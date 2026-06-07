@@ -1,0 +1,7 @@
+backend/__pycache__/
+backend/place_cache/
+backend/datos.json
+backend/director_cache.json
+backend/server.log
+backend/server_test.log
+backend/python
