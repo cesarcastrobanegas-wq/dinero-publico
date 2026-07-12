@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: dinero-publico-murcia
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # --workers 1 es obligatorio, no opcional: el estado de los jobs de
+    # búsqueda (_jobs) y la caché en RAM (_datos_memoria, _result_cache)
+    # viven en memoria de un único proceso. Con más de un worker, una
+    # petición podría caer en un proceso que nunca vio el job creado por
+    # otro y el spinner de progreso se quedaría colgado en "not_found".
+    # --threads da concurrencia dentro de ese único proceso.
+    startCommand: gunicorn backend.app:app --workers 1 --threads 4 --bind 0.0.0.0:$PORT --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+    healthCheckPath: /
