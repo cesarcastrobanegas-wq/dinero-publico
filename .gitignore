@@ -1,7 +1,19 @@
-backend/__pycache__/
+__pycache__/
+*.pyc
+*.log
+place_cache/
 backend/place_cache/
+.env
 backend/datos.json
 backend/director_cache.json
-backend/server.log
-backend/server_test.log
 backend/python
+
+# Journal/WAL de SQLite: son ficheros transitorios de la sesión de
+# escritura en curso, no aportan nada fuera de esta máquina. NO se ignora
+# backend/cache.db a propósito: es la base de datos con los contratos ya
+# scrapeados y los directivos ya resueltos (85% de la región tras esta
+# sesión). Render no tiene disco persistente en el plan gratuito, así que
+# commitear cache.db es lo que permite que un despliegue nuevo arranque
+# con los datos ya construidos en vez de vacío. Ver notas de despliegue.
+backend/cache.db-wal
+backend/cache.db-shm

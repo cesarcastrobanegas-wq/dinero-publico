@@ -4,7 +4,7 @@ Fuente: Plataforma de Contratación del Sector Público (datos oficiales CODICE/
 """
 
 import gzip as _gzip
-import json, os, re, html, io, zipfile, threading, uuid, time
+import json, os, re, html, io, sqlite3, zipfile, threading, uuid, time
 from datetime import datetime
 from urllib.parse import parse_qs, quote_plus, urlparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -59,6 +59,11 @@ adapter = requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=20, ma
 session.mount("http://", adapter)
 session.mount("https://", adapter)
 
+# ─── EJECUCIÓN HTTP ──────────────────────────────────────────────────────────
+HTTP_TIMEOUT = 5            # timeout para feeds PLACE/BORM (peticiones rápidas)
+DIRECTIVOS_TIMEOUT = 15    # timeout para búsquedas de directivos (páginas empresia/BOE más lentas)
+HTTP_POOL = ThreadPoolExecutor(max_workers=10)   # pool compartido para todas las peticiones HTTP
+
 _datos_lock = threading.Lock()
 _datos_memoria: list = []    # datos.json cargado en RAM al arrancar
 _jobs: dict = {}
@@ -72,48 +77,131 @@ _result_cache: dict = {}   # normalizar(municipio) → {"ts": float, "resultado"
 _cache_lock   = threading.Lock()
 RESULT_CACHE_TTL = 6 * 3600   # 6 horas
 
-# ─── CACHÉ DE DIRECTIVOS (persistente) ───────────────────────────────────────
-DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")
-_dir_cache: dict = {}          # clave → {"nombre": str, "cargo": str, "ts": float}
-_dir_cache_lock = threading.Lock()
+# ─── CACHÉ SQLITE (directivos + contratos por municipio) ─────────────────────
+DB_FILE = os.path.join(BASE_DIR, "cache.db")
+DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo para migración inicial
+
+_db = sqlite3.connect(DB_FILE, check_same_thread=False, timeout=30)
+_db.execute("PRAGMA journal_mode=WAL")
+_db_lock = threading.Lock()
+
 DIR_CACHE_POS_TTL = 90 * 24 * 3600   # 90 días para resultados encontrados
 DIR_CACHE_NEG_TTL =  7 * 24 * 3600   # 7 días para "no encontrado"
+
+def _db_init():
+    with _db_lock:
+        _db.execute("""CREATE TABLE IF NOT EXISTS directores (
+            clave  TEXT PRIMARY KEY,
+            nombre TEXT,
+            cargo  TEXT,
+            ts     REAL NOT NULL
+        )""")
+        _db.execute("""CREATE TABLE IF NOT EXISTS municipios (
+            municipio TEXT PRIMARY KEY,
+            data      TEXT NOT NULL,
+            ts        REAL NOT NULL
+        )""")
+        _db.commit()
+    _migrar_json_a_sqlite()
+
+
+def _migrar_json_a_sqlite():
+    """Importa datos.json / director_cache.json (versiones antiguas) si la BD está vacía."""
+    with _db_lock:
+        n_muni = _db.execute("SELECT COUNT(*) FROM municipios").fetchone()[0]
+        n_dir  = _db.execute("SELECT COUNT(*) FROM directores").fetchone()[0]
+
+    if n_muni == 0 and os.path.exists(DATA_FILE):
+        for d in _cargar_datos_json():
+            muni = d.get("municipio", "")
+            if muni:
+                _db_set_municipio(muni, d)
+
+    if n_dir == 0 and os.path.exists(DIRECTOR_CACHE_FILE):
+        try:
+            with open(DIRECTOR_CACHE_FILE, encoding="utf-8") as f:
+                old = json.load(f)
+            with _db_lock:
+                for k, v in old.items():
+                    if not v.get("nombre"):
+                        continue  # no migrar negativos: las nuevas fuentes pueden encontrarlos
+                    _db.execute(
+                        "INSERT OR IGNORE INTO directores (clave, nombre, cargo, ts) VALUES (?,?,?,?)",
+                        (k, v.get("nombre", ""), v.get("cargo", ""), v.get("ts", time.time())),
+                    )
+                _db.commit()
+        except Exception:
+            pass
+
+
+def _cargar_datos_json():
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+                if isinstance(d, list):
+                    return d
+        except Exception:
+            pass
+    return []
+
+
+def _db_set_municipio(municipio, resultado):
+    key = normalizar(municipio)
+    with _db_lock:
+        _db.execute(
+            "INSERT INTO municipios (municipio, data, ts) VALUES (?,?,?) "
+            "ON CONFLICT(municipio) DO UPDATE SET data=excluded.data, ts=excluded.ts",
+            (key, json.dumps(resultado, ensure_ascii=False), resultado.get("timestamp", time.time())),
+        )
+        _db.commit()
+
+
+def _db_all_municipios():
+    with _db_lock:
+        rows = _db.execute("SELECT data FROM municipios").fetchall()
+    out = []
+    for (data,) in rows:
+        try:
+            out.append(json.loads(data))
+        except Exception:
+            pass
+    return out
+
+
+def _db_clear_municipios():
+    with _db_lock:
+        _db.execute("DELETE FROM municipios")
+        _db.commit()
+
+
+# ─── CACHÉ DE DIRECTIVOS (persistente, SQLite) ────────────────────────────────
 
 def _dir_cache_key(empresa, nif=""):
     return nif.upper().strip() if nif else normalizar(empresa)
 
-def _dir_cache_load():
-    global _dir_cache
-    try:
-        with open(DIRECTOR_CACHE_FILE, encoding="utf-8") as f:
-            _dir_cache = json.load(f)
-    except Exception:
-        _dir_cache = {}
-
-def _dir_cache_save():
-    try:
-        with open(DIRECTOR_CACHE_FILE, "w", encoding="utf-8") as f:
-            json.dump(_dir_cache, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
-
 def _dir_cache_get(empresa, nif=""):
     """Devuelve (nombre, cargo) si hay hit válido; (None, None) si hay que buscar."""
     key = _dir_cache_key(empresa, nif)
-    with _dir_cache_lock:
-        entry = _dir_cache.get(key)
-    if not entry:
+    with _db_lock:
+        row = _db.execute("SELECT nombre, cargo, ts FROM directores WHERE clave=?", (key,)).fetchone()
+    if not row:
         return None, None
-    ttl = DIR_CACHE_POS_TTL if entry.get("nombre") else DIR_CACHE_NEG_TTL
-    if time.time() - entry.get("ts", 0) > ttl:
+    nombre, cargo, ts = row
+    ttl = DIR_CACHE_POS_TTL if nombre else DIR_CACHE_NEG_TTL
+    if time.time() - ts > ttl:
         return None, None
-    return entry.get("nombre", ""), entry.get("cargo", "")
+    return nombre or "", cargo or ""
 
 def _dir_cache_set(empresa, nif, nombre, cargo):
     key = _dir_cache_key(empresa, nif)
-    with _dir_cache_lock:
-        _dir_cache[key] = {"nombre": nombre, "cargo": cargo, "ts": time.time()}
-        _dir_cache_save()
+    with _db_lock:
+        _db.execute(
+            "INSERT INTO directores (clave, nombre, cargo, ts) VALUES (?,?,?,?) "
+            "ON CONFLICT(clave) DO UPDATE SET nombre=excluded.nombre, cargo=excluded.cargo, ts=excluded.ts",
+            (key, nombre, cargo, time.time()),
+        )
+        _db.commit()
 
 # ─── UTILIDADES ──────────────────────────────────────────────────────────────
 
@@ -573,7 +661,7 @@ def buscar_en_zip(zip_path, municipio, job_id=None):
 def buscar_en_feed_vivo(municipio):
     """Consulta el feed en vivo de PLACE (últimas ~200 entradas de toda España)."""
     try:
-        r = session.get(PLACE_FEED_LIVE, timeout=(8, 30))
+        r = session.get(PLACE_FEED_LIVE, timeout=HTTP_TIMEOUT)
         if r.status_code == 200:
             return parsear_atom_bytes(r.content, municipio)
     except Exception:
@@ -749,7 +837,7 @@ def buscar_en_borm(municipio, job_id=None):
         "tipoBusqueda": 0,
     }
     try:
-        r = session.post(BORM_BUSCAR_URL, json=payload, timeout=(8, 20))
+        r = session.post(BORM_BUSCAR_URL, json=payload, timeout=HTTP_TIMEOUT)
         if r.status_code != 200:
             _log(job_id, f"  BORM: HTTP {r.status_code}")
             return []
@@ -796,7 +884,7 @@ def buscar_en_borm(municipio, job_id=None):
         try:
             id_a = anuncio["idAnuncio"]
             txt_url = BORM_TXT_URL.format(id=id_a)
-            r2 = session.get(txt_url, timeout=(4, 10))
+            r2 = session.get(txt_url, timeout=HTTP_TIMEOUT)
             if r2.status_code != 200:
                 return None
             # Force UTF-8; fall back to Latin-1 if decoding fails
@@ -815,25 +903,15 @@ def buscar_en_borm(municipio, job_id=None):
         except Exception:
             return None
 
-    with ThreadPoolExecutor(max_workers=4) as ex:
-        for c in ex.map(_fetch_y_parsear, candidatos):
-            if c:
-                contratos.append(c)
+    for c in HTTP_POOL.map(_fetch_y_parsear, candidatos):
+        if c:
+            contratos.append(c)
 
     _log(job_id, f"  BORM: {len(contratos)} contratos con datos extraídos")
     return contratos
 
 
-# ─── DIRECTIVOS (BORME / InfoEmpresa) ────────────────────────────────────────
-
-def _obtener_html(url, timeout=(5, 12)):
-    try:
-        r = session.get(url, timeout=timeout, allow_redirects=True)
-        if r.status_code == 200:
-            return r.text
-    except Exception:
-        pass
-    return ""
+# ─── DIRECTIVOS (empresia/BORME via BOE) ────────────────────────────────────
 
 def _extraer_texto(html_text):
     soup = BeautifulSoup(html_text, "html.parser")
@@ -849,423 +927,433 @@ _CARGO_RE = re.compile(
     re.IGNORECASE,
 )
 
+_CARGOS_SKIP = re.compile(r"\b(auditor|liquidador|comisario|verificador)\b", re.I)
+
+# Prioridad de cargos: índice menor = más relevante
+_CARGO_PRIORITY = [
+    "administrador único", "administrador unico",
+    "administrador solidario", "administrador mancomunado", "administrador",
+    "consejero delegado", "director general", "presidente", "gerente",
+    "socio director", "apoderado general", "apoderado",
+]
+
+_STOPWORDS_NOMBRE = {
+    "fuente", "informe", "boletin", "boletín", "oficial", "registro", "mercantil",
+    "sociedad", "consejero", "consejeros", "presidente", "secretario",
+    "administrador", "administradores", "gerente", "apoderado", "datos",
+    "seguir", "dejar", "avanzado", "axesor", "completa", "básica", "basica",
+    "de", "del", "la", "el", "los", "las", "y",
+}
+
+_SUFIJOS_SOCIEDAD_NOM = re.compile(
+    r'\b(s\.?l\.?u?\.?|s\.?a\.?u?\.?|s\.?c\.?|s\.?coop\.?|s\.?r\.?l\.?)\s*$', re.I
+)
+
+def _limpiar_nombre(raw):
+    """Recorta una captura a las 2-4 primeras palabras válidas. Acepta mayúsculas BORME."""
+    # Rechazar si el raw completo parece ser una empresa (termina en SL, SA, etc.)
+    if _SUFIJOS_SOCIEDAD_NOM.search(raw.strip()):
+        return ""
+    out = []
+    for w in raw.split():
+        clean = re.sub(r"[^A-Za-záéíóúñÁÉÍÓÚÑ]", "", w)
+        if not clean or len(clean) < 2:
+            break
+        if not (clean[0].isupper() or clean.isupper()):
+            break
+        if clean.lower() in _STOPWORDS_NOMBRE:
+            break
+        # Si la palabra acumulada hasta aquí es un sufijo de sociedad, parar
+        if _SUFIJOS_SOCIEDAD_NOM.search(clean):
+            break
+        out.append(clean)
+        if len(out) >= 4:
+            break
+    return " ".join(out)
+
 def _extraer_directivo(texto):
+    best_n, best_c, best_prio = "", "", 999
     for m in _CARGO_RE.finditer(texto):
-        a, b = m.group(1).strip(), m.group(2).strip()
-        if len(b.split()) >= 2:
-            return b.title(), a.title()
-    return "", ""
-
-def _infoempresa_slug(empresa):
-    """Genera el slug de URL para infoempresa.com a partir del nombre de empresa."""
-    s = normalizar(empresa)
-    s = re.sub(r"[,/&|]", " ", s)
-    s = re.sub(r"[^a-z0-9\s]", "", s)
-    return re.sub(r"\s+", "-", s.strip())
-
-_SUF_NORM_RE = re.compile(r"\b(sl|sa|slu|sau|slp|sc|cb|coop|slne|sal)\b\.?", re.I)
-
-def _empresa_match(busqueda, borme):
-    """True si dos nombres de empresa se refieren a la misma entidad (comparación aproximada)."""
-    if not busqueda or not borme:
-        return False
-    a = normalizar(busqueda)
-    b = normalizar(borme)
-    if a == b:
-        return True
-    a2 = _SUF_NORM_RE.sub("", a).strip()
-    b2 = _SUF_NORM_RE.sub("", b).strip()
-    return bool(a2) and bool(b2) and (a2 == b2 or a2 in b2 or b2 in a2)
+        cargo_raw, raw = m.group(1).strip(), m.group(2).strip()
+        if _CARGOS_SKIP.search(cargo_raw):
+            continue
+        nombre = _limpiar_nombre(raw)
+        if len(nombre.split()) < 2:
+            continue
+        cargo_norm = normalizar(cargo_raw)
+        prio = next((i for i, p in enumerate(_CARGO_PRIORITY) if p in cargo_norm), 500)
+        if prio < best_prio:
+            best_n, best_c, best_prio = nombre.title(), cargo_raw.title(), prio
+    return best_n, best_c
 
 _BORME_NOM_RE = re.compile(
     r"nombramiento[s]?\s*[.:]\s*"
     r"(administrador(?:\s+(?:[úu]nico|solidario|mancomunado))?|"
-    r"consejero\s+delegado|presidente|gerente|director\s+general|"
-    r"apoderado(?:\s+general)?)\s*[.:]?\s+"
+    r"adm\.?\s*(?:[úu]nico|unico|solid(?:\.|ario)?|mancom(?:\.|unado)?)?\.?|"
+    r"consejero\s+delegado|cons\.?\s*del\.?|"
+    r"presidente|pres\.?|"
+    r"gerente|ger\.?|"
+    r"director\s+general|"
+    r"apoderado(?:\s+(?:solidario|mancomunado|general))?|"
+    r"apo\.?\s*(?:sol(?:\.|idario)?|mancom(?:\.|unado)?|gen(?:\.|eral)?)?\.?)\s*[.:]?\s+"
     r"([A-ZÁÉÍÓÚÑ][A-Za-záéíóúñÁÉÍÓÚÑ]+(?:\s+[A-Za-záéíóúñÁÉÍÓÚÑ]+){1,5})",
     re.IGNORECASE,
 )
+
+_CARGO_ABREV = [
+    (re.compile(r"^adm\.?\s*[úu]nico\.?$", re.I), "Administrador Único"),
+    (re.compile(r"^adm\.?\s*solid(?:\.|ario)?\.?$", re.I), "Administrador Solidario"),
+    (re.compile(r"^adm\.?\s*mancom(?:\.|unado)?\.?$", re.I), "Administrador Mancomunado"),
+    (re.compile(r"^adm\.?$", re.I), "Administrador"),
+    (re.compile(r"^apo\.?\s*sol(?:\.|idario)?\.?$", re.I), "Apoderado Solidario"),
+    (re.compile(r"^apo\.?\s*mancom(?:\.|unado)?\.?$", re.I), "Apoderado Mancomunado"),
+    (re.compile(r"^apo\.?\s*gen(?:\.|eral)?\.?$", re.I), "Apoderado General"),
+    (re.compile(r"^apo\.?$", re.I), "Apoderado"),
+    (re.compile(r"^pres\.?$", re.I), "Presidente"),
+    (re.compile(r"^ger\.?$", re.I), "Gerente"),
+    (re.compile(r"^cons\.?\s*del\.?$", re.I), "Consejero Delegado"),
+]
+
+def _normalizar_cargo_borme(cargo_raw):
+    """Expande abreviaturas de BORME (Adm. Unico, Apo.Sol., …) a su forma completa."""
+    c = cargo_raw.strip()
+    for rx, full in _CARGO_ABREV:
+        if rx.match(c):
+            return full
+    return cargo_raw
 
 def _extraer_directivo_nombramiento(texto):
-    """Extrae el administrador de texto BORME priorizando la sección Nombramientos."""
+    """Extrae el administrador de texto BORME priorizando sección Nombramientos."""
     if not texto:
         return "", ""
     nom_idx = texto.lower().find("nombramiento")
     candidato = texto[nom_idx:] if nom_idx >= 0 else texto
+    best_n, best_c, best_prio = "", "", 999
     for m in _BORME_NOM_RE.finditer(candidato):
         cargo, nombre = m.group(1).strip(), m.group(2).strip()
-        if len(nombre.split()) >= 2 and not _CARGOS_SKIP.search(cargo):
-            return nombre.title(), cargo.title()
-    for m in _CARGO_RE.finditer(candidato):
-        cargo, nombre = m.group(1).strip(), m.group(2).strip()
-        if len(nombre.split()) >= 2 and not _CARGOS_SKIP.search(cargo):
-            return nombre.title(), cargo.title()
-    return "", ""
-
-
-_CARGOS_SKIP = re.compile(r"\b(auditor|liquidador|comisario|verificador)\b", re.I)
-_NOMBRE_EMPRESA_RE = re.compile(r"\b(s\.?l\.?|s\.?a\.?|s\.?l\.?p\.?|s\.?c\.?|cb)\b", re.I)
-
-
-# Maps BORME abbreviated titles to canonical Spanish names
-_CARGO_BORME_MAP = (
-    (re.compile(r"adm\.?\s+[úu]nico", re.I),        "Administrador Único"),
-    (re.compile(r"adm\.?\s+solidario", re.I),        "Administrador Solidario"),
-    (re.compile(r"adm\.?\s+mancomunado", re.I),      "Administrador Mancomunado"),
-    (re.compile(r"c\.?\s+delegado", re.I),            "Consejero Delegado"),
-    (re.compile(r"consejero\s+delegado", re.I),       "Consejero Delegado"),
-    (re.compile(r"administrador", re.I),              "Administrador"),
-    (re.compile(r"gerente", re.I),                    "Gerente"),
-    (re.compile(r"presidente", re.I),                 "Presidente"),
-)
-
-_BORME_PARRAFO_RE = re.compile(
-    r"\b(Adm\.?\s+(?:[Úú]nico|Unico|Solidario|Mancomunado)"
-    r"|Administrador(?:\s+(?:[Úú]nico|Solidario|Mancomunado))?"
-    r"|C\.?\s+Delegado|Consejero\s+Delegado"
-    r"|Gerente|Presidente|Director\s+General"
-    r"|Apoderado(?:\s+General)?)\s*[:.]\s*"
-    r"([A-ZÁÉÍÓÚÑ][A-Za-záéíóúñÁÉÍÓÚÑ]+(?:\s+[A-Za-záéíóúñÁÉÍÓÚÑ]+){1,5})",
-    re.IGNORECASE,
-)
-
-
-def _extraer_directivo_parrafo(texto):
-    """Extrae administrador de un párrafo BORME (usa abreviaturas: Adm. Unico, etc.)."""
-    if not texto:
-        return "", ""
-    # Only look in the Nombramientos section; stop at 'Datos registrales'
-    nom_idx = texto.lower().find("nombramiento")
-    candidato = texto[nom_idx:] if nom_idx >= 0 else texto
-    dr_idx = candidato.lower().find("datos registrales")
-    if dr_idx > 0:
-        candidato = candidato[:dr_idx]
-    for m in _BORME_PARRAFO_RE.finditer(candidato):
-        cargo_raw = m.group(1).strip()
-        nombre = m.group(2).strip().rstrip(".")
-        if len(nombre.split()) < 2 or _CARGOS_SKIP.search(cargo_raw):
+        cargo = _normalizar_cargo_borme(cargo)
+        if _CARGOS_SKIP.search(cargo):
             continue
-        cargo = cargo_raw
-        for pat, canonical in _CARGO_BORME_MAP:
-            if pat.match(cargo_raw):
-                cargo = canonical
-                break
-        return nombre.title(), cargo
-    return "", ""
-
-
-def _borme_entry_admin(entry_id, empresa):
-    """Descarga el XML de una entrada provincial BORME-A y extrae el administrador."""
-    import xml.etree.ElementTree as ET
-    try:
-        rx = session.get(
-            f"https://www.boe.es/diario_borme/xml.php?id={entry_id}",
-            timeout=(5, 15),
-        )
-        if rx.status_code != 200:
-            return "", ""
-        root = ET.fromstring(rx.content)
-        texto_el = root.find(".//texto")
-        if texto_el is None:
-            return "", ""
-        # Collect all <p> in order — alternating articulo / parrafo
-        parrafos = [p for p in texto_el.iter("p")]
-        for i, p in enumerate(parrafos):
-            if p.get("class") != "articulo":
-                continue
-            articulo_txt = (p.text or "").strip()
-            # Format: "NUMBER - COMPANY NAME."
-            m = re.match(r"\d+\s*-\s*(.+)", articulo_txt)
-            if not m:
-                continue
-            company_in_entry = m.group(1).strip().rstrip(".")
-            if not _empresa_match(empresa, company_in_entry):
-                continue
-            # Found this company — parse the following parrafo
-            if i + 1 < len(parrafos) and parrafos[i + 1].get("class") == "parrafo":
-                n, c = _extraer_directivo_parrafo((parrafos[i + 1].text or "").strip())
-                if n:
-                    return n, c
-    except Exception:
-        pass
-    return "", ""
-
-
-def buscar_directivo_borme_api(empresa, nif=""):
-    """Busca directivos en el BORME oficial vía sumario API + índice alfabético."""
-    if not empresa or empresa == "No localizada":
-        return "", ""
-    from datetime import date, timedelta
-    import xml.etree.ElementTree as ET
-
-    d = date.today()
-    issues_checked = 0
-    attempts = 0
-    seen_entries: set = set()
-
-    while issues_checked < 10 and attempts < 30:
-        date_str = d.strftime("%Y%m%d")
-        d -= timedelta(days=1)
-        attempts += 1
-
-        # Get the daily sumario
-        try:
-            r_sum = session.get(
-                f"https://www.boe.es/datosabiertos/api/borme/sumario/{date_str}",
-                headers={"Accept": "application/xml"},
-                timeout=(4, 10),
-            )
-        except Exception:
+        nombre_clean = _limpiar_nombre(nombre)
+        if len(nombre_clean.split()) < 2:
             continue
-        if r_sum.status_code != 200 or "<seccion" not in r_sum.text:
-            continue
-
-        try:
-            sum_root = ET.fromstring(r_sum.content)
-        except Exception:
-            continue
-
-        # Find the alphabetical index entry (always ends in -99)
-        idx_id = None
-        all_section_a_ids = []
-        for item in sum_root.iter("item"):
-            eid = (item.findtext("identificador") or "").strip()
-            if not eid.startswith("BORME-A-"):
-                continue
-            all_section_a_ids.append(eid)
-            if eid.endswith("-99"):
-                idx_id = eid
-
-        if not idx_id:
-            continue
-        issues_checked += 1
-
-        # Fetch the alphabetical index to find which provincial entry contains our company
-        try:
-            r_idx = session.get(
-                f"https://www.boe.es/diario_borme/xml.php?id={idx_id}",
-                timeout=(5, 15),
-            )
-            if r_idx.status_code != 200:
-                continue
-            idx_root = ET.fromstring(r_idx.content)
-        except Exception:
-            continue
-
-        texto_el = idx_root.find(".//texto")
-        if texto_el is None:
-            continue
-
-        for tr in texto_el.iter("tr"):
-            tds = list(tr.findall("td"))
-            if len(tds) < 2:
-                continue
-            company_cell = (tds[0].text or "").strip()
-            if not company_cell:
-                for p in tds[0].iter("p"):
-                    company_cell = (p.text or "").strip()
-                    break
-            entry_id = ""
-            for p in tds[1].iter("p"):
-                entry_id = (p.text or "").strip()
-                break
-            if not company_cell or not entry_id or not entry_id.startswith("BORME-A-"):
-                continue
-            if not _empresa_match(empresa, company_cell):
-                continue
-            if entry_id in seen_entries:
-                continue
-            seen_entries.add(entry_id)
-            n, c = _borme_entry_admin(entry_id, empresa)
-            if n:
-                return n, c
-
-    return "", ""
+        cargo_norm = normalizar(cargo)
+        prio = next((i for i, p in enumerate(_CARGO_PRIORITY) if p in cargo_norm), 500)
+        if prio < best_prio:
+            best_n, best_c, best_prio = nombre_clean.title(), cargo.title(), prio
+    if best_n:
+        return best_n, best_c
+    return _extraer_directivo(candidato)
 
 
-_CONECTORES = {"y", "e", "de", "del", "los", "las", "el", "la", "y", "para", "en"}
+_BORME_REF_RE = re.compile(r'BORME-[A-Z]-\d{4}-\d+-\d+', re.I)
 
-
-def buscar_directivo_empresite(empresa):
-    """Fallback: scraper de empresite.eleconomista.es (datos públicos del R.M.)."""
-    slug = normalizar(empresa)
-    slug = re.sub(r"[^a-z0-9\s]", "", slug)
-    slug = re.sub(r"\s+", "-", slug.strip())
-    if not slug:
-        return "", ""
+def _fetch_borme_texto(borme_id):
+    """Descarga el texto plano de un anuncio BORME directamente desde BOE."""
     try:
         r = session.get(
-            f"https://empresite.eleconomista.es/{slug}/",
-            timeout=(4, 9),
-            allow_redirects=True,
+            f"https://www.boe.es/diario_borme/txt.php?id={borme_id}",
+            timeout=DIRECTIVOS_TIMEOUT,
         )
-        if r.status_code != 200:
-            return "", ""
-        soup = BeautifulSoup(r.text, "html.parser")
-        # Sección de administradores / directivos
-        for section in soup.find_all(["section", "div"], class_=re.compile(r"administ|directiv|cargo", re.I)):
-            text = section.get_text(" ", strip=True)
-            for m in _CARGO_RE.finditer(text):
-                cargo_str, nombre = m.group(1).strip(), m.group(2).strip()
-                if len(nombre.split()) >= 2 and not _CARGOS_SKIP.search(cargo_str):
-                    return nombre.title(), cargo_str.title()
-        # Fallback: buscar el patrón en el texto completo de la página
-        page_text = soup.get_text(" ", strip=True)
-        for m in _CARGO_RE.finditer(page_text):
-            cargo_str, nombre = m.group(1).strip(), m.group(2).strip()
-            if len(nombre.split()) >= 2 and not _CARGOS_SKIP.search(cargo_str):
-                return nombre.title(), cargo_str.title()
+        if r.status_code == 200:
+            try:
+                return r.content.decode("utf-8")
+            except UnicodeDecodeError:
+                return r.content.decode("latin-1", errors="replace")
     except Exception:
         pass
-    return "", ""
+    return ""
 
 
-def buscar_directivo_borme(empresa, nif=""):
-    """Busca en el BORME (boe.es) nombramientos/ceses de la empresa."""
-    if not empresa or empresa == "No localizada":
+def _extraer_de_borme_empresa(boe_texto, empresa, sufijos_empresa_re):
+    """
+    Extrae el director del boletín BORME localizando primero la sección
+    de la empresa concreta (los boletines pueden incluir MUCHAS empresas).
+    """
+    boe_clean = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", boe_texto))
+    # Palabras clave del nombre de empresa (sin sufijos legales, min 4 chars)
+    palabras = [
+        w for w in re.split(r"[\s,\.&\-]+", empresa)
+        if len(w) > 3 and not sufijos_empresa_re.match(w)
+    ]
+    if not palabras:
         return "", ""
-    try:
-        from urllib.parse import quote_plus as _qp
-        query = nif if nif else empresa
-        url = f"https://www.boe.es/borme/buscar.php?text={_qp(query)}&type=1"
-        r = session.get(url, timeout=(5, 12))
-        if r.status_code != 200:
-            return "", ""
-        soup = BeautifulSoup(r.text, "html.parser")
-        # Extrae el primer resultado con datos de nombramiento
-        for row in soup.select("div.resultado, li.resultado, tr"):
-            text = row.get_text(" ", strip=True)
-            for m in _CARGO_RE.finditer(text):
-                cargo_str, nombre = m.group(1).strip(), m.group(2).strip()
-                if len(nombre.split()) >= 2 and not _CARGOS_SKIP.search(cargo_str):
-                    return nombre.title(), cargo_str.title()
-    except Exception:
-        pass
-    return "", ""
+
+    # Buscar la sección de la empresa en el BORME (case-insensitive)
+    best_n, best_c, best_prio = "", "", 999
+    for p in palabras[:3]:
+        idx = boe_clean.lower().find(p.lower())
+        if idx < 0:
+            continue
+        # Contexto: desde 100 chars antes hasta 800 chars después
+        context = boe_clean[max(0, idx - 100):idx + 900]
+        n, c = _extraer_directivo_nombramiento(context)
+        if n:
+            cargo_norm = normalizar(c)
+            prio = next((i for i, cp in enumerate(_CARGO_PRIORITY) if cp in cargo_norm), 500)
+            if prio < best_prio:
+                best_n, best_c, best_prio = n, c, prio
+        if best_n:
+            break  # primera palabra que funciona es suficiente
+
+    return best_n, best_c
 
 
-def _scrape_admin_from_page(soup):
-    """Extrae administrador de una página BS4 probando varios selectores y CARGO_RE."""
-    # Intentar bloques específicos primero
-    for sel in ("div.administradores", "section.administradores", "#administradores",
-                "div.cargos", "section.cargos", "#cargos", "table.cargos",
-                "div.organ", ".organ-section", ".empresa-directivos__list"):
-        bloque = soup.select_one(sel)
-        if bloque:
-            for m in _CARGO_RE.finditer(bloque.get_text(" ", strip=True)):
-                c, n = m.group(1).strip(), m.group(2).strip()
-                if len(n.split()) >= 2 and not _CARGOS_SKIP.search(c):
-                    return n.title(), c.title()
-    # Fallback: página completa
-    for m in _CARGO_RE.finditer(soup.get_text(" ", strip=True)):
-        c, n = m.group(1).strip(), m.group(2).strip()
-        if len(n.split()) >= 2 and not _CARGOS_SKIP.search(c):
-            return n.title(), c.title()
-    return "", ""
+_CONECTORES = {"y", "e", "de", "del", "los", "las", "el", "la", "para", "en"}
 
 
 def buscar_directivo_einforma(empresa, nif=""):
-    """Busca administrador en einforma.com (búsqueda por NIF o nombre)."""
+    """Fuente 1: einforma.com (actualmente retorna 404 para la mayoría — solo intento rápido)."""
     if not empresa or empresa == "No localizada":
         return "", ""
     try:
-        q = nif if nif else empresa
-        r = session.get(
-            "https://www.einforma.com/buscar-empresa",
-            params={"q": q},
-            timeout=(5, 12),
-        )
+        url = f"https://www.einforma.com/servlet/app/prod/EMPRESA_BUSCADOR_NOMBRE/nombre/{quote_plus(empresa)}"
+        r = session.get(url, timeout=DIRECTIVOS_TIMEOUT, allow_redirects=True)
         if r.status_code != 200:
             return "", ""
         soup = BeautifulSoup(r.text, "html.parser")
-        primer = (soup.select_one("a[href*='/info-empresa'], a[href*='/empresa/']") or
+        primer = (soup.select_one("a[href*='/informe-empresa'], a[href*='/cif/'], a[href*='/empresa/']") or
                   soup.find("a", href=re.compile(r"einforma\.com/\S*empresa\S*", re.I)))
         if not primer:
             return "", ""
         href = primer.get("href", "")
         if not href.startswith("http"):
             href = "https://www.einforma.com" + href
-        r2 = session.get(href, timeout=(5, 12))
+        r2 = session.get(href, timeout=DIRECTIVOS_TIMEOUT)
         if r2.status_code != 200:
             return "", ""
-        return _scrape_admin_from_page(BeautifulSoup(r2.text, "html.parser"))
+        soup2 = BeautifulSoup(r2.text, "html.parser")
+        for sel in ("div.administradores", "section.administradores", "#administradores",
+                    "div.cargos", ".empresa-directivos__list"):
+            bloque = soup2.select_one(sel)
+            if bloque:
+                n, c = _extraer_directivo(bloque.get_text(" ", strip=True))
+                if n:
+                    return n, c
+        return _extraer_directivo(soup2.get_text(" ", strip=True))
     except Exception:
         pass
     return "", ""
 
 
-def buscar_directivo_axesor(empresa, nif=""):
-    """Busca administrador en axesor.es."""
+def buscar_directivo_empresia(empresa, nif=""):
+    """
+    Fuente 2 (principal): empresia.es → eventos BORME → texto BOE → administrador.
+
+    Estrategia:
+      1. Busca la empresa en empresia.es
+      2. Recoge links de eventos BORME del resultado de búsqueda y del perfil
+      3. Por cada evento extrae la ref BORME-A-YYYY-NNN-PP
+      4. Descarga el texto plano del anuncio desde BOE (/diario_borme/txt.php)
+      5. Parsea buscando nombramientos de administradores (prioriza Administrador > Apoderado)
+    """
     if not empresa or empresa == "No localizada":
         return "", ""
     try:
-        # Axesor permite buscar directamente por NIF en la URL
-        if nif:
-            r = session.get(
-                f"https://www.axesor.es/informes-empresas/{quote_plus(nif)}",
-                timeout=(5, 12),
-                allow_redirects=True,
-            )
-        else:
-            r = session.get(
-                "https://www.axesor.es/buscar",
-                params={"q": empresa},
-                timeout=(5, 12),
-            )
-        if r.status_code != 200:
-            return "", ""
-        soup = BeautifulSoup(r.text, "html.parser")
-        # Si es página de búsqueda, seguir primer resultado
-        if "/buscar" in r.url or "/search" in r.url:
-            primer = (soup.select_one("a[href*='/informes-empresas/']") or
-                      soup.find("a", href=re.compile(r"axesor\.es/informes", re.I)))
-            if not primer:
-                return "", ""
-            href = primer.get("href", "")
-            if not href.startswith("http"):
-                href = "https://www.axesor.es" + href
-            r = session.get(href, timeout=(5, 12))
-            if r.status_code != 200:
-                return "", ""
-            soup = BeautifulSoup(r.text, "html.parser")
-        return _scrape_admin_from_page(soup)
-    except Exception:
-        pass
-    return "", ""
-
-
-def buscar_directivo_infocif(empresa, nif=""):
-    """Busca administrador en infocif.es."""
-    if not empresa or empresa == "No localizada":
-        return "", ""
-    try:
-        q = nif if nif else empresa
         r = session.get(
-            "https://www.infocif.es/buscar",
-            params={"q": q, "tipo": "empresas"},
-            timeout=(5, 12),
+            "https://empresia.es/busqueda/",
+            params={"q": empresa},
+            timeout=DIRECTIVOS_TIMEOUT,
         )
         if r.status_code != 200:
             return "", ""
         soup = BeautifulSoup(r.text, "html.parser")
-        primer = (soup.select_one("a[href*='/ficha-empresa/']") or
-                  soup.find("a", href=re.compile(r"infocif\.es/ficha", re.I)))
-        if not primer:
+
+        evento_links = []
+        perfil_href = None
+        seen_ev = set()
+        for a in soup.find_all("a", href=re.compile(r"^/empresa/")):
+            href = a.get("href", "")
+            if "/evento/" in href and href not in seen_ev:
+                evento_links.append(href)
+                seen_ev.add(href)
+            elif perfil_href is None:
+                parts = [p for p in href.split("/") if p]
+                if len(parts) == 2:
+                    perfil_href = href
+
+        # Si pocos eventos en la búsqueda, ir al perfil a buscar más
+        if len(evento_links) < 3 and perfil_href:
+            try:
+                time.sleep(0.4)
+                r2 = session.get("https://empresia.es" + perfil_href, timeout=DIRECTIVOS_TIMEOUT)
+                if r2.status_code == 200:
+                    soup2 = BeautifulSoup(r2.text, "html.parser")
+                    for a in soup2.find_all("a", href=re.compile(r"^/empresa/")):
+                        href = a.get("href", "")
+                        if "/evento/" in href and href not in seen_ev:
+                            evento_links.append(href)
+                            seen_ev.add(href)
+            except Exception:
+                pass
+
+        print(f"  [empresia] {empresa[:40]}: {len(evento_links)} eventos", flush=True)
+
+        # Palabras significativas del nombre de empresa para validar el BORME
+        _palabras_emp = [
+            w for w in re.split(r"[\s,\.&]+", empresa)
+            if len(w) > 3 and not _SUFIJOS_EMPRESA.match(w)
+        ]
+
+        def _borme_menciona_empresa(boe_text):
+            """Verifica que el texto BORME es de la empresa buscada."""
+            txt_low = boe_text.lower()
+            return any(p.lower() in txt_low for p in _palabras_emp[:2])
+
+        for ev_href in evento_links[:12]:
+            try:
+                time.sleep(0.3)
+                r_ev = session.get("https://empresia.es" + ev_href, timeout=DIRECTIVOS_TIMEOUT)
+                if r_ev.status_code != 200:
+                    continue
+                borme_m = _BORME_REF_RE.search(r_ev.text)
+                if not borme_m:
+                    continue
+                borme_id = borme_m.group(0).upper()
+                boe_texto = _fetch_borme_texto(borme_id)
+                if boe_texto and _borme_menciona_empresa(boe_texto):
+                    # Extraer desde la sección de esta empresa específica en el boletín
+                    n, c = _extraer_de_borme_empresa(boe_texto, empresa, _SUFIJOS_EMPRESA)
+                    if n:
+                        print(f"    OK {borme_id} => {n} [{c}]", flush=True)
+                        return n, c
+                # Fallback: texto del evento en empresia
+                ev_text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", r_ev.text))
+                if _borme_menciona_empresa(ev_text):
+                    n, c = _extraer_de_borme_empresa(ev_text, empresa, _SUFIJOS_EMPRESA)
+                    if n:
+                        print(f"    OK evento empresia => {n} [{c}]", flush=True)
+                        return n, c
+            except Exception:
+                continue
+
+        # Fallback cuando no hay eventos: buscar refs BORME en el HTML del perfil directamente
+        if not evento_links and perfil_href:
+            try:
+                time.sleep(0.4)
+                r_perfil = session.get("https://empresia.es" + perfil_href, timeout=DIRECTIVOS_TIMEOUT)
+                if r_perfil.status_code == 200:
+                    seen_borme = set()
+                    for borme_m in _BORME_REF_RE.finditer(r_perfil.text):
+                        borme_id = borme_m.group(0).upper()
+                        if borme_id in seen_borme:
+                            continue
+                        seen_borme.add(borme_id)
+                        boe_texto = _fetch_borme_texto(borme_id)
+                        if not boe_texto or not _borme_menciona_empresa(boe_texto):
+                            continue
+                        n, c = _extraer_de_borme_empresa(boe_texto, empresa, _SUFIJOS_EMPRESA)
+                        if n:
+                            print(f"    OK perfil {borme_id} => {n} [{c}]", flush=True)
+                            return n, c
+            except Exception:
+                pass
+
+    except Exception:
+        pass
+    return "", ""
+
+
+def buscar_directivo_borme_anuncios(empresa, nif=""):
+    """
+    Fuente 3 (fallback): busca refs BORME en la página de resultados del BOE
+    usando el nombre de empresa sin sufijos legales (SL, SA, SLU…).
+    """
+    if not empresa or empresa == "No localizada":
+        return "", ""
+    nombre_sin_sufijo = re.sub(
+        r"\s*,?\s*(s\.?l\.?u?\.?|s\.?a\.?u?\.?|s\.?c\.?|s\.?coop\.?)\s*$",
+        "", empresa, flags=re.I,
+    ).strip().rstrip(".,")
+    variantes = [nombre_sin_sufijo]
+    if "," in nombre_sin_sufijo:
+        variantes.append(nombre_sin_sufijo.split(",")[0].strip())
+
+    for variante in variantes:
+        if not variante:
+            continue
+        try:
+            r = session.get(
+                "https://www.boe.es/buscar/anborme.php",
+                params={"campo[0]": "TITULO", "dato[0]": variante,
+                        "operador[0]": "and", "accion": "Buscar"},
+                timeout=DIRECTIVOS_TIMEOUT,
+            )
+            if r.status_code != 200:
+                continue
+            for borme_m in _BORME_REF_RE.finditer(r.text):
+                borme_id = borme_m.group(0).upper()
+                boe_texto = _fetch_borme_texto(borme_id)
+                if not boe_texto:
+                    continue
+                n, c = _extraer_de_borme_empresa(boe_texto, empresa, _SUFIJOS_EMPRESA)
+                if n:
+                    print(f"    OK BORME {borme_id} => {n} [{c}]", flush=True)
+                    return n, c
+        except Exception:
+            pass
+    return "", ""
+
+
+_ddg_bloqueado = False  # circuit-breaker: DuckDuckGo puede exigir captcha si detecta tráfico de bot
+
+def buscar_directivo_web(empresa, nif=""):
+    """
+    Fuente 4 (último recurso): búsqueda de texto en DuckDuckGo (Google bloquea el
+    scraping directo) restringida a portales mercantiles conocidos, extrayendo el
+    cargo/nombre del snippet o, si no aparece, de la primera ficha enlazada.
+    Se desactiva sola para el resto de la sesión si DDG responde con un captcha.
+    """
+    global _ddg_bloqueado
+    if not empresa or empresa == "No localizada" or _ddg_bloqueado:
+        return "", ""
+    query = (
+        f'"{empresa}" administrador OR gerente OR apoderado OR autónomo '
+        f'site:einforma.com OR site:empresia.es OR site:axesor.es OR '
+        f'site:empresite.eleconomista.es OR site:infoempresa.com'
+    )
+    try:
+        r = session.get(
+            "https://lite.duckduckgo.com/lite/",
+            params={"q": query},
+            timeout=DIRECTIVOS_TIMEOUT,
+        )
+        if r.status_code == 202 or "Select all squares" in r.text:
+            _ddg_bloqueado = True
+            print("  [web] DuckDuckGo pide captcha — fuente desactivada para esta sesión.", flush=True)
             return "", ""
-        href = primer.get("href", "")
-        if not href.startswith("http"):
-            href = "https://www.infocif.es" + href
-        r2 = session.get(href, timeout=(5, 12))
-        if r2.status_code != 200:
+        if r.status_code != 200:
             return "", ""
-        return _scrape_admin_from_page(BeautifulSoup(r2.text, "html.parser"))
+        n, c = _extraer_directivo(_extraer_texto(r.text))
+        if n:
+            return n, c
+
+        soup = BeautifulSoup(r.text, "html.parser")
+        vistos = set()
+        for a in soup.find_all("a", href=re.compile(
+                r"(einforma|empresia|axesor|empresite\.eleconomista|infoempresa)\.[a-z]+", re.I)):
+            href = a.get("href", "")
+            if not href.startswith("http") or href in vistos:
+                continue
+            vistos.add(href)
+            try:
+                time.sleep(0.3)
+                r2 = session.get(href, timeout=DIRECTIVOS_TIMEOUT)
+                if r2.status_code == 200:
+                    n, c = _extraer_directivo(_extraer_texto(r2.text))
+                    if n:
+                        return n, c
+            except Exception:
+                continue
+            if len(vistos) >= 3:
+                break
     except Exception:
         pass
     return "", ""
 
 
 def buscar_directivo(empresa, nif=""):
-    """Busca directivo: persona física → BORME API → empresite. Usa caché persistente."""
+    """Busca directivo: persona física → einforma → empresia → BORME anuncios → búsqueda web. Usa caché persistente."""
     if not empresa or empresa == "No localizada":
         return "", ""
     palabras = empresa.strip().split()
@@ -1276,12 +1364,21 @@ def buscar_directivo(empresa, nif=""):
             and not _SUFIJOS_EMPRESA.search(empresa)
             and len(palabras_limpias) == len(palabras)):
         return empresa.title(), "Autónomo / Persona física"
+
     cached_n, cached_c = _dir_cache_get(empresa, nif)
     if cached_n is not None:
         return cached_n, cached_c
-    nombre, cargo = buscar_directivo_borme_api(empresa, nif)
-    if not nombre:
-        nombre, cargo = buscar_directivo_empresite(empresa)
+
+    nombre, cargo = "", ""
+    for fuente in (buscar_directivo_einforma, buscar_directivo_empresia,
+                   buscar_directivo_borme_anuncios, buscar_directivo_web):
+        try:
+            nombre, cargo = fuente(empresa, nif)
+        except Exception:
+            nombre, cargo = "", ""
+        if nombre:
+            break
+
     _dir_cache_set(empresa, nif, nombre, cargo)
     return nombre, cargo
 
@@ -1437,7 +1534,7 @@ def _job_run(job_id, municipio):
         with ThreadPoolExecutor(max_workers=4) as ex:
             futs = {ex.submit(buscar_en_zip, zp, municipio, job_id): ("ZIP", am)
                     for am, zp in zips}
-            borm_fut = ex.submit(buscar_en_borm, municipio, job_id)
+            borm_fut = HTTP_POOL.submit(buscar_en_borm, municipio, job_id)
             futs[borm_fut] = ("BORM", "")
             for fut in as_completed(futs):
                 tipo, etiqueta = futs[fut]
@@ -1472,18 +1569,17 @@ def _job_run(job_id, municipio):
 
         if empresas_lista:
             _log(job_id, f"Buscando directivos de {len(empresas_lista)} empresas "
-                 f"(BORME oficial · empresite)…")
+                 f"(einforma · empresia · BORME)…")
         directivos = {}
-        with ThreadPoolExecutor(max_workers=6) as ex:
-            futs = {ex.submit(buscar_directivo, emp, nif): emp
-                    for emp, nif in empresas_lista}
-            for fut in as_completed(futs):
-                emp = futs[fut]
-                try:
-                    d, cargo = fut.result()
-                    directivos[emp] = (d, cargo)
-                except Exception:
-                    directivos[emp] = ("", "")
+        futs = {HTTP_POOL.submit(buscar_directivo, emp, nif): emp
+                for emp, nif in empresas_lista}
+        for fut in as_completed(futs):
+            emp = futs[fut]
+            try:
+                d, cargo = fut.result()
+                directivos[emp] = (d, cargo)
+            except Exception:
+                directivos[emp] = ("", "")
 
         for c in contratos:
             emp = c.get("empresa", "")
@@ -1508,8 +1604,7 @@ def _job_run(job_id, municipio):
         with _datos_lock:
             _datos_memoria[:] = [d for d in _datos_memoria if normalizar(d.get("municipio", "")) != normalizar(municipio)]
             _datos_memoria.append(resultado)
-            with open(DATA_FILE, "w", encoding="utf-8") as f:
-                json.dump(_datos_memoria, f, ensure_ascii=False, indent=2)
+        _db_set_municipio(municipio, resultado)
 
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
@@ -1524,22 +1619,10 @@ def _job_run(job_id, municipio):
             _jobs[job_id]["error"] = str(e)
 
 
-def _cargar_datos():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                d = json.load(f)
-                if isinstance(d, list):
-                    return d
-        except Exception:
-            pass
-    return []
-
-
 def _inicializar_datos():
-    """Carga datos.json y director_cache.json en RAM al arrancar."""
-    _dir_cache_load()
-    cargados = _cargar_datos()
+    """Carga municipios y directivos cacheados desde SQLite en RAM al arrancar."""
+    _db_init()
+    cargados = _db_all_municipios()
     with _datos_lock:
         _datos_memoria[:] = cargados
     for d in cargados:
@@ -1549,7 +1632,7 @@ def _inicializar_datos():
             _cache_set(muni, d)
 
 
-# ─── ENRIQUECIMIENTO EN BACKGROUND (einforma / axesor / infocif) ─────────────
+# ─── ENRIQUECIMIENTO EN BACKGROUND (empresia / BORME) ────────────────────────
 
 def _contrato_key(c):
     """Clave estable para identificar un contrato independientemente de su posición en memoria."""
@@ -1557,15 +1640,28 @@ def _contrato_key(c):
 
 
 def _guardar_datos_sin_lock():
-    """Escribe _datos_memoria en datos.json. Llamar solo desde dentro de _datos_lock."""
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(_datos_memoria, f, ensure_ascii=False, indent=2)
+    """Persiste _datos_memoria en SQLite. Llamar solo desde dentro de _datos_lock."""
+    for d in _datos_memoria:
+        muni = d.get("municipio", "")
+        if muni:
+            _db_set_municipio(muni, d)
+
+
+def _limpiar_cache_negativos():
+    """Elimina del caché SQLite las entradas con nombre vacío para forzar re-búsqueda."""
+    with _db_lock:
+        deleted = _db.execute(
+            "DELETE FROM directores WHERE nombre = '' OR nombre IS NULL"
+        ).rowcount
+        _db.commit()
+    if deleted:
+        print(f"  [enriquecimiento] {deleted} entradas negativas eliminadas del caché.", flush=True)
 
 
 def _enriquecer_directivos_bg():
     """
-    Hilo de fondo: para cada contrato de sociedad (SL, SA…) sin directivo localizado
-    y sin intento previo, prueba einforma → axesor → infocif y guarda el resultado.
+    Hilo de fondo: para cada empresa o autónomo sin directivo,
+    busca via einforma → empresia.es → BORME → BOE → búsqueda web y guarda el resultado.
     """
     if not _enriqueciendo_lock.acquire(blocking=False):
         return  # ya hay otro hilo de enriquecimiento en marcha
@@ -1573,14 +1669,24 @@ def _enriquecer_directivos_bg():
     try:
         time.sleep(6)  # dejar que el servidor arranque del todo
 
+        # Limpiar caché negativo y flags "intentado" para re-buscar con la nueva estrategia
+        _limpiar_cache_negativos()
+        with _datos_lock:
+            for d in _datos_memoria:
+                for c in d.get("contratos", []):
+                    if not c.get("directivo") and c.get("intentado"):
+                        c.pop("intentado", None)
+
         # Recopilar contratos pendientes: (municipio, key, empresa, nif)
         pendientes = []
         with _datos_lock:
             for d in _datos_memoria:
                 for c in d.get("contratos", []):
+                    empresa_c = c.get("empresa", "")
                     if (not c.get("directivo")
                             and not c.get("intentado")
-                            and _SUFIJOS_EMPRESA.search(c.get("empresa", ""))):
+                            and empresa_c
+                            and empresa_c != "No localizada"):
                         pendientes.append((
                             d.get("municipio", ""),
                             _contrato_key(c),
@@ -1589,21 +1695,25 @@ def _enriquecer_directivos_bg():
                         ))
 
         if not pendientes:
+            print("  [enriquecimiento] Sin empresas pendientes.", flush=True)
             return
 
+        print(f"  [enriquecimiento] {len(pendientes)} empresas pendientes.", flush=True)
+        encontrados = 0
         cambios = 0
-        for municipio, key, empresa, nif in pendientes:
-            # Comprobar caché antes de lanzar peticiones de red
+        for idx, (municipio, key, empresa, nif) in enumerate(pendientes, 1):
+            print(f"  [{idx}/{len(pendientes)}] {empresa} (NIF:{nif})", flush=True)
             cached_n, cached_c = _dir_cache_get(empresa, nif)
             if cached_n is not None:
                 nombre, cargo = cached_n, cached_c
+                print(f"    caché: {nombre!r}", flush=True)
             else:
-                nombre, cargo = buscar_directivo_einforma(empresa, nif)
-                if not nombre:
-                    nombre, cargo = buscar_directivo_axesor(empresa, nif)
-                if not nombre:
-                    nombre, cargo = buscar_directivo_infocif(empresa, nif)
-                _dir_cache_set(empresa, nif, nombre, cargo)
+                nombre, cargo = buscar_directivo(empresa, nif)
+
+            if nombre:
+                encontrados += 1
+            else:
+                print(f"    No localizado.", flush=True)
 
             with _datos_lock:
                 for d in _datos_memoria:
@@ -1617,13 +1727,12 @@ def _enriquecer_directivos_bg():
                             c["intentado"] = True
                             cambios += 1
                             break
-                # Guardar cada 10 cambios para no perder trabajo si el servidor para
                 if cambios % 10 == 0:
                     _guardar_datos_sin_lock()
 
-            if cached_n is None:
-                time.sleep(1.5)  # delay entre peticiones para no saturar los sitios
+            time.sleep(1.2)  # delay entre peticiones
 
+        print(f"  [enriquecimiento] Fin: {encontrados}/{len(pendientes)} directivos encontrados.", flush=True)
         if cambios > 0:
             with _datos_lock:
                 _guardar_datos_sin_lock()
@@ -1980,7 +2089,154 @@ def render_html(datos, muni_filter="", page=1):
 </div></body></html>"""
 
 
-# ─── SERVIDOR HTTP ───────────────────────────────────────────────────────────
+# ─── ENRUTADO HTTP (compartido: servidor de desarrollo + WSGI/gunicorn) ──────
+#
+# Toda la lógica de rutas vive aquí como funciones puras que devuelven
+# (código, cabeceras, cuerpo-en-bytes). Tanto el Handler de http.server
+# (uso local: `python app.py`) como el callable WSGI `app` (uso en
+# producción: `gunicorn backend.app:app`) llaman a estas mismas funciones,
+# así que el comportamiento es idéntico en ambos casos.
+
+_HTTP_STATUS_TEXT = {
+    200: "OK", 303: "See Other", 400: "Bad Request",
+    404: "Not Found", 405: "Method Not Allowed", 500: "Internal Server Error",
+}
+
+
+def _resp(body, content_type="text/html; charset=utf-8", code=200, headers=None, gzip_ok=False):
+    b = body.encode("utf-8") if isinstance(body, str) else body
+    hdrs = dict(headers or {})
+    hdrs["Content-Type"] = content_type
+    if gzip_ok:
+        b = _gzip.compress(b, compresslevel=6)
+        hdrs["Content-Encoding"] = "gzip"
+    hdrs["Content-Length"] = str(len(b))
+    return code, hdrs, b
+
+
+def _redirect_resp(path):
+    return 303, {"Location": path, "Content-Length": "0"}, b""
+
+
+def _error_resp(msg, code=500):
+    body = (f"<html><body style='font-family:sans-serif;padding:40px;background:#0d1117;color:#c9d1d9'>"
+            f"<h2>{esc(msg)}</h2><a href='/' style='color:#58a6ff'>← Volver</a></body></html>")
+    return _resp(body, code=code)
+
+
+def _route_get(path, qs, gzip_ok=False):
+    if path == "/":
+        with _datos_lock:
+            datos_snap = list(_datos_memoria)
+        muni_filter = qs.get("muni", [""])[0].strip()
+        try:
+            page = max(1, int(qs.get("pag", ["1"])[0]))
+        except ValueError:
+            page = 1
+        return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page), gzip_ok=gzip_ok)
+
+    if path == "/static/style.css":
+        return _resp(
+            _ALL_CSS_CONTENT, content_type="text/css; charset=utf-8",
+            headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
+        )
+
+    if path.startswith("/api/job/"):
+        job_id = path[len("/api/job/"):]
+        with _jobs_lock:
+            job = dict(_jobs.get(job_id, {}))
+        code = 200 if job else 404
+        body = json.dumps(job if job else {"status": "not_found"}, ensure_ascii=False)
+        return _resp(body, content_type="application/json; charset=utf-8", code=code, gzip_ok=gzip_ok)
+
+    return 404, {"Content-Length": "0"}, b""
+
+
+def _route_post(path, params):
+    try:
+        if path == "/buscar":
+            municipio = params.get("municipio", [""])[0].strip()
+            force     = params.get("force", [""])[0] == "1"
+            mun_ok = municipio_valido(municipio)
+            if not mun_ok:
+                return _error_resp("Municipio no válido o no pertenece a la Región de Murcia.", 400)
+            # Servir desde caché si los datos son recientes (salvo si fuerza actualización)
+            if not force:
+                cached = _cache_get(mun_ok)
+                if cached is None:
+                    # Intentar restaurar desde memoria (TTL igual)
+                    with _datos_lock:
+                        datos_disco = list(_datos_memoria)
+                    for d in datos_disco:
+                        if normalizar(d.get("municipio","")) == normalizar(mun_ok):
+                            ts = d.get("timestamp", 0)
+                            if (time.time() - ts) < RESULT_CACHE_TTL:
+                                _cache_set(mun_ok, d)
+                                cached = d
+                            break
+                if cached:
+                    return _redirect_resp("/")
+            else:
+                _cache_invalidate(mun_ok)
+            job_id = str(uuid.uuid4())
+            with _jobs_lock:
+                _jobs[job_id] = {"status": "running", "log": [], "error": None}
+            threading.Thread(target=_job_run, args=(job_id, mun_ok), daemon=True).start()
+            return _resp(spinner_page(job_id, mun_ok))
+
+        if path == "/vaciar":
+            with _datos_lock:
+                _datos_memoria.clear()
+                _db_clear_municipios()
+            with _cache_lock:
+                _result_cache.clear()
+            return _redirect_resp("/")
+
+        if path == "/actualizar":
+            municipio = params.get("municipio", [""])[0].strip()
+            mun_ok = municipio_valido(municipio)
+            if not mun_ok:
+                return _redirect_resp("/")
+            _cache_invalidate(mun_ok)
+            job_id = str(uuid.uuid4())
+            with _jobs_lock:
+                _jobs[job_id] = {"status": "running", "log": [], "error": None}
+            threading.Thread(target=_job_run, args=(job_id, mun_ok), daemon=True).start()
+            return _resp(spinner_page(job_id, mun_ok))
+
+        return 404, {"Content-Length": "0"}, b""
+    except Exception as e:
+        return _error_resp(f"Error: {e}", 500)
+
+
+# ─── WSGI (producción: gunicorn backend.app:app) ─────────────────────────────
+
+def app(environ, start_response):
+    """Callable WSGI estándar — es lo que gunicorn/render.yaml invocan."""
+    method = environ.get("REQUEST_METHOD", "GET")
+    path = environ.get("PATH_INFO", "/")
+    qs = parse_qs(environ.get("QUERY_STRING", ""))
+    gzip_ok = "gzip" in environ.get("HTTP_ACCEPT_ENCODING", "")
+
+    if method == "GET":
+        code, headers, body = _route_get(path, qs, gzip_ok=gzip_ok)
+    elif method == "POST":
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        raw = environ["wsgi.input"].read(length).decode("utf-8") if length else ""
+        params = parse_qs(raw, keep_blank_values=True)
+        code, headers, body = _route_post(path, params)
+    else:
+        code, headers, body = 405, {"Content-Length": "0"}, b""
+
+    status_line = f"{code} {_HTTP_STATUS_TEXT.get(code, 'OK')}"
+    start_response(status_line, list(headers.items()))
+    return [body]
+
+
+# ─── SERVIDOR HTTP DE DESARROLLO (uso local: python app.py) ──────────────────
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
@@ -1989,161 +2245,46 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
+    def _write(self, code, headers, body):
+        self.send_response(code)
+        for k, v in headers.items():
+            self.send_header(k, v)
+        self.end_headers()
+        if body:
+            self.wfile.write(body)
+
     def do_GET(self):
         parsed = urlparse(self.path)
         qs = parse_qs(parsed.query)
-
-        if parsed.path == "/":
-            with _datos_lock:
-                datos_snap = list(_datos_memoria)
-            muni_filter = qs.get("muni", [""])[0].strip()
-            try:
-                page = max(1, int(qs.get("pag", ["1"])[0]))
-            except ValueError:
-                page = 1
-            self._html(render_html(datos_snap, muni_filter=muni_filter, page=page))
-        elif parsed.path == "/static/style.css":
-            self._static_css()
-        elif parsed.path.startswith("/api/job/"):
-            job_id = parsed.path[len("/api/job/"):]
-            with _jobs_lock:
-                job = dict(_jobs.get(job_id, {}))
-            self._json(job if job else {"status": "not_found"}, 200 if job else 404)
-        else:
-            self.send_response(404); self.end_headers()
+        gzip_ok = "gzip" in self.headers.get("Accept-Encoding", "")
+        self._write(*_route_get(parsed.path, qs, gzip_ok=gzip_ok))
 
     def do_POST(self):
         try:
-            length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(length).decode("utf-8")
-            params = parse_qs(body, keep_blank_values=True)
-
-            if self.path == "/buscar":
-                municipio = params.get("municipio", [""])[0].strip()
-                force     = params.get("force", [""])[0] == "1"
-                mun_ok = municipio_valido(municipio)
-                if not mun_ok:
-                    self._error("Municipio no válido o no pertenece a la Región de Murcia.", 400)
-                    return
-                # Servir desde caché si los datos son recientes (salvo si fuerza actualización)
-                if not force:
-                    cached = _cache_get(mun_ok)
-                    if cached is None:
-                        # Intentar restaurar desde memoria (TTL igual)
-                        with _datos_lock:
-                            datos_disco = list(_datos_memoria)
-                        for d in datos_disco:
-                            if normalizar(d.get("municipio","")) == normalizar(mun_ok):
-                                ts = d.get("timestamp", 0)
-                                if (time.time() - ts) < RESULT_CACHE_TTL:
-                                    _cache_set(mun_ok, d)
-                                    cached = d
-                                break
-                    if cached:
-                        self._redirect("/")
-                        return
-                else:
-                    _cache_invalidate(mun_ok)
-                job_id = str(uuid.uuid4())
-                with _jobs_lock:
-                    _jobs[job_id] = {"status": "running", "log": [], "error": None}
-                threading.Thread(target=_job_run, args=(job_id, mun_ok), daemon=True).start()
-                self._html(spinner_page(job_id, mun_ok))
-                return
-
-            if self.path == "/vaciar":
-                with _datos_lock:
-                    _datos_memoria.clear()
-                    with open(DATA_FILE, "w", encoding="utf-8") as f:
-                        json.dump([], f)
-                with _cache_lock:
-                    _result_cache.clear()
-                self._redirect("/")
-                return
-
-            if self.path == "/actualizar":
-                municipio = params.get("municipio", [""])[0].strip()
-                mun_ok = municipio_valido(municipio)
-                if not mun_ok:
-                    self._redirect("/")
-                    return
-                _cache_invalidate(mun_ok)
-                job_id = str(uuid.uuid4())
-                with _jobs_lock:
-                    _jobs[job_id] = {"status": "running", "log": [], "error": None}
-                threading.Thread(target=_job_run, args=(job_id, mun_ok), daemon=True).start()
-                self._html(spinner_page(job_id, mun_ok))
-                return
-
-            self.send_response(404); self.end_headers()
+            length = int(self.headers.get("Content-Length", 0) or 0)
+            raw = self.rfile.read(length).decode("utf-8") if length else ""
+            params = parse_qs(raw, keep_blank_values=True)
+            self._write(*_route_post(self.path, params))
         except Exception as e:
-            self._error(f"Error: {e}", 500)
+            self._write(*_error_resp(f"Error: {e}", 500))
 
-    def _html(self, content, code=200):
-        b = content.encode("utf-8")
-        accept = self.headers.get("Accept-Encoding", "")
-        use_gzip = "gzip" in accept
-        if use_gzip:
-            b = _gzip.compress(b, compresslevel=6)
-        self.send_response(code)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(b)))
-        if use_gzip:
-            self.send_header("Content-Encoding", "gzip")
-        self.end_headers()
-        self.wfile.write(b)
 
-    def _json(self, data, code=200):
-        b = json.dumps(data, ensure_ascii=False).encode("utf-8")
-        accept = self.headers.get("Accept-Encoding", "")
-        use_gzip = "gzip" in accept
-        if use_gzip:
-            b = _gzip.compress(b, compresslevel=6)
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(b)))
-        if use_gzip:
-            self.send_header("Content-Encoding", "gzip")
-        self.end_headers()
-        self.wfile.write(b)
-
-    def _static_css(self):
-        b = _ALL_CSS_CONTENT.encode("utf-8")
-        accept = self.headers.get("Accept-Encoding", "")
-        use_gzip = "gzip" in accept
-        if use_gzip:
-            b = _gzip.compress(b, compresslevel=9)
-        self.send_response(200)
-        self.send_header("Content-Type", "text/css; charset=utf-8")
-        self.send_header("Cache-Control", "public, max-age=86400")
-        self.send_header("Content-Length", str(len(b)))
-        if use_gzip:
-            self.send_header("Content-Encoding", "gzip")
-        self.end_headers()
-        self.wfile.write(b)
-
-    def _redirect(self, path):
-        self.send_response(303)
-        self.send_header("Location", path)
-        self.end_headers()
-
-    def _error(self, msg, code=500):
-        self._html(
-            f"<html><body style='font-family:sans-serif;padding:40px;background:#0d1117;color:#c9d1d9'>"
-            f"<h2>{esc(msg)}</h2><a href='/' style='color:#58a6ff'>← Volver</a></body></html>",
-            code,
-        )
-
+# Se ejecuta al importar el módulo (tanto `python app.py` como
+# `gunicorn backend.app:app`, que solo importa `app` sin pasar por
+# `if __name__ == "__main__"`), así los datos están cargados en memoria
+# antes de servir la primera petición.
+_inicializar_datos()
+_lanzar_enriquecimiento()   # enriquecer sociedades ya guardadas sin directivo
 
 if __name__ == "__main__":
+    _host = "0.0.0.0"
+    _port = int(os.environ.get("PORT", 8000))
     print("=" * 55)
     print("  DINERO PÚBLICO — CONTRATOS REGIÓN DE MURCIA")
     print("  Fuente: PLACE (Ministerio de Hacienda)")
     print("=" * 55)
     print(f"  Caché ZIPs: {CACHE_DIR}")
-    print(f"  Servidor:   http://127.0.0.1:8000")
+    print(f"  Servidor:   http://{_host}:{_port}")
     print("=" * 55)
-    _inicializar_datos()
-    _lanzar_enriquecimiento()   # enriquecer sociedades ya guardadas sin directivo
-    srv = ThreadedHTTPServer(("127.0.0.1", 8000), Handler)
+    srv = ThreadedHTTPServer((_host, _port), Handler)
     srv.serve_forever()
