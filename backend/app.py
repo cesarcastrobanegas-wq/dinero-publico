@@ -88,6 +88,8 @@ _db_lock = threading.Lock()
 DIR_CACHE_POS_TTL = 90 * 24 * 3600   # 90 días para resultados encontrados
 DIR_CACHE_NEG_TTL =  7 * 24 * 3600   # 7 días para "no encontrado"
 
+DIR_INTENTOS_MAX = 3  # tras estos intentos fallidos, se marca "sin datos registrales públicos" y se deja de reintentar
+
 def _db_init():
     with _db_lock:
         _db.execute("""CREATE TABLE IF NOT EXISTS directores (
@@ -101,6 +103,10 @@ def _db_init():
             data      TEXT NOT NULL,
             ts        REAL NOT NULL
         )""")
+        try:
+            _db.execute("ALTER TABLE directores ADD COLUMN intentos INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass  # ya existe (migración ya aplicada en un arranque anterior)
         _db.commit()
     _migrar_json_a_sqlite()
 
@@ -193,14 +199,34 @@ def _dir_cache_get(empresa, nif=""):
         return None, None
     return nombre or "", cargo or ""
 
+def _dir_cache_agotado(empresa, nif=""):
+    """True si ya se agotaron los reintentos automáticos para esta empresa
+    (DIR_INTENTOS_MAX intentos fallidos): se considera sin datos registrales públicos."""
+    key = _dir_cache_key(empresa, nif)
+    with _db_lock:
+        row = _db.execute(
+            "SELECT intentos FROM directores WHERE clave=? AND (nombre IS NULL OR nombre='')", (key,)
+        ).fetchone()
+    return bool(row) and (row[0] or 0) >= DIR_INTENTOS_MAX
+
+
 def _dir_cache_set(empresa, nif, nombre, cargo):
     key = _dir_cache_key(empresa, nif)
     with _db_lock:
-        _db.execute(
-            "INSERT INTO directores (clave, nombre, cargo, ts) VALUES (?,?,?,?) "
-            "ON CONFLICT(clave) DO UPDATE SET nombre=excluded.nombre, cargo=excluded.cargo, ts=excluded.ts",
-            (key, nombre, cargo, time.time()),
-        )
+        if nombre:
+            _db.execute(
+                "INSERT INTO directores (clave, nombre, cargo, ts, intentos) VALUES (?,?,?,?,0) "
+                "ON CONFLICT(clave) DO UPDATE SET nombre=excluded.nombre, cargo=excluded.cargo, "
+                "ts=excluded.ts, intentos=0",
+                (key, nombre, cargo, time.time()),
+            )
+        else:
+            _db.execute(
+                "INSERT INTO directores (clave, nombre, cargo, ts, intentos) VALUES (?,?,?,?,1) "
+                "ON CONFLICT(clave) DO UPDATE SET nombre=excluded.nombre, cargo=excluded.cargo, "
+                "ts=excluded.ts, intentos=directores.intentos+1",
+                (key, nombre, cargo, time.time()),
+            )
         _db.commit()
 
 # ─── UTILIDADES ──────────────────────────────────────────────────────────────
@@ -1433,15 +1459,15 @@ def analizar_riesgo(contratos):
                     ),
                 })
 
-    # Empresa sin nombre (posible opacidad)
+    # Empresa sin nombre (posible opacidad) — indicador de riesgo prominente
     sin_empresa = sum(1 for c in contratos if c.get("empresa") == "No localizada")
     if sin_empresa > 0:
         pct = round(100 * sin_empresa / total)
         alertas.append({
-            "nivel": "info",
-            "icono": "ℹ️",
+            "nivel": "opacidad",
+            "icono": "🚩",
             "texto": (
-                f"{sin_empresa} contrato{'s' if sin_empresa != 1 else ''} "
+                f"<b>{sin_empresa} contrato{'s' if sin_empresa != 1 else ''}</b> "
                 f"({pct}%) sin empresa adjudicataria identificada."
             ),
         })
@@ -1585,6 +1611,9 @@ def _job_run(job_id, municipio):
             emp = c.get("empresa", "")
             if emp in directivos:
                 c["directivo"], c["cargo"] = directivos[emp]
+                if not c["directivo"] and _dir_cache_agotado(emp, c.get("nif", "")):
+                    c["rm_agotado"] = True
+                    c["intentado"] = True
 
         # Análisis de riesgo
         alertas = analizar_riesgo(contratos)
@@ -1648,10 +1677,13 @@ def _guardar_datos_sin_lock():
 
 
 def _limpiar_cache_negativos():
-    """Elimina del caché SQLite las entradas con nombre vacío para forzar re-búsqueda."""
+    """Elimina del caché SQLite las entradas negativas que aún no agotaron sus
+    reintentos, para forzar re-búsqueda. Las que ya llegaron a DIR_INTENTOS_MAX
+    se dejan (se consideran "sin datos registrales públicos" y no se reintentan)."""
     with _db_lock:
         deleted = _db.execute(
-            "DELETE FROM directores WHERE nombre = '' OR nombre IS NULL"
+            "DELETE FROM directores WHERE (nombre = '' OR nombre IS NULL) AND intentos < ?",
+            (DIR_INTENTOS_MAX,),
         ).rowcount
         _db.commit()
     if deleted:
@@ -1670,12 +1702,17 @@ def _enriquecer_directivos_bg():
         time.sleep(6)  # dejar que el servidor arranque del todo
 
         # Limpiar caché negativo y flags "intentado" para re-buscar con la nueva estrategia
+        # (las empresas que ya agotaron DIR_INTENTOS_MAX no se tocan: se consideran
+        # "sin datos registrales públicos" y no se vuelven a intentar automáticamente)
         _limpiar_cache_negativos()
         with _datos_lock:
             for d in _datos_memoria:
                 for c in d.get("contratos", []):
                     if not c.get("directivo") and c.get("intentado"):
-                        c.pop("intentado", None)
+                        if _dir_cache_agotado(c.get("empresa", ""), c.get("nif", "")):
+                            c["rm_agotado"] = True
+                        else:
+                            c.pop("intentado", None)
 
         # Recopilar contratos pendientes: (municipio, key, empresa, nif)
         pendientes = []
@@ -1683,16 +1720,18 @@ def _enriquecer_directivos_bg():
             for d in _datos_memoria:
                 for c in d.get("contratos", []):
                     empresa_c = c.get("empresa", "")
-                    if (not c.get("directivo")
-                            and not c.get("intentado")
-                            and empresa_c
-                            and empresa_c != "No localizada"):
-                        pendientes.append((
-                            d.get("municipio", ""),
-                            _contrato_key(c),
-                            c.get("empresa", ""),
-                            c.get("nif", ""),
-                        ))
+                    if not empresa_c or empresa_c == "No localizada" or c.get("directivo") or c.get("intentado"):
+                        continue
+                    if _dir_cache_agotado(empresa_c, c.get("nif", "")):
+                        c["rm_agotado"] = True
+                        c["intentado"] = True
+                        continue
+                    pendientes.append((
+                        d.get("municipio", ""),
+                        _contrato_key(c),
+                        empresa_c,
+                        c.get("nif", ""),
+                    ))
 
         if not pendientes:
             print("  [enriquecimiento] Sin empresas pendientes.", flush=True)
@@ -1757,9 +1796,13 @@ CSS = """
   --red:#f85149;--green:#3fb950;--yellow:#d29922;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;}
+html{overflow-x:hidden;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;overflow-x:hidden;}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10;}
-.logo{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:3px;border:1px solid var(--accent);padding:4px 8px;border-radius:3px;}
+header a{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
+header a>div{min-width:0;}
+header h1{overflow-wrap:break-word;}
+.logo{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:3px;border:1px solid var(--accent);padding:4px 8px;border-radius:3px;flex-shrink:0;}
 header h1{font-size:15px;font-weight:600;}
 header p{font-size:12px;color:var(--dim);margin-top:2px;}
 .main{max-width:1340px;margin:28px auto;padding:0 20px;}
@@ -1834,6 +1877,86 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .pag-more a{color:var(--blue);}
 .back-link{font-size:12px;color:var(--dim);margin-bottom:12px;display:block;}
 .back-link a{color:var(--blue);}
+
+/* ── banner publicitario ─────────────────────────────────────────────── */
+.ad-banner{max-width:728px;min-height:90px;margin:0 auto 22px;background:var(--surface);border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:.5px;text-align:center;padding:8px;}
+
+/* ── landing ──────────────────────────────────────────────────────────── */
+.hero{text-align:center;padding:38px 20px 8px;}
+.hero-tagline{font-size:20px;color:var(--text);font-weight:600;}
+.hero-sub{color:var(--dim);margin-top:10px;font-size:13px;max-width:640px;margin-left:auto;margin-right:auto;}
+.global-search{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 22px;margin:22px 0;}
+.global-search .gs-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.global-search input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:10px 14px;border-radius:6px;flex:1;min-width:220px;outline:none;}
+.global-search input:focus{border-color:var(--blue);}
+.global-search .gs-hint{font-size:11px;color:var(--dim);margin-top:8px;}
+.section-title{font-size:13px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:26px 0 12px;}
+.muni-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.muni-tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s;}
+.muni-tile:hover{border-color:var(--accent);}
+.muni-tile h3{font-size:14px;color:var(--accent);}
+.muni-tile .mt-row{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+.muni-tile .mt-row b{color:var(--text);font-weight:600;}
+.muni-tile .mt-imp{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--green);font-weight:600;}
+.muni-tile a.btn-ver{margin-top:4px;text-align:center;padding:7px 10px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;}
+.muni-tile a.btn-ver:hover{background:rgba(240,136,62,.22);}
+
+/* ── footer ───────────────────────────────────────────────────────────── */
+.site-footer{max-width:1340px;margin:48px auto 0;padding:22px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center;}
+.site-footer .ft-links{display:flex;flex-wrap:wrap;gap:16px;}
+.site-footer a{color:var(--dim);font-size:12px;text-decoration:none;}
+.site-footer a:hover{color:var(--blue);}
+.site-footer .ft-brand{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);}
+
+/* ── páginas estáticas (quiénes somos / aviso legal) ─────────────────── */
+.static-page{max-width:820px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:34px 38px;line-height:1.8;font-size:14px;}
+.static-page h1{font-size:22px;color:var(--accent);margin-bottom:18px;}
+.static-page h2{font-size:15px;color:var(--text);margin:26px 0 10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px;}
+.static-page p{margin-bottom:14px;color:var(--text);}
+.static-page ul{margin:0 0 14px 22px;}
+.static-page li{margin-bottom:6px;}
+.static-page a{color:var(--blue);}
+.static-page .contact-btn{display:inline-block;margin-top:8px;padding:9px 18px;background:var(--accent);color:#000;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;}
+
+/* ── mejoras visuales: importes / iconos / avisos ────────────────────── */
+.importe.big{font-size:16px;color:#5fe37a;}
+.icon-tipo{margin-right:5px;}
+.noloc-warn{display:inline-flex;align-items:center;gap:5px;color:var(--yellow);font-size:11px;font-style:italic;}
+.noloc-warn a{color:var(--yellow);text-decoration:underline;}
+.noloc-nota{display:block;font-size:10px;color:var(--dim);font-style:italic;margin-top:2px;}
+.risk-prominent{border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:center;background:rgba(248,81,73,.12);border:2px solid rgba(248,81,73,.5);}
+.risk-prominent .rp-ico{font-size:26px;line-height:1;}
+.risk-prominent .rp-text{font-size:13px;color:#f8c4c2;line-height:1.5;}
+.risk-prominent .rp-text b{color:#fff;}
+
+/* ── responsive ───────────────────────────────────────────────────────── */
+@media (max-width:700px){
+  header{padding:10px 14px;}
+  header h1{font-size:13px;}
+  header p{font-size:10px;}
+  .main{padding:0 12px;margin:18px auto;max-width:100%;}
+  .hero{padding:22px 6px 4px;}
+  .hero-tagline{font-size:16px;}
+  .hero-sub{font-size:12px;}
+  .stats-bar{gap:8px;}
+  .stat{padding:8px 12px;flex:1 1 40%;}
+  .stat span{font-size:16px;}
+  .muni-grid{grid-template-columns:1fr 1fr;gap:10px;}
+  .muni-tile{padding:12px 14px;}
+  .search-bar,.global-search{padding:14px 16px;}
+  .search-bar .btn,.search-bar form,.global-search .gs-row{width:100%;}
+  .global-search input,.search-bar input{min-width:0;width:100%;}
+  table{font-size:12px;display:block;overflow-x:auto;white-space:nowrap;}
+  th,td{padding:7px 8px;}
+  .contrato-title{display:none;}
+  .site-footer{flex-direction:column;align-items:flex-start;max-width:100%;}
+  .site-footer .ft-links{gap:10px 14px;}
+  .static-page{padding:22px 18px;}
+  .ad-banner{max-width:100%;}
+}
+@media (max-width:420px){
+  .muni-grid{grid-template-columns:1fr;}
+}
 """
 
 
@@ -1883,19 +2006,196 @@ poll();
 def _render_alertas(alertas):
     if not alertas:
         return ""
-    html_parts = ['<div class="alertas">']
-    for a in alertas:
-        nivel = esc(a.get("nivel", "info"))
-        icono = a.get("icono", "ℹ️")
-        texto = a.get("texto", "")
+    normales = [a for a in alertas if a.get("nivel") != "opacidad"]
+    prominentes = [a for a in alertas if a.get("nivel") == "opacidad"]
+
+    html_parts = []
+    for a in prominentes:
         html_parts.append(
-            f'<div class="alerta {nivel}">'
-            f'<span class="alerta-ico">{icono}</span>'
-            f'<div><div class="alerta-titulo">Indicador de riesgo</div>{texto}</div>'
+            f'<div class="risk-prominent">'
+            f'<span class="rp-ico">{a.get("icono","🚩")}</span>'
+            f'<div class="rp-text">{a.get("texto","")}</div>'
             f'</div>'
         )
-    html_parts.append('</div>')
+    if normales:
+        html_parts.append('<div class="alertas">')
+        for a in normales:
+            nivel = esc(a.get("nivel", "info"))
+            icono = a.get("icono", "ℹ️")
+            texto = a.get("texto", "")
+            html_parts.append(
+                f'<div class="alerta {nivel}">'
+                f'<span class="alerta-ico">{icono}</span>'
+                f'<div><div class="alerta-titulo">Indicador de riesgo</div>{texto}</div>'
+                f'</div>'
+            )
+        html_parts.append('</div>')
     return "\n".join(html_parts)
+
+
+# ─── PLANTILLA COMÚN (header / footer / banner / SEO) ────────────────────────
+
+SITE_URL = "https://dinero-publico.onrender.com"
+SITE_TAGLINE = "El dinero de todos, en manos de quién"
+
+REGISTRO_MERCANTIL_URL = "https://www.registradores.org/actualidad/portal-notarial/registro-mercantil-en-linea"
+
+_ICONOS_TIPO = [
+    (re.compile(r"\bobra|construcci[oó]n|rehabilitaci[oó]n|edificaci[oó]n", re.I), "🏗️"),
+    (re.compile(r"\blimpieza|residuos|jardiner[ií]a|mantenimiento", re.I), "🧹"),
+    (re.compile(r"\bsuministro|material|equipamiento|veh[ií]culo", re.I), "📦"),
+    (re.compile(r"\bconsultor[ií]a|asisten|asesor|direcci[oó]n facultativa", re.I), "📋"),
+    (re.compile(r"\bseguridad|vigilancia|polic[ií]a", re.I), "🛡️"),
+    (re.compile(r"\benerg[ií]a|el[eé]ctric", re.I), "⚡"),
+    (re.compile(r"\binform[aá]tic|software|digital|web|tecnolog", re.I), "💻"),
+    (re.compile(r"\bcultura|festival|espect[aá]culo|deporte|fiestas", re.I), "🎭"),
+    (re.compile(r"\bsanidad|salud|social|dependenc", re.I), "🏥"),
+    (re.compile(r"\beducaci[oó]n|escuela|centro docente", re.I), "🎓"),
+]
+
+def _icono_contrato(titulo):
+    for rx, ico in _ICONOS_TIPO:
+        if rx.search(titulo or ""):
+            return ico
+    return "📄"
+
+
+def _ad_banner_html():
+    return ('<div class="ad-banner" id="ad-banner">'
+            'Espacio publicitario — contacto@dinero-publico.com'
+            '</div>')
+
+
+def _header_html():
+    return f"""<header>
+  <a href="/" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
+    <div class="logo">DINERO&nbsp;PÚBLICO</div>
+    <div>
+      <h1 style="color:var(--text)">Contratos Públicos · Región de Murcia</h1>
+      <p>{esc(SITE_TAGLINE)}</p>
+    </div>
+  </a>
+</header>"""
+
+
+def _footer_html():
+    return f"""<footer class="site-footer">
+  <div class="ft-brand">© Dinero Público — datos oficiales públicos, Región de Murcia</div>
+  <div class="ft-links">
+    <a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>
+    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>
+    <a href="https://www.boe.es/" target="_blank" rel="noopener">BOE</a>
+    <a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener">Registro Mercantil</a>
+    <a href="/aviso-legal">Aviso Legal</a>
+    <a href="/quienes-somos">Quiénes Somos</a>
+  </div>
+</footer>"""
+
+
+def _page_shell(title, body_html, description="", extra_head=""):
+    full_title = title if "|" in title else f"{title} | Dinero Público"
+    desc = esc(description or "Consulta los contratos públicos de los 45 municipios de la "
+                               "Región de Murcia con los directivos de las empresas adjudicatarias. "
+                               "Datos oficiales PLACE + Registro Mercantil.")
+    return f"""<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(full_title)}</title>
+<meta name="description" content="{desc}">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="{esc(SITE_URL)}/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{esc(full_title)}">
+<meta property="og:description" content="{desc}">
+<meta property="og:url" content="{esc(SITE_URL)}/">
+<meta property="og:site_name" content="Dinero Público">
+<meta property="og:locale" content="es_ES">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{esc(full_title)}">
+<meta name="twitter:description" content="{desc}">
+<link rel="stylesheet" href="/static/style.css">
+{extra_head}</head>
+<body>
+{_header_html()}
+<div class="main">
+{_ad_banner_html()}
+{body_html}
+</div>
+{_footer_html()}
+</body></html>"""
+
+
+def _render_fila_contrato(c, municipio_label=None):
+    """Genera la fila <tr> de un contrato. Reutilizada por la vista de
+    municipio y por los resultados de búsqueda global."""
+    imp = c.get("importe", "") or "No localizado"
+    imp_cls = "importe" if imp != "No localizado" else "importe noloc"
+    try:
+        if c.get("importe_num", 0) and float(c.get("importe_num", 0)) > 100000:
+            imp_cls += " big"
+    except (TypeError, ValueError):
+        pass
+
+    directivo = c.get("directivo", "")
+    if directivo:
+        dir_html = (f'<div class="directivo">{esc(directivo)}</div>'
+                     f'<div class="cargo">{esc(c.get("cargo",""))}</div>')
+    else:
+        empresa_q = quote_plus(c.get("empresa", ""))
+        rm_link = (f'<a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener" '
+                   f'title="Buscar {esc(c.get("empresa",""))} en el Registro Mercantil">'
+                   f'Registro Mercantil ↗</a>') if empresa_q else ""
+        nota = ('<span class="noloc-nota">Empresa sin datos registrales públicos</span>'
+                if c.get("rm_agotado") else "")
+        dir_html = (f'<span class="noloc-warn">⚠️ No localizado {rm_link}</span>{nota}')
+
+    est = c.get("estado", "")
+    est_label = {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado"}.get(est, est)
+    url = c.get("url", "")
+    fuente = c.get("fuente", "PLACE")
+
+    if fuente == "BORM":
+        borm_html_url = c.get("borm_html_url", "")
+        html_link = (f' <a class="link borm-link" href="{esc(borm_html_url)}" target="_blank" '
+                     f'title="Ver HTML en BORM">HTML ↗</a>') if borm_html_url else ""
+        link_html = (f'<a class="link borm-link" href="{esc(url)}" target="_blank" '
+                     f'title="Ver PDF en BORM">BORM PDF ↗</a>{html_link}')
+    elif url:
+        link_html = f'<a class="link" href="{esc(url)}" target="_blank" title="Ficha en PLACE">PLACE ↗</a>'
+    else:
+        link_html = ""
+
+    borm_url = c.get("borm_url", "")
+    borm_extra = (f' <a class="link borm-link" href="{esc(borm_url)}" target="_blank" '
+                  f'title="Ver publicación BORM">BORM ↗</a>') if borm_url else ""
+
+    lid = c.get("licitacion_id", "")
+    lid_html = f'<div class="lid">Licit. {esc(lid)}</div>' if lid else ""
+
+    fuente_badge = (
+        f'<span class="fuente-badge fuente-borm">BORM</span>' if fuente == "BORM" else
+        f'<span class="fuente-badge fuente-place">PLACE</span>'
+    )
+
+    muni_html = (f'<div class="lid" style="margin-top:2px">📍 {esc(municipio_label)}</div>'
+                 if municipio_label else "")
+
+    titulo = c.get("titulo", "")
+    icono = _icono_contrato(titulo)
+
+    return f"""<tr>
+      <td>
+        <div class="empresa">{esc(c.get('empresa', '—'))} {fuente_badge}</div>
+        <div class="contrato-title"><span class="icon-tipo">{icono}</span>{esc(titulo[:110])}</div>
+        {lid_html}{muni_html}
+      </td>
+      <td class="{imp_cls}">{esc(imp)}</td>
+      <td>{dir_html}</td>
+      <td>
+        <span class="estado-badge est-{esc(est)}">{esc(est_label)}</span>
+        <div style="margin-top:4px">{link_html}{borm_extra}</div>
+      </td>
+    </tr>"""
 
 
 def render_html(datos, muni_filter="", page=1):
@@ -1923,8 +2223,7 @@ def render_html(datos, muni_filter="", page=1):
           <div class="stat"><span>{fmt_eur(str(total_imp))}</span>Importe total</div>
         </div>"""
 
-    back_html = (f'<span class="back-link"><a href="/">← Ver todos los municipios</a></span>'
-                 if muni_filter else "")
+    back_html = '<span class="back-link"><a href="/">← Ver todos los municipios</a></span>'
 
     cards = ""
     for d in datos:
@@ -1941,60 +2240,7 @@ def render_html(datos, muni_filter="", page=1):
             contratos_shown = contratos_all[:PAGE_SIZE]
         total_pages = max(1, (total_muni + PAGE_SIZE - 1) // PAGE_SIZE)
 
-        filas = ""
-        for c in contratos_shown:
-            imp = c.get("importe", "") or "No localizado"
-            imp_cls = "importe" if imp != "No localizado" else "importe noloc"
-            dir_html = (
-                f'<div class="directivo">{esc(c.get("directivo",""))}</div>'
-                f'<div class="cargo">{esc(c.get("cargo",""))}</div>'
-                if c.get("directivo") else
-                '<span style="color:var(--dim);font-size:11px;font-style:italic">No localizado</span>'
-            )
-            est = c.get("estado", "")
-            est_label = {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado"}.get(est, est)
-            url = c.get("url", "")
-            fuente = c.get("fuente", "PLACE")
-            fuente_label = c.get("fuente_label", fuente)
-
-            # Enlace directo al anuncio original (PLACE o BORM)
-            if fuente == "BORM":
-                borm_html_url = c.get("borm_html_url", "")
-                html_link = (f' <a class="link borm-link" href="{esc(borm_html_url)}" target="_blank" '
-                             f'title="Ver HTML en BORM">HTML ↗</a>') if borm_html_url else ""
-                link_html = (f'<a class="link borm-link" href="{esc(url)}" target="_blank" '
-                             f'title="Ver PDF en BORM">BORM PDF ↗</a>{html_link}')
-            elif url:
-                link_html = f'<a class="link" href="{esc(url)}" target="_blank" title="Ficha en PLACE">PLACE ↗</a>'
-            else:
-                link_html = ""
-
-            # Si es contrato PLACE que además tiene enlace en BORM
-            borm_url = c.get("borm_url", "")
-            borm_extra = f' <a class="link borm-link" href="{esc(borm_url)}" target="_blank" title="Ver publicación BORM">BORM ↗</a>' if borm_url else ""
-
-            lid = c.get("licitacion_id", "")
-            lid_html = f'<div class="lid">Licit. {esc(lid)}</div>' if lid else ""
-
-            fuente_badge = (
-                f'<span class="fuente-badge fuente-borm">BORM</span>'
-                if fuente == "BORM" else
-                f'<span class="fuente-badge fuente-place">PLACE</span>'
-            )
-
-            filas += f"""<tr>
-              <td>
-                <div class="empresa">{esc(c.get('empresa', '—'))} {fuente_badge}</div>
-                <div class="contrato-title">{esc(c.get('titulo', '')[:110])}</div>
-                {lid_html}
-              </td>
-              <td class="{imp_cls}">{esc(imp)}</td>
-              <td>{dir_html}</td>
-              <td>
-                <span class="estado-badge est-{esc(est)}">{esc(est_label)}</span>
-                <div style="margin-top:4px">{link_html}{borm_extra}</div>
-              </td>
-            </tr>"""
+        filas = "".join(_render_fila_contrato(c) for c in contratos_shown)
 
         if not filas:
             filas = '<tr><td colspan="4" class="empty">Sin contratos adjudicados encontrados en PLACE ni BORM para este municipio</td></tr>'
@@ -2060,33 +2306,216 @@ def render_html(datos, muni_filter="", page=1):
         </div>"""
 
     if not cards:
-        cards = '<div class="empty">Busca un municipio de la Región de Murcia para empezar.<br><small>Fuentes: PLACE (Ministerio de Hacienda) y BORM (Boletín Oficial de la Región de Murcia).</small></div>'
+        cards = '<div class="empty">Municipio no encontrado.</div>'
 
-    return f"""<!DOCTYPE html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Contratos Públicos — Murcia</title>
-<link rel="stylesheet" href="/static/style.css"></head>
-<body>
-<header>
-  <div class="logo">DINERO&nbsp;PÚBLICO</div>
-  <div>
-    <h1>Contratos Públicos · Región de Murcia</h1>
-    <p>Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)</p>
-  </div>
-</header>
-<div class="main">
-  {back_html}
+    body = f"""{back_html}
   <div class="search-bar">
     <label>Municipio</label>
     <form method="POST" action="/buscar" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
       <input name="municipio" placeholder="Ej: Lorca, Murcia, Cartagena, Archena…" required>
       <button type="submit" class="btn btn-primary">Buscar contratos</button>
     </form>
-    <form method="POST" action="/vaciar"><button type="submit" class="btn btn-danger">Vaciar</button></form>
   </div>
   {stats}
-  {cards}
-</div></body></html>"""
+  {cards}"""
+
+    muni_display = datos[0].get("municipio", "") if datos else muni_filter
+    titulo = f"Contratos públicos de {muni_display}" if muni_display else "Contratos Públicos"
+    descripcion = (f"Contratos públicos adjudicados en {muni_display} (Región de Murcia): "
+                   f"empresa adjudicataria, importe y directivo/administrador. "
+                   f"Datos oficiales PLACE + Registro Mercantil.") if muni_display else ""
+    return _page_shell(titulo, body, description=descripcion)
+
+
+def render_landing_html(datos):
+    """Página de inicio: no carga ningún municipio, muestra stats globales,
+    buscador global y el grid de los 45 municipios."""
+    por_muni = {normalizar(d.get("municipio", "")): d for d in datos}
+
+    total_m = len(datos)
+    total_c = sum(d.get("total_contratos", 0) for d in datos)
+    total_e = len(set(
+        normalizar(c.get("empresa", ""))
+        for d in datos for c in d.get("contratos", [])
+        if c.get("empresa") not in ("No localizada", "")
+    ))
+    total_imp = sum(c.get("importe_num", 0.0) for d in datos for c in d.get("contratos", []))
+
+    stats = f"""<div class="stats-bar">
+      <div class="stat"><span>{total_m}</span>Municipios</div>
+      <div class="stat"><span>{total_c}</span>Contratos</div>
+      <div class="stat"><span>{total_e}</span>Empresas únicas</div>
+      <div class="stat"><span>{fmt_eur(str(total_imp))}</span>Importe total</div>
+    </div>"""
+
+    tiles = ""
+    for muni in sorted(MUNICIPIOS_MURCIA, key=lambda m: normalizar(m)):
+        d = por_muni.get(normalizar(muni))
+        n = d.get("total_contratos", 0) if d else 0
+        imp = sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])) if d else 0.0
+        muni_enc = quote_plus(muni)
+        tiles += f"""<div class="muni-tile">
+          <h3>🏛 {esc(muni)}</h3>
+          <div class="mt-row"><span>Contratos</span><b>{n}</b></div>
+          <div class="mt-imp">{fmt_eur(str(imp))}</div>
+          <a class="btn-ver" href="/?muni={muni_enc}">Ver contratos →</a>
+        </div>"""
+
+    body = f"""<div class="hero">
+    <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
+    <p class="hero-sub">
+      Contratos públicos de los 45 municipios de la Región de Murcia, cruzados con el
+      Registro Mercantil para saber qué empresa — y qué persona — hay detrás de cada adjudicación.
+    </p>
+  </div>
+  <div class="global-search">
+    <form method="GET" action="/" class="gs-row">
+      <input name="q" placeholder="Buscar por empresa, directivo o municipio…" autofocus>
+      <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+    <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda la región.</div>
+  </div>
+  {stats}
+  <div class="section-title">Municipios · Región de Murcia</div>
+  <div class="muni-grid">{tiles}</div>
+  <div class="search-bar" style="margin-top:24px">
+    <label>¿No aparece o quieres forzar una actualización?</label>
+    <form method="POST" action="/buscar" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
+      <input name="municipio" placeholder="Nombre exacto del municipio…" required>
+      <button type="submit" class="btn btn-primary">Actualizar</button>
+    </form>
+  </div>"""
+
+    return _page_shell("Dinero Público | Contratos públicos Región de Murcia", body,
+                        description="Consulta los contratos públicos de los 45 municipios de la "
+                                     "Región de Murcia con los directivos de las empresas "
+                                     "adjudicatarias. Datos oficiales PLACE + Registro Mercantil.")
+
+
+def render_busqueda_global_html(datos, q):
+    """Resultados de la búsqueda global por empresa, directivo o municipio."""
+    q_norm = normalizar(q)
+    resultados = []
+    for d in datos:
+        muni = d.get("municipio", "")
+        for c in d.get("contratos", []):
+            if (q_norm in normalizar(c.get("empresa", ""))
+                    or q_norm in normalizar(c.get("directivo", ""))
+                    or q_norm in normalizar(muni)):
+                resultados.append((muni, c))
+
+    if resultados:
+        filas = "".join(_render_fila_contrato(c, municipio_label=m) for m, c in resultados[:300])
+        aviso = (f'<div class="gs-hint" style="margin-bottom:10px">Mostrando los primeros 300 de '
+                 f'{len(resultados)} resultados.</div>') if len(resultados) > 300 else ""
+        tabla = f"""{aviso}<table>
+          <tr>
+            <th>Empresa adjudicataria / Contrato</th>
+            <th>Importe</th>
+            <th>Directivo / Cargo</th>
+            <th>Estado / Fuente</th>
+          </tr>
+          {filas}
+        </table>"""
+    else:
+        tabla = '<div class="empty">Sin resultados para tu búsqueda.</div>'
+
+    body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
+  <div class="global-search">
+    <form method="GET" action="/" class="gs-row">
+      <input name="q" value="{esc(q)}" placeholder="Buscar por empresa, directivo o municipio…" autofocus>
+      <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+    <div class="gs-hint">{len(resultados)} resultado{'s' if len(resultados) != 1 else ''} para "{esc(q)}"</div>
+  </div>
+  <div class="muni-card">{tabla}</div>"""
+
+    return _page_shell(f'Búsqueda: {q}', body, description=f'Resultados de "{q}" en contratos públicos de la Región de Murcia.')
+
+
+def render_quienes_somos_html():
+    body = """<div class="static-page">
+  <h1>Transparencia al servicio de la ciudadanía</h1>
+
+  <p>Dinero Público nació con un objetivo claro: hacer accesible a cualquier ciudadano
+  la información sobre cómo se gasta el dinero público en la Región de Murcia.</p>
+
+  <p>Cruzamos datos oficiales de la Plataforma de Contratación del Sector Público (PLACE)
+  del Ministerio de Hacienda con información registral pública para identificar quién
+  está detrás de cada empresa que recibe contratos públicos.</p>
+
+  <p>No somos un partido político. No tenemos agenda ideológica. Creemos que la
+  transparencia es la mejor herramienta contra la corrupción, y que los ciudadanos
+  tienen derecho a saber quién se beneficia del dinero de todos.</p>
+
+  <p>Todos los datos que mostramos son públicos y oficiales.</p>
+
+  <h2>Para quién</h2>
+  <ul>
+    <li>📰 Periodistas de investigación</li>
+    <li>🏛️ Grupos municipales de oposición</li>
+    <li>🤝 ONGs y asociaciones ciudadanas</li>
+    <li>👤 Cualquier ciudadano</li>
+  </ul>
+
+  <h2>Fuentes de datos</h2>
+  <ul>
+    <li>PLACE (Ministerio de Hacienda) — contratos públicos</li>
+    <li>BORM (Boletín Oficial Región de Murcia) — publicaciones oficiales</li>
+    <li>Registro Mercantil — directivos y administradores</li>
+    <li>einforma.com, axesor.es, infocif.es — datos empresariales públicos</li>
+  </ul>
+
+  <h2>Contacto</h2>
+  <a class="contact-btn" href="mailto:cesarcastrobanegas@hotmail.com">✉ cesarcastrobanegas@hotmail.com</a>
+</div>"""
+    return _page_shell("Quiénes Somos", body,
+                        description="Quiénes somos y por qué existe Dinero Público: transparencia sobre "
+                                     "la contratación pública en la Región de Murcia.")
+
+
+def render_aviso_legal_html():
+    body = f"""<div class="static-page">
+  <h1>Aviso Legal y Privacidad</h1>
+
+  <h2>Titular</h2>
+  <p>César Castro Banegas.</p>
+
+  <h2>Dominio</h2>
+  <p>{esc(SITE_URL)}</p>
+
+  <h2>Actividad</h2>
+  <p>Plataforma de transparencia y datos públicos sobre contratación del sector público
+  en la Región de Murcia.</p>
+
+  <h2>Origen de los datos</h2>
+  <p>Los datos de contratos mostrados provienen de fuentes oficiales públicas: la
+  Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda y
+  el Boletín Oficial de la Región de Murcia (BORM).</p>
+  <p>Los nombres de directivos y administradores provienen de registros públicos
+  (Registro Mercantil y fuentes empresariales públicas equivalentes).</p>
+
+  <h2>Base legal para el tratamiento de datos</h2>
+  <p>El tratamiento de los nombres de personas físicas que aparecen como
+  administradores o apoderados de empresas adjudicatarias se ampara en el interés
+  público de la información y en que proceden de fuentes accesibles al público
+  (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018,
+  de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD).</p>
+
+  <h2>Ejercicio de derechos RGPD</h2>
+  <p>Para ejercer tus derechos de acceso, rectificación, supresión, oposición o
+  limitación del tratamiento, escribe a
+  <a href="mailto:cesarcastrobanegas@hotmail.com">cesarcastrobanegas@hotmail.com</a>.</p>
+
+  <h2>Cookies y publicidad</h2>
+  <p>Este sitio no utiliza cookies de seguimiento ni publicidad personalizada.</p>
+
+  <h2>Contacto</h2>
+  <a class="contact-btn" href="mailto:cesarcastrobanegas@hotmail.com">✉ cesarcastrobanegas@hotmail.com</a>
+</div>"""
+    return _page_shell("Aviso Legal", body,
+                        description="Aviso legal, privacidad y base legal para el tratamiento de datos "
+                                     "públicos en Dinero Público.")
 
 
 # ─── ENRUTADO HTTP (compartido: servidor de desarrollo + WSGI/gunicorn) ──────
@@ -2129,11 +2558,39 @@ def _route_get(path, qs, gzip_ok=False):
         with _datos_lock:
             datos_snap = list(_datos_memoria)
         muni_filter = qs.get("muni", [""])[0].strip()
-        try:
-            page = max(1, int(qs.get("pag", ["1"])[0]))
-        except ValueError:
-            page = 1
-        return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page), gzip_ok=gzip_ok)
+        q = qs.get("q", [""])[0].strip()
+        if muni_filter:
+            try:
+                page = max(1, int(qs.get("pag", ["1"])[0]))
+            except ValueError:
+                page = 1
+            return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page), gzip_ok=gzip_ok)
+        if q:
+            return _resp(render_busqueda_global_html(datos_snap, q), gzip_ok=gzip_ok)
+        return _resp(render_landing_html(datos_snap), gzip_ok=gzip_ok)
+
+    if path == "/quienes-somos":
+        return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
+
+    if path == "/aviso-legal":
+        return _resp(render_aviso_legal_html(), gzip_ok=gzip_ok)
+
+    if path == "/robots.txt":
+        body = f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
+        return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
+
+    if path == "/sitemap.xml":
+        with _datos_lock:
+            munis = [d.get("municipio", "") for d in _datos_memoria]
+        urls = [f"  <url><loc>{esc(SITE_URL)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>",
+                f"  <url><loc>{esc(SITE_URL)}/quienes-somos</loc><changefreq>monthly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>"]
+        for m in munis:
+            urls.append(f"  <url><loc>{esc(SITE_URL)}/?muni={quote_plus(m)}</loc><changefreq>daily</changefreq></url>")
+        body = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+                + "\n".join(urls) + "\n</urlset>\n")
+        return _resp(body, content_type="application/xml; charset=utf-8", gzip_ok=gzip_ok)
 
     if path == "/static/style.css":
         return _resp(
@@ -2185,6 +2642,13 @@ def _route_post(path, params):
             return _resp(spinner_page(job_id, mun_ok))
 
         if path == "/vaciar":
+            # Borra TODOS los contratos ya scrapeados/enriquecidos. Ya no hay botón en
+            # la interfaz que apunte aquí, pero el endpoint sigue existiendo y el código
+            # es público — se exige ADMIN_TOKEN para evitar que cualquiera lo dispare
+            # directamente contra el sitio en producción.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
             with _datos_lock:
                 _datos_memoria.clear()
                 _db_clear_municipios()
