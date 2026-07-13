@@ -1,0 +1,4 @@
+*.db binary
+*.db -text
+backend/cache.db binary
+backend/cache.db -text
