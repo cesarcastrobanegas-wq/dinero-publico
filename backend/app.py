@@ -1802,7 +1802,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 header a{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
 header a>div{min-width:0;}
 header h1{overflow-wrap:break-word;}
-.logo{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:3px;border:1px solid var(--accent);padding:4px 8px;border-radius:3px;flex-shrink:0;}
+.logo-svg{flex-shrink:0;line-height:0;}
+.logo-svg svg{width:160px;height:auto;display:block;}
 header h1{font-size:15px;font-weight:600;}
 header p{font-size:12px;color:var(--dim);margin-top:2px;}
 .main{max-width:1340px;margin:28px auto;padding:0 20px;}
@@ -1934,6 +1935,7 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
   header{padding:10px 14px;}
   header h1{font-size:13px;}
   header p{font-size:10px;}
+  .logo-svg svg{width:96px;}
   .main{padding:0 12px;margin:18px auto;max-width:100%;}
   .hero{padding:22px 6px 4px;}
   .hero-tagline{font-size:16px;}
@@ -2040,6 +2042,63 @@ SITE_TAGLINE = "El dinero de todos, en manos de quién"
 
 REGISTRO_MERCANTIL_URL = "https://www.registradores.org/actualidad/portal-notarial/registro-mercantil-en-linea"
 
+LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200" width="220" height="88">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowStrong">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#f0883e;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#0d1117;stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+  <rect width="500" height="200" fill="#0d1117"/>
+  <text x="8"   y="22" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.25">€</text>
+  <text x="24"  y="18" font-family="Arial" font-size="9"  fill="#f0883e" opacity="0.15">€</text>
+  <text x="38"  y="25" font-family="Arial" font-size="13" fill="#f0883e" opacity="0.3">€</text>
+  <text x="54"  y="16" font-family="Arial" font-size="8"  fill="#f0883e" opacity="0.2">€</text>
+  <text x="66"  y="24" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.18">€</text>
+  <text x="82"  y="19" font-family="Arial" font-size="10" fill="#f0883e" opacity="0.12">€</text>
+  <text x="96"  y="26" font-family="Arial" font-size="9"  fill="#f0883e" opacity="0.08">€</text>
+  <text x="6"   y="42" font-family="Arial" font-size="10" fill="#f0883e" opacity="0.3">€</text>
+  <text x="20"  y="48" font-family="Arial" font-size="14" fill="#f0883e" opacity="0.2">€</text>
+  <text x="36"  y="40" font-family="Arial" font-size="9"  fill="#f0883e" opacity="0.25">€</text>
+  <text x="50"  y="46" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.15">€</text>
+  <text x="64"  y="38" font-family="Arial" font-size="8"  fill="#f0883e" opacity="0.1">€</text>
+  <text x="4"   y="66" font-family="Arial" font-size="12" fill="#f0883e" opacity="0.35">€</text>
+  <text x="18"  y="70" font-family="Arial" font-size="9"  fill="#f0883e" opacity="0.22">€</text>
+  <text x="32"  y="63" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.28">€</text>
+  <text x="5"   y="90" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.4">€</text>
+  <text x="19"  y="94" font-family="Arial" font-size="14" fill="#f0883e" opacity="0.25">€</text>
+  <text x="4"   y="115" font-family="Arial" font-size="10" fill="#f0883e" opacity="0.4">€</text>
+  <text x="18"  y="119" font-family="Arial" font-size="13" fill="#f0883e" opacity="0.22">€</text>
+  <text x="5"   y="140" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.35">€</text>
+  <text x="6"   y="164" font-family="Arial" font-size="12" fill="#f0883e" opacity="0.3">€</text>
+  <text x="7"   y="186" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.25">€</text>
+  <circle cx="100" cy="100" r="55" fill="url(#eyeGlow)"/>
+  <path d="M 45 100 Q 100 55 155 100" fill="#0d1117" stroke="#f0883e" stroke-width="2.5"/>
+  <path d="M 45 100 Q 100 140 155 100" fill="#0d1117" stroke="#f0883e" stroke-width="2.5"/>
+  <line x1="70"  y1="72"  x2="73"  y2="80"  stroke="#f0883e" stroke-width="1.5" opacity="0.6"/>
+  <line x1="85"  y1="62"  x2="86"  y2="71"  stroke="#f0883e" stroke-width="1.5" opacity="0.6"/>
+  <line x1="100" y1="58"  x2="100" y2="67"  stroke="#f0883e" stroke-width="2"   opacity="0.7"/>
+  <line x1="115" y1="62"  x2="114" y2="71"  stroke="#f0883e" stroke-width="1.5" opacity="0.6"/>
+  <line x1="130" y1="72"  x2="127" y2="80"  stroke="#f0883e" stroke-width="1.5" opacity="0.6"/>
+  <circle cx="100" cy="100" r="28" fill="#1a0a00" stroke="#f0883e" stroke-width="2" filter="url(#glow)"/>
+  <circle cx="100" cy="100" r="22" fill="none" stroke="#f0883e" stroke-width="0.8" opacity="0.4"/>
+  <circle cx="100" cy="100" r="11" fill="#f0883e" filter="url(#glowStrong)"/>
+  <circle cx="100" cy="100" r="7" fill="#0d1117"/>
+  <circle cx="106" cy="94" r="3.5" fill="#ffffff" opacity="0.55"/>
+  <line x1="168" y1="15" x2="168" y2="185" stroke="#f0883e" stroke-width="1" opacity="0.35"/>
+  <text x="188" y="88" font-family="'IBM Plex Mono','Courier New',monospace" font-size="50" font-weight="700" letter-spacing="2" fill="#f0883e" filter="url(#glow)">DINERO</text>
+  <text x="188" y="138" font-family="'IBM Plex Mono','Courier New',monospace" font-size="50" font-weight="700" letter-spacing="2" fill="#ffffff">PÚBLICO</text>
+  <text x="190" y="164" font-family="'IBM Plex Mono','Courier New',monospace" font-size="10" letter-spacing="3" fill="#8b949e">¿EN QUÉ SE GASTA TU DINERO?</text>
+</svg>"""
+
 _ICONOS_TIPO = [
     (re.compile(r"\bobra|construcci[oó]n|rehabilitaci[oó]n|edificaci[oó]n", re.I), "🏗️"),
     (re.compile(r"\blimpieza|residuos|jardiner[ií]a|mantenimiento", re.I), "🧹"),
@@ -2069,7 +2128,7 @@ def _ad_banner_html():
 def _header_html():
     return f"""<header>
   <a href="/" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
-    <div class="logo">DINERO&nbsp;PÚBLICO</div>
+    <div class="logo-svg">{LOGO_SVG}</div>
     <div>
       <h1 style="color:var(--text)">Contratos Públicos · Región de Murcia</h1>
       <p>{esc(SITE_TAGLINE)}</p>
@@ -2104,15 +2163,18 @@ def _page_shell(title, body_html, description="", extra_head=""):
 <meta name="description" content="{desc}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{esc(SITE_URL)}/">
+<link rel="icon" type="image/svg+xml" href="/static/logo.svg">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{esc(full_title)}">
 <meta property="og:description" content="{desc}">
 <meta property="og:url" content="{esc(SITE_URL)}/">
 <meta property="og:site_name" content="Dinero Público">
 <meta property="og:locale" content="es_ES">
+<meta property="og:image" content="{esc(SITE_URL)}/static/logo.svg">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="{esc(full_title)}">
 <meta name="twitter:description" content="{desc}">
+<meta name="twitter:image" content="{esc(SITE_URL)}/static/logo.svg">
 <link rel="stylesheet" href="/static/style.css">
 {extra_head}</head>
 <body>
@@ -2595,6 +2657,12 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/static/style.css":
         return _resp(
             _ALL_CSS_CONTENT, content_type="text/css; charset=utf-8",
+            headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
+        )
+
+    if path == "/static/logo.svg":
+        return _resp(
+            LOGO_SVG, content_type="image/svg+xml; charset=utf-8",
             headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
         )
 
