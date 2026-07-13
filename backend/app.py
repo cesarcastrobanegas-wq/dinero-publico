@@ -1891,6 +1891,30 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .global-search input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:10px 14px;border-radius:6px;flex:1;min-width:220px;outline:none;}
 .global-search input:focus{border-color:var(--blue);}
 .global-search .gs-hint{font-size:11px;color:var(--dim);margin-top:8px;}
+
+/* ── buscador avanzado (3 modos, AJAX) ───────────────────────────────── */
+.adv-search{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 22px;margin:22px 0;width:100%;}
+.as-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.as-tab{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:7px 16px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--dim);cursor:pointer;font-weight:600;}
+.as-tab.active{background:rgba(240,136,62,.15);color:var(--accent);border-color:rgba(240,136,62,.4);}
+.as-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;width:100%;}
+.as-row input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:12px 16px;border-radius:6px;flex:1;min-width:220px;outline:none;}
+.as-row input:focus{border-color:var(--blue);}
+.as-row .btn{padding:12px 22px;}
+.gs-hint{font-size:11px;color:var(--dim);margin-top:8px;}
+#as-results{margin-top:16px;display:flex;flex-direction:column;gap:10px;}
+.as-loading{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);padding:10px 0;}
+.as-total{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);padding:4px 0 8px;border-bottom:1px solid var(--border);}
+.as-row-result{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px 16px;}
+.as-rr-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;}
+.as-rr-empresa{font-weight:600;font-size:13px;}
+.as-rr-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;}
+.as-rr-importe.big{font-size:15px;color:#5fe37a;font-weight:600;}
+.as-rr-sub{font-size:11px;color:var(--dim);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
+.as-rr-titulo{font-size:12px;color:var(--text);margin-top:5px;}
+.as-rr-directivo{font-size:12px;color:var(--blue);margin-top:4px;}
+.as-group{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;}
+.as-group .as-row-result{margin-top:8px;background:var(--surface);}
 .section-title{font-size:13px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:26px 0 12px;}
 .muni-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
 .muni-tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s;}
@@ -1945,9 +1969,11 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
   .stat span{font-size:16px;}
   .muni-grid{grid-template-columns:1fr 1fr;gap:10px;}
   .muni-tile{padding:12px 14px;}
-  .search-bar,.global-search{padding:14px 16px;}
-  .search-bar .btn,.search-bar form,.global-search .gs-row{width:100%;}
-  .global-search input,.search-bar input{min-width:0;width:100%;}
+  .search-bar,.global-search,.adv-search{padding:14px 16px;}
+  .search-bar .btn,.search-bar form,.global-search .gs-row,.as-row{width:100%;}
+  .global-search input,.search-bar input,.as-row input{min-width:0;width:100%;}
+  .as-row .btn{width:100%;}
+  .as-tab{flex:1 1 auto;text-align:center;padding:8px 6px;}
   table{font-size:12px;display:block;overflow-x:auto;white-space:nowrap;}
   th,td{padding:7px 8px;}
   .contrato-title{display:none;}
@@ -2098,6 +2124,137 @@ LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200" widt
   <text x="188" y="138" font-family="'IBM Plex Mono','Courier New',monospace" font-size="50" font-weight="700" letter-spacing="2" fill="#ffffff">PÚBLICO</text>
   <text x="190" y="164" font-family="'IBM Plex Mono','Courier New',monospace" font-size="10" letter-spacing="3" fill="#8b949e">¿EN QUÉ SE GASTA TU DINERO?</text>
 </svg>"""
+
+_ADV_SEARCH_JS = r"""
+(function(){
+  var PLACEHOLDERS = {
+    empresa: 'Nombre de la empresa…',
+    directivo: 'Nombre del directivo o empresario…',
+    licitacion: 'Número de licitación (ej: 321/2026)…'
+  };
+  var tabs = document.querySelectorAll('#adv-search .as-tab');
+  var input = document.getElementById('as-input');
+  var btn = document.getElementById('as-btn');
+  var results = document.getElementById('as-results');
+  if (!input || !results) return;
+  var tipo = 'empresa';
+  var timer = null;
+  var seq = 0;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+
+  function setTipo(t) {
+    tipo = t;
+    tabs.forEach(function(tb){ tb.classList.toggle('active', tb.dataset.tipo === t); });
+    input.placeholder = PLACEHOLDERS[t] || '';
+    results.innerHTML = '';
+    input.focus();
+  }
+  tabs.forEach(function(tb){ tb.addEventListener('click', function(){ setTipo(tb.dataset.tipo); }); });
+
+  function filaContrato(c) {
+    var row = el('div', 'as-row-result');
+    var top = el('div', 'as-rr-top');
+    var emp = el('span', 'as-rr-empresa', c.empresa || '—');
+    top.appendChild(emp);
+    var imp = el('span', 'as-rr-importe', c.importe);
+    if ((c.importe_num || 0) > 100000) imp.classList.add('big');
+    top.appendChild(imp);
+    row.appendChild(top);
+    var sub = el('div', 'as-rr-sub');
+    sub.appendChild(el('span', null, '📍 ' + c.municipio + ' · ' + c.estado));
+    row.appendChild(sub);
+    var titulo = el('div', 'as-rr-titulo', c.titulo);
+    row.appendChild(titulo);
+    if (c.directivo) {
+      row.appendChild(el('div', 'as-rr-directivo', c.directivo + (c.cargo ? ' — ' + c.cargo : '')));
+    }
+    if (c.url) {
+      var a = document.createElement('a');
+      a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; a.className = 'link';
+      a.textContent = 'PLACE ↗';
+      row.appendChild(a);
+    }
+    return row;
+  }
+
+  function renderEmpresa(data) {
+    results.innerHTML = '';
+    if (!data.resultados || !data.resultados.length) {
+      results.appendChild(el('div', 'empty', 'Sin resultados.'));
+      return;
+    }
+    var head = el('div', 'as-total', data.total_contratos + ' contratos · total acumulado ' + data.total_importe);
+    results.appendChild(head);
+    data.resultados.forEach(function(c){ results.appendChild(filaContrato(c)); });
+  }
+
+  function renderDirectivo(data) {
+    results.innerHTML = '';
+    if (!data.grupos || !data.grupos.length) {
+      results.appendChild(el('div', 'empty', 'Sin resultados.'));
+      return;
+    }
+    var head = el('div', 'as-total', data.n_empresas + ' empresa(s) vinculada(s) · total global ' + data.total_importe);
+    results.appendChild(head);
+    data.grupos.forEach(function(g){
+      var card = el('div', 'as-group');
+      var top = el('div', 'as-rr-top');
+      top.appendChild(el('span', 'as-rr-empresa', g.empresa));
+      top.appendChild(el('span', 'as-rr-importe big', g.total_importe));
+      card.appendChild(top);
+      card.appendChild(el('div', 'as-rr-sub', (g.cargo || 'Directivo') + ' · ' + g.n_contratos + ' contrato(s)'));
+      g.contratos.forEach(function(c){ card.appendChild(filaContrato(c)); });
+      results.appendChild(card);
+    });
+  }
+
+  function renderLicitacion(data) {
+    results.innerHTML = '';
+    if (!data.encontrado) {
+      results.appendChild(el('div', 'empty', 'No se ha encontrado ninguna licitación con ese número.'));
+      return;
+    }
+    results.appendChild(filaContrato(data.contrato));
+  }
+
+  function buscar() {
+    var q = input.value.trim();
+    if (q.length < 2) { results.innerHTML = ''; return; }
+    var mySeq = ++seq;
+    results.innerHTML = '';
+    results.appendChild(el('div', 'as-loading', 'Buscando…'));
+    fetch('/api/buscar?tipo=' + encodeURIComponent(tipo) + '&q=' + encodeURIComponent(q))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (mySeq !== seq) return; // respuesta obsoleta, ya se lanzó otra búsqueda
+        if (data.error) { results.innerHTML = ''; results.appendChild(el('div', 'empty', data.error)); return; }
+        if (tipo === 'empresa') renderEmpresa(data);
+        else if (tipo === 'directivo') renderDirectivo(data);
+        else renderLicitacion(data);
+      })
+      .catch(function(){
+        if (mySeq !== seq) return;
+        results.innerHTML = '';
+        results.appendChild(el('div', 'empty', 'Error al buscar. Inténtalo de nuevo.'));
+      });
+  }
+
+  input.addEventListener('input', function(){
+    clearTimeout(timer);
+    timer = setTimeout(buscar, 300);
+  });
+  input.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); clearTimeout(timer); buscar(); }
+  });
+  btn.addEventListener('click', function(){ clearTimeout(timer); buscar(); });
+})();
+"""
 
 _ICONOS_TIPO = [
     (re.compile(r"\bobra|construcci[oó]n|rehabilitaci[oó]n|edificaci[oó]n", re.I), "🏗️"),
@@ -2430,12 +2587,18 @@ def render_landing_html(datos):
       Registro Mercantil para saber qué empresa — y qué persona — hay detrás de cada adjudicación.
     </p>
   </div>
-  <div class="global-search">
-    <form method="GET" action="/" class="gs-row">
-      <input name="q" placeholder="Buscar por empresa, directivo o municipio…" autofocus>
-      <button type="submit" class="btn btn-primary">Buscar</button>
-    </form>
-    <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda la región.</div>
+  <div class="adv-search" id="adv-search">
+    <div class="as-tabs">
+      <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
+      <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
+      <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
+    </div>
+    <div class="as-row">
+      <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off" autofocus>
+      <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
+    </div>
+    <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda la región · mínimo 2 caracteres.</div>
+    <div id="as-results"></div>
   </div>
   {stats}
   <div class="section-title">Municipios · Región de Murcia</div>
@@ -2446,12 +2609,93 @@ def render_landing_html(datos):
       <input name="municipio" placeholder="Nombre exacto del municipio…" required>
       <button type="submit" class="btn btn-primary">Actualizar</button>
     </form>
-  </div>"""
+  </div>
+  <script>{_ADV_SEARCH_JS}</script>"""
 
     return _page_shell("Dinero Público | Contratos públicos Región de Murcia", body,
                         description="Consulta los contratos públicos de los 45 municipios de la "
                                      "Región de Murcia con los directivos de las empresas "
                                      "adjudicatarias. Datos oficiales PLACE + Registro Mercantil.")
+
+
+def _contrato_json(c, municipio):
+    """Representación JSON de un contrato para el buscador avanzado (/api/buscar)."""
+    return {
+        "municipio": municipio,
+        "empresa": c.get("empresa", ""),
+        "titulo": c.get("titulo", ""),
+        "importe": c.get("importe", "") or "No localizado",
+        "importe_num": c.get("importe_num", 0.0) or 0.0,
+        "estado": {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado"}.get(c.get("estado", ""), c.get("estado", "")),
+        "directivo": c.get("directivo", ""),
+        "cargo": c.get("cargo", ""),
+        "url": c.get("url", ""),
+        "licitacion_id": c.get("licitacion_id", ""),
+    }
+
+
+def api_buscar(tipo, q, datos):
+    """Backend del buscador avanzado (GET /api/buscar?tipo=...&q=...). Devuelve
+    un dict JSON-serializable; ninguna búsqueda distingue mayúsculas ni acentos."""
+    q = (q or "").strip()
+    if len(q) < 2:
+        return {"tipo": tipo, "query": q, "error": "Escribe al menos 2 caracteres."}
+
+    q_norm = normalizar(q)
+
+    if tipo == "empresa":
+        resultados = []
+        for d in datos:
+            muni = d.get("municipio", "")
+            for c in d.get("contratos", []):
+                if q_norm in normalizar(c.get("empresa", "")):
+                    resultados.append(_contrato_json(c, muni))
+        resultados.sort(key=lambda r: r["importe_num"], reverse=True)
+        total = sum(r["importe_num"] for r in resultados)
+        return {
+            "tipo": "empresa", "query": q,
+            "resultados": resultados[:500],
+            "total_contratos": len(resultados),
+            "total_importe": fmt_eur(str(total)),
+        }
+
+    if tipo == "directivo":
+        grupos = {}  # empresa -> {cargo, contratos:[], total}
+        for d in datos:
+            muni = d.get("municipio", "")
+            for c in d.get("contratos", []):
+                directivo = c.get("directivo", "")
+                if directivo and q_norm in normalizar(directivo):
+                    emp = c.get("empresa", "")
+                    g = grupos.setdefault(emp, {"empresa": emp, "directivo": directivo,
+                                                 "cargo": c.get("cargo", ""), "contratos": [], "total": 0.0})
+                    g["contratos"].append(_contrato_json(c, muni))
+                    g["total"] += c.get("importe_num", 0.0) or 0.0
+        lista = sorted(grupos.values(), key=lambda g: g["total"], reverse=True)
+        for g in lista:
+            g["contratos"].sort(key=lambda r: r["importe_num"], reverse=True)
+            g["total_importe"] = fmt_eur(str(g["total"]))
+            g["n_contratos"] = len(g["contratos"])
+        total_global = sum(g["total"] for g in lista)
+        return {
+            "tipo": "directivo", "query": q,
+            "grupos": lista[:200],
+            "n_empresas": len(lista),
+            "total_importe": fmt_eur(str(total_global)),
+        }
+
+    if tipo == "licitacion":
+        q_low = q.strip().lower()
+        for d in datos:
+            muni = d.get("municipio", "")
+            for c in d.get("contratos", []):
+                lid = (c.get("licitacion_id") or "").lower()
+                if lid and q_low in lid:
+                    return {"tipo": "licitacion", "query": q, "encontrado": True,
+                            "contrato": _contrato_json(c, muni)}
+        return {"tipo": "licitacion", "query": q, "encontrado": False}
+
+    return {"tipo": tipo, "query": q, "error": "Tipo de búsqueda no reconocido."}
 
 
 def render_busqueda_global_html(datos, q):
@@ -2673,6 +2917,15 @@ def _route_get(path, qs, gzip_ok=False):
         code = 200 if job else 404
         body = json.dumps(job if job else {"status": "not_found"}, ensure_ascii=False)
         return _resp(body, content_type="application/json; charset=utf-8", code=code, gzip_ok=gzip_ok)
+
+    if path == "/api/buscar":
+        tipo = qs.get("tipo", ["empresa"])[0]
+        q = qs.get("q", [""])[0]
+        with _datos_lock:
+            datos_snap = list(_datos_memoria)
+        resultado = api_buscar(tipo, q, datos_snap)
+        return _resp(json.dumps(resultado, ensure_ascii=False),
+                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
     return 404, {"Content-Length": "0"}, b""
 
