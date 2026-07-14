@@ -1,0 +1,26 @@
+name: Actualizar contratos diariamente
+
+on:
+  schedule:
+    # 04:00 UTC ≈ 05:00–06:00 hora de España (invierno/verano). Hora de bajo
+    # tráfico tanto en la web como en PLACE/BORM.
+    - cron: "0 4 * * *"
+  workflow_dispatch: {}   # permite lanzarlo a mano desde la pestaña Actions
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar refresco completo (45 municipios) en producción
+        run: |
+          respuesta=$(curl -s -w "\n%{http_code}" -X POST \
+            -d "token=${{ secrets.ADMIN_TOKEN }}" \
+            https://dinero-publico.onrender.com/actualizar-todos)
+          codigo=$(echo "$respuesta" | tail -n1)
+          cuerpo=$(echo "$respuesta" | sed '$d')
+          echo "HTTP $codigo"
+          echo "$cuerpo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::El endpoint /actualizar-todos devolvió $codigo"
+            exit 1
+          fi

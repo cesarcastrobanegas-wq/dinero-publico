@@ -69,6 +69,7 @@ _datos_memoria: list = []    # datos.json cargado en RAM al arrancar
 _jobs: dict = {}
 _jobs_lock = threading.Lock()
 _enriqueciendo_lock = threading.Lock()  # evita lanzar dos hilos de enriquecimiento a la vez
+_actualizando_todos_lock = threading.Lock()  # evita lanzar dos refrescos completos a la vez
 
 PAGE_SIZE = 50               # contratos máximos por página
 
@@ -1648,6 +1649,56 @@ def _job_run(job_id, municipio):
             _jobs[job_id]["error"] = str(e)
 
 
+def _actualizar_todos_bg(job_id):
+    """
+    Hilo de fondo: refresca secuencialmente los 45 municipios de la Región de
+    Murcia (invalida caché + relanza _job_run para cada uno, con una pausa
+    entre municipios para no saturar PLACE/BORM). Pensado para dispararse
+    desde un disparador externo (cron) vía POST /actualizar-todos.
+
+    Mientras corre, la web sigue sirviendo los datos anteriores con
+    normalidad: _job_run solo sustituye la entrada de _datos_memoria del
+    municipio que esté procesando en ese momento, bajo _datos_lock, así que
+    nunca hay un estado a medias visible para quien esté navegando.
+    """
+    if not _actualizando_todos_lock.acquire(blocking=False):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "error", "log": [],
+                              "error": "Ya hay un refresco completo en curso."}
+        return
+
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "running", "log": [], "error": None,
+                              "total_municipios": len(MUNICIPIOS_MURCIA), "procesados": 0}
+        print(f"  [actualizar-todos] Iniciando refresco de {len(MUNICIPIOS_MURCIA)} municipios…", flush=True)
+
+        for idx, municipio in enumerate(MUNICIPIOS_MURCIA, 1):
+            print(f"  [actualizar-todos] [{idx}/{len(MUNICIPIOS_MURCIA)}] {municipio}", flush=True)
+            sub_job_id = f"{job_id}-{idx}"
+            with _jobs_lock:
+                _jobs[sub_job_id] = {"status": "running", "log": [], "error": None}
+            try:
+                _cache_invalidate(municipio)
+                _job_run(sub_job_id, municipio)
+            except Exception as e:
+                print(f"  [actualizar-todos] Error en {municipio}: {e}", flush=True)
+            finally:
+                with _jobs_lock:
+                    _jobs.pop(sub_job_id, None)
+                    if job_id in _jobs:
+                        _jobs[job_id]["procesados"] = idx
+            time.sleep(4)  # pausa entre municipios
+
+        with _jobs_lock:
+            if job_id in _jobs:
+                _jobs[job_id]["status"] = "done"
+        print("  [actualizar-todos] Refresco completo terminado.", flush=True)
+
+    finally:
+        _actualizando_todos_lock.release()
+
+
 def _inicializar_datos():
     """Carga municipios y directivos cacheados desde SQLite en RAM al arrancar."""
     _db_init()
@@ -2996,6 +3047,19 @@ def _route_post(path, params):
                 _jobs[job_id] = {"status": "running", "log": [], "error": None}
             threading.Thread(target=_job_run, args=(job_id, mun_ok), daemon=True).start()
             return _resp(spinner_page(job_id, mun_ok))
+
+        if path == "/actualizar-todos":
+            # Refresca los 45 municipios de la región, uno a uno. Pensado para
+            # un disparador externo (GitHub Actions programado), no para la
+            # interfaz — de ahí el ADMIN_TOKEN (mismo patrón que /vaciar).
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            job_id = str(uuid.uuid4())
+            threading.Thread(target=_actualizar_todos_bg, args=(job_id,), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id,
+                                "total_municipios": len(MUNICIPIOS_MURCIA)})
+            return _resp(body, content_type="application/json; charset=utf-8")
 
         return 404, {"Content-Length": "0"}, b""
     except Exception as e:
