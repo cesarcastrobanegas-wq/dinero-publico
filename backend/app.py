@@ -1928,10 +1928,12 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 
 /* ── footer ───────────────────────────────────────────────────────────── */
 .site-footer{max-width:1340px;margin:48px auto 0;padding:22px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center;}
-.site-footer .ft-links{display:flex;flex-wrap:wrap;gap:16px;}
+.site-footer .ft-links{display:flex;flex-wrap:wrap;gap:16px;align-items:center;}
 .site-footer a{color:var(--dim);font-size:12px;text-decoration:none;}
 .site-footer a:hover{color:var(--blue);}
 .site-footer .ft-brand{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);}
+.site-footer .ft-sep{color:var(--border);font-size:12px;}
+.site-footer .ft-label{color:var(--dim);font-size:12px;}
 
 /* ── páginas estáticas (quiénes somos / aviso legal) ─────────────────── */
 .static-page{max-width:820px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:34px 38px;line-height:1.8;font-size:14px;}
@@ -2304,6 +2306,12 @@ def _footer_html():
     <a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener">Registro Mercantil</a>
     <a href="/aviso-legal">Aviso Legal</a>
     <a href="/quienes-somos">Quiénes Somos</a>
+    <span class="ft-sep">|</span>
+    <span class="ft-label">Enlaces de interés:</span>
+    <a href="https://civio.es" target="_blank" rel="noopener">CIVIO</a>
+    <a href="https://transparencia.org.es" target="_blank" rel="noopener">Transparency International España</a>
+    <a href="https://www.hayderecho.com" target="_blank" rel="noopener">Fundación Hay Derecho</a>
+    <a href="https://www.datadista.com" target="_blank" rel="noopener">Datadista</a>
   </div>
 </footer>"""
 
