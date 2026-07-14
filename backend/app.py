@@ -2116,7 +2116,7 @@ def _render_alertas(alertas):
 
 # ─── PLANTILLA COMÚN (header / footer / banner / SEO) ────────────────────────
 
-SITE_URL = "https://dinero-publico.onrender.com"
+SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
 SITE_TAGLINE = "El dinero de todos, en manos de quién"
 
 REGISTRO_MERCANTIL_URL = "https://www.registradores.org/actualidad/portal-notarial/registro-mercantil-en-linea"
