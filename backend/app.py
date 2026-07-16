@@ -499,12 +499,21 @@ def municipio_valido_girona(txt):
 
 # ─── PROVINCIA (Fase 4 — rutas/UI transversales) ─────────────────────────────
 MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GIRONA}
-PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona"}
+PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona", "todas": "España"}
 
 def _provincia_valida(txt):
     """Normaliza el parámetro ?provincia= de la querystring: cualquier valor
-    desconocido (o ausente) cae a 'murcia', el comportamiento de siempre."""
+    desconocido (o ausente) cae a 'murcia'. Para rutas que operan siempre
+    sobre una provincia concreta (rankings provincial, /buscar, /actualizar,
+    /actualizar-todos) — un municipio pertenece a una única provincia, no
+    tiene sentido "todas" ahí."""
     return txt if txt in MUNICIPIOS_POR_PROVINCIA else "murcia"
+
+def _provincia_o_todas(txt):
+    """Como _provincia_valida, pero para las rutas que sí soportan una vista
+    agregada: cualquier valor que no sea una provincia real (ausente, vacío,
+    'todas' o inválido) se trata como "sin filtro"."""
+    return txt if txt in MUNICIPIOS_POR_PROVINCIA else "todas"
 
 def municipio_valido_provincia(municipio, provincia):
     if provincia == "girona":
@@ -2314,6 +2323,25 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .muni-tile .mt-row b{color:var(--text);font-weight:600;}
 .muni-tile .mt-imp{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--green);font-weight:600;}
 .muni-tile a.btn-ver{margin-top:4px;text-align:center;padding:7px 10px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;}
+a.btn-ver{display:inline-block;padding:8px 16px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;}
+a.btn-ver:hover{background:rgba(240,136,62,.22);}
+.region-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:24px;}
+.region-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:8px;text-decoration:none;transition:border-color .15s;}
+.region-card:hover{border-color:var(--accent);}
+.region-card h3{font-size:15px;color:var(--accent);}
+.region-stats{font-size:12px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+.region-stats b{color:var(--text);font-weight:600;}
+.region-imp{font-family:'IBM Plex Mono',monospace;font-size:16px;color:var(--green);font-weight:600;}
+.top1-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:8px;}
+.top1-card{background:var(--surface);border:1px solid rgba(240,136,62,.35);border-radius:8px;padding:16px 20px;}
+.top1-label{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:8px;}
+.top1-empresa{display:block;font-size:16px;font-weight:600;color:var(--text);text-decoration:none;margin-bottom:4px;}
+.top1-empresa:hover{color:var(--accent);text-decoration:underline;}
+.top1-valor{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--green);font-weight:600;margin-bottom:4px;}
+.top1-directivo{font-size:12px;color:var(--blue);}
+.rk-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:32px 0 4px;padding-bottom:10px;border-bottom:2px solid var(--accent);}
+.rk-section-header h2{font-size:18px;color:var(--text);}
+.rk-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 10px;}
 .muni-tile a.btn-ver:hover{background:rgba(240,136,62,.22);}
 
 /* ── footer ───────────────────────────────────────────────────────────── */
@@ -2362,6 +2390,7 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
   .stat span{font-size:16px;}
   .muni-grid{grid-template-columns:1fr 1fr;gap:10px;}
   .muni-tile{padding:12px 14px;}
+  .region-grid,.top1-grid{grid-template-columns:1fr;gap:10px;}
   .search-bar,.global-search,.adv-search{padding:14px 16px;}
   .search-bar .btn,.search-bar form,.global-search .gs-row,.as-row{width:100%;}
   .global-search input,.search-bar input,.as-row input{min-width:0;width:100%;}
@@ -2682,21 +2711,21 @@ def _ad_banner_html():
             '</div>')
 
 
-def _header_html(provincia="murcia"):
+def _header_html(provincia="todas"):
     es_girona = provincia == "girona"
-    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
+    es_murcia = provincia == "murcia"
     rankings_href = "/rankings?provincia=girona" if es_girona else "/rankings"
     return f"""<header>
   <a href="/" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
     <div class="logo-svg">{LOGO_SVG}</div>
     <div>
-      <h1 style="color:var(--text)">Contratos Públicos · {esc(label)}</h1>
+      <h1 style="color:var(--text)">Dinero Público · Contratación pública en España</h1>
       <p>{esc(SITE_TAGLINE)}</p>
     </div>
   </a>
   <nav class="header-nav">
     <div class="prov-switch">
-      <a href="/" class="prov-tab{' active' if not es_girona else ''}">Murcia</a>
+      <a href="/?provincia=murcia" class="prov-tab{' active' if es_murcia else ''}">Murcia</a>
       <a href="/?provincia=girona" class="prov-tab{' active' if es_girona else ''}">Girona</a>
     </div>
     <a href="{rankings_href}">🏆 Rankings</a>
@@ -2704,16 +2733,21 @@ def _header_html(provincia="murcia"):
 </header>"""
 
 
-def _footer_html(provincia="murcia"):
+def _footer_html(provincia="todas"):
     es_girona = provincia == "girona"
-    fuente_links = (
-        '<a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>'
-        if es_girona else
-        '<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>\n'
-        '    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>'
-    )
+    es_murcia = provincia == "murcia"
+    if es_girona:
+        fuente_links = '<a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>'
+    elif es_murcia:
+        fuente_links = ('<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>\n'
+                         '    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>')
+    else:
+        fuente_links = ('<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>\n'
+                         '    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>\n'
+                         '    <a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>')
+    brand_label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["todas"])
     return f"""<footer class="site-footer">
-  <div class="ft-brand">© Dinero Público — datos oficiales públicos, {esc(PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"]))}</div>
+  <div class="ft-brand">© Dinero Público — datos oficiales públicos, {esc(brand_label)}</div>
   <div class="ft-links">
     {fuente_links}
     <a href="https://www.boe.es/" target="_blank" rel="noopener">BOE</a>
@@ -2731,11 +2765,11 @@ def _footer_html(provincia="murcia"):
 </footer>"""
 
 
-def _page_shell(title, body_html, description="", extra_head="", provincia="murcia"):
+def _page_shell(title, body_html, description="", extra_head="", provincia="todas"):
     full_title = title if "|" in title else f"{title} | Dinero Público"
-    desc = esc(description or "Consulta los contratos públicos de los 45 municipios de la "
-                               "Región de Murcia con los directivos de las empresas adjudicatarias. "
-                               "Datos oficiales PLACE + Registro Mercantil.")
+    desc = esc(description or "Consulta los contratos públicos adjudicados en España "
+                               "con los directivos de las empresas adjudicatarias. "
+                               "Datos oficiales PLACE + BORM + PSCP + Registro Mercantil.")
     return f"""<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -2871,12 +2905,16 @@ def _calcular_rankings(datos):
     return top_n, top_imp
 
 
-def render_rankings_html(datos, provincia="murcia"):
-    top_n, top_imp = _calcular_rankings(datos)
-    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
-    q_prov = "&provincia=girona" if provincia == "girona" else ""
+def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia"):
+    """Dos rankings claramente separados:
+    - Nacional: agrega TODAS las provincias cargadas (Murcia + Girona + las que vengan).
+    - Provincial: el mismo top 10 x2, filtrable por una provincia concreta.
+    """
+    top_n_nac, top_imp_nac = _calcular_rankings(datos_nacional)
+    top_n_prov, top_imp_prov = _calcular_rankings(datos_provincia)
+    label_prov = PROVINCIA_LABEL.get(provincia_prov, PROVINCIA_LABEL["murcia"])
 
-    def _filas(lista, valor_html):
+    def _filas(lista, valor_html, q_prov=""):
         filas = ""
         for i, g in enumerate(lista, 1):
             pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
@@ -2896,32 +2934,63 @@ def render_rankings_html(datos, provincia="murcia"):
             filas = '<tr><td colspan="4" class="empty">Aún no hay datos suficientes.</td></tr>'
         return filas
 
-    tabla_n = _filas(top_n, lambda g: f'<b>{g["n"]}</b> contratos')
-    tabla_imp = _filas(top_imp, lambda g: fmt_eur(str(g["importe"])))
+    # Los enlaces de empresa del ranking nacional no se filtran por provincia
+    # (la empresa puede tener contratos en más de una); los del provincial sí.
+    tabla_n_nac = _filas(top_n_nac, lambda g: f'<b>{g["n"]}</b> contratos')
+    tabla_imp_nac = _filas(top_imp_nac, lambda g: fmt_eur(str(g["importe"])))
+    q_prov_link = f"&provincia={provincia_prov}"
+    tabla_n_prov = _filas(top_n_prov, lambda g: f'<b>{g["n"]}</b> contratos', q_prov=q_prov_link)
+    tabla_imp_prov = _filas(top_imp_prov, lambda g: fmt_eur(str(g["importe"])), q_prov=q_prov_link)
 
-    body = f"""<span class="back-link"><a href="/{'?provincia=girona' if provincia == 'girona' else ''}">← Volver al inicio</a></span>
+    selector_prov = "".join(
+        f'<a href="/rankings?provincia={prov}" class="prov-tab{" active" if prov == provincia_prov else ""}">'
+        f'{esc(PROVINCIA_LABEL.get(prov, prov))}</a>'
+        for prov in MUNICIPIOS_POR_PROVINCIA
+    )
+
+    body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
   <div class="hero" style="padding-bottom:4px">
-    <div class="hero-tagline">🏆 Rankings · Top 10 empresas</div>
+    <div class="hero-tagline">🏆 Rankings</div>
     <p class="hero-sub">
-      Clasificación de las empresas adjudicatarias con más contratos y mayor importe acumulado
-      en los datos ya cargados de {esc(label)}, con su directivo identificado cuando lo tenemos.
+      Clasificación de las empresas adjudicatarias con más contratos y mayor importe acumulado,
+      con su directivo identificado cuando lo tenemos.
     </p>
+  </div>
+
+  <div class="rk-section-header">
+    <h2>🌍 Ranking Nacional</h2>
+    <span class="rk-badge">Región de Murcia + Provincia de Girona</span>
   </div>
   <div class="section-title">Top 10 por número de contratos adjudicados</div>
   <div class="muni-card"><table>
     <tr><th>#</th><th>Empresa</th><th>Contratos</th><th>Directivo / Cargo</th></tr>
-    {tabla_n}
+    {tabla_n_nac}
   </table></div>
   <div class="section-title">Top 10 por importe total adjudicado</div>
   <div class="muni-card"><table>
     <tr><th>#</th><th>Empresa</th><th>Importe total</th><th>Directivo / Cargo</th></tr>
-    {tabla_imp}
+    {tabla_imp_nac}
+  </table></div>
+
+  <div class="rk-section-header">
+    <h2>📍 Ranking por Provincia</h2>
+    <div class="prov-switch">{selector_prov}</div>
+  </div>
+  <div class="section-title">Top 10 por número de contratos — {esc(label_prov)}</div>
+  <div class="muni-card"><table>
+    <tr><th>#</th><th>Empresa</th><th>Contratos</th><th>Directivo / Cargo</th></tr>
+    {tabla_n_prov}
+  </table></div>
+  <div class="section-title">Top 10 por importe total — {esc(label_prov)}</div>
+  <div class="muni-card"><table>
+    <tr><th>#</th><th>Empresa</th><th>Importe total</th><th>Directivo / Cargo</th></tr>
+    {tabla_imp_prov}
   </table></div>"""
 
     return _page_shell("Rankings — Top 10 empresas", body,
-                        description=f"Ranking de las empresas con más contratos públicos y mayor importe "
-                                     f"adjudicado en {label}, con sus directivos identificados.",
-                        provincia=provincia)
+                        description="Ranking nacional y por provincia de las empresas con más contratos "
+                                     "públicos y mayor importe adjudicado, con sus directivos identificados.",
+                        provincia="todas")
 
 
 def render_html(datos, muni_filter="", page=1, provincia="murcia"):
@@ -3065,6 +3134,106 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
                    f"empresa adjudicataria, importe y directivo/administrador. "
                    f"Datos oficiales {fuente_desc} + Registro Mercantil.") if muni_display else ""
     return _page_shell(titulo, body, description=descripcion, provincia=provincia)
+
+
+def render_landing_nacional_html(datos):
+    """Home agregada: cifras combinadas de todas las provincias cargadas,
+    desglose secundario por región, y el top 1 del ranking nacional. Es la
+    vista por defecto de '/' (sin ?provincia=); el selector Murcia/Girona
+    del header sigue disponible como filtro opcional."""
+    total_m = len(datos)
+    total_c = sum(d.get("total_contratos", 0) for d in datos)
+    total_e = len(set(
+        normalizar(c.get("empresa", ""))
+        for d in datos for c in d.get("contratos", [])
+        if c.get("empresa") not in ("No localizada", "")
+    ))
+    total_imp = sum(c.get("importe_num", 0.0) for d in datos for c in d.get("contratos", []))
+
+    stats = f"""<div class="stats-bar">
+      <div class="stat"><span>{total_m}</span>Municipios</div>
+      <div class="stat"><span>{total_c}</span>Contratos</div>
+      <div class="stat"><span>{total_e}</span>Empresas únicas</div>
+      <div class="stat"><span>{fmt_eur(str(total_imp))}</span>Importe total</div>
+    </div>"""
+
+    # Desglose secundario por región (el "selector" ya no es la puerta de
+    # entrada principal, sino estas tarjetas + las pestañas del header).
+    region_cards = ""
+    for prov, municipios_lista in MUNICIPIOS_POR_PROVINCIA.items():
+        datos_prov = [d for d in datos if d.get("provincia", "murcia") == prov]
+        n_con_datos = len(datos_prov)
+        c_prov = sum(d.get("total_contratos", 0) for d in datos_prov)
+        imp_prov = sum(c.get("importe_num", 0.0) for d in datos_prov for c in d.get("contratos", []))
+        label = PROVINCIA_LABEL.get(prov, prov)
+        region_cards += f"""<a href="/?provincia={prov}" class="region-card">
+          <h3>📍 {esc(label)}</h3>
+          <div class="region-stats"><b>{n_con_datos}</b>/{len(municipios_lista)} municipios · <b>{c_prov}</b> contratos</div>
+          <div class="region-imp">{fmt_eur(str(imp_prov))}</div>
+        </a>"""
+
+    # Top 1 del ranking nacional (agregando todas las provincias)
+    top_n_nac, top_imp_nac = _calcular_rankings(datos)
+
+    def _top1_card(lista, etiqueta, valor_html):
+        if not lista:
+            return f"""<div class="top1-card">
+              <div class="top1-label">{etiqueta}</div>
+              <div class="empty" style="padding:14px 0">Aún no hay datos suficientes.</div>
+            </div>"""
+        g = lista[0]
+        if g["directivo"]:
+            dir_html = f'{esc(g["directivo"])} — {esc(g["cargo"])}'
+        else:
+            dir_html = '<span class="noloc-warn">⚠️ No localizado</span>'
+        emp_q = quote_plus(g["empresa"])
+        return f"""<div class="top1-card">
+          <div class="top1-label">{etiqueta}</div>
+          <a class="top1-empresa" href="/?q={emp_q}">{esc(g['empresa'])}</a>
+          <div class="top1-valor">{valor_html(g)}</div>
+          <div class="top1-directivo">{dir_html}</div>
+        </div>"""
+
+    top1_html = (
+        _top1_card(top_n_nac, "🥇 Más contratos", lambda g: f'{g["n"]} contratos') +
+        _top1_card(top_imp_nac, "🥇 Mayor importe", lambda g: fmt_eur(str(g["importe"])))
+    )
+
+    body = f"""<div class="hero">
+    <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
+    <p class="hero-sub">
+      Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
+      — y qué persona — hay detrás de cada adjudicación. Cubrimos actualmente la
+      Región de Murcia y la provincia de Girona, con más territorios en camino.
+    </p>
+  </div>
+  <div class="adv-search" id="adv-search">
+    <div class="as-tabs">
+      <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
+      <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
+      <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
+    </div>
+    <div class="as-row">
+      <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off" autofocus>
+      <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
+    </div>
+    <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda España · mínimo 2 caracteres.</div>
+    <div id="as-results"></div>
+  </div>
+  {stats}
+  <div class="section-title">🏆 Liderando ahora mismo · Ranking Nacional</div>
+  <div class="top1-grid">{top1_html}</div>
+  <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
+  <div class="section-title">Cobertura por región</div>
+  <div class="region-grid">{region_cards}</div>
+  <script>window.__PROVINCIA__ = "";</script>
+  <script>{_ADV_SEARCH_JS}</script>"""
+
+    return _page_shell("Dinero Público | Contratación pública en España", body,
+                        description="Consulta los contratos públicos adjudicados en España con los "
+                                     "directivos de las empresas adjudicatarias. Cubrimos actualmente "
+                                     "la Región de Murcia y la provincia de Girona.",
+                        provincia="todas")
 
 
 def render_landing_html(datos, provincia="murcia"):
@@ -3400,26 +3569,56 @@ def _error_resp(msg, code=500):
 
 def _route_get(path, qs, gzip_ok=False):
     if path == "/":
-        provincia = _provincia_valida(qs.get("provincia", ["murcia"])[0])
-        with _datos_lock:
-            datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia]
+        # Cualquier ?provincia= que no sea una provincia real (ausente,
+        # vacio, "todas" o un valor invalido) se trata como "sin filtro":
+        # esa es la nueva home nacional agregada, por defecto. Solo
+        # provincia=murcia|girona explicito activa el filtro clasico de la
+        # Fase 4 (bookmarks/enlaces existentes siguen funcionando igual).
+        provincia_qs_raw = qs.get("provincia", [""])[0]
+        provincia_filtro = _provincia_o_todas(provincia_qs_raw)
         muni_filter = qs.get("muni", [""])[0].strip()
         q = qs.get("q", [""])[0].strip()
+
         if muni_filter:
+            provincia = provincia_filtro
+            if provincia == "todas":
+                # averiguar a que provincia pertenece el municipio para que
+                # /?muni=Olot funcione sin necesidad de &provincia=girona
+                with _datos_lock:
+                    match = next((d for d in _datos_memoria
+                                  if normalizar(d.get("municipio", "")) == normalizar(muni_filter)), None)
+                provincia = match.get("provincia", "murcia") if match else "murcia"
+            with _datos_lock:
+                datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia]
             try:
                 page = max(1, int(qs.get("pag", ["1"])[0]))
             except ValueError:
                 page = 1
             return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page, provincia=provincia), gzip_ok=gzip_ok)
+
         if q:
-            return _resp(render_busqueda_global_html(datos_snap, q, provincia=provincia), gzip_ok=gzip_ok)
-        return _resp(render_landing_html(datos_snap, provincia=provincia), gzip_ok=gzip_ok)
+            with _datos_lock:
+                if provincia_filtro == "todas":
+                    datos_snap = list(_datos_memoria)
+                else:
+                    datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia_filtro]
+            return _resp(render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro), gzip_ok=gzip_ok)
+
+        if provincia_filtro == "todas":
+            with _datos_lock:
+                datos_todas = list(_datos_memoria)
+            return _resp(render_landing_nacional_html(datos_todas), gzip_ok=gzip_ok)
+
+        with _datos_lock:
+            datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia_filtro]
+        return _resp(render_landing_html(datos_snap, provincia=provincia_filtro), gzip_ok=gzip_ok)
 
     if path == "/rankings":
-        provincia = _provincia_valida(qs.get("provincia", ["murcia"])[0])
+        provincia_prov = _provincia_valida(qs.get("provincia", ["murcia"])[0])
         with _datos_lock:
-            datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia]
-        return _resp(render_rankings_html(datos_snap, provincia=provincia), gzip_ok=gzip_ok)
+            datos_nacional = list(_datos_memoria)
+            datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
+        return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov), gzip_ok=gzip_ok)
 
     if path == "/quienes-somos":
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
@@ -3471,9 +3670,12 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/api/buscar":
         tipo = qs.get("tipo", ["empresa"])[0]
         q = qs.get("q", [""])[0]
-        provincia = _provincia_valida(qs.get("provincia", ["murcia"])[0])
+        provincia_param = qs.get("provincia", [""])[0]
         with _datos_lock:
-            datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia]
+            if provincia_param in MUNICIPIOS_POR_PROVINCIA:
+                datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia_param]
+            else:
+                datos_snap = list(_datos_memoria)   # "" o "todas" -> sin filtro, busca en toda España
         resultado = api_buscar(tipo, q, datos_snap)
         return _resp(json.dumps(resultado, ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
