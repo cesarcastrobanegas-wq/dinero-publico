@@ -108,6 +108,13 @@ def _db_init():
             _db.execute("ALTER TABLE directores ADD COLUMN intentos INTEGER DEFAULT 0")
         except sqlite3.OperationalError:
             pass  # ya existe (migración ya aplicada en un arranque anterior)
+        try:
+            # SQLite aplica el DEFAULT a las filas ya existentes al añadir la
+            # columna, así que todo lo cargado antes de Girona queda como
+            # 'murcia' sin necesidad de migrar datos a mano.
+            _db.execute("ALTER TABLE municipios ADD COLUMN provincia TEXT DEFAULT 'murcia'")
+        except sqlite3.OperationalError:
+            pass  # ya existe
         _db.commit()
     _migrar_json_a_sqlite()
 
@@ -153,32 +160,47 @@ def _cargar_datos_json():
     return []
 
 
-def _db_set_municipio(municipio, resultado):
+def _db_set_municipio(municipio, resultado, provincia="murcia"):
     key = normalizar(municipio)
+    # Mutar el dict del caller in-place (NO una copia): resultado suele ser el
+    # mismo objeto que ya vive en _datos_memoria, así que si copiáramos aquí
+    # la provincia nunca llegaría a esa copia en memoria -- y el hilo de
+    # enriquecimiento (_guardar_datos_sin_lock, que sí lee d.get("provincia"))
+    # la volvería a pisar a "murcia" en su siguiente checkpoint. Confirmado
+    # con un test dirigido durante la Fase 4.
+    resultado["provincia"] = provincia
     with _db_lock:
         _db.execute(
-            "INSERT INTO municipios (municipio, data, ts) VALUES (?,?,?) "
-            "ON CONFLICT(municipio) DO UPDATE SET data=excluded.data, ts=excluded.ts",
-            (key, json.dumps(resultado, ensure_ascii=False), resultado.get("timestamp", time.time())),
+            "INSERT INTO municipios (municipio, data, ts, provincia) VALUES (?,?,?,?) "
+            "ON CONFLICT(municipio) DO UPDATE SET data=excluded.data, ts=excluded.ts, provincia=excluded.provincia",
+            (key, json.dumps(resultado, ensure_ascii=False), resultado.get("timestamp", time.time()), provincia),
         )
         _db.commit()
 
 
-def _db_all_municipios():
+def _db_all_municipios(provincia=None):
     with _db_lock:
-        rows = _db.execute("SELECT data FROM municipios").fetchall()
+        if provincia:
+            rows = _db.execute("SELECT data, provincia FROM municipios WHERE provincia=?", (provincia,)).fetchall()
+        else:
+            rows = _db.execute("SELECT data, provincia FROM municipios").fetchall()
     out = []
-    for (data,) in rows:
+    for data, prov in rows:
         try:
-            out.append(json.loads(data))
+            d = json.loads(data)
+            d.setdefault("provincia", prov or "murcia")  # filas antiguas sin el campo en el JSON
+            out.append(d)
         except Exception:
             pass
     return out
 
 
-def _db_clear_municipios():
+def _db_clear_municipios(provincia=None):
     with _db_lock:
-        _db.execute("DELETE FROM municipios")
+        if provincia:
+            _db.execute("DELETE FROM municipios WHERE provincia=?", (provincia,))
+        else:
+            _db.execute("DELETE FROM municipios")
         _db.commit()
 
 
@@ -283,6 +305,165 @@ MUNICIPIOS_PLACE_IDS = {
     "Villanueva del Río Segura": "4336",
 }
 
+# ─── PROVINCIA DE GIRONA (Fase 1 — módulo PSCP, no usado aún por las rutas) ──
+# Los 221 municipios oficiales (Idescat) y su codi_ine10 (10 dígitos) en el
+# dataset de contractació pública de Catalunya, para poder filtrar la
+# consulta a PSCP por municipio exacto (en vez de buscar por texto libre
+# como se hace en PLACE/BORM).
+MUNICIPIOS_GIRONA = [
+    "Agullana", "Aiguaviva", "Albanyà", "Albons", "Alp", "Amer", "Anglès",
+    "Arbúcies", "Argelaguer", "Armentera, l'", "Avinyonet de Puigventós",
+    "Banyoles", "Begur", "Bellcaire d'Empordà", "Besalú", "Bescanó", "Beuda",
+    "Bisbal d'Empordà, la", "Biure", "Blanes", "Boadella i les Escaules",
+    "Bolvir", "Bordils", "Borrassà", "Breda", "Brunyola i Sant Martí Sapresa",
+    "Bàscara", "Cabanelles", "Cabanes", "Cadaqués", "Caldes de Malavella",
+    "Calonge i Sant Antoni", "Campdevànol", "Campelles", "Campllong",
+    "Camprodon", "Camós", "Canet d'Adri", "Cantallops", "Capmany",
+    "Cassà de la Selva", "Castell d'Aro, Platja d'Aro i s'Agaró",
+    "Castellfollit de la Roca", "Castelló d'Empúries", "Cellera de Ter, la",
+    "Celrà", "Cervià de Ter", "Cistella", "Colera", "Colomers",
+    "Cornellà del Terri", "Corçà", "Crespià",
+    "Cruïlles, Monells i Sant Sadurní de l'Heura", "Darnius", "Das",
+    "Escala, l'", "Espinelves", "Espolla", "Esponellà", "Far d'Empordà, el",
+    "Figueres", "Flaçà", "Foixà", "Fontanals de Cerdanya", "Fontanilles",
+    "Fontcoberta", "Forallac", "Fornells de la Selva", "Fortià",
+    "Garrigoles", "Garriguella", "Garrigàs", "Ger", "Girona", "Gombrèn",
+    "Gualta", "Guils de Cerdanya", "Hostalric", "Isòvol", "Jafre",
+    "Jonquera, la", "Juià", "Lladó", "Llagostera", "Llambilles", "Llanars",
+    "Llançà", "Llers", "Lloret de Mar", "Llosses, les", "Llívia",
+    "Madremanya", "Maià de Montcal", "Masarac i Vilarnadal", "Massanes",
+    "Maçanet de Cabrenys", "Maçanet de la Selva", "Meranges", "Mieres",
+    "Mollet de Peralada", "Molló", "Mont-ras", "Montagut i Oix", "Navata",
+    "Ogassa", "Olot", "Ordis", "Osor", "Palafrugell", "Palamós",
+    "Palau de Santa Eulàlia", "Palau-sator", "Palau-saverdera",
+    "Palol de Revardit", "Pals", "Pardines", "Parlavà", "Pau",
+    "Pedret i Marzà", "Pera, la", "Peralada", "Planes d'Hostoles, les",
+    "Planoles", "Pont de Molins", "Pontós", "Porqueres",
+    "Port de la Selva, el", "Portbou", "Preses, les", "Puigcerdà", "Quart",
+    "Queralbs", "Rabós", "Regencós", "Ribes de Freser", "Riells i Viabrea",
+    "Ripoll", "Riudarenes", "Riudaura", "Riudellots de la Selva", "Riumors",
+    "Roses", "Rupià", "Sales de Llierca", "Salt", "Sant Andreu Salou",
+    "Sant Aniol de Finestres", "Sant Climent Sescebes",
+    "Sant Feliu de Buixalleu", "Sant Feliu de Guíxols",
+    "Sant Feliu de Pallerols", "Sant Ferriol", "Sant Gregori",
+    "Sant Hilari Sacalm", "Sant Jaume de Llierca", "Sant Joan de Mollet",
+    "Sant Joan de les Abadesses", "Sant Joan les Fonts",
+    "Sant Jordi Desvalls", "Sant Julià de Ramis",
+    "Sant Julià del Llor i Bonmatí", "Sant Llorenç de la Muga",
+    "Sant Martí Vell", "Sant Martí de Llémena", "Sant Miquel de Campmajor",
+    "Sant Miquel de Fluvià", "Sant Mori", "Sant Pau de Segúries",
+    "Sant Pere Pescador", "Santa Coloma de Farners", "Santa Cristina d'Aro",
+    "Santa Llogaia d'Àlguema", "Santa Pau", "Sarrià de Ter",
+    "Saus, Camallera i Llampaies", "Selva de Mar, la", "Serinyà",
+    "Serra de Daró", "Setcases", "Sils", "Siurana", "Susqueda",
+    "Tallada d'Empordà, la", "Terrades", "Torrent", "Torroella de Fluvià",
+    "Torroella de Montgrí", "Tortellà", "Toses", "Tossa de Mar", "Ullastret",
+    "Ullà", "Ultramort", "Urús", "Vajol, la", "Vall d'en Bas, la",
+    "Vall de Bianya, la", "Vall-llobrega", "Vallfogona de Ripollès",
+    "Ventalló", "Verges", "Vidreres", "Vidrà", "Vila-sacra", "Vilabertran",
+    "Vilablareix", "Viladamat", "Viladasens", "Vilademuls", "Viladrau",
+    "Vilafant", "Vilajuïga", "Vilallonga de Ter", "Vilamacolum", "Vilamalla",
+    "Vilamaniscle", "Vilanant", "Vilaür", "Vilobí d'Onyar", "Vilopriu",
+]
+
+# nombre de municipio -> codi_ine10 (10 dígitos) del Ajuntament en el dataset
+# PSCP. Construido cruzando el listado oficial de Idescat con el dataset
+# ybgg-dgi6 (ver backend/diag_pscp_build_municipios.py); validado 221/221
+# sin ambigüedad.
+MUNICIPIOS_GIRONA_INE = {
+    "Agullana": "1700100000", "Aiguaviva": "1700250006", "Albanyà": "1700310007",
+    "Albons": "1700460009", "Alp": "1700620002", "Amer": "1700780001",
+    "Anglès": "1700840003", "Arbúcies": "1700970005", "Argelaguer": "1701010007",
+    "Armentera, l'": "1701180001", "Avinyonet de Puigventós": "1701230008",
+    "Banyoles": "1701570005", "Begur": "1701390004", "Bellcaire d'Empordà": "1701820002",
+    "Besalú": "1701950006", "Bescanó": "1702090004", "Beuda": "1702160009",
+    "Bisbal d'Empordà, la": "1702210007", "Biure": "1723480001", "Blanes": "1702370005",
+    "Boadella i les Escaules": "1702930008", "Bolvir": "1702420002", "Bordils": "1702550006",
+    "Borrassà": "1702680001", "Breda": "1702740003",
+    "Brunyola i Sant Martí Sapresa": "1702800000", "Bàscara": "1701600000",
+    "Cabanelles": "1703140003", "Cabanes": "1703070005", "Cadaqués": "1703290004",
+    "Caldes de Malavella": "1703350006", "Calonge i Sant Antoni": "1703400000",
+    "Campdevànol": "1703660009", "Campelles": "1703720002", "Campllong": "1703880001",
+    "Camprodon": "1703910007", "Camós": "1703530008", "Canet d'Adri": "1704050006",
+    "Cantallops": "1704120002", "Capmany": "1704270005", "Cassà de la Selva": "1704480001",
+    "Castell d'Aro, Platja d'Aro i s'Agaró": "1704860009",
+    "Castellfollit de la Roca": "1704640003", "Castelló d'Empúries": "1704700000",
+    "Cellera de Ter, la": "1718990004", "Celrà": "1704990004", "Cervià de Ter": "1705020002",
+    "Cistella": "1705190004", "Colera": "1705450006", "Colomers": "1705580001",
+    "Cornellà del Terri": "1705610007", "Corçà": "1705770005", "Crespià": "1705830008",
+    "Cruïlles, Monells i Sant Sadurní de l'Heura": "1790110007", "Darnius": "1706000000",
+    "Das": "1706170005", "Escala, l'": "1706220002", "Espinelves": "1706380001",
+    "Espolla": "1706430008", "Esponellà": "1706560009", "Far d'Empordà, el": "1700590004",
+    "Figueres": "1706690004", "Flaçà": "1706750006", "Foixà": "1706810007",
+    "Fontanals de Cerdanya": "1706940003", "Fontanilles": "1707080001",
+    "Fontcoberta": "1707150006", "Forallac": "1790260009",
+    "Fornells de la Selva": "1707360009", "Fortià": "1707410007", "Garrigoles": "1707670005",
+    "Garriguella": "1707730008", "Garrigàs": "1707540003", "Ger": "1707890004",
+    "Girona": "1707920002", "Gombrèn": "1708060009", "Gualta": "1708130008",
+    "Guils de Cerdanya": "1708280001", "Hostalric": "1708340003", "Isòvol": "1708490004",
+    "Jafre": "1708520002", "Jonquera, la": "1708650006", "Juià": "1708710007",
+    "Lladó": "1708870005", "Llagostera": "1708900000", "Llambilles": "1709040003",
+    "Llanars": "1709110007", "Llançà": "1709260009", "Llers": "1709320002",
+    "Lloret de Mar": "1709500000", "Llosses, les": "1709630008", "Llívia": "1709470005",
+    "Madremanya": "1709790004", "Maià de Montcal": "1709850006",
+    "Masarac i Vilarnadal": "1710020002", "Massanes": "1710190004",
+    "Maçanet de Cabrenys": "1710240003", "Maçanet de la Selva": "1710300000",
+    "Meranges": "1709980001", "Mieres": "1710580001", "Mollet de Peralada": "1710610007",
+    "Molló": "1710770005", "Mont-ras": "1711000000", "Montagut i Oix": "1710960009",
+    "Navata": "1711170005", "Ogassa": "1711220002", "Olot": "1711430008",
+    "Ordis": "1711560009", "Osor": "1711690004", "Palafrugell": "1711750006",
+    "Palamós": "1711810007", "Palau de Santa Eulàlia": "1711940003",
+    "Palau-sator": "1712150006", "Palau-saverdera": "1712080001",
+    "Palol de Revardit": "1712360009", "Pals": "1712410007", "Pardines": "1712540003",
+    "Parlavà": "1712670005", "Pau": "1712890004", "Pedret i Marzà": "1712920002",
+    "Pera, la": "1713060009", "Peralada": "1713280001",
+    "Planes d'Hostoles, les": "1713340003", "Planoles": "1713490004",
+    "Pont de Molins": "1713520002", "Pontós": "1713650006", "Porqueres": "1713710007",
+    "Port de la Selva, el": "1714040003", "Portbou": "1713870005", "Preses, les": "1713900000",
+    "Puigcerdà": "1714110007", "Quart": "1714260009", "Queralbs": "1704330008",
+    "Rabós": "1714320002", "Regencós": "1714470005", "Ribes de Freser": "1714500000",
+    "Riells i Viabrea": "1714630008", "Ripoll": "1714790004", "Riudarenes": "1714850006",
+    "Riudaura": "1714980001", "Riudellots de la Selva": "1715010007",
+    "Riumors": "1715180001", "Roses": "1715230008", "Rupià": "1715390004",
+    "Sales de Llierca": "1715440003", "Salt": "1715570005",
+    "Sant Andreu Salou": "1715760009", "Sant Aniol de Finestres": "1718330008",
+    "Sant Climent Sescebes": "1715820002", "Sant Feliu de Buixalleu": "1715950006",
+    "Sant Feliu de Guíxols": "1716090004", "Sant Feliu de Pallerols": "1716160009",
+    "Sant Ferriol": "1716210007", "Sant Gregori": "1716370005",
+    "Sant Hilari Sacalm": "1716420002", "Sant Jaume de Llierca": "1716550006",
+    "Sant Joan de Mollet": "1716800000", "Sant Joan de les Abadesses": "1716740003",
+    "Sant Joan les Fonts": "1718510007", "Sant Jordi Desvalls": "1716680001",
+    "Sant Julià de Ramis": "1716930008", "Sant Julià del Llor i Bonmatí": "1790320002",
+    "Sant Llorenç de la Muga": "1717140003", "Sant Martí Vell": "1717350006",
+    "Sant Martí de Llémena": "1717290004", "Sant Miquel de Campmajor": "1717400000",
+    "Sant Miquel de Fluvià": "1717530008", "Sant Mori": "1717660009",
+    "Sant Pau de Segúries": "1717720002", "Sant Pere Pescador": "1717880001",
+    "Santa Coloma de Farners": "1718050006", "Santa Cristina d'Aro": "1718120002",
+    "Santa Llogaia d'Àlguema": "1718270005", "Santa Pau": "1718480001",
+    "Sarrià de Ter": "1718640003", "Saus, Camallera i Llampaies": "1718700000",
+    "Selva de Mar, la": "1718860009", "Serinyà": "1719030008", "Serra de Daró": "1719100000",
+    "Setcases": "1719250006", "Sils": "1719310007", "Siurana": "1705240003",
+    "Susqueda": "1719460009", "Tallada d'Empordà, la": "1719590004",
+    "Terrades": "1719620002", "Torrent": "1719780001", "Torroella de Fluvià": "1719840003",
+    "Torroella de Montgrí": "1719970005", "Tortellà": "1720010007", "Toses": "1720180001",
+    "Tossa de Mar": "1720230008", "Ullastret": "1720570005", "Ullà": "1720440003",
+    "Ultramort": "1720390004", "Urús": "1720600000", "Vajol, la": "1701440003",
+    "Vall d'en Bas, la": "1720760009", "Vall de Bianya, la": "1720820002",
+    "Vall-llobrega": "1720950006", "Vallfogona de Ripollès": "1717070005",
+    "Ventalló": "1721090004", "Verges": "1721160009", "Vidreres": "1721370005",
+    "Vidrà": "1721210007", "Vila-sacra": "1723050006", "Vilabertran": "1721420002",
+    "Vilablareix": "1721550006", "Viladamat": "1721740003", "Viladasens": "1721680001",
+    "Vilademuls": "1721800000", "Viladrau": "1722070005", "Vilafant": "1722140003",
+    "Vilajuïga": "1722350006", "Vilallonga de Ter": "1722400000",
+    "Vilamacolum": "1722530008", "Vilamalla": "1722660009", "Vilamaniscle": "1722720002",
+    "Vilanant": "1722880001", "Vilaür": "1722290004", "Vilobí d'Onyar": "1723330008",
+    "Vilopriu": "1723270005",
+}
+
+PSCP_URL = "https://analisi.transparenciacatalunya.cat/resource/ybgg-dgi6.json"
+PSCP_FASES = "'Adjudicació','Formalització'"
+
+
 def place_profile_url(municipio):
     pid = MUNICIPIOS_PLACE_IDS.get(municipio)
     if pid:
@@ -294,7 +475,8 @@ def place_profile_url(municipio):
 
 def normalizar(s):
     s = (s or "").lower().strip()
-    for a, b in {"á":"a","é":"e","í":"i","ó":"o","ú":"u","ü":"u","ñ":"n"}.items():
+    for a, b in {"á":"a","é":"e","í":"i","ó":"o","ú":"u","ü":"u","ñ":"n",
+                 "à":"a","è":"e","ò":"o","ï":"i","ç":"c"}.items():  # también vocales/ç catalanas (Girona)
         s = s.replace(a, b)
     return re.sub(r"\s+", " ", s)
 
@@ -307,6 +489,27 @@ def municipio_valido(txt):
         if normalizar(m) == buscado:
             return m
     return None
+
+def municipio_valido_girona(txt):
+    buscado = normalizar(txt)
+    for m in MUNICIPIOS_GIRONA:
+        if normalizar(m) == buscado:
+            return m
+    return None
+
+# ─── PROVINCIA (Fase 4 — rutas/UI transversales) ─────────────────────────────
+MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GIRONA}
+PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona"}
+
+def _provincia_valida(txt):
+    """Normaliza el parámetro ?provincia= de la querystring: cualquier valor
+    desconocido (o ausente) cae a 'murcia', el comportamiento de siempre."""
+    return txt if txt in MUNICIPIOS_POR_PROVINCIA else "murcia"
+
+def municipio_valido_provincia(municipio, provincia):
+    if provincia == "girona":
+        return municipio_valido_girona(municipio)
+    return municipio_valido(municipio)
 
 def fmt_eur(valor_str):
     try:
@@ -938,6 +1141,116 @@ def buscar_en_borm(municipio, job_id=None):
     return contratos
 
 
+# ─── PSCP — Plataforma de Serveis de Contractació Pública de Catalunya ──────
+# (provincia de Girona). Fuente: dades obertes de la Generalitat, dataset
+# "ybgg-dgi6" (Socrata/SODA API, sin autenticación). A diferencia de PLACE
+# (ATOM) o BORM (HTML), la fila ya trae empresa/NIF/importe como columnas
+# planas — no hace falta resolver ningún JSON de detalle. Ver diagnóstico en
+# backend/diag_pscp_*.py.
+
+_PSCP_FASE_A_ESTADO = {"Formalització": "FOR", "Adjudicació": "ADJ"}
+_PSCP_FASE_PRIORIDAD = {"Formalització": 2, "Adjudicació": 1}
+
+
+def _fila_pscp_a_contrato(fila):
+    """Convierte una fila del dataset PSCP al mismo formato de contrato que
+    usan PLACE y BORM."""
+    nif = (fila.get("identificacio_adjudicatari") or "").strip()
+    empresa = (fila.get("denominacio_adjudicatari") or "").strip()
+
+    # NIF enmascarado (p.ej. "*** 0336 **") = adjudicatario persona física:
+    # no tiene Registro Mercantil que cruzar, igual que "No localizada" en
+    # Murcia — se deja así para que no se intente buscar directivo.
+    if not empresa or "*" in nif:
+        empresa, nif = "No localizada", ""
+
+    importe_num = 0.0
+    for campo in ("import_adjudicacio_amb_iva", "import_adjudicacio_sense"):
+        try:
+            v = fila.get(campo)
+            if v not in (None, ""):
+                importe_num = float(v)
+                break
+        except (TypeError, ValueError):
+            pass
+
+    enllac = fila.get("enllac_publicacio")
+    url = enllac.get("url", "") if isinstance(enllac, dict) else (enllac or "")
+
+    titulo = fila.get("denominacio", "") or fila.get("objecte_contracte", "") or ""
+
+    return {
+        "titulo":        titulo[:200],
+        "organo":        fila.get("nom_organ", ""),
+        "empresa":       empresa,
+        "nif":           nif,
+        "importe":       fmt_eur(str(importe_num)) if importe_num else "No localizado",
+        "importe_num":   importe_num,
+        "estado":        _PSCP_FASE_A_ESTADO.get(fila.get("fase_publicacio", ""), "ADJ"),
+        "licitacion_id": fila.get("codi_expedient", ""),
+        "url":           url,
+        "fuente":        "PSCP",
+        "directivo":     "",
+        "cargo":         "",
+    }
+
+
+def _dedup_pscp_fases(filas):
+    """El mismo lote pasa por fase Adjudicació y luego Formalització, así que
+    el dataset publica una fila por cada una. Nos quedamos con la más
+    avanzada (Formalització) para no contar el mismo contrato dos veces."""
+    mejores = {}
+    for f in filas:
+        clave = (f.get("codi_expedient", ""), f.get("numero_lot", ""),
+                 f.get("identificacio_adjudicatari", ""))
+        actual = mejores.get(clave)
+        if actual is None or (_PSCP_FASE_PRIORIDAD.get(f.get("fase_publicacio"), 0)
+                               > _PSCP_FASE_PRIORIDAD.get(actual.get("fase_publicacio"), 0)):
+            mejores[clave] = f
+    return list(mejores.values())
+
+
+def buscar_en_pscp(municipio, job_id=None):
+    """Busca contratos adjudicados/formalizados del Ajuntament del municipio
+    dado en la Plataforma de Serveis de Contractació Pública de Catalunya
+    (vía el espejo de dades obertes, dataset ybgg-dgi6)."""
+    ine10 = MUNICIPIOS_GIRONA_INE.get(municipio, "")
+    if not ine10:
+        _log(job_id, f"  PSCP: municipio sin codi_ine10 mapeado ({municipio})")
+        return []
+
+    _log(job_id, "Consultando PSCP (Plataforma de contractació pública de Catalunya)…")
+    filas = []
+    limit, offset = 1000, 0
+    while True:
+        try:
+            r = session.get(PSCP_URL, params={
+                "$where": f"codi_ine10='{ine10}' AND fase_publicacio in ({PSCP_FASES})",
+                "$order": "codi_expedient",
+                "$limit": limit,
+                "$offset": offset,
+            }, timeout=HTTP_TIMEOUT * 4)  # SODA puede tardar más que PLACE/BORM
+            if r.status_code != 200:
+                _log(job_id, f"  PSCP: HTTP {r.status_code}")
+                break
+            pagina = r.json()
+        except Exception as e:
+            _log(job_id, f"  PSCP no disponible ({type(e).__name__})")
+            break
+
+        if not pagina:
+            break
+        filas += pagina
+        if len(pagina) < limit:
+            break
+        offset += limit
+
+    filas = _dedup_pscp_fases(filas)
+    contratos = [_fila_pscp_a_contrato(f) for f in filas]
+    _log(job_id, f"  PSCP: {len(contratos)} contratos encontrados")
+    return contratos
+
+
 # ─── DIRECTIVOS (empresia/BORME via BOE) ────────────────────────────────────
 
 def _extraer_texto(html_text):
@@ -1517,60 +1830,64 @@ def _log(job_id, msg):
                 _jobs[job_id].setdefault("log", []).append(msg)
 
 
-def _job_run(job_id, municipio):
+def _job_run(job_id, municipio, provincia="murcia"):
     try:
         _log(job_id, f"Iniciando búsqueda de contratos para {municipio}…")
-        contratos = []
 
-        # 1. Feed en vivo
-        _log(job_id, "Consultando feed en vivo de PLACE…")
-        vivos = buscar_en_feed_vivo(municipio)
-        contratos += vivos
-        _log(job_id, f"  Feed en vivo: {len(vivos)} contratos")
+        if provincia == "girona":
+            contratos = buscar_en_pscp(municipio, job_id)
+        else:
+            contratos = []
 
-        # 2. Construir lista de ZIPs: los 2 más recientes + todos los ya cacheados
-        _zips_vistos = set()
-        zips = []   # lista de (anomes, zip_path)
+            # 1. Feed en vivo
+            _log(job_id, "Consultando feed en vivo de PLACE…")
+            vivos = buscar_en_feed_vivo(municipio)
+            contratos += vivos
+            _log(job_id, f"  Feed en vivo: {len(vivos)} contratos")
 
-        def _add_zip(am):
-            if am in _zips_vistos:
-                return
-            _zips_vistos.add(am)
-            p = descargar_zip_place(am, job_id)
-            if p:
-                try:        # descartar archivos vacíos / inválidos
-                    import zipfile as _zf
-                    with _zf.ZipFile(p) as _z:
-                        pass
-                    zips.append((am, p))
-                except Exception:
-                    _log(job_id, f"  ZIP {am}: archivo inválido, ignorado")
+            # 2. Construir lista de ZIPs: los 2 más recientes + todos los ya cacheados
+            _zips_vistos = set()
+            zips = []   # lista de (anomes, zip_path)
 
-        # Descargar los 2 más recientes si faltan
-        _add_zip(_anomes_actual())
-        _add_zip(_anomes_anterior())
+            def _add_zip(am):
+                if am in _zips_vistos:
+                    return
+                _zips_vistos.add(am)
+                p = descargar_zip_place(am, job_id)
+                if p:
+                    try:        # descartar archivos vacíos / inválidos
+                        import zipfile as _zf
+                        with _zf.ZipFile(p) as _z:
+                            pass
+                        zips.append((am, p))
+                    except Exception:
+                        _log(job_id, f"  ZIP {am}: archivo inválido, ignorado")
 
-        # Sumar los que ya estén en caché (en orden descendente = más recientes primero)
-        for _fname in sorted(os.listdir(CACHE_DIR), reverse=True):
-            if _fname.startswith("place_") and _fname.endswith(".zip"):
-                _am = _fname[len("place_"):][:6]   # "place_202503.zip" → "202503"
-                _add_zip(_am)
+            # Descargar los 2 más recientes si faltan
+            _add_zip(_anomes_actual())
+            _add_zip(_anomes_anterior())
 
-        _log(job_id, f"Procesando {len(zips)} ZIPs en paralelo (BORM simultáneo)…")
+            # Sumar los que ya estén en caché (en orden descendente = más recientes primero)
+            for _fname in sorted(os.listdir(CACHE_DIR), reverse=True):
+                if _fname.startswith("place_") and _fname.endswith(".zip"):
+                    _am = _fname[len("place_"):][:6]   # "place_202503.zip" → "202503"
+                    _add_zip(_am)
 
-        with ThreadPoolExecutor(max_workers=4) as ex:
-            futs = {ex.submit(buscar_en_zip, zp, municipio, job_id): ("ZIP", am)
-                    for am, zp in zips}
-            borm_fut = HTTP_POOL.submit(buscar_en_borm, municipio, job_id)
-            futs[borm_fut] = ("BORM", "")
-            for fut in as_completed(futs):
-                tipo, etiqueta = futs[fut]
-                nuevos = fut.result()
-                contratos += nuevos
-                if tipo == "ZIP":
-                    _log(job_id, f"  ZIP {etiqueta}: {len(nuevos)} contratos")
-                else:
-                    _log(job_id, f"  BORM: {len(nuevos)} contratos adicionales")
+            _log(job_id, f"Procesando {len(zips)} ZIPs en paralelo (BORM simultáneo)…")
+
+            with ThreadPoolExecutor(max_workers=4) as ex:
+                futs = {ex.submit(buscar_en_zip, zp, municipio, job_id): ("ZIP", am)
+                        for am, zp in zips}
+                borm_fut = HTTP_POOL.submit(buscar_en_borm, municipio, job_id)
+                futs[borm_fut] = ("BORM", "")
+                for fut in as_completed(futs):
+                    tipo, etiqueta = futs[fut]
+                    nuevos = fut.result()
+                    contratos += nuevos
+                    if tipo == "ZIP":
+                        _log(job_id, f"  ZIP {etiqueta}: {len(nuevos)} contratos")
+                    else:
+                        _log(job_id, f"  BORM: {len(nuevos)} contratos adicionales")
 
         # Deduplicar por URL (dentro de la misma fuente) — PLACE y BORM pueden tener URLs distintas para el mismo contrato
         vistos = set()
@@ -1582,8 +1899,9 @@ def _job_run(job_id, municipio):
                 unicos.append(c)
         contratos = unicos
 
-        # Enriquecer contratos PLACE con el link al BORM cuando existe uno equivalente
-        _enlazar_borm_place(contratos)
+        if provincia != "girona":
+            # Enriquecer contratos PLACE con el link al BORM cuando existe uno equivalente
+            _enlazar_borm_place(contratos)
         _log(job_id, f"Total contratos únicos: {len(contratos)}")
 
         # Directivos — todas las empresas únicas identificadas
@@ -1619,13 +1937,15 @@ def _job_run(job_id, municipio):
         # Análisis de riesgo
         alertas = analizar_riesgo(contratos)
 
+        organismo = f"Ajuntament de {municipio}" if provincia == "girona" else f"Ayuntamiento de {municipio}"
         resultado = {
             "municipio":       municipio,
-            "organismo":       f"Ayuntamiento de {municipio}",
+            "organismo":       organismo,
             "total_contratos": len(contratos),
             "contratos":       contratos,
             "alertas":         alertas,
-            "place_profile":   place_profile_url(municipio),
+            # PSCP no tiene perfil de contratante equivalente al de PLACE (ver Fase 3)
+            "place_profile":   "" if provincia == "girona" else place_profile_url(municipio),
             "timestamp":       time.time(),
         }
 
@@ -1634,7 +1954,7 @@ def _job_run(job_id, municipio):
         with _datos_lock:
             _datos_memoria[:] = [d for d in _datos_memoria if normalizar(d.get("municipio", "")) != normalizar(municipio)]
             _datos_memoria.append(resultado)
-        _db_set_municipio(municipio, resultado)
+        _db_set_municipio(municipio, resultado, provincia=provincia)
 
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
@@ -1649,18 +1969,20 @@ def _job_run(job_id, municipio):
             _jobs[job_id]["error"] = str(e)
 
 
-def _actualizar_todos_bg(job_id):
+def _actualizar_todos_bg(job_id, provincia="murcia"):
     """
-    Hilo de fondo: refresca secuencialmente los 45 municipios de la Región de
-    Murcia (invalida caché + relanza _job_run para cada uno, con una pausa
-    entre municipios para no saturar PLACE/BORM). Pensado para dispararse
-    desde un disparador externo (cron) vía POST /actualizar-todos.
+    Hilo de fondo: refresca secuencialmente todos los municipios de la
+    provincia dada (invalida caché + relanza _job_run para cada uno, con una
+    pausa entre municipios para no saturar la fuente). Pensado para
+    dispararse desde un disparador externo (cron) vía POST /actualizar-todos.
 
     Mientras corre, la web sigue sirviendo los datos anteriores con
     normalidad: _job_run solo sustituye la entrada de _datos_memoria del
     municipio que esté procesando en ese momento, bajo _datos_lock, así que
     nunca hay un estado a medias visible para quien esté navegando.
     """
+    municipios = MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)
+
     if not _actualizando_todos_lock.acquire(blocking=False):
         with _jobs_lock:
             _jobs[job_id] = {"status": "error", "log": [],
@@ -1670,19 +1992,19 @@ def _actualizar_todos_bg(job_id):
     try:
         with _jobs_lock:
             _jobs[job_id] = {"status": "running", "log": [], "error": None,
-                              "total_municipios": len(MUNICIPIOS_MURCIA), "procesados": 0}
-        print(f"  [actualizar-todos] Iniciando refresco de {len(MUNICIPIOS_MURCIA)} municipios…", flush=True)
+                              "total_municipios": len(municipios), "procesados": 0}
+        print(f"  [actualizar-todos:{provincia}] Iniciando refresco de {len(municipios)} municipios…", flush=True)
 
-        for idx, municipio in enumerate(MUNICIPIOS_MURCIA, 1):
-            print(f"  [actualizar-todos] [{idx}/{len(MUNICIPIOS_MURCIA)}] {municipio}", flush=True)
+        for idx, municipio in enumerate(municipios, 1):
+            print(f"  [actualizar-todos:{provincia}] [{idx}/{len(municipios)}] {municipio}", flush=True)
             sub_job_id = f"{job_id}-{idx}"
             with _jobs_lock:
                 _jobs[sub_job_id] = {"status": "running", "log": [], "error": None}
             try:
                 _cache_invalidate(municipio)
-                _job_run(sub_job_id, municipio)
+                _job_run(sub_job_id, municipio, provincia=provincia)
             except Exception as e:
-                print(f"  [actualizar-todos] Error en {municipio}: {e}", flush=True)
+                print(f"  [actualizar-todos:{provincia}] Error en {municipio}: {e}", flush=True)
             finally:
                 with _jobs_lock:
                     _jobs.pop(sub_job_id, None)
@@ -1693,7 +2015,7 @@ def _actualizar_todos_bg(job_id):
         with _jobs_lock:
             if job_id in _jobs:
                 _jobs[job_id]["status"] = "done"
-        print("  [actualizar-todos] Refresco completo terminado.", flush=True)
+        print(f"  [actualizar-todos:{provincia}] Refresco completo terminado.", flush=True)
 
     finally:
         _actualizando_todos_lock.release()
@@ -1724,7 +2046,11 @@ def _guardar_datos_sin_lock():
     for d in _datos_memoria:
         muni = d.get("municipio", "")
         if muni:
-            _db_set_municipio(muni, d)
+            # Propagar la provincia del propio dict -- si no, el hilo de
+            # enriquecimiento (que recorre TODOS los municipios en memoria,
+            # de cualquier provincia) pisaría silenciosamente a "murcia" el
+            # valor de cualquier municipio de Girona que reguarde de paso.
+            _db_set_municipio(muni, d, provincia=d.get("provincia", "murcia"))
 
 
 def _limpiar_cache_negativos():
@@ -1857,6 +2183,13 @@ header h1{overflow-wrap:break-word;}
 .logo-svg svg{width:160px;height:auto;display:block;}
 header h1{font-size:15px;font-weight:600;}
 header p{font-size:12px;color:var(--dim);margin-top:2px;}
+.header-nav{flex-shrink:0;display:flex;align-items:center;gap:10px;}
+.header-nav>a{display:inline-flex;text-decoration:none;padding:8px 16px;border-radius:6px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);font-size:13px;font-weight:600;white-space:nowrap;}
+.header-nav>a:hover{background:rgba(240,136,62,.22);}
+.prov-switch{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.prov-tab{text-decoration:none;padding:8px 14px;font-size:13px;font-weight:600;color:var(--dim);background:var(--bg);white-space:nowrap;}
+.prov-tab:hover{color:var(--text);}
+.prov-tab.active{background:var(--accent);color:#000;}
 .main{max-width:1340px;margin:28px auto;padding:0 20px;}
 .search-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:24px;}
 .search-bar label{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--dim);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
@@ -1902,6 +2235,12 @@ a.borm-link{color:#e0a0ff;font-size:11px;}
 .fuente-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 5px;border-radius:3px;vertical-align:middle;margin-left:4px;}
 .fuente-place{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);}
 .fuente-borm{background:rgba(224,160,255,.15);color:#e0a0ff;border:1px solid rgba(224,160,255,.3);}
+.fuente-pscp{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);}
+a.pscp-link{color:var(--green);}
+.rk-pos{font-size:16px;text-align:center;width:44px;}
+.rk-empresa{color:var(--text);font-weight:600;text-decoration:none;}
+.rk-empresa:hover{color:var(--accent);text-decoration:underline;}
+.rk-valor{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
 </style>
 """
 
@@ -2013,6 +2352,7 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
   header h1{font-size:13px;}
   header p{font-size:10px;}
   .logo-svg svg{width:96px;}
+  .header-nav a{padding:7px 10px;font-size:11px;}
   .main{padding:0 12px;margin:18px auto;max-width:100%;}
   .hero{padding:22px 6px 4px;}
   .hero-tagline{font-size:16px;}
@@ -2041,7 +2381,13 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 """
 
 
-def spinner_page(job_id, municipio):
+def spinner_page(job_id, municipio, provincia="murcia"):
+    es_girona = provincia == "girona"
+    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
+    fuente_txt = ("Datos oficiales: PSCP (Generalitat de Catalunya)" if es_girona else
+                  "Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)")
+    fuente_corta = "PSCP" if es_girona else "PLACE (Ministerio de Hacienda) y BORM"
+    redirect_url = f"/?muni={quote_plus(municipio)}" + ("&provincia=girona" if es_girona else "")
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Buscando — {esc(municipio)}</title>
@@ -2049,14 +2395,14 @@ def spinner_page(job_id, municipio):
 <body>
 <header>
   <div class="logo">DINERO&nbsp;PÚBLICO</div>
-  <div><h1>Contratos Públicos · Región de Murcia</h1>
-  <p>Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)</p></div>
+  <div><h1>Contratos Públicos · {esc(label)}</h1>
+  <p>{esc(fuente_txt)}</p></div>
 </header>
 <div class="main">
   <div class="sp-wrap">
     <div class="sp-ring" id="ring"></div>
     <div class="sp-label">Analizando contratos de <strong>{esc(municipio)}</strong><br>
-    Descargando datos de PLACE (Ministerio de Hacienda) y BORM…</div>
+    Descargando datos de {esc(fuente_corta)}…</div>
     <div class="sp-log" id="log">Iniciando…</div>
     <div class="err-box" id="err"><span id="errmsg"></span><a href="/">← Volver</a></div>
   </div>
@@ -2070,7 +2416,7 @@ async function poll(){{
     const d=await r.json();
     if(d.log&&d.log.length)logEl.innerHTML=d.log.map(l=>`<div>${{l}}</div>`).join("");
     logEl.scrollTop=logEl.scrollHeight;
-    if(d.status==="done"){{window.location.href="/";return;}}
+    if(d.status==="done"){{window.location.href="{redirect_url}";return;}}
     if(d.status==="error"){{
       document.getElementById("ring").style.display="none";
       document.getElementById("errmsg").textContent="Error: "+(d.error||"desconocido");
@@ -2282,7 +2628,8 @@ _ADV_SEARCH_JS = r"""
     var mySeq = ++seq;
     results.innerHTML = '';
     results.appendChild(el('div', 'as-loading', 'Buscando…'));
-    fetch('/api/buscar?tipo=' + encodeURIComponent(tipo) + '&q=' + encodeURIComponent(q))
+    fetch('/api/buscar?tipo=' + encodeURIComponent(tipo) + '&q=' + encodeURIComponent(q) +
+          '&provincia=' + encodeURIComponent(window.__PROVINCIA__ || 'murcia'))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (mySeq !== seq) return; // respuesta obsoleta, ya se lanzó otra búsqueda
@@ -2335,26 +2682,43 @@ def _ad_banner_html():
             '</div>')
 
 
-def _header_html():
+def _header_html(provincia="murcia"):
+    es_girona = provincia == "girona"
+    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
+    rankings_href = "/rankings?provincia=girona" if es_girona else "/rankings"
     return f"""<header>
   <a href="/" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
     <div class="logo-svg">{LOGO_SVG}</div>
     <div>
-      <h1 style="color:var(--text)">Contratos Públicos · Región de Murcia</h1>
+      <h1 style="color:var(--text)">Contratos Públicos · {esc(label)}</h1>
       <p>{esc(SITE_TAGLINE)}</p>
     </div>
   </a>
+  <nav class="header-nav">
+    <div class="prov-switch">
+      <a href="/" class="prov-tab{' active' if not es_girona else ''}">Murcia</a>
+      <a href="/?provincia=girona" class="prov-tab{' active' if es_girona else ''}">Girona</a>
+    </div>
+    <a href="{rankings_href}">🏆 Rankings</a>
+  </nav>
 </header>"""
 
 
-def _footer_html():
+def _footer_html(provincia="murcia"):
+    es_girona = provincia == "girona"
+    fuente_links = (
+        '<a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>'
+        if es_girona else
+        '<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>\n'
+        '    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>'
+    )
     return f"""<footer class="site-footer">
-  <div class="ft-brand">© Dinero Público — datos oficiales públicos, Región de Murcia</div>
+  <div class="ft-brand">© Dinero Público — datos oficiales públicos, {esc(PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"]))}</div>
   <div class="ft-links">
-    <a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>
-    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>
+    {fuente_links}
     <a href="https://www.boe.es/" target="_blank" rel="noopener">BOE</a>
     <a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener">Registro Mercantil</a>
+    <a href="{'/rankings?provincia=girona' if es_girona else '/rankings'}">Rankings</a>
     <a href="/aviso-legal">Aviso Legal</a>
     <a href="/quienes-somos">Quiénes Somos</a>
     <span class="ft-sep">|</span>
@@ -2367,7 +2731,7 @@ def _footer_html():
 </footer>"""
 
 
-def _page_shell(title, body_html, description="", extra_head=""):
+def _page_shell(title, body_html, description="", extra_head="", provincia="murcia"):
     full_title = title if "|" in title else f"{title} | Dinero Público"
     desc = esc(description or "Consulta los contratos públicos de los 45 municipios de la "
                                "Región de Murcia con los directivos de las empresas adjudicatarias. "
@@ -2394,12 +2758,12 @@ def _page_shell(title, body_html, description="", extra_head=""):
 <link rel="stylesheet" href="/static/style.css">
 {extra_head}</head>
 <body>
-{_header_html()}
+{_header_html(provincia)}
 <div class="main">
 {_ad_banner_html()}
 {body_html}
 </div>
-{_footer_html()}
+{_footer_html(provincia)}
 </body></html>"""
 
 
@@ -2438,6 +2802,9 @@ def _render_fila_contrato(c, municipio_label=None):
                      f'title="Ver HTML en BORM">HTML ↗</a>') if borm_html_url else ""
         link_html = (f'<a class="link borm-link" href="{esc(url)}" target="_blank" '
                      f'title="Ver PDF en BORM">BORM PDF ↗</a>{html_link}')
+    elif fuente == "PSCP" and url:
+        link_html = (f'<a class="link pscp-link" href="{esc(url)}" target="_blank" '
+                     f'title="Fitxa a contractaciopublica.cat">PSCP ↗</a>')
     elif url:
         link_html = f'<a class="link" href="{esc(url)}" target="_blank" title="Ficha en PLACE">PLACE ↗</a>'
     else:
@@ -2450,10 +2817,10 @@ def _render_fila_contrato(c, municipio_label=None):
     lid = c.get("licitacion_id", "")
     lid_html = f'<div class="lid">Licit. {esc(lid)}</div>' if lid else ""
 
-    fuente_badge = (
-        f'<span class="fuente-badge fuente-borm">BORM</span>' if fuente == "BORM" else
-        f'<span class="fuente-badge fuente-place">PLACE</span>'
-    )
+    fuente_badge = {
+        "BORM": '<span class="fuente-badge fuente-borm">BORM</span>',
+        "PSCP": '<span class="fuente-badge fuente-pscp">PSCP</span>',
+    }.get(fuente, '<span class="fuente-badge fuente-place">PLACE</span>')
 
     muni_html = (f'<div class="lid" style="margin-top:2px">📍 {esc(municipio_label)}</div>'
                  if municipio_label else "")
@@ -2476,7 +2843,90 @@ def _render_fila_contrato(c, municipio_label=None):
     </tr>"""
 
 
-def render_html(datos, muni_filter="", page=1):
+def _calcular_rankings(datos):
+    """Agrupa todos los contratos cargados por empresa y devuelve dos listas
+    Top 10: por número de contratos y por importe total adjudicado. Cada
+    entrada incluye el directivo/cargo identificado (el primero que se
+    encuentre para esa empresa), si lo tenemos."""
+    por_empresa = {}
+    for d in datos:
+        for c in d.get("contratos", []):
+            emp = c.get("empresa", "")
+            if not emp or emp == "No localizada":
+                continue
+            key = normalizar(emp)
+            g = por_empresa.setdefault(key, {
+                "empresa": emp, "n": 0, "importe": 0.0,
+                "directivo": "", "cargo": "",
+            })
+            g["n"] += 1
+            g["importe"] += c.get("importe_num", 0.0) or 0.0
+            if not g["directivo"] and c.get("directivo"):
+                g["directivo"] = c.get("directivo")
+                g["cargo"] = c.get("cargo", "")
+
+    lista = list(por_empresa.values())
+    top_n = sorted(lista, key=lambda g: g["n"], reverse=True)[:10]
+    top_imp = sorted(lista, key=lambda g: g["importe"], reverse=True)[:10]
+    return top_n, top_imp
+
+
+def render_rankings_html(datos, provincia="murcia"):
+    top_n, top_imp = _calcular_rankings(datos)
+    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
+    q_prov = "&provincia=girona" if provincia == "girona" else ""
+
+    def _filas(lista, valor_html):
+        filas = ""
+        for i, g in enumerate(lista, 1):
+            pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
+            if g["directivo"]:
+                dir_html = (f'<div class="directivo">{esc(g["directivo"])}</div>'
+                            f'<div class="cargo">{esc(g["cargo"])}</div>')
+            else:
+                dir_html = '<span class="noloc-warn">⚠️ No localizado</span>'
+            emp_q = quote_plus(g["empresa"])
+            filas += f"""<tr>
+              <td class="rk-pos">{pos}</td>
+              <td><a class="rk-empresa" href="/?q={emp_q}{q_prov}">{esc(g['empresa'])}</a></td>
+              <td class="rk-valor">{valor_html(g)}</td>
+              <td>{dir_html}</td>
+            </tr>"""
+        if not filas:
+            filas = '<tr><td colspan="4" class="empty">Aún no hay datos suficientes.</td></tr>'
+        return filas
+
+    tabla_n = _filas(top_n, lambda g: f'<b>{g["n"]}</b> contratos')
+    tabla_imp = _filas(top_imp, lambda g: fmt_eur(str(g["importe"])))
+
+    body = f"""<span class="back-link"><a href="/{'?provincia=girona' if provincia == 'girona' else ''}">← Volver al inicio</a></span>
+  <div class="hero" style="padding-bottom:4px">
+    <div class="hero-tagline">🏆 Rankings · Top 10 empresas</div>
+    <p class="hero-sub">
+      Clasificación de las empresas adjudicatarias con más contratos y mayor importe acumulado
+      en los datos ya cargados de {esc(label)}, con su directivo identificado cuando lo tenemos.
+    </p>
+  </div>
+  <div class="section-title">Top 10 por número de contratos adjudicados</div>
+  <div class="muni-card"><table>
+    <tr><th>#</th><th>Empresa</th><th>Contratos</th><th>Directivo / Cargo</th></tr>
+    {tabla_n}
+  </table></div>
+  <div class="section-title">Top 10 por importe total adjudicado</div>
+  <div class="muni-card"><table>
+    <tr><th>#</th><th>Empresa</th><th>Importe total</th><th>Directivo / Cargo</th></tr>
+    {tabla_imp}
+  </table></div>"""
+
+    return _page_shell("Rankings — Top 10 empresas", body,
+                        description=f"Ranking de las empresas con más contratos públicos y mayor importe "
+                                     f"adjudicado en {label}, con sus directivos identificados.",
+                        provincia=provincia)
+
+
+def render_html(datos, muni_filter="", page=1, provincia="murcia"):
+    q_prov = "&provincia=girona" if provincia == "girona" else ""
+    q_prov_first = "?provincia=girona" if provincia == "girona" else ""
     if muni_filter:
         datos = [d for d in datos if normalizar(d.get("municipio", "")) == normalizar(muni_filter)]
 
@@ -2501,7 +2951,7 @@ def render_html(datos, muni_filter="", page=1):
           <div class="stat"><span>{fmt_eur(str(total_imp))}</span>Importe total</div>
         </div>"""
 
-    back_html = '<span class="back-link"><a href="/">← Ver todos los municipios</a></span>'
+    back_html = f'<span class="back-link"><a href="/{q_prov_first}">← Ver todos los municipios</a></span>'
 
     cards = ""
     for d in datos:
@@ -2521,18 +2971,25 @@ def render_html(datos, muni_filter="", page=1):
         filas = "".join(_render_fila_contrato(c) for c in contratos_shown)
 
         if not filas:
-            filas = '<tr><td colspan="4" class="empty">Sin contratos adjudicados encontrados en PLACE ni BORM para este municipio</td></tr>'
+            filas = '<tr><td colspan="4" class="empty">Sin contratos adjudicados encontrados para este municipio</td></tr>'
 
         n_place = sum(1 for c in contratos_all if c.get("fuente", "PLACE") == "PLACE")
         n_borm  = sum(1 for c in contratos_all if c.get("fuente") == "BORM")
+        n_pscp  = sum(1 for c in contratos_all if c.get("fuente") == "PSCP")
         fuentes_desc = []
         if n_place: fuentes_desc.append(f"PLACE: {n_place}")
         if n_borm:  fuentes_desc.append(f"BORM: {n_borm}")
+        if n_pscp:  fuentes_desc.append(f"PSCP: {n_pscp}")
         fuentes_str = " · ".join(fuentes_desc) if fuentes_desc else "—"
+        fuentes_label = ("Fuente: PSCP (Generalitat de Catalunya)" if provincia == "girona" else
+                          "Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia)")
 
         muni_name     = muni_name_d
         muni_enc      = quote_plus(muni_name)
-        profile_url   = d.get("place_profile", place_profile_url(muni_name))
+        profile_url   = d.get("place_profile", "" if provincia == "girona" else place_profile_url(muni_name))
+        profile_html  = (f'<a href="{esc(profile_url)}" target="_blank" class="link" '
+                          f'title="Perfil contratante en PLACE" style="font-size:11px">Perfil PLACE ↗</a>'
+                          if profile_url else "")
         age_str       = _cache_age_str(muni_name)
         ts            = d.get("timestamp", 0)
         if not age_str and ts:
@@ -2545,9 +3002,9 @@ def render_html(datos, muni_filter="", page=1):
         pag_html = ""
         if total_muni > PAGE_SIZE:
             if is_paged:
-                prev_link = (f'<a href="/?muni={muni_enc}&pag={page-1}" class="pag-btn">← Anterior</a>'
+                prev_link = (f'<a href="/?muni={muni_enc}&pag={page-1}{q_prov}" class="pag-btn">← Anterior</a>'
                              if page > 1 else '')
-                next_link = (f'<a href="/?muni={muni_enc}&pag={page+1}" class="pag-btn">Siguiente →</a>'
+                next_link = (f'<a href="/?muni={muni_enc}&pag={page+1}{q_prov}" class="pag-btn">Siguiente →</a>'
                              if page < total_pages else '')
                 pag_html = (f'<div class="pagination">'
                             f'<span class="pag-info">Página {page} de {total_pages} · {total_muni} contratos</span>'
@@ -2555,21 +3012,22 @@ def render_html(datos, muni_filter="", page=1):
                             f'</div>')
             else:
                 pag_html = (f'<div class="pag-more">Mostrando los primeros {PAGE_SIZE} de {total_muni} contratos. '
-                            f'<a href="/?muni={muni_enc}&pag=1">Ver todos →</a></div>')
+                            f'<a href="/?muni={muni_enc}&pag=1{q_prov}">Ver todos →</a></div>')
 
         cards += f"""<div class="muni-card">
           <div class="muni-header">
             <h2>🏛 {esc(muni_name)}</h2>
             <div style="display:flex;gap:8px;align-items:center;">
-              <a href="{esc(profile_url)}" target="_blank" class="link" title="Perfil contratante en PLACE" style="font-size:11px">Perfil PLACE ↗</a>
+              {profile_html}
               <form method="POST" action="/actualizar" style="display:inline">
                 <input type="hidden" name="municipio" value="{esc(muni_name)}">
+                <input type="hidden" name="provincia" value="{esc(provincia)}">
                 <button type="submit" class="btn" style="padding:3px 10px;font-size:11px;background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);">↻ Actualizar</button>
               </form>
               <span class="badge">{d.get('total_contratos', 0)} contratos</span>
             </div>
           </div>
-          <div class="source-bar">Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia) · {fuentes_str}{age_html}</div>
+          <div class="source-bar">{esc(fuentes_label)} · {fuentes_str}{age_html}</div>
           {alertas_html}
           <table>
             <tr>
@@ -2586,11 +3044,13 @@ def render_html(datos, muni_filter="", page=1):
     if not cards:
         cards = '<div class="empty">Municipio no encontrado.</div>'
 
+    ejemplo_muni = "Olot, Figueres, Girona, Blanes…" if provincia == "girona" else "Lorca, Murcia, Cartagena, Archena…"
     body = f"""{back_html}
   <div class="search-bar">
     <label>Municipio</label>
     <form method="POST" action="/buscar" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
-      <input name="municipio" placeholder="Ej: Lorca, Murcia, Cartagena, Archena…" required>
+      <input name="municipio" placeholder="Ej: {ejemplo_muni}" required>
+      <input type="hidden" name="provincia" value="{esc(provincia)}">
       <button type="submit" class="btn btn-primary">Buscar contratos</button>
     </form>
   </div>
@@ -2598,16 +3058,22 @@ def render_html(datos, muni_filter="", page=1):
   {cards}"""
 
     muni_display = datos[0].get("municipio", "") if datos else muni_filter
+    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
+    fuente_desc = "PSCP" if provincia == "girona" else "PLACE"
     titulo = f"Contratos públicos de {muni_display}" if muni_display else "Contratos Públicos"
-    descripcion = (f"Contratos públicos adjudicados en {muni_display} (Región de Murcia): "
+    descripcion = (f"Contratos públicos adjudicados en {muni_display} ({label}): "
                    f"empresa adjudicataria, importe y directivo/administrador. "
-                   f"Datos oficiales PLACE + Registro Mercantil.") if muni_display else ""
-    return _page_shell(titulo, body, description=descripcion)
+                   f"Datos oficiales {fuente_desc} + Registro Mercantil.") if muni_display else ""
+    return _page_shell(titulo, body, description=descripcion, provincia=provincia)
 
 
-def render_landing_html(datos):
+def render_landing_html(datos, provincia="murcia"):
     """Página de inicio: no carga ningún municipio, muestra stats globales,
-    buscador global y el grid de los 45 municipios."""
+    buscador global y el grid de municipios de la provincia seleccionada."""
+    es_girona = provincia == "girona"
+    municipios_lista = MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)
+    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
+    q_prov = "&provincia=girona" if es_girona else ""
     por_muni = {normalizar(d.get("municipio", "")): d for d in datos}
 
     total_m = len(datos)
@@ -2627,7 +3093,7 @@ def render_landing_html(datos):
     </div>"""
 
     tiles = ""
-    for muni in sorted(MUNICIPIOS_MURCIA, key=lambda m: normalizar(m)):
+    for muni in sorted(municipios_lista, key=lambda m: normalizar(m)):
         d = por_muni.get(normalizar(muni))
         n = d.get("total_contratos", 0) if d else 0
         imp = sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])) if d else 0.0
@@ -2636,15 +3102,22 @@ def render_landing_html(datos):
           <h3>🏛 {esc(muni)}</h3>
           <div class="mt-row"><span>Contratos</span><b>{n}</b></div>
           <div class="mt-imp">{fmt_eur(str(imp))}</div>
-          <a class="btn-ver" href="/?muni={muni_enc}">Ver contratos →</a>
+          <a class="btn-ver" href="/?muni={muni_enc}{q_prov}">Ver contratos →</a>
         </div>"""
+
+    hero_sub = (
+        f"Contratos públicos de los {len(municipios_lista)} municipios de la provincia de Girona, "
+        f"cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás "
+        f"de cada adjudicación."
+        if es_girona else
+        f"Contratos públicos de los {len(municipios_lista)} municipios de la Región de Murcia, "
+        f"cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás "
+        f"de cada adjudicación."
+    )
 
     body = f"""<div class="hero">
     <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
-    <p class="hero-sub">
-      Contratos públicos de los 45 municipios de la Región de Murcia, cruzados con el
-      Registro Mercantil para saber qué empresa — y qué persona — hay detrás de cada adjudicación.
-    </p>
+    <p class="hero-sub">{esc(hero_sub)}</p>
   </div>
   <div class="adv-search" id="adv-search">
     <div class="as-tabs">
@@ -2656,25 +3129,28 @@ def render_landing_html(datos):
       <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off" autofocus>
       <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
     </div>
-    <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda la región · mínimo 2 caracteres.</div>
+    <div class="gs-hint">Busca en los {total_c} contratos ya cargados de {esc(label)} · mínimo 2 caracteres.</div>
     <div id="as-results"></div>
   </div>
   {stats}
-  <div class="section-title">Municipios · Región de Murcia</div>
+  <div class="section-title">Municipios · {esc(label)}</div>
   <div class="muni-grid">{tiles}</div>
   <div class="search-bar" style="margin-top:24px">
     <label>¿No aparece o quieres forzar una actualización?</label>
     <form method="POST" action="/buscar" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
       <input name="municipio" placeholder="Nombre exacto del municipio…" required>
+      <input type="hidden" name="provincia" value="{esc(provincia)}">
       <button type="submit" class="btn btn-primary">Actualizar</button>
     </form>
   </div>
+  <script>window.__PROVINCIA__ = "{provincia}";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
 
-    return _page_shell("Dinero Público | Contratos públicos Región de Murcia", body,
-                        description="Consulta los contratos públicos de los 45 municipios de la "
-                                     "Región de Murcia con los directivos de las empresas "
-                                     "adjudicatarias. Datos oficiales PLACE + Registro Mercantil.")
+    return _page_shell(f"Dinero Público | Contratos públicos {label}", body,
+                        description=f"Consulta los contratos públicos de los {len(municipios_lista)} "
+                                     f"municipios de {label} con los directivos de las empresas "
+                                     f"adjudicatarias.",
+                        provincia=provincia)
 
 
 def _contrato_json(c, municipio):
@@ -2757,8 +3233,9 @@ def api_buscar(tipo, q, datos):
     return {"tipo": tipo, "query": q, "error": "Tipo de búsqueda no reconocido."}
 
 
-def render_busqueda_global_html(datos, q):
+def render_busqueda_global_html(datos, q, provincia="murcia"):
     """Resultados de la búsqueda global por empresa, directivo o municipio."""
+    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
     q_norm = normalizar(q)
     resultados = []
     for d in datos:
@@ -2785,17 +3262,20 @@ def render_busqueda_global_html(datos, q):
     else:
         tabla = '<div class="empty">Sin resultados para tu búsqueda.</div>'
 
-    body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
+    body = f"""<span class="back-link"><a href="/{'?provincia=girona' if provincia == 'girona' else ''}">← Volver al inicio</a></span>
   <div class="global-search">
     <form method="GET" action="/" class="gs-row">
       <input name="q" value="{esc(q)}" placeholder="Buscar por empresa, directivo o municipio…" autofocus>
+      <input type="hidden" name="provincia" value="{esc(provincia)}">
       <button type="submit" class="btn btn-primary">Buscar</button>
     </form>
     <div class="gs-hint">{len(resultados)} resultado{'s' if len(resultados) != 1 else ''} para "{esc(q)}"</div>
   </div>
   <div class="muni-card">{tabla}</div>"""
 
-    return _page_shell(f'Búsqueda: {q}', body, description=f'Resultados de "{q}" en contratos públicos de la Región de Murcia.')
+    return _page_shell(f'Búsqueda: {q}', body,
+                        description=f'Resultados de "{q}" en contratos públicos de {label}.',
+                        provincia=provincia)
 
 
 def render_quienes_somos_html():
@@ -2920,8 +3400,9 @@ def _error_resp(msg, code=500):
 
 def _route_get(path, qs, gzip_ok=False):
     if path == "/":
+        provincia = _provincia_valida(qs.get("provincia", ["murcia"])[0])
         with _datos_lock:
-            datos_snap = list(_datos_memoria)
+            datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia]
         muni_filter = qs.get("muni", [""])[0].strip()
         q = qs.get("q", [""])[0].strip()
         if muni_filter:
@@ -2929,10 +3410,16 @@ def _route_get(path, qs, gzip_ok=False):
                 page = max(1, int(qs.get("pag", ["1"])[0]))
             except ValueError:
                 page = 1
-            return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page), gzip_ok=gzip_ok)
+            return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page, provincia=provincia), gzip_ok=gzip_ok)
         if q:
-            return _resp(render_busqueda_global_html(datos_snap, q), gzip_ok=gzip_ok)
-        return _resp(render_landing_html(datos_snap), gzip_ok=gzip_ok)
+            return _resp(render_busqueda_global_html(datos_snap, q, provincia=provincia), gzip_ok=gzip_ok)
+        return _resp(render_landing_html(datos_snap, provincia=provincia), gzip_ok=gzip_ok)
+
+    if path == "/rankings":
+        provincia = _provincia_valida(qs.get("provincia", ["murcia"])[0])
+        with _datos_lock:
+            datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia]
+        return _resp(render_rankings_html(datos_snap, provincia=provincia), gzip_ok=gzip_ok)
 
     if path == "/quienes-somos":
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
@@ -2946,12 +3433,16 @@ def _route_get(path, qs, gzip_ok=False):
 
     if path == "/sitemap.xml":
         with _datos_lock:
-            munis = [d.get("municipio", "") for d in _datos_memoria]
+            entradas = [(d.get("municipio", ""), d.get("provincia", "murcia")) for d in _datos_memoria]
         urls = [f"  <url><loc>{esc(SITE_URL)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>",
+                f"  <url><loc>{esc(SITE_URL)}/?provincia=girona</loc><changefreq>daily</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/rankings</loc><changefreq>daily</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/rankings?provincia=girona</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quienes-somos</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>"]
-        for m in munis:
-            urls.append(f"  <url><loc>{esc(SITE_URL)}/?muni={quote_plus(m)}</loc><changefreq>daily</changefreq></url>")
+        for m, prov in entradas:
+            sufijo = "&provincia=girona" if prov == "girona" else ""
+            urls.append(f"  <url><loc>{esc(SITE_URL)}/?muni={quote_plus(m)}{sufijo}</loc><changefreq>daily</changefreq></url>")
         body = ('<?xml version="1.0" encoding="UTF-8"?>\n'
                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                 + "\n".join(urls) + "\n</urlset>\n")
@@ -2980,8 +3471,9 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/api/buscar":
         tipo = qs.get("tipo", ["empresa"])[0]
         q = qs.get("q", [""])[0]
+        provincia = _provincia_valida(qs.get("provincia", ["murcia"])[0])
         with _datos_lock:
-            datos_snap = list(_datos_memoria)
+            datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia]
         resultado = api_buscar(tipo, q, datos_snap)
         return _resp(json.dumps(resultado, ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
@@ -2994,9 +3486,12 @@ def _route_post(path, params):
         if path == "/buscar":
             municipio = params.get("municipio", [""])[0].strip()
             force     = params.get("force", [""])[0] == "1"
-            mun_ok = municipio_valido(municipio)
+            provincia = _provincia_valida(params.get("provincia", ["murcia"])[0])
+            mun_ok = municipio_valido_provincia(municipio, provincia)
             if not mun_ok:
-                return _error_resp("Municipio no válido o no pertenece a la Región de Murcia.", 400)
+                label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
+                return _error_resp(f"Municipio no válido o no pertenece a {label}.", 400)
+            redirect_url = "/" + ("?provincia=girona" if provincia == "girona" else "")
             # Servir desde caché si los datos son recientes (salvo si fuerza actualización)
             if not force:
                 cached = _cache_get(mun_ok)
@@ -3012,53 +3507,62 @@ def _route_post(path, params):
                                 cached = d
                             break
                 if cached:
-                    return _redirect_resp("/")
+                    return _redirect_resp(redirect_url)
             else:
                 _cache_invalidate(mun_ok)
             job_id = str(uuid.uuid4())
             with _jobs_lock:
                 _jobs[job_id] = {"status": "running", "log": [], "error": None}
-            threading.Thread(target=_job_run, args=(job_id, mun_ok), daemon=True).start()
-            return _resp(spinner_page(job_id, mun_ok))
+            threading.Thread(target=_job_run, args=(job_id, mun_ok, provincia), daemon=True).start()
+            return _resp(spinner_page(job_id, mun_ok, provincia=provincia))
 
         if path == "/vaciar":
-            # Borra TODOS los contratos ya scrapeados/enriquecidos. Ya no hay botón en
-            # la interfaz que apunte aquí, pero el endpoint sigue existiendo y el código
-            # es público — se exige ADMIN_TOKEN para evitar que cualquiera lo dispare
-            # directamente contra el sitio en producción.
+            # Borra contratos ya scrapeados/enriquecidos. Ya no hay botón en la
+            # interfaz que apunte aquí, pero el endpoint sigue existiendo y el
+            # código es público — se exige ADMIN_TOKEN para evitar que cualquiera
+            # lo dispare directamente contra el sitio en producción. Con
+            # provincia=girona|murcia borra solo esa provincia; sin el parámetro,
+            # borra todo (comportamiento de siempre).
             admin_token = os.environ.get("ADMIN_TOKEN", "")
             if not admin_token or params.get("token", [""])[0] != admin_token:
                 return _error_resp("No autorizado.", 403)
+            provincia_param = params.get("provincia", [""])[0]
+            provincia_filtro = provincia_param if provincia_param in MUNICIPIOS_POR_PROVINCIA else None
             with _datos_lock:
-                _datos_memoria.clear()
-                _db_clear_municipios()
+                if provincia_filtro:
+                    _datos_memoria[:] = [d for d in _datos_memoria if d.get("provincia", "murcia") != provincia_filtro]
+                else:
+                    _datos_memoria.clear()
+                _db_clear_municipios(provincia=provincia_filtro)
             with _cache_lock:
                 _result_cache.clear()
             return _redirect_resp("/")
 
         if path == "/actualizar":
             municipio = params.get("municipio", [""])[0].strip()
-            mun_ok = municipio_valido(municipio)
+            provincia = _provincia_valida(params.get("provincia", ["murcia"])[0])
+            mun_ok = municipio_valido_provincia(municipio, provincia)
             if not mun_ok:
-                return _redirect_resp("/")
+                return _redirect_resp("/" + ("?provincia=girona" if provincia == "girona" else ""))
             _cache_invalidate(mun_ok)
             job_id = str(uuid.uuid4())
             with _jobs_lock:
                 _jobs[job_id] = {"status": "running", "log": [], "error": None}
-            threading.Thread(target=_job_run, args=(job_id, mun_ok), daemon=True).start()
-            return _resp(spinner_page(job_id, mun_ok))
+            threading.Thread(target=_job_run, args=(job_id, mun_ok, provincia), daemon=True).start()
+            return _resp(spinner_page(job_id, mun_ok, provincia=provincia))
 
         if path == "/actualizar-todos":
-            # Refresca los 45 municipios de la región, uno a uno. Pensado para
-            # un disparador externo (GitHub Actions programado), no para la
-            # interfaz — de ahí el ADMIN_TOKEN (mismo patrón que /vaciar).
+            # Refresca todos los municipios de la provincia dada, uno a uno.
+            # Pensado para un disparador externo (GitHub Actions programado),
+            # no para la interfaz — de ahí el ADMIN_TOKEN (mismo patrón que /vaciar).
             admin_token = os.environ.get("ADMIN_TOKEN", "")
             if not admin_token or params.get("token", [""])[0] != admin_token:
                 return _error_resp("No autorizado.", 403)
+            provincia = _provincia_valida(params.get("provincia", ["murcia"])[0])
             job_id = str(uuid.uuid4())
-            threading.Thread(target=_actualizar_todos_bg, args=(job_id,), daemon=True).start()
-            body = json.dumps({"status": "started", "job_id": job_id,
-                                "total_municipios": len(MUNICIPIOS_MURCIA)})
+            threading.Thread(target=_actualizar_todos_bg, args=(job_id, provincia), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id, "provincia": provincia,
+                                "total_municipios": len(MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA))})
             return _resp(body, content_type="application/json; charset=utf-8")
 
         return 404, {"Content-Length": "0"}, b""
