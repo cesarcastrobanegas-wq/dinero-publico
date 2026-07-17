@@ -2185,8 +2185,8 @@ CSS = """
 html{overflow-x:hidden;}
 body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;overflow-x:hidden;}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10;}
-header a{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
-header a>div{min-width:0;}
+.header-brand{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
+.header-brand>div{min-width:0;}
 header h1{overflow-wrap:break-word;}
 .logo-svg{flex-shrink:0;line-height:0;}
 .logo-svg svg{width:160px;height:auto;display:block;}
@@ -2376,11 +2376,14 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 
 /* ── responsive ───────────────────────────────────────────────────────── */
 @media (max-width:700px){
-  header{padding:10px 14px;}
-  header h1{font-size:13px;}
-  header p{font-size:10px;}
+  header{padding:10px 14px;flex-wrap:wrap;row-gap:10px;}
+  .header-brand{flex:1 1 100%;}
+  header h1{font-size:15px;}
+  header p{font-size:11px;}
   .logo-svg svg{width:96px;}
-  .header-nav a{padding:7px 10px;font-size:11px;}
+  .header-nav{flex:1 1 100%;flex-wrap:wrap;justify-content:flex-start;}
+  .header-nav>a{padding:7px 10px;font-size:11px;}
+  .prov-tab{padding:7px 10px;font-size:11px;}
   .main{padding:0 12px;margin:18px auto;max-width:100%;}
   .hero{padding:22px 6px 4px;}
   .hero-tagline{font-size:16px;}
@@ -2716,7 +2719,7 @@ def _header_html(provincia="todas"):
     es_murcia = provincia == "murcia"
     rankings_href = "/rankings?provincia=girona" if es_girona else "/rankings"
     return f"""<header>
-  <a href="/" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
+  <a href="/" class="header-brand" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
     <div class="logo-svg">{LOGO_SVG}</div>
     <div>
       <h1 style="color:var(--text)">Dinero Público · Contratación pública en España</h1>
