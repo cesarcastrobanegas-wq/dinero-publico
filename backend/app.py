@@ -2395,6 +2395,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .muni-tile{padding:12px 14px;}
   .region-grid,.top1-grid{grid-template-columns:1fr;gap:10px;}
   .search-bar,.global-search,.adv-search{padding:14px 16px;}
+  .search-bar label{white-space:normal;flex:1 1 100%;}
   .search-bar .btn,.search-bar form,.global-search .gs-row,.as-row{width:100%;}
   .global-search input,.search-bar input,.as-row input{min-width:0;width:100%;}
   .as-row .btn{width:100%;}
