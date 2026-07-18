@@ -23,6 +23,7 @@ from bs4 import BeautifulSoup
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE  = os.path.join(BASE_DIR, "datos.json")
+ALCALDES_FILE = os.path.join(BASE_DIR, "alcaldes_concejales.json")
 CACHE_DIR  = os.path.join(BASE_DIR, "place_cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
@@ -158,6 +159,25 @@ def _cargar_datos_json():
         except Exception:
             pass
     return []
+
+
+def _cargar_alcaldes_concejales():
+    """Carga alcaldes_concejales.json (generado por actualizar_alcaldes.py a
+    partir del Ministerio de Política Territorial y Memoria Democrática).
+    Dato estático: no se recalcula en caliente, solo se refresca re-lanzando
+    ese script periódicamente."""
+    if os.path.exists(ALCALDES_FILE):
+        try:
+            with open(ALCALDES_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+                if isinstance(d, dict):
+                    return d.get("municipios", {})
+        except Exception:
+            pass
+    return {}
+
+
+ALCALDES_CONCEJALES = _cargar_alcaldes_concejales()
 
 
 def _db_set_municipio(municipio, resultado, provincia="murcia"):
@@ -482,6 +502,57 @@ def normalizar(s):
 
 def esc(s):
     return html.escape(str(s or ""), quote=True)
+
+
+def _capitalizar_nombre(s):
+    """Los nombres del Ministerio vienen en mayúsculas (NOMBRE APELLIDO1
+    APELLIDO2); formato legible tipo 'Nombre Apellido'."""
+    return " ".join(p.capitalize() for p in (s or "").split())
+
+
+def alcalde_concejales_html(municipio):
+    """Bloque HTML de alcalde/alcaldesa + desplegable de concejales para la
+    ficha de un ayuntamiento, a partir de ALCALDES_CONCEJALES (Ministerio de
+    Política Territorial y Memoria Democrática, ver actualizar_alcaldes.py).
+    Cada concejal enlaza a una búsqueda de la transparencia de su
+    ayuntamiento (no hay una fuente pública con la URL directa de cada uno
+    de los 266 municipios). Devuelve "" si no hay datos para el municipio."""
+    info = ALCALDES_CONCEJALES.get(normalizar(municipio))
+    if not info:
+        return ""
+
+    alcalde = info.get("alcalde") or {}
+    nombre_alcalde = _capitalizar_nombre(alcalde.get("nombre", ""))
+    alcalde_html = ""
+    if nombre_alcalde:
+        partido_alcalde = alcalde.get("partido", "")
+        sufijo = f" ({esc(partido_alcalde)})" if partido_alcalde else ""
+        alcalde_html = f'<span class="alcalde-info">👤 Alcalde/sa: <b>{esc(nombre_alcalde)}</b>{sufijo}</span>'
+
+    concejales = info.get("concejales") or []
+    organismo = f"Ajuntament de {municipio}" if info.get("provincia") == "girona" else f"Ayuntamiento de {municipio}"
+    transp_url = f"https://www.google.com/search?q={quote_plus(organismo + ' transparencia')}"
+
+    items = []
+    for c in concejales:
+        nombre_c = esc(_capitalizar_nombre(c.get("nombre", "")))
+        cargo_c = esc(c.get("cargo", ""))
+        partido_c = c.get("partido", "")
+        sufijo_c = f" ({esc(partido_c)})" if partido_c else ""
+        items.append(
+            f'<li><a href="{esc(transp_url)}" target="_blank" rel="noopener">{nombre_c}</a> '
+            f'<span class="conc-cargo">— {cargo_c}{sufijo_c}</span></li>'
+        )
+
+    dd_html = ""
+    if concejales:
+        dd_html = (f'<details class="concejales-dd"><summary>Concejales ({len(concejales)})</summary>'
+                   f'<ul>{"".join(items)}</ul></details>')
+
+    if not alcalde_html and not dd_html:
+        return ""
+    return f'<div class="alcalde-block">{alcalde_html}{dd_html}</div>'
+
 
 def municipio_valido(txt):
     buscado = normalizar(txt)
@@ -1167,6 +1238,22 @@ def _fila_pscp_a_contrato(fila):
     nif = (fila.get("identificacio_adjudicatari") or "").strip()
     empresa = (fila.get("denominacio_adjudicatari") or "").strip()
 
+    # UTEs (uniones temporales de empresas): PSCP publica todas las
+    # empresas del consorcio en un único campo separadas por "||" (p.ej.
+    # "TELEFÓNICA DE ESPAÑA SAU||ORANGE ESPAGNE SA"). Sin partir esto, el
+    # texto conjunto (razones sociales y NIF pegados) no casa con ninguna
+    # fuente de directivos. Usamos la primera empresa del consorcio como
+    # entidad principal para el matching y guardamos el resto solo para
+    # mostrarlo (ute_socios no participa en la búsqueda de directivo).
+    ute_socios = []
+    if "||" in empresa:
+        empresas_ute = [e.strip() for e in empresa.split("||") if e.strip()]
+        nifs_ute = [n.strip() for n in nif.split("||") if n.strip()]
+        if empresas_ute:
+            empresa = empresas_ute[0]
+            nif = nifs_ute[0] if nifs_ute else ""
+            ute_socios = empresas_ute[1:]
+
     # NIF enmascarado (p.ej. "*** 0336 **") = adjudicatario persona física:
     # no tiene Registro Mercantil que cruzar, igual que "No localizada" en
     # Murcia — se deja así para que no se intente buscar directivo.
@@ -1193,6 +1280,7 @@ def _fila_pscp_a_contrato(fila):
         "organo":        fila.get("nom_organ", ""),
         "empresa":       empresa,
         "nif":           nif,
+        "ute_socios":    ute_socios,
         "importe":       fmt_eur(str(importe_num)) if importe_num else "No localizado",
         "importe_num":   importe_num,
         "estado":        _PSCP_FASE_A_ESTADO.get(fila.get("fase_publicacio", ""), "ADJ"),
@@ -1644,17 +1732,24 @@ def buscar_directivo_borme_anuncios(empresa, nif=""):
     return "", ""
 
 
-_ddg_bloqueado = False  # circuit-breaker: DuckDuckGo puede exigir captcha si detecta tráfico de bot
+_ddg_bloqueado_hasta = 0.0  # circuit-breaker temporal (epoch): DuckDuckGo puede
+# exigir captcha si detecta tráfico de bot. Antes era un booleano permanente
+# para toda la sesión -- en la tirada de Girona (175 min, 221 municipios) un
+# captcha en el municipio 2 desactivó esta fuente para el resto de la tirada
+# completa. Ahora se reactiva sola pasado el cooldown, para no perder la
+# fuente 4 durante horas por un único bloqueo puntual.
+DDG_COOLDOWN = 15 * 60  # 15 minutos
 
 def buscar_directivo_web(empresa, nif=""):
     """
     Fuente 4 (último recurso): búsqueda de texto en DuckDuckGo (Google bloquea el
     scraping directo) restringida a portales mercantiles conocidos, extrayendo el
     cargo/nombre del snippet o, si no aparece, de la primera ficha enlazada.
-    Se desactiva sola para el resto de la sesión si DDG responde con un captcha.
+    Si DDG responde con un captcha, se desactiva temporalmente (DDG_COOLDOWN)
+    en vez de para el resto de la sesión.
     """
-    global _ddg_bloqueado
-    if not empresa or empresa == "No localizada" or _ddg_bloqueado:
+    global _ddg_bloqueado_hasta
+    if not empresa or empresa == "No localizada" or time.time() < _ddg_bloqueado_hasta:
         return "", ""
     query = (
         f'"{empresa}" administrador OR gerente OR apoderado OR autónomo '
@@ -1668,8 +1763,8 @@ def buscar_directivo_web(empresa, nif=""):
             timeout=DIRECTIVOS_TIMEOUT,
         )
         if r.status_code == 202 or "Select all squares" in r.text:
-            _ddg_bloqueado = True
-            print("  [web] DuckDuckGo pide captcha — fuente desactivada para esta sesión.", flush=True)
+            _ddg_bloqueado_hasta = time.time() + DDG_COOLDOWN
+            print(f"  [web] DuckDuckGo pide captcha — fuente desactivada {DDG_COOLDOWN // 60} min.", flush=True)
             return "", ""
         if r.status_code != 200:
             return "", ""
@@ -2220,8 +2315,16 @@ header p{font-size:12px;color:var(--dim);margin-top:2px;}
 .alerta-titulo{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;opacity:.7;}
 /* cards municipio */
 .muni-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
-.muni-header{padding:12px 18px;background:rgba(240,136,62,.08);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.muni-header{padding:12px 18px;background:rgba(240,136,62,.08);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
 .muni-header h2{font-size:14px;font-weight:600;color:var(--accent);}
+.alcalde-info{display:block;font-size:11px;color:var(--dim);margin-top:4px;}
+.concejales-dd{margin-top:4px;font-size:11px;}
+.concejales-dd summary{cursor:pointer;color:var(--dim);}
+.concejales-dd summary:hover{color:var(--accent);}
+.concejales-dd ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;}
+.concejales-dd a{color:var(--blue);text-decoration:none;}
+.concejales-dd a:hover{text-decoration:underline;}
+.conc-cargo{color:var(--dim);}
 .badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);}
 .source-bar{padding:5px 18px;font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -2230,6 +2333,7 @@ td{padding:9px 14px;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:top
 tr:last-child td{border-bottom:none;}
 .empresa{font-weight:600;}
 .contrato-title{font-size:11px;color:var(--dim);margin-top:3px;}
+.ute-nota{font-size:10px;color:var(--dim);font-weight:normal;}
 .importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
 .importe.noloc{color:var(--dim);font-style:italic;font-weight:normal;}
 .directivo{color:var(--blue);}
@@ -2402,7 +2506,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .as-tab{flex:1 1 auto;text-align:center;padding:8px 6px;}
   table{font-size:12px;display:block;overflow-x:auto;white-space:nowrap;}
   th,td{padding:7px 8px;}
-  .contrato-title{display:none;}
+  .contrato-title{white-space:normal;}
   .site-footer{flex-direction:column;align-items:flex-start;max-width:100%;}
   .site-footer .ft-links{gap:10px 14px;}
   .static-page{padding:22px 18px;}
@@ -2499,6 +2603,24 @@ SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
 SITE_TAGLINE = "El dinero de todos, en manos de quién"
 
 REGISTRO_MERCANTIL_URL = "https://www.registradores.org/actualidad/portal-notarial/registro-mercantil-en-linea"
+REGISTRO_ASOCIACIONES_URL = "https://www.interior.gob.es/opencms/es/servicios-al-ciudadano/tramites-y-gestiones/asociaciones/consulta-del-fichero-de-denominaciones/"
+REGISTRO_COOPERATIVAS_URL = "https://www.mites.gob.es/es/sec_trabajo/autonomos/economia-social/Regsociedades/index.htm"
+
+
+def _registro_correcto(nif):
+    """El Registro Mercantil no es el registro correcto para todos los NIF:
+    las asociaciones (letra G) se inscriben en el Registro Nacional de
+    Asociaciones y las cooperativas (letra F) en el Registro de
+    Cooperativas -- nunca van a aparecer en el Registro Mercantil, así que
+    enlazar ahí es directamente engañoso para el lector. Es la causa
+    dominante del peor % de directivos localizados en Girona (más
+    asociaciones/cooperativas entre sus adjudicatarios que Murcia)."""
+    letra = (nif or "").strip()[:1].upper()
+    if letra == "G":
+        return "Registro Nacional de Asociaciones", REGISTRO_ASOCIACIONES_URL
+    if letra == "F":
+        return "Registro de Cooperativas", REGISTRO_COOPERATIVAS_URL
+    return "Registro Mercantil", REGISTRO_MERCANTIL_URL
 
 LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200" width="220" height="88">
   <defs>
@@ -2822,9 +2944,10 @@ def _render_fila_contrato(c, municipio_label=None):
                      f'<div class="cargo">{esc(c.get("cargo",""))}</div>')
     else:
         empresa_q = quote_plus(c.get("empresa", ""))
-        rm_link = (f'<a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener" '
-                   f'title="Buscar {esc(c.get("empresa",""))} en el Registro Mercantil">'
-                   f'Registro Mercantil ↗</a>') if empresa_q else ""
+        registro_label, registro_url = _registro_correcto(c.get("nif", ""))
+        rm_link = (f'<a href="{esc(registro_url)}" target="_blank" rel="noopener" '
+                   f'title="Buscar {esc(c.get("empresa",""))} en el {esc(registro_label)}">'
+                   f'{esc(registro_label)} ↗</a>') if empresa_q else ""
         nota = ('<span class="noloc-nota">Empresa sin datos registrales públicos</span>'
                 if c.get("rm_agotado") else "")
         dir_html = (f'<span class="noloc-warn">⚠️ No localizado {rm_link}</span>{nota}')
@@ -2866,9 +2989,13 @@ def _render_fila_contrato(c, municipio_label=None):
     titulo = c.get("titulo", "")
     icono = _icono_contrato(titulo)
 
+    ute_socios = c.get("ute_socios") or []
+    ute_html = (f' <span class="ute-nota">(UTE con {esc(", ".join(ute_socios))})</span>'
+                if ute_socios else "")
+
     return f"""<tr>
       <td>
-        <div class="empresa">{esc(c.get('empresa', '—'))} {fuente_badge}</div>
+        <div class="empresa">{esc(c.get('empresa', '—'))}{ute_html} {fuente_badge}</div>
         <div class="contrato-title"><span class="icon-tipo">{icono}</span>{esc(titulo[:110])}</div>
         {lid_html}{muni_html}
       </td>
@@ -3089,7 +3216,10 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
 
         cards += f"""<div class="muni-card">
           <div class="muni-header">
-            <h2>🏛 {esc(muni_name)}</h2>
+            <div>
+              <h2>🏛 {esc(muni_name)}</h2>
+              {alcalde_concejales_html(muni_name)}
+            </div>
             <div style="display:flex;gap:8px;align-items:center;">
               {profile_html}
               <form method="POST" action="/actualizar" style="display:inline">
@@ -3485,7 +3615,7 @@ def render_quienes_somos_html():
   </ul>
 
   <h2>Contacto</h2>
-  <a class="contact-btn" href="mailto:cesarcastrobanegas@hotmail.com">✉ cesarcastrobanegas@hotmail.com</a>
+  <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
 </div>"""
     return _page_shell("Quiénes Somos", body,
                         description="Quiénes somos y por qué existe Dinero Público: transparencia sobre "
@@ -3523,13 +3653,13 @@ def render_aviso_legal_html():
   <h2>Ejercicio de derechos RGPD</h2>
   <p>Para ejercer tus derechos de acceso, rectificación, supresión, oposición o
   limitación del tratamiento, escribe a
-  <a href="mailto:cesarcastrobanegas@hotmail.com">cesarcastrobanegas@hotmail.com</a>.</p>
+  <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.</p>
 
   <h2>Cookies y publicidad</h2>
   <p>Este sitio no utiliza cookies de seguimiento ni publicidad personalizada.</p>
 
   <h2>Contacto</h2>
-  <a class="contact-btn" href="mailto:cesarcastrobanegas@hotmail.com">✉ cesarcastrobanegas@hotmail.com</a>
+  <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
 </div>"""
     return _page_shell("Aviso Legal", body,
                         description="Aviso legal, privacidad y base legal para el tratamiento de datos "
