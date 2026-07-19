@@ -180,6 +180,51 @@ def _cargar_alcaldes_concejales():
 ALCALDES_CONCEJALES = _cargar_alcaldes_concejales()
 
 
+def _construir_indice_cargos_publicos():
+    """Índice nombre_completo_normalizado -> [{cargo, municipio, provincia}, ...]
+    a partir de ALCALDES_CONCEJALES, para el detector de coincidencias de
+    nombre (adjudicatarios/directivos vs. alcaldes/concejales). Exige nombre
+    + al menos un apellido (2+ palabras) -- un apellido suelto no es señal
+    de nada y generaría demasiados falsos positivos."""
+    idx = {}
+    for info in ALCALDES_CONCEJALES.values():
+        municipio = info.get("municipio", "")
+        provincia = info.get("provincia", "murcia")
+        for conc in info.get("concejales", []):
+            nombre = conc.get("nombre", "")
+            key = normalizar(nombre)
+            if not key or len(key.split()) < 2:
+                continue
+            idx.setdefault(key, []).append({
+                "cargo": conc.get("cargo", ""),
+                "municipio": municipio,
+                "provincia": provincia,
+            })
+    return idx
+
+
+def _detectar_coincidencia_cargo(nombre_persona, municipio_contrato, provincia_contrato):
+    """Compara el nombre completo de un adjudicatario/directivo contra el
+    índice de alcaldes/concejales. Coincidencia EXACTA de nombre+apellidos
+    únicamente (nunca apellido suelto). Devuelve None o un dict con tipo
+    'local' (mismo municipio) o 'regional' (misma provincia, municipio
+    distinto) -- nunca implica relación, es solo una señal para verificar."""
+    key = normalizar(nombre_persona or "")
+    if not key or len(key.split()) < 2:
+        return None
+    candidatos = INDICE_CARGOS_PUBLICOS.get(key)
+    if not candidatos:
+        return None
+    muni_norm = normalizar(municipio_contrato or "")
+    for cand in candidatos:
+        if normalizar(cand["municipio"]) == muni_norm:
+            return {"tipo": "local", **cand}
+    for cand in candidatos:
+        if cand["provincia"] == provincia_contrato:
+            return {"tipo": "regional", **cand}
+    return None
+
+
 def _db_set_municipio(municipio, resultado, provincia="murcia"):
     key = normalizar(municipio)
     # Mutar el dict del caller in-place (NO una copia): resultado suele ser el
@@ -502,6 +547,9 @@ def normalizar(s):
 
 def esc(s):
     return html.escape(str(s or ""), quote=True)
+
+
+INDICE_CARGOS_PUBLICOS = _construir_indice_cargos_publicos()
 
 
 def _capitalizar_nombre(s):
@@ -2338,6 +2386,10 @@ tr:last-child td{border-bottom:none;}
 .importe.noloc{color:var(--dim);font-style:italic;font-weight:normal;}
 .directivo{color:var(--blue);}
 .cargo{color:var(--dim);font-size:11px;}
+.cargo-match{font-size:10.5px;line-height:1.5;margin-top:5px;padding:5px 8px;border-radius:4px;max-width:260px;}
+.cargo-match-local{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:#e6c87a;}
+.cargo-match-regional{background:rgba(88,166,255,.06);border:3px double rgba(88,166,255,.5);color:var(--text);}
+.cargo-match-detalle{opacity:.85;font-weight:normal;}
 a.link{color:var(--blue);font-size:11px;}
 a.borm-link{color:#e0a0ff;font-size:11px;}
 .empty{text-align:center;padding:50px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
@@ -2927,7 +2979,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 </body></html>"""
 
 
-def _render_fila_contrato(c, municipio_label=None):
+def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=None):
     """Genera la fila <tr> de un contrato. Reutilizada por la vista de
     municipio y por los resultados de búsqueda global."""
     imp = c.get("importe", "") or "No localizado"
@@ -2940,8 +2992,28 @@ def _render_fila_contrato(c, municipio_label=None):
 
     directivo = c.get("directivo", "")
     if directivo:
+        match = _detectar_coincidencia_cargo(directivo, municipio or municipio_label, provincia)
+        if match:
+            if match["tipo"] == "local":
+                match_html = (
+                    f'<div class="cargo-match cargo-match-local">'
+                    f'⚠️ Coincidencia de nombre — verificar<br>'
+                    f'<span class="cargo-match-detalle">Mismo nombre y apellidos que {esc(match["cargo"].lower())} '
+                    f'de {esc(match["municipio"])}. No implica necesariamente relación — dato para verificar.</span>'
+                    f'</div>'
+                )
+            else:
+                match_html = (
+                    f'<div class="cargo-match cargo-match-regional">'
+                    f'🔎 Coincidencia de nombre (otro municipio) — verificar<br>'
+                    f'<span class="cargo-match-detalle">Mismo nombre y apellidos que {esc(match["cargo"].lower())} '
+                    f'de {esc(match["municipio"])}. No implica necesariamente relación — dato para verificar.</span>'
+                    f'</div>'
+                )
+        else:
+            match_html = ""
         dir_html = (f'<div class="directivo">{esc(directivo)}</div>'
-                     f'<div class="cargo">{esc(c.get("cargo",""))}</div>')
+                     f'<div class="cargo">{esc(c.get("cargo",""))}</div>{match_html}')
     else:
         empresa_q = quote_plus(c.get("empresa", ""))
         registro_label, registro_url = _registro_correcto(c.get("nif", ""))
@@ -2976,7 +3048,17 @@ def _render_fila_contrato(c, municipio_label=None):
                   f'title="Ver publicación BORM">BORM ↗</a>') if borm_url else ""
 
     lid = c.get("licitacion_id", "")
-    lid_html = f'<div class="lid">Licit. {esc(lid)}</div>' if lid else ""
+    titulo = c.get("titulo", "")
+    icono = _icono_contrato(titulo)
+
+    if lid and titulo:
+        contrato_line = f'Licit. {esc(lid)} — {esc(titulo[:110])}'
+    elif lid:
+        contrato_line = f'Licit. {esc(lid)}'
+    else:
+        contrato_line = esc(titulo[:110])
+    contrato_html = (f'<div class="contrato-title"><span class="icon-tipo">{icono}</span>{contrato_line}</div>'
+                      if contrato_line else "")
 
     fuente_badge = {
         "BORM": '<span class="fuente-badge fuente-borm">BORM</span>',
@@ -2986,9 +3068,6 @@ def _render_fila_contrato(c, municipio_label=None):
     muni_html = (f'<div class="lid" style="margin-top:2px">📍 {esc(municipio_label)}</div>'
                  if municipio_label else "")
 
-    titulo = c.get("titulo", "")
-    icono = _icono_contrato(titulo)
-
     ute_socios = c.get("ute_socios") or []
     ute_html = (f' <span class="ute-nota">(UTE con {esc(", ".join(ute_socios))})</span>'
                 if ute_socios else "")
@@ -2996,8 +3075,7 @@ def _render_fila_contrato(c, municipio_label=None):
     return f"""<tr>
       <td>
         <div class="empresa">{esc(c.get('empresa', '—'))}{ute_html} {fuente_badge}</div>
-        <div class="contrato-title"><span class="icon-tipo">{icono}</span>{esc(titulo[:110])}</div>
-        {lid_html}{muni_html}
+        {contrato_html}{muni_html}
       </td>
       <td class="{imp_cls}">{esc(imp)}</td>
       <td>{dir_html}</td>
@@ -3168,7 +3246,8 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
             contratos_shown = contratos_all[:PAGE_SIZE]
         total_pages = max(1, (total_muni + PAGE_SIZE - 1) // PAGE_SIZE)
 
-        filas = "".join(_render_fila_contrato(c) for c in contratos_shown)
+        filas = "".join(_render_fila_contrato(c, municipio=muni_name_d, provincia=d.get("provincia", provincia))
+                         for c in contratos_shown)
 
         if not filas:
             filas = '<tr><td colspan="4" class="empty">Sin contratos adjudicados encontrados para este municipio</td></tr>'
@@ -3543,14 +3622,16 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
     resultados = []
     for d in datos:
         muni = d.get("municipio", "")
+        prov_d = d.get("provincia", "murcia")
         for c in d.get("contratos", []):
             if (q_norm in normalizar(c.get("empresa", ""))
                     or q_norm in normalizar(c.get("directivo", ""))
                     or q_norm in normalizar(muni)):
-                resultados.append((muni, c))
+                resultados.append((muni, prov_d, c))
 
     if resultados:
-        filas = "".join(_render_fila_contrato(c, municipio_label=m) for m, c in resultados[:300])
+        filas = "".join(_render_fila_contrato(c, municipio_label=m, municipio=m, provincia=p)
+                         for m, p, c in resultados[:300])
         aviso = (f'<div class="gs-hint" style="margin-bottom:10px">Mostrando los primeros 300 de '
                  f'{len(resultados)} resultados.</div>') if len(resultados) > 300 else ""
         tabla = f"""{aviso}<table>
