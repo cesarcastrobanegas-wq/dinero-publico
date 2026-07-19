@@ -1344,6 +1344,29 @@ def _fila_pscp_a_contrato(fila):
     }
 
 
+def _dedup_contratos_por_url(contratos):
+    """Deduplica contratos por URL (o título si no hay URL). PLACE/BORM
+    publican una URL por contrato -- ahí esto es un no-op salvo colisión
+    real. PSCP a veces publica varias filas (multi-lote) bajo la MISMA
+    enllac_publicacio, con solo alguna de ellas trayendo el adjudicatario
+    resuelto (las demás pueden tener el NIF enmascarado en esa fila
+    concreta); si la fila que ya tenemos para una URL no tiene empresa
+    identificada y aparece otra que sí, la sustituye en vez de descartarla."""
+    vistos = {}
+    orden = []
+    for c in contratos:
+        key = c.get("url") or c.get("titulo", "")[:80]
+        if not key:
+            continue
+        if key not in vistos:
+            vistos[key] = c
+            orden.append(key)
+        elif (vistos[key].get("empresa") in ("No localizada", "")
+              and c.get("empresa") not in ("No localizada", "")):
+            vistos[key] = c
+    return [vistos[k] for k in orden]
+
+
 def _dedup_pscp_fases(filas):
     """El mismo lote pasa por fase Adjudicació y luego Formalització, así que
     el dataset publica una fila por cada una. Nos quedamos con la más
@@ -2046,14 +2069,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
                         _log(job_id, f"  BORM: {len(nuevos)} contratos adicionales")
 
         # Deduplicar por URL (dentro de la misma fuente) — PLACE y BORM pueden tener URLs distintas para el mismo contrato
-        vistos = set()
-        unicos = []
-        for c in contratos:
-            key = c.get("url") or c.get("titulo", "")[:80]
-            if key and key not in vistos:
-                vistos.add(key)
-                unicos.append(c)
-        contratos = unicos
+        contratos = _dedup_contratos_por_url(contratos)
 
         if provincia != "girona":
             # Enriquecer contratos PLACE con el link al BORM cuando existe uno equivalente
