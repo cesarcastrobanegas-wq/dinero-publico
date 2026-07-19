@@ -1302,11 +1302,15 @@ def _fila_pscp_a_contrato(fila):
             nif = nifs_ute[0] if nifs_ute else ""
             ute_socios = empresas_ute[1:]
 
-    # NIF enmascarado (p.ej. "*** 0336 **") = adjudicatario persona física:
-    # no tiene Registro Mercantil que cruzar, igual que "No localizada" en
-    # Murcia — se deja así para que no se intente buscar directivo.
-    if not empresa or "*" in nif:
+    # NIF enmascarado (p.ej. "*** 0336 **"): PSCP lo hace tanto con personas
+    # físicas como, a veces, con empresas -- pero el nombre del adjudicatario
+    # sí es legible y se mantiene (igual que un autónomo en Murcia: se
+    # muestra el nombre aunque no haya NIF utilizable para cruzar registro).
+    # Solo se marca "No localizada" cuando PSCP no publica ni el nombre.
+    if not empresa:
         empresa, nif = "No localizada", ""
+    elif "*" in nif:
+        nif = ""
 
     importe_num = 0.0
     for campo in ("import_adjudicacio_amb_iva", "import_adjudicacio_sense"):
