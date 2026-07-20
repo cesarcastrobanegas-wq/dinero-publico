@@ -14,4 +14,16 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      # Disco persistente añadido en el dashboard de Render, montado en
+      # /var/data -- cache.db se lee/escribe ahí en vez de junto al código,
+      # para que los refrescos (cron diario, /actualizar-todos) sobrevivan a
+      # un reinicio del servicio. Sin esta variable, la app cae de vuelta a
+      # guardar cache.db en el propio directorio del código (comportamiento
+      # local de siempre). El bloque `disks:` de Render no se declara aquí
+      # a propósito: el disco ya se creó a mano en el dashboard y no
+      # conozco su nombre/tamaño exactos desde este entorno -- declarar un
+      # `disks:` con datos adivinados podría chocar con lo ya provisionado
+      # en el próximo sync del blueprint. Confirmar antes de añadirlo.
+      - key: DATA_DIR
+        value: /var/data
     healthCheckPath: /
