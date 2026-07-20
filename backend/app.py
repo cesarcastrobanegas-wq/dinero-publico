@@ -4,7 +4,7 @@ Fuente: Plataforma de Contratación del Sector Público (datos oficiales CODICE/
 """
 
 import gzip as _gzip
-import json, os, re, html, io, sqlite3, zipfile, threading, uuid, time
+import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time
 from datetime import datetime
 from urllib.parse import parse_qs, quote_plus, urlparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -80,8 +80,28 @@ _cache_lock   = threading.Lock()
 RESULT_CACHE_TTL = 6 * 3600   # 6 horas
 
 # ─── CACHÉ SQLITE (directivos + contratos por municipio) ─────────────────────
-DB_FILE = os.path.join(BASE_DIR, "cache.db")
+# DATA_DIR apunta al disco persistente de Render (/var/data) cuando existe la
+# env var; en local (sin la env var) sigue siendo BASE_DIR, como siempre --
+# así cache.db se guarda junto al código igual que antes de este cambio.
+# Antes de tener disco persistente, cualquier refresco en caliente (cron
+# diario o /actualizar-todos) se perdía en cuanto Render reiniciaba el
+# servicio por inactividad, porque arrancaba de nuevo desde el cache.db
+# commiteado en el repo (ver INFORME_NOCHE.md, 2026-07-20).
+DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_FILE = os.path.join(DATA_DIR, "cache.db")
 DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo para migración inicial
+
+# Primer arranque con disco nuevo/vacío (DATA_DIR distinto de BASE_DIR y sin
+# cache.db todavía): sembrarlo con el cache.db commiteado en el repo para no
+# empezar de cero. En arranques siguientes DB_FILE ya existe en el disco
+# persistente y este bloque no hace nada.
+_DB_SEED_FILE = os.path.join(BASE_DIR, "cache.db")
+if (not os.path.exists(DB_FILE) and os.path.exists(_DB_SEED_FILE)
+        and os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE)):
+    shutil.copy2(_DB_SEED_FILE, DB_FILE)
+    print(f"[startup] Disco persistente vacío: cache.db sembrado desde el repo "
+          f"({_DB_SEED_FILE} -> {DB_FILE})", flush=True)
 
 _db = sqlite3.connect(DB_FILE, check_same_thread=False, timeout=30)
 _db.execute("PRAGMA journal_mode=WAL")
