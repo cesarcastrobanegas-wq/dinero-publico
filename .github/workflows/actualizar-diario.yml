@@ -11,10 +11,11 @@ jobs:
   actualizar:
     runs-on: ubuntu-latest
     steps:
-      - name: Disparar refresco completo (45 municipios) en producción
+      - name: Disparar refresco completo (Murcia + Girona, 266 municipios) en producción
         run: |
           respuesta=$(curl -s -w "\n%{http_code}" -X POST \
             -d "token=${{ secrets.ADMIN_TOKEN }}" \
+            -d "provincia=todas" \
             https://dinero-publico.onrender.com/actualizar-todos)
           codigo=$(echo "$respuesta" | tail -n1)
           cuerpo=$(echo "$respuesta" | sed '$d')

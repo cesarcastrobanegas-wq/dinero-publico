@@ -2161,19 +2161,51 @@ def _job_run(job_id, municipio, provincia="murcia"):
             _jobs[job_id]["error"] = str(e)
 
 
+def _refrescar_provincia_secuencial(job_id, provincia, offset=0):
+    """Refresca secuencialmente todos los municipios de UNA provincia,
+    actualizando `_jobs[job_id]["procesados"]` con el progreso acumulado
+    (offset = municipios ya procesados de provincias anteriores en la misma
+    llamada, para que el contador avance sin reiniciarse al pasar de Murcia
+    a Girona cuando se pide provincia="todas")."""
+    municipios = MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)
+    print(f"  [actualizar-todos:{provincia}] Iniciando refresco de {len(municipios)} municipios…", flush=True)
+
+    for idx, municipio in enumerate(municipios, 1):
+        print(f"  [actualizar-todos:{provincia}] [{idx}/{len(municipios)}] {municipio}", flush=True)
+        sub_job_id = f"{job_id}-{provincia}-{idx}"
+        with _jobs_lock:
+            _jobs[sub_job_id] = {"status": "running", "log": [], "error": None}
+        try:
+            _cache_invalidate(municipio)
+            _job_run(sub_job_id, municipio, provincia=provincia)
+        except Exception as e:
+            print(f"  [actualizar-todos:{provincia}] Error en {municipio}: {e}", flush=True)
+        finally:
+            with _jobs_lock:
+                _jobs.pop(sub_job_id, None)
+                if job_id in _jobs:
+                    _jobs[job_id]["procesados"] = offset + idx
+        time.sleep(4)  # pausa entre municipios
+
+    print(f"  [actualizar-todos:{provincia}] Refresco completo terminado.", flush=True)
+
+
 def _actualizar_todos_bg(job_id, provincia="murcia"):
     """
     Hilo de fondo: refresca secuencialmente todos los municipios de la
-    provincia dada (invalida caché + relanza _job_run para cada uno, con una
-    pausa entre municipios para no saturar la fuente). Pensado para
-    dispararse desde un disparador externo (cron) vía POST /actualizar-todos.
+    provincia dada, o de TODAS (Murcia y luego Girona, una detrás de otra)
+    si provincia="todas". Pensado para dispararse desde un disparador
+    externo (cron) vía POST /actualizar-todos -- el cron diario pasa
+    provincia=todas para cubrir ambas fuentes en una sola ejecución.
 
     Mientras corre, la web sigue sirviendo los datos anteriores con
     normalidad: _job_run solo sustituye la entrada de _datos_memoria del
     municipio que esté procesando en ese momento, bajo _datos_lock, así que
     nunca hay un estado a medias visible para quien esté navegando.
     """
-    municipios = MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)
+    provincias = (list(MUNICIPIOS_POR_PROVINCIA.keys()) if provincia == "todas"
+                  else [provincia if provincia in MUNICIPIOS_POR_PROVINCIA else "murcia"])
+    total = sum(len(MUNICIPIOS_POR_PROVINCIA[p]) for p in provincias)
 
     if not _actualizando_todos_lock.acquire(blocking=False):
         with _jobs_lock:
@@ -2184,30 +2216,17 @@ def _actualizar_todos_bg(job_id, provincia="murcia"):
     try:
         with _jobs_lock:
             _jobs[job_id] = {"status": "running", "log": [], "error": None,
-                              "total_municipios": len(municipios), "procesados": 0}
-        print(f"  [actualizar-todos:{provincia}] Iniciando refresco de {len(municipios)} municipios…", flush=True)
+                              "total_municipios": total, "procesados": 0}
 
-        for idx, municipio in enumerate(municipios, 1):
-            print(f"  [actualizar-todos:{provincia}] [{idx}/{len(municipios)}] {municipio}", flush=True)
-            sub_job_id = f"{job_id}-{idx}"
-            with _jobs_lock:
-                _jobs[sub_job_id] = {"status": "running", "log": [], "error": None}
-            try:
-                _cache_invalidate(municipio)
-                _job_run(sub_job_id, municipio, provincia=provincia)
-            except Exception as e:
-                print(f"  [actualizar-todos:{provincia}] Error en {municipio}: {e}", flush=True)
-            finally:
-                with _jobs_lock:
-                    _jobs.pop(sub_job_id, None)
-                    if job_id in _jobs:
-                        _jobs[job_id]["procesados"] = idx
-            time.sleep(4)  # pausa entre municipios
+        offset = 0
+        for prov in provincias:
+            _refrescar_provincia_secuencial(job_id, prov, offset=offset)
+            offset += len(MUNICIPIOS_POR_PROVINCIA[prov])
 
         with _jobs_lock:
             if job_id in _jobs:
                 _jobs[job_id]["status"] = "done"
-        print(f"  [actualizar-todos:{provincia}] Refresco completo terminado.", flush=True)
+        print(f"  [actualizar-todos] Refresco completo terminado ({'+'.join(provincias)}).", flush=True)
 
     finally:
         _actualizando_todos_lock.release()
@@ -4009,17 +4028,24 @@ def _route_post(path, params):
             return _resp(spinner_page(job_id, mun_ok, provincia=provincia))
 
         if path == "/actualizar-todos":
-            # Refresca todos los municipios de la provincia dada, uno a uno.
-            # Pensado para un disparador externo (GitHub Actions programado),
-            # no para la interfaz — de ahí el ADMIN_TOKEN (mismo patrón que /vaciar).
+            # Refresca todos los municipios de la provincia dada, uno a uno
+            # -- o de TODAS (Murcia y Girona, secuencial) si provincia=todas.
+            # Pensado para un disparador externo (GitHub Actions programado,
+            # que pasa provincia=todas para cubrir ambas fuentes en un solo
+            # disparo diario), no para la interfaz — de ahí el ADMIN_TOKEN
+            # (mismo patrón que /vaciar). Sin el parámetro, sigue asumiendo
+            # "murcia" por compatibilidad con disparos antiguos.
             admin_token = os.environ.get("ADMIN_TOKEN", "")
             if not admin_token or params.get("token", [""])[0] != admin_token:
                 return _error_resp("No autorizado.", 403)
-            provincia = _provincia_valida(params.get("provincia", ["murcia"])[0])
+            provincia_raw = params.get("provincia", ["murcia"])[0]
+            provincia = provincia_raw if provincia_raw in ("todas", *MUNICIPIOS_POR_PROVINCIA) else "murcia"
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_todos_bg, args=(job_id, provincia), daemon=True).start()
+            total_municipios = (sum(len(v) for v in MUNICIPIOS_POR_PROVINCIA.values()) if provincia == "todas"
+                                 else len(MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)))
             body = json.dumps({"status": "started", "job_id": job_id, "provincia": provincia,
-                                "total_municipios": len(MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA))})
+                                "total_municipios": total_municipios})
             return _resp(body, content_type="application/json; charset=utf-8")
 
         return 404, {"Content-Length": "0"}, b""
