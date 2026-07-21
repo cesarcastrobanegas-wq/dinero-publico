@@ -1292,9 +1292,17 @@ def buscar_en_borm(municipio, job_id=None):
         except Exception:
             return None
 
-    for c in HTTP_POOL.map(_fetch_y_parsear, candidatos):
-        if c:
-            contratos.append(c)
+    # Pool LOCAL, no el HTTP_POOL compartido: buscar_en_borm ya se envía a
+    # HTTP_POOL.submit(...) desde _job_run, así que reentrar en el mismo
+    # pool aquí (como hacía antes) puede dejar todos sus workers ocupados
+    # esperándose entre sí -- con suficiente concurrencia real, un
+    # interbloqueo total del pool compartido (afectaría a todas las
+    # peticiones que dependen de él, no solo a esta búsqueda). Mismo patrón
+    # que ya usa buscar_en_zip.
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        for c in ex.map(_fetch_y_parsear, candidatos):
+            if c:
+                contratos.append(c)
 
     _log(job_id, f"  BORM: {len(contratos)} contratos con datos extraídos")
     return contratos
