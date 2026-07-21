@@ -22,9 +22,28 @@ from bs4 import BeautifulSoup
 # ─── CONFIGURACIÓN ───────────────────────────────────────────────────────────
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+
+# DATA_DIR apunta al disco persistente de Render (/var/data) cuando existe la
+# env var; en local (sin la env var) sigue siendo BASE_DIR, como siempre --
+# tanto cache.db como place_cache/ se guardan junto al código igual que
+# antes de este cambio. Sin disco persistente, cualquier dato escrito en
+# caliente (cache.db, o los ZIPs de place_cache/) se perdía en cuanto
+# Render reiniciaba el servicio por inactividad, porque arrancaba de nuevo
+# desde cero (ver INFORME_NOCHE.md, 2026-07-20/21).
+DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)
+os.makedirs(DATA_DIR, exist_ok=True)
+
 DATA_FILE  = os.path.join(BASE_DIR, "datos.json")
 ALCALDES_FILE = os.path.join(BASE_DIR, "alcaldes_concejales.json")
-CACHE_DIR  = os.path.join(BASE_DIR, "place_cache")
+# place_cache/ (ZIPs mensuales de PLACE, ~127 MB cada uno) NO se siembra
+# desde el repo -- está en .gitignore a propósito (nunca se ha commiteado,
+# a diferencia de cache.db) y no tiene sentido empezar a versionar binarios
+# de ese tamaño solo para esto. En un disco nuevo/vacío simplemente se
+# vuelve a descargar el ZIP del mes en curso la primera vez que haga falta
+# (descargar_zip_place ya cachea en CACHE_DIR y reutiliza si ya existe) --
+# un único coste de unos minutos, una vez, y ya queda para siempre en el
+# disco persistente en vez de repetirse en cada reinicio.
+CACHE_DIR  = os.path.join(DATA_DIR, "place_cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 HEADERS = {
@@ -80,15 +99,8 @@ _cache_lock   = threading.Lock()
 RESULT_CACHE_TTL = 6 * 3600   # 6 horas
 
 # ─── CACHÉ SQLITE (directivos + contratos por municipio) ─────────────────────
-# DATA_DIR apunta al disco persistente de Render (/var/data) cuando existe la
-# env var; en local (sin la env var) sigue siendo BASE_DIR, como siempre --
-# así cache.db se guarda junto al código igual que antes de este cambio.
-# Antes de tener disco persistente, cualquier refresco en caliente (cron
-# diario o /actualizar-todos) se perdía en cuanto Render reiniciaba el
-# servicio por inactividad, porque arrancaba de nuevo desde el cache.db
-# commiteado en el repo (ver INFORME_NOCHE.md, 2026-07-20).
-DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)
-os.makedirs(DATA_DIR, exist_ok=True)
+# DATA_DIR ya se resuelve arriba, junto a BASE_DIR (la usan tanto cache.db
+# como place_cache/).
 DB_FILE = os.path.join(DATA_DIR, "cache.db")
 DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo para migración inicial
 
