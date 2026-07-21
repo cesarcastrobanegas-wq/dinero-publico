@@ -3726,7 +3726,9 @@ def render_quienes_somos_html():
   <h1>Transparencia al servicio de la ciudadanía</h1>
 
   <p>Dinero Público nació con un objetivo claro: hacer accesible a cualquier ciudadano
-  la información sobre cómo se gasta el dinero público en la Región de Murcia.</p>
+  la información sobre cómo se gasta el dinero público. Actualmente cubrimos la
+  Región de Murcia y la provincia de Girona, con expansión progresiva a toda
+  España.</p>
 
   <p>Cruzamos datos oficiales de la Plataforma de Contratación del Sector Público (PLACE)
   del Ministerio de Hacienda con información registral pública para identificar quién
@@ -3749,9 +3751,11 @@ def render_quienes_somos_html():
   <h2>Fuentes de datos</h2>
   <ul>
     <li>PLACE (Ministerio de Hacienda) — contratos públicos</li>
+    <li>PSCP (Generalitat de Catalunya) — contratos públicos de Girona</li>
     <li>BORM (Boletín Oficial Región de Murcia) — publicaciones oficiales</li>
     <li>Registro Mercantil — directivos y administradores</li>
     <li>einforma.com, axesor.es, infocif.es — datos empresariales públicos</li>
+    <li>(próximamente) EU Funding &amp; Tenders / CORDIS — subvenciones y fondos europeos</li>
   </ul>
 
   <h2>Contacto</h2>
@@ -3759,7 +3763,8 @@ def render_quienes_somos_html():
 </div>"""
     return _page_shell("Quiénes Somos", body,
                         description="Quiénes somos y por qué existe Dinero Público: transparencia sobre "
-                                     "la contratación pública en la Región de Murcia.")
+                                     "la contratación pública en la Región de Murcia y la provincia de "
+                                     "Girona.")
 
 
 def render_aviso_legal_html():
