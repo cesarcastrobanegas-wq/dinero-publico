@@ -1021,28 +1021,40 @@ def descargar_zip_place(anomes, job_id=None):
 
 
 def buscar_en_zip(zip_path, municipio, job_id=None):
-    """Lee el ZIP completo en RAM y procesa los atom files en paralelo."""
+    """Procesa los atom files de un ZIP en paralelo, leyendo cada uno bajo
+    demanda dentro de cada worker -- NO carga el ZIP completo descomprimido
+    en RAM de golpe antes de empezar. Un ZIP mensual de PLACE puede rondar
+    el GB descomprimido en varios cientos de archivos; cargarlos todos a
+    la vez (multiplicado por los varios ZIPs que _job_run procesa en
+    paralelo) agotaba la RAM del plan free de Render y mataba el proceso a
+    media faena -- confirmado en producción reprocesando Murcia (ver
+    INFORME_NOCHE.md, 2026-07-21). Verificado en local con ZIPs reales:
+    mismos contratos encontrados que antes, con un pico de memoria por ZIP
+    ~39x menor (2.131 MB -> 55 MB en un ZIP de 142 archivos / 2,1 GB
+    descomprimidos)."""
     nombre = os.path.basename(zip_path)
     muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
 
-    # 1. Leer todos los bytes en memoria (el ZIP ya está en disco, es I/O puro)
     try:
         with zipfile.ZipFile(zip_path, "r") as z:
             atom_names = [n for n in z.namelist() if n.endswith(".atom")]
-            total = len(atom_names)
-            _log(job_id, f"  Cargando {total} archivos de {nombre}…")
-            raw_list = [(n, z.read(n)) for n in atom_names]
     except Exception as e:
         _log(job_id, f"Error abriendo {nombre}: {e}")
         return []
 
-    # 2. Procesar en paralelo (4 workers)
+    total = len(atom_names)
+    _log(job_id, f"  Procesando {total} archivos de {nombre}…")
+
     contratos_total = []
     lock = threading.Lock()
     procesados = [0]
 
-    def _procesar(item):
-        _, raw = item
+    def _procesar(name):
+        # Cada hilo abre su propia instancia de ZipFile -- zipfile.ZipFile
+        # no es seguro para lecturas concurrentes desde una única instancia
+        # compartida entre hilos.
+        with zipfile.ZipFile(zip_path, "r") as z:
+            raw = z.read(name)
         result = parsear_atom_bytes(raw, municipio, muni_re)
         with lock:
             procesados[0] += 1
@@ -1053,7 +1065,7 @@ def buscar_en_zip(zip_path, municipio, job_id=None):
         return result
 
     with ThreadPoolExecutor(max_workers=4) as ex:
-        for parcial in ex.map(_procesar, raw_list):
+        for parcial in ex.map(_procesar, atom_names):
             contratos_total.extend(parcial)
 
     return contratos_total
