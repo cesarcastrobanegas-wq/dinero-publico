@@ -2691,6 +2691,13 @@ def spinner_page(job_id, municipio, provincia="murcia"):
     redirect_url = f"/?muni={quote_plus(municipio)}" + ("&provincia=girona" if es_girona else "")
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-86Q210M1DC"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', 'G-86Q210M1DC');
+</script>
 <title>Buscando — {esc(municipio)}</title>
 <link rel="stylesheet" href="/static/style.css"></head>
 <body>
