@@ -112,6 +112,17 @@ DIR_CACHE_NEG_TTL =  7 * 24 * 3600   # 7 días para "no encontrado"
 
 DIR_INTENTOS_MAX = 3  # tras estos intentos fallidos, se marca "sin datos registrales públicos" y se deja de reintentar
 
+# _limpiar_cache_negativos() se relanza cada vez que un municipio termina de
+# refrescarse (vía _lanzar_enriquecimiento() en _job_run) -- en un lote de
+# /actualizar-todos eso puede ser un ciclo completo de re-consultas externas
+# cada pocos segundos/minutos, si no se limita. Este intervalo mínimo evita
+# que se repita más de una vez al día por proceso (ver INFORME_NOCHE.md,
+# propuesta de consumo #4: identificado como causa principal de que el lote
+# de Girona tardase ~4x más en Render que en local).
+_ULTIMA_LIMPIEZA_NEGATIVOS = 0.0
+LIMPIEZA_NEGATIVOS_INTERVALO = 24 * 3600
+
+
 def _db_init():
     with _db_lock:
         _db.execute("""CREATE TABLE IF NOT EXISTS directores (
@@ -2267,13 +2278,23 @@ def _guardar_datos_sin_lock():
 def _limpiar_cache_negativos():
     """Elimina del caché SQLite las entradas negativas que aún no agotaron sus
     reintentos, para forzar re-búsqueda. Las que ya llegaron a DIR_INTENTOS_MAX
-    se dejan (se consideran "sin datos registrales públicos" y no se reintentan)."""
+    se dejan (se consideran "sin datos registrales públicos" y no se reintentan).
+
+    No hace nada si ya se ejecutó hace menos de LIMPIEZA_NEGATIVOS_INTERVALO
+    -- sin este límite, cada refresco de municipio relanza el hilo de
+    enriquecimiento (_lanzar_enriquecimiento en _job_run), que llama aquí
+    incondicionalmente y anulaba en la práctica el TTL negativo de 7 días
+    (DIR_CACHE_NEG_TTL) durante cualquier lote de refrescos consecutivos."""
+    global _ULTIMA_LIMPIEZA_NEGATIVOS
+    if time.time() - _ULTIMA_LIMPIEZA_NEGATIVOS < LIMPIEZA_NEGATIVOS_INTERVALO:
+        return
     with _db_lock:
         deleted = _db.execute(
             "DELETE FROM directores WHERE (nombre = '' OR nombre IS NULL) AND intentos < ?",
             (DIR_INTENTOS_MAX,),
         ).rowcount
         _db.commit()
+    _ULTIMA_LIMPIEZA_NEGATIVOS = time.time()
     if deleted:
         print(f"  [enriquecimiento] {deleted} entradas negativas eliminadas del caché.", flush=True)
 
