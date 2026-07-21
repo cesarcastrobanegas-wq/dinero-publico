@@ -3773,15 +3773,21 @@ def render_aviso_legal_html():
   <p>{esc(SITE_URL)}</p>
 
   <h2>Actividad</h2>
-  <p>Plataforma de transparencia y datos públicos sobre contratación del sector público
-  en la Región de Murcia.</p>
+  <p>Plataforma de transparencia y datos públicos sobre contratación del sector
+  público en España. Cubre actualmente la Región de Murcia y la provincia de
+  Girona, con expansión progresiva a todo el territorio nacional.</p>
 
   <h2>Origen de los datos</h2>
   <p>Los datos de contratos mostrados provienen de fuentes oficiales públicas: la
-  Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda y
-  el Boletín Oficial de la Región de Murcia (BORM).</p>
+  Plataforma de Contratación del Sector Público (PLACE) del Ministerio de
+  Hacienda, el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de
+  Serveis de Contractació Pública de Catalunya (PSCP). Se irán incorporando otras
+  plataformas de contratación pública autonómicas y estatales a medida que se
+  amplíe la cobertura territorial.</p>
   <p>Los nombres de directivos y administradores provienen de registros públicos
   (Registro Mercantil y fuentes empresariales públicas equivalentes).</p>
+  <p>Próximamente se incorporarán también datos de subvenciones y fondos
+  europeos.</p>
 
   <h2>Base legal para el tratamiento de datos</h2>
   <p>El tratamiento de los nombres de personas físicas que aparecen como
