@@ -12,7 +12,12 @@ web -- se ejecuta manualmente / de forma periódica (ej. trimestral, o
 tras una moción de censura conocida), y el resultado se versiona como
 un JSON estático que app.py carga en memoria al arrancar.
 
-Uso:  python actualizar_alcaldes.py
+Uso:  pip install openpyxl && python actualizar_alcaldes.py
+
+openpyxl no está en requirements.txt a propósito: es la única dependencia
+de todo el proyecto que usa este script y no el servidor de producción, así
+que no tiene sentido instalarla en cada deploy de Render. Instálala aparte
+en tu entorno local antes de ejecutar este script.
 """
 import io
 import json
