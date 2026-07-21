@@ -3063,6 +3063,13 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     return f"""<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-86Q210M1DC"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', 'G-86Q210M1DC');
+</script>
 <title>{esc(full_title)}</title>
 <meta name="description" content="{desc}">
 <meta name="robots" content="index, follow">
