@@ -148,6 +148,24 @@ def _db_init():
             data      TEXT NOT NULL,
             ts        REAL NOT NULL
         )""")
+        _db.execute("""CREATE TABLE IF NOT EXISTS fondos_ue (
+            id           TEXT PRIMARY KEY,
+            fuente       TEXT NOT NULL,
+            provincia    TEXT NOT NULL,
+            municipio    TEXT,
+            nuts_code    TEXT,
+            titulo       TEXT,
+            beneficiario TEXT,
+            nif          TEXT,
+            rol          TEXT,
+            importe_num  REAL,
+            fecha_inicio TEXT,
+            fecha_fin    TEXT,
+            programa     TEXT,
+            fondo        TEXT,
+            url          TEXT,
+            ts           REAL NOT NULL
+        )""")
         try:
             _db.execute("ALTER TABLE directores ADD COLUMN intentos INTEGER DEFAULT 0")
         except sqlite3.OperationalError:
@@ -1484,6 +1502,194 @@ def buscar_en_pscp(municipio, job_id=None):
     contratos = [_fila_pscp_a_contrato(f) for f in filas]
     _log(job_id, f"  PSCP: {len(contratos)} contratos encontrados")
     return contratos
+
+
+# ─── FONDOS Y PROYECTOS FINANCIADOS POR LA UE ────────────────────────────────
+# Dos fuentes oficiales, ambas de acceso libre sin autenticación (ver
+# INFORME_NOCHE.md 2026-07-21/22 para el diagnóstico completo):
+#
+# - CORDIS (proyectos de investigación Horizon Europe 2021-2027): volcado
+#   masivo CSV/JSON/XML en cordis.europa.eu/data/. Trae beneficiario, NIF
+#   (con prefijo de país, ej. "ESB12345678"), NUTS, importe -- la fuente
+#   más completa, compatible con el detector de coincidencias de nombre.
+# - Cohesion Data / Kohesio (fondos estructurales FEDER/FSE 2014-2020): API
+#   Socrata en cohesiondata.ec.europa.eu (mismo tipo de plataforma que
+#   PSCP). Trae proyecto, importe, región y programa, pero NO el nombre
+#   del beneficiario para España (confirmado: 0 de 139.395 registros
+#   españoles tienen beneficiary_name relleno, aunque el campo sí existe
+#   y se rellena para otros países) -- así que no se cruza con el detector.
+
+CORDIS_HORIZON_CSV_URL = "https://cordis.europa.eu/data/cordis-HORIZONprojects-csv.zip"
+COHESION_DATA_URL = "https://cohesiondata.ec.europa.eu/resource/557j-pmg8.json"
+
+# NUTS3 (Girona) / prefijo de programa (Murcia, que no trae NUTS3 relleno
+# en Cohesion Data) por provincia -- ver diagnóstico para el porqué de la
+# diferencia de criterio entre una y otra.
+FONDOS_UE_NUTS3_GIRONA = "ES512"
+FONDOS_UE_PROGRAMA_MURCIA = "Murcia"
+
+
+def _guardar_fondos_ue(filas):
+    """Inserta/actualiza filas en la tabla fondos_ue (misma clave = mismo
+    registro, se sobrescribe con el dato más reciente)."""
+    if not filas:
+        return
+    ahora = time.time()
+    with _db_lock:
+        for f in filas:
+            _db.execute(
+                """INSERT OR REPLACE INTO fondos_ue
+                   (id, fuente, provincia, municipio, nuts_code, titulo, beneficiario,
+                    nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (f["id"], f["fuente"], f["provincia"], f.get("municipio", ""),
+                 f.get("nuts_code", ""), f.get("titulo", ""), f.get("beneficiario", ""),
+                 f.get("nif", ""), f.get("rol", ""), f.get("importe_num", 0.0),
+                 f.get("fecha_inicio", ""), f.get("fecha_fin", ""), f.get("programa", ""),
+                 f.get("fondo", ""), f.get("url", ""), ahora),
+            )
+        _db.commit()
+
+
+def _db_fondos_ue(provincia=None):
+    """Lee de vuelta la tabla fondos_ue, opcionalmente filtrada por provincia."""
+    with _db_lock:
+        if provincia:
+            rows = _db.execute(
+                "SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
+                "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
+                "FROM fondos_ue WHERE provincia=? ORDER BY importe_num DESC", (provincia,),
+            ).fetchall()
+        else:
+            rows = _db.execute(
+                "SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
+                "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
+                "FROM fondos_ue ORDER BY importe_num DESC",
+            ).fetchall()
+    cols = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario",
+            "nif", "rol", "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts")
+    return [dict(zip(cols, r)) for r in rows]
+
+
+def actualizar_fondos_cordis(job_id=None):
+    """Descarga el volcado masivo de CORDIS (Horizon Europe 2021-2027) y
+    guarda las organizaciones de Murcia/Girona en la tabla fondos_ue.
+    ~36 MB comprimidos -- se procesa en memoria fila a fila con csv.DictReader,
+    no se acumulan los CSV completos como texto (mismo cuidado que con los
+    ZIPs de PLACE, aunque aquí el volumen es dos órdenes de magnitud menor)."""
+    import csv, io, zipfile as _zf
+
+    _log(job_id, "Descargando volcado CORDIS (Horizon Europe 2021-2027)…")
+    try:
+        r = session.get(CORDIS_HORIZON_CSV_URL, timeout=120)
+        r.raise_for_status()
+    except Exception as e:
+        _log(job_id, f"  CORDIS no disponible ({type(e).__name__})")
+        return 0
+
+    proyectos = {}
+    filas = []
+    with _zf.ZipFile(io.BytesIO(r.content)) as z:
+        with z.open("project.csv") as f:
+            reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8"), delimiter=";")
+            for row in reader:
+                proyectos[row["id"]] = row
+
+        with z.open("organization.csv") as f:
+            reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8"), delimiter=";")
+            for row in reader:
+                nuts = (row.get("nutsCode") or "").strip()
+                if nuts.startswith(FONDOS_UE_NUTS3_GIRONA):
+                    provincia = "girona"
+                elif nuts.startswith("ES62"):
+                    provincia = "murcia"
+                else:
+                    continue
+
+                proy = proyectos.get(row.get("projectID", ""), {})
+                nif = (row.get("vatNumber") or "").strip()
+                if nif.upper().startswith("ES"):
+                    nif = nif[2:]
+                try:
+                    importe = float((row.get("ecContribution") or "0").replace(",", "."))
+                except ValueError:
+                    importe = 0.0
+
+                filas.append({
+                    "id": f"cordis-{row.get('projectID','')}-{row.get('organisationID','')}",
+                    "fuente": "cordis",
+                    "provincia": provincia,
+                    "municipio": row.get("city", ""),
+                    "nuts_code": nuts,
+                    "titulo": proy.get("title", ""),
+                    "beneficiario": row.get("name", ""),
+                    "nif": nif,
+                    "rol": row.get("role", ""),
+                    "importe_num": importe,
+                    "fecha_inicio": proy.get("startDate", ""),
+                    "fecha_fin": proy.get("endDate", ""),
+                    "programa": proy.get("frameworkProgramme", ""),
+                    "fondo": "Horizon Europe",
+                    "url": f"https://cordis.europa.eu/project/id/{row.get('projectID','')}",
+                })
+
+    _guardar_fondos_ue(filas)
+    _log(job_id, f"  CORDIS: {len(filas)} organizaciones de Murcia/Girona guardadas")
+    return len(filas)
+
+
+def actualizar_fondos_cohesion(job_id=None):
+    """Consulta la API de Cohesion Data (fondos estructurales 2014-2020,
+    FEDER/FSE) filtrada a Murcia y Girona, y guarda en fondos_ue. Sin
+    beneficiario para España (ver nota de cabecera) -- se guarda igualmente
+    para mostrar en qué proyecto/importe/región se invirtió el fondo."""
+    _log(job_id, "Consultando Cohesion Data (fondos FEDER/FSE 2014-2020)…")
+    filas = []
+
+    consultas = [
+        ("girona", {"$where": f"nuts3_code like '%{FONDOS_UE_NUTS3_GIRONA}%'", "$limit": 10000}),
+        ("murcia", {"$where": f"programme_name like '{FONDOS_UE_PROGRAMA_MURCIA}%'", "$limit": 10000}),
+    ]
+    for provincia, params in consultas:
+        try:
+            r = session.get(COHESION_DATA_URL, params=params, timeout=60)
+            if r.status_code != 200:
+                _log(job_id, f"  Cohesion Data ({provincia}): HTTP {r.status_code}")
+                continue
+            filas_prov = r.json()
+        except Exception as e:
+            _log(job_id, f"  Cohesion Data ({provincia}) no disponible ({type(e).__name__})")
+            continue
+
+        for row in filas_prov:
+            op_id = (row.get("operation_unique_identifier") or {}).get("url", "")
+            if not op_id:
+                continue
+            try:
+                importe = float(row.get("total_eligible_expenditure_amount") or 0)
+            except ValueError:
+                importe = 0.0
+            filas.append({
+                "id": f"cohesion-{op_id}",
+                "fuente": "cohesion",
+                "provincia": provincia,
+                "municipio": row.get("region", ""),
+                "nuts_code": row.get("nuts3_code", ""),
+                "titulo": row.get("operation_name_english") or row.get("operation_name_programme_language", ""),
+                "beneficiario": row.get("beneficiary_name", ""),
+                "nif": "",
+                "rol": "",
+                "importe_num": importe,
+                "fecha_inicio": row.get("operation_start_date", ""),
+                "fecha_fin": row.get("operation_end_date", ""),
+                "programa": row.get("programme_name", ""),
+                "fondo": row.get("fund_name", ""),
+                "url": "",
+            })
+
+    _guardar_fondos_ue(filas)
+    _log(job_id, f"  Cohesion Data: {len(filas)} operaciones de Murcia/Girona guardadas")
+    return len(filas)
 
 
 # ─── DIRECTIVOS (empresia/BORME via BOE) ────────────────────────────────────
