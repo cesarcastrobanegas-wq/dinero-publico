@@ -1,10 +1,19 @@
 name: Actualizar contratos diariamente
 
 on:
-  schedule:
-    # 04:00 UTC ≈ 05:00–06:00 hora de España (invierno/verano). Hora de bajo
-    # tráfico tanto en la web como en PLACE/BORM.
-    - cron: "0 4 * * *"
+  # ⚠️ PAUSADO A MANO el 2026-07-22 ~21:10 UTC: el refresco de contratos es
+  # SUSTITUTIVO en vez de ADITIVO (_db_set_municipio sobrescribe en vez de
+  # fusionar con lo ya guardado) y ha borrado histórico de al menos Archena
+  # cuando faltaban ZIPs antiguos en place_cache/ en el momento del refresco.
+  # Con el cron activo, la próxima ejecución (04:00 UTC) habría lanzado
+  # /actualizar-todos con provincia=todas -- los 266 municipios de golpe --
+  # arriesgando perder histórico judicialmente relevante a gran escala. NO
+  # reactivar el "schedule:" hasta que el refresco aditivo esté desplegado y
+  # verificado en producción (ver INFORME_NOCHE.md 2026-07-22, sección del
+  # bug de refresco sustitutivo). workflow_dispatch se deja activo para
+  # poder disparar el cron a mano una vez resuelto.
+  # schedule:
+  #   - cron: "0 4 * * *"
   workflow_dispatch: {}   # permite lanzarlo a mano desde la pestaña Actions
 
 jobs:
