@@ -178,7 +178,33 @@ def _db_init():
             _db.execute("ALTER TABLE municipios ADD COLUMN provincia TEXT DEFAULT 'murcia'")
         except sqlite3.OperationalError:
             pass  # ya existe
+        municipio_match_es_nuevo = False
+        try:
+            # Municipio canónico (mismo listado que MUNICIPIOS_MURCIA/GIRONA)
+            # al que se ha podido cruzar este registro de fondos_ue, o '' si
+            # la fuente solo trae ubicación a nivel regional/provincial y no
+            # se ha podido cruzar -- ver _cruzar_municipio_fondo_ue().
+            _db.execute("ALTER TABLE fondos_ue ADD COLUMN municipio_match TEXT DEFAULT ''")
+            municipio_match_es_nuevo = True
+        except sqlite3.OperationalError:
+            pass  # ya existe
         _db.commit()
+
+        if municipio_match_es_nuevo:
+            # Columna recién añadida: las filas de fondos_ue ya cargadas antes
+            # de esta versión (CORDIS/Cohesion Data de sesiones anteriores) se
+            # quedarían con municipio_match='' hasta el próximo refresco
+            # completo -- se recalcula una sola vez aquí para que el cruce
+            # esté disponible de inmediato sin esperar a /actualizar-fondos-ue.
+            filas_existentes = _db.execute(
+                "SELECT id, provincia, municipio FROM fondos_ue").fetchall()
+            for fid, prov, muni in filas_existentes:
+                match = _cruzar_municipio_fondo_ue(prov, muni)
+                if match:
+                    _db.execute("UPDATE fondos_ue SET municipio_match=? WHERE id=?", (match, fid))
+            _db.commit()
+            print(f"  [db-init] municipio_match calculado para {len(filas_existentes)} "
+                  f"filas de fondos_ue ya existentes.", flush=True)
     _migrar_json_a_sqlite()
 
 
@@ -1520,6 +1546,65 @@ def buscar_en_pscp(municipio, job_id=None):
 #   españoles tienen beneficiary_name relleno, aunque el campo sí existe
 #   y se rellena para otros países) -- así que no se cruza con el detector.
 
+# Cruce de cada registro de fondos_ue contra la lista canónica de municipios
+# ya usada para contratos públicos (MUNICIPIOS_MURCIA/MUNICIPIOS_GIRONA), a
+# partir del texto libre de ubicación que trae cada fuente -- ver
+# INFORME_NOCHE.md 2026-07-22 para el porqué de las limitaciones por fuente:
+# - CORDIS: el campo "city" de organization.csv ya es un nombre de ciudad
+#   real (ej. "MURCIA", "Girona"), cruzable directamente.
+# - Cohesion Data: el campo "region" es SIEMPRE a nivel provincial/regional
+#   (ej. "Province of Girona", a veces varias regiones separadas por "|" en
+#   programas de cooperación transfronteriza) -- verificado con datos reales,
+#   nunca trae una ciudad concreta, así que el cruce por texto no encuentra
+#   nada para esta fuente (comportamiento esperado, no un bug: son
+#   operaciones a nivel región que deben quedarse solo en /fondos-ue, tal
+#   como pide el encargo). Sí trae coordenadas (location_indicator_latitude_
+#   longitude) que en teoría permitirían geolocalizar al municipio exacto,
+#   pero construir esa correspondencia por coordenadas (centroides/límites de
+#   los 264 municipios) es un desarrollo nuevo de más envergadura -- se deja
+#   documentado como posible ampliación futura, no se implementa ahora.
+_ARTICULOS_MUNICIPIO = ("l'", "la ", "el ", "els ", "les ")
+
+
+def _clave_municipio_match(nombre):
+    """Clave de comparación para cruzar el texto libre de ubicación de una
+    fuente externa contra la lista canónica de municipios: normaliza y quita
+    el artículo catalán, tanto en formato normal ("la Bisbal d'Empordà")
+    como en el formato invertido tipo callejero que usa MUNICIPIOS_GIRONA
+    ("Bisbal d'Empordà, la"), para que ambos casen con la misma clave."""
+    n = normalizar(nombre)
+    m = re.match(r"^(.*), (l'|la|el|els|les)$", n)
+    if m:
+        return m.group(1).strip()
+    for art in _ARTICULOS_MUNICIPIO:
+        if n.startswith(art):
+            return n[len(art):].strip()
+    return n.strip()
+
+
+def _construir_indice_municipios_fondos_ue():
+    idx = {"murcia": {}, "girona": {}}
+    for m in MUNICIPIOS_MURCIA:
+        idx["murcia"][_clave_municipio_match(m)] = m
+    for m in MUNICIPIOS_GIRONA:
+        idx["girona"][_clave_municipio_match(m)] = m
+    return idx
+
+
+_INDICE_MUNICIPIOS_FONDOS_UE = _construir_indice_municipios_fondos_ue()
+
+
+def _cruzar_municipio_fondo_ue(provincia, texto_ubicacion):
+    """Intenta identificar el municipio canónico al que corresponde un
+    proyecto/operación de fondos UE a partir del texto libre de ubicación de
+    su fuente. Devuelve '' si no hay cruce fiable -- el proyecto se queda
+    solo en /fondos-ue, no se fuerza a ningún municipio."""
+    idx = _INDICE_MUNICIPIOS_FONDOS_UE.get(provincia)
+    if not idx or not texto_ubicacion:
+        return ""
+    return idx.get(_clave_municipio_match(texto_ubicacion), "")
+
+
 CORDIS_HORIZON_CSV_URL = "https://cordis.europa.eu/data/cordis-HORIZONprojects-csv.zip"
 COHESION_DATA_URL = "https://cohesiondata.ec.europa.eu/resource/557j-pmg8.json"
 
@@ -1538,16 +1623,19 @@ def _guardar_fondos_ue(filas):
     ahora = time.time()
     with _db_lock:
         for f in filas:
+            municipio_match = f.get("municipio_match") or _cruzar_municipio_fondo_ue(
+                f["provincia"], f.get("municipio", ""))
             _db.execute(
                 """INSERT OR REPLACE INTO fondos_ue
                    (id, fuente, provincia, municipio, nuts_code, titulo, beneficiario,
-                    nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts,
+                    municipio_match)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (f["id"], f["fuente"], f["provincia"], f.get("municipio", ""),
                  f.get("nuts_code", ""), f.get("titulo", ""), f.get("beneficiario", ""),
                  f.get("nif", ""), f.get("rol", ""), f.get("importe_num", 0.0),
                  f.get("fecha_inicio", ""), f.get("fecha_fin", ""), f.get("programa", ""),
-                 f.get("fondo", ""), f.get("url", ""), ahora),
+                 f.get("fondo", ""), f.get("url", ""), ahora, municipio_match),
             )
         _db.commit()
 
@@ -1567,6 +1655,21 @@ def _db_fondos_ue(provincia=None):
                 "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
                 "FROM fondos_ue ORDER BY importe_num DESC",
             ).fetchall()
+    cols = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario",
+            "nif", "rol", "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts")
+    return [dict(zip(cols, r)) for r in rows]
+
+
+def _db_fondos_ue_por_municipio(municipio):
+    """Fondos UE ya cruzados con este municipio exacto (columna municipio_match,
+    calculada en la ingesta -- ver _cruzar_municipio_fondo_ue). Se usa para
+    mostrar el bloque violeta de fondos UE en la ficha de cada ayuntamiento."""
+    with _db_lock:
+        rows = _db.execute(
+            "SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
+            "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
+            "FROM fondos_ue WHERE municipio_match=? ORDER BY importe_num DESC", (municipio,),
+        ).fetchall()
     cols = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario",
             "nif", "rol", "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts")
     return [dict(zip(cols, r)) for r in rows]
@@ -3797,6 +3900,33 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
                 pag_html = (f'<div class="pag-more">Mostrando los primeros {PAGE_SIZE} de {total_muni} contratos. '
                             f'<a href="/?muni={muni_enc}&pag=1{q_prov}">Ver todos →</a></div>')
 
+        # Fondos y proyectos UE cruzados con este municipio (ver
+        # _cruzar_municipio_fondo_ue) -- solo se muestra si hay al menos uno,
+        # mismo color violeta que /fondos-ue para diferenciarlos de los
+        # contratos públicos normales.
+        fondos_ue_muni = _db_fondos_ue_por_municipio(muni_name_d)
+        fondos_ue_html = ""
+        if fondos_ue_muni:
+            total_fue = sum(f["importe_num"] for f in fondos_ue_muni)
+            filas_fue = "".join(_render_fila_fondo_ue(f) for f in fondos_ue_muni)
+            fondos_ue_html = f"""<div class="fue-card" style="margin-top:14px">
+            <div class="section-title" style="color:var(--violeta);margin:0 0 8px">
+              🇪🇺 Fondos y proyectos financiados por la UE
+              <span class="badge" style="background:rgba(163,113,247,.15);color:var(--violeta);border-color:rgba(163,113,247,.3)">
+                {len(fondos_ue_muni)} · {fmt_eur(str(total_fue))}
+              </span>
+            </div>
+            <table>
+              <tr>
+                <th>Proyecto / Beneficiario</th>
+                <th>Importe</th>
+                <th>Fuente / Programa</th>
+                <th>Fechas</th>
+              </tr>
+              {filas_fue}
+            </table>
+          </div>"""
+
         cards += f"""<div class="muni-card">
           <div class="muni-header">
             <div>
@@ -3825,6 +3955,7 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
             {filas}
           </table>
           {pag_html}
+          {fondos_ue_html}
         </div>"""
 
     if not cards:
