@@ -2670,7 +2670,7 @@ CSS = """
 :root{
   --bg:#0d1117;--surface:#161b22;--border:#30363d;
   --accent:#f0883e;--blue:#58a6ff;--text:#c9d1d9;--dim:#8b949e;
-  --red:#f85149;--green:#3fb950;--yellow:#d29922;
+  --red:#f85149;--green:#3fb950;--yellow:#d29922;--violeta:#a371f7;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{overflow-x:hidden;}
@@ -2750,6 +2750,16 @@ a.borm-link{color:#e0a0ff;font-size:11px;}
 .fuente-borm{background:rgba(224,160,255,.15);color:#e0a0ff;border:1px solid rgba(224,160,255,.3);}
 .fuente-pscp{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);}
 a.pscp-link{color:var(--green);}
+/* Fondos UE -- violeta a propósito, para diferenciarlos a simple vista de
+   los contratos públicos normales (naranja/azul) */
+.fuente-cordis{background:rgba(163,113,247,.15);color:var(--violeta);border:1px solid rgba(163,113,247,.3);}
+.fuente-cohesion{background:rgba(163,113,247,.15);color:var(--violeta);border:1px solid rgba(163,113,247,.35);}
+.fue-card{background:var(--surface);border:1px solid rgba(163,113,247,.35);border-radius:8px;margin-bottom:18px;overflow:hidden;}
+.fue-header{padding:12px 18px;background:rgba(163,113,247,.08);border-bottom:1px solid var(--border);}
+.fue-header h2{font-size:14px;font-weight:600;color:var(--violeta);}
+.fue-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--violeta);white-space:nowrap;font-weight:600;}
+a.fue-link{color:var(--violeta);font-size:11px;}
+.fue-nif{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .rk-pos{font-size:16px;text-align:center;width:44px;}
 .rk-empresa{color:var(--text);font-weight:600;text-decoration:none;}
 .rk-empresa:hover{color:var(--accent);text-decoration:underline;}
@@ -3262,6 +3272,7 @@ def _header_html(provincia="todas"):
       <a href="/?provincia=girona" class="prov-tab{' active' if es_girona else ''}">Girona</a>
     </div>
     <a href="{rankings_href}">🏆 Rankings</a>
+    <a href="/fondos-ue" style="color:var(--violeta)">🇪🇺 Fondos UE</a>
   </nav>
 </header>"""
 
@@ -3286,6 +3297,7 @@ def _footer_html(provincia="todas"):
     <a href="https://www.boe.es/" target="_blank" rel="noopener">BOE</a>
     <a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener">Registro Mercantil</a>
     <a href="{'/rankings?provincia=girona' if es_girona else '/rankings'}">Rankings</a>
+    <a href="/fondos-ue">Fondos UE</a>
     <a href="/aviso-legal">Aviso Legal</a>
     <a href="/quienes-somos">Quiénes Somos</a>
     <span class="ft-sep">|</span>
@@ -3561,6 +3573,107 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     return _page_shell("Rankings — Top 10 empresas", body,
                         description="Ranking nacional y por provincia de las empresas con más contratos "
                                      "públicos y mayor importe adjudicado, con sus directivos identificados.",
+                        provincia="todas")
+
+
+_FUENTE_UE_LABEL = {
+    "cordis": ("CORDIS", "fuente-cordis", "Horizon Europe -- proyectos de investigación e innovación"),
+    "cohesion": ("Cohesion Data", "fuente-cohesion", "Fondos estructurales FEDER/FSE 2014-2020"),
+}
+
+
+def _render_fila_fondo_ue(f):
+    fuente_label, fuente_cls, _ = _FUENTE_UE_LABEL.get(f["fuente"], (f["fuente"], "fuente-cordis", ""))
+    fuente_badge = f'<span class="fuente-badge {fuente_cls}">{esc(fuente_label)}</span>'
+
+    if f["beneficiario"]:
+        nif_html = f'<div class="fue-nif">{esc(f["nif"])}</div>' if f.get("nif") else ""
+        rol_html = f' <span class="ute-nota">({esc(f["rol"])})</span>' if f.get("rol") else ""
+        benef_html = f'<div class="empresa">{esc(f["beneficiario"])}{rol_html}</div>{nif_html}'
+    else:
+        benef_html = '<span class="noloc-warn">Beneficiario no publicado por la fuente</span>'
+
+    municipio_html = (f'<div class="lid" style="margin-top:2px">📍 {esc(f["municipio"])}</div>'
+                       if f.get("municipio") else "")
+
+    fechas = ""
+    if f.get("fecha_inicio"):
+        fi = f["fecha_inicio"][:10]
+        ff = f.get("fecha_fin", "")[:10]
+        fechas = f'{esc(fi)}{" → " + esc(ff) if ff else ""}'
+
+    link_html = (f'<a class="fue-link" href="{esc(f["url"])}" target="_blank" rel="noopener">Ver proyecto ↗</a>'
+                 if f.get("url") else "")
+
+    return f"""<tr>
+      <td>
+        <div class="empresa">{esc(f["titulo"][:110])}</div>
+        {benef_html}
+        {municipio_html}
+      </td>
+      <td class="fue-importe">{fmt_eur(str(f["importe_num"])) if f["importe_num"] else "—"}</td>
+      <td>{fuente_badge}<div class="cargo">{esc(f.get("programa","") or f.get("fondo",""))}</div></td>
+      <td><div class="lid">{fechas}</div>{link_html}</td>
+    </tr>"""
+
+
+def render_fondos_ue_html(fondos, provincia="todas"):
+    """Página de fondos y proyectos financiados por la UE (CORDIS + Cohesion
+    Data), con color violeta distintivo respecto a los contratos públicos
+    normales. Ver INFORME_NOCHE.md 2026-07-21/22 para el diagnóstico de
+    fuentes."""
+    total_importe = sum(f["importe_num"] for f in fondos)
+    n_cordis = sum(1 for f in fondos if f["fuente"] == "cordis")
+    n_cohesion = sum(1 for f in fondos if f["fuente"] == "cohesion")
+
+    stats = f"""<div class="stats-bar">
+      <div class="stat" style="border-color:rgba(163,113,247,.35)"><span style="color:var(--violeta)">{len(fondos)}</span>Proyectos/operaciones</div>
+      <div class="stat" style="border-color:rgba(163,113,247,.35)"><span style="color:var(--violeta)">{fmt_eur(str(total_importe))}</span>Importe total</div>
+      <div class="stat" style="border-color:rgba(163,113,247,.35)"><span style="color:var(--violeta)">{n_cordis}</span>CORDIS (Horizon Europe)</div>
+      <div class="stat" style="border-color:rgba(163,113,247,.35)"><span style="color:var(--violeta)">{n_cohesion}</span>Cohesion Data (FEDER/FSE)</div>
+    </div>"""
+
+    selector_prov = "".join(
+        f'<a href="/fondos-ue?provincia={prov}" class="prov-tab{" active" if prov == provincia else ""}">'
+        f'{esc(PROVINCIA_LABEL.get(prov, prov))}</a>'
+        for prov in MUNICIPIOS_POR_PROVINCIA
+    )
+
+    filas = "".join(_render_fila_fondo_ue(f) for f in fondos[:300])
+    if not filas:
+        filas = '<tr><td colspan="4" class="empty">Sin datos de fondos UE todavía para esta provincia.</td></tr>'
+    aviso_limite = (f'<div class="gs-hint" style="margin-bottom:10px">Mostrando los primeros 300 de '
+                     f'{len(fondos)}, ordenados por importe.</div>') if len(fondos) > 300 else ""
+
+    body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
+  <div class="hero" style="padding-bottom:4px">
+    <div class="hero-tagline" style="color:var(--violeta)">🇪🇺 Fondos y proyectos financiados por la UE</div>
+    <p class="hero-sub">
+      Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales
+      (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea en
+      la Región de Murcia y la provincia de Girona. Fuentes oficiales de la Comisión
+      Europea, sin scraping -- descarga/consulta directa de sus datasets abiertos.
+    </p>
+  </div>
+  <div class="prov-switch" style="margin-bottom:14px">{selector_prov}</div>
+  {stats}
+  <div class="fue-card">
+    {aviso_limite}
+    <table>
+      <tr>
+        <th>Proyecto / Beneficiario</th>
+        <th>Importe</th>
+        <th>Fuente / Programa</th>
+        <th>Fechas</th>
+      </tr>
+      {filas}
+    </table>
+  </div>"""
+
+    return _page_shell("Fondos UE — Proyectos financiados por la Unión Europea", body,
+                        description="Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon "
+                                     "Europe, Cohesion Data FEDER/FSE) en la Región de Murcia y la provincia "
+                                     "de Girona.",
                         provincia="todas")
 
 
@@ -4208,6 +4321,12 @@ def _route_get(path, qs, gzip_ok=False):
             datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
         return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov), gzip_ok=gzip_ok)
 
+    if path == "/fondos-ue":
+        provincia_qs = qs.get("provincia", ["todas"])[0]
+        provincia_fue = provincia_qs if provincia_qs in MUNICIPIOS_POR_PROVINCIA else "todas"
+        fondos = _db_fondos_ue(provincia_fue if provincia_fue != "todas" else None)
+        return _resp(render_fondos_ue_html(fondos, provincia_fue), gzip_ok=gzip_ok)
+
     if path == "/quienes-somos":
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
 
@@ -4225,6 +4344,7 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/?provincia=girona</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/rankings</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/rankings?provincia=girona</loc><changefreq>daily</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quienes-somos</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>"]
         for m, prov in entradas:
