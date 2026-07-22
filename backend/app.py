@@ -3589,7 +3589,36 @@ def _render_fila_fondo_ue(f):
     if f["beneficiario"]:
         nif_html = f'<div class="fue-nif">{esc(f["nif"])}</div>' if f.get("nif") else ""
         rol_html = f' <span class="ute-nota">({esc(f["rol"])})</span>' if f.get("rol") else ""
-        benef_html = f'<div class="empresa">{esc(f["beneficiario"])}{rol_html}</div>{nif_html}'
+
+        # Mismo detector que ya usan los contratos públicos (cargo público vs
+        # adjudicatario/directivo) -- aquí aplicado al beneficiario del fondo
+        # UE. Solo tiene sentido para CORDIS: Cohesion Data no trae nombre de
+        # beneficiario para España (ver diagnóstico), así que ahí "empresa"
+        # suele ser una entidad (universidad, pyme...) y esto no da falsos
+        # positivos porque el índice de cargos públicos solo casa con
+        # nombre+apellidos completos, nunca con razones sociales.
+        match = _detectar_coincidencia_cargo(f["beneficiario"], f.get("municipio"), f.get("provincia"))
+        if match:
+            if match["tipo"] == "local":
+                match_html = (
+                    f'<div class="cargo-match cargo-match-local">'
+                    f'⚠️ Coincidencia de nombre — verificar<br>'
+                    f'<span class="cargo-match-detalle">Mismo nombre y apellidos que {esc(match["cargo"].lower())} '
+                    f'de {esc(match["municipio"])}. No implica necesariamente relación — dato para verificar.</span>'
+                    f'</div>'
+                )
+            else:
+                match_html = (
+                    f'<div class="cargo-match cargo-match-regional">'
+                    f'🔎 Coincidencia de nombre (otro municipio) — verificar<br>'
+                    f'<span class="cargo-match-detalle">Mismo nombre y apellidos que {esc(match["cargo"].lower())} '
+                    f'de {esc(match["municipio"])}. No implica necesariamente relación — dato para verificar.</span>'
+                    f'</div>'
+                )
+        else:
+            match_html = ""
+
+        benef_html = f'<div class="empresa">{esc(f["beneficiario"])}{rol_html}</div>{nif_html}{match_html}'
     else:
         benef_html = '<span class="noloc-warn">Beneficiario no publicado por la fuente</span>'
 
