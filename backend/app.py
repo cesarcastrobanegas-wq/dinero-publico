@@ -1546,6 +1546,74 @@ def _fusionar_historico_contratos(existentes, nuevos):
     return [combinados[k] for k in orden]
 
 
+_RECUPERACION_HISTORICO_MARCADOR = os.path.join(DATA_DIR, "recuperacion_historico_20260722.marker")
+
+
+def _recuperar_historico_perdido():
+    """Recuperación puntual (ver INFORME_NOCHE.md 2026-07-22): el cache.db
+    commiteado en el repo (`_DB_SEED_FILE`) no se ha vuelto a tocar desde el
+    commit c05918d (2026-07-19) -- es decir, conserva el histórico de
+    contratos tal como estaba justo antes de que el bug de refresco
+    sustitutivo empezara a truncar municipios al perderse ZIPs antiguos de
+    PLACE en caché. Se fusiona (nunca sustituye, misma función ya verificada
+    del fix) ese histórico "conocido bueno" con lo que haya AHORA MISMO en
+    el disco de producción, municipio a municipio. Solo puede añadir o
+    refrescar contratos, nunca puede quitar ninguno de los que ya hubiera en
+    producción -- si un municipio no perdió nada, esto es un no-op. Se
+    ejecuta una única vez (marcador en disco)."""
+    if os.path.exists(_RECUPERACION_HISTORICO_MARCADOR):
+        return
+    if not os.path.exists(_DB_SEED_FILE) or os.path.abspath(_DB_SEED_FILE) == os.path.abspath(DB_FILE):
+        return
+
+    seed_db = sqlite3.connect(_DB_SEED_FILE)
+    filas_seed = seed_db.execute("SELECT municipio, data, provincia FROM municipios").fetchall()
+    seed_db.close()
+
+    recuperados = []
+    for muni_key, data_json, prov in filas_seed:
+        try:
+            seed_d = json.loads(data_json)
+        except Exception:
+            continue
+        seed_contratos = seed_d.get("contratos", [])
+        if not seed_contratos:
+            continue
+
+        with _db_lock:
+            row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (muni_key,)).fetchone()
+        actual = json.loads(row[0]) if row else {}
+        actual_contratos = actual.get("contratos", [])
+
+        fusion = _fusionar_historico_contratos(actual_contratos, seed_contratos)
+        if len(fusion) <= len(actual_contratos):
+            continue  # nada que recuperar para este municipio
+
+        nuevo = dict(actual) if actual else dict(seed_d)
+        nuevo["contratos"] = fusion
+        nuevo["total_contratos"] = len(fusion)
+        nuevo["alertas"] = analizar_riesgo(fusion)
+        with _db_lock:
+            _db.execute(
+                "INSERT INTO municipios (municipio, data, ts, provincia) VALUES (?,?,?,?) "
+                "ON CONFLICT(municipio) DO UPDATE SET data=excluded.data, provincia=excluded.provincia",
+                (muni_key, json.dumps(nuevo, ensure_ascii=False),
+                 nuevo.get("timestamp", time.time()), prov or "murcia"),
+            )
+            _db.commit()
+        recuperados.append((muni_key, len(actual_contratos), len(fusion)))
+
+    with open(_RECUPERACION_HISTORICO_MARCADOR, "w") as f:
+        f.write(f"{time.time()}\n")
+    if recuperados:
+        print(f"[startup] Recuperación de histórico perdido: {len(recuperados)} municipios "
+              f"recibieron contratos recuperados del seed del repo (municipio, antes, después): "
+              f"{recuperados}", flush=True)
+    else:
+        print("[startup] Recuperación de histórico: comprobado, ningún municipio necesitaba "
+              "recuperación (todos igual o más completos que el seed del repo).", flush=True)
+
+
 def _dedup_pscp_fases(filas):
     """El mismo lote pasa por fase Adjudicació y luego Formalització, así que
     el dataset publica una fila por cada una. Nos quedamos con la más
@@ -2701,6 +2769,7 @@ def _actualizar_todos_bg(job_id, provincia="murcia"):
 def _inicializar_datos():
     """Carga municipios y directivos cacheados desde SQLite en RAM al arrancar."""
     _db_init()
+    _recuperar_historico_perdido()
     cargados = _db_all_municipios()
     with _datos_lock:
         _datos_memoria[:] = cargados
