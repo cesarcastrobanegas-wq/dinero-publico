@@ -90,6 +90,7 @@ _jobs: dict = {}
 _jobs_lock = threading.Lock()
 _enriqueciendo_lock = threading.Lock()  # evita lanzar dos hilos de enriquecimiento a la vez
 _actualizando_todos_lock = threading.Lock()  # evita lanzar dos refrescos completos a la vez
+_actualizando_fondos_ue_lock = threading.Lock()  # evita lanzar dos refrescos de fondos_ue a la vez
 
 PAGE_SIZE = 50               # contratos máximos por página
 
@@ -1690,6 +1691,35 @@ def actualizar_fondos_cohesion(job_id=None):
     _guardar_fondos_ue(filas)
     _log(job_id, f"  Cohesion Data: {len(filas)} operaciones de Murcia/Girona guardadas")
     return len(filas)
+
+
+def _actualizar_fondos_ue_bg(job_id):
+    """Hilo de fondo para POST /actualizar-fondos-ue: refresca CORDIS y
+    Cohesion Data uno detrás de otro. A diferencia de los contratos
+    (municipio por municipio), aquí son dos descargas masivas ya filtradas
+    a Murcia/Girona en la propia consulta, así que no hace falta trocearlo
+    por municipio ni haría sentido reutilizar _actualizar_todos_bg."""
+    if not _actualizando_fondos_ue_lock.acquire(blocking=False):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "error", "log": [],
+                              "error": "Ya hay un refresco de fondos UE en curso."}
+        return
+
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "running", "log": [], "error": None}
+        n_cordis = actualizar_fondos_cordis(job_id)
+        n_cohesion = actualizar_fondos_cohesion(job_id)
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "done"
+            _jobs[job_id]["total"] = n_cordis + n_cohesion
+        print(f"  [actualizar-fondos-ue] Terminado: {n_cordis} CORDIS + {n_cohesion} Cohesion Data.", flush=True)
+    except Exception as e:
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "error"
+            _jobs[job_id]["error"] = str(e)
+    finally:
+        _actualizando_fondos_ue_lock.release()
 
 
 # ─── DIRECTIVOS (empresia/BORME via BOE) ────────────────────────────────────
@@ -4330,6 +4360,18 @@ def _route_post(path, params):
                                  else len(MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)))
             body = json.dumps({"status": "started", "job_id": job_id, "provincia": provincia,
                                 "total_municipios": total_municipios})
+            return _resp(body, content_type="application/json; charset=utf-8")
+
+        if path == "/actualizar-fondos-ue":
+            # Refresca la tabla fondos_ue (CORDIS + Cohesion Data). Mismo
+            # patrón de disparo externo + ADMIN_TOKEN que /actualizar-todos;
+            # el cron diario llama a los dos endpoints uno detrás de otro.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            job_id = str(uuid.uuid4())
+            threading.Thread(target=_actualizar_fondos_ue_bg, args=(job_id,), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id})
             return _resp(body, content_type="application/json; charset=utf-8")
 
         return 404, {"Content-Length": "0"}, b""

@@ -25,3 +25,17 @@ jobs:
             echo "::error::El endpoint /actualizar-todos devolvió $codigo"
             exit 1
           fi
+
+      - name: Disparar refresco de fondos UE (CORDIS + Cohesion Data) en producción
+        run: |
+          respuesta=$(curl -s -w "\n%{http_code}" -X POST \
+            -d "token=${{ secrets.ADMIN_TOKEN }}" \
+            https://dinero-publico.onrender.com/actualizar-fondos-ue)
+          codigo=$(echo "$respuesta" | tail -n1)
+          cuerpo=$(echo "$respuesta" | sed '$d')
+          echo "HTTP $codigo"
+          echo "$cuerpo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::El endpoint /actualizar-fondos-ue devolvió $codigo"
+            exit 1
+          fi
