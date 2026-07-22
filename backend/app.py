@@ -1596,7 +1596,7 @@ def _recuperar_historico_perdido():
         with _db_lock:
             _db.execute(
                 "INSERT INTO municipios (municipio, data, ts, provincia) VALUES (?,?,?,?) "
-                "ON CONFLICT(municipio) DO UPDATE SET data=excluded.data, provincia=excluded.provincia",
+                "ON CONFLICT(municipio) DO UPDATE SET data=excluded.data, ts=excluded.ts, provincia=excluded.provincia",
                 (muni_key, json.dumps(nuevo, ensure_ascii=False),
                  nuevo.get("timestamp", time.time()), prov or "murcia"),
             )
