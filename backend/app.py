@@ -116,6 +116,26 @@ if (not os.path.exists(DB_FILE) and os.path.exists(_DB_SEED_FILE)
     print(f"[startup] Disco persistente vacío: cache.db sembrado desde el repo "
           f"({_DB_SEED_FILE} -> {DB_FILE})", flush=True)
 
+# Backup de seguridad de una sola vez, ANTES de aplicar el fix de refresco
+# aditivo (ver INFORME_NOCHE.md 2026-07-22): copia el cache.db tal cual está
+# en este primer arranque con el código nuevo -- incompleto para algún
+# municipio ya afectado por el bug de refresco sustitutivo, pero es lo único
+# que hay en este disco, y es mejor tener esta foto que ninguna. Vive en el
+# mismo DATA_DIR (mismo disco persistente), no requiere credenciales
+# adicionales. El nombre fijo (sin timestamp) hace que el `if` de abajo sea
+# idempotente: solo copia la primera vez que arranca este código.
+_DB_BACKUP_PRE_REFRESCO_ADITIVO = os.path.join(DATA_DIR, "cache_db_backup_pre_refresco_aditivo_20260722.db")
+if os.path.exists(DB_FILE) and not os.path.exists(_DB_BACKUP_PRE_REFRESCO_ADITIVO):
+    shutil.copy2(DB_FILE, _DB_BACKUP_PRE_REFRESCO_ADITIVO)
+    # Copiar también los sidecars de WAL si el proceso anterior no hizo un
+    # checkpoint limpio al parar -- si no, el backup podría no reflejar los
+    # últimos commits todavía no volcados al fichero principal.
+    for _ext in ("-wal", "-shm"):
+        if os.path.exists(DB_FILE + _ext):
+            shutil.copy2(DB_FILE + _ext, _DB_BACKUP_PRE_REFRESCO_ADITIVO + _ext)
+    print(f"[startup] Backup de seguridad de cache.db antes del fix de refresco aditivo: "
+          f"{_DB_BACKUP_PRE_REFRESCO_ADITIVO}", flush=True)
+
 _db = sqlite3.connect(DB_FILE, check_same_thread=False, timeout=30)
 _db.execute("PRAGMA journal_mode=WAL")
 _db_lock = threading.Lock()
@@ -346,6 +366,22 @@ def _db_all_municipios(provincia=None):
         except Exception:
             pass
     return out
+
+
+def _db_obtener_contratos_municipio(municipio):
+    """Contratos ya guardados para este municipio ANTES de un nuevo refresco
+    -- se usa para fusionar en vez de sustituir (ver _fusionar_historico_
+    contratos e INFORME_NOCHE.md 2026-07-22: el refresco sustitutivo anterior
+    borró histórico real de al menos Archena)."""
+    key = normalizar(municipio)
+    with _db_lock:
+        row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
+    if not row:
+        return []
+    try:
+        return json.loads(row[0]).get("contratos", [])
+    except Exception:
+        return []
 
 
 def _db_clear_municipios(provincia=None):
@@ -1475,6 +1511,41 @@ def _dedup_contratos_por_url(contratos):
     return [vistos[k] for k in orden]
 
 
+def _fusionar_historico_contratos(existentes, nuevos):
+    """Fusiona el histórico ya guardado de un municipio con lo recién
+    encontrado en un refresco -- NUNCA se pierde un contrato que ya estuviera
+    guardado y que este refresco en concreto no haya vuelto a encontrar (ver
+    INFORME_NOCHE.md 2026-07-22: el refresco sustitutivo anterior borró
+    histórico real de al menos Archena cuando faltaba algún ZIP mensual
+    antiguo de PLACE en caché en el momento del refresco). Aplica por igual a
+    las tres fuentes (PLACE, BORM, PSCP) aunque el riesgo real detectado es
+    solo de PLACE -- BORM y PSCP consultan en vivo su histórico completo en
+    cada refresco, no dependen de caché local, así que para ellas esto es
+    solo una red de seguridad adicional, no un fix necesario.
+
+    Misma clave que _dedup_contratos_por_url (URL, o título truncado si no
+    hay URL). Si la misma clave aparece en ambos lados, gana la versión
+    NUEVA (dato más fresco: estado, enlace BORM, etc.) -- lo antiguo solo se
+    conserva cuando el refresco actual no lo trae en absoluto."""
+    combinados = {}
+    orden = []
+    for c in existentes:
+        key = c.get("url") or c.get("titulo", "")[:80]
+        if not key:
+            continue
+        if key not in combinados:
+            orden.append(key)
+        combinados[key] = c
+    for c in nuevos:
+        key = c.get("url") or c.get("titulo", "")[:80]
+        if not key:
+            continue
+        if key not in combinados:
+            orden.append(key)
+        combinados[key] = c   # el nuevo siempre gana si la clave ya existía
+    return [combinados[k] for k in orden]
+
+
 def _dedup_pscp_fases(filas):
     """El mismo lote pasa por fase Adjudicació y luego Formalització, así que
     el dataset publica una fila por cada una. Nos quedamos con la más
@@ -2476,6 +2547,19 @@ def _job_run(job_id, municipio, provincia="murcia"):
         if provincia != "girona":
             # Enriquecer contratos PLACE con el link al BORM cuando existe uno equivalente
             _enlazar_borm_place(contratos)
+        _log(job_id, f"Total contratos únicos (este refresco): {len(contratos)}")
+
+        # Fusión con el histórico ya guardado -- el refresco de este ciclo
+        # NUNCA sustituye lo ya persistido, se fusiona con ello (ver
+        # _fusionar_historico_contratos). Corrige el bug documentado en
+        # INFORME_NOCHE.md 2026-07-22 que borró histórico real de Archena.
+        existentes = _db_obtener_contratos_municipio(municipio)
+        if existentes:
+            antes = len(contratos)
+            contratos = _fusionar_historico_contratos(existentes, contratos)
+            _log(job_id, f"Fusionado con histórico ya guardado: {antes} de este refresco + "
+                 f"{len(existentes)} ya guardados -> {len(contratos)} tras fusión")
+
         _log(job_id, f"Total contratos únicos: {len(contratos)}")
 
         # Directivos — todas las empresas únicas identificadas
