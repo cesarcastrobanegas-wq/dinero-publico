@@ -198,33 +198,36 @@ def _db_init():
             _db.execute("ALTER TABLE municipios ADD COLUMN provincia TEXT DEFAULT 'murcia'")
         except sqlite3.OperationalError:
             pass  # ya existe
-        municipio_match_es_nuevo = False
         try:
-            # Municipio canónico (mismo listado que MUNICIPIOS_MURCIA/GIRONA)
+            # Municipio canónico (mismo listado que MUNICIPIOS_MURCIA/GIRONA,
+            # o el pseudo-municipio de la provincia -- ver MUNICIPIOS_PSEUDO)
             # al que se ha podido cruzar este registro de fondos_ue, o '' si
-            # la fuente solo trae ubicación a nivel regional/provincial y no
-            # se ha podido cruzar -- ver _cruzar_municipio_fondo_ue().
+            # la fuente solo trae ubicación a nivel regional/provincial no
+            # cruzable -- ver _cruzar_municipio_fondo_ue().
             _db.execute("ALTER TABLE fondos_ue ADD COLUMN municipio_match TEXT DEFAULT ''")
-            municipio_match_es_nuevo = True
         except sqlite3.OperationalError:
             pass  # ya existe
         _db.commit()
 
-        if municipio_match_es_nuevo:
-            # Columna recién añadida: las filas de fondos_ue ya cargadas antes
-            # de esta versión (CORDIS/Cohesion Data de sesiones anteriores) se
-            # quedarían con municipio_match='' hasta el próximo refresco
-            # completo -- se recalcula una sola vez aquí para que el cruce
-            # esté disponible de inmediato sin esperar a /actualizar-fondos-ue.
-            filas_existentes = _db.execute(
-                "SELECT id, provincia, municipio FROM fondos_ue").fetchall()
-            for fid, prov, muni in filas_existentes:
-                match = _cruzar_municipio_fondo_ue(prov, muni)
-                if match:
-                    _db.execute("UPDATE fondos_ue SET municipio_match=? WHERE id=?", (match, fid))
-            _db.commit()
-            print(f"  [db-init] municipio_match calculado para {len(filas_existentes)} "
-                  f"filas de fondos_ue ya existentes.", flush=True)
+        # Recalcula municipio_match para TODAS las filas en cada arranque (no
+        # solo cuando la columna es nueva): es una tabla pequeña (unos pocos
+        # miles de filas, coste insignificante una vez al arrancar) y así
+        # cualquier cambio futuro en _cruzar_municipio_fondo_ue (como el del
+        # 2026-07-23 que añadió el cruce contra los pseudo-municipios) se
+        # aplica de inmediato a los datos ya cargados, sin esperar al próximo
+        # /actualizar-fondos-ue.
+        filas_existentes = _db.execute(
+            "SELECT id, provincia, municipio, municipio_match FROM fondos_ue").fetchall()
+        cambios = 0
+        for fid, prov, muni, match_actual in filas_existentes:
+            match = _cruzar_municipio_fondo_ue(prov, muni)
+            if match != (match_actual or ""):
+                _db.execute("UPDATE fondos_ue SET municipio_match=? WHERE id=?", (match, fid))
+                cambios += 1
+        _db.commit()
+        if filas_existentes:
+            print(f"  [db-init] municipio_match recalculado para {len(filas_existentes)} "
+                  f"filas de fondos_ue ({cambios} cambiaron).", flush=True)
     _migrar_json_a_sqlite()
 
 
@@ -762,6 +765,122 @@ def municipio_valido_provincia(municipio, provincia):
     if provincia == "girona":
         return municipio_valido_girona(municipio)
     return municipio_valido(municipio)
+
+
+# ─── PSEUDO-MUNICIPIOS (ámbito autonómico/provincial, no un ayuntamiento) ────
+# Contratos y fondos UE cuyo ámbito es toda la Región de Murcia o toda la
+# provincia de Girona -- no pertenecen a ningún ayuntamiento concreto, así
+# que hoy se quedaban fuera del listado de municipios (los fondos, solo
+# visibles en /fondos-ue) o mal atribuidos (los contratos de la CCAA de
+# Murcia, ver _es_organo_ccaa_murcia). Estas entradas se guardan en las
+# mismas tablas/estructuras que un ayuntamiento más (misma tabla SQLite
+# `municipios`, mismo `_datos_memoria`, mismas páginas de listado/ficha) para
+# que aparezcan con sus propias estadísticas igual que cualquier otro
+# municipio -- pero NO están en MUNICIPIOS_MURCIA/MUNICIPIOS_GIRONA a
+# propósito, para no arrastrar el pipeline de scraping por-municipio
+# (buscador PLACE "Ayuntamiento de X", INE10 de Girona, alcalde/concejales...)
+# que no tiene sentido para ellas. Ver INFORME_NOCHE.md 2026-07-23 para el
+# porqué de no incluir también "Generalitat de Catalunya": el PSCP no
+# permite acotar sus contratos a solo Girona (son de toda Catalunya), así
+# que de momento solo se resuelve el lado de fondos UE para Girona
+# (etiquetado "Provincia de Girona", que sí es un recorte fiable por NUTS3).
+MUNICIPIOS_PSEUDO = {"murcia": "Región de Murcia", "girona": "Provincia de Girona"}
+
+
+def es_pseudo_municipio(municipio):
+    buscado = normalizar(municipio)
+    return any(normalizar(m) == buscado for m in MUNICIPIOS_PSEUDO.values())
+
+
+_RE_ORGANO_CCAA_MURCIA = re.compile(r"region(al)? de murcia")
+_EXCLUIR_ORGANO_CCAA_MURCIA = ("consorcio", "mancomunidad", "federacion de municipios")
+
+
+def _es_organo_ccaa_murcia(organo):
+    """True si el órgano contratante es la propia Comunidad Autónoma de la
+    Región de Murcia (Consejerías, institutos, agencias, Asamblea Regional,
+    Boletín Oficial...) y no un ayuntamiento ni un ente conjunto con varios
+    municipios (consorcio/mancomunidad/federación de municipios -- estos sí
+    incluyen "Región de Murcia" en su nombre pero no son la CCAA en sí, se
+    dejan sin tocar). Verificado contra los 1.886 contratos ya atribuidos al
+    municipio "Murcia" en local: 736 clasificados como CCAA, sin falsos
+    positivos evidentes entre ayuntamientos/consorcios/mancomunidades (ver
+    INFORME_NOCHE.md 2026-07-23). Los organismos ESTATALES que también se
+    cuelan hoy en "Murcia" por el mismo bug de texto libre (Guardia Civil,
+    AEAT, TGSS, INSS, Universidad de Murcia...) no encajan aquí ni en
+    ningún otro bucket -- quedan documentados como pendiente, no se tocan."""
+    n = normalizar(organo)
+    if not _RE_ORGANO_CCAA_MURCIA.search(n):
+        return False
+    return not any(kw in n for kw in _EXCLUIR_ORGANO_CCAA_MURCIA)
+
+
+def _separar_contratos_ccaa_murcia(contratos):
+    """Separa una lista de contratos ya atribuidos al municipio "Murcia" en
+    (municipales, ccaa) según _es_organo_ccaa_murcia."""
+    municipales, ccaa = [], []
+    for c in contratos:
+        (ccaa if _es_organo_ccaa_murcia(c.get("organo", "")) else municipales).append(c)
+    return municipales, ccaa
+
+
+def _guardar_pseudo_municipio_ccaa(provincia, contratos_ccaa, job_id=None):
+    """Guarda los contratos de la CCAA (separados de un municipio real, ver
+    _separar_contratos_ccaa_murcia) bajo la entrada pseudo-municipio de esa
+    provincia, tratada en el resto de la app igual que un ayuntamiento más
+    (mismas tablas/listados), pero sin alcalde ni perfil PLACE propio. Se
+    recalcula entera en cada refresco del municipio real del que procede
+    (hoy solo "Murcia" capital) -- no necesita fusión propia con histórico
+    porque siempre deriva del histórico ya fusionado de ese municipio."""
+    nombre = MUNICIPIOS_PSEUDO.get(provincia)
+    if not nombre:
+        return
+    resultado = {
+        "municipio":       nombre,
+        "organismo":       "Comunidad Autónoma de la Región de Murcia" if provincia == "murcia" else nombre,
+        "total_contratos": len(contratos_ccaa),
+        "contratos":       contratos_ccaa,
+        "alertas":         analizar_riesgo(contratos_ccaa),
+        "place_profile":   "",
+        "timestamp":       time.time(),
+    }
+    if job_id:
+        _log(job_id, f"  {len(contratos_ccaa)} contratos reclasificados a "
+                      f"'{nombre}' (órgano = CCAA, no ayuntamiento)")
+    with _datos_lock:
+        _datos_memoria[:] = [d for d in _datos_memoria if normalizar(d.get("municipio", "")) != normalizar(nombre)]
+        _datos_memoria.append(resultado)
+    _db_set_municipio(nombre, resultado, provincia=provincia)
+
+
+def _asegurar_pseudo_municipio_fondos(provincia):
+    """Crea (si no existe ya) la entrada pseudo-municipio de una provincia
+    con 0 contratos propios, solo para que aparezca en el listado general y
+    su ficha de detalle no dé "municipio no encontrado" cuando lo único que
+    tiene son fondos UE cruzados (hoy, "Provincia de Girona" -- "Región de
+    Murcia" ya se crea con contratos reales en _guardar_pseudo_municipio_ccaa
+    y esta función no la sobrescribe). Se llama al arrancar y tras cada
+    refresco de fondos UE."""
+    nombre = MUNICIPIOS_PSEUDO.get(provincia)
+    if not nombre:
+        return
+    with _datos_lock:
+        ya_existe = any(normalizar(d.get("municipio", "")) == normalizar(nombre) for d in _datos_memoria)
+    if ya_existe:
+        return
+    resultado = {
+        "municipio":       nombre,
+        "organismo":       nombre,
+        "total_contratos": 0,
+        "contratos":       [],
+        "alertas":         [],
+        "place_profile":   "",
+        "timestamp":       time.time(),
+    }
+    with _datos_lock:
+        _datos_memoria.append(resultado)
+    _db_set_municipio(nombre, resultado, provincia=provincia)
+
 
 def fmt_eur(valor_str):
     try:
@@ -1733,15 +1852,47 @@ def _construir_indice_municipios_fondos_ue():
 _INDICE_MUNICIPIOS_FONDOS_UE = _construir_indice_municipios_fondos_ue()
 
 
+_TEXTO_REGIONAL_GIRONA = "province of girona"
+
+
 def _cruzar_municipio_fondo_ue(provincia, texto_ubicacion):
     """Intenta identificar el municipio canónico al que corresponde un
     proyecto/operación de fondos UE a partir del texto libre de ubicación de
     su fuente. Devuelve '' si no hay cruce fiable -- el proyecto se queda
-    solo en /fondos-ue, no se fuerza a ningún municipio."""
+    solo en /fondos-ue, no se fuerza a ningún municipio.
+
+    Dos casos adicionales cruzan contra el pseudo-municipio de la provincia
+    (ver MUNICIPIOS_PSEUDO) en vez de contra una ciudad concreta, para fondos
+    de ámbito regional/provincial sin desglose municipal (ver INFORME_NOCHE.md
+    2026-07-23 para el análisis de los datos reales que justifica cada regla):
+
+    - Murcia: Cohesion Data (FEDER/FSE) sin "region" relleno -- confirmado en
+      datos reales que toda fila con provincia="murcia" y texto_ubicacion=""
+      es del programa "Murcia - ERDF/ESF" (la consulta ya filtra por ese
+      programa) sin desglose de ciudad, 5.175 filas / ~741M€. Los casos donde
+      sí trae otra región (p.ej. "Cantabria", "A Coruña Province" -- 59 filas,
+      posible dato cruzado o programa interregional) se dejan sin tocar, no
+      se fuerzan.
+    - Girona: Cohesion Data con "region" EXACTAMENTE "Province of Girona" (sin
+      combinar con otras regiones) -- 895 filas / ~237M€, ya acotado a NUTS3
+      ES512 por la propia consulta. Las combinaciones multi-región (p.ej.
+      "Province of Girona|Pyrénées-Orientales", programas de cooperación
+      transfronteriza que no son solo de Girona) se dejan sin tocar."""
+    if provincia == "murcia" and not texto_ubicacion:
+        return MUNICIPIOS_PSEUDO["murcia"]
+
     idx = _INDICE_MUNICIPIOS_FONDOS_UE.get(provincia)
     if not idx or not texto_ubicacion:
         return ""
-    return idx.get(_clave_municipio_match(texto_ubicacion), "")
+
+    match_ciudad = idx.get(_clave_municipio_match(texto_ubicacion), "")
+    if match_ciudad:
+        return match_ciudad
+
+    if provincia == "girona" and normalizar(texto_ubicacion) == _TEXTO_REGIONAL_GIRONA:
+        return MUNICIPIOS_PSEUDO["girona"]
+
+    return ""
 
 
 CORDIS_HORIZON_CSV_URL = "https://cordis.europa.eu/data/cordis-HORIZONprojects-csv.zip"
@@ -1802,7 +1953,7 @@ def _db_fondos_ue(provincia=None):
 def _db_fondos_ue_por_municipio(municipio):
     """Fondos UE ya cruzados con este municipio exacto (columna municipio_match,
     calculada en la ingesta -- ver _cruzar_municipio_fondo_ue). Se usa para
-    mostrar el bloque violeta de fondos UE en la ficha de cada ayuntamiento."""
+    mostrar el bloque amarillo/azul de fondos UE en la ficha de cada ayuntamiento."""
     with _db_lock:
         rows = _db.execute(
             "SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
@@ -1952,6 +2103,8 @@ def _actualizar_fondos_ue_bg(job_id):
             _jobs[job_id] = {"status": "running", "log": [], "error": None}
         n_cordis = actualizar_fondos_cordis(job_id)
         n_cohesion = actualizar_fondos_cohesion(job_id)
+        for _prov in MUNICIPIOS_PSEUDO:
+            _asegurar_pseudo_municipio_fondos(_prov)
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
             _jobs[job_id]["total"] = n_cordis + n_cohesion
@@ -2660,6 +2813,17 @@ def _job_run(job_id, municipio, provincia="murcia"):
                     c["rm_agotado"] = True
                     c["intentado"] = True
 
+        # Separa los contratos cuyo órgano contratante es la propia CCAA de
+        # Murcia (Consejerías, institutos...) de los del Ayuntamiento de
+        # Murcia capital -- ver _es_organo_ccaa_murcia e INFORME_NOCHE.md
+        # 2026-07-23. Solo aplica al refresco de "Murcia" capital porque el
+        # bug de atribución (buscar el nombre del municipio como subcadena
+        # del órgano) solo mete contratos de la CCAA ahí -- el resto de
+        # municipios de Murcia no tienen ese problema.
+        contratos_ccaa_murcia = []
+        if provincia == "murcia" and normalizar(municipio) == normalizar("Murcia"):
+            contratos, contratos_ccaa_murcia = _separar_contratos_ccaa_murcia(contratos)
+
         # Análisis de riesgo
         alertas = analizar_riesgo(contratos)
 
@@ -2681,6 +2845,9 @@ def _job_run(job_id, municipio, provincia="murcia"):
             _datos_memoria[:] = [d for d in _datos_memoria if normalizar(d.get("municipio", "")) != normalizar(municipio)]
             _datos_memoria.append(resultado)
         _db_set_municipio(municipio, resultado, provincia=provincia)
+
+        if contratos_ccaa_murcia:
+            _guardar_pseudo_municipio_ccaa("murcia", contratos_ccaa_murcia, job_id)
 
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
@@ -2778,6 +2945,8 @@ def _inicializar_datos():
         ts = d.get("timestamp", 0)
         if muni and (time.time() - ts) < RESULT_CACHE_TTL:
             _cache_set(muni, d)
+    for _prov in MUNICIPIOS_PSEUDO:
+        _asegurar_pseudo_municipio_fondos(_prov)
 
 
 # ─── ENRIQUECIMIENTO EN BACKGROUND (empresia / BORME) ────────────────────────
@@ -2926,7 +3095,7 @@ CSS = """
 :root{
   --bg:#0d1117;--surface:#161b22;--border:#30363d;
   --accent:#f0883e;--blue:#58a6ff;--text:#c9d1d9;--dim:#8b949e;
-  --red:#f85149;--green:#3fb950;--yellow:#d29922;--violeta:#a371f7;
+  --red:#f85149;--green:#3fb950;--yellow:#d29922;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{overflow-x:hidden;}
@@ -3006,15 +3175,16 @@ a.borm-link{color:#e0a0ff;font-size:11px;}
 .fuente-borm{background:rgba(224,160,255,.15);color:#e0a0ff;border:1px solid rgba(224,160,255,.3);}
 .fuente-pscp{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);}
 a.pscp-link{color:var(--green);}
-/* Fondos UE -- violeta a propósito, para diferenciarlos a simple vista de
-   los contratos públicos normales (naranja/azul) */
-.fuente-cordis{background:rgba(163,113,247,.15);color:var(--violeta);border:1px solid rgba(163,113,247,.3);}
-.fuente-cohesion{background:rgba(163,113,247,.15);color:var(--violeta);border:1px solid rgba(163,113,247,.35);}
-.fue-card{background:var(--surface);border:1px solid rgba(163,113,247,.35);border-radius:8px;margin-bottom:18px;overflow:hidden;}
-.fue-header{padding:12px 18px;background:rgba(163,113,247,.08);border-bottom:1px solid var(--border);}
-.fue-header h2{font-size:14px;font-weight:600;color:var(--violeta);}
-.fue-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--violeta);white-space:nowrap;font-weight:600;}
-a.fue-link{color:var(--violeta);font-size:11px;}
+/* Fondos UE -- letra amarilla sobre fondo azul a propósito, para
+   diferenciarlos a simple vista de los contratos públicos normales
+   (naranja/azul). Antes del 2026-07-23 era violeta -- ver INFORME_NOCHE.md. */
+.fuente-cordis{background:rgba(88,166,255,.15);color:var(--yellow);border:1px solid rgba(88,166,255,.3);}
+.fuente-cohesion{background:rgba(88,166,255,.15);color:var(--yellow);border:1px solid rgba(88,166,255,.35);}
+.fue-card{background:var(--surface);border:1px solid rgba(88,166,255,.35);border-radius:8px;margin-bottom:18px;overflow:hidden;}
+.fue-header{padding:12px 18px;background:rgba(88,166,255,.15);border-bottom:1px solid var(--border);}
+.fue-header h2{font-size:14px;font-weight:600;color:var(--yellow);}
+.fue-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--yellow);white-space:nowrap;font-weight:600;}
+a.fue-link{color:var(--yellow);font-size:11px;}
 .fue-nif{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .rk-pos{font-size:16px;text-align:center;width:44px;}
 .rk-empresa{color:var(--text);font-weight:600;text-decoration:none;}
@@ -3528,7 +3698,7 @@ def _header_html(provincia="todas"):
       <a href="/?provincia=girona" class="prov-tab{' active' if es_girona else ''}">Girona</a>
     </div>
     <a href="{rankings_href}">🏆 Rankings</a>
-    <a href="/fondos-ue" style="color:var(--violeta)">🇪🇺 Fondos UE</a>
+    <a href="/fondos-ue" style="color:var(--yellow)">🇪🇺 Fondos UE</a>
   </nav>
 </header>"""
 
@@ -3904,7 +4074,7 @@ def _render_fila_fondo_ue(f):
 
 def render_fondos_ue_html(fondos, provincia="todas"):
     """Página de fondos y proyectos financiados por la UE (CORDIS + Cohesion
-    Data), con color violeta distintivo respecto a los contratos públicos
+    Data), con estilo amarillo sobre azul distintivo respecto a los contratos públicos
     normales. Ver INFORME_NOCHE.md 2026-07-21/22 para el diagnóstico de
     fuentes."""
     total_importe = sum(f["importe_num"] for f in fondos)
@@ -3912,10 +4082,10 @@ def render_fondos_ue_html(fondos, provincia="todas"):
     n_cohesion = sum(1 for f in fondos if f["fuente"] == "cohesion")
 
     stats = f"""<div class="stats-bar">
-      <div class="stat" style="border-color:rgba(163,113,247,.35)"><span style="color:var(--violeta)">{len(fondos)}</span>Proyectos/operaciones</div>
-      <div class="stat" style="border-color:rgba(163,113,247,.35)"><span style="color:var(--violeta)">{fmt_eur(str(total_importe))}</span>Importe total</div>
-      <div class="stat" style="border-color:rgba(163,113,247,.35)"><span style="color:var(--violeta)">{n_cordis}</span>CORDIS (Horizon Europe)</div>
-      <div class="stat" style="border-color:rgba(163,113,247,.35)"><span style="color:var(--violeta)">{n_cohesion}</span>Cohesion Data (FEDER/FSE)</div>
+      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{len(fondos)}</span>Proyectos/operaciones</div>
+      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{fmt_eur(str(total_importe))}</span>Importe total</div>
+      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{n_cordis}</span>CORDIS (Horizon Europe)</div>
+      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{n_cohesion}</span>Cohesion Data (FEDER/FSE)</div>
     </div>"""
 
     selector_prov = "".join(
@@ -3932,7 +4102,7 @@ def render_fondos_ue_html(fondos, provincia="todas"):
 
     body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
   <div class="hero" style="padding-bottom:4px">
-    <div class="hero-tagline" style="color:var(--violeta)">🇪🇺 Fondos y proyectos financiados por la UE</div>
+    <div class="hero-tagline" style="color:var(--yellow)">🇪🇺 Fondos y proyectos financiados por la UE</div>
     <p class="hero-sub">
       Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales
       (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea en
@@ -4055,7 +4225,7 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
 
         # Fondos y proyectos UE cruzados con este municipio (ver
         # _cruzar_municipio_fondo_ue) -- solo se muestra si hay al menos uno,
-        # mismo color violeta que /fondos-ue para diferenciarlos de los
+        # mismo estilo amarillo/azul que /fondos-ue para diferenciarlos de los
         # contratos públicos normales.
         fondos_ue_muni = _db_fondos_ue_por_municipio(muni_name_d)
         fondos_ue_html = ""
@@ -4063,9 +4233,9 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
             total_fue = sum(f["importe_num"] for f in fondos_ue_muni)
             filas_fue = "".join(_render_fila_fondo_ue(f) for f in fondos_ue_muni)
             fondos_ue_html = f"""<div class="fue-card" style="margin-top:14px">
-            <div class="section-title" style="color:var(--violeta);margin:0 0 8px">
+            <div class="section-title" style="color:var(--yellow);margin:0 0 8px">
               🇪🇺 Fondos y proyectos financiados por la UE
-              <span class="badge" style="background:rgba(163,113,247,.15);color:var(--violeta);border-color:rgba(163,113,247,.3)">
+              <span class="badge" style="background:rgba(88,166,255,.15);color:var(--yellow);border-color:rgba(88,166,255,.3)">
                 {len(fondos_ue_muni)} · {fmt_eur(str(total_fue))}
               </span>
             </div>
@@ -4163,7 +4333,13 @@ def render_landing_nacional_html(datos):
     region_cards = ""
     for prov, municipios_lista in MUNICIPIOS_POR_PROVINCIA.items():
         datos_prov = [d for d in datos if d.get("provincia", "murcia") == prov]
-        n_con_datos = len(datos_prov)
+        # El pseudo-municipio (Región de Murcia / Provincia de Girona) suma
+        # en contratos/importe pero no en el "N/total municipios" -- no es
+        # uno de los ayuntamientos de esa lista, mostrarlo ahí daría un
+        # "43/42 municipios" sin sentido.
+        pseudo_nombre_prov = MUNICIPIOS_PSEUDO.get(prov)
+        n_con_datos = sum(1 for d in datos_prov
+                           if normalizar(d.get("municipio", "")) != normalizar(pseudo_nombre_prov or ""))
         c_prov = sum(d.get("total_contratos", 0) for d in datos_prov)
         imp_prov = sum(c.get("importe_num", 0.0) for d in datos_prov for c in d.get("contratos", []))
         label = PROVINCIA_LABEL.get(prov, prov)
@@ -4262,18 +4438,41 @@ def render_landing_html(datos, provincia="murcia"):
       <div class="stat"><span>{fmt_eur(str(total_imp))}</span>Importe total</div>
     </div>"""
 
-    tiles = ""
-    for muni in sorted(municipios_lista, key=lambda m: normalizar(m)):
-        d = por_muni.get(normalizar(muni))
+    def _muni_tile(muni, d):
+        """Tile de un municipio o pseudo-municipio (ver MUNICIPIOS_PSEUDO):
+        mismas estadísticas de contratos con el mismo estilo de siempre, más
+        una línea de fondos UE (amarillo sobre azul) si tiene alguno cruzado
+        -- solo se muestra esa línea cuando hay datos, igual que en la ficha
+        de detalle (_db_fondos_ue_por_municipio)."""
         n = d.get("total_contratos", 0) if d else 0
         imp = sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])) if d else 0.0
         muni_enc = quote_plus(muni)
-        tiles += f"""<div class="muni-tile">
+        fondos_ue_muni = _db_fondos_ue_por_municipio(muni)
+        fue_html = ""
+        if fondos_ue_muni:
+            total_fue = sum(f["importe_num"] for f in fondos_ue_muni)
+            fue_html = (f'<div class="mt-row" style="color:var(--yellow)">'
+                        f'<span>🇪🇺 Fondos UE</span><b>{len(fondos_ue_muni)}</b></div>'
+                        f'<div class="mt-imp" style="color:var(--yellow)">{fmt_eur(str(total_fue))}</div>')
+        return f"""<div class="muni-tile">
           <h3>🏛 {esc(muni)}</h3>
           <div class="mt-row"><span>Contratos</span><b>{n}</b></div>
           <div class="mt-imp">{fmt_eur(str(imp))}</div>
+          {fue_html}
           <a class="btn-ver" href="/?muni={muni_enc}{q_prov}">Ver contratos →</a>
         </div>"""
+
+    tiles = ""
+    # Pseudo-municipio de la provincia (Región de Murcia / Provincia de
+    # Girona) primero, antes del listado alfabético de ayuntamientos: no es
+    # un municipio más, así que fijarlo arriba lo hace más fácil de
+    # encontrar, aunque el tile en sí es idéntico a los demás (mismas
+    # estadísticas, mismo estilo -- ver INFORME_NOCHE.md 2026-07-23).
+    pseudo_nombre = MUNICIPIOS_PSEUDO.get(provincia)
+    if pseudo_nombre:
+        tiles += _muni_tile(pseudo_nombre, por_muni.get(normalizar(pseudo_nombre)))
+    for muni in sorted(municipios_lista, key=lambda m: normalizar(m)):
+        tiles += _muni_tile(muni, por_muni.get(normalizar(muni)))
 
     hero_sub = (
         f"Contratos públicos de los {len(municipios_lista)} municipios de la provincia de Girona, "
