@@ -4710,6 +4710,12 @@ def render_aviso_legal_html():
   público en España. Cubre actualmente la Región de Murcia y la provincia de
   Girona, con expansión progresiva a todo el territorio nacional.</p>
 
+  <h2>Propiedad intelectual</h2>
+  <p>El código fuente de esta plataforma está registrado como obra en Safe
+  Creative con todos los derechos reservados, número de registro
+  <a href="https://www.safecreative.org/work/2607236515551" target="_blank"
+  rel="noopener">2607236515551</a> (23 de julio de 2026).</p>
+
   <h2>Origen de los datos</h2>
   <p>Los datos de contratos mostrados provienen de fuentes oficiales públicas: la
   Plataforma de Contratación del Sector Público (PLACE) del Ministerio de
