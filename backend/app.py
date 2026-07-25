@@ -152,8 +152,9 @@ DIR_INTENTOS_MAX = 3  # tras estos intentos fallidos, se marca "sin datos regist
 # que se repita más de una vez al día por proceso (ver INFORME_NOCHE.md,
 # propuesta de consumo #4: identificado como causa principal de que el lote
 # de Girona tardase ~4x más en Render que en local).
-_ULTIMA_LIMPIEZA_NEGATIVOS = 0.0
+_ULTIMA_LIMPIEZA_NEGATIVOS = 0.0   # fast-path en memoria; la fuente fiable es la tabla settings
 LIMPIEZA_NEGATIVOS_INTERVALO = 24 * 3600
+_CLAVE_ULTIMA_LIMPIEZA_NEG = "ultima_limpieza_negativos"
 
 
 def _db_init():
@@ -186,6 +187,14 @@ def _db_init():
             fondo        TEXT,
             url          TEXT,
             ts           REAL NOT NULL
+        )""")
+        # Clave-valor de settings persistentes en disco (sobrevive a reinicios
+        # del contenedor de Render, a diferencia de un global en memoria). Hoy
+        # guarda el timestamp de la última limpieza de caché negativo -- ver
+        # _limpiar_cache_negativos e INFORME_NOCHE.md 2026-07-25.
+        _db.execute("""CREATE TABLE IF NOT EXISTS settings (
+            clave TEXT PRIMARY KEY,
+            valor TEXT
         )""")
         try:
             _db.execute("ALTER TABLE directores ADD COLUMN intentos INTEGER DEFAULT 0")
@@ -229,6 +238,31 @@ def _db_init():
             print(f"  [db-init] municipio_match recalculado para {len(filas_existentes)} "
                   f"filas de fondos_ue ({cambios} cambiaron).", flush=True)
     _migrar_json_a_sqlite()
+
+
+def _settings_get(clave, default=None):
+    """Lee un valor de la tabla settings (persistente en disco)."""
+    with _db_lock:
+        row = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
+    return row[0] if row else default
+
+
+def _settings_get_float(clave, default=0.0):
+    try:
+        return float(_settings_get(clave, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _settings_set(clave, valor):
+    """Escribe (upsert) un valor en la tabla settings."""
+    with _db_lock:
+        _db.execute(
+            "INSERT INTO settings (clave, valor) VALUES (?, ?) "
+            "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor",
+            (clave, str(valor)),
+        )
+        _db.commit()
 
 
 def _migrar_json_a_sqlite():
@@ -3193,9 +3227,21 @@ def _limpiar_cache_negativos():
     -- sin este límite, cada refresco de municipio relanza el hilo de
     enriquecimiento (_lanzar_enriquecimiento en _job_run), que llama aquí
     incondicionalmente y anulaba en la práctica el TTL negativo de 7 días
-    (DIR_CACHE_NEG_TTL) durante cualquier lote de refrescos consecutivos."""
+    (DIR_CACHE_NEG_TTL) durante cualquier lote de refrescos consecutivos.
+
+    El timestamp de la última limpieza se persiste en la tabla `settings`
+    (disco), NO solo en un global en memoria: el contenedor de Render se
+    reinicia con frecuencia (sleep del plan free), y un global se reiniciaría
+    a 0.0 en cada arranque, dejando que la primera limpieza del nuevo proceso
+    volviera a disparar la tormenta de re-consultas externas a mitad de un
+    lote de /actualizar-todos. Con el timestamp en disco, el límite de 24h se
+    respeta aunque el proceso muera y vuelva a arrancar durante el lote (ver
+    INFORME_NOCHE.md 2026-07-25)."""
     global _ULTIMA_LIMPIEZA_NEGATIVOS
-    if time.time() - _ULTIMA_LIMPIEZA_NEGATIVOS < LIMPIEZA_NEGATIVOS_INTERVALO:
+    ahora = time.time()
+    ultima = max(_ULTIMA_LIMPIEZA_NEGATIVOS,
+                 _settings_get_float(_CLAVE_ULTIMA_LIMPIEZA_NEG, 0.0))
+    if ahora - ultima < LIMPIEZA_NEGATIVOS_INTERVALO:
         return
     with _db_lock:
         deleted = _db.execute(
@@ -3203,7 +3249,8 @@ def _limpiar_cache_negativos():
             (DIR_INTENTOS_MAX,),
         ).rowcount
         _db.commit()
-    _ULTIMA_LIMPIEZA_NEGATIVOS = time.time()
+    _ULTIMA_LIMPIEZA_NEGATIVOS = ahora
+    _settings_set(_CLAVE_ULTIMA_LIMPIEZA_NEG, ahora)
     if deleted:
         print(f"  [enriquecimiento] {deleted} entradas negativas eliminadas del caché.", flush=True)
 
@@ -5098,6 +5145,38 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(
             LOGO_SVG, content_type="image/svg+xml; charset=utf-8",
             headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
+        )
+
+    if path == "/admin/cache-db":
+        # Sirve el SQLite en bruto para que el cron de GitHub Actions haga una
+        # copia versionada (Git LFS) tras un refresco completo con éxito. Mismo
+        # patrón de protección que /actualizar-todos: ADMIN_TOKEN obligatorio
+        # (403 si falta o no coincide). El fichero se sirve desde un snapshot
+        # consistente (sqlite3.backup bajo _db_lock), NUNCA leyendo cache.db
+        # directamente del disco, para no entregar un fichero a medio escribir
+        # con WAL activo. Ver INFORME_NOCHE.md 2026-07-25.
+        admin_token = os.environ.get("ADMIN_TOKEN", "")
+        if not admin_token or qs.get("token", [""])[0] != admin_token:
+            return _error_resp("No autorizado.", 403)
+        tmp_path = os.path.join(DATA_DIR, f".cache_db_export_{uuid.uuid4().hex}.tmp")
+        try:
+            with _db_lock:
+                dst = sqlite3.connect(tmp_path)
+                try:
+                    _db.backup(dst)
+                finally:
+                    dst.close()
+            with open(tmp_path, "rb") as f:
+                data = f.read()
+        finally:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+        return _resp(
+            data, content_type="application/octet-stream",
+            headers={"Content-Disposition": 'attachment; filename="cache.db"'},
+            gzip_ok=False,
         )
 
     if path.startswith("/api/job/"):
