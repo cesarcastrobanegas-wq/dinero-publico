@@ -1097,6 +1097,12 @@ _SUFIJOS_EMPRESA = re.compile(
     r'\b(s\.?l\.?u?\.?|s\.?a\.?u?\.?|s\.?c\.?|s\.?l\.?p\.?|s\.?coop\.?|s\.?a\.?)\s*$', re.I
 )
 
+# Códigos de TenderResultCode-2.09 (PLACE) que significan que NO hubo
+# adjudicatario por decisión de la fuente (no es un fallo de nuestro cruce):
+# 3 Desierto · 4 Desistimiento · 5 Renuncia · 6 Desierto provisional ·
+# 7 Desierto definitivo. Los códigos 1/2/8/9/10 sí tienen adjudicatario.
+_RESULTADO_SIN_ADJUDICATARIO = {"3", "4", "5", "6", "7"}
+
 def _entry_to_contrato(entry_xml):
     """Convierte el XML crudo de un <entry> a dict de contrato. Retorna None si no relevante."""
 
@@ -1105,6 +1111,17 @@ def _entry_to_contrato(entry_xml):
     m = re.search(r'ContractFolderStatusCode[^>]*>\s*([A-Z]{2,4})\s*<', entry_xml, re.I)
     if m:
         estado = m.group(1).upper()
+
+    # ── resultado de la licitación (TenderResultCode-2.09) ────────────────────
+    # Distingue los concursos SIN adjudicatario por decisión de la fuente
+    # (desierto/desistimiento/renuncia, ver _RESULTADO_SIN_ADJUDICATARIO) de
+    # aquellos donde sí hubo adjudicatario pero no lo hemos podido extraer.
+    # Solo lo publica PLACE; BORM/PSCP no traen este código. Ver analizar_riesgo
+    # e INFORME_NOCHE.md 2026-07-25.
+    resultado_code = ""
+    m_rc = re.search(r'ResultCode[^>]*>\s*(\d+)\s*<', entry_xml, re.I)
+    if m_rc:
+        resultado_code = m_rc.group(1)
 
     organo, importe_raw, licitacion_id = "", "", ""
 
@@ -1215,6 +1232,7 @@ def _entry_to_contrato(entry_xml):
         "importe":       importe or "No localizado",
         "importe_num":   float(importe_raw.replace(",", ".")) if importe_raw else 0.0,
         "estado":        estado,
+        "resultado_code": resultado_code,
         "licitacion_id": licitacion_id,
         "url":           url,
         "fuente":        "PLACE",
@@ -2805,18 +2823,39 @@ def analizar_riesgo(contratos):
                     ),
                 })
 
-    # Empresa sin nombre (posible opacidad) — indicador de riesgo prominente
-    sin_empresa = sum(1 for c in contratos if c.get("empresa") == "No localizada")
+    # Contratos sin empresa: distingue los declarados SIN adjudicatario por la
+    # propia fuente (desierto/desistimiento/renuncia, código de resultado de
+    # PLACE) de aquellos donde sí hubo adjudicatario pero no hemos podido
+    # cruzarlo (limitación nuestra). PLACE trae el código; BORM/PSCP no, así
+    # que sus "sin empresa" se cuentan como "no identificada" (ver
+    # INFORME_NOCHE.md 2026-07-25).
+    sin_empresa_lista = [c for c in contratos if c.get("empresa") == "No localizada"]
+    sin_empresa = len(sin_empresa_lista)
     if sin_empresa > 0:
         pct = round(100 * sin_empresa / total)
-        alertas.append({
-            "nivel": "opacidad",
-            "icono": "🚩",
-            "texto": (
-                f"<b>{sin_empresa} contrato{'s' if sin_empresa != 1 else ''}</b> "
-                f"({pct}%) sin empresa adjudicataria identificada."
-            ),
-        })
+        desiertos = sum(1 for c in sin_empresa_lista
+                        if c.get("resultado_code") in _RESULTADO_SIN_ADJUDICATARIO)
+        no_identificados = sin_empresa - desiertos
+        plural = "s" if sin_empresa != 1 else ""
+        if desiertos and no_identificados:
+            texto = (
+                f"<b>{sin_empresa} contrato{plural}</b> ({pct}%) sin empresa adjudicataria: "
+                f"<b>{desiertos}</b> declarado{'s' if desiertos != 1 else ''} desierto{'s' if desiertos != 1 else ''} "
+                f"o sin adjudicatario por la fuente (renuncia/desistimiento), y "
+                f"<b>{no_identificados}</b> no identificado{'s' if no_identificados != 1 else ''} "
+                f"(hubo adjudicatario pero no se ha podido cruzar)."
+            )
+        elif desiertos:
+            texto = (
+                f"<b>{sin_empresa} contrato{plural}</b> ({pct}%) declarado{plural} desierto{plural} "
+                f"o sin adjudicatario por la fuente (renuncia/desistimiento) — no es una limitación del cruce."
+            )
+        else:
+            texto = (
+                f"<b>{sin_empresa} contrato{plural}</b> ({pct}%) sin empresa adjudicataria identificada "
+                f"(hubo adjudicatario pero no se ha podido cruzar con la empresa)."
+            )
+        alertas.append({"nivel": "opacidad", "icono": "🚩", "texto": texto})
 
     return alertas
 
