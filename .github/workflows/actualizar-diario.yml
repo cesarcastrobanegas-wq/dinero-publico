@@ -1,47 +1,156 @@
 name: Actualizar contratos diariamente
 
+# Diseño (ver INFORME_NOCHE.md 2026-07-25): los endpoints /actualizar-todos y
+# /actualizar-fondos-ue son fire-and-forget (devuelven job_id al instante y
+# procesan en segundo plano durante horas). En el plan free de Render, el
+# contenedor se DUERME tras ~15 min sin tráfico HTTP, matando el lote a medias.
+# Solución: este workflow hace polling de /api/job/<id> cada 4 min (ese propio
+# tráfico mantiene el contenedor despierto) hasta que AMBOS jobs terminan; solo
+# entonces descarga el cache.db de producción (/admin/cache-db, con ADMIN_TOKEN)
+# y, si un chequeo "canario" de conteos confirma que no hubo colapso, lo
+# commitea versionado con Git LFS. Así los datos sobreviven a los reinicios del
+# contenedor (que revierten cache.db en caliente al último commit).
+
 on:
-  # Reactivado el 2026-07-23: estuvo pausado desde el 2026-07-22 ~21:10 UTC
-  # por el bug de refresco sustitutivo (_db_set_municipio sobrescribía en
-  # vez de fusionar con lo ya guardado, borró histórico de Archena). El
-  # refresco aditivo (_fusionar_historico_contratos, commits 241447b +
-  # c17a6c8) ya está verificado en local y confirmado en producción -- ver
-  # INFORME_NOCHE.md -- así que el cron ya no puede repetir aquel borrado.
   schedule:
-    # 04:00 UTC ≈ 05:00–06:00 hora de España (invierno/verano). Hora de bajo
-    # tráfico tanto en la web como en PLACE/BORM.
+    # 04:00 UTC ≈ 05:00–06:00 hora de España. Hora de bajo tráfico en la web y
+    # en PLACE/BORM/PSCP.
     - cron: "0 4 * * *"
   workflow_dispatch: {}   # permite lanzarlo a mano desde la pestaña Actions
+
+# Necesario para que el paso final pueda commitear/pushear el cache.db nuevo.
+permissions:
+  contents: write
 
 jobs:
   actualizar:
     runs-on: ubuntu-latest
+    # Tope de seguridad por debajo del límite DURO de 6h (360 min) de los
+    # runners hosted de GitHub. El polling interno corta antes (320 min), esto
+    # es solo una red de seguridad por si algo se colgara.
+    timeout-minutes: 350
     steps:
-      - name: Disparar refresco completo (Murcia + Girona, 266 municipios) en producción
-        run: |
-          respuesta=$(curl -s -w "\n%{http_code}" -X POST \
-            -d "token=${{ secrets.ADMIN_TOKEN }}" \
-            -d "provincia=todas" \
-            https://dinero-publico.onrender.com/actualizar-todos)
-          codigo=$(echo "$respuesta" | tail -n1)
-          cuerpo=$(echo "$respuesta" | sed '$d')
-          echo "HTTP $codigo"
-          echo "$cuerpo"
-          if [ "$codigo" != "200" ]; then
-            echo "::error::El endpoint /actualizar-todos devolvió $codigo"
-            exit 1
-          fi
+      - name: Checkout del repo (con Git LFS para materializar cache.db)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
 
-      - name: Disparar refresco de fondos UE (CORDIS + Cohesion Data) en producción
+      - name: Refresco + keep-alive por polling + descarga del cache.db
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          BASE_URL: https://dinero-publico.onrender.com
         run: |
-          respuesta=$(curl -s -w "\n%{http_code}" -X POST \
-            -d "token=${{ secrets.ADMIN_TOKEN }}" \
-            https://dinero-publico.onrender.com/actualizar-fondos-ue)
-          codigo=$(echo "$respuesta" | tail -n1)
-          cuerpo=$(echo "$respuesta" | sed '$d')
-          echo "HTTP $codigo"
-          echo "$cuerpo"
-          if [ "$codigo" != "200" ]; then
-            echo "::error::El endpoint /actualizar-fondos-ue devolvió $codigo"
+          set -uo pipefail
+
+          # --- helpers (python3 en una sola línea: si el cuerpo no es JSON
+          #     válido, json.load lanza, python sale != 0 y el `|| echo` da el
+          #     valor por defecto -- así nunca aborta el paso) -----------------
+          get_jobid() {   # job_id de una respuesta JSON, o '' si no hay
+            printf '%s' "$1" | python3 -c "import sys,json;print(json.load(sys.stdin).get('job_id',''))" 2>/dev/null || echo ''
+          }
+          get_status() {  # status de un job, o 'not_found' ante cualquier fallo
+            curl -s --max-time 30 "${BASE_URL}/api/job/$1" | python3 -c "import sys,json;print(json.load(sys.stdin).get('status','not_found'))" 2>/dev/null || echo not_found
+          }
+
+          # --- 1. disparar ambos refrescos ------------------------------------
+          echo "== Disparando /actualizar-todos (Murcia + Girona) =="
+          resp_todos=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" -d "provincia=todas" \
+            "${BASE_URL}/actualizar-todos" || true)
+          echo "respuesta: $resp_todos"
+          job_todos=$(get_jobid "$resp_todos")
+
+          echo "== Disparando /actualizar-fondos-ue (CORDIS + Cohesion Data) =="
+          resp_fue=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" \
+            "${BASE_URL}/actualizar-fondos-ue" || true)
+          echo "respuesta: $resp_fue"
+          job_fue=$(get_jobid "$resp_fue")
+
+          if [ -z "$job_todos" ] || [ -z "$job_fue" ]; then
+            echo "::error::No se obtuvo job_id de uno de los disparos (todos='$job_todos' fondos='$job_fue'). ¿ADMIN_TOKEN mal configurado (403) o app caída?"
             exit 1
           fi
+          echo "job_todos=$job_todos  job_fue=$job_fue"
+
+          # --- 2. polling (= keep-alive) hasta que ambos terminen -------------
+          MAX_MIN=320          # corta bien por debajo del límite duro de 360
+          INTERVAL=240         # 4 min < los ~15 min que Render tarda en dormirse
+          deadline=$(( $(date +%s) + MAX_MIN * 60 ))
+          done_todos=0; done_fue=0; notfound=0
+
+          while true; do
+            st_todos=$(get_status "$job_todos")
+            st_fue=$(get_status "$job_fue")
+            echo "$(date -u +%H:%M:%S)Z  todos=$st_todos  fondos=$st_fue"
+
+            if [ "$st_todos" = "error" ] || [ "$st_fue" = "error" ]; then
+              echo "::error::Un job terminó en 'error' (todos=$st_todos fondos=$st_fue). No se commitea."
+              exit 1
+            fi
+
+            [ "$st_todos" = "done" ] && done_todos=1
+            [ "$st_fue" = "done" ] && done_fue=1
+            if [ "$done_todos" = 1 ] && [ "$done_fue" = 1 ]; then
+              echo "Ambos jobs completados ('done')."
+              break
+            fi
+
+            # 'not_found' en un job que aún no estaba 'done' = el contenedor se
+            # reinició y perdió los jobs (viven en memoria). Tolera algún hueco
+            # transitorio del wake, pero aborta si persiste 3 ciclos seguidos.
+            if { [ "$st_todos" = "not_found" ] && [ "$done_todos" = 0 ]; } || \
+               { [ "$st_fue" = "not_found" ] && [ "$done_fue" = 0 ]; }; then
+              notfound=$(( notfound + 1 ))
+            else
+              notfound=0
+            fi
+            if [ "$notfound" -ge 3 ]; then
+              echo "::error::job_id no encontrado 3 ciclos seguidos: el contenedor se reinició a mitad del lote y perdió el estado en memoria. Aborto sin commitear."
+              exit 1
+            fi
+
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::Timeout de ${MAX_MIN} min sin completar ambos jobs (todos=$st_todos fondos=$st_fue). Aborto sin commitear."
+              exit 1
+            fi
+            sleep "$INTERVAL"
+          done
+
+          # --- 3. descargar el cache.db de producción ------------------------
+          echo "== Descargando cache.db de producción =="
+          http=$(curl -s --max-time 300 -w "%{http_code}" \
+            -o cache_db_nuevo.db \
+            "${BASE_URL}/admin/cache-db?token=${ADMIN_TOKEN}" || echo 000)
+          if [ "$http" != "200" ]; then
+            echo "::error::/admin/cache-db devolvió HTTP $http."
+            exit 1
+          fi
+          echo "Descargado cache_db_nuevo.db ($(stat -c%s cache_db_nuevo.db) bytes)."
+
+      - name: Canario anti-colapso + commit condicionado (Git LFS)
+        run: |
+          set -uo pipefail
+          # El canario compara conteos (contratos + filas de fondos_ue) del
+          # cache.db del repo vs el descargado; sale != 0 si el nuevo cae por
+          # debajo del 90% en cualquiera (colapso silencioso -> mejor no tocar).
+          python3 .github/scripts/canario_cache_db.py backend/cache.db cache_db_nuevo.db | tee canario.out
+          codigo=${PIPESTATUS[0]}
+          if [ "$codigo" -ne 0 ]; then
+            echo "El canario bloqueó el commit (ver ::error:: arriba). Termino sin tocar el repo."
+            exit 1
+          fi
+          conteos=$(grep '^RESUMEN' canario.out | sed 's/^RESUMEN //')
+          rm -f canario.out
+
+          mv -f cache_db_nuevo.db backend/cache.db
+          git config user.name  "dinero-publico-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add backend/cache.db
+          if git diff --cached --quiet; then
+            echo "cache.db idéntico al del repo; nada que commitear."
+            exit 0
+          fi
+          git commit -m "Auto-commit diario de cache.db desde producción (${conteos})"
+          git push
+          echo "cache.db commiteado y pusheado (${conteos})."
