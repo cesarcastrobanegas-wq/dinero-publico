@@ -1,4 +1,10 @@
+# Los .db se tratan como binarios (sin conversión de fin de línea ni diffs de texto).
 *.db binary
-*.db -text
-backend/cache.db binary
-backend/cache.db -text
+
+# backend/cache.db se versiona con Git LFS DE AQUÍ EN ADELANTE (ver
+# INFORME_NOCHE.md 2026-07-25): el cron diario de GitHub Actions hace commit
+# automático del cache.db de producción tras un refresco completo con éxito.
+# NO se usó `git lfs migrate import` a propósito: reescribiría los hashes de
+# todo el historial y exigiría un force-push (prohibido). Los commits antiguos
+# de cache.db conservan sus blobs normales; solo los nuevos van a LFS.
+backend/cache.db filter=lfs diff=lfs merge=lfs -text
