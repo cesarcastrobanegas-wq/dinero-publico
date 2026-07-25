@@ -786,10 +786,43 @@ def municipio_valido_provincia(municipio, provincia):
 # (etiquetado "Provincia de Girona", que sí es un recorte fiable por NUTS3).
 MUNICIPIOS_PSEUDO = {"murcia": "Región de Murcia", "girona": "Provincia de Girona"}
 
+# Pseudo-municipios ADICIONALES por provincia (puede haber más de uno).
+# La Administración General del Estado (organismos estatales periféricos con
+# sede en Murcia: Guardia Civil, AEAT, TGSS, INSS, Delegación del Gobierno,
+# centros penitenciarios, SEPE, Universidad de Murcia...) contamina hoy el
+# municipio "Murcia" capital por el mismo bug de subcadena que la CCAA -- el
+# nombre del municipio aparece dentro del texto del órgano ("...en Murcia",
+# "(Murcia)"), así que se atribuye a la ciudad sin ser ni municipal ni
+# autonómico. Se separan a su propia entrada, igual que "Región de Murcia".
+# Ver _es_organo_age e INFORME_NOCHE.md 2026-07-25 (incluye la nota sobre por
+# qué la Universidad de Murcia -- técnicamente universidad pública autónoma,
+# no AGE en sentido estricto -- se agrupa aquí siguiendo el encargo).
+NOMBRE_PSEUDO_AGE = "Administración General del Estado"
+MUNICIPIOS_PSEUDO_EXTRA = {"murcia": [NOMBRE_PSEUDO_AGE]}
+
+
+def _pseudos_de_provincia(provincia):
+    """Nombres de todas las entradas pseudo-municipio de una provincia (la
+    de ámbito autonómico/provincial de MUNICIPIOS_PSEUDO más las adicionales
+    de MUNICIPIOS_PSEUDO_EXTRA, p.ej. la AGE en Murcia)."""
+    out = []
+    n = MUNICIPIOS_PSEUDO.get(provincia)
+    if n:
+        out.append(n)
+    out.extend(MUNICIPIOS_PSEUDO_EXTRA.get(provincia, []))
+    return out
+
+
+def _todos_los_pseudo_nombres():
+    nombres = list(MUNICIPIOS_PSEUDO.values())
+    for extra in MUNICIPIOS_PSEUDO_EXTRA.values():
+        nombres.extend(extra)
+    return nombres
+
 
 def es_pseudo_municipio(municipio):
     buscado = normalizar(municipio)
-    return any(normalizar(m) == buscado for m in MUNICIPIOS_PSEUDO.values())
+    return any(normalizar(m) == buscado for m in _todos_los_pseudo_nombres())
 
 
 _RE_ORGANO_CCAA_MURCIA = re.compile(r"region(al)? de murcia")
@@ -851,6 +884,132 @@ def _guardar_pseudo_municipio_ccaa(provincia, contratos_ccaa, job_id=None):
         _datos_memoria[:] = [d for d in _datos_memoria if normalizar(d.get("municipio", "")) != normalizar(nombre)]
         _datos_memoria.append(resultado)
     _db_set_municipio(nombre, resultado, provincia=provincia)
+
+
+# ─── AGE (Administración General del Estado) ─────────────────────────────────
+# Detección por patrones de texto del ÓRGANO contratante (no del objeto), medida
+# contra los contratos reales ya atribuidos a municipios de Murcia en cache.db
+# (ver INFORME_NOCHE.md 2026-07-25): 226 en "Murcia" capital + 4 duplicados del
+# Centro Penitenciario Murcia II en "Campos del Río". Cada patrón corresponde a
+# un órgano estatal periférico realmente presente en los datos; se añaden unos
+# pocos patrones extra igual de inequívocos (Policía Nacional, DGT/Tráfico,
+# Confederación Hidrográfica del Segura, Ministerios, Defensa) por robustez ante
+# futuros refrescos, todos elegidos para no chocar con órganos municipales.
+_AGE_KEYWORDS = (
+    "guardia civil",
+    "agencia estatal de administracion tributaria",
+    "instituto social de la marina",
+    "delegacion del gobierno",
+    "subdelegacion del gobierno",
+    "tesoreria general de la seguridad social",
+    "instituto nacional de la seguridad social",
+    "centro penitenciario",
+    "centro de insercion social",
+    "servicio publico de empleo estatal",
+    "universidad de murcia",
+    "confederacion hidrografica del segura",
+    "jefatura provincial de trafico",
+    "jefatura de trafico",
+    "direccion general de trafico",
+    "policia nacional",
+    "cuerpo nacional de policia",
+    "direccion general de la policia",
+    "ministerio de ",
+    "ministerio del ",
+    "subdelegacion de defensa",
+    "delegacion de defensa",
+)
+# Siglas como token aislado (\b) + las Delegaciones (Especiales) de Economía y
+# Hacienda del Estado (periféricas del Ministerio de Hacienda; distintas de una
+# "Consejería de Economía y Hacienda" autonómica, que queda excluida abajo).
+_AGE_REGEX = re.compile(
+    r"\btgss\b|\binss\b|\baeat\b|\bsepe\b|"
+    r"delegacion (especial )?de economia y hacienda"
+)
+# Excluye explícitamente lo que NO es AGE aunque comparta alguna palabra: el
+# propio Ayuntamiento y sus empresas municipales, la CCAA (Consejerías / "Región
+# de Murcia"), y los entes conjuntos de varios municipios (mancomunidad /
+# consorcio / diputación / junta vecinal). Ver encargo, punto 3.
+_AGE_EXCLUIR = (
+    "ayuntamiento", "alcaldia", "consejeria", "region de murcia",
+    "regional de murcia", "mancomunidad", "consorcio", "empresa municipal",
+    "junta vecinal", "diputacion",
+)
+
+
+def _es_organo_age(organo):
+    """True si el órgano contratante es un organismo de la Administración
+    General del Estado (o asimilado, ver nota de la Universidad de Murcia en
+    INFORME_NOCHE.md) que se ha colado en un municipio murciano por el bug de
+    subcadena. Excluye ayuntamientos, empresas municipales, la CCAA y entes
+    conjuntos aunque compartan alguna palabra clave."""
+    n = normalizar(organo)
+    if any(kw in n for kw in _AGE_EXCLUIR):
+        return False
+    if any(kw in n for kw in _AGE_KEYWORDS):
+        return True
+    return bool(_AGE_REGEX.search(n))
+
+
+def _separar_contratos_age(contratos):
+    """Separa una lista de contratos de un municipio murciano en (resto, age)
+    según _es_organo_age."""
+    resto, age = [], []
+    for c in contratos:
+        (age if _es_organo_age(c.get("organo", "")) else resto).append(c)
+    return resto, age
+
+
+def _guardar_pseudo_municipio_age(municipio_origen, contratos_age, job_id=None):
+    """Acumula los contratos de la AGE separados de un municipio murciano bajo
+    la entrada pseudo-municipio "Administración General del Estado" (provincia
+    murcia), tratada en el resto de la app igual que un ayuntamiento más.
+
+    A diferencia de "Región de Murcia" (que solo procede de un municipio,
+    Murcia capital), la AGE puede recibir contratos de VARIOS municipios en un
+    mismo refresco completo (hoy: Murcia capital + Campos del Río, este último
+    con duplicados del mismo centro penitenciario). Por eso acumula en vez de
+    sustituir: cada contrato se etiqueta con `_origen_muni`; al refrescar un
+    municipio se reemplaza SOLO su aportación anterior (para que no queden
+    restos si un contrato deja de ser AGE) y se deduplica por URL/título, así
+    los duplicados que llegan por dos municipios distintos colapsan en uno.
+
+    Se llama para TODOS los municipios de Murcia (incluso con lista vacía, para
+    poder limpiar la aportación previa de ese municipio); si tras la fusión no
+    queda ningún contrato AGE y no había entrada previa, no crea una vacía."""
+    origen = normalizar(municipio_origen)
+    for c in contratos_age:
+        c["_origen_muni"] = origen
+
+    with _datos_lock:
+        prev = next((d for d in _datos_memoria
+                     if normalizar(d.get("municipio", "")) == normalizar(NOMBRE_PSEUDO_AGE)), None)
+        conservados = [c for c in (prev.get("contratos", []) if prev else [])
+                       if c.get("_origen_muni") != origen]
+
+    fusionados = _dedup_contratos_por_url(conservados + list(contratos_age))
+
+    if not fusionados and prev is None:
+        return
+
+    resultado = {
+        "municipio":       NOMBRE_PSEUDO_AGE,
+        "organismo":       NOMBRE_PSEUDO_AGE,
+        "total_contratos": len(fusionados),
+        "contratos":       fusionados,
+        "alertas":         analizar_riesgo(fusionados),
+        "place_profile":   "",
+        "timestamp":       time.time(),
+    }
+    if job_id and contratos_age:
+        _log(job_id, f"  {len(contratos_age)} contratos de '{municipio_origen}' "
+                      f"reclasificados a '{NOMBRE_PSEUDO_AGE}' (órgano estatal) "
+                      f"-- total AGE ahora: {len(fusionados)}")
+    with _datos_lock:
+        _datos_memoria[:] = [d for d in _datos_memoria
+                             if normalizar(d.get("municipio", "")) != normalizar(NOMBRE_PSEUDO_AGE)]
+        _datos_memoria.append(resultado)
+    _db_set_municipio(NOMBRE_PSEUDO_AGE, resultado, provincia="murcia")
 
 
 def _asegurar_pseudo_municipio_fondos(provincia):
@@ -2824,6 +2983,18 @@ def _job_run(job_id, municipio, provincia="murcia"):
         if provincia == "murcia" and normalizar(municipio) == normalizar("Murcia"):
             contratos, contratos_ccaa_murcia = _separar_contratos_ccaa_murcia(contratos)
 
+        # Separa los contratos cuyo órgano es un organismo de la Administración
+        # General del Estado (Guardia Civil, AEAT, TGSS, INSS, Delegación del
+        # Gobierno, centros penitenciarios, SEPE, Universidad de Murcia...) que
+        # se cuelan por el mismo bug de subcadena. A diferencia de la CCAA, esto
+        # aplica a CUALQUIER municipio de Murcia (medido: Murcia capital 226 +
+        # Campos del Río 4 duplicados) -- ver _es_organo_age e INFORME_NOCHE.md
+        # 2026-07-25. No se ejecuta sobre las propias entradas pseudo.
+        es_age_target = provincia == "murcia" and not es_pseudo_municipio(municipio)
+        contratos_age = []
+        if es_age_target:
+            contratos, contratos_age = _separar_contratos_age(contratos)
+
         # Análisis de riesgo
         alertas = analizar_riesgo(contratos)
 
@@ -2848,6 +3019,12 @@ def _job_run(job_id, municipio, provincia="murcia"):
 
         if contratos_ccaa_murcia:
             _guardar_pseudo_municipio_ccaa("murcia", contratos_ccaa_murcia, job_id)
+
+        # Siempre para municipios de Murcia (incluso con lista vacía): así se
+        # limpia la aportación AGE previa de este municipio si un contrato dejó
+        # de ser AGE, y se acumulan los de varios municipios sin duplicar.
+        if es_age_target:
+            _guardar_pseudo_municipio_age(municipio, contratos_age, job_id)
 
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
@@ -4337,9 +4514,9 @@ def render_landing_nacional_html(datos):
         # en contratos/importe pero no en el "N/total municipios" -- no es
         # uno de los ayuntamientos de esa lista, mostrarlo ahí daría un
         # "43/42 municipios" sin sentido.
-        pseudo_nombre_prov = MUNICIPIOS_PSEUDO.get(prov)
+        pseudos_prov = {normalizar(p) for p in _pseudos_de_provincia(prov)}
         n_con_datos = sum(1 for d in datos_prov
-                           if normalizar(d.get("municipio", "")) != normalizar(pseudo_nombre_prov or ""))
+                           if normalizar(d.get("municipio", "")) not in pseudos_prov)
         c_prov = sum(d.get("total_contratos", 0) for d in datos_prov)
         imp_prov = sum(c.get("importe_num", 0.0) for d in datos_prov for c in d.get("contratos", []))
         label = PROVINCIA_LABEL.get(prov, prov)
@@ -4468,8 +4645,7 @@ def render_landing_html(datos, provincia="murcia"):
     # un municipio más, así que fijarlo arriba lo hace más fácil de
     # encontrar, aunque el tile en sí es idéntico a los demás (mismas
     # estadísticas, mismo estilo -- ver INFORME_NOCHE.md 2026-07-23).
-    pseudo_nombre = MUNICIPIOS_PSEUDO.get(provincia)
-    if pseudo_nombre:
+    for pseudo_nombre in _pseudos_de_provincia(provincia):
         tiles += _muni_tile(pseudo_nombre, por_muni.get(normalizar(pseudo_nombre)))
     for muni in sorted(municipios_lista, key=lambda m: normalizar(m)):
         tiles += _muni_tile(muni, por_muni.get(normalizar(muni)))
