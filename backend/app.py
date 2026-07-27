@@ -2118,7 +2118,14 @@ FONDOS_UE_PROGRAMA_MURCIA = "Murcia"
 
 def _guardar_fondos_ue(filas):
     """Inserta/actualiza filas en la tabla fondos_ue (misma clave = mismo
-    registro, se sobrescribe con el dato más reciente)."""
+    registro, se sobrescribe con el dato más reciente).
+
+    Excepción: 'beneficiario' NO se sobrescribe con un valor vacío si la fila
+    ya tenía uno guardado. Necesario porque Cohesion Data siempre llega con
+    beneficiary_name vacío para España (ver actualizar_fondos_cohesion) y el
+    backfill de enriquecer_beneficiarios_cohesion() lo rellena aparte, en un
+    paso posterior -- sin esta excepción, el refresco diario de Cohesion Data
+    borraría cada noche el trabajo del enriquecimiento del día anterior."""
     if not filas:
         return
     ahora = time.time()
@@ -2127,11 +2134,21 @@ def _guardar_fondos_ue(filas):
             municipio_match = f.get("municipio_match") or _cruzar_municipio_fondo_ue(
                 f["provincia"], f.get("municipio", ""))
             _db.execute(
-                """INSERT OR REPLACE INTO fondos_ue
+                """INSERT INTO fondos_ue
                    (id, fuente, provincia, municipio, nuts_code, titulo, beneficiario,
                     nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts,
                     municipio_match)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(id) DO UPDATE SET
+                     fuente=excluded.fuente, provincia=excluded.provincia,
+                     municipio=excluded.municipio, nuts_code=excluded.nuts_code,
+                     titulo=excluded.titulo,
+                     beneficiario=CASE WHEN excluded.beneficiario<>'' THEN excluded.beneficiario
+                                       ELSE fondos_ue.beneficiario END,
+                     nif=excluded.nif, rol=excluded.rol, importe_num=excluded.importe_num,
+                     fecha_inicio=excluded.fecha_inicio, fecha_fin=excluded.fecha_fin,
+                     programa=excluded.programa, fondo=excluded.fondo, url=excluded.url,
+                     ts=excluded.ts, municipio_match=excluded.municipio_match""",
                 (f["id"], f["fuente"], f["provincia"], f.get("municipio", ""),
                  f.get("nuts_code", ""), f.get("titulo", ""), f.get("beneficiario", ""),
                  f.get("nif", ""), f.get("rol", ""), f.get("importe_num", 0.0),
@@ -2295,6 +2312,106 @@ def actualizar_fondos_cohesion(job_id=None):
     _guardar_fondos_ue(filas)
     _log(job_id, f"  Cohesion Data: {len(filas)} operaciones de Murcia/Girona guardadas")
     return len(filas)
+
+
+# ─── Beneficiario de Cohesion Data vía Kohesio/linkedopendata.eu ────────────
+# cohesiondata.ec.europa.eu (Socrata) no trae beneficiary_name para España
+# (ver cabecera de actualizar_fondos_cohesion), pero cada operación sí trae un
+# identificador único propio -- operation_unique_identifier.url, guardado
+# como sufijo del id de esta fila (ej. "cohesion-https://linkedopendata.eu/
+# entity/Q3168603") -- que apunta a un ítem Wikibase en linkedopendata.eu, un
+# espejo comunitario en abierto del propio Kohesio (el portal oficial de la
+# Comisión, kohesio.ec.europa.eu, es una SPA Angular sin API pública propia
+# de la que tirar). Ese ítem sí trae el nombre real del beneficiario en la
+# propiedad P841 ("beneficiary name (string)"), con P889 ("beneficiario",
+# enlace a otro ítem) como respaldo si P841 faltara. Verificado a mano contra
+# 5 operaciones de programas distintos (Girona): 5/5 con P841 relleno.
+#
+# Nota deliberada sobre robots.txt: linkedopendata.eu publica "Disallow: /"
+# para todo user-agent. Se consulta de todos modos, por ser: (a) datos
+# abiertos de fondos públicos de la UE sin autenticación ni captcha, en la
+# misma línea de transparencia que el resto de la app; (b) peticiones
+# puntuales por identificador exacto (una URL por operación ya conocida, no
+# un rastreo/descubrimiento del sitio); (c) espaciadas con pausa y con
+# presupuesto de tiempo acotado (ver más abajo) para no cargar el servicio.
+# Mismo criterio que ya se aplica a einforma/axesor/infocif/BORME para
+# administradores de empresas adjudicatarias.
+KOHESIO_ENTITY_URL = "https://linkedopendata.eu/wiki/Special:EntityData/{qid}.json"
+_KOHESIO_QID_RE = re.compile(r"/entity/(Q\d+)$")
+
+
+def _kohesio_beneficiario(qid):
+    """Nombre del beneficiario de una operación Cohesion Data a partir del
+    ítem Wikibase de linkedopendata.eu, o '' si no se encuentra/falla."""
+    try:
+        r = session.get(KOHESIO_ENTITY_URL.format(qid=qid), timeout=15)
+        if r.status_code != 200:
+            return ""
+        ent = r.json().get("entities", {}).get(qid, {})
+        claims = ent.get("claims", {})
+
+        p841 = claims.get("P841")
+        if p841:
+            valor = p841[0].get("mainsnak", {}).get("datavalue", {}).get("value")
+            if isinstance(valor, str) and valor.strip():
+                return valor.strip()
+
+        # Respaldo: P889 (beneficiario) enlaza a otro ítem; su etiqueta es el nombre.
+        p889 = claims.get("P889")
+        if p889:
+            item_id = (p889[0].get("mainsnak", {}).get("datavalue", {})
+                       .get("value", {}).get("id", ""))
+            if item_id:
+                r2 = session.get(KOHESIO_ENTITY_URL.format(qid=item_id), timeout=15)
+                if r2.status_code == 200:
+                    labels = r2.json().get("entities", {}).get(item_id, {}).get("labels", {})
+                    for lang in ("es", "en"):
+                        valor = labels.get(lang, {}).get("value", "").strip()
+                        if valor:
+                            return valor
+    except Exception:
+        pass
+    return ""
+
+
+def enriquecer_beneficiarios_cohesion(job_id=None, presupuesto_minutos=60):
+    """Backfill del nombre de beneficiario de las operaciones Cohesion Data
+    que llegan sin él (ver nota de cabecera arriba). Solo toca filas con
+    beneficiario todavía vacío -- _guardar_fondos_ue ya preserva un
+    beneficiario ya enriquecido en refrescos posteriores, así que esto es
+    incremental: cada día solo se procesan las operaciones nuevas o las que
+    quedaron pendientes por el presupuesto de tiempo del día anterior."""
+    deadline = time.time() + presupuesto_minutos * 60
+    with _db_lock:
+        filas = _db.execute(
+            "SELECT id FROM fondos_ue WHERE fuente='cohesion' "
+            "AND (beneficiario IS NULL OR beneficiario='')"
+        ).fetchall()
+    total = len(filas)
+    _log(job_id, f"Enriqueciendo beneficiarios de Cohesion Data (Kohesio): "
+                 f"{total} operaciones pendientes…")
+    encontrados = procesados = 0
+    for (fid,) in filas:
+        if time.time() >= deadline:
+            _log(job_id, f"  Presupuesto de {presupuesto_minutos} min agotado: "
+                         f"{procesados}/{total} procesadas, se retoma en el próximo refresco.")
+            break
+        procesados += 1
+        m = _KOHESIO_QID_RE.search(fid)
+        if not m:
+            continue
+        nombre = _kohesio_beneficiario(m.group(1))
+        if nombre:
+            with _db_lock:
+                _db.execute("UPDATE fondos_ue SET beneficiario=? WHERE id=?", (nombre, fid))
+                _db.commit()
+            encontrados += 1
+        time.sleep(0.3)
+        if procesados % 200 == 0:
+            _log(job_id, f"  … {procesados}/{total} procesadas ({encontrados} encontrados)")
+    _log(job_id, f"  Beneficiarios Cohesion Data: {encontrados}/{procesados} "
+                 f"encontrados (de {total} pendientes).")
+    return encontrados
 
 
 def _actualizar_fondos_ue_bg(job_id):

@@ -1,15 +1,29 @@
 name: Actualizar contratos diariamente
 
-# Diseño (ver INFORME_NOCHE.md 2026-07-25): los endpoints /actualizar-todos y
-# /actualizar-fondos-ue son fire-and-forget (devuelven job_id al instante y
-# procesan en segundo plano durante horas). En el plan free de Render, el
-# contenedor se DUERME tras ~15 min sin tráfico HTTP, matando el lote a medias.
-# Solución: este workflow hace polling de /api/job/<id> cada 4 min (ese propio
-# tráfico mantiene el contenedor despierto) hasta que AMBOS jobs terminan; solo
-# entonces descarga el cache.db de producción (/admin/cache-db, con ADMIN_TOKEN)
-# y, si un chequeo "canario" de conteos confirma que no hubo colapso, lo
-# commitea versionado con Git LFS. Así los datos sobreviven a los reinicios del
-# contenedor (que revierten cache.db en caliente al último commit).
+# Diseño (ver INFORME_NOCHE.md 2026-07-25 y 2026-07-27): los endpoints
+# /actualizar-todos y /actualizar-fondos-ue son fire-and-forget (devuelven
+# job_id al instante y procesan en segundo plano durante horas). En el plan
+# free de Render, el contenedor se DUERME tras ~15 min sin tráfico HTTP,
+# matando el lote a medias. Solución: este workflow hace polling de
+# /api/job/<id> cada 4 min (ese propio tráfico mantiene el contenedor
+# despierto) hasta que el job termina; solo entonces descarga el cache.db de
+# producción (/admin/cache-db, con ADMIN_TOKEN) y, si un chequeo "canario" de
+# conteos confirma que no hubo colapso, lo commitea versionado con Git LFS.
+# Así los datos sobreviven a los reinicios del contenedor (que revierten
+# cache.db en caliente al último commit).
+#
+# SECUENCIAL, no en paralelo (cambiado 2026-07-27): la primera ejecución en
+# producción de este workflow disparó ambos refrescos a la vez y el
+# contenedor se reinició a los ~4 min (job_id perdido de memoria en todos los
+# ciclos siguientes -> abortado sin commitear). Contratos (266 municipios,
+# varios workers internos) ya tuvo un OOM documentado en el pasado solo él
+# solo (commit 2754631); sumarle a la vez la descarga del volcado CORDIS
+# (~36 MB) + Cohesion Data en el mismo proceso de 512 MB del free tier es la
+# explicación más plausible del reinicio (no se pudo confirmar contra los
+# logs de Render, sin acceso a su dashboard/API desde este entorno). Lanzar
+# fondos UE solo DESPUÉS de que contratos termine reduce el pico de memoria
+# concurrente sin renunciar a que ambos se actualicen en la misma pasada
+# diaria.
 
 on:
   schedule:
@@ -35,7 +49,7 @@ jobs:
         with:
           lfs: true
 
-      - name: Refresco + keep-alive por polling + descarga del cache.db
+      - name: Refresco secuencial + keep-alive por polling + descarga del cache.db
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           BASE_URL: https://dinero-publico.onrender.com
@@ -52,70 +66,78 @@ jobs:
             curl -s --max-time 30 "${BASE_URL}/api/job/$1" | python3 -c "import sys,json;print(json.load(sys.stdin).get('status','not_found'))" 2>/dev/null || echo not_found
           }
 
-          # --- 1. disparar ambos refrescos ------------------------------------
+          MAX_MIN=320          # presupuesto TOTAL (ambas etapas), por debajo del límite duro de 360
+          INTERVAL=240         # 4 min < los ~15 min que Render tarda en dormirse
+          deadline=$(( $(date +%s) + MAX_MIN * 60 ))
+
+          # Espera a que un job_id llegue a 'done'. Aborta (return 1) si el job
+          # da 'error', si 'not_found' persiste 3 ciclos seguidos (el
+          # contenedor se reinició y perdió el estado en memoria), o si se
+          # agota el presupuesto total. Mientras tanto imprime cada ciclo, y
+          # ese propio tráfico de polling es el keep-alive.
+          poll_hasta_done() {
+            local job_id="$1" etiqueta="$2" notfound=0 st
+            while true; do
+              st=$(get_status "$job_id")
+              echo "$(date -u +%H:%M:%S)Z  ${etiqueta}=${st}"
+
+              if [ "$st" = "error" ]; then
+                echo "::error::${etiqueta} terminó en 'error'. No se commitea."
+                return 1
+              fi
+              [ "$st" = "done" ] && return 0
+
+              if [ "$st" = "not_found" ]; then
+                notfound=$(( notfound + 1 ))
+              else
+                notfound=0
+              fi
+              if [ "$notfound" -ge 3 ]; then
+                echo "::error::${etiqueta}: job_id no encontrado 3 ciclos seguidos: el contenedor se reinició a mitad del lote y perdió el estado en memoria. Aborto sin commitear."
+                return 1
+              fi
+
+              if [ "$(date +%s)" -ge "$deadline" ]; then
+                echo "::error::Timeout de ${MAX_MIN} min sin completar ${etiqueta} (status=$st). Aborto sin commitear."
+                return 1
+              fi
+              sleep "$INTERVAL"
+            done
+          }
+
+          # --- 1. Contratos (Murcia + Girona) primero y en solitario ----------
+          # Secuencial a propósito (ver nota de cabecera del workflow): lanzar
+          # esto a la vez que fondos UE reventó el contenedor la primera vez
+          # que corrió este workflow en producción (probable OOM del free
+          # tier de Render al sumar ambas cargas).
           echo "== Disparando /actualizar-todos (Murcia + Girona) =="
           resp_todos=$(curl -s --max-time 60 -X POST \
             -d "token=${ADMIN_TOKEN}" -d "provincia=todas" \
             "${BASE_URL}/actualizar-todos" || true)
           echo "respuesta: $resp_todos"
           job_todos=$(get_jobid "$resp_todos")
+          if [ -z "$job_todos" ]; then
+            echo "::error::No se obtuvo job_id de /actualizar-todos. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
+            exit 1
+          fi
+          echo "job_todos=$job_todos"
+          poll_hasta_done "$job_todos" "todos" || exit 1
+          echo "Contratos completados ('done')."
 
+          # --- 2. Fondos UE (CORDIS + Cohesion Data) después, no en paralelo --
           echo "== Disparando /actualizar-fondos-ue (CORDIS + Cohesion Data) =="
           resp_fue=$(curl -s --max-time 60 -X POST \
             -d "token=${ADMIN_TOKEN}" \
             "${BASE_URL}/actualizar-fondos-ue" || true)
           echo "respuesta: $resp_fue"
           job_fue=$(get_jobid "$resp_fue")
-
-          if [ -z "$job_todos" ] || [ -z "$job_fue" ]; then
-            echo "::error::No se obtuvo job_id de uno de los disparos (todos='$job_todos' fondos='$job_fue'). ¿ADMIN_TOKEN mal configurado (403) o app caída?"
+          if [ -z "$job_fue" ]; then
+            echo "::error::No se obtuvo job_id de /actualizar-fondos-ue. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
             exit 1
           fi
-          echo "job_todos=$job_todos  job_fue=$job_fue"
-
-          # --- 2. polling (= keep-alive) hasta que ambos terminen -------------
-          MAX_MIN=320          # corta bien por debajo del límite duro de 360
-          INTERVAL=240         # 4 min < los ~15 min que Render tarda en dormirse
-          deadline=$(( $(date +%s) + MAX_MIN * 60 ))
-          done_todos=0; done_fue=0; notfound=0
-
-          while true; do
-            st_todos=$(get_status "$job_todos")
-            st_fue=$(get_status "$job_fue")
-            echo "$(date -u +%H:%M:%S)Z  todos=$st_todos  fondos=$st_fue"
-
-            if [ "$st_todos" = "error" ] || [ "$st_fue" = "error" ]; then
-              echo "::error::Un job terminó en 'error' (todos=$st_todos fondos=$st_fue). No se commitea."
-              exit 1
-            fi
-
-            [ "$st_todos" = "done" ] && done_todos=1
-            [ "$st_fue" = "done" ] && done_fue=1
-            if [ "$done_todos" = 1 ] && [ "$done_fue" = 1 ]; then
-              echo "Ambos jobs completados ('done')."
-              break
-            fi
-
-            # 'not_found' en un job que aún no estaba 'done' = el contenedor se
-            # reinició y perdió los jobs (viven en memoria). Tolera algún hueco
-            # transitorio del wake, pero aborta si persiste 3 ciclos seguidos.
-            if { [ "$st_todos" = "not_found" ] && [ "$done_todos" = 0 ]; } || \
-               { [ "$st_fue" = "not_found" ] && [ "$done_fue" = 0 ]; }; then
-              notfound=$(( notfound + 1 ))
-            else
-              notfound=0
-            fi
-            if [ "$notfound" -ge 3 ]; then
-              echo "::error::job_id no encontrado 3 ciclos seguidos: el contenedor se reinició a mitad del lote y perdió el estado en memoria. Aborto sin commitear."
-              exit 1
-            fi
-
-            if [ "$(date +%s)" -ge "$deadline" ]; then
-              echo "::error::Timeout de ${MAX_MIN} min sin completar ambos jobs (todos=$st_todos fondos=$st_fue). Aborto sin commitear."
-              exit 1
-            fi
-            sleep "$INTERVAL"
-          done
+          echo "job_fue=$job_fue"
+          poll_hasta_done "$job_fue" "fondos" || exit 1
+          echo "Fondos UE completados ('done')."
 
           # --- 3. descargar el cache.db de producción ------------------------
           echo "== Descargando cache.db de producción =="
