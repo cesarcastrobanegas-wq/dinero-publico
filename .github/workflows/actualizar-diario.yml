@@ -75,6 +75,12 @@ jobs:
           get_status() {  # status de un job, o 'not_found' ante cualquier fallo
             curl -s --max-time 30 "${BASE_URL}/api/job/$1" | python3 -c "import sys,json;print(json.load(sys.stdin).get('status','not_found'))" 2>/dev/null || echo not_found
           }
+          mostrar_log() {  # imprime el log del job (vive solo en memoria del
+            # contenedor -- se pierde en el próximo reinicio, así que hay que
+            # volcarlo aquí en cuanto el job termina, no se puede recuperar después)
+            curl -s --max-time 30 "${BASE_URL}/api/job/$1" | \
+              python3 -c "import sys,json; print('\n'.join(json.load(sys.stdin).get('log', [])))" 2>/dev/null || true
+          }
 
           MAX_MIN=320          # presupuesto TOTAL (ambas etapas), por debajo del límite duro de 360
           INTERVAL=240         # 4 min < los ~15 min que Render tarda en dormirse
@@ -93,9 +99,15 @@ jobs:
 
               if [ "$st" = "error" ]; then
                 echo "::error::${etiqueta} terminó en 'error'. No se commitea."
+                echo "--- log de ${etiqueta} ---"
+                mostrar_log "$job_id"
                 return 1
               fi
-              [ "$st" = "done" ] && return 0
+              if [ "$st" = "done" ]; then
+                echo "--- log de ${etiqueta} ---"
+                mostrar_log "$job_id"
+                return 0
+              fi
 
               if [ "$st" = "not_found" ]; then
                 notfound=$(( notfound + 1 ))
