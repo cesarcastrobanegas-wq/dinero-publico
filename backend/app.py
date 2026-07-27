@@ -2342,11 +2342,16 @@ _KOHESIO_QID_RE = re.compile(r"/entity/(Q\d+)$")
 
 def _kohesio_beneficiario(qid):
     """Nombre del beneficiario de una operación Cohesion Data a partir del
-    ítem Wikibase de linkedopendata.eu, o '' si no se encuentra/falla."""
+    ítem Wikibase de linkedopendata.eu.
+
+    Devuelve (nombre, motivo). 'motivo' es 'ok' si se encontró, o un código
+    corto de por qué no (http_XXX, timeout, sin_p841_p889, error:<Tipo>) --
+    se usa solo para diagnóstico/logging del proceso en producción, no se
+    guarda en la base de datos."""
     try:
-        r = session.get(KOHESIO_ENTITY_URL.format(qid=qid), timeout=15)
+        r = session.get(KOHESIO_ENTITY_URL.format(qid=qid), timeout=8)
         if r.status_code != 200:
-            return ""
+            return "", f"http_{r.status_code}"
         ent = r.json().get("entities", {}).get(qid, {})
         claims = ent.get("claims", {})
 
@@ -2354,7 +2359,7 @@ def _kohesio_beneficiario(qid):
         if p841:
             valor = p841[0].get("mainsnak", {}).get("datavalue", {}).get("value")
             if isinstance(valor, str) and valor.strip():
-                return valor.strip()
+                return valor.strip(), "ok"
 
         # Respaldo: P889 (beneficiario) enlaza a otro ítem; su etiqueta es el nombre.
         p889 = claims.get("P889")
@@ -2362,16 +2367,19 @@ def _kohesio_beneficiario(qid):
             item_id = (p889[0].get("mainsnak", {}).get("datavalue", {})
                        .get("value", {}).get("id", ""))
             if item_id:
-                r2 = session.get(KOHESIO_ENTITY_URL.format(qid=item_id), timeout=15)
-                if r2.status_code == 200:
-                    labels = r2.json().get("entities", {}).get(item_id, {}).get("labels", {})
-                    for lang in ("es", "en"):
-                        valor = labels.get(lang, {}).get("value", "").strip()
-                        if valor:
-                            return valor
-    except Exception:
-        pass
-    return ""
+                r2 = session.get(KOHESIO_ENTITY_URL.format(qid=item_id), timeout=8)
+                if r2.status_code != 200:
+                    return "", f"http_item_{r2.status_code}"
+                labels = r2.json().get("entities", {}).get(item_id, {}).get("labels", {})
+                for lang in ("es", "en"):
+                    valor = labels.get(lang, {}).get("value", "").strip()
+                    if valor:
+                        return valor, "ok"
+        return "", "sin_p841_p889"
+    except requests.exceptions.Timeout:
+        return "", "timeout"
+    except Exception as e:
+        return "", f"error:{type(e).__name__}"
 
 
 def enriquecer_beneficiarios_cohesion(job_id=None, presupuesto_minutos=60):
@@ -2391,6 +2399,7 @@ def enriquecer_beneficiarios_cohesion(job_id=None, presupuesto_minutos=60):
     _log(job_id, f"Enriqueciendo beneficiarios de Cohesion Data (Kohesio): "
                  f"{total} operaciones pendientes…")
     encontrados = procesados = 0
+    motivos = {}   # diagnóstico: cuenta de fallos por motivo (http_403, timeout, ...)
     for (fid,) in filas:
         if time.time() >= deadline:
             _log(job_id, f"  Presupuesto de {presupuesto_minutos} min agotado: "
@@ -2400,15 +2409,19 @@ def enriquecer_beneficiarios_cohesion(job_id=None, presupuesto_minutos=60):
         m = _KOHESIO_QID_RE.search(fid)
         if not m:
             continue
-        nombre = _kohesio_beneficiario(m.group(1))
+        nombre, motivo = _kohesio_beneficiario(m.group(1))
         if nombre:
             with _db_lock:
                 _db.execute("UPDATE fondos_ue SET beneficiario=? WHERE id=?", (nombre, fid))
                 _db.commit()
             encontrados += 1
+        else:
+            motivos[motivo] = motivos.get(motivo, 0) + 1
         time.sleep(0.3)
         if procesados % 200 == 0:
-            _log(job_id, f"  … {procesados}/{total} procesadas ({encontrados} encontrados)")
+            _log(job_id, f"  … {procesados}/{total} procesadas ({encontrados} encontrados, "
+                         f"fallos: {motivos})")
+    _log(job_id, f"  Motivos de fallo: {motivos}")
     _log(job_id, f"  Beneficiarios Cohesion Data: {encontrados}/{procesados} "
                  f"encontrados (de {total} pendientes).")
     return encontrados

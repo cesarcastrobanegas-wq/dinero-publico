@@ -30,7 +30,16 @@ on:
     # 04:00 UTC ≈ 05:00–06:00 hora de España. Hora de bajo tráfico en la web y
     # en PLACE/BORM/PSCP.
     - cron: "0 4 * * *"
-  workflow_dispatch: {}   # permite lanzarlo a mano desde la pestaña Actions
+  workflow_dispatch:   # permite lanzarlo a mano desde la pestaña Actions
+    inputs:
+      solo_fondos_ue:
+        description: >-
+          Salta el refresco de contratos (Murcia+Girona, ~1h30) y lanza solo
+          /actualizar-fondos-ue. Útil para probar rápido cambios en CORDIS,
+          Cohesion Data o el enriquecimiento de beneficiarios (Kohesio) sin
+          esperar el ciclo completo.
+        type: boolean
+        default: false
 
 # Necesario para que el paso final pueda commitear/pushear el cache.db nuevo.
 permissions:
@@ -53,6 +62,7 @@ jobs:
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           BASE_URL: https://dinero-publico.onrender.com
+          SOLO_FONDOS_UE: ${{ github.event.inputs.solo_fondos_ue || 'false' }}
         run: |
           set -uo pipefail
 
@@ -110,19 +120,25 @@ jobs:
           # esto a la vez que fondos UE reventó el contenedor la primera vez
           # que corrió este workflow en producción (probable OOM del free
           # tier de Render al sumar ambas cargas).
-          echo "== Disparando /actualizar-todos (Murcia + Girona) =="
-          resp_todos=$(curl -s --max-time 60 -X POST \
-            -d "token=${ADMIN_TOKEN}" -d "provincia=todas" \
-            "${BASE_URL}/actualizar-todos" || true)
-          echo "respuesta: $resp_todos"
-          job_todos=$(get_jobid "$resp_todos")
-          if [ -z "$job_todos" ]; then
-            echo "::error::No se obtuvo job_id de /actualizar-todos. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
-            exit 1
+          # SOLO_FONDOS_UE=true (input manual) se salta esta etapa entera --
+          # solo para pruebas rápidas, el cron programado nunca lo activa.
+          if [ "$SOLO_FONDOS_UE" = "true" ]; then
+            echo "== SOLO_FONDOS_UE=true: saltando /actualizar-todos =="
+          else
+            echo "== Disparando /actualizar-todos (Murcia + Girona) =="
+            resp_todos=$(curl -s --max-time 60 -X POST \
+              -d "token=${ADMIN_TOKEN}" -d "provincia=todas" \
+              "${BASE_URL}/actualizar-todos" || true)
+            echo "respuesta: $resp_todos"
+            job_todos=$(get_jobid "$resp_todos")
+            if [ -z "$job_todos" ]; then
+              echo "::error::No se obtuvo job_id de /actualizar-todos. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
+              exit 1
+            fi
+            echo "job_todos=$job_todos"
+            poll_hasta_done "$job_todos" "todos" || exit 1
+            echo "Contratos completados ('done')."
           fi
-          echo "job_todos=$job_todos"
-          poll_hasta_done "$job_todos" "todos" || exit 1
-          echo "Contratos completados ('done')."
 
           # --- 2. Fondos UE (CORDIS + Cohesion Data) después, no en paralelo --
           echo "== Disparando /actualizar-fondos-ue (CORDIS + Cohesion Data) =="
