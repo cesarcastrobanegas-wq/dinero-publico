@@ -2198,7 +2198,16 @@ def actualizar_fondos_cordis(job_id=None):
     guarda las organizaciones de Murcia/Girona en la tabla fondos_ue.
     ~36 MB comprimidos -- se procesa en memoria fila a fila con csv.DictReader,
     no se acumulan los CSV completos como texto (mismo cuidado que con los
-    ZIPs de PLACE, aunque aquí el volumen es dos órdenes de magnitud menor)."""
+    ZIPs de PLACE, aunque aquí el volumen es dos órdenes de magnitud menor).
+
+    project.csv trae TODOS los proyectos Horizon Europe del mundo (decenas de
+    miles, con columnas largas como el abstract) aunque solo usemos 4 campos
+    de cada uno -- guardar el `row` completo de csv.DictReader en `proyectos`
+    multiplicaba la memoria varias veces sin necesidad. Ver INFORME_NOCHE.md
+    2026-07-27: sospecha fundada de que esto (no Kohesio ni el refresco de
+    contratos en paralelo) es la causa real del reinicio del contenedor del
+    free tier de Render -- el contenedor murió a los ~4 min lanzando SOLO
+    /actualizar-fondos-ue, justo la ventana en la que corre este bloque."""
     import csv, io, zipfile as _zf
 
     _log(job_id, "Descargando volcado CORDIS (Horizon Europe 2021-2027)…")
@@ -2215,7 +2224,12 @@ def actualizar_fondos_cordis(job_id=None):
         with z.open("project.csv") as f:
             reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8"), delimiter=";")
             for row in reader:
-                proyectos[row["id"]] = row
+                proyectos[row["id"]] = {
+                    "title": row.get("title", ""),
+                    "startDate": row.get("startDate", ""),
+                    "endDate": row.get("endDate", ""),
+                    "frameworkProgramme": row.get("frameworkProgramme", ""),
+                }
 
         with z.open("organization.csv") as f:
             reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8"), delimiter=";")
