@@ -2458,12 +2458,14 @@ def _actualizar_fondos_ue_bg(job_id):
             _jobs[job_id] = {"status": "running", "log": [], "error": None}
         n_cordis = actualizar_fondos_cordis(job_id)
         n_cohesion = actualizar_fondos_cohesion(job_id)
+        n_enriquecidos = enriquecer_beneficiarios_cohesion(job_id)
         for _prov in MUNICIPIOS_PSEUDO:
             _asegurar_pseudo_municipio_fondos(_prov)
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
             _jobs[job_id]["total"] = n_cordis + n_cohesion
-        print(f"  [actualizar-fondos-ue] Terminado: {n_cordis} CORDIS + {n_cohesion} Cohesion Data.", flush=True)
+        print(f"  [actualizar-fondos-ue] Terminado: {n_cordis} CORDIS + {n_cohesion} Cohesion Data "
+              f"({n_enriquecidos} beneficiarios enriquecidos vía Kohesio).", flush=True)
     except Exception as e:
         with _jobs_lock:
             _jobs[job_id]["status"] = "error"
