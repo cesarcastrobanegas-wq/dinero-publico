@@ -3693,6 +3693,39 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .rk-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 10px;}
 .muni-tile a.btn-ver:hover{background:rgba(240,136,62,.22);}
 
+/* ── cabecera home: panel degradado azul (hero + buscador + stats) ──────
+   Solo se aplica en la home nacional envolviendo .hero/.adv-search/.stats-bar
+   en .hero-panel -- el resto de usos de esas clases (rankings, fondos-ue,
+   landing por provincia) no llevan ese envoltorio y siguen en fondo oscuro. */
+.hero-panel{background:linear-gradient(135deg,#0b2145 0%,#12336b 55%,#1c4fa0 100%);border-radius:14px;padding:6px 20px 24px;margin-bottom:24px;color:#fff;}
+.hero-panel .hero-tagline{color:#fff;}
+.hero-panel .hero-sub{color:rgba(255,255,255,.82);}
+.hero-panel .adv-search{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);}
+.hero-panel .as-tab{background:rgba(255,255,255,.08);color:rgba(255,255,255,.72);border-color:rgba(255,255,255,.2);}
+.hero-panel .as-tab.active{background:rgba(245,183,0,.18);color:#f5b700;border-color:rgba(245,183,0,.55);}
+.hero-panel .as-row input{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.28);color:#fff;}
+.hero-panel .as-row input::placeholder{color:rgba(255,255,255,.55);}
+.hero-panel .as-row input:focus{border-color:#f5b700;}
+.hero-panel #as-btn{background:#f5b700;color:#1a1200;}
+.hero-panel #as-btn:hover{background:#ffc93d;}
+.hero-panel .gs-hint{color:rgba(255,255,255,.62);}
+.hero-panel .stats-bar .stat{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:rgba(255,255,255,.9);}
+.hero-panel .stats-bar .stat span{color:#f5b700;}
+
+/* ── sección Cobertura (home, debajo de la cabecera) ─────────────────────
+   Verde-teal deliberadamente distinto del verde de importes (var(--green),
+   #3fb950) para que no se confundan a simple vista -- ver instrucción del
+   2026-07-29. */
+.cobertura-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:28px;}
+.cobertura-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;padding:24px 20px;border-radius:10px;text-decoration:none;border:1.5px solid #1fae7a;color:#1fae7a;background:rgba(31,174,122,.10);transition:background .15s,border-color .15s;}
+.cobertura-btn:hover{background:rgba(31,174,122,.2);border-color:#26cf92;}
+.cobertura-btn .cb-title{font-size:17px;font-weight:700;}
+.cobertura-btn .cb-count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#1fae7a;opacity:.9;}
+
+/* ── indicador de scroll horizontal en tarjetas de contrato (móvil) ─────── */
+.tbl-scroll{position:relative;}
+.scroll-hint{display:none;}
+
 /* ── footer ───────────────────────────────────────────────────────────── */
 .site-footer{max-width:1340px;margin:48px auto 0;padding:22px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center;}
 .site-footer .ft-links{display:flex;flex-wrap:wrap;gap:16px;align-items:center;}
@@ -3756,9 +3789,22 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .site-footer .ft-links{gap:10px 14px;}
   .static-page{padding:22px 18px;}
   .ad-banner{max-width:100%;}
+  .cobertura-grid{grid-template-columns:1fr;}
+  .scroll-hint{
+    display:flex;align-items:center;gap:2px;
+    position:absolute;top:16px;right:6px;z-index:2;pointer-events:none;
+    background:rgba(22,27,34,.92);border:1px solid rgba(88,166,255,.45);color:var(--blue);
+    font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.3px;
+    padding:4px 8px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.4);
+    animation:scroll-hint-nudge 1.6s ease-in-out infinite;
+  }
 }
 @media (max-width:420px){
   .muni-grid{grid-template-columns:1fr;}
+}
+@keyframes scroll-hint-nudge{
+  0%,100%{transform:translateX(0);}
+  50%{transform:translateX(4px);}
 }
 """
 
@@ -4677,15 +4723,18 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
           </div>
           <div class="source-bar">{esc(fuentes_label)} · {fuentes_str}{age_html}</div>
           {alertas_html}
-          <table>
-            <tr>
-              <th>Empresa adjudicataria / Contrato</th>
-              <th>Importe</th>
-              <th>Directivo / Cargo</th>
-              <th>Estado / Fuente</th>
-            </tr>
-            {filas}
-          </table>
+          <div class="tbl-scroll">
+            <table>
+              <tr>
+                <th>Empresa adjudicataria / Contrato</th>
+                <th>Importe</th>
+                <th>Directivo / Cargo</th>
+                <th>Estado / Fuente</th>
+              </tr>
+              {filas}
+            </table>
+            <span class="scroll-hint" aria-hidden="true">sigue <span class="scroll-hint-arrow">›</span></span>
+          </div>
           {pag_html}
           {fondos_ue_html}
         </div>"""
@@ -4758,6 +4807,18 @@ def render_landing_nacional_html(datos):
           <div class="region-imp">{fmt_eur(str(imp_prov))}</div>
         </a>"""
 
+    # Botones grandes de Cobertura, justo debajo de la cabecera -- acceso
+    # directo y prominente al listado de cada provincia (distinto de las
+    # tarjetas "Cobertura por región" de más abajo, que van con el ranking
+    # nacional y llevan el naranja de acento habitual).
+    cobertura_html = ""
+    for prov, municipios_lista in MUNICIPIOS_POR_PROVINCIA.items():
+        label = PROVINCIA_LABEL.get(prov, prov)
+        cobertura_html += f"""<a href="/?provincia={prov}" class="cobertura-btn">
+          <span class="cb-title">📍 {esc(label)}</span>
+          <span class="cb-count">{len(municipios_lista)} municipios</span>
+        </a>"""
+
     # Top 1 del ranking nacional (agregando todas las provincias)
     top_n_nac, top_imp_nac = _calcular_rankings(datos)
 
@@ -4785,28 +4846,32 @@ def render_landing_nacional_html(datos):
         _top1_card(top_imp_nac, "🥇 Mayor importe", lambda g: fmt_eur(str(g["importe"])))
     )
 
-    body = f"""<div class="hero">
-    <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
-    <p class="hero-sub">
-      Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
-      — y qué persona — hay detrás de cada adjudicación. Cubrimos actualmente la
-      Región de Murcia y la provincia de Girona, con más territorios en camino.
-    </p>
-  </div>
-  <div class="adv-search" id="adv-search">
-    <div class="as-tabs">
-      <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
-      <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
-      <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
+    body = f"""<div class="hero-panel">
+    <div class="hero">
+      <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
+      <p class="hero-sub">
+        Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
+        — y qué persona — hay detrás de cada adjudicación. Cubrimos actualmente la
+        Región de Murcia y la provincia de Girona, con más territorios en camino.
+      </p>
     </div>
-    <div class="as-row">
-      <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off" autofocus>
-      <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
+    <div class="adv-search" id="adv-search">
+      <div class="as-tabs">
+        <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
+        <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
+        <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
+      </div>
+      <div class="as-row">
+        <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off" autofocus>
+        <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
+      </div>
+      <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda España · mínimo 2 caracteres.</div>
+      <div id="as-results"></div>
     </div>
-    <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda España · mínimo 2 caracteres.</div>
-    <div id="as-results"></div>
+    {stats}
   </div>
-  {stats}
+  <div class="section-title">Cobertura</div>
+  <div class="cobertura-grid">{cobertura_html}</div>
   <div class="section-title">🏆 Liderando ahora mismo · Ranking Nacional</div>
   <div class="top1-grid">{top1_html}</div>
   <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
