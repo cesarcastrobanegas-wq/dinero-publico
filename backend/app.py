@@ -5,7 +5,9 @@ Fuente: Plataforma de Contratación del Sector Público (datos oficiales CODICE/
 
 import gzip as _gzip
 import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time
+import xml.etree.ElementTree as ET
 from datetime import datetime
+from email.utils import parsedate_to_datetime
 from urllib.parse import parse_qs, quote_plus, urlparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
@@ -195,6 +197,18 @@ def _db_init():
         _db.execute("""CREATE TABLE IF NOT EXISTS settings (
             clave TEXT PRIMARY KEY,
             valor TEXT
+        )""")
+        # Noticias del RSS de comunicados de prensa de la Comisión Europea
+        # (ver actualizar_noticias_ue) filtradas a presupuesto/fondos/
+        # subvenciones -- id = URL del comunicado (estable, ya es única).
+        _db.execute("""CREATE TABLE IF NOT EXISTS noticias_ue (
+            id           TEXT PRIMARY KEY,
+            titulo       TEXT,
+            resumen      TEXT,
+            url          TEXT,
+            fecha_ts     REAL,
+            policy_areas TEXT,
+            ts           REAL NOT NULL
         )""")
         try:
             _db.execute("ALTER TABLE directores ADD COLUMN intentos INTEGER DEFAULT 0")
@@ -1081,6 +1095,19 @@ def fmt_eur(valor_str):
         return f"{n:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
     except Exception:
         return str(valor_str)
+
+
+_MESES_ES = ["ene", "feb", "mar", "abr", "may", "jun",
+             "jul", "ago", "sep", "oct", "nov", "dic"]
+
+
+def fmt_fecha_corta(ts):
+    """'29 jul 2026' a partir de un epoch -- evita depender del locale del
+    sistema (Render/gunicorn no garantiza es_ES instalado)."""
+    if not ts:
+        return ""
+    d = datetime.fromtimestamp(ts)
+    return f"{d.day} {_MESES_ES[d.month - 1]} {d.year}"
 
 
 # ─── PARSEO REGEX SOBRE ATOM/CODICE RAW ──────────────────────────────────────
@@ -2474,6 +2501,146 @@ def _actualizar_fondos_ue_bg(job_id):
         _actualizando_fondos_ue_lock.release()
 
 
+# ─── NOTICIAS UE (RSS oficial Press Corner, presupuesto y subvenciones) ──────
+# Feed general de la Comisión Europea (Press Corner) -- trae los últimos ~10
+# comunicados de TODAS las áreas mezcladas (exterior, competencia, migración,
+# presupuesto...), sin filtro de tema soportado por el propio servidor
+# (?policyArea=BUDG devuelve 400). El filtrado a presupuesto/fondos/
+# subvenciones se hace aquí, al guardar, por código POLICY_AREA + palabras
+# clave de refuerzo. ?language=es da títulos/resúmenes en español cuando ya
+# existe traducción (la mayoría) y cae a inglés si no -- confirmado el
+# 2026-07-29, ver INFORME_NOCHE.md.
+NOTICIAS_UE_RSS_URL = "https://ec.europa.eu/commission/presscorner/api/rss?language=es"
+
+NOTICIAS_UE_POLICY_AREAS = {"BUDG", "REGIO", "RECOVERY", "ESF", "COHESION", "AGRI", "EMPL"}
+NOTICIAS_UE_KEYWORDS = [
+    "fondo", "fondos", "subvencion", "ayudas", "presupuesto", "millones de euros",
+    "financiacion", "nextgenerationeu", "cohesion", "fondos estructurales",
+]
+
+# La <description> del RSS trae de cabecera "European Commission <tipo>
+# Brussels, <fecha> " antes del resumen real -- se recorta para no
+# duplicarlo (ya mostramos título y fecha aparte).
+_NOTICIA_UE_CABECERA_RE = re.compile(
+    r"^European Commission\s+\S.*?Brussels,\s*\d{1,2}\s+\w+\s+\d{4}\s*", re.I)
+
+
+def _guardar_noticias_ue(filas):
+    """Inserta/actualiza noticias UE (id = URL del comunicado, estable).
+    Igual patrón de upsert que _guardar_fondos_ue."""
+    if not filas:
+        return
+    ahora = time.time()
+    with _db_lock:
+        for f in filas:
+            _db.execute(
+                """INSERT INTO noticias_ue (id, titulo, resumen, url, fecha_ts, policy_areas, ts)
+                   VALUES (?,?,?,?,?,?,?)
+                   ON CONFLICT(id) DO UPDATE SET
+                     titulo=excluded.titulo, resumen=excluded.resumen, url=excluded.url,
+                     fecha_ts=excluded.fecha_ts, policy_areas=excluded.policy_areas, ts=excluded.ts""",
+                (f["id"], f["titulo"], f["resumen"], f["url"], f["fecha_ts"], f["policy_areas"], ahora),
+            )
+        _db.commit()
+
+
+def _db_noticias_ue(limit=6):
+    """Últimas noticias guardadas, más recientes primero (por fecha de
+    publicación del propio comunicado, no por cuándo se cacheó)."""
+    with _db_lock:
+        rows = _db.execute(
+            "SELECT titulo, resumen, url, fecha_ts FROM noticias_ue "
+            "ORDER BY fecha_ts DESC LIMIT ?", (limit,)
+        ).fetchall()
+    return [{"titulo": t, "resumen": r, "url": u, "fecha_ts": f} for t, r, u, f in rows]
+
+
+def actualizar_noticias_ue(job_id=None):
+    """Descarga el RSS de comunicados de prensa de la Comisión Europea y
+    guarda solo los relacionados con presupuesto/fondos/subvenciones
+    (ver NOTICIAS_UE_POLICY_AREAS/_KEYWORDS). Llamada desde el cron diario
+    (POST /actualizar-noticias-ue), mismo patrón que actualizar_fondos_ue."""
+    _log(job_id, "Consultando RSS de comunicados de prensa de la Comisión Europea…")
+    try:
+        r = session.get(NOTICIAS_UE_RSS_URL, timeout=30)
+        r.raise_for_status()
+    except Exception as e:
+        _log(job_id, f"  RSS Comisión Europea no disponible ({type(e).__name__})")
+        return 0
+
+    try:
+        root = ET.fromstring(r.content)
+    except ET.ParseError as e:
+        _log(job_id, f"  RSS Comisión Europea: XML inválido ({e})")
+        return 0
+
+    items = root.findall(".//item")
+    filas = []
+    for item in items:
+        titulo = (item.findtext("title") or "").strip()
+        link = (item.findtext("link") or "").strip()
+        descripcion = (item.findtext("description") or "").strip()
+        pub_date = (item.findtext("pubDate") or "").strip()
+        if not titulo or not link:
+            continue
+
+        policy_areas = set()
+        for cat in item.findall("category"):
+            texto_cat = (cat.text or "")
+            if texto_cat.startswith("POLICY_AREA="):
+                policy_areas.update(texto_cat.split("=", 1)[1].split(","))
+
+        texto_norm = normalizar(titulo + " " + descripcion)
+        relevante = bool(policy_areas & NOTICIAS_UE_POLICY_AREAS) or any(
+            kw in texto_norm for kw in NOTICIAS_UE_KEYWORDS)
+        if not relevante:
+            continue
+
+        try:
+            fecha_ts = parsedate_to_datetime(pub_date).timestamp() if pub_date else 0.0
+        except (TypeError, ValueError):
+            fecha_ts = 0.0
+
+        resumen = _NOTICIA_UE_CABECERA_RE.sub("", descripcion).strip()
+        if len(resumen) > 280:
+            resumen = resumen[:277].rsplit(" ", 1)[0] + "…"
+
+        filas.append({
+            "id": link, "titulo": titulo, "resumen": resumen, "url": link,
+            "fecha_ts": fecha_ts, "policy_areas": ",".join(sorted(policy_areas)),
+        })
+
+    _guardar_noticias_ue(filas)
+    _log(job_id, f"  RSS Comisión Europea: {len(filas)} noticias de presupuesto/fondos guardadas "
+                 f"(de {len(items)} comunicados recibidos)")
+    return len(filas)
+
+
+_actualizando_noticias_ue_lock = threading.Lock()  # evita lanzar dos refrescos de noticias_ue a la vez
+
+
+def _actualizar_noticias_ue_bg(job_id):
+    if not _actualizando_noticias_ue_lock.acquire(blocking=False):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "error", "log": [],
+                              "error": "Ya hay un refresco de noticias UE en curso."}
+        return
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "running", "log": [], "error": None}
+        n = actualizar_noticias_ue(job_id)
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "done"
+            _jobs[job_id]["total"] = n
+        print(f"  [actualizar-noticias-ue] Terminado: {n} noticias guardadas.", flush=True)
+    except Exception as e:
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "error"
+            _jobs[job_id]["error"] = str(e)
+    finally:
+        _actualizando_noticias_ue_lock.release()
+
+
 # ─── DIRECTIVOS (empresia/BORME via BOE) ────────────────────────────────────
 
 def _extraer_texto(html_text):
@@ -3726,6 +3893,23 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .tbl-scroll{position:relative;}
 .scroll-hint{display:none;}
 
+/* ── home: columna de noticias UE (margen izquierdo) + columna principal ─
+   Mismo amarillo que fondos UE (.fue-header h2, badges CORDIS/Cohesion)
+   para mantener "UE = amarillo" consistente en todo el sitio. */
+.home-grid{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start;}
+.noticias-ue-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:2px;position:sticky;top:80px;}
+.nu-panel-title{font-size:13px;font-weight:600;color:var(--yellow);margin-bottom:10px;}
+.noticia-ue-item{padding:10px 0;border-bottom:1px solid var(--border);}
+.noticia-ue-item:last-of-type{border-bottom:none;}
+.noticia-ue-item .nu-titulo{display:block;font-size:12.5px;font-weight:600;line-height:1.4;color:var(--text);text-decoration:none;margin-bottom:4px;}
+.noticia-ue-item .nu-titulo:hover{color:var(--yellow);text-decoration:underline;}
+.noticia-ue-item .nu-resumen{font-size:11.5px;color:var(--dim);line-height:1.5;margin-bottom:5px;}
+.noticia-ue-item .nu-meta{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
+.noticia-ue-item .nu-meta .nu-fuente{color:var(--yellow);}
+.nu-ver-mas{display:block;margin-top:10px;font-size:11px;color:var(--yellow);text-decoration:none;}
+.nu-ver-mas:hover{text-decoration:underline;}
+.home-main-col{min-width:0;}
+
 /* ── footer ───────────────────────────────────────────────────────────── */
 .site-footer{max-width:1340px;margin:48px auto 0;padding:22px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center;}
 .site-footer .ft-links{display:flex;flex-wrap:wrap;gap:16px;align-items:center;}
@@ -3801,6 +3985,10 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 }
 @media (max-width:420px){
   .muni-grid{grid-template-columns:1fr;}
+}
+@media (max-width:860px){
+  .home-grid{grid-template-columns:1fr;}
+  .noticias-ue-panel{position:static;}
 }
 @keyframes scroll-hint-nudge{
   0%,100%{transform:translateX(0);}
@@ -4882,6 +5070,20 @@ def render_landing_nacional_html(datos):
         _top1_card(top_imp_nac, "🥇 Mayor importe", lambda g: fmt_eur(str(g["importe"])))
     )
 
+    # Columna de noticias UE (presupuesto/fondos/subvenciones) -- ver
+    # actualizar_noticias_ue(). Solo titular + resumen corto + enlace
+    # directo a ec.europa.eu, nunca el texto completo del comunicado.
+    noticias_ue = _db_noticias_ue(limit=6)
+    if noticias_ue:
+        noticias_html = "".join(f"""<div class="noticia-ue-item">
+          <a class="nu-titulo" href="{esc(n['url'])}" target="_blank" rel="noopener">{esc(n['titulo'])}</a>
+          <div class="nu-resumen">{esc(n['resumen'])}</div>
+          <div class="nu-meta"><span>{esc(fmt_fecha_corta(n['fecha_ts']))}</span><span class="nu-fuente">ec.europa.eu ↗</span></div>
+        </div>""" for n in noticias_ue)
+    else:
+        noticias_html = ('<div class="empty" style="padding:20px 8px;font-size:12px">'
+                          'Aún no hay noticias cargadas.</div>')
+
     body = f"""<div class="hero-panel">
     <div class="hero">
       <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
@@ -4909,11 +5111,20 @@ def render_landing_nacional_html(datos):
   </div>
   <div class="section-title">Cobertura</div>
   <div class="cobertura-grid">{cobertura_html}</div>
-  <div class="section-title">🏆 Liderando ahora mismo · Ranking Nacional</div>
-  <div class="top1-grid">{top1_html}</div>
-  <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
-  <div class="section-title">Cobertura por región</div>
-  <div class="region-grid">{region_cards}</div>
+  <div class="home-grid">
+    <aside class="noticias-ue-panel">
+      <div class="nu-panel-title">🇪🇺 Noticias UE · Presupuesto y fondos</div>
+      {noticias_html}
+      <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es" target="_blank" rel="noopener">Ver más en la Comisión Europea →</a>
+    </aside>
+    <div class="home-main-col">
+      <div class="section-title" style="margin-top:0">🏆 Liderando ahora mismo · Ranking Nacional</div>
+      <div class="top1-grid">{top1_html}</div>
+      <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
+      <div class="section-title">Cobertura por región</div>
+      <div class="region-grid">{region_cards}</div>
+    </div>
+  </div>
   <script>window.__PROVINCIA__ = "";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
 
@@ -5572,6 +5783,18 @@ def _route_post(path, params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_fondos_ue_bg, args=(job_id,), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id})
+            return _resp(body, content_type="application/json; charset=utf-8")
+
+        if path == "/actualizar-noticias-ue":
+            # Refresca la tabla noticias_ue (RSS Press Corner de la Comisión
+            # Europea). Mismo patrón de disparo externo + ADMIN_TOKEN que
+            # /actualizar-fondos-ue; el cron diario lo llama justo después.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            job_id = str(uuid.uuid4())
+            threading.Thread(target=_actualizar_noticias_ue_bg, args=(job_id,), daemon=True).start()
             body = json.dumps({"status": "started", "job_id": job_id})
             return _resp(body, content_type="application/json; charset=utf-8")
 
