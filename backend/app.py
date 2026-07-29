@@ -3980,6 +3980,7 @@ LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200" widt
 _ADV_SEARCH_JS = r"""
 (function(){
   var PLACEHOLDERS = {
+    ayuntamiento: 'Nombre del municipio…',
     empresa: 'Nombre de la empresa…',
     directivo: 'Nombre del directivo o empresario…',
     licitacion: 'Número de licitación (ej: 321/2026)…'
@@ -4075,6 +4076,40 @@ _ADV_SEARCH_JS = r"""
     results.appendChild(filaContrato(data.contrato));
   }
 
+  function filaMunicipio(m) {
+    var row = el('div', 'as-row-result');
+    var top = el('div', 'as-rr-top');
+    top.appendChild(el('span', 'as-rr-empresa', '🏛 ' + m.municipio));
+    if (m.cached) top.appendChild(el('span', 'as-rr-importe', m.total_importe));
+    row.appendChild(top);
+    row.appendChild(el('div', 'as-rr-sub', '📍 ' + m.provincia_label +
+      (m.cached ? ' · ' + m.total_contratos + ' contratos' : ' · aún sin datos cargados')));
+    var form = document.createElement('form');
+    form.method = 'POST'; form.action = '/buscar'; form.style.marginTop = '8px';
+    var iMuni = document.createElement('input');
+    iMuni.type = 'hidden'; iMuni.name = 'municipio'; iMuni.value = m.municipio;
+    var iProv = document.createElement('input');
+    iProv.type = 'hidden'; iProv.name = 'provincia'; iProv.value = m.provincia;
+    var btnVer = document.createElement('button');
+    btnVer.type = 'submit'; btnVer.className = 'btn btn-primary';
+    btnVer.style.padding = '6px 14px'; btnVer.style.fontSize = '12px';
+    btnVer.textContent = m.cached ? 'Ver contratos →' : 'Buscar contratos →';
+    form.appendChild(iMuni); form.appendChild(iProv); form.appendChild(btnVer);
+    row.appendChild(form);
+    return row;
+  }
+
+  function renderAyuntamiento(data) {
+    results.innerHTML = '';
+    if (!data.resultados || !data.resultados.length) {
+      results.appendChild(el('div', 'empty', 'Sin municipios que coincidan.'));
+      return;
+    }
+    var head = el('div', 'as-total', data.resultados.length + ' municipio(s) encontrado(s).');
+    results.appendChild(head);
+    data.resultados.forEach(function(m){ results.appendChild(filaMunicipio(m)); });
+  }
+
   function buscar() {
     var q = input.value.trim();
     if (q.length < 2) { results.innerHTML = ''; return; }
@@ -4082,12 +4117,13 @@ _ADV_SEARCH_JS = r"""
     results.innerHTML = '';
     results.appendChild(el('div', 'as-loading', 'Buscando…'));
     fetch('/api/buscar?tipo=' + encodeURIComponent(tipo) + '&q=' + encodeURIComponent(q) +
-          '&provincia=' + encodeURIComponent(window.__PROVINCIA__ || 'murcia'))
+          '&provincia=' + encodeURIComponent(window.__PROVINCIA__ || 'todas'))
       .then(function(r){ return r.json(); })
       .then(function(data){
         if (mySeq !== seq) return; // respuesta obsoleta, ya se lanzó otra búsqueda
         if (data.error) { results.innerHTML = ''; results.appendChild(el('div', 'empty', data.error)); return; }
-        if (tipo === 'empresa') renderEmpresa(data);
+        if (tipo === 'ayuntamiento') renderAyuntamiento(data);
+        else if (tipo === 'empresa') renderEmpresa(data);
         else if (tipo === 'directivo') renderDirectivo(data);
         else renderLicitacion(data);
       })
@@ -4857,6 +4893,7 @@ def render_landing_nacional_html(datos):
     </div>
     <div class="adv-search" id="adv-search">
       <div class="as-tabs">
+        <button type="button" class="as-tab" data-tipo="ayuntamiento">Ayuntamiento</button>
         <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
         <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
         <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
@@ -4963,6 +5000,7 @@ def render_landing_html(datos, provincia="murcia"):
   </div>
   <div class="adv-search" id="adv-search">
     <div class="as-tabs">
+      <button type="button" class="as-tab" data-tipo="ayuntamiento">Ayuntamiento</button>
       <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
       <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
       <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
@@ -4977,14 +5015,6 @@ def render_landing_html(datos, provincia="murcia"):
   {stats}
   <div class="section-title">Municipios · {esc(label)}</div>
   <div class="muni-grid">{tiles}</div>
-  <div class="search-bar" style="margin-top:24px">
-    <label>¿No aparece o quieres forzar una actualización?</label>
-    <form method="POST" action="/buscar" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
-      <input name="municipio" placeholder="Nombre exacto del municipio…" required>
-      <input type="hidden" name="provincia" value="{esc(provincia)}">
-      <button type="submit" class="btn btn-primary">Actualizar</button>
-    </form>
-  </div>
   <script>window.__PROVINCIA__ = "{provincia}";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
 
@@ -5019,6 +5049,34 @@ def api_buscar(tipo, q, datos):
         return {"tipo": tipo, "query": q, "error": "Escribe al menos 2 caracteres."}
 
     q_norm = normalizar(q)
+
+    if tipo == "ayuntamiento":
+        # Búsqueda de municipio siempre nacional (Murcia + Girona), sin
+        # filtrar por la provincia de la página desde la que se lanza --
+        # reutiliza el mismo POST /buscar que el buscador clásico de la
+        # cabecera (ver formulario municipio/provincia en filaMunicipio()).
+        with _datos_lock:
+            datos_todas = list(_datos_memoria)
+        por_muni = {normalizar(d.get("municipio", "")): d for d in datos_todas}
+        resultados = []
+        for prov, lista_muni in MUNICIPIOS_POR_PROVINCIA.items():
+            nombres = list(_pseudos_de_provincia(prov)) + list(lista_muni)
+            for muni in nombres:
+                if q_norm not in normalizar(muni):
+                    continue
+                d = por_muni.get(normalizar(muni))
+                cached = d is not None
+                total_imp = sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])) if cached else 0.0
+                resultados.append({
+                    "municipio": muni,
+                    "provincia": prov,
+                    "provincia_label": PROVINCIA_LABEL.get(prov, prov),
+                    "cached": cached,
+                    "total_contratos": d.get("total_contratos", 0) if cached else 0,
+                    "total_importe": fmt_eur(str(total_imp)) if cached else "",
+                })
+        resultados.sort(key=lambda r: (not r["cached"], normalizar(r["municipio"])))
+        return {"tipo": "ayuntamiento", "query": q, "resultados": resultados[:60]}
 
     if tipo == "empresa":
         resultados = []
@@ -5424,7 +5482,7 @@ def _route_post(path, params):
             if not mun_ok:
                 label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
                 return _error_resp(f"Municipio no válido o no pertenece a {label}.", 400)
-            redirect_url = "/" + ("?provincia=girona" if provincia == "girona" else "")
+            redirect_url = f"/?muni={quote_plus(mun_ok)}" + ("&provincia=girona" if provincia == "girona" else "")
             # Servir desde caché si los datos son recientes (salvo si fuerza actualización)
             if not force:
                 cached = _cache_get(mun_ok)
