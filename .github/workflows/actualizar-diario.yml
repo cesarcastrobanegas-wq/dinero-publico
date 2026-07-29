@@ -167,7 +167,27 @@ jobs:
           poll_hasta_done "$job_fue" "fondos" || exit 1
           echo "Fondos UE completados ('done')."
 
-          # --- 3. descargar el cache.db de producción ------------------------
+          # --- 3. Noticias UE (RSS Press Corner) -------------------------------
+          # Descarga rápida (un solo GET del RSS, sin ZIPs) -- no aporta al
+          # riesgo de OOM de los pasos anteriores, pero se deja igualmente
+          # secuencial y al final por simplicidad (mismo patrón que fondos UE).
+          # Si este paso falla, NO aborta el workflow entero (`|| true`): un
+          # fallo puntual del RSS de la Comisión Europea no debe bloquear el
+          # commit de contratos/fondos UE, que sí se completaron bien.
+          echo "== Disparando /actualizar-noticias-ue (RSS Press Corner) =="
+          resp_noticias=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" \
+            "${BASE_URL}/actualizar-noticias-ue" || true)
+          echo "respuesta: $resp_noticias"
+          job_noticias=$(get_jobid "$resp_noticias")
+          if [ -z "$job_noticias" ]; then
+            echo "::warning::No se obtuvo job_id de /actualizar-noticias-ue. Se continúa sin noticias UE frescas hoy."
+          else
+            echo "job_noticias=$job_noticias"
+            poll_hasta_done "$job_noticias" "noticias" || echo "::warning::Noticias UE no completadas; se continúa igualmente."
+          fi
+
+          # --- 4. descargar el cache.db de producción ------------------------
           echo "== Descargando cache.db de producción =="
           http=$(curl -s --max-time 300 -w "%{http_code}" \
             -o cache_db_nuevo.db \
