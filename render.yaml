@@ -2,7 +2,13 @@ services:
   - type: web
     name: dinero-publico-murcia
     runtime: python
-    plan: free
+    # Confirmado por César en el dashboard de Render (2026-07-30): el
+    # servicio corre en plan de pago Standard, no en el free que decía
+    # antes este archivo -- los discos persistentes de Render requieren
+    # plan de pago (ver render.com/docs/disks), así que "free" nunca pudo
+    # haber sido el plan real mientras el disco de abajo estaba activo.
+    # Este archivo simplemente no se había actualizado para reflejarlo.
+    plan: standard
     buildCommand: pip install -r requirements.txt
     # --workers 1 es obligatorio, no opcional: el estado de los jobs de
     # búsqueda (_jobs) y la caché en RAM (_datos_memoria, _result_cache)
@@ -14,16 +20,25 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
-      # Disco persistente añadido en el dashboard de Render, montado en
-      # /var/data -- cache.db se lee/escribe ahí en vez de junto al código,
-      # para que los refrescos (cron diario, /actualizar-todos) sobrevivan a
-      # un reinicio del servicio. Sin esta variable, la app cae de vuelta a
-      # guardar cache.db en el propio directorio del código (comportamiento
-      # local de siempre). El bloque `disks:` de Render no se declara aquí
-      # a propósito: el disco ya se creó a mano en el dashboard y no
-      # conozco su nombre/tamaño exactos desde este entorno -- declarar un
-      # `disks:` con datos adivinados podría chocar con lo ya provisionado
-      # en el próximo sync del blueprint. Confirmar antes de añadirlo.
+      # Disco persistente en /var/data -- cache.db se lee/escribe ahí en
+      # vez de junto al código, para que los refrescos (cron diario,
+      # /actualizar-todos) sobrevivan a un reinicio del servicio. Sin esta
+      # variable, la app cae de vuelta a guardar cache.db en el propio
+      # directorio del código (comportamiento local de siempre).
       - key: DATA_DIR
         value: /var/data
     healthCheckPath: /
+    # Confirmado por César en el dashboard de Render (2026-07-30): disco
+    # persistente de pago de 2GB ya activo y montado en /var/data -- no se
+    # ha creado ni modificado nada aquí, esto solo documenta lo que ya
+    # existe. IMPORTANTE antes de un futuro "sync" del blueprint: Render
+    # empareja discos existentes con este bloque por el campo `name` de
+    # abajo -- "cache-data" es un nombre descriptivo puesto desde aquí sin
+    # ver el dashboard directamente. Si el disco real en Render → tu
+    # servicio → pestaña "Disks" tiene otro nombre, cámbialo aquí antes de
+    # sincronizar el blueprint, o Render podría intentar crear un disco
+    # nuevo en vez de reconocer el existente.
+    disks:
+      - name: cache-data
+        mountPath: /var/data
+        sizeGB: 2
