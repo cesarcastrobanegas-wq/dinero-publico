@@ -3767,21 +3767,8 @@ CSS = """
   --red:#f85149;--green:#3fb950;--yellow:#d29922;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-/* overflow-x:hidden SOLO en html, no en body -- ver INFORME_NOCHE.md (header
-   roto en movil): con overflow-x:hidden en AMBOS, body pasa a computar
-   overflow-y:auto (regla de la spec cuando un eje no es 'visible') y se
-   convierte en su propio contenedor de scroll, desacoplado del scroll real
-   del documento (document.scrollingElement, que sigue siendo <html>). El
-   header (position:sticky) queda anclado a ese scroll-container de body en
-   vez de al del documento, así que cuando el foco automático del buscador
-   (autofocus en #as-input) desplaza la pagina en pantallas bajas (~568px de
-   alto, tipo iPhone SE), el header se desplaza fuera de la vista en vez de
-   quedarse fijo arriba. Reproducido con Playwright a 320x568: scrollY=341,
-   header en y=-341 pese a position:sticky. Con overflow-x:hidden solo en
-   html, body ya no crea ese segundo contenedor y el sticky vuelve a anclarse
-   al scroll real del documento.*/
 html{overflow-x:hidden;}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;overflow-x:hidden;}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10;}
 .header-brand{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
 .header-brand>div{min-width:0;}

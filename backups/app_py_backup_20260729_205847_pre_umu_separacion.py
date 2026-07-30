@@ -837,20 +837,16 @@ MUNICIPIOS_PSEUDO = {"murcia": "Región de Murcia", "girona": "Provincia de Giro
 # Pseudo-municipios ADICIONALES por provincia (puede haber más de uno).
 # La Administración General del Estado (organismos estatales periféricos con
 # sede en Murcia: Guardia Civil, AEAT, TGSS, INSS, Delegación del Gobierno,
-# centros penitenciarios, SEPE...) contamina hoy el municipio "Murcia" capital
-# por el mismo bug de subcadena que la CCAA -- el nombre del municipio aparece
-# dentro del texto del órgano ("...en Murcia", "(Murcia)"), así que se
-# atribuye a la ciudad sin ser ni municipal ni autonómico. Se separan a su
-# propia entrada, igual que "Región de Murcia". Ver _es_organo_age e
-# INFORME_NOCHE.md 2026-07-25.
+# centros penitenciarios, SEPE, Universidad de Murcia...) contamina hoy el
+# municipio "Murcia" capital por el mismo bug de subcadena que la CCAA -- el
+# nombre del municipio aparece dentro del texto del órgano ("...en Murcia",
+# "(Murcia)"), así que se atribuye a la ciudad sin ser ni municipal ni
+# autonómico. Se separan a su propia entrada, igual que "Región de Murcia".
+# Ver _es_organo_age e INFORME_NOCHE.md 2026-07-25 (incluye la nota sobre por
+# qué la Universidad de Murcia -- técnicamente universidad pública autónoma,
+# no AGE en sentido estricto -- se agrupa aquí siguiendo el encargo).
 NOMBRE_PSEUDO_AGE = "Administración General del Estado"
-# La Universidad de Murcia se agrupó inicialmente dentro de la AGE (mismo bug
-# de subcadena), pero es una universidad pública AUTÓNOMA, no AGE en sentido
-# estricto -- pesaba el 64% de esa entrada. Se separa a su propia entrada
-# pseudo-municipio, con el mismo patrón de detección/reclasificación que la
-# AGE (ver _es_organo_umu / _guardar_pseudo_municipio_umu).
-NOMBRE_PSEUDO_UMU = "Universidad de Murcia"
-MUNICIPIOS_PSEUDO_EXTRA = {"murcia": [NOMBRE_PSEUDO_AGE, NOMBRE_PSEUDO_UMU]}
+MUNICIPIOS_PSEUDO_EXTRA = {"murcia": [NOMBRE_PSEUDO_AGE]}
 
 
 def _pseudos_de_provincia(provincia):
@@ -958,6 +954,7 @@ _AGE_KEYWORDS = (
     "centro penitenciario",
     "centro de insercion social",
     "servicio publico de empleo estatal",
+    "universidad de murcia",
     "confederacion hidrografica del segura",
     "jefatura provincial de trafico",
     "jefatura de trafico",
@@ -990,11 +987,10 @@ _AGE_EXCLUIR = (
 
 def _es_organo_age(organo):
     """True si el órgano contratante es un organismo de la Administración
-    General del Estado que se ha colado en un municipio murciano por el bug
-    de subcadena. Excluye ayuntamientos, empresas municipales, la CCAA y
-    entes conjuntos aunque compartan alguna palabra clave. La Universidad de
-    Murcia tiene su propio detector (_es_organo_umu, no AGE en sentido
-    estricto -- ver INFORME_NOCHE.md)."""
+    General del Estado (o asimilado, ver nota de la Universidad de Murcia en
+    INFORME_NOCHE.md) que se ha colado en un municipio murciano por el bug de
+    subcadena. Excluye ayuntamientos, empresas municipales, la CCAA y entes
+    conjuntos aunque compartan alguna palabra clave."""
     n = normalizar(organo)
     if any(kw in n for kw in _AGE_EXCLUIR):
         return False
@@ -1012,89 +1008,56 @@ def _separar_contratos_age(contratos):
     return resto, age
 
 
-def _guardar_pseudo_municipio_acumulado(nombre_pseudo, municipio_origen, contratos_extra, job_id=None):
-    """Acumula contratos separados de un municipio murciano bajo una entrada
-    pseudo-municipio (AGE, Universidad de Murcia...), tratada en el resto de
-    la app igual que un ayuntamiento más.
+def _guardar_pseudo_municipio_age(municipio_origen, contratos_age, job_id=None):
+    """Acumula los contratos de la AGE separados de un municipio murciano bajo
+    la entrada pseudo-municipio "Administración General del Estado" (provincia
+    murcia), tratada en el resto de la app igual que un ayuntamiento más.
 
     A diferencia de "Región de Murcia" (que solo procede de un municipio,
-    Murcia capital), estas entradas pueden recibir contratos de VARIOS
-    municipios en un mismo refresco completo (p.ej. la AGE: Murcia capital +
-    Campos del Río, este último con duplicados del mismo centro
-    penitenciario). Por eso acumula en vez de sustituir: cada contrato se
-    etiqueta con `_origen_muni`; al refrescar un municipio se reemplaza SOLO
-    su aportación anterior (para que no queden restos si un contrato deja de
-    encajar) y se deduplica por URL/título, así los duplicados que llegan por
-    dos municipios distintos colapsan en uno.
+    Murcia capital), la AGE puede recibir contratos de VARIOS municipios en un
+    mismo refresco completo (hoy: Murcia capital + Campos del Río, este último
+    con duplicados del mismo centro penitenciario). Por eso acumula en vez de
+    sustituir: cada contrato se etiqueta con `_origen_muni`; al refrescar un
+    municipio se reemplaza SOLO su aportación anterior (para que no queden
+    restos si un contrato deja de ser AGE) y se deduplica por URL/título, así
+    los duplicados que llegan por dos municipios distintos colapsan en uno.
 
-    Se llama para TODOS los municipios de origen (incluso con lista vacía,
-    para poder limpiar la aportación previa de ese municipio); si tras la
-    fusión no queda ningún contrato y no había entrada previa, no crea una
-    vacía."""
+    Se llama para TODOS los municipios de Murcia (incluso con lista vacía, para
+    poder limpiar la aportación previa de ese municipio); si tras la fusión no
+    queda ningún contrato AGE y no había entrada previa, no crea una vacía."""
     origen = normalizar(municipio_origen)
-    for c in contratos_extra:
+    for c in contratos_age:
         c["_origen_muni"] = origen
 
     with _datos_lock:
         prev = next((d for d in _datos_memoria
-                     if normalizar(d.get("municipio", "")) == normalizar(nombre_pseudo)), None)
+                     if normalizar(d.get("municipio", "")) == normalizar(NOMBRE_PSEUDO_AGE)), None)
         conservados = [c for c in (prev.get("contratos", []) if prev else [])
                        if c.get("_origen_muni") != origen]
 
-    fusionados = _dedup_contratos_por_url(conservados + list(contratos_extra))
+    fusionados = _dedup_contratos_por_url(conservados + list(contratos_age))
 
     if not fusionados and prev is None:
         return
 
     resultado = {
-        "municipio":       nombre_pseudo,
-        "organismo":       nombre_pseudo,
+        "municipio":       NOMBRE_PSEUDO_AGE,
+        "organismo":       NOMBRE_PSEUDO_AGE,
         "total_contratos": len(fusionados),
         "contratos":       fusionados,
         "alertas":         analizar_riesgo(fusionados),
         "place_profile":   "",
         "timestamp":       time.time(),
     }
-    if job_id and contratos_extra:
-        _log(job_id, f"  {len(contratos_extra)} contratos de '{municipio_origen}' "
-                      f"reclasificados a '{nombre_pseudo}' -- total ahora: {len(fusionados)}")
+    if job_id and contratos_age:
+        _log(job_id, f"  {len(contratos_age)} contratos de '{municipio_origen}' "
+                      f"reclasificados a '{NOMBRE_PSEUDO_AGE}' (órgano estatal) "
+                      f"-- total AGE ahora: {len(fusionados)}")
     with _datos_lock:
         _datos_memoria[:] = [d for d in _datos_memoria
-                             if normalizar(d.get("municipio", "")) != normalizar(nombre_pseudo)]
+                             if normalizar(d.get("municipio", "")) != normalizar(NOMBRE_PSEUDO_AGE)]
         _datos_memoria.append(resultado)
-    _db_set_municipio(nombre_pseudo, resultado, provincia="murcia")
-
-
-def _guardar_pseudo_municipio_age(municipio_origen, contratos_age, job_id=None):
-    """Acumula los contratos de la AGE separados de un municipio murciano bajo
-    la entrada pseudo-municipio "Administración General del Estado". Ver
-    _guardar_pseudo_municipio_acumulado."""
-    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_AGE, municipio_origen, contratos_age, job_id)
-
-
-def _es_organo_umu(organo):
-    """True si el órgano contratante es la Universidad de Murcia, colada en
-    el municipio "Murcia" por el mismo bug de subcadena que la AGE (ver
-    _es_organo_age). Se separa en su propia entrada porque es una
-    universidad pública AUTÓNOMA, no AGE en sentido estricto -- pesaba el
-    64% de esa entrada antes de separarla (ver INFORME_NOCHE.md)."""
-    return "universidad de murcia" in normalizar(organo)
-
-
-def _separar_contratos_umu(contratos):
-    """Separa una lista de contratos de un municipio murciano en (resto, umu)
-    según _es_organo_umu."""
-    resto, umu = [], []
-    for c in contratos:
-        (umu if _es_organo_umu(c.get("organo", "")) else resto).append(c)
-    return resto, umu
-
-
-def _guardar_pseudo_municipio_umu(municipio_origen, contratos_umu, job_id=None):
-    """Acumula los contratos de la Universidad de Murcia separados de un
-    municipio murciano bajo su propia entrada pseudo-municipio. Ver
-    _guardar_pseudo_municipio_acumulado."""
-    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UMU, municipio_origen, contratos_umu, job_id)
+    _db_set_municipio(NOMBRE_PSEUDO_AGE, resultado, provincia="murcia")
 
 
 def _asegurar_pseudo_municipio_fondos(provincia):
@@ -2505,53 +2468,6 @@ def enriquecer_beneficiarios_cohesion(job_id=None, presupuesto_minutos=60):
     return encontrados
 
 
-def enriquecer_directivos_fondos_ue(job_id=None, presupuesto_minutos=30):
-    """Busca gerente/administrador de los beneficiarios de fondos UE con el
-    MISMO detector y caché que ya se usa para los adjudicatarios de contratos
-    públicos (buscar_directivo: einforma → empresia → BORME anuncios →
-    búsqueda web, caché persistente en la tabla `directores`).
-
-    No añade columnas nuevas a `fondos_ue`: el resultado se guarda en la
-    misma tabla `directores` (clave = NIF si lo hay, si no nombre
-    normalizado -- ver _dir_cache_key) y se lee de ahí al renderizar (ver
-    _render_fila_fondo_ue), exactamente igual que para los adjudicatarios de
-    contratos. Respeta el mismo caché negativo con reintentos limitados
-    (_dir_cache_agotado/DIR_INTENTOS_MAX) para no repetir búsquedas contra
-    beneficiarios sin datos registrales públicos.
-
-    Solo procesa beneficiarios ya identificados (con nombre no vacío) -- los
-    de Cohesion Data que aún no tienen beneficiario dependen primero de
-    enriquecer_beneficiarios_cohesion(), que se llama antes en el mismo job."""
-    deadline = time.time() + presupuesto_minutos * 60
-    with _db_lock:
-        filas = _db.execute(
-            "SELECT DISTINCT beneficiario, nif FROM fondos_ue "
-            "WHERE beneficiario IS NOT NULL AND beneficiario <> ''"
-        ).fetchall()
-    pendientes = [(b, nif or "") for b, nif in filas
-                  if _dir_cache_get(b, nif or "")[0] is None
-                  and not _dir_cache_agotado(b, nif or "")]
-    total = len(pendientes)
-    _log(job_id, f"Buscando gerente/administrador de {total} beneficiarios de "
-                 f"fondos UE pendientes (einforma · empresia · BORME)…")
-    encontrados = procesados = 0
-    for beneficiario, nif in pendientes:
-        if time.time() >= deadline:
-            _log(job_id, f"  Presupuesto de {presupuesto_minutos} min agotado: "
-                         f"{procesados}/{total} procesados, se retoma en el próximo refresco.")
-            break
-        procesados += 1
-        nombre, cargo = buscar_directivo(beneficiario, nif)
-        if nombre:
-            encontrados += 1
-        time.sleep(1.2)  # mismo delay entre peticiones que el enriquecimiento de contratos
-        if procesados % 50 == 0:
-            _log(job_id, f"  … {procesados}/{total} procesados ({encontrados} encontrados)")
-    _log(job_id, f"  Gerentes/administradores de fondos UE: {encontrados}/{procesados} "
-                 f"encontrados (de {total} pendientes).")
-    return encontrados
-
-
 def _actualizar_fondos_ue_bg(job_id):
     """Hilo de fondo para POST /actualizar-fondos-ue: refresca CORDIS y
     Cohesion Data uno detrás de otro. A diferencia de los contratos
@@ -2570,15 +2486,13 @@ def _actualizar_fondos_ue_bg(job_id):
         n_cordis = actualizar_fondos_cordis(job_id)
         n_cohesion = actualizar_fondos_cohesion(job_id)
         n_enriquecidos = enriquecer_beneficiarios_cohesion(job_id)
-        n_directivos = enriquecer_directivos_fondos_ue(job_id)
         for _prov in MUNICIPIOS_PSEUDO:
             _asegurar_pseudo_municipio_fondos(_prov)
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
             _jobs[job_id]["total"] = n_cordis + n_cohesion
         print(f"  [actualizar-fondos-ue] Terminado: {n_cordis} CORDIS + {n_cohesion} Cohesion Data "
-              f"({n_enriquecidos} beneficiarios enriquecidos vía Kohesio, "
-              f"{n_directivos} gerentes/administradores encontrados).", flush=True)
+              f"({n_enriquecidos} beneficiarios enriquecidos vía Kohesio).", flush=True)
     except Exception as e:
         with _jobs_lock:
             _jobs[job_id]["status"] = "error"
@@ -3457,20 +3371,14 @@ def _job_run(job_id, municipio, provincia="murcia"):
 
         # Separa los contratos cuyo órgano es un organismo de la Administración
         # General del Estado (Guardia Civil, AEAT, TGSS, INSS, Delegación del
-        # Gobierno, centros penitenciarios, SEPE...) o la Universidad de Murcia
-        # que se cuelan por el mismo bug de subcadena. A diferencia de la CCAA,
-        # esto aplica a CUALQUIER municipio de Murcia (medido: Murcia capital
-        # 226 + Campos del Río 4 duplicados) -- ver _es_organo_age/_es_organo_umu
-        # e INFORME_NOCHE.md 2026-07-25 y 2026-07-29 (separación de la UMU).
-        # No se ejecuta sobre las propias entradas pseudo. La UMU se separa
-        # ANTES que la AGE para que quede en su propia entrada (si se hiciera
-        # al revés, _es_organo_age ya no la reconoce, pero el orden se deja
-        # explícito por claridad).
+        # Gobierno, centros penitenciarios, SEPE, Universidad de Murcia...) que
+        # se cuelan por el mismo bug de subcadena. A diferencia de la CCAA, esto
+        # aplica a CUALQUIER municipio de Murcia (medido: Murcia capital 226 +
+        # Campos del Río 4 duplicados) -- ver _es_organo_age e INFORME_NOCHE.md
+        # 2026-07-25. No se ejecuta sobre las propias entradas pseudo.
         es_age_target = provincia == "murcia" and not es_pseudo_municipio(municipio)
-        contratos_umu = []
         contratos_age = []
         if es_age_target:
-            contratos, contratos_umu = _separar_contratos_umu(contratos)
             contratos, contratos_age = _separar_contratos_age(contratos)
 
         # Análisis de riesgo
@@ -3499,11 +3407,10 @@ def _job_run(job_id, municipio, provincia="murcia"):
             _guardar_pseudo_municipio_ccaa("murcia", contratos_ccaa_murcia, job_id)
 
         # Siempre para municipios de Murcia (incluso con lista vacía): así se
-        # limpia la aportación previa de este municipio si un contrato dejó de
-        # encajar, y se acumulan los de varios municipios sin duplicar.
+        # limpia la aportación AGE previa de este municipio si un contrato dejó
+        # de ser AGE, y se acumulan los de varios municipios sin duplicar.
         if es_age_target:
             _guardar_pseudo_municipio_age(municipio, contratos_age, job_id)
-            _guardar_pseudo_municipio_umu(municipio, contratos_umu, job_id)
 
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
@@ -3767,21 +3674,8 @@ CSS = """
   --red:#f85149;--green:#3fb950;--yellow:#d29922;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-/* overflow-x:hidden SOLO en html, no en body -- ver INFORME_NOCHE.md (header
-   roto en movil): con overflow-x:hidden en AMBOS, body pasa a computar
-   overflow-y:auto (regla de la spec cuando un eje no es 'visible') y se
-   convierte en su propio contenedor de scroll, desacoplado del scroll real
-   del documento (document.scrollingElement, que sigue siendo <html>). El
-   header (position:sticky) queda anclado a ese scroll-container de body en
-   vez de al del documento, así que cuando el foco automático del buscador
-   (autofocus en #as-input) desplaza la pagina en pantallas bajas (~568px de
-   alto, tipo iPhone SE), el header se desplaza fuera de la vista en vez de
-   quedarse fijo arriba. Reproducido con Playwright a 320x568: scrollY=341,
-   header en y=-341 pese a position:sticky. Con overflow-x:hidden solo en
-   html, body ya no crea ese segundo contenedor y el sticky vuelve a anclarse
-   al scroll real del documento.*/
 html{overflow-x:hidden;}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;overflow-x:hidden;}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10;}
 .header-brand{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
 .header-brand>div{min-width:0;}
@@ -4801,14 +4695,6 @@ def _render_fila_fondo_ue(f):
         nif_html = f'<div class="fue-nif">{esc(f["nif"])}</div>' if f.get("nif") else ""
         rol_html = f' <span class="ute-nota">({esc(f["rol"])})</span>' if f.get("rol") else ""
 
-        # Gerente/administrador del beneficiario, con el MISMO detector y
-        # caché que los adjudicatarios de contratos públicos (buscar_directivo,
-        # ver enriquecer_directivos_fondos_ue) -- lectura de caché aquí,
-        # nunca se lanza la búsqueda en el hilo de render.
-        dir_nombre, dir_cargo = _dir_cache_get(f["beneficiario"], f.get("nif", "") or "")
-        gerente_html = (f'<div class="lid" style="margin-top:2px">👤 {esc(dir_nombre)} — {esc(dir_cargo)}</div>'
-                         if dir_nombre else "")
-
         # Mismo detector que ya usan los contratos públicos (cargo público vs
         # adjudicatario/directivo) -- aquí aplicado al beneficiario del fondo
         # UE. Solo tiene sentido para CORDIS: Cohesion Data no trae nombre de
@@ -4837,7 +4723,7 @@ def _render_fila_fondo_ue(f):
         else:
             match_html = ""
 
-        benef_html = f'<div class="empresa">{esc(f["beneficiario"])}{rol_html}</div>{nif_html}{gerente_html}{match_html}'
+        benef_html = f'<div class="empresa">{esc(f["beneficiario"])}{rol_html}</div>{nif_html}{match_html}'
     else:
         benef_html = '<span class="noloc-warn">Beneficiario no publicado por la fuente</span>'
 

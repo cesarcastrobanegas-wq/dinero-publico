@@ -2505,53 +2505,6 @@ def enriquecer_beneficiarios_cohesion(job_id=None, presupuesto_minutos=60):
     return encontrados
 
 
-def enriquecer_directivos_fondos_ue(job_id=None, presupuesto_minutos=30):
-    """Busca gerente/administrador de los beneficiarios de fondos UE con el
-    MISMO detector y caché que ya se usa para los adjudicatarios de contratos
-    públicos (buscar_directivo: einforma → empresia → BORME anuncios →
-    búsqueda web, caché persistente en la tabla `directores`).
-
-    No añade columnas nuevas a `fondos_ue`: el resultado se guarda en la
-    misma tabla `directores` (clave = NIF si lo hay, si no nombre
-    normalizado -- ver _dir_cache_key) y se lee de ahí al renderizar (ver
-    _render_fila_fondo_ue), exactamente igual que para los adjudicatarios de
-    contratos. Respeta el mismo caché negativo con reintentos limitados
-    (_dir_cache_agotado/DIR_INTENTOS_MAX) para no repetir búsquedas contra
-    beneficiarios sin datos registrales públicos.
-
-    Solo procesa beneficiarios ya identificados (con nombre no vacío) -- los
-    de Cohesion Data que aún no tienen beneficiario dependen primero de
-    enriquecer_beneficiarios_cohesion(), que se llama antes en el mismo job."""
-    deadline = time.time() + presupuesto_minutos * 60
-    with _db_lock:
-        filas = _db.execute(
-            "SELECT DISTINCT beneficiario, nif FROM fondos_ue "
-            "WHERE beneficiario IS NOT NULL AND beneficiario <> ''"
-        ).fetchall()
-    pendientes = [(b, nif or "") for b, nif in filas
-                  if _dir_cache_get(b, nif or "")[0] is None
-                  and not _dir_cache_agotado(b, nif or "")]
-    total = len(pendientes)
-    _log(job_id, f"Buscando gerente/administrador de {total} beneficiarios de "
-                 f"fondos UE pendientes (einforma · empresia · BORME)…")
-    encontrados = procesados = 0
-    for beneficiario, nif in pendientes:
-        if time.time() >= deadline:
-            _log(job_id, f"  Presupuesto de {presupuesto_minutos} min agotado: "
-                         f"{procesados}/{total} procesados, se retoma en el próximo refresco.")
-            break
-        procesados += 1
-        nombre, cargo = buscar_directivo(beneficiario, nif)
-        if nombre:
-            encontrados += 1
-        time.sleep(1.2)  # mismo delay entre peticiones que el enriquecimiento de contratos
-        if procesados % 50 == 0:
-            _log(job_id, f"  … {procesados}/{total} procesados ({encontrados} encontrados)")
-    _log(job_id, f"  Gerentes/administradores de fondos UE: {encontrados}/{procesados} "
-                 f"encontrados (de {total} pendientes).")
-    return encontrados
-
-
 def _actualizar_fondos_ue_bg(job_id):
     """Hilo de fondo para POST /actualizar-fondos-ue: refresca CORDIS y
     Cohesion Data uno detrás de otro. A diferencia de los contratos
@@ -2570,15 +2523,13 @@ def _actualizar_fondos_ue_bg(job_id):
         n_cordis = actualizar_fondos_cordis(job_id)
         n_cohesion = actualizar_fondos_cohesion(job_id)
         n_enriquecidos = enriquecer_beneficiarios_cohesion(job_id)
-        n_directivos = enriquecer_directivos_fondos_ue(job_id)
         for _prov in MUNICIPIOS_PSEUDO:
             _asegurar_pseudo_municipio_fondos(_prov)
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
             _jobs[job_id]["total"] = n_cordis + n_cohesion
         print(f"  [actualizar-fondos-ue] Terminado: {n_cordis} CORDIS + {n_cohesion} Cohesion Data "
-              f"({n_enriquecidos} beneficiarios enriquecidos vía Kohesio, "
-              f"{n_directivos} gerentes/administradores encontrados).", flush=True)
+              f"({n_enriquecidos} beneficiarios enriquecidos vía Kohesio).", flush=True)
     except Exception as e:
         with _jobs_lock:
             _jobs[job_id]["status"] = "error"
@@ -3767,21 +3718,8 @@ CSS = """
   --red:#f85149;--green:#3fb950;--yellow:#d29922;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-/* overflow-x:hidden SOLO en html, no en body -- ver INFORME_NOCHE.md (header
-   roto en movil): con overflow-x:hidden en AMBOS, body pasa a computar
-   overflow-y:auto (regla de la spec cuando un eje no es 'visible') y se
-   convierte en su propio contenedor de scroll, desacoplado del scroll real
-   del documento (document.scrollingElement, que sigue siendo <html>). El
-   header (position:sticky) queda anclado a ese scroll-container de body en
-   vez de al del documento, así que cuando el foco automático del buscador
-   (autofocus en #as-input) desplaza la pagina en pantallas bajas (~568px de
-   alto, tipo iPhone SE), el header se desplaza fuera de la vista en vez de
-   quedarse fijo arriba. Reproducido con Playwright a 320x568: scrollY=341,
-   header en y=-341 pese a position:sticky. Con overflow-x:hidden solo en
-   html, body ya no crea ese segundo contenedor y el sticky vuelve a anclarse
-   al scroll real del documento.*/
 html{overflow-x:hidden;}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;overflow-x:hidden;}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10;}
 .header-brand{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
 .header-brand>div{min-width:0;}
@@ -4801,14 +4739,6 @@ def _render_fila_fondo_ue(f):
         nif_html = f'<div class="fue-nif">{esc(f["nif"])}</div>' if f.get("nif") else ""
         rol_html = f' <span class="ute-nota">({esc(f["rol"])})</span>' if f.get("rol") else ""
 
-        # Gerente/administrador del beneficiario, con el MISMO detector y
-        # caché que los adjudicatarios de contratos públicos (buscar_directivo,
-        # ver enriquecer_directivos_fondos_ue) -- lectura de caché aquí,
-        # nunca se lanza la búsqueda en el hilo de render.
-        dir_nombre, dir_cargo = _dir_cache_get(f["beneficiario"], f.get("nif", "") or "")
-        gerente_html = (f'<div class="lid" style="margin-top:2px">👤 {esc(dir_nombre)} — {esc(dir_cargo)}</div>'
-                         if dir_nombre else "")
-
         # Mismo detector que ya usan los contratos públicos (cargo público vs
         # adjudicatario/directivo) -- aquí aplicado al beneficiario del fondo
         # UE. Solo tiene sentido para CORDIS: Cohesion Data no trae nombre de
@@ -4837,7 +4767,7 @@ def _render_fila_fondo_ue(f):
         else:
             match_html = ""
 
-        benef_html = f'<div class="empresa">{esc(f["beneficiario"])}{rol_html}</div>{nif_html}{gerente_html}{match_html}'
+        benef_html = f'<div class="empresa">{esc(f["beneficiario"])}{rol_html}</div>{nif_html}{match_html}'
     else:
         benef_html = '<span class="noloc-warn">Beneficiario no publicado por la fuente</span>'
 
