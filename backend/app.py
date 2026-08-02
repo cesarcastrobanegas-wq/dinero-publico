@@ -8,7 +8,7 @@ import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from urllib.parse import parse_qs, quote_plus, urlparse
+from urllib.parse import parse_qs, quote_plus, urlencode, urlparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -37,6 +37,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 
 DATA_FILE  = os.path.join(BASE_DIR, "datos.json")
 ALCALDES_FILE = os.path.join(BASE_DIR, "alcaldes_concejales.json")
+RETRIBUCIONES_FILE = os.path.join(BASE_DIR, "retribuciones_ispa.json")
 # place_cache/ (ZIPs mensuales de PLACE, ~127 MB cada uno) NO se siembra
 # desde el repo -- está en .gitignore a propósito (nunca se ha commiteado,
 # a diferencia de cache.db) y no tiene sentido empezar a versionar binarios
@@ -337,6 +338,26 @@ def _cargar_alcaldes_concejales():
 
 
 ALCALDES_CONCEJALES = _cargar_alcaldes_concejales()
+
+
+def _cargar_retribuciones_ispa():
+    """Carga retribuciones_ispa.json (generado por actualizar_retribuciones.py
+    a partir del fichero 'retribuciones_alcaldes.xlsx' del Portal MTDFP -
+    Espacio ISPA, Ministerio para la Transformación Digital y de la Función
+    Pública). Dato anual y estático, mismo patrón que ALCALDES_CONCEJALES:
+    no se recalcula en caliente, solo se refresca re-lanzando ese script."""
+    if os.path.exists(RETRIBUCIONES_FILE):
+        try:
+            with open(RETRIBUCIONES_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+                if isinstance(d, dict):
+                    return d.get("municipios", {})
+        except Exception:
+            pass
+    return {}
+
+
+RETRIBUCIONES_ISPA = _cargar_retribuciones_ispa()
 
 
 def _construir_indice_cargos_publicos():
@@ -713,6 +734,43 @@ def place_profile_url(municipio):
             f"?buscador={_qp('Ayuntamiento de ' + municipio)}")
 
 
+# Comunidad Autónoma / Provincia tal como los identifica el desplegable de
+# la Plataforma de Rendición de Cuentas (rendiciondecuentas.es) -- ids
+# verificados a mano el 2026-08-02 inspeccionando el HTML del propio
+# formulario de busqueda (idComunidadAutonoma=9 "Cataluña", idProvincia=17
+# "Gerona"; idComunidadAutonoma=13 "Región de Murcia", idProvincia=30
+# "Murcia"). idTipoEntidad="A" = Ayuntamiento.
+RENDICION_CUENTAS_IDS = {
+    "murcia": {"idComunidadAutonoma": "13", "idProvincia": "30"},
+    "girona": {"idComunidadAutonoma": "9", "idProvincia": "17"},
+}
+
+
+def rendicion_cuentas_url(municipio, provincia):
+    """Enlace a la ficha de búsqueda del ayuntamiento en la Plataforma de
+    Rendición de Cuentas de las Corporaciones Locales (Tribunal de Cuentas),
+    con la Cuenta General de cada ejercicio. Es un GET plano -- verificado
+    que funciona "en frío" (sin sesión/Referer previos) y devuelve
+    directamente la ficha del municipio si el nombre es único, un paso más
+    cerca del expediente que una búsqueda genérica en Google. No incluimos
+    el resultado (superávit/déficit) todavía: la ficha de cada ejercicio
+    concreto sí exige la sesión completa del buscador (múltiples pasos con
+    comprobación de Referer), así que de momento el usuario da ese último
+    clic él mismo desde esta página de resultados."""
+    ids = RENDICION_CUENTAS_IDS.get(provincia)
+    if not ids:
+        return ""
+    params = {
+        "idComunidadAutonoma": ids["idComunidadAutonoma"],
+        "idProvincia": ids["idProvincia"],
+        "idTipoEntidad": "A",
+        "denominacion": municipio,
+        "submitFormBusquedaEntidades": "Buscar",
+    }
+    return ("https://www.rendiciondecuentas.es/es/consultadeentidadesycuentas/"
+            f"buscarEntidades/index.html?{urlencode(params)}")
+
+
 def normalizar(s):
     s = (s or "").lower().strip()
     for a, b in {"á":"a","é":"e","í":"i","ó":"o","ú":"u","ü":"u","ñ":"n",
@@ -739,7 +797,16 @@ def alcalde_concejales_html(municipio):
     Política Territorial y Memoria Democrática, ver actualizar_alcaldes.py).
     Cada concejal enlaza a una búsqueda de la transparencia de su
     ayuntamiento (no hay una fuente pública con la URL directa de cada uno
-    de los 266 municipios). Devuelve "" si no hay datos para el municipio."""
+    de los 266 municipios). Devuelve "" si no hay datos para el municipio.
+
+    El sueldo del alcalde/sa (si existe en RETRIBUCIONES_ISPA, ver
+    actualizar_retribuciones.py) se muestra junto a su nombre -- es la única
+    fila del fichero ISPA con una atribución nombre↔importe inequívoca (una
+    fila = un ayuntamiento). Los concejales NO llevan importe: el fichero
+    ISPA de concejales trae una fila por asiento sin nombre ni cargo
+    distintivo (siempre "Concejal"), así que no hay forma fiable de saber
+    qué importe corresponde a qué persona cuando hay varios -- instrucción
+    del 2026-08-02, mejor no mostrar dato que atribuirlo mal."""
     info = ALCALDES_CONCEJALES.get(normalizar(municipio))
     if not info:
         return ""
@@ -750,7 +817,14 @@ def alcalde_concejales_html(municipio):
     if nombre_alcalde:
         partido_alcalde = alcalde.get("partido", "")
         sufijo = f" ({esc(partido_alcalde)})" if partido_alcalde else ""
-        alcalde_html = f'<span class="alcalde-info">👤 Alcalde/sa: <b>{esc(nombre_alcalde)}</b>{sufijo}</span>'
+        retrib = RETRIBUCIONES_ISPA.get(normalizar(municipio))
+        retrib_html = ""
+        if retrib and retrib.get("importe") is not None:
+            anio = retrib.get("anio", "")
+            retrib_html = (f' <span class="pol-retrib">💰 {fmt_eur(retrib["importe"])}/año'
+                            f'{f" (ISPA {esc(anio)})" if anio else ""}</span>')
+        alcalde_html = (f'<span class="alcalde-info">👤 Alcalde/sa: '
+                         f'<b class="pol-nombre">{esc(nombre_alcalde)}</b>{sufijo}{retrib_html}</span>')
 
     concejales = info.get("concejales") or []
     organismo = f"Ajuntament de {municipio}" if info.get("provincia") == "girona" else f"Ayuntamiento de {municipio}"
@@ -3764,7 +3838,7 @@ CSS = """
 :root{
   --bg:#0d1117;--surface:#161b22;--border:#30363d;
   --accent:#f0883e;--blue:#58a6ff;--text:#c9d1d9;--dim:#8b949e;
-  --red:#f85149;--green:#3fb950;--yellow:#d29922;
+  --red:#f85149;--green:#3fb950;--yellow:#d29922;--purple:#d2a8ff;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 /* overflow-x:hidden SOLO en html, no en body -- ver INFORME_NOCHE.md (header
@@ -3820,12 +3894,16 @@ header p{font-size:12px;color:var(--dim);margin-top:2px;}
 .muni-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
 .muni-header{padding:12px 18px;background:rgba(240,136,62,.08);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
 .muni-header h2{font-size:14px;font-weight:600;color:var(--accent);}
+.cuentas-link{font-size:10px;font-weight:600;color:var(--dim);text-decoration:none;border:1px solid var(--border);border-radius:4px;padding:2px 6px;vertical-align:middle;white-space:nowrap;}
+.cuentas-link:hover{color:var(--text);border-color:var(--dim);}
 .alcalde-info{display:block;font-size:11px;color:var(--dim);margin-top:4px;}
+.pol-nombre{color:var(--purple);}
+.pol-retrib{color:var(--green);font-family:'IBM Plex Mono',monospace;}
 .concejales-dd{margin-top:4px;font-size:11px;}
 .concejales-dd summary{cursor:pointer;color:var(--dim);}
 .concejales-dd summary:hover{color:var(--accent);}
 .concejales-dd ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;}
-.concejales-dd a{color:var(--blue);text-decoration:none;}
+.concejales-dd a{color:var(--purple);text-decoration:none;}
 .concejales-dd a:hover{text-decoration:underline;}
 .conc-cargo{color:var(--dim);}
 .badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);}
@@ -4467,7 +4545,6 @@ def _ad_banner_html():
 
 def _header_html(provincia="todas"):
     es_girona = provincia == "girona"
-    es_murcia = provincia == "murcia"
     rankings_href = "/rankings?provincia=girona" if es_girona else "/rankings"
     return f"""<header>
   <a href="/" class="header-brand" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
@@ -4478,10 +4555,6 @@ def _header_html(provincia="todas"):
     </div>
   </a>
   <nav class="header-nav">
-    <div class="prov-switch">
-      <a href="/?provincia=murcia" class="prov-tab{' active' if es_murcia else ''}">Murcia</a>
-      <a href="/?provincia=girona" class="prov-tab{' active' if es_girona else ''}">Girona</a>
-    </div>
     <a href="{rankings_href}">🏆 Rankings</a>
     <a href="/fondos-ue" style="color:var(--yellow)">🇪🇺 Fondos UE</a>
   </nav>
@@ -4992,6 +5065,17 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
         profile_html  = (f'<a href="{esc(profile_url)}" target="_blank" class="link" '
                           f'title="Perfil contratante en PLACE" style="font-size:11px">Perfil PLACE ↗</a>'
                           if profile_url else "")
+        # Cuentas anuales (Plataforma de Rendición de Cuentas) -- no se
+        # muestra en pseudo-municipios ("Región de Murcia", AGE, UMU...): no
+        # son ayuntamientos y no tienen ficha propia ahí.
+        cuentas_html = ""
+        if not es_pseudo_municipio(muni_name):
+            cuentas_url = rendicion_cuentas_url(muni_name, d.get("provincia", provincia))
+            if cuentas_url:
+                cuentas_html = (f'<a href="{esc(cuentas_url)}" target="_blank" rel="noopener" '
+                                 f'class="cuentas-link" title="Cuenta General y resultado de las '
+                                 f'cuentas anuales en la Plataforma de Rendición de Cuentas">'
+                                 f'📊 Cuentas anuales ↗</a>')
         age_str       = _cache_age_str(muni_name)
         ts            = d.get("timestamp", 0)
         if not age_str and ts:
@@ -5046,7 +5130,7 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
         cards += f"""<div class="muni-card">
           <div class="muni-header">
             <div>
-              <h2>🏛 {esc(muni_name)}</h2>
+              <h2>🏛 {esc(muni_name)} {cuentas_html}</h2>
               {alcalde_concejales_html(muni_name)}
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
@@ -5106,8 +5190,10 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
 def render_landing_nacional_html(datos):
     """Home agregada: cifras combinadas de todas las provincias cargadas,
     desglose secundario por región, y el top 1 del ranking nacional. Es la
-    vista por defecto de '/' (sin ?provincia=); el selector Murcia/Girona
-    del header sigue disponible como filtro opcional."""
+    vista por defecto de '/' (sin ?provincia=); el acceso al listado de
+    municipios por región es vía los botones de "Cobertura" y las tarjetas
+    de "Cobertura por región" de más abajo (el toggle Murcia/Girona del
+    header se quitó por redundante -- ver instrucción del 2026-08-02)."""
     total_m = len(datos)
     total_c = sum(d.get("total_contratos", 0) for d in datos)
     total_e = len(set(
