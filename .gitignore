@@ -17,3 +17,13 @@ backend/python
 # con los datos ya construidos en vez de vacío. Ver notas de despliegue.
 backend/cache.db-wal
 backend/cache.db-shm
+
+# Backup de seguridad de un solo uso (ver app.py, _DB_BACKUP_PRE_REFRESCO_ADITIVO):
+# se regenera solo en local porque DATA_DIR==BASE_DIR fuera de Render, cada
+# vez que se importa app.py (p.ej. al lanzar uno de los scripts manuales de
+# este directorio). En producción vive en el disco persistente /var/data,
+# nunca en el repo -- no tocar ese mecanismo, esto solo evita el ruido en
+# `git status` de la copia local.
+backend/cache_db_backup_pre_refresco_aditivo_*.db
+backend/cache_db_backup_pre_refresco_aditivo_*.db-wal
+backend/cache_db_backup_pre_refresco_aditivo_*.db-shm
