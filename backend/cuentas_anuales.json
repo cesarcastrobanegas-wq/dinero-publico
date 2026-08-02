@@ -1,0 +1,1547 @@
+{
+ "generado": "2026-08-02 18:00:00",
+ "municipios": {
+  "abanilla": {
+   "municipio": "Abanilla",
+   "provincia": "murcia",
+   "id_entidad": 4554,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "abaran": {
+   "municipio": "Abarán",
+   "provincia": "murcia",
+   "id_entidad": 4555,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "aguilas": {
+   "municipio": "Águilas",
+   "provincia": "murcia",
+   "id_entidad": 4556,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "alcantarilla": {
+   "municipio": "Alcantarilla",
+   "provincia": "murcia",
+   "id_entidad": 4558,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "los alcazares": {
+   "municipio": "Los Alcázares",
+   "provincia": "murcia",
+   "id_entidad": 4559,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "aledo": {
+   "municipio": "Aledo",
+   "provincia": "murcia",
+   "id_entidad": 4560,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "alguazas": {
+   "municipio": "Alguazas",
+   "provincia": "murcia",
+   "id_entidad": 4561,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "alhama de murcia": {
+   "municipio": "Alhama de Murcia",
+   "provincia": "murcia",
+   "id_entidad": 4562,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "archena": {
+   "municipio": "Archena",
+   "provincia": "murcia",
+   "id_entidad": 4563,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "beniel": {
+   "municipio": "Beniel",
+   "provincia": "murcia",
+   "id_entidad": 4564,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "blanca": {
+   "municipio": "Blanca",
+   "provincia": "murcia",
+   "id_entidad": 4565,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "bullas": {
+   "municipio": "Bullas",
+   "provincia": "murcia",
+   "id_entidad": 4566,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "calasparra": {
+   "municipio": "Calasparra",
+   "provincia": "murcia",
+   "id_entidad": 4567,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "caravaca de la cruz": {
+   "municipio": "Caravaca de la Cruz",
+   "provincia": "murcia",
+   "id_entidad": 4569,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cartagena": {
+   "municipio": "Cartagena",
+   "provincia": "murcia",
+   "id_entidad": 4570,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cehegin": {
+   "municipio": "Cehegín",
+   "provincia": "murcia",
+   "id_entidad": 4571,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "cieza": {
+   "municipio": "Cieza",
+   "provincia": "murcia",
+   "id_entidad": 4573,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "fortuna": {
+   "municipio": "Fortuna",
+   "provincia": "murcia",
+   "id_entidad": 4575,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "fuente alamo de murcia": {
+   "municipio": "Fuente Álamo de Murcia",
+   "provincia": "murcia",
+   "id_entidad": 4576,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "lorca": {
+   "municipio": "Lorca",
+   "provincia": "murcia",
+   "id_entidad": 4579,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "lorqui": {
+   "municipio": "Lorquí",
+   "provincia": "murcia",
+   "id_entidad": 4580,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "molina de segura": {
+   "municipio": "Molina de Segura",
+   "provincia": "murcia",
+   "id_entidad": 4582,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "mula": {
+   "municipio": "Mula",
+   "provincia": "murcia",
+   "id_entidad": 4584,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "murcia": {
+   "municipio": "Murcia",
+   "provincia": "murcia",
+   "id_entidad": 4585,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ojos": {
+   "municipio": "Ojós",
+   "provincia": "murcia",
+   "id_entidad": 4586,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "puerto lumbreras": {
+   "municipio": "Puerto Lumbreras",
+   "provincia": "murcia",
+   "id_entidad": 4588,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "ricote": {
+   "municipio": "Ricote",
+   "provincia": "murcia",
+   "id_entidad": 4589,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "san javier": {
+   "municipio": "San Javier",
+   "provincia": "murcia",
+   "id_entidad": 4590,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "san pedro del pinatar": {
+   "municipio": "San Pedro del Pinatar",
+   "provincia": "murcia",
+   "id_entidad": 4591,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "santomera": {
+   "municipio": "Santomera",
+   "provincia": "murcia",
+   "id_entidad": 4592,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "torre pacheco": {
+   "municipio": "Torre Pacheco",
+   "provincia": "murcia",
+   "id_entidad": 4593,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "las torres de cotillas": {
+   "municipio": "Las Torres de Cotillas",
+   "provincia": "murcia",
+   "id_entidad": 4594,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "totana": {
+   "municipio": "Totana",
+   "provincia": "murcia",
+   "id_entidad": 4595,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "ulea": {
+   "municipio": "Ulea",
+   "provincia": "murcia",
+   "id_entidad": 4596,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la union": {
+   "municipio": "La Unión",
+   "provincia": "murcia",
+   "id_entidad": 4597,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "villanueva del rio segura": {
+   "municipio": "Villanueva del Río Segura",
+   "provincia": "murcia",
+   "id_entidad": 4598,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "yecla": {
+   "municipio": "Yecla",
+   "provincia": "murcia",
+   "id_entidad": 4599,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "agullana": {
+   "municipio": "Agullana",
+   "provincia": "girona",
+   "id_entidad": 2450,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "aiguaviva": {
+   "municipio": "Aiguaviva",
+   "provincia": "girona",
+   "id_entidad": 2451,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "albanya": {
+   "municipio": "Albanyà",
+   "provincia": "girona",
+   "id_entidad": 2452,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "albons": {
+   "municipio": "Albons",
+   "provincia": "girona",
+   "id_entidad": 2453,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "alp": {
+   "municipio": "Alp",
+   "provincia": "girona",
+   "id_entidad": 2454,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "amer": {
+   "municipio": "Amer",
+   "provincia": "girona",
+   "id_entidad": 2455,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "angles": {
+   "municipio": "Anglès",
+   "provincia": "girona",
+   "id_entidad": 2456,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "arbucies": {
+   "municipio": "Arbúcies",
+   "provincia": "girona",
+   "id_entidad": 2457,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "argelaguer": {
+   "municipio": "Argelaguer",
+   "provincia": "girona",
+   "id_entidad": 2458,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "armentera, l'": {
+   "municipio": "Armentera, l'",
+   "provincia": "girona",
+   "id_entidad": 2459,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "avinyonet de puigventos": {
+   "municipio": "Avinyonet de Puigventós",
+   "provincia": "girona",
+   "id_entidad": 2460,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "banyoles": {
+   "municipio": "Banyoles",
+   "provincia": "girona",
+   "id_entidad": 2461,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "begur": {
+   "municipio": "Begur",
+   "provincia": "girona",
+   "id_entidad": 2463,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "bellcaire d'emporda": {
+   "municipio": "Bellcaire d'Empordà",
+   "provincia": "girona",
+   "id_entidad": 2464,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "besalu": {
+   "municipio": "Besalú",
+   "provincia": "girona",
+   "id_entidad": 2465,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "bescano": {
+   "municipio": "Bescanó",
+   "provincia": "girona",
+   "id_entidad": 2466,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "beuda": {
+   "municipio": "Beuda",
+   "provincia": "girona",
+   "id_entidad": 2467,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "bisbal d'emporda, la": {
+   "municipio": "Bisbal d'Empordà, la",
+   "provincia": "girona",
+   "id_entidad": 2468,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "biure": {
+   "municipio": "Biure",
+   "provincia": "girona",
+   "id_entidad": 2469,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "blanes": {
+   "municipio": "Blanes",
+   "provincia": "girona",
+   "id_entidad": 2470,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "boadella i les escaules": {
+   "municipio": "Boadella i les Escaules",
+   "provincia": "girona",
+   "id_entidad": 2471,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "bolvir": {
+   "municipio": "Bolvir",
+   "provincia": "girona",
+   "id_entidad": 2472,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "bordils": {
+   "municipio": "Bordils",
+   "provincia": "girona",
+   "id_entidad": 2473,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "borrassa": {
+   "municipio": "Borrassà",
+   "provincia": "girona",
+   "id_entidad": 2474,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "breda": {
+   "municipio": "Breda",
+   "provincia": "girona",
+   "id_entidad": 2475,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "brunyola i sant marti sapresa": {
+   "municipio": "Brunyola i Sant Martí Sapresa",
+   "provincia": "girona",
+   "id_entidad": 2476,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "bascara": {
+   "municipio": "Bàscara",
+   "provincia": "girona",
+   "id_entidad": 2462,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cabanelles": {
+   "municipio": "Cabanelles",
+   "provincia": "girona",
+   "id_entidad": 2477,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "cabanes": {
+   "municipio": "Cabanes",
+   "provincia": "girona",
+   "id_entidad": 9261,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cadaques": {
+   "municipio": "Cadaqués",
+   "provincia": "girona",
+   "id_entidad": 2478,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "caldes de malavella": {
+   "municipio": "Caldes de Malavella",
+   "provincia": "girona",
+   "id_entidad": 2479,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "calonge i sant antoni": {
+   "municipio": "Calonge i Sant Antoni",
+   "provincia": "girona",
+   "id_entidad": 2480,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "campdevanol": {
+   "municipio": "Campdevànol",
+   "provincia": "girona",
+   "id_entidad": 2482,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "campelles": {
+   "municipio": "Campelles",
+   "provincia": "girona",
+   "id_entidad": 2483,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "campllong": {
+   "municipio": "Campllong",
+   "provincia": "girona",
+   "id_entidad": 2484,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "camprodon": {
+   "municipio": "Camprodon",
+   "provincia": "girona",
+   "id_entidad": 2485,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "camos": {
+   "municipio": "Camós",
+   "provincia": "girona",
+   "id_entidad": 2481,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "canet d'adri": {
+   "municipio": "Canet d'Adri",
+   "provincia": "girona",
+   "id_entidad": 2486,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cantallops": {
+   "municipio": "Cantallops",
+   "provincia": "girona",
+   "id_entidad": 2487,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "capmany": {
+   "municipio": "Capmany",
+   "provincia": "girona",
+   "id_entidad": 2488,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cassa de la selva": {
+   "municipio": "Cassà de la Selva",
+   "provincia": "girona",
+   "id_entidad": 2489,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "castell d'aro, platja d'aro i s'agaro": {
+   "municipio": "Castell d'Aro, Platja d'Aro i s'Agaró",
+   "provincia": "girona",
+   "id_entidad": 2492,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "castellfollit de la roca": {
+   "municipio": "Castellfollit de la Roca",
+   "provincia": "girona",
+   "id_entidad": 2490,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "castello d'empuries": {
+   "municipio": "Castelló d'Empúries",
+   "provincia": "girona",
+   "id_entidad": 2491,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cellera de ter, la": {
+   "municipio": "Cellera de Ter, la",
+   "provincia": "girona",
+   "id_entidad": 2493,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "celra": {
+   "municipio": "Celrà",
+   "provincia": "girona",
+   "id_entidad": 2494,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cervia de ter": {
+   "municipio": "Cervià de Ter",
+   "provincia": "girona",
+   "id_entidad": 2495,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "cistella": {
+   "municipio": "Cistella",
+   "provincia": "girona",
+   "id_entidad": 2496,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "colera": {
+   "municipio": "Colera",
+   "provincia": "girona",
+   "id_entidad": 2497,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "colomers": {
+   "municipio": "Colomers",
+   "provincia": "girona",
+   "id_entidad": 2498,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cornella del terri": {
+   "municipio": "Cornellà del Terri",
+   "provincia": "girona",
+   "id_entidad": 2500,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "corca": {
+   "municipio": "Corçà",
+   "provincia": "girona",
+   "id_entidad": 2499,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "crespia": {
+   "municipio": "Crespià",
+   "provincia": "girona",
+   "id_entidad": 2501,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cruilles, monells i sant sadurni de l'heura": {
+   "municipio": "Cruïlles, Monells i Sant Sadurní de l'Heura",
+   "provincia": "girona",
+   "id_entidad": 2502,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "darnius": {
+   "municipio": "Darnius",
+   "provincia": "girona",
+   "id_entidad": 2503,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "das": {
+   "municipio": "Das",
+   "provincia": "girona",
+   "id_entidad": 2504,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "escala, l'": {
+   "municipio": "Escala, l'",
+   "provincia": "girona",
+   "id_entidad": 2505,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "espinelves": {
+   "municipio": "Espinelves",
+   "provincia": "girona",
+   "id_entidad": 2506,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "espolla": {
+   "municipio": "Espolla",
+   "provincia": "girona",
+   "id_entidad": 2507,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "esponella": {
+   "municipio": "Esponellà",
+   "provincia": "girona",
+   "id_entidad": 2508,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "far d'emporda, el": {
+   "municipio": "Far d'Empordà, el",
+   "provincia": "girona",
+   "id_entidad": 2509,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "figueres": {
+   "municipio": "Figueres",
+   "provincia": "girona",
+   "id_entidad": 2510,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "flaca": {
+   "municipio": "Flaçà",
+   "provincia": "girona",
+   "id_entidad": 2511,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "foixa": {
+   "municipio": "Foixà",
+   "provincia": "girona",
+   "id_entidad": 2512,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "fontanals de cerdanya": {
+   "municipio": "Fontanals de Cerdanya",
+   "provincia": "girona",
+   "id_entidad": 2513,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "fontanilles": {
+   "municipio": "Fontanilles",
+   "provincia": "girona",
+   "id_entidad": 2514,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "fontcoberta": {
+   "municipio": "Fontcoberta",
+   "provincia": "girona",
+   "id_entidad": 2515,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "forallac": {
+   "municipio": "Forallac",
+   "provincia": "girona",
+   "id_entidad": 2516,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "fornells de la selva": {
+   "municipio": "Fornells de la Selva",
+   "provincia": "girona",
+   "id_entidad": 2517,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "fortia": {
+   "municipio": "Fortià",
+   "provincia": "girona",
+   "id_entidad": 2518,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "garrigoles": {
+   "municipio": "Garrigoles",
+   "provincia": "girona",
+   "id_entidad": 2520,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "garriguella": {
+   "municipio": "Garriguella",
+   "provincia": "girona",
+   "id_entidad": 2521,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "garrigas": {
+   "municipio": "Garrigàs",
+   "provincia": "girona",
+   "id_entidad": 2519,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ger": {
+   "municipio": "Ger",
+   "provincia": "girona",
+   "id_entidad": 2522,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "girona": {
+   "municipio": "Girona",
+   "provincia": "girona",
+   "id_entidad": 2523,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "gombren": {
+   "municipio": "Gombrèn",
+   "provincia": "girona",
+   "id_entidad": 2524,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "gualta": {
+   "municipio": "Gualta",
+   "provincia": "girona",
+   "id_entidad": 2525,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "guils de cerdanya": {
+   "municipio": "Guils de Cerdanya",
+   "provincia": "girona",
+   "id_entidad": 2526,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "hostalric": {
+   "municipio": "Hostalric",
+   "provincia": "girona",
+   "id_entidad": 2527,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "isovol": {
+   "municipio": "Isòvol",
+   "provincia": "girona",
+   "id_entidad": 2528,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "jafre": {
+   "municipio": "Jafre",
+   "provincia": "girona",
+   "id_entidad": 2529,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "jonquera, la": {
+   "municipio": "Jonquera, la",
+   "provincia": "girona",
+   "id_entidad": 2530,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "juia": {
+   "municipio": "Juià",
+   "provincia": "girona",
+   "id_entidad": 2531,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "llado": {
+   "municipio": "Lladó",
+   "provincia": "girona",
+   "id_entidad": 2532,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "llagostera": {
+   "municipio": "Llagostera",
+   "provincia": "girona",
+   "id_entidad": 2533,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "llambilles": {
+   "municipio": "Llambilles",
+   "provincia": "girona",
+   "id_entidad": 2534,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "llanars": {
+   "municipio": "Llanars",
+   "provincia": "girona",
+   "id_entidad": 2535,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "llanca": {
+   "municipio": "Llançà",
+   "provincia": "girona",
+   "id_entidad": 2536,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "llers": {
+   "municipio": "Llers",
+   "provincia": "girona",
+   "id_entidad": 2537,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "lloret de mar": {
+   "municipio": "Lloret de Mar",
+   "provincia": "girona",
+   "id_entidad": 2539,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "llosses, les": {
+   "municipio": "Llosses, les",
+   "provincia": "girona",
+   "id_entidad": 2540,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "llivia": {
+   "municipio": "Llívia",
+   "provincia": "girona",
+   "id_entidad": 2538,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "madremanya": {
+   "municipio": "Madremanya",
+   "provincia": "girona",
+   "id_entidad": 2543,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "maia de montcal": {
+   "municipio": "Maià de Montcal",
+   "provincia": "girona",
+   "id_entidad": 2544,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "massanes": {
+   "municipio": "Massanes",
+   "provincia": "girona",
+   "id_entidad": 2546,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "macanet de cabrenys": {
+   "municipio": "Maçanet de Cabrenys",
+   "provincia": "girona",
+   "id_entidad": 2541,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "macanet de la selva": {
+   "municipio": "Maçanet de la Selva",
+   "provincia": "girona",
+   "id_entidad": 2542,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "meranges": {
+   "municipio": "Meranges",
+   "provincia": "girona",
+   "id_entidad": 2547,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "mieres": {
+   "municipio": "Mieres",
+   "provincia": "girona",
+   "id_entidad": 2548,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "mollet de peralada": {
+   "municipio": "Mollet de Peralada",
+   "provincia": "girona",
+   "id_entidad": 2550,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "mollo": {
+   "municipio": "Molló",
+   "provincia": "girona",
+   "id_entidad": 2551,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "mont-ras": {
+   "municipio": "Mont-ras",
+   "provincia": "girona",
+   "id_entidad": 2553,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "montagut i oix": {
+   "municipio": "Montagut i Oix",
+   "provincia": "girona",
+   "id_entidad": 2552,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "navata": {
+   "municipio": "Navata",
+   "provincia": "girona",
+   "id_entidad": 2554,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ogassa": {
+   "municipio": "Ogassa",
+   "provincia": "girona",
+   "id_entidad": 2555,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "olot": {
+   "municipio": "Olot",
+   "provincia": "girona",
+   "id_entidad": 2556,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ordis": {
+   "municipio": "Ordis",
+   "provincia": "girona",
+   "id_entidad": 2557,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "osor": {
+   "municipio": "Osor",
+   "provincia": "girona",
+   "id_entidad": 2558,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "palafrugell": {
+   "municipio": "Palafrugell",
+   "provincia": "girona",
+   "id_entidad": 2559,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "palamos": {
+   "municipio": "Palamós",
+   "provincia": "girona",
+   "id_entidad": 2560,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "palau de santa eulalia": {
+   "municipio": "Palau de Santa Eulàlia",
+   "provincia": "girona",
+   "id_entidad": 2561,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "palau-sator": {
+   "municipio": "Palau-sator",
+   "provincia": "girona",
+   "id_entidad": 2562,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "palau-saverdera": {
+   "municipio": "Palau-saverdera",
+   "provincia": "girona",
+   "id_entidad": 2563,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "palol de revardit": {
+   "municipio": "Palol de Revardit",
+   "provincia": "girona",
+   "id_entidad": 2564,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "pals": {
+   "municipio": "Pals",
+   "provincia": "girona",
+   "id_entidad": 2565,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "pardines": {
+   "municipio": "Pardines",
+   "provincia": "girona",
+   "id_entidad": 2566,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "parlava": {
+   "municipio": "Parlavà",
+   "provincia": "girona",
+   "id_entidad": 2567,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "pau": {
+   "municipio": "Pau",
+   "provincia": "girona",
+   "id_entidad": 2568,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "pedret i marza": {
+   "municipio": "Pedret i Marzà",
+   "provincia": "girona",
+   "id_entidad": 2569,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "pera, la": {
+   "municipio": "Pera, la",
+   "provincia": "girona",
+   "id_entidad": 2570,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "peralada": {
+   "municipio": "Peralada",
+   "provincia": "girona",
+   "id_entidad": 2571,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "planes d'hostoles, les": {
+   "municipio": "Planes d'Hostoles, les",
+   "provincia": "girona",
+   "id_entidad": 2572,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "planoles": {
+   "municipio": "Planoles",
+   "provincia": "girona",
+   "id_entidad": 2573,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "pont de molins": {
+   "municipio": "Pont de Molins",
+   "provincia": "girona",
+   "id_entidad": 2574,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "pontos": {
+   "municipio": "Pontós",
+   "provincia": "girona",
+   "id_entidad": 2575,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "porqueres": {
+   "municipio": "Porqueres",
+   "provincia": "girona",
+   "id_entidad": 2576,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "port de la selva, el": {
+   "municipio": "Port de la Selva, el",
+   "provincia": "girona",
+   "id_entidad": 2577,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "portbou": {
+   "municipio": "Portbou",
+   "provincia": "girona",
+   "id_entidad": 2578,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "preses, les": {
+   "municipio": "Preses, les",
+   "provincia": "girona",
+   "id_entidad": 2579,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "puigcerda": {
+   "municipio": "Puigcerdà",
+   "provincia": "girona",
+   "id_entidad": 2580,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "quart": {
+   "municipio": "Quart",
+   "provincia": "girona",
+   "id_entidad": 2581,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "queralbs": {
+   "municipio": "Queralbs",
+   "provincia": "girona",
+   "id_entidad": 2582,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "rabos": {
+   "municipio": "Rabós",
+   "provincia": "girona",
+   "id_entidad": 2583,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "regencos": {
+   "municipio": "Regencós",
+   "provincia": "girona",
+   "id_entidad": 2584,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ribes de freser": {
+   "municipio": "Ribes de Freser",
+   "provincia": "girona",
+   "id_entidad": 2585,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "riells i viabrea": {
+   "municipio": "Riells i Viabrea",
+   "provincia": "girona",
+   "id_entidad": 2586,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ripoll": {
+   "municipio": "Ripoll",
+   "provincia": "girona",
+   "id_entidad": 2587,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "riudarenes": {
+   "municipio": "Riudarenes",
+   "provincia": "girona",
+   "id_entidad": 2588,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "riudaura": {
+   "municipio": "Riudaura",
+   "provincia": "girona",
+   "id_entidad": 2589,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "riudellots de la selva": {
+   "municipio": "Riudellots de la Selva",
+   "provincia": "girona",
+   "id_entidad": 2590,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "riumors": {
+   "municipio": "Riumors",
+   "provincia": "girona",
+   "id_entidad": 2591,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "roses": {
+   "municipio": "Roses",
+   "provincia": "girona",
+   "id_entidad": 2592,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "rupia": {
+   "municipio": "Rupià",
+   "provincia": "girona",
+   "id_entidad": 2593,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "sales de llierca": {
+   "municipio": "Sales de Llierca",
+   "provincia": "girona",
+   "id_entidad": 2594,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "salt": {
+   "municipio": "Salt",
+   "provincia": "girona",
+   "id_entidad": 2595,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant andreu salou": {
+   "municipio": "Sant Andreu Salou",
+   "provincia": "girona",
+   "id_entidad": 2596,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "sant aniol de finestres": {
+   "municipio": "Sant Aniol de Finestres",
+   "provincia": "girona",
+   "id_entidad": 2597,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant climent sescebes": {
+   "municipio": "Sant Climent Sescebes",
+   "provincia": "girona",
+   "id_entidad": 2598,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "sant feliu de buixalleu": {
+   "municipio": "Sant Feliu de Buixalleu",
+   "provincia": "girona",
+   "id_entidad": 41403,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant feliu de guixols": {
+   "municipio": "Sant Feliu de Guíxols",
+   "provincia": "girona",
+   "id_entidad": 2600,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant feliu de pallerols": {
+   "municipio": "Sant Feliu de Pallerols",
+   "provincia": "girona",
+   "id_entidad": 2601,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant ferriol": {
+   "municipio": "Sant Ferriol",
+   "provincia": "girona",
+   "id_entidad": 2602,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant gregori": {
+   "municipio": "Sant Gregori",
+   "provincia": "girona",
+   "id_entidad": 2603,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant hilari sacalm": {
+   "municipio": "Sant Hilari Sacalm",
+   "provincia": "girona",
+   "id_entidad": 2604,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant jaume de llierca": {
+   "municipio": "Sant Jaume de Llierca",
+   "provincia": "girona",
+   "id_entidad": 2605,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant joan de mollet": {
+   "municipio": "Sant Joan de Mollet",
+   "provincia": "girona",
+   "id_entidad": 2607,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant joan de les abadesses": {
+   "municipio": "Sant Joan de les Abadesses",
+   "provincia": "girona",
+   "id_entidad": 2606,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant joan les fonts": {
+   "municipio": "Sant Joan les Fonts",
+   "provincia": "girona",
+   "id_entidad": 2608,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant jordi desvalls": {
+   "municipio": "Sant Jordi Desvalls",
+   "provincia": "girona",
+   "id_entidad": 2609,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant julia de ramis": {
+   "municipio": "Sant Julià de Ramis",
+   "provincia": "girona",
+   "id_entidad": 2610,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant julia del llor i bonmati": {
+   "municipio": "Sant Julià del Llor i Bonmatí",
+   "provincia": "girona",
+   "id_entidad": 2611,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant llorenc de la muga": {
+   "municipio": "Sant Llorenç de la Muga",
+   "provincia": "girona",
+   "id_entidad": 2612,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "sant marti vell": {
+   "municipio": "Sant Martí Vell",
+   "provincia": "girona",
+   "id_entidad": 2614,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant marti de llemena": {
+   "municipio": "Sant Martí de Llémena",
+   "provincia": "girona",
+   "id_entidad": 2613,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant miquel de campmajor": {
+   "municipio": "Sant Miquel de Campmajor",
+   "provincia": "girona",
+   "id_entidad": 2615,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "sant miquel de fluvia": {
+   "municipio": "Sant Miquel de Fluvià",
+   "provincia": "girona",
+   "id_entidad": 2616,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant mori": {
+   "municipio": "Sant Mori",
+   "provincia": "girona",
+   "id_entidad": 2617,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant pau de seguries": {
+   "municipio": "Sant Pau de Segúries",
+   "provincia": "girona",
+   "id_entidad": 2618,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant pere pescador": {
+   "municipio": "Sant Pere Pescador",
+   "provincia": "girona",
+   "id_entidad": 2619,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "santa coloma de farners": {
+   "municipio": "Santa Coloma de Farners",
+   "provincia": "girona",
+   "id_entidad": 2620,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "santa cristina d'aro": {
+   "municipio": "Santa Cristina d'Aro",
+   "provincia": "girona",
+   "id_entidad": 2621,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "santa llogaia d'alguema": {
+   "municipio": "Santa Llogaia d'Àlguema",
+   "provincia": "girona",
+   "id_entidad": 2622,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "santa pau": {
+   "municipio": "Santa Pau",
+   "provincia": "girona",
+   "id_entidad": 2623,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sarria de ter": {
+   "municipio": "Sarrià de Ter",
+   "provincia": "girona",
+   "id_entidad": 2624,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "saus, camallera i llampaies": {
+   "municipio": "Saus, Camallera i Llampaies",
+   "provincia": "girona",
+   "id_entidad": 2625,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "selva de mar, la": {
+   "municipio": "Selva de Mar, la",
+   "provincia": "girona",
+   "id_entidad": 2626,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "serinya": {
+   "municipio": "Serinyà",
+   "provincia": "girona",
+   "id_entidad": 2627,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "serra de daro": {
+   "municipio": "Serra de Daró",
+   "provincia": "girona",
+   "id_entidad": 2628,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "setcases": {
+   "municipio": "Setcases",
+   "provincia": "girona",
+   "id_entidad": 2629,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sils": {
+   "municipio": "Sils",
+   "provincia": "girona",
+   "id_entidad": 2630,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "siurana": {
+   "municipio": "Siurana",
+   "provincia": "girona",
+   "id_entidad": 2631,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "susqueda": {
+   "municipio": "Susqueda",
+   "provincia": "girona",
+   "id_entidad": 2632,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "tallada d'emporda, la": {
+   "municipio": "Tallada d'Empordà, la",
+   "provincia": "girona",
+   "id_entidad": 2633,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "terrades": {
+   "municipio": "Terrades",
+   "provincia": "girona",
+   "id_entidad": 2634,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "torrent": {
+   "municipio": "Torrent",
+   "provincia": "girona",
+   "id_entidad": 2635,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "torroella de fluvia": {
+   "municipio": "Torroella de Fluvià",
+   "provincia": "girona",
+   "id_entidad": 2637,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "torroella de montgri": {
+   "municipio": "Torroella de Montgrí",
+   "provincia": "girona",
+   "id_entidad": 2638,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "tortella": {
+   "municipio": "Tortellà",
+   "provincia": "girona",
+   "id_entidad": 2639,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "toses": {
+   "municipio": "Toses",
+   "provincia": "girona",
+   "id_entidad": 2640,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "tossa de mar": {
+   "municipio": "Tossa de Mar",
+   "provincia": "girona",
+   "id_entidad": 2641,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ullastret": {
+   "municipio": "Ullastret",
+   "provincia": "girona",
+   "id_entidad": 2643,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ulla": {
+   "municipio": "Ullà",
+   "provincia": "girona",
+   "id_entidad": 2642,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ultramort": {
+   "municipio": "Ultramort",
+   "provincia": "girona",
+   "id_entidad": 2644,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "urus": {
+   "municipio": "Urús",
+   "provincia": "girona",
+   "id_entidad": 2645,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "vajol, la": {
+   "municipio": "Vajol, la",
+   "provincia": "girona",
+   "id_entidad": 2646,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vall d'en bas, la": {
+   "municipio": "Vall d'en Bas, la",
+   "provincia": "girona",
+   "id_entidad": 2648,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vall de bianya, la": {
+   "municipio": "Vall de Bianya, la",
+   "provincia": "girona",
+   "id_entidad": 2647,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vall-llobrega": {
+   "municipio": "Vall-llobrega",
+   "provincia": "girona",
+   "id_entidad": 2650,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vallfogona de ripolles": {
+   "municipio": "Vallfogona de Ripollès",
+   "provincia": "girona",
+   "id_entidad": 2649,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ventallo": {
+   "municipio": "Ventalló",
+   "provincia": "girona",
+   "id_entidad": 2651,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "verges": {
+   "municipio": "Verges",
+   "provincia": "girona",
+   "id_entidad": 2652,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vidreres": {
+   "municipio": "Vidreres",
+   "provincia": "girona",
+   "id_entidad": 2654,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vidra": {
+   "municipio": "Vidrà",
+   "provincia": "girona",
+   "id_entidad": 2653,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vila-sacra": {
+   "municipio": "Vila-sacra",
+   "provincia": "girona",
+   "id_entidad": 2668,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilabertran": {
+   "municipio": "Vilabertran",
+   "provincia": "girona",
+   "id_entidad": 2655,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "vilablareix": {
+   "municipio": "Vilablareix",
+   "provincia": "girona",
+   "id_entidad": 2656,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "viladamat": {
+   "municipio": "Viladamat",
+   "provincia": "girona",
+   "id_entidad": 2657,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "viladasens": {
+   "municipio": "Viladasens",
+   "provincia": "girona",
+   "id_entidad": 2658,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilademuls": {
+   "municipio": "Vilademuls",
+   "provincia": "girona",
+   "id_entidad": 2659,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "viladrau": {
+   "municipio": "Viladrau",
+   "provincia": "girona",
+   "id_entidad": 2660,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilafant": {
+   "municipio": "Vilafant",
+   "provincia": "girona",
+   "id_entidad": 2661,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilajuiga": {
+   "municipio": "Vilajuïga",
+   "provincia": "girona",
+   "id_entidad": 2662,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilallonga de ter": {
+   "municipio": "Vilallonga de Ter",
+   "provincia": "girona",
+   "id_entidad": 2663,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilamacolum": {
+   "municipio": "Vilamacolum",
+   "provincia": "girona",
+   "id_entidad": 2664,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilamalla": {
+   "municipio": "Vilamalla",
+   "provincia": "girona",
+   "id_entidad": 2665,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilamaniscle": {
+   "municipio": "Vilamaniscle",
+   "provincia": "girona",
+   "id_entidad": 2666,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilanant": {
+   "municipio": "Vilanant",
+   "provincia": "girona",
+   "id_entidad": 2667,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilaur": {
+   "municipio": "Vilaür",
+   "provincia": "girona",
+   "id_entidad": 2669,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilobi d'onyar": {
+   "municipio": "Vilobí d'Onyar",
+   "provincia": "girona",
+   "id_entidad": 2670,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vilopriu": {
+   "municipio": "Vilopriu",
+   "provincia": "girona",
+   "id_entidad": 2671,
+   "ultimo_ejercicio_rendido": 2024
+  }
+ }
+}
