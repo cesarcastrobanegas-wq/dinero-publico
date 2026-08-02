@@ -38,6 +38,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 DATA_FILE  = os.path.join(BASE_DIR, "datos.json")
 ALCALDES_FILE = os.path.join(BASE_DIR, "alcaldes_concejales.json")
 RETRIBUCIONES_FILE = os.path.join(BASE_DIR, "retribuciones_ispa.json")
+CUENTAS_ANUALES_FILE = os.path.join(BASE_DIR, "cuentas_anuales.json")
 # place_cache/ (ZIPs mensuales de PLACE, ~127 MB cada uno) NO se siembra
 # desde el repo -- está en .gitignore a propósito (nunca se ha commiteado,
 # a diferencia de cache.db) y no tiene sentido empezar a versionar binarios
@@ -358,6 +359,26 @@ def _cargar_retribuciones_ispa():
 
 
 RETRIBUCIONES_ISPA = _cargar_retribuciones_ispa()
+
+
+def _cargar_cuentas_anuales():
+    """Carga cuentas_anuales.json (generado por actualizar_cuentas_anuales.py):
+    idEntidad + último ejercicio rendido en la Plataforma de Rendición de
+    Cuentas, por municipio -- permite enlazar directo a la ficha de esa
+    Cuenta General concreta en vez de al buscador genérico. Mismo patrón
+    estático/periódico que ALCALDES_CONCEJALES y RETRIBUCIONES_ISPA."""
+    if os.path.exists(CUENTAS_ANUALES_FILE):
+        try:
+            with open(CUENTAS_ANUALES_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+                if isinstance(d, dict):
+                    return d.get("municipios", {})
+        except Exception:
+            pass
+    return {}
+
+
+CUENTAS_ANUALES = _cargar_cuentas_anuales()
 
 
 def _construir_indice_cargos_publicos():
@@ -747,16 +768,29 @@ RENDICION_CUENTAS_IDS = {
 
 
 def rendicion_cuentas_url(municipio, provincia):
-    """Enlace a la ficha de búsqueda del ayuntamiento en la Plataforma de
-    Rendición de Cuentas de las Corporaciones Locales (Tribunal de Cuentas),
-    con la Cuenta General de cada ejercicio. Es un GET plano -- verificado
-    que funciona "en frío" (sin sesión/Referer previos) y devuelve
-    directamente la ficha del municipio si el nombre es único, un paso más
-    cerca del expediente que una búsqueda genérica en Google. No incluimos
-    el resultado (superávit/déficit) todavía: la ficha de cada ejercicio
-    concreto sí exige la sesión completa del buscador (múltiples pasos con
-    comprobación de Referer), así que de momento el usuario da ese último
-    clic él mismo desde esta página de resultados."""
+    """Enlace a la Plataforma de Rendición de Cuentas de las Corporaciones
+    Locales (Tribunal de Cuentas) para este ayuntamiento.
+
+    Si CUENTAS_ANUALES tiene el idEntidad de este municipio (ver
+    actualizar_cuentas_anuales.py), enlaza DIRECTO a la ficha de la Cuenta
+    General del último ejercicio rendido -- verificado a mano el
+    2026-08-02 que esa URL (buscarCuentas/consultarCuenta.html) funciona
+    "en frío", sin sesión ni Referer previos, GET plano. Si no hay dato
+    cacheado para el municipio (script sin ejecutar todavía, o municipio
+    sin match), cae al buscador genérico por nombre -- también un GET
+    plano verificado en frío, un paso menos directo pero sigue llevando al
+    municipio correcto en la inmensa mayoría de los casos.
+
+    No incluimos el resultado (superávit/déficit) en ningún caso: esa
+    cifra vive detrás de un visualizador Java con sesión de varios pasos
+    (ver docstring de actualizar_cuentas_anuales.py) que no es replicable
+    como enlace estable para el usuario final."""
+    info = CUENTAS_ANUALES.get(normalizar(municipio))
+    if info and info.get("id_entidad") and info.get("ultimo_ejercicio_rendido"):
+        params = {"idEntidad": info["id_entidad"], "ejercicio": info["ultimo_ejercicio_rendido"]}
+        return ("https://www.rendiciondecuentas.es/es/consultadeentidadesycuentas/"
+                f"buscarCuentas/consultarCuenta.html?{urlencode(params)}")
+
     ids = RENDICION_CUENTAS_IDS.get(provincia)
     if not ids:
         return ""
