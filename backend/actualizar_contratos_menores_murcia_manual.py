@@ -44,6 +44,32 @@ midiendo contra el documento completo esto recupera el 98,2% de las filas
 (la fuente no los publica). Nombres de personas físicas ya en orden
 correcto -- no hace falta ninguna variante invertida como en Molina de Segura.
 
+Lorca publica un PDF POR TRIMESTRE (no acumulativo como Lorquí), pero con un
+problema real descubierto al investigar (2026-08-03): **el formato de la
+tabla ha cambiado al menos dos veces entre 2021 y 2026**:
+- 2021-2023 (y los primeros trimestres de 2024): texto corrido SIN tabla
+  real detectable por pdfplumber (0 tablas por página) -- los campos
+  (Tercero/CIF, Denominación Social, Importe, Concepto, dos fechas de
+  registro) vienen pegados sin separador fiable. NO soportado por este
+  script.
+- Desde algún trimestre de 2024 en adelante (confirmado en 4T-2024, 1T/2T-2026):
+  tabla real de 5 columnas `CIF, RAZONSOCIAL, OBJETO, IMPORTE, DURACION`
+  -- SIN columna de fecha por contrato (a diferencia del formato antiguo,
+  que sí tenía fechas). Es el único formato que procesa este script.
+- Por eso `actualizar_lorca()` NO filtra por año fijo como las demás fuentes:
+  comprueba la cabecera real de cada PDF (¿la primera fila de la tabla es
+  literalmente ['CIF', 'RAZONSOCIAL', 'OBJETO', 'IMPORTE', 'DURACION']?) y
+  se salta entero cualquier fichero que no la tenga -- así se adapta solo
+  si el ayuntamiento vuelve a cambiar el formato, en vez de producir basura.
+  Al no haber fecha por contrato, se usa el primer día del trimestre (según
+  el propio nombre del fichero) como fecha aproximada -- una limitación real
+  de la fuente, no una decisión de diseño.
+- Volumen medido: solo el 1T-2026 tiene 1.383 filas (tasa de normalización
+  99,9%) -- mucho más grande que cualquier otra fuente de Murcia salvo Girona.
+- Águilas se investigó también (2026-08-03) y se aparcó: la página real solo
+  tiene un trimestre publicado (1T-2024, ~8 filas), congelado desde entonces
+  -- no compensa el esfuerzo de un parser para ese volumen.
+
 Uso:  pip install odfpy openpyxl xlrd pdfplumber && python actualizar_contratos_menores_murcia_manual.py
 """
 import hashlib
@@ -61,6 +87,7 @@ from bs4 import BeautifulSoup
 from odf.opendocument import load as odf_load
 from odf.table import Table, TableRow, TableCell
 from odf.text import P as odf_P
+from urllib.parse import urljoin
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
 from app import BASE_DIR
@@ -76,13 +103,18 @@ MULA_LISTADO_URL = "https://mula.es/web/transparencia/informacion-sobre-contrato
 MOLINA_LISTADO_URL = ("https://transparencia.molinadesegura.es/publicidad-activa/"
                        "informacion-sobre-contratacion-convenios-y-subvenciones/contratos-formalizados/")
 LORQUI_LISTADO_URL = "https://ayuntamientodelorqui.es/perfil-contratante/contratos-mayores-menores/"
+LORCA_LISTADO_URL = "https://transparencia.lorca.es/contratos-menores/"
 
 
 def _listar_enlaces(url, extension):
+    """Devuelve URLs absolutas de los enlaces que acaban en `extension`. Usa
+    urljoin porque no todas las fuentes traen href ya absoluto -- Lorca, por
+    ejemplo, enlaza con rutas relativas ('pdf/2026/...') resueltas contra la
+    URL de la propia página de listado, no contra el dominio raíz."""
     r = requests.get(url, headers=HEADERS, timeout=30)
     r.raise_for_status()
     soup = BeautifulSoup(r.text, "html.parser")
-    return sorted({a["href"] for a in soup.find_all("a", href=True)
+    return sorted({urljoin(url, a["href"]) for a in soup.find_all("a", href=True)
                    if a["href"].lower().endswith(extension)})
 
 
@@ -90,6 +122,24 @@ def _num_es(valor):
     """Convierte un importe en formato español ('1.020,03') a float."""
     try:
         return float(str(valor).replace("€", "").strip().replace(".", "").replace(",", "."))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _num_lorca(valor):
+    """Lorca usa un formato de número DISTINTO al resto de fuentes: sin
+    separador de miles, punto como decimal ('48278.97 €', no '48.278,97 €')
+    -- detectado en producción 2026-08-04: usar _num_es() aquí borraba el
+    punto decimal asumiéndolo separador de miles y convertía 48278.97 en
+    4827897.0 (un "contrato menor" de 4,8 millones de euros, imposible por
+    ley -- la pista de que algo iba mal). Si alguna fila trajera coma en vez
+    de punto (proveedor extranjero, poco probable pero visto NIFs franceses
+    en esta fuente), se interpreta como separador decimal también."""
+    limpio = str(valor).replace("€", "").strip()
+    if "," in limpio and "." not in limpio:
+        limpio = limpio.replace(",", ".")
+    try:
+        return float(limpio)
     except (TypeError, ValueError):
         return 0.0
 
@@ -346,8 +396,98 @@ def actualizar_lorqui():
     return registros
 
 
+_LORCA_CABECERA = ("CIF", "RAZONSOCIAL", "OBJETO", "IMPORTE", "DURACION")
+
+_LORCA_MESES_TRIMESTRE = {
+    "primer": "01", "1": "01",
+    "segundo": "04", "2": "04",
+    "tercer": "07", "3": "07",
+    "cuarto": "10", "4": "10",
+}
+
+
+def _lorca_fecha_aprox(nombre_fichero):
+    """Sin fecha por contrato en el formato nuevo (ver docstring del módulo)
+    -- se aproxima al primer día del trimestre, deducido del propio nombre
+    del fichero ('Primer trimestre 2026', 'Cuarto_trimestre_2024',
+    'Segundo-trimestre-2024', variantes con espacio/guion/guion bajo)."""
+    m = re.search(r"(primer|segundo|tercer|cuarto)[\s_-]*trimestre[\s_-]*(\d{4})",
+                  nombre_fichero, re.I)
+    if not m:
+        return "", ""
+    mes = _LORCA_MESES_TRIMESTRE[m.group(1).lower()]
+    anio = m.group(2)
+    return f"{anio}-{mes}-01", anio
+
+
+def actualizar_lorca():
+    """Lorca: un PDF por trimestre (no acumulativo). Solo se procesan los
+    ficheros cuya tabla tenga la cabecera nueva (CIF/RAZONSOCIAL/OBJETO/
+    IMPORTE/DURACION) -- los de formato antiguo (texto corrido, sin tabla
+    real) se detectan y se saltan, ver docstring del módulo."""
+    urls = [u for u in _listar_enlaces(LORCA_LISTADO_URL, ".pdf") if "trimestre" in u.lower()]
+    print(f"Lorca: {len(urls)} ficheros PDF de contratos menores encontrados en el listado")
+    registros = {}
+    saltados = 0
+    for url in urls:
+        fecha_aprox, anio = _lorca_fecha_aprox(url)
+        if not anio or int(anio) < DESDE_ANY:
+            continue
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=60)
+            r.raise_for_status()
+        except Exception as e:
+            print(f"  Lorca: {url} no disponible ({type(e).__name__})")
+            continue
+        try:
+            with pdfplumber.open(io.BytesIO(r.content)) as pdf:
+                primera_tabla = pdf.pages[0].extract_tables()
+                cabecera_ok = bool(primera_tabla and primera_tabla[0] and tuple(
+                    (c or "").strip().upper() for c in primera_tabla[0][0][0:5]
+                ) == _LORCA_CABECERA)
+                if not cabecera_ok:
+                    saltados += 1
+                    continue
+                for pagina in pdf.pages:
+                    for tabla in pagina.extract_tables():
+                        for row in tabla:
+                            if not row or not row[0] or row[0].strip().upper() == "CIF":
+                                continue
+                            fila = [(c or "").strip() for c in row]
+                            if len(fila) != 5:
+                                continue
+                            cif, razonsocial, objeto, importe, duracion = fila
+                            if not razonsocial or not re.search(r"\d", importe):
+                                continue
+                            clave_hash = hashlib.md5(
+                                f"{cif}|{razonsocial}|{objeto}|{importe}|{fecha_aprox}".encode("utf-8")
+                            ).hexdigest()[:12]
+                            registros[f"Lorca::{clave_hash}"] = {
+                                "id":               f"Lorca::{clave_hash}",
+                                "municipio":        "Lorca",
+                                "provincia":        "murcia",
+                                "fuente":           "lorca",
+                                "organisme":        "Ayuntamiento de Lorca",
+                                "adjudicatari":     razonsocial.replace("\n", " ").strip(),
+                                "nif":              cif,
+                                "import_num":       _num_lorca(importe),
+                                "data_adjudicacio": fecha_aprox,
+                                "tipus_contracte":  duracion.replace("\n", " ").strip(),
+                                "descripcio":       objeto.replace("\n", " ").strip(),
+                                "codi_cpv":         "",
+                                "exercici":         anio,
+                            }
+        except Exception as e:
+            print(f"  Lorca: {url} no se pudo procesar ({type(e).__name__})")
+            continue
+    registros = list(registros.values())
+    print(f"Lorca: {len(registros)} contratos menores extraídos "
+          f"({saltados} ficheros con formato antiguo descartados, desde {DESDE_ANY})")
+    return registros
+
+
 def main():
-    todos = actualizar_mula() + actualizar_molina_segura() + actualizar_lorqui()
+    todos = actualizar_mula() + actualizar_molina_segura() + actualizar_lorqui() + actualizar_lorca()
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "registros": todos},
                    f, ensure_ascii=False, indent=1)
