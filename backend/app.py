@@ -95,6 +95,7 @@ _jobs_lock = threading.Lock()
 _enriqueciendo_lock = threading.Lock()  # evita lanzar dos hilos de enriquecimiento a la vez
 _actualizando_todos_lock = threading.Lock()  # evita lanzar dos refrescos completos a la vez
 _actualizando_fondos_ue_lock = threading.Lock()  # evita lanzar dos refrescos de fondos_ue a la vez
+_actualizando_rpc_menors_lock = threading.Lock()  # evita lanzar dos refrescos de contratos menors Girona a la vez
 
 PAGE_SIZE = 50               # contratos máximos por página
 
@@ -211,6 +212,25 @@ def _db_init():
             fecha_ts     REAL,
             policy_areas TEXT,
             ts           REAL NOT NULL
+        )""")
+        # Contractes menors dels ajuntaments de Girona, via el Registre Públic
+        # de Contractes (dataset hb6v-jcbf) -- ver actualizar_contratos_menors_girona().
+        # id = codi_expedient (ya viene casi único de la fuente, ver diseño en
+        # DISENO_CONTRATOS_MENORS_GIRONA.md). Fuente independiente de PSCP
+        # (ybgg-dgi6, solo procediments formals): procediment_adjudicacio='Menor'
+        # es disjunto por definición legal, así que no hay solape esperado.
+        _db.execute("""CREATE TABLE IF NOT EXISTS contratos_menors_girona (
+            id                TEXT PRIMARY KEY,
+            municipio         TEXT NOT NULL,
+            organisme         TEXT,
+            adjudicatari      TEXT,
+            import_num        REAL,
+            data_adjudicacio  TEXT,
+            tipus_contracte   TEXT,
+            descripcio        TEXT,
+            codi_cpv          TEXT,
+            exercici          TEXT,
+            ts                REAL NOT NULL
         )""")
         try:
             _db.execute("ALTER TABLE directores ADD COLUMN intentos INTEGER DEFAULT 0")
@@ -2172,6 +2192,217 @@ def buscar_en_pscp(municipio, job_id=None):
     return contratos
 
 
+# ─── RPC — Registre Públic de Contractes (contractes menors, Girona) ────────
+# Fuente: dades obertes de la Generalitat, dataset "hb6v-jcbf" (Socrata/SODA,
+# mismo dominio analisi.transparenciacatalunya.cat que PSCP). A diferencia de
+# PSCP (ybgg-dgi6, solo procediments formals Adjudicació/Formalització), este
+# dataset es el registro general de contratos y aquí se filtra específicamente
+# a procediment_adjudicacio='Menor' -- disjunto por definición legal de lo que
+# ya trae PSCP, así que no se solapa con los contratos ya indexados.
+#
+# id_organisme_contractant usa el MISMO código de 10 dígitos que
+# MUNICIPIOS_GIRONA_INE (verificado en vivo: Girona capital = 1707920002,
+# Setcases = 1719250006) -- se reutiliza ese mapeo, no hace falta ninguno nuevo.
+#
+# Volumen medido en vivo (2026-08-03): ~194.000 filas "Menor" históricas para
+# toda la provincia de Girona -- viable en SQLite, pero demasiado para el flujo
+# de scraping por clic (buscar_en_pscp) que corre en vivo en cada visita/
+# actualización de un municipio. Por eso esta fuente vive en su propia tabla
+# (contratos_menors_girona) y se refresca con un job periódico (mismo patrón
+# que fondos_ue), no dentro de _job_run.
+#
+# Decisión 2026-08-03 (César): histórico desde 2021 en adelante, sin umbral de
+# importe (se guarda todo), sección propia colapsable en la ficha de municipio.
+RPC_MENORS_URL = "https://analisi.transparenciacatalunya.cat/resource/hb6v-jcbf.json"
+RPC_MENORS_DESDE_ANY = 2021
+
+
+def _variantes_nombre_para_detector(nombre):
+    """El campo 'adjudicatari' de RPC viene para personas físicas en formato
+    'Apellidos, Nombre' (p.ej. 'VIAL TAULERA, MIREIA'), justo el orden inverso
+    al que espera el índice de cargos públicos (construido como 'Nombre
+    Apellido1 Apellido2' desde ALCALDES_CONCEJALES, con coincidencia EXACTA de
+    cadena -- ver _detectar_coincidencia_cargo). Sin esto, el detector nunca
+    dispararía sobre esta fuente.
+
+    OJO: el mismo patrón 'X, Y' aparece también en nombres de empresa (p.ej.
+    'PLANTERS ROVIRA, SCP', donde SCP es forma jurídica, no nombre de pila) --
+    por eso esto NUNCA se usa para decidir qué se muestra en pantalla
+    (adjudicatari se muestra siempre tal cual viene de la fuente), solo se
+    genera una variante adicional para PROBAR contra el índice de cargos."""
+    nombre = (nombre or "").strip()
+    if "," not in nombre:
+        return [nombre]
+    izq, _, der = nombre.partition(",")
+    invertido = f"{der.strip()} {izq.strip()}".strip()
+    return [nombre, invertido] if invertido else [nombre]
+
+
+def _dedup_rpc_menors(filas):
+    """codi_expedient ya viene casi único de la fuente (verificado: solo 5
+    colisiones de ~28.000 expedientes 'Menor' de Girona capital) -- a
+    diferencia de PSCP no hace falta lógica de prioridad de fases, basta con
+    quedarse con la fila 'liquidació' si hay colisión (estado más completo/final)."""
+    mejores = {}
+    for f in filas:
+        clave = f.get("codi_expedient", "")
+        if not clave:
+            continue
+        actual = mejores.get(clave)
+        if actual is None or (f.get("situaci_contractual") == "liquidació"
+                               and actual.get("situaci_contractual") != "liquidació"):
+            mejores[clave] = f
+    return list(mejores.values())
+
+
+def _fila_rpc_menor_a_registro(fila, municipio):
+    """Convierte una fila del dataset RPC al formato que guarda
+    contratos_menors_girona. Sin NIF (la fuente no lo publica) y sin URL por
+    expediente (la fuente no publica un enlace público por registro)."""
+    try:
+        importe_num = float(fila.get("import_adjudicacio") or 0)
+    except (TypeError, ValueError):
+        importe_num = 0.0
+    return {
+        "id":               fila.get("codi_expedient", ""),
+        "municipio":        municipio,
+        "organisme":        fila.get("organisme_contractant", ""),
+        "adjudicatari":     (fila.get("adjudicatari") or "").strip(),
+        "import_num":       importe_num,
+        "data_adjudicacio": (fila.get("data_adjudicacio") or "")[:10],
+        "tipus_contracte":  fila.get("tipus_contracte", ""),
+        "descripcio":       (fila.get("descripcio_expedient") or "").strip(),
+        "codi_cpv":         fila.get("codi_cpv", ""),
+        "exercici":         fila.get("exercici", ""),
+    }
+
+
+def buscar_en_rpc_menors(municipio, job_id=None):
+    """Busca contractes menors del Ajuntament del municipio dado en el
+    Registre Públic de Contractes (dataset hb6v-jcbf), desde
+    RPC_MENORS_DESDE_ANY en adelante."""
+    ine10 = MUNICIPIOS_GIRONA_INE.get(municipio, "")
+    if not ine10:
+        _log(job_id, f"  RPC: municipio sin codi_ine10 mapeado ({municipio})")
+        return []
+
+    _log(job_id, "Consultando RPC (Registre Públic de Contractes, contractes menors)…")
+    filas = []
+    limit, offset = 1000, 0
+    while True:
+        try:
+            r = session.get(RPC_MENORS_URL, params={
+                "$where": (f"id_organisme_contractant='{ine10}' AND "
+                           f"procediment_adjudicacio='Menor' AND "
+                           f"exercici >= '{RPC_MENORS_DESDE_ANY}'"),
+                "$order": "codi_expedient",
+                "$limit": limit,
+                "$offset": offset,
+            }, timeout=HTTP_TIMEOUT * 4)  # SODA puede tardar más que PLACE/BORM
+            if r.status_code != 200:
+                _log(job_id, f"  RPC: HTTP {r.status_code}")
+                break
+            pagina = r.json()
+        except Exception as e:
+            _log(job_id, f"  RPC no disponible ({type(e).__name__})")
+            break
+
+        if not pagina:
+            break
+        filas += pagina
+        if len(pagina) < limit:
+            break
+        offset += limit
+
+    filas = _dedup_rpc_menors(filas)
+    registros = [_fila_rpc_menor_a_registro(f, municipio) for f in filas]
+    _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados")
+    return registros
+
+
+def _guardar_contratos_menors_girona(registros):
+    """Inserta/actualiza filas en contratos_menors_girona (mismo patrón que
+    _guardar_fondos_ue: misma clave = mismo registro, se sobrescribe con el
+    dato más reciente)."""
+    if not registros:
+        return
+    ahora = time.time()
+    with _db_lock:
+        for r in registros:
+            _db.execute(
+                """INSERT INTO contratos_menors_girona
+                   (id, municipio, organisme, adjudicatari, import_num,
+                    data_adjudicacio, tipus_contracte, descripcio, codi_cpv, exercici, ts)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(id) DO UPDATE SET
+                     municipio=excluded.municipio, organisme=excluded.organisme,
+                     adjudicatari=excluded.adjudicatari, import_num=excluded.import_num,
+                     data_adjudicacio=excluded.data_adjudicacio,
+                     tipus_contracte=excluded.tipus_contracte, descripcio=excluded.descripcio,
+                     codi_cpv=excluded.codi_cpv, exercici=excluded.exercici, ts=excluded.ts""",
+                (r["id"], r["municipio"], r["organisme"], r["adjudicatari"], r["import_num"],
+                 r["data_adjudicacio"], r["tipus_contracte"], r["descripcio"], r["codi_cpv"],
+                 r["exercici"], ahora),
+            )
+        _db.commit()
+
+
+def _db_contratos_menors_por_municipio(municipio):
+    """Lee contratos_menors_girona para un municipio exacto -- se usa para
+    mostrar la sección colapsable de contractes menors en la ficha del
+    ayuntamiento."""
+    with _db_lock:
+        rows = _db.execute(
+            "SELECT id, municipio, organisme, adjudicatari, import_num, data_adjudicacio, "
+            "tipus_contracte, descripcio, codi_cpv, exercici, ts "
+            "FROM contratos_menors_girona WHERE municipio=? ORDER BY data_adjudicacio DESC",
+            (municipio,),
+        ).fetchall()
+    cols = ("id", "municipio", "organisme", "adjudicatari", "import_num", "data_adjudicacio",
+            "tipus_contracte", "descripcio", "codi_cpv", "exercici", "ts")
+    return [dict(zip(cols, r)) for r in rows]
+
+
+def actualizar_contratos_menors_girona(job_id=None):
+    """Refresca contratos_menors_girona para los 221 municipios de Girona,
+    uno detrás de otro (mismo dataset, un municipio por consulta filtrada por
+    id_organisme_contractant -- no tiene sentido paralelizar de más contra la
+    misma API pública)."""
+    total = 0
+    for municipio in MUNICIPIOS_GIRONA:
+        registros = buscar_en_rpc_menors(municipio, job_id)
+        _guardar_contratos_menors_girona(registros)
+        total += len(registros)
+    _log(job_id, f"RPC: {total} contractes menors guardados en total ({len(MUNICIPIOS_GIRONA)} municipios).")
+    return total
+
+
+def _actualizar_contratos_menors_girona_bg(job_id):
+    """Hilo de fondo para POST /actualizar-contratos-menors-girona. Mismo
+    patrón que _actualizar_fondos_ue_bg: un lock para no lanzar dos refrescos
+    a la vez, y log de progreso vía _jobs."""
+    if not _actualizando_rpc_menors_lock.acquire(blocking=False):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "error", "log": [],
+                              "error": "Ya hay un refresco de contratos menors Girona en curso."}
+        return
+
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "running", "log": [], "error": None}
+        total = actualizar_contratos_menors_girona(job_id)
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "done"
+            _jobs[job_id]["total"] = total
+        print(f"  [actualizar-contratos-menors-girona] Terminado: {total} contractes menors.", flush=True)
+    except Exception as e:
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "error"
+            _jobs[job_id]["error"] = str(e)
+    finally:
+        _actualizando_rpc_menors_lock.release()
+
+
 # ─── FONDOS Y PROYECTOS FINANCIADOS POR LA UE ────────────────────────────────
 # Dos fuentes oficiales, ambas de acceso libre sin autenticación (ver
 # INFORME_NOCHE.md 2026-07-21/22 para el diagnóstico completo):
@@ -3980,6 +4211,16 @@ a.pscp-link{color:var(--green);}
 .fue-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--yellow);white-space:nowrap;font-weight:600;}
 a.fue-link{color:var(--yellow);font-size:11px;}
 .fue-nif{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
+/* Contractes menors (Girona, RPC) -- acento naranja (--accent), distinto del
+   azul/amarillo de Fondos UE y del verde de PSCP, para que se reconozca como
+   una tercera fuente de naturaleza distinta (registre de menors, no
+   licitació formal). Colapsable con <details> -- son muchos contratos de
+   importe bajo, no tiene sentido mostrarlos todos abiertos por defecto. */
+.cm-card{background:var(--surface);border:1px solid rgba(240,136,62,.35);border-radius:8px;margin-top:14px;overflow:hidden;}
+.cm-card summary{padding:12px 18px;background:rgba(240,136,62,.12);cursor:pointer;font-size:14px;font-weight:600;color:var(--accent);list-style:none;}
+.cm-card summary::-webkit-details-marker{display:none;}
+.cm-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);white-space:nowrap;font-weight:600;}
+.fuente-rpc{background:rgba(240,136,62,.15);color:var(--accent);border:1px solid rgba(240,136,62,.3);}
 .rk-pos{font-size:16px;text-align:center;width:44px;}
 .rk-empresa{color:var(--text);font-weight:600;text-decoration:none;}
 .rk-empresa:hover{color:var(--accent);text-decoration:underline;}
@@ -4972,6 +5213,49 @@ def _render_fila_fondo_ue(f):
     </tr>"""
 
 
+def _render_fila_contrato_menor(r):
+    """Fila de la tabla de contractes menors (Girona, RPC) -- ver
+    buscar_en_rpc_menors. Sin NIF ni URL por registro (la fuente no los
+    publica), así que no hay enlace clicable ni ficha de registro mercantil
+    para esta fuente."""
+    adjudicatari = r.get("adjudicatari", "")
+    fuente_badge = '<span class="fuente-badge fuente-rpc">RPC</span>'
+
+    # Mismo detector que ya usan contratos públicos y fondos UE, pero probando
+    # también la variante "Nombre Apellidos" (ver _variantes_nombre_para_detector)
+    # porque adjudicatari viene en formato "Apellidos, Nombre" para personas
+    # físicas -- el orden inverso al que espera el índice de cargos públicos.
+    match = None
+    for variante in _variantes_nombre_para_detector(adjudicatari):
+        match = _detectar_coincidencia_cargo(variante, r.get("municipio"), "girona")
+        if match:
+            break
+    if match:
+        cls = "cargo-match-local" if match["tipo"] == "local" else "cargo-match-regional"
+        icono = "⚠️" if match["tipo"] == "local" else "🔎"
+        otro_muni = "" if match["tipo"] == "local" else " (otro municipio)"
+        match_html = (
+            f'<div class="cargo-match {cls}">'
+            f'{icono} Coincidencia de nombre{otro_muni} — verificar<br>'
+            f'<span class="cargo-match-detalle">Mismo nombre y apellidos que {esc(match["cargo"].lower())} '
+            f'de {esc(match["municipio"])}. No implica necesariamente relación — dato para verificar.</span>'
+            f'</div>'
+        )
+    else:
+        match_html = ""
+
+    return f"""<tr>
+      <td>
+        <div class="empresa">{esc(adjudicatari)}{fuente_badge}</div>
+        <div class="cargo">{esc(r.get("descripcio","")[:110])}</div>
+        {match_html}
+      </td>
+      <td class="cm-importe">{fmt_eur(str(r["import_num"])) if r["import_num"] else "—"}</td>
+      <td><div class="lid">{esc(r.get("tipus_contracte",""))}</div></td>
+      <td><div class="lid">{esc(r.get("data_adjudicacio",""))}</div></td>
+    </tr>"""
+
+
 def render_fondos_ue_html(fondos, provincia="todas"):
     """Página de fondos y proyectos financiados por la UE (CORDIS + Cohesion
     Data), con estilo amarillo sobre azul distintivo respecto a los contratos públicos
@@ -5161,6 +5445,35 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
             </table>
           </div>"""
 
+        # Contractes menors (Girona, RPC) -- fuente independiente de PSCP, ver
+        # buscar_en_rpc_menors. Colapsable por defecto: son muchos contratos
+        # de importe bajo (compras rutinarias), no formalizaciones grandes.
+        contratos_menors_html = ""
+        if d.get("provincia", provincia) == "girona":
+            menors_muni = _db_contratos_menors_por_municipio(muni_name_d)
+            if menors_muni:
+                total_cm = sum(r["import_num"] for r in menors_muni)
+                filas_cm = "".join(_render_fila_contrato_menor(r) for r in menors_muni)
+                contratos_menors_html = f"""<details class="cm-card">
+                <summary>
+                  📋 Contractes menors (Registre Públic de Contractes, des de {RPC_MENORS_DESDE_ANY})
+                  <span class="badge" style="background:rgba(240,136,62,.15);color:var(--accent);border-color:rgba(240,136,62,.3)">
+                    {len(menors_muni)} · {fmt_eur(str(total_cm))}
+                  </span>
+                </summary>
+                <div class="tbl-scroll">
+                  <table>
+                    <tr>
+                      <th>Adjudicatari / Objecte</th>
+                      <th>Import</th>
+                      <th>Tipus</th>
+                      <th>Data</th>
+                    </tr>
+                    {filas_cm}
+                  </table>
+                </div>
+              </details>"""
+
         cards += f"""<div class="muni-card">
           <div class="muni-header">
             <div>
@@ -5193,6 +5506,7 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
           </div>
           {pag_html}
           {fondos_ue_html}
+          {contratos_menors_html}
         </div>"""
 
     if not cards:
@@ -6029,6 +6343,19 @@ def _route_post(path, params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_noticias_ue_bg, args=(job_id,), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id})
+            return _resp(body, content_type="application/json; charset=utf-8")
+
+        if path == "/actualizar-contratos-menors-girona":
+            # Refresca contratos_menors_girona (Registre Públic de Contractes,
+            # dataset hb6v-jcbf). Mismo patrón de disparo externo + ADMIN_TOKEN
+            # que /actualizar-fondos-ue; el cron diario lo llama al final,
+            # igual que noticias UE.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            job_id = str(uuid.uuid4())
+            threading.Thread(target=_actualizar_contratos_menors_girona_bg, args=(job_id,), daemon=True).start()
             body = json.dumps({"status": "started", "job_id": job_id})
             return _resp(body, content_type="application/json; charset=utf-8")
 
