@@ -205,6 +205,26 @@ jobs:
             poll_hasta_done "$job_menors" "menors" || echo "::warning::Contractes menors no completados; se continúa igualmente."
           fi
 
+          # --- 3.6. Contratos menores Fuente Álamo de Murcia (portal propio) --
+          # Nuevo 2026-08-03: refresca contratos_menors_locales con las filas de
+          # Fuente Álamo (scraping de CSV, sin dependencias nuevas -- a
+          # diferencia de Mula/Molina de Segura, que necesitan odfpy/openpyxl y
+          # de momento se ingieren a mano, ver
+          # actualizar_contratos_menores_murcia_manual.py). No bloquea el
+          # commit del día si falla.
+          echo "== Disparando /actualizar-contratos-menores-fuentealamo =="
+          resp_fa=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" \
+            "${BASE_URL}/actualizar-contratos-menores-fuentealamo" || true)
+          echo "respuesta: $resp_fa"
+          job_fa=$(get_jobid "$resp_fa")
+          if [ -z "$job_fa" ]; then
+            echo "::warning::No se obtuvo job_id de /actualizar-contratos-menores-fuentealamo. Se continúa sin refrescar hoy."
+          else
+            echo "job_fa=$job_fa"
+            poll_hasta_done "$job_fa" "fuentealamo" || echo "::warning::Fuente Álamo no completado; se continúa igualmente."
+          fi
+
           # --- 4. descargar el cache.db de producción ------------------------
           echo "== Descargando cache.db de producción =="
           http=$(curl -s --max-time 300 -w "%{http_code}" \
