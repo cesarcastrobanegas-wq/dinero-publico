@@ -12,8 +12,10 @@ recién descargado de producción:
     `municipios`, incluidas las pseudo-entradas como "Región de Murcia" /
     "Administración General del Estado", que son filas normales de esa tabla)
   - número de filas de `fondos_ue`
-  - número de filas de `contratos_menors_girona` (contractes menors, ver
-    actualizar_contratos_menors_girona -- añadido 2026-08-03)
+  - número de filas de `contratos_menors_locales` (contratos menores de
+    fuentes locales -- Girona/RPC, Fuente Álamo, Mula, Molina de Segura --
+    ver actualizar_contratos_menors_girona / actualizar_contratos_menores_fuentealamo,
+    añadido 2026-08-03)
 
 Sale con código != 0 (y emite ::error:: para GitHub Actions) si el nuevo cae
 por debajo del 90% del anterior en cualquiera de las métricas -> mejor no
@@ -51,7 +53,7 @@ def _contar(path):
     except sqlite3.OperationalError:
         fondos = 0  # el seed antiguo puede no tener esta tabla
     try:
-        menors = con.execute("SELECT COUNT(*) FROM contratos_menors_girona").fetchone()[0]
+        menors = con.execute("SELECT COUNT(*) FROM contratos_menors_locales").fetchone()[0]
     except sqlite3.OperationalError:
         menors = 0  # el seed antiguo no tiene esta tabla (fuente nueva 2026-08-03)
     con.close()
@@ -68,12 +70,12 @@ def main():
 
     print(f"contratos: repo={c_old} nuevo={c_new}")
     print(f"fondos_ue: repo={f_old} nuevo={f_new}")
-    print(f"contratos_menors_girona: repo={m_old} nuevo={m_new}")
+    print(f"contratos_menors_locales: repo={m_old} nuevo={m_new}")
 
     fallo = False
     for nombre, viejo, nuevo in (("contratos", c_old, c_new),
                                  ("fondos_ue", f_old, f_new),
-                                 ("contratos_menors_girona", m_old, m_new)):
+                                 ("contratos_menors_locales", m_old, m_new)):
         if viejo > 0 and nuevo < UMBRAL * viejo:
             print(f"::error::COLAPSO en {nombre}: nuevo={nuevo} < 90% de repo={viejo}. "
                   f"NO se commitea el cache.db descargado.")
@@ -81,7 +83,7 @@ def main():
 
     # Guardia extra: un cache.db nuevo totalmente vacío nunca se commitea,
     # aunque el repo también estuviera vacío (evita subir basura). No incluye
-    # contratos_menors_girona: es una fuente nueva y opcional, un día 0 ahí no
+    # contratos_menors_locales: es una fuente nueva y opcional, un día 0 ahí no
     # debe bloquear el commit de contratos/fondos_ue si esos sí tienen datos.
     if c_new == 0 and f_new == 0:
         print("::error::El cache.db nuevo está vacío (0 contratos, 0 fondos). NO se commitea.")
