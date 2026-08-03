@@ -5495,6 +5495,7 @@ _FUENTE_CM_LABEL = {
     "mula":            "Mula",
     "molina-segura":   "Molina",
     "lorqui":          "Lorquí",
+    "lorca":           "Lorca",
 }
 
 
@@ -5608,7 +5609,7 @@ def render_fondos_ue_html(fondos, provincia="todas"):
                         provincia="todas")
 
 
-def render_html(datos, muni_filter="", page=1, provincia="murcia"):
+def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     q_prov = "&provincia=girona" if provincia == "girona" else ""
     q_prov_first = "?provincia=girona" if provincia == "girona" else ""
     if muni_filter:
@@ -5746,12 +5747,45 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
         menors_muni = _db_contratos_menors_por_municipio(muni_name_d)
         if menors_muni:
             total_cm = sum(r["import_num"] for r in menors_muni)
-            filas_cm = "".join(_render_fila_contrato_menor(r) for r in menors_muni)
-            contratos_menors_html = f"""<details class="cm-card">
+            total_cm_n = len(menors_muni)
+            total_pages_cm = max(1, (total_cm_n + PAGE_SIZE - 1) // PAGE_SIZE)
+            # Paginación propia de esta sección (query param 'pag_cm',
+            # independiente de la paginación de la tabla principal de
+            # contratos) -- necesaria desde que Lorca (10.451 filas en una
+            # sola ficha) hizo que renderizar todo de golpe generase una
+            # página de ~5 MB. Solo se activan los controles Anterior/
+            # Siguiente cuando se está viendo este municipio en detalle
+            # (is_paged); en el listado de "todos los municipios" se
+            # muestran los primeros PAGE_SIZE con un aviso, igual que ya
+            # hace la tabla principal.
+            if is_paged:
+                start_cm = (page_cm - 1) * PAGE_SIZE
+                menors_shown = menors_muni[start_cm:start_cm + PAGE_SIZE]
+            else:
+                menors_shown = menors_muni[:PAGE_SIZE]
+            filas_cm = "".join(_render_fila_contrato_menor(r) for r in menors_shown)
+
+            pag_cm_html = ""
+            if total_cm_n > PAGE_SIZE:
+                if is_paged:
+                    prev_cm = (f'<a href="/?muni={muni_enc}&pag={page}&pag_cm={page_cm-1}{q_prov}" class="pag-btn">← Anterior</a>'
+                               if page_cm > 1 else '')
+                    next_cm = (f'<a href="/?muni={muni_enc}&pag={page}&pag_cm={page_cm+1}{q_prov}" class="pag-btn">Siguiente →</a>'
+                               if page_cm < total_pages_cm else '')
+                    pag_cm_html = (f'<div class="pagination">'
+                                   f'<span class="pag-info">Página {page_cm} de {total_pages_cm} · {total_cm_n} contratos</span>'
+                                   f'<div class="pag-links">{prev_cm}{next_cm}</div>'
+                                   f'</div>')
+                else:
+                    pag_cm_html = (f'<div class="pag-more">Mostrando los primeros {PAGE_SIZE} de {total_cm_n}. '
+                                   f'<a href="/?muni={muni_enc}&pag_cm=1{q_prov}">Ver todos →</a></div>')
+
+            abierto = " open" if page_cm > 1 else ""
+            contratos_menors_html = f"""<details class="cm-card"{abierto}>
                 <summary>
                   📋 Contratos menores (fuentes locales del ayuntamiento)
                   <span class="badge" style="background:rgba(240,136,62,.15);color:var(--accent);border-color:rgba(240,136,62,.3)">
-                    {len(menors_muni)} · {fmt_eur(str(total_cm))}
+                    {total_cm_n} · {fmt_eur(str(total_cm))}
                   </span>
                 </summary>
                 <div class="tbl-scroll">
@@ -5765,6 +5799,7 @@ def render_html(datos, muni_filter="", page=1, provincia="murcia"):
                     {filas_cm}
                   </table>
                 </div>
+                {pag_cm_html}
               </details>"""
 
         cards += f"""<div class="muni-card">
@@ -6396,7 +6431,11 @@ def _route_get(path, qs, gzip_ok=False):
                 page = max(1, int(qs.get("pag", ["1"])[0]))
             except ValueError:
                 page = 1
-            return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page, provincia=provincia), gzip_ok=gzip_ok)
+            try:
+                page_cm = max(1, int(qs.get("pag_cm", ["1"])[0]))
+            except ValueError:
+                page_cm = 1
+            return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page, page_cm=page_cm, provincia=provincia), gzip_ok=gzip_ok)
 
         if q:
             with _datos_lock:
