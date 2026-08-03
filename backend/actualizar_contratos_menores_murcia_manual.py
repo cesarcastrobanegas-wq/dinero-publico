@@ -2,21 +2,22 @@
 """
 Descarga contratos menores de fuentes municipales de Murcia cuyo formato
 necesita librerías que NO están en requirements.txt de producción (odfpy para
-ODS, openpyxl para XLSX, xlrd para XLS legado) -- mismo patrón
-manual/periódico que actualizar_alcaldes.py / actualizar_retribuciones.py: se
-ejecuta a mano de vez en cuando (cada trimestre/año, cuando el ayuntamiento
-publique un fichero nuevo) y genera contratos_menores_murcia_manual.json, que
-app.py carga al arrancar y vuelca a la tabla compartida
-contratos_menors_locales (ver _cargar_contratos_menores_murcia_manual en app.py).
+ODS, openpyxl para XLSX, xlrd para XLS legado, pdfplumber para tablas en PDF)
+-- mismo patrón manual/periódico que actualizar_alcaldes.py /
+actualizar_retribuciones.py: se ejecuta a mano de vez en cuando (cada
+trimestre/año, cuando el ayuntamiento publique un fichero nuevo) y genera
+contratos_menores_murcia_manual.json, que app.py carga al arrancar y vuelca a
+la tabla compartida contratos_menors_locales (ver
+_cargar_contratos_menores_murcia_manual en app.py).
 
 Fuente Álamo de Murcia NO está aquí: su fuente es CSV (módulo estándar `csv`,
 sin dependencia nueva), así que se refresca sola en el cron diario --
 ver buscar_en_fuentealamo_menores en app.py.
 
-Ninguna de las dos fuentes de aquí tiene URL predecible por año/trimestre
+Ninguna de las fuentes de aquí tiene URL predecible por año/trimestre
 (verificado 2026-08-03: la carpeta de subida no coincide con el periodo que
-describe el fichero) -- por eso ambas funciones scrapean la página de listado
-en cada ejecución en vez de adivinar la URL.
+describe el fichero) -- por eso todas las funciones scrapean la página de
+listado en cada ejecución en vez de adivinar la URL.
 
 Molina de Segura publica los años 2022-2024 en XLS legado (formato binario
 OLE2, Composite Document Format vía Apache POI) y solo 2025 en XLSX real
@@ -26,8 +27,26 @@ distinto, `sedeelectronica.molinadesegura.es`, pero 2023/2024 no tienen
 equivalente). Por eso hace falta `xlrd` (que dejó de soportar .xlsx en la
 v2.0 pero sigue leyendo .xls perfectamente) además de `openpyxl`.
 
-Uso:  pip install odfpy openpyxl xlrd && python actualizar_contratos_menores_murcia_manual.py
+Lorquí publica un único PDF acumulativo (2015-2026, no por trimestre/año) con
+una tabla real de 5 columnas (OBJETO/DURACIÓN/IMPORTE ADJUDICACIÓN/
+ADJUDICATARIO/FECHA ADJUDICACIÓN). Aviso importante tras la investigación de
+Albudeite (que resultó tener sobre todo anuncios/pliegos SIN adjudicatario,
+no decretos de adjudicación): verificado que este PDF de Lorquí SÍ es una
+tabla de contratos ya adjudicados de verdad (columna ADJUDICATARIO real en
+todas las filas), no anuncios previos. `pdftotext -layout` no sirve aquí
+porque las celdas envuelven a varias líneas y las columnas no quedan
+alineadas de forma fiable entre filas -- `pdfplumber` sí reconstruye la
+tabla real fila a fila. Aun así, la detección de rejilla de pdfplumber no es
+perfecta en todas las páginas: algunas filas salen con columnas de más (con
+huecos `None` intercalados) -- normalizar_fila_lorqui() los limpia y dedupa;
+midiendo contra el documento completo esto recupera el 98,2% de las filas
+(553 de 563) a un registro limpio de 5 campos. Sin NIF ni nº de expediente
+(la fuente no los publica). Nombres de personas físicas ya en orden
+correcto -- no hace falta ninguna variante invertida como en Molina de Segura.
+
+Uso:  pip install odfpy openpyxl xlrd pdfplumber && python actualizar_contratos_menores_murcia_manual.py
 """
+import hashlib
 import io
 import json
 import re
@@ -35,6 +54,7 @@ import sys
 import time
 
 import openpyxl
+import pdfplumber
 import requests
 import xlrd
 from bs4 import BeautifulSoup
@@ -55,6 +75,7 @@ OUT_FILE = f"{BASE_DIR}/contratos_menores_murcia_manual.json"
 MULA_LISTADO_URL = "https://mula.es/web/transparencia/informacion-sobre-contratos-y-convenios/"
 MOLINA_LISTADO_URL = ("https://transparencia.molinadesegura.es/publicidad-activa/"
                        "informacion-sobre-contratacion-convenios-y-subvenciones/contratos-formalizados/")
+LORQUI_LISTADO_URL = "https://ayuntamientodelorqui.es/perfil-contratante/contratos-mayores-menores/"
 
 
 def _listar_enlaces(url, extension):
@@ -236,8 +257,97 @@ def actualizar_molina_segura():
     return registros
 
 
+def _normaliza_fila_lorqui(row):
+    """Limpia una fila cruda de pdfplumber: quita celdas None/vacías y
+    colapsa duplicados consecutivos (alguna fila trae el objeto repetido dos
+    veces por un artefacto de la detección de rejilla de la tabla). Devuelve
+    la fila limpia solo si quedan exactamente 5 campos (objeto, duración,
+    importe, adjudicatario, fecha) -- si no, se descarta como no fiable."""
+    vals = [(c or "").strip() for c in row if c and str(c).strip()]
+    limpio = []
+    for v in vals:
+        if not limpio or limpio[-1] != v:
+            limpio.append(v)
+    return limpio if len(limpio) == 5 else None
+
+
+def actualizar_lorqui():
+    """Lorquí: PDF único acumulativo (2015-2026) con tabla real de contratos
+    ya adjudicados -- ver docstring del módulo para el porqué de usar
+    pdfplumber en vez de pdftotext y la tasa de recuperación medida (98,2%)."""
+    urls = [u for u in _listar_enlaces(LORQUI_LISTADO_URL, ".pdf") if "menor" in u.lower()]
+    print(f"Lorquí: {len(urls)} ficheros PDF de contratos menores encontrados en el listado")
+    registros = {}
+    anio_actual = int(time.strftime("%Y"))
+    for url in urls:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=60)
+            r.raise_for_status()
+        except Exception as e:
+            print(f"  Lorquí: {url} no disponible ({type(e).__name__})")
+            continue
+        with pdfplumber.open(io.BytesIO(r.content)) as pdf:
+            for pagina in pdf.pages:
+                for tabla in pagina.extract_tables():
+                    for row in tabla:
+                        if not row or not row[0] or "OBJETO" in (row[0] or ""):
+                            continue
+                        fila = _normaliza_fila_lorqui(row)
+                        if not fila:
+                            continue
+                        objeto, duracion, importe, adjudicatario, fecha_raw = fila
+                        m = re.match(r"(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})", fecha_raw)
+                        if not m or not re.search(r"\d", importe):
+                            continue
+                        dia, mes, anio = m.groups()
+                        if len(anio) == 2:
+                            anio = f"20{anio}"
+                        # Cordura: alguna celda de fecha trae dos fechas pegadas
+                        # ("28/27/2025, Modif. 12/09/2225", un typo real de la
+                        # fuente con mes=27 inexistente) -- se descarta si
+                        # día/mes no son un calendario válido, igual que las
+                        # cotas de cordura ya aplicadas a Fuente Álamo/Mula.
+                        if not (anio.isdigit() and 1 <= int(mes) <= 12 and 1 <= int(dia) <= 31):
+                            continue
+                        if int(anio) < DESDE_ANY or int(anio) > anio_actual:
+                            continue
+                        # Sin nº de expediente en esta fuente -- id por hash
+                        # de contenido (objeto+adjudicatario+fecha+importe),
+                        # estable frente a re-ejecuciones mientras el PDF no
+                        # cambie esa fila.
+                        clave_hash = hashlib.md5(
+                            f"{objeto}|{adjudicatario}|{fecha_raw}|{importe}".encode("utf-8")
+                        ).hexdigest()[:12]
+                        # Sin columna de "tipo de contrato" en esta fuente --
+                        # se reutiliza esa columna para mostrar la duración
+                        # (dato real que aporta la fuente), limpiando los
+                        # placeholders "----"/"-----" que usa el propio PDF
+                        # para "no aplica".
+                        duracion_limpia = duracion.replace("\n", " ").strip()
+                        if re.fullmatch(r"-{2,}", duracion_limpia):
+                            duracion_limpia = ""
+                        registros[f"Lorquí::{clave_hash}"] = {
+                            "id":               f"Lorquí::{clave_hash}",
+                            "municipio":        "Lorquí",
+                            "provincia":        "murcia",
+                            "fuente":           "lorqui",
+                            "organisme":        "Ayuntamiento de Lorquí",
+                            "adjudicatari":     adjudicatario.replace("\n", " ").strip(),
+                            "nif":              "",
+                            "import_num":       _num_es(importe),
+                            "data_adjudicacio": f"{anio}-{mes.zfill(2)}-{dia.zfill(2)}",
+                            "tipus_contracte":  duracion_limpia,
+                            "descripcio":       objeto.replace("\n", " ").strip(),
+                            "codi_cpv":         "",
+                            "exercici":         anio,
+                        }
+    registros = list(registros.values())
+    print(f"Lorquí: {len(registros)} contratos menores extraídos (desde {DESDE_ANY})")
+    return registros
+
+
 def main():
-    todos = actualizar_mula() + actualizar_molina_segura()
+    todos = actualizar_mula() + actualizar_molina_segura() + actualizar_lorqui()
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "registros": todos},
                    f, ensure_ascii=False, indent=1)

@@ -5494,6 +5494,7 @@ _FUENTE_CM_LABEL = {
     "fuente-alamo":    "F. Álamo",
     "mula":            "Mula",
     "molina-segura":   "Molina",
+    "lorqui":          "Lorquí",
 }
 
 
