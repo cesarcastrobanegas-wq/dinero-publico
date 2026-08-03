@@ -215,10 +215,11 @@ def _db_init():
         )""")
         # Contractes menors dels ajuntaments de Girona, via el Registre Públic
         # de Contractes (dataset hb6v-jcbf) -- ver actualizar_contratos_menors_girona().
-        # id = codi_expedient (ya viene casi único de la fuente, ver diseño en
-        # DISENO_CONTRATOS_MENORS_GIRONA.md). Fuente independiente de PSCP
-        # (ybgg-dgi6, solo procediments formals): procediment_adjudicacio='Menor'
-        # es disjunto por definición legal, así que no hay solape esperado.
+        # id = "{municipio}::{codi_expedient}" (ver _fila_rpc_menor_a_registro
+        # para el porqué de namespacear por municipio -- codi_expedient NO es
+        # único a nivel global). Fuente independiente de PSCP (ybgg-dgi6, solo
+        # procediments formals): procediment_adjudicacio='Menor' es disjunto
+        # por definición legal, así que no hay solape esperado.
         _db.execute("""CREATE TABLE IF NOT EXISTS contratos_menors_girona (
             id                TEXT PRIMARY KEY,
             municipio         TEXT NOT NULL,
@@ -232,6 +233,24 @@ def _db_init():
             exercici          TEXT,
             ts                REAL NOT NULL
         )""")
+        # Migración de un solo uso (2026-08-03): el primer backfill en
+        # producción guardaba id=codi_expedient a secas, sin namespacear por
+        # municipio -- como codi_expedient se repite entre municipios
+        # distintos (ver nota en _fila_rpc_menor_a_registro), esas filas
+        # antiguas están incompletas (contratos de un municipio sobrescritos
+        # por los de otro). Se detectan por no contener "::" y se borran
+        # todas de golpe; el siguiente /actualizar-contratos-menors-girona
+        # las repuebla ya con el id correcto. No-op en cualquier arranque
+        # posterior (todas las filas ya tendrán el separador).
+        try:
+            n_borradas = _db.execute(
+                "DELETE FROM contratos_menors_girona WHERE id NOT LIKE '%::%'"
+            ).rowcount
+            if n_borradas:
+                print(f"  [db-init] Migración contratos_menors_girona: "
+                      f"{n_borradas} filas con id antiguo (sin namespacear) borradas.", flush=True)
+        except sqlite3.OperationalError:
+            pass
         try:
             _db.execute("ALTER TABLE directores ADD COLUMN intentos INTEGER DEFAULT 0")
         except sqlite3.OperationalError:
@@ -2258,13 +2277,24 @@ def _dedup_rpc_menors(filas):
 def _fila_rpc_menor_a_registro(fila, municipio):
     """Convierte una fila del dataset RPC al formato que guarda
     contratos_menors_girona. Sin NIF (la fuente no lo publica) y sin URL por
-    expediente (la fuente no publica un enlace público por registro)."""
+    expediente (la fuente no publica un enlace público por registro).
+
+    OJO -- codi_expedient NO es único a nivel global: muchos municipios
+    pequeños comparten el mismo software/numeración de expedientes (medido en
+    producción 2026-08-03: 'X2022000056' aparece en más de 10 ayuntamientos
+    distintos -- Canet d'Adri, Palau-sator, Maçanet de la Selva, Osor,
+    Susqueda...). Usar solo codi_expedient como id causaba que, al procesar
+    los 221 municipios uno detrás de otro, un municipio posterior en
+    MUNICIPIOS_GIRONA sobrescribiera silenciosamente los contratos de un
+    municipio anterior con el mismo código (147 de 221 municipios afectados,
+    ~15% de filas perdidas en el primer backfill). El id se namespacea con el
+    municipio para que la clave primaria sea única de verdad."""
     try:
         importe_num = float(fila.get("import_adjudicacio") or 0)
     except (TypeError, ValueError):
         importe_num = 0.0
     return {
-        "id":               fila.get("codi_expedient", ""),
+        "id":               f"{municipio}::{fila.get('codi_expedient', '')}",
         "municipio":        municipio,
         "organisme":        fila.get("organisme_contractant", ""),
         "adjudicatari":     (fila.get("adjudicatari") or "").strip(),
