@@ -187,6 +187,24 @@ jobs:
             poll_hasta_done "$job_noticias" "noticias" || echo "::warning::Noticias UE no completadas; se continúa igualmente."
           fi
 
+          # --- 3.5. Contractes menors Girona (Registre Públic de Contractes) --
+          # Nuevo 2026-08-03: refresca contratos_menors_girona (221 municipios,
+          # una consulta paginada por municipio contra la misma API Socrata
+          # que PSCP). No bloquea el commit del día si falla (`|| true`, mismo
+          # criterio que noticias UE) -- es una fuente adicional, no crítica.
+          echo "== Disparando /actualizar-contratos-menors-girona (RPC) =="
+          resp_menors=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" \
+            "${BASE_URL}/actualizar-contratos-menors-girona" || true)
+          echo "respuesta: $resp_menors"
+          job_menors=$(get_jobid "$resp_menors")
+          if [ -z "$job_menors" ]; then
+            echo "::warning::No se obtuvo job_id de /actualizar-contratos-menors-girona. Se continúa sin refrescar hoy."
+          else
+            echo "job_menors=$job_menors"
+            poll_hasta_done "$job_menors" "menors" || echo "::warning::Contractes menors no completados; se continúa igualmente."
+          fi
+
           # --- 4. descargar el cache.db de producción ------------------------
           echo "== Descargando cache.db de producción =="
           http=$(curl -s --max-time 300 -w "%{http_code}" \
