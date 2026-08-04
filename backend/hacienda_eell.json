@@ -1,0 +1,3155 @@
+{
+ "generado": "2026-08-04 16:25:49",
+ "deuda_viva": {
+  "fuente_url": "https://www.hacienda.gob.es/cdi/sist%20financiacion%20y%20deuda/informacioneells/2025/deuda-viva-ayuntamientos-202512.xlsx",
+  "municipios": {
+   "agullana": {
+    "municipio": "Agullana",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "aiguaviva": {
+    "municipio": "Aiguaviva",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "albanya": {
+    "municipio": "Albanyà",
+    "provincia": "girona",
+    "deuda_eur": 230000.0
+   },
+   "albons": {
+    "municipio": "Albons",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "far d'emporda, el": {
+    "municipio": "Far d'Empordà, el",
+    "provincia": "girona",
+    "deuda_eur": 2545.0
+   },
+   "alp": {
+    "municipio": "Alp",
+    "provincia": "girona",
+    "deuda_eur": 1000.0
+   },
+   "amer": {
+    "municipio": "Amer",
+    "provincia": "girona",
+    "deuda_eur": 755555.0
+   },
+   "angles": {
+    "municipio": "Anglès",
+    "provincia": "girona",
+    "deuda_eur": 829923.0
+   },
+   "arbucies": {
+    "municipio": "Arbúcies",
+    "provincia": "girona",
+    "deuda_eur": 3367692.19
+   },
+   "argelaguer": {
+    "municipio": "Argelaguer",
+    "provincia": "girona",
+    "deuda_eur": 183.0
+   },
+   "armentera, l'": {
+    "municipio": "Armentera, l'",
+    "provincia": "girona",
+    "deuda_eur": 256174.0
+   },
+   "avinyonet de puigventos": {
+    "municipio": "Avinyonet de Puigventós",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "begur": {
+    "municipio": "Begur",
+    "provincia": "girona",
+    "deuda_eur": 4552.0
+   },
+   "vajol, la": {
+    "municipio": "Vajol, la",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "banyoles": {
+    "municipio": "Banyoles",
+    "provincia": "girona",
+    "deuda_eur": 9754270.0
+   },
+   "bascara": {
+    "municipio": "Bàscara",
+    "provincia": "girona",
+    "deuda_eur": 1393878.13
+   },
+   "bellcaire d'emporda": {
+    "municipio": "Bellcaire d'Empordà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "besalu": {
+    "municipio": "Besalú",
+    "provincia": "girona",
+    "deuda_eur": 892020.37
+   },
+   "bescano": {
+    "municipio": "Bescanó",
+    "provincia": "girona",
+    "deuda_eur": 1000.0
+   },
+   "beuda": {
+    "municipio": "Beuda",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "bisbal d'emporda, la": {
+    "municipio": "Bisbal d'Empordà, la",
+    "provincia": "girona",
+    "deuda_eur": 5411563.0
+   },
+   "blanes": {
+    "municipio": "Blanes",
+    "provincia": "girona",
+    "deuda_eur": 21592430.0
+   },
+   "bolvir": {
+    "municipio": "Bolvir",
+    "provincia": "girona",
+    "deuda_eur": 95.0
+   },
+   "bordils": {
+    "municipio": "Bordils",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "borrassa": {
+    "municipio": "Borrassà",
+    "provincia": "girona",
+    "deuda_eur": 424467.0
+   },
+   "breda": {
+    "municipio": "Breda",
+    "provincia": "girona",
+    "deuda_eur": 1192527.0
+   },
+   "brunyola i sant marti sapresa": {
+    "municipio": "Brunyola i Sant Martí Sapresa",
+    "provincia": "girona",
+    "deuda_eur": 121598.0
+   },
+   "boadella i les escaules": {
+    "municipio": "Boadella i les Escaules",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "cabanes": {
+    "municipio": "Cabanes",
+    "provincia": "girona",
+    "deuda_eur": 300000.0
+   },
+   "cabanelles": {
+    "municipio": "Cabanelles",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "cadaques": {
+    "municipio": "Cadaqués",
+    "provincia": "girona",
+    "deuda_eur": 1188044.0
+   },
+   "caldes de malavella": {
+    "municipio": "Caldes de Malavella",
+    "provincia": "girona",
+    "deuda_eur": 1719857.0
+   },
+   "calonge i sant antoni": {
+    "municipio": "Calonge i Sant Antoni",
+    "provincia": "girona",
+    "deuda_eur": 7330264.82
+   },
+   "camos": {
+    "municipio": "Camós",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "campdevanol": {
+    "municipio": "Campdevànol",
+    "provincia": "girona",
+    "deuda_eur": 1546603.0
+   },
+   "campelles": {
+    "municipio": "Campelles",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "campllong": {
+    "municipio": "Campllong",
+    "provincia": "girona",
+    "deuda_eur": 410894.0
+   },
+   "camprodon": {
+    "municipio": "Camprodon",
+    "provincia": "girona",
+    "deuda_eur": 513790.6
+   },
+   "canet d'adri": {
+    "municipio": "Canet d'Adri",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "cantallops": {
+    "municipio": "Cantallops",
+    "provincia": "girona",
+    "deuda_eur": 239370.0
+   },
+   "capmany": {
+    "municipio": "Capmany",
+    "provincia": "girona",
+    "deuda_eur": 372965.0
+   },
+   "queralbs": {
+    "municipio": "Queralbs",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "cassa de la selva": {
+    "municipio": "Cassà de la Selva",
+    "provincia": "girona",
+    "deuda_eur": 3371482.0
+   },
+   "castellfollit de la roca": {
+    "municipio": "Castellfollit de la Roca",
+    "provincia": "girona",
+    "deuda_eur": 263205.0
+   },
+   "castello d'empuries": {
+    "municipio": "Castelló d'Empúries",
+    "provincia": "girona",
+    "deuda_eur": 6268790.0
+   },
+   "castell d'aro, platja d'aro i s'agaro": {
+    "municipio": "Castell d'Aro, Platja d'Aro i s'Agaró",
+    "provincia": "girona",
+    "deuda_eur": 24731199.0
+   },
+   "celra": {
+    "municipio": "Celrà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "cervia de ter": {
+    "municipio": "Cervià de Ter",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "cistella": {
+    "municipio": "Cistella",
+    "provincia": "girona",
+    "deuda_eur": 82580.0
+   },
+   "siurana": {
+    "municipio": "Siurana",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "colera": {
+    "municipio": "Colera",
+    "provincia": "girona",
+    "deuda_eur": 587781.0
+   },
+   "colomers": {
+    "municipio": "Colomers",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "cornella del terri": {
+    "municipio": "Cornellà del Terri",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "corca": {
+    "municipio": "Corçà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "crespia": {
+    "municipio": "Crespià",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "darnius": {
+    "municipio": "Darnius",
+    "provincia": "girona",
+    "deuda_eur": 200000.0
+   },
+   "das": {
+    "municipio": "Das",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "escala, l'": {
+    "municipio": "Escala, l'",
+    "provincia": "girona",
+    "deuda_eur": 536835.0
+   },
+   "espinelves": {
+    "municipio": "Espinelves",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "espolla": {
+    "municipio": "Espolla",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "esponella": {
+    "municipio": "Esponellà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "figueres": {
+    "municipio": "Figueres",
+    "provincia": "girona",
+    "deuda_eur": 25849450.0
+   },
+   "flaca": {
+    "municipio": "Flaçà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "foixa": {
+    "municipio": "Foixà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "fontanals de cerdanya": {
+    "municipio": "Fontanals de Cerdanya",
+    "provincia": "girona",
+    "deuda_eur": 496.0
+   },
+   "fontanilles": {
+    "municipio": "Fontanilles",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "fontcoberta": {
+    "municipio": "Fontcoberta",
+    "provincia": "girona",
+    "deuda_eur": 74021.0
+   },
+   "fornells de la selva": {
+    "municipio": "Fornells de la Selva",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "fortia": {
+    "municipio": "Fortià",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "garrigas": {
+    "municipio": "Garrigàs",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "garrigoles": {
+    "municipio": "Garrigoles",
+    "provincia": "girona",
+    "deuda_eur": 257.0
+   },
+   "garriguella": {
+    "municipio": "Garriguella",
+    "provincia": "girona",
+    "deuda_eur": 475459.28
+   },
+   "ger": {
+    "municipio": "Ger",
+    "provincia": "girona",
+    "deuda_eur": 614772.0
+   },
+   "girona": {
+    "municipio": "Girona",
+    "provincia": "girona",
+    "deuda_eur": 56817404.31
+   },
+   "gombren": {
+    "municipio": "Gombrèn",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "gualta": {
+    "municipio": "Gualta",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "guils de cerdanya": {
+    "municipio": "Guils de Cerdanya",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "hostalric": {
+    "municipio": "Hostalric",
+    "provincia": "girona",
+    "deuda_eur": 1327354.0
+   },
+   "isovol": {
+    "municipio": "Isòvol",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "jafre": {
+    "municipio": "Jafre",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "jonquera, la": {
+    "municipio": "Jonquera, la",
+    "provincia": "girona",
+    "deuda_eur": 2566800.0
+   },
+   "juia": {
+    "municipio": "Juià",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "llado": {
+    "municipio": "Lladó",
+    "provincia": "girona",
+    "deuda_eur": 743750.0
+   },
+   "llagostera": {
+    "municipio": "Llagostera",
+    "provincia": "girona",
+    "deuda_eur": 2669385.0
+   },
+   "llambilles": {
+    "municipio": "Llambilles",
+    "provincia": "girona",
+    "deuda_eur": 335389.0
+   },
+   "llanars": {
+    "municipio": "Llanars",
+    "provincia": "girona",
+    "deuda_eur": 55000.0
+   },
+   "llanca": {
+    "municipio": "Llançà",
+    "provincia": "girona",
+    "deuda_eur": 2033241.0
+   },
+   "llers": {
+    "municipio": "Llers",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "llivia": {
+    "municipio": "Llívia",
+    "provincia": "girona",
+    "deuda_eur": 1060832.0
+   },
+   "lloret de mar": {
+    "municipio": "Lloret de Mar",
+    "provincia": "girona",
+    "deuda_eur": 31165991.0
+   },
+   "llosses, les": {
+    "municipio": "Llosses, les",
+    "provincia": "girona",
+    "deuda_eur": 80.0
+   },
+   "madremanya": {
+    "municipio": "Madremanya",
+    "provincia": "girona",
+    "deuda_eur": 14513.03
+   },
+   "maia de montcal": {
+    "municipio": "Maià de Montcal",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "meranges": {
+    "municipio": "Meranges",
+    "provincia": "girona",
+    "deuda_eur": 421.0
+   },
+   "masarac i vilarnadal": {
+    "municipio": "Masarac i Vilarnadal",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "massanes": {
+    "municipio": "Massanes",
+    "provincia": "girona",
+    "deuda_eur": 725.0
+   },
+   "macanet de cabrenys": {
+    "municipio": "Maçanet de Cabrenys",
+    "provincia": "girona",
+    "deuda_eur": 283362.0
+   },
+   "macanet de la selva": {
+    "municipio": "Maçanet de la Selva",
+    "provincia": "girona",
+    "deuda_eur": 1950000.0
+   },
+   "mieres": {
+    "municipio": "Mieres",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "mollet de peralada": {
+    "municipio": "Mollet de Peralada",
+    "provincia": "girona",
+    "deuda_eur": 62289.99
+   },
+   "mollo": {
+    "municipio": "Molló",
+    "provincia": "girona",
+    "deuda_eur": 89125.0
+   },
+   "montagut i oix": {
+    "municipio": "Montagut i Oix",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "mont-ras": {
+    "municipio": "Mont-ras",
+    "provincia": "girona",
+    "deuda_eur": 516.0
+   },
+   "navata": {
+    "municipio": "Navata",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "ogassa": {
+    "municipio": "Ogassa",
+    "provincia": "girona",
+    "deuda_eur": 594387.23
+   },
+   "olot": {
+    "municipio": "Olot",
+    "provincia": "girona",
+    "deuda_eur": 17091027.0
+   },
+   "ordis": {
+    "municipio": "Ordis",
+    "provincia": "girona",
+    "deuda_eur": 1184.0
+   },
+   "osor": {
+    "municipio": "Osor",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "palafrugell": {
+    "municipio": "Palafrugell",
+    "provincia": "girona",
+    "deuda_eur": 6568622.0
+   },
+   "palamos": {
+    "municipio": "Palamós",
+    "provincia": "girona",
+    "deuda_eur": 5456470.0
+   },
+   "palau de santa eulalia": {
+    "municipio": "Palau de Santa Eulàlia",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "palau-saverdera": {
+    "municipio": "Palau-saverdera",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "palau-sator": {
+    "municipio": "Palau-sator",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "palol de revardit": {
+    "municipio": "Palol de Revardit",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "pals": {
+    "municipio": "Pals",
+    "provincia": "girona",
+    "deuda_eur": 955.0
+   },
+   "pardines": {
+    "municipio": "Pardines",
+    "provincia": "girona",
+    "deuda_eur": 70109.0
+   },
+   "parlava": {
+    "municipio": "Parlavà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "pau": {
+    "municipio": "Pau",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "pedret i marza": {
+    "municipio": "Pedret i Marzà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "pera, la": {
+    "municipio": "Pera, la",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "peralada": {
+    "municipio": "Peralada",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "planes d'hostoles, les": {
+    "municipio": "Planes d'Hostoles, les",
+    "provincia": "girona",
+    "deuda_eur": 900900.22
+   },
+   "planoles": {
+    "municipio": "Planoles",
+    "provincia": "girona",
+    "deuda_eur": 299999.0
+   },
+   "pont de molins": {
+    "municipio": "Pont de Molins",
+    "provincia": "girona",
+    "deuda_eur": 245.0
+   },
+   "pontos": {
+    "municipio": "Pontós",
+    "provincia": "girona",
+    "deuda_eur": 6.0
+   },
+   "porqueres": {
+    "municipio": "Porqueres",
+    "provincia": "girona",
+    "deuda_eur": 48279.0
+   },
+   "portbou": {
+    "municipio": "Portbou",
+    "provincia": "girona",
+    "deuda_eur": 2123214.58
+   },
+   "preses, les": {
+    "municipio": "Preses, les",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "port de la selva, el": {
+    "municipio": "Port de la Selva, el",
+    "provincia": "girona",
+    "deuda_eur": 565013.0
+   },
+   "puigcerda": {
+    "municipio": "Puigcerdà",
+    "provincia": "girona",
+    "deuda_eur": 3034043.35
+   },
+   "quart": {
+    "municipio": "Quart",
+    "provincia": "girona",
+    "deuda_eur": 149.0
+   },
+   "rabos": {
+    "municipio": "Rabós",
+    "provincia": "girona",
+    "deuda_eur": 2905.0
+   },
+   "regencos": {
+    "municipio": "Regencós",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "ribes de freser": {
+    "municipio": "Ribes de Freser",
+    "provincia": "girona",
+    "deuda_eur": 1759428.0
+   },
+   "riells i viabrea": {
+    "municipio": "Riells i Viabrea",
+    "provincia": "girona",
+    "deuda_eur": 2782808.0
+   },
+   "ripoll": {
+    "municipio": "Ripoll",
+    "provincia": "girona",
+    "deuda_eur": 6152951.0
+   },
+   "riudarenes": {
+    "municipio": "Riudarenes",
+    "provincia": "girona",
+    "deuda_eur": 180000.0
+   },
+   "riudaura": {
+    "municipio": "Riudaura",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "riudellots de la selva": {
+    "municipio": "Riudellots de la Selva",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "riumors": {
+    "municipio": "Riumors",
+    "provincia": "girona",
+    "deuda_eur": 244279.0
+   },
+   "roses": {
+    "municipio": "Roses",
+    "provincia": "girona",
+    "deuda_eur": 40648.0
+   },
+   "rupia": {
+    "municipio": "Rupià",
+    "provincia": "girona",
+    "deuda_eur": 145000.0
+   },
+   "sales de llierca": {
+    "municipio": "Sales de Llierca",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "salt": {
+    "municipio": "Salt",
+    "provincia": "girona",
+    "deuda_eur": 12871729.47
+   },
+   "sant andreu salou": {
+    "municipio": "Sant Andreu Salou",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant climent sescebes": {
+    "municipio": "Sant Climent Sescebes",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant feliu de buixalleu": {
+    "municipio": "Sant Feliu de Buixalleu",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant feliu de guixols": {
+    "municipio": "Sant Feliu de Guíxols",
+    "provincia": "girona",
+    "deuda_eur": 8688784.0
+   },
+   "sant feliu de pallerols": {
+    "municipio": "Sant Feliu de Pallerols",
+    "provincia": "girona",
+    "deuda_eur": 685948.0
+   },
+   "sant ferriol": {
+    "municipio": "Sant Ferriol",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant gregori": {
+    "municipio": "Sant Gregori",
+    "provincia": "girona",
+    "deuda_eur": 2039848.0
+   },
+   "sant hilari sacalm": {
+    "municipio": "Sant Hilari Sacalm",
+    "provincia": "girona",
+    "deuda_eur": 2308060.0
+   },
+   "sant jaume de llierca": {
+    "municipio": "Sant Jaume de Llierca",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant jordi desvalls": {
+    "municipio": "Sant Jordi Desvalls",
+    "provincia": "girona",
+    "deuda_eur": 229273.0
+   },
+   "sant joan de les abadesses": {
+    "municipio": "Sant Joan de les Abadesses",
+    "provincia": "girona",
+    "deuda_eur": 5086941.0
+   },
+   "sant joan de mollet": {
+    "municipio": "Sant Joan de Mollet",
+    "provincia": "girona",
+    "deuda_eur": 217500.0
+   },
+   "sant julia de ramis": {
+    "municipio": "Sant Julià de Ramis",
+    "provincia": "girona",
+    "deuda_eur": 442234.0
+   },
+   "vallfogona de ripolles": {
+    "municipio": "Vallfogona de Ripollès",
+    "provincia": "girona",
+    "deuda_eur": 214016.57
+   },
+   "sant llorenc de la muga": {
+    "municipio": "Sant Llorenç de la Muga",
+    "provincia": "girona",
+    "deuda_eur": 270443.0
+   },
+   "sant marti de llemena": {
+    "municipio": "Sant Martí de Llémena",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant marti vell": {
+    "municipio": "Sant Martí Vell",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant miquel de campmajor": {
+    "municipio": "Sant Miquel de Campmajor",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant miquel de fluvia": {
+    "municipio": "Sant Miquel de Fluvià",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant mori": {
+    "municipio": "Sant Mori",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant pau de seguries": {
+    "municipio": "Sant Pau de Segúries",
+    "provincia": "girona",
+    "deuda_eur": 137500.0
+   },
+   "sant pere pescador": {
+    "municipio": "Sant Pere Pescador",
+    "provincia": "girona",
+    "deuda_eur": 1799466.0
+   },
+   "santa coloma de farners": {
+    "municipio": "Santa Coloma de Farners",
+    "provincia": "girona",
+    "deuda_eur": 6201767.0
+   },
+   "santa cristina d'aro": {
+    "municipio": "Santa Cristina d'Aro",
+    "provincia": "girona",
+    "deuda_eur": 137893.0
+   },
+   "santa llogaia d'alguema": {
+    "municipio": "Santa Llogaia d'Àlguema",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant aniol de finestres": {
+    "municipio": "Sant Aniol de Finestres",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "santa pau": {
+    "municipio": "Santa Pau",
+    "provincia": "girona",
+    "deuda_eur": 179687.0
+   },
+   "sant joan les fonts": {
+    "municipio": "Sant Joan les Fonts",
+    "provincia": "girona",
+    "deuda_eur": 2796142.0
+   },
+   "sarria de ter": {
+    "municipio": "Sarrià de Ter",
+    "provincia": "girona",
+    "deuda_eur": 803106.19
+   },
+   "saus, camallera i llampaies": {
+    "municipio": "Saus, Camallera i Llampaies",
+    "provincia": "girona",
+    "deuda_eur": 505640.0
+   },
+   "selva de mar, la": {
+    "municipio": "Selva de Mar, la",
+    "provincia": "girona",
+    "deuda_eur": 242666.51
+   },
+   "cellera de ter, la": {
+    "municipio": "Cellera de Ter, la",
+    "provincia": "girona",
+    "deuda_eur": 418079.0
+   },
+   "serinya": {
+    "municipio": "Serinyà",
+    "provincia": "girona",
+    "deuda_eur": 108270.36
+   },
+   "serra de daro": {
+    "municipio": "Serra de Daró",
+    "provincia": "girona",
+    "deuda_eur": 260.0
+   },
+   "setcases": {
+    "municipio": "Setcases",
+    "provincia": "girona",
+    "deuda_eur": 33446.0
+   },
+   "sils": {
+    "municipio": "Sils",
+    "provincia": "girona",
+    "deuda_eur": 110434.0
+   },
+   "susqueda": {
+    "municipio": "Susqueda",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "tallada d'emporda, la": {
+    "municipio": "Tallada d'Empordà, la",
+    "provincia": "girona",
+    "deuda_eur": 3524.0
+   },
+   "terrades": {
+    "municipio": "Terrades",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "torrent": {
+    "municipio": "Torrent",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "torroella de fluvia": {
+    "municipio": "Torroella de Fluvià",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "torroella de montgri": {
+    "municipio": "Torroella de Montgrí",
+    "provincia": "girona",
+    "deuda_eur": 7473493.0
+   },
+   "tortella": {
+    "municipio": "Tortellà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "toses": {
+    "municipio": "Toses",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "tossa de mar": {
+    "municipio": "Tossa de Mar",
+    "provincia": "girona",
+    "deuda_eur": 3032600.0
+   },
+   "ultramort": {
+    "municipio": "Ultramort",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "ulla": {
+    "municipio": "Ullà",
+    "provincia": "girona",
+    "deuda_eur": 350000.0
+   },
+   "ullastret": {
+    "municipio": "Ullastret",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "urus": {
+    "municipio": "Urús",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "vall d'en bas, la": {
+    "municipio": "Vall d'en Bas, la",
+    "provincia": "girona",
+    "deuda_eur": 681868.0
+   },
+   "vall de bianya, la": {
+    "municipio": "Vall de Bianya, la",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "vall-llobrega": {
+    "municipio": "Vall-llobrega",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "ventallo": {
+    "municipio": "Ventalló",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "verges": {
+    "municipio": "Verges",
+    "provincia": "girona",
+    "deuda_eur": 92500.0
+   },
+   "vidra": {
+    "municipio": "Vidrà",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "vidreres": {
+    "municipio": "Vidreres",
+    "provincia": "girona",
+    "deuda_eur": 3482338.03
+   },
+   "vilabertran": {
+    "municipio": "Vilabertran",
+    "provincia": "girona",
+    "deuda_eur": 30000.0
+   },
+   "vilablareix": {
+    "municipio": "Vilablareix",
+    "provincia": "girona",
+    "deuda_eur": 1718750.0
+   },
+   "viladasens": {
+    "municipio": "Viladasens",
+    "provincia": "girona",
+    "deuda_eur": 160194.0
+   },
+   "viladamat": {
+    "municipio": "Viladamat",
+    "provincia": "girona",
+    "deuda_eur": 100427.0
+   },
+   "vilademuls": {
+    "municipio": "Vilademuls",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "viladrau": {
+    "municipio": "Viladrau",
+    "provincia": "girona",
+    "deuda_eur": 65006.0
+   },
+   "vilafant": {
+    "municipio": "Vilafant",
+    "provincia": "girona",
+    "deuda_eur": 1827781.42
+   },
+   "vilaur": {
+    "municipio": "Vilaür",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "vilajuiga": {
+    "municipio": "Vilajuïga",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "vilallonga de ter": {
+    "municipio": "Vilallonga de Ter",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "vilamacolum": {
+    "municipio": "Vilamacolum",
+    "provincia": "girona",
+    "deuda_eur": 58347.0
+   },
+   "vilamalla": {
+    "municipio": "Vilamalla",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "vilamaniscle": {
+    "municipio": "Vilamaniscle",
+    "provincia": "girona",
+    "deuda_eur": 65875.0
+   },
+   "vilanant": {
+    "municipio": "Vilanant",
+    "provincia": "girona",
+    "deuda_eur": 220811.0
+   },
+   "vila-sacra": {
+    "municipio": "Vila-sacra",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "vilopriu": {
+    "municipio": "Vilopriu",
+    "provincia": "girona",
+    "deuda_eur": 33524.0
+   },
+   "vilobi d'onyar": {
+    "municipio": "Vilobí d'Onyar",
+    "provincia": "girona",
+    "deuda_eur": 1346876.0
+   },
+   "biure": {
+    "municipio": "Biure",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "cruilles, monells i sant sadurni de l'heura": {
+    "municipio": "Cruïlles, Monells i Sant Sadurní de l'Heura",
+    "provincia": "girona",
+    "deuda_eur": 315.0
+   },
+   "forallac": {
+    "municipio": "Forallac",
+    "provincia": "girona",
+    "deuda_eur": 0.0
+   },
+   "sant julia del llor i bonmati": {
+    "municipio": "Sant Julià del Llor i Bonmatí",
+    "provincia": "girona",
+    "deuda_eur": 176610.0
+   },
+   "abanilla": {
+    "municipio": "Abanilla",
+    "provincia": "murcia",
+    "deuda_eur": 0.0
+   },
+   "abaran": {
+    "municipio": "Abarán",
+    "provincia": "murcia",
+    "deuda_eur": 4090029.77
+   },
+   "aguilas": {
+    "municipio": "Águilas",
+    "provincia": "murcia",
+    "deuda_eur": 0.0
+   },
+   "albudeite": {
+    "municipio": "Albudeite",
+    "provincia": "murcia",
+    "deuda_eur": 948461.55
+   },
+   "alcantarilla": {
+    "municipio": "Alcantarilla",
+    "provincia": "murcia",
+    "deuda_eur": 11566039.21
+   },
+   "aledo": {
+    "municipio": "Aledo",
+    "provincia": "murcia",
+    "deuda_eur": 2644289.86
+   },
+   "alguazas": {
+    "municipio": "Alguazas",
+    "provincia": "murcia",
+    "deuda_eur": 2746152.49
+   },
+   "alhama de murcia": {
+    "municipio": "Alhama de Murcia",
+    "provincia": "murcia",
+    "deuda_eur": 126245.0
+   },
+   "archena": {
+    "municipio": "Archena",
+    "provincia": "murcia",
+    "deuda_eur": 16477790.37
+   },
+   "beniel": {
+    "municipio": "Beniel",
+    "provincia": "murcia",
+    "deuda_eur": 6105184.5
+   },
+   "blanca": {
+    "municipio": "Blanca",
+    "provincia": "murcia",
+    "deuda_eur": 589570.0
+   },
+   "bullas": {
+    "municipio": "Bullas",
+    "provincia": "murcia",
+    "deuda_eur": 3614004.44
+   },
+   "calasparra": {
+    "municipio": "Calasparra",
+    "provincia": "murcia",
+    "deuda_eur": 4864080.09
+   },
+   "campos del rio": {
+    "municipio": "Campos del Río",
+    "provincia": "murcia",
+    "deuda_eur": 4639704.91
+   },
+   "caravaca de la cruz": {
+    "municipio": "Caravaca de la Cruz",
+    "provincia": "murcia",
+    "deuda_eur": 24047308.8
+   },
+   "cartagena": {
+    "municipio": "Cartagena",
+    "provincia": "murcia",
+    "deuda_eur": 55721844.0
+   },
+   "cehegin": {
+    "municipio": "Cehegín",
+    "provincia": "murcia",
+    "deuda_eur": 10123094.35
+   },
+   "ceuti": {
+    "municipio": "Ceutí",
+    "provincia": "murcia",
+    "deuda_eur": 30475330.27
+   },
+   "cieza": {
+    "municipio": "Cieza",
+    "provincia": "murcia",
+    "deuda_eur": 206540.0
+   },
+   "fortuna": {
+    "municipio": "Fortuna",
+    "provincia": "murcia",
+    "deuda_eur": 0.0
+   },
+   "fuente alamo de murcia": {
+    "municipio": "Fuente Álamo de Murcia",
+    "provincia": "murcia",
+    "deuda_eur": 8622687.18
+   },
+   "jumilla": {
+    "municipio": "Jumilla",
+    "provincia": "murcia",
+    "deuda_eur": 0.0
+   },
+   "librilla": {
+    "municipio": "Librilla",
+    "provincia": "murcia",
+    "deuda_eur": 3922860.68
+   },
+   "lorca": {
+    "municipio": "Lorca",
+    "provincia": "murcia",
+    "deuda_eur": 23696906.05
+   },
+   "lorqui": {
+    "municipio": "Lorquí",
+    "provincia": "murcia",
+    "deuda_eur": 4139608.0
+   },
+   "mazarron": {
+    "municipio": "Mazarrón",
+    "provincia": "murcia",
+    "deuda_eur": 36629.0
+   },
+   "molina de segura": {
+    "municipio": "Molina de Segura",
+    "provincia": "murcia",
+    "deuda_eur": 14980890.0
+   },
+   "moratalla": {
+    "municipio": "Moratalla",
+    "provincia": "murcia",
+    "deuda_eur": 21650828.95
+   },
+   "mula": {
+    "municipio": "Mula",
+    "provincia": "murcia",
+    "deuda_eur": 7710192.0
+   },
+   "murcia": {
+    "municipio": "Murcia",
+    "provincia": "murcia",
+    "deuda_eur": 250758861.17
+   },
+   "ojos": {
+    "municipio": "Ojós",
+    "provincia": "murcia",
+    "deuda_eur": 0.0
+   },
+   "pliego": {
+    "municipio": "Pliego",
+    "provincia": "murcia",
+    "deuda_eur": 394069.0
+   },
+   "puerto lumbreras": {
+    "municipio": "Puerto Lumbreras",
+    "provincia": "murcia",
+    "deuda_eur": 2582024.86
+   },
+   "ricote": {
+    "municipio": "Ricote",
+    "provincia": "murcia",
+    "deuda_eur": 29999.0
+   },
+   "san javier": {
+    "municipio": "San Javier",
+    "provincia": "murcia",
+    "deuda_eur": 19096907.0
+   },
+   "san pedro del pinatar": {
+    "municipio": "San Pedro del Pinatar",
+    "provincia": "murcia",
+    "deuda_eur": 13200738.19
+   },
+   "torre pacheco": {
+    "municipio": "Torre Pacheco",
+    "provincia": "murcia",
+    "deuda_eur": 15560332.64
+   },
+   "las torres de cotillas": {
+    "municipio": "Las Torres de Cotillas",
+    "provincia": "murcia",
+    "deuda_eur": 507835.0
+   },
+   "totana": {
+    "municipio": "Totana",
+    "provincia": "murcia",
+    "deuda_eur": 105126477.52
+   },
+   "ulea": {
+    "municipio": "Ulea",
+    "provincia": "murcia",
+    "deuda_eur": 0.0
+   },
+   "la union": {
+    "municipio": "La Unión",
+    "provincia": "murcia",
+    "deuda_eur": 1945270.38
+   },
+   "villanueva del rio segura": {
+    "municipio": "Villanueva del Río Segura",
+    "provincia": "murcia",
+    "deuda_eur": 9257281.02
+   },
+   "yecla": {
+    "municipio": "Yecla",
+    "provincia": "murcia",
+    "deuda_eur": 11493686.0
+   },
+   "santomera": {
+    "municipio": "Santomera",
+    "provincia": "murcia",
+    "deuda_eur": 4767333.0
+   },
+   "los alcazares": {
+    "municipio": "Los Alcázares",
+    "provincia": "murcia",
+    "deuda_eur": 6183649.87
+   }
+  }
+ },
+ "saldo_no_financiero": {
+  "municipios": {
+   "agullana": {
+    "municipio": "Agullana",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 200006.52,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "aiguaviva": {
+    "municipio": "Aiguaviva",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 251472.51,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "albanya": {
+    "municipio": "Albanyà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 104924.59,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "albons": {
+    "municipio": "Albons",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 40647.76,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "alp": {
+    "municipio": "Alp",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 64477.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "amer": {
+    "municipio": "Amer",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -957681.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "angles": {
+    "municipio": "Anglès",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 419499.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "arbucies": {
+    "municipio": "Arbúcies",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 1360921.08,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "argelaguer": {
+    "municipio": "Argelaguer",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 200976.48,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "armentera, l'": {
+    "municipio": "Armentera, l'",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 104320.24,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "avinyonet de puigventos": {
+    "municipio": "Avinyonet de Puigventós",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 928.73,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "begur": {
+    "municipio": "Begur",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -3863649.44,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vajol, la": {
+    "municipio": "Vajol, la",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 103617.33,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "banyoles": {
+    "municipio": "Banyoles",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -2284257.35,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bascara": {
+    "municipio": "Bàscara",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 151462.42,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bellcaire d'emporda": {
+    "municipio": "Bellcaire d'Empordà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -23060.48,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "besalu": {
+    "municipio": "Besalú",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 40026.41,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bescano": {
+    "municipio": "Bescanó",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -683063.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "beuda": {
+    "municipio": "Beuda",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -57563.24,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bisbal d'emporda, la": {
+    "municipio": "Bisbal d'Empordà, la",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -178581.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "blanes": {
+    "municipio": "Blanes",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 12037439.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bolvir": {
+    "municipio": "Bolvir",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -306717.68,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bordils": {
+    "municipio": "Bordils",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 173055.66,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "borrassa": {
+    "municipio": "Borrassà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 70817.09,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "breda": {
+    "municipio": "Breda",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 199864.09,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "brunyola i sant marti sapresa": {
+    "municipio": "Brunyola i Sant Martí Sapresa",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 206477.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "boadella i les escaules": {
+    "municipio": "Boadella i les Escaules",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -252719.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabanes": {
+    "municipio": "Cabanes",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 11992.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabanelles": {
+    "municipio": "Cabanelles",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 30782.1,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "caldes de malavella": {
+    "municipio": "Caldes de Malavella",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -967483.22,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "camos": {
+    "municipio": "Camós",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -25818.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "campdevanol": {
+    "municipio": "Campdevànol",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 158015.26,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "campelles": {
+    "municipio": "Campelles",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 100999.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "campllong": {
+    "municipio": "Campllong",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -8090.55,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "camprodon": {
+    "municipio": "Camprodon",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 392738.0,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "canet d'adri": {
+    "municipio": "Canet d'Adri",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -21631.54,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cantallops": {
+    "municipio": "Cantallops",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -403447.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "capmany": {
+    "municipio": "Capmany",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 33786.67,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "queralbs": {
+    "municipio": "Queralbs",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 577351.65,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cassa de la selva": {
+    "municipio": "Cassà de la Selva",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 478650.34,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "castellfollit de la roca": {
+    "municipio": "Castellfollit de la Roca",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 97474.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "castello d'empuries": {
+    "municipio": "Castelló d'Empúries",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 2268821.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "castell d'aro, platja d'aro i s'agaro": {
+    "municipio": "Castell d'Aro, Platja d'Aro i s'Agaró",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 6382780.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "celra": {
+    "municipio": "Celrà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 973641.66,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cervia de ter": {
+    "municipio": "Cervià de Ter",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 32009.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cistella": {
+    "municipio": "Cistella",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 66741.31,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "siurana": {
+    "municipio": "Siurana",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 93225.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "colera": {
+    "municipio": "Colera",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -972451.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "colomers": {
+    "municipio": "Colomers",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 39079.51,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cornella del terri": {
+    "municipio": "Cornellà del Terri",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 281050.52,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "corca": {
+    "municipio": "Corçà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -156593.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "crespia": {
+    "municipio": "Crespià",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 43293.33,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "darnius": {
+    "municipio": "Darnius",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 134766.77,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "das": {
+    "municipio": "Das",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -540891.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "escala, l'": {
+    "municipio": "Escala, l'",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -325760.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "espinelves": {
+    "municipio": "Espinelves",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 69357.88,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "espolla": {
+    "municipio": "Espolla",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 59502.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "esponella": {
+    "municipio": "Esponellà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 210371.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "figueres": {
+    "municipio": "Figueres",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 4316554.85,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "flaca": {
+    "municipio": "Flaçà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -287.14,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "foixa": {
+    "municipio": "Foixà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -78960.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fontanals de cerdanya": {
+    "municipio": "Fontanals de Cerdanya",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 151106.32,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fontanilles": {
+    "municipio": "Fontanilles",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 78494.59,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fontcoberta": {
+    "municipio": "Fontcoberta",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 75789.52,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fornells de la selva": {
+    "municipio": "Fornells de la Selva",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -302105.44,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fortia": {
+    "municipio": "Fortià",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 235881.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "garrigas": {
+    "municipio": "Garrigàs",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -13376.3,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "garrigoles": {
+    "municipio": "Garrigoles",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -11082.28,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "garriguella": {
+    "municipio": "Garriguella",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 47949.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ger": {
+    "municipio": "Ger",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -211040.47,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "girona": {
+    "municipio": "Girona",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 376428.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "gualta": {
+    "municipio": "Gualta",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 90977.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "guils de cerdanya": {
+    "municipio": "Guils de Cerdanya",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -50940.45,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "hostalric": {
+    "municipio": "Hostalric",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 2864493.25,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "isovol": {
+    "municipio": "Isòvol",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 49385.24,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "jafre": {
+    "municipio": "Jafre",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -16188.1,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "jonquera, la": {
+    "municipio": "Jonquera, la",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 970308.79,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "juia": {
+    "municipio": "Juià",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 180828.26,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "llado": {
+    "municipio": "Lladó",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -253765.51,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "llagostera": {
+    "municipio": "Llagostera",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 432192.68,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "llambilles": {
+    "municipio": "Llambilles",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 168001.6,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "llanars": {
+    "municipio": "Llanars",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -251762.35,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "llanca": {
+    "municipio": "Llançà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 938967.22,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "llers": {
+    "municipio": "Llers",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 113417.75,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "llivia": {
+    "municipio": "Llívia",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 681309.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "lloret de mar": {
+    "municipio": "Lloret de Mar",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 2809615.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "llosses, les": {
+    "municipio": "Llosses, les",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 88188.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "maia de montcal": {
+    "municipio": "Maià de Montcal",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 100925.58,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "massanes": {
+    "municipio": "Massanes",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 126204.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "macanet de cabrenys": {
+    "municipio": "Maçanet de Cabrenys",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 107756.48,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "macanet de la selva": {
+    "municipio": "Maçanet de la Selva",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 275080.03,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "mieres": {
+    "municipio": "Mieres",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -2813.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "mollet de peralada": {
+    "municipio": "Mollet de Peralada",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 11237.34,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "mollo": {
+    "municipio": "Molló",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 92812.62,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "montagut i oix": {
+    "municipio": "Montagut i Oix",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 598218.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "mont-ras": {
+    "municipio": "Mont-ras",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 347110.31,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "navata": {
+    "municipio": "Navata",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -67947.06,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ogassa": {
+    "municipio": "Ogassa",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 67838.75,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "olot": {
+    "municipio": "Olot",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 5434582.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ordis": {
+    "municipio": "Ordis",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 60390.52,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "osor": {
+    "municipio": "Osor",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 82692.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "palafrugell": {
+    "municipio": "Palafrugell",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -316329.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "palamos": {
+    "municipio": "Palamós",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -1614385.95,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "palau de santa eulalia": {
+    "municipio": "Palau de Santa Eulàlia",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -47520.36,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "palau-saverdera": {
+    "municipio": "Palau-saverdera",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 572636.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "palau-sator": {
+    "municipio": "Palau-sator",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 329919.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "palol de revardit": {
+    "municipio": "Palol de Revardit",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 708069.62,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pals": {
+    "municipio": "Pals",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 730363.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pardines": {
+    "municipio": "Pardines",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 371752.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "parlava": {
+    "municipio": "Parlavà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 72853.5,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pau": {
+    "municipio": "Pau",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -8942.19,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pedret i marza": {
+    "municipio": "Pedret i Marzà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -348754.57,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pera, la": {
+    "municipio": "Pera, la",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -56035.14,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "peralada": {
+    "municipio": "Peralada",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -158536.48,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "planes d'hostoles, les": {
+    "municipio": "Planes d'Hostoles, les",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -115046.32,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pont de molins": {
+    "municipio": "Pont de Molins",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 213971.06,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pontos": {
+    "municipio": "Pontós",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 54195.5,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "porqueres": {
+    "municipio": "Porqueres",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -79484.28,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "portbou": {
+    "municipio": "Portbou",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -161208.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "preses, les": {
+    "municipio": "Preses, les",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -497832.67,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "port de la selva, el": {
+    "municipio": "Port de la Selva, el",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 676026.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "quart": {
+    "municipio": "Quart",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 782883.19,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "rabos": {
+    "municipio": "Rabós",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 31906.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "regencos": {
+    "municipio": "Regencós",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 71786.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ribes de freser": {
+    "municipio": "Ribes de Freser",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 56887.54,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "riells i viabrea": {
+    "municipio": "Riells i Viabrea",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 157144.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ripoll": {
+    "municipio": "Ripoll",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 1479308.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "riudarenes": {
+    "municipio": "Riudarenes",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 102312.5,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "riudaura": {
+    "municipio": "Riudaura",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 99897.03,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "riudellots de la selva": {
+    "municipio": "Riudellots de la Selva",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 473183.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "riumors": {
+    "municipio": "Riumors",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 20034.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "roses": {
+    "municipio": "Roses",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 6201458.59,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "rupia": {
+    "municipio": "Rupià",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 127303.25,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sales de llierca": {
+    "municipio": "Sales de Llierca",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 70381.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "salt": {
+    "municipio": "Salt",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 4707434.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant andreu salou": {
+    "municipio": "Sant Andreu Salou",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -65295.89,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant climent sescebes": {
+    "municipio": "Sant Climent Sescebes",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -586.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant feliu de buixalleu": {
+    "municipio": "Sant Feliu de Buixalleu",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 133820.34,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant feliu de guixols": {
+    "municipio": "Sant Feliu de Guíxols",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 3476911.32,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant feliu de pallerols": {
+    "municipio": "Sant Feliu de Pallerols",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 553880.86,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant ferriol": {
+    "municipio": "Sant Ferriol",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 249973.34,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant gregori": {
+    "municipio": "Sant Gregori",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -253973.4,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant hilari sacalm": {
+    "municipio": "Sant Hilari Sacalm",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -1209783.9,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant jordi desvalls": {
+    "municipio": "Sant Jordi Desvalls",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -92826.88,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant joan de les abadesses": {
+    "municipio": "Sant Joan de les Abadesses",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -761049.44,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant joan de mollet": {
+    "municipio": "Sant Joan de Mollet",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 41955.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant julia de ramis": {
+    "municipio": "Sant Julià de Ramis",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 475840.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vallfogona de ripolles": {
+    "municipio": "Vallfogona de Ripollès",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 110769.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant llorenc de la muga": {
+    "municipio": "Sant Llorenç de la Muga",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 36086.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant marti de llemena": {
+    "municipio": "Sant Martí de Llémena",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 277495.26,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant marti vell": {
+    "municipio": "Sant Martí Vell",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -288663.92,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant miquel de campmajor": {
+    "municipio": "Sant Miquel de Campmajor",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 18560.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant miquel de fluvia": {
+    "municipio": "Sant Miquel de Fluvià",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 32235.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant mori": {
+    "municipio": "Sant Mori",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 71350.44,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant pau de seguries": {
+    "municipio": "Sant Pau de Segúries",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 214427.9,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant pere pescador": {
+    "municipio": "Sant Pere Pescador",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -278418.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santa coloma de farners": {
+    "municipio": "Santa Coloma de Farners",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -5052415.67,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santa cristina d'aro": {
+    "municipio": "Santa Cristina d'Aro",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -1355618.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santa llogaia d'alguema": {
+    "municipio": "Santa Llogaia d'Àlguema",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 121407.1,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant aniol de finestres": {
+    "municipio": "Sant Aniol de Finestres",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -520450.62,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santa pau": {
+    "municipio": "Santa Pau",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 37189.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant joan les fonts": {
+    "municipio": "Sant Joan les Fonts",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 1352257.33,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sarria de ter": {
+    "municipio": "Sarrià de Ter",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 580150.45,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "saus, camallera i llampaies": {
+    "municipio": "Saus, Camallera i Llampaies",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -89934.06,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "selva de mar, la": {
+    "municipio": "Selva de Mar, la",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 53020.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cellera de ter, la": {
+    "municipio": "Cellera de Ter, la",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 212143.76,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "serinya": {
+    "municipio": "Serinyà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 82772.79,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "serra de daro": {
+    "municipio": "Serra de Daró",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 48413.42,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "setcases": {
+    "municipio": "Setcases",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 14814.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sils": {
+    "municipio": "Sils",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -29311.97,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "susqueda": {
+    "municipio": "Susqueda",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -134580.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "tallada d'emporda, la": {
+    "municipio": "Tallada d'Empordà, la",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 97943.04,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "terrades": {
+    "municipio": "Terrades",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -28102.44,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torrent": {
+    "municipio": "Torrent",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 58235.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torroella de fluvia": {
+    "municipio": "Torroella de Fluvià",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -107697.08,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torroella de montgri": {
+    "municipio": "Torroella de Montgrí",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 431607.76,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "tortella": {
+    "municipio": "Tortellà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 124406.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "toses": {
+    "municipio": "Toses",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -53141.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "tossa de mar": {
+    "municipio": "Tossa de Mar",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 1539873.91,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ultramort": {
+    "municipio": "Ultramort",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 1779.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ulla": {
+    "municipio": "Ullà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -62861.92,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ullastret": {
+    "municipio": "Ullastret",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 105781.39,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "urus": {
+    "municipio": "Urús",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 216126.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vall d'en bas, la": {
+    "municipio": "Vall d'en Bas, la",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 60540.07,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vall de bianya, la": {
+    "municipio": "Vall de Bianya, la",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -302177.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vall-llobrega": {
+    "municipio": "Vall-llobrega",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 612406.15,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ventallo": {
+    "municipio": "Ventalló",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -266164.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "verges": {
+    "municipio": "Verges",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 213479.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vidra": {
+    "municipio": "Vidrà",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 373037.45,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vidreres": {
+    "municipio": "Vidreres",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 724378.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilabertran": {
+    "municipio": "Vilabertran",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 103807.58,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilablareix": {
+    "municipio": "Vilablareix",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 513515.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "viladamat": {
+    "municipio": "Viladamat",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 94373.33,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilademuls": {
+    "municipio": "Vilademuls",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 100458.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "viladrau": {
+    "municipio": "Viladrau",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -385077.08,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilafant": {
+    "municipio": "Vilafant",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 902667.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilaur": {
+    "municipio": "Vilaür",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 220062.73,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilajuiga": {
+    "municipio": "Vilajuïga",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -230887.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilallonga de ter": {
+    "municipio": "Vilallonga de Ter",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -423047.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilamacolum": {
+    "municipio": "Vilamacolum",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 97146.82,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilamalla": {
+    "municipio": "Vilamalla",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 844054.47,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilamaniscle": {
+    "municipio": "Vilamaniscle",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 19041.79,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilanant": {
+    "municipio": "Vilanant",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -168210.91,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vila-sacra": {
+    "municipio": "Vila-sacra",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 208124.34,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilopriu": {
+    "municipio": "Vilopriu",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 246093.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vilobi d'onyar": {
+    "municipio": "Vilobí d'Onyar",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 77068.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "biure": {
+    "municipio": "Biure",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -175385.95,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cruilles, monells i sant sadurni de l'heura": {
+    "municipio": "Cruïlles, Monells i Sant Sadurní de l'Heura",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 139687.05,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "forallac": {
+    "municipio": "Forallac",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 1782367.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant julia del llor i bonmati": {
+    "municipio": "Sant Julià del Llor i Bonmatí",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": -482323.79,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "aguilas": {
+    "municipio": "Águilas",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 4991712.18,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "alcantarilla": {
+    "municipio": "Alcantarilla",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 7481848.75,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "archena": {
+    "municipio": "Archena",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 1700094.08,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "beniel": {
+    "municipio": "Beniel",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 74980.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "blanca": {
+    "municipio": "Blanca",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 802796.32,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bullas": {
+    "municipio": "Bullas",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 4451056.01,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "caravaca de la cruz": {
+    "municipio": "Caravaca de la Cruz",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": -518932.47,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cartagena": {
+    "municipio": "Cartagena",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": -6874997.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ceuti": {
+    "municipio": "Ceutí",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 975284.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fortuna": {
+    "municipio": "Fortuna",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": -496285.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fuente alamo de murcia": {
+    "municipio": "Fuente Álamo de Murcia",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 1368046.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "jumilla": {
+    "municipio": "Jumilla",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 466203.75,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "lorca": {
+    "municipio": "Lorca",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 5176237.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "lorqui": {
+    "municipio": "Lorquí",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": -1165795.72,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "molina de segura": {
+    "municipio": "Molina de Segura",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": -277515.35,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "moratalla": {
+    "municipio": "Moratalla",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 285591.41,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "mula": {
+    "municipio": "Mula",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 2104664.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "murcia": {
+    "municipio": "Murcia",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 21024559.15,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "puerto lumbreras": {
+    "municipio": "Puerto Lumbreras",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 2268832.22,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ricote": {
+    "municipio": "Ricote",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 154268.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "san javier": {
+    "municipio": "San Javier",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": -8679007.35,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torre pacheco": {
+    "municipio": "Torre Pacheco",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 3606395.0,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "totana": {
+    "municipio": "Totana",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 1752604.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la union": {
+    "municipio": "La Unión",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 4080698.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villanueva del rio segura": {
+    "municipio": "Villanueva del Río Segura",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": 115063.11,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "yecla": {
+    "municipio": "Yecla",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": -3175928.72,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "los alcazares": {
+    "municipio": "Los Alcázares",
+    "provincia": "murcia",
+    "ejercicio": 2025,
+    "importe_eur": -2015204.73,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "far d'emporda, el": {
+    "municipio": "Far d'Empordà, el",
+    "provincia": "girona",
+    "ejercicio": 2024,
+    "importe_eur": 225730.79,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "cadaques": {
+    "municipio": "Cadaqués",
+    "provincia": "girona",
+    "ejercicio": 2024,
+    "importe_eur": -1620107.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "calonge i sant antoni": {
+    "municipio": "Calonge i Sant Antoni",
+    "provincia": "girona",
+    "ejercicio": 2024,
+    "importe_eur": 2363642.82,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "gombren": {
+    "municipio": "Gombrèn",
+    "provincia": "girona",
+    "ejercicio": 2024,
+    "importe_eur": 200301.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "madremanya": {
+    "municipio": "Madremanya",
+    "provincia": "girona",
+    "ejercicio": 2024,
+    "importe_eur": 87270.89,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "masarac i vilarnadal": {
+    "municipio": "Masarac i Vilarnadal",
+    "provincia": "girona",
+    "ejercicio": 2024,
+    "importe_eur": 11880.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "planoles": {
+    "municipio": "Planoles",
+    "provincia": "girona",
+    "ejercicio": 2024,
+    "importe_eur": 71624.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "sant jaume de llierca": {
+    "municipio": "Sant Jaume de Llierca",
+    "provincia": "girona",
+    "ejercicio": 2024,
+    "importe_eur": -452927.92,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "viladasens": {
+    "municipio": "Viladasens",
+    "provincia": "girona",
+    "ejercicio": 2024,
+    "importe_eur": 145992.32,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "abanilla": {
+    "municipio": "Abanilla",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": -599674.05,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "alguazas": {
+    "municipio": "Alguazas",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": -923655.25,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "alhama de murcia": {
+    "municipio": "Alhama de Murcia",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": 3128434.15,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "calasparra": {
+    "municipio": "Calasparra",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": -45100.54,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "campos del rio": {
+    "municipio": "Campos del Río",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": -214260.65,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "cehegin": {
+    "municipio": "Cehegín",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": 1175504.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "cieza": {
+    "municipio": "Cieza",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": 3431859.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "ojos": {
+    "municipio": "Ojós",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": 226097.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "pliego": {
+    "municipio": "Pliego",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": 556342.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "san pedro del pinatar": {
+    "municipio": "San Pedro del Pinatar",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": 6309179.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "las torres de cotillas": {
+    "municipio": "Las Torres de Cotillas",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": 3950974.62,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "ulea": {
+    "municipio": "Ulea",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": 174804.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "santomera": {
+    "municipio": "Santomera",
+    "provincia": "murcia",
+    "ejercicio": 2024,
+    "importe_eur": -175057.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   }
+  }
+ }
+}
