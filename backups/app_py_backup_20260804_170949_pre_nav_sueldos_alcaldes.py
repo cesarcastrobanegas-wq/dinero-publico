@@ -4613,7 +4613,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .top1-empresa:hover{color:var(--accent);text-decoration:underline;}
 .top1-valor{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--green);font-weight:600;margin-bottom:4px;}
 .top1-directivo{font-size:12px;color:var(--blue);}
-.rk-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:32px 0 4px;padding-bottom:10px;border-bottom:2px solid var(--accent);scroll-margin-top:96px;}
+.rk-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:32px 0 4px;padding-bottom:10px;border-bottom:2px solid var(--accent);}
 .rk-section-header h2{font-size:18px;color:var(--text);}
 .rk-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 10px;}
 .muni-tile a.btn-ver:hover{background:rgba(240,136,62,.22);}
@@ -5130,7 +5130,6 @@ def _header_html(provincia="todas"):
   </a>
   <nav class="header-nav">
     <a href="{rankings_href}">🏆 Rankings</a>
-    <a href="{rankings_href}#alcaldes">💰 Sueldos Alcaldes</a>
     <a href="/fondos-ue" style="color:var(--yellow)">🇪🇺 Fondos UE</a>
   </nav>
 </header>"""
@@ -5480,7 +5479,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     {tabla_imp_prov}
   </table></div>
 
-  <div class="rk-section-header" id="alcaldes">
+  <div class="rk-section-header">
     <h2>💰 Ranking de Sueldos: Alcaldes y Alcaldesas</h2>
     <span class="rk-badge">ISPA {esc(anio_ispa)} · {len(ranking_alcaldes)} municipios con dato</span>
   </div>
