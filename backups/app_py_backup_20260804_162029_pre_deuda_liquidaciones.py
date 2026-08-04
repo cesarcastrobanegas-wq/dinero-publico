@@ -40,7 +40,6 @@ ALCALDES_FILE = os.path.join(BASE_DIR, "alcaldes_concejales.json")
 RETRIBUCIONES_FILE = os.path.join(BASE_DIR, "retribuciones_ispa.json")
 CONTRATOS_MENORES_MURCIA_MANUAL_FILE = os.path.join(BASE_DIR, "contratos_menores_murcia_manual.json")
 CUENTAS_ANUALES_FILE = os.path.join(BASE_DIR, "cuentas_anuales.json")
-HACIENDA_EELL_FILE = os.path.join(BASE_DIR, "hacienda_eell.json")
 # place_cache/ (ZIPs mensuales de PLACE, ~127 MB cada uno) NO se siembra
 # desde el repo -- está en .gitignore a propósito (nunca se ha commiteado,
 # a diferencia de cache.db) y no tiene sentido empezar a versionar binarios
@@ -445,28 +444,6 @@ def _cargar_cuentas_anuales():
 
 
 CUENTAS_ANUALES = _cargar_cuentas_anuales()
-
-
-def _cargar_hacienda_eell():
-    """Carga hacienda_eell.json (generado por actualizar_deuda_y_liquidaciones.py):
-    deuda viva municipal y saldo presupuestario no financiero (superávit/
-    déficit), ambos del Ministerio de Hacienda -- ver docstring de ese
-    script sobre por qué esta fuente sí trae el importe que rendiciondecuentas.es
-    no puede dar. Mismo patrón estático/periódico que CUENTAS_ANUALES."""
-    if os.path.exists(HACIENDA_EELL_FILE):
-        try:
-            with open(HACIENDA_EELL_FILE, encoding="utf-8") as f:
-                d = json.load(f)
-                if isinstance(d, dict):
-                    return (d.get("deuda_viva", {}).get("municipios", {}),
-                            d.get("deuda_viva", {}).get("fuente_url", ""),
-                            d.get("saldo_no_financiero", {}).get("municipios", {}))
-        except Exception:
-            pass
-    return {}, "", {}
-
-
-DEUDA_VIVA, DEUDA_VIVA_FUENTE_URL, SALDO_NO_FINANCIERO = _cargar_hacienda_eell()
 
 
 def _construir_indice_cargos_publicos():
@@ -5710,31 +5687,6 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                                  f'class="cuentas-link" title="Cuenta General y resultado de las '
                                  f'cuentas anuales en la Plataforma de Rendición de Cuentas">'
                                  f'📊 Cuentas anuales ↗</a>')
-        # Importe (saldo no financiero, superávit/déficit real del último
-        # ejercicio remitido) y deuda viva municipal -- Ministerio de
-        # Hacienda, ver actualizar_deuda_y_liquidaciones.py. No todos los
-        # municipios tienen saldo (algunos no han remitido ningún ejercicio
-        # de los probados todavía), por eso se comprueba aparte de deuda.
-        saldo_html = ""
-        deuda_html = ""
-        if not es_pseudo_municipio(muni_name):
-            saldo_info = SALDO_NO_FINANCIERO.get(normalizar(muni_name))
-            if saldo_info and saldo_info.get("importe_eur") is not None:
-                ejercicio_saldo = saldo_info.get("ejercicio", "")
-                importe_saldo = saldo_info["importe_eur"]
-                fuente_saldo = saldo_info.get("fuente_url", "")
-                etiqueta = "Superávit" if importe_saldo >= 0 else "Déficit"
-                saldo_html = (f'<a href="{esc(fuente_saldo)}" target="_blank" rel="noopener" '
-                               f'class="cuentas-link" title="Saldo presupuestario no financiero '
-                               f'({etiqueta.lower()}) del ejercicio {esc(ejercicio_saldo)}, '
-                               f'Ministerio de Hacienda">'
-                               f'💶 {etiqueta} {esc(ejercicio_saldo)}: {fmt_eur(abs(importe_saldo))} ↗</a>')
-            deuda_info = DEUDA_VIVA.get(normalizar(muni_name))
-            if deuda_info and DEUDA_VIVA_FUENTE_URL:
-                deuda_html = (f'<a href="{esc(DEUDA_VIVA_FUENTE_URL)}" target="_blank" rel="noopener" '
-                               f'class="cuentas-link" title="Deuda viva municipal a 31/12, '
-                               f'Ministerio de Hacienda">'
-                               f'🏦 Deuda viva: {fmt_eur(deuda_info["deuda_eur"])} ↗</a>')
         age_str       = _cache_age_str(muni_name)
         ts            = d.get("timestamp", 0)
         if not age_str and ts:
@@ -5853,7 +5805,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         cards += f"""<div class="muni-card">
           <div class="muni-header">
             <div>
-              <h2>🏛 {esc(muni_name)} {cuentas_html} {saldo_html} {deuda_html}</h2>
+              <h2>🏛 {esc(muni_name)} {cuentas_html}</h2>
               {alcalde_concejales_html(muni_name)}
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
