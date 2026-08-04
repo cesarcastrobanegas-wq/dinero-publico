@@ -5318,38 +5318,6 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     </tr>"""
 
 
-def _calcular_ranking_alcaldes():
-    """Ranking de sueldos de alcaldes/alcaldesas (ISPA), de mayor a menor
-    importe anual. El nombre/partido viene de ALCALDES_CONCEJALES
-    (concejales.redsara.es) y el importe de RETRIBUCIONES_ISPA (Portal
-    MTDFP) -- dos fuentes distintas, igual que en alcalde_concejales_html(),
-    así que solo entran al ranking los municipios que tienen AMBOS datos.
-    Verificado el 2026-08-04: 239/266 (los otros 27 tienen alcalde/sa
-    identificado pero ISPA no ha publicado o no ha podido atribuir su
-    retribución todavía)."""
-    filas = []
-    for clave, retrib in RETRIBUCIONES_ISPA.items():
-        importe = retrib.get("importe")
-        if importe is None:
-            continue
-        info = ALCALDES_CONCEJALES.get(clave)
-        if not info:
-            continue
-        nombre = (info.get("alcalde") or {}).get("nombre", "")
-        if not nombre:
-            continue
-        filas.append({
-            "nombre": _capitalizar_nombre(nombre),
-            "partido": (info.get("alcalde") or {}).get("partido", ""),
-            "municipio": retrib.get("municipio") or info.get("municipio", ""),
-            "provincia": retrib.get("provincia") or info.get("provincia", ""),
-            "importe": importe,
-            "anio": retrib.get("anio", ""),
-        })
-    filas.sort(key=lambda f: f["importe"], reverse=True)
-    return filas
-
-
 def _calcular_rankings(datos):
     """Agrupa todos los contratos cargados por empresa y devuelve dos listas
     Top 10: por número de contratos y por importe total adjudicado. Cada
@@ -5415,25 +5383,6 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     tabla_n_prov = _filas(top_n_prov, lambda g: f'<b>{g["n"]}</b> contratos', q_prov=q_prov_link)
     tabla_imp_prov = _filas(top_imp_prov, lambda g: fmt_eur(str(g["importe"])), q_prov=q_prov_link)
 
-    ranking_alcaldes = _calcular_ranking_alcaldes()
-    anio_ispa = next((f["anio"] for f in ranking_alcaldes if f.get("anio")), "")
-    filas_alcaldes_html = ""
-    for i, f in enumerate(ranking_alcaldes, 1):
-        pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
-        muni_q = quote_plus(f["municipio"])
-        q_prov_muni = "&provincia=girona" if f["provincia"] == "girona" else ""
-        partido_html = (esc(f["partido"]) if f["partido"]
-                         else '<span class="noloc-warn">Sin partido registrado</span>')
-        filas_alcaldes_html += f"""<tr>
-          <td class="rk-pos">{pos}</td>
-          <td><b class="pol-nombre">{esc(f['nombre'])}</b></td>
-          <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
-          <td>{partido_html}</td>
-          <td class="rk-valor">{fmt_eur(f['importe'])}/año</td>
-        </tr>"""
-    if not filas_alcaldes_html:
-        filas_alcaldes_html = '<tr><td colspan="5" class="empty">Aún no hay datos suficientes.</td></tr>'
-
     selector_prov = "".join(
         f'<a href="/rankings?provincia={prov}" class="prov-tab{" active" if prov == provincia_prov else ""}">'
         f'{esc(PROVINCIA_LABEL.get(prov, prov))}</a>'
@@ -5477,16 +5426,6 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
   <div class="muni-card"><table>
     <tr><th>#</th><th>Empresa</th><th>Importe total</th><th>Directivo / Cargo</th></tr>
     {tabla_imp_prov}
-  </table></div>
-
-  <div class="rk-section-header">
-    <h2>💰 Ranking de Sueldos: Alcaldes y Alcaldesas</h2>
-    <span class="rk-badge">ISPA {esc(anio_ispa)} · {len(ranking_alcaldes)} municipios con dato</span>
-  </div>
-  <div class="section-title">De mayor a menor retribución anual (Murcia + Girona)</div>
-  <div class="muni-card"><table>
-    <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th></tr>
-    {filas_alcaldes_html}
   </table></div>"""
 
     return _page_shell("Rankings — Top 10 empresas", body,
