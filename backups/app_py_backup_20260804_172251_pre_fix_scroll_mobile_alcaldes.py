@@ -4707,12 +4707,6 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .logo-svg svg{width:96px;}
   .header-nav{flex:1 1 100%;flex-wrap:wrap;justify-content:flex-start;}
   .header-nav>a{padding:7px 10px;font-size:11px;}
-  /* El header sticky es más alto en móvil que en escritorio (el nav pasa
-     a su propia fila bajo el logo) -- verificado con Playwright a 390px
-     de ancho (2026-08-04): header real ~116px, el scroll-margin-top:96px
-     pensado para escritorio dejaba el título de #alcaldes tapado ~20px
-     bajo el header al saltar desde el enlace del menú. */
-  .rk-section-header{scroll-margin-top:130px;}
   .prov-tab{padding:7px 10px;font-size:11px;}
   .main{padding:0 12px;margin:18px auto;max-width:100%;}
   .hero{padding:22px 6px 4px;}
