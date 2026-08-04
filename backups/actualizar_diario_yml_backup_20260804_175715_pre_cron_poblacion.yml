@@ -90,30 +90,6 @@ jobs:
             echo "hacienda_eell.json commiteado y pusheado."
           fi
 
-      - name: Refrescar población oficial (INE, Padrón Municipal)
-        run: |
-          set -uo pipefail
-          # Mismo criterio que el paso de Hacienda de arriba: independiente
-          # del resto (no habla con la app en producción), fuente propia
-          # (API JSON del INE, ver actualizar_poblacion.py), y no bloquea el
-          # refresco de contratos si falla -- solo usa 'requests', ya en
-          # requirements.txt, no hace falta openpyxl aquí.
-          pip install --quiet -r requirements.txt \
-            || { echo "::warning::No se pudieron instalar dependencias para el refresco de población; se salta."; exit 0; }
-          (cd backend && python actualizar_poblacion.py) \
-            || { echo "::warning::actualizar_poblacion.py falló; se mantiene el poblacion.json existente."; exit 0; }
-
-          git config user.name  "dinero-publico-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add backend/poblacion.json
-          if git diff --cached --quiet; then
-            echo "poblacion.json sin cambios; nada que commitear."
-          else
-            git commit -m "Auto-commit: refresco población oficial (INE, Padrón Municipal)"
-            git push
-            echo "poblacion.json commiteado y pusheado."
-          fi
-
       - name: Refresco secuencial + keep-alive por polling + descarga del cache.db
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
