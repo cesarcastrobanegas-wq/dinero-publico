@@ -58,38 +58,6 @@ jobs:
         with:
           lfs: true
 
-      - name: Refrescar deuda viva y saldo no financiero (Ministerio de Hacienda)
-        run: |
-          set -uo pipefail
-          # Independiente del resto del workflow: no depende de la app en
-          # producción (a diferencia de los pasos de abajo, que hablan con
-          # ${BASE_URL} vía ADMIN_TOKEN) -- descarga directo de
-          # hacienda.gob.es y escribe un JSON estático versionado, mismo
-          # patrón que cuentas_anuales.json/retribuciones_ispa.json (ver
-          # actualizar_deuda_y_liquidaciones.py). Se coloca aquí, antes del
-          # refresco pesado de contratos, para no competir por el
-          # presupuesto de tiempo de ese paso ni arriesgar el reinicio de
-          # contenedor que motivó hacerlo todo secuencial.
-          # Cada `|| exit 0` es a propósito: un fallo aquí (Hacienda cambia
-          # el formato de su página índice, host caído, etc.) no debe
-          # bloquear el refresco de contratos, que es lo crítico del día --
-          # mismo criterio que noticias UE / contractes menors más abajo.
-          pip install --quiet -r requirements.txt openpyxl \
-            || { echo "::warning::No se pudieron instalar dependencias para el refresco de Hacienda; se salta."; exit 0; }
-          (cd backend && python actualizar_deuda_y_liquidaciones.py) \
-            || { echo "::warning::actualizar_deuda_y_liquidaciones.py falló; se mantiene el hacienda_eell.json existente."; exit 0; }
-
-          git config user.name  "dinero-publico-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add backend/hacienda_eell.json
-          if git diff --cached --quiet; then
-            echo "hacienda_eell.json sin cambios; nada que commitear."
-          else
-            git commit -m "Auto-commit: refresco deuda viva y saldo no financiero (Ministerio de Hacienda)"
-            git push
-            echo "hacienda_eell.json commiteado y pusheado."
-          fi
-
       - name: Refresco secuencial + keep-alive por polling + descarga del cache.db
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
