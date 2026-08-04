@@ -41,7 +41,6 @@ RETRIBUCIONES_FILE = os.path.join(BASE_DIR, "retribuciones_ispa.json")
 CONTRATOS_MENORES_MURCIA_MANUAL_FILE = os.path.join(BASE_DIR, "contratos_menores_murcia_manual.json")
 CUENTAS_ANUALES_FILE = os.path.join(BASE_DIR, "cuentas_anuales.json")
 HACIENDA_EELL_FILE = os.path.join(BASE_DIR, "hacienda_eell.json")
-POBLACION_FILE = os.path.join(BASE_DIR, "poblacion.json")
 # place_cache/ (ZIPs mensuales de PLACE, ~127 MB cada uno) NO se siembra
 # desde el repo -- está en .gitignore a propósito (nunca se ha commiteado,
 # a diferencia de cache.db) y no tiene sentido empezar a versionar binarios
@@ -468,25 +467,6 @@ def _cargar_hacienda_eell():
 
 
 DEUDA_VIVA, DEUDA_VIVA_FUENTE_URL, SALDO_NO_FINANCIERO = _cargar_hacienda_eell()
-
-
-def _cargar_poblacion():
-    """Carga poblacion.json (generado por actualizar_poblacion.py): cifra
-    oficial de población de cada municipio (INE, Padrón Municipal) y la URL
-    pública de la tabla del INE de la que sale, una por provincia (no una
-    por municipio, ver docstring de ese script)."""
-    if os.path.exists(POBLACION_FILE):
-        try:
-            with open(POBLACION_FILE, encoding="utf-8") as f:
-                d = json.load(f)
-                if isinstance(d, dict):
-                    return d.get("municipios", {}), d.get("fuente_url", {})
-        except Exception:
-            pass
-    return {}, {}
-
-
-POBLACION, POBLACION_FUENTE_URL = _cargar_poblacion()
 
 
 def _construir_indice_cargos_publicos():
@@ -1348,13 +1328,6 @@ def fmt_eur(valor_str):
         return f"{n:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
     except Exception:
         return str(valor_str)
-
-
-def fmt_num(valor):
-    try:
-        return f"{int(round(float(valor))):,}".replace(",", ".")
-    except Exception:
-        return str(valor)
 
 
 _MESES_ES = ["ene", "feb", "mar", "abr", "may", "jun",
@@ -5798,18 +5771,6 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # Cuentas anuales (Plataforma de Rendición de Cuentas) -- no se
         # muestra en pseudo-municipios ("Región de Murcia", AGE, UMU...): no
         # son ayuntamientos y no tienen ficha propia ahí.
-        # Población oficial (INE, Padrón Municipal) -- ver actualizar_poblacion.py.
-        habitantes_html = ""
-        if not es_pseudo_municipio(muni_name):
-            pob_info = POBLACION.get(normalizar(muni_name))
-            if pob_info:
-                fuente_pob = POBLACION_FUENTE_URL.get(pob_info.get("provincia", ""), "")
-                if fuente_pob:
-                    habitantes_html = (f'<a href="{esc(fuente_pob)}" target="_blank" rel="noopener" '
-                                        f'class="cuentas-link" title="Población oficial a 1 de enero de '
-                                        f'{esc(pob_info.get("anio", ""))} (INE, Padrón Municipal)">'
-                                        f'👥 {fmt_num(pob_info["poblacion"])} hab. ↗</a>')
-
         cuentas_html = ""
         if not es_pseudo_municipio(muni_name):
             cuentas_url = rendicion_cuentas_url(muni_name, d.get("provincia", provincia))
@@ -5839,14 +5800,10 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                                f'💶 {etiqueta} {esc(ejercicio_saldo)}: {fmt_eur(abs(importe_saldo))} ↗</a>')
             deuda_info = DEUDA_VIVA.get(normalizar(muni_name))
             if deuda_info and DEUDA_VIVA_FUENTE_URL:
-                pob_info = POBLACION.get(normalizar(muni_name))
-                por_habitante = ""
-                if pob_info and pob_info.get("poblacion"):
-                    por_habitante = f' ({fmt_eur(deuda_info["deuda_eur"] / pob_info["poblacion"])}/hab.)'
                 deuda_html = (f'<a href="{esc(DEUDA_VIVA_FUENTE_URL)}" target="_blank" rel="noopener" '
                                f'class="cuentas-link" title="Deuda viva municipal a 31/12, '
                                f'Ministerio de Hacienda">'
-                               f'🏦 Deuda viva: {fmt_eur(deuda_info["deuda_eur"])}{por_habitante} ↗</a>')
+                               f'🏦 Deuda viva: {fmt_eur(deuda_info["deuda_eur"])} ↗</a>')
         age_str       = _cache_age_str(muni_name)
         ts            = d.get("timestamp", 0)
         if not age_str and ts:
@@ -5965,7 +5922,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         cards += f"""<div class="muni-card">
           <div class="muni-header">
             <div>
-              <h2>🏛 {esc(muni_name)} {habitantes_html} {cuentas_html} {saldo_html} {deuda_html}</h2>
+              <h2>🏛 {esc(muni_name)} {cuentas_html} {saldo_html} {deuda_html}</h2>
               {alcalde_concejales_html(muni_name)}
             </div>
             <div style="display:flex;gap:8px;align-items:center;">

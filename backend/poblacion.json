@@ -1,0 +1,1605 @@
+{
+ "generado": "2026-08-04 17:44:35",
+ "fuente_url": {
+  "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
+  "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870"
+ },
+ "municipios": {
+  "abanilla": {
+   "municipio": "Abanilla",
+   "provincia": "murcia",
+   "poblacion": 6256,
+   "anio": 2025
+  },
+  "abaran": {
+   "municipio": "Abarán",
+   "provincia": "murcia",
+   "poblacion": 13228,
+   "anio": 2025
+  },
+  "aguilas": {
+   "municipio": "Águilas",
+   "provincia": "murcia",
+   "poblacion": 37811,
+   "anio": 2025
+  },
+  "albudeite": {
+   "municipio": "Albudeite",
+   "provincia": "murcia",
+   "poblacion": 1395,
+   "anio": 2025
+  },
+  "alcantarilla": {
+   "municipio": "Alcantarilla",
+   "provincia": "murcia",
+   "poblacion": 43876,
+   "anio": 2025
+  },
+  "los alcazares": {
+   "municipio": "Los Alcázares",
+   "provincia": "murcia",
+   "poblacion": 20408,
+   "anio": 2025
+  },
+  "aledo": {
+   "municipio": "Aledo",
+   "provincia": "murcia",
+   "poblacion": 1123,
+   "anio": 2025
+  },
+  "alguazas": {
+   "municipio": "Alguazas",
+   "provincia": "murcia",
+   "poblacion": 10431,
+   "anio": 2025
+  },
+  "alhama de murcia": {
+   "municipio": "Alhama de Murcia",
+   "provincia": "murcia",
+   "poblacion": 24163,
+   "anio": 2025
+  },
+  "archena": {
+   "municipio": "Archena",
+   "provincia": "murcia",
+   "poblacion": 20908,
+   "anio": 2025
+  },
+  "beniel": {
+   "municipio": "Beniel",
+   "provincia": "murcia",
+   "poblacion": 11582,
+   "anio": 2025
+  },
+  "blanca": {
+   "municipio": "Blanca",
+   "provincia": "murcia",
+   "poblacion": 6882,
+   "anio": 2025
+  },
+  "bullas": {
+   "municipio": "Bullas",
+   "provincia": "murcia",
+   "poblacion": 12027,
+   "anio": 2025
+  },
+  "calasparra": {
+   "municipio": "Calasparra",
+   "provincia": "murcia",
+   "poblacion": 10391,
+   "anio": 2025
+  },
+  "campos del rio": {
+   "municipio": "Campos del Río",
+   "provincia": "murcia",
+   "poblacion": 2159,
+   "anio": 2025
+  },
+  "caravaca de la cruz": {
+   "municipio": "Caravaca de la Cruz",
+   "provincia": "murcia",
+   "poblacion": 26126,
+   "anio": 2025
+  },
+  "cartagena": {
+   "municipio": "Cartagena",
+   "provincia": "murcia",
+   "poblacion": 220704,
+   "anio": 2025
+  },
+  "cehegin": {
+   "municipio": "Cehegín",
+   "provincia": "murcia",
+   "poblacion": 14506,
+   "anio": 2025
+  },
+  "ceuti": {
+   "municipio": "Ceutí",
+   "provincia": "murcia",
+   "poblacion": 13089,
+   "anio": 2025
+  },
+  "cieza": {
+   "municipio": "Cieza",
+   "provincia": "murcia",
+   "poblacion": 35577,
+   "anio": 2025
+  },
+  "fortuna": {
+   "municipio": "Fortuna",
+   "provincia": "murcia",
+   "poblacion": 11437,
+   "anio": 2025
+  },
+  "fuente alamo de murcia": {
+   "municipio": "Fuente Álamo de Murcia",
+   "provincia": "murcia",
+   "poblacion": 19171,
+   "anio": 2025
+  },
+  "jumilla": {
+   "municipio": "Jumilla",
+   "provincia": "murcia",
+   "poblacion": 27574,
+   "anio": 2025
+  },
+  "librilla": {
+   "municipio": "Librilla",
+   "provincia": "murcia",
+   "poblacion": 5854,
+   "anio": 2025
+  },
+  "lorca": {
+   "municipio": "Lorca",
+   "provincia": "murcia",
+   "poblacion": 98969,
+   "anio": 2025
+  },
+  "lorqui": {
+   "municipio": "Lorquí",
+   "provincia": "murcia",
+   "poblacion": 7946,
+   "anio": 2025
+  },
+  "mazarron": {
+   "municipio": "Mazarrón",
+   "provincia": "murcia",
+   "poblacion": 35449,
+   "anio": 2025
+  },
+  "molina de segura": {
+   "municipio": "Molina de Segura",
+   "provincia": "murcia",
+   "poblacion": 78458,
+   "anio": 2025
+  },
+  "moratalla": {
+   "municipio": "Moratalla",
+   "provincia": "murcia",
+   "poblacion": 7518,
+   "anio": 2025
+  },
+  "mula": {
+   "municipio": "Mula",
+   "provincia": "murcia",
+   "poblacion": 17937,
+   "anio": 2025
+  },
+  "murcia": {
+   "municipio": "Murcia",
+   "provincia": "murcia",
+   "poblacion": 479405,
+   "anio": 2025
+  },
+  "ojos": {
+   "municipio": "Ojós",
+   "provincia": "murcia",
+   "poblacion": 548,
+   "anio": 2025
+  },
+  "pliego": {
+   "municipio": "Pliego",
+   "provincia": "murcia",
+   "poblacion": 4003,
+   "anio": 2025
+  },
+  "puerto lumbreras": {
+   "municipio": "Puerto Lumbreras",
+   "provincia": "murcia",
+   "poblacion": 18006,
+   "anio": 2025
+  },
+  "ricote": {
+   "municipio": "Ricote",
+   "provincia": "murcia",
+   "poblacion": 1197,
+   "anio": 2025
+  },
+  "san javier": {
+   "municipio": "San Javier",
+   "provincia": "murcia",
+   "poblacion": 36524,
+   "anio": 2025
+  },
+  "san pedro del pinatar": {
+   "municipio": "San Pedro del Pinatar",
+   "provincia": "murcia",
+   "poblacion": 29674,
+   "anio": 2025
+  },
+  "santomera": {
+   "municipio": "Santomera",
+   "provincia": "murcia",
+   "poblacion": 16443,
+   "anio": 2025
+  },
+  "torre pacheco": {
+   "municipio": "Torre Pacheco",
+   "provincia": "murcia",
+   "poblacion": 41479,
+   "anio": 2025
+  },
+  "las torres de cotillas": {
+   "municipio": "Las Torres de Cotillas",
+   "provincia": "murcia",
+   "poblacion": 22676,
+   "anio": 2025
+  },
+  "totana": {
+   "municipio": "Totana",
+   "provincia": "murcia",
+   "poblacion": 33358,
+   "anio": 2025
+  },
+  "ulea": {
+   "municipio": "Ulea",
+   "provincia": "murcia",
+   "poblacion": 926,
+   "anio": 2025
+  },
+  "la union": {
+   "municipio": "La Unión",
+   "provincia": "murcia",
+   "poblacion": 21380,
+   "anio": 2025
+  },
+  "villanueva del rio segura": {
+   "municipio": "Villanueva del Río Segura",
+   "provincia": "murcia",
+   "poblacion": 4111,
+   "anio": 2025
+  },
+  "yecla": {
+   "municipio": "Yecla",
+   "provincia": "murcia",
+   "poblacion": 36453,
+   "anio": 2025
+  },
+  "agullana": {
+   "municipio": "Agullana",
+   "provincia": "girona",
+   "poblacion": 880,
+   "anio": 2025
+  },
+  "aiguaviva": {
+   "municipio": "Aiguaviva",
+   "provincia": "girona",
+   "poblacion": 804,
+   "anio": 2025
+  },
+  "albanya": {
+   "municipio": "Albanyà",
+   "provincia": "girona",
+   "poblacion": 157,
+   "anio": 2025
+  },
+  "albons": {
+   "municipio": "Albons",
+   "provincia": "girona",
+   "poblacion": 845,
+   "anio": 2025
+  },
+  "alp": {
+   "municipio": "Alp",
+   "provincia": "girona",
+   "poblacion": 1724,
+   "anio": 2025
+  },
+  "amer": {
+   "municipio": "Amer",
+   "provincia": "girona",
+   "poblacion": 2422,
+   "anio": 2025
+  },
+  "angles": {
+   "municipio": "Anglès",
+   "provincia": "girona",
+   "poblacion": 5944,
+   "anio": 2025
+  },
+  "arbucies": {
+   "municipio": "Arbúcies",
+   "provincia": "girona",
+   "poblacion": 6665,
+   "anio": 2025
+  },
+  "argelaguer": {
+   "municipio": "Argelaguer",
+   "provincia": "girona",
+   "poblacion": 468,
+   "anio": 2025
+  },
+  "armentera, l'": {
+   "municipio": "Armentera, l'",
+   "provincia": "girona",
+   "poblacion": 1080,
+   "anio": 2025
+  },
+  "avinyonet de puigventos": {
+   "municipio": "Avinyonet de Puigventós",
+   "provincia": "girona",
+   "poblacion": 1671,
+   "anio": 2025
+  },
+  "banyoles": {
+   "municipio": "Banyoles",
+   "provincia": "girona",
+   "poblacion": 20865,
+   "anio": 2025
+  },
+  "bascara": {
+   "municipio": "Bàscara",
+   "provincia": "girona",
+   "poblacion": 1049,
+   "anio": 2025
+  },
+  "begur": {
+   "municipio": "Begur",
+   "provincia": "girona",
+   "poblacion": 4291,
+   "anio": 2025
+  },
+  "bellcaire d'emporda": {
+   "municipio": "Bellcaire d'Empordà",
+   "provincia": "girona",
+   "poblacion": 723,
+   "anio": 2025
+  },
+  "besalu": {
+   "municipio": "Besalú",
+   "provincia": "girona",
+   "poblacion": 2592,
+   "anio": 2025
+  },
+  "bescano": {
+   "municipio": "Bescanó",
+   "provincia": "girona",
+   "poblacion": 5088,
+   "anio": 2025
+  },
+  "beuda": {
+   "municipio": "Beuda",
+   "provincia": "girona",
+   "poblacion": 203,
+   "anio": 2025
+  },
+  "bisbal d'emporda, la": {
+   "municipio": "Bisbal d'Empordà, la",
+   "provincia": "girona",
+   "poblacion": 11757,
+   "anio": 2025
+  },
+  "biure": {
+   "municipio": "Biure",
+   "provincia": "girona",
+   "poblacion": 226,
+   "anio": 2025
+  },
+  "blanes": {
+   "municipio": "Blanes",
+   "provincia": "girona",
+   "poblacion": 42699,
+   "anio": 2025
+  },
+  "boadella i les escaules": {
+   "municipio": "Boadella i les Escaules",
+   "provincia": "girona",
+   "poblacion": 262,
+   "anio": 2025
+  },
+  "bolvir": {
+   "municipio": "Bolvir",
+   "provincia": "girona",
+   "poblacion": 493,
+   "anio": 2025
+  },
+  "bordils": {
+   "municipio": "Bordils",
+   "provincia": "girona",
+   "poblacion": 1841,
+   "anio": 2025
+  },
+  "borrassa": {
+   "municipio": "Borrassà",
+   "provincia": "girona",
+   "poblacion": 804,
+   "anio": 2025
+  },
+  "breda": {
+   "municipio": "Breda",
+   "provincia": "girona",
+   "poblacion": 3969,
+   "anio": 2025
+  },
+  "brunyola i sant marti sapresa": {
+   "municipio": "Brunyola i Sant Martí Sapresa",
+   "provincia": "girona",
+   "poblacion": 401,
+   "anio": 2025
+  },
+  "cabanelles": {
+   "municipio": "Cabanelles",
+   "provincia": "girona",
+   "poblacion": 286,
+   "anio": 2025
+  },
+  "cabanes": {
+   "municipio": "Cabanes",
+   "provincia": "girona",
+   "poblacion": 995,
+   "anio": 2025
+  },
+  "cadaques": {
+   "municipio": "Cadaqués",
+   "provincia": "girona",
+   "poblacion": 2918,
+   "anio": 2025
+  },
+  "caldes de malavella": {
+   "municipio": "Caldes de Malavella",
+   "provincia": "girona",
+   "poblacion": 8673,
+   "anio": 2025
+  },
+  "calonge i sant antoni": {
+   "municipio": "Calonge i Sant Antoni",
+   "provincia": "girona",
+   "poblacion": 12335,
+   "anio": 2025
+  },
+  "camos": {
+   "municipio": "Camós",
+   "provincia": "girona",
+   "poblacion": 701,
+   "anio": 2025
+  },
+  "campdevanol": {
+   "municipio": "Campdevànol",
+   "provincia": "girona",
+   "poblacion": 3241,
+   "anio": 2025
+  },
+  "campelles": {
+   "municipio": "Campelles",
+   "provincia": "girona",
+   "poblacion": 163,
+   "anio": 2025
+  },
+  "campllong": {
+   "municipio": "Campllong",
+   "provincia": "girona",
+   "poblacion": 534,
+   "anio": 2025
+  },
+  "camprodon": {
+   "municipio": "Camprodon",
+   "provincia": "girona",
+   "poblacion": 2570,
+   "anio": 2025
+  },
+  "canet d'adri": {
+   "municipio": "Canet d'Adri",
+   "provincia": "girona",
+   "poblacion": 744,
+   "anio": 2025
+  },
+  "cantallops": {
+   "municipio": "Cantallops",
+   "provincia": "girona",
+   "poblacion": 366,
+   "anio": 2025
+  },
+  "capmany": {
+   "municipio": "Capmany",
+   "provincia": "girona",
+   "poblacion": 680,
+   "anio": 2025
+  },
+  "cassa de la selva": {
+   "municipio": "Cassà de la Selva",
+   "provincia": "girona",
+   "poblacion": 11131,
+   "anio": 2025
+  },
+  "castellfollit de la roca": {
+   "municipio": "Castellfollit de la Roca",
+   "provincia": "girona",
+   "poblacion": 966,
+   "anio": 2025
+  },
+  "castello d'empuries": {
+   "municipio": "Castelló d'Empúries",
+   "provincia": "girona",
+   "poblacion": 12201,
+   "anio": 2025
+  },
+  "castell d'aro, platja d'aro i s'agaro": {
+   "municipio": "Castell d'Aro, Platja d'Aro i s'Agaró",
+   "provincia": "girona",
+   "poblacion": 12982,
+   "anio": 2025
+  },
+  "cellera de ter, la": {
+   "municipio": "Cellera de Ter, la",
+   "provincia": "girona",
+   "poblacion": 2027,
+   "anio": 2025
+  },
+  "celra": {
+   "municipio": "Celrà",
+   "provincia": "girona",
+   "poblacion": 5621,
+   "anio": 2025
+  },
+  "cervia de ter": {
+   "municipio": "Cervià de Ter",
+   "provincia": "girona",
+   "poblacion": 1029,
+   "anio": 2025
+  },
+  "cistella": {
+   "municipio": "Cistella",
+   "provincia": "girona",
+   "poblacion": 283,
+   "anio": 2025
+  },
+  "colera": {
+   "municipio": "Colera",
+   "provincia": "girona",
+   "poblacion": 494,
+   "anio": 2025
+  },
+  "colomers": {
+   "municipio": "Colomers",
+   "provincia": "girona",
+   "poblacion": 208,
+   "anio": 2025
+  },
+  "corca": {
+   "municipio": "Corçà",
+   "provincia": "girona",
+   "poblacion": 1283,
+   "anio": 2025
+  },
+  "cornella del terri": {
+   "municipio": "Cornellà del Terri",
+   "provincia": "girona",
+   "poblacion": 2414,
+   "anio": 2025
+  },
+  "crespia": {
+   "municipio": "Crespià",
+   "provincia": "girona",
+   "poblacion": 254,
+   "anio": 2025
+  },
+  "cruilles, monells i sant sadurni de l'heura": {
+   "municipio": "Cruïlles, Monells i Sant Sadurní de l'Heura",
+   "provincia": "girona",
+   "poblacion": 1350,
+   "anio": 2025
+  },
+  "darnius": {
+   "municipio": "Darnius",
+   "provincia": "girona",
+   "poblacion": 563,
+   "anio": 2025
+  },
+  "das": {
+   "municipio": "Das",
+   "provincia": "girona",
+   "poblacion": 261,
+   "anio": 2025
+  },
+  "escala, l'": {
+   "municipio": "Escala, l'",
+   "provincia": "girona",
+   "poblacion": 10374,
+   "anio": 2025
+  },
+  "espinelves": {
+   "municipio": "Espinelves",
+   "provincia": "girona",
+   "poblacion": 261,
+   "anio": 2025
+  },
+  "espolla": {
+   "municipio": "Espolla",
+   "provincia": "girona",
+   "poblacion": 398,
+   "anio": 2025
+  },
+  "esponella": {
+   "municipio": "Esponellà",
+   "provincia": "girona",
+   "poblacion": 446,
+   "anio": 2025
+  },
+  "far d'emporda, el": {
+   "municipio": "Far d'Empordà, el",
+   "provincia": "girona",
+   "poblacion": 628,
+   "anio": 2025
+  },
+  "figueres": {
+   "municipio": "Figueres",
+   "provincia": "girona",
+   "poblacion": 49689,
+   "anio": 2025
+  },
+  "flaca": {
+   "municipio": "Flaçà",
+   "provincia": "girona",
+   "poblacion": 1175,
+   "anio": 2025
+  },
+  "foixa": {
+   "municipio": "Foixà",
+   "provincia": "girona",
+   "poblacion": 298,
+   "anio": 2025
+  },
+  "fontanals de cerdanya": {
+   "municipio": "Fontanals de Cerdanya",
+   "provincia": "girona",
+   "poblacion": 516,
+   "anio": 2025
+  },
+  "fontanilles": {
+   "municipio": "Fontanilles",
+   "provincia": "girona",
+   "poblacion": 171,
+   "anio": 2025
+  },
+  "fontcoberta": {
+   "municipio": "Fontcoberta",
+   "provincia": "girona",
+   "poblacion": 1483,
+   "anio": 2025
+  },
+  "forallac": {
+   "municipio": "Forallac",
+   "provincia": "girona",
+   "poblacion": 1790,
+   "anio": 2025
+  },
+  "fornells de la selva": {
+   "municipio": "Fornells de la Selva",
+   "provincia": "girona",
+   "poblacion": 2818,
+   "anio": 2025
+  },
+  "fortia": {
+   "municipio": "Fortià",
+   "provincia": "girona",
+   "poblacion": 793,
+   "anio": 2025
+  },
+  "garrigas": {
+   "municipio": "Garrigàs",
+   "provincia": "girona",
+   "poblacion": 480,
+   "anio": 2025
+  },
+  "garrigoles": {
+   "municipio": "Garrigoles",
+   "provincia": "girona",
+   "poblacion": 182,
+   "anio": 2025
+  },
+  "garriguella": {
+   "municipio": "Garriguella",
+   "provincia": "girona",
+   "poblacion": 989,
+   "anio": 2025
+  },
+  "ger": {
+   "municipio": "Ger",
+   "provincia": "girona",
+   "poblacion": 501,
+   "anio": 2025
+  },
+  "girona": {
+   "municipio": "Girona",
+   "provincia": "girona",
+   "poblacion": 108666,
+   "anio": 2025
+  },
+  "gombren": {
+   "municipio": "Gombrèn",
+   "provincia": "girona",
+   "poblacion": 206,
+   "anio": 2025
+  },
+  "gualta": {
+   "municipio": "Gualta",
+   "provincia": "girona",
+   "poblacion": 438,
+   "anio": 2025
+  },
+  "guils de cerdanya": {
+   "municipio": "Guils de Cerdanya",
+   "provincia": "girona",
+   "poblacion": 557,
+   "anio": 2025
+  },
+  "hostalric": {
+   "municipio": "Hostalric",
+   "provincia": "girona",
+   "poblacion": 4493,
+   "anio": 2025
+  },
+  "isovol": {
+   "municipio": "Isòvol",
+   "provincia": "girona",
+   "poblacion": 314,
+   "anio": 2025
+  },
+  "jafre": {
+   "municipio": "Jafre",
+   "provincia": "girona",
+   "poblacion": 386,
+   "anio": 2025
+  },
+  "jonquera, la": {
+   "municipio": "Jonquera, la",
+   "provincia": "girona",
+   "poblacion": 3420,
+   "anio": 2025
+  },
+  "juia": {
+   "municipio": "Juià",
+   "provincia": "girona",
+   "poblacion": 319,
+   "anio": 2025
+  },
+  "llado": {
+   "municipio": "Lladó",
+   "provincia": "girona",
+   "poblacion": 822,
+   "anio": 2025
+  },
+  "llagostera": {
+   "municipio": "Llagostera",
+   "provincia": "girona",
+   "poblacion": 9585,
+   "anio": 2025
+  },
+  "llambilles": {
+   "municipio": "Llambilles",
+   "provincia": "girona",
+   "poblacion": 737,
+   "anio": 2025
+  },
+  "llanars": {
+   "municipio": "Llanars",
+   "provincia": "girona",
+   "poblacion": 516,
+   "anio": 2025
+  },
+  "llanca": {
+   "municipio": "Llançà",
+   "provincia": "girona",
+   "poblacion": 4892,
+   "anio": 2025
+  },
+  "llers": {
+   "municipio": "Llers",
+   "provincia": "girona",
+   "poblacion": 1269,
+   "anio": 2025
+  },
+  "llivia": {
+   "municipio": "Llívia",
+   "provincia": "girona",
+   "poblacion": 1562,
+   "anio": 2025
+  },
+  "lloret de mar": {
+   "municipio": "Lloret de Mar",
+   "provincia": "girona",
+   "poblacion": 43000,
+   "anio": 2025
+  },
+  "llosses, les": {
+   "municipio": "Llosses, les",
+   "provincia": "girona",
+   "poblacion": 197,
+   "anio": 2025
+  },
+  "macanet de cabrenys": {
+   "municipio": "Maçanet de Cabrenys",
+   "provincia": "girona",
+   "poblacion": 761,
+   "anio": 2025
+  },
+  "macanet de la selva": {
+   "municipio": "Maçanet de la Selva",
+   "provincia": "girona",
+   "poblacion": 8071,
+   "anio": 2025
+  },
+  "madremanya": {
+   "municipio": "Madremanya",
+   "provincia": "girona",
+   "poblacion": 280,
+   "anio": 2025
+  },
+  "maia de montcal": {
+   "municipio": "Maià de Montcal",
+   "provincia": "girona",
+   "poblacion": 498,
+   "anio": 2025
+  },
+  "masarac i vilarnadal": {
+   "municipio": "Masarac i Vilarnadal",
+   "provincia": "girona",
+   "poblacion": 287,
+   "anio": 2025
+  },
+  "massanes": {
+   "municipio": "Massanes",
+   "provincia": "girona",
+   "poblacion": 882,
+   "anio": 2025
+  },
+  "meranges": {
+   "municipio": "Meranges",
+   "provincia": "girona",
+   "poblacion": 111,
+   "anio": 2025
+  },
+  "mieres": {
+   "municipio": "Mieres",
+   "provincia": "girona",
+   "poblacion": 369,
+   "anio": 2025
+  },
+  "mollet de peralada": {
+   "municipio": "Mollet de Peralada",
+   "provincia": "girona",
+   "poblacion": 202,
+   "anio": 2025
+  },
+  "mollo": {
+   "municipio": "Molló",
+   "provincia": "girona",
+   "poblacion": 351,
+   "anio": 2025
+  },
+  "montagut i oix": {
+   "municipio": "Montagut i Oix",
+   "provincia": "girona",
+   "poblacion": 1011,
+   "anio": 2025
+  },
+  "mont-ras": {
+   "municipio": "Mont-ras",
+   "provincia": "girona",
+   "poblacion": 1690,
+   "anio": 2025
+  },
+  "navata": {
+   "municipio": "Navata",
+   "provincia": "girona",
+   "poblacion": 1507,
+   "anio": 2025
+  },
+  "ogassa": {
+   "municipio": "Ogassa",
+   "provincia": "girona",
+   "poblacion": 222,
+   "anio": 2025
+  },
+  "olot": {
+   "municipio": "Olot",
+   "provincia": "girona",
+   "poblacion": 39519,
+   "anio": 2025
+  },
+  "ordis": {
+   "municipio": "Ordis",
+   "provincia": "girona",
+   "poblacion": 409,
+   "anio": 2025
+  },
+  "osor": {
+   "municipio": "Osor",
+   "provincia": "girona",
+   "poblacion": 430,
+   "anio": 2025
+  },
+  "palafrugell": {
+   "municipio": "Palafrugell",
+   "provincia": "girona",
+   "poblacion": 24543,
+   "anio": 2025
+  },
+  "palamos": {
+   "municipio": "Palamós",
+   "provincia": "girona",
+   "poblacion": 18933,
+   "anio": 2025
+  },
+  "palau de santa eulalia": {
+   "municipio": "Palau de Santa Eulàlia",
+   "provincia": "girona",
+   "poblacion": 124,
+   "anio": 2025
+  },
+  "palau-sator": {
+   "municipio": "Palau-sator",
+   "provincia": "girona",
+   "poblacion": 311,
+   "anio": 2025
+  },
+  "palau-saverdera": {
+   "municipio": "Palau-saverdera",
+   "provincia": "girona",
+   "poblacion": 1535,
+   "anio": 2025
+  },
+  "palol de revardit": {
+   "municipio": "Palol de Revardit",
+   "provincia": "girona",
+   "poblacion": 459,
+   "anio": 2025
+  },
+  "pals": {
+   "municipio": "Pals",
+   "provincia": "girona",
+   "poblacion": 2534,
+   "anio": 2025
+  },
+  "pardines": {
+   "municipio": "Pardines",
+   "provincia": "girona",
+   "poblacion": 168,
+   "anio": 2025
+  },
+  "parlava": {
+   "municipio": "Parlavà",
+   "provincia": "girona",
+   "poblacion": 432,
+   "anio": 2025
+  },
+  "pau": {
+   "municipio": "Pau",
+   "provincia": "girona",
+   "poblacion": 560,
+   "anio": 2025
+  },
+  "pedret i marza": {
+   "municipio": "Pedret i Marzà",
+   "provincia": "girona",
+   "poblacion": 208,
+   "anio": 2025
+  },
+  "pera, la": {
+   "municipio": "Pera, la",
+   "provincia": "girona",
+   "poblacion": 447,
+   "anio": 2025
+  },
+  "peralada": {
+   "municipio": "Peralada",
+   "provincia": "girona",
+   "poblacion": 2077,
+   "anio": 2025
+  },
+  "planes d'hostoles, les": {
+   "municipio": "Planes d'Hostoles, les",
+   "provincia": "girona",
+   "poblacion": 1746,
+   "anio": 2025
+  },
+  "planoles": {
+   "municipio": "Planoles",
+   "provincia": "girona",
+   "poblacion": 313,
+   "anio": 2025
+  },
+  "pont de molins": {
+   "municipio": "Pont de Molins",
+   "provincia": "girona",
+   "poblacion": 585,
+   "anio": 2025
+  },
+  "pontos": {
+   "municipio": "Pontós",
+   "provincia": "girona",
+   "poblacion": 296,
+   "anio": 2025
+  },
+  "porqueres": {
+   "municipio": "Porqueres",
+   "provincia": "girona",
+   "poblacion": 4811,
+   "anio": 2025
+  },
+  "port de la selva, el": {
+   "municipio": "Port de la Selva, el",
+   "provincia": "girona",
+   "poblacion": 1053,
+   "anio": 2025
+  },
+  "portbou": {
+   "municipio": "Portbou",
+   "provincia": "girona",
+   "poblacion": 1131,
+   "anio": 2025
+  },
+  "preses, les": {
+   "municipio": "Preses, les",
+   "provincia": "girona",
+   "poblacion": 1948,
+   "anio": 2025
+  },
+  "puigcerda": {
+   "municipio": "Puigcerdà",
+   "provincia": "girona",
+   "poblacion": 10035,
+   "anio": 2025
+  },
+  "quart": {
+   "municipio": "Quart",
+   "provincia": "girona",
+   "poblacion": 4165,
+   "anio": 2025
+  },
+  "queralbs": {
+   "municipio": "Queralbs",
+   "provincia": "girona",
+   "poblacion": 202,
+   "anio": 2025
+  },
+  "rabos": {
+   "municipio": "Rabós",
+   "provincia": "girona",
+   "poblacion": 232,
+   "anio": 2025
+  },
+  "regencos": {
+   "municipio": "Regencós",
+   "provincia": "girona",
+   "poblacion": 275,
+   "anio": 2025
+  },
+  "ribes de freser": {
+   "municipio": "Ribes de Freser",
+   "provincia": "girona",
+   "poblacion": 1841,
+   "anio": 2025
+  },
+  "riells i viabrea": {
+   "municipio": "Riells i Viabrea",
+   "provincia": "girona",
+   "poblacion": 4635,
+   "anio": 2025
+  },
+  "ripoll": {
+   "municipio": "Ripoll",
+   "provincia": "girona",
+   "poblacion": 10665,
+   "anio": 2025
+  },
+  "riudarenes": {
+   "municipio": "Riudarenes",
+   "provincia": "girona",
+   "poblacion": 2532,
+   "anio": 2025
+  },
+  "riudaura": {
+   "municipio": "Riudaura",
+   "provincia": "girona",
+   "poblacion": 526,
+   "anio": 2025
+  },
+  "riudellots de la selva": {
+   "municipio": "Riudellots de la Selva",
+   "provincia": "girona",
+   "poblacion": 2125,
+   "anio": 2025
+  },
+  "riumors": {
+   "municipio": "Riumors",
+   "provincia": "girona",
+   "poblacion": 253,
+   "anio": 2025
+  },
+  "roses": {
+   "municipio": "Roses",
+   "provincia": "girona",
+   "poblacion": 20365,
+   "anio": 2025
+  },
+  "rupia": {
+   "municipio": "Rupià",
+   "provincia": "girona",
+   "poblacion": 325,
+   "anio": 2025
+  },
+  "sales de llierca": {
+   "municipio": "Sales de Llierca",
+   "provincia": "girona",
+   "poblacion": 164,
+   "anio": 2025
+  },
+  "salt": {
+   "municipio": "Salt",
+   "provincia": "girona",
+   "poblacion": 34491,
+   "anio": 2025
+  },
+  "sant andreu salou": {
+   "municipio": "Sant Andreu Salou",
+   "provincia": "girona",
+   "poblacion": 161,
+   "anio": 2025
+  },
+  "sant aniol de finestres": {
+   "municipio": "Sant Aniol de Finestres",
+   "provincia": "girona",
+   "poblacion": 382,
+   "anio": 2025
+  },
+  "sant climent sescebes": {
+   "municipio": "Sant Climent Sescebes",
+   "provincia": "girona",
+   "poblacion": 690,
+   "anio": 2025
+  },
+  "sant feliu de buixalleu": {
+   "municipio": "Sant Feliu de Buixalleu",
+   "provincia": "girona",
+   "poblacion": 882,
+   "anio": 2025
+  },
+  "sant feliu de guixols": {
+   "municipio": "Sant Feliu de Guíxols",
+   "provincia": "girona",
+   "poblacion": 23141,
+   "anio": 2025
+  },
+  "sant feliu de pallerols": {
+   "municipio": "Sant Feliu de Pallerols",
+   "provincia": "girona",
+   "poblacion": 1700,
+   "anio": 2025
+  },
+  "sant ferriol": {
+   "municipio": "Sant Ferriol",
+   "provincia": "girona",
+   "poblacion": 245,
+   "anio": 2025
+  },
+  "sant gregori": {
+   "municipio": "Sant Gregori",
+   "provincia": "girona",
+   "poblacion": 4191,
+   "anio": 2025
+  },
+  "sant hilari sacalm": {
+   "municipio": "Sant Hilari Sacalm",
+   "provincia": "girona",
+   "poblacion": 6069,
+   "anio": 2025
+  },
+  "sant jaume de llierca": {
+   "municipio": "Sant Jaume de Llierca",
+   "provincia": "girona",
+   "poblacion": 863,
+   "anio": 2025
+  },
+  "sant joan de les abadesses": {
+   "municipio": "Sant Joan de les Abadesses",
+   "provincia": "girona",
+   "poblacion": 3404,
+   "anio": 2025
+  },
+  "sant joan de mollet": {
+   "municipio": "Sant Joan de Mollet",
+   "provincia": "girona",
+   "poblacion": 536,
+   "anio": 2025
+  },
+  "sant joan les fonts": {
+   "municipio": "Sant Joan les Fonts",
+   "provincia": "girona",
+   "poblacion": 3167,
+   "anio": 2025
+  },
+  "sant jordi desvalls": {
+   "municipio": "Sant Jordi Desvalls",
+   "provincia": "girona",
+   "poblacion": 880,
+   "anio": 2025
+  },
+  "sant julia de ramis": {
+   "municipio": "Sant Julià de Ramis",
+   "provincia": "girona",
+   "poblacion": 3715,
+   "anio": 2025
+  },
+  "sant julia del llor i bonmati": {
+   "municipio": "Sant Julià del Llor i Bonmatí",
+   "provincia": "girona",
+   "poblacion": 1457,
+   "anio": 2025
+  },
+  "sant llorenc de la muga": {
+   "municipio": "Sant Llorenç de la Muga",
+   "provincia": "girona",
+   "poblacion": 247,
+   "anio": 2025
+  },
+  "sant marti de llemena": {
+   "municipio": "Sant Martí de Llémena",
+   "provincia": "girona",
+   "poblacion": 726,
+   "anio": 2025
+  },
+  "sant marti vell": {
+   "municipio": "Sant Martí Vell",
+   "provincia": "girona",
+   "poblacion": 271,
+   "anio": 2025
+  },
+  "sant miquel de campmajor": {
+   "municipio": "Sant Miquel de Campmajor",
+   "provincia": "girona",
+   "poblacion": 258,
+   "anio": 2025
+  },
+  "sant miquel de fluvia": {
+   "municipio": "Sant Miquel de Fluvià",
+   "provincia": "girona",
+   "poblacion": 860,
+   "anio": 2025
+  },
+  "sant mori": {
+   "municipio": "Sant Mori",
+   "provincia": "girona",
+   "poblacion": 163,
+   "anio": 2025
+  },
+  "sant pau de seguries": {
+   "municipio": "Sant Pau de Segúries",
+   "provincia": "girona",
+   "poblacion": 719,
+   "anio": 2025
+  },
+  "sant pere pescador": {
+   "municipio": "Sant Pere Pescador",
+   "provincia": "girona",
+   "poblacion": 2290,
+   "anio": 2025
+  },
+  "santa coloma de farners": {
+   "municipio": "Santa Coloma de Farners",
+   "provincia": "girona",
+   "poblacion": 13993,
+   "anio": 2025
+  },
+  "santa cristina d'aro": {
+   "municipio": "Santa Cristina d'Aro",
+   "provincia": "girona",
+   "poblacion": 5987,
+   "anio": 2025
+  },
+  "santa llogaia d'alguema": {
+   "municipio": "Santa Llogaia d'Àlguema",
+   "provincia": "girona",
+   "poblacion": 396,
+   "anio": 2025
+  },
+  "santa pau": {
+   "municipio": "Santa Pau",
+   "provincia": "girona",
+   "poblacion": 1579,
+   "anio": 2025
+  },
+  "sarria de ter": {
+   "municipio": "Sarrià de Ter",
+   "provincia": "girona",
+   "poblacion": 5406,
+   "anio": 2025
+  },
+  "saus, camallera i llampaies": {
+   "municipio": "Saus, Camallera i Llampaies",
+   "provincia": "girona",
+   "poblacion": 897,
+   "anio": 2025
+  },
+  "selva de mar, la": {
+   "municipio": "Selva de Mar, la",
+   "provincia": "girona",
+   "poblacion": 223,
+   "anio": 2025
+  },
+  "serinya": {
+   "municipio": "Serinyà",
+   "provincia": "girona",
+   "poblacion": 1228,
+   "anio": 2025
+  },
+  "serra de daro": {
+   "municipio": "Serra de Daró",
+   "provincia": "girona",
+   "poblacion": 240,
+   "anio": 2025
+  },
+  "setcases": {
+   "municipio": "Setcases",
+   "provincia": "girona",
+   "poblacion": 195,
+   "anio": 2025
+  },
+  "sils": {
+   "municipio": "Sils",
+   "provincia": "girona",
+   "poblacion": 6920,
+   "anio": 2025
+  },
+  "siurana": {
+   "municipio": "Siurana",
+   "provincia": "girona",
+   "poblacion": 188,
+   "anio": 2025
+  },
+  "susqueda": {
+   "municipio": "Susqueda",
+   "provincia": "girona",
+   "poblacion": 103,
+   "anio": 2025
+  },
+  "tallada d'emporda, la": {
+   "municipio": "Tallada d'Empordà, la",
+   "provincia": "girona",
+   "poblacion": 490,
+   "anio": 2025
+  },
+  "terrades": {
+   "municipio": "Terrades",
+   "provincia": "girona",
+   "poblacion": 337,
+   "anio": 2025
+  },
+  "torrent": {
+   "municipio": "Torrent",
+   "provincia": "girona",
+   "poblacion": 182,
+   "anio": 2025
+  },
+  "torroella de fluvia": {
+   "municipio": "Torroella de Fluvià",
+   "provincia": "girona",
+   "poblacion": 778,
+   "anio": 2025
+  },
+  "torroella de montgri": {
+   "municipio": "Torroella de Montgrí",
+   "provincia": "girona",
+   "poblacion": 12570,
+   "anio": 2025
+  },
+  "tortella": {
+   "municipio": "Tortellà",
+   "provincia": "girona",
+   "poblacion": 849,
+   "anio": 2025
+  },
+  "toses": {
+   "municipio": "Toses",
+   "provincia": "girona",
+   "poblacion": 198,
+   "anio": 2025
+  },
+  "tossa de mar": {
+   "municipio": "Tossa de Mar",
+   "provincia": "girona",
+   "poblacion": 6347,
+   "anio": 2025
+  },
+  "ulla": {
+   "municipio": "Ullà",
+   "provincia": "girona",
+   "poblacion": 1258,
+   "anio": 2025
+  },
+  "ullastret": {
+   "municipio": "Ullastret",
+   "provincia": "girona",
+   "poblacion": 249,
+   "anio": 2025
+  },
+  "ultramort": {
+   "municipio": "Ultramort",
+   "provincia": "girona",
+   "poblacion": 218,
+   "anio": 2025
+  },
+  "urus": {
+   "municipio": "Urús",
+   "provincia": "girona",
+   "poblacion": 201,
+   "anio": 2025
+  },
+  "vajol, la": {
+   "municipio": "Vajol, la",
+   "provincia": "girona",
+   "poblacion": 112,
+   "anio": 2025
+  },
+  "vall de bianya, la": {
+   "municipio": "Vall de Bianya, la",
+   "provincia": "girona",
+   "poblacion": 1347,
+   "anio": 2025
+  },
+  "vall d'en bas, la": {
+   "municipio": "Vall d'en Bas, la",
+   "provincia": "girona",
+   "poblacion": 3269,
+   "anio": 2025
+  },
+  "vallfogona de ripolles": {
+   "municipio": "Vallfogona de Ripollès",
+   "provincia": "girona",
+   "poblacion": 225,
+   "anio": 2025
+  },
+  "vall-llobrega": {
+   "municipio": "Vall-llobrega",
+   "provincia": "girona",
+   "poblacion": 891,
+   "anio": 2025
+  },
+  "ventallo": {
+   "municipio": "Ventalló",
+   "provincia": "girona",
+   "poblacion": 914,
+   "anio": 2025
+  },
+  "verges": {
+   "municipio": "Verges",
+   "provincia": "girona",
+   "poblacion": 1167,
+   "anio": 2025
+  },
+  "vidra": {
+   "municipio": "Vidrà",
+   "provincia": "girona",
+   "poblacion": 167,
+   "anio": 2025
+  },
+  "vidreres": {
+   "municipio": "Vidreres",
+   "provincia": "girona",
+   "poblacion": 8862,
+   "anio": 2025
+  },
+  "vilabertran": {
+   "municipio": "Vilabertran",
+   "provincia": "girona",
+   "poblacion": 961,
+   "anio": 2025
+  },
+  "vilablareix": {
+   "municipio": "Vilablareix",
+   "provincia": "girona",
+   "poblacion": 4077,
+   "anio": 2025
+  },
+  "viladamat": {
+   "municipio": "Viladamat",
+   "provincia": "girona",
+   "poblacion": 500,
+   "anio": 2025
+  },
+  "viladasens": {
+   "municipio": "Viladasens",
+   "provincia": "girona",
+   "poblacion": 206,
+   "anio": 2025
+  },
+  "vilademuls": {
+   "municipio": "Vilademuls",
+   "provincia": "girona",
+   "poblacion": 898,
+   "anio": 2025
+  },
+  "viladrau": {
+   "municipio": "Viladrau",
+   "provincia": "girona",
+   "poblacion": 1184,
+   "anio": 2025
+  },
+  "vilafant": {
+   "municipio": "Vilafant",
+   "provincia": "girona",
+   "poblacion": 5663,
+   "anio": 2025
+  },
+  "vilajuiga": {
+   "municipio": "Vilajuïga",
+   "provincia": "girona",
+   "poblacion": 1177,
+   "anio": 2025
+  },
+  "vilallonga de ter": {
+   "municipio": "Vilallonga de Ter",
+   "provincia": "girona",
+   "poblacion": 395,
+   "anio": 2025
+  },
+  "vilamacolum": {
+   "municipio": "Vilamacolum",
+   "provincia": "girona",
+   "poblacion": 406,
+   "anio": 2025
+  },
+  "vilamalla": {
+   "municipio": "Vilamalla",
+   "provincia": "girona",
+   "poblacion": 1205,
+   "anio": 2025
+  },
+  "vilamaniscle": {
+   "municipio": "Vilamaniscle",
+   "provincia": "girona",
+   "poblacion": 185,
+   "anio": 2025
+  },
+  "vilanant": {
+   "municipio": "Vilanant",
+   "provincia": "girona",
+   "poblacion": 406,
+   "anio": 2025
+  },
+  "vila-sacra": {
+   "municipio": "Vila-sacra",
+   "provincia": "girona",
+   "poblacion": 878,
+   "anio": 2025
+  },
+  "vilaur": {
+   "municipio": "Vilaür",
+   "provincia": "girona",
+   "poblacion": 164,
+   "anio": 2025
+  },
+  "vilobi d'onyar": {
+   "municipio": "Vilobí d'Onyar",
+   "provincia": "girona",
+   "poblacion": 3297,
+   "anio": 2025
+  },
+  "vilopriu": {
+   "municipio": "Vilopriu",
+   "provincia": "girona",
+   "poblacion": 209,
+   "anio": 2025
+  }
+ }
+}
