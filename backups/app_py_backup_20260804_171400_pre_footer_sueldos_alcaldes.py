@@ -5156,7 +5156,6 @@ def _footer_html(provincia="todas"):
     <a href="https://www.boe.es/" target="_blank" rel="noopener">BOE</a>
     <a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener">Registro Mercantil</a>
     <a href="{'/rankings?provincia=girona' if es_girona else '/rankings'}">Rankings</a>
-    <a href="{'/rankings?provincia=girona' if es_girona else '/rankings'}#alcaldes">Sueldos Alcaldes</a>
     <a href="/fondos-ue">Fondos UE</a>
     <a href="/aviso-legal">Aviso Legal</a>
     <a href="/quienes-somos">Quiénes Somos</a>
