@@ -4496,6 +4496,9 @@ header p{font-size:12px;color:var(--dim);margin-top:2px;}
 .header-nav{flex-shrink:0;display:flex;align-items:center;gap:10px;}
 .header-nav>a{display:inline-flex;text-decoration:none;padding:8px 16px;border-radius:6px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);font-size:13px;font-weight:600;white-space:nowrap;}
 .header-nav>a:hover{background:rgba(240,136,62,.22);}
+.pwa-install-btn{display:inline-flex;font-family:'IBM Plex Sans',sans-serif;text-decoration:none;padding:8px 16px;border-radius:6px;background:var(--accent);color:#000;border:1px solid var(--accent);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
+.pwa-install-btn[hidden]{display:none;}
+.pwa-install-btn:hover{background:#ffa657;}
 .prov-switch{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
 .prov-tab{text-decoration:none;padding:8px 14px;font-size:13px;font-weight:600;color:var(--dim);background:var(--bg);white-space:nowrap;}
 .prov-tab:hover{color:var(--text);}
@@ -4795,6 +4798,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .logo-svg svg{width:96px;}
   .header-nav{flex:1 1 100%;flex-wrap:wrap;justify-content:flex-start;}
   .header-nav>a{padding:7px 10px;font-size:11px;}
+  .pwa-install-btn{padding:7px 10px;font-size:11px;}
   /* El header sticky es más alto en móvil que en escritorio (el nav pasa
      a su propia fila bajo el logo) -- verificado con Playwright a 390px
      de ancho (2026-08-04): header real ~116px, el scroll-margin-top:96px
@@ -5322,6 +5326,7 @@ def _header_html(provincia="todas"):
     <a href="{rankings_href}">🏆 Rankings</a>
     <a href="{rankings_href}#alcaldes">💰 Sueldos Alcaldes</a>
     <a href="/fondos-ue" style="color:var(--yellow)">🇪🇺 Fondos UE</a>
+    <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>📲 Instalar app</button>
   </nav>
 </header>"""
 
@@ -5423,6 +5428,37 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
       navigator.serviceWorker.register('/sw.js');
     }});
   }}
+  (function() {{
+    // Botón "Instalar app" custom (header) en vez de fiarse solo del
+    // mini-infobar automático de Chrome, que es fácil de perder de vista.
+    // Solo aparece en navegadores que disparan beforeinstallprompt
+    // (Chrome/Edge/Android) -- en el resto (Firefox, iOS Safari) el botón
+    // se queda oculto para siempre, que es el comportamiento correcto: ahí
+    // no existe ese evento y la instalación es manual (Compartir > Añadir a
+    // pantalla de inicio).
+    var installBtn = document.getElementById('pwa-install-btn');
+    var deferredPrompt = null;
+    if (window.matchMedia('(display-mode: standalone)').matches) {{
+      return;  // ya instalada, no hace falta ofrecer el botón
+    }}
+    window.addEventListener('beforeinstallprompt', function(e) {{
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) installBtn.hidden = false;
+    }});
+    if (installBtn) {{
+      installBtn.addEventListener('click', function() {{
+        if (!deferredPrompt) return;
+        installBtn.hidden = true;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() {{ deferredPrompt = null; }});
+      }});
+    }}
+    window.addEventListener('appinstalled', function() {{
+      if (installBtn) installBtn.hidden = true;
+      deferredPrompt = null;
+    }});
+  }})();
 </script>
 </body></html>"""
 
