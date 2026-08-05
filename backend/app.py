@@ -151,6 +151,7 @@ _enriqueciendo_lock = threading.Lock()  # evita lanzar dos hilos de enriquecimie
 _actualizando_todos_lock = threading.Lock()  # evita lanzar dos refrescos completos a la vez
 _actualizando_fondos_ue_lock = threading.Lock()  # evita lanzar dos refrescos de fondos_ue a la vez
 _actualizando_rpc_menors_lock = threading.Lock()  # evita lanzar dos refrescos de contratos menors Girona a la vez
+_actualizando_rpc_menors_lleida_lock = threading.Lock()  # ídem, fase piloto Lleida -- lock propio, no compartido con el de Girona
 _actualizando_menores_fuentealamo_lock = threading.Lock()  # evita lanzar dos refrescos de Fuente Álamo a la vez
 
 PAGE_SIZE = 50               # contratos máximos por página
@@ -917,6 +918,187 @@ MUNICIPIOS_GIRONA_INE = {
     "Vilamacolum": "1722530008", "Vilamalla": "1722660009", "Vilamaniscle": "1722720002",
     "Vilanant": "1722880001", "Vilaür": "1722290004", "Vilobí d'Onyar": "1723330008",
     "Vilopriu": "1723270005",
+}
+
+# ─── PROVINCIA DE LLEIDA (Fase piloto RPC contractes menors, 2026-08-06) ────
+# Mismo criterio que MUNICIPIOS_GIRONA/_INE: los 231 municipios oficiales y
+# su codi_ine10 (10 dígitos) en el dataset de contractació pública de
+# Catalunya. A diferencia del proceso de Girona (que cruzó Idescat con el
+# dataset a mano), aquí se confirmó que el propio dataset PSCP (ybgg-dgi6)
+# ya trae codi_ine10 + nom_organ ("Ajuntament de X") con cobertura completa:
+# consulta SoQL agrupando por codi_ine10 con "codi_ine10 like '25%' AND
+# nom_organ like 'Ajuntament%'" devolvió exactamente 231 filas, 231 códigos
+# únicos, 231 nombres únicos -- verificado en vivo 2026-08-06, sin
+# necesidad de una lista Idescat aparte. El nombre se obtiene quitando el
+# prefijo "Ajuntament de/d'/la/les/el/dels " -- a diferencia de
+# MUNICIPIOS_GIRONA (curada a mano con el artículo movido al final, p.ej.
+# "Bisbal d'Empordà, la"), aquí el artículo se queda delante tal cual
+# ("la Seu d'Urgell") -- estilo distinto, incluida alguna inconsistencia de
+# mayúsculas heredada del propio dataset ("La Granja d'Escarp" con "La"
+# mayúscula, "la Seu d'Urgell" con "la" minúscula) -- no se ha normalizado
+# a mano para no introducir un error propio sobre un dato ya verificado.
+MUNICIPIOS_LLEIDA = [
+    "Abella de la Conca", "Agramunt", "Aitona", "Albatàrrec", "Albesa",
+    "Alcanó", "Alcarràs", "Alcoletge", "Alfarràs", "Alfés", "Algerri",
+    "Alguaire", "Alins", "Almacelles", "Almatret", "Almenar", "Alpicat",
+    "Alt Àneu", "Alàs i Cerc", "Alòs de Balaguer", "Anglesola", "Arbeca",
+    "Arres", "Arsèguel", "Artesa de Lleida", "Artesa de Segre", "Aspa",
+    "Baix Pallars", "Balaguer", "Barbens", "Bassella", "Bausen", "Belianes",
+    "Bell-lloc d'Urgell", "Bellaguarda", "Bellcaire d'Urgell",
+    "Bellmunt d'Urgell", "Bellpuig", "Bellver de Cerdanya", "Bellvís",
+    "Benavent de Segrià", "Biosca", "Bossòst", "Bovera", "Cabanabona",
+    "Cabó", "Camarasa", "Canejan", "Castell de Mur",
+    "Castellar de la Ribera", "Castelldans", "Castellnou de Seana",
+    "Castellserà", "Castelló de Farfanya", "Cava", "Cervera",
+    "Cervià de les Garrigues", "Ciutadilla", "Clariana de Cardener",
+    "Coll de Nargó", "Conca de Dalt", "Corbins", "Cubells", "Es Bòrdes",
+    "Espot", "Estamariu", "Estaràs", "Esterri d'Àneu", "Esterri de Cardós",
+    "Farrera", "Fondarella", "Foradada", "Fulleda", "Fígols i Alinyà",
+    "Gavet de la Conca", "Gimenells i el Pla de la Font", "Golmés",
+    "Granyanella", "Granyena de Segarra", "Granyena de les Garrigues",
+    "Guimerà", "Guissona", "Guixers", "Gósol", "Isona i Conca Dellà",
+    "Ivars d'Urgell", "Ivars de Noguera", "Ivorra", "Josa i Tuixén",
+    "Juncosa", "Juneda", "La Granja d'Escarp", "La Portella", "Les",
+    "Linyola", "Lladorre", "Lladurs", "Llardecans", "Llavorsí", "Lleida",
+    "Lles de Cerdanya", "Llimiana", "Llobera", "Maials", "Maldà",
+    "Massalcoreig", "Massoteres", "Menàrguens", "Miralcamp", "Mollerussa",
+    "Montellà i Martinet", "Montferrer i Castellbò", "Montgai",
+    "Montoliu de Lleida", "Montoliu de Segarra", "Montornès de Segarra",
+    "Nalec", "Naut Aran", "Navès", "Odèn", "Oliana", "Oliola", "Olius",
+    "Organyà", "Os de Balaguer", "Ossó de Sió", "Penelles", "Peramola",
+    "Pinell de Solsonès", "Pinós", "Ponts", "Prats i Sansor", "Preixana",
+    "Preixens", "Prullans", "Puiggròs", "Puigverd d'Agramunt",
+    "Puigverd de Lleida", "Rialp", "Ribera d'Ondara", "Ribera d'Urgellet",
+    "Riner", "Riu de Cerdanya", "Rosselló", "Salàs de Pallars", "Sanaüja",
+    "Sant Esteve de la Sarga", "Sant Guim de Freixenet",
+    "Sant Guim de la Plana", "Sant Llorenç de Morunys",
+    "Sant Martí de Riucorb", "Sant Ramon", "Sarroca de Bellera",
+    "Sarroca de Lleida", "Senterada", "Seròs", "Sidamon", "Solsona",
+    "Soriguera", "Sort", "Soses", "Sudanell", "Sunyer", "Talarn",
+    "Talavera", "Tarroja de Segarra", "Tarrés", "Tiurana", "Tornabous",
+    "Torre-serona", "Torrebesses", "Torrefarrera", "Torrefeta i Florejacs",
+    "Torregrossa", "Torrelameu", "Torres de Segre", "Torà", "Tremp",
+    "Tàrrega", "Térmens", "Tírvia", "Vall de Cardós",
+    "Vallbona de les Monges", "Vallfogona de Balaguer", "Verdú",
+    "Vielha e Mijaran", "Vila-Sana", "Vilagrassa", "Vilaller", "Vilamòs",
+    "Vilanova de Bellpuig", "Vilanova de Meià", "Vilanova de Segrià",
+    "Vilanova de l'Aguda", "Vilanova de la Barca", "Vinaixa", "dels Alamús",
+    "dels Omellons", "dels Omells de na Gaia", "dels Plans de Sió",
+    "dels Torms", "el Cogul", "el Palau d'Anglesola", "el Poal",
+    "el Pont de Bar", "el Pont de Suert", "el Soleràs", "el Vilosell",
+    "l'Albagés", "l'Albi", "l'Espluga Calba", "la Baronia de Rialb",
+    "la Coma i la Pedra", "la Floresta", "la Fuliola", "la Granadella",
+    "la Guingueta d'Àneu", "la Molsosa", "la Pobla de Cérvoles",
+    "la Pobla de Segur", "la Sentiu de Sió", "la Seu d'Urgell",
+    "la Torre de Cabdella", "la Vall de Boí", "la Vansa i Fórnols",
+    "les Avellanes i Santa Linya", "les Borges Blanques", "les Oluges",
+    "les Valls d'Aguilar", "les Valls de Valira", "Àger",
+]
+
+MUNICIPIOS_LLEIDA_INE = {
+    "Abella de la Conca": "2500190004", "Agramunt": "2500300000",
+    "Aitona": "2503870005", "Albatàrrec": "2500770005", "Albesa": "2500830008",
+    "Alcanó": "2501000000", "Alcarràs": "2501170005", "Alcoletge": "2501220002",
+    "Alfarràs": "2501380001", "Alfés": "2501430008", "Algerri": "2501560009",
+    "Alguaire": "2501690004", "Alins": "2501750006", "Almacelles": "2501940003",
+    "Almatret": "2502080001", "Almenar": "2502150006", "Alpicat": "2502360009",
+    "Alt Àneu": "2502410007", "Alàs i Cerc": "2500580001",
+    "Alòs de Balaguer": "2502200000", "Anglesola": "2502730008",
+    "Arbeca": "2502920002", "Arres": "2503130008", "Arsèguel": "2503280001",
+    "Artesa de Lleida": "2503340003", "Artesa de Segre": "2503490004",
+    "Aspa": "2503650006", "Baix Pallars": "2503900000", "Balaguer": "2504040003",
+    "Barbens": "2504110007", "Bassella": "2504470005", "Bausen": "2504500000",
+    "Belianes": "2504630008", "Bell-lloc d'Urgell": "2504850006",
+    "Bellaguarda": "2517060009", "Bellcaire d'Urgell": "2504790004",
+    "Bellmunt d'Urgell": "2504980001", "Bellpuig": "2505010007",
+    "Bellver de Cerdanya": "2505180001", "Bellvís": "2505230008",
+    "Benavent de Segrià": "2505390004", "Biosca": "2505570005",
+    "Bossòst": "2505950006", "Bovera": "2505600000", "Cabanabona": "2506090004",
+    "Cabó": "2506160009", "Camarasa": "2506210007", "Canejan": "2506370005",
+    "Castell de Mur": "2590460009", "Castellar de la Ribera": "2506420002",
+    "Castelldans": "2506740003", "Castellnou de Seana": "2506800000",
+    "Castellserà": "2507070005", "Castelló de Farfanya": "2506930008",
+    "Cava": "2507140003", "Cervera": "2507290004",
+    "Cervià de les Garrigues": "2507350006", "Ciutadilla": "2507400000",
+    "Clariana de Cardener": "2507530008", "Coll de Nargó": "2507720002",
+    "Conca de Dalt": "2516150006", "Corbins": "2507880001",
+    "Cubells": "2507910007", "Es Bòrdes": "2505760009", "Espot": "2508270005",
+    "Estamariu": "2508860009", "Estaràs": "2508510007",
+    "Esterri d'Àneu": "2508640003", "Esterri de Cardós": "2508700000",
+    "Farrera": "2508990004", "Fondarella": "2509310007", "Foradada": "2509460009",
+    "Fulleda": "2509780001", "Fígols i Alinyà": "2590840003",
+    "Gavet de la Conca": "2509840003",
+    "Gimenells i el Pla de la Font": "2591230008", "Golmés": "2509970005",
+    "Granyanella": "2510390004", "Granyena de Segarra": "2510440003",
+    "Granyena de les Garrigues": "2510570005", "Guimerà": "2510950006",
+    "Guissona": "2511090004", "Guixers": "2511160009", "Gósol": "2510010007",
+    "Isona i Conca Dellà": "2511550006", "Ivars d'Urgell": "2511370005",
+    "Ivars de Noguera": "2511210007", "Ivorra": "2511420002",
+    "Josa i Tuixén": "2591010007", "Juncosa": "2511800000", "Juneda": "2511930008",
+    "La Granja d'Escarp": "2510230008", "La Portella": "2517490004",
+    "Les": "2512140003", "Linyola": "2512290004", "Lladorre": "2512350006",
+    "Lladurs": "2512400000", "Llardecans": "2512530008", "Llavorsí": "2512660009",
+    "Lleida": "2512070005", "Lles de Cerdanya": "2512720002",
+    "Llimiana": "2512880001", "Llobera": "2512910007", "Maials": "2513330008",
+    "Maldà": "2513050006", "Massalcoreig": "2513120002",
+    "Massoteres": "2513270005", "Menàrguens": "2513480001",
+    "Miralcamp": "2513510007", "Mollerussa": "2513700000",
+    "Montellà i Martinet": "2513990004", "Montferrer i Castellbò": "2514030008",
+    "Montgai": "2513860009", "Montoliu de Lleida": "2514250006",
+    "Montoliu de Segarra": "2514100000", "Montornès de Segarra": "2514310007",
+    "Nalec": "2514590004", "Naut Aran": "2502540003", "Navès": "2514620002",
+    "Odèn": "2514840003", "Oliana": "2514970005", "Oliola": "2515000000",
+    "Olius": "2515170005", "Organyà": "2515560009", "Os de Balaguer": "2515690004",
+    "Ossó de Sió": "2515750006", "Penelles": "2516410007",
+    "Peramola": "2516540003", "Pinell de Solsonès": "2516670005",
+    "Pinós": "2516730008", "Ponts": "2517280001", "Prats i Sansor": "2517520002",
+    "Preixana": "2517650006", "Preixens": "2517710007", "Prullans": "2517900000",
+    "Puiggròs": "2518040003", "Puigverd d'Agramunt": "2518110007",
+    "Puigverd de Lleida": "2518260009", "Rialp": "2518320002",
+    "Ribera d'Ondara": "2590590004", "Ribera d'Urgellet": "2518500000",
+    "Riner": "2518630008", "Riu de Cerdanya": "2591390004",
+    "Rosselló": "2518980001", "Salàs de Pallars": "2519020002",
+    "Sanaüja": "2519190004", "Sant Esteve de la Sarga": "2519610007",
+    "Sant Guim de Freixenet": "2519240003", "Sant Guim de la Plana": "2519770005",
+    "Sant Llorenç de Morunys": "2519300000", "Sant Martí de Riucorb": "2590250006",
+    "Sant Ramon": "2519450006", "Sarroca de Bellera": "2520170005",
+    "Sarroca de Lleida": "2520000000", "Senterada": "2520220002",
+    "Seròs": "2520430008", "Sidamon": "2520560009", "Solsona": "2520750006",
+    "Soriguera": "2520810007", "Sort": "2520940003", "Soses": "2521080001",
+    "Sudanell": "2521150006", "Sunyer": "2521200000", "Talarn": "2521540003",
+    "Talavera": "2521670005", "Tarroja de Segarra": "2521920002",
+    "Tarrés": "2521890004", "Tiurana": "2522280001", "Tornabous": "2522520002",
+    "Torre-serona": "2523320002", "Torrebesses": "2522650006",
+    "Torrefarrera": "2522870005", "Torrefeta i Florejacs": "2590780001",
+    "Torregrossa": "2523040003", "Torrelameu": "2523110007",
+    "Torres de Segre": "2523260009", "Torà": "2522340003", "Tremp": "2523470005",
+    "Tàrrega": "2521730008", "Térmens": "2522060009", "Tírvia": "2522130008",
+    "Vall de Cardós": "2590100000", "Vallbona de les Monges": "2523850006",
+    "Vallfogona de Balaguer": "2524020002", "Verdú": "2524240003",
+    "Vielha e Mijaran": "2524300000", "Vila-Sana": "2525210007",
+    "Vilagrassa": "2524450006", "Vilaller": "2524580001", "Vilamòs": "2524770005",
+    "Vilanova de Bellpuig": "2524830008", "Vilanova de Meià": "2525090004",
+    "Vilanova de Segrià": "2525160009", "Vilanova de l'Aguda": "2524960009",
+    "Vilanova de la Barca": "2525420002", "Vinaixa": "2525550006",
+    "dels Alamús": "2500450006", "dels Omellons": "2515380001",
+    "dels Omells de na Gaia": "2515430008", "dels Plans de Sió": "2591180001",
+    "dels Torms": "2522490004", "el Cogul": "2507660009",
+    "el Palau d'Anglesola": "2515810007", "el Poal": "2516890004",
+    "el Pont de Bar": "2503060009", "el Pont de Suert": "2517340003",
+    "el Soleràs": "2520690004", "el Vilosell": "2525370005",
+    "l'Albagés": "2500610007", "l'Albi": "2500960009",
+    "l'Espluga Calba": "2508120002", "la Baronia de Rialb": "2504260009",
+    "la Coma i la Pedra": "2516360009", "la Floresta": "2509250006",
+    "la Fuliola": "2509620002", "la Granadella": "2510180001",
+    "la Guingueta d'Àneu": "2590310007", "la Molsosa": "2513640003",
+    "la Pobla de Cérvoles": "2516920002", "la Pobla de Segur": "2517130008",
+    "la Sentiu de Sió": "2503520002", "la Seu d'Urgell": "2520380001",
+    "la Torre de Cabdella": "2522710007", "la Vall de Boí": "2504320002",
+    "la Vansa i Fórnols": "2590970005",
+    "les Avellanes i Santa Linya": "2503710007",
+    "les Borges Blanques": "2505820002", "les Oluges": "2515220002",
+    "les Valls d'Aguilar": "2590620002", "les Valls de Valira": "2523980001",
+    "Àger": "2500240003",
 }
 
 PSCP_URL = "https://analisi.transparenciacatalunya.cat/resource/ybgg-dgi6.json"
@@ -2608,6 +2790,124 @@ def _actualizar_contratos_menors_girona_bg(job_id):
             _jobs[job_id]["error"] = str(e)
     finally:
         _actualizando_rpc_menors_lock.release()
+
+
+# ─── RPC — Lleida (fase piloto, 2026-08-06) ──────────────────────────────────
+# Duplicado deliberado de _fila_rpc_menor_a_registro/buscar_en_rpc_menors/
+# actualizar_contratos_menors_girona/_actualizar_contratos_menors_girona_bg
+# en vez de generalizarlos con un parámetro de provincia -- para esta fase
+# piloto no se toca ni se reescribe nada del código ya en producción de
+# Girona, solo se añade el equivalente para Lleida en paralelo. Si el
+# piloto confirma que el tiempo del cron da margen (ver informe de
+# viabilidad 2026-08-05/06), generalizar estas 4 funciones (+ las de
+# Barcelona/Tarragona) en una sola versión parametrizada por provincia
+# sería el siguiente paso natural, no antes.
+def _fila_rpc_menor_a_registro_lleida(fila, municipio):
+    """Igual que _fila_rpc_menor_a_registro pero con provincia/fuente de
+    Lleida -- mismo namespacing id=municipio::codi_expedient por la misma
+    razón (codi_expedient no es único entre municipios distintos)."""
+    try:
+        importe_num = float(fila.get("import_adjudicacio") or 0)
+    except (TypeError, ValueError):
+        importe_num = 0.0
+    return {
+        "id":               f"{municipio}::{fila.get('codi_expedient', '')}",
+        "municipio":        municipio,
+        "provincia":        "lleida",
+        "fuente":           "rpc-lleida",
+        "organisme":        fila.get("organisme_contractant", ""),
+        "adjudicatari":     (fila.get("adjudicatari") or "").strip(),
+        "nif":              "",
+        "import_num":       importe_num,
+        "data_adjudicacio": (fila.get("data_adjudicacio") or "")[:10],
+        "tipus_contracte":  fila.get("tipus_contracte", ""),
+        "descripcio":       (fila.get("descripcio_expedient") or "").strip(),
+        "codi_cpv":         fila.get("codi_cpv", ""),
+        "exercici":         fila.get("exercici", ""),
+    }
+
+
+def buscar_en_rpc_menors_lleida(municipio, job_id=None):
+    """Igual que buscar_en_rpc_menors pero resolviendo el codi_ine10 contra
+    MUNICIPIOS_LLEIDA_INE en vez de MUNICIPIOS_GIRONA_INE."""
+    ine10 = MUNICIPIOS_LLEIDA_INE.get(municipio, "")
+    if not ine10:
+        _log(job_id, f"  RPC: municipio sin codi_ine10 mapeado ({municipio})")
+        return []
+
+    _log(job_id, "Consultando RPC (Registre Públic de Contractes, contractes menors)…")
+    filas = []
+    limit, offset = 1000, 0
+    while True:
+        try:
+            r = session.get(RPC_MENORS_URL, params={
+                "$where": (f"id_organisme_contractant='{ine10}' AND "
+                           f"procediment_adjudicacio='Menor' AND "
+                           f"exercici >= '{RPC_MENORS_DESDE_ANY}'"),
+                "$order": "codi_expedient",
+                "$limit": limit,
+                "$offset": offset,
+            }, timeout=HTTP_TIMEOUT * 4)
+            if r.status_code != 200:
+                _log(job_id, f"  RPC: HTTP {r.status_code}")
+                break
+            pagina = r.json()
+        except Exception as e:
+            _log(job_id, f"  RPC no disponible ({type(e).__name__})")
+            break
+
+        if not pagina:
+            break
+        filas += pagina
+        if len(pagina) < limit:
+            break
+        offset += limit
+
+    filas = _dedup_rpc_menors(filas)
+    registros = [_fila_rpc_menor_a_registro_lleida(f, municipio) for f in filas]
+    _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados")
+    return registros
+
+
+def actualizar_contratos_menors_lleida(job_id=None):
+    """Igual que actualizar_contratos_menors_girona pero para los 231
+    municipios de Lleida -- ver MUNICIPIOS_LLEIDA arriba."""
+    total = 0
+    for municipio in MUNICIPIOS_LLEIDA:
+        registros = buscar_en_rpc_menors_lleida(municipio, job_id)
+        _guardar_contratos_menors_locales(registros)
+        total += len(registros)
+    _log(job_id, f"RPC: {total} contractes menors guardados en total ({len(MUNICIPIOS_LLEIDA)} municipios).")
+    return total
+
+
+def _actualizar_contratos_menors_lleida_bg(job_id):
+    """Hilo de fondo para POST /actualizar-contratos-menors-lleida. Mismo
+    patrón que _actualizar_contratos_menors_girona_bg, lock propio."""
+    if not _actualizando_rpc_menors_lleida_lock.acquire(blocking=False):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "error", "log": [],
+                              "error": "Ya hay un refresco de contratos menors Lleida en curso."}
+        return
+
+    inicio = time.time()
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "running", "log": [], "error": None}
+        total = actualizar_contratos_menors_lleida(job_id)
+        duracion_min = (time.time() - inicio) / 60
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "done"
+            _jobs[job_id]["total"] = total
+            _jobs[job_id]["duracion_min"] = round(duracion_min, 1)
+        print(f"  [actualizar-contratos-menors-lleida] Terminado: {total} contractes menors "
+              f"en {duracion_min:.1f} min.", flush=True)
+    except Exception as e:
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "error"
+            _jobs[job_id]["error"] = str(e)
+    finally:
+        _actualizando_rpc_menors_lleida_lock.release()
 
 
 # ─── CONTRATOS MENORES -- FUENTE ÁLAMO DE MURCIA (portal propio, CSV) ────────
@@ -7308,6 +7608,20 @@ def _route_post(path, params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_girona_bg, args=(job_id,), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id})
+            return _resp(body, content_type="application/json; charset=utf-8")
+
+        if path == "/actualizar-contratos-menors-lleida":
+            # Fase piloto (2026-08-06): endpoint gemelo del de Girona, para
+            # poder medir en vivo el tiempo real del refresco RPC de los 231
+            # municipios de Lleida antes de decidir si se suma al cron diario
+            # (ver informe de viabilidad). El job guarda "duracion_min" al
+            # terminar -- consultar GET /api/job/{job_id} para verlo.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            job_id = str(uuid.uuid4())
+            threading.Thread(target=_actualizar_contratos_menors_lleida_bg, args=(job_id,), daemon=True).start()
             body = json.dumps({"status": "started", "job_id": job_id})
             return _resp(body, content_type="application/json; charset=utf-8")
 
