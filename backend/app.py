@@ -1259,8 +1259,27 @@ def municipio_valido_girona(txt):
     return None
 
 # ─── PROVINCIA (Fase 4 — rutas/UI transversales) ─────────────────────────────
-MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GIRONA}
-PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona", "todas": "España"}
+MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GIRONA,
+                            "lleida": MUNICIPIOS_LLEIDA}
+PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
+                   "lleida": "Provincia de Lleida", "todas": "España"}
+_EJEMPLO_MUNI_POR_PROVINCIA = {
+    "murcia": "Lorca, Murcia, Cartagena, Archena…",
+    "girona": "Olot, Figueres, Girona, Blanes…",
+    "lleida": "Tàrrega, Balaguer, Lleida, Cervera…",
+}
+
+# codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
+# dominio Socrata que PSCP/RPC. Esta misma clave sirve de doble propósito
+# en todo el código: (1) resolver el codi_ine10 de un municipio para las
+# consultas SoQL, y (2) decidir si una provincia es "estilo Cataluña"
+# (PSCP/RPC, Ajuntament) o "estilo Murcia" (PLACE/BORM, Ayuntamiento) --
+# ver PROVINCIAS_CATALUNYA más abajo, que es literalmente el mismo dict.
+MUNICIPIOS_INE_POR_PROVINCIA = {"girona": MUNICIPIOS_GIRONA_INE, "lleida": MUNICIPIOS_LLEIDA_INE}
+# Alias con nombre más claro para los sitios donde solo se usa como
+# comprobación de pertenencia (if provincia in PROVINCIAS_CATALUNYA), no
+# para resolver un codi_ine10 -- mismo dict, no una copia.
+PROVINCIAS_CATALUNYA = MUNICIPIOS_INE_POR_PROVINCIA
 
 def _provincia_valida(txt):
     """Normaliza el parámetro ?provincia= de la querystring: cualquier valor
@@ -1276,10 +1295,29 @@ def _provincia_o_todas(txt):
     'todas' o inválido) se trata como "sin filtro"."""
     return txt if txt in MUNICIPIOS_POR_PROVINCIA else "todas"
 
+def _q_prov(provincia):
+    """Query string "&provincia=X" para enlaces que deben preservar la
+    provincia actual -- "" si es "murcia" o "todas" (las dos provincias
+    "por defecto" del sitio, una para vistas provinciales y otra para
+    vistas nacionales agregadas), que nunca llevan el parámetro explícito
+    en las URLs del sitio. Generaliza los antiguos
+    '"&provincia=girona" if provincia == "girona" else ""' repetidos por
+    todo el fichero a cualquier número de provincias."""
+    return f"&provincia={provincia}" if provincia not in ("murcia", "todas") else ""
+
+def _q_prov_first(provincia):
+    """Como _q_prov pero para cuando la provincia es el primer parámetro
+    de la querystring ("?provincia=X" en vez de "&provincia=X")."""
+    return f"?provincia={provincia}" if provincia not in ("murcia", "todas") else ""
+
 def municipio_valido_provincia(municipio, provincia):
-    if provincia == "girona":
-        return municipio_valido_girona(municipio)
-    return municipio_valido(municipio)
+    """Generalizado: busca en la lista de municipios de la provincia dada
+    (o Murcia si la provincia no se reconoce, mismo fallback que siempre)."""
+    buscado = normalizar(municipio)
+    for m in MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA):
+        if normalizar(m) == buscado:
+            return m
+    return None
 
 
 # ─── PSEUDO-MUNICIPIOS (ámbito autonómico/provincial, no un ayuntamiento) ────
@@ -1299,7 +1337,8 @@ def municipio_valido_provincia(municipio, provincia):
 # permite acotar sus contratos a solo Girona (son de toda Catalunya), así
 # que de momento solo se resuelve el lado de fondos UE para Girona
 # (etiquetado "Provincia de Girona", que sí es un recorte fiable por NUTS3).
-MUNICIPIOS_PSEUDO = {"murcia": "Región de Murcia", "girona": "Provincia de Girona"}
+MUNICIPIOS_PSEUDO = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
+                     "lleida": "Provincia de Lleida"}
 
 # Pseudo-municipios ADICIONALES por provincia (puede haber más de uno).
 # La Administración General del Estado (organismos estatales periféricos con
@@ -2499,11 +2538,13 @@ def _dedup_pscp_fases(filas):
     return list(mejores.values())
 
 
-def buscar_en_pscp(municipio, job_id=None):
+def buscar_en_pscp(municipio, provincia="girona", job_id=None):
     """Busca contratos adjudicados/formalizados del Ajuntament del municipio
     dado en la Plataforma de Serveis de Contractació Pública de Catalunya
-    (vía el espejo de dades obertes, dataset ybgg-dgi6)."""
-    ine10 = MUNICIPIOS_GIRONA_INE.get(municipio, "")
+    (vía el espejo de dades obertes, dataset ybgg-dgi6). Generalizado
+    2026-08-06 para cualquier provincia de MUNICIPIOS_INE_POR_PROVINCIA
+    (antes hardcodeado a Girona)."""
+    ine10 = MUNICIPIOS_INE_POR_PROVINCIA.get(provincia, {}).get(municipio, "")
     if not ine10:
         _log(job_id, f"  PSCP: municipio sin codi_ine10 mapeado ({municipio})")
         return []
@@ -2622,21 +2663,24 @@ def _dedup_rpc_menors(filas):
     return list(mejores.values())
 
 
-def _fila_rpc_menor_a_registro(fila, municipio):
+def _fila_rpc_menor_a_registro(fila, municipio, provincia):
     """Convierte una fila del dataset RPC al formato que guarda
     contratos_menors_locales. Sin NIF (la fuente no lo publica) y sin URL por
     expediente (la fuente no publica un enlace público por registro).
+    Generalizado 2026-08-06 (antes hardcodeado a Girona; hubo una versión
+    duplicada para la fase piloto de Lleida, ahora unificadas) -- funciona
+    para cualquier provincia de MUNICIPIOS_INE_POR_PROVINCIA.
 
     OJO -- codi_expedient NO es único a nivel global: muchos municipios
     pequeños comparten el mismo software/numeración de expedientes (medido en
     producción 2026-08-03: 'X2022000056' aparece en más de 10 ayuntamientos
     distintos -- Canet d'Adri, Palau-sator, Maçanet de la Selva, Osor,
     Susqueda...). Usar solo codi_expedient como id causaba que, al procesar
-    los 221 municipios uno detrás de otro, un municipio posterior en
-    MUNICIPIOS_GIRONA sobrescribiera silenciosamente los contratos de un
-    municipio anterior con el mismo código (147 de 221 municipios afectados,
-    ~15% de filas perdidas en el primer backfill). El id se namespacea con el
-    municipio para que la clave primaria sea única de verdad."""
+    todos los municipios uno detrás de otro, uno posterior en la lista
+    sobrescribiera silenciosamente los contratos de otro anterior con el
+    mismo código (147 de 221 municipios de Girona afectados en el primer
+    backfill). El id se namespacea con el municipio para que la clave
+    primaria sea única de verdad."""
     try:
         importe_num = float(fila.get("import_adjudicacio") or 0)
     except (TypeError, ValueError):
@@ -2644,8 +2688,8 @@ def _fila_rpc_menor_a_registro(fila, municipio):
     return {
         "id":               f"{municipio}::{fila.get('codi_expedient', '')}",
         "municipio":        municipio,
-        "provincia":        "girona",
-        "fuente":           "rpc-girona",
+        "provincia":        provincia,
+        "fuente":           f"rpc-{provincia}",
         "organisme":        fila.get("organisme_contractant", ""),
         "adjudicatari":     (fila.get("adjudicatari") or "").strip(),
         "nif":              "",
@@ -2658,11 +2702,12 @@ def _fila_rpc_menor_a_registro(fila, municipio):
     }
 
 
-def buscar_en_rpc_menors(municipio, job_id=None):
+def buscar_en_rpc_menors(municipio, provincia, job_id=None):
     """Busca contractes menors del Ajuntament del municipio dado en el
     Registre Públic de Contractes (dataset hb6v-jcbf), desde
-    RPC_MENORS_DESDE_ANY en adelante."""
-    ine10 = MUNICIPIOS_GIRONA_INE.get(municipio, "")
+    RPC_MENORS_DESDE_ANY en adelante. Generalizado 2026-08-06 -- resuelve
+    el codi_ine10 contra MUNICIPIOS_INE_POR_PROVINCIA[provincia]."""
+    ine10 = MUNICIPIOS_INE_POR_PROVINCIA.get(provincia, {}).get(municipio, "")
     if not ine10:
         _log(job_id, f"  RPC: municipio sin codi_ine10 mapeado ({municipio})")
         return []
@@ -2696,7 +2741,7 @@ def buscar_en_rpc_menors(municipio, job_id=None):
         offset += limit
 
     filas = _dedup_rpc_menors(filas)
-    registros = [_fila_rpc_menor_a_registro(f, municipio) for f in filas]
+    registros = [_fila_rpc_menor_a_registro(f, municipio, provincia) for f in filas]
     _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados")
     return registros
 
@@ -2752,17 +2797,20 @@ def _db_contratos_menors_por_municipio(municipio):
     return [dict(zip(cols, r)) for r in rows]
 
 
-def actualizar_contratos_menors_girona(job_id=None):
-    """Refresca contratos_menors_locales (filas de Girona/RPC) para los 221
-    municipios de Girona, uno detrás de otro (mismo dataset, un municipio por
+def actualizar_contratos_menors_rpc(provincia, municipios, job_id=None):
+    """Refresca contratos_menors_locales (RPC) para todos los municipios de
+    una provincia, uno detrás de otro (mismo dataset, un municipio por
     consulta filtrada por id_organisme_contractant -- no tiene sentido
-    paralelizar de más contra la misma API pública)."""
+    paralelizar de más contra la misma API pública). Generalizado 2026-08-06:
+    antes existían actualizar_contratos_menors_girona() y su duplicado
+    _lleida() por separado (fase piloto); unificadas aquí para poder añadir
+    Barcelona/Tarragona sin duplicar de nuevo."""
     total = 0
-    for municipio in MUNICIPIOS_GIRONA:
-        registros = buscar_en_rpc_menors(municipio, job_id)
+    for municipio in municipios:
+        registros = buscar_en_rpc_menors(municipio, provincia, job_id)
         _guardar_contratos_menors_locales(registros)
         total += len(registros)
-    _log(job_id, f"RPC: {total} contractes menors guardados en total ({len(MUNICIPIOS_GIRONA)} municipios).")
+    _log(job_id, f"RPC: {total} contractes menors guardados en total ({len(municipios)} municipios, {provincia}).")
     return total
 
 
@@ -2776,13 +2824,15 @@ def _actualizar_contratos_menors_girona_bg(job_id):
                               "error": "Ya hay un refresco de contratos menors Girona en curso."}
         return
 
+    inicio = time.time()
     try:
         with _jobs_lock:
             _jobs[job_id] = {"status": "running", "log": [], "error": None}
-        total = actualizar_contratos_menors_girona(job_id)
+        total = actualizar_contratos_menors_rpc("girona", MUNICIPIOS_GIRONA, job_id)
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
             _jobs[job_id]["total"] = total
+            _jobs[job_id]["duracion_min"] = round((time.time() - inicio) / 60, 1)
         print(f"  [actualizar-contratos-menors-girona] Terminado: {total} contractes menors.", flush=True)
     except Exception as e:
         with _jobs_lock:
@@ -2790,95 +2840,6 @@ def _actualizar_contratos_menors_girona_bg(job_id):
             _jobs[job_id]["error"] = str(e)
     finally:
         _actualizando_rpc_menors_lock.release()
-
-
-# ─── RPC — Lleida (fase piloto, 2026-08-06) ──────────────────────────────────
-# Duplicado deliberado de _fila_rpc_menor_a_registro/buscar_en_rpc_menors/
-# actualizar_contratos_menors_girona/_actualizar_contratos_menors_girona_bg
-# en vez de generalizarlos con un parámetro de provincia -- para esta fase
-# piloto no se toca ni se reescribe nada del código ya en producción de
-# Girona, solo se añade el equivalente para Lleida en paralelo. Si el
-# piloto confirma que el tiempo del cron da margen (ver informe de
-# viabilidad 2026-08-05/06), generalizar estas 4 funciones (+ las de
-# Barcelona/Tarragona) en una sola versión parametrizada por provincia
-# sería el siguiente paso natural, no antes.
-def _fila_rpc_menor_a_registro_lleida(fila, municipio):
-    """Igual que _fila_rpc_menor_a_registro pero con provincia/fuente de
-    Lleida -- mismo namespacing id=municipio::codi_expedient por la misma
-    razón (codi_expedient no es único entre municipios distintos)."""
-    try:
-        importe_num = float(fila.get("import_adjudicacio") or 0)
-    except (TypeError, ValueError):
-        importe_num = 0.0
-    return {
-        "id":               f"{municipio}::{fila.get('codi_expedient', '')}",
-        "municipio":        municipio,
-        "provincia":        "lleida",
-        "fuente":           "rpc-lleida",
-        "organisme":        fila.get("organisme_contractant", ""),
-        "adjudicatari":     (fila.get("adjudicatari") or "").strip(),
-        "nif":              "",
-        "import_num":       importe_num,
-        "data_adjudicacio": (fila.get("data_adjudicacio") or "")[:10],
-        "tipus_contracte":  fila.get("tipus_contracte", ""),
-        "descripcio":       (fila.get("descripcio_expedient") or "").strip(),
-        "codi_cpv":         fila.get("codi_cpv", ""),
-        "exercici":         fila.get("exercici", ""),
-    }
-
-
-def buscar_en_rpc_menors_lleida(municipio, job_id=None):
-    """Igual que buscar_en_rpc_menors pero resolviendo el codi_ine10 contra
-    MUNICIPIOS_LLEIDA_INE en vez de MUNICIPIOS_GIRONA_INE."""
-    ine10 = MUNICIPIOS_LLEIDA_INE.get(municipio, "")
-    if not ine10:
-        _log(job_id, f"  RPC: municipio sin codi_ine10 mapeado ({municipio})")
-        return []
-
-    _log(job_id, "Consultando RPC (Registre Públic de Contractes, contractes menors)…")
-    filas = []
-    limit, offset = 1000, 0
-    while True:
-        try:
-            r = session.get(RPC_MENORS_URL, params={
-                "$where": (f"id_organisme_contractant='{ine10}' AND "
-                           f"procediment_adjudicacio='Menor' AND "
-                           f"exercici >= '{RPC_MENORS_DESDE_ANY}'"),
-                "$order": "codi_expedient",
-                "$limit": limit,
-                "$offset": offset,
-            }, timeout=HTTP_TIMEOUT * 4)
-            if r.status_code != 200:
-                _log(job_id, f"  RPC: HTTP {r.status_code}")
-                break
-            pagina = r.json()
-        except Exception as e:
-            _log(job_id, f"  RPC no disponible ({type(e).__name__})")
-            break
-
-        if not pagina:
-            break
-        filas += pagina
-        if len(pagina) < limit:
-            break
-        offset += limit
-
-    filas = _dedup_rpc_menors(filas)
-    registros = [_fila_rpc_menor_a_registro_lleida(f, municipio) for f in filas]
-    _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados")
-    return registros
-
-
-def actualizar_contratos_menors_lleida(job_id=None):
-    """Igual que actualizar_contratos_menors_girona pero para los 231
-    municipios de Lleida -- ver MUNICIPIOS_LLEIDA arriba."""
-    total = 0
-    for municipio in MUNICIPIOS_LLEIDA:
-        registros = buscar_en_rpc_menors_lleida(municipio, job_id)
-        _guardar_contratos_menors_locales(registros)
-        total += len(registros)
-    _log(job_id, f"RPC: {total} contractes menors guardados en total ({len(MUNICIPIOS_LLEIDA)} municipios).")
-    return total
 
 
 def _actualizar_contratos_menors_lleida_bg(job_id):
@@ -2894,7 +2855,7 @@ def _actualizar_contratos_menors_lleida_bg(job_id):
     try:
         with _jobs_lock:
             _jobs[job_id] = {"status": "running", "log": [], "error": None}
-        total = actualizar_contratos_menors_lleida(job_id)
+        total = actualizar_contratos_menors_rpc("lleida", MUNICIPIOS_LLEIDA, job_id)
         duracion_min = (time.time() - inicio) / 60
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
@@ -4368,8 +4329,8 @@ def _job_run(job_id, municipio, provincia="murcia"):
     try:
         _log(job_id, f"Iniciando búsqueda de contratos para {municipio}…")
 
-        if provincia == "girona":
-            contratos = buscar_en_pscp(municipio, job_id)
+        if provincia in PROVINCIAS_CATALUNYA:
+            contratos = buscar_en_pscp(municipio, provincia, job_id)
         else:
             contratos = []
 
@@ -4426,7 +4387,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
         # Deduplicar por URL (dentro de la misma fuente) — PLACE y BORM pueden tener URLs distintas para el mismo contrato
         contratos = _dedup_contratos_por_url(contratos)
 
-        if provincia != "girona":
+        if provincia not in PROVINCIAS_CATALUNYA:
             # Enriquecer contratos PLACE con el link al BORM cuando existe uno equivalente
             _enlazar_borm_place(contratos)
         _log(job_id, f"Total contratos únicos (este refresco): {len(contratos)}")
@@ -4506,7 +4467,8 @@ def _job_run(job_id, municipio, provincia="murcia"):
         # Análisis de riesgo
         alertas = analizar_riesgo(contratos)
 
-        organismo = f"Ajuntament de {municipio}" if provincia == "girona" else f"Ayuntamiento de {municipio}"
+        organismo = (f"Ajuntament de {municipio}" if provincia in PROVINCIAS_CATALUNYA
+                     else f"Ayuntamiento de {municipio}")
         resultado = {
             "municipio":       municipio,
             "organismo":       organismo,
@@ -4514,7 +4476,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
             "contratos":       contratos,
             "alertas":         alertas,
             # PSCP no tiene perfil de contratante equivalente al de PLACE (ver Fase 3)
-            "place_profile":   "" if provincia == "girona" else place_profile_url(municipio),
+            "place_profile":   "" if provincia in PROVINCIAS_CATALUNYA else place_profile_url(municipio),
             "timestamp":       time.time(),
         }
 
@@ -5211,12 +5173,12 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 
 
 def spinner_page(job_id, municipio, provincia="murcia"):
-    es_girona = provincia == "girona"
+    es_catalunya = provincia in PROVINCIAS_CATALUNYA
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
-    fuente_txt = ("Datos oficiales: PSCP (Generalitat de Catalunya)" if es_girona else
+    fuente_txt = ("Datos oficiales: PSCP (Generalitat de Catalunya)" if es_catalunya else
                   "Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)")
-    fuente_corta = "PSCP" if es_girona else "PLACE (Ministerio de Hacienda) y BORM"
-    redirect_url = f"/?muni={quote_plus(municipio)}" + ("&provincia=girona" if es_girona else "")
+    fuente_corta = "PSCP" if es_catalunya else "PLACE (Ministerio de Hacienda) y BORM"
+    redirect_url = f"/?muni={quote_plus(municipio)}" + _q_prov(provincia)
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-86Q210M1DC"></script>
@@ -5666,8 +5628,7 @@ def _ad_banner_html():
 
 
 def _header_html(provincia="todas"):
-    es_girona = provincia == "girona"
-    rankings_href = "/rankings?provincia=girona" if es_girona else "/rankings"
+    rankings_href = "/rankings" + _q_prov_first(provincia)
     return f"""<header>
   <a href="/" class="header-brand" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
     <div class="logo-svg">{LOGO_SVG}</div>
@@ -5686,9 +5647,8 @@ def _header_html(provincia="todas"):
 
 
 def _footer_html(provincia="todas"):
-    es_girona = provincia == "girona"
     es_murcia = provincia == "murcia"
-    if es_girona:
+    if provincia in PROVINCIAS_CATALUNYA:
         fuente_links = '<a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>'
     elif es_murcia:
         fuente_links = ('<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>\n'
@@ -5714,8 +5674,8 @@ def _footer_html(provincia="todas"):
     {fuente_links}
     <a href="https://www.boe.es/" target="_blank" rel="noopener">BOE</a>
     <a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener">Registro Mercantil</a>
-    <a href="{'/rankings?provincia=girona' if es_girona else '/rankings'}">Rankings</a>
-    <a href="{'/rankings?provincia=girona' if es_girona else '/rankings'}#alcaldes">Sueldos Alcaldes</a>
+    <a href="/rankings{_q_prov_first(provincia)}">Rankings</a>
+    <a href="/rankings{_q_prov_first(provincia)}#alcaldes">Sueldos Alcaldes</a>
     <a href="/fondos-ue">Fondos UE</a>
     <a href="/aviso-legal">Aviso Legal</a>
     <a href="/quienes-somos">Quiénes Somos</a>
@@ -6070,7 +6030,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     for i, f in enumerate(ranking_alcaldes, 1):
         pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
         muni_q = quote_plus(f["municipio"])
-        q_prov_muni = "&provincia=girona" if f["provincia"] == "girona" else ""
+        q_prov_muni = _q_prov(f["provincia"])
         partido_html = (esc(f["partido"]) if f["partido"]
                          else '<span class="noloc-warn">Sin partido registrado</span>')
         habitantes_html = fmt_num(f["habitantes"]) if f["habitantes"] else "—"
@@ -6093,7 +6053,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     for i, f in enumerate(ranking_deuda_hab, 1):
         pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
         muni_q = quote_plus(f["municipio"])
-        q_prov_muni = "&provincia=girona" if f["provincia"] == "girona" else ""
+        q_prov_muni = _q_prov(f["provincia"])
         filas_deuda_hab_html += f"""<tr>
           <td class="rk-pos">{pos}</td>
           <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
@@ -6410,8 +6370,8 @@ def render_comentarios_html(tipo, clave_raw, redirect_url, titulo="esta ficha"):
 
 
 def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
-    q_prov = "&provincia=girona" if provincia == "girona" else ""
-    q_prov_first = "?provincia=girona" if provincia == "girona" else ""
+    q_prov = _q_prov(provincia)
+    q_prov_first = _q_prov_first(provincia)
     if muni_filter:
         datos = [d for d in datos if normalizar(d.get("municipio", "")) == normalizar(muni_filter)]
 
@@ -6467,12 +6427,12 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         if n_borm:  fuentes_desc.append(f"BORM: {n_borm}")
         if n_pscp:  fuentes_desc.append(f"PSCP: {n_pscp}")
         fuentes_str = " · ".join(fuentes_desc) if fuentes_desc else "—"
-        fuentes_label = ("Fuente: PSCP (Generalitat de Catalunya)" if provincia == "girona" else
+        fuentes_label = ("Fuente: PSCP (Generalitat de Catalunya)" if provincia in PROVINCIAS_CATALUNYA else
                           "Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia)")
 
         muni_name     = muni_name_d
         muni_enc      = quote_plus(muni_name)
-        profile_url   = d.get("place_profile", "" if provincia == "girona" else place_profile_url(muni_name))
+        profile_url   = d.get("place_profile", "" if provincia in PROVINCIAS_CATALUNYA else place_profile_url(muni_name))
         profile_html  = (f'<a href="{esc(profile_url)}" target="_blank" class="link" '
                           f'title="Perfil contratante en PLACE" style="font-size:11px">Perfil PLACE ↗</a>'
                           if profile_url else "")
@@ -6682,7 +6642,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     if not cards:
         cards = '<div class="empty">Municipio no encontrado.</div>'
 
-    ejemplo_muni = "Olot, Figueres, Girona, Blanes…" if provincia == "girona" else "Lorca, Murcia, Cartagena, Archena…"
+    ejemplo_muni = _EJEMPLO_MUNI_POR_PROVINCIA.get(provincia, _EJEMPLO_MUNI_POR_PROVINCIA["murcia"])
     body = f"""{back_html}
   <div class="search-bar">
     <label>Municipio</label>
@@ -6697,7 +6657,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
 
     muni_display = datos[0].get("municipio", "") if datos else muni_filter
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
-    fuente_desc = "PSCP" if provincia == "girona" else "PLACE"
+    fuente_desc = "PSCP" if provincia in PROVINCIAS_CATALUNYA else "PLACE"
     titulo = f"Contratos públicos de {muni_display}" if muni_display else "Contratos Públicos"
     descripcion = (f"Contratos públicos adjudicados en {muni_display} ({label}): "
                    f"empresa adjudicataria, importe y directivo/administrador. "
@@ -6856,10 +6816,9 @@ def render_landing_nacional_html(datos):
 def render_landing_html(datos, provincia="murcia"):
     """Página de inicio: no carga ningún municipio, muestra stats globales,
     buscador global y el grid de municipios de la provincia seleccionada."""
-    es_girona = provincia == "girona"
     municipios_lista = MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
-    q_prov = "&provincia=girona" if es_girona else ""
+    q_prov = _q_prov(provincia)
     por_muni = {normalizar(d.get("municipio", "")): d for d in datos}
 
     total_m = len(datos)
@@ -6914,11 +6873,7 @@ def render_landing_html(datos, provincia="murcia"):
         tiles += _muni_tile(muni, por_muni.get(normalizar(muni)))
 
     hero_sub = (
-        f"Contratos públicos de los {len(municipios_lista)} municipios de la provincia de Girona, "
-        f"cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás "
-        f"de cada adjudicación."
-        if es_girona else
-        f"Contratos públicos de los {len(municipios_lista)} municipios de la Región de Murcia, "
+        f"Contratos públicos de los {len(municipios_lista)} municipios de la {label}, "
         f"cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás "
         f"de cada adjudicación."
     )
@@ -7093,11 +7048,11 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
     else:
         tabla = '<div class="empty">Sin resultados para tu búsqueda.</div>'
 
-    q_prov = "&provincia=girona" if provincia == "girona" else ""
+    q_prov = _q_prov(provincia)
     comentarios_html = (render_comentarios_html("busqueda", q, f"/?q={quote_plus(q)}{q_prov}", titulo=q)
                          if resultados else "")
 
-    body = f"""<span class="back-link"><a href="/{'?provincia=girona' if provincia == 'girona' else ''}">← Volver al inicio</a></span>
+    body = f"""<span class="back-link"><a href="/{_q_prov_first(provincia)}">← Volver al inicio</a></span>
   <div class="global-search">
     <form method="GET" action="/" class="gs-row">
       <input name="q" value="{esc(q)}" placeholder="Buscar por empresa, directivo o municipio…" autofocus>
@@ -7328,15 +7283,17 @@ def _route_get(path, qs, gzip_ok=False):
         with _datos_lock:
             entradas = [(d.get("municipio", ""), d.get("provincia", "murcia")) for d in _datos_memoria]
         urls = [f"  <url><loc>{esc(SITE_URL)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>",
-                f"  <url><loc>{esc(SITE_URL)}/?provincia=girona</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/rankings</loc><changefreq>daily</changefreq></url>",
-                f"  <url><loc>{esc(SITE_URL)}/rankings?provincia=girona</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quienes-somos</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>"]
+        for prov in MUNICIPIOS_POR_PROVINCIA:
+            if prov == "murcia":
+                continue  # sin parámetro, ya cubierto por las URLs de arriba
+            urls.append(f"  <url><loc>{esc(SITE_URL)}/{_q_prov_first(prov)}</loc><changefreq>daily</changefreq></url>")
+            urls.append(f"  <url><loc>{esc(SITE_URL)}/rankings{_q_prov_first(prov)}</loc><changefreq>daily</changefreq></url>")
         for m, prov in entradas:
-            sufijo = "&provincia=girona" if prov == "girona" else ""
-            urls.append(f"  <url><loc>{esc(SITE_URL)}/?muni={quote_plus(m)}{sufijo}</loc><changefreq>daily</changefreq></url>")
+            urls.append(f"  <url><loc>{esc(SITE_URL)}/?muni={quote_plus(m)}{_q_prov(prov)}</loc><changefreq>daily</changefreq></url>")
         body = ('<?xml version="1.0" encoding="UTF-8"?>\n'
                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                 + "\n".join(urls) + "\n</urlset>\n")
@@ -7453,7 +7410,7 @@ def _route_post(path, params):
             if not mun_ok:
                 label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
                 return _error_resp(f"Municipio no válido o no pertenece a {label}.", 400)
-            redirect_url = f"/?muni={quote_plus(mun_ok)}" + ("&provincia=girona" if provincia == "girona" else "")
+            redirect_url = f"/?muni={quote_plus(mun_ok)}" + _q_prov(provincia)
             # Servir desde caché si los datos son recientes (salvo si fuerza actualización)
             if not force:
                 cached = _cache_get(mun_ok)
@@ -7545,7 +7502,7 @@ def _route_post(path, params):
             provincia = _provincia_valida(params.get("provincia", ["murcia"])[0])
             mun_ok = municipio_valido_provincia(municipio, provincia)
             if not mun_ok:
-                return _redirect_resp("/" + ("?provincia=girona" if provincia == "girona" else ""))
+                return _redirect_resp("/" + _q_prov_first(provincia))
             _cache_invalidate(mun_ok)
             job_id = str(uuid.uuid4())
             with _jobs_lock:
