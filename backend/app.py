@@ -53,6 +53,58 @@ POBLACION_FILE = os.path.join(BASE_DIR, "poblacion.json")
 CACHE_DIR  = os.path.join(DATA_DIR, "place_cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
+# Retención de ZIPs de place_cache/ -- decisión de César 2026-08-06, tras
+# confirmar en el dashboard de Render que el disco de 2GB estaba casi
+# lleno y diagnosticar que place_cache/ (sin ninguna purga hasta ahora)
+# era la causa: acumulaba ~3,1 GB (20 ZIPs desde dic-2024) porque nunca se
+# borraba nada. El código real solo necesita activamente el ZIP del mes
+# actual + el anterior (ver _add_zip en _job_run) -- todo lo más antiguo
+# que eso es histórico ya absorbido para siempre en cache.db (fusión
+# aditiva, ver _fusionar_historico_contratos: un contrato ya guardado
+# nunca se pierde aunque el ZIP de origen desaparezca). 3 meses = esos 2
+# necesarios + 1 de margen, no un requisito legal de retención de datos
+# (ese histórico de contratos vive en cache.db, que no borra nada).
+PLACE_CACHE_RETENCION_MESES = 3
+
+
+def _purgar_place_cache_antiguos(job_id=None):
+    """Borra de CACHE_DIR los ZIPs mensuales de PLACE (place_YYYYMM.zip) con
+    más de PLACE_CACHE_RETENCION_MESES de antigüedad. Seguro de ejecutar en
+    cualquier momento: el histórico de contratos ya extraído de esos ZIPs
+    vive para siempre en cache.db (ver PLACE_CACHE_RETENCION_MESES arriba),
+    así que borrar el ZIP de origen no puede hacer desaparecer un contrato
+    ya guardado -- como mucho, si algún día hiciera falta re-escanear ese
+    mes desde cero, tocaría volver a descargarlo."""
+    hoy = datetime.now()
+    limite_absoluto = hoy.year * 12 + hoy.month - PLACE_CACHE_RETENCION_MESES
+    borrados = []
+    bytes_liberados = 0
+    try:
+        nombres = os.listdir(CACHE_DIR)
+    except OSError:
+        return borrados
+    for fname in nombres:
+        if not (fname.startswith("place_") and fname.endswith(".zip")):
+            continue
+        anomes = fname[len("place_"):-len(".zip")]
+        if len(anomes) != 6 or not anomes.isdigit():
+            continue
+        anio, mes = int(anomes[:4]), int(anomes[4:6])
+        if anio * 12 + mes >= limite_absoluto:
+            continue
+        ruta = os.path.join(CACHE_DIR, fname)
+        try:
+            bytes_liberados += os.path.getsize(ruta)
+            os.remove(ruta)
+            borrados.append(fname)
+        except OSError:
+            pass
+    if borrados:
+        _log(job_id, f"place_cache/: {len(borrados)} ZIP(s) purgado(s) "
+                      f"(> {PLACE_CACHE_RETENCION_MESES} meses), "
+                      f"{bytes_liberados // 1024 // 1024} MB liberados.")
+    return borrados
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
     "Accept-Language": "es-ES,es;q=0.9",
@@ -1700,6 +1752,7 @@ def descargar_zip_place(anomes, job_id=None):
 
             if r.status_code == 416:
                 os.rename(temp_path, cache_path)
+                _purgar_place_cache_antiguos(job_id)
                 return cache_path
             if r.status_code not in (200, 206):
                 _log(job_id, f"HTTP {r.status_code} — ZIP no disponible para {anomes}")
@@ -1725,6 +1778,7 @@ def descargar_zip_place(anomes, job_id=None):
 
             os.rename(temp_path, cache_path)
             _log(job_id, f"ZIP {anomes} descargado ({descargado // 1024 // 1024} MB).")
+            _purgar_place_cache_antiguos(job_id)
             return cache_path
 
         except Exception as e:
@@ -7139,6 +7193,30 @@ def _route_post(path, params):
             if tipo in ("municipio", "busqueda") and clave_raw and texto:
                 _db_comentarios_insertar(tipo, clave_raw, texto, nombre)
             return _redirect_resp(redirect_url + "#comentarios" if "#" not in redirect_url else redirect_url)
+
+        if path == "/admin/purgar-place-cache":
+            # Disparo manual de _purgar_place_cache_antiguos() -- la purga
+            # normal solo se dispara sola al descargar un ZIP nuevo (una vez
+            # al mes en la práctica), así que este endpoint existe para
+            # poder liberar espacio YA en producción sin esperar al próximo
+            # mes (ver informe de viabilidad + purga 2026-08-06). Mismo
+            # patrón ADMIN_TOKEN que /vaciar y /actualizar-todos.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            borrados = _purgar_place_cache_antiguos()
+            try:
+                restantes = sorted(f for f in os.listdir(CACHE_DIR)
+                                    if f.startswith("place_") and f.endswith(".zip"))
+                mb_restantes = sum(os.path.getsize(os.path.join(CACHE_DIR, f)) for f in restantes) // 1024 // 1024
+            except OSError:
+                restantes, mb_restantes = [], 0
+            body = json.dumps({
+                "borrados": borrados,
+                "restantes": restantes,
+                "mb_restantes": mb_restantes,
+            }, ensure_ascii=False)
+            return _resp(body, content_type="application/json; charset=utf-8")
 
         if path == "/vaciar":
             # Borra contratos ya scrapeados/enriquecidos. Ya no hay botón en la
