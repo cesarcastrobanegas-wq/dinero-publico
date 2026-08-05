@@ -299,6 +299,23 @@ def _db_init():
             _db.execute("ALTER TABLE fondos_ue ADD COLUMN municipio_match TEXT DEFAULT ''")
         except sqlite3.OperationalError:
             pass  # ya existe
+        # Comentarios de usuarios en la ficha de municipio o de empresa
+        # (búsqueda global) -- formulario simple, sin gestión activa ni
+        # aviso por email: se guardan y se muestran públicos al instante,
+        # sin cola de moderación. clave = normalizar(nombre del municipio)
+        # o normalizar(texto de búsqueda de la empresa) -- mismo criterio
+        # que el resto de tablas indexadas por municipio (ver DEUDA_VIVA/
+        # POBLACION), así "Molina de Segura" y "molina  de   segura"
+        # comparten hilo de comentarios.
+        _db.execute("""CREATE TABLE IF NOT EXISTS comentarios (
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            tipo    TEXT NOT NULL,
+            clave   TEXT NOT NULL,
+            etiqueta TEXT NOT NULL,
+            nombre  TEXT,
+            texto   TEXT NOT NULL,
+            ts      REAL NOT NULL
+        )""")
         _db.commit()
 
         # Recalcula municipio_match para TODAS las filas en cada arranque (no
@@ -2894,6 +2911,28 @@ def _db_fondos_ue_por_municipio(municipio):
     return [dict(zip(cols, r)) for r in rows]
 
 
+def _db_comentarios_insertar(tipo, clave_raw, texto, nombre=""):
+    """Guarda un comentario de usuario en la ficha de municipio o de empresa.
+    Sin gestión activa ni email: se guarda directamente y se muestra público
+    de inmediato (ver render_comentarios_html), no hay cola de moderación."""
+    with _db_lock:
+        _db.execute(
+            "INSERT INTO comentarios (tipo, clave, etiqueta, nombre, texto, ts) VALUES (?,?,?,?,?,?)",
+            (tipo, normalizar(clave_raw), clave_raw.strip(), nombre.strip(), texto.strip(), time.time()),
+        )
+        _db.commit()
+
+
+def _db_comentarios_por(tipo, clave_raw):
+    """Comentarios guardados para este municipio/empresa, más reciente primero."""
+    with _db_lock:
+        rows = _db.execute(
+            "SELECT nombre, texto, ts FROM comentarios WHERE tipo=? AND clave=? ORDER BY ts DESC",
+            (tipo, normalizar(clave_raw)),
+        ).fetchall()
+    return [{"nombre": r[0], "texto": r[1], "ts": r[2]} for r in rows]
+
+
 def actualizar_fondos_cordis(job_id=None):
     """Descarga el volcado masivo de CORDIS (Horizon Europe 2021-2027) y
     guarda las organizaciones de Murcia/Girona en la tabla fondos_ue.
@@ -4547,6 +4586,24 @@ a.fue-link{color:var(--yellow);font-size:11px;}
 .cm-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);white-space:nowrap;font-weight:600;}
 .cm-nif{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .fuente-rpc{background:rgba(240,136,62,.15);color:var(--accent);border:1px solid rgba(240,136,62,.3);}
+/* Comentarios de usuarios (ficha de municipio/empresa) -- mismo patrón
+   <details> colapsable que cm-card, acento azul para diferenciarlo de las
+   fuentes de datos oficiales (naranja/amarillo/verde). */
+.comentarios-card{background:var(--surface);border:1px solid rgba(88,166,255,.35);border-radius:8px;margin-top:14px;overflow:hidden;}
+.comentarios-card summary{padding:12px 18px;background:rgba(88,166,255,.1);cursor:pointer;font-size:14px;font-weight:600;color:var(--blue);list-style:none;}
+.comentarios-card summary::-webkit-details-marker{display:none;}
+.comentarios-list{padding:4px 18px;}
+.comentario-item{padding:10px 0;border-bottom:1px solid rgba(48,54,61,.5);}
+.comentario-item:last-child{border-bottom:none;}
+.comentario-meta{font-size:12px;margin-bottom:4px;}
+.comentario-meta b{color:var(--text);}
+.comentario-fecha{color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;margin-left:8px;}
+.comentario-texto{font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+.comentario-form{display:flex;flex-direction:column;gap:8px;padding:14px 18px 18px;border-top:1px solid var(--border);}
+.comentario-form input,.comentario-form textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:9px 12px;border-radius:6px;outline:none;resize:vertical;}
+.comentario-form textarea{min-height:70px;}
+.comentario-form input:focus,.comentario-form textarea:focus{border-color:var(--blue);}
+.comentario-form .btn{align-self:flex-start;}
 .rk-pos{font-size:16px;text-align:center;width:44px;}
 .rk-empresa{color:var(--text);font-weight:600;text-decoration:none;}
 .rk-empresa:hover{color:var(--accent);text-decoration:underline;}
@@ -4696,7 +4753,11 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .home-main-col{min-width:0;}
 
 /* ── footer ───────────────────────────────────────────────────────────── */
-.site-footer{max-width:1340px;margin:48px auto 0;padding:22px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center;}
+.colabora-bar{max-width:1340px;margin:48px auto 0;padding:16px 20px;border-radius:8px;background:rgba(240,136,62,.08);border:1px solid rgba(240,136,62,.3);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;}
+.colabora-text{font-size:12.5px;color:var(--text);line-height:1.6;max-width:760px;}
+.colabora-text b{color:var(--accent);}
+.colabora-bizum{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);background:var(--surface);border:1px solid rgba(240,136,62,.4);border-radius:6px;padding:8px 16px;white-space:nowrap;}
+.site-footer{max-width:1340px;margin:0 auto;padding:22px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center;}
 .site-footer .ft-links{display:flex;flex-wrap:wrap;gap:16px;align-items:center;}
 .site-footer a{color:var(--dim);font-size:12px;text-decoration:none;}
 .site-footer a:hover{color:var(--blue);}
@@ -4762,6 +4823,9 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .contrato-title{white-space:normal;}
   .site-footer{flex-direction:column;align-items:flex-start;max-width:100%;}
   .site-footer .ft-links{gap:10px 14px;}
+  .colabora-bar{flex-direction:column;align-items:flex-start;max-width:100%;margin:32px auto 0;}
+  .colabora-bizum{align-self:stretch;text-align:center;}
+  .comentario-form .btn{align-self:stretch;}
   .static-page{padding:22px 18px;}
   .ad-banner{max-width:100%;}
   .cobertura-grid{grid-template-columns:1fr;}
@@ -4878,6 +4942,7 @@ def _render_alertas(alertas):
 
 SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
 SITE_TAGLINE = "El dinero de todos, en manos de quién"
+BIZUM_TELEFONO = "661657013"
 
 REGISTRO_MERCANTIL_URL = "https://www.registradores.org/actualidad/portal-notarial/registro-mercantil-en-linea"
 REGISTRO_ASOCIACIONES_URL = "https://www.interior.gob.es/opencms/es/servicios-al-ciudadano/tramites-y-gestiones/asociaciones/consulta-del-fichero-de-denominaciones/"
@@ -5182,7 +5247,17 @@ def _footer_html(provincia="todas"):
                          '    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>\n'
                          '    <a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>')
     brand_label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["todas"])
-    return f"""<footer class="site-footer">
+    return f"""<div class="colabora-bar">
+  <div class="colabora-text">
+    <b>🤝 Colabora</b> — La transparencia no se regala, se construye.
+    Si este proyecto te ha servido para saber en qué se gasta el dinero de todos,
+    ayúdanos a que siga en pie.
+  </div>
+  <span class="colabora-bizum" title="Envía un Bizum a este número desde tu app del banco">
+    💙 Bizum: {BIZUM_TELEFONO}
+  </span>
+</div>
+<footer class="site-footer">
   <div class="ft-brand">© Dinero Público — datos oficiales públicos, {esc(brand_label)}</div>
   <div class="ft-links">
     {fuente_links}
@@ -5361,7 +5436,13 @@ def _calcular_ranking_alcaldes():
     así que solo entran al ranking los municipios que tienen AMBOS datos.
     Verificado el 2026-08-04: 239/266 (los otros 27 tienen alcalde/sa
     identificado pero ISPA no ha publicado o no ha podido atribuir su
-    retribución todavía)."""
+    retribución todavía).
+    Habitantes y deuda por habitante se añaden reutilizando POBLACION y
+    DEUDA_VIVA (mismos datos ya cargados para la ficha de municipio, ver
+    _cargar_poblacion/_cargar_hacienda_eell) -- ninguna fuente nueva.
+    Ninguno de los dos es obligatorio para entrar en el ranking (sigue
+    ordenado por sueldo), simplemente pueden venir vacíos ("") si el
+    municipio no tiene ese dato."""
     filas = []
     for clave, retrib in RETRIBUCIONES_ISPA.items():
         importe = retrib.get("importe")
@@ -5373,15 +5454,52 @@ def _calcular_ranking_alcaldes():
         nombre = (info.get("alcalde") or {}).get("nombre", "")
         if not nombre:
             continue
+        municipio = retrib.get("municipio") or info.get("municipio", "")
+        pob_info = POBLACION.get(normalizar(municipio))
+        habitantes = pob_info["poblacion"] if pob_info else None
+        deuda_info = DEUDA_VIVA.get(normalizar(municipio))
+        deuda_por_habitante = None
+        if deuda_info and habitantes:
+            deuda_por_habitante = deuda_info["deuda_eur"] / habitantes
         filas.append({
             "nombre": _capitalizar_nombre(nombre),
             "partido": (info.get("alcalde") or {}).get("partido", ""),
-            "municipio": retrib.get("municipio") or info.get("municipio", ""),
+            "municipio": municipio,
             "provincia": retrib.get("provincia") or info.get("provincia", ""),
             "importe": importe,
             "anio": retrib.get("anio", ""),
+            "habitantes": habitantes,
+            "deuda_por_habitante": deuda_por_habitante,
         })
     filas.sort(key=lambda f: f["importe"], reverse=True)
+    return filas
+
+
+def _calcular_ranking_deuda_por_habitante():
+    """Ranking de deuda viva municipal por habitante, de mayor a menor,
+    reutilizando DEUDA_VIVA y POBLACION (Ministerio de Hacienda + INE, ya
+    cargados para la ficha de municipio -- ver _cargar_hacienda_eell/
+    _cargar_poblacion) -- ninguna fuente nueva. Solo entran los municipios
+    con ambos datos (deuda y población); se excluyen los pseudo-municipios
+    ("Región de Murcia", AGE...) porque no tienen población propia."""
+    filas = []
+    for clave, deuda_info in DEUDA_VIVA.items():
+        pob_info = POBLACION.get(clave)
+        if not pob_info or not pob_info.get("poblacion"):
+            continue
+        municipio = deuda_info.get("municipio") or pob_info.get("municipio", "")
+        if es_pseudo_municipio(municipio):
+            continue
+        habitantes = pob_info["poblacion"]
+        deuda_eur = deuda_info["deuda_eur"]
+        filas.append({
+            "municipio": municipio,
+            "provincia": deuda_info.get("provincia") or pob_info.get("provincia", ""),
+            "deuda_eur": deuda_eur,
+            "habitantes": habitantes,
+            "deuda_por_habitante": deuda_eur / habitantes,
+        })
+    filas.sort(key=lambda f: f["deuda_por_habitante"], reverse=True)
     return filas
 
 
@@ -5459,15 +5577,36 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
         q_prov_muni = "&provincia=girona" if f["provincia"] == "girona" else ""
         partido_html = (esc(f["partido"]) if f["partido"]
                          else '<span class="noloc-warn">Sin partido registrado</span>')
+        habitantes_html = fmt_num(f["habitantes"]) if f["habitantes"] else "—"
+        deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + "/hab."
+                           if f["deuda_por_habitante"] is not None else "—")
         filas_alcaldes_html += f"""<tr>
           <td class="rk-pos">{pos}</td>
           <td><b class="pol-nombre">{esc(f['nombre'])}</b></td>
           <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
           <td>{partido_html}</td>
           <td class="rk-valor">{fmt_eur(f['importe'])}/año</td>
+          <td>{habitantes_html}</td>
+          <td class="rk-valor">{deuda_hab_html}</td>
         </tr>"""
     if not filas_alcaldes_html:
-        filas_alcaldes_html = '<tr><td colspan="5" class="empty">Aún no hay datos suficientes.</td></tr>'
+        filas_alcaldes_html = '<tr><td colspan="7" class="empty">Aún no hay datos suficientes.</td></tr>'
+
+    ranking_deuda_hab = _calcular_ranking_deuda_por_habitante()
+    filas_deuda_hab_html = ""
+    for i, f in enumerate(ranking_deuda_hab, 1):
+        pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
+        muni_q = quote_plus(f["municipio"])
+        q_prov_muni = "&provincia=girona" if f["provincia"] == "girona" else ""
+        filas_deuda_hab_html += f"""<tr>
+          <td class="rk-pos">{pos}</td>
+          <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
+          <td>{fmt_eur(f['deuda_eur'])}</td>
+          <td>{fmt_num(f['habitantes'])}</td>
+          <td class="rk-valor">{fmt_eur(f['deuda_por_habitante'])}/hab.</td>
+        </tr>"""
+    if not filas_deuda_hab_html:
+        filas_deuda_hab_html = '<tr><td colspan="5" class="empty">Aún no hay datos suficientes.</td></tr>'
 
     selector_prov = "".join(
         f'<a href="/rankings?provincia={prov}" class="prov-tab{" active" if prov == provincia_prov else ""}">'
@@ -5519,10 +5658,20 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <span class="rk-badge">ISPA {esc(anio_ispa)} · {len(ranking_alcaldes)} municipios con dato</span>
   </div>
   <div class="section-title">De mayor a menor retribución anual (Murcia + Girona)</div>
-  <div class="muni-card"><table>
-    <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th></tr>
+  <div class="muni-card"><div class="tbl-scroll"><table>
+    <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_alcaldes_html}
-  </table></div>"""
+  </table></div></div>
+
+  <div class="rk-section-header" id="deuda-habitante">
+    <h2>🏦 Ranking de Deuda por Habitante</h2>
+    <span class="rk-badge">Ministerio de Hacienda + INE · {len(ranking_deuda_hab)} municipios con dato</span>
+  </div>
+  <div class="section-title">De mayor a menor deuda viva por habitante (Murcia + Girona)</div>
+  <div class="muni-card"><div class="tbl-scroll"><table>
+    <tr><th>#</th><th>Municipio</th><th>Deuda viva</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
+    {filas_deuda_hab_html}
+  </table></div></div>"""
 
     return _page_shell("Rankings — Top 10 empresas", body,
                         description="Ranking nacional y por provincia de las empresas con más contratos "
@@ -5726,6 +5875,42 @@ def render_fondos_ue_html(fondos, provincia="todas"):
                                      "Europe, Cohesion Data FEDER/FSE) en la Región de Murcia y la provincia "
                                      "de Girona.",
                         provincia="todas")
+
+
+def render_comentarios_html(tipo, clave_raw, redirect_url, titulo="esta ficha"):
+    """Bloque 'Deja tu comentario' -- formulario simple sin gestión activa ni
+    email: se guarda directamente en la tabla comentarios y se muestra
+    público de inmediato, sin cola de moderación (decisión de César
+    2026-08-05). Se usa tanto en la ficha de municipio (tipo='municipio',
+    clave=nombre del municipio) como en los resultados de búsqueda por
+    empresa (tipo='busqueda', clave=texto buscado), que es la única 'ficha
+    de empresa' que existe hoy en el sitio -- no hay una página de perfil
+    de empresa aparte, ver render_busqueda_global_html."""
+    comentarios = _db_comentarios_por(tipo, clave_raw)
+    if comentarios:
+        filas = "".join(
+            f"""<div class="comentario-item">
+              <div class="comentario-meta"><b>{esc(c['nombre'] or 'Anónimo')}</b>
+                <span class="comentario-fecha">{esc(datetime.fromtimestamp(c['ts']).strftime('%d/%m/%Y %H:%M'))}</span></div>
+              <div class="comentario-texto">{esc(c['texto'])}</div>
+            </div>"""
+            for c in comentarios
+        )
+    else:
+        filas = '<div class="empty" style="padding:14px 0">Todavía no hay comentarios. Sé el primero.</div>'
+
+    return f"""<details class="comentarios-card" id="comentarios" open>
+      <summary>💬 Comentarios <span class="badge">{len(comentarios)}</span></summary>
+      <div class="comentarios-list">{filas}</div>
+      <form method="POST" action="/comentario" class="comentario-form">
+        <input type="hidden" name="tipo" value="{esc(tipo)}">
+        <input type="hidden" name="clave" value="{esc(clave_raw)}">
+        <input type="hidden" name="redirect" value="{esc(redirect_url)}">
+        <input name="nombre" maxlength="60" placeholder="Tu nombre (opcional)">
+        <textarea name="texto" maxlength="1000" required placeholder="Deja tu comentario sobre {esc(titulo)}…"></textarea>
+        <button type="submit" class="btn btn-primary">Enviar comentario</button>
+      </form>
+    </details>"""
 
 
 def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
@@ -5995,6 +6180,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           {pag_html}
           {fondos_ue_html}
           {contratos_menors_html}
+          {render_comentarios_html("municipio", muni_name, f"/?muni={muni_enc}{q_prov}", titulo=muni_name)}
         </div>"""
 
     if not cards:
@@ -6411,6 +6597,10 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
     else:
         tabla = '<div class="empty">Sin resultados para tu búsqueda.</div>'
 
+    q_prov = "&provincia=girona" if provincia == "girona" else ""
+    comentarios_html = (render_comentarios_html("busqueda", q, f"/?q={quote_plus(q)}{q_prov}", titulo=q)
+                         if resultados else "")
+
     body = f"""<span class="back-link"><a href="/{'?provincia=girona' if provincia == 'girona' else ''}">← Volver al inicio</a></span>
   <div class="global-search">
     <form method="GET" action="/" class="gs-row">
@@ -6420,7 +6610,8 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
     </form>
     <div class="gs-hint">{len(resultados)} resultado{'s' if len(resultados) != 1 else ''} para "{esc(q)}"</div>
   </div>
-  <div class="muni-card">{tabla}</div>"""
+  <div class="muni-card">{tabla}</div>
+  {comentarios_html}"""
 
     return _page_shell(f'Búsqueda: {q}', body,
                         description=f'Resultados de "{q}" en contratos públicos de {label}.',
@@ -6757,6 +6948,22 @@ def _route_post(path, params):
                 _jobs[job_id] = {"status": "running", "log": [], "error": None}
             threading.Thread(target=_job_run, args=(job_id, mun_ok, provincia), daemon=True).start()
             return _resp(spinner_page(job_id, mun_ok, provincia=provincia))
+
+        if path == "/comentario":
+            # Formulario "Deja tu comentario" (ficha de municipio o de
+            # empresa) -- sin gestión activa ni email, se guarda y se
+            # muestra público de inmediato (ver render_comentarios_html,
+            # decisión de César 2026-08-05).
+            tipo = params.get("tipo", [""])[0]
+            clave_raw = params.get("clave", [""])[0].strip()[:200]
+            nombre = params.get("nombre", [""])[0].strip()[:60]
+            texto = params.get("texto", [""])[0].strip()[:1000]
+            redirect_url = params.get("redirect", [""])[0]
+            if not redirect_url.startswith("/"):
+                redirect_url = "/"
+            if tipo in ("municipio", "busqueda") and clave_raw and texto:
+                _db_comentarios_insertar(tipo, clave_raw, texto, nombre)
+            return _redirect_resp(redirect_url + "#comentarios" if "#" not in redirect_url else redirect_url)
 
         if path == "/vaciar":
             # Borra contratos ya scrapeados/enriquecidos. Ya no hay botón en la
