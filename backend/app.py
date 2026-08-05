@@ -4944,6 +4944,98 @@ SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
 SITE_TAGLINE = "El dinero de todos, en manos de quién"
 BIZUM_TELEFONO = "661657013"
 
+# ─── PWA: manifest + service worker (2026-08-05) ─────────────────────────────
+# Instalable como app en Android/Chrome (banner automático) e iOS/Safari
+# (Compartir > Añadir a pantalla de inicio, manual, sin banner -- iOS no
+# soporta beforeinstallprompt). Colores tomados de las variables CSS ya
+# existentes (--bg y --surface, ver _ALL_CSS_CONTENT) para que la barra de
+# estado/task switcher combine con el sitio real, no un color inventado.
+PWA_THEME_COLOR = "#161b22"       # --surface, mismo fondo que <header>
+PWA_BACKGROUND_COLOR = "#0d1117"  # --bg, fondo de la pantalla de carga
+
+PWA_MANIFEST = {
+    "id": "/",
+    "name": "Dinero Público — Contratación pública en España",
+    "short_name": "Dinero Público",
+    "description": "Consulta los contratos públicos, sueldos de alcaldes y deuda "
+                    "municipal en España. Datos oficiales PLACE, BORM, PSCP e INE.",
+    "lang": "es",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": PWA_BACKGROUND_COLOR,
+    "theme_color": PWA_THEME_COLOR,
+    "icons": [
+        {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+        {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+        {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+        {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    ],
+}
+
+# Service worker deliberadamente mínimo: su único trabajo es cumplir el
+# requisito de Chrome de un SW con manejador `fetch` para que aparezca el
+# banner automático de instalación (ver informe de viabilidad 2026-08-05).
+# Cachea SOLO los estáticos que no cambian (CSS, logo, iconos, el propio
+# manifest) -- todo lo demás (HTML de municipios/rankings, /api/*, cualquier
+# POST) va SIEMPRE a red sin tocar caché, porque son datos de contratos que
+# se actualizan a diario vía cron y nunca deben servirse desactualizados.
+# CACHE_NAME lleva fecha para poder invalidar cachés viejas cambiándola --
+# ver el evento 'activate', que borra cualquier caché con otro nombre.
+_PWA_SW_JS = """
+const CACHE_NAME = "dinero-publico-static-v1";
+const STATIC_PATHS = [
+  "/static/style.css",
+  "/static/logo.svg",
+  "/static/icon-192.png",
+  "/static/icon-512.png",
+  "/static/apple-touch-icon.png",
+  "/manifest.json",
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_PATHS))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((names) =>
+      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  const isStatic = event.request.method === "GET" && STATIC_PATHS.includes(url.pathname);
+
+  if (!isStatic) {
+    // Todo lo que no sea un estatico conocido va directo a red, sin
+    // interceptar ni cachear -- contratos, rankings, busquedas, comentarios
+    // y cualquier POST deben ser siempre datos frescos.
+    return;
+  }
+
+  // Estaticos: stale-while-revalidate (sirve de cache al instante si existe,
+  // y de paso actualiza la cache en segundo plano para la proxima visita).
+  event.respondWith(
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        const fetchPromise = fetch(event.request).then((response) => {
+          cache.put(event.request, response.clone());
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
+    )
+  );
+});
+"""
+
 REGISTRO_MERCANTIL_URL = "https://www.registradores.org/actualidad/portal-notarial/registro-mercantil-en-linea"
 REGISTRO_ASOCIACIONES_URL = "https://www.interior.gob.es/opencms/es/servicios-al-ciudadano/tramites-y-gestiones/asociaciones/consulta-del-fichero-de-denominaciones/"
 REGISTRO_COOPERATIVAS_URL = "https://www.mites.gob.es/es/sec_trabajo/autonomos/economia-social/Regsociedades/index.htm"
@@ -5298,6 +5390,13 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{esc(SITE_URL)}/">
 <link rel="icon" type="image/svg+xml" href="/static/logo.svg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="{PWA_THEME_COLOR}">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dinero Público">
 <meta property="og:type" content="website">
 <meta property="og:title" content="{esc(full_title)}">
 <meta property="og:description" content="{desc}">
@@ -5318,6 +5417,13 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 {body_html}
 </div>
 {_footer_html(provincia)}
+<script>
+  if ('serviceWorker' in navigator) {{
+    window.addEventListener('load', function() {{
+      navigator.serviceWorker.register('/sw.js');
+    }});
+  }}
+</script>
 </body></html>"""
 
 
@@ -6856,6 +6962,39 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(
             LOGO_SVG, content_type="image/svg+xml; charset=utf-8",
             headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
+        )
+
+    if path in ("/static/icon-192.png", "/static/icon-512.png", "/static/apple-touch-icon.png"):
+        # Iconos PWA -- ficheros PNG reales en backend/static/ (generados una
+        # sola vez recortando LOGO_SVG a la zona del icono, ver informe de
+        # viabilidad 2026-08-05), no contenido generado en caliente como el
+        # resto del sitio. Se sirven desde BASE_DIR (código desplegado), no
+        # desde DATA_DIR (disco persistente de datos), porque son un asset
+        # del código, no un dato que cambie.
+        icon_path = os.path.join(BASE_DIR, path.lstrip("/"))
+        try:
+            with open(icon_path, "rb") as f:
+                data = f.read()
+        except OSError:
+            return 404, {"Content-Length": "0"}, b""
+        return _resp(
+            data, content_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=False,
+        )
+
+    if path == "/manifest.json":
+        return _resp(
+            json.dumps(PWA_MANIFEST, ensure_ascii=False),
+            content_type="application/manifest+json; charset=utf-8",
+            headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
+        )
+
+    if path == "/sw.js":
+        # Sin caché -- si no, un navegador podría tardar en enterarse de que
+        # hay una versión nueva del propio service worker (ver CACHE_NAME).
+        return _resp(
+            _PWA_SW_JS, content_type="application/javascript; charset=utf-8",
+            headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok,
         )
 
     if path == "/admin/cache-db":
