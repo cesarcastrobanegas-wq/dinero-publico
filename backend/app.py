@@ -169,14 +169,64 @@ DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo par
 
 # Primer arranque con disco nuevo/vacío (DATA_DIR distinto de BASE_DIR y sin
 # cache.db todavía): sembrarlo con el cache.db commiteado en el repo para no
-# empezar de cero. En arranques siguientes DB_FILE ya existe en el disco
-# persistente y este bloque no hace nada.
+# empezar de cero.
+#
+# Este bloque solo debe disparar UNA vez en toda la vida del disco -- no en
+# cada arranque en que DB_FILE parezca ausente. Incidente 2026-08-07 (ver
+# memoria del proyecto): un reinicio del contenedor por OOM (ya documentado,
+# ver /actualizar-todos con las 5 provincias) coincidió con el disco
+# persistente todavía montándose, un solo os.path.exists(DB_FILE) visto
+# demasiado pronto lo confundió con "disco nuevo" y sembró por encima datos
+# reales ya acumulados en producción (así se perdió el precalentamiento de
+# Lleida/Barcelona/Tarragona, sin avisar -- contaba como un arranque
+# silenciosamente "normal"). Fix con dos partes:
+#   1. Reintentos con espera antes de decidir que el disco está vacío --
+#      cubre el caso de que solo vaya lento a montar.
+#   2. Un marcador dedicado (_DISK_INIT_MARKER, en el propio disco) que
+#      recuerda "este disco ya se inicializó alguna vez", en vez de fiarlo
+#      todo a un os.path.exists(DB_FILE) puntual en cada arranque. Si el
+#      marcador existe pero cache.db no, ya NO es un disco nuevo -- es una
+#      pérdida de datos real, y sembrar en silencio la ocultaría otra vez.
+#      En ese caso se prefiere arrancar con un cache.db vacío de verdad
+#      (visible al instante en la web para cualquiera, imposible de pasar
+#      por alto) antes que resucitar en silencio la foto vieja del repo.
 _DB_SEED_FILE = os.path.join(BASE_DIR, "cache.db")
-if (not os.path.exists(DB_FILE) and os.path.exists(_DB_SEED_FILE)
-        and os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE)):
-    shutil.copy2(_DB_SEED_FILE, DB_FILE)
-    print(f"[startup] Disco persistente vacío: cache.db sembrado desde el repo "
-          f"({_DB_SEED_FILE} -> {DB_FILE})", flush=True)
+_DISK_INIT_MARKER = os.path.join(DATA_DIR, ".disco_inicializado")
+
+if os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE):
+    _intentos, _espera_seg = 8, 2.0   # hasta 16s de margen para que el disco monte
+    for _intento in range(_intentos):
+        if os.path.exists(DB_FILE) or os.path.exists(_DISK_INIT_MARKER):
+            break
+        if _intento < _intentos - 1:
+            time.sleep(_espera_seg)
+
+    if os.path.exists(_DISK_INIT_MARKER):
+        if not os.path.exists(DB_FILE):
+            print(f"[startup] ALERTA: {_DISK_INIT_MARKER} existe pero {DB_FILE} no. "
+                  "El disco persistente ya se había inicializado antes y ahora cache.db "
+                  "ha desaparecido -- NO se siembra en silencio desde el repo (podría "
+                  "ocultar una pérdida de datos real). Arrancando con un cache.db VACÍO; "
+                  "revisar el disco persistente en Render cuanto antes.", flush=True)
+        # Si DB_FILE sí existe, es el arranque normal de cada día: no hacer nada.
+    elif not os.path.exists(DB_FILE):
+        # Ni cache.db ni el marcador aparecen tras los reintentos: primer
+        # arranque real de un disco nuevo (o genuinamente vacío). Sembrar
+        # desde el repo es correcto y seguro aquí -- no hay nada que perder.
+        shutil.copy2(_DB_SEED_FILE, DB_FILE)
+        print(f"[startup] Disco persistente vacío (primer arranque real): "
+              f"cache.db sembrado desde el repo ({_DB_SEED_FILE} -> {DB_FILE})",
+              flush=True)
+    # Si el marcador no existe pero DB_FILE sí (disco ya en uso desde antes de
+    # que existiera este marcador): no tocar los datos ya presentes, solo
+    # adoptar el disco escribiendo el marcador más abajo.
+
+    if not os.path.exists(_DISK_INIT_MARKER):
+        try:
+            with open(_DISK_INIT_MARKER, "w", encoding="utf-8") as _f:
+                _f.write(f"Disco inicializado {datetime.now().isoformat()}\n")
+        except OSError:
+            pass  # no crítico -- en el peor caso se repite este chequeo en el próximo arranque
 
 # Backup de seguridad de una sola vez, ANTES de aplicar el fix de refresco
 # aditivo (ver INFORME_NOCHE.md 2026-07-22): copia el cache.db tal cual está
