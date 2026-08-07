@@ -24,6 +24,28 @@ name: Actualizar contratos diariamente
 # fondos UE solo DESPUÉS de que contratos termine reduce el pico de memoria
 # concurrente sin renunciar a que ambos se actualicen en la misma pasada
 # diaria.
+#
+# CHECKPOINTING (añadido 2026-08-07, ver INFORME_NOCHE.md / memoria del
+# proyecto): confirmado en el dashboard de Render que el disco SÍ es
+# persistente (/var/data, plan Standard, 2GB) y que cada municipio se guarda
+# en cache.db en cuanto termina de procesarse (_db_set_municipio, aditivo,
+# nunca borra lo ya guardado) -- el OOM que reinicia el contenedor a mitad
+# de un /actualizar-todos de las 5 provincias (987 municipios) NO borra el
+# progreso ya hecho, solo impide que ESTE workflow, tal y como estaba,
+# llegara a descargarlo y commitearlo: un `exit 1` en cuanto "todos" o
+# "fondos" no llegaban a 'done' saltaba directo al final sin pasar por el
+# paso 4. Resultado real: 3 días seguidos (2026-08-04 a 2026-08-07) sin ni
+# un solo commit de cache.db pese a que el disco sí tenía avances reales.
+# Fix: los fallos de "todos"/"fondos" ahora son blandos (marcan `fallo=1`
+# pero NO abortan el step), así que el paso 4 (descarga) y el step
+# siguiente (canario + commit) se intentan SIEMPRE -- capturando lo que
+# haya en el disco en ese momento, aunque el lote no haya terminado. El
+# canario (canario_cache_db.py) sigue siendo la última línea de defensa:
+# si la descarga sale vacía o colapsada (<90% de lo que ya hay en el repo),
+# bloquea el commit igual que antes. El job del workflow se sigue marcando
+# como fallido (exit 1 al final del step principal) si `fallo=1`, para que
+# César siga recibiendo el aviso por email cuando algo no termina bien --
+# lo único que cambia es que ya no se tira a la basura el progreso parcial.
 
 on:
   schedule:
@@ -141,6 +163,10 @@ jobs:
           MAX_MIN=320          # presupuesto TOTAL (ambas etapas), por debajo del límite duro de 360
           INTERVAL=240         # 4 min < los ~15 min que Render tarda en dormirse
           deadline=$(( $(date +%s) + MAX_MIN * 60 ))
+          fallo=0              # se pone a 1 si "todos" o "fondos" no llegan a 'done' --
+                                # no aborta el step (ver nota de checkpointing arriba), solo
+                                # hace que el step termine en exit 1 al final, DESPUÉS de
+                                # intentar igualmente la descarga+commit del progreso parcial.
 
           # Espera a que un job_id llegue a 'done'. Aborta (return 1) si el job
           # da 'error', si 'not_found' persiste 3 ciclos seguidos (el
@@ -201,11 +227,16 @@ jobs:
             job_todos=$(get_jobid "$resp_todos")
             if [ -z "$job_todos" ]; then
               echo "::error::No se obtuvo job_id de /actualizar-todos. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
-              exit 1
+              fallo=1
+            else
+              echo "job_todos=$job_todos"
+              if poll_hasta_done "$job_todos" "todos"; then
+                echo "Contratos completados ('done')."
+              else
+                echo "::warning::Refresco de contratos no completó ('todos'). Se sigue igualmente para checkpointear el progreso parcial que ya haya en el disco."
+                fallo=1
+              fi
             fi
-            echo "job_todos=$job_todos"
-            poll_hasta_done "$job_todos" "todos" || exit 1
-            echo "Contratos completados ('done')."
           fi
 
           # --- 2. Fondos UE (CORDIS + Cohesion Data) después, no en paralelo --
@@ -217,11 +248,16 @@ jobs:
           job_fue=$(get_jobid "$resp_fue")
           if [ -z "$job_fue" ]; then
             echo "::error::No se obtuvo job_id de /actualizar-fondos-ue. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
-            exit 1
+            fallo=1
+          else
+            echo "job_fue=$job_fue"
+            if poll_hasta_done "$job_fue" "fondos"; then
+              echo "Fondos UE completados ('done')."
+            else
+              echo "::warning::Refresco de fondos UE no completó. Se sigue igualmente para checkpointear el progreso parcial que ya haya en el disco."
+              fallo=1
+            fi
           fi
-          echo "job_fue=$job_fue"
-          poll_hasta_done "$job_fue" "fondos" || exit 1
-          echo "Fondos UE completados ('done')."
 
           # --- 3. Noticias UE (RSS Press Corner) -------------------------------
           # Descarga rápida (un solo GET del RSS, sin ZIPs) -- no aporta al
@@ -282,19 +318,41 @@ jobs:
           fi
 
           # --- 4. descargar el cache.db de producción ------------------------
+          # Se intenta SIEMPRE, incluso si "todos" y/o "fondos" no llegaron a
+          # 'done' arriba (checkpointing, ver nota de cabecera del workflow):
+          # el disco persistente ya tiene lo que se haya procesado hasta el
+          # momento del reinicio, aditivo por municipio -- mejor commitear eso
+          # que nada. El canario del step siguiente decide si de verdad es
+          # seguro commitearlo.
           echo "== Descargando cache.db de producción =="
           http=$(curl -s --max-time 300 -w "%{http_code}" \
             -o cache_db_nuevo.db \
             "${BASE_URL}/admin/cache-db?token=${ADMIN_TOKEN}" || echo 000)
           if [ "$http" != "200" ]; then
             echo "::error::/admin/cache-db devolvió HTTP $http."
-            exit 1
+            fallo=1
+          else
+            echo "Descargado cache_db_nuevo.db ($(stat -c%s cache_db_nuevo.db) bytes)."
           fi
-          echo "Descargado cache_db_nuevo.db ($(stat -c%s cache_db_nuevo.db) bytes)."
+
+          if [ "$fallo" -ne 0 ]; then
+            echo "::error::Uno o más refrescos críticos (contratos y/o fondos UE) no se completaron hoy. El job se marca como fallido para que llegue el aviso por email, pero se intenta igualmente checkpointear cualquier progreso parcial en el siguiente paso."
+          fi
+          exit "$fallo"
 
       - name: Canario anti-colapso + commit condicionado (Git LFS)
+        # !cancelled() (no always()): se ejecuta tanto si el step anterior
+        # terminó bien como si terminó en `fallo=1` (checkpointing de
+        # progreso parcial, ver nota de cabecera del workflow) -- pero NO si
+        # el propio workflow fue cancelado a mano, para no commitear a medias
+        # de una cancelación deliberada.
+        if: ${{ !cancelled() }}
         run: |
           set -uo pipefail
+          if [ ! -f cache_db_nuevo.db ]; then
+            echo "No se llegó a descargar cache_db_nuevo.db (fallo antes de ese paso). Nada que commitear."
+            exit 0
+          fi
           # El canario compara conteos (contratos + filas de fondos_ue) del
           # cache.db del repo vs el descargado; sale != 0 si el nuevo cae por
           # debajo del 90% en cualquiera (colapso silencioso -> mejor no tocar).
