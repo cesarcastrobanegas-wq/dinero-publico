@@ -171,30 +171,46 @@ DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo par
 # cache.db todavía): sembrarlo con el cache.db commiteado en el repo para no
 # empezar de cero.
 #
-# Este bloque solo debe disparar UNA vez en toda la vida del disco -- no en
-# cada arranque en que DB_FILE parezca ausente. Incidente 2026-08-07 (ver
-# memoria del proyecto): un reinicio del contenedor por OOM (ya documentado,
-# ver /actualizar-todos con las 5 provincias) coincidió con el disco
-# persistente todavía montándose, un solo os.path.exists(DB_FILE) visto
-# demasiado pronto lo confundió con "disco nuevo" y sembró por encima datos
-# reales ya acumulados en producción (así se perdió el precalentamiento de
-# Lleida/Barcelona/Tarragona, sin avisar -- contaba como un arranque
-# silenciosamente "normal"). Fix con dos partes:
-#   1. Reintentos con espera antes de decidir que el disco está vacío --
-#      cubre el caso de que solo vaya lento a montar.
-#   2. Un marcador dedicado (_DISK_INIT_MARKER, en el propio disco) que
-#      recuerda "este disco ya se inicializó alguna vez", en vez de fiarlo
-#      todo a un os.path.exists(DB_FILE) puntual en cada arranque. Si el
-#      marcador existe pero cache.db no, ya NO es un disco nuevo -- es una
-#      pérdida de datos real, y sembrar en silencio la ocultaría otra vez.
-#      En ese caso se prefiere arrancar con un cache.db vacío de verdad
-#      (visible al instante en la web para cualquiera, imposible de pasar
-#      por alto) antes que resucitar en silencio la foto vieja del repo.
+# REDISEÑO 2026-08-08 (incidentes 2026-08-07 Y 2026-08-08, ver memoria del
+# proyecto -- el primer fix no bastó): el primer intento de arreglar esto
+# (2026-08-07) seguía teniendo una vía de escape hacia "sembrar por si
+# acaso" cuando, tras esperar unos segundos, ni cache.db ni el marcador
+# aparecían -- pensado para cubrir un reinicio in-place por OOM, pero cada
+# auto-commit del bot (población, hacienda, el propio cache.db) hace `git
+# push` y eso dispara un REDEPLOY completo de Render (contenedor nuevo +
+# reenganche del disco persistente), que probablemente tarda más que esos
+# pocos segundos de margen. Resultado: la misma noche siguiente
+# (2026-08-08) se volvió a perder el precalentamiento de
+# Lleida/Barcelona/Tarragona, con los conteos commiteados idénticos al
+# último cache.db del repo -- la firma exacta de un sembrado silencioso.
+#
+# Principio nuevo, explícito: ANTE CUALQUIER DUDA, el sistema cae SIEMPRE
+# hacia "alarma + cache.db vacío", NUNCA hacia "sembrar por si acaso". Ya
+# no existe ninguna rama de este bloque que llame a shutil.copy2() de forma
+# automática. Sembrar desde el repo pasa a ser una acción deliberada
+# (ver _RECUPERACION_HISTORICO_MARCADOR más abajo para un mecanismo
+# parecido, o hacerlo a mano si algún día se aprovisiona un disco
+# genuinamente nuevo) en vez de algo que el propio arranque decide solo.
+# Un marcador dedicado (_DISK_INIT_MARKER, en el propio disco) recuerda si
+# este disco ya se inicializó alguna vez:
+#   - marcador SÍ + cache.db SÍ  -> arranque normal de cada día, no tocar nada.
+#   - marcador SÍ + cache.db NO  -> pérdida de datos real (el disco ya se
+#     había usado antes). ALERTA, arrancar vacío.
+#   - marcador NO + cache.db SÍ  -> disco en uso desde antes de que existiera
+#     este marcador (o justo se acaba de adoptar). No tocar los datos, solo
+#     escribir el marcador para adoptarlo.
+#   - marcador NO + cache.db NO, incluso tras esperar generosamente a que el
+#     disco monte -> podría ser un disco genuinamente nuevo, pero también
+#     podría ser el disco de siempre tardando más de la cuenta en aparecer.
+#     Como no hay forma fiable de distinguirlos desde aquí, se trata igual
+#     que el caso de pérdida de datos: ALERTA, arrancar vacío. Nunca sembrar.
 _DB_SEED_FILE = os.path.join(BASE_DIR, "cache.db")
 _DISK_INIT_MARKER = os.path.join(DATA_DIR, ".disco_inicializado")
 
 if os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE):
-    _intentos, _espera_seg = 8, 2.0   # hasta 16s de margen para que el disco monte
+    _intentos, _espera_seg = 30, 2.0   # hasta 60s -- un redeploy completo (contenedor
+                                        # nuevo + reenganche del disco) puede tardar más
+                                        # que un simple reinicio del proceso in-place
     for _intento in range(_intentos):
         if os.path.exists(DB_FILE) or os.path.exists(_DISK_INIT_MARKER):
             break
@@ -209,19 +225,24 @@ if os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE):
                   "ocultar una pérdida de datos real). Arrancando con un cache.db VACÍO; "
                   "revisar el disco persistente en Render cuanto antes.", flush=True)
         # Si DB_FILE sí existe, es el arranque normal de cada día: no hacer nada.
-    elif not os.path.exists(DB_FILE):
-        # Ni cache.db ni el marcador aparecen tras los reintentos: primer
-        # arranque real de un disco nuevo (o genuinamente vacío). Sembrar
-        # desde el repo es correcto y seguro aquí -- no hay nada que perder.
-        shutil.copy2(_DB_SEED_FILE, DB_FILE)
-        print(f"[startup] Disco persistente vacío (primer arranque real): "
-              f"cache.db sembrado desde el repo ({_DB_SEED_FILE} -> {DB_FILE})",
+    elif os.path.exists(DB_FILE):
+        # Sin marcador pero con datos ya presentes: no tocar nada, solo adoptar
+        # el disco (escribir el marcador más abajo).
+        pass
+    else:
+        # Ni cache.db ni el marcador aparecen tras esperar hasta 60s. Antes
+        # (fix del 2026-08-07) esto sembraba desde el repo asumiendo "disco
+        # nuevo" -- ese fue precisamente el hueco que causó la pérdida de
+        # datos del 2026-08-08. Ahora, ante la duda, NUNCA se siembra.
+        print(f"[startup] ALERTA: ni {DB_FILE} ni {_DISK_INIT_MARKER} aparecieron tras "
+              f"{_intentos * _espera_seg:.0f}s de espera. Podría ser un disco genuinamente "
+              "nuevo, o el disco de siempre tardando más de la cuenta en montar -- no hay "
+              "forma fiable de distinguirlo desde aquí, así que NO se siembra desde el repo "
+              "en ningún caso. Arrancando con un cache.db VACÍO; revisar el disco persistente "
+              "en Render cuanto antes (si de verdad es un disco nuevo, sembrarlo a mano).",
               flush=True)
-    # Si el marcador no existe pero DB_FILE sí (disco ya en uso desde antes de
-    # que existiera este marcador): no tocar los datos ya presentes, solo
-    # adoptar el disco escribiendo el marcador más abajo.
 
-    if not os.path.exists(_DISK_INIT_MARKER):
+    if os.path.exists(DB_FILE) and not os.path.exists(_DISK_INIT_MARKER):
         try:
             with open(_DISK_INIT_MARKER, "w", encoding="utf-8") as _f:
                 _f.write(f"Disco inicializado {datetime.now().isoformat()}\n")
