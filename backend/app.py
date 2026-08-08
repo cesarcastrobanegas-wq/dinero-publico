@@ -207,6 +207,21 @@ DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo par
 _DB_SEED_FILE = os.path.join(BASE_DIR, "cache.db")
 _DISK_INIT_MARKER = os.path.join(DATA_DIR, ".disco_inicializado")
 
+# Compartido con _recuperar_historico_perdido() más abajo -- MISMO fallo,
+# otro sitio (incidente 2026-08-08, segunda vuelta): esa función tiene su
+# propio marcador (_RECUPERACION_HISTORICO_MARCADOR) pero lo comprueba con
+# un os.path.exists() suelto, SIN ningún reintento ni espera -- así que
+# hereda exactamente la misma vulnerabilidad al montaje lento del disco que
+# este bloque, pero sin ninguno de los reintentos de arriba. Si el disco
+# tarda en aparecer, esa función lo confunde con "aún no se ha recuperado
+# nunca" y fusiona en los contratos del cache.db viejo del repo -- así se
+# reprodujo la pérdida de Lleida/Barcelona/Tarragona una segunda vez el
+# mismo día, ya con el fix de sembrado principal desplegado y funcionando
+# bien. _DISCO_CONFIABLE = True solo cuando este bloque pudo confirmar el
+# estado del disco con confianza (no en ninguno de los dos casos de ALERTA);
+# _recuperar_historico_perdido() se niega a tocar nada si es False.
+_DISCO_CONFIABLE = True
+
 if os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE):
     _intentos, _espera_seg = 30, 2.0   # hasta 60s -- un redeploy completo (contenedor
                                         # nuevo + reenganche del disco) puede tardar más
@@ -219,6 +234,7 @@ if os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE):
 
     if os.path.exists(_DISK_INIT_MARKER):
         if not os.path.exists(DB_FILE):
+            _DISCO_CONFIABLE = False
             print(f"[startup] ALERTA: {_DISK_INIT_MARKER} existe pero {DB_FILE} no. "
                   "El disco persistente ya se había inicializado antes y ahora cache.db "
                   "ha desaparecido -- NO se siembra en silencio desde el repo (podría "
@@ -234,6 +250,7 @@ if os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE):
         # (fix del 2026-08-07) esto sembraba desde el repo asumiendo "disco
         # nuevo" -- ese fue precisamente el hueco que causó la pérdida de
         # datos del 2026-08-08. Ahora, ante la duda, NUNCA se siembra.
+        _DISCO_CONFIABLE = False
         print(f"[startup] ALERTA: ni {DB_FILE} ni {_DISK_INIT_MARKER} aparecieron tras "
               f"{_intentos * _espera_seg:.0f}s de espera. Podría ser un disco genuinamente "
               "nuevo, o el disco de siempre tardando más de la cuenta en montar -- no hay "
@@ -3563,7 +3580,17 @@ def _recuperar_historico_perdido():
     el disco de producción, municipio a municipio. Solo puede añadir o
     refrescar contratos, nunca puede quitar ninguno de los que ya hubiera en
     producción -- si un municipio no perdió nada, esto es un no-op. Se
-    ejecuta una única vez (marcador en disco)."""
+    ejecuta una única vez (marcador en disco).
+
+    Guarda de 2026-08-08: si el bloque de arranque no pudo confirmar con
+    confianza el estado del disco persistente (_DISCO_CONFIABLE=False, ver
+    más arriba), esta función se niega a tocar nada -- su propio marcador
+    (_RECUPERACION_HISTORICO_MARCADOR) es tan vulnerable al mismo montaje
+    lento del disco como lo era el bloque de sembrado antes de arreglarlo
+    (un solo os.path.exists() suelto, sin reintentos), y sin esta guarda
+    repetiría el mismo tipo de pérdida de datos por otra vía."""
+    if not _DISCO_CONFIABLE:
+        return
     if os.path.exists(_RECUPERACION_HISTORICO_MARCADOR):
         return
     if not os.path.exists(_DB_SEED_FILE) or os.path.abspath(_DB_SEED_FILE) == os.path.abspath(DB_FILE):
