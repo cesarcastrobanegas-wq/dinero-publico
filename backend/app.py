@@ -6203,7 +6203,10 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .home-main-col{min-width:0;}
 
 /* ── footer ───────────────────────────────────────────────────────────── */
-.colabora-bar{max-width:1340px;margin:48px auto 0;padding:16px 20px;border-radius:8px;background:rgba(240,136,62,.08);border:1px solid rgba(240,136,62,.3);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;}
+.instalar-bar{max-width:1340px;margin:48px auto 0;padding:16px 20px;border-radius:8px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);}
+.instalar-text{font-size:12.5px;color:var(--text);line-height:1.6;max-width:1000px;}
+.instalar-text b{color:var(--blue);}
+.colabora-bar{max-width:1340px;margin:14px auto 0;padding:16px 20px;border-radius:8px;background:rgba(240,136,62,.08);border:1px solid rgba(240,136,62,.3);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;}
 .colabora-text{font-size:12.5px;color:var(--text);line-height:1.6;max-width:760px;}
 .colabora-text b{color:var(--accent);}
 .colabora-bizum{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);background:var(--surface);border:1px solid rgba(240,136,62,.4);border-radius:6px;padding:8px 16px;white-space:nowrap;}
@@ -6274,7 +6277,8 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .contrato-title{white-space:normal;}
   .site-footer{flex-direction:column;align-items:flex-start;max-width:100%;}
   .site-footer .ft-links{gap:10px 14px;}
-  .colabora-bar{flex-direction:column;align-items:flex-start;max-width:100%;margin:32px auto 0;}
+  .instalar-bar{max-width:100%;margin:32px auto 0;}
+  .colabora-bar{flex-direction:column;align-items:flex-start;max-width:100%;margin:10px auto 0;}
   .colabora-bizum{align-self:stretch;text-align:center;}
   .comentario-form .btn{align-self:stretch;}
   .static-page{padding:22px 18px;}
@@ -6789,7 +6793,16 @@ def _footer_html(provincia="todas"):
                          '    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>\n'
                          '    <a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>')
     brand_label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["todas"])
-    return f"""<div class="colabora-bar">
+    return f"""<div class="instalar-bar">
+  <div class="instalar-text">
+    <b>📲 Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin
+    tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la
+    cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome,
+    Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad
+    (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio».
+  </div>
+</div>
+<div class="colabora-bar">
   <div class="colabora-text">
     <b>🤝 Colabora</b> — La transparencia no se regala, se construye.
     Si este proyecto te ha servido para saber en qué se gasta el dinero de todos,
@@ -7847,9 +7860,11 @@ def render_landing_nacional_html(datos):
     cobertura_html = ""
     for prov, municipios_lista in MUNICIPIOS_POR_PROVINCIA.items():
         label = PROVINCIA_LABEL.get(prov, prov)
+        hab_prov = sum(v["poblacion"] for v in POBLACION.values() if v.get("provincia") == prov)
+        hab_html = f" · {fmt_num(hab_prov)} hab." if hab_prov else ""
         cobertura_html += f"""<a href="/?provincia={prov}" class="cobertura-btn">
           <span class="cb-title">📍 {esc(label)}</span>
-          <span class="cb-count">{len(municipios_lista)} municipios</span>
+          <span class="cb-count">{len(municipios_lista)} municipios{hab_html}</span>
         </a>"""
 
     # Top 1 del ranking nacional (agregando todas las provincias)
