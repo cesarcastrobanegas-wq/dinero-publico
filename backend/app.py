@@ -585,6 +585,76 @@ def _cargar_retribuciones_ispa():
 
 RETRIBUCIONES_ISPA = _cargar_retribuciones_ispa()
 
+# Presidente/a de cada provincia + su retribución anual (ISPA 2025,
+# percepciones del ejercicio 2024). Dato institucional (5 personas, cambia
+# como mucho una vez por mandato de 4 años) -- no hay script de
+# actualización automática, a diferencia de ALCALDES_CONCEJALES/
+# RETRIBUCIONES_ISPA (miles de filas, sí justifica un scraper). Revisar a
+# mano si cambia el titular o sale una edición nueva de ISPA.
+# Murcia es Comunidad Autónoma uniprovincial (sin Diputación propia): su
+# "presidente de provincia" equivalente es el Presidente de la Comunidad
+# Autónoma. Girona/Lleida/Barcelona/Tarragona sí tienen Diputación.
+# Sueldos verificados el 2026-08-09 contra los PDF oficiales de ISPA
+# (digital.gob.es/.../ispa2025/retrib_2024/presidentes_diputaciones.pdf y
+# .../presidentes_consejeros_ccaa.pdf, fila "MURCIA, REGIÓN DE
+# PRESIDENTE/A"). Titulares verificados en vivo la misma fecha contra
+# fuentes oficiales de cada institución (mandato local 2023-2027, vigente).
+PRESIDENTES_PROVINCIA = {
+    "murcia": {
+        "nombre": "Fernando López Miras",
+        "cargo": "Presidente de la Comunidad Autónoma",
+        "sueldo": 79499.00,
+        "anio": 2024,
+    },
+    "girona": {
+        "nombre": "Miquel Noguer i Planas",
+        "cargo": "Presidente de la Diputació",
+        "sueldo": 87956.90,
+        "anio": 2024,
+    },
+    "lleida": {
+        "nombre": "Joan Talarn",
+        "cargo": "Presidente de la Diputació",
+        "sueldo": 19200.00,
+        "anio": 2024,
+    },
+    "barcelona": {
+        "nombre": "Lluïsa Moret Sabidó",
+        "cargo": "Presidenta de la Diputació",
+        "sueldo": 114017.12,
+        "anio": 2024,
+    },
+    "tarragona": {
+        "nombre": "Noemí Llauradó",
+        "cargo": "Presidenta de la Diputació",
+        "sueldo": 92611.68,
+        "anio": 2024,
+    },
+}
+
+
+def _resumen_por_provincia():
+    """Para cada provincia: deuda viva agregada / población agregada
+    (deuda por habitante A NIVEL PROVINCIAL, distinta de las filas por
+    municipio de _calcular_ranking_deuda_por_habitante) + el presidente/a
+    y su retribución (PRESIDENTES_PROVINCIA). Reutiliza DEUDA_VIVA/
+    POBLACION ya cargados, ninguna fuente nueva."""
+    filas = []
+    for prov in MUNICIPIOS_POR_PROVINCIA:
+        deuda_total = sum(v["deuda_eur"] for v in DEUDA_VIVA.values() if v.get("provincia") == prov)
+        hab_total = sum(v["poblacion"] for v in POBLACION.values() if v.get("provincia") == prov)
+        pres = PRESIDENTES_PROVINCIA.get(prov, {})
+        filas.append({
+            "provincia": prov,
+            "label": PROVINCIA_LABEL.get(prov, prov),
+            "deuda_por_habitante": (deuda_total / hab_total) if hab_total else None,
+            "presidente_nombre": pres.get("nombre", ""),
+            "presidente_cargo": pres.get("cargo", ""),
+            "presidente_sueldo": pres.get("sueldo"),
+            "presidente_anio": pres.get("anio", ""),
+        })
+    return filas
+
 
 def _cargar_cuentas_anuales():
     """Carga cuentas_anuales.json (generado por actualizar_cuentas_anuales.py):
@@ -7214,6 +7284,20 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
         for prov in MUNICIPIOS_POR_PROVINCIA
     )
 
+    resumen_prov_html = ""
+    for f in _resumen_por_provincia():
+        deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + "/hab." if f["deuda_por_habitante"] is not None else "—")
+        pres_html = (f'👤 {esc(f["presidente_nombre"])} — {esc(f["presidente_cargo"])}'
+                     if f["presidente_nombre"] else '<span class="noloc-warn">Sin datos</span>')
+        sueldo_html = (f'💰 {fmt_eur(f["presidente_sueldo"])}/año (ISPA {esc(f["presidente_anio"])})'
+                       if f["presidente_sueldo"] is not None else "")
+        resumen_prov_html += f"""<div class="top1-card">
+          <div class="top1-label">📍 {esc(f['label'])}</div>
+          <div class="top1-valor">🏦 {deuda_hab_html} de deuda viva</div>
+          <div class="top1-directivo">{pres_html}</div>
+          <div class="top1-directivo">{sueldo_html}</div>
+        </div>"""
+
     body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
   <div class="hero" style="padding-bottom:4px">
     <div class="hero-tagline">🏆 Rankings</div>
@@ -7224,8 +7308,14 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
   </div>
 
   <div class="rk-section-header">
+    <h2>📍 Resumen por Provincia</h2>
+    <span class="rk-badge">Deuda viva agregada · Presidente/a de Diputación (Comunidad Autónoma en Murcia)</span>
+  </div>
+  <div class="top1-grid">{resumen_prov_html}</div>
+
+  <div class="rk-section-header">
     <h2>🌍 Ranking Nacional</h2>
-    <span class="rk-badge">Región de Murcia + Provincia de Girona</span>
+    <span class="rk-badge">Murcia, Girona, Lleida, Barcelona y Tarragona</span>
   </div>
   <div class="section-title">Top 10 por número de contratos adjudicados</div>
   <div class="muni-card"><table>
@@ -7257,7 +7347,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>💰 Ranking de Sueldos: Alcaldes y Alcaldesas</h2>
     <span class="rk-badge">ISPA {esc(anio_ispa)} · {len(ranking_alcaldes)} municipios con dato</span>
   </div>
-  <div class="section-title">De mayor a menor retribución anual (Murcia + Girona)</div>
+  <div class="section-title">De mayor a menor retribución anual (Murcia, Girona, Lleida, Barcelona y Tarragona)</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_alcaldes_html}
@@ -7267,7 +7357,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>🏦 Ranking de Deuda por Habitante</h2>
     <span class="rk-badge">Ministerio de Hacienda + INE · {len(ranking_deuda_hab)} municipios con dato</span>
   </div>
-  <div class="section-title">De mayor a menor deuda viva por habitante (Murcia + Girona)</div>
+  <div class="section-title">De mayor a menor deuda viva por habitante (Murcia, Girona, Lleida, Barcelona y Tarragona)</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Municipio</th><th>Deuda viva</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_deuda_hab_html}
