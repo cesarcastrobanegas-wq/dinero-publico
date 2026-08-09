@@ -6019,7 +6019,7 @@ CSS = """
    al scroll real del documento.*/
 html{overflow-x:hidden;}
 body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;}
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:var(--pwa-banner-offset,0px);z-index:10;}
 .header-brand{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
 .header-brand>div{min-width:0;}
 header h1{overflow-wrap:break-word;}
@@ -6033,6 +6033,22 @@ header p{font-size:12px;color:var(--dim);margin-top:2px;}
 .pwa-install-btn{display:inline-flex;font-family:'IBM Plex Sans',sans-serif;text-decoration:none;padding:8px 16px;border-radius:6px;background:var(--accent);color:#000;border:1px solid var(--accent);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
 .pwa-install-btn[hidden]{display:none;}
 .pwa-install-btn:hover{background:#ffa657;}
+/* ── banner fijo de instalar app (solo móvil) ──────────────────────────── */
+.pwa-banner-mobile{display:none;}
+.pwa-banner-mobile[hidden]{display:none;}
+@keyframes pwaBannerPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(240,136,62,.55);}
+  50%{box-shadow:0 0 0 8px rgba(240,136,62,0);}
+}
+@media (max-width:700px){
+  .pwa-banner-mobile{display:flex;align-items:center;gap:10px;position:fixed;top:0;left:0;right:0;z-index:200;padding:10px 14px;background:var(--accent);color:#000;font-size:12.5px;font-weight:600;animation:pwaBannerPulse 1.8s ease-in-out infinite;}
+  .pwa-banner-mobile[hidden]{display:none;}
+  .pwa-banner-text{flex:1;line-height:1.3;}
+  .pwa-banner-btn{background:#000;color:var(--accent);border:none;border-radius:5px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .pwa-banner-close{background:transparent;border:none;color:#000;font-size:17px;cursor:pointer;padding:0 2px;line-height:1;opacity:.65;}
+  .pwa-banner-close:hover{opacity:1;}
+}
+.instalar-bar-highlight{animation:pwaBannerPulse 1s ease-in-out 2;border-color:var(--accent) !important;}
 .prov-switch{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
 .prov-tab{text-decoration:none;padding:8px 14px;font-size:13px;font-weight:600;color:var(--dim);background:var(--bg);white-space:nowrap;}
 .prov-tab:hover{color:var(--text);}
@@ -6962,6 +6978,11 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <link rel="stylesheet" href="/static/style.css">
 {extra_head}</head>
 <body>
+<div id="pwa-banner-mobile" class="pwa-banner-mobile" hidden>
+  <span class="pwa-banner-text">📲 Instala la app — acceso directo desde tu móvil</span>
+  <button type="button" id="pwa-banner-btn" class="pwa-banner-btn">Instalar</button>
+  <button type="button" id="pwa-banner-close" class="pwa-banner-close" aria-label="Cerrar aviso">✕</button>
+</div>
 {_header_html(provincia)}
 <div class="main">
 {_ad_banner_html()}
@@ -6983,10 +7004,68 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     // no existe ese evento y la instalación es manual (Compartir > Añadir a
     // pantalla de inicio).
     var installBtn = document.getElementById('pwa-install-btn');
+    var pwaBanner = document.getElementById('pwa-banner-mobile');
+    var pwaBannerBtn = document.getElementById('pwa-banner-btn');
+    var pwaBannerClose = document.getElementById('pwa-banner-close');
+    var PWA_DISMISS_KEY = 'pwaBannerDismissed';
     var deferredPrompt = null;
-    if (window.matchMedia('(display-mode: standalone)').matches) {{
-      return;  // ya instalada, no hace falta ofrecer el botón
+
+    // El header es sticky top:0 -- si el banner (fixed, arriba del todo) se
+    // muestra, hay que empujar el punto donde se pega el header hacia abajo
+    // lo que mida el banner, o se solaparían al hacer scroll. Se hace vía
+    // variable CSS en vez de tocar el sticky del header directamente, para
+    // no afectar a ninguna página cuando el banner está oculto (por defecto
+    // la variable no está puesta = 0px, ver regla de header en el CSS).
+    function pwaAjustarOffset() {{
+      var h = (pwaBanner && !pwaBanner.hidden) ? pwaBanner.offsetHeight : 0;
+      document.documentElement.style.setProperty('--pwa-banner-offset', h + 'px');
     }}
+    function pwaOcultarBanner() {{
+      if (pwaBanner) pwaBanner.hidden = true;
+      pwaAjustarOffset();
+    }}
+
+    if (window.matchMedia('(display-mode: standalone)').matches) {{
+      return;  // ya instalada, no hace falta ofrecer ni botón ni banner
+    }}
+
+    // Banner fijo (solo visible en móvil por CSS): a diferencia del botón
+    // de la cabecera, que depende de que Chrome dispare beforeinstallprompt,
+    // este se muestra siempre salvo que el usuario ya lo haya cerrado antes
+    // (localStorage). Su botón dispara el prompt nativo si está disponible,
+    // o si no (iOS Safari, o Chrome que aún no lo ha ofrecido) desplaza
+    // hasta las instrucciones manuales del footer (.instalar-bar).
+    try {{
+      if (pwaBanner && !localStorage.getItem(PWA_DISMISS_KEY)) {{
+        pwaBanner.hidden = false;
+        pwaAjustarOffset();
+      }}
+    }} catch (e) {{}}
+    window.addEventListener('resize', pwaAjustarOffset);
+
+    if (pwaBannerClose) {{
+      pwaBannerClose.addEventListener('click', function() {{
+        pwaOcultarBanner();
+        try {{ localStorage.setItem(PWA_DISMISS_KEY, '1'); }} catch (e) {{}}
+      }});
+    }}
+    if (pwaBannerBtn) {{
+      pwaBannerBtn.addEventListener('click', function() {{
+        if (deferredPrompt) {{
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function() {{ deferredPrompt = null; }});
+          pwaOcultarBanner();
+        }} else {{
+          var instrucciones = document.querySelector('.instalar-bar');
+          if (instrucciones) {{
+            instrucciones.scrollIntoView({{behavior: 'smooth', block: 'center'}});
+            instrucciones.classList.add('instalar-bar-highlight');
+            setTimeout(function() {{ instrucciones.classList.remove('instalar-bar-highlight'); }}, 2000);
+          }}
+        }}
+      }});
+    }}
+
     window.addEventListener('beforeinstallprompt', function(e) {{
       e.preventDefault();
       deferredPrompt = e;
@@ -7002,6 +7081,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     }}
     window.addEventListener('appinstalled', function() {{
       if (installBtn) installBtn.hidden = true;
+      pwaOcultarBanner();
       deferredPrompt = null;
     }});
   }})();
