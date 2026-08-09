@@ -7914,7 +7914,8 @@ def render_landing_nacional_html(datos):
       <p class="hero-sub">
         Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
         — y qué persona — hay detrás de cada adjudicación. Cubrimos actualmente la
-        Región de Murcia y la provincia de Girona, con más territorios en camino.
+        Región de Murcia y las provincias de Girona, Lleida, Barcelona y Tarragona,
+        con más territorios en camino.
       </p>
     </div>
     <div class="adv-search" id="adv-search">
@@ -7955,7 +7956,8 @@ def render_landing_nacional_html(datos):
     return _page_shell("Dinero Público | Contratación pública en España", body,
                         description="Consulta los contratos públicos adjudicados en España con los "
                                      "directivos de las empresas adjudicatarias. Cubrimos actualmente "
-                                     "la Región de Murcia y la provincia de Girona.",
+                                     "la Región de Murcia y las provincias de Girona, Lleida, "
+                                     "Barcelona y Tarragona.",
                         provincia="todas")
 
 
@@ -8221,8 +8223,8 @@ def render_quienes_somos_html():
 
   <p>Dinero Público nació con un objetivo claro: hacer accesible a cualquier ciudadano
   la información sobre cómo se gasta el dinero público. Actualmente cubrimos la
-  Región de Murcia y la provincia de Girona, con expansión progresiva a toda
-  España.</p>
+  Región de Murcia y las provincias de Girona, Lleida, Barcelona y Tarragona,
+  con expansión progresiva a toda España.</p>
 
   <p>Cruzamos datos oficiales de la Plataforma de Contratación del Sector Público (PLACE)
   del Ministerio de Hacienda con información registral pública para identificar quién
