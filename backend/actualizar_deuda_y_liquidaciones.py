@@ -1,8 +1,10 @@
 # encoding: utf-8
 """
-Descarga, para cada municipio de Murcia y Girona, la deuda viva municipal y
-el saldo presupuestario no financiero (superávit/déficit) publicados por el
-Ministerio de Hacienda, y genera backend/hacienda_eell.json.
+Descarga, para cada municipio de las 5 provincias que cubre esta app
+(Murcia, Girona, Lleida, Barcelona, Tarragona -- ampliado 2026-08-09), la
+deuda viva municipal y el saldo presupuestario no financiero
+(superávit/déficit) publicados por el Ministerio de Hacienda, y genera
+backend/hacienda_eell.json.
 
 Dos ficheros oficiales, mismo ministerio, mismo patrón de descarga directa
 (XLSX público, sin sesión ni formulario) -- a diferencia de rendiciondecuentas.es,
@@ -57,7 +59,8 @@ import requests
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
 from app import BASE_DIR, normalizar
-from actualizar_alcaldes import _emparejar_municipio, _sin_apostrofes_curvos, PROV_A_KEY
+from actualizar_alcaldes import (_emparejar_municipio, _sin_apostrofes_curvos,
+                                  PROV_A_KEY, MUNICIPIOS_POR_PROV_MIN)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
@@ -77,10 +80,14 @@ EJERCICIOS_A_PROBAR = 3
 
 OUT_FILE = f"{BASE_DIR}/hacienda_eell.json"
 
-PROVINCIAS_CUBIERTAS = ("Murcia", "Girona")
+PROVINCIAS_CUBIERTAS = ("Murcia", "Girona", "Lleida", "Barcelona", "Tarragona")
 # Nombre de provincia tal como aparece en MAYÚSCULAS en los ficheros de
 # Hacienda -> nombre "Título" que usa MUNICIPIOS_POR_PROV_MIN / PROV_A_KEY.
-PROVINCIA_MAYUS_A_TITULO = {"MURCIA": "Murcia", "GIRONA": "Girona"}
+# Ampliado 2026-08-09 a las 3 provincias catalanas restantes -- este dict es
+# el filtro real (PROVINCIAS_CUBIERTAS de arriba no se referencia en el
+# procesamiento, solo queda como documentación de intención).
+PROVINCIA_MAYUS_A_TITULO = {"MURCIA": "Murcia", "GIRONA": "Girona",
+                             "LLEIDA": "Lleida", "BARCELONA": "Barcelona", "TARRAGONA": "Tarragona"}
 
 # Los ficheros de Hacienda escriben el artículo catalán/castellano como
 # sufijo entre paréntesis ("Far d'Empordà (El)", "Torres de Cotillas
@@ -92,7 +99,10 @@ PROVINCIA_MAYUS_A_TITULO = {"MURCIA": "Murcia", "GIRONA": "Girona"}
 # d'Aro" llega como el carácter U+00B4 (´, ACUTE ACCENT) en vez de un
 # apóstrofe recto o curvo -- ninguno de los dos está cubierto por
 # _sin_apostrofes_curvos() (pensada para ’‘\`), así que se resuelve aquí.
-_RE_PARENTESIS_ARTICULO = re.compile(r"^(.*)\s\((L'|El|La|Los|Las|Els|Les)\)$")
+# re.IGNORECASE + "Es"/"Ets" (artículo aranés) añadidos 2026-08-09 al
+# ejecutar sobre Lleida/Barcelona/Tarragona: Hacienda no siempre capitaliza
+# el artículo entre paréntesis ("Esquirol (l')", "Bòrdes (Es)").
+_RE_PARENTESIS_ARTICULO = re.compile(r"^(.*)\s\((L'|El|La|Los|Las|Els|Les|Es|Ets)\)$", re.IGNORECASE)
 
 
 def _limpiar_nombre_hacienda(nombre):
@@ -269,11 +279,6 @@ def main():
     for clave, info in saldo_por_muni.items():
         info["fuente_url"] = fuente_url_por_muni[clave]
 
-    n_murcia_deuda = sum(1 for v in deuda_por_muni.values() if v["provincia"] == "murcia")
-    n_girona_deuda = sum(1 for v in deuda_por_muni.values() if v["provincia"] == "girona")
-    n_murcia_saldo = sum(1 for v in saldo_por_muni.values() if v["provincia"] == "murcia")
-    n_girona_saldo = sum(1 for v in saldo_por_muni.values() if v["provincia"] == "girona")
-
     salida = {
         "generado": time.strftime("%Y-%m-%d %H:%M:%S"),
         "deuda_viva": {
@@ -287,8 +292,13 @@ def main():
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump(salida, f, ensure_ascii=False, indent=1)
 
-    print(f"\nDeuda viva -- Murcia: {n_murcia_deuda}/45, Girona: {n_girona_deuda}/221")
-    print(f"Saldo no financiero -- Murcia: {n_murcia_saldo}/45, Girona: {n_girona_saldo}/221")
+    print()
+    for provincia_titulo, key in PROV_A_KEY.items():
+        esperados = len(MUNICIPIOS_POR_PROV_MIN[provincia_titulo])
+        n_deuda = sum(1 for v in deuda_por_muni.values() if v["provincia"] == key)
+        n_saldo = sum(1 for v in saldo_por_muni.values() if v["provincia"] == key)
+        print(f"{provincia_titulo} -- Deuda viva: {n_deuda}/{esperados}, "
+              f"Saldo no financiero: {n_saldo}/{esperados}")
     print(f"\nGuardado en {OUT_FILE}")
 
 

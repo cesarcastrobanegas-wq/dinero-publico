@@ -1,7 +1,1988 @@
 {
- "generado": "2026-08-02 14:48:25",
+ "generado": "2026-08-09 14:46:19",
  "anio": 2024,
  "municipios": {
+  "abrera": {
+   "municipio": "Abrera",
+   "provincia": "barcelona",
+   "importe": 17874.9,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "aguilar de segarra": {
+   "municipio": "Aguilar de Segarra",
+   "provincia": "barcelona",
+   "importe": 3300.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "aiguafreda": {
+   "municipio": "Aiguafreda",
+   "provincia": "barcelona",
+   "importe": 11000.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "alella": {
+   "municipio": "Alella",
+   "provincia": "barcelona",
+   "importe": 45000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "alpens": {
+   "municipio": "Alpens",
+   "provincia": "barcelona",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "l'ametlla del valles": {
+   "municipio": "l'Ametlla del Vallès",
+   "provincia": "barcelona",
+   "importe": 43200.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "arenys de mar": {
+   "municipio": "Arenys de Mar",
+   "provincia": "barcelona",
+   "importe": 40783.41,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "arenys de munt": {
+   "municipio": "Arenys de Munt",
+   "provincia": "barcelona",
+   "importe": 45000.06,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "argentona": {
+   "municipio": "Argentona",
+   "provincia": "barcelona",
+   "importe": 42000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "artes": {
+   "municipio": "Artés",
+   "provincia": "barcelona",
+   "importe": 38556.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "avia": {
+   "municipio": "Avià",
+   "provincia": "barcelona",
+   "importe": 34848.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "avinyo": {
+   "municipio": "Avinyó",
+   "provincia": "barcelona",
+   "importe": 9204.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "avinyonet del penedes": {
+   "municipio": "Avinyonet del Penedès",
+   "provincia": "barcelona",
+   "importe": 15200.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "badalona": {
+   "municipio": "Badalona",
+   "provincia": "barcelona",
+   "importe": 40847.06,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "badia del valles": {
+   "municipio": "Badia del Vallès",
+   "provincia": "barcelona",
+   "importe": 47814.25,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "baga": {
+   "municipio": "Bagà",
+   "provincia": "barcelona",
+   "importe": 27398.34,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "balenya": {
+   "municipio": "Balenyà",
+   "provincia": "barcelona",
+   "importe": 26605.34,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "balsareny": {
+   "municipio": "Balsareny",
+   "provincia": "barcelona",
+   "importe": 17800.02,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "barbera del valles": {
+   "municipio": "Barberà del Vallès",
+   "provincia": "barcelona",
+   "importe": 66408.08,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "barcelona": {
+   "municipio": "Barcelona",
+   "provincia": "barcelona",
+   "importe": 104000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "begues": {
+   "municipio": "Begues",
+   "provincia": "barcelona",
+   "importe": 28680.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "bellprat": {
+   "municipio": "Bellprat",
+   "provincia": "barcelona",
+   "importe": 8530.02,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "berga": {
+   "municipio": "Berga",
+   "provincia": "barcelona",
+   "importe": 37964.65,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "bigues i riells": {
+   "municipio": "Bigues i Riells",
+   "provincia": "barcelona",
+   "importe": 3135.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "borreda": {
+   "municipio": "Borredà",
+   "provincia": "barcelona",
+   "importe": 16800.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el bruc": {
+   "municipio": "el Bruc",
+   "provincia": "barcelona",
+   "importe": 44435.85,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "el brull": {
+   "municipio": "el Brull",
+   "provincia": "barcelona",
+   "importe": 25625.74,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "les cabanyes": {
+   "municipio": "les Cabanyes",
+   "provincia": "barcelona",
+   "importe": 9375.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "cabrera d'anoia": {
+   "municipio": "Cabrera d'Anoia",
+   "provincia": "barcelona",
+   "importe": 33880.84,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "cabrera de mar": {
+   "municipio": "Cabrera de Mar",
+   "provincia": "barcelona",
+   "importe": 47688.23,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "cabrils": {
+   "municipio": "Cabrils",
+   "provincia": "barcelona",
+   "importe": 44186.66,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "calaf": {
+   "municipio": "Calaf",
+   "provincia": "barcelona",
+   "importe": 30259.49,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "calders": {
+   "municipio": "Calders",
+   "provincia": "barcelona",
+   "importe": 32524.8,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "caldes de montbui": {
+   "municipio": "Caldes de Montbui",
+   "provincia": "barcelona",
+   "importe": 53557.42,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "calella": {
+   "municipio": "Calella",
+   "provincia": "barcelona",
+   "importe": 52794.77,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "calldetenes": {
+   "municipio": "Calldetenes",
+   "provincia": "barcelona",
+   "importe": 34848.02,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "calonge de segarra": {
+   "municipio": "Calonge de Segarra",
+   "provincia": "barcelona",
+   "importe": 6664.32,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "campins": {
+   "municipio": "Campins",
+   "provincia": "barcelona",
+   "importe": 23809.55,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "canet de mar": {
+   "municipio": "Canet de Mar",
+   "provincia": "barcelona",
+   "importe": 50400.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "canovelles": {
+   "municipio": "Canovelles",
+   "provincia": "barcelona",
+   "importe": 59735.76,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "capellades": {
+   "municipio": "Capellades",
+   "provincia": "barcelona",
+   "importe": 9100.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "capolat": {
+   "municipio": "Capolat",
+   "provincia": "barcelona",
+   "importe": 8529.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "cardedeu": {
+   "municipio": "Cardedeu",
+   "provincia": "barcelona",
+   "importe": 58000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "cardona": {
+   "municipio": "Cardona",
+   "provincia": "barcelona",
+   "importe": 12110.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "carme": {
+   "municipio": "Carme",
+   "provincia": "barcelona",
+   "importe": 4376.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "casserres": {
+   "municipio": "Casserres",
+   "provincia": "barcelona",
+   "importe": 23932.02,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castell de l'areny": {
+   "municipio": "Castell de l'Areny",
+   "provincia": "barcelona",
+   "importe": 8529.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellar de n'hug": {
+   "municipio": "Castellar de n'Hug",
+   "provincia": "barcelona",
+   "importe": 600.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "castellar del valles": {
+   "municipio": "Castellar del Vallès",
+   "provincia": "barcelona",
+   "importe": 31695.91,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellbell i el vilar": {
+   "municipio": "Castellbell i el Vilar",
+   "provincia": "barcelona",
+   "importe": 40228.24,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellbisbal": {
+   "municipio": "Castellbisbal",
+   "provincia": "barcelona",
+   "importe": 55186.32,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "castellcir": {
+   "municipio": "Castellcir",
+   "provincia": "barcelona",
+   "importe": 14100.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castelldefels": {
+   "municipio": "Castelldefels",
+   "provincia": "barcelona",
+   "importe": 32659.13,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "castellet i la gornal": {
+   "municipio": "Castellet i la Gornal",
+   "provincia": "barcelona",
+   "importe": 36000.02,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellfollit de riubregos": {
+   "municipio": "Castellfollit de Riubregós",
+   "provincia": "barcelona",
+   "importe": 5251.06,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellfollit del boix": {
+   "municipio": "Castellfollit del Boix",
+   "provincia": "barcelona",
+   "importe": 320.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "castellgali": {
+   "municipio": "Castellgalí",
+   "provincia": "barcelona",
+   "importe": 4710.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "castellnou de bages": {
+   "municipio": "Castellnou de Bages",
+   "provincia": "barcelona",
+   "importe": 33717.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "castelloli": {
+   "municipio": "Castellolí",
+   "provincia": "barcelona",
+   "importe": 3265.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "castelltercol": {
+   "municipio": "Castellterçol",
+   "provincia": "barcelona",
+   "importe": 5306.56,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellvi de la marca": {
+   "municipio": "Castellví de la Marca",
+   "provincia": "barcelona",
+   "importe": 17499.96,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "castellvi de rosanes": {
+   "municipio": "Castellví de Rosanes",
+   "provincia": "barcelona",
+   "importe": 31000.08,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "centelles": {
+   "municipio": "Centelles",
+   "provincia": "barcelona",
+   "importe": 23378.04,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "cercs": {
+   "municipio": "Cercs",
+   "provincia": "barcelona",
+   "importe": 3672.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "cerdanyola del valles": {
+   "municipio": "Cerdanyola del Vallès",
+   "provincia": "barcelona",
+   "importe": 67169.2,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "cervello": {
+   "municipio": "Cervelló",
+   "provincia": "barcelona",
+   "importe": 34013.88,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "collbato": {
+   "municipio": "Collbató",
+   "provincia": "barcelona",
+   "importe": 36000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "collsuspina": {
+   "municipio": "Collsuspina",
+   "provincia": "barcelona",
+   "importe": 23727.7,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "copons": {
+   "municipio": "Copons",
+   "provincia": "barcelona",
+   "importe": 21999.96,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "corbera de llobregat": {
+   "municipio": "Corbera de Llobregat",
+   "provincia": "barcelona",
+   "importe": 45000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "cornella de llobregat": {
+   "municipio": "Cornellà de Llobregat",
+   "provincia": "barcelona",
+   "importe": 78157.38,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "cubelles": {
+   "municipio": "Cubelles",
+   "provincia": "barcelona",
+   "importe": 58080.12,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "dosrius": {
+   "municipio": "Dosrius",
+   "provincia": "barcelona",
+   "importe": 47553.38,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "esparreguera": {
+   "municipio": "Esparreguera",
+   "provincia": "barcelona",
+   "importe": 21227.49,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "esplugues de llobregat": {
+   "municipio": "Esplugues de Llobregat",
+   "provincia": "barcelona",
+   "importe": 64896.44,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "l'espunyola": {
+   "municipio": "l'Espunyola",
+   "provincia": "barcelona",
+   "importe": 10518.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "l'esquirol": {
+   "municipio": "l'Esquirol",
+   "provincia": "barcelona",
+   "importe": 47857.94,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "l'estany": {
+   "municipio": "l'Estany",
+   "provincia": "barcelona",
+   "importe": 550.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "figaro-montmany": {
+   "municipio": "Figaró-Montmany",
+   "provincia": "barcelona",
+   "importe": 27515.76,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "figols": {
+   "municipio": "Fígols",
+   "provincia": "barcelona",
+   "importe": 8700.44,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "fogars de la selva": {
+   "municipio": "Fogars de la Selva",
+   "provincia": "barcelona",
+   "importe": 11400.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "fogars de montclus": {
+   "municipio": "Fogars de Montclús",
+   "provincia": "barcelona",
+   "importe": 2200.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "folgueroles": {
+   "municipio": "Folgueroles",
+   "provincia": "barcelona",
+   "importe": 17238.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "fonollosa": {
+   "municipio": "Fonollosa",
+   "provincia": "barcelona",
+   "importe": 21756.01,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "font-rubi": {
+   "municipio": "Font-rubí",
+   "provincia": "barcelona",
+   "importe": 18381.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "les franqueses del valles": {
+   "municipio": "les Franqueses del Vallès",
+   "provincia": "barcelona",
+   "importe": 58647.92,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "gaia": {
+   "municipio": "Gaià",
+   "provincia": "barcelona",
+   "importe": 10024.25,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "gallifa": {
+   "municipio": "Gallifa",
+   "provincia": "barcelona",
+   "importe": 33505.36,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la garriga": {
+   "municipio": "la Garriga",
+   "provincia": "barcelona",
+   "importe": 6604.65,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "gava": {
+   "municipio": "Gavà",
+   "provincia": "barcelona",
+   "importe": 58876.99,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "gelida": {
+   "municipio": "Gelida",
+   "provincia": "barcelona",
+   "importe": 34789.13,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "gironella": {
+   "municipio": "Gironella",
+   "provincia": "barcelona",
+   "importe": 8316.26,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "gisclareny": {
+   "municipio": "Gisclareny",
+   "provincia": "barcelona",
+   "importe": 11573.36,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "granera": {
+   "municipio": "Granera",
+   "provincia": "barcelona",
+   "importe": 500.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "granollers": {
+   "municipio": "Granollers",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "gualba": {
+   "municipio": "Gualba",
+   "provincia": "barcelona",
+   "importe": 35000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "guardiola de bergueda": {
+   "municipio": "Guardiola de Berguedà",
+   "provincia": "barcelona",
+   "importe": 35891.88,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "gurb": {
+   "municipio": "Gurb",
+   "provincia": "barcelona",
+   "importe": 43567.73,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "l'hospitalet de llobregat": {
+   "municipio": "l'Hospitalet de Llobregat",
+   "provincia": "barcelona",
+   "importe": 81901.61,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "igualada": {
+   "municipio": "Igualada",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "jorba": {
+   "municipio": "Jorba",
+   "provincia": "barcelona",
+   "importe": 33048.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la granada": {
+   "municipio": "la Granada",
+   "provincia": "barcelona",
+   "importe": 12936.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la llacuna": {
+   "municipio": "la Llacuna",
+   "provincia": "barcelona",
+   "importe": 15181.51,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la llagosta": {
+   "municipio": "la Llagosta",
+   "provincia": "barcelona",
+   "importe": 58079.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "llica d'amunt": {
+   "municipio": "Lliçà d'Amunt",
+   "provincia": "barcelona",
+   "importe": 61765.24,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "llica de vall": {
+   "municipio": "Lliçà de Vall",
+   "provincia": "barcelona",
+   "importe": 40383.83,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "llinars del valles": {
+   "municipio": "Llinars del Vallès",
+   "provincia": "barcelona",
+   "importe": 59819.48,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "lluca": {
+   "municipio": "Lluçà",
+   "provincia": "barcelona",
+   "importe": 525.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "malgrat de mar": {
+   "municipio": "Malgrat de Mar",
+   "provincia": "barcelona",
+   "importe": 52667.67,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "malla": {
+   "municipio": "Malla",
+   "provincia": "barcelona",
+   "importe": 10137.57,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "manlleu": {
+   "municipio": "Manlleu",
+   "provincia": "barcelona",
+   "importe": 49004.76,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "manresa": {
+   "municipio": "Manresa",
+   "provincia": "barcelona",
+   "importe": 73808.46,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "marganell": {
+   "municipio": "Marganell",
+   "provincia": "barcelona",
+   "importe": 5600.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "martorell": {
+   "municipio": "Martorell",
+   "provincia": "barcelona",
+   "importe": 37842.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "martorelles": {
+   "municipio": "Martorelles",
+   "provincia": "barcelona",
+   "importe": 46375.56,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "les masies de roda": {
+   "municipio": "les Masies de Roda",
+   "provincia": "barcelona",
+   "importe": 35196.34,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "les masies de voltrega": {
+   "municipio": "les Masies de Voltregà",
+   "provincia": "barcelona",
+   "importe": 43254.68,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el masnou": {
+   "municipio": "el Masnou",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "masquefa": {
+   "municipio": "Masquefa",
+   "provincia": "barcelona",
+   "importe": 41363.7,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "matadepera": {
+   "municipio": "Matadepera",
+   "provincia": "barcelona",
+   "importe": 33436.32,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "mataro": {
+   "municipio": "Mataró",
+   "provincia": "barcelona",
+   "importe": 53990.64,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "mediona": {
+   "municipio": "Mediona",
+   "provincia": "barcelona",
+   "importe": 13025.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "moia": {
+   "municipio": "Moià",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "molins de rei": {
+   "municipio": "Molins de Rei",
+   "provincia": "barcelona",
+   "importe": 49813.4,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "mollet del valles": {
+   "municipio": "Mollet del Vallès",
+   "provincia": "barcelona",
+   "importe": 33200.38,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "monistrol de calders": {
+   "municipio": "Monistrol de Calders",
+   "provincia": "barcelona",
+   "importe": 22929.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "monistrol de montserrat": {
+   "municipio": "Monistrol de Montserrat",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "montcada i reixac": {
+   "municipio": "Montcada i Reixac",
+   "provincia": "barcelona",
+   "importe": 55944.28,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "montclar": {
+   "municipio": "Montclar",
+   "provincia": "barcelona",
+   "importe": 14000.04,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "montesquiu": {
+   "municipio": "Montesquiu",
+   "provincia": "barcelona",
+   "importe": 14713.36,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "montgat": {
+   "municipio": "Montgat",
+   "provincia": "barcelona",
+   "importe": 33492.53,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "montmaneu": {
+   "municipio": "Montmaneu",
+   "provincia": "barcelona",
+   "importe": 7200.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "montmelo": {
+   "municipio": "Montmeló",
+   "provincia": "barcelona",
+   "importe": 53838.26,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "montornes del valles": {
+   "municipio": "Montornès del Vallès",
+   "provincia": "barcelona",
+   "importe": 53607.67,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "montseny": {
+   "municipio": "Montseny",
+   "provincia": "barcelona",
+   "importe": 28629.41,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "mura": {
+   "municipio": "Mura",
+   "provincia": "barcelona",
+   "importe": 500.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "navarcles": {
+   "municipio": "Navarcles",
+   "provincia": "barcelona",
+   "importe": 35894.46,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "navas": {
+   "municipio": "Navàs",
+   "provincia": "barcelona",
+   "importe": 37079.85,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "odena": {
+   "municipio": "Òdena",
+   "provincia": "barcelona",
+   "importe": 27602.74,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "olerdola": {
+   "municipio": "Olèrdola",
+   "provincia": "barcelona",
+   "importe": 47966.27,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "olesa de bonesvalls": {
+   "municipio": "Olesa de Bonesvalls",
+   "provincia": "barcelona",
+   "importe": 23991.6,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "olesa de montserrat": {
+   "municipio": "Olesa de Montserrat",
+   "provincia": "barcelona",
+   "importe": 56935.92,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "olost": {
+   "municipio": "Olost",
+   "provincia": "barcelona",
+   "importe": 14857.98,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "olvan": {
+   "municipio": "Olvan",
+   "provincia": "barcelona",
+   "importe": 16878.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "oris": {
+   "municipio": "Orís",
+   "provincia": "barcelona",
+   "importe": 28339.8,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "orpi": {
+   "municipio": "Orpí",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "pacs del penedes": {
+   "municipio": "Pacs del Penedès",
+   "provincia": "barcelona",
+   "importe": 30000.12,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "palafolls": {
+   "municipio": "Palafolls",
+   "provincia": "barcelona",
+   "importe": 26250.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "palau-solita i plegamans": {
+   "municipio": "Palau-solità i Plegamans",
+   "provincia": "barcelona",
+   "importe": 51497.88,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "la palma de cervello": {
+   "municipio": "la Palma de Cervelló",
+   "provincia": "barcelona",
+   "importe": 32000.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el papiol": {
+   "municipio": "el Papiol",
+   "provincia": "barcelona",
+   "importe": 32598.44,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "parets del valles": {
+   "municipio": "Parets del Vallès",
+   "provincia": "barcelona",
+   "importe": 28965.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "perafita": {
+   "municipio": "Perafita",
+   "provincia": "barcelona",
+   "importe": 7748.16,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "piera": {
+   "municipio": "Piera",
+   "provincia": "barcelona",
+   "importe": 48566.18,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "el pla del penedes": {
+   "municipio": "el Pla del Penedès",
+   "provincia": "barcelona",
+   "importe": 3252.02,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la pobla de claramunt": {
+   "municipio": "la Pobla de Claramunt",
+   "provincia": "barcelona",
+   "importe": 28183.05,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la pobla de lillet": {
+   "municipio": "La Pobla de Lillet",
+   "provincia": "barcelona",
+   "importe": 39106.24,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "polinya": {
+   "municipio": "Polinyà",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "el pont de vilomara i rocafort": {
+   "municipio": "el Pont de Vilomara i Rocafort",
+   "provincia": "barcelona",
+   "importe": 620.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "pontons": {
+   "municipio": "Pontons",
+   "provincia": "barcelona",
+   "importe": 4040.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "el prat de llobregat": {
+   "municipio": "el Prat de Llobregat",
+   "provincia": "barcelona",
+   "importe": 41807.05,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "prats de llucanes": {
+   "municipio": "Prats de Lluçanès",
+   "provincia": "barcelona",
+   "importe": 22495.68,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "dels prats de rei": {
+   "municipio": "dels Prats de Rei",
+   "provincia": "barcelona",
+   "importe": 15000.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "premia de dalt": {
+   "municipio": "Premià de Dalt",
+   "provincia": "barcelona",
+   "importe": 17550.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "premia de mar": {
+   "municipio": "Premià de Mar",
+   "provincia": "barcelona",
+   "importe": 39434.21,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "puigdalber": {
+   "municipio": "Puigdàlber",
+   "provincia": "barcelona",
+   "importe": 12976.62,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "puig-reig": {
+   "municipio": "Puig-reig",
+   "provincia": "barcelona",
+   "importe": 32580.68,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "pujalt": {
+   "municipio": "Pujalt",
+   "provincia": "barcelona",
+   "importe": 2500.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la quar": {
+   "municipio": "la Quar",
+   "provincia": "barcelona",
+   "importe": 5519.6,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "rajadell": {
+   "municipio": "Rajadell",
+   "provincia": "barcelona",
+   "importe": 14541.33,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "rellinars": {
+   "municipio": "Rellinars",
+   "provincia": "barcelona",
+   "importe": 20275.76,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "ripollet": {
+   "municipio": "Ripollet",
+   "provincia": "barcelona",
+   "importe": 64208.04,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "la roca del valles": {
+   "municipio": "la Roca del Vallès",
+   "provincia": "barcelona",
+   "importe": 51175.65,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "rubi": {
+   "municipio": "Rubí",
+   "provincia": "barcelona",
+   "importe": 17520.09,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "rubio": {
+   "municipio": "Rubió",
+   "provincia": "barcelona",
+   "importe": 34846.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "rupit i pruit": {
+   "municipio": "Rupit i Pruit",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sabadell": {
+   "municipio": "Sabadell",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sagas": {
+   "municipio": "Sagàs",
+   "provincia": "barcelona",
+   "importe": 12758.46,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sallent": {
+   "municipio": "Sallent",
+   "provincia": "barcelona",
+   "importe": 48631.69,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant adria de besos": {
+   "municipio": "Sant Adrià de Besòs",
+   "provincia": "barcelona",
+   "importe": 46028.14,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant agusti de llucanes": {
+   "municipio": "Sant Agustí de Lluçanès",
+   "provincia": "barcelona",
+   "importe": 8530.08,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant andreu de la barca": {
+   "municipio": "Sant Andreu de la Barca",
+   "provincia": "barcelona",
+   "importe": 46923.73,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant andreu de llavaneres": {
+   "municipio": "Sant Andreu de Llavaneres",
+   "provincia": "barcelona",
+   "importe": 58009.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant antoni de vilamajor": {
+   "municipio": "Sant Antoni de Vilamajor",
+   "provincia": "barcelona",
+   "importe": 49000.08,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant bartomeu del grau": {
+   "municipio": "Sant Bartomeu del Grau",
+   "provincia": "barcelona",
+   "importe": 13785.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant boi de llobregat": {
+   "municipio": "Sant Boi de Llobregat",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sant boi de llucanes": {
+   "municipio": "Sant Boi de Lluçanès",
+   "provincia": "barcelona",
+   "importe": 18643.44,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant cebria de vallalta": {
+   "municipio": "Sant Cebrià de Vallalta",
+   "provincia": "barcelona",
+   "importe": 42000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant celoni": {
+   "municipio": "Sant Celoni",
+   "provincia": "barcelona",
+   "importe": 51688.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant climent de llobregat": {
+   "municipio": "Sant Climent de Llobregat",
+   "provincia": "barcelona",
+   "importe": 20180.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sant cugat del valles": {
+   "municipio": "Sant Cugat del Vallès",
+   "provincia": "barcelona",
+   "importe": 81483.64,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant cugat sesgarrigues": {
+   "municipio": "Sant Cugat Sesgarrigues",
+   "provincia": "barcelona",
+   "importe": 18550.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant esteve de palautordera": {
+   "municipio": "Sant Esteve de Palautordera",
+   "provincia": "barcelona",
+   "importe": 25212.15,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant esteve sesrovires": {
+   "municipio": "Sant Esteve Sesrovires",
+   "provincia": "barcelona",
+   "importe": 47809.5,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant feliu de codines": {
+   "municipio": "Sant Feliu de Codines",
+   "provincia": "barcelona",
+   "importe": 32659.92,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant feliu sasserra": {
+   "municipio": "Sant Feliu Sasserra",
+   "provincia": "barcelona",
+   "importe": 17755.53,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant fost de campsentelles": {
+   "municipio": "Sant Fost de Campsentelles",
+   "provincia": "barcelona",
+   "importe": 46493.42,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant fruitos de bages": {
+   "municipio": "Sant Fruitós de Bages",
+   "provincia": "barcelona",
+   "importe": 49658.98,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant hipolit de voltrega": {
+   "municipio": "Sant Hipòlit de Voltregà",
+   "provincia": "barcelona",
+   "importe": 16400.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sant iscle de vallalta": {
+   "municipio": "Sant Iscle de Vallalta",
+   "provincia": "barcelona",
+   "importe": 12180.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sant joan de vilatorrada": {
+   "municipio": "Sant Joan de Vilatorrada",
+   "provincia": "barcelona",
+   "importe": 43525.81,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant joan despi": {
+   "municipio": "Sant Joan Despí",
+   "provincia": "barcelona",
+   "importe": 65779.84,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant julia de cerdanyola": {
+   "municipio": "Sant Julià de Cerdanyola",
+   "provincia": "barcelona",
+   "importe": 9763.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant julia de vilatorta": {
+   "municipio": "Sant Julià de Vilatorta",
+   "provincia": "barcelona",
+   "importe": 34778.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant just desvern": {
+   "municipio": "Sant Just Desvern",
+   "provincia": "barcelona",
+   "importe": 59334.53,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant llorenc d'hortons": {
+   "municipio": "Sant Llorenç d'Hortons",
+   "provincia": "barcelona",
+   "importe": 18035.61,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sant llorenc savall": {
+   "municipio": "Sant Llorenç Savall",
+   "provincia": "barcelona",
+   "importe": 15310.2,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant marti d'albars": {
+   "municipio": "Sant Martí d'Albars",
+   "provincia": "barcelona",
+   "importe": 20930.38,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant marti de centelles": {
+   "municipio": "Sant Martí de Centelles",
+   "provincia": "barcelona",
+   "importe": 16371.39,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant marti de tous": {
+   "municipio": "Sant Martí de Tous",
+   "provincia": "barcelona",
+   "importe": 20100.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sant marti sarroca": {
+   "municipio": "Sant Martí Sarroca",
+   "provincia": "barcelona",
+   "importe": 13920.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant marti sesgueioles": {
+   "municipio": "Sant Martí Sesgueioles",
+   "provincia": "barcelona",
+   "importe": 27877.98,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant mateu de bages": {
+   "municipio": "Sant Mateu de Bages",
+   "provincia": "barcelona",
+   "importe": 16083.34,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant pere de ribes": {
+   "municipio": "Sant Pere de Ribes",
+   "provincia": "barcelona",
+   "importe": 19334.54,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant pere de riudebitlles": {
+   "municipio": "Sant Pere de Riudebitlles",
+   "provincia": "barcelona",
+   "importe": 26956.11,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant pere de vilamajor": {
+   "municipio": "Sant Pere de Vilamajor",
+   "provincia": "barcelona",
+   "importe": 15765.49,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant pere sallavinera": {
+   "municipio": "Sant Pere Sallavinera",
+   "provincia": "barcelona",
+   "importe": 1050.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sant quinti de mediona": {
+   "municipio": "Sant Quintí de Mediona",
+   "provincia": "barcelona",
+   "importe": 14450.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sant quirze de besora": {
+   "municipio": "Sant Quirze de Besora",
+   "provincia": "barcelona",
+   "importe": 33999.98,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant quirze safaja": {
+   "municipio": "Sant Quirze Safaja",
+   "provincia": "barcelona",
+   "importe": 48201.45,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant sadurni d'anoia": {
+   "municipio": "Sant Sadurní d'Anoia",
+   "provincia": "barcelona",
+   "importe": 37080.68,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant sadurni d'osormort": {
+   "municipio": "Sant Sadurní d'Osormort",
+   "provincia": "barcelona",
+   "importe": 3500.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sant salvador de guardiola": {
+   "municipio": "Sant Salvador de Guardiola",
+   "provincia": "barcelona",
+   "importe": 32873.82,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant vicenc de castellet": {
+   "municipio": "Sant Vicenç de Castellet",
+   "provincia": "barcelona",
+   "importe": 30000.04,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant vicenc de montalt": {
+   "municipio": "Sant Vicenç de Montalt",
+   "provincia": "barcelona",
+   "importe": 52272.5,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant vicenc de torello": {
+   "municipio": "Sant Vicenç de Torelló",
+   "provincia": "barcelona",
+   "importe": 38999.94,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant vicenc dels horts": {
+   "municipio": "Sant Vicenç dels Horts",
+   "provincia": "barcelona",
+   "importe": 44421.99,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "santa cecilia de voltrega": {
+   "municipio": "Santa Cecília de Voltregà",
+   "provincia": "barcelona",
+   "importe": 19326.66,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "santa coloma de cervello": {
+   "municipio": "Santa Coloma de Cervelló",
+   "provincia": "barcelona",
+   "importe": 40878.44,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "santa coloma de gramenet": {
+   "municipio": "Santa Coloma de Gramenet",
+   "provincia": "barcelona",
+   "importe": 56031.8,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "santa eugenia de berga": {
+   "municipio": "Santa Eugènia de Berga",
+   "provincia": "barcelona",
+   "importe": 36272.43,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "santa eulalia de riuprimer": {
+   "municipio": "Santa Eulàlia de Riuprimer",
+   "provincia": "barcelona",
+   "importe": 32280.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "santa eulalia de roncana": {
+   "municipio": "Santa Eulàlia de Ronçana",
+   "provincia": "barcelona",
+   "importe": 52272.64,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "santa margarida de montbui": {
+   "municipio": "Santa Margarida de Montbui",
+   "provincia": "barcelona",
+   "importe": 45000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "santa margarida i els monjos": {
+   "municipio": "Santa Margarida i els Monjos",
+   "provincia": "barcelona",
+   "importe": 31257.08,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "santa maria de besora": {
+   "municipio": "Santa Maria de Besora",
+   "provincia": "barcelona",
+   "importe": 13264.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "santa maria de miralles": {
+   "municipio": "Santa Maria de Miralles",
+   "provincia": "barcelona",
+   "importe": 18000.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "santa maria de palautordera": {
+   "municipio": "Santa Maria de Palautordera",
+   "provincia": "barcelona",
+   "importe": 52100.45,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "santa maria d'olo": {
+   "municipio": "Santa Maria d'Oló",
+   "provincia": "barcelona",
+   "importe": 8500.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "santa perpetua de mogoda": {
+   "municipio": "Santa Perpètua de Mogoda",
+   "provincia": "barcelona",
+   "importe": 65166.64,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "santa susanna": {
+   "municipio": "Santa Susanna",
+   "provincia": "barcelona",
+   "importe": 12090.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "santpedor": {
+   "municipio": "Santpedor",
+   "provincia": "barcelona",
+   "importe": 48259.82,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sentmenat": {
+   "municipio": "Sentmenat",
+   "provincia": "barcelona",
+   "importe": 37498.03,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "seva": {
+   "municipio": "Seva",
+   "provincia": "barcelona",
+   "importe": 39541.98,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sitges": {
+   "municipio": "Sitges",
+   "provincia": "barcelona",
+   "importe": 63144.82,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sobremunt": {
+   "municipio": "Sobremunt",
+   "provincia": "barcelona",
+   "importe": 14596.51,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sora": {
+   "municipio": "Sora",
+   "provincia": "barcelona",
+   "importe": 10298.96,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "subirats": {
+   "municipio": "Subirats",
+   "provincia": "barcelona",
+   "importe": 47393.36,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "suria": {
+   "municipio": "Súria",
+   "provincia": "barcelona",
+   "importe": 45360.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "tagamanent": {
+   "municipio": "Tagamanent",
+   "provincia": "barcelona",
+   "importe": 30353.12,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "talamanca": {
+   "municipio": "Talamanca",
+   "provincia": "barcelona",
+   "importe": 420.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "taradell": {
+   "municipio": "Taradell",
+   "provincia": "barcelona",
+   "importe": 48649.73,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "tavernoles": {
+   "municipio": "Tavèrnoles",
+   "provincia": "barcelona",
+   "importe": 16272.66,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "tavertet": {
+   "municipio": "Tavertet",
+   "provincia": "barcelona",
+   "importe": 17209.2,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "teia": {
+   "municipio": "Teià",
+   "provincia": "barcelona",
+   "importe": 18184.62,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "terrassa": {
+   "municipio": "Terrassa",
+   "provincia": "barcelona",
+   "importe": 75351.75,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "tiana": {
+   "municipio": "Tiana",
+   "provincia": "barcelona",
+   "importe": 35800.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "tona": {
+   "municipio": "Tona",
+   "provincia": "barcelona",
+   "importe": 53540.98,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "tordera": {
+   "municipio": "Tordera",
+   "provincia": "barcelona",
+   "importe": 42151.92,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "torello": {
+   "municipio": "Torelló",
+   "provincia": "barcelona",
+   "importe": 31943.94,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la torre de claramunt": {
+   "municipio": "la Torre de Claramunt",
+   "provincia": "barcelona",
+   "importe": 41469.12,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "torrelavit": {
+   "municipio": "Torrelavit",
+   "provincia": "barcelona",
+   "importe": 23231.88,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "torrelles de foix": {
+   "municipio": "Torrelles de Foix",
+   "provincia": "barcelona",
+   "importe": 12820.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "torrelles de llobregat": {
+   "municipio": "Torrelles de Llobregat",
+   "provincia": "barcelona",
+   "importe": 32719.96,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "ullastrell": {
+   "municipio": "Ullastrell",
+   "provincia": "barcelona",
+   "importe": 39929.28,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vallbona d'anoia": {
+   "municipio": "Vallbona d'Anoia",
+   "provincia": "barcelona",
+   "importe": 26250.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vallcebre": {
+   "municipio": "Vallcebre",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "vallgorguina": {
+   "municipio": "Vallgorguina",
+   "provincia": "barcelona",
+   "importe": 43790.52,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vallirana": {
+   "municipio": "Vallirana",
+   "provincia": "barcelona",
+   "importe": 5650.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "vallromanes": {
+   "municipio": "Vallromanes",
+   "provincia": "barcelona",
+   "importe": 39167.21,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "veciana": {
+   "municipio": "Veciana",
+   "provincia": "barcelona",
+   "importe": 8000.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "vic": {
+   "municipio": "Vic",
+   "provincia": "barcelona",
+   "importe": 65802.12,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vilada": {
+   "municipio": "Vilada",
+   "provincia": "barcelona",
+   "importe": 16800.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "viladecans": {
+   "municipio": "Viladecans",
+   "provincia": "barcelona",
+   "importe": 17641.27,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "viladecavalls": {
+   "municipio": "Viladecavalls",
+   "provincia": "barcelona",
+   "importe": 59483.14,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vilafranca del penedes": {
+   "municipio": "Vilafranca del Penedès",
+   "provincia": "barcelona",
+   "importe": 58980.06,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilalba sasserra": {
+   "municipio": "Vilalba Sasserra",
+   "provincia": "barcelona",
+   "importe": 15249.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilanova de sau": {
+   "municipio": "Vilanova de Sau",
+   "provincia": "barcelona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "vilanova del cami": {
+   "municipio": "Vilanova del Camí",
+   "provincia": "barcelona",
+   "importe": 52738.39,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vilanova del valles": {
+   "municipio": "Vilanova del Vallès",
+   "provincia": "barcelona",
+   "importe": 47045.32,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vilanova i la geltru": {
+   "municipio": "Vilanova i la Geltrú",
+   "provincia": "barcelona",
+   "importe": 63405.83,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vilassar de dalt": {
+   "municipio": "Vilassar de Dalt",
+   "provincia": "barcelona",
+   "importe": 41303.07,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vilassar de mar": {
+   "municipio": "Vilassar de Mar",
+   "provincia": "barcelona",
+   "importe": 63000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
   "agullana": {
    "municipio": "Agullana",
    "provincia": "girona",
@@ -1409,6 +3390,1497 @@
    "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
+  "abella de la conca": {
+   "municipio": "Abella de la Conca",
+   "provincia": "lleida",
+   "importe": 4958.32,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "ager": {
+   "municipio": "Àger",
+   "provincia": "lleida",
+   "importe": 15772.8,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "agramunt": {
+   "municipio": "Agramunt",
+   "provincia": "lleida",
+   "importe": 43376.2,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "aitona": {
+   "municipio": "Aitona",
+   "provincia": "lleida",
+   "importe": 3930.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "dels alamus": {
+   "municipio": "dels Alamús",
+   "provincia": "lleida",
+   "importe": 34860.19,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "alas i cerc": {
+   "municipio": "Alàs i Cerc",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "l'albages": {
+   "municipio": "l'Albagés",
+   "provincia": "lleida",
+   "importe": 9996.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "albatarrec": {
+   "municipio": "Albatàrrec",
+   "provincia": "lleida",
+   "importe": 42090.86,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "albesa": {
+   "municipio": "Albesa",
+   "provincia": "lleida",
+   "importe": 2242.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "l'albi": {
+   "municipio": "l'Albi",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "alcano": {
+   "municipio": "Alcanó",
+   "provincia": "lleida",
+   "importe": 18299.04,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "alcarras": {
+   "municipio": "Alcarràs",
+   "provincia": "lleida",
+   "importe": 45560.64,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "alcoletge": {
+   "municipio": "Alcoletge",
+   "provincia": "lleida",
+   "importe": 26775.12,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "alfarras": {
+   "municipio": "Alfarràs",
+   "provincia": "lleida",
+   "importe": 6850.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "alfes": {
+   "municipio": "Alfés",
+   "provincia": "lleida",
+   "importe": 9965.88,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "algerri": {
+   "municipio": "Algerri",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "alguaire": {
+   "municipio": "Alguaire",
+   "provincia": "lleida",
+   "importe": 25122.1,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "almacelles": {
+   "municipio": "Almacelles",
+   "provincia": "lleida",
+   "importe": 31349.75,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "almatret": {
+   "municipio": "Almatret",
+   "provincia": "lleida",
+   "importe": 30000.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "almenar": {
+   "municipio": "Almenar",
+   "provincia": "lleida",
+   "importe": 19200.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "alos de balaguer": {
+   "municipio": "Alòs de Balaguer",
+   "provincia": "lleida",
+   "importe": 15813.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "alpicat": {
+   "municipio": "Alpicat",
+   "provincia": "lleida",
+   "importe": 15151.1,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "alt aneu": {
+   "municipio": "Alt Àneu",
+   "provincia": "lleida",
+   "importe": 5696.74,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "arres": {
+   "municipio": "Arres",
+   "provincia": "lleida",
+   "importe": 2500.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "arseguel": {
+   "municipio": "Arsèguel",
+   "provincia": "lleida",
+   "importe": 7754.64,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "artesa de lleida": {
+   "municipio": "Artesa de Lleida",
+   "provincia": "lleida",
+   "importe": 19149.78,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "artesa de segre": {
+   "municipio": "Artesa de Segre",
+   "provincia": "lleida",
+   "importe": 18543.14,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "aspa": {
+   "municipio": "Aspa",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "les avellanes i santa linya": {
+   "municipio": "les Avellanes i Santa Linya",
+   "provincia": "lleida",
+   "importe": 9299.07,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "baix pallars": {
+   "municipio": "Baix Pallars",
+   "provincia": "lleida",
+   "importe": 13631.98,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "balaguer": {
+   "municipio": "Balaguer",
+   "provincia": "lleida",
+   "importe": 49500.08,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "barbens": {
+   "municipio": "Barbens",
+   "provincia": "lleida",
+   "importe": 28658.66,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la baronia de rialb": {
+   "municipio": "la Baronia de Rialb",
+   "provincia": "lleida",
+   "importe": 16723.75,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "bassella": {
+   "municipio": "Bassella",
+   "provincia": "lleida",
+   "importe": 26567.77,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "bausen": {
+   "municipio": "Bausen",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "belianes": {
+   "municipio": "Belianes",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "bell-lloc d'urgell": {
+   "municipio": "Bell-lloc d'Urgell",
+   "provincia": "lleida",
+   "importe": 11054.5,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "bellmunt d'urgell": {
+   "municipio": "Bellmunt d'Urgell",
+   "provincia": "lleida",
+   "importe": 9840.31,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "bellpuig": {
+   "municipio": "Bellpuig",
+   "provincia": "lleida",
+   "importe": 51413.12,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "bellver de cerdanya": {
+   "municipio": "Bellver de Cerdanya",
+   "provincia": "lleida",
+   "importe": 14850.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "bellvis": {
+   "municipio": "Bellvís",
+   "provincia": "lleida",
+   "importe": 34416.82,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "es bordes": {
+   "municipio": "Es Bòrdes",
+   "provincia": "lleida",
+   "importe": 8577.36,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "les borges blanques": {
+   "municipio": "les Borges Blanques",
+   "provincia": "lleida",
+   "importe": 39200.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "bossost": {
+   "municipio": "Bossòst",
+   "provincia": "lleida",
+   "importe": 30000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "bovera": {
+   "municipio": "Bovera",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "cabo": {
+   "municipio": "Cabó",
+   "provincia": "lleida",
+   "importe": 8530.78,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "camarasa": {
+   "municipio": "Camarasa",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "canejan": {
+   "municipio": "Canejan",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "castell de mur": {
+   "municipio": "Castell de Mur",
+   "provincia": "lleida",
+   "importe": 1300.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "castellar de la ribera": {
+   "municipio": "Castellar de la Ribera",
+   "provincia": "lleida",
+   "importe": 2583.1,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castelldans": {
+   "municipio": "Castelldans",
+   "provincia": "lleida",
+   "importe": 13284.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellnou de seana": {
+   "municipio": "Castellnou de Seana",
+   "provincia": "lleida",
+   "importe": 16800.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castello de farfanya": {
+   "municipio": "Castelló de Farfanya",
+   "provincia": "lleida",
+   "importe": 14636.62,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellsera": {
+   "municipio": "Castellserà",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "cava": {
+   "municipio": "Cava",
+   "provincia": "lleida",
+   "importe": 4265.04,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "cervera": {
+   "municipio": "Cervera",
+   "provincia": "lleida",
+   "importe": 14534.1,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "cervia de les garrigues": {
+   "municipio": "Cervià de les Garrigues",
+   "provincia": "lleida",
+   "importe": 12929.64,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "ciutadilla": {
+   "municipio": "Ciutadilla",
+   "provincia": "lleida",
+   "importe": 555.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "clariana de cardener": {
+   "municipio": "Clariana de Cardener",
+   "provincia": "lleida",
+   "importe": 11912.7,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el cogul": {
+   "municipio": "el Cogul",
+   "provincia": "lleida",
+   "importe": 6997.2,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "coll de nargo": {
+   "municipio": "Coll de Nargó",
+   "provincia": "lleida",
+   "importe": 13864.17,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la coma i la pedra": {
+   "municipio": "la Coma i la Pedra",
+   "provincia": "lleida",
+   "importe": 20966.76,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "conca de dalt": {
+   "municipio": "Conca de Dalt",
+   "provincia": "lleida",
+   "importe": 17002.67,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "corbins": {
+   "municipio": "Corbins",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "cubells": {
+   "municipio": "Cubells",
+   "provincia": "lleida",
+   "importe": 12748.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "l'espluga calba": {
+   "municipio": "l'Espluga Calba",
+   "provincia": "lleida",
+   "importe": 9885.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "espot": {
+   "municipio": "Espot",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "estaras": {
+   "municipio": "Estaràs",
+   "provincia": "lleida",
+   "importe": 11424.6,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "esterri d'aneu": {
+   "municipio": "Esterri d'Àneu",
+   "provincia": "lleida",
+   "importe": 34799.94,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "esterri de cardos": {
+   "municipio": "Esterri de Cardós",
+   "provincia": "lleida",
+   "importe": 5686.68,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "farrera": {
+   "municipio": "Farrera",
+   "provincia": "lleida",
+   "importe": 10521.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "figols i alinya": {
+   "municipio": "Fígols i Alinyà",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la floresta": {
+   "municipio": "la Floresta",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "fondarella": {
+   "municipio": "Fondarella",
+   "provincia": "lleida",
+   "importe": 8707.5,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "foradada": {
+   "municipio": "Foradada",
+   "provincia": "lleida",
+   "importe": 6199.33,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la fuliola": {
+   "municipio": "la Fuliola",
+   "provincia": "lleida",
+   "importe": 17505.72,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "fulleda": {
+   "municipio": "Fulleda",
+   "provincia": "lleida",
+   "importe": 17329.92,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "gavet de la conca": {
+   "municipio": "Gavet de la Conca",
+   "provincia": "lleida",
+   "importe": 1380.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "gimenells i el pla de la font": {
+   "municipio": "Gimenells i el Pla de la Font",
+   "provincia": "lleida",
+   "importe": 18000.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "golmes": {
+   "municipio": "Golmés",
+   "provincia": "lleida",
+   "importe": 24562.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "gosol": {
+   "municipio": "Gósol",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la granadella": {
+   "municipio": "la Granadella",
+   "provincia": "lleida",
+   "importe": 13785.84,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la granja d'escarp": {
+   "municipio": "La Granja d'Escarp",
+   "provincia": "lleida",
+   "importe": 1200.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "granyanella": {
+   "municipio": "Granyanella",
+   "provincia": "lleida",
+   "importe": 30385.08,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "granyena de segarra": {
+   "municipio": "Granyena de Segarra",
+   "provincia": "lleida",
+   "importe": 21028.44,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "guimera": {
+   "municipio": "Guimerà",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la guingueta d'aneu": {
+   "municipio": "la Guingueta d'Àneu",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "guissona": {
+   "municipio": "Guissona",
+   "provincia": "lleida",
+   "importe": 54097.25,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "guixers": {
+   "municipio": "Guixers",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "isona i conca della": {
+   "municipio": "Isona i Conca Dellà",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "ivars de noguera": {
+   "municipio": "Ivars de Noguera",
+   "provincia": "lleida",
+   "importe": 15521.84,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "ivars d'urgell": {
+   "municipio": "Ivars d'Urgell",
+   "provincia": "lleida",
+   "importe": 39618.46,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "ivorra": {
+   "municipio": "Ivorra",
+   "provincia": "lleida",
+   "importe": 300.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "josa i tuixen": {
+   "municipio": "Josa i Tuixén",
+   "provincia": "lleida",
+   "importe": 10523.14,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "juncosa": {
+   "municipio": "Juncosa",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "juneda": {
+   "municipio": "Juneda",
+   "provincia": "lleida",
+   "importe": 11848.35,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "les": {
+   "municipio": "Les",
+   "provincia": "lleida",
+   "importe": 22483.43,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "linyola": {
+   "municipio": "Linyola",
+   "provincia": "lleida",
+   "importe": 39200.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "lladorre": {
+   "municipio": "Lladorre",
+   "provincia": "lleida",
+   "importe": 1360.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "lladurs": {
+   "municipio": "Lladurs",
+   "provincia": "lleida",
+   "importe": 400.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "llardecans": {
+   "municipio": "Llardecans",
+   "provincia": "lleida",
+   "importe": 34846.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "llavorsi": {
+   "municipio": "Llavorsí",
+   "provincia": "lleida",
+   "importe": 600.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "lleida": {
+   "municipio": "Lleida",
+   "provincia": "lleida",
+   "importe": 76417.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "lles de cerdanya": {
+   "municipio": "Lles de Cerdanya",
+   "provincia": "lleida",
+   "importe": 11340.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "llimiana": {
+   "municipio": "Llimiana",
+   "provincia": "lleida",
+   "importe": 12960.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "llobera": {
+   "municipio": "Llobera",
+   "provincia": "lleida",
+   "importe": 800.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "maials": {
+   "municipio": "Maials",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "malda": {
+   "municipio": "Maldà",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "massalcoreig": {
+   "municipio": "Massalcoreig",
+   "provincia": "lleida",
+   "importe": 1286.67,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "massoteres": {
+   "municipio": "Massoteres",
+   "provincia": "lleida",
+   "importe": 9910.35,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "menarguens": {
+   "municipio": "Menàrguens",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "miralcamp": {
+   "municipio": "Miralcamp",
+   "provincia": "lleida",
+   "importe": 12101.26,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la molsosa": {
+   "municipio": "la Molsosa",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "montella i martinet": {
+   "municipio": "Montellà i Martinet",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "montferrer i castellbo": {
+   "municipio": "Montferrer i Castellbò",
+   "provincia": "lleida",
+   "importe": 23040.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "montgai": {
+   "municipio": "Montgai",
+   "provincia": "lleida",
+   "importe": 365.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "montoliu de lleida": {
+   "municipio": "Montoliu de Lleida",
+   "provincia": "lleida",
+   "importe": 19899.96,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "montoliu de segarra": {
+   "municipio": "Montoliu de Segarra",
+   "provincia": "lleida",
+   "importe": 13510.98,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "montornes de segarra": {
+   "municipio": "Montornès de Segarra",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "nalec": {
+   "municipio": "Nalec",
+   "provincia": "lleida",
+   "importe": 8530.03,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "naut aran": {
+   "municipio": "Naut Aran",
+   "provincia": "lleida",
+   "importe": 47855.5,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "naves": {
+   "municipio": "Navès",
+   "provincia": "lleida",
+   "importe": 21210.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "oden": {
+   "municipio": "Odèn",
+   "provincia": "lleida",
+   "importe": 8018.76,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "oliana": {
+   "municipio": "Oliana",
+   "provincia": "lleida",
+   "importe": 13785.8,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "oliola": {
+   "municipio": "Oliola",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "olius": {
+   "municipio": "Olius",
+   "provincia": "lleida",
+   "importe": 18000.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "les oluges": {
+   "municipio": "les Oluges",
+   "provincia": "lleida",
+   "importe": 9800.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "dels omellons": {
+   "municipio": "dels Omellons",
+   "provincia": "lleida",
+   "importe": 4998.24,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "dels omells de na gaia": {
+   "municipio": "dels Omells de na Gaia",
+   "provincia": "lleida",
+   "importe": 10004.31,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "organya": {
+   "municipio": "Organyà",
+   "provincia": "lleida",
+   "importe": 450.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "os de balaguer": {
+   "municipio": "Os de Balaguer",
+   "provincia": "lleida",
+   "importe": 362.2,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "osso de sio": {
+   "municipio": "Ossó de Sió",
+   "provincia": "lleida",
+   "importe": 17065.44,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el palau d'anglesola": {
+   "municipio": "el Palau d'Anglesola",
+   "provincia": "lleida",
+   "importe": 29304.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "penelles": {
+   "municipio": "Penelles",
+   "provincia": "lleida",
+   "importe": 400.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "peramola": {
+   "municipio": "Peramola",
+   "provincia": "lleida",
+   "importe": 11407.9,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "pinell de solsones": {
+   "municipio": "Pinell de Solsonès",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "pinos": {
+   "municipio": "Pinós",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "dels plans de sio": {
+   "municipio": "dels Plans de Sió",
+   "provincia": "lleida",
+   "importe": 25076.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el poal": {
+   "municipio": "el Poal",
+   "provincia": "lleida",
+   "importe": 18499.92,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la pobla de cervoles": {
+   "municipio": "la Pobla de Cérvoles",
+   "provincia": "lleida",
+   "importe": 2436.32,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la pobla de segur": {
+   "municipio": "la Pobla de Segur",
+   "provincia": "lleida",
+   "importe": 3240.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "el pont de bar": {
+   "municipio": "el Pont de Bar",
+   "provincia": "lleida",
+   "importe": 11314.88,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el pont de suert": {
+   "municipio": "el Pont de Suert",
+   "provincia": "lleida",
+   "importe": 51651.49,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "ponts": {
+   "municipio": "Ponts",
+   "provincia": "lleida",
+   "importe": 29425.34,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la portella": {
+   "municipio": "La Portella",
+   "provincia": "lleida",
+   "importe": 17680.8,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "prats i sansor": {
+   "municipio": "Prats i Sansor",
+   "provincia": "lleida",
+   "importe": 10715.64,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "preixana": {
+   "municipio": "Preixana",
+   "provincia": "lleida",
+   "importe": 9954.04,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "preixens": {
+   "municipio": "Preixens",
+   "provincia": "lleida",
+   "importe": 11507.75,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "prullans": {
+   "municipio": "Prullans",
+   "provincia": "lleida",
+   "importe": 25511.67,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "puiggros": {
+   "municipio": "Puiggròs",
+   "provincia": "lleida",
+   "importe": 9917.94,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "puigverd d'agramunt": {
+   "municipio": "Puigverd d'Agramunt",
+   "provincia": "lleida",
+   "importe": 10561.31,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "rialp": {
+   "municipio": "Rialp",
+   "provincia": "lleida",
+   "importe": 1425.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "ribera d'ondara": {
+   "municipio": "Ribera d'Ondara",
+   "provincia": "lleida",
+   "importe": 11132.94,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "ribera d'urgellet": {
+   "municipio": "Ribera d'Urgellet",
+   "provincia": "lleida",
+   "importe": 9347.74,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "riner": {
+   "municipio": "Riner",
+   "provincia": "lleida",
+   "importe": 15282.45,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "riu de cerdanya": {
+   "municipio": "Riu de Cerdanya",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "rossello": {
+   "municipio": "Rosselló",
+   "provincia": "lleida",
+   "importe": 46464.04,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "salas de pallars": {
+   "municipio": "Salàs de Pallars",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sanauja": {
+   "municipio": "Sanaüja",
+   "provincia": "lleida",
+   "importe": 11200.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant esteve de la sarga": {
+   "municipio": "Sant Esteve de la Sarga",
+   "provincia": "lleida",
+   "importe": 10800.12,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant guim de freixenet": {
+   "municipio": "Sant Guim de Freixenet",
+   "provincia": "lleida",
+   "importe": 37164.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sant guim de la plana": {
+   "municipio": "Sant Guim de la Plana",
+   "provincia": "lleida",
+   "importe": 22466.76,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant llorenc de morunys": {
+   "municipio": "Sant Llorenç de Morunys",
+   "provincia": "lleida",
+   "importe": 4595.28,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant marti de riucorb": {
+   "municipio": "Sant Martí de Riucorb",
+   "provincia": "lleida",
+   "importe": 13785.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant ramon": {
+   "municipio": "Sant Ramon",
+   "provincia": "lleida",
+   "importe": 21478.05,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sarroca de bellera": {
+   "municipio": "Sarroca de Bellera",
+   "provincia": "lleida",
+   "importe": 13580.61,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sarroca de lleida": {
+   "municipio": "Sarroca de Lleida",
+   "provincia": "lleida",
+   "importe": 13143.84,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "senterada": {
+   "municipio": "Senterada",
+   "provincia": "lleida",
+   "importe": 10704.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la sentiu de sio": {
+   "municipio": "la Sentiu de Sió",
+   "provincia": "lleida",
+   "importe": 25111.8,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "seros": {
+   "municipio": "Seròs",
+   "provincia": "lleida",
+   "importe": 15600.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la seu d'urgell": {
+   "municipio": "la Seu d'Urgell",
+   "provincia": "lleida",
+   "importe": 45218.18,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "solsona": {
+   "municipio": "Solsona",
+   "provincia": "lleida",
+   "importe": 46588.92,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "soriguera": {
+   "municipio": "Soriguera",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "soses": {
+   "municipio": "Soses",
+   "provincia": "lleida",
+   "importe": 6577.44,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sudanell": {
+   "municipio": "Sudanell",
+   "provincia": "lleida",
+   "importe": 13785.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sunyer": {
+   "municipio": "Sunyer",
+   "provincia": "lleida",
+   "importe": 18999.96,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "talarn": {
+   "municipio": "Talarn",
+   "provincia": "lleida",
+   "importe": 13785.75,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "talavera": {
+   "municipio": "Talavera",
+   "provincia": "lleida",
+   "importe": 28285.68,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "tarrega": {
+   "municipio": "Tàrrega",
+   "provincia": "lleida",
+   "importe": 58074.72,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "tarres": {
+   "municipio": "Tarrés",
+   "provincia": "lleida",
+   "importe": 1094.74,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "tarroja de segarra": {
+   "municipio": "Tarroja de Segarra",
+   "provincia": "lleida",
+   "importe": 12933.42,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "termens": {
+   "municipio": "Térmens",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "tirvia": {
+   "municipio": "Tírvia",
+   "provincia": "lleida",
+   "importe": 996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "tiurana": {
+   "municipio": "Tiurana",
+   "provincia": "lleida",
+   "importe": 17496.94,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "dels torms": {
+   "municipio": "dels Torms",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "tornabous": {
+   "municipio": "Tornabous",
+   "provincia": "lleida",
+   "importe": 26127.12,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la torre de cabdella": {
+   "municipio": "la Torre de Cabdella",
+   "provincia": "lleida",
+   "importe": 12840.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "torrebesses": {
+   "municipio": "Torrebesses",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "torrefarrera": {
+   "municipio": "Torrefarrera",
+   "provincia": "lleida",
+   "importe": 11613.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "torrefeta i florejacs": {
+   "municipio": "Torrefeta i Florejacs",
+   "provincia": "lleida",
+   "importe": 18182.5,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "torrelameu": {
+   "municipio": "Torrelameu",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "torres de segre": {
+   "municipio": "Torres de Segre",
+   "provincia": "lleida",
+   "importe": 30240.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "torre-serona": {
+   "municipio": "Torre-serona",
+   "provincia": "lleida",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "tremp": {
+   "municipio": "Tremp",
+   "provincia": "lleida",
+   "importe": 13286.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vall de cardos": {
+   "municipio": "Vall de Cardós",
+   "provincia": "lleida",
+   "importe": 15446.72,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vallbona de les monges": {
+   "municipio": "Vallbona de les Monges",
+   "provincia": "lleida",
+   "importe": 1062.5,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "vallfogona de balaguer": {
+   "municipio": "Vallfogona de Balaguer",
+   "provincia": "lleida",
+   "importe": 23478.64,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "les valls d'aguilar": {
+   "municipio": "les Valls d'Aguilar",
+   "provincia": "lleida",
+   "importe": 9745.2,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "les valls de valira": {
+   "municipio": "les Valls de Valira",
+   "provincia": "lleida",
+   "importe": 1200.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la vansa i fornols": {
+   "municipio": "la Vansa i Fórnols",
+   "provincia": "lleida",
+   "importe": 12522.96,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "verdu": {
+   "municipio": "Verdú",
+   "provincia": "lleida",
+   "importe": 25200.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vielha e mijaran": {
+   "municipio": "Vielha e Mijaran",
+   "provincia": "lleida",
+   "importe": 9500.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vilagrassa": {
+   "municipio": "Vilagrassa",
+   "provincia": "lleida",
+   "importe": 5186.26,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "vilaller": {
+   "municipio": "Vilaller",
+   "provincia": "lleida",
+   "importe": 25678.82,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilamos": {
+   "municipio": "Vilamòs",
+   "provincia": "lleida",
+   "importe": 13300.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilanova de bellpuig": {
+   "municipio": "Vilanova de Bellpuig",
+   "provincia": "lleida",
+   "importe": 19299.96,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilanova de la barca": {
+   "municipio": "Vilanova de la Barca",
+   "provincia": "lleida",
+   "importe": 7961.94,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilanova de l'aguda": {
+   "municipio": "Vilanova de l'Aguda",
+   "provincia": "lleida",
+   "importe": 14400.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilanova de meia": {
+   "municipio": "Vilanova de Meià",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilanova de segria": {
+   "municipio": "Vilanova de Segrià",
+   "provincia": "lleida",
+   "importe": 21312.06,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vila-sana": {
+   "municipio": "Vila-Sana",
+   "provincia": "lleida",
+   "importe": 14260.67,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el vilosell": {
+   "municipio": "el Vilosell",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vinaixa": {
+   "municipio": "Vinaixa",
+   "provincia": "lleida",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
   "abanilla": {
    "municipio": "Abanilla",
    "provincia": "murcia",
@@ -1672,6 +5144,1168 @@
    "municipio": "Yecla",
    "provincia": "murcia",
    "importe": 47722.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "aiguamurcia": {
+   "municipio": "Aiguamúrcia",
+   "provincia": "tarragona",
+   "importe": 23000.04,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "albinyana": {
+   "municipio": "Albinyana",
+   "provincia": "tarragona",
+   "importe": 10200.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "l'albiol": {
+   "municipio": "l'Albiol",
+   "provincia": "tarragona",
+   "importe": 6153.4,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "alcanar": {
+   "municipio": "Alcanar",
+   "provincia": "tarragona",
+   "importe": 31003.6,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "l'aldea": {
+   "municipio": "L'Aldea",
+   "provincia": "tarragona",
+   "importe": 12000.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "aldover": {
+   "municipio": "Aldover",
+   "provincia": "tarragona",
+   "importe": 17002.44,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "l'aleixar": {
+   "municipio": "l'Aleixar",
+   "provincia": "tarragona",
+   "importe": 13785.8,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "alfara de carles": {
+   "municipio": "Alfara de Carles",
+   "provincia": "tarragona",
+   "importe": 18598.3,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "alforja": {
+   "municipio": "Alforja",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "alio": {
+   "municipio": "Alió",
+   "provincia": "tarragona",
+   "importe": 3420.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "almoster": {
+   "municipio": "Almoster",
+   "provincia": "tarragona",
+   "importe": 7827.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "altafulla": {
+   "municipio": "Altafulla",
+   "provincia": "tarragona",
+   "importe": 31020.68,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "l'ametlla de mar": {
+   "municipio": "l'Ametlla de Mar",
+   "provincia": "tarragona",
+   "importe": 46141.76,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "l'ampolla": {
+   "municipio": "l'Ampolla",
+   "provincia": "tarragona",
+   "importe": 46000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "amposta": {
+   "municipio": "Amposta",
+   "provincia": "tarragona",
+   "importe": 30336.98,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "l'arboc": {
+   "municipio": "l'Arboç",
+   "provincia": "tarragona",
+   "importe": 41818.08,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "arboli": {
+   "municipio": "Arbolí",
+   "provincia": "tarragona",
+   "importe": 17328.39,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "l'argentera": {
+   "municipio": "l'Argentera",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "arnes": {
+   "municipio": "Arnes",
+   "provincia": "tarragona",
+   "importe": 14652.96,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "asco": {
+   "municipio": "Ascó",
+   "provincia": "tarragona",
+   "importe": 29275.6,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "banyeres del penedes": {
+   "municipio": "Banyeres del Penedès",
+   "provincia": "tarragona",
+   "importe": 25390.52,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "barbera de la conca": {
+   "municipio": "Barberà de la Conca",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "batea": {
+   "municipio": "Batea",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "bellmunt del priorat": {
+   "municipio": "Bellmunt del Priorat",
+   "provincia": "tarragona",
+   "importe": 14853.81,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "bellvei": {
+   "municipio": "Bellvei",
+   "provincia": "tarragona",
+   "importe": 35000.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "benifallet": {
+   "municipio": "Benifallet",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "benissanet": {
+   "municipio": "Benissanet",
+   "provincia": "tarragona",
+   "importe": 18381.02,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la bisbal del penedes": {
+   "municipio": "la Bisbal del Penedès",
+   "provincia": "tarragona",
+   "importe": 25999.96,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "blancafort": {
+   "municipio": "Blancafort",
+   "provincia": "tarragona",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "bonastre": {
+   "municipio": "Bonastre",
+   "provincia": "tarragona",
+   "importe": 12000.1,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "les borges del camp": {
+   "municipio": "les Borges del Camp",
+   "provincia": "tarragona",
+   "importe": 1090.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "bot": {
+   "municipio": "Bot",
+   "provincia": "tarragona",
+   "importe": 13785.75,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "brafim": {
+   "municipio": "Bràfim",
+   "provincia": "tarragona",
+   "importe": 13782.66,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "cabaces": {
+   "municipio": "Cabacés",
+   "provincia": "tarragona",
+   "importe": 9563.76,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "cabra del camp": {
+   "municipio": "Cabra del Camp",
+   "provincia": "tarragona",
+   "importe": 35000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "calafell": {
+   "municipio": "Calafell",
+   "provincia": "tarragona",
+   "importe": 58649.78,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "camarles": {
+   "municipio": "Camarles",
+   "provincia": "tarragona",
+   "importe": 4300.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "cambrils": {
+   "municipio": "Cambrils",
+   "provincia": "tarragona",
+   "importe": 52582.46,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "la canonja": {
+   "municipio": "la Canonja",
+   "provincia": "tarragona",
+   "importe": 26856.42,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "capcanes": {
+   "municipio": "Capçanes",
+   "provincia": "tarragona",
+   "importe": 19932.78,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "caseres": {
+   "municipio": "Caseres",
+   "provincia": "tarragona",
+   "importe": 16264.7,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellvell del camp": {
+   "municipio": "Castellvell del Camp",
+   "provincia": "tarragona",
+   "importe": 33810.02,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el catllar": {
+   "municipio": "el Catllar",
+   "provincia": "tarragona",
+   "importe": 10600.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "colldejou": {
+   "municipio": "Colldejou",
+   "provincia": "tarragona",
+   "importe": 10128.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "conesa": {
+   "municipio": "Conesa",
+   "provincia": "tarragona",
+   "importe": 24458.64,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "constanti": {
+   "municipio": "Constantí",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "corbera d'ebre": {
+   "municipio": "Corbera d'Ebre",
+   "provincia": "tarragona",
+   "importe": 13785.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "cornudella de montsant": {
+   "municipio": "Cornudella de Montsant",
+   "provincia": "tarragona",
+   "importe": 31839.12,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "creixell": {
+   "municipio": "Creixell",
+   "provincia": "tarragona",
+   "importe": 55104.32,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "cunit": {
+   "municipio": "Cunit",
+   "provincia": "tarragona",
+   "importe": 48095.75,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "deltebre": {
+   "municipio": "Deltebre",
+   "provincia": "tarragona",
+   "importe": 43193.76,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "duesaigues": {
+   "municipio": "Duesaigües",
+   "provincia": "tarragona",
+   "importe": 6952.54,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "l'espluga de francoli": {
+   "municipio": "l'Espluga de Francolí",
+   "provincia": "tarragona",
+   "importe": 26532.66,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "la fatarella": {
+   "municipio": "la Fatarella",
+   "provincia": "tarragona",
+   "importe": 13785.84,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la febro": {
+   "municipio": "la Febró",
+   "provincia": "tarragona",
+   "importe": 4501.98,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la figuera": {
+   "municipio": "la Figuera",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "flix": {
+   "municipio": "Flix",
+   "provincia": "tarragona",
+   "importe": 18846.38,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "fores": {
+   "municipio": "Forès",
+   "provincia": "tarragona",
+   "importe": 11568.55,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "freginals": {
+   "municipio": "Freginals",
+   "provincia": "tarragona",
+   "importe": 13699.92,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la galera": {
+   "municipio": "la Galera",
+   "provincia": "tarragona",
+   "importe": 17805.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "gandesa": {
+   "municipio": "Gandesa",
+   "provincia": "tarragona",
+   "importe": 42645.27,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "garcia": {
+   "municipio": "Garcia",
+   "provincia": "tarragona",
+   "importe": 14764.21,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "dels garidells": {
+   "municipio": "dels Garidells",
+   "provincia": "tarragona",
+   "importe": 11453.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "ginestar": {
+   "municipio": "Ginestar",
+   "provincia": "tarragona",
+   "importe": 9314.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "godall": {
+   "municipio": "Godall",
+   "provincia": "tarragona",
+   "importe": 12917.61,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "gratallops": {
+   "municipio": "Gratallops",
+   "provincia": "tarragona",
+   "importe": 16271.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "dels guiamets": {
+   "municipio": "dels Guiamets",
+   "provincia": "tarragona",
+   "importe": 6317.22,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "horta de sant joan": {
+   "municipio": "Horta de Sant Joan",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la rapita": {
+   "municipio": "la Ràpita",
+   "provincia": "tarragona",
+   "importe": 7500.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "llorac": {
+   "municipio": "Llorac",
+   "provincia": "tarragona",
+   "importe": 12960.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "llorenc del penedes": {
+   "municipio": "Llorenç del Penedès",
+   "provincia": "tarragona",
+   "importe": 19125.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "marca": {
+   "municipio": "Marçà",
+   "provincia": "tarragona",
+   "importe": 14879.83,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "mas de barberans": {
+   "municipio": "Mas de Barberans",
+   "provincia": "tarragona",
+   "importe": 17773.08,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "masdenverge": {
+   "municipio": "Masdenverge",
+   "provincia": "tarragona",
+   "importe": 2176.6,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "masllorenc": {
+   "municipio": "Masllorenç",
+   "provincia": "tarragona",
+   "importe": 7876.68,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la maso": {
+   "municipio": "La Masó",
+   "provincia": "tarragona",
+   "importe": 7986.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "maspujols": {
+   "municipio": "Maspujols",
+   "provincia": "tarragona",
+   "importe": 230.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "el masroig": {
+   "municipio": "el Masroig",
+   "provincia": "tarragona",
+   "importe": 13863.32,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el mila": {
+   "municipio": "el Milà",
+   "provincia": "tarragona",
+   "importe": 6172.42,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "miravet": {
+   "municipio": "Miravet",
+   "provincia": "tarragona",
+   "importe": 1459.5,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el molar": {
+   "municipio": "el Molar",
+   "provincia": "tarragona",
+   "importe": 13453.9,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "montblanc": {
+   "municipio": "Montblanc",
+   "provincia": "tarragona",
+   "importe": 37880.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "montbrio del camp": {
+   "municipio": "Montbrió del Camp",
+   "provincia": "tarragona",
+   "importe": 7690.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "el montmell": {
+   "municipio": "el Montmell",
+   "provincia": "tarragona",
+   "importe": 36255.24,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "mont-roig del camp": {
+   "municipio": "Mont-roig del Camp",
+   "provincia": "tarragona",
+   "importe": 59160.08,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "mora d'ebre": {
+   "municipio": "Móra d'Ebre",
+   "provincia": "tarragona",
+   "importe": 52532.2,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "mora la nova": {
+   "municipio": "Móra la Nova",
+   "provincia": "tarragona",
+   "importe": 13485.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "el morell": {
+   "municipio": "el Morell",
+   "provincia": "tarragona",
+   "importe": 28382.64,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la morera de montsant": {
+   "municipio": "la Morera de Montsant",
+   "provincia": "tarragona",
+   "importe": 15295.39,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la nou de gaia": {
+   "municipio": "la Nou de Gaià",
+   "provincia": "tarragona",
+   "importe": 13785.75,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "nulles": {
+   "municipio": "Nulles",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "dels pallaresos": {
+   "municipio": "dels Pallaresos",
+   "provincia": "tarragona",
+   "importe": 16922.84,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "la palma d'ebre": {
+   "municipio": "la Palma d'Ebre",
+   "provincia": "tarragona",
+   "importe": 12053.37,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "passanant i belltall": {
+   "municipio": "Passanant i Belltall",
+   "provincia": "tarragona",
+   "importe": 21060.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "pauls": {
+   "municipio": "Paüls",
+   "provincia": "tarragona",
+   "importe": 1730.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "perafort": {
+   "municipio": "Perafort",
+   "provincia": "tarragona",
+   "importe": 45994.9,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "el perello": {
+   "municipio": "el Perelló",
+   "provincia": "tarragona",
+   "importe": 31181.75,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "les piles": {
+   "municipio": "les Piles",
+   "provincia": "tarragona",
+   "importe": 9964.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el pinell de brai": {
+   "municipio": "el Pinell de Brai",
+   "provincia": "tarragona",
+   "importe": 10739.76,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "pira": {
+   "municipio": "Pira",
+   "provincia": "tarragona",
+   "importe": 9996.5,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "el pla de santa maria": {
+   "municipio": "el Pla de Santa Maria",
+   "provincia": "tarragona",
+   "importe": 23800.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la pobla de mafumet": {
+   "municipio": "la Pobla de Mafumet",
+   "provincia": "tarragona",
+   "importe": 25000.08,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la pobla de massaluca": {
+   "municipio": "la Pobla de Massaluca",
+   "provincia": "tarragona",
+   "importe": 9996.48,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la pobla de montornes": {
+   "municipio": "la Pobla de Montornès",
+   "provincia": "tarragona",
+   "importe": 37500.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "poboleda": {
+   "municipio": "Poboleda",
+   "provincia": "tarragona",
+   "importe": 20000.04,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "pontils": {
+   "municipio": "Pontils",
+   "provincia": "tarragona",
+   "importe": 12032.76,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "porrera": {
+   "municipio": "Porrera",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "pradell de la teixeta": {
+   "municipio": "Pradell de la Teixeta",
+   "provincia": "tarragona",
+   "importe": 13900.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "prades": {
+   "municipio": "Prades",
+   "provincia": "tarragona",
+   "importe": 12600.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "prat de comte": {
+   "municipio": "Prat de Comte",
+   "provincia": "tarragona",
+   "importe": 9299.16,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "pratdip": {
+   "municipio": "Pratdip",
+   "provincia": "tarragona",
+   "importe": 31184.55,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "querol": {
+   "municipio": "Querol",
+   "provincia": "tarragona",
+   "importe": 13812.12,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "rasquera": {
+   "municipio": "Rasquera",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "renau": {
+   "municipio": "Renau",
+   "provincia": "tarragona",
+   "importe": 9936.84,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "reus": {
+   "municipio": "Reus",
+   "provincia": "tarragona",
+   "importe": 73219.34,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la riba": {
+   "municipio": "la Riba",
+   "provincia": "tarragona",
+   "importe": 2000.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la riera de gaia": {
+   "municipio": "la Riera de Gaià",
+   "provincia": "tarragona",
+   "importe": 28380.96,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "riudecanyes": {
+   "municipio": "Riudecanyes",
+   "provincia": "tarragona",
+   "importe": 2551.5,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "riudoms": {
+   "municipio": "Riudoms",
+   "provincia": "tarragona",
+   "importe": 40764.06,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "rocafort de queralt": {
+   "municipio": "Rocafort de Queralt",
+   "provincia": "tarragona",
+   "importe": 6664.32,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "roda de bera": {
+   "municipio": "Roda de Berà",
+   "provincia": "tarragona",
+   "importe": 43429.96,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "rodonya": {
+   "municipio": "Rodonyà",
+   "provincia": "tarragona",
+   "importe": 13785.75,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "roquetes": {
+   "municipio": "Roquetes",
+   "provincia": "tarragona",
+   "importe": 48000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "el rourell": {
+   "municipio": "el Rourell",
+   "provincia": "tarragona",
+   "importe": 12708.72,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "salomo": {
+   "municipio": "Salomó",
+   "provincia": "tarragona",
+   "importe": 9202.07,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "salou": {
+   "municipio": "Salou",
+   "provincia": "tarragona",
+   "importe": 57499.82,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "sant jaume d'enveja": {
+   "municipio": "Sant Jaume d'Enveja",
+   "provincia": "tarragona",
+   "importe": 30000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "santa barbara": {
+   "municipio": "Santa Bàrbara",
+   "provincia": "tarragona",
+   "importe": 21792.27,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "santa coloma de queralt": {
+   "municipio": "Santa Coloma de Queralt",
+   "provincia": "tarragona",
+   "importe": 30000.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "santa oliva": {
+   "municipio": "Santa Oliva",
+   "provincia": "tarragona",
+   "importe": 32536.98,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "sarral": {
+   "municipio": "Sarral",
+   "provincia": "tarragona",
+   "importe": 24000.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "savalla del comtat": {
+   "municipio": "Savallà del Comtat",
+   "provincia": "tarragona",
+   "importe": 8400.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la secuita": {
+   "municipio": "la Secuita",
+   "provincia": "tarragona",
+   "importe": 47855.5,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "la selva del camp": {
+   "municipio": "la Selva del Camp",
+   "provincia": "tarragona",
+   "importe": 26831.15,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "senan": {
+   "municipio": "Senan",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la senia": {
+   "municipio": "la Sénia",
+   "provincia": "tarragona",
+   "importe": 10700.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "solivella": {
+   "municipio": "Solivella",
+   "provincia": "tarragona",
+   "importe": 15540.32,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "tarragona": {
+   "municipio": "Tarragona",
+   "provincia": "tarragona",
+   "importe": 2184.12,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "tivenys": {
+   "municipio": "Tivenys",
+   "provincia": "tarragona",
+   "importe": 5343.51,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "tivissa": {
+   "municipio": "Tivissa",
+   "provincia": "tarragona",
+   "importe": 8755.94,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "la torre de fontaubella": {
+   "municipio": "la Torre de Fontaubella",
+   "provincia": "tarragona",
+   "importe": 5400.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la torre de l'espanyol": {
+   "municipio": "la Torre de l'Espanyol",
+   "provincia": "tarragona",
+   "importe": 22895.42,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "torredembarra": {
+   "municipio": "Torredembarra",
+   "provincia": "tarragona",
+   "importe": 21883.32,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "torroja del priorat": {
+   "municipio": "Torroja del Priorat",
+   "provincia": "tarragona",
+   "importe": 14594.59,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "tortosa": {
+   "municipio": "Tortosa",
+   "provincia": "tarragona",
+   "importe": 57499.96,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "ulldecona": {
+   "municipio": "Ulldecona",
+   "provincia": "tarragona",
+   "importe": 31798.85,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "ulldemolins": {
+   "municipio": "Ulldemolins",
+   "provincia": "tarragona",
+   "importe": 5170.75,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vallclara": {
+   "municipio": "Vallclara",
+   "provincia": "tarragona",
+   "importe": 760.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "vallfogona de riucorb": {
+   "municipio": "Vallfogona de Riucorb",
+   "provincia": "tarragona",
+   "importe": 13200.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vallmoll": {
+   "municipio": "Vallmoll",
+   "provincia": "tarragona",
+   "importe": 11718.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "valls": {
+   "municipio": "Valls",
+   "provincia": "tarragona",
+   "importe": 63800.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vandellos i l'hospitalet de l'infant": {
+   "municipio": "Vandellòs i l'Hospitalet de l'Infant",
+   "provincia": "tarragona",
+   "importe": 20000.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "el vendrell": {
+   "municipio": "el Vendrell",
+   "provincia": "tarragona",
+   "importe": 52000.0,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vespella de gaia": {
+   "municipio": "Vespella de Gaià",
+   "provincia": "tarragona",
+   "importe": 11939.4,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilabella": {
+   "municipio": "Vilabella",
+   "provincia": "tarragona",
+   "importe": 3750.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "vilalba dels arcs": {
+   "municipio": "Vilalba dels Arcs",
+   "provincia": "tarragona",
+   "importe": 13924.27,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilanova de prades": {
+   "municipio": "Vilanova de Prades",
+   "provincia": "tarragona",
+   "importe": 10306.98,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilanova d'escornalbou": {
+   "municipio": "Vilanova d'Escornalbou",
+   "provincia": "tarragona",
+   "importe": 14460.76,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vilaplana": {
+   "municipio": "Vilaplana",
+   "provincia": "tarragona",
+   "importe": 8670.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vila-seca": {
+   "municipio": "Vila-seca",
+   "provincia": "tarragona",
+   "importe": 66107.13,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "vilaverd": {
+   "municipio": "Vilaverd",
+   "provincia": "tarragona",
+   "importe": 650.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "la vilella baixa": {
+   "municipio": "la Vilella Baixa",
+   "provincia": "tarragona",
+   "importe": 13198.32,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vimbodi i poblet": {
+   "municipio": "Vimbodí i Poblet",
+   "provincia": "tarragona",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "vinebre": {
+   "municipio": "Vinebre",
+   "provincia": "tarragona",
+   "importe": 5564.85,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vinyols i els arcs": {
+   "municipio": "Vinyols i els Arcs",
+   "provincia": "tarragona",
+   "importe": 32926.42,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "xerta": {
+   "municipio": "Xerta",
+   "provincia": "tarragona",
+   "importe": 24344.92,
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   }

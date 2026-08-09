@@ -2,7 +2,7 @@
 """
 Descarga la población oficial (INE, Cifras Oficiales de Población de los
 Municipios Españoles: Revisión del Padrón Municipal) de cada municipio de
-Murcia y Girona, y genera backend/poblacion.json.
+las 5 provincias que cubre esta app, y genera backend/poblacion.json.
 
 Fuente: API pública Tempus3 del INE (servicios.ine.es/wstempus), sin
 scraping HTML ni sesión -- un GET por tabla, JSON directo. Cada provincia
@@ -11,8 +11,11 @@ y sexo"), con un identificador numérico PERMANENTE (a diferencia de los
 ficheros de Hacienda, cuyo nombre de fichero cambia con la fecha de
 publicación): cuando el INE publique el padrón del año siguiente, la misma
 tabla añade el dato nuevo sola, sin tocar este script.
-  Murcia -> tabla 2883  https://www.ine.es/jaxiT3/Tabla.htm?t=2883
-  Girona -> tabla 2870  https://www.ine.es/jaxiT3/Tabla.htm?t=2870
+  Murcia    -> tabla 2883  https://www.ine.es/jaxiT3/Tabla.htm?t=2883
+  Girona    -> tabla 2870  https://www.ine.es/jaxiT3/Tabla.htm?t=2870
+  Lleida    -> tabla 2878  https://www.ine.es/jaxiT3/Tabla.htm?t=2878  (2026-08-09)
+  Barcelona -> tabla 2861  https://www.ine.es/jaxiT3/Tabla.htm?t=2861  (2026-08-09)
+  Tarragona -> tabla 2900  https://www.ine.es/jaxiT3/Tabla.htm?t=2900  (2026-08-09)
 
 ?nult=1 devuelve solo el último dato publicado de cada serie. Cada serie es
 una combinación municipio×sexo; se filtran las de "Total" (ambos sexos).
@@ -47,6 +50,13 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0
 TABLAS = {
     "Murcia": {"id": 2883, "provincia": "murcia"},
     "Girona": {"id": 2870, "provincia": "girona"},
+    # IDs localizados y verificados en vivo el 2026-08-09 contra la propia
+    # API (filas de "Total.Total habitantes" tras descartar el agregado
+    # provincial: Lleida 231, Barcelona 311, Tarragona 184 -- coincide
+    # exactamente con el nº de municipios oficiales de cada provincia).
+    "Lleida": {"id": 2878, "provincia": "lleida"},
+    "Barcelona": {"id": 2861, "provincia": "barcelona"},
+    "Tarragona": {"id": 2900, "provincia": "tarragona"},
 }
 API_URL = "https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/{tabla_id}?nult=1"
 URL_TABLA_HTML = "https://www.ine.es/jaxiT3/Tabla.htm?t={tabla_id}"
@@ -115,21 +125,22 @@ def main():
         print(f"  {len(filas)} filas procesadas.")
         time.sleep(0.3)
 
-    n_murcia = sum(1 for v in resultado.values() if v["provincia"] == "murcia")
-    n_girona = sum(1 for v in resultado.values() if v["provincia"] == "girona")
-
     salida = {
         "generado": time.strftime("%Y-%m-%d %H:%M:%S"),
         "fuente_url": {
-            "murcia": URL_TABLA_HTML.format(tabla_id=TABLAS["Murcia"]["id"]),
-            "girona": URL_TABLA_HTML.format(tabla_id=TABLAS["Girona"]["id"]),
+            cfg["provincia"]: URL_TABLA_HTML.format(tabla_id=cfg["id"])
+            for cfg in TABLAS.values()
         },
         "municipios": resultado,
     }
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump(salida, f, ensure_ascii=False, indent=1)
 
-    print(f"\nPoblación -- Murcia: {n_murcia}/45, Girona: {n_girona}/221")
+    print()
+    for provincia_ine, cfg in TABLAS.items():
+        esperados = len(MUNICIPIOS_POR_PROV_MIN[provincia_ine])
+        n = sum(1 for v in resultado.values() if v["provincia"] == cfg["provincia"])
+        print(f"Población -- {provincia_ine}: {n}/{esperados}")
     if sin_match:
         print(f"\nSin emparejar ({len(sin_match)}): {sin_match}")
     print(f"\nGuardado en {OUT_FILE}")

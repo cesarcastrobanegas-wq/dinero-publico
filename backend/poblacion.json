@@ -1,8 +1,11 @@
 {
- "generado": "2026-08-09 06:10:19",
+ "generado": "2026-08-09 14:50:44",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
-  "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870"
+  "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
+  "lleida": "https://www.ine.es/jaxiT3/Tabla.htm?t=2878",
+  "barcelona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2861",
+  "tarragona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2900"
  },
  "municipios": {
   "abanilla": {
@@ -1599,6 +1602,4332 @@
    "municipio": "Vilopriu",
    "provincia": "girona",
    "poblacion": 209,
+   "anio": 2025
+  },
+  "abella de la conca": {
+   "municipio": "Abella de la Conca",
+   "provincia": "lleida",
+   "poblacion": 156,
+   "anio": 2025
+  },
+  "ager": {
+   "municipio": "Àger",
+   "provincia": "lleida",
+   "poblacion": 637,
+   "anio": 2025
+  },
+  "agramunt": {
+   "municipio": "Agramunt",
+   "provincia": "lleida",
+   "poblacion": 5653,
+   "anio": 2025
+  },
+  "aitona": {
+   "municipio": "Aitona",
+   "provincia": "lleida",
+   "poblacion": 2591,
+   "anio": 2025
+  },
+  "dels alamus": {
+   "municipio": "dels Alamús",
+   "provincia": "lleida",
+   "poblacion": 835,
+   "anio": 2025
+  },
+  "alas i cerc": {
+   "municipio": "Alàs i Cerc",
+   "provincia": "lleida",
+   "poblacion": 320,
+   "anio": 2025
+  },
+  "l'albages": {
+   "municipio": "l'Albagés",
+   "provincia": "lleida",
+   "poblacion": 339,
+   "anio": 2025
+  },
+  "albatarrec": {
+   "municipio": "Albatàrrec",
+   "provincia": "lleida",
+   "poblacion": 2331,
+   "anio": 2025
+  },
+  "albesa": {
+   "municipio": "Albesa",
+   "provincia": "lleida",
+   "poblacion": 1584,
+   "anio": 2025
+  },
+  "l'albi": {
+   "municipio": "l'Albi",
+   "provincia": "lleida",
+   "poblacion": 764,
+   "anio": 2025
+  },
+  "alcano": {
+   "municipio": "Alcanó",
+   "provincia": "lleida",
+   "poblacion": 244,
+   "anio": 2025
+  },
+  "alcarras": {
+   "municipio": "Alcarràs",
+   "provincia": "lleida",
+   "poblacion": 10256,
+   "anio": 2025
+  },
+  "alcoletge": {
+   "municipio": "Alcoletge",
+   "provincia": "lleida",
+   "poblacion": 3640,
+   "anio": 2025
+  },
+  "alfarras": {
+   "municipio": "Alfarràs",
+   "provincia": "lleida",
+   "poblacion": 2805,
+   "anio": 2025
+  },
+  "alfes": {
+   "municipio": "Alfés",
+   "provincia": "lleida",
+   "poblacion": 284,
+   "anio": 2025
+  },
+  "algerri": {
+   "municipio": "Algerri",
+   "provincia": "lleida",
+   "poblacion": 424,
+   "anio": 2025
+  },
+  "alguaire": {
+   "municipio": "Alguaire",
+   "provincia": "lleida",
+   "poblacion": 3060,
+   "anio": 2025
+  },
+  "alins": {
+   "municipio": "Alins",
+   "provincia": "lleida",
+   "poblacion": 269,
+   "anio": 2025
+  },
+  "almacelles": {
+   "municipio": "Almacelles",
+   "provincia": "lleida",
+   "poblacion": 7018,
+   "anio": 2025
+  },
+  "almatret": {
+   "municipio": "Almatret",
+   "provincia": "lleida",
+   "poblacion": 292,
+   "anio": 2025
+  },
+  "almenar": {
+   "municipio": "Almenar",
+   "provincia": "lleida",
+   "poblacion": 3369,
+   "anio": 2025
+  },
+  "alos de balaguer": {
+   "municipio": "Alòs de Balaguer",
+   "provincia": "lleida",
+   "poblacion": 118,
+   "anio": 2025
+  },
+  "alpicat": {
+   "municipio": "Alpicat",
+   "provincia": "lleida",
+   "poblacion": 6515,
+   "anio": 2025
+  },
+  "alt aneu": {
+   "municipio": "Alt Àneu",
+   "provincia": "lleida",
+   "poblacion": 453,
+   "anio": 2025
+  },
+  "anglesola": {
+   "municipio": "Anglesola",
+   "provincia": "lleida",
+   "poblacion": 1389,
+   "anio": 2025
+  },
+  "arbeca": {
+   "municipio": "Arbeca",
+   "provincia": "lleida",
+   "poblacion": 2163,
+   "anio": 2025
+  },
+  "arres": {
+   "municipio": "Arres",
+   "provincia": "lleida",
+   "poblacion": 58,
+   "anio": 2025
+  },
+  "arseguel": {
+   "municipio": "Arsèguel",
+   "provincia": "lleida",
+   "poblacion": 87,
+   "anio": 2025
+  },
+  "artesa de lleida": {
+   "municipio": "Artesa de Lleida",
+   "provincia": "lleida",
+   "poblacion": 1543,
+   "anio": 2025
+  },
+  "artesa de segre": {
+   "municipio": "Artesa de Segre",
+   "provincia": "lleida",
+   "poblacion": 3559,
+   "anio": 2025
+  },
+  "aspa": {
+   "municipio": "Aspa",
+   "provincia": "lleida",
+   "poblacion": 233,
+   "anio": 2025
+  },
+  "les avellanes i santa linya": {
+   "municipio": "les Avellanes i Santa Linya",
+   "provincia": "lleida",
+   "poblacion": 434,
+   "anio": 2025
+  },
+  "baix pallars": {
+   "municipio": "Baix Pallars",
+   "provincia": "lleida",
+   "poblacion": 345,
+   "anio": 2025
+  },
+  "balaguer": {
+   "municipio": "Balaguer",
+   "provincia": "lleida",
+   "poblacion": 17729,
+   "anio": 2025
+  },
+  "barbens": {
+   "municipio": "Barbens",
+   "provincia": "lleida",
+   "poblacion": 929,
+   "anio": 2025
+  },
+  "la baronia de rialb": {
+   "municipio": "la Baronia de Rialb",
+   "provincia": "lleida",
+   "poblacion": 216,
+   "anio": 2025
+  },
+  "bassella": {
+   "municipio": "Bassella",
+   "provincia": "lleida",
+   "poblacion": 216,
+   "anio": 2025
+  },
+  "bausen": {
+   "municipio": "Bausen",
+   "provincia": "lleida",
+   "poblacion": 62,
+   "anio": 2025
+  },
+  "belianes": {
+   "municipio": "Belianes",
+   "provincia": "lleida",
+   "poblacion": 514,
+   "anio": 2025
+  },
+  "bellaguarda": {
+   "municipio": "Bellaguarda",
+   "provincia": "lleida",
+   "poblacion": 278,
+   "anio": 2025
+  },
+  "bellcaire d'urgell": {
+   "municipio": "Bellcaire d'Urgell",
+   "provincia": "lleida",
+   "poblacion": 1275,
+   "anio": 2025
+  },
+  "bell-lloc d'urgell": {
+   "municipio": "Bell-lloc d'Urgell",
+   "provincia": "lleida",
+   "poblacion": 2364,
+   "anio": 2025
+  },
+  "bellmunt d'urgell": {
+   "municipio": "Bellmunt d'Urgell",
+   "provincia": "lleida",
+   "poblacion": 174,
+   "anio": 2025
+  },
+  "bellpuig": {
+   "municipio": "Bellpuig",
+   "provincia": "lleida",
+   "poblacion": 5510,
+   "anio": 2025
+  },
+  "bellver de cerdanya": {
+   "municipio": "Bellver de Cerdanya",
+   "provincia": "lleida",
+   "poblacion": 2289,
+   "anio": 2025
+  },
+  "bellvis": {
+   "municipio": "Bellvís",
+   "provincia": "lleida",
+   "poblacion": 2249,
+   "anio": 2025
+  },
+  "benavent de segria": {
+   "municipio": "Benavent de Segrià",
+   "provincia": "lleida",
+   "poblacion": 1571,
+   "anio": 2025
+  },
+  "biosca": {
+   "municipio": "Biosca",
+   "provincia": "lleida",
+   "poblacion": 185,
+   "anio": 2025
+  },
+  "es bordes": {
+   "municipio": "Es Bòrdes",
+   "provincia": "lleida",
+   "poblacion": 281,
+   "anio": 2025
+  },
+  "les borges blanques": {
+   "municipio": "les Borges Blanques",
+   "provincia": "lleida",
+   "poblacion": 6482,
+   "anio": 2025
+  },
+  "bossost": {
+   "municipio": "Bossòst",
+   "provincia": "lleida",
+   "poblacion": 1189,
+   "anio": 2025
+  },
+  "bovera": {
+   "municipio": "Bovera",
+   "provincia": "lleida",
+   "poblacion": 244,
+   "anio": 2025
+  },
+  "cabanabona": {
+   "municipio": "Cabanabona",
+   "provincia": "lleida",
+   "poblacion": 70,
+   "anio": 2025
+  },
+  "cabo": {
+   "municipio": "Cabó",
+   "provincia": "lleida",
+   "poblacion": 85,
+   "anio": 2025
+  },
+  "camarasa": {
+   "municipio": "Camarasa",
+   "provincia": "lleida",
+   "poblacion": 788,
+   "anio": 2025
+  },
+  "canejan": {
+   "municipio": "Canejan",
+   "provincia": "lleida",
+   "poblacion": 95,
+   "anio": 2025
+  },
+  "castell de mur": {
+   "municipio": "Castell de Mur",
+   "provincia": "lleida",
+   "poblacion": 159,
+   "anio": 2025
+  },
+  "castellar de la ribera": {
+   "municipio": "Castellar de la Ribera",
+   "provincia": "lleida",
+   "poblacion": 131,
+   "anio": 2025
+  },
+  "castelldans": {
+   "municipio": "Castelldans",
+   "provincia": "lleida",
+   "poblacion": 952,
+   "anio": 2025
+  },
+  "castellnou de seana": {
+   "municipio": "Castellnou de Seana",
+   "provincia": "lleida",
+   "poblacion": 726,
+   "anio": 2025
+  },
+  "castello de farfanya": {
+   "municipio": "Castelló de Farfanya",
+   "provincia": "lleida",
+   "poblacion": 548,
+   "anio": 2025
+  },
+  "castellsera": {
+   "municipio": "Castellserà",
+   "provincia": "lleida",
+   "poblacion": 993,
+   "anio": 2025
+  },
+  "cava": {
+   "municipio": "Cava",
+   "provincia": "lleida",
+   "poblacion": 38,
+   "anio": 2025
+  },
+  "cervera": {
+   "municipio": "Cervera",
+   "provincia": "lleida",
+   "poblacion": 9603,
+   "anio": 2025
+  },
+  "cervia de les garrigues": {
+   "municipio": "Cervià de les Garrigues",
+   "provincia": "lleida",
+   "poblacion": 641,
+   "anio": 2025
+  },
+  "ciutadilla": {
+   "municipio": "Ciutadilla",
+   "provincia": "lleida",
+   "poblacion": 186,
+   "anio": 2025
+  },
+  "clariana de cardener": {
+   "municipio": "Clariana de Cardener",
+   "provincia": "lleida",
+   "poblacion": 160,
+   "anio": 2025
+  },
+  "el cogul": {
+   "municipio": "el Cogul",
+   "provincia": "lleida",
+   "poblacion": 163,
+   "anio": 2025
+  },
+  "coll de nargo": {
+   "municipio": "Coll de Nargó",
+   "provincia": "lleida",
+   "poblacion": 585,
+   "anio": 2025
+  },
+  "la coma i la pedra": {
+   "municipio": "la Coma i la Pedra",
+   "provincia": "lleida",
+   "poblacion": 277,
+   "anio": 2025
+  },
+  "conca de dalt": {
+   "municipio": "Conca de Dalt",
+   "provincia": "lleida",
+   "poblacion": 438,
+   "anio": 2025
+  },
+  "corbins": {
+   "municipio": "Corbins",
+   "provincia": "lleida",
+   "poblacion": 1502,
+   "anio": 2025
+  },
+  "cubells": {
+   "municipio": "Cubells",
+   "provincia": "lleida",
+   "poblacion": 354,
+   "anio": 2025
+  },
+  "l'espluga calba": {
+   "municipio": "l'Espluga Calba",
+   "provincia": "lleida",
+   "poblacion": 324,
+   "anio": 2025
+  },
+  "espot": {
+   "municipio": "Espot",
+   "provincia": "lleida",
+   "poblacion": 377,
+   "anio": 2025
+  },
+  "estamariu": {
+   "municipio": "Estamariu",
+   "provincia": "lleida",
+   "poblacion": 135,
+   "anio": 2025
+  },
+  "estaras": {
+   "municipio": "Estaràs",
+   "provincia": "lleida",
+   "poblacion": 161,
+   "anio": 2025
+  },
+  "esterri d'aneu": {
+   "municipio": "Esterri d'Àneu",
+   "provincia": "lleida",
+   "poblacion": 917,
+   "anio": 2025
+  },
+  "esterri de cardos": {
+   "municipio": "Esterri de Cardós",
+   "provincia": "lleida",
+   "poblacion": 63,
+   "anio": 2025
+  },
+  "farrera": {
+   "municipio": "Farrera",
+   "provincia": "lleida",
+   "poblacion": 118,
+   "anio": 2025
+  },
+  "figols i alinya": {
+   "municipio": "Fígols i Alinyà",
+   "provincia": "lleida",
+   "poblacion": 234,
+   "anio": 2025
+  },
+  "la floresta": {
+   "municipio": "la Floresta",
+   "provincia": "lleida",
+   "poblacion": 159,
+   "anio": 2025
+  },
+  "fondarella": {
+   "municipio": "Fondarella",
+   "provincia": "lleida",
+   "poblacion": 823,
+   "anio": 2025
+  },
+  "foradada": {
+   "municipio": "Foradada",
+   "provincia": "lleida",
+   "poblacion": 193,
+   "anio": 2025
+  },
+  "la fuliola": {
+   "municipio": "la Fuliola",
+   "provincia": "lleida",
+   "poblacion": 1262,
+   "anio": 2025
+  },
+  "fulleda": {
+   "municipio": "Fulleda",
+   "provincia": "lleida",
+   "poblacion": 87,
+   "anio": 2025
+  },
+  "gavet de la conca": {
+   "municipio": "Gavet de la Conca",
+   "provincia": "lleida",
+   "poblacion": 252,
+   "anio": 2025
+  },
+  "gimenells i el pla de la font": {
+   "municipio": "Gimenells i el Pla de la Font",
+   "provincia": "lleida",
+   "poblacion": 1069,
+   "anio": 2025
+  },
+  "golmes": {
+   "municipio": "Golmés",
+   "provincia": "lleida",
+   "poblacion": 1909,
+   "anio": 2025
+  },
+  "gosol": {
+   "municipio": "Gósol",
+   "provincia": "lleida",
+   "poblacion": 205,
+   "anio": 2025
+  },
+  "la granadella": {
+   "municipio": "la Granadella",
+   "provincia": "lleida",
+   "poblacion": 748,
+   "anio": 2025
+  },
+  "la granja d'escarp": {
+   "municipio": "La Granja d'Escarp",
+   "provincia": "lleida",
+   "poblacion": 994,
+   "anio": 2025
+  },
+  "granyanella": {
+   "municipio": "Granyanella",
+   "provincia": "lleida",
+   "poblacion": 154,
+   "anio": 2025
+  },
+  "granyena de les garrigues": {
+   "municipio": "Granyena de les Garrigues",
+   "provincia": "lleida",
+   "poblacion": 174,
+   "anio": 2025
+  },
+  "granyena de segarra": {
+   "municipio": "Granyena de Segarra",
+   "provincia": "lleida",
+   "poblacion": 149,
+   "anio": 2025
+  },
+  "guimera": {
+   "municipio": "Guimerà",
+   "provincia": "lleida",
+   "poblacion": 250,
+   "anio": 2025
+  },
+  "la guingueta d'aneu": {
+   "municipio": "la Guingueta d'Àneu",
+   "provincia": "lleida",
+   "poblacion": 278,
+   "anio": 2025
+  },
+  "guissona": {
+   "municipio": "Guissona",
+   "provincia": "lleida",
+   "poblacion": 7774,
+   "anio": 2025
+  },
+  "guixers": {
+   "municipio": "Guixers",
+   "provincia": "lleida",
+   "poblacion": 125,
+   "anio": 2025
+  },
+  "isona i conca della": {
+   "municipio": "Isona i Conca Dellà",
+   "provincia": "lleida",
+   "poblacion": 1038,
+   "anio": 2025
+  },
+  "ivars de noguera": {
+   "municipio": "Ivars de Noguera",
+   "provincia": "lleida",
+   "poblacion": 317,
+   "anio": 2025
+  },
+  "ivars d'urgell": {
+   "municipio": "Ivars d'Urgell",
+   "provincia": "lleida",
+   "poblacion": 1578,
+   "anio": 2025
+  },
+  "ivorra": {
+   "municipio": "Ivorra",
+   "provincia": "lleida",
+   "poblacion": 100,
+   "anio": 2025
+  },
+  "josa i tuixen": {
+   "municipio": "Josa i Tuixén",
+   "provincia": "lleida",
+   "poblacion": 110,
+   "anio": 2025
+  },
+  "juncosa": {
+   "municipio": "Juncosa",
+   "provincia": "lleida",
+   "poblacion": 377,
+   "anio": 2025
+  },
+  "juneda": {
+   "municipio": "Juneda",
+   "provincia": "lleida",
+   "poblacion": 3453,
+   "anio": 2025
+  },
+  "les": {
+   "municipio": "Les",
+   "provincia": "lleida",
+   "poblacion": 1036,
+   "anio": 2025
+  },
+  "linyola": {
+   "municipio": "Linyola",
+   "provincia": "lleida",
+   "poblacion": 2762,
+   "anio": 2025
+  },
+  "lladorre": {
+   "municipio": "Lladorre",
+   "provincia": "lleida",
+   "poblacion": 246,
+   "anio": 2025
+  },
+  "lladurs": {
+   "municipio": "Lladurs",
+   "provincia": "lleida",
+   "poblacion": 186,
+   "anio": 2025
+  },
+  "llardecans": {
+   "municipio": "Llardecans",
+   "provincia": "lleida",
+   "poblacion": 444,
+   "anio": 2025
+  },
+  "llavorsi": {
+   "municipio": "Llavorsí",
+   "provincia": "lleida",
+   "poblacion": 342,
+   "anio": 2025
+  },
+  "lleida": {
+   "municipio": "Lleida",
+   "provincia": "lleida",
+   "poblacion": 146266,
+   "anio": 2025
+  },
+  "lles de cerdanya": {
+   "municipio": "Lles de Cerdanya",
+   "provincia": "lleida",
+   "poblacion": 290,
+   "anio": 2025
+  },
+  "llimiana": {
+   "municipio": "Llimiana",
+   "provincia": "lleida",
+   "poblacion": 130,
+   "anio": 2025
+  },
+  "llobera": {
+   "municipio": "Llobera",
+   "provincia": "lleida",
+   "poblacion": 201,
+   "anio": 2025
+  },
+  "maials": {
+   "municipio": "Maials",
+   "provincia": "lleida",
+   "poblacion": 951,
+   "anio": 2025
+  },
+  "malda": {
+   "municipio": "Maldà",
+   "provincia": "lleida",
+   "poblacion": 239,
+   "anio": 2025
+  },
+  "massalcoreig": {
+   "municipio": "Massalcoreig",
+   "provincia": "lleida",
+   "poblacion": 592,
+   "anio": 2025
+  },
+  "massoteres": {
+   "municipio": "Massoteres",
+   "provincia": "lleida",
+   "poblacion": 227,
+   "anio": 2025
+  },
+  "menarguens": {
+   "municipio": "Menàrguens",
+   "provincia": "lleida",
+   "poblacion": 798,
+   "anio": 2025
+  },
+  "miralcamp": {
+   "municipio": "Miralcamp",
+   "provincia": "lleida",
+   "poblacion": 1369,
+   "anio": 2025
+  },
+  "mollerussa": {
+   "municipio": "Mollerussa",
+   "provincia": "lleida",
+   "poblacion": 15763,
+   "anio": 2025
+  },
+  "la molsosa": {
+   "municipio": "la Molsosa",
+   "provincia": "lleida",
+   "poblacion": 100,
+   "anio": 2025
+  },
+  "montella i martinet": {
+   "municipio": "Montellà i Martinet",
+   "provincia": "lleida",
+   "poblacion": 598,
+   "anio": 2025
+  },
+  "montferrer i castellbo": {
+   "municipio": "Montferrer i Castellbò",
+   "provincia": "lleida",
+   "poblacion": 1161,
+   "anio": 2025
+  },
+  "montgai": {
+   "municipio": "Montgai",
+   "provincia": "lleida",
+   "poblacion": 640,
+   "anio": 2025
+  },
+  "montoliu de lleida": {
+   "municipio": "Montoliu de Lleida",
+   "provincia": "lleida",
+   "poblacion": 488,
+   "anio": 2025
+  },
+  "montoliu de segarra": {
+   "municipio": "Montoliu de Segarra",
+   "provincia": "lleida",
+   "poblacion": 180,
+   "anio": 2025
+  },
+  "montornes de segarra": {
+   "municipio": "Montornès de Segarra",
+   "provincia": "lleida",
+   "poblacion": 87,
+   "anio": 2025
+  },
+  "nalec": {
+   "municipio": "Nalec",
+   "provincia": "lleida",
+   "poblacion": 91,
+   "anio": 2025
+  },
+  "naut aran": {
+   "municipio": "Naut Aran",
+   "provincia": "lleida",
+   "poblacion": 1902,
+   "anio": 2025
+  },
+  "naves": {
+   "municipio": "Navès",
+   "provincia": "lleida",
+   "poblacion": 292,
+   "anio": 2025
+  },
+  "oden": {
+   "municipio": "Odèn",
+   "provincia": "lleida",
+   "poblacion": 231,
+   "anio": 2025
+  },
+  "oliana": {
+   "municipio": "Oliana",
+   "provincia": "lleida",
+   "poblacion": 1874,
+   "anio": 2025
+  },
+  "oliola": {
+   "municipio": "Oliola",
+   "provincia": "lleida",
+   "poblacion": 192,
+   "anio": 2025
+  },
+  "olius": {
+   "municipio": "Olius",
+   "provincia": "lleida",
+   "poblacion": 990,
+   "anio": 2025
+  },
+  "les oluges": {
+   "municipio": "les Oluges",
+   "provincia": "lleida",
+   "poblacion": 167,
+   "anio": 2025
+  },
+  "dels omellons": {
+   "municipio": "dels Omellons",
+   "provincia": "lleida",
+   "poblacion": 187,
+   "anio": 2025
+  },
+  "dels omells de na gaia": {
+   "municipio": "dels Omells de na Gaia",
+   "provincia": "lleida",
+   "poblacion": 126,
+   "anio": 2025
+  },
+  "organya": {
+   "municipio": "Organyà",
+   "provincia": "lleida",
+   "poblacion": 853,
+   "anio": 2025
+  },
+  "os de balaguer": {
+   "municipio": "Os de Balaguer",
+   "provincia": "lleida",
+   "poblacion": 1088,
+   "anio": 2025
+  },
+  "osso de sio": {
+   "municipio": "Ossó de Sió",
+   "provincia": "lleida",
+   "poblacion": 198,
+   "anio": 2025
+  },
+  "el palau d'anglesola": {
+   "municipio": "el Palau d'Anglesola",
+   "provincia": "lleida",
+   "poblacion": 2232,
+   "anio": 2025
+  },
+  "penelles": {
+   "municipio": "Penelles",
+   "provincia": "lleida",
+   "poblacion": 431,
+   "anio": 2025
+  },
+  "peramola": {
+   "municipio": "Peramola",
+   "provincia": "lleida",
+   "poblacion": 339,
+   "anio": 2025
+  },
+  "pinell de solsones": {
+   "municipio": "Pinell de Solsonès",
+   "provincia": "lleida",
+   "poblacion": 198,
+   "anio": 2025
+  },
+  "pinos": {
+   "municipio": "Pinós",
+   "provincia": "lleida",
+   "poblacion": 274,
+   "anio": 2025
+  },
+  "dels plans de sio": {
+   "municipio": "dels Plans de Sió",
+   "provincia": "lleida",
+   "poblacion": 506,
+   "anio": 2025
+  },
+  "el poal": {
+   "municipio": "el Poal",
+   "provincia": "lleida",
+   "poblacion": 649,
+   "anio": 2025
+  },
+  "la pobla de cervoles": {
+   "municipio": "la Pobla de Cérvoles",
+   "provincia": "lleida",
+   "poblacion": 208,
+   "anio": 2025
+  },
+  "la pobla de segur": {
+   "municipio": "la Pobla de Segur",
+   "provincia": "lleida",
+   "poblacion": 3143,
+   "anio": 2025
+  },
+  "el pont de bar": {
+   "municipio": "el Pont de Bar",
+   "provincia": "lleida",
+   "poblacion": 162,
+   "anio": 2025
+  },
+  "el pont de suert": {
+   "municipio": "el Pont de Suert",
+   "provincia": "lleida",
+   "poblacion": 2381,
+   "anio": 2025
+  },
+  "ponts": {
+   "municipio": "Ponts",
+   "provincia": "lleida",
+   "poblacion": 2653,
+   "anio": 2025
+  },
+  "la portella": {
+   "municipio": "La Portella",
+   "provincia": "lleida",
+   "poblacion": 731,
+   "anio": 2025
+  },
+  "prats i sansor": {
+   "municipio": "Prats i Sansor",
+   "provincia": "lleida",
+   "poblacion": 252,
+   "anio": 2025
+  },
+  "preixana": {
+   "municipio": "Preixana",
+   "provincia": "lleida",
+   "poblacion": 401,
+   "anio": 2025
+  },
+  "preixens": {
+   "municipio": "Preixens",
+   "provincia": "lleida",
+   "poblacion": 399,
+   "anio": 2025
+  },
+  "prullans": {
+   "municipio": "Prullans",
+   "provincia": "lleida",
+   "poblacion": 270,
+   "anio": 2025
+  },
+  "puiggros": {
+   "municipio": "Puiggròs",
+   "provincia": "lleida",
+   "poblacion": 269,
+   "anio": 2025
+  },
+  "puigverd d'agramunt": {
+   "municipio": "Puigverd d'Agramunt",
+   "provincia": "lleida",
+   "poblacion": 231,
+   "anio": 2025
+  },
+  "puigverd de lleida": {
+   "municipio": "Puigverd de Lleida",
+   "provincia": "lleida",
+   "poblacion": 1409,
+   "anio": 2025
+  },
+  "rialp": {
+   "municipio": "Rialp",
+   "provincia": "lleida",
+   "poblacion": 654,
+   "anio": 2025
+  },
+  "ribera d'ondara": {
+   "municipio": "Ribera d'Ondara",
+   "provincia": "lleida",
+   "poblacion": 437,
+   "anio": 2025
+  },
+  "ribera d'urgellet": {
+   "municipio": "Ribera d'Urgellet",
+   "provincia": "lleida",
+   "poblacion": 989,
+   "anio": 2025
+  },
+  "riner": {
+   "municipio": "Riner",
+   "provincia": "lleida",
+   "poblacion": 269,
+   "anio": 2025
+  },
+  "riu de cerdanya": {
+   "municipio": "Riu de Cerdanya",
+   "provincia": "lleida",
+   "poblacion": 96,
+   "anio": 2025
+  },
+  "rossello": {
+   "municipio": "Rosselló",
+   "provincia": "lleida",
+   "poblacion": 3416,
+   "anio": 2025
+  },
+  "salas de pallars": {
+   "municipio": "Salàs de Pallars",
+   "provincia": "lleida",
+   "poblacion": 365,
+   "anio": 2025
+  },
+  "sanauja": {
+   "municipio": "Sanaüja",
+   "provincia": "lleida",
+   "poblacion": 385,
+   "anio": 2025
+  },
+  "sant esteve de la sarga": {
+   "municipio": "Sant Esteve de la Sarga",
+   "provincia": "lleida",
+   "poblacion": 121,
+   "anio": 2025
+  },
+  "sant guim de freixenet": {
+   "municipio": "Sant Guim de Freixenet",
+   "provincia": "lleida",
+   "poblacion": 1235,
+   "anio": 2025
+  },
+  "sant guim de la plana": {
+   "municipio": "Sant Guim de la Plana",
+   "provincia": "lleida",
+   "poblacion": 190,
+   "anio": 2025
+  },
+  "sant llorenc de morunys": {
+   "municipio": "Sant Llorenç de Morunys",
+   "provincia": "lleida",
+   "poblacion": 983,
+   "anio": 2025
+  },
+  "sant marti de riucorb": {
+   "municipio": "Sant Martí de Riucorb",
+   "provincia": "lleida",
+   "poblacion": 668,
+   "anio": 2025
+  },
+  "sant ramon": {
+   "municipio": "Sant Ramon",
+   "provincia": "lleida",
+   "poblacion": 483,
+   "anio": 2025
+  },
+  "sarroca de bellera": {
+   "municipio": "Sarroca de Bellera",
+   "provincia": "lleida",
+   "poblacion": 111,
+   "anio": 2025
+  },
+  "sarroca de lleida": {
+   "municipio": "Sarroca de Lleida",
+   "provincia": "lleida",
+   "poblacion": 383,
+   "anio": 2025
+  },
+  "senterada": {
+   "municipio": "Senterada",
+   "provincia": "lleida",
+   "poblacion": 160,
+   "anio": 2025
+  },
+  "la sentiu de sio": {
+   "municipio": "la Sentiu de Sió",
+   "provincia": "lleida",
+   "poblacion": 448,
+   "anio": 2025
+  },
+  "seros": {
+   "municipio": "Seròs",
+   "provincia": "lleida",
+   "poblacion": 1954,
+   "anio": 2025
+  },
+  "la seu d'urgell": {
+   "municipio": "la Seu d'Urgell",
+   "provincia": "lleida",
+   "poblacion": 13009,
+   "anio": 2025
+  },
+  "sidamon": {
+   "municipio": "Sidamon",
+   "provincia": "lleida",
+   "poblacion": 760,
+   "anio": 2025
+  },
+  "el soleras": {
+   "municipio": "el Soleràs",
+   "provincia": "lleida",
+   "poblacion": 308,
+   "anio": 2025
+  },
+  "solsona": {
+   "municipio": "Solsona",
+   "provincia": "lleida",
+   "poblacion": 9717,
+   "anio": 2025
+  },
+  "soriguera": {
+   "municipio": "Soriguera",
+   "provincia": "lleida",
+   "poblacion": 446,
+   "anio": 2025
+  },
+  "sort": {
+   "municipio": "Sort",
+   "provincia": "lleida",
+   "poblacion": 2236,
+   "anio": 2025
+  },
+  "soses": {
+   "municipio": "Soses",
+   "provincia": "lleida",
+   "poblacion": 1892,
+   "anio": 2025
+  },
+  "sudanell": {
+   "municipio": "Sudanell",
+   "provincia": "lleida",
+   "poblacion": 915,
+   "anio": 2025
+  },
+  "sunyer": {
+   "municipio": "Sunyer",
+   "provincia": "lleida",
+   "poblacion": 310,
+   "anio": 2025
+  },
+  "talarn": {
+   "municipio": "Talarn",
+   "provincia": "lleida",
+   "poblacion": 555,
+   "anio": 2025
+  },
+  "talavera": {
+   "municipio": "Talavera",
+   "provincia": "lleida",
+   "poblacion": 280,
+   "anio": 2025
+  },
+  "tarrega": {
+   "municipio": "Tàrrega",
+   "provincia": "lleida",
+   "poblacion": 19057,
+   "anio": 2025
+  },
+  "tarres": {
+   "municipio": "Tarrés",
+   "provincia": "lleida",
+   "poblacion": 126,
+   "anio": 2025
+  },
+  "tarroja de segarra": {
+   "municipio": "Tarroja de Segarra",
+   "provincia": "lleida",
+   "poblacion": 164,
+   "anio": 2025
+  },
+  "termens": {
+   "municipio": "Térmens",
+   "provincia": "lleida",
+   "poblacion": 1350,
+   "anio": 2025
+  },
+  "tirvia": {
+   "municipio": "Tírvia",
+   "provincia": "lleida",
+   "poblacion": 141,
+   "anio": 2025
+  },
+  "tiurana": {
+   "municipio": "Tiurana",
+   "provincia": "lleida",
+   "poblacion": 69,
+   "anio": 2025
+  },
+  "tora": {
+   "municipio": "Torà",
+   "provincia": "lleida",
+   "poblacion": 1190,
+   "anio": 2025
+  },
+  "dels torms": {
+   "municipio": "dels Torms",
+   "provincia": "lleida",
+   "poblacion": 135,
+   "anio": 2025
+  },
+  "tornabous": {
+   "municipio": "Tornabous",
+   "provincia": "lleida",
+   "poblacion": 832,
+   "anio": 2025
+  },
+  "la torre de cabdella": {
+   "municipio": "la Torre de Cabdella",
+   "provincia": "lleida",
+   "poblacion": 758,
+   "anio": 2025
+  },
+  "torrebesses": {
+   "municipio": "Torrebesses",
+   "provincia": "lleida",
+   "poblacion": 278,
+   "anio": 2025
+  },
+  "torrefarrera": {
+   "municipio": "Torrefarrera",
+   "provincia": "lleida",
+   "poblacion": 4900,
+   "anio": 2025
+  },
+  "torrefeta i florejacs": {
+   "municipio": "Torrefeta i Florejacs",
+   "provincia": "lleida",
+   "poblacion": 589,
+   "anio": 2025
+  },
+  "torregrossa": {
+   "municipio": "Torregrossa",
+   "provincia": "lleida",
+   "poblacion": 2248,
+   "anio": 2025
+  },
+  "torrelameu": {
+   "municipio": "Torrelameu",
+   "provincia": "lleida",
+   "poblacion": 788,
+   "anio": 2025
+  },
+  "torres de segre": {
+   "municipio": "Torres de Segre",
+   "provincia": "lleida",
+   "poblacion": 2317,
+   "anio": 2025
+  },
+  "torre-serona": {
+   "municipio": "Torre-serona",
+   "provincia": "lleida",
+   "poblacion": 405,
+   "anio": 2025
+  },
+  "tremp": {
+   "municipio": "Tremp",
+   "provincia": "lleida",
+   "poblacion": 6123,
+   "anio": 2025
+  },
+  "la vall de boi": {
+   "municipio": "la Vall de Boí",
+   "provincia": "lleida",
+   "poblacion": 1122,
+   "anio": 2025
+  },
+  "vall de cardos": {
+   "municipio": "Vall de Cardós",
+   "provincia": "lleida",
+   "poblacion": 388,
+   "anio": 2025
+  },
+  "vallbona de les monges": {
+   "municipio": "Vallbona de les Monges",
+   "provincia": "lleida",
+   "poblacion": 223,
+   "anio": 2025
+  },
+  "vallfogona de balaguer": {
+   "municipio": "Vallfogona de Balaguer",
+   "provincia": "lleida",
+   "poblacion": 2009,
+   "anio": 2025
+  },
+  "les valls d'aguilar": {
+   "municipio": "les Valls d'Aguilar",
+   "provincia": "lleida",
+   "poblacion": 253,
+   "anio": 2025
+  },
+  "les valls de valira": {
+   "municipio": "les Valls de Valira",
+   "provincia": "lleida",
+   "poblacion": 845,
+   "anio": 2025
+  },
+  "la vansa i fornols": {
+   "municipio": "la Vansa i Fórnols",
+   "provincia": "lleida",
+   "poblacion": 187,
+   "anio": 2025
+  },
+  "verdu": {
+   "municipio": "Verdú",
+   "provincia": "lleida",
+   "poblacion": 876,
+   "anio": 2025
+  },
+  "vielha e mijaran": {
+   "municipio": "Vielha e Mijaran",
+   "provincia": "lleida",
+   "poblacion": 5865,
+   "anio": 2025
+  },
+  "vilagrassa": {
+   "municipio": "Vilagrassa",
+   "provincia": "lleida",
+   "poblacion": 627,
+   "anio": 2025
+  },
+  "vilaller": {
+   "municipio": "Vilaller",
+   "provincia": "lleida",
+   "poblacion": 496,
+   "anio": 2025
+  },
+  "vilamos": {
+   "municipio": "Vilamòs",
+   "provincia": "lleida",
+   "poblacion": 174,
+   "anio": 2025
+  },
+  "vilanova de bellpuig": {
+   "municipio": "Vilanova de Bellpuig",
+   "provincia": "lleida",
+   "poblacion": 1150,
+   "anio": 2025
+  },
+  "vilanova de la barca": {
+   "municipio": "Vilanova de la Barca",
+   "provincia": "lleida",
+   "poblacion": 1163,
+   "anio": 2025
+  },
+  "vilanova de l'aguda": {
+   "municipio": "Vilanova de l'Aguda",
+   "provincia": "lleida",
+   "poblacion": 192,
+   "anio": 2025
+  },
+  "vilanova de meia": {
+   "municipio": "Vilanova de Meià",
+   "provincia": "lleida",
+   "poblacion": 479,
+   "anio": 2025
+  },
+  "vilanova de segria": {
+   "municipio": "Vilanova de Segrià",
+   "provincia": "lleida",
+   "poblacion": 1094,
+   "anio": 2025
+  },
+  "vila-sana": {
+   "municipio": "Vila-Sana",
+   "provincia": "lleida",
+   "poblacion": 753,
+   "anio": 2025
+  },
+  "el vilosell": {
+   "municipio": "el Vilosell",
+   "provincia": "lleida",
+   "poblacion": 177,
+   "anio": 2025
+  },
+  "vinaixa": {
+   "municipio": "Vinaixa",
+   "provincia": "lleida",
+   "poblacion": 437,
+   "anio": 2025
+  },
+  "abrera": {
+   "municipio": "Abrera",
+   "provincia": "barcelona",
+   "poblacion": 13227,
+   "anio": 2025
+  },
+  "aguilar de segarra": {
+   "municipio": "Aguilar de Segarra",
+   "provincia": "barcelona",
+   "poblacion": 292,
+   "anio": 2025
+  },
+  "aiguafreda": {
+   "municipio": "Aiguafreda",
+   "provincia": "barcelona",
+   "poblacion": 2569,
+   "anio": 2025
+  },
+  "alella": {
+   "municipio": "Alella",
+   "provincia": "barcelona",
+   "poblacion": 10262,
+   "anio": 2025
+  },
+  "alpens": {
+   "municipio": "Alpens",
+   "provincia": "barcelona",
+   "poblacion": 267,
+   "anio": 2025
+  },
+  "l'ametlla del valles": {
+   "municipio": "l'Ametlla del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 9474,
+   "anio": 2025
+  },
+  "arenys de mar": {
+   "municipio": "Arenys de Mar",
+   "provincia": "barcelona",
+   "poblacion": 17042,
+   "anio": 2025
+  },
+  "arenys de munt": {
+   "municipio": "Arenys de Munt",
+   "provincia": "barcelona",
+   "poblacion": 9558,
+   "anio": 2025
+  },
+  "argencola": {
+   "municipio": "Argençola",
+   "provincia": "barcelona",
+   "poblacion": 245,
+   "anio": 2025
+  },
+  "argentona": {
+   "municipio": "Argentona",
+   "provincia": "barcelona",
+   "poblacion": 12891,
+   "anio": 2025
+  },
+  "artes": {
+   "municipio": "Artés",
+   "provincia": "barcelona",
+   "poblacion": 6225,
+   "anio": 2025
+  },
+  "avia": {
+   "municipio": "Avià",
+   "provincia": "barcelona",
+   "poblacion": 2267,
+   "anio": 2025
+  },
+  "avinyo": {
+   "municipio": "Avinyó",
+   "provincia": "barcelona",
+   "poblacion": 2322,
+   "anio": 2025
+  },
+  "avinyonet del penedes": {
+   "municipio": "Avinyonet del Penedès",
+   "provincia": "barcelona",
+   "poblacion": 1782,
+   "anio": 2025
+  },
+  "badalona": {
+   "municipio": "Badalona",
+   "provincia": "barcelona",
+   "poblacion": 231542,
+   "anio": 2025
+  },
+  "badia del valles": {
+   "municipio": "Badia del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 13060,
+   "anio": 2025
+  },
+  "baga": {
+   "municipio": "Bagà",
+   "provincia": "barcelona",
+   "poblacion": 2161,
+   "anio": 2025
+  },
+  "balenya": {
+   "municipio": "Balenyà",
+   "provincia": "barcelona",
+   "poblacion": 4021,
+   "anio": 2025
+  },
+  "balsareny": {
+   "municipio": "Balsareny",
+   "provincia": "barcelona",
+   "poblacion": 3380,
+   "anio": 2025
+  },
+  "barbera del valles": {
+   "municipio": "Barberà del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 33987,
+   "anio": 2025
+  },
+  "barcelona": {
+   "municipio": "Barcelona",
+   "provincia": "barcelona",
+   "poblacion": 1731649,
+   "anio": 2025
+  },
+  "begues": {
+   "municipio": "Begues",
+   "provincia": "barcelona",
+   "poblacion": 7561,
+   "anio": 2025
+  },
+  "bellprat": {
+   "municipio": "Bellprat",
+   "provincia": "barcelona",
+   "poblacion": 69,
+   "anio": 2025
+  },
+  "berga": {
+   "municipio": "Berga",
+   "provincia": "barcelona",
+   "poblacion": 17473,
+   "anio": 2025
+  },
+  "bigues i riells": {
+   "municipio": "Bigues i Riells",
+   "provincia": "barcelona",
+   "poblacion": 10139,
+   "anio": 2025
+  },
+  "borreda": {
+   "municipio": "Borredà",
+   "provincia": "barcelona",
+   "poblacion": 433,
+   "anio": 2025
+  },
+  "el bruc": {
+   "municipio": "el Bruc",
+   "provincia": "barcelona",
+   "poblacion": 2290,
+   "anio": 2025
+  },
+  "el brull": {
+   "municipio": "el Brull",
+   "provincia": "barcelona",
+   "poblacion": 296,
+   "anio": 2025
+  },
+  "les cabanyes": {
+   "municipio": "les Cabanyes",
+   "provincia": "barcelona",
+   "poblacion": 1060,
+   "anio": 2025
+  },
+  "cabrera d'anoia": {
+   "municipio": "Cabrera d'Anoia",
+   "provincia": "barcelona",
+   "poblacion": 1772,
+   "anio": 2025
+  },
+  "cabrera de mar": {
+   "municipio": "Cabrera de Mar",
+   "provincia": "barcelona",
+   "poblacion": 5045,
+   "anio": 2025
+  },
+  "cabrils": {
+   "municipio": "Cabrils",
+   "provincia": "barcelona",
+   "poblacion": 7765,
+   "anio": 2025
+  },
+  "calaf": {
+   "municipio": "Calaf",
+   "provincia": "barcelona",
+   "poblacion": 3644,
+   "anio": 2025
+  },
+  "calders": {
+   "municipio": "Calders",
+   "provincia": "barcelona",
+   "poblacion": 1122,
+   "anio": 2025
+  },
+  "caldes de montbui": {
+   "municipio": "Caldes de Montbui",
+   "provincia": "barcelona",
+   "poblacion": 18567,
+   "anio": 2025
+  },
+  "caldes d'estrac": {
+   "municipio": "Caldes d'Estrac",
+   "provincia": "barcelona",
+   "poblacion": 3356,
+   "anio": 2025
+  },
+  "calella": {
+   "municipio": "Calella",
+   "provincia": "barcelona",
+   "poblacion": 20864,
+   "anio": 2025
+  },
+  "calldetenes": {
+   "municipio": "Calldetenes",
+   "provincia": "barcelona",
+   "poblacion": 2733,
+   "anio": 2025
+  },
+  "callus": {
+   "municipio": "Callús",
+   "provincia": "barcelona",
+   "poblacion": 2180,
+   "anio": 2025
+  },
+  "calonge de segarra": {
+   "municipio": "Calonge de Segarra",
+   "provincia": "barcelona",
+   "poblacion": 179,
+   "anio": 2025
+  },
+  "campins": {
+   "municipio": "Campins",
+   "provincia": "barcelona",
+   "poblacion": 586,
+   "anio": 2025
+  },
+  "canet de mar": {
+   "municipio": "Canet de Mar",
+   "provincia": "barcelona",
+   "poblacion": 15198,
+   "anio": 2025
+  },
+  "canovelles": {
+   "municipio": "Canovelles",
+   "provincia": "barcelona",
+   "poblacion": 17473,
+   "anio": 2025
+  },
+  "canoves i samalus": {
+   "municipio": "Cànoves i Samalús",
+   "provincia": "barcelona",
+   "poblacion": 3399,
+   "anio": 2025
+  },
+  "canyelles": {
+   "municipio": "Canyelles",
+   "provincia": "barcelona",
+   "poblacion": 5505,
+   "anio": 2025
+  },
+  "capellades": {
+   "municipio": "Capellades",
+   "provincia": "barcelona",
+   "poblacion": 5608,
+   "anio": 2025
+  },
+  "capolat": {
+   "municipio": "Capolat",
+   "provincia": "barcelona",
+   "poblacion": 93,
+   "anio": 2025
+  },
+  "cardedeu": {
+   "municipio": "Cardedeu",
+   "provincia": "barcelona",
+   "poblacion": 19046,
+   "anio": 2025
+  },
+  "cardona": {
+   "municipio": "Cardona",
+   "provincia": "barcelona",
+   "poblacion": 4553,
+   "anio": 2025
+  },
+  "carme": {
+   "municipio": "Carme",
+   "provincia": "barcelona",
+   "poblacion": 847,
+   "anio": 2025
+  },
+  "casserres": {
+   "municipio": "Casserres",
+   "provincia": "barcelona",
+   "poblacion": 1660,
+   "anio": 2025
+  },
+  "castell de l'areny": {
+   "municipio": "Castell de l'Areny",
+   "provincia": "barcelona",
+   "poblacion": 68,
+   "anio": 2025
+  },
+  "castellar de n'hug": {
+   "municipio": "Castellar de n'Hug",
+   "provincia": "barcelona",
+   "poblacion": 166,
+   "anio": 2025
+  },
+  "castellar del riu": {
+   "municipio": "Castellar del Riu",
+   "provincia": "barcelona",
+   "poblacion": 151,
+   "anio": 2025
+  },
+  "castellar del valles": {
+   "municipio": "Castellar del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 25422,
+   "anio": 2025
+  },
+  "castellbell i el vilar": {
+   "municipio": "Castellbell i el Vilar",
+   "provincia": "barcelona",
+   "poblacion": 4159,
+   "anio": 2025
+  },
+  "castellbisbal": {
+   "municipio": "Castellbisbal",
+   "provincia": "barcelona",
+   "poblacion": 13061,
+   "anio": 2025
+  },
+  "castellcir": {
+   "municipio": "Castellcir",
+   "provincia": "barcelona",
+   "poblacion": 804,
+   "anio": 2025
+  },
+  "castelldefels": {
+   "municipio": "Castelldefels",
+   "provincia": "barcelona",
+   "poblacion": 70057,
+   "anio": 2025
+  },
+  "castellet i la gornal": {
+   "municipio": "Castellet i la Gornal",
+   "provincia": "barcelona",
+   "poblacion": 2776,
+   "anio": 2025
+  },
+  "castellfollit de riubregos": {
+   "municipio": "Castellfollit de Riubregós",
+   "provincia": "barcelona",
+   "poblacion": 153,
+   "anio": 2025
+  },
+  "castellfollit del boix": {
+   "municipio": "Castellfollit del Boix",
+   "provincia": "barcelona",
+   "poblacion": 467,
+   "anio": 2025
+  },
+  "castellgali": {
+   "municipio": "Castellgalí",
+   "provincia": "barcelona",
+   "poblacion": 2413,
+   "anio": 2025
+  },
+  "castellnou de bages": {
+   "municipio": "Castellnou de Bages",
+   "provincia": "barcelona",
+   "poblacion": 1473,
+   "anio": 2025
+  },
+  "castelloli": {
+   "municipio": "Castellolí",
+   "provincia": "barcelona",
+   "poblacion": 669,
+   "anio": 2025
+  },
+  "castelltercol": {
+   "municipio": "Castellterçol",
+   "provincia": "barcelona",
+   "poblacion": 2754,
+   "anio": 2025
+  },
+  "castellvi de la marca": {
+   "municipio": "Castellví de la Marca",
+   "provincia": "barcelona",
+   "poblacion": 1721,
+   "anio": 2025
+  },
+  "castellvi de rosanes": {
+   "municipio": "Castellví de Rosanes",
+   "provincia": "barcelona",
+   "poblacion": 2171,
+   "anio": 2025
+  },
+  "centelles": {
+   "municipio": "Centelles",
+   "provincia": "barcelona",
+   "poblacion": 7864,
+   "anio": 2025
+  },
+  "cercs": {
+   "municipio": "Cercs",
+   "provincia": "barcelona",
+   "poblacion": 1236,
+   "anio": 2025
+  },
+  "cerdanyola del valles": {
+   "municipio": "Cerdanyola del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 58528,
+   "anio": 2025
+  },
+  "cervello": {
+   "municipio": "Cervelló",
+   "provincia": "barcelona",
+   "poblacion": 9743,
+   "anio": 2025
+  },
+  "collbato": {
+   "municipio": "Collbató",
+   "provincia": "barcelona",
+   "poblacion": 4828,
+   "anio": 2025
+  },
+  "collsuspina": {
+   "municipio": "Collsuspina",
+   "provincia": "barcelona",
+   "poblacion": 391,
+   "anio": 2025
+  },
+  "copons": {
+   "municipio": "Copons",
+   "provincia": "barcelona",
+   "poblacion": 352,
+   "anio": 2025
+  },
+  "corbera de llobregat": {
+   "municipio": "Corbera de Llobregat",
+   "provincia": "barcelona",
+   "poblacion": 16010,
+   "anio": 2025
+  },
+  "cornella de llobregat": {
+   "municipio": "Cornellà de Llobregat",
+   "provincia": "barcelona",
+   "poblacion": 92237,
+   "anio": 2025
+  },
+  "cubelles": {
+   "municipio": "Cubelles",
+   "provincia": "barcelona",
+   "poblacion": 17673,
+   "anio": 2025
+  },
+  "dosrius": {
+   "municipio": "Dosrius",
+   "provincia": "barcelona",
+   "poblacion": 6287,
+   "anio": 2025
+  },
+  "esparreguera": {
+   "municipio": "Esparreguera",
+   "provincia": "barcelona",
+   "poblacion": 22665,
+   "anio": 2025
+  },
+  "esplugues de llobregat": {
+   "municipio": "Esplugues de Llobregat",
+   "provincia": "barcelona",
+   "poblacion": 48221,
+   "anio": 2025
+  },
+  "l'espunyola": {
+   "municipio": "l'Espunyola",
+   "provincia": "barcelona",
+   "poblacion": 260,
+   "anio": 2025
+  },
+  "l'esquirol": {
+   "municipio": "l'Esquirol",
+   "provincia": "barcelona",
+   "poblacion": 2301,
+   "anio": 2025
+  },
+  "l'estany": {
+   "municipio": "l'Estany",
+   "provincia": "barcelona",
+   "poblacion": 390,
+   "anio": 2025
+  },
+  "figaro-montmany": {
+   "municipio": "Figaró-Montmany",
+   "provincia": "barcelona",
+   "poblacion": 1195,
+   "anio": 2025
+  },
+  "figols": {
+   "municipio": "Fígols",
+   "provincia": "barcelona",
+   "poblacion": 40,
+   "anio": 2025
+  },
+  "fogars de la selva": {
+   "municipio": "Fogars de la Selva",
+   "provincia": "barcelona",
+   "poblacion": 1704,
+   "anio": 2025
+  },
+  "fogars de montclus": {
+   "municipio": "Fogars de Montclús",
+   "provincia": "barcelona",
+   "poblacion": 494,
+   "anio": 2025
+  },
+  "folgueroles": {
+   "municipio": "Folgueroles",
+   "provincia": "barcelona",
+   "poblacion": 2262,
+   "anio": 2025
+  },
+  "fonollosa": {
+   "municipio": "Fonollosa",
+   "provincia": "barcelona",
+   "poblacion": 1570,
+   "anio": 2025
+  },
+  "font-rubi": {
+   "municipio": "Font-rubí",
+   "provincia": "barcelona",
+   "poblacion": 1441,
+   "anio": 2025
+  },
+  "les franqueses del valles": {
+   "municipio": "les Franqueses del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 20881,
+   "anio": 2025
+  },
+  "gaia": {
+   "municipio": "Gaià",
+   "provincia": "barcelona",
+   "poblacion": 172,
+   "anio": 2025
+  },
+  "gallifa": {
+   "municipio": "Gallifa",
+   "provincia": "barcelona",
+   "poblacion": 171,
+   "anio": 2025
+  },
+  "la garriga": {
+   "municipio": "la Garriga",
+   "provincia": "barcelona",
+   "poblacion": 17426,
+   "anio": 2025
+  },
+  "gava": {
+   "municipio": "Gavà",
+   "provincia": "barcelona",
+   "poblacion": 48243,
+   "anio": 2025
+  },
+  "gelida": {
+   "municipio": "Gelida",
+   "provincia": "barcelona",
+   "poblacion": 8198,
+   "anio": 2025
+  },
+  "gironella": {
+   "municipio": "Gironella",
+   "provincia": "barcelona",
+   "poblacion": 5083,
+   "anio": 2025
+  },
+  "gisclareny": {
+   "municipio": "Gisclareny",
+   "provincia": "barcelona",
+   "poblacion": 28,
+   "anio": 2025
+  },
+  "la granada": {
+   "municipio": "la Granada",
+   "provincia": "barcelona",
+   "poblacion": 2287,
+   "anio": 2025
+  },
+  "granera": {
+   "municipio": "Granera",
+   "provincia": "barcelona",
+   "poblacion": 84,
+   "anio": 2025
+  },
+  "granollers": {
+   "municipio": "Granollers",
+   "provincia": "barcelona",
+   "poblacion": 65341,
+   "anio": 2025
+  },
+  "gualba": {
+   "municipio": "Gualba",
+   "provincia": "barcelona",
+   "poblacion": 1766,
+   "anio": 2025
+  },
+  "guardiola de bergueda": {
+   "municipio": "Guardiola de Berguedà",
+   "provincia": "barcelona",
+   "poblacion": 964,
+   "anio": 2025
+  },
+  "gurb": {
+   "municipio": "Gurb",
+   "provincia": "barcelona",
+   "poblacion": 2741,
+   "anio": 2025
+  },
+  "l'hospitalet de llobregat": {
+   "municipio": "l'Hospitalet de Llobregat",
+   "provincia": "barcelona",
+   "poblacion": 289510,
+   "anio": 2025
+  },
+  "dels hostalets de pierola": {
+   "municipio": "dels Hostalets de Pierola",
+   "provincia": "barcelona",
+   "poblacion": 3258,
+   "anio": 2025
+  },
+  "igualada": {
+   "municipio": "Igualada",
+   "provincia": "barcelona",
+   "poblacion": 42085,
+   "anio": 2025
+  },
+  "jorba": {
+   "municipio": "Jorba",
+   "provincia": "barcelona",
+   "poblacion": 850,
+   "anio": 2025
+  },
+  "la llacuna": {
+   "municipio": "la Llacuna",
+   "provincia": "barcelona",
+   "poblacion": 959,
+   "anio": 2025
+  },
+  "la llagosta": {
+   "municipio": "la Llagosta",
+   "provincia": "barcelona",
+   "poblacion": 13280,
+   "anio": 2025
+  },
+  "llica d'amunt": {
+   "municipio": "Lliçà d'Amunt",
+   "provincia": "barcelona",
+   "poblacion": 16540,
+   "anio": 2025
+  },
+  "llica de vall": {
+   "municipio": "Lliçà de Vall",
+   "provincia": "barcelona",
+   "poblacion": 6903,
+   "anio": 2025
+  },
+  "llinars del valles": {
+   "municipio": "Llinars del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 10956,
+   "anio": 2025
+  },
+  "lluca": {
+   "municipio": "Lluçà",
+   "provincia": "barcelona",
+   "poblacion": 281,
+   "anio": 2025
+  },
+  "malgrat de mar": {
+   "municipio": "Malgrat de Mar",
+   "provincia": "barcelona",
+   "poblacion": 19714,
+   "anio": 2025
+  },
+  "malla": {
+   "municipio": "Malla",
+   "provincia": "barcelona",
+   "poblacion": 285,
+   "anio": 2025
+  },
+  "manlleu": {
+   "municipio": "Manlleu",
+   "provincia": "barcelona",
+   "poblacion": 21425,
+   "anio": 2025
+  },
+  "manresa": {
+   "municipio": "Manresa",
+   "provincia": "barcelona",
+   "poblacion": 80974,
+   "anio": 2025
+  },
+  "marganell": {
+   "municipio": "Marganell",
+   "provincia": "barcelona",
+   "poblacion": 309,
+   "anio": 2025
+  },
+  "martorell": {
+   "municipio": "Martorell",
+   "provincia": "barcelona",
+   "poblacion": 29175,
+   "anio": 2025
+  },
+  "martorelles": {
+   "municipio": "Martorelles",
+   "provincia": "barcelona",
+   "poblacion": 4992,
+   "anio": 2025
+  },
+  "les masies de roda": {
+   "municipio": "les Masies de Roda",
+   "provincia": "barcelona",
+   "poblacion": 758,
+   "anio": 2025
+  },
+  "les masies de voltrega": {
+   "municipio": "les Masies de Voltregà",
+   "provincia": "barcelona",
+   "poblacion": 3345,
+   "anio": 2025
+  },
+  "el masnou": {
+   "municipio": "el Masnou",
+   "provincia": "barcelona",
+   "poblacion": 24761,
+   "anio": 2025
+  },
+  "masquefa": {
+   "municipio": "Masquefa",
+   "provincia": "barcelona",
+   "poblacion": 10120,
+   "anio": 2025
+  },
+  "matadepera": {
+   "municipio": "Matadepera",
+   "provincia": "barcelona",
+   "poblacion": 9776,
+   "anio": 2025
+  },
+  "mataro": {
+   "municipio": "Mataró",
+   "provincia": "barcelona",
+   "poblacion": 131683,
+   "anio": 2025
+  },
+  "mediona": {
+   "municipio": "Mediona",
+   "provincia": "barcelona",
+   "poblacion": 2658,
+   "anio": 2025
+  },
+  "moia": {
+   "municipio": "Moià",
+   "provincia": "barcelona",
+   "poblacion": 6828,
+   "anio": 2025
+  },
+  "molins de rei": {
+   "municipio": "Molins de Rei",
+   "provincia": "barcelona",
+   "poblacion": 27300,
+   "anio": 2025
+  },
+  "mollet del valles": {
+   "municipio": "Mollet del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 52990,
+   "anio": 2025
+  },
+  "monistrol de calders": {
+   "municipio": "Monistrol de Calders",
+   "provincia": "barcelona",
+   "poblacion": 764,
+   "anio": 2025
+  },
+  "monistrol de montserrat": {
+   "municipio": "Monistrol de Montserrat",
+   "provincia": "barcelona",
+   "poblacion": 3250,
+   "anio": 2025
+  },
+  "montcada i reixac": {
+   "municipio": "Montcada i Reixac",
+   "provincia": "barcelona",
+   "poblacion": 37460,
+   "anio": 2025
+  },
+  "montclar": {
+   "municipio": "Montclar",
+   "provincia": "barcelona",
+   "poblacion": 132,
+   "anio": 2025
+  },
+  "montesquiu": {
+   "municipio": "Montesquiu",
+   "provincia": "barcelona",
+   "poblacion": 1131,
+   "anio": 2025
+  },
+  "montgat": {
+   "municipio": "Montgat",
+   "provincia": "barcelona",
+   "poblacion": 12879,
+   "anio": 2025
+  },
+  "montmajor": {
+   "municipio": "Montmajor",
+   "provincia": "barcelona",
+   "poblacion": 473,
+   "anio": 2025
+  },
+  "montmaneu": {
+   "municipio": "Montmaneu",
+   "provincia": "barcelona",
+   "poblacion": 181,
+   "anio": 2025
+  },
+  "montmelo": {
+   "municipio": "Montmeló",
+   "provincia": "barcelona",
+   "poblacion": 8886,
+   "anio": 2025
+  },
+  "montornes del valles": {
+   "municipio": "Montornès del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 17102,
+   "anio": 2025
+  },
+  "montseny": {
+   "municipio": "Montseny",
+   "provincia": "barcelona",
+   "poblacion": 388,
+   "anio": 2025
+  },
+  "muntanyola": {
+   "municipio": "Muntanyola",
+   "provincia": "barcelona",
+   "poblacion": 697,
+   "anio": 2025
+  },
+  "mura": {
+   "municipio": "Mura",
+   "provincia": "barcelona",
+   "poblacion": 235,
+   "anio": 2025
+  },
+  "navarcles": {
+   "municipio": "Navarcles",
+   "provincia": "barcelona",
+   "poblacion": 6276,
+   "anio": 2025
+  },
+  "navas": {
+   "municipio": "Navàs",
+   "provincia": "barcelona",
+   "poblacion": 6238,
+   "anio": 2025
+  },
+  "la nou de bergueda": {
+   "municipio": "la Nou de Berguedà",
+   "provincia": "barcelona",
+   "poblacion": 163,
+   "anio": 2025
+  },
+  "odena": {
+   "municipio": "Òdena",
+   "provincia": "barcelona",
+   "poblacion": 3760,
+   "anio": 2025
+  },
+  "olerdola": {
+   "municipio": "Olèrdola",
+   "provincia": "barcelona",
+   "poblacion": 3945,
+   "anio": 2025
+  },
+  "olesa de bonesvalls": {
+   "municipio": "Olesa de Bonesvalls",
+   "provincia": "barcelona",
+   "poblacion": 2135,
+   "anio": 2025
+  },
+  "olesa de montserrat": {
+   "municipio": "Olesa de Montserrat",
+   "provincia": "barcelona",
+   "poblacion": 24966,
+   "anio": 2025
+  },
+  "olivella": {
+   "municipio": "Olivella",
+   "provincia": "barcelona",
+   "poblacion": 4435,
+   "anio": 2025
+  },
+  "olost": {
+   "municipio": "Olost",
+   "provincia": "barcelona",
+   "poblacion": 1209,
+   "anio": 2025
+  },
+  "olvan": {
+   "municipio": "Olvan",
+   "provincia": "barcelona",
+   "poblacion": 924,
+   "anio": 2025
+  },
+  "oris": {
+   "municipio": "Orís",
+   "provincia": "barcelona",
+   "poblacion": 355,
+   "anio": 2025
+  },
+  "orista": {
+   "municipio": "Oristà",
+   "provincia": "barcelona",
+   "poblacion": 555,
+   "anio": 2025
+  },
+  "orpi": {
+   "municipio": "Orpí",
+   "provincia": "barcelona",
+   "poblacion": 175,
+   "anio": 2025
+  },
+  "orrius": {
+   "municipio": "Òrrius",
+   "provincia": "barcelona",
+   "poblacion": 812,
+   "anio": 2025
+  },
+  "pacs del penedes": {
+   "municipio": "Pacs del Penedès",
+   "provincia": "barcelona",
+   "poblacion": 932,
+   "anio": 2025
+  },
+  "palafolls": {
+   "municipio": "Palafolls",
+   "provincia": "barcelona",
+   "poblacion": 10038,
+   "anio": 2025
+  },
+  "palau-solita i plegamans": {
+   "municipio": "Palau-solità i Plegamans",
+   "provincia": "barcelona",
+   "poblacion": 15614,
+   "anio": 2025
+  },
+  "palleja": {
+   "municipio": "Pallejà",
+   "provincia": "barcelona",
+   "poblacion": 12006,
+   "anio": 2025
+  },
+  "la palma de cervello": {
+   "municipio": "la Palma de Cervelló",
+   "provincia": "barcelona",
+   "poblacion": 3056,
+   "anio": 2025
+  },
+  "el papiol": {
+   "municipio": "el Papiol",
+   "provincia": "barcelona",
+   "poblacion": 4404,
+   "anio": 2025
+  },
+  "parets del valles": {
+   "municipio": "Parets del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 18885,
+   "anio": 2025
+  },
+  "perafita": {
+   "municipio": "Perafita",
+   "provincia": "barcelona",
+   "poblacion": 433,
+   "anio": 2025
+  },
+  "piera": {
+   "municipio": "Piera",
+   "provincia": "barcelona",
+   "poblacion": 17880,
+   "anio": 2025
+  },
+  "pineda de mar": {
+   "municipio": "Pineda de Mar",
+   "provincia": "barcelona",
+   "poblacion": 30108,
+   "anio": 2025
+  },
+  "el pla del penedes": {
+   "municipio": "el Pla del Penedès",
+   "provincia": "barcelona",
+   "poblacion": 1393,
+   "anio": 2025
+  },
+  "la pobla de claramunt": {
+   "municipio": "la Pobla de Claramunt",
+   "provincia": "barcelona",
+   "poblacion": 2350,
+   "anio": 2025
+  },
+  "la pobla de lillet": {
+   "municipio": "La Pobla de Lillet",
+   "provincia": "barcelona",
+   "poblacion": 1105,
+   "anio": 2025
+  },
+  "polinya": {
+   "municipio": "Polinyà",
+   "provincia": "barcelona",
+   "poblacion": 8581,
+   "anio": 2025
+  },
+  "el pont de vilomara i rocafort": {
+   "municipio": "el Pont de Vilomara i Rocafort",
+   "provincia": "barcelona",
+   "poblacion": 4193,
+   "anio": 2025
+  },
+  "pontons": {
+   "municipio": "Pontons",
+   "provincia": "barcelona",
+   "poblacion": 516,
+   "anio": 2025
+  },
+  "el prat de llobregat": {
+   "municipio": "el Prat de Llobregat",
+   "provincia": "barcelona",
+   "poblacion": 66338,
+   "anio": 2025
+  },
+  "prats de llucanes": {
+   "municipio": "Prats de Lluçanès",
+   "provincia": "barcelona",
+   "poblacion": 2761,
+   "anio": 2025
+  },
+  "dels prats de rei": {
+   "municipio": "dels Prats de Rei",
+   "provincia": "barcelona",
+   "poblacion": 554,
+   "anio": 2025
+  },
+  "premia de dalt": {
+   "municipio": "Premià de Dalt",
+   "provincia": "barcelona",
+   "poblacion": 10632,
+   "anio": 2025
+  },
+  "premia de mar": {
+   "municipio": "Premià de Mar",
+   "provincia": "barcelona",
+   "poblacion": 29431,
+   "anio": 2025
+  },
+  "puigdalber": {
+   "municipio": "Puigdàlber",
+   "provincia": "barcelona",
+   "poblacion": 621,
+   "anio": 2025
+  },
+  "puig-reig": {
+   "municipio": "Puig-reig",
+   "provincia": "barcelona",
+   "poblacion": 4565,
+   "anio": 2025
+  },
+  "pujalt": {
+   "municipio": "Pujalt",
+   "provincia": "barcelona",
+   "poblacion": 204,
+   "anio": 2025
+  },
+  "la quar": {
+   "municipio": "la Quar",
+   "provincia": "barcelona",
+   "poblacion": 41,
+   "anio": 2025
+  },
+  "rajadell": {
+   "municipio": "Rajadell",
+   "provincia": "barcelona",
+   "poblacion": 597,
+   "anio": 2025
+  },
+  "rellinars": {
+   "municipio": "Rellinars",
+   "provincia": "barcelona",
+   "poblacion": 926,
+   "anio": 2025
+  },
+  "ripollet": {
+   "municipio": "Ripollet",
+   "provincia": "barcelona",
+   "poblacion": 39897,
+   "anio": 2025
+  },
+  "la roca del valles": {
+   "municipio": "la Roca del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 11014,
+   "anio": 2025
+  },
+  "roda de ter": {
+   "municipio": "Roda de Ter",
+   "provincia": "barcelona",
+   "poblacion": 6937,
+   "anio": 2025
+  },
+  "rubi": {
+   "municipio": "Rubí",
+   "provincia": "barcelona",
+   "poblacion": 82823,
+   "anio": 2025
+  },
+  "rubio": {
+   "municipio": "Rubió",
+   "provincia": "barcelona",
+   "poblacion": 225,
+   "anio": 2025
+  },
+  "rupit i pruit": {
+   "municipio": "Rupit i Pruit",
+   "provincia": "barcelona",
+   "poblacion": 280,
+   "anio": 2025
+  },
+  "sabadell": {
+   "municipio": "Sabadell",
+   "provincia": "barcelona",
+   "poblacion": 225368,
+   "anio": 2025
+  },
+  "sagas": {
+   "municipio": "Sagàs",
+   "provincia": "barcelona",
+   "poblacion": 154,
+   "anio": 2025
+  },
+  "saldes": {
+   "municipio": "Saldes",
+   "provincia": "barcelona",
+   "poblacion": 302,
+   "anio": 2025
+  },
+  "sallent": {
+   "municipio": "Sallent",
+   "provincia": "barcelona",
+   "poblacion": 7030,
+   "anio": 2025
+  },
+  "sant adria de besos": {
+   "municipio": "Sant Adrià de Besòs",
+   "provincia": "barcelona",
+   "poblacion": 39323,
+   "anio": 2025
+  },
+  "sant agusti de llucanes": {
+   "municipio": "Sant Agustí de Lluçanès",
+   "provincia": "barcelona",
+   "poblacion": 106,
+   "anio": 2025
+  },
+  "sant andreu de la barca": {
+   "municipio": "Sant Andreu de la Barca",
+   "provincia": "barcelona",
+   "poblacion": 27094,
+   "anio": 2025
+  },
+  "sant andreu de llavaneres": {
+   "municipio": "Sant Andreu de Llavaneres",
+   "provincia": "barcelona",
+   "poblacion": 11938,
+   "anio": 2025
+  },
+  "sant antoni de vilamajor": {
+   "municipio": "Sant Antoni de Vilamajor",
+   "provincia": "barcelona",
+   "poblacion": 6724,
+   "anio": 2025
+  },
+  "sant bartomeu del grau": {
+   "municipio": "Sant Bartomeu del Grau",
+   "provincia": "barcelona",
+   "poblacion": 933,
+   "anio": 2025
+  },
+  "sant boi de llobregat": {
+   "municipio": "Sant Boi de Llobregat",
+   "provincia": "barcelona",
+   "poblacion": 85610,
+   "anio": 2025
+  },
+  "sant boi de llucanes": {
+   "municipio": "Sant Boi de Lluçanès",
+   "provincia": "barcelona",
+   "poblacion": 602,
+   "anio": 2025
+  },
+  "sant cebria de vallalta": {
+   "municipio": "Sant Cebrià de Vallalta",
+   "provincia": "barcelona",
+   "poblacion": 3872,
+   "anio": 2025
+  },
+  "sant celoni": {
+   "municipio": "Sant Celoni",
+   "provincia": "barcelona",
+   "poblacion": 18977,
+   "anio": 2025
+  },
+  "sant climent de llobregat": {
+   "municipio": "Sant Climent de Llobregat",
+   "provincia": "barcelona",
+   "poblacion": 4187,
+   "anio": 2025
+  },
+  "sant cugat del valles": {
+   "municipio": "Sant Cugat del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 97983,
+   "anio": 2025
+  },
+  "sant cugat sesgarrigues": {
+   "municipio": "Sant Cugat Sesgarrigues",
+   "provincia": "barcelona",
+   "poblacion": 1038,
+   "anio": 2025
+  },
+  "sant esteve de palautordera": {
+   "municipio": "Sant Esteve de Palautordera",
+   "provincia": "barcelona",
+   "poblacion": 3099,
+   "anio": 2025
+  },
+  "sant esteve sesrovires": {
+   "municipio": "Sant Esteve Sesrovires",
+   "provincia": "barcelona",
+   "poblacion": 8121,
+   "anio": 2025
+  },
+  "sant feliu de codines": {
+   "municipio": "Sant Feliu de Codines",
+   "provincia": "barcelona",
+   "poblacion": 6827,
+   "anio": 2025
+  },
+  "sant feliu de llobregat": {
+   "municipio": "Sant Feliu de Llobregat",
+   "provincia": "barcelona",
+   "poblacion": 46781,
+   "anio": 2025
+  },
+  "sant feliu sasserra": {
+   "municipio": "Sant Feliu Sasserra",
+   "provincia": "barcelona",
+   "poblacion": 633,
+   "anio": 2025
+  },
+  "sant fost de campsentelles": {
+   "municipio": "Sant Fost de Campsentelles",
+   "provincia": "barcelona",
+   "poblacion": 9419,
+   "anio": 2025
+  },
+  "sant fruitos de bages": {
+   "municipio": "Sant Fruitós de Bages",
+   "provincia": "barcelona",
+   "poblacion": 9333,
+   "anio": 2025
+  },
+  "sant hipolit de voltrega": {
+   "municipio": "Sant Hipòlit de Voltregà",
+   "provincia": "barcelona",
+   "poblacion": 3666,
+   "anio": 2025
+  },
+  "sant iscle de vallalta": {
+   "municipio": "Sant Iscle de Vallalta",
+   "provincia": "barcelona",
+   "poblacion": 1477,
+   "anio": 2025
+  },
+  "sant joan de vilatorrada": {
+   "municipio": "Sant Joan de Vilatorrada",
+   "provincia": "barcelona",
+   "poblacion": 11133,
+   "anio": 2025
+  },
+  "sant joan despi": {
+   "municipio": "Sant Joan Despí",
+   "provincia": "barcelona",
+   "poblacion": 35926,
+   "anio": 2025
+  },
+  "sant julia de cerdanyola": {
+   "municipio": "Sant Julià de Cerdanyola",
+   "provincia": "barcelona",
+   "poblacion": 234,
+   "anio": 2025
+  },
+  "sant julia de vilatorta": {
+   "municipio": "Sant Julià de Vilatorta",
+   "provincia": "barcelona",
+   "poblacion": 3323,
+   "anio": 2025
+  },
+  "sant just desvern": {
+   "municipio": "Sant Just Desvern",
+   "provincia": "barcelona",
+   "poblacion": 21037,
+   "anio": 2025
+  },
+  "sant llorenc d'hortons": {
+   "municipio": "Sant Llorenç d'Hortons",
+   "provincia": "barcelona",
+   "poblacion": 2627,
+   "anio": 2025
+  },
+  "sant llorenc savall": {
+   "municipio": "Sant Llorenç Savall",
+   "provincia": "barcelona",
+   "poblacion": 2587,
+   "anio": 2025
+  },
+  "sant marti d'albars": {
+   "municipio": "Sant Martí d'Albars",
+   "provincia": "barcelona",
+   "poblacion": 135,
+   "anio": 2025
+  },
+  "sant marti de centelles": {
+   "municipio": "Sant Martí de Centelles",
+   "provincia": "barcelona",
+   "poblacion": 1263,
+   "anio": 2025
+  },
+  "sant marti de tous": {
+   "municipio": "Sant Martí de Tous",
+   "provincia": "barcelona",
+   "poblacion": 1269,
+   "anio": 2025
+  },
+  "sant marti sarroca": {
+   "municipio": "Sant Martí Sarroca",
+   "provincia": "barcelona",
+   "poblacion": 3485,
+   "anio": 2025
+  },
+  "sant marti sesgueioles": {
+   "municipio": "Sant Martí Sesgueioles",
+   "provincia": "barcelona",
+   "poblacion": 353,
+   "anio": 2025
+  },
+  "sant mateu de bages": {
+   "municipio": "Sant Mateu de Bages",
+   "provincia": "barcelona",
+   "poblacion": 641,
+   "anio": 2025
+  },
+  "sant pere de ribes": {
+   "municipio": "Sant Pere de Ribes",
+   "provincia": "barcelona",
+   "poblacion": 32705,
+   "anio": 2025
+  },
+  "sant pere de riudebitlles": {
+   "municipio": "Sant Pere de Riudebitlles",
+   "provincia": "barcelona",
+   "poblacion": 2516,
+   "anio": 2025
+  },
+  "sant pere de torello": {
+   "municipio": "Sant Pere de Torelló",
+   "provincia": "barcelona",
+   "poblacion": 2596,
+   "anio": 2025
+  },
+  "sant pere de vilamajor": {
+   "municipio": "Sant Pere de Vilamajor",
+   "provincia": "barcelona",
+   "poblacion": 5074,
+   "anio": 2025
+  },
+  "sant pere sallavinera": {
+   "municipio": "Sant Pere Sallavinera",
+   "provincia": "barcelona",
+   "poblacion": 177,
+   "anio": 2025
+  },
+  "sant pol de mar": {
+   "municipio": "Sant Pol de Mar",
+   "provincia": "barcelona",
+   "poblacion": 5793,
+   "anio": 2025
+  },
+  "sant quinti de mediona": {
+   "municipio": "Sant Quintí de Mediona",
+   "provincia": "barcelona",
+   "poblacion": 2580,
+   "anio": 2025
+  },
+  "sant quirze de besora": {
+   "municipio": "Sant Quirze de Besora",
+   "provincia": "barcelona",
+   "poblacion": 2164,
+   "anio": 2025
+  },
+  "sant quirze del valles": {
+   "municipio": "Sant Quirze del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 20209,
+   "anio": 2025
+  },
+  "sant quirze safaja": {
+   "municipio": "Sant Quirze Safaja",
+   "provincia": "barcelona",
+   "poblacion": 663,
+   "anio": 2025
+  },
+  "sant sadurni d'anoia": {
+   "municipio": "Sant Sadurní d'Anoia",
+   "provincia": "barcelona",
+   "poblacion": 12911,
+   "anio": 2025
+  },
+  "sant sadurni d'osormort": {
+   "municipio": "Sant Sadurní d'Osormort",
+   "provincia": "barcelona",
+   "poblacion": 89,
+   "anio": 2025
+  },
+  "sant salvador de guardiola": {
+   "municipio": "Sant Salvador de Guardiola",
+   "provincia": "barcelona",
+   "poblacion": 3612,
+   "anio": 2025
+  },
+  "sant vicenc de castellet": {
+   "municipio": "Sant Vicenç de Castellet",
+   "provincia": "barcelona",
+   "poblacion": 10164,
+   "anio": 2025
+  },
+  "sant vicenc de montalt": {
+   "municipio": "Sant Vicenç de Montalt",
+   "provincia": "barcelona",
+   "poblacion": 6802,
+   "anio": 2025
+  },
+  "sant vicenc de torello": {
+   "municipio": "Sant Vicenç de Torelló",
+   "provincia": "barcelona",
+   "poblacion": 2117,
+   "anio": 2025
+  },
+  "sant vicenc dels horts": {
+   "municipio": "Sant Vicenç dels Horts",
+   "provincia": "barcelona",
+   "poblacion": 28746,
+   "anio": 2025
+  },
+  "santa cecilia de voltrega": {
+   "municipio": "Santa Cecília de Voltregà",
+   "provincia": "barcelona",
+   "poblacion": 197,
+   "anio": 2025
+  },
+  "santa coloma de cervello": {
+   "municipio": "Santa Coloma de Cervelló",
+   "provincia": "barcelona",
+   "poblacion": 8273,
+   "anio": 2025
+  },
+  "santa coloma de gramenet": {
+   "municipio": "Santa Coloma de Gramenet",
+   "provincia": "barcelona",
+   "poblacion": 123981,
+   "anio": 2025
+  },
+  "santa eugenia de berga": {
+   "municipio": "Santa Eugènia de Berga",
+   "provincia": "barcelona",
+   "poblacion": 2348,
+   "anio": 2025
+  },
+  "santa eulalia de riuprimer": {
+   "municipio": "Santa Eulàlia de Riuprimer",
+   "provincia": "barcelona",
+   "poblacion": 1516,
+   "anio": 2025
+  },
+  "santa eulalia de roncana": {
+   "municipio": "Santa Eulàlia de Ronçana",
+   "provincia": "barcelona",
+   "poblacion": 7953,
+   "anio": 2025
+  },
+  "santa margarida de montbui": {
+   "municipio": "Santa Margarida de Montbui",
+   "provincia": "barcelona",
+   "poblacion": 10631,
+   "anio": 2025
+  },
+  "santa margarida i els monjos": {
+   "municipio": "Santa Margarida i els Monjos",
+   "provincia": "barcelona",
+   "poblacion": 7806,
+   "anio": 2025
+  },
+  "santa maria de besora": {
+   "municipio": "Santa Maria de Besora",
+   "provincia": "barcelona",
+   "poblacion": 164,
+   "anio": 2025
+  },
+  "santa maria de martorelles": {
+   "municipio": "Santa Maria de Martorelles",
+   "provincia": "barcelona",
+   "poblacion": 868,
+   "anio": 2025
+  },
+  "santa maria de merles": {
+   "municipio": "Santa Maria de Merlès",
+   "provincia": "barcelona",
+   "poblacion": 179,
+   "anio": 2025
+  },
+  "santa maria de miralles": {
+   "municipio": "Santa Maria de Miralles",
+   "provincia": "barcelona",
+   "poblacion": 144,
+   "anio": 2025
+  },
+  "santa maria de palautordera": {
+   "municipio": "Santa Maria de Palautordera",
+   "provincia": "barcelona",
+   "poblacion": 10080,
+   "anio": 2025
+  },
+  "santa maria d'olo": {
+   "municipio": "Santa Maria d'Oló",
+   "provincia": "barcelona",
+   "poblacion": 1099,
+   "anio": 2025
+  },
+  "santa perpetua de mogoda": {
+   "municipio": "Santa Perpètua de Mogoda",
+   "provincia": "barcelona",
+   "poblacion": 26130,
+   "anio": 2025
+  },
+  "santa susanna": {
+   "municipio": "Santa Susanna",
+   "provincia": "barcelona",
+   "poblacion": 4099,
+   "anio": 2025
+  },
+  "santpedor": {
+   "municipio": "Santpedor",
+   "provincia": "barcelona",
+   "poblacion": 7744,
+   "anio": 2025
+  },
+  "sentmenat": {
+   "municipio": "Sentmenat",
+   "provincia": "barcelona",
+   "poblacion": 9548,
+   "anio": 2025
+  },
+  "seva": {
+   "municipio": "Seva",
+   "provincia": "barcelona",
+   "poblacion": 3808,
+   "anio": 2025
+  },
+  "sitges": {
+   "municipio": "Sitges",
+   "provincia": "barcelona",
+   "poblacion": 32609,
+   "anio": 2025
+  },
+  "sobremunt": {
+   "municipio": "Sobremunt",
+   "provincia": "barcelona",
+   "poblacion": 90,
+   "anio": 2025
+  },
+  "sora": {
+   "municipio": "Sora",
+   "provincia": "barcelona",
+   "poblacion": 225,
+   "anio": 2025
+  },
+  "subirats": {
+   "municipio": "Subirats",
+   "provincia": "barcelona",
+   "poblacion": 3288,
+   "anio": 2025
+  },
+  "suria": {
+   "municipio": "Súria",
+   "provincia": "barcelona",
+   "poblacion": 6200,
+   "anio": 2025
+  },
+  "tagamanent": {
+   "municipio": "Tagamanent",
+   "provincia": "barcelona",
+   "poblacion": 328,
+   "anio": 2025
+  },
+  "talamanca": {
+   "municipio": "Talamanca",
+   "provincia": "barcelona",
+   "poblacion": 209,
+   "anio": 2025
+  },
+  "taradell": {
+   "municipio": "Taradell",
+   "provincia": "barcelona",
+   "poblacion": 6854,
+   "anio": 2025
+  },
+  "tavernoles": {
+   "municipio": "Tavèrnoles",
+   "provincia": "barcelona",
+   "poblacion": 354,
+   "anio": 2025
+  },
+  "tavertet": {
+   "municipio": "Tavertet",
+   "provincia": "barcelona",
+   "poblacion": 128,
+   "anio": 2025
+  },
+  "teia": {
+   "municipio": "Teià",
+   "provincia": "barcelona",
+   "poblacion": 6898,
+   "anio": 2025
+  },
+  "terrassa": {
+   "municipio": "Terrassa",
+   "provincia": "barcelona",
+   "poblacion": 233270,
+   "anio": 2025
+  },
+  "tiana": {
+   "municipio": "Tiana",
+   "provincia": "barcelona",
+   "poblacion": 9331,
+   "anio": 2025
+  },
+  "tona": {
+   "municipio": "Tona",
+   "provincia": "barcelona",
+   "poblacion": 8527,
+   "anio": 2025
+  },
+  "tordera": {
+   "municipio": "Tordera",
+   "provincia": "barcelona",
+   "poblacion": 19039,
+   "anio": 2025
+  },
+  "torello": {
+   "municipio": "Torelló",
+   "provincia": "barcelona",
+   "poblacion": 15334,
+   "anio": 2025
+  },
+  "la torre de claramunt": {
+   "municipio": "la Torre de Claramunt",
+   "provincia": "barcelona",
+   "poblacion": 4158,
+   "anio": 2025
+  },
+  "torrelavit": {
+   "municipio": "Torrelavit",
+   "provincia": "barcelona",
+   "poblacion": 1572,
+   "anio": 2025
+  },
+  "torrelles de foix": {
+   "municipio": "Torrelles de Foix",
+   "provincia": "barcelona",
+   "poblacion": 2746,
+   "anio": 2025
+  },
+  "torrelles de llobregat": {
+   "municipio": "Torrelles de Llobregat",
+   "provincia": "barcelona",
+   "poblacion": 6170,
+   "anio": 2025
+  },
+  "ullastrell": {
+   "municipio": "Ullastrell",
+   "provincia": "barcelona",
+   "poblacion": 2171,
+   "anio": 2025
+  },
+  "vacarisses": {
+   "municipio": "Vacarisses",
+   "provincia": "barcelona",
+   "poblacion": 7729,
+   "anio": 2025
+  },
+  "vallbona d'anoia": {
+   "municipio": "Vallbona d'Anoia",
+   "provincia": "barcelona",
+   "poblacion": 1424,
+   "anio": 2025
+  },
+  "vallcebre": {
+   "municipio": "Vallcebre",
+   "provincia": "barcelona",
+   "poblacion": 260,
+   "anio": 2025
+  },
+  "vallgorguina": {
+   "municipio": "Vallgorguina",
+   "provincia": "barcelona",
+   "poblacion": 3261,
+   "anio": 2025
+  },
+  "vallirana": {
+   "municipio": "Vallirana",
+   "provincia": "barcelona",
+   "poblacion": 16245,
+   "anio": 2025
+  },
+  "vallromanes": {
+   "municipio": "Vallromanes",
+   "provincia": "barcelona",
+   "poblacion": 2778,
+   "anio": 2025
+  },
+  "veciana": {
+   "municipio": "Veciana",
+   "provincia": "barcelona",
+   "poblacion": 168,
+   "anio": 2025
+  },
+  "vic": {
+   "municipio": "Vic",
+   "provincia": "barcelona",
+   "poblacion": 50796,
+   "anio": 2025
+  },
+  "vilada": {
+   "municipio": "Vilada",
+   "provincia": "barcelona",
+   "poblacion": 432,
+   "anio": 2025
+  },
+  "viladecans": {
+   "municipio": "Viladecans",
+   "provincia": "barcelona",
+   "poblacion": 67587,
+   "anio": 2025
+  },
+  "viladecavalls": {
+   "municipio": "Viladecavalls",
+   "provincia": "barcelona",
+   "poblacion": 7817,
+   "anio": 2025
+  },
+  "vilafranca del penedes": {
+   "municipio": "Vilafranca del Penedès",
+   "provincia": "barcelona",
+   "poblacion": 42607,
+   "anio": 2025
+  },
+  "vilalba sasserra": {
+   "municipio": "Vilalba Sasserra",
+   "provincia": "barcelona",
+   "poblacion": 794,
+   "anio": 2025
+  },
+  "vilanova de sau": {
+   "municipio": "Vilanova de Sau",
+   "provincia": "barcelona",
+   "poblacion": 325,
+   "anio": 2025
+  },
+  "vilanova del cami": {
+   "municipio": "Vilanova del Camí",
+   "provincia": "barcelona",
+   "poblacion": 12936,
+   "anio": 2025
+  },
+  "vilanova del valles": {
+   "municipio": "Vilanova del Vallès",
+   "provincia": "barcelona",
+   "poblacion": 5693,
+   "anio": 2025
+  },
+  "vilanova i la geltru": {
+   "municipio": "Vilanova i la Geltrú",
+   "provincia": "barcelona",
+   "poblacion": 71641,
+   "anio": 2025
+  },
+  "vilassar de dalt": {
+   "municipio": "Vilassar de Dalt",
+   "provincia": "barcelona",
+   "poblacion": 9404,
+   "anio": 2025
+  },
+  "vilassar de mar": {
+   "municipio": "Vilassar de Mar",
+   "provincia": "barcelona",
+   "poblacion": 21227,
+   "anio": 2025
+  },
+  "vilobi del penedes": {
+   "municipio": "Vilobí del Penedès",
+   "provincia": "barcelona",
+   "poblacion": 1154,
+   "anio": 2025
+  },
+  "viver i serrateix": {
+   "municipio": "Viver i Serrateix",
+   "provincia": "barcelona",
+   "poblacion": 178,
+   "anio": 2025
+  },
+  "aiguamurcia": {
+   "municipio": "Aiguamúrcia",
+   "provincia": "tarragona",
+   "poblacion": 987,
+   "anio": 2025
+  },
+  "albinyana": {
+   "municipio": "Albinyana",
+   "provincia": "tarragona",
+   "poblacion": 2718,
+   "anio": 2025
+  },
+  "l'albiol": {
+   "municipio": "l'Albiol",
+   "provincia": "tarragona",
+   "poblacion": 557,
+   "anio": 2025
+  },
+  "alcanar": {
+   "municipio": "Alcanar",
+   "provincia": "tarragona",
+   "poblacion": 10104,
+   "anio": 2025
+  },
+  "alcover": {
+   "municipio": "Alcover",
+   "provincia": "tarragona",
+   "poblacion": 5362,
+   "anio": 2025
+  },
+  "l'aldea": {
+   "municipio": "L'Aldea",
+   "provincia": "tarragona",
+   "poblacion": 4657,
+   "anio": 2025
+  },
+  "aldover": {
+   "municipio": "Aldover",
+   "provincia": "tarragona",
+   "poblacion": 901,
+   "anio": 2025
+  },
+  "l'aleixar": {
+   "municipio": "l'Aleixar",
+   "provincia": "tarragona",
+   "poblacion": 1009,
+   "anio": 2025
+  },
+  "alfara de carles": {
+   "municipio": "Alfara de Carles",
+   "provincia": "tarragona",
+   "poblacion": 355,
+   "anio": 2025
+  },
+  "alforja": {
+   "municipio": "Alforja",
+   "provincia": "tarragona",
+   "poblacion": 2024,
+   "anio": 2025
+  },
+  "alio": {
+   "municipio": "Alió",
+   "provincia": "tarragona",
+   "poblacion": 496,
+   "anio": 2025
+  },
+  "almoster": {
+   "municipio": "Almoster",
+   "provincia": "tarragona",
+   "poblacion": 1384,
+   "anio": 2025
+  },
+  "altafulla": {
+   "municipio": "Altafulla",
+   "provincia": "tarragona",
+   "poblacion": 5870,
+   "anio": 2025
+  },
+  "l'ametlla de mar": {
+   "municipio": "l'Ametlla de Mar",
+   "provincia": "tarragona",
+   "poblacion": 7446,
+   "anio": 2025
+  },
+  "l'ampolla": {
+   "municipio": "l'Ampolla",
+   "provincia": "tarragona",
+   "poblacion": 3785,
+   "anio": 2025
+  },
+  "amposta": {
+   "municipio": "Amposta",
+   "provincia": "tarragona",
+   "poblacion": 23080,
+   "anio": 2025
+  },
+  "l'arboc": {
+   "municipio": "l'Arboç",
+   "provincia": "tarragona",
+   "poblacion": 5721,
+   "anio": 2025
+  },
+  "arboli": {
+   "municipio": "Arbolí",
+   "provincia": "tarragona",
+   "poblacion": 138,
+   "anio": 2025
+  },
+  "l'argentera": {
+   "municipio": "l'Argentera",
+   "provincia": "tarragona",
+   "poblacion": 139,
+   "anio": 2025
+  },
+  "arnes": {
+   "municipio": "Arnes",
+   "provincia": "tarragona",
+   "poblacion": 461,
+   "anio": 2025
+  },
+  "asco": {
+   "municipio": "Ascó",
+   "provincia": "tarragona",
+   "poblacion": 1589,
+   "anio": 2025
+  },
+  "banyeres del penedes": {
+   "municipio": "Banyeres del Penedès",
+   "provincia": "tarragona",
+   "poblacion": 3395,
+   "anio": 2025
+  },
+  "barbera de la conca": {
+   "municipio": "Barberà de la Conca",
+   "provincia": "tarragona",
+   "poblacion": 476,
+   "anio": 2025
+  },
+  "batea": {
+   "municipio": "Batea",
+   "provincia": "tarragona",
+   "poblacion": 1875,
+   "anio": 2025
+  },
+  "bellmunt del priorat": {
+   "municipio": "Bellmunt del Priorat",
+   "provincia": "tarragona",
+   "poblacion": 290,
+   "anio": 2025
+  },
+  "bellvei": {
+   "municipio": "Bellvei",
+   "provincia": "tarragona",
+   "poblacion": 2460,
+   "anio": 2025
+  },
+  "benifallet": {
+   "municipio": "Benifallet",
+   "provincia": "tarragona",
+   "poblacion": 706,
+   "anio": 2025
+  },
+  "benissanet": {
+   "municipio": "Benissanet",
+   "provincia": "tarragona",
+   "poblacion": 1186,
+   "anio": 2025
+  },
+  "la bisbal de montsant": {
+   "municipio": "la Bisbal de Montsant",
+   "provincia": "tarragona",
+   "poblacion": 214,
+   "anio": 2025
+  },
+  "la bisbal del penedes": {
+   "municipio": "la Bisbal del Penedès",
+   "provincia": "tarragona",
+   "poblacion": 4278,
+   "anio": 2025
+  },
+  "blancafort": {
+   "municipio": "Blancafort",
+   "provincia": "tarragona",
+   "poblacion": 392,
+   "anio": 2025
+  },
+  "bonastre": {
+   "municipio": "Bonastre",
+   "provincia": "tarragona",
+   "poblacion": 777,
+   "anio": 2025
+  },
+  "les borges del camp": {
+   "municipio": "les Borges del Camp",
+   "provincia": "tarragona",
+   "poblacion": 2319,
+   "anio": 2025
+  },
+  "bot": {
+   "municipio": "Bot",
+   "provincia": "tarragona",
+   "poblacion": 548,
+   "anio": 2025
+  },
+  "botarell": {
+   "municipio": "Botarell",
+   "provincia": "tarragona",
+   "poblacion": 1161,
+   "anio": 2025
+  },
+  "brafim": {
+   "municipio": "Bràfim",
+   "provincia": "tarragona",
+   "poblacion": 697,
+   "anio": 2025
+  },
+  "cabaces": {
+   "municipio": "Cabacés",
+   "provincia": "tarragona",
+   "poblacion": 296,
+   "anio": 2025
+  },
+  "cabra del camp": {
+   "municipio": "Cabra del Camp",
+   "provincia": "tarragona",
+   "poblacion": 1388,
+   "anio": 2025
+  },
+  "calafell": {
+   "municipio": "Calafell",
+   "provincia": "tarragona",
+   "poblacion": 32624,
+   "anio": 2025
+  },
+  "camarles": {
+   "municipio": "Camarles",
+   "provincia": "tarragona",
+   "poblacion": 3465,
+   "anio": 2025
+  },
+  "cambrils": {
+   "municipio": "Cambrils",
+   "provincia": "tarragona",
+   "poblacion": 37042,
+   "anio": 2025
+  },
+  "la canonja": {
+   "municipio": "la Canonja",
+   "provincia": "tarragona",
+   "poblacion": 6001,
+   "anio": 2025
+  },
+  "capafonts": {
+   "municipio": "Capafonts",
+   "provincia": "tarragona",
+   "poblacion": 101,
+   "anio": 2025
+  },
+  "capcanes": {
+   "municipio": "Capçanes",
+   "provincia": "tarragona",
+   "poblacion": 444,
+   "anio": 2025
+  },
+  "caseres": {
+   "municipio": "Caseres",
+   "provincia": "tarragona",
+   "poblacion": 250,
+   "anio": 2025
+  },
+  "castellvell del camp": {
+   "municipio": "Castellvell del Camp",
+   "provincia": "tarragona",
+   "poblacion": 3002,
+   "anio": 2025
+  },
+  "el catllar": {
+   "municipio": "el Catllar",
+   "provincia": "tarragona",
+   "poblacion": 5375,
+   "anio": 2025
+  },
+  "colldejou": {
+   "municipio": "Colldejou",
+   "provincia": "tarragona",
+   "poblacion": 155,
+   "anio": 2025
+  },
+  "conesa": {
+   "municipio": "Conesa",
+   "provincia": "tarragona",
+   "poblacion": 111,
+   "anio": 2025
+  },
+  "constanti": {
+   "municipio": "Constantí",
+   "provincia": "tarragona",
+   "poblacion": 7108,
+   "anio": 2025
+  },
+  "corbera d'ebre": {
+   "municipio": "Corbera d'Ebre",
+   "provincia": "tarragona",
+   "poblacion": 1023,
+   "anio": 2025
+  },
+  "cornudella de montsant": {
+   "municipio": "Cornudella de Montsant",
+   "provincia": "tarragona",
+   "poblacion": 999,
+   "anio": 2025
+  },
+  "creixell": {
+   "municipio": "Creixell",
+   "provincia": "tarragona",
+   "poblacion": 4261,
+   "anio": 2025
+  },
+  "cunit": {
+   "municipio": "Cunit",
+   "provincia": "tarragona",
+   "poblacion": 16385,
+   "anio": 2025
+  },
+  "deltebre": {
+   "municipio": "Deltebre",
+   "provincia": "tarragona",
+   "poblacion": 12041,
+   "anio": 2025
+  },
+  "duesaigues": {
+   "municipio": "Duesaigües",
+   "provincia": "tarragona",
+   "poblacion": 217,
+   "anio": 2025
+  },
+  "l'espluga de francoli": {
+   "municipio": "l'Espluga de Francolí",
+   "provincia": "tarragona",
+   "poblacion": 3863,
+   "anio": 2025
+  },
+  "la fatarella": {
+   "municipio": "la Fatarella",
+   "provincia": "tarragona",
+   "poblacion": 840,
+   "anio": 2025
+  },
+  "la febro": {
+   "municipio": "la Febró",
+   "provincia": "tarragona",
+   "poblacion": 35,
+   "anio": 2025
+  },
+  "la figuera": {
+   "municipio": "la Figuera",
+   "provincia": "tarragona",
+   "poblacion": 115,
+   "anio": 2025
+  },
+  "figuerola del camp": {
+   "municipio": "Figuerola del Camp",
+   "provincia": "tarragona",
+   "poblacion": 342,
+   "anio": 2025
+  },
+  "flix": {
+   "municipio": "Flix",
+   "provincia": "tarragona",
+   "poblacion": 3340,
+   "anio": 2025
+  },
+  "fores": {
+   "municipio": "Forès",
+   "provincia": "tarragona",
+   "poblacion": 38,
+   "anio": 2025
+  },
+  "freginals": {
+   "municipio": "Freginals",
+   "provincia": "tarragona",
+   "poblacion": 443,
+   "anio": 2025
+  },
+  "la galera": {
+   "municipio": "la Galera",
+   "provincia": "tarragona",
+   "poblacion": 726,
+   "anio": 2025
+  },
+  "gandesa": {
+   "municipio": "Gandesa",
+   "provincia": "tarragona",
+   "poblacion": 3150,
+   "anio": 2025
+  },
+  "garcia": {
+   "municipio": "Garcia",
+   "provincia": "tarragona",
+   "poblacion": 551,
+   "anio": 2025
+  },
+  "dels garidells": {
+   "municipio": "dels Garidells",
+   "provincia": "tarragona",
+   "poblacion": 211,
+   "anio": 2025
+  },
+  "ginestar": {
+   "municipio": "Ginestar",
+   "provincia": "tarragona",
+   "poblacion": 800,
+   "anio": 2025
+  },
+  "godall": {
+   "municipio": "Godall",
+   "provincia": "tarragona",
+   "poblacion": 591,
+   "anio": 2025
+  },
+  "gratallops": {
+   "municipio": "Gratallops",
+   "provincia": "tarragona",
+   "poblacion": 226,
+   "anio": 2025
+  },
+  "dels guiamets": {
+   "municipio": "dels Guiamets",
+   "provincia": "tarragona",
+   "poblacion": 254,
+   "anio": 2025
+  },
+  "horta de sant joan": {
+   "municipio": "Horta de Sant Joan",
+   "provincia": "tarragona",
+   "poblacion": 1150,
+   "anio": 2025
+  },
+  "el lloar": {
+   "municipio": "el Lloar",
+   "provincia": "tarragona",
+   "poblacion": 99,
+   "anio": 2025
+  },
+  "llorac": {
+   "municipio": "Llorac",
+   "provincia": "tarragona",
+   "poblacion": 105,
+   "anio": 2025
+  },
+  "llorenc del penedes": {
+   "municipio": "Llorenç del Penedès",
+   "provincia": "tarragona",
+   "poblacion": 2425,
+   "anio": 2025
+  },
+  "marca": {
+   "municipio": "Marçà",
+   "provincia": "tarragona",
+   "poblacion": 623,
+   "anio": 2025
+  },
+  "margalef": {
+   "municipio": "Margalef",
+   "provincia": "tarragona",
+   "poblacion": 106,
+   "anio": 2025
+  },
+  "mas de barberans": {
+   "municipio": "Mas de Barberans",
+   "provincia": "tarragona",
+   "poblacion": 535,
+   "anio": 2025
+  },
+  "masdenverge": {
+   "municipio": "Masdenverge",
+   "provincia": "tarragona",
+   "poblacion": 1138,
+   "anio": 2025
+  },
+  "masllorenc": {
+   "municipio": "Masllorenç",
+   "provincia": "tarragona",
+   "poblacion": 573,
+   "anio": 2025
+  },
+  "la maso": {
+   "municipio": "La Masó",
+   "provincia": "tarragona",
+   "poblacion": 307,
+   "anio": 2025
+  },
+  "maspujols": {
+   "municipio": "Maspujols",
+   "provincia": "tarragona",
+   "poblacion": 915,
+   "anio": 2025
+  },
+  "el masroig": {
+   "municipio": "el Masroig",
+   "provincia": "tarragona",
+   "poblacion": 473,
+   "anio": 2025
+  },
+  "el mila": {
+   "municipio": "el Milà",
+   "provincia": "tarragona",
+   "poblacion": 194,
+   "anio": 2025
+  },
+  "miravet": {
+   "municipio": "Miravet",
+   "provincia": "tarragona",
+   "poblacion": 703,
+   "anio": 2025
+  },
+  "el molar": {
+   "municipio": "el Molar",
+   "provincia": "tarragona",
+   "poblacion": 295,
+   "anio": 2025
+  },
+  "montblanc": {
+   "municipio": "Montblanc",
+   "provincia": "tarragona",
+   "poblacion": 7542,
+   "anio": 2025
+  },
+  "montbrio del camp": {
+   "municipio": "Montbrió del Camp",
+   "provincia": "tarragona",
+   "poblacion": 3157,
+   "anio": 2025
+  },
+  "montferri": {
+   "municipio": "Montferri",
+   "provincia": "tarragona",
+   "poblacion": 502,
+   "anio": 2025
+  },
+  "el montmell": {
+   "municipio": "el Montmell",
+   "provincia": "tarragona",
+   "poblacion": 1958,
+   "anio": 2025
+  },
+  "mont-ral": {
+   "municipio": "Mont-ral",
+   "provincia": "tarragona",
+   "poblacion": 174,
+   "anio": 2025
+  },
+  "mont-roig del camp": {
+   "municipio": "Mont-roig del Camp",
+   "provincia": "tarragona",
+   "poblacion": 14615,
+   "anio": 2025
+  },
+  "mora d'ebre": {
+   "municipio": "Móra d'Ebre",
+   "provincia": "tarragona",
+   "poblacion": 5811,
+   "anio": 2025
+  },
+  "mora la nova": {
+   "municipio": "Móra la Nova",
+   "provincia": "tarragona",
+   "poblacion": 3350,
+   "anio": 2025
+  },
+  "el morell": {
+   "municipio": "el Morell",
+   "provincia": "tarragona",
+   "poblacion": 3811,
+   "anio": 2025
+  },
+  "la morera de montsant": {
+   "municipio": "la Morera de Montsant",
+   "provincia": "tarragona",
+   "poblacion": 150,
+   "anio": 2025
+  },
+  "la nou de gaia": {
+   "municipio": "la Nou de Gaià",
+   "provincia": "tarragona",
+   "poblacion": 603,
+   "anio": 2025
+  },
+  "nulles": {
+   "municipio": "Nulles",
+   "provincia": "tarragona",
+   "poblacion": 551,
+   "anio": 2025
+  },
+  "dels pallaresos": {
+   "municipio": "dels Pallaresos",
+   "provincia": "tarragona",
+   "poblacion": 5028,
+   "anio": 2025
+  },
+  "la palma d'ebre": {
+   "municipio": "la Palma d'Ebre",
+   "provincia": "tarragona",
+   "poblacion": 333,
+   "anio": 2025
+  },
+  "passanant i belltall": {
+   "municipio": "Passanant i Belltall",
+   "provincia": "tarragona",
+   "poblacion": 149,
+   "anio": 2025
+  },
+  "pauls": {
+   "municipio": "Paüls",
+   "provincia": "tarragona",
+   "poblacion": 558,
+   "anio": 2025
+  },
+  "perafort": {
+   "municipio": "Perafort",
+   "provincia": "tarragona",
+   "poblacion": 1342,
+   "anio": 2025
+  },
+  "el perello": {
+   "municipio": "el Perelló",
+   "provincia": "tarragona",
+   "poblacion": 2948,
+   "anio": 2025
+  },
+  "les piles": {
+   "municipio": "les Piles",
+   "provincia": "tarragona",
+   "poblacion": 229,
+   "anio": 2025
+  },
+  "el pinell de brai": {
+   "municipio": "el Pinell de Brai",
+   "provincia": "tarragona",
+   "poblacion": 948,
+   "anio": 2025
+  },
+  "pira": {
+   "municipio": "Pira",
+   "provincia": "tarragona",
+   "poblacion": 512,
+   "anio": 2025
+  },
+  "el pla de santa maria": {
+   "municipio": "el Pla de Santa Maria",
+   "provincia": "tarragona",
+   "poblacion": 2408,
+   "anio": 2025
+  },
+  "la pobla de mafumet": {
+   "municipio": "la Pobla de Mafumet",
+   "provincia": "tarragona",
+   "poblacion": 4175,
+   "anio": 2025
+  },
+  "la pobla de massaluca": {
+   "municipio": "la Pobla de Massaluca",
+   "provincia": "tarragona",
+   "poblacion": 344,
+   "anio": 2025
+  },
+  "la pobla de montornes": {
+   "municipio": "la Pobla de Montornès",
+   "provincia": "tarragona",
+   "poblacion": 3440,
+   "anio": 2025
+  },
+  "poboleda": {
+   "municipio": "Poboleda",
+   "provincia": "tarragona",
+   "poblacion": 345,
+   "anio": 2025
+  },
+  "el pont d'armentera": {
+   "municipio": "el Pont d'Armentera",
+   "provincia": "tarragona",
+   "poblacion": 500,
+   "anio": 2025
+  },
+  "pontils": {
+   "municipio": "Pontils",
+   "provincia": "tarragona",
+   "poblacion": 124,
+   "anio": 2025
+  },
+  "porrera": {
+   "municipio": "Porrera",
+   "provincia": "tarragona",
+   "poblacion": 405,
+   "anio": 2025
+  },
+  "pradell de la teixeta": {
+   "municipio": "Pradell de la Teixeta",
+   "provincia": "tarragona",
+   "poblacion": 182,
+   "anio": 2025
+  },
+  "prades": {
+   "municipio": "Prades",
+   "provincia": "tarragona",
+   "poblacion": 629,
+   "anio": 2025
+  },
+  "prat de comte": {
+   "municipio": "Prat de Comte",
+   "provincia": "tarragona",
+   "poblacion": 174,
+   "anio": 2025
+  },
+  "pratdip": {
+   "municipio": "Pratdip",
+   "provincia": "tarragona",
+   "poblacion": 781,
+   "anio": 2025
+  },
+  "puigpelat": {
+   "municipio": "Puigpelat",
+   "provincia": "tarragona",
+   "poblacion": 1222,
+   "anio": 2025
+  },
+  "querol": {
+   "municipio": "Querol",
+   "provincia": "tarragona",
+   "poblacion": 611,
+   "anio": 2025
+  },
+  "rasquera": {
+   "municipio": "Rasquera",
+   "provincia": "tarragona",
+   "poblacion": 786,
+   "anio": 2025
+  },
+  "renau": {
+   "municipio": "Renau",
+   "provincia": "tarragona",
+   "poblacion": 165,
+   "anio": 2025
+  },
+  "reus": {
+   "municipio": "Reus",
+   "provincia": "tarragona",
+   "poblacion": 111601,
+   "anio": 2025
+  },
+  "la riba": {
+   "municipio": "la Riba",
+   "provincia": "tarragona",
+   "poblacion": 574,
+   "anio": 2025
+  },
+  "riba-roja d'ebre": {
+   "municipio": "Riba-roja d'Ebre",
+   "provincia": "tarragona",
+   "poblacion": 1132,
+   "anio": 2025
+  },
+  "la riera de gaia": {
+   "municipio": "la Riera de Gaià",
+   "provincia": "tarragona",
+   "poblacion": 1834,
+   "anio": 2025
+  },
+  "riudecanyes": {
+   "municipio": "Riudecanyes",
+   "provincia": "tarragona",
+   "poblacion": 1362,
+   "anio": 2025
+  },
+  "riudecols": {
+   "municipio": "Riudecols",
+   "provincia": "tarragona",
+   "poblacion": 1264,
+   "anio": 2025
+  },
+  "riudoms": {
+   "municipio": "Riudoms",
+   "provincia": "tarragona",
+   "poblacion": 6891,
+   "anio": 2025
+  },
+  "rocafort de queralt": {
+   "municipio": "Rocafort de Queralt",
+   "provincia": "tarragona",
+   "poblacion": 247,
+   "anio": 2025
+  },
+  "roda de bera": {
+   "municipio": "Roda de Berà",
+   "provincia": "tarragona",
+   "poblacion": 8260,
+   "anio": 2025
+  },
+  "rodonya": {
+   "municipio": "Rodonyà",
+   "provincia": "tarragona",
+   "poblacion": 519,
+   "anio": 2025
+  },
+  "roquetes": {
+   "municipio": "Roquetes",
+   "provincia": "tarragona",
+   "poblacion": 8607,
+   "anio": 2025
+  },
+  "el rourell": {
+   "municipio": "el Rourell",
+   "provincia": "tarragona",
+   "poblacion": 385,
+   "anio": 2025
+  },
+  "salomo": {
+   "municipio": "Salomó",
+   "provincia": "tarragona",
+   "poblacion": 519,
+   "anio": 2025
+  },
+  "salou": {
+   "municipio": "Salou",
+   "provincia": "tarragona",
+   "poblacion": 31491,
+   "anio": 2025
+  },
+  "la rapita": {
+   "municipio": "la Ràpita",
+   "provincia": "tarragona",
+   "poblacion": 16119,
+   "anio": 2025
+  },
+  "sant jaume d'enveja": {
+   "municipio": "Sant Jaume d'Enveja",
+   "provincia": "tarragona",
+   "poblacion": 3745,
+   "anio": 2025
+  },
+  "santa barbara": {
+   "municipio": "Santa Bàrbara",
+   "provincia": "tarragona",
+   "poblacion": 3871,
+   "anio": 2025
+  },
+  "santa coloma de queralt": {
+   "municipio": "Santa Coloma de Queralt",
+   "provincia": "tarragona",
+   "poblacion": 2795,
+   "anio": 2025
+  },
+  "santa oliva": {
+   "municipio": "Santa Oliva",
+   "provincia": "tarragona",
+   "poblacion": 3711,
+   "anio": 2025
+  },
+  "sarral": {
+   "municipio": "Sarral",
+   "provincia": "tarragona",
+   "poblacion": 1644,
+   "anio": 2025
+  },
+  "savalla del comtat": {
+   "municipio": "Savallà del Comtat",
+   "provincia": "tarragona",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "la secuita": {
+   "municipio": "la Secuita",
+   "provincia": "tarragona",
+   "poblacion": 1845,
+   "anio": 2025
+  },
+  "la selva del camp": {
+   "municipio": "la Selva del Camp",
+   "provincia": "tarragona",
+   "poblacion": 5732,
+   "anio": 2025
+  },
+  "senan": {
+   "municipio": "Senan",
+   "provincia": "tarragona",
+   "poblacion": 47,
+   "anio": 2025
+  },
+  "la senia": {
+   "municipio": "la Sénia",
+   "provincia": "tarragona",
+   "poblacion": 5516,
+   "anio": 2025
+  },
+  "solivella": {
+   "municipio": "Solivella",
+   "provincia": "tarragona",
+   "poblacion": 633,
+   "anio": 2025
+  },
+  "tarragona": {
+   "municipio": "Tarragona",
+   "provincia": "tarragona",
+   "poblacion": 143649,
+   "anio": 2025
+  },
+  "tivenys": {
+   "municipio": "Tivenys",
+   "provincia": "tarragona",
+   "poblacion": 948,
+   "anio": 2025
+  },
+  "tivissa": {
+   "municipio": "Tivissa",
+   "provincia": "tarragona",
+   "poblacion": 1658,
+   "anio": 2025
+  },
+  "la torre de fontaubella": {
+   "municipio": "la Torre de Fontaubella",
+   "provincia": "tarragona",
+   "poblacion": 124,
+   "anio": 2025
+  },
+  "la torre de l'espanyol": {
+   "municipio": "la Torre de l'Espanyol",
+   "provincia": "tarragona",
+   "poblacion": 641,
+   "anio": 2025
+  },
+  "torredembarra": {
+   "municipio": "Torredembarra",
+   "provincia": "tarragona",
+   "poblacion": 18237,
+   "anio": 2025
+  },
+  "torroja del priorat": {
+   "municipio": "Torroja del Priorat",
+   "provincia": "tarragona",
+   "poblacion": 129,
+   "anio": 2025
+  },
+  "tortosa": {
+   "municipio": "Tortosa",
+   "provincia": "tarragona",
+   "poblacion": 35997,
+   "anio": 2025
+  },
+  "ulldecona": {
+   "municipio": "Ulldecona",
+   "provincia": "tarragona",
+   "poblacion": 6714,
+   "anio": 2025
+  },
+  "ulldemolins": {
+   "municipio": "Ulldemolins",
+   "provincia": "tarragona",
+   "poblacion": 389,
+   "anio": 2025
+  },
+  "vallclara": {
+   "municipio": "Vallclara",
+   "provincia": "tarragona",
+   "poblacion": 91,
+   "anio": 2025
+  },
+  "vallfogona de riucorb": {
+   "municipio": "Vallfogona de Riucorb",
+   "provincia": "tarragona",
+   "poblacion": 95,
+   "anio": 2025
+  },
+  "vallmoll": {
+   "municipio": "Vallmoll",
+   "provincia": "tarragona",
+   "poblacion": 1997,
+   "anio": 2025
+  },
+  "valls": {
+   "municipio": "Valls",
+   "provincia": "tarragona",
+   "poblacion": 25518,
+   "anio": 2025
+  },
+  "vandellos i l'hospitalet de l'infant": {
+   "municipio": "Vandellòs i l'Hospitalet de l'Infant",
+   "provincia": "tarragona",
+   "poblacion": 7143,
+   "anio": 2025
+  },
+  "el vendrell": {
+   "municipio": "el Vendrell",
+   "provincia": "tarragona",
+   "poblacion": 41133,
+   "anio": 2025
+  },
+  "vespella de gaia": {
+   "municipio": "Vespella de Gaià",
+   "provincia": "tarragona",
+   "poblacion": 502,
+   "anio": 2025
+  },
+  "vilabella": {
+   "municipio": "Vilabella",
+   "provincia": "tarragona",
+   "poblacion": 724,
+   "anio": 2025
+  },
+  "vilalba dels arcs": {
+   "municipio": "Vilalba dels Arcs",
+   "provincia": "tarragona",
+   "poblacion": 611,
+   "anio": 2025
+  },
+  "vilallonga del camp": {
+   "municipio": "Vilallonga del Camp",
+   "provincia": "tarragona",
+   "poblacion": 2495,
+   "anio": 2025
+  },
+  "vilanova de prades": {
+   "municipio": "Vilanova de Prades",
+   "provincia": "tarragona",
+   "poblacion": 111,
+   "anio": 2025
+  },
+  "vilanova d'escornalbou": {
+   "municipio": "Vilanova d'Escornalbou",
+   "provincia": "tarragona",
+   "poblacion": 614,
+   "anio": 2025
+  },
+  "vilaplana": {
+   "municipio": "Vilaplana",
+   "provincia": "tarragona",
+   "poblacion": 549,
+   "anio": 2025
+  },
+  "vila-seca": {
+   "municipio": "Vila-seca",
+   "provincia": "tarragona",
+   "poblacion": 23917,
+   "anio": 2025
+  },
+  "vilaverd": {
+   "municipio": "Vilaverd",
+   "provincia": "tarragona",
+   "poblacion": 493,
+   "anio": 2025
+  },
+  "la vilella alta": {
+   "municipio": "la Vilella Alta",
+   "provincia": "tarragona",
+   "poblacion": 127,
+   "anio": 2025
+  },
+  "la vilella baixa": {
+   "municipio": "la Vilella Baixa",
+   "provincia": "tarragona",
+   "poblacion": 201,
+   "anio": 2025
+  },
+  "vimbodi i poblet": {
+   "municipio": "Vimbodí i Poblet",
+   "provincia": "tarragona",
+   "poblacion": 887,
+   "anio": 2025
+  },
+  "vinebre": {
+   "municipio": "Vinebre",
+   "provincia": "tarragona",
+   "poblacion": 427,
+   "anio": 2025
+  },
+  "vinyols i els arcs": {
+   "municipio": "Vinyols i els Arcs",
+   "provincia": "tarragona",
+   "poblacion": 2450,
+   "anio": 2025
+  },
+  "xerta": {
+   "municipio": "Xerta",
+   "provincia": "tarragona",
+   "poblacion": 1180,
    "anio": 2025
   }
  }

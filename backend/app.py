@@ -2228,6 +2228,15 @@ def place_profile_url(municipio):
 RENDICION_CUENTAS_IDS = {
     "murcia": {"idComunidadAutonoma": "13", "idProvincia": "30"},
     "girona": {"idComunidadAutonoma": "9", "idProvincia": "17"},
+    # idProvincia verificados en vivo contra el formulario real el
+    # 2026-08-09 (mismo patrón que Girona: idComunidadAutonoma=9 para las
+    # 4 provincias catalanas, idProvincia = código INE de provincia) --
+    # "Lleida" devolvió 5 municipios con "Lleida" en el nombre (capital
+    # incluida, idEntidad 3917), "Barcelona"/"Tarragona" devolvieron cada
+    # una un único resultado exacto (idEntidad 879 / 6491).
+    "lleida": {"idComunidadAutonoma": "9", "idProvincia": "25"},
+    "barcelona": {"idComunidadAutonoma": "9", "idProvincia": "08"},
+    "tarragona": {"idComunidadAutonoma": "9", "idProvincia": "43"},
 }
 
 
@@ -2325,7 +2334,8 @@ def alcalde_concejales_html(municipio):
                          f'<b class="pol-nombre">{esc(nombre_alcalde)}</b>{sufijo}{retrib_html}</span>')
 
     concejales = info.get("concejales") or []
-    organismo = f"Ajuntament de {municipio}" if info.get("provincia") == "girona" else f"Ayuntamiento de {municipio}"
+    organismo = (f"Ajuntament de {municipio}" if info.get("provincia") in PROVINCIAS_CATALUNYA
+                 else f"Ayuntamiento de {municipio}")
     transp_url = f"https://www.google.com/search?q={quote_plus(organismo + ' transparencia')}"
 
     items = []

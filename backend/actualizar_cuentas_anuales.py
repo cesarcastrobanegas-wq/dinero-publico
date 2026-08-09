@@ -1,6 +1,7 @@
 # encoding: utf-8
 """
-Resuelve, para cada municipio de Murcia y Girona, su identificador interno
+Resuelve, para cada municipio de las 5 provincias que cubre esta app
+(ampliado 2026-08-09), su identificador interno
 (idEntidad) en la Plataforma de Rendición de Cuentas de las Corporaciones
 Locales (rendiciondecuentas.es, Tribunal de Cuentas) y el último ejercicio
 con la Cuenta General rendida, y genera backend/cuentas_anuales.json.
@@ -40,7 +41,8 @@ import requests
 import requests.sessions
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import (BASE_DIR, MUNICIPIOS_MURCIA, MUNICIPIOS_GIRONA, normalizar,
+from app import (BASE_DIR, MUNICIPIOS_MURCIA, MUNICIPIOS_GIRONA, MUNICIPIOS_LLEIDA,
+                  MUNICIPIOS_BARCELONA, MUNICIPIOS_TARRAGONA, normalizar,
                   RENDICION_CUENTAS_IDS)
 
 # rendiciondecuentas.es declara charset=ISO-8859-1 y, cuando la denominación
@@ -193,8 +195,13 @@ def main():
     sin_match = []
     sin_ejercicio = []
 
+    # Ampliado 2026-08-09 a las 3 provincias catalanas restantes -- mismo
+    # RENDICION_CUENTAS_IDS (app.py) ya con sus idProvincia verificados.
     tareas = ([(m, "murcia") for m in MUNICIPIOS_MURCIA] +
-              [(m, "girona") for m in MUNICIPIOS_GIRONA])
+              [(m, "girona") for m in MUNICIPIOS_GIRONA] +
+              [(m, "lleida") for m in MUNICIPIOS_LLEIDA] +
+              [(m, "barcelona") for m in MUNICIPIOS_BARCELONA] +
+              [(m, "tarragona") for m in MUNICIPIOS_TARRAGONA])
 
     for i, (municipio, provincia) in enumerate(tareas, 1):
         provincia_ids = RENDICION_CUENTAS_IDS[provincia]

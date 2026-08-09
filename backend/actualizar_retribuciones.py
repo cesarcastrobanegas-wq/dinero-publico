@@ -53,6 +53,10 @@ from actualizar_alcaldes import _emparejar_municipio, PROV_A_KEY
 # (Girona)" traía el paréntesis desambiguador frente al Mieres asturiano.
 ALIAS_ISPA = {
     "Calonge": "Calonge i Sant Antoni",
+    # Detectado 2026-08-09 al ejecutar sobre Lleida/Barcelona/Tarragona:
+    # ISPA escribe este municipio sin artículo, a diferencia del XLSX del
+    # Ministerio de Política Territorial (que sí usa "Pont de Suert, El").
+    "Pont de Suert": "el Pont de Suert",
 }
 
 
@@ -80,7 +84,9 @@ OUT_FILE = f"{BASE_DIR}/retribuciones_ispa.json"
 
 # Provincias (tal como aparecen en la columna PROVINCIA del XLSX de ISPA,
 # que coincide con la nomenclatura del INE que ya usa actualizar_alcaldes.py)
-PROVINCIAS_CUBIERTAS = ("Murcia", "Girona")
+# Ampliado 2026-08-09 a las 3 provincias catalanas restantes -- revisar
+# sin_match tras la primera ejecución por si aparecen alias nuevos.
+PROVINCIAS_CUBIERTAS = ("Murcia", "Girona", "Lleida", "Barcelona", "Tarragona")
 
 
 def _descargar_xlsx(session, url):
