@@ -2398,8 +2398,25 @@ def alcalde_concejales_html(municipio):
         retrib_html = ""
         if retrib and retrib.get("importe") is not None:
             anio = retrib.get("anio", "")
-            retrib_html = (f' <span class="pol-retrib">💰 {fmt_eur(retrib["importe"])}/año'
-                            f'{f" (ISPA {esc(anio)})" if anio else ""}</span>')
+            anio_html = f" (ISPA {esc(anio)})" if anio else ""
+            if retrib["importe"] == 0:
+                # Verificado 2026-08-09 en 3 casos reales (Sabadell, Sant
+                # Boi de Llobregat, Granollers, los 3 alcaldesas que también
+                # forman parte del gobierno de la Diputació de Barcelona):
+                # el 0€ de ISPA no es un hueco de datos, es que la persona
+                # renunció al sueldo de alcalde/sa por cobrar ya de otro
+                # cargo público. No se puede afirmar el motivo exacto para
+                # CUALQUIER municipio con 0€ (no se ha verificado uno a
+                # uno), así que el texto queda en condicional.
+                nota = ("Un sueldo de 0 € en ISPA no significa que no cobre nada -- suele "
+                        "indicar que quien ocupa el cargo ha renunciado al sueldo de alcalde/sa "
+                        "por percibir ya retribución de otro cargo público (frecuente cuando "
+                        "también forma parte del gobierno de una Diputación). Verificado así en "
+                        "varios municipios de la provincia de Barcelona.")
+                retrib_html = (f' <span class="pol-retrib" title="{esc(nota)}">💰 0 €/año{anio_html} '
+                                f'<span class="pol-retrib-nota">(posible renuncia por doble cargo ℹ️)</span></span>')
+            else:
+                retrib_html = f' <span class="pol-retrib">💰 {fmt_eur(retrib["importe"])}/año{anio_html}</span>'
         alcalde_html = (f'<span class="alcalde-info">👤 Alcalde/sa: '
                          f'<b class="pol-nombre">{esc(nombre_alcalde)}</b>{sufijo}{retrib_html}</span>')
 
@@ -6048,6 +6065,7 @@ header p{font-size:12px;color:var(--dim);margin-top:2px;}
 .alcalde-info{display:block;font-size:11px;color:var(--dim);margin-top:4px;}
 .pol-nombre{color:var(--purple);}
 .pol-retrib{color:var(--green);font-family:'IBM Plex Mono',monospace;}
+.pol-retrib-nota{color:var(--dim);font-style:italic;cursor:help;}
 .concejales-dd{margin-top:4px;font-size:11px;}
 .concejales-dd summary{cursor:pointer;color:var(--dim);}
 .concejales-dd summary:hover{color:var(--accent);}
