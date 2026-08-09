@@ -6539,10 +6539,22 @@ PWA_MANIFEST = {
 # manifest) -- todo lo demás (HTML de municipios/rankings, /api/*, cualquier
 # POST) va SIEMPRE a red sin tocar caché, porque son datos de contratos que
 # se actualizan a diario vía cron y nunca deben servirse desactualizados.
-# CACHE_NAME lleva fecha para poder invalidar cachés viejas cambiándola --
+# CACHE_NAME lleva versión para poder invalidar cachés viejas cambiándola --
 # ver el evento 'activate', que borra cualquier caché con otro nombre.
+# IMPORTANTE (aprendido 2026-08-09): el navegador solo revisa si hay un SW
+# nuevo comparando el CONTENIDO de este fichero byte a byte -- si se cambia
+# style.css (u otro de los STATIC_PATHS) SIN tocar nada aquí, los
+# dispositivos que ya tenían el SW instalado siguen sirviendo el CSS/JS
+# viejo desde caché indefinidamente (stale-while-revalidate sirve la
+# versión vieja en cuanto exista, y como el propio sw.js no cambió, nunca
+# se dispara una reinstalación que la purgue). Bug real: un banner nuevo
+# añadido a style.css no se veía en un móvil real que ya había visitado el
+# sitio antes, pese a funcionar bien en pruebas con navegador limpio
+# (Playwright). Por eso: **cualquier cambio a alguno de los STATIC_PATHS
+# de abajo tiene que venir acompañado de subir este número de versión**,
+# aunque el propio código de este service worker no cambie en nada más.
 _PWA_SW_JS = """
-const CACHE_NAME = "dinero-publico-static-v1";
+const CACHE_NAME = "dinero-publico-static-v2";
 const STATIC_PATHS = [
   "/static/style.css",
   "/static/logo.svg",
