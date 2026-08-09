@@ -4,7 +4,7 @@ Fuente: Plataforma de Contratación del Sector Público (datos oficiales CODICE/
 """
 
 import gzip as _gzip
-import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time
+import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from email.utils import parsedate_to_datetime
@@ -6410,6 +6410,26 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 }
 """
 
+# Version de cache-busting para los estaticos servidos con Cache-Control de
+# 24h (style.css, logo.svg, iconos, manifest.json) -- se deriva de un hash
+# del propio CSS en vez de un numero a subir a mano. Motivo (bug real,
+# 2026-08-09): un cambio de CSS (el banner de instalar app) no llegaba a
+# verse en moviles que ya habian cargado style.css ese mismo dia, PESE a
+# subir la version del cache del service worker (v1->v2, commit a49878c) --
+# ese bump solo invalida el CacheStorage del SW, pero el propio fetch que
+# repuebla esa cache (y el <link> normal fuera del SW) sigue respetando el
+# Cache-Control:max-age=86400 del navegador si la entrada aun esta fresca,
+# asi que redescargaba el CSS VIEJO igualmente. Al colgar esta version como
+# ?v=<hash> de la URL, cualquier cambio de CSS pasa a ser una URL nueva --
+# cache-miss garantizado en las dos capas (HTTP y SW), sin depender de
+# acordarse de subir un numero a mano cada vez.
+PWA_STATIC_VERSION = hashlib.md5(_ALL_CSS_CONTENT.encode("utf-8")).hexdigest()[:10]
+
+
+def _pwa_asset(path):
+    """Añade ?v=<hash-del-css> a una URL de estático para cache-busting."""
+    return f"{path}?v={PWA_STATIC_VERSION}"
+
 
 def spinner_page(job_id, municipio, provincia="murcia"):
     es_catalunya = provincia in PROVINCIAS_CATALUNYA
@@ -6428,7 +6448,7 @@ def spinner_page(job_id, municipio, provincia="murcia"):
   gtag('config', 'G-86Q210M1DC');
 </script>
 <title>Buscando — {esc(municipio)}</title>
-<link rel="stylesheet" href="/static/style.css"></head>
+<link rel="stylesheet" href="{_pwa_asset('/static/style.css')}"></head>
 <body>
 <header>
   <div class="logo">DINERO&nbsp;PÚBLICO</div>
@@ -6525,10 +6545,10 @@ PWA_MANIFEST = {
     "background_color": PWA_BACKGROUND_COLOR,
     "theme_color": PWA_THEME_COLOR,
     "icons": [
-        {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-        {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
-        {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-        {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+        {"src": _pwa_asset("/static/icon-192.png"), "sizes": "192x192", "type": "image/png", "purpose": "any"},
+        {"src": _pwa_asset("/static/icon-192.png"), "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+        {"src": _pwa_asset("/static/icon-512.png"), "sizes": "512x512", "type": "image/png", "purpose": "any"},
+        {"src": _pwa_asset("/static/icon-512.png"), "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
     ],
 }
 
@@ -6541,29 +6561,38 @@ PWA_MANIFEST = {
 # se actualizan a diario vía cron y nunca deben servirse desactualizados.
 # CACHE_NAME lleva versión para poder invalidar cachés viejas cambiándola --
 # ver el evento 'activate', que borra cualquier caché con otro nombre.
-# IMPORTANTE (aprendido 2026-08-09): el navegador solo revisa si hay un SW
-# nuevo comparando el CONTENIDO de este fichero byte a byte -- si se cambia
-# style.css (u otro de los STATIC_PATHS) SIN tocar nada aquí, los
-# dispositivos que ya tenían el SW instalado siguen sirviendo el CSS/JS
-# viejo desde caché indefinidamente (stale-while-revalidate sirve la
-# versión vieja en cuanto exista, y como el propio sw.js no cambió, nunca
-# se dispara una reinstalación que la purgue). Bug real: un banner nuevo
-# añadido a style.css no se veía en un móvil real que ya había visitado el
-# sitio antes, pese a funcionar bien en pruebas con navegador limpio
-# (Playwright). Por eso: **cualquier cambio a alguno de los STATIC_PATHS
-# de abajo tiene que venir acompañado de subir este número de versión**,
-# aunque el propio código de este service worker no cambie en nada más.
-_PWA_SW_JS = """
-const CACHE_NAME = "dinero-publico-static-v2";
-const STATIC_PATHS = [
-  "/static/style.css",
-  "/static/logo.svg",
-  "/static/icon-192.png",
-  "/static/icon-512.png",
-  "/static/apple-touch-icon.png",
-  "/manifest.json",
-];
+# IMPORTANTE (aprendido 2026-08-09, dos veces): el navegador solo revisa si
+# hay un SW nuevo comparando el CONTENIDO de este fichero byte a byte -- si
+# se cambia style.css SIN tocar nada aquí, los dispositivos que ya tenían el
+# SW instalado siguen sirviendo el CSS viejo indefinidamente. El primer
+# intento de arreglar esto fue subir CACHE_NAME a mano (v1->v2, commit
+# a49878c) -- INSUFICIENTE: ese bump solo invalida el CacheStorage del SW,
+# pero el propio fetch que repuebla la cache nueva (cache.addAll) usa fetch()
+# con caché HTTP normal, así que si el navegador todavía tenía
+# /static/style.css fresco en su caché HTTP (Cache-Control:max-age=86400,
+# ver ruta /static/style.css más abajo), redescargaba el CSS VIEJO de todos
+# modos -- un banner nuevo no se veía en un móvil real que ya había visitado
+# el sitio ese mismo día, pese a funcionar en pruebas con navegador limpio.
+# Fix real: CACHE_NAME y cada URL de STATIC_PATHS llevan ahora
+# ?v=PWA_STATIC_VERSION (hash del CSS, ver _pwa_asset() más arriba) -- un
+# cambio de CSS cambia la URL, así que es cache-miss garantizado en las DOS
+# capas (HTTP y SW) a la vez, y de paso este propio fichero cambia de
+# contenido automáticamente (ya no hace falta acordarse de subir nada a
+# mano).
+_PWA_STATIC_PATHS_BASE = [
+    "/static/style.css",
+    "/static/logo.svg",
+    "/static/icon-192.png",
+    "/static/icon-512.png",
+    "/static/apple-touch-icon.png",
+    "/manifest.json",
+]
+_PWA_STATIC_PATHS_VERSIONED = [_pwa_asset(p) for p in _PWA_STATIC_PATHS_BASE]
 
+_PWA_SW_JS = ('const CACHE_NAME = "dinero-publico-static-' + PWA_STATIC_VERSION + '";\n'
+'const STATIC_PATHS_BASE = ' + json.dumps(_PWA_STATIC_PATHS_BASE) + ';\n'
+'const STATIC_PATHS = ' + json.dumps(_PWA_STATIC_PATHS_VERSIONED) + ';\n'
++ """
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_PATHS))
@@ -6582,7 +6611,7 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  const isStatic = event.request.method === "GET" && STATIC_PATHS.includes(url.pathname);
+  const isStatic = event.request.method === "GET" && STATIC_PATHS_BASE.includes(url.pathname);
 
   if (!isStatic) {
     // Todo lo que no sea un estatico conocido va directo a red, sin
@@ -6605,7 +6634,7 @@ self.addEventListener("fetch", (event) => {
     )
   );
 });
-"""
+""")
 
 REGISTRO_MERCANTIL_URL = "https://www.registradores.org/actualidad/portal-notarial/registro-mercantil-en-linea"
 REGISTRO_ASOCIACIONES_URL = "https://www.interior.gob.es/opencms/es/servicios-al-ciudadano/tramites-y-gestiones/asociaciones/consulta-del-fichero-de-denominaciones/"
@@ -6968,10 +6997,10 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <meta name="description" content="{desc}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{esc(SITE_URL)}/">
-<link rel="icon" type="image/svg+xml" href="/static/logo.svg">
-<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/svg+xml" href="{_pwa_asset('/static/logo.svg')}">
+<link rel="manifest" href="{_pwa_asset('/manifest.json')}">
 <meta name="theme-color" content="{PWA_THEME_COLOR}">
-<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="{_pwa_asset('/static/apple-touch-icon.png')}">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -6982,12 +7011,12 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <meta property="og:url" content="{esc(SITE_URL)}/">
 <meta property="og:site_name" content="Dinero Público">
 <meta property="og:locale" content="es_ES">
-<meta property="og:image" content="{esc(SITE_URL)}/static/logo.svg">
+<meta property="og:image" content="{esc(SITE_URL)}{_pwa_asset('/static/logo.svg')}">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="{esc(full_title)}">
 <meta name="twitter:description" content="{desc}">
-<meta name="twitter:image" content="{esc(SITE_URL)}/static/logo.svg">
-<link rel="stylesheet" href="/static/style.css">
+<meta name="twitter:image" content="{esc(SITE_URL)}{_pwa_asset('/static/logo.svg')}">
+<link rel="stylesheet" href="{_pwa_asset('/static/style.css')}">
 {extra_head}</head>
 <body>
 <div id="pwa-banner-mobile" class="pwa-banner-mobile" hidden>
