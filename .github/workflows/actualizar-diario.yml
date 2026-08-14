@@ -76,6 +76,24 @@ name: Actualizar contratos diariamente
 # como fallido (exit 1 al final del step principal) si `fallo=1`, para que
 # César siga recibiendo el aviso por email cuando algo no termina bien --
 # lo único que cambia es que ya no se tira a la basura el progreso parcial.
+#
+# RACE DE PUSH ENTRE FRANJAS (descubierto 2026-08-14 la primera noche que
+# corrió el split de arriba): con 5 franjas empujando a `main` la misma
+# noche, la franja de Tarragona (run 31788768296) hizo `git push` y lo
+# recibió rechazado ("fetch first") porque el commit de cache.db de la
+# franja de Barcelona (bd0e9e9) aterró en `main` unos segundos DESPUÉS del
+# `checkout` de Tarragona -- el `concurrency` de abajo evita que dos
+# franjas corran a la vez, pero no hay garantía de que el checkout de la
+# siguiente incluya ya el push final de la anterior si la cola se libera
+# justo en ese margen de segundos. Sin reintento, ese rechazo tiraba a la
+# basura el cache.db recién descargado (con el progreso parcial de
+# Tarragona ya checkpointeado en él). Fix: `push_con_reintento` (definida
+# en cada paso que hace `git push`) reintenta con `git fetch` + `git
+# rebase origin/main` antes de volver a empujar, hasta 5 veces -- para un
+# fichero generado por el propio bot (cache.db, hacienda_eell.json,
+# poblacion.json) el rebase es trivial (solo re-aplica "sustituir el
+# fichero por la versión descargada", nunca hay conflicto real de
+# contenido).
 
 on:
   schedule:
@@ -187,6 +205,30 @@ jobs:
           (cd backend && python actualizar_deuda_y_liquidaciones.py) \
             || { echo "::warning::actualizar_deuda_y_liquidaciones.py falló; se mantiene el hacienda_eell.json existente."; exit 0; }
 
+          # Reintenta el push con rebase si otra franja ya empujó a main
+          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera.
+          push_con_reintento() {
+            local intentos=0
+            while true; do
+              if git push; then
+                return 0
+              fi
+              intentos=$((intentos+1))
+              if [ "$intentos" -ge 5 ]; then
+                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
+                return 1
+              fi
+              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
+              git fetch origin main
+              if ! git rebase origin/main; then
+                echo "::error::git rebase sobre origin/main falló; abortando push."
+                git rebase --abort 2>/dev/null || true
+                return 1
+              fi
+              sleep 5
+            done
+          }
+
           git config user.name  "dinero-publico-bot"
           git config user.email "bot@users.noreply.github.com"
           git add backend/hacienda_eell.json
@@ -194,7 +236,7 @@ jobs:
             echo "hacienda_eell.json sin cambios; nada que commitear."
           else
             git commit -m "Auto-commit: refresco deuda viva y saldo no financiero (Ministerio de Hacienda)"
-            git push
+            push_con_reintento
             echo "hacienda_eell.json commiteado y pusheado."
           fi
 
@@ -213,6 +255,30 @@ jobs:
           (cd backend && python actualizar_poblacion.py) \
             || { echo "::warning::actualizar_poblacion.py falló; se mantiene el poblacion.json existente."; exit 0; }
 
+          # Reintenta el push con rebase si otra franja ya empujó a main
+          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera.
+          push_con_reintento() {
+            local intentos=0
+            while true; do
+              if git push; then
+                return 0
+              fi
+              intentos=$((intentos+1))
+              if [ "$intentos" -ge 5 ]; then
+                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
+                return 1
+              fi
+              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
+              git fetch origin main
+              if ! git rebase origin/main; then
+                echo "::error::git rebase sobre origin/main falló; abortando push."
+                git rebase --abort 2>/dev/null || true
+                return 1
+              fi
+              sleep 5
+            done
+          }
+
           git config user.name  "dinero-publico-bot"
           git config user.email "bot@users.noreply.github.com"
           git add backend/poblacion.json
@@ -220,7 +286,7 @@ jobs:
             echo "poblacion.json sin cambios; nada que commitear."
           else
             git commit -m "Auto-commit: refresco población oficial (INE, Padrón Municipal)"
-            git push
+            push_con_reintento
             echo "poblacion.json commiteado y pusheado."
           fi
 
@@ -456,6 +522,33 @@ jobs:
           conteos=$(grep '^RESUMEN' canario.out | sed 's/^RESUMEN //')
           rm -f canario.out
 
+          # Reintenta el push con rebase si otra franja ya empujó a main
+          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera
+          # (así es exactamente como se perdió el checkpoint de Tarragona la
+          # primera noche: Barcelona commiteó unos segundos después de que
+          # este job hiciera su checkout).
+          push_con_reintento() {
+            local intentos=0
+            while true; do
+              if git push; then
+                return 0
+              fi
+              intentos=$((intentos+1))
+              if [ "$intentos" -ge 5 ]; then
+                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
+                return 1
+              fi
+              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
+              git fetch origin main
+              if ! git rebase origin/main; then
+                echo "::error::git rebase sobre origin/main falló; abortando push."
+                git rebase --abort 2>/dev/null || true
+                return 1
+              fi
+              sleep 5
+            done
+          }
+
           mv -f cache_db_nuevo.db backend/cache.db
           git config user.name  "dinero-publico-bot"
           git config user.email "bot@users.noreply.github.com"
@@ -465,5 +558,5 @@ jobs:
             exit 0
           fi
           git commit -m "Auto-commit diario de cache.db desde producción (${conteos}) [franja: ${{ steps.slot.outputs.provincia }}]"
-          git push
+          push_con_reintento
           echo "cache.db commiteado y pusheado (${conteos})."
