@@ -3486,19 +3486,20 @@ def _enlazar_borm_place(contratos):
                 p["borm_url"] = b["url"]
 
 
-def buscar_en_borm(municipio, job_id=None):
-    """Busca contratos adjudicados publicados en el BORM para el municipio dado."""
-    _log(job_id, "Consultando BORM (Boletín Oficial Región de Murcia)…")
-    contratos = []
+# Primer año que consulta buscar_en_borm (ver nota ahí sobre el porqué de
+# no ir más atrás -- decisión sin documentar heredada del código original,
+# no una política deliberada como RPC_MENORS_DESDE_ANY).
+BORM_ANIO_INICIO = 2020
 
-    # Solo anuncios de adjudicación/formalización de contratos (evitar padrones, presupuestos, etc.)
-    keywords_sumario = ["adjudic", "formaliz", "licitaci"]
 
-    # Buscar anuncios del municipio en BORM (sumario)
+def _borm_buscar_pagina(municipio, fecha_desde, fecha_hasta, job_id=None):
+    """Una única llamada a BORM_BUSCAR_URL para el rango de fechas dado.
+    Devuelve la lista de anuncios (puede ser vacía), o None si la petición
+    falla del todo (no confundir con "vacía pero válida")."""
     payload = {
         "textoLibre": municipio,
-        "fechaDesde": "01/01/2020",
-        "fechaHasta": datetime.now().strftime("%d/%m/%Y"),
+        "fechaDesde": fecha_desde,
+        "fechaHasta": fecha_hasta,
         "anunciante": municipio,   # el BORM registra el Ayto. solo con el nombre del municipio
         "rango": 0,
         "tipo": "libre",
@@ -3510,32 +3511,70 @@ def buscar_en_borm(municipio, job_id=None):
     try:
         r = session.post(BORM_BUSCAR_URL, json=payload, timeout=HTTP_TIMEOUT)
         if r.status_code != 200:
-            _log(job_id, f"  BORM: HTTP {r.status_code}")
-            return []
+            _log(job_id, f"  BORM: HTTP {r.status_code} ({fecha_desde}–{fecha_hasta})")
+            return None
 
         # La API puede responder con JSON o con XML según la versión
         ct = r.headers.get("Content-Type", "")
         if "json" in ct:
             raw_anuncios = r.json().get("anuncios", [])
-            anuncios = raw_anuncios if isinstance(raw_anuncios, list) else []
-        else:
-            # Parsear XML (formato vigente a partir de mayo 2026)
-            import xml.etree.ElementTree as _ET
-            root = _ET.fromstring(r.content)
-            anuncios = []
-            for a in root.findall("anuncios/anuncios"):
-                def _txt(tag):
-                    el = a.find(tag)
-                    return el.text.strip() if el is not None and el.text else ""
-                anuncios.append({
-                    "idAnuncio":        _txt("idAnuncio"),
-                    "sumario":          _txt("sumario"),
-                    "anunciante":       _txt("anunciante"),
-                    "fechaPublicacion": _txt("fechaPublicacion"),
-                })
+            return raw_anuncios if isinstance(raw_anuncios, list) else []
+
+        # Parsear XML (formato vigente a partir de mayo 2026)
+        import xml.etree.ElementTree as _ET
+        root = _ET.fromstring(r.content)
+        anuncios = []
+        for a in root.findall("anuncios/anuncios"):
+            def _txt(tag):
+                el = a.find(tag)
+                return el.text.strip() if el is not None and el.text else ""
+            anuncios.append({
+                "idAnuncio":        _txt("idAnuncio"),
+                "sumario":          _txt("sumario"),
+                "anunciante":       _txt("anunciante"),
+                "fechaPublicacion": _txt("fechaPublicacion"),
+            })
+        return anuncios
     except Exception as e:
-        _log(job_id, f"  BORM no disponible ({type(e).__name__})")
-        return []
+        _log(job_id, f"  BORM no disponible ({type(e).__name__}, {fecha_desde}–{fecha_hasta})")
+        return None
+
+
+def buscar_en_borm(municipio, job_id=None):
+    """Busca contratos adjudicados publicados en el BORM para el municipio dado.
+
+    Consulta AÑO A AÑO, no de una sola vez para todo BORM_ANIO_INICIO-hoy:
+    BORM_BUSCAR_URL trunca en silencio a 1000 anuncios por llamada, sin
+    ningún indicio en la respuesta de que se cortó ni un total real
+    verificado en vivo (2026-08-15): una única llamada para Cartagena
+    2020-2025 devolvió exactamente 1000 anuncios, pero sumando año a año la
+    misma búsqueda dio 1017 -- 17 anuncios que la llamada única perdía sin
+    avisar. Trocear por año mantiene cada llamada muy por debajo del límite
+    (máximo medido: 201/año en Cartagena, el municipio con más actividad del
+    padrón) salvo que algún año concreto también lo alcance, en cuyo caso se
+    avisa explícitamente en vez de fallar en silencio otra vez."""
+    _log(job_id, "Consultando BORM (Boletín Oficial Región de Murcia)…")
+    contratos = []
+
+    # Solo anuncios de adjudicación/formalización de contratos (evitar padrones, presupuestos, etc.)
+    keywords_sumario = ["adjudic", "formaliz", "licitaci"]
+
+    hoy = datetime.now()
+    anuncios_por_id = {}
+    for anio in range(BORM_ANIO_INICIO, hoy.year + 1):
+        fecha_desde = f"01/01/{anio}"
+        fecha_hasta = f"31/12/{anio}" if anio < hoy.year else hoy.strftime("%d/%m/%Y")
+        pagina = _borm_buscar_pagina(municipio, fecha_desde, fecha_hasta, job_id)
+        if pagina is None:
+            continue
+        if len(pagina) >= 1000:
+            _log(job_id, f"  BORM {anio}: {len(pagina)} anuncios -- posible límite de la API, "
+                         f"podría faltar alguno de {municipio} ese año")
+        for a in pagina:
+            aid = a.get("idAnuncio")
+            if aid:
+                anuncios_por_id[aid] = a
+    anuncios = list(anuncios_por_id.values())
 
     # Filtrar anuncios que sean adjudicaciones/formalizaciones reales
     candidatos = [
