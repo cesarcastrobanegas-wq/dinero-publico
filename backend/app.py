@@ -3359,6 +3359,44 @@ def _parse_borm_contrato(texto, id_anuncio, sumario, fecha_pub):
                 nif = nif_m.group(1).upper()
                 break
 
+    # Fallback sin NIF: las tres estrategias de arriba exigen todas un
+    # CIF/NIF adyacente al nombre, pero el BORM no siempre lo publica en el
+    # anuncio de adjudicación (verificado en vivo, anuncio 782989 de
+    # Alcantarilla: "b) Adjudicatario: Vectoris, S.L. antes denominada..."
+    # sin NIF en todo el texto -- contrato real de 1,18M€ marcado "No
+    # localizada" pese a nombrar la empresa sin ambigüedad). Sin NIF no
+    # podemos cruzar con el registro mercantil (búsqueda de directivos), pero
+    # sí mostrar el nombre en vez de "No localizada". Se descartan los casos
+    # sin adjudicatario real (desierto/sin ofertas/renuncia) para no inventar
+    # una empresa donde no la hay.
+    #
+    # Exige que "Adjudicatario:" esté al principio de línea (con o sin
+    # marcador de lista "b)" delante) -- verificado en vivo contra 98
+    # anuncios reales marcados "No localizada": sin esta condición, la
+    # palabra "adjudicatario" también aparece (1) en frases sueltas sin
+    # relación ("... haya sido adjudicatario de una vivienda..."), (2) en
+    # cabeceras de tablas de adjudicaciones múltiples ("Adjudicatario\t
+    # Precio de adjudicación\tFecha..." -- un mismo anuncio puede listar
+    # varias concesiones, cada una con su propio resultado, y capturar solo
+    # la cabecera es peor que "No localizada"), y (3) en cláusulas
+    # genéricas ("obligaciones del adjudicatario: Establecido en la
+    # cláusula..."). Exigir inicio de línea descarta los tres sin perder
+    # ningún caso real de los probados. Con este filtro: 6 recuperaciones
+    # limpias de 98 (Vectoris S.L., y 5 personas físicas/autónomos con DNI
+    # -- formato que las tres estrategias de arriba tampoco cubrían, solo
+    # reconocen CIF con letra inicial, no DNI con letra final), 0 falsos
+    # positivos.
+    if not empresa:
+        m3 = re.search(r'^\s*(?:[a-z]\)\s*)?adjudicatari[ao][:\s]+([^\n]{3,120})', texto, re.I | re.M)
+        if m3:
+            candidate = m3.group(1).strip()
+            candidate = re.split(r'\s+antes\s+denominad[ao]\b', candidate, flags=re.I)[0]
+            candidate = candidate.rstrip(') .,')
+            if (candidate and "\t" not in candidate
+                    and re.match(r'^[A-ZÁÉÍÓÚÑ]', candidate)
+                    and not re.search(r'desiert|sin ofertas|no se present|renunci|establecid', candidate, re.I)):
+                empresa = candidate
+
     m_imp = _BORM_IMPORTE_RE.search(texto)
     if m_imp:
         raw = re.sub(r'\s+', '', m_imp.group(1))
