@@ -33,12 +33,13 @@ name: Actualizar contratos diariamente
 # contenedor para ella sola:
 #
 #   01:00 UTC  murcia      (45 municipios)  + Hacienda + Población (INE)
-#   02:30 UTC  girona      (240 municipios)
-#   04:30 UTC  lleida      (231 municipios)
-#   06:30 UTC  barcelona   (309 municipios, la más grande)
-#   08:30 UTC  tarragona   (181 municipios)  + fondos UE + noticias UE +
-#                                              contractes menors Girona +
-#                                              contratos menores Fuente Álamo
+#   02:30 UTC  girona      (240 municipios)  + contractes menors Girona (RPC)
+#   04:30 UTC  lleida      (231 municipios)  + contractes menors Lleida (RPC)
+#   06:30 UTC  barcelona   (309 municipios, la más grande) + contractes
+#                                              menors Barcelona (RPC)
+#   08:30 UTC  tarragona   (181 municipios)  + contractes menors Tarragona
+#                                              (RPC) + fondos UE + noticias UE
+#                                              + contratos menores Fuente Álamo
 #
 # Los huecos (1h30-2h) son deliberadamente generosos: con Murcia+Girona
 # (285 municipios) tardando ~1h en total cuando funcionaba bien, cada
@@ -53,11 +54,23 @@ name: Actualizar contratos diariamente
 # Los pasos de Hacienda y Población (independientes de /actualizar-todos,
 # no tocan contratos) se quedan anclados a la franja de Murcia, la primera
 # de la noche, para que corran solo una vez al día y no cinco. Fondos UE +
-# noticias + contractes menors Girona + Fuente Álamo se quedan anclados a
-# la última franja (Tarragona) por el mismo motivo, y porque ya se sabe
-# por los logs (run 31670360515) que esos cuatro completan bien incluso en
-# las noches en que "todos" revienta -- no son la causa del OOM ni se
-# benefician de tener su propia franja aparte.
+# noticias + Fuente Álamo se quedan anclados a la última franja (Tarragona)
+# por el mismo motivo, y porque ya se sabe por los logs (run 31670360515)
+# que esos tres completan bien incluso en las noches en que "todos"
+# revienta -- no son la causa del OOM ni se benefician de tener su propia
+# franja aparte.
+#
+# CONTRACTES MENORS RPC POR PROVINCIA (añadido 2026-08-15, ver memoria del
+# proyecto -- investigación de "contratos que faltan"): antes de este
+# commit el dataset RPC (hb6v-jcbf, contractes 'Menor' de la Generalitat)
+# solo se refrescaba para Girona. Verificado en vivo contra la API pública:
+# 1.107 contractes reales en Lleida capital, 29.074 en Barcelona capital y
+# 19.178 en Tarragona capital (todo 2021+) que nunca llegaban a la app --
+# Lleida tenía el endpoint construido como fase piloto sin sumar nunca al
+# cron, Barcelona/Tarragona ni siquiera tenían endpoint. Como es una
+# consulta filtrada por municipio contra una API pública (no un ZIP pesado
+# como PLACE), se dispara en la MISMA franja que los contratos de esa
+# provincia, justo después -- no hace falta una franja propia.
 #
 # CHECKPOINTING (añadido 2026-08-07, ver INFORME_NOCHE.md / memoria del
 # proyecto): confirmado en el dashboard de Render que el disco SÍ es
@@ -392,14 +405,49 @@ jobs:
             fi
           fi
 
-          # --- 2. Extras de fin de noche: fondos UE, noticias UE, contractes
-          #     menors Girona y Fuente Álamo -- SOLO en la última franja
-          #     (Tarragona) para que corran una vez al día, no cinco. Se
-          #     saltan por completo en las demás franjas. `solo_fondos_ue`
-          #     manual los fuerza también fuera de la franja de Tarragona,
-          #     para poder probarlos sueltos sin esperar al ciclo completo. --
+          # --- 1.5. Contractes menors (RPC) de la MISMA provincia de esta
+          #     franja -- Girona, Lleida, Barcelona y Tarragona (Murcia no:
+          #     sus contratos menores vienen de Lorca/Mula/Molina de Segura/
+          #     Fuente Álamo, fuentes propias sin API RPC, ver sección 2 más
+          #     abajo). Añadido 2026-08-15 al investigar contratos que
+          #     faltaban en la app: el dataset RPC (hb6v-jcbf) tenía
+          #     contractes 'Menor' reales para las 4 provincias catalanas
+          #     (verificado en vivo: 1.107 en Lleida capital, 29.074 en
+          #     Barcelona capital, 19.178 en Tarragona capital, solo 2021+)
+          #     pero antes de este commit únicamente se refrescaba Girona
+          #     (Lleida tenía el endpoint construido como fase piloto sin
+          #     sumar nunca al cron; Barcelona/Tarragona ni siquiera tenían
+          #     endpoint). Va DESPUÉS de los contratos de la franja pero en
+          #     el mismo paso/franja horaria -- no merece una franja propia,
+          #     es una única consulta filtrada por municipio contra la API
+          #     pública de la Generalitat, no un ZIP pesado como PLACE.
+          if [ "$SOLO_FONDOS_UE" = "true" ]; then
+            echo "== SOLO_FONDOS_UE=true: saltando contractes menors (RPC) =="
+          elif [ "$PROVINCIA_SLOT" = "murcia" ]; then
+            echo "== Franja murcia: RPC no aplica (fuentes propias de Murcia van en la franja de Tarragona) =="
+          else
+            echo "== Disparando /actualizar-contratos-menors-${PROVINCIA_SLOT} (RPC) =="
+            resp_menors=$(curl -s --max-time 60 -X POST \
+              -d "token=${ADMIN_TOKEN}" \
+              "${BASE_URL}/actualizar-contratos-menors-${PROVINCIA_SLOT}" || true)
+            echo "respuesta: $resp_menors"
+            job_menors=$(get_jobid "$resp_menors")
+            if [ -z "$job_menors" ]; then
+              echo "::warning::No se obtuvo job_id de /actualizar-contratos-menors-${PROVINCIA_SLOT}. Se continúa sin refrescar hoy."
+            else
+              echo "job_menors=$job_menors"
+              poll_hasta_done "$job_menors" "menors-${PROVINCIA_SLOT}" || echo "::warning::Contractes menors de ${PROVINCIA_SLOT} no completados; se continúa igualmente."
+            fi
+          fi
+
+          # --- 2. Extras de fin de noche: fondos UE, noticias UE y Fuente
+          #     Álamo -- SOLO en la última franja (Tarragona) para que
+          #     corran una vez al día, no cinco. Se saltan por completo en
+          #     las demás franjas. `solo_fondos_ue` manual los fuerza
+          #     también fuera de la franja de Tarragona, para poder
+          #     probarlos sueltos sin esperar al ciclo completo. --
           if [ "$PROVINCIA_SLOT" != "tarragona" ] && [ "$SOLO_FONDOS_UE" != "true" ]; then
-            echo "== Franja ${PROVINCIA_SLOT}: se saltan fondos UE/noticias/menors/fuentealamo (van con la franja de Tarragona) =="
+            echo "== Franja ${PROVINCIA_SLOT}: se saltan fondos UE/noticias/fuentealamo (van con la franja de Tarragona) =="
           else
             echo "== Disparando /actualizar-fondos-ue (CORDIS + Cohesion Data) =="
             resp_fue=$(curl -s --max-time 60 -X POST \
@@ -438,25 +486,7 @@ jobs:
               poll_hasta_done "$job_noticias" "noticias" || echo "::warning::Noticias UE no completadas; se continúa igualmente."
             fi
 
-            # --- 2.2. Contractes menors Girona (Registre Públic de Contractes) -
-            # Refresca contratos_menors_girona (221 municipios, una consulta
-            # paginada por municipio contra la misma API Socrata que PSCP). No
-            # bloquea el commit del día si falla -- es una fuente adicional, no
-            # crítica.
-            echo "== Disparando /actualizar-contratos-menors-girona (RPC) =="
-            resp_menors=$(curl -s --max-time 60 -X POST \
-              -d "token=${ADMIN_TOKEN}" \
-              "${BASE_URL}/actualizar-contratos-menors-girona" || true)
-            echo "respuesta: $resp_menors"
-            job_menors=$(get_jobid "$resp_menors")
-            if [ -z "$job_menors" ]; then
-              echo "::warning::No se obtuvo job_id de /actualizar-contratos-menors-girona. Se continúa sin refrescar hoy."
-            else
-              echo "job_menors=$job_menors"
-              poll_hasta_done "$job_menors" "menors" || echo "::warning::Contractes menors no completados; se continúa igualmente."
-            fi
-
-            # --- 2.3. Contratos menores Fuente Álamo de Murcia (portal propio) -
+            # --- 2.2. Contratos menores Fuente Álamo de Murcia (portal propio) -
             # Refresca contratos_menors_locales con las filas de Fuente Álamo
             # (scraping de CSV, sin dependencias nuevas). No bloquea el commit
             # del día si falla.
