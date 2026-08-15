@@ -233,11 +233,23 @@ jobs:
               fi
               echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
               git fetch origin main
+              # Guarda cualquier cambio suelto sin commitear antes de rebasar
+              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
+              # está limpio ("cannot rebase: You have unstaged changes",
+              # visto en producción 2026-08-15: algo deja el working tree con
+              # cambios sin stagear entre el commit y el push, probablemente
+              # normalización de line-endings vía .gitattributes/LFS al
+              # tocar main). `git stash push -u` no hace nada si no hay
+              # cambios que guardar, así que este paso es inofensivo también
+              # cuando el árbol ya estaba limpio.
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
               if ! git rebase origin/main; then
                 echo "::error::git rebase sobre origin/main falló; abortando push."
                 git rebase --abort 2>/dev/null || true
+                git stash pop >/dev/null 2>&1 || true
                 return 1
               fi
+              git stash pop >/dev/null 2>&1 || true
               sleep 5
             done
           }
@@ -283,11 +295,23 @@ jobs:
               fi
               echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
               git fetch origin main
+              # Guarda cualquier cambio suelto sin commitear antes de rebasar
+              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
+              # está limpio ("cannot rebase: You have unstaged changes",
+              # visto en producción 2026-08-15: algo deja el working tree con
+              # cambios sin stagear entre el commit y el push, probablemente
+              # normalización de line-endings vía .gitattributes/LFS al
+              # tocar main). `git stash push -u` no hace nada si no hay
+              # cambios que guardar, así que este paso es inofensivo también
+              # cuando el árbol ya estaba limpio.
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
               if ! git rebase origin/main; then
                 echo "::error::git rebase sobre origin/main falló; abortando push."
                 git rebase --abort 2>/dev/null || true
+                git stash pop >/dev/null 2>&1 || true
                 return 1
               fi
+              git stash pop >/dev/null 2>&1 || true
               sleep 5
             done
           }
@@ -570,11 +594,23 @@ jobs:
               fi
               echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
               git fetch origin main
+              # Guarda cualquier cambio suelto sin commitear antes de rebasar
+              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
+              # está limpio ("cannot rebase: You have unstaged changes",
+              # visto en producción 2026-08-15: algo deja el working tree con
+              # cambios sin stagear entre el commit y el push, probablemente
+              # normalización de line-endings vía .gitattributes/LFS al
+              # tocar main). `git stash push -u` no hace nada si no hay
+              # cambios que guardar, así que este paso es inofensivo también
+              # cuando el árbol ya estaba limpio.
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
               if ! git rebase origin/main; then
                 echo "::error::git rebase sobre origin/main falló; abortando push."
                 git rebase --abort 2>/dev/null || true
+                git stash pop >/dev/null 2>&1 || true
                 return 1
               fi
+              git stash pop >/dev/null 2>&1 || true
               sleep 5
             done
           }
