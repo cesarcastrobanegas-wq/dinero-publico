@@ -160,6 +160,11 @@ PAGE_SIZE = 50               # contratos máximos por página
 _result_cache: dict = {}   # normalizar(municipio) → {"ts": float, "resultado": dict}
 _cache_lock   = threading.Lock()
 RESULT_CACHE_TTL = 6 * 3600   # 6 horas
+# Intervalo mínimo entre barridos de _purgar_result_cache_caducado() -- ver esa
+# función más abajo. No hace falta que sea muy frecuente: la barrida es barata
+# y solo importa que las entradas caducadas no se acumulen indefinidamente.
+RESULT_CACHE_PURGA_INTERVALO = 3600   # 1 hora
+_ultima_purga_result_cache = 0.0
 
 # ─── CACHÉ SQLITE (directivos + contratos por municipio) ─────────────────────
 # DATA_DIR ya se resuelve arriba, junto a BASE_DIR (la usan tanto cache.db
@@ -5518,6 +5523,32 @@ def _cache_set(municipio, resultado):
     key = normalizar(municipio)
     with _cache_lock:
         _result_cache[key] = {"ts": time.time(), "resultado": resultado}
+    _purgar_result_cache_caducado()
+
+
+def _purgar_result_cache_caducado():
+    """Elimina de _result_cache las entradas que ya superaron RESULT_CACHE_TTL.
+
+    _cache_get() ya trata una entrada caducada como si no existiera (devuelve
+    None), pero nunca la borraba del dict -- un municipio que deja de
+    visitarse (p.ej. de una provincia que no se toca en varios días) se
+    quedaba ocupando memoria para siempre. El coste real por entrada es
+    pequeño (el "resultado" es el mismo objeto que ya vive en _datos_memoria,
+    no una copia -- ver _job_run), pero el número de entradas nunca bajaba.
+    Throttled a RESULT_CACHE_PURGA_INTERVALO para no recorrer el dict entero
+    en cada _cache_set (se llama una vez por municipio refrescado, cientos de
+    veces por noche)."""
+    global _ultima_purga_result_cache
+    ahora = time.time()
+    if ahora - _ultima_purga_result_cache < RESULT_CACHE_PURGA_INTERVALO:
+        return
+    _ultima_purga_result_cache = ahora
+    with _cache_lock:
+        caducadas = [k for k, v in _result_cache.items() if ahora - v["ts"] >= RESULT_CACHE_TTL]
+        for k in caducadas:
+            del _result_cache[k]
+    if caducadas:
+        print(f"  [cache] {len(caducadas)} entradas caducadas purgadas de _result_cache.", flush=True)
 
 def _cache_age_str(municipio):
     key = normalizar(municipio)
