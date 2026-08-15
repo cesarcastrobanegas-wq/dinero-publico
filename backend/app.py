@@ -2284,7 +2284,22 @@ MUNICIPIOS_TARRAGONA_INE = {
 
 
 PSCP_URL = "https://analisi.transparenciacatalunya.cat/resource/ybgg-dgi6.json"
-PSCP_FASES = "'Adjudicació','Formalització'"
+# 'Execució' añadida 2026-08-15 (investigación de "contratos que faltan"):
+# verificado en vivo que fase_publicacio NO es un historial append-only por
+# expedient -- es el estado ACTUAL, y una vez un contrato formalizado entra
+# en ejecución, su fila pasa de 'Formalització' a 'Execució' (deja de
+# aparecer en 'Formalització'). Sin 'Execució' en este filtro, cualquier
+# contrato que ya hubiera empezado a ejecutarse -- el estado normal y
+# esperado de casi todo contrato adjudicado que no sea recentísimo --
+# desaparecía por completo de la app. Medido en vivo (capitales): Lleida
+# 310, Barcelona 923, Girona 170, Tarragona 101 contratos en 'Execució',
+# todos con adjudicatari/import ya rellenados (no son huecos, son
+# contratos reales completos). 'Publicació agregada de contractes' (la
+# fase con más filas de largo, p.ej. 17.666 en Barcelona capital) se deja
+# fuera a propósito: es el mismo universo de 'Contracte menor' que ya cubre
+# el dataset RPC (hb6v-jcbf, ver actualizar_contratos_menors_rpc) --
+# añadirla aquí duplicaría contratos ya indexados por esa otra vía.
+PSCP_FASES = "'Adjudicació','Formalització','Execució'"
 
 
 def place_profile_url(municipio):
@@ -3582,8 +3597,11 @@ def buscar_en_borm(municipio, job_id=None):
 # planas — no hace falta resolver ningún JSON de detalle. Ver diagnóstico en
 # backend/diag_pscp_*.py.
 
-_PSCP_FASE_A_ESTADO = {"Formalització": "FOR", "Adjudicació": "ADJ"}
-_PSCP_FASE_PRIORIDAD = {"Formalització": 2, "Adjudicació": 1}
+_PSCP_FASE_A_ESTADO = {"Formalització": "FOR", "Adjudicació": "ADJ", "Execució": "EXE"}
+# Execució > Formalització > Adjudicació: es el orden real del ciclo de vida
+# del expediente (ver nota de PSCP_FASES arriba), así que ante una colisión
+# de codi_expedient nos quedamos con el estado más avanzado.
+_PSCP_FASE_PRIORIDAD = {"Formalització": 2, "Adjudicació": 1, "Execució": 3}
 
 
 def _fila_pscp_a_contrato(fila):
@@ -3787,9 +3805,11 @@ def _recuperar_historico_perdido():
 
 
 def _dedup_pscp_fases(filas):
-    """El mismo lote pasa por fase Adjudicació y luego Formalització, así que
-    el dataset publica una fila por cada una. Nos quedamos con la más
-    avanzada (Formalització) para no contar el mismo contrato dos veces."""
+    """El mismo lote pasa por Adjudicació -> Formalització -> Execució a lo
+    largo de su ciclo de vida (ver nota de PSCP_FASES), y el dataset puede
+    traer más de una fila para el mismo expedient/lot/adjudicatari si abarca
+    varias de esas fases. Nos quedamos con la más avanzada para no contar el
+    mismo contrato dos veces."""
     mejores = {}
     for f in filas:
         clave = (f.get("codi_expedient", ""), f.get("numero_lot", ""),
@@ -7317,7 +7337,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
         dir_html = (f'<span class="noloc-warn">⚠️ No localizado {rm_link}</span>{nota}')
 
     est = c.get("estado", "")
-    est_label = {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado"}.get(est, est)
+    est_label = {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(est, est)
     url = c.get("url", "")
     fuente = c.get("fuente", "PLACE")
 
@@ -8435,7 +8455,7 @@ def _contrato_json(c, municipio):
         "titulo": c.get("titulo", ""),
         "importe": c.get("importe", "") or "No localizado",
         "importe_num": c.get("importe_num", 0.0) or 0.0,
-        "estado": {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado"}.get(c.get("estado", ""), c.get("estado", "")),
+        "estado": {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(c.get("estado", ""), c.get("estado", "")),
         "directivo": c.get("directivo", ""),
         "cargo": c.get("cargo", ""),
         "url": c.get("url", ""),
