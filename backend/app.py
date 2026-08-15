@@ -152,6 +152,8 @@ _actualizando_todos_lock = threading.Lock()  # evita lanzar dos refrescos comple
 _actualizando_fondos_ue_lock = threading.Lock()  # evita lanzar dos refrescos de fondos_ue a la vez
 _actualizando_rpc_menors_lock = threading.Lock()  # evita lanzar dos refrescos de contratos menors Girona a la vez
 _actualizando_rpc_menors_lleida_lock = threading.Lock()  # ídem, fase piloto Lleida -- lock propio, no compartido con el de Girona
+_actualizando_rpc_menors_barcelona_lock = threading.Lock()  # ídem, Barcelona -- lock propio
+_actualizando_rpc_menors_tarragona_lock = threading.Lock()  # ídem, Tarragona -- lock propio
 _actualizando_menores_fuentealamo_lock = threading.Lock()  # evita lanzar dos refrescos de Fuente Álamo a la vez
 
 PAGE_SIZE = 50               # contratos máximos por página
@@ -4092,6 +4094,76 @@ def _actualizar_contratos_menors_lleida_bg(job_id):
             _jobs[job_id]["error"] = str(e)
     finally:
         _actualizando_rpc_menors_lleida_lock.release()
+
+
+def _actualizar_contratos_menors_barcelona_bg(job_id):
+    """Hilo de fondo para POST /actualizar-contratos-menors-barcelona. Mismo
+    patrón que _actualizar_contratos_menors_girona_bg, lock propio.
+
+    Añadido 2026-08-15 al investigar contratos que faltaban en la app: el
+    dataset RPC (hb6v-jcbf) tiene contractes 'Menor' reales para Barcelona
+    (verificado en vivo: 29.074 solo para el Ajuntament de Barcelona capital,
+    2021+) pero nunca se había construido este endpoint -- a diferencia de
+    Lleida, que sí tenía el endpoint (fase piloto) aunque tampoco estuviera
+    en el cron. actualizar_contratos_menors_rpc() ya es genérica desde
+    2026-08-06 precisamente para poder añadir esto sin duplicar lógica."""
+    if not _actualizando_rpc_menors_barcelona_lock.acquire(blocking=False):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "error", "log": [],
+                              "error": "Ya hay un refresco de contratos menors Barcelona en curso."}
+        return
+
+    inicio = time.time()
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "running", "log": [], "error": None}
+        total = actualizar_contratos_menors_rpc("barcelona", MUNICIPIOS_BARCELONA, job_id)
+        duracion_min = (time.time() - inicio) / 60
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "done"
+            _jobs[job_id]["total"] = total
+            _jobs[job_id]["duracion_min"] = round(duracion_min, 1)
+        print(f"  [actualizar-contratos-menors-barcelona] Terminado: {total} contractes menors "
+              f"en {duracion_min:.1f} min.", flush=True)
+    except Exception as e:
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "error"
+            _jobs[job_id]["error"] = str(e)
+    finally:
+        _actualizando_rpc_menors_barcelona_lock.release()
+
+
+def _actualizar_contratos_menors_tarragona_bg(job_id):
+    """Hilo de fondo para POST /actualizar-contratos-menors-tarragona. Mismo
+    patrón que _actualizar_contratos_menors_barcelona_bg, lock propio.
+
+    Añadido 2026-08-15, mismo motivo que Barcelona: 19.178 contractes
+    'Menor' reales verificados en vivo solo para el Ajuntament de Tarragona
+    capital (2021+), cero en contratos_menors_locales antes de este fix."""
+    if not _actualizando_rpc_menors_tarragona_lock.acquire(blocking=False):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "error", "log": [],
+                              "error": "Ya hay un refresco de contratos menors Tarragona en curso."}
+        return
+
+    inicio = time.time()
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "running", "log": [], "error": None}
+        total = actualizar_contratos_menors_rpc("tarragona", MUNICIPIOS_TARRAGONA, job_id)
+        duracion_min = (time.time() - inicio) / 60
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "done"
+            _jobs[job_id]["total"] = total
+            _jobs[job_id]["duracion_min"] = round(duracion_min, 1)
+        print(f"  [actualizar-contratos-menors-tarragona] Terminado: {total} contractes menors "
+              f"en {duracion_min:.1f} min.", flush=True)
+    except Exception as e:
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "error"
+            _jobs[job_id]["error"] = str(e)
+    finally:
+        _actualizando_rpc_menors_tarragona_lock.release()
 
 
 # ─── CONTRATOS MENORES -- FUENTE ÁLAMO DE MURCIA (portal propio, CSV) ────────
@@ -8977,16 +9049,41 @@ def _route_post(path, params):
             return _resp(body, content_type="application/json; charset=utf-8")
 
         if path == "/actualizar-contratos-menors-lleida":
-            # Fase piloto (2026-08-06): endpoint gemelo del de Girona, para
-            # poder medir en vivo el tiempo real del refresco RPC de los 231
-            # municipios de Lleida antes de decidir si se suma al cron diario
-            # (ver informe de viabilidad). El job guarda "duracion_min" al
-            # terminar -- consultar GET /api/job/{job_id} para verlo.
+            # Nació como fase piloto (2026-08-06) para medir en vivo el
+            # tiempo real del refresco RPC de los 231 municipios de Lleida
+            # antes de sumarlo al cron. Se sumó el 2026-08-15 (investigación
+            # de contratos que faltaban -- 1.107 contractes 'Menor' reales
+            # verificados solo para Lleida capital, cero en la app antes de
+            # esto): ver actualizar-diario.yml, franja de Lleida.
             admin_token = os.environ.get("ADMIN_TOKEN", "")
             if not admin_token or params.get("token", [""])[0] != admin_token:
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_lleida_bg, args=(job_id,), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id})
+            return _resp(body, content_type="application/json; charset=utf-8")
+
+        if path == "/actualizar-contratos-menors-barcelona":
+            # Gemelo del de Girona/Lleida -- ver
+            # _actualizar_contratos_menors_barcelona_bg para el porqué
+            # (2026-08-15, investigación de contratos que faltaban).
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            job_id = str(uuid.uuid4())
+            threading.Thread(target=_actualizar_contratos_menors_barcelona_bg, args=(job_id,), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id})
+            return _resp(body, content_type="application/json; charset=utf-8")
+
+        if path == "/actualizar-contratos-menors-tarragona":
+            # Gemelo del de Girona/Lleida/Barcelona -- ver
+            # _actualizar_contratos_menors_tarragona_bg para el porqué
+            # (2026-08-15, investigación de contratos que faltaban).
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            job_id = str(uuid.uuid4())
+            threading.Thread(target=_actualizar_contratos_menors_tarragona_bg, args=(job_id,), daemon=True).start()
             body = json.dumps({"status": "started", "job_id": job_id})
             return _resp(body, content_type="application/json; charset=utf-8")
 
