@@ -6337,6 +6337,11 @@ a.fue-link{color:var(--yellow);font-size:11px;}
 .cm-card{background:var(--surface);border:1px solid rgba(240,136,62,.35);border-radius:8px;margin-top:14px;overflow:hidden;}
 .cm-card summary{padding:12px 18px;background:rgba(240,136,62,.12);cursor:pointer;font-size:14px;font-weight:600;color:var(--accent);list-style:none;}
 .cm-card summary::-webkit-details-marker{display:none;}
+/* Aviso cuando la sección de contratos menores queda vacía (ver
+   render_html) -- informativo, no un error, mismo tono que .instalar-bar
+   pero escalado al tamaño de una tarjeta de municipio en vez de un footer. */
+.cm-aviso{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);border-radius:8px;margin-top:14px;padding:12px 16px;font-size:12.5px;line-height:1.5;color:var(--dim);}
+.cm-aviso .link{color:var(--blue);}
 .cm-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);white-space:nowrap;font-weight:600;}
 .cm-nif{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .fuente-rpc{background:rgba(240,136,62,.15);color:var(--accent);border:1px solid rgba(240,136,62,.3);}
@@ -8175,6 +8180,35 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                 </div>
                 {pag_cm_html}
               </details>"""
+        elif not es_pseudo_municipio(muni_name_d):
+            # Aviso visible cuando la sección de contratos menores queda
+            # vacía -- verificado en producción (2026-08-18): 238 de 987
+            # municipios reales (24%) no tienen ninguna fila en
+            # contratos_menors_locales, con reparto muy desigual por
+            # provincia (Murcia 40/45 sin ninguna fuente conectada --solo
+            # Lorca/Lorquí/Mula/Molina de Segura/Fuente Álamo tienen scraper
+            # propio-- vs. Girona/Lleida/Barcelona/Tarragona, donde SÍ hay
+            # una fuente consultada para los 987 municipios (RPC hb6v-jcbf)
+            # pero para 53/79/45/21 de ellos respectivamente la consulta
+            # simplemente devuelve 0 filas). Mismo criterio de "no es un
+            # hueco de datos nuestro, es un límite real de la fuente" que ya
+            # se aplica al aviso de sueldo 0€ (ver alcalde_concejales_html) --
+            # aquí el motivo es que los contratos menores NO tienen
+            # obligación legal de publicación centralizada en ningún
+            # registro único, a diferencia de las licitaciones formales.
+            organismo_d = (f"Ajuntament de {muni_name_d}" if provincia in PROVINCIAS_CATALUNYA
+                           else f"Ayuntamiento de {muni_name_d}")
+            transp_url_cm = f"https://www.google.com/search?q={quote_plus(organismo_d + ' transparencia contratos menores')}"
+            contratos_menors_html = f"""<div class="cm-aviso">
+                📋 <b>Contratos menores:</b> no hay registros de este tipo para {esc(muni_name_d)} en las
+                fuentes que consultamos. Los contratos menores no siempre tienen obligación legal de
+                publicación centralizada -- muchos ayuntamientos los tramitan sin subirlos a ningún
+                registro abierto que esta web pueda consultar, así que esto no significa necesariamente
+                que no existan. Cualquier vecino o concejal puede solicitarlos formalmente al
+                ayuntamiento por la vía de acceso a la información pública
+                (<a href="https://www.boe.es/buscar/act.php?id=BOE-A-2013-12887" target="_blank" class="link">Ley 19/2013, de transparencia</a>)
+                -- <a href="{esc(transp_url_cm)}" target="_blank" class="link">buscar el portal de transparencia de {esc(organismo_d)} ↗</a>
+              </div>"""
 
         cards += f"""<div class="muni-card">
           <div class="muni-header">
