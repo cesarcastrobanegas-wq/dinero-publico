@@ -53,7 +53,9 @@ name: Actualizar contratos diariamente
 #
 # Los pasos de Hacienda y Población (independientes de /actualizar-todos,
 # no tocan contratos) se quedan anclados a la franja de Murcia, la primera
-# de la noche, para que corran solo una vez al día y no cinco. Fondos UE +
+# de la noche, para que corran solo una vez al día y no cinco -- van AL
+# FINAL de esa franja, después del refresco de contratos, ver nota
+# "REORDENADO HACIENDA/POBLACIÓN" más abajo. Fondos UE +
 # noticias + Fuente Álamo se quedan anclados a la última franja (Tarragona)
 # por el mismo motivo, y porque ya se sabe por los logs (run 31670360515)
 # que esos tres completan bien incluso en las noches en que "todos"
@@ -107,6 +109,29 @@ name: Actualizar contratos diariamente
 # poblacion.json) el rebase es trivial (solo re-aplica "sustituir el
 # fichero por la versión descargada", nunca hay conflicto real de
 # contenido).
+#
+# REORDENADO HACIENDA/POBLACIÓN -- causa real de que SOLO la franja de
+# murcia fallara cada noche (encontrado y arreglado 2026-08-18, runs
+# 32091014680/31987521098/31921614417, las 3 últimas noches, mismo patrón
+# exacto): no era OOM. Render tiene autoDeploy por defecto (render.yaml no
+# lo desactiva) -- cualquier push a `main` redespliega el servicio entero.
+# Los pasos de Hacienda y Población hacían su propio commit+push ANTES de
+# llamar a /actualizar-todos (únicos 2 pasos de todo el workflow que
+# pusheaban antes del refresco de contratos de su franja; las otras 4
+# provincias solo pushean su cache.db al final, cuando su job ya está
+# 'done'). Timeline real del run 32091014680: 02:13:18 push hacienda ->
+# 02:13:27 push población -> 02:13:27 POST /actualizar-todos?provincia=
+# murcia (running) -> 02:17:27 not_found (contenedor reiniciado por el
+# redeploy que dispararon esos 2 pushes, justo a mitad del lote de 45
+# municipios, el más pequeño de los 5 -- por eso nunca fue un problema de
+# tamaño de lote). Fix: Hacienda y Población se movieron al FINAL de la
+# franja de murcia (después del paso de contratos y del canario+commit),
+# mismo patrón que ya usan las otras 4 provincias -- su push ahora llega
+# cuando el job de contratos de esa franja ya terminó, así que el redeploy
+# que dispara no puede interrumpir nada. Sus `if:` pasan a necesitar
+# `!cancelled()` explícito (antes no hacía falta, al ir primero corrían
+# siempre) para que sigan ejecutándose aunque el paso de contratos termine
+# en `fallo=1`.
 
 on:
   schedule:
@@ -196,136 +221,6 @@ jobs:
           fi
           echo "Franja de esta ejecución: provincia=${provincia}"
           echo "provincia=${provincia}" >> "$GITHUB_OUTPUT"
-
-      - name: Refrescar deuda viva y saldo no financiero (Ministerio de Hacienda)
-        if: steps.slot.outputs.provincia == 'murcia'
-        run: |
-          set -uo pipefail
-          # Independiente del resto del workflow: no depende de la app en
-          # producción (a diferencia de los pasos de abajo, que hablan con
-          # ${BASE_URL} vía ADMIN_TOKEN) -- descarga directo de
-          # hacienda.gob.es y escribe un JSON estático versionado, mismo
-          # patrón que cuentas_anuales.json/retribuciones_ispa.json (ver
-          # actualizar_deuda_y_liquidaciones.py). Anclado a la franja de
-          # Murcia (la primera de la noche) para que corra una sola vez al
-          # día, no una vez por cada una de las 5 franjas.
-          # Cada `|| exit 0` es a propósito: un fallo aquí (Hacienda cambia
-          # el formato de su página índice, host caído, etc.) no debe
-          # bloquear el refresco de contratos, que es lo crítico del día --
-          # mismo criterio que noticias UE / contractes menors más abajo.
-          pip install --quiet -r requirements.txt openpyxl \
-            || { echo "::warning::No se pudieron instalar dependencias para el refresco de Hacienda; se salta."; exit 0; }
-          (cd backend && python actualizar_deuda_y_liquidaciones.py) \
-            || { echo "::warning::actualizar_deuda_y_liquidaciones.py falló; se mantiene el hacienda_eell.json existente."; exit 0; }
-
-          # Reintenta el push con rebase si otra franja ya empujó a main
-          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera.
-          push_con_reintento() {
-            local intentos=0
-            while true; do
-              if git push; then
-                return 0
-              fi
-              intentos=$((intentos+1))
-              if [ "$intentos" -ge 5 ]; then
-                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
-                return 1
-              fi
-              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
-              git fetch origin main
-              # Guarda cualquier cambio suelto sin commitear antes de rebasar
-              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
-              # está limpio ("cannot rebase: You have unstaged changes",
-              # visto en producción 2026-08-15: algo deja el working tree con
-              # cambios sin stagear entre el commit y el push, probablemente
-              # normalización de line-endings vía .gitattributes/LFS al
-              # tocar main). `git stash push -u` no hace nada si no hay
-              # cambios que guardar, así que este paso es inofensivo también
-              # cuando el árbol ya estaba limpio.
-              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
-              if ! git rebase origin/main; then
-                echo "::error::git rebase sobre origin/main falló; abortando push."
-                git rebase --abort 2>/dev/null || true
-                git stash pop >/dev/null 2>&1 || true
-                return 1
-              fi
-              git stash pop >/dev/null 2>&1 || true
-              sleep 5
-            done
-          }
-
-          git config user.name  "dinero-publico-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add backend/hacienda_eell.json
-          if git diff --cached --quiet; then
-            echo "hacienda_eell.json sin cambios; nada que commitear."
-          else
-            git commit -m "Auto-commit: refresco deuda viva y saldo no financiero (Ministerio de Hacienda)"
-            push_con_reintento
-            echo "hacienda_eell.json commiteado y pusheado."
-          fi
-
-      - name: Refrescar población oficial (INE, Padrón Municipal)
-        if: steps.slot.outputs.provincia == 'murcia'
-        run: |
-          set -uo pipefail
-          # Mismo criterio que el paso de Hacienda de arriba: independiente
-          # del resto (no habla con la app en producción), fuente propia
-          # (API JSON del INE, ver actualizar_poblacion.py), anclado a la
-          # franja de Murcia para correr una sola vez al día, y no bloquea
-          # el refresco de contratos si falla -- solo usa 'requests', ya en
-          # requirements.txt, no hace falta openpyxl aquí.
-          pip install --quiet -r requirements.txt \
-            || { echo "::warning::No se pudieron instalar dependencias para el refresco de población; se salta."; exit 0; }
-          (cd backend && python actualizar_poblacion.py) \
-            || { echo "::warning::actualizar_poblacion.py falló; se mantiene el poblacion.json existente."; exit 0; }
-
-          # Reintenta el push con rebase si otra franja ya empujó a main
-          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera.
-          push_con_reintento() {
-            local intentos=0
-            while true; do
-              if git push; then
-                return 0
-              fi
-              intentos=$((intentos+1))
-              if [ "$intentos" -ge 5 ]; then
-                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
-                return 1
-              fi
-              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
-              git fetch origin main
-              # Guarda cualquier cambio suelto sin commitear antes de rebasar
-              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
-              # está limpio ("cannot rebase: You have unstaged changes",
-              # visto en producción 2026-08-15: algo deja el working tree con
-              # cambios sin stagear entre el commit y el push, probablemente
-              # normalización de line-endings vía .gitattributes/LFS al
-              # tocar main). `git stash push -u` no hace nada si no hay
-              # cambios que guardar, así que este paso es inofensivo también
-              # cuando el árbol ya estaba limpio.
-              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
-              if ! git rebase origin/main; then
-                echo "::error::git rebase sobre origin/main falló; abortando push."
-                git rebase --abort 2>/dev/null || true
-                git stash pop >/dev/null 2>&1 || true
-                return 1
-              fi
-              git stash pop >/dev/null 2>&1 || true
-              sleep 5
-            done
-          }
-
-          git config user.name  "dinero-publico-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add backend/poblacion.json
-          if git diff --cached --quiet; then
-            echo "poblacion.json sin cambios; nada que commitear."
-          else
-            git commit -m "Auto-commit: refresco población oficial (INE, Padrón Municipal)"
-            push_con_reintento
-            echo "poblacion.json commiteado y pusheado."
-          fi
 
       - name: Refresco de la provincia de esta franja + keep-alive por polling + descarga del cache.db
         env:
@@ -626,3 +521,140 @@ jobs:
           git commit -m "Auto-commit diario de cache.db desde producción (${conteos}) [franja: ${{ steps.slot.outputs.provincia }}]"
           push_con_reintento
           echo "cache.db commiteado y pusheado (${conteos})."
+
+      - name: Refrescar deuda viva y saldo no financiero (Ministerio de Hacienda)
+        # !cancelled() (no éxito implícito): tiene que seguir corriendo aunque
+        # el paso de contratos de esta franja haya fallado -- ver nota
+        # "REORDENADO HACIENDA/POBLACIÓN" de cabecera (2026-08-18): antes este
+        # paso iba ANTES del refresco de contratos y su push a main disparaba
+        # un redeploy de Render que mataba el job de contratos de murcia a
+        # mitad. Ahora va al final de la franja a propósito, para que su push
+        # (y el redeploy que dispara) no pueda interrumpir nada.
+        if: ${{ !cancelled() && steps.slot.outputs.provincia == 'murcia' }}
+        run: |
+          set -uo pipefail
+          # Independiente del resto del workflow: no depende de la app en
+          # producción (a diferencia del paso de contratos de arriba, que
+          # habla con ${BASE_URL} vía ADMIN_TOKEN) -- descarga directo de
+          # hacienda.gob.es y escribe un JSON estático versionado, mismo
+          # patrón que cuentas_anuales.json/retribuciones_ispa.json (ver
+          # actualizar_deuda_y_liquidaciones.py). Anclado a la franja de
+          # Murcia para que corra una sola vez al día, no una vez por cada
+          # una de las 5 franjas.
+          # Cada `|| exit 0` es a propósito: un fallo aquí (Hacienda cambia
+          # el formato de su página índice, host caído, etc.) no debe
+          # bloquear nada más -- mismo criterio que noticias UE / contractes
+          # menors de más arriba.
+          pip install --quiet -r requirements.txt openpyxl \
+            || { echo "::warning::No se pudieron instalar dependencias para el refresco de Hacienda; se salta."; exit 0; }
+          (cd backend && python actualizar_deuda_y_liquidaciones.py) \
+            || { echo "::warning::actualizar_deuda_y_liquidaciones.py falló; se mantiene el hacienda_eell.json existente."; exit 0; }
+
+          # Reintenta el push con rebase si otra franja ya empujó a main
+          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera.
+          push_con_reintento() {
+            local intentos=0
+            while true; do
+              if git push; then
+                return 0
+              fi
+              intentos=$((intentos+1))
+              if [ "$intentos" -ge 5 ]; then
+                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
+                return 1
+              fi
+              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
+              git fetch origin main
+              # Guarda cualquier cambio suelto sin commitear antes de rebasar
+              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
+              # está limpio ("cannot rebase: You have unstaged changes",
+              # visto en producción 2026-08-15: algo deja el working tree con
+              # cambios sin stagear entre el commit y el push, probablemente
+              # normalización de line-endings vía .gitattributes/LFS al
+              # tocar main). `git stash push -u` no hace nada si no hay
+              # cambios que guardar, así que este paso es inofensivo también
+              # cuando el árbol ya estaba limpio.
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
+              if ! git rebase origin/main; then
+                echo "::error::git rebase sobre origin/main falló; abortando push."
+                git rebase --abort 2>/dev/null || true
+                git stash pop >/dev/null 2>&1 || true
+                return 1
+              fi
+              git stash pop >/dev/null 2>&1 || true
+              sleep 5
+            done
+          }
+
+          git config user.name  "dinero-publico-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add backend/hacienda_eell.json
+          if git diff --cached --quiet; then
+            echo "hacienda_eell.json sin cambios; nada que commitear."
+          else
+            git commit -m "Auto-commit: refresco deuda viva y saldo no financiero (Ministerio de Hacienda)"
+            push_con_reintento
+            echo "hacienda_eell.json commiteado y pusheado."
+          fi
+
+      - name: Refrescar población oficial (INE, Padrón Municipal)
+        # !cancelled(): mismo motivo que el paso de Hacienda de arriba.
+        if: ${{ !cancelled() && steps.slot.outputs.provincia == 'murcia' }}
+        run: |
+          set -uo pipefail
+          # Mismo criterio que el paso de Hacienda de arriba: independiente
+          # del resto (no habla con la app en producción), fuente propia
+          # (API JSON del INE, ver actualizar_poblacion.py), anclado a la
+          # franja de Murcia para correr una sola vez al día -- solo usa
+          # 'requests', ya en requirements.txt, no hace falta openpyxl aquí.
+          pip install --quiet -r requirements.txt \
+            || { echo "::warning::No se pudieron instalar dependencias para el refresco de población; se salta."; exit 0; }
+          (cd backend && python actualizar_poblacion.py) \
+            || { echo "::warning::actualizar_poblacion.py falló; se mantiene el poblacion.json existente."; exit 0; }
+
+          # Reintenta el push con rebase si otra franja ya empujó a main
+          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera.
+          push_con_reintento() {
+            local intentos=0
+            while true; do
+              if git push; then
+                return 0
+              fi
+              intentos=$((intentos+1))
+              if [ "$intentos" -ge 5 ]; then
+                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
+                return 1
+              fi
+              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
+              git fetch origin main
+              # Guarda cualquier cambio suelto sin commitear antes de rebasar
+              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
+              # está limpio ("cannot rebase: You have unstaged changes",
+              # visto en producción 2026-08-15: algo deja el working tree con
+              # cambios sin stagear entre el commit y el push, probablemente
+              # normalización de line-endings vía .gitattributes/LFS al
+              # tocar main). `git stash push -u` no hace nada si no hay
+              # cambios que guardar, así que este paso es inofensivo también
+              # cuando el árbol ya estaba limpio.
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
+              if ! git rebase origin/main; then
+                echo "::error::git rebase sobre origin/main falló; abortando push."
+                git rebase --abort 2>/dev/null || true
+                git stash pop >/dev/null 2>&1 || true
+                return 1
+              fi
+              git stash pop >/dev/null 2>&1 || true
+              sleep 5
+            done
+          }
+
+          git config user.name  "dinero-publico-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add backend/poblacion.json
+          if git diff --cached --quiet; then
+            echo "poblacion.json sin cambios; nada que commitear."
+          else
+            git commit -m "Auto-commit: refresco población oficial (INE, Padrón Municipal)"
+            push_con_reintento
+            echo "poblacion.json commiteado y pusheado."
+          fi
