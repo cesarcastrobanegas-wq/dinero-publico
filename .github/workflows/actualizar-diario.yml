@@ -421,6 +421,25 @@ jobs:
               echo "job_fa=$job_fa"
               poll_hasta_done "$job_fa" "fuentealamo" || echo "::warning::Fuente Álamo no completado; se continúa igualmente."
             fi
+
+            # --- 2.3. Gerentes/administradores de contratos menores -----------
+            # Enriquece TODA la tabla contratos_menors_locales de una vez
+            # (Girona/Lleida/Barcelona/Tarragona RPC + Fuente Álamo + resto de
+            # Murcia), sea cual sea su fuente -- por eso va al final, después
+            # de que todas las fuentes de arriba ya hayan podido escribir filas
+            # nuevas hoy. No bloquea el commit del día si falla.
+            echo "== Disparando /actualizar-directivos-contratos-menores =="
+            resp_dcm=$(curl -s --max-time 60 -X POST \
+              -d "token=${ADMIN_TOKEN}" \
+              "${BASE_URL}/actualizar-directivos-contratos-menores" || true)
+            echo "respuesta: $resp_dcm"
+            job_dcm=$(get_jobid "$resp_dcm")
+            if [ -z "$job_dcm" ]; then
+              echo "::warning::No se obtuvo job_id de /actualizar-directivos-contratos-menores. Se continúa sin refrescar hoy."
+            else
+              echo "job_dcm=$job_dcm"
+              poll_hasta_done "$job_dcm" "directivos-menores" || echo "::warning::Directivos de contratos menores no completado; se continúa igualmente."
+            fi
           fi
 
           # --- 3. descargar el cache.db de producción ------------------------

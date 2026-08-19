@@ -155,6 +155,7 @@ _actualizando_rpc_menors_lleida_lock = threading.Lock()  # ídem, fase piloto Ll
 _actualizando_rpc_menors_barcelona_lock = threading.Lock()  # ídem, Barcelona -- lock propio
 _actualizando_rpc_menors_tarragona_lock = threading.Lock()  # ídem, Tarragona -- lock propio
 _actualizando_menores_fuentealamo_lock = threading.Lock()  # evita lanzar dos refrescos de Fuente Álamo a la vez
+_actualizando_directivos_menores_lock = threading.Lock()  # evita lanzar dos enriquecimientos de directivos de contratos menores a la vez
 
 PAGE_SIZE = 50               # contratos máximos por página
 
@@ -4935,6 +4936,84 @@ def enriquecer_directivos_fondos_ue(job_id=None, presupuesto_minutos=30):
     return encontrados
 
 
+def enriquecer_directivos_contratos_menores(job_id=None, presupuesto_minutos=30):
+    """Busca gerente/administrador de los adjudicatarios de contratos menores
+    (contratos_menors_locales -- Girona/Lleida/Barcelona/Tarragona RPC, Fuente
+    Álamo, Lorca/Lorquí/Mula/Molina de Segura) con el MISMO detector y caché
+    que ya se usa para los contratos públicos normales y los beneficiarios de
+    fondos UE (buscar_directivo: persona física → einforma → empresia →
+    BORME anuncios → búsqueda web, caché persistente en la tabla `directores`).
+
+    Ninguna fuente de contratos menores publica NIF/CIF del adjudicatario
+    (ver LIMITACIONES_COBERTURA.md), a diferencia de PLACE. No hace falta:
+    _dir_cache_key ya usa el nombre normalizado como clave cuando no hay NIF
+    (mismo mecanismo que fondos UE con beneficiarios sin NIF), y
+    buscar_directivo() prueba las mismas fuentes por nombre. La detección de
+    "es una persona física, no una empresa" (2-4 palabras, sin sufijo
+    societario, sin conectores) tampoco depende del NIF: es la misma
+    heurística que ya evita buscar en el Registro Mercantil un "administrador"
+    para adjudicatarios como personas físicas (p.ej. autónomos).
+
+    No añade columnas nuevas a `contratos_menors_locales`: el resultado se
+    guarda en la tabla `directores` y se lee de ahí al renderizar (ver
+    _render_fila_contrato_menor), igual que fondos UE."""
+    deadline = time.time() + presupuesto_minutos * 60
+    with _db_lock:
+        filas = _db.execute(
+            "SELECT DISTINCT adjudicatari FROM contratos_menors_locales "
+            "WHERE adjudicatari IS NOT NULL AND adjudicatari <> ''"
+        ).fetchall()
+    pendientes = [a for (a,) in filas
+                  if _dir_cache_get(a, "")[0] is None
+                  and not _dir_cache_agotado(a, "")]
+    total = len(pendientes)
+    _log(job_id, f"Buscando gerente/administrador de {total} adjudicatarios de "
+                 f"contratos menores pendientes (einforma · empresia · BORME)…")
+    encontrados = procesados = 0
+    for adjudicatari in pendientes:
+        if time.time() >= deadline:
+            _log(job_id, f"  Presupuesto de {presupuesto_minutos} min agotado: "
+                         f"{procesados}/{total} procesados, se retoma en el próximo refresco.")
+            break
+        procesados += 1
+        nombre, cargo = buscar_directivo(adjudicatari, "")
+        if nombre:
+            encontrados += 1
+        time.sleep(1.2)  # mismo delay entre peticiones que el resto de enriquecimientos
+        if procesados % 50 == 0:
+            _log(job_id, f"  … {procesados}/{total} procesados ({encontrados} encontrados)")
+    _log(job_id, f"  Gerentes/administradores de contratos menores: {encontrados}/{procesados} "
+                 f"encontrados (de {total} pendientes).")
+    return encontrados
+
+
+def _actualizar_directivos_contratos_menores_bg(job_id):
+    """Hilo de fondo para POST /actualizar-directivos-contratos-menores.
+    Mismo patrón que _actualizar_contratos_menores_fuentealamo_bg -- se llama
+    por separado (no dentro de cada refresco RPC/CSV) porque procesa TODA la
+    tabla contratos_menors_locales de una vez, cualquiera que sea su fuente."""
+    if not _actualizando_directivos_menores_lock.acquire(blocking=False):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "error", "log": [],
+                              "error": "Ya hay un enriquecimiento de directivos de contratos menores en curso."}
+        return
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "running", "log": [], "error": None}
+        n_directivos = enriquecer_directivos_contratos_menores(job_id)
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "done"
+            _jobs[job_id]["total"] = n_directivos
+        print(f"  [actualizar-directivos-contratos-menores] Terminado: "
+              f"{n_directivos} gerentes/administradores encontrados.", flush=True)
+    except Exception as e:
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "error"
+            _jobs[job_id]["error"] = str(e)
+    finally:
+        _actualizando_directivos_menores_lock.release()
+
+
 def _actualizar_fondos_ue_bg(job_id):
     """Hilo de fondo para POST /actualizar-fondos-ue: refresca CORDIS y
     Cohesion Data uno detrás de otro. A diferencia de los contratos
@@ -7812,6 +7891,14 @@ def _render_fila_contrato_menor(r):
     fuente_badge = f'<span class="fuente-badge fuente-rpc">{esc(_FUENTE_CM_LABEL.get(fuente, fuente or "?"))}</span>'
     nif_html = f'<div class="cm-nif">{esc(r["nif"])}</div>' if r.get("nif") else ""
 
+    # Gerente/administrador del adjudicatario, con el MISMO detector y caché
+    # que fondos UE (ver _render_fila_fondo_ue) -- lectura de caché aquí,
+    # nunca se lanza la búsqueda en el hilo de render (la busca aparte
+    # enriquecer_directivos_contratos_menores).
+    dir_nombre, dir_cargo = _dir_cache_get(adjudicatari, "")
+    gerente_html = (f'<div class="lid" style="margin-top:2px">👤 {esc(dir_nombre)} — {esc(dir_cargo)}</div>'
+                     if dir_nombre else "")
+
     # Mismo detector que ya usan contratos públicos y fondos UE, pero probando
     # también variantes de orden de nombre (ver _variantes_nombre_para_detector)
     # -- necesario para Girona (formato "Apellidos, Nombre") y Molina de Segura
@@ -7843,6 +7930,7 @@ def _render_fila_contrato_menor(r):
         <div class="empresa">{esc(adjudicatari)}{fuente_badge}</div>
         {nif_html}
         <div class="cargo">{esc(r.get("descripcio","")[:110])}</div>
+        {gerente_html}
         {match_html}
       </td>
       <td class="cm-importe">{fmt_eur(str(r["import_num"])) if r["import_num"] else "—"}</td>
@@ -9228,6 +9316,21 @@ def _route_post(path, params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menores_fuentealamo_bg, args=(job_id,), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id})
+            return _resp(body, content_type="application/json; charset=utf-8")
+
+        if path == "/actualizar-directivos-contratos-menores":
+            # Enriquece gerente/administrador de TODOS los adjudicatarios de
+            # contratos_menors_locales (Girona/Lleida/Barcelona/Tarragona RPC +
+            # Fuente Álamo + Lorca/Lorquí/Mula/Molina de Segura), sea cual sea
+            # su fuente -- por eso va aparte de cada refresco individual, igual
+            # que Fuente Álamo. Mismo patrón de disparo externo + ADMIN_TOKEN;
+            # el cron diario lo llama al final, después de todas las fuentes.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            job_id = str(uuid.uuid4())
+            threading.Thread(target=_actualizar_directivos_contratos_menores_bg, args=(job_id,), daemon=True).start()
             body = json.dumps({"status": "started", "job_id": job_id})
             return _resp(body, content_type="application/json; charset=utf-8")
 
