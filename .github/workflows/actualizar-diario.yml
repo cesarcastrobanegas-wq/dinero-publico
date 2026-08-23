@@ -363,6 +363,35 @@ jobs:
               echo "job_menors=$job_menors"
               poll_hasta_done "$job_menors" "menors-${PROVINCIA_SLOT}" || echo "::warning::Contractes menors de ${PROVINCIA_SLOT} no completados; se continúa igualmente."
             fi
+
+            # --- 1.6. Gerentes/administradores de los contractes menors RPC
+            #     de ESTA MISMA franja -- justo después de refrescarlos
+            #     (arriba), en vez de esperar a que las 4 provincias
+            #     catalanas + Murcia compitan por un único presupuesto de
+            #     30 min/noche anclado a Tarragona (ver sección 2.3 más
+            #     abajo, causa original de que a ~1.250 filas/noche el
+            #     backlog nacional de 75k+ tardara ~60 noches en vaciarse).
+            #     El endpoint sigue sin filtrar por provincia -- no filtra
+            #     por columna `provincia`, procesa toda la tabla
+            #     `contratos_menors_locales` -- pero eso no duplica trabajo:
+            #     la caché persistente de la tabla `directores`
+            #     (_dir_cache_get/_dir_cache_agotado) hace que lo ya resuelto
+            #     por una franja anterior esta misma noche se salte solo. Al
+            #     dispararlo aquí, cada franja catalana se lleva su propio
+            #     presupuesto de 30 min en vez de competir con las otras. No
+            #     bloquea el commit del día si falla.
+            echo "== Disparando /actualizar-directivos-contratos-menores (franja ${PROVINCIA_SLOT}) =="
+            resp_dcm_franja=$(curl -s --max-time 60 -X POST \
+              -d "token=${ADMIN_TOKEN}" \
+              "${BASE_URL}/actualizar-directivos-contratos-menores" || true)
+            echo "respuesta: $resp_dcm_franja"
+            job_dcm_franja=$(get_jobid "$resp_dcm_franja")
+            if [ -z "$job_dcm_franja" ]; then
+              echo "::warning::No se obtuvo job_id de /actualizar-directivos-contratos-menores (franja ${PROVINCIA_SLOT}). Se continúa sin refrescar hoy."
+            else
+              echo "job_dcm_franja=$job_dcm_franja"
+              poll_hasta_done "$job_dcm_franja" "directivos-menores-${PROVINCIA_SLOT}" || echo "::warning::Directivos de contratos menores (franja ${PROVINCIA_SLOT}) no completado; se continúa igualmente."
+            fi
           fi
 
           # --- 2. Extras de fin de noche: fondos UE, noticias UE y Fuente
@@ -428,12 +457,22 @@ jobs:
               poll_hasta_done "$job_fa" "fuentealamo" || echo "::warning::Fuente Álamo no completado; se continúa igualmente."
             fi
 
-            # --- 2.3. Gerentes/administradores de contratos menores -----------
-            # Enriquece TODA la tabla contratos_menors_locales de una vez
-            # (Girona/Lleida/Barcelona/Tarragona RPC + Fuente Álamo + resto de
-            # Murcia), sea cual sea su fuente -- por eso va al final, después
-            # de que todas las fuentes de arriba ya hayan podido escribir filas
-            # nuevas hoy. No bloquea el commit del día si falla.
+            # --- 2.3. Gerentes/administradores de contratos menores restantes
+            #     (Murcia + cualquier resto) -------------------------------
+            # Las 4 provincias catalanas (Girona/Lleida/Barcelona/Tarragona)
+            # ya se llevan su propio pase justo después de refrescar sus
+            # contractes menors RPC (sección 1.6, dentro de su propia franja)
+            # -- este llamado, anclado a la franja de Tarragona junto con
+            # fondos UE/noticias/Fuente Álamo, procesa lo que quede: sobre
+            # todo los contratos menores propios de Murcia (Fuente Álamo,
+            # Lorca/Lorquí/Mula/Molina de Segura, sin fuente RPC propia) más
+            # cualquier fila residual que las pasadas de la sección 1.6 no
+            # llegaran a cubrir en su presupuesto de 30 min. El endpoint
+            # sigue sin filtrar por provincia (ver sección 1.6), así que
+            # también vuelve a mirar Girona/Lleida/Barcelona/Tarragona en la
+            # misma noche -- inofensivo, la caché persistente de `directores`
+            # hace que lo ya resuelto se salte solo. No bloquea el commit del
+            # día si falla.
             echo "== Disparando /actualizar-directivos-contratos-menores =="
             resp_dcm=$(curl -s --max-time 60 -X POST \
               -d "token=${ADMIN_TOKEN}" \
