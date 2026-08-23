@@ -2378,6 +2378,12 @@ def normalizar(s):
         s = s.replace(a, b)
     return re.sub(r"\s+", " ", s)
 
+# Registrada como función SQL para poder cruzar contratos_menors_locales
+# contra directores (clave = NIF o normalizar(nombre), ver _dir_cache_key)
+# en una sola consulta con JOIN, en vez de una consulta Python por fila --
+# ver _indice_menores_stats_por_municipio (Índice de Transparencia).
+_db.create_function("normalizar", 1, normalizar)
+
 def esc(s):
     return html.escape(str(s or ""), quote=True)
 
@@ -2490,6 +2496,27 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona", "todas": "España"}
+
+# Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
+# "provincia" y su "comunidad" son la misma entidad); Girona/Lleida/
+# Barcelona/Tarragona son las 4 provincias de Cataluña. Usado por el filtro
+# de comunidad autónoma del Índice de Transparencia (ver
+# _calcular_indice_transparencia / render_rankings_html) -- si en el futuro
+# se añade una provincia de otra comunidad, solo hace falta ampliar este
+# dict, el resto del filtro ya es genérico.
+COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
+    "murcia": "murcia",
+    "girona": "cataluna", "lleida": "cataluna",
+    "barcelona": "cataluna", "tarragona": "cataluna",
+}
+COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña"}
+
+
+def _comunidad_valida(txt):
+    """Como _provincia_valida pero para el parámetro ?comunidad= del Índice
+    de Transparencia: cualquier valor desconocido (ausente, vacío, 'todas')
+    se trata como "sin filtro" (vista nacional)."""
+    return txt if txt in COMUNIDAD_AUTONOMA_LABEL else "todas"
 _EJEMPLO_MUNI_POR_PROVINCIA = {
     "murcia": "Lorca, Murcia, Cartagena, Archena…",
     "girona": "Olot, Figueres, Girona, Blanes…",
@@ -6627,6 +6654,20 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .risk-prominent .rp-text{font-size:13px;color:#f8c4c2;line-height:1.5;}
 .risk-prominent .rp-text b{color:#fff;}
 
+/* ── Índice de Transparencia (rankings) ──────────────────────────────── */
+.it-buscador{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:9px 14px;border-radius:6px;margin:14px 0;outline:none;}
+.it-buscador:focus{border-color:var(--blue);}
+.it-indice{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;padding:3px 10px;border-radius:5px;}
+.it-alto{background:rgba(63,185,80,.15);color:var(--green);}
+.it-medio{background:rgba(210,153,34,.15);color:var(--yellow);}
+.it-bajo{background:rgba(248,81,73,.15);color:var(--red);}
+.it-desglose summary{cursor:pointer;color:var(--blue);font-size:12px;list-style:none;}
+.it-desglose summary::-webkit-details-marker{display:none;}
+.it-desglose-tbl{margin-top:8px;font-size:11.5px;}
+.it-desglose-tbl td{padding:3px 8px 3px 0;border:none;vertical-align:top;}
+.it-peso{color:var(--dim);font-weight:400;}
+.it-detalle{color:var(--dim);}
+
 /* ── responsive ───────────────────────────────────────────────────────── */
 @media (max-width:700px){
   header{padding:10px 14px;flex-wrap:wrap;row-gap:10px;}
@@ -7521,6 +7562,295 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     </tr>"""
 
 
+# ─── ÍNDICE DE TRANSPARENCIA DINERO PÚBLICO ──────────────────────────────────
+# Valoración propia de actividad y disponibilidad de datos públicos por
+# municipio, NO una certificación legal de cumplimiento de la Ley 19/2013 de
+# transparencia -- este proyecto no es organismo acreditador. Fórmula
+# propuesta a César y validada el 2026-08-23 antes de escribir una sola línea
+# de código (ver conversación de esa fecha): 7 componentes, agrupados en
+# "disponibilidad institucional" (4 señales binarias, insensibles al tamaño
+# del municipio por construcción) y "calidad/actividad de contratación" (3
+# señales calculadas como RATIO sobre los propios contratos del municipio,
+# nunca como conteo absoluto -- así un municipio pequeño con 3/3 contratos
+# bien identificados saca la misma nota que uno grande con 500/500).
+#
+# Pesos (suman 100, ajustables si César quiere recalibrar):
+#   - Cuentas anuales publicadas .......... 15%  (binario)
+#   - Deuda viva/hab. publicada ........... 12,5% (binario)
+#   - Saldo no financiero publicado ........ 12,5% (binario)
+#   - Sueldos ISPA (alcalde/sa) publicados . 10%  (binario)
+#   - % adjudicatario identificado ......... 20%  (ratio, solo contratos
+#     formales PLACE/PSCP -- ver más abajo por qué los menores no cuentan)
+#   - % directivo/administrador identificado 10%  (ratio, peso reducido
+#     porque depende en parte de si el Registro Mercantil/einforma tiene
+#     datos públicos para ese tipo de adjudicatario, no solo de lo que
+#     publica el ayuntamiento -- ruido estructural, no señal pura)
+#   - Actividad de publicación (contratos/1.000 hab., percentil DENTRO de
+#     su tramo de población) ............... 20%
+#
+# Ningún componente puntúa "0" cuando falta el dato: se EXCLUYE del cálculo
+# de ese municipio y el peso se redistribuye entre los que sí están
+# disponibles (ver _calcular_indice_transparencia). En particular, "tiene
+# fuente propia de contratos menores" NUNCA se puntúa como componente --
+# sería castigar a los 238/987 municipios sin ella (ver
+# LIMITACIONES_COBERTURA.md) por una limitación de cobertura de ESTE
+# proyecto, no de su transparencia real. Los ratios simplemente se calculan
+# sobre los contratos que sí tenemos (formales, que cubren el 100% de Murcia
+# y las 4 provincias catalanas vía PLACE/PSCP).
+_INDICE_TRANSPARENCIA_PESOS = {
+    "cuentas":       15.0,
+    "deuda_pub":     12.5,
+    "saldo_pub":     12.5,
+    "ispa_pub":      10.0,
+    "adjudicatario": 20.0,
+    "directivo":     10.0,
+    "actividad":     20.0,
+}
+_INDICE_TRANSPARENCIA_MIN_COMPONENTES = 3  # por debajo de esto, "cobertura insuficiente"
+
+# Tramos de población para comparar la actividad de publicación (componente
+# "actividad") solo contra municipios de tamaño parecido -- comparar Lorca
+# con un pueblo de 300 habitantes en términos absolutos no tiene sentido
+# (ver conversación de validación de la fórmula, 2026-08-23).
+_INDICE_TRANSPARENCIA_TRAMOS_POBLACION = [1_000, 5_000, 20_000, 100_000]  # límites superiores; el último tramo es ">100.000"
+
+
+def _indice_tramo_poblacion(habitantes):
+    for limite in _INDICE_TRANSPARENCIA_TRAMOS_POBLACION:
+        if habitantes < limite:
+            return limite
+    return None  # ">100.000", último tramo
+
+
+def _indice_menores_stats_por_municipio():
+    """Una sola consulta SQL (no una por municipio ni una por fila): para
+    cada municipio, nº total de contratos menores y cuántos tienen
+    directivo/administrador identificado en la caché `directores`, cruzando
+    por NIF si lo hay o por normalizar(adjudicatari) si no (mismo criterio
+    que _dir_cache_key). `normalizar` está registrada como función SQL justo
+    después de definirse (ver más arriba) para poder hacer este JOIN sin
+    traer las ~680k filas a Python.
+
+    Simplificación consciente frente a _dir_cache_get: no aplica el TTL de
+    caducidad (DIR_CACHE_POS_TTL/NEG_TTL) -- para un índice agregado que se
+    recalcula como mucho una vez por hora (ver caché más abajo) basta con
+    "¿se encontró alguna vez un directivo?", no con si el hallazgo es
+    reciente. La búsqueda en vivo (buscar_directivo) sí sigue respetando el
+    TTL como hasta ahora, esto es solo para el cálculo del índice."""
+    with _db_lock:
+        rows = _db.execute("""
+            SELECT c.municipio,
+                   COUNT(*) AS total,
+                   SUM(CASE WHEN d.nombre IS NOT NULL AND d.nombre <> '' THEN 1 ELSE 0 END) AS con_directivo
+            FROM contratos_menors_locales c
+            LEFT JOIN directores d
+              ON d.clave = CASE WHEN c.nif IS NOT NULL AND c.nif <> ''
+                                 THEN upper(trim(c.nif))
+                                 ELSE normalizar(c.adjudicatari) END
+            GROUP BY c.municipio
+        """).fetchall()
+    return {municipio: {"total": total, "con_directivo": con_directivo or 0}
+            for municipio, total, con_directivo in rows}
+
+
+def _calcular_indice_transparencia():
+    """Función pura: Índice de Transparencia Dinero Público para cada
+    municipio real (excluye pseudo-municipios como "Región de Murcia" o la
+    AGE, que no son ayuntamientos). No escribe nada, no dispara peticiones de
+    red -- solo lee datos ya cargados en memoria (POBLACION, CUENTAS_ANUALES,
+    DEUDA_VIVA, SALDO_NO_FINANCIERO, RETRIBUCIONES_ISPA, _datos_memoria) más
+    UNA consulta SQL agregada (_indice_menores_stats_por_municipio). Ver el
+    bloque de comentarios de cabecera de esta sección para la metodología y
+    los pesos.
+
+    Devuelve una lista de dicts (sin ordenar), uno por municipio, con:
+      - municipio, provincia, comunidad_autonoma, habitantes
+      - componentes: {nombre: {"disponible": bool, "puntos": float|None,
+        "detalle": str}} -- las 7 señales, siempre las 7 claves presentes
+        aunque "disponible" sea False, para poder mostrar el desglose
+        completo en la UI (nunca una nota sin desglose).
+      - n_componentes: cuántos de los 7 estaban disponibles
+      - indice: media ponderada 0-100 sobre los componentes disponibles
+        (peso renormalizado), o None si n_componentes < 3 ("cobertura
+        insuficiente para calcular el índice de forma fiable")."""
+    menores_stats = _indice_menores_stats_por_municipio()
+
+    formales_idx = {}
+    with _datos_lock:
+        for d in _datos_memoria:
+            formales_idx[normalizar(d.get("municipio", ""))] = d
+
+    # Primera pasada: todo menos "actividad" (que necesita conocer la
+    # actividad de TODOS los municipios de su tramo antes de poder puntuar
+    # a ninguno -- es un percentil, no un valor absoluto).
+    filas = []
+    for clave, pob in POBLACION.items():
+        municipio = pob.get("municipio", "")
+        if es_pseudo_municipio(municipio):
+            continue
+        provincia = pob.get("provincia", "murcia")
+        habitantes = pob.get("poblacion")
+
+        componentes = {
+            "cuentas": {
+                "disponible": True,
+                "puntos": 100.0 if clave in CUENTAS_ANUALES else 0.0,
+                "detalle": "Cuentas anuales publicadas" if clave in CUENTAS_ANUALES
+                           else "Cuentas anuales no publicadas (o no localizadas)",
+            },
+            "deuda_pub": {
+                "disponible": True,
+                "puntos": 100.0 if clave in DEUDA_VIVA else 0.0,
+                "detalle": "Deuda viva publicada" if clave in DEUDA_VIVA else "Deuda viva no publicada",
+            },
+            "saldo_pub": {
+                "disponible": True,
+                "puntos": 100.0 if clave in SALDO_NO_FINANCIERO else 0.0,
+                "detalle": "Saldo presupuestario publicado" if clave in SALDO_NO_FINANCIERO
+                           else "Saldo presupuestario no publicado",
+            },
+        }
+        ispa_ok = RETRIBUCIONES_ISPA.get(clave, {}).get("importe") is not None
+        componentes["ispa_pub"] = {
+            "disponible": True,
+            "puntos": 100.0 if ispa_ok else 0.0,
+            "detalle": "Sueldo del alcalde/sa publicado (ISPA)" if ispa_ok
+                       else "Sueldo del alcalde/sa no publicado o no atribuido (ISPA)",
+        }
+
+        # % adjudicatario identificado -- SOLO contratos formales (PLACE/
+        # PSCP): ahí "No localizada" es un valor real que la propia fuente
+        # puede publicar. Los contratos menores locales siempre traen un
+        # nombre de adjudicatario desde origen (ver enriquecer_directivos_
+        # contratos_menores), así que no discriminan nada en este componente
+        # -- se excluyen a propósito, no es un olvido.
+        d_formal = formales_idx.get(clave)
+        contratos_formales = d_formal.get("contratos", []) if d_formal else []
+        denom_adj = len(contratos_formales)
+        num_adj = sum(1 for c in contratos_formales
+                      if c.get("empresa") and c.get("empresa") != "No localizada")
+        if denom_adj:
+            componentes["adjudicatario"] = {
+                "disponible": True,
+                "puntos": 100.0 * num_adj / denom_adj,
+                "detalle": f"{num_adj}/{denom_adj} contratos formales con adjudicatario identificado",
+            }
+        else:
+            componentes["adjudicatario"] = {
+                "disponible": False, "puntos": None,
+                "detalle": "Sin contratos formales (PLACE/PSCP) para calcularlo",
+            }
+
+        # % directivo/administrador identificado -- combina formales
+        # (directivo ya resuelto por contrato) + menores (agregado SQL de
+        # arriba). Solo se cuenta sobre adjudicatarios CONOCIDOS: no tiene
+        # sentido buscar director de una empresa que ni siquiera sabemos
+        # cuál es ("No localizada").
+        num_dir = sum(1 for c in contratos_formales
+                      if c.get("empresa") and c.get("empresa") != "No localizada" and c.get("directivo"))
+        denom_dir = num_adj
+        m = menores_stats.get(municipio)
+        if m:
+            denom_dir += m["total"]
+            num_dir += m["con_directivo"]
+        if denom_dir:
+            componentes["directivo"] = {
+                "disponible": True,
+                "puntos": 100.0 * num_dir / denom_dir,
+                "detalle": f"{num_dir}/{denom_dir} adjudicatarios conocidos con directivo identificado",
+            }
+        else:
+            componentes["directivo"] = {
+                "disponible": False, "puntos": None,
+                "detalle": "Sin adjudicatarios conocidos para calcularlo",
+            }
+
+        total_contratos = denom_adj + (m["total"] if m else 0)
+        actividad_por_1000 = (total_contratos / habitantes * 1000) if habitantes else None
+
+        filas.append({
+            "municipio": municipio,
+            "provincia": provincia,
+            "comunidad_autonoma": COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(provincia, provincia),
+            "habitantes": habitantes,
+            "componentes": componentes,
+            "_actividad_por_1000": actividad_por_1000,  # temporal, se consume en la 2ª pasada
+            "_total_contratos": total_contratos,
+        })
+
+    # Segunda pasada: percentil de "actividad" DENTRO de cada tramo de
+    # población (ver _indice_tramo_poblacion) -- no tiene sentido comparar
+    # contratos/1.000 hab. de Lorca contra un pueblo de 300 habitantes.
+    por_tramo = {}
+    for f in filas:
+        if f["habitantes"]:
+            por_tramo.setdefault(_indice_tramo_poblacion(f["habitantes"]), []).append(f)
+
+    for grupo in por_tramo.values():
+        grupo.sort(key=lambda f: f["_actividad_por_1000"])
+        n = len(grupo)
+        for i, f in enumerate(grupo):
+            percentil = 100.0 if n <= 1 else 100.0 * i / (n - 1)
+            f["componentes"]["actividad"] = {
+                "disponible": True,
+                "puntos": percentil,
+                "detalle": (f"{f['_total_contratos']} contratos/{f['habitantes']} hab. "
+                            f"({f['_actividad_por_1000']:.2f}/1.000 hab.), "
+                            f"percentil {percentil:.0f} entre municipios de tamaño similar"),
+            }
+
+    # Municipios sin población conocida (no debería pasar, POBLACION es
+    # 987/987, pero por si acaso) se quedan sin componente "actividad".
+    for f in filas:
+        f["componentes"].setdefault("actividad", {
+            "disponible": False, "puntos": None,
+            "detalle": "Sin población conocida para calcularlo",
+        })
+        del f["_actividad_por_1000"]
+        del f["_total_contratos"]
+
+    # Tercera pasada: índice final, media ponderada solo sobre componentes
+    # disponibles (peso renormalizado -- nunca se puntúa un "0" por falta
+    # de dato).
+    for f in filas:
+        disponibles = {k: v for k, v in f["componentes"].items() if v["disponible"]}
+        f["n_componentes"] = len(disponibles)
+        if len(disponibles) < _INDICE_TRANSPARENCIA_MIN_COMPONENTES:
+            f["indice"] = None
+            continue
+        peso_total = sum(_INDICE_TRANSPARENCIA_PESOS[k] for k in disponibles)
+        f["indice"] = round(
+            sum(_INDICE_TRANSPARENCIA_PESOS[k] * v["puntos"] for k, v in disponibles.items()) / peso_total,
+            1,
+        )
+
+    return filas
+
+
+_INDICE_TRANSPARENCIA_CACHE = {"ts": 0.0, "filas": None}
+_indice_transparencia_cache_lock = threading.Lock()
+INDICE_TRANSPARENCIA_CACHE_TTL = 3600  # 1h: los datos de origen (cron diario) no cambian más rápido que eso
+
+
+def _indice_transparencia_cacheado():
+    """Envoltorio con caché en memoria de _calcular_indice_transparencia()
+    (función pura, ver su docstring). El cálculo agrega hasta ~680k filas de
+    contratos_menors_locales (una consulta SQL con JOIN) y recorre
+    _datos_memoria entero -- caro para recalcularlo en cada visita a
+    /rankings. TTL de 1h, igual de orden de magnitud que el resto de datos
+    periódicos del sitio (ninguno de los 7 componentes cambia más rápido que
+    el cron diario)."""
+    with _indice_transparencia_cache_lock:
+        if (_INDICE_TRANSPARENCIA_CACHE["filas"] is not None
+                and (time.time() - _INDICE_TRANSPARENCIA_CACHE["ts"]) < INDICE_TRANSPARENCIA_CACHE_TTL):
+            return _INDICE_TRANSPARENCIA_CACHE["filas"]
+    filas = _calcular_indice_transparencia()
+    with _indice_transparencia_cache_lock:
+        _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
+        _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
+    return filas
+
+
 def _calcular_ranking_alcaldes():
     """Ranking de sueldos de alcaldes/alcaldesas (ISPA), de mayor a menor
     importe anual. El nombre/partido viene de ALCALDES_CONCEJALES
@@ -7624,7 +7954,117 @@ def _calcular_rankings(datos):
     return top_n, top_imp
 
 
-def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia"):
+_INDICE_COMPONENTE_LABEL = {
+    "cuentas":       "Cuentas anuales",
+    "deuda_pub":     "Deuda/hab. publicada",
+    "saldo_pub":     "Saldo no financiero",
+    "ispa_pub":      "Sueldos ISPA",
+    "adjudicatario": "Adjudicatario identificado",
+    "directivo":     "Directivo identificado",
+    "actividad":     "Actividad de publicación",
+}
+
+# JS del buscador de la tabla del Índice de Transparencia -- filtro por
+# texto puro cliente, sin backend nuevo (la tabla ya trae los ~978
+# municipios reales renderizados, ver _render_indice_transparencia_html).
+# Definido como constante (no f-string) para no tener que escapar cada
+# llave literal de JS con {{ }}.
+_IT_BUSCADOR_JS = (
+    "var q=this.value.toLowerCase();"
+    "document.querySelectorAll('.it-row').forEach(function(tr){"
+    "tr.style.display = tr.dataset.muni.indexOf(q)===-1 ? 'none' : '';"
+    "});"
+)
+
+
+def _indice_transparencia_desglose_html(componentes):
+    """Desglose completo de los 7 componentes de un municipio (siempre las 7
+    filas, disponible o no) -- nunca una nota de índice sin desglose."""
+    filas = ""
+    for clave, peso in _INDICE_TRANSPARENCIA_PESOS.items():
+        c = componentes.get(clave, {})
+        if c.get("disponible"):
+            icono, valor_html = "✅", f'{c["puntos"]:.0f}/100'
+        else:
+            icono, valor_html = "➖", "no disponible"
+        filas += (f'<tr><td>{icono} {esc(_INDICE_COMPONENTE_LABEL.get(clave, clave))} '
+                  f'<span class="it-peso">(peso {peso:g}%)</span></td>'
+                  f'<td class="rk-valor">{valor_html}</td>'
+                  f'<td class="it-detalle">{esc(c.get("detalle", ""))}</td></tr>')
+    return filas
+
+
+def _render_indice_transparencia_html(comunidad="todas"):
+    """Sección "Índice de Transparencia Dinero Público" de /rankings --
+    ranking nacional (o filtrado por comunidad autónoma) de actividad y
+    disponibilidad de datos públicos, con el desglose de los 7 componentes
+    siempre visible por municipio. Ver el bloque de comentarios de cabecera
+    de _calcular_indice_transparencia para la metodología completa."""
+    filas_datos = _indice_transparencia_cacheado()
+    if comunidad != "todas":
+        filas_datos = [f for f in filas_datos if f["comunidad_autonoma"] == comunidad]
+
+    con_indice = [f for f in filas_datos if f["indice"] is not None]
+    con_indice.sort(key=lambda f: f["indice"], reverse=True)
+    sin_indice = len(filas_datos) - len(con_indice)
+
+    filas_html = ""
+    for i, f in enumerate(con_indice, 1):
+        pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
+        muni_q = quote_plus(f["municipio"])
+        q_prov_muni = _q_prov(f["provincia"])
+        indice = f["indice"]
+        color_cls = "it-alto" if indice >= 70 else ("it-medio" if indice >= 40 else "it-bajo")
+        desglose = _indice_transparencia_desglose_html(f["componentes"])
+        filas_html += f"""<tr class="it-row" data-muni="{esc(normalizar(f['municipio']))}">
+          <td class="rk-pos">{pos}</td>
+          <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
+          <td>{esc(PROVINCIA_LABEL.get(f['provincia'], f['provincia']))}</td>
+          <td class="rk-valor"><span class="it-indice {color_cls}">{indice:.1f}</span></td>
+          <td>{f['n_componentes']}/7</td>
+          <td><details class="it-desglose"><summary>Ver desglose ▾</summary>
+            <table class="it-desglose-tbl">{desglose}</table>
+          </details></td>
+        </tr>"""
+    if not filas_html:
+        filas_html = '<tr><td colspan="6" class="empty">Aún no hay datos suficientes.</td></tr>'
+
+    opciones_comunidad = [("todas", "España")] + list(COMUNIDAD_AUTONOMA_LABEL.items())
+    selector_comunidad = "".join(
+        f'<a href="/rankings?comunidad={c}#indice-transparencia" class="prov-tab{" active" if c == comunidad else ""}">'
+        f'{esc(label)}</a>'
+        for c, label in opciones_comunidad
+    )
+
+    aviso_sin_cobertura = (
+        f'<br><span class="noloc-warn">⚠️ {sin_indice} municipios sin cobertura de datos suficiente '
+        f'para calcular su índice (menos de {_INDICE_TRANSPARENCIA_MIN_COMPONENTES} de 7 componentes '
+        f'disponibles) -- no se muestran en la tabla.</span>'
+        if sin_indice else ""
+    )
+
+    return f"""
+  <div class="rk-section-header" id="indice-transparencia">
+    <h2>📊 Índice de Transparencia Dinero Público</h2>
+    <div class="prov-switch">{selector_comunidad}</div>
+  </div>
+  <p class="hero-sub" style="margin-top:-8px">
+    Valoración propia de Dinero Público sobre la actividad y disponibilidad de datos públicos de cada
+    municipio, calculada a partir de fuentes oficiales (contratación, cuentas anuales, deuda viva, sueldos
+    ISPA). <b>No es una certificación legal de cumplimiento de la Ley 19/2013 de Transparencia</b> ni una
+    acreditación oficial -- este proyecto no es organismo acreditador. Es un indicador propio pensado para
+    comparar municipios entre sí a partir de lo que hemos podido recopilar, no para juzgar su gestión.
+    {aviso_sin_cobertura}
+  </p>
+  <input type="text" class="it-buscador" placeholder="Buscar municipio…" autocomplete="off"
+         oninput="{esc(_IT_BUSCADOR_JS)}">
+  <div class="muni-card"><div class="tbl-scroll"><table>
+    <tr><th>#</th><th>Municipio</th><th>Provincia</th><th>Índice</th><th>Cobertura</th><th>Desglose</th></tr>
+    {filas_html}
+  </table></div></div>"""
+
+
+def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas"):
     """Dos rankings claramente separados:
     - Nacional: agrega TODAS las provincias cargadas (Murcia + Girona + las que vengan).
     - Provincial: el mismo top 10 x2, filtrable por una provincia concreta.
@@ -7784,7 +8224,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Municipio</th><th>Deuda viva</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_deuda_hab_html}
-  </table></div></div>"""
+  </table></div></div>
+{_render_indice_transparencia_html(comunidad)}"""
 
     return _page_shell("Rankings — Top 10 empresas", body,
                         description="Ranking nacional y por provincia de las empresas con más contratos "
@@ -8957,10 +9398,11 @@ def _route_get(path, qs, gzip_ok=False):
 
     if path == "/rankings":
         provincia_prov = _provincia_valida(qs.get("provincia", ["murcia"])[0])
+        comunidad_qs = _comunidad_valida(qs.get("comunidad", ["todas"])[0])
         with _datos_lock:
             datos_nacional = list(_datos_memoria)
             datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
-        return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov), gzip_ok=gzip_ok)
+        return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs), gzip_ok=gzip_ok)
 
     if path == "/fondos-ue":
         provincia_qs = qs.get("provincia", ["todas"])[0]
@@ -8991,6 +9433,11 @@ def _route_get(path, qs, gzip_ok=False):
                 continue  # sin parámetro, ya cubierto por las URLs de arriba
             urls.append(f"  <url><loc>{esc(SITE_URL)}/{_q_prov_first(prov)}</loc><changefreq>daily</changefreq></url>")
             urls.append(f"  <url><loc>{esc(SITE_URL)}/rankings{_q_prov_first(prov)}</loc><changefreq>daily</changefreq></url>")
+        # Índice de Transparencia: mismo patrón que el filtro por provincia de
+        # arriba, pero por comunidad autónoma (sección dentro de /rankings,
+        # no una ruta propia). "todas" ya cubierto por /rankings sin parámetro.
+        for com in COMUNIDAD_AUTONOMA_LABEL:
+            urls.append(f"  <url><loc>{esc(SITE_URL)}/rankings?comunidad={com}</loc><changefreq>daily</changefreq></url>")
         for m, prov in entradas:
             urls.append(f"  <url><loc>{esc(SITE_URL)}/?muni={quote_plus(m)}{_q_prov(prov)}</loc><changefreq>daily</changefreq></url>")
         body = ('<?xml version="1.0" encoding="UTF-8"?>\n'
