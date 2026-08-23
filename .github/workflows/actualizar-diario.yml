@@ -240,6 +240,11 @@ jobs:
           get_status() {  # status de un job, o 'not_found' ante cualquier fallo
             curl -s --max-time 30 "${BASE_URL}/api/job/$1" | python3 -c "import sys,json;print(json.load(sys.stdin).get('status','not_found'))" 2>/dev/null || echo not_found
           }
+          get_error() {   # campo 'error' de un job (motivo corto, ej. lock de
+            # /actualizar-todos ya ocupado) -- distinto de 'log', que en un
+            # rechazo por lock viene vacío y no explica nada por sí solo
+            curl -s --max-time 30 "${BASE_URL}/api/job/$1" | python3 -c "import sys,json;print(json.load(sys.stdin).get('error') or '(sin detalle)')" 2>/dev/null || echo '(sin detalle)'
+          }
           mostrar_log() {  # imprime el log del job (vive solo en memoria del
             # contenedor -- se pierde en el próximo reinicio, así que hay que
             # volcarlo aquí en cuanto el job termina, no se puede recuperar después)
@@ -269,6 +274,7 @@ jobs:
 
               if [ "$st" = "error" ]; then
                 echo "::error::${etiqueta} terminó en 'error'. No se commitea."
+                echo "  motivo: $(get_error "$job_id")"
                 echo "--- log de ${etiqueta} ---"
                 mostrar_log "$job_id"
                 return 1
