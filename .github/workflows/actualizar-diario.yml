@@ -103,12 +103,21 @@ name: Actualizar contratos diariamente
 # justo en ese margen de segundos. Sin reintento, ese rechazo tiraba a la
 # basura el cache.db recién descargado (con el progreso parcial de
 # Tarragona ya checkpointeado en él). Fix: `push_con_reintento` (definida
-# en cada paso que hace `git push`) reintenta con `git fetch` + `git
-# rebase origin/main` antes de volver a empujar, hasta 5 veces -- para un
-# fichero generado por el propio bot (cache.db, hacienda_eell.json,
-# poblacion.json) el rebase es trivial (solo re-aplica "sustituir el
-# fichero por la versión descargada", nunca hay conflicto real de
-# contenido).
+# en cada paso que hace `git push`) reintenta con `git fetch` + `git merge
+# origin/main` antes de volver a empujar, hasta 5 veces.
+#
+# El fix original (2026-08-14) usaba `git rebase` en vez de `merge`, bajo
+# el supuesto de que para un fichero generado por el propio bot "nunca hay
+# conflicto real de contenido" -- FALSO para cache.db: es un binario (Git
+# LFS), y si dos franjas lo tocan cerca en el tiempo (visto en producción
+# 2026-08-24, run 32711275521) el rebase revienta con CONFLICT (content)
+# sin forma de auto-resolverlo, aunque ambas versiones sean snapshots
+# igual de válidos de la MISMA base de datos en producción. `git merge -X
+# ours` sí lo resuelve: ante conflicto en cache.db se queda automáticamente
+# con nuestra copia (la recién descargada) en vez de abortar. Para
+# hacienda_eell.json/poblacion.json (texto, sin -X ours) un merge normal
+# sigue siendo trivial como antes, pero ahora fusiona de verdad en el caso
+# raro de que sí difieran en vez de simplemente asumir que no puede pasar.
 #
 # REORDENADO HACIENDA/POBLACIÓN -- causa real de que SOLO la franja de
 # murcia fallara cada noche (encontrado y arreglado 2026-08-18, runs
@@ -535,11 +544,23 @@ jobs:
           conteos=$(grep '^RESUMEN' canario.out | sed 's/^RESUMEN //')
           rm -f canario.out
 
-          # Reintenta el push con rebase si otra franja ya empujó a main
+          # Reintenta el push con merge si otra franja ya empujó a main
           # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera
           # (así es exactamente como se perdió el checkpoint de Tarragona la
           # primera noche: Barcelona commiteó unos segundos después de que
           # este job hiciera su checkout).
+          #
+          # Antes usaba `git rebase`, pero cache.db es un binario (Git LFS):
+          # un rebase reaplica nuestro commit como un parche sobre
+          # origin/main y git no sabe fusionar dos versiones de un binario
+          # -- revienta con CONFLICT (content) en CUALQUIER noche en que dos
+          # franjas toquen cache.db cerca en el tiempo, aunque las dos sean
+          # snapshots igual de válidos de la MISMA base de datos en
+          # producción (visto en producción 2026-08-24, run 32711275521).
+          # `git merge -X ours` sí resuelve esto: si cache.db conflictúa, se
+          # queda automáticamente con NUESTRA copia (la que acabamos de
+          # descargar de producción, la más fresca) en vez de abortar --
+          # nunca hace falta resolver un binario a mano.
           push_con_reintento() {
             local intentos=0
             while true; do
@@ -551,21 +572,20 @@ jobs:
                 echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
                 return 1
               fi
-              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
+              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras merge con origin/main..."
               git fetch origin main
-              # Guarda cualquier cambio suelto sin commitear antes de rebasar
-              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
-              # está limpio ("cannot rebase: You have unstaged changes",
-              # visto en producción 2026-08-15: algo deja el working tree con
-              # cambios sin stagear entre el commit y el push, probablemente
-              # normalización de line-endings vía .gitattributes/LFS al
-              # tocar main). `git stash push -u` no hace nada si no hay
+              # Guarda cualquier cambio suelto sin commitear antes de
+              # mergear -- mismo motivo que antes con rebase: algo deja el
+              # working tree con cambios sin stagear entre el commit y el
+              # push, probablemente normalización de line-endings vía
+              # .gitattributes/LFS al tocar main (visto en producción
+              # 2026-08-15). `git stash push -u` no hace nada si no hay
               # cambios que guardar, así que este paso es inofensivo también
               # cuando el árbol ya estaba limpio.
-              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
-              if ! git rebase origin/main; then
-                echo "::error::git rebase sobre origin/main falló; abortando push."
-                git rebase --abort 2>/dev/null || true
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
+              if ! git merge --no-edit -X ours origin/main; then
+                echo "::error::git merge con origin/main falló; abortando push."
+                git merge --abort 2>/dev/null || true
                 git stash pop >/dev/null 2>&1 || true
                 return 1
               fi
@@ -614,8 +634,13 @@ jobs:
           (cd backend && python actualizar_deuda_y_liquidaciones.py) \
             || { echo "::warning::actualizar_deuda_y_liquidaciones.py falló; se mantiene el hacienda_eell.json existente."; exit 0; }
 
-          # Reintenta el push con rebase si otra franja ya empujó a main
-          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera.
+          # Reintenta el push con merge si otra franja ya empujó a main
+          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de
+          # cabecera. Antes usaba `git rebase`; ver el comentario largo en el
+          # push_con_reintento() del paso de cache.db más arriba sobre por
+          # qué eso reventaba con binarios LFS -- aquí el archivo es JSON de
+          # texto, así que un merge normal (sin -X ours) puede fusionar de
+          # verdad los cambios de ambos lados en vez de descartar uno.
           push_con_reintento() {
             local intentos=0
             while true; do
@@ -627,21 +652,20 @@ jobs:
                 echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
                 return 1
               fi
-              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
+              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras merge con origin/main..."
               git fetch origin main
-              # Guarda cualquier cambio suelto sin commitear antes de rebasar
-              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
-              # está limpio ("cannot rebase: You have unstaged changes",
-              # visto en producción 2026-08-15: algo deja el working tree con
-              # cambios sin stagear entre el commit y el push, probablemente
-              # normalización de line-endings vía .gitattributes/LFS al
-              # tocar main). `git stash push -u` no hace nada si no hay
+              # Guarda cualquier cambio suelto sin commitear antes de
+              # mergear -- mismo motivo que antes con rebase: algo deja el
+              # working tree con cambios sin stagear entre el commit y el
+              # push, probablemente normalización de line-endings vía
+              # .gitattributes/LFS al tocar main (visto en producción
+              # 2026-08-15). `git stash push -u` no hace nada si no hay
               # cambios que guardar, así que este paso es inofensivo también
               # cuando el árbol ya estaba limpio.
-              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
-              if ! git rebase origin/main; then
-                echo "::error::git rebase sobre origin/main falló; abortando push."
-                git rebase --abort 2>/dev/null || true
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
+              if ! git merge --no-edit origin/main; then
+                echo "::error::git merge con origin/main falló; abortando push."
+                git merge --abort 2>/dev/null || true
                 git stash pop >/dev/null 2>&1 || true
                 return 1
               fi
@@ -676,8 +700,13 @@ jobs:
           (cd backend && python actualizar_poblacion.py) \
             || { echo "::warning::actualizar_poblacion.py falló; se mantiene el poblacion.json existente."; exit 0; }
 
-          # Reintenta el push con rebase si otra franja ya empujó a main
-          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera.
+          # Reintenta el push con merge si otra franja ya empujó a main
+          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de
+          # cabecera. Antes usaba `git rebase`; ver el comentario largo en el
+          # push_con_reintento() del paso de cache.db más arriba sobre por
+          # qué eso reventaba con binarios LFS -- aquí el archivo es JSON de
+          # texto, así que un merge normal (sin -X ours) puede fusionar de
+          # verdad los cambios de ambos lados en vez de descartar uno.
           push_con_reintento() {
             local intentos=0
             while true; do
@@ -689,21 +718,20 @@ jobs:
                 echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
                 return 1
               fi
-              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras rebase con origin/main..."
+              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras merge con origin/main..."
               git fetch origin main
-              # Guarda cualquier cambio suelto sin commitear antes de rebasar
-              # -- `git rebase` se niega a arrancar si el árbol de trabajo no
-              # está limpio ("cannot rebase: You have unstaged changes",
-              # visto en producción 2026-08-15: algo deja el working tree con
-              # cambios sin stagear entre el commit y el push, probablemente
-              # normalización de line-endings vía .gitattributes/LFS al
-              # tocar main). `git stash push -u` no hace nada si no hay
+              # Guarda cualquier cambio suelto sin commitear antes de
+              # mergear -- mismo motivo que antes con rebase: algo deja el
+              # working tree con cambios sin stagear entre el commit y el
+              # push, probablemente normalización de line-endings vía
+              # .gitattributes/LFS al tocar main (visto en producción
+              # 2026-08-15). `git stash push -u` no hace nada si no hay
               # cambios que guardar, así que este paso es inofensivo también
               # cuando el árbol ya estaba limpio.
-              git stash push -u -m "push_con_reintento: cambios sueltos antes de rebase" >/dev/null 2>&1 || true
-              if ! git rebase origin/main; then
-                echo "::error::git rebase sobre origin/main falló; abortando push."
-                git rebase --abort 2>/dev/null || true
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
+              if ! git merge --no-edit origin/main; then
+                echo "::error::git merge con origin/main falló; abortando push."
+                git merge --abort 2>/dev/null || true
                 git stash pop >/dev/null 2>&1 || true
                 return 1
               fi
