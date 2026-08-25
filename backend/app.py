@@ -7746,18 +7746,21 @@ def _calcular_indice_transparencia():
         # arriba). Solo se cuenta sobre adjudicatarios CONOCIDOS: no tiene
         # sentido buscar director de una empresa que ni siquiera sabemos
         # cuál es ("No localizada").
-        num_dir = sum(1 for c in contratos_formales
-                      if c.get("empresa") and c.get("empresa") != "No localizada" and c.get("directivo"))
-        denom_dir = num_adj
+        num_dir_formal = sum(1 for c in contratos_formales
+                              if c.get("empresa") and c.get("empresa") != "No localizada" and c.get("directivo"))
+        denom_dir_formal = num_adj
         m = menores_stats.get(municipio)
-        if m:
-            denom_dir += m["total"]
-            num_dir += m["con_directivo"]
+        denom_dir_menor = m["total"] if m else 0
+        num_dir_menor = m["con_directivo"] if m else 0
+        num_dir = num_dir_formal + num_dir_menor
+        denom_dir = denom_dir_formal + denom_dir_menor
         if denom_dir:
             componentes["directivo"] = {
                 "disponible": True,
                 "puntos": 100.0 * num_dir / denom_dir,
-                "detalle": f"{num_dir}/{denom_dir} adjudicatarios conocidos con directivo identificado",
+                "detalle": (f"{num_dir}/{denom_dir} adjudicatarios conocidos con directivo identificado "
+                            f"({num_dir_formal}/{denom_dir_formal} formales + "
+                            f"{num_dir_menor}/{denom_dir_menor} menores)"),
             }
         else:
             componentes["directivo"] = {
@@ -7776,6 +7779,8 @@ def _calcular_indice_transparencia():
             "componentes": componentes,
             "_actividad_por_1000": actividad_por_1000,  # temporal, se consume en la 2ª pasada
             "_total_contratos": total_contratos,
+            "_total_contratos_formales": denom_adj,
+            "_total_contratos_menores": m["total"] if m else 0,
         })
 
     # Segunda pasada: percentil de "actividad" DENTRO de cada tramo de
@@ -7794,7 +7799,9 @@ def _calcular_indice_transparencia():
             f["componentes"]["actividad"] = {
                 "disponible": True,
                 "puntos": percentil,
-                "detalle": (f"{f['_total_contratos']} contratos/{f['habitantes']} hab. "
+                "detalle": (f"{f['_total_contratos']} contratos "
+                            f"({f['_total_contratos_formales']} formales + "
+                            f"{f['_total_contratos_menores']} menores) / {f['habitantes']} hab. "
                             f"({f['_actividad_por_1000']:.2f}/1.000 hab.), "
                             f"percentil {percentil:.0f} entre municipios de tamaño similar"),
             }
@@ -7808,6 +7815,8 @@ def _calcular_indice_transparencia():
         })
         del f["_actividad_por_1000"]
         del f["_total_contratos"]
+        del f["_total_contratos_formales"]
+        del f["_total_contratos_menores"]
 
     # Tercera pasada: índice final, media ponderada solo sobre componentes
     # disponibles (peso renormalizado -- nunca se puntúa un "0" por falta
