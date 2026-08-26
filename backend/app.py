@@ -4,7 +4,7 @@ Fuente: Plataforma de Contratación del Sector Público (datos oficiales CODICE/
 """
 
 import gzip as _gzip
-import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib
+import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib, random
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from email.utils import parsedate_to_datetime
@@ -4993,6 +4993,24 @@ def enriquecer_directivos_contratos_menores(job_id=None, presupuesto_minutos=30)
     pendientes = [a for (a,) in filas
                   if _dir_cache_get(a, "")[0] is None
                   and not _dir_cache_agotado(a, "")]
+    # Orden aleatorio (investigación 2026-08-26, tasa de acierto real medida:
+    # solo 1258/75663 adjudicatarios -- 1,7%-- tenían ALGUNA vez un intento
+    # registrado en `directores`, con CERO entradas negativas persistentes
+    # pese a que los logs de cron sí muestran cientos de fallos cada noche).
+    # Causa: `_limpiar_cache_negativos()` (pensada para el enriquecimiento de
+    # contratos FORMALES, ver _enriquecer_directivos_bg) comparte la misma
+    # tabla `directores` y borra cualquier entrada negativa con intentos <
+    # DIR_INTENTOS_MAX cada ~24h. Como esta consulta no tenía ORDER BY, SQLite
+    # devolvía siempre el mismo orden estable (rowid), así que cada noche se
+    # reintentaban las MISMAS empresas del principio de la lista -- si
+    # fallaban, la purga las devolvía a "pendiente" antes de la siguiente
+    # tirada, y el presupuesto de 30 min nunca llegaba a explorar el resto de
+    # las ~75k. Barajar aquí no toca la purga (compartida con fondos UE/
+    # contratos formales, demasiado radio de impacto para tocarla desde aquí)
+    # ni el mecanismo de caché (_dir_cache_get/set/agotado) -- solo asegura
+    # que cada tirada explore una muestra distinta del backlog en vez de
+    # quedarse machacando siempre el mismo subconjunto inicial.
+    random.shuffle(pendientes)
     total = len(pendientes)
     _log(job_id, f"Buscando gerente/administrador de {total} adjudicatarios de "
                  f"contratos menores pendientes (einforma · empresia · BORME)…")
@@ -5665,7 +5683,16 @@ def buscar_directivo_web(empresa, nif=""):
 
 
 def buscar_directivo(empresa, nif=""):
-    """Busca directivo: persona física → einforma → empresia → BORME anuncios → búsqueda web. Usa caché persistente."""
+    """Busca directivo: persona física → empresia → BORME anuncios → búsqueda web. Usa caché persistente.
+
+    einforma (antigua fuente 1) se quitó de la cadena el 2026-08-26:
+    probado en vivo contra 5 empresas reales, devolvía HTTP 404 en 5/5 --
+    coincide con lo que ya advertía el propio docstring de
+    buscar_directivo_einforma ("actualmente retorna 404 para la mayoría").
+    Mantenerla en la cadena solo añadía una petición HTTP completa
+    desperdiciada por empresa (más tiempo de presupuesto de 30 min gastado
+    sin encontrar nada, menos empresas cubiertas por tirada). La función
+    se deja definida por si el sitio vuelve a funcionar más adelante."""
     if not empresa or empresa == "No localizada":
         return "", ""
     palabras = empresa.strip().split()
@@ -5682,7 +5709,7 @@ def buscar_directivo(empresa, nif=""):
         return cached_n, cached_c
 
     nombre, cargo = "", ""
-    for fuente in (buscar_directivo_einforma, buscar_directivo_empresia,
+    for fuente in (buscar_directivo_empresia,
                    buscar_directivo_borme_anuncios, buscar_directivo_web):
         try:
             nombre, cargo = fuente(empresa, nif)
