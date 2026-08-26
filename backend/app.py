@@ -2963,7 +2963,12 @@ def _parse_summary(summary_raw):
 
 
 _SUFIJOS_EMPRESA = re.compile(
-    r'\b(s\.?l\.?u?\.?|s\.?a\.?u?\.?|s\.?c\.?|s\.?l\.?p\.?|s\.?coop\.?|s\.?a\.?)\s*$', re.I
+    # "s\.?r\.?l\.?" (SRL, forma italiana usada a veces por filiales/sucursales
+    # en España -- ver CARPOSA SRL, adjudicatario real de contratos menores
+    # que sin este sufijo se clasificaba como persona física en
+    # buscar_directivo(), 2026-08-26) añadido para que quede en línea con
+    # _SUFIJOS_SOCIEDAD_NOM, que ya lo reconocía.
+    r'\b(s\.?l\.?u?\.?|s\.?a\.?u?\.?|s\.?c\.?|s\.?l\.?p\.?|s\.?coop\.?|s\.?a\.?|s\.?r\.?l\.?)\s*$', re.I
 )
 
 # Códigos de TenderResultCode-2.09 (PLACE) que significan que NO hubo
@@ -5243,8 +5248,18 @@ def _extraer_texto(html_text):
     return re.sub(r"\s+", " ", soup.get_text(" ", strip=True)).strip()
 
 _CARGO_RE = re.compile(
+    # "apoderado" solo aceptaba el calificador "general" -- a diferencia de
+    # _BORME_NOM_RE, que ya reconocía también "solidario"/"mancomunado" para
+    # el mismo cargo. Esa asimetría causaba que, en texto BORME con
+    # "Apoderado solidario: NOMBRE" (cuando _extraer_directivo_nombramiento
+    # caía al fallback genérico _extraer_directivo en vez de acertar con
+    # _BORME_NOM_RE), "solidario"/"mancomunado" se colara como primera
+    # palabra del nombre capturado en vez de quedarse en el cargo -- visto en
+    # producción 2026-08-26: "MUÑOZ MIQUEL, MIREIA" resolvió a directivo
+    # "Solidario Lobato Fernandez Marc" (cargo "Apoderado") en vez de
+    # directivo "Lobato Fernandez Marc" (cargo "Apoderado Solidario").
     r"(administrador(?:\s+[úu]nico|\s+solidario|\s+mancomunado)?|"
-    r"apoderado(?:\s+general)?|consejero\s+delegado|presidente|"
+    r"apoderado(?:\s+(?:general|solidario|mancomunado))?|consejero\s+delegado|presidente|"
     r"gerente|director\s+general|socio(?:\s+director)?)"
     r"[\s:,\-]+([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ ]{5,80})",
     re.IGNORECASE,
