@@ -8335,7 +8335,17 @@ def _render_fila_contrato_menor(r):
     las fuentes (Girona/RPC, Fuente Álamo, Mula, Molina de Segura...). No
     todas traen NIF ni URL por registro (ninguna de las cuatro fuentes de
     momento las publica de forma completa), así que ambos se muestran solo
-    si vienen informados."""
+    si vienen informados.
+
+    Columna DIRECTIVO/CARGO separada, junto a IMPORTE (reestructurado
+    2026-08-26 a petición de César -- antes iba mezclada bajo el objeto del
+    contrato, en la misma columna que la empresa): mismo patrón visual que
+    ya usa la tabla de contratos formales (_render_fila_contrato/dir_html),
+    así que ambas tablas se leen igual. En móvil no hace falta lógica
+    especial de apilado -- las tablas ya son horizontalmente scrolleables
+    (ver `table{display:block;overflow-x:auto}` en el media query de
+    700px), el mismo mecanismo que ya absorbe la 4ª columna de la tabla
+    formal."""
     adjudicatari = r.get("adjudicatari", "")
     fuente = r.get("fuente", "")
     fuente_badge = f'<span class="fuente-badge fuente-rpc">{esc(_FUENTE_CM_LABEL.get(fuente, fuente or "?"))}</span>'
@@ -8346,8 +8356,6 @@ def _render_fila_contrato_menor(r):
     # nunca se lanza la búsqueda en el hilo de render (la busca aparte
     # enriquecer_directivos_contratos_menores).
     dir_nombre, dir_cargo = _dir_cache_get(adjudicatari, "")
-    gerente_html = (f'<div class="lid" style="margin-top:2px">👤 {esc(dir_nombre)} — {esc(dir_cargo)}</div>'
-                     if dir_nombre else "")
 
     # Mismo detector que ya usan contratos públicos y fondos UE, pero probando
     # también variantes de orden de nombre (ver _variantes_nombre_para_detector)
@@ -8375,15 +8383,31 @@ def _render_fila_contrato_menor(r):
     else:
         match_html = ""
 
+    if dir_nombre:
+        dir_html = (f'<div class="directivo">{esc(dir_nombre)}</div>'
+                     f'<div class="cargo">{esc(dir_cargo)}</div>{match_html}')
+    else:
+        # Sin NIF (ninguna fuente de menores lo publica, ver
+        # enriquecer_directivos_contratos_menores), así que _registro_correcto("")
+        # siempre cae en Registro Mercantil -- razonable por defecto: el grueso
+        # de adjudicatarios de contratos menores son SL/SLU/autónomos locales.
+        empresa_q = quote_plus(adjudicatari)
+        registro_label, registro_url = _registro_correcto(r.get("nif", ""))
+        rm_link = (f'<a href="{esc(registro_url)}" target="_blank" rel="noopener" '
+                   f'title="Buscar {esc(adjudicatari)} en el {esc(registro_label)}">'
+                   f'{esc(registro_label)} ↗</a>') if empresa_q else ""
+        nota = ('<span class="noloc-nota">Empresa sin datos registrales públicos</span>'
+                if _dir_cache_agotado(adjudicatari, "") else "")
+        dir_html = (f'<span class="noloc-warn">⚠️ No localizado {rm_link}</span>{nota}')
+
     return f"""<tr>
       <td>
         <div class="empresa">{esc(adjudicatari)}{fuente_badge}</div>
         {nif_html}
         <div class="cargo">{esc(r.get("descripcio","")[:110])}</div>
-        {gerente_html}
-        {match_html}
       </td>
       <td class="cm-importe">{fmt_eur(str(r["import_num"])) if r["import_num"] else "—"}</td>
+      <td>{dir_html}</td>
       <td><div class="lid">{esc(r.get("tipus_contracte",""))}</div></td>
       <td><div class="lid">{esc(r.get("data_adjudicacio",""))}</div></td>
     </tr>"""
@@ -8710,11 +8734,13 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                     <tr>
                       <th>Adjudicatario / Objeto</th>
                       <th>Importe</th>
+                      <th>Directivo</th>
                       <th>Tipo</th>
                       <th>Fecha</th>
                     </tr>
                     {filas_cm}
                   </table>
+                  <span class="scroll-hint" aria-hidden="true">sigue <span class="scroll-hint-arrow">›</span></span>
                 </div>
                 {pag_cm_html}
               </details>"""
