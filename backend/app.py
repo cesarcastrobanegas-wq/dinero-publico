@@ -5717,7 +5717,21 @@ def buscar_directivo(empresa, nif=""):
             and not tiene_conectores
             and not _SUFIJOS_EMPRESA.search(empresa)
             and len(palabras_limpias) == len(palabras)):
-        return empresa.title(), "Autónomo / Persona física"
+        # Bug encontrado en producción 2026-08-27: este return nunca pasaba
+        # por _dir_cache_set, así que un adjudicatario-persona-física jamás
+        # quedaba persistido en `directores` -- en la siguiente tirada
+        # _dir_cache_get lo seguía viendo como None, así que
+        # enriquecer_directivos_contratos_menores() lo volvía a seleccionar
+        # como "pendiente", lo volvía a "encontrar" al instante (heurística
+        # local, sin red) y lo volvía a contar en el log, para siempre, sin
+        # que el backlog real ni la tabla `directores` avanzaran un solo
+        # milímetro para estos casos. Verificado comparando 3 snapshots de
+        # cache.db de producción en la misma noche: "con nombre resuelto" se
+        # quedó en exactamente 11631 en los tres pese a que los logs de esas
+        # mismas tiradas reportaban 448+466+484+480 "encontrados".
+        nombre_pf, cargo_pf = empresa.title(), "Autónomo / Persona física"
+        _dir_cache_set(empresa, nif, nombre_pf, cargo_pf)
+        return nombre_pf, cargo_pf
 
     cached_n, cached_c = _dir_cache_get(empresa, nif)
     if cached_n is not None:
