@@ -4,11 +4,22 @@ name: Actualizar contratos diariamente
 # /actualizar-todos y /actualizar-fondos-ue son fire-and-forget (devuelven
 # job_id al instante y procesan en segundo plano durante horas). Este
 # workflow hace polling de /api/job/<id> cada 4 min (ese propio tráfico
-# mantiene el contenedor despierto) hasta que el job termina; solo entonces
-# descarga el cache.db de producción (/admin/cache-db, con ADMIN_TOKEN) y,
-# si un chequeo "canario" de conteos confirma que no hubo colapso, lo
-# commitea versionado con Git LFS. Así los datos sobreviven a los reinicios
-# del contenedor (que revierten cache.db en caliente al último commit).
+# mantiene el contenedor despierto) hasta que el job termina.
+#
+# CACHE.DB YA NO SE COMMITEA A GIT (eliminado 2026-09-02): hasta esa fecha,
+# tras cada franja se descargaba el cache.db de producción (/admin/cache-db,
+# con ADMIN_TOKEN) y, si un chequeo "canario" de conteos confirmaba que no
+# hubo colapso, se commiteaba versionado con Git LFS como backup. Ese
+# commit (~250MB, hasta 5 veces/día) agotaba la cuota de Git LFS bandwidth
+# (10GB/mes) y bloqueaba los builds de Render. Se eliminó porque Render ya
+# hace snapshots nativos del disco persistente (confirmado por César) --
+# ese backup en git era redundante. El dato real sigue viviendo SOLO en el
+# disco persistente de Render (DB_FILE, ver backend/app.py), que cada
+# franja escribe igual que siempre; el sembrado automático desde el
+# cache.db del repo lleva deshabilitado desde el incidente de 2026-08-08 y
+# no depende de nada de esto. El script `canario_cache_db.py` y la lógica
+# de reintento de push que se describen más abajo son contexto histórico
+# de ese mecanismo ya retirado.
 #
 # SPLIT POR PROVINCIA (añadido 2026-08-13/14 — ver memoria del proyecto):
 # hasta el 2026-08-04 este cron llamaba a /actualizar-todos?provincia=todas
@@ -180,7 +191,9 @@ on:
         type: boolean
         default: false
 
-# Necesario para que el paso final pueda commitear/pushear el cache.db nuevo.
+# Necesario para que los pasos de Hacienda/Población puedan commitear/pushear
+# sus JSON al final de la franja de Murcia (ver nota "REORDENADO
+# HACIENDA/POBLACIÓN" más arriba).
 permissions:
   contents: write
 
@@ -227,23 +240,19 @@ jobs:
           echo "provincia=${provincia}" >> "$GITHUB_OUTPUT"
 
       # Va DESPUÉS de "Determinar franja horaria" a propósito (ese paso no
-      # necesita el repo descargado, es puro bash/expresiones de GH) --
-      # 2026-09-02, cuota de Git LFS bandwidth agotada (10GB/mes). El
-      # ancho de banda de LFS de GitHub SOLO cuenta descargas (pull/clone/
-      # checkout), los push/commit son gratis -- así que este checkout con
-      # `lfs: true`, que antes se hacía SIEMPRE (~250MB × 5 franjas/día),
-      # era el consumo real dominante, no los commits. Ahora que el commit
-      # de cache.db solo pasa en Tarragona (ver step "Canario anti-colapso
-      # + commit condicionado" más abajo), backend/cache.db ya materializado
-      # por LFS no lo usa NADA en las otras 4 franjas -- solo el script del
-      # canario lo lee, y ese script tampoco corre fuera de Tarragona. Con
-      # esto la descarga LFS pasa de 5 veces/día a 1.
-      - name: Checkout del repo (con Git LFS para materializar cache.db solo en Tarragona)
+      # necesita el repo descargado, es puro bash/expresiones de GH).
+      #
+      # Sin `lfs: true`: desde 2026-09-02 este workflow ya no commitea ni
+      # lee backend/cache.db en absoluto (ver nota al final de "Refresco
+      # de la provincia..." más abajo) -- el dato real vive solo en el
+      # disco persistente de Render, nunca en git. Materializar el LFS
+      # de cache.db aquí no serviría para nada y solo consumiría cuota de
+      # LFS bandwidth (10GB/mes, la causa original de los fallos de build
+      # de Render de estos días).
+      - name: Checkout del repo
         uses: actions/checkout@v4
-        with:
-          lfs: ${{ steps.slot.outputs.provincia == 'tarragona' }}
 
-      - name: Refresco de la provincia de esta franja + keep-alive por polling + descarga del cache.db
+      - name: Refresco de la provincia de esta franja + keep-alive por polling
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           BASE_URL: https://dinero-publico.onrender.com
@@ -508,133 +517,18 @@ jobs:
             fi
           fi
 
-          # --- 3. descargar el cache.db de producción ------------------------
-          # Se intenta SIEMPRE, incluso si algo de lo anterior no llegó a
-          # 'done' (checkpointing, ver nota de cabecera del workflow): el
-          # disco persistente ya tiene lo que se haya procesado hasta el
-          # momento del reinicio, aditivo por municipio -- mejor commitear eso
-          # que nada. El canario del step siguiente decide si de verdad es
-          # seguro commitearlo.
-          echo "== Descargando cache.db de producción =="
-          http=$(curl -s --max-time 300 -w "%{http_code}" \
-            -o cache_db_nuevo.db \
-            "${BASE_URL}/admin/cache-db?token=${ADMIN_TOKEN}" || echo 000)
-          if [ "$http" != "200" ]; then
-            echo "::error::/admin/cache-db devolvió HTTP $http."
-            fallo=1
-          else
-            echo "Descargado cache_db_nuevo.db ($(stat -c%s cache_db_nuevo.db) bytes)."
-          fi
-
+          # (Hasta 2026-09-02 aquí se descargaba cache.db de producción para
+          # commitearlo a git como backup -- eliminado: Render ya hace
+          # snapshots nativos del disco persistente (confirmado por César),
+          # así que ese backup en git era redundante, y el commit diario de
+          # ~250MB agotaba la cuota de Git LFS bandwidth/storage y
+          # bloqueaba los builds de Render. El disco persistente sigue
+          # siendo la única fuente real de datos, igual que siempre --
+          # nada de este cambio afecta a lo que sirve la app.)
           if [ "$fallo" -ne 0 ]; then
-            echo "::error::Uno o más refrescos críticos de esta franja (${PROVINCIA_SLOT}) no se completaron hoy. El job se marca como fallido para que llegue el aviso por email, pero se intenta igualmente checkpointear cualquier progreso parcial en el siguiente paso."
+            echo "::error::Uno o más refrescos críticos de esta franja (${PROVINCIA_SLOT}) no se completaron hoy. El job se marca como fallido para que llegue el aviso por email."
           fi
           exit "$fallo"
-
-      - name: Canario anti-colapso + commit condicionado (Git LFS)
-        # !cancelled() (no always()): se ejecuta tanto si el step anterior
-        # terminó bien como si terminó en `fallo=1` (checkpointing de
-        # progreso parcial, ver nota de cabecera del workflow) -- pero NO si
-        # el propio workflow fue cancelado a mano, para no commitear a medias
-        # de una cancelación deliberada.
-        #
-        # SOLO en la franja de Tarragona (2026-09-02, cuota de Git LFS
-        # bandwidth agotada -- 10GB/mes, y este commit de ~250MB se hacía
-        # hasta 5 veces/día, una por franja, disparando el bloqueo de LFS
-        # que rompía el build de Render con "git lfs pull" fallando). El
-        # commit a git de cache.db es puramente un backup/auditoría: la app
-        # sirve siempre desde el disco persistente de Render (DB_FILE,
-        # ver backend/app.py), que cada franja escribe igual que antes --
-        # nada de esto depende de que este step llegue a correr. El
-        # sembrado automático desde el cache.db del repo está además
-        # explícitamente deshabilitado desde el incidente de 2026-08-08
-        # (ver comentario "REDISEÑO 2026-08-08" en backend/app.py): nunca
-        # se copia solo al arrancar, así que reducir la frecuencia de este
-        # commit no cambia en nada el comportamiento de arranque. Efecto
-        # secundario bueno: al pasar de hasta 5 pushes/redeploys de Render
-        # al día a 1, también baja el riesgo del patrón de "redeploy mata
-        # el job de la siguiente franja ~12 min después" visto varias
-        # noches seguidas.
-        if: ${{ !cancelled() && steps.slot.outputs.provincia == 'tarragona' }}
-        run: |
-          set -uo pipefail
-          if [ ! -f cache_db_nuevo.db ]; then
-            echo "No se llegó a descargar cache_db_nuevo.db (fallo antes de ese paso). Nada que commitear."
-            exit 0
-          fi
-          # El canario compara conteos (contratos + filas de fondos_ue) del
-          # cache.db del repo vs el descargado; sale != 0 si el nuevo cae por
-          # debajo del 90% en cualquiera (colapso silencioso -> mejor no tocar).
-          python3 .github/scripts/canario_cache_db.py backend/cache.db cache_db_nuevo.db | tee canario.out
-          codigo=${PIPESTATUS[0]}
-          if [ "$codigo" -ne 0 ]; then
-            echo "El canario bloqueó el commit (ver ::error:: arriba). Termino sin tocar el repo."
-            exit 1
-          fi
-          conteos=$(grep '^RESUMEN' canario.out | sed 's/^RESUMEN //')
-          rm -f canario.out
-
-          # Reintenta el push con merge si otra franja ya empujó a main
-          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de cabecera
-          # (así es exactamente como se perdió el checkpoint de Tarragona la
-          # primera noche: Barcelona commiteó unos segundos después de que
-          # este job hiciera su checkout).
-          #
-          # Antes usaba `git rebase`, pero cache.db es un binario (Git LFS):
-          # un rebase reaplica nuestro commit como un parche sobre
-          # origin/main y git no sabe fusionar dos versiones de un binario
-          # -- revienta con CONFLICT (content) en CUALQUIER noche en que dos
-          # franjas toquen cache.db cerca en el tiempo, aunque las dos sean
-          # snapshots igual de válidos de la MISMA base de datos en
-          # producción (visto en producción 2026-08-24, run 32711275521).
-          # `git merge -X ours` sí resuelve esto: si cache.db conflictúa, se
-          # queda automáticamente con NUESTRA copia (la que acabamos de
-          # descargar de producción, la más fresca) en vez de abortar --
-          # nunca hace falta resolver un binario a mano.
-          push_con_reintento() {
-            local intentos=0
-            while true; do
-              if git push; then
-                return 0
-              fi
-              intentos=$((intentos+1))
-              if [ "$intentos" -ge 5 ]; then
-                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
-                return 1
-              fi
-              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras merge con origin/main..."
-              git fetch origin main
-              # Guarda cualquier cambio suelto sin commitear antes de
-              # mergear -- mismo motivo que antes con rebase: algo deja el
-              # working tree con cambios sin stagear entre el commit y el
-              # push, probablemente normalización de line-endings vía
-              # .gitattributes/LFS al tocar main (visto en producción
-              # 2026-08-15). `git stash push -u` no hace nada si no hay
-              # cambios que guardar, así que este paso es inofensivo también
-              # cuando el árbol ya estaba limpio.
-              git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
-              if ! git merge --no-edit -X ours origin/main; then
-                echo "::error::git merge con origin/main falló; abortando push."
-                git merge --abort 2>/dev/null || true
-                git stash pop >/dev/null 2>&1 || true
-                return 1
-              fi
-              git stash pop >/dev/null 2>&1 || true
-              sleep 5
-            done
-          }
-
-          mv -f cache_db_nuevo.db backend/cache.db
-          git config user.name  "dinero-publico-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add backend/cache.db
-          if git diff --cached --quiet; then
-            echo "cache.db idéntico al del repo; nada que commitear."
-            exit 0
-          fi
-          git commit -m "Auto-commit diario de cache.db desde producción (${conteos}) [franja: ${{ steps.slot.outputs.provincia }}]"
-          push_con_reintento
-          echo "cache.db commiteado y pusheado (${conteos})."
 
       - name: Refrescar deuda viva y saldo no financiero (Ministerio de Hacienda)
         # !cancelled() (no éxito implícito): tiene que seguir corriendo aunque
@@ -666,11 +560,12 @@ jobs:
 
           # Reintenta el push con merge si otra franja ya empujó a main
           # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de
-          # cabecera. Antes usaba `git rebase`; ver el comentario largo en el
-          # push_con_reintento() del paso de cache.db más arriba sobre por
-          # qué eso reventaba con binarios LFS -- aquí el archivo es JSON de
-          # texto, así que un merge normal (sin -X ours) puede fusionar de
-          # verdad los cambios de ambos lados en vez de descartar uno.
+          # cabecera. Antes usaba `git rebase`, cambiado a merge por el
+          # mismo motivo explicado ahí (con el cache.db LFS ya retirado,
+          # aquí solo aplica al caso general: dos franjas pusheando cerca en
+          # el tiempo) -- este archivo es JSON de texto, así que un merge
+          # normal (sin -X ours) puede fusionar de verdad los cambios de
+          # ambos lados en vez de descartar uno.
           push_con_reintento() {
             local intentos=0
             while true; do
@@ -732,11 +627,12 @@ jobs:
 
           # Reintenta el push con merge si otra franja ya empujó a main
           # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de
-          # cabecera. Antes usaba `git rebase`; ver el comentario largo en el
-          # push_con_reintento() del paso de cache.db más arriba sobre por
-          # qué eso reventaba con binarios LFS -- aquí el archivo es JSON de
-          # texto, así que un merge normal (sin -X ours) puede fusionar de
-          # verdad los cambios de ambos lados en vez de descartar uno.
+          # cabecera. Antes usaba `git rebase`, cambiado a merge por el
+          # mismo motivo explicado ahí (con el cache.db LFS ya retirado,
+          # aquí solo aplica al caso general: dos franjas pusheando cerca en
+          # el tiempo) -- este archivo es JSON de texto, así que un merge
+          # normal (sin -X ours) puede fusionar de verdad los cambios de
+          # ambos lados en vez de descartar uno.
           push_con_reintento() {
             local intentos=0
             while true; do
