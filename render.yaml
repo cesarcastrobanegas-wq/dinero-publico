@@ -15,8 +15,21 @@ services:
     # viven en memoria de un único proceso. Con más de un worker, una
     # petición podría caer en un proceso que nunca vio el job creado por
     # otro y el spinner de progreso se quedaría colgado en "not_found".
-    # --threads da concurrencia dentro de ese único proceso.
-    startCommand: gunicorn backend.app:app --workers 1 --threads 4 --bind 0.0.0.0:$PORT --timeout 120
+    # --threads da concurrencia dentro de ese único proceso -- PERO solo si
+    # el worker es "gthread": el worker "sync" (el que se usaba aquí antes,
+    # porque --worker-class nunca se especificó) ignora --threads en
+    # silencio, sin error ni aviso. Se descubrió el 2026-09-03 restaurando
+    # el cache.db del incidente del día anterior: la subida del fichero
+    # (253MB) bloqueaba el único hilo real que había, y el watchdog del
+    # arbiter (gunicorn/workers/base.py:handle_abort) mataba el worker por
+    # "no responde" en mitad de la lectura -- exactamente el síntoma de un
+    # worker sync sin más hilos, aunque --threads 4 llevara ahí desde
+    # siempre. --worker-class gthread arranca un hilo notificador aparte
+    # que sigue avisando al arbiter mientras un hilo de trabajo está
+    # ocupado en una lectura/escritura larga, así que una petición grande
+    # ya no puede matar el worker entero. --timeout sube a 300s de margen
+    # adicional (antes 120s) para subidas/descargas grandes futuras.
+    startCommand: gunicorn backend.app:app --workers 1 --worker-class gthread --threads 4 --bind 0.0.0.0:$PORT --timeout 300
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
