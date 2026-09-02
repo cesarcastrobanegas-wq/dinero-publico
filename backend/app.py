@@ -181,36 +181,13 @@ DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo par
 # El endpoint POST /admin/restaurar-cache-db (ver _route_post) sube un
 # cache.db bueno (recuperado del histórico de git LFS, commit 91cd689,
 # 2026-09-02 12:30 UTC) a esta ruta de staging tras verificar su
-# integridad; este bloque lo aplica en el SIGUIENTE arranque, nunca en
-# caliente sobre la conexión sqlite3 de un proceso ya corriendo -- mismo
-# principio que el resto de este fichero: cualquier sustitución de
-# cache.db pasa por un reinicio limpio, nunca por una escritura en vivo.
-# Va ANTES del bloque de sembrado/alerta de abajo a propósito: si hay una
-# restauración pendiente, se aplica primero y ese bloque ve un DB_FILE ya
-# presente (arranque normal), en vez de disparar su propia alerta por un
-# hueco que ya se está resolviendo aquí mismo.
+# integridad; el bloque de más abajo lo aplica en el SIGUIENTE arranque,
+# nunca en caliente sobre la conexión sqlite3 de un proceso ya corriendo.
+# Solo se declara la ruta aquí -- la comprobación real vive DENTRO del
+# bucle de espera de más abajo (ver nota "BUG 2026-09-03" en ese bucle):
+# comprobarla aquí, suelta y sin reintento, fue precisamente el bug que
+# hizo fallar la primera restauración real.
 _DB_RESTAURACION_PENDIENTE = os.path.join(DATA_DIR, "cache_db_restauracion_pendiente.db")
-if os.path.exists(_DB_RESTAURACION_PENDIENTE):
-    if os.path.exists(DB_FILE):
-        _backup_pre_restauracion = os.path.join(
-            DATA_DIR, f"cache_db_pre_restauracion_{datetime.now():%Y%m%d_%H%M%S}.db")
-        shutil.copy2(DB_FILE, _backup_pre_restauracion)
-        print(f"[startup] RESTAURACIÓN: cache.db actual respaldado en "
-              f"{_backup_pre_restauracion} antes de aplicar la restauración pendiente.",
-              flush=True)
-    shutil.move(_DB_RESTAURACION_PENDIENTE, DB_FILE)
-    # Sidecars WAL/SHM que pudiera haber dejado el DB_FILE anterior (ahora
-    # sustituido) -- son específicos del contenido viejo, replayarlos sobre
-    # el fichero nuevo corrompería el arranque en vez de solo ignorarlos.
-    for _ext in ("-wal", "-shm"):
-        _p = DB_FILE + _ext
-        if os.path.exists(_p):
-            try:
-                os.remove(_p)
-            except OSError:
-                pass
-    print(f"[startup] RESTAURACIÓN aplicada: {DB_FILE} reemplazado por el backup subido "
-          "vía /admin/restaurar-cache-db.", flush=True)
 
 # Primer arranque con disco nuevo/vacío (DATA_DIR distinto de BASE_DIR y sin
 # cache.db todavía): sembrarlo con el cache.db commiteado en el repo para no
@@ -272,10 +249,46 @@ if os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE):
                                         # nuevo + reenganche del disco) puede tardar más
                                         # que un simple reinicio del proceso in-place
     for _intento in range(_intentos):
-        if os.path.exists(DB_FILE) or os.path.exists(_DISK_INIT_MARKER):
+        # BUG 2026-09-03: la primera versión de la restauración manual (ver
+        # _DB_RESTAURACION_PENDIENTE arriba) comprobaba esa ruta en un
+        # os.path.exists() suelto ANTES de este bucle -- exactamente el
+        # mismo fallo de montaje lento del disco que ya describe la nota de
+        # _recuperar_historico_perdido() más abajo. La restauración recién
+        # subida (el fichero SÍ estaba en el disco real) llegó a arrancar
+        # "todavía no visto" porque el disco tardó en montar tras el
+        # reinicio, y el bloque de alerta de aquí abajo arrancó con
+        # cache.db vacío antes de que la restauración llegara a aplicarse
+        # -- la segunda pérdida de datos que reportó César. Ahora
+        # _DB_RESTAURACION_PENDIENTE entra en la MISMA condición de espera
+        # que ya cubre a DB_FILE/marcador, con las mismas garantías.
+        if (os.path.exists(DB_FILE) or os.path.exists(_DISK_INIT_MARKER)
+                or os.path.exists(_DB_RESTAURACION_PENDIENTE)):
             break
         if _intento < _intentos - 1:
             time.sleep(_espera_seg)
+
+    if os.path.exists(_DB_RESTAURACION_PENDIENTE):
+        if os.path.exists(DB_FILE):
+            _backup_pre_restauracion = os.path.join(
+                DATA_DIR, f"cache_db_pre_restauracion_{datetime.now():%Y%m%d_%H%M%S}.db")
+            shutil.copy2(DB_FILE, _backup_pre_restauracion)
+            print(f"[startup] RESTAURACIÓN: cache.db actual respaldado en "
+                  f"{_backup_pre_restauracion} antes de aplicar la restauración pendiente.",
+                  flush=True)
+        shutil.move(_DB_RESTAURACION_PENDIENTE, DB_FILE)
+        # Sidecars WAL/SHM que pudiera haber dejado el DB_FILE anterior
+        # (ahora sustituido) -- son específicos del contenido viejo,
+        # replayarlos sobre el fichero nuevo corrompería el arranque en
+        # vez de solo ignorarlos.
+        for _ext in ("-wal", "-shm"):
+            _p = DB_FILE + _ext
+            if os.path.exists(_p):
+                try:
+                    os.remove(_p)
+                except OSError:
+                    pass
+        print(f"[startup] RESTAURACIÓN aplicada: {DB_FILE} reemplazado por el backup "
+              "subido vía /admin/restaurar-cache-db.", flush=True)
 
     if os.path.exists(_DISK_INIT_MARKER):
         if not os.path.exists(DB_FILE):
@@ -9285,6 +9298,36 @@ def api_buscar(tipo, q, datos):
     return {"tipo": tipo, "query": q, "error": "Tipo de búsqueda no reconocido."}
 
 
+def _diagnostico_arranque():
+    """Estado del disco persistente TAL COMO lo vio este proceso al
+    arrancar (incidente 2026-09-02/03) -- _DISCO_CONFIABLE, si había una
+    restauración pendiente sin aplicar (no debería, si _admin_restaurar_
+    cache_db devolvió "staged" y el siguiente reinicio funcionó bien) y
+    tamaño/fecha de cache.db en este mismo momento, en caliente."""
+    def _info(path):
+        try:
+            st = os.stat(path)
+            return {
+                "existe": True,
+                "tamano_mb": round(st.st_size / 1024 / 1024, 2),
+                "modificado": datetime.fromtimestamp(st.st_mtime).isoformat(),
+            }
+        except OSError:
+            return {"existe": False}
+
+    with _datos_lock:
+        n_municipios_memoria = len(_datos_memoria)
+
+    return {
+        "disco_confiable": _DISCO_CONFIABLE,
+        "data_dir": DATA_DIR,
+        "cache_db": _info(DB_FILE),
+        "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
+        "restauracion_pendiente_sin_aplicar": _info(_DB_RESTAURACION_PENDIENTE),
+        "municipios_en_memoria_ahora": n_municipios_memoria,
+    }
+
+
 def _stats_localizacion():
     """Tasa real de 'No localizado' en el Registro Mercantil, comparando
     contratos formales (directivo ya resuelto y guardado en el propio
@@ -9742,6 +9785,18 @@ def _route_get(path, qs, gzip_ok=False):
         # nombres de empresa/persona, así que no hay nada que proteger --
         # evita repetir el histórico de exposición del token en este chat.
         return _resp(json.dumps(_stats_localizacion(), ensure_ascii=False),
+                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
+
+    if path == "/api/diagnostico-arranque":
+        # Diagnóstico público del estado del disco persistente al arrancar
+        # (incidente 2026-09-02/03). Sin ADMIN_TOKEN a propósito: solo
+        # tamaños/fechas/booleanos, cero datos de empresas/personas. Nace
+        # de no tener otra forma fiable de comprobar esto -- el Web Shell de
+        # Render corre en una instancia efímera sin el disco real montado,
+        # y la métrica "Disk Usage" del dashboard salió plana en 0 incluso
+        # con datos reales en disco (ver incidente). Esto lee directamente
+        # el disco que la propia app está usando, en el momento real.
+        return _resp(json.dumps(_diagnostico_arranque(), ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
     return 404, {"Content-Length": "0"}, b""
