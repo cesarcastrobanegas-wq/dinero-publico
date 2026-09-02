@@ -8,13 +8,17 @@ backend/datos.json
 backend/director_cache.json
 backend/python
 
-# Journal/WAL de SQLite: son ficheros transitorios de la sesión de
-# escritura en curso, no aportan nada fuera de esta máquina. NO se ignora
-# backend/cache.db a propósito: es la base de datos con los contratos ya
-# scrapeados y los directivos ya resueltos (85% de la región tras esta
-# sesión). Render no tiene disco persistente en el plan gratuito, así que
-# commitear cache.db es lo que permite que un despliegue nuevo arranque
-# con los datos ya construidos en vez de vacío. Ver notas de despliegue.
+# backend/cache.db se ignora desde 2026-09-02 (antes se commiteaba a
+# propósito -- ver historial de este fichero). Render sí tiene disco
+# persistente (plan Standard, confirmado en el dashboard), así que el
+# cache.db real vive solo ahí (DATA_DIR, ver backend/app.py) y sobrevive a
+# los despliegues por sí solo; el sembrado automático desde el cache.db
+# del repo lleva deshabilitado desde el incidente de 2026-08-08. Seguir
+# commiteándolo solo agotaba la cuota de Git LFS bandwidth/storage
+# (10GB/mes) y bloqueaba builds de Render. En local, sqlite3 crea un
+# cache.db nuevo y vacío automáticamente si no existe -- no hace falta
+# ningún seed para desarrollar.
+backend/cache.db
 backend/cache.db-wal
 backend/cache.db-shm
 

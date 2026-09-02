@@ -1,10 +1,17 @@
 # Los .db se tratan como binarios (sin conversión de fin de línea ni diffs de texto).
 *.db binary
 
-# backend/cache.db se versiona con Git LFS DE AQUÍ EN ADELANTE (ver
-# INFORME_NOCHE.md 2026-07-25): el cron diario de GitHub Actions hace commit
+# backend/cache.db se versionó con Git LFS entre 2026-07-25 y 2026-09-02 (ver
+# INFORME_NOCHE.md 2026-07-25): el cron diario de GitHub Actions hacía commit
 # automático del cache.db de producción tras un refresco completo con éxito.
 # NO se usó `git lfs migrate import` a propósito: reescribiría los hashes de
 # todo el historial y exigiría un force-push (prohibido). Los commits antiguos
-# de cache.db conservan sus blobs normales; solo los nuevos van a LFS.
+# de cache.db conservan sus blobs normales; solo los nuevos iban a LFS.
+#
+# Eliminado 2026-09-02 (ver .gitignore): backend/cache.db ya no se commitea
+# -- ese ~250MB/día agotaba la cuota de LFS bandwidth/storage (10GB/mes) y
+# Render ya hace snapshots nativos del disco persistente, así que el backup
+# en git era redundante. Esta regla se deja tal cual (inofensiva mientras
+# el fichero esté en .gitignore): si alguna vez se vuelve a commitear por
+# error, mejor que vaya a LFS que como blob normal gigante en el historial.
 backend/cache.db filter=lfs diff=lfs merge=lfs -text
