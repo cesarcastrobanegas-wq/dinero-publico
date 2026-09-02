@@ -204,11 +204,6 @@ jobs:
     # Barcelona, en el peor caso) en vez de las 5 a la vez.
     timeout-minutes: 220
     steps:
-      - name: Checkout del repo (con Git LFS para materializar cache.db)
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
       - name: Determinar franja horaria (provincia) de esta ejecución
         id: slot
         run: |
@@ -230,6 +225,23 @@ jobs:
           fi
           echo "Franja de esta ejecución: provincia=${provincia}"
           echo "provincia=${provincia}" >> "$GITHUB_OUTPUT"
+
+      # Va DESPUÉS de "Determinar franja horaria" a propósito (ese paso no
+      # necesita el repo descargado, es puro bash/expresiones de GH) --
+      # 2026-09-02, cuota de Git LFS bandwidth agotada (10GB/mes). El
+      # ancho de banda de LFS de GitHub SOLO cuenta descargas (pull/clone/
+      # checkout), los push/commit son gratis -- así que este checkout con
+      # `lfs: true`, que antes se hacía SIEMPRE (~250MB × 5 franjas/día),
+      # era el consumo real dominante, no los commits. Ahora que el commit
+      # de cache.db solo pasa en Tarragona (ver step "Canario anti-colapso
+      # + commit condicionado" más abajo), backend/cache.db ya materializado
+      # por LFS no lo usa NADA en las otras 4 franjas -- solo el script del
+      # canario lo lee, y ese script tampoco corre fuera de Tarragona. Con
+      # esto la descarga LFS pasa de 5 veces/día a 1.
+      - name: Checkout del repo (con Git LFS para materializar cache.db solo en Tarragona)
+        uses: actions/checkout@v4
+        with:
+          lfs: ${{ steps.slot.outputs.provincia == 'tarragona' }}
 
       - name: Refresco de la provincia de esta franja + keep-alive por polling + descarga del cache.db
         env:
@@ -525,7 +537,25 @@ jobs:
         # progreso parcial, ver nota de cabecera del workflow) -- pero NO si
         # el propio workflow fue cancelado a mano, para no commitear a medias
         # de una cancelación deliberada.
-        if: ${{ !cancelled() }}
+        #
+        # SOLO en la franja de Tarragona (2026-09-02, cuota de Git LFS
+        # bandwidth agotada -- 10GB/mes, y este commit de ~250MB se hacía
+        # hasta 5 veces/día, una por franja, disparando el bloqueo de LFS
+        # que rompía el build de Render con "git lfs pull" fallando). El
+        # commit a git de cache.db es puramente un backup/auditoría: la app
+        # sirve siempre desde el disco persistente de Render (DB_FILE,
+        # ver backend/app.py), que cada franja escribe igual que antes --
+        # nada de esto depende de que este step llegue a correr. El
+        # sembrado automático desde el cache.db del repo está además
+        # explícitamente deshabilitado desde el incidente de 2026-08-08
+        # (ver comentario "REDISEÑO 2026-08-08" en backend/app.py): nunca
+        # se copia solo al arrancar, así que reducir la frecuencia de este
+        # commit no cambia en nada el comportamiento de arranque. Efecto
+        # secundario bueno: al pasar de hasta 5 pushes/redeploys de Render
+        # al día a 1, también baja el riesgo del patrón de "redeploy mata
+        # el job de la siguiente franja ~12 min después" visto varias
+        # noches seguidas.
+        if: ${{ !cancelled() && steps.slot.outputs.provincia == 'tarragona' }}
         run: |
           set -uo pipefail
           if [ ! -f cache_db_nuevo.db ]; then
