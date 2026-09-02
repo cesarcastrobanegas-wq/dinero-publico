@@ -9248,6 +9248,69 @@ def api_buscar(tipo, q, datos):
     return {"tipo": tipo, "query": q, "error": "Tipo de búsqueda no reconocido."}
 
 
+def _stats_localizacion():
+    """Tasa real de 'No localizado' en el Registro Mercantil, comparando
+    contratos formales (directivo ya resuelto y guardado en el propio
+    contrato, ver enriquecer_directivos) contra contratos menores
+    (directivo resuelto EN CALIENTE contra la caché `directores`, ver
+    _dir_cache_get -- no se guarda en la fila del contrato menor, así que
+    hay que recalcular el mismo hit-or-miss que ve el usuario al renderizar
+    _render_fila_contrato_menor). Devuelve también, dentro de menores, la
+    tasa por EMPRESA única (no por fila de contrato) y cuántas de esas
+    empresas ya agotaron los DIR_INTENTOS_MAX intentos (_dir_cache_agotado
+    == "de verdad no está en el registro") frente a las que aún no se han
+    intentado lo suficiente (pendientes de que les toque en el cron)."""
+    with _datos_lock:
+        datos_snap = list(_datos_memoria)
+    total_f = sin_f = 0
+    for d in datos_snap:
+        for c in d.get("contratos", []):
+            total_f += 1
+            if not c.get("directivo"):
+                sin_f += 1
+
+    with _db_lock:
+        filas_menor = _db.execute("SELECT adjudicatari, nif FROM contratos_menors_locales").fetchall()
+        cache_rows = _db.execute("SELECT clave, nombre, ts, intentos FROM directores").fetchall()
+    cache = {clave: (nombre, ts, intentos) for clave, nombre, ts, intentos in cache_rows}
+
+    ahora = time.time()
+    total_m = sin_m = 0
+    empresas_todas, empresas_sin, empresas_agotadas = set(), set(), set()
+    for adjudicatari, nif in filas_menor:
+        total_m += 1
+        key = _dir_cache_key(adjudicatari or "", nif or "")
+        empresas_todas.add(key)
+        hit = cache.get(key)
+        localizado = bool(hit and hit[0] and (ahora - hit[1]) <= DIR_CACHE_POS_TTL)
+        if not localizado:
+            sin_m += 1
+            empresas_sin.add(key)
+            if hit and not hit[0] and (hit[2] or 0) >= DIR_INTENTOS_MAX:
+                empresas_agotadas.add(key)
+
+    def _pct(n, total):
+        return round(100 * n / total, 2) if total else 0.0
+
+    return {
+        "formales": {
+            "total_contratos": total_f,
+            "sin_directivo": sin_f,
+            "pct_sin_directivo": _pct(sin_f, total_f),
+        },
+        "menores": {
+            "total_contratos": total_m,
+            "sin_directivo": sin_m,
+            "pct_sin_directivo": _pct(sin_m, total_m),
+            "empresas_unicas": len(empresas_todas),
+            "empresas_unicas_sin_directivo": len(empresas_sin),
+            "pct_empresas_sin_directivo": _pct(len(empresas_sin), len(empresas_todas)),
+            "empresas_agotadas_intentos": len(empresas_agotadas),
+            "empresas_pendientes_no_agotadas": len(empresas_sin) - len(empresas_agotadas),
+        },
+    }
+
+
 def render_busqueda_global_html(datos, q, provincia="murcia"):
     """Resultados de la búsqueda global por empresa, directivo o municipio."""
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
@@ -9632,6 +9695,16 @@ def _route_get(path, qs, gzip_ok=False):
                 datos_snap = list(_datos_memoria)   # "" o "todas" -> sin filtro, busca en toda España
         resultado = api_buscar(tipo, q, datos_snap)
         return _resp(json.dumps(resultado, ensure_ascii=False),
+                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
+
+    if path == "/api/stats-localizacion":
+        # Diagnóstico público de la tasa real de "No localizado" en el
+        # Registro Mercantil, formales vs. menores (2026-09-02, a petición
+        # de César: medir con datos reales de producción, no estimar).
+        # Sin ADMIN_TOKEN a propósito: solo devuelve conteos agregados, cero
+        # nombres de empresa/persona, así que no hay nada que proteger --
+        # evita repetir el histórico de exposición del token en este chat.
+        return _resp(json.dumps(_stats_localizacion(), ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
     return 404, {"Content-Length": "0"}, b""
