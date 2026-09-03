@@ -9960,46 +9960,6 @@ def _route_post(path, params):
             }, ensure_ascii=False)
             return _resp(body, content_type="application/json; charset=utf-8")
 
-        if path == "/admin/limpiar-restauracion":
-            # Limpieza de los ficheros temporales que fue dejando la
-            # restauración de cache.db del incidente 2026-09-02/03: el
-            # backup de seguridad del cache.db vacío que había justo antes
-            # de aplicar la restauración buena (cache_db_pre_restauracion_
-            # *.db, con sus sidecars -wal/-shm si los hubiera) y cualquier
-            # .tmp huérfano de una subida que se cortara a medias
-            # (.cache_db_subida_*.tmp). El endpoint que generaba estos
-            # ficheros (POST /admin/restaurar-cache-db) ya se retiró (ver
-            # incidente en la memoria del proyecto) -- este de aquí se deja
-            # como red de seguridad por si queda algún resto suelto. Mismo
-            # patrón ADMIN_TOKEN que /purgar-place-cache. A propósito NO
-            # toca cache.db, el marcador .disco_inicializado, ni
-            # cache_db_backup_pre_refresco_aditivo_20260722.db (backup
-            # antiguo sin relación con este incidente).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
-                return _error_resp("No autorizado.", 403)
-            borrados = []
-            try:
-                candidatos = os.listdir(DATA_DIR)
-            except OSError:
-                candidatos = []
-            for _nombre in candidatos:
-                if not (_nombre.startswith("cache_db_pre_restauracion_")
-                        or _nombre.startswith(".cache_db_subida_")):
-                    continue
-                _ruta = os.path.join(DATA_DIR, _nombre)
-                try:
-                    _mb = round(os.path.getsize(_ruta) / 1024 / 1024, 2)
-                    os.remove(_ruta)
-                    borrados.append({"fichero": _nombre, "mb": _mb})
-                except OSError as e:
-                    borrados.append({"fichero": _nombre, "error": str(e)})
-            body = json.dumps({
-                "borrados": borrados,
-                "mb_liberados": round(sum(b.get("mb", 0) for b in borrados), 2),
-            }, ensure_ascii=False)
-            return _resp(body, content_type="application/json; charset=utf-8")
-
         if path == "/vaciar":
             # Borra contratos ya scrapeados/enriquecidos. Ya no hay botón en la
             # interfaz que apunte aquí, pero el endpoint sigue existiendo y el
