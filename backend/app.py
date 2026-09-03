@@ -468,6 +468,286 @@ MUNICIPIOS_SEVILLA = [
     "Écija",
 ]
 
+# ─── FASE PILOTO: País Vasco (2026-09-03, ver memoria del proyecto) ──────────
+# A DIFERENCIA de Comunitat Valenciana/Andalucía (Mecanismo A, reutilizan
+# PLACE tal cual): País Vasco es Mecanismo B, como Cataluña -- verificado
+# que NINGÚN ayuntamiento vasco publica en PLACE. Antes de construir nada
+# se comprobó "bilbao"/"donostia"/"vitoria"/etc. contra el ZIP real de
+# julio 2026: las pocas menciones que aparecían eran de la Autoridad
+# Portuaria de Bilbao, AENA (aeropuertos de Bilbao/Vitoria/San Sebastián)
+# y municipios homónimos de otras regiones (Ayuntamiento de San Sebastián
+# de los Reyes en Madrid, San Sebastián de la Gomera en Canarias) -- CERO
+# coincidencias reales de ayuntamientos vascos.
+#
+# Fuente real: API REST propia sobre la plataforma KontratazioA
+# (api.euskadi.eus/procurements, documentada en
+# opendata.euskadi.eus/webopd00-apicontract), pública y sin autenticación.
+# A diferencia de PLACE (texto libre "Ayuntamiento de X", con riesgo real
+# de colisión de nombre -- ver Comunitat Valenciana/Andalucía arriba), esta
+# API identifica cada ayuntamiento por un ID numérico propio
+# (/procurements/contracting-authorities?contracting-authority=...) --
+# CERO riesgo de colisión de nombre, no hace falta ningún patrón anclado.
+# Lista completa verificada en vivo: 252 entradas cuyo nombre empieza por
+# "Ayuntamiento de" (de las 253 que devuelve la búsqueda de texto "Ayuntamiento
+# de", 1 no calificaba), consistente con el número oficial de 251 municipios
+# vascos (el pequeño desajuste no se ha investigado más, irrelevante para
+# el piloto). IDs obtenidos una sola vez y fijados aquí como constante --
+# no hace falta volver a listarlos en cada medición.
+MUNICIPIOS_PAIS_VASCO_EUSKADI_ID = {
+    'ANOETA': 311,
+    'Abaltzisketa': 25,
+    'Abanto Zierbena': 502,
+    'Aduna': 27,
+    'Agurain': 463,
+    'Aia': 669,
+    'Aizarnazabal': 103,
+    'Ajangiz': 325,
+    'Albiztur': 43,
+    'Alegia': 91,
+    'Alegria-Dulantzi': 67,
+    'Alkiza': 28,
+    'Alonsotegi': 260,
+    'Altzaga': 51,
+    'Altzo': 25573,
+    'Amezketa': 329,
+    'Amorebieta-Etxano': 299,
+    'Amoroto': 461,
+    'Amurrio': 19,
+    'Andoain': 85,
+    'Anoeta': 612,
+    'Antzuola': 204,
+    'Arakaldo': 553,
+    'Arama': 52,
+    'Aramaio': 53,
+    'Arantzazu': 557,
+    'Areatza': 252,
+    'Aretxabaleta': 114,
+    'Armiñón': 719,
+    'Arraia-Maeztu': 195,
+    'Arrankudiaga-Zollo': 655,
+    'Arrasate/Mondragón': 123,
+    'Arratzua-Ubarrundia': 361,
+    'Arrazu': 435,
+    'Arrieta': 432,
+    'Arrigorriaga': 264,
+    'Artea': 552,
+    'Artzentales': 401,
+    'Artziniega': 77,
+    'Asparrena': 145,
+    'Asteasu': 55,
+    'Astigarraga': 318,
+    'Ataun': 95,
+    'Atxondo': 436,
+    'Aulesti': 423,
+    'Ayala': 68,
+    'Azkoitia': 190,
+    'Azpeitia': 288,
+    'Añana': 629,
+    'Bakio': 399,
+    'Baliarrain': 23,
+    'Balmaseda': 371,
+    'Barakaldo': 171,
+    'Barrika': 306,
+    'Barrundia': 462,
+    'Basauri': 274,
+    'Baños de Ebro': 474,
+    'Beasain': 300,
+    'Bedia': 410,
+    'Beizama': 765,
+    'Belauntza': 41,
+    'Berango': 431,
+    'Berantevilla': 559,
+    'Berastegi': 735,
+    'Bergara': 57,
+    'Bermeo': 338,
+    'Bernedo': 66,
+    'Berriatua': 433,
+    'Berriz': 326,
+    'Berrobi': 31,
+    'Bidania-Goiatz': 34,
+    'Bilbao': 24446,
+    'Busturia': 417,
+    'Campezo': 97,
+    'Carranza': 258,
+    'Deba': 174,
+    'Derio': 232,
+    'Dima': 405,
+    'Donostia/San Sebastián': 153,
+    'Durango': 459,
+    'Ea': 342,
+    'Eibar': 6,
+    'Elburgo': 181,
+    'Elciego': 245,
+    'Elduain': 763,
+    'Elgeta': 317,
+    'Elgoibar': 133,
+    'Elorrio': 301,
+    'Elvillar': 378,
+    'Ereño': 415,
+    'Ermua': 416,
+    'Errenteria': 185,
+    'Errezil': 722,
+    'Erriberagoitia/Ribera Alta': 648,
+    'Errigoiti': 427,
+    'Eskoriatza': 101,
+    'Etxebarri': 197,
+    'Etxebarria': 392,
+    'Ezkio': 280,
+    'Forua': 302,
+    'Fruiz': 175,
+    'Gabiria': 511,
+    'Gaintza': 24523,
+    'Galdakao': 281,
+    'Galdames': 383,
+    'Gamiz-Fika': 352,
+    'Garai': 452,
+    'Gatika': 296,
+    'Gautegiz Arteaga': 400,
+    'Gaztelu': 26059,
+    'Gernika-Lumo': 442,
+    'Getaria': 116,
+    'Getxo': 179,
+    'Gizaburuaga': 599,
+    'Gordexola': 241,
+    'Gorliz': 360,
+    'Güeñes': 321,
+    'Hernani': 112,
+    'Hernialde': 29,
+    'Hondarribia': 135,
+    'Ibarra': 64,
+    'Ibarrangelu': 394,
+    'Idiazabal': 315,
+    'Igorre': 192,
+    'Ikaztegieta': 22,
+    'Irun': 259,
+    'Irura': 45,
+    'Iruraiz-Gauna': 684,
+    'Iruña de Oca': 233,
+    'Ispaster': 493,
+    'Itsaso': 509,
+    'Itsasondo': 50,
+    'Iurreta': 271,
+    'Izurtza': 396,
+    'Kortezubi': 412,
+    'Kripan': 379,
+    'Kuartango': 151,
+    'Labastida': 385,
+    'Lagrán': 353,
+    'Laguardia': 441,
+    'Lanciego': 376,
+    'Lanestosa': 47,
+    'Lantarón': 372,
+    'Lapuebla de Labarca': 507,
+    'Larrabetzu': 261,
+    'Larraul': 32,
+    'Lasarte-Oria': 304,
+    'Laukiz': 313,
+    'Lazkao': 183,
+    'Leaburu-Txarama': 30,
+    'Legazpi': 194,
+    'Legorreta': 220,
+    'Legutio': 293,
+    'Leintz Gatzaga': 640,
+    'Leioa': 254,
+    'Lekeitio': 370,
+    'Lemoa': 294,
+    'Lemoiz': 298,
+    'Leza': 587,
+    'Lezama': 173,
+    'Lezo': 100,
+    'Lizartza': 570,
+    'Llodio': 333,
+    'Loiu': 193,
+    'Mallabia': 256,
+    'Markina-Xemein': 253,
+    'Maruri-Jatabe': 368,
+    'Mañaria': 386,
+    'Mendaro': 60,
+    'Mendata': 515,
+    'Mendexa': 469,
+    'Meñaka': 334,
+    'Moreda de Álava': 424,
+    'Morga': 391,
+    'Mundaka': 411,
+    'Mungia': 240,
+    'Munitibar-Arbatzegi-Gerrikaitz': 439,
+    'Murueta': 534,
+    'Muskiz': 202,
+    'Mutiloa': 323,
+    'Mutriku': 650,
+    'Muxika': 402,
+    'Nabarniz': 388,
+    'Navaridas': 597,
+    'Oiartzun': 88,
+    'Okondo': 69,
+    'Olaberria': 262,
+    'Ondarroa': 291,
+    'Ordizia': 184,
+    'Orduña': 246,
+    'Orendain': 24,
+    'Orexa': 573,
+    'Orio': 381,
+    'Ormaiztegi': 198,
+    'Orozko': 247,
+    'Ortuella': 285,
+    'Otxandio': 483,
+    'Oyón-Oion': 244,
+    'Oñati': 108,
+    'Pasaia': 89,
+    'Peñacerrada-Urizaharra': 182,
+    'Plentzia': 292,
+    'Portugalete': 152,
+    'Ribera Baja': 121,
+    'Samaniego': 471,
+    'San Millán': 359,
+    'Santurtzi': 250,
+    'Segura': 437,
+    'Sestao': 219,
+    'Sondika': 248,
+    'Sopela': 384,
+    'Sopuerta': 422,
+    'Soraluze': 92,
+    'Sukarrieta': 476,
+    'Tolosa': 86,
+    'Trucíos': 526,
+    'Ubide': 414,
+    'Ugao-Miraballes': 307,
+    'Urduliz': 80,
+    'Urkabustaiz': 139,
+    'Urnieta': 430,
+    'Urretxu': 113,
+    'Usansolo': 26535,
+    'Usurbil': 242,
+    'Valdegovia-Gaubea': 594,
+    'Valle de Arana': 458,
+    'Valle de Trápaga-Trapagaran': 309,
+    'Villabona': 393,
+    'Villabuena de Álava': 472,
+    'Vitoria-Gasteiz': 350,
+    'Yécora': 355,
+    'Zaldibar': 229,
+    'Zaldibia': 357,
+    'Zalduondo': 429,
+    'Zambrana': 544,
+    'Zamudio': 303,
+    'Zaratamo': 518,
+    'Zarautz': 161,
+    'Zeanuri': 428,
+    'Zeberio': 320,
+    'Zegama': 404,
+    'Zerain': 349,
+    'Zestoa': 498,
+    'Zierbena': 419,
+    'Zigoitia': 255,
+    'Ziortza-Bolibar': 395,
+    'Zizurkil': 654,
+    'Zuia': 137,
+    'Zumaia': 268,
+    'Zumarraga': 117,
+    'la Anteiglesia de Abadiño': 284,
+    'la Anteiglesia de Erandio': 420,
+}
+
 session = requests.Session()
 session.headers.update(HEADERS)
 adapter = requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=0)
@@ -3791,6 +4071,93 @@ def _piloto_medir_andalucia(zip_paths, job_id=None):
         matches = [c for c in todos_contratos if muni_re.search(normalizar(c.get("organo", "")))]
         if matches:
             resultados[nombre] = {"provincia": prov, "contratos": _dedup_contratos_por_url(matches)}
+    return resultados
+
+
+EUSKADI_API_BASE = "https://api.euskadi.eus/procurements"
+
+
+def _euskadi_item_a_contrato(item, municipio):
+    """Convierte un item de la API REST de Euskadi (KontratazioA) al mismo
+    dict de contrato que ya usa el resto del proyecto (mismas claves que
+    _entry_to_contrato) -- así el resultado es intercambiable con
+    PLACE/BORM/PSCP sin tocar el resto del pipeline (render, guardado,
+    directivos)."""
+    importe_num = item.get("awardAmount") or 0.0
+    return {
+        "titulo":        (item.get("object") or "")[:200],
+        "organo":        f"Ayuntamiento de {municipio}",
+        "empresa":       item.get("socialReason") or "No localizada",
+        "nif":           item.get("CIF") or "",
+        "importe":       fmt_eur(str(importe_num)) if importe_num else "No localizado",
+        "importe_num":   float(importe_num) if importe_num else 0.0,
+        "estado":        (item.get("contractProcedureStatus") or {}).get("name", ""),
+        "resultado_code": "",
+        "licitacion_id": item.get("id", ""),
+        "url":           item.get("mainEntityOfPage", ""),
+        "fuente":        "EUSKADI",
+        "directivo":     "",
+        "cargo":         "",
+    }
+
+
+def _piloto_medir_pais_vasco(job_id=None, max_paginas_por_municipio=5):
+    """FASE PILOTO País Vasco (2026-09-03) -- Mecanismo B: API REST propia
+    (ver MUNICIPIOS_PAIS_VASCO_EUSKADI_ID arriba para el porqué). A
+    diferencia de los pilotos de Comunitat Valenciana/Andalucía, aquí no
+    hace falta ancla de texto ni ZIP: se consulta /procurements/contracts
+    directamente por contracting-authority-id (identificador propio de
+    Euskadi, sin ambigüedad de nombre posible) filtrando minor-contract=
+    false para quedarse en el mismo tipo de contrato (formales) que los
+    otros dos pilotos, comparable entre sí.
+
+    max_paginas_por_municipio acota el volumen de esta medición piloto
+    (50 contratos/página -- itemsOfPage tiene un máximo documentado de 50
+    en la API, pedir más da HTTP 400) -- esta API devuelve el HISTÓRICO
+    COMPLETO por ayuntamiento, no un mes como los ZIPs de PLACE (un solo
+    municipio, Getaria, ya tenía 1.224 contratos totales en la
+    comprobación previa), así que sin límite el piloto tardaría mucho y
+    traería un volumen desproporcionado para una primera medición. NO
+    escribe en cache.db real ni conecta nada a producción."""
+    resultados = {}
+    for nombre, authority_id in MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.items():
+        contratos = []
+        total_items_api = 0
+        pagina = 1
+        while pagina <= max_paginas_por_municipio:
+            try:
+                r = session.get(
+                    f"{EUSKADI_API_BASE}/contracts",
+                    params={
+                        "contracting-authority-id": authority_id,
+                        "minor-contract": "false",
+                        "itemsOfPage": 50,
+                        "currentPage": pagina,
+                        "lang": "SPANISH",
+                    },
+                    timeout=20,
+                )
+                if r.status_code != 200:
+                    _log(job_id, f"  {nombre}: HTTP {r.status_code} en página {pagina}")
+                    break
+                d = r.json()
+            except Exception as e:
+                _log(job_id, f"  Error consultando {nombre}: {e}")
+                break
+            total_items_api = d.get("totalItems", 0)
+            for item in d.get("items", []):
+                contratos.append(_euskadi_item_a_contrato(item, nombre))
+            if pagina >= d.get("totalPages", 1):
+                break
+            pagina += 1
+            time.sleep(0.2)  # ritmo respetuoso, API pública documentada sin rate-limit publicado
+
+        if contratos:
+            resultados[nombre] = {
+                "provincia": "pais_vasco",
+                "contratos": _dedup_contratos_por_url(contratos),
+                "total_items_api": total_items_api,  # por si max_paginas cortó antes del final real
+            }
     return resultados
 
 
