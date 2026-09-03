@@ -175,20 +175,6 @@ _ultima_purga_result_cache = 0.0
 DB_FILE = os.path.join(DATA_DIR, "cache.db")
 DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo para migración inicial
 
-# Restauración manual puntual (incidente 2026-09-02: el disco persistente
-# apareció vacío tras el resize 2GB->10GB + los redeploys de esa tarde,
-# disparando la propia alarma "arrancar con cache.db VACÍO" de más abajo).
-# El endpoint POST /admin/restaurar-cache-db (ver _route_post) sube un
-# cache.db bueno (recuperado del histórico de git LFS, commit 91cd689,
-# 2026-09-02 12:30 UTC) a esta ruta de staging tras verificar su
-# integridad; el bloque de más abajo lo aplica en el SIGUIENTE arranque,
-# nunca en caliente sobre la conexión sqlite3 de un proceso ya corriendo.
-# Solo se declara la ruta aquí -- la comprobación real vive DENTRO del
-# bucle de espera de más abajo (ver nota "BUG 2026-09-03" en ese bucle):
-# comprobarla aquí, suelta y sin reintento, fue precisamente el bug que
-# hizo fallar la primera restauración real.
-_DB_RESTAURACION_PENDIENTE = os.path.join(DATA_DIR, "cache_db_restauracion_pendiente.db")
-
 # Primer arranque con disco nuevo/vacío (DATA_DIR distinto de BASE_DIR y sin
 # cache.db todavía): sembrarlo con el cache.db commiteado en el repo para no
 # empezar de cero.
@@ -249,46 +235,10 @@ if os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE):
                                         # nuevo + reenganche del disco) puede tardar más
                                         # que un simple reinicio del proceso in-place
     for _intento in range(_intentos):
-        # BUG 2026-09-03: la primera versión de la restauración manual (ver
-        # _DB_RESTAURACION_PENDIENTE arriba) comprobaba esa ruta en un
-        # os.path.exists() suelto ANTES de este bucle -- exactamente el
-        # mismo fallo de montaje lento del disco que ya describe la nota de
-        # _recuperar_historico_perdido() más abajo. La restauración recién
-        # subida (el fichero SÍ estaba en el disco real) llegó a arrancar
-        # "todavía no visto" porque el disco tardó en montar tras el
-        # reinicio, y el bloque de alerta de aquí abajo arrancó con
-        # cache.db vacío antes de que la restauración llegara a aplicarse
-        # -- la segunda pérdida de datos que reportó César. Ahora
-        # _DB_RESTAURACION_PENDIENTE entra en la MISMA condición de espera
-        # que ya cubre a DB_FILE/marcador, con las mismas garantías.
-        if (os.path.exists(DB_FILE) or os.path.exists(_DISK_INIT_MARKER)
-                or os.path.exists(_DB_RESTAURACION_PENDIENTE)):
+        if os.path.exists(DB_FILE) or os.path.exists(_DISK_INIT_MARKER):
             break
         if _intento < _intentos - 1:
             time.sleep(_espera_seg)
-
-    if os.path.exists(_DB_RESTAURACION_PENDIENTE):
-        if os.path.exists(DB_FILE):
-            _backup_pre_restauracion = os.path.join(
-                DATA_DIR, f"cache_db_pre_restauracion_{datetime.now():%Y%m%d_%H%M%S}.db")
-            shutil.copy2(DB_FILE, _backup_pre_restauracion)
-            print(f"[startup] RESTAURACIÓN: cache.db actual respaldado en "
-                  f"{_backup_pre_restauracion} antes de aplicar la restauración pendiente.",
-                  flush=True)
-        shutil.move(_DB_RESTAURACION_PENDIENTE, DB_FILE)
-        # Sidecars WAL/SHM que pudiera haber dejado el DB_FILE anterior
-        # (ahora sustituido) -- son específicos del contenido viejo,
-        # replayarlos sobre el fichero nuevo corrompería el arranque en
-        # vez de solo ignorarlos.
-        for _ext in ("-wal", "-shm"):
-            _p = DB_FILE + _ext
-            if os.path.exists(_p):
-                try:
-                    os.remove(_p)
-                except OSError:
-                    pass
-        print(f"[startup] RESTAURACIÓN aplicada: {DB_FILE} reemplazado por el backup "
-              "subido vía /admin/restaurar-cache-db.", flush=True)
 
     if os.path.exists(_DISK_INIT_MARKER):
         if not os.path.exists(DB_FILE):
@@ -9430,10 +9380,8 @@ def api_buscar(tipo, q, datos):
 
 def _diagnostico_arranque():
     """Estado del disco persistente TAL COMO lo vio este proceso al
-    arrancar (incidente 2026-09-02/03) -- _DISCO_CONFIABLE, si había una
-    restauración pendiente sin aplicar (no debería, si _admin_restaurar_
-    cache_db devolvió "staged" y el siguiente reinicio funcionó bien) y
-    tamaño/fecha de cache.db en este mismo momento, en caliente."""
+    arrancar (incidente 2026-09-02/03) -- _DISCO_CONFIABLE y tamaño/fecha
+    de cache.db en este mismo momento, en caliente."""
     def _info(path):
         try:
             st = os.stat(path)
@@ -9453,7 +9401,6 @@ def _diagnostico_arranque():
         "data_dir": DATA_DIR,
         "cache_db": _info(DB_FILE),
         "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
-        "restauracion_pendiente_sin_aplicar": _info(_DB_RESTAURACION_PENDIENTE),
         "municipios_en_memoria_ahora": n_municipios_memoria,
     }
 
@@ -10014,18 +9961,20 @@ def _route_post(path, params):
             return _resp(body, content_type="application/json; charset=utf-8")
 
         if path == "/admin/limpiar-restauracion":
-            # Limpieza puntual de los ficheros temporales que fue dejando la
-            # restauración de cache.db del incidente 2026-09-02/03 (ver
-            # _admin_restaurar_cache_db y el bloque de arranque que aplica
-            # _DB_RESTAURACION_PENDIENTE): el backup de seguridad del
-            # cache.db vacío que había justo antes de aplicar la
-            # restauración buena (cache_db_pre_restauracion_*.db, con sus
-            # sidecars -wal/-shm si los hubiera) y cualquier .tmp huérfano
-            # de una subida que se cortara a medias
-            # (.cache_db_subida_*.tmp). Mismo patrón ADMIN_TOKEN que
-            # /purgar-place-cache. A propósito NO toca cache.db, el marcador
-            # .disco_inicializado, ni cache_db_backup_pre_refresco_aditivo_
-            # 20260722.db (backup antiguo sin relación con este incidente).
+            # Limpieza de los ficheros temporales que fue dejando la
+            # restauración de cache.db del incidente 2026-09-02/03: el
+            # backup de seguridad del cache.db vacío que había justo antes
+            # de aplicar la restauración buena (cache_db_pre_restauracion_
+            # *.db, con sus sidecars -wal/-shm si los hubiera) y cualquier
+            # .tmp huérfano de una subida que se cortara a medias
+            # (.cache_db_subida_*.tmp). El endpoint que generaba estos
+            # ficheros (POST /admin/restaurar-cache-db) ya se retiró (ver
+            # incidente en la memoria del proyecto) -- este de aquí se deja
+            # como red de seguridad por si queda algún resto suelto. Mismo
+            # patrón ADMIN_TOKEN que /purgar-place-cache. A propósito NO
+            # toca cache.db, el marcador .disco_inicializado, ni
+            # cache_db_backup_pre_refresco_aditivo_20260722.db (backup
+            # antiguo sin relación con este incidente).
             admin_token = os.environ.get("ADMIN_TOKEN", "")
             if not admin_token or params.get("token", [""])[0] != admin_token:
                 return _error_resp("No autorizado.", 403)
@@ -10216,90 +10165,6 @@ def _route_post(path, params):
         return _error_resp(f"Error: {e}", 500)
 
 
-def _json_err(msg, code=400):
-    return _resp(json.dumps({"error": msg}, ensure_ascii=False),
-                 content_type="application/json; charset=utf-8", code=code)
-
-
-def _admin_restaurar_cache_db(read_stream, length, token):
-    """POST /admin/restaurar-cache-db (incidente 2026-09-02: disco vacío tras
-    el resize 2GB->10GB). Fuera del router genérico (_route_post) a propósito:
-    el cuerpo es el propio fichero cache.db binario, no form-urlencoded --
-    decodificarlo como UTF-8 (lo que hacen el resto de POSTs) rompería en el
-    primer byte no-ASCII. Se lee en streaming a disco por bloques (nunca el
-    fichero entero en RAM) y se verifica integridad + conteos ANTES de
-    dejarlo en la ruta de staging (_DB_RESTAURACION_PENDIENTE) que aplica el
-    bloque de arranque -- nunca se sustituye cache.db en caliente sobre la
-    conexión sqlite3 de un proceso ya corriendo."""
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or token != admin_token:
-        return _json_err("No autorizado.", 403)
-    if length <= 0:
-        return _json_err("Cuerpo vacío o Content-Length ausente.")
-
-    tmp_path = os.path.join(DATA_DIR, f".cache_db_subida_{uuid.uuid4().hex}.tmp")
-    restantes = length
-    try:
-        with open(tmp_path, "wb") as f:
-            while restantes > 0:
-                chunk = read_stream.read(min(4 * 1024 * 1024, restantes))
-                if not chunk:
-                    break
-                f.write(chunk)
-                restantes -= len(chunk)
-    except Exception as e:
-        try:
-            os.remove(tmp_path)
-        except OSError:
-            pass
-        return _json_err(f"Error escribiendo el fichero subido: {e}", 500)
-
-    if restantes > 0:
-        try:
-            os.remove(tmp_path)
-        except OSError:
-            pass
-        return _json_err(f"Subida incompleta: faltaron {restantes} de {length} bytes.")
-
-    # Verificación de integridad ANTES de dejarlo listo para aplicarse --
-    # nunca se deja en staging un fichero a medio verificar.
-    try:
-        chk = sqlite3.connect(tmp_path)
-        integridad = chk.execute("PRAGMA integrity_check").fetchone()[0]
-        conteos = {}
-        for _t in ("municipios", "contratos_menors_locales", "directores", "fondos_ue"):
-            try:
-                conteos[_t] = chk.execute(f"SELECT COUNT(*) FROM {_t}").fetchone()[0]
-            except sqlite3.OperationalError:
-                conteos[_t] = None
-        chk.close()
-    except Exception as e:
-        try:
-            os.remove(tmp_path)
-        except OSError:
-            pass
-        return _json_err(f"El fichero subido no es una base SQLite válida: {e}")
-
-    if integridad != "ok" or not conteos.get("municipios"):
-        try:
-            os.remove(tmp_path)
-        except OSError:
-            pass
-        return _json_err(
-            f"Verificación fallida (integrity_check={integridad}, "
-            f"municipios={conteos.get('municipios')}) -- no se deja en staging.")
-
-    shutil.move(tmp_path, _DB_RESTAURACION_PENDIENTE)
-    body = json.dumps({
-        "status": "staged",
-        "integrity_check": integridad,
-        "conteos": conteos,
-        "siguiente_paso": "Reinicia el servicio (Render -> Manual Deploy -> "
-                           "Restart service) para que se aplique en el próximo arranque.",
-    }, ensure_ascii=False)
-    return _resp(body, content_type="application/json; charset=utf-8")
-
-
 # ─── WSGI (producción: gunicorn backend.app:app) ─────────────────────────────
 
 def app(environ, start_response):
@@ -10316,15 +10181,9 @@ def app(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        if path == "/admin/restaurar-cache-db":
-            # Cuerpo binario (el propio cache.db) -- nunca pasa por el
-            # decode("utf-8") genérico de abajo, ver _admin_restaurar_cache_db.
-            token = qs.get("token", [""])[0]
-            code, headers, body = _admin_restaurar_cache_db(environ["wsgi.input"], length, token)
-        else:
-            raw = environ["wsgi.input"].read(length).decode("utf-8") if length else ""
-            params = parse_qs(raw, keep_blank_values=True)
-            code, headers, body = _route_post(path, params)
+        raw = environ["wsgi.input"].read(length).decode("utf-8") if length else ""
+        params = parse_qs(raw, keep_blank_values=True)
+        code, headers, body = _route_post(path, params)
     else:
         code, headers, body = 405, {"Content-Length": "0"}, b""
 
@@ -10358,12 +10217,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            parsed = urlparse(self.path)
             length = int(self.headers.get("Content-Length", 0) or 0)
-            if parsed.path == "/admin/restaurar-cache-db":
-                token = parse_qs(parsed.query).get("token", [""])[0]
-                self._write(*_admin_restaurar_cache_db(self.rfile, length, token))
-                return
             raw = self.rfile.read(length).decode("utf-8") if length else ""
             params = parse_qs(raw, keep_blank_values=True)
             self._write(*_route_post(self.path, params))
