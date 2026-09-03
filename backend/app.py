@@ -260,6 +260,214 @@ MUNICIPIOS_VALENCIA = [
     "Xàtiva","Yesa, La","Yátova","Zarra","Énova, l'",
 ]
 
+# ─── FASE PILOTO: Andalucía (2026-09-03, ver memoria del proyecto) ───────────
+# Mismo mecanismo A que Comunitat Valenciana arriba: Andalucía SÍ tiene
+# ayuntamientos reales en PLACE (verificado en vivo: Málaga, Córdoba,
+# Sevilla, Jerez, Granada, Huelva, Marbella, Arahal...), así que reutiliza
+# PLACE/BORM tal cual, sin scraper nuevo. 785 municipios exactos (misma
+# fuente que Comunitat Valenciana: codeforspain/ds-organizacion-
+# administrativa, INE 2026) -- 103 Almería + 45 Cádiz + 77 Córdoba +
+# 174 Granada + 80 Huelva + 97 Jaén + 103 Málaga + 106 Sevilla.
+# Comprobación de colisiones de nombre (mismo método que Comunitat
+# Valenciana): 191 colisiones potenciales encontradas, más que las 112 de
+# Comunitat Valenciana (785 municipios frente a 542) -- el caso más claro
+# es "María" (pueblo de Almería), que como palabra suelta coincide con
+# decenas de "Santa María de/del X" en toda España. Confirma que el patrón
+# anclado a "ayuntamiento de X" (ver _piloto_medir_comunitat_valenciana)
+# es imprescindible aquí también, no una precaución de más.
+MUNICIPIOS_ALMERIA = [
+    "Abla","Abrucena","Adra","Albanchez","Alboloduy","Albox","Alcolea",
+    "Alcudia de Monteagud","Alcóntar","Alhabia","Alhama de Almería","Alicún",
+    "Almería","Almócita","Alsodux","Antas","Arboleas","Armuña de Almanzora",
+    "Bacares","Balanegra","Bayarque","Bayárcal","Beires","Benahadux",
+    "Benitagla","Benizalón","Bentarique","Berja","Bédar","Canjáyar",
+    "Cantoria","Carboneras","Castro de Filabres","Chercos","Chirivel",
+    "Cuevas del Almanzora","Cóbdar","Dalías","Ejido, El","Enix","Felix",
+    "Fines","Fiñana","Fondón","Gallardos, Los","Garrucha","Gádor","Gérgal",
+    "Huécija","Huércal de Almería","Huércal-Overa","Instinción","Laroya",
+    "Laujar de Andarax","Lubrín","Lucainena de las Torres","Líjar","Lúcar",
+    "Macael","María","Mojonera, La","Mojácar","Nacimiento","Níjar","Ohanes",
+    "Olula de Castro","Olula del Río","Oria","Padules","Partaloa",
+    "Paterna del Río","Pechina","Pulpí","Purchena","Rioja","Roquetas de Mar",
+    "Rágol","Santa Cruz de Marchena","Santa Fe de Mondújar","Senés","Serón",
+    "Sierro","Somontín","Sorbas","Suflí","Tabernas","Taberno","Tahal",
+    "Terque","Tres Villas, Las","Turre","Turrillas","Tíjola",
+    "Uleila del Campo","Urrácal","Velefique","Vera","Viator","Vélez-Blanco",
+    "Vélez-Rubio","Vícar","Zurgena","Íllar",
+]
+
+MUNICIPIOS_CADIZ = [
+    "Alcalá de los Gazules","Alcalá del Valle","Algar","Algeciras",
+    "Algodonales","Arcos de la Frontera","Barbate","Barrios, Los",
+    "Benalup-Casas Viejas","Benaocaz","Bornos","Bosque, El",
+    "Castellar de la Frontera","Chiclana de la Frontera","Chipiona",
+    "Conil de la Frontera","Cádiz","Espera","Gastor, El","Grazalema",
+    "Jerez de la Frontera","Jimena de la Frontera",
+    "Línea de la Concepción, La","Medina Sidonia","Olvera",
+    "Paterna de Rivera","Prado del Rey","Puerto Real","Puerto Serrano",
+    "Puerto de Santa María, El","Rota","San Fernando","San José del Valle",
+    "San Martín del Tesorillo","San Roque","Sanlúcar de Barrameda",
+    "Setenil de las Bodegas","Tarifa","Torre Alháquime","Trebujena","Ubrique",
+    "Vejer de la Frontera","Villaluenga del Rosario","Villamartín","Zahara",
+]
+
+MUNICIPIOS_CORDOBA = [
+    "Adamuz","Aguilar de la Frontera","Alcaracejos","Almedinilla",
+    "Almodóvar del Río","Añora","Baena","Belalcázar","Belmez","Benamejí",
+    "Blázquez, Los","Bujalance","Cabra","Carcabuey","Cardeña","Carlota, La",
+    "Carpio, El","Castro del Río","Cañete de las Torres","Conquista",
+    "Córdoba","Dos Torres","Doña Mencía","Encinas Reales","Espejo","Espiel",
+    "Fernán-Núñez","Fuente Carreteros","Fuente Obejuna","Fuente Palmera",
+    "Fuente la Lancha","Fuente-Tójar","Granjuela, La","Guadalcázar",
+    "Guijarrosa, La","Guijo, El","Hinojosa del Duque","Hornachuelos",
+    "Iznájar","Lucena","Luque","Montalbán de Córdoba","Montemayor","Montilla",
+    "Montoro","Monturque","Moriles","Nueva Carteya","Obejo","Palenciana",
+    "Palma del Río","Pedro Abad","Pedroche","Peñarroya-Pueblonuevo","Posadas",
+    "Pozoblanco","Priego de Córdoba","Puente Genil","Rambla, La","Rute",
+    "San Sebastián de los Ballesteros","Santa Eufemia","Santaella",
+    "Torrecampo","Valenzuela","Valsequillo","Victoria, La","Villa del Río",
+    "Villafranca de Córdoba","Villaharta","Villanueva de Córdoba",
+    "Villanueva del Duque","Villanueva del Rey","Villaralto",
+    "Villaviciosa de Córdoba","Viso, El","Zuheros",
+]
+
+MUNICIPIOS_GRANADA = [
+    "Agrón","Alamedilla","Albolote","Albondón","Albuñol","Albuñuelas",
+    "Albuñán","Aldeire","Alfacar","Algarinejo","Alhama de Granada","Alhendín",
+    "Alicún de Ortega","Almegíjar","Almuñécar","Alpujarra de la Sierra",
+    "Alquife","Arenas del Rey","Armilla","Atarfe","Baza","Beas de Granada",
+    "Beas de Guadix","Benalúa","Benalúa de las Villas","Benamaurel","Bubión",
+    "Busquístar","Bérchules","Cacín","Calahorra, La","Calicasas","Campotéjar",
+    "Caniles","Capileira","Carataunas","Castilléjar","Castril",
+    "Cenes de la Vega","Chauchina","Chimeneas","Churriana de la Vega",
+    "Cijuela","Cogollos de Guadix","Cogollos de la Vega","Colomera",
+    "Cortes de Baza","Cortes y Graena","Cuevas del Campo","Cádiar","Cájar",
+    "Cástaras","Cáñar","Cúllar","Cúllar Vega","Darro","Dehesas Viejas",
+    "Dehesas de Guadix","Deifontes","Diezma","Domingo Pérez de Granada",
+    "Dílar","Dólar","Dúdar","Dúrcal","Escúzar","Ferreira","Fonelas","Fornes",
+    "Freila","Fuente Vaqueros","Gabias, Las","Galera","Gobernador","Gor",
+    "Gorafe","Granada","Guadahortuna","Guadix","Gualchos","Guájares, Los",
+    "Gójar","Güevéjar","Güéjar Sierra","Huélago","Huéneja","Huéscar",
+    "Huétor Tájar","Huétor Vega","Huétor de Santillán","Iznalloz","Jayena",
+    "Jete","Jun","Juviles","Játar","Jérez del Marquesado","Lanjarón",
+    "Lanteira","Lecrín","Lentegí","Lobras","Loja","Lugros","Láchar","Lújar",
+    "Malahá, La","Maracena","Marchal","Moclín","Molvízar","Monachil",
+    "Montefrío","Montejícar","Montillana","Moraleda de Zafayona","Morelábor",
+    "Motril","Murtas","Nevada","Nigüelas","Nívar","Ogíjares","Orce","Otívar",
+    "Padul","Pampaneira","Pedro Martínez","Peligros","Peza, La","Pinar, El",
+    "Pinos Genil","Pinos Puente","Polopos","Polícar","Puebla de Don Fadrique",
+    "Pulianas","Purullena","Píñar","Pórtugos","Quéntar","Rubite","Salar",
+    "Salobreña","Santa Cruz del Comercio","Santa Fe","Soportújar","Sorvilán",
+    "Taha, La","Torre-Cardela","Torrenueva Costa","Torvizcón","Trevélez",
+    "Turón","Ugíjar","Valderrubio","Valle del Zalabí","Valle, El",
+    "Vegas del Genil","Ventas de Huelma","Villa de Otura","Villamena",
+    "Villanueva Mesía","Villanueva de las Torres","Válor",
+    "Vélez de Benaudalla","Víznar","Zafarraya","Zagra","Zubia, La","Zújar",
+    "Íllora","Ítrabo","Órgiva",
+]
+
+MUNICIPIOS_HUELVA = [
+    "Aljaraque","Almendro, El","Almonaster la Real","Almonte","Alosno",
+    "Alájar","Aracena","Aroche","Arroyomolinos de León","Ayamonte","Beas",
+    "Berrocal","Bollullos Par del Condado","Bonares","Cabezas Rubias","Cala",
+    "Calañas","Campillo, El","Campofrío","Cartaya","Castaño del Robledo",
+    "Cañaveral de León","Cerro de Andévalo, El","Chucena","Corteconcepción",
+    "Cortegana","Cortelazor","Cumbres Mayores","Cumbres de Enmedio",
+    "Cumbres de San Bartolomé","Encinasola","Escacena del Campo",
+    "Fuenteheridos","Galaroza","Gibraleón","Granada de Río-Tinto, La",
+    "Granado, El","Higuera de la Sierra","Hinojales","Hinojos","Huelva",
+    "Isla Cristina","Jabugo","Lepe","Linares de la Sierra",
+    "Lucena del Puerto","Manzanilla","Marines, Los","Minas de Riotinto",
+    "Moguer","Nava, La","Nerva","Niebla","Palma del Condado, La",
+    "Palos de la Frontera","Paterna del Campo","Paymogo","Puebla de Guzmán",
+    "Puerto Moral","Punta Umbría","Rociana del Condado",
+    "Rosal de la Frontera","San Bartolomé de la Torre","San Juan del Puerto",
+    "San Silvestre de Guzmán","Sanlúcar de Guadiana","Santa Ana la Real",
+    "Santa Bárbara de Casa","Santa Olalla del Cala","Trigueros","Valdelarco",
+    "Valverde del Camino","Villablanca","Villalba del Alcor",
+    "Villanueva de las Cruces","Villanueva de los Castillejos","Villarrasa",
+    "Zalamea la Real","Zarza-Perrunal, La","Zufre",
+]
+
+MUNICIPIOS_JAEN = [
+    "Albanchez de Mágina","Alcalá la Real","Alcaudete","Aldeaquemada",
+    "Andújar","Arjona","Arjonilla","Arquillos","Arroyo del Ojanco","Baeza",
+    "Bailén","Baños de la Encina","Beas de Segura","Bedmar y Garcíez",
+    "Begíjar","Benatae","Bélmez de la Moraleda","Cabra del Santo Cristo",
+    "Cambil","Campillo de Arenas","Canena","Carboneros","Carolina, La",
+    "Castellar","Castillo de Locubín","Cazalilla","Cazorla",
+    "Chiclana de Segura","Chilluévar","Cárcheles","Escañuela","Espeluy",
+    "Frailes","Fuensanta de Martos","Fuerte del Rey","Guardia de Jaén, La",
+    "Guarromán","Génave","Higuera de Calatrava","Hinojares","Hornos","Huelma",
+    "Huesa","Ibros","Iruela, La","Iznatoraf","Jabalquinto","Jamilena","Jaén",
+    "Jimena","Jódar","Lahiguera","Larva","Linares","Lopera","Lupión",
+    "Mancha Real","Marmolejo","Martos","Mengíbar","Montizón",
+    "Navas de San Juan","Noalejo","Orcera","Peal de Becerro","Pegalajar",
+    "Porcuna","Pozo Alcón","Puente de Génave","Puerta de Segura, La",
+    "Quesada","Rus","Sabiote","Santa Elena","Santiago de Calatrava",
+    "Santiago-Pontones","Santisteban del Puerto","Santo Tomé",
+    "Segura de la Sierra","Siles","Sorihuela del Guadalimar",
+    "Torreblascopedro","Torredelcampo","Torredonjimeno","Torreperogil",
+    "Torres","Torres de Albánchez","Valdepeñas de Jaén","Vilches",
+    "Villacarrillo","Villanueva de la Reina","Villanueva del Arzobispo",
+    "Villardompardo","Villares, Los","Villarrodrigo","Villatorres","Úbeda",
+]
+
+MUNICIPIOS_MALAGA = [
+    "Alameda","Alcaucín","Alfarnate","Alfarnatejo","Algarrobo","Algatocín",
+    "Alhaurín de la Torre","Alhaurín el Grande","Almargen","Almogía",
+    "Almáchar","Alozaina","Alpandeire","Antequera","Archidona","Ardales",
+    "Arenas","Arriate","Atajate","Benadalid","Benahavís","Benalauría",
+    "Benalmádena","Benamargosa","Benamocarra","Benaoján","Benarrabá",
+    "Borge, El","Burgo, El","Campillos","Canillas de Aceituno",
+    "Canillas de Albaida","Carratraca","Cartajima","Casabermeja",
+    "Casarabonela","Casares","Cañete la Real","Colmenar","Comares",
+    "Cortes de la Frontera","Coín","Cuevas Bajas","Cuevas de San Marcos",
+    "Cuevas del Becerro","Cártama","Cómpeta","Cútar","Estepona","Faraján",
+    "Frigiliana","Fuengirola","Fuente de Piedra","Gaucín","Genalguacil",
+    "Guaro","Humilladero","Igualeja","Istán","Iznate","Jimera de Líbar",
+    "Jubrique","Júzcar","Macharaviaya","Manilva","Marbella","Mijas",
+    "Moclinejo","Mollina","Monda","Montecorto","Montejaque","Málaga","Nerja",
+    "Ojén","Parauta","Periana","Pizarra","Pujerra","Rincón de la Victoria",
+    "Riogordo","Ronda","Salares","Sayalonga","Sedella","Serrato",
+    "Sierra de Yeguas","Teba","Tolox","Torremolinos","Torrox","Totalán",
+    "Valle de Abdalajís","Villanueva de Algaidas","Villanueva de Tapia",
+    "Villanueva de la Concepción","Villanueva del Rosario",
+    "Villanueva del Trabuco","Viñuela","Vélez-Málaga","Yunquera","Álora",
+    "Árchez",
+]
+
+MUNICIPIOS_SEVILLA = [
+    "Aguadulce","Alanís","Albaida del Aljarafe","Alcalá de Guadaíra",
+    "Alcalá del Río","Alcolea del Río","Algaba, La","Algámitas",
+    "Almadén de la Plata","Almensilla","Arahal","Aznalcázar","Aznalcóllar",
+    "Badolatosa","Benacazón","Bollullos de la Mitación","Bormujos","Brenes",
+    "Burguillos","Cabezas de San Juan, Las","Camas","Campana, La",
+    "Cantillana","Carmona","Carrión de los Céspedes","Casariche",
+    "Castilblanco de los Arroyos","Castilleja de Guzmán",
+    "Castilleja de la Cuesta","Castilleja del Campo",
+    "Castillo de las Guardas, El","Cazalla de la Sierra","Cañada Rosal",
+    "Constantina","Coria del Río","Coripe","Coronil, El","Corrales, Los",
+    "Cuervo de Sevilla, El","Dos Hermanas","Espartinas","Estepa",
+    "Fuentes de Andalucía","Garrobo, El","Gelves","Gerena","Gilena","Gines",
+    "Guadalcanal","Guillena","Herrera","Huévar del Aljarafe","Isla Mayor",
+    "Lantejuela","Lebrija","Lora de Estepa","Lora del Río","Luisiana, La",
+    "Madroño, El","Mairena del Alcor","Mairena del Aljarafe","Marchena",
+    "Marinaleda","Martín de la Jara","Molares, Los","Montellano",
+    "Morón de la Frontera","Navas de la Concepción, Las","Olivares","Osuna",
+    "Palacios y Villafranca, Los","Palmar de Troya, El","Palomares del Río",
+    "Paradas","Pedrera","Pedroso, El","Peñaflor","Pilas","Pruna",
+    "Puebla de Cazalla, La","Puebla de los Infantes, La","Puebla del Río, La",
+    "Real de la Jara, El","Rinconada, La","Roda de Andalucía, La",
+    "Ronquillo, El","Rubio, El","Salteras","San Juan de Aznalfarache",
+    "San Nicolás del Puerto","Sanlúcar la Mayor","Santiponce","Saucejo, El",
+    "Sevilla","Tocina","Tomares","Umbrete","Utrera",
+    "Valencina de la Concepción","Villamanrique de la Condesa",
+    "Villanueva de San Juan","Villanueva del Ariscal",
+    "Villanueva del Río y Minas","Villaverde del Río","Viso del Alcor, El",
+    "Écija",
+]
+
 session = requests.Session()
 session.headers.update(HEADERS)
 adapter = requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=0)
@@ -3473,14 +3681,12 @@ def _piloto_medir_comunitat_valenciana(zip_paths, job_id=None):
     llevan semanas en producción sin este problema por tener nombres
     únicos.
 
-    UNA sola pasada por fichero .atom, no una por municipio: la primera
-    versión de este piloto llamaba a parsear_atom_bytes 542 veces por
-    fichero (una por municipio), releyendo y reabriendo el ZIP en cada
-    llamada -- con 56 ficheros × 542 municipios eso no terminaba ni en 5
-    minutos. Aquí se extraen TODOS los contratos ADJ/RES/FOR de España de
-    una vez (mismo _entry_to_contrato que ya usa producción, sin filtro de
-    municipio) y LUEGO se filtra esa lista ya pequeña 542 veces en memoria
-    -- mismo resultado, sin la re-lectura repetida del XML crudo."""
+    UNA sola pasada por fichero .atom, no una por municipio -- ver
+    _piloto_extraer_contratos_place_todos() más abajo (compartida con
+    _piloto_medir_andalucia): la primera versión de este piloto llamaba a
+    parsear_atom_bytes 542 veces por fichero (una por municipio),
+    releyendo y reabriendo el ZIP en cada llamada -- con 56 ficheros × 542
+    municipios eso no terminaba ni en 5 minutos."""
     todos = ([(n, "alicante") for n in MUNICIPIOS_ALICANTE]
              + [(n, "castellon") for n in MUNICIPIOS_CASTELLON]
              + [(n, "valencia") for n in MUNICIPIOS_VALENCIA])
@@ -3492,6 +3698,26 @@ def _piloto_medir_comunitat_valenciana(zip_paths, job_id=None):
     munis_re = [(nombre, prov, re.compile(rf'\bayuntamiento de {re.escape(normalizar(nombre))}\b'))
                 for nombre, prov in todos]
 
+    todos_contratos = _piloto_extraer_contratos_place_todos(zip_paths, job_id)
+    _log(job_id, f"[piloto CV] {len(todos_contratos)} contratos ADJ/RES/FOR extraídos de "
+                 f"{len(zip_paths)} ZIP(s) (toda España, antes de filtrar por municipio).")
+
+    resultados = {}
+    for nombre, prov, muni_re in munis_re:
+        matches = [c for c in todos_contratos if muni_re.search(normalizar(c.get("organo", "")))]
+        if matches:
+            resultados[nombre] = {"provincia": prov, "contratos": _dedup_contratos_por_url(matches)}
+    return resultados
+
+
+def _piloto_extraer_contratos_place_todos(zip_paths, job_id=None):
+    """Extrae TODOS los contratos ADJ/RES/FOR de España de los ZIPs de
+    PLACE indicados, sin filtrar por municipio -- helper compartido entre
+    _piloto_medir_comunitat_valenciana y _piloto_medir_andalucia (2026-09-03,
+    ver memoria del proyecto). Una sola pasada por fichero .atom (mismo
+    _entry_to_contrato que ya usa producción); cada piloto filtra luego
+    esta lista ya pequeña en memoria, tantas veces como municipios tenga,
+    en vez de re-escanear el XML crudo una vez por municipio."""
     def _todos_los_contratos_de(zp):
         try:
             with zipfile.ZipFile(zp, "r") as z:
@@ -3536,7 +3762,28 @@ def _piloto_medir_comunitat_valenciana(zip_paths, job_id=None):
     todos_contratos = []
     for zp in zip_paths:
         todos_contratos.extend(_todos_los_contratos_de(zp))
-    _log(job_id, f"[piloto CV] {len(todos_contratos)} contratos ADJ/RES/FOR extraídos de "
+    return todos_contratos
+
+
+def _piloto_medir_andalucia(zip_paths, job_id=None):
+    """FASE PILOTO Andalucía (2026-09-03) -- mismo mecanismo que
+    _piloto_medir_comunitat_valenciana (ver esa función para el porqué del
+    patrón anclado "ayuntamiento de X"), aplicado a los 785 municipios de
+    las 8 provincias andaluzas. NO escribe en cache.db real ni conecta
+    nada a producción."""
+    todos = ([(n, "almeria") for n in MUNICIPIOS_ALMERIA]
+             + [(n, "cadiz") for n in MUNICIPIOS_CADIZ]
+             + [(n, "cordoba") for n in MUNICIPIOS_CORDOBA]
+             + [(n, "granada") for n in MUNICIPIOS_GRANADA]
+             + [(n, "huelva") for n in MUNICIPIOS_HUELVA]
+             + [(n, "jaen") for n in MUNICIPIOS_JAEN]
+             + [(n, "malaga") for n in MUNICIPIOS_MALAGA]
+             + [(n, "sevilla") for n in MUNICIPIOS_SEVILLA])
+    munis_re = [(nombre, prov, re.compile(rf'\bayuntamiento de {re.escape(normalizar(nombre))}\b'))
+                for nombre, prov in todos]
+
+    todos_contratos = _piloto_extraer_contratos_place_todos(zip_paths, job_id)
+    _log(job_id, f"[piloto Andalucía] {len(todos_contratos)} contratos ADJ/RES/FOR extraídos de "
                  f"{len(zip_paths)} ZIP(s) (toda España, antes de filtrar por municipio).")
 
     resultados = {}
