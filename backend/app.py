@@ -6661,6 +6661,12 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .region-stats{font-size:12px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
 .region-stats b{color:var(--text);font-weight:600;}
 .region-imp{font-family:'IBM Plex Mono',monospace;font-size:16px;color:var(--green);font-weight:600;}
+/* deuda/hab. en la tarjeta de cobertura fusionada (ver render_landing_
+   nacional_html, 2026-09-02): color deliberadamente distinto de
+   .region-imp (importe adjudicado, verde) para no confundir dinero-que-
+   entra con dinero-que-se-debe en la misma tarjeta -- mismo criterio que
+   ya se aplicaba entre .cobertura-btn y .region-imp antes de fusionarlas. */
+.region-deuda{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--red);opacity:.9;}
 .top1-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:8px;}
 .top1-card{background:var(--surface);border:1px solid rgba(240,136,62,.35);border-radius:8px;padding:16px 20px;}
 .top1-label{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:8px;}
@@ -6691,16 +6697,6 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .hero-panel .gs-hint{color:rgba(255,255,255,.62);}
 .hero-panel .stats-bar .stat{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:rgba(255,255,255,.9);}
 .hero-panel .stats-bar .stat span{color:#f5b700;}
-
-/* ── sección Cobertura (home, debajo de la cabecera) ─────────────────────
-   Verde-teal deliberadamente distinto del verde de importes (var(--green),
-   #3fb950) para que no se confundan a simple vista -- ver instrucción del
-   2026-07-29. */
-.cobertura-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:28px;}
-.cobertura-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;padding:24px 20px;border-radius:10px;text-decoration:none;border:1.5px solid #1fae7a;color:#1fae7a;background:rgba(31,174,122,.10);transition:background .15s,border-color .15s;}
-.cobertura-btn:hover{background:rgba(31,174,122,.2);border-color:#26cf92;}
-.cobertura-btn .cb-title{font-size:17px;font-weight:700;}
-.cobertura-btn .cb-count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#1fae7a;opacity:.9;}
 
 /* ── indicador de scroll horizontal en tarjetas de contrato (móvil) ─────── */
 .tbl-scroll{position:relative;}
@@ -6763,6 +6759,9 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 /* ── Índice de Transparencia (rankings) ──────────────────────────────── */
 .it-buscador{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:9px 14px;border-radius:6px;margin:14px 0;outline:none;}
 .it-buscador:focus{border-color:var(--blue);}
+.rk-muni-result{margin-bottom:12px;padding:16px 20px;}
+.rk-muni-linea{font-size:13px;color:var(--dim);margin-top:6px;}
+.rk-muni-linea b{color:var(--text);font-family:'IBM Plex Mono',monospace;}
 .it-indice{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;padding:3px 10px;border-radius:5px;}
 .it-alto{background:rgba(63,185,80,.15);color:var(--green);}
 .it-medio{background:rgba(210,153,34,.15);color:var(--yellow);}
@@ -6818,7 +6817,6 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .comentario-form .btn{align-self:stretch;}
   .static-page{padding:22px 18px;}
   .ad-banner{max-width:100%;}
-  .cobertura-grid{grid-template-columns:1fr;}
   .scroll-hint{
     display:flex;align-items:center;gap:2px;
     position:absolute;top:16px;right:6px;z-index:2;pointer-events:none;
@@ -8179,6 +8177,133 @@ def _render_indice_transparencia_html(comunidad="todas"):
   </table></div></div>"""
 
 
+def _buscar_posicion_municipio(q, limite=10):
+    """Backend de GET /api/rankings-municipio: dado un nombre (o parte) de
+    municipio, devuelve para cada coincidencia su posición en los rankings
+    de /rankings -- Índice de Transparencia (nacional y dentro de su
+    comunidad autónoma), Deuda por habitante y Sueldo de alcalde/sa cuando
+    hay dato. Reutiliza exactamente las mismas listas/orden que ya pinta la
+    página (_indice_transparencia_cacheado, _calcular_ranking_deuda_por_
+    habitante, _calcular_ranking_alcaldes) para que la posición mostrada
+    aquí coincida siempre con la fila real de la tabla correspondiente,
+    nunca un cálculo aparte que pueda desincronizarse."""
+    q_norm = normalizar(q or "")
+    if len(q_norm) < 2:
+        return {"query": q, "resultados": [], "error": "Escribe al menos 2 caracteres."}
+
+    indice_filas = _indice_transparencia_cacheado()
+    deuda_ordenada = _calcular_ranking_deuda_por_habitante()      # ya viene ordenado desc
+    alcaldes_ordenados = _calcular_ranking_alcaldes()             # ya viene ordenado desc
+    indice_nac_ordenado = sorted(
+        [f for f in indice_filas if f["indice"] is not None],
+        key=lambda f: f["indice"], reverse=True,
+    )
+
+    def _rank(lista_ordenada, clave_muni):
+        for i, f in enumerate(lista_ordenada, 1):
+            if normalizar(f["municipio"]) == clave_muni:
+                return i
+        return None
+
+    coincidencias = [f for f in indice_filas if q_norm in normalizar(f["municipio"])]
+    coincidencias.sort(key=lambda f: normalizar(f["municipio"]))
+
+    resultados = []
+    for f in coincidencias[:limite]:
+        clave_muni = normalizar(f["municipio"])
+        indice_com_ordenado = sorted(
+            [x for x in indice_filas
+             if x["comunidad_autonoma"] == f["comunidad_autonoma"] and x["indice"] is not None],
+            key=lambda x: x["indice"], reverse=True,
+        )
+        item = {
+            "municipio": f["municipio"],
+            "provincia_label": PROVINCIA_LABEL.get(f["provincia"], f["provincia"]),
+            "comunidad_autonoma_label": COMUNIDAD_AUTONOMA_LABEL.get(f["comunidad_autonoma"], f["comunidad_autonoma"]),
+            "ficha_url": f"/?muni={quote_plus(f['municipio'])}{_q_prov(f['provincia'])}",
+            "indice": None, "deuda_habitante": None, "alcalde": None,
+        }
+        if f["indice"] is not None:
+            item["indice"] = {
+                "valor_fmt": f'{f["indice"]:.1f}',
+                "rank_nacional": _rank(indice_nac_ordenado, clave_muni),
+                "total_nacional": len(indice_nac_ordenado),
+                "rank_comunidad": _rank(indice_com_ordenado, clave_muni),
+                "total_comunidad": len(indice_com_ordenado),
+            }
+        deuda_match = next((d for d in deuda_ordenada if normalizar(d["municipio"]) == clave_muni), None)
+        if deuda_match:
+            item["deuda_habitante"] = {
+                "valor_fmt": fmt_eur(deuda_match["deuda_por_habitante"]) + "/hab.",
+                "rank_nacional": _rank(deuda_ordenada, clave_muni),
+                "total_nacional": len(deuda_ordenada),
+            }
+        alcalde_match = next((a for a in alcaldes_ordenados if normalizar(a["municipio"]) == clave_muni), None)
+        if alcalde_match:
+            item["alcalde"] = {
+                "nombre": alcalde_match["nombre"],
+                "importe_fmt": fmt_eur(alcalde_match["importe"]) + "/año",
+                "rank_nacional": _rank(alcaldes_ordenados, clave_muni),
+                "total_nacional": len(alcaldes_ordenados),
+            }
+        resultados.append(item)
+
+    return {"query": q, "resultados": resultados, "total_coincidencias": len(coincidencias)}
+
+
+# JS del buscador de municipio de /rankings -- fetch con debounce a
+# /api/rankings-municipio, mismo patrón de secuencia anti-respuesta-
+# desactualizada que _ADV_SEARCH_JS de la home (ver esa constante).
+_RK_MUNI_BUSCADOR_JS = r"""(function(){
+  var input = document.getElementById('rk-muni-input');
+  var out = document.getElementById('rk-muni-resultados');
+  if (!input || !out) return;
+  var seq = 0, timer = null;
+  function pintar(data, miSeq){
+    if (miSeq !== seq) return;
+    if (data.error) { out.innerHTML = '<div class="gs-hint">' + data.error + '</div>'; return; }
+    if (!data.resultados.length) { out.innerHTML = '<div class="gs-hint">Sin coincidencias.</div>'; return; }
+    var html = '';
+    data.resultados.forEach(function(r){
+      html += '<div class="muni-card rk-muni-result"><div class="top1-label">📍 '
+        + '<a class="rk-empresa" href="' + r.ficha_url + '">' + r.municipio + '</a> · '
+        + r.provincia_label + '</div>';
+      if (r.indice) {
+        html += '<div class="rk-muni-linea">📊 Índice de Transparencia: <b>' + r.indice.valor_fmt + '</b>'
+          + ' — #' + r.indice.rank_nacional + ' de ' + r.indice.total_nacional + ' (nacional), '
+          + '#' + r.indice.rank_comunidad + ' de ' + r.indice.total_comunidad + ' en ' + r.comunidad_autonoma_label + '</div>';
+      } else {
+        html += '<div class="rk-muni-linea noloc-warn">📊 Índice de Transparencia: cobertura insuficiente</div>';
+      }
+      if (r.deuda_habitante) {
+        html += '<div class="rk-muni-linea">🏦 Deuda/habitante: <b>' + r.deuda_habitante.valor_fmt + '</b>'
+          + ' — #' + r.deuda_habitante.rank_nacional + ' de ' + r.deuda_habitante.total_nacional + '</div>';
+      } else {
+        html += '<div class="rk-muni-linea noloc-warn">🏦 Deuda/habitante: sin dato</div>';
+      }
+      if (r.alcalde) {
+        html += '<div class="rk-muni-linea">💰 ' + r.alcalde.nombre + ': <b>' + r.alcalde.importe_fmt + '</b>'
+          + ' — #' + r.alcalde.rank_nacional + ' de ' + r.alcalde.total_nacional + '</div>';
+      }
+      html += '</div>';
+    });
+    out.innerHTML = html;
+  }
+  input.addEventListener('input', function(){
+    var q = input.value.trim();
+    clearTimeout(timer);
+    if (q.length < 2) { out.innerHTML = ''; return; }
+    var miSeq = ++seq;
+    timer = setTimeout(function(){
+      fetch('/api/rankings-municipio?q=' + encodeURIComponent(q))
+        .then(function(r){ return r.json(); })
+        .then(function(data){ pintar(data, miSeq); })
+        .catch(function(){});
+    }, 300);
+  });
+})();"""
+
+
 def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas"):
     """Dos rankings claramente separados:
     - Nacional: agrega TODAS las provincias cargadas (Murcia + Girona + las que vengan).
@@ -8284,6 +8409,14 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
       con su directivo identificado cuando lo tenemos.
     </p>
   </div>
+
+  <div class="rk-section-header" id="buscador-municipio">
+    <h2>🔎 Busca tu municipio</h2>
+    <span class="rk-badge">Todas sus posiciones de un vistazo</span>
+  </div>
+  <input type="text" id="rk-muni-input" class="it-buscador" placeholder="Nombre del municipio…" autocomplete="off">
+  <div id="rk-muni-resultados"></div>
+  <script>{_RK_MUNI_BUSCADOR_JS}</script>
 
   <div class="rk-section-header">
     <h2>📍 Resumen por Provincia</h2>
@@ -8965,9 +9098,16 @@ def render_landing_nacional_html(datos):
       <div class="stat"><span>{fmt_eur(str(total_imp))}</span>Importe total</div>
     </div>"""
 
-    # Desglose secundario por región (el "selector" ya no es la puerta de
-    # entrada principal, sino estas tarjetas + las pestañas del header).
-    region_cards = ""
+    # Cobertura por región -- una sola tarjeta por provincia con TODO junto
+    # (municipios, habitantes, contratos, importe, deuda/hab.). Hasta
+    # 2026-09-02 esto eran DOS secciones separadas (los botones verdes de
+    # "Cobertura" arriba con municipios+habitantes, y las tarjetas naranjas
+    # de "Cobertura por región" más abajo con contratos+importe) mostrando
+    # la misma provincia dos veces -- fusionadas a petición de César. Deuda
+    # por habitante reutiliza _resumen_por_provincia() (ya la calcula para
+    # /rankings, agregado deuda_total/hab_total a nivel provincia).
+    deuda_por_prov = {f["provincia"]: f["deuda_por_habitante"] for f in _resumen_por_provincia()}
+    cobertura_html = ""
     for prov, municipios_lista in MUNICIPIOS_POR_PROVINCIA.items():
         datos_prov = [d for d in datos if d.get("provincia", "murcia") == prov]
         # El pseudo-municipio (Región de Murcia / Provincia de Girona) suma
@@ -8980,24 +9120,16 @@ def render_landing_nacional_html(datos):
         c_prov = sum(d.get("total_contratos", 0) for d in datos_prov)
         imp_prov = sum(c.get("importe_num", 0.0) for d in datos_prov for c in d.get("contratos", []))
         label = PROVINCIA_LABEL.get(prov, prov)
-        region_cards += f"""<a href="/?provincia={prov}" class="region-card">
-          <h3>📍 {esc(label)}</h3>
-          <div class="region-stats"><b>{n_con_datos}</b>/{len(municipios_lista)} municipios · <b>{c_prov}</b> contratos</div>
-          <div class="region-imp">{fmt_eur(str(imp_prov))}</div>
-        </a>"""
-
-    # Botones grandes de Cobertura, justo debajo de la cabecera -- acceso
-    # directo y prominente al listado de cada provincia (distinto de las
-    # tarjetas "Cobertura por región" de más abajo, que van con el ranking
-    # nacional y llevan el naranja de acento habitual).
-    cobertura_html = ""
-    for prov, municipios_lista in MUNICIPIOS_POR_PROVINCIA.items():
-        label = PROVINCIA_LABEL.get(prov, prov)
         hab_prov = sum(v["poblacion"] for v in POBLACION.values() if v.get("provincia") == prov)
-        hab_html = f" · {fmt_num(hab_prov)} hab." if hab_prov else ""
-        cobertura_html += f"""<a href="/?provincia={prov}" class="cobertura-btn">
-          <span class="cb-title">📍 {esc(label)}</span>
-          <span class="cb-count">{len(municipios_lista)} municipios{hab_html}</span>
+        hab_html = f" · <b>{fmt_num(hab_prov)}</b> hab." if hab_prov else ""
+        deuda_hab = deuda_por_prov.get(prov)
+        deuda_html = (f'<div class="region-deuda">🏦 {fmt_eur(deuda_hab)}/hab. de deuda viva</div>'
+                      if deuda_hab is not None else "")
+        cobertura_html += f"""<a href="/?provincia={prov}" class="region-card">
+          <h3>📍 {esc(label)}</h3>
+          <div class="region-stats"><b>{n_con_datos}</b>/{len(municipios_lista)} municipios{hab_html} · <b>{c_prov}</b> contratos</div>
+          <div class="region-imp">{fmt_eur(str(imp_prov))} adjudicado</div>
+          {deuda_html}
         </a>"""
 
     # Top 1 del ranking nacional (agregando todas las provincias)
@@ -9068,7 +9200,7 @@ def render_landing_nacional_html(datos):
     {stats}
   </div>
   <div class="section-title">Cobertura</div>
-  <div class="cobertura-grid">{cobertura_html}</div>
+  <div class="region-grid">{cobertura_html}</div>
   <div class="home-grid">
     <aside class="noticias-ue-panel">
       <div class="nu-panel-title">🇪🇺 Noticias UE · Presupuesto y fondos</div>
@@ -9079,8 +9211,6 @@ def render_landing_nacional_html(datos):
       <div class="section-title" style="margin-top:0">🏆 Liderando ahora mismo · Ranking Nacional</div>
       <div class="top1-grid">{top1_html}</div>
       <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
-      <div class="section-title">Cobertura por región</div>
-      <div class="region-grid">{region_cards}</div>
     </div>
   </div>
   <script>window.__PROVINCIA__ = "";</script>
@@ -9774,6 +9904,12 @@ def _route_get(path, qs, gzip_ok=False):
             else:
                 datos_snap = list(_datos_memoria)   # "" o "todas" -> sin filtro, busca en toda España
         resultado = api_buscar(tipo, q, datos_snap)
+        return _resp(json.dumps(resultado, ensure_ascii=False),
+                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
+
+    if path == "/api/rankings-municipio":
+        q = qs.get("q", [""])[0]
+        resultado = _buscar_posicion_municipio(q)
         return _resp(json.dumps(resultado, ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
