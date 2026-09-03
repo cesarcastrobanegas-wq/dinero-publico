@@ -132,6 +132,134 @@ MUNICIPIOS_MURCIA = [
     "Villanueva del Río Segura","Yecla",
 ]
 
+# ─── FASE PILOTO: Comunitat Valenciana (2026-09-03, ver memoria del proyecto) ─
+# A diferencia de Girona/Lleida/Barcelona/Tarragona (que necesitaron PSCP
+# porque sus municipios NO publican en PLACE), Comunitat Valenciana SÍ tiene
+# ayuntamientos reales en PLACE -- verificado en vivo contra el ZIP mensual
+# real de julio 2026: Alicante, Castellón de la Plana, Torrevieja, Elche,
+# Sagunto y más, con contratos e importes reales. Mecanismo A: reutiliza
+# PLACE/BORM tal cual (mismo _job_run, mismo buscar_en_zip/parsear_atom_
+# bytes que ya usa Murcia) -- NO hace falta ningún scraper nuevo, solo esta
+# lista de municipios + INE (fuente: codeforspain/ds-organizacion-
+# administrativa, basado en INE 2026 -- 542 municipios exactos, coincide
+# con la cifra oficial: 141 Alicante + 135 Castellón + 266 Valencia).
+MUNICIPIOS_ALICANTE = [
+    "Agost","Agres","Aigües","Albatera","Alcalalí","Alcoleja","Alcosser",
+    "Alcoy","Alfafara","Alfàs del Pi, l'","Algorfa","Algueña","Alicante",
+    "Almoradí","Almudaina","Alqueria d'Asnar, l'","Altea","Aspe",
+    "Atzúbia, l'","Balones","Banyeres de Mariola","Benasau","Beneixama",
+    "Benejúzar","Benferri","Beniarbeig","Beniardà","Beniarrés","Benidoleig",
+    "Benidorm","Benifallim","Benifato","Benigembla","Benijófar","Benilloba",
+    "Benillup","Benimantell","Benimarfull","Benimassot","Benimeli","Benissa",
+    "Benitachell","Biar","Bigastro","Bolulla","Busot","Callosa d'en Sarrià",
+    "Callosa de Segura","Calp","Campello, el","Campo de Mirra","Castalla",
+    "Castell de Castells","Castell de Guadalest, el","Catral","Cañada",
+    "Cocentaina","Confrides","Cox","Crevillent","Daya Nueva","Daya Vieja",
+    "Dolores","Dénia","Elche","Elda","Fageca","Famorca","Finestrat",
+    "Formentera del Segura","Gaianes","Gata de Gorgos","Gorga",
+    "Granja de Rocamora","Guardamar del Segura","Hondón de las Nieves",
+    "Hondón de los Frailes","Ibi","Jacarilla","Jijona","Jávea","Llíber",
+    "Lorcha","Millena","Monforte del Cid","Montesinos, Los","Monóvar","Murla",
+    "Muro de Alcoy","Mutxamel","Novelda","Nucia, la","Ondara","Onil","Orba",
+    "Orihuela","Orxeta","Parcent","Pedreguer","Pego","Penàguila","Petrer",
+    "Pilar de la Horadada","Pinoso","Planes","Poblets, els","Polop",
+    "Quatretondeta","Rafal","Redován","Relleu","Rojales","Romana, la",
+    "Ràfol d'Almúnia, el","Sagra","Salinas","San Fulgencio","San Isidro",
+    "San Miguel de Salinas","San Vicente del Raspeig","Sanet y Negrals",
+    "Sant Joan d'Alacant","Santa Pola","Sax","Sella","Senija","Teulada",
+    "Tibi","Tollos","Tormos","Torremanzanas","Torrevieja","Tàrbena",
+    "Vall d'Alcalà, la","Vall d'Ebo, la","Vall de Gallinera, la",
+    "Vall de Laguar, la","Verger, el","Villajoyosa","Villena","Xaló",
+]
+
+MUNICIPIOS_CASTELLON = [
+    "Albocàsser","Alcalà de Xivert","Alcora, l'","Alcudia de Veo",
+    "Alfondeguilla","Algimia de Almonacid","Almassora","Almedíjar","Almenara",
+    "Alquerías del Niño Perdido","Altura","Arañuel","Ares del Maestrat",
+    "Argelita","Artana","Atzeneta del Maestrat","Ayódar","Azuébar","Aín",
+    "Barracas","Bejís","Benafer","Benafigos","Benassal","Benicarló",
+    "Benicasim","Benlloc","Betxí","Borriol","Burriana","Cabanes",
+    "Canet lo Roig","Castell de Cabres","Castellfort","Castellnovo",
+    "Castellón de la Plana","Castillo de Villamalefa","Catí","Caudiel",
+    "Cervera del Maestre","Chodos","Chóvar","Cinctorres","Cirat",
+    "Cortes de Arenoso","Costur","Coves de Vinromà, les","Culla","Càlig",
+    "Eslida","Espadilla","Fanzara","Figueroles","Forcall","Fuente la Reina",
+    "Fuentes de Ayódar","Gaibiel","Geldo","Herbers","Higueras","Jana, la",
+    "Jérica","Llosa, la","Lucena del Cid","Ludiente","Mata de Morella, la",
+    "Matet","Moncofa","Montanejos","Montán","Morella","Navajas","Nules",
+    "Olocau del Rey","Onda","Oropesa del Mar","Palanques","Pavías",
+    "Peñíscola","Pina de Montalgrao","Pobla Tornesa, la",
+    "Pobla de Benifassà, la","Portell de Morella","Puebla de Arenoso",
+    "Ribesalbes","Rossell","Sacañet","Salzadella, la","San Jorge",
+    "San Rafael del Río","Sant Joan de Moró","Sant Mateu",
+    "Santa Magdalena de Pulpis","Segorbe","Serratella, la",
+    "Sierra Engarcerán","Soneja","Sot de Ferrer","Sueras","Tales","Teresa",
+    "Todolella","Toga","Toro, El","Torralba del Pinar",
+    "Torre d'en Besora, la","Torre d'en Doménec, la","Torreblanca",
+    "Torrechiva","Torás","Traiguera","Tírig","Useras","Vall d'Alba",
+    "Vall d'Uixó, la","Vall de Almonacid","Vallat","Vallibona","Vila-real",
+    "Vilafamés","Vilanova d'Alcolea","Vilar de Canes","Vilavella, la",
+    "Villafranca del Cid","Villahermosa del Río","Villamalur",
+    "Villanueva de Viver","Villores","Vinaròs","Vistabella del Maestrat",
+    "Viver","Xert","Xilxes","Zorita del Maestrazgo","Zucaina",
+]
+
+MUNICIPIOS_VALENCIA = [
+    "Ademuz","Ador","Agullent","Aielo de Malferit","Aielo de Rugat","Alaquàs",
+    "Albaida","Albal","Albalat de la Ribera","Albalat dels Sorells",
+    "Albalat dels Tarongers","Alberic","Alborache","Alboraya","Albuixech",
+    "Alcublas","Alcàntera de Xúquer","Alcàsser","Alcúdia de Crespins, l'",
+    "Alcúdia, l'","Aldaia","Alfafar","Alfara de la Baronia",
+    "Alfara del Patriarca","Alfarb","Alfarrasí","Alfauir","Algar de Palància",
+    "Algemesí","Alginet","Algímia d'Alfara","Almiserà","Almoines",
+    "Almussafes","Almàssera","Alpuente","Alqueria de la Comtessa, l'",
+    "Alzira","Andilla","Anna","Antella","Aras de los Olmos",
+    "Atzeneta d'Albaida","Ayora","Barx","Barxeta","Bellreguard","Bellús",
+    "Benaguasil","Benagéber","Benavites","Beneixida","Benetússer","Beniarjó",
+    "Beniatjar","Benicolet","Benicull de Xúquer","Benifairó de la Valldigna",
+    "Benifairó de les Valls","Benifaió","Beniflá","Benigànim","Benimodo",
+    "Benimuslem","Beniparrell","Benirredrà","Benissanó","Benissoda",
+    "Benissuera","Bicorp","Bocairent","Bolbaite","Bonrepòs i Mirambell",
+    "Bufali","Bugarra","Burjassot","Buñol","Bèlgida","Bétera","Calles",
+    "Camporrobles","Canals","Canet d'En Berenguer","Carcaixent","Carlet",
+    "Carrícola","Casas Altas","Casas Bajas","Casinos",
+    "Castellonet de la Conquesta","Castelló","Castelló de Rugat",
+    "Castielfabib","Catadau","Catarroja","Caudete de las Fuentes","Cerdà",
+    "Chella","Chelva","Chera","Cheste","Chiva","Chulilla","Cofrentes",
+    "Corbera","Cortes de Pallás","Cotes","Cullera","Càrcer","Daimús","Domeño",
+    "Dos Aguas","Eliana, l'","Emperador","Enguera","Estivella","Estubeny",
+    "Faura","Favara","Foios","Font d'en Carròs, la","Font de la Figuera, la",
+    "Fontanars dels Alforins","Fortaleny","Fuenterrobles","Gandia","Gavarda",
+    "Genovés, el","Gestalgar","Gilet","Godella","Godelleta",
+    "Granja de la Costera, la","Guadassuar","Guadasséquies",
+    "Guardamar de la Safor","Gátova","Higueruelas","Jalance","Jarafuel",
+    "Llanera de Ranes","Llaurí","Llocnou d'En Fenollet",
+    "Llocnou de Sant Jeroni","Llocnou de la Corona","Llombai",
+    "Llosa de Ranes, la","Llutxent","Llíria","Loriguilla","Losa del Obispo",
+    "Macastre","Manises","Manuel","Marines","Massalavés","Massalfassar",
+    "Massamagrell","Massanassa","Meliana","Millares","Miramar","Mislata",
+    "Mogente","Moncada","Montaverner","Montesa","Montichelvo","Montroy",
+    "Montserrat","Museros","Navarrés","Novetlè","Náquera","Oliva",
+    "Olleria, l'","Olocau","Ontinyent","Otos","Paiporta","Palma de Gandía",
+    "Palmera","Palomar, el","Paterna","Pedralba","Petrés","Picanya",
+    "Picassent","Piles","Pinet","Pobla Llarga, la","Pobla de Farnals, la",
+    "Pobla de Vallbona, la","Pobla del Duc, la","Polinyà de Xúquer","Potries",
+    "Puebla de San Miguel","Puig de Santa Maria, el","Puçol",
+    "Quart de Poblet","Quart de les Valls","Quartell","Quatretonda","Quesa",
+    "Rafelbunyol","Rafelcofer","Rafelguaraf","Real","Real de Gandia, el",
+    "Requena","Riba-roja de Túria","Riola","Rocafort","Rotglà i Corberà",
+    "Rugat","Ráfol de Salem","Ròtova","Sagunto","Salem",
+    "San Antonio de Benagéber","Sant Joanet","Sedaví","Segart","Sellent",
+    "Sempere","Senyera","Serra","Siete Aguas","Silla","Simat de la Valldigna",
+    "Sinarcas","Sollana","Sot de Chera","Sueca","Sumacàrcer",
+    "Tavernes Blanques","Tavernes de la Valldigna","Teresa de Cofrentes",
+    "Terrateig","Titaguas","Torrebaja","Torrella","Torrent","Torres Torres",
+    "Tous","Turís","Tuéjar","Utiel","Vallada","Vallanca","Vallés","València",
+    "Venta del Moro","Vilamarxant","Villalonga","Villar del Arzobispo",
+    "Villargordo del Cabriel","Vinalesa","Xeraco","Xeresa","Xirivella",
+    "Xàtiva","Yesa, La","Yátova","Zarra","Énova, l'",
+]
+
 session = requests.Session()
 session.headers.update(HEADERS)
 adapter = requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=0)
@@ -3322,6 +3450,101 @@ def buscar_en_zip(zip_path, municipio, job_id=None):
             contratos_total.extend(parcial)
 
     return contratos_total
+
+
+def _piloto_medir_comunitat_valenciana(zip_paths, job_id=None):
+    """FASE PILOTO Comunitat Valenciana (2026-09-03) -- mide cobertura real
+    de PLACE para los 542 municipios de Alicante/Castellón/Valencia contra
+    los ZIPs ya cacheados en local, SIN escribir en cache.db real ni
+    conectar nada a producción (mismo patrón que la fase piloto de Lleida:
+    medir primero, decidir después). Devuelve {municipio: {"provincia":...,
+    "contratos": [...]}} solo para los municipios con al menos 1 contrato
+    real.
+
+    El órgano de contratación se compara anclado a "AYUNTAMIENTO DE
+    {municipio}", NUNCA con el \\b{municipio}\\b suelto que usa buscar_en_zip
+    (fuente de Murcia) -- verificado con el ZIP real de julio 2026 que ese
+    patrón suelto produce falsos positivos reales entre los 542 municipios
+    de la Comunitat Valenciana y homónimos de otras provincias (112
+    colisiones de nombre encontradas, ej. "Cañada" -- pueblo de Alicante --
+    también matchea "Villanueva de la Cañada" en Madrid o "Cañada Rosal" en
+    Sevilla; ~51% de las entradas que el patrón suelto contaba en esa
+    prueba eran de otras provincias). NO toca buscar_en_zip ni Murcia, que
+    llevan semanas en producción sin este problema por tener nombres
+    únicos.
+
+    UNA sola pasada por fichero .atom, no una por municipio: la primera
+    versión de este piloto llamaba a parsear_atom_bytes 542 veces por
+    fichero (una por municipio), releyendo y reabriendo el ZIP en cada
+    llamada -- con 56 ficheros × 542 municipios eso no terminaba ni en 5
+    minutos. Aquí se extraen TODOS los contratos ADJ/RES/FOR de España de
+    una vez (mismo _entry_to_contrato que ya usa producción, sin filtro de
+    municipio) y LUEGO se filtra esa lista ya pequeña 542 veces en memoria
+    -- mismo resultado, sin la re-lectura repetida del XML crudo."""
+    todos = ([(n, "alicante") for n in MUNICIPIOS_ALICANTE]
+             + [(n, "castellon") for n in MUNICIPIOS_CASTELLON]
+             + [(n, "valencia") for n in MUNICIPIOS_VALENCIA])
+    # normalizar() (definida arriba) pone todo en minúsculas -- el ancla
+    # tiene que ir en minúsculas también, o el regex nunca matchea nada
+    # (bug real: la primera versión de este fix usaba "AYUNTAMIENTO DE" en
+    # mayúsculas contra un texto ya normalizado en minúsculas, 0 resultados
+    # en la primera prueba).
+    munis_re = [(nombre, prov, re.compile(rf'\bayuntamiento de {re.escape(normalizar(nombre))}\b'))
+                for nombre, prov in todos]
+
+    def _todos_los_contratos_de(zp):
+        try:
+            with zipfile.ZipFile(zp, "r") as z:
+                atom_names = [n for n in z.namelist() if n.endswith(".atom")]
+        except Exception as e:
+            _log(job_id, f"Error abriendo {os.path.basename(zp)}: {e}")
+            return []
+
+        def _procesar(name):
+            with zipfile.ZipFile(zp, "r") as z:
+                raw = z.read(name)
+            out = []
+            starts, pos = [], 0
+            while True:
+                p = raw.find(_OPEN_ENTRY_B, pos)
+                if p == -1:
+                    break
+                starts.append(p + _OPEN_LEN_B)
+                pos = p + 1
+            for s in starts:
+                e = raw.find(_CLOSE_ENTRY_B, s)
+                if e == -1:
+                    e = len(raw)
+                try:
+                    entry_xml = raw[s:e].decode("utf-8")
+                except UnicodeDecodeError:
+                    entry_xml = raw[s:e].decode("latin-1", errors="replace")
+                try:
+                    c = _entry_to_contrato(entry_xml)
+                except Exception:
+                    c = None
+                if c:
+                    out.append(c)
+            return out
+
+        contratos = []
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            for parcial in ex.map(_procesar, atom_names):
+                contratos.extend(parcial)
+        return contratos
+
+    todos_contratos = []
+    for zp in zip_paths:
+        todos_contratos.extend(_todos_los_contratos_de(zp))
+    _log(job_id, f"[piloto CV] {len(todos_contratos)} contratos ADJ/RES/FOR extraídos de "
+                 f"{len(zip_paths)} ZIP(s) (toda España, antes de filtrar por municipio).")
+
+    resultados = {}
+    for nombre, prov, muni_re in munis_re:
+        matches = [c for c in todos_contratos if muni_re.search(normalizar(c.get("organo", "")))]
+        if matches:
+            resultados[nombre] = {"provincia": prov, "contratos": _dedup_contratos_por_url(matches)}
+    return resultados
 
 
 def buscar_en_feed_vivo(municipio):
