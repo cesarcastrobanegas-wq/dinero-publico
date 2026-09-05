@@ -7248,6 +7248,28 @@ header p{font-size:12px;color:var(--dim);margin-top:2px;}
   .pwa-banner-close:hover{opacity:1;}
 }
 .instalar-bar-highlight{animation:pwaBannerPulse 1s ease-in-out 2;border-color:var(--accent) !important;}
+/* ── banner de consentimiento de cookies (2026-09-05) ────────────────────
+   Aceptar/Rechazar con el MISMO tamaño, grosor de fuente y padding -- solo
+   cambia el color, nunca uno como botón grande y el otro como enlace
+   pequeño. Igual que .pwa-banner-mobile, la regla [hidden] va DESPUÉS y
+   explícita: un selector de autor con propiedades propias puede ganarle
+   al estilo [hidden] del user-agent si no se fuerza el orden. */
+.cookie-banner{position:fixed;left:0;right:0;bottom:0;z-index:300;background:var(--surface);border-top:1px solid var(--border);padding:16px 20px;box-shadow:0 -4px 16px rgba(0,0,0,.35);}
+.cookie-banner[hidden]{display:none;}
+.cookie-content{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.cookie-texto{flex:1;min-width:240px;font-size:13px;color:var(--text);line-height:1.5;}
+.cookie-texto a{color:var(--blue);}
+.cookie-botones{display:flex;gap:10px;flex-wrap:wrap;}
+.cookie-btn{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:700;padding:10px 22px;border-radius:6px;cursor:pointer;white-space:nowrap;min-width:120px;text-align:center;}
+.cookie-btn-aceptar{background:var(--accent);color:#000;border:1px solid var(--accent);}
+.cookie-btn-aceptar:hover{background:#ffa657;}
+.cookie-btn-rechazar{background:var(--surface);color:var(--text);border:1px solid var(--border);}
+.cookie-btn-rechazar:hover{border-color:var(--dim);}
+@media (max-width:700px){
+  .cookie-content{flex-direction:column;align-items:stretch;}
+  .cookie-botones{justify-content:stretch;}
+  .cookie-btn{flex:1;}
+}
 .prov-switch{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
 .prov-tab{text-decoration:none;padding:8px 14px;font-size:13px;font-weight:600;color:var(--dim);background:var(--bg);white-space:nowrap;}
 .prov-tab:hover{color:var(--text);}
@@ -7656,13 +7678,7 @@ def spinner_page(job_id, municipio, provincia="murcia"):
     redirect_url = f"/?muni={quote_plus(municipio)}" + _q_prov(provincia)
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-86Q210M1DC"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){{dataLayer.push(arguments);}}
-  gtag('js', new Date());
-  gtag('config', 'G-86Q210M1DC');
-</script>
+<script>{_ANALYTICS_LOADER_JS}</script>
 <title>Buscando — {esc(municipio)}</title>
 <link rel="stylesheet" href="{_pwa_asset('/static/style.css')}"></head>
 <body>
@@ -7738,6 +7754,71 @@ def _render_alertas(alertas):
 SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
 SITE_TAGLINE = "El dinero de todos, en manos de quién"
 BIZUM_TELEFONO = "661657013"
+
+# ─── Consentimiento de cookies + Google AdSense (2026-09-05) ────────────────
+# Antes de esto, Google Analytics se cargaba sin ningún consentimiento en
+# TODAS las páginas (ver _ANALYTICS_LOADER_JS y spinner_page más abajo) --
+# un banner de cookies que solo bloqueara el AdSense futuro pero dejara GA
+# cargando solo habría sido un banner que no hace lo que dice. Ahora los dos
+# (GA ya activo, AdSense preparado) pasan por el mismo consentimiento.
+#
+# ADSENSE_CLIENT_ID/ADSENSE_SLOT_ID vacíos = AdSense todavía NO activo (cuenta
+# pendiente de aprobación, a petición explícita de César de no activar nada
+# real todavía). En cuanto haya cuenta aprobada, activar es solo rellenar
+# estas dos constantes con los valores reales -- _ad_banner_html() y
+# _dpCargarAdsense() (JS) ya están preparados para usarlos en cuanto dejen de
+# estar vacíos, sin tocar nada más.
+GA_MEASUREMENT_ID = "G-86Q210M1DC"
+ADSENSE_CLIENT_ID = ""   # ej. "ca-pub-1234567890123456" cuando se apruebe la cuenta
+ADSENSE_SLOT_ID = ""     # ej. "1234567890"
+COOKIE_CONSENT_KEY = "cookieConsent"
+
+# Fragmento JS compartido entre _page_shell (todas las páginas normales) y
+# spinner_page (la pantalla de "buscando..." durante un refresco en vivo,
+# que no pasa por _page_shell) -- así ambas respetan el mismo consentimiento
+# guardado en localStorage. NO muestra ningún banner por sí solo (eso solo
+# vive en _page_shell): si ya hay consentimiento aceptado de una visita
+# anterior, carga Analytics en silencio; si no, no hace nada -- el banner de
+# _page_shell es el único sitio donde se pide/cambia el consentimiento.
+_ANALYTICS_LOADER_JS = f"""
+function _dpCargarAnalytics() {{
+  if (window.__dpGaActivado) return;
+  window.__dpGaActivado = true;
+  var s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}';
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){{ dataLayer.push(arguments); }};
+  gtag('js', new Date());
+  gtag('config', '{GA_MEASUREMENT_ID}');
+}}
+try {{
+  if (localStorage.getItem('{COOKIE_CONSENT_KEY}') === 'accepted') {{ _dpCargarAnalytics(); }}
+}} catch (e) {{}}
+"""
+
+# _dpCargarAdsense(): con ADSENSE_CLIENT_ID vacío es un no-op a propósito
+# (nada que activar todavía) -- se puede llamar siempre sin comprobar antes
+# si hay cuenta o no. El día que ADSENSE_CLIENT_ID tenga valor real, esta
+# función ya inyecta el script de AdSense de verdad, sin más cambios.
+if ADSENSE_CLIENT_ID:
+    _ADSENSE_LOADER_JS = f"""
+function _dpCargarAdsense() {{
+  if (window.__dpAdsActivado) return;
+  window.__dpAdsActivado = true;
+  var s = document.createElement('script');
+  s.async = true;
+  s.crossOrigin = 'anonymous';
+  s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT_ID}';
+  document.head.appendChild(s);
+  (window.adsbygoogle = window.adsbygoogle || []).push({{}});
+}}
+"""
+else:
+    _ADSENSE_LOADER_JS = """
+function _dpCargarAdsense() {} // AdSense todavía no activo (cuenta pendiente de aprobación)
+"""
 
 # ─── PWA: manifest + service worker (2026-08-05) ─────────────────────────────
 # Instalable como app en Android/Chrome (banner automático) e iOS/Safari
@@ -8118,6 +8199,19 @@ def _icono_contrato(titulo):
 
 
 def _ad_banner_html():
+    """Con ADSENSE_CLIENT_ID/ADSENSE_SLOT_ID vacíos (hoy) se queda igual que
+    siempre -- el hueco de contacto, sin nada de Google. El día que César dé
+    el código real de su cuenta aprobada, rellenar esas dos constantes ya
+    activa el <ins> real aquí; el script de AdSense en sí solo se inyecta
+    tras aceptar el banner de cookies (_dpCargarAdsense(), ver
+    _ANALYTICS_LOADER_JS/_ADSENSE_LOADER_JS y _page_shell), nunca antes."""
+    if ADSENSE_CLIENT_ID and ADSENSE_SLOT_ID:
+        return (f'<div class="ad-banner ad-banner-real" id="ad-banner">'
+                f'<ins class="adsbygoogle" style="display:block" '
+                f'data-ad-client="{esc(ADSENSE_CLIENT_ID)}" '
+                f'data-ad-slot="{esc(ADSENSE_SLOT_ID)}" '
+                f'data-ad-format="auto" data-full-width-responsive="true"></ins>'
+                f'</div>')
     return ('<div class="ad-banner" id="ad-banner">'
             'Espacio publicitario — contacto@dinero-publico.com'
             '</div>')
@@ -8183,6 +8277,7 @@ def _footer_html(provincia="todas"):
     <a href="/rankings{_q_prov_first(provincia)}#alcaldes">Sueldos Alcaldes</a>
     <a href="/fondos-ue">Fondos UE</a>
     <a href="/aviso-legal">Aviso Legal</a>
+    <a href="#" id="cookie-preferencias">Preferencias de cookies</a>
     <a href="/quienes-somos">Quiénes Somos</a>
     <span class="ft-sep">|</span>
     <span class="ft-label">Enlaces de interés:</span>
@@ -8202,12 +8297,9 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     return f"""<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-86Q210M1DC"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){{dataLayer.push(arguments);}}
-  gtag('js', new Date());
-  gtag('config', 'G-86Q210M1DC');
+{_ANALYTICS_LOADER_JS}
+{_ADSENSE_LOADER_JS}
 </script>
 <title>{esc(full_title)}</title>
 <meta name="description" content="{desc}">
@@ -8239,6 +8331,20 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
   <span class="pwa-banner-text">📲 Instala la app — acceso directo desde tu móvil</span>
   <button type="button" id="pwa-banner-btn" class="pwa-banner-btn">Instalar</button>
   <button type="button" id="pwa-banner-close" class="pwa-banner-close" aria-label="Cerrar aviso">✕</button>
+</div>
+<div id="cookie-banner" class="cookie-banner" hidden>
+  <div class="cookie-content">
+    <div class="cookie-texto">
+      🍪 Usamos cookies propias y de terceros (Google Analytics y, en el
+      futuro, publicidad de Google AdSense) para analizar el uso del sitio y,
+      si las aceptas, mostrar anuncios — <a href="/aviso-legal">más
+      información</a>.
+    </div>
+    <div class="cookie-botones">
+      <button type="button" id="cookie-rechazar" class="cookie-btn cookie-btn-rechazar">Rechazar</button>
+      <button type="button" id="cookie-aceptar" class="cookie-btn cookie-btn-aceptar">Aceptar</button>
+    </div>
+  </div>
 </div>
 {_header_html(provincia)}
 <div class="main">
@@ -8341,6 +8447,59 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
       pwaOcultarBanner();
       deferredPrompt = null;
     }});
+  }})();
+
+  (function() {{
+    // Banner de consentimiento de cookies -- Aceptar/Rechazar con el MISMO
+    // peso visual (dos botones iguales en tamaño/grosor, ver .cookie-btn en
+    // el CSS -- nada de "aceptar" grande y "rechazar" como enlace pequeño).
+    // _dpCargarAnalytics()/_dpCargarAdsense() están definidas en el <head>
+    // (ver _ANALYTICS_LOADER_JS/_ADSENSE_LOADER_JS) -- este bloque solo
+    // decide CUÁNDO llamarlas: al aceptar, o ya en la carga si el
+    // consentimiento venía guardado de una visita anterior.
+    var banner = document.getElementById('cookie-banner');
+    var btnAceptar = document.getElementById('cookie-aceptar');
+    var btnRechazar = document.getElementById('cookie-rechazar');
+
+    function mostrarBannerCookies() {{ if (banner) banner.hidden = false; }}
+    function ocultarBannerCookies() {{ if (banner) banner.hidden = true; }}
+
+    try {{
+      var pref = localStorage.getItem('{COOKIE_CONSENT_KEY}');
+      if (!pref) {{
+        mostrarBannerCookies();
+      }}
+      // Si pref === 'accepted', _ANALYTICS_LOADER_JS ya la cargó por su
+      // cuenta más arriba en el <head> -- no hace falta repetirlo aquí.
+    }} catch (e) {{
+      mostrarBannerCookies();  // sin localStorage no hay forma de recordar la decisión -- preguntar siempre
+    }}
+
+    if (btnAceptar) {{
+      btnAceptar.addEventListener('click', function() {{
+        try {{ localStorage.setItem('{COOKIE_CONSENT_KEY}', 'accepted'); }} catch (e) {{}}
+        ocultarBannerCookies();
+        _dpCargarAnalytics();
+        _dpCargarAdsense();
+      }});
+    }}
+    if (btnRechazar) {{
+      btnRechazar.addEventListener('click', function() {{
+        try {{ localStorage.setItem('{COOKIE_CONSENT_KEY}', 'rejected'); }} catch (e) {{}}
+        ocultarBannerCookies();
+      }});
+    }}
+
+    // Enlace "Preferencias de cookies" del pie de página -- reabre el
+    // banner en cualquier momento para cambiar de opinión, sin borrar la
+    // decisión anterior hasta que se pulse uno de los dos botones otra vez.
+    var linkPreferencias = document.getElementById('cookie-preferencias');
+    if (linkPreferencias) {{
+      linkPreferencias.addEventListener('click', function(e) {{
+        e.preventDefault();
+        mostrarBannerCookies();
+      }});
+    }}
   }})();
 </script>
 </body></html>"""
@@ -10449,7 +10608,23 @@ def render_aviso_legal_html():
   <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.</p>
 
   <h2>Cookies y publicidad</h2>
-  <p>Este sitio no utiliza cookies de seguimiento ni publicidad personalizada.</p>
+  <p>Este sitio usa cookies propias, necesarias para su funcionamiento básico,
+  y cookies de terceros que solo se activan si das tu consentimiento
+  explícito en el banner que aparece al entrar:</p>
+  <ul>
+    <li><b>Google Analytics</b> — estadísticas de uso agregadas del sitio.</li>
+    <li><b>Google AdSense</b> — cuando esté activo, para mostrar publicidad,
+    en algunos casos personalizada según tus intereses.</li>
+  </ul>
+  <p>Puedes aceptar o rechazar estas cookies en cualquier momento desde el
+  enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier
+  página del sitio — rechazarlas no impide usar la web con normalidad, solo
+  desactiva las estadísticas y la publicidad.</p>
+  <p>Más información sobre cómo Google usa los datos en sitios que utilizan
+  sus servicios de publicidad:
+  <a href="https://policies.google.com/technologies/partner-sites" target="_blank"
+  rel="noopener">Cómo usa Google los datos de los sitios o las apps que
+  utilizan sus servicios</a>.</p>
 
   <h2>Contacto</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
