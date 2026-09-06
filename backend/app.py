@@ -7762,16 +7762,33 @@ BIZUM_TELEFONO = "661657013"
 # cargando solo habría sido un banner que no hace lo que dice. Ahora los dos
 # (GA ya activo, AdSense preparado) pasan por el mismo consentimiento.
 #
-# ADSENSE_CLIENT_ID/ADSENSE_SLOT_ID vacíos = AdSense todavía NO activo (cuenta
-# pendiente de aprobación, a petición explícita de César de no activar nada
-# real todavía). En cuanto haya cuenta aprobada, activar es solo rellenar
-# estas dos constantes con los valores reales -- _ad_banner_html() y
-# _dpCargarAdsense() (JS) ya están preparados para usarlos en cuanto dejen de
-# estar vacíos, sin tocar nada más.
+# ADSENSE_CLIENT_ID: código de verificación de la cuenta de AdSense de César
+# (2026-09-06) -- SOLO el script de verificación/librería, que Google pide
+# instalar en el <head> de forma incondicional (sin esperar a consentimiento
+# de cookies) para poder verificar la propiedad del sitio; no muestra
+# ningún anuncio por sí solo. ADSENSE_SLOT_ID sigue vacío a propósito
+# (cuenta aún sin unidad de anuncio aprobada) -- _ad_banner_html() solo
+# renderiza un <ins> de AdSense de verdad cuando AMBAS constantes tienen
+# valor, así que el hueco "Espacio publicitario" se queda exactamente igual
+# que antes hasta que César dé también el slot ID.
 GA_MEASUREMENT_ID = "G-86Q210M1DC"
-ADSENSE_CLIENT_ID = ""   # ej. "ca-pub-1234567890123456" cuando se apruebe la cuenta
-ADSENSE_SLOT_ID = ""     # ej. "1234567890"
+ADSENSE_CLIENT_ID = "ca-pub-7682507700250366"
+ADSENSE_SLOT_ID = ""     # ej. "1234567890" -- pendiente de unidad de anuncio aprobada
 COOKIE_CONSENT_KEY = "cookieConsent"
+
+# Script de verificación de AdSense tal cual lo entrega Google -- va
+# SUELTO e incondicional en el <head> (ver _page_shell), fuera del banner
+# de consentimiento: es la propia instalación de este script lo que Google
+# usa para verificar la propiedad del sitio, y por sí solo (sin unidad de
+# anuncio configurada, ver ADSENSE_SLOT_ID arriba) no sirve ningún anuncio
+# ni depende del consentimiento de cookies -- ese consentimiento sigue
+# gobernando _dpCargarAdsense() (la llamada que de verdad pinta un anuncio
+# en un <ins>, más abajo), no la presencia de esta librería.
+_ADSENSE_VERIFICATION_HEAD_TAG = (
+    f'<script async src="https://pagead2.googlesyndication.com/pagead/js/'
+    f'adsbygoogle.js?client={ADSENSE_CLIENT_ID}" crossorigin="anonymous"></script>'
+    if ADSENSE_CLIENT_ID else ""
+)
 
 # Fragmento JS compartido entre _page_shell (todas las páginas normales) y
 # spinner_page (la pantalla de "buscando..." durante un refresco en vivo,
@@ -7798,22 +7815,21 @@ try {{
 }} catch (e) {{}}
 """
 
-# _dpCargarAdsense(): con ADSENSE_CLIENT_ID vacío es un no-op a propósito
-# (nada que activar todavía) -- se puede llamar siempre sin comprobar antes
-# si hay cuenta o no. El día que ADSENSE_CLIENT_ID tenga valor real, esta
-# función ya inyecta el script de AdSense de verdad, sin más cambios.
+# _dpCargarAdsense(): la librería adsbygoogle.js ya se carga sola, sin
+# gating, vía _ADSENSE_VERIFICATION_HEAD_TAG (arriba) -- esta función NO
+# vuelve a inyectarla. Su trabajo, gobernado por el consentimiento de
+# cookies, es únicamente el "push" que pinta un anuncio en un <ins> que
+# ya exista en la página -- con ADSENSE_SLOT_ID vacío (hoy) no hay ningún
+# <ins class="adsbygoogle"> en el HTML (ver _ad_banner_html()), así que
+# este push no tiene nada sobre lo que actuar: instalar la verificación no
+# sirve ningún anuncio real por sí sola.
 if ADSENSE_CLIENT_ID:
-    _ADSENSE_LOADER_JS = f"""
-function _dpCargarAdsense() {{
+    _ADSENSE_LOADER_JS = """
+function _dpCargarAdsense() {
   if (window.__dpAdsActivado) return;
   window.__dpAdsActivado = true;
-  var s = document.createElement('script');
-  s.async = true;
-  s.crossOrigin = 'anonymous';
-  s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={ADSENSE_CLIENT_ID}';
-  document.head.appendChild(s);
-  (window.adsbygoogle = window.adsbygoogle || []).push({{}});
-}}
+  (window.adsbygoogle = window.adsbygoogle || []).push({});
+}
 """
 else:
     _ADSENSE_LOADER_JS = """
@@ -8297,6 +8313,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     return f"""<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+{_ADSENSE_VERIFICATION_HEAD_TAG}
 <script>
 {_ANALYTICS_LOADER_JS}
 {_ADSENSE_LOADER_JS}
