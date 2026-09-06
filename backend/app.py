@@ -8471,9 +8471,20 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     // peso visual (dos botones iguales en tamaño/grosor, ver .cookie-btn en
     // el CSS -- nada de "aceptar" grande y "rechazar" como enlace pequeño).
     // _dpCargarAnalytics()/_dpCargarAdsense() están definidas en el <head>
-    // (ver _ANALYTICS_LOADER_JS/_ADSENSE_LOADER_JS) -- este bloque solo
-    // decide CUÁNDO llamarlas: al aceptar, o ya en la carga si el
-    // consentimiento venía guardado de una visita anterior.
+    // (ver _ANALYTICS_LOADER_JS/_ADSENSE_LOADER_JS).
+    //
+    // 2026-09-06: César activó la CMP de Google en AdSense (obligatoria
+    // para servir anuncios en EEE/Reino Unido/Suiza desde 2024 -- una CMP
+    // casera no certificada no vale para eso). Para esos visitantes, el
+    // propio mensaje de Google (Consentir/No consentir/Administrar) YA
+    // pide consentimiento -- este banner nuestro NO debe mostrarse también
+    // ahí, sería duplicarlo. Se usa __tcfapi, el API ESTÁNDAR de IAB TCF
+    // (no propietario de Google) que implementa cualquier CMP certificada
+    // -- si algún día se cambia de CMP, este enganche sigue funcionando
+    // igual sin tocar nada. Nuestro banner casero se queda como fallback
+    // para visitantes fuera de EEE/Reino Unido/Suiza (gdprApplies=false,
+    // ahí la normativa de Google no exige su CMP) y por si la CMP de
+    // Google no llega a cargar por lo que sea.
     var banner = document.getElementById('cookie-banner');
     var btnAceptar = document.getElementById('cookie-aceptar');
     var btnRechazar = document.getElementById('cookie-rechazar');
@@ -8481,15 +8492,19 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     function mostrarBannerCookies() {{ if (banner) banner.hidden = false; }}
     function ocultarBannerCookies() {{ if (banner) banner.hidden = true; }}
 
-    try {{
-      var pref = localStorage.getItem('{COOKIE_CONSENT_KEY}');
-      if (!pref) {{
-        mostrarBannerCookies();
+    function activarSegunConsentimientoPropio() {{
+      try {{
+        var pref = localStorage.getItem('{COOKIE_CONSENT_KEY}');
+        if (pref === 'accepted') {{
+          _dpCargarAnalytics();
+          _dpCargarAdsense();
+        }} else if (!pref) {{
+          mostrarBannerCookies();
+        }}
+        // Si pref === 'rejected', no hacer nada -- ya se decidió que no.
+      }} catch (e) {{
+        mostrarBannerCookies();  // sin localStorage no hay forma de recordar la decisión -- preguntar siempre
       }}
-      // Si pref === 'accepted', _ANALYTICS_LOADER_JS ya la cargó por su
-      // cuenta más arriba en el <head> -- no hace falta repetirlo aquí.
-    }} catch (e) {{
-      mostrarBannerCookies();  // sin localStorage no hay forma de recordar la decisión -- preguntar siempre
     }}
 
     if (btnAceptar) {{
@@ -8507,9 +8522,9 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
       }});
     }}
 
-    // Enlace "Preferencias de cookies" del pie de página -- reabre el
-    // banner en cualquier momento para cambiar de opinión, sin borrar la
-    // decisión anterior hasta que se pulse uno de los dos botones otra vez.
+    // Enlace "Preferencias de cookies" del pie de página -- reabre NUESTRO
+    // banner en cualquier momento (solo tiene sentido cuando es el que
+    // manda, es decir, cuando no aplica la CMP de Google).
     var linkPreferencias = document.getElementById('cookie-preferencias');
     if (linkPreferencias) {{
       linkPreferencias.addEventListener('click', function(e) {{
@@ -8517,6 +8532,48 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
         mostrarBannerCookies();
       }});
     }}
+
+    // Enganche a la CMP de Google vía __tcfapi -- adsbygoogle.js (ver
+    // _ADSENSE_VERIFICATION_HEAD_TAG) inyecta el stub de __tcfapi de forma
+    // asíncrona, así que puede tardar unos instantes en aparecer tras
+    // cargar esta página. Se sondea brevemente (hasta 2s) en vez de
+    // comprobar una sola vez, para no dar por hecho "no hay CMP de Google"
+    // solo por una carrera de tiempos con el script async.
+    var intentosTcf = 0;
+    function intentarEngancharTcf() {{
+      if (typeof window.__tcfapi === 'function') {{
+        window.__tcfapi('addEventListener', 2, function(tcData, exito) {{
+          if (!exito) return;
+          if (tcData.gdprApplies === false) {{
+            // Fuera de EEE/Reino Unido/Suiza -- la CMP de Google no actúa
+            // aquí, usar nuestro propio banner como siempre.
+            activarSegunConsentimientoPropio();
+            return;
+          }}
+          if (tcData.eventStatus === 'tcloaded' || tcData.eventStatus === 'useractioncomplete') {{
+            ocultarBannerCookies();  // nunca el nuestro si aplica la CMP de Google
+            var consentimientoAlmacenamiento = !!(
+              tcData.purpose && tcData.purpose.consents && tcData.purpose.consents[1]
+            );
+            if (consentimientoAlmacenamiento) {{
+              _dpCargarAnalytics();
+              _dpCargarAdsense();
+            }}
+          }}
+        }});
+        return;
+      }}
+      intentosTcf++;
+      if (intentosTcf < 10) {{
+        setTimeout(intentarEngancharTcf, 200);
+      }} else {{
+        // La CMP de Google no llegó a cargar (bloqueador de anuncios del
+        // visitante, fallo de red, etc.) -- no dejar al visitante sin
+        // ningún banner, recurrir al nuestro.
+        activarSegunConsentimientoPropio();
+      }}
+    }}
+    intentarEngancharTcf();
   }})();
 </script>
 </body></html>"""
