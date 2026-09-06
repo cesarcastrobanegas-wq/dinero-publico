@@ -3106,12 +3106,29 @@ def municipio_valido_girona(txt):
     return None
 
 # ─── PROVINCIA (Fase 4 — rutas/UI transversales) ─────────────────────────────
+# Comunitat Valenciana (3), Andalucía (8) y País Vasco (1, ver nota en
+# PROVINCIAS_PAIS_VASCO más abajo) generalizados a producción 2026-09-06
+# (ver memoria del proyecto para el diagnóstico/piloto de cada una).
 MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GIRONA,
                             "lleida": MUNICIPIOS_LLEIDA, "barcelona": MUNICIPIOS_BARCELONA,
-                            "tarragona": MUNICIPIOS_TARRAGONA}
+                            "tarragona": MUNICIPIOS_TARRAGONA,
+                            "alicante": MUNICIPIOS_ALICANTE, "castellon": MUNICIPIOS_CASTELLON,
+                            "valencia": MUNICIPIOS_VALENCIA,
+                            "almeria": MUNICIPIOS_ALMERIA, "cadiz": MUNICIPIOS_CADIZ,
+                            "cordoba": MUNICIPIOS_CORDOBA, "granada": MUNICIPIOS_GRANADA,
+                            "huelva": MUNICIPIOS_HUELVA, "jaen": MUNICIPIOS_JAEN,
+                            "malaga": MUNICIPIOS_MALAGA, "sevilla": MUNICIPIOS_SEVILLA,
+                            "pais_vasco": list(MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.keys())}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
-                   "tarragona": "Provincia de Tarragona", "todas": "España"}
+                   "tarragona": "Provincia de Tarragona",
+                   "alicante": "Provincia de Alicante", "castellon": "Provincia de Castellón",
+                   "valencia": "Provincia de Valencia",
+                   "almeria": "Provincia de Almería", "cadiz": "Provincia de Cádiz",
+                   "cordoba": "Provincia de Córdoba", "granada": "Provincia de Granada",
+                   "huelva": "Provincia de Huelva", "jaen": "Provincia de Jaén",
+                   "malaga": "Provincia de Málaga", "sevilla": "Provincia de Sevilla",
+                   "pais_vasco": "País Vasco", "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
 # "provincia" y su "comunidad" son la misma entidad); Girona/Lleida/
@@ -3124,8 +3141,15 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "murcia": "murcia",
     "girona": "cataluna", "lleida": "cataluna",
     "barcelona": "cataluna", "tarragona": "cataluna",
+    "alicante": "valenciana", "castellon": "valenciana", "valencia": "valenciana",
+    "almeria": "andalucia", "cadiz": "andalucia", "cordoba": "andalucia",
+    "granada": "andalucia", "huelva": "andalucia", "jaen": "andalucia",
+    "malaga": "andalucia", "sevilla": "andalucia",
+    "pais_vasco": "pais_vasco",
 }
-COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña"}
+COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
+                            "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
+                            "pais_vasco": "País Vasco"}
 
 
 def _comunidad_valida(txt):
@@ -3139,6 +3163,18 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "lleida": "Tàrrega, Balaguer, Lleida, Cervera…",
     "barcelona": "Sabadell, Terrassa, Mataró, Manresa…",
     "tarragona": "Reus, Valls, Tortosa, Amposta…",
+    "alicante": "Elche, Alicante, Torrevieja, Orihuela…",
+    "castellon": "Castellón de la Plana, Vinaròs, Burriana…",
+    "valencia": "Valencia, Gandia, Sagunto, Torrent…",
+    "almeria": "Almería, El Ejido, Roquetas de Mar…",
+    "cadiz": "Jerez de la Frontera, Cádiz, Algeciras…",
+    "cordoba": "Córdoba, Lucena, Puente Genil…",
+    "granada": "Granada, Motril, Almuñécar…",
+    "huelva": "Huelva, Lepe, Almonte…",
+    "jaen": "Jaén, Linares, Úbeda…",
+    "malaga": "Málaga, Marbella, Fuengirola…",
+    "sevilla": "Sevilla, Dos Hermanas, Alcalá de Guadaíra…",
+    "pais_vasco": "Bilbao, Vitoria-Gasteiz, Donostia/San Sebastián…",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
@@ -3153,6 +3189,18 @@ MUNICIPIOS_INE_POR_PROVINCIA = {"girona": MUNICIPIOS_GIRONA_INE, "lleida": MUNIC
 # comprobación de pertenencia (if provincia in PROVINCIAS_CATALUNYA), no
 # para resolver un codi_ine10 -- mismo dict, no una copia.
 PROVINCIAS_CATALUNYA = MUNICIPIOS_INE_POR_PROVINCIA
+
+# País Vasco (2026-09-06, Mecanismo B -- ver MUNICIPIOS_PAIS_VASCO_EUSKADI_ID
+# y buscar_en_euskadi): a diferencia de Cataluña (4 provincias reales) se
+# trata como UNA sola clave "pais_vasco" en vez de separar Araba/Bizkaia/
+# Gipuzkoa -- simplificación deliberada (igual que Murcia, CCAA
+# uniprovincial tratada como una sola clave), no una limitación técnica de
+# la API de Euskadi (si hiciera falta separar por territorio histórico más
+# adelante, la propia API ya devuelve ese dato en el campo "scope" de cada
+# ayuntamiento). Set en vez de dict porque aquí solo hace falta la
+# comprobación de pertenencia -- MUNICIPIOS_PAIS_VASCO_EUSKADI_ID ya resuelve
+# el id de la API por su cuenta.
+PROVINCIAS_PAIS_VASCO = {"pais_vasco"}
 
 def _provincia_valida(txt):
     """Normaliza el parámetro ?provincia= de la querystring: cualquier valor
@@ -3889,7 +3937,7 @@ def descargar_zip_place(anomes, job_id=None):
     return None
 
 
-def buscar_en_zip(zip_path, municipio, job_id=None):
+def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
     """Procesa los atom files de un ZIP en paralelo, leyendo cada uno bajo
     demanda dentro de cada worker -- NO carga el ZIP completo descomprimido
     en RAM de golpe antes de empezar. Un ZIP mensual de PLACE puede rondar
@@ -3900,9 +3948,27 @@ def buscar_en_zip(zip_path, municipio, job_id=None):
     INFORME_NOCHE.md, 2026-07-21). Verificado en local con ZIPs reales:
     mismos contratos encontrados que antes, con un pico de memoria por ZIP
     ~39x menor (2.131 MB -> 55 MB en un ZIP de 142 archivos / 2,1 GB
-    descomprimidos)."""
+    descomprimidos).
+
+    anclar=True usa "ayuntamiento de {municipio}" como patrón (en vez del
+    \\b{municipio}\\b suelto de siempre) -- necesario para Comunitat
+    Valenciana/Andalucía (2026-09-06, ver memoria del proyecto): con 542+785
+    municipios el patrón suelto produce falsos positivos reales por
+    colisión de nombre con otras provincias. Verificado también contra
+    Murcia (45 municipios): el patrón anclado habría cambiado sus conteos
+    ya en producción -- "Ayuntamiento de Murcia" incluye hoy contratos de
+    la Autoridad Portuaria de Cartagena, varias Consejerías de la Región de
+    Murcia, la Universidad de Murcia (aparte del split AGE/UMU existente) y
+    otros organismos que NO son el propio ayuntamiento, solo por contener
+    el nombre del municipio en su texto. Es un hallazgo real, pero cambiar
+    el comportamiento ya en vivo de Murcia es una decisión aparte que no se
+    ha tomado todavía -- anclar=False (el de siempre) para Murcia hasta que
+    se decida qué hacer con ese dato, ver memoria del proyecto."""
     nombre = os.path.basename(zip_path)
-    muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
+    if anclar:
+        muni_re = re.compile(rf'\bayuntamiento de {re.escape(normalizar(municipio))}\b')
+    else:
+        muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
 
     try:
         with zipfile.ZipFile(zip_path, "r") as z:
@@ -4101,6 +4167,52 @@ def _euskadi_item_a_contrato(item, municipio):
     }
 
 
+def buscar_en_euskadi(municipio, job_id=None):
+    """Búsqueda REAL (producción) de contratos formales de un ayuntamiento
+    vasco vía la API REST de Euskadi -- Mecanismo B, generalizado a
+    producción 2026-09-06 (ver diagnóstico/piloto en la memoria del
+    proyecto). A diferencia de _piloto_medir_pais_vasco (que acotaba a 5
+    páginas para no desbordar una medición puntual), aquí se trae el
+    HISTÓRICO COMPLETO -- producción necesita los datos reales, no una
+    muestra. Identifica al ayuntamiento por su ID numérico propio de
+    Euskadi (MUNICIPIOS_PAIS_VASCO_EUSKADI_ID), sin ningún riesgo de
+    colisión de nombre (a diferencia de PLACE, que es texto libre)."""
+    authority_id = MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.get(municipio)
+    if not authority_id:
+        return []
+    contratos = []
+    pagina = 1
+    while True:
+        try:
+            r = session.get(
+                f"{EUSKADI_API_BASE}/contracts",
+                params={
+                    "contracting-authority-id": authority_id,
+                    "minor-contract": "false",
+                    "itemsOfPage": 50,   # máximo documentado de la API (ver commit del bug itemsOfPage=100)
+                    "currentPage": pagina,
+                    "lang": "SPANISH",
+                },
+                timeout=20,
+            )
+            if r.status_code != 200:
+                _log(job_id, f"  Euskadi {municipio}: HTTP {r.status_code} en página {pagina}")
+                break
+            d = r.json()
+        except Exception as e:
+            _log(job_id, f"  Error consultando Euskadi para {municipio}: {e}")
+            break
+        for item in d.get("items", []):
+            contratos.append(_euskadi_item_a_contrato(item, municipio))
+        total_paginas = d.get("totalPages", 1)
+        if pagina >= total_paginas or pagina >= 100:   # tope de seguridad, no un límite normal
+            break
+        pagina += 1
+        time.sleep(0.2)   # mismo ritmo respetuoso que el piloto -- API pública sin rate-limit documentado
+    _log(job_id, f"  Euskadi {municipio}: {len(contratos)} contratos")
+    return contratos
+
+
 def _piloto_medir_pais_vasco(job_id=None, max_paginas_por_municipio=5):
     """FASE PILOTO País Vasco (2026-09-03) -- Mecanismo B: API REST propia
     (ver MUNICIPIOS_PAIS_VASCO_EUSKADI_ID arriba para el porqué). A
@@ -4161,12 +4273,17 @@ def _piloto_medir_pais_vasco(job_id=None, max_paginas_por_municipio=5):
     return resultados
 
 
-def buscar_en_feed_vivo(municipio):
-    """Consulta el feed en vivo de PLACE (últimas ~200 entradas de toda España)."""
+def buscar_en_feed_vivo(municipio, anclar=False):
+    """Consulta el feed en vivo de PLACE (últimas ~200 entradas de toda España).
+    anclar=True: mismo patrón "ayuntamiento de X" que buscar_en_zip -- ver esa
+    función para el porqué (Comunitat Valenciana/Andalucía, no Murcia)."""
+    muni_re = None
+    if anclar:
+        muni_re = re.compile(rf'\bayuntamiento de {re.escape(normalizar(municipio))}\b')
     try:
         r = session.get(PLACE_FEED_LIVE, timeout=HTTP_TIMEOUT)
         if r.status_code == 200:
-            return parsear_atom_bytes(r.content, municipio)
+            return parsear_atom_bytes(r.content, municipio, muni_re)
     except Exception:
         pass
     return []
@@ -6748,12 +6865,19 @@ def _job_run(job_id, municipio, provincia="murcia"):
 
         if provincia in PROVINCIAS_CATALUNYA:
             contratos = buscar_en_pscp(municipio, provincia, job_id)
+        elif provincia in PROVINCIAS_PAIS_VASCO:
+            contratos = buscar_en_euskadi(municipio, job_id)
         else:
             contratos = []
+            # Ver buscar_en_zip para el porqué: Comunitat Valenciana/Andalucía
+            # necesitan el patrón anclado "ayuntamiento de X" (colisiones de
+            # nombre reales con otras provincias a esta escala); Murcia se
+            # queda con el patrón de siempre, sin cambios -- ver esa función.
+            anclar_place = provincia != "murcia"
 
             # 1. Feed en vivo
             _log(job_id, "Consultando feed en vivo de PLACE…")
-            vivos = buscar_en_feed_vivo(municipio)
+            vivos = buscar_en_feed_vivo(municipio, anclar=anclar_place)
             contratos += vivos
             _log(job_id, f"  Feed en vivo: {len(vivos)} contratos")
 
@@ -6785,13 +6909,19 @@ def _job_run(job_id, municipio, provincia="murcia"):
                     _am = _fname[len("place_"):][:6]   # "place_202503.zip" → "202503"
                     _add_zip(_am)
 
-            _log(job_id, f"Procesando {len(zips)} ZIPs en paralelo (BORM simultáneo)…")
+            # BORM (Boletín Oficial de la Región de Murcia) solo tiene
+            # sentido para Murcia -- para el resto de provincias PLACE
+            # (Comunitat Valenciana/Andalucía) sería una petición
+            # desperdiciada que nunca va a encontrar nada.
+            _log(job_id, f"Procesando {len(zips)} ZIPs en paralelo"
+                         + (" (BORM simultáneo)…" if provincia == "murcia" else "…"))
 
             with ThreadPoolExecutor(max_workers=4) as ex:
-                futs = {ex.submit(buscar_en_zip, zp, municipio, job_id): ("ZIP", am)
+                futs = {ex.submit(buscar_en_zip, zp, municipio, job_id, anclar_place): ("ZIP", am)
                         for am, zp in zips}
-                borm_fut = HTTP_POOL.submit(buscar_en_borm, municipio, job_id)
-                futs[borm_fut] = ("BORM", "")
+                if provincia == "murcia":
+                    borm_fut = HTTP_POOL.submit(buscar_en_borm, municipio, job_id)
+                    futs[borm_fut] = ("BORM", "")
                 for fut in as_completed(futs):
                     tipo, etiqueta = futs[fut]
                     nuevos = fut.result()
@@ -6804,8 +6934,9 @@ def _job_run(job_id, municipio, provincia="murcia"):
         # Deduplicar por URL (dentro de la misma fuente) — PLACE y BORM pueden tener URLs distintas para el mismo contrato
         contratos = _dedup_contratos_por_url(contratos)
 
-        if provincia not in PROVINCIAS_CATALUNYA:
-            # Enriquecer contratos PLACE con el link al BORM cuando existe uno equivalente
+        if provincia == "murcia":
+            # Enriquecer contratos PLACE con el link al BORM cuando existe uno
+            # equivalente -- BORM es específico de Murcia, igual que arriba.
             _enlazar_borm_place(contratos)
         _log(job_id, f"Total contratos únicos (este refresco): {len(contratos)}")
 
@@ -6892,8 +7023,10 @@ def _job_run(job_id, municipio, provincia="murcia"):
             "total_contratos": len(contratos),
             "contratos":       contratos,
             "alertas":         alertas,
-            # PSCP no tiene perfil de contratante equivalente al de PLACE (ver Fase 3)
-            "place_profile":   "" if provincia in PROVINCIAS_CATALUNYA else place_profile_url(municipio),
+            # PSCP/Euskadi no tienen perfil de contratante equivalente al de
+            # PLACE (ver Fase 3 y generalización País Vasco 2026-09-06)
+            "place_profile":   ("" if provincia in PROVINCIAS_CATALUNYA or provincia in PROVINCIAS_PAIS_VASCO
+                                 else place_profile_url(municipio)),
             "timestamp":       time.time(),
         }
 
@@ -7670,11 +7803,19 @@ def _pwa_asset(path):
 
 
 def spinner_page(job_id, municipio, provincia="murcia"):
-    es_catalunya = provincia in PROVINCIAS_CATALUNYA
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
-    fuente_txt = ("Datos oficiales: PSCP (Generalitat de Catalunya)" if es_catalunya else
-                  "Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)")
-    fuente_corta = "PSCP" if es_catalunya else "PLACE (Ministerio de Hacienda) y BORM"
+    if provincia in PROVINCIAS_CATALUNYA:
+        fuente_txt = "Datos oficiales: PSCP (Generalitat de Catalunya)"
+        fuente_corta = "PSCP"
+    elif provincia in PROVINCIAS_PAIS_VASCO:
+        fuente_txt = "Datos oficiales: KontratazioA (Gobierno Vasco)"
+        fuente_corta = "KontratazioA"
+    elif provincia == "murcia":
+        fuente_txt = "Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)"
+        fuente_corta = "PLACE (Ministerio de Hacienda) y BORM"
+    else:
+        fuente_txt = "Datos oficiales: PLACE (Ministerio de Hacienda)"
+        fuente_corta = "PLACE (Ministerio de Hacienda)"
     redirect_url = f"/?muni={quote_plus(municipio)}" + _q_prov(provincia)
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -8254,15 +8395,23 @@ def _header_html(provincia="todas"):
 
 def _footer_html(provincia="todas"):
     es_murcia = provincia == "murcia"
+    _link_place = '<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>'
+    _link_borm = '<a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>'
+    _link_pscp = '<a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>'
+    _link_euskadi = '<a href="https://www.contratacion.euskadi.eus/" target="_blank" rel="noopener">KontratazioA</a>'
     if provincia in PROVINCIAS_CATALUNYA:
-        fuente_links = '<a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>'
+        fuente_links = _link_pscp
+    elif provincia in PROVINCIAS_PAIS_VASCO:
+        fuente_links = _link_euskadi
     elif es_murcia:
-        fuente_links = ('<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>\n'
-                         '    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>')
+        fuente_links = f"{_link_place}\n    {_link_borm}"
+    elif provincia == "todas":
+        # Vista nacional agregada -- todas las fuentes que usa el sitio.
+        fuente_links = f"{_link_place}\n    {_link_borm}\n    {_link_pscp}\n    {_link_euskadi}"
     else:
-        fuente_links = ('<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>\n'
-                         '    <a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>\n'
-                         '    <a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>')
+        # Comunitat Valenciana/Andalucía (Mecanismo A, PLACE, sin BORM --
+        # eso es específico de Murcia).
+        fuente_links = _link_place
     brand_label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["todas"])
     return f"""<div class="instalar-bar">
   <div class="instalar-text">
@@ -9826,12 +9975,20 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         if n_borm:  fuentes_desc.append(f"BORM: {n_borm}")
         if n_pscp:  fuentes_desc.append(f"PSCP: {n_pscp}")
         fuentes_str = " · ".join(fuentes_desc) if fuentes_desc else "—"
-        fuentes_label = ("Fuente: PSCP (Generalitat de Catalunya)" if provincia in PROVINCIAS_CATALUNYA else
-                          "Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia)")
+        if provincia in PROVINCIAS_CATALUNYA:
+            fuentes_label = "Fuente: PSCP (Generalitat de Catalunya)"
+        elif provincia in PROVINCIAS_PAIS_VASCO:
+            fuentes_label = "Fuente: KontratazioA (Gobierno Vasco)"
+        elif provincia == "murcia":
+            fuentes_label = "Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia)"
+        else:
+            fuentes_label = "Fuente: PLACE (Ministerio de Hacienda)"
 
         muni_name     = muni_name_d
         muni_enc      = quote_plus(muni_name)
-        profile_url   = d.get("place_profile", "" if provincia in PROVINCIAS_CATALUNYA else place_profile_url(muni_name))
+        profile_url   = d.get("place_profile", "" if (provincia in PROVINCIAS_CATALUNYA
+                                                        or provincia in PROVINCIAS_PAIS_VASCO)
+                                                    else place_profile_url(muni_name))
         profile_html  = (f'<a href="{esc(profile_url)}" target="_blank" class="link" '
                           f'title="Perfil contratante en PLACE" style="font-size:11px">Perfil PLACE ↗</a>'
                           if profile_url else "")
