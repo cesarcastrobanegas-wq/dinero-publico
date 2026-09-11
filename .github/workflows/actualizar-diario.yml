@@ -46,11 +46,30 @@ name: Actualizar contratos diariamente
 #   01:00 UTC  murcia      (45 municipios)  + Hacienda + Población (INE)
 #   02:30 UTC  girona      (240 municipios)  + contractes menors Girona (RPC)
 #   04:30 UTC  lleida      (231 municipios)  + contractes menors Lleida (RPC)
-#   06:30 UTC  barcelona   (309 municipios, la más grande) + contractes
-#                                              menors Barcelona (RPC)
+#   06:30 UTC  barcelona   (309 municipios, la más grande de Cataluña) +
+#                                              contractes menors Barcelona (RPC)
 #   08:30 UTC  tarragona   (181 municipios)  + contractes menors Tarragona
 #                                              (RPC) + fondos UE + noticias UE
 #                                              + contratos menores Fuente Álamo
+#   10:30 UTC  valenciana  (542 municipios, Alicante+Castellón+Valencia,
+#                                              PLACE anclado -- ver _job_run)
+#   13:00 UTC  andalucia   (785 municipios, 8 provincias, la más grande de
+#                                              todas -- PLACE anclado, más
+#                                              margen antes/después por si
+#                                              acaso)
+#   15:30 UTC  pais_vasco  (252 municipios, API REST propia KontratazioA --
+#                                              Mecanismo B, sin PLACE/ZIP)
+#
+# NOTA 2026-09-11: valenciana/andalucia/pais_vasco se conectaron a
+# MUNICIPIOS_POR_PROVINCIA y a _job_run en el commit a489d31 (2026-09-06),
+# pero ESTE workflow nunca se actualizó para dispararlas -- ni una franja
+# programada ni una opción de workflow_dispatch las mencionaba, así que
+# ningún disparo automático ni manual las tocó jamás. Por eso aparecían en
+# "Cobertura" con 0 municipios/0 contratos pese al código ya estar
+# desplegado (investigado a raíz de un aviso de César, ver memoria del
+# proyecto). Estas 3 franjas nuevas son la corrección; no llevan RPC de
+# contractes menors (ese dataset, hb6v-jcbf, es específico de la Generalitat
+# de Catalunya, ver sección 1.5 más abajo).
 #
 # Los huecos (1h30-2h) son deliberadamente generosos: con Murcia+Girona
 # (285 municipios) tardando ~1h en total cuando funcionaba bien, cada
@@ -163,6 +182,9 @@ on:
     - cron: "30 4 * * *"   # lleida
     - cron: "30 6 * * *"   # barcelona
     - cron: "30 8 * * *"   # tarragona + fondos UE + noticias UE + menors girona + fuentealamo
+    - cron: "30 10 * * *"  # comunitat valenciana
+    - cron: "0 13 * * *"   # andalucia (la más grande, más margen)
+    - cron: "30 15 * * *"  # pais vasco
   workflow_dispatch:   # permite lanzarlo a mano desde la pestaña Actions
     inputs:
       provincia:
@@ -179,6 +201,9 @@ on:
           - lleida
           - barcelona
           - tarragona
+          - valenciana
+          - andalucia
+          - pais_vasco
           - todas
         default: murcia
       solo_fondos_ue:
@@ -213,8 +238,8 @@ jobs:
     # runners hosted de GitHub. El polling interno corta antes (200 min),
     # esto es solo una red de seguridad por si algo se colgara. Bajado de
     # 350 a 220 min respecto a la versión "todas" de este workflow: ahora
-    # cada ejecución cubre como mucho UNA provincia (309 municipios,
-    # Barcelona, en el peor caso) en vez de las 5 a la vez.
+    # cada ejecución cubre como mucho UNA provincia (785 municipios,
+    # Andalucía, en el peor caso desde 2026-09-11) en vez de las 8 a la vez.
     timeout-minutes: 220
     steps:
       - name: Determinar franja horaria (provincia) de esta ejecución
@@ -230,6 +255,9 @@ jobs:
               "30 4 * * *") provincia="lleida" ;;
               "30 6 * * *") provincia="barcelona" ;;
               "30 8 * * *") provincia="tarragona" ;;
+              "30 10 * * *") provincia="valenciana" ;;
+              "0 13 * * *")  provincia="andalucia" ;;
+              "30 15 * * *") provincia="pais_vasco" ;;
               *)
                 echo "::error::Cron desconocido '${{ github.event.schedule }}'; no sé qué provincia toca. Abortando por seguridad."
                 exit 1
@@ -378,8 +406,9 @@ jobs:
           #     pública de la Generalitat, no un ZIP pesado como PLACE.
           if [ "$SOLO_FONDOS_UE" = "true" ]; then
             echo "== SOLO_FONDOS_UE=true: saltando contractes menors (RPC) =="
-          elif [ "$PROVINCIA_SLOT" = "murcia" ]; then
-            echo "== Franja murcia: RPC no aplica (fuentes propias de Murcia van en la franja de Tarragona) =="
+          elif [ "$PROVINCIA_SLOT" = "murcia" ] || [ "$PROVINCIA_SLOT" = "valenciana" ] || \
+               [ "$PROVINCIA_SLOT" = "andalucia" ] || [ "$PROVINCIA_SLOT" = "pais_vasco" ]; then
+            echo "== Franja ${PROVINCIA_SLOT}: RPC no aplica (dataset hb6v-jcbf es específico de la Generalitat de Catalunya) =="
           else
             echo "== Disparando /actualizar-contratos-menors-${PROVINCIA_SLOT} (RPC) =="
             resp_menors=$(curl -s --max-time 60 -X POST \
