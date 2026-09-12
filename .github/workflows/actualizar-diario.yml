@@ -181,7 +181,7 @@ on:
     - cron: "30 2 * * *"   # girona
     - cron: "30 4 * * *"   # lleida
     - cron: "30 6 * * *"   # barcelona
-    - cron: "30 8 * * *"   # tarragona + fondos UE + noticias UE + menors girona + fuentealamo
+    - cron: "30 8 * * *"   # tarragona + fondos UE + noticias UE + menors girona + fuentealamo + cartagena
     - cron: "30 10 * * *"  # comunitat valenciana
     - cron: "0 13 * * *"   # andalucia (la más grande, más margen)
     - cron: "30 15 * * *"  # pais vasco
@@ -210,7 +210,7 @@ on:
         description: >-
           Salta el refresco de contratos de la provincia elegida y lanza
           solo /actualizar-fondos-ue (+ noticias + menors girona +
-          fuentealamo). Útil para probar rápido cambios en CORDIS,
+          fuentealamo + cartagena). Útil para probar rápido cambios en CORDIS,
           Cohesion Data o el enriquecimiento de beneficiarios (Kohesio) sin
           esperar el ciclo completo de una provincia.
         type: boolean
@@ -460,7 +460,7 @@ jobs:
           #     también fuera de la franja de Tarragona, para poder
           #     probarlos sueltos sin esperar al ciclo completo. --
           if [ "$PROVINCIA_SLOT" != "tarragona" ] && [ "$SOLO_FONDOS_UE" != "true" ]; then
-            echo "== Franja ${PROVINCIA_SLOT}: se saltan fondos UE/noticias/fuentealamo (van con la franja de Tarragona) =="
+            echo "== Franja ${PROVINCIA_SLOT}: se saltan fondos UE/noticias/fuentealamo/cartagena (van con la franja de Tarragona) =="
           else
             echo "== Disparando /actualizar-fondos-ue (CORDIS + Cohesion Data) =="
             resp_fue=$(curl -s --max-time 60 -X POST \
@@ -514,6 +514,23 @@ jobs:
             else
               echo "job_fa=$job_fa"
               poll_hasta_done "$job_fa" "fuentealamo" || echo "::warning::Fuente Álamo no completado; se continúa igualmente."
+            fi
+
+            # --- 2.2b. Contratos menores Cartagena (formulario propio, sin
+            # fichero exportable, HTML parseado directamente) -- investigado
+            # 2026-09-12. Mismo patrón que Fuente Álamo: no bloquea el commit
+            # del día si falla.
+            echo "== Disparando /actualizar-contratos-menores-cartagena =="
+            resp_ctg=$(curl -s --max-time 60 -X POST \
+              -d "token=${ADMIN_TOKEN}" \
+              "${BASE_URL}/actualizar-contratos-menores-cartagena" || true)
+            echo "respuesta: $resp_ctg"
+            job_ctg=$(get_jobid "$resp_ctg")
+            if [ -z "$job_ctg" ]; then
+              echo "::warning::No se obtuvo job_id de /actualizar-contratos-menores-cartagena. Se continúa sin refrescar hoy."
+            else
+              echo "job_ctg=$job_ctg"
+              poll_hasta_done "$job_ctg" "cartagena" || echo "::warning::Cartagena no completado; se continúa igualmente."
             fi
 
             # --- 2.3. Gerentes/administradores de contratos menores restantes
