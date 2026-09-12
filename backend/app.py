@@ -771,6 +771,7 @@ _actualizando_rpc_menors_lleida_lock = threading.Lock()  # ídem, fase piloto Ll
 _actualizando_rpc_menors_barcelona_lock = threading.Lock()  # ídem, Barcelona -- lock propio
 _actualizando_rpc_menors_tarragona_lock = threading.Lock()  # ídem, Tarragona -- lock propio
 _actualizando_menores_fuentealamo_lock = threading.Lock()  # evita lanzar dos refrescos de Fuente Álamo a la vez
+_actualizando_menores_cartagena_lock = threading.Lock()  # evita lanzar dos refrescos de Cartagena a la vez
 _actualizando_directivos_menores_lock = threading.Lock()  # evita lanzar dos enriquecimientos de directivos de contratos menores a la vez
 
 PAGE_SIZE = 50               # contratos máximos por página
@@ -5388,6 +5389,164 @@ def actualizar_contratos_menores_fuentealamo(job_id=None):
     return len(registros)
 
 
+# ─── CARTAGENA: CONTRATOS MENORES (formulario propio, sin fichero exportable) ─
+# Investigado 2026-09-12 (ver memoria del proyecto, encargo "indexar
+# contratos menores en municipios con solo enlace externo"): el portal de
+# transparencia de Cartagena NO ofrece descarga de fichero (CSV/XLSX/JSON),
+# pero SÍ expone un formulario POST que devuelve un listado HTML real y
+# completo -- verificado en vivo: ~2.290 contratos 2021-2026, 30 filas por
+# página, 77 páginas, con adjudicatario+NIF, nº de contrato, expediente
+# electrónico, tipo, fecha de adjudicación, departamento, importe y nombre
+# del contrato. Mismo criterio ya usado con Lorca/Lorquí (parsear una fuente
+# real no descargable en vez de descartarla). Cada fila es un
+# <div class="col-md-12 panel-sede"> con pares
+# <span class="tituloDato">Campo:</span>Valor<br> -- NO hay <table> real, así
+# que no sirve buscar una tabla HTML, hay que parsear estos bloques.
+# Solo se consulta la entidad 1 ("Ayuntamiento de Cartagena") del desplegable
+# del formulario -- las otras 3 (Agencia de Desarrollo Local y Empleo,
+# Patronato Carmen Conde - Antonio Oliver, Fundación Rifa Benéfica Casa del
+# Niño) quedan fuera de alcance por ahora, son organismos satélite, no el
+# ayuntamiento en sí.
+CARTAGENA_LISTADO_URL = "https://www.cartagena.es/listado_contratos_menores.asp?idPaginaOriginal=1286"
+CARTAGENA_DESDE_ANY = 2021
+CARTAGENA_FILAS_POR_PAGINA = 30
+
+
+def _parsear_pagina_cartagena(html):
+    """Parsea una página de resultados del formulario de contratos menores
+    de Cartagena (ver nota del módulo: bloques <div class="col-md-12
+    panel-sede">, no una <table>)."""
+    registros = []
+    bloques = html.split('class="col-md-12 panel-sede"')[1:]
+    for bloque in bloques:
+        def _campo(patron):
+            m = re.search(patron, bloque, re.S)
+            return m.group(1).strip() if m else ""
+
+        adj_nif = _campo(r'Adjudicatario:</span>\s*(.*?)<br>')
+        m_nif = re.match(r"(.*?)&nbsp;\(([^)]+)\)\s*$", adj_nif)
+        if m_nif:
+            adjudicatario, nif = m_nif.group(1).strip(), m_nif.group(2).strip()
+        else:
+            adjudicatario, nif = adj_nif.strip(), ""
+
+        expediente = _campo(r'Expediente Electr.nico:</span>\s*(.*?)<br>')
+        tipo = _campo(r'Tipo de Contrato:</span>\s*(.*?)<br>')
+        fecha_raw = _campo(r'Fecha de Adjudicaci.n:</span>\s*(.*?)<br>')
+        depto = _campo(r'Departamento:</span>\s*(.*?)<br>')
+        importe_raw = _campo(r'Importe \(IVA Incluido\):</span>\s*(?:<span[^>]*>)?\s*(.*?)(?:</span>)?\s*<br>')
+        nombre_contrato = _campo(r'Nombre del Contrato:</span>\s*(.*?)<br>')
+
+        if not expediente or not adjudicatario:
+            continue
+
+        m_fecha = re.match(r"(\d{2})/(\d{2})/(\d{4})", fecha_raw)
+        if not m_fecha:
+            continue
+        dia, mes, anio = m_fecha.groups()
+        if int(anio) < CARTAGENA_DESDE_ANY:
+            continue
+        fecha_iso = f"{anio}-{mes}-{dia}"
+
+        # La página es ISO-8859-1 y usa la entidad HTML "&euro;" para el
+        # símbolo de moneda, no el carácter € literal -- verificado en vivo
+        # (bug real: sin este reemplazo, import_num salía a 0.0 en las 2.290
+        # filas porque float() fallaba con "&euro;" colgando al final).
+        importe_limpio = re.sub(r"&nbsp;|&euro;|€", "", importe_raw).strip()
+        try:
+            importe_num = float(importe_limpio.replace(".", "").replace(",", "."))
+        except ValueError:
+            importe_num = 0.0
+
+        registros.append({
+            "id":               f"Cartagena::{expediente}",
+            "municipio":        "Cartagena",
+            "provincia":        "murcia",
+            "fuente":           "cartagena",
+            "organisme":        "Ayuntamiento de Cartagena",
+            "adjudicatari":     adjudicatario,
+            "nif":              nif,
+            "import_num":       importe_num,
+            "data_adjudicacio": fecha_iso,
+            "tipus_contracte":  tipo,
+            "descripcio":       nombre_contrato,
+            "codi_cpv":         "",
+            "exercici":         anio,
+        })
+    return registros
+
+
+def buscar_en_cartagena_menores(job_id=None):
+    """Recorre el formulario POST de contratos menores de Cartagena, página
+    a página (30 filas/página, ver CARTAGENA_FILAS_POR_PAGINA), hasta que una
+    página devuelve menos de esa cifra. Sin descarga de fichero: HTML real
+    parseado directamente (ver _parsear_pagina_cartagena)."""
+    _log(job_id, "Consultando portal de contratos menores de Cartagena…")
+    registros = []
+    pagina = 1
+    while True:
+        try:
+            r = session.post(
+                CARTAGENA_LISTADO_URL,
+                data={
+                    "primeraVezIndexContratosMenores": "",
+                    "pagina": str(pagina),
+                    "desde": f"01/01/{CARTAGENA_DESDE_ANY}",
+                    "hasta": "31/12/2099",
+                    "adjudicado": "", "numContrato": "", "descripcion": "",
+                    "numExpedienteElectronico": "", "entidad": "1", "departamento": "",
+                },
+                timeout=HTTP_TIMEOUT * 4,
+            )
+            if r.status_code != 200:
+                _log(job_id, f"  Cartagena: HTTP {r.status_code} en página {pagina}")
+                break
+        except Exception as e:
+            _log(job_id, f"  Cartagena: página {pagina} no disponible ({type(e).__name__})")
+            break
+
+        filas = _parsear_pagina_cartagena(r.text)
+        if not filas:
+            break
+        registros += filas
+        if len(filas) < CARTAGENA_FILAS_POR_PAGINA:
+            break
+        pagina += 1
+
+    _log(job_id, f"  Cartagena: {len(registros)} contratos menores encontrados ({pagina} páginas)")
+    return registros
+
+
+def actualizar_contratos_menores_cartagena(job_id=None):
+    registros = buscar_en_cartagena_menores(job_id)
+    _guardar_contratos_menors_locales(registros)
+    return len(registros)
+
+
+def _actualizar_contratos_menores_cartagena_bg(job_id):
+    """Hilo de fondo para POST /actualizar-contratos-menores-cartagena.
+    Mismo patrón que _actualizar_contratos_menores_fuentealamo_bg."""
+    if not _actualizando_menores_cartagena_lock.acquire(blocking=False):
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "error", "log": [],
+                              "error": "Ya hay un refresco de Cartagena en curso."}
+        return
+    try:
+        with _jobs_lock:
+            _jobs[job_id] = {"status": "running", "log": [], "error": None}
+        total = actualizar_contratos_menores_cartagena(job_id)
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "done"
+            _jobs[job_id]["total"] = total
+        print(f"  [actualizar-contratos-menores-cartagena] Terminado: {total} contratos menores.", flush=True)
+    except Exception as e:
+        with _jobs_lock:
+            _jobs[job_id]["status"] = "error"
+            _jobs[job_id]["error"] = str(e)
+    finally:
+        _actualizando_menores_cartagena_lock.release()
+
+
 def _actualizar_contratos_menores_fuentealamo_bg(job_id):
     """Hilo de fondo para POST /actualizar-contratos-menores-fuentealamo.
     Mismo patrón que _actualizar_contratos_menors_girona_bg."""
@@ -9735,6 +9894,7 @@ _FUENTE_CM_LABEL = {
     "molina-segura":   "Molina",
     "lorqui":          "Lorquí",
     "lorca":           "Lorca",
+    "cartagena":       "Cartagena",
 }
 
 
@@ -11345,6 +11505,19 @@ def _route_post(path, params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menores_fuentealamo_bg, args=(job_id,), daemon=True).start()
+            body = json.dumps({"status": "started", "job_id": job_id})
+            return _resp(body, content_type="application/json; charset=utf-8")
+
+        if path == "/actualizar-contratos-menores-cartagena":
+            # Refresca contratos_menors_locales (filas de Cartagena, formulario
+            # propio vía HTML -- ver buscar_en_cartagena_menores). Mismo patrón
+            # de disparo externo + ADMIN_TOKEN que las demás fuentes de
+            # contratos menores; el cron diario lo llama al final.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            job_id = str(uuid.uuid4())
+            threading.Thread(target=_actualizar_contratos_menores_cartagena_bg, args=(job_id,), daemon=True).start()
             body = json.dumps({"status": "started", "job_id": job_id})
             return _resp(body, content_type="application/json; charset=utf-8")
 
