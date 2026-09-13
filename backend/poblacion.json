@@ -1,11 +1,23 @@
 {
- "generado": "2026-09-13 05:46:38",
+ "generado": "2026-09-13 16:42:55",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
   "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
   "lleida": "https://www.ine.es/jaxiT3/Tabla.htm?t=2878",
   "barcelona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2861",
-  "tarragona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2900"
+  "tarragona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2900",
+  "alicante": "https://www.ine.es/jaxiT3/Tabla.htm?t=2856",
+  "castellon": "https://www.ine.es/jaxiT3/Tabla.htm?t=2865",
+  "valencia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2903",
+  "almeria": "https://www.ine.es/jaxiT3/Tabla.htm?t=2857",
+  "cadiz": "https://www.ine.es/jaxiT3/Tabla.htm?t=2864",
+  "cordoba": "https://www.ine.es/jaxiT3/Tabla.htm?t=2901",
+  "granada": "https://www.ine.es/jaxiT3/Tabla.htm?t=2871",
+  "huelva": "https://www.ine.es/jaxiT3/Tabla.htm?t=2874",
+  "jaen": "https://www.ine.es/jaxiT3/Tabla.htm?t=2876",
+  "malaga": "https://www.ine.es/jaxiT3/Tabla.htm?t=2882",
+  "sevilla": "https://www.ine.es/jaxiT3/Tabla.htm?t=2895",
+  "pais_vasco": "https://www.ine.es/jaxiT3/Tabla.htm?t=2854"
  },
  "municipios": {
   "abanilla": {
@@ -5928,6 +5940,9348 @@
    "municipio": "Xerta",
    "provincia": "tarragona",
    "poblacion": 1180,
+   "anio": 2025
+  },
+  "agost": {
+   "municipio": "Agost",
+   "provincia": "alicante",
+   "poblacion": 5225,
+   "anio": 2025
+  },
+  "agres": {
+   "municipio": "Agres",
+   "provincia": "alicante",
+   "poblacion": 623,
+   "anio": 2025
+  },
+  "aigues": {
+   "municipio": "Aigües",
+   "provincia": "alicante",
+   "poblacion": 1199,
+   "anio": 2025
+  },
+  "albatera": {
+   "municipio": "Albatera",
+   "provincia": "alicante",
+   "poblacion": 13566,
+   "anio": 2025
+  },
+  "alcalali": {
+   "municipio": "Alcalalí",
+   "provincia": "alicante",
+   "poblacion": 1428,
+   "anio": 2025
+  },
+  "alcoleja": {
+   "municipio": "Alcoleja",
+   "provincia": "alicante",
+   "poblacion": 184,
+   "anio": 2025
+  },
+  "alcosser": {
+   "municipio": "Alcosser",
+   "provincia": "alicante",
+   "poblacion": 263,
+   "anio": 2025
+  },
+  "alcoy": {
+   "municipio": "Alcoy",
+   "provincia": "alicante",
+   "poblacion": 61468,
+   "anio": 2025
+  },
+  "alfafara": {
+   "municipio": "Alfafara",
+   "provincia": "alicante",
+   "poblacion": 419,
+   "anio": 2025
+  },
+  "alfas del pi, l'": {
+   "municipio": "Alfàs del Pi, l'",
+   "provincia": "alicante",
+   "poblacion": 21080,
+   "anio": 2025
+  },
+  "algorfa": {
+   "municipio": "Algorfa",
+   "provincia": "alicante",
+   "poblacion": 3788,
+   "anio": 2025
+  },
+  "alguena": {
+   "municipio": "Algueña",
+   "provincia": "alicante",
+   "poblacion": 1328,
+   "anio": 2025
+  },
+  "alicante": {
+   "municipio": "Alicante",
+   "provincia": "alicante",
+   "poblacion": 366221,
+   "anio": 2025
+  },
+  "almoradi": {
+   "municipio": "Almoradí",
+   "provincia": "alicante",
+   "poblacion": 22965,
+   "anio": 2025
+  },
+  "almudaina": {
+   "municipio": "Almudaina",
+   "provincia": "alicante",
+   "poblacion": 128,
+   "anio": 2025
+  },
+  "alqueria d'asnar, l'": {
+   "municipio": "Alqueria d'Asnar, l'",
+   "provincia": "alicante",
+   "poblacion": 519,
+   "anio": 2025
+  },
+  "altea": {
+   "municipio": "Altea",
+   "provincia": "alicante",
+   "poblacion": 24592,
+   "anio": 2025
+  },
+  "aspe": {
+   "municipio": "Aspe",
+   "provincia": "alicante",
+   "poblacion": 22397,
+   "anio": 2025
+  },
+  "atzubia, l'": {
+   "municipio": "Atzúbia, l'",
+   "provincia": "alicante",
+   "poblacion": 589,
+   "anio": 2025
+  },
+  "balones": {
+   "municipio": "Balones",
+   "provincia": "alicante",
+   "poblacion": 132,
+   "anio": 2025
+  },
+  "banyeres de mariola": {
+   "municipio": "Banyeres de Mariola",
+   "provincia": "alicante",
+   "poblacion": 7347,
+   "anio": 2025
+  },
+  "benasau": {
+   "municipio": "Benasau",
+   "provincia": "alicante",
+   "poblacion": 174,
+   "anio": 2025
+  },
+  "beneixama": {
+   "municipio": "Beneixama",
+   "provincia": "alicante",
+   "poblacion": 1696,
+   "anio": 2025
+  },
+  "benejuzar": {
+   "municipio": "Benejúzar",
+   "provincia": "alicante",
+   "poblacion": 5811,
+   "anio": 2025
+  },
+  "benferri": {
+   "municipio": "Benferri",
+   "provincia": "alicante",
+   "poblacion": 2099,
+   "anio": 2025
+  },
+  "beniarbeig": {
+   "municipio": "Beniarbeig",
+   "provincia": "alicante",
+   "poblacion": 2499,
+   "anio": 2025
+  },
+  "beniarda": {
+   "municipio": "Beniardà",
+   "provincia": "alicante",
+   "poblacion": 226,
+   "anio": 2025
+  },
+  "beniarres": {
+   "municipio": "Beniarrés",
+   "provincia": "alicante",
+   "poblacion": 1117,
+   "anio": 2025
+  },
+  "benidoleig": {
+   "municipio": "Benidoleig",
+   "provincia": "alicante",
+   "poblacion": 1245,
+   "anio": 2025
+  },
+  "benidorm": {
+   "municipio": "Benidorm",
+   "provincia": "alicante",
+   "poblacion": 77327,
+   "anio": 2025
+  },
+  "benifallim": {
+   "municipio": "Benifallim",
+   "provincia": "alicante",
+   "poblacion": 130,
+   "anio": 2025
+  },
+  "benifato": {
+   "municipio": "Benifato",
+   "provincia": "alicante",
+   "poblacion": 162,
+   "anio": 2025
+  },
+  "benigembla": {
+   "municipio": "Benigembla",
+   "provincia": "alicante",
+   "poblacion": 590,
+   "anio": 2025
+  },
+  "benijofar": {
+   "municipio": "Benijófar",
+   "provincia": "alicante",
+   "poblacion": 3679,
+   "anio": 2025
+  },
+  "benilloba": {
+   "municipio": "Benilloba",
+   "provincia": "alicante",
+   "poblacion": 744,
+   "anio": 2025
+  },
+  "benillup": {
+   "municipio": "Benillup",
+   "provincia": "alicante",
+   "poblacion": 110,
+   "anio": 2025
+  },
+  "benimantell": {
+   "municipio": "Benimantell",
+   "provincia": "alicante",
+   "poblacion": 548,
+   "anio": 2025
+  },
+  "benimarfull": {
+   "municipio": "Benimarfull",
+   "provincia": "alicante",
+   "poblacion": 465,
+   "anio": 2025
+  },
+  "benimassot": {
+   "municipio": "Benimassot",
+   "provincia": "alicante",
+   "poblacion": 85,
+   "anio": 2025
+  },
+  "benimeli": {
+   "municipio": "Benimeli",
+   "provincia": "alicante",
+   "poblacion": 474,
+   "anio": 2025
+  },
+  "benissa": {
+   "municipio": "Benissa",
+   "provincia": "alicante",
+   "poblacion": 12471,
+   "anio": 2025
+  },
+  "benitachell": {
+   "municipio": "Benitachell",
+   "provincia": "alicante",
+   "poblacion": 4911,
+   "anio": 2025
+  },
+  "biar": {
+   "municipio": "Biar",
+   "provincia": "alicante",
+   "poblacion": 3677,
+   "anio": 2025
+  },
+  "bigastro": {
+   "municipio": "Bigastro",
+   "provincia": "alicante",
+   "poblacion": 7537,
+   "anio": 2025
+  },
+  "bolulla": {
+   "municipio": "Bolulla",
+   "provincia": "alicante",
+   "poblacion": 490,
+   "anio": 2025
+  },
+  "busot": {
+   "municipio": "Busot",
+   "provincia": "alicante",
+   "poblacion": 3782,
+   "anio": 2025
+  },
+  "callosa de segura": {
+   "municipio": "Callosa de Segura",
+   "provincia": "alicante",
+   "poblacion": 19988,
+   "anio": 2025
+  },
+  "callosa d'en sarria": {
+   "municipio": "Callosa d'en Sarrià",
+   "provincia": "alicante",
+   "poblacion": 8182,
+   "anio": 2025
+  },
+  "calp": {
+   "municipio": "Calp",
+   "provincia": "alicante",
+   "poblacion": 27616,
+   "anio": 2025
+  },
+  "campello, el": {
+   "municipio": "Campello, el",
+   "provincia": "alicante",
+   "poblacion": 31419,
+   "anio": 2025
+  },
+  "campo de mirra": {
+   "municipio": "Campo de Mirra",
+   "provincia": "alicante",
+   "poblacion": 447,
+   "anio": 2025
+  },
+  "canada": {
+   "municipio": "Cañada",
+   "provincia": "alicante",
+   "poblacion": 1213,
+   "anio": 2025
+  },
+  "castalla": {
+   "municipio": "Castalla",
+   "provincia": "alicante",
+   "poblacion": 11908,
+   "anio": 2025
+  },
+  "castell de castells": {
+   "municipio": "Castell de Castells",
+   "provincia": "alicante",
+   "poblacion": 443,
+   "anio": 2025
+  },
+  "castell de guadalest, el": {
+   "municipio": "Castell de Guadalest, el",
+   "provincia": "alicante",
+   "poblacion": 284,
+   "anio": 2025
+  },
+  "catral": {
+   "municipio": "Catral",
+   "provincia": "alicante",
+   "poblacion": 9600,
+   "anio": 2025
+  },
+  "cocentaina": {
+   "municipio": "Cocentaina",
+   "provincia": "alicante",
+   "poblacion": 11498,
+   "anio": 2025
+  },
+  "confrides": {
+   "municipio": "Confrides",
+   "provincia": "alicante",
+   "poblacion": 293,
+   "anio": 2025
+  },
+  "cox": {
+   "municipio": "Cox",
+   "provincia": "alicante",
+   "poblacion": 7722,
+   "anio": 2025
+  },
+  "crevillent": {
+   "municipio": "Crevillent",
+   "provincia": "alicante",
+   "poblacion": 30921,
+   "anio": 2025
+  },
+  "daya nueva": {
+   "municipio": "Daya Nueva",
+   "provincia": "alicante",
+   "poblacion": 1885,
+   "anio": 2025
+  },
+  "daya vieja": {
+   "municipio": "Daya Vieja",
+   "provincia": "alicante",
+   "poblacion": 698,
+   "anio": 2025
+  },
+  "denia": {
+   "municipio": "Dénia",
+   "provincia": "alicante",
+   "poblacion": 47261,
+   "anio": 2025
+  },
+  "dolores": {
+   "municipio": "Dolores",
+   "provincia": "alicante",
+   "poblacion": 8326,
+   "anio": 2025
+  },
+  "elche": {
+   "municipio": "Elche",
+   "provincia": "alicante",
+   "poblacion": 245557,
+   "anio": 2025
+  },
+  "elda": {
+   "municipio": "Elda",
+   "provincia": "alicante",
+   "poblacion": 55222,
+   "anio": 2025
+  },
+  "fageca": {
+   "municipio": "Fageca",
+   "provincia": "alicante",
+   "poblacion": 100,
+   "anio": 2025
+  },
+  "famorca": {
+   "municipio": "Famorca",
+   "provincia": "alicante",
+   "poblacion": 44,
+   "anio": 2025
+  },
+  "finestrat": {
+   "municipio": "Finestrat",
+   "provincia": "alicante",
+   "poblacion": 9919,
+   "anio": 2025
+  },
+  "hondon de las nieves": {
+   "municipio": "Hondón de las Nieves",
+   "provincia": "alicante",
+   "poblacion": 2738,
+   "anio": 2025
+  },
+  "formentera del segura": {
+   "municipio": "Formentera del Segura",
+   "provincia": "alicante",
+   "poblacion": 4868,
+   "anio": 2025
+  },
+  "gaianes": {
+   "municipio": "Gaianes",
+   "provincia": "alicante",
+   "poblacion": 577,
+   "anio": 2025
+  },
+  "gata de gorgos": {
+   "municipio": "Gata de Gorgos",
+   "provincia": "alicante",
+   "poblacion": 6773,
+   "anio": 2025
+  },
+  "gorga": {
+   "municipio": "Gorga",
+   "provincia": "alicante",
+   "poblacion": 286,
+   "anio": 2025
+  },
+  "granja de rocamora": {
+   "municipio": "Granja de Rocamora",
+   "provincia": "alicante",
+   "poblacion": 2728,
+   "anio": 2025
+  },
+  "guardamar del segura": {
+   "municipio": "Guardamar del Segura",
+   "provincia": "alicante",
+   "poblacion": 18564,
+   "anio": 2025
+  },
+  "hondon de los frailes": {
+   "municipio": "Hondón de los Frailes",
+   "provincia": "alicante",
+   "poblacion": 1334,
+   "anio": 2025
+  },
+  "ibi": {
+   "municipio": "Ibi",
+   "provincia": "alicante",
+   "poblacion": 24500,
+   "anio": 2025
+  },
+  "jacarilla": {
+   "municipio": "Jacarilla",
+   "provincia": "alicante",
+   "poblacion": 2176,
+   "anio": 2025
+  },
+  "javea": {
+   "municipio": "Jávea",
+   "provincia": "alicante",
+   "poblacion": 30642,
+   "anio": 2025
+  },
+  "jijona": {
+   "municipio": "Jijona",
+   "provincia": "alicante",
+   "poblacion": 7669,
+   "anio": 2025
+  },
+  "lliber": {
+   "municipio": "Llíber",
+   "provincia": "alicante",
+   "poblacion": 882,
+   "anio": 2025
+  },
+  "lorcha": {
+   "municipio": "Lorcha",
+   "provincia": "alicante",
+   "poblacion": 589,
+   "anio": 2025
+  },
+  "millena": {
+   "municipio": "Millena",
+   "provincia": "alicante",
+   "poblacion": 265,
+   "anio": 2025
+  },
+  "monforte del cid": {
+   "municipio": "Monforte del Cid",
+   "provincia": "alicante",
+   "poblacion": 9283,
+   "anio": 2025
+  },
+  "monovar": {
+   "municipio": "Monóvar",
+   "provincia": "alicante",
+   "poblacion": 13116,
+   "anio": 2025
+  },
+  "montesinos, los": {
+   "municipio": "Montesinos, Los",
+   "provincia": "alicante",
+   "poblacion": 5786,
+   "anio": 2025
+  },
+  "murla": {
+   "municipio": "Murla",
+   "provincia": "alicante",
+   "poblacion": 574,
+   "anio": 2025
+  },
+  "muro de alcoy": {
+   "municipio": "Muro de Alcoy",
+   "provincia": "alicante",
+   "poblacion": 9372,
+   "anio": 2025
+  },
+  "mutxamel": {
+   "municipio": "Mutxamel",
+   "provincia": "alicante",
+   "poblacion": 28621,
+   "anio": 2025
+  },
+  "novelda": {
+   "municipio": "Novelda",
+   "provincia": "alicante",
+   "poblacion": 26606,
+   "anio": 2025
+  },
+  "nucia, la": {
+   "municipio": "Nucia, la",
+   "provincia": "alicante",
+   "poblacion": 19121,
+   "anio": 2025
+  },
+  "ondara": {
+   "municipio": "Ondara",
+   "provincia": "alicante",
+   "poblacion": 7717,
+   "anio": 2025
+  },
+  "onil": {
+   "municipio": "Onil",
+   "provincia": "alicante",
+   "poblacion": 8114,
+   "anio": 2025
+  },
+  "orba": {
+   "municipio": "Orba",
+   "provincia": "alicante",
+   "poblacion": 2399,
+   "anio": 2025
+  },
+  "orihuela": {
+   "municipio": "Orihuela",
+   "provincia": "alicante",
+   "poblacion": 84560,
+   "anio": 2025
+  },
+  "orxeta": {
+   "municipio": "Orxeta",
+   "provincia": "alicante",
+   "poblacion": 906,
+   "anio": 2025
+  },
+  "parcent": {
+   "municipio": "Parcent",
+   "provincia": "alicante",
+   "poblacion": 1037,
+   "anio": 2025
+  },
+  "pedreguer": {
+   "municipio": "Pedreguer",
+   "provincia": "alicante",
+   "poblacion": 8849,
+   "anio": 2025
+  },
+  "pego": {
+   "municipio": "Pego",
+   "provincia": "alicante",
+   "poblacion": 10791,
+   "anio": 2025
+  },
+  "penaguila": {
+   "municipio": "Penàguila",
+   "provincia": "alicante",
+   "poblacion": 305,
+   "anio": 2025
+  },
+  "petrer": {
+   "municipio": "Petrer",
+   "provincia": "alicante",
+   "poblacion": 34022,
+   "anio": 2025
+  },
+  "pilar de la horadada": {
+   "municipio": "Pilar de la Horadada",
+   "provincia": "alicante",
+   "poblacion": 24316,
+   "anio": 2025
+  },
+  "pinoso": {
+   "municipio": "Pinoso",
+   "provincia": "alicante",
+   "poblacion": 8523,
+   "anio": 2025
+  },
+  "planes": {
+   "municipio": "Planes",
+   "provincia": "alicante",
+   "poblacion": 697,
+   "anio": 2025
+  },
+  "poblets, els": {
+   "municipio": "Poblets, els",
+   "provincia": "alicante",
+   "poblacion": 2757,
+   "anio": 2025
+  },
+  "polop": {
+   "municipio": "Polop",
+   "provincia": "alicante",
+   "poblacion": 5828,
+   "anio": 2025
+  },
+  "quatretondeta": {
+   "municipio": "Quatretondeta",
+   "provincia": "alicante",
+   "poblacion": 130,
+   "anio": 2025
+  },
+  "rafal": {
+   "municipio": "Rafal",
+   "provincia": "alicante",
+   "poblacion": 4849,
+   "anio": 2025
+  },
+  "rafol d'almunia, el": {
+   "municipio": "Ràfol d'Almúnia, el",
+   "provincia": "alicante",
+   "poblacion": 734,
+   "anio": 2025
+  },
+  "redovan": {
+   "municipio": "Redován",
+   "provincia": "alicante",
+   "poblacion": 8283,
+   "anio": 2025
+  },
+  "relleu": {
+   "municipio": "Relleu",
+   "provincia": "alicante",
+   "poblacion": 1375,
+   "anio": 2025
+  },
+  "rojales": {
+   "municipio": "Rojales",
+   "provincia": "alicante",
+   "poblacion": 17652,
+   "anio": 2025
+  },
+  "romana, la": {
+   "municipio": "Romana, la",
+   "provincia": "alicante",
+   "poblacion": 2729,
+   "anio": 2025
+  },
+  "sagra": {
+   "municipio": "Sagra",
+   "provincia": "alicante",
+   "poblacion": 441,
+   "anio": 2025
+  },
+  "salinas": {
+   "municipio": "Salinas",
+   "provincia": "alicante",
+   "poblacion": 1828,
+   "anio": 2025
+  },
+  "san fulgencio": {
+   "municipio": "San Fulgencio",
+   "provincia": "alicante",
+   "poblacion": 9769,
+   "anio": 2025
+  },
+  "san isidro": {
+   "municipio": "San Isidro",
+   "provincia": "alicante",
+   "poblacion": 2337,
+   "anio": 2025
+  },
+  "san miguel de salinas": {
+   "municipio": "San Miguel de Salinas",
+   "provincia": "alicante",
+   "poblacion": 7177,
+   "anio": 2025
+  },
+  "san vicente del raspeig": {
+   "municipio": "San Vicente del Raspeig",
+   "provincia": "alicante",
+   "poblacion": 60247,
+   "anio": 2025
+  },
+  "sanet y negrals": {
+   "municipio": "Sanet y Negrals",
+   "provincia": "alicante",
+   "poblacion": 712,
+   "anio": 2025
+  },
+  "sant joan d'alacant": {
+   "municipio": "Sant Joan d'Alacant",
+   "provincia": "alicante",
+   "poblacion": 26834,
+   "anio": 2025
+  },
+  "santa pola": {
+   "municipio": "Santa Pola",
+   "provincia": "alicante",
+   "poblacion": 39709,
+   "anio": 2025
+  },
+  "sax": {
+   "municipio": "Sax",
+   "provincia": "alicante",
+   "poblacion": 10346,
+   "anio": 2025
+  },
+  "sella": {
+   "municipio": "Sella",
+   "provincia": "alicante",
+   "poblacion": 621,
+   "anio": 2025
+  },
+  "senija": {
+   "municipio": "Senija",
+   "provincia": "alicante",
+   "poblacion": 698,
+   "anio": 2025
+  },
+  "tarbena": {
+   "municipio": "Tàrbena",
+   "provincia": "alicante",
+   "poblacion": 662,
+   "anio": 2025
+  },
+  "teulada": {
+   "municipio": "Teulada",
+   "provincia": "alicante",
+   "poblacion": 12912,
+   "anio": 2025
+  },
+  "tibi": {
+   "municipio": "Tibi",
+   "provincia": "alicante",
+   "poblacion": 1757,
+   "anio": 2025
+  },
+  "tollos": {
+   "municipio": "Tollos",
+   "provincia": "alicante",
+   "poblacion": 32,
+   "anio": 2025
+  },
+  "tormos": {
+   "municipio": "Tormos",
+   "provincia": "alicante",
+   "poblacion": 323,
+   "anio": 2025
+  },
+  "torremanzanas": {
+   "municipio": "Torremanzanas",
+   "provincia": "alicante",
+   "poblacion": 749,
+   "anio": 2025
+  },
+  "torrevieja": {
+   "municipio": "Torrevieja",
+   "provincia": "alicante",
+   "poblacion": 98533,
+   "anio": 2025
+  },
+  "vall d'alcala, la": {
+   "municipio": "Vall d'Alcalà, la",
+   "provincia": "alicante",
+   "poblacion": 159,
+   "anio": 2025
+  },
+  "vall de gallinera, la": {
+   "municipio": "Vall de Gallinera, la",
+   "provincia": "alicante",
+   "poblacion": 583,
+   "anio": 2025
+  },
+  "vall de laguar, la": {
+   "municipio": "Vall de Laguar, la",
+   "provincia": "alicante",
+   "poblacion": 905,
+   "anio": 2025
+  },
+  "vall d'ebo, la": {
+   "municipio": "Vall d'Ebo, la",
+   "provincia": "alicante",
+   "poblacion": 231,
+   "anio": 2025
+  },
+  "verger, el": {
+   "municipio": "Verger, el",
+   "provincia": "alicante",
+   "poblacion": 5508,
+   "anio": 2025
+  },
+  "villajoyosa": {
+   "municipio": "Villajoyosa",
+   "provincia": "alicante",
+   "poblacion": 37449,
+   "anio": 2025
+  },
+  "villena": {
+   "municipio": "Villena",
+   "provincia": "alicante",
+   "poblacion": 34712,
+   "anio": 2025
+  },
+  "xalo": {
+   "municipio": "Xaló",
+   "provincia": "alicante",
+   "poblacion": 3104,
+   "anio": 2025
+  },
+  "ain": {
+   "municipio": "Aín",
+   "provincia": "castellon",
+   "poblacion": 133,
+   "anio": 2025
+  },
+  "albocasser": {
+   "municipio": "Albocàsser",
+   "provincia": "castellon",
+   "poblacion": 1370,
+   "anio": 2025
+  },
+  "alcala de xivert": {
+   "municipio": "Alcalà de Xivert",
+   "provincia": "castellon",
+   "poblacion": 7349,
+   "anio": 2025
+  },
+  "alcora, l'": {
+   "municipio": "Alcora, l'",
+   "provincia": "castellon",
+   "poblacion": 10664,
+   "anio": 2025
+  },
+  "alcudia de veo": {
+   "municipio": "Alcudia de Veo",
+   "provincia": "castellon",
+   "poblacion": 200,
+   "anio": 2025
+  },
+  "alfondeguilla": {
+   "municipio": "Alfondeguilla",
+   "provincia": "castellon",
+   "poblacion": 881,
+   "anio": 2025
+  },
+  "algimia de almonacid": {
+   "municipio": "Algimia de Almonacid",
+   "provincia": "castellon",
+   "poblacion": 254,
+   "anio": 2025
+  },
+  "almassora": {
+   "municipio": "Almassora",
+   "provincia": "castellon",
+   "poblacion": 29159,
+   "anio": 2025
+  },
+  "almedijar": {
+   "municipio": "Almedíjar",
+   "provincia": "castellon",
+   "poblacion": 288,
+   "anio": 2025
+  },
+  "almenara": {
+   "municipio": "Almenara",
+   "provincia": "castellon",
+   "poblacion": 6813,
+   "anio": 2025
+  },
+  "alquerias del nino perdido": {
+   "municipio": "Alquerías del Niño Perdido",
+   "provincia": "castellon",
+   "poblacion": 4605,
+   "anio": 2025
+  },
+  "altura": {
+   "municipio": "Altura",
+   "provincia": "castellon",
+   "poblacion": 3849,
+   "anio": 2025
+  },
+  "aranuel": {
+   "municipio": "Arañuel",
+   "provincia": "castellon",
+   "poblacion": 148,
+   "anio": 2025
+  },
+  "ares del maestrat": {
+   "municipio": "Ares del Maestrat",
+   "provincia": "castellon",
+   "poblacion": 181,
+   "anio": 2025
+  },
+  "argelita": {
+   "municipio": "Argelita",
+   "provincia": "castellon",
+   "poblacion": 139,
+   "anio": 2025
+  },
+  "artana": {
+   "municipio": "Artana",
+   "provincia": "castellon",
+   "poblacion": 1993,
+   "anio": 2025
+  },
+  "atzeneta del maestrat": {
+   "municipio": "Atzeneta del Maestrat",
+   "provincia": "castellon",
+   "poblacion": 1284,
+   "anio": 2025
+  },
+  "ayodar": {
+   "municipio": "Ayódar",
+   "provincia": "castellon",
+   "poblacion": 176,
+   "anio": 2025
+  },
+  "azuebar": {
+   "municipio": "Azuébar",
+   "provincia": "castellon",
+   "poblacion": 359,
+   "anio": 2025
+  },
+  "barracas": {
+   "municipio": "Barracas",
+   "provincia": "castellon",
+   "poblacion": 188,
+   "anio": 2025
+  },
+  "bejis": {
+   "municipio": "Bejís",
+   "provincia": "castellon",
+   "poblacion": 400,
+   "anio": 2025
+  },
+  "benafer": {
+   "municipio": "Benafer",
+   "provincia": "castellon",
+   "poblacion": 168,
+   "anio": 2025
+  },
+  "benafigos": {
+   "municipio": "Benafigos",
+   "provincia": "castellon",
+   "poblacion": 121,
+   "anio": 2025
+  },
+  "benassal": {
+   "municipio": "Benassal",
+   "provincia": "castellon",
+   "poblacion": 1048,
+   "anio": 2025
+  },
+  "benicarlo": {
+   "municipio": "Benicarló",
+   "provincia": "castellon",
+   "poblacion": 30296,
+   "anio": 2025
+  },
+  "benicasim": {
+   "municipio": "Benicasim",
+   "provincia": "castellon",
+   "poblacion": 20539,
+   "anio": 2025
+  },
+  "benlloc": {
+   "municipio": "Benlloc",
+   "provincia": "castellon",
+   "poblacion": 1143,
+   "anio": 2025
+  },
+  "betxi": {
+   "municipio": "Betxí",
+   "provincia": "castellon",
+   "poblacion": 5659,
+   "anio": 2025
+  },
+  "burriana": {
+   "municipio": "Burriana",
+   "provincia": "castellon",
+   "poblacion": 37915,
+   "anio": 2025
+  },
+  "borriol": {
+   "municipio": "Borriol",
+   "provincia": "castellon",
+   "poblacion": 6018,
+   "anio": 2025
+  },
+  "calig": {
+   "municipio": "Càlig",
+   "provincia": "castellon",
+   "poblacion": 2042,
+   "anio": 2025
+  },
+  "canet lo roig": {
+   "municipio": "Canet lo Roig",
+   "provincia": "castellon",
+   "poblacion": 715,
+   "anio": 2025
+  },
+  "castell de cabres": {
+   "municipio": "Castell de Cabres",
+   "provincia": "castellon",
+   "poblacion": 21,
+   "anio": 2025
+  },
+  "castellfort": {
+   "municipio": "Castellfort",
+   "provincia": "castellon",
+   "poblacion": 178,
+   "anio": 2025
+  },
+  "castellnovo": {
+   "municipio": "Castellnovo",
+   "provincia": "castellon",
+   "poblacion": 912,
+   "anio": 2025
+  },
+  "castillo de villamalefa": {
+   "municipio": "Castillo de Villamalefa",
+   "provincia": "castellon",
+   "poblacion": 110,
+   "anio": 2025
+  },
+  "cati": {
+   "municipio": "Catí",
+   "provincia": "castellon",
+   "poblacion": 719,
+   "anio": 2025
+  },
+  "caudiel": {
+   "municipio": "Caudiel",
+   "provincia": "castellon",
+   "poblacion": 735,
+   "anio": 2025
+  },
+  "cervera del maestre": {
+   "municipio": "Cervera del Maestre",
+   "provincia": "castellon",
+   "poblacion": 617,
+   "anio": 2025
+  },
+  "xilxes": {
+   "municipio": "Xilxes",
+   "provincia": "castellon",
+   "poblacion": 3199,
+   "anio": 2025
+  },
+  "chodos": {
+   "municipio": "Chodos",
+   "provincia": "castellon",
+   "poblacion": 107,
+   "anio": 2025
+  },
+  "chovar": {
+   "municipio": "Chóvar",
+   "provincia": "castellon",
+   "poblacion": 316,
+   "anio": 2025
+  },
+  "cinctorres": {
+   "municipio": "Cinctorres",
+   "provincia": "castellon",
+   "poblacion": 433,
+   "anio": 2025
+  },
+  "cirat": {
+   "municipio": "Cirat",
+   "provincia": "castellon",
+   "poblacion": 220,
+   "anio": 2025
+  },
+  "cortes de arenoso": {
+   "municipio": "Cortes de Arenoso",
+   "provincia": "castellon",
+   "poblacion": 308,
+   "anio": 2025
+  },
+  "costur": {
+   "municipio": "Costur",
+   "provincia": "castellon",
+   "poblacion": 511,
+   "anio": 2025
+  },
+  "coves de vinroma, les": {
+   "municipio": "Coves de Vinromà, les",
+   "provincia": "castellon",
+   "poblacion": 1888,
+   "anio": 2025
+  },
+  "culla": {
+   "municipio": "Culla",
+   "provincia": "castellon",
+   "poblacion": 503,
+   "anio": 2025
+  },
+  "eslida": {
+   "municipio": "Eslida",
+   "provincia": "castellon",
+   "poblacion": 815,
+   "anio": 2025
+  },
+  "espadilla": {
+   "municipio": "Espadilla",
+   "provincia": "castellon",
+   "poblacion": 101,
+   "anio": 2025
+  },
+  "fanzara": {
+   "municipio": "Fanzara",
+   "provincia": "castellon",
+   "poblacion": 295,
+   "anio": 2025
+  },
+  "figueroles": {
+   "municipio": "Figueroles",
+   "provincia": "castellon",
+   "poblacion": 525,
+   "anio": 2025
+  },
+  "forcall": {
+   "municipio": "Forcall",
+   "provincia": "castellon",
+   "poblacion": 475,
+   "anio": 2025
+  },
+  "fuente la reina": {
+   "municipio": "Fuente la Reina",
+   "provincia": "castellon",
+   "poblacion": 55,
+   "anio": 2025
+  },
+  "fuentes de ayodar": {
+   "municipio": "Fuentes de Ayódar",
+   "provincia": "castellon",
+   "poblacion": 98,
+   "anio": 2025
+  },
+  "gaibiel": {
+   "municipio": "Gaibiel",
+   "provincia": "castellon",
+   "poblacion": 200,
+   "anio": 2025
+  },
+  "geldo": {
+   "municipio": "Geldo",
+   "provincia": "castellon",
+   "poblacion": 665,
+   "anio": 2025
+  },
+  "herbers": {
+   "municipio": "Herbers",
+   "provincia": "castellon",
+   "poblacion": 68,
+   "anio": 2025
+  },
+  "higueras": {
+   "municipio": "Higueras",
+   "provincia": "castellon",
+   "poblacion": 54,
+   "anio": 2025
+  },
+  "jana, la": {
+   "municipio": "Jana, la",
+   "provincia": "castellon",
+   "poblacion": 679,
+   "anio": 2025
+  },
+  "jerica": {
+   "municipio": "Jérica",
+   "provincia": "castellon",
+   "poblacion": 1764,
+   "anio": 2025
+  },
+  "llosa, la": {
+   "municipio": "Llosa, la",
+   "provincia": "castellon",
+   "poblacion": 1033,
+   "anio": 2025
+  },
+  "lucena del cid": {
+   "municipio": "Lucena del Cid",
+   "provincia": "castellon",
+   "poblacion": 1421,
+   "anio": 2025
+  },
+  "ludiente": {
+   "municipio": "Ludiente",
+   "provincia": "castellon",
+   "poblacion": 162,
+   "anio": 2025
+  },
+  "mata de morella, la": {
+   "municipio": "Mata de Morella, la",
+   "provincia": "castellon",
+   "poblacion": 196,
+   "anio": 2025
+  },
+  "matet": {
+   "municipio": "Matet",
+   "provincia": "castellon",
+   "poblacion": 94,
+   "anio": 2025
+  },
+  "moncofa": {
+   "municipio": "Moncofa",
+   "provincia": "castellon",
+   "poblacion": 8339,
+   "anio": 2025
+  },
+  "montan": {
+   "municipio": "Montán",
+   "provincia": "castellon",
+   "poblacion": 429,
+   "anio": 2025
+  },
+  "montanejos": {
+   "municipio": "Montanejos",
+   "provincia": "castellon",
+   "poblacion": 649,
+   "anio": 2025
+  },
+  "morella": {
+   "municipio": "Morella",
+   "provincia": "castellon",
+   "poblacion": 2501,
+   "anio": 2025
+  },
+  "navajas": {
+   "municipio": "Navajas",
+   "provincia": "castellon",
+   "poblacion": 906,
+   "anio": 2025
+  },
+  "nules": {
+   "municipio": "Nules",
+   "provincia": "castellon",
+   "poblacion": 14315,
+   "anio": 2025
+  },
+  "olocau del rey": {
+   "municipio": "Olocau del Rey",
+   "provincia": "castellon",
+   "poblacion": 135,
+   "anio": 2025
+  },
+  "onda": {
+   "municipio": "Onda",
+   "provincia": "castellon",
+   "poblacion": 26190,
+   "anio": 2025
+  },
+  "oropesa del mar": {
+   "municipio": "Oropesa del Mar",
+   "provincia": "castellon",
+   "poblacion": 12640,
+   "anio": 2025
+  },
+  "palanques": {
+   "municipio": "Palanques",
+   "provincia": "castellon",
+   "poblacion": 34,
+   "anio": 2025
+  },
+  "pavias": {
+   "municipio": "Pavías",
+   "provincia": "castellon",
+   "poblacion": 72,
+   "anio": 2025
+  },
+  "peniscola": {
+   "municipio": "Peñíscola",
+   "provincia": "castellon",
+   "poblacion": 8774,
+   "anio": 2025
+  },
+  "pina de montalgrao": {
+   "municipio": "Pina de Montalgrao",
+   "provincia": "castellon",
+   "poblacion": 121,
+   "anio": 2025
+  },
+  "pobla de benifassa, la": {
+   "municipio": "Pobla de Benifassà, la",
+   "provincia": "castellon",
+   "poblacion": 229,
+   "anio": 2025
+  },
+  "pobla tornesa, la": {
+   "municipio": "Pobla Tornesa, la",
+   "provincia": "castellon",
+   "poblacion": 1322,
+   "anio": 2025
+  },
+  "portell de morella": {
+   "municipio": "Portell de Morella",
+   "provincia": "castellon",
+   "poblacion": 155,
+   "anio": 2025
+  },
+  "puebla de arenoso": {
+   "municipio": "Puebla de Arenoso",
+   "provincia": "castellon",
+   "poblacion": 169,
+   "anio": 2025
+  },
+  "ribesalbes": {
+   "municipio": "Ribesalbes",
+   "provincia": "castellon",
+   "poblacion": 1191,
+   "anio": 2025
+  },
+  "rossell": {
+   "municipio": "Rossell",
+   "provincia": "castellon",
+   "poblacion": 910,
+   "anio": 2025
+  },
+  "sacanet": {
+   "municipio": "Sacañet",
+   "provincia": "castellon",
+   "poblacion": 67,
+   "anio": 2025
+  },
+  "salzadella, la": {
+   "municipio": "Salzadella, la",
+   "provincia": "castellon",
+   "poblacion": 671,
+   "anio": 2025
+  },
+  "san rafael del rio": {
+   "municipio": "San Rafael del Río",
+   "provincia": "castellon",
+   "poblacion": 532,
+   "anio": 2025
+  },
+  "sant joan de moro": {
+   "municipio": "Sant Joan de Moró",
+   "provincia": "castellon",
+   "poblacion": 3695,
+   "anio": 2025
+  },
+  "san jorge": {
+   "municipio": "San Jorge",
+   "provincia": "castellon",
+   "poblacion": 1554,
+   "anio": 2025
+  },
+  "sant mateu": {
+   "municipio": "Sant Mateu",
+   "provincia": "castellon",
+   "poblacion": 2021,
+   "anio": 2025
+  },
+  "santa magdalena de pulpis": {
+   "municipio": "Santa Magdalena de Pulpis",
+   "provincia": "castellon",
+   "poblacion": 771,
+   "anio": 2025
+  },
+  "segorbe": {
+   "municipio": "Segorbe",
+   "provincia": "castellon",
+   "poblacion": 9805,
+   "anio": 2025
+  },
+  "serratella, la": {
+   "municipio": "Serratella, la",
+   "provincia": "castellon",
+   "poblacion": 113,
+   "anio": 2025
+  },
+  "sierra engarceran": {
+   "municipio": "Sierra Engarcerán",
+   "provincia": "castellon",
+   "poblacion": 1039,
+   "anio": 2025
+  },
+  "soneja": {
+   "municipio": "Soneja",
+   "provincia": "castellon",
+   "poblacion": 1521,
+   "anio": 2025
+  },
+  "sot de ferrer": {
+   "municipio": "Sot de Ferrer",
+   "provincia": "castellon",
+   "poblacion": 492,
+   "anio": 2025
+  },
+  "sueras": {
+   "municipio": "Sueras",
+   "provincia": "castellon",
+   "poblacion": 593,
+   "anio": 2025
+  },
+  "tales": {
+   "municipio": "Tales",
+   "provincia": "castellon",
+   "poblacion": 827,
+   "anio": 2025
+  },
+  "teresa": {
+   "municipio": "Teresa",
+   "provincia": "castellon",
+   "poblacion": 254,
+   "anio": 2025
+  },
+  "tirig": {
+   "municipio": "Tírig",
+   "provincia": "castellon",
+   "poblacion": 417,
+   "anio": 2025
+  },
+  "todolella": {
+   "municipio": "Todolella",
+   "provincia": "castellon",
+   "poblacion": 136,
+   "anio": 2025
+  },
+  "toga": {
+   "municipio": "Toga",
+   "provincia": "castellon",
+   "poblacion": 106,
+   "anio": 2025
+  },
+  "toras": {
+   "municipio": "Torás",
+   "provincia": "castellon",
+   "poblacion": 271,
+   "anio": 2025
+  },
+  "toro, el": {
+   "municipio": "Toro, El",
+   "provincia": "castellon",
+   "poblacion": 256,
+   "anio": 2025
+  },
+  "torralba del pinar": {
+   "municipio": "Torralba del Pinar",
+   "provincia": "castellon",
+   "poblacion": 57,
+   "anio": 2025
+  },
+  "torre d'en besora, la": {
+   "municipio": "Torre d'en Besora, la",
+   "provincia": "castellon",
+   "poblacion": 164,
+   "anio": 2025
+  },
+  "torre d'en domenec, la": {
+   "municipio": "Torre d'en Doménec, la",
+   "provincia": "castellon",
+   "poblacion": 177,
+   "anio": 2025
+  },
+  "torreblanca": {
+   "municipio": "Torreblanca",
+   "provincia": "castellon",
+   "poblacion": 5744,
+   "anio": 2025
+  },
+  "torrechiva": {
+   "municipio": "Torrechiva",
+   "provincia": "castellon",
+   "poblacion": 106,
+   "anio": 2025
+  },
+  "traiguera": {
+   "municipio": "Traiguera",
+   "provincia": "castellon",
+   "poblacion": 1302,
+   "anio": 2025
+  },
+  "useras": {
+   "municipio": "Useras",
+   "provincia": "castellon",
+   "poblacion": 954,
+   "anio": 2025
+  },
+  "vall d'alba": {
+   "municipio": "Vall d'Alba",
+   "provincia": "castellon",
+   "poblacion": 3218,
+   "anio": 2025
+  },
+  "vall de almonacid": {
+   "municipio": "Vall de Almonacid",
+   "provincia": "castellon",
+   "poblacion": 284,
+   "anio": 2025
+  },
+  "vall d'uixo, la": {
+   "municipio": "Vall d'Uixó, la",
+   "provincia": "castellon",
+   "poblacion": 32242,
+   "anio": 2025
+  },
+  "vallat": {
+   "municipio": "Vallat",
+   "provincia": "castellon",
+   "poblacion": 66,
+   "anio": 2025
+  },
+  "vallibona": {
+   "municipio": "Vallibona",
+   "provincia": "castellon",
+   "poblacion": 63,
+   "anio": 2025
+  },
+  "vilafames": {
+   "municipio": "Vilafamés",
+   "provincia": "castellon",
+   "poblacion": 1962,
+   "anio": 2025
+  },
+  "vilanova d'alcolea": {
+   "municipio": "Vilanova d'Alcolea",
+   "provincia": "castellon",
+   "poblacion": 584,
+   "anio": 2025
+  },
+  "vilar de canes": {
+   "municipio": "Vilar de Canes",
+   "provincia": "castellon",
+   "poblacion": 156,
+   "anio": 2025
+  },
+  "vila-real": {
+   "municipio": "Vila-real",
+   "provincia": "castellon",
+   "poblacion": 53623,
+   "anio": 2025
+  },
+  "vilavella, la": {
+   "municipio": "Vilavella, la",
+   "provincia": "castellon",
+   "poblacion": 3054,
+   "anio": 2025
+  },
+  "villafranca del cid": {
+   "municipio": "Villafranca del Cid",
+   "provincia": "castellon",
+   "poblacion": 2115,
+   "anio": 2025
+  },
+  "villahermosa del rio": {
+   "municipio": "Villahermosa del Río",
+   "provincia": "castellon",
+   "poblacion": 473,
+   "anio": 2025
+  },
+  "villamalur": {
+   "municipio": "Villamalur",
+   "provincia": "castellon",
+   "poblacion": 99,
+   "anio": 2025
+  },
+  "villanueva de viver": {
+   "municipio": "Villanueva de Viver",
+   "provincia": "castellon",
+   "poblacion": 94,
+   "anio": 2025
+  },
+  "villores": {
+   "municipio": "Villores",
+   "provincia": "castellon",
+   "poblacion": 51,
+   "anio": 2025
+  },
+  "vinaros": {
+   "municipio": "Vinaròs",
+   "provincia": "castellon",
+   "poblacion": 30529,
+   "anio": 2025
+  },
+  "vistabella del maestrat": {
+   "municipio": "Vistabella del Maestrat",
+   "provincia": "castellon",
+   "poblacion": 354,
+   "anio": 2025
+  },
+  "viver": {
+   "municipio": "Viver",
+   "provincia": "castellon",
+   "poblacion": 1729,
+   "anio": 2025
+  },
+  "xert": {
+   "municipio": "Xert",
+   "provincia": "castellon",
+   "poblacion": 702,
+   "anio": 2025
+  },
+  "zorita del maestrazgo": {
+   "municipio": "Zorita del Maestrazgo",
+   "provincia": "castellon",
+   "poblacion": 118,
+   "anio": 2025
+  },
+  "zucaina": {
+   "municipio": "Zucaina",
+   "provincia": "castellon",
+   "poblacion": 171,
+   "anio": 2025
+  },
+  "ademuz": {
+   "municipio": "Ademuz",
+   "provincia": "valencia",
+   "poblacion": 1015,
+   "anio": 2025
+  },
+  "ador": {
+   "municipio": "Ador",
+   "provincia": "valencia",
+   "poblacion": 1755,
+   "anio": 2025
+  },
+  "agullent": {
+   "municipio": "Agullent",
+   "provincia": "valencia",
+   "poblacion": 2438,
+   "anio": 2025
+  },
+  "aielo de malferit": {
+   "municipio": "Aielo de Malferit",
+   "provincia": "valencia",
+   "poblacion": 4624,
+   "anio": 2025
+  },
+  "aielo de rugat": {
+   "municipio": "Aielo de Rugat",
+   "provincia": "valencia",
+   "poblacion": 160,
+   "anio": 2025
+  },
+  "alaquas": {
+   "municipio": "Alaquàs",
+   "provincia": "valencia",
+   "poblacion": 30166,
+   "anio": 2025
+  },
+  "albaida": {
+   "municipio": "Albaida",
+   "provincia": "valencia",
+   "poblacion": 6322,
+   "anio": 2025
+  },
+  "albal": {
+   "municipio": "Albal",
+   "provincia": "valencia",
+   "poblacion": 17365,
+   "anio": 2025
+  },
+  "albalat de la ribera": {
+   "municipio": "Albalat de la Ribera",
+   "provincia": "valencia",
+   "poblacion": 3523,
+   "anio": 2025
+  },
+  "albalat dels sorells": {
+   "municipio": "Albalat dels Sorells",
+   "provincia": "valencia",
+   "poblacion": 4368,
+   "anio": 2025
+  },
+  "albalat dels tarongers": {
+   "municipio": "Albalat dels Tarongers",
+   "provincia": "valencia",
+   "poblacion": 1574,
+   "anio": 2025
+  },
+  "alberic": {
+   "municipio": "Alberic",
+   "provincia": "valencia",
+   "poblacion": 11099,
+   "anio": 2025
+  },
+  "alborache": {
+   "municipio": "Alborache",
+   "provincia": "valencia",
+   "poblacion": 1568,
+   "anio": 2025
+  },
+  "alboraya": {
+   "municipio": "Alboraya",
+   "provincia": "valencia",
+   "poblacion": 26273,
+   "anio": 2025
+  },
+  "albuixech": {
+   "municipio": "Albuixech",
+   "provincia": "valencia",
+   "poblacion": 4482,
+   "anio": 2025
+  },
+  "alcantera de xuquer": {
+   "municipio": "Alcàntera de Xúquer",
+   "provincia": "valencia",
+   "poblacion": 1468,
+   "anio": 2025
+  },
+  "alcasser": {
+   "municipio": "Alcàsser",
+   "provincia": "valencia",
+   "poblacion": 10772,
+   "anio": 2025
+  },
+  "alcublas": {
+   "municipio": "Alcublas",
+   "provincia": "valencia",
+   "poblacion": 710,
+   "anio": 2025
+  },
+  "alcudia de crespins, l'": {
+   "municipio": "Alcúdia de Crespins, l'",
+   "provincia": "valencia",
+   "poblacion": 5548,
+   "anio": 2025
+  },
+  "alcudia, l'": {
+   "municipio": "Alcúdia, l'",
+   "provincia": "valencia",
+   "poblacion": 12587,
+   "anio": 2025
+  },
+  "aldaia": {
+   "municipio": "Aldaia",
+   "provincia": "valencia",
+   "poblacion": 34630,
+   "anio": 2025
+  },
+  "alfafar": {
+   "municipio": "Alfafar",
+   "provincia": "valencia",
+   "poblacion": 22270,
+   "anio": 2025
+  },
+  "alfara de la baronia": {
+   "municipio": "Alfara de la Baronia",
+   "provincia": "valencia",
+   "poblacion": 624,
+   "anio": 2025
+  },
+  "alfara del patriarca": {
+   "municipio": "Alfara del Patriarca",
+   "provincia": "valencia",
+   "poblacion": 3740,
+   "anio": 2025
+  },
+  "alfarrasi": {
+   "municipio": "Alfarrasí",
+   "provincia": "valencia",
+   "poblacion": 1173,
+   "anio": 2025
+  },
+  "alfauir": {
+   "municipio": "Alfauir",
+   "provincia": "valencia",
+   "poblacion": 515,
+   "anio": 2025
+  },
+  "algar de palancia": {
+   "municipio": "Algar de Palància",
+   "provincia": "valencia",
+   "poblacion": 565,
+   "anio": 2025
+  },
+  "algemesi": {
+   "municipio": "Algemesí",
+   "provincia": "valencia",
+   "poblacion": 28306,
+   "anio": 2025
+  },
+  "algimia d'alfara": {
+   "municipio": "Algímia d'Alfara",
+   "provincia": "valencia",
+   "poblacion": 1115,
+   "anio": 2025
+  },
+  "alginet": {
+   "municipio": "Alginet",
+   "provincia": "valencia",
+   "poblacion": 14844,
+   "anio": 2025
+  },
+  "almassera": {
+   "municipio": "Almàssera",
+   "provincia": "valencia",
+   "poblacion": 7887,
+   "anio": 2025
+  },
+  "almisera": {
+   "municipio": "Almiserà",
+   "provincia": "valencia",
+   "poblacion": 278,
+   "anio": 2025
+  },
+  "almoines": {
+   "municipio": "Almoines",
+   "provincia": "valencia",
+   "poblacion": 2664,
+   "anio": 2025
+  },
+  "almussafes": {
+   "municipio": "Almussafes",
+   "provincia": "valencia",
+   "poblacion": 9070,
+   "anio": 2025
+  },
+  "alpuente": {
+   "municipio": "Alpuente",
+   "provincia": "valencia",
+   "poblacion": 688,
+   "anio": 2025
+  },
+  "alqueria de la comtessa, l'": {
+   "municipio": "Alqueria de la Comtessa, l'",
+   "provincia": "valencia",
+   "poblacion": 1547,
+   "anio": 2025
+  },
+  "alzira": {
+   "municipio": "Alzira",
+   "provincia": "valencia",
+   "poblacion": 48236,
+   "anio": 2025
+  },
+  "andilla": {
+   "municipio": "Andilla",
+   "provincia": "valencia",
+   "poblacion": 338,
+   "anio": 2025
+  },
+  "anna": {
+   "municipio": "Anna",
+   "provincia": "valencia",
+   "poblacion": 2600,
+   "anio": 2025
+  },
+  "antella": {
+   "municipio": "Antella",
+   "provincia": "valencia",
+   "poblacion": 1130,
+   "anio": 2025
+  },
+  "aras de los olmos": {
+   "municipio": "Aras de los Olmos",
+   "provincia": "valencia",
+   "poblacion": 401,
+   "anio": 2025
+  },
+  "atzeneta d'albaida": {
+   "municipio": "Atzeneta d'Albaida",
+   "provincia": "valencia",
+   "poblacion": 1193,
+   "anio": 2025
+  },
+  "ayora": {
+   "municipio": "Ayora",
+   "provincia": "valencia",
+   "poblacion": 5282,
+   "anio": 2025
+  },
+  "barx": {
+   "municipio": "Barx",
+   "provincia": "valencia",
+   "poblacion": 1501,
+   "anio": 2025
+  },
+  "barxeta": {
+   "municipio": "Barxeta",
+   "provincia": "valencia",
+   "poblacion": 1578,
+   "anio": 2025
+  },
+  "belgida": {
+   "municipio": "Bèlgida",
+   "provincia": "valencia",
+   "poblacion": 651,
+   "anio": 2025
+  },
+  "bellreguard": {
+   "municipio": "Bellreguard",
+   "provincia": "valencia",
+   "poblacion": 5032,
+   "anio": 2025
+  },
+  "bellus": {
+   "municipio": "Bellús",
+   "provincia": "valencia",
+   "poblacion": 317,
+   "anio": 2025
+  },
+  "benageber": {
+   "municipio": "Benagéber",
+   "provincia": "valencia",
+   "poblacion": 176,
+   "anio": 2025
+  },
+  "benaguasil": {
+   "municipio": "Benaguasil",
+   "provincia": "valencia",
+   "poblacion": 12668,
+   "anio": 2025
+  },
+  "benavites": {
+   "municipio": "Benavites",
+   "provincia": "valencia",
+   "poblacion": 652,
+   "anio": 2025
+  },
+  "beneixida": {
+   "municipio": "Beneixida",
+   "provincia": "valencia",
+   "poblacion": 659,
+   "anio": 2025
+  },
+  "benetusser": {
+   "municipio": "Benetússer",
+   "provincia": "valencia",
+   "poblacion": 16734,
+   "anio": 2025
+  },
+  "beniarjo": {
+   "municipio": "Beniarjó",
+   "provincia": "valencia",
+   "poblacion": 1964,
+   "anio": 2025
+  },
+  "beniatjar": {
+   "municipio": "Beniatjar",
+   "provincia": "valencia",
+   "poblacion": 209,
+   "anio": 2025
+  },
+  "benicolet": {
+   "municipio": "Benicolet",
+   "provincia": "valencia",
+   "poblacion": 610,
+   "anio": 2025
+  },
+  "benicull de xuquer": {
+   "municipio": "Benicull de Xúquer",
+   "provincia": "valencia",
+   "poblacion": 1179,
+   "anio": 2025
+  },
+  "benifaio": {
+   "municipio": "Benifaió",
+   "provincia": "valencia",
+   "poblacion": 12262,
+   "anio": 2025
+  },
+  "benifairo de la valldigna": {
+   "municipio": "Benifairó de la Valldigna",
+   "provincia": "valencia",
+   "poblacion": 1588,
+   "anio": 2025
+  },
+  "benifairo de les valls": {
+   "municipio": "Benifairó de les Valls",
+   "provincia": "valencia",
+   "poblacion": 2359,
+   "anio": 2025
+  },
+  "benifla": {
+   "municipio": "Beniflá",
+   "provincia": "valencia",
+   "poblacion": 505,
+   "anio": 2025
+  },
+  "beniganim": {
+   "municipio": "Benigànim",
+   "provincia": "valencia",
+   "poblacion": 5759,
+   "anio": 2025
+  },
+  "benimodo": {
+   "municipio": "Benimodo",
+   "provincia": "valencia",
+   "poblacion": 2332,
+   "anio": 2025
+  },
+  "benimuslem": {
+   "municipio": "Benimuslem",
+   "provincia": "valencia",
+   "poblacion": 674,
+   "anio": 2025
+  },
+  "beniparrell": {
+   "municipio": "Beniparrell",
+   "provincia": "valencia",
+   "poblacion": 2108,
+   "anio": 2025
+  },
+  "benirredra": {
+   "municipio": "Benirredrà",
+   "provincia": "valencia",
+   "poblacion": 1576,
+   "anio": 2025
+  },
+  "benissano": {
+   "municipio": "Benissanó",
+   "provincia": "valencia",
+   "poblacion": 2449,
+   "anio": 2025
+  },
+  "benissoda": {
+   "municipio": "Benissoda",
+   "provincia": "valencia",
+   "poblacion": 494,
+   "anio": 2025
+  },
+  "benissuera": {
+   "municipio": "Benissuera",
+   "provincia": "valencia",
+   "poblacion": 196,
+   "anio": 2025
+  },
+  "betera": {
+   "municipio": "Bétera",
+   "provincia": "valencia",
+   "poblacion": 28560,
+   "anio": 2025
+  },
+  "bicorp": {
+   "municipio": "Bicorp",
+   "provincia": "valencia",
+   "poblacion": 546,
+   "anio": 2025
+  },
+  "bocairent": {
+   "municipio": "Bocairent",
+   "provincia": "valencia",
+   "poblacion": 4130,
+   "anio": 2025
+  },
+  "bolbaite": {
+   "municipio": "Bolbaite",
+   "provincia": "valencia",
+   "poblacion": 1320,
+   "anio": 2025
+  },
+  "bonrepos i mirambell": {
+   "municipio": "Bonrepòs i Mirambell",
+   "provincia": "valencia",
+   "poblacion": 4115,
+   "anio": 2025
+  },
+  "bufali": {
+   "municipio": "Bufali",
+   "provincia": "valencia",
+   "poblacion": 162,
+   "anio": 2025
+  },
+  "bugarra": {
+   "municipio": "Bugarra",
+   "provincia": "valencia",
+   "poblacion": 774,
+   "anio": 2025
+  },
+  "bunol": {
+   "municipio": "Buñol",
+   "provincia": "valencia",
+   "poblacion": 9858,
+   "anio": 2025
+  },
+  "burjassot": {
+   "municipio": "Burjassot",
+   "provincia": "valencia",
+   "poblacion": 41299,
+   "anio": 2025
+  },
+  "calles": {
+   "municipio": "Calles",
+   "provincia": "valencia",
+   "poblacion": 465,
+   "anio": 2025
+  },
+  "camporrobles": {
+   "municipio": "Camporrobles",
+   "provincia": "valencia",
+   "poblacion": 1183,
+   "anio": 2025
+  },
+  "canals": {
+   "municipio": "Canals",
+   "provincia": "valencia",
+   "poblacion": 13746,
+   "anio": 2025
+  },
+  "canet d'en berenguer": {
+   "municipio": "Canet d'En Berenguer",
+   "provincia": "valencia",
+   "poblacion": 8297,
+   "anio": 2025
+  },
+  "carcaixent": {
+   "municipio": "Carcaixent",
+   "provincia": "valencia",
+   "poblacion": 21934,
+   "anio": 2025
+  },
+  "carcer": {
+   "municipio": "Càrcer",
+   "provincia": "valencia",
+   "poblacion": 1795,
+   "anio": 2025
+  },
+  "carlet": {
+   "municipio": "Carlet",
+   "provincia": "valencia",
+   "poblacion": 16857,
+   "anio": 2025
+  },
+  "carricola": {
+   "municipio": "Carrícola",
+   "provincia": "valencia",
+   "poblacion": 97,
+   "anio": 2025
+  },
+  "casas altas": {
+   "municipio": "Casas Altas",
+   "provincia": "valencia",
+   "poblacion": 118,
+   "anio": 2025
+  },
+  "casas bajas": {
+   "municipio": "Casas Bajas",
+   "provincia": "valencia",
+   "poblacion": 158,
+   "anio": 2025
+  },
+  "casinos": {
+   "municipio": "Casinos",
+   "provincia": "valencia",
+   "poblacion": 3153,
+   "anio": 2025
+  },
+  "castello de rugat": {
+   "municipio": "Castelló de Rugat",
+   "provincia": "valencia",
+   "poblacion": 2345,
+   "anio": 2025
+  },
+  "castellonet de la conquesta": {
+   "municipio": "Castellonet de la Conquesta",
+   "provincia": "valencia",
+   "poblacion": 159,
+   "anio": 2025
+  },
+  "castielfabib": {
+   "municipio": "Castielfabib",
+   "provincia": "valencia",
+   "poblacion": 284,
+   "anio": 2025
+  },
+  "catadau": {
+   "municipio": "Catadau",
+   "provincia": "valencia",
+   "poblacion": 3005,
+   "anio": 2025
+  },
+  "catarroja": {
+   "municipio": "Catarroja",
+   "provincia": "valencia",
+   "poblacion": 30604,
+   "anio": 2025
+  },
+  "caudete de las fuentes": {
+   "municipio": "Caudete de las Fuentes",
+   "provincia": "valencia",
+   "poblacion": 725,
+   "anio": 2025
+  },
+  "cerda": {
+   "municipio": "Cerdà",
+   "provincia": "valencia",
+   "poblacion": 370,
+   "anio": 2025
+  },
+  "chella": {
+   "municipio": "Chella",
+   "provincia": "valencia",
+   "poblacion": 2452,
+   "anio": 2025
+  },
+  "chelva": {
+   "municipio": "Chelva",
+   "provincia": "valencia",
+   "poblacion": 1863,
+   "anio": 2025
+  },
+  "chera": {
+   "municipio": "Chera",
+   "provincia": "valencia",
+   "poblacion": 508,
+   "anio": 2025
+  },
+  "cheste": {
+   "municipio": "Cheste",
+   "provincia": "valencia",
+   "poblacion": 8951,
+   "anio": 2025
+  },
+  "chiva": {
+   "municipio": "Chiva",
+   "provincia": "valencia",
+   "poblacion": 17951,
+   "anio": 2025
+  },
+  "chulilla": {
+   "municipio": "Chulilla",
+   "provincia": "valencia",
+   "poblacion": 710,
+   "anio": 2025
+  },
+  "cofrentes": {
+   "municipio": "Cofrentes",
+   "provincia": "valencia",
+   "poblacion": 1113,
+   "anio": 2025
+  },
+  "corbera": {
+   "municipio": "Corbera",
+   "provincia": "valencia",
+   "poblacion": 3266,
+   "anio": 2025
+  },
+  "cortes de pallas": {
+   "municipio": "Cortes de Pallás",
+   "provincia": "valencia",
+   "poblacion": 727,
+   "anio": 2025
+  },
+  "cotes": {
+   "municipio": "Cotes",
+   "provincia": "valencia",
+   "poblacion": 314,
+   "anio": 2025
+  },
+  "cullera": {
+   "municipio": "Cullera",
+   "provincia": "valencia",
+   "poblacion": 24702,
+   "anio": 2025
+  },
+  "daimus": {
+   "municipio": "Daimús",
+   "provincia": "valencia",
+   "poblacion": 3524,
+   "anio": 2025
+  },
+  "domeno": {
+   "municipio": "Domeño",
+   "provincia": "valencia",
+   "poblacion": 723,
+   "anio": 2025
+  },
+  "dos aguas": {
+   "municipio": "Dos Aguas",
+   "provincia": "valencia",
+   "poblacion": 340,
+   "anio": 2025
+  },
+  "eliana, l'": {
+   "municipio": "Eliana, l'",
+   "provincia": "valencia",
+   "poblacion": 19839,
+   "anio": 2025
+  },
+  "emperador": {
+   "municipio": "Emperador",
+   "provincia": "valencia",
+   "poblacion": 700,
+   "anio": 2025
+  },
+  "enguera": {
+   "municipio": "Enguera",
+   "provincia": "valencia",
+   "poblacion": 4807,
+   "anio": 2025
+  },
+  "enova, l'": {
+   "municipio": "Énova, l'",
+   "provincia": "valencia",
+   "poblacion": 952,
+   "anio": 2025
+  },
+  "estivella": {
+   "municipio": "Estivella",
+   "provincia": "valencia",
+   "poblacion": 1710,
+   "anio": 2025
+  },
+  "estubeny": {
+   "municipio": "Estubeny",
+   "provincia": "valencia",
+   "poblacion": 110,
+   "anio": 2025
+  },
+  "faura": {
+   "municipio": "Faura",
+   "provincia": "valencia",
+   "poblacion": 3753,
+   "anio": 2025
+  },
+  "favara": {
+   "municipio": "Favara",
+   "provincia": "valencia",
+   "poblacion": 2776,
+   "anio": 2025
+  },
+  "foios": {
+   "municipio": "Foios",
+   "provincia": "valencia",
+   "poblacion": 7995,
+   "anio": 2025
+  },
+  "font de la figuera, la": {
+   "municipio": "Font de la Figuera, la",
+   "provincia": "valencia",
+   "poblacion": 2022,
+   "anio": 2025
+  },
+  "font d'en carros, la": {
+   "municipio": "Font d'en Carròs, la",
+   "provincia": "valencia",
+   "poblacion": 4020,
+   "anio": 2025
+  },
+  "fontanars dels alforins": {
+   "municipio": "Fontanars dels Alforins",
+   "provincia": "valencia",
+   "poblacion": 936,
+   "anio": 2025
+  },
+  "fortaleny": {
+   "municipio": "Fortaleny",
+   "provincia": "valencia",
+   "poblacion": 1024,
+   "anio": 2025
+  },
+  "fuenterrobles": {
+   "municipio": "Fuenterrobles",
+   "provincia": "valencia",
+   "poblacion": 678,
+   "anio": 2025
+  },
+  "gandia": {
+   "municipio": "Gandia",
+   "provincia": "valencia",
+   "poblacion": 83135,
+   "anio": 2025
+  },
+  "gatova": {
+   "municipio": "Gátova",
+   "provincia": "valencia",
+   "poblacion": 452,
+   "anio": 2025
+  },
+  "gavarda": {
+   "municipio": "Gavarda",
+   "provincia": "valencia",
+   "poblacion": 1023,
+   "anio": 2025
+  },
+  "genoves, el": {
+   "municipio": "Genovés, el",
+   "provincia": "valencia",
+   "poblacion": 2822,
+   "anio": 2025
+  },
+  "gestalgar": {
+   "municipio": "Gestalgar",
+   "provincia": "valencia",
+   "poblacion": 587,
+   "anio": 2025
+  },
+  "gilet": {
+   "municipio": "Gilet",
+   "provincia": "valencia",
+   "poblacion": 4011,
+   "anio": 2025
+  },
+  "godella": {
+   "municipio": "Godella",
+   "provincia": "valencia",
+   "poblacion": 13533,
+   "anio": 2025
+  },
+  "godelleta": {
+   "municipio": "Godelleta",
+   "provincia": "valencia",
+   "poblacion": 4266,
+   "anio": 2025
+  },
+  "granja de la costera, la": {
+   "municipio": "Granja de la Costera, la",
+   "provincia": "valencia",
+   "poblacion": 306,
+   "anio": 2025
+  },
+  "guadassequies": {
+   "municipio": "Guadasséquies",
+   "provincia": "valencia",
+   "poblacion": 478,
+   "anio": 2025
+  },
+  "guadassuar": {
+   "municipio": "Guadassuar",
+   "provincia": "valencia",
+   "poblacion": 6039,
+   "anio": 2025
+  },
+  "guardamar de la safor": {
+   "municipio": "Guardamar de la Safor",
+   "provincia": "valencia",
+   "poblacion": 622,
+   "anio": 2025
+  },
+  "higueruelas": {
+   "municipio": "Higueruelas",
+   "provincia": "valencia",
+   "poblacion": 567,
+   "anio": 2025
+  },
+  "jalance": {
+   "municipio": "Jalance",
+   "provincia": "valencia",
+   "poblacion": 808,
+   "anio": 2025
+  },
+  "jarafuel": {
+   "municipio": "Jarafuel",
+   "provincia": "valencia",
+   "poblacion": 788,
+   "anio": 2025
+  },
+  "llanera de ranes": {
+   "municipio": "Llanera de Ranes",
+   "provincia": "valencia",
+   "poblacion": 1062,
+   "anio": 2025
+  },
+  "llauri": {
+   "municipio": "Llaurí",
+   "provincia": "valencia",
+   "poblacion": 1226,
+   "anio": 2025
+  },
+  "lliria": {
+   "municipio": "Llíria",
+   "provincia": "valencia",
+   "poblacion": 25333,
+   "anio": 2025
+  },
+  "llocnou de la corona": {
+   "municipio": "Llocnou de la Corona",
+   "provincia": "valencia",
+   "poblacion": 132,
+   "anio": 2025
+  },
+  "llocnou de sant jeroni": {
+   "municipio": "Llocnou de Sant Jeroni",
+   "provincia": "valencia",
+   "poblacion": 594,
+   "anio": 2025
+  },
+  "llocnou d'en fenollet": {
+   "municipio": "Llocnou d'En Fenollet",
+   "provincia": "valencia",
+   "poblacion": 944,
+   "anio": 2025
+  },
+  "llombai": {
+   "municipio": "Llombai",
+   "provincia": "valencia",
+   "poblacion": 2791,
+   "anio": 2025
+  },
+  "llosa de ranes, la": {
+   "municipio": "Llosa de Ranes, la",
+   "provincia": "valencia",
+   "poblacion": 3765,
+   "anio": 2025
+  },
+  "llutxent": {
+   "municipio": "Llutxent",
+   "provincia": "valencia",
+   "poblacion": 2314,
+   "anio": 2025
+  },
+  "loriguilla": {
+   "municipio": "Loriguilla",
+   "provincia": "valencia",
+   "poblacion": 2188,
+   "anio": 2025
+  },
+  "losa del obispo": {
+   "municipio": "Losa del Obispo",
+   "provincia": "valencia",
+   "poblacion": 531,
+   "anio": 2025
+  },
+  "macastre": {
+   "municipio": "Macastre",
+   "provincia": "valencia",
+   "poblacion": 1461,
+   "anio": 2025
+  },
+  "manises": {
+   "municipio": "Manises",
+   "provincia": "valencia",
+   "poblacion": 32609,
+   "anio": 2025
+  },
+  "manuel": {
+   "municipio": "Manuel",
+   "provincia": "valencia",
+   "poblacion": 2560,
+   "anio": 2025
+  },
+  "marines": {
+   "municipio": "Marines",
+   "provincia": "valencia",
+   "poblacion": 1967,
+   "anio": 2025
+  },
+  "massalaves": {
+   "municipio": "Massalavés",
+   "provincia": "valencia",
+   "poblacion": 1905,
+   "anio": 2025
+  },
+  "massalfassar": {
+   "municipio": "Massalfassar",
+   "provincia": "valencia",
+   "poblacion": 2716,
+   "anio": 2025
+  },
+  "massamagrell": {
+   "municipio": "Massamagrell",
+   "provincia": "valencia",
+   "poblacion": 17566,
+   "anio": 2025
+  },
+  "massanassa": {
+   "municipio": "Massanassa",
+   "provincia": "valencia",
+   "poblacion": 10607,
+   "anio": 2025
+  },
+  "meliana": {
+   "municipio": "Meliana",
+   "provincia": "valencia",
+   "poblacion": 11055,
+   "anio": 2025
+  },
+  "millares": {
+   "municipio": "Millares",
+   "provincia": "valencia",
+   "poblacion": 321,
+   "anio": 2025
+  },
+  "miramar": {
+   "municipio": "Miramar",
+   "provincia": "valencia",
+   "poblacion": 3143,
+   "anio": 2025
+  },
+  "mislata": {
+   "municipio": "Mislata",
+   "provincia": "valencia",
+   "poblacion": 47079,
+   "anio": 2025
+  },
+  "mogente": {
+   "municipio": "Mogente",
+   "provincia": "valencia",
+   "poblacion": 4401,
+   "anio": 2025
+  },
+  "moncada": {
+   "municipio": "Moncada",
+   "provincia": "valencia",
+   "poblacion": 22213,
+   "anio": 2025
+  },
+  "montaverner": {
+   "municipio": "Montaverner",
+   "provincia": "valencia",
+   "poblacion": 1624,
+   "anio": 2025
+  },
+  "montesa": {
+   "municipio": "Montesa",
+   "provincia": "valencia",
+   "poblacion": 1128,
+   "anio": 2025
+  },
+  "montichelvo": {
+   "municipio": "Montichelvo",
+   "provincia": "valencia",
+   "poblacion": 556,
+   "anio": 2025
+  },
+  "montroy": {
+   "municipio": "Montroy",
+   "provincia": "valencia",
+   "poblacion": 3792,
+   "anio": 2025
+  },
+  "montserrat": {
+   "municipio": "Montserrat",
+   "provincia": "valencia",
+   "poblacion": 10062,
+   "anio": 2025
+  },
+  "museros": {
+   "municipio": "Museros",
+   "provincia": "valencia",
+   "poblacion": 6871,
+   "anio": 2025
+  },
+  "naquera": {
+   "municipio": "Náquera",
+   "provincia": "valencia",
+   "poblacion": 8556,
+   "anio": 2025
+  },
+  "navarres": {
+   "municipio": "Navarrés",
+   "provincia": "valencia",
+   "poblacion": 3027,
+   "anio": 2025
+  },
+  "novetle": {
+   "municipio": "Novetlè",
+   "provincia": "valencia",
+   "poblacion": 872,
+   "anio": 2025
+  },
+  "oliva": {
+   "municipio": "Oliva",
+   "provincia": "valencia",
+   "poblacion": 26813,
+   "anio": 2025
+  },
+  "olleria, l'": {
+   "municipio": "Olleria, l'",
+   "provincia": "valencia",
+   "poblacion": 8818,
+   "anio": 2025
+  },
+  "olocau": {
+   "municipio": "Olocau",
+   "provincia": "valencia",
+   "poblacion": 2534,
+   "anio": 2025
+  },
+  "ontinyent": {
+   "municipio": "Ontinyent",
+   "provincia": "valencia",
+   "poblacion": 37012,
+   "anio": 2025
+  },
+  "otos": {
+   "municipio": "Otos",
+   "provincia": "valencia",
+   "poblacion": 442,
+   "anio": 2025
+  },
+  "paiporta": {
+   "municipio": "Paiporta",
+   "provincia": "valencia",
+   "poblacion": 28136,
+   "anio": 2025
+  },
+  "palma de gandia": {
+   "municipio": "Palma de Gandía",
+   "provincia": "valencia",
+   "poblacion": 1897,
+   "anio": 2025
+  },
+  "palmera": {
+   "municipio": "Palmera",
+   "provincia": "valencia",
+   "poblacion": 1038,
+   "anio": 2025
+  },
+  "palomar, el": {
+   "municipio": "Palomar, el",
+   "provincia": "valencia",
+   "poblacion": 593,
+   "anio": 2025
+  },
+  "paterna": {
+   "municipio": "Paterna",
+   "provincia": "valencia",
+   "poblacion": 76019,
+   "anio": 2025
+  },
+  "pedralba": {
+   "municipio": "Pedralba",
+   "provincia": "valencia",
+   "poblacion": 3225,
+   "anio": 2025
+  },
+  "petres": {
+   "municipio": "Petrés",
+   "provincia": "valencia",
+   "poblacion": 1124,
+   "anio": 2025
+  },
+  "picanya": {
+   "municipio": "Picanya",
+   "provincia": "valencia",
+   "poblacion": 11901,
+   "anio": 2025
+  },
+  "picassent": {
+   "municipio": "Picassent",
+   "provincia": "valencia",
+   "poblacion": 23202,
+   "anio": 2025
+  },
+  "piles": {
+   "municipio": "Piles",
+   "provincia": "valencia",
+   "poblacion": 3151,
+   "anio": 2025
+  },
+  "pinet": {
+   "municipio": "Pinet",
+   "provincia": "valencia",
+   "poblacion": 156,
+   "anio": 2025
+  },
+  "pobla de farnals, la": {
+   "municipio": "Pobla de Farnals, la",
+   "provincia": "valencia",
+   "poblacion": 9255,
+   "anio": 2025
+  },
+  "pobla de vallbona, la": {
+   "municipio": "Pobla de Vallbona, la",
+   "provincia": "valencia",
+   "poblacion": 27471,
+   "anio": 2025
+  },
+  "pobla del duc, la": {
+   "municipio": "Pobla del Duc, la",
+   "provincia": "valencia",
+   "poblacion": 2451,
+   "anio": 2025
+  },
+  "pobla llarga, la": {
+   "municipio": "Pobla Llarga, la",
+   "provincia": "valencia",
+   "poblacion": 4665,
+   "anio": 2025
+  },
+  "polinya de xuquer": {
+   "municipio": "Polinyà de Xúquer",
+   "provincia": "valencia",
+   "poblacion": 2577,
+   "anio": 2025
+  },
+  "potries": {
+   "municipio": "Potries",
+   "provincia": "valencia",
+   "poblacion": 1135,
+   "anio": 2025
+  },
+  "pucol": {
+   "municipio": "Puçol",
+   "provincia": "valencia",
+   "poblacion": 21659,
+   "anio": 2025
+  },
+  "puebla de san miguel": {
+   "municipio": "Puebla de San Miguel",
+   "provincia": "valencia",
+   "poblacion": 53,
+   "anio": 2025
+  },
+  "puig de santa maria, el": {
+   "municipio": "Puig de Santa Maria, el",
+   "provincia": "valencia",
+   "poblacion": 9490,
+   "anio": 2025
+  },
+  "quart de les valls": {
+   "municipio": "Quart de les Valls",
+   "provincia": "valencia",
+   "poblacion": 1029,
+   "anio": 2025
+  },
+  "quart de poblet": {
+   "municipio": "Quart de Poblet",
+   "provincia": "valencia",
+   "poblacion": 26967,
+   "anio": 2025
+  },
+  "quartell": {
+   "municipio": "Quartell",
+   "provincia": "valencia",
+   "poblacion": 1810,
+   "anio": 2025
+  },
+  "quatretonda": {
+   "municipio": "Quatretonda",
+   "provincia": "valencia",
+   "poblacion": 2174,
+   "anio": 2025
+  },
+  "quesa": {
+   "municipio": "Quesa",
+   "provincia": "valencia",
+   "poblacion": 691,
+   "anio": 2025
+  },
+  "rafelbunyol": {
+   "municipio": "Rafelbunyol",
+   "provincia": "valencia",
+   "poblacion": 9974,
+   "anio": 2025
+  },
+  "rafelcofer": {
+   "municipio": "Rafelcofer",
+   "provincia": "valencia",
+   "poblacion": 1409,
+   "anio": 2025
+  },
+  "rafelguaraf": {
+   "municipio": "Rafelguaraf",
+   "provincia": "valencia",
+   "poblacion": 2395,
+   "anio": 2025
+  },
+  "rafol de salem": {
+   "municipio": "Ráfol de Salem",
+   "provincia": "valencia",
+   "poblacion": 463,
+   "anio": 2025
+  },
+  "real": {
+   "municipio": "Real",
+   "provincia": "valencia",
+   "poblacion": 2497,
+   "anio": 2025
+  },
+  "real de gandia, el": {
+   "municipio": "Real de Gandia, el",
+   "provincia": "valencia",
+   "poblacion": 2722,
+   "anio": 2025
+  },
+  "requena": {
+   "municipio": "Requena",
+   "provincia": "valencia",
+   "poblacion": 20982,
+   "anio": 2025
+  },
+  "riba-roja de turia": {
+   "municipio": "Riba-roja de Túria",
+   "provincia": "valencia",
+   "poblacion": 24616,
+   "anio": 2025
+  },
+  "riola": {
+   "municipio": "Riola",
+   "provincia": "valencia",
+   "poblacion": 1820,
+   "anio": 2025
+  },
+  "rocafort": {
+   "municipio": "Rocafort",
+   "provincia": "valencia",
+   "poblacion": 7751,
+   "anio": 2025
+  },
+  "rotgla i corbera": {
+   "municipio": "Rotglà i Corberà",
+   "provincia": "valencia",
+   "poblacion": 1171,
+   "anio": 2025
+  },
+  "rotova": {
+   "municipio": "Ròtova",
+   "provincia": "valencia",
+   "poblacion": 1283,
+   "anio": 2025
+  },
+  "rugat": {
+   "municipio": "Rugat",
+   "provincia": "valencia",
+   "poblacion": 165,
+   "anio": 2025
+  },
+  "sagunto": {
+   "municipio": "Sagunto",
+   "provincia": "valencia",
+   "poblacion": 73031,
+   "anio": 2025
+  },
+  "salem": {
+   "municipio": "Salem",
+   "provincia": "valencia",
+   "poblacion": 407,
+   "anio": 2025
+  },
+  "san antonio de benageber": {
+   "municipio": "San Antonio de Benagéber",
+   "provincia": "valencia",
+   "poblacion": 11192,
+   "anio": 2025
+  },
+  "sant joanet": {
+   "municipio": "Sant Joanet",
+   "provincia": "valencia",
+   "poblacion": 527,
+   "anio": 2025
+  },
+  "sedavi": {
+   "municipio": "Sedaví",
+   "provincia": "valencia",
+   "poblacion": 10837,
+   "anio": 2025
+  },
+  "segart": {
+   "municipio": "Segart",
+   "provincia": "valencia",
+   "poblacion": 180,
+   "anio": 2025
+  },
+  "sellent": {
+   "municipio": "Sellent",
+   "provincia": "valencia",
+   "poblacion": 383,
+   "anio": 2025
+  },
+  "sempere": {
+   "municipio": "Sempere",
+   "provincia": "valencia",
+   "poblacion": 33,
+   "anio": 2025
+  },
+  "senyera": {
+   "municipio": "Senyera",
+   "provincia": "valencia",
+   "poblacion": 1114,
+   "anio": 2025
+  },
+  "serra": {
+   "municipio": "Serra",
+   "provincia": "valencia",
+   "poblacion": 3767,
+   "anio": 2025
+  },
+  "siete aguas": {
+   "municipio": "Siete Aguas",
+   "provincia": "valencia",
+   "poblacion": 1289,
+   "anio": 2025
+  },
+  "silla": {
+   "municipio": "Silla",
+   "provincia": "valencia",
+   "poblacion": 20482,
+   "anio": 2025
+  },
+  "simat de la valldigna": {
+   "municipio": "Simat de la Valldigna",
+   "provincia": "valencia",
+   "poblacion": 3311,
+   "anio": 2025
+  },
+  "sinarcas": {
+   "municipio": "Sinarcas",
+   "provincia": "valencia",
+   "poblacion": 1176,
+   "anio": 2025
+  },
+  "sollana": {
+   "municipio": "Sollana",
+   "provincia": "valencia",
+   "poblacion": 5089,
+   "anio": 2025
+  },
+  "sot de chera": {
+   "municipio": "Sot de Chera",
+   "provincia": "valencia",
+   "poblacion": 427,
+   "anio": 2025
+  },
+  "sueca": {
+   "municipio": "Sueca",
+   "provincia": "valencia",
+   "poblacion": 29194,
+   "anio": 2025
+  },
+  "sumacarcer": {
+   "municipio": "Sumacàrcer",
+   "provincia": "valencia",
+   "poblacion": 1013,
+   "anio": 2025
+  },
+  "tavernes blanques": {
+   "municipio": "Tavernes Blanques",
+   "provincia": "valencia",
+   "poblacion": 9824,
+   "anio": 2025
+  },
+  "tavernes de la valldigna": {
+   "municipio": "Tavernes de la Valldigna",
+   "provincia": "valencia",
+   "poblacion": 17866,
+   "anio": 2025
+  },
+  "teresa de cofrentes": {
+   "municipio": "Teresa de Cofrentes",
+   "provincia": "valencia",
+   "poblacion": 620,
+   "anio": 2025
+  },
+  "terrateig": {
+   "municipio": "Terrateig",
+   "provincia": "valencia",
+   "poblacion": 290,
+   "anio": 2025
+  },
+  "titaguas": {
+   "municipio": "Titaguas",
+   "provincia": "valencia",
+   "poblacion": 517,
+   "anio": 2025
+  },
+  "torrebaja": {
+   "municipio": "Torrebaja",
+   "provincia": "valencia",
+   "poblacion": 398,
+   "anio": 2025
+  },
+  "torrella": {
+   "municipio": "Torrella",
+   "provincia": "valencia",
+   "poblacion": 151,
+   "anio": 2025
+  },
+  "torres torres": {
+   "municipio": "Torres Torres",
+   "provincia": "valencia",
+   "poblacion": 808,
+   "anio": 2025
+  },
+  "tous": {
+   "municipio": "Tous",
+   "provincia": "valencia",
+   "poblacion": 1354,
+   "anio": 2025
+  },
+  "tuejar": {
+   "municipio": "Tuéjar",
+   "provincia": "valencia",
+   "poblacion": 1278,
+   "anio": 2025
+  },
+  "turis": {
+   "municipio": "Turís",
+   "provincia": "valencia",
+   "poblacion": 7717,
+   "anio": 2025
+  },
+  "utiel": {
+   "municipio": "Utiel",
+   "provincia": "valencia",
+   "poblacion": 11663,
+   "anio": 2025
+  },
+  "valencia": {
+   "municipio": "València",
+   "provincia": "valencia",
+   "poblacion": 840792,
+   "anio": 2025
+  },
+  "vallada": {
+   "municipio": "Vallada",
+   "provincia": "valencia",
+   "poblacion": 3091,
+   "anio": 2025
+  },
+  "vallanca": {
+   "municipio": "Vallanca",
+   "provincia": "valencia",
+   "poblacion": 128,
+   "anio": 2025
+  },
+  "valles": {
+   "municipio": "Vallés",
+   "provincia": "valencia",
+   "poblacion": 161,
+   "anio": 2025
+  },
+  "venta del moro": {
+   "municipio": "Venta del Moro",
+   "provincia": "valencia",
+   "poblacion": 1143,
+   "anio": 2025
+  },
+  "villalonga": {
+   "municipio": "Villalonga",
+   "provincia": "valencia",
+   "poblacion": 4865,
+   "anio": 2025
+  },
+  "vilamarxant": {
+   "municipio": "Vilamarxant",
+   "provincia": "valencia",
+   "poblacion": 11403,
+   "anio": 2025
+  },
+  "castello": {
+   "municipio": "Castelló",
+   "provincia": "valencia",
+   "poblacion": 6972,
+   "anio": 2025
+  },
+  "villar del arzobispo": {
+   "municipio": "Villar del Arzobispo",
+   "provincia": "valencia",
+   "poblacion": 3862,
+   "anio": 2025
+  },
+  "villargordo del cabriel": {
+   "municipio": "Villargordo del Cabriel",
+   "provincia": "valencia",
+   "poblacion": 588,
+   "anio": 2025
+  },
+  "vinalesa": {
+   "municipio": "Vinalesa",
+   "provincia": "valencia",
+   "poblacion": 3572,
+   "anio": 2025
+  },
+  "xativa": {
+   "municipio": "Xàtiva",
+   "provincia": "valencia",
+   "poblacion": 31008,
+   "anio": 2025
+  },
+  "xeraco": {
+   "municipio": "Xeraco",
+   "provincia": "valencia",
+   "poblacion": 6149,
+   "anio": 2025
+  },
+  "xeresa": {
+   "municipio": "Xeresa",
+   "provincia": "valencia",
+   "poblacion": 2418,
+   "anio": 2025
+  },
+  "xirivella": {
+   "municipio": "Xirivella",
+   "provincia": "valencia",
+   "poblacion": 32093,
+   "anio": 2025
+  },
+  "yatova": {
+   "municipio": "Yátova",
+   "provincia": "valencia",
+   "poblacion": 2325,
+   "anio": 2025
+  },
+  "yesa, la": {
+   "municipio": "Yesa, La",
+   "provincia": "valencia",
+   "poblacion": 246,
+   "anio": 2025
+  },
+  "zarra": {
+   "municipio": "Zarra",
+   "provincia": "valencia",
+   "poblacion": 374,
+   "anio": 2025
+  },
+  "abla": {
+   "municipio": "Abla",
+   "provincia": "almeria",
+   "poblacion": 1268,
+   "anio": 2025
+  },
+  "abrucena": {
+   "municipio": "Abrucena",
+   "provincia": "almeria",
+   "poblacion": 1241,
+   "anio": 2025
+  },
+  "adra": {
+   "municipio": "Adra",
+   "provincia": "almeria",
+   "poblacion": 25501,
+   "anio": 2025
+  },
+  "albanchez": {
+   "municipio": "Albanchez",
+   "provincia": "almeria",
+   "poblacion": 688,
+   "anio": 2025
+  },
+  "alboloduy": {
+   "municipio": "Alboloduy",
+   "provincia": "almeria",
+   "poblacion": 579,
+   "anio": 2025
+  },
+  "albox": {
+   "municipio": "Albox",
+   "provincia": "almeria",
+   "poblacion": 12799,
+   "anio": 2025
+  },
+  "alcolea": {
+   "municipio": "Alcolea",
+   "provincia": "almeria",
+   "poblacion": 829,
+   "anio": 2025
+  },
+  "alcontar": {
+   "municipio": "Alcóntar",
+   "provincia": "almeria",
+   "poblacion": 545,
+   "anio": 2025
+  },
+  "alcudia de monteagud": {
+   "municipio": "Alcudia de Monteagud",
+   "provincia": "almeria",
+   "poblacion": 115,
+   "anio": 2025
+  },
+  "alhabia": {
+   "municipio": "Alhabia",
+   "provincia": "almeria",
+   "poblacion": 743,
+   "anio": 2025
+  },
+  "alhama de almeria": {
+   "municipio": "Alhama de Almería",
+   "provincia": "almeria",
+   "poblacion": 3975,
+   "anio": 2025
+  },
+  "alicun": {
+   "municipio": "Alicún",
+   "provincia": "almeria",
+   "poblacion": 206,
+   "anio": 2025
+  },
+  "almeria": {
+   "municipio": "Almería",
+   "provincia": "almeria",
+   "poblacion": 205468,
+   "anio": 2025
+  },
+  "almocita": {
+   "municipio": "Almócita",
+   "provincia": "almeria",
+   "poblacion": 208,
+   "anio": 2025
+  },
+  "alsodux": {
+   "municipio": "Alsodux",
+   "provincia": "almeria",
+   "poblacion": 126,
+   "anio": 2025
+  },
+  "antas": {
+   "municipio": "Antas",
+   "provincia": "almeria",
+   "poblacion": 3472,
+   "anio": 2025
+  },
+  "arboleas": {
+   "municipio": "Arboleas",
+   "provincia": "almeria",
+   "poblacion": 4215,
+   "anio": 2025
+  },
+  "armuna de almanzora": {
+   "municipio": "Armuña de Almanzora",
+   "provincia": "almeria",
+   "poblacion": 371,
+   "anio": 2025
+  },
+  "bacares": {
+   "municipio": "Bacares",
+   "provincia": "almeria",
+   "poblacion": 226,
+   "anio": 2025
+  },
+  "balanegra": {
+   "municipio": "Balanegra",
+   "provincia": "almeria",
+   "poblacion": 3055,
+   "anio": 2025
+  },
+  "bayarcal": {
+   "municipio": "Bayárcal",
+   "provincia": "almeria",
+   "poblacion": 294,
+   "anio": 2025
+  },
+  "bayarque": {
+   "municipio": "Bayarque",
+   "provincia": "almeria",
+   "poblacion": 215,
+   "anio": 2025
+  },
+  "bedar": {
+   "municipio": "Bédar",
+   "provincia": "almeria",
+   "poblacion": 953,
+   "anio": 2025
+  },
+  "beires": {
+   "municipio": "Beires",
+   "provincia": "almeria",
+   "poblacion": 140,
+   "anio": 2025
+  },
+  "benahadux": {
+   "municipio": "Benahadux",
+   "provincia": "almeria",
+   "poblacion": 4901,
+   "anio": 2025
+  },
+  "benitagla": {
+   "municipio": "Benitagla",
+   "provincia": "almeria",
+   "poblacion": 63,
+   "anio": 2025
+  },
+  "benizalon": {
+   "municipio": "Benizalón",
+   "provincia": "almeria",
+   "poblacion": 242,
+   "anio": 2025
+  },
+  "bentarique": {
+   "municipio": "Bentarique",
+   "provincia": "almeria",
+   "poblacion": 223,
+   "anio": 2025
+  },
+  "berja": {
+   "municipio": "Berja",
+   "provincia": "almeria",
+   "poblacion": 13120,
+   "anio": 2025
+  },
+  "canjayar": {
+   "municipio": "Canjáyar",
+   "provincia": "almeria",
+   "poblacion": 1139,
+   "anio": 2025
+  },
+  "cantoria": {
+   "municipio": "Cantoria",
+   "provincia": "almeria",
+   "poblacion": 3592,
+   "anio": 2025
+  },
+  "carboneras": {
+   "municipio": "Carboneras",
+   "provincia": "almeria",
+   "poblacion": 8458,
+   "anio": 2025
+  },
+  "castro de filabres": {
+   "municipio": "Castro de Filabres",
+   "provincia": "almeria",
+   "poblacion": 101,
+   "anio": 2025
+  },
+  "chercos": {
+   "municipio": "Chercos",
+   "provincia": "almeria",
+   "poblacion": 301,
+   "anio": 2025
+  },
+  "chirivel": {
+   "municipio": "Chirivel",
+   "provincia": "almeria",
+   "poblacion": 1619,
+   "anio": 2025
+  },
+  "cobdar": {
+   "municipio": "Cóbdar",
+   "provincia": "almeria",
+   "poblacion": 169,
+   "anio": 2025
+  },
+  "cuevas del almanzora": {
+   "municipio": "Cuevas del Almanzora",
+   "provincia": "almeria",
+   "poblacion": 15526,
+   "anio": 2025
+  },
+  "dalias": {
+   "municipio": "Dalías",
+   "provincia": "almeria",
+   "poblacion": 4196,
+   "anio": 2025
+  },
+  "ejido, el": {
+   "municipio": "Ejido, El",
+   "provincia": "almeria",
+   "poblacion": 91440,
+   "anio": 2025
+  },
+  "enix": {
+   "municipio": "Enix",
+   "provincia": "almeria",
+   "poblacion": 612,
+   "anio": 2025
+  },
+  "felix": {
+   "municipio": "Felix",
+   "provincia": "almeria",
+   "poblacion": 771,
+   "anio": 2025
+  },
+  "fines": {
+   "municipio": "Fines",
+   "provincia": "almeria",
+   "poblacion": 2404,
+   "anio": 2025
+  },
+  "finana": {
+   "municipio": "Fiñana",
+   "provincia": "almeria",
+   "poblacion": 1956,
+   "anio": 2025
+  },
+  "fondon": {
+   "municipio": "Fondón",
+   "provincia": "almeria",
+   "poblacion": 1152,
+   "anio": 2025
+  },
+  "gador": {
+   "municipio": "Gádor",
+   "provincia": "almeria",
+   "poblacion": 3130,
+   "anio": 2025
+  },
+  "gallardos, los": {
+   "municipio": "Gallardos, Los",
+   "provincia": "almeria",
+   "poblacion": 3110,
+   "anio": 2025
+  },
+  "garrucha": {
+   "municipio": "Garrucha",
+   "provincia": "almeria",
+   "poblacion": 10845,
+   "anio": 2025
+  },
+  "gergal": {
+   "municipio": "Gérgal",
+   "provincia": "almeria",
+   "poblacion": 1211,
+   "anio": 2025
+  },
+  "huecija": {
+   "municipio": "Huécija",
+   "provincia": "almeria",
+   "poblacion": 526,
+   "anio": 2025
+  },
+  "huercal de almeria": {
+   "municipio": "Huércal de Almería",
+   "provincia": "almeria",
+   "poblacion": 18660,
+   "anio": 2025
+  },
+  "huercal-overa": {
+   "municipio": "Huércal-Overa",
+   "provincia": "almeria",
+   "poblacion": 20860,
+   "anio": 2025
+  },
+  "illar": {
+   "municipio": "Íllar",
+   "provincia": "almeria",
+   "poblacion": 492,
+   "anio": 2025
+  },
+  "instincion": {
+   "municipio": "Instinción",
+   "provincia": "almeria",
+   "poblacion": 507,
+   "anio": 2025
+  },
+  "laroya": {
+   "municipio": "Laroya",
+   "provincia": "almeria",
+   "poblacion": 197,
+   "anio": 2025
+  },
+  "laujar de andarax": {
+   "municipio": "Laujar de Andarax",
+   "provincia": "almeria",
+   "poblacion": 1674,
+   "anio": 2025
+  },
+  "lijar": {
+   "municipio": "Líjar",
+   "provincia": "almeria",
+   "poblacion": 378,
+   "anio": 2025
+  },
+  "lubrin": {
+   "municipio": "Lubrín",
+   "provincia": "almeria",
+   "poblacion": 1434,
+   "anio": 2025
+  },
+  "lucainena de las torres": {
+   "municipio": "Lucainena de las Torres",
+   "provincia": "almeria",
+   "poblacion": 722,
+   "anio": 2025
+  },
+  "lucar": {
+   "municipio": "Lúcar",
+   "provincia": "almeria",
+   "poblacion": 829,
+   "anio": 2025
+  },
+  "macael": {
+   "municipio": "Macael",
+   "provincia": "almeria",
+   "poblacion": 5436,
+   "anio": 2025
+  },
+  "maria": {
+   "municipio": "María",
+   "provincia": "almeria",
+   "poblacion": 1202,
+   "anio": 2025
+  },
+  "mojacar": {
+   "municipio": "Mojácar",
+   "provincia": "almeria",
+   "poblacion": 7680,
+   "anio": 2025
+  },
+  "mojonera, la": {
+   "municipio": "Mojonera, La",
+   "provincia": "almeria",
+   "poblacion": 8793,
+   "anio": 2025
+  },
+  "nacimiento": {
+   "municipio": "Nacimiento",
+   "provincia": "almeria",
+   "poblacion": 485,
+   "anio": 2025
+  },
+  "nijar": {
+   "municipio": "Níjar",
+   "provincia": "almeria",
+   "poblacion": 33319,
+   "anio": 2025
+  },
+  "ohanes": {
+   "municipio": "Ohanes",
+   "provincia": "almeria",
+   "poblacion": 553,
+   "anio": 2025
+  },
+  "olula de castro": {
+   "municipio": "Olula de Castro",
+   "provincia": "almeria",
+   "poblacion": 175,
+   "anio": 2025
+  },
+  "olula del rio": {
+   "municipio": "Olula del Río",
+   "provincia": "almeria",
+   "poblacion": 6506,
+   "anio": 2025
+  },
+  "oria": {
+   "municipio": "Oria",
+   "provincia": "almeria",
+   "poblacion": 2219,
+   "anio": 2025
+  },
+  "padules": {
+   "municipio": "Padules",
+   "provincia": "almeria",
+   "poblacion": 438,
+   "anio": 2025
+  },
+  "partaloa": {
+   "municipio": "Partaloa",
+   "provincia": "almeria",
+   "poblacion": 836,
+   "anio": 2025
+  },
+  "paterna del rio": {
+   "municipio": "Paterna del Río",
+   "provincia": "almeria",
+   "poblacion": 399,
+   "anio": 2025
+  },
+  "pechina": {
+   "municipio": "Pechina",
+   "provincia": "almeria",
+   "poblacion": 4552,
+   "anio": 2025
+  },
+  "pulpi": {
+   "municipio": "Pulpí",
+   "provincia": "almeria",
+   "poblacion": 12214,
+   "anio": 2025
+  },
+  "purchena": {
+   "municipio": "Purchena",
+   "provincia": "almeria",
+   "poblacion": 1563,
+   "anio": 2025
+  },
+  "ragol": {
+   "municipio": "Rágol",
+   "provincia": "almeria",
+   "poblacion": 297,
+   "anio": 2025
+  },
+  "rioja": {
+   "municipio": "Rioja",
+   "provincia": "almeria",
+   "poblacion": 1609,
+   "anio": 2025
+  },
+  "roquetas de mar": {
+   "municipio": "Roquetas de Mar",
+   "provincia": "almeria",
+   "poblacion": 111240,
+   "anio": 2025
+  },
+  "santa cruz de marchena": {
+   "municipio": "Santa Cruz de Marchena",
+   "provincia": "almeria",
+   "poblacion": 236,
+   "anio": 2025
+  },
+  "santa fe de mondujar": {
+   "municipio": "Santa Fe de Mondújar",
+   "provincia": "almeria",
+   "poblacion": 503,
+   "anio": 2025
+  },
+  "senes": {
+   "municipio": "Senés",
+   "provincia": "almeria",
+   "poblacion": 279,
+   "anio": 2025
+  },
+  "seron": {
+   "municipio": "Serón",
+   "provincia": "almeria",
+   "poblacion": 2151,
+   "anio": 2025
+  },
+  "sierro": {
+   "municipio": "Sierro",
+   "provincia": "almeria",
+   "poblacion": 364,
+   "anio": 2025
+  },
+  "somontin": {
+   "municipio": "Somontín",
+   "provincia": "almeria",
+   "poblacion": 497,
+   "anio": 2025
+  },
+  "sorbas": {
+   "municipio": "Sorbas",
+   "provincia": "almeria",
+   "poblacion": 2564,
+   "anio": 2025
+  },
+  "sufli": {
+   "municipio": "Suflí",
+   "provincia": "almeria",
+   "poblacion": 224,
+   "anio": 2025
+  },
+  "tabernas": {
+   "municipio": "Tabernas",
+   "provincia": "almeria",
+   "poblacion": 3991,
+   "anio": 2025
+  },
+  "taberno": {
+   "municipio": "Taberno",
+   "provincia": "almeria",
+   "poblacion": 955,
+   "anio": 2025
+  },
+  "tahal": {
+   "municipio": "Tahal",
+   "provincia": "almeria",
+   "poblacion": 355,
+   "anio": 2025
+  },
+  "terque": {
+   "municipio": "Terque",
+   "provincia": "almeria",
+   "poblacion": 393,
+   "anio": 2025
+  },
+  "tijola": {
+   "municipio": "Tíjola",
+   "provincia": "almeria",
+   "poblacion": 3573,
+   "anio": 2025
+  },
+  "tres villas, las": {
+   "municipio": "Tres Villas, Las",
+   "provincia": "almeria",
+   "poblacion": 547,
+   "anio": 2025
+  },
+  "turre": {
+   "municipio": "Turre",
+   "provincia": "almeria",
+   "poblacion": 4361,
+   "anio": 2025
+  },
+  "turrillas": {
+   "municipio": "Turrillas",
+   "provincia": "almeria",
+   "poblacion": 256,
+   "anio": 2025
+  },
+  "uleila del campo": {
+   "municipio": "Uleila del Campo",
+   "provincia": "almeria",
+   "poblacion": 815,
+   "anio": 2025
+  },
+  "urracal": {
+   "municipio": "Urrácal",
+   "provincia": "almeria",
+   "poblacion": 340,
+   "anio": 2025
+  },
+  "velefique": {
+   "municipio": "Velefique",
+   "provincia": "almeria",
+   "poblacion": 230,
+   "anio": 2025
+  },
+  "velez-blanco": {
+   "municipio": "Vélez-Blanco",
+   "provincia": "almeria",
+   "poblacion": 1928,
+   "anio": 2025
+  },
+  "velez-rubio": {
+   "municipio": "Vélez-Rubio",
+   "provincia": "almeria",
+   "poblacion": 6685,
+   "anio": 2025
+  },
+  "vera": {
+   "municipio": "Vera",
+   "provincia": "almeria",
+   "poblacion": 20282,
+   "anio": 2025
+  },
+  "viator": {
+   "municipio": "Viator",
+   "provincia": "almeria",
+   "poblacion": 6339,
+   "anio": 2025
+  },
+  "vicar": {
+   "municipio": "Vícar",
+   "provincia": "almeria",
+   "poblacion": 29342,
+   "anio": 2025
+  },
+  "zurgena": {
+   "municipio": "Zurgena",
+   "provincia": "almeria",
+   "poblacion": 3059,
+   "anio": 2025
+  },
+  "alcala de los gazules": {
+   "municipio": "Alcalá de los Gazules",
+   "provincia": "cadiz",
+   "poblacion": 5230,
+   "anio": 2025
+  },
+  "alcala del valle": {
+   "municipio": "Alcalá del Valle",
+   "provincia": "cadiz",
+   "poblacion": 4864,
+   "anio": 2025
+  },
+  "algar": {
+   "municipio": "Algar",
+   "provincia": "cadiz",
+   "poblacion": 1452,
+   "anio": 2025
+  },
+  "algeciras": {
+   "municipio": "Algeciras",
+   "provincia": "cadiz",
+   "poblacion": 126589,
+   "anio": 2025
+  },
+  "algodonales": {
+   "municipio": "Algodonales",
+   "provincia": "cadiz",
+   "poblacion": 5425,
+   "anio": 2025
+  },
+  "arcos de la frontera": {
+   "municipio": "Arcos de la Frontera",
+   "provincia": "cadiz",
+   "poblacion": 31267,
+   "anio": 2025
+  },
+  "barbate": {
+   "municipio": "Barbate",
+   "provincia": "cadiz",
+   "poblacion": 22635,
+   "anio": 2025
+  },
+  "barrios, los": {
+   "municipio": "Barrios, Los",
+   "provincia": "cadiz",
+   "poblacion": 24449,
+   "anio": 2025
+  },
+  "benalup-casas viejas": {
+   "municipio": "Benalup-Casas Viejas",
+   "provincia": "cadiz",
+   "poblacion": 7236,
+   "anio": 2025
+  },
+  "benaocaz": {
+   "municipio": "Benaocaz",
+   "provincia": "cadiz",
+   "poblacion": 742,
+   "anio": 2025
+  },
+  "bornos": {
+   "municipio": "Bornos",
+   "provincia": "cadiz",
+   "poblacion": 7510,
+   "anio": 2025
+  },
+  "bosque, el": {
+   "municipio": "Bosque, El",
+   "provincia": "cadiz",
+   "poblacion": 2242,
+   "anio": 2025
+  },
+  "cadiz": {
+   "municipio": "Cádiz",
+   "provincia": "cadiz",
+   "poblacion": 109950,
+   "anio": 2025
+  },
+  "castellar de la frontera": {
+   "municipio": "Castellar de la Frontera",
+   "provincia": "cadiz",
+   "poblacion": 2984,
+   "anio": 2025
+  },
+  "chiclana de la frontera": {
+   "municipio": "Chiclana de la Frontera",
+   "provincia": "cadiz",
+   "poblacion": 90864,
+   "anio": 2025
+  },
+  "chipiona": {
+   "municipio": "Chipiona",
+   "provincia": "cadiz",
+   "poblacion": 20076,
+   "anio": 2025
+  },
+  "conil de la frontera": {
+   "municipio": "Conil de la Frontera",
+   "provincia": "cadiz",
+   "poblacion": 24102,
+   "anio": 2025
+  },
+  "espera": {
+   "municipio": "Espera",
+   "provincia": "cadiz",
+   "poblacion": 3755,
+   "anio": 2025
+  },
+  "gastor, el": {
+   "municipio": "Gastor, El",
+   "provincia": "cadiz",
+   "poblacion": 1675,
+   "anio": 2025
+  },
+  "grazalema": {
+   "municipio": "Grazalema",
+   "provincia": "cadiz",
+   "poblacion": 1977,
+   "anio": 2025
+  },
+  "jerez de la frontera": {
+   "municipio": "Jerez de la Frontera",
+   "provincia": "cadiz",
+   "poblacion": 213634,
+   "anio": 2025
+  },
+  "jimena de la frontera": {
+   "municipio": "Jimena de la Frontera",
+   "provincia": "cadiz",
+   "poblacion": 6719,
+   "anio": 2025
+  },
+  "linea de la concepcion, la": {
+   "municipio": "Línea de la Concepción, La",
+   "provincia": "cadiz",
+   "poblacion": 64499,
+   "anio": 2025
+  },
+  "medina sidonia": {
+   "municipio": "Medina Sidonia",
+   "provincia": "cadiz",
+   "poblacion": 11838,
+   "anio": 2025
+  },
+  "olvera": {
+   "municipio": "Olvera",
+   "provincia": "cadiz",
+   "poblacion": 7842,
+   "anio": 2025
+  },
+  "paterna de rivera": {
+   "municipio": "Paterna de Rivera",
+   "provincia": "cadiz",
+   "poblacion": 5539,
+   "anio": 2025
+  },
+  "prado del rey": {
+   "municipio": "Prado del Rey",
+   "provincia": "cadiz",
+   "poblacion": 5692,
+   "anio": 2025
+  },
+  "puerto de santa maria, el": {
+   "municipio": "Puerto de Santa María, El",
+   "provincia": "cadiz",
+   "poblacion": 89983,
+   "anio": 2025
+  },
+  "puerto real": {
+   "municipio": "Puerto Real",
+   "provincia": "cadiz",
+   "poblacion": 42527,
+   "anio": 2025
+  },
+  "puerto serrano": {
+   "municipio": "Puerto Serrano",
+   "provincia": "cadiz",
+   "poblacion": 6877,
+   "anio": 2025
+  },
+  "rota": {
+   "municipio": "Rota",
+   "provincia": "cadiz",
+   "poblacion": 29289,
+   "anio": 2025
+  },
+  "san fernando": {
+   "municipio": "San Fernando",
+   "provincia": "cadiz",
+   "poblacion": 93338,
+   "anio": 2025
+  },
+  "san jose del valle": {
+   "municipio": "San José del Valle",
+   "provincia": "cadiz",
+   "poblacion": 4419,
+   "anio": 2025
+  },
+  "san martin del tesorillo": {
+   "municipio": "San Martín del Tesorillo",
+   "provincia": "cadiz",
+   "poblacion": 2735,
+   "anio": 2025
+  },
+  "san roque": {
+   "municipio": "San Roque",
+   "provincia": "cadiz",
+   "poblacion": 34310,
+   "anio": 2025
+  },
+  "sanlucar de barrameda": {
+   "municipio": "Sanlúcar de Barrameda",
+   "provincia": "cadiz",
+   "poblacion": 70012,
+   "anio": 2025
+  },
+  "setenil de las bodegas": {
+   "municipio": "Setenil de las Bodegas",
+   "provincia": "cadiz",
+   "poblacion": 2634,
+   "anio": 2025
+  },
+  "tarifa": {
+   "municipio": "Tarifa",
+   "provincia": "cadiz",
+   "poblacion": 18613,
+   "anio": 2025
+  },
+  "torre alhaquime": {
+   "municipio": "Torre Alháquime",
+   "provincia": "cadiz",
+   "poblacion": 781,
+   "anio": 2025
+  },
+  "trebujena": {
+   "municipio": "Trebujena",
+   "provincia": "cadiz",
+   "poblacion": 6999,
+   "anio": 2025
+  },
+  "ubrique": {
+   "municipio": "Ubrique",
+   "provincia": "cadiz",
+   "poblacion": 16615,
+   "anio": 2025
+  },
+  "vejer de la frontera": {
+   "municipio": "Vejer de la Frontera",
+   "provincia": "cadiz",
+   "poblacion": 13131,
+   "anio": 2025
+  },
+  "villaluenga del rosario": {
+   "municipio": "Villaluenga del Rosario",
+   "provincia": "cadiz",
+   "poblacion": 463,
+   "anio": 2025
+  },
+  "villamartin": {
+   "municipio": "Villamartín",
+   "provincia": "cadiz",
+   "poblacion": 12184,
+   "anio": 2025
+  },
+  "zahara": {
+   "municipio": "Zahara",
+   "provincia": "cadiz",
+   "poblacion": 1344,
+   "anio": 2025
+  },
+  "adamuz": {
+   "municipio": "Adamuz",
+   "provincia": "cordoba",
+   "poblacion": 4100,
+   "anio": 2025
+  },
+  "aguilar de la frontera": {
+   "municipio": "Aguilar de la Frontera",
+   "provincia": "cordoba",
+   "poblacion": 13130,
+   "anio": 2025
+  },
+  "alcaracejos": {
+   "municipio": "Alcaracejos",
+   "provincia": "cordoba",
+   "poblacion": 1512,
+   "anio": 2025
+  },
+  "almedinilla": {
+   "municipio": "Almedinilla",
+   "provincia": "cordoba",
+   "poblacion": 2302,
+   "anio": 2025
+  },
+  "almodovar del rio": {
+   "municipio": "Almodóvar del Río",
+   "provincia": "cordoba",
+   "poblacion": 8040,
+   "anio": 2025
+  },
+  "anora": {
+   "municipio": "Añora",
+   "provincia": "cordoba",
+   "poblacion": 1487,
+   "anio": 2025
+  },
+  "baena": {
+   "municipio": "Baena",
+   "provincia": "cordoba",
+   "poblacion": 18386,
+   "anio": 2025
+  },
+  "belalcazar": {
+   "municipio": "Belalcázar",
+   "provincia": "cordoba",
+   "poblacion": 3093,
+   "anio": 2025
+  },
+  "belmez": {
+   "municipio": "Belmez",
+   "provincia": "cordoba",
+   "poblacion": 2833,
+   "anio": 2025
+  },
+  "benameji": {
+   "municipio": "Benamejí",
+   "provincia": "cordoba",
+   "poblacion": 4895,
+   "anio": 2025
+  },
+  "blazquez, los": {
+   "municipio": "Blázquez, Los",
+   "provincia": "cordoba",
+   "poblacion": 619,
+   "anio": 2025
+  },
+  "bujalance": {
+   "municipio": "Bujalance",
+   "provincia": "cordoba",
+   "poblacion": 7065,
+   "anio": 2025
+  },
+  "cabra": {
+   "municipio": "Cabra",
+   "provincia": "cordoba",
+   "poblacion": 19995,
+   "anio": 2025
+  },
+  "canete de las torres": {
+   "municipio": "Cañete de las Torres",
+   "provincia": "cordoba",
+   "poblacion": 2766,
+   "anio": 2025
+  },
+  "carcabuey": {
+   "municipio": "Carcabuey",
+   "provincia": "cordoba",
+   "poblacion": 2302,
+   "anio": 2025
+  },
+  "cardena": {
+   "municipio": "Cardeña",
+   "provincia": "cordoba",
+   "poblacion": 1387,
+   "anio": 2025
+  },
+  "carlota, la": {
+   "municipio": "Carlota, La",
+   "provincia": "cordoba",
+   "poblacion": 14503,
+   "anio": 2025
+  },
+  "carpio, el": {
+   "municipio": "Carpio, El",
+   "provincia": "cordoba",
+   "poblacion": 4327,
+   "anio": 2025
+  },
+  "castro del rio": {
+   "municipio": "Castro del Río",
+   "provincia": "cordoba",
+   "poblacion": 7597,
+   "anio": 2025
+  },
+  "conquista": {
+   "municipio": "Conquista",
+   "provincia": "cordoba",
+   "poblacion": 367,
+   "anio": 2025
+  },
+  "cordoba": {
+   "municipio": "Córdoba",
+   "provincia": "cordoba",
+   "poblacion": 323262,
+   "anio": 2025
+  },
+  "dona mencia": {
+   "municipio": "Doña Mencía",
+   "provincia": "cordoba",
+   "poblacion": 4465,
+   "anio": 2025
+  },
+  "dos torres": {
+   "municipio": "Dos Torres",
+   "provincia": "cordoba",
+   "poblacion": 2340,
+   "anio": 2025
+  },
+  "encinas reales": {
+   "municipio": "Encinas Reales",
+   "provincia": "cordoba",
+   "poblacion": 2208,
+   "anio": 2025
+  },
+  "espejo": {
+   "municipio": "Espejo",
+   "provincia": "cordoba",
+   "poblacion": 3175,
+   "anio": 2025
+  },
+  "espiel": {
+   "municipio": "Espiel",
+   "provincia": "cordoba",
+   "poblacion": 2326,
+   "anio": 2025
+  },
+  "fernan-nunez": {
+   "municipio": "Fernán-Núñez",
+   "provincia": "cordoba",
+   "poblacion": 9670,
+   "anio": 2025
+  },
+  "fuente carreteros": {
+   "municipio": "Fuente Carreteros",
+   "provincia": "cordoba",
+   "poblacion": 1073,
+   "anio": 2025
+  },
+  "fuente la lancha": {
+   "municipio": "Fuente la Lancha",
+   "provincia": "cordoba",
+   "poblacion": 330,
+   "anio": 2025
+  },
+  "fuente obejuna": {
+   "municipio": "Fuente Obejuna",
+   "provincia": "cordoba",
+   "poblacion": 4309,
+   "anio": 2025
+  },
+  "fuente palmera": {
+   "municipio": "Fuente Palmera",
+   "provincia": "cordoba",
+   "poblacion": 9883,
+   "anio": 2025
+  },
+  "fuente-tojar": {
+   "municipio": "Fuente-Tójar",
+   "provincia": "cordoba",
+   "poblacion": 666,
+   "anio": 2025
+  },
+  "granjuela, la": {
+   "municipio": "Granjuela, La",
+   "provincia": "cordoba",
+   "poblacion": 412,
+   "anio": 2025
+  },
+  "guadalcazar": {
+   "municipio": "Guadalcázar",
+   "provincia": "cordoba",
+   "poblacion": 1589,
+   "anio": 2025
+  },
+  "guijarrosa, la": {
+   "municipio": "Guijarrosa, La",
+   "provincia": "cordoba",
+   "poblacion": 1358,
+   "anio": 2025
+  },
+  "guijo, el": {
+   "municipio": "Guijo, El",
+   "provincia": "cordoba",
+   "poblacion": 342,
+   "anio": 2025
+  },
+  "hinojosa del duque": {
+   "municipio": "Hinojosa del Duque",
+   "provincia": "cordoba",
+   "poblacion": 6534,
+   "anio": 2025
+  },
+  "hornachuelos": {
+   "municipio": "Hornachuelos",
+   "provincia": "cordoba",
+   "poblacion": 4383,
+   "anio": 2025
+  },
+  "iznajar": {
+   "municipio": "Iznájar",
+   "provincia": "cordoba",
+   "poblacion": 3676,
+   "anio": 2025
+  },
+  "lucena": {
+   "municipio": "Lucena",
+   "provincia": "cordoba",
+   "poblacion": 43408,
+   "anio": 2025
+  },
+  "luque": {
+   "municipio": "Luque",
+   "provincia": "cordoba",
+   "poblacion": 2796,
+   "anio": 2025
+  },
+  "montalban de cordoba": {
+   "municipio": "Montalbán de Córdoba",
+   "provincia": "cordoba",
+   "poblacion": 4401,
+   "anio": 2025
+  },
+  "montemayor": {
+   "municipio": "Montemayor",
+   "provincia": "cordoba",
+   "poblacion": 3859,
+   "anio": 2025
+  },
+  "montilla": {
+   "municipio": "Montilla",
+   "provincia": "cordoba",
+   "poblacion": 22305,
+   "anio": 2025
+  },
+  "montoro": {
+   "municipio": "Montoro",
+   "provincia": "cordoba",
+   "poblacion": 9004,
+   "anio": 2025
+  },
+  "monturque": {
+   "municipio": "Monturque",
+   "provincia": "cordoba",
+   "poblacion": 1929,
+   "anio": 2025
+  },
+  "moriles": {
+   "municipio": "Moriles",
+   "provincia": "cordoba",
+   "poblacion": 3667,
+   "anio": 2025
+  },
+  "nueva carteya": {
+   "municipio": "Nueva Carteya",
+   "provincia": "cordoba",
+   "poblacion": 5235,
+   "anio": 2025
+  },
+  "obejo": {
+   "municipio": "Obejo",
+   "provincia": "cordoba",
+   "poblacion": 2101,
+   "anio": 2025
+  },
+  "palenciana": {
+   "municipio": "Palenciana",
+   "provincia": "cordoba",
+   "poblacion": 1431,
+   "anio": 2025
+  },
+  "palma del rio": {
+   "municipio": "Palma del Río",
+   "provincia": "cordoba",
+   "poblacion": 20438,
+   "anio": 2025
+  },
+  "pedro abad": {
+   "municipio": "Pedro Abad",
+   "provincia": "cordoba",
+   "poblacion": 2794,
+   "anio": 2025
+  },
+  "pedroche": {
+   "municipio": "Pedroche",
+   "provincia": "cordoba",
+   "poblacion": 1441,
+   "anio": 2025
+  },
+  "penarroya-pueblonuevo": {
+   "municipio": "Peñarroya-Pueblonuevo",
+   "provincia": "cordoba",
+   "poblacion": 10244,
+   "anio": 2025
+  },
+  "posadas": {
+   "municipio": "Posadas",
+   "provincia": "cordoba",
+   "poblacion": 7273,
+   "anio": 2025
+  },
+  "pozoblanco": {
+   "municipio": "Pozoblanco",
+   "provincia": "cordoba",
+   "poblacion": 16931,
+   "anio": 2025
+  },
+  "priego de cordoba": {
+   "municipio": "Priego de Córdoba",
+   "provincia": "cordoba",
+   "poblacion": 21764,
+   "anio": 2025
+  },
+  "puente genil": {
+   "municipio": "Puente Genil",
+   "provincia": "cordoba",
+   "poblacion": 29963,
+   "anio": 2025
+  },
+  "rambla, la": {
+   "municipio": "Rambla, La",
+   "provincia": "cordoba",
+   "poblacion": 7412,
+   "anio": 2025
+  },
+  "rute": {
+   "municipio": "Rute",
+   "provincia": "cordoba",
+   "poblacion": 9824,
+   "anio": 2025
+  },
+  "san sebastian de los ballesteros": {
+   "municipio": "San Sebastián de los Ballesteros",
+   "provincia": "cordoba",
+   "poblacion": 865,
+   "anio": 2025
+  },
+  "santa eufemia": {
+   "municipio": "Santa Eufemia",
+   "provincia": "cordoba",
+   "poblacion": 685,
+   "anio": 2025
+  },
+  "santaella": {
+   "municipio": "Santaella",
+   "provincia": "cordoba",
+   "poblacion": 4641,
+   "anio": 2025
+  },
+  "torrecampo": {
+   "municipio": "Torrecampo",
+   "provincia": "cordoba",
+   "poblacion": 992,
+   "anio": 2025
+  },
+  "valenzuela": {
+   "municipio": "Valenzuela",
+   "provincia": "cordoba",
+   "poblacion": 1030,
+   "anio": 2025
+  },
+  "valsequillo": {
+   "municipio": "Valsequillo",
+   "provincia": "cordoba",
+   "poblacion": 351,
+   "anio": 2025
+  },
+  "victoria, la": {
+   "municipio": "Victoria, La",
+   "provincia": "cordoba",
+   "poblacion": 2320,
+   "anio": 2025
+  },
+  "villa del rio": {
+   "municipio": "Villa del Río",
+   "provincia": "cordoba",
+   "poblacion": 6852,
+   "anio": 2025
+  },
+  "villafranca de cordoba": {
+   "municipio": "Villafranca de Córdoba",
+   "provincia": "cordoba",
+   "poblacion": 4895,
+   "anio": 2025
+  },
+  "villaharta": {
+   "municipio": "Villaharta",
+   "provincia": "cordoba",
+   "poblacion": 630,
+   "anio": 2025
+  },
+  "villanueva de cordoba": {
+   "municipio": "Villanueva de Córdoba",
+   "provincia": "cordoba",
+   "poblacion": 8328,
+   "anio": 2025
+  },
+  "villanueva del duque": {
+   "municipio": "Villanueva del Duque",
+   "provincia": "cordoba",
+   "poblacion": 1409,
+   "anio": 2025
+  },
+  "villanueva del rey": {
+   "municipio": "Villanueva del Rey",
+   "provincia": "cordoba",
+   "poblacion": 1031,
+   "anio": 2025
+  },
+  "villaralto": {
+   "municipio": "Villaralto",
+   "provincia": "cordoba",
+   "poblacion": 1059,
+   "anio": 2025
+  },
+  "villaviciosa de cordoba": {
+   "municipio": "Villaviciosa de Córdoba",
+   "provincia": "cordoba",
+   "poblacion": 3043,
+   "anio": 2025
+  },
+  "viso, el": {
+   "municipio": "Viso, El",
+   "provincia": "cordoba",
+   "poblacion": 2499,
+   "anio": 2025
+  },
+  "zuheros": {
+   "municipio": "Zuheros",
+   "provincia": "cordoba",
+   "poblacion": 596,
+   "anio": 2025
+  },
+  "agron": {
+   "municipio": "Agrón",
+   "provincia": "granada",
+   "poblacion": 247,
+   "anio": 2025
+  },
+  "alamedilla": {
+   "municipio": "Alamedilla",
+   "provincia": "granada",
+   "poblacion": 518,
+   "anio": 2025
+  },
+  "albolote": {
+   "municipio": "Albolote",
+   "provincia": "granada",
+   "poblacion": 19768,
+   "anio": 2025
+  },
+  "albondon": {
+   "municipio": "Albondón",
+   "provincia": "granada",
+   "poblacion": 703,
+   "anio": 2025
+  },
+  "albunan": {
+   "municipio": "Albuñán",
+   "provincia": "granada",
+   "poblacion": 422,
+   "anio": 2025
+  },
+  "albunol": {
+   "municipio": "Albuñol",
+   "provincia": "granada",
+   "poblacion": 7388,
+   "anio": 2025
+  },
+  "albunuelas": {
+   "municipio": "Albuñuelas",
+   "provincia": "granada",
+   "poblacion": 794,
+   "anio": 2025
+  },
+  "aldeire": {
+   "municipio": "Aldeire",
+   "provincia": "granada",
+   "poblacion": 597,
+   "anio": 2025
+  },
+  "alfacar": {
+   "municipio": "Alfacar",
+   "provincia": "granada",
+   "poblacion": 5834,
+   "anio": 2025
+  },
+  "algarinejo": {
+   "municipio": "Algarinejo",
+   "provincia": "granada",
+   "poblacion": 2335,
+   "anio": 2025
+  },
+  "alhama de granada": {
+   "municipio": "Alhama de Granada",
+   "provincia": "granada",
+   "poblacion": 5544,
+   "anio": 2025
+  },
+  "alhendin": {
+   "municipio": "Alhendín",
+   "provincia": "granada",
+   "poblacion": 10475,
+   "anio": 2025
+  },
+  "alicun de ortega": {
+   "municipio": "Alicún de Ortega",
+   "provincia": "granada",
+   "poblacion": 461,
+   "anio": 2025
+  },
+  "almegijar": {
+   "municipio": "Almegíjar",
+   "provincia": "granada",
+   "poblacion": 327,
+   "anio": 2025
+  },
+  "almunecar": {
+   "municipio": "Almuñécar",
+   "provincia": "granada",
+   "poblacion": 27544,
+   "anio": 2025
+  },
+  "alpujarra de la sierra": {
+   "municipio": "Alpujarra de la Sierra",
+   "provincia": "granada",
+   "poblacion": 933,
+   "anio": 2025
+  },
+  "alquife": {
+   "municipio": "Alquife",
+   "provincia": "granada",
+   "poblacion": 543,
+   "anio": 2025
+  },
+  "arenas del rey": {
+   "municipio": "Arenas del Rey",
+   "provincia": "granada",
+   "poblacion": 608,
+   "anio": 2025
+  },
+  "armilla": {
+   "municipio": "Armilla",
+   "provincia": "granada",
+   "poblacion": 25300,
+   "anio": 2025
+  },
+  "atarfe": {
+   "municipio": "Atarfe",
+   "provincia": "granada",
+   "poblacion": 20914,
+   "anio": 2025
+  },
+  "baza": {
+   "municipio": "Baza",
+   "provincia": "granada",
+   "poblacion": 20587,
+   "anio": 2025
+  },
+  "beas de granada": {
+   "municipio": "Beas de Granada",
+   "provincia": "granada",
+   "poblacion": 1007,
+   "anio": 2025
+  },
+  "beas de guadix": {
+   "municipio": "Beas de Guadix",
+   "provincia": "granada",
+   "poblacion": 318,
+   "anio": 2025
+  },
+  "benalua": {
+   "municipio": "Benalúa",
+   "provincia": "granada",
+   "poblacion": 3381,
+   "anio": 2025
+  },
+  "benalua de las villas": {
+   "municipio": "Benalúa de las Villas",
+   "provincia": "granada",
+   "poblacion": 1028,
+   "anio": 2025
+  },
+  "benamaurel": {
+   "municipio": "Benamaurel",
+   "provincia": "granada",
+   "poblacion": 2235,
+   "anio": 2025
+  },
+  "berchules": {
+   "municipio": "Bérchules",
+   "provincia": "granada",
+   "poblacion": 688,
+   "anio": 2025
+  },
+  "bubion": {
+   "municipio": "Bubión",
+   "provincia": "granada",
+   "poblacion": 305,
+   "anio": 2025
+  },
+  "busquistar": {
+   "municipio": "Busquístar",
+   "provincia": "granada",
+   "poblacion": 313,
+   "anio": 2025
+  },
+  "cacin": {
+   "municipio": "Cacín",
+   "provincia": "granada",
+   "poblacion": 549,
+   "anio": 2025
+  },
+  "cadiar": {
+   "municipio": "Cádiar",
+   "provincia": "granada",
+   "poblacion": 1491,
+   "anio": 2025
+  },
+  "cajar": {
+   "municipio": "Cájar",
+   "provincia": "granada",
+   "poblacion": 5511,
+   "anio": 2025
+  },
+  "calahorra, la": {
+   "municipio": "Calahorra, La",
+   "provincia": "granada",
+   "poblacion": 680,
+   "anio": 2025
+  },
+  "calicasas": {
+   "municipio": "Calicasas",
+   "provincia": "granada",
+   "poblacion": 687,
+   "anio": 2025
+  },
+  "campotejar": {
+   "municipio": "Campotéjar",
+   "provincia": "granada",
+   "poblacion": 1218,
+   "anio": 2025
+  },
+  "caniles": {
+   "municipio": "Caniles",
+   "provincia": "granada",
+   "poblacion": 3929,
+   "anio": 2025
+  },
+  "canar": {
+   "municipio": "Cáñar",
+   "provincia": "granada",
+   "poblacion": 424,
+   "anio": 2025
+  },
+  "capileira": {
+   "municipio": "Capileira",
+   "provincia": "granada",
+   "poblacion": 590,
+   "anio": 2025
+  },
+  "carataunas": {
+   "municipio": "Carataunas",
+   "provincia": "granada",
+   "poblacion": 207,
+   "anio": 2025
+  },
+  "castaras": {
+   "municipio": "Cástaras",
+   "provincia": "granada",
+   "poblacion": 178,
+   "anio": 2025
+  },
+  "castillejar": {
+   "municipio": "Castilléjar",
+   "provincia": "granada",
+   "poblacion": 1284,
+   "anio": 2025
+  },
+  "castril": {
+   "municipio": "Castril",
+   "provincia": "granada",
+   "poblacion": 1927,
+   "anio": 2025
+  },
+  "cenes de la vega": {
+   "municipio": "Cenes de la Vega",
+   "provincia": "granada",
+   "poblacion": 8254,
+   "anio": 2025
+  },
+  "chauchina": {
+   "municipio": "Chauchina",
+   "provincia": "granada",
+   "poblacion": 5817,
+   "anio": 2025
+  },
+  "chimeneas": {
+   "municipio": "Chimeneas",
+   "provincia": "granada",
+   "poblacion": 1265,
+   "anio": 2025
+  },
+  "churriana de la vega": {
+   "municipio": "Churriana de la Vega",
+   "provincia": "granada",
+   "poblacion": 16878,
+   "anio": 2025
+  },
+  "cijuela": {
+   "municipio": "Cijuela",
+   "provincia": "granada",
+   "poblacion": 3827,
+   "anio": 2025
+  },
+  "cogollos de guadix": {
+   "municipio": "Cogollos de Guadix",
+   "provincia": "granada",
+   "poblacion": 614,
+   "anio": 2025
+  },
+  "cogollos de la vega": {
+   "municipio": "Cogollos de la Vega",
+   "provincia": "granada",
+   "poblacion": 2119,
+   "anio": 2025
+  },
+  "colomera": {
+   "municipio": "Colomera",
+   "provincia": "granada",
+   "poblacion": 1278,
+   "anio": 2025
+  },
+  "cortes de baza": {
+   "municipio": "Cortes de Baza",
+   "provincia": "granada",
+   "poblacion": 1769,
+   "anio": 2025
+  },
+  "cortes y graena": {
+   "municipio": "Cortes y Graena",
+   "provincia": "granada",
+   "poblacion": 949,
+   "anio": 2025
+  },
+  "cuevas del campo": {
+   "municipio": "Cuevas del Campo",
+   "provincia": "granada",
+   "poblacion": 1841,
+   "anio": 2025
+  },
+  "cullar": {
+   "municipio": "Cúllar",
+   "provincia": "granada",
+   "poblacion": 3978,
+   "anio": 2025
+  },
+  "cullar vega": {
+   "municipio": "Cúllar Vega",
+   "provincia": "granada",
+   "poblacion": 7947,
+   "anio": 2025
+  },
+  "darro": {
+   "municipio": "Darro",
+   "provincia": "granada",
+   "poblacion": 1700,
+   "anio": 2025
+  },
+  "dehesas de guadix": {
+   "municipio": "Dehesas de Guadix",
+   "provincia": "granada",
+   "poblacion": 382,
+   "anio": 2025
+  },
+  "dehesas viejas": {
+   "municipio": "Dehesas Viejas",
+   "provincia": "granada",
+   "poblacion": 635,
+   "anio": 2025
+  },
+  "deifontes": {
+   "municipio": "Deifontes",
+   "provincia": "granada",
+   "poblacion": 2612,
+   "anio": 2025
+  },
+  "diezma": {
+   "municipio": "Diezma",
+   "provincia": "granada",
+   "poblacion": 829,
+   "anio": 2025
+  },
+  "dilar": {
+   "municipio": "Dílar",
+   "provincia": "granada",
+   "poblacion": 2384,
+   "anio": 2025
+  },
+  "dolar": {
+   "municipio": "Dólar",
+   "provincia": "granada",
+   "poblacion": 600,
+   "anio": 2025
+  },
+  "domingo perez de granada": {
+   "municipio": "Domingo Pérez de Granada",
+   "provincia": "granada",
+   "poblacion": 822,
+   "anio": 2025
+  },
+  "dudar": {
+   "municipio": "Dúdar",
+   "provincia": "granada",
+   "poblacion": 382,
+   "anio": 2025
+  },
+  "durcal": {
+   "municipio": "Dúrcal",
+   "provincia": "granada",
+   "poblacion": 7234,
+   "anio": 2025
+  },
+  "escuzar": {
+   "municipio": "Escúzar",
+   "provincia": "granada",
+   "poblacion": 826,
+   "anio": 2025
+  },
+  "ferreira": {
+   "municipio": "Ferreira",
+   "provincia": "granada",
+   "poblacion": 297,
+   "anio": 2025
+  },
+  "fonelas": {
+   "municipio": "Fonelas",
+   "provincia": "granada",
+   "poblacion": 965,
+   "anio": 2025
+  },
+  "fornes": {
+   "municipio": "Fornes",
+   "provincia": "granada",
+   "poblacion": 526,
+   "anio": 2025
+  },
+  "freila": {
+   "municipio": "Freila",
+   "provincia": "granada",
+   "poblacion": 960,
+   "anio": 2025
+  },
+  "fuente vaqueros": {
+   "municipio": "Fuente Vaqueros",
+   "provincia": "granada",
+   "poblacion": 4743,
+   "anio": 2025
+  },
+  "gabias, las": {
+   "municipio": "Gabias, Las",
+   "provincia": "granada",
+   "poblacion": 23584,
+   "anio": 2025
+  },
+  "galera": {
+   "municipio": "Galera",
+   "provincia": "granada",
+   "poblacion": 1139,
+   "anio": 2025
+  },
+  "gobernador": {
+   "municipio": "Gobernador",
+   "provincia": "granada",
+   "poblacion": 231,
+   "anio": 2025
+  },
+  "gojar": {
+   "municipio": "Gójar",
+   "provincia": "granada",
+   "poblacion": 6371,
+   "anio": 2025
+  },
+  "gor": {
+   "municipio": "Gor",
+   "provincia": "granada",
+   "poblacion": 766,
+   "anio": 2025
+  },
+  "gorafe": {
+   "municipio": "Gorafe",
+   "provincia": "granada",
+   "poblacion": 368,
+   "anio": 2025
+  },
+  "granada": {
+   "municipio": "Granada",
+   "provincia": "granada",
+   "poblacion": 233975,
+   "anio": 2025
+  },
+  "guadahortuna": {
+   "municipio": "Guadahortuna",
+   "provincia": "granada",
+   "poblacion": 1829,
+   "anio": 2025
+  },
+  "guadix": {
+   "municipio": "Guadix",
+   "provincia": "granada",
+   "poblacion": 18881,
+   "anio": 2025
+  },
+  "guajares, los": {
+   "municipio": "Guájares, Los",
+   "provincia": "granada",
+   "poblacion": 1081,
+   "anio": 2025
+  },
+  "gualchos": {
+   "municipio": "Gualchos",
+   "provincia": "granada",
+   "poblacion": 5284,
+   "anio": 2025
+  },
+  "guejar sierra": {
+   "municipio": "Güéjar Sierra",
+   "provincia": "granada",
+   "poblacion": 2915,
+   "anio": 2025
+  },
+  "guevejar": {
+   "municipio": "Güevéjar",
+   "provincia": "granada",
+   "poblacion": 2723,
+   "anio": 2025
+  },
+  "huelago": {
+   "municipio": "Huélago",
+   "provincia": "granada",
+   "poblacion": 343,
+   "anio": 2025
+  },
+  "hueneja": {
+   "municipio": "Huéneja",
+   "provincia": "granada",
+   "poblacion": 1180,
+   "anio": 2025
+  },
+  "huescar": {
+   "municipio": "Huéscar",
+   "provincia": "granada",
+   "poblacion": 7241,
+   "anio": 2025
+  },
+  "huetor de santillan": {
+   "municipio": "Huétor de Santillán",
+   "provincia": "granada",
+   "poblacion": 1964,
+   "anio": 2025
+  },
+  "huetor tajar": {
+   "municipio": "Huétor Tájar",
+   "provincia": "granada",
+   "poblacion": 10749,
+   "anio": 2025
+  },
+  "huetor vega": {
+   "municipio": "Huétor Vega",
+   "provincia": "granada",
+   "poblacion": 12285,
+   "anio": 2025
+  },
+  "illora": {
+   "municipio": "Íllora",
+   "provincia": "granada",
+   "poblacion": 9923,
+   "anio": 2025
+  },
+  "itrabo": {
+   "municipio": "Ítrabo",
+   "provincia": "granada",
+   "poblacion": 1022,
+   "anio": 2025
+  },
+  "iznalloz": {
+   "municipio": "Iznalloz",
+   "provincia": "granada",
+   "poblacion": 5179,
+   "anio": 2025
+  },
+  "jatar": {
+   "municipio": "Játar",
+   "provincia": "granada",
+   "poblacion": 631,
+   "anio": 2025
+  },
+  "jayena": {
+   "municipio": "Jayena",
+   "provincia": "granada",
+   "poblacion": 979,
+   "anio": 2025
+  },
+  "jerez del marquesado": {
+   "municipio": "Jérez del Marquesado",
+   "provincia": "granada",
+   "poblacion": 955,
+   "anio": 2025
+  },
+  "jete": {
+   "municipio": "Jete",
+   "provincia": "granada",
+   "poblacion": 990,
+   "anio": 2025
+  },
+  "jun": {
+   "municipio": "Jun",
+   "provincia": "granada",
+   "poblacion": 4103,
+   "anio": 2025
+  },
+  "juviles": {
+   "municipio": "Juviles",
+   "provincia": "granada",
+   "poblacion": 140,
+   "anio": 2025
+  },
+  "lachar": {
+   "municipio": "Láchar",
+   "provincia": "granada",
+   "poblacion": 3892,
+   "anio": 2025
+  },
+  "lanjaron": {
+   "municipio": "Lanjarón",
+   "provincia": "granada",
+   "poblacion": 3708,
+   "anio": 2025
+  },
+  "lanteira": {
+   "municipio": "Lanteira",
+   "provincia": "granada",
+   "poblacion": 533,
+   "anio": 2025
+  },
+  "lecrin": {
+   "municipio": "Lecrín",
+   "provincia": "granada",
+   "poblacion": 2244,
+   "anio": 2025
+  },
+  "lentegi": {
+   "municipio": "Lentegí",
+   "provincia": "granada",
+   "poblacion": 368,
+   "anio": 2025
+  },
+  "lobras": {
+   "municipio": "Lobras",
+   "provincia": "granada",
+   "poblacion": 139,
+   "anio": 2025
+  },
+  "loja": {
+   "municipio": "Loja",
+   "provincia": "granada",
+   "poblacion": 20951,
+   "anio": 2025
+  },
+  "lugros": {
+   "municipio": "Lugros",
+   "provincia": "granada",
+   "poblacion": 306,
+   "anio": 2025
+  },
+  "lujar": {
+   "municipio": "Lújar",
+   "provincia": "granada",
+   "poblacion": 491,
+   "anio": 2025
+  },
+  "malaha, la": {
+   "municipio": "Malahá, La",
+   "provincia": "granada",
+   "poblacion": 1928,
+   "anio": 2025
+  },
+  "maracena": {
+   "municipio": "Maracena",
+   "provincia": "granada",
+   "poblacion": 22294,
+   "anio": 2025
+  },
+  "marchal": {
+   "municipio": "Marchal",
+   "provincia": "granada",
+   "poblacion": 437,
+   "anio": 2025
+  },
+  "moclin": {
+   "municipio": "Moclín",
+   "provincia": "granada",
+   "poblacion": 3503,
+   "anio": 2025
+  },
+  "molvizar": {
+   "municipio": "Molvízar",
+   "provincia": "granada",
+   "poblacion": 2689,
+   "anio": 2025
+  },
+  "monachil": {
+   "municipio": "Monachil",
+   "provincia": "granada",
+   "poblacion": 8664,
+   "anio": 2025
+  },
+  "montefrio": {
+   "municipio": "Montefrío",
+   "provincia": "granada",
+   "poblacion": 5283,
+   "anio": 2025
+  },
+  "montejicar": {
+   "municipio": "Montejícar",
+   "provincia": "granada",
+   "poblacion": 1989,
+   "anio": 2025
+  },
+  "montillana": {
+   "municipio": "Montillana",
+   "provincia": "granada",
+   "poblacion": 1054,
+   "anio": 2025
+  },
+  "moraleda de zafayona": {
+   "municipio": "Moraleda de Zafayona",
+   "provincia": "granada",
+   "poblacion": 3214,
+   "anio": 2025
+  },
+  "morelabor": {
+   "municipio": "Morelábor",
+   "provincia": "granada",
+   "poblacion": 588,
+   "anio": 2025
+  },
+  "motril": {
+   "municipio": "Motril",
+   "provincia": "granada",
+   "poblacion": 59862,
+   "anio": 2025
+  },
+  "murtas": {
+   "municipio": "Murtas",
+   "provincia": "granada",
+   "poblacion": 431,
+   "anio": 2025
+  },
+  "nevada": {
+   "municipio": "Nevada",
+   "provincia": "granada",
+   "poblacion": 1086,
+   "anio": 2025
+  },
+  "niguelas": {
+   "municipio": "Nigüelas",
+   "provincia": "granada",
+   "poblacion": 1229,
+   "anio": 2025
+  },
+  "nivar": {
+   "municipio": "Nívar",
+   "provincia": "granada",
+   "poblacion": 1093,
+   "anio": 2025
+  },
+  "ogijares": {
+   "municipio": "Ogíjares",
+   "provincia": "granada",
+   "poblacion": 15239,
+   "anio": 2025
+  },
+  "orce": {
+   "municipio": "Orce",
+   "provincia": "granada",
+   "poblacion": 1116,
+   "anio": 2025
+  },
+  "orgiva": {
+   "municipio": "Órgiva",
+   "provincia": "granada",
+   "poblacion": 5728,
+   "anio": 2025
+  },
+  "otivar": {
+   "municipio": "Otívar",
+   "provincia": "granada",
+   "poblacion": 1011,
+   "anio": 2025
+  },
+  "padul": {
+   "municipio": "Padul",
+   "provincia": "granada",
+   "poblacion": 9667,
+   "anio": 2025
+  },
+  "pampaneira": {
+   "municipio": "Pampaneira",
+   "provincia": "granada",
+   "poblacion": 312,
+   "anio": 2025
+  },
+  "pedro martinez": {
+   "municipio": "Pedro Martínez",
+   "provincia": "granada",
+   "poblacion": 1166,
+   "anio": 2025
+  },
+  "peligros": {
+   "municipio": "Peligros",
+   "provincia": "granada",
+   "poblacion": 11725,
+   "anio": 2025
+  },
+  "peza, la": {
+   "municipio": "Peza, La",
+   "provincia": "granada",
+   "poblacion": 1104,
+   "anio": 2025
+  },
+  "pinar, el": {
+   "municipio": "Pinar, El",
+   "provincia": "granada",
+   "poblacion": 867,
+   "anio": 2025
+  },
+  "pinos genil": {
+   "municipio": "Pinos Genil",
+   "provincia": "granada",
+   "poblacion": 1642,
+   "anio": 2025
+  },
+  "pinos puente": {
+   "municipio": "Pinos Puente",
+   "provincia": "granada",
+   "poblacion": 9807,
+   "anio": 2025
+  },
+  "pinar": {
+   "municipio": "Píñar",
+   "provincia": "granada",
+   "poblacion": 1040,
+   "anio": 2025
+  },
+  "policar": {
+   "municipio": "Polícar",
+   "provincia": "granada",
+   "poblacion": 252,
+   "anio": 2025
+  },
+  "polopos": {
+   "municipio": "Polopos",
+   "provincia": "granada",
+   "poblacion": 1682,
+   "anio": 2025
+  },
+  "portugos": {
+   "municipio": "Pórtugos",
+   "provincia": "granada",
+   "poblacion": 372,
+   "anio": 2025
+  },
+  "puebla de don fadrique": {
+   "municipio": "Puebla de Don Fadrique",
+   "provincia": "granada",
+   "poblacion": 2195,
+   "anio": 2025
+  },
+  "pulianas": {
+   "municipio": "Pulianas",
+   "provincia": "granada",
+   "poblacion": 5659,
+   "anio": 2025
+  },
+  "purullena": {
+   "municipio": "Purullena",
+   "provincia": "granada",
+   "poblacion": 2409,
+   "anio": 2025
+  },
+  "quentar": {
+   "municipio": "Quéntar",
+   "provincia": "granada",
+   "poblacion": 952,
+   "anio": 2025
+  },
+  "rubite": {
+   "municipio": "Rubite",
+   "provincia": "granada",
+   "poblacion": 419,
+   "anio": 2025
+  },
+  "salar": {
+   "municipio": "Salar",
+   "provincia": "granada",
+   "poblacion": 2582,
+   "anio": 2025
+  },
+  "salobrena": {
+   "municipio": "Salobreña",
+   "provincia": "granada",
+   "poblacion": 12760,
+   "anio": 2025
+  },
+  "santa cruz del comercio": {
+   "municipio": "Santa Cruz del Comercio",
+   "provincia": "granada",
+   "poblacion": 523,
+   "anio": 2025
+  },
+  "santa fe": {
+   "municipio": "Santa Fe",
+   "provincia": "granada",
+   "poblacion": 15494,
+   "anio": 2025
+  },
+  "soportujar": {
+   "municipio": "Soportújar",
+   "provincia": "granada",
+   "poblacion": 260,
+   "anio": 2025
+  },
+  "sorvilan": {
+   "municipio": "Sorvilán",
+   "provincia": "granada",
+   "poblacion": 521,
+   "anio": 2025
+  },
+  "taha, la": {
+   "municipio": "Taha, La",
+   "provincia": "granada",
+   "poblacion": 777,
+   "anio": 2025
+  },
+  "torre-cardela": {
+   "municipio": "Torre-Cardela",
+   "provincia": "granada",
+   "poblacion": 700,
+   "anio": 2025
+  },
+  "torrenueva costa": {
+   "municipio": "Torrenueva Costa",
+   "provincia": "granada",
+   "poblacion": 3207,
+   "anio": 2025
+  },
+  "torvizcon": {
+   "municipio": "Torvizcón",
+   "provincia": "granada",
+   "poblacion": 608,
+   "anio": 2025
+  },
+  "trevelez": {
+   "municipio": "Trevélez",
+   "provincia": "granada",
+   "poblacion": 698,
+   "anio": 2025
+  },
+  "turon": {
+   "municipio": "Turón",
+   "provincia": "granada",
+   "poblacion": 203,
+   "anio": 2025
+  },
+  "ugijar": {
+   "municipio": "Ugíjar",
+   "provincia": "granada",
+   "poblacion": 2574,
+   "anio": 2025
+  },
+  "valderrubio": {
+   "municipio": "Valderrubio",
+   "provincia": "granada",
+   "poblacion": 2069,
+   "anio": 2025
+  },
+  "valle del zalabi": {
+   "municipio": "Valle del Zalabí",
+   "provincia": "granada",
+   "poblacion": 2128,
+   "anio": 2025
+  },
+  "valle, el": {
+   "municipio": "Valle, El",
+   "provincia": "granada",
+   "poblacion": 941,
+   "anio": 2025
+  },
+  "valor": {
+   "municipio": "Válor",
+   "provincia": "granada",
+   "poblacion": 658,
+   "anio": 2025
+  },
+  "vegas del genil": {
+   "municipio": "Vegas del Genil",
+   "provincia": "granada",
+   "poblacion": 12424,
+   "anio": 2025
+  },
+  "velez de benaudalla": {
+   "municipio": "Vélez de Benaudalla",
+   "provincia": "granada",
+   "poblacion": 3108,
+   "anio": 2025
+  },
+  "ventas de huelma": {
+   "municipio": "Ventas de Huelma",
+   "provincia": "granada",
+   "poblacion": 667,
+   "anio": 2025
+  },
+  "villa de otura": {
+   "municipio": "Villa de Otura",
+   "provincia": "granada",
+   "poblacion": 7696,
+   "anio": 2025
+  },
+  "villamena": {
+   "municipio": "Villamena",
+   "provincia": "granada",
+   "poblacion": 1029,
+   "anio": 2025
+  },
+  "villanueva de las torres": {
+   "municipio": "Villanueva de las Torres",
+   "provincia": "granada",
+   "poblacion": 491,
+   "anio": 2025
+  },
+  "villanueva mesia": {
+   "municipio": "Villanueva Mesía",
+   "provincia": "granada",
+   "poblacion": 1965,
+   "anio": 2025
+  },
+  "viznar": {
+   "municipio": "Víznar",
+   "provincia": "granada",
+   "poblacion": 1006,
+   "anio": 2025
+  },
+  "zafarraya": {
+   "municipio": "Zafarraya",
+   "provincia": "granada",
+   "poblacion": 2244,
+   "anio": 2025
+  },
+  "zagra": {
+   "municipio": "Zagra",
+   "provincia": "granada",
+   "poblacion": 845,
+   "anio": 2025
+  },
+  "zubia, la": {
+   "municipio": "Zubia, La",
+   "provincia": "granada",
+   "poblacion": 20389,
+   "anio": 2025
+  },
+  "zujar": {
+   "municipio": "Zújar",
+   "provincia": "granada",
+   "poblacion": 2655,
+   "anio": 2025
+  },
+  "alajar": {
+   "municipio": "Alájar",
+   "provincia": "huelva",
+   "poblacion": 793,
+   "anio": 2025
+  },
+  "aljaraque": {
+   "municipio": "Aljaraque",
+   "provincia": "huelva",
+   "poblacion": 22737,
+   "anio": 2025
+  },
+  "almendro, el": {
+   "municipio": "Almendro, El",
+   "provincia": "huelva",
+   "poblacion": 862,
+   "anio": 2025
+  },
+  "almonaster la real": {
+   "municipio": "Almonaster la Real",
+   "provincia": "huelva",
+   "poblacion": 1759,
+   "anio": 2025
+  },
+  "almonte": {
+   "municipio": "Almonte",
+   "provincia": "huelva",
+   "poblacion": 24864,
+   "anio": 2025
+  },
+  "alosno": {
+   "municipio": "Alosno",
+   "provincia": "huelva",
+   "poblacion": 3986,
+   "anio": 2025
+  },
+  "aracena": {
+   "municipio": "Aracena",
+   "provincia": "huelva",
+   "poblacion": 8425,
+   "anio": 2025
+  },
+  "aroche": {
+   "municipio": "Aroche",
+   "provincia": "huelva",
+   "poblacion": 2991,
+   "anio": 2025
+  },
+  "arroyomolinos de leon": {
+   "municipio": "Arroyomolinos de León",
+   "provincia": "huelva",
+   "poblacion": 907,
+   "anio": 2025
+  },
+  "ayamonte": {
+   "municipio": "Ayamonte",
+   "provincia": "huelva",
+   "poblacion": 22001,
+   "anio": 2025
+  },
+  "beas": {
+   "municipio": "Beas",
+   "provincia": "huelva",
+   "poblacion": 4414,
+   "anio": 2025
+  },
+  "berrocal": {
+   "municipio": "Berrocal",
+   "provincia": "huelva",
+   "poblacion": 283,
+   "anio": 2025
+  },
+  "bollullos par del condado": {
+   "municipio": "Bollullos Par del Condado",
+   "provincia": "huelva",
+   "poblacion": 14314,
+   "anio": 2025
+  },
+  "bonares": {
+   "municipio": "Bonares",
+   "provincia": "huelva",
+   "poblacion": 6125,
+   "anio": 2025
+  },
+  "cabezas rubias": {
+   "municipio": "Cabezas Rubias",
+   "provincia": "huelva",
+   "poblacion": 694,
+   "anio": 2025
+  },
+  "cala": {
+   "municipio": "Cala",
+   "provincia": "huelva",
+   "poblacion": 1106,
+   "anio": 2025
+  },
+  "calanas": {
+   "municipio": "Calañas",
+   "provincia": "huelva",
+   "poblacion": 2749,
+   "anio": 2025
+  },
+  "campillo, el": {
+   "municipio": "Campillo, El",
+   "provincia": "huelva",
+   "poblacion": 2003,
+   "anio": 2025
+  },
+  "campofrio": {
+   "municipio": "Campofrío",
+   "provincia": "huelva",
+   "poblacion": 728,
+   "anio": 2025
+  },
+  "canaveral de leon": {
+   "municipio": "Cañaveral de León",
+   "provincia": "huelva",
+   "poblacion": 389,
+   "anio": 2025
+  },
+  "cartaya": {
+   "municipio": "Cartaya",
+   "provincia": "huelva",
+   "poblacion": 21471,
+   "anio": 2025
+  },
+  "castano del robledo": {
+   "municipio": "Castaño del Robledo",
+   "provincia": "huelva",
+   "poblacion": 217,
+   "anio": 2025
+  },
+  "cerro de andevalo, el": {
+   "municipio": "Cerro de Andévalo, El",
+   "provincia": "huelva",
+   "poblacion": 2246,
+   "anio": 2025
+  },
+  "chucena": {
+   "municipio": "Chucena",
+   "provincia": "huelva",
+   "poblacion": 2306,
+   "anio": 2025
+  },
+  "corteconcepcion": {
+   "municipio": "Corteconcepción",
+   "provincia": "huelva",
+   "poblacion": 581,
+   "anio": 2025
+  },
+  "cortegana": {
+   "municipio": "Cortegana",
+   "provincia": "huelva",
+   "poblacion": 4617,
+   "anio": 2025
+  },
+  "cortelazor": {
+   "municipio": "Cortelazor",
+   "provincia": "huelva",
+   "poblacion": 302,
+   "anio": 2025
+  },
+  "cumbres de enmedio": {
+   "municipio": "Cumbres de Enmedio",
+   "provincia": "huelva",
+   "poblacion": 54,
+   "anio": 2025
+  },
+  "cumbres de san bartolome": {
+   "municipio": "Cumbres de San Bartolomé",
+   "provincia": "huelva",
+   "poblacion": 354,
+   "anio": 2025
+  },
+  "cumbres mayores": {
+   "municipio": "Cumbres Mayores",
+   "provincia": "huelva",
+   "poblacion": 1708,
+   "anio": 2025
+  },
+  "encinasola": {
+   "municipio": "Encinasola",
+   "provincia": "huelva",
+   "poblacion": 1232,
+   "anio": 2025
+  },
+  "escacena del campo": {
+   "municipio": "Escacena del Campo",
+   "provincia": "huelva",
+   "poblacion": 2327,
+   "anio": 2025
+  },
+  "fuenteheridos": {
+   "municipio": "Fuenteheridos",
+   "provincia": "huelva",
+   "poblacion": 804,
+   "anio": 2025
+  },
+  "galaroza": {
+   "municipio": "Galaroza",
+   "provincia": "huelva",
+   "poblacion": 1366,
+   "anio": 2025
+  },
+  "gibraleon": {
+   "municipio": "Gibraleón",
+   "provincia": "huelva",
+   "poblacion": 13261,
+   "anio": 2025
+  },
+  "granada de rio-tinto, la": {
+   "municipio": "Granada de Río-Tinto, La",
+   "provincia": "huelva",
+   "poblacion": 235,
+   "anio": 2025
+  },
+  "granado, el": {
+   "municipio": "Granado, El",
+   "provincia": "huelva",
+   "poblacion": 480,
+   "anio": 2025
+  },
+  "higuera de la sierra": {
+   "municipio": "Higuera de la Sierra",
+   "provincia": "huelva",
+   "poblacion": 1292,
+   "anio": 2025
+  },
+  "hinojales": {
+   "municipio": "Hinojales",
+   "provincia": "huelva",
+   "poblacion": 314,
+   "anio": 2025
+  },
+  "hinojos": {
+   "municipio": "Hinojos",
+   "provincia": "huelva",
+   "poblacion": 4097,
+   "anio": 2025
+  },
+  "huelva": {
+   "municipio": "Huelva",
+   "provincia": "huelva",
+   "poblacion": 143215,
+   "anio": 2025
+  },
+  "isla cristina": {
+   "municipio": "Isla Cristina",
+   "provincia": "huelva",
+   "poblacion": 21525,
+   "anio": 2025
+  },
+  "jabugo": {
+   "municipio": "Jabugo",
+   "provincia": "huelva",
+   "poblacion": 2183,
+   "anio": 2025
+  },
+  "lepe": {
+   "municipio": "Lepe",
+   "provincia": "huelva",
+   "poblacion": 29677,
+   "anio": 2025
+  },
+  "linares de la sierra": {
+   "municipio": "Linares de la Sierra",
+   "provincia": "huelva",
+   "poblacion": 279,
+   "anio": 2025
+  },
+  "lucena del puerto": {
+   "municipio": "Lucena del Puerto",
+   "provincia": "huelva",
+   "poblacion": 3390,
+   "anio": 2025
+  },
+  "manzanilla": {
+   "municipio": "Manzanilla",
+   "provincia": "huelva",
+   "poblacion": 2214,
+   "anio": 2025
+  },
+  "marines, los": {
+   "municipio": "Marines, Los",
+   "provincia": "huelva",
+   "poblacion": 436,
+   "anio": 2025
+  },
+  "minas de riotinto": {
+   "municipio": "Minas de Riotinto",
+   "provincia": "huelva",
+   "poblacion": 3698,
+   "anio": 2025
+  },
+  "moguer": {
+   "municipio": "Moguer",
+   "provincia": "huelva",
+   "poblacion": 24083,
+   "anio": 2025
+  },
+  "nava, la": {
+   "municipio": "Nava, La",
+   "provincia": "huelva",
+   "poblacion": 271,
+   "anio": 2025
+  },
+  "nerva": {
+   "municipio": "Nerva",
+   "provincia": "huelva",
+   "poblacion": 5087,
+   "anio": 2025
+  },
+  "niebla": {
+   "municipio": "Niebla",
+   "provincia": "huelva",
+   "poblacion": 4268,
+   "anio": 2025
+  },
+  "palma del condado, la": {
+   "municipio": "Palma del Condado, La",
+   "provincia": "huelva",
+   "poblacion": 10841,
+   "anio": 2025
+  },
+  "palos de la frontera": {
+   "municipio": "Palos de la Frontera",
+   "provincia": "huelva",
+   "poblacion": 12938,
+   "anio": 2025
+  },
+  "paterna del campo": {
+   "municipio": "Paterna del Campo",
+   "provincia": "huelva",
+   "poblacion": 3382,
+   "anio": 2025
+  },
+  "paymogo": {
+   "municipio": "Paymogo",
+   "provincia": "huelva",
+   "poblacion": 1132,
+   "anio": 2025
+  },
+  "puebla de guzman": {
+   "municipio": "Puebla de Guzmán",
+   "provincia": "huelva",
+   "poblacion": 3071,
+   "anio": 2025
+  },
+  "puerto moral": {
+   "municipio": "Puerto Moral",
+   "provincia": "huelva",
+   "poblacion": 276,
+   "anio": 2025
+  },
+  "punta umbria": {
+   "municipio": "Punta Umbría",
+   "provincia": "huelva",
+   "poblacion": 16281,
+   "anio": 2025
+  },
+  "rociana del condado": {
+   "municipio": "Rociana del Condado",
+   "provincia": "huelva",
+   "poblacion": 8024,
+   "anio": 2025
+  },
+  "rosal de la frontera": {
+   "municipio": "Rosal de la Frontera",
+   "provincia": "huelva",
+   "poblacion": 1676,
+   "anio": 2025
+  },
+  "san bartolome de la torre": {
+   "municipio": "San Bartolomé de la Torre",
+   "provincia": "huelva",
+   "poblacion": 4072,
+   "anio": 2025
+  },
+  "san juan del puerto": {
+   "municipio": "San Juan del Puerto",
+   "provincia": "huelva",
+   "poblacion": 9969,
+   "anio": 2025
+  },
+  "san silvestre de guzman": {
+   "municipio": "San Silvestre de Guzmán",
+   "provincia": "huelva",
+   "poblacion": 649,
+   "anio": 2025
+  },
+  "sanlucar de guadiana": {
+   "municipio": "Sanlúcar de Guadiana",
+   "provincia": "huelva",
+   "poblacion": 418,
+   "anio": 2025
+  },
+  "santa ana la real": {
+   "municipio": "Santa Ana la Real",
+   "provincia": "huelva",
+   "poblacion": 466,
+   "anio": 2025
+  },
+  "santa barbara de casa": {
+   "municipio": "Santa Bárbara de Casa",
+   "provincia": "huelva",
+   "poblacion": 1144,
+   "anio": 2025
+  },
+  "santa olalla del cala": {
+   "municipio": "Santa Olalla del Cala",
+   "provincia": "huelva",
+   "poblacion": 2039,
+   "anio": 2025
+  },
+  "trigueros": {
+   "municipio": "Trigueros",
+   "provincia": "huelva",
+   "poblacion": 8159,
+   "anio": 2025
+  },
+  "valdelarco": {
+   "municipio": "Valdelarco",
+   "provincia": "huelva",
+   "poblacion": 239,
+   "anio": 2025
+  },
+  "valverde del camino": {
+   "municipio": "Valverde del Camino",
+   "provincia": "huelva",
+   "poblacion": 12631,
+   "anio": 2025
+  },
+  "villablanca": {
+   "municipio": "Villablanca",
+   "provincia": "huelva",
+   "poblacion": 2939,
+   "anio": 2025
+  },
+  "villalba del alcor": {
+   "municipio": "Villalba del Alcor",
+   "provincia": "huelva",
+   "poblacion": 3303,
+   "anio": 2025
+  },
+  "villanueva de las cruces": {
+   "municipio": "Villanueva de las Cruces",
+   "provincia": "huelva",
+   "poblacion": 379,
+   "anio": 2025
+  },
+  "villanueva de los castillejos": {
+   "municipio": "Villanueva de los Castillejos",
+   "provincia": "huelva",
+   "poblacion": 2967,
+   "anio": 2025
+  },
+  "villarrasa": {
+   "municipio": "Villarrasa",
+   "provincia": "huelva",
+   "poblacion": 2103,
+   "anio": 2025
+  },
+  "zalamea la real": {
+   "municipio": "Zalamea la Real",
+   "provincia": "huelva",
+   "poblacion": 2968,
+   "anio": 2025
+  },
+  "zarza-perrunal, la": {
+   "municipio": "Zarza-Perrunal, La",
+   "provincia": "huelva",
+   "poblacion": 1181,
+   "anio": 2025
+  },
+  "zufre": {
+   "municipio": "Zufre",
+   "provincia": "huelva",
+   "poblacion": 736,
+   "anio": 2025
+  },
+  "albanchez de magina": {
+   "municipio": "Albanchez de Mágina",
+   "provincia": "jaen",
+   "poblacion": 903,
+   "anio": 2025
+  },
+  "alcala la real": {
+   "municipio": "Alcalá la Real",
+   "provincia": "jaen",
+   "poblacion": 21496,
+   "anio": 2025
+  },
+  "alcaudete": {
+   "municipio": "Alcaudete",
+   "provincia": "jaen",
+   "poblacion": 10129,
+   "anio": 2025
+  },
+  "aldeaquemada": {
+   "municipio": "Aldeaquemada",
+   "provincia": "jaen",
+   "poblacion": 446,
+   "anio": 2025
+  },
+  "andujar": {
+   "municipio": "Andújar",
+   "provincia": "jaen",
+   "poblacion": 35610,
+   "anio": 2025
+  },
+  "arjona": {
+   "municipio": "Arjona",
+   "provincia": "jaen",
+   "poblacion": 5330,
+   "anio": 2025
+  },
+  "arjonilla": {
+   "municipio": "Arjonilla",
+   "provincia": "jaen",
+   "poblacion": 3520,
+   "anio": 2025
+  },
+  "arquillos": {
+   "municipio": "Arquillos",
+   "provincia": "jaen",
+   "poblacion": 1682,
+   "anio": 2025
+  },
+  "arroyo del ojanco": {
+   "municipio": "Arroyo del Ojanco",
+   "provincia": "jaen",
+   "poblacion": 2158,
+   "anio": 2025
+  },
+  "baeza": {
+   "municipio": "Baeza",
+   "provincia": "jaen",
+   "poblacion": 15575,
+   "anio": 2025
+  },
+  "bailen": {
+   "municipio": "Bailén",
+   "provincia": "jaen",
+   "poblacion": 17119,
+   "anio": 2025
+  },
+  "banos de la encina": {
+   "municipio": "Baños de la Encina",
+   "provincia": "jaen",
+   "poblacion": 2542,
+   "anio": 2025
+  },
+  "beas de segura": {
+   "municipio": "Beas de Segura",
+   "provincia": "jaen",
+   "poblacion": 4983,
+   "anio": 2025
+  },
+  "bedmar y garciez": {
+   "municipio": "Bedmar y Garcíez",
+   "provincia": "jaen",
+   "poblacion": 2567,
+   "anio": 2025
+  },
+  "begijar": {
+   "municipio": "Begíjar",
+   "provincia": "jaen",
+   "poblacion": 2908,
+   "anio": 2025
+  },
+  "belmez de la moraleda": {
+   "municipio": "Bélmez de la Moraleda",
+   "provincia": "jaen",
+   "poblacion": 1504,
+   "anio": 2025
+  },
+  "benatae": {
+   "municipio": "Benatae",
+   "provincia": "jaen",
+   "poblacion": 423,
+   "anio": 2025
+  },
+  "cabra del santo cristo": {
+   "municipio": "Cabra del Santo Cristo",
+   "provincia": "jaen",
+   "poblacion": 1639,
+   "anio": 2025
+  },
+  "cambil": {
+   "municipio": "Cambil",
+   "provincia": "jaen",
+   "poblacion": 2654,
+   "anio": 2025
+  },
+  "campillo de arenas": {
+   "municipio": "Campillo de Arenas",
+   "provincia": "jaen",
+   "poblacion": 1711,
+   "anio": 2025
+  },
+  "canena": {
+   "municipio": "Canena",
+   "provincia": "jaen",
+   "poblacion": 1717,
+   "anio": 2025
+  },
+  "carboneros": {
+   "municipio": "Carboneros",
+   "provincia": "jaen",
+   "poblacion": 624,
+   "anio": 2025
+  },
+  "carcheles": {
+   "municipio": "Cárcheles",
+   "provincia": "jaen",
+   "poblacion": 1291,
+   "anio": 2025
+  },
+  "carolina, la": {
+   "municipio": "Carolina, La",
+   "provincia": "jaen",
+   "poblacion": 14677,
+   "anio": 2025
+  },
+  "castellar": {
+   "municipio": "Castellar",
+   "provincia": "jaen",
+   "poblacion": 3147,
+   "anio": 2025
+  },
+  "castillo de locubin": {
+   "municipio": "Castillo de Locubín",
+   "provincia": "jaen",
+   "poblacion": 3805,
+   "anio": 2025
+  },
+  "cazalilla": {
+   "municipio": "Cazalilla",
+   "provincia": "jaen",
+   "poblacion": 762,
+   "anio": 2025
+  },
+  "cazorla": {
+   "municipio": "Cazorla",
+   "provincia": "jaen",
+   "poblacion": 6930,
+   "anio": 2025
+  },
+  "chiclana de segura": {
+   "municipio": "Chiclana de Segura",
+   "provincia": "jaen",
+   "poblacion": 859,
+   "anio": 2025
+  },
+  "chilluevar": {
+   "municipio": "Chilluévar",
+   "provincia": "jaen",
+   "poblacion": 1309,
+   "anio": 2025
+  },
+  "escanuela": {
+   "municipio": "Escañuela",
+   "provincia": "jaen",
+   "poblacion": 902,
+   "anio": 2025
+  },
+  "espeluy": {
+   "municipio": "Espeluy",
+   "provincia": "jaen",
+   "poblacion": 596,
+   "anio": 2025
+  },
+  "frailes": {
+   "municipio": "Frailes",
+   "provincia": "jaen",
+   "poblacion": 1565,
+   "anio": 2025
+  },
+  "fuensanta de martos": {
+   "municipio": "Fuensanta de Martos",
+   "provincia": "jaen",
+   "poblacion": 3030,
+   "anio": 2025
+  },
+  "fuerte del rey": {
+   "municipio": "Fuerte del Rey",
+   "provincia": "jaen",
+   "poblacion": 1348,
+   "anio": 2025
+  },
+  "genave": {
+   "municipio": "Génave",
+   "provincia": "jaen",
+   "poblacion": 548,
+   "anio": 2025
+  },
+  "guardia de jaen, la": {
+   "municipio": "Guardia de Jaén, La",
+   "provincia": "jaen",
+   "poblacion": 5212,
+   "anio": 2025
+  },
+  "guarroman": {
+   "municipio": "Guarromán",
+   "provincia": "jaen",
+   "poblacion": 2703,
+   "anio": 2025
+  },
+  "higuera de calatrava": {
+   "municipio": "Higuera de Calatrava",
+   "provincia": "jaen",
+   "poblacion": 590,
+   "anio": 2025
+  },
+  "hinojares": {
+   "municipio": "Hinojares",
+   "provincia": "jaen",
+   "poblacion": 335,
+   "anio": 2025
+  },
+  "hornos": {
+   "municipio": "Hornos",
+   "provincia": "jaen",
+   "poblacion": 561,
+   "anio": 2025
+  },
+  "huelma": {
+   "municipio": "Huelma",
+   "provincia": "jaen",
+   "poblacion": 5485,
+   "anio": 2025
+  },
+  "huesa": {
+   "municipio": "Huesa",
+   "provincia": "jaen",
+   "poblacion": 2411,
+   "anio": 2025
+  },
+  "ibros": {
+   "municipio": "Ibros",
+   "provincia": "jaen",
+   "poblacion": 2773,
+   "anio": 2025
+  },
+  "iruela, la": {
+   "municipio": "Iruela, La",
+   "provincia": "jaen",
+   "poblacion": 1819,
+   "anio": 2025
+  },
+  "iznatoraf": {
+   "municipio": "Iznatoraf",
+   "provincia": "jaen",
+   "poblacion": 874,
+   "anio": 2025
+  },
+  "jabalquinto": {
+   "municipio": "Jabalquinto",
+   "provincia": "jaen",
+   "poblacion": 1939,
+   "anio": 2025
+  },
+  "jaen": {
+   "municipio": "Jaén",
+   "provincia": "jaen",
+   "poblacion": 112235,
+   "anio": 2025
+  },
+  "jamilena": {
+   "municipio": "Jamilena",
+   "provincia": "jaen",
+   "poblacion": 3319,
+   "anio": 2025
+  },
+  "jimena": {
+   "municipio": "Jimena",
+   "provincia": "jaen",
+   "poblacion": 1219,
+   "anio": 2025
+  },
+  "jodar": {
+   "municipio": "Jódar",
+   "provincia": "jaen",
+   "poblacion": 11285,
+   "anio": 2025
+  },
+  "lahiguera": {
+   "municipio": "Lahiguera",
+   "provincia": "jaen",
+   "poblacion": 1560,
+   "anio": 2025
+  },
+  "larva": {
+   "municipio": "Larva",
+   "provincia": "jaen",
+   "poblacion": 435,
+   "anio": 2025
+  },
+  "linares": {
+   "municipio": "Linares",
+   "provincia": "jaen",
+   "poblacion": 55633,
+   "anio": 2025
+  },
+  "lopera": {
+   "municipio": "Lopera",
+   "provincia": "jaen",
+   "poblacion": 3502,
+   "anio": 2025
+  },
+  "lupion": {
+   "municipio": "Lupión",
+   "provincia": "jaen",
+   "poblacion": 801,
+   "anio": 2025
+  },
+  "mancha real": {
+   "municipio": "Mancha Real",
+   "provincia": "jaen",
+   "poblacion": 11481,
+   "anio": 2025
+  },
+  "marmolejo": {
+   "municipio": "Marmolejo",
+   "provincia": "jaen",
+   "poblacion": 6412,
+   "anio": 2025
+  },
+  "martos": {
+   "municipio": "Martos",
+   "provincia": "jaen",
+   "poblacion": 24462,
+   "anio": 2025
+  },
+  "mengibar": {
+   "municipio": "Mengíbar",
+   "provincia": "jaen",
+   "poblacion": 10250,
+   "anio": 2025
+  },
+  "montizon": {
+   "municipio": "Montizón",
+   "provincia": "jaen",
+   "poblacion": 1574,
+   "anio": 2025
+  },
+  "navas de san juan": {
+   "municipio": "Navas de San Juan",
+   "provincia": "jaen",
+   "poblacion": 4345,
+   "anio": 2025
+  },
+  "noalejo": {
+   "municipio": "Noalejo",
+   "provincia": "jaen",
+   "poblacion": 1721,
+   "anio": 2025
+  },
+  "orcera": {
+   "municipio": "Orcera",
+   "provincia": "jaen",
+   "poblacion": 1715,
+   "anio": 2025
+  },
+  "peal de becerro": {
+   "municipio": "Peal de Becerro",
+   "provincia": "jaen",
+   "poblacion": 5290,
+   "anio": 2025
+  },
+  "pegalajar": {
+   "municipio": "Pegalajar",
+   "provincia": "jaen",
+   "poblacion": 2830,
+   "anio": 2025
+  },
+  "porcuna": {
+   "municipio": "Porcuna",
+   "provincia": "jaen",
+   "poblacion": 5936,
+   "anio": 2025
+  },
+  "pozo alcon": {
+   "municipio": "Pozo Alcón",
+   "provincia": "jaen",
+   "poblacion": 4514,
+   "anio": 2025
+  },
+  "puente de genave": {
+   "municipio": "Puente de Génave",
+   "provincia": "jaen",
+   "poblacion": 2191,
+   "anio": 2025
+  },
+  "puerta de segura, la": {
+   "municipio": "Puerta de Segura, La",
+   "provincia": "jaen",
+   "poblacion": 2223,
+   "anio": 2025
+  },
+  "quesada": {
+   "municipio": "Quesada",
+   "provincia": "jaen",
+   "poblacion": 4901,
+   "anio": 2025
+  },
+  "rus": {
+   "municipio": "Rus",
+   "provincia": "jaen",
+   "poblacion": 3386,
+   "anio": 2025
+  },
+  "sabiote": {
+   "municipio": "Sabiote",
+   "provincia": "jaen",
+   "poblacion": 3742,
+   "anio": 2025
+  },
+  "santa elena": {
+   "municipio": "Santa Elena",
+   "provincia": "jaen",
+   "poblacion": 863,
+   "anio": 2025
+  },
+  "santiago de calatrava": {
+   "municipio": "Santiago de Calatrava",
+   "provincia": "jaen",
+   "poblacion": 660,
+   "anio": 2025
+  },
+  "santiago-pontones": {
+   "municipio": "Santiago-Pontones",
+   "provincia": "jaen",
+   "poblacion": 2629,
+   "anio": 2025
+  },
+  "santisteban del puerto": {
+   "municipio": "Santisteban del Puerto",
+   "provincia": "jaen",
+   "poblacion": 4451,
+   "anio": 2025
+  },
+  "santo tome": {
+   "municipio": "Santo Tomé",
+   "provincia": "jaen",
+   "poblacion": 2029,
+   "anio": 2025
+  },
+  "segura de la sierra": {
+   "municipio": "Segura de la Sierra",
+   "provincia": "jaen",
+   "poblacion": 1711,
+   "anio": 2025
+  },
+  "siles": {
+   "municipio": "Siles",
+   "provincia": "jaen",
+   "poblacion": 2067,
+   "anio": 2025
+  },
+  "sorihuela del guadalimar": {
+   "municipio": "Sorihuela del Guadalimar",
+   "provincia": "jaen",
+   "poblacion": 1000,
+   "anio": 2025
+  },
+  "torreblascopedro": {
+   "municipio": "Torreblascopedro",
+   "provincia": "jaen",
+   "poblacion": 2382,
+   "anio": 2025
+  },
+  "torredelcampo": {
+   "municipio": "Torredelcampo",
+   "provincia": "jaen",
+   "poblacion": 13888,
+   "anio": 2025
+  },
+  "torredonjimeno": {
+   "municipio": "Torredonjimeno",
+   "provincia": "jaen",
+   "poblacion": 13213,
+   "anio": 2025
+  },
+  "torreperogil": {
+   "municipio": "Torreperogil",
+   "provincia": "jaen",
+   "poblacion": 7107,
+   "anio": 2025
+  },
+  "torres": {
+   "municipio": "Torres",
+   "provincia": "jaen",
+   "poblacion": 1328,
+   "anio": 2025
+  },
+  "torres de albanchez": {
+   "municipio": "Torres de Albánchez",
+   "provincia": "jaen",
+   "poblacion": 735,
+   "anio": 2025
+  },
+  "ubeda": {
+   "municipio": "Úbeda",
+   "provincia": "jaen",
+   "poblacion": 33588,
+   "anio": 2025
+  },
+  "valdepenas de jaen": {
+   "municipio": "Valdepeñas de Jaén",
+   "provincia": "jaen",
+   "poblacion": 3469,
+   "anio": 2025
+  },
+  "vilches": {
+   "municipio": "Vilches",
+   "provincia": "jaen",
+   "poblacion": 4191,
+   "anio": 2025
+  },
+  "villacarrillo": {
+   "municipio": "Villacarrillo",
+   "provincia": "jaen",
+   "poblacion": 10342,
+   "anio": 2025
+  },
+  "villanueva de la reina": {
+   "municipio": "Villanueva de la Reina",
+   "provincia": "jaen",
+   "poblacion": 2941,
+   "anio": 2025
+  },
+  "villanueva del arzobispo": {
+   "municipio": "Villanueva del Arzobispo",
+   "provincia": "jaen",
+   "poblacion": 7703,
+   "anio": 2025
+  },
+  "villardompardo": {
+   "municipio": "Villardompardo",
+   "provincia": "jaen",
+   "poblacion": 893,
+   "anio": 2025
+  },
+  "villares, los": {
+   "municipio": "Villares, Los",
+   "provincia": "jaen",
+   "poblacion": 6111,
+   "anio": 2025
+  },
+  "villarrodrigo": {
+   "municipio": "Villarrodrigo",
+   "provincia": "jaen",
+   "poblacion": 371,
+   "anio": 2025
+  },
+  "villatorres": {
+   "municipio": "Villatorres",
+   "provincia": "jaen",
+   "poblacion": 4259,
+   "anio": 2025
+  },
+  "alameda": {
+   "municipio": "Alameda",
+   "provincia": "malaga",
+   "poblacion": 5426,
+   "anio": 2025
+  },
+  "alcaucin": {
+   "municipio": "Alcaucín",
+   "provincia": "malaga",
+   "poblacion": 2671,
+   "anio": 2025
+  },
+  "alfarnate": {
+   "municipio": "Alfarnate",
+   "provincia": "malaga",
+   "poblacion": 1034,
+   "anio": 2025
+  },
+  "alfarnatejo": {
+   "municipio": "Alfarnatejo",
+   "provincia": "malaga",
+   "poblacion": 358,
+   "anio": 2025
+  },
+  "algarrobo": {
+   "municipio": "Algarrobo",
+   "provincia": "malaga",
+   "poblacion": 7103,
+   "anio": 2025
+  },
+  "algatocin": {
+   "municipio": "Algatocín",
+   "provincia": "malaga",
+   "poblacion": 816,
+   "anio": 2025
+  },
+  "alhaurin de la torre": {
+   "municipio": "Alhaurín de la Torre",
+   "provincia": "malaga",
+   "poblacion": 45066,
+   "anio": 2025
+  },
+  "alhaurin el grande": {
+   "municipio": "Alhaurín el Grande",
+   "provincia": "malaga",
+   "poblacion": 27552,
+   "anio": 2025
+  },
+  "almachar": {
+   "municipio": "Almáchar",
+   "provincia": "malaga",
+   "poblacion": 1959,
+   "anio": 2025
+  },
+  "almargen": {
+   "municipio": "Almargen",
+   "provincia": "malaga",
+   "poblacion": 1876,
+   "anio": 2025
+  },
+  "almogia": {
+   "municipio": "Almogía",
+   "provincia": "malaga",
+   "poblacion": 4269,
+   "anio": 2025
+  },
+  "alora": {
+   "municipio": "Álora",
+   "provincia": "malaga",
+   "poblacion": 13650,
+   "anio": 2025
+  },
+  "alozaina": {
+   "municipio": "Alozaina",
+   "provincia": "malaga",
+   "poblacion": 2127,
+   "anio": 2025
+  },
+  "alpandeire": {
+   "municipio": "Alpandeire",
+   "provincia": "malaga",
+   "poblacion": 242,
+   "anio": 2025
+  },
+  "antequera": {
+   "municipio": "Antequera",
+   "provincia": "malaga",
+   "poblacion": 41849,
+   "anio": 2025
+  },
+  "archez": {
+   "municipio": "Árchez",
+   "provincia": "malaga",
+   "poblacion": 441,
+   "anio": 2025
+  },
+  "archidona": {
+   "municipio": "Archidona",
+   "provincia": "malaga",
+   "poblacion": 8105,
+   "anio": 2025
+  },
+  "ardales": {
+   "municipio": "Ardales",
+   "provincia": "malaga",
+   "poblacion": 2524,
+   "anio": 2025
+  },
+  "arenas": {
+   "municipio": "Arenas",
+   "provincia": "malaga",
+   "poblacion": 1291,
+   "anio": 2025
+  },
+  "arriate": {
+   "municipio": "Arriate",
+   "provincia": "malaga",
+   "poblacion": 4049,
+   "anio": 2025
+  },
+  "atajate": {
+   "municipio": "Atajate",
+   "provincia": "malaga",
+   "poblacion": 168,
+   "anio": 2025
+  },
+  "benadalid": {
+   "municipio": "Benadalid",
+   "provincia": "malaga",
+   "poblacion": 226,
+   "anio": 2025
+  },
+  "benahavis": {
+   "municipio": "Benahavís",
+   "provincia": "malaga",
+   "poblacion": 9472,
+   "anio": 2025
+  },
+  "benalauria": {
+   "municipio": "Benalauría",
+   "provincia": "malaga",
+   "poblacion": 460,
+   "anio": 2025
+  },
+  "benalmadena": {
+   "municipio": "Benalmádena",
+   "provincia": "malaga",
+   "poblacion": 78338,
+   "anio": 2025
+  },
+  "benamargosa": {
+   "municipio": "Benamargosa",
+   "provincia": "malaga",
+   "poblacion": 1560,
+   "anio": 2025
+  },
+  "benamocarra": {
+   "municipio": "Benamocarra",
+   "provincia": "malaga",
+   "poblacion": 3200,
+   "anio": 2025
+  },
+  "benaojan": {
+   "municipio": "Benaoján",
+   "provincia": "malaga",
+   "poblacion": 1427,
+   "anio": 2025
+  },
+  "benarraba": {
+   "municipio": "Benarrabá",
+   "provincia": "malaga",
+   "poblacion": 457,
+   "anio": 2025
+  },
+  "borge, el": {
+   "municipio": "Borge, El",
+   "provincia": "malaga",
+   "poblacion": 958,
+   "anio": 2025
+  },
+  "burgo, el": {
+   "municipio": "Burgo, El",
+   "provincia": "malaga",
+   "poblacion": 1761,
+   "anio": 2025
+  },
+  "campillos": {
+   "municipio": "Campillos",
+   "provincia": "malaga",
+   "poblacion": 8561,
+   "anio": 2025
+  },
+  "canillas de aceituno": {
+   "municipio": "Canillas de Aceituno",
+   "provincia": "malaga",
+   "poblacion": 1801,
+   "anio": 2025
+  },
+  "canillas de albaida": {
+   "municipio": "Canillas de Albaida",
+   "provincia": "malaga",
+   "poblacion": 807,
+   "anio": 2025
+  },
+  "canete la real": {
+   "municipio": "Cañete la Real",
+   "provincia": "malaga",
+   "poblacion": 1569,
+   "anio": 2025
+  },
+  "carratraca": {
+   "municipio": "Carratraca",
+   "provincia": "malaga",
+   "poblacion": 801,
+   "anio": 2025
+  },
+  "cartajima": {
+   "municipio": "Cartajima",
+   "provincia": "malaga",
+   "poblacion": 234,
+   "anio": 2025
+  },
+  "cartama": {
+   "municipio": "Cártama",
+   "provincia": "malaga",
+   "poblacion": 29333,
+   "anio": 2025
+  },
+  "casabermeja": {
+   "municipio": "Casabermeja",
+   "provincia": "malaga",
+   "poblacion": 4214,
+   "anio": 2025
+  },
+  "casarabonela": {
+   "municipio": "Casarabonela",
+   "provincia": "malaga",
+   "poblacion": 2800,
+   "anio": 2025
+  },
+  "casares": {
+   "municipio": "Casares",
+   "provincia": "malaga",
+   "poblacion": 9009,
+   "anio": 2025
+  },
+  "coin": {
+   "municipio": "Coín",
+   "provincia": "malaga",
+   "poblacion": 26574,
+   "anio": 2025
+  },
+  "colmenar": {
+   "municipio": "Colmenar",
+   "provincia": "malaga",
+   "poblacion": 3626,
+   "anio": 2025
+  },
+  "comares": {
+   "municipio": "Comares",
+   "provincia": "malaga",
+   "poblacion": 1354,
+   "anio": 2025
+  },
+  "competa": {
+   "municipio": "Cómpeta",
+   "provincia": "malaga",
+   "poblacion": 3824,
+   "anio": 2025
+  },
+  "cortes de la frontera": {
+   "municipio": "Cortes de la Frontera",
+   "provincia": "malaga",
+   "poblacion": 3048,
+   "anio": 2025
+  },
+  "cuevas bajas": {
+   "municipio": "Cuevas Bajas",
+   "provincia": "malaga",
+   "poblacion": 1341,
+   "anio": 2025
+  },
+  "cuevas de san marcos": {
+   "municipio": "Cuevas de San Marcos",
+   "provincia": "malaga",
+   "poblacion": 3647,
+   "anio": 2025
+  },
+  "cuevas del becerro": {
+   "municipio": "Cuevas del Becerro",
+   "provincia": "malaga",
+   "poblacion": 1617,
+   "anio": 2025
+  },
+  "cutar": {
+   "municipio": "Cútar",
+   "provincia": "malaga",
+   "poblacion": 603,
+   "anio": 2025
+  },
+  "estepona": {
+   "municipio": "Estepona",
+   "provincia": "malaga",
+   "poblacion": 79621,
+   "anio": 2025
+  },
+  "farajan": {
+   "municipio": "Faraján",
+   "provincia": "malaga",
+   "poblacion": 285,
+   "anio": 2025
+  },
+  "frigiliana": {
+   "municipio": "Frigiliana",
+   "provincia": "malaga",
+   "poblacion": 3383,
+   "anio": 2025
+  },
+  "fuengirola": {
+   "municipio": "Fuengirola",
+   "provincia": "malaga",
+   "poblacion": 85211,
+   "anio": 2025
+  },
+  "fuente de piedra": {
+   "municipio": "Fuente de Piedra",
+   "provincia": "malaga",
+   "poblacion": 3045,
+   "anio": 2025
+  },
+  "gaucin": {
+   "municipio": "Gaucín",
+   "provincia": "malaga",
+   "poblacion": 1620,
+   "anio": 2025
+  },
+  "genalguacil": {
+   "municipio": "Genalguacil",
+   "provincia": "malaga",
+   "poblacion": 352,
+   "anio": 2025
+  },
+  "guaro": {
+   "municipio": "Guaro",
+   "provincia": "malaga",
+   "poblacion": 2638,
+   "anio": 2025
+  },
+  "humilladero": {
+   "municipio": "Humilladero",
+   "provincia": "malaga",
+   "poblacion": 3373,
+   "anio": 2025
+  },
+  "igualeja": {
+   "municipio": "Igualeja",
+   "provincia": "malaga",
+   "poblacion": 733,
+   "anio": 2025
+  },
+  "istan": {
+   "municipio": "Istán",
+   "provincia": "malaga",
+   "poblacion": 1707,
+   "anio": 2025
+  },
+  "iznate": {
+   "municipio": "Iznate",
+   "provincia": "malaga",
+   "poblacion": 940,
+   "anio": 2025
+  },
+  "jimera de libar": {
+   "municipio": "Jimera de Líbar",
+   "provincia": "malaga",
+   "poblacion": 399,
+   "anio": 2025
+  },
+  "jubrique": {
+   "municipio": "Jubrique",
+   "provincia": "malaga",
+   "poblacion": 585,
+   "anio": 2025
+  },
+  "juzcar": {
+   "municipio": "Júzcar",
+   "provincia": "malaga",
+   "poblacion": 208,
+   "anio": 2025
+  },
+  "macharaviaya": {
+   "municipio": "Macharaviaya",
+   "provincia": "malaga",
+   "poblacion": 518,
+   "anio": 2025
+  },
+  "malaga": {
+   "municipio": "Málaga",
+   "provincia": "malaga",
+   "poblacion": 599063,
+   "anio": 2025
+  },
+  "manilva": {
+   "municipio": "Manilva",
+   "provincia": "malaga",
+   "poblacion": 18165,
+   "anio": 2025
+  },
+  "marbella": {
+   "municipio": "Marbella",
+   "provincia": "malaga",
+   "poblacion": 159786,
+   "anio": 2025
+  },
+  "mijas": {
+   "municipio": "Mijas",
+   "provincia": "malaga",
+   "poblacion": 95104,
+   "anio": 2025
+  },
+  "moclinejo": {
+   "municipio": "Moclinejo",
+   "provincia": "malaga",
+   "poblacion": 1222,
+   "anio": 2025
+  },
+  "mollina": {
+   "municipio": "Mollina",
+   "provincia": "malaga",
+   "poblacion": 5528,
+   "anio": 2025
+  },
+  "monda": {
+   "municipio": "Monda",
+   "provincia": "malaga",
+   "poblacion": 2984,
+   "anio": 2025
+  },
+  "montecorto": {
+   "municipio": "Montecorto",
+   "provincia": "malaga",
+   "poblacion": 585,
+   "anio": 2025
+  },
+  "montejaque": {
+   "municipio": "Montejaque",
+   "provincia": "malaga",
+   "poblacion": 945,
+   "anio": 2025
+  },
+  "nerja": {
+   "municipio": "Nerja",
+   "provincia": "malaga",
+   "poblacion": 22132,
+   "anio": 2025
+  },
+  "ojen": {
+   "municipio": "Ojén",
+   "provincia": "malaga",
+   "poblacion": 4755,
+   "anio": 2025
+  },
+  "parauta": {
+   "municipio": "Parauta",
+   "provincia": "malaga",
+   "poblacion": 271,
+   "anio": 2025
+  },
+  "periana": {
+   "municipio": "Periana",
+   "provincia": "malaga",
+   "poblacion": 3367,
+   "anio": 2025
+  },
+  "pizarra": {
+   "municipio": "Pizarra",
+   "provincia": "malaga",
+   "poblacion": 10334,
+   "anio": 2025
+  },
+  "pujerra": {
+   "municipio": "Pujerra",
+   "provincia": "malaga",
+   "poblacion": 285,
+   "anio": 2025
+  },
+  "rincon de la victoria": {
+   "municipio": "Rincón de la Victoria",
+   "provincia": "malaga",
+   "poblacion": 52454,
+   "anio": 2025
+  },
+  "riogordo": {
+   "municipio": "Riogordo",
+   "provincia": "malaga",
+   "poblacion": 2839,
+   "anio": 2025
+  },
+  "ronda": {
+   "municipio": "Ronda",
+   "provincia": "malaga",
+   "poblacion": 33671,
+   "anio": 2025
+  },
+  "salares": {
+   "municipio": "Salares",
+   "provincia": "malaga",
+   "poblacion": 194,
+   "anio": 2025
+  },
+  "sayalonga": {
+   "municipio": "Sayalonga",
+   "provincia": "malaga",
+   "poblacion": 1672,
+   "anio": 2025
+  },
+  "sedella": {
+   "municipio": "Sedella",
+   "provincia": "malaga",
+   "poblacion": 607,
+   "anio": 2025
+  },
+  "serrato": {
+   "municipio": "Serrato",
+   "provincia": "malaga",
+   "poblacion": 457,
+   "anio": 2025
+  },
+  "sierra de yeguas": {
+   "municipio": "Sierra de Yeguas",
+   "provincia": "malaga",
+   "poblacion": 3418,
+   "anio": 2025
+  },
+  "teba": {
+   "municipio": "Teba",
+   "provincia": "malaga",
+   "poblacion": 3708,
+   "anio": 2025
+  },
+  "tolox": {
+   "municipio": "Tolox",
+   "provincia": "malaga",
+   "poblacion": 2468,
+   "anio": 2025
+  },
+  "torremolinos": {
+   "municipio": "Torremolinos",
+   "provincia": "malaga",
+   "poblacion": 71329,
+   "anio": 2025
+  },
+  "torrox": {
+   "municipio": "Torrox",
+   "provincia": "malaga",
+   "poblacion": 22015,
+   "anio": 2025
+  },
+  "totalan": {
+   "municipio": "Totalán",
+   "provincia": "malaga",
+   "poblacion": 797,
+   "anio": 2025
+  },
+  "valle de abdalajis": {
+   "municipio": "Valle de Abdalajís",
+   "provincia": "malaga",
+   "poblacion": 2439,
+   "anio": 2025
+  },
+  "velez-malaga": {
+   "municipio": "Vélez-Málaga",
+   "provincia": "malaga",
+   "poblacion": 86048,
+   "anio": 2025
+  },
+  "villanueva de algaidas": {
+   "municipio": "Villanueva de Algaidas",
+   "provincia": "malaga",
+   "poblacion": 4084,
+   "anio": 2025
+  },
+  "villanueva de la concepcion": {
+   "municipio": "Villanueva de la Concepción",
+   "provincia": "malaga",
+   "poblacion": 3296,
+   "anio": 2025
+  },
+  "villanueva de tapia": {
+   "municipio": "Villanueva de Tapia",
+   "provincia": "malaga",
+   "poblacion": 1391,
+   "anio": 2025
+  },
+  "villanueva del rosario": {
+   "municipio": "Villanueva del Rosario",
+   "provincia": "malaga",
+   "poblacion": 3470,
+   "anio": 2025
+  },
+  "villanueva del trabuco": {
+   "municipio": "Villanueva del Trabuco",
+   "provincia": "malaga",
+   "poblacion": 5521,
+   "anio": 2025
+  },
+  "vinuela": {
+   "municipio": "Viñuela",
+   "provincia": "malaga",
+   "poblacion": 2044,
+   "anio": 2025
+  },
+  "yunquera": {
+   "municipio": "Yunquera",
+   "provincia": "malaga",
+   "poblacion": 2828,
+   "anio": 2025
+  },
+  "aguadulce": {
+   "municipio": "Aguadulce",
+   "provincia": "sevilla",
+   "poblacion": 2109,
+   "anio": 2025
+  },
+  "alanis": {
+   "municipio": "Alanís",
+   "provincia": "sevilla",
+   "poblacion": 1638,
+   "anio": 2025
+  },
+  "albaida del aljarafe": {
+   "municipio": "Albaida del Aljarafe",
+   "provincia": "sevilla",
+   "poblacion": 3220,
+   "anio": 2025
+  },
+  "alcala de guadaira": {
+   "municipio": "Alcalá de Guadaíra",
+   "provincia": "sevilla",
+   "poblacion": 77474,
+   "anio": 2025
+  },
+  "alcala del rio": {
+   "municipio": "Alcalá del Río",
+   "provincia": "sevilla",
+   "poblacion": 12335,
+   "anio": 2025
+  },
+  "alcolea del rio": {
+   "municipio": "Alcolea del Río",
+   "provincia": "sevilla",
+   "poblacion": 3265,
+   "anio": 2025
+  },
+  "algaba, la": {
+   "municipio": "Algaba, La",
+   "provincia": "sevilla",
+   "poblacion": 16803,
+   "anio": 2025
+  },
+  "algamitas": {
+   "municipio": "Algámitas",
+   "provincia": "sevilla",
+   "poblacion": 1258,
+   "anio": 2025
+  },
+  "almaden de la plata": {
+   "municipio": "Almadén de la Plata",
+   "provincia": "sevilla",
+   "poblacion": 1328,
+   "anio": 2025
+  },
+  "almensilla": {
+   "municipio": "Almensilla",
+   "provincia": "sevilla",
+   "poblacion": 6646,
+   "anio": 2025
+  },
+  "arahal": {
+   "municipio": "Arahal",
+   "provincia": "sevilla",
+   "poblacion": 19546,
+   "anio": 2025
+  },
+  "aznalcazar": {
+   "municipio": "Aznalcázar",
+   "provincia": "sevilla",
+   "poblacion": 4875,
+   "anio": 2025
+  },
+  "aznalcollar": {
+   "municipio": "Aznalcóllar",
+   "provincia": "sevilla",
+   "poblacion": 6096,
+   "anio": 2025
+  },
+  "badolatosa": {
+   "municipio": "Badolatosa",
+   "provincia": "sevilla",
+   "poblacion": 3058,
+   "anio": 2025
+  },
+  "benacazon": {
+   "municipio": "Benacazón",
+   "provincia": "sevilla",
+   "poblacion": 7363,
+   "anio": 2025
+  },
+  "bollullos de la mitacion": {
+   "municipio": "Bollullos de la Mitación",
+   "provincia": "sevilla",
+   "poblacion": 11431,
+   "anio": 2025
+  },
+  "bormujos": {
+   "municipio": "Bormujos",
+   "provincia": "sevilla",
+   "poblacion": 23071,
+   "anio": 2025
+  },
+  "brenes": {
+   "municipio": "Brenes",
+   "provincia": "sevilla",
+   "poblacion": 12975,
+   "anio": 2025
+  },
+  "burguillos": {
+   "municipio": "Burguillos",
+   "provincia": "sevilla",
+   "poblacion": 7448,
+   "anio": 2025
+  },
+  "cabezas de san juan, las": {
+   "municipio": "Cabezas de San Juan, Las",
+   "provincia": "sevilla",
+   "poblacion": 16388,
+   "anio": 2025
+  },
+  "camas": {
+   "municipio": "Camas",
+   "provincia": "sevilla",
+   "poblacion": 29089,
+   "anio": 2025
+  },
+  "campana, la": {
+   "municipio": "Campana, La",
+   "provincia": "sevilla",
+   "poblacion": 5122,
+   "anio": 2025
+  },
+  "cantillana": {
+   "municipio": "Cantillana",
+   "provincia": "sevilla",
+   "poblacion": 10780,
+   "anio": 2025
+  },
+  "canada rosal": {
+   "municipio": "Cañada Rosal",
+   "provincia": "sevilla",
+   "poblacion": 3481,
+   "anio": 2025
+  },
+  "carmona": {
+   "municipio": "Carmona",
+   "provincia": "sevilla",
+   "poblacion": 30240,
+   "anio": 2025
+  },
+  "carrion de los cespedes": {
+   "municipio": "Carrión de los Céspedes",
+   "provincia": "sevilla",
+   "poblacion": 2647,
+   "anio": 2025
+  },
+  "casariche": {
+   "municipio": "Casariche",
+   "provincia": "sevilla",
+   "poblacion": 5291,
+   "anio": 2025
+  },
+  "castilblanco de los arroyos": {
+   "municipio": "Castilblanco de los Arroyos",
+   "provincia": "sevilla",
+   "poblacion": 5145,
+   "anio": 2025
+  },
+  "castilleja de guzman": {
+   "municipio": "Castilleja de Guzmán",
+   "provincia": "sevilla",
+   "poblacion": 2843,
+   "anio": 2025
+  },
+  "castilleja de la cuesta": {
+   "municipio": "Castilleja de la Cuesta",
+   "provincia": "sevilla",
+   "poblacion": 17074,
+   "anio": 2025
+  },
+  "castilleja del campo": {
+   "municipio": "Castilleja del Campo",
+   "provincia": "sevilla",
+   "poblacion": 611,
+   "anio": 2025
+  },
+  "castillo de las guardas, el": {
+   "municipio": "Castillo de las Guardas, El",
+   "provincia": "sevilla",
+   "poblacion": 1501,
+   "anio": 2025
+  },
+  "cazalla de la sierra": {
+   "municipio": "Cazalla de la Sierra",
+   "provincia": "sevilla",
+   "poblacion": 4626,
+   "anio": 2025
+  },
+  "constantina": {
+   "municipio": "Constantina",
+   "provincia": "sevilla",
+   "poblacion": 5745,
+   "anio": 2025
+  },
+  "coria del rio": {
+   "municipio": "Coria del Río",
+   "provincia": "sevilla",
+   "poblacion": 31278,
+   "anio": 2025
+  },
+  "coripe": {
+   "municipio": "Coripe",
+   "provincia": "sevilla",
+   "poblacion": 1218,
+   "anio": 2025
+  },
+  "coronil, el": {
+   "municipio": "Coronil, El",
+   "provincia": "sevilla",
+   "poblacion": 4659,
+   "anio": 2025
+  },
+  "corrales, los": {
+   "municipio": "Corrales, Los",
+   "provincia": "sevilla",
+   "poblacion": 4021,
+   "anio": 2025
+  },
+  "cuervo de sevilla, el": {
+   "municipio": "Cuervo de Sevilla, El",
+   "provincia": "sevilla",
+   "poblacion": 8783,
+   "anio": 2025
+  },
+  "dos hermanas": {
+   "municipio": "Dos Hermanas",
+   "provincia": "sevilla",
+   "poblacion": 142519,
+   "anio": 2025
+  },
+  "ecija": {
+   "municipio": "Écija",
+   "provincia": "sevilla",
+   "poblacion": 39659,
+   "anio": 2025
+  },
+  "espartinas": {
+   "municipio": "Espartinas",
+   "provincia": "sevilla",
+   "poblacion": 16479,
+   "anio": 2025
+  },
+  "estepa": {
+   "municipio": "Estepa",
+   "provincia": "sevilla",
+   "poblacion": 12430,
+   "anio": 2025
+  },
+  "fuentes de andalucia": {
+   "municipio": "Fuentes de Andalucía",
+   "provincia": "sevilla",
+   "poblacion": 7247,
+   "anio": 2025
+  },
+  "garrobo, el": {
+   "municipio": "Garrobo, El",
+   "provincia": "sevilla",
+   "poblacion": 800,
+   "anio": 2025
+  },
+  "gelves": {
+   "municipio": "Gelves",
+   "provincia": "sevilla",
+   "poblacion": 10548,
+   "anio": 2025
+  },
+  "gerena": {
+   "municipio": "Gerena",
+   "provincia": "sevilla",
+   "poblacion": 7971,
+   "anio": 2025
+  },
+  "gilena": {
+   "municipio": "Gilena",
+   "provincia": "sevilla",
+   "poblacion": 3647,
+   "anio": 2025
+  },
+  "gines": {
+   "municipio": "Gines",
+   "provincia": "sevilla",
+   "poblacion": 13634,
+   "anio": 2025
+  },
+  "guadalcanal": {
+   "municipio": "Guadalcanal",
+   "provincia": "sevilla",
+   "poblacion": 2544,
+   "anio": 2025
+  },
+  "guillena": {
+   "municipio": "Guillena",
+   "provincia": "sevilla",
+   "poblacion": 14260,
+   "anio": 2025
+  },
+  "herrera": {
+   "municipio": "Herrera",
+   "provincia": "sevilla",
+   "poblacion": 6575,
+   "anio": 2025
+  },
+  "huevar del aljarafe": {
+   "municipio": "Huévar del Aljarafe",
+   "provincia": "sevilla",
+   "poblacion": 3388,
+   "anio": 2025
+  },
+  "isla mayor": {
+   "municipio": "Isla Mayor",
+   "provincia": "sevilla",
+   "poblacion": 5748,
+   "anio": 2025
+  },
+  "lantejuela": {
+   "municipio": "Lantejuela",
+   "provincia": "sevilla",
+   "poblacion": 3857,
+   "anio": 2025
+  },
+  "lebrija": {
+   "municipio": "Lebrija",
+   "provincia": "sevilla",
+   "poblacion": 27788,
+   "anio": 2025
+  },
+  "lora de estepa": {
+   "municipio": "Lora de Estepa",
+   "provincia": "sevilla",
+   "poblacion": 890,
+   "anio": 2025
+  },
+  "lora del rio": {
+   "municipio": "Lora del Río",
+   "provincia": "sevilla",
+   "poblacion": 18122,
+   "anio": 2025
+  },
+  "luisiana, la": {
+   "municipio": "Luisiana, La",
+   "provincia": "sevilla",
+   "poblacion": 4618,
+   "anio": 2025
+  },
+  "madrono, el": {
+   "municipio": "Madroño, El",
+   "provincia": "sevilla",
+   "poblacion": 286,
+   "anio": 2025
+  },
+  "mairena del alcor": {
+   "municipio": "Mairena del Alcor",
+   "provincia": "sevilla",
+   "poblacion": 24339,
+   "anio": 2025
+  },
+  "mairena del aljarafe": {
+   "municipio": "Mairena del Aljarafe",
+   "provincia": "sevilla",
+   "poblacion": 48017,
+   "anio": 2025
+  },
+  "marchena": {
+   "municipio": "Marchena",
+   "provincia": "sevilla",
+   "poblacion": 19405,
+   "anio": 2025
+  },
+  "marinaleda": {
+   "municipio": "Marinaleda",
+   "provincia": "sevilla",
+   "poblacion": 2562,
+   "anio": 2025
+  },
+  "martin de la jara": {
+   "municipio": "Martín de la Jara",
+   "provincia": "sevilla",
+   "poblacion": 2627,
+   "anio": 2025
+  },
+  "molares, los": {
+   "municipio": "Molares, Los",
+   "provincia": "sevilla",
+   "poblacion": 3659,
+   "anio": 2025
+  },
+  "montellano": {
+   "municipio": "Montellano",
+   "provincia": "sevilla",
+   "poblacion": 7032,
+   "anio": 2025
+  },
+  "moron de la frontera": {
+   "municipio": "Morón de la Frontera",
+   "provincia": "sevilla",
+   "poblacion": 27210,
+   "anio": 2025
+  },
+  "navas de la concepcion, las": {
+   "municipio": "Navas de la Concepción, Las",
+   "provincia": "sevilla",
+   "poblacion": 1501,
+   "anio": 2025
+  },
+  "olivares": {
+   "municipio": "Olivares",
+   "provincia": "sevilla",
+   "poblacion": 9537,
+   "anio": 2025
+  },
+  "osuna": {
+   "municipio": "Osuna",
+   "provincia": "sevilla",
+   "poblacion": 17396,
+   "anio": 2025
+  },
+  "palacios y villafranca, los": {
+   "municipio": "Palacios y Villafranca, Los",
+   "provincia": "sevilla",
+   "poblacion": 38761,
+   "anio": 2025
+  },
+  "palmar de troya, el": {
+   "municipio": "Palmar de Troya, El",
+   "provincia": "sevilla",
+   "poblacion": 2301,
+   "anio": 2025
+  },
+  "palomares del rio": {
+   "municipio": "Palomares del Río",
+   "provincia": "sevilla",
+   "poblacion": 9421,
+   "anio": 2025
+  },
+  "paradas": {
+   "municipio": "Paradas",
+   "provincia": "sevilla",
+   "poblacion": 6762,
+   "anio": 2025
+  },
+  "pedrera": {
+   "municipio": "Pedrera",
+   "provincia": "sevilla",
+   "poblacion": 5057,
+   "anio": 2025
+  },
+  "pedroso, el": {
+   "municipio": "Pedroso, El",
+   "provincia": "sevilla",
+   "poblacion": 2062,
+   "anio": 2025
+  },
+  "penaflor": {
+   "municipio": "Peñaflor",
+   "provincia": "sevilla",
+   "poblacion": 3628,
+   "anio": 2025
+  },
+  "pilas": {
+   "municipio": "Pilas",
+   "provincia": "sevilla",
+   "poblacion": 14222,
+   "anio": 2025
+  },
+  "pruna": {
+   "municipio": "Pruna",
+   "provincia": "sevilla",
+   "poblacion": 2461,
+   "anio": 2025
+  },
+  "puebla de cazalla, la": {
+   "municipio": "Puebla de Cazalla, La",
+   "provincia": "sevilla",
+   "poblacion": 10830,
+   "anio": 2025
+  },
+  "puebla de los infantes, la": {
+   "municipio": "Puebla de los Infantes, La",
+   "provincia": "sevilla",
+   "poblacion": 2949,
+   "anio": 2025
+  },
+  "puebla del rio, la": {
+   "municipio": "Puebla del Río, La",
+   "provincia": "sevilla",
+   "poblacion": 11903,
+   "anio": 2025
+  },
+  "real de la jara, el": {
+   "municipio": "Real de la Jara, El",
+   "provincia": "sevilla",
+   "poblacion": 1517,
+   "anio": 2025
+  },
+  "rinconada, la": {
+   "municipio": "Rinconada, La",
+   "provincia": "sevilla",
+   "poblacion": 40724,
+   "anio": 2025
+  },
+  "roda de andalucia, la": {
+   "municipio": "Roda de Andalucía, La",
+   "provincia": "sevilla",
+   "poblacion": 4168,
+   "anio": 2025
+  },
+  "ronquillo, el": {
+   "municipio": "Ronquillo, El",
+   "provincia": "sevilla",
+   "poblacion": 1453,
+   "anio": 2025
+  },
+  "rubio, el": {
+   "municipio": "Rubio, El",
+   "provincia": "sevilla",
+   "poblacion": 3287,
+   "anio": 2025
+  },
+  "salteras": {
+   "municipio": "Salteras",
+   "provincia": "sevilla",
+   "poblacion": 5604,
+   "anio": 2025
+  },
+  "san juan de aznalfarache": {
+   "municipio": "San Juan de Aznalfarache",
+   "provincia": "sevilla",
+   "poblacion": 23408,
+   "anio": 2025
+  },
+  "san nicolas del puerto": {
+   "municipio": "San Nicolás del Puerto",
+   "provincia": "sevilla",
+   "poblacion": 604,
+   "anio": 2025
+  },
+  "sanlucar la mayor": {
+   "municipio": "Sanlúcar la Mayor",
+   "provincia": "sevilla",
+   "poblacion": 14648,
+   "anio": 2025
+  },
+  "santiponce": {
+   "municipio": "Santiponce",
+   "provincia": "sevilla",
+   "poblacion": 8634,
+   "anio": 2025
+  },
+  "saucejo, el": {
+   "municipio": "Saucejo, El",
+   "provincia": "sevilla",
+   "poblacion": 4189,
+   "anio": 2025
+  },
+  "sevilla": {
+   "municipio": "Sevilla",
+   "provincia": "sevilla",
+   "poblacion": 689423,
+   "anio": 2025
+  },
+  "tocina": {
+   "municipio": "Tocina",
+   "provincia": "sevilla",
+   "poblacion": 9431,
+   "anio": 2025
+  },
+  "tomares": {
+   "municipio": "Tomares",
+   "provincia": "sevilla",
+   "poblacion": 25432,
+   "anio": 2025
+  },
+  "umbrete": {
+   "municipio": "Umbrete",
+   "provincia": "sevilla",
+   "poblacion": 9455,
+   "anio": 2025
+  },
+  "utrera": {
+   "municipio": "Utrera",
+   "provincia": "sevilla",
+   "poblacion": 52403,
+   "anio": 2025
+  },
+  "valencina de la concepcion": {
+   "municipio": "Valencina de la Concepción",
+   "provincia": "sevilla",
+   "poblacion": 8050,
+   "anio": 2025
+  },
+  "villamanrique de la condesa": {
+   "municipio": "Villamanrique de la Condesa",
+   "provincia": "sevilla",
+   "poblacion": 4694,
+   "anio": 2025
+  },
+  "villanueva de san juan": {
+   "municipio": "Villanueva de San Juan",
+   "provincia": "sevilla",
+   "poblacion": 986,
+   "anio": 2025
+  },
+  "villanueva del ariscal": {
+   "municipio": "Villanueva del Ariscal",
+   "provincia": "sevilla",
+   "poblacion": 6965,
+   "anio": 2025
+  },
+  "villanueva del rio y minas": {
+   "municipio": "Villanueva del Río y Minas",
+   "provincia": "sevilla",
+   "poblacion": 5073,
+   "anio": 2025
+  },
+  "villaverde del rio": {
+   "municipio": "Villaverde del Río",
+   "provincia": "sevilla",
+   "poblacion": 7885,
+   "anio": 2025
+  },
+  "viso del alcor, el": {
+   "municipio": "Viso del Alcor, El",
+   "provincia": "sevilla",
+   "poblacion": 19458,
+   "anio": 2025
+  },
+  "alegria-dulantzi": {
+   "municipio": "Alegria-Dulantzi",
+   "provincia": "pais_vasco",
+   "poblacion": 2955,
+   "anio": 2025
+  },
+  "amurrio": {
+   "municipio": "Amurrio",
+   "provincia": "pais_vasco",
+   "poblacion": 10364,
+   "anio": 2025
+  },
+  "anana": {
+   "municipio": "Añana",
+   "provincia": "pais_vasco",
+   "poblacion": 141,
+   "anio": 2025
+  },
+  "aramaio": {
+   "municipio": "Aramaio",
+   "provincia": "pais_vasco",
+   "poblacion": 1354,
+   "anio": 2025
+  },
+  "arminon": {
+   "municipio": "Armiñón",
+   "provincia": "pais_vasco",
+   "poblacion": 236,
+   "anio": 2025
+  },
+  "arraia-maeztu": {
+   "municipio": "Arraia-Maeztu",
+   "provincia": "pais_vasco",
+   "poblacion": 812,
+   "anio": 2025
+  },
+  "arratzua-ubarrundia": {
+   "municipio": "Arratzua-Ubarrundia",
+   "provincia": "pais_vasco",
+   "poblacion": 1056,
+   "anio": 2025
+  },
+  "artziniega": {
+   "municipio": "Artziniega",
+   "provincia": "pais_vasco",
+   "poblacion": 1868,
+   "anio": 2025
+  },
+  "asparrena": {
+   "municipio": "Asparrena",
+   "provincia": "pais_vasco",
+   "poblacion": 1609,
+   "anio": 2025
+  },
+  "ayala": {
+   "municipio": "Ayala",
+   "provincia": "pais_vasco",
+   "poblacion": 2921,
+   "anio": 2025
+  },
+  "banos de ebro": {
+   "municipio": "Baños de Ebro",
+   "provincia": "pais_vasco",
+   "poblacion": 286,
+   "anio": 2025
+  },
+  "barrundia": {
+   "municipio": "Barrundia",
+   "provincia": "pais_vasco",
+   "poblacion": 882,
+   "anio": 2025
+  },
+  "berantevilla": {
+   "municipio": "Berantevilla",
+   "provincia": "pais_vasco",
+   "poblacion": 461,
+   "anio": 2025
+  },
+  "bernedo": {
+   "municipio": "Bernedo",
+   "provincia": "pais_vasco",
+   "poblacion": 541,
+   "anio": 2025
+  },
+  "campezo": {
+   "municipio": "Campezo",
+   "provincia": "pais_vasco",
+   "poblacion": 1073,
+   "anio": 2025
+  },
+  "elburgo": {
+   "municipio": "Elburgo",
+   "provincia": "pais_vasco",
+   "poblacion": 642,
+   "anio": 2025
+  },
+  "elciego": {
+   "municipio": "Elciego",
+   "provincia": "pais_vasco",
+   "poblacion": 971,
+   "anio": 2025
+  },
+  "elvillar": {
+   "municipio": "Elvillar",
+   "provincia": "pais_vasco",
+   "poblacion": 315,
+   "anio": 2025
+  },
+  "valle de arana": {
+   "municipio": "Valle de Arana",
+   "provincia": "pais_vasco",
+   "poblacion": 212,
+   "anio": 2025
+  },
+  "iruna de oca": {
+   "municipio": "Iruña de Oca",
+   "provincia": "pais_vasco",
+   "poblacion": 3704,
+   "anio": 2025
+  },
+  "iruraiz-gauna": {
+   "municipio": "Iruraiz-Gauna",
+   "provincia": "pais_vasco",
+   "poblacion": 559,
+   "anio": 2025
+  },
+  "kripan": {
+   "municipio": "Kripan",
+   "provincia": "pais_vasco",
+   "poblacion": 174,
+   "anio": 2025
+  },
+  "kuartango": {
+   "municipio": "Kuartango",
+   "provincia": "pais_vasco",
+   "poblacion": 402,
+   "anio": 2025
+  },
+  "labastida": {
+   "municipio": "Labastida",
+   "provincia": "pais_vasco",
+   "poblacion": 1558,
+   "anio": 2025
+  },
+  "lagran": {
+   "municipio": "Lagrán",
+   "provincia": "pais_vasco",
+   "poblacion": 177,
+   "anio": 2025
+  },
+  "laguardia": {
+   "municipio": "Laguardia",
+   "provincia": "pais_vasco",
+   "poblacion": 1459,
+   "anio": 2025
+  },
+  "lanciego": {
+   "municipio": "Lanciego",
+   "provincia": "pais_vasco",
+   "poblacion": 700,
+   "anio": 2025
+  },
+  "lantaron": {
+   "municipio": "Lantarón",
+   "provincia": "pais_vasco",
+   "poblacion": 929,
+   "anio": 2025
+  },
+  "lapuebla de labarca": {
+   "municipio": "Lapuebla de Labarca",
+   "provincia": "pais_vasco",
+   "poblacion": 895,
+   "anio": 2025
+  },
+  "llodio": {
+   "municipio": "Llodio",
+   "provincia": "pais_vasco",
+   "poblacion": 18077,
+   "anio": 2025
+  },
+  "legutio": {
+   "municipio": "Legutio",
+   "provincia": "pais_vasco",
+   "poblacion": 2094,
+   "anio": 2025
+  },
+  "leza": {
+   "municipio": "Leza",
+   "provincia": "pais_vasco",
+   "poblacion": 205,
+   "anio": 2025
+  },
+  "moreda de alava": {
+   "municipio": "Moreda de Álava",
+   "provincia": "pais_vasco",
+   "poblacion": 218,
+   "anio": 2025
+  },
+  "navaridas": {
+   "municipio": "Navaridas",
+   "provincia": "pais_vasco",
+   "poblacion": 192,
+   "anio": 2025
+  },
+  "okondo": {
+   "municipio": "Okondo",
+   "provincia": "pais_vasco",
+   "poblacion": 1184,
+   "anio": 2025
+  },
+  "oyon-oion": {
+   "municipio": "Oyón-Oion",
+   "provincia": "pais_vasco",
+   "poblacion": 3476,
+   "anio": 2025
+  },
+  "penacerrada-urizaharra": {
+   "municipio": "Peñacerrada-Urizaharra",
+   "provincia": "pais_vasco",
+   "poblacion": 332,
+   "anio": 2025
+  },
+  "agurain": {
+   "municipio": "Agurain",
+   "provincia": "pais_vasco",
+   "poblacion": 5189,
+   "anio": 2025
+  },
+  "samaniego": {
+   "municipio": "Samaniego",
+   "provincia": "pais_vasco",
+   "poblacion": 292,
+   "anio": 2025
+  },
+  "san millan": {
+   "municipio": "San Millán",
+   "provincia": "pais_vasco",
+   "poblacion": 701,
+   "anio": 2025
+  },
+  "urkabustaiz": {
+   "municipio": "Urkabustaiz",
+   "provincia": "pais_vasco",
+   "poblacion": 1470,
+   "anio": 2025
+  },
+  "villabuena de alava": {
+   "municipio": "Villabuena de Álava",
+   "provincia": "pais_vasco",
+   "poblacion": 276,
+   "anio": 2025
+  },
+  "vitoria-gasteiz": {
+   "municipio": "Vitoria-Gasteiz",
+   "provincia": "pais_vasco",
+   "poblacion": 260699,
+   "anio": 2025
+  },
+  "yecora": {
+   "municipio": "Yécora",
+   "provincia": "pais_vasco",
+   "poblacion": 278,
+   "anio": 2025
+  },
+  "zalduondo": {
+   "municipio": "Zalduondo",
+   "provincia": "pais_vasco",
+   "poblacion": 195,
+   "anio": 2025
+  },
+  "zambrana": {
+   "municipio": "Zambrana",
+   "provincia": "pais_vasco",
+   "poblacion": 452,
+   "anio": 2025
+  },
+  "zigoitia": {
+   "municipio": "Zigoitia",
+   "provincia": "pais_vasco",
+   "poblacion": 1845,
+   "anio": 2025
+  },
+  "zuia": {
+   "municipio": "Zuia",
+   "provincia": "pais_vasco",
+   "poblacion": 2350,
+   "anio": 2025
+  },
+  "abaltzisketa": {
+   "municipio": "Abaltzisketa",
+   "provincia": "pais_vasco",
+   "poblacion": 321,
+   "anio": 2025
+  },
+  "aduna": {
+   "municipio": "Aduna",
+   "provincia": "pais_vasco",
+   "poblacion": 500,
+   "anio": 2025
+  },
+  "aia": {
+   "municipio": "Aia",
+   "provincia": "pais_vasco",
+   "poblacion": 2148,
+   "anio": 2025
+  },
+  "aizarnazabal": {
+   "municipio": "Aizarnazabal",
+   "provincia": "pais_vasco",
+   "poblacion": 822,
+   "anio": 2025
+  },
+  "albiztur": {
+   "municipio": "Albiztur",
+   "provincia": "pais_vasco",
+   "poblacion": 328,
+   "anio": 2025
+  },
+  "alegia": {
+   "municipio": "Alegia",
+   "provincia": "pais_vasco",
+   "poblacion": 1813,
+   "anio": 2025
+  },
+  "alkiza": {
+   "municipio": "Alkiza",
+   "provincia": "pais_vasco",
+   "poblacion": 352,
+   "anio": 2025
+  },
+  "altzaga": {
+   "municipio": "Altzaga",
+   "provincia": "pais_vasco",
+   "poblacion": 165,
+   "anio": 2025
+  },
+  "altzo": {
+   "municipio": "Altzo",
+   "provincia": "pais_vasco",
+   "poblacion": 447,
+   "anio": 2025
+  },
+  "amezketa": {
+   "municipio": "Amezketa",
+   "provincia": "pais_vasco",
+   "poblacion": 956,
+   "anio": 2025
+  },
+  "andoain": {
+   "municipio": "Andoain",
+   "provincia": "pais_vasco",
+   "poblacion": 14517,
+   "anio": 2025
+  },
+  "anoeta": {
+   "municipio": "ANOETA",
+   "provincia": "pais_vasco",
+   "poblacion": 2112,
+   "anio": 2025
+  },
+  "antzuola": {
+   "municipio": "Antzuola",
+   "provincia": "pais_vasco",
+   "poblacion": 2045,
+   "anio": 2025
+  },
+  "arama": {
+   "municipio": "Arama",
+   "provincia": "pais_vasco",
+   "poblacion": 173,
+   "anio": 2025
+  },
+  "aretxabaleta": {
+   "municipio": "Aretxabaleta",
+   "provincia": "pais_vasco",
+   "poblacion": 7178,
+   "anio": 2025
+  },
+  "asteasu": {
+   "municipio": "Asteasu",
+   "provincia": "pais_vasco",
+   "poblacion": 1566,
+   "anio": 2025
+  },
+  "astigarraga": {
+   "municipio": "Astigarraga",
+   "provincia": "pais_vasco",
+   "poblacion": 7812,
+   "anio": 2025
+  },
+  "ataun": {
+   "municipio": "Ataun",
+   "provincia": "pais_vasco",
+   "poblacion": 1714,
+   "anio": 2025
+  },
+  "azkoitia": {
+   "municipio": "Azkoitia",
+   "provincia": "pais_vasco",
+   "poblacion": 11774,
+   "anio": 2025
+  },
+  "azpeitia": {
+   "municipio": "Azpeitia",
+   "provincia": "pais_vasco",
+   "poblacion": 15301,
+   "anio": 2025
+  },
+  "baliarrain": {
+   "municipio": "Baliarrain",
+   "provincia": "pais_vasco",
+   "poblacion": 152,
+   "anio": 2025
+  },
+  "beasain": {
+   "municipio": "Beasain",
+   "provincia": "pais_vasco",
+   "poblacion": 14048,
+   "anio": 2025
+  },
+  "beizama": {
+   "municipio": "Beizama",
+   "provincia": "pais_vasco",
+   "poblacion": 128,
+   "anio": 2025
+  },
+  "belauntza": {
+   "municipio": "Belauntza",
+   "provincia": "pais_vasco",
+   "poblacion": 291,
+   "anio": 2025
+  },
+  "berastegi": {
+   "municipio": "Berastegi",
+   "provincia": "pais_vasco",
+   "poblacion": 1114,
+   "anio": 2025
+  },
+  "bergara": {
+   "municipio": "Bergara",
+   "provincia": "pais_vasco",
+   "poblacion": 14404,
+   "anio": 2025
+  },
+  "berrobi": {
+   "municipio": "Berrobi",
+   "provincia": "pais_vasco",
+   "poblacion": 551,
+   "anio": 2025
+  },
+  "bidania-goiatz": {
+   "municipio": "Bidania-Goiatz",
+   "provincia": "pais_vasco",
+   "poblacion": 530,
+   "anio": 2025
+  },
+  "deba": {
+   "municipio": "Deba",
+   "provincia": "pais_vasco",
+   "poblacion": 5362,
+   "anio": 2025
+  },
+  "eibar": {
+   "municipio": "Eibar",
+   "provincia": "pais_vasco",
+   "poblacion": 27484,
+   "anio": 2025
+  },
+  "elduain": {
+   "municipio": "Elduain",
+   "provincia": "pais_vasco",
+   "poblacion": 248,
+   "anio": 2025
+  },
+  "elgeta": {
+   "municipio": "Elgeta",
+   "provincia": "pais_vasco",
+   "poblacion": 1133,
+   "anio": 2025
+  },
+  "elgoibar": {
+   "municipio": "Elgoibar",
+   "provincia": "pais_vasco",
+   "poblacion": 11705,
+   "anio": 2025
+  },
+  "errenteria": {
+   "municipio": "Errenteria",
+   "provincia": "pais_vasco",
+   "poblacion": 39363,
+   "anio": 2025
+  },
+  "errezil": {
+   "municipio": "Errezil",
+   "provincia": "pais_vasco",
+   "poblacion": 588,
+   "anio": 2025
+  },
+  "eskoriatza": {
+   "municipio": "Eskoriatza",
+   "provincia": "pais_vasco",
+   "poblacion": 4215,
+   "anio": 2025
+  },
+  "gabiria": {
+   "municipio": "Gabiria",
+   "provincia": "pais_vasco",
+   "poblacion": 519,
+   "anio": 2025
+  },
+  "gaintza": {
+   "municipio": "Gaintza",
+   "provincia": "pais_vasco",
+   "poblacion": 122,
+   "anio": 2025
+  },
+  "gaztelu": {
+   "municipio": "Gaztelu",
+   "provincia": "pais_vasco",
+   "poblacion": 171,
+   "anio": 2025
+  },
+  "getaria": {
+   "municipio": "Getaria",
+   "provincia": "pais_vasco",
+   "poblacion": 2887,
+   "anio": 2025
+  },
+  "hernani": {
+   "municipio": "Hernani",
+   "provincia": "pais_vasco",
+   "poblacion": 20375,
+   "anio": 2025
+  },
+  "hernialde": {
+   "municipio": "Hernialde",
+   "provincia": "pais_vasco",
+   "poblacion": 326,
+   "anio": 2025
+  },
+  "hondarribia": {
+   "municipio": "Hondarribia",
+   "provincia": "pais_vasco",
+   "poblacion": 16788,
+   "anio": 2025
+  },
+  "ibarra": {
+   "municipio": "Ibarra",
+   "provincia": "pais_vasco",
+   "poblacion": 4114,
+   "anio": 2025
+  },
+  "idiazabal": {
+   "municipio": "Idiazabal",
+   "provincia": "pais_vasco",
+   "poblacion": 2217,
+   "anio": 2025
+  },
+  "ikaztegieta": {
+   "municipio": "Ikaztegieta",
+   "provincia": "pais_vasco",
+   "poblacion": 498,
+   "anio": 2025
+  },
+  "irun": {
+   "municipio": "Irun",
+   "provincia": "pais_vasco",
+   "poblacion": 63835,
+   "anio": 2025
+  },
+  "irura": {
+   "municipio": "Irura",
+   "provincia": "pais_vasco",
+   "poblacion": 1885,
+   "anio": 2025
+  },
+  "itsasondo": {
+   "municipio": "Itsasondo",
+   "provincia": "pais_vasco",
+   "poblacion": 687,
+   "anio": 2025
+  },
+  "larraul": {
+   "municipio": "Larraul",
+   "provincia": "pais_vasco",
+   "poblacion": 263,
+   "anio": 2025
+  },
+  "lasarte-oria": {
+   "municipio": "Lasarte-Oria",
+   "provincia": "pais_vasco",
+   "poblacion": 19435,
+   "anio": 2025
+  },
+  "lazkao": {
+   "municipio": "Lazkao",
+   "provincia": "pais_vasco",
+   "poblacion": 6087,
+   "anio": 2025
+  },
+  "legazpi": {
+   "municipio": "Legazpi",
+   "provincia": "pais_vasco",
+   "poblacion": 8384,
+   "anio": 2025
+  },
+  "legorreta": {
+   "municipio": "Legorreta",
+   "provincia": "pais_vasco",
+   "poblacion": 1457,
+   "anio": 2025
+  },
+  "lezo": {
+   "municipio": "Lezo",
+   "provincia": "pais_vasco",
+   "poblacion": 6184,
+   "anio": 2025
+  },
+  "lizartza": {
+   "municipio": "Lizartza",
+   "provincia": "pais_vasco",
+   "poblacion": 672,
+   "anio": 2025
+  },
+  "mendaro": {
+   "municipio": "Mendaro",
+   "provincia": "pais_vasco",
+   "poblacion": 2028,
+   "anio": 2025
+  },
+  "mutiloa": {
+   "municipio": "Mutiloa",
+   "provincia": "pais_vasco",
+   "poblacion": 261,
+   "anio": 2025
+  },
+  "mutriku": {
+   "municipio": "Mutriku",
+   "provincia": "pais_vasco",
+   "poblacion": 5238,
+   "anio": 2025
+  },
+  "oiartzun": {
+   "municipio": "Oiartzun",
+   "provincia": "pais_vasco",
+   "poblacion": 10480,
+   "anio": 2025
+  },
+  "olaberria": {
+   "municipio": "Olaberria",
+   "provincia": "pais_vasco",
+   "poblacion": 938,
+   "anio": 2025
+  },
+  "onati": {
+   "municipio": "Oñati",
+   "provincia": "pais_vasco",
+   "poblacion": 11480,
+   "anio": 2025
+  },
+  "ordizia": {
+   "municipio": "Ordizia",
+   "provincia": "pais_vasco",
+   "poblacion": 10815,
+   "anio": 2025
+  },
+  "orendain": {
+   "municipio": "Orendain",
+   "provincia": "pais_vasco",
+   "poblacion": 245,
+   "anio": 2025
+  },
+  "orexa": {
+   "municipio": "Orexa",
+   "provincia": "pais_vasco",
+   "poblacion": 103,
+   "anio": 2025
+  },
+  "orio": {
+   "municipio": "Orio",
+   "provincia": "pais_vasco",
+   "poblacion": 6184,
+   "anio": 2025
+  },
+  "ormaiztegi": {
+   "municipio": "Ormaiztegi",
+   "provincia": "pais_vasco",
+   "poblacion": 1293,
+   "anio": 2025
+  },
+  "pasaia": {
+   "municipio": "Pasaia",
+   "provincia": "pais_vasco",
+   "poblacion": 15820,
+   "anio": 2025
+  },
+  "segura": {
+   "municipio": "Segura",
+   "provincia": "pais_vasco",
+   "poblacion": 1496,
+   "anio": 2025
+  },
+  "tolosa": {
+   "municipio": "Tolosa",
+   "provincia": "pais_vasco",
+   "poblacion": 20070,
+   "anio": 2025
+  },
+  "urnieta": {
+   "municipio": "Urnieta",
+   "provincia": "pais_vasco",
+   "poblacion": 6327,
+   "anio": 2025
+  },
+  "urretxu": {
+   "municipio": "Urretxu",
+   "provincia": "pais_vasco",
+   "poblacion": 6730,
+   "anio": 2025
+  },
+  "usurbil": {
+   "municipio": "Usurbil",
+   "provincia": "pais_vasco",
+   "poblacion": 6488,
+   "anio": 2025
+  },
+  "villabona": {
+   "municipio": "Villabona",
+   "provincia": "pais_vasco",
+   "poblacion": 5900,
+   "anio": 2025
+  },
+  "zaldibia": {
+   "municipio": "Zaldibia",
+   "provincia": "pais_vasco",
+   "poblacion": 1761,
+   "anio": 2025
+  },
+  "zarautz": {
+   "municipio": "Zarautz",
+   "provincia": "pais_vasco",
+   "poblacion": 23496,
+   "anio": 2025
+  },
+  "zegama": {
+   "municipio": "Zegama",
+   "provincia": "pais_vasco",
+   "poblacion": 1543,
+   "anio": 2025
+  },
+  "zerain": {
+   "municipio": "Zerain",
+   "provincia": "pais_vasco",
+   "poblacion": 284,
+   "anio": 2025
+  },
+  "zestoa": {
+   "municipio": "Zestoa",
+   "provincia": "pais_vasco",
+   "poblacion": 3933,
+   "anio": 2025
+  },
+  "zizurkil": {
+   "municipio": "Zizurkil",
+   "provincia": "pais_vasco",
+   "poblacion": 2976,
+   "anio": 2025
+  },
+  "zumaia": {
+   "municipio": "Zumaia",
+   "provincia": "pais_vasco",
+   "poblacion": 10160,
+   "anio": 2025
+  },
+  "zumarraga": {
+   "municipio": "Zumarraga",
+   "provincia": "pais_vasco",
+   "poblacion": 9678,
+   "anio": 2025
+  },
+  "ajangiz": {
+   "municipio": "Ajangiz",
+   "provincia": "pais_vasco",
+   "poblacion": 458,
+   "anio": 2025
+  },
+  "alonsotegi": {
+   "municipio": "Alonsotegi",
+   "provincia": "pais_vasco",
+   "poblacion": 2991,
+   "anio": 2025
+  },
+  "amorebieta-etxano": {
+   "municipio": "Amorebieta-Etxano",
+   "provincia": "pais_vasco",
+   "poblacion": 19660,
+   "anio": 2025
+  },
+  "amoroto": {
+   "municipio": "Amoroto",
+   "provincia": "pais_vasco",
+   "poblacion": 390,
+   "anio": 2025
+  },
+  "arakaldo": {
+   "municipio": "Arakaldo",
+   "provincia": "pais_vasco",
+   "poblacion": 156,
+   "anio": 2025
+  },
+  "arantzazu": {
+   "municipio": "Arantzazu",
+   "provincia": "pais_vasco",
+   "poblacion": 411,
+   "anio": 2025
+  },
+  "areatza": {
+   "municipio": "Areatza",
+   "provincia": "pais_vasco",
+   "poblacion": 1292,
+   "anio": 2025
+  },
+  "arrankudiaga-zollo": {
+   "municipio": "Arrankudiaga-Zollo",
+   "provincia": "pais_vasco",
+   "poblacion": 1018,
+   "anio": 2025
+  },
+  "arrieta": {
+   "municipio": "Arrieta",
+   "provincia": "pais_vasco",
+   "poblacion": 582,
+   "anio": 2025
+  },
+  "arrigorriaga": {
+   "municipio": "Arrigorriaga",
+   "provincia": "pais_vasco",
+   "poblacion": 11939,
+   "anio": 2025
+  },
+  "artea": {
+   "municipio": "Artea",
+   "provincia": "pais_vasco",
+   "poblacion": 743,
+   "anio": 2025
+  },
+  "artzentales": {
+   "municipio": "Artzentales",
+   "provincia": "pais_vasco",
+   "poblacion": 754,
+   "anio": 2025
+  },
+  "atxondo": {
+   "municipio": "Atxondo",
+   "provincia": "pais_vasco",
+   "poblacion": 1342,
+   "anio": 2025
+  },
+  "aulesti": {
+   "municipio": "Aulesti",
+   "provincia": "pais_vasco",
+   "poblacion": 639,
+   "anio": 2025
+  },
+  "bakio": {
+   "municipio": "Bakio",
+   "provincia": "pais_vasco",
+   "poblacion": 2857,
+   "anio": 2025
+  },
+  "balmaseda": {
+   "municipio": "Balmaseda",
+   "provincia": "pais_vasco",
+   "poblacion": 7718,
+   "anio": 2025
+  },
+  "barakaldo": {
+   "municipio": "Barakaldo",
+   "provincia": "pais_vasco",
+   "poblacion": 102986,
+   "anio": 2025
+  },
+  "barrika": {
+   "municipio": "Barrika",
+   "provincia": "pais_vasco",
+   "poblacion": 1513,
+   "anio": 2025
+  },
+  "basauri": {
+   "municipio": "Basauri",
+   "provincia": "pais_vasco",
+   "poblacion": 40274,
+   "anio": 2025
+  },
+  "bedia": {
+   "municipio": "Bedia",
+   "provincia": "pais_vasco",
+   "poblacion": 1111,
+   "anio": 2025
+  },
+  "berango": {
+   "municipio": "Berango",
+   "provincia": "pais_vasco",
+   "poblacion": 8242,
+   "anio": 2025
+  },
+  "bermeo": {
+   "municipio": "Bermeo",
+   "provincia": "pais_vasco",
+   "poblacion": 17038,
+   "anio": 2025
+  },
+  "berriatua": {
+   "municipio": "Berriatua",
+   "provincia": "pais_vasco",
+   "poblacion": 1224,
+   "anio": 2025
+  },
+  "berriz": {
+   "municipio": "Berriz",
+   "provincia": "pais_vasco",
+   "poblacion": 4533,
+   "anio": 2025
+  },
+  "bilbao": {
+   "municipio": "Bilbao",
+   "provincia": "pais_vasco",
+   "poblacion": 351124,
+   "anio": 2025
+  },
+  "busturia": {
+   "municipio": "Busturia",
+   "provincia": "pais_vasco",
+   "poblacion": 1693,
+   "anio": 2025
+  },
+  "derio": {
+   "municipio": "Derio",
+   "provincia": "pais_vasco",
+   "poblacion": 7294,
+   "anio": 2025
+  },
+  "dima": {
+   "municipio": "Dima",
+   "provincia": "pais_vasco",
+   "poblacion": 1531,
+   "anio": 2025
+  },
+  "durango": {
+   "municipio": "Durango",
+   "provincia": "pais_vasco",
+   "poblacion": 30192,
+   "anio": 2025
+  },
+  "ea": {
+   "municipio": "Ea",
+   "provincia": "pais_vasco",
+   "poblacion": 824,
+   "anio": 2025
+  },
+  "elorrio": {
+   "municipio": "Elorrio",
+   "provincia": "pais_vasco",
+   "poblacion": 7277,
+   "anio": 2025
+  },
+  "ereno": {
+   "municipio": "Ereño",
+   "provincia": "pais_vasco",
+   "poblacion": 275,
+   "anio": 2025
+  },
+  "ermua": {
+   "municipio": "Ermua",
+   "provincia": "pais_vasco",
+   "poblacion": 15516,
+   "anio": 2025
+  },
+  "errigoiti": {
+   "municipio": "Errigoiti",
+   "provincia": "pais_vasco",
+   "poblacion": 499,
+   "anio": 2025
+  },
+  "etxebarri": {
+   "municipio": "Etxebarri",
+   "provincia": "pais_vasco",
+   "poblacion": 12038,
+   "anio": 2025
+  },
+  "etxebarria": {
+   "municipio": "Etxebarria",
+   "provincia": "pais_vasco",
+   "poblacion": 791,
+   "anio": 2025
+  },
+  "forua": {
+   "municipio": "Forua",
+   "provincia": "pais_vasco",
+   "poblacion": 928,
+   "anio": 2025
+  },
+  "fruiz": {
+   "municipio": "Fruiz",
+   "provincia": "pais_vasco",
+   "poblacion": 591,
+   "anio": 2025
+  },
+  "galdakao": {
+   "municipio": "Galdakao",
+   "provincia": "pais_vasco",
+   "poblacion": 24776,
+   "anio": 2025
+  },
+  "galdames": {
+   "municipio": "Galdames",
+   "provincia": "pais_vasco",
+   "poblacion": 829,
+   "anio": 2025
+  },
+  "gamiz-fika": {
+   "municipio": "Gamiz-Fika",
+   "provincia": "pais_vasco",
+   "poblacion": 1414,
+   "anio": 2025
+  },
+  "garai": {
+   "municipio": "Garai",
+   "provincia": "pais_vasco",
+   "poblacion": 332,
+   "anio": 2025
+  },
+  "gatika": {
+   "municipio": "Gatika",
+   "provincia": "pais_vasco",
+   "poblacion": 1633,
+   "anio": 2025
+  },
+  "gautegiz arteaga": {
+   "municipio": "Gautegiz Arteaga",
+   "provincia": "pais_vasco",
+   "poblacion": 866,
+   "anio": 2025
+  },
+  "gernika-lumo": {
+   "municipio": "Gernika-Lumo",
+   "provincia": "pais_vasco",
+   "poblacion": 17129,
+   "anio": 2025
+  },
+  "getxo": {
+   "municipio": "Getxo",
+   "provincia": "pais_vasco",
+   "poblacion": 75752,
+   "anio": 2025
+  },
+  "gizaburuaga": {
+   "municipio": "Gizaburuaga",
+   "provincia": "pais_vasco",
+   "poblacion": 196,
+   "anio": 2025
+  },
+  "gordexola": {
+   "municipio": "Gordexola",
+   "provincia": "pais_vasco",
+   "poblacion": 1720,
+   "anio": 2025
+  },
+  "gorliz": {
+   "municipio": "Gorliz",
+   "provincia": "pais_vasco",
+   "poblacion": 6034,
+   "anio": 2025
+  },
+  "guenes": {
+   "municipio": "Güeñes",
+   "provincia": "pais_vasco",
+   "poblacion": 6817,
+   "anio": 2025
+  },
+  "ibarrangelu": {
+   "municipio": "Ibarrangelu",
+   "provincia": "pais_vasco",
+   "poblacion": 669,
+   "anio": 2025
+  },
+  "igorre": {
+   "municipio": "Igorre",
+   "provincia": "pais_vasco",
+   "poblacion": 4344,
+   "anio": 2025
+  },
+  "ispaster": {
+   "municipio": "Ispaster",
+   "provincia": "pais_vasco",
+   "poblacion": 721,
+   "anio": 2025
+  },
+  "iurreta": {
+   "municipio": "Iurreta",
+   "provincia": "pais_vasco",
+   "poblacion": 3897,
+   "anio": 2025
+  },
+  "izurtza": {
+   "municipio": "Izurtza",
+   "provincia": "pais_vasco",
+   "poblacion": 224,
+   "anio": 2025
+  },
+  "kortezubi": {
+   "municipio": "Kortezubi",
+   "provincia": "pais_vasco",
+   "poblacion": 447,
+   "anio": 2025
+  },
+  "lanestosa": {
+   "municipio": "Lanestosa",
+   "provincia": "pais_vasco",
+   "poblacion": 244,
+   "anio": 2025
+  },
+  "larrabetzu": {
+   "municipio": "Larrabetzu",
+   "provincia": "pais_vasco",
+   "poblacion": 2039,
+   "anio": 2025
+  },
+  "laukiz": {
+   "municipio": "Laukiz",
+   "provincia": "pais_vasco",
+   "poblacion": 1239,
+   "anio": 2025
+  },
+  "leioa": {
+   "municipio": "Leioa",
+   "provincia": "pais_vasco",
+   "poblacion": 32748,
+   "anio": 2025
+  },
+  "lekeitio": {
+   "municipio": "Lekeitio",
+   "provincia": "pais_vasco",
+   "poblacion": 7211,
+   "anio": 2025
+  },
+  "lemoa": {
+   "municipio": "Lemoa",
+   "provincia": "pais_vasco",
+   "poblacion": 3614,
+   "anio": 2025
+  },
+  "lemoiz": {
+   "municipio": "Lemoiz",
+   "provincia": "pais_vasco",
+   "poblacion": 1347,
+   "anio": 2025
+  },
+  "lezama": {
+   "municipio": "Lezama",
+   "provincia": "pais_vasco",
+   "poblacion": 2430,
+   "anio": 2025
+  },
+  "loiu": {
+   "municipio": "Loiu",
+   "provincia": "pais_vasco",
+   "poblacion": 2364,
+   "anio": 2025
+  },
+  "mallabia": {
+   "municipio": "Mallabia",
+   "provincia": "pais_vasco",
+   "poblacion": 1106,
+   "anio": 2025
+  },
+  "manaria": {
+   "municipio": "Mañaria",
+   "provincia": "pais_vasco",
+   "poblacion": 539,
+   "anio": 2025
+  },
+  "markina-xemein": {
+   "municipio": "Markina-Xemein",
+   "provincia": "pais_vasco",
+   "poblacion": 5089,
+   "anio": 2025
+  },
+  "maruri-jatabe": {
+   "municipio": "Maruri-Jatabe",
+   "provincia": "pais_vasco",
+   "poblacion": 1129,
+   "anio": 2025
+  },
+  "mendata": {
+   "municipio": "Mendata",
+   "provincia": "pais_vasco",
+   "poblacion": 382,
+   "anio": 2025
+  },
+  "mendexa": {
+   "municipio": "Mendexa",
+   "provincia": "pais_vasco",
+   "poblacion": 426,
+   "anio": 2025
+  },
+  "menaka": {
+   "municipio": "Meñaka",
+   "provincia": "pais_vasco",
+   "poblacion": 789,
+   "anio": 2025
+  },
+  "morga": {
+   "municipio": "Morga",
+   "provincia": "pais_vasco",
+   "poblacion": 416,
+   "anio": 2025
+  },
+  "mundaka": {
+   "municipio": "Mundaka",
+   "provincia": "pais_vasco",
+   "poblacion": 1816,
+   "anio": 2025
+  },
+  "mungia": {
+   "municipio": "Mungia",
+   "provincia": "pais_vasco",
+   "poblacion": 18129,
+   "anio": 2025
+  },
+  "murueta": {
+   "municipio": "Murueta",
+   "provincia": "pais_vasco",
+   "poblacion": 311,
+   "anio": 2025
+  },
+  "muskiz": {
+   "municipio": "Muskiz",
+   "provincia": "pais_vasco",
+   "poblacion": 7465,
+   "anio": 2025
+  },
+  "muxika": {
+   "municipio": "Muxika",
+   "provincia": "pais_vasco",
+   "poblacion": 1546,
+   "anio": 2025
+  },
+  "nabarniz": {
+   "municipio": "Nabarniz",
+   "provincia": "pais_vasco",
+   "poblacion": 264,
+   "anio": 2025
+  },
+  "ondarroa": {
+   "municipio": "Ondarroa",
+   "provincia": "pais_vasco",
+   "poblacion": 8060,
+   "anio": 2025
+  },
+  "orozko": {
+   "municipio": "Orozko",
+   "provincia": "pais_vasco",
+   "poblacion": 2666,
+   "anio": 2025
+  },
+  "ortuella": {
+   "municipio": "Ortuella",
+   "provincia": "pais_vasco",
+   "poblacion": 8735,
+   "anio": 2025
+  },
+  "otxandio": {
+   "municipio": "Otxandio",
+   "provincia": "pais_vasco",
+   "poblacion": 1322,
+   "anio": 2025
+  },
+  "plentzia": {
+   "municipio": "Plentzia",
+   "provincia": "pais_vasco",
+   "poblacion": 4407,
+   "anio": 2025
+  },
+  "portugalete": {
+   "municipio": "Portugalete",
+   "provincia": "pais_vasco",
+   "poblacion": 44843,
+   "anio": 2025
+  },
+  "santurtzi": {
+   "municipio": "Santurtzi",
+   "provincia": "pais_vasco",
+   "poblacion": 46442,
+   "anio": 2025
+  },
+  "sestao": {
+   "municipio": "Sestao",
+   "provincia": "pais_vasco",
+   "poblacion": 28512,
+   "anio": 2025
+  },
+  "sondika": {
+   "municipio": "Sondika",
+   "provincia": "pais_vasco",
+   "poblacion": 4670,
+   "anio": 2025
+  },
+  "sopela": {
+   "municipio": "Sopela",
+   "provincia": "pais_vasco",
+   "poblacion": 15048,
+   "anio": 2025
+  },
+  "sopuerta": {
+   "municipio": "Sopuerta",
+   "provincia": "pais_vasco",
+   "poblacion": 2820,
+   "anio": 2025
+  },
+  "sukarrieta": {
+   "municipio": "Sukarrieta",
+   "provincia": "pais_vasco",
+   "poblacion": 362,
+   "anio": 2025
+  },
+  "ubide": {
+   "municipio": "Ubide",
+   "provincia": "pais_vasco",
+   "poblacion": 167,
+   "anio": 2025
+  },
+  "ugao-miraballes": {
+   "municipio": "Ugao-Miraballes",
+   "provincia": "pais_vasco",
+   "poblacion": 4213,
+   "anio": 2025
+  },
+  "urduliz": {
+   "municipio": "Urduliz",
+   "provincia": "pais_vasco",
+   "poblacion": 6128,
+   "anio": 2025
+  },
+  "orduna": {
+   "municipio": "Orduña",
+   "provincia": "pais_vasco",
+   "poblacion": 4247,
+   "anio": 2025
+  },
+  "usansolo": {
+   "municipio": "Usansolo",
+   "provincia": "pais_vasco",
+   "poblacion": 4565,
+   "anio": 2025
+  },
+  "valle de trapaga-trapagaran": {
+   "municipio": "Valle de Trápaga-Trapagaran",
+   "provincia": "pais_vasco",
+   "poblacion": 11797,
+   "anio": 2025
+  },
+  "zaldibar": {
+   "municipio": "Zaldibar",
+   "provincia": "pais_vasco",
+   "poblacion": 3066,
+   "anio": 2025
+  },
+  "zamudio": {
+   "municipio": "Zamudio",
+   "provincia": "pais_vasco",
+   "poblacion": 3442,
+   "anio": 2025
+  },
+  "zaratamo": {
+   "municipio": "Zaratamo",
+   "provincia": "pais_vasco",
+   "poblacion": 1609,
+   "anio": 2025
+  },
+  "zeanuri": {
+   "municipio": "Zeanuri",
+   "provincia": "pais_vasco",
+   "poblacion": 1234,
+   "anio": 2025
+  },
+  "zeberio": {
+   "municipio": "Zeberio",
+   "provincia": "pais_vasco",
+   "poblacion": 1087,
+   "anio": 2025
+  },
+  "zierbena": {
+   "municipio": "Zierbena",
+   "provincia": "pais_vasco",
+   "poblacion": 1512,
+   "anio": 2025
+  },
+  "ziortza-bolibar": {
+   "municipio": "Ziortza-Bolibar",
+   "provincia": "pais_vasco",
+   "poblacion": 401,
    "anio": 2025
   }
  }

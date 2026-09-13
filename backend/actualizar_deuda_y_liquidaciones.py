@@ -1,10 +1,26 @@
 # encoding: utf-8
 """
-Descarga, para cada municipio de las 5 provincias que cubre esta app
-(Murcia, Girona, Lleida, Barcelona, Tarragona -- ampliado 2026-08-09), la
-deuda viva municipal y el saldo presupuestario no financiero
-(superávit/déficit) publicados por el Ministerio de Hacienda, y genera
-backend/hacienda_eell.json.
+Descarga, para cada municipio de CUALQUIER provincia que
+MUNICIPIOS_POR_PROVINCIA (app.py) cubra, la deuda viva municipal y el saldo
+presupuestario no financiero (superávit/déficit) publicados por el
+Ministerio de Hacienda, y genera backend/hacienda_eell.json.
+
+GENERALIZADO 2026-09-13 (a petición de César, ver docstring de
+actualizar_poblacion.py para el contexto completo del problema y la misma
+solución aplicada aquí): el fichero de Hacienda YA cubre los 8.133
+municipios de España en una sola descarga (no hace falta un fichero por
+provincia, a diferencia de las tablas del INE) -- el filtro real estaba en
+PROVINCIA_MAYUS_A_TITULO, hardcodeado a las 5 provincias originales. Ahora
+ese filtro se deriva en vivo de PROVINCIA_LABEL (ver _provincia_mayus_a_clave
+más abajo), así que cualquier provincia nueva en MUNICIPIOS_POR_PROVINCIA se
+recoge sola. Verificado en vivo (2026-09-13) que la columna "Provincia" del
+XLSX usa nombres en MAYÚSCULAS SIN ACENTOS de una sola palabra para el caso
+general ("ALICANTE", "ALMERIA", "CASTELLON", "CORDOBA", "JAEN", "MALAGA") --
+coincide exactamente con normalizar(nombre).upper() a partir de
+PROVINCIA_LABEL, sin necesitar ningún alias. Única excepción real: el fichero
+trae el País Vasco con las 3 provincias reales por separado bajo nombres
+compuestos ("ARABA/ALAVA", "GIPUZKOA", "BIZKAIA"), que la app agrupa en una
+sola clave "pais_vasco" -- ver NOMBRES_MAYUS_OVERRIDE.
 
 Dos ficheros oficiales, mismo ministerio, mismo patrón de descarga directa
 (XLSX público, sin sesión ni formulario) -- a diferencia de rendiciondecuentas.es,
@@ -39,10 +55,12 @@ lee las páginas índice (arriba) y extrae por regex el enlace .xlsx vigente,
 en vez de construir la URL a mano (a diferencia de ISPA/actualizar_retribuciones.py,
 donde sí hace falta tocar una constante a mano cada edición).
 
-Reutiliza _emparejar_municipio() de actualizar_alcaldes.py (mismo
-normalizado de acentos/apóstrofes/orden "Núcleo, Artículo" que ya resolvía
-el listado del Ministerio de Política Territorial) porque el Ministerio de
-Hacienda usa la misma convención de nomenclátor del INE.
+Reutiliza el mismo normalizado de acentos/apóstrofes/orden "Núcleo,
+Artículo" de actualizar_alcaldes.py (_sin_apostrofes_curvos/
+_formas_nucleo_articulo/ALIAS_MUNICIPIO) a través de _emparejar_en_lista()
+(ver más abajo, variante local que no depende de MUNICIPIOS_POR_PROV_MIN)
+porque el Ministerio de Hacienda usa la misma convención de nomenclátor del
+INE que ya resolvía el listado del Ministerio de Política Territorial.
 
 Uso:  pip install openpyxl && python actualizar_deuda_y_liquidaciones.py
 (openpyxl no está en requirements.txt por el mismo motivo que en los otros
@@ -58,9 +76,8 @@ import openpyxl
 import requests
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import BASE_DIR, normalizar
-from actualizar_alcaldes import (_emparejar_municipio, _sin_apostrofes_curvos,
-                                  PROV_A_KEY, MUNICIPIOS_POR_PROV_MIN)
+from app import BASE_DIR, normalizar, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL
+from actualizar_alcaldes import _sin_apostrofes_curvos, _formas_nucleo_articulo, ALIAS_MUNICIPIO
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
@@ -80,14 +97,69 @@ EJERCICIOS_A_PROBAR = 3
 
 OUT_FILE = f"{BASE_DIR}/hacienda_eell.json"
 
-PROVINCIAS_CUBIERTAS = ("Murcia", "Girona", "Lleida", "Barcelona", "Tarragona")
-# Nombre de provincia tal como aparece en MAYÚSCULAS en los ficheros de
-# Hacienda -> nombre "Título" que usa MUNICIPIOS_POR_PROV_MIN / PROV_A_KEY.
-# Ampliado 2026-08-09 a las 3 provincias catalanas restantes -- este dict es
-# el filtro real (PROVINCIAS_CUBIERTAS de arriba no se referencia en el
-# procesamiento, solo queda como documentación de intención).
-PROVINCIA_MAYUS_A_TITULO = {"MURCIA": "Murcia", "GIRONA": "Girona",
-                             "LLEIDA": "Lleida", "BARCELONA": "Barcelona", "TARRAGONA": "Tarragona"}
+# Prefijos que PROVINCIA_LABEL antepone al nombre real de la provincia --
+# se quitan para obtener el nombre "pelado" (ver actualizar_poblacion.py,
+# misma idea).
+_PREFIJOS_LABEL = ("Provincia de ", "Región de ")
+
+# Comunidades autónomas que agrupan varias provincias reales bajo una sola
+# clave de MUNICIPIOS_POR_PROVINCIA -- el fichero de Hacienda SÍ las trae
+# desglosadas por su provincia real, así que hace falta el mapeo explícito
+# (verificado en vivo 2026-09-13: la columna "Provincia" trae literalmente
+# "ARABA/ALAVA", "GIPUZKOA", "BIZKAIA", no "PAIS VASCO").
+NOMBRES_MAYUS_OVERRIDE = {
+    "pais_vasco": ["ARABA/ALAVA", "GIPUZKOA", "BIZKAIA"],
+}
+
+
+def _nombres_mayus_provincia(clave):
+    """Nombre(s) tal como aparecen en MAYÚSCULAS en los ficheros de Hacienda
+    para una clave de MUNICIPIOS_POR_PROVINCIA -- derivado de PROVINCIA_LABEL
+    salvo las claves de NOMBRES_MAYUS_OVERRIDE."""
+    if clave in NOMBRES_MAYUS_OVERRIDE:
+        return NOMBRES_MAYUS_OVERRIDE[clave]
+    label = PROVINCIA_LABEL.get(clave, "")
+    for pref in _PREFIJOS_LABEL:
+        if label.startswith(pref):
+            label = label[len(pref):]
+            break
+    return [normalizar(label).upper()] if label else []
+
+
+def _provincia_mayus_a_clave():
+    """{nombre en MAYÚSCULAS del fichero de Hacienda: clave interna de la
+    app} para TODAS las provincias de MUNICIPIOS_POR_PROVINCIA -- este dict
+    es ahora el filtro real (antes era PROVINCIA_MAYUS_A_TITULO, hardcodeado
+    a 5 provincias). Cualquier provincia nueva en MUNICIPIOS_POR_PROVINCIA/
+    PROVINCIA_LABEL se recoge sola, sin tocar este script."""
+    resultado = {}
+    for clave in MUNICIPIOS_POR_PROVINCIA:
+        for nombre_mayus in _nombres_mayus_provincia(clave):
+            resultado[nombre_mayus] = clave
+    return resultado
+
+
+def _emparejar_en_lista(nombre_oficial, lista_municipios):
+    """Igual que _emparejar_municipio() de actualizar_alcaldes.py, pero
+    contra una lista de municipios cualquiera en vez de MUNICIPIOS_POR_PROV_MIN
+    (que solo cubre las 5 provincias originales) -- así funciona igual de
+    bien para cualquier provincia nueva de MUNICIPIOS_POR_PROVINCIA.
+    Amplía también con el nombre bilingüe partido por "/" (mismo problema y
+    mismo fix que en actualizar_poblacion.py, ver ahí el detalle)."""
+    partes = nombre_oficial.split("/") if "/" in nombre_oficial else [nombre_oficial]
+    candidatos = set()
+    for parte in partes:
+        candidatos.add(normalizar(_sin_apostrofes_curvos(parte)))
+        for forma in _formas_nucleo_articulo(parte):
+            candidatos.add(normalizar(_sin_apostrofes_curvos(forma)))
+    for m in lista_municipios:
+        if normalizar(_sin_apostrofes_curvos(m)) in candidatos:
+            return m
+    for buscado in candidatos:
+        alias = ALIAS_MUNICIPIO.get(buscado)
+        if alias and alias in lista_municipios:
+            return alias
+    return None
 
 # Los ficheros de Hacienda escriben el artículo catalán/castellano como
 # sufijo entre paréntesis ("Far d'Empordà (El)", "Torres de Cotillas
@@ -166,7 +238,7 @@ def _descubrir_urls_liquidaciones(session, n_ejercicios):
     return resultado
 
 
-def _procesar_deuda_viva(wb):
+def _procesar_deuda_viva(wb, provincia_mayus_a_clave):
     """Hoja 'Datos': fila de cabecera empieza por 'Ejercicio'; columnas
     (Ejercicio, Código CCAA, CCAA, Código Provincia, Provincia, Código
     Municipio, Municipio, Deuda viva (miles de euros))."""
@@ -184,26 +256,34 @@ def _procesar_deuda_viva(wb):
         if not row or not row[4]:
             continue
         provincia_mayus = str(row[4]).strip().upper()
-        provincia = PROVINCIA_MAYUS_A_TITULO.get(provincia_mayus)
-        if not provincia:
+        clave = provincia_mayus_a_clave.get(provincia_mayus)
+        if not clave:
             continue
         nombre_crudo = _limpiar_nombre_hacienda(row[6])
         deuda_miles = row[7]
         if deuda_miles is None:
             continue
-        muni = _emparejar_municipio(nombre_crudo, provincia)
+        muni = _emparejar_en_lista(nombre_crudo, MUNICIPIOS_POR_PROVINCIA[clave])
         if not muni:
-            sin_match.append((provincia, nombre_crudo))
+            sin_match.append((clave, nombre_crudo))
             continue
-        resultado[normalizar(muni)] = {
+        clave_normalizada = normalizar(muni)
+        # Colisión de nombre entre provincias (ver actualizar_poblacion.py
+        # para el detalle completo: "Cabanes" en Girona/Castellón, "Torrent"
+        # en Girona/Valencia) -- mejor sin dato que un dato de otro municipio.
+        if clave_normalizada in resultado and resultado[clave_normalizada]["provincia"] != clave:
+            print(f"  [aviso] colisión de nombre: '{muni}' ya existe en "
+                  f"{resultado[clave_normalizada]['provincia']} -- se descarta el de {clave}.")
+            continue
+        resultado[clave_normalizada] = {
             "municipio": muni,
-            "provincia": PROV_A_KEY[provincia],
+            "provincia": clave,
             "deuda_eur": round(float(deuda_miles) * 1000, 2),
         }
     return resultado, sin_match
 
 
-def _procesar_liquidaciones(wb, ejercicio):
+def _procesar_liquidaciones(wb, ejercicio, provincia_mayus_a_clave):
     """Hoja 'Ayuntamientos': fila de cabecera empieza por 'Código de la
     entidad local'; columnas de interés: [4]=Nombre, [5]=Provincia,
     [7]=Importe saldo no financiero (€), [9]=Remisión de información (Sí/No)."""
@@ -221,8 +301,8 @@ def _procesar_liquidaciones(wb, ejercicio):
         if not row or not row[5]:
             continue
         provincia_mayus = str(row[5]).strip().upper()
-        provincia = PROVINCIA_MAYUS_A_TITULO.get(provincia_mayus)
-        if not provincia:
+        clave = provincia_mayus_a_clave.get(provincia_mayus)
+        if not clave:
             continue
         if row[9] != "Si":
             continue  # no remitido todavía este ejercicio -- se prueba el anterior
@@ -230,13 +310,19 @@ def _procesar_liquidaciones(wb, ejercicio):
         if not isinstance(importe, (int, float)):
             continue
         nombre_crudo = _limpiar_nombre_hacienda(row[4])
-        muni = _emparejar_municipio(nombre_crudo, provincia)
+        muni = _emparejar_en_lista(nombre_crudo, MUNICIPIOS_POR_PROVINCIA[clave])
         if not muni:
-            sin_match.append((provincia, nombre_crudo))
+            sin_match.append((clave, nombre_crudo))
             continue
-        resultado[normalizar(muni)] = {
+        clave_normalizada = normalizar(muni)
+        # Misma colisión de nombre entre provincias que en _procesar_deuda_viva.
+        if clave_normalizada in resultado and resultado[clave_normalizada]["provincia"] != clave:
+            print(f"  [aviso] colisión de nombre: '{muni}' ya existe en "
+                  f"{resultado[clave_normalizada]['provincia']} -- se descarta el de {clave}.")
+            continue
+        resultado[clave_normalizada] = {
             "municipio": muni,
-            "provincia": PROV_A_KEY[provincia],
+            "provincia": clave,
             "ejercicio": ejercicio,
             "importe_eur": round(float(importe), 2),
         }
@@ -247,11 +333,13 @@ def main():
     session = requests.Session()
     session.headers.update(HEADERS)
 
+    provincia_mayus_a_clave = _provincia_mayus_a_clave()
+
     print("Localizando fichero vigente de Deuda Viva...")
     url_deuda = _descubrir_url_deuda_viva(session)
     print(f"  -> {url_deuda}")
     wb_deuda = _descargar_xlsx(session, url_deuda)
-    deuda_por_muni, sin_match_deuda = _procesar_deuda_viva(wb_deuda)
+    deuda_por_muni, sin_match_deuda = _procesar_deuda_viva(wb_deuda, provincia_mayus_a_clave)
     print(f"Deuda viva: {len(deuda_por_muni)} municipios emparejados"
           f"{f' (sin emparejar: {sin_match_deuda})' if sin_match_deuda else ''}")
 
@@ -265,7 +353,7 @@ def main():
     for ejercicio, url in urls_liquidaciones:
         print(f"Descargando Liquidaciones {ejercicio}...")
         wb = _descargar_xlsx(session, url)
-        datos_ejercicio, sin_match_ejercicio = _procesar_liquidaciones(wb, ejercicio)
+        datos_ejercicio, sin_match_ejercicio = _procesar_liquidaciones(wb, ejercicio, provincia_mayus_a_clave)
         nuevos = 0
         for clave, info in datos_ejercicio.items():
             if clave not in saldo_por_muni:  # ya cubierto por un ejercicio más reciente
@@ -293,11 +381,11 @@ def main():
         json.dump(salida, f, ensure_ascii=False, indent=1)
 
     print()
-    for provincia_titulo, key in PROV_A_KEY.items():
-        esperados = len(MUNICIPIOS_POR_PROV_MIN[provincia_titulo])
-        n_deuda = sum(1 for v in deuda_por_muni.values() if v["provincia"] == key)
-        n_saldo = sum(1 for v in saldo_por_muni.values() if v["provincia"] == key)
-        print(f"{provincia_titulo} -- Deuda viva: {n_deuda}/{esperados}, "
+    for clave, municipios in MUNICIPIOS_POR_PROVINCIA.items():
+        esperados = len(municipios)
+        n_deuda = sum(1 for v in deuda_por_muni.values() if v["provincia"] == clave)
+        n_saldo = sum(1 for v in saldo_por_muni.values() if v["provincia"] == clave)
+        print(f"{PROVINCIA_LABEL.get(clave, clave)} -- Deuda viva: {n_deuda}/{esperados}, "
               f"Saldo no financiero: {n_saldo}/{esperados}")
     print(f"\nGuardado en {OUT_FILE}")
 
