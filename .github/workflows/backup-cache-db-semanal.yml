@@ -44,10 +44,18 @@ jobs:
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
-          curl -sS --max-time 600 -o cache.db \
-            "https://dinero-publico.onrender.com/admin/cache-db?token=${ADMIN_TOKEN}"
+          codigo=$(curl -sS --max-time 600 -o cache.db -w "%{http_code}" \
+            "https://dinero-publico.onrender.com/admin/cache-db?token=${ADMIN_TOKEN}")
           tam=$(stat -c%s cache.db)
-          echo "Tamaño descargado: ${tam} bytes"
+          echo "HTTP ${codigo}, tamaño descargado: ${tam} bytes"
+          # DEBUG TEMPORAL (2026-09-13): la primera ejecución real devolvió
+          # 223.038 bytes en vez de las decenas/cientos de MB esperadas --
+          # esto vuelca los primeros bytes (sin tocar el token, no es
+          # secreto) para diagnosticar antes de decidir el fix definitivo.
+          echo "--- primeros 500 bytes de la respuesta (diagnóstico) ---"
+          head -c 500 cache.db || true
+          echo ""
+          echo "--- fin del volcado ---"
           if [ "$tam" -lt 1000000 ]; then
             echo "::error::cache.db descargado sospechosamente pequeño (<1MB, ¿token mal configurado o app caída?) -- se aborta sin tocar el backup existente."
             exit 1
