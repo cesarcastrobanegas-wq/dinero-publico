@@ -44,20 +44,26 @@ jobs:
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
-          codigo=$(curl -sS --max-time 600 -o cache.db -w "%{http_code}" \
-            "https://dinero-publico.onrender.com/admin/cache-db?token=${ADMIN_TOKEN}")
-          tam=$(stat -c%s cache.db)
-          echo "HTTP ${codigo}, tamaño descargado: ${tam} bytes"
-          # DEBUG TEMPORAL (2026-09-13): la primera ejecución real devolvió
-          # 223.038 bytes en vez de las decenas/cientos de MB esperadas --
-          # esto vuelca los primeros bytes (sin tocar el token, no es
-          # secreto) para diagnosticar antes de decidir el fix definitivo.
-          echo "--- primeros 500 bytes de la respuesta (diagnóstico) ---"
-          head -c 500 cache.db || true
-          echo ""
-          echo "--- fin del volcado ---"
-          if [ "$tam" -lt 1000000 ]; then
-            echo "::error::cache.db descargado sospechosamente pequeño (<1MB, ¿token mal configurado o app caída?) -- se aborta sin tocar el backup existente."
+          # Reintentos: la primera ejecución real (2026-09-13) dio un 502
+          # Bad Gateway transitorio de Render (misma clase de reinicio
+          # momentáneo que se ve tras cada deploy) -- nada que ver con el
+          # token ni con el código, solo mala suerte de tiempos. Con 3
+          # intentos y una espera corta se absorbe sin fallar el backup.
+          ok=0
+          for intento in 1 2 3; do
+            codigo=$(curl -sS --max-time 600 -o cache.db -w "%{http_code}" \
+              "https://dinero-publico.onrender.com/admin/cache-db?token=${ADMIN_TOKEN}")
+            tam=$(stat -c%s cache.db)
+            echo "Intento ${intento}: HTTP ${codigo}, ${tam} bytes"
+            if [ "$codigo" = "200" ] && [ "$tam" -ge 1000000 ]; then
+              ok=1
+              break
+            fi
+            echo "  no válido, esperando 30s antes de reintentar..."
+            sleep 30
+          done
+          if [ "$ok" != "1" ]; then
+            echo "::error::No se consiguió un cache.db válido tras 3 intentos (último: HTTP ${codigo}, ${tam} bytes) -- se aborta sin tocar el backup existente."
             exit 1
           fi
 
