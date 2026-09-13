@@ -1,0 +1,99 @@
+name: Backup semanal de cache.db (rama dedicada, un solo commit)
+
+# Diseño (2026-09-13, ver memoria del proyecto -- limpieza de cuota de Git
+# LFS): NO es el mecanismo antiguo "un commit nuevo cada vez" que entre
+# 2026-07-27 y 2026-09-02 generó 123 versiones (~22GB únicos en LFS) y
+# obligó a purgar cache.db de todo el historial (git filter-repo +
+# force-push). Aquí, en cambio, la rama `cache-db-backup` vive SIEMPRE con
+# UN ÚNICO COMMIT: cada ejecución hace `git commit --amend` + force-push
+# sobre ese mismo commit, así que el storage en LFS se queda plano para
+# siempre (~1 snapshot, 150-250MB) en vez de crecer sin límite. Es
+# deliberadamente una rama huérfana (sin historia compartida con `main`) y
+# un workflow separado del cron diario (`actualizar-diario.yml`) -- no
+# comparte nada de su complejidad (franjas, polling de jobs, etc.), solo
+# necesita descargar el cache.db actual y publicarlo.
+#
+# Por qué esto y no solo confiar en los snapshots nativos de Render: César
+# decidió mantener esta capa extra como red de seguridad barata (cuesta
+# ~200MB de LFS de forma constante) sin volver a acumular historial.
+#
+# ADMIN_TOKEN se usa aquí SOLO para llamar a GET /admin/cache-db (leer el
+# dato, no para nada más) -- mismo patrón de protección que el resto del
+# proyecto. El push a git usa el GITHUB_TOKEN automático de Actions
+# (permissions: contents: write más abajo), no un PAT nuevo.
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"  # lunes 04:00 UTC
+  workflow_dispatch: {}   # permite lanzarlo a mano desde la pestaña Actions
+
+permissions:
+  contents: write
+
+jobs:
+  backup-cache-db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Herramientas necesarias (git-lfs, sqlite3)
+        run: |
+          sudo apt-get update -y -qq
+          sudo apt-get install -y -qq git-lfs sqlite3
+          git lfs install --skip-repo
+
+      - name: Descargar cache.db actual de producción
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          curl -sS --max-time 600 -o cache.db \
+            "https://dinero-publico.onrender.com/admin/cache-db?token=${ADMIN_TOKEN}"
+          tam=$(stat -c%s cache.db)
+          echo "Tamaño descargado: ${tam} bytes"
+          if [ "$tam" -lt 1000000 ]; then
+            echo "::error::cache.db descargado sospechosamente pequeño (<1MB, ¿token mal configurado o app caída?) -- se aborta sin tocar el backup existente."
+            exit 1
+          fi
+
+      - name: Comprobación de integridad (equivalente al antiguo canario_cache_db.py)
+        run: |
+          resultado=$(sqlite3 cache.db "PRAGMA integrity_check;")
+          if [ "$resultado" != "ok" ]; then
+            echo "::error::cache.db no pasa PRAGMA integrity_check ('${resultado}') -- se aborta sin tocar el backup existente."
+            exit 1
+          fi
+          menores=$(sqlite3 cache.db "SELECT COUNT(*) FROM contratos_menors_locales;" 2>/dev/null || echo "?")
+          echo "integrity_check: ok -- contratos_menors_locales: ${menores} filas"
+
+      - name: Publicar como único commit en la rama cache-db-backup
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git config --global user.name "Dinero Público Bot"
+          git config --global user.email "actions@users.noreply.github.com"
+
+          mkdir backup-checkout && cd backup-checkout
+          git init -q
+          git lfs install --local
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          if git fetch -q --depth 1 origin cache-db-backup 2>/dev/null; then
+            git checkout -q FETCH_HEAD -b cache-db-backup
+          else
+            echo "Rama cache-db-backup no existe todavía -- se crea desde cero."
+            git checkout -q --orphan cache-db-backup
+          fi
+
+          mkdir -p backend
+          cp ../cache.db backend/cache.db
+          printf 'backend/cache.db filter=lfs diff=lfs merge=lfs -text\n' > .gitattributes
+          git add -A
+
+          mensaje="Backup semanal de cache.db ($(date -u +%Y-%m-%d), $(stat -c%s backend/cache.db) bytes)"
+          if git rev-parse --verify -q HEAD >/dev/null; then
+            git commit -q --amend -m "$mensaje"
+          else
+            git commit -q -m "$mensaje"
+          fi
+
+          git push --force origin HEAD:cache-db-backup
+          echo "Backup publicado: $mensaje"
