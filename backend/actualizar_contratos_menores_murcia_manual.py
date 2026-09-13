@@ -486,8 +486,136 @@ def actualizar_lorca():
     return registros
 
 
+# ─── MURCIA CAPITAL ──────────────────────────────────────────────────────────
+# Retomado 2026-09-13 (ver memoria del proyecto): un intento anterior de
+# adivinar las URLs de los PDF por año dio 404 dos veces seguidas. La fuente
+# real y permanente es el propio indicador de transparencia D1-49 ("Se
+# publican periódicamente los Contratos menores...") en
+# https://transparencia.mimurcia.murcia.es/es/transparencia/65 -- esa página
+# lista un enlace "AÑO NNNN" por cada PDF anual, con URLs que SÍ cambian
+# (llevan la fecha de publicación en la ruta), así que hay que leer el
+# índice en cada ejecución, igual que Lorca/Lorquí, no construir la URL a
+# mano.
+#
+# Formato verificado descargando y parseando 2021-2024 con pdfplumber
+# (además del de 2025 ya visto antes): NO hay <table> real detectable por
+# extract_tables() (a diferencia de Lorca) -- hay que parsear línea a línea
+# el texto plano de cada página, cada fila con columnas ADJUDICATARIO / TIPO
+# (Servicios|Suministros|Obras) / F.ENTRADA (dd/mm/aaaa, sin espacio fijo
+# antes de la descripción que sigue) / DESCRIPCIÓN / IMPORTE, más líneas de
+# subtotal "<adjudicatario> Total <tipo> <importe>" que se descartan solas
+# porque no tienen fecha. Sin NIF ni número de expediente en este formato.
+#
+# 2021 tiene un formato DISTINTO (columna extra "DOCUMENTO" con el NIF, y el
+# nombre del adjudicatario envuelve a una segunda línea en el texto extraído)
+# que este parser NO reconoce -- se salta explícitamente, mismo criterio que
+# Lorca con su formato antiguo: mejor no procesarlo que arriesgarse a
+# producir basura mezclando columnas.
+#
+# Aviso de rendimiento: cada PDF anual tiene 100-130 páginas y pdfplumber
+# tarda varios minutos por año (~6 min medido con el de 2024) -- ejecutar
+# este script completo (2022-2025) puede tardar 20-30 min solo en esta
+# fuente. Coherente con que viva en el script manual/periódico y no en el
+# cron diario (mismo motivo que Mula/Molina/Lorquí, ver docstring del
+# módulo), aunque aquí la razón sea el tiempo de proceso y no una
+# dependencia nueva.
+MURCIA_CAPITAL_INDICE_URL = "https://transparencia.mimurcia.murcia.es/es/transparencia/65"
+_MURCIA_CAPITAL_TIPOS = ("Servicios", "Suministros", "Obras")
+_RE_MURCIA_CAPITAL_FILA = re.compile(
+    r"^(?P<adj>.+?)\s+(?P<tipo>" + "|".join(_MURCIA_CAPITAL_TIPOS) + r")\s+"
+    r"(?P<fecha>\d{2}/\d{2}/\d{4})(?P<desc>.*?)\s+"
+    r"(?P<importe>[\d.]+,\d{2})\s*€?\s*$"
+)
+
+
+def _listar_anios_murcia_capital():
+    """Lee el índice real de "Contratos menores" (indicador de transparencia
+    D1-49, ver nota de arriba) y devuelve [(año, url_pdf), ...] para cada
+    enlace de texto literal "AÑO NNNN" -- excluye de paso el enlace suelto
+    de "Nueva instrucción de Contratos Menores" (mismo indicador, no es un
+    listado de contratos) porque su texto no encaja ese patrón."""
+    r = requests.get(MURCIA_CAPITAL_INDICE_URL, headers=HEADERS, timeout=30)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    resultado = []
+    for a in soup.find_all("a", href=True):
+        texto = a.get_text(strip=True)
+        m = re.match(r"A[ÑN]O\s*(\d{4})$", texto, re.I)
+        if m and a["href"].lower().endswith(".pdf"):
+            resultado.append((int(m.group(1)), urljoin(MURCIA_CAPITAL_INDICE_URL, a["href"])))
+    return sorted(set(resultado))
+
+
+def _parsear_pdf_murcia_capital(contenido, anio):
+    """Parsea un PDF anual de Murcia capital línea a línea (ver nota de
+    arriba: sin tabla real detectable, columnas ADJUDICATARIO/TIPO/
+    F.ENTRADA/DESCRIPCIÓN/IMPORTE). Sin expediente ni NIF en este formato,
+    así que la clave es un hash del contenido de la fila (mismo patrón que
+    Lorca)."""
+    registros = {}
+    with pdfplumber.open(io.BytesIO(contenido)) as pdf:
+        for pagina in pdf.pages:
+            texto = pagina.extract_text() or ""
+            for linea in texto.split("\n"):
+                m = _RE_MURCIA_CAPITAL_FILA.match(linea.strip())
+                if not m:
+                    continue
+                adjudicatario = m.group("adj").strip()
+                descripcion = m.group("desc").strip()
+                if not adjudicatario or not descripcion:
+                    continue
+                dia, mes, anio_fecha = m.group("fecha").split("/")
+                clave_hash = hashlib.md5(
+                    f"{adjudicatario}|{m.group('tipo')}|{m.group('fecha')}|"
+                    f"{descripcion}|{m.group('importe')}".encode("utf-8")
+                ).hexdigest()[:12]
+                registros[f"MurciaCapital::{clave_hash}"] = {
+                    "id":               f"MurciaCapital::{clave_hash}",
+                    "municipio":        "Murcia",
+                    "provincia":        "murcia",
+                    "fuente":           "murcia-capital",
+                    "organisme":        "Ayuntamiento de Murcia",
+                    "adjudicatari":     adjudicatario,
+                    "nif":              "",
+                    "import_num":       _num_es(m.group("importe")),
+                    "data_adjudicacio": f"{anio_fecha}-{mes}-{dia}",
+                    "tipus_contracte":  m.group("tipo"),
+                    "descripcio":       descripcion,
+                    "codi_cpv":         "",
+                    "exercici":         str(anio),
+                }
+    return registros
+
+
+def actualizar_murcia_capital():
+    anios_urls = [(a, u) for a, u in _listar_anios_murcia_capital()
+                  if a >= DESDE_ANY and a != 2021]
+    print(f"Murcia capital: {len(anios_urls)} PDF anuales encontrados en el índice real (transparencia/65)")
+    registros = {}
+    for anio, url in anios_urls:
+        print(f"  Descargando y parseando {anio} (puede tardar varios minutos)...")
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=120)
+            r.raise_for_status()
+        except Exception as e:
+            print(f"  Murcia capital {anio}: {url} no disponible ({type(e).__name__})")
+            continue
+        try:
+            filas_anio = _parsear_pdf_murcia_capital(r.content, anio)
+        except Exception as e:
+            print(f"  Murcia capital {anio}: no se pudo procesar ({type(e).__name__})")
+            continue
+        registros.update(filas_anio)
+        print(f"  Murcia capital {anio}: {len(filas_anio)} contratos extraídos")
+    registros = list(registros.values())
+    print(f"Murcia capital: {len(registros)} contratos menores extraídos en total "
+          f"(desde {DESDE_ANY}, excluido 2021 por formato distinto)")
+    return registros
+
+
 def main():
-    todos = actualizar_mula() + actualizar_molina_segura() + actualizar_lorqui() + actualizar_lorca()
+    todos = (actualizar_mula() + actualizar_molina_segura() + actualizar_lorqui()
+             + actualizar_lorca() + actualizar_murcia_capital())
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "registros": todos},
                    f, ensure_ascii=False, indent=1)

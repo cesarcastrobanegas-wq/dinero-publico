@@ -7292,9 +7292,11 @@ def _actualizar_todos_bg(job_id, provincia="murcia"):
 
 def _cargar_contratos_menores_murcia_manual():
     """Carga contratos_menores_murcia_manual.json (generado por
-    actualizar_contratos_menores_murcia_manual.py -- Mula y Molina de Segura,
-    fuentes que necesitan odfpy/openpyxl y por eso se ingieren a mano en vez
-    de en el cron diario, ver ese script) y lo vuelca a la tabla compartida
+    actualizar_contratos_menores_murcia_manual.py -- Mula, Molina de Segura,
+    Lorquí, Lorca y Murcia capital, fuentes que necesitan librerías pesadas
+    (odfpy/openpyxl/pdfplumber) o un tiempo de proceso alto, y por eso se
+    ingieren a mano en vez de en el cron diario, ver ese script) y lo vuelca
+    a la tabla compartida
     contratos_menors_locales. A diferencia de ALCALDES_CONCEJALES/
     RETRIBUCIONES_ISPA (que se quedan en memoria), esto SÍ escribe en SQLite
     porque la tabla es la fuente única de verdad para renderizar la sección
@@ -7313,7 +7315,7 @@ def _cargar_contratos_menores_murcia_manual():
     if registros:
         _guardar_contratos_menors_locales(registros)
         print(f"  [startup] contratos_menores_murcia_manual.json: {len(registros)} "
-              f"contratos menores (Mula/Molina de Segura) cargados en contratos_menors_locales.", flush=True)
+              f"contratos menores (Mula/Molina/Lorquí/Lorca/Murcia capital) cargados en contratos_menors_locales.", flush=True)
 
 
 def _inicializar_datos():
@@ -9895,6 +9897,7 @@ _FUENTE_CM_LABEL = {
     "lorqui":          "Lorquí",
     "lorca":           "Lorca",
     "cartagena":       "Cartagena",
+    "murcia-capital":  "Murcia",
 }
 
 
