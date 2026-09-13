@@ -759,8 +759,6 @@ HTTP_TIMEOUT = 5            # timeout para feeds PLACE/BORM (peticiones rápidas
 DIRECTIVOS_TIMEOUT = 15    # timeout para búsquedas de directivos (páginas empresia/BOE más lentas)
 HTTP_POOL = ThreadPoolExecutor(max_workers=10)   # pool compartido para todas las peticiones HTTP
 
-_datos_lock = threading.Lock()
-_datos_memoria: list = []    # datos.json cargado en RAM al arrancar
 _jobs: dict = {}
 _jobs_lock = threading.Lock()
 _enriqueciendo_lock = threading.Lock()  # evita lanzar dos hilos de enriquecimiento a la vez
@@ -1389,12 +1387,11 @@ def _detectar_coincidencia_cargo(nombre_persona, municipio_contrato, provincia_c
 
 def _db_set_municipio(municipio, resultado, provincia="murcia"):
     key = normalizar(municipio)
-    # Mutar el dict del caller in-place (NO una copia): resultado suele ser el
-    # mismo objeto que ya vive en _datos_memoria, así que si copiáramos aquí
-    # la provincia nunca llegaría a esa copia en memoria -- y el hilo de
-    # enriquecimiento (_guardar_datos_sin_lock, que sí lee d.get("provincia"))
-    # la volvería a pisar a "murcia" en su siguiente checkpoint. Confirmado
-    # con un test dirigido durante la Fase 4.
+    # Mutar el dict del caller in-place (NO una copia): el llamador (p.ej.
+    # _job_run, o el hilo de enriquecimiento tras cargar un municipio con
+    # _db_get_municipio) a veces sigue usando esa misma referencia
+    # después de llamar aquí, y necesita ver la provincia ya puesta.
+    # Confirmado con un test dirigido durante la Fase 4.
     resultado["provincia"] = provincia
     with _db_lock:
         _db.execute(
@@ -1420,6 +1417,36 @@ def _db_all_municipios(provincia=None):
         except Exception:
             pass
     return out
+
+
+def _db_get_municipio(municipio):
+    """Lee UN municipio directamente de SQLite (SELECT por clave primaria),
+    bajo demanda -- sin pasar por ningún caché permanente en RAM. Contraparte
+    de _db_all_municipios() para cuando solo hace falta uno.
+
+    Introducida 2026-09-14 para el arreglo de fondo del OOM que tumbó el
+    precalentamiento de Huelva/Jaén: antes, _inicializar_datos() cargaba
+    TODOS los municipios de TODAS las provincias en la lista _datos_memoria
+    al arrancar y ahí se quedaban para siempre (cache.db en SQLite ya los
+    persistía en disco, pero la RAM nunca liberaba nada) -- la base de
+    memoria crecía sin límite con cada provincia nueva conectada. Ahora
+    cache.db es la única fuente de verdad en RAM: cada ficha/cálculo pide
+    aquí (o a _db_all_municipios) lo que necesita en el momento, y Python
+    libera la memoria en cuanto termina esa petición -- exactamente igual
+    de "bajo demanda" que ya hacía _db_obtener_contratos_municipio() para
+    la fusión de histórico, solo que devolviendo el dict completo."""
+    key = normalizar(municipio)
+    with _db_lock:
+        row = _db.execute("SELECT data, provincia FROM municipios WHERE municipio=?", (key,)).fetchone()
+    if not row:
+        return None
+    data, prov = row
+    try:
+        d = json.loads(data)
+        d.setdefault("provincia", prov or "murcia")
+        return d
+    except Exception:
+        return None
 
 
 def _db_obtener_contratos_municipio(municipio):
@@ -3249,7 +3276,7 @@ def municipio_valido_provincia(municipio, provincia):
 # visibles en /fondos-ue) o mal atribuidos (los contratos de la CCAA de
 # Murcia, ver _es_organo_ccaa_murcia). Estas entradas se guardan en las
 # mismas tablas/estructuras que un ayuntamiento más (misma tabla SQLite
-# `municipios`, mismo `_datos_memoria`, mismas páginas de listado/ficha) para
+# `municipios`, mismas páginas de listado/ficha) para
 # que aparezcan con sus propias estadísticas igual que cualquier otro
 # municipio -- pero NO están en MUNICIPIOS_MURCIA/MUNICIPIOS_GIRONA a
 # propósito, para no arrastrar el pipeline de scraping por-municipio
@@ -3361,9 +3388,6 @@ def _guardar_pseudo_municipio_ccaa(provincia, contratos_ccaa, job_id=None):
     if job_id:
         _log(job_id, f"  {len(contratos_ccaa)} contratos reclasificados a "
                       f"'{nombre}' (órgano = CCAA, no ayuntamiento)")
-    with _datos_lock:
-        _datos_memoria[:] = [d for d in _datos_memoria if normalizar(d.get("municipio", "")) != normalizar(nombre)]
-        _datos_memoria.append(resultado)
     _db_set_municipio(nombre, resultado, provincia=provincia)
 
 
@@ -3464,11 +3488,9 @@ def _guardar_pseudo_municipio_acumulado(nombre_pseudo, municipio_origen, contrat
     for c in contratos_extra:
         c["_origen_muni"] = origen
 
-    with _datos_lock:
-        prev = next((d for d in _datos_memoria
-                     if normalizar(d.get("municipio", "")) == normalizar(nombre_pseudo)), None)
-        conservados = [c for c in (prev.get("contratos", []) if prev else [])
-                       if c.get("_origen_muni") != origen]
+    prev = _db_get_municipio(nombre_pseudo)
+    conservados = [c for c in (prev.get("contratos", []) if prev else [])
+                   if c.get("_origen_muni") != origen]
 
     fusionados = _dedup_contratos_por_url(conservados + list(contratos_extra))
 
@@ -3487,10 +3509,6 @@ def _guardar_pseudo_municipio_acumulado(nombre_pseudo, municipio_origen, contrat
     if job_id and contratos_extra:
         _log(job_id, f"  {len(contratos_extra)} contratos de '{municipio_origen}' "
                       f"reclasificados a '{nombre_pseudo}' -- total ahora: {len(fusionados)}")
-    with _datos_lock:
-        _datos_memoria[:] = [d for d in _datos_memoria
-                             if normalizar(d.get("municipio", "")) != normalizar(nombre_pseudo)]
-        _datos_memoria.append(resultado)
     _db_set_municipio(nombre_pseudo, resultado, provincia="murcia")
 
 
@@ -3537,9 +3555,7 @@ def _asegurar_pseudo_municipio_fondos(provincia):
     nombre = MUNICIPIOS_PSEUDO.get(provincia)
     if not nombre:
         return
-    with _datos_lock:
-        ya_existe = any(normalizar(d.get("municipio", "")) == normalizar(nombre) for d in _datos_memoria)
-    if ya_existe:
+    if _db_get_municipio(nombre) is not None:
         return
     resultado = {
         "municipio":       nombre,
@@ -3550,8 +3566,6 @@ def _asegurar_pseudo_municipio_fondos(provincia):
         "place_profile":   "",
         "timestamp":       time.time(),
     }
-    with _datos_lock:
-        _datos_memoria.append(resultado)
     _db_set_municipio(nombre, resultado, provincia=provincia)
 
 
@@ -6976,12 +6990,15 @@ def _purgar_result_cache_caducado():
     _cache_get() ya trata una entrada caducada como si no existiera (devuelve
     None), pero nunca la borraba del dict -- un municipio que deja de
     visitarse (p.ej. de una provincia que no se toca en varios días) se
-    quedaba ocupando memoria para siempre. El coste real por entrada es
-    pequeño (el "resultado" es el mismo objeto que ya vive en _datos_memoria,
-    no una copia -- ver _job_run), pero el número de entradas nunca bajaba.
-    Throttled a RESULT_CACHE_PURGA_INTERVALO para no recorrer el dict entero
-    en cada _cache_set (se llama una vez por municipio refrescado, cientos de
-    veces por noche)."""
+    quedaba ocupando memoria para siempre. Desde el arreglo del OOM
+    2026-09-14 (_datos_memoria eliminada, ver memoria del proyecto),
+    _result_cache es la ÚNICA cosa que mantiene vivo en RAM el dict completo
+    de un municipio (contratos incluidos) -- antes ese coste era "gratis"
+    porque el mismo objeto ya vivía para siempre en _datos_memoria de todas
+    formas; ahora si esto no purgara, volveríamos a acumular sin límite por
+    otra vía. Throttled a RESULT_CACHE_PURGA_INTERVALO para no recorrer el
+    dict entero en cada _cache_set (se llama una vez por municipio
+    refrescado, cientos de veces por noche)."""
     global _ultima_purga_result_cache
     ahora = time.time()
     if ahora - _ultima_purga_result_cache < RESULT_CACHE_PURGA_INTERVALO:
@@ -7190,10 +7207,6 @@ def _job_run(job_id, municipio, provincia="murcia"):
         }
 
         _cache_set(municipio, resultado)
-
-        with _datos_lock:
-            _datos_memoria[:] = [d for d in _datos_memoria if normalizar(d.get("municipio", "")) != normalizar(municipio)]
-            _datos_memoria.append(resultado)
         _db_set_municipio(municipio, resultado, provincia=provincia)
 
         if contratos_ccaa_murcia:
@@ -7257,9 +7270,10 @@ def _actualizar_todos_bg(job_id, provincia="murcia"):
     provincia=todas para cubrir ambas fuentes en una sola ejecución.
 
     Mientras corre, la web sigue sirviendo los datos anteriores con
-    normalidad: _job_run solo sustituye la entrada de _datos_memoria del
-    municipio que esté procesando en ese momento, bajo _datos_lock, así que
-    nunca hay un estado a medias visible para quien esté navegando.
+    normalidad: _job_run solo sustituye en SQLite (_db_set_municipio, un
+    UPDATE atómico por municipio) la fila del municipio que esté procesando
+    en ese momento, así que nunca hay un estado a medias visible para quien
+    esté navegando.
     """
     provincias = (list(MUNICIPIOS_POR_PROVINCIA.keys()) if provincia == "todas"
                   else [provincia if provincia in MUNICIPIOS_POR_PROVINCIA else "murcia"])
@@ -7319,18 +7333,30 @@ def _cargar_contratos_menores_murcia_manual():
 
 
 def _inicializar_datos():
-    """Carga municipios y directivos cacheados desde SQLite en RAM al arrancar."""
+    """Inicializa SQLite y precalienta _result_cache con lo actualizado
+    recientemente -- YA NO carga todos los municipios de golpe a una lista
+    permanente en RAM (ver _db_get_municipio/_db_all_municipios: cache.db es
+    ahora la única fuente de verdad en RAM, cada petición pide lo que
+    necesita en el momento). Antes, _datos_memoria acumulaba en RAM, para
+    siempre, los contratos de TODOS los municipios de TODAS las provincias
+    cargadas -- crecía sin límite con cada provincia nueva conectada y fue
+    la causa de fondo de que el precalentamiento de Huelva/Jaén se quedara
+    sin RAM a mitad (arreglo 2026-09-14, ver memoria del proyecto).
+    La consulta de abajo (SELECT ... WHERE ts > ?) solo mira la columna
+    `ts`, sin tocar el JSON `data` -- así el precalentamiento de caché sigue
+    siendo barato aunque haya miles de municipios en disco: solo se
+    deserializa el contenido completo de los que de verdad van a entrar en
+    _result_cache."""
     _db_init()
     _cargar_contratos_menores_murcia_manual()
     _recuperar_historico_perdido()
-    cargados = _db_all_municipios()
-    with _datos_lock:
-        _datos_memoria[:] = cargados
-    for d in cargados:
-        muni = d.get("municipio", "")
-        ts = d.get("timestamp", 0)
-        if muni and (time.time() - ts) < RESULT_CACHE_TTL:
-            _cache_set(muni, d)
+    corte = time.time() - RESULT_CACHE_TTL
+    with _db_lock:
+        recientes = _db.execute("SELECT municipio FROM municipios WHERE ts > ?", (corte,)).fetchall()
+    for (muni_key,) in recientes:
+        d = _db_get_municipio(muni_key)
+        if d:
+            _cache_set(d.get("municipio", muni_key), d)
     for _prov in MUNICIPIOS_PSEUDO:
         _asegurar_pseudo_municipio_fondos(_prov)
 
@@ -7340,18 +7366,6 @@ def _inicializar_datos():
 def _contrato_key(c):
     """Clave estable para identificar un contrato independientemente de su posición en memoria."""
     return (c.get("empresa", ""), c.get("url", ""), c.get("titulo", "")[:60])
-
-
-def _guardar_datos_sin_lock():
-    """Persiste _datos_memoria en SQLite. Llamar solo desde dentro de _datos_lock."""
-    for d in _datos_memoria:
-        muni = d.get("municipio", "")
-        if muni:
-            # Propagar la provincia del propio dict -- si no, el hilo de
-            # enriquecimiento (que recorre TODOS los municipios en memoria,
-            # de cualquier provincia) pisaría silenciosamente a "murcia" el
-            # valor de cualquier municipio de Girona que reguarde de paso.
-            _db_set_municipio(muni, d, provincia=d.get("provincia", "murcia"))
 
 
 def _limpiar_cache_negativos():
@@ -7395,6 +7409,23 @@ def _enriquecer_directivos_bg():
     """
     Hilo de fondo: para cada empresa o autónomo sin directivo,
     busca via einforma → empresia.es → BORME → BOE → búsqueda web y guarda el resultado.
+
+    Reescrito 2026-09-14 (arreglo de fondo del OOM que tumbó el
+    precalentamiento de Huelva/Jaén, ver memoria del proyecto): antes este
+    hilo recorría TODA la lista permanente _datos_memoria (todas las
+    provincias cargadas, siempre en RAM, para siempre) dos veces completas
+    en cada pasada, y además la volcaba entera a SQLite cada 10 cambios
+    (_guardar_datos_sin_lock, ya eliminada). _datos_memoria ya no existe.
+    Fase 1 (reset + recopilar pendientes) sigue necesitando una lectura
+    completa de cache.db para poder verla entera -- usa _db_all_municipios(),
+    que sí materializa la lista de golpe, pero solo de forma TRANSITORIA
+    durante esta pasada (se libera al terminar la función, no se queda
+    residente para siempre como antes). Fase 2 (la lenta, con peticiones de
+    red) sí procesa un municipio de cache.db a la vez de verdad -- lee su
+    dict completo bajo demanda (_db_get_municipio) solo cuando cambia de
+    municipio, lo muta en esa copia local, y lo guarda (_db_set_municipio)
+    antes de pasar al siguiente; `pendientes` en sí solo guarda tuplas
+    ligeras (nombres/claves), no contratos completos.
     """
     if not _enriqueciendo_lock.acquire(blocking=False):
         return  # ya hay otro hilo de enriquecimiento en marcha
@@ -7402,37 +7433,43 @@ def _enriquecer_directivos_bg():
     try:
         time.sleep(6)  # dejar que el servidor arranque del todo
 
-        # Limpiar caché negativo y flags "intentado" para re-buscar con la nueva estrategia
-        # (las empresas que ya agotaron DIR_INTENTOS_MAX no se tocan: se consideran
-        # "sin datos registrales públicos" y no se vuelven a intentar automáticamente)
+        # Limpiar caché negativo (las empresas que ya agotaron
+        # DIR_INTENTOS_MAX no se tocan: se consideran "sin datos registrales
+        # públicos" y no se vuelven a intentar automáticamente)
         _limpiar_cache_negativos()
-        with _datos_lock:
-            for d in _datos_memoria:
-                for c in d.get("contratos", []):
-                    if not c.get("directivo") and c.get("intentado"):
-                        if _dir_cache_agotado(c.get("empresa", ""), c.get("nif", "")):
-                            c["rm_agotado"] = True
-                        else:
-                            c.pop("intentado", None)
 
-        # Recopilar contratos pendientes: (municipio, key, empresa, nif)
+        # Fase 1: recorrer TODOS los municipios de cache.db (lectura
+        # completa, transitoria -- ver docstring) para (a) resetear el flag
+        # "intentado" de contratos cuya empresa ya no está agotada
+        # (re-buscables con la estrategia actual) y (b) recopilar los
+        # pendientes de enriquecer.
         pendientes = []
-        with _datos_lock:
-            for d in _datos_memoria:
-                for c in d.get("contratos", []):
-                    empresa_c = c.get("empresa", "")
-                    if not empresa_c or empresa_c == "No localizada" or c.get("directivo") or c.get("intentado"):
-                        continue
-                    if _dir_cache_agotado(empresa_c, c.get("nif", "")):
-                        c["rm_agotado"] = True
-                        c["intentado"] = True
-                        continue
-                    pendientes.append((
-                        d.get("municipio", ""),
-                        _contrato_key(c),
-                        empresa_c,
-                        c.get("nif", ""),
-                    ))
+        for d in _db_all_municipios():
+            municipio = d.get("municipio", "")
+            provincia_d = d.get("provincia", "murcia")
+            tocado = False
+            for c in d.get("contratos", []):
+                if not c.get("directivo") and c.get("intentado"):
+                    if _dir_cache_agotado(c.get("empresa", ""), c.get("nif", "")):
+                        if not c.get("rm_agotado"):
+                            c["rm_agotado"] = True
+                            tocado = True
+                    elif "intentado" in c:
+                        c.pop("intentado", None)
+                        tocado = True
+
+                empresa_c = c.get("empresa", "")
+                if not empresa_c or empresa_c == "No localizada" or c.get("directivo") or c.get("intentado"):
+                    continue
+                if _dir_cache_agotado(empresa_c, c.get("nif", "")):
+                    c["rm_agotado"] = True
+                    c["intentado"] = True
+                    tocado = True
+                    continue
+                pendientes.append((municipio, _contrato_key(c), empresa_c, c.get("nif", "")))
+
+            if tocado:
+                _db_set_municipio(municipio, d, provincia=provincia_d)
 
         if not pendientes:
             print("  [enriquecimiento] Sin empresas pendientes.", flush=True)
@@ -7440,7 +7477,23 @@ def _enriquecer_directivos_bg():
 
         print(f"  [enriquecimiento] {len(pendientes)} empresas pendientes.", flush=True)
         encontrados = 0
-        cambios = 0
+
+        # Fase 2: recorrer los pendientes (orden = mismo orden de la Fase 1,
+        # así que los de un mismo municipio salen consecutivos casi siempre)
+        # manteniendo cargado en memoria SOLO el municipio que se está
+        # tocando ahora mismo -- se guarda y se descarta antes de pasar al
+        # siguiente municipio distinto.
+        muni_actual = None
+        d_actual = None
+        muni_actual_provincia = "murcia"
+        cambios_muni_actual = False
+
+        def _flush_actual():
+            nonlocal d_actual, cambios_muni_actual
+            if d_actual is not None and cambios_muni_actual:
+                _db_set_municipio(muni_actual, d_actual, provincia=muni_actual_provincia)
+            cambios_muni_actual = False
+
         for idx, (municipio, key, empresa, nif) in enumerate(pendientes, 1):
             print(f"  [{idx}/{len(pendientes)}] {empresa} (NIF:{nif})", flush=True)
             cached_n, cached_c = _dir_cache_get(empresa, nif)
@@ -7455,27 +7508,26 @@ def _enriquecer_directivos_bg():
             else:
                 print(f"    No localizado.", flush=True)
 
-            with _datos_lock:
-                for d in _datos_memoria:
-                    if d.get("municipio") != municipio:
-                        continue
-                    for c in d.get("contratos", []):
-                        if _contrato_key(c) == key:
-                            if nombre:
-                                c["directivo"] = nombre
-                                c["cargo"] = cargo
-                            c["intentado"] = True
-                            cambios += 1
-                            break
-                if cambios % 10 == 0:
-                    _guardar_datos_sin_lock()
+            if municipio != muni_actual:
+                _flush_actual()
+                muni_actual = municipio
+                d_actual = _db_get_municipio(municipio)
+                muni_actual_provincia = d_actual.get("provincia", "murcia") if d_actual else "murcia"
+
+            if d_actual:
+                for c in d_actual.get("contratos", []):
+                    if _contrato_key(c) == key:
+                        if nombre:
+                            c["directivo"] = nombre
+                            c["cargo"] = cargo
+                        c["intentado"] = True
+                        cambios_muni_actual = True
+                        break
 
             time.sleep(1.2)  # delay entre peticiones
 
+        _flush_actual()
         print(f"  [enriquecimiento] Fin: {encontrados}/{len(pendientes)} directivos encontrados.", flush=True)
-        if cambios > 0:
-            with _datos_lock:
-                _guardar_datos_sin_lock()
 
     finally:
         _enriqueciendo_lock.release()
@@ -9091,9 +9143,10 @@ def _calcular_indice_transparencia():
     """Función pura: Índice de Transparencia Dinero Público para cada
     municipio real (excluye pseudo-municipios como "Región de Murcia" o la
     AGE, que no son ayuntamientos). No escribe nada, no dispara peticiones de
-    red -- solo lee datos ya cargados en memoria (POBLACION, CUENTAS_ANUALES,
-    DEUDA_VIVA, SALDO_NO_FINANCIERO, RETRIBUCIONES_ISPA, _datos_memoria) más
-    UNA consulta SQL agregada (_indice_menores_stats_por_municipio). Ver el
+    red -- lee datos ya cargados en memoria (POBLACION, CUENTAS_ANUALES,
+    DEUDA_VIVA, SALDO_NO_FINANCIERO, RETRIBUCIONES_ISPA) más una lectura
+    completa (transitoria) de cache.db vía _db_all_municipios(), más UNA
+    consulta SQL agregada (_indice_menores_stats_por_municipio). Ver el
     bloque de comentarios de cabecera de esta sección para la metodología y
     los pesos.
 
@@ -9109,10 +9162,11 @@ def _calcular_indice_transparencia():
         insuficiente para calcular el índice de forma fiable")."""
     menores_stats = _indice_menores_stats_por_municipio()
 
-    formales_idx = {}
-    with _datos_lock:
-        for d in _datos_memoria:
-            formales_idx[normalizar(d.get("municipio", ""))] = d
+    # Lectura completa de cache.db, transitoria (se libera al terminar esta
+    # función) -- esta función ya está envuelta en un caché de 1h propio
+    # (_indice_transparencia_cacheado), así que este coste no se paga en
+    # cada visita a /rankings, solo una vez por hora.
+    formales_idx = {normalizar(d.get("municipio", "")): d for d in _db_all_municipios()}
 
     # Primera pasada: todo menos "actividad" (que necesita conocer la
     # actividad de TODOS los municipios de su tramo antes de poder puntuar
@@ -9278,9 +9332,9 @@ INDICE_TRANSPARENCIA_CACHE_TTL = 3600  # 1h: los datos de origen (cron diario) n
 def _indice_transparencia_cacheado():
     """Envoltorio con caché en memoria de _calcular_indice_transparencia()
     (función pura, ver su docstring). El cálculo agrega hasta ~680k filas de
-    contratos_menors_locales (una consulta SQL con JOIN) y recorre
-    _datos_memoria entero -- caro para recalcularlo en cada visita a
-    /rankings. TTL de 1h, igual de orden de magnitud que el resto de datos
+    contratos_menors_locales (una consulta SQL con JOIN) y lee cache.db
+    entero vía _db_all_municipios() -- caro para recalcularlo en cada visita
+    a /rankings. TTL de 1h, igual de orden de magnitud que el resto de datos
     periódicos del sitio (ninguno de los 7 componentes cambia más rápido que
     el cron diario)."""
     with _indice_transparencia_cache_lock:
@@ -10689,9 +10743,7 @@ def api_buscar(tipo, q, datos):
         # filtrar por la provincia de la página desde la que se lanza --
         # reutiliza el mismo POST /buscar que el buscador clásico de la
         # cabecera (ver formulario municipio/provincia en filaMunicipio()).
-        with _datos_lock:
-            datos_todas = list(_datos_memoria)
-        por_muni = {normalizar(d.get("municipio", "")): d for d in datos_todas}
+        por_muni = {normalizar(d.get("municipio", "")): d for d in _db_all_municipios()}
         resultados = []
         for prov, lista_muni in MUNICIPIOS_POR_PROVINCIA.items():
             nombres = list(_pseudos_de_provincia(prov)) + list(lista_muni)
@@ -10782,15 +10834,19 @@ def _diagnostico_arranque():
         except OSError:
             return {"existe": False}
 
-    with _datos_lock:
-        n_municipios_memoria = len(_datos_memoria)
+    # Desde el arreglo del OOM 2026-09-14 ya no hay una lista permanente de
+    # todos los municipios en RAM -- el número relevante ahora es cuántos
+    # hay "calientes" en _result_cache (TTL de RESULT_CACHE_TTL, se purga
+    # solo), no un recuento que crezca sin límite con cada provincia nueva.
+    with _cache_lock:
+        n_municipios_en_cache = len(_result_cache)
 
     return {
         "disco_confiable": _DISCO_CONFIABLE,
         "data_dir": DATA_DIR,
         "cache_db": _info(DB_FILE),
         "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
-        "municipios_en_memoria_ahora": n_municipios_memoria,
+        "municipios_en_cache_resultado_ahora": n_municipios_en_cache,
     }
 
 
@@ -10806,10 +10862,8 @@ def _stats_localizacion():
     empresas ya agotaron los DIR_INTENTOS_MAX intentos (_dir_cache_agotado
     == "de verdad no está en el registro") frente a las que aún no se han
     intentado lo suficiente (pendientes de que les toque en el cron)."""
-    with _datos_lock:
-        datos_snap = list(_datos_memoria)
     total_f = sin_f = 0
-    for d in datos_snap:
+    for d in _db_all_municipios():
         for c in d.get("contratos", []):
             total_f += 1
             if not c.get("directivo"):
@@ -11075,16 +11129,19 @@ def _route_get(path, qs, gzip_ok=False):
         q = qs.get("q", [""])[0].strip()
 
         if muni_filter:
-            provincia = provincia_filtro
-            if provincia == "todas":
+            # Un único SELECT por clave primaria (bajo demanda, sin pasar por
+            # ninguna lista permanente en RAM -- ver _db_get_municipio) en
+            # vez de cargar TODOS los municipios de la provincia para
+            # quedarse solo con este: ya bastaba con uno, render_html()
+            # siempre filtró internamente a un único match.
+            d_muni = _db_get_municipio(muni_filter)
+            if provincia_filtro == "todas":
                 # averiguar a que provincia pertenece el municipio para que
                 # /?muni=Olot funcione sin necesidad de &provincia=girona
-                with _datos_lock:
-                    match = next((d for d in _datos_memoria
-                                  if normalizar(d.get("municipio", "")) == normalizar(muni_filter)), None)
-                provincia = match.get("provincia", "murcia") if match else "murcia"
-            with _datos_lock:
-                datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia]
+                provincia = d_muni.get("provincia", "murcia") if d_muni else "murcia"
+            else:
+                provincia = provincia_filtro
+            datos_snap = [d_muni] if d_muni else []
             try:
                 page = max(1, int(qs.get("pag", ["1"])[0]))
             except ValueError:
@@ -11096,28 +11153,21 @@ def _route_get(path, qs, gzip_ok=False):
             return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page, page_cm=page_cm, provincia=provincia), gzip_ok=gzip_ok)
 
         if q:
-            with _datos_lock:
-                if provincia_filtro == "todas":
-                    datos_snap = list(_datos_memoria)
-                else:
-                    datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia_filtro]
+            datos_snap = _db_all_municipios(provincia_filtro if provincia_filtro != "todas" else None)
             return _resp(render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro), gzip_ok=gzip_ok)
 
         if provincia_filtro == "todas":
-            with _datos_lock:
-                datos_todas = list(_datos_memoria)
+            datos_todas = _db_all_municipios()
             return _resp(render_landing_nacional_html(datos_todas), gzip_ok=gzip_ok)
 
-        with _datos_lock:
-            datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia_filtro]
+        datos_snap = _db_all_municipios(provincia=provincia_filtro)
         return _resp(render_landing_html(datos_snap, provincia=provincia_filtro), gzip_ok=gzip_ok)
 
     if path == "/rankings":
         provincia_prov = _provincia_valida(qs.get("provincia", ["murcia"])[0])
         comunidad_qs = _comunidad_valida(qs.get("comunidad", ["todas"])[0])
-        with _datos_lock:
-            datos_nacional = list(_datos_memoria)
-            datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
+        datos_nacional = _db_all_municipios()
+        datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
         return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs), gzip_ok=gzip_ok)
 
     if path == "/fondos-ue":
@@ -11137,8 +11187,14 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
 
     if path == "/sitemap.xml":
-        with _datos_lock:
-            entradas = [(d.get("municipio", ""), d.get("provincia", "murcia")) for d in _datos_memoria]
+        # OJO: la columna SQL `municipio` guarda la clave normalizada
+        # (minúsculas, sin acentos, ver _db_set_municipio) -- el nombre real
+        # de presentación ("Cartagena", no "cartagena") solo vive dentro del
+        # JSON `data`, así que hace falta _db_all_municipios() completo aquí,
+        # no una consulta ligera solo de columnas (verificado en vivo antes
+        # de commitear esto: casi se cuela un sitemap con nombres en
+        # minúsculas sin acentos).
+        entradas = [(d.get("municipio", ""), d.get("provincia", "murcia")) for d in _db_all_municipios()]
         urls = [f"  <url><loc>{esc(SITE_URL)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>",
                 f"  <url><loc>{esc(SITE_URL)}/rankings</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
@@ -11250,11 +11306,10 @@ def _route_get(path, qs, gzip_ok=False):
         tipo = qs.get("tipo", ["empresa"])[0]
         q = qs.get("q", [""])[0]
         provincia_param = qs.get("provincia", [""])[0]
-        with _datos_lock:
-            if provincia_param in MUNICIPIOS_POR_PROVINCIA:
-                datos_snap = [d for d in _datos_memoria if d.get("provincia", "murcia") == provincia_param]
-            else:
-                datos_snap = list(_datos_memoria)   # "" o "todas" -> sin filtro, busca en toda España
+        if provincia_param in MUNICIPIOS_POR_PROVINCIA:
+            datos_snap = _db_all_municipios(provincia=provincia_param)
+        else:
+            datos_snap = _db_all_municipios()   # "" o "todas" -> sin filtro, busca en toda España
         resultado = api_buscar(tipo, q, datos_snap)
         return _resp(json.dumps(resultado, ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
@@ -11305,16 +11360,12 @@ def _route_post(path, params):
             if not force:
                 cached = _cache_get(mun_ok)
                 if cached is None:
-                    # Intentar restaurar desde memoria (TTL igual)
-                    with _datos_lock:
-                        datos_disco = list(_datos_memoria)
-                    for d in datos_disco:
-                        if normalizar(d.get("municipio","")) == normalizar(mun_ok):
-                            ts = d.get("timestamp", 0)
-                            if (time.time() - ts) < RESULT_CACHE_TTL:
-                                _cache_set(mun_ok, d)
-                                cached = d
-                            break
+                    # Intentar restaurar desde disco (TTL igual) -- un único
+                    # SELECT por clave, no una lista completa en RAM.
+                    d = _db_get_municipio(mun_ok)
+                    if d and (time.time() - d.get("timestamp", 0)) < RESULT_CACHE_TTL:
+                        _cache_set(mun_ok, d)
+                        cached = d
                 if cached:
                     return _redirect_resp(redirect_url)
             else:
@@ -11377,14 +11428,17 @@ def _route_post(path, params):
                 return _error_resp("No autorizado.", 403)
             provincia_param = params.get("provincia", [""])[0]
             provincia_filtro = provincia_param if provincia_param in MUNICIPIOS_POR_PROVINCIA else None
-            with _datos_lock:
-                if provincia_filtro:
-                    _datos_memoria[:] = [d for d in _datos_memoria if d.get("provincia", "murcia") != provincia_filtro]
-                else:
-                    _datos_memoria.clear()
-                _db_clear_municipios(provincia=provincia_filtro)
+            _db_clear_municipios(provincia=provincia_filtro)
+            # _result_cache es ahora el único caché en RAM: si se filtra por
+            # provincia, solo se purgan sus entradas (las de otras
+            # provincias siguen siendo válidas, sin tocar).
             with _cache_lock:
-                _result_cache.clear()
+                if provincia_filtro:
+                    for k in [k for k, v in _result_cache.items()
+                              if v["resultado"].get("provincia", "murcia") == provincia_filtro]:
+                        del _result_cache[k]
+                else:
+                    _result_cache.clear()
             return _redirect_resp("/")
 
         if path == "/actualizar":
