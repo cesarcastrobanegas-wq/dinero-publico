@@ -475,20 +475,6 @@ MUNICIPIOS_SEVILLA = [
 # el único ajuste real que sí hace falta (el patrón de búsqueda anclado).
 MUNICIPIOS_CEUTA = ["Ceuta"]
 
-# Melilla, mismo caso que Ceuta (ciudad autónoma, un único municipio) --
-# pero a diferencia de Ceuta, PLACE no tiene un órgano genérico "Órgano de
-# Contratación de la Ciudad Autónoma de Melilla": sus contratos salen bajo
-# consejerías concretas ("Consejería de Hacienda de la Ciudad Autónoma de
-# Melilla", verificado contra un ZIP real 2026-09-15). El patrón anclado
-# "ciudad autonoma de melilla" (mismo mecanismo que Ceuta, ver
-# CIUDADES_AUTONOMAS/_prefijo_anclaje) los encuentra igual porque busca la
-# frase como SUBCADENA del órgano, no solo al principio -- 34 contratos
-# encontrados, todos de esa consejería, ninguno de los ~10 organismos
-# estatales/militares/portuarios que también mencionan "Melilla" en el
-# mismo ZIP (AEAT, INGESA, TGSS, Autoridad Portuaria, Comandancia
-# General...).
-MUNICIPIOS_MELILLA = ["Melilla"]
-
 # ─── FASE PILOTO: País Vasco (2026-09-03, ver memoria del proyecto) ──────────
 # A DIFERENCIA de Comunitat Valenciana/Andalucía (Mecanismo A, reutilizan
 # PLACE tal cual): País Vasco es Mecanismo B, como Cataluña -- verificado
@@ -3171,7 +3157,7 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "huelva": MUNICIPIOS_HUELVA, "jaen": MUNICIPIOS_JAEN,
                             "malaga": MUNICIPIOS_MALAGA, "sevilla": MUNICIPIOS_SEVILLA,
                             "pais_vasco": list(MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.keys()),
-                            "ceuta": MUNICIPIOS_CEUTA, "melilla": MUNICIPIOS_MELILLA}
+                            "ceuta": MUNICIPIOS_CEUTA}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3182,7 +3168,6 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "huelva": "Provincia de Huelva", "jaen": "Provincia de Jaén",
                    "malaga": "Provincia de Málaga", "sevilla": "Provincia de Sevilla",
                    "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
-                   "melilla": "Ciudad Autónoma de Melilla",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3202,12 +3187,10 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "malaga": "andalucia", "sevilla": "andalucia",
     "pais_vasco": "pais_vasco",
     "ceuta": "ceuta",  # ciudad autónoma uniprovincial, mismo patrón que Murcia
-    "melilla": "melilla",
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
-                            "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
-                            "melilla": "Ciudad Autónoma de Melilla"}
+                            "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta"}
 
 
 def _comunidad_valida(txt):
@@ -3234,7 +3217,6 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "sevilla": "Sevilla, Dos Hermanas, Alcalá de Guadaíra…",
     "pais_vasco": "Bilbao, Vitoria-Gasteiz, Donostia/San Sebastián…",
     "ceuta": "Ceuta",
-    "melilla": "Melilla",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
@@ -3984,7 +3966,7 @@ def descargar_zip_place(anomes, job_id=None):
     return None
 
 
-CIUDADES_AUTONOMAS = {"ceuta", "melilla"}
+CIUDADES_AUTONOMAS = {"ceuta"}  # Melilla seguiría el mismo patrón si se piloteara
 
 def _prefijo_anclaje(municipio):
     """Prefijo del patrón anclado (ver anclar= en buscar_en_zip/buscar_en_feed_vivo):
@@ -3999,17 +3981,7 @@ def _prefijo_anclaje(municipio):
     esos (no cuela ninguno de los ~11 organismos estatales/militares/
     portuarios que también mencionan "Ceuta" en el mismo ZIP: AEAT, INGESA,
     Autoridad Portuaria, Comandancia General, AENA... -- ninguno lleva
-    "ciudad autonoma de ceuta" en su propio nombre de órgano).
-
-    Melilla (2026-09-15) verificado igual, con un matiz: PLACE no tiene un
-    órgano genérico "Órgano de Contratación de la Ciudad Autónoma de
-    Melilla" -- sus contratos salen bajo consejerías concretas ("Consejería
-    de Hacienda de la Ciudad Autónoma de Melilla"). El patrón las encuentra
-    igual porque busca la frase como SUBCADENA del órgano (search, no
-    match), no solo al principio: 34/34 contratos encontrados fueron de esa
-    consejería, ninguno de los ~10 organismos estatales/militares/
-    portuarios que también mencionan "Melilla" (AEAT, INGESA, TGSS,
-    Autoridad Portuaria, Comandancia General...)."""
+    "ciudad autonoma de ceuta" en su propio nombre de órgano)."""
     return "ciudad autonoma de" if normalizar(municipio) in CIUDADES_AUTONOMAS else "ayuntamiento de"
 
 
