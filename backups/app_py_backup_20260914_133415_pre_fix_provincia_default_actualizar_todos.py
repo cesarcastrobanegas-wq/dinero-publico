@@ -7275,10 +7275,8 @@ def _actualizar_todos_bg(job_id, provincia="murcia"):
     en ese momento, así que nunca hay un estado a medias visible para quien
     esté navegando.
     """
-    if provincia != "todas" and provincia not in MUNICIPIOS_POR_PROVINCIA:
-        raise ValueError(f"provincia no reconocida: {provincia}")
     provincias = (list(MUNICIPIOS_POR_PROVINCIA.keys()) if provincia == "todas"
-                  else [provincia])
+                  else [provincia if provincia in MUNICIPIOS_POR_PROVINCIA else "murcia"])
     total = sum(len(MUNICIPIOS_POR_PROVINCIA[p]) for p in provincias)
 
     if not _actualizando_todos_lock.acquire(blocking=False):
@@ -11462,18 +11460,13 @@ def _route_post(path, params):
             # Pensado para un disparador externo (GitHub Actions programado,
             # que pasa provincia=todas para cubrir ambas fuentes en un solo
             # disparo diario), no para la interfaz — de ahí el ADMIN_TOKEN
-            # (mismo patrón que /vaciar). Si "provincia" falta o no es una
-            # clave reconocida, se rechaza con 400 en vez de asumir "murcia"
-            # en silencio (ese fallback silencioso lanzó refrescos contra
-            # Murcia por error durante horas — ver incidente 2026-09-14).
+            # (mismo patrón que /vaciar). Sin el parámetro, sigue asumiendo
+            # "murcia" por compatibilidad con disparos antiguos.
             admin_token = os.environ.get("ADMIN_TOKEN", "")
             if not admin_token or params.get("token", [""])[0] != admin_token:
                 return _error_resp("No autorizado.", 403)
-            provincia_raw = params.get("provincia", [""])[0]
-            if provincia_raw not in ("todas", *MUNICIPIOS_POR_PROVINCIA):
-                return _resp(json.dumps({"error": f"provincia no reconocida: {provincia_raw}"}),
-                             content_type="application/json; charset=utf-8", code=400)
-            provincia = provincia_raw
+            provincia_raw = params.get("provincia", ["murcia"])[0]
+            provincia = provincia_raw if provincia_raw in ("todas", *MUNICIPIOS_POR_PROVINCIA) else "murcia"
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_todos_bg, args=(job_id, provincia), daemon=True).start()
             total_municipios = (sum(len(v) for v in MUNICIPIOS_POR_PROVINCIA.values()) if provincia == "todas"
