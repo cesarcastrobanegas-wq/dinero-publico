@@ -468,13 +468,6 @@ MUNICIPIOS_SEVILLA = [
     "Écija",
 ]
 
-# Ceuta es ciudad autónoma, no provincia -- un único municipio (ella misma),
-# a diferencia del resto de listas de arriba. Encaja igual en el mismo
-# esquema genérico "provincia -> lista de municipios" (lista de 1 elemento),
-# sin necesitar arquitectura nueva -- ver CIUDADES_AUTONOMAS más abajo para
-# el único ajuste real que sí hace falta (el patrón de búsqueda anclado).
-MUNICIPIOS_CEUTA = ["Ceuta"]
-
 # ─── FASE PILOTO: País Vasco (2026-09-03, ver memoria del proyecto) ──────────
 # A DIFERENCIA de Comunitat Valenciana/Andalucía (Mecanismo A, reutilizan
 # PLACE tal cual): País Vasco es Mecanismo B, como Cataluña -- verificado
@@ -2959,12 +2952,8 @@ def place_profile_url(municipio):
     if pid:
         return f"https://contrataciondelsectorpublico.gob.es/web/guest/perfil-del-contratante/-/entity/id/{pid}"
     from urllib.parse import quote_plus as _qp
-    # Mismo matiz que el patrón anclado de búsqueda (ver _prefijo_anclaje):
-    # una ciudad autónoma (Ceuta) no tiene "Ayuntamiento", el perfil de
-    # contratante real de PLACE aparece bajo "Ciudad Autónoma de X".
-    prefijo = "Ciudad Autónoma de" if normalizar(municipio) in CIUDADES_AUTONOMAS else "Ayuntamiento de"
     return (f"https://contrataciondelsectorpublico.gob.es/web/guest/perfil-del-contratante"
-            f"?buscador={_qp(prefijo + ' ' + municipio)}")
+            f"?buscador={_qp('Ayuntamiento de ' + municipio)}")
 
 
 # Comunidad Autónoma / Provincia tal como los identifica el desplegable de
@@ -3157,8 +3146,7 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "cordoba": MUNICIPIOS_CORDOBA, "granada": MUNICIPIOS_GRANADA,
                             "huelva": MUNICIPIOS_HUELVA, "jaen": MUNICIPIOS_JAEN,
                             "malaga": MUNICIPIOS_MALAGA, "sevilla": MUNICIPIOS_SEVILLA,
-                            "pais_vasco": list(MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.keys()),
-                            "ceuta": MUNICIPIOS_CEUTA}
+                            "pais_vasco": list(MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.keys())}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3168,8 +3156,7 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "cordoba": "Provincia de Córdoba", "granada": "Provincia de Granada",
                    "huelva": "Provincia de Huelva", "jaen": "Provincia de Jaén",
                    "malaga": "Provincia de Málaga", "sevilla": "Provincia de Sevilla",
-                   "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
-                   "todas": "España"}
+                   "pais_vasco": "País Vasco", "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
 # "provincia" y su "comunidad" son la misma entidad); Girona/Lleida/
@@ -3187,11 +3174,10 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "granada": "andalucia", "huelva": "andalucia", "jaen": "andalucia",
     "malaga": "andalucia", "sevilla": "andalucia",
     "pais_vasco": "pais_vasco",
-    "ceuta": "ceuta",  # ciudad autónoma uniprovincial, mismo patrón que Murcia
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
-                            "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta"}
+                            "pais_vasco": "País Vasco"}
 
 
 def _comunidad_valida(txt):
@@ -3217,7 +3203,6 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "malaga": "Málaga, Marbella, Fuengirola…",
     "sevilla": "Sevilla, Dos Hermanas, Alcalá de Guadaíra…",
     "pais_vasco": "Bilbao, Vitoria-Gasteiz, Donostia/San Sebastián…",
-    "ceuta": "Ceuta",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
@@ -3967,25 +3952,6 @@ def descargar_zip_place(anomes, job_id=None):
     return None
 
 
-CIUDADES_AUTONOMAS = {"ceuta"}  # Melilla seguiría el mismo patrón si se piloteara
-
-def _prefijo_anclaje(municipio):
-    """Prefijo del patrón anclado (ver anclar= en buscar_en_zip/buscar_en_feed_vivo):
-    "ayuntamiento de X" para municipios normales, "ciudad autonoma de X" para
-    ciudades autónomas -- verificado contra datos reales de PLACE (2026-09-14,
-    piloto Ceuta): su órgano de contratación aparece como "Órgano de
-    Contratación de la Ciudad Autónoma de Ceuta", nunca como "Ayuntamiento de
-    Ceuta" (no tiene ayuntamiento propio, es la misma entidad que hace de
-    municipio y de comunidad autónoma) -- con el prefijo viejo el patrón
-    anclado no encontraba NINGÚN contrato (0 en un ZIP real con 9 contratos
-    verificados manualmente); con este prefijo los encuentra todos y solo
-    esos (no cuela ninguno de los ~11 organismos estatales/militares/
-    portuarios que también mencionan "Ceuta" en el mismo ZIP: AEAT, INGESA,
-    Autoridad Portuaria, Comandancia General, AENA... -- ninguno lleva
-    "ciudad autonoma de ceuta" en su propio nombre de órgano)."""
-    return "ciudad autonoma de" if normalizar(municipio) in CIUDADES_AUTONOMAS else "ayuntamiento de"
-
-
 def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
     """Procesa los atom files de un ZIP en paralelo, leyendo cada uno bajo
     demanda dentro de cada worker -- NO carga el ZIP completo descomprimido
@@ -4015,7 +3981,7 @@ def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
     se decida qué hacer con ese dato, ver memoria del proyecto."""
     nombre = os.path.basename(zip_path)
     if anclar:
-        muni_re = re.compile(rf'\b{_prefijo_anclaje(municipio)} {re.escape(normalizar(municipio))}\b')
+        muni_re = re.compile(rf'\bayuntamiento de {re.escape(normalizar(municipio))}\b')
     else:
         muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
 
@@ -4324,12 +4290,11 @@ def _piloto_medir_pais_vasco(job_id=None, max_paginas_por_municipio=5):
 
 def buscar_en_feed_vivo(municipio, anclar=False):
     """Consulta el feed en vivo de PLACE (últimas ~200 entradas de toda España).
-    anclar=True: mismo patrón anclado que buscar_en_zip (_prefijo_anclaje) --
-    ver esa función para el porqué (Comunitat Valenciana/Andalucía/Ceuta, no
-    Murcia)."""
+    anclar=True: mismo patrón "ayuntamiento de X" que buscar_en_zip -- ver esa
+    función para el porqué (Comunitat Valenciana/Andalucía, no Murcia)."""
     muni_re = None
     if anclar:
-        muni_re = re.compile(rf'\b{_prefijo_anclaje(municipio)} {re.escape(normalizar(municipio))}\b')
+        muni_re = re.compile(rf'\bayuntamiento de {re.escape(normalizar(municipio))}\b')
     try:
         r = session.get(PLACE_FEED_LIVE, timeout=HTTP_TIMEOUT)
         if r.status_code == 200:
