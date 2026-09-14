@@ -9837,7 +9837,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
   <div class="rk-section-header">
     <h2>🌍 Ranking Nacional</h2>
-    <span class="rk-badge">Murcia, Cataluña, Comunitat Valenciana y Andalucía</span>
+    <span class="rk-badge">Murcia, Cataluña y Comunitat Valenciana</span>
   </div>
   <div class="section-title">Top 10 por número de contratos adjudicados</div>
   <div class="muni-card"><table>
@@ -9869,7 +9869,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>💰 Ranking de Sueldos: Alcaldes y Alcaldesas</h2>
     <span class="rk-badge">ISPA {esc(anio_ispa)} · {len(ranking_alcaldes)} municipios con dato</span>
   </div>
-  <div class="section-title">De mayor a menor retribución anual (Murcia, Cataluña, Comunitat Valenciana y Andalucía)</div>
+  <div class="section-title">De mayor a menor retribución anual (Murcia, Cataluña y Comunitat Valenciana)</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_alcaldes_html}
@@ -9879,7 +9879,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>🏦 Ranking de Deuda por Habitante</h2>
     <span class="rk-badge">Ministerio de Hacienda + INE · {len(ranking_deuda_hab)} municipios con dato</span>
   </div>
-  <div class="section-title">De mayor a menor deuda viva por habitante (Murcia, Cataluña, Comunitat Valenciana y Andalucía)</div>
+  <div class="section-title">De mayor a menor deuda viva por habitante (Murcia, Cataluña y Comunitat Valenciana)</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Municipio</th><th>Deuda viva</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_deuda_hab_html}
@@ -10600,7 +10600,7 @@ def render_landing_nacional_html(datos):
       <p class="hero-sub">
         Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
         — y qué persona — hay detrás de cada adjudicación. Cubrimos la
-        Región de Murcia, Cataluña, la Comunitat Valenciana y Andalucía,
+        Región de Murcia, Cataluña y la Comunitat Valenciana,
         con más territorios en camino.
       </p>
     </div>
@@ -10640,7 +10640,7 @@ def render_landing_nacional_html(datos):
     return _page_shell("Dinero Público | Contratación pública en España", body,
                         description="Consulta los contratos públicos adjudicados en España con los "
                                      "directivos de las empresas adjudicatarias. Cubrimos la Región "
-                                     "de Murcia, Cataluña, la Comunitat Valenciana y Andalucía.",
+                                     "de Murcia, Cataluña y la Comunitat Valenciana.",
                         provincia="todas")
 
 
@@ -10996,7 +10996,7 @@ def render_quienes_somos_html():
 
   <p>Dinero Público nació con un objetivo claro: hacer accesible a cualquier ciudadano
   la información sobre cómo se gasta el dinero público. Actualmente cubrimos la
-  Región de Murcia, Cataluña, la Comunitat Valenciana y Andalucía,
+  Región de Murcia, Cataluña y la Comunitat Valenciana,
   con expansión progresiva a toda España.</p>
 
   <p>Cruzamos datos oficiales de la Plataforma de Contratación del Sector Público (PLACE)
@@ -11032,8 +11032,8 @@ def render_quienes_somos_html():
 </div>"""
     return _page_shell("Quiénes Somos", body,
                         description="Quiénes somos y por qué existe Dinero Público: transparencia sobre "
-                                     "la contratación pública en la Región de Murcia, Cataluña, la "
-                                     "Comunitat Valenciana y Andalucía.")
+                                     "la contratación pública en la Región de Murcia, Cataluña y la "
+                                     "Comunitat Valenciana.")
 
 
 def render_aviso_legal_html():
