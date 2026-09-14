@@ -7223,11 +7223,8 @@ def _job_run(job_id, municipio, provincia="murcia"):
             _jobs[job_id]["status"] = "done"
             _jobs[job_id]["total"] = len(contratos)
 
-        # Enriquecer en fondo las sociedades que aún no tienen directivo --
-        # solo de esta provincia (ver docstring de _enriquecer_directivos_bg,
-        # incidente Sevilla 2026-09-14): evita releer/deserializar cache.db
-        # entero en mitad de un lote de /actualizar-todos.
-        _lanzar_enriquecimiento(provincia=provincia)
+        # Enriquecer en fondo las sociedades que aún no tienen directivo
+        _lanzar_enriquecimiento()
 
     except Exception as e:
         with _jobs_lock:
@@ -7410,7 +7407,7 @@ def _limpiar_cache_negativos():
         print(f"  [enriquecimiento] {deleted} entradas negativas eliminadas del caché.", flush=True)
 
 
-def _enriquecer_directivos_bg(provincia=None):
+def _enriquecer_directivos_bg():
     """
     Hilo de fondo: para cada empresa o autónomo sin directivo,
     busca via einforma → empresia.es → BORME → BOE → búsqueda web y guarda el resultado.
@@ -7431,24 +7428,7 @@ def _enriquecer_directivos_bg(provincia=None):
     municipio, lo muta en esa copia local, y lo guarda (_db_set_municipio)
     antes de pasar al siguiente; `pendientes` en sí solo guarda tuplas
     ligeras (nombres/claves), no contratos completos.
-
-    `provincia` (añadido 2026-09-14, incidente Sevilla atascada en 2/106):
-    _job_run() llama aquí después de CADA municipio durante un lote de
-    /actualizar-todos (ver _lanzar_enriquecimiento), pasando la provincia de
-    ese lote. Antes del rewrite de arriba, la Fase 1 barría _datos_memoria
-    (ya en RAM, coste ~0) sin importar cuántas provincias hubiera. Ahora
-    _db_all_municipios() sin filtro deserializa TODO cache.db (todas las
-    provincias, cientos de MB y creciendo con cada provincia nueva) desde
-    cero en cada ciclo -- justo al lanzar una provincia nunca cacheada
-    (muchas empresas nuevas sin directivo → Fase 1 se dispara enseguida),
-    esa deserialización masiva competía por GIL/RAM con el propio lote
-    recién arrancado y lo dejaba parado a los 2-3 municipios, sin OOM-kill
-    ni reinicio visible (confirmado en producción con el lote de Sevilla).
-    Filtrar por la provincia que disparó este ciclo evita ese coste: cubre
-    igual todos los pendientes relevantes para el lote en curso, y las
-    demás provincias se cubren solas cuando les toque su propio lote (cron
-    diario, una franja por provincia) o en el barrido completo del arranque
-    (_lanzar_enriquecimiento() sin argumento, ver _inicializar_datos)."""
+    """
     if not _enriqueciendo_lock.acquire(blocking=False):
         return  # ya hay otro hilo de enriquecimiento en marcha
 
@@ -7460,14 +7440,13 @@ def _enriquecer_directivos_bg(provincia=None):
         # públicos" y no se vuelven a intentar automáticamente)
         _limpiar_cache_negativos()
 
-        # Fase 1: recorrer los municipios de cache.db -- de UNA provincia si
-        # se indicó (caso normal durante un lote de /actualizar-todos, ver
-        # docstring) o de TODAS si no (barrido completo, solo al arrancar).
-        # Lectura transitoria: (a) resetear el flag "intentado" de contratos
-        # cuya empresa ya no está agotada (re-buscables con la estrategia
-        # actual) y (b) recopilar los pendientes de enriquecer.
+        # Fase 1: recorrer TODOS los municipios de cache.db (lectura
+        # completa, transitoria -- ver docstring) para (a) resetear el flag
+        # "intentado" de contratos cuya empresa ya no está agotada
+        # (re-buscables con la estrategia actual) y (b) recopilar los
+        # pendientes de enriquecer.
         pendientes = []
-        for d in _db_all_municipios(provincia=provincia):
+        for d in _db_all_municipios():
             municipio = d.get("municipio", "")
             provincia_d = d.get("provincia", "murcia")
             tocado = False
@@ -7556,13 +7535,9 @@ def _enriquecer_directivos_bg(provincia=None):
         _enriqueciendo_lock.release()
 
 
-def _lanzar_enriquecimiento(provincia=None):
-    """Arranca el hilo de enriquecimiento si no está ya en marcha.
-    `provincia`: si se indica, la Fase 1 de _enriquecer_directivos_bg solo
-    escanea esa provincia en vez de cache.db entero (ver su docstring,
-    incidente Sevilla 2026-09-14) -- pasarla siempre que se conozca cuál
-    provincia disparó este ciclo (p.ej. desde _job_run, en medio de un lote)."""
-    threading.Thread(target=_enriquecer_directivos_bg, args=(provincia,), daemon=True).start()
+def _lanzar_enriquecimiento():
+    """Arranca el hilo de enriquecimiento si no está ya en marcha."""
+    threading.Thread(target=_enriquecer_directivos_bg, daemon=True).start()
 
 
 # ─── HTML / UI ───────────────────────────────────────────────────────────────
