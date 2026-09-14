@@ -489,47 +489,6 @@ MUNICIPIOS_CEUTA = ["Ceuta"]
 # General...).
 MUNICIPIOS_MELILLA = ["Melilla"]
 
-# Canarias: 2 provincias reales (no ciudades autónomas, no necesitan
-# CIUDADES_AUTONOMAS/_prefijo_anclaje -- Mecanismo A normal, igual que
-# Comunitat Valenciana/Andalucía, verificado 2026-09-15 contra un ZIP real
-# de PLACE: "Junta de Gobierno del Ayuntamiento de Santa Cruz de Tenerife",
-# "Ayuntamiento de Telde", "Pleno del Ayuntamiento de Arona" -- patrón
-# "ayuntamiento de X" normal). Nombres en orden natural (NO forma-coma tipo
-# "Algaba, La"): verificado que PLACE escribe "Ayuntamiento de San
-# Cristóbal de La Laguna", nunca "..La Laguna, San Cristóbal de" ni
-# variantes -- usar el nombre oficial completo tal cual, en el mismo orden
-# que aparece en el órgano de contratación real.
-MUNICIPIOS_LAS_PALMAS = [
-    "Agaete","Agüimes","Antigua","Arrecife","Artenara","Arucas","Betancuria",
-    "Firgas","Gáldar","Haría","Ingenio","La Aldea de San Nicolás","La Oliva",
-    "Las Palmas de Gran Canaria","Mogán","Moya","Pájara","Puerto del Rosario",
-    "San Bartolomé","San Bartolomé de Tirajana","Santa Brígida",
-    "Santa Lucía de Tirajana","Santa María de Guía de Gran Canaria","Teguise",
-    "Tejeda","Telde","Teror","Tías","Tinajo","Tuineje","Valleseco",
-    "Valsequillo de Gran Canaria","Vega de San Mateo","Yaiza",
-]
-
-# Provincia de Santa Cruz de Tenerife: las 54 incluyen las 4 islas de su
-# demarcación provincial (Tenerife 31, La Palma 14, La Gomera 6, El Hierro
-# 3) -- no solo la isla de Tenerife.
-MUNICIPIOS_SANTA_CRUZ_TENERIFE = [
-    "Adeje","Arafo","Arico","Arona","Buenavista del Norte","Candelaria",
-    "El Rosario","El Sauzal","El Tanque","Fasnia","Garachico",
-    "Granadilla de Abona","Guía de Isora","Güímar","Icod de los Vinos",
-    "La Guancha","La Matanza de Acentejo","La Orotava","La Victoria de Acentejo",
-    "Los Realejos","Los Silos","Puerto de la Cruz","San Cristóbal de La Laguna",
-    "San Juan de la Rambla","San Miguel de Abona","Santa Cruz de Tenerife",
-    "Santa Úrsula","Santiago del Teide","Tacoronte","Tegueste",
-    "Vilaflor de Chasna",
-    "Barlovento","Breña Alta","Breña Baja","El Paso","Fuencaliente de La Palma",
-    "Garafía","Los Llanos de Aridane","Puntagorda","Puntallana",
-    "San Andrés y Sauces","Santa Cruz de La Palma","Tazacorte","Tijarafe",
-    "Villa de Mazo",
-    "Agulo","Alajeró","Hermigua","San Sebastián de La Gomera",
-    "Valle Gran Rey","Vallehermoso",
-    "El Pinar de El Hierro","La Frontera","Valverde",
-]
-
 # ─── FASE PILOTO: País Vasco (2026-09-03, ver memoria del proyecto) ──────────
 # A DIFERENCIA de Comunitat Valenciana/Andalucía (Mecanismo A, reutilizan
 # PLACE tal cual): País Vasco es Mecanismo B, como Cataluña -- verificado
@@ -3212,9 +3171,7 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "huelva": MUNICIPIOS_HUELVA, "jaen": MUNICIPIOS_JAEN,
                             "malaga": MUNICIPIOS_MALAGA, "sevilla": MUNICIPIOS_SEVILLA,
                             "pais_vasco": list(MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.keys()),
-                            "ceuta": MUNICIPIOS_CEUTA, "melilla": MUNICIPIOS_MELILLA,
-                            "las_palmas": MUNICIPIOS_LAS_PALMAS,
-                            "santa_cruz_tenerife": MUNICIPIOS_SANTA_CRUZ_TENERIFE}
+                            "ceuta": MUNICIPIOS_CEUTA, "melilla": MUNICIPIOS_MELILLA}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3226,8 +3183,6 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "malaga": "Provincia de Málaga", "sevilla": "Provincia de Sevilla",
                    "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
                    "melilla": "Ciudad Autónoma de Melilla",
-                   "las_palmas": "Provincia de Las Palmas",
-                   "santa_cruz_tenerife": "Provincia de Santa Cruz de Tenerife",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3248,12 +3203,11 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "pais_vasco": "pais_vasco",
     "ceuta": "ceuta",  # ciudad autónoma uniprovincial, mismo patrón que Murcia
     "melilla": "melilla",
-    "las_palmas": "canarias", "santa_cruz_tenerife": "canarias",
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
                             "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
-                            "melilla": "Ciudad Autónoma de Melilla", "canarias": "Canarias"}
+                            "melilla": "Ciudad Autónoma de Melilla"}
 
 
 def _comunidad_valida(txt):
@@ -3281,8 +3235,6 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "pais_vasco": "Bilbao, Vitoria-Gasteiz, Donostia/San Sebastián…",
     "ceuta": "Ceuta",
     "melilla": "Melilla",
-    "las_palmas": "Las Palmas de Gran Canaria, Telde, Arrecife…",
-    "santa_cruz_tenerife": "Santa Cruz de Tenerife, La Laguna, Arona…",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
@@ -4061,27 +4013,6 @@ def _prefijo_anclaje(municipio):
     return "ciudad autonoma de" if normalizar(municipio) in CIUDADES_AUTONOMAS else "ayuntamiento de"
 
 
-# Título honorífico que algunos municipios anteponen a su propio nombre en
-# el órgano de contratación real de PLACE -- verificado 2026-09-15 (piloto
-# Canarias) contra un ZIP real: "Alcaldía del Ayuntamiento de LA VILLA DE La
-# Orotava" y "Alcaldía del Ayuntamiento de LA HISTÓRICA VILLA DE los
-# Realejos" NO llevan el municipio pegado a "ayuntamiento de" -- el patrón
-# anclado normal (_prefijo_anclaje + municipio a secas) no los habría
-# encontrado. Opcional (la mayoría de municipios, incluidos otros de
-# Canarias como El Rosario o Puerto de la Cruz, no llevan ninguno) y
-# acotado a los 2 casos vistos en datos reales -- no una lista exhaustiva
-# de honoríficos españoles, solo lo verificado.
-_INFIJO_HONORIFICO_RE = r'(?:la (?:hist[oó]rica )?villa de )?'
-
-
-def _regex_anclado(municipio):
-    """Regex completo para anclar=True en buscar_en_zip/buscar_en_feed_vivo:
-    _prefijo_anclaje + infijo honorífico opcional + nombre del municipio."""
-    return re.compile(
-        rf'\b{_prefijo_anclaje(municipio)} {_INFIJO_HONORIFICO_RE}{re.escape(normalizar(municipio))}\b'
-    )
-
-
 def _nombre_organismo_municipal(municipio, provincia):
     """Nombre para mostrar del organismo de gobierno local (ficha de
     municipio, enlaces de "buscar portal de transparencia") -- "Ajuntament
@@ -4126,7 +4057,7 @@ def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
     se decida qué hacer con ese dato, ver memoria del proyecto."""
     nombre = os.path.basename(zip_path)
     if anclar:
-        muni_re = _regex_anclado(municipio)
+        muni_re = re.compile(rf'\b{_prefijo_anclaje(municipio)} {re.escape(normalizar(municipio))}\b')
     else:
         muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
 
@@ -4435,12 +4366,12 @@ def _piloto_medir_pais_vasco(job_id=None, max_paginas_por_municipio=5):
 
 def buscar_en_feed_vivo(municipio, anclar=False):
     """Consulta el feed en vivo de PLACE (últimas ~200 entradas de toda España).
-    anclar=True: mismo patrón anclado que buscar_en_zip (_regex_anclado) --
-    ver esa función para el porqué (Comunitat Valenciana/Andalucía/Ceuta/
-    Canarias, no Murcia)."""
+    anclar=True: mismo patrón anclado que buscar_en_zip (_prefijo_anclaje) --
+    ver esa función para el porqué (Comunitat Valenciana/Andalucía/Ceuta, no
+    Murcia)."""
     muni_re = None
     if anclar:
-        muni_re = _regex_anclado(municipio)
+        muni_re = re.compile(rf'\b{_prefijo_anclaje(municipio)} {re.escape(normalizar(municipio))}\b')
     try:
         r = session.get(PLACE_FEED_LIVE, timeout=HTTP_TIMEOUT)
         if r.status_code == 200:
