@@ -3105,7 +3105,8 @@ def alcalde_concejales_html(municipio):
                          f'<b class="pol-nombre">{esc(nombre_alcalde)}</b>{sufijo}{retrib_html}</span>')
 
     concejales = info.get("concejales") or []
-    organismo = _nombre_organismo_municipal(municipio, info.get("provincia"))
+    organismo = (f"Ajuntament de {municipio}" if info.get("provincia") in PROVINCIAS_CATALUNYA
+                 else f"Ayuntamiento de {municipio}")
     transp_url = f"https://www.google.com/search?q={quote_plus(organismo + ' transparencia')}"
 
     items = []
@@ -3983,21 +3984,6 @@ def _prefijo_anclaje(municipio):
     Autoridad Portuaria, Comandancia General, AENA... -- ninguno lleva
     "ciudad autonoma de ceuta" en su propio nombre de órgano)."""
     return "ciudad autonoma de" if normalizar(municipio) in CIUDADES_AUTONOMAS else "ayuntamiento de"
-
-
-def _nombre_organismo_municipal(municipio, provincia):
-    """Nombre para mostrar del organismo de gobierno local (ficha de
-    municipio, enlaces de "buscar portal de transparencia") -- "Ajuntament
-    de X" en Cataluña, "Ciudad Autónoma de X" en ciudades autónomas (ver
-    CIUDADES_AUTONOMAS), "Ayuntamiento de X" el resto. Mismo matiz que
-    _prefijo_anclaje, aplicado al texto visible en vez del patrón de
-    búsqueda (2026-09-14, piloto Ceuta: sin este ajuste la ficha mostraba
-    "Ayuntamiento de Ceuta", que no existe)."""
-    if provincia in PROVINCIAS_CATALUNYA:
-        return f"Ajuntament de {municipio}"
-    if normalizar(municipio) in CIUDADES_AUTONOMAS:
-        return f"Ciudad Autónoma de {municipio}"
-    return f"Ayuntamiento de {municipio}"
 
 
 def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
@@ -7240,7 +7226,8 @@ def _job_run(job_id, municipio, provincia="murcia"):
         # Análisis de riesgo
         alertas = analizar_riesgo(contratos)
 
-        organismo = _nombre_organismo_municipal(municipio, provincia)
+        organismo = (f"Ajuntament de {municipio}" if provincia in PROVINCIAS_CATALUNYA
+                     else f"Ayuntamiento de {municipio}")
         resultado = {
             "municipio":       municipio,
             "organismo":       organismo,
@@ -10468,7 +10455,8 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             # aquí el motivo es que los contratos menores NO tienen
             # obligación legal de publicación centralizada en ningún
             # registro único, a diferencia de las licitaciones formales.
-            organismo_d = _nombre_organismo_municipal(muni_name_d, provincia)
+            organismo_d = (f"Ajuntament de {muni_name_d}" if provincia in PROVINCIAS_CATALUNYA
+                           else f"Ayuntamiento de {muni_name_d}")
             transp_url_cm = f"https://www.google.com/search?q={quote_plus(organismo_d + ' transparencia contratos menores')}"
             contratos_menors_html = f"""<div class="cm-aviso">
                 📋 <b>Contratos menores:</b> no hay registros de este tipo para {esc(muni_name_d)} en las
