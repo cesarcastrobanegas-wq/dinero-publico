@@ -530,51 +530,6 @@ MUNICIPIOS_SANTA_CRUZ_TENERIFE = [
     "El Pinar de El Hierro","La Frontera","Valverde",
 ]
 
-# Illes Balears (67, comunidad uniprovincial -- mismo patrón que Murcia,
-# UNA sola provincia). Mecanismo A normal, verificado 2026-09-15 contra un
-# ZIP real de PLACE: "Junta de Gobierno del Ayuntamiento de Ciutadella de
-# Menorca", "Alcaldía del Ayuntamiento de Ferreries" -- patrón
-# "ayuntamiento de X" normal, sin CIUDADES_AUTONOMAS.
-#
-# Nombres oficiales SIEMPRE en catalán (única forma oficial desde 1990s,
-# BOE) -- verificado que así es también como los usa el propio órgano de
-# contratación real de PLACE, NO la forma castellana histórica que todavía
-# circula en fuentes desactualizadas: "Ayuntamiento de Eivissa" (nunca
-# "Ibiza" -- "Ibiza" solo aparece en el nombre de organismos estatales
-# como el aeropuerto de AENA, nunca en el propio ayuntamiento) y
-# "Ayuntamiento de Maó" (nunca "Mahón"). "Palma" (sin "de Mallorca", nombre
-# oficial desde 1997) sí funciona bien buscado a secas -- el propio órgano
-# de PLACE dice "Ayuntamiento de Palma DE MALLORCA" y el patrón anclado lo
-# encuentra igual (\b solo exige límite de palabra, no fin de cadena).
-#
-# Colisión real encontrada y corregida (ver _EXCLUSION_CONTINUACION_
-# ANCLAJE): "Palma" también coincidía con "Ayuntamiento de Palma DEL RÍO"
-# (Córdoba, otro municipio real) y "Muro" con "Ayuntamiento de Muro DE
-# ALCOY" (Alicante) -- ambos verificados como falsos positivos reales en
-# el mismo ZIP, ya excluidos.
-MUNICIPIOS_MALLORCA = [
-    "Alaró","Alcúdia","Algaida","Andratx","Ariany","Artà","Banyalbufar",
-    "Binissalem","Búger","Bunyola","Calvià","Campanet","Campos","Capdepera",
-    "Consell","Costitx","Deià","Escorca","Esporles","Estellencs","Felanitx",
-    "Fornalutx","Inca","Lloret de Vistalegre","Lloseta","Llubí","Llucmajor",
-    "Manacor","Mancor de la Vall","Maria de la Salut","Marratxí","Montuïri",
-    "Muro","Palma","Petra","Sa Pobla","Pollença","Porreres","Puigpunyent",
-    "Ses Salines","Sant Joan","Sant Llorenç des Cardassar","Santa Eugènia",
-    "Santa Margalida","Santa Maria del Camí","Santanyí","Selva","Sencelles",
-    "Sineu","Sóller","Son Servera","Valldemossa","Vilafranca de Bonany",
-]
-MUNICIPIOS_MENORCA = [
-    "Alaior","Es Castell","Ciutadella de Menorca","Ferreries","Es Mercadal",
-    "Es Migjorn Gran","Maó","Sant Lluís",
-]
-MUNICIPIOS_EIVISSA = [
-    "Eivissa","Sant Antoni de Portmany","Sant Joan de Labritja",
-    "Sant Josep de sa Talaia","Santa Eulària des Riu",
-]
-MUNICIPIOS_FORMENTERA = ["Formentera"]
-MUNICIPIOS_BALEARES = (MUNICIPIOS_MALLORCA + MUNICIPIOS_MENORCA
-                        + MUNICIPIOS_EIVISSA + MUNICIPIOS_FORMENTERA)
-
 # ─── FASE PILOTO: País Vasco (2026-09-03, ver memoria del proyecto) ──────────
 # A DIFERENCIA de Comunitat Valenciana/Andalucía (Mecanismo A, reutilizan
 # PLACE tal cual): País Vasco es Mecanismo B, como Cataluña -- verificado
@@ -3259,8 +3214,7 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "pais_vasco": list(MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.keys()),
                             "ceuta": MUNICIPIOS_CEUTA, "melilla": MUNICIPIOS_MELILLA,
                             "las_palmas": MUNICIPIOS_LAS_PALMAS,
-                            "santa_cruz_tenerife": MUNICIPIOS_SANTA_CRUZ_TENERIFE,
-                            "baleares": MUNICIPIOS_BALEARES}
+                            "santa_cruz_tenerife": MUNICIPIOS_SANTA_CRUZ_TENERIFE}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3274,7 +3228,6 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "melilla": "Ciudad Autónoma de Melilla",
                    "las_palmas": "Provincia de Las Palmas",
                    "santa_cruz_tenerife": "Provincia de Santa Cruz de Tenerife",
-                   "baleares": "Illes Balears",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3296,13 +3249,11 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "ceuta": "ceuta",  # ciudad autónoma uniprovincial, mismo patrón que Murcia
     "melilla": "melilla",
     "las_palmas": "canarias", "santa_cruz_tenerife": "canarias",
-    "baleares": "baleares",  # comunidad uniprovincial, mismo patrón que Murcia
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
                             "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
-                            "melilla": "Ciudad Autónoma de Melilla", "canarias": "Canarias",
-                            "baleares": "Illes Balears"}
+                            "melilla": "Ciudad Autónoma de Melilla", "canarias": "Canarias"}
 
 
 def _comunidad_valida(txt):
@@ -3332,7 +3283,6 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "melilla": "Melilla",
     "las_palmas": "Las Palmas de Gran Canaria, Telde, Arrecife…",
     "santa_cruz_tenerife": "Santa Cruz de Tenerife, La Laguna, Arona…",
-    "baleares": "Palma, Ciutadella de Menorca, Eivissa…",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
@@ -4123,35 +4073,12 @@ def _prefijo_anclaje(municipio):
 # de honoríficos españoles, solo lo verificado.
 _INFIJO_HONORIFICO_RE = r'(?:la (?:hist[oó]rica )?villa de )?'
 
-# Colisiones verificadas 2026-09-15 (piloto Baleares) contra un ZIP real: el
-# patrón anclado normal (\bayuntamiento de {municipio}\b) también hace
-# match como PREFIJO del nombre de OTRO municipio real de otra provincia,
-# porque \b solo exige un límite de palabra justo después del nombre, sin
-# importar qué venga a continuación -- "Ayuntamiento de Muro DE ALCOY"
-# (Alicante) coincidía al buscar "Muro" (Mallorca); "Ayuntamiento de Palma
-# DEL RÍO" (Córdoba) coincidía al buscar "Palma" (Mallorca). A diferencia
-# del infijo honorífico de arriba, aquí la continuación real SÍ debe
-# rechazarse (no forma parte del nombre buscado). "Palma" necesita seguir
-# aceptando su propia continuación legítima "de Mallorca" (ya funciona sin
-# tocar nada, _prefijo_anclaje no la bloquea) -- esta exclusión solo
-# rechaza la continuación de OTRO municipio, verificada en datos reales,
-# no una lista exhaustiva de colisiones hipotéticas en toda España.
-_EXCLUSION_CONTINUACION_ANCLAJE = {
-    "muro": " de alcoy",
-    "palma": " del rio",
-}
-
 
 def _regex_anclado(municipio):
     """Regex completo para anclar=True en buscar_en_zip/buscar_en_feed_vivo:
-    _prefijo_anclaje + infijo honorífico opcional + nombre del municipio,
-    con exclusión de continuación si aplica (ver _EXCLUSION_CONTINUACION_
-    ANCLAJE)."""
-    muni_norm = normalizar(municipio)
-    exclusion = _EXCLUSION_CONTINUACION_ANCLAJE.get(muni_norm)
-    lookahead = f'(?!{re.escape(exclusion)}\\b)' if exclusion else ''
+    _prefijo_anclaje + infijo honorífico opcional + nombre del municipio."""
     return re.compile(
-        rf'\b{_prefijo_anclaje(municipio)} {_INFIJO_HONORIFICO_RE}{re.escape(muni_norm)}{lookahead}\b'
+        rf'\b{_prefijo_anclaje(municipio)} {_INFIJO_HONORIFICO_RE}{re.escape(normalizar(municipio))}\b'
     )
 
 
