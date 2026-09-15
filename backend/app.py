@@ -3565,6 +3565,23 @@ MUNICIPIOS_INE_POR_PROVINCIA = {"girona": MUNICIPIOS_GIRONA_INE, "lleida": MUNIC
 # para resolver un codi_ine10 -- mismo dict, no una copia.
 PROVINCIAS_CATALUNYA = MUNICIPIOS_INE_POR_PROVINCIA
 
+# Agrupaciones multi-provincia SOLO para /actualizar-todos (cron diario,
+# ver .github/workflows/actualizar-diario.yml): Comunitat Valenciana y
+# Andalucía se cubren en una única franja horaria cada una, pero
+# MUNICIPIOS_POR_PROVINCIA no tiene una clave "valenciana"/"andalucia" --
+# están registradas por sus provincias reales (alicante/castellon/valencia,
+# almeria/cadiz/cordoba/granada/huelva/jaen/malaga/sevilla), igual que
+# Cataluña con girona/lleida/barcelona/tarragona. Mismo patrón que
+# provincia="todas" en _actualizar_todos_bg, pero acotado a un subconjunto
+# en vez de a todas las provincias conectadas. NO usar esto fuera de
+# /actualizar-todos (_provincia_valida y el resto del sitio siguen
+# esperando una única provincia real, nunca un agregado).
+PROVINCIA_AGREGADOS = {
+    "valenciana": ["alicante", "castellon", "valencia"],
+    "andalucia": ["almeria", "cadiz", "cordoba", "granada", "huelva", "jaen",
+                  "malaga", "sevilla"],
+}
+
 # País Vasco (2026-09-06, Mecanismo B -- ver MUNICIPIOS_PAIS_VASCO_EUSKADI_ID
 # y buscar_en_euskadi): a diferencia de Cataluña (4 provincias reales) se
 # trata como UNA sola clave "pais_vasco" en vez de separar Araba/Bizkaia/
@@ -7793,10 +7810,15 @@ def _actualizar_todos_bg(job_id, provincia="murcia"):
     en ese momento, así que nunca hay un estado a medias visible para quien
     esté navegando.
     """
-    if provincia != "todas" and provincia not in MUNICIPIOS_POR_PROVINCIA:
+    if (provincia != "todas" and provincia not in PROVINCIA_AGREGADOS
+            and provincia not in MUNICIPIOS_POR_PROVINCIA):
         raise ValueError(f"provincia no reconocida: {provincia}")
-    provincias = (list(MUNICIPIOS_POR_PROVINCIA.keys()) if provincia == "todas"
-                  else [provincia])
+    if provincia == "todas":
+        provincias = list(MUNICIPIOS_POR_PROVINCIA.keys())
+    elif provincia in PROVINCIA_AGREGADOS:
+        provincias = PROVINCIA_AGREGADOS[provincia]
+    else:
+        provincias = [provincia]
     total = sum(len(MUNICIPIOS_POR_PROVINCIA[p]) for p in provincias)
 
     if not _actualizando_todos_lock.acquire(blocking=False):
@@ -12009,14 +12031,18 @@ def _route_post(path, params):
             if not admin_token or params.get("token", [""])[0] != admin_token:
                 return _error_resp("No autorizado.", 403)
             provincia_raw = params.get("provincia", [""])[0]
-            if provincia_raw not in ("todas", *MUNICIPIOS_POR_PROVINCIA):
+            if provincia_raw not in ("todas", *PROVINCIA_AGREGADOS, *MUNICIPIOS_POR_PROVINCIA):
                 return _resp(json.dumps({"error": f"provincia no reconocida: {provincia_raw}"}),
                              content_type="application/json; charset=utf-8", code=400)
             provincia = provincia_raw
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_todos_bg, args=(job_id, provincia), daemon=True).start()
-            total_municipios = (sum(len(v) for v in MUNICIPIOS_POR_PROVINCIA.values()) if provincia == "todas"
-                                 else len(MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)))
+            if provincia == "todas":
+                total_municipios = sum(len(v) for v in MUNICIPIOS_POR_PROVINCIA.values())
+            elif provincia in PROVINCIA_AGREGADOS:
+                total_municipios = sum(len(MUNICIPIOS_POR_PROVINCIA[p]) for p in PROVINCIA_AGREGADOS[provincia])
+            else:
+                total_municipios = len(MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA))
             body = json.dumps({"status": "started", "job_id": job_id, "provincia": provincia,
                                 "total_municipios": total_municipios})
             return _resp(body, content_type="application/json; charset=utf-8")
