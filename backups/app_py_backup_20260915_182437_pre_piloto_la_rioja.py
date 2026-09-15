@@ -633,66 +633,6 @@ MUNICIPIOS_CANTABRIA = [
     "Villaescusa","Villafufre","Voto",
 ]
 
-# La Rioja: comunidad uniprovincial (como Murcia/Baleares/Cantabria, una
-# sola provincia). Mecanismo A normal, verificado 2026-09-15 contra un ZIP
-# real de PLACE: "Alcaldía del Ayuntamiento de Logroño", "Junta de
-# Gobierno Local del Ayuntamiento de Calahorra" -- patrón "ayuntamiento de
-# X" normal. 174 municipios, verificados uno a uno contra la tabla real de
-# Wikipedia (parseada directamente del HTML) y comprobados sistemáticamente
-# sin ninguna colisión de clave primaria contra los 22 territorios ya
-# activos (a diferencia de Cantabria/Cieza) -- verificación aplicada tras
-# ese incidente, antes de escribir nada aquí.
-#
-# Colisión tipo prefijo encontrada y corregida (ver
-# _EXCLUSION_CONTINUACION_ANCLAJE): "Villarroya" coincidía con "Ayuntamiento
-# de Villarroya DE LOS PINARES" (Teruel, Aragón, no conectado en este
-# sitio) -- misma clase que Muro/Palma en Baleares, no como Cieza (no hay
-# fila compartida en BD porque ese municipio de Teruel no existe en
-# ninguna lista ya activa).
-MUNICIPIOS_LA_RIOJA = [
-    "Ábalos","Agoncillo","Aguilar del Río Alhama","Ajamil de Cameros",
-    "Albelda de Iregua","Alberite","Alcanadre","Aldeanueva de Ebro",
-    "Alesanco","Alesón","Alfaro","Almarza de Cameros","Anguciana",
-    "Anguiano","Arenzana de Abajo","Arenzana de Arriba","Arnedillo",
-    "Arnedo","Arrúbal","Ausejo","Autol","Azofra","Badarán","Bañares",
-    "Baños de Río Tobía","Baños de Rioja","Berceo","Bergasa",
-    "Bergasillas Bajera","Bezares","Bobadilla","Brieva de Cameros",
-    "Briñas","Briones","Cabezón de Cameros","Calahorra","Camprovín",
-    "Canales de la Sierra","Canillas de Río Tuerto","Cañas","Cárdenas",
-    "Casalarreina","Castañares de Rioja","Castroviejo","Cellorigo",
-    "Cenicero","Cervera del Río Alhama","Cidamón","Cihuri","Ciruena",
-    "Clavijo","Cordovín","Corera","Cornago","Corporales",
-    "Cuzcurrita de Río Tirón","Daroca de Rioja","Enciso","Entrena",
-    "Estollo","Ezcaray","Foncea","Fonzaleche","Fuenmayor","Galbárruli",
-    "Galilea","Gallinero de Cameros","Gimileo","Grañón","Grávalos",
-    "Haro","Herce","Herramélluri","Hervías","Hormilla","Hormilleja",
-    "Hornillos de Cameros","Hornos de Moncalvillo","Huércanos","Igea",
-    "Jalón de Cameros","Laguna de Cameros","Lagunilla del Jubera",
-    "Lardero","Ledesma de la Cogolla","Leiva","Leza de Río Leza",
-    "Logroño","Lumbreras de Cameros","Manjarrés","Mansilla de la Sierra",
-    "Manzanares de Rioja","Matute","Medrano","Munilla",
-    "Murillo de Río Leza","Muro de Aguas","Muro en Cameros","Nájera",
-    "Nalda","Navajún","Navarrete","Nestares","Nieva de Cameros",
-    "Ochánduri","Ocón","Ojacastro","Ollauri","Ortigosa de Cameros",
-    "Pazuengos","Pedroso","Pinillos","Pradejón","Pradillo","Préjano",
-    "Quel","Rabanera","El Rasillo de Cameros","El Redal","Ribafrecha",
-    "Rincón de Soto","Robres del Castillo","Rodezno","Sajazarra",
-    "San Asensio","San Millán de la Cogolla","San Millán de Yécora",
-    "San Román de Cameros","San Torcuato","San Vicente de la Sonsierra",
-    "Santa Coloma","Santa Engracia del Jubera","Santa Eulalia Bajera",
-    "Santo Domingo de la Calzada","Santurde de Rioja","Santurdejo",
-    "Sojuela","Sorzano","Sotés","Soto en Cameros","Terroba","Tirgo",
-    "Tobía","Tormantos","Torre en Cameros","Torrecilla en Cameros",
-    "Torrecilla sobre Alesanco","Torremontalbo","Treviana","Tricio",
-    "Tudelilla","Uruñuela","Valdemadera","Valgañón","Ventosa","Ventrosa",
-    "Viguera","Villalba de Rioja","Villalobar de Rioja",
-    "Villamediana de Iregua","Villanueva de Cameros",
-    "El Villar de Arnedo","Villar de Torre","Villarejo","Villarroya",
-    "Villarta-Quintana","Villavelayo","Villaverde de Rioja",
-    "Villoslada de Cameros","Viniegra de Abajo","Viniegra de Arriba",
-    "Zarratón","Zarzosa","Zorraquín",
-]
-
 # ─── FASE PILOTO: País Vasco (2026-09-03, ver memoria del proyecto) ──────────
 # A DIFERENCIA de Comunitat Valenciana/Andalucía (Mecanismo A, reutilizan
 # PLACE tal cual): País Vasco es Mecanismo B, como Cataluña -- verificado
@@ -3388,8 +3328,7 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "las_palmas": MUNICIPIOS_LAS_PALMAS,
                             "santa_cruz_tenerife": MUNICIPIOS_SANTA_CRUZ_TENERIFE,
                             "baleares": MUNICIPIOS_BALEARES,
-                            "cantabria": MUNICIPIOS_CANTABRIA,
-                            "la_rioja": MUNICIPIOS_LA_RIOJA}
+                            "cantabria": MUNICIPIOS_CANTABRIA}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3405,7 +3344,6 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "santa_cruz_tenerife": "Provincia de Santa Cruz de Tenerife",
                    "baleares": "Illes Balears",
                    "cantabria": "Cantabria",
-                   "la_rioja": "La Rioja",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3429,14 +3367,12 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "las_palmas": "canarias", "santa_cruz_tenerife": "canarias",
     "baleares": "baleares",  # comunidad uniprovincial, mismo patrón que Murcia
     "cantabria": "cantabria",  # comunidad uniprovincial, mismo patrón que Murcia
-    "la_rioja": "la_rioja",  # comunidad uniprovincial, mismo patrón que Murcia
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
                             "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
                             "melilla": "Ciudad Autónoma de Melilla", "canarias": "Canarias",
-                            "baleares": "Illes Balears", "cantabria": "Cantabria",
-                            "la_rioja": "La Rioja"}
+                            "baleares": "Illes Balears", "cantabria": "Cantabria"}
 
 
 def _comunidad_valida(txt):
@@ -3468,7 +3404,6 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "santa_cruz_tenerife": "Santa Cruz de Tenerife, La Laguna, Arona…",
     "baleares": "Palma, Ciutadella de Menorca, Eivissa…",
     "cantabria": "Santander, Torrelavega, Castro-Urdiales…",
-    "la_rioja": "Logroño, Calahorra, Arnedo…",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
@@ -4330,14 +4265,6 @@ _EXCLUSION_CONTINUACION_ANCLAJE = {
     # provincia). Decisión final: excluir "Cieza" de MUNICIPIOS_CANTABRIA
     # por completo (ver esa constante para el detalle del incidente), no
     # queda ninguna entrada aquí para él.
-    # Colisión tipo prefijo (piloto La Rioja, 2026-09-15), misma clase que
-    # Muro/Palma -- "Ayuntamiento de Villarroya DE LOS PINARES" (Teruel,
-    # Aragón, NO conectado en este sitio) coincidía al buscar "Villarroya"
-    # (La Rioja). Sin colisión de clave primaria en BD (Villarroya de los
-    # Pinares no existe como municipio propio en ninguna provincia ya
-    # activa), a diferencia de Cieza -- exclusión de texto simple y
-    # suficiente aquí.
-    "villarroya": " de los pinares",
 }
 
 
