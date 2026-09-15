@@ -595,22 +595,13 @@ MUNICIPIOS_BALEARES = (MUNICIPIOS_MALLORCA + MUNICIPIOS_MENORCA
 # (/procurements/contracting-authorities?contracting-authority=...) --
 # CERO riesgo de colisión de nombre, no hace falta ningún patrón anclado.
 # Lista completa verificada en vivo: 252 entradas cuyo nombre empieza por
-# "Ayuntamiento de" -- consistente con el número oficial de 251 municipios
-# vascos MENOS una: "ANOETA" (id 311, NIF 44158757E -- formato de DNI/NIE
-# de persona física, no de entidad) resultó ser un registro duplicado
-# defectuoso en el propio directorio de Euskadi de la "Ayuntamiento de
-# Anoeta" real (id 612, NIF P2001100C -- formato oficial "P"+código INE+
-# letra de corporación local). Verificado 2026-09-15 (piloto País Vasco
-# "al completo"): id 311 devuelve 0 contratos en /contracts (entrada
-# muerta), id 612 devuelve 14 -- confirmado también que ningún otro de los
-# 252 nombres "Ayuntamiento de X" del directorio completo (937 entidades)
-# está duplicado. Con esta entrada eliminada, el dict queda en 251 (el
-# número oficial exacto). IDs obtenidos una sola vez y fijados aquí como
-# constante -- no hace falta volver a listarlos en cada medición
-# (reverificado íntegro contra la API en vivo el 2026-09-15: mismos 251
-# IDs, ninguno dado de baja ni ninguno nuevo desde que se construyó esta
-# lista el 2026-09-06).
+# "Ayuntamiento de" (de las 253 que devuelve la búsqueda de texto "Ayuntamiento
+# de", 1 no calificaba), consistente con el número oficial de 251 municipios
+# vascos (el pequeño desajuste no se ha investigado más, irrelevante para
+# el piloto). IDs obtenidos una sola vez y fijados aquí como constante --
+# no hace falta volver a listarlos en cada medición.
 MUNICIPIOS_PAIS_VASCO_EUSKADI_ID = {
+    'ANOETA': 311,
     'Abaltzisketa': 25,
     'Abanto Zierbena': 502,
     'Aduna': 27,
