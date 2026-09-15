@@ -579,40 +579,26 @@ MUNICIPIOS_BALEARES = (MUNICIPIOS_MALLORCA + MUNICIPIOS_MENORCA
 # provincia). Mecanismo A normal, verificado 2026-09-15 contra un ZIP real
 # de PLACE: "Junta de Gobierno del Ayuntamiento de Santander", "Alcaldía
 # del Ayuntamiento de Torrelavega" -- patrón "ayuntamiento de X" normal.
-# 101 municipios de 102 -- ver exclusión de "Cieza" más abajo.
+# 102 municipios, códigos INE 39001-39102, verificados uno a uno contra la
+# tabla real de Wikipedia (parseada directamente del HTML, no del resumen
+# del fetch -- un resumen previo mezcló nombres de otras provincias, ver
+# incidente en la investigación de esta misma sesión).
 #
-# "Cieza" EXCLUIDO A PROPÓSITO (incidente real en producción, 2026-09-15):
-# Cantabria tiene su propio municipio real llamado "Cieza" (552 hab.,
-# Villayuso de Cieza), con el mismo nombre EXACTO que "Cieza" de Murcia (ya
-# en MUNICIPIOS_MURCIA desde el origen del sitio, PLACE id 3802). Esto no
-# es solo un problema de scraping (ya se intentó arreglar con exclusión de
-# texto y luego con verificación de código postal estructurado, ver
-# _EXCLUSION_CONTINUACION_ANCLAJE/_CP_ESPERADO_ANCLAJE en buscar_en_zip) --
-# es un problema de ESQUEMA: la tabla SQL `municipios` usa
-# `municipio TEXT PRIMARY KEY` (nombre normalizado, SIN provincia) como
-# clave única. El "Cieza" de Cantabria y el de Murcia comparten
-# literalmente la misma fila. Confirmado en producción: al precalentar
-# Cantabria completa, el refresco de "Cieza" fusionó su historial con el
-# de Murcia ya guardado (_fusionar_historico_contratos) y sobrescribió el
-# campo `provincia` de esa fila a "cantabria" -- corrompiendo el "Cieza"
-# real de Murcia (contratos genuinos como "Teatro Capitol de Cieza",
-# feria gastronómica) bajo la etiqueta de Cantabria. Arreglar esto de
-# raíz requeriría migrar la clave primaria a (municipio, provincia) --
-# afecta a todos los municipios del sitio, no solo a este, así que no se
-# ha hecho sin decisión explícita. Hasta entonces, "Cieza" de Cantabria
-# queda sin cubrir -- mismo criterio que otras exclusiones ya documentadas
-# en el proyecto ("mostrar nada" es mejor que "mostrar un dato mal
-# atribuido"). Verificado que ningún otro municipio nuevo (Ceuta/Melilla/
-# Canarias/Baleares/Cantabria) colisiona en clave primaria con ninguno de
-# los ya activos -- comprobación sistemática contra los 16 antiguos, 2026-
-# 09-15, Cieza fue el único caso.
+# Colisión real encontrada y corregida (ver _EXCLUSION_CONTINUACION_
+# ANCLAJE): "Cieza" no es un prefijo de otro nombre (a diferencia de Muro/
+# Palma) -- son DOS municipios reales distintos con el mismo nombre exacto:
+# el "Cieza" de Cantabria (esta lista) y el "Cieza" de Murcia (ya en
+# MUNICIPIOS_MURCIA desde el origen del sitio, PLACE id 3802). El propio
+# órgano de Murcia se autodesambigua en PLACE con el sufijo "(Murcia)" --
+# sin la exclusión, el "Cieza" de Cantabria habría heredado en silencio
+# los contratos del "Cieza" de Murcia.
 MUNICIPIOS_CANTABRIA = [
     "Alfoz de Lloredo","Ampuero","Anievas","Arenas de Iguña","Argoños",
     "Arnuero","Arredondo","El Astillero","Bárcena de Cicero",
     "Bárcena de Pie de Concha","Bareyo","Cabezón de la Sal",
     "Cabezón de Liébana","Cabuérniga","Camaleño","Camargo",
     "Campoo de Enmedio","Campoo de Yuso","Cartes","Castañeda",
-    "Castro-Urdiales","Cillorigo de Liébana","Colindres","Comillas",
+    "Castro-Urdiales","Cieza","Cillorigo de Liébana","Colindres","Comillas",
     "Los Corrales de Buelna","Corvera de Toranzo","Entrambasaguas",
     "Escalante","Guriezo","Hazas de Cesto","Hermandad de Campoo de Suso",
     "Herrerías","Lamasón","Laredo","Liendo","Liérganes","Limpias","Luena",
@@ -3910,27 +3896,6 @@ def _entry_to_contrato(entry_xml):
                 pn = _re_tag_block("PartyName", party)
                 organo = _re_tag("Name", pn) if pn else _re_tag("Name", party)
 
-    # ── código postal del órgano (desambiguación adicional) ───────────────────
-    # PLACE es texto libre para el nombre del órgano y NO siempre desambigua
-    # de forma consistente cuando dos municipios reales comparten nombre --
-    # verificado 2026-09-15 (piloto Cantabria): el "Ayuntamiento de Cieza"
-    # de Murcia aparece unas veces como "... Cieza (Murcia)" y otras veces
-    # como "... Cieza" a secas (sin sufijo), en ZIPs mensuales distintos --
-    # ninguna exclusión de texto fija puede cubrir eso de forma fiable. El
-    # PostalZone SÍ es consistente en los datos reales vistos (Cieza,
-    # Cantabria: CP 39407; Cieza, Murcia: CP 30530) porque viene de un campo
-    # estructurado (dirección postal del órgano), no de texto libre --
-    # usado como verificación cruzada opcional en _CP_ESPERADO_ANCLAJE (ver
-    # parsear_atom_bytes), no como campo obligatorio para el resto del sitio.
-    cp_organo = ""
-    cp_bloque = _re_tag_block("LocatedContractingParty", entry_xml) or _re_tag_block("ContractingParty", entry_xml)
-    if cp_bloque:
-        cp_party = _re_tag_block("Party", cp_bloque)
-        if cp_party:
-            cp_postal = _re_tag_block("PostalAddress", cp_party)
-            if cp_postal:
-                cp_organo = _re_tag("PostalZone", cp_postal)
-
     # ── importe fallback ──────────────────────────────────────────────────────
     if not importe_raw:
         for tag in ("TaxExclusiveAmount", "TotalAmount", "PayableAmount",
@@ -4002,7 +3967,6 @@ def _entry_to_contrato(entry_xml):
     return {
         "titulo":        titulo[:200],
         "organo":        organo,
-        "cp":            cp_organo,
         "empresa":       empresa or "No localizada",
         "nif":           nif,
         "importe":       importe or "No localizado",
@@ -4081,25 +4045,6 @@ def _entries_con_estado_bytes(raw_bytes, muni_b_variants):
     return results
 
 
-# Verificación cruzada por código postal, SOLO para municipios con colisión
-# de nombre real ya confirmada donde el texto libre del órgano en PLACE no
-# desambigua de forma fiable (ver docstring de cp_organo en
-# _entry_to_contrato). Vacío a propósito (2026-09-15, incidente Cieza/
-# Cantabria/Murcia): este filtro solo protege el paso de SCRAPING (evita
-# traer contratos del municipio equivocado en el refresco actual), pero no
-# resuelve el problema de fondo cuando dos municipios reales comparten
-# nombre exacto -- la tabla SQL `municipios` usa `municipio TEXT PRIMARY
-# KEY` (sin provincia), así que _db_obtener_contratos_municipio() y
-# _db_set_municipio() seguirían leyendo/escribiendo la MISMA fila para
-# ambos sin importar cómo de bien filtre este diccionario. Por eso "Cieza"
-# se excluyó directamente de MUNICIPIOS_CANTABRIA en vez de intentar
-# arreglarlo solo aquí -- ver esa constante para el detalle completo. Este
-# mecanismo queda listo (cp_organo ya se extrae en cada contrato) por si
-# migra el esquema a clave compuesta (municipio, provincia) en el futuro y
-# hace falta reactivarlo para un caso similar.
-_CP_ESPERADO_ANCLAJE = {}
-
-
 def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None):
     """Parsea un .atom en bytes buscando contratos del municipio."""
 
@@ -4116,18 +4061,13 @@ def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None):
     if _muni_re is None:
         _muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
 
-    cp_esperado = _CP_ESPERADO_ANCLAJE.get(normalizar(municipio))
-
     contratos = []
     # _entries_con_estado_bytes ya filtra por estado Y municipio; parsear solo las candidatas
     for entry_xml in _entries_con_estado_bytes(raw_bytes, muni_b_variants):
         try:
             c = _entry_to_contrato(entry_xml)
-            if not c or not _muni_re.search(normalizar(c.get("organo", ""))):
-                continue
-            if cp_esperado and not c.get("cp", "").startswith(cp_esperado):
-                continue
-            contratos.append(c)
+            if c and _muni_re.search(normalizar(c.get("organo", ""))):
+                contratos.append(c)
         except Exception:
             pass
     return contratos
@@ -4256,15 +4196,16 @@ _INFIJO_HONORIFICO_RE = r'(?:la (?:hist[oó]rica )?villa de )?'
 _EXCLUSION_CONTINUACION_ANCLAJE = {
     "muro": " de alcoy",
     "palma": " del rio",
-    # NOTA: "Cieza" (colisión Cantabria/Murcia) se intentó cubrir aquí con
-    # " (murcia)" y no fue suficiente -- PLACE no desambigua de forma
-    # consistente (a veces sí, a veces no, según el mes). Se añadió después
-    # una verificación cruzada por código postal (_CP_ESPERADO_ANCLAJE) que
-    # tampoco resolvía el problema de fondo: la tabla `municipios` comparte
-    # una única fila para ambos por clave primaria (municipio, sin
-    # provincia). Decisión final: excluir "Cieza" de MUNICIPIOS_CANTABRIA
-    # por completo (ver esa constante para el detalle del incidente), no
-    # queda ninguna entrada aquí para él.
+    # Colisión distinta (piloto Cantabria, 2026-09-15): no es un prefijo de
+    # OTRO nombre, son dos municipios reales DISTINTOS que comparten el
+    # mismo nombre exacto -- "Cieza" ya existe como municipio de Murcia
+    # (MUNICIPIOS_MURCIA, PLACE id 3802, en el sitio desde el origen) y
+    # también como municipio de Cantabria. El propio órgano de Murcia se
+    # autodesambigua en PLACE con el sufijo "(Murcia)" -- verificado en un
+    # ZIP real: "Ayuntamiento de Cieza (Murcia)". Sin esta exclusión, el
+    # "Cieza" de Cantabria habría heredado en silencio los contratos del
+    # "Cieza" de Murcia.
+    "cieza": " (murcia)",
 }
 
 
