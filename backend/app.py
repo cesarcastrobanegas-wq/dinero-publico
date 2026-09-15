@@ -4245,6 +4245,55 @@ def _entries_con_estado_bytes(raw_bytes, muni_b_variants):
     return results
 
 
+def _entries_con_estado_todas_bytes(raw_bytes):
+    """Como _entries_con_estado_bytes pero SIN filtrar por municipio --
+    devuelve TODAS las entries con estado ADJ/RES/FOR del fichero. Mismo
+    algoritmo bytes.find + bisect, solo sin el `if not any(v in entry_raw
+    for v in muni_b_variants)` -- usada por _extraer_contratos_zip para
+    extraer un ZIP completo en una sola pasada (ver esa función para el
+    porqué)."""
+    import bisect
+
+    starts, pos = [], 0
+    while True:
+        p = raw_bytes.find(_OPEN_ENTRY_B, pos)
+        if p == -1: break
+        starts.append(p + _OPEN_LEN_B)
+        pos = p + 1
+    if not starts:
+        return []
+
+    ends = []
+    for s in starts:
+        e = raw_bytes.find(_CLOSE_ENTRY_B, s)
+        ends.append(e if e != -1 else len(raw_bytes))
+
+    status_positions = []
+    for code in _STATUS_CODES_B:
+        pos = 0
+        while True:
+            p = raw_bytes.find(code, pos)
+            if p == -1: break
+            status_positions.append(p)
+            pos = p + 1
+    if not status_positions:
+        return []
+
+    seen, results = set(), []
+    for mpos in status_positions:
+        idx = bisect.bisect_right(starts, mpos) - 1
+        if idx < 0 or idx in seen: continue
+        if ends[idx] < mpos: continue
+        seen.add(idx)
+        entry_raw = raw_bytes[starts[idx]:ends[idx]]
+        try:
+            results.append(entry_raw.decode("utf-8"))
+        except UnicodeDecodeError:
+            results.append(entry_raw.decode("latin-1", errors="replace"))
+
+    return results
+
+
 # Verificación cruzada por código postal, SOLO para municipios con colisión
 # de nombre real ya confirmada donde el texto libre del órgano en PLACE no
 # desambigua de forma fiable (ver docstring de cp_organo en
@@ -4485,18 +4534,92 @@ def _nombre_organismo_municipal(municipio, provincia):
     return f"Ayuntamiento de {municipio}"
 
 
+# Caché en RAM de "todos los contratos ADJ/RES/FOR de un ZIP, sin filtrar
+# por municipio" -- ver _extraer_contratos_zip/_contratos_de_zip_cacheado.
+# Acotada a _ZIP_CONTRATOS_CACHE_MAX ZIPs simultáneos (LRU simple por orden
+# de inserción del dict) para no crecer sin límite a lo largo de la vida
+# del proceso.
+_ZIP_CONTRATOS_CACHE = {}
+_ZIP_CONTRATOS_CACHE_LOCK = threading.Lock()
+_ZIP_CONTRATOS_CACHE_MAX = 4
+
+
+def _extraer_contratos_zip(zip_path, job_id=None):
+    """Extrae TODOS los contratos ADJ/RES/FOR de un ZIP de PLACE en una
+    sola pasada, SIN filtrar por municipio (ver _entries_con_estado_todas_bytes).
+    Mismo _entry_to_contrato que usa producción desde siempre -- idéntico
+    resultado a filtrar cada .atom por municipio, solo que se hace una vez
+    por ZIP en vez de una vez por municipio. Mismo patrón que ya midieron y
+    validaron los pilotos de Comunitat Valenciana/Andalucía
+    (_piloto_extraer_contratos_place_todos, 2026-09-03)."""
+    nombre = os.path.basename(zip_path)
+    try:
+        with zipfile.ZipFile(zip_path, "r") as z:
+            atom_names = [n for n in z.namelist() if n.endswith(".atom")]
+    except Exception as e:
+        _log(job_id, f"Error abriendo {nombre}: {e}")
+        return []
+
+    def _procesar(name):
+        with zipfile.ZipFile(zip_path, "r") as z:
+            raw = z.read(name)
+        out = []
+        for entry_xml in _entries_con_estado_todas_bytes(raw):
+            try:
+                c = _entry_to_contrato(entry_xml)
+            except Exception:
+                c = None
+            if c:
+                out.append(c)
+        return out
+
+    contratos = []
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        for parcial in ex.map(_procesar, atom_names):
+            contratos.extend(parcial)
+    return contratos
+
+
+def _contratos_de_zip_cacheado(zip_path, job_id=None):
+    """Devuelve _extraer_contratos_zip(zip_path), cacheado en RAM por
+    zip_path durante la vida del proceso -- el candado se mantiene durante
+    toda la extracción a propósito (simplicidad: como mucho serializa unos
+    pocos ZIPs la primera vez que se piden en este proceso, después todos
+    los accesos son instantáneos). Los ZIPs de PLACE son inmutables una vez
+    descargados (mismo anomes = mismo fichero siempre), así que no hace
+    falta invalidar por contenido, solo acotar cuántos quedan en RAM a la
+    vez (_ZIP_CONTRATOS_CACHE_MAX)."""
+    with _ZIP_CONTRATOS_CACHE_LOCK:
+        if zip_path in _ZIP_CONTRATOS_CACHE:
+            return _ZIP_CONTRATOS_CACHE[zip_path]
+        nombre = os.path.basename(zip_path)
+        _log(job_id, f"  Extrayendo {nombre} completo (primera vez en este proceso)…")
+        contratos = _extraer_contratos_zip(zip_path, job_id)
+        _log(job_id, f"  {nombre}: {len(contratos)} contratos ADJ/RES/FOR en total (toda España).")
+        _ZIP_CONTRATOS_CACHE[zip_path] = contratos
+        while len(_ZIP_CONTRATOS_CACHE) > _ZIP_CONTRATOS_CACHE_MAX:
+            _ZIP_CONTRATOS_CACHE.pop(next(iter(_ZIP_CONTRATOS_CACHE)))
+        return contratos
+
+
 def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
-    """Procesa los atom files de un ZIP en paralelo, leyendo cada uno bajo
-    demanda dentro de cada worker -- NO carga el ZIP completo descomprimido
-    en RAM de golpe antes de empezar. Un ZIP mensual de PLACE puede rondar
-    el GB descomprimido en varios cientos de archivos; cargarlos todos a
-    la vez (multiplicado por los varios ZIPs que _job_run procesa en
-    paralelo) agotaba la RAM del plan free de Render y mataba el proceso a
-    media faena -- confirmado en producción reprocesando Murcia (ver
-    INFORME_NOCHE.md, 2026-07-21). Verificado en local con ZIPs reales:
-    mismos contratos encontrados que antes, con un pico de memoria por ZIP
-    ~39x menor (2.131 MB -> 55 MB en un ZIP de 142 archivos / 2,1 GB
-    descomprimidos).
+    """Filtra por municipio los contratos ya extraídos de zip_path (ver
+    _contratos_de_zip_cacheado) -- misma lógica de coincidencia que antes
+    (organo anclado/suelto + CP de desambiguación), pero sin reabrir ni
+    reparsear el ZIP en cada llamada.
+
+    Reescrito 2026-09-15 (investigación de los reinicios de contenedor
+    durante el precalentamiento de Madrid, ver memoria del proyecto):
+    antes esta función reabría y reparseaba el ZIP COMPLETO en cada
+    llamada -- una por municipio (178 veces para Madrid, hasta 785 para
+    Andalucía) -- incluso aunque cada pasada individual ya estaba acotada
+    en pico de memoria (~55MB, fix de 2026-07-21, ver commit de esa
+    fecha). Repetir esa reserva/parseo/descarte cientos de veces seguidas
+    dentro del mismo proceso fragmentaba la memoria del intérprete: el RSS
+    real medido en producción subía de 88MB en reposo a 700+MB durante el
+    mismo lote de Madrid sin bajar entre municipios. Ahora el ZIP se
+    extrae UNA sola vez por proceso y cada municipio solo filtra la lista
+    ya parseada en memoria -- mismos contratos, sin releer el ZIP.
 
     anclar=True usa "ayuntamiento de {municipio}" como patrón (en vez del
     \\b{municipio}\\b suelto de siempre) -- necesario para Comunitat
@@ -4512,46 +4635,21 @@ def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
     el comportamiento ya en vivo de Murcia es una decisión aparte que no se
     ha tomado todavía -- anclar=False (el de siempre) para Murcia hasta que
     se decida qué hacer con ese dato, ver memoria del proyecto."""
-    nombre = os.path.basename(zip_path)
     if anclar:
         muni_re = _regex_anclado(municipio)
     else:
         muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
+    cp_esperado = _CP_ESPERADO_ANCLAJE.get(normalizar(municipio))
 
-    try:
-        with zipfile.ZipFile(zip_path, "r") as z:
-            atom_names = [n for n in z.namelist() if n.endswith(".atom")]
-    except Exception as e:
-        _log(job_id, f"Error abriendo {nombre}: {e}")
-        return []
-
-    total = len(atom_names)
-    _log(job_id, f"  Procesando {total} archivos de {nombre}…")
-
-    contratos_total = []
-    lock = threading.Lock()
-    procesados = [0]
-
-    def _procesar(name):
-        # Cada hilo abre su propia instancia de ZipFile -- zipfile.ZipFile
-        # no es seguro para lecturas concurrentes desde una única instancia
-        # compartida entre hilos.
-        with zipfile.ZipFile(zip_path, "r") as z:
-            raw = z.read(name)
-        result = parsear_atom_bytes(raw, municipio, muni_re)
-        with lock:
-            procesados[0] += 1
-            pct = int(100 * procesados[0] / total)
-            if pct % 25 == 0 and pct > 0 and procesados[0] % (total // 4 or 1) == 0:
-                n_enc = len(contratos_total)
-                _log(job_id, f"  {nombre}: {pct}% — {n_enc} contratos encontrados")
-        return result
-
-    with ThreadPoolExecutor(max_workers=4) as ex:
-        for parcial in ex.map(_procesar, atom_names):
-            contratos_total.extend(parcial)
-
-    return contratos_total
+    todos = _contratos_de_zip_cacheado(zip_path, job_id)
+    contratos = []
+    for c in todos:
+        if not muni_re.search(normalizar(c.get("organo", ""))):
+            continue
+        if cp_esperado and not c.get("cp", "").startswith(cp_esperado):
+            continue
+        contratos.append(dict(c))  # copia -- nunca mutar el dict compartido en caché
+    return contratos
 
 
 def _piloto_medir_comunitat_valenciana(zip_paths, job_id=None):
