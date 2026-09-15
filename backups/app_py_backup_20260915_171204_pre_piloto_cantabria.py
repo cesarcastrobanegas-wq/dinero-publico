@@ -575,50 +575,6 @@ MUNICIPIOS_FORMENTERA = ["Formentera"]
 MUNICIPIOS_BALEARES = (MUNICIPIOS_MALLORCA + MUNICIPIOS_MENORCA
                         + MUNICIPIOS_EIVISSA + MUNICIPIOS_FORMENTERA)
 
-# Cantabria: comunidad uniprovincial (como Murcia/Baleares, una sola
-# provincia). Mecanismo A normal, verificado 2026-09-15 contra un ZIP real
-# de PLACE: "Junta de Gobierno del Ayuntamiento de Santander", "Alcaldía
-# del Ayuntamiento de Torrelavega" -- patrón "ayuntamiento de X" normal.
-# 102 municipios, códigos INE 39001-39102, verificados uno a uno contra la
-# tabla real de Wikipedia (parseada directamente del HTML, no del resumen
-# del fetch -- un resumen previo mezcló nombres de otras provincias, ver
-# incidente en la investigación de esta misma sesión).
-#
-# Colisión real encontrada y corregida (ver _EXCLUSION_CONTINUACION_
-# ANCLAJE): "Cieza" no es un prefijo de otro nombre (a diferencia de Muro/
-# Palma) -- son DOS municipios reales distintos con el mismo nombre exacto:
-# el "Cieza" de Cantabria (esta lista) y el "Cieza" de Murcia (ya en
-# MUNICIPIOS_MURCIA desde el origen del sitio, PLACE id 3802). El propio
-# órgano de Murcia se autodesambigua en PLACE con el sufijo "(Murcia)" --
-# sin la exclusión, el "Cieza" de Cantabria habría heredado en silencio
-# los contratos del "Cieza" de Murcia.
-MUNICIPIOS_CANTABRIA = [
-    "Alfoz de Lloredo","Ampuero","Anievas","Arenas de Iguña","Argoños",
-    "Arnuero","Arredondo","El Astillero","Bárcena de Cicero",
-    "Bárcena de Pie de Concha","Bareyo","Cabezón de la Sal",
-    "Cabezón de Liébana","Cabuérniga","Camaleño","Camargo",
-    "Campoo de Enmedio","Campoo de Yuso","Cartes","Castañeda",
-    "Castro-Urdiales","Cieza","Cillorigo de Liébana","Colindres","Comillas",
-    "Los Corrales de Buelna","Corvera de Toranzo","Entrambasaguas",
-    "Escalante","Guriezo","Hazas de Cesto","Hermandad de Campoo de Suso",
-    "Herrerías","Lamasón","Laredo","Liendo","Liérganes","Limpias","Luena",
-    "Marina de Cudeyo","Mazcuerras","Medio Cudeyo","Meruelo","Miengo",
-    "Miera","Molledo","Noja","Penagos","Peñarrubia","Pesaguero","Pesquera",
-    "Piélagos","Polaciones","Polanco","Potes","Puente Viesgo",
-    "Ramales de la Victoria","Rasines","Reinosa","Reocín",
-    "Ribamontán al Mar","Ribamontán al Monte","Rionansa","Riotuerto",
-    "Las Rozas de Valdearroyo","Ruente","Ruesga","Ruiloba",
-    "San Felices de Buelna","San Miguel de Aguayo","San Pedro del Romeral",
-    "San Roque de Riomiera","San Vicente de la Barquera",
-    "Santa Cruz de Bezana","Santa María de Cayón","Santander",
-    "Santillana del Mar","Santiurde de Reinosa","Santiurde de Toranzo",
-    "Santoña","Saro","Selaya","Soba","Solórzano","Suances","Los Tojos",
-    "Torrelavega","Tresviso","Tudanca","Udías","Val de San Vicente",
-    "Valdáliga","Valdeolea","Valdeprado del Río","Valderredible",
-    "Valle de Villaverde","Vega de Liébana","Vega de Pas","Villacarriedo",
-    "Villaescusa","Villafufre","Voto",
-]
-
 # ─── FASE PILOTO: País Vasco (2026-09-03, ver memoria del proyecto) ──────────
 # A DIFERENCIA de Comunitat Valenciana/Andalucía (Mecanismo A, reutilizan
 # PLACE tal cual): País Vasco es Mecanismo B, como Cataluña -- verificado
@@ -3313,8 +3269,7 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "ceuta": MUNICIPIOS_CEUTA, "melilla": MUNICIPIOS_MELILLA,
                             "las_palmas": MUNICIPIOS_LAS_PALMAS,
                             "santa_cruz_tenerife": MUNICIPIOS_SANTA_CRUZ_TENERIFE,
-                            "baleares": MUNICIPIOS_BALEARES,
-                            "cantabria": MUNICIPIOS_CANTABRIA}
+                            "baleares": MUNICIPIOS_BALEARES}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3329,7 +3284,6 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "las_palmas": "Provincia de Las Palmas",
                    "santa_cruz_tenerife": "Provincia de Santa Cruz de Tenerife",
                    "baleares": "Illes Balears",
-                   "cantabria": "Cantabria",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3352,13 +3306,12 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "melilla": "melilla",
     "las_palmas": "canarias", "santa_cruz_tenerife": "canarias",
     "baleares": "baleares",  # comunidad uniprovincial, mismo patrón que Murcia
-    "cantabria": "cantabria",  # comunidad uniprovincial, mismo patrón que Murcia
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
                             "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
                             "melilla": "Ciudad Autónoma de Melilla", "canarias": "Canarias",
-                            "baleares": "Illes Balears", "cantabria": "Cantabria"}
+                            "baleares": "Illes Balears"}
 
 
 def _comunidad_valida(txt):
@@ -3389,7 +3342,6 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "las_palmas": "Las Palmas de Gran Canaria, Telde, Arrecife…",
     "santa_cruz_tenerife": "Santa Cruz de Tenerife, La Laguna, Arona…",
     "baleares": "Palma, Ciutadella de Menorca, Eivissa…",
-    "cantabria": "Santander, Torrelavega, Castro-Urdiales…",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
@@ -4196,16 +4148,6 @@ _INFIJO_HONORIFICO_RE = r'(?:la (?:hist[oó]rica )?villa de )?'
 _EXCLUSION_CONTINUACION_ANCLAJE = {
     "muro": " de alcoy",
     "palma": " del rio",
-    # Colisión distinta (piloto Cantabria, 2026-09-15): no es un prefijo de
-    # OTRO nombre, son dos municipios reales DISTINTOS que comparten el
-    # mismo nombre exacto -- "Cieza" ya existe como municipio de Murcia
-    # (MUNICIPIOS_MURCIA, PLACE id 3802, en el sitio desde el origen) y
-    # también como municipio de Cantabria. El propio órgano de Murcia se
-    # autodesambigua en PLACE con el sufijo "(Murcia)" -- verificado en un
-    # ZIP real: "Ayuntamiento de Cieza (Murcia)". Sin esta exclusión, el
-    # "Cieza" de Cantabria habría heredado en silencio los contratos del
-    # "Cieza" de Murcia.
-    "cieza": " (murcia)",
 }
 
 
@@ -4216,18 +4158,7 @@ def _regex_anclado(municipio):
     ANCLAJE)."""
     muni_norm = normalizar(municipio)
     exclusion = _EXCLUSION_CONTINUACION_ANCLAJE.get(muni_norm)
-    if exclusion:
-        # \b final solo si la exclusión termina en letra/dígito (para no
-        # rechazar también un prefijo más largo, p.ej. "del rio" no debe
-        # rechazar un hipotético "del rioverde") -- si termina en
-        # puntuación (p.ej. el ")" de "Cieza (Murcia)"), \b nunca se
-        # cumple justo ahí (puntuación a puntuación/fin de cadena no es
-        # límite de palabra) y la exclusión quedaría rota en silencio, ver
-        # incidente Cieza/Cantabria 2026-09-15.
-        sufijo_b = r'\b' if exclusion[-1].isalnum() else ''
-        lookahead = f'(?!{re.escape(exclusion)}{sufijo_b})'
-    else:
-        lookahead = ''
+    lookahead = f'(?!{re.escape(exclusion)}\\b)' if exclusion else ''
     return re.compile(
         rf'\b{_prefijo_anclaje(municipio)} {_INFIJO_HONORIFICO_RE}{re.escape(muni_norm)}{lookahead}\b'
     )
