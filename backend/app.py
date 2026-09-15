@@ -20,6 +20,7 @@ BORM_PDF_URL    = "https://www.borm.es/services/anuncio/{id}/pdf"
 
 import requests
 from bs4 import BeautifulSoup
+import psutil
 
 # ─── CONFIGURACIÓN ───────────────────────────────────────────────────────────
 
@@ -11404,12 +11405,26 @@ def _diagnostico_arranque():
     with _cache_lock:
         n_municipios_en_cache = len(_result_cache)
 
+    # RAM real del proceso (añadido 2026-09-15, investigación de los
+    # reinicios de contenedor a mitad de /actualizar-todos que ya se veían
+    # en País Vasco/Lleida/Madrid ese mismo día pese al arreglo del OOM de
+    # _datos_memoria del 09-14 -- sin esto, confirmar un OOM real requería
+    # pedirle a César que mirara la gráfica de memoria del dashboard de
+    # Render cada vez. RSS es lo comparable al límite de 512MB del plan
+    # free. Envuelto en try/except: si psutil fallara por lo que sea, el
+    # resto del diagnóstico no debe romperse por esto.
+    try:
+        memoria_rss_mb = round(psutil.Process().memory_info().rss / 1024 / 1024, 1)
+    except Exception:
+        memoria_rss_mb = None
+
     return {
         "disco_confiable": _DISCO_CONFIABLE,
         "data_dir": DATA_DIR,
         "cache_db": _info(DB_FILE),
         "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
         "municipios_en_cache_resultado_ahora": n_municipios_en_cache,
+        "memoria_rss_mb": memoria_rss_mb,
     }
 
 
