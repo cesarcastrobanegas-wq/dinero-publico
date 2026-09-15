@@ -693,83 +693,6 @@ MUNICIPIOS_LA_RIOJA = [
     "Zarratón","Zarzosa","Zorraquín",
 ]
 
-# Comunidad de Madrid: uniprovincial (como Murcia/Baleares/Cantabria/La
-# Rioja, una sola provincia). Mecanismo A normal, verificado 2026-09-15
-# contra un ZIP real de PLACE: "Junta de Gobierno del Ayuntamiento de
-# Getafe", "Junta de Gobierno del Ayuntamiento de Móstoles" -- patrón
-# "ayuntamiento de X" normal. Madrid capital funciona bien buscada a
-# secas: "Ayuntamiento de Madridejos" (Toledo, otro municipio real) NO
-# colisiona porque \b no se cumple entre "madrid" y "ejos" (letra a letra,
-# sin límite de palabra) -- verificado con la función real, no solo
-# teorizado.
-#
-# 178 municipios de 179 -- ver exclusión de "El Molar" más abajo.
-#
-# "El Molar" EXCLUIDO A PROPÓSITO (mismo tipo de incidente que Cieza/
-# Cantabria, detectado esta vez ANTES de desplegar gracias a la
-# verificación de colisión de clave primaria que se añadió tras ese
-# incidente): "El Molar" es un municipio real de Madrid, pero TAMBIÉN ya
-# existe como municipio real de Tarragona ("el Molar", MUNICIPIOS_
-# TARRAGONA, desplegado con datos reales desde la ampliación a Cataluña).
-# Mismo nombre exacto normalizado -> misma fila en la tabla `municipios`
-# (`municipio TEXT PRIMARY KEY`, sin provincia). Se mantiene el "El Molar"
-# de Tarragona (ya en producción con datos reales) y se excluye el de
-# Madrid, en vez de arriesgarse a repetir la corrupción de datos ya vista
-# con Cieza.
-#
-# Colisión tipo prefijo encontrada y corregida (ver
-# _EXCLUSION_CONTINUACION_ANCLAJE): "Villalbilla" coincidía con
-# "Ayuntamiento de Villalbilla DE BURGOS" (Castilla y León, no conectado
-# en este sitio) -- misma clase que Muro/Palma/Villarroya, no como El
-# Molar (sin fila compartida en BD).
-MUNICIPIOS_MADRID = [
-    "La Acebeda","Ajalvir","Alameda del Valle","El Álamo","Alcalá de Henares",
-    "Alcobendas","Alcorcón","Aldea del Fresno","Algete","Alpedrete","Ambite",
-    "Anchuelo","Aranjuez","Arganda del Rey","Arroyomolinos","El Atazar","Batres",
-    "Becerril de la Sierra","Belmonte de Tajo","El Berrueco","Berzosa del Lozoya",
-    "Boadilla del Monte","El Boalo","Braojos","Brea de Tajo","Brunete",
-    "Buitrago del Lozoya","Bustarviejo","Cabanillas de la Sierra","La Cabrera",
-    "Cadalso de los Vidrios","Camarma de Esteruelas","Campo Real","Canencia",
-    "Carabaña","Casarrubuelos","Cenicientos","Cercedilla","Cervera de Buitrago",
-    "Chapinería","Chinchón","Ciempozuelos","Cobeña","Collado Mediano",
-    "Collado Villalba","Colmenar de Oreja","Colmenar del Arroyo","Colmenar Viejo",
-    "Colmenarejo","Corpa","Coslada","Cubas de la Sagra","Daganzo de Arriba",
-    "El Escorial","Estremera","Fresnedillas de la Oliva","Fresno de Torote",
-    "Fuenlabrada","Fuente el Saz de Jarama","Fuentidueña de Tajo","Galapagar",
-    "Garganta de los Montes","Gargantilla del Lozoya y Pinilla de Buitrago",
-    "Gascones","Getafe","Griñón","Guadalix de la Sierra","Guadarrama","La Hiruela",
-    "Horcajo de la Sierra-Aoslos","Horcajuelo de la Sierra","Hoyo de Manzanares",
-    "Humanes de Madrid","Leganés","Loeches","Lozoya","Lozoyuela-Navas-Sieteiglesias",
-    "Madarcos","Madrid","Majadahonda","Manzanares el Real","Meco",
-    "Mejorada del Campo","Miraflores de la Sierra","Los Molinos",
-    "Montejo de la Sierra","Moraleja de Enmedio","Moralzarzal","Morata de Tajuña",
-    "Móstoles","Navacerrada","Navalafuente","Navalagamella","Navalcarnero",
-    "Navarredonda y San Mamés","Navas del Rey","Nuevo Baztán",
-    "Olmeda de las Fuentes","Orusco de Tajuña","Paracuellos de Jarama","Parla",
-    "Patones","Pedrezuela","Pelayos de la Presa","Perales de Tajuña",
-    "Pezuela de las Torres","Pinilla del Valle","Pinto","Piñuécar-Gandullas",
-    "Pozuelo de Alarcón","Pozuelo del Rey","Prádena del Rincón",
-    "Puebla de la Sierra","Puentes Viejas","Quijorna","Rascafría","Redueña",
-    "Ribatejada","Rivas-Vaciamadrid","Robledillo de la Jara","Robledo de Chavela",
-    "Robregordo","Las Rozas de Madrid","Rozas de Puerto Real",
-    "San Agustín del Guadalix","San Fernando de Henares",
-    "San Lorenzo de El Escorial","San Martín de la Vega",
-    "San Martín de Valdeiglesias","San Sebastián de los Reyes",
-    "Santa María de la Alameda","Santorcaz","Los Santos de la Humosa",
-    "La Serna del Monte","Serranillos del Valle","Sevilla la Nueva","Somosierra",
-    "Soto del Real","Talamanca de Jarama","Tielmes","Titulcia",
-    "Torrejón de Ardoz","Torrejón de la Calzada","Torrejón de Velasco",
-    "Torrelaguna","Torrelodones","Torremocha de Jarama","Torres de la Alameda",
-    "Tres Cantos","Valdaracete","Valdeavero","Valdelaguna","Valdemanco",
-    "Valdemaqueda","Valdemorillo","Valdemoro","Valdeolmos-Alalpardo",
-    "Valdepiélagos","Valdetorres de Jarama","Valdilecha","Valverde de Alcalá",
-    "Velilla de San Antonio","El Vellón","Venturada","Villa del Prado",
-    "Villaconejos","Villalbilla","Villamanrique de Tajo","Villamanta",
-    "Villamantilla","Villanueva de la Cañada","Villanueva de Perales",
-    "Villanueva del Pardillo","Villar del Olmo","Villarejo de Salvanés",
-    "Villaviciosa de Odón","Villavieja del Lozoya","Zarzalejo",
-]
-
 # ─── FASE PILOTO: País Vasco (2026-09-03, ver memoria del proyecto) ──────────
 # A DIFERENCIA de Comunitat Valenciana/Andalucía (Mecanismo A, reutilizan
 # PLACE tal cual): País Vasco es Mecanismo B, como Cataluña -- verificado
@@ -3466,8 +3389,7 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "santa_cruz_tenerife": MUNICIPIOS_SANTA_CRUZ_TENERIFE,
                             "baleares": MUNICIPIOS_BALEARES,
                             "cantabria": MUNICIPIOS_CANTABRIA,
-                            "la_rioja": MUNICIPIOS_LA_RIOJA,
-                            "madrid": MUNICIPIOS_MADRID}
+                            "la_rioja": MUNICIPIOS_LA_RIOJA}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3484,7 +3406,6 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "baleares": "Illes Balears",
                    "cantabria": "Cantabria",
                    "la_rioja": "La Rioja",
-                   "madrid": "Comunidad de Madrid",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3509,14 +3430,13 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "baleares": "baleares",  # comunidad uniprovincial, mismo patrón que Murcia
     "cantabria": "cantabria",  # comunidad uniprovincial, mismo patrón que Murcia
     "la_rioja": "la_rioja",  # comunidad uniprovincial, mismo patrón que Murcia
-    "madrid": "madrid",  # comunidad uniprovincial, mismo patrón que Murcia
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
                             "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
                             "melilla": "Ciudad Autónoma de Melilla", "canarias": "Canarias",
                             "baleares": "Illes Balears", "cantabria": "Cantabria",
-                            "la_rioja": "La Rioja", "madrid": "Comunidad de Madrid"}
+                            "la_rioja": "La Rioja"}
 
 
 def _comunidad_valida(txt):
@@ -3549,7 +3469,6 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "baleares": "Palma, Ciutadella de Menorca, Eivissa…",
     "cantabria": "Santander, Torrelavega, Castro-Urdiales…",
     "la_rioja": "Logroño, Calahorra, Arnedo…",
-    "madrid": "Madrid, Móstoles, Alcalá de Henares…",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
@@ -4419,12 +4338,6 @@ _EXCLUSION_CONTINUACION_ANCLAJE = {
     # activa), a diferencia de Cieza -- exclusión de texto simple y
     # suficiente aquí.
     "villarroya": " de los pinares",
-    # Colisión tipo prefijo (piloto Madrid, 2026-09-15), misma clase que
-    # Muro/Palma/Villarroya -- "Alcaldía del Ayuntamiento de Villalbilla DE
-    # BURGOS" (Castilla y León, NO conectado en este sitio) coincidía al
-    # buscar "Villalbilla" (Madrid). Sin colisión de clave primaria en BD
-    # (Villalbilla de Burgos no existe en ninguna provincia ya activa).
-    "villalbilla": " de burgos",
 }
 
 
