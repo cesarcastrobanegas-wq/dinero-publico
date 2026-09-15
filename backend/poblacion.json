@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-14 05:52:09",
+ "generado": "2026-09-15 05:53:27",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
   "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
@@ -17,7 +17,8 @@
   "jaen": "https://www.ine.es/jaxiT3/Tabla.htm?t=2876",
   "malaga": "https://www.ine.es/jaxiT3/Tabla.htm?t=2882",
   "sevilla": "https://www.ine.es/jaxiT3/Tabla.htm?t=2895",
-  "pais_vasco": "https://www.ine.es/jaxiT3/Tabla.htm?t=2854"
+  "pais_vasco": "https://www.ine.es/jaxiT3/Tabla.htm?t=2854",
+  "santa_cruz_tenerife": "https://www.ine.es/jaxiT3/Tabla.htm?t=2892"
  },
  "municipios": {
   "abanilla": {
@@ -15282,6 +15283,306 @@
    "municipio": "Ziortza-Bolibar",
    "provincia": "pais_vasco",
    "poblacion": 401,
+   "anio": 2025
+  },
+  "adeje": {
+   "municipio": "Adeje",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 50021,
+   "anio": 2025
+  },
+  "agulo": {
+   "municipio": "Agulo",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 1078,
+   "anio": 2025
+  },
+  "alajero": {
+   "municipio": "Alajeró",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 2061,
+   "anio": 2025
+  },
+  "arafo": {
+   "municipio": "Arafo",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 5945,
+   "anio": 2025
+  },
+  "arico": {
+   "municipio": "Arico",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 9505,
+   "anio": 2025
+  },
+  "arona": {
+   "municipio": "Arona",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 87793,
+   "anio": 2025
+  },
+  "barlovento": {
+   "municipio": "Barlovento",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 2108,
+   "anio": 2025
+  },
+  "brena alta": {
+   "municipio": "Breña Alta",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 7487,
+   "anio": 2025
+  },
+  "brena baja": {
+   "municipio": "Breña Baja",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 6159,
+   "anio": 2025
+  },
+  "buenavista del norte": {
+   "municipio": "Buenavista del Norte",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 4695,
+   "anio": 2025
+  },
+  "candelaria": {
+   "municipio": "Candelaria",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 29023,
+   "anio": 2025
+  },
+  "fasnia": {
+   "municipio": "Fasnia",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 3145,
+   "anio": 2025
+  },
+  "fuencaliente de la palma": {
+   "municipio": "Fuencaliente de La Palma",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 1965,
+   "anio": 2025
+  },
+  "garachico": {
+   "municipio": "Garachico",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 4940,
+   "anio": 2025
+  },
+  "garafia": {
+   "municipio": "Garafía",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 2015,
+   "anio": 2025
+  },
+  "granadilla de abona": {
+   "municipio": "Granadilla de Abona",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 58752,
+   "anio": 2025
+  },
+  "la guancha": {
+   "municipio": "La Guancha",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 5667,
+   "anio": 2025
+  },
+  "guia de isora": {
+   "municipio": "Guía de Isora",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 22654,
+   "anio": 2025
+  },
+  "guimar": {
+   "municipio": "Güímar",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 22009,
+   "anio": 2025
+  },
+  "hermigua": {
+   "municipio": "Hermigua",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 1961,
+   "anio": 2025
+  },
+  "icod de los vinos": {
+   "municipio": "Icod de los Vinos",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 24616,
+   "anio": 2025
+  },
+  "la matanza de acentejo": {
+   "municipio": "La Matanza de Acentejo",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 9089,
+   "anio": 2025
+  },
+  "la orotava": {
+   "municipio": "La Orotava",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 42514,
+   "anio": 2025
+  },
+  "el paso": {
+   "municipio": "El Paso",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 8290,
+   "anio": 2025
+  },
+  "el pinar de el hierro": {
+   "municipio": "El Pinar de El Hierro",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 2042,
+   "anio": 2025
+  },
+  "puerto de la cruz": {
+   "municipio": "Puerto de la Cruz",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 31137,
+   "anio": 2025
+  },
+  "puntagorda": {
+   "municipio": "Puntagorda",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 2345,
+   "anio": 2025
+  },
+  "puntallana": {
+   "municipio": "Puntallana",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 2790,
+   "anio": 2025
+  },
+  "el rosario": {
+   "municipio": "El Rosario",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 17958,
+   "anio": 2025
+  },
+  "san andres y sauces": {
+   "municipio": "San Andrés y Sauces",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 4350,
+   "anio": 2025
+  },
+  "san cristobal de la laguna": {
+   "municipio": "San Cristóbal de La Laguna",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 161108,
+   "anio": 2025
+  },
+  "san juan de la rambla": {
+   "municipio": "San Juan de la Rambla",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 4987,
+   "anio": 2025
+  },
+  "san miguel de abona": {
+   "municipio": "San Miguel de Abona",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 23960,
+   "anio": 2025
+  },
+  "san sebastian de la gomera": {
+   "municipio": "San Sebastián de La Gomera",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 9574,
+   "anio": 2025
+  },
+  "santa cruz de la palma": {
+   "municipio": "Santa Cruz de La Palma",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 15690,
+   "anio": 2025
+  },
+  "santa cruz de tenerife": {
+   "municipio": "Santa Cruz de Tenerife",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 211957,
+   "anio": 2025
+  },
+  "santa ursula": {
+   "municipio": "Santa Úrsula",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 15429,
+   "anio": 2025
+  },
+  "santiago del teide": {
+   "municipio": "Santiago del Teide",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 12582,
+   "anio": 2025
+  },
+  "el sauzal": {
+   "municipio": "El Sauzal",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 9345,
+   "anio": 2025
+  },
+  "tacoronte": {
+   "municipio": "Tacoronte",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 24619,
+   "anio": 2025
+  },
+  "el tanque": {
+   "municipio": "El Tanque",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 2787,
+   "anio": 2025
+  },
+  "tazacorte": {
+   "municipio": "Tazacorte",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 4549,
+   "anio": 2025
+  },
+  "tegueste": {
+   "municipio": "Tegueste",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 11490,
+   "anio": 2025
+  },
+  "tijarafe": {
+   "municipio": "Tijarafe",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 2733,
+   "anio": 2025
+  },
+  "valle gran rey": {
+   "municipio": "Valle Gran Rey",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 4830,
+   "anio": 2025
+  },
+  "vallehermoso": {
+   "municipio": "Vallehermoso",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 2938,
+   "anio": 2025
+  },
+  "valverde": {
+   "municipio": "Valverde",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 5338,
+   "anio": 2025
+  },
+  "la victoria de acentejo": {
+   "municipio": "La Victoria de Acentejo",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 9448,
+   "anio": 2025
+  },
+  "vilaflor de chasna": {
+   "municipio": "Vilaflor de Chasna",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 1930,
+   "anio": 2025
+  },
+  "villa de mazo": {
+   "municipio": "Villa de Mazo",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 5131,
    "anio": 2025
   }
  }
