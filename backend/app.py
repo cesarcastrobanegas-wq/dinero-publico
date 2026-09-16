@@ -1765,6 +1765,38 @@ def _resumen_por_provincia():
     return filas
 
 
+def _resumen_por_comunidad():
+    """Como _resumen_por_provincia pero agregado a nivel de COMUNIDAD
+    autónoma (no provincia) -- para el mapa interactivo de la home
+    nacional (2026-09-17). Reutiliza POBLACION/DEUDA_VIVA/
+    SALDO_NO_FINANCIERO ya cargados vía COMUNIDAD_AUTONOMA_POR_PROVINCIA,
+    ninguna fuente nueva ni cálculo que no existiera ya a nivel provincia,
+    solo una agregación más. Cubre TODAS las claves de
+    COMUNIDAD_AUTONOMA_LABEL, incluidas las que ya están conectadas para
+    contratos -- si una comunidad no tiene ninguna provincia conectada
+    (Galicia, Aragón, Castilla y León, Castilla-La Mancha, Navarra), sale
+    con habitantes=0/deuda=None/saldo=None, tal cual (el mapa la trata
+    como "sin datos", no la oculta)."""
+    out = {com: {"poblacion": 0, "deuda_eur": 0.0, "saldo_eur": 0.0, "saldo_n": 0}
+           for com in COMUNIDAD_AUTONOMA_LABEL if com != "todas"}
+    for info in POBLACION.values():
+        com = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(info.get("provincia"))
+        if com in out:
+            out[com]["poblacion"] += info.get("poblacion", 0)
+    for info in DEUDA_VIVA.values():
+        com = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(info.get("provincia"))
+        if com in out:
+            out[com]["deuda_eur"] += info.get("deuda_eur", 0.0)
+    for info in SALDO_NO_FINANCIERO.values():
+        com = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(info.get("provincia"))
+        if com in out and info.get("importe_eur") is not None:
+            out[com]["saldo_eur"] += info["importe_eur"]
+            out[com]["saldo_n"] += 1
+    for com, d in out.items():
+        d["deuda_por_habitante"] = (d["deuda_eur"] / d["poblacion"]) if d["poblacion"] else None
+    return out
+
+
 def _cargar_cuentas_anuales():
     """Carga cuentas_anuales.json (generado por actualizar_cuentas_anuales.py):
     idEntidad + último ejercicio rendido en la Plataforma de Rendición de
@@ -3737,6 +3769,72 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "badajoz": "Badajoz, Mérida, Don Benito, Almendralejo…",
     "caceres": "Cáceres, Plasencia, Navalmoral de la Mata, Coria…",
 }
+
+# ─── Mapa interactivo de comunidades autónomas (home nacional, 2026-09-17) ──
+# Base: mapa-espana.svg (Wikimedia Commons, "Autonomous communities of
+# Spain.svg", CC BY-SA 3.0 / GFDL, autor en el propio fichero -- crédito
+# obligatorio, ver _footer_html) renderizado a un viewBox de 900x850 para
+# este sitio. El SVG fuente NO trae id/title utilizables por región (paths
+# con nombres autogenerados de CorelDRAW, sin metadata) -- las coordenadas
+# de abajo se sacaron renderizando el SVG con Playwright y leyendo la
+# posición real de cada región a ojo sobre la captura (incluida una
+# ampliación 3x de la zona norte, muy apretada, para separar bien
+# Cantabria/País Vasco/Navarra/La Rioja) -- verificado visualmente, no
+# adivinado. r = radio del área clicable en unidades del viewBox, más
+# pequeño en esa zona norte para no solapar entre sí.
+#
+# "destino": la provincia (clave de MUNICIPIOS_POR_PROVINCIA) a la que
+# lleva el click. Para comunidades de una sola provincia es directo. Para
+# las de varias provincias (Cataluña/Comunitat Valenciana/Andalucía/
+# Extremadura) se enlaza a UNA provincia representativa (simplificación
+# deliberada, documentada aquí -- construir una landing agregada por
+# comunidad sería más correcto pero es un cambio mayor; desde esa página
+# ya se puede navegar al resto de provincias de la misma comunidad con
+# las pestañas ya existentes). None = comunidad sin ninguna provincia
+# conectada todavía (Galicia/Aragón/Castilla y León/Castilla-La Mancha/
+# Navarra) -- se muestra en el mapa (bandera incluida) pero sin click ni
+# tooltip de datos, nunca un enlace roto.
+_MAPA_CCAA = [
+    {"comunidad": "galicia", "bandera": "galicia", "label": "Galicia", "destino": None,
+     "cx": 80, "cy": 60, "r": 45},
+    {"comunidad": "asturias", "bandera": "asturias", "label": "Principado de Asturias", "destino": "asturias",
+     "cx": 185, "cy": 42, "r": 33},
+    {"comunidad": "cantabria", "bandera": "cantabria", "label": "Cantabria", "destino": "cantabria",
+     "cx": 258, "cy": 48, "r": 17},
+    {"comunidad": "pais_vasco", "bandera": "pais_vasco", "label": "País Vasco", "destino": "pais_vasco",
+     "cx": 345, "cy": 58, "r": 17},
+    {"comunidad": "navarra", "bandera": "navarra", "label": "Comunidad Foral de Navarra", "destino": None,
+     "cx": 378, "cy": 78, "r": 17},
+    {"comunidad": "la_rioja", "bandera": "la_rioja", "label": "La Rioja", "destino": "la_rioja",
+     "cx": 335, "cy": 108, "r": 15},
+    {"comunidad": "castilla_leon", "bandera": "castilla_leon", "label": "Castilla y León", "destino": None,
+     "cx": 220, "cy": 160, "r": 55},
+    {"comunidad": "aragon", "bandera": "aragon", "label": "Aragón", "destino": None,
+     "cx": 430, "cy": 155, "r": 45},
+    {"comunidad": "cataluna", "bandera": "cataluna", "label": "Cataluña", "destino": "barcelona",
+     "cx": 555, "cy": 130, "r": 50},
+    {"comunidad": "madrid", "bandera": "madrid", "label": "Comunidad de Madrid", "destino": "madrid",
+     "cx": 275, "cy": 232, "r": 30},
+    {"comunidad": "extremadura", "bandera": "extremadura", "label": "Extremadura", "destino": "badajoz",
+     "cx": 150, "cy": 312, "r": 45},
+    {"comunidad": "castilla_mancha", "bandera": "castilla_mancha", "label": "Castilla-La Mancha", "destino": None,
+     "cx": 320, "cy": 300, "r": 50},
+    {"comunidad": "valenciana", "bandera": "valenciana", "label": "Comunitat Valenciana", "destino": "valencia",
+     "cx": 478, "cy": 305, "r": 33},
+    {"comunidad": "baleares", "bandera": "baleares", "label": "Illes Balears", "destino": "baleares",
+     "cx": 600, "cy": 320, "r": 24},
+    {"comunidad": "murcia", "bandera": "murcia", "label": "Región de Murcia", "destino": "murcia",
+     "cx": 400, "cy": 405, "r": 30},
+    {"comunidad": "andalucia", "bandera": "andalucia", "label": "Andalucía", "destino": "sevilla",
+     "cx": 240, "cy": 430, "r": 55},
+    {"comunidad": "ceuta", "bandera": "ceuta", "label": "Ciudad Autónoma de Ceuta", "destino": "ceuta",
+     "cx": 210, "cy": 535, "r": 16},
+    {"comunidad": "melilla", "bandera": "melilla", "label": "Ciudad Autónoma de Melilla", "destino": "melilla",
+     "cx": 315, "cy": 572, "r": 16},
+    {"comunidad": "canarias", "bandera": "canarias", "label": "Canarias", "destino": "las_palmas",
+     "cx": 545, "cy": 565, "r": 55},
+]
+_BANDERAS_CCAA = {r["bandera"] for r in _MAPA_CCAA}
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
 # dominio Socrata que PSCP/RPC. Esta misma clave sirve de doble propósito
@@ -8740,6 +8838,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
    Mismo amarillo que fondos UE (.fue-header h2, badges CORDIS/Cohesion)
    para mantener "UE = amarillo" consistente en todo el sitio. */
 .home-grid{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start;}
+.home-sidebar-stack{display:flex;flex-direction:column;gap:20px;}
 .noticias-ue-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:2px;position:sticky;top:80px;}
 .nu-panel-title{font-size:13px;font-weight:600;color:var(--yellow);margin-bottom:10px;}
 .noticia-ue-item{padding:10px 0;border-bottom:1px solid var(--border);}
@@ -8870,6 +8969,66 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 @keyframes scroll-hint-nudge{
   0%,100%{transform:translateX(0);}
   50%{transform:translateX(4px);}
+}
+
+/* ── mapa interactivo de comunidades (home nacional, 2026-09-17) ────────── */
+.mapa-ccaa-wrap{position:relative;max-width:700px;margin:0 auto;}
+.mapa-ccaa-svg{width:100%;height:auto;display:block;}
+.mapa-ccaa-base{width:100%;height:auto;display:block;pointer-events:none;user-select:none;}
+.mapa-hotspot{fill:#000;opacity:0;cursor:pointer;transition:opacity .15s;}
+.mapa-hotspot:hover,.mapa-hotspot:focus{opacity:.10;}
+.mapa-hotspot.sin-datos{cursor:default;}
+.mapa-hotspot.sin-datos:hover{opacity:.05;}
+.mapa-bandera{pointer-events:none;}
+.mapa-bandera image{filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));}
+.mapa-bandera.sin-datos image{opacity:.9;filter:grayscale(85%) drop-shadow(0 1px 3px rgba(0,0,0,.6));}
+.mapa-tooltip{position:absolute;z-index:20;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text);box-shadow:0 6px 20px rgba(0,0,0,.35);pointer-events:none;min-width:180px;max-width:240px;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;}
+.mapa-tooltip.show{opacity:1;transform:translateY(0);}
+.mapa-tooltip .mt-titulo{font-weight:600;margin-bottom:5px;color:var(--accent);}
+.mapa-tooltip .mt-fila{display:flex;justify-content:space-between;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);}
+.mapa-tooltip .mt-fila b{color:var(--text);font-weight:600;}
+.mapa-tooltip .mt-sin-datos{font-size:11px;color:var(--dim);font-style:italic;}
+.mapa-credito{font-size:10px;color:var(--dim);text-align:center;margin-top:6px;}
+.mapa-credito a{color:var(--dim);}
+@media (max-width:520px){
+  .mapa-tooltip{max-width:200px;font-size:11px;}
+}
+
+/* ── sidebar ranking de transparencia (home nacional) ────────────────────── */
+.rk-sidebar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+.rk-sidebar-title{font-weight:600;font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.rk-sidebar-list{display:flex;flex-direction:column;gap:8px;}
+.rk-sidebar-item{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);}
+.rk-sidebar-item:last-child{border-bottom:none;}
+.rk-sidebar-pos{font-family:'IBM Plex Mono',monospace;color:var(--dim);width:18px;flex-shrink:0;}
+.rk-sidebar-muni{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rk-sidebar-valor{font-family:'IBM Plex Mono',monospace;color:var(--green);font-size:11px;white-space:nowrap;}
+.rk-sidebar-ver{display:block;margin-top:12px;font-size:11px;text-align:center;}
+
+/* ── gancho de personalización (home nacional) ───────────────────────────── */
+.personaliza-banner{background:linear-gradient(135deg,#1c4fa0 0%,#0b2145 100%);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#fff;}
+.personaliza-banner.oculto{display:none;}
+.personaliza-texto{flex:1;min-width:200px;font-size:13px;}
+.personaliza-input-row{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:220px;position:relative;}
+.personaliza-input-row input{flex:1;min-width:160px;padding:9px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.personaliza-input-row input::placeholder{color:rgba(255,255,255,.6);}
+.personaliza-input-row button{padding:9px 16px;border-radius:6px;border:none;background:var(--accent);color:#000;font-weight:600;cursor:pointer;font-size:12px;white-space:nowrap;}
+.personaliza-cerrar{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;padding:0 4px;}
+.personaliza-sugerencias{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:15;display:none;}
+.personaliza-sugerencias.show{display:block;}
+.personaliza-sug-item{padding:8px 12px;font-size:12px;color:var(--text);cursor:pointer;}
+.personaliza-sug-item:hover{background:rgba(88,166,255,.1);}
+.personaliza-resultado{background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:16px 20px;margin-bottom:20px;}
+.personaliza-resultado.oculto{display:none;}
+.personaliza-resultado h3{margin:0 0 10px;font-size:14px;}
+.personaliza-resultado .pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.personaliza-resultado .pr-stat{background:var(--bg);border-radius:6px;padding:10px 12px;}
+.personaliza-resultado .pr-stat-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;}
+.personaliza-resultado .pr-stat-valor{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--accent);margin-top:3px;}
+.personaliza-resultado .pr-cerrar{float:right;background:none;border:none;color:var(--dim);cursor:pointer;font-size:13px;}
+@media (max-width:600px){
+  .personaliza-banner{flex-direction:column;align-items:stretch;}
+  .personaliza-input-row{width:100%;}
 }
 """
 
@@ -10510,6 +10669,18 @@ def _buscar_posicion_municipio(q, limite=10):
                 "rank_nacional": _rank(alcaldes_ordenados, clave_muni),
                 "total_nacional": len(alcaldes_ordenados),
             }
+        # Contratos ya cargados para este municipio -- añadido 2026-09-17
+        # para el gancho de personalización de la home (ver
+        # render_landing_nacional_html): reutiliza _db_get_municipio, ya
+        # existente (un SELECT por PK), ningún dato nuevo ni fuente nueva,
+        # solo se expone aquí para no tener que dar de alta un endpoint
+        # aparte solo para esto.
+        d_muni = _db_get_municipio(f["municipio"])
+        if d_muni and d_muni.get("contratos"):
+            item["contratos"] = {
+                "total": d_muni.get("total_contratos", len(d_muni["contratos"])),
+                "importe_total_fmt": fmt_eur(str(sum(c.get("importe_num", 0.0) for c in d_muni["contratos"]))),
+            }
         resultados.append(item)
 
     return {"query": q, "resultados": resultados, "total_coincidencias": len(coincidencias)}
@@ -11348,6 +11519,296 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     return _page_shell(titulo, body, description=descripcion, provincia=provincia)
 
 
+def _personalizacion_html():
+    """Gancho de personalización de la home nacional (2026-09-17, petición
+    de César): banner no intrusivo (dismissible, recordado en
+    localStorage) que pregunta el municipio del usuario y muestra datos ya
+    públicos sobre él -- posición en rankings + contratos/importe ya
+    cargados. Reutiliza /api/rankings-municipio?q=X, el endpoint público
+    ya existente (se le añadieron 2 campos más -- total de contratos e
+    importe -- en esta misma sesión, ver _buscar_posicion_municipio, pero
+    es el mismo endpoint, sin ruta nueva). Todo el estado (municipio
+    elegido, banner descartado) vive SOLO en localStorage del navegador --
+    esta función no lee ni escribe nada en el servidor, solo pinta el
+    HTML/JS que hace las peticiones normales de lectura."""
+    return f"""<div class="personaliza-banner" id="personaliza-banner">
+    <div class="personaliza-texto">📍 <b>¿Cuál es tu municipio?</b> Te enseñamos lo que ha gastado tu ayuntamiento y su puesto en los rankings.</div>
+    <div class="personaliza-input-row">
+      <input type="text" id="personaliza-input" placeholder="Escribe tu municipio…" autocomplete="off">
+      <div class="personaliza-sugerencias" id="personaliza-sugerencias"></div>
+      <button type="button" id="personaliza-btn">Ver</button>
+    </div>
+    <button type="button" class="personaliza-cerrar" id="personaliza-cerrar" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="personaliza-resultado oculto" id="personaliza-resultado"></div>
+  <script>{_PERSONALIZACION_JS}</script>"""
+
+
+_PERSONALIZACION_JS = r"""(function(){
+  var LS_KEY = 'dp_mi_municipio';
+  var LS_OCULTO = 'dp_personaliza_oculta';
+  var banner = document.getElementById('personaliza-banner');
+  var input = document.getElementById('personaliza-input');
+  var sugs = document.getElementById('personaliza-sugerencias');
+  var btn = document.getElementById('personaliza-btn');
+  var cerrar = document.getElementById('personaliza-cerrar');
+  var resultadoBox = document.getElementById('personaliza-resultado');
+  if (!banner || !resultadoBox) return;
+
+  function guardado(){
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch(e){ return null; }
+  }
+  function guardar(obj){
+    try { localStorage.setItem(LS_KEY, JSON.stringify(obj)); } catch(e){}
+  }
+  function ocultarBanner(permanente){
+    banner.classList.add('oculto');
+    if (permanente){ try { localStorage.setItem(LS_OCULTO, '1'); } catch(e){} }
+  }
+
+  function pintarResultado(item){
+    var filas = '';
+    if (item.contratos){
+      filas += '<div class="pr-stat"><div class="pr-stat-label">Contratos cargados</div><div class="pr-stat-valor">'
+        + item.contratos.total + ' · ' + item.contratos.importe_total_fmt + '</div></div>';
+    }
+    if (item.indice){
+      filas += '<div class="pr-stat"><div class="pr-stat-label">Índice de Transparencia</div><div class="pr-stat-valor">'
+        + item.indice.valor_fmt + '/100 (#' + item.indice.rank_nacional + ' de ' + item.indice.total_nacional + ')</div></div>';
+    }
+    if (item.deuda_habitante){
+      filas += '<div class="pr-stat"><div class="pr-stat-label">Deuda por habitante</div><div class="pr-stat-valor">'
+        + item.deuda_habitante.valor_fmt + ' (#' + item.deuda_habitante.rank_nacional + ' de ' + item.deuda_habitante.total_nacional + ')</div></div>';
+    }
+    if (item.alcalde){
+      filas += '<div class="pr-stat"><div class="pr-stat-label">Sueldo alcalde/sa</div><div class="pr-stat-valor">'
+        + item.alcalde.nombre + ' · ' + item.alcalde.importe_fmt + '</div></div>';
+    }
+    if (!filas){
+      filas = '<div class="pr-stat"><div class="pr-stat-label">Sin datos suficientes todavía para este municipio.</div></div>';
+    }
+    resultadoBox.innerHTML = '<button type="button" class="pr-cerrar" id="personaliza-resultado-cerrar">✕ cambiar</button>'
+      + '<h3>📍 ' + item.municipio + ' (' + item.provincia_label + ')</h3>'
+      + '<div class="pr-grid">' + filas + '</div>'
+      + '<a class="btn-ver" href="' + item.ficha_url + '" style="display:inline-block;margin-top:10px">Ver ficha completa →</a>';
+    resultadoBox.classList.remove('oculto');
+    document.getElementById('personaliza-resultado-cerrar').addEventListener('click', function(){
+      resultadoBox.classList.add('oculto');
+    });
+  }
+
+  function buscarYMostrar(nombreExacto){
+    fetch('/api/rankings-municipio?q=' + encodeURIComponent(nombreExacto))
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var match = (data.resultados || []).find(function(x){
+          return x.municipio.toLowerCase() === nombreExacto.toLowerCase();
+        }) || data.resultados[0];
+        if (match){
+          pintarResultado(match);
+          ocultarBanner(true);
+        }
+      })
+      .catch(function(){});
+  }
+
+  // Si ya hay municipio guardado, saltar directo al resultado sin mostrar el banner.
+  var previo = guardado();
+  if (previo && previo.municipio){
+    ocultarBanner(false);
+    buscarYMostrar(previo.municipio);
+  } else if (localStorage.getItem(LS_OCULTO) === '1') {
+    ocultarBanner(false);
+  }
+
+  if (cerrar) cerrar.addEventListener('click', function(){ ocultarBanner(true); });
+
+  var timer = null;
+  if (input) input.addEventListener('input', function(){
+    var q = input.value.trim();
+    if (timer) clearTimeout(timer);
+    if (q.length < 2){ sugs.classList.remove('show'); sugs.innerHTML=''; return; }
+    timer = setTimeout(function(){
+      fetch('/api/rankings-municipio?q=' + encodeURIComponent(q))
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          var lista = (data.resultados || []).slice(0, 8);
+          if (!lista.length){ sugs.classList.remove('show'); sugs.innerHTML=''; return; }
+          sugs.innerHTML = lista.map(function(item){
+            return '<div class="personaliza-sug-item" data-muni="' + item.municipio.replace(/"/g,'&quot;') + '">'
+              + item.municipio + ' <span style="color:var(--dim)">(' + item.provincia_label + ')</span></div>';
+          }).join('');
+          sugs.classList.add('show');
+          Array.prototype.forEach.call(sugs.querySelectorAll('.personaliza-sug-item'), function(el){
+            el.addEventListener('click', function(){
+              var nombre = el.getAttribute('data-muni');
+              input.value = nombre;
+              sugs.classList.remove('show');
+              guardar({municipio: nombre});
+              buscarYMostrar(nombre);
+            });
+          });
+        })
+        .catch(function(){});
+    }, 300);
+  });
+
+  function enviar(){
+    var q = input.value.trim();
+    if (q.length < 2) return;
+    guardar({municipio: q});
+    buscarYMostrar(q);
+    sugs.classList.remove('show');
+  }
+  if (btn) btn.addEventListener('click', enviar);
+  if (input) input.addEventListener('keydown', function(evt){
+    if (evt.key === 'Enter'){ evt.preventDefault(); enviar(); }
+  });
+  document.addEventListener('click', function(evt){
+    if (sugs && !sugs.contains(evt.target) && evt.target !== input) sugs.classList.remove('show');
+  });
+})();"""
+
+
+def _sidebar_ranking_transparencia_html(top_n=8):
+    """Bloque lateral con el Top N del Índice de Transparencia para la home
+    nacional (2026-09-17, petición de César) -- reutiliza
+    _indice_transparencia_cacheado() tal cual (mismo caché de 1h que ya
+    usa /rankings, ningún cálculo nuevo), solo recorta a los primeros
+    top_n. Si el índice tarda en tener cobertura suficiente en algún
+    momento y sale vacío, el bloque no se pinta (mejor nada que una caja
+    vacía)."""
+    filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
+    filas.sort(key=lambda f: f["indice"], reverse=True)
+    filas = filas[:top_n]
+    if not filas:
+        return ""
+    items = "".join(
+        f'<a class="rk-sidebar-item" href="/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}">'
+        f'<span class="rk-sidebar-pos">{i}.</span>'
+        f'<span class="rk-sidebar-muni">{esc(f["municipio"])}</span>'
+        f'<span class="rk-sidebar-valor">{f["indice"]:.0f}/100</span>'
+        f'</a>'
+        for i, f in enumerate(filas, 1)
+    )
+    return f"""<aside class="rk-sidebar">
+      <div class="rk-sidebar-title">🏅 Índice de Transparencia</div>
+      <div class="rk-sidebar-list">{items}</div>
+      <a class="rk-sidebar-ver btn-ver" href="/rankings#indice-transparencia">Ver ranking completo →</a>
+    </aside>"""
+
+
+def _mapa_ccaa_html():
+    """Mapa interactivo de comunidades autónomas para la home nacional
+    (2026-09-17, petición de César, sustituye la cuadrícula de texto de
+    "Cobertura" como interfaz de selección -- misma lógica de navegación
+    de siempre, /?provincia=X, solo cambia cómo se elige). Ver _MAPA_CCAA
+    para las coordenadas (verificadas visualmente) y la nota sobre
+    "destino" para comunidades multi-provincia.
+
+    Cada región es un <a href> real (funciona sin JS, tecleando Tab
+    también) que envuelve un círculo invisible (el área clicable) + el
+    icono de la bandera -- el propio SVG del mapa de fondo se sirve aparte
+    como <image>, cacheable por el navegador. El tooltip (JS, ver
+    _MAPA_CCAA_JS) lee las estadísticas ya precalculadas en el atributo
+    data-tooltip de cada región, generadas aquí en el servidor a partir de
+    _resumen_por_comunidad() -- ninguna petición nueva al cargar la home."""
+    resumen = _resumen_por_comunidad()
+    regiones_html = []
+    for r in _MAPA_CCAA:
+        com = r["comunidad"]
+        stats = resumen.get(com, {})
+        sin_datos = r["destino"] is None
+        clase_extra = " sin-datos" if sin_datos else ""
+
+        if sin_datos:
+            tooltip_inner = (f'<div class="mt-titulo">{esc(r["label"])}</div>'
+                              f'<div class="mt-sin-datos">Aún sin datos en Dinero Público.</div>')
+        else:
+            filas = []
+            if stats.get("poblacion"):
+                filas.append(f'<div class="mt-fila"><span>Habitantes</span><b>{fmt_num(stats["poblacion"])}</b></div>')
+            if stats.get("deuda_por_habitante") is not None:
+                filas.append(f'<div class="mt-fila"><span>Deuda/hab.</span><b>{fmt_eur(stats["deuda_por_habitante"])}</b></div>')
+            if stats.get("saldo_n"):
+                etiqueta_saldo = "Superávit" if stats["saldo_eur"] >= 0 else "Déficit"
+                filas.append(f'<div class="mt-fila"><span>{etiqueta_saldo} agreg.</span><b>{fmt_eur(abs(stats["saldo_eur"]))}</b></div>')
+            filas_html = "".join(filas) if filas else '<div class="mt-sin-datos">Sin datos agregados todavía.</div>'
+            tooltip_inner = f'<div class="mt-titulo">{esc(r["label"])}</div>{filas_html}'
+
+        # <g> (no <a>) para comunidades sin destino -- <span> no es un
+        # elemento SVG válido como contenedor aquí, y <g> además evita
+        # cualquier navegación/foco de teclado sobre algo que no lleva a
+        # ningún sitio.
+        tag = "a" if r["destino"] else "g"
+        href_attr = f' href="/?provincia={esc(r["destino"])}"' if r["destino"] else ""
+
+        regiones_html.append(f"""<{tag} class="mapa-region"{href_attr}
+          data-tooltip="{esc(tooltip_inner)}" aria-label="{esc(r['label'])}">
+          <circle class="mapa-hotspot{clase_extra}" cx="{r['cx']}" cy="{r['cy']}" r="{r['r']}"/>
+          <g class="mapa-bandera{clase_extra}" transform="translate({r['cx']-18},{r['cy']-12})">
+            <image href="/static/flags/{r['bandera']}.svg" width="36" height="24" preserveAspectRatio="xMidYMid slice"/>
+          </g>
+        </{tag}>""")
+
+    return f"""<div class="mapa-ccaa-wrap" id="mapa-ccaa-wrap">
+    <svg class="mapa-ccaa-svg" viewBox="0 0 700 642.727" xmlns="http://www.w3.org/2000/svg">
+      <image class="mapa-ccaa-base" href="/static/mapa-espana.svg" x="0" y="0" width="700" height="642.727"/>
+      {"".join(regiones_html)}
+    </svg>
+    <div class="mapa-tooltip" id="mapa-tooltip"></div>
+  </div>
+  <div class="mapa-credito">Mapa: Wikimedia Commons (CC BY-SA 3.0 / GFDL) · Banderas: Wikimedia Commons (dominio público / CC BY-SA, varios autores)</div>
+  <script>{_MAPA_CCAA_JS}</script>"""
+
+
+# JS del mapa de comunidades: tooltip en hover (desktop) y en el primer tap
+# en móvil (un segundo tap sobre la misma región, o cualquier tap fuera,
+# navega/cierra -- el <a href> de cada región sigue funcionando siempre,
+# esto solo añade el tooltip por encima). Sin dependencias nuevas.
+_MAPA_CCAA_JS = r"""(function(){
+  var wrap = document.getElementById('mapa-ccaa-wrap');
+  var tip = document.getElementById('mapa-tooltip');
+  if (!wrap || !tip) return;
+  var regiones = wrap.querySelectorAll('.mapa-region');
+  var activa = null;
+
+  function mostrar(el, evt){
+    tip.innerHTML = el.getAttribute('data-tooltip') || '';
+    var wrapRect = wrap.getBoundingClientRect();
+    var x = (evt && evt.clientX != null) ? evt.clientX - wrapRect.left : wrapRect.width/2;
+    var y = (evt && evt.clientY != null) ? evt.clientY - wrapRect.top : wrapRect.height/2;
+    var tipW = 220, tipH = 90; // estimado antes de pintar, suficiente para no salirse
+    var left = Math.min(Math.max(x + 14, 4), wrapRect.width - tipW - 4);
+    var top = Math.min(Math.max(y + 14, 4), wrapRect.height - tipH - 4);
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+    tip.classList.add('show');
+    activa = el;
+  }
+  function ocultar(){
+    tip.classList.remove('show');
+    activa = null;
+  }
+
+  // Solo hover en ratón real -- en táctil NO se intenta un tooltip-antes-
+  // de-navegar (se probó un esquema de "primer tap = tooltip, segundo tap
+  // = navega" y falló de forma poco fiable en pruebas reales con
+  // Playwright: el segundo tap no siempre disparaba la navegación nativa
+  // del <a>, un fallo justo en el dispositivo de mayor tráfico del sitio).
+  // En táctil el tap simplemente navega, sin paso intermedio -- el hover
+  // es un concepto de ratón, no se pierde nada importante al no
+  // replicarlo con gestos en pantallas táctiles.
+  var esTactil = window.matchMedia && window.matchMedia('(hover: none)').matches;
+
+  if (!esTactil) regiones.forEach(function(el){
+      el.addEventListener('mouseenter', function(evt){ mostrar(el, evt); });
+      el.addEventListener('mousemove', function(evt){ mostrar(el, evt); });
+      el.addEventListener('mouseleave', ocultar);
+  });
+})();"""
+
+
 def render_landing_nacional_html(datos):
     """Home agregada: cifras combinadas de todas las provincias cargadas,
     desglose secundario por región, y el top 1 del ranking nacional. Es la
@@ -11464,9 +11925,18 @@ def render_landing_nacional_html(datos):
     # sitio sigue reservando el hueco de anuncio como siempre). Petición de
     # César 2026-09-16: que sea lo primero que se vea al entrar, no solo
     # algo debajo del ranking.
+    # Gancho de personalización + mapa interactivo de comunidades
+    # (2026-09-17, petición de César) -- ver _personalizacion_html/
+    # _mapa_ccaa_html para el detalle. Se calculan aquí (no en el bloque
+    # de arriba) para mantener el resto de la función igual que estaba.
+    personalizacion_html = _personalizacion_html()
+    mapa_html = _mapa_ccaa_html()
+    sidebar_ranking_html = _sidebar_ranking_transparencia_html()
+
     body = f"""<div class="section-title" style="margin-top:0">🔍 Casos de investigación</div>
   <div class="region-grid">{casos_home_html}</div>
   <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
+  {personalizacion_html}
   <div class="hero-panel">
     <div class="hero">
       <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
@@ -11494,13 +11964,20 @@ def render_landing_nacional_html(datos):
     {stats}
   </div>
   <div class="section-title">Cobertura</div>
-  <div class="region-grid">{cobertura_html}</div>
+  {mapa_html}
+  <details style="margin:14px 0 24px">
+    <summary style="cursor:pointer;font-size:12px;color:var(--dim)">Ver todas las provincias en una lista (texto)</summary>
+    <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
+  </details>
   <div class="home-grid">
-    <aside class="noticias-ue-panel">
-      <div class="nu-panel-title">🇪🇺 Noticias UE · Presupuesto y fondos</div>
-      {noticias_html}
-      <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es" target="_blank" rel="noopener">Ver más en la Comisión Europea →</a>
-    </aside>
+    <div class="home-sidebar-stack">
+      <aside class="noticias-ue-panel">
+        <div class="nu-panel-title">🇪🇺 Noticias UE · Presupuesto y fondos</div>
+        {noticias_html}
+        <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es" target="_blank" rel="noopener">Ver más en la Comisión Europea →</a>
+      </aside>
+      {sidebar_ranking_html}
+    </div>
     <div class="home-main-col">
       <div class="section-title" style="margin-top:0">🏆 Liderando ahora mismo · Ranking Nacional</div>
       <div class="top1-grid">{top1_html}</div>
@@ -12317,6 +12794,32 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(
             data, content_type="image/png",
             headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=False,
+        )
+
+    # Mapa interactivo de comunidades autónomas + banderas (2026-09-17,
+    # petición de César) -- ficheros SVG reales en backend/static/, mismo
+    # patrón que los iconos PWA de arriba (asset de código, servido desde
+    # BASE_DIR, no DATA_DIR). Allowlist explícita de nombres conocidos (19
+    # banderas + el mapa) en vez de servir cualquier ruta bajo /static/
+    # flags/ -- evita cualquier riesgo de path traversal con un chequeo
+    # extra que no cuesta nada. gzip_ok activo (SVG es texto XML, comprime
+    # muy bien -- los ficheros de banderas más pesados bajan de ~450KB a
+    # bajo 100KB tras gzip). NO se añaden a _PWA_STATIC_PATHS_BASE (el
+    # service worker sigue cacheando solo los 6 ficheros mínimos de
+    # siempre, sin tocar ese diseño).
+    if path == "/static/mapa-espana.svg" or (
+        path.startswith("/static/flags/") and path.endswith(".svg")
+        and path[len("/static/flags/"):-len(".svg")] in _BANDERAS_CCAA
+    ):
+        asset_path = os.path.join(BASE_DIR, path.lstrip("/"))
+        try:
+            with open(asset_path, "rb") as f:
+                data = f.read()
+        except OSError:
+            return 404, {"Content-Length": "0"}, b""
+        return _resp(
+            data, content_type="image/svg+xml; charset=utf-8",
+            headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
         )
 
     if path == "/manifest.json":
