@@ -11216,6 +11216,18 @@ def render_landing_nacional_html(datos):
         _top1_card(top_imp_nac, "🥇 Mayor importe", lambda g: fmt_eur(str(g["importe"])))
     )
 
+    # Bloque "Casos de investigación" en la propia portada (2026-09-16,
+    # petición de César): /casos ya existía enlazado desde el footer y el
+    # sitemap, pero para que sirva de cara a AdSense (contenido original
+    # visible, no solo indexable) y a una visita normal, hace falta que se
+    # vea sin teclear la URL a mano. Reutiliza _CASOS (misma lista que
+    # render_casos_index_html) y las clases .region-grid/.region-card ya
+    # existentes -- mismo patrón que "Cobertura" más arriba, sin CSS nuevo.
+    casos_home_html = "".join(f"""<a class="region-card" href="/casos/{esc(c['slug'])}">
+      <h3>📌 {esc(c['titulo'])}</h3>
+      <div class="region-stats">{esc(c['resumen'])}</div>
+    </a>""" for c in _CASOS)
+
     # Columna de noticias UE (presupuesto/fondos/subvenciones) -- ver
     # actualizar_noticias_ue(). Solo titular + resumen corto + enlace
     # directo a ec.europa.eu, nunca el texto completo del comunicado.
@@ -11270,6 +11282,9 @@ def render_landing_nacional_html(datos):
       <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
     </div>
   </div>
+  <div class="section-title">🔍 Casos de investigación</div>
+  <div class="region-grid">{casos_home_html}</div>
+  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
   <script>window.__PROVINCIA__ = "";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
 
