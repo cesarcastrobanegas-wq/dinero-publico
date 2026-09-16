@@ -738,6 +738,136 @@ MUNICIPIOS_ASTURIAS = [
     "Yernes y Tameza",
 ]
 
+# Extremadura: 2 provincias reales (Badajoz/Cáceres), NO uniprovincial --
+# mismo patrón que Cataluña/Comunitat Valenciana/Andalucía (provincias
+# separadas), no como Murcia/Asturias/Madrid. Investigación 2026-09-16:
+# Mecanismo A normal, verificado contra un ZIP real de PLACE (29
+# apariciones de "ayuntamiento de badajoz", 16 de "ayuntamiento de
+# cáceres", 18 de "ayuntamiento de mérida", 25 de "ayuntamiento de don
+# benito", 17 de "ayuntamiento de coria", entre otras, en una sola
+# muestra parcial). No es comunidad foral con plataforma propia.
+#
+# Listas obtenidas de Wikipedia -- IMPORTANTE: la primera pasada de
+# Cáceres incluía "Cuaternos", una entrada que NO existe en ninguna otra
+# fuente de contraste (todopueblos.es, búsqueda del número real de
+# municipios) -- 224 en vez de los 223 reales. Descartada tras
+# verificación cruzada, no es un municipio real. Lección para futuras
+# regiones: contar SIEMPRE el total obtenido contra una segunda fuente
+# antes de dar la lista por buena, no asumir que el primer fetch es
+# correcto solo porque tiene forma de tabla plausible.
+#
+# 165/165 municipios de Badajoz -- sin colisión de nombre exacto con
+# ninguna provincia ya conectada.
+MUNICIPIOS_BADAJOZ = [
+    "Acedera","Aceuchal","Ahillones","Alange","La Albuera","Alburquerque",
+    "Alconchel","Alconera","Aljucén","Almendral","Almendralejo",
+    "Arroyo de San Serván","Atalaya","Azuaga","Badajoz","Barcarrota",
+    "Baterno","Benquerencia de la Serena","Berlanga","Bienvenida",
+    "Bodonal de la Sierra","Burguillos del Cerro","Cabeza del Buey",
+    "Cabeza la Vaca","Calamonte","Calera de León","Calzadilla de los Barros",
+    "Campanario","Campillo de Llerena","Capilla","Carmonita",
+    "El Carrascalejo","Casas de Don Pedro","Casas de Reina","Castilblanco",
+    "Castuera","Cheles","La Codosera","Cordobilla de Lácara","La Coronada",
+    "Corte de Peleas","Cristina","Don Álvaro","Don Benito","Entrín Bajo",
+    "Esparragalejo","Esparragosa de la Serena","Esparragosa de Lares","Feria",
+    "Fregenal de la Sierra","Fuenlabrada de los Montes","Fuente de Cantos",
+    "Fuente del Arco","Fuente del Maestre","Fuentes de León","Garbayuela",
+    "Garlitos","La Garrovilla","Granja de Torrehermosa","Guadiana","Guareña",
+    "La Haba","Helechosa de los Montes","Herrera del Duque",
+    "Higuera de la Serena","Higuera de Llerena","Higuera de Vargas",
+    "Higuera la Real","Hinojosa del Valle","Hornachos",
+    "Jerez de los Caballeros","La Lapa","Llera","Llerena","Lobón","Magacela",
+    "Maguilla","Malcocinado","Malpartida de la Serena","Manchita","Medellín",
+    "Medina de las Torres","Mengabril","Mérida","Mirandilla","Monesterio",
+    "Montemolín","Monterrubio de la Serena","Montijo","La Morera",
+    "La Nava de Santiago","Navalvillar de Pela","Nogales",
+    "Oliva de la Frontera","Oliva de Mérida","Olivenza",
+    "Orellana de la Sierra","Orellana la Vieja","Palomas","La Parra",
+    "Peñalsordo","Peraleda del Zaucejo","Puebla de Alcocer",
+    "Puebla de la Calzada","Puebla de la Reina","Puebla de Obando",
+    "Puebla de Sancho Pérez","Puebla del Maestre","Puebla del Prior",
+    "Pueblonuevo del Guadiana","Quintana de la Serena","Reina","Rena",
+    "Retamal de Llerena","Ribera del Fresno","Risco","La Roca de la Sierra",
+    "Salvaleón","Salvatierra de los Barros","San Pedro de Mérida",
+    "San Vicente de Alcántara","Sancti-Spíritus","Santa Amalia","Santa Marta",
+    "Los Santos de Maimona","Segura de León","Siruela","Solana de los Barros",
+    "Talarrubias","Talavera la Real","Táliga","Tamurejo",
+    "Torre de Miguel Sesmero","Torremayor","Torremejía","Trasierra",
+    "Trujillanos","Usagre","Valdecaballeros","Valdelacalzada","Valdetorres",
+    "Valencia de las Torres","Valencia del Mombuey","Valencia del Ventoso",
+    "Valle de la Serena","Valle de Matamoros","Valle de Santa Ana",
+    "Valverde de Burguillos","Valverde de Leganés","Valverde de Llerena",
+    "Valverde de Mérida","Villafranca de los Barros",
+    "Villagarcía de la Torre","Villagonzalo","Villalba de los Barros",
+    "Villanueva de la Serena","Villanueva del Fresno","Villar de Rena",
+    "Villar del Rey","Villarta de los Montes","Zafra","Zahínos",
+    "Zalamea de la Serena","La Zarza","Zarza Capilla",
+]
+
+# 222/223 municipios de Cáceres -- "Arroyomolinos" EXCLUIDO A PROPÓSITO
+# (mismo tipo de incidente que Mieres/Asturias, Cieza/Cantabria, El
+# Molar/Madrid): es un municipio real de Cáceres, pero TAMBIÉN ya existe
+# como municipio real de Madrid (MUNICIPIOS_MADRID, desplegado con datos
+# reales). Se mantiene el de Madrid y se excluye el de Cáceres. Distinto
+# de "Arroyomolinos de la Vera" (también real, sin colisión, SÍ incluido).
+MUNICIPIOS_CACERES = [
+    "Abadía","Abertura","Acebo","Acehúche","Aceituna","Ahigal",
+    "Alagón del Río","Albalá","Alcántara","Alcollarín","Alcuéscar",
+    "Aldea del Cano","La Aldea del Obispo","Aldeacentenera",
+    "Aldeanueva de la Vera","Aldeanueva del Camino","Aldehuela del Jerte",
+    "Alía","Aliseda","Almaraz","Almoharín","Arroyo de la Luz",
+    "Arroyomolinos de la Vera","Baños de Montemayor","Barrado",
+    "Belvís de Monroy","Benquerencia","Berrocalejo","Berzocana",
+    "Bohonal de Ibor","Botija","Brozas","Cabañas del Castillo",
+    "Cabezabellosa","Cabezuela del Valle","Cabrero","Cáceres","Cachorrilla",
+    "Cadalso","Calzadilla","Caminomorisco","Campillo de Deleitosa",
+    "Campo Lugar","Cañamero","Cañaveral","Carbajo","Carcaboso","Carrascalejo",
+    "Casar de Cáceres","Casar de Palomero","Casares de las Hurdes",
+    "Casas de Don Antonio","Casas de Don Gómez","Casas de Millán",
+    "Casas de Miravete","Casas del Castañar","Casas del Monte","Casatejada",
+    "Casillas de Coria","Castañar de Ibor","Ceclavín","Cedillo","Cerezo",
+    "Cilleros","Collado de la Vera","Conquista de la Sierra","Coria",
+    "Cuacos de Yuste","La Cumbre","Deleitosa","Descargamaría","Eljas",
+    "Escurial","Fresnedoso de Ibor","Galisteo","Garciaz","Garganta la Olla",
+    "La Garganta","Gargantilla","Gargüera","Garrovillas de Alconétar",
+    "Garvín","Gata","El Gordo","La Granja","Guadalupe","Guijo de Coria",
+    "Guijo de Galisteo","Guijo de Granadilla","Guijo de Santa Bárbara",
+    "Herguijuela","Hernán-Pérez","Herrera de Alcántara","Herreruela","Hervás",
+    "Higuera de Albalat","Hinojal","Holguera","Hoyos","Huélaga","Ibahernando",
+    "Jaraicejo","Jaraíz de la Vera","Jarandilla de la Vera","Jarilla","Jerte",
+    "Ladrillar","Logrosán","Losar de la Vera","Madrigal de la Vera",
+    "Madrigalejo","Madroñera","Majadas","Malpartida de Cáceres",
+    "Malpartida de Plasencia","Marchagaz","Mata de Alcántara","Membrío",
+    "Mesas de Ibor","Miajadas","Millanes","Mirabel","Mohedas de Granadilla",
+    "Monroy","Montánchez","Montehermoso","Moraleja","Morcillo","Navaconcejo",
+    "Navalmoral de la Mata","Navalvillar de Ibor","Navas del Madroño",
+    "Navezuelas","Nuñomoral","Oliva de Plasencia","Palomero",
+    "Pasarón de la Vera","Pedroso de Acim","Peraleda de la Mata",
+    "Peraleda de San Román","Perales del Puerto","Pescueza","La Pesga",
+    "Piedras Albas","Pinofranqueado","Piornal","Plasencia","Plasenzuela",
+    "Portaje","Portezuelo","Pozuelo de Zarzón","Pueblonuevo de Miramontes",
+    "Puerto de Santa Cruz","Rebollar","Riolobos","Robledillo de Gata",
+    "Robledillo de la Vera","Robledillo de Trujillo","Robledollano",
+    "Romangordo","Rosalejo","Ruanes","Salorino","Salvatierra de Santiago",
+    "San Martín de Trevejo","Santa Ana","Santa Cruz de la Sierra",
+    "Santa Cruz de Paniagua","Santa Marta de Magasca","Santiago de Alcántara",
+    "Santiago del Campo","Santibáñez el Alto","Santibáñez el Bajo",
+    "Saucedilla","Segura de Toro","Serradilla","Serrejón","Sierra de Fuentes",
+    "Talaván","Talaveruela de la Vera","Talayuela","Tejeda de Tiétar",
+    "Tiétar","Toril","Tornavacas","El Torno","Torre de Don Miguel",
+    "Torre de Santa María","Torrecilla de los Ángeles",
+    "Torrecillas de la Tiesa","Torrejón el Rubio","Torrejoncillo",
+    "Torremenga","Torremocha","Torreorgaz","Torrequemada","Trujillo",
+    "Valdastillas","Valdecañas de Tajo","Valdefuentes","Valdehúncar",
+    "Valdelacasa de Tajo","Valdemorales","Valdeobispo",
+    "Valencia de Alcántara","Valverde de la Vera","Valverde del Fresno",
+    "Vegaviana","Viandar de la Vera","Villa del Campo","Villa del Rey",
+    "Villamesías","Villamiel","Villanueva de la Sierra",
+    "Villanueva de la Vera","Villar de Plasencia","Villar del Pedroso",
+    "Villasbuenas de Gata","Zarza de Granadilla","Zarza de Montánchez",
+    "Zarza la Mayor","Zorita",
+]
+
 # Comunidad de Madrid: uniprovincial (como Murcia/Baleares/Cantabria/La
 # Rioja, una sola provincia). Mecanismo A normal, verificado 2026-09-15
 # contra un ZIP real de PLACE: "Junta de Gobierno del Ayuntamiento de
@@ -3513,7 +3643,8 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "cantabria": MUNICIPIOS_CANTABRIA,
                             "la_rioja": MUNICIPIOS_LA_RIOJA,
                             "madrid": MUNICIPIOS_MADRID,
-                            "asturias": MUNICIPIOS_ASTURIAS}
+                            "asturias": MUNICIPIOS_ASTURIAS,
+                            "badajoz": MUNICIPIOS_BADAJOZ, "caceres": MUNICIPIOS_CACERES}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3532,6 +3663,7 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "la_rioja": "La Rioja",
                    "madrid": "Comunidad de Madrid",
                    "asturias": "Principado de Asturias",
+                   "badajoz": "Provincia de Badajoz", "caceres": "Provincia de Cáceres",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3558,6 +3690,7 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "la_rioja": "la_rioja",  # comunidad uniprovincial, mismo patrón que Murcia
     "madrid": "madrid",  # comunidad uniprovincial, mismo patrón que Murcia
     "asturias": "asturias",  # comunidad uniprovincial, mismo patrón que Murcia
+    "badajoz": "extremadura", "caceres": "extremadura",  # 2 provincias de Extremadura, mismo patrón que Cataluña/CV/Andalucía
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
@@ -3565,7 +3698,8 @@ COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluñ
                             "melilla": "Ciudad Autónoma de Melilla", "canarias": "Canarias",
                             "baleares": "Illes Balears", "cantabria": "Cantabria",
                             "la_rioja": "La Rioja", "madrid": "Comunidad de Madrid",
-                            "asturias": "Principado de Asturias"}
+                            "asturias": "Principado de Asturias",
+                            "extremadura": "Extremadura"}
 
 
 def _comunidad_valida(txt):
@@ -3600,6 +3734,8 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "la_rioja": "Logroño, Calahorra, Arnedo…",
     "madrid": "Madrid, Móstoles, Alcalá de Henares…",
     "asturias": "Gijón, Oviedo, Avilés, Langreo…",
+    "badajoz": "Badajoz, Mérida, Don Benito, Almendralejo…",
+    "caceres": "Cáceres, Plasencia, Navalmoral de la Mata, Coria…",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
@@ -4552,6 +4688,26 @@ _EXCLUSION_CONTINUACION_ANCLAJE = {
     # de clave primaria en BD porque son cadenas normalizadas distintas
     # ("villaviciosa" vs "villaviciosa de odon"), a diferencia de Mieres.
     "villaviciosa": " de odon",
+    # Colisiones tipo prefijo (piloto Extremadura, 2026-09-16), misma clase
+    # que las anteriores -- verificadas contra 3 ZIPs reales ANTES de
+    # desplegar, no solo teorizadas. Extremadura tiene muchos más nombres
+    # genéricos cortos que las regiones anteriores, de ahí el número más
+    # alto (10, frente a 1-2 en pilotos previos).
+    "santa marta": " de tormes",  # Badajoz vs "Santa Marta de Tormes" (Salamanca, no conectada)
+    "valdetorres": " de jarama",  # Badajoz vs "Valdetorres de Jarama" (Madrid, SÍ conectada)
+    "cadalso": " de los vidrios",  # Cáceres vs "Cadalso de los Vidrios" (Madrid, SÍ conectada)
+    # "Calzadilla" (Cáceres) vs "Calzadilla DE LOS BARROS" -- ojo, esta NO
+    # es una región distinta: "Calzadilla de los Barros" es el propio
+    # municipio de Badajoz de este mismo piloto (MUNICIPIOS_BADAJOZ). Sin
+    # esta exclusión, el "Calzadilla" de Cáceres se habría atribuido
+    # también los contratos reales de Calzadilla de los Barros.
+    "calzadilla": " de los barros",
+    "coria": " del rio",  # Cáceres vs "Coria del Río" (Sevilla, SÍ conectada)
+    "gata": " de gorgos",  # Cáceres vs "Gata de Gorgos" (Alicante, SÍ conectada)
+    "plasencia": " de jalon",  # Cáceres vs "Plasencia de Jalón" (Zaragoza, no conectada)
+    "santa ana": " la real",  # Cáceres vs "Santa Ana la Real" (Huelva, SÍ conectada)
+    "torrejoncillo": " del rey",  # Cáceres vs "Torrejoncillo del Rey" (Cuenca, no conectada)
+    "torremocha": " de jarama",  # Cáceres vs "Torremocha de Jarama" (Madrid, SÍ conectada)
 }
 
 
