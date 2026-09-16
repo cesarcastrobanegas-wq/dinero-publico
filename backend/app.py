@@ -11833,8 +11833,22 @@ def _route_get(path, qs, gzip_ok=False):
             return _resp(render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro), gzip_ok=gzip_ok)
 
         if provincia_filtro == "todas":
+            # Cache-Control: no-cache -- 2026-09-16: home nacional encontrada
+            # servida con cifras desactualizadas (994 municipios/69.113
+            # contratos, el estado previo a conectar CV/Andalucía/Madrid) pese
+            # a que _db_all_municipios() ya lee cache.db en caliente en cada
+            # petición (nada de caché en el propio código). Confirmado que NO
+            # es un bug de cálculo: pidiendo la home con un query string
+            # distinto (?cb=...) o directamente al subdominio de Render (sin
+            # pasar por el dominio propio) las cifras ya salían correctas y
+            # al día. Todo apunta a un proxy/CDN delante de dinero-publico.com
+            # cacheando la URL exacta "/" desde antes de la expansión -- esta
+            # cabecera (mismo patrón que /sw.js más abajo) evita que vuelva a
+            # quedarse pegada; la copia YA cacheada en el edge necesita una
+            # purga aparte (no algo que este proceso pueda hacer).
             datos_todas = _db_all_municipios()
-            return _resp(render_landing_nacional_html(datos_todas), gzip_ok=gzip_ok)
+            return _resp(render_landing_nacional_html(datos_todas),
+                         headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok)
 
         datos_snap = _db_all_municipios(provincia=provincia_filtro)
         return _resp(render_landing_html(datos_snap, provincia=provincia_filtro), gzip_ok=gzip_ok)
