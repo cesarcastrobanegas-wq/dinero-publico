@@ -9320,6 +9320,7 @@ def _footer_html(provincia="todas"):
     <a href="/aviso-legal">Aviso Legal</a>
     <a href="#" id="cookie-preferencias">Preferencias de cookies</a>
     <a href="/quienes-somos">Quiénes Somos</a>
+    <a href="/casos">Casos</a>
     <span class="ft-sep">|</span>
     <span class="ft-label">Enlaces de interés:</span>
     <a href="https://civio.es" target="_blank" rel="noopener">CIVIO</a>
@@ -11639,6 +11640,133 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
                         provincia=provincia)
 
 
+_CASOS = [
+    {
+        "slug": "contratos-menores-culmina",
+        "titulo": "Lo que una empresa que no aparecía nos enseñó sobre los contratos menores",
+        "resumen": "Por qué una empresa activa en el sector local puede no tener ni una sola "
+                   "adjudicación indexada — y qué nos llevó a construir toda la sección de "
+                   "contratos menores del proyecto.",
+    },
+    {
+        "slug": "sueldo-cero-barcelona",
+        "titulo": "Cuando el sueldo de una alcaldesa aparece en 0€ (y no es un error)",
+        "resumen": "Tres alcaldesas de la provincia de Barcelona figuran sin sueldo municipal. "
+                   "La explicación real, verificada con fuentes oficiales.",
+    },
+]
+
+
+def render_casos_index_html():
+    items_html = "".join(f"""<a class="region-card" href="/casos/{esc(c['slug'])}">
+      <h3>📌 {esc(c['titulo'])}</h3>
+      <div class="region-stats">{esc(c['resumen'])}</div>
+    </a>""" for c in _CASOS)
+    body = f"""<div class="static-page">
+  <h1>Casos</h1>
+  <p>Detrás de cada tabla de contratos hay preguntas que no se responden solo con datos
+  en bruto: por qué una empresa no aparece donde se la esperaba, por qué una cifra que
+  parece un hueco no lo es. Aquí explicamos, caso a caso, lo que hemos investigado y
+  cómo lo hemos verificado.</p>
+  <div class="region-grid">{items_html}</div>
+</div>"""
+    return _page_shell("Casos", body,
+                        description="Investigaciones y casos concretos detrás de los datos de "
+                                     "Dinero Público: cómo verificamos lo que mostramos.")
+
+
+def render_caso_contratos_menores_html():
+    body = """<div class="static-page">
+  <h1>Lo que una empresa que no aparecía nos enseñó sobre los contratos menores</h1>
+
+  <p>Culmina SL (CIF B75254557), administrada por Jesús Molina Cano y vinculada también
+  a Rafting Murcia SL y Funes 2008 SL, es una empresa activa en el sector local. Al
+  buscarla en nuestra base de datos de adjudicaciones, no encontramos ni una sola
+  adjudicación formal indexada a su nombre — ni en PLACE, ni en el BORM, ni en el resto
+  de fuentes que cruzamos. Esto, por sí solo, no dice nada malo de la empresa: no
+  localizar una adjudicación formal significa exactamente eso, que no hemos encontrado
+  ninguna registrada en las fuentes oficiales que indexamos, nada más. Pero la pregunta
+  de por qué una empresa activa en el sector puede no tener ningún rastro en nuestros
+  datos nos llevó a investigar algo mucho más grande: cómo se publica —y cómo no se
+  publica— la contratación pública por debajo del umbral de licitación formal.</p>
+
+  <h2>El hueco: contratos menores</h2>
+  <p>La ley no exige que los llamados «contratos menores» (por debajo de un umbral de
+  importe) se publiquen de forma centralizada del mismo modo que una licitación formal.
+  Cada administración decide cómo —y si— los hace públicos: un portal de transparencia
+  propio, una tabla trimestral en PDF, un registro que solo cubre el último ejercicio…
+  o nada en absoluto. PLACE, la plataforma nacional que indexamos para las adjudicaciones
+  formales, no los recoge.</p>
+
+  <h2>Qué hicimos</h2>
+  <p>Auditamos, municipio a municipio, cómo publica cada administración sus contratos
+  menores. En Cataluña existe un atajo real: la Generalitat mantiene un dataset
+  centralizado (vía API pública de Socrata) que cubre los 221 municipios de la provincia
+  de Girona de una sola vez — resultado: 110.555 contratos menores indexados, 221/221
+  municipios, verificados sin duplicados. En la Región de Murcia no existe ese atajo
+  regional; el portal autonómico está prácticamente vacío, así que identificamos las
+  fuentes reales una por una: un CSV trimestral en Fuente Álamo (con actualización
+  automática), un fichero ODS en Mula, un XLSX en Molina de Segura, un listado paginado
+  en Lorca (10.451 contratos, 19,3M€) y en Lorquí (344 contratos, 2,49M€), y más tarde
+  el portal de Cartagena (2.290 contratos, 2021-2026).</p>
+
+  <p>Aplicamos también un criterio: más de 5 años de antigüedad no tiene ya valor
+  jurídico a efectos de responsabilidad, así que mostramos histórico desde 2021, sin
+  umbral de importe mínimo, en una sección propia y separada de las adjudicaciones
+  formales de PLACE/BORM/PSCP — para que quede claro qué es cada cosa.</p>
+
+  <h2>Por qué importa</h2>
+  <p>Que una empresa no aparezca en nuestros datos de adjudicaciones formales no prueba
+  nada por sí solo — y esa es exactamente la lección: la ausencia de dato no es ausencia
+  de gasto. Es un hueco estructural en cómo se publica la contratación pública en España,
+  no un fallo de una empresa en particular. Seguimos ampliando, municipio a municipio,
+  la lista de fuentes de contratos menores indexadas. Si conoces un portal de
+  transparencia municipal que no hayamos indexado todavía, nos lo puedes decir en la
+  ficha de ese municipio.</p>
+
+  <p><a href="/casos">← Volver a Casos</a></p>
+</div>"""
+    return _page_shell("Caso: lo que una empresa que no aparecía nos enseñó sobre los contratos menores",
+                        body,
+                        description="Por qué una empresa activa en el sector local puede no tener "
+                                     "ninguna adjudicación indexada, y cómo eso nos llevó a construir "
+                                     "la sección de contratos menores de Dinero Público.")
+
+
+def render_caso_sueldo_cero_html():
+    body = """<div class="static-page">
+  <h1>Cuando el sueldo de una alcaldesa aparece en 0€ (y no es un error)</h1>
+
+  <p>Al revisar el ranking de sueldos de alcaldes y alcaldesas, tres nombres de
+  municipios grandes de la provincia de Barcelona llaman la atención: Sabadell (Marta
+  Farrés), Sant Boi de Llobregat (Lluïsa Moret) y Granollers (Alba Barnusell) figuran
+  con sueldo municipal de 0€. En un ranking pensado precisamente para mostrar cuánto
+  cobra cada alcalde o alcaldesa, un 0€ en un municipio de ese tamaño parece, a primera
+  vista, un hueco de datos.</p>
+
+  <h2>No lo es</h2>
+  <p>Las tres ocupan también un cargo remunerado en la Diputació de Barcelona. La
+  normativa sobre incompatibilidades retributivas en el sector público impide —salvo
+  excepciones tasadas— cobrar dos sueldos públicos a la vez por dos cargos electos, así
+  que renuncian al sueldo municipal para poder cobrar el de la Diputació. El resultado es
+  un 0€ real en la columna «sueldo municipal», no un fallo de nuestra fuente (ISPA,
+  Ministerio de Hacienda) ni un hueco en nuestro cruce de datos.</p>
+
+  <h2>Por qué lo explicamos así</h2>
+  <p>Un dato correcto puede llevar a una lectura equivocada si no se explica. Por eso,
+  cuando un sueldo aparece en 0€ en un municipio con población suficiente para que eso
+  llame la atención, añadimos una nota visible junto a la cifra explicando el motivo
+  verificado — en vez de dejar que el lector saque su propia conclusión sobre un dato
+  que, sin contexto, parece decir algo que no es cierto.</p>
+
+  <p><a href="/casos">← Volver a Casos</a></p>
+</div>"""
+    return _page_shell("Caso: el sueldo de alcaldesa en 0€ que no es un error",
+                        body,
+                        description="Por qué tres alcaldesas de la provincia de Barcelona figuran sin "
+                                     "sueldo municipal, y cómo lo verificamos antes de mostrarlo.")
+
+
 def render_quienes_somos_html():
     body = """<div class="static-page">
   <h1>Transparencia al servicio de la ciudadanía</h1>
@@ -11869,6 +11997,15 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/quienes-somos":
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
 
+    if path == "/casos":
+        return _resp(render_casos_index_html(), gzip_ok=gzip_ok)
+
+    if path == "/casos/contratos-menores-culmina":
+        return _resp(render_caso_contratos_menores_html(), gzip_ok=gzip_ok)
+
+    if path == "/casos/sueldo-cero-barcelona":
+        return _resp(render_caso_sueldo_cero_html(), gzip_ok=gzip_ok)
+
     if path == "/aviso-legal":
         return _resp(render_aviso_legal_html(), gzip_ok=gzip_ok)
 
@@ -11889,7 +12026,10 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/rankings</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quienes-somos</loc><changefreq>monthly</changefreq></url>",
-                f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>"]
+                f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/casos</loc><changefreq>weekly</changefreq></url>"] + [
+                f"  <url><loc>{esc(SITE_URL)}/casos/{esc(c['slug'])}</loc><changefreq>monthly</changefreq></url>"
+                for c in _CASOS]
         for prov in MUNICIPIOS_POR_PROVINCIA:
             if prov == "murcia":
                 continue  # sin parámetro, ya cubierto por las URLs de arriba
