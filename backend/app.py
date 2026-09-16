@@ -11420,8 +11420,14 @@ def render_landing_html(datos, provincia="murcia"):
     for muni in sorted(municipios_lista, key=lambda m: normalizar(m)):
         tiles += _muni_tile(muni, por_muni.get(normalizar(muni)))
 
+    # "de la {label}" da por hecho género femenino (Región de Murcia,
+    # Provincia de X, Comunidad de Madrid, Illes Balears...) -- roto para
+    # "Principado de Asturias" (masculino, "del Principado", no "de la
+    # Principado"). Único caso hoy, override puntual en vez de un dict de
+    # género completo para una lista de 25 territorios.
+    prep_label = "del" if provincia == "asturias" else "de la"
     hero_sub = (
-        f"Contratos públicos de los {len(municipios_lista)} municipios de la {label}, "
+        f"Contratos públicos de los {len(municipios_lista)} municipios {prep_label} {label}, "
         f"cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás "
         f"de cada adjudicación."
     )
