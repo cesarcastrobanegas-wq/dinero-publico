@@ -11679,9 +11679,8 @@ def render_caso_contratos_menores_html():
     body = """<div class="static-page">
   <h1>Lo que una empresa que no aparecía nos enseñó sobre los contratos menores</h1>
 
-  <p>Culmina SL (CIF B75254557), administrada por Jesús Molina Cano y vinculada también
-  a Rafting Murcia SL y Funes 2008 SL, es una empresa activa en el sector local. Al
-  buscarla en nuestra base de datos de adjudicaciones, no encontramos ni una sola
+  <p>Culmina SL (CIF B75254557), una empresa activa en el sector local, es un buen
+  ejemplo. Al buscarla en nuestra base de datos de adjudicaciones, no encontramos ni una sola
   adjudicación formal indexada a su nombre — ni en PLACE, ni en el BORM, ni en el resto
   de fuentes que cruzamos. Esto, por sí solo, no dice nada malo de la empresa: no
   localizar una adjudicación formal significa exactamente eso, que no hemos encontrado
