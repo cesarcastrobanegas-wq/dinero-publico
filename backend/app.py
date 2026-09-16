@@ -694,6 +694,50 @@ MUNICIPIOS_LA_RIOJA = [
     "Zarratón","Zarzosa","Zorraquín",
 ]
 
+# Principado de Asturias: uniprovincial (como Murcia/Baleares/Cantabria/
+# La Rioja/Madrid). Investigación 2026-09-16: Mecanismo A normal,
+# verificado contra un ZIP real de PLACE -- "ayuntamiento de gijón" (41
+# apariciones), "ayuntamiento de oviedo" (24), "ayuntamiento de siero"
+# (24), "ayuntamiento de avilés" (15), "ayuntamiento de langreo" (10),
+# "ayuntamiento de mieres" (6), "ayuntamiento de llanes" (13), en una
+# sola muestra parcial de un ZIP mensual -- no es comunidad foral con
+# plataforma propia, a diferencia de Navarra/País Vasco.
+#
+# 77 municipios de 78 -- ver exclusión de "Mieres" más abajo.
+#
+# "Mieres" EXCLUIDO A PROPÓSITO (mismo tipo de incidente que Cieza/
+# Cantabria y El Molar/Madrid, detectado ANTES de desplegar mediante la
+# verificación de colisión de clave primaria ya establecida): "Mieres"
+# es un municipio real de Asturias, pero TAMBIÉN ya existe como
+# municipio real de Girona (MUNICIPIOS_GIRONA, desplegado con datos
+# reales desde la ampliación a Cataluña). Mismo nombre exacto
+# normalizado -> misma fila en la tabla `municipios` (`municipio TEXT
+# PRIMARY KEY`, sin provincia). Se mantiene el "Mieres" de Girona (ya en
+# producción con datos reales) y se excluye el de Asturias.
+#
+# NO se ha hecho todavía la verificación fina de colisión tipo prefijo
+# (la que encontró "Villalbilla"/"Villalbilla de Burgos" para Madrid) --
+# pendiente si se decide conectar de verdad, no bloqueante para dejar el
+# código preparado sin desplegar.
+MUNICIPIOS_ASTURIAS = [
+    "Allande","Aller","Amieva","Avilés","Belmonte de Miranda","Bimenes",
+    "Boal","Cabranes","Cabrales","Candamo","Cangas de Onís",
+    "Cangas del Narcea","Caravia","Carreño","Caso","Castrillón",
+    "Castropol","Coaña","Colunga","Corvera de Asturias","Cudillero",
+    "Degaña","El Franco","Gijón","Gozón","Grado","Grandas de Salime",
+    "Ibias","Illano","Illas","Langreo","Las Regueras","Laviana","Lena",
+    "Llanera","Llanes","Morcín","Muros de Nalón","Nava","Navia",
+    "Noreña","Onís","Oviedo","Parres","Peñamellera Alta",
+    "Peñamellera Baja","Pesoz","Piloña","Ponga","Pravia","Proaza",
+    "Quirós","Ribadedeva","Ribadesella","Ribera de Arriba","Riosa",
+    "Salas","San Martín de Oscos","San Martín del Rey Aurelio",
+    "San Tirso de Abres","Santa Eulalia de Oscos","Santo Adriano",
+    "Sariego","Siero","Sobrescobio","Somiedo","Soto del Barco",
+    "Tapia de Casariego","Taramundi","Teverga","Tineo","Valdés",
+    "Vegadeo","Villanueva de Oscos","Villaviciosa","Villayón",
+    "Yernes y Tameza",
+]
+
 # Comunidad de Madrid: uniprovincial (como Murcia/Baleares/Cantabria/La
 # Rioja, una sola provincia). Mecanismo A normal, verificado 2026-09-15
 # contra un ZIP real de PLACE: "Junta de Gobierno del Ayuntamiento de
@@ -3468,7 +3512,8 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "baleares": MUNICIPIOS_BALEARES,
                             "cantabria": MUNICIPIOS_CANTABRIA,
                             "la_rioja": MUNICIPIOS_LA_RIOJA,
-                            "madrid": MUNICIPIOS_MADRID}
+                            "madrid": MUNICIPIOS_MADRID,
+                            "asturias": MUNICIPIOS_ASTURIAS}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3486,6 +3531,7 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "cantabria": "Cantabria",
                    "la_rioja": "La Rioja",
                    "madrid": "Comunidad de Madrid",
+                   "asturias": "Principado de Asturias",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3511,13 +3557,15 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "cantabria": "cantabria",  # comunidad uniprovincial, mismo patrón que Murcia
     "la_rioja": "la_rioja",  # comunidad uniprovincial, mismo patrón que Murcia
     "madrid": "madrid",  # comunidad uniprovincial, mismo patrón que Murcia
+    "asturias": "asturias",  # comunidad uniprovincial, mismo patrón que Murcia
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
                             "pais_vasco": "País Vasco", "ceuta": "Ciudad Autónoma de Ceuta",
                             "melilla": "Ciudad Autónoma de Melilla", "canarias": "Canarias",
                             "baleares": "Illes Balears", "cantabria": "Cantabria",
-                            "la_rioja": "La Rioja", "madrid": "Comunidad de Madrid"}
+                            "la_rioja": "La Rioja", "madrid": "Comunidad de Madrid",
+                            "asturias": "Principado de Asturias"}
 
 
 def _comunidad_valida(txt):
@@ -3551,6 +3599,7 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "cantabria": "Santander, Torrelavega, Castro-Urdiales…",
     "la_rioja": "Logroño, Calahorra, Arnedo…",
     "madrid": "Madrid, Móstoles, Alcalá de Henares…",
+    "asturias": "Gijón, Oviedo, Avilés, Langreo…",
 }
 
 # codi_ine10 (Registre d'ens locals de Catalunya) por provincia -- mismo
