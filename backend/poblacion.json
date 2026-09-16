@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-15 05:53:27",
+ "generado": "2026-09-16 05:43:07",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
   "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
@@ -18,7 +18,8 @@
   "malaga": "https://www.ine.es/jaxiT3/Tabla.htm?t=2882",
   "sevilla": "https://www.ine.es/jaxiT3/Tabla.htm?t=2895",
   "pais_vasco": "https://www.ine.es/jaxiT3/Tabla.htm?t=2854",
-  "santa_cruz_tenerife": "https://www.ine.es/jaxiT3/Tabla.htm?t=2892"
+  "santa_cruz_tenerife": "https://www.ine.es/jaxiT3/Tabla.htm?t=2892",
+  "cantabria": "https://www.ine.es/jaxiT3/Tabla.htm?t=2893"
  },
  "municipios": {
   "abanilla": {
@@ -14236,7 +14237,7 @@
    "anio": 2025
   },
   "anoeta": {
-   "municipio": "ANOETA",
+   "municipio": "Anoeta",
    "provincia": "pais_vasco",
    "poblacion": 2112,
    "anio": 2025
@@ -15583,6 +15584,594 @@
    "municipio": "Villa de Mazo",
    "provincia": "santa_cruz_tenerife",
    "poblacion": 5131,
+   "anio": 2025
+  },
+  "alfoz de lloredo": {
+   "municipio": "Alfoz de Lloredo",
+   "provincia": "cantabria",
+   "poblacion": 2500,
+   "anio": 2025
+  },
+  "ampuero": {
+   "municipio": "Ampuero",
+   "provincia": "cantabria",
+   "poblacion": 4518,
+   "anio": 2025
+  },
+  "anievas": {
+   "municipio": "Anievas",
+   "provincia": "cantabria",
+   "poblacion": 274,
+   "anio": 2025
+  },
+  "arenas de iguna": {
+   "municipio": "Arenas de Iguña",
+   "provincia": "cantabria",
+   "poblacion": 1735,
+   "anio": 2025
+  },
+  "argonos": {
+   "municipio": "Argoños",
+   "provincia": "cantabria",
+   "poblacion": 1884,
+   "anio": 2025
+  },
+  "arnuero": {
+   "municipio": "Arnuero",
+   "provincia": "cantabria",
+   "poblacion": 2300,
+   "anio": 2025
+  },
+  "arredondo": {
+   "municipio": "Arredondo",
+   "provincia": "cantabria",
+   "poblacion": 478,
+   "anio": 2025
+  },
+  "el astillero": {
+   "municipio": "El Astillero",
+   "provincia": "cantabria",
+   "poblacion": 18448,
+   "anio": 2025
+  },
+  "barcena de cicero": {
+   "municipio": "Bárcena de Cicero",
+   "provincia": "cantabria",
+   "poblacion": 4907,
+   "anio": 2025
+  },
+  "barcena de pie de concha": {
+   "municipio": "Bárcena de Pie de Concha",
+   "provincia": "cantabria",
+   "poblacion": 675,
+   "anio": 2025
+  },
+  "bareyo": {
+   "municipio": "Bareyo",
+   "provincia": "cantabria",
+   "poblacion": 2124,
+   "anio": 2025
+  },
+  "cabezon de la sal": {
+   "municipio": "Cabezón de la Sal",
+   "provincia": "cantabria",
+   "poblacion": 8226,
+   "anio": 2025
+  },
+  "cabezon de liebana": {
+   "municipio": "Cabezón de Liébana",
+   "provincia": "cantabria",
+   "poblacion": 530,
+   "anio": 2025
+  },
+  "cabuerniga": {
+   "municipio": "Cabuérniga",
+   "provincia": "cantabria",
+   "poblacion": 976,
+   "anio": 2025
+  },
+  "camaleno": {
+   "municipio": "Camaleño",
+   "provincia": "cantabria",
+   "poblacion": 964,
+   "anio": 2025
+  },
+  "camargo": {
+   "municipio": "Camargo",
+   "provincia": "cantabria",
+   "poblacion": 30577,
+   "anio": 2025
+  },
+  "campoo de enmedio": {
+   "municipio": "Campoo de Enmedio",
+   "provincia": "cantabria",
+   "poblacion": 3729,
+   "anio": 2025
+  },
+  "campoo de yuso": {
+   "municipio": "Campoo de Yuso",
+   "provincia": "cantabria",
+   "poblacion": 680,
+   "anio": 2025
+  },
+  "cartes": {
+   "municipio": "Cartes",
+   "provincia": "cantabria",
+   "poblacion": 5874,
+   "anio": 2025
+  },
+  "castaneda": {
+   "municipio": "Castañeda",
+   "provincia": "cantabria",
+   "poblacion": 3290,
+   "anio": 2025
+  },
+  "castro-urdiales": {
+   "municipio": "Castro-Urdiales",
+   "provincia": "cantabria",
+   "poblacion": 33450,
+   "anio": 2025
+  },
+  "cillorigo de liebana": {
+   "municipio": "Cillorigo de Liébana",
+   "provincia": "cantabria",
+   "poblacion": 1386,
+   "anio": 2025
+  },
+  "colindres": {
+   "municipio": "Colindres",
+   "provincia": "cantabria",
+   "poblacion": 8570,
+   "anio": 2025
+  },
+  "comillas": {
+   "municipio": "Comillas",
+   "provincia": "cantabria",
+   "poblacion": 2075,
+   "anio": 2025
+  },
+  "corvera de toranzo": {
+   "municipio": "Corvera de Toranzo",
+   "provincia": "cantabria",
+   "poblacion": 2204,
+   "anio": 2025
+  },
+  "entrambasaguas": {
+   "municipio": "Entrambasaguas",
+   "provincia": "cantabria",
+   "poblacion": 5693,
+   "anio": 2025
+  },
+  "escalante": {
+   "municipio": "Escalante",
+   "provincia": "cantabria",
+   "poblacion": 716,
+   "anio": 2025
+  },
+  "guriezo": {
+   "municipio": "Guriezo",
+   "provincia": "cantabria",
+   "poblacion": 2496,
+   "anio": 2025
+  },
+  "hazas de cesto": {
+   "municipio": "Hazas de Cesto",
+   "provincia": "cantabria",
+   "poblacion": 1957,
+   "anio": 2025
+  },
+  "hermandad de campoo de suso": {
+   "municipio": "Hermandad de Campoo de Suso",
+   "provincia": "cantabria",
+   "poblacion": 1619,
+   "anio": 2025
+  },
+  "herrerias": {
+   "municipio": "Herrerías",
+   "provincia": "cantabria",
+   "poblacion": 570,
+   "anio": 2025
+  },
+  "lamason": {
+   "municipio": "Lamasón",
+   "provincia": "cantabria",
+   "poblacion": 237,
+   "anio": 2025
+  },
+  "laredo": {
+   "municipio": "Laredo",
+   "provincia": "cantabria",
+   "poblacion": 10698,
+   "anio": 2025
+  },
+  "liendo": {
+   "municipio": "Liendo",
+   "provincia": "cantabria",
+   "poblacion": 1218,
+   "anio": 2025
+  },
+  "lierganes": {
+   "municipio": "Liérganes",
+   "provincia": "cantabria",
+   "poblacion": 2365,
+   "anio": 2025
+  },
+  "limpias": {
+   "municipio": "Limpias",
+   "provincia": "cantabria",
+   "poblacion": 1983,
+   "anio": 2025
+  },
+  "luena": {
+   "municipio": "Luena",
+   "provincia": "cantabria",
+   "poblacion": 600,
+   "anio": 2025
+  },
+  "marina de cudeyo": {
+   "municipio": "Marina de Cudeyo",
+   "provincia": "cantabria",
+   "poblacion": 5221,
+   "anio": 2025
+  },
+  "mazcuerras": {
+   "municipio": "Mazcuerras",
+   "provincia": "cantabria",
+   "poblacion": 2068,
+   "anio": 2025
+  },
+  "medio cudeyo": {
+   "municipio": "Medio Cudeyo",
+   "provincia": "cantabria",
+   "poblacion": 7775,
+   "anio": 2025
+  },
+  "meruelo": {
+   "municipio": "Meruelo",
+   "provincia": "cantabria",
+   "poblacion": 2321,
+   "anio": 2025
+  },
+  "miengo": {
+   "municipio": "Miengo",
+   "provincia": "cantabria",
+   "poblacion": 5265,
+   "anio": 2025
+  },
+  "miera": {
+   "municipio": "Miera",
+   "provincia": "cantabria",
+   "poblacion": 397,
+   "anio": 2025
+  },
+  "molledo": {
+   "municipio": "Molledo",
+   "provincia": "cantabria",
+   "poblacion": 1482,
+   "anio": 2025
+  },
+  "noja": {
+   "municipio": "Noja",
+   "provincia": "cantabria",
+   "poblacion": 2661,
+   "anio": 2025
+  },
+  "penagos": {
+   "municipio": "Penagos",
+   "provincia": "cantabria",
+   "poblacion": 2253,
+   "anio": 2025
+  },
+  "penarrubia": {
+   "municipio": "Peñarrubia",
+   "provincia": "cantabria",
+   "poblacion": 301,
+   "anio": 2025
+  },
+  "pesaguero": {
+   "municipio": "Pesaguero",
+   "provincia": "cantabria",
+   "poblacion": 275,
+   "anio": 2025
+  },
+  "pesquera": {
+   "municipio": "Pesquera",
+   "provincia": "cantabria",
+   "poblacion": 72,
+   "anio": 2025
+  },
+  "pielagos": {
+   "municipio": "Piélagos",
+   "provincia": "cantabria",
+   "poblacion": 26901,
+   "anio": 2025
+  },
+  "polaciones": {
+   "municipio": "Polaciones",
+   "provincia": "cantabria",
+   "poblacion": 209,
+   "anio": 2025
+  },
+  "polanco": {
+   "municipio": "Polanco",
+   "provincia": "cantabria",
+   "poblacion": 6304,
+   "anio": 2025
+  },
+  "potes": {
+   "municipio": "Potes",
+   "provincia": "cantabria",
+   "poblacion": 1323,
+   "anio": 2025
+  },
+  "puente viesgo": {
+   "municipio": "Puente Viesgo",
+   "provincia": "cantabria",
+   "poblacion": 2893,
+   "anio": 2025
+  },
+  "ramales de la victoria": {
+   "municipio": "Ramales de la Victoria",
+   "provincia": "cantabria",
+   "poblacion": 3099,
+   "anio": 2025
+  },
+  "rasines": {
+   "municipio": "Rasines",
+   "provincia": "cantabria",
+   "poblacion": 980,
+   "anio": 2025
+  },
+  "reinosa": {
+   "municipio": "Reinosa",
+   "provincia": "cantabria",
+   "poblacion": 8570,
+   "anio": 2025
+  },
+  "reocin": {
+   "municipio": "Reocín",
+   "provincia": "cantabria",
+   "poblacion": 8389,
+   "anio": 2025
+  },
+  "ribamontan al mar": {
+   "municipio": "Ribamontán al Mar",
+   "provincia": "cantabria",
+   "poblacion": 4605,
+   "anio": 2025
+  },
+  "ribamontan al monte": {
+   "municipio": "Ribamontán al Monte",
+   "provincia": "cantabria",
+   "poblacion": 2535,
+   "anio": 2025
+  },
+  "rionansa": {
+   "municipio": "Rionansa",
+   "provincia": "cantabria",
+   "poblacion": 1022,
+   "anio": 2025
+  },
+  "riotuerto": {
+   "municipio": "Riotuerto",
+   "provincia": "cantabria",
+   "poblacion": 1682,
+   "anio": 2025
+  },
+  "ruente": {
+   "municipio": "Ruente",
+   "provincia": "cantabria",
+   "poblacion": 1083,
+   "anio": 2025
+  },
+  "ruesga": {
+   "municipio": "Ruesga",
+   "provincia": "cantabria",
+   "poblacion": 810,
+   "anio": 2025
+  },
+  "ruiloba": {
+   "municipio": "Ruiloba",
+   "provincia": "cantabria",
+   "poblacion": 769,
+   "anio": 2025
+  },
+  "san felices de buelna": {
+   "municipio": "San Felices de Buelna",
+   "provincia": "cantabria",
+   "poblacion": 2379,
+   "anio": 2025
+  },
+  "san miguel de aguayo": {
+   "municipio": "San Miguel de Aguayo",
+   "provincia": "cantabria",
+   "poblacion": 164,
+   "anio": 2025
+  },
+  "san pedro del romeral": {
+   "municipio": "San Pedro del Romeral",
+   "provincia": "cantabria",
+   "poblacion": 432,
+   "anio": 2025
+  },
+  "san roque de riomiera": {
+   "municipio": "San Roque de Riomiera",
+   "provincia": "cantabria",
+   "poblacion": 333,
+   "anio": 2025
+  },
+  "san vicente de la barquera": {
+   "municipio": "San Vicente de la Barquera",
+   "provincia": "cantabria",
+   "poblacion": 3995,
+   "anio": 2025
+  },
+  "santa cruz de bezana": {
+   "municipio": "Santa Cruz de Bezana",
+   "provincia": "cantabria",
+   "poblacion": 13904,
+   "anio": 2025
+  },
+  "santa maria de cayon": {
+   "municipio": "Santa María de Cayón",
+   "provincia": "cantabria",
+   "poblacion": 9538,
+   "anio": 2025
+  },
+  "santander": {
+   "municipio": "Santander",
+   "provincia": "cantabria",
+   "poblacion": 175425,
+   "anio": 2025
+  },
+  "santillana del mar": {
+   "municipio": "Santillana del Mar",
+   "provincia": "cantabria",
+   "poblacion": 4189,
+   "anio": 2025
+  },
+  "santiurde de reinosa": {
+   "municipio": "Santiurde de Reinosa",
+   "provincia": "cantabria",
+   "poblacion": 254,
+   "anio": 2025
+  },
+  "santiurde de toranzo": {
+   "municipio": "Santiurde de Toranzo",
+   "provincia": "cantabria",
+   "poblacion": 1726,
+   "anio": 2025
+  },
+  "santona": {
+   "municipio": "Santoña",
+   "provincia": "cantabria",
+   "poblacion": 10835,
+   "anio": 2025
+  },
+  "saro": {
+   "municipio": "Saro",
+   "provincia": "cantabria",
+   "poblacion": 480,
+   "anio": 2025
+  },
+  "selaya": {
+   "municipio": "Selaya",
+   "provincia": "cantabria",
+   "poblacion": 1868,
+   "anio": 2025
+  },
+  "soba": {
+   "municipio": "Soba",
+   "provincia": "cantabria",
+   "poblacion": 1057,
+   "anio": 2025
+  },
+  "solorzano": {
+   "municipio": "Solórzano",
+   "provincia": "cantabria",
+   "poblacion": 1144,
+   "anio": 2025
+  },
+  "suances": {
+   "municipio": "Suances",
+   "provincia": "cantabria",
+   "poblacion": 9034,
+   "anio": 2025
+  },
+  "torrelavega": {
+   "municipio": "Torrelavega",
+   "provincia": "cantabria",
+   "poblacion": 51796,
+   "anio": 2025
+  },
+  "tresviso": {
+   "municipio": "Tresviso",
+   "provincia": "cantabria",
+   "poblacion": 52,
+   "anio": 2025
+  },
+  "tudanca": {
+   "municipio": "Tudanca",
+   "provincia": "cantabria",
+   "poblacion": 154,
+   "anio": 2025
+  },
+  "udias": {
+   "municipio": "Udías",
+   "provincia": "cantabria",
+   "poblacion": 960,
+   "anio": 2025
+  },
+  "val de san vicente": {
+   "municipio": "Val de San Vicente",
+   "provincia": "cantabria",
+   "poblacion": 2775,
+   "anio": 2025
+  },
+  "valdaliga": {
+   "municipio": "Valdáliga",
+   "provincia": "cantabria",
+   "poblacion": 2135,
+   "anio": 2025
+  },
+  "valdeolea": {
+   "municipio": "Valdeolea",
+   "provincia": "cantabria",
+   "poblacion": 869,
+   "anio": 2025
+  },
+  "valdeprado del rio": {
+   "municipio": "Valdeprado del Río",
+   "provincia": "cantabria",
+   "poblacion": 306,
+   "anio": 2025
+  },
+  "valderredible": {
+   "municipio": "Valderredible",
+   "provincia": "cantabria",
+   "poblacion": 922,
+   "anio": 2025
+  },
+  "valle de villaverde": {
+   "municipio": "Valle de Villaverde",
+   "provincia": "cantabria",
+   "poblacion": 249,
+   "anio": 2025
+  },
+  "vega de liebana": {
+   "municipio": "Vega de Liébana",
+   "provincia": "cantabria",
+   "poblacion": 676,
+   "anio": 2025
+  },
+  "vega de pas": {
+   "municipio": "Vega de Pas",
+   "provincia": "cantabria",
+   "poblacion": 776,
+   "anio": 2025
+  },
+  "villacarriedo": {
+   "municipio": "Villacarriedo",
+   "provincia": "cantabria",
+   "poblacion": 1670,
+   "anio": 2025
+  },
+  "villaescusa": {
+   "municipio": "Villaescusa",
+   "provincia": "cantabria",
+   "poblacion": 3970,
+   "anio": 2025
+  },
+  "villafufre": {
+   "municipio": "Villafufre",
+   "provincia": "cantabria",
+   "poblacion": 1022,
+   "anio": 2025
+  },
+  "voto": {
+   "municipio": "Voto",
+   "provincia": "cantabria",
+   "poblacion": 2971,
    "anio": 2025
   }
  }
