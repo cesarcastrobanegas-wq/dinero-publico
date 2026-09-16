@@ -4541,6 +4541,17 @@ _EXCLUSION_CONTINUACION_ANCLAJE = {
     # buscar "Villalbilla" (Madrid). Sin colisión de clave primaria en BD
     # (Villalbilla de Burgos no existe en ninguna provincia ya activa).
     "villalbilla": " de burgos",
+    # Colisiones tipo prefijo (piloto Asturias, 2026-09-16), misma clase que
+    # Muro/Palma/Villarroya/Villalbilla -- verificadas contra un ZIP real
+    # ANTES de desplegar, no solo teorizadas:
+    # "Ayuntamiento de Nava DE LA ASUNCIÓN" (Segovia, Castilla y León, NO
+    # conectado en este sitio) coincidía al buscar "Nava" (Asturias).
+    "nava": " de la asuncion",
+    # "Ayuntamiento de Villaviciosa DE ODÓN" (Madrid, SÍ conectado en este
+    # sitio) coincidía al buscar "Villaviciosa" (Asturias) -- sin colisión
+    # de clave primaria en BD porque son cadenas normalizadas distintas
+    # ("villaviciosa" vs "villaviciosa de odon"), a diferencia de Mieres.
+    "villaviciosa": " de odon",
 }
 
 
