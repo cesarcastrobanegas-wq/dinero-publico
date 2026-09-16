@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-15 05:52:43",
+ "generado": "2026-09-16 05:42:17",
  "deuda_viva": {
   "fuente_url": "https://www.hacienda.gob.es/cdi/sist%20financiacion%20y%20deuda/informacioneells/2025/deuda-viva-ayuntamientos-202512.xlsx",
   "municipios": {
@@ -3916,6 +3916,496 @@
    "palmar de troya, el": {
     "municipio": "Palmar de Troya, El",
     "provincia": "sevilla",
+    "deuda_eur": 0.0
+   },
+   "alfoz de lloredo": {
+    "municipio": "Alfoz de Lloredo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "ampuero": {
+    "municipio": "Ampuero",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "anievas": {
+    "municipio": "Anievas",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "arenas de iguna": {
+    "municipio": "Arenas de Iguña",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "argonos": {
+    "municipio": "Argoños",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "arnuero": {
+    "municipio": "Arnuero",
+    "provincia": "cantabria",
+    "deuda_eur": 727.0
+   },
+   "arredondo": {
+    "municipio": "Arredondo",
+    "provincia": "cantabria",
+    "deuda_eur": 110714.0
+   },
+   "el astillero": {
+    "municipio": "El Astillero",
+    "provincia": "cantabria",
+    "deuda_eur": 91682.0
+   },
+   "barcena de cicero": {
+    "municipio": "Bárcena de Cicero",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "barcena de pie de concha": {
+    "municipio": "Bárcena de Pie de Concha",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "bareyo": {
+    "municipio": "Bareyo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "cabezon de la sal": {
+    "municipio": "Cabezón de la Sal",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "cabezon de liebana": {
+    "municipio": "Cabezón de Liébana",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "cabuerniga": {
+    "municipio": "Cabuérniga",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "camaleno": {
+    "municipio": "Camaleño",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "camargo": {
+    "municipio": "Camargo",
+    "provincia": "cantabria",
+    "deuda_eur": 105701.0
+   },
+   "campoo de yuso": {
+    "municipio": "Campoo de Yuso",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "cartes": {
+    "municipio": "Cartes",
+    "provincia": "cantabria",
+    "deuda_eur": 1500000.0
+   },
+   "castaneda": {
+    "municipio": "Castañeda",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "castro-urdiales": {
+    "municipio": "Castro-Urdiales",
+    "provincia": "cantabria",
+    "deuda_eur": 19496.0
+   },
+   "cillorigo de liebana": {
+    "municipio": "Cillorigo de Liébana",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "colindres": {
+    "municipio": "Colindres",
+    "provincia": "cantabria",
+    "deuda_eur": 1265353.0
+   },
+   "comillas": {
+    "municipio": "Comillas",
+    "provincia": "cantabria",
+    "deuda_eur": 782349.0
+   },
+   "corvera de toranzo": {
+    "municipio": "Corvera de Toranzo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "campoo de enmedio": {
+    "municipio": "Campoo de Enmedio",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "entrambasaguas": {
+    "municipio": "Entrambasaguas",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "escalante": {
+    "municipio": "Escalante",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "guriezo": {
+    "municipio": "Guriezo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "hazas de cesto": {
+    "municipio": "Hazas de Cesto",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "hermandad de campoo de suso": {
+    "municipio": "Hermandad de Campoo de Suso",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "herrerias": {
+    "municipio": "Herrerías",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "lamason": {
+    "municipio": "Lamasón",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "laredo": {
+    "municipio": "Laredo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "liendo": {
+    "municipio": "Liendo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "lierganes": {
+    "municipio": "Liérganes",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "limpias": {
+    "municipio": "Limpias",
+    "provincia": "cantabria",
+    "deuda_eur": 5876.0
+   },
+   "luena": {
+    "municipio": "Luena",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "marina de cudeyo": {
+    "municipio": "Marina de Cudeyo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "mazcuerras": {
+    "municipio": "Mazcuerras",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "medio cudeyo": {
+    "municipio": "Medio Cudeyo",
+    "provincia": "cantabria",
+    "deuda_eur": 81739.0
+   },
+   "meruelo": {
+    "municipio": "Meruelo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "miengo": {
+    "municipio": "Miengo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "miera": {
+    "municipio": "Miera",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "molledo": {
+    "municipio": "Molledo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "noja": {
+    "municipio": "Noja",
+    "provincia": "cantabria",
+    "deuda_eur": 17597.0
+   },
+   "penagos": {
+    "municipio": "Penagos",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "penarrubia": {
+    "municipio": "Peñarrubia",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "pesaguero": {
+    "municipio": "Pesaguero",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "pesquera": {
+    "municipio": "Pesquera",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "pielagos": {
+    "municipio": "Piélagos",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "polaciones": {
+    "municipio": "Polaciones",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "polanco": {
+    "municipio": "Polanco",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "potes": {
+    "municipio": "Potes",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "puente viesgo": {
+    "municipio": "Puente Viesgo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "ramales de la victoria": {
+    "municipio": "Ramales de la Victoria",
+    "provincia": "cantabria",
+    "deuda_eur": 1176149.0
+   },
+   "rasines": {
+    "municipio": "Rasines",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "reinosa": {
+    "municipio": "Reinosa",
+    "provincia": "cantabria",
+    "deuda_eur": 2334681.0
+   },
+   "reocin": {
+    "municipio": "Reocín",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "ribamontan al mar": {
+    "municipio": "Ribamontán al Mar",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "ribamontan al monte": {
+    "municipio": "Ribamontán al Monte",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "rionansa": {
+    "municipio": "Rionansa",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "riotuerto": {
+    "municipio": "Riotuerto",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "ruente": {
+    "municipio": "Ruente",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "ruesga": {
+    "municipio": "Ruesga",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "ruiloba": {
+    "municipio": "Ruiloba",
+    "provincia": "cantabria",
+    "deuda_eur": 1848.0
+   },
+   "san felices de buelna": {
+    "municipio": "San Felices de Buelna",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "san miguel de aguayo": {
+    "municipio": "San Miguel de Aguayo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "san pedro del romeral": {
+    "municipio": "San Pedro del Romeral",
+    "provincia": "cantabria",
+    "deuda_eur": 30138.0
+   },
+   "san roque de riomiera": {
+    "municipio": "San Roque de Riomiera",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "santa cruz de bezana": {
+    "municipio": "Santa Cruz de Bezana",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "santa maria de cayon": {
+    "municipio": "Santa María de Cayón",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "santander": {
+    "municipio": "Santander",
+    "provincia": "cantabria",
+    "deuda_eur": 23643503.0
+   },
+   "santillana del mar": {
+    "municipio": "Santillana del Mar",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "santiurde de reinosa": {
+    "municipio": "Santiurde de Reinosa",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "santiurde de toranzo": {
+    "municipio": "Santiurde de Toranzo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "santona": {
+    "municipio": "Santoña",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "san vicente de la barquera": {
+    "municipio": "San Vicente de la Barquera",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "saro": {
+    "municipio": "Saro",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "selaya": {
+    "municipio": "Selaya",
+    "provincia": "cantabria",
+    "deuda_eur": 15827.0
+   },
+   "soba": {
+    "municipio": "Soba",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "solorzano": {
+    "municipio": "Solórzano",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "suances": {
+    "municipio": "Suances",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "torrelavega": {
+    "municipio": "Torrelavega",
+    "provincia": "cantabria",
+    "deuda_eur": 9604265.0
+   },
+   "tresviso": {
+    "municipio": "Tresviso",
+    "provincia": "cantabria",
+    "deuda_eur": 77972.84
+   },
+   "tudanca": {
+    "municipio": "Tudanca",
+    "provincia": "cantabria",
+    "deuda_eur": 22.0
+   },
+   "udias": {
+    "municipio": "Udías",
+    "provincia": "cantabria",
+    "deuda_eur": 16070.0
+   },
+   "valdaliga": {
+    "municipio": "Valdáliga",
+    "provincia": "cantabria",
+    "deuda_eur": 195875.0
+   },
+   "valdeolea": {
+    "municipio": "Valdeolea",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "valdeprado del rio": {
+    "municipio": "Valdeprado del Río",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "valderredible": {
+    "municipio": "Valderredible",
+    "provincia": "cantabria",
+    "deuda_eur": 89724.39
+   },
+   "val de san vicente": {
+    "municipio": "Val de San Vicente",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "vega de liebana": {
+    "municipio": "Vega de Liébana",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "vega de pas": {
+    "municipio": "Vega de Pas",
+    "provincia": "cantabria",
+    "deuda_eur": 164.0
+   },
+   "villacarriedo": {
+    "municipio": "Villacarriedo",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "villaescusa": {
+    "municipio": "Villaescusa",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "villafufre": {
+    "municipio": "Villafufre",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "valle de villaverde": {
+    "municipio": "Valle de Villaverde",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
+   "voto": {
+    "municipio": "Voto",
+    "provincia": "cantabria",
     "deuda_eur": 0.0
    },
    "abrera": {
@@ -9144,7 +9634,7 @@
     "deuda_eur": 2590212.0
    },
    "anoeta": {
-    "municipio": "ANOETA",
+    "municipio": "Anoeta",
     "provincia": "pais_vasco",
     "deuda_eur": 0.0
    },
@@ -21759,6 +22249,447 @@
     "importe_eur": -2015204.73,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "ampuero": {
+    "municipio": "Ampuero",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 147815.68,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "anievas": {
+    "municipio": "Anievas",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -10790.34,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "argonos": {
+    "municipio": "Argoños",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 533354.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "el astillero": {
+    "municipio": "El Astillero",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 107445.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "barcena de cicero": {
+    "municipio": "Bárcena de Cicero",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 454629.36,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "barcena de pie de concha": {
+    "municipio": "Bárcena de Pie de Concha",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -555739.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabezon de la sal": {
+    "municipio": "Cabezón de la Sal",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 829567.55,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabezon de liebana": {
+    "municipio": "Cabezón de Liébana",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 13592.73,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabuerniga": {
+    "municipio": "Cabuérniga",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 219560.77,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "camargo": {
+    "municipio": "Camargo",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 869547.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "campoo de yuso": {
+    "municipio": "Campoo de Yuso",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 1922777.01,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cartes": {
+    "municipio": "Cartes",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 579863.31,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "castaneda": {
+    "municipio": "Castañeda",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 278589.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cillorigo de liebana": {
+    "municipio": "Cillorigo de Liébana",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 83524.91,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "corvera de toranzo": {
+    "municipio": "Corvera de Toranzo",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -117713.36,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "campoo de enmedio": {
+    "municipio": "Campoo de Enmedio",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 898564.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "entrambasaguas": {
+    "municipio": "Entrambasaguas",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 168643.48,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "escalante": {
+    "municipio": "Escalante",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 644893.11,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "hermandad de campoo de suso": {
+    "municipio": "Hermandad de Campoo de Suso",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 185699.79,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "herrerias": {
+    "municipio": "Herrerías",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 216543.96,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "laredo": {
+    "municipio": "Laredo",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -1315136.36,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "liendo": {
+    "municipio": "Liendo",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -698722.69,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "marina de cudeyo": {
+    "municipio": "Marina de Cudeyo",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 1250784.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "mazcuerras": {
+    "municipio": "Mazcuerras",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 213352.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "medio cudeyo": {
+    "municipio": "Medio Cudeyo",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -938955.72,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "miera": {
+    "municipio": "Miera",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 144424.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "molledo": {
+    "municipio": "Molledo",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 575925.82,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "penagos": {
+    "municipio": "Penagos",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 169071.51,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "penarrubia": {
+    "municipio": "Peñarrubia",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 107738.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pesaguero": {
+    "municipio": "Pesaguero",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 79910.31,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pesquera": {
+    "municipio": "Pesquera",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 438.25,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pielagos": {
+    "municipio": "Piélagos",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -817961.79,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "polaciones": {
+    "municipio": "Polaciones",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 186838.31,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "polanco": {
+    "municipio": "Polanco",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 286839.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "potes": {
+    "municipio": "Potes",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 27339.26,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "puente viesgo": {
+    "municipio": "Puente Viesgo",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 54535.72,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ramales de la victoria": {
+    "municipio": "Ramales de la Victoria",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -73611.5,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "reinosa": {
+    "municipio": "Reinosa",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 175614.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "reocin": {
+    "municipio": "Reocín",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 697639.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ribamontan al mar": {
+    "municipio": "Ribamontán al Mar",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -130047.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ribamontan al monte": {
+    "municipio": "Ribamontán al Monte",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 618840.4,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "rionansa": {
+    "municipio": "Rionansa",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 22123.93,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "riotuerto": {
+    "municipio": "Riotuerto",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 351573.57,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ruente": {
+    "municipio": "Ruente",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -445905.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "san felices de buelna": {
+    "municipio": "San Felices de Buelna",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 665757.54,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "san pedro del romeral": {
+    "municipio": "San Pedro del Romeral",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 103452.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "san roque de riomiera": {
+    "municipio": "San Roque de Riomiera",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 12741.05,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santa cruz de bezana": {
+    "municipio": "Santa Cruz de Bezana",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -261055.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santa maria de cayon": {
+    "municipio": "Santa María de Cayón",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -886905.42,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santander": {
+    "municipio": "Santander",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 12582272.26,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santillana del mar": {
+    "municipio": "Santillana del Mar",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 245332.6,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santiurde de reinosa": {
+    "municipio": "Santiurde de Reinosa",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 66489.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "san vicente de la barquera": {
+    "municipio": "San Vicente de la Barquera",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -305404.48,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "saro": {
+    "municipio": "Saro",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 27561.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "suances": {
+    "municipio": "Suances",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 1339768.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torrelavega": {
+    "municipio": "Torrelavega",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": -1125129.92,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "tresviso": {
+    "municipio": "Tresviso",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 20261.92,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valdeolea": {
+    "municipio": "Valdeolea",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 223962.06,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "val de san vicente": {
+    "municipio": "Val de San Vicente",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 605356.82,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villacarriedo": {
+    "municipio": "Villacarriedo",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 80537.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villafufre": {
+    "municipio": "Villafufre",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 99109.88,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valle de villaverde": {
+    "municipio": "Valle de Villaverde",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 7938.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "voto": {
+    "municipio": "Voto",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 171673.45,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "aguadulce": {
     "municipio": "Aguadulce",
     "provincia": "sevilla",
@@ -27420,6 +28351,202 @@
     "provincia": "murcia",
     "ejercicio": 2024,
     "importe_eur": -175057.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "arenas de iguna": {
+    "municipio": "Arenas de Iguña",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 216105.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "arredondo": {
+    "municipio": "Arredondo",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": -51763.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "camaleno": {
+    "municipio": "Camaleño",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 251127.88,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "castro-urdiales": {
+    "municipio": "Castro-Urdiales",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 8614519.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "colindres": {
+    "municipio": "Colindres",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 1243568.32,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "comillas": {
+    "municipio": "Comillas",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 1189932.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "guriezo": {
+    "municipio": "Guriezo",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 574146.99,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "hazas de cesto": {
+    "municipio": "Hazas de Cesto",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 209526.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "lamason": {
+    "municipio": "Lamasón",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 98241.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "lierganes": {
+    "municipio": "Liérganes",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": -44814.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "limpias": {
+    "municipio": "Limpias",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 488509.18,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "luena": {
+    "municipio": "Luena",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 29470.5,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "miengo": {
+    "municipio": "Miengo",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 1248421.9,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "noja": {
+    "municipio": "Noja",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 218740.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "rasines": {
+    "municipio": "Rasines",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": -365727.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "ruiloba": {
+    "municipio": "Ruiloba",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 294778.86,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "san miguel de aguayo": {
+    "municipio": "San Miguel de Aguayo",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 75832.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "santiurde de toranzo": {
+    "municipio": "Santiurde de Toranzo",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 414736.31,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "santona": {
+    "municipio": "Santoña",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 2740777.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "selaya": {
+    "municipio": "Selaya",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 223573.05,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "soba": {
+    "municipio": "Soba",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 23697.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "solorzano": {
+    "municipio": "Solórzano",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 125144.54,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "tudanca": {
+    "municipio": "Tudanca",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 163637.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "valdaliga": {
+    "municipio": "Valdáliga",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": -430809.88,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "valdeprado del rio": {
+    "municipio": "Valdeprado del Río",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 214656.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "valderredible": {
+    "municipio": "Valderredible",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 3549825.52,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "vega de liebana": {
+    "municipio": "Vega de Liébana",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 25128.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "villaescusa": {
+    "municipio": "Villaescusa",
+    "provincia": "cantabria",
+    "ejercicio": 2024,
+    "importe_eur": 99139.8,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
    "alcolea del rio": {
