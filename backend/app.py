@@ -9331,7 +9331,7 @@ def _footer_html(provincia="todas"):
 </footer>"""
 
 
-def _page_shell(title, body_html, description="", extra_head="", provincia="todas"):
+def _page_shell(title, body_html, description="", extra_head="", provincia="todas", show_ad_banner=True):
     full_title = title if "|" in title else f"{title} | Dinero Público"
     desc = esc(description or "Consulta los contratos públicos adjudicados en España "
                                "con los directivos de las empresas adjudicatarias. "
@@ -9391,7 +9391,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 </div>
 {_header_html(provincia)}
 <div class="main">
-{_ad_banner_html()}
+{_ad_banner_html() if show_ad_banner else ""}
 {body_html}
 </div>
 {_footer_html(provincia)}
@@ -11242,7 +11242,16 @@ def render_landing_nacional_html(datos):
         noticias_html = ('<div class="empty" style="padding:20px 8px;font-size:12px">'
                           'Aún no hay noticias cargadas.</div>')
 
-    body = f"""<div class="hero-panel">
+    # Bloque de Casos ANTES del hero/buscador, ocupando el sitio del banner
+    # de anuncios de _ad_banner_html() (ver show_ad_banner=False en el
+    # _page_shell() de más abajo, SOLO para esta página -- el resto del
+    # sitio sigue reservando el hueco de anuncio como siempre). Petición de
+    # César 2026-09-16: que sea lo primero que se vea al entrar, no solo
+    # algo debajo del ranking.
+    body = f"""<div class="section-title" style="margin-top:0">🔍 Casos de investigación</div>
+  <div class="region-grid">{casos_home_html}</div>
+  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
+  <div class="hero-panel">
     <div class="hero">
       <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
       <p class="hero-sub">
@@ -11282,9 +11291,6 @@ def render_landing_nacional_html(datos):
       <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
     </div>
   </div>
-  <div class="section-title">🔍 Casos de investigación</div>
-  <div class="region-grid">{casos_home_html}</div>
-  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
   <script>window.__PROVINCIA__ = "";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
 
@@ -11292,7 +11298,7 @@ def render_landing_nacional_html(datos):
                         description="Consulta los contratos públicos adjudicados en España con los "
                                      "directivos de las empresas adjudicatarias. Cubrimos la Región "
                                      "de Murcia, Cataluña, la Comunitat Valenciana y Andalucía.",
-                        provincia="todas")
+                        provincia="todas", show_ad_banner=False)
 
 
 def render_landing_html(datos, provincia="murcia"):
