@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-16 05:42:17",
+ "generado": "2026-09-17 05:47:31",
  "deuda_viva": {
   "fuente_url": "https://www.hacienda.gob.es/cdi/sist%20financiacion%20y%20deuda/informacioneells/2025/deuda-viva-ayuntamientos-202512.xlsx",
   "municipios": {
@@ -9118,6 +9118,1926 @@
     "provincia": "tarragona",
     "deuda_eur": 2.0
    },
+   "acedera": {
+    "municipio": "Acedera",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "aceuchal": {
+    "municipio": "Aceuchal",
+    "provincia": "badajoz",
+    "deuda_eur": 510515.0
+   },
+   "ahillones": {
+    "municipio": "Ahillones",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "alange": {
+    "municipio": "Alange",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la albuera": {
+    "municipio": "La Albuera",
+    "provincia": "badajoz",
+    "deuda_eur": 180000.0
+   },
+   "alburquerque": {
+    "municipio": "Alburquerque",
+    "provincia": "badajoz",
+    "deuda_eur": 10861874.41
+   },
+   "alconchel": {
+    "municipio": "Alconchel",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "alconera": {
+    "municipio": "Alconera",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "aljucen": {
+    "municipio": "Aljucén",
+    "provincia": "badajoz",
+    "deuda_eur": 100000.0
+   },
+   "almendral": {
+    "municipio": "Almendral",
+    "provincia": "badajoz",
+    "deuda_eur": 79512.0
+   },
+   "almendralejo": {
+    "municipio": "Almendralejo",
+    "provincia": "badajoz",
+    "deuda_eur": 4515866.0
+   },
+   "arroyo de san servan": {
+    "municipio": "Arroyo de San Serván",
+    "provincia": "badajoz",
+    "deuda_eur": 1476167.11
+   },
+   "atalaya": {
+    "municipio": "Atalaya",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "azuaga": {
+    "municipio": "Azuaga",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "badajoz": {
+    "municipio": "Badajoz",
+    "provincia": "badajoz",
+    "deuda_eur": 1096347.0
+   },
+   "barcarrota": {
+    "municipio": "Barcarrota",
+    "provincia": "badajoz",
+    "deuda_eur": 375029.0
+   },
+   "baterno": {
+    "municipio": "Baterno",
+    "provincia": "badajoz",
+    "deuda_eur": 52676.0
+   },
+   "benquerencia de la serena": {
+    "municipio": "Benquerencia de la Serena",
+    "provincia": "badajoz",
+    "deuda_eur": 277341.22
+   },
+   "berlanga": {
+    "municipio": "Berlanga",
+    "provincia": "badajoz",
+    "deuda_eur": 7374.0
+   },
+   "bienvenida": {
+    "municipio": "Bienvenida",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "bodonal de la sierra": {
+    "municipio": "Bodonal de la Sierra",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "burguillos del cerro": {
+    "municipio": "Burguillos del Cerro",
+    "provincia": "badajoz",
+    "deuda_eur": 66442.65
+   },
+   "cabeza del buey": {
+    "municipio": "Cabeza del Buey",
+    "provincia": "badajoz",
+    "deuda_eur": 422034.0
+   },
+   "cabeza la vaca": {
+    "municipio": "Cabeza la Vaca",
+    "provincia": "badajoz",
+    "deuda_eur": 26285.0
+   },
+   "calamonte": {
+    "municipio": "Calamonte",
+    "provincia": "badajoz",
+    "deuda_eur": 392563.0
+   },
+   "calera de leon": {
+    "municipio": "Calera de León",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "calzadilla de los barros": {
+    "municipio": "Calzadilla de los Barros",
+    "provincia": "badajoz",
+    "deuda_eur": 97010.0
+   },
+   "campanario": {
+    "municipio": "Campanario",
+    "provincia": "badajoz",
+    "deuda_eur": 681643.0
+   },
+   "campillo de llerena": {
+    "municipio": "Campillo de Llerena",
+    "provincia": "badajoz",
+    "deuda_eur": 97049.0
+   },
+   "capilla": {
+    "municipio": "Capilla",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "carmonita": {
+    "municipio": "Carmonita",
+    "provincia": "badajoz",
+    "deuda_eur": 130766.0
+   },
+   "el carrascalejo": {
+    "municipio": "El Carrascalejo",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "casas de don pedro": {
+    "municipio": "Casas de Don Pedro",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "casas de reina": {
+    "municipio": "Casas de Reina",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "castilblanco": {
+    "municipio": "Castilblanco",
+    "provincia": "badajoz",
+    "deuda_eur": 764690.0
+   },
+   "castuera": {
+    "municipio": "Castuera",
+    "provincia": "badajoz",
+    "deuda_eur": 36886.0
+   },
+   "la codosera": {
+    "municipio": "La Codosera",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "cordobilla de lacara": {
+    "municipio": "Cordobilla de Lácara",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la coronada": {
+    "municipio": "La Coronada",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "corte de peleas": {
+    "municipio": "Corte de Peleas",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "cristina": {
+    "municipio": "Cristina",
+    "provincia": "badajoz",
+    "deuda_eur": 49559.0
+   },
+   "cheles": {
+    "municipio": "Cheles",
+    "provincia": "badajoz",
+    "deuda_eur": 134499.72
+   },
+   "don alvaro": {
+    "municipio": "Don Álvaro",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "don benito": {
+    "municipio": "Don Benito",
+    "provincia": "badajoz",
+    "deuda_eur": 16362.0
+   },
+   "entrin bajo": {
+    "municipio": "Entrín Bajo",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "esparragalejo": {
+    "municipio": "Esparragalejo",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "esparragosa de la serena": {
+    "municipio": "Esparragosa de la Serena",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "esparragosa de lares": {
+    "municipio": "Esparragosa de Lares",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "feria": {
+    "municipio": "Feria",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "fregenal de la sierra": {
+    "municipio": "Fregenal de la Sierra",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "fuenlabrada de los montes": {
+    "municipio": "Fuenlabrada de los Montes",
+    "provincia": "badajoz",
+    "deuda_eur": 893404.0
+   },
+   "fuente de cantos": {
+    "municipio": "Fuente de Cantos",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "fuente del arco": {
+    "municipio": "Fuente del Arco",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "fuente del maestre": {
+    "municipio": "Fuente del Maestre",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "fuentes de leon": {
+    "municipio": "Fuentes de León",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "garbayuela": {
+    "municipio": "Garbayuela",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "garlitos": {
+    "municipio": "Garlitos",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la garrovilla": {
+    "municipio": "La Garrovilla",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "granja de torrehermosa": {
+    "municipio": "Granja de Torrehermosa",
+    "provincia": "badajoz",
+    "deuda_eur": 91370.0
+   },
+   "guarena": {
+    "municipio": "Guareña",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la haba": {
+    "municipio": "La Haba",
+    "provincia": "badajoz",
+    "deuda_eur": 146755.0
+   },
+   "helechosa de los montes": {
+    "municipio": "Helechosa de los Montes",
+    "provincia": "badajoz",
+    "deuda_eur": 32499.0
+   },
+   "herrera del duque": {
+    "municipio": "Herrera del Duque",
+    "provincia": "badajoz",
+    "deuda_eur": 1892966.4
+   },
+   "higuera de la serena": {
+    "municipio": "Higuera de la Serena",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "higuera de llerena": {
+    "municipio": "Higuera de Llerena",
+    "provincia": "badajoz",
+    "deuda_eur": 184086.4
+   },
+   "higuera de vargas": {
+    "municipio": "Higuera de Vargas",
+    "provincia": "badajoz",
+    "deuda_eur": 36251.0
+   },
+   "higuera la real": {
+    "municipio": "Higuera la Real",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "hinojosa del valle": {
+    "municipio": "Hinojosa del Valle",
+    "provincia": "badajoz",
+    "deuda_eur": 1093109.76
+   },
+   "hornachos": {
+    "municipio": "Hornachos",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "jerez de los caballeros": {
+    "municipio": "Jerez de los Caballeros",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la lapa": {
+    "municipio": "La Lapa",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "lobon": {
+    "municipio": "Lobón",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "llera": {
+    "municipio": "Llera",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "llerena": {
+    "municipio": "Llerena",
+    "provincia": "badajoz",
+    "deuda_eur": 177587.0
+   },
+   "magacela": {
+    "municipio": "Magacela",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "maguilla": {
+    "municipio": "Maguilla",
+    "provincia": "badajoz",
+    "deuda_eur": 220.0
+   },
+   "malcocinado": {
+    "municipio": "Malcocinado",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "malpartida de la serena": {
+    "municipio": "Malpartida de la Serena",
+    "provincia": "badajoz",
+    "deuda_eur": 13750.0
+   },
+   "manchita": {
+    "municipio": "Manchita",
+    "provincia": "badajoz",
+    "deuda_eur": 282952.0
+   },
+   "medellin": {
+    "municipio": "Medellín",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "medina de las torres": {
+    "municipio": "Medina de las Torres",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "mengabril": {
+    "municipio": "Mengabril",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "merida": {
+    "municipio": "Mérida",
+    "provincia": "badajoz",
+    "deuda_eur": 1227486.0
+   },
+   "mirandilla": {
+    "municipio": "Mirandilla",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "monesterio": {
+    "municipio": "Monesterio",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "montemolin": {
+    "municipio": "Montemolín",
+    "provincia": "badajoz",
+    "deuda_eur": 94016.0
+   },
+   "monterrubio de la serena": {
+    "municipio": "Monterrubio de la Serena",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "montijo": {
+    "municipio": "Montijo",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la morera": {
+    "municipio": "La Morera",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la nava de santiago": {
+    "municipio": "La Nava de Santiago",
+    "provincia": "badajoz",
+    "deuda_eur": 673.0
+   },
+   "navalvillar de pela": {
+    "municipio": "Navalvillar de Pela",
+    "provincia": "badajoz",
+    "deuda_eur": 50757.0
+   },
+   "nogales": {
+    "municipio": "Nogales",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "oliva de la frontera": {
+    "municipio": "Oliva de la Frontera",
+    "provincia": "badajoz",
+    "deuda_eur": 324152.0
+   },
+   "oliva de merida": {
+    "municipio": "Oliva de Mérida",
+    "provincia": "badajoz",
+    "deuda_eur": 162.0
+   },
+   "olivenza": {
+    "municipio": "Olivenza",
+    "provincia": "badajoz",
+    "deuda_eur": 1648223.23
+   },
+   "orellana de la sierra": {
+    "municipio": "Orellana de la Sierra",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "orellana la vieja": {
+    "municipio": "Orellana la Vieja",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "palomas": {
+    "municipio": "Palomas",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la parra": {
+    "municipio": "La Parra",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "penalsordo": {
+    "municipio": "Peñalsordo",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "peraleda del zaucejo": {
+    "municipio": "Peraleda del Zaucejo",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "puebla de alcocer": {
+    "municipio": "Puebla de Alcocer",
+    "provincia": "badajoz",
+    "deuda_eur": 3638747.85
+   },
+   "puebla de la calzada": {
+    "municipio": "Puebla de la Calzada",
+    "provincia": "badajoz",
+    "deuda_eur": 179635.0
+   },
+   "puebla de la reina": {
+    "municipio": "Puebla de la Reina",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "puebla del maestre": {
+    "municipio": "Puebla del Maestre",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "puebla del prior": {
+    "municipio": "Puebla del Prior",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "puebla de obando": {
+    "municipio": "Puebla de Obando",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "puebla de sancho perez": {
+    "municipio": "Puebla de Sancho Pérez",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "quintana de la serena": {
+    "municipio": "Quintana de la Serena",
+    "provincia": "badajoz",
+    "deuda_eur": 851030.0
+   },
+   "reina": {
+    "municipio": "Reina",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "rena": {
+    "municipio": "Rena",
+    "provincia": "badajoz",
+    "deuda_eur": 84735.0
+   },
+   "retamal de llerena": {
+    "municipio": "Retamal de Llerena",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "ribera del fresno": {
+    "municipio": "Ribera del Fresno",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "risco": {
+    "municipio": "Risco",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la roca de la sierra": {
+    "municipio": "La Roca de la Sierra",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "salvaleon": {
+    "municipio": "Salvaleón",
+    "provincia": "badajoz",
+    "deuda_eur": 14049.0
+   },
+   "salvatierra de los barros": {
+    "municipio": "Salvatierra de los Barros",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "sancti-spiritus": {
+    "municipio": "Sancti-Spíritus",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "san pedro de merida": {
+    "municipio": "San Pedro de Mérida",
+    "provincia": "badajoz",
+    "deuda_eur": 94162.0
+   },
+   "santa amalia": {
+    "municipio": "Santa Amalia",
+    "provincia": "badajoz",
+    "deuda_eur": 1245793.44
+   },
+   "santa marta": {
+    "municipio": "Santa Marta",
+    "provincia": "badajoz",
+    "deuda_eur": 903043.0
+   },
+   "san vicente de alcantara": {
+    "municipio": "San Vicente de Alcántara",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "segura de leon": {
+    "municipio": "Segura de León",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "siruela": {
+    "municipio": "Siruela",
+    "provincia": "badajoz",
+    "deuda_eur": 141327.0
+   },
+   "solana de los barros": {
+    "municipio": "Solana de los Barros",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "talarrubias": {
+    "municipio": "Talarrubias",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "talavera la real": {
+    "municipio": "Talavera la Real",
+    "provincia": "badajoz",
+    "deuda_eur": 1598607.0
+   },
+   "taliga": {
+    "municipio": "Táliga",
+    "provincia": "badajoz",
+    "deuda_eur": 397005.52
+   },
+   "tamurejo": {
+    "municipio": "Tamurejo",
+    "provincia": "badajoz",
+    "deuda_eur": 62664.0
+   },
+   "torre de miguel sesmero": {
+    "municipio": "Torre de Miguel Sesmero",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "torremayor": {
+    "municipio": "Torremayor",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "torremejia": {
+    "municipio": "Torremejía",
+    "provincia": "badajoz",
+    "deuda_eur": 159749.01
+   },
+   "trasierra": {
+    "municipio": "Trasierra",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "trujillanos": {
+    "municipio": "Trujillanos",
+    "provincia": "badajoz",
+    "deuda_eur": 137552.0
+   },
+   "usagre": {
+    "municipio": "Usagre",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "valdecaballeros": {
+    "municipio": "Valdecaballeros",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "valdetorres": {
+    "municipio": "Valdetorres",
+    "provincia": "badajoz",
+    "deuda_eur": 79973.55
+   },
+   "valencia de las torres": {
+    "municipio": "Valencia de las Torres",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "valencia del mombuey": {
+    "municipio": "Valencia del Mombuey",
+    "provincia": "badajoz",
+    "deuda_eur": 543882.0
+   },
+   "valencia del ventoso": {
+    "municipio": "Valencia del Ventoso",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "valverde de burguillos": {
+    "municipio": "Valverde de Burguillos",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "valverde de leganes": {
+    "municipio": "Valverde de Leganés",
+    "provincia": "badajoz",
+    "deuda_eur": 1815587.0
+   },
+   "valverde de llerena": {
+    "municipio": "Valverde de Llerena",
+    "provincia": "badajoz",
+    "deuda_eur": 527495.02
+   },
+   "valverde de merida": {
+    "municipio": "Valverde de Mérida",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "valle de la serena": {
+    "municipio": "Valle de la Serena",
+    "provincia": "badajoz",
+    "deuda_eur": 556265.1
+   },
+   "valle de matamoros": {
+    "municipio": "Valle de Matamoros",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "valle de santa ana": {
+    "municipio": "Valle de Santa Ana",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "villafranca de los barros": {
+    "municipio": "Villafranca de los Barros",
+    "provincia": "badajoz",
+    "deuda_eur": 210039.0
+   },
+   "villagarcia de la torre": {
+    "municipio": "Villagarcía de la Torre",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "villagonzalo": {
+    "municipio": "Villagonzalo",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "villalba de los barros": {
+    "municipio": "Villalba de los Barros",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "villanueva de la serena": {
+    "municipio": "Villanueva de la Serena",
+    "provincia": "badajoz",
+    "deuda_eur": 761913.0
+   },
+   "villanueva del fresno": {
+    "municipio": "Villanueva del Fresno",
+    "provincia": "badajoz",
+    "deuda_eur": 353254.0
+   },
+   "villar del rey": {
+    "municipio": "Villar del Rey",
+    "provincia": "badajoz",
+    "deuda_eur": 208565.0
+   },
+   "villar de rena": {
+    "municipio": "Villar de Rena",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "villarta de los montes": {
+    "municipio": "Villarta de los Montes",
+    "provincia": "badajoz",
+    "deuda_eur": 45764.0
+   },
+   "zafra": {
+    "municipio": "Zafra",
+    "provincia": "badajoz",
+    "deuda_eur": 2571196.0
+   },
+   "zahinos": {
+    "municipio": "Zahínos",
+    "provincia": "badajoz",
+    "deuda_eur": 61573.0
+   },
+   "zalamea de la serena": {
+    "municipio": "Zalamea de la Serena",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "la zarza": {
+    "municipio": "La Zarza",
+    "provincia": "badajoz",
+    "deuda_eur": 92811.0
+   },
+   "valdelacalzada": {
+    "municipio": "Valdelacalzada",
+    "provincia": "badajoz",
+    "deuda_eur": 61861.0
+   },
+   "pueblonuevo del guadiana": {
+    "municipio": "Pueblonuevo del Guadiana",
+    "provincia": "badajoz",
+    "deuda_eur": 0.0
+   },
+   "guadiana": {
+    "municipio": "Guadiana",
+    "provincia": "badajoz",
+    "deuda_eur": 199909.0
+   },
+   "abadia": {
+    "municipio": "Abadía",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "abertura": {
+    "municipio": "Abertura",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "acebo": {
+    "municipio": "Acebo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "acehuche": {
+    "municipio": "Acehúche",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "aceituna": {
+    "municipio": "Aceituna",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "ahigal": {
+    "municipio": "Ahigal",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "albala": {
+    "municipio": "Albalá",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "alcantara": {
+    "municipio": "Alcántara",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "alcollarin": {
+    "municipio": "Alcollarín",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "alcuescar": {
+    "municipio": "Alcuéscar",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "aldeacentenera": {
+    "municipio": "Aldeacentenera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "aldea del cano": {
+    "municipio": "Aldea del Cano",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "la aldea del obispo": {
+    "municipio": "La Aldea del Obispo",
+    "provincia": "caceres",
+    "deuda_eur": 46574.0
+   },
+   "aldeanueva de la vera": {
+    "municipio": "Aldeanueva de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "aldeanueva del camino": {
+    "municipio": "Aldeanueva del Camino",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "alia": {
+    "municipio": "Alía",
+    "provincia": "caceres",
+    "deuda_eur": 1212225.0
+   },
+   "aliseda": {
+    "municipio": "Aliseda",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "almaraz": {
+    "municipio": "Almaraz",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "almoharin": {
+    "municipio": "Almoharín",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "arroyo de la luz": {
+    "municipio": "Arroyo de la Luz",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "arroyomolinos de la vera": {
+    "municipio": "Arroyomolinos de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "banos de montemayor": {
+    "municipio": "Baños de Montemayor",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "barrado": {
+    "municipio": "Barrado",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "belvis de monroy": {
+    "municipio": "Belvís de Monroy",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "benquerencia": {
+    "municipio": "Benquerencia",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "berrocalejo": {
+    "municipio": "Berrocalejo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "berzocana": {
+    "municipio": "Berzocana",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "bohonal de ibor": {
+    "municipio": "Bohonal de Ibor",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "botija": {
+    "municipio": "Botija",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "brozas": {
+    "municipio": "Brozas",
+    "provincia": "caceres",
+    "deuda_eur": 223730.0
+   },
+   "cabanas del castillo": {
+    "municipio": "Cabañas del Castillo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "cabezabellosa": {
+    "municipio": "Cabezabellosa",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "cabezuela del valle": {
+    "municipio": "Cabezuela del Valle",
+    "provincia": "caceres",
+    "deuda_eur": 808878.0
+   },
+   "cabrero": {
+    "municipio": "Cabrero",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "caceres": {
+    "municipio": "Cáceres",
+    "provincia": "caceres",
+    "deuda_eur": 6.0
+   },
+   "cachorrilla": {
+    "municipio": "Cachorrilla",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "cadalso": {
+    "municipio": "Cadalso",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "calzadilla": {
+    "municipio": "Calzadilla",
+    "provincia": "caceres",
+    "deuda_eur": 251908.0
+   },
+   "caminomorisco": {
+    "municipio": "Caminomorisco",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "campillo de deleitosa": {
+    "municipio": "Campillo de Deleitosa",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "campo lugar": {
+    "municipio": "Campo Lugar",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "canamero": {
+    "municipio": "Cañamero",
+    "provincia": "caceres",
+    "deuda_eur": 74225.0
+   },
+   "canaveral": {
+    "municipio": "Cañaveral",
+    "provincia": "caceres",
+    "deuda_eur": 695141.43
+   },
+   "carbajo": {
+    "municipio": "Carbajo",
+    "provincia": "caceres",
+    "deuda_eur": 54018.0
+   },
+   "carcaboso": {
+    "municipio": "Carcaboso",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "carrascalejo": {
+    "municipio": "Carrascalejo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "casar de caceres": {
+    "municipio": "Casar de Cáceres",
+    "provincia": "caceres",
+    "deuda_eur": 1748284.0
+   },
+   "casar de palomero": {
+    "municipio": "Casar de Palomero",
+    "provincia": "caceres",
+    "deuda_eur": 167183.57
+   },
+   "casares de las hurdes": {
+    "municipio": "Casares de las Hurdes",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "casas de don antonio": {
+    "municipio": "Casas de Don Antonio",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "casas de don gomez": {
+    "municipio": "Casas de Don Gómez",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "casas del castanar": {
+    "municipio": "Casas del Castañar",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "casas del monte": {
+    "municipio": "Casas del Monte",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "casas de millan": {
+    "municipio": "Casas de Millán",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "casas de miravete": {
+    "municipio": "Casas de Miravete",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "casatejada": {
+    "municipio": "Casatejada",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "casillas de coria": {
+    "municipio": "Casillas de Coria",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "castanar de ibor": {
+    "municipio": "Castañar de Ibor",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "ceclavin": {
+    "municipio": "Ceclavín",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "cedillo": {
+    "municipio": "Cedillo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "cerezo": {
+    "municipio": "Cerezo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "cilleros": {
+    "municipio": "Cilleros",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "collado de la vera": {
+    "municipio": "Collado de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "conquista de la sierra": {
+    "municipio": "Conquista de la Sierra",
+    "provincia": "caceres",
+    "deuda_eur": 6978.0
+   },
+   "coria": {
+    "municipio": "Coria",
+    "provincia": "caceres",
+    "deuda_eur": 2927707.0
+   },
+   "cuacos de yuste": {
+    "municipio": "Cuacos de Yuste",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "la cumbre": {
+    "municipio": "La Cumbre",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "deleitosa": {
+    "municipio": "Deleitosa",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "descargamaria": {
+    "municipio": "Descargamaría",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "eljas": {
+    "municipio": "Eljas",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "escurial": {
+    "municipio": "Escurial",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "fresnedoso de ibor": {
+    "municipio": "Fresnedoso de Ibor",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "galisteo": {
+    "municipio": "Galisteo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "garciaz": {
+    "municipio": "Garciaz",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "la garganta": {
+    "municipio": "La Garganta",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "garganta la olla": {
+    "municipio": "Garganta la Olla",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "gargantilla": {
+    "municipio": "Gargantilla",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "garguera": {
+    "municipio": "Gargüera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "garrovillas de alconetar": {
+    "municipio": "Garrovillas de Alconétar",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "garvin": {
+    "municipio": "Garvín",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "gata": {
+    "municipio": "Gata",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "el gordo": {
+    "municipio": "El Gordo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "la granja": {
+    "municipio": "La Granja",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "guadalupe": {
+    "municipio": "Guadalupe",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "guijo de coria": {
+    "municipio": "Guijo de Coria",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "guijo de galisteo": {
+    "municipio": "Guijo de Galisteo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "guijo de granadilla": {
+    "municipio": "Guijo de Granadilla",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "guijo de santa barbara": {
+    "municipio": "Guijo de Santa Bárbara",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "herguijuela": {
+    "municipio": "Herguijuela",
+    "provincia": "caceres",
+    "deuda_eur": 449966.1
+   },
+   "hernan-perez": {
+    "municipio": "Hernán-Pérez",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "herrera de alcantara": {
+    "municipio": "Herrera de Alcántara",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "herreruela": {
+    "municipio": "Herreruela",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "hervas": {
+    "municipio": "Hervás",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "higuera de albalat": {
+    "municipio": "Higuera de Albalat",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "hinojal": {
+    "municipio": "Hinojal",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "holguera": {
+    "municipio": "Holguera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "hoyos": {
+    "municipio": "Hoyos",
+    "provincia": "caceres",
+    "deuda_eur": 14.0
+   },
+   "huelaga": {
+    "municipio": "Huélaga",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "ibahernando": {
+    "municipio": "Ibahernando",
+    "provincia": "caceres",
+    "deuda_eur": 125857.09
+   },
+   "jaraicejo": {
+    "municipio": "Jaraicejo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "jaraiz de la vera": {
+    "municipio": "Jaraíz de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "jarandilla de la vera": {
+    "municipio": "Jarandilla de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "jarilla": {
+    "municipio": "Jarilla",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "jerte": {
+    "municipio": "Jerte",
+    "provincia": "caceres",
+    "deuda_eur": 12421.0
+   },
+   "ladrillar": {
+    "municipio": "Ladrillar",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "logrosan": {
+    "municipio": "Logrosán",
+    "provincia": "caceres",
+    "deuda_eur": 758176.0
+   },
+   "losar de la vera": {
+    "municipio": "Losar de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 465.0
+   },
+   "madrigal de la vera": {
+    "municipio": "Madrigal de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "madrigalejo": {
+    "municipio": "Madrigalejo",
+    "provincia": "caceres",
+    "deuda_eur": 393316.0
+   },
+   "madronera": {
+    "municipio": "Madroñera",
+    "provincia": "caceres",
+    "deuda_eur": 3525589.69
+   },
+   "majadas": {
+    "municipio": "Majadas",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "malpartida de caceres": {
+    "municipio": "Malpartida de Cáceres",
+    "provincia": "caceres",
+    "deuda_eur": 1.0
+   },
+   "malpartida de plasencia": {
+    "municipio": "Malpartida de Plasencia",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "marchagaz": {
+    "municipio": "Marchagaz",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "mata de alcantara": {
+    "municipio": "Mata de Alcántara",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "membrio": {
+    "municipio": "Membrío",
+    "provincia": "caceres",
+    "deuda_eur": 82971.0
+   },
+   "mesas de ibor": {
+    "municipio": "Mesas de Ibor",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "miajadas": {
+    "municipio": "Miajadas",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "millanes": {
+    "municipio": "Millanes",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "mirabel": {
+    "municipio": "Mirabel",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "mohedas de granadilla": {
+    "municipio": "Mohedas de Granadilla",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "monroy": {
+    "municipio": "Monroy",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "montanchez": {
+    "municipio": "Montánchez",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "montehermoso": {
+    "municipio": "Montehermoso",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "moraleja": {
+    "municipio": "Moraleja",
+    "provincia": "caceres",
+    "deuda_eur": 81050.0
+   },
+   "morcillo": {
+    "municipio": "Morcillo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "navaconcejo": {
+    "municipio": "Navaconcejo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "navalmoral de la mata": {
+    "municipio": "Navalmoral de la Mata",
+    "provincia": "caceres",
+    "deuda_eur": 172587.0
+   },
+   "navalvillar de ibor": {
+    "municipio": "Navalvillar de Ibor",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "navas del madrono": {
+    "municipio": "Navas del Madroño",
+    "provincia": "caceres",
+    "deuda_eur": 15616.0
+   },
+   "navezuelas": {
+    "municipio": "Navezuelas",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "nunomoral": {
+    "municipio": "Nuñomoral",
+    "provincia": "caceres",
+    "deuda_eur": 60268.0
+   },
+   "oliva de plasencia": {
+    "municipio": "Oliva de Plasencia",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "palomero": {
+    "municipio": "Palomero",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "pasaron de la vera": {
+    "municipio": "Pasarón de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "pedroso de acim": {
+    "municipio": "Pedroso de Acim",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "peraleda de la mata": {
+    "municipio": "Peraleda de la Mata",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "peraleda de san roman": {
+    "municipio": "Peraleda de San Román",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "perales del puerto": {
+    "municipio": "Perales del Puerto",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "pescueza": {
+    "municipio": "Pescueza",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "la pesga": {
+    "municipio": "La Pesga",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "piedras albas": {
+    "municipio": "Piedras Albas",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "pinofranqueado": {
+    "municipio": "Pinofranqueado",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "piornal": {
+    "municipio": "Piornal",
+    "provincia": "caceres",
+    "deuda_eur": 1109637.56
+   },
+   "plasencia": {
+    "municipio": "Plasencia",
+    "provincia": "caceres",
+    "deuda_eur": 19598716.22
+   },
+   "plasenzuela": {
+    "municipio": "Plasenzuela",
+    "provincia": "caceres",
+    "deuda_eur": 3729016.64
+   },
+   "portaje": {
+    "municipio": "Portaje",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "portezuelo": {
+    "municipio": "Portezuelo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "pozuelo de zarzon": {
+    "municipio": "Pozuelo de Zarzón",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "puerto de santa cruz": {
+    "municipio": "Puerto de Santa Cruz",
+    "provincia": "caceres",
+    "deuda_eur": 44281.0
+   },
+   "rebollar": {
+    "municipio": "Rebollar",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "riolobos": {
+    "municipio": "Riolobos",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "robledillo de gata": {
+    "municipio": "Robledillo de Gata",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "robledillo de la vera": {
+    "municipio": "Robledillo de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "robledillo de trujillo": {
+    "municipio": "Robledillo de Trujillo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "robledollano": {
+    "municipio": "Robledollano",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "romangordo": {
+    "municipio": "Romangordo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "ruanes": {
+    "municipio": "Ruanes",
+    "provincia": "caceres",
+    "deuda_eur": 7291.58
+   },
+   "salorino": {
+    "municipio": "Salorino",
+    "provincia": "caceres",
+    "deuda_eur": 20279.0
+   },
+   "salvatierra de santiago": {
+    "municipio": "Salvatierra de Santiago",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "san martin de trevejo": {
+    "municipio": "San Martín de Trevejo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "santa ana": {
+    "municipio": "Santa Ana",
+    "provincia": "caceres",
+    "deuda_eur": 43036.0
+   },
+   "santa cruz de la sierra": {
+    "municipio": "Santa Cruz de la Sierra",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "santa cruz de paniagua": {
+    "municipio": "Santa Cruz de Paniagua",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "santa marta de magasca": {
+    "municipio": "Santa Marta de Magasca",
+    "provincia": "caceres",
+    "deuda_eur": 1703256.42
+   },
+   "santiago de alcantara": {
+    "municipio": "Santiago de Alcántara",
+    "provincia": "caceres",
+    "deuda_eur": 227478.0
+   },
+   "santiago del campo": {
+    "municipio": "Santiago del Campo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "santibanez el alto": {
+    "municipio": "Santibáñez el Alto",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "santibanez el bajo": {
+    "municipio": "Santibáñez el Bajo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "saucedilla": {
+    "municipio": "Saucedilla",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "segura de toro": {
+    "municipio": "Segura de Toro",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "serradilla": {
+    "municipio": "Serradilla",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "serrejon": {
+    "municipio": "Serrejón",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "sierra de fuentes": {
+    "municipio": "Sierra de Fuentes",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "talavan": {
+    "municipio": "Talaván",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "talaveruela de la vera": {
+    "municipio": "Talaveruela de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "talayuela": {
+    "municipio": "Talayuela",
+    "provincia": "caceres",
+    "deuda_eur": 84994.0
+   },
+   "tejeda de tietar": {
+    "municipio": "Tejeda de Tiétar",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "toril": {
+    "municipio": "Toril",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "tornavacas": {
+    "municipio": "Tornavacas",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "el torno": {
+    "municipio": "El Torno",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torrecilla de los angeles": {
+    "municipio": "Torrecilla de los Ángeles",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torrecillas de la tiesa": {
+    "municipio": "Torrecillas de la Tiesa",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torre de don miguel": {
+    "municipio": "Torre de Don Miguel",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torre de santa maria": {
+    "municipio": "Torre de Santa María",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torrejoncillo": {
+    "municipio": "Torrejoncillo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torrejon el rubio": {
+    "municipio": "Torrejón el Rubio",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torremenga": {
+    "municipio": "Torremenga",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torremocha": {
+    "municipio": "Torremocha",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torreorgaz": {
+    "municipio": "Torreorgaz",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "torrequemada": {
+    "municipio": "Torrequemada",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "trujillo": {
+    "municipio": "Trujillo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "valdastillas": {
+    "municipio": "Valdastillas",
+    "provincia": "caceres",
+    "deuda_eur": 1620.0
+   },
+   "valdecanas de tajo": {
+    "municipio": "Valdecañas de Tajo",
+    "provincia": "caceres",
+    "deuda_eur": 400000.0
+   },
+   "valdefuentes": {
+    "municipio": "Valdefuentes",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "valdehuncar": {
+    "municipio": "Valdehúncar",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "valdelacasa de tajo": {
+    "municipio": "Valdelacasa de Tajo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "valdemorales": {
+    "municipio": "Valdemorales",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "valdeobispo": {
+    "municipio": "Valdeobispo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "valencia de alcantara": {
+    "municipio": "Valencia de Alcántara",
+    "provincia": "caceres",
+    "deuda_eur": 67676.0
+   },
+   "valverde de la vera": {
+    "municipio": "Valverde de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "valverde del fresno": {
+    "municipio": "Valverde del Fresno",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "viandar de la vera": {
+    "municipio": "Viandar de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "villa del campo": {
+    "municipio": "Villa del Campo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "villa del rey": {
+    "municipio": "Villa del Rey",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "villamesias": {
+    "municipio": "Villamesías",
+    "provincia": "caceres",
+    "deuda_eur": 1155978.69
+   },
+   "villamiel": {
+    "municipio": "Villamiel",
+    "provincia": "caceres",
+    "deuda_eur": 53850.77
+   },
+   "villanueva de la sierra": {
+    "municipio": "Villanueva de la Sierra",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "villanueva de la vera": {
+    "municipio": "Villanueva de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 36743.0
+   },
+   "villar del pedroso": {
+    "municipio": "Villar del Pedroso",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "villar de plasencia": {
+    "municipio": "Villar de Plasencia",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "villasbuenas de gata": {
+    "municipio": "Villasbuenas de Gata",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "zarza de granadilla": {
+    "municipio": "Zarza de Granadilla",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "zarza de montanchez": {
+    "municipio": "Zarza de Montánchez",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "zarza la mayor": {
+    "municipio": "Zarza la Mayor",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "zorita": {
+    "municipio": "Zorita",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "rosalejo": {
+    "municipio": "Rosalejo",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "vegaviana": {
+    "municipio": "Vegaviana",
+    "provincia": "caceres",
+    "deuda_eur": 1220.0
+   },
+   "alagon del rio": {
+    "municipio": "Alagón del Río",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "tietar": {
+    "municipio": "Tiétar",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "pueblonuevo de miramontes": {
+    "municipio": "Pueblonuevo de Miramontes",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
    "abanilla": {
     "municipio": "Abanilla",
     "provincia": "murcia",
@@ -14577,6 +16497,713 @@
     "importe_eur": -1371024.69,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "aceuchal": {
+    "municipio": "Aceuchal",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 112965.82,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ahillones": {
+    "municipio": "Ahillones",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -224583.85,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la albuera": {
+    "municipio": "La Albuera",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 42360.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "alburquerque": {
+    "municipio": "Alburquerque",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 1705490.86,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "alconera": {
+    "municipio": "Alconera",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -23948.08,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "almendral": {
+    "municipio": "Almendral",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 130123.97,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "almendralejo": {
+    "municipio": "Almendralejo",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 10010848.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "badajoz": {
+    "municipio": "Badajoz",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 27829707.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "barcarrota": {
+    "municipio": "Barcarrota",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -215751.33,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "benquerencia de la serena": {
+    "municipio": "Benquerencia de la Serena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 82448.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bienvenida": {
+    "municipio": "Bienvenida",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 480397.89,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bodonal de la sierra": {
+    "municipio": "Bodonal de la Sierra",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 158279.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "burguillos del cerro": {
+    "municipio": "Burguillos del Cerro",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -68552.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabeza del buey": {
+    "municipio": "Cabeza del Buey",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 293631.08,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabeza la vaca": {
+    "municipio": "Cabeza la Vaca",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 46925.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "calamonte": {
+    "municipio": "Calamonte",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 398875.14,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "calera de leon": {
+    "municipio": "Calera de León",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 153039.75,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "calzadilla de los barros": {
+    "municipio": "Calzadilla de los Barros",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 90542.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "campillo de llerena": {
+    "municipio": "Campillo de Llerena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 11383.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "capilla": {
+    "municipio": "Capilla",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 53943.45,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casas de don pedro": {
+    "municipio": "Casas de Don Pedro",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 228360.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casas de reina": {
+    "municipio": "Casas de Reina",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 78204.88,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "castilblanco": {
+    "municipio": "Castilblanco",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 7099.59,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "castuera": {
+    "municipio": "Castuera",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 524427.67,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la codosera": {
+    "municipio": "La Codosera",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 49329.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la coronada": {
+    "municipio": "La Coronada",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 199838.59,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "corte de peleas": {
+    "municipio": "Corte de Peleas",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 92627.19,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "don alvaro": {
+    "municipio": "Don Álvaro",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 23108.59,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "don benito": {
+    "municipio": "Don Benito",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -1248759.65,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "esparragalejo": {
+    "municipio": "Esparragalejo",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -121654.62,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "esparragosa de la serena": {
+    "municipio": "Esparragosa de la Serena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 166115.1,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fuenlabrada de los montes": {
+    "municipio": "Fuenlabrada de los Montes",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 14495.36,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fuente de cantos": {
+    "municipio": "Fuente de Cantos",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -816038.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fuente del arco": {
+    "municipio": "Fuente del Arco",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 93136.96,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fuente del maestre": {
+    "municipio": "Fuente del Maestre",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 205380.45,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "garlitos": {
+    "municipio": "Garlitos",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 21687.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la garrovilla": {
+    "municipio": "La Garrovilla",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -358838.96,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "granja de torrehermosa": {
+    "municipio": "Granja de Torrehermosa",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 48520.57,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "guarena": {
+    "municipio": "Guareña",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 1073344.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "helechosa de los montes": {
+    "municipio": "Helechosa de los Montes",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -126753.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "herrera del duque": {
+    "municipio": "Herrera del Duque",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 609233.77,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "higuera de llerena": {
+    "municipio": "Higuera de Llerena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 28293.66,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "higuera de vargas": {
+    "municipio": "Higuera de Vargas",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 144613.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "higuera la real": {
+    "municipio": "Higuera la Real",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -749958.77,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "hornachos": {
+    "municipio": "Hornachos",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 3121336.39,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "jerez de los caballeros": {
+    "municipio": "Jerez de los Caballeros",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 758447.37,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "lobon": {
+    "municipio": "Lobón",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -80688.68,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "magacela": {
+    "municipio": "Magacela",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 67846.77,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "malcocinado": {
+    "municipio": "Malcocinado",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 63885.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "malpartida de la serena": {
+    "municipio": "Malpartida de la Serena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 91211.37,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "manchita": {
+    "municipio": "Manchita",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 106017.93,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "medina de las torres": {
+    "municipio": "Medina de las Torres",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 634665.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "merida": {
+    "municipio": "Mérida",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 8583783.19,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "monesterio": {
+    "municipio": "Monesterio",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -518874.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "monterrubio de la serena": {
+    "municipio": "Monterrubio de la Serena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 60506.25,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "montijo": {
+    "municipio": "Montijo",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -248259.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la morera": {
+    "municipio": "La Morera",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 18621.75,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "navalvillar de pela": {
+    "municipio": "Navalvillar de Pela",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 466487.36,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "oliva de la frontera": {
+    "municipio": "Oliva de la Frontera",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 32588.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "oliva de merida": {
+    "municipio": "Oliva de Mérida",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 209412.18,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "orellana de la sierra": {
+    "municipio": "Orellana de la Sierra",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -276985.41,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "orellana la vieja": {
+    "municipio": "Orellana la Vieja",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -826453.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "palomas": {
+    "municipio": "Palomas",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 433322.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "puebla de la calzada": {
+    "municipio": "Puebla de la Calzada",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 100157.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "puebla de la reina": {
+    "municipio": "Puebla de la Reina",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 32113.76,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "puebla del prior": {
+    "municipio": "Puebla del Prior",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 65846.89,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "puebla de obando": {
+    "municipio": "Puebla de Obando",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -27355.52,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "puebla de sancho perez": {
+    "municipio": "Puebla de Sancho Pérez",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -586175.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "quintana de la serena": {
+    "municipio": "Quintana de la Serena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -316231.38,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "reina": {
+    "municipio": "Reina",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 76822.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "rena": {
+    "municipio": "Rena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 104425.95,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "retamal de llerena": {
+    "municipio": "Retamal de Llerena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 16692.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ribera del fresno": {
+    "municipio": "Ribera del Fresno",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 304821.28,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la roca de la sierra": {
+    "municipio": "La Roca de la Sierra",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 130411.97,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "salvaleon": {
+    "municipio": "Salvaleón",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 104047.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "salvatierra de los barros": {
+    "municipio": "Salvatierra de los Barros",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 5351.99,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santa amalia": {
+    "municipio": "Santa Amalia",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 623240.28,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "san vicente de alcantara": {
+    "municipio": "San Vicente de Alcántara",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 73986.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "segura de leon": {
+    "municipio": "Segura de León",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 210919.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "siruela": {
+    "municipio": "Siruela",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 445591.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "solana de los barros": {
+    "municipio": "Solana de los Barros",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -328482.9,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "talarrubias": {
+    "municipio": "Talarrubias",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -744636.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torremejia": {
+    "municipio": "Torremejía",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 478665.19,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "trasierra": {
+    "municipio": "Trasierra",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 57256.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valencia de las torres": {
+    "municipio": "Valencia de las Torres",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 79211.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valencia del ventoso": {
+    "municipio": "Valencia del Ventoso",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -124483.68,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valverde de leganes": {
+    "municipio": "Valverde de Leganés",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 577430.22,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valverde de llerena": {
+    "municipio": "Valverde de Llerena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 197792.41,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valverde de merida": {
+    "municipio": "Valverde de Mérida",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 312369.26,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valle de la serena": {
+    "municipio": "Valle de la Serena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 187153.14,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valle de santa ana": {
+    "municipio": "Valle de Santa Ana",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -39827.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villafranca de los barros": {
+    "municipio": "Villafranca de los Barros",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -478589.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villagarcia de la torre": {
+    "municipio": "Villagarcía de la Torre",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -219040.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villalba de los barros": {
+    "municipio": "Villalba de los Barros",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 239719.37,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villanueva de la serena": {
+    "municipio": "Villanueva de la Serena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 2019351.66,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villar de rena": {
+    "municipio": "Villar de Rena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 481865.1,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "zalamea de la serena": {
+    "municipio": "Zalamea de la Serena",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 660748.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la zarza": {
+    "municipio": "La Zarza",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -540823.28,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valdelacalzada": {
+    "municipio": "Valdelacalzada",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 595090.76,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pueblonuevo del guadiana": {
+    "municipio": "Pueblonuevo del Guadiana",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": 404480.66,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "guadiana": {
+    "municipio": "Guadiana",
+    "provincia": "badajoz",
+    "ejercicio": 2025,
+    "importe_eur": -960551.04,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "abrera": {
     "municipio": "Abrera",
     "provincia": "barcelona",
@@ -16073,6 +18700,1245 @@
     "provincia": "barcelona",
     "ejercicio": 2025,
     "importe_eur": 460535.72,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "abertura": {
+    "municipio": "Abertura",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 41116.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "acebo": {
+    "municipio": "Acebo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 238404.92,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "acehuche": {
+    "municipio": "Acehúche",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 215939.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "aceituna": {
+    "municipio": "Aceituna",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 1720.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ahigal": {
+    "municipio": "Ahigal",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 256912.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "albala": {
+    "municipio": "Albalá",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 230284.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "alcollarin": {
+    "municipio": "Alcollarín",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 613.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "alcuescar": {
+    "municipio": "Alcuéscar",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -47563.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "aldeacentenera": {
+    "municipio": "Aldeacentenera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -202909.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la aldea del obispo": {
+    "municipio": "La Aldea del Obispo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 73143.9,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "aldeanueva de la vera": {
+    "municipio": "Aldeanueva de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 140497.88,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "aldeanueva del camino": {
+    "municipio": "Aldeanueva del Camino",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 74928.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "alia": {
+    "municipio": "Alía",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 8716.65,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "aliseda": {
+    "municipio": "Aliseda",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 41335.19,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "almaraz": {
+    "municipio": "Almaraz",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -536098.09,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "almoharin": {
+    "municipio": "Almoharín",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 91437.91,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "arroyo de la luz": {
+    "municipio": "Arroyo de la Luz",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 1195748.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "arroyomolinos de la vera": {
+    "municipio": "Arroyomolinos de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 216066.82,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "banos de montemayor": {
+    "municipio": "Baños de Montemayor",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 316471.24,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "barrado": {
+    "municipio": "Barrado",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -97209.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "belvis de monroy": {
+    "municipio": "Belvís de Monroy",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 486715.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "benquerencia": {
+    "municipio": "Benquerencia",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -45200.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "berzocana": {
+    "municipio": "Berzocana",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 339024.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "bohonal de ibor": {
+    "municipio": "Bohonal de Ibor",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 84636.96,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "botija": {
+    "municipio": "Botija",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -547952.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "brozas": {
+    "municipio": "Brozas",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 91099.85,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabanas del castillo": {
+    "municipio": "Cabañas del Castillo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 3924.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabezuela del valle": {
+    "municipio": "Cabezuela del Valle",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 153866.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cabrero": {
+    "municipio": "Cabrero",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -70435.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "caceres": {
+    "municipio": "Cáceres",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 9926091.37,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cachorrilla": {
+    "municipio": "Cachorrilla",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 37161.08,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cadalso": {
+    "municipio": "Cadalso",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 12394.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "calzadilla": {
+    "municipio": "Calzadilla",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 355458.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "caminomorisco": {
+    "municipio": "Caminomorisco",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 34035.82,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "campillo de deleitosa": {
+    "municipio": "Campillo de Deleitosa",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -126659.24,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "campo lugar": {
+    "municipio": "Campo Lugar",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 166133.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "canaveral": {
+    "municipio": "Cañaveral",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 26251.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "carbajo": {
+    "municipio": "Carbajo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 110458.06,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "carcaboso": {
+    "municipio": "Carcaboso",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 192904.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "carrascalejo": {
+    "municipio": "Carrascalejo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 17931.47,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casar de palomero": {
+    "municipio": "Casar de Palomero",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 280783.36,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casares de las hurdes": {
+    "municipio": "Casares de las Hurdes",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 163073.22,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casas de don gomez": {
+    "municipio": "Casas de Don Gómez",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 3347.51,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casas del castanar": {
+    "municipio": "Casas del Castañar",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -65742.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casas del monte": {
+    "municipio": "Casas del Monte",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 331905.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casas de millan": {
+    "municipio": "Casas de Millán",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 618930.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casatejada": {
+    "municipio": "Casatejada",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 572426.09,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "casillas de coria": {
+    "municipio": "Casillas de Coria",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 89877.96,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "castanar de ibor": {
+    "municipio": "Castañar de Ibor",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 194076.86,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ceclavin": {
+    "municipio": "Ceclavín",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 593653.06,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cerezo": {
+    "municipio": "Cerezo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 99978.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "cilleros": {
+    "municipio": "Cilleros",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 156216.68,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "collado de la vera": {
+    "municipio": "Collado de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 146323.89,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "coria": {
+    "municipio": "Coria",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 2375305.36,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "deleitosa": {
+    "municipio": "Deleitosa",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 32048.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "descargamaria": {
+    "municipio": "Descargamaría",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 35345.58,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "eljas": {
+    "municipio": "Eljas",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 1408.92,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "escurial": {
+    "municipio": "Escurial",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 279392.47,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fresnedoso de ibor": {
+    "municipio": "Fresnedoso de Ibor",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 102798.07,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "garciaz": {
+    "municipio": "Garciaz",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -265986.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la garganta": {
+    "municipio": "La Garganta",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 53724.93,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "garganta la olla": {
+    "municipio": "Garganta la Olla",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 373702.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "gargantilla": {
+    "municipio": "Gargantilla",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 20783.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "garguera": {
+    "municipio": "Gargüera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 101899.05,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "garrovillas de alconetar": {
+    "municipio": "Garrovillas de Alconétar",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -268103.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "garvin": {
+    "municipio": "Garvín",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -1944.99,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "gata": {
+    "municipio": "Gata",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 303801.28,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "el gordo": {
+    "municipio": "El Gordo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -84167.65,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la granja": {
+    "municipio": "La Granja",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 86713.58,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "guadalupe": {
+    "municipio": "Guadalupe",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 432095.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "guijo de coria": {
+    "municipio": "Guijo de Coria",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 11684.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "guijo de galisteo": {
+    "municipio": "Guijo de Galisteo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 347386.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "guijo de granadilla": {
+    "municipio": "Guijo de Granadilla",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 11839.44,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "guijo de santa barbara": {
+    "municipio": "Guijo de Santa Bárbara",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 71811.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "herguijuela": {
+    "municipio": "Herguijuela",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -75286.69,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "herrera de alcantara": {
+    "municipio": "Herrera de Alcántara",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 74194.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "herreruela": {
+    "municipio": "Herreruela",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 29050.3,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "hervas": {
+    "municipio": "Hervás",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 527426.75,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "hinojal": {
+    "municipio": "Hinojal",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 11551.01,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "holguera": {
+    "municipio": "Holguera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 21873.83,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "huelaga": {
+    "municipio": "Huélaga",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 78779.11,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ibahernando": {
+    "municipio": "Ibahernando",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 106255.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "jaraiz de la vera": {
+    "municipio": "Jaraíz de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 190789.24,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "jarandilla de la vera": {
+    "municipio": "Jarandilla de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -86664.42,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "jarilla": {
+    "municipio": "Jarilla",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 138313.79,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "jerte": {
+    "municipio": "Jerte",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 440223.22,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ladrillar": {
+    "municipio": "Ladrillar",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 1236.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "logrosan": {
+    "municipio": "Logrosán",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -1294782.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "madrigal de la vera": {
+    "municipio": "Madrigal de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 505159.15,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "madronera": {
+    "municipio": "Madroñera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 237895.73,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "malpartida de caceres": {
+    "municipio": "Malpartida de Cáceres",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 494936.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "malpartida de plasencia": {
+    "municipio": "Malpartida de Plasencia",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -848217.36,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "marchagaz": {
+    "municipio": "Marchagaz",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 242718.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "mata de alcantara": {
+    "municipio": "Mata de Alcántara",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -43825.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "mesas de ibor": {
+    "municipio": "Mesas de Ibor",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 84354.3,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "miajadas": {
+    "municipio": "Miajadas",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 24637.15,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "millanes": {
+    "municipio": "Millanes",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 193105.96,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "mohedas de granadilla": {
+    "municipio": "Mohedas de Granadilla",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 46719.41,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "monroy": {
+    "municipio": "Monroy",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 134465.97,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "montanchez": {
+    "municipio": "Montánchez",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -48028.6,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "montehermoso": {
+    "municipio": "Montehermoso",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -216789.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "moraleja": {
+    "municipio": "Moraleja",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 669557.67,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "morcillo": {
+    "municipio": "Morcillo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 184423.57,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "navaconcejo": {
+    "municipio": "Navaconcejo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 450739.86,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "navalmoral de la mata": {
+    "municipio": "Navalmoral de la Mata",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -1402512.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "navalvillar de ibor": {
+    "municipio": "Navalvillar de Ibor",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 162747.91,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "navezuelas": {
+    "municipio": "Navezuelas",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 144217.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "oliva de plasencia": {
+    "municipio": "Oliva de Plasencia",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 94250.51,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "palomero": {
+    "municipio": "Palomero",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 1632.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pasaron de la vera": {
+    "municipio": "Pasarón de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 229240.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pedroso de acim": {
+    "municipio": "Pedroso de Acim",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 124070.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "peraleda de la mata": {
+    "municipio": "Peraleda de la Mata",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 130660.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "perales del puerto": {
+    "municipio": "Perales del Puerto",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 92885.95,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pescueza": {
+    "municipio": "Pescueza",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 104668.4,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la pesga": {
+    "municipio": "La Pesga",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 112699.19,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pinofranqueado": {
+    "municipio": "Pinofranqueado",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 1204965.54,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "portaje": {
+    "municipio": "Portaje",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 37063.09,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "portezuelo": {
+    "municipio": "Portezuelo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 94200.32,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pozuelo de zarzon": {
+    "municipio": "Pozuelo de Zarzón",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -4889.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "puerto de santa cruz": {
+    "municipio": "Puerto de Santa Cruz",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 1377.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "rebollar": {
+    "municipio": "Rebollar",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 33173.09,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "riolobos": {
+    "municipio": "Riolobos",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 128101.01,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "robledillo de gata": {
+    "municipio": "Robledillo de Gata",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 35781.39,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "robledillo de trujillo": {
+    "municipio": "Robledillo de Trujillo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 55469.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "robledollano": {
+    "municipio": "Robledollano",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 29145.86,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "romangordo": {
+    "municipio": "Romangordo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 1881732.33,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ruanes": {
+    "municipio": "Ruanes",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 51856.85,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "salorino": {
+    "municipio": "Salorino",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 211100.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "san martin de trevejo": {
+    "municipio": "San Martín de Trevejo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 191393.04,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santa ana": {
+    "municipio": "Santa Ana",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 81097.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santa cruz de la sierra": {
+    "municipio": "Santa Cruz de la Sierra",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 147601.41,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santiago del campo": {
+    "municipio": "Santiago del Campo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 77905.04,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santibanez el alto": {
+    "municipio": "Santibáñez el Alto",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 197675.57,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "santibanez el bajo": {
+    "municipio": "Santibáñez el Bajo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 450494.07,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "segura de toro": {
+    "municipio": "Segura de Toro",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -90142.95,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "serradilla": {
+    "municipio": "Serradilla",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 57831.11,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sierra de fuentes": {
+    "municipio": "Sierra de Fuentes",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 335410.4,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "talaveruela de la vera": {
+    "municipio": "Talaveruela de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 51472.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "talayuela": {
+    "municipio": "Talayuela",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 430020.58,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "tejeda de tietar": {
+    "municipio": "Tejeda de Tiétar",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 229442.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "toril": {
+    "municipio": "Toril",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -61455.2,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "el torno": {
+    "municipio": "El Torno",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 84374.57,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torrecilla de los angeles": {
+    "municipio": "Torrecilla de los Ángeles",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 146318.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torrecillas de la tiesa": {
+    "municipio": "Torrecillas de la Tiesa",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 188713.32,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torre de don miguel": {
+    "municipio": "Torre de Don Miguel",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 253162.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torre de santa maria": {
+    "municipio": "Torre de Santa María",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 91302.2,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torrejoncillo": {
+    "municipio": "Torrejoncillo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 355831.07,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torrejon el rubio": {
+    "municipio": "Torrejón el Rubio",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 28.6,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torremenga": {
+    "municipio": "Torremenga",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 43491.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torremocha": {
+    "municipio": "Torremocha",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -119428.52,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torreorgaz": {
+    "municipio": "Torreorgaz",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 27386.34,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "torrequemada": {
+    "municipio": "Torrequemada",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 82944.54,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "trujillo": {
+    "municipio": "Trujillo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 3345899.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valdastillas": {
+    "municipio": "Valdastillas",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -71663.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valdecanas de tajo": {
+    "municipio": "Valdecañas de Tajo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 76460.11,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valdefuentes": {
+    "municipio": "Valdefuentes",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -735139.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valdehuncar": {
+    "municipio": "Valdehúncar",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 174832.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valdelacasa de tajo": {
+    "municipio": "Valdelacasa de Tajo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 54133.77,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valdemorales": {
+    "municipio": "Valdemorales",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 105710.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valdeobispo": {
+    "municipio": "Valdeobispo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 182704.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valverde de la vera": {
+    "municipio": "Valverde de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 56397.01,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "valverde del fresno": {
+    "municipio": "Valverde del Fresno",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 133014.5,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "viandar de la vera": {
+    "municipio": "Viandar de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -37951.01,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villa del rey": {
+    "municipio": "Villa del Rey",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 58756.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villanueva de la sierra": {
+    "municipio": "Villanueva de la Sierra",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -146392.99,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villanueva de la vera": {
+    "municipio": "Villanueva de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -20010.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villar del pedroso": {
+    "municipio": "Villar del Pedroso",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -53524.49,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villar de plasencia": {
+    "municipio": "Villar de Plasencia",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 110153.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villasbuenas de gata": {
+    "municipio": "Villasbuenas de Gata",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 209560.69,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "zarza de granadilla": {
+    "municipio": "Zarza de Granadilla",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 185700.58,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "zarza de montanchez": {
+    "municipio": "Zarza de Montánchez",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 415339.9,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "zarza la mayor": {
+    "municipio": "Zarza la Mayor",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": -141041.86,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "rosalejo": {
+    "municipio": "Rosalejo",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 491564.28,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "vegaviana": {
+    "municipio": "Vegaviana",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 18205.66,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "alagon del rio": {
+    "municipio": "Alagón del Río",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 93130.72,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "tietar": {
+    "municipio": "Tiétar",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 54298.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "pueblonuevo de miramontes": {
+    "municipio": "Pueblonuevo de Miramontes",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 225300.05,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "algeciras": {
@@ -25910,6 +29776,300 @@
     "importe_eur": 510701.35,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
+   "acedera": {
+    "municipio": "Acedera",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -401639.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "alange": {
+    "municipio": "Alange",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 69131.64,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "arroyo de san servan": {
+    "municipio": "Arroyo de San Serván",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 659760.48,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "atalaya": {
+    "municipio": "Atalaya",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 98138.75,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "azuaga": {
+    "municipio": "Azuaga",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 732895.63,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "baterno": {
+    "municipio": "Baterno",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 279452.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "campanario": {
+    "municipio": "Campanario",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 776680.0,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "carmonita": {
+    "municipio": "Carmonita",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 30018.41,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "el carrascalejo": {
+    "municipio": "El Carrascalejo",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 66452.99,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "cordobilla de lacara": {
+    "municipio": "Cordobilla de Lácara",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 276871.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "cheles": {
+    "municipio": "Cheles",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 331407.62,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "esparragosa de lares": {
+    "municipio": "Esparragosa de Lares",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -499833.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "fregenal de la sierra": {
+    "municipio": "Fregenal de la Sierra",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -819220.0,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "fuentes de leon": {
+    "municipio": "Fuentes de León",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 169385.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "garbayuela": {
+    "municipio": "Garbayuela",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 291177.5,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "higuera de la serena": {
+    "municipio": "Higuera de la Serena",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 379701.19,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "hinojosa del valle": {
+    "municipio": "Hinojosa del Valle",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -59412.59,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "la lapa": {
+    "municipio": "La Lapa",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 29766.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "llera": {
+    "municipio": "Llera",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 107124.25,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "llerena": {
+    "municipio": "Llerena",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -132164.31,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "maguilla": {
+    "municipio": "Maguilla",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 232502.95,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "medellin": {
+    "municipio": "Medellín",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -277473.55,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "mengabril": {
+    "municipio": "Mengabril",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 284580.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "mirandilla": {
+    "municipio": "Mirandilla",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 46306.24,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "la nava de santiago": {
+    "municipio": "La Nava de Santiago",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -93445.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "nogales": {
+    "municipio": "Nogales",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 307263.21,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "olivenza": {
+    "municipio": "Olivenza",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -1073522.78,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "la parra": {
+    "municipio": "La Parra",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -26760.51,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "san pedro de merida": {
+    "municipio": "San Pedro de Mérida",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 86005.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "talavera la real": {
+    "municipio": "Talavera la Real",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 746712.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "taliga": {
+    "municipio": "Táliga",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 129618.82,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "torre de miguel sesmero": {
+    "municipio": "Torre de Miguel Sesmero",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -575259.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "trujillanos": {
+    "municipio": "Trujillanos",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 26332.72,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "usagre": {
+    "municipio": "Usagre",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 1844651.25,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "valdecaballeros": {
+    "municipio": "Valdecaballeros",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -52842.3,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "valdetorres": {
+    "municipio": "Valdetorres",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 279896.11,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "valencia del mombuey": {
+    "municipio": "Valencia del Mombuey",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 2833035.04,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "valverde de burguillos": {
+    "municipio": "Valverde de Burguillos",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 98157.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "villagonzalo": {
+    "municipio": "Villagonzalo",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -288869.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "villar del rey": {
+    "municipio": "Villar del Rey",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": 229654.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "villarta de los montes": {
+    "municipio": "Villarta de los Montes",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -102541.18,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "zafra": {
+    "municipio": "Zafra",
+    "provincia": "badajoz",
+    "ejercicio": 2024,
+    "importe_eur": -1018435.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
    "aguilar de segarra": {
     "municipio": "Aguilar de Segarra",
     "provincia": "barcelona",
@@ -26461,6 +30621,209 @@
     "provincia": "barcelona",
     "ejercicio": 2024,
     "importe_eur": 332185.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "abadia": {
+    "municipio": "Abadía",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 20359.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "alcantara": {
+    "municipio": "Alcántara",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 40721.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "aldea del cano": {
+    "municipio": "Aldea del Cano",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 92537.09,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "berrocalejo": {
+    "municipio": "Berrocalejo",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 9070.56,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "casar de caceres": {
+    "municipio": "Casar de Cáceres",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": -2393956.86,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "casas de don antonio": {
+    "municipio": "Casas de Don Antonio",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 35676.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "cedillo": {
+    "municipio": "Cedillo",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": -336946.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "conquista de la sierra": {
+    "municipio": "Conquista de la Sierra",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 180762.54,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "cuacos de yuste": {
+    "municipio": "Cuacos de Yuste",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 213780.57,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "hernan-perez": {
+    "municipio": "Hernán-Pérez",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 32579.72,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "hoyos": {
+    "municipio": "Hoyos",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 234026.11,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "losar de la vera": {
+    "municipio": "Losar de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 421095.69,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "madrigalejo": {
+    "municipio": "Madrigalejo",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 227816.25,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "membrio": {
+    "municipio": "Membrío",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 239593.44,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "mirabel": {
+    "municipio": "Mirabel",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 119652.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "peraleda de san roman": {
+    "municipio": "Peraleda de San Román",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 26902.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "plasencia": {
+    "municipio": "Plasencia",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 9863614.72,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "plasenzuela": {
+    "municipio": "Plasenzuela",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 80874.84,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "robledillo de la vera": {
+    "municipio": "Robledillo de la Vera",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": -161152.06,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "santa cruz de paniagua": {
+    "municipio": "Santa Cruz de Paniagua",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": -98215.02,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "santa marta de magasca": {
+    "municipio": "Santa Marta de Magasca",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 28935.45,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "santiago de alcantara": {
+    "municipio": "Santiago de Alcántara",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 139915.65,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "saucedilla": {
+    "municipio": "Saucedilla",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": -4877153.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "serrejon": {
+    "municipio": "Serrejón",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": -72855.39,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "talavan": {
+    "municipio": "Talaván",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 448725.44,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "villa del campo": {
+    "municipio": "Villa del Campo",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": -45240.03,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "villamesias": {
+    "municipio": "Villamesías",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": -18741.03,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "villamiel": {
+    "municipio": "Villamiel",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": -59757.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "zorita": {
+    "municipio": "Zorita",
+    "provincia": "caceres",
+    "ejercicio": 2024,
+    "importe_eur": 41006.72,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
    "alcala de los gazules": {

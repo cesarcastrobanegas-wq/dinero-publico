@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-16 05:43:07",
+ "generado": "2026-09-17 05:48:27",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
   "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
@@ -19,7 +19,9 @@
   "sevilla": "https://www.ine.es/jaxiT3/Tabla.htm?t=2895",
   "pais_vasco": "https://www.ine.es/jaxiT3/Tabla.htm?t=2854",
   "santa_cruz_tenerife": "https://www.ine.es/jaxiT3/Tabla.htm?t=2892",
-  "cantabria": "https://www.ine.es/jaxiT3/Tabla.htm?t=2893"
+  "cantabria": "https://www.ine.es/jaxiT3/Tabla.htm?t=2893",
+  "badajoz": "https://www.ine.es/jaxiT3/Tabla.htm?t=2859",
+  "caceres": "https://www.ine.es/jaxiT3/Tabla.htm?t=2863"
  },
  "municipios": {
   "abanilla": {
@@ -16172,6 +16174,2310 @@
    "municipio": "Voto",
    "provincia": "cantabria",
    "poblacion": 2971,
+   "anio": 2025
+  },
+  "acedera": {
+   "municipio": "Acedera",
+   "provincia": "badajoz",
+   "poblacion": 815,
+   "anio": 2025
+  },
+  "aceuchal": {
+   "municipio": "Aceuchal",
+   "provincia": "badajoz",
+   "poblacion": 5307,
+   "anio": 2025
+  },
+  "ahillones": {
+   "municipio": "Ahillones",
+   "provincia": "badajoz",
+   "poblacion": 793,
+   "anio": 2025
+  },
+  "alange": {
+   "municipio": "Alange",
+   "provincia": "badajoz",
+   "poblacion": 1802,
+   "anio": 2025
+  },
+  "la albuera": {
+   "municipio": "La Albuera",
+   "provincia": "badajoz",
+   "poblacion": 1995,
+   "anio": 2025
+  },
+  "alburquerque": {
+   "municipio": "Alburquerque",
+   "provincia": "badajoz",
+   "poblacion": 4928,
+   "anio": 2025
+  },
+  "alconchel": {
+   "municipio": "Alconchel",
+   "provincia": "badajoz",
+   "poblacion": 1592,
+   "anio": 2025
+  },
+  "alconera": {
+   "municipio": "Alconera",
+   "provincia": "badajoz",
+   "poblacion": 748,
+   "anio": 2025
+  },
+  "aljucen": {
+   "municipio": "Aljucén",
+   "provincia": "badajoz",
+   "poblacion": 252,
+   "anio": 2025
+  },
+  "almendral": {
+   "municipio": "Almendral",
+   "provincia": "badajoz",
+   "poblacion": 1202,
+   "anio": 2025
+  },
+  "almendralejo": {
+   "municipio": "Almendralejo",
+   "provincia": "badajoz",
+   "poblacion": 34587,
+   "anio": 2025
+  },
+  "arroyo de san servan": {
+   "municipio": "Arroyo de San Serván",
+   "provincia": "badajoz",
+   "poblacion": 4001,
+   "anio": 2025
+  },
+  "atalaya": {
+   "municipio": "Atalaya",
+   "provincia": "badajoz",
+   "poblacion": 258,
+   "anio": 2025
+  },
+  "azuaga": {
+   "municipio": "Azuaga",
+   "provincia": "badajoz",
+   "poblacion": 7587,
+   "anio": 2025
+  },
+  "badajoz": {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "poblacion": 150209,
+   "anio": 2025
+  },
+  "barcarrota": {
+   "municipio": "Barcarrota",
+   "provincia": "badajoz",
+   "poblacion": 3456,
+   "anio": 2025
+  },
+  "baterno": {
+   "municipio": "Baterno",
+   "provincia": "badajoz",
+   "poblacion": 231,
+   "anio": 2025
+  },
+  "benquerencia de la serena": {
+   "municipio": "Benquerencia de la Serena",
+   "provincia": "badajoz",
+   "poblacion": 771,
+   "anio": 2025
+  },
+  "berlanga": {
+   "municipio": "Berlanga",
+   "provincia": "badajoz",
+   "poblacion": 2171,
+   "anio": 2025
+  },
+  "bienvenida": {
+   "municipio": "Bienvenida",
+   "provincia": "badajoz",
+   "poblacion": 1999,
+   "anio": 2025
+  },
+  "bodonal de la sierra": {
+   "municipio": "Bodonal de la Sierra",
+   "provincia": "badajoz",
+   "poblacion": 982,
+   "anio": 2025
+  },
+  "burguillos del cerro": {
+   "municipio": "Burguillos del Cerro",
+   "provincia": "badajoz",
+   "poblacion": 2940,
+   "anio": 2025
+  },
+  "cabeza del buey": {
+   "municipio": "Cabeza del Buey",
+   "provincia": "badajoz",
+   "poblacion": 4489,
+   "anio": 2025
+  },
+  "cabeza la vaca": {
+   "municipio": "Cabeza la Vaca",
+   "provincia": "badajoz",
+   "poblacion": 1257,
+   "anio": 2025
+  },
+  "calamonte": {
+   "municipio": "Calamonte",
+   "provincia": "badajoz",
+   "poblacion": 6104,
+   "anio": 2025
+  },
+  "calera de leon": {
+   "municipio": "Calera de León",
+   "provincia": "badajoz",
+   "poblacion": 912,
+   "anio": 2025
+  },
+  "calzadilla de los barros": {
+   "municipio": "Calzadilla de los Barros",
+   "provincia": "badajoz",
+   "poblacion": 679,
+   "anio": 2025
+  },
+  "campanario": {
+   "municipio": "Campanario",
+   "provincia": "badajoz",
+   "poblacion": 4702,
+   "anio": 2025
+  },
+  "campillo de llerena": {
+   "municipio": "Campillo de Llerena",
+   "provincia": "badajoz",
+   "poblacion": 1321,
+   "anio": 2025
+  },
+  "capilla": {
+   "municipio": "Capilla",
+   "provincia": "badajoz",
+   "poblacion": 142,
+   "anio": 2025
+  },
+  "carmonita": {
+   "municipio": "Carmonita",
+   "provincia": "badajoz",
+   "poblacion": 514,
+   "anio": 2025
+  },
+  "el carrascalejo": {
+   "municipio": "El Carrascalejo",
+   "provincia": "badajoz",
+   "poblacion": 80,
+   "anio": 2025
+  },
+  "casas de don pedro": {
+   "municipio": "Casas de Don Pedro",
+   "provincia": "badajoz",
+   "poblacion": 1375,
+   "anio": 2025
+  },
+  "casas de reina": {
+   "municipio": "Casas de Reina",
+   "provincia": "badajoz",
+   "poblacion": 200,
+   "anio": 2025
+  },
+  "castilblanco": {
+   "municipio": "Castilblanco",
+   "provincia": "badajoz",
+   "poblacion": 820,
+   "anio": 2025
+  },
+  "castuera": {
+   "municipio": "Castuera",
+   "provincia": "badajoz",
+   "poblacion": 5457,
+   "anio": 2025
+  },
+  "cheles": {
+   "municipio": "Cheles",
+   "provincia": "badajoz",
+   "poblacion": 1175,
+   "anio": 2025
+  },
+  "la codosera": {
+   "municipio": "La Codosera",
+   "provincia": "badajoz",
+   "poblacion": 1983,
+   "anio": 2025
+  },
+  "cordobilla de lacara": {
+   "municipio": "Cordobilla de Lácara",
+   "provincia": "badajoz",
+   "poblacion": 815,
+   "anio": 2025
+  },
+  "la coronada": {
+   "municipio": "La Coronada",
+   "provincia": "badajoz",
+   "poblacion": 2136,
+   "anio": 2025
+  },
+  "corte de peleas": {
+   "municipio": "Corte de Peleas",
+   "provincia": "badajoz",
+   "poblacion": 1153,
+   "anio": 2025
+  },
+  "cristina": {
+   "municipio": "Cristina",
+   "provincia": "badajoz",
+   "poblacion": 549,
+   "anio": 2025
+  },
+  "don alvaro": {
+   "municipio": "Don Álvaro",
+   "provincia": "badajoz",
+   "poblacion": 841,
+   "anio": 2025
+  },
+  "don benito": {
+   "municipio": "Don Benito",
+   "provincia": "badajoz",
+   "poblacion": 37986,
+   "anio": 2025
+  },
+  "entrin bajo": {
+   "municipio": "Entrín Bajo",
+   "provincia": "badajoz",
+   "poblacion": 548,
+   "anio": 2025
+  },
+  "esparragalejo": {
+   "municipio": "Esparragalejo",
+   "provincia": "badajoz",
+   "poblacion": 1506,
+   "anio": 2025
+  },
+  "esparragosa de la serena": {
+   "municipio": "Esparragosa de la Serena",
+   "provincia": "badajoz",
+   "poblacion": 912,
+   "anio": 2025
+  },
+  "esparragosa de lares": {
+   "municipio": "Esparragosa de Lares",
+   "provincia": "badajoz",
+   "poblacion": 839,
+   "anio": 2025
+  },
+  "feria": {
+   "municipio": "Feria",
+   "provincia": "badajoz",
+   "poblacion": 1054,
+   "anio": 2025
+  },
+  "fregenal de la sierra": {
+   "municipio": "Fregenal de la Sierra",
+   "provincia": "badajoz",
+   "poblacion": 4715,
+   "anio": 2025
+  },
+  "fuenlabrada de los montes": {
+   "municipio": "Fuenlabrada de los Montes",
+   "provincia": "badajoz",
+   "poblacion": 1693,
+   "anio": 2025
+  },
+  "fuente de cantos": {
+   "municipio": "Fuente de Cantos",
+   "provincia": "badajoz",
+   "poblacion": 4583,
+   "anio": 2025
+  },
+  "fuente del arco": {
+   "municipio": "Fuente del Arco",
+   "provincia": "badajoz",
+   "poblacion": 648,
+   "anio": 2025
+  },
+  "fuente del maestre": {
+   "municipio": "Fuente del Maestre",
+   "provincia": "badajoz",
+   "poblacion": 6499,
+   "anio": 2025
+  },
+  "fuentes de leon": {
+   "municipio": "Fuentes de León",
+   "provincia": "badajoz",
+   "poblacion": 2118,
+   "anio": 2025
+  },
+  "garbayuela": {
+   "municipio": "Garbayuela",
+   "provincia": "badajoz",
+   "poblacion": 450,
+   "anio": 2025
+  },
+  "garlitos": {
+   "municipio": "Garlitos",
+   "provincia": "badajoz",
+   "poblacion": 510,
+   "anio": 2025
+  },
+  "la garrovilla": {
+   "municipio": "La Garrovilla",
+   "provincia": "badajoz",
+   "poblacion": 2310,
+   "anio": 2025
+  },
+  "granja de torrehermosa": {
+   "municipio": "Granja de Torrehermosa",
+   "provincia": "badajoz",
+   "poblacion": 1913,
+   "anio": 2025
+  },
+  "guadiana": {
+   "municipio": "Guadiana",
+   "provincia": "badajoz",
+   "poblacion": 2444,
+   "anio": 2025
+  },
+  "guarena": {
+   "municipio": "Guareña",
+   "provincia": "badajoz",
+   "poblacion": 6665,
+   "anio": 2025
+  },
+  "la haba": {
+   "municipio": "La Haba",
+   "provincia": "badajoz",
+   "poblacion": 1184,
+   "anio": 2025
+  },
+  "helechosa de los montes": {
+   "municipio": "Helechosa de los Montes",
+   "provincia": "badajoz",
+   "poblacion": 556,
+   "anio": 2025
+  },
+  "herrera del duque": {
+   "municipio": "Herrera del Duque",
+   "provincia": "badajoz",
+   "poblacion": 3385,
+   "anio": 2025
+  },
+  "higuera de la serena": {
+   "municipio": "Higuera de la Serena",
+   "provincia": "badajoz",
+   "poblacion": 881,
+   "anio": 2025
+  },
+  "higuera de llerena": {
+   "municipio": "Higuera de Llerena",
+   "provincia": "badajoz",
+   "poblacion": 343,
+   "anio": 2025
+  },
+  "higuera de vargas": {
+   "municipio": "Higuera de Vargas",
+   "provincia": "badajoz",
+   "poblacion": 1830,
+   "anio": 2025
+  },
+  "higuera la real": {
+   "municipio": "Higuera la Real",
+   "provincia": "badajoz",
+   "poblacion": 2186,
+   "anio": 2025
+  },
+  "hinojosa del valle": {
+   "municipio": "Hinojosa del Valle",
+   "provincia": "badajoz",
+   "poblacion": 472,
+   "anio": 2025
+  },
+  "hornachos": {
+   "municipio": "Hornachos",
+   "provincia": "badajoz",
+   "poblacion": 3375,
+   "anio": 2025
+  },
+  "jerez de los caballeros": {
+   "municipio": "Jerez de los Caballeros",
+   "provincia": "badajoz",
+   "poblacion": 9095,
+   "anio": 2025
+  },
+  "la lapa": {
+   "municipio": "La Lapa",
+   "provincia": "badajoz",
+   "poblacion": 298,
+   "anio": 2025
+  },
+  "llera": {
+   "municipio": "Llera",
+   "provincia": "badajoz",
+   "poblacion": 781,
+   "anio": 2025
+  },
+  "llerena": {
+   "municipio": "Llerena",
+   "provincia": "badajoz",
+   "poblacion": 5642,
+   "anio": 2025
+  },
+  "lobon": {
+   "municipio": "Lobón",
+   "provincia": "badajoz",
+   "poblacion": 2756,
+   "anio": 2025
+  },
+  "magacela": {
+   "municipio": "Magacela",
+   "provincia": "badajoz",
+   "poblacion": 502,
+   "anio": 2025
+  },
+  "maguilla": {
+   "municipio": "Maguilla",
+   "provincia": "badajoz",
+   "poblacion": 919,
+   "anio": 2025
+  },
+  "malcocinado": {
+   "municipio": "Malcocinado",
+   "provincia": "badajoz",
+   "poblacion": 343,
+   "anio": 2025
+  },
+  "malpartida de la serena": {
+   "municipio": "Malpartida de la Serena",
+   "provincia": "badajoz",
+   "poblacion": 508,
+   "anio": 2025
+  },
+  "manchita": {
+   "municipio": "Manchita",
+   "provincia": "badajoz",
+   "poblacion": 741,
+   "anio": 2025
+  },
+  "medellin": {
+   "municipio": "Medellín",
+   "provincia": "badajoz",
+   "poblacion": 2241,
+   "anio": 2025
+  },
+  "medina de las torres": {
+   "municipio": "Medina de las Torres",
+   "provincia": "badajoz",
+   "poblacion": 1160,
+   "anio": 2025
+  },
+  "mengabril": {
+   "municipio": "Mengabril",
+   "provincia": "badajoz",
+   "poblacion": 504,
+   "anio": 2025
+  },
+  "merida": {
+   "municipio": "Mérida",
+   "provincia": "badajoz",
+   "poblacion": 60225,
+   "anio": 2025
+  },
+  "mirandilla": {
+   "municipio": "Mirandilla",
+   "provincia": "badajoz",
+   "poblacion": 1232,
+   "anio": 2025
+  },
+  "monesterio": {
+   "municipio": "Monesterio",
+   "provincia": "badajoz",
+   "poblacion": 4245,
+   "anio": 2025
+  },
+  "montemolin": {
+   "municipio": "Montemolín",
+   "provincia": "badajoz",
+   "poblacion": 1231,
+   "anio": 2025
+  },
+  "monterrubio de la serena": {
+   "municipio": "Monterrubio de la Serena",
+   "provincia": "badajoz",
+   "poblacion": 2157,
+   "anio": 2025
+  },
+  "montijo": {
+   "municipio": "Montijo",
+   "provincia": "badajoz",
+   "poblacion": 15198,
+   "anio": 2025
+  },
+  "la morera": {
+   "municipio": "La Morera",
+   "provincia": "badajoz",
+   "poblacion": 698,
+   "anio": 2025
+  },
+  "la nava de santiago": {
+   "municipio": "La Nava de Santiago",
+   "provincia": "badajoz",
+   "poblacion": 914,
+   "anio": 2025
+  },
+  "navalvillar de pela": {
+   "municipio": "Navalvillar de Pela",
+   "provincia": "badajoz",
+   "poblacion": 4303,
+   "anio": 2025
+  },
+  "nogales": {
+   "municipio": "Nogales",
+   "provincia": "badajoz",
+   "poblacion": 632,
+   "anio": 2025
+  },
+  "oliva de la frontera": {
+   "municipio": "Oliva de la Frontera",
+   "provincia": "badajoz",
+   "poblacion": 4907,
+   "anio": 2025
+  },
+  "oliva de merida": {
+   "municipio": "Oliva de Mérida",
+   "provincia": "badajoz",
+   "poblacion": 1660,
+   "anio": 2025
+  },
+  "olivenza": {
+   "municipio": "Olivenza",
+   "provincia": "badajoz",
+   "poblacion": 11789,
+   "anio": 2025
+  },
+  "orellana de la sierra": {
+   "municipio": "Orellana de la Sierra",
+   "provincia": "badajoz",
+   "poblacion": 250,
+   "anio": 2025
+  },
+  "orellana la vieja": {
+   "municipio": "Orellana la Vieja",
+   "provincia": "badajoz",
+   "poblacion": 2580,
+   "anio": 2025
+  },
+  "palomas": {
+   "municipio": "Palomas",
+   "provincia": "badajoz",
+   "poblacion": 651,
+   "anio": 2025
+  },
+  "la parra": {
+   "municipio": "La Parra",
+   "provincia": "badajoz",
+   "poblacion": 1297,
+   "anio": 2025
+  },
+  "penalsordo": {
+   "municipio": "Peñalsordo",
+   "provincia": "badajoz",
+   "poblacion": 805,
+   "anio": 2025
+  },
+  "peraleda del zaucejo": {
+   "municipio": "Peraleda del Zaucejo",
+   "provincia": "badajoz",
+   "poblacion": 465,
+   "anio": 2025
+  },
+  "puebla de alcocer": {
+   "municipio": "Puebla de Alcocer",
+   "provincia": "badajoz",
+   "poblacion": 1091,
+   "anio": 2025
+  },
+  "puebla de la calzada": {
+   "municipio": "Puebla de la Calzada",
+   "provincia": "badajoz",
+   "poblacion": 5815,
+   "anio": 2025
+  },
+  "puebla de la reina": {
+   "municipio": "Puebla de la Reina",
+   "provincia": "badajoz",
+   "poblacion": 689,
+   "anio": 2025
+  },
+  "puebla de obando": {
+   "municipio": "Puebla de Obando",
+   "provincia": "badajoz",
+   "poblacion": 1809,
+   "anio": 2025
+  },
+  "puebla de sancho perez": {
+   "municipio": "Puebla de Sancho Pérez",
+   "provincia": "badajoz",
+   "poblacion": 2634,
+   "anio": 2025
+  },
+  "puebla del maestre": {
+   "municipio": "Puebla del Maestre",
+   "provincia": "badajoz",
+   "poblacion": 653,
+   "anio": 2025
+  },
+  "puebla del prior": {
+   "municipio": "Puebla del Prior",
+   "provincia": "badajoz",
+   "poblacion": 462,
+   "anio": 2025
+  },
+  "pueblonuevo del guadiana": {
+   "municipio": "Pueblonuevo del Guadiana",
+   "provincia": "badajoz",
+   "poblacion": 1955,
+   "anio": 2025
+  },
+  "quintana de la serena": {
+   "municipio": "Quintana de la Serena",
+   "provincia": "badajoz",
+   "poblacion": 4429,
+   "anio": 2025
+  },
+  "reina": {
+   "municipio": "Reina",
+   "provincia": "badajoz",
+   "poblacion": 144,
+   "anio": 2025
+  },
+  "rena": {
+   "municipio": "Rena",
+   "provincia": "badajoz",
+   "poblacion": 605,
+   "anio": 2025
+  },
+  "retamal de llerena": {
+   "municipio": "Retamal de Llerena",
+   "provincia": "badajoz",
+   "poblacion": 428,
+   "anio": 2025
+  },
+  "ribera del fresno": {
+   "municipio": "Ribera del Fresno",
+   "provincia": "badajoz",
+   "poblacion": 3130,
+   "anio": 2025
+  },
+  "risco": {
+   "municipio": "Risco",
+   "provincia": "badajoz",
+   "poblacion": 126,
+   "anio": 2025
+  },
+  "la roca de la sierra": {
+   "municipio": "La Roca de la Sierra",
+   "provincia": "badajoz",
+   "poblacion": 1454,
+   "anio": 2025
+  },
+  "salvaleon": {
+   "municipio": "Salvaleón",
+   "provincia": "badajoz",
+   "poblacion": 1645,
+   "anio": 2025
+  },
+  "salvatierra de los barros": {
+   "municipio": "Salvatierra de los Barros",
+   "provincia": "badajoz",
+   "poblacion": 1546,
+   "anio": 2025
+  },
+  "san pedro de merida": {
+   "municipio": "San Pedro de Mérida",
+   "provincia": "badajoz",
+   "poblacion": 859,
+   "anio": 2025
+  },
+  "san vicente de alcantara": {
+   "municipio": "San Vicente de Alcántara",
+   "provincia": "badajoz",
+   "poblacion": 5227,
+   "anio": 2025
+  },
+  "sancti-spiritus": {
+   "municipio": "Sancti-Spíritus",
+   "provincia": "badajoz",
+   "poblacion": 141,
+   "anio": 2025
+  },
+  "santa amalia": {
+   "municipio": "Santa Amalia",
+   "provincia": "badajoz",
+   "poblacion": 3881,
+   "anio": 2025
+  },
+  "santa marta": {
+   "municipio": "Santa Marta",
+   "provincia": "badajoz",
+   "poblacion": 4201,
+   "anio": 2025
+  },
+  "segura de leon": {
+   "municipio": "Segura de León",
+   "provincia": "badajoz",
+   "poblacion": 1758,
+   "anio": 2025
+  },
+  "siruela": {
+   "municipio": "Siruela",
+   "provincia": "badajoz",
+   "poblacion": 1766,
+   "anio": 2025
+  },
+  "solana de los barros": {
+   "municipio": "Solana de los Barros",
+   "provincia": "badajoz",
+   "poblacion": 2522,
+   "anio": 2025
+  },
+  "talarrubias": {
+   "municipio": "Talarrubias",
+   "provincia": "badajoz",
+   "poblacion": 3251,
+   "anio": 2025
+  },
+  "talavera la real": {
+   "municipio": "Talavera la Real",
+   "provincia": "badajoz",
+   "poblacion": 5288,
+   "anio": 2025
+  },
+  "taliga": {
+   "municipio": "Táliga",
+   "provincia": "badajoz",
+   "poblacion": 650,
+   "anio": 2025
+  },
+  "tamurejo": {
+   "municipio": "Tamurejo",
+   "provincia": "badajoz",
+   "poblacion": 190,
+   "anio": 2025
+  },
+  "torre de miguel sesmero": {
+   "municipio": "Torre de Miguel Sesmero",
+   "provincia": "badajoz",
+   "poblacion": 1234,
+   "anio": 2025
+  },
+  "torremayor": {
+   "municipio": "Torremayor",
+   "provincia": "badajoz",
+   "poblacion": 992,
+   "anio": 2025
+  },
+  "torremejia": {
+   "municipio": "Torremejía",
+   "provincia": "badajoz",
+   "poblacion": 2238,
+   "anio": 2025
+  },
+  "trasierra": {
+   "municipio": "Trasierra",
+   "provincia": "badajoz",
+   "poblacion": 590,
+   "anio": 2025
+  },
+  "trujillanos": {
+   "municipio": "Trujillanos",
+   "provincia": "badajoz",
+   "poblacion": 1397,
+   "anio": 2025
+  },
+  "usagre": {
+   "municipio": "Usagre",
+   "provincia": "badajoz",
+   "poblacion": 1698,
+   "anio": 2025
+  },
+  "valdecaballeros": {
+   "municipio": "Valdecaballeros",
+   "provincia": "badajoz",
+   "poblacion": 1036,
+   "anio": 2025
+  },
+  "valdelacalzada": {
+   "municipio": "Valdelacalzada",
+   "provincia": "badajoz",
+   "poblacion": 2743,
+   "anio": 2025
+  },
+  "valdetorres": {
+   "municipio": "Valdetorres",
+   "provincia": "badajoz",
+   "poblacion": 1105,
+   "anio": 2025
+  },
+  "valencia de las torres": {
+   "municipio": "Valencia de las Torres",
+   "provincia": "badajoz",
+   "poblacion": 486,
+   "anio": 2025
+  },
+  "valencia del mombuey": {
+   "municipio": "Valencia del Mombuey",
+   "provincia": "badajoz",
+   "poblacion": 703,
+   "anio": 2025
+  },
+  "valencia del ventoso": {
+   "municipio": "Valencia del Ventoso",
+   "provincia": "badajoz",
+   "poblacion": 1870,
+   "anio": 2025
+  },
+  "valle de la serena": {
+   "municipio": "Valle de la Serena",
+   "provincia": "badajoz",
+   "poblacion": 1075,
+   "anio": 2025
+  },
+  "valle de matamoros": {
+   "municipio": "Valle de Matamoros",
+   "provincia": "badajoz",
+   "poblacion": 337,
+   "anio": 2025
+  },
+  "valle de santa ana": {
+   "municipio": "Valle de Santa Ana",
+   "provincia": "badajoz",
+   "poblacion": 1090,
+   "anio": 2025
+  },
+  "valverde de burguillos": {
+   "municipio": "Valverde de Burguillos",
+   "provincia": "badajoz",
+   "poblacion": 260,
+   "anio": 2025
+  },
+  "valverde de leganes": {
+   "municipio": "Valverde de Leganés",
+   "provincia": "badajoz",
+   "poblacion": 4230,
+   "anio": 2025
+  },
+  "valverde de llerena": {
+   "municipio": "Valverde de Llerena",
+   "provincia": "badajoz",
+   "poblacion": 560,
+   "anio": 2025
+  },
+  "valverde de merida": {
+   "municipio": "Valverde de Mérida",
+   "provincia": "badajoz",
+   "poblacion": 1002,
+   "anio": 2025
+  },
+  "villafranca de los barros": {
+   "municipio": "Villafranca de los Barros",
+   "provincia": "badajoz",
+   "poblacion": 12284,
+   "anio": 2025
+  },
+  "villagarcia de la torre": {
+   "municipio": "Villagarcía de la Torre",
+   "provincia": "badajoz",
+   "poblacion": 909,
+   "anio": 2025
+  },
+  "villagonzalo": {
+   "municipio": "Villagonzalo",
+   "provincia": "badajoz",
+   "poblacion": 1226,
+   "anio": 2025
+  },
+  "villalba de los barros": {
+   "municipio": "Villalba de los Barros",
+   "provincia": "badajoz",
+   "poblacion": 1429,
+   "anio": 2025
+  },
+  "villanueva de la serena": {
+   "municipio": "Villanueva de la Serena",
+   "provincia": "badajoz",
+   "poblacion": 25773,
+   "anio": 2025
+  },
+  "villanueva del fresno": {
+   "municipio": "Villanueva del Fresno",
+   "provincia": "badajoz",
+   "poblacion": 3247,
+   "anio": 2025
+  },
+  "villar de rena": {
+   "municipio": "Villar de Rena",
+   "provincia": "badajoz",
+   "poblacion": 1326,
+   "anio": 2025
+  },
+  "villar del rey": {
+   "municipio": "Villar del Rey",
+   "provincia": "badajoz",
+   "poblacion": 2064,
+   "anio": 2025
+  },
+  "villarta de los montes": {
+   "municipio": "Villarta de los Montes",
+   "provincia": "badajoz",
+   "poblacion": 375,
+   "anio": 2025
+  },
+  "zafra": {
+   "municipio": "Zafra",
+   "provincia": "badajoz",
+   "poblacion": 16735,
+   "anio": 2025
+  },
+  "zahinos": {
+   "municipio": "Zahínos",
+   "provincia": "badajoz",
+   "poblacion": 2766,
+   "anio": 2025
+  },
+  "zalamea de la serena": {
+   "municipio": "Zalamea de la Serena",
+   "provincia": "badajoz",
+   "poblacion": 3371,
+   "anio": 2025
+  },
+  "la zarza": {
+   "municipio": "La Zarza",
+   "provincia": "badajoz",
+   "poblacion": 3339,
+   "anio": 2025
+  },
+  "abadia": {
+   "municipio": "Abadía",
+   "provincia": "caceres",
+   "poblacion": 337,
+   "anio": 2025
+  },
+  "abertura": {
+   "municipio": "Abertura",
+   "provincia": "caceres",
+   "poblacion": 362,
+   "anio": 2025
+  },
+  "acebo": {
+   "municipio": "Acebo",
+   "provincia": "caceres",
+   "poblacion": 567,
+   "anio": 2025
+  },
+  "acehuche": {
+   "municipio": "Acehúche",
+   "provincia": "caceres",
+   "poblacion": 808,
+   "anio": 2025
+  },
+  "aceituna": {
+   "municipio": "Aceituna",
+   "provincia": "caceres",
+   "poblacion": 569,
+   "anio": 2025
+  },
+  "ahigal": {
+   "municipio": "Ahigal",
+   "provincia": "caceres",
+   "poblacion": 1340,
+   "anio": 2025
+  },
+  "alagon del rio": {
+   "municipio": "Alagón del Río",
+   "provincia": "caceres",
+   "poblacion": 919,
+   "anio": 2025
+  },
+  "albala": {
+   "municipio": "Albalá",
+   "provincia": "caceres",
+   "poblacion": 647,
+   "anio": 2025
+  },
+  "alcantara": {
+   "municipio": "Alcántara",
+   "provincia": "caceres",
+   "poblacion": 1329,
+   "anio": 2025
+  },
+  "alcollarin": {
+   "municipio": "Alcollarín",
+   "provincia": "caceres",
+   "poblacion": 259,
+   "anio": 2025
+  },
+  "alcuescar": {
+   "municipio": "Alcuéscar",
+   "provincia": "caceres",
+   "poblacion": 2447,
+   "anio": 2025
+  },
+  "aldea del cano": {
+   "municipio": "Aldea del Cano",
+   "provincia": "caceres",
+   "poblacion": 609,
+   "anio": 2025
+  },
+  "la aldea del obispo": {
+   "municipio": "La Aldea del Obispo",
+   "provincia": "caceres",
+   "poblacion": 290,
+   "anio": 2025
+  },
+  "aldeacentenera": {
+   "municipio": "Aldeacentenera",
+   "provincia": "caceres",
+   "poblacion": 603,
+   "anio": 2025
+  },
+  "aldeanueva de la vera": {
+   "municipio": "Aldeanueva de la Vera",
+   "provincia": "caceres",
+   "poblacion": 1966,
+   "anio": 2025
+  },
+  "aldeanueva del camino": {
+   "municipio": "Aldeanueva del Camino",
+   "provincia": "caceres",
+   "poblacion": 696,
+   "anio": 2025
+  },
+  "alia": {
+   "municipio": "Alía",
+   "provincia": "caceres",
+   "poblacion": 722,
+   "anio": 2025
+  },
+  "aliseda": {
+   "municipio": "Aliseda",
+   "provincia": "caceres",
+   "poblacion": 1726,
+   "anio": 2025
+  },
+  "almaraz": {
+   "municipio": "Almaraz",
+   "provincia": "caceres",
+   "poblacion": 1594,
+   "anio": 2025
+  },
+  "almoharin": {
+   "municipio": "Almoharín",
+   "provincia": "caceres",
+   "poblacion": 1771,
+   "anio": 2025
+  },
+  "arroyo de la luz": {
+   "municipio": "Arroyo de la Luz",
+   "provincia": "caceres",
+   "poblacion": 5495,
+   "anio": 2025
+  },
+  "arroyomolinos de la vera": {
+   "municipio": "Arroyomolinos de la Vera",
+   "provincia": "caceres",
+   "poblacion": 424,
+   "anio": 2025
+  },
+  "banos de montemayor": {
+   "municipio": "Baños de Montemayor",
+   "provincia": "caceres",
+   "poblacion": 738,
+   "anio": 2025
+  },
+  "barrado": {
+   "municipio": "Barrado",
+   "provincia": "caceres",
+   "poblacion": 383,
+   "anio": 2025
+  },
+  "belvis de monroy": {
+   "municipio": "Belvís de Monroy",
+   "provincia": "caceres",
+   "poblacion": 774,
+   "anio": 2025
+  },
+  "benquerencia": {
+   "municipio": "Benquerencia",
+   "provincia": "caceres",
+   "poblacion": 74,
+   "anio": 2025
+  },
+  "berrocalejo": {
+   "municipio": "Berrocalejo",
+   "provincia": "caceres",
+   "poblacion": 120,
+   "anio": 2025
+  },
+  "berzocana": {
+   "municipio": "Berzocana",
+   "provincia": "caceres",
+   "poblacion": 375,
+   "anio": 2025
+  },
+  "bohonal de ibor": {
+   "municipio": "Bohonal de Ibor",
+   "provincia": "caceres",
+   "poblacion": 488,
+   "anio": 2025
+  },
+  "botija": {
+   "municipio": "Botija",
+   "provincia": "caceres",
+   "poblacion": 184,
+   "anio": 2025
+  },
+  "brozas": {
+   "municipio": "Brozas",
+   "provincia": "caceres",
+   "poblacion": 1718,
+   "anio": 2025
+  },
+  "cabanas del castillo": {
+   "municipio": "Cabañas del Castillo",
+   "provincia": "caceres",
+   "poblacion": 406,
+   "anio": 2025
+  },
+  "cabezabellosa": {
+   "municipio": "Cabezabellosa",
+   "provincia": "caceres",
+   "poblacion": 317,
+   "anio": 2025
+  },
+  "cabezuela del valle": {
+   "municipio": "Cabezuela del Valle",
+   "provincia": "caceres",
+   "poblacion": 2049,
+   "anio": 2025
+  },
+  "cabrero": {
+   "municipio": "Cabrero",
+   "provincia": "caceres",
+   "poblacion": 353,
+   "anio": 2025
+  },
+  "caceres": {
+   "municipio": "Cáceres",
+   "provincia": "caceres",
+   "poblacion": 96651,
+   "anio": 2025
+  },
+  "cachorrilla": {
+   "municipio": "Cachorrilla",
+   "provincia": "caceres",
+   "poblacion": 83,
+   "anio": 2025
+  },
+  "cadalso": {
+   "municipio": "Cadalso",
+   "provincia": "caceres",
+   "poblacion": 394,
+   "anio": 2025
+  },
+  "calzadilla": {
+   "municipio": "Calzadilla",
+   "provincia": "caceres",
+   "poblacion": 450,
+   "anio": 2025
+  },
+  "caminomorisco": {
+   "municipio": "Caminomorisco",
+   "provincia": "caceres",
+   "poblacion": 1097,
+   "anio": 2025
+  },
+  "campillo de deleitosa": {
+   "municipio": "Campillo de Deleitosa",
+   "provincia": "caceres",
+   "poblacion": 82,
+   "anio": 2025
+  },
+  "campo lugar": {
+   "municipio": "Campo Lugar",
+   "provincia": "caceres",
+   "poblacion": 790,
+   "anio": 2025
+  },
+  "canamero": {
+   "municipio": "Cañamero",
+   "provincia": "caceres",
+   "poblacion": 1578,
+   "anio": 2025
+  },
+  "canaveral": {
+   "municipio": "Cañaveral",
+   "provincia": "caceres",
+   "poblacion": 995,
+   "anio": 2025
+  },
+  "carbajo": {
+   "municipio": "Carbajo",
+   "provincia": "caceres",
+   "poblacion": 183,
+   "anio": 2025
+  },
+  "carcaboso": {
+   "municipio": "Carcaboso",
+   "provincia": "caceres",
+   "poblacion": 1076,
+   "anio": 2025
+  },
+  "carrascalejo": {
+   "municipio": "Carrascalejo",
+   "provincia": "caceres",
+   "poblacion": 223,
+   "anio": 2025
+  },
+  "casar de caceres": {
+   "municipio": "Casar de Cáceres",
+   "provincia": "caceres",
+   "poblacion": 4511,
+   "anio": 2025
+  },
+  "casar de palomero": {
+   "municipio": "Casar de Palomero",
+   "provincia": "caceres",
+   "poblacion": 991,
+   "anio": 2025
+  },
+  "casares de las hurdes": {
+   "municipio": "Casares de las Hurdes",
+   "provincia": "caceres",
+   "poblacion": 362,
+   "anio": 2025
+  },
+  "casas de don antonio": {
+   "municipio": "Casas de Don Antonio",
+   "provincia": "caceres",
+   "poblacion": 167,
+   "anio": 2025
+  },
+  "casas de don gomez": {
+   "municipio": "Casas de Don Gómez",
+   "provincia": "caceres",
+   "poblacion": 342,
+   "anio": 2025
+  },
+  "casas de millan": {
+   "municipio": "Casas de Millán",
+   "provincia": "caceres",
+   "poblacion": 536,
+   "anio": 2025
+  },
+  "casas de miravete": {
+   "municipio": "Casas de Miravete",
+   "provincia": "caceres",
+   "poblacion": 106,
+   "anio": 2025
+  },
+  "casas del castanar": {
+   "municipio": "Casas del Castañar",
+   "provincia": "caceres",
+   "poblacion": 583,
+   "anio": 2025
+  },
+  "casas del monte": {
+   "municipio": "Casas del Monte",
+   "provincia": "caceres",
+   "poblacion": 761,
+   "anio": 2025
+  },
+  "casatejada": {
+   "municipio": "Casatejada",
+   "provincia": "caceres",
+   "poblacion": 1393,
+   "anio": 2025
+  },
+  "casillas de coria": {
+   "municipio": "Casillas de Coria",
+   "provincia": "caceres",
+   "poblacion": 354,
+   "anio": 2025
+  },
+  "castanar de ibor": {
+   "municipio": "Castañar de Ibor",
+   "provincia": "caceres",
+   "poblacion": 1020,
+   "anio": 2025
+  },
+  "ceclavin": {
+   "municipio": "Ceclavín",
+   "provincia": "caceres",
+   "poblacion": 1769,
+   "anio": 2025
+  },
+  "cedillo": {
+   "municipio": "Cedillo",
+   "provincia": "caceres",
+   "poblacion": 453,
+   "anio": 2025
+  },
+  "cerezo": {
+   "municipio": "Cerezo",
+   "provincia": "caceres",
+   "poblacion": 147,
+   "anio": 2025
+  },
+  "cilleros": {
+   "municipio": "Cilleros",
+   "provincia": "caceres",
+   "poblacion": 1547,
+   "anio": 2025
+  },
+  "collado de la vera": {
+   "municipio": "Collado de la Vera",
+   "provincia": "caceres",
+   "poblacion": 274,
+   "anio": 2025
+  },
+  "conquista de la sierra": {
+   "municipio": "Conquista de la Sierra",
+   "provincia": "caceres",
+   "poblacion": 193,
+   "anio": 2025
+  },
+  "coria": {
+   "municipio": "Coria",
+   "provincia": "caceres",
+   "poblacion": 12001,
+   "anio": 2025
+  },
+  "cuacos de yuste": {
+   "municipio": "Cuacos de Yuste",
+   "provincia": "caceres",
+   "poblacion": 809,
+   "anio": 2025
+  },
+  "la cumbre": {
+   "municipio": "La Cumbre",
+   "provincia": "caceres",
+   "poblacion": 815,
+   "anio": 2025
+  },
+  "deleitosa": {
+   "municipio": "Deleitosa",
+   "provincia": "caceres",
+   "poblacion": 681,
+   "anio": 2025
+  },
+  "descargamaria": {
+   "municipio": "Descargamaría",
+   "provincia": "caceres",
+   "poblacion": 105,
+   "anio": 2025
+  },
+  "eljas": {
+   "municipio": "Eljas",
+   "provincia": "caceres",
+   "poblacion": 827,
+   "anio": 2025
+  },
+  "escurial": {
+   "municipio": "Escurial",
+   "provincia": "caceres",
+   "poblacion": 855,
+   "anio": 2025
+  },
+  "fresnedoso de ibor": {
+   "municipio": "Fresnedoso de Ibor",
+   "provincia": "caceres",
+   "poblacion": 236,
+   "anio": 2025
+  },
+  "galisteo": {
+   "municipio": "Galisteo",
+   "provincia": "caceres",
+   "poblacion": 849,
+   "anio": 2025
+  },
+  "garciaz": {
+   "municipio": "Garciaz",
+   "provincia": "caceres",
+   "poblacion": 666,
+   "anio": 2025
+  },
+  "garganta la olla": {
+   "municipio": "Garganta la Olla",
+   "provincia": "caceres",
+   "poblacion": 874,
+   "anio": 2025
+  },
+  "la garganta": {
+   "municipio": "La Garganta",
+   "provincia": "caceres",
+   "poblacion": 353,
+   "anio": 2025
+  },
+  "gargantilla": {
+   "municipio": "Gargantilla",
+   "provincia": "caceres",
+   "poblacion": 346,
+   "anio": 2025
+  },
+  "garguera": {
+   "municipio": "Gargüera",
+   "provincia": "caceres",
+   "poblacion": 187,
+   "anio": 2025
+  },
+  "garrovillas de alconetar": {
+   "municipio": "Garrovillas de Alconétar",
+   "provincia": "caceres",
+   "poblacion": 1941,
+   "anio": 2025
+  },
+  "garvin": {
+   "municipio": "Garvín",
+   "provincia": "caceres",
+   "poblacion": 101,
+   "anio": 2025
+  },
+  "gata": {
+   "municipio": "Gata",
+   "provincia": "caceres",
+   "poblacion": 1335,
+   "anio": 2025
+  },
+  "el gordo": {
+   "municipio": "El Gordo",
+   "provincia": "caceres",
+   "poblacion": 363,
+   "anio": 2025
+  },
+  "la granja": {
+   "municipio": "La Granja",
+   "provincia": "caceres",
+   "poblacion": 313,
+   "anio": 2025
+  },
+  "guadalupe": {
+   "municipio": "Guadalupe",
+   "provincia": "caceres",
+   "poblacion": 1722,
+   "anio": 2025
+  },
+  "guijo de coria": {
+   "municipio": "Guijo de Coria",
+   "provincia": "caceres",
+   "poblacion": 180,
+   "anio": 2025
+  },
+  "guijo de galisteo": {
+   "municipio": "Guijo de Galisteo",
+   "provincia": "caceres",
+   "poblacion": 1460,
+   "anio": 2025
+  },
+  "guijo de granadilla": {
+   "municipio": "Guijo de Granadilla",
+   "provincia": "caceres",
+   "poblacion": 497,
+   "anio": 2025
+  },
+  "guijo de santa barbara": {
+   "municipio": "Guijo de Santa Bárbara",
+   "provincia": "caceres",
+   "poblacion": 386,
+   "anio": 2025
+  },
+  "herguijuela": {
+   "municipio": "Herguijuela",
+   "provincia": "caceres",
+   "poblacion": 264,
+   "anio": 2025
+  },
+  "hernan-perez": {
+   "municipio": "Hernán-Pérez",
+   "provincia": "caceres",
+   "poblacion": 401,
+   "anio": 2025
+  },
+  "herrera de alcantara": {
+   "municipio": "Herrera de Alcántara",
+   "provincia": "caceres",
+   "poblacion": 225,
+   "anio": 2025
+  },
+  "herreruela": {
+   "municipio": "Herreruela",
+   "provincia": "caceres",
+   "poblacion": 322,
+   "anio": 2025
+  },
+  "hervas": {
+   "municipio": "Hervás",
+   "provincia": "caceres",
+   "poblacion": 3898,
+   "anio": 2025
+  },
+  "higuera de albalat": {
+   "municipio": "Higuera de Albalat",
+   "provincia": "caceres",
+   "poblacion": 102,
+   "anio": 2025
+  },
+  "hinojal": {
+   "municipio": "Hinojal",
+   "provincia": "caceres",
+   "poblacion": 391,
+   "anio": 2025
+  },
+  "holguera": {
+   "municipio": "Holguera",
+   "provincia": "caceres",
+   "poblacion": 588,
+   "anio": 2025
+  },
+  "hoyos": {
+   "municipio": "Hoyos",
+   "provincia": "caceres",
+   "poblacion": 848,
+   "anio": 2025
+  },
+  "huelaga": {
+   "municipio": "Huélaga",
+   "provincia": "caceres",
+   "poblacion": 203,
+   "anio": 2025
+  },
+  "ibahernando": {
+   "municipio": "Ibahernando",
+   "provincia": "caceres",
+   "poblacion": 538,
+   "anio": 2025
+  },
+  "jaraicejo": {
+   "municipio": "Jaraicejo",
+   "provincia": "caceres",
+   "poblacion": 418,
+   "anio": 2025
+  },
+  "jaraiz de la vera": {
+   "municipio": "Jaraíz de la Vera",
+   "provincia": "caceres",
+   "poblacion": 6831,
+   "anio": 2025
+  },
+  "jarandilla de la vera": {
+   "municipio": "Jarandilla de la Vera",
+   "provincia": "caceres",
+   "poblacion": 2894,
+   "anio": 2025
+  },
+  "jarilla": {
+   "municipio": "Jarilla",
+   "provincia": "caceres",
+   "poblacion": 127,
+   "anio": 2025
+  },
+  "jerte": {
+   "municipio": "Jerte",
+   "provincia": "caceres",
+   "poblacion": 1189,
+   "anio": 2025
+  },
+  "ladrillar": {
+   "municipio": "Ladrillar",
+   "provincia": "caceres",
+   "poblacion": 177,
+   "anio": 2025
+  },
+  "logrosan": {
+   "municipio": "Logrosán",
+   "provincia": "caceres",
+   "poblacion": 1852,
+   "anio": 2025
+  },
+  "losar de la vera": {
+   "municipio": "Losar de la Vera",
+   "provincia": "caceres",
+   "poblacion": 2799,
+   "anio": 2025
+  },
+  "madrigal de la vera": {
+   "municipio": "Madrigal de la Vera",
+   "provincia": "caceres",
+   "poblacion": 1536,
+   "anio": 2025
+  },
+  "madrigalejo": {
+   "municipio": "Madrigalejo",
+   "provincia": "caceres",
+   "poblacion": 1710,
+   "anio": 2025
+  },
+  "madronera": {
+   "municipio": "Madroñera",
+   "provincia": "caceres",
+   "poblacion": 2349,
+   "anio": 2025
+  },
+  "majadas": {
+   "municipio": "Majadas",
+   "provincia": "caceres",
+   "poblacion": 1281,
+   "anio": 2025
+  },
+  "malpartida de caceres": {
+   "municipio": "Malpartida de Cáceres",
+   "provincia": "caceres",
+   "poblacion": 4027,
+   "anio": 2025
+  },
+  "malpartida de plasencia": {
+   "municipio": "Malpartida de Plasencia",
+   "provincia": "caceres",
+   "poblacion": 4666,
+   "anio": 2025
+  },
+  "marchagaz": {
+   "municipio": "Marchagaz",
+   "provincia": "caceres",
+   "poblacion": 231,
+   "anio": 2025
+  },
+  "mata de alcantara": {
+   "municipio": "Mata de Alcántara",
+   "provincia": "caceres",
+   "poblacion": 300,
+   "anio": 2025
+  },
+  "membrio": {
+   "municipio": "Membrío",
+   "provincia": "caceres",
+   "poblacion": 587,
+   "anio": 2025
+  },
+  "mesas de ibor": {
+   "municipio": "Mesas de Ibor",
+   "provincia": "caceres",
+   "poblacion": 146,
+   "anio": 2025
+  },
+  "miajadas": {
+   "municipio": "Miajadas",
+   "provincia": "caceres",
+   "poblacion": 9396,
+   "anio": 2025
+  },
+  "millanes": {
+   "municipio": "Millanes",
+   "provincia": "caceres",
+   "poblacion": 239,
+   "anio": 2025
+  },
+  "mirabel": {
+   "municipio": "Mirabel",
+   "provincia": "caceres",
+   "poblacion": 620,
+   "anio": 2025
+  },
+  "mohedas de granadilla": {
+   "municipio": "Mohedas de Granadilla",
+   "provincia": "caceres",
+   "poblacion": 817,
+   "anio": 2025
+  },
+  "monroy": {
+   "municipio": "Monroy",
+   "provincia": "caceres",
+   "poblacion": 909,
+   "anio": 2025
+  },
+  "montanchez": {
+   "municipio": "Montánchez",
+   "provincia": "caceres",
+   "poblacion": 1597,
+   "anio": 2025
+  },
+  "montehermoso": {
+   "municipio": "Montehermoso",
+   "provincia": "caceres",
+   "poblacion": 5552,
+   "anio": 2025
+  },
+  "moraleja": {
+   "municipio": "Moraleja",
+   "provincia": "caceres",
+   "poblacion": 6562,
+   "anio": 2025
+  },
+  "morcillo": {
+   "municipio": "Morcillo",
+   "provincia": "caceres",
+   "poblacion": 378,
+   "anio": 2025
+  },
+  "navaconcejo": {
+   "municipio": "Navaconcejo",
+   "provincia": "caceres",
+   "poblacion": 2037,
+   "anio": 2025
+  },
+  "navalmoral de la mata": {
+   "municipio": "Navalmoral de la Mata",
+   "provincia": "caceres",
+   "poblacion": 17352,
+   "anio": 2025
+  },
+  "navalvillar de ibor": {
+   "municipio": "Navalvillar de Ibor",
+   "provincia": "caceres",
+   "poblacion": 374,
+   "anio": 2025
+  },
+  "navas del madrono": {
+   "municipio": "Navas del Madroño",
+   "provincia": "caceres",
+   "poblacion": 1254,
+   "anio": 2025
+  },
+  "navezuelas": {
+   "municipio": "Navezuelas",
+   "provincia": "caceres",
+   "poblacion": 668,
+   "anio": 2025
+  },
+  "nunomoral": {
+   "municipio": "Nuñomoral",
+   "provincia": "caceres",
+   "poblacion": 1196,
+   "anio": 2025
+  },
+  "oliva de plasencia": {
+   "municipio": "Oliva de Plasencia",
+   "provincia": "caceres",
+   "poblacion": 290,
+   "anio": 2025
+  },
+  "palomero": {
+   "municipio": "Palomero",
+   "provincia": "caceres",
+   "poblacion": 450,
+   "anio": 2025
+  },
+  "pasaron de la vera": {
+   "municipio": "Pasarón de la Vera",
+   "provincia": "caceres",
+   "poblacion": 588,
+   "anio": 2025
+  },
+  "pedroso de acim": {
+   "municipio": "Pedroso de Acim",
+   "provincia": "caceres",
+   "poblacion": 90,
+   "anio": 2025
+  },
+  "peraleda de la mata": {
+   "municipio": "Peraleda de la Mata",
+   "provincia": "caceres",
+   "poblacion": 1444,
+   "anio": 2025
+  },
+  "peraleda de san roman": {
+   "municipio": "Peraleda de San Román",
+   "provincia": "caceres",
+   "poblacion": 268,
+   "anio": 2025
+  },
+  "perales del puerto": {
+   "municipio": "Perales del Puerto",
+   "provincia": "caceres",
+   "poblacion": 874,
+   "anio": 2025
+  },
+  "pescueza": {
+   "municipio": "Pescueza",
+   "provincia": "caceres",
+   "poblacion": 150,
+   "anio": 2025
+  },
+  "la pesga": {
+   "municipio": "La Pesga",
+   "provincia": "caceres",
+   "poblacion": 950,
+   "anio": 2025
+  },
+  "piedras albas": {
+   "municipio": "Piedras Albas",
+   "provincia": "caceres",
+   "poblacion": 125,
+   "anio": 2025
+  },
+  "pinofranqueado": {
+   "municipio": "Pinofranqueado",
+   "provincia": "caceres",
+   "poblacion": 1783,
+   "anio": 2025
+  },
+  "piornal": {
+   "municipio": "Piornal",
+   "provincia": "caceres",
+   "poblacion": 1443,
+   "anio": 2025
+  },
+  "plasencia": {
+   "municipio": "Plasencia",
+   "provincia": "caceres",
+   "poblacion": 40132,
+   "anio": 2025
+  },
+  "plasenzuela": {
+   "municipio": "Plasenzuela",
+   "provincia": "caceres",
+   "poblacion": 536,
+   "anio": 2025
+  },
+  "portaje": {
+   "municipio": "Portaje",
+   "provincia": "caceres",
+   "poblacion": 379,
+   "anio": 2025
+  },
+  "portezuelo": {
+   "municipio": "Portezuelo",
+   "provincia": "caceres",
+   "poblacion": 196,
+   "anio": 2025
+  },
+  "pozuelo de zarzon": {
+   "municipio": "Pozuelo de Zarzón",
+   "provincia": "caceres",
+   "poblacion": 430,
+   "anio": 2025
+  },
+  "pueblonuevo de miramontes": {
+   "municipio": "Pueblonuevo de Miramontes",
+   "provincia": "caceres",
+   "poblacion": 762,
+   "anio": 2025
+  },
+  "puerto de santa cruz": {
+   "municipio": "Puerto de Santa Cruz",
+   "provincia": "caceres",
+   "poblacion": 268,
+   "anio": 2025
+  },
+  "rebollar": {
+   "municipio": "Rebollar",
+   "provincia": "caceres",
+   "poblacion": 203,
+   "anio": 2025
+  },
+  "riolobos": {
+   "municipio": "Riolobos",
+   "provincia": "caceres",
+   "poblacion": 1173,
+   "anio": 2025
+  },
+  "robledillo de gata": {
+   "municipio": "Robledillo de Gata",
+   "provincia": "caceres",
+   "poblacion": 91,
+   "anio": 2025
+  },
+  "robledillo de la vera": {
+   "municipio": "Robledillo de la Vera",
+   "provincia": "caceres",
+   "poblacion": 252,
+   "anio": 2025
+  },
+  "robledillo de trujillo": {
+   "municipio": "Robledillo de Trujillo",
+   "provincia": "caceres",
+   "poblacion": 394,
+   "anio": 2025
+  },
+  "robledollano": {
+   "municipio": "Robledollano",
+   "provincia": "caceres",
+   "poblacion": 325,
+   "anio": 2025
+  },
+  "romangordo": {
+   "municipio": "Romangordo",
+   "provincia": "caceres",
+   "poblacion": 240,
+   "anio": 2025
+  },
+  "rosalejo": {
+   "municipio": "Rosalejo",
+   "provincia": "caceres",
+   "poblacion": 1268,
+   "anio": 2025
+  },
+  "ruanes": {
+   "municipio": "Ruanes",
+   "provincia": "caceres",
+   "poblacion": 82,
+   "anio": 2025
+  },
+  "salorino": {
+   "municipio": "Salorino",
+   "provincia": "caceres",
+   "poblacion": 522,
+   "anio": 2025
+  },
+  "salvatierra de santiago": {
+   "municipio": "Salvatierra de Santiago",
+   "provincia": "caceres",
+   "poblacion": 229,
+   "anio": 2025
+  },
+  "san martin de trevejo": {
+   "municipio": "San Martín de Trevejo",
+   "provincia": "caceres",
+   "poblacion": 693,
+   "anio": 2025
+  },
+  "santa ana": {
+   "municipio": "Santa Ana",
+   "provincia": "caceres",
+   "poblacion": 302,
+   "anio": 2025
+  },
+  "santa cruz de la sierra": {
+   "municipio": "Santa Cruz de la Sierra",
+   "provincia": "caceres",
+   "poblacion": 317,
+   "anio": 2025
+  },
+  "santa cruz de paniagua": {
+   "municipio": "Santa Cruz de Paniagua",
+   "provincia": "caceres",
+   "poblacion": 286,
+   "anio": 2025
+  },
+  "santa marta de magasca": {
+   "municipio": "Santa Marta de Magasca",
+   "provincia": "caceres",
+   "poblacion": 291,
+   "anio": 2025
+  },
+  "santiago de alcantara": {
+   "municipio": "Santiago de Alcántara",
+   "provincia": "caceres",
+   "poblacion": 454,
+   "anio": 2025
+  },
+  "santiago del campo": {
+   "municipio": "Santiago del Campo",
+   "provincia": "caceres",
+   "poblacion": 250,
+   "anio": 2025
+  },
+  "santibanez el alto": {
+   "municipio": "Santibáñez el Alto",
+   "provincia": "caceres",
+   "poblacion": 386,
+   "anio": 2025
+  },
+  "santibanez el bajo": {
+   "municipio": "Santibáñez el Bajo",
+   "provincia": "caceres",
+   "poblacion": 711,
+   "anio": 2025
+  },
+  "saucedilla": {
+   "municipio": "Saucedilla",
+   "provincia": "caceres",
+   "poblacion": 1002,
+   "anio": 2025
+  },
+  "segura de toro": {
+   "municipio": "Segura de Toro",
+   "provincia": "caceres",
+   "poblacion": 190,
+   "anio": 2025
+  },
+  "serradilla": {
+   "municipio": "Serradilla",
+   "provincia": "caceres",
+   "poblacion": 1448,
+   "anio": 2025
+  },
+  "serrejon": {
+   "municipio": "Serrejón",
+   "provincia": "caceres",
+   "poblacion": 410,
+   "anio": 2025
+  },
+  "sierra de fuentes": {
+   "municipio": "Sierra de Fuentes",
+   "provincia": "caceres",
+   "poblacion": 2081,
+   "anio": 2025
+  },
+  "talavan": {
+   "municipio": "Talaván",
+   "provincia": "caceres",
+   "poblacion": 775,
+   "anio": 2025
+  },
+  "talaveruela de la vera": {
+   "municipio": "Talaveruela de la Vera",
+   "provincia": "caceres",
+   "poblacion": 303,
+   "anio": 2025
+  },
+  "talayuela": {
+   "municipio": "Talayuela",
+   "provincia": "caceres",
+   "poblacion": 7439,
+   "anio": 2025
+  },
+  "tejeda de tietar": {
+   "municipio": "Tejeda de Tiétar",
+   "provincia": "caceres",
+   "poblacion": 761,
+   "anio": 2025
+  },
+  "tietar": {
+   "municipio": "Tiétar",
+   "provincia": "caceres",
+   "poblacion": 835,
+   "anio": 2025
+  },
+  "toril": {
+   "municipio": "Toril",
+   "provincia": "caceres",
+   "poblacion": 157,
+   "anio": 2025
+  },
+  "tornavacas": {
+   "municipio": "Tornavacas",
+   "provincia": "caceres",
+   "poblacion": 989,
+   "anio": 2025
+  },
+  "el torno": {
+   "municipio": "El Torno",
+   "provincia": "caceres",
+   "poblacion": 805,
+   "anio": 2025
+  },
+  "torre de don miguel": {
+   "municipio": "Torre de Don Miguel",
+   "provincia": "caceres",
+   "poblacion": 481,
+   "anio": 2025
+  },
+  "torre de santa maria": {
+   "municipio": "Torre de Santa María",
+   "provincia": "caceres",
+   "poblacion": 508,
+   "anio": 2025
+  },
+  "torrecilla de los angeles": {
+   "municipio": "Torrecilla de los Ángeles",
+   "provincia": "caceres",
+   "poblacion": 642,
+   "anio": 2025
+  },
+  "torrecillas de la tiesa": {
+   "municipio": "Torrecillas de la Tiesa",
+   "provincia": "caceres",
+   "poblacion": 1038,
+   "anio": 2025
+  },
+  "torrejon el rubio": {
+   "municipio": "Torrejón el Rubio",
+   "provincia": "caceres",
+   "poblacion": 537,
+   "anio": 2025
+  },
+  "torrejoncillo": {
+   "municipio": "Torrejoncillo",
+   "provincia": "caceres",
+   "poblacion": 2743,
+   "anio": 2025
+  },
+  "torremenga": {
+   "municipio": "Torremenga",
+   "provincia": "caceres",
+   "poblacion": 620,
+   "anio": 2025
+  },
+  "torremocha": {
+   "municipio": "Torremocha",
+   "provincia": "caceres",
+   "poblacion": 742,
+   "anio": 2025
+  },
+  "torreorgaz": {
+   "municipio": "Torreorgaz",
+   "provincia": "caceres",
+   "poblacion": 1641,
+   "anio": 2025
+  },
+  "torrequemada": {
+   "municipio": "Torrequemada",
+   "provincia": "caceres",
+   "poblacion": 564,
+   "anio": 2025
+  },
+  "trujillo": {
+   "municipio": "Trujillo",
+   "provincia": "caceres",
+   "poblacion": 8611,
+   "anio": 2025
+  },
+  "valdastillas": {
+   "municipio": "Valdastillas",
+   "provincia": "caceres",
+   "poblacion": 332,
+   "anio": 2025
+  },
+  "valdecanas de tajo": {
+   "municipio": "Valdecañas de Tajo",
+   "provincia": "caceres",
+   "poblacion": 96,
+   "anio": 2025
+  },
+  "valdefuentes": {
+   "municipio": "Valdefuentes",
+   "provincia": "caceres",
+   "poblacion": 1074,
+   "anio": 2025
+  },
+  "valdehuncar": {
+   "municipio": "Valdehúncar",
+   "provincia": "caceres",
+   "poblacion": 188,
+   "anio": 2025
+  },
+  "valdelacasa de tajo": {
+   "municipio": "Valdelacasa de Tajo",
+   "provincia": "caceres",
+   "poblacion": 338,
+   "anio": 2025
+  },
+  "valdemorales": {
+   "municipio": "Valdemorales",
+   "provincia": "caceres",
+   "poblacion": 218,
+   "anio": 2025
+  },
+  "valdeobispo": {
+   "municipio": "Valdeobispo",
+   "provincia": "caceres",
+   "poblacion": 617,
+   "anio": 2025
+  },
+  "valencia de alcantara": {
+   "municipio": "Valencia de Alcántara",
+   "provincia": "caceres",
+   "poblacion": 5150,
+   "anio": 2025
+  },
+  "valverde de la vera": {
+   "municipio": "Valverde de la Vera",
+   "provincia": "caceres",
+   "poblacion": 428,
+   "anio": 2025
+  },
+  "valverde del fresno": {
+   "municipio": "Valverde del Fresno",
+   "provincia": "caceres",
+   "poblacion": 2143,
+   "anio": 2025
+  },
+  "vegaviana": {
+   "municipio": "Vegaviana",
+   "provincia": "caceres",
+   "poblacion": 837,
+   "anio": 2025
+  },
+  "viandar de la vera": {
+   "municipio": "Viandar de la Vera",
+   "provincia": "caceres",
+   "poblacion": 216,
+   "anio": 2025
+  },
+  "villa del campo": {
+   "municipio": "Villa del Campo",
+   "provincia": "caceres",
+   "poblacion": 435,
+   "anio": 2025
+  },
+  "villa del rey": {
+   "municipio": "Villa del Rey",
+   "provincia": "caceres",
+   "poblacion": 118,
+   "anio": 2025
+  },
+  "villamesias": {
+   "municipio": "Villamesías",
+   "provincia": "caceres",
+   "poblacion": 271,
+   "anio": 2025
+  },
+  "villamiel": {
+   "municipio": "Villamiel",
+   "provincia": "caceres",
+   "poblacion": 379,
+   "anio": 2025
+  },
+  "villanueva de la sierra": {
+   "municipio": "Villanueva de la Sierra",
+   "provincia": "caceres",
+   "poblacion": 478,
+   "anio": 2025
+  },
+  "villanueva de la vera": {
+   "municipio": "Villanueva de la Vera",
+   "provincia": "caceres",
+   "poblacion": 2108,
+   "anio": 2025
+  },
+  "villar de plasencia": {
+   "municipio": "Villar de Plasencia",
+   "provincia": "caceres",
+   "poblacion": 224,
+   "anio": 2025
+  },
+  "villar del pedroso": {
+   "municipio": "Villar del Pedroso",
+   "provincia": "caceres",
+   "poblacion": 547,
+   "anio": 2025
+  },
+  "villasbuenas de gata": {
+   "municipio": "Villasbuenas de Gata",
+   "provincia": "caceres",
+   "poblacion": 481,
+   "anio": 2025
+  },
+  "zarza de granadilla": {
+   "municipio": "Zarza de Granadilla",
+   "provincia": "caceres",
+   "poblacion": 1815,
+   "anio": 2025
+  },
+  "zarza de montanchez": {
+   "municipio": "Zarza de Montánchez",
+   "provincia": "caceres",
+   "poblacion": 504,
+   "anio": 2025
+  },
+  "zarza la mayor": {
+   "municipio": "Zarza la Mayor",
+   "provincia": "caceres",
+   "poblacion": 1096,
+   "anio": 2025
+  },
+  "zorita": {
+   "municipio": "Zorita",
+   "provincia": "caceres",
+   "poblacion": 1223,
    "anio": 2025
   }
  }
