@@ -12661,6 +12661,14 @@ _CASOS = [
         "resumen": "Tres alcaldesas de la provincia de Barcelona figuran sin sueldo municipal. "
                    "La explicación real, verificada con fuentes oficiales.",
     },
+    {
+        "slug": "quiebras-servicios-deportivos-vitoria",
+        "titulo": "Dos empresas, un año, el mismo patrón: los servicios deportivos subcontratados de Vitoria-Gasteiz",
+        "resumen": "Disport Eki y Prismaglobal, dos empresas subcontratadas por el Ayuntamiento de "
+                   "Vitoria-Gasteiz para gestionar instalaciones deportivas municipales, entraron en "
+                   "concurso de acreedores con poco más de un año de diferencia — y un historial de "
+                   "impagos casi idéntico.",
+    },
 ]
 
 
@@ -12771,6 +12779,81 @@ def render_caso_sueldo_cero_html():
                         body,
                         description="Por qué tres alcaldesas de la provincia de Barcelona figuran sin "
                                      "sueldo municipal, y cómo lo verificamos antes de mostrarlo.")
+
+
+def render_caso_quiebras_vitoria_html():
+    body = """<div class="static-page">
+  <h1>Dos empresas, un año, el mismo patrón: los servicios deportivos subcontratados de Vitoria-Gasteiz</h1>
+
+  <p>En mayo de 2024, los socorristas, monitores deportivos y cancheros de los centros
+  cívicos de Vitoria-Gasteiz llevaban dos años y medio cobrando tarde. La empresa que
+  los empleaba, Disport Eki, subcontratada por el Ayuntamiento, entró en preconcurso de
+  acreedores el 21 de mayo de ese año, tras una huelga indefinida de su plantilla (unos
+  cien trabajadores en huelga, 150 en toda la contrata) que había gestionado unos 11
+  millones de euros en contratos municipales en cuatro años. El concurso se hizo oficial
+  en noviembre; el Ayuntamiento empezó a romper los contratos el día 5 de ese mes,
+  comprometiéndose a subrogar a las trabajadoras en los nuevos adjudicatarios.</p>
+
+  <p>Poco más de un año después, el mismo patrón se repitió con otra empresa, en otro
+  servicio deportivo municipal.</p>
+
+  <h2>El caso Prismaglobal</h2>
+  <p>Prismaglobal Servicios y Proyectos, S.L. (Grupo Eleyco) gestionaba desde junio de
+  2024 los rocódromos municipales y la pista de hielo de Vitoria-Gasteiz. El 8 de
+  octubre de 2025, su plantilla denunció públicamente "abusos laborales": seguían sin
+  cobrar agosto y septiembre, y la temporada anterior algunos trabajadores habían
+  llegado a cobrar con hasta siete meses de retraso. Denunciaron también negligencias
+  graves de seguridad — ausencia de EPIs adecuados para trabajos en altura y
+  manipulación de ácido, falta de formación en trabajos verticales, y un incidente en
+  el que un trabajador cayó desde una altura de 7-8 metros sin que, según la plantilla,
+  la empresa tomara ninguna medida al respecto.</p>
+
+  <p>Dos semanas después, el 22 de octubre de 2025, Prismaglobal entró formalmente en
+  concurso de acreedores (procedimiento 445/2025, Juzgado nº7 de Primera Instancia de
+  Vitoria-Gasteiz). La noticia se conoció públicamente a mediados de noviembre, cuando
+  la propia plantilla trasladó el aviso al Ayuntamiento en comisión — el mismo medio
+  que lo contó señaló el paralelismo evidente con el "Caso Disport" once meses antes.
+  El 5 de febrero de 2026 se abrió la fase de liquidación.</p>
+
+  <p>En junio de 2026, el Ayuntamiento intentó relanzar el contrato de los rocódromos
+  —907.440€, IVA incluido— para sustituir a Prismaglobal. Ninguna empresa se presentó.
+  El servicio, aseguró el Ayuntamiento, no va a cerrar; se buscará una nueva vía para
+  mantenerlo.</p>
+
+  <h2>El mismo patrón, dos veces</h2>
+  <p>Subcontratación de un servicio deportivo municipal → impagos sistemáticos a la
+  plantilla, negados o minimizados por la empresa → denuncia pública de los
+  trabajadores → concurso de acreedores → liquidación. En ambos casos, el Ayuntamiento
+  tuvo constancia de los impagos meses antes del concurso; en ambos casos, se limitó a
+  exigir a la empresa que "pagara" o "cumpliera", sin que eso evitara el desenlace.</p>
+
+  <p>No es una acusación de que el Ayuntamiento haya actuado de forma negligente — la
+  resolución de un contrato de servicios no es instantánea, y en el caso de Disport sí
+  llegó, con subrogación incluida. Es un patrón que vale la pena que la ciudadanía
+  vitoriana conozca: dos empresas distintas, el mismo tipo de servicio, el mismo
+  desenlace, con poco más de un año de diferencia.</p>
+
+  <h2>Fuentes</h2>
+  <ul>
+    <li><a href="https://www.eldiario.es/euskadi/empresa-retrasos-pagos-socorristas-monitores-vitoria-queda-borde-quiebra_1_11385111.html" target="_blank" rel="noopener">eldiario.es</a> (21/05/2024) — preconcurso de Disport Eki</li>
+    <li><a href="https://www.noticiasdealava.eus/alava/2024/05/21/disport-deja-aire-futuro-150-8262978.html" target="_blank" rel="noopener">noticiasdealava.eus</a> (21/05/2024) — 150 trabajadores afectados</li>
+    <li><a href="https://www.noticiasdealava.eus/gasteiz/2024/11/12/oficial-disport-entra-concurso-acreedores-8923189.html" target="_blank" rel="noopener">noticiasdealava.eus</a> (12/11/2024) — concurso oficial de Disport Eki</li>
+    <li><a href="https://gasteizberri.com/2024/11/el-ayuntamiento-rompe-los-contratos-con-disport-eki/" target="_blank" rel="noopener">gasteizberri.com</a> (05/11/2024) — el Ayuntamiento rompe los contratos con Disport Eki</li>
+    <li><a href="https://www.einforma.com/informacion-empresa/prisma-servicios-proyectos" target="_blank" rel="noopener">einforma.com</a> — ficha societaria de Prismaglobal</li>
+    <li><a href="https://infonif.economia3.com/ficha-empresa/prismaglobal-servicios-y-proyectos-sl" target="_blank" rel="noopener">infonif.economia3.com</a> — procedimiento concursal 445/2025</li>
+    <li><a href="https://www.gasteizhoy.com/abusos-laborales-prismaglobal-rocodromos/" target="_blank" rel="noopener">gasteizhoy.com</a> (08/10/2025) — denuncia de abusos laborales</li>
+    <li><a href="https://gasteizberri.com/2025/11/prisma-global-concurso-de-acreedores/" target="_blank" rel="noopener">gasteizberri.com</a> (18/11/2025) — entrada en concurso de acreedores</li>
+    <li><a href="https://gasteizberri.com/2026/06/rocodromos-municipales-vitoria-servicio-no-va-a-cerrar/" target="_blank" rel="noopener">gasteizberri.com</a> (12/06/2026) — contrato de relanzamiento desierto</li>
+  </ul>
+
+  <p><a href="/casos">← Volver a Casos</a></p>
+</div>"""
+    return _page_shell("Caso: el patrón de quiebras en los servicios deportivos de Vitoria-Gasteiz",
+                        body,
+                        description="Disport Eki y Prismaglobal, dos empresas subcontratadas por el "
+                                     "Ayuntamiento de Vitoria-Gasteiz para gestionar instalaciones "
+                                     "deportivas municipales, entraron en concurso de acreedores con "
+                                     "poco más de un año de diferencia.")
 
 
 def render_quienes_somos_html():
@@ -13011,6 +13094,9 @@ def _route_get(path, qs, gzip_ok=False):
 
     if path == "/casos/sueldo-cero-barcelona":
         return _resp(render_caso_sueldo_cero_html(), gzip_ok=gzip_ok)
+
+    if path == "/casos/quiebras-servicios-deportivos-vitoria":
+        return _resp(render_caso_quiebras_vitoria_html(), gzip_ok=gzip_ok)
 
     if path == "/aviso-legal":
         return _resp(render_aviso_legal_html(), gzip_ok=gzip_ok)
