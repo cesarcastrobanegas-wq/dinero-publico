@@ -5370,8 +5370,33 @@ def _euskadi_item_a_contrato(item, municipio):
     dict de contrato que ya usa el resto del proyecto (mismas claves que
     _entry_to_contrato) -- así el resultado es intercambiable con
     PLACE/BORM/PSCP sin tocar el resto del pipeline (render, guardado,
-    directivos)."""
+    directivos).
+
+    Comprobación de plausibilidad IVA (2026-09-17, incidente Prismaglobal/
+    Vitoria-Gasteiz -- ver memoria del proyecto): un aviso externo de
+    César señaló un contrato mostrado con 751.410.000 € cuando la empresa
+    real es una pyme de gestión de instalaciones deportivas. Verificado
+    contra la API cruda de Euskadi (no un bug de parseo propio): el propio
+    campo `awardAmount` de KontratazioA trae ya el valor corrupto
+    (751410000), tres ceros de más sobre el real -- el campo hermano
+    `awardAmountWithoutVAT` (621000) es correcto y, multiplicado por el
+    IVA general español (621000 × 1,21 = 751410,00 €), cuadra exacto con
+    lo que "awardAmount" debería decir. Es decir, el error está en el
+    origen (base de datos del Gobierno Vasco), no en nuestro código, pero
+    publicarlo tal cual induce a error igualmente.
+    _piloto_medir_pais_vasco y el resto de usos de este mismo dict de
+    contrato no se ven afectados -- este fallback solo entra en juego
+    cuando el propio dato de origen es matemáticamente imposible."""
     importe_num = item.get("awardAmount") or 0.0
+    sin_iva = item.get("awardAmountWithoutVAT") or 0.0
+    # Con IVA nunca debería superar ~1,25x el precio sin IVA (el tipo
+    # general en España es el 21%; margen extra por redondeos/recargos
+    # menores) -- un ratio mayor es la firma de este tipo de error de
+    # captura. Si detectamos la anomalía, se prefiere el precio sin IVA
+    # (dato verificado, real, aunque sea una cifra ligeramente por debajo
+    # de la real con IVA) antes que inventar un IVA que no consta.
+    if sin_iva > 0 and importe_num > sin_iva * 1.25:
+        importe_num = sin_iva
     return {
         "titulo":        (item.get("object") or "")[:200],
         "organo":        f"Ayuntamiento de {municipio}",
