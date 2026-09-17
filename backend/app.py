@@ -868,6 +868,186 @@ MUNICIPIOS_CACERES = [
     "Zarza la Mayor","Zorita",
 ]
 
+# 202/202 municipios de Huesca -- verificados contra Wikipedia
+# ("Anexo:Municipios de la provincia de Huesca") + Diputación de Huesca
+# (dphuesca.es), sin colisión de clave primaria con ninguna provincia ya
+# conectada (ver colisiones tipo prefijo en _EXCLUSION_CONTINUACION_
+# ANCLAJE, piloto Aragón 2026-09-17).
+MUNICIPIOS_HUESCA = [
+    "Abiego","Abizanda","Adahuesca","Agüero","Aínsa-Sobrarbe",
+    "Aísa","Albalate de Cinca","Albalatillo","Albelda","Albero Alto",
+    "Albero Bajo","Alberuela de Tubo","Alcalá de Gurrea","Alcalá del Obispo","Alcampell",
+    "Alcolea de Cinca","Alcubierre","Alerre","Alfántega","Almudévar",
+    "Almunia de San Juan","Almuniente","Alquézar","Altorricón","Angüés",
+    "Ansó","Antillón","Aragüés del Puerto","Arén","Argavieso",
+    "Arguis","Ayerbe","Azanuy-Alins","Azara","Azlor",
+    "Baélls","Bailo","Baldellou","Ballobar","Banastás",
+    "Barbastro","Barbués","Barbuñales","Bárcabo","Belver de Cinca",
+    "Benabarre","Benasque","Beranuy","Berbegal","Bielsa",
+    "Bierge","Biescas","Binaced","Binéfar","Bisaurri",
+    "Biscarrués","Blecua y Torres","Boltaña","Bonansa","Borau",
+    "Broto","Caldearenas","Campo","Camporrélls","Canal de Berdún",
+    "Candasnos","Canfranc","Capdesaso","Capella","Casbas de Huesca",
+    "Castejón de Monegros","Castejón del Puente","Castejón de Sos","Castelflorite","Castiello de Jaca",
+    "Castigaleu","Castillazuelo","Castillonroy","Chalamera","Chía",
+    "Chimillas","Colungo","Esplús","Estada","Estadilla",
+    "Estopiñán del Castillo","Fago","Fanlo","Fiscal","Fonz",
+    "Foradada del Toscar","Fraga","La Fueva","Gistaín","El Grado",
+    "Grañén","Graus","Gurrea de Gállego","Hoz de Jaca","Hoz y Costean",
+    "Huerto","Huesca","Ibieca","Igriés","Ilche",
+    "Isábena","Jaca","Jasa","Labuerda","Laluenga",
+    "Lalueza","Lanaja","Laperdiguera","Lascellas-Ponzano","Lascuarre",
+    "Laspaúles","Laspuña","Loarre","Loporzano","Loscorrales",
+    "Lupiñén-Ortilla","Monesma y Cajigar","Monflorite-Lascasas","Montanuy","Monzón",
+    "Naval","Novales","Nueno","Olvena","Ontiñena",
+    "Osso de Cinca","Palo","Panticosa","Peñalba","Las Peñas de Riglos",
+    "Peralta de Alcofea","Peralta de Calasanz","Peraltilla","Perarrúa","Pertusa",
+    "Piracés","Plan","Poleñino","Pozán de Vero","La Puebla de Castro",
+    "Puente de Montañana","Puente la Reina de Jaca","Puértolas","El Pueyo de Araguás","Pueyo de Santa Cruz",
+    "Quicena","Robres","Sabiñánigo","Sahún","Salas Altas",
+    "Salas Bajas","Salillas","Sallent de Gállego","San Esteban de Litera","Sangarrén",
+    "San Juan de Plan","San Miguel del Cinca","Santa Cilia","Santa Cruz de la Serós","Santaliestra y San Quílez",
+    "Santa María de Dulcis","Sariñena","Secastilla","Seira","Sena",
+    "Senés de Alcubierre","Sesa","Sesué","Siétamo","Sopeira",
+    "La Sotonera","Tamarite de Litera","Tardienta","Tella-Sin","Tierz",
+    "Tolva","Torla-Ordesa","Torralba de Aragón","Torre la Ribera","Torrente de Cinca",
+    "Torres de Alcanadre","Torres de Barbués","Tramaced","Valfarta","Valle de Bardají",
+    "Valle de Hecho","Valle de Lierp","Velilla de Cinca","Vencillón","Viacamp y Litera",
+    "Vicién","Villanova","Villanúa","Villanueva de Sigena","Yebra de Basa",
+    "Yésero","Zaidín",
+]
+
+# 236/236 municipios de Teruel -- verificados contra Wikipedia
+# ("Anexo:Municipios de la provincia de Teruel") + INE (padrón municipal,
+# jaxiT3?t=2899); 2 discrepancias de cifra vistas en fuentes de resumen
+# (237 y 218) investigadas y descartadas -- ninguna de las dos se sostuvo
+# al pedir el listado completo y numerado, que coincide con Wikipedia en
+# los 236 nombres.
+MUNICIPIOS_TERUEL = [
+    "Ababuj","Abejuela","Aguatón","Aguaviva","Aguilar del Alfambra",
+    "Alacón","Alba","Albalate del Arzobispo","Albarracín","Albentosa",
+    "Alcaine","Alcalá de la Selva","Alcañiz","Alcorisa","Alfambra",
+    "Aliaga","Allepuz","Alloza","Allueva","Almohaja",
+    "Alobras","Alpeñés","Anadón","Andorra","Arcos de las Salinas",
+    "Arens de Lledó","Argente","Ariño","Azaila","Bádenas",
+    "Báguena","Bañón","Barrachina","Bea","Beceite",
+    "Bello","Belmonte de San José","Berge","Bezas","Blancas",
+    "Blesa","Bordón","Bronchales","Bueña","Burbáguena",
+    "Cabra de Mora","Calaceite","Calamocha","Calanda","Calomarde",
+    "Camañas","Camarena de la Sierra","Camarillas","Caminreal","Cantavieja",
+    "Cañada de Benatanduz","La Cañada de Verich","Cañada Vellida","Cañizar del Olivar","Cascante del Río",
+    "Castejón de Tornos","Castel de Cabra","El Castellar","Castellote","Castelnou",
+    "Castelserás","Cedrillas","Celadas","Cella","La Cerollera",
+    "La Codoñera","Corbalán","Cortes de Aragón","Cosa","Cretas",
+    "Crivillén","La Cuba","Cubla","Cucalón","El Cuervo",
+    "Cuevas de Almudén","Cuevas Labradas","Ejulve","Escorihuela","Escucha",
+    "Estercuel","Ferreruela de Huerva","Fonfría","Formiche Alto","Fórnoles",
+    "Fortanete","Foz-Calanda","La Fresneda","Frías de Albarracín","Fuenferrada",
+    "Fuentes Calientes","Fuentes Claras","Fuentes de Rubielos","Fuentespalda","Galve",
+    "Gargallo","Gea de Albarracín","La Ginebrosa","Griegos","Guadalaviar",
+    "Gúdar","Híjar","Hinojosa de Jarque","La Hoz de la Vieja","Huesa del Común",
+    "La Iglesuela del Cid","Jabaloyas","Jarque de la Val","Jatiel","Jorcas",
+    "Josa","Lagueruela","Lanzuela","Libros","Lidón",
+    "Linares de Mora","Lledó","Loscos","Maicas","Manzanera",
+    "Martín del Río","Mas de las Matas","La Mata de los Olmos","Mazaleón","Mezquita de Jarque",
+    "Mirambel","Miravete de la Sierra","Molinos","Monforte de Moyuela","Monreal del Campo",
+    "Monroyo","Montalbán","Monteagudo del Castillo","Monterde de Albarracín","Mora de Rubielos",
+    "Moscardón","Mosqueruela","Muniesa","Noguera de Albarracín","Nogueras",
+    "Nogueruelas","Obón","Odón","Ojos Negros","Olba",
+    "Oliete","Los Olmos","Orihuela del Tremedal","Orrios","Palomar de Arroyos",
+    "Pancrudo","Las Parras de Castellote","Peñarroya de Tastavins","Peracense","Peralejos",
+    "Perales del Alfambra","Pitarque","Plou","El Pobo","La Portellada",
+    "Pozondón","Pozuel del Campo","La Puebla de Híjar","La Puebla de Valverde","Puertomingalvo",
+    "Ráfales","Rillo","Riodeva","Ródenas","Royuela",
+    "Rubiales","Rubielos de la Cérida","Rubielos de Mora","Salcedillo","Saldón",
+    "Samper de Calanda","San Agustín","San Martín del Río","Santa Cruz de Nogueras","Santa Eulalia",
+    "Sarrión","Segura de los Baños","Seno","Singra","Terriente",
+    "Teruel","Toril y Masegoso","Tormón","Tornos","Torralba de los Sisones",
+    "Torre de Arcas","Torre de las Arcas","Torre del Compte","Torre los Negros","Torrecilla de Alcañiz",
+    "Torrecilla del Rebollar","Torrelacárcel","Torremocha de Jiloca","Torres de Albarracín","Torrevelilla",
+    "Torrijas","Torrijo del Campo","Tramacastiel","Tramacastilla","Tronchón",
+    "Urrea de Gaén","Utrillas","Valacloche","Valbona","Valdealgorfa",
+    "Valdecuenca","Valdelinares","Valdeltormo","Valderrobres","Valjunquera",
+    "El Vallecillo","Veguillas de la Sierra","Villafranca del Campo","Villahermosa del Campo","Villanueva del Rebollar de la Sierra",
+    "Villar del Cobo","Villar del Salz","Villarluengo","Villarquemado","Villarroya de los Pinares",
+    "Villastar","Villel","Vinaceite","Visiedo","Vivel del Río Martín",
+    "La Zoma",
+]
+
+# 293/293 municipios de Zaragoza -- verificados contra Wikipedia
+# ("Anexo:Municipios de la provincia de Zaragoza") + soydezaragoza.es
+# (tabla de población), conteo confirmado además contra el total conocido
+# de Aragón (293+202+236 = 731). 2 discrepancias de nombre resueltas:
+# "Jarque de Moncayo" (nombre oficial vigente, BOE-A-2018-1671, no
+# "Jarque" a secas) y "La Puebla de Albortón" (con artículo, coincide con
+# la web oficial del propio municipio).
+MUNICIPIOS_ZARAGOZA = [
+    "Abanto","Acered","Agón","Aguarón","Aguilón","Ainzón","Aladrén",
+    "Alagón","Alarba","Alberite de San Juan","Albeta","Alborge",
+    "Alcalá de Ebro","Alcalá de Moncayo","Alconchel de Ariza",
+    "Aldehuela de Liestos","Alfajarín","Alfamén","Alforque",
+    "Alhama de Aragón","Almochuel","La Almolda","Almonacid de la Cuba",
+    "Almonacid de la Sierra","La Almunia de Doña Godina","Alpartir",
+    "Ambel","Anento","Aniñón","Añón de Moncayo","Aranda de Moncayo",
+    "Arándiga","Ardisa","Ariza","Artieda","Asín","Atea","Ateca",
+    "Azuara","Badules","Bagüés","Balconchán","Bárboles","Bardallur",
+    "Belchite","Belmonte de Gracián","Berdejo","Berrueco","Biel",
+    "Bijuesca","Biota","Bisimbre","Boquiñeni","Bordalba","Borja",
+    "Botorrita","Brea de Aragón","Bubierca","Bujaraloz","Bulbuente",
+    "Bureta","El Burgo de Ebro","El Buste","Cabañas de Ebro",
+    "Cabolafuente","Cadrete","Calatayud","Calatorao","Calcena",
+    "Calmarza","Campillo de Aragón","Carenas","Cariñena","Caspe",
+    "Castejón de Alarba","Castejón de las Armas","Castejón de Valdejasa",
+    "Castiliscar","Cervera de la Cañada","Cerveruela","Cetina",
+    "Chiprana","Chodes","Cimballa","Cinco Olivas","Clarés de Ribota",
+    "Codo","Codos","Contamina","Cosuenda","Cuarte de Huerva","Cubel",
+    "Las Cuerlas","Daroca","Ejea de los Caballeros","Embid de Ariza",
+    "Encinacorba","Épila","Erla","Escatrón","Fabara","Farlete","Fayón",
+    "Los Fayos","Figueruelas","Fombuena","El Frago","El Frasno",
+    "Fréscano","Fuendejalón","Fuendetodos","Fuentes de Ebro",
+    "Fuentes de Jiloca","Gallocanta","Gallur","Gelsa","Godojos","Gotor",
+    "Grisel","Grisén","Herrera de los Navarros","Ibdes","Illueca",
+    "Isuerre","Jaraba","Jarque de Moncayo","Jaulín","La Joyosa",
+    "Lagata","Langa del Castillo","Layana","Lécera","Lechón","Leciñena",
+    "Letux","Litago","Lituénigo","Lobera de Onsella","Longares",
+    "Longás","Lucena de Jalón","Luceni","Luesia","Luesma","Lumpiaque",
+    "Luna","Maella","Magallón","Mainar","Malanquilla","Maleján",
+    "Mallén","Malón","Maluenda","Manchones","Mara","María de Huerva",
+    "Marracos","Mediana de Aragón","Mequinenza","Mesones de Isuela",
+    "Mezalocha","Mianos","Miedes de Aragón","Monegrillo","Moneva",
+    "Monreal de Ariza","Monterde","Montón","Morata de Jalón",
+    "Morata de Jiloca","Morés","Moros","Moyuela","Mozota","Muel",
+    "La Muela","Munébrega","Murero","Murillo de Gállego","Navardún",
+    "Nigüella","Nombrevilla","Nonaspe","Novallas","Novillas","Nuévalos",
+    "Nuez de Ebro","Olvés","Orcajo","Orera","Orés","Oseja",
+    "Osera de Ebro","Paniza","Paracuellos de Jiloca",
+    "Paracuellos de la Ribera","Pastriz","Pedrola","Las Pedrosas",
+    "Perdiguera","Piedratajada","Pina de Ebro","Pinseque","Los Pintanos",
+    "Plasencia de Jalón","Pleitas","Plenas","Pomer","Pozuel de Ariza",
+    "Pozuelo de Aragón","Pradilla de Ebro","La Puebla de Albortón",
+    "La Puebla de Alfindén","Puendeluna","Purujosa","Quinto","Remolinos",
+    "Retascón","Ricla","Romanos","Rueda de Jalón","Ruesca","Sabiñán",
+    "Sádaba","Salillas de Jalón","Salvatierra de Esca","Samper del Salz",
+    "San Martín de la Virgen de Moncayo","San Mateo de Gállego",
+    "Santa Cruz de Grío","Santa Cruz de Moncayo",
+    "Santa Eulalia de Gállego","Santed","Sástago","Sediles","Sestrica",
+    "Sierra de Luna","Sigüés","Sisamón","Sobradiel",
+    "Sos del Rey Católico","Tabuenca","Talamantes","Tarazona","Tauste",
+    "Terrer","Tierga","Tobed","Torralba de los Frailes",
+    "Torralba de Ribota","Torralbilla","Torrehermosa","Torrelapaja",
+    "Torrellas","Torres de Berrellén","Torrijo de la Cañada","Tosos",
+    "Trasmoz","Trasobares","Uncastillo","Undués de Lerda",
+    "Urrea de Jalón","Urriés","Used","Utebo","Val de San Martín",
+    "Valdehorna","Valmadrid","Valpalmas","Valtorres","Velilla de Ebro",
+    "Velilla de Jiloca","Vera de Moncayo","Vierlas","Villadoz",
+    "Villafeliche","Villafranca de Ebro","Villalba de Perejil",
+    "Villalengua","Villamayor de Gállego","Villanueva de Gállego",
+    "Villanueva de Huerva","Villanueva de Jiloca","Villar de los Navarros",
+    "Villarreal de Huerva","Villarroya de la Sierra",
+    "Villarroya del Campo","La Vilueña","Vistabella","La Zaida",
+    "Zaragoza","Zuera",
+]
+
 # Comunidad de Madrid: uniprovincial (como Murcia/Baleares/Cantabria/La
 # Rioja, una sola provincia). Mecanismo A normal, verificado 2026-09-15
 # contra un ZIP real de PLACE: "Junta de Gobierno del Ayuntamiento de
@@ -3676,7 +3856,9 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "la_rioja": MUNICIPIOS_LA_RIOJA,
                             "madrid": MUNICIPIOS_MADRID,
                             "asturias": MUNICIPIOS_ASTURIAS,
-                            "badajoz": MUNICIPIOS_BADAJOZ, "caceres": MUNICIPIOS_CACERES}
+                            "badajoz": MUNICIPIOS_BADAJOZ, "caceres": MUNICIPIOS_CACERES,
+                            "huesca": MUNICIPIOS_HUESCA, "teruel": MUNICIPIOS_TERUEL,
+                            "zaragoza": MUNICIPIOS_ZARAGOZA}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3696,6 +3878,8 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "madrid": "Comunidad de Madrid",
                    "asturias": "Principado de Asturias",
                    "badajoz": "Provincia de Badajoz", "caceres": "Provincia de Cáceres",
+                   "huesca": "Provincia de Huesca", "teruel": "Provincia de Teruel",
+                   "zaragoza": "Provincia de Zaragoza",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3723,6 +3907,7 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "madrid": "madrid",  # comunidad uniprovincial, mismo patrón que Murcia
     "asturias": "asturias",  # comunidad uniprovincial, mismo patrón que Murcia
     "badajoz": "extremadura", "caceres": "extremadura",  # 2 provincias de Extremadura, mismo patrón que Cataluña/CV/Andalucía
+    "huesca": "aragon", "teruel": "aragon", "zaragoza": "aragon",  # 3 provincias de Aragón, mismo patrón
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
@@ -3731,7 +3916,7 @@ COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluñ
                             "baleares": "Illes Balears", "cantabria": "Cantabria",
                             "la_rioja": "La Rioja", "madrid": "Comunidad de Madrid",
                             "asturias": "Principado de Asturias",
-                            "extremadura": "Extremadura"}
+                            "extremadura": "Extremadura", "aragon": "Aragón"}
 
 
 def _comunidad_valida(txt):
@@ -3768,6 +3953,9 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "asturias": "Gijón, Oviedo, Avilés, Langreo…",
     "badajoz": "Badajoz, Mérida, Don Benito, Almendralejo…",
     "caceres": "Cáceres, Plasencia, Navalmoral de la Mata, Coria…",
+    "huesca": "Huesca, Barbastro, Monzón, Jaca…",
+    "teruel": "Teruel, Alcañiz, Andorra, Calamocha…",
+    "zaragoza": "Zaragoza, Calatayud, Ejea de los Caballeros, Utebo…",
 }
 
 # ─── Mapa interactivo de comunidades autónomas (home nacional, 2026-09-17) ──
@@ -3791,9 +3979,13 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
 # comunidad sería más correcto pero es un cambio mayor; desde esa página
 # ya se puede navegar al resto de provincias de la misma comunidad con
 # las pestañas ya existentes). None = comunidad sin ninguna provincia
-# conectada todavía (Galicia/Aragón/Castilla y León/Castilla-La Mancha/
-# Navarra) -- se muestra en el mapa (bandera incluida) pero sin click ni
-# tooltip de datos, nunca un enlace roto.
+# conectada todavía (Galicia/Castilla y León/Castilla-La Mancha/Navarra)
+# -- se muestra en el mapa (bandera incluida) pero sin click ni tooltip de
+# datos, nunca un enlace roto. Aragón conectada 2026-09-17 (piloto Huesca/
+# Teruel/Zaragoza) -- destino "zaragoza" (provincia representativa, mismo
+# patrón que Cataluña/CV/Andalucía/Extremadura). El tooltip de Aragón
+# mostrará "sin datos" hasta que corran los scrapers de población/deuda/
+# saldo para sus municipios (pipeline aparte, no parte de este cambio).
 _MAPA_CCAA = [
     {"comunidad": "galicia", "bandera": "galicia", "label": "Galicia", "destino": None,
      "cx": 80, "cy": 60, "r": 45},
@@ -3809,7 +4001,7 @@ _MAPA_CCAA = [
      "cx": 335, "cy": 108, "r": 15},
     {"comunidad": "castilla_leon", "bandera": "castilla_leon", "label": "Castilla y León", "destino": None,
      "cx": 220, "cy": 160, "r": 55},
-    {"comunidad": "aragon", "bandera": "aragon", "label": "Aragón", "destino": None,
+    {"comunidad": "aragon", "bandera": "aragon", "label": "Aragón", "destino": "zaragoza",
      "cx": 430, "cy": 155, "r": 45},
     {"comunidad": "cataluna", "bandera": "cataluna", "label": "Cataluña", "destino": "barcelona",
      "cx": 555, "cy": 130, "r": 50},
@@ -4767,8 +4959,12 @@ _EXCLUSION_CONTINUACION_ANCLAJE = {
     # (La Rioja). Sin colisión de clave primaria en BD (Villarroya de los
     # Pinares no existe como municipio propio en ninguna provincia ya
     # activa), a diferencia de Cieza -- exclusión de texto simple y
-    # suficiente aquí.
-    "villarroya": " de los pinares",
+    # suficiente aquí. Ampliada a tupla en el piloto de Aragón
+    # (2026-09-17): "Villarroya de la Sierra" y "Villarroya del Campo"
+    # (ambas de Zaragoza) son la MISMA clase de colisión con "Villarroya"
+    # (La Rioja) -- _regex_anclado ya soporta varias continuaciones por
+    # clave, ver esa función.
+    "villarroya": (" de los pinares", " de la sierra", " del campo"),
     # Colisión tipo prefijo (piloto Madrid, 2026-09-15), misma clase que
     # Muro/Palma/Villarroya -- "Alcaldía del Ayuntamiento de Villalbilla DE
     # BURGOS" (Castilla y León, NO conectado en este sitio) coincidía al
@@ -4805,7 +5001,61 @@ _EXCLUSION_CONTINUACION_ANCLAJE = {
     "plasencia": " de jalon",  # Cáceres vs "Plasencia de Jalón" (Zaragoza, no conectada)
     "santa ana": " la real",  # Cáceres vs "Santa Ana la Real" (Huelva, SÍ conectada)
     "torrejoncillo": " del rey",  # Cáceres vs "Torrejoncillo del Rey" (Cuenca, no conectada)
-    "torremocha": " de jarama",  # Cáceres vs "Torremocha de Jarama" (Madrid, SÍ conectada)
+    # Ampliada a tupla en el piloto de Aragón (2026-09-17): "Torremocha de
+    # Jiloca" (Teruel) es la misma clase de colisión que "Torremocha de
+    # Jarama" (Madrid) para el "Torremocha" de Cáceres.
+    "torremocha": (" de jarama", " de jiloca"),  # Cáceres vs Madrid (SÍ conectada) y Teruel
+
+    # Colisiones tipo prefijo (piloto Aragón, 2026-09-17) -- mismo patrón
+    # que todos los bloques anteriores, verificadas contra un ZIP real
+    # (place_202609.zip) ANTES de desplegar. A diferencia de los pilotos
+    # previos, varias de estas colisiones NO son nuevas: el ZIP nacional
+    # de PLACE ya incluía el órgano de contratación de estos municipios de
+    # Aragón aunque el sitio nunca los mostrara (Aragón no estaba
+    # "conectado" a MUNICIPIOS_POR_PROVINCIA, pero PLACE cubre toda
+    # España, no solo las provincias que ya tenemos en el sitio) -- es
+    # decir, algunas de estas correcciones arreglan una atribución
+    # incorrecta que YA estaba pasando hoy en producción para esas
+    # provincias, no solo protegen datos nuevos de Aragón. Confirmado con
+    # menciones reales este mes: "Campo Real" (Madrid, 14), "Huesa del
+    # Común" (Teruel, 3), "Santa Eulalia de Oscos" (Asturias, 6),
+    # "Vistabella del Maestrat" (Castellón, 3) -- el resto de pares no
+    # tenía contratos ESTE mes concreto pero la colisión es estructural
+    # (mismo mecanismo de \b sin mirar qué sigue), así que se excluyen
+    # igual, mismo criterio que "plasencia"/"villarroya" ya existentes
+    # (añadidas antes de tener ninguna mención real ese mes).
+    "albelda": " de iregua",  # Huesca (nuevo) vs "Albelda de Iregua" (La Rioja, SÍ conectada)
+    "alcolea": " de cinca",  # Almería (SÍ conectada) vs "Alcolea de Cinca" (Huesca, nuevo)
+    "campo": (" de mirra", " lugar", " real"),  # Huesca (nuevo) vs Alicante/Cáceres/Madrid (SÍ conectadas)
+    "foradada": " del toscar",  # Lleida (SÍ conectada) vs "Foradada del Toscar" (Huesca, nuevo)
+    "robres": " del castillo",  # Huesca (nuevo) vs "Robres del Castillo" (La Rioja, SÍ conectada)
+    "salas": (" altas", " bajas"),  # Asturias (SÍ conectada) vs "Salas Altas"/"Salas Bajas" (Huesca, nuevo)
+    "salillas": " de jalon",  # Huesca (nuevo) vs "Salillas de Jalón" (Zaragoza, nuevo)
+    "sallent": " de gallego",  # Barcelona (SÍ conectada) vs "Sallent de Gállego" (Huesca, nuevo)
+    "senes": " de alcubierre",  # Almería (SÍ conectada) vs "Senés de Alcubierre" (Huesca, nuevo)
+    "torres": (" de alcanadre", " de barbues", " de albarracin", " de berrellen"),  # Jaén (SÍ conectada) vs Huesca x2/Teruel/Zaragoza (nuevos)
+    "cabra": " de mora",  # Córdoba (SÍ conectada) vs "Cabra de Mora" (Teruel, nuevo)
+    "canada": (" de benatanduz", " vellida"),  # Alicante (SÍ conectada) vs "Cañada de Benatanduz"/"Cañada Vellida" (Teruel, nuevo)
+    "huesa": " del comun",  # Jaén (SÍ conectada) vs "Huesa del Común" (Teruel, nuevo)
+    "josa": " i tuixen",  # Teruel (nuevo) vs "Josa i Tuixén" (Lleida, SÍ conectada)
+    "linares": " de mora",  # Jaén (SÍ conectada) vs "Linares de Mora" (Teruel, nuevo)
+    "montalban": " de cordoba",  # Teruel (nuevo) vs "Montalbán de Córdoba" (Córdoba, SÍ conectada)
+    "monterde": " de albarracin",  # Zaragoza (nuevo) vs "Monterde de Albarracín" (Teruel, nuevo -- colisión interna de Aragón)
+    "ojos": " negros",  # Murcia -- "Ojós" (SÍ conectada) vs "Ojos Negros" (Teruel, nuevo)
+    "orihuela": " del tremedal",  # Alicante (SÍ conectada) vs "Orihuela del Tremedal" (Teruel, nuevo)
+    "san agustin": " del guadalix",  # Teruel (nuevo) vs "San Agustín del Guadalix" (Madrid, SÍ conectada)
+    "santa eulalia": (" de oscos", " de riuprimer", " de roncana", " bajera", " de gallego"),  # Teruel (nuevo) vs Asturias/Barcelona x2/La Rioja (SÍ conectadas) y Zaragoza (nuevo)
+    "toril": " y masegoso",  # Cáceres (SÍ conectada) vs "Toril y Masegoso" (Teruel, nuevo)
+    "alagon": " del rio",  # Zaragoza (nuevo) vs "Alagón del Río" (Cáceres, SÍ conectada)
+    "alberite": " de san juan",  # La Rioja (SÍ conectada) vs "Alberite de San Juan" (Zaragoza, nuevo)
+    "alconchel": " de ariza",  # Badajoz (SÍ conectada) vs "Alconchel de Ariza" (Zaragoza, nuevo)
+    "cervera": " de la canada",  # Lleida (SÍ conectada) vs "Cervera de la Cañada" (Zaragoza, nuevo)
+    "daroca": " de rioja",  # Zaragoza (nuevo) vs "Daroca de Rioja" (La Rioja, SÍ conectada)
+    "herrera": " de los navarros",  # Sevilla (SÍ conectada) vs "Herrera de los Navarros" (Zaragoza, nuevo)
+    "lucena": " de jalon",  # Córdoba (SÍ conectada) vs "Lucena de Jalón" (Zaragoza, nuevo)
+    "maria": " de huerva",  # Almería (SÍ conectada) vs "María de Huerva" (Zaragoza, nuevo)
+    "vera": " de moncayo",  # Almería (SÍ conectada) vs "Vera de Moncayo" (Zaragoza, nuevo)
+    "vistabella": " del maestrat",  # Zaragoza (nuevo) vs "Vistabella del Maestrat" (Castellón, SÍ conectada)
 }
 
 
@@ -4813,21 +5063,33 @@ def _regex_anclado(municipio):
     """Regex completo para anclar=True en buscar_en_zip/buscar_en_feed_vivo:
     _prefijo_anclaje + infijo honorífico opcional + nombre del municipio,
     con exclusión de continuación si aplica (ver _EXCLUSION_CONTINUACION_
-    ANCLAJE)."""
+    ANCLAJE).
+
+    El valor del dict puede ser un string (una sola continuación a
+    excluir, caso original) o una tupla de strings (varias continuaciones
+    -- necesario desde el piloto de Aragón 2026-09-17: p.ej. "Torres"
+    -Jaén- colisiona con 4 municipios distintos de otras provincias que
+    empiezan por "Torres de..."/"Torres de...", no solo uno). Cada
+    continuación genera su propio lookahead negativo encadenado
+    (?!c1)(?!c2)... -- un string suelto se trata como tupla de 1 elemento,
+    mismo comportamiento de siempre para las entradas que no necesitan
+    más de una."""
     muni_norm = normalizar(municipio)
-    exclusion = _EXCLUSION_CONTINUACION_ANCLAJE.get(muni_norm)
-    if exclusion:
-        # \b final solo si la exclusión termina en letra/dígito (para no
-        # rechazar también un prefijo más largo, p.ej. "del rio" no debe
-        # rechazar un hipotético "del rioverde") -- si termina en
-        # puntuación (p.ej. el ")" de "Cieza (Murcia)"), \b nunca se
-        # cumple justo ahí (puntuación a puntuación/fin de cadena no es
-        # límite de palabra) y la exclusión quedaría rota en silencio, ver
-        # incidente Cieza/Cantabria 2026-09-15.
-        sufijo_b = r'\b' if exclusion[-1].isalnum() else ''
-        lookahead = f'(?!{re.escape(exclusion)}{sufijo_b})'
-    else:
-        lookahead = ''
+    exclusiones = _EXCLUSION_CONTINUACION_ANCLAJE.get(muni_norm)
+    lookahead = ''
+    if exclusiones:
+        if isinstance(exclusiones, str):
+            exclusiones = (exclusiones,)
+        for exclusion in exclusiones:
+            # \b final solo si la exclusión termina en letra/dígito (para no
+            # rechazar también un prefijo más largo, p.ej. "del rio" no debe
+            # rechazar un hipotético "del rioverde") -- si termina en
+            # puntuación (p.ej. el ")" de "Cieza (Murcia)"), \b nunca se
+            # cumple justo ahí (puntuación a puntuación/fin de cadena no es
+            # límite de palabra) y la exclusión quedaría rota en silencio, ver
+            # incidente Cieza/Cantabria 2026-09-15.
+            sufijo_b = r'\b' if exclusion[-1].isalnum() else ''
+            lookahead += f'(?!{re.escape(exclusion)}{sufijo_b})'
     return re.compile(
         rf'\b{_prefijo_anclaje(municipio)} {_INFIJO_HONORIFICO_RE}{re.escape(muni_norm)}{lookahead}\b'
     )
