@@ -6,219 +6,102 @@ name: Actualizar contratos diariamente
 # workflow hace polling de /api/job/<id> cada 4 min (ese propio tráfico
 # mantiene el contenedor despierto) hasta que el job termina.
 #
-# CACHE.DB YA NO SE COMMITEA A GIT (eliminado 2026-09-02): hasta esa fecha,
-# tras cada franja se descargaba el cache.db de producción (/admin/cache-db,
-# con ADMIN_TOKEN) y, si un chequeo "canario" de conteos confirmaba que no
-# hubo colapso, se commiteaba versionado con Git LFS como backup. Ese
-# commit (~250MB, hasta 5 veces/día) agotaba la cuota de Git LFS bandwidth
-# (10GB/mes) y bloqueaba los builds de Render. Se eliminó porque Render ya
-# hace snapshots nativos del disco persistente (confirmado por César) --
-# ese backup en git era redundante. El dato real sigue viviendo SOLO en el
-# disco persistente de Render (DB_FILE, ver backend/app.py), que cada
-# franja escribe igual que siempre; el sembrado automático desde el
-# cache.db del repo lleva deshabilitado desde el incidente de 2026-08-08 y
-# no depende de nada de esto. El script `canario_cache_db.py` y la lógica
-# de reintento de push que se describen más abajo son contexto histórico
-# de ese mecanismo ya retirado.
+# CACHE.DB YA NO SE COMMITEA A GIT (eliminado 2026-09-02): el dato real
+# vive solo en el disco persistente de Render (DB_FILE, ver backend/
+# app.py), que cada refresco escribe igual que siempre; Render ya hace
+# snapshots nativos del disco (confirmado por César), así que un backup
+# en git habría sido redundante y agotaba la cuota de Git LFS bandwidth.
 #
-# SPLIT POR PROVINCIA (añadido 2026-08-13/14 — ver memoria del proyecto):
-# hasta el 2026-08-04 este cron llamaba a /actualizar-todos?provincia=todas
-# cubriendo solo Murcia+Girona (285 municipios) y funcionaba de forma
-# fiable (ej. run 30906403403, 2026-08-04, 1h36m, éxito). El 2026-08-04/05
-# se amplió la cobertura a Lleida+Barcelona+Tarragona (commit 0856c90),
-# con lo que "todas" pasó a cubrir 5 provincias (~1006 municipios). Desde
-# entonces el cron falla noche tras noche con "All jobs have failed": el
-# job "todos" pasa a running y a los 4 minutos ya da 'not_found' (ver run
-# 31670360515, 2026-08-13: 05:28:13 running -> 05:32:13 not_found) --
-# el contenedor de Render (plan Standard, 2GB RAM) se reinicia por OOM casi
-# nada más arrancar el lote completo, muy lejos de terminar los 1006
-# municipios. Los fixes de checkpointing (ver más abajo) ya evitan que ese
-# reinicio destruya el progreso que hubiera en disco, pero no evitan el
-# OOM en sí ni permiten completar el refresco diario real de las 5
-# provincias.
+# REDISEÑO 2026-09-17 -- UN SOLO JOB SECUENCIAL, SIN HORARIO FIJO POR
+# PROVINCIA (sustituye el "split por franjas horarias" de 2026-08-13/14):
 #
-# Solución: en vez de un único disparo `provincia=todas`, este workflow
-# dispara /actualizar-todos con una ÚNICA provincia cada vez (nunca más
-# "todas" desde el cron), una franja horaria distinta por provincia,
-# escalonadas a lo largo de la noche para que cada ejecución tenga el
-# contenedor para ella sola:
+# Historial del problema que esto resuelve: el diseño anterior disparaba
+# /actualizar-todos con una única provincia por franja, cada una en un
+# horario UTC fijo distinto (01:00 murcia, 02:30 girona... hasta 13
+# franjas tras añadir Aragón/Extremadura esta misma noche), asumiendo que
+# cada provincia tardaría bastante menos que el margen de 90-120 min
+# asignado. Auditado contra las ejecuciones reales del workflow (`gh run
+# list`) el mismo 2026-09-17 al intentar añadir una 14ª franja para
+# Galicia: la duración real de cada franja resultó variar entre 9 y 148
+# minutos, MUY por encima de lo asumido, y el ciclo llevaba ya varios días
+# arrastrando un desfase de varias horas sobre el horario nominal (ej. la
+# franja de País Vasco, programada a las 15:30 UTC, arrancó realmente a
+# las 19:07 UTC esa noche -- 3h37 tarde). Ese desfase es ANTERIOR a
+# cualquier cambio de esta noche (ya se veía el día 16), así que no era un
+# problema de "faltaba investigar por qué tarda cada provincia": el propio
+# concepto de horario fijo por franja no escala una vez el número de
+# provincias crece y sus duraciones reales son tan dispares.
 #
-#   01:00 UTC  murcia      (45 municipios)  + Hacienda + Población (INE)
-#   02:30 UTC  girona      (240 municipios)  + contractes menors Girona (RPC)
-#   04:30 UTC  lleida      (231 municipios)  + contractes menors Lleida (RPC)
-#   06:30 UTC  barcelona   (309 municipios, la más grande de Cataluña) +
-#                                              contractes menors Barcelona (RPC)
-#   08:30 UTC  tarragona   (181 municipios)  + contractes menors Tarragona
-#                                              (RPC) + fondos UE + noticias UE
-#                                              + contratos menores Fuente Álamo
-#   10:30 UTC  valenciana  (542 municipios, Alicante+Castellón+Valencia,
-#                                              PLACE anclado -- ver _job_run)
-#   13:00 UTC  andalucia   (785 municipios, 8 provincias, la más grande de
-#                                              todas -- PLACE anclado, más
-#                                              margen antes/después por si
-#                                              acaso)
-#   15:30 UTC  pais_vasco  (252 municipios, API REST propia KontratazioA --
-#                                              Mecanismo B, sin PLACE/ZIP)
-#   17:15 UTC  huesca      (202 municipios, PLACE anclado)
-#   18:45 UTC  teruel      (236 municipios, PLACE anclado)
-#   20:15 UTC  zaragoza    (293 municipios, la más grande de Aragón, PLACE anclado)
-#   21:45 UTC  badajoz     (165 municipios, PLACE anclado)
-#   23:15 UTC  caceres     (222 municipios, PLACE anclado)
+# Solución (decisión de César): un único disparo nocturno que RECORRE la
+# lista completa de provincias conectadas, una detrás de otra --
+# /actualizar-todos + polling hasta 'done' (o hasta su propio timeout) --
+# y solo entonces pasa a la siguiente. Ya no existe ningún horario que
+# pueda desincronizarse: da igual cuánto tarde cada provincia, el propio
+# orden secuencial + el polling ya se encargan de esperar lo que haga
+# falta. Añadir una provincia nueva (Galicia hoy; Castilla y León/
+# Castilla-La Mancha cuando se conecten) es solo añadir una entrada más a
+# PROVINCIAS_ORDEN, sin tocar nada de horarios.
 #
-# NOTA 2026-09-11: valenciana/andalucia/pais_vasco se conectaron a
-# MUNICIPIOS_POR_PROVINCIA y a _job_run en el commit a489d31 (2026-09-06),
-# pero ESTE workflow nunca se actualizó para dispararlas -- ni una franja
-# programada ni una opción de workflow_dispatch las mencionaba, así que
-# ningún disparo automático ni manual las tocó jamás. Por eso aparecían en
-# "Cobertura" con 0 municipios/0 contratos pese al código ya estar
-# desplegado (investigado a raíz de un aviso de César, ver memoria del
-# proyecto). Estas 3 franjas nuevas son la corrección; no llevan RPC de
-# contractes menors (ese dataset, hb6v-jcbf, es específico de la Generalitat
-# de Catalunya, ver sección 1.5 más abajo).
+# Limitación real, no resuelta por este cambio, solo hecha explícita: un
+# runner hosted de GitHub Actions tiene un límite DURO de 6h (360 min) por
+# job. Sumando las duraciones reales observadas hoy para las provincias ya
+# medidas (Aragón: 28-31 min cada una; Galicia: 6-21 min cada una) más una
+# estimación conservadora para las que aún no se han medido de forma
+# aislada (valenciana/andalucia, las más grandes), el ciclo COMPLETO de
+# las 17 provincias hoy conectadas puede superar fácilmente esas 6h. Este
+# workflow NO puede procesar las 17 en una sola ejecución si eso ocurre --
+# hay un tope de tiempo total (ver MAX_MIN_TOTAL más abajo) que corta el
+# bucle y deja el resto para la noche siguiente. Mitigación: el PUNTO DE
+# PARTIDA en la lista rota cada noche según el día del año (ver
+# "rotación" más abajo), así que si una noche no da tiempo a completar la
+# lista entera, no son SIEMPRE las mismas provincias (las últimas de la
+# lista) las que se quedan sin refrescar -- sin esto, Galicia (añadida al
+# final de la lista) correría el riesgo real de no recibir refresco
+# automático nunca si el ciclo nunca llega a completarse del todo.
 #
-# NOTA 2026-09-17: exactamente el mismo hueco que la nota de arriba,
-# encontrado esta vez para Extremadura (badajoz/caceres, conectadas a
-# MUNICIPIOS_POR_PROVINCIA semanas antes) Y para Aragón (huesca/teruel/
-# zaragoza, conectadas el mismo día que este workflow) -- ninguna de las
-# 5 tenía franja ni opción de workflow_dispatch, así que solo se
-# refrescaban a mano. Estas 5 franjas nuevas son la corrección para las
-# 5 de una vez. Precalentadas a mano por César antes de añadir estas
-# franjas (huesca 202/202, teruel 236/236, zaragoza 293/293, sin
-# errores) -- badajoz/caceres ya llevaban precalentadas desde su propia
-# conexión en agosto. Ninguna de las 5 lleva RPC de contractes menors
-# (ese dataset es específico de Cataluña) ni fondos UE/noticias (eso se
-# queda anclado a Tarragona, ver más abajo).
+# CHECKPOINTING (ver INFORME_NOCHE.md 2026-08-07): cada municipio se
+# guarda en cache.db en cuanto termina de procesarse (_db_set_municipio,
+# aditivo, nunca borra lo ya guardado) -- si este job se corta a media
+# provincia (por timeout total, o porque GitHub mata el runner a las 6h),
+# el progreso parcial de esa provincia ya está en disco, no se pierde.
 #
-# Los huecos (1h30-2h) son deliberadamente generosos: con Murcia+Girona
-# (285 municipios) tardando ~1h en total cuando funcionaba bien, cada
-# provincia por separado (máximo 309, Barcelona) debería tardar bien menos
-# que eso. Si aun así una ejecución se alarga más de la cuenta, el bloque
-# `concurrency` de abajo hace que la siguiente ejecución programada quede
-# en cola en vez de solaparse (y aunque llegara a solaparse, el lock
-# `_actualizando_todos_lock` del backend ya impide dos /actualizar-todos
-# concurrentes: el segundo simplemente falla rápido con "Ya hay un
-# refresco completo en curso").
+# CONTRACTES MENORS RPC (Cataluña, ver memoria del proyecto 2026-08-15):
+# el dataset RPC (hb6v-jcbf, contractes 'Menor' de la Generalitat) solo
+# aplica a girona/lleida/barcelona/tarragona -- se dispara justo después
+# de los contratos de esas 4 provincias, dentro de su propio turno del
+# bucle (antes iba "dentro de su franja horaria"; ahora es "dentro de su
+# turno en la lista", mismo sitio lógico, ya no depende de un horario).
 #
-# Los pasos de Hacienda y Población (independientes de /actualizar-todos,
-# no tocan contratos) se quedan anclados a la franja de Murcia, la primera
-# de la noche, para que corran solo una vez al día y no cinco -- van AL
-# FINAL de esa franja, después del refresco de contratos, ver nota
-# "REORDENADO HACIENDA/POBLACIÓN" más abajo. Fondos UE +
-# noticias + Fuente Álamo se quedan anclados a la última franja (Tarragona)
-# por el mismo motivo, y porque ya se sabe por los logs (run 31670360515)
-# que esos tres completan bien incluso en las noches en que "todos"
-# revienta -- no son la causa del OOM ni se benefician de tener su propia
-# franja aparte.
+# EXTRAS DE FIN DE CICLO (Hacienda, Población, fondos UE, noticias UE,
+# Fuente Álamo, Cartagena, directivos de contratos menores residuales):
+# antes anclados a la franja de Murcia (Hacienda/Población) o a la de
+# Tarragona (el resto), porque eran "la primera" y "la última" franja del
+# horario fijo. Sin horario fijo esos anclajes ya no tienen sentido --
+# ahora corren UNA VEZ, después de intentar procesar toda la lista de
+# provincias (haya terminado entera o se haya cortado por el tope de
+# tiempo total), como pasos independientes al final del job.
 #
-# CONTRACTES MENORS RPC POR PROVINCIA (añadido 2026-08-15, ver memoria del
-# proyecto -- investigación de "contratos que faltan"): antes de este
-# commit el dataset RPC (hb6v-jcbf, contractes 'Menor' de la Generalitat)
-# solo se refrescaba para Girona. Verificado en vivo contra la API pública:
-# 1.107 contractes reales en Lleida capital, 29.074 en Barcelona capital y
-# 19.178 en Tarragona capital (todo 2021+) que nunca llegaban a la app --
-# Lleida tenía el endpoint construido como fase piloto sin sumar nunca al
-# cron, Barcelona/Tarragona ni siquiera tenían endpoint. Como es una
-# consulta filtrada por municipio contra una API pública (no un ZIP pesado
-# como PLACE), se dispara en la MISMA franja que los contratos de esa
-# provincia, justo después -- no hace falta una franja propia.
-#
-# CHECKPOINTING (añadido 2026-08-07, ver INFORME_NOCHE.md / memoria del
-# proyecto): confirmado en el dashboard de Render que el disco SÍ es
-# persistente (/var/data, plan Standard, 2GB) y que cada municipio se guarda
-# en cache.db en cuanto termina de procesarse (_db_set_municipio, aditivo,
-# nunca borra lo ya guardado) -- un OOM que reinicia el contenedor a mitad
-# de un /actualizar-todos NO borra el progreso ya hecho, solo impide que
-# ESTE workflow, tal y como estaba, llegara a descargarlo y commitearlo.
-# Fix: los fallos de "todos"/"fondos"/etc. ahora son blandos (marcan
-# `fallo=1` pero NO abortan el step), así que el paso de descarga y el de
-# canario+commit se intentan SIEMPRE -- capturando lo que haya en el disco
-# en ese momento, aunque el lote no haya terminado. El canario
-# (canario_cache_db.py) sigue siendo la última línea de defensa: si la
-# descarga sale vacía o colapsada (<90% de lo que ya hay en el repo),
-# bloquea el commit igual que antes. El job del workflow se sigue marcando
-# como fallido (exit 1 al final del step principal) si `fallo=1`, para que
-# César siga recibiendo el aviso por email cuando algo no termina bien --
-# lo único que cambia es que ya no se tira a la basura el progreso parcial.
-#
-# RACE DE PUSH ENTRE FRANJAS (descubierto 2026-08-14 la primera noche que
-# corrió el split de arriba): con 5 franjas empujando a `main` la misma
-# noche, la franja de Tarragona (run 31788768296) hizo `git push` y lo
-# recibió rechazado ("fetch first") porque el commit de cache.db de la
-# franja de Barcelona (bd0e9e9) aterró en `main` unos segundos DESPUÉS del
-# `checkout` de Tarragona -- el `concurrency` de abajo evita que dos
-# franjas corran a la vez, pero no hay garantía de que el checkout de la
-# siguiente incluya ya el push final de la anterior si la cola se libera
-# justo en ese margen de segundos. Sin reintento, ese rechazo tiraba a la
-# basura el cache.db recién descargado (con el progreso parcial de
-# Tarragona ya checkpointeado en él). Fix: `push_con_reintento` (definida
-# en cada paso que hace `git push`) reintenta con `git fetch` + `git merge
-# origin/main` antes de volver a empujar, hasta 5 veces.
-#
-# El fix original (2026-08-14) usaba `git rebase` en vez de `merge`, bajo
-# el supuesto de que para un fichero generado por el propio bot "nunca hay
-# conflicto real de contenido" -- FALSO para cache.db: es un binario (Git
-# LFS), y si dos franjas lo tocan cerca en el tiempo (visto en producción
-# 2026-08-24, run 32711275521) el rebase revienta con CONFLICT (content)
-# sin forma de auto-resolverlo, aunque ambas versiones sean snapshots
-# igual de válidos de la MISMA base de datos en producción. `git merge -X
-# ours` sí lo resuelve: ante conflicto en cache.db se queda automáticamente
-# con nuestra copia (la recién descargada) en vez de abortar. Para
-# hacienda_eell.json/poblacion.json (texto, sin -X ours) un merge normal
-# sigue siendo trivial como antes, pero ahora fusiona de verdad en el caso
-# raro de que sí difieran en vez de simplemente asumir que no puede pasar.
-#
-# REORDENADO HACIENDA/POBLACIÓN -- causa real de que SOLO la franja de
-# murcia fallara cada noche (encontrado y arreglado 2026-08-18, runs
-# 32091014680/31987521098/31921614417, las 3 últimas noches, mismo patrón
-# exacto): no era OOM. Render tiene autoDeploy por defecto (render.yaml no
-# lo desactiva) -- cualquier push a `main` redespliega el servicio entero.
-# Los pasos de Hacienda y Población hacían su propio commit+push ANTES de
-# llamar a /actualizar-todos (únicos 2 pasos de todo el workflow que
-# pusheaban antes del refresco de contratos de su franja; las otras 4
-# provincias solo pushean su cache.db al final, cuando su job ya está
-# 'done'). Timeline real del run 32091014680: 02:13:18 push hacienda ->
-# 02:13:27 push población -> 02:13:27 POST /actualizar-todos?provincia=
-# murcia (running) -> 02:17:27 not_found (contenedor reiniciado por el
-# redeploy que dispararon esos 2 pushes, justo a mitad del lote de 45
-# municipios, el más pequeño de los 5 -- por eso nunca fue un problema de
-# tamaño de lote). Fix: Hacienda y Población se movieron al FINAL de la
-# franja de murcia (después del paso de contratos y del canario+commit),
-# mismo patrón que ya usan las otras 4 provincias -- su push ahora llega
-# cuando el job de contratos de esa franja ya terminó, así que el redeploy
-# que dispara no puede interrumpir nada. Sus `if:` pasan a necesitar
-# `!cancelled()` explícito (antes no hacía falta, al ir primero corrían
-# siempre) para que sigan ejecutándose aunque el paso de contratos termine
-# en `fallo=1`.
+# RACE DE PUSH (ver commit histórico, aplica igual aquí): Hacienda y
+# Población hacen su propio commit+push de un JSON de texto
+# (hacienda_eell.json/poblacion.json) -- `push_con_reintento` reintenta
+# con merge si otra ejecución ya empujó a main mientras tanto.
 
 on:
   schedule:
-    # Horarios UTC -- ver tabla en la nota de cabecera de más arriba. Cada
-    # entrada dispara la MISMA job, que decide qué franja es mirando
-    # `github.event.schedule` (paso "Determinar franja horaria" más abajo).
-    - cron: "0 1 * * *"    # murcia + hacienda + población
-    - cron: "30 2 * * *"   # girona
-    - cron: "30 4 * * *"   # lleida
-    - cron: "30 6 * * *"   # barcelona
-    - cron: "30 8 * * *"   # tarragona + fondos UE + noticias UE + menors girona + fuentealamo + cartagena
-    - cron: "30 10 * * *"  # comunitat valenciana
-    - cron: "0 13 * * *"   # andalucia (la más grande, más margen)
-    - cron: "30 15 * * *"  # pais vasco
-    - cron: "15 17 * * *"  # huesca
-    - cron: "45 18 * * *"  # teruel
-    - cron: "15 20 * * *"  # zaragoza (la más grande de Aragón)
-    - cron: "45 21 * * *"  # badajoz
-    - cron: "15 23 * * *"  # caceres
+    # Un único disparo nocturno -- ya no hay una franja por provincia.
+    - cron: "0 1 * * *"
   workflow_dispatch:   # permite lanzarlo a mano desde la pestaña Actions
     inputs:
       provincia:
         description: >-
-          Provincia a refrescar en este disparo manual (una sola, nunca
-          "todas" en el cron programado -- ver nota de cabecera sobre el
-          OOM que causaba). "todas" queda disponible aquí solo para un
-          catch-up manual de emergencia, asumiendo el riesgo de OOM que
-          motivó dividir el cron.
+          "todas" (por defecto) recorre la lista completa de provincias
+          conectadas, una detrás de otra, con la misma rotación de punto
+          de partida que el disparo nocturno. Elegir una provincia
+          concreta aquí SOLO refresca esa, útil para un catch-up manual
+          puntual sin tener que usar curl+ADMIN_TOKEN desde una terminal.
         type: choice
         options:
+          - todas
           - murcia
           - girona
           - lleida
@@ -232,29 +115,32 @@ on:
           - zaragoza
           - badajoz
           - caceres
-          - todas
-        default: murcia
+          - a_coruna
+          - lugo
+          - ourense
+          - pontevedra
+        default: todas
       solo_fondos_ue:
         description: >-
-          Salta el refresco de contratos de la provincia elegida y lanza
-          solo /actualizar-fondos-ue (+ noticias + menors girona +
-          fuentealamo + cartagena). Útil para probar rápido cambios en CORDIS,
-          Cohesion Data o el enriquecimiento de beneficiarios (Kohesio) sin
-          esperar el ciclo completo de una provincia.
+          Salta el recorrido de provincias y lanza solo /actualizar-fondos-ue
+          (+ noticias + fuentealamo + cartagena + directivos de menores).
+          Útil para probar rápido cambios en CORDIS, Cohesion Data o el
+          enriquecimiento de beneficiarios (Kohesio) sin esperar el ciclo
+          completo.
         type: boolean
         default: false
 
 # Necesario para que los pasos de Hacienda/Población puedan commitear/pushear
-# sus JSON al final de la franja de Murcia (ver nota "REORDENADO
-# HACIENDA/POBLACIÓN" más arriba).
+# sus JSON al final del ciclo.
 permissions:
   contents: write
 
-# Evita que dos disparos de este workflow (dos franjas horarias distintas,
-# o una franja + un disparo manual) corran en paralelo: si uno se alarga
-# más de la cuenta, el siguiente se pone en cola en vez de pisarle el
-# refresco al de producción (que además ya tiene su propio lock interno,
-# ver nota de cabecera).
+# Con un único disparo nocturno esto protege sobre todo contra un disparo
+# manual solapándose con el nocturno (o con otro disparo manual): si uno
+# se alarga más de la cuenta, el siguiente se pone en cola en vez de
+# pisarle el refresco al de producción (que además ya tiene su propio
+# lock interno -- el segundo /actualizar-todos simplemente falla rápido
+# con "Ya hay un refresco completo en curso").
 concurrency:
   group: actualizar-diario
   cancel-in-progress: false
@@ -262,62 +148,19 @@ concurrency:
 jobs:
   actualizar:
     runs-on: ubuntu-latest
-    # Tope de seguridad por debajo del límite DURO de 6h (360 min) de los
-    # runners hosted de GitHub. El polling interno corta antes (200 min),
-    # esto es solo una red de seguridad por si algo se colgara. Bajado de
-    # 350 a 220 min respecto a la versión "todas" de este workflow: ahora
-    # cada ejecución cubre como mucho UNA provincia (785 municipios,
-    # Andalucía, en el peor caso desde 2026-09-11) en vez de las 8 a la vez.
-    timeout-minutes: 220
+    # Por debajo del límite DURO de 6h (360 min) de los runners hosted de
+    # GitHub -- ver nota de cabecera sobre por qué el ciclo completo de
+    # las 17 provincias puede no caber en una sola ejecución.
+    timeout-minutes: 350
     steps:
-      - name: Determinar franja horaria (provincia) de esta ejecución
-        id: slot
-        run: |
-          set -uo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            provincia="${{ github.event.inputs.provincia }}"
-          else
-            case "${{ github.event.schedule }}" in
-              "0 1 * * *")  provincia="murcia" ;;
-              "30 2 * * *") provincia="girona" ;;
-              "30 4 * * *") provincia="lleida" ;;
-              "30 6 * * *") provincia="barcelona" ;;
-              "30 8 * * *") provincia="tarragona" ;;
-              "30 10 * * *") provincia="valenciana" ;;
-              "0 13 * * *")  provincia="andalucia" ;;
-              "30 15 * * *") provincia="pais_vasco" ;;
-              "15 17 * * *") provincia="huesca" ;;
-              "45 18 * * *") provincia="teruel" ;;
-              "15 20 * * *") provincia="zaragoza" ;;
-              "45 21 * * *") provincia="badajoz" ;;
-              "15 23 * * *") provincia="caceres" ;;
-              *)
-                echo "::error::Cron desconocido '${{ github.event.schedule }}'; no sé qué provincia toca. Abortando por seguridad."
-                exit 1
-                ;;
-            esac
-          fi
-          echo "Franja de esta ejecución: provincia=${provincia}"
-          echo "provincia=${provincia}" >> "$GITHUB_OUTPUT"
-
-      # Va DESPUÉS de "Determinar franja horaria" a propósito (ese paso no
-      # necesita el repo descargado, es puro bash/expresiones de GH).
-      #
-      # Sin `lfs: true`: desde 2026-09-02 este workflow ya no commitea ni
-      # lee backend/cache.db en absoluto (ver nota al final de "Refresco
-      # de la provincia..." más abajo) -- el dato real vive solo en el
-      # disco persistente de Render, nunca en git. Materializar el LFS
-      # de cache.db aquí no serviría para nada y solo consumiría cuota de
-      # LFS bandwidth (10GB/mes, la causa original de los fallos de build
-      # de Render de estos días).
       - name: Checkout del repo
         uses: actions/checkout@v4
 
-      - name: Refresco de la provincia de esta franja + keep-alive por polling
+      - name: Recorrer todas las provincias (contratos + RPC Cataluña)
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           BASE_URL: https://dinero-publico.onrender.com
-          PROVINCIA_SLOT: ${{ steps.slot.outputs.provincia }}
+          PROVINCIA_INPUT: ${{ github.event.inputs.provincia || 'todas' }}
           SOLO_FONDOS_UE: ${{ github.event.inputs.solo_fondos_ue || 'false' }}
         run: |
           set -uo pipefail
@@ -343,22 +186,26 @@ jobs:
               python3 -c "import sys,json; print('\n'.join(json.load(sys.stdin).get('log', [])))" 2>/dev/null || true
           }
 
-          MAX_MIN=200           # presupuesto TOTAL de este paso, por debajo del límite duro de 220 min del job
+          # Presupuesto por PROVINCIA (una sola no puede comerse la noche
+          # entera) y presupuesto TOTAL del bucle (deja margen para los
+          # extras de fin de ciclo -- Hacienda/Población/fondos UE -- antes
+          # del timeout-minutes:350 del job).
+          MAX_MIN_PROVINCIA=100
+          MAX_MIN_TOTAL=300
           INTERVAL=240          # 4 min < los ~15 min que Render tarda en dormirse
-          deadline=$(( $(date +%s) + MAX_MIN * 60 ))
-          fallo=0               # se pone a 1 si algún refresco crítico de esta franja no
-                                 # llega a 'done' -- no aborta el step (ver nota de
-                                 # checkpointing arriba), solo hace que el step termine en
-                                 # exit 1 al final, DESPUÉS de intentar igualmente la
-                                 # descarga+commit del progreso parcial.
+          deadline_total=$(( $(date +%s) + MAX_MIN_TOTAL * 60 ))
+          fallo=0               # se pone a 1 si algún refresco crítico no llega
+                                 # a 'done' -- no aborta el step, solo hace que
+                                 # termine en exit 1 al final para el aviso por email.
 
           # Espera a que un job_id llegue a 'done'. Aborta (return 1) si el job
           # da 'error', si 'not_found' persiste 3 ciclos seguidos (el
           # contenedor se reinició y perdió el estado en memoria), o si se
-          # agota el presupuesto total. Mientras tanto imprime cada ciclo, y
-          # ese propio tráfico de polling es el keep-alive.
+          # agota el presupuesto de ESTA provincia/tarea. Mientras tanto
+          # imprime cada ciclo, y ese propio tráfico de polling es el keep-alive.
           poll_hasta_done() {
-            local job_id="$1" etiqueta="$2" notfound=0 st
+            local job_id="$1" etiqueta="$2" max_min="${3:-$MAX_MIN_PROVINCIA}" notfound=0 st
+            local deadline_local=$(( $(date +%s) + max_min * 60 ))
             while true; do
               st=$(get_status "$job_id")
               echo "$(date -u +%H:%M:%S)Z  ${etiqueta}=${st}"
@@ -386,251 +233,224 @@ jobs:
                 return 1
               fi
 
-              if [ "$(date +%s)" -ge "$deadline" ]; then
-                echo "::error::Timeout de ${MAX_MIN} min sin completar ${etiqueta} (status=$st). Aborto sin commitear."
+              if [ "$(date +%s)" -ge "$deadline_local" ]; then
+                echo "::error::Timeout de ${max_min} min sin completar ${etiqueta} (status=$st). Se sigue con la siguiente provincia."
                 return 1
               fi
               sleep "$INTERVAL"
             done
           }
 
-          # --- 1. Contratos de la provincia de esta franja (nunca "todas" --
-          #     ver nota de cabecera sobre el OOM que causaba) --------------
-          # SOLO_FONDOS_UE=true (input manual) se salta esta etapa entera --
-          # solo para pruebas rápidas, el cron programado nunca lo activa.
-          if [ "$SOLO_FONDOS_UE" = "true" ]; then
-            echo "== SOLO_FONDOS_UE=true: saltando /actualizar-todos =="
-          else
-            echo "== Disparando /actualizar-todos (provincia=${PROVINCIA_SLOT}) =="
+          # Dispara /actualizar-todos para UNA provincia + su RPC de
+          # contractes menors si es catalana -- misma lógica de siempre,
+          # ahora factorizada en una función para poder llamarla tanto desde
+          # el bucle nocturno como desde un disparo manual de una sola
+          # provincia.
+          procesar_provincia() {
+            local prov="$1"
+            echo "== [$(date -u +%H:%M:%S)Z] Disparando /actualizar-todos (provincia=${prov}) =="
+            local resp_todos job_todos
             resp_todos=$(curl -s --max-time 60 -X POST \
-              -d "token=${ADMIN_TOKEN}" -d "provincia=${PROVINCIA_SLOT}" \
+              -d "token=${ADMIN_TOKEN}" -d "provincia=${prov}" \
               "${BASE_URL}/actualizar-todos" || true)
             echo "respuesta: $resp_todos"
             job_todos=$(get_jobid "$resp_todos")
             if [ -z "$job_todos" ]; then
-              echo "::error::No se obtuvo job_id de /actualizar-todos. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
+              echo "::error::No se obtuvo job_id de /actualizar-todos para ${prov}. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
               fallo=1
             else
               echo "job_todos=$job_todos"
-              if poll_hasta_done "$job_todos" "todos-${PROVINCIA_SLOT}"; then
-                echo "Contratos de ${PROVINCIA_SLOT} completados ('done')."
+              if poll_hasta_done "$job_todos" "todos-${prov}"; then
+                echo "Contratos de ${prov} completados ('done')."
               else
-                echo "::warning::Refresco de contratos de ${PROVINCIA_SLOT} no completó. Se sigue igualmente para checkpointear el progreso parcial que ya haya en el disco."
+                echo "::warning::Refresco de contratos de ${prov} no completó dentro de su presupuesto. Se sigue con la siguiente provincia; el progreso parcial ya quedó checkpointeado en disco."
                 fallo=1
               fi
             fi
-          fi
 
-          # --- 1.5. Contractes menors (RPC) de la MISMA provincia de esta
-          #     franja -- Girona, Lleida, Barcelona y Tarragona (Murcia no:
-          #     sus contratos menores vienen de Lorca/Mula/Molina de Segura/
-          #     Fuente Álamo, fuentes propias sin API RPC, ver sección 2 más
-          #     abajo). Añadido 2026-08-15 al investigar contratos que
-          #     faltaban en la app: el dataset RPC (hb6v-jcbf) tenía
-          #     contractes 'Menor' reales para las 4 provincias catalanas
-          #     (verificado en vivo: 1.107 en Lleida capital, 29.074 en
-          #     Barcelona capital, 19.178 en Tarragona capital, solo 2021+)
-          #     pero antes de este commit únicamente se refrescaba Girona
-          #     (Lleida tenía el endpoint construido como fase piloto sin
-          #     sumar nunca al cron; Barcelona/Tarragona ni siquiera tenían
-          #     endpoint). Va DESPUÉS de los contratos de la franja pero en
-          #     el mismo paso/franja horaria -- no merece una franja propia,
-          #     es una única consulta filtrada por municipio contra la API
-          #     pública de la Generalitat, no un ZIP pesado como PLACE.
+            # RPC de contractes menors + sus directivos -- solo Cataluña
+            # (dataset hb6v-jcbf, específico de la Generalitat).
+            case "$prov" in
+              girona|lleida|barcelona|tarragona)
+                echo "== Disparando /actualizar-contratos-menors-${prov} (RPC) =="
+                local resp_menors job_menors
+                resp_menors=$(curl -s --max-time 60 -X POST \
+                  -d "token=${ADMIN_TOKEN}" \
+                  "${BASE_URL}/actualizar-contratos-menors-${prov}" || true)
+                echo "respuesta: $resp_menors"
+                job_menors=$(get_jobid "$resp_menors")
+                if [ -z "$job_menors" ]; then
+                  echo "::warning::No se obtuvo job_id de /actualizar-contratos-menors-${prov}. Se continúa sin refrescar hoy."
+                else
+                  echo "job_menors=$job_menors"
+                  poll_hasta_done "$job_menors" "menors-${prov}" 30 || echo "::warning::Contractes menors de ${prov} no completados; se continúa igualmente."
+                fi
+
+                # Gerentes/administradores de los contractes menors RPC de
+                # ESTA misma provincia, justo después -- la caché
+                # persistente de la tabla `directores`
+                # (_dir_cache_get/_dir_cache_agotado) hace que lo ya
+                # resuelto por una provincia anterior esta misma noche se
+                # salte solo, así que llamarlo una vez por provincia
+                # catalana no duplica trabajo.
+                echo "== Disparando /actualizar-directivos-contratos-menores (turno ${prov}) =="
+                local resp_dcm_p job_dcm_p
+                resp_dcm_p=$(curl -s --max-time 60 -X POST \
+                  -d "token=${ADMIN_TOKEN}" \
+                  "${BASE_URL}/actualizar-directivos-contratos-menores" || true)
+                echo "respuesta: $resp_dcm_p"
+                job_dcm_p=$(get_jobid "$resp_dcm_p")
+                if [ -z "$job_dcm_p" ]; then
+                  echo "::warning::No se obtuvo job_id de /actualizar-directivos-contratos-menores (turno ${prov}). Se continúa sin refrescar hoy."
+                else
+                  echo "job_dcm_p=$job_dcm_p"
+                  poll_hasta_done "$job_dcm_p" "directivos-menores-${prov}" 30 || echo "::warning::Directivos de contratos menores (turno ${prov}) no completado; se continúa igualmente."
+                fi
+                ;;
+            esac
+          }
+
           if [ "$SOLO_FONDOS_UE" = "true" ]; then
-            echo "== SOLO_FONDOS_UE=true: saltando contractes menors (RPC) =="
-          elif [ "$PROVINCIA_SLOT" = "murcia" ] || [ "$PROVINCIA_SLOT" = "valenciana" ] || \
-               [ "$PROVINCIA_SLOT" = "andalucia" ] || [ "$PROVINCIA_SLOT" = "pais_vasco" ] || \
-               [ "$PROVINCIA_SLOT" = "huesca" ] || [ "$PROVINCIA_SLOT" = "teruel" ] || \
-               [ "$PROVINCIA_SLOT" = "zaragoza" ] || [ "$PROVINCIA_SLOT" = "badajoz" ] || \
-               [ "$PROVINCIA_SLOT" = "caceres" ]; then
-            echo "== Franja ${PROVINCIA_SLOT}: RPC no aplica (dataset hb6v-jcbf es específico de la Generalitat de Catalunya) =="
-          else
-            echo "== Disparando /actualizar-contratos-menors-${PROVINCIA_SLOT} (RPC) =="
-            resp_menors=$(curl -s --max-time 60 -X POST \
-              -d "token=${ADMIN_TOKEN}" \
-              "${BASE_URL}/actualizar-contratos-menors-${PROVINCIA_SLOT}" || true)
-            echo "respuesta: $resp_menors"
-            job_menors=$(get_jobid "$resp_menors")
-            if [ -z "$job_menors" ]; then
-              echo "::warning::No se obtuvo job_id de /actualizar-contratos-menors-${PROVINCIA_SLOT}. Se continúa sin refrescar hoy."
-            else
-              echo "job_menors=$job_menors"
-              poll_hasta_done "$job_menors" "menors-${PROVINCIA_SLOT}" || echo "::warning::Contractes menors de ${PROVINCIA_SLOT} no completados; se continúa igualmente."
-            fi
+            echo "== SOLO_FONDOS_UE=true: saltando el recorrido de provincias =="
 
-            # --- 1.6. Gerentes/administradores de los contractes menors RPC
-            #     de ESTA MISMA franja -- justo después de refrescarlos
-            #     (arriba), en vez de esperar a que las 4 provincias
-            #     catalanas + Murcia compitan por un único presupuesto de
-            #     30 min/noche anclado a Tarragona (ver sección 2.3 más
-            #     abajo, causa original de que a ~1.250 filas/noche el
-            #     backlog nacional de 75k+ tardara ~60 noches en vaciarse).
-            #     El endpoint sigue sin filtrar por provincia -- no filtra
-            #     por columna `provincia`, procesa toda la tabla
-            #     `contratos_menors_locales` -- pero eso no duplica trabajo:
-            #     la caché persistente de la tabla `directores`
-            #     (_dir_cache_get/_dir_cache_agotado) hace que lo ya resuelto
-            #     por una franja anterior esta misma noche se salte solo. Al
-            #     dispararlo aquí, cada franja catalana se lleva su propio
-            #     presupuesto de 30 min en vez de competir con las otras. No
-            #     bloquea el commit del día si falla.
-            echo "== Disparando /actualizar-directivos-contratos-menores (franja ${PROVINCIA_SLOT}) =="
-            resp_dcm_franja=$(curl -s --max-time 60 -X POST \
-              -d "token=${ADMIN_TOKEN}" \
-              "${BASE_URL}/actualizar-directivos-contratos-menores" || true)
-            echo "respuesta: $resp_dcm_franja"
-            job_dcm_franja=$(get_jobid "$resp_dcm_franja")
-            if [ -z "$job_dcm_franja" ]; then
-              echo "::warning::No se obtuvo job_id de /actualizar-directivos-contratos-menores (franja ${PROVINCIA_SLOT}). Se continúa sin refrescar hoy."
-            else
-              echo "job_dcm_franja=$job_dcm_franja"
-              poll_hasta_done "$job_dcm_franja" "directivos-menores-${PROVINCIA_SLOT}" || echo "::warning::Directivos de contratos menores (franja ${PROVINCIA_SLOT}) no completado; se continúa igualmente."
-            fi
-          fi
+          elif [ "$PROVINCIA_INPUT" != "todas" ]; then
+            # Disparo manual de una sola provincia (workflow_dispatch).
+            echo "== Disparo manual: solo ${PROVINCIA_INPUT} =="
+            procesar_provincia "$PROVINCIA_INPUT"
 
-          # --- 2. Extras de fin de noche: fondos UE, noticias UE y Fuente
-          #     Álamo -- SOLO en la última franja (Tarragona) para que
-          #     corran una vez al día, no cinco. Se saltan por completo en
-          #     las demás franjas. `solo_fondos_ue` manual los fuerza
-          #     también fuera de la franja de Tarragona, para poder
-          #     probarlos sueltos sin esperar al ciclo completo. --
-          if [ "$PROVINCIA_SLOT" != "tarragona" ] && [ "$SOLO_FONDOS_UE" != "true" ]; then
-            echo "== Franja ${PROVINCIA_SLOT}: se saltan fondos UE/noticias/fuentealamo/cartagena (van con la franja de Tarragona) =="
           else
-            echo "== Disparando /actualizar-fondos-ue (CORDIS + Cohesion Data) =="
-            resp_fue=$(curl -s --max-time 60 -X POST \
-              -d "token=${ADMIN_TOKEN}" \
-              "${BASE_URL}/actualizar-fondos-ue" || true)
-            echo "respuesta: $resp_fue"
-            job_fue=$(get_jobid "$resp_fue")
-            if [ -z "$job_fue" ]; then
-              echo "::error::No se obtuvo job_id de /actualizar-fondos-ue. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
-              fallo=1
-            else
-              echo "job_fue=$job_fue"
-              if poll_hasta_done "$job_fue" "fondos"; then
-                echo "Fondos UE completados ('done')."
-              else
-                echo "::warning::Refresco de fondos UE no completó. Se sigue igualmente para checkpointear el progreso parcial que ya haya en el disco."
+            # --- Recorrido nocturno de la lista completa -------------------
+            # Orden base. Añadir una provincia nueva (Galicia hoy; Castilla
+            # y León / Castilla-La Mancha cuando se conecten) es solo añadir
+            # una entrada más aquí -- nada de horarios que tocar.
+            PROVINCIAS_ORDEN=(murcia girona lleida barcelona tarragona \
+              valenciana andalucia pais_vasco \
+              huesca teruel zaragoza badajoz caceres \
+              a_coruna lugo ourense pontevedra)
+            n=${#PROVINCIAS_ORDEN[@]}
+
+            # Rotación del punto de partida por día del año: ver nota de
+            # cabecera -- el ciclo completo puede no caber en el límite duro
+            # de 6h de un runner de GitHub Actions, así que sin esto las
+            # provincias del final de la lista (Galicia hoy) podrían no
+            # recibir refresco automático nunca si el ciclo nunca llega a
+            # completarse del todo. `10#` evita que bash interprete el día
+            # como octal cuando empieza por 0 (ej. día 007).
+            dia=$(date -u +%j)
+            offset=$(( 10#$dia % n ))
+            echo "Día del año UTC: ${dia} -- punto de partida de esta noche: índice ${offset} (${PROVINCIAS_ORDEN[$offset]})"
+
+            for i in $(seq 0 $((n - 1))); do
+              idx=$(( (offset + i) % n ))
+              prov="${PROVINCIAS_ORDEN[$idx]}"
+
+              if [ "$(date +%s)" -ge "$deadline_total" ]; then
+                echo "::warning::Presupuesto total de ${MAX_MIN_TOTAL} min agotado. Provincias sin procesar esta noche (se recogerán en noches siguientes gracias a la rotación): ${PROVINCIAS_ORDEN[@]:$idx}"
                 fallo=1
+                break
               fi
-            fi
 
-            # --- 2.1. Noticias UE (RSS Press Corner) ---------------------------
-            # Descarga rápida (un solo GET del RSS, sin ZIPs). Si este paso
-            # falla, NO aborta el workflow entero: un fallo puntual del RSS de
-            # la Comisión Europea no debe bloquear el commit de contratos/
-            # fondos UE, que sí se completaron bien.
-            echo "== Disparando /actualizar-noticias-ue (RSS Press Corner) =="
-            resp_noticias=$(curl -s --max-time 60 -X POST \
-              -d "token=${ADMIN_TOKEN}" \
-              "${BASE_URL}/actualizar-noticias-ue" || true)
-            echo "respuesta: $resp_noticias"
-            job_noticias=$(get_jobid "$resp_noticias")
-            if [ -z "$job_noticias" ]; then
-              echo "::warning::No se obtuvo job_id de /actualizar-noticias-ue. Se continúa sin noticias UE frescas hoy."
-            else
-              echo "job_noticias=$job_noticias"
-              poll_hasta_done "$job_noticias" "noticias" || echo "::warning::Noticias UE no completadas; se continúa igualmente."
-            fi
+              procesar_provincia "$prov"
+            done
+          fi
 
-            # --- 2.2. Contratos menores Fuente Álamo de Murcia (portal propio) -
-            # Refresca contratos_menors_locales con las filas de Fuente Álamo
-            # (scraping de CSV, sin dependencias nuevas). No bloquea el commit
-            # del día si falla.
-            echo "== Disparando /actualizar-contratos-menores-fuentealamo =="
-            resp_fa=$(curl -s --max-time 60 -X POST \
-              -d "token=${ADMIN_TOKEN}" \
-              "${BASE_URL}/actualizar-contratos-menores-fuentealamo" || true)
-            echo "respuesta: $resp_fa"
-            job_fa=$(get_jobid "$resp_fa")
-            if [ -z "$job_fa" ]; then
-              echo "::warning::No se obtuvo job_id de /actualizar-contratos-menores-fuentealamo. Se continúa sin refrescar hoy."
+          # --- Extras de fin de ciclo: fondos UE, noticias UE, Fuente
+          #     Álamo, Cartagena y directivos de contratos menores
+          #     residuales -- una vez por noche, después de intentar
+          #     procesar toda la lista (haya terminado entera o se haya
+          #     cortado por el tope de tiempo). `solo_fondos_ue` los
+          #     fuerza también si el recorrido de provincias se saltó.
+          echo "== Extras de fin de ciclo: fondos UE / noticias / Fuente Álamo / Cartagena =="
+          resp_fue=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" \
+            "${BASE_URL}/actualizar-fondos-ue" || true)
+          echo "respuesta: $resp_fue"
+          job_fue=$(get_jobid "$resp_fue")
+          if [ -z "$job_fue" ]; then
+            echo "::error::No se obtuvo job_id de /actualizar-fondos-ue. ¿ADMIN_TOKEN mal configurado (403) o app caída?"
+            fallo=1
+          else
+            echo "job_fue=$job_fue"
+            if poll_hasta_done "$job_fue" "fondos" 40; then
+              echo "Fondos UE completados ('done')."
             else
-              echo "job_fa=$job_fa"
-              poll_hasta_done "$job_fa" "fuentealamo" || echo "::warning::Fuente Álamo no completado; se continúa igualmente."
-            fi
-
-            # --- 2.2b. Contratos menores Cartagena (formulario propio, sin
-            # fichero exportable, HTML parseado directamente) -- investigado
-            # 2026-09-12. Mismo patrón que Fuente Álamo: no bloquea el commit
-            # del día si falla.
-            echo "== Disparando /actualizar-contratos-menores-cartagena =="
-            resp_ctg=$(curl -s --max-time 60 -X POST \
-              -d "token=${ADMIN_TOKEN}" \
-              "${BASE_URL}/actualizar-contratos-menores-cartagena" || true)
-            echo "respuesta: $resp_ctg"
-            job_ctg=$(get_jobid "$resp_ctg")
-            if [ -z "$job_ctg" ]; then
-              echo "::warning::No se obtuvo job_id de /actualizar-contratos-menores-cartagena. Se continúa sin refrescar hoy."
-            else
-              echo "job_ctg=$job_ctg"
-              poll_hasta_done "$job_ctg" "cartagena" || echo "::warning::Cartagena no completado; se continúa igualmente."
-            fi
-
-            # --- 2.3. Gerentes/administradores de contratos menores restantes
-            #     (Murcia + cualquier resto) -------------------------------
-            # Las 4 provincias catalanas (Girona/Lleida/Barcelona/Tarragona)
-            # ya se llevan su propio pase justo después de refrescar sus
-            # contractes menors RPC (sección 1.6, dentro de su propia franja)
-            # -- este llamado, anclado a la franja de Tarragona junto con
-            # fondos UE/noticias/Fuente Álamo, procesa lo que quede: sobre
-            # todo los contratos menores propios de Murcia (Fuente Álamo,
-            # Lorca/Lorquí/Mula/Molina de Segura, sin fuente RPC propia) más
-            # cualquier fila residual que las pasadas de la sección 1.6 no
-            # llegaran a cubrir en su presupuesto de 30 min. El endpoint
-            # sigue sin filtrar por provincia (ver sección 1.6), así que
-            # también vuelve a mirar Girona/Lleida/Barcelona/Tarragona en la
-            # misma noche -- inofensivo, la caché persistente de `directores`
-            # hace que lo ya resuelto se salte solo. No bloquea el commit del
-            # día si falla.
-            echo "== Disparando /actualizar-directivos-contratos-menores =="
-            resp_dcm=$(curl -s --max-time 60 -X POST \
-              -d "token=${ADMIN_TOKEN}" \
-              "${BASE_URL}/actualizar-directivos-contratos-menores" || true)
-            echo "respuesta: $resp_dcm"
-            job_dcm=$(get_jobid "$resp_dcm")
-            if [ -z "$job_dcm" ]; then
-              echo "::warning::No se obtuvo job_id de /actualizar-directivos-contratos-menores. Se continúa sin refrescar hoy."
-            else
-              echo "job_dcm=$job_dcm"
-              poll_hasta_done "$job_dcm" "directivos-menores" || echo "::warning::Directivos de contratos menores no completado; se continúa igualmente."
+              echo "::warning::Refresco de fondos UE no completó. Se sigue igualmente."
+              fallo=1
             fi
           fi
 
-          # (Hasta 2026-09-02 aquí se descargaba cache.db de producción para
-          # commitearlo a git como backup -- eliminado: Render ya hace
-          # snapshots nativos del disco persistente (confirmado por César),
-          # así que ese backup en git era redundante, y el commit diario de
-          # ~250MB agotaba la cuota de Git LFS bandwidth/storage y
-          # bloqueaba los builds de Render. El disco persistente sigue
-          # siendo la única fuente real de datos, igual que siempre --
-          # nada de este cambio afecta a lo que sirve la app.)
+          echo "== Disparando /actualizar-noticias-ue (RSS Press Corner) =="
+          resp_noticias=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" \
+            "${BASE_URL}/actualizar-noticias-ue" || true)
+          echo "respuesta: $resp_noticias"
+          job_noticias=$(get_jobid "$resp_noticias")
+          if [ -z "$job_noticias" ]; then
+            echo "::warning::No se obtuvo job_id de /actualizar-noticias-ue. Se continúa sin noticias UE frescas hoy."
+          else
+            echo "job_noticias=$job_noticias"
+            poll_hasta_done "$job_noticias" "noticias" 15 || echo "::warning::Noticias UE no completadas; se continúa igualmente."
+          fi
+
+          echo "== Disparando /actualizar-contratos-menores-fuentealamo =="
+          resp_fa=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" \
+            "${BASE_URL}/actualizar-contratos-menores-fuentealamo" || true)
+          echo "respuesta: $resp_fa"
+          job_fa=$(get_jobid "$resp_fa")
+          if [ -z "$job_fa" ]; then
+            echo "::warning::No se obtuvo job_id de /actualizar-contratos-menores-fuentealamo. Se continúa sin refrescar hoy."
+          else
+            echo "job_fa=$job_fa"
+            poll_hasta_done "$job_fa" "fuentealamo" 15 || echo "::warning::Fuente Álamo no completado; se continúa igualmente."
+          fi
+
+          echo "== Disparando /actualizar-contratos-menores-cartagena =="
+          resp_ctg=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" \
+            "${BASE_URL}/actualizar-contratos-menores-cartagena" || true)
+          echo "respuesta: $resp_ctg"
+          job_ctg=$(get_jobid "$resp_ctg")
+          if [ -z "$job_ctg" ]; then
+            echo "::warning::No se obtuvo job_id de /actualizar-contratos-menores-cartagena. Se continúa sin refrescar hoy."
+          else
+            echo "job_ctg=$job_ctg"
+            poll_hasta_done "$job_ctg" "cartagena" 15 || echo "::warning::Cartagena no completado; se continúa igualmente."
+          fi
+
+          echo "== Disparando /actualizar-directivos-contratos-menores (residual, Murcia + lo que quede) =="
+          resp_dcm=$(curl -s --max-time 60 -X POST \
+            -d "token=${ADMIN_TOKEN}" \
+            "${BASE_URL}/actualizar-directivos-contratos-menores" || true)
+          echo "respuesta: $resp_dcm"
+          job_dcm=$(get_jobid "$resp_dcm")
+          if [ -z "$job_dcm" ]; then
+            echo "::warning::No se obtuvo job_id de /actualizar-directivos-contratos-menores. Se continúa sin refrescar hoy."
+          else
+            echo "job_dcm=$job_dcm"
+            poll_hasta_done "$job_dcm" "directivos-menores" 30 || echo "::warning::Directivos de contratos menores no completado; se continúa igualmente."
+          fi
+
           if [ "$fallo" -ne 0 ]; then
-            echo "::error::Uno o más refrescos críticos de esta franja (${PROVINCIA_SLOT}) no se completaron hoy. El job se marca como fallido para que llegue el aviso por email."
+            echo "::error::Uno o más refrescos críticos de esta noche no se completaron. El job se marca como fallido para que llegue el aviso por email."
           fi
           exit "$fallo"
 
       - name: Refrescar deuda viva y saldo no financiero (Ministerio de Hacienda)
-        # !cancelled() (no éxito implícito): tiene que seguir corriendo aunque
-        # el paso de contratos de esta franja haya fallado -- ver nota
-        # "REORDENADO HACIENDA/POBLACIÓN" de cabecera (2026-08-18): antes este
-        # paso iba ANTES del refresco de contratos y su push a main disparaba
-        # un redeploy de Render que mataba el job de contratos de murcia a
-        # mitad. Ahora va al final de la franja a propósito, para que su push
-        # (y el redeploy que dispara) no pueda interrumpir nada.
-        if: ${{ !cancelled() && steps.slot.outputs.provincia == 'murcia' }}
+        # !cancelled(): tiene que seguir corriendo aunque el paso de arriba
+        # haya terminado en fallo=1 -- ver nota de cabecera "RACE DE PUSH".
+        # Ya no está anclado a ninguna provincia concreta (antes "murcia",
+        # la primera franja del horario fijo) -- corre una vez por noche,
+        # después de intentar el recorrido completo.
+        if: ${{ !cancelled() }}
         run: |
           set -uo pipefail
           # Independiente del resto del workflow: no depende de la app en
-          # producción (a diferencia del paso de contratos de arriba, que
-          # habla con ${BASE_URL} vía ADMIN_TOKEN) -- descarga directo de
+          # producción (a diferencia del paso de arriba, que habla con
+          # ${BASE_URL} vía ADMIN_TOKEN) -- descarga directo de
           # hacienda.gob.es y escribe un JSON estático versionado, mismo
           # patrón que cuentas_anuales.json/retribuciones_ispa.json (ver
-          # actualizar_deuda_y_liquidaciones.py). Anclado a la franja de
-          # Murcia para que corra una sola vez al día, no una vez por cada
-          # una de las 5 franjas.
+          # actualizar_deuda_y_liquidaciones.py).
           # Cada `|| exit 0` es a propósito: un fallo aquí (Hacienda cambia
           # el formato de su página índice, host caído, etc.) no debe
           # bloquear nada más -- mismo criterio que noticias UE / contractes
@@ -640,14 +460,11 @@ jobs:
           (cd backend && python actualizar_deuda_y_liquidaciones.py) \
             || { echo "::warning::actualizar_deuda_y_liquidaciones.py falló; se mantiene el hacienda_eell.json existente."; exit 0; }
 
-          # Reintenta el push con merge si otra franja ya empujó a main
-          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de
-          # cabecera. Antes usaba `git rebase`, cambiado a merge por el
-          # mismo motivo explicado ahí (con el cache.db LFS ya retirado,
-          # aquí solo aplica al caso general: dos franjas pusheando cerca en
-          # el tiempo) -- este archivo es JSON de texto, así que un merge
-          # normal (sin -X ours) puede fusionar de verdad los cambios de
-          # ambos lados en vez de descartar uno.
+          # Reintenta el push con merge si otra ejecución ya empujó a main
+          # mientras tanto (ver nota de cabecera "RACE DE PUSH"). Este
+          # archivo es JSON de texto, así que un merge normal (sin -X ours)
+          # puede fusionar de verdad los cambios de ambos lados en vez de
+          # descartar uno.
           push_con_reintento() {
             local intentos=0
             while true; do
@@ -659,16 +476,8 @@ jobs:
                 echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
                 return 1
               fi
-              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras merge con origin/main..."
+              echo "push rechazado -- reintento $intentos/5 tras merge con origin/main..."
               git fetch origin main
-              # Guarda cualquier cambio suelto sin commitear antes de
-              # mergear -- mismo motivo que antes con rebase: algo deja el
-              # working tree con cambios sin stagear entre el commit y el
-              # push, probablemente normalización de line-endings vía
-              # .gitattributes/LFS al tocar main (visto en producción
-              # 2026-08-15). `git stash push -u` no hace nada si no hay
-              # cambios que guardar, así que este paso es inofensivo también
-              # cuando el árbol ya estaba limpio.
               git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
               if ! git merge --no-edit origin/main; then
                 echo "::error::git merge con origin/main falló; abortando push."
@@ -694,27 +503,18 @@ jobs:
 
       - name: Refrescar población oficial (INE, Padrón Municipal)
         # !cancelled(): mismo motivo que el paso de Hacienda de arriba.
-        if: ${{ !cancelled() && steps.slot.outputs.provincia == 'murcia' }}
+        if: ${{ !cancelled() }}
         run: |
           set -uo pipefail
           # Mismo criterio que el paso de Hacienda de arriba: independiente
           # del resto (no habla con la app en producción), fuente propia
-          # (API JSON del INE, ver actualizar_poblacion.py), anclado a la
-          # franja de Murcia para correr una sola vez al día -- solo usa
+          # (API JSON del INE, ver actualizar_poblacion.py) -- solo usa
           # 'requests', ya en requirements.txt, no hace falta openpyxl aquí.
           pip install --quiet -r requirements.txt \
             || { echo "::warning::No se pudieron instalar dependencias para el refresco de población; se salta."; exit 0; }
           (cd backend && python actualizar_poblacion.py) \
             || { echo "::warning::actualizar_poblacion.py falló; se mantiene el poblacion.json existente."; exit 0; }
 
-          # Reintenta el push con merge si otra franja ya empujó a main
-          # mientras tanto -- ver nota "RACE DE PUSH ENTRE FRANJAS" de
-          # cabecera. Antes usaba `git rebase`, cambiado a merge por el
-          # mismo motivo explicado ahí (con el cache.db LFS ya retirado,
-          # aquí solo aplica al caso general: dos franjas pusheando cerca en
-          # el tiempo) -- este archivo es JSON de texto, así que un merge
-          # normal (sin -X ours) puede fusionar de verdad los cambios de
-          # ambos lados en vez de descartar uno.
           push_con_reintento() {
             local intentos=0
             while true; do
@@ -726,16 +526,8 @@ jobs:
                 echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
                 return 1
               fi
-              echo "push rechazado (probablemente otra franja commiteó primero) -- reintento $intentos/5 tras merge con origin/main..."
+              echo "push rechazado -- reintento $intentos/5 tras merge con origin/main..."
               git fetch origin main
-              # Guarda cualquier cambio suelto sin commitear antes de
-              # mergear -- mismo motivo que antes con rebase: algo deja el
-              # working tree con cambios sin stagear entre el commit y el
-              # push, probablemente normalización de line-endings vía
-              # .gitattributes/LFS al tocar main (visto en producción
-              # 2026-08-15). `git stash push -u` no hace nada si no hay
-              # cambios que guardar, así que este paso es inofensivo también
-              # cuando el árbol ya estaba limpio.
               git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
               if ! git merge --no-edit origin/main; then
                 echo "::error::git merge con origin/main falló; abortando push."
