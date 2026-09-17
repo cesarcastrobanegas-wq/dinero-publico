@@ -59,6 +59,11 @@ name: Actualizar contratos diariamente
 #                                              acaso)
 #   15:30 UTC  pais_vasco  (252 municipios, API REST propia KontratazioA --
 #                                              Mecanismo B, sin PLACE/ZIP)
+#   17:15 UTC  huesca      (202 municipios, PLACE anclado)
+#   18:45 UTC  teruel      (236 municipios, PLACE anclado)
+#   20:15 UTC  zaragoza    (293 municipios, la más grande de Aragón, PLACE anclado)
+#   21:45 UTC  badajoz     (165 municipios, PLACE anclado)
+#   23:15 UTC  caceres     (222 municipios, PLACE anclado)
 #
 # NOTA 2026-09-11: valenciana/andalucia/pais_vasco se conectaron a
 # MUNICIPIOS_POR_PROVINCIA y a _job_run en el commit a489d31 (2026-09-06),
@@ -70,6 +75,19 @@ name: Actualizar contratos diariamente
 # proyecto). Estas 3 franjas nuevas son la corrección; no llevan RPC de
 # contractes menors (ese dataset, hb6v-jcbf, es específico de la Generalitat
 # de Catalunya, ver sección 1.5 más abajo).
+#
+# NOTA 2026-09-17: exactamente el mismo hueco que la nota de arriba,
+# encontrado esta vez para Extremadura (badajoz/caceres, conectadas a
+# MUNICIPIOS_POR_PROVINCIA semanas antes) Y para Aragón (huesca/teruel/
+# zaragoza, conectadas el mismo día que este workflow) -- ninguna de las
+# 5 tenía franja ni opción de workflow_dispatch, así que solo se
+# refrescaban a mano. Estas 5 franjas nuevas son la corrección para las
+# 5 de una vez. Precalentadas a mano por César antes de añadir estas
+# franjas (huesca 202/202, teruel 236/236, zaragoza 293/293, sin
+# errores) -- badajoz/caceres ya llevaban precalentadas desde su propia
+# conexión en agosto. Ninguna de las 5 lleva RPC de contractes menors
+# (ese dataset es específico de Cataluña) ni fondos UE/noticias (eso se
+# queda anclado a Tarragona, ver más abajo).
 #
 # Los huecos (1h30-2h) son deliberadamente generosos: con Murcia+Girona
 # (285 municipios) tardando ~1h en total cuando funcionaba bien, cada
@@ -185,6 +203,11 @@ on:
     - cron: "30 10 * * *"  # comunitat valenciana
     - cron: "0 13 * * *"   # andalucia (la más grande, más margen)
     - cron: "30 15 * * *"  # pais vasco
+    - cron: "15 17 * * *"  # huesca
+    - cron: "45 18 * * *"  # teruel
+    - cron: "15 20 * * *"  # zaragoza (la más grande de Aragón)
+    - cron: "45 21 * * *"  # badajoz
+    - cron: "15 23 * * *"  # caceres
   workflow_dispatch:   # permite lanzarlo a mano desde la pestaña Actions
     inputs:
       provincia:
@@ -204,6 +227,11 @@ on:
           - valenciana
           - andalucia
           - pais_vasco
+          - huesca
+          - teruel
+          - zaragoza
+          - badajoz
+          - caceres
           - todas
         default: murcia
       solo_fondos_ue:
@@ -258,6 +286,11 @@ jobs:
               "30 10 * * *") provincia="valenciana" ;;
               "0 13 * * *")  provincia="andalucia" ;;
               "30 15 * * *") provincia="pais_vasco" ;;
+              "15 17 * * *") provincia="huesca" ;;
+              "45 18 * * *") provincia="teruel" ;;
+              "15 20 * * *") provincia="zaragoza" ;;
+              "45 21 * * *") provincia="badajoz" ;;
+              "15 23 * * *") provincia="caceres" ;;
               *)
                 echo "::error::Cron desconocido '${{ github.event.schedule }}'; no sé qué provincia toca. Abortando por seguridad."
                 exit 1
@@ -407,7 +440,10 @@ jobs:
           if [ "$SOLO_FONDOS_UE" = "true" ]; then
             echo "== SOLO_FONDOS_UE=true: saltando contractes menors (RPC) =="
           elif [ "$PROVINCIA_SLOT" = "murcia" ] || [ "$PROVINCIA_SLOT" = "valenciana" ] || \
-               [ "$PROVINCIA_SLOT" = "andalucia" ] || [ "$PROVINCIA_SLOT" = "pais_vasco" ]; then
+               [ "$PROVINCIA_SLOT" = "andalucia" ] || [ "$PROVINCIA_SLOT" = "pais_vasco" ] || \
+               [ "$PROVINCIA_SLOT" = "huesca" ] || [ "$PROVINCIA_SLOT" = "teruel" ] || \
+               [ "$PROVINCIA_SLOT" = "zaragoza" ] || [ "$PROVINCIA_SLOT" = "badajoz" ] || \
+               [ "$PROVINCIA_SLOT" = "caceres" ]; then
             echo "== Franja ${PROVINCIA_SLOT}: RPC no aplica (dataset hb6v-jcbf es específico de la Generalitat de Catalunya) =="
           else
             echo "== Disparando /actualizar-contratos-menors-${PROVINCIA_SLOT} (RPC) =="
