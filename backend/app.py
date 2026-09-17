@@ -1048,6 +1048,101 @@ MUNICIPIOS_ZARAGOZA = [
     "Zaragoza","Zuera",
 ]
 
+# 93/93 municipios de A Coruña -- verificados contra Wikipedia
+# ("Anexo:Municipios de la provincia de La Coruña") + todopueblos.es +
+# Real Academia Galega / Deputación da Coruña. Topónimos oficiales en
+# gallego (artículo antepuesto: "A Coruña", "A Baña", no "La Coruña"),
+# mismo criterio ya usado para "La Rioja"/"Las Palmas" en el resto del
+# proyecto.
+MUNICIPIOS_A_CORUNA = [
+    "Abegondo","Ames","Aranga","Ares","Arteixo",
+    "Arzúa","A Baña","Bergondo","Betanzos","Boimorto",
+    "Boiro","Boqueixón","Brión","Cabana de Bergantiños","Cabanas",
+    "Camariñas","Cambre","A Capela","Carballo","Cariño",
+    "Carnota","Carral","Cedeira","Cee","Cerceda",
+    "Cerdido","Coirós","Corcubión","Coristanco","A Coruña",
+    "Culleredo","Curtis","Dodro","Dumbría","Fene",
+    "Ferrol","Fisterra","Frades","Irixoa","A Laracha",
+    "Laxe","Lousame","Malpica de Bergantiños","Mañón","Mazaricos",
+    "Melide","Mesía","Miño","Moeche","Monfero",
+    "Mugardos","Muros","Muxía","Narón","Neda",
+    "Negreira","Noia","Oleiros","Ordes","Oroso",
+    "Ortigueira","Outes","Oza-Cesuras","Paderne","Padrón",
+    "O Pino","A Pobra do Caramiñal","Ponteceso","Pontedeume","As Pontes de García Rodríguez",
+    "Porto do Son","Rianxo","Ribeira","Rois","Sada",
+    "San Sadurniño","Santa Comba","Santiago de Compostela","Santiso","Sobrado",
+    "As Somozas","Teo","Toques","Tordoia","Touro",
+    "Trazo","Val do Dubra","Valdoviño","Vedra","Vilarmaior",
+    "Vilasantar","Vimianzo","Zas",
+]
+
+# 67/67 municipios de Lugo -- verificados contra Wikipedia ES + Wikipedia
+# GL + nomenclátor IGE (Instituto Galego de Estatística).
+MUNICIPIOS_LUGO = [
+    "Abadín","Alfoz do Castrodouro","Antas de Ulla","Baleira","Baralla",
+    "Barreiros","Becerreá","Begonte","Bóveda","Burela",
+    "Carballedo","Castro de Rei","Castroverde","Cervantes","Cervo",
+    "Chantada","O Corgo","Cospeito","Folgoso do Courel","A Fonsagrada",
+    "Foz","Friol","Guitiriz","Guntín","O Incio",
+    "Láncara","Lourenzá","Lugo","Meira","Mondoñedo",
+    "Monforte de Lemos","Monterroso","Muras","Navia de Suarna","Negueira de Muñiz",
+    "As Nogais","Ourol","Outeiro de Rei","Palas de Rei","Pantón",
+    "Paradela","O Páramo","A Pastoriza","Pedrafita do Cebreiro","Pol",
+    "A Pobra do Brollón","A Pontenova","Portomarín","Quiroga","Rábade",
+    "Ribadeo","Ribas de Sil","A Ribeira de Piquín","Riotorto","Samos",
+    "Sarria","O Saviñao","Sober","Taboada","Trabada",
+    "Triacastela","O Valadouro","O Vicedo","Vilalba","Viveiro",
+    "Xermade","Xove",
+]
+
+# 92/92 municipios de Ourense -- verificados contra Wikipedia ES/GL + IGE
+# + FEGAMP. 2 discrepancias de nombre resueltas: "A Arnoia" (con artículo,
+# confirmado contra la web oficial del propio ayuntamiento) y "Xunqueira
+# de Espadanedo" (sin ñ, nombre oficial vigente confirmado contra 4
+# fuentes independientes incluida la web oficial del municipio).
+MUNICIPIOS_OURENSE = [
+    "Allariz","Amoeiro","A Arnoia","Avión","Baltar",
+    "Bande","Baños de Molgas","Barbadás","O Barco de Valdeorras","Beade",
+    "Beariz","Os Blancos","Boborás","A Bola","O Bolo",
+    "Calvos de Randín","Carballeda de Avia","Carballeda de Valdeorras","O Carballiño","Cartelle",
+    "Castrelo de Miño","Castrelo do Val","O Castro de Caldelas","Celanova","Cenlle",
+    "Chandrexa de Queixa","Coles","Cortegada","Cualedro","Entrimo",
+    "Esgos","Gomesende","A Gudiña","O Irixo","Larouco",
+    "Laza","Leiro","Lobeira","Lobios","Maceda",
+    "Manzaneda","Maside","Melón","A Merca","A Mezquita",
+    "Montederramo","Monterrei","Muíños","Nogueira de Ramuín","Oímbra",
+    "Ourense","Paderne de Allariz","Padrenda","Parada de Sil","O Pereiro de Aguiar",
+    "A Peroxa","Petín","Piñor","A Pobra de Trives","Porqueira",
+    "Pontedeva","Punxín","Quintela de Leirado","Rairiz de Veiga","Ramirás",
+    "Ribadavia","O Riós","A Rúa","Rubiá","San Amaro",
+    "San Cibrao das Viñas","San Cristovo de Cea","San Xoán de Río","Sandiás","Sarreaus",
+    "Taboadela","A Teixeira","Toén","Trasmiras","A Veiga",
+    "Verea","Verín","Viana do Bolo","Vilamarín","Vilamartín de Valdeorras",
+    "Vilar de Barrio","Vilar de Santos","Vilardevós","Vilariño de Conso","Xinzo de Limia",
+    "Xunqueira de Ambía","Xunqueira de Espadanedo",
+]
+
+# 61/61 municipios de Pontevedra -- verificados contra Wikipedia +
+# Deputación de Pontevedra (depo.gal). "Cerdedo Cotobade" y "Mondariz
+# Balneario" SIN guion: no es un error de las fuentes, es un cambio
+# oficial reciente de toponimia de la Xunta de Galicia que afectó a 14
+# concellos (confirmado contra pontevedraviva.com), no "Cerdedo-Cotobade".
+MUNICIPIOS_PONTEVEDRA = [
+    "Agolada","Arbo","Baiona","Barro","Bueu",
+    "Caldas de Reis","Cambados","O Campo Lameiro","Cangas de Morrazo","A Caniza",
+    "Catoira","Cerdedo Cotobade","Covelo","Crecente","Cuntis",
+    "Dozón","A Estrada","Forcarei","Fornelos de Montes","Gondomar",
+    "O Grove","A Guarda","A Illa de Arousa","Lalín","A Lama",
+    "Marín","Meaño","Meis","Moaña","Mondariz",
+    "Mondariz Balneario","Moraña","Mos","As Neves","Nigrán",
+    "Oia","Pazos de Borbén","Poio","Ponte Caldelas","Ponteareas",
+    "Pontecesures","Pontevedra","O Porriño","Portas","Redondela",
+    "Ribadumia","Rodeiro","O Rosal","Salceda de Caselas","Salvaterra de Miño",
+    "Sanxenxo","Silleda","Soutomaior","Tomiño","Tui",
+    "Valga","Vigo","Vila de Cruces","Vilaboa","Vilagarcía de Arousa",
+    "Vilanova de Arousa",
+]
+
 # Comunidad de Madrid: uniprovincial (como Murcia/Baleares/Cantabria/La
 # Rioja, una sola provincia). Mecanismo A normal, verificado 2026-09-15
 # contra un ZIP real de PLACE: "Junta de Gobierno del Ayuntamiento de
@@ -3858,7 +3953,9 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "asturias": MUNICIPIOS_ASTURIAS,
                             "badajoz": MUNICIPIOS_BADAJOZ, "caceres": MUNICIPIOS_CACERES,
                             "huesca": MUNICIPIOS_HUESCA, "teruel": MUNICIPIOS_TERUEL,
-                            "zaragoza": MUNICIPIOS_ZARAGOZA}
+                            "zaragoza": MUNICIPIOS_ZARAGOZA,
+                            "a_coruna": MUNICIPIOS_A_CORUNA, "lugo": MUNICIPIOS_LUGO,
+                            "ourense": MUNICIPIOS_OURENSE, "pontevedra": MUNICIPIOS_PONTEVEDRA}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -3880,6 +3977,8 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "badajoz": "Provincia de Badajoz", "caceres": "Provincia de Cáceres",
                    "huesca": "Provincia de Huesca", "teruel": "Provincia de Teruel",
                    "zaragoza": "Provincia de Zaragoza",
+                   "a_coruna": "Provincia de A Coruña", "lugo": "Provincia de Lugo",
+                   "ourense": "Provincia de Ourense", "pontevedra": "Provincia de Pontevedra",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -3908,6 +4007,7 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "asturias": "asturias",  # comunidad uniprovincial, mismo patrón que Murcia
     "badajoz": "extremadura", "caceres": "extremadura",  # 2 provincias de Extremadura, mismo patrón que Cataluña/CV/Andalucía
     "huesca": "aragon", "teruel": "aragon", "zaragoza": "aragon",  # 3 provincias de Aragón, mismo patrón
+    "a_coruna": "galicia", "lugo": "galicia", "ourense": "galicia", "pontevedra": "galicia",  # 4 provincias de Galicia, mismo patrón
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
@@ -3916,7 +4016,8 @@ COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluñ
                             "baleares": "Illes Balears", "cantabria": "Cantabria",
                             "la_rioja": "La Rioja", "madrid": "Comunidad de Madrid",
                             "asturias": "Principado de Asturias",
-                            "extremadura": "Extremadura", "aragon": "Aragón"}
+                            "extremadura": "Extremadura", "aragon": "Aragón",
+                            "galicia": "Galicia"}
 
 
 def _comunidad_valida(txt):
@@ -3956,6 +4057,10 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
     "huesca": "Huesca, Barbastro, Monzón, Jaca…",
     "teruel": "Teruel, Alcañiz, Andorra, Calamocha…",
     "zaragoza": "Zaragoza, Calatayud, Ejea de los Caballeros, Utebo…",
+    "a_coruna": "A Coruña, Santiago de Compostela, Ferrol, Narón…",
+    "lugo": "Lugo, Monforte de Lemos, Vilalba, Burela…",
+    "ourense": "Ourense, O Barco de Valdeorras, Verín, Xinzo de Limia…",
+    "pontevedra": "Vigo, Pontevedra, Vilagarcía de Arousa, Redondela…",
 }
 
 # ─── Mapa interactivo de comunidades autónomas (home nacional, 2026-09-17) ──
@@ -3979,15 +4084,18 @@ _EJEMPLO_MUNI_POR_PROVINCIA = {
 # comunidad sería más correcto pero es un cambio mayor; desde esa página
 # ya se puede navegar al resto de provincias de la misma comunidad con
 # las pestañas ya existentes). None = comunidad sin ninguna provincia
-# conectada todavía (Galicia/Castilla y León/Castilla-La Mancha/Navarra)
-# -- se muestra en el mapa (bandera incluida) pero sin click ni tooltip de
+# conectada todavía (Castilla y León/Castilla-La Mancha/Navarra) -- se
+# muestra en el mapa (bandera incluida) pero sin click ni tooltip de
 # datos, nunca un enlace roto. Aragón conectada 2026-09-17 (piloto Huesca/
 # Teruel/Zaragoza) -- destino "zaragoza" (provincia representativa, mismo
-# patrón que Cataluña/CV/Andalucía/Extremadura). El tooltip de Aragón
-# mostrará "sin datos" hasta que corran los scrapers de población/deuda/
-# saldo para sus municipios (pipeline aparte, no parte de este cambio).
+# patrón que Cataluña/CV/Andalucía/Extremadura). Galicia conectada el
+# mismo día (piloto A Coruña/Lugo/Ourense/Pontevedra) -- destino
+# "a_coruna" (provincia más poblada, sede de Santiago de Compostela). El
+# tooltip de ambas mostrará "sin datos" hasta que corran los scrapers de
+# población/deuda/saldo para sus municipios (pipeline aparte, no parte de
+# este cambio).
 _MAPA_CCAA = [
-    {"comunidad": "galicia", "bandera": "galicia", "label": "Galicia", "destino": None,
+    {"comunidad": "galicia", "bandera": "galicia", "label": "Galicia", "destino": "a_coruna",
      "cx": 80, "cy": 60, "r": 45},
     {"comunidad": "asturias", "bandera": "asturias", "label": "Principado de Asturias", "destino": "asturias",
      "cx": 185, "cy": 42, "r": 33},
@@ -5056,6 +5164,23 @@ _EXCLUSION_CONTINUACION_ANCLAJE = {
     "maria": " de huerva",  # Almería (SÍ conectada) vs "María de Huerva" (Zaragoza, nuevo)
     "vera": " de moncayo",  # Almería (SÍ conectada) vs "Vera de Moncayo" (Zaragoza, nuevo)
     "vistabella": " del maestrat",  # Zaragoza (nuevo) vs "Vistabella del Maestrat" (Castellón, SÍ conectada)
+
+    # Colisiones tipo prefijo (piloto Galicia, 2026-09-17) -- mismo patrón
+    # que todos los bloques anteriores. A diferencia del piloto de Aragón,
+    # ninguna de estas 9 tenía menciones reales en el ZIP de este mes
+    # concreto (place_202609.zip) -- se añaden igual, mismo criterio ya
+    # aplicado a "plasencia"/"villarroya" antes de tener ninguna mención
+    # real: la colisión es estructural (el patrón \b no mira qué sigue),
+    # no depende de que haya habido un contrato ese mes en concreto.
+    "ares": " del maestrat",  # A Coruña (nuevo) vs "Ares del Maestrat" (Castellón, SÍ conectada)
+    "cabanas": (" del castillo", " de ebro"),  # A Coruña (nuevo) vs Cáceres/Zaragoza (SÍ conectadas)
+    "muros": " de nalon",  # A Coruña (nuevo) vs "Muros de Nalón" (Asturias, SÍ conectada)
+    "paderne": " de allariz",  # A Coruña (nuevo) vs "Paderne de Allariz" (Ourense, nuevo -- colisión interna de Galicia)
+    "antas": " de ulla",  # Almería (SÍ conectada) vs "Antas de Ulla" (Lugo, nuevo)
+    "navia": " de suarna",  # Asturias (SÍ conectada) vs "Navia de Suarna" (Lugo, nuevo)
+    "sarria": " de ter",  # Lugo (nuevo) vs "Sarrià de Ter" (Girona, SÍ conectada)
+    "vilalba": (" sasserra", " dels arcs"),  # Lugo (nuevo) vs Barcelona/Tarragona (SÍ conectadas)
+    "mondariz": " balneario",  # Pontevedra (nuevo) vs "Mondariz Balneario" (Pontevedra, nuevo -- colisión interna)
 }
 
 
