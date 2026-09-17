@@ -11955,7 +11955,7 @@ def render_landing_nacional_html(datos):
         <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
       </div>
       <div class="as-row">
-        <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off" autofocus>
+        <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off">
         <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
       </div>
       <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda España · mínimo 2 caracteres.</div>
