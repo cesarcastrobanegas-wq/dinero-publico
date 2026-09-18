@@ -2051,9 +2051,9 @@ def _resumen_por_comunidad():
     solo una agregación más. Cubre TODAS las claves de
     COMUNIDAD_AUTONOMA_LABEL, incluidas las que ya están conectadas para
     contratos -- si una comunidad no tiene ninguna provincia conectada
-    (Galicia, Aragón, Castilla y León, Castilla-La Mancha, Navarra), sale
-    con habitantes=0/deuda=None/saldo=None, tal cual (el mapa la trata
-    como "sin datos", no la oculta)."""
+    (a fecha 2026-09-18: Castilla-La Mancha, Navarra), sale con
+    habitantes=0/deuda=None/saldo=None, tal cual (el mapa la trata como
+    "sin datos", no la oculta)."""
     out = {com: {"poblacion": 0, "deuda_eur": 0.0, "saldo_eur": 0.0, "saldo_n": 0}
            for com in COMUNIDAD_AUTONOMA_LABEL if com != "todas"}
     for info in POBLACION.values():
@@ -3962,6 +3962,457 @@ def municipio_valido_girona(txt):
             return m
     return None
 
+# Castilla y León: 9 provincias (Ávila, Burgos, León, Palencia, Salamanca,
+# Segovia, Soria, Valladolid, Zamora), NO uniprovincial -- mismo patrón que
+# Cataluña/CV/Andalucía/Aragón/Galicia. Investigación 2026-09-18: Mecanismo
+# A normal, verificado contra un ZIP real de PLACE ya cacheado
+# (place_202609.zip): match real de "ayuntamiento de X" para las 9
+# capitales de provincia (León 30, Valladolid 66, Burgos 68, Salamanca 135,
+# Segovia 44, Soria 6, Zamora 24, Ávila 56, Palencia 35, en una sola
+# muestra parcial de un ZIP mensual) más municipios menores (Ponferrada,
+# Aranda de Duero, Miranda de Ebro). NO es comunidad foral con plataforma
+# propia obligatoria (a diferencia de Navarra/País Vasco) -- no hace falta
+# ningún mecanismo propio.
+#
+# LISTAS DE MUNICIPIOS: 2.248 = 248 Ávila + 371 Burgos + 211 León + 191
+# Palencia + 362 Salamanca + 209 Segovia + 183 Soria + 225 Valladolid + 248
+# Zamora, coincide con el total oficial de Castilla y León. Cada lista
+# verificada de forma independiente (por 9 subagentes en paralelo) contra
+# 2 fuentes distintas (Wikipedia + INE, con la Diputación provincial o una
+# tercera fuente como desempate en varios casos puntuales) antes de darla
+# por buena, mismo protocolo que ya detectó la alucinación real de
+# "Cuaternos" en el piloto de Cáceres -- en este caso concreto varios de
+# los fetches automáticos de Wikipedia SÍ llegaron a alucinar nombres
+# inventados o de otras provincias (p.ej. intentos fallidos en Ávila,
+# León, Segovia y Salamanca), siempre detectados y descartados antes de
+# incluir nada no confirmado en 2 fuentes reales.
+#
+# 2.242 municipios de 2.248 -- 6 EXCLUSIONES A PROPÓSITO por colisión de
+# nombre exacto con un municipio ya conectado y en producción (mismo tipo
+# de incidente que Cieza/Cantabria, Mieres/Asturias y El Molar/Madrid): se
+# mantiene el municipio YA CONECTADO y se excluye el de Castilla y León,
+# porque la tabla `municipios` usa el nombre normalizado como clave
+# primaria sin provincia, y una colisión fusionaría/pisaría datos de dos
+# ayuntamientos reales distintos.
+#   - "Sobrado" (León) -- ya existe en MUNICIPIOS_A_CORUNA (Galicia).
+#   - "Sancti-Spíritus" (Salamanca) -- ya existe en MUNICIPIOS_BADAJOZ (Extremadura).
+#   - "Rebollar" (Soria) -- ya existe en MUNICIPIOS_CACERES (Extremadura).
+#   - "Campillo, El" (Valladolid) -- ya existe en MUNICIPIOS_HUELVA (Andalucía).
+#   - "Fonfría" (Zamora) -- ya existe en MUNICIPIOS_TERUEL (Aragón).
+#   - "Villaescusa" (Zamora) -- ya existe en MUNICIPIOS_CANTABRIA.
+MUNICIPIOS_AVILA = [
+    "Adanero","Adrada, La","Albornos","Aldeanueva de Santa Cruz","Aldeaseca","Aldehuela, La",
+    "Amavida","Arenal, El","Arenas de San Pedro","Arevalillo","Arévalo","Aveinte",
+    "Avellaneda","Barco de Ávila, El","Barraco, El","Barromán","Becedas","Becedillas",
+    "Bercial de Zapardiel","Berlanas, Las","Bernuy-Zapardiel","Berrocalejo de Aragona","Blascomillán","Blasconuño de Matacabras",
+    "Blascosancho","Bohodón, El","Bohoyo","Bonilla de la Sierra","Brabos","Bularros",
+    "Burgohondo","Cabezas de Alambre","Cabezas del Pozo","Cabezas del Villar","Cabizuela","Canales",
+    "Candeleda","Cantiveros","Cardeñosa","Carrera, La","Casas del Puerto","Casasola",
+    "Casavieja","Casillas","Castellanos de Zapardiel","Cebreros","Cepeda la Mora","Chamartín",
+    "Cillán","Cisla","Colilla, La","Collado de Contreras","Collado del Mirón","Constanzana",
+    "Crespos","Cuevas del Valle","Diego del Carpio","Donjimeno","Donvidas","Espinosa de los Caballeros",
+    "Flores de Ávila","Fontiveros","Fresnedilla","Fresno, El","Fuente el Saúz","Fuentes de Año",
+    "Gallegos de Altamiros","Gallegos de Sobrinos","Garganta del Villar","Gavilanes","Gemuño","Gil García",
+    "Gilbuena","Gimialcón","Gotarrendura","Grandes y San Martín","Guisando","Gutierre-Muñoz",
+    "Hernansancho","Herradón de Pinares","Herreros de Suso","Higuera de las Dueñas","Hija de Dios, La","Horcajada, La",
+    "Horcajo de las Torres","Hornillo, El","Hoyo de Pinares, El","Hoyocasero","Hoyorredondo","Hoyos de Miguel Muñoz",
+    "Hoyos del Collado","Hoyos del Espino","Hurtumpascual","Junciana","Langa","Lanzahíta",
+    "Llanos de Tormes, Los","Losar del Barco, El","Madrigal de las Altas Torres","Maello","Malpartida de Corneja","Mamblas",
+    "Mancera de Arriba","Manjabálago y Ortigosa de Rioalmar","Marlín","Martiherrero","Martínez","Mediana de Voltoya",
+    "Medinilla","Mengamuñoz","Mesegar de Corneja","Mijares","Mingorría","Mironcillo",
+    "Mirueña de los Infanzones","Mirón, El","Mombeltrán","Monsalupe","Moraleja de Matacabras","Muñana",
+    "Muñico","Muñogalindo","Muñogrande","Muñomer del Peco","Muñopepe","Muñosancho",
+    "Muñotello","Narrillos del Rebollar","Narrillos del Álamo","Narros de Saldueña","Narros del Castillo","Narros del Puerto",
+    "Nava de Arévalo","Nava del Barco","Navacepedilla de Corneja","Navadijos","Navaescurial","Navahondilla",
+    "Navalacruz","Navalmoral","Navalonguilla","Navalosa","Navalperal de Pinares","Navalperal de Tormes",
+    "Navaluenga","Navaquesera","Navarredonda de Gredos","Navarredondilla","Navarrevisca","Navas del Marqués, Las",
+    "Navatalgordo","Navatejares","Neila de San Miguel","Niharra","Ojos-Albos","Orbita",
+    "Oso, El","Padiernos","Pajares de Adaja","Palacios de Goda","Papatrigo","Parral, El",
+    "Pascualcobo","Pedro Bernardo","Pedro-Rodríguez","Peguerinos","Peñalba de Ávila","Piedrahíta",
+    "Piedralaves","Poveda","Poyales del Hoyo","Pozanco","Pradosegar","Puerto Castilla",
+    "Rasueros","Riocabado","Riofrío","Rivilla de Barajas","Salobral","Salvadiós",
+    "San Bartolomé de Béjar","San Bartolomé de Corneja","San Bartolomé de Pinares","San Esteban de Zapardiel","San Esteban de los Patos","San Esteban del Valle",
+    "San García de Ingelmos","San Juan de Gredos","San Juan de la Encinilla","San Juan de la Nava","San Juan del Molinillo","San Juan del Olmo",
+    "San Lorenzo de Tormes","San Martín de la Vega del Alberche","San Martín del Pimpollar","San Miguel de Corneja","San Miguel de Serrezuela","San Pascual",
+    "San Pedro del Arroyo","San Vicente de Arévalo","Sanchidrián","Sanchorreja","Santa Cruz de Pinares","Santa Cruz del Valle",
+    "Santa María de los Caballeros","Santa María del Arroyo","Santa María del Berrocal","Santa María del Cubillo","Santa María del Tiétar","Santiago del Collado",
+    "Santiago del Tormes","Santo Domingo de las Posadas","Santo Tomé de Zabarcos","Serrada, La","Serranillos","Sigeres",
+    "Sinlabajos","Solana de Rioalmar","Solana de Ávila","Solosancho","Sotalbo","Sotillo de la Adrada",
+    "Tiemblo, El","Tiñosillos","Tolbaños","Tormellas","Tornadizos de Ávila","Torre, La",
+    "Tórtoles","Umbrías","Vadillo de la Sierra","Valdecasa","Vega de Santa María","Velayos",
+    "Villaflor","Villafranca de la Sierra","Villanueva de Gómez","Villanueva de Ávila","Villanueva del Aceral","Villanueva del Campillo",
+    "Villar de Corneja","Villarejo del Valle","Villatoro","Vita","Viñegra de Moraña","Zapardiel de la Cañada",
+    "Zapardiel de la Ribera","Ávila",
+]
+
+MUNICIPIOS_BURGOS = [
+    "Abajas","Adrada de Haza","Aguas Cándidas","Aguilar de Bureba","Albillos","Alcocero de Mola",
+    "Alfoz de Bricia","Alfoz de Quintanadueñas","Alfoz de Santa Gadea","Altable","Ameyugo","Anguix",
+    "Aranda de Duero","Arandilla","Arauzo de Miel","Arauzo de Salce","Arauzo de Torre","Arcos de la Llana",
+    "Arenillas de Riopisuerga","Arija","Arlanzón","Arraya de Oca","Atapuerca","Avellanosa de Muñó",
+    "Bahabón de Esgueva","Barbadillo de Herreros","Barbadillo del Mercado","Barbadillo del Pez","Barrio de Muñó","Barrios de Colina",
+    "Basconcillos del Tozo","Bascuñana","Baños de Valdearados","Bañuelos de Bureba","Belbimbre","Belorado",
+    "Berberana","Berlangas de Roa","Berzosa de Bureba","Bozoó","Brazacorta","Briviesca",
+    "Bugedo","Buniel","Burgos","Busto de Bureba","Cabañes de Esgueva","Cabezón de la Sierra",
+    "Caleruega","Campillo de Aranda","Campolara","Canicosa de la Sierra","Cantabrana","Carazo",
+    "Carcedo de Bureba","Carcedo de Burgos","Cardeñadijo","Cardeñajimeno","Cardeñuela Riopico","Carrias",
+    "Cascajares de Bureba","Cascajares de la Sierra","Castellanos de Castro","Castil de Peones","Castildelgado","Castrillo Mota de Judíos",
+    "Castrillo de Riopisuerga","Castrillo de la Reina","Castrillo de la Vega","Castrillo del Val","Castrojeriz","Cavia",
+    "Cayuela","Cebrecos","Celada del Camino","Cerezo de Río Tirón","Cerratón de Juarros","Ciadoncha",
+    "Cillaperlata","Cilleruelo de Abajo","Cilleruelo de Arriba","Ciruelos de Cervera","Cogollos","Condado de Treviño",
+    "Contreras","Coruña del Conde","Covarrubias","Cubillo del Campo","Cubo de Bureba","Cuevas de San Clemente",
+    "Encío","Espinosa de Cervera","Espinosa de los Monteros","Espinosa del Camino","Estépar","Fontioso",
+    "Frandovínez","Fresneda de la Sierra Tirón","Fresneña","Fresnillo de las Dueñas","Fresno de Rodilla","Fresno de Río Tirón",
+    "Frías","Fuentebureba","Fuentecén","Fuentelcésped","Fuentelisendo","Fuentemolinos",
+    "Fuentenebro","Fuentespina","Galbarros","Grijalba","Grisaleña","Gumiel de Izán",
+    "Gumiel de Mercado","Hacinas","Haza","Hontanas","Hontangas","Hontoria de Valdearados",
+    "Hontoria de la Cantera","Hontoria del Pinar","Hornillos del Camino","Hortigüela","Hoyales de Roa","Huerta de Arriba",
+    "Huerta de Rey","Humada","Hurones","Huérmeces","Ibeas de Juarros","Ibrillos",
+    "Iglesiarrubia","Iglesias","Isar","Itero del Castillo","Jaramillo Quemado","Jaramillo de la Fuente",
+    "Junta de Traslaloma","Junta de Villalba de Losa","Jurisdicción de Lara","Jurisdicción de San Zadornil","La Cueva de Roa","La Gallega",
+    "La Horra","La Puebla de Arganzón","La Revilla y Ahedo","La Sequera de Haza","La Vid de Bureba","La Vid y Barrios",
+    "Las Hormazas","Las Quintanillas","Lerma","Llano de Bureba","Los Altos","Los Ausines",
+    "Los Balbases","Los Barrios de Bureba","Madrigal del Monte","Madrigalejo del Monte","Mahamud","Mambrilla de Castrejón",
+    "Mambrillas de Lara","Mamolar","Manciles","Mazuela","Mecerreyes","Medina de Pomar",
+    "Melgar de Fernamental","Merindad de Cuesta-Urria","Merindad de Montija","Merindad de Río Ubierna","Merindad de Sotoscueva","Merindad de Valdeporres",
+    "Merindad de Valdivielso","Milagros","Miranda de Ebro","Miraveche","Modúbar de la Emparedada","Monasterio de Rodilla",
+    "Monasterio de la Sierra","Moncalvillo","Monterrubio de la Demanda","Montorio","Moradillo de Roa","Nava de Roa",
+    "Navas de Bureba","Nebreda","Neila","Olmedillo de Roa","Olmillos de Muñó","Oquillas",
+    "Orbaneja Riopico","Oña","Padilla de Abajo","Padilla de Arriba","Padrones de Bureba","Palacios de Riopisuerga",
+    "Palacios de la Sierra","Palazuelos de Muñó","Palazuelos de la Sierra","Pampliega","Pancorbo","Pardilla",
+    "Partido de la Sierra en Tobalina","Pedrosa de Duero","Pedrosa de Río Úrbel","Pedrosa del Príncipe","Pedrosa del Páramo","Peral de Arlanza",
+    "Peñaranda de Duero","Pineda Trasmonte","Pineda de la Sierra","Pinilla Trasmonte","Pinilla de los Barruecos","Pinilla de los Moros",
+    "Piérnigas","Poza de la Sal","Pradoluengo","Presencio","Prádanos de Bureba","Puentedura",
+    "Quemada","Quintana del Pidio","Quintanabureba","Quintanaortuño","Quintanapalla","Quintanar de la Sierra",
+    "Quintanavides","Quintanaélez","Quintanilla San García","Quintanilla Vivar","Quintanilla de la Mata","Quintanilla del Agua y Tordueles",
+    "Quintanilla del Coco","Rabanera del Pinar","Rabé de las Calzadas","Rebolledo de la Torre","Redecilla del Camino","Redecilla del Campo",
+    "Regumiel de la Sierra","Reinoso","Retuerta","Revilla Vallejera","Revilla del Campo","Revillarruz",
+    "Rezmondo","Riocavado de la Sierra","Roa","Rojas","Royuela de Río Franco","Rubena",
+    "Rublacedo de Abajo","Rucandio","Rábanos","Salas de Bureba","Salas de los Infantes","Saldaña de Burgos",
+    "Salinillas de Bureba","San Adrián de Juarros","San Juan del Monte","San Mamés de Burgos","San Martín de Rubiales","San Millán de Lara",
+    "San Vicente del Valle","Santa Cecilia","Santa Cruz de la Salceda","Santa Cruz del Valle Urbión","Santa Gadea del Cid","Santa Inés",
+    "Santa María Ribarredonda","Santa María del Campo","Santa María del Invierno","Santa María del Mercadillo","Santa Olalla de Bureba","Santibáñez de Esgueva",
+    "Santibáñez del Val","Santo Domingo de Silos","Sargentes de la Lora","Sarracín","Sasamón","Solarana",
+    "Sordillos","Sotillo de la Ribera","Sotragero","Sotresgudo","Susinos del Páramo","Tamarón",
+    "Tardajos","Tejada","Terradillos de Esgueva","Tinieblas de la Sierra","Tobar","Tordómar",
+    "Torrecilla del Monte","Torregalindo","Torrelara","Torrepadre","Torresandino","Tosantos",
+    "Trespaderne","Tubilla del Agua","Tubilla del Lago","Tórtoles de Esgueva","Vadocondes","Valdeande",
+    "Valdezate","Valdorros","Vallarta de Bureba","Valle de Losa","Valle de Manzanedo","Valle de Mena",
+    "Valle de Oca","Valle de Santibáñez","Valle de Sedano","Valle de Tobalina","Valle de Valdebezana","Valle de Valdelaguna",
+    "Valle de Valdelucio","Valle de Zamanzas","Valle de las Navas","Vallejera","Valles de Palenzuela","Valluércanes",
+    "Valmala","Vileña","Villadiego","Villaescusa de Roa","Villaescusa la Sombría","Villaespasa",
+    "Villafranca Montes de Oca","Villafruela","Villagalijo","Villagonzalo Pedernales","Villahoz","Villalba de Duero",
+    "Villalbilla de Burgos","Villalbilla de Gumiel","Villaldemiro","Villalmanzo","Villamayor de Treviño","Villamayor de los Montes",
+    "Villambistia","Villamedianilla","Villamiel de la Sierra","Villangómez","Villanueva de Argaño","Villanueva de Carazo",
+    "Villanueva de Gumiel","Villanueva de Teba","Villaquirán de la Puebla","Villaquirán de los Infantes","Villarcayo de Merindad de Castilla la Vieja","Villariezo",
+    "Villasandino","Villasur de Herreros","Villatuelda","Villaverde del Monte","Villaverde-Mogina","Villayerno Morquillas",
+    "Villazopeque","Villegas","Villoruebo","Viloria de Rioja","Vilviestre del Pinar","Vizcaínos",
+    "Zael","Zarzosa de Riopisuerga","Zazuar","Zuñeda","Úrbel del Castillo",
+]
+
+MUNICIPIOS_LEON = [
+    "Acebedo","Algadefe","Alija del Infantado","Almanza","Antigua, La","Ardón",
+    "Arganza","Astorga","Balboa","Barjas","Barrios de Luna, Los","Bañeza, La",
+    "Bembibre","Benavides","Benuza","Bercianos del Páramo","Bercianos del Real Camino","Berlanga del Bierzo",
+    "Boca de Huérgano","Borrenes","Boñar","Brazuelo","Burgo Ranero, El","Burón",
+    "Bustillo del Páramo","Cabañas Raras","Cabreros del Río","Cabrillanes","Cacabelos","Calzada del Coto",
+    "Campazas","Campo de Villavidel","Camponaraya","Carracedelo","Carrizo","Carrocera",
+    "Carucedo","Castilfalé","Castrillo de Cabrera","Castrillo de la Valduerna","Castrocalbón","Castrocontrigo",
+    "Castropodame","Castrotierra de Valmadrigal","Cea","Cebanico","Cebrones del Río","Chozas de Abajo",
+    "Cimanes de la Vega","Cimanes del Tejar","Cistierna","Congosto","Corbillos de los Oteros","Corullón",
+    "Crémenes","Cuadros","Cubillas de Rueda","Cubillas de los Oteros","Cubillos del Sil","Cármenes",
+    "Destriana","Encinedo","Ercina, La","Escobar de Campos","Fabero","Folgoso de la Ribera",
+    "Fresno de la Vega","Fuentes de Carbajal","Garrafe de Torío","Gordaliza del Pino","Gordoncillo","Gradefes",
+    "Grajal de Campos","Gusendos de los Oteros","Hospital de Órbigo","Igüeña","Izagre","Joarilla de las Matas",
+    "Laguna Dalga","Laguna de Negrillos","León","Llamas de la Ribera","Lucillo","Luyego",
+    "Magaz de Cepeda","Mansilla Mayor","Mansilla de las Mulas","Maraña","Matadeón de los Oteros","Matallana de Torío",
+    "Matanza","Molinaseca","Murias de Paredes","Noceda del Bierzo","Oencia","Omañas, Las",
+    "Onzonilla","Oseja de Sajambre","Pajares de los Oteros","Palacios de la Valduerna","Palacios del Sil","Peranzanes",
+    "Pobladura de Pelayo García","Pola de Gordón, La","Ponferrada","Posada de Valdeón","Pozuelo del Páramo","Prado de la Guzpeña",
+    "Priaranza del Bierzo","Prioro","Puebla de Lillo","Puente de Domingo Flórez","Páramo del Sil","Quintana del Castillo",
+    "Quintana del Marco","Quintana y Congosto","Regueras de Arriba","Reyero","Riaño","Riego de la Vega",
+    "Riello","Rioseco de Tapia","Robla, La","Roperuelos del Páramo","Sabero","Sahagún",
+    "San Adrián del Valle","San Andrés del Rabanedo","San Cristóbal de la Polantera","San Emiliano","San Esteban de Nogales","San Justo de la Vega",
+    "San Millán de los Caballeros","San Pedro Bercianos","Sancedo","Santa Colomba de Curueño","Santa Colomba de Somoza","Santa Cristina de Valmadrigal",
+    "Santa Elena de Jamuz","Santa Marina del Rey","Santa María de Ordás","Santa María de la Isla","Santa María del Monte de Cea","Santa María del Páramo",
+    "Santas Martas","Santiago Millas","Santovenia de la Valdoncina","Sariegos","Sena de Luna",
+    "Soto de la Vega","Soto y Amío","Toral de los Guzmanes","Toral de los Vados","Toreno","Torre del Bierzo",
+    "Trabadelo","Truchas","Turcia","Urdiales del Páramo","Val de San Lorenzo","Valdefresno",
+    "Valdefuentes del Páramo","Valdelugueros","Valdemora","Valdepiélago","Valdepolo","Valderas",
+    "Valderrey","Valderrueda","Valdesamario","Valdevimbre","Valencia de Don Juan","Valle de Ancares",
+    "Vallecillo","Valverde de la Virgen","Valverde-Enrique","Vecilla, La","Vega de Espinareda","Vega de Infanzones",
+    "Vega de Valcarce","Vegacervera","Vegaquemada","Vegas del Condado","Villablino","Villabraz",
+    "Villadangos del Páramo","Villademor de la Vega","Villafranca del Bierzo","Villagatón","Villamandos","Villamanín",
+    "Villamartín de Don Sancho","Villamañán","Villamejil","Villamol","Villamontán de la Valduerna","Villamoratiel de las Matas",
+    "Villanueva de las Manzanas","Villaobispo de Otero","Villaornate y Castro","Villaquejida","Villaquilambre","Villarejo de Órbigo",
+    "Villares de Órbigo","Villasabariego","Villaselán","Villaturiel","Villazala","Villazanzo de Valderaduey",
+    "Zotes del Páramo",
+]
+
+MUNICIPIOS_PALENCIA = [
+    "Abarca de Campos","Abia de las Torres","Aguilar de Campoo","Alar del Rey","Alba de Cerrato","Amayuelas de Arriba",
+    "Ampudia","Amusco","Antigüedad","Arconada","Astudillo","Autilla del Pino",
+    "Autillo de Campos","Ayuela","Baltanás","Baquerín de Campos","Barruelo de Santullán","Becerril de Campos",
+    "Belmonte de Campos","Berzosilla","Boada de Campos","Boadilla de Rioseco","Boadilla del Camino","Brañosera",
+    "Buenavista de Valdavia","Bustillo de la Vega","Bustillo del Páramo de Carrión","Bárcena de Campos","Báscones de Ojeda","Calahorra de Boedo",
+    "Calzada de los Molinos","Capillas","Cardeñosa de Volpejera","Carrión de los Condes","Castil de Vela","Castrejón de la Peña",
+    "Castrillo de Don Juan","Castrillo de Onielo","Castrillo de Villavega","Castromocho","Cervatos de la Cueza","Cervera de Pisuerga",
+    "Cevico Navero","Cevico de la Torre","Cisneros","Cobos de Cerrato","Collazos de Boedo","Congosto de Valdavia",
+    "Cordovilla la Real","Cubillas de Cerrato","Dehesa de Montejo","Dehesa de Romanos","Dueñas","Espinosa de Cerrato",
+    "Espinosa de Villagonzalo","Frechilla","Fresno del Río","Frómista","Fuentes de Nava","Fuentes de Valdepero",
+    "Grijota","Guardo","Guaza de Campos","Herrera de Pisuerga","Herrera de Valdecañas","Hontoria de Cerrato",
+    "Hornillos de Cerrato","Husillos","Hérmedes de Cerrato","Itero de la Vega","La Pernía","La Puebla de Valdavia",
+    "La Serna","La Vid de Ojeda","Lagartos","Lantadilla","Ledigos","Loma de Ucieza",
+    "Lomas","Magaz de Pisuerga","Manquillos","Mantinos","Marcilla de Campos","Mazariegos",
+    "Mazuecos de Valdeginate","Melgar de Yuso","Meneses de Campos","Micieces de Ojeda","Monzón de Campos","Moratinos",
+    "Mudá","Nogal de las Huertas","Olea de Boedo","Olmos de Ojeda","Osornillo","Osorno la Mayor",
+    "Palencia","Palenzuela","Paredes de Nava","Payo de Ojeda","Pedraza de Campos","Pedrosa de la Vega",
+    "Perales","Pino del Río","Piña de Campos","Población de Arroyo","Población de Campos","Población de Cerrato",
+    "Polentinos","Pomar de Valdivia","Poza de la Vega","Pozo de Urama","Prádanos de Ojeda","Páramo de Boedo",
+    "Quintana del Puente","Quintanilla de Onsoña","Reinoso de Cerrato","Renedo de la Vega","Requena de Campos","Respenda de la Peña",
+    "Revenga de Campos","Revilla de Collazos","Ribas de Campos","Riberos de la Cueza","Saldaña","Salinas de Pisuerga",
+    "San Cebrián de Campos","San Cebrián de Mudá","San Cristóbal de Boedo","San Mamés de Campos","San Román de la Cuba","Santa Cecilia del Alcor",
+    "Santa Cruz de Boedo","Santervás de la Vega","Santibáñez de Ecla","Santibáñez de la Peña","Santoyo","Soto de Cerrato",
+    "Sotobañado y Priorato","Tabanera de Cerrato","Tabanera de Valdavia","Tariego de Cerrato","Torquemada","Torremormojón",
+    "Triollo","Támara de Campos","Valbuena de Pisuerga","Valde-Ucieza","Valdeolmillos","Valderrábano",
+    "Valle de Cerrato","Valle del Retortillo","Velilla del Río Carrión","Venta de Baños","Vertavillo","Villabasta de Valdavia",
+    "Villacidaler","Villaconancio","Villada","Villaeles de Valdavia","Villaherreros","Villahán",
+    "Villalaco","Villalba de Guardo","Villalcázar de Sirga","Villalcón","Villalobón","Villaluenga de la Vega",
+    "Villamartín de Campos","Villamediana","Villameriel","Villamoronta","Villamuera de la Cueza","Villamuriel de Cerrato",
+    "Villanueva del Rebollar","Villanuño de Valdavia","Villaprovedo","Villarmentero de Campos","Villarrabé","Villarramiel",
+    "Villasarracino","Villasila de Valdavia","Villaturde","Villaumbrales","Villaviudas","Villerías de Campos",
+    "Villodre","Villodrigo","Villoldo","Villota del Páramo","Villovieco",
+]
+
+MUNICIPIOS_SALAMANCA = [
+    "Abusejo","Agallas","Ahigal de Villarino","Ahigal de los Aceiteros","Alameda de Gardón, La","Alamedilla, La",
+    "Alaraz","Alba de Tormes","Alba de Yeltes","Alberca, La","Alberguería de Argañán, La","Alconada",
+    "Aldea del Obispo","Aldeacipreste","Aldeadávila de la Ribera","Aldealengua","Aldeanueva de Figueroa","Aldeanueva de la Sierra",
+    "Aldearrodrigo","Aldearrubia","Aldeaseca de Alba","Aldeaseca de la Frontera","Aldeatejada","Aldeavieja de Tormes",
+    "Aldehuela de Yeltes","Aldehuela de la Bóveda","Almenara de Tormes","Almendra","Anaya de Alba","Arabayona de Mógica",
+    "Arapiles","Arcediano","Arco, El","Armenteros","Atalaya, La","Añover de Tormes",
+    "Babilafuente","Barbadillo","Barbalos","Barceo","Barruecopardo","Bastida, La",
+    "Bañobárez","Beleña","Bermellar","Berrocal de Huebra","Berrocal de Salvatierra","Boada",
+    "Bodón, El","Bogajo","Bouza, La","Brincones","Buenamadre","Buenavista",
+    "Béjar","Bóveda del Río Almar","Cabaco, El","Cabeza de Béjar, La","Cabeza del Caballo","Cabezabellosa de la Calzada",
+    "Cabrerizos","Cabrillas","Calvarrasa de Abajo","Calvarrasa de Arriba","Calzada de Béjar, La","Calzada de Don Diego",
+    "Calzada de Valdunciel","Campillo de Azaba","Campo de Peñaranda, El","Candelario","Canillas de Abajo","Cantagallo",
+    "Cantalapiedra","Cantalpino","Cantaracillo","Carbajosa de la Sagrada","Carpio de Azaba","Carrascal de Barregas",
+    "Carrascal del Obispo","Casafranca","Casas del Conde, Las","Casillas de Flores","Castellanos de Moriscos","Castellanos de Villiquera",
+    "Castillejo de Martín Viejo","Castraz","Cepeda","Cereceda de la Sierra","Cerezal de Peñahorcada","Cerralbo",
+    "Cerro, El","Cespedosa de Tormes","Chagarcía Medianero","Cilleros de la Bastida","Cipérez","Ciudad Rodrigo",
+    "Coca de Alba","Colmenar de Montemayor","Cordovilla","Cristóbal","Cubo de Don Sancho, El","Dios le Guarde",
+    "Doñinos de Ledesma","Doñinos de Salamanca","Encina de San Silvestre","Encina, La","Encinas de Abajo","Encinas de Arriba",
+    "Encinasola de los Comendadores","Endrinal","Escurial de la Sierra","Espadaña","Espeja","Espino de la Orbada",
+    "Florida de Liébana","Forfoleda","Frades de la Sierra","Fregeneda, La","Fresnedoso","Fresno Alhándiga",
+    "Fuente de San Esteban, La","Fuenteguinaldo","Fuenteliante","Fuenterroble de Salvatierra","Fuentes de Béjar","Fuentes de Oñoro",
+    "Gajates","Galindo y Perahuy","Galinduste","Galisancho","Gallegos de Argañán","Gallegos de Solmirón",
+    "Garcibuey","Garcihernández","Garcirrey","Gejuelo del Barro","Golpejas","Gomecello",
+    "Guadramiro","Guijo de Ávila","Guijuelo","Herguijuela de Ciudad Rodrigo","Herguijuela de la Sierra","Herguijuela del Campo",
+    "Hinojosa de Duero","Horcajo Medianero","Horcajo de Montemayor","Hoya, La","Huerta","Iruelos",
+    "Ituero de Azaba","Juzbado","Lagunilla","Larrodrigo","Ledesma","Ledrada",
+    "Linares de Riofrío","Lumbrales","Machacón","Macotera","Madroñal","Malpartida",
+    "Mancera de Abajo","Manzano, El","Martiago","Martinamor","Martín de Yeltes","Masueco",
+    "Mata de Ledesma, La","Matilla de los Caños del Río","Maya, La","Maíllo, El","Membribe de la Sierra","Mieza",
+    "Milano, El","Miranda de Azán","Miranda del Castañar","Mogarraz","Molinillo","Monforte de la Sierra",
+    "Monleras","Monleón","Monsagro","Montejo","Montemayor del Río","Monterrubio de Armuña",
+    "Monterrubio de la Sierra","Morasverdes","Morille","Moriscos","Moronta","Moríñigo",
+    "Mozárbez","Narros de Matalayegua","Nava de Béjar","Nava de Francia","Nava de Sotrobal","Navacarros",
+    "Navales","Navalmoral de Béjar","Navamorales","Navarredonda de la Rinconada","Navasfrías","Negrilla de Palencia",
+    "Olmedo de Camaces","Orbada, La","Pajares de la Laguna","Palacios del Arzobispo","Palaciosrubios","Palencia de Negrilla",
+    "Parada de Arriba","Parada de Rubiales","Paradinas de San Juan","Pastores","Payo, El","Pedraza de Alba",
+    "Pedrosillo de Alba","Pedrosillo de los Aires","Pedrosillo el Ralo","Pedroso de la Armuña, El","Pelabravo","Pelarrodríguez",
+    "Pelayos","Peralejos de Abajo","Peralejos de Arriba","Pereña de la Ribera","Peromingo","Peña, La",
+    "Peñacaballera","Peñaparda","Peñaranda de Bracamonte","Peñarandilla","Pinedas","Pino de Tormes, El",
+    "Pitiegua","Pizarral","Poveda de las Cintas","Pozos de Hinojo","Puebla de Azaba","Puebla de San Medel",
+    "Puebla de Yeltes","Puente del Congosto","Puertas","Puerto Seguro","Puerto de Béjar","Redonda, La",
+    "Retortillo","Rinconada de la Sierra, La","Robleda","Robliza de Cojos","Rollán","Rágama",
+    "Saelices el Chico","Sagrada, La","Sahugo, El","Salamanca","Saldeana","Salmoral",
+    "Salvatierra de Tormes","San Cristóbal de la Cuesta","San Esteban de la Sierra","San Felices de los Gallegos","San Martín del Castañar","San Miguel de Valero",
+    "San Miguel del Robledo","San Morales","San Muñoz","San Pedro de Rozados","San Pedro del Valle","San Pelayo de Guareña",
+    "Sanchotello","Sanchón de la Ribera","Sanchón de la Sagrada","Sando","Santa Marta de Tormes",
+    "Santa María de Sando","Santiago de la Puebla","Santibáñez de Béjar","Santibáñez de la Sierra","Santiz","Santos, Los",
+    "Sardón de los Frailes","Saucelle","Sepulcro-Hilario","Sequeros","Serradilla del Arroyo","Serradilla del Llano",
+    "Sierpe, La","Sieteiglesias de Tormes","Sobradillo","Sorihuela","Sotoserrano","Tabera de Abajo",
+    "Tala, La","Tamames","Tarazona de Guareña","Tardáguila","Tejado, El","Tejeda y Segoyuela",
+    "Tenebrón","Terradillos","Topas","Tordillos","Tornadizo, El","Torresmenudas",
+    "Trabanca","Tremedal de Tormes","Valdecarros","Valdefuentes de Sangusín","Valdehijaderos","Valdelacasa",
+    "Valdelageve","Valdelosa","Valdemierque","Valderrodrigo","Valdunciel","Valero",
+    "Vallejera de Riofrío","Valsalabroso","Valverde de Valdelacasa","Valverdón","Vecinos","Vega de Tirados",
+    "Veguillas, Las","Vellés, La","Ventosa del Río Almar","Villaflores","Villagonzalo de Tormes","Villalba de los Llanos",
+    "Villamayor","Villanueva del Conde","Villar de Argañán","Villar de Ciervo","Villar de Gallimazo","Villar de Peralonso",
+    "Villar de Samaniego","Villar de la Yegua","Villares de Yeltes","Villares de la Reina","Villarino de los Aires","Villarmayor",
+    "Villarmuerto","Villasbuenas","Villasdardo","Villaseco de los Gamitos","Villaseco de los Reyes","Villasrubias",
+    "Villaverde de Guareña","Villavieja de Yeltes","Villoria","Villoruela","Vilvestre","Vitigudino",
+    "Vídola, La","Yecla de Yeltes","Zamarra","Zamayón","Zarapicos","Zarza de Pumareda, La",
+    "Zorita de la Frontera","Éjeme",
+]
+
+MUNICIPIOS_SEGOVIA = [
+    "Abades","Adrada de Pirón","Adrados","Aguilafuente","Alconada de Maderuelo",
+    "Aldea Real","Aldealcorvo","Aldealengua de Pedraza","Aldealengua de Santa María","Aldeanueva de la Serrezuela",
+    "Aldeanueva del Codonal","Aldeasoña","Aldehorno","Aldehuela del Codonal","Aldeonte",
+    "Anaya","Arahuetes","Arcones","Arevalillo de Cega","Armuña",
+    "Ayllón","Añe","Barbolla","Basardilla","Bercial",
+    "Bercimuel","Bernardos","Bernuy de Porreros","Boceguillas","Brieva",
+    "Caballar","Cabañas de Polendos","Cabezuela","Calabazas de Fuentidueña","Campo de San Pedro",
+    "Cantalejo","Cantimpalos","Carabias","Carbonero el Mayor","Carrascal del Río",
+    "Casla","Castillejo de Mesleón","Castro de Fuentidueña","Castrojimeno","Castroserna de Abajo",
+    "Castroserracín","Cedillo de la Torre","Cerezo de Abajo","Cerezo de Arriba","Chañe",
+    "Cilleruelo de San Mamés","Cobos de Fuentidueña","Coca","Codorniz","Collado Hermoso",
+    "Condado de Castilnovo","Corral de Ayllón","Cozuelos de Fuentidueña","Cubillo","Cuevas de Provanco",
+    "Cuéllar","Domingo García","Donhierro","Duruelo","Encinas",
+    "Encinillas","Escalona del Prado","Escarabajosa de Cabezas","Escobar de Polendos","Espinar, El",
+    "Espirdo","Fresneda de Cuéllar","Fresno de Cantespino","Fresno de la Fuente","Frumales",
+    "Fuente de Santa Cruz","Fuente el Olmo de Fuentidueña","Fuente el Olmo de Íscar","Fuentepelayo","Fuentepiñel",
+    "Fuenterrebollo","Fuentesaúco de Fuentidueña","Fuentesoto","Fuentidueña","Gallegos",
+    "Garcillán","Gomezserracín","Grajera","Honrubia de la Cuesta","Hontalbilla",
+    "Hontanares de Eresma","Huertos, Los","Ituero y Lama","Juarros de Riomoros","Juarros de Voltoya",
+    "Labajos","Laguna de Contreras","Languilla","Lastras de Cuéllar","Lastras del Pozo",
+    "Lastrilla, La","Losa, La","Maderuelo","Marazoleja","Marazuela",
+    "Martín Miguel","Martín Muñoz de la Dehesa","Martín Muñoz de las Posadas","Marugán","Mata de Cuéllar",
+    "Matabuena","Matilla, La","Melque de Cercos","Membibre de la Hoz","Migueláñez",
+    "Montejo de Arévalo","Montejo de la Vega de la Serrezuela","Monterrubio","Moral de Hornuez","Mozoncillo",
+    "Muñopedro","Muñoveros","Nava de la Asunción","Navafría","Navalilla",
+    "Navalmanzano","Navares de Ayuso","Navares de Enmedio","Navares de las Cuevas","Navas de Oro",
+    "Navas de Riofrío","Navas de San Antonio","Nieva","Olombrada","Orejana",
+    "Ortigosa de Pestaño","Ortigosa del Monte","Otero de Herreros","Pajarejos","Palazuelos de Eresma",
+    "Pedraza","Pelayos del Arroyo","Perosillo","Pinarejos","Pinarnegrillo",
+    "Prádena","Puebla de Pedraza","Rapariegos","Real Sitio de San Ildefonso","Rebollo",
+    "Remondo","Riaguas de San Bartolomé","Riaza","Ribota","Riofrío de Riaza",
+    "Roda de Eresma","Sacramenia","Samboal","San Cristóbal de Cuéllar","San Cristóbal de Segovia",
+    "San Cristóbal de la Vega","San Martín y Mudrián","San Miguel de Bernuy","San Pedro de Gaíllos","Sanchonuño",
+    "Sangarcía","Santa Marta del Cerro","Santa María la Real de Nieva","Santiuste de Pedraza","Santiuste de San Juan Bautista",
+    "Santo Domingo de Pirón","Santo Tomé del Puerto","Sauquillo de Cabezas","Sebúlcor","Segovia",
+    "Sepúlveda","Sequera de Fresno","Sotillo","Sotosalbos","Tabanera la Luenga",
+    "Tolocirio","Torre Val de San Pedro","Torreadrada","Torrecaballeros","Torrecilla del Pinar",
+    "Torreiglesias","Trescasas","Turégano","Urueñas","Valdeprados",
+    "Valdevacas de Montejo","Valdevacas y Guijar","Valle de Tabladillo","Vallelado","Valleruela de Pedraza",
+    "Valleruela de Sepúlveda","Valseca","Valtiendas","Valverde del Majano","Veganzones",
+    "Vegas de Matute","Ventosilla y Tejadilla","Villacastín","Villaverde de Montejo","Villaverde de Íscar",
+    "Villeguillo","Yanguas de Eresma","Zarzuela del Monte","Zarzuela del Pinar",
+]
+
+MUNICIPIOS_SORIA = [
+    "Abejar","Adradas","Alconaba","Alcubilla de Avellaneda","Alcubilla de las Peñas","Aldealafuente",
+    "Aldealices","Aldealpozo","Aldealseñor","Aldehuela de Periáñez","Alentisque","Aliud",
+    "Almajano","Almaluez","Almarza","Almazul","Almazán","Almenar de Soria",
+    "Alpanseque","Arancón","Arcos de Jalón","Arenillas","Arévalo de la Sierra","Ausejo de la Sierra",
+    "Baraona","Barca","Barcones","Bayubas de Abajo","Bayubas de Arriba","Beratón",
+    "Berlanga de Duero","Blacos","Bliecos","Borjabad","Borobia","Buberos",
+    "Buitrago","Cabrejas del Campo","Cabrejas del Pinar","Calatañazor","Caltojar","Candilichera",
+    "Carabantes","Caracena","Carrascosa de Abajo","Carrascosa de la Sierra","Casarejos","Castilfrío de la Sierra",
+    "Castillejo de Robledo","Castilruiz","Cañamaque","Centenera de Andaluz","Cerbón","Cidones",
+    "Cigudosa","Cihuela","Ciria","Cirujales del Río","Coscurita","Covaleda",
+    "Cubilla","Cubo de la Solana","Cueva de Ágreda","Deza","Duruelo de la Sierra","Dévanos",
+    "El Burgo de Osma-Ciudad de Osma","El Royo","Escobosa de Almazán","Espeja de San Marcelino","Espejón","Estepa de San Juan",
+    "Frechilla de Almazán","Fresno de Caracena","Fuentearmegil","Fuentecambrón","Fuentecantos","Fuentelmonge",
+    "Fuentelsaz de Soria","Fuentepinilla","Fuentes de Magaña","Fuentestrún","Garray","Golmayo",
+    "Gormaz","Gómara","Herrera de Soria","Hinojosa del Campo","La Losilla","La Póveda de Soria",
+    "La Riba de Escalote","Langa de Duero","Las Aldehuelas","Liceras","Los Rábanos","Los Villares de Soria",
+    "Magaña","Maján","Matalebreras","Matamala de Almazán","Medinaceli","Miño de Medinaceli",
+    "Miño de San Esteban","Molinos de Duero","Momblona","Monteagudo de las Vicarías","Montejo de Tiermes","Montenegro de Cameros",
+    "Morón de Almazán","Muriel Viejo","Muriel de la Fuente","Nafría de Ucero","Narros","Navaleno",
+    "Nepas","Nolay","Noviercas","Oncala","Pinilla del Campo","Portillo de Soria",
+    "Pozalmuro","Quintana Redonda","Quintanas de Gormaz","Quiñonería","Recuerda",
+    "Rello","Renieblas","Retortillo de Soria","Reznos","Rioseco de Soria","Rollamienta",
+    "Salduero","San Esteban de Gormaz","San Felices","San Leonardo de Yagüe","San Pedro Manrique","Santa Cruz de Yanguas",
+    "Santa María de Huerta","Santa María de las Hoyas","Serón de Nágima","Soliedra","Soria","Sotillo del Rincón",
+    "Suellacabras","Tajahuerce","Tajueco","Talveila","Tardelcuende","Taroda",
+    "Tejado","Torlengua","Torreblacos","Torrubia de Soria","Trévago","Ucero",
+    "Vadillo","Valdeavellano de Tera","Valdegeña","Valdelagua del Cerro","Valdemaluque","Valdenebro",
+    "Valdeprado","Valderrodilla","Valtajeros","Velamazán","Velilla de la Sierra","Velilla de los Ajos",
+    "Viana de Duero","Villaciervos","Villanueva de Gormaz","Villar del Ala","Villar del Campo","Villar del Río",
+    "Villasayas","Villaseca de Arciel","Vinuesa","Vizmanos","Vozmediano","Yanguas",
+    "Yelo","Ágreda","Ólvega",
+]
+
+MUNICIPIOS_VALLADOLID = [
+    "Adalia","Aguasal","Aguilar de Campos","Alaejos","Alcazarén","Aldea de San Miguel",
+    "Aldeamayor de San Martín","Almenara de Adaja","Amusquillo","Arroyo de la Encomienda","Ataquines","Bahabón",
+    "Barcial de la Loma","Barruelo del Valle","Becilla de Valderaduey","Benafarces","Bercero","Berceruelo",
+    "Berrueces","Bobadilla del Campo","Bocigas","Bocos de Duero","Boecillo","Bolaños de Campos",
+    "Brahojos de Medina","Bustillo de Chaves","Cabezón de Pisuerga","Cabezón de Valderaduey","Cabreros del Monte","Campaspero",
+    "Camporredondo","Canalejas de Peñafiel","Canillas de Esgueva","Carpio","Casasola de Arión",
+    "Castrejón de Trabancos","Castrillo de Duero","Castrillo-Tejeriego","Castrobol","Castrodeza","Castromembibre",
+    "Castromonte","Castronuevo de Esgueva","Castronuño","Castroponce","Castroverde de Cerrato","Ceinos de Campos",
+    "Cervillego de la Cruz","Cigales","Ciguñuela","Cistérniga","Cogeces de Íscar","Cogeces del Monte",
+    "Corcos","Corrales de Duero","Cubillas de Santa Marta","Cuenca de Campos","Curiel de Duero","Encinas de Esgueva",
+    "Esguevillas de Esgueva","Fombellida","Fompedraza","Fontihoyuelo","Fresno el Viejo","Fuensaldaña",
+    "Fuente el Sol","Fuente-Olmedo","Gallegos de Hornija","Gatón de Campos","Geria","Herrín de Campos",
+    "Hornillos de Eresma","Laguna de Duero","Langayo","Llano de Olmedo","Lomoviejo","Manzanillo",
+    "Marzales","Matapozuelos","Matilla de los Caños","Mayorga","Medina de Rioseco","Medina del Campo",
+    "Megeces","Melgar de Abajo","Melgar de Arriba","Mojados","Monasterio de Vega","Montealegre de Campos",
+    "Montemayor de Pililla","Moral de la Reina","Moraleja de las Panaderas","Morales de Campos","Mota del Marqués","Mucientes",
+    "Mudarra, La","Muriel","Nava del Rey","Nueva Villa de las Torres","Olivares de Duero","Olmedo",
+    "Olmos de Esgueva","Olmos de Peñafiel","Palazuelo de Vedija","Parrilla, La","Pedraja de Portillo, La","Pedrajas de San Esteban",
+    "Pedrosa del Rey","Pesquera de Duero","Peñafiel","Peñaflor de Hornija","Piña de Esgueva","Piñel de Abajo",
+    "Piñel de Arriba","Pollos","Portillo","Pozal de Gallinas","Pozaldez","Pozuelo de la Orden",
+    "Puras","Quintanilla de Arriba","Quintanilla de Onésimo","Quintanilla de Trigueros","Quintanilla del Molar","Ramiro",
+    "Renedo de Esgueva","Roales de Campos","Robladillo","Roturas","Rubí de Bracamonte","Rueda",
+    "Rábano","Saelices de Mayorga","Salvador de Zapardiel","San Cebrián de Mazote","San Llorente","San Martín de Valvení",
+    "San Miguel del Arroyo","San Miguel del Pino","San Pablo de la Moraleja","San Pedro de Latarce","San Pelayo","San Román de Hornija",
+    "San Salvador","San Vicente del Palacio","Santa Eufemia del Arroyo","Santervás de Campos","Santibáñez de Valcorba","Santovenia de Pisuerga",
+    "Sardón de Duero","Seca, La","Serrada","Siete Iglesias de Trabancos","Simancas","Tamariz de Campos",
+    "Tiedra","Tordehumos","Tordesillas","Torre de Esgueva","Torre de Peñafiel","Torrecilla de la Abadesa",
+    "Torrecilla de la Orden","Torrecilla de la Torre","Torrelobatón","Torrescárcela","Traspinedo","Trigueros del Valle",
+    "Tudela de Duero","Unión de Campos, La","Urones de Castroponce","Urueña","Valbuena de Duero","Valdearcos de la Vega",
+    "Valdenebro de los Valles","Valdestillas","Valdunquillo","Valladolid","Valoria la Buena","Valverde de Campos",
+    "Vega de Ruiponce","Vega de Valdetronco","Velascálvaro","Velilla","Velliza","Ventosa de la Cuesta",
+    "Viana de Cega","Villabaruz de Campos","Villabrágima","Villabáñez","Villacarralón","Villacid de Campos",
+    "Villaco","Villafrades de Campos","Villafranca de Duero","Villafrechós","Villafuerte","Villagarcía de Campos",
+    "Villagómez la Nueva","Villalar de los Comuneros","Villalba de la Loma","Villalba de los Alcores","Villalbarba","Villalán de Campos",
+    "Villalón de Campos","Villamuriel de Campos","Villanubla","Villanueva de Duero","Villanueva de San Mancio","Villanueva de la Condesa",
+    "Villanueva de los Caballeros","Villanueva de los Infantes","Villardefrades","Villarmentero de Esgueva","Villasexmir","Villavaquerín",
+    "Villavellid","Villaverde de Medina","Villavicencio de los Caballeros","Villán de Tordesillas","Viloria","Wamba",
+    "Zaratán","Zarza, La","Íscar",
+]
+
+MUNICIPIOS_ZAMORA = [
+    "Abezames","Alcañices","Alcubilla de Nogales","Alfaraz de Sayago","Algodre","Almaraz de Duero",
+    "Almeida de Sayago","Andavías","Arcenillas","Arcos de la Polvorosa","Argañín","Argujillo",
+    "Arquillinos","Arrabalde","Aspariegos","Asturianos","Ayoó de Vidriales","Barcial del Barco",
+    "Belver de los Montes","Benavente","Benegiles","Bermillo de Sayago","Bretocino","Bretó",
+    "Brime de Sog","Brime de Urz","Burganes de Valverde","Bustillo del Oro","Cabañas de Sayago","Calzadilla de Tera",
+    "Camarzana de Tera","Carbajales de Alba","Carbellino","Casaseca de Campeán","Casaseca de las Chanas","Castrillo de la Guareña",
+    "Castrogonzalo","Castronuevo","Castroverde de Campos","Cazurra","Cañizal","Cañizo",
+    "Cerecinos de Campos","Cerecinos del Carrizal","Cernadilla","Cobreros","Coomonte","Coreses",
+    "Corrales del Vino","Cotanes del Monte","Cubillos","Cubo de Benavente","Cuelgamures","El Cubo de Tierra del Vino",
+    "El Maderal","El Pego","El Perdigón","El Piñero","Entrala","Espadañedo",
+    "Faramontanos de Tábara","Fariza","Fermoselle","Ferreras de Abajo","Ferreras de Arriba","Ferreruela",
+    "Figueruela de Arriba","Fresno de Sayago","Fresno de la Polvorosa","Fresno de la Ribera","Friera de Valverde",
+    "Fuente Encalada","Fuentelapeña","Fuentes de Ropel","Fuentesaúco","Fuentesecas","Fuentespreadas",
+    "Galende","Gallegos del Pan","Gallegos del Río","Gamones","Gema","Granja de Moreruela",
+    "Granucillo","Guarrate","Hermisende","Jambrina","Justel","La Bóveda de Toro",
+    "La Hiniesta","La Torre del Valle","Losacino","Losacio","Lubián","Luelmo",
+    "Madridanos","Mahíde","Maire de Castroponce","Malva","Manganeses de la Lampreana","Manganeses de la Polvorosa",
+    "Manzanal de Arriba","Manzanal de los Infantes","Manzanal del Barco","Matilla de Arzón","Matilla la Seca","Mayalde",
+    "Melgar de Tera","Micereces de Tera","Milles de la Polvorosa","Molacillos","Molezuelas de la Carballeda","Mombuey",
+    "Monfarracinos","Montamarta","Moral de Sayago","Moraleja de Sayago","Moraleja del Vino","Morales de Rey",
+    "Morales de Toro","Morales de Valverde","Morales del Vino","Moralina","Moreruela de Tábara","Moreruela de los Infanzones",
+    "Muelas de los Caballeros","Muelas del Pan","Muga de Sayago","Navianos de Valverde","Olmillos de Castro","Otero de Bodas",
+    "Pajares de la Lampreana","Palacios de Sanabria","Palacios del Pan","Pedralba de la Pradería","Peleagonzalo","Peleas de Abajo",
+    "Peque","Pereruela","Perilla de Castro","Peñausende","Piedrahita de Castro","Pinilla de Toro",
+    "Pino del Oro","Pobladura de Valderaduey","Pobladura del Valle","Porto","Pozoantiguo","Pozuelo de Tábara",
+    "Prado","Puebla de Sanabria","Pueblica de Valverde","Pías","Quintanilla de Urz","Quintanilla del Monte",
+    "Quintanilla del Olmo","Quiruelas de Vidriales","Rabanales","Requejo","Revellinos","Riofrío de Aliste",
+    "Rionegro del Puente","Roales del Pan","Robleda-Cervantes","Roelos de Sayago","Rosinos de la Requejada","Rábano de Aliste",
+    "Salce","Samir de los Caños","San Agustín del Pozo","San Cebrián de Castro","San Cristóbal de Entreviñas","San Esteban del Molar",
+    "San Justo","San Martín de Valderaduey","San Miguel de la Ribera","San Miguel del Valle","San Pedro de Ceque","San Pedro de la Nave-Almendra",
+    "San Vicente de la Cabeza","San Vitero","Santa Clara de Avedillo","Santa Colomba de las Monjas","Santa Cristina de la Polvorosa","Santa Croya de Tera",
+    "Santa Eufemia del Barco","Santa María de Valverde","Santa María de la Vega","Santibáñez de Tera","Santibáñez de Vidriales","Santovenia",
+    "Sanzoles","Tapioles","Toro","Torregamones","Torres del Carrizal","Trabazos",
+    "Trefacio","Tábara","Uña de Quintana","Vadillo de la Guareña","Valcabado","Valdefinjas",
+    "Valdescorriel","Vallesa de la Guareña","Vega de Tera","Vega de Villalobos","Vegalatrave","Venialbo",
+    "Vezdemarbán","Vidayanes","Videmala","Villabrázaro","Villabuena del Puente","Villadepera",
+    "Villaferrueña","Villafáfila","Villageriz","Villalazán","Villalba de la Lampreana",
+    "Villalcampo","Villalobos","Villalonso","Villalpando","Villalube","Villamayor de Campos",
+    "Villamor de los Escuderos","Villanueva de Azoague","Villanueva de Campeán","Villanueva de las Peras","Villanueva del Campo","Villanázar",
+    "Villar de Fallaves","Villar del Buey","Villaralbo","Villardeciervos","Villardiegua de la Ribera","Villardondiego",
+    "Villarrín de Campos","Villaseco del Pan","Villavendimio","Villaveza de Valverde","Villaveza del Agua","Villárdiga",
+    "Viñas","Zamora",
+]
+
 # ─── PROVINCIA (Fase 4 — rutas/UI transversales) ─────────────────────────────
 # Comunitat Valenciana (3), Andalucía (8) y País Vasco (1, ver nota en
 # PROVINCIAS_PAIS_VASCO más abajo) generalizados a producción 2026-09-06
@@ -3988,7 +4439,12 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "huesca": MUNICIPIOS_HUESCA, "teruel": MUNICIPIOS_TERUEL,
                             "zaragoza": MUNICIPIOS_ZARAGOZA,
                             "a_coruna": MUNICIPIOS_A_CORUNA, "lugo": MUNICIPIOS_LUGO,
-                            "ourense": MUNICIPIOS_OURENSE, "pontevedra": MUNICIPIOS_PONTEVEDRA}
+                            "ourense": MUNICIPIOS_OURENSE, "pontevedra": MUNICIPIOS_PONTEVEDRA,
+                            "avila": MUNICIPIOS_AVILA, "burgos": MUNICIPIOS_BURGOS,
+                            "leon": MUNICIPIOS_LEON, "palencia": MUNICIPIOS_PALENCIA,
+                            "salamanca": MUNICIPIOS_SALAMANCA, "segovia": MUNICIPIOS_SEGOVIA,
+                            "soria": MUNICIPIOS_SORIA, "valladolid": MUNICIPIOS_VALLADOLID,
+                            "zamora": MUNICIPIOS_ZAMORA}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -4012,6 +4468,11 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "zaragoza": "Provincia de Zaragoza",
                    "a_coruna": "Provincia de A Coruña", "lugo": "Provincia de Lugo",
                    "ourense": "Provincia de Ourense", "pontevedra": "Provincia de Pontevedra",
+                   "avila": "Provincia de Ávila", "burgos": "Provincia de Burgos",
+                   "leon": "Provincia de León", "palencia": "Provincia de Palencia",
+                   "salamanca": "Provincia de Salamanca", "segovia": "Provincia de Segovia",
+                   "soria": "Provincia de Soria", "valladolid": "Provincia de Valladolid",
+                   "zamora": "Provincia de Zamora",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -4041,6 +4502,9 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "badajoz": "extremadura", "caceres": "extremadura",  # 2 provincias de Extremadura, mismo patrón que Cataluña/CV/Andalucía
     "huesca": "aragon", "teruel": "aragon", "zaragoza": "aragon",  # 3 provincias de Aragón, mismo patrón
     "a_coruna": "galicia", "lugo": "galicia", "ourense": "galicia", "pontevedra": "galicia",  # 4 provincias de Galicia, mismo patrón
+    "avila": "castilla_y_leon", "burgos": "castilla_y_leon", "leon": "castilla_y_leon",
+    "palencia": "castilla_y_leon", "salamanca": "castilla_y_leon", "segovia": "castilla_y_leon",
+    "soria": "castilla_y_leon", "valladolid": "castilla_y_leon", "zamora": "castilla_y_leon",  # 9 provincias de Castilla y León, mismo patrón
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
@@ -4050,7 +4514,7 @@ COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluñ
                             "la_rioja": "La Rioja", "madrid": "Comunidad de Madrid",
                             "asturias": "Principado de Asturias",
                             "extremadura": "Extremadura", "aragon": "Aragón",
-                            "galicia": "Galicia"}
+                            "galicia": "Galicia", "castilla_y_leon": "Castilla y León"}
 
 
 def _comunidad_valida(txt):
@@ -4140,7 +4604,7 @@ _MAPA_CCAA = [
      "cx": 378, "cy": 78, "r": 17},
     {"comunidad": "la_rioja", "bandera": "la_rioja", "label": "La Rioja", "destino": "la_rioja",
      "cx": 335, "cy": 108, "r": 15},
-    {"comunidad": "castilla_leon", "bandera": "castilla_leon", "label": "Castilla y León", "destino": None,
+    {"comunidad": "castilla_y_leon", "bandera": "castilla_leon", "label": "Castilla y León", "destino": "valladolid",
      "cx": 220, "cy": 160, "r": 55},
     {"comunidad": "aragon", "bandera": "aragon", "label": "Aragón", "destino": "zaragoza",
      "cx": 430, "cy": 155, "r": 45},
@@ -13217,10 +13681,10 @@ MAPA_COBERTURA_FLAGS = {
 
 # slug del mapa -> slug de "comunidad" tal como lo usa
 # COMUNIDAD_AUTONOMA_POR_PROVINCIA/COMUNIDAD_AUTONOMA_LABEL en el resto del
-# sitio (difieren en 3 casos: "valencia"->"valenciana", "paisvasco"->
-# "pais_vasco", "larioja"->"la_rioja"). Castilla y León, Castilla-La Mancha
-# y Navarra no tienen ninguna provincia conectada al sitio todavía -- se
-# omiten a propósito, así _estado_cobertura_mapa() las deja en "pending"
+# sitio (difieren en 4 casos: "valencia"->"valenciana", "paisvasco"->
+# "pais_vasco", "larioja"->"la_rioja", "cyl"->"castilla_y_leon"). Castilla-La
+# Mancha y Navarra no tienen ninguna provincia conectada al sitio todavía --
+# se omiten a propósito, así _estado_cobertura_mapa() las deja en "pending"
 # por defecto sin necesidad de listarlas.
 MAPA_COBERTURA_SLUG_A_COMUNIDAD = {
     "andalucia": "andalucia", "aragon": "aragon", "asturias": "asturias",
@@ -13228,7 +13692,7 @@ MAPA_COBERTURA_SLUG_A_COMUNIDAD = {
     "cataluna": "cataluna", "valencia": "valenciana", "extremadura": "extremadura",
     "galicia": "galicia", "madrid": "madrid", "murcia": "murcia",
     "paisvasco": "pais_vasco", "larioja": "la_rioja",
-    "ceuta": "ceuta", "melilla": "melilla",
+    "ceuta": "ceuta", "melilla": "melilla", "cyl": "castilla_y_leon",
 }
 
 

@@ -119,6 +119,22 @@ ALIAS_MUNICIPIO = {
     "cangas": "Cangas de Morrazo",
     "cerdedo-cotobade": "Cerdedo Cotobade",
     "mondariz-balneario": "Mondariz Balneario",
+    # Detectados 2026-09-18 al ejecutar actualizar_poblacion.py sobre
+    # Castilla y León (9 provincias). "candin" es un caso distinto a los
+    # demás: NO es un desajuste de formato, es un municipio renombrado
+    # (Candín -> Valle de Ancares, 23/08/2023) que el INE/Hacienda todavía
+    # catalogan con el nombre antiguo en varias tablas -- verificado en
+    # Wikipedia (https://es.wikipedia.org/wiki/Cand%C3%ADn_(Le%C3%B3n),
+    # redirige a "Valle de Ancares"). El resto son nombres cortos/con
+    # grafía distinta que el INE usa frente a la forma verificada contra
+    # Wikipedia/Diputación puesta en MUNICIPIOS_BURGOS/SORIA/ZAMORA.
+    "candin": "Valle de Ancares",
+    "santa maria rivarredonda": "Santa María Ribarredonda",
+    "zarzosa de rio pisuerga": "Zarzosa de Riopisuerga",
+    "arcos": "Arcos de la Llana",
+    "burgo de osma-ciudad de osma": "El Burgo de Osma-Ciudad de Osma",
+    "roales": "Roales del Pan",
+    "roa de duero": "Roa",
 }
 
 # Girona se curó a mano al estilo "núcleo, artículo, en minúscula" (p.ej.
