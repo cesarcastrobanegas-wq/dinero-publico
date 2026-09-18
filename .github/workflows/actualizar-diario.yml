@@ -72,14 +72,26 @@ name: Actualizar contratos diariamente
 # bucle (antes iba "dentro de su franja horaria"; ahora es "dentro de su
 # turno en la lista", mismo sitio lógico, ya no depende de un horario).
 #
-# EXTRAS DE FIN DE CICLO (Hacienda, Población, fondos UE, noticias UE,
-# Fuente Álamo, Cartagena, directivos de contratos menores residuales):
-# antes anclados a la franja de Murcia (Hacienda/Población) o a la de
-# Tarragona (el resto), porque eran "la primera" y "la última" franja del
-# horario fijo. Sin horario fijo esos anclajes ya no tienen sentido --
-# ahora corren UNA VEZ, después de intentar procesar toda la lista de
-# provincias (haya terminado entera o se haya cortado por el tope de
-# tiempo total), como pasos independientes al final del job.
+# HACIENDA/POBLACIÓN -- van PRIMERO, no al final (ver hallazgo 2026-09-18
+# en ese mismo step): antes anclados a la franja de Murcia (la primera del
+# horario fijo); con el job único inicialmente se pusieron al FINAL del
+# ciclo, pero el primer run real mostró que si GitHub cancela el job por
+# timeout duro, mata también los pasos con `if: !cancelled()` que vengan
+# después del punto de corte -- así que Hacienda/Población nunca llegaban
+# a ejecutarse si el recorrido de provincias + extras agotaba el
+# presupuesto. Al ir ANTES del recorrido (son descargas rápidas e
+# independientes de la app en producción) se garantiza que corren siempre,
+# pase lo que pase con el resto de la noche.
+#
+# EXTRAS DE FIN DE CICLO (fondos UE, noticias UE, Fuente Álamo, Cartagena,
+# directivos de contratos menores residuales): antes anclados a la franja
+# de Tarragona (la última del horario fijo), porque tenía sentido que
+# corrieran "al final". Sin horario fijo ese anclaje ya no aplica -- ahora
+# corren UNA VEZ, después de intentar procesar toda la lista de provincias
+# (haya terminado entera o se haya cortado por el tope de tiempo total),
+# como parte final del mismo step de recorrido (no pasos aparte, a
+# diferencia de Hacienda/Población: estos sí hablan con la app en
+# producción vía ADMIN_TOKEN, mismo motivo que las provincias).
 #
 # RACE DE PUSH (ver commit histórico, aplica igual aquí): Hacienda y
 # Población hacen su propio commit+push de un JSON de texto
@@ -156,6 +168,128 @@ jobs:
       - name: Checkout del repo
         uses: actions/checkout@v4
 
+      - name: Refrescar deuda viva y saldo no financiero (Ministerio de Hacienda)
+        # HALLAZGO 2026-09-18 (primer disparo real del rediseño de job
+        # único): cuando GitHub Actions cancela el job por alcanzar el
+        # límite duro de timeout-minutes, mata TODOS los pasos restantes
+        # de golpe -- incluidos los que llevaban `if: !cancelled()`, que
+        # solo protege contra un paso ANTERIOR fallando, no contra el job
+        # entero siendo cancelado por timeout. Ese primer run real
+        # (35278029305) se quedó sin tiempo a mitad del recorrido de
+        # provincias y nunca llegó a ejecutar Hacienda/Población, pese a
+        # estar "protegidos" con !cancelled(). Fix: Hacienda y Población
+        # se mueven aquí, ANTES del recorrido de provincias (que es el
+        # paso largo e impredecible) -- son descargas rápidas e
+        # independientes de la app en producción, así que corren siempre,
+        # pase lo que pase después.
+        run: |
+          set -uo pipefail
+          # Independiente del resto del workflow: no depende de la app en
+          # producción (a diferencia del paso de abajo, que habla con
+          # ${BASE_URL} vía ADMIN_TOKEN) -- descarga directo de
+          # hacienda.gob.es y escribe un JSON estático versionado, mismo
+          # patrón que cuentas_anuales.json/retribuciones_ispa.json (ver
+          # actualizar_deuda_y_liquidaciones.py).
+          # Cada `|| exit 0` es a propósito: un fallo aquí (Hacienda cambia
+          # el formato de su página índice, host caído, etc.) no debe
+          # bloquear nada más -- mismo criterio que noticias UE / contractes
+          # menors de más abajo.
+          pip install --quiet -r requirements.txt openpyxl \
+            || { echo "::warning::No se pudieron instalar dependencias para el refresco de Hacienda; se salta."; exit 0; }
+          (cd backend && python actualizar_deuda_y_liquidaciones.py) \
+            || { echo "::warning::actualizar_deuda_y_liquidaciones.py falló; se mantiene el hacienda_eell.json existente."; exit 0; }
+
+          # Reintenta el push con merge si otra ejecución ya empujó a main
+          # mientras tanto (ver nota de cabecera "RACE DE PUSH"). Este
+          # archivo es JSON de texto, así que un merge normal (sin -X ours)
+          # puede fusionar de verdad los cambios de ambos lados en vez de
+          # descartar uno.
+          push_con_reintento() {
+            local intentos=0
+            while true; do
+              if git push; then
+                return 0
+              fi
+              intentos=$((intentos+1))
+              if [ "$intentos" -ge 5 ]; then
+                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
+                return 1
+              fi
+              echo "push rechazado -- reintento $intentos/5 tras merge con origin/main..."
+              git fetch origin main
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
+              if ! git merge --no-edit origin/main; then
+                echo "::error::git merge con origin/main falló; abortando push."
+                git merge --abort 2>/dev/null || true
+                git stash pop >/dev/null 2>&1 || true
+                return 1
+              fi
+              git stash pop >/dev/null 2>&1 || true
+              sleep 5
+            done
+          }
+
+          git config user.name  "dinero-publico-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add backend/hacienda_eell.json
+          if git diff --cached --quiet; then
+            echo "hacienda_eell.json sin cambios; nada que commitear."
+          else
+            git commit -m "Auto-commit: refresco deuda viva y saldo no financiero (Ministerio de Hacienda)"
+            push_con_reintento
+            echo "hacienda_eell.json commiteado y pusheado."
+          fi
+
+      - name: Refrescar población oficial (INE, Padrón Municipal)
+        # Mismo motivo que el paso de Hacienda de arriba (movido antes del
+        # recorrido de provincias el 2026-09-18).
+        run: |
+          set -uo pipefail
+          # Mismo criterio que el paso de Hacienda de arriba: independiente
+          # del resto (no habla con la app en producción), fuente propia
+          # (API JSON del INE, ver actualizar_poblacion.py) -- solo usa
+          # 'requests', ya en requirements.txt, no hace falta openpyxl aquí.
+          pip install --quiet -r requirements.txt \
+            || { echo "::warning::No se pudieron instalar dependencias para el refresco de población; se salta."; exit 0; }
+          (cd backend && python actualizar_poblacion.py) \
+            || { echo "::warning::actualizar_poblacion.py falló; se mantiene el poblacion.json existente."; exit 0; }
+
+          push_con_reintento() {
+            local intentos=0
+            while true; do
+              if git push; then
+                return 0
+              fi
+              intentos=$((intentos+1))
+              if [ "$intentos" -ge 5 ]; then
+                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
+                return 1
+              fi
+              echo "push rechazado -- reintento $intentos/5 tras merge con origin/main..."
+              git fetch origin main
+              git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
+              if ! git merge --no-edit origin/main; then
+                echo "::error::git merge con origin/main falló; abortando push."
+                git merge --abort 2>/dev/null || true
+                git stash pop >/dev/null 2>&1 || true
+                return 1
+              fi
+              git stash pop >/dev/null 2>&1 || true
+              sleep 5
+            done
+          }
+
+          git config user.name  "dinero-publico-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add backend/poblacion.json
+          if git diff --cached --quiet; then
+            echo "poblacion.json sin cambios; nada que commitear."
+          else
+            git commit -m "Auto-commit: refresco población oficial (INE, Padrón Municipal)"
+            push_con_reintento
+            echo "poblacion.json commiteado y pusheado."
+          fi
+
       - name: Recorrer todas las provincias (contratos + RPC Cataluña)
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
@@ -188,10 +322,23 @@ jobs:
 
           # Presupuesto por PROVINCIA (una sola no puede comerse la noche
           # entera) y presupuesto TOTAL del bucle (deja margen para los
-          # extras de fin de ciclo -- Hacienda/Población/fondos UE -- antes
-          # del timeout-minutes:350 del job).
+          # extras de fin de ciclo -- fondos UE/noticias/Fuente Álamo/
+          # Cartagena/directivos -- antes del timeout-minutes:350 del job;
+          # Hacienda/Población YA NO cuentan aquí, van antes del bucle,
+          # ver ese step).
+          #
+          # AJUSTADO 2026-09-18 tras el primer run real (35278029305, un
+          # disparo manual): bucle + extras se llevaron los 350 min
+          # completos y GitHub canceló el job a mitad del polling de
+          # fondos UE (que sigue "running" a los 28 min sin llegar a
+          # 'done', más lento de lo esperado -- coherente con lo ya
+          # documentado sobre Cohesion Data/Kohesio: es un proceso
+          # incremental por diseño, no siempre termina en una sola
+          # pasada). MAX_MIN_TOTAL baja de 300 a 260 para dejar más
+          # margen real a los extras -- ajuste con datos de una sola
+          # noche, revisar si vuelve a quedarse corto.
           MAX_MIN_PROVINCIA=100
-          MAX_MIN_TOTAL=300
+          MAX_MIN_TOTAL=260
           INTERVAL=240          # 4 min < los ~15 min que Render tarda en dormirse
           deadline_total=$(( $(date +%s) + MAX_MIN_TOTAL * 60 ))
           fallo=0               # se pone a 1 si algún refresco crítico no llega
@@ -371,7 +518,7 @@ jobs:
             fallo=1
           else
             echo "job_fue=$job_fue"
-            if poll_hasta_done "$job_fue" "fondos" 40; then
+            if poll_hasta_done "$job_fue" "fondos" 50; then
               echo "Fondos UE completados ('done')."
             else
               echo "::warning::Refresco de fondos UE no completó. Se sigue igualmente."
@@ -436,117 +583,3 @@ jobs:
           fi
           exit "$fallo"
 
-      - name: Refrescar deuda viva y saldo no financiero (Ministerio de Hacienda)
-        # !cancelled(): tiene que seguir corriendo aunque el paso de arriba
-        # haya terminado en fallo=1 -- ver nota de cabecera "RACE DE PUSH".
-        # Ya no está anclado a ninguna provincia concreta (antes "murcia",
-        # la primera franja del horario fijo) -- corre una vez por noche,
-        # después de intentar el recorrido completo.
-        if: ${{ !cancelled() }}
-        run: |
-          set -uo pipefail
-          # Independiente del resto del workflow: no depende de la app en
-          # producción (a diferencia del paso de arriba, que habla con
-          # ${BASE_URL} vía ADMIN_TOKEN) -- descarga directo de
-          # hacienda.gob.es y escribe un JSON estático versionado, mismo
-          # patrón que cuentas_anuales.json/retribuciones_ispa.json (ver
-          # actualizar_deuda_y_liquidaciones.py).
-          # Cada `|| exit 0` es a propósito: un fallo aquí (Hacienda cambia
-          # el formato de su página índice, host caído, etc.) no debe
-          # bloquear nada más -- mismo criterio que noticias UE / contractes
-          # menors de más arriba.
-          pip install --quiet -r requirements.txt openpyxl \
-            || { echo "::warning::No se pudieron instalar dependencias para el refresco de Hacienda; se salta."; exit 0; }
-          (cd backend && python actualizar_deuda_y_liquidaciones.py) \
-            || { echo "::warning::actualizar_deuda_y_liquidaciones.py falló; se mantiene el hacienda_eell.json existente."; exit 0; }
-
-          # Reintenta el push con merge si otra ejecución ya empujó a main
-          # mientras tanto (ver nota de cabecera "RACE DE PUSH"). Este
-          # archivo es JSON de texto, así que un merge normal (sin -X ours)
-          # puede fusionar de verdad los cambios de ambos lados en vez de
-          # descartar uno.
-          push_con_reintento() {
-            local intentos=0
-            while true; do
-              if git push; then
-                return 0
-              fi
-              intentos=$((intentos+1))
-              if [ "$intentos" -ge 5 ]; then
-                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
-                return 1
-              fi
-              echo "push rechazado -- reintento $intentos/5 tras merge con origin/main..."
-              git fetch origin main
-              git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
-              if ! git merge --no-edit origin/main; then
-                echo "::error::git merge con origin/main falló; abortando push."
-                git merge --abort 2>/dev/null || true
-                git stash pop >/dev/null 2>&1 || true
-                return 1
-              fi
-              git stash pop >/dev/null 2>&1 || true
-              sleep 5
-            done
-          }
-
-          git config user.name  "dinero-publico-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add backend/hacienda_eell.json
-          if git diff --cached --quiet; then
-            echo "hacienda_eell.json sin cambios; nada que commitear."
-          else
-            git commit -m "Auto-commit: refresco deuda viva y saldo no financiero (Ministerio de Hacienda)"
-            push_con_reintento
-            echo "hacienda_eell.json commiteado y pusheado."
-          fi
-
-      - name: Refrescar población oficial (INE, Padrón Municipal)
-        # !cancelled(): mismo motivo que el paso de Hacienda de arriba.
-        if: ${{ !cancelled() }}
-        run: |
-          set -uo pipefail
-          # Mismo criterio que el paso de Hacienda de arriba: independiente
-          # del resto (no habla con la app en producción), fuente propia
-          # (API JSON del INE, ver actualizar_poblacion.py) -- solo usa
-          # 'requests', ya en requirements.txt, no hace falta openpyxl aquí.
-          pip install --quiet -r requirements.txt \
-            || { echo "::warning::No se pudieron instalar dependencias para el refresco de población; se salta."; exit 0; }
-          (cd backend && python actualizar_poblacion.py) \
-            || { echo "::warning::actualizar_poblacion.py falló; se mantiene el poblacion.json existente."; exit 0; }
-
-          push_con_reintento() {
-            local intentos=0
-            while true; do
-              if git push; then
-                return 0
-              fi
-              intentos=$((intentos+1))
-              if [ "$intentos" -ge 5 ]; then
-                echo "::error::git push falló tras $intentos intentos (main avanzó más rápido de lo que podíamos alcanzar)."
-                return 1
-              fi
-              echo "push rechazado -- reintento $intentos/5 tras merge con origin/main..."
-              git fetch origin main
-              git stash push -u -m "push_con_reintento: cambios sueltos antes de mergear" >/dev/null 2>&1 || true
-              if ! git merge --no-edit origin/main; then
-                echo "::error::git merge con origin/main falló; abortando push."
-                git merge --abort 2>/dev/null || true
-                git stash pop >/dev/null 2>&1 || true
-                return 1
-              fi
-              git stash pop >/dev/null 2>&1 || true
-              sleep 5
-            done
-          }
-
-          git config user.name  "dinero-publico-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add backend/poblacion.json
-          if git diff --cached --quiet; then
-            echo "poblacion.json sin cambios; nada que commitear."
-          else
-            git commit -m "Auto-commit: refresco población oficial (INE, Padrón Municipal)"
-            push_con_reintento
-            echo "poblacion.json commiteado y pusheado."
-          fi
