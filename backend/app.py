@@ -8960,7 +8960,7 @@ header h1{overflow-wrap:break-word;}
 .logo-svg{flex-shrink:0;line-height:0;}
 .logo-svg svg{width:160px;height:auto;display:block;}
 header h1{font-size:15px;font-weight:600;}
-header p{font-size:12px;color:var(--dim);margin-top:2px;}
+header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .header-nav{flex-shrink:0;display:flex;align-items:center;gap:10px;}
 .header-nav>a{display:inline-flex;text-decoration:none;padding:8px 16px;border-radius:6px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);font-size:13px;font-weight:600;white-space:nowrap;}
 .header-nav>a:hover{background:rgba(240,136,62,.22);}
@@ -9156,7 +9156,7 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 
 /* ── landing ──────────────────────────────────────────────────────────── */
 .hero{text-align:center;padding:38px 20px 8px;}
-.hero-tagline{font-size:20px;color:var(--text);font-weight:600;}
+.hero-tagline{font-size:20px;color:var(--yellow);font-weight:600;}
 .hero-sub{color:var(--dim);margin-top:10px;font-size:13px;max-width:640px;margin-left:auto;margin-right:auto;}
 .global-search{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 22px;margin:22px 0;}
 .global-search .gs-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
@@ -9228,7 +9228,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
    en .hero-panel -- el resto de usos de esas clases (rankings, fondos-ue,
    landing por provincia) no llevan ese envoltorio y siguen en fondo oscuro. */
 .hero-panel{background:linear-gradient(135deg,#0b2145 0%,#12336b 55%,#1c4fa0 100%);border-radius:14px;padding:6px 20px 24px;margin-bottom:24px;color:#fff;}
-.hero-panel .hero-tagline{color:#fff;}
+.hero-panel .hero-tagline{color:var(--yellow);}
 .hero-panel .hero-sub{color:rgba(255,255,255,.82);}
 .hero-panel .adv-search{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);}
 .hero-panel .as-tab{background:rgba(255,255,255,.08);color:rgba(255,255,255,.72);border-color:rgba(255,255,255,.2);}
@@ -9416,6 +9416,16 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .rk-sidebar-muni{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rk-sidebar-valor{font-family:'IBM Plex Mono',monospace;color:var(--green);font-size:11px;white-space:nowrap;}
 .rk-sidebar-ver{display:block;margin-top:12px;font-size:11px;text-align:center;}
+/* Widget de Índice de Transparencia en la ficha de municipio (2026-09-18)
+   -- reutiliza .rk-sidebar-item/-pos/-muni/-valor/-list/-ver de arriba
+   para las filas, solo añade el contenedor <details> y el resalte de la
+   fila del propio municipio. */
+.it-widget{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-top:14px;overflow:hidden;}
+.it-widget summary{padding:12px 18px;background:rgba(88,166,255,.08);cursor:pointer;font-size:14px;font-weight:600;color:var(--text);list-style:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.it-widget summary::-webkit-details-marker{display:none;}
+.it-widget-body{padding:12px 18px 16px;}
+.rk-sidebar-item-actual{background:rgba(63,185,80,.1);border-radius:6px;padding:6px 8px;margin:0 -8px;border-bottom-color:transparent;}
+.rk-sidebar-separador{border-top:1px dashed var(--border);margin:4px 0;}
 
 /* ── gancho de personalización (home nacional) ───────────────────────────── */
 .personaliza-banner{background:linear-gradient(135deg,#1c4fa0 0%,#0b2145 100%);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#fff;}
@@ -10019,12 +10029,16 @@ def _icono_contrato(titulo):
 
 
 def _ad_banner_html():
-    """Con ADSENSE_CLIENT_ID/ADSENSE_SLOT_ID vacíos (hoy) se queda igual que
-    siempre -- el hueco de contacto, sin nada de Google. El día que César dé
-    el código real de su cuenta aprobada, rellenar esas dos constantes ya
-    activa el <ins> real aquí; el script de AdSense en sí solo se inyecta
-    tras aceptar el banner de cookies (_dpCargarAdsense(), ver
-    _ANALYTICS_LOADER_JS/_ADSENSE_LOADER_JS y _page_shell), nunca antes."""
+    """Con ADSENSE_CLIENT_ID/ADSENSE_SLOT_ID vacíos (hoy) no se muestra nada
+    -- antes había un placeholder visible ("Espacio publicitario —
+    contacto@dinero-publico.com") en todas las páginas del sitio; a
+    petición de César (2026-09-18) se quita hasta tener AdSense real, en
+    vez de anunciar un hueco publicitario que todavía no existe. El día
+    que César dé el código real de su cuenta aprobada, rellenar esas dos
+    constantes ya activa el <ins> real aquí; el script de AdSense en sí
+    solo se inyecta tras aceptar el banner de cookies (_dpCargarAdsense(),
+    ver _ANALYTICS_LOADER_JS/_ADSENSE_LOADER_JS y _page_shell), nunca
+    antes."""
     if ADSENSE_CLIENT_ID and ADSENSE_SLOT_ID:
         return (f'<div class="ad-banner ad-banner-real" id="ad-banner">'
                 f'<ins class="adsbygoogle" style="display:block" '
@@ -10032,9 +10046,7 @@ def _ad_banner_html():
                 f'data-ad-slot="{esc(ADSENSE_SLOT_ID)}" '
                 f'data-ad-format="auto" data-full-width-responsive="true"></ins>'
                 f'</div>')
-    return ('<div class="ad-banner" id="ad-banner">'
-            'Espacio publicitario — contacto@dinero-publico.com'
-            '</div>')
+    return ''
 
 
 def _header_html(provincia="todas"):
@@ -11775,6 +11787,14 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             </table>
           </div>"""
 
+        # Índice de Transparencia de este municipio -- solo en la ficha de
+        # UN municipio concreto (is_paged), no en listados de "todos los
+        # municipios de la provincia": no tendría sentido repetir el mismo
+        # Top N nacional en 45+ cards seguidas. Pseudo-municipios excluidos
+        # (nunca tienen índice, ver _calcular_indice_transparencia).
+        it_widget_html = (_widget_indice_transparencia_muni_html(muni_name_d)
+                           if is_paged and not es_pseudo_municipio(muni_name_d) else "")
+
         # Contratos menores de fuentes LOCALES (Girona/RPC, Fuente Álamo, Mula,
         # Molina de Segura...) -- independientes de PLACE/PSCP, ver
         # contratos_menors_locales en _db_init. Colapsable por defecto: son
@@ -11900,6 +11920,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             <span class="scroll-hint" aria-hidden="true">sigue <span class="scroll-hint-arrow">›</span></span>
           </div>
           {pag_html}
+          {it_widget_html}
           {fondos_ue_html}
           {contratos_menors_html}
           {render_comentarios_html("municipio", muni_name, f"/?muni={muni_enc}{q_prov}", titulo=muni_name)}
@@ -12080,6 +12101,54 @@ _PERSONALIZACION_JS = r"""(function(){
     if (sugs && !sugs.contains(evt.target) && evt.target !== input) sugs.classList.remove('show');
   });
 })();"""
+
+
+def _widget_indice_transparencia_muni_html(municipio, top_n=8):
+    """Widget compacto del Índice de Transparencia para la ficha de UN
+    ayuntamiento concreto (2026-09-18, petición de César) -- reutiliza
+    _indice_transparencia_cacheado() tal cual (mismo caché de 1h que ya
+    usa /rankings y el sidebar de la home, ver
+    _sidebar_ranking_transparencia_html más abajo, ningún cálculo nuevo),
+    y las mismas clases CSS .rk-sidebar-* ya existentes para las filas.
+    Muestra el Top N nacional; si el municipio de esta ficha tiene índice
+    calculado, se resalta su fila si ya está dentro del Top N, o se añade
+    aparte (con un separador) si no. Si el municipio no tiene índice
+    calculado (cobertura insuficiente, ver _calcular_indice_transparencia),
+    no se muestra nada -- mismo criterio que el sidebar de la home: mejor
+    nada que una caja vacía o con un "N/A" que no aporta."""
+    filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
+    filas.sort(key=lambda f: f["indice"], reverse=True)
+    clave_muni = normalizar(municipio)
+    fila_actual = next((f for f in filas if normalizar(f["municipio"]) == clave_muni), None)
+    if fila_actual is None:
+        return ""
+    total = len(filas)
+    posicion_actual = next(i for i, f in enumerate(filas, 1) if normalizar(f["municipio"]) == clave_muni)
+    top = filas[:top_n]
+    en_top = posicion_actual <= top_n
+
+    def _fila(pos, f, es_actual):
+        clase = ' rk-sidebar-item-actual' if es_actual else ''
+        return (f'<a class="rk-sidebar-item{clase}" href="/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}">'
+                f'<span class="rk-sidebar-pos">{pos}.</span>'
+                f'<span class="rk-sidebar-muni">{esc(f["municipio"])}</span>'
+                f'<span class="rk-sidebar-valor">{f["indice"]:.0f}/100</span>'
+                f'</a>')
+
+    items = "".join(_fila(i, f, normalizar(f["municipio"]) == clave_muni) for i, f in enumerate(top, 1))
+    if not en_top:
+        items += (f'<div class="rk-sidebar-separador"></div>'
+                   + _fila(posicion_actual, fila_actual, True))
+
+    return f"""<details class="it-widget">
+        <summary>🏅 Índice de Transparencia
+          <span class="badge">{fila_actual["indice"]:.0f}/100 · #{posicion_actual} de {total}</span>
+        </summary>
+        <div class="it-widget-body">
+          <div class="rk-sidebar-list">{items}</div>
+          <a class="rk-sidebar-ver btn-ver" href="/rankings#indice-transparencia">Ver ranking completo →</a>
+        </div>
+      </details>"""
 
 
 def _sidebar_ranking_transparencia_html(top_n=8):
