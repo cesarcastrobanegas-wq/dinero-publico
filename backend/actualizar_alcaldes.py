@@ -103,6 +103,22 @@ ALIAS_MUNICIPIO = {
     # Montsant" en el nomenclátor PSCP, ver memoria del proyecto).
     "bigues i riells del fai": "Bigues i Riells",
     "la bisbal de falset": "la Bisbal de Montsant",
+    # Detectados 2026-09-18 al ejecutar actualizar_poblacion.py y
+    # actualizar_deuda_y_liquidaciones.py sobre Galicia -- ninguno es un
+    # problema de artículo pospuesto (ya cubierto por
+    # _formas_nucleo_articulo): son nombres cortos/con o sin guion que el
+    # INE/Hacienda usan de forma distinta a nuestra lista. Puesto aquí
+    # (compartido) en vez de en un dict local de un solo script para que
+    # beneficie a ambos por igual -- mismo criterio que las 2 entradas de
+    # arriba.
+    "alfoz": "Alfoz do Castrodouro",
+    "ribeira de piquin": "A Ribeira de Piquín",
+    "castro caldelas": "O Castro de Caldelas",
+    "rios": "O Riós",
+    "campo lameiro": "O Campo Lameiro",
+    "cangas": "Cangas de Morrazo",
+    "cerdedo-cotobade": "Cerdedo Cotobade",
+    "mondariz-balneario": "Mondariz Balneario",
 }
 
 # Girona se curó a mano al estilo "núcleo, artículo, en minúscula" (p.ej.
@@ -117,7 +133,27 @@ ALIAS_MUNICIPIO = {
 # sobre las 3 provincias nuevas: 122 municipios sin emparejar, casi todos
 # con este mismo patrón sistemático (no casos sueltos) -- se resuelve
 # reordenando el nombre de origen en vez de añadir cientos de alias a mano.
-_RE_NUCLEO_ARTICULO = re.compile(r"^(.+),\s*(El|La|L'|Els|Les|Es|Ets)\s*$", re.IGNORECASE)
+#
+# AMPLIADO 2026-09-18 (piloto Galicia + auditoría de actualizar_poblacion.py
+# tras conectar Aragón/Extremadura/Galicia): el mismo patrón "Núcleo,
+# Artículo" del Ministerio/INE se usa también con artículos CASTELLANOS
+# (Los/Las) y GALLEGOS (O/A/Os/As), que esta regex no reconocía -- se
+# detectó al ejecutar actualizar_poblacion.py con Galicia recién conectada:
+# Lugo 54/67, Ourense 74/92, Pontevedra 48/61 sin emparejar, casi todos del
+# tipo "Corgo, O"/"Arnoia, A"/"Estrada, A" (nuestra app ya guarda "O Corgo"/
+# "A Arnoia"/"A Estrada", artículo antepuesto, mismo criterio que "A
+# Coruña"). Al revisar la salida completa del script también aparecían sin
+# emparejar municipios de Cantabria/Santa Cruz de Tenerife/Badajoz/Huesca/
+# Teruel/Zaragoza con "Los"/"Las" pospuesto ("Corrales de Buelna, Los",
+# "Llanos de Aridane, Los", "Santos de Maimona, Los"...) -- un déficit
+# PREEXISTENTE (no causado por los cambios de hoy) que nunca se había
+# detectado porque nadie había revisado la lista completa de "sin
+# emparejar" con atención. Un solo artículo de una letra (O/A) tiene, en
+# teoría, más riesgo de falso positivo que "El/La/Los/Las" -- pero el
+# patrón exige que sea EXACTAMENTE eso tras una coma final en un nombre de
+# municipio ya filtrado por el propio catálogo del Ministerio, no una
+# coincidencia libre en cualquier texto, así que el riesgo real es mínimo.
+_RE_NUCLEO_ARTICULO = re.compile(r"^(.+),\s*(El|La|Los|Las|L'|Els|Les|Es|Ets|O|A|Os|As)\s*$", re.IGNORECASE)
 
 # "de + el" -> "del", "de + els" -> "dels" (única contracción real en
 # catalán con el artículo pospuesto). El nomenclátor PSCP de origen de
@@ -126,7 +162,13 @@ _RE_NUCLEO_ARTICULO = re.compile(r"^(.+),\s*(El|La|L'|Els|Les|Es|Ets)\s*$", re.I
 # Pierola" en vez de "els Hostalets de Pierola") -- ver memoria del
 # proyecto: no se normalizó a mano a propósito para no introducir un error
 # propio sobre datos de contratos ya verificados, así que aquí se prueban
-# ambas formas en vez de "corregir" el nomenclátor.
+# ambas formas en vez de "corregir" el nomenclátor. Sin entrada equivalente
+# para castellano/gallego: "del"/"da"/"do" SÍ existen como contracciones
+# reales en esos idiomas, pero no se ha visto ningún caso real en los
+# nomenclátores propios de esta app donde el límite "de + artículo" quede
+# justo en el borde del nombre reordenado (a diferencia del catalán, donde
+# sí se detectó la inconsistencia real arriba) -- añadir sin un caso real
+# que lo justifique sería adivinar, no corregir.
 _CONTRACCION_DE = {"el": "del", "els": "dels"}
 
 

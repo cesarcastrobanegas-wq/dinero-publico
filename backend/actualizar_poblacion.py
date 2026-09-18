@@ -74,14 +74,34 @@ OPERACION_PADRON_ID = 22
 # Prefijos que PROVINCIA_LABEL antepone al nombre real de la provincia --
 # se quitan para obtener el nombre "pelado" que usa el INE en el título de
 # cada tabla (p.ej. "Región de Murcia" -> "Murcia", "Provincia de Almería"
-# -> "Almería").
-_PREFIJOS_LABEL = ("Provincia de ", "Región de ")
+# -> "Almería"). Ampliado 2026-09-18: "Comunidad de "/"Principado de " no
+# estaban -- madrid/asturias llevaban CERO población cargada desde que se
+# conectaron (nadie había revisado la salida completa del script, que sí
+# avisaba "no se encontró tabla INE para 'Comunidad de Madrid'"/'Principado
+# de Asturias'" en cada ejecución).
+_PREFIJOS_LABEL = ("Provincia de ", "Región de ", "Comunidad de ", "Principado de ")
 
 # Comunidades autónomas que agrupan varias provincias INE reales bajo una
 # sola clave de MUNICIPIOS_POR_PROVINCIA -- únicas que necesitan mapeo a
 # mano, el resto se deriva solo de PROVINCIA_LABEL (ver docstring).
+#
+# Ampliado 2026-09-18: el INE cataloga sus tablas con el mismo patrón
+# "Núcleo, Artículo" que ya se conocía para MUNICIPIOS (ver
+# _RE_NUCLEO_ARTICULO en actualizar_alcaldes.py), pero también para el
+# nombre de la PROVINCIA/CCAA en sí -- verificado contra el listado real
+# de TABLAS_OPERACION/22: "Coruña, A" (no "A Coruña"), "Rioja, La" (no "La
+# Rioja"), "Palmas, Las" (no "Las Palmas"), "Balears, Illes" (orden
+# invertido, mismo patrón con "Illes" en el lugar del artículo). Solo 4
+# casos entre las provincias/CCAA hoy conectadas -- se listan explícitos
+# en vez de generalizar una heurística automática de reordenamiento para
+# tan pocos casos, más fácil de verificar y sin riesgo de falsos positivos
+# en provincias futuras con nombres que no sigan este patrón.
 NOMBRES_INE_OVERRIDE = {
     "pais_vasco": ["Araba", "Gipuzkoa", "Bizkaia"],
+    "la_rioja": ["Rioja, La"],
+    "a_coruna": ["Coruña, A"],
+    "las_palmas": ["Palmas, Las"],
+    "baleares": ["Balears, Illes"],
 }
 
 
@@ -151,6 +171,20 @@ OUT_FILE = f"{BASE_DIR}/poblacion.json"
 # municipio que esta app tiene con su nombre largo completo -- único
 # desajuste de nomenclátor encontrado al ejecutar este script por primera
 # vez (2026-08-04); mismo patrón que ALIAS_ISPA en actualizar_retribuciones.py.
+#
+# NOTA 2026-09-18 (piloto Galicia): los alias de municipios gallegos
+# detectados al generalizar a Galicia (Alfoz, Ribeira de Piquín, Castro
+# Caldelas, Riós, Campo Lameiro, Cangas, Cerdedo-Cotobade, Mondariz-
+# Balneario) se pusieron en ALIAS_MUNICIPIO (actualizar_alcaldes.py, dict
+# compartido) en vez de aquí, para que beneficien también a
+# actualizar_deuda_y_liquidaciones.py, que tiene el mismo tipo de
+# desajuste con las mismas fuentes -- este script ya consulta
+# ALIAS_MUNICIPIO como fallback dentro de _emparejar_en_lista, así que no
+# hace falta duplicarlos aquí. "Cerdedo"/"Cotobade" sueltos SÍ aparecen
+# catalogados por separado en el INE pero sin ninguna cifra publicada
+# (verificado contra DATOS_TABLA/2890: Data=[] para ambos) -- correcto
+# dejarlos sin emparejar, la población real y activa vive solo bajo la
+# entrada fusionada "Cerdedo-Cotobade".
 ALIAS_POBLACION = {
     "Castell-Platja d'Aro": "Castell d'Aro, Platja d'Aro i s'Agaró",
     "Masarac": "Masarac i Vilarnadal",

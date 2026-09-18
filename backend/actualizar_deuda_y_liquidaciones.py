@@ -99,16 +99,39 @@ OUT_FILE = f"{BASE_DIR}/hacienda_eell.json"
 
 # Prefijos que PROVINCIA_LABEL antepone al nombre real de la provincia --
 # se quitan para obtener el nombre "pelado" (ver actualizar_poblacion.py,
-# misma idea).
-_PREFIJOS_LABEL = ("Provincia de ", "Región de ")
+# misma idea). Ampliado 2026-09-18: "Comunidad de "/"Principado de "/
+# "Ciudad Autónoma de " no estaban -- madrid/asturias/ceuta/melilla
+# llevaban CERO deuda/saldo cargados desde que se conectaron (mismo
+# hallazgo que en actualizar_poblacion.py, mismo día: nadie había revisado
+# la salida completa "Deuda viva: N/N, Saldo no financiero: N/N" con
+# atención hasta auditar Aragón/Galicia).
+_PREFIJOS_LABEL = ("Provincia de ", "Región de ", "Comunidad de ",
+                   "Principado de ", "Ciudad Autónoma de ")
 
 # Comunidades autónomas que agrupan varias provincias reales bajo una sola
-# clave de MUNICIPIOS_POR_PROVINCIA -- el fichero de Hacienda SÍ las trae
-# desglosadas por su provincia real, así que hace falta el mapeo explícito
-# (verificado en vivo 2026-09-13: la columna "Provincia" trae literalmente
-# "ARABA/ALAVA", "GIPUZKOA", "BIZKAIA", no "PAIS VASCO").
+# clave de MUNICIPIOS_POR_PROVINCIA, MÁS provincias/CCAA cuyo nombre en el
+# fichero de Hacienda no se deriva de forma directa (abreviado, con
+# artículo pospuesto, o con orden distinto al de PROVINCIA_LABEL) -- el
+# fichero de Hacienda SÍ las trae desglosadas por su provincia real.
+# Verificado en vivo 2026-09-13 para pais_vasco (columna "Provincia" trae
+# literalmente "ARABA/ALAVA", "GIPUZKOA", "BIZKAIA", no "PAIS VASCO") y
+# 2026-09-18, al auditar por qué A Coruña/La Rioja/Las Palmas/Baleares/
+# Santa Cruz de Tenerife llevaban cero deuda/saldo, para el resto:
+# inspeccionado el XLSX real (columna "Provincia", hoja "Datos") con
+# openpyxl -- "CORUÑA, A" (con tilde real en el fichero), "RIOJA, LA",
+# "PALMAS, LAS" (mismo patrón "Núcleo, Artículo" que en
+# actualizar_poblacion.py, pero aquí NO se reutiliza esa lógica porque solo
+# son 5 casos entre provincias, más simple y verificable listarlos a mano
+# que generalizar una transformación automática), "I. BALEARS" (abreviado,
+# no "ILLES BALEARS") y "S.C.TENERIFE" (abreviado, no "SANTA CRUZ DE
+# TENERIFE").
 NOMBRES_MAYUS_OVERRIDE = {
     "pais_vasco": ["ARABA/ALAVA", "GIPUZKOA", "BIZKAIA"],
+    "a_coruna": ["CORUÑA, A"],
+    "la_rioja": ["RIOJA, LA"],
+    "las_palmas": ["PALMAS, LAS"],
+    "baleares": ["I. BALEARS"],
+    "santa_cruz_tenerife": ["S.C.TENERIFE"],
 }
 
 
@@ -286,7 +309,15 @@ def _procesar_deuda_viva(wb, provincia_mayus_a_clave):
 def _procesar_liquidaciones(wb, ejercicio, provincia_mayus_a_clave):
     """Hoja 'Ayuntamientos': fila de cabecera empieza por 'Código de la
     entidad local'; columnas de interés: [4]=Nombre, [5]=Provincia,
-    [7]=Importe saldo no financiero (€), [9]=Remisión de información (Sí/No)."""
+    [7]=Importe saldo no financiero (€), [9]=Remisión de información (Sí/No).
+
+    OJO -- este fichero trae explícito en su propia cabecera (fila 8 del
+    XLSX real, verificado 2026-09-18): "No se incluyen los ayuntamientos de
+    País Vasco y Navarra". No es un desajuste de nomenclátor ni un fallo de
+    _provincia_mayus_a_clave -- pais_vasco puede tener Deuda Viva completa
+    (fichero distinto, sí lo cubre) y Saldo no financiero en 0 a la vez, y
+    eso es el comportamiento correcto. No "arreglar" esto buscando un
+    override de nombre que no existe."""
     ws = wb["Ayuntamientos"]
     filas = ws.iter_rows(values_only=True)
     for row in filas:
