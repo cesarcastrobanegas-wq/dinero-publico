@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-18 14:21:55",
+ "generado": "2026-09-18 15:30:03",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
   "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
@@ -42,7 +42,12 @@
   "segovia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2894",
   "soria": "https://www.ine.es/jaxiT3/Tabla.htm?t=2896",
   "valladolid": "https://www.ine.es/jaxiT3/Tabla.htm?t=2904",
-  "zamora": "https://www.ine.es/jaxiT3/Tabla.htm?t=2906"
+  "zamora": "https://www.ine.es/jaxiT3/Tabla.htm?t=2906",
+  "albacete": "https://www.ine.es/jaxiT3/Tabla.htm?t=2855",
+  "ciudad_real": "https://www.ine.es/jaxiT3/Tabla.htm?t=2866",
+  "cuenca": "https://www.ine.es/jaxiT3/Tabla.htm?t=2869",
+  "guadalajara": "https://www.ine.es/jaxiT3/Tabla.htm?t=2872",
+  "toledo": "https://www.ine.es/jaxiT3/Tabla.htm?t=2902"
  },
  "municipios": {
   "abanilla": {
@@ -41419,6 +41424,5508 @@
    "municipio": "Zamora",
    "provincia": "zamora",
    "poblacion": 59815,
+   "anio": 2025
+  },
+  "abengibre": {
+   "municipio": "Abengibre",
+   "provincia": "albacete",
+   "poblacion": 753,
+   "anio": 2025
+  },
+  "alatoz": {
+   "municipio": "Alatoz",
+   "provincia": "albacete",
+   "poblacion": 504,
+   "anio": 2025
+  },
+  "albacete": {
+   "municipio": "Albacete",
+   "provincia": "albacete",
+   "poblacion": 175400,
+   "anio": 2025
+  },
+  "albatana": {
+   "municipio": "Albatana",
+   "provincia": "albacete",
+   "poblacion": 644,
+   "anio": 2025
+  },
+  "alborea": {
+   "municipio": "Alborea",
+   "provincia": "albacete",
+   "poblacion": 672,
+   "anio": 2025
+  },
+  "alcadozo": {
+   "municipio": "Alcadozo",
+   "provincia": "albacete",
+   "poblacion": 635,
+   "anio": 2025
+  },
+  "alcala del jucar": {
+   "municipio": "Alcalá del Júcar",
+   "provincia": "albacete",
+   "poblacion": 1130,
+   "anio": 2025
+  },
+  "alcaraz": {
+   "municipio": "Alcaraz",
+   "provincia": "albacete",
+   "poblacion": 1283,
+   "anio": 2025
+  },
+  "almansa": {
+   "municipio": "Almansa",
+   "provincia": "albacete",
+   "poblacion": 24615,
+   "anio": 2025
+  },
+  "alpera": {
+   "municipio": "Alpera",
+   "provincia": "albacete",
+   "poblacion": 2278,
+   "anio": 2025
+  },
+  "ayna": {
+   "municipio": "Ayna",
+   "provincia": "albacete",
+   "poblacion": 577,
+   "anio": 2025
+  },
+  "balazote": {
+   "municipio": "Balazote",
+   "provincia": "albacete",
+   "poblacion": 2356,
+   "anio": 2025
+  },
+  "ballestero, el": {
+   "municipio": "Ballestero, El",
+   "provincia": "albacete",
+   "poblacion": 411,
+   "anio": 2025
+  },
+  "balsa de ves": {
+   "municipio": "Balsa de Ves",
+   "provincia": "albacete",
+   "poblacion": 121,
+   "anio": 2025
+  },
+  "barrax": {
+   "municipio": "Barrax",
+   "provincia": "albacete",
+   "poblacion": 1838,
+   "anio": 2025
+  },
+  "bienservida": {
+   "municipio": "Bienservida",
+   "provincia": "albacete",
+   "poblacion": 548,
+   "anio": 2025
+  },
+  "bogarra": {
+   "municipio": "Bogarra",
+   "provincia": "albacete",
+   "poblacion": 727,
+   "anio": 2025
+  },
+  "bonete": {
+   "municipio": "Bonete",
+   "provincia": "albacete",
+   "poblacion": 950,
+   "anio": 2025
+  },
+  "bonillo, el": {
+   "municipio": "Bonillo, El",
+   "provincia": "albacete",
+   "poblacion": 2645,
+   "anio": 2025
+  },
+  "carcelen": {
+   "municipio": "Carcelén",
+   "provincia": "albacete",
+   "poblacion": 483,
+   "anio": 2025
+  },
+  "casas de juan nunez": {
+   "municipio": "Casas de Juan Núñez",
+   "provincia": "albacete",
+   "poblacion": 1409,
+   "anio": 2025
+  },
+  "casas de lazaro": {
+   "municipio": "Casas de Lázaro",
+   "provincia": "albacete",
+   "poblacion": 298,
+   "anio": 2025
+  },
+  "casas de ves": {
+   "municipio": "Casas de Ves",
+   "provincia": "albacete",
+   "poblacion": 519,
+   "anio": 2025
+  },
+  "casas-ibanez": {
+   "municipio": "Casas-Ibáñez",
+   "provincia": "albacete",
+   "poblacion": 4616,
+   "anio": 2025
+  },
+  "caudete": {
+   "municipio": "Caudete",
+   "provincia": "albacete",
+   "poblacion": 10439,
+   "anio": 2025
+  },
+  "cenizate": {
+   "municipio": "Cenizate",
+   "provincia": "albacete",
+   "poblacion": 1163,
+   "anio": 2025
+  },
+  "chinchilla de monte-aragon": {
+   "municipio": "Chinchilla de Monte-Aragón",
+   "provincia": "albacete",
+   "poblacion": 4614,
+   "anio": 2025
+  },
+  "corral-rubio": {
+   "municipio": "Corral-Rubio",
+   "provincia": "albacete",
+   "poblacion": 303,
+   "anio": 2025
+  },
+  "cotillas": {
+   "municipio": "Cotillas",
+   "provincia": "albacete",
+   "poblacion": 123,
+   "anio": 2025
+  },
+  "elche de la sierra": {
+   "municipio": "Elche de la Sierra",
+   "provincia": "albacete",
+   "poblacion": 3603,
+   "anio": 2025
+  },
+  "ferez": {
+   "municipio": "Férez",
+   "provincia": "albacete",
+   "poblacion": 604,
+   "anio": 2025
+  },
+  "fuensanta": {
+   "municipio": "Fuensanta",
+   "provincia": "albacete",
+   "poblacion": 282,
+   "anio": 2025
+  },
+  "fuente-alamo": {
+   "municipio": "Fuente-Álamo",
+   "provincia": "albacete",
+   "poblacion": 2422,
+   "anio": 2025
+  },
+  "fuentealbilla": {
+   "municipio": "Fuentealbilla",
+   "provincia": "albacete",
+   "poblacion": 1804,
+   "anio": 2025
+  },
+  "gineta, la": {
+   "municipio": "Gineta, La",
+   "provincia": "albacete",
+   "poblacion": 2656,
+   "anio": 2025
+  },
+  "golosalvo": {
+   "municipio": "Golosalvo",
+   "provincia": "albacete",
+   "poblacion": 79,
+   "anio": 2025
+  },
+  "hellin": {
+   "municipio": "Hellín",
+   "provincia": "albacete",
+   "poblacion": 30836,
+   "anio": 2025
+  },
+  "herrera, la": {
+   "municipio": "Herrera, La",
+   "provincia": "albacete",
+   "poblacion": 308,
+   "anio": 2025
+  },
+  "higueruela": {
+   "municipio": "Higueruela",
+   "provincia": "albacete",
+   "poblacion": 1133,
+   "anio": 2025
+  },
+  "hoya-gonzalo": {
+   "municipio": "Hoya-Gonzalo",
+   "provincia": "albacete",
+   "poblacion": 582,
+   "anio": 2025
+  },
+  "jorquera": {
+   "municipio": "Jorquera",
+   "provincia": "albacete",
+   "poblacion": 356,
+   "anio": 2025
+  },
+  "letur": {
+   "municipio": "Letur",
+   "provincia": "albacete",
+   "poblacion": 911,
+   "anio": 2025
+  },
+  "lezuza": {
+   "municipio": "Lezuza",
+   "provincia": "albacete",
+   "poblacion": 1281,
+   "anio": 2025
+  },
+  "lietor": {
+   "municipio": "Liétor",
+   "provincia": "albacete",
+   "poblacion": 1052,
+   "anio": 2025
+  },
+  "madrigueras": {
+   "municipio": "Madrigueras",
+   "provincia": "albacete",
+   "poblacion": 4670,
+   "anio": 2025
+  },
+  "mahora": {
+   "municipio": "Mahora",
+   "provincia": "albacete",
+   "poblacion": 1465,
+   "anio": 2025
+  },
+  "masegoso": {
+   "municipio": "Masegoso",
+   "provincia": "albacete",
+   "poblacion": 117,
+   "anio": 2025
+  },
+  "minaya": {
+   "municipio": "Minaya",
+   "provincia": "albacete",
+   "poblacion": 1381,
+   "anio": 2025
+  },
+  "molinicos": {
+   "municipio": "Molinicos",
+   "provincia": "albacete",
+   "poblacion": 754,
+   "anio": 2025
+  },
+  "montalvos": {
+   "municipio": "Montalvos",
+   "provincia": "albacete",
+   "poblacion": 74,
+   "anio": 2025
+  },
+  "montealegre del castillo": {
+   "municipio": "Montealegre del Castillo",
+   "provincia": "albacete",
+   "poblacion": 2051,
+   "anio": 2025
+  },
+  "motilleja": {
+   "municipio": "Motilleja",
+   "provincia": "albacete",
+   "poblacion": 673,
+   "anio": 2025
+  },
+  "munera": {
+   "municipio": "Munera",
+   "provincia": "albacete",
+   "poblacion": 3351,
+   "anio": 2025
+  },
+  "navas de jorquera": {
+   "municipio": "Navas de Jorquera",
+   "provincia": "albacete",
+   "poblacion": 521,
+   "anio": 2025
+  },
+  "nerpio": {
+   "municipio": "Nerpio",
+   "provincia": "albacete",
+   "poblacion": 1136,
+   "anio": 2025
+  },
+  "ontur": {
+   "municipio": "Ontur",
+   "provincia": "albacete",
+   "poblacion": 1895,
+   "anio": 2025
+  },
+  "ossa de montiel": {
+   "municipio": "Ossa de Montiel",
+   "provincia": "albacete",
+   "poblacion": 2233,
+   "anio": 2025
+  },
+  "paterna del madera": {
+   "municipio": "Paterna del Madera",
+   "provincia": "albacete",
+   "poblacion": 328,
+   "anio": 2025
+  },
+  "penas de san pedro": {
+   "municipio": "Peñas de San Pedro",
+   "provincia": "albacete",
+   "poblacion": 1488,
+   "anio": 2025
+  },
+  "penascosa": {
+   "municipio": "Peñascosa",
+   "provincia": "albacete",
+   "poblacion": 329,
+   "anio": 2025
+  },
+  "petrola": {
+   "municipio": "Pétrola",
+   "provincia": "albacete",
+   "poblacion": 660,
+   "anio": 2025
+  },
+  "povedilla": {
+   "municipio": "Povedilla",
+   "provincia": "albacete",
+   "poblacion": 374,
+   "anio": 2025
+  },
+  "pozo canada": {
+   "municipio": "Pozo Cañada",
+   "provincia": "albacete",
+   "poblacion": 2704,
+   "anio": 2025
+  },
+  "pozohondo": {
+   "municipio": "Pozohondo",
+   "provincia": "albacete",
+   "poblacion": 1544,
+   "anio": 2025
+  },
+  "pozo-lorente": {
+   "municipio": "Pozo-Lorente",
+   "provincia": "albacete",
+   "poblacion": 398,
+   "anio": 2025
+  },
+  "pozuelo": {
+   "municipio": "Pozuelo",
+   "provincia": "albacete",
+   "poblacion": 455,
+   "anio": 2025
+  },
+  "recueja, la": {
+   "municipio": "Recueja, La",
+   "provincia": "albacete",
+   "poblacion": 215,
+   "anio": 2025
+  },
+  "riopar": {
+   "municipio": "Riópar",
+   "provincia": "albacete",
+   "poblacion": 1344,
+   "anio": 2025
+  },
+  "robledo": {
+   "municipio": "Robledo",
+   "provincia": "albacete",
+   "poblacion": 382,
+   "anio": 2025
+  },
+  "roda, la": {
+   "municipio": "Roda, La",
+   "provincia": "albacete",
+   "poblacion": 15643,
+   "anio": 2025
+  },
+  "salobre": {
+   "municipio": "Salobre",
+   "provincia": "albacete",
+   "poblacion": 442,
+   "anio": 2025
+  },
+  "san pedro": {
+   "municipio": "San Pedro",
+   "provincia": "albacete",
+   "poblacion": 1155,
+   "anio": 2025
+  },
+  "socovos": {
+   "municipio": "Socovos",
+   "provincia": "albacete",
+   "poblacion": 1643,
+   "anio": 2025
+  },
+  "tarazona de la mancha": {
+   "municipio": "Tarazona de la Mancha",
+   "provincia": "albacete",
+   "poblacion": 6100,
+   "anio": 2025
+  },
+  "tobarra": {
+   "municipio": "Tobarra",
+   "provincia": "albacete",
+   "poblacion": 8006,
+   "anio": 2025
+  },
+  "valdeganga": {
+   "municipio": "Valdeganga",
+   "provincia": "albacete",
+   "poblacion": 1970,
+   "anio": 2025
+  },
+  "vianos": {
+   "municipio": "Vianos",
+   "provincia": "albacete",
+   "poblacion": 317,
+   "anio": 2025
+  },
+  "villa de ves": {
+   "municipio": "Villa de Ves",
+   "provincia": "albacete",
+   "poblacion": 51,
+   "anio": 2025
+  },
+  "villalgordo del jucar": {
+   "municipio": "Villalgordo del Júcar",
+   "provincia": "albacete",
+   "poblacion": 1159,
+   "anio": 2025
+  },
+  "villamalea": {
+   "municipio": "Villamalea",
+   "provincia": "albacete",
+   "poblacion": 4083,
+   "anio": 2025
+  },
+  "villapalacios": {
+   "municipio": "Villapalacios",
+   "provincia": "albacete",
+   "poblacion": 539,
+   "anio": 2025
+  },
+  "villarrobledo": {
+   "municipio": "Villarrobledo",
+   "provincia": "albacete",
+   "poblacion": 25400,
+   "anio": 2025
+  },
+  "villatoya": {
+   "municipio": "Villatoya",
+   "provincia": "albacete",
+   "poblacion": 114,
+   "anio": 2025
+  },
+  "villavaliente": {
+   "municipio": "Villavaliente",
+   "provincia": "albacete",
+   "poblacion": 190,
+   "anio": 2025
+  },
+  "villaverde de guadalimar": {
+   "municipio": "Villaverde de Guadalimar",
+   "provincia": "albacete",
+   "poblacion": 325,
+   "anio": 2025
+  },
+  "viveros": {
+   "municipio": "Viveros",
+   "provincia": "albacete",
+   "poblacion": 293,
+   "anio": 2025
+  },
+  "yeste": {
+   "municipio": "Yeste",
+   "provincia": "albacete",
+   "poblacion": 2471,
+   "anio": 2025
+  },
+  "abenojar": {
+   "municipio": "Abenójar",
+   "provincia": "ciudad_real",
+   "poblacion": 1309,
+   "anio": 2025
+  },
+  "agudo": {
+   "municipio": "Agudo",
+   "provincia": "ciudad_real",
+   "poblacion": 1605,
+   "anio": 2025
+  },
+  "alamillo": {
+   "municipio": "Alamillo",
+   "provincia": "ciudad_real",
+   "poblacion": 450,
+   "anio": 2025
+  },
+  "albaladejo": {
+   "municipio": "Albaladejo",
+   "provincia": "ciudad_real",
+   "poblacion": 984,
+   "anio": 2025
+  },
+  "alcazar de san juan": {
+   "municipio": "Alcázar de San Juan",
+   "provincia": "ciudad_real",
+   "poblacion": 31914,
+   "anio": 2025
+  },
+  "alcoba de los montes": {
+   "municipio": "Alcoba de los Montes",
+   "provincia": "ciudad_real",
+   "poblacion": 558,
+   "anio": 2025
+  },
+  "alcolea de calatrava": {
+   "municipio": "Alcolea de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 1360,
+   "anio": 2025
+  },
+  "alcubillas": {
+   "municipio": "Alcubillas",
+   "provincia": "ciudad_real",
+   "poblacion": 417,
+   "anio": 2025
+  },
+  "aldea del rey": {
+   "municipio": "Aldea del Rey",
+   "provincia": "ciudad_real",
+   "poblacion": 1565,
+   "anio": 2025
+  },
+  "alhambra": {
+   "municipio": "Alhambra",
+   "provincia": "ciudad_real",
+   "poblacion": 946,
+   "anio": 2025
+  },
+  "almaden": {
+   "municipio": "Almadén",
+   "provincia": "ciudad_real",
+   "poblacion": 4855,
+   "anio": 2025
+  },
+  "almadenejos": {
+   "municipio": "Almadenejos",
+   "provincia": "ciudad_real",
+   "poblacion": 384,
+   "anio": 2025
+  },
+  "almagro": {
+   "municipio": "Almagro",
+   "provincia": "ciudad_real",
+   "poblacion": 9190,
+   "anio": 2025
+  },
+  "almedina": {
+   "municipio": "Almedina",
+   "provincia": "ciudad_real",
+   "poblacion": 475,
+   "anio": 2025
+  },
+  "almodovar del campo": {
+   "municipio": "Almodóvar del Campo",
+   "provincia": "ciudad_real",
+   "poblacion": 5637,
+   "anio": 2025
+  },
+  "almuradiel": {
+   "municipio": "Almuradiel",
+   "provincia": "ciudad_real",
+   "poblacion": 744,
+   "anio": 2025
+  },
+  "anchuras": {
+   "municipio": "Anchuras",
+   "provincia": "ciudad_real",
+   "poblacion": 267,
+   "anio": 2025
+  },
+  "arenales de san gregorio": {
+   "municipio": "Arenales de San Gregorio",
+   "provincia": "ciudad_real",
+   "poblacion": 626,
+   "anio": 2025
+  },
+  "arenas de san juan": {
+   "municipio": "Arenas de San Juan",
+   "provincia": "ciudad_real",
+   "poblacion": 1013,
+   "anio": 2025
+  },
+  "argamasilla de alba": {
+   "municipio": "Argamasilla de Alba",
+   "provincia": "ciudad_real",
+   "poblacion": 6777,
+   "anio": 2025
+  },
+  "argamasilla de calatrava": {
+   "municipio": "Argamasilla de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 5847,
+   "anio": 2025
+  },
+  "arroba de los montes": {
+   "municipio": "Arroba de los Montes",
+   "provincia": "ciudad_real",
+   "poblacion": 388,
+   "anio": 2025
+  },
+  "ballesteros de calatrava": {
+   "municipio": "Ballesteros de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 363,
+   "anio": 2025
+  },
+  "bolanos de calatrava": {
+   "municipio": "Bolaños de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 12153,
+   "anio": 2025
+  },
+  "brazatortas": {
+   "municipio": "Brazatortas",
+   "provincia": "ciudad_real",
+   "poblacion": 1007,
+   "anio": 2025
+  },
+  "cabezarados": {
+   "municipio": "Cabezarados",
+   "provincia": "ciudad_real",
+   "poblacion": 279,
+   "anio": 2025
+  },
+  "cabezarrubias del puerto": {
+   "municipio": "Cabezarrubias del Puerto",
+   "provincia": "ciudad_real",
+   "poblacion": 483,
+   "anio": 2025
+  },
+  "calzada de calatrava": {
+   "municipio": "Calzada de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 3668,
+   "anio": 2025
+  },
+  "campo de criptana": {
+   "municipio": "Campo de Criptana",
+   "provincia": "ciudad_real",
+   "poblacion": 12868,
+   "anio": 2025
+  },
+  "canada de calatrava": {
+   "municipio": "Cañada de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 99,
+   "anio": 2025
+  },
+  "caracuel de calatrava": {
+   "municipio": "Caracuel de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 140,
+   "anio": 2025
+  },
+  "carrion de calatrava": {
+   "municipio": "Carrión de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 3239,
+   "anio": 2025
+  },
+  "carrizosa": {
+   "municipio": "Carrizosa",
+   "provincia": "ciudad_real",
+   "poblacion": 1097,
+   "anio": 2025
+  },
+  "castellar de santiago": {
+   "municipio": "Castellar de Santiago",
+   "provincia": "ciudad_real",
+   "poblacion": 1714,
+   "anio": 2025
+  },
+  "chillon": {
+   "municipio": "Chillón",
+   "provincia": "ciudad_real",
+   "poblacion": 1752,
+   "anio": 2025
+  },
+  "ciudad real": {
+   "municipio": "Ciudad Real",
+   "provincia": "ciudad_real",
+   "poblacion": 76217,
+   "anio": 2025
+  },
+  "corral de calatrava": {
+   "municipio": "Corral de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 1154,
+   "anio": 2025
+  },
+  "los cortijos": {
+   "municipio": "Los Cortijos",
+   "provincia": "ciudad_real",
+   "poblacion": 848,
+   "anio": 2025
+  },
+  "cozar": {
+   "municipio": "Cózar",
+   "provincia": "ciudad_real",
+   "poblacion": 903,
+   "anio": 2025
+  },
+  "daimiel": {
+   "municipio": "Daimiel",
+   "provincia": "ciudad_real",
+   "poblacion": 17722,
+   "anio": 2025
+  },
+  "fernan caballero": {
+   "municipio": "Fernán Caballero",
+   "provincia": "ciudad_real",
+   "poblacion": 965,
+   "anio": 2025
+  },
+  "fontanarejo": {
+   "municipio": "Fontanarejo",
+   "provincia": "ciudad_real",
+   "poblacion": 223,
+   "anio": 2025
+  },
+  "fuencaliente": {
+   "municipio": "Fuencaliente",
+   "provincia": "ciudad_real",
+   "poblacion": 1007,
+   "anio": 2025
+  },
+  "fuenllana": {
+   "municipio": "Fuenllana",
+   "provincia": "ciudad_real",
+   "poblacion": 189,
+   "anio": 2025
+  },
+  "fuente el fresno": {
+   "municipio": "Fuente el Fresno",
+   "provincia": "ciudad_real",
+   "poblacion": 3011,
+   "anio": 2025
+  },
+  "granatula de calatrava": {
+   "municipio": "Granátula de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 683,
+   "anio": 2025
+  },
+  "guadalmez": {
+   "municipio": "Guadalmez",
+   "provincia": "ciudad_real",
+   "poblacion": 709,
+   "anio": 2025
+  },
+  "herencia": {
+   "municipio": "Herencia",
+   "provincia": "ciudad_real",
+   "poblacion": 8661,
+   "anio": 2025
+  },
+  "hinojosas de calatrava": {
+   "municipio": "Hinojosas de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 506,
+   "anio": 2025
+  },
+  "horcajo de los montes": {
+   "municipio": "Horcajo de los Montes",
+   "provincia": "ciudad_real",
+   "poblacion": 798,
+   "anio": 2025
+  },
+  "las labores": {
+   "municipio": "Las Labores",
+   "provincia": "ciudad_real",
+   "poblacion": 550,
+   "anio": 2025
+  },
+  "llanos del caudillo": {
+   "municipio": "Llanos del Caudillo",
+   "provincia": "ciudad_real",
+   "poblacion": 651,
+   "anio": 2025
+  },
+  "luciana": {
+   "municipio": "Luciana",
+   "provincia": "ciudad_real",
+   "poblacion": 350,
+   "anio": 2025
+  },
+  "malagon": {
+   "municipio": "Malagón",
+   "provincia": "ciudad_real",
+   "poblacion": 7827,
+   "anio": 2025
+  },
+  "manzanares": {
+   "municipio": "Manzanares",
+   "provincia": "ciudad_real",
+   "poblacion": 17728,
+   "anio": 2025
+  },
+  "membrilla": {
+   "municipio": "Membrilla",
+   "provincia": "ciudad_real",
+   "poblacion": 5793,
+   "anio": 2025
+  },
+  "mestanza": {
+   "municipio": "Mestanza",
+   "provincia": "ciudad_real",
+   "poblacion": 634,
+   "anio": 2025
+  },
+  "miguelturra": {
+   "municipio": "Miguelturra",
+   "provincia": "ciudad_real",
+   "poblacion": 15924,
+   "anio": 2025
+  },
+  "montiel": {
+   "municipio": "Montiel",
+   "provincia": "ciudad_real",
+   "poblacion": 1167,
+   "anio": 2025
+  },
+  "moral de calatrava": {
+   "municipio": "Moral de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 5184,
+   "anio": 2025
+  },
+  "navalpino": {
+   "municipio": "Navalpino",
+   "provincia": "ciudad_real",
+   "poblacion": 193,
+   "anio": 2025
+  },
+  "navas de estena": {
+   "municipio": "Navas de Estena",
+   "provincia": "ciudad_real",
+   "poblacion": 269,
+   "anio": 2025
+  },
+  "pedro munoz": {
+   "municipio": "Pedro Muñoz",
+   "provincia": "ciudad_real",
+   "poblacion": 7585,
+   "anio": 2025
+  },
+  "picon": {
+   "municipio": "Picón",
+   "provincia": "ciudad_real",
+   "poblacion": 690,
+   "anio": 2025
+  },
+  "piedrabuena": {
+   "municipio": "Piedrabuena",
+   "provincia": "ciudad_real",
+   "poblacion": 4305,
+   "anio": 2025
+  },
+  "poblete": {
+   "municipio": "Poblete",
+   "provincia": "ciudad_real",
+   "poblacion": 2998,
+   "anio": 2025
+  },
+  "porzuna": {
+   "municipio": "Porzuna",
+   "provincia": "ciudad_real",
+   "poblacion": 3529,
+   "anio": 2025
+  },
+  "pozuelo de calatrava": {
+   "municipio": "Pozuelo de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 4055,
+   "anio": 2025
+  },
+  "los pozuelos de calatrava": {
+   "municipio": "Los Pozuelos de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 326,
+   "anio": 2025
+  },
+  "puebla de don rodrigo": {
+   "municipio": "Puebla de Don Rodrigo",
+   "provincia": "ciudad_real",
+   "poblacion": 1148,
+   "anio": 2025
+  },
+  "puebla del principe": {
+   "municipio": "Puebla del Príncipe",
+   "provincia": "ciudad_real",
+   "poblacion": 648,
+   "anio": 2025
+  },
+  "puerto lapice": {
+   "municipio": "Puerto Lápice",
+   "provincia": "ciudad_real",
+   "poblacion": 824,
+   "anio": 2025
+  },
+  "puertollano": {
+   "municipio": "Puertollano",
+   "provincia": "ciudad_real",
+   "poblacion": 45565,
+   "anio": 2025
+  },
+  "retuerta del bullaque": {
+   "municipio": "Retuerta del Bullaque",
+   "provincia": "ciudad_real",
+   "poblacion": 854,
+   "anio": 2025
+  },
+  "el robledo": {
+   "municipio": "El Robledo",
+   "provincia": "ciudad_real",
+   "poblacion": 1078,
+   "anio": 2025
+  },
+  "ruidera": {
+   "municipio": "Ruidera",
+   "provincia": "ciudad_real",
+   "poblacion": 529,
+   "anio": 2025
+  },
+  "saceruela": {
+   "municipio": "Saceruela",
+   "provincia": "ciudad_real",
+   "poblacion": 520,
+   "anio": 2025
+  },
+  "san carlos del valle": {
+   "municipio": "San Carlos del Valle",
+   "provincia": "ciudad_real",
+   "poblacion": 1055,
+   "anio": 2025
+  },
+  "san lorenzo de calatrava": {
+   "municipio": "San Lorenzo de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 189,
+   "anio": 2025
+  },
+  "santa cruz de los canamos": {
+   "municipio": "Santa Cruz de los Cáñamos",
+   "provincia": "ciudad_real",
+   "poblacion": 463,
+   "anio": 2025
+  },
+  "santa cruz de mudela": {
+   "municipio": "Santa Cruz de Mudela",
+   "provincia": "ciudad_real",
+   "poblacion": 3881,
+   "anio": 2025
+  },
+  "socuellamos": {
+   "municipio": "Socuéllamos",
+   "provincia": "ciudad_real",
+   "poblacion": 12172,
+   "anio": 2025
+  },
+  "la solana": {
+   "municipio": "La Solana",
+   "provincia": "ciudad_real",
+   "poblacion": 15242,
+   "anio": 2025
+  },
+  "solana del pino": {
+   "municipio": "Solana del Pino",
+   "provincia": "ciudad_real",
+   "poblacion": 333,
+   "anio": 2025
+  },
+  "terrinches": {
+   "municipio": "Terrinches",
+   "provincia": "ciudad_real",
+   "poblacion": 574,
+   "anio": 2025
+  },
+  "tomelloso": {
+   "municipio": "Tomelloso",
+   "provincia": "ciudad_real",
+   "poblacion": 37060,
+   "anio": 2025
+  },
+  "torralba de calatrava": {
+   "municipio": "Torralba de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 3068,
+   "anio": 2025
+  },
+  "torre de juan abad": {
+   "municipio": "Torre de Juan Abad",
+   "provincia": "ciudad_real",
+   "poblacion": 928,
+   "anio": 2025
+  },
+  "torrenueva": {
+   "municipio": "Torrenueva",
+   "provincia": "ciudad_real",
+   "poblacion": 2645,
+   "anio": 2025
+  },
+  "valdemanco del esteras": {
+   "municipio": "Valdemanco del Esteras",
+   "provincia": "ciudad_real",
+   "poblacion": 157,
+   "anio": 2025
+  },
+  "valdepenas": {
+   "municipio": "Valdepeñas",
+   "provincia": "ciudad_real",
+   "poblacion": 30782,
+   "anio": 2025
+  },
+  "valenzuela de calatrava": {
+   "municipio": "Valenzuela de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 638,
+   "anio": 2025
+  },
+  "villahermosa": {
+   "municipio": "Villahermosa",
+   "provincia": "ciudad_real",
+   "poblacion": 1712,
+   "anio": 2025
+  },
+  "villamanrique": {
+   "municipio": "Villamanrique",
+   "provincia": "ciudad_real",
+   "poblacion": 1050,
+   "anio": 2025
+  },
+  "villamayor de calatrava": {
+   "municipio": "Villamayor de Calatrava",
+   "provincia": "ciudad_real",
+   "poblacion": 611,
+   "anio": 2025
+  },
+  "villanueva de la fuente": {
+   "municipio": "Villanueva de la Fuente",
+   "provincia": "ciudad_real",
+   "poblacion": 1831,
+   "anio": 2025
+  },
+  "villanueva de san carlos": {
+   "municipio": "Villanueva de San Carlos",
+   "provincia": "ciudad_real",
+   "poblacion": 261,
+   "anio": 2025
+  },
+  "villar del pozo": {
+   "municipio": "Villar del Pozo",
+   "provincia": "ciudad_real",
+   "poblacion": 45,
+   "anio": 2025
+  },
+  "villarrubia de los ojos": {
+   "municipio": "Villarrubia de los Ojos",
+   "provincia": "ciudad_real",
+   "poblacion": 9512,
+   "anio": 2025
+  },
+  "villarta de san juan": {
+   "municipio": "Villarta de San Juan",
+   "provincia": "ciudad_real",
+   "poblacion": 2681,
+   "anio": 2025
+  },
+  "viso del marques": {
+   "municipio": "Viso del Marqués",
+   "provincia": "ciudad_real",
+   "poblacion": 2091,
+   "anio": 2025
+  },
+  "abia de la obispalia": {
+   "municipio": "Abia de la Obispalía",
+   "provincia": "cuenca",
+   "poblacion": 68,
+   "anio": 2025
+  },
+  "acebron, el": {
+   "municipio": "Acebrón, El",
+   "provincia": "cuenca",
+   "poblacion": 234,
+   "anio": 2025
+  },
+  "alarcon": {
+   "municipio": "Alarcón",
+   "provincia": "cuenca",
+   "poblacion": 173,
+   "anio": 2025
+  },
+  "albaladejo del cuende": {
+   "municipio": "Albaladejo del Cuende",
+   "provincia": "cuenca",
+   "poblacion": 196,
+   "anio": 2025
+  },
+  "albalate de las nogueras": {
+   "municipio": "Albalate de las Nogueras",
+   "provincia": "cuenca",
+   "poblacion": 261,
+   "anio": 2025
+  },
+  "albendea": {
+   "municipio": "Albendea",
+   "provincia": "cuenca",
+   "poblacion": 132,
+   "anio": 2025
+  },
+  "alberca de zancara, la": {
+   "municipio": "Alberca de Záncara, La",
+   "provincia": "cuenca",
+   "poblacion": 1504,
+   "anio": 2025
+  },
+  "alcala de la vega": {
+   "municipio": "Alcalá de la Vega",
+   "provincia": "cuenca",
+   "poblacion": 80,
+   "anio": 2025
+  },
+  "alcantud": {
+   "municipio": "Alcantud",
+   "provincia": "cuenca",
+   "poblacion": 59,
+   "anio": 2025
+  },
+  "alcazar del rey": {
+   "municipio": "Alcázar del Rey",
+   "provincia": "cuenca",
+   "poblacion": 171,
+   "anio": 2025
+  },
+  "alcohujate": {
+   "municipio": "Alcohujate",
+   "provincia": "cuenca",
+   "poblacion": 25,
+   "anio": 2025
+  },
+  "alconchel de la estrella": {
+   "municipio": "Alconchel de la Estrella",
+   "provincia": "cuenca",
+   "poblacion": 75,
+   "anio": 2025
+  },
+  "algarra": {
+   "municipio": "Algarra",
+   "provincia": "cuenca",
+   "poblacion": 25,
+   "anio": 2025
+  },
+  "aliaguilla": {
+   "municipio": "Aliaguilla",
+   "provincia": "cuenca",
+   "poblacion": 594,
+   "anio": 2025
+  },
+  "almarcha, la": {
+   "municipio": "Almarcha, La",
+   "provincia": "cuenca",
+   "poblacion": 469,
+   "anio": 2025
+  },
+  "almendros": {
+   "municipio": "Almendros",
+   "provincia": "cuenca",
+   "poblacion": 240,
+   "anio": 2025
+  },
+  "almodovar del pinar": {
+   "municipio": "Almodóvar del Pinar",
+   "provincia": "cuenca",
+   "poblacion": 401,
+   "anio": 2025
+  },
+  "almonacid del marquesado": {
+   "municipio": "Almonacid del Marquesado",
+   "provincia": "cuenca",
+   "poblacion": 412,
+   "anio": 2025
+  },
+  "altarejos": {
+   "municipio": "Altarejos",
+   "provincia": "cuenca",
+   "poblacion": 193,
+   "anio": 2025
+  },
+  "arandilla del arroyo": {
+   "municipio": "Arandilla del Arroyo",
+   "provincia": "cuenca",
+   "poblacion": 14,
+   "anio": 2025
+  },
+  "arcas": {
+   "municipio": "Arcas",
+   "provincia": "cuenca",
+   "poblacion": 2332,
+   "anio": 2025
+  },
+  "arcos de la sierra": {
+   "municipio": "Arcos de la Sierra",
+   "provincia": "cuenca",
+   "poblacion": 77,
+   "anio": 2025
+  },
+  "arguisuelas": {
+   "municipio": "Arguisuelas",
+   "provincia": "cuenca",
+   "poblacion": 127,
+   "anio": 2025
+  },
+  "arrancacepas": {
+   "municipio": "Arrancacepas",
+   "provincia": "cuenca",
+   "poblacion": 14,
+   "anio": 2025
+  },
+  "atalaya del canavate": {
+   "municipio": "Atalaya del Cañavate",
+   "provincia": "cuenca",
+   "poblacion": 91,
+   "anio": 2025
+  },
+  "barajas de melo": {
+   "municipio": "Barajas de Melo",
+   "provincia": "cuenca",
+   "poblacion": 1011,
+   "anio": 2025
+  },
+  "barchin del hoyo": {
+   "municipio": "Barchín del Hoyo",
+   "provincia": "cuenca",
+   "poblacion": 104,
+   "anio": 2025
+  },
+  "bascunana de san pedro": {
+   "municipio": "Bascuñana de San Pedro",
+   "provincia": "cuenca",
+   "poblacion": 23,
+   "anio": 2025
+  },
+  "beamud": {
+   "municipio": "Beamud",
+   "provincia": "cuenca",
+   "poblacion": 45,
+   "anio": 2025
+  },
+  "belinchon": {
+   "municipio": "Belinchón",
+   "provincia": "cuenca",
+   "poblacion": 453,
+   "anio": 2025
+  },
+  "belmonte": {
+   "municipio": "Belmonte",
+   "provincia": "cuenca",
+   "poblacion": 1751,
+   "anio": 2025
+  },
+  "belmontejo": {
+   "municipio": "Belmontejo",
+   "provincia": "cuenca",
+   "poblacion": 122,
+   "anio": 2025
+  },
+  "beteta": {
+   "municipio": "Beteta",
+   "provincia": "cuenca",
+   "poblacion": 253,
+   "anio": 2025
+  },
+  "boniches": {
+   "municipio": "Boniches",
+   "provincia": "cuenca",
+   "poblacion": 135,
+   "anio": 2025
+  },
+  "buciegas": {
+   "municipio": "Buciegas",
+   "provincia": "cuenca",
+   "poblacion": 36,
+   "anio": 2025
+  },
+  "buenache de alarcon": {
+   "municipio": "Buenache de Alarcón",
+   "provincia": "cuenca",
+   "poblacion": 447,
+   "anio": 2025
+  },
+  "buenache de la sierra": {
+   "municipio": "Buenache de la Sierra",
+   "provincia": "cuenca",
+   "poblacion": 112,
+   "anio": 2025
+  },
+  "buendia": {
+   "municipio": "Buendía",
+   "provincia": "cuenca",
+   "poblacion": 422,
+   "anio": 2025
+  },
+  "campillo de altobuey": {
+   "municipio": "Campillo de Altobuey",
+   "provincia": "cuenca",
+   "poblacion": 1312,
+   "anio": 2025
+  },
+  "campillos-paravientos": {
+   "municipio": "Campillos-Paravientos",
+   "provincia": "cuenca",
+   "poblacion": 112,
+   "anio": 2025
+  },
+  "campillos-sierra": {
+   "municipio": "Campillos-Sierra",
+   "provincia": "cuenca",
+   "poblacion": 28,
+   "anio": 2025
+  },
+  "campos del paraiso": {
+   "municipio": "Campos del Paraíso",
+   "provincia": "cuenca",
+   "poblacion": 646,
+   "anio": 2025
+  },
+  "canalejas del arroyo": {
+   "municipio": "Canalejas del Arroyo",
+   "provincia": "cuenca",
+   "poblacion": 153,
+   "anio": 2025
+  },
+  "canada del hoyo": {
+   "municipio": "Cañada del Hoyo",
+   "provincia": "cuenca",
+   "poblacion": 221,
+   "anio": 2025
+  },
+  "canada juncosa": {
+   "municipio": "Cañada Juncosa",
+   "provincia": "cuenca",
+   "poblacion": 213,
+   "anio": 2025
+  },
+  "canamares": {
+   "municipio": "Cañamares",
+   "provincia": "cuenca",
+   "poblacion": 457,
+   "anio": 2025
+  },
+  "canavate, el": {
+   "municipio": "Cañavate, El",
+   "provincia": "cuenca",
+   "poblacion": 125,
+   "anio": 2025
+  },
+  "canaveras": {
+   "municipio": "Cañaveras",
+   "provincia": "cuenca",
+   "poblacion": 230,
+   "anio": 2025
+  },
+  "canaveruelas": {
+   "municipio": "Cañaveruelas",
+   "provincia": "cuenca",
+   "poblacion": 110,
+   "anio": 2025
+  },
+  "canete": {
+   "municipio": "Cañete",
+   "provincia": "cuenca",
+   "poblacion": 877,
+   "anio": 2025
+  },
+  "canizares": {
+   "municipio": "Cañizares",
+   "provincia": "cuenca",
+   "poblacion": 441,
+   "anio": 2025
+  },
+  "carboneras de guadazaon": {
+   "municipio": "Carboneras de Guadazaón",
+   "provincia": "cuenca",
+   "poblacion": 797,
+   "anio": 2025
+  },
+  "cardenete": {
+   "municipio": "Cardenete",
+   "provincia": "cuenca",
+   "poblacion": 479,
+   "anio": 2025
+  },
+  "carrascosa": {
+   "municipio": "Carrascosa",
+   "provincia": "cuenca",
+   "poblacion": 69,
+   "anio": 2025
+  },
+  "carrascosa de haro": {
+   "municipio": "Carrascosa de Haro",
+   "provincia": "cuenca",
+   "poblacion": 87,
+   "anio": 2025
+  },
+  "casas de benitez": {
+   "municipio": "Casas de Benítez",
+   "provincia": "cuenca",
+   "poblacion": 872,
+   "anio": 2025
+  },
+  "casas de fernando alonso": {
+   "municipio": "Casas de Fernando Alonso",
+   "provincia": "cuenca",
+   "poblacion": 1041,
+   "anio": 2025
+  },
+  "casas de garcimolina": {
+   "municipio": "Casas de Garcimolina",
+   "provincia": "cuenca",
+   "poblacion": 30,
+   "anio": 2025
+  },
+  "casas de guijarro": {
+   "municipio": "Casas de Guijarro",
+   "provincia": "cuenca",
+   "poblacion": 105,
+   "anio": 2025
+  },
+  "casas de haro": {
+   "municipio": "Casas de Haro",
+   "provincia": "cuenca",
+   "poblacion": 812,
+   "anio": 2025
+  },
+  "casas de los pinos": {
+   "municipio": "Casas de los Pinos",
+   "provincia": "cuenca",
+   "poblacion": 374,
+   "anio": 2025
+  },
+  "casasimarro": {
+   "municipio": "Casasimarro",
+   "provincia": "cuenca",
+   "poblacion": 3177,
+   "anio": 2025
+  },
+  "castejon": {
+   "municipio": "Castejón",
+   "provincia": "cuenca",
+   "poblacion": 120,
+   "anio": 2025
+  },
+  "castillejo de iniesta": {
+   "municipio": "Castillejo de Iniesta",
+   "provincia": "cuenca",
+   "poblacion": 94,
+   "anio": 2025
+  },
+  "castillejo-sierra": {
+   "municipio": "Castillejo-Sierra",
+   "provincia": "cuenca",
+   "poblacion": 31,
+   "anio": 2025
+  },
+  "castillo de garcimunoz": {
+   "municipio": "Castillo de Garcimuñoz",
+   "provincia": "cuenca",
+   "poblacion": 129,
+   "anio": 2025
+  },
+  "castillo-albaranez": {
+   "municipio": "Castillo-Albaráñez",
+   "provincia": "cuenca",
+   "poblacion": 17,
+   "anio": 2025
+  },
+  "cervera del llano": {
+   "municipio": "Cervera del Llano",
+   "provincia": "cuenca",
+   "poblacion": 220,
+   "anio": 2025
+  },
+  "chillaron de cuenca": {
+   "municipio": "Chillarón de Cuenca",
+   "provincia": "cuenca",
+   "poblacion": 907,
+   "anio": 2025
+  },
+  "chumillas": {
+   "municipio": "Chumillas",
+   "provincia": "cuenca",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "cierva, la": {
+   "municipio": "Cierva, La",
+   "provincia": "cuenca",
+   "poblacion": 39,
+   "anio": 2025
+  },
+  "cuenca": {
+   "municipio": "Cuenca",
+   "provincia": "cuenca",
+   "poblacion": 53600,
+   "anio": 2025
+  },
+  "cueva del hierro": {
+   "municipio": "Cueva del Hierro",
+   "provincia": "cuenca",
+   "poblacion": 27,
+   "anio": 2025
+  },
+  "enguidanos": {
+   "municipio": "Enguídanos",
+   "provincia": "cuenca",
+   "poblacion": 274,
+   "anio": 2025
+  },
+  "fresneda de altarejos": {
+   "municipio": "Fresneda de Altarejos",
+   "provincia": "cuenca",
+   "poblacion": 35,
+   "anio": 2025
+  },
+  "fresneda de la sierra": {
+   "municipio": "Fresneda de la Sierra",
+   "provincia": "cuenca",
+   "poblacion": 42,
+   "anio": 2025
+  },
+  "frontera, la": {
+   "municipio": "Frontera, La",
+   "provincia": "cuenca",
+   "poblacion": 155,
+   "anio": 2025
+  },
+  "fuente de pedro naharro": {
+   "municipio": "Fuente de Pedro Naharro",
+   "provincia": "cuenca",
+   "poblacion": 1290,
+   "anio": 2025
+  },
+  "fuentelespino de haro": {
+   "municipio": "Fuentelespino de Haro",
+   "provincia": "cuenca",
+   "poblacion": 230,
+   "anio": 2025
+  },
+  "fuentelespino de moya": {
+   "municipio": "Fuentelespino de Moya",
+   "provincia": "cuenca",
+   "poblacion": 101,
+   "anio": 2025
+  },
+  "fuentenava de jabaga": {
+   "municipio": "Fuentenava de Jábaga",
+   "provincia": "cuenca",
+   "poblacion": 634,
+   "anio": 2025
+  },
+  "fuentes": {
+   "municipio": "Fuentes",
+   "provincia": "cuenca",
+   "poblacion": 462,
+   "anio": 2025
+  },
+  "fuertescusa": {
+   "municipio": "Fuertescusa",
+   "provincia": "cuenca",
+   "poblacion": 65,
+   "anio": 2025
+  },
+  "gabaldon": {
+   "municipio": "Gabaldón",
+   "provincia": "cuenca",
+   "poblacion": 146,
+   "anio": 2025
+  },
+  "garaballa": {
+   "municipio": "Garaballa",
+   "provincia": "cuenca",
+   "poblacion": 58,
+   "anio": 2025
+  },
+  "gascuena": {
+   "municipio": "Gascueña",
+   "provincia": "cuenca",
+   "poblacion": 132,
+   "anio": 2025
+  },
+  "graja de campalbo": {
+   "municipio": "Graja de Campalbo",
+   "provincia": "cuenca",
+   "poblacion": 85,
+   "anio": 2025
+  },
+  "graja de iniesta": {
+   "municipio": "Graja de Iniesta",
+   "provincia": "cuenca",
+   "poblacion": 343,
+   "anio": 2025
+  },
+  "henarejos": {
+   "municipio": "Henarejos",
+   "provincia": "cuenca",
+   "poblacion": 134,
+   "anio": 2025
+  },
+  "herrumblar, el": {
+   "municipio": "Herrumblar, El",
+   "provincia": "cuenca",
+   "poblacion": 800,
+   "anio": 2025
+  },
+  "hinojosa, la": {
+   "municipio": "Hinojosa, La",
+   "provincia": "cuenca",
+   "poblacion": 184,
+   "anio": 2025
+  },
+  "hinojosos, los": {
+   "municipio": "Hinojosos, Los",
+   "provincia": "cuenca",
+   "poblacion": 702,
+   "anio": 2025
+  },
+  "hito, el": {
+   "municipio": "Hito, El",
+   "provincia": "cuenca",
+   "poblacion": 118,
+   "anio": 2025
+  },
+  "honrubia": {
+   "municipio": "Honrubia",
+   "provincia": "cuenca",
+   "poblacion": 1529,
+   "anio": 2025
+  },
+  "hontanaya": {
+   "municipio": "Hontanaya",
+   "provincia": "cuenca",
+   "poblacion": 255,
+   "anio": 2025
+  },
+  "hontecillas": {
+   "municipio": "Hontecillas",
+   "provincia": "cuenca",
+   "poblacion": 54,
+   "anio": 2025
+  },
+  "horcajo de santiago": {
+   "municipio": "Horcajo de Santiago",
+   "provincia": "cuenca",
+   "poblacion": 3894,
+   "anio": 2025
+  },
+  "huelamo": {
+   "municipio": "Huélamo",
+   "provincia": "cuenca",
+   "poblacion": 68,
+   "anio": 2025
+  },
+  "huelves": {
+   "municipio": "Huelves",
+   "provincia": "cuenca",
+   "poblacion": 105,
+   "anio": 2025
+  },
+  "huerguina": {
+   "municipio": "Huérguina",
+   "provincia": "cuenca",
+   "poblacion": 41,
+   "anio": 2025
+  },
+  "huerta de la obispalia": {
+   "municipio": "Huerta de la Obispalía",
+   "provincia": "cuenca",
+   "poblacion": 126,
+   "anio": 2025
+  },
+  "huerta del marquesado": {
+   "municipio": "Huerta del Marquesado",
+   "provincia": "cuenca",
+   "poblacion": 155,
+   "anio": 2025
+  },
+  "huete": {
+   "municipio": "Huete",
+   "provincia": "cuenca",
+   "poblacion": 1814,
+   "anio": 2025
+  },
+  "iniesta": {
+   "municipio": "Iniesta",
+   "provincia": "cuenca",
+   "poblacion": 4567,
+   "anio": 2025
+  },
+  "laguna del marquesado": {
+   "municipio": "Laguna del Marquesado",
+   "provincia": "cuenca",
+   "poblacion": 54,
+   "anio": 2025
+  },
+  "lagunaseca": {
+   "municipio": "Lagunaseca",
+   "provincia": "cuenca",
+   "poblacion": 50,
+   "anio": 2025
+  },
+  "landete": {
+   "municipio": "Landete",
+   "provincia": "cuenca",
+   "poblacion": 1175,
+   "anio": 2025
+  },
+  "ledana": {
+   "municipio": "Ledaña",
+   "provincia": "cuenca",
+   "poblacion": 1552,
+   "anio": 2025
+  },
+  "leganiel": {
+   "municipio": "Leganiel",
+   "provincia": "cuenca",
+   "poblacion": 223,
+   "anio": 2025
+  },
+  "majadas, las": {
+   "municipio": "Majadas, Las",
+   "provincia": "cuenca",
+   "poblacion": 214,
+   "anio": 2025
+  },
+  "mariana": {
+   "municipio": "Mariana",
+   "provincia": "cuenca",
+   "poblacion": 332,
+   "anio": 2025
+  },
+  "masegosa": {
+   "municipio": "Masegosa",
+   "provincia": "cuenca",
+   "poblacion": 58,
+   "anio": 2025
+  },
+  "mesas, las": {
+   "municipio": "Mesas, Las",
+   "provincia": "cuenca",
+   "poblacion": 2234,
+   "anio": 2025
+  },
+  "minglanilla": {
+   "municipio": "Minglanilla",
+   "provincia": "cuenca",
+   "poblacion": 2388,
+   "anio": 2025
+  },
+  "mira": {
+   "municipio": "Mira",
+   "provincia": "cuenca",
+   "poblacion": 917,
+   "anio": 2025
+  },
+  "monreal del llano": {
+   "municipio": "Monreal del Llano",
+   "provincia": "cuenca",
+   "poblacion": 44,
+   "anio": 2025
+  },
+  "montalbanejo": {
+   "municipio": "Montalbanejo",
+   "provincia": "cuenca",
+   "poblacion": 82,
+   "anio": 2025
+  },
+  "montalbo": {
+   "municipio": "Montalbo",
+   "provincia": "cuenca",
+   "poblacion": 703,
+   "anio": 2025
+  },
+  "monteagudo de las salinas": {
+   "municipio": "Monteagudo de las Salinas",
+   "provincia": "cuenca",
+   "poblacion": 126,
+   "anio": 2025
+  },
+  "mota de altarejos": {
+   "municipio": "Mota de Altarejos",
+   "provincia": "cuenca",
+   "poblacion": 25,
+   "anio": 2025
+  },
+  "mota del cuervo": {
+   "municipio": "Mota del Cuervo",
+   "provincia": "cuenca",
+   "poblacion": 6089,
+   "anio": 2025
+  },
+  "motilla del palancar": {
+   "municipio": "Motilla del Palancar",
+   "provincia": "cuenca",
+   "poblacion": 6432,
+   "anio": 2025
+  },
+  "narboneta": {
+   "municipio": "Narboneta",
+   "provincia": "cuenca",
+   "poblacion": 42,
+   "anio": 2025
+  },
+  "olivares de jucar": {
+   "municipio": "Olivares de Júcar",
+   "provincia": "cuenca",
+   "poblacion": 290,
+   "anio": 2025
+  },
+  "olmeda de la cuesta": {
+   "municipio": "Olmeda de la Cuesta",
+   "provincia": "cuenca",
+   "poblacion": 16,
+   "anio": 2025
+  },
+  "olmeda del rey": {
+   "municipio": "Olmeda del Rey",
+   "provincia": "cuenca",
+   "poblacion": 129,
+   "anio": 2025
+  },
+  "olmedilla de alarcon": {
+   "municipio": "Olmedilla de Alarcón",
+   "provincia": "cuenca",
+   "poblacion": 128,
+   "anio": 2025
+  },
+  "olmedilla de eliz": {
+   "municipio": "Olmedilla de Eliz",
+   "provincia": "cuenca",
+   "poblacion": 20,
+   "anio": 2025
+  },
+  "osa de la vega": {
+   "municipio": "Osa de la Vega",
+   "provincia": "cuenca",
+   "poblacion": 450,
+   "anio": 2025
+  },
+  "pajaron": {
+   "municipio": "Pajarón",
+   "provincia": "cuenca",
+   "poblacion": 71,
+   "anio": 2025
+  },
+  "pajaroncillo": {
+   "municipio": "Pajaroncillo",
+   "provincia": "cuenca",
+   "poblacion": 59,
+   "anio": 2025
+  },
+  "palomares del campo": {
+   "municipio": "Palomares del Campo",
+   "provincia": "cuenca",
+   "poblacion": 556,
+   "anio": 2025
+  },
+  "palomera": {
+   "municipio": "Palomera",
+   "provincia": "cuenca",
+   "poblacion": 187,
+   "anio": 2025
+  },
+  "paracuellos": {
+   "municipio": "Paracuellos",
+   "provincia": "cuenca",
+   "poblacion": 105,
+   "anio": 2025
+  },
+  "paredes": {
+   "municipio": "Paredes",
+   "provincia": "cuenca",
+   "poblacion": 61,
+   "anio": 2025
+  },
+  "parra de las vegas, la": {
+   "municipio": "Parra de las Vegas, La",
+   "provincia": "cuenca",
+   "poblacion": 36,
+   "anio": 2025
+  },
+  "pedernoso, el": {
+   "municipio": "Pedernoso, El",
+   "provincia": "cuenca",
+   "poblacion": 1113,
+   "anio": 2025
+  },
+  "pedroneras, las": {
+   "municipio": "Pedroñeras, Las",
+   "provincia": "cuenca",
+   "poblacion": 6416,
+   "anio": 2025
+  },
+  "peral, el": {
+   "municipio": "Peral, El",
+   "provincia": "cuenca",
+   "poblacion": 660,
+   "anio": 2025
+  },
+  "peraleja, la": {
+   "municipio": "Peraleja, La",
+   "provincia": "cuenca",
+   "poblacion": 77,
+   "anio": 2025
+  },
+  "pesquera, la": {
+   "municipio": "Pesquera, La",
+   "provincia": "cuenca",
+   "poblacion": 228,
+   "anio": 2025
+  },
+  "picazo, el": {
+   "municipio": "Picazo, El",
+   "provincia": "cuenca",
+   "poblacion": 693,
+   "anio": 2025
+  },
+  "pinarejo": {
+   "municipio": "Pinarejo",
+   "provincia": "cuenca",
+   "poblacion": 172,
+   "anio": 2025
+  },
+  "pineda de giguela": {
+   "municipio": "Pineda de Gigüela",
+   "provincia": "cuenca",
+   "poblacion": 58,
+   "anio": 2025
+  },
+  "piqueras del castillo": {
+   "municipio": "Piqueras del Castillo",
+   "provincia": "cuenca",
+   "poblacion": 36,
+   "anio": 2025
+  },
+  "portalrubio de guadamejud": {
+   "municipio": "Portalrubio de Guadamejud",
+   "provincia": "cuenca",
+   "poblacion": 35,
+   "anio": 2025
+  },
+  "portilla": {
+   "municipio": "Portilla",
+   "provincia": "cuenca",
+   "poblacion": 58,
+   "anio": 2025
+  },
+  "poyatos": {
+   "municipio": "Poyatos",
+   "provincia": "cuenca",
+   "poblacion": 70,
+   "anio": 2025
+  },
+  "pozoamargo": {
+   "municipio": "Pozoamargo",
+   "provincia": "cuenca",
+   "poblacion": 255,
+   "anio": 2025
+  },
+  "pozorrubielos de la mancha": {
+   "municipio": "Pozorrubielos de la Mancha",
+   "provincia": "cuenca",
+   "poblacion": 166,
+   "anio": 2025
+  },
+  "pozorrubio de santiago": {
+   "municipio": "Pozorrubio de Santiago",
+   "provincia": "cuenca",
+   "poblacion": 307,
+   "anio": 2025
+  },
+  "pozuelo, el": {
+   "municipio": "Pozuelo, El",
+   "provincia": "cuenca",
+   "poblacion": 47,
+   "anio": 2025
+  },
+  "priego": {
+   "municipio": "Priego",
+   "provincia": "cuenca",
+   "poblacion": 912,
+   "anio": 2025
+  },
+  "provencio, el": {
+   "municipio": "Provencio, El",
+   "provincia": "cuenca",
+   "poblacion": 2327,
+   "anio": 2025
+  },
+  "puebla de almenara": {
+   "municipio": "Puebla de Almenara",
+   "provincia": "cuenca",
+   "poblacion": 294,
+   "anio": 2025
+  },
+  "valle de altomira, el": {
+   "municipio": "Valle de Altomira, El",
+   "provincia": "cuenca",
+   "poblacion": 191,
+   "anio": 2025
+  },
+  "puebla del salvador": {
+   "municipio": "Puebla del Salvador",
+   "provincia": "cuenca",
+   "poblacion": 190,
+   "anio": 2025
+  },
+  "quintanar del rey": {
+   "municipio": "Quintanar del Rey",
+   "provincia": "cuenca",
+   "poblacion": 7508,
+   "anio": 2025
+  },
+  "rada de haro": {
+   "municipio": "Rada de Haro",
+   "provincia": "cuenca",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "reillo": {
+   "municipio": "Reíllo",
+   "provincia": "cuenca",
+   "poblacion": 106,
+   "anio": 2025
+  },
+  "rozalen del monte": {
+   "municipio": "Rozalén del Monte",
+   "provincia": "cuenca",
+   "poblacion": 48,
+   "anio": 2025
+  },
+  "saceda-trasierra": {
+   "municipio": "Saceda-Trasierra",
+   "provincia": "cuenca",
+   "poblacion": 33,
+   "anio": 2025
+  },
+  "saelices": {
+   "municipio": "Saelices",
+   "provincia": "cuenca",
+   "poblacion": 475,
+   "anio": 2025
+  },
+  "salinas del manzano": {
+   "municipio": "Salinas del Manzano",
+   "provincia": "cuenca",
+   "poblacion": 86,
+   "anio": 2025
+  },
+  "salmeroncillos": {
+   "municipio": "Salmeroncillos",
+   "provincia": "cuenca",
+   "poblacion": 106,
+   "anio": 2025
+  },
+  "salvacanete": {
+   "municipio": "Salvacañete",
+   "provincia": "cuenca",
+   "poblacion": 300,
+   "anio": 2025
+  },
+  "san clemente": {
+   "municipio": "San Clemente",
+   "provincia": "cuenca",
+   "poblacion": 6797,
+   "anio": 2025
+  },
+  "san lorenzo de la parrilla": {
+   "municipio": "San Lorenzo de la Parrilla",
+   "provincia": "cuenca",
+   "poblacion": 1119,
+   "anio": 2025
+  },
+  "san martin de boniches": {
+   "municipio": "San Martín de Boniches",
+   "provincia": "cuenca",
+   "poblacion": 43,
+   "anio": 2025
+  },
+  "san pedro palmiches": {
+   "municipio": "San Pedro Palmiches",
+   "provincia": "cuenca",
+   "poblacion": 54,
+   "anio": 2025
+  },
+  "santa cruz de moya": {
+   "municipio": "Santa Cruz de Moya",
+   "provincia": "cuenca",
+   "poblacion": 233,
+   "anio": 2025
+  },
+  "santa maria de los llanos": {
+   "municipio": "Santa María de los Llanos",
+   "provincia": "cuenca",
+   "poblacion": 660,
+   "anio": 2025
+  },
+  "santa maria del campo rus": {
+   "municipio": "Santa María del Campo Rus",
+   "provincia": "cuenca",
+   "poblacion": 527,
+   "anio": 2025
+  },
+  "santa maria del val": {
+   "municipio": "Santa María del Val",
+   "provincia": "cuenca",
+   "poblacion": 55,
+   "anio": 2025
+  },
+  "sisante": {
+   "municipio": "Sisante",
+   "provincia": "cuenca",
+   "poblacion": 1640,
+   "anio": 2025
+  },
+  "solera de gabaldon": {
+   "municipio": "Solera de Gabaldón",
+   "provincia": "cuenca",
+   "poblacion": 32,
+   "anio": 2025
+  },
+  "sotorribas": {
+   "municipio": "Sotorribas",
+   "provincia": "cuenca",
+   "poblacion": 711,
+   "anio": 2025
+  },
+  "talayuelas": {
+   "municipio": "Talayuelas",
+   "provincia": "cuenca",
+   "poblacion": 873,
+   "anio": 2025
+  },
+  "tarancon": {
+   "municipio": "Tarancón",
+   "provincia": "cuenca",
+   "poblacion": 16748,
+   "anio": 2025
+  },
+  "tebar": {
+   "municipio": "Tébar",
+   "provincia": "cuenca",
+   "poblacion": 300,
+   "anio": 2025
+  },
+  "tejadillos": {
+   "municipio": "Tejadillos",
+   "provincia": "cuenca",
+   "poblacion": 102,
+   "anio": 2025
+  },
+  "tinajas": {
+   "municipio": "Tinajas",
+   "provincia": "cuenca",
+   "poblacion": 184,
+   "anio": 2025
+  },
+  "torralba": {
+   "municipio": "Torralba",
+   "provincia": "cuenca",
+   "poblacion": 107,
+   "anio": 2025
+  },
+  "torrejoncillo del rey": {
+   "municipio": "Torrejoncillo del Rey",
+   "provincia": "cuenca",
+   "poblacion": 341,
+   "anio": 2025
+  },
+  "torrubia del campo": {
+   "municipio": "Torrubia del Campo",
+   "provincia": "cuenca",
+   "poblacion": 312,
+   "anio": 2025
+  },
+  "torrubia del castillo": {
+   "municipio": "Torrubia del Castillo",
+   "provincia": "cuenca",
+   "poblacion": 42,
+   "anio": 2025
+  },
+  "tragacete": {
+   "municipio": "Tragacete",
+   "provincia": "cuenca",
+   "poblacion": 263,
+   "anio": 2025
+  },
+  "tresjuncos": {
+   "municipio": "Tresjuncos",
+   "provincia": "cuenca",
+   "poblacion": 258,
+   "anio": 2025
+  },
+  "tribaldos": {
+   "municipio": "Tribaldos",
+   "provincia": "cuenca",
+   "poblacion": 101,
+   "anio": 2025
+  },
+  "ucles": {
+   "municipio": "Uclés",
+   "provincia": "cuenca",
+   "poblacion": 230,
+   "anio": 2025
+  },
+  "una": {
+   "municipio": "Uña",
+   "provincia": "cuenca",
+   "poblacion": 90,
+   "anio": 2025
+  },
+  "valdecolmenas, los": {
+   "municipio": "Valdecolmenas, Los",
+   "provincia": "cuenca",
+   "poblacion": 69,
+   "anio": 2025
+  },
+  "valdemeca": {
+   "municipio": "Valdemeca",
+   "provincia": "cuenca",
+   "poblacion": 83,
+   "anio": 2025
+  },
+  "valdemorillo de la sierra": {
+   "municipio": "Valdemorillo de la Sierra",
+   "provincia": "cuenca",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "valdemoro-sierra": {
+   "municipio": "Valdemoro-Sierra",
+   "provincia": "cuenca",
+   "poblacion": 96,
+   "anio": 2025
+  },
+  "valdeolivas": {
+   "municipio": "Valdeolivas",
+   "provincia": "cuenca",
+   "poblacion": 206,
+   "anio": 2025
+  },
+  "valdetortola": {
+   "municipio": "Valdetórtola",
+   "provincia": "cuenca",
+   "poblacion": 115,
+   "anio": 2025
+  },
+  "valeras, las": {
+   "municipio": "Valeras, Las",
+   "provincia": "cuenca",
+   "poblacion": 1528,
+   "anio": 2025
+  },
+  "valhermoso de la fuente": {
+   "municipio": "Valhermoso de la Fuente",
+   "provincia": "cuenca",
+   "poblacion": 61,
+   "anio": 2025
+  },
+  "valsalobre": {
+   "municipio": "Valsalobre",
+   "provincia": "cuenca",
+   "poblacion": 17,
+   "anio": 2025
+  },
+  "valverde de jucar": {
+   "municipio": "Valverde de Júcar",
+   "provincia": "cuenca",
+   "poblacion": 1118,
+   "anio": 2025
+  },
+  "valverdejo": {
+   "municipio": "Valverdejo",
+   "provincia": "cuenca",
+   "poblacion": 86,
+   "anio": 2025
+  },
+  "vara de rey": {
+   "municipio": "Vara de Rey",
+   "provincia": "cuenca",
+   "poblacion": 466,
+   "anio": 2025
+  },
+  "vega del codorno": {
+   "municipio": "Vega del Codorno",
+   "provincia": "cuenca",
+   "poblacion": 141,
+   "anio": 2025
+  },
+  "vellisca": {
+   "municipio": "Vellisca",
+   "provincia": "cuenca",
+   "poblacion": 128,
+   "anio": 2025
+  },
+  "villaconejos de trabaque": {
+   "municipio": "Villaconejos de Trabaque",
+   "provincia": "cuenca",
+   "poblacion": 325,
+   "anio": 2025
+  },
+  "villaescusa de haro": {
+   "municipio": "Villaescusa de Haro",
+   "provincia": "cuenca",
+   "poblacion": 480,
+   "anio": 2025
+  },
+  "villagarcia del llano": {
+   "municipio": "Villagarcía del Llano",
+   "provincia": "cuenca",
+   "poblacion": 763,
+   "anio": 2025
+  },
+  "villalba de la sierra": {
+   "municipio": "Villalba de la Sierra",
+   "provincia": "cuenca",
+   "poblacion": 569,
+   "anio": 2025
+  },
+  "villalba del rey": {
+   "municipio": "Villalba del Rey",
+   "provincia": "cuenca",
+   "poblacion": 468,
+   "anio": 2025
+  },
+  "villalgordo del marquesado": {
+   "municipio": "Villalgordo del Marquesado",
+   "provincia": "cuenca",
+   "poblacion": 59,
+   "anio": 2025
+  },
+  "villalpardo": {
+   "municipio": "Villalpardo",
+   "provincia": "cuenca",
+   "poblacion": 979,
+   "anio": 2025
+  },
+  "villamayor de santiago": {
+   "municipio": "Villamayor de Santiago",
+   "provincia": "cuenca",
+   "poblacion": 2336,
+   "anio": 2025
+  },
+  "villanueva de guadamejud": {
+   "municipio": "Villanueva de Guadamejud",
+   "provincia": "cuenca",
+   "poblacion": 59,
+   "anio": 2025
+  },
+  "villanueva de la jara": {
+   "municipio": "Villanueva de la Jara",
+   "provincia": "cuenca",
+   "poblacion": 2396,
+   "anio": 2025
+  },
+  "villar de canas": {
+   "municipio": "Villar de Cañas",
+   "provincia": "cuenca",
+   "poblacion": 389,
+   "anio": 2025
+  },
+  "villar de domingo garcia": {
+   "municipio": "Villar de Domingo García",
+   "provincia": "cuenca",
+   "poblacion": 217,
+   "anio": 2025
+  },
+  "villar de la encina": {
+   "municipio": "Villar de la Encina",
+   "provincia": "cuenca",
+   "poblacion": 146,
+   "anio": 2025
+  },
+  "villar de olalla": {
+   "municipio": "Villar de Olalla",
+   "provincia": "cuenca",
+   "poblacion": 1575,
+   "anio": 2025
+  },
+  "villar del humo": {
+   "municipio": "Villar del Humo",
+   "provincia": "cuenca",
+   "poblacion": 182,
+   "anio": 2025
+  },
+  "villar del infantado": {
+   "municipio": "Villar del Infantado",
+   "provincia": "cuenca",
+   "poblacion": 34,
+   "anio": 2025
+  },
+  "villar y velasco": {
+   "municipio": "Villar y Velasco",
+   "provincia": "cuenca",
+   "poblacion": 91,
+   "anio": 2025
+  },
+  "villarejo de fuentes": {
+   "municipio": "Villarejo de Fuentes",
+   "provincia": "cuenca",
+   "poblacion": 387,
+   "anio": 2025
+  },
+  "villarejo de la penuela": {
+   "municipio": "Villarejo de la Peñuela",
+   "provincia": "cuenca",
+   "poblacion": 16,
+   "anio": 2025
+  },
+  "villarejo-periesteban": {
+   "municipio": "Villarejo-Periesteban",
+   "provincia": "cuenca",
+   "poblacion": 375,
+   "anio": 2025
+  },
+  "villares del saz": {
+   "municipio": "Villares del Saz",
+   "provincia": "cuenca",
+   "poblacion": 499,
+   "anio": 2025
+  },
+  "villarrubio": {
+   "municipio": "Villarrubio",
+   "provincia": "cuenca",
+   "poblacion": 211,
+   "anio": 2025
+  },
+  "villarta": {
+   "municipio": "Villarta",
+   "provincia": "cuenca",
+   "poblacion": 853,
+   "anio": 2025
+  },
+  "villas de la ventosa": {
+   "municipio": "Villas de la Ventosa",
+   "provincia": "cuenca",
+   "poblacion": 225,
+   "anio": 2025
+  },
+  "villaverde y pasaconsol": {
+   "municipio": "Villaverde y Pasaconsol",
+   "provincia": "cuenca",
+   "poblacion": 318,
+   "anio": 2025
+  },
+  "villora": {
+   "municipio": "Víllora",
+   "provincia": "cuenca",
+   "poblacion": 120,
+   "anio": 2025
+  },
+  "vindel": {
+   "municipio": "Vindel",
+   "provincia": "cuenca",
+   "poblacion": 19,
+   "anio": 2025
+  },
+  "yemeda": {
+   "municipio": "Yémeda",
+   "provincia": "cuenca",
+   "poblacion": 18,
+   "anio": 2025
+  },
+  "zafra de zancara": {
+   "municipio": "Zafra de Záncara",
+   "provincia": "cuenca",
+   "poblacion": 92,
+   "anio": 2025
+  },
+  "zafrilla": {
+   "municipio": "Zafrilla",
+   "provincia": "cuenca",
+   "poblacion": 59,
+   "anio": 2025
+  },
+  "zarza de tajo": {
+   "municipio": "Zarza de Tajo",
+   "provincia": "cuenca",
+   "poblacion": 320,
+   "anio": 2025
+  },
+  "zarzuela": {
+   "municipio": "Zarzuela",
+   "provincia": "cuenca",
+   "poblacion": 174,
+   "anio": 2025
+  },
+  "abanades": {
+   "municipio": "Abánades",
+   "provincia": "guadalajara",
+   "poblacion": 64,
+   "anio": 2025
+  },
+  "ablanque": {
+   "municipio": "Ablanque",
+   "provincia": "guadalajara",
+   "poblacion": 70,
+   "anio": 2025
+  },
+  "adobes": {
+   "municipio": "Adobes",
+   "provincia": "guadalajara",
+   "poblacion": 28,
+   "anio": 2025
+  },
+  "alaminos": {
+   "municipio": "Alaminos",
+   "provincia": "guadalajara",
+   "poblacion": 54,
+   "anio": 2025
+  },
+  "alarilla": {
+   "municipio": "Alarilla",
+   "provincia": "guadalajara",
+   "poblacion": 144,
+   "anio": 2025
+  },
+  "albalate de zorita": {
+   "municipio": "Albalate de Zorita",
+   "provincia": "guadalajara",
+   "poblacion": 1148,
+   "anio": 2025
+  },
+  "albares": {
+   "municipio": "Albares",
+   "provincia": "guadalajara",
+   "poblacion": 610,
+   "anio": 2025
+  },
+  "albendiego": {
+   "municipio": "Albendiego",
+   "provincia": "guadalajara",
+   "poblacion": 50,
+   "anio": 2025
+  },
+  "alcocer": {
+   "municipio": "Alcocer",
+   "provincia": "guadalajara",
+   "poblacion": 319,
+   "anio": 2025
+  },
+  "alcolea de las penas": {
+   "municipio": "Alcolea de las Peñas",
+   "provincia": "guadalajara",
+   "poblacion": 7,
+   "anio": 2025
+  },
+  "alcolea del pinar": {
+   "municipio": "Alcolea del Pinar",
+   "provincia": "guadalajara",
+   "poblacion": 357,
+   "anio": 2025
+  },
+  "alcoroches": {
+   "municipio": "Alcoroches",
+   "provincia": "guadalajara",
+   "poblacion": 117,
+   "anio": 2025
+  },
+  "aldeanueva de guadalajara": {
+   "municipio": "Aldeanueva de Guadalajara",
+   "provincia": "guadalajara",
+   "poblacion": 107,
+   "anio": 2025
+  },
+  "algar de mesa": {
+   "municipio": "Algar de Mesa",
+   "provincia": "guadalajara",
+   "poblacion": 44,
+   "anio": 2025
+  },
+  "algora": {
+   "municipio": "Algora",
+   "provincia": "guadalajara",
+   "poblacion": 89,
+   "anio": 2025
+  },
+  "alhondiga": {
+   "municipio": "Alhóndiga",
+   "provincia": "guadalajara",
+   "poblacion": 185,
+   "anio": 2025
+  },
+  "alique": {
+   "municipio": "Alique",
+   "provincia": "guadalajara",
+   "poblacion": 15,
+   "anio": 2025
+  },
+  "almadrones": {
+   "municipio": "Almadrones",
+   "provincia": "guadalajara",
+   "poblacion": 67,
+   "anio": 2025
+  },
+  "almoguera": {
+   "municipio": "Almoguera",
+   "provincia": "guadalajara",
+   "poblacion": 1379,
+   "anio": 2025
+  },
+  "almonacid de zorita": {
+   "municipio": "Almonacid de Zorita",
+   "provincia": "guadalajara",
+   "poblacion": 667,
+   "anio": 2025
+  },
+  "alocen": {
+   "municipio": "Alocén",
+   "provincia": "guadalajara",
+   "poblacion": 151,
+   "anio": 2025
+  },
+  "alovera": {
+   "municipio": "Alovera",
+   "provincia": "guadalajara",
+   "poblacion": 14526,
+   "anio": 2025
+  },
+  "alustante": {
+   "municipio": "Alustante",
+   "provincia": "guadalajara",
+   "poblacion": 152,
+   "anio": 2025
+  },
+  "angon": {
+   "municipio": "Angón",
+   "provincia": "guadalajara",
+   "poblacion": 8,
+   "anio": 2025
+  },
+  "anguita": {
+   "municipio": "Anguita",
+   "provincia": "guadalajara",
+   "poblacion": 150,
+   "anio": 2025
+  },
+  "anquela del ducado": {
+   "municipio": "Anquela del Ducado",
+   "provincia": "guadalajara",
+   "poblacion": 46,
+   "anio": 2025
+  },
+  "anquela del pedregal": {
+   "municipio": "Anquela del Pedregal",
+   "provincia": "guadalajara",
+   "poblacion": 28,
+   "anio": 2025
+  },
+  "aranzueque": {
+   "municipio": "Aranzueque",
+   "provincia": "guadalajara",
+   "poblacion": 411,
+   "anio": 2025
+  },
+  "arbancon": {
+   "municipio": "Arbancón",
+   "provincia": "guadalajara",
+   "poblacion": 157,
+   "anio": 2025
+  },
+  "arbeteta": {
+   "municipio": "Arbeteta",
+   "provincia": "guadalajara",
+   "poblacion": 16,
+   "anio": 2025
+  },
+  "argecilla": {
+   "municipio": "Argecilla",
+   "provincia": "guadalajara",
+   "poblacion": 74,
+   "anio": 2025
+  },
+  "armallones": {
+   "municipio": "Armallones",
+   "provincia": "guadalajara",
+   "poblacion": 52,
+   "anio": 2025
+  },
+  "armuna de tajuna": {
+   "municipio": "Armuña de Tajuña",
+   "provincia": "guadalajara",
+   "poblacion": 280,
+   "anio": 2025
+  },
+  "arroyo de las fraguas": {
+   "municipio": "Arroyo de las Fraguas",
+   "provincia": "guadalajara",
+   "poblacion": 32,
+   "anio": 2025
+  },
+  "atanzon": {
+   "municipio": "Atanzón",
+   "provincia": "guadalajara",
+   "poblacion": 83,
+   "anio": 2025
+  },
+  "atienza": {
+   "municipio": "Atienza",
+   "provincia": "guadalajara",
+   "poblacion": 406,
+   "anio": 2025
+  },
+  "aunon": {
+   "municipio": "Auñón",
+   "provincia": "guadalajara",
+   "poblacion": 156,
+   "anio": 2025
+  },
+  "azuqueca de henares": {
+   "municipio": "Azuqueca de Henares",
+   "provincia": "guadalajara",
+   "poblacion": 35924,
+   "anio": 2025
+  },
+  "baides": {
+   "municipio": "Baides",
+   "provincia": "guadalajara",
+   "poblacion": 46,
+   "anio": 2025
+  },
+  "banos de tajo": {
+   "municipio": "Baños de Tajo",
+   "provincia": "guadalajara",
+   "poblacion": 13,
+   "anio": 2025
+  },
+  "banuelos": {
+   "municipio": "Bañuelos",
+   "provincia": "guadalajara",
+   "poblacion": 10,
+   "anio": 2025
+  },
+  "barriopedro": {
+   "municipio": "Barriopedro",
+   "provincia": "guadalajara",
+   "poblacion": 26,
+   "anio": 2025
+  },
+  "berninches": {
+   "municipio": "Berninches",
+   "provincia": "guadalajara",
+   "poblacion": 51,
+   "anio": 2025
+  },
+  "bodera, la": {
+   "municipio": "Bodera, La",
+   "provincia": "guadalajara",
+   "poblacion": 19,
+   "anio": 2025
+  },
+  "brihuega": {
+   "municipio": "Brihuega",
+   "provincia": "guadalajara",
+   "poblacion": 2826,
+   "anio": 2025
+  },
+  "budia": {
+   "municipio": "Budia",
+   "provincia": "guadalajara",
+   "poblacion": 226,
+   "anio": 2025
+  },
+  "bujalaro": {
+   "municipio": "Bujalaro",
+   "provincia": "guadalajara",
+   "poblacion": 59,
+   "anio": 2025
+  },
+  "bustares": {
+   "municipio": "Bustares",
+   "provincia": "guadalajara",
+   "poblacion": 62,
+   "anio": 2025
+  },
+  "cabanillas del campo": {
+   "municipio": "Cabanillas del Campo",
+   "provincia": "guadalajara",
+   "poblacion": 11572,
+   "anio": 2025
+  },
+  "campillo de duenas": {
+   "municipio": "Campillo de Dueñas",
+   "provincia": "guadalajara",
+   "poblacion": 71,
+   "anio": 2025
+  },
+  "campillo de ranas": {
+   "municipio": "Campillo de Ranas",
+   "provincia": "guadalajara",
+   "poblacion": 150,
+   "anio": 2025
+  },
+  "campisabalos": {
+   "municipio": "Campisábalos",
+   "provincia": "guadalajara",
+   "poblacion": 72,
+   "anio": 2025
+  },
+  "canredondo": {
+   "municipio": "Canredondo",
+   "provincia": "guadalajara",
+   "poblacion": 81,
+   "anio": 2025
+  },
+  "cantalojas": {
+   "municipio": "Cantalojas",
+   "provincia": "guadalajara",
+   "poblacion": 121,
+   "anio": 2025
+  },
+  "canizar": {
+   "municipio": "Cañizar",
+   "provincia": "guadalajara",
+   "poblacion": 78,
+   "anio": 2025
+  },
+  "cardoso de la sierra, el": {
+   "municipio": "Cardoso de la Sierra, El",
+   "provincia": "guadalajara",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "casa de uceda": {
+   "municipio": "Casa de Uceda",
+   "provincia": "guadalajara",
+   "poblacion": 128,
+   "anio": 2025
+  },
+  "casar, el": {
+   "municipio": "Casar, El",
+   "provincia": "guadalajara",
+   "poblacion": 13962,
+   "anio": 2025
+  },
+  "casas de san galindo": {
+   "municipio": "Casas de San Galindo",
+   "provincia": "guadalajara",
+   "poblacion": 24,
+   "anio": 2025
+  },
+  "caspuenas": {
+   "municipio": "Caspueñas",
+   "provincia": "guadalajara",
+   "poblacion": 120,
+   "anio": 2025
+  },
+  "castejon de henares": {
+   "municipio": "Castejón de Henares",
+   "provincia": "guadalajara",
+   "poblacion": 62,
+   "anio": 2025
+  },
+  "castellar de la muela": {
+   "municipio": "Castellar de la Muela",
+   "provincia": "guadalajara",
+   "poblacion": 22,
+   "anio": 2025
+  },
+  "castilforte": {
+   "municipio": "Castilforte",
+   "provincia": "guadalajara",
+   "poblacion": 57,
+   "anio": 2025
+  },
+  "castilnuevo": {
+   "municipio": "Castilnuevo",
+   "provincia": "guadalajara",
+   "poblacion": 8,
+   "anio": 2025
+  },
+  "cendejas de enmedio": {
+   "municipio": "Cendejas de Enmedio",
+   "provincia": "guadalajara",
+   "poblacion": 68,
+   "anio": 2025
+  },
+  "cendejas de la torre": {
+   "municipio": "Cendejas de la Torre",
+   "provincia": "guadalajara",
+   "poblacion": 23,
+   "anio": 2025
+  },
+  "centenera": {
+   "municipio": "Centenera",
+   "provincia": "guadalajara",
+   "poblacion": 158,
+   "anio": 2025
+  },
+  "checa": {
+   "municipio": "Checa",
+   "provincia": "guadalajara",
+   "poblacion": 268,
+   "anio": 2025
+  },
+  "chequilla": {
+   "municipio": "Chequilla",
+   "provincia": "guadalajara",
+   "poblacion": 13,
+   "anio": 2025
+  },
+  "chillaron del rey": {
+   "municipio": "Chillarón del Rey",
+   "provincia": "guadalajara",
+   "poblacion": 76,
+   "anio": 2025
+  },
+  "chiloeches": {
+   "municipio": "Chiloeches",
+   "provincia": "guadalajara",
+   "poblacion": 4117,
+   "anio": 2025
+  },
+  "cifuentes": {
+   "municipio": "Cifuentes",
+   "provincia": "guadalajara",
+   "poblacion": 1731,
+   "anio": 2025
+  },
+  "cincovillas": {
+   "municipio": "Cincovillas",
+   "provincia": "guadalajara",
+   "poblacion": 20,
+   "anio": 2025
+  },
+  "ciruelas": {
+   "municipio": "Ciruelas",
+   "provincia": "guadalajara",
+   "poblacion": 136,
+   "anio": 2025
+  },
+  "ciruelos del pinar": {
+   "municipio": "Ciruelos del Pinar",
+   "provincia": "guadalajara",
+   "poblacion": 23,
+   "anio": 2025
+  },
+  "cobeta": {
+   "municipio": "Cobeta",
+   "provincia": "guadalajara",
+   "poblacion": 100,
+   "anio": 2025
+  },
+  "cogollor": {
+   "municipio": "Cogollor",
+   "provincia": "guadalajara",
+   "poblacion": 19,
+   "anio": 2025
+  },
+  "cogolludo": {
+   "municipio": "Cogolludo",
+   "provincia": "guadalajara",
+   "poblacion": 574,
+   "anio": 2025
+  },
+  "condemios de abajo": {
+   "municipio": "Condemios de Abajo",
+   "provincia": "guadalajara",
+   "poblacion": 14,
+   "anio": 2025
+  },
+  "condemios de arriba": {
+   "municipio": "Condemios de Arriba",
+   "provincia": "guadalajara",
+   "poblacion": 101,
+   "anio": 2025
+  },
+  "congostrina": {
+   "municipio": "Congostrina",
+   "provincia": "guadalajara",
+   "poblacion": 18,
+   "anio": 2025
+  },
+  "copernal": {
+   "municipio": "Copernal",
+   "provincia": "guadalajara",
+   "poblacion": 44,
+   "anio": 2025
+  },
+  "corduente": {
+   "municipio": "Corduente",
+   "provincia": "guadalajara",
+   "poblacion": 297,
+   "anio": 2025
+  },
+  "cubillo de uceda, el": {
+   "municipio": "Cubillo de Uceda, El",
+   "provincia": "guadalajara",
+   "poblacion": 120,
+   "anio": 2025
+  },
+  "driebes": {
+   "municipio": "Driebes",
+   "provincia": "guadalajara",
+   "poblacion": 331,
+   "anio": 2025
+  },
+  "duron": {
+   "municipio": "Durón",
+   "provincia": "guadalajara",
+   "poblacion": 108,
+   "anio": 2025
+  },
+  "embid": {
+   "municipio": "Embid",
+   "provincia": "guadalajara",
+   "poblacion": 37,
+   "anio": 2025
+  },
+  "escamilla": {
+   "municipio": "Escamilla",
+   "provincia": "guadalajara",
+   "poblacion": 65,
+   "anio": 2025
+  },
+  "escariche": {
+   "municipio": "Escariche",
+   "provincia": "guadalajara",
+   "poblacion": 186,
+   "anio": 2025
+  },
+  "escopete": {
+   "municipio": "Escopete",
+   "provincia": "guadalajara",
+   "poblacion": 80,
+   "anio": 2025
+  },
+  "espinosa de henares": {
+   "municipio": "Espinosa de Henares",
+   "provincia": "guadalajara",
+   "poblacion": 715,
+   "anio": 2025
+  },
+  "esplegares": {
+   "municipio": "Esplegares",
+   "provincia": "guadalajara",
+   "poblacion": 30,
+   "anio": 2025
+  },
+  "estables": {
+   "municipio": "Establés",
+   "provincia": "guadalajara",
+   "poblacion": 35,
+   "anio": 2025
+  },
+  "estriegana": {
+   "municipio": "Estriégana",
+   "provincia": "guadalajara",
+   "poblacion": 13,
+   "anio": 2025
+  },
+  "fontanar": {
+   "municipio": "Fontanar",
+   "provincia": "guadalajara",
+   "poblacion": 2630,
+   "anio": 2025
+  },
+  "fuembellida": {
+   "municipio": "Fuembellida",
+   "provincia": "guadalajara",
+   "poblacion": 13,
+   "anio": 2025
+  },
+  "fuencemillan": {
+   "municipio": "Fuencemillán",
+   "provincia": "guadalajara",
+   "poblacion": 81,
+   "anio": 2025
+  },
+  "fuentelahiguera de albatages": {
+   "municipio": "Fuentelahiguera de Albatages",
+   "provincia": "guadalajara",
+   "poblacion": 121,
+   "anio": 2025
+  },
+  "fuentelencina": {
+   "municipio": "Fuentelencina",
+   "provincia": "guadalajara",
+   "poblacion": 324,
+   "anio": 2025
+  },
+  "fuentelsaz": {
+   "municipio": "Fuentelsaz",
+   "provincia": "guadalajara",
+   "poblacion": 82,
+   "anio": 2025
+  },
+  "fuentelviejo": {
+   "municipio": "Fuentelviejo",
+   "provincia": "guadalajara",
+   "poblacion": 61,
+   "anio": 2025
+  },
+  "fuentenovilla": {
+   "municipio": "Fuentenovilla",
+   "provincia": "guadalajara",
+   "poblacion": 621,
+   "anio": 2025
+  },
+  "gajanejos": {
+   "municipio": "Gajanejos",
+   "provincia": "guadalajara",
+   "poblacion": 51,
+   "anio": 2025
+  },
+  "galapagos": {
+   "municipio": "Galápagos",
+   "provincia": "guadalajara",
+   "poblacion": 2802,
+   "anio": 2025
+  },
+  "galve de sorbe": {
+   "municipio": "Galve de Sorbe",
+   "provincia": "guadalajara",
+   "poblacion": 97,
+   "anio": 2025
+  },
+  "gascuena de bornova": {
+   "municipio": "Gascueña de Bornova",
+   "provincia": "guadalajara",
+   "poblacion": 22,
+   "anio": 2025
+  },
+  "guadalajara": {
+   "municipio": "Guadalajara",
+   "provincia": "guadalajara",
+   "poblacion": 92834,
+   "anio": 2025
+  },
+  "henche": {
+   "municipio": "Henche",
+   "provincia": "guadalajara",
+   "poblacion": 73,
+   "anio": 2025
+  },
+  "heras de ayuso": {
+   "municipio": "Heras de Ayuso",
+   "provincia": "guadalajara",
+   "poblacion": 248,
+   "anio": 2025
+  },
+  "herreria": {
+   "municipio": "Herrería",
+   "provincia": "guadalajara",
+   "poblacion": 13,
+   "anio": 2025
+  },
+  "hiendelaencina": {
+   "municipio": "Hiendelaencina",
+   "provincia": "guadalajara",
+   "poblacion": 107,
+   "anio": 2025
+  },
+  "hijes": {
+   "municipio": "Hijes",
+   "provincia": "guadalajara",
+   "poblacion": 24,
+   "anio": 2025
+  },
+  "hita": {
+   "municipio": "Hita",
+   "provincia": "guadalajara",
+   "poblacion": 336,
+   "anio": 2025
+  },
+  "hombrados": {
+   "municipio": "Hombrados",
+   "provincia": "guadalajara",
+   "poblacion": 44,
+   "anio": 2025
+  },
+  "hontoba": {
+   "municipio": "Hontoba",
+   "provincia": "guadalajara",
+   "poblacion": 475,
+   "anio": 2025
+  },
+  "horche": {
+   "municipio": "Horche",
+   "provincia": "guadalajara",
+   "poblacion": 3119,
+   "anio": 2025
+  },
+  "hortezuela de ocen": {
+   "municipio": "Hortezuela de Océn",
+   "provincia": "guadalajara",
+   "poblacion": 32,
+   "anio": 2025
+  },
+  "huerce, la": {
+   "municipio": "Huerce, La",
+   "provincia": "guadalajara",
+   "poblacion": 52,
+   "anio": 2025
+  },
+  "huermeces del cerro": {
+   "municipio": "Huérmeces del Cerro",
+   "provincia": "guadalajara",
+   "poblacion": 43,
+   "anio": 2025
+  },
+  "huertahernando": {
+   "municipio": "Huertahernando",
+   "provincia": "guadalajara",
+   "poblacion": 51,
+   "anio": 2025
+  },
+  "hueva": {
+   "municipio": "Hueva",
+   "provincia": "guadalajara",
+   "poblacion": 113,
+   "anio": 2025
+  },
+  "humanes": {
+   "municipio": "Humanes",
+   "provincia": "guadalajara",
+   "poblacion": 1841,
+   "anio": 2025
+  },
+  "illana": {
+   "municipio": "Illana",
+   "provincia": "guadalajara",
+   "poblacion": 938,
+   "anio": 2025
+  },
+  "iniestola": {
+   "municipio": "Iniéstola",
+   "provincia": "guadalajara",
+   "poblacion": 19,
+   "anio": 2025
+  },
+  "inviernas, las": {
+   "municipio": "Inviernas, Las",
+   "provincia": "guadalajara",
+   "poblacion": 60,
+   "anio": 2025
+  },
+  "irueste": {
+   "municipio": "Irueste",
+   "provincia": "guadalajara",
+   "poblacion": 93,
+   "anio": 2025
+  },
+  "jadraque": {
+   "municipio": "Jadraque",
+   "provincia": "guadalajara",
+   "poblacion": 1522,
+   "anio": 2025
+  },
+  "jirueque": {
+   "municipio": "Jirueque",
+   "provincia": "guadalajara",
+   "poblacion": 44,
+   "anio": 2025
+  },
+  "ledanca": {
+   "municipio": "Ledanca",
+   "provincia": "guadalajara",
+   "poblacion": 98,
+   "anio": 2025
+  },
+  "loranca de tajuna": {
+   "municipio": "Loranca de Tajuña",
+   "provincia": "guadalajara",
+   "poblacion": 1624,
+   "anio": 2025
+  },
+  "lupiana": {
+   "municipio": "Lupiana",
+   "provincia": "guadalajara",
+   "poblacion": 344,
+   "anio": 2025
+  },
+  "luzaga": {
+   "municipio": "Luzaga",
+   "provincia": "guadalajara",
+   "poblacion": 65,
+   "anio": 2025
+  },
+  "luzon": {
+   "municipio": "Luzón",
+   "provincia": "guadalajara",
+   "poblacion": 50,
+   "anio": 2025
+  },
+  "majaelrayo": {
+   "municipio": "Majaelrayo",
+   "provincia": "guadalajara",
+   "poblacion": 60,
+   "anio": 2025
+  },
+  "malaga del fresno": {
+   "municipio": "Málaga del Fresno",
+   "provincia": "guadalajara",
+   "poblacion": 187,
+   "anio": 2025
+  },
+  "malaguilla": {
+   "municipio": "Malaguilla",
+   "provincia": "guadalajara",
+   "poblacion": 218,
+   "anio": 2025
+  },
+  "mandayona": {
+   "municipio": "Mandayona",
+   "provincia": "guadalajara",
+   "poblacion": 285,
+   "anio": 2025
+  },
+  "mantiel": {
+   "municipio": "Mantiel",
+   "provincia": "guadalajara",
+   "poblacion": 28,
+   "anio": 2025
+  },
+  "maranchon": {
+   "municipio": "Maranchón",
+   "provincia": "guadalajara",
+   "poblacion": 225,
+   "anio": 2025
+  },
+  "marchamalo": {
+   "municipio": "Marchamalo",
+   "provincia": "guadalajara",
+   "poblacion": 8714,
+   "anio": 2025
+  },
+  "masegoso de tajuna": {
+   "municipio": "Masegoso de Tajuña",
+   "provincia": "guadalajara",
+   "poblacion": 84,
+   "anio": 2025
+  },
+  "matarrubia": {
+   "municipio": "Matarrubia",
+   "provincia": "guadalajara",
+   "poblacion": 99,
+   "anio": 2025
+  },
+  "matillas": {
+   "municipio": "Matillas",
+   "provincia": "guadalajara",
+   "poblacion": 111,
+   "anio": 2025
+  },
+  "mazarete": {
+   "municipio": "Mazarete",
+   "provincia": "guadalajara",
+   "poblacion": 25,
+   "anio": 2025
+  },
+  "mazuecos": {
+   "municipio": "Mazuecos",
+   "provincia": "guadalajara",
+   "poblacion": 267,
+   "anio": 2025
+  },
+  "medranda": {
+   "municipio": "Medranda",
+   "provincia": "guadalajara",
+   "poblacion": 83,
+   "anio": 2025
+  },
+  "megina": {
+   "municipio": "Megina",
+   "provincia": "guadalajara",
+   "poblacion": 25,
+   "anio": 2025
+  },
+  "membrillera": {
+   "municipio": "Membrillera",
+   "provincia": "guadalajara",
+   "poblacion": 95,
+   "anio": 2025
+  },
+  "miedes de atienza": {
+   "municipio": "Miedes de Atienza",
+   "provincia": "guadalajara",
+   "poblacion": 60,
+   "anio": 2025
+  },
+  "mierla, la": {
+   "municipio": "Mierla, La",
+   "provincia": "guadalajara",
+   "poblacion": 44,
+   "anio": 2025
+  },
+  "millana": {
+   "municipio": "Millana",
+   "provincia": "guadalajara",
+   "poblacion": 126,
+   "anio": 2025
+  },
+  "milmarcos": {
+   "municipio": "Milmarcos",
+   "provincia": "guadalajara",
+   "poblacion": 63,
+   "anio": 2025
+  },
+  "minosa, la": {
+   "municipio": "Miñosa, La",
+   "provincia": "guadalajara",
+   "poblacion": 31,
+   "anio": 2025
+  },
+  "mirabueno": {
+   "municipio": "Mirabueno",
+   "provincia": "guadalajara",
+   "poblacion": 86,
+   "anio": 2025
+  },
+  "miralrio": {
+   "municipio": "Miralrío",
+   "provincia": "guadalajara",
+   "poblacion": 56,
+   "anio": 2025
+  },
+  "mochales": {
+   "municipio": "Mochales",
+   "provincia": "guadalajara",
+   "poblacion": 36,
+   "anio": 2025
+  },
+  "mohernando": {
+   "municipio": "Mohernando",
+   "provincia": "guadalajara",
+   "poblacion": 190,
+   "anio": 2025
+  },
+  "molina de aragon": {
+   "municipio": "Molina de Aragón",
+   "provincia": "guadalajara",
+   "poblacion": 3281,
+   "anio": 2025
+  },
+  "monasterio": {
+   "municipio": "Monasterio",
+   "provincia": "guadalajara",
+   "poblacion": 13,
+   "anio": 2025
+  },
+  "mondejar": {
+   "municipio": "Mondéjar",
+   "provincia": "guadalajara",
+   "poblacion": 2918,
+   "anio": 2025
+  },
+  "montarron": {
+   "municipio": "Montarrón",
+   "provincia": "guadalajara",
+   "poblacion": 31,
+   "anio": 2025
+  },
+  "moratilla de los meleros": {
+   "municipio": "Moratilla de los Meleros",
+   "provincia": "guadalajara",
+   "poblacion": 106,
+   "anio": 2025
+  },
+  "morenilla": {
+   "municipio": "Morenilla",
+   "provincia": "guadalajara",
+   "poblacion": 53,
+   "anio": 2025
+  },
+  "muduex": {
+   "municipio": "Muduex",
+   "provincia": "guadalajara",
+   "poblacion": 104,
+   "anio": 2025
+  },
+  "navas de jadraque, las": {
+   "municipio": "Navas de Jadraque, Las",
+   "provincia": "guadalajara",
+   "poblacion": 37,
+   "anio": 2025
+  },
+  "negredo": {
+   "municipio": "Negredo",
+   "provincia": "guadalajara",
+   "poblacion": 12,
+   "anio": 2025
+  },
+  "ocentejo": {
+   "municipio": "Ocentejo",
+   "provincia": "guadalajara",
+   "poblacion": 15,
+   "anio": 2025
+  },
+  "olivar, el": {
+   "municipio": "Olivar, El",
+   "provincia": "guadalajara",
+   "poblacion": 68,
+   "anio": 2025
+  },
+  "olmeda de cobeta": {
+   "municipio": "Olmeda de Cobeta",
+   "provincia": "guadalajara",
+   "poblacion": 56,
+   "anio": 2025
+  },
+  "olmeda de jadraque, la": {
+   "municipio": "Olmeda de Jadraque, La",
+   "provincia": "guadalajara",
+   "poblacion": 18,
+   "anio": 2025
+  },
+  "ordial, el": {
+   "municipio": "Ordial, El",
+   "provincia": "guadalajara",
+   "poblacion": 45,
+   "anio": 2025
+  },
+  "orea": {
+   "municipio": "Orea",
+   "provincia": "guadalajara",
+   "poblacion": 191,
+   "anio": 2025
+  },
+  "palmaces de jadraque": {
+   "municipio": "Pálmaces de Jadraque",
+   "provincia": "guadalajara",
+   "poblacion": 54,
+   "anio": 2025
+  },
+  "pardos": {
+   "municipio": "Pardos",
+   "provincia": "guadalajara",
+   "poblacion": 33,
+   "anio": 2025
+  },
+  "paredes de siguenza": {
+   "municipio": "Paredes de Sigüenza",
+   "provincia": "guadalajara",
+   "poblacion": 21,
+   "anio": 2025
+  },
+  "pareja": {
+   "municipio": "Pareja",
+   "provincia": "guadalajara",
+   "poblacion": 493,
+   "anio": 2025
+  },
+  "pastrana": {
+   "municipio": "Pastrana",
+   "provincia": "guadalajara",
+   "poblacion": 971,
+   "anio": 2025
+  },
+  "pedregal, el": {
+   "municipio": "Pedregal, El",
+   "provincia": "guadalajara",
+   "poblacion": 60,
+   "anio": 2025
+  },
+  "penalen": {
+   "municipio": "Peñalén",
+   "provincia": "guadalajara",
+   "poblacion": 72,
+   "anio": 2025
+  },
+  "penalver": {
+   "municipio": "Peñalver",
+   "provincia": "guadalajara",
+   "poblacion": 172,
+   "anio": 2025
+  },
+  "peralejos de las truchas": {
+   "municipio": "Peralejos de las Truchas",
+   "provincia": "guadalajara",
+   "poblacion": 148,
+   "anio": 2025
+  },
+  "peralveche": {
+   "municipio": "Peralveche",
+   "provincia": "guadalajara",
+   "poblacion": 52,
+   "anio": 2025
+  },
+  "pinilla de jadraque": {
+   "municipio": "Pinilla de Jadraque",
+   "provincia": "guadalajara",
+   "poblacion": 47,
+   "anio": 2025
+  },
+  "pinilla de molina": {
+   "municipio": "Pinilla de Molina",
+   "provincia": "guadalajara",
+   "poblacion": 13,
+   "anio": 2025
+  },
+  "pioz": {
+   "municipio": "Pioz",
+   "provincia": "guadalajara",
+   "poblacion": 5261,
+   "anio": 2025
+  },
+  "piqueras": {
+   "municipio": "Piqueras",
+   "provincia": "guadalajara",
+   "poblacion": 33,
+   "anio": 2025
+  },
+  "pobo de duenas, el": {
+   "municipio": "Pobo de Dueñas, El",
+   "provincia": "guadalajara",
+   "poblacion": 102,
+   "anio": 2025
+  },
+  "poveda de la sierra": {
+   "municipio": "Poveda de la Sierra",
+   "provincia": "guadalajara",
+   "poblacion": 99,
+   "anio": 2025
+  },
+  "pozo de almoguera": {
+   "municipio": "Pozo de Almoguera",
+   "provincia": "guadalajara",
+   "poblacion": 110,
+   "anio": 2025
+  },
+  "pozo de guadalajara": {
+   "municipio": "Pozo de Guadalajara",
+   "provincia": "guadalajara",
+   "poblacion": 1739,
+   "anio": 2025
+  },
+  "pradena de atienza": {
+   "municipio": "Prádena de Atienza",
+   "provincia": "guadalajara",
+   "poblacion": 45,
+   "anio": 2025
+  },
+  "prados redondos": {
+   "municipio": "Prados Redondos",
+   "provincia": "guadalajara",
+   "poblacion": 45,
+   "anio": 2025
+  },
+  "puebla de belena": {
+   "municipio": "Puebla de Beleña",
+   "provincia": "guadalajara",
+   "poblacion": 57,
+   "anio": 2025
+  },
+  "puebla de valles": {
+   "municipio": "Puebla de Valles",
+   "provincia": "guadalajara",
+   "poblacion": 59,
+   "anio": 2025
+  },
+  "quer": {
+   "municipio": "Quer",
+   "provincia": "guadalajara",
+   "poblacion": 1080,
+   "anio": 2025
+  },
+  "rebollosa de jadraque": {
+   "municipio": "Rebollosa de Jadraque",
+   "provincia": "guadalajara",
+   "poblacion": 11,
+   "anio": 2025
+  },
+  "recuenco, el": {
+   "municipio": "Recuenco, El",
+   "provincia": "guadalajara",
+   "poblacion": 80,
+   "anio": 2025
+  },
+  "renera": {
+   "municipio": "Renera",
+   "provincia": "guadalajara",
+   "poblacion": 100,
+   "anio": 2025
+  },
+  "retiendas": {
+   "municipio": "Retiendas",
+   "provincia": "guadalajara",
+   "poblacion": 52,
+   "anio": 2025
+  },
+  "riba de saelices": {
+   "municipio": "Riba de Saelices",
+   "provincia": "guadalajara",
+   "poblacion": 113,
+   "anio": 2025
+  },
+  "rillo de gallo": {
+   "municipio": "Rillo de Gallo",
+   "provincia": "guadalajara",
+   "poblacion": 37,
+   "anio": 2025
+  },
+  "riofrio del llano": {
+   "municipio": "Riofrío del Llano",
+   "provincia": "guadalajara",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "robledillo de mohernando": {
+   "municipio": "Robledillo de Mohernando",
+   "provincia": "guadalajara",
+   "poblacion": 200,
+   "anio": 2025
+  },
+  "robledo de corpes": {
+   "municipio": "Robledo de Corpes",
+   "provincia": "guadalajara",
+   "poblacion": 39,
+   "anio": 2025
+  },
+  "romanillos de atienza": {
+   "municipio": "Romanillos de Atienza",
+   "provincia": "guadalajara",
+   "poblacion": 37,
+   "anio": 2025
+  },
+  "romanones": {
+   "municipio": "Romanones",
+   "provincia": "guadalajara",
+   "poblacion": 127,
+   "anio": 2025
+  },
+  "rueda de la sierra": {
+   "municipio": "Rueda de la Sierra",
+   "provincia": "guadalajara",
+   "poblacion": 38,
+   "anio": 2025
+  },
+  "sacecorbo": {
+   "municipio": "Sacecorbo",
+   "provincia": "guadalajara",
+   "poblacion": 90,
+   "anio": 2025
+  },
+  "sacedon": {
+   "municipio": "Sacedón",
+   "provincia": "guadalajara",
+   "poblacion": 1623,
+   "anio": 2025
+  },
+  "saelices de la sal": {
+   "municipio": "Saelices de la Sal",
+   "provincia": "guadalajara",
+   "poblacion": 41,
+   "anio": 2025
+  },
+  "salmeron": {
+   "municipio": "Salmerón",
+   "provincia": "guadalajara",
+   "poblacion": 147,
+   "anio": 2025
+  },
+  "san andres del congosto": {
+   "municipio": "San Andrés del Congosto",
+   "provincia": "guadalajara",
+   "poblacion": 63,
+   "anio": 2025
+  },
+  "san andres del rey": {
+   "municipio": "San Andrés del Rey",
+   "provincia": "guadalajara",
+   "poblacion": 35,
+   "anio": 2025
+  },
+  "santiuste": {
+   "municipio": "Santiuste",
+   "provincia": "guadalajara",
+   "poblacion": 15,
+   "anio": 2025
+  },
+  "sauca": {
+   "municipio": "Saúca",
+   "provincia": "guadalajara",
+   "poblacion": 47,
+   "anio": 2025
+  },
+  "sayaton": {
+   "municipio": "Sayatón",
+   "provincia": "guadalajara",
+   "poblacion": 64,
+   "anio": 2025
+  },
+  "selas": {
+   "municipio": "Selas",
+   "provincia": "guadalajara",
+   "poblacion": 33,
+   "anio": 2025
+  },
+  "semillas": {
+   "municipio": "Semillas",
+   "provincia": "guadalajara",
+   "poblacion": 25,
+   "anio": 2025
+  },
+  "setiles": {
+   "municipio": "Setiles",
+   "provincia": "guadalajara",
+   "poblacion": 78,
+   "anio": 2025
+  },
+  "sienes": {
+   "municipio": "Sienes",
+   "provincia": "guadalajara",
+   "poblacion": 38,
+   "anio": 2025
+  },
+  "siguenza": {
+   "municipio": "Sigüenza",
+   "provincia": "guadalajara",
+   "poblacion": 4911,
+   "anio": 2025
+  },
+  "solanillos del extremo": {
+   "municipio": "Solanillos del Extremo",
+   "provincia": "guadalajara",
+   "poblacion": 72,
+   "anio": 2025
+  },
+  "somolinos": {
+   "municipio": "Somolinos",
+   "provincia": "guadalajara",
+   "poblacion": 26,
+   "anio": 2025
+  },
+  "sotillo, el": {
+   "municipio": "Sotillo, El",
+   "provincia": "guadalajara",
+   "poblacion": 28,
+   "anio": 2025
+  },
+  "sotodosos": {
+   "municipio": "Sotodosos",
+   "provincia": "guadalajara",
+   "poblacion": 30,
+   "anio": 2025
+  },
+  "tamajon": {
+   "municipio": "Tamajón",
+   "provincia": "guadalajara",
+   "poblacion": 153,
+   "anio": 2025
+  },
+  "taragudo": {
+   "municipio": "Taragudo",
+   "provincia": "guadalajara",
+   "poblacion": 45,
+   "anio": 2025
+  },
+  "taravilla": {
+   "municipio": "Taravilla",
+   "provincia": "guadalajara",
+   "poblacion": 38,
+   "anio": 2025
+  },
+  "tartanedo": {
+   "municipio": "Tartanedo",
+   "provincia": "guadalajara",
+   "poblacion": 143,
+   "anio": 2025
+  },
+  "tendilla": {
+   "municipio": "Tendilla",
+   "provincia": "guadalajara",
+   "poblacion": 353,
+   "anio": 2025
+  },
+  "terzaga": {
+   "municipio": "Terzaga",
+   "provincia": "guadalajara",
+   "poblacion": 24,
+   "anio": 2025
+  },
+  "tierzo": {
+   "municipio": "Tierzo",
+   "provincia": "guadalajara",
+   "poblacion": 32,
+   "anio": 2025
+  },
+  "toba, la": {
+   "municipio": "Toba, La",
+   "provincia": "guadalajara",
+   "poblacion": 70,
+   "anio": 2025
+  },
+  "tordellego": {
+   "municipio": "Tordellego",
+   "provincia": "guadalajara",
+   "poblacion": 38,
+   "anio": 2025
+  },
+  "tordelrabano": {
+   "municipio": "Tordelrábano",
+   "provincia": "guadalajara",
+   "poblacion": 8,
+   "anio": 2025
+  },
+  "tordesilos": {
+   "municipio": "Tordesilos",
+   "provincia": "guadalajara",
+   "poblacion": 78,
+   "anio": 2025
+  },
+  "torija": {
+   "municipio": "Torija",
+   "provincia": "guadalajara",
+   "poblacion": 1877,
+   "anio": 2025
+  },
+  "torre del burgo": {
+   "municipio": "Torre del Burgo",
+   "provincia": "guadalajara",
+   "poblacion": 494,
+   "anio": 2025
+  },
+  "torrecuadrada de molina": {
+   "municipio": "Torrecuadrada de Molina",
+   "provincia": "guadalajara",
+   "poblacion": 20,
+   "anio": 2025
+  },
+  "torrecuadradilla": {
+   "municipio": "Torrecuadradilla",
+   "provincia": "guadalajara",
+   "poblacion": 26,
+   "anio": 2025
+  },
+  "torrejon del rey": {
+   "municipio": "Torrejón del Rey",
+   "provincia": "guadalajara",
+   "poblacion": 6435,
+   "anio": 2025
+  },
+  "torremocha de jadraque": {
+   "municipio": "Torremocha de Jadraque",
+   "provincia": "guadalajara",
+   "poblacion": 23,
+   "anio": 2025
+  },
+  "torremocha del campo": {
+   "municipio": "Torremocha del Campo",
+   "provincia": "guadalajara",
+   "poblacion": 193,
+   "anio": 2025
+  },
+  "torremocha del pinar": {
+   "municipio": "Torremocha del Pinar",
+   "provincia": "guadalajara",
+   "poblacion": 32,
+   "anio": 2025
+  },
+  "torremochuela": {
+   "municipio": "Torremochuela",
+   "provincia": "guadalajara",
+   "poblacion": 6,
+   "anio": 2025
+  },
+  "torrubia": {
+   "municipio": "Torrubia",
+   "provincia": "guadalajara",
+   "poblacion": 28,
+   "anio": 2025
+  },
+  "tortola de henares": {
+   "municipio": "Tórtola de Henares",
+   "provincia": "guadalajara",
+   "poblacion": 1439,
+   "anio": 2025
+  },
+  "tortuera": {
+   "municipio": "Tortuera",
+   "provincia": "guadalajara",
+   "poblacion": 157,
+   "anio": 2025
+  },
+  "tortuero": {
+   "municipio": "Tortuero",
+   "provincia": "guadalajara",
+   "poblacion": 19,
+   "anio": 2025
+  },
+  "traid": {
+   "municipio": "Traíd",
+   "provincia": "guadalajara",
+   "poblacion": 18,
+   "anio": 2025
+  },
+  "trijueque": {
+   "municipio": "Trijueque",
+   "provincia": "guadalajara",
+   "poblacion": 1737,
+   "anio": 2025
+  },
+  "trillo": {
+   "municipio": "Trillo",
+   "provincia": "guadalajara",
+   "poblacion": 1406,
+   "anio": 2025
+  },
+  "uceda": {
+   "municipio": "Uceda",
+   "provincia": "guadalajara",
+   "poblacion": 3400,
+   "anio": 2025
+  },
+  "ujados": {
+   "municipio": "Ujados",
+   "provincia": "guadalajara",
+   "poblacion": 20,
+   "anio": 2025
+  },
+  "utande": {
+   "municipio": "Utande",
+   "provincia": "guadalajara",
+   "poblacion": 31,
+   "anio": 2025
+  },
+  "valdarachas": {
+   "municipio": "Valdarachas",
+   "provincia": "guadalajara",
+   "poblacion": 67,
+   "anio": 2025
+  },
+  "valdearenas": {
+   "municipio": "Valdearenas",
+   "provincia": "guadalajara",
+   "poblacion": 88,
+   "anio": 2025
+  },
+  "valdeavellano": {
+   "municipio": "Valdeavellano",
+   "provincia": "guadalajara",
+   "poblacion": 101,
+   "anio": 2025
+  },
+  "valdeaveruelo": {
+   "municipio": "Valdeaveruelo",
+   "provincia": "guadalajara",
+   "poblacion": 1317,
+   "anio": 2025
+  },
+  "valdeconcha": {
+   "municipio": "Valdeconcha",
+   "provincia": "guadalajara",
+   "poblacion": 42,
+   "anio": 2025
+  },
+  "valdegrudas": {
+   "municipio": "Valdegrudas",
+   "provincia": "guadalajara",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "valdelcubo": {
+   "municipio": "Valdelcubo",
+   "provincia": "guadalajara",
+   "poblacion": 42,
+   "anio": 2025
+  },
+  "valdenuno fernandez": {
+   "municipio": "Valdenuño Fernández",
+   "provincia": "guadalajara",
+   "poblacion": 359,
+   "anio": 2025
+  },
+  "valdepenas de la sierra": {
+   "municipio": "Valdepeñas de la Sierra",
+   "provincia": "guadalajara",
+   "poblacion": 151,
+   "anio": 2025
+  },
+  "valderrebollo": {
+   "municipio": "Valderrebollo",
+   "provincia": "guadalajara",
+   "poblacion": 25,
+   "anio": 2025
+  },
+  "valdesotos": {
+   "municipio": "Valdesotos",
+   "provincia": "guadalajara",
+   "poblacion": 35,
+   "anio": 2025
+  },
+  "valfermoso de tajuna": {
+   "municipio": "Valfermoso de Tajuña",
+   "provincia": "guadalajara",
+   "poblacion": 77,
+   "anio": 2025
+  },
+  "valhermoso": {
+   "municipio": "Valhermoso",
+   "provincia": "guadalajara",
+   "poblacion": 15,
+   "anio": 2025
+  },
+  "valtablado del rio": {
+   "municipio": "Valtablado del Río",
+   "provincia": "guadalajara",
+   "poblacion": 7,
+   "anio": 2025
+  },
+  "valverde de los arroyos": {
+   "municipio": "Valverde de los Arroyos",
+   "provincia": "guadalajara",
+   "poblacion": 85,
+   "anio": 2025
+  },
+  "viana de jadraque": {
+   "municipio": "Viana de Jadraque",
+   "provincia": "guadalajara",
+   "poblacion": 41,
+   "anio": 2025
+  },
+  "villanueva de alcoron": {
+   "municipio": "Villanueva de Alcorón",
+   "provincia": "guadalajara",
+   "poblacion": 140,
+   "anio": 2025
+  },
+  "villanueva de argecilla": {
+   "municipio": "Villanueva de Argecilla",
+   "provincia": "guadalajara",
+   "poblacion": 30,
+   "anio": 2025
+  },
+  "villanueva de la torre": {
+   "municipio": "Villanueva de la Torre",
+   "provincia": "guadalajara",
+   "poblacion": 6666,
+   "anio": 2025
+  },
+  "villares de jadraque": {
+   "municipio": "Villares de Jadraque",
+   "provincia": "guadalajara",
+   "poblacion": 39,
+   "anio": 2025
+  },
+  "villaseca de henares": {
+   "municipio": "Villaseca de Henares",
+   "provincia": "guadalajara",
+   "poblacion": 22,
+   "anio": 2025
+  },
+  "villaseca de uceda": {
+   "municipio": "Villaseca de Uceda",
+   "provincia": "guadalajara",
+   "poblacion": 59,
+   "anio": 2025
+  },
+  "villel de mesa": {
+   "municipio": "Villel de Mesa",
+   "provincia": "guadalajara",
+   "poblacion": 163,
+   "anio": 2025
+  },
+  "vinuelas": {
+   "municipio": "Viñuelas",
+   "provincia": "guadalajara",
+   "poblacion": 181,
+   "anio": 2025
+  },
+  "yebes": {
+   "municipio": "Yebes",
+   "provincia": "guadalajara",
+   "poblacion": 5637,
+   "anio": 2025
+  },
+  "yebra": {
+   "municipio": "Yebra",
+   "provincia": "guadalajara",
+   "poblacion": 489,
+   "anio": 2025
+  },
+  "yelamos de abajo": {
+   "municipio": "Yélamos de Abajo",
+   "provincia": "guadalajara",
+   "poblacion": 57,
+   "anio": 2025
+  },
+  "yelamos de arriba": {
+   "municipio": "Yélamos de Arriba",
+   "provincia": "guadalajara",
+   "poblacion": 97,
+   "anio": 2025
+  },
+  "yunquera de henares": {
+   "municipio": "Yunquera de Henares",
+   "provincia": "guadalajara",
+   "poblacion": 4706,
+   "anio": 2025
+  },
+  "yunta, la": {
+   "municipio": "Yunta, La",
+   "provincia": "guadalajara",
+   "poblacion": 86,
+   "anio": 2025
+  },
+  "zaorejas": {
+   "municipio": "Zaorejas",
+   "provincia": "guadalajara",
+   "poblacion": 117,
+   "anio": 2025
+  },
+  "zarzuela de jadraque": {
+   "municipio": "Zarzuela de Jadraque",
+   "provincia": "guadalajara",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "zorita de los canes": {
+   "municipio": "Zorita de los Canes",
+   "provincia": "guadalajara",
+   "poblacion": 72,
+   "anio": 2025
+  },
+  "ajofrin": {
+   "municipio": "Ajofrín",
+   "provincia": "toledo",
+   "poblacion": 2379,
+   "anio": 2025
+  },
+  "alameda de la sagra": {
+   "municipio": "Alameda de la Sagra",
+   "provincia": "toledo",
+   "poblacion": 4350,
+   "anio": 2025
+  },
+  "albarreal de tajo": {
+   "municipio": "Albarreal de Tajo",
+   "provincia": "toledo",
+   "poblacion": 804,
+   "anio": 2025
+  },
+  "alcabon": {
+   "municipio": "Alcabón",
+   "provincia": "toledo",
+   "poblacion": 792,
+   "anio": 2025
+  },
+  "alcanizo": {
+   "municipio": "Alcañizo",
+   "provincia": "toledo",
+   "poblacion": 259,
+   "anio": 2025
+  },
+  "alcaudete de la jara": {
+   "municipio": "Alcaudete de la Jara",
+   "provincia": "toledo",
+   "poblacion": 1720,
+   "anio": 2025
+  },
+  "alcolea de tajo": {
+   "municipio": "Alcolea de Tajo",
+   "provincia": "toledo",
+   "poblacion": 839,
+   "anio": 2025
+  },
+  "aldea en cabo": {
+   "municipio": "Aldea en Cabo",
+   "provincia": "toledo",
+   "poblacion": 184,
+   "anio": 2025
+  },
+  "aldeanueva de barbarroya": {
+   "municipio": "Aldeanueva de Barbarroya",
+   "provincia": "toledo",
+   "poblacion": 456,
+   "anio": 2025
+  },
+  "aldeanueva de san bartolome": {
+   "municipio": "Aldeanueva de San Bartolomé",
+   "provincia": "toledo",
+   "poblacion": 404,
+   "anio": 2025
+  },
+  "almendral de la canada": {
+   "municipio": "Almendral de la Cañada",
+   "provincia": "toledo",
+   "poblacion": 341,
+   "anio": 2025
+  },
+  "almonacid de toledo": {
+   "municipio": "Almonacid de Toledo",
+   "provincia": "toledo",
+   "poblacion": 991,
+   "anio": 2025
+  },
+  "almorox": {
+   "municipio": "Almorox",
+   "provincia": "toledo",
+   "poblacion": 2569,
+   "anio": 2025
+  },
+  "anover de tajo": {
+   "municipio": "Añover de Tajo",
+   "provincia": "toledo",
+   "poblacion": 5454,
+   "anio": 2025
+  },
+  "arcicollar": {
+   "municipio": "Arcicóllar",
+   "provincia": "toledo",
+   "poblacion": 1089,
+   "anio": 2025
+  },
+  "arges": {
+   "municipio": "Argés",
+   "provincia": "toledo",
+   "poblacion": 7178,
+   "anio": 2025
+  },
+  "azutan": {
+   "municipio": "Azután",
+   "provincia": "toledo",
+   "poblacion": 286,
+   "anio": 2025
+  },
+  "barcience": {
+   "municipio": "Barcience",
+   "provincia": "toledo",
+   "poblacion": 1110,
+   "anio": 2025
+  },
+  "bargas": {
+   "municipio": "Bargas",
+   "provincia": "toledo",
+   "poblacion": 11274,
+   "anio": 2025
+  },
+  "belvis de la jara": {
+   "municipio": "Belvís de la Jara",
+   "provincia": "toledo",
+   "poblacion": 1475,
+   "anio": 2025
+  },
+  "borox": {
+   "municipio": "Borox",
+   "provincia": "toledo",
+   "poblacion": 4306,
+   "anio": 2025
+  },
+  "buenaventura": {
+   "municipio": "Buenaventura",
+   "provincia": "toledo",
+   "poblacion": 386,
+   "anio": 2025
+  },
+  "burguillos de toledo": {
+   "municipio": "Burguillos de Toledo",
+   "provincia": "toledo",
+   "poblacion": 3872,
+   "anio": 2025
+  },
+  "burujon": {
+   "municipio": "Burujón",
+   "provincia": "toledo",
+   "poblacion": 1344,
+   "anio": 2025
+  },
+  "cabanas de la sagra": {
+   "municipio": "Cabañas de la Sagra",
+   "provincia": "toledo",
+   "poblacion": 2177,
+   "anio": 2025
+  },
+  "cabanas de yepes": {
+   "municipio": "Cabañas de Yepes",
+   "provincia": "toledo",
+   "poblacion": 316,
+   "anio": 2025
+  },
+  "cabezamesada": {
+   "municipio": "Cabezamesada",
+   "provincia": "toledo",
+   "poblacion": 343,
+   "anio": 2025
+  },
+  "calera y chozas": {
+   "municipio": "Calera y Chozas",
+   "provincia": "toledo",
+   "poblacion": 4834,
+   "anio": 2025
+  },
+  "caleruela": {
+   "municipio": "Caleruela",
+   "provincia": "toledo",
+   "poblacion": 203,
+   "anio": 2025
+  },
+  "calzada de oropesa": {
+   "municipio": "Calzada de Oropesa",
+   "provincia": "toledo",
+   "poblacion": 514,
+   "anio": 2025
+  },
+  "camarena": {
+   "municipio": "Camarena",
+   "provincia": "toledo",
+   "poblacion": 4848,
+   "anio": 2025
+  },
+  "camarenilla": {
+   "municipio": "Camarenilla",
+   "provincia": "toledo",
+   "poblacion": 606,
+   "anio": 2025
+  },
+  "campillo de la jara, el": {
+   "municipio": "Campillo de la Jara, El",
+   "provincia": "toledo",
+   "poblacion": 326,
+   "anio": 2025
+  },
+  "camunas": {
+   "municipio": "Camuñas",
+   "provincia": "toledo",
+   "poblacion": 1742,
+   "anio": 2025
+  },
+  "cardiel de los montes": {
+   "municipio": "Cardiel de los Montes",
+   "provincia": "toledo",
+   "poblacion": 406,
+   "anio": 2025
+  },
+  "carmena": {
+   "municipio": "Carmena",
+   "provincia": "toledo",
+   "poblacion": 771,
+   "anio": 2025
+  },
+  "carpio de tajo, el": {
+   "municipio": "Carpio de Tajo, El",
+   "provincia": "toledo",
+   "poblacion": 1948,
+   "anio": 2025
+  },
+  "carranque": {
+   "municipio": "Carranque",
+   "provincia": "toledo",
+   "poblacion": 5469,
+   "anio": 2025
+  },
+  "carriches": {
+   "municipio": "Carriches",
+   "provincia": "toledo",
+   "poblacion": 260,
+   "anio": 2025
+  },
+  "casar de escalona, el": {
+   "municipio": "Casar de Escalona, El",
+   "provincia": "toledo",
+   "poblacion": 2280,
+   "anio": 2025
+  },
+  "casarrubios del monte": {
+   "municipio": "Casarrubios del Monte",
+   "provincia": "toledo",
+   "poblacion": 7424,
+   "anio": 2025
+  },
+  "casasbuenas": {
+   "municipio": "Casasbuenas",
+   "provincia": "toledo",
+   "poblacion": 210,
+   "anio": 2025
+  },
+  "castillo de bayuela": {
+   "municipio": "Castillo de Bayuela",
+   "provincia": "toledo",
+   "poblacion": 889,
+   "anio": 2025
+  },
+  "cazalegas": {
+   "municipio": "Cazalegas",
+   "provincia": "toledo",
+   "poblacion": 2195,
+   "anio": 2025
+  },
+  "cebolla": {
+   "municipio": "Cebolla",
+   "provincia": "toledo",
+   "poblacion": 3270,
+   "anio": 2025
+  },
+  "cedillo del condado": {
+   "municipio": "Cedillo del Condado",
+   "provincia": "toledo",
+   "poblacion": 4525,
+   "anio": 2025
+  },
+  "cerralbos, los": {
+   "municipio": "Cerralbos, Los",
+   "provincia": "toledo",
+   "poblacion": 452,
+   "anio": 2025
+  },
+  "cervera de los montes": {
+   "municipio": "Cervera de los Montes",
+   "provincia": "toledo",
+   "poblacion": 513,
+   "anio": 2025
+  },
+  "chozas de canales": {
+   "municipio": "Chozas de Canales",
+   "provincia": "toledo",
+   "poblacion": 5044,
+   "anio": 2025
+  },
+  "chueca": {
+   "municipio": "Chueca",
+   "provincia": "toledo",
+   "poblacion": 252,
+   "anio": 2025
+  },
+  "ciruelos": {
+   "municipio": "Ciruelos",
+   "provincia": "toledo",
+   "poblacion": 723,
+   "anio": 2025
+  },
+  "cobeja": {
+   "municipio": "Cobeja",
+   "provincia": "toledo",
+   "poblacion": 2719,
+   "anio": 2025
+  },
+  "cobisa": {
+   "municipio": "Cobisa",
+   "provincia": "toledo",
+   "poblacion": 4550,
+   "anio": 2025
+  },
+  "consuegra": {
+   "municipio": "Consuegra",
+   "provincia": "toledo",
+   "poblacion": 9767,
+   "anio": 2025
+  },
+  "corral de almaguer": {
+   "municipio": "Corral de Almaguer",
+   "provincia": "toledo",
+   "poblacion": 5280,
+   "anio": 2025
+  },
+  "cuerva": {
+   "municipio": "Cuerva",
+   "provincia": "toledo",
+   "poblacion": 1226,
+   "anio": 2025
+  },
+  "domingo perez": {
+   "municipio": "Domingo Pérez",
+   "provincia": "toledo",
+   "poblacion": 418,
+   "anio": 2025
+  },
+  "dosbarrios": {
+   "municipio": "Dosbarrios",
+   "provincia": "toledo",
+   "poblacion": 2228,
+   "anio": 2025
+  },
+  "erustes": {
+   "municipio": "Erustes",
+   "provincia": "toledo",
+   "poblacion": 220,
+   "anio": 2025
+  },
+  "escalona": {
+   "municipio": "Escalona",
+   "provincia": "toledo",
+   "poblacion": 3987,
+   "anio": 2025
+  },
+  "escalonilla": {
+   "municipio": "Escalonilla",
+   "provincia": "toledo",
+   "poblacion": 1545,
+   "anio": 2025
+  },
+  "espinoso del rey": {
+   "municipio": "Espinoso del Rey",
+   "provincia": "toledo",
+   "poblacion": 420,
+   "anio": 2025
+  },
+  "esquivias": {
+   "municipio": "Esquivias",
+   "provincia": "toledo",
+   "poblacion": 5833,
+   "anio": 2025
+  },
+  "estrella, la": {
+   "municipio": "Estrella, La",
+   "provincia": "toledo",
+   "poblacion": 251,
+   "anio": 2025
+  },
+  "fuensalida": {
+   "municipio": "Fuensalida",
+   "provincia": "toledo",
+   "poblacion": 12669,
+   "anio": 2025
+  },
+  "galvez": {
+   "municipio": "Gálvez",
+   "provincia": "toledo",
+   "poblacion": 3044,
+   "anio": 2025
+  },
+  "garciotum": {
+   "municipio": "Garciotum",
+   "provincia": "toledo",
+   "poblacion": 220,
+   "anio": 2025
+  },
+  "gerindote": {
+   "municipio": "Gerindote",
+   "provincia": "toledo",
+   "poblacion": 2828,
+   "anio": 2025
+  },
+  "guadamur": {
+   "municipio": "Guadamur",
+   "provincia": "toledo",
+   "poblacion": 1796,
+   "anio": 2025
+  },
+  "guardia, la": {
+   "municipio": "Guardia, La",
+   "provincia": "toledo",
+   "poblacion": 2200,
+   "anio": 2025
+  },
+  "herencias, las": {
+   "municipio": "Herencias, Las",
+   "provincia": "toledo",
+   "poblacion": 821,
+   "anio": 2025
+  },
+  "herreruela de oropesa": {
+   "municipio": "Herreruela de Oropesa",
+   "provincia": "toledo",
+   "poblacion": 323,
+   "anio": 2025
+  },
+  "hinojosa de san vicente": {
+   "municipio": "Hinojosa de San Vicente",
+   "provincia": "toledo",
+   "poblacion": 363,
+   "anio": 2025
+  },
+  "hontanar": {
+   "municipio": "Hontanar",
+   "provincia": "toledo",
+   "poblacion": 139,
+   "anio": 2025
+  },
+  "hormigos": {
+   "municipio": "Hormigos",
+   "provincia": "toledo",
+   "poblacion": 1035,
+   "anio": 2025
+  },
+  "huecas": {
+   "municipio": "Huecas",
+   "provincia": "toledo",
+   "poblacion": 890,
+   "anio": 2025
+  },
+  "huerta de valdecarabanos": {
+   "municipio": "Huerta de Valdecarábanos",
+   "provincia": "toledo",
+   "poblacion": 1836,
+   "anio": 2025
+  },
+  "iglesuela del tietar, la": {
+   "municipio": "Iglesuela del Tiétar, La",
+   "provincia": "toledo",
+   "poblacion": 448,
+   "anio": 2025
+  },
+  "illan de vacas": {
+   "municipio": "Illán de Vacas",
+   "provincia": "toledo",
+   "poblacion": 8,
+   "anio": 2025
+  },
+  "illescas": {
+   "municipio": "Illescas",
+   "provincia": "toledo",
+   "poblacion": 33301,
+   "anio": 2025
+  },
+  "lagartera": {
+   "municipio": "Lagartera",
+   "provincia": "toledo",
+   "poblacion": 1294,
+   "anio": 2025
+  },
+  "layos": {
+   "municipio": "Layos",
+   "provincia": "toledo",
+   "poblacion": 931,
+   "anio": 2025
+  },
+  "lillo": {
+   "municipio": "Lillo",
+   "provincia": "toledo",
+   "poblacion": 2519,
+   "anio": 2025
+  },
+  "lominchar": {
+   "municipio": "Lominchar",
+   "provincia": "toledo",
+   "poblacion": 2989,
+   "anio": 2025
+  },
+  "lucillos": {
+   "municipio": "Lucillos",
+   "provincia": "toledo",
+   "poblacion": 666,
+   "anio": 2025
+  },
+  "madridejos": {
+   "municipio": "Madridejos",
+   "provincia": "toledo",
+   "poblacion": 10088,
+   "anio": 2025
+  },
+  "magan": {
+   "municipio": "Magán",
+   "provincia": "toledo",
+   "poblacion": 4384,
+   "anio": 2025
+  },
+  "malpica de tajo": {
+   "municipio": "Malpica de Tajo",
+   "provincia": "toledo",
+   "poblacion": 1655,
+   "anio": 2025
+  },
+  "manzaneque": {
+   "municipio": "Manzaneque",
+   "provincia": "toledo",
+   "poblacion": 407,
+   "anio": 2025
+  },
+  "maqueda": {
+   "municipio": "Maqueda",
+   "provincia": "toledo",
+   "poblacion": 548,
+   "anio": 2025
+  },
+  "marjaliza": {
+   "municipio": "Marjaliza",
+   "provincia": "toledo",
+   "poblacion": 258,
+   "anio": 2025
+  },
+  "marrupe": {
+   "municipio": "Marrupe",
+   "provincia": "toledo",
+   "poblacion": 166,
+   "anio": 2025
+  },
+  "mascaraque": {
+   "municipio": "Mascaraque",
+   "provincia": "toledo",
+   "poblacion": 441,
+   "anio": 2025
+  },
+  "mata, la": {
+   "municipio": "Mata, La",
+   "provincia": "toledo",
+   "poblacion": 910,
+   "anio": 2025
+  },
+  "mazarambroz": {
+   "municipio": "Mazarambroz",
+   "provincia": "toledo",
+   "poblacion": 1251,
+   "anio": 2025
+  },
+  "mejorada": {
+   "municipio": "Mejorada",
+   "provincia": "toledo",
+   "poblacion": 1387,
+   "anio": 2025
+  },
+  "menasalbas": {
+   "municipio": "Menasalbas",
+   "provincia": "toledo",
+   "poblacion": 2465,
+   "anio": 2025
+  },
+  "mentrida": {
+   "municipio": "Méntrida",
+   "provincia": "toledo",
+   "poblacion": 6495,
+   "anio": 2025
+  },
+  "mesegar de tajo": {
+   "municipio": "Mesegar de Tajo",
+   "provincia": "toledo",
+   "poblacion": 199,
+   "anio": 2025
+  },
+  "miguel esteban": {
+   "municipio": "Miguel Esteban",
+   "provincia": "toledo",
+   "poblacion": 4751,
+   "anio": 2025
+  },
+  "mocejon": {
+   "municipio": "Mocejón",
+   "provincia": "toledo",
+   "poblacion": 5188,
+   "anio": 2025
+  },
+  "mohedas de la jara": {
+   "municipio": "Mohedas de la Jara",
+   "provincia": "toledo",
+   "poblacion": 384,
+   "anio": 2025
+  },
+  "montearagon": {
+   "municipio": "Montearagón",
+   "provincia": "toledo",
+   "poblacion": 598,
+   "anio": 2025
+  },
+  "montesclaros": {
+   "municipio": "Montesclaros",
+   "provincia": "toledo",
+   "poblacion": 377,
+   "anio": 2025
+  },
+  "mora": {
+   "municipio": "Mora",
+   "provincia": "toledo",
+   "poblacion": 10064,
+   "anio": 2025
+  },
+  "nambroca": {
+   "municipio": "Nambroca",
+   "provincia": "toledo",
+   "poblacion": 5263,
+   "anio": 2025
+  },
+  "nava de ricomalillo, la": {
+   "municipio": "Nava de Ricomalillo, La",
+   "provincia": "toledo",
+   "poblacion": 514,
+   "anio": 2025
+  },
+  "navahermosa": {
+   "municipio": "Navahermosa",
+   "provincia": "toledo",
+   "poblacion": 3587,
+   "anio": 2025
+  },
+  "navalcan": {
+   "municipio": "Navalcán",
+   "provincia": "toledo",
+   "poblacion": 1859,
+   "anio": 2025
+  },
+  "navalmoralejo": {
+   "municipio": "Navalmoralejo",
+   "provincia": "toledo",
+   "poblacion": 56,
+   "anio": 2025
+  },
+  "navalmorales, los": {
+   "municipio": "Navalmorales, Los",
+   "provincia": "toledo",
+   "poblacion": 2074,
+   "anio": 2025
+  },
+  "navalucillos, los": {
+   "municipio": "Navalucillos, Los",
+   "provincia": "toledo",
+   "poblacion": 1889,
+   "anio": 2025
+  },
+  "navamorcuende": {
+   "municipio": "Navamorcuende",
+   "provincia": "toledo",
+   "poblacion": 581,
+   "anio": 2025
+  },
+  "noblejas": {
+   "municipio": "Noblejas",
+   "provincia": "toledo",
+   "poblacion": 3998,
+   "anio": 2025
+  },
+  "noez": {
+   "municipio": "Noez",
+   "provincia": "toledo",
+   "poblacion": 1058,
+   "anio": 2025
+  },
+  "nombela": {
+   "municipio": "Nombela",
+   "provincia": "toledo",
+   "poblacion": 904,
+   "anio": 2025
+  },
+  "noves": {
+   "municipio": "Novés",
+   "provincia": "toledo",
+   "poblacion": 3564,
+   "anio": 2025
+  },
+  "numancia de la sagra": {
+   "municipio": "Numancia de la Sagra",
+   "provincia": "toledo",
+   "poblacion": 5674,
+   "anio": 2025
+  },
+  "nuno gomez": {
+   "municipio": "Nuño Gómez",
+   "provincia": "toledo",
+   "poblacion": 178,
+   "anio": 2025
+  },
+  "ocana": {
+   "municipio": "Ocaña",
+   "provincia": "toledo",
+   "poblacion": 15560,
+   "anio": 2025
+  },
+  "olias del rey": {
+   "municipio": "Olías del Rey",
+   "provincia": "toledo",
+   "poblacion": 9174,
+   "anio": 2025
+  },
+  "ontigola": {
+   "municipio": "Ontígola",
+   "provincia": "toledo",
+   "poblacion": 5101,
+   "anio": 2025
+  },
+  "orgaz": {
+   "municipio": "Orgaz",
+   "provincia": "toledo",
+   "poblacion": 2639,
+   "anio": 2025
+  },
+  "oropesa": {
+   "municipio": "Oropesa",
+   "provincia": "toledo",
+   "poblacion": 2587,
+   "anio": 2025
+  },
+  "otero": {
+   "municipio": "Otero",
+   "provincia": "toledo",
+   "poblacion": 436,
+   "anio": 2025
+  },
+  "palomeque": {
+   "municipio": "Palomeque",
+   "provincia": "toledo",
+   "poblacion": 1213,
+   "anio": 2025
+  },
+  "pantoja": {
+   "municipio": "Pantoja",
+   "provincia": "toledo",
+   "poblacion": 3536,
+   "anio": 2025
+  },
+  "paredes de escalona": {
+   "municipio": "Paredes de Escalona",
+   "provincia": "toledo",
+   "poblacion": 133,
+   "anio": 2025
+  },
+  "parrillas": {
+   "municipio": "Parrillas",
+   "provincia": "toledo",
+   "poblacion": 323,
+   "anio": 2025
+  },
+  "pelahustan": {
+   "municipio": "Pelahustán",
+   "provincia": "toledo",
+   "poblacion": 335,
+   "anio": 2025
+  },
+  "pepino": {
+   "municipio": "Pepino",
+   "provincia": "toledo",
+   "poblacion": 3421,
+   "anio": 2025
+  },
+  "polan": {
+   "municipio": "Polán",
+   "provincia": "toledo",
+   "poblacion": 3941,
+   "anio": 2025
+  },
+  "portillo de toledo": {
+   "municipio": "Portillo de Toledo",
+   "provincia": "toledo",
+   "poblacion": 2384,
+   "anio": 2025
+  },
+  "puebla de almoradiel, la": {
+   "municipio": "Puebla de Almoradiel, La",
+   "provincia": "toledo",
+   "poblacion": 4950,
+   "anio": 2025
+  },
+  "puebla de montalban, la": {
+   "municipio": "Puebla de Montalbán, La",
+   "provincia": "toledo",
+   "poblacion": 8144,
+   "anio": 2025
+  },
+  "pueblanueva, la": {
+   "municipio": "Pueblanueva, La",
+   "provincia": "toledo",
+   "poblacion": 2139,
+   "anio": 2025
+  },
+  "puente del arzobispo, el": {
+   "municipio": "Puente del Arzobispo, El",
+   "provincia": "toledo",
+   "poblacion": 1143,
+   "anio": 2025
+  },
+  "puerto de san vicente": {
+   "municipio": "Puerto de San Vicente",
+   "provincia": "toledo",
+   "poblacion": 141,
+   "anio": 2025
+  },
+  "pulgar": {
+   "municipio": "Pulgar",
+   "provincia": "toledo",
+   "poblacion": 1608,
+   "anio": 2025
+  },
+  "quero": {
+   "municipio": "Quero",
+   "provincia": "toledo",
+   "poblacion": 1006,
+   "anio": 2025
+  },
+  "quintanar de la orden": {
+   "municipio": "Quintanar de la Orden",
+   "provincia": "toledo",
+   "poblacion": 11355,
+   "anio": 2025
+  },
+  "quismondo": {
+   "municipio": "Quismondo",
+   "provincia": "toledo",
+   "poblacion": 1857,
+   "anio": 2025
+  },
+  "real de san vicente, el": {
+   "municipio": "Real de San Vicente, El",
+   "provincia": "toledo",
+   "poblacion": 966,
+   "anio": 2025
+  },
+  "recas": {
+   "municipio": "Recas",
+   "provincia": "toledo",
+   "poblacion": 5037,
+   "anio": 2025
+  },
+  "retamoso de la jara": {
+   "municipio": "Retamoso de la Jara",
+   "provincia": "toledo",
+   "poblacion": 109,
+   "anio": 2025
+  },
+  "rielves": {
+   "municipio": "Rielves",
+   "provincia": "toledo",
+   "poblacion": 900,
+   "anio": 2025
+  },
+  "robledo del mazo": {
+   "municipio": "Robledo del Mazo",
+   "provincia": "toledo",
+   "poblacion": 249,
+   "anio": 2025
+  },
+  "romeral, el": {
+   "municipio": "Romeral, El",
+   "provincia": "toledo",
+   "poblacion": 518,
+   "anio": 2025
+  },
+  "san bartolome de las abiertas": {
+   "municipio": "San Bartolomé de las Abiertas",
+   "provincia": "toledo",
+   "poblacion": 637,
+   "anio": 2025
+  },
+  "san martin de montalban": {
+   "municipio": "San Martín de Montalbán",
+   "provincia": "toledo",
+   "poblacion": 778,
+   "anio": 2025
+  },
+  "san martin de pusa": {
+   "municipio": "San Martín de Pusa",
+   "provincia": "toledo",
+   "poblacion": 623,
+   "anio": 2025
+  },
+  "san pablo de los montes": {
+   "municipio": "San Pablo de los Montes",
+   "provincia": "toledo",
+   "poblacion": 1627,
+   "anio": 2025
+  },
+  "san roman de los montes": {
+   "municipio": "San Román de los Montes",
+   "provincia": "toledo",
+   "poblacion": 2191,
+   "anio": 2025
+  },
+  "santa ana de pusa": {
+   "municipio": "Santa Ana de Pusa",
+   "provincia": "toledo",
+   "poblacion": 345,
+   "anio": 2025
+  },
+  "santa cruz de la zarza": {
+   "municipio": "Santa Cruz de la Zarza",
+   "provincia": "toledo",
+   "poblacion": 4180,
+   "anio": 2025
+  },
+  "santa cruz del retamar": {
+   "municipio": "Santa Cruz del Retamar",
+   "provincia": "toledo",
+   "poblacion": 4194,
+   "anio": 2025
+  },
+  "santa olalla": {
+   "municipio": "Santa Olalla",
+   "provincia": "toledo",
+   "poblacion": 3571,
+   "anio": 2025
+  },
+  "santo domingo-caudilla": {
+   "municipio": "Santo Domingo-Caudilla",
+   "provincia": "toledo",
+   "poblacion": 1299,
+   "anio": 2025
+  },
+  "sartajada": {
+   "municipio": "Sartajada",
+   "provincia": "toledo",
+   "poblacion": 104,
+   "anio": 2025
+  },
+  "segurilla": {
+   "municipio": "Segurilla",
+   "provincia": "toledo",
+   "poblacion": 1412,
+   "anio": 2025
+  },
+  "sesena": {
+   "municipio": "Seseña",
+   "provincia": "toledo",
+   "poblacion": 30907,
+   "anio": 2025
+  },
+  "sevilleja de la jara": {
+   "municipio": "Sevilleja de la Jara",
+   "provincia": "toledo",
+   "poblacion": 635,
+   "anio": 2025
+  },
+  "sonseca": {
+   "municipio": "Sonseca",
+   "provincia": "toledo",
+   "poblacion": 11452,
+   "anio": 2025
+  },
+  "sotillo de las palomas": {
+   "municipio": "Sotillo de las Palomas",
+   "provincia": "toledo",
+   "poblacion": 184,
+   "anio": 2025
+  },
+  "talavera de la reina": {
+   "municipio": "Talavera de la Reina",
+   "provincia": "toledo",
+   "poblacion": 83803,
+   "anio": 2025
+  },
+  "tembleque": {
+   "municipio": "Tembleque",
+   "provincia": "toledo",
+   "poblacion": 1992,
+   "anio": 2025
+  },
+  "toboso, el": {
+   "municipio": "Toboso, El",
+   "provincia": "toledo",
+   "poblacion": 1702,
+   "anio": 2025
+  },
+  "toledo": {
+   "municipio": "Toledo",
+   "provincia": "toledo",
+   "poblacion": 87216,
+   "anio": 2025
+  },
+  "torralba de oropesa": {
+   "municipio": "Torralba de Oropesa",
+   "provincia": "toledo",
+   "poblacion": 186,
+   "anio": 2025
+  },
+  "torre de esteban hambran, la": {
+   "municipio": "Torre de Esteban Hambrán, La",
+   "provincia": "toledo",
+   "poblacion": 1946,
+   "anio": 2025
+  },
+  "torrecilla de la jara": {
+   "municipio": "Torrecilla de la Jara",
+   "provincia": "toledo",
+   "poblacion": 227,
+   "anio": 2025
+  },
+  "torrico": {
+   "municipio": "Torrico",
+   "provincia": "toledo",
+   "poblacion": 688,
+   "anio": 2025
+  },
+  "torrijos": {
+   "municipio": "Torrijos",
+   "provincia": "toledo",
+   "poblacion": 14307,
+   "anio": 2025
+  },
+  "totanes": {
+   "municipio": "Totanés",
+   "provincia": "toledo",
+   "poblacion": 361,
+   "anio": 2025
+  },
+  "turleque": {
+   "municipio": "Turleque",
+   "provincia": "toledo",
+   "poblacion": 702,
+   "anio": 2025
+  },
+  "ugena": {
+   "municipio": "Ugena",
+   "provincia": "toledo",
+   "poblacion": 5988,
+   "anio": 2025
+  },
+  "urda": {
+   "municipio": "Urda",
+   "provincia": "toledo",
+   "poblacion": 2454,
+   "anio": 2025
+  },
+  "valdeverdeja": {
+   "municipio": "Valdeverdeja",
+   "provincia": "toledo",
+   "poblacion": 598,
+   "anio": 2025
+  },
+  "valmojado": {
+   "municipio": "Valmojado",
+   "provincia": "toledo",
+   "poblacion": 4898,
+   "anio": 2025
+  },
+  "velada": {
+   "municipio": "Velada",
+   "provincia": "toledo",
+   "poblacion": 2899,
+   "anio": 2025
+  },
+  "ventas con pena aguilera, las": {
+   "municipio": "Ventas con Peña Aguilera, Las",
+   "provincia": "toledo",
+   "poblacion": 1090,
+   "anio": 2025
+  },
+  "ventas de retamosa, las": {
+   "municipio": "Ventas de Retamosa, Las",
+   "provincia": "toledo",
+   "poblacion": 4206,
+   "anio": 2025
+  },
+  "ventas de san julian, las": {
+   "municipio": "Ventas de San Julián, Las",
+   "provincia": "toledo",
+   "poblacion": 239,
+   "anio": 2025
+  },
+  "villa de don fadrique, la": {
+   "municipio": "Villa de Don Fadrique, La",
+   "provincia": "toledo",
+   "poblacion": 3519,
+   "anio": 2025
+  },
+  "villacanas": {
+   "municipio": "Villacañas",
+   "provincia": "toledo",
+   "poblacion": 9411,
+   "anio": 2025
+  },
+  "villafranca de los caballeros": {
+   "municipio": "Villafranca de los Caballeros",
+   "provincia": "toledo",
+   "poblacion": 4884,
+   "anio": 2025
+  },
+  "villaluenga de la sagra": {
+   "municipio": "Villaluenga de la Sagra",
+   "provincia": "toledo",
+   "poblacion": 4308,
+   "anio": 2025
+  },
+  "villamiel de toledo": {
+   "municipio": "Villamiel de Toledo",
+   "provincia": "toledo",
+   "poblacion": 1097,
+   "anio": 2025
+  },
+  "villaminaya": {
+   "municipio": "Villaminaya",
+   "provincia": "toledo",
+   "poblacion": 518,
+   "anio": 2025
+  },
+  "villamuelas": {
+   "municipio": "Villamuelas",
+   "provincia": "toledo",
+   "poblacion": 587,
+   "anio": 2025
+  },
+  "villanueva de alcardete": {
+   "municipio": "Villanueva de Alcardete",
+   "provincia": "toledo",
+   "poblacion": 2910,
+   "anio": 2025
+  },
+  "villanueva de bogas": {
+   "municipio": "Villanueva de Bogas",
+   "provincia": "toledo",
+   "poblacion": 657,
+   "anio": 2025
+  },
+  "villarejo de montalban": {
+   "municipio": "Villarejo de Montalbán",
+   "provincia": "toledo",
+   "poblacion": 83,
+   "anio": 2025
+  },
+  "villarrubia de santiago": {
+   "municipio": "Villarrubia de Santiago",
+   "provincia": "toledo",
+   "poblacion": 2583,
+   "anio": 2025
+  },
+  "villaseca de la sagra": {
+   "municipio": "Villaseca de la Sagra",
+   "provincia": "toledo",
+   "poblacion": 1910,
+   "anio": 2025
+  },
+  "villasequilla": {
+   "municipio": "Villasequilla",
+   "provincia": "toledo",
+   "poblacion": 2673,
+   "anio": 2025
+  },
+  "villatobas": {
+   "municipio": "Villatobas",
+   "provincia": "toledo",
+   "poblacion": 2964,
+   "anio": 2025
+  },
+  "viso de san juan, el": {
+   "municipio": "Viso de San Juan, El",
+   "provincia": "toledo",
+   "poblacion": 6380,
+   "anio": 2025
+  },
+  "yebenes, los": {
+   "municipio": "Yébenes, Los",
+   "provincia": "toledo",
+   "poblacion": 5787,
+   "anio": 2025
+  },
+  "yeles": {
+   "municipio": "Yeles",
+   "provincia": "toledo",
+   "poblacion": 6514,
+   "anio": 2025
+  },
+  "yepes": {
+   "municipio": "Yepes",
+   "provincia": "toledo",
+   "poblacion": 5820,
+   "anio": 2025
+  },
+  "yuncler": {
+   "municipio": "Yuncler",
+   "provincia": "toledo",
+   "poblacion": 5275,
+   "anio": 2025
+  },
+  "yunclillos": {
+   "municipio": "Yunclillos",
+   "provincia": "toledo",
+   "poblacion": 819,
+   "anio": 2025
+  },
+  "yuncos": {
+   "municipio": "Yuncos",
+   "provincia": "toledo",
+   "poblacion": 13189,
    "anio": 2025
   }
  }

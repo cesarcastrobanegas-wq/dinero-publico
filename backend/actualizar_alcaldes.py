@@ -135,6 +135,12 @@ ALIAS_MUNICIPIO = {
     "burgo de osma-ciudad de osma": "El Burgo de Osma-Ciudad de Osma",
     "roales": "Roales del Pan",
     "roa de duero": "Roa",
+    # Detectado 2026-09-18 al ejecutar actualizar_poblacion.py sobre
+    # Castilla-La Mancha (5 provincias): mismo patrón que "arcos"/"roales"
+    # de arriba -- el INE usa el nombre corto "Alcoba" en su tabla de
+    # población, mientras que el nombre oficial completo (Wikipedia,
+    # Diputación de Ciudad Real) es "Alcoba de los Montes".
+    "alcoba": "Alcoba de los Montes",
 }
 
 # Girona se curó a mano al estilo "núcleo, artículo, en minúscula" (p.ej.

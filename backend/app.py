@@ -2051,7 +2051,7 @@ def _resumen_por_comunidad():
     solo una agregación más. Cubre TODAS las claves de
     COMUNIDAD_AUTONOMA_LABEL, incluidas las que ya están conectadas para
     contratos -- si una comunidad no tiene ninguna provincia conectada
-    (a fecha 2026-09-18: Castilla-La Mancha, Navarra), sale con
+    (a fecha 2026-09-18: Navarra), sale con
     habitantes=0/deuda=None/saldo=None, tal cual (el mapa la trata como
     "sin datos", no la oculta)."""
     out = {com: {"poblacion": 0, "deuda_eur": 0.0, "saldo_eur": 0.0, "saldo_n": 0}
@@ -4413,6 +4413,210 @@ MUNICIPIOS_ZAMORA = [
     "Viñas","Zamora",
 ]
 
+# Castilla-La Mancha: 5 provincias (Albacete, Ciudad Real, Cuenca,
+# Guadalajara, Toledo), NO uniprovincial -- mismo patrón que Castilla y
+# León/Cataluña/CV/Andalucía/Aragón/Galicia. Investigación 2026-09-18:
+# Mecanismo A normal, verificado contra un ZIP real de PLACE ya cacheado
+# (place_202609.zip): match real de "ayuntamiento de X" para las 5
+# capitales de provincia (Albacete 69, Ciudad Real 28, Cuenca 43,
+# Guadalajara 45, Toledo 65, en una sola muestra parcial de un ZIP
+# mensual) más municipios menores (Talavera de la Reina, Puertollano,
+# Azuqueca de Henares, Tomelloso). NO es comunidad foral con plataforma
+# propia obligatoria -- no hace falta ningún mecanismo propio.
+#
+# LISTAS DE MUNICIPIOS: 917 = 87 Albacete + 101 Ciudad Real + 237 Cuenca +
+# 288 Guadalajara + 204 Toledo (de 919 oficiales, tras 2 exclusiones, ver
+# abajo). Cada lista verificada por un subagente en paralelo contra 2
+# fuentes distintas (Wikipedia + INE, con la Diputación provincial o una
+# tercera fuente del propio INE como desempate en varios casos puntuales)
+# antes de darla por buena, mismo protocolo que ya detectó la alucinación
+# de "Cuaternos" en el piloto de Cáceres y varias más en Castilla y León
+# -- en esta tanda no se detectó ningún nombre inventado (0 discrepancias
+# de contenido tras normalizar formato de artículo en las 5 provincias).
+#
+# 917 municipios de 919 -- 2 EXCLUSIONES A PROPÓSITO por colisión de
+# nombre exacto con un municipio ya conectado y en producción (mismo tipo
+# de incidente que Cieza/Cantabria, Mieres/Asturias, El Molar/Madrid y las
+# 6 de Castilla y León): se mantiene el municipio YA CONECTADO y se
+# excluye el de Castilla-La Mancha.
+#   - "Villanueva de los Infantes" (Ciudad Real) -- ya existe en MUNICIPIOS_VALLADOLID (Castilla y León).
+#   - "Moya" (Cuenca) -- ya existe en MUNICIPIOS_LAS_PALMAS (Canarias).
+MUNICIPIOS_ALBACETE = [
+    "Abengibre","Alatoz","Albacete","Albatana","Alborea","Alcadozo",
+    "Alcalá del Júcar","Alcaraz","Almansa","Alpera","Ayna","Balazote",
+    "Ballestero, El","Balsa de Ves","Barrax","Bienservida","Bogarra","Bonete",
+    "Bonillo, El","Carcelén","Casas de Juan Núñez","Casas de Lázaro","Casas de Ves","Casas-Ibáñez",
+    "Caudete","Cenizate","Chinchilla de Monte-Aragón","Corral-Rubio","Cotillas","Elche de la Sierra",
+    "Fuensanta","Fuente-Álamo","Fuentealbilla","Férez","Gineta, La","Golosalvo",
+    "Hellín","Herrera, La","Higueruela","Hoya-Gonzalo","Jorquera","Letur",
+    "Lezuza","Liétor","Madrigueras","Mahora","Masegoso","Minaya",
+    "Molinicos","Montalvos","Montealegre del Castillo","Motilleja","Munera","Navas de Jorquera",
+    "Nerpio","Ontur","Ossa de Montiel","Paterna del Madera","Peñas de San Pedro","Peñascosa",
+    "Povedilla","Pozo Cañada","Pozo-Lorente","Pozohondo","Pozuelo","Pétrola",
+    "Recueja, La","Riópar","Robledo","Roda, La","Salobre","San Pedro",
+    "Socovos","Tarazona de la Mancha","Tobarra","Valdeganga","Vianos","Villa de Ves",
+    "Villalgordo del Júcar","Villamalea","Villapalacios","Villarrobledo","Villatoya","Villavaliente",
+    "Villaverde de Guadalimar","Viveros","Yeste",
+]
+
+MUNICIPIOS_CIUDAD_REAL = [
+    "Abenójar","Agudo","Alamillo","Albaladejo","Alcázar de San Juan","Alcoba de los Montes",
+    "Alcolea de Calatrava","Alcubillas","Aldea del Rey","Alhambra","Almadén","Almadenejos",
+    "Almagro","Almedina","Almodóvar del Campo","Almuradiel","Anchuras","Arenales de San Gregorio",
+    "Arenas de San Juan","Argamasilla de Alba","Argamasilla de Calatrava","Arroba de los Montes","Ballesteros de Calatrava","Bolaños de Calatrava",
+    "Brazatortas","Cabezarados","Cabezarrubias del Puerto","Calzada de Calatrava","Campo de Criptana","Cañada de Calatrava",
+    "Caracuel de Calatrava","Carrión de Calatrava","Carrizosa","Castellar de Santiago","Chillón","Ciudad Real",
+    "Corral de Calatrava","Cózar","Daimiel","El Robledo","Fernán Caballero","Fontanarejo",
+    "Fuencaliente","Fuenllana","Fuente el Fresno","Granátula de Calatrava","Guadalmez","Herencia",
+    "Hinojosas de Calatrava","Horcajo de los Montes","La Solana","Las Labores","Llanos del Caudillo","Los Cortijos",
+    "Los Pozuelos de Calatrava","Luciana","Malagón","Manzanares","Membrilla","Mestanza",
+    "Miguelturra","Montiel","Moral de Calatrava","Navalpino","Navas de Estena","Pedro Muñoz",
+    "Picón","Piedrabuena","Poblete","Porzuna","Pozuelo de Calatrava","Puebla de Don Rodrigo",
+    "Puebla del Príncipe","Puerto Lápice","Puertollano","Retuerta del Bullaque","Ruidera","Saceruela",
+    "San Carlos del Valle","San Lorenzo de Calatrava","Santa Cruz de los Cáñamos","Santa Cruz de Mudela","Socuéllamos","Solana del Pino",
+    "Terrinches","Tomelloso","Torralba de Calatrava","Torre de Juan Abad","Torrenueva","Valdemanco del Esteras",
+    "Valdepeñas","Valenzuela de Calatrava","Villahermosa","Villamanrique","Villamayor de Calatrava","Villanueva de la Fuente",
+    "Villanueva de San Carlos","Villar del Pozo","Villarrubia de los Ojos","Villarta de San Juan","Viso del Marqués",
+]
+
+MUNICIPIOS_CUENCA = [
+    "Abia de la Obispalía","Acebrón, El","Alarcón","Albaladejo del Cuende","Albalate de las Nogueras","Albendea",
+    "Alberca de Záncara, La","Alcalá de la Vega","Alcantud","Alcohujate","Alconchel de la Estrella","Alcázar del Rey",
+    "Algarra","Aliaguilla","Almarcha, La","Almendros","Almodóvar del Pinar","Almonacid del Marquesado",
+    "Altarejos","Arandilla del Arroyo","Arcas","Arcos de la Sierra","Arguisuelas","Arrancacepas",
+    "Atalaya del Cañavate","Barajas de Melo","Barchín del Hoyo","Bascuñana de San Pedro","Beamud","Belinchón",
+    "Belmonte","Belmontejo","Beteta","Boniches","Buciegas","Buenache de Alarcón",
+    "Buenache de la Sierra","Buendía","Campillo de Altobuey","Campillos-Paravientos","Campillos-Sierra","Campos del Paraíso",
+    "Canalejas del Arroyo","Carboneras de Guadazaón","Cardenete","Carrascosa","Carrascosa de Haro","Casas de Benítez",
+    "Casas de Fernando Alonso","Casas de Garcimolina","Casas de Guijarro","Casas de Haro","Casas de los Pinos","Casasimarro",
+    "Castejón","Castillejo de Iniesta","Castillejo-Sierra","Castillo de Garcimuñoz","Castillo-Albaráñez","Cañada Juncosa",
+    "Cañada del Hoyo","Cañamares","Cañavate, El","Cañaveras","Cañaveruelas","Cañete",
+    "Cañizares","Cervera del Llano","Chillarón de Cuenca","Chumillas","Cierva, La","Cuenca",
+    "Cueva del Hierro","Enguídanos","Fresneda de Altarejos","Fresneda de la Sierra","Frontera, La","Fuente de Pedro Naharro",
+    "Fuentelespino de Haro","Fuentelespino de Moya","Fuentenava de Jábaga","Fuentes","Fuertescusa","Gabaldón",
+    "Garaballa","Gascueña","Graja de Campalbo","Graja de Iniesta","Henarejos","Herrumblar, El",
+    "Hinojosa, La","Hinojosos, Los","Hito, El","Honrubia","Hontanaya","Hontecillas",
+    "Horcajo de Santiago","Huelves","Huerta de la Obispalía","Huerta del Marquesado","Huete","Huélamo",
+    "Huérguina","Iniesta","Laguna del Marquesado","Lagunaseca","Landete","Ledaña",
+    "Leganiel","Majadas, Las","Mariana","Masegosa","Mesas, Las","Minglanilla",
+    "Mira","Monreal del Llano","Montalbanejo","Montalbo","Monteagudo de las Salinas","Mota de Altarejos",
+    "Mota del Cuervo","Motilla del Palancar","Narboneta","Olivares de Júcar","Olmeda de la Cuesta",
+    "Olmeda del Rey","Olmedilla de Alarcón","Olmedilla de Eliz","Osa de la Vega","Pajaroncillo","Pajarón",
+    "Palomares del Campo","Palomera","Paracuellos","Paredes","Parra de las Vegas, La","Pedernoso, El",
+    "Pedroñeras, Las","Peral, El","Peraleja, La","Pesquera, La","Picazo, El","Pinarejo",
+    "Pineda de Gigüela","Piqueras del Castillo","Portalrubio de Guadamejud","Portilla","Poyatos","Pozoamargo",
+    "Pozorrubielos de la Mancha","Pozorrubio de Santiago","Pozuelo, El","Priego","Provencio, El","Puebla de Almenara",
+    "Puebla del Salvador","Quintanar del Rey","Rada de Haro","Reíllo","Rozalén del Monte","Saceda-Trasierra",
+    "Saelices","Salinas del Manzano","Salmeroncillos","Salvacañete","San Clemente","San Lorenzo de la Parrilla",
+    "San Martín de Boniches","San Pedro Palmiches","Santa Cruz de Moya","Santa María de los Llanos","Santa María del Campo Rus","Santa María del Val",
+    "Sisante","Solera de Gabaldón","Sotorribas","Talayuelas","Tarancón","Tejadillos",
+    "Tinajas","Torralba","Torrejoncillo del Rey","Torrubia del Campo","Torrubia del Castillo","Tragacete",
+    "Tresjuncos","Tribaldos","Tébar","Uclés","Uña","Valdecolmenas, Los",
+    "Valdemeca","Valdemorillo de la Sierra","Valdemoro-Sierra","Valdeolivas","Valdetórtola","Valeras, Las",
+    "Valhermoso de la Fuente","Valle de Altomira, El","Valsalobre","Valverde de Júcar","Valverdejo","Vara de Rey",
+    "Vega del Codorno","Vellisca","Villaconejos de Trabaque","Villaescusa de Haro","Villagarcía del Llano","Villalba de la Sierra",
+    "Villalba del Rey","Villalgordo del Marquesado","Villalpardo","Villamayor de Santiago","Villanueva de Guadamejud","Villanueva de la Jara",
+    "Villar de Cañas","Villar de Domingo García","Villar de Olalla","Villar de la Encina","Villar del Humo","Villar del Infantado",
+    "Villar y Velasco","Villarejo de Fuentes","Villarejo de la Peñuela","Villarejo-Periesteban","Villares del Saz","Villarrubio",
+    "Villarta","Villas de la Ventosa","Villaverde y Pasaconsol","Vindel","Víllora","Yémeda",
+    "Zafra de Záncara","Zafrilla","Zarza de Tajo","Zarzuela",
+]
+
+MUNICIPIOS_GUADALAJARA = [
+    "Ablanque","Abánades","Adobes","Alaminos","Alarilla","Albalate de Zorita",
+    "Albares","Albendiego","Alcocer","Alcolea de las Peñas","Alcolea del Pinar","Alcoroches",
+    "Aldeanueva de Guadalajara","Algar de Mesa","Algora","Alhóndiga","Alique","Almadrones",
+    "Almoguera","Almonacid de Zorita","Alocén","Alovera","Alustante","Anguita",
+    "Angón","Anquela del Ducado","Anquela del Pedregal","Aranzueque","Arbancón","Arbeteta",
+    "Argecilla","Armallones","Armuña de Tajuña","Arroyo de las Fraguas","Atanzón","Atienza",
+    "Auñón","Azuqueca de Henares","Baides","Barriopedro","Baños de Tajo","Bañuelos",
+    "Berninches","Bodera, La","Brihuega","Budia","Bujalaro","Bustares",
+    "Cabanillas del Campo","Campillo de Dueñas","Campillo de Ranas","Campisábalos","Canredondo","Cantalojas",
+    "Cardoso de la Sierra, El","Casa de Uceda","Casar, El","Casas de San Galindo","Caspueñas","Castejón de Henares",
+    "Castellar de la Muela","Castilforte","Castilnuevo","Cañizar","Cendejas de Enmedio","Cendejas de la Torre",
+    "Centenera","Checa","Chequilla","Chillarón del Rey","Chiloeches","Cifuentes",
+    "Cincovillas","Ciruelas","Ciruelos del Pinar","Cobeta","Cogollor","Cogolludo",
+    "Condemios de Abajo","Condemios de Arriba","Congostrina","Copernal","Corduente","Cubillo de Uceda, El",
+    "Driebes","Durón","Embid","Escamilla","Escariche","Escopete",
+    "Espinosa de Henares","Esplegares","Establés","Estriégana","Fontanar","Fuembellida",
+    "Fuencemillán","Fuentelahiguera de Albatages","Fuentelencina","Fuentelsaz","Fuentelviejo","Fuentenovilla",
+    "Gajanejos","Galve de Sorbe","Galápagos","Gascueña de Bornova","Guadalajara","Henche",
+    "Heras de Ayuso","Herrería","Hiendelaencina","Hijes","Hita","Hombrados",
+    "Hontoba","Horche","Hortezuela de Océn","Huerce, La","Huertahernando","Hueva",
+    "Humanes","Huérmeces del Cerro","Illana","Iniéstola","Inviernas, Las","Irueste",
+    "Jadraque","Jirueque","Ledanca","Loranca de Tajuña","Lupiana","Luzaga",
+    "Luzón","Majaelrayo","Malaguilla","Mandayona","Mantiel","Maranchón",
+    "Marchamalo","Masegoso de Tajuña","Matarrubia","Matillas","Mazarete","Mazuecos",
+    "Medranda","Megina","Membrillera","Miedes de Atienza","Mierla, La","Millana",
+    "Milmarcos","Mirabueno","Miralrío","Miñosa, La","Mochales","Mohernando",
+    "Molina de Aragón","Monasterio","Mondéjar","Montarrón","Moratilla de los Meleros","Morenilla",
+    "Muduex","Málaga del Fresno","Navas de Jadraque, Las","Negredo","Ocentejo","Olivar, El",
+    "Olmeda de Cobeta","Olmeda de Jadraque, La","Ordial, El","Orea","Pardos","Paredes de Sigüenza",
+    "Pareja","Pastrana","Pedregal, El","Peralejos de las Truchas","Peralveche","Peñalver",
+    "Peñalén","Pinilla de Jadraque","Pinilla de Molina","Pioz","Piqueras","Pobo de Dueñas, El",
+    "Poveda de la Sierra","Pozo de Almoguera","Pozo de Guadalajara","Prados Redondos","Prádena de Atienza","Puebla de Beleña",
+    "Puebla de Valles","Pálmaces de Jadraque","Quer","Rebollosa de Jadraque","Recuenco, El","Renera",
+    "Retiendas","Riba de Saelices","Rillo de Gallo","Riofrío del Llano","Robledillo de Mohernando","Robledo de Corpes",
+    "Romanillos de Atienza","Romanones","Rueda de la Sierra","Sacecorbo","Sacedón","Saelices de la Sal",
+    "Salmerón","San Andrés del Congosto","San Andrés del Rey","Santiuste","Sayatón","Saúca",
+    "Selas","Semillas","Setiles","Sienes","Sigüenza","Solanillos del Extremo",
+    "Somolinos","Sotillo, El","Sotodosos","Tamajón","Taragudo","Taravilla",
+    "Tartanedo","Tendilla","Terzaga","Tierzo","Toba, La","Tordellego",
+    "Tordelrábano","Tordesilos","Torija","Torre del Burgo","Torrecuadrada de Molina","Torrecuadradilla",
+    "Torrejón del Rey","Torremocha de Jadraque","Torremocha del Campo","Torremocha del Pinar","Torremochuela","Torrubia",
+    "Tortuera","Tortuero","Traíd","Trijueque","Trillo","Tórtola de Henares",
+    "Uceda","Ujados","Utande","Valdarachas","Valdearenas","Valdeavellano",
+    "Valdeaveruelo","Valdeconcha","Valdegrudas","Valdelcubo","Valdenuño Fernández","Valdepeñas de la Sierra",
+    "Valderrebollo","Valdesotos","Valfermoso de Tajuña","Valhermoso","Valtablado del Río","Valverde de los Arroyos",
+    "Viana de Jadraque","Villanueva de Alcorón","Villanueva de Argecilla","Villanueva de la Torre","Villares de Jadraque","Villaseca de Henares",
+    "Villaseca de Uceda","Villel de Mesa","Viñuelas","Yebes","Yebra","Yunquera de Henares",
+    "Yunta, La","Yélamos de Abajo","Yélamos de Arriba","Zaorejas","Zarzuela de Jadraque","Zorita de los Canes",
+]
+
+MUNICIPIOS_TOLEDO = [
+    "Ajofrín","Alameda de la Sagra","Albarreal de Tajo","Alcabón","Alcaudete de la Jara",
+    "Alcañizo","Alcolea de Tajo","Aldea en Cabo","Aldeanueva de Barbarroya","Aldeanueva de San Bartolomé",
+    "Almendral de la Cañada","Almonacid de Toledo","Almorox","Arcicóllar","Argés",
+    "Azután","Añover de Tajo","Barcience","Bargas","Belvís de la Jara",
+    "Borox","Buenaventura","Burguillos de Toledo","Burujón","Cabañas de Yepes",
+    "Cabañas de la Sagra","Cabezamesada","Calera y Chozas","Caleruela","Calzada de Oropesa",
+    "Camarena","Camarenilla","Campillo de la Jara, El","Camuñas","Cardiel de los Montes",
+    "Carmena","Carpio de Tajo, El","Carranque","Carriches","Casar de Escalona, El",
+    "Casarrubios del Monte","Casasbuenas","Castillo de Bayuela","Cazalegas","Cebolla",
+    "Cedillo del Condado","Cerralbos, Los","Cervera de los Montes","Chozas de Canales","Chueca",
+    "Ciruelos","Cobeja","Cobisa","Consuegra","Corral de Almaguer",
+    "Cuerva","Domingo Pérez","Dosbarrios","Erustes","Escalona",
+    "Escalonilla","Espinoso del Rey","Esquivias","Estrella, La","Fuensalida",
+    "Garciotum","Gerindote","Guadamur","Guardia, La","Gálvez",
+    "Herencias, Las","Herreruela de Oropesa","Hinojosa de San Vicente","Hontanar","Hormigos",
+    "Huecas","Huerta de Valdecarábanos","Iglesuela del Tiétar, La","Illescas","Illán de Vacas",
+    "Lagartera","Layos","Lillo","Lominchar","Lucillos",
+    "Madridejos","Magán","Malpica de Tajo","Manzaneque","Maqueda",
+    "Marjaliza","Marrupe","Mascaraque","Mata, La","Mazarambroz",
+    "Mejorada","Menasalbas","Mesegar de Tajo","Miguel Esteban","Mocejón",
+    "Mohedas de la Jara","Montearagón","Montesclaros","Mora","Méntrida",
+    "Nambroca","Nava de Ricomalillo, La","Navahermosa","Navalcán","Navalmoralejo",
+    "Navalmorales, Los","Navalucillos, Los","Navamorcuende","Noblejas","Noez",
+    "Nombela","Novés","Numancia de la Sagra","Nuño Gómez","Ocaña",
+    "Olías del Rey","Ontígola","Orgaz","Oropesa","Otero",
+    "Palomeque","Pantoja","Paredes de Escalona","Parrillas","Pelahustán",
+    "Pepino","Polán","Portillo de Toledo","Puebla de Almoradiel, La","Puebla de Montalbán, La",
+    "Pueblanueva, La","Puente del Arzobispo, El","Puerto de San Vicente","Pulgar","Quero",
+    "Quintanar de la Orden","Quismondo","Real de San Vicente, El","Recas","Retamoso de la Jara",
+    "Rielves","Robledo del Mazo","Romeral, El","San Bartolomé de las Abiertas","San Martín de Montalbán",
+    "San Martín de Pusa","San Pablo de los Montes","San Román de los Montes","Santa Ana de Pusa","Santa Cruz de la Zarza",
+    "Santa Cruz del Retamar","Santa Olalla","Santo Domingo-Caudilla","Sartajada","Segurilla",
+    "Seseña","Sevilleja de la Jara","Sonseca","Sotillo de las Palomas","Talavera de la Reina",
+    "Tembleque","Toboso, El","Toledo","Torralba de Oropesa","Torre de Esteban Hambrán, La",
+    "Torrecilla de la Jara","Torrico","Torrijos","Totanés","Turleque",
+    "Ugena","Urda","Valdeverdeja","Valmojado","Velada",
+    "Ventas con Peña Aguilera, Las","Ventas de Retamosa, Las","Ventas de San Julián, Las","Villa de Don Fadrique, La","Villacañas",
+    "Villafranca de los Caballeros","Villaluenga de la Sagra","Villamiel de Toledo","Villaminaya","Villamuelas",
+    "Villanueva de Alcardete","Villanueva de Bogas","Villarejo de Montalbán","Villarrubia de Santiago","Villaseca de la Sagra",
+    "Villasequilla","Villatobas","Viso de San Juan, El","Yeles","Yepes",
+    "Yuncler","Yunclillos","Yuncos","Yébenes, Los",
+]
+
 # ─── PROVINCIA (Fase 4 — rutas/UI transversales) ─────────────────────────────
 # Comunitat Valenciana (3), Andalucía (8) y País Vasco (1, ver nota en
 # PROVINCIAS_PAIS_VASCO más abajo) generalizados a producción 2026-09-06
@@ -4444,7 +4648,10 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "leon": MUNICIPIOS_LEON, "palencia": MUNICIPIOS_PALENCIA,
                             "salamanca": MUNICIPIOS_SALAMANCA, "segovia": MUNICIPIOS_SEGOVIA,
                             "soria": MUNICIPIOS_SORIA, "valladolid": MUNICIPIOS_VALLADOLID,
-                            "zamora": MUNICIPIOS_ZAMORA}
+                            "zamora": MUNICIPIOS_ZAMORA,
+                            "albacete": MUNICIPIOS_ALBACETE, "ciudad_real": MUNICIPIOS_CIUDAD_REAL,
+                            "cuenca": MUNICIPIOS_CUENCA, "guadalajara": MUNICIPIOS_GUADALAJARA,
+                            "toledo": MUNICIPIOS_TOLEDO}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -4473,6 +4680,9 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "salamanca": "Provincia de Salamanca", "segovia": "Provincia de Segovia",
                    "soria": "Provincia de Soria", "valladolid": "Provincia de Valladolid",
                    "zamora": "Provincia de Zamora",
+                   "albacete": "Provincia de Albacete", "ciudad_real": "Provincia de Ciudad Real",
+                   "cuenca": "Provincia de Cuenca", "guadalajara": "Provincia de Guadalajara",
+                   "toledo": "Provincia de Toledo",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -4505,6 +4715,8 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "avila": "castilla_y_leon", "burgos": "castilla_y_leon", "leon": "castilla_y_leon",
     "palencia": "castilla_y_leon", "salamanca": "castilla_y_leon", "segovia": "castilla_y_leon",
     "soria": "castilla_y_leon", "valladolid": "castilla_y_leon", "zamora": "castilla_y_leon",  # 9 provincias de Castilla y León, mismo patrón
+    "albacete": "castilla_la_mancha", "ciudad_real": "castilla_la_mancha", "cuenca": "castilla_la_mancha",
+    "guadalajara": "castilla_la_mancha", "toledo": "castilla_la_mancha",  # 5 provincias de Castilla-La Mancha, mismo patrón
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
@@ -4514,7 +4726,8 @@ COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluñ
                             "la_rioja": "La Rioja", "madrid": "Comunidad de Madrid",
                             "asturias": "Principado de Asturias",
                             "extremadura": "Extremadura", "aragon": "Aragón",
-                            "galicia": "Galicia", "castilla_y_leon": "Castilla y León"}
+                            "galicia": "Galicia", "castilla_y_leon": "Castilla y León",
+                            "castilla_la_mancha": "Castilla-La Mancha"}
 
 
 def _comunidad_valida(txt):
@@ -4614,7 +4827,7 @@ _MAPA_CCAA = [
      "cx": 275, "cy": 232, "r": 30},
     {"comunidad": "extremadura", "bandera": "extremadura", "label": "Extremadura", "destino": "badajoz",
      "cx": 150, "cy": 312, "r": 45},
-    {"comunidad": "castilla_mancha", "bandera": "castilla_mancha", "label": "Castilla-La Mancha", "destino": None,
+    {"comunidad": "castilla_la_mancha", "bandera": "castilla_mancha", "label": "Castilla-La Mancha", "destino": "toledo",
      "cx": 320, "cy": 300, "r": 50},
     {"comunidad": "valenciana", "bandera": "valenciana", "label": "Comunitat Valenciana", "destino": "valencia",
      "cx": 478, "cy": 305, "r": 33},
@@ -13681,11 +13894,11 @@ MAPA_COBERTURA_FLAGS = {
 
 # slug del mapa -> slug de "comunidad" tal como lo usa
 # COMUNIDAD_AUTONOMA_POR_PROVINCIA/COMUNIDAD_AUTONOMA_LABEL en el resto del
-# sitio (difieren en 4 casos: "valencia"->"valenciana", "paisvasco"->
-# "pais_vasco", "larioja"->"la_rioja", "cyl"->"castilla_y_leon"). Castilla-La
-# Mancha y Navarra no tienen ninguna provincia conectada al sitio todavía --
-# se omiten a propósito, así _estado_cobertura_mapa() las deja en "pending"
-# por defecto sin necesidad de listarlas.
+# sitio (difieren en 5 casos: "valencia"->"valenciana", "paisvasco"->
+# "pais_vasco", "larioja"->"la_rioja", "cyl"->"castilla_y_leon", "clm"->
+# "castilla_la_mancha"). Navarra no tiene ninguna provincia conectada al
+# sitio todavía -- se omite a propósito, así _estado_cobertura_mapa() la
+# deja en "pending" por defecto sin necesidad de listarla.
 MAPA_COBERTURA_SLUG_A_COMUNIDAD = {
     "andalucia": "andalucia", "aragon": "aragon", "asturias": "asturias",
     "baleares": "baleares", "canarias": "canarias", "cantabria": "cantabria",
@@ -13693,6 +13906,7 @@ MAPA_COBERTURA_SLUG_A_COMUNIDAD = {
     "galicia": "galicia", "madrid": "madrid", "murcia": "murcia",
     "paisvasco": "pais_vasco", "larioja": "la_rioja",
     "ceuta": "ceuta", "melilla": "melilla", "cyl": "castilla_y_leon",
+    "clm": "castilla_la_mancha",
 }
 
 
