@@ -43,6 +43,8 @@ CONTRATOS_MENORES_MURCIA_MANUAL_FILE = os.path.join(BASE_DIR, "contratos_menores
 CUENTAS_ANUALES_FILE = os.path.join(BASE_DIR, "cuentas_anuales.json")
 HACIENDA_EELL_FILE = os.path.join(BASE_DIR, "hacienda_eell.json")
 POBLACION_FILE = os.path.join(BASE_DIR, "poblacion.json")
+MAPA_COBERTURA_PROVINCIAS_FILE = os.path.join(BASE_DIR, "mapa_cobertura_provincias.json")
+MAPA_COBERTURA_CCAA_FILE = os.path.join(BASE_DIR, "mapa_cobertura_ccaa.json")
 # place_cache/ (ZIPs mensuales de PLACE, ~127 MB cada uno) NO se siembra
 # desde el repo -- está en .gitignore a propósito (nunca se ha commiteado,
 # a diferencia de cache.db) y no tiene sentido empezar a versionar binarios
@@ -2133,6 +2135,28 @@ def _cargar_poblacion():
 POBLACION, POBLACION_FUENTE_URL = _cargar_poblacion()
 
 
+def _cargar_mapa_cobertura_geo():
+    """Carga la geometría SVG de provincias/comunidades para /mapa-cobertura,
+    pre-generada UNA VEZ con build.mjs (Node.js: es-atlas + d3-composite-
+    projections, proyección geoConicConformalSpain con Canarias en su propio
+    inset, igual que los mapas oficiales) y commiteada como JSON estático --
+    no hace falta Node en producción, esto es un json.load() normal más."""
+    provs, ccaas = [], []
+    try:
+        if os.path.exists(MAPA_COBERTURA_PROVINCIAS_FILE):
+            with open(MAPA_COBERTURA_PROVINCIAS_FILE, encoding="utf-8") as f:
+                provs = json.load(f)
+        if os.path.exists(MAPA_COBERTURA_CCAA_FILE):
+            with open(MAPA_COBERTURA_CCAA_FILE, encoding="utf-8") as f:
+                ccaas = json.load(f)
+    except Exception:
+        pass
+    return provs, ccaas
+
+
+MAPA_COBERTURA_PROVINCIAS_GEO, MAPA_COBERTURA_CCAA_GEO = _cargar_mapa_cobertura_geo()
+
+
 def _construir_indice_cargos_publicos():
     """Índice nombre_completo_normalizado -> [{cargo, municipio, provincia}, ...]
     a partir de ALCALDES_CONCEJALES, para el detector de coincidencias de
@@ -2210,6 +2234,15 @@ def _db_all_municipios(provincia=None):
         except Exception:
             pass
     return out
+
+
+def _db_count_municipios(provincia):
+    """COUNT(*) ligero por provincia -- para /mapa-cobertura (estado done/
+    partial/pending), que solo necesita el número de filas, no los datos
+    completos de cada municipio (a diferencia de _db_all_municipios)."""
+    with _db_lock:
+        row = _db.execute("SELECT COUNT(*) FROM municipios WHERE provincia=?", (provincia,)).fetchone()
+    return row[0] if row else 0
 
 
 def _db_get_municipio(municipio):
@@ -10120,6 +10153,7 @@ def _footer_html(provincia="todas"):
     <a href="#" id="cookie-preferencias">Preferencias de cookies</a>
     <a href="/quienes-somos">Quiénes Somos</a>
     <a href="/casos">Casos</a>
+    <a href="/mapa-cobertura">Mapa de cobertura</a>
     <span class="ft-sep">|</span>
     <span class="ft-label">Enlaces de interés:</span>
     <a href="https://civio.es" target="_blank" rel="noopener">CIVIO</a>
@@ -13050,6 +13084,365 @@ def render_caso_quiebras_vitoria_html():
                                      "poco más de un año de diferencia.")
 
 
+# Banderas simplificadas de cada comunidad/ciudad autónoma, como marcado SVG
+# interior en un viewBox "0 0 3 2" -- para /mapa-cobertura. Se omiten
+# escudos/detalles heráldicos finos (colores y patrón principal solamente).
+# Verificadas 2026-09-18 contra Wikipedia + Sociedad Española de Vexilología
+# + BOE-A-2020-3355 (Navarra) las 6 que llegaron marcadas como "baja
+# confianza" en el prototipo entregado por César (Castilla y León,
+# Castilla-La Mancha, Murcia, Navarra, Ceuta, Melilla): 3 de las 6 tenían un
+# error real, no solo de matiz -- CyL era amarillo/blanco y el campo real es
+# ROJO/BLANCO; CLM no es un cuartelado en aspa sino dos mitades VERTICALES
+# simples (roja con castillo / blanca); Melilla no es amarillo/rojo, el
+# campo real es AZUL CELESTE liso (art. 3 del Estatuto de Autonomía) -- el
+# amarillo/rojo del prototipo pertenecía por error a colores del escudo
+# (calderas), no del campo. Murcia/Navarra/Ceuta se corrigieron de forma más
+# menor (Murcia no lleva borde dorado real; Navarra se aproxima con
+# cruz+aspa dorada y esmeralda central, más fiel al patrón real de cadenas;
+# Ceuta pasa a su patrón real "jironado" de 8 triángulos blancos/negros).
+MAPA_COBERTURA_FLAGS = {
+    "andalucia": '''
+    <rect width="3" height="2" fill="#0da452"/>
+    <rect y="0.6667" width="3" height="0.6667" fill="#ffffff"/>
+    ''',
+    "aragon": '''
+    <rect width="3" height="2" fill="#e30016"/>
+    <rect y="0" width="3" height="0.5" fill="#ffd100"/>
+    <rect y="1" width="3" height="0.5" fill="#ffd100"/>
+    ''',
+    "asturias": '''
+    <rect width="3" height="2" fill="#2a4b9b"/>
+    <rect x="1.35" width="0.3" height="2" fill="#ffffff"/>
+    <rect y="0.85" width="3" height="0.3" fill="#ffffff"/>
+    ''',
+    "baleares": '''
+    <rect width="3" height="2" fill="#ffd100"/>
+    <rect y="0" width="3" height="0.222" fill="#e30016"/>
+    <rect y="0.444" width="3" height="0.222" fill="#e30016"/>
+    <rect y="0.889" width="3" height="0.222" fill="#e30016"/>
+    <rect y="1.333" width="3" height="0.222" fill="#e30016"/>
+    <rect y="1.778" width="3" height="0.222" fill="#e30016"/>
+    <rect width="1.2" height="0.889" fill="#003399"/>
+    ''',
+    "canarias": '''
+    <rect width="1" height="2" fill="#ffffff"/>
+    <rect x="1" width="1" height="2" fill="#0033a0"/>
+    <rect x="2" width="1" height="2" fill="#ffd100"/>
+    ''',
+    "cantabria": '''
+    <rect width="3" height="2" fill="#ffffff"/>
+    <line x1="0" y1="0" x2="3" y2="2" stroke="#e30016" stroke-width="0.35"/>
+    <line x1="3" y1="0" x2="0" y2="2" stroke="#e30016" stroke-width="0.35"/>
+    ''',
+    "cyl": '''
+    <rect width="1.5" height="1" fill="#e30016"/>
+    <rect x="1.5" width="1.5" height="1" fill="#ffffff"/>
+    <rect y="1" width="1.5" height="1" fill="#ffffff"/>
+    <rect x="1.5" y="1" width="1.5" height="1" fill="#e30016"/>
+    ''',
+    "clm": '''
+    <rect width="1.5" height="2" fill="#e30016"/>
+    <rect x="1.5" width="1.5" height="2" fill="#ffffff"/>
+    ''',
+    "cataluna": '''
+    <rect width="3" height="2" fill="#ffd100"/>
+    <rect y="0" width="3" height="0.222" fill="#e30016"/>
+    <rect y="0.444" width="3" height="0.222" fill="#e30016"/>
+    <rect y="0.889" width="3" height="0.222" fill="#e30016"/>
+    <rect y="1.333" width="3" height="0.222" fill="#e30016"/>
+    <rect y="1.778" width="3" height="0.222" fill="#e30016"/>
+    ''',
+    "valencia": '''
+    <rect width="3" height="2" fill="#ffd100"/>
+    <rect y="0" width="3" height="0.222" fill="#e30016"/>
+    <rect y="0.444" width="3" height="0.222" fill="#e30016"/>
+    <rect y="0.889" width="3" height="0.222" fill="#e30016"/>
+    <rect y="1.333" width="3" height="0.222" fill="#e30016"/>
+    <rect y="1.778" width="3" height="0.222" fill="#e30016"/>
+    <rect width="0.6" height="2" fill="#0033a0"/>
+    ''',
+    "extremadura": '''
+    <rect width="3" height="2" fill="#0da452"/>
+    <rect y="0.4" width="3" height="0.4" fill="#ffffff"/>
+    <rect y="0.8" width="3" height="0.4" fill="#111111"/>
+    <rect y="1.2" width="3" height="0.4" fill="#ffffff"/>
+    ''',
+    "galicia": '''
+    <rect width="3" height="2" fill="#ffffff"/>
+    <polygon points="0,2 0,1.55 2.55,0 3,0 3,0.45 0.45,2" fill="#0033a0"/>
+    ''',
+    "madrid": '''
+    <rect width="3" height="2" fill="#7a1a2f"/>
+    <circle cx="0.9" cy="0.55" r="0.05" fill="#ffffff"/>
+    <circle cx="1.15" cy="0.42" r="0.05" fill="#ffffff"/>
+    <circle cx="1.45" cy="0.38" r="0.05" fill="#ffffff"/>
+    <circle cx="1.75" cy="0.42" r="0.05" fill="#ffffff"/>
+    <circle cx="2.0" cy="0.55" r="0.05" fill="#ffffff"/>
+    <circle cx="1.3" cy="0.62" r="0.05" fill="#ffffff"/>
+    <circle cx="1.6" cy="0.62" r="0.05" fill="#ffffff"/>
+    ''',
+    "murcia": '''
+    <rect width="3" height="2" fill="#7a1a2f"/>
+    ''',
+    "navarra": '''
+    <rect width="3" height="2" fill="#e30016"/>
+    <line x1="0.75" y1="0.3" x2="2.25" y2="1.7" stroke="#ffd100" stroke-width="0.16"/>
+    <line x1="2.25" y1="0.3" x2="0.75" y2="1.7" stroke="#ffd100" stroke-width="0.16"/>
+    <line x1="1.5" y1="0.15" x2="1.5" y2="1.85" stroke="#ffd100" stroke-width="0.16"/>
+    <line x1="0.6" y1="1" x2="2.4" y2="1" stroke="#ffd100" stroke-width="0.16"/>
+    <circle cx="1.5" cy="1" r="0.16" fill="#0da452"/>
+    ''',
+    "paisvasco": '''
+    <rect width="3" height="2" fill="#00843d"/>
+    <line x1="0" y1="0" x2="3" y2="2" stroke="#ffffff" stroke-width="0.3"/>
+    <line x1="3" y1="0" x2="0" y2="2" stroke="#ffffff" stroke-width="0.3"/>
+    <line x1="1.5" y1="0" x2="1.5" y2="2" stroke="#e30016" stroke-width="0.34"/>
+    <line x1="0" y1="1" x2="3" y2="1" stroke="#e30016" stroke-width="0.34"/>
+    ''',
+    "larioja": '''
+    <rect width="3" height="2" fill="#e30016"/>
+    <rect width="3" height="2" fill="none" stroke="#ffd100" stroke-width="0.06"/>
+    ''',
+    "ceuta": '''
+    <rect width="3" height="2" fill="#ffffff"/>
+    <polygon points="0,0 1.5,0 1.5,1" fill="#111111"/>
+    <polygon points="3,0 3,1 1.5,1" fill="#111111"/>
+    <polygon points="3,2 1.5,2 1.5,1" fill="#111111"/>
+    <polygon points="0,2 0,1 1.5,1" fill="#111111"/>
+    ''',
+    "melilla": '''
+    <rect width="3" height="2" fill="#4a90d9"/>
+    ''',
+}
+
+# slug del mapa -> slug de "comunidad" tal como lo usa
+# COMUNIDAD_AUTONOMA_POR_PROVINCIA/COMUNIDAD_AUTONOMA_LABEL en el resto del
+# sitio (difieren en 3 casos: "valencia"->"valenciana", "paisvasco"->
+# "pais_vasco", "larioja"->"la_rioja"). Castilla y León, Castilla-La Mancha
+# y Navarra no tienen ninguna provincia conectada al sitio todavía -- se
+# omiten a propósito, así _estado_cobertura_mapa() las deja en "pending"
+# por defecto sin necesidad de listarlas.
+MAPA_COBERTURA_SLUG_A_COMUNIDAD = {
+    "andalucia": "andalucia", "aragon": "aragon", "asturias": "asturias",
+    "baleares": "baleares", "canarias": "canarias", "cantabria": "cantabria",
+    "cataluna": "cataluna", "valencia": "valenciana", "extremadura": "extremadura",
+    "galicia": "galicia", "madrid": "madrid", "murcia": "murcia",
+    "paisvasco": "pais_vasco", "larioja": "la_rioja",
+    "ceuta": "ceuta", "melilla": "melilla",
+}
+
+
+def _estado_cobertura_mapa():
+    """Estado done/partial/pending por comunidad para /mapa-cobertura, a
+    partir de cache.db real (cuántos municipios de MUNICIPIOS_POR_PROVINCIA
+    ya tienen fila en la tabla `municipios`, sumado por todas las provincias
+    de esa comunidad vía COMUNIDAD_AUTONOMA_POR_PROVINCIA) -- sustituye el
+    COVERAGE placeholder fijo del prototipo entregado por César el 17/09."""
+    provincias_por_comunidad = {}
+    for prov, com in COMUNIDAD_AUTONOMA_POR_PROVINCIA.items():
+        provincias_por_comunidad.setdefault(com, []).append(prov)
+
+    estado = {}
+    for slug_mapa, com in MAPA_COBERTURA_SLUG_A_COMUNIDAD.items():
+        provincias = provincias_por_comunidad.get(com, [])
+        total = sum(len(MUNICIPIOS_POR_PROVINCIA.get(p, [])) for p in provincias)
+        hechos = sum(_db_count_municipios(p) for p in provincias)
+        if total == 0 or hechos == 0:
+            estado[slug_mapa] = "pending"
+        elif hechos >= total * 0.97:
+            estado[slug_mapa] = "done"
+        else:
+            estado[slug_mapa] = "partial"
+    return estado
+
+
+def render_mapa_cobertura_html():
+    W, H = 980, 760
+    estado = _estado_cobertura_mapa()
+
+    defs = []
+    ccaa_groups = []
+    for c in MAPA_COBERTURA_CCAA_GEO:
+        slug = c["slug"]
+        (x0, y0), (x1, y1) = c["bounds"]
+        bw, bh = x1 - x0, y1 - y0
+        flag_inner = MAPA_COBERTURA_FLAGS.get(slug, '<rect width="3" height="2" fill="#999"/>')
+        state = estado.get(slug, "pending")
+
+        defs.append(f'<clipPath id="clip-{slug}"><path d="{c["d"]}"/></clipPath>')
+
+        muted = ' class="muted"' if state == "pending" else ""
+        hatch = (f'<path d="{c["d"]}" clip-path="url(#clip-{slug})" fill="url(#hatch)" opacity="0.55"/>'
+                  if state == "partial" else "")
+
+        # Baleares: Mallorca/Menorca/Ibiza/Formentera/Cabrera quedan muy
+        # repartidas dentro del bounding box conjunto de la comunidad --
+        # estirar una sola bandera sobre todo ese rectángulo dejaba a las
+        # islas pequeñas y alejadas con solo una esquirla de la franja en
+        # vez de una mini-bandera limpia (bug conocido del prototipo
+        # entregado por César). Fix: un <svg> de bandera POR SUBTRAYECTO
+        # ("M..." de su "d" SVG, uno por isla/islote), cada uno escalado a
+        # su propio bounding box -- el clip-path del <g> exterior (con la
+        # silueta real completa) sigue recortando cada mini-bandera a la
+        # forma exacta de su isla. Solo hace falta para Baleares (única
+        # comunidad con este problema); el resto sigue con el bounds único.
+        if slug == "baleares":
+            island_boxes = []
+            for sp in re.findall(r'M[^M]*', c["d"]):
+                nums = [float(n) for n in re.findall(r'-?\d+\.?\d*(?:e-?\d+)?', sp)]
+                sxs, sys_ = nums[0::2], nums[1::2]
+                sx0, sy0 = min(sxs), min(sys_)
+                sbw = max(max(sxs) - sx0, 0.001)
+                sbh = max(max(sys_) - sy0, 0.001)
+                island_boxes.append(
+                    f'<svg x="{sx0}" y="{sy0}" width="{sbw}" height="{sbh}" '
+                    f'viewBox="0 0 3 2" preserveAspectRatio="none">{flag_inner}</svg>'
+                )
+            flag_svg_block = "".join(island_boxes)
+        else:
+            flag_svg_block = (
+                f'<svg x="{x0}" y="{y0}" width="{bw}" height="{bh}" '
+                f'viewBox="0 0 3 2" preserveAspectRatio="none">{flag_inner}</svg>'
+            )
+
+        ccaa_groups.append(f'''
+    <g data-ccaa="{slug}" data-name="{esc(c["name"])}" data-state="{state}">
+      <g clip-path="url(#clip-{slug})"{muted}>
+        {flag_svg_block}
+      </g>
+      {hatch}
+      <path d="{c["d"]}" fill="transparent" stroke="#1a1a1a" stroke-width="1.6" stroke-linejoin="round" class="ccaa-outline"/>
+    </g>''')
+
+    province_borders = []
+    for p in MAPA_COBERTURA_PROVINCIAS_GEO:
+        province_borders.append(
+            f'<path d="{p["d"]}" fill="transparent" stroke="#1a1a1a" stroke-opacity="0.55" '
+            f'stroke-width="0.6" data-prov="{p["id"]}" data-name="{esc(p["name"])}" '
+            f'data-ccaa="{p["ccaaSlug"]}" class="prov-border"/>'
+        )
+
+    style = f'''<style>
+  .map-wrap {{
+    position: relative; width: 100%; max-width: 980px; margin: 0 auto;
+    background: #101a2e; border-radius: 12px; padding: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }}
+  svg#mapa-cobertura {{ width: 100%; height: auto; display: block; }}
+  .muted {{ filter: grayscale(1) opacity(0.35) brightness(1.3); }}
+  .ccaa-outline {{ pointer-events: none; }}
+  g[data-ccaa] {{ cursor: pointer; transition: filter 0.15s ease; }}
+  g[data-ccaa]:hover .ccaa-outline {{ stroke-width: 3; stroke: #ffffff; }}
+  g[data-ccaa]:hover g[clip-path] {{ filter: brightness(1.12) saturate(1.15); }}
+  g[data-ccaa]:hover g[clip-path].muted {{ filter: grayscale(0.7) opacity(0.55) brightness(1.15); }}
+  .prov-border {{ pointer-events: none; }}
+  #mc-tooltip {{
+    position: fixed; pointer-events: none; background: #0b1220;
+    border: 1px solid #2a3550; color: #eef1f7; padding: 10px 12px;
+    border-radius: 8px; font-size: 0.85rem; max-width: 240px; opacity: 0;
+    transform: translate(-50%, -110%); transition: opacity 0.1s ease;
+    z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  }}
+  #mc-tooltip .t-prov {{ font-weight: 700; font-size: 0.95rem; }}
+  #mc-tooltip .t-ccaa {{ color: #9aa4b8; margin-top: 2px; }}
+  #mc-tooltip .t-state {{ margin-top: 6px; display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }}
+  .mc-st-done {{ background: #0da45233; color: #4ee08a; }}
+  .mc-st-partial {{ background: #ffd10033; color: #ffd100; }}
+  .mc-st-pending {{ background: #ffffff22; color: #c7ccd6; }}
+  .mc-legend {{ display: flex; gap: 18px; flex-wrap: wrap; margin: 16px auto 0; max-width: 980px; font-size: 0.82rem; color: #c7ccd6; }}
+  .mc-legend span {{ display: inline-flex; align-items: center; gap: 6px; }}
+  .mc-dot {{ width: 10px; height: 10px; border-radius: 3px; display: inline-block; }}
+  .mc-note {{ max-width: 980px; margin: 18px auto 0; font-size: 0.8rem; color: #7c8598; line-height: 1.5; }}
+</style>'''
+
+    body = f'''<div class="static-page">
+  <h1>Mapa de cobertura</h1>
+  <p class="sub">Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para
+  ver su estado de cobertura.</p>
+
+  <div class="map-wrap">
+    <svg id="mapa-cobertura" viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        {"".join(defs)}
+        <pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+          <rect width="6" height="6" fill="#00000000"/>
+          <line x1="0" y1="0" x2="0" y2="6" stroke="#0b1220" stroke-width="3"/>
+        </pattern>
+      </defs>
+      {"".join(ccaa_groups)}
+      <g id="mc-province-borders">{"".join(province_borders)}</g>
+    </svg>
+  </div>
+
+  <div class="mc-legend">
+    <span><span class="mc-dot" style="background:#4ee08a"></span> Cobertura completa</span>
+    <span><span class="mc-dot" style="background:#ffd100"></span> Cobertura parcial</span>
+    <span><span class="mc-dot" style="background:#cfd3da"></span> Pendiente</span>
+  </div>
+
+  <p class="mc-note">
+    Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico
+    Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y
+    patrón principal; se omiten escudos y detalles heráldicos finos). El estado de cobertura se calcula
+    en cada carga a partir de los municipios ya procesados en nuestra base de datos frente al total
+    esperado por provincia.
+  </p>
+
+  <div id="mc-tooltip"></div>
+</div>
+
+<script>
+  (function() {{
+    const tooltip = document.getElementById('mc-tooltip');
+    const stateLabel = {{ done: 'Cobertura completa', partial: 'Cobertura parcial', pending: 'Pendiente' }};
+    const stateClass = {{ done: 'mc-st-done', partial: 'mc-st-partial', pending: 'mc-st-pending' }};
+
+    function showTooltip(evt, provName, ccaaName, state) {{
+      tooltip.innerHTML = `
+        <div class="t-prov">${{provName}}</div>
+        <div class="t-ccaa">${{ccaaName}}</div>
+        <div class="t-state ${{stateClass[state] || 'mc-st-pending'}}">${{stateLabel[state] || 'Pendiente'}}</div>
+      `;
+      tooltip.style.opacity = '1';
+      moveTooltip(evt);
+    }}
+    function moveTooltip(evt) {{
+      tooltip.style.left = evt.clientX + 'px';
+      tooltip.style.top = evt.clientY + 'px';
+    }}
+    function hideTooltip() {{ tooltip.style.opacity = '0'; }}
+
+    const ccaaNames = {{}};
+    document.querySelectorAll('g[data-ccaa]').forEach(g => {{
+      ccaaNames[g.dataset.ccaa] = g.dataset.name;
+    }});
+
+    document.querySelectorAll('.prov-border').forEach(p => {{
+      p.style.pointerEvents = 'all';
+      p.addEventListener('mousemove', evt => {{
+        const ccaaSlug = p.dataset.ccaa;
+        const g = document.querySelector(`g[data-ccaa="${{ccaaSlug}}"]`);
+        const state = g ? g.dataset.state : 'pending';
+        showTooltip(evt, p.dataset.name, ccaaNames[ccaaSlug] || '', state);
+      }});
+      p.addEventListener('mouseleave', hideTooltip);
+    }});
+
+    document.querySelectorAll('g[data-ccaa]').forEach(g => {{
+      g.addEventListener('mousemove', evt => {{
+        if (evt.target.classList.contains('prov-border')) return;
+        showTooltip(evt, g.dataset.name, '', g.dataset.state);
+      }});
+      g.addEventListener('mouseleave', hideTooltip);
+    }});
+  }})();
+</script>'''
+
+    return _page_shell("Mapa de cobertura", body, extra_head=style, show_ad_banner=False,
+                        description="Mapa de España por comunidades y provincias con el estado de "
+                                     "cobertura de datos de Dinero Público: completa, parcial o pendiente.")
+
+
 def render_quienes_somos_html():
     body = """<div class="static-page">
   <h1>Transparencia al servicio de la ciudadanía</h1>
@@ -13280,6 +13673,9 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/quienes-somos":
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
 
+    if path == "/mapa-cobertura":
+        return _resp(render_mapa_cobertura_html(), gzip_ok=gzip_ok)
+
     if path == "/casos":
         return _resp(render_casos_index_html(), gzip_ok=gzip_ok)
 
@@ -13312,6 +13708,7 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/rankings</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quienes-somos</loc><changefreq>monthly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/mapa-cobertura</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/casos</loc><changefreq>weekly</changefreq></url>"] + [
                 f"  <url><loc>{esc(SITE_URL)}/casos/{esc(c['slug'])}</loc><changefreq>monthly</changefreq></url>"
