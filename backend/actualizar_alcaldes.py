@@ -141,6 +141,14 @@ ALIAS_MUNICIPIO = {
     # población, mientras que el nombre oficial completo (Wikipedia,
     # Diputación de Ciudad Real) es "Alcoba de los Montes".
     "alcoba": "Alcoba de los Montes",
+    # Detectados 2026-09-18 al ejecutar actualizar_poblacion.py sobre
+    # Navarra: no son desajustes de formato sino RENOMBRES OFICIALES muy
+    # recientes (2024-2025, ver Acuerdos del Gobierno de Navarra) que las
+    # tablas del INE todavía no reflejan -- el INE sigue usando el nombre
+    # antiguo, ya despojado de tilde en su tabla de población ("Goni").
+    "goni": "Val de Goñi/Goñerri",
+    "noain (valle de elorz)": "Valle de Elorz/Elortzibar",
+    "noain (elortzibar)": "Valle de Elorz/Elortzibar",
 }
 
 # Girona se curó a mano al estilo "núcleo, artículo, en minúscula" (p.ej.

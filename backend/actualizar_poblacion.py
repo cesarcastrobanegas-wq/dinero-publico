@@ -102,6 +102,12 @@ NOMBRES_INE_OVERRIDE = {
     "a_coruna": ["Coruña, A"],
     "las_palmas": ["Palmas, Las"],
     "baleares": ["Balears, Illes"],
+    # Verificado 2026-09-18 contra el listado real de TABLAS_OPERACION/22:
+    # el INE cataloga la tabla como "Navarra: Población por municipios y
+    # sexo" (id 2884) -- "Navarra" a secas, no "Comunidad Foral de Navarra"
+    # (el nombre completo que da _PREFIJOS_LABEL tras quitar "Comunidad
+    # Foral de ").
+    "navarra": ["Navarra"],
 }
 
 
@@ -158,6 +164,19 @@ def _emparejar_en_lista(nombre_oficial, lista_municipios):
     for m in lista_municipios:
         if normalizar(_sin_apostrofes_curvos(m)) in candidatos:
             return m
+        # Navarra (2026-09-18): a diferencia de Comunitat Valenciana/País
+        # Vasco (donde esta app solo guarda UNA forma, la castellana), la
+        # lista de Navarra guarda el nombre bilingüe completo "X/Y" tal
+        # cual -- así que además de comparar el nombre_oficial partido
+        # contra el `m` completo (de arriba), hace falta partir también
+        # `m` y comparar cada mitad por separado (p.ej. INE trae
+        # "Pamplona/Iruña" y esta lista también, pero normalizar() de la
+        # cadena completa con "/" no coincide con ninguna candidata --
+        # sin esto, ~1/3 de Navarra se quedaba sin emparejar).
+        if "/" in m:
+            for parte_m in m.split("/"):
+                if normalizar(_sin_apostrofes_curvos(parte_m)) in candidatos:
+                    return m
     for buscado in candidatos:
         alias = ALIAS_MUNICIPIO.get(buscado)
         if alias and alias in lista_municipios:

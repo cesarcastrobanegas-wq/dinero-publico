@@ -132,6 +132,12 @@ NOMBRES_MAYUS_OVERRIDE = {
     "las_palmas": ["PALMAS, LAS"],
     "baleares": ["I. BALEARS"],
     "santa_cruz_tenerife": ["S.C.TENERIFE"],
+    # Verificado 2026-09-18 inspeccionando el XLSX real de deuda viva
+    # (columna "Provincia", hoja "Datos"): "NAVARRA" a secas, no "COMUNIDAD
+    # FORAL DE NAVARRA". El fichero de Liquidaciones/Estabilidad SÍ excluye
+    # a Navarra (igual que a País Vasco, ver _procesar_liquidaciones más
+    # abajo) -- pero el de Deuda Viva no, Navarra sí aparece ahí.
+    "navarra": ["NAVARRA"],
 }
 
 
@@ -178,6 +184,15 @@ def _emparejar_en_lista(nombre_oficial, lista_municipios):
     for m in lista_municipios:
         if normalizar(_sin_apostrofes_curvos(m)) in candidatos:
             return m
+        # Navarra (2026-09-18): esta lista guarda el nombre bilingüe
+        # completo "X/Y" tal cual (a diferencia de Comunitat Valenciana/
+        # País Vasco, que solo guardan la forma castellana) -- hace falta
+        # partir también `m` y comparar cada mitad, ver detalle en
+        # actualizar_poblacion.py._emparejar_en_lista.
+        if "/" in m:
+            for parte_m in m.split("/"):
+                if normalizar(_sin_apostrofes_curvos(parte_m)) in candidatos:
+                    return m
     for buscado in candidatos:
         alias = ALIAS_MUNICIPIO.get(buscado)
         if alias and alias in lista_municipios:

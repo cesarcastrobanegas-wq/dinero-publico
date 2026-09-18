@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-18 15:30:56",
+ "generado": "2026-09-18 19:33:01",
  "deuda_viva": {
   "fuente_url": "https://www.hacienda.gob.es/cdi/sist%20financiacion%20y%20deuda/informacioneells/2025/deuda-viva-ayuntamientos-202512.xlsx",
   "municipios": {
@@ -34103,6 +34103,1356 @@
     "provincia": "murcia",
     "deuda_eur": 6183649.87
    },
+   "abaigar": {
+    "municipio": "Abáigar",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "abarzuza/abartzuza": {
+    "municipio": "Abárzuza/Abartzuza",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "abaurregaina/abaurrea alta": {
+    "municipio": "Abaurregaina/Abaurrea Alta",
+    "provincia": "navarra",
+    "deuda_eur": 208465.0
+   },
+   "abaurrepea/abaurrea baja": {
+    "municipio": "Abaurrepea/Abaurrea Baja",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "aberin": {
+    "municipio": "Aberin",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ablitas": {
+    "municipio": "Ablitas",
+    "provincia": "navarra",
+    "deuda_eur": 44005.0
+   },
+   "adios": {
+    "municipio": "Adiós",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "aguilar de codes": {
+    "municipio": "Aguilar de Codés",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "aibar/oibar": {
+    "municipio": "Aibar/Oibar",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "altsasu/alsasua": {
+    "municipio": "Altsasu/Alsasua",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "allin/allin": {
+    "municipio": "Allín/Allin",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "allo": {
+    "municipio": "Allo",
+    "provincia": "navarra",
+    "deuda_eur": 474.0
+   },
+   "amescoa baja": {
+    "municipio": "Améscoa Baja",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ancin/antzin": {
+    "municipio": "Ancín/Antzin",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "andosilla": {
+    "municipio": "Andosilla",
+    "provincia": "navarra",
+    "deuda_eur": 624043.0
+   },
+   "ansoain/antsoain": {
+    "municipio": "Ansoáin/Antsoain",
+    "provincia": "navarra",
+    "deuda_eur": 120.0
+   },
+   "anue": {
+    "municipio": "Anue",
+    "provincia": "navarra",
+    "deuda_eur": 78736.0
+   },
+   "anorbe": {
+    "municipio": "Añorbe",
+    "provincia": "navarra",
+    "deuda_eur": 355962.0
+   },
+   "aoiz/agoitz": {
+    "municipio": "Aoiz/Agoitz",
+    "provincia": "navarra",
+    "deuda_eur": 399835.0
+   },
+   "araitz": {
+    "municipio": "Araitz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "aranarache/aranaratxe": {
+    "municipio": "Aranarache/Aranaratxe",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "arantza": {
+    "municipio": "Arantza",
+    "provincia": "navarra",
+    "deuda_eur": 45980.0
+   },
+   "aranguren": {
+    "municipio": "Aranguren",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "arano": {
+    "municipio": "Arano",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "arakil": {
+    "municipio": "Arakil",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "aras": {
+    "municipio": "Aras",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "arbizu": {
+    "municipio": "Arbizu",
+    "provincia": "navarra",
+    "deuda_eur": 107555.0
+   },
+   "arce/artzi": {
+    "municipio": "Arce/Artzi",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "los arcos": {
+    "municipio": "Los Arcos",
+    "provincia": "navarra",
+    "deuda_eur": 561448.0
+   },
+   "arellano": {
+    "municipio": "Arellano",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "areso": {
+    "municipio": "Areso",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "arguedas": {
+    "municipio": "Arguedas",
+    "provincia": "navarra",
+    "deuda_eur": 14828.0
+   },
+   "aria": {
+    "municipio": "Aria",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "aribe": {
+    "municipio": "Aribe",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "armananzas": {
+    "municipio": "Armañanzas",
+    "provincia": "navarra",
+    "deuda_eur": 82524.0
+   },
+   "arroniz": {
+    "municipio": "Arróniz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "arruazu": {
+    "municipio": "Arruazu",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "artajona": {
+    "municipio": "Artajona",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "artazu": {
+    "municipio": "Artazu",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "atetz": {
+    "municipio": "Atetz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ayegui/aiegi": {
+    "municipio": "Ayegui/Aiegi",
+    "provincia": "navarra",
+    "deuda_eur": 465459.0
+   },
+   "azagra": {
+    "municipio": "Azagra",
+    "provincia": "navarra",
+    "deuda_eur": 571956.0
+   },
+   "azuelo": {
+    "municipio": "Azuelo",
+    "provincia": "navarra",
+    "deuda_eur": 301.0
+   },
+   "bakaiku": {
+    "municipio": "Bakaiku",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "barasoain": {
+    "municipio": "Barásoain",
+    "provincia": "navarra",
+    "deuda_eur": 546.0
+   },
+   "barbarin": {
+    "municipio": "Barbarin",
+    "provincia": "navarra",
+    "deuda_eur": 5596.0
+   },
+   "bargota": {
+    "municipio": "Bargota",
+    "provincia": "navarra",
+    "deuda_eur": 19217.0
+   },
+   "barillas": {
+    "municipio": "Barillas",
+    "provincia": "navarra",
+    "deuda_eur": 15659.0
+   },
+   "basaburua": {
+    "municipio": "Basaburua",
+    "provincia": "navarra",
+    "deuda_eur": 324584.0
+   },
+   "baztan": {
+    "municipio": "Baztan",
+    "provincia": "navarra",
+    "deuda_eur": 3009999.0
+   },
+   "beire": {
+    "municipio": "Beire",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "belascoain": {
+    "municipio": "Belascoáin",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "berbinzana": {
+    "municipio": "Berbinzana",
+    "provincia": "navarra",
+    "deuda_eur": 103305.0
+   },
+   "bertizarana": {
+    "municipio": "Bertizarana",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "betelu": {
+    "municipio": "Betelu",
+    "provincia": "navarra",
+    "deuda_eur": 227842.0
+   },
+   "biurrun-olcoz": {
+    "municipio": "Biurrun-Olcoz",
+    "provincia": "navarra",
+    "deuda_eur": 20429.0
+   },
+   "bunuel": {
+    "municipio": "Buñuel",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "auritz/burguete": {
+    "municipio": "Auritz/Burguete",
+    "provincia": "navarra",
+    "deuda_eur": 156971.0
+   },
+   "burgui/burgi": {
+    "municipio": "Burgui/Burgi",
+    "provincia": "navarra",
+    "deuda_eur": 112469.0
+   },
+   "burlada/burlata": {
+    "municipio": "Burlada/Burlata",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "el busto": {
+    "municipio": "El Busto",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "cabanillas": {
+    "municipio": "Cabanillas",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "cabredo": {
+    "municipio": "Cabredo",
+    "provincia": "navarra",
+    "deuda_eur": 48000.0
+   },
+   "cadreita": {
+    "municipio": "Cadreita",
+    "provincia": "navarra",
+    "deuda_eur": 1521665.0
+   },
+   "caparroso": {
+    "municipio": "Caparroso",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "carcar": {
+    "municipio": "Cárcar",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "carcastillo": {
+    "municipio": "Carcastillo",
+    "provincia": "navarra",
+    "deuda_eur": 2704.0
+   },
+   "cascante": {
+    "municipio": "Cascante",
+    "provincia": "navarra",
+    "deuda_eur": 76.0
+   },
+   "caseda": {
+    "municipio": "Cáseda",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "castillonuevo/gazteluberri": {
+    "municipio": "Castillonuevo/Gazteluberri",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "cintruenigo": {
+    "municipio": "Cintruénigo",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ziordia": {
+    "municipio": "Ziordia",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "cirauqui/zirauki": {
+    "municipio": "Cirauqui/Zirauki",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ciriza/ziritza": {
+    "municipio": "Ciriza/Ziritza",
+    "provincia": "navarra",
+    "deuda_eur": 12489.0
+   },
+   "cizur": {
+    "municipio": "Cizur",
+    "provincia": "navarra",
+    "deuda_eur": 999.0
+   },
+   "corella": {
+    "municipio": "Corella",
+    "provincia": "navarra",
+    "deuda_eur": 660049.0
+   },
+   "cortes": {
+    "municipio": "Cortes",
+    "provincia": "navarra",
+    "deuda_eur": 112.0
+   },
+   "desojo": {
+    "municipio": "Desojo",
+    "provincia": "navarra",
+    "deuda_eur": 47113.0
+   },
+   "dicastillo": {
+    "municipio": "Dicastillo",
+    "provincia": "navarra",
+    "deuda_eur": 2489.0
+   },
+   "donamaria": {
+    "municipio": "Donamaria",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "etxalar": {
+    "municipio": "Etxalar",
+    "provincia": "navarra",
+    "deuda_eur": 5353.0
+   },
+   "echarri/etxarri": {
+    "municipio": "Echarri/Etxarri",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "etxarri aranatz": {
+    "municipio": "Etxarri Aranatz",
+    "provincia": "navarra",
+    "deuda_eur": 165250.0
+   },
+   "etxauri": {
+    "municipio": "Etxauri",
+    "provincia": "navarra",
+    "deuda_eur": 101.0
+   },
+   "valle de egues/eguesibar": {
+    "municipio": "Valle de Egüés/Eguesibar",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "elgorriaga": {
+    "municipio": "Elgorriaga",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "valle de elorz/elortzibar": {
+    "municipio": "Valle de Elorz/Elortzibar",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "eneriz/eneritz": {
+    "municipio": "Enériz/Eneritz",
+    "provincia": "navarra",
+    "deuda_eur": 57155.0
+   },
+   "eratsun": {
+    "municipio": "Eratsun",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ergoiena": {
+    "municipio": "Ergoiena",
+    "provincia": "navarra",
+    "deuda_eur": 66.0
+   },
+   "erro": {
+    "municipio": "Erro",
+    "provincia": "navarra",
+    "deuda_eur": 912.0
+   },
+   "ezcaroz/ezkaroze": {
+    "municipio": "Ezcároz/Ezkaroze",
+    "provincia": "navarra",
+    "deuda_eur": 342992.0
+   },
+   "eslava": {
+    "municipio": "Eslava",
+    "provincia": "navarra",
+    "deuda_eur": 1153.0
+   },
+   "esparza de salazar/espartza zaraitzu": {
+    "municipio": "Esparza de Salazar/Espartza Zaraitzu",
+    "provincia": "navarra",
+    "deuda_eur": 50000.0
+   },
+   "espronceda": {
+    "municipio": "Espronceda",
+    "provincia": "navarra",
+    "deuda_eur": 6299.0
+   },
+   "estella-lizarra": {
+    "municipio": "Estella-Lizarra",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "esteribar": {
+    "municipio": "Esteribar",
+    "provincia": "navarra",
+    "deuda_eur": 43.0
+   },
+   "etayo": {
+    "municipio": "Etayo",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "eulate": {
+    "municipio": "Eulate",
+    "provincia": "navarra",
+    "deuda_eur": 95000.0
+   },
+   "ezcabarte": {
+    "municipio": "Ezcabarte",
+    "provincia": "navarra",
+    "deuda_eur": 165469.0
+   },
+   "ezkurra": {
+    "municipio": "Ezkurra",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ezprogui": {
+    "municipio": "Ezprogui",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "falces": {
+    "municipio": "Falces",
+    "provincia": "navarra",
+    "deuda_eur": 795968.0
+   },
+   "fitero": {
+    "municipio": "Fitero",
+    "provincia": "navarra",
+    "deuda_eur": 131450.0
+   },
+   "fontellas": {
+    "municipio": "Fontellas",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "funes": {
+    "municipio": "Funes",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "fustinana": {
+    "municipio": "Fustiñana",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "galar": {
+    "municipio": "Galar",
+    "provincia": "navarra",
+    "deuda_eur": 3150.0
+   },
+   "gallipienzo/galipentzu": {
+    "municipio": "Gallipienzo/Galipentzu",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "gallues/galoze": {
+    "municipio": "Gallués/Galoze",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "garaioa": {
+    "municipio": "Garaioa",
+    "provincia": "navarra",
+    "deuda_eur": 6734.0
+   },
+   "garde": {
+    "municipio": "Garde",
+    "provincia": "navarra",
+    "deuda_eur": 12500.0
+   },
+   "garinoain": {
+    "municipio": "Garínoain",
+    "provincia": "navarra",
+    "deuda_eur": 342740.0
+   },
+   "garralda": {
+    "municipio": "Garralda",
+    "provincia": "navarra",
+    "deuda_eur": 41289.0
+   },
+   "genevilla": {
+    "municipio": "Genevilla",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "goizueta": {
+    "municipio": "Goizueta",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "val de goni/gonerri": {
+    "municipio": "Val de Goñi/Goñerri",
+    "provincia": "navarra",
+    "deuda_eur": 1079.0
+   },
+   "guesa/gorza": {
+    "municipio": "Güesa/Gorza",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "guesalaz/gesalatz": {
+    "municipio": "Guesálaz/Gesalatz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "guirguillano": {
+    "municipio": "Guirguillano",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "huarte/uharte": {
+    "municipio": "Huarte/Uharte",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "uharte arakil": {
+    "municipio": "Uharte Arakil",
+    "provincia": "navarra",
+    "deuda_eur": 137500.0
+   },
+   "ibargoiti": {
+    "municipio": "Ibargoiti",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "iguzquiza": {
+    "municipio": "Igúzquiza",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "imotz": {
+    "municipio": "Imotz",
+    "provincia": "navarra",
+    "deuda_eur": 72894.0
+   },
+   "iraneta": {
+    "municipio": "Irañeta",
+    "provincia": "navarra",
+    "deuda_eur": 38518.0
+   },
+   "isaba/izaba": {
+    "municipio": "Isaba/Izaba",
+    "provincia": "navarra",
+    "deuda_eur": 250000.0
+   },
+   "ituren": {
+    "municipio": "Ituren",
+    "provincia": "navarra",
+    "deuda_eur": 27661.0
+   },
+   "iturmendi": {
+    "municipio": "Iturmendi",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "iza/itza": {
+    "municipio": "Iza/Itza",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "izagaondoa": {
+    "municipio": "Izagaondoa",
+    "provincia": "navarra",
+    "deuda_eur": 51.0
+   },
+   "izalzu/itzaltzu": {
+    "municipio": "Izalzu/Itzaltzu",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "jaurrieta": {
+    "municipio": "Jaurrieta",
+    "provincia": "navarra",
+    "deuda_eur": 19359.0
+   },
+   "javier": {
+    "municipio": "Javier",
+    "provincia": "navarra",
+    "deuda_eur": 47105.0
+   },
+   "juslapena/txulapain": {
+    "municipio": "Juslapeña/Txulapain",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "beintza-labaien": {
+    "municipio": "Beintza-Labaien",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "lakuntza": {
+    "municipio": "Lakuntza",
+    "provincia": "navarra",
+    "deuda_eur": 372083.0
+   },
+   "lana": {
+    "municipio": "Lana",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "lantz": {
+    "municipio": "Lantz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "lapoblacion": {
+    "municipio": "Lapoblación",
+    "provincia": "navarra",
+    "deuda_eur": 130499.0
+   },
+   "larraga": {
+    "municipio": "Larraga",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "larraona": {
+    "municipio": "Larraona",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "larraun": {
+    "municipio": "Larraun",
+    "provincia": "navarra",
+    "deuda_eur": 150000.0
+   },
+   "lazagurria": {
+    "municipio": "Lazagurría",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "leache/leatxe": {
+    "municipio": "Leache/Leatxe",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "legarda": {
+    "municipio": "Legarda",
+    "provincia": "navarra",
+    "deuda_eur": 230230.0
+   },
+   "legaria": {
+    "municipio": "Legaria",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "leitza": {
+    "municipio": "Leitza",
+    "provincia": "navarra",
+    "deuda_eur": 1167454.0
+   },
+   "leoz/leotz": {
+    "municipio": "Leoz/Leotz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "lerga": {
+    "municipio": "Lerga",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "lerin": {
+    "municipio": "Lerín",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "lesaka": {
+    "municipio": "Lesaka",
+    "provincia": "navarra",
+    "deuda_eur": 2369806.0
+   },
+   "lezaun": {
+    "municipio": "Lezaun",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "liedena": {
+    "municipio": "Liédena",
+    "provincia": "navarra",
+    "deuda_eur": 386.0
+   },
+   "lizoain-arriasgoiti/lizoainibar-arriasgoiti": {
+    "municipio": "Lizoain-Arriasgoiti/Lizoainibar-Arriasgoiti",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "lodosa": {
+    "municipio": "Lodosa",
+    "provincia": "navarra",
+    "deuda_eur": 48709.0
+   },
+   "longuida/longida": {
+    "municipio": "Lónguida/Longida",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "lumbier": {
+    "municipio": "Lumbier",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "luquin": {
+    "municipio": "Luquin",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "maneru": {
+    "municipio": "Mañeru",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "maranon": {
+    "municipio": "Marañón",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "marcilla": {
+    "municipio": "Marcilla",
+    "provincia": "navarra",
+    "deuda_eur": 238476.0
+   },
+   "melida": {
+    "municipio": "Mélida",
+    "provincia": "navarra",
+    "deuda_eur": 32062.0
+   },
+   "mendavia": {
+    "municipio": "Mendavia",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "mendaza": {
+    "municipio": "Mendaza",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "mendigorria": {
+    "municipio": "Mendigorria",
+    "provincia": "navarra",
+    "deuda_eur": 574537.0
+   },
+   "metauten": {
+    "municipio": "Metauten",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "milagro": {
+    "municipio": "Milagro",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "mirafuentes": {
+    "municipio": "Mirafuentes",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "miranda de arga": {
+    "municipio": "Miranda de Arga",
+    "provincia": "navarra",
+    "deuda_eur": 1806.0
+   },
+   "monreal/elo": {
+    "municipio": "Monreal/Elo",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "monteagudo": {
+    "municipio": "Monteagudo",
+    "provincia": "navarra",
+    "deuda_eur": 198919.0
+   },
+   "morentin": {
+    "municipio": "Morentin",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "mues": {
+    "municipio": "Mues",
+    "provincia": "navarra",
+    "deuda_eur": 4743.0
+   },
+   "murchante": {
+    "municipio": "Murchante",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "murieta": {
+    "municipio": "Murieta",
+    "provincia": "navarra",
+    "deuda_eur": 58679.0
+   },
+   "murillo el cuende": {
+    "municipio": "Murillo el Cuende",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "murillo el fruto": {
+    "municipio": "Murillo el Fruto",
+    "provincia": "navarra",
+    "deuda_eur": 689877.0
+   },
+   "muruzabal": {
+    "municipio": "Muruzábal",
+    "provincia": "navarra",
+    "deuda_eur": 17336.0
+   },
+   "navascues/nabaskoze": {
+    "municipio": "Navascués/Nabaskoze",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "nazar": {
+    "municipio": "Nazar",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "obanos": {
+    "municipio": "Obanos",
+    "provincia": "navarra",
+    "deuda_eur": 164000.0
+   },
+   "oco": {
+    "municipio": "Oco",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ochagavia/otsagabia": {
+    "municipio": "Ochagavía/Otsagabia",
+    "provincia": "navarra",
+    "deuda_eur": 244753.0
+   },
+   "odieta": {
+    "municipio": "Odieta",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "oiz": {
+    "municipio": "Oiz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "olaibar": {
+    "municipio": "Oláibar",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "olazti/olazagutia": {
+    "municipio": "Olazti/Olazagutía",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "olejua": {
+    "municipio": "Olejua",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "olite/erriberri": {
+    "municipio": "Olite/Erriberri",
+    "provincia": "navarra",
+    "deuda_eur": 2022642.0
+   },
+   "oloriz/oloritz": {
+    "municipio": "Olóriz/Oloritz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "cendea de olza/oltza zendea": {
+    "municipio": "Cendea de Olza/Oltza Zendea",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "valle de ollo/ollaran": {
+    "municipio": "Valle de Ollo/Ollaran",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "orbaizeta": {
+    "municipio": "Orbaizeta",
+    "provincia": "navarra",
+    "deuda_eur": 80000.0
+   },
+   "orbara": {
+    "municipio": "Orbara",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "orisoain": {
+    "municipio": "Orísoain",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "oronz/orontze": {
+    "municipio": "Oronz/Orontze",
+    "provincia": "navarra",
+    "deuda_eur": 43519.0
+   },
+   "oroz-betelu/orotz-betelu": {
+    "municipio": "Oroz-Betelu/Orotz-Betelu",
+    "provincia": "navarra",
+    "deuda_eur": 36792.0
+   },
+   "oteiza": {
+    "municipio": "Oteiza",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "pamplona/iruna": {
+    "municipio": "Pamplona/Iruña",
+    "provincia": "navarra",
+    "deuda_eur": 20060660.0
+   },
+   "peralta/azkoien": {
+    "municipio": "Peralta/Azkoien",
+    "provincia": "navarra",
+    "deuda_eur": 286.0
+   },
+   "petilla de aragon": {
+    "municipio": "Petilla de Aragón",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "piedramillera": {
+    "municipio": "Piedramillera",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "pitillas": {
+    "municipio": "Pitillas",
+    "provincia": "navarra",
+    "deuda_eur": 200.0
+   },
+   "puente la reina/gares": {
+    "municipio": "Puente la Reina/Gares",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "pueyo/puiu": {
+    "municipio": "Pueyo/Puiu",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ribaforada": {
+    "municipio": "Ribaforada",
+    "provincia": "navarra",
+    "deuda_eur": 755752.0
+   },
+   "romanzado/erromantzatua": {
+    "municipio": "Romanzado/Erromantzatua",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "roncal/erronkari": {
+    "municipio": "Roncal/Erronkari",
+    "provincia": "navarra",
+    "deuda_eur": 255806.0
+   },
+   "orreaga/roncesvalles": {
+    "municipio": "Orreaga/Roncesvalles",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "saldias": {
+    "municipio": "Saldias",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "salinas de oro/jaitz": {
+    "municipio": "Salinas de Oro/Jaitz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "san adrian": {
+    "municipio": "San Adrián",
+    "provincia": "navarra",
+    "deuda_eur": 1736523.0
+   },
+   "sanguesa/zangoza": {
+    "municipio": "Sangüesa/Zangoza",
+    "provincia": "navarra",
+    "deuda_eur": 476617.0
+   },
+   "san martin de unx": {
+    "municipio": "San Martín de Unx",
+    "provincia": "navarra",
+    "deuda_eur": 191518.0
+   },
+   "sansol": {
+    "municipio": "Sansol",
+    "provincia": "navarra",
+    "deuda_eur": 2667.0
+   },
+   "santacara": {
+    "municipio": "Santacara",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "doneztebe/santesteban": {
+    "municipio": "Doneztebe/Santesteban",
+    "provincia": "navarra",
+    "deuda_eur": 256307.0
+   },
+   "sarries/sartze": {
+    "municipio": "Sarriés/Sartze",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "sartaguda": {
+    "municipio": "Sartaguda",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "sesma": {
+    "municipio": "Sesma",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "sorlada": {
+    "municipio": "Sorlada",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "sunbilla": {
+    "municipio": "Sunbilla",
+    "provincia": "navarra",
+    "deuda_eur": 62129.0
+   },
+   "tafalla": {
+    "municipio": "Tafalla",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "tiebas-muruarte de reta": {
+    "municipio": "Tiebas-Muruarte de Reta",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "tirapu": {
+    "municipio": "Tirapu",
+    "provincia": "navarra",
+    "deuda_eur": 518.0
+   },
+   "torralba del rio": {
+    "municipio": "Torralba del Río",
+    "provincia": "navarra",
+    "deuda_eur": 6800.0
+   },
+   "torres del rio": {
+    "municipio": "Torres del Río",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "tudela": {
+    "municipio": "Tudela",
+    "provincia": "navarra",
+    "deuda_eur": 6156085.0
+   },
+   "tulebras": {
+    "municipio": "Tulebras",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ucar": {
+    "municipio": "Úcar",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ujue/uxue": {
+    "municipio": "Ujué/Uxue",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "ultzama": {
+    "municipio": "Ultzama",
+    "provincia": "navarra",
+    "deuda_eur": 489907.0
+   },
+   "unciti": {
+    "municipio": "Unciti",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "unzue/untzue": {
+    "municipio": "Unzué/Untzue",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "urdazubi/urdax": {
+    "municipio": "Urdazubi/Urdax",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "urdiain": {
+    "municipio": "Urdiain",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "urraul alto": {
+    "municipio": "Urraúl Alto",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "urraul bajo": {
+    "municipio": "Urraúl Bajo",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "urroz-villa": {
+    "municipio": "Urroz-Villa",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "urroz": {
+    "municipio": "Urroz",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "urzainqui/urzainki": {
+    "municipio": "Urzainqui/Urzainki",
+    "provincia": "navarra",
+    "deuda_eur": 10565.0
+   },
+   "uterga": {
+    "municipio": "Uterga",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "uztarroz/uztarroze": {
+    "municipio": "Uztárroz/Uztarroze",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "luzaide/valcarlos": {
+    "municipio": "Luzaide/Valcarlos",
+    "provincia": "navarra",
+    "deuda_eur": 61203.0
+   },
+   "valtierra": {
+    "municipio": "Valtierra",
+    "provincia": "navarra",
+    "deuda_eur": 258.0
+   },
+   "bera": {
+    "municipio": "Bera",
+    "provincia": "navarra",
+    "deuda_eur": 114604.0
+   },
+   "viana": {
+    "municipio": "Viana",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "vidangoz/bidankoze": {
+    "municipio": "Vidángoz/Bidankoze",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "bidaurreta": {
+    "municipio": "Bidaurreta",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "villafranca": {
+    "municipio": "Villafranca",
+    "provincia": "navarra",
+    "deuda_eur": 1363889.0
+   },
+   "villamayor de monjardin": {
+    "municipio": "Villamayor de Monjardín",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "hiriberri/villanueva de aezkoa": {
+    "municipio": "Hiriberri/Villanueva de Aezkoa",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "villatuerta": {
+    "municipio": "Villatuerta",
+    "provincia": "navarra",
+    "deuda_eur": 40.0
+   },
+   "villava/atarrabia": {
+    "municipio": "Villava/Atarrabia",
+    "provincia": "navarra",
+    "deuda_eur": 2394536.0
+   },
+   "igantzi": {
+    "municipio": "Igantzi",
+    "provincia": "navarra",
+    "deuda_eur": 332991.0
+   },
+   "valle de yerri/deierri": {
+    "municipio": "Valle de Yerri/Deierri",
+    "provincia": "navarra",
+    "deuda_eur": 455.0
+   },
+   "yesa": {
+    "municipio": "Yesa",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "zabalza/zabaltza": {
+    "municipio": "Zabalza/Zabaltza",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "zubieta": {
+    "municipio": "Zubieta",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "zugarramurdi": {
+    "municipio": "Zugarramurdi",
+    "provincia": "navarra",
+    "deuda_eur": 1115.0
+   },
+   "zuniga": {
+    "municipio": "Zúñiga",
+    "provincia": "navarra",
+    "deuda_eur": 39533.0
+   },
+   "baranain/baranain": {
+    "municipio": "Barañáin/Barañain",
+    "provincia": "navarra",
+    "deuda_eur": 27242.0
+   },
+   "berrioplano/berriobeiti": {
+    "municipio": "Berrioplano/Berriobeiti",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "berriozar": {
+    "municipio": "Berriozar",
+    "provincia": "navarra",
+    "deuda_eur": 244.0
+   },
+   "irurtzun": {
+    "municipio": "Irurtzun",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "beriain": {
+    "municipio": "Beriáin",
+    "provincia": "navarra",
+    "deuda_eur": 2604400.0
+   },
+   "orkoien": {
+    "municipio": "Orkoien",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "zizur mayor/zizur nagusia": {
+    "municipio": "Zizur Mayor/Zizur Nagusia",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "lekunberri": {
+    "municipio": "Lekunberri",
+    "provincia": "navarra",
+    "deuda_eur": 302799.04
+   },
    "alegria-dulantzi": {
     "municipio": "Alegria-Dulantzi",
     "provincia": "pais_vasco",
@@ -34267,6 +35617,11 @@
     "municipio": "Peñacerrada-Urizaharra",
     "provincia": "pais_vasco",
     "deuda_eur": 0.0
+   },
+   "erriberagoitia/ribera alta": {
+    "municipio": "Erriberagoitia/Ribera Alta",
+    "provincia": "pais_vasco",
+    "deuda_eur": 129133.0
    },
    "ribera baja": {
     "municipio": "Ribera Baja",
@@ -34608,6 +35963,11 @@
     "provincia": "pais_vasco",
     "deuda_eur": 0.0
    },
+   "arrasate/mondragon": {
+    "municipio": "Arrasate/Mondragón",
+    "provincia": "pais_vasco",
+    "deuda_eur": 0.0
+   },
    "mutriku": {
     "municipio": "Mutriku",
     "provincia": "pais_vasco",
@@ -34667,6 +36027,11 @@
     "municipio": "Errenteria",
     "provincia": "pais_vasco",
     "deuda_eur": 9685638.0
+   },
+   "donostia/san sebastian": {
+    "municipio": "Donostia/San Sebastián",
+    "provincia": "pais_vasco",
+    "deuda_eur": 96543255.0
    },
    "segura": {
     "municipio": "Segura",

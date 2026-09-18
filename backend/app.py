@@ -4,11 +4,11 @@ Fuente: Plataforma de Contratación del Sector Público (datos oficiales CODICE/
 """
 
 import gzip as _gzip
-import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib, random
+import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib, random, unicodedata
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from urllib.parse import parse_qs, quote_plus, urlencode, urlparse
+from urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urljoin
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -1509,6 +1509,328 @@ MUNICIPIOS_PAIS_VASCO_EUSKADI_ID = {
     'Zumarraga': 117,
     'la Anteiglesia de Abadiño': 284,
     'la Anteiglesia de Erandio': 420,
+}
+
+# Navarra (2026-09-18, Mecanismo B): comunidad foral con plataforma de
+# contratación propia obligatoria (Ley Foral 2/2018) -- verificado que
+# NINGÚN ayuntamiento navarro publica en PLACE (0 coincidencias reales
+# para "ayuntamiento de pamplona/tudela/etc." en un ZIP real de
+# septiembre 2026; los 6 "matches" de "tudela" eran en realidad "Tudela
+# de Duero", en Valladolid -- Castilla y León). El portal de datos
+# abiertos de Navarra (datosabiertos.navarra.es, CKAN) tampoco sirve --
+# sus datasets de contratación EXCLUYEN por completo a los ayuntamientos
+# (0 resultados filtrando "Ayuntamiento" en 4.866 registros), solo cubren
+# departamentos forales y entidades vinculadas (ANIMSA, etc.).
+#
+# Única fuente real: el buscador legacy de adjudicaciones en
+# hacienda.navarra.es/sicpportal (ASP.NET WebForms clásico, postback con
+# __VIEWSTATE/__EVENTVALIDATION -- ver _navarra_post/_navarra_search más
+# abajo). A diferencia de Euskadi (API con ID numérico, sin ambigüedad),
+# aquí el filtro por "Convocante" es texto libre -- riesgo real de falso
+# positivo verificado en vivo: buscar "Cintruenigo" trae también la
+# "MANOMUNIDAD DE AGUAS DE CASCANTE CINTRUENIGO Y FITERO"; buscar
+# "Pamplona" trae también la Gerencia de Urbanismo, "Servicios de La
+# Comarca de Pamplona S.A." y "MERCADOS CENTRALES...MERCAIRUÑA S.A.".
+# MUNICIPIOS_NAVARRA_CONVOCANTE fija, para cada uno de los 272 municipios,
+# el valor EXACTO de "Convocante" descubierto en vivo contra el portal
+# (246/272, verificado con búsqueda + comparación exacta tras quitar el
+# marcador de entidad -- necesario porque nombres como "Arakil" son
+# substring real de otro municipio real y distinto, "Uharte Arakil": la
+# comparación es por palabra/núcleo completo, nunca por subcadena suelta)
+# o -- para los 26 municipios muy pequeños en los que la búsqueda no
+# encontró NINGUNA fila en el listado (ver lista con comentario "sin
+# confirmar en vivo" más abajo, p.ej. Orreaga/Roncesvalles ~25 habitantes)
+# -- la forma "Ayuntamiento de X" esperable sin confirmar, por si en el
+# futuro sí aparece algún contrato con ese nombre exacto.
+#
+# 270 municipios de 272 -- 2 EXCLUSIONES A PROPÓSITO por colisión de
+# nombre exacto con un municipio ya conectado y en producción (mismo tipo
+# de incidente que Cieza/Cantabria, Mieres/Asturias, El Molar/Madrid, las
+# 6 de Castilla y León y las 2 de Castilla-La Mancha): se mantiene el
+# municipio YA CONECTADO y se excluye el de Navarra --
+# "Castejón" (ya existe en MUNICIPIOS_CUENCA, Castilla-La Mancha) y "Sada"
+# (ya existe en MUNICIPIOS_A_CORUNA, Galicia).
+#
+# Encoding: el servidor espera el POST en iso-8859-15 -- enviarlo con la
+# codificación por defecto de `requests` (UTF-8) hace que CUALQUIER
+# búsqueda con tilde/ñ devuelva 0 resultados aunque el municipio sí tenga
+# contratos reales (confirmado con "Buñuel": 0 filas vía UTF-8, 22 filas
+# reales vía iso-8859-15 -- este único bug de codificación explicaba la
+# mayoría de los 26 casos que en un primer intento parecían "sin datos").
+# _navarra_post() codifica el body a mano por esto exactamente.
+NAVARRA_SEARCH_URL = "https://hacienda.navarra.es/sicpportal/mtoBuscadorAdjudicaciones.aspx"
+
+MUNICIPIOS_NAVARRA_CONVOCANTE = {
+    'Abaurregaina/Abaurrea Alta': 'AYUNTAMIENTO DE ABAURREGAINA/ABAURREA  ALTA',
+    'Abaurrepea/Abaurrea Baja': 'Ayuntamiento de Abaurrea Baja/Abaurrepea',
+    'Aberin': 'AYUNTAMIENTO DE ABERIN',
+    'Ablitas': 'AYUNTAMIENTO DE ABLITAS',
+    'Abáigar': 'Ayuntamiento de Abáigar',  # sin confirmar en vivo
+    'Abárzuza/Abartzuza': 'Ayuntamiento de Abarzuza',
+    'Adiós': 'AYUNTAMIENTO DE ADIÓS',
+    'Aguilar de Codés': 'AYUNTAMIENTO DE AGUILAR DE CODES',
+    'Aibar/Oibar': 'Ayuntamiento de Aibar',
+    'Allo': 'Ayuntamiento de Allo',
+    'Allín/Allin': 'AYUNTAMIENTO DEL VALLE DE ALLIN',
+    'Altsasu/Alsasua': 'Ayuntamiento de Alsasua/Altsasu',
+    'Améscoa Baja': 'AYUNTAMIENTO DE AMESCOA BAJA',
+    'Ancín/Antzin': 'Ayuntamiento de Ancín',
+    'Andosilla': 'Ayuntamiento de Andosilla',
+    'Ansoáin/Antsoain': 'Ayuntamiento de Ansoáin',
+    'Anue': 'AYUNTAMIENTO DE ANUE',
+    'Aoiz/Agoitz': 'AYUNTAMIENTO DE AOIZ',
+    'Araitz': 'AYUNTAMIENTO DE ARAITZ',
+    'Arakil': 'Ayuntamiento de Arakil',
+    'Aranarache/Aranaratxe': 'AYUNTAMIENTO DE ARANARACHE',
+    'Aranguren': 'Ayuntamiento de Valle de Aranguren',
+    'Arano': 'AYUNTAMIENTO DE ARANO',
+    'Arantza': 'Ayuntamiento de Arantza',
+    'Aras': 'Ayuntamiento de Aras',
+    'Arbizu': 'Ayuntamiento de Arbizu',
+    'Arce/Artzi': 'AYUNTAMIENTO DE ARCE ARTZI',
+    'Arellano': 'AYUNTAMIENTO DE ARELLANO',
+    'Areso': 'Ayuntamiento de Areso',
+    'Arguedas': 'AYUNTAMIENTO DE ARGUEDAS',
+    'Aria': 'Ayuntamiento de Aria',  # sin confirmar en vivo
+    'Aribe': 'AYUNTAMIENTO DE ARIBE/ARIVE',
+    'Armañanzas': 'AYUNTAMIENTO DE ARMAÑANZAS',
+    'Arruazu': 'Ayuntamiento de Arruazu',
+    'Arróniz': 'Ayuntamiento de Arróniz',
+    'Artajona': 'Ayuntamiento de Artajona',
+    'Artazu': 'Ayuntamiento de Artazu',
+    'Atetz': 'Ayuntamiento de Atetz',  # sin confirmar en vivo
+    'Auritz/Burguete': 'AYUNTAMIENTO DE AURITZ-BURGUETE',
+    'Ayegui/Aiegi': 'Ayuntamiento de Ayegui',
+    'Azagra': 'AYUNTAMIENTO DE AZAGRA',
+    'Azuelo': 'AYUNTAMIENTO DE AZUELO',
+    'Añorbe': 'Ayuntamiento de Añorbe',
+    'Bakaiku': 'AYUNTAMIENTO DE BAKAIKU',
+    'Barañáin/Barañain': 'Ayuntamiento de Barañain',
+    'Barbarin': 'Ayuntamiento de Barbarin',  # sin confirmar en vivo
+    'Bargota': 'AYUNTAMIENTO DE BARGOTA',
+    'Barillas': 'AYUNTAMIENTO DE BARILLAS',
+    'Barásoain': 'AYUNTAMIENTO DE BARASOAIN',
+    'Basaburua': 'Ayuntamiento de Basaburua',
+    'Baztan': 'Ayuntamiento del Valle de Baztan',
+    'Beintza-Labaien': 'Ayuntamiento de Beintza-Labaien/Beintza-Labaiengo Udala',
+    'Beire': 'Ayuntamiento de Beire',
+    'Belascoáin': 'ayuntamiento de belascoain',
+    'Bera': 'Berako Udala / Ayuntamiento de Bera',
+    'Berbinzana': 'Ayuntamiento de Berbinzana',
+    'Beriáin': 'Ayuntamiento de Beriain',
+    'Berrioplano/Berriobeiti': 'Ayuntamiento de Berrioplano',
+    'Berriozar': 'AYUNTAMIENTO BERRIOZAR',
+    'Bertizarana': 'AYUNTAMIENTO DE BERTIZARANA',
+    'Betelu': 'AYUNTAMIENTO DE BETELU',
+    'Bidaurreta': 'Ayuntamiento de Bidaurreta',  # sin confirmar en vivo
+    'Biurrun-Olcoz': 'AYUNTAMIENTO DE BIURRUN-OLCOZ',
+    'Burgui/Burgi': 'AYUNTAMIENTO DE BURGUI',
+    'Burlada/Burlata': 'Ayuntamiento de Burlada',
+    'Buñuel': 'Ayuntamiento de Buñuel',
+    'Cabanillas': 'AYUNTAMIENTO DE CABANILLAS',
+    'Cabredo': 'AYUNTAMIENTO DE CABREDO',
+    'Cadreita': 'Ayuntamiento de Cadreita',
+    'Caparroso': 'Ayuntamiento de Caparroso',
+    'Carcastillo': 'AYUNTAMIENTO CARCASTILLO',
+    'Cascante': 'Ayuntamiento de Cascante',
+    'Castillonuevo/Gazteluberri': 'Ayuntamiento de Castillonuevo',  # sin confirmar en vivo
+    'Cendea de Olza/Oltza Zendea': 'AYUNTAMIENTO CENDEA DE OLZA/OLTZA ZENDEA',
+    'Cintruénigo': 'AYUNTAMIENTO DE CINTRUENIGO',
+    'Cirauqui/Zirauki': 'AYUNTAMIENTO DE CIRAUQUI',
+    'Ciriza/Ziritza': 'Ayuntamiento de Ciriza/Ziritza',
+    'Cizur': 'Ayuntamiento de La Cendea de Cizur',
+    'Corella': 'Ayuntamiento de Corella',
+    'Cortes': 'Ayuntamiento de Cortes',
+    'Cárcar': 'Ayuntamiento de Carcar',
+    'Cáseda': 'Ayuntamiento de Cáseda',
+    'Desojo': 'AYUNTAMIENTO DE DESOJO',
+    'Dicastillo': 'Ayuntamiento de Dicastillo',
+    'Donamaria': 'Ayuntamiento de Donamaria/Donamariako udala',
+    'Doneztebe/Santesteban': 'Ayuntamiento de Doneztebe/Santesteban',
+    'Echarri/Etxarri': 'Ayuntamiento de Etxarri Aranatz',
+    'El Busto': 'AYUNTAMIENTO EL BUSTO',
+    'Elgorriaga': 'Ayuntamiento de Elgorriaga',  # sin confirmar en vivo
+    'Enériz/Eneritz': 'Ayuntamiento de Eneritz',
+    'Eratsun': 'Ayuntamiento de Eratsun',
+    'Ergoiena': 'AYUNTAMIENTO DE ERGOIENA',
+    'Erro': 'Ayuntamiento del Valle de Erro',
+    'Eslava': 'AYUNTAMIENTO DE ESLAVA',
+    'Esparza de Salazar/Espartza Zaraitzu': 'AYUNTAMIENTO DE ESPARZA DE SALAZAR',
+    'Espronceda': 'AYUNTAMIENTO DE ESPRONCEDA',
+    'Estella-Lizarra': 'AYUNTAMIENTO DE ESTELLA-LIZARRA',
+    'Esteribar': 'Ayuntamiento de Esteribar',
+    'Etayo': 'AYUNTAMIENTO DE ETAYO',
+    'Etxalar': 'Ayuntamiento de Etxalar',
+    'Etxarri Aranatz': 'Ayuntamiento de Etxarri Aranatz',
+    'Etxauri': 'Ayuntamiento de Etxauri',
+    'Eulate': 'Ayuntamiento de Eulate',
+    'Ezcabarte': 'Ayuntamiento de Ezcabarte',
+    'Ezcároz/Ezkaroze': 'AYUNTAMIENTO DE EZCAROZ',
+    'Ezkurra': 'AYUNTAMIENTO DE EZKURRA',
+    'Ezprogui': 'AYUNTAMIENTO DE EZPROGUI',
+    'Falces': 'Ayuntamiento de Falces',
+    'Fitero': 'Ayuntamiento de Fitero',
+    'Fontellas': 'Ayuntamiento de fontellas',
+    'Funes': 'AYUNTAMIENTO DE FUNES',
+    'Fustiñana': 'Ayuntamiento de Fustiñana',
+    'Galar': 'Ayuntamiento de Galar',
+    'Gallipienzo/Galipentzu': 'Ayuntamiento de Gallipienzo',
+    'Gallués/Galoze': 'Ayuntamiento de Gallués',
+    'Garaioa': 'AYUNTAMIENTO DE GARAIOA',
+    'Garde': 'Ayuntamiento de Garde',
+    'Garralda': 'AYUNTAMIENTO DE GARRALDA',
+    'Garínoain': 'Ayuntamiento de Garínoain',
+    'Genevilla': 'AYUNTAMIENTO DE GENEVILLA',
+    'Goizueta': 'Ayuntamiento de Goizueta',
+    'Guesálaz/Gesalatz': 'Ayuntamiento de Guesalaz',
+    'Guirguillano': 'AYUNTAMIENTO DE GUIRGUILLANO',
+    'Güesa/Gorza': 'Ayuntamiento de Güesa',  # sin confirmar en vivo
+    'Hiriberri/Villanueva de Aezkoa': 'AYUNTAMIENTO DE HIRIBERRI-VILLANUEVA DE AEZKOA',
+    'Huarte/Uharte': 'Ayuntamiento de Huarte',
+    'Ibargoiti': 'Ayuntamiento de Ibargoiti',
+    'Igantzi': 'Igantziko Udala/Ayuntamiento de Igantzi',
+    'Igúzquiza': 'Ayuntamiento de Igúzquiza',  # sin confirmar en vivo
+    'Imotz': 'Ayuntamiento de Imotz',
+    'Irañeta': 'Ayuntamiento de Irañeta',
+    'Irurtzun': 'Ayuntamiento de Irurtzun',
+    'Isaba/Izaba': 'Ayuntamiento de Isaba',
+    'Ituren': 'AYUNTAMIENTO DE ITUREN',
+    'Iturmendi': 'Ayuntamiento de Iturmendi',
+    'Iza/Itza': 'AYUNTAMIENTO DE IZA',
+    'Izagaondoa': 'AYUNTAMIENTO DE IZAGAONDOA',
+    'Izalzu/Itzaltzu': 'Ayuntamiento de Izalzu/Itzaltzu',
+    'Jaurrieta': 'AYUNTAMIENTO DE JAURRIETA',
+    'Javier': 'AYUNTAMIENTO DE JAVIER',
+    'Juslapeña/Txulapain': 'AYUNTAMIENTO DEL VALLE DE JUSLAPEÑA',
+    'Lakuntza': 'AYUNTAMIENTO DE LAKUNTZA',
+    'Lana': 'Ayuntamiento de Lana',  # sin confirmar en vivo
+    'Lantz': 'AYUNTAMIENTO DE LANTZ',
+    'Lapoblación': 'AYUNTAMIENTO DE LAPOBLACION',
+    'Larraga': 'AYUNTAMIENTO LARRAGA',
+    'Larraona': 'Ayuntamiento de Larraona',
+    'Larraun': 'AYUNTAMIENTO DE LARRAUN',
+    'Lazagurría': 'AYUNTAMIENTO DE LAZAGURRIA',
+    'Leache/Leatxe': 'Ayuntamiento de Leache',
+    'Legarda': 'Ayuntamiento de Legarda',
+    'Legaria': 'AYUNTAMIENTO DE LEGARIA',
+    'Leitza': 'Ayuntamiento de Leitza',
+    'Lekunberri': 'Ayuntamiento de Lekunberri / Lekunberriko Udala',
+    'Leoz/Leotz': 'Ayuntamiento de Leoz',  # sin confirmar en vivo
+    'Lerga': 'AYUNTAMIENTO DE LERGA',
+    'Lerín': 'AYUNTAMIENTO DE LERÍN',
+    'Lesaka': 'Ayuntamiento de Lesaka',
+    'Lezaun': 'Ayuntamiento de Lezaun',  # sin confirmar en vivo
+    'Lizoain-Arriasgoiti/Lizoainibar-Arriasgoiti': 'Ayuntamiento de Lizoain-Arriasgoiti',  # sin confirmar en vivo
+    'Liédena': 'AYUNTAMIENTO DE LIEDENA',
+    'Lodosa': 'Ayuntamiento de Lodosa',
+    'Los Arcos': 'Ayuntamiento de Los Arcos',
+    'Lumbier': 'Ayuntamiento de Lumbier',
+    'Luquin': 'AYUNTAMIENTO DE LUQUIN',
+    'Luzaide/Valcarlos': 'Ayuntamiento de Luzaide/Valcarlos',
+    'Lónguida/Longida': 'AYUNTAMIENTO DE LONGUIDA',
+    'Marañón': 'AYUNTAMIENTO DE MARAÑON',
+    'Marcilla': 'Ayuntamiento de Marcilla',
+    'Mañeru': 'Ayuntamiento de Mañeru',
+    'Mendavia': 'AYUNTAMIENTO DE MENDAVIA',
+    'Mendaza': 'AYUNTAMIENTO DEL DISTRITO DE MENDAZA',
+    'Mendigorria': 'AYUNTAMIENTO DE MENDIGORRIA',
+    'Metauten': 'Ayuntamiento del Distrito de Metauten',
+    'Milagro': 'Ayuntamiento de Milagro',
+    'Mirafuentes': 'Ayuntamiento de Mirafuentes',  # sin confirmar en vivo
+    'Miranda de Arga': 'AYUNTAMIENTO DE MIRANDA DE ARGA',
+    'Monreal/Elo': 'AYUNTAMIENTO DE MONREAL',
+    'Monteagudo': 'Ayuntamiento de Monteagudo',
+    'Morentin': 'AYUNTAMIENTO DE MORENTIN',
+    'Mues': 'Ayuntamiento de Mues',  # sin confirmar en vivo
+    'Murchante': 'Ayuntamiento de Murchante',
+    'Murieta': 'Ayuntamiento de Murieta',
+    'Murillo el Cuende': 'AYUNTAMIENTO DE MURILLO EL CUENDE',
+    'Murillo el Fruto': 'Ayuntamiento de Murillo el Fruto',
+    'Muruzábal': 'AYUNTAMIENTO DE MURUZABAL',
+    'Mélida': 'AYUNTAMIENTO DE MÉLIDA',
+    'Navascués/Nabaskoze': 'Ayuntamiento de Navascués',  # sin confirmar en vivo
+    'Nazar': 'AYUNTAMIENTO DE NAZAR',
+    'Obanos': 'Ayuntamiento de Obanos',
+    'Ochagavía/Otsagabia': 'Ayuntamiento de Ochagavía',
+    'Oco': 'Ayuntamiento de Oco',  # sin confirmar en vivo
+    'Odieta': 'AYUNTAMIENTO DE ODIETA',
+    'Oiz': 'Ayuntamiento de Oiz',  # sin confirmar en vivo
+    'Olazti/Olazagutía': 'Ayuntamiento de Olazti/Olazagutía',
+    'Olejua': 'AYUNTAMIENTO DE OLEJUA',
+    'Olite/Erriberri': 'AYUNTAMIENTO DE OLITE',
+    'Oláibar': 'Ayuntamiento de Olaibar',
+    'Olóriz/Oloritz': 'AYUNTAMIENTO DE OLORIZ',
+    'Orbaizeta': 'Ayuntamiento de Orbaizeta',  # sin confirmar en vivo
+    'Orbara': 'Ayuntamiento de Orbara',
+    'Orkoien': 'Ayuntamiento de Orkoien',
+    'Oronz/Orontze': 'AYUNTAMIENTO DE ORONZ',
+    'Oroz-Betelu/Orotz-Betelu': 'AYUNTAMIENTO DE OROZ-BETELU',
+    'Orreaga/Roncesvalles': 'Ayuntamiento de Orreaga',  # sin confirmar en vivo
+    'Orísoain': 'AYUNTAMIENTO DE ORISOAIN',
+    'Oteiza': 'Ayuntamiento de Oteiza',
+    'Pamplona/Iruña': 'Ayuntamiento de Pamplona',
+    'Peralta/Azkoien': 'Ayuntamiento de Peralta',
+    'Petilla de Aragón': 'AYUNTAMIENTO DE PETILLA DE ARAGON',
+    'Piedramillera': 'Ayuntamiento de Piedramillera',  # sin confirmar en vivo
+    'Pitillas': 'Ayuntamiento Pitillas',
+    'Puente la Reina/Gares': 'AYUNTAMIENTO DE PUENTE LA REINA / GARES',
+    'Pueyo/Puiu': 'Ayuntamiento de Pueyo',
+    'Ribaforada': 'Ayuntamiento de Ribaforada',
+    'Romanzado/Erromantzatua': 'AYUNTAMIENTO DE ROMANZADO',
+    'Roncal/Erronkari': 'Ayuntamiento de Roncal',
+    'Saldias': 'AYUNTAMIENTO DE SALDIAS',
+    'Salinas de Oro/Jaitz': 'AYUNTAMIENTO DE SALINAS DE ORO',
+    'San Adrián': 'AYUNTAMIENTO DE SAN ADRIÁN',
+    'San Martín de Unx': 'AYUNTAMIENTO DE SAN MARTIN DE UNX',
+    'Sangüesa/Zangoza': 'Ayuntamiento de Sangüesa - Zangoza',
+    'Sansol': 'AYUNTAMIENTO DE  SANSOL',
+    'Santacara': 'AYUNTAMIENTO DE SANTACARA',
+    'Sarriés/Sartze': 'Ayuntamiento de Sarriés',  # sin confirmar en vivo
+    'Sartaguda': 'Ayuntamiento de Sartaguda',
+    'Sesma': 'AYUNTAMIENTO DE SESMA',
+    'Sorlada': 'Ayuntamiento de Sorlada',
+    'Sunbilla': 'Ayuntamiento de Sunbilla /Sunbilla Udala',
+    'Tafalla': 'Ayuntamiento de Tafalla',
+    'Tiebas-Muruarte de Reta': 'AYUNTAMIENTO DE TIEBAS-MURUARTE DE RETA',
+    'Tirapu': 'Ayuntamiento de Tirapu',  # sin confirmar en vivo
+    'Torralba del Río': 'Ayuntamiento de Torralba Del Río',
+    'Torres del Río': 'AYUNTAMIENTO DE TORRES DEL RIO',
+    'Tudela': 'Ayuntamiento de Tudela',
+    'Tulebras': 'AYUNTAMIENTO DE TULEBRAS',
+    'Uharte Arakil': 'Ayuntamiento de Uharte Arakil',
+    'Ujué/Uxue': 'Ayuntamiento de Ujué',
+    'Ultzama': 'Ayuntamiento de Ultzama',
+    'Unciti': 'Ayuntamiento de Unciti',
+    'Unzué/Untzue': 'AYUNTAMIENTO DE UNZUE',
+    'Urdazubi/Urdax': 'Ayuntamiento de Urdazubi/Urdax',
+    'Urdiain': 'AYUNTAMIENTO DE URDIAIN',
+    'Urraúl Alto': 'AYUNTAMIENTO URRAUL ALTO',
+    'Urraúl Bajo': 'Ayuntamiento de Urraúl Bajo',
+    'Urroz': 'Urrozko Udala/Ayuntamiento de Urroz',
+    'Urroz-Villa': 'AYUNTAMIENTO DE URROZ VILLA',
+    'Urzainqui/Urzainki': 'AYUNTAMIENTO DE URZAINQUI / URZAINKI',
+    'Uterga': 'AYUNTAMIENTO DE UTERGA',
+    'Uztárroz/Uztarroze': 'Ayuntamiento de Uztárroz',
+    'Val de Goñi/Goñerri': 'Ayuntamiento de Val de Goñi',  # sin confirmar en vivo
+    'Valle de Egüés/Eguesibar': 'Ayuntamiento del Valle de Egüés',
+    'Valle de Elorz/Elortzibar': 'Ayuntamiento del Valle de Elorz',
+    'Valle de Ollo/Ollaran': 'Ayuntamiento del Valle de Ollo',
+    'Valle de Yerri/Deierri': 'Ayuntamiento del Valle de Yerri',
+    'Valtierra': 'Ayuntamiento de Valtierra',
+    'Viana': 'Ayuntamiento de Viana',
+    'Vidángoz/Bidankoze': 'AYUNTAMIENTO DE DE VIDANGOZ',
+    'Villafranca': 'AYUNTAMIENTO DE VILLAFRANCA',
+    'Villamayor de Monjardín': 'Ayuntamiento de Villamayor de Monjardín',  # sin confirmar en vivo
+    'Villatuerta': 'Ayuntamiento de Villatuerta',
+    'Villava/Atarrabia': 'Ayuntamiento de Villava',
+    'Yesa': 'AYUNTAMIENTO DE YESA',
+    'Zabalza/Zabaltza': 'Ayuntamiento de Zabalza',  # sin confirmar en vivo
+    'Ziordia': 'ayuntamiento ziordia',
+    'Zizur Mayor/Zizur Nagusia': 'Ayuntamiento de Zizur Mayor',
+    'Zubieta': 'AYUNTAMIENTO DE ZUBIETA',
+    'Zugarramurdi': 'Ayuntamiento de Zugarramurdi',
+    'Zúñiga': 'AYUNTAMIENTO DE ZÚÑIGA',
+    'Úcar': 'Ayuntamiento de Úcar',
 }
 
 session = requests.Session()
@@ -4617,6 +4939,73 @@ MUNICIPIOS_TOLEDO = [
     "Yuncler","Yunclillos","Yuncos","Yébenes, Los",
 ]
 
+# Navarra: comunidad foral uniprovincial (su "provincia" y su "comunidad"
+# son la misma entidad, mismo patrón que Murcia/Baleares/Cantabria) --
+# Mecanismo B, ver MUNICIPIOS_NAVARRA_CONVOCANTE/buscar_en_navarra() más
+# arriba para el porqué. 272 municipios verificados por un subagente
+# contra el Nomenclátor oficial de Navarra (Nastat) + el Registro de
+# Entidades Locales (REL), con Wikipedia como contraste -- incluye la
+# forma bilingüe castellano/euskera con "/" para los municipios oficiales
+# bilingües (p.ej. "Pamplona/Iruña"). Sin exclusiones por colisión de
+# nombre con otras provincias ya conectadas (comprobado).
+MUNICIPIOS_NAVARRA = [
+    "Abaurregaina/Abaurrea Alta", "Abaurrepea/Abaurrea Baja", "Aberin", "Ablitas", "Abáigar",
+    "Abárzuza/Abartzuza", "Adiós", "Aguilar de Codés", "Aibar/Oibar", "Allo",
+    "Allín/Allin", "Altsasu/Alsasua", "Améscoa Baja", "Ancín/Antzin", "Andosilla",
+    "Ansoáin/Antsoain", "Anue", "Aoiz/Agoitz", "Araitz", "Arakil",
+    "Aranarache/Aranaratxe", "Aranguren", "Arano", "Arantza", "Aras",
+    "Arbizu", "Arce/Artzi", "Arellano", "Areso", "Arguedas",
+    "Aria", "Aribe", "Armañanzas", "Arruazu", "Arróniz",
+    "Artajona", "Artazu", "Atetz", "Auritz/Burguete", "Ayegui/Aiegi",
+    "Azagra", "Azuelo", "Añorbe", "Bakaiku", "Barañáin/Barañain",
+    "Barbarin", "Bargota", "Barillas", "Barásoain", "Basaburua",
+    "Baztan", "Beintza-Labaien", "Beire", "Belascoáin", "Bera",
+    "Berbinzana", "Beriáin", "Berrioplano/Berriobeiti", "Berriozar", "Bertizarana",
+    "Betelu", "Bidaurreta", "Biurrun-Olcoz", "Burgui/Burgi", "Burlada/Burlata",
+    "Buñuel", "Cabanillas", "Cabredo", "Cadreita", "Caparroso",
+    "Carcastillo", "Cascante", "Castillonuevo/Gazteluberri", "Cendea de Olza/Oltza Zendea",
+    "Cintruénigo", "Cirauqui/Zirauki", "Ciriza/Ziritza", "Cizur", "Corella",
+    "Cortes", "Cárcar", "Cáseda", "Desojo", "Dicastillo",
+    "Donamaria", "Doneztebe/Santesteban", "Echarri/Etxarri", "El Busto", "Elgorriaga",
+    "Enériz/Eneritz", "Eratsun", "Ergoiena", "Erro", "Eslava",
+    "Esparza de Salazar/Espartza Zaraitzu", "Espronceda", "Estella-Lizarra", "Esteribar", "Etayo",
+    "Etxalar", "Etxarri Aranatz", "Etxauri", "Eulate", "Ezcabarte",
+    "Ezcároz/Ezkaroze", "Ezkurra", "Ezprogui", "Falces", "Fitero",
+    "Fontellas", "Funes", "Fustiñana", "Galar", "Gallipienzo/Galipentzu",
+    "Gallués/Galoze", "Garaioa", "Garde", "Garralda", "Garínoain",
+    "Genevilla", "Goizueta", "Guesálaz/Gesalatz", "Guirguillano", "Güesa/Gorza",
+    "Hiriberri/Villanueva de Aezkoa", "Huarte/Uharte", "Ibargoiti", "Igantzi", "Igúzquiza",
+    "Imotz", "Irañeta", "Irurtzun", "Isaba/Izaba", "Ituren",
+    "Iturmendi", "Iza/Itza", "Izagaondoa", "Izalzu/Itzaltzu", "Jaurrieta",
+    "Javier", "Juslapeña/Txulapain", "Lakuntza", "Lana", "Lantz",
+    "Lapoblación", "Larraga", "Larraona", "Larraun", "Lazagurría",
+    "Leache/Leatxe", "Legarda", "Legaria", "Leitza", "Lekunberri",
+    "Leoz/Leotz", "Lerga", "Lerín", "Lesaka", "Lezaun",
+    "Lizoain-Arriasgoiti/Lizoainibar-Arriasgoiti", "Liédena", "Lodosa", "Los Arcos", "Lumbier",
+    "Luquin", "Luzaide/Valcarlos", "Lónguida/Longida", "Marañón", "Marcilla",
+    "Mañeru", "Mendavia", "Mendaza", "Mendigorria", "Metauten",
+    "Milagro", "Mirafuentes", "Miranda de Arga", "Monreal/Elo", "Monteagudo",
+    "Morentin", "Mues", "Murchante", "Murieta", "Murillo el Cuende",
+    "Murillo el Fruto", "Muruzábal", "Mélida", "Navascués/Nabaskoze", "Nazar",
+    "Obanos", "Ochagavía/Otsagabia", "Oco", "Odieta", "Oiz",
+    "Olazti/Olazagutía", "Olejua", "Olite/Erriberri", "Oláibar", "Olóriz/Oloritz",
+    "Orbaizeta", "Orbara", "Orkoien", "Oronz/Orontze", "Oroz-Betelu/Orotz-Betelu",
+    "Orreaga/Roncesvalles", "Orísoain", "Oteiza", "Pamplona/Iruña", "Peralta/Azkoien",
+    "Petilla de Aragón", "Piedramillera", "Pitillas", "Puente la Reina/Gares", "Pueyo/Puiu",
+    "Ribaforada", "Romanzado/Erromantzatua", "Roncal/Erronkari", "Saldias",
+    "Salinas de Oro/Jaitz", "San Adrián", "San Martín de Unx", "Sangüesa/Zangoza", "Sansol",
+    "Santacara", "Sarriés/Sartze", "Sartaguda", "Sesma", "Sorlada",
+    "Sunbilla", "Tafalla", "Tiebas-Muruarte de Reta", "Tirapu", "Torralba del Río",
+    "Torres del Río", "Tudela", "Tulebras", "Uharte Arakil", "Ujué/Uxue",
+    "Ultzama", "Unciti", "Unzué/Untzue", "Urdazubi/Urdax", "Urdiain",
+    "Urraúl Alto", "Urraúl Bajo", "Urroz", "Urroz-Villa", "Urzainqui/Urzainki",
+    "Uterga", "Uztárroz/Uztarroze", "Val de Goñi/Goñerri", "Valle de Egüés/Eguesibar", "Valle de Elorz/Elortzibar",
+    "Valle de Ollo/Ollaran", "Valle de Yerri/Deierri", "Valtierra", "Viana", "Vidángoz/Bidankoze",
+    "Villafranca", "Villamayor de Monjardín", "Villatuerta", "Villava/Atarrabia", "Yesa",
+    "Zabalza/Zabaltza", "Ziordia", "Zizur Mayor/Zizur Nagusia", "Zubieta", "Zugarramurdi",
+    "Zúñiga", "Úcar",
+]
+
 # ─── PROVINCIA (Fase 4 — rutas/UI transversales) ─────────────────────────────
 # Comunitat Valenciana (3), Andalucía (8) y País Vasco (1, ver nota en
 # PROVINCIAS_PAIS_VASCO más abajo) generalizados a producción 2026-09-06
@@ -4651,7 +5040,8 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "zamora": MUNICIPIOS_ZAMORA,
                             "albacete": MUNICIPIOS_ALBACETE, "ciudad_real": MUNICIPIOS_CIUDAD_REAL,
                             "cuenca": MUNICIPIOS_CUENCA, "guadalajara": MUNICIPIOS_GUADALAJARA,
-                            "toledo": MUNICIPIOS_TOLEDO}
+                            "toledo": MUNICIPIOS_TOLEDO,
+                            "navarra": MUNICIPIOS_NAVARRA}
 PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona",
                    "lleida": "Provincia de Lleida", "barcelona": "Provincia de Barcelona",
                    "tarragona": "Provincia de Tarragona",
@@ -4683,6 +5073,7 @@ PROVINCIA_LABEL = {"murcia": "Región de Murcia", "girona": "Provincia de Girona
                    "albacete": "Provincia de Albacete", "ciudad_real": "Provincia de Ciudad Real",
                    "cuenca": "Provincia de Cuenca", "guadalajara": "Provincia de Guadalajara",
                    "toledo": "Provincia de Toledo",
+                   "navarra": "Comunidad Foral de Navarra",
                    "todas": "España"}
 
 # Comunidad autónoma de cada provincia -- Murcia es CCAA uniprovincial (su
@@ -4717,6 +5108,7 @@ COMUNIDAD_AUTONOMA_POR_PROVINCIA = {
     "soria": "castilla_y_leon", "valladolid": "castilla_y_leon", "zamora": "castilla_y_leon",  # 9 provincias de Castilla y León, mismo patrón
     "albacete": "castilla_la_mancha", "ciudad_real": "castilla_la_mancha", "cuenca": "castilla_la_mancha",
     "guadalajara": "castilla_la_mancha", "toledo": "castilla_la_mancha",  # 5 provincias de Castilla-La Mancha, mismo patrón
+    "navarra": "navarra",  # comunidad foral uniprovincial, mismo patrón que Murcia/Baleares/Cantabria
 }
 COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluña",
                             "valenciana": "Comunitat Valenciana", "andalucia": "Andalucía",
@@ -4727,7 +5119,8 @@ COMUNIDAD_AUTONOMA_LABEL = {"murcia": "Región de Murcia", "cataluna": "Cataluñ
                             "asturias": "Principado de Asturias",
                             "extremadura": "Extremadura", "aragon": "Aragón",
                             "galicia": "Galicia", "castilla_y_leon": "Castilla y León",
-                            "castilla_la_mancha": "Castilla-La Mancha"}
+                            "castilla_la_mancha": "Castilla-La Mancha",
+                            "navarra": "Comunidad Foral de Navarra"}
 
 
 def _comunidad_valida(txt):
@@ -4813,7 +5206,7 @@ _MAPA_CCAA = [
      "cx": 258, "cy": 48, "r": 17},
     {"comunidad": "pais_vasco", "bandera": "pais_vasco", "label": "País Vasco", "destino": "pais_vasco",
      "cx": 345, "cy": 58, "r": 17},
-    {"comunidad": "navarra", "bandera": "navarra", "label": "Comunidad Foral de Navarra", "destino": None,
+    {"comunidad": "navarra", "bandera": "navarra", "label": "Comunidad Foral de Navarra", "destino": "navarra",
      "cx": 378, "cy": 78, "r": 17},
     {"comunidad": "la_rioja", "bandera": "la_rioja", "label": "La Rioja", "destino": "la_rioja",
      "cx": 335, "cy": 108, "r": 15},
@@ -4887,6 +5280,11 @@ PROVINCIA_AGREGADOS = {
 # comprobación de pertenencia -- MUNICIPIOS_PAIS_VASCO_EUSKADI_ID ya resuelve
 # el id de la API por su cuenta.
 PROVINCIAS_PAIS_VASCO = {"pais_vasco"}
+
+# Navarra (2026-09-18, Mecanismo B -- ver MUNICIPIOS_NAVARRA_CONVOCANTE y
+# buscar_en_navarra): mismo patrón que PROVINCIAS_PAIS_VASCO de arriba,
+# set de una sola clave porque Navarra ya es uniprovincial de por sí.
+PROVINCIAS_NAVARRA = {"navarra"}
 
 def _provincia_valida(txt):
     """Normaliza el parámetro ?provincia= de la querystring: cualquier valor
@@ -6353,6 +6751,272 @@ def _piloto_medir_pais_vasco(job_id=None, max_paginas_por_municipio=5):
                 "total_items_api": total_items_api,  # por si max_paginas cortó antes del final real
             }
     return resultados
+
+
+def _navarra_hidden_fields(soup):
+    """Recoge TODOS los <input type=hidden> del formulario ASP.NET, sin
+    asumir nombres fijos -- el servidor añade/quita __EVENTTARGET/
+    __EVENTARGUMENT según el contexto (búsqueda inicial vs. paginación)."""
+    data = {}
+    for inp in soup.find_all("input", type="hidden"):
+        name = inp.get("name")
+        if name:
+            data[name] = inp.get("value", "")
+    return data
+
+
+def _navarra_post(sess, payload):
+    """POST codificado a mano en iso-8859-15 -- ver nota en
+    MUNICIPIOS_NAVARRA_CONVOCANTE arriba sobre por qué hace falta
+    (requests con data=<dict> usa UTF-8 por defecto, y el servidor no
+    decodifica bien esos bytes para términos con tilde/ñ)."""
+    body = "&".join(
+        f"{k}={requests.utils.quote(str(v).encode('iso-8859-15', errors='replace'))}"
+        for k, v in payload.items()
+    )
+    headers = dict(HEADERS)
+    headers["Content-Type"] = "application/x-www-form-urlencoded; charset=iso-8859-15"
+    r = sess.post(NAVARRA_SEARCH_URL, data=body.encode("iso-8859-15", errors="replace"),
+                  headers=headers, timeout=30)
+    r.raise_for_status()
+    return BeautifulSoup(r.text, "html.parser")
+
+
+def _navarra_search(sess, entidad):
+    r = sess.get(NAVARRA_SEARCH_URL, timeout=30)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    payload = _navarra_hidden_fields(soup)
+    payload["txtEntidad"] = entidad
+    payload["btnEnviar"] = "Buscar"
+    return _navarra_post(sess, payload)
+
+
+def _navarra_next_page(sess, soup):
+    """Avanza a la página siguiente reutilizando los hidden fields de
+    `soup` (que ya vienen actualizados de la respuesta anterior).
+    Devuelve None si no hay botón 'siguiente' (última página)."""
+    if soup.find("input", id="btnSiguiente") is None:
+        return None
+    payload = _navarra_hidden_fields(soup)
+    payload["__EVENTTARGET"] = "btnSiguiente"
+    payload["__EVENTARGUMENT"] = ""
+    txt = soup.find("input", id="txtEntidad")
+    if txt is not None:
+        payload["txtEntidad"] = txt.get("value", "")
+    return _navarra_post(sess, payload)
+
+
+def _navarra_parse_results(soup):
+    """Extrae las filas de la tabla de resultados del listado. Cada fila
+    representa un lote/adjudicación. Propaga el Convocante hacia adelante
+    para las filas-continuación (mismo expediente, varios lotes -- la
+    celda Convocante solo viene rellena en la primera fila de cada
+    grupo)."""
+    table = soup.find("table", id="tblBuscadorAdjudicaciones")
+    if table is None:
+        return []
+    out = []
+    last_convocante = None
+    for tr in table.find_all("tr"):
+        a = tr.find("a", href=re.compile(r"ctaDatosAdjudicacion\.aspx"))
+        if a is None:
+            continue  # cabecera / separador
+        cells = tr.find_all("td")
+        convocante = a.get_text(strip=True)
+        if convocante:
+            last_convocante = convocante
+        else:
+            convocante = last_convocante
+        href = a.get("href")
+        m = re.search(r"Cod=(\d+)&Ticket=([0-9A-Fa-f]+)", href or "")
+        out.append({
+            "convocante": convocante,
+            "adjudicatario": cells[3].get_text(strip=True) if len(cells) > 3 else None,
+            "importe": cells[4].get_text(strip=True) if len(cells) > 4 else None,
+            "fecha_publicado": cells[5].get_text(strip=True) if len(cells) > 5 else None,
+            "detalle_cod": m.group(1) if m else None,
+            "detalle_ticket": m.group(2) if m else None,
+            "detalle_href": href,
+        })
+    return out
+
+
+_NAVARRA_LABEL_CLASS = "casillasimple"
+
+
+def _navarra_normalize_label(label):
+    label = label.rstrip(":").strip().lower()
+    nfkd = unicodedata.normalize("NFKD", label)
+    ascii_ = "".join(c for c in nfkd if not unicodedata.combining(c))
+    return re.sub(r"\s+", "_", ascii_.strip())
+
+
+def _navarra_parse_detail(soup):
+    """Extrae los campos de la ficha de detalle ctaDatosAdjudicacion.aspx:
+    título/objeto, órgano exacto, y un bloque por cada "Empresa
+    adjudicataria N"/"...de lote N" con NIF (parcialmente enmascarado,
+    p.ej. "****2936*"), importe y fecha real de adjudicación (distinta de
+    la fecha de publicación del listado)."""
+    datos = {}
+    adjudicatarios = []
+    t_datos = soup.find("table", id="tblDatosAdj")
+    if t_datos is not None:
+        for td_label in t_datos.find_all("td", class_=_NAVARRA_LABEL_CLASS):
+            val_td = td_label.find_next_sibling("td")
+            if val_td is None:
+                continue
+            label = td_label.get_text(" ", strip=True)
+            if not label:
+                continue
+            datos[_navarra_normalize_label(label)] = val_td.get_text(" ", strip=True)
+
+    t_adj = soup.find("table", id="tblAdjudicatarios")
+    current = None
+    if t_adj is not None:
+        for td_label in t_adj.find_all("td", class_=_NAVARRA_LABEL_CLASS):
+            val_td = td_label.find_next_sibling("td")
+            if val_td is None:
+                continue
+            label = td_label.get_text(" ", strip=True)
+            if not label:
+                continue
+            value = val_td.get_text(" ", strip=True)
+            if re.match(r"^Empresa (adjudicataria|seleccionada)", label, re.I):
+                if current:
+                    adjudicatarios.append(current)
+                current = {"empresa": value}
+                continue
+            if current is not None:
+                current[_navarra_normalize_label(label)] = value
+    if current:
+        adjudicatarios.append(current)
+    return {"datos_contrato": datos, "adjudicatarios": adjudicatarios}
+
+
+def _navarra_importe_a_float(s):
+    if not s:
+        return 0.0
+    s = s.strip().replace(".", "").replace(",", ".")
+    try:
+        return float(s)
+    except ValueError:
+        return 0.0
+
+
+def _navarra_row_a_contrato(row, detalle, municipio):
+    """Convierte una fila del listado + su ficha de detalle al mismo dict
+    de contrato que ya usa el resto del proyecto (mismas claves que
+    _entry_to_contrato/_euskadi_item_a_contrato)."""
+    dc = detalle["datos_contrato"]
+    match = None
+    for adj in detalle["adjudicatarios"]:
+        if (adj.get("importe") or "").split(" ")[0] == row.get("importe"):
+            match = adj
+            break
+    if match is None and detalle["adjudicatarios"]:
+        match = detalle["adjudicatarios"][0]
+    match = match or {}
+    importe_num = _navarra_importe_a_float(row.get("importe") or "")
+    return {
+        "titulo":        (dc.get("denominacion") or "")[:200],
+        "organo":        dc.get("organo_de_contratacion") or row["convocante"] or f"Ayuntamiento de {municipio}",
+        "empresa":       match.get("empresa") or "No localizada",
+        "nif":           match.get("nif") or "",
+        "importe":       fmt_eur(str(importe_num)) if importe_num else "No localizado",
+        "importe_num":   importe_num,
+        "estado":        "Adjudicado",
+        "resultado_code": "",
+        "licitacion_id": row.get("detalle_cod") or "",
+        "url":           urljoin(NAVARRA_SEARCH_URL, row["detalle_href"]) if row.get("detalle_href") else "",
+        "fuente":        "NAVARRA",
+        "directivo":     "",
+        "cargo":         "",
+    }
+
+
+def buscar_en_navarra(municipio, job_id=None):
+    """Búsqueda REAL (producción) de contratos formales de un ayuntamiento
+    navarro en el buscador legacy de hacienda.navarra.es/sicpportal --
+    Mecanismo B, ver MUNICIPIOS_NAVARRA_CONVOCANTE arriba para el porqué
+    (Navarra no publica en PLACE ni en su propio portal de datos
+    abiertos). A diferencia de Euskadi (ID numérico, sin ambigüedad), el
+    buscador de Navarra filtra por texto libre sobre "Convocante" -- cada
+    fila del listado se compara contra el valor EXACTO ya verificado en
+    MUNICIPIOS_NAVARRA_CONVOCANTE (normalizado, no por subcadena) antes de
+    aceptarla, para no colar contratos de una mancomunidad, gerencia o
+    empresa municipal relacionada pero distinta del propio ayuntamiento."""
+    convocante_esperado = MUNICIPIOS_NAVARRA_CONVOCANTE.get(municipio)
+    if not convocante_esperado:
+        return []
+    conv_norm = normalizar(convocante_esperado)
+
+    sess = requests.Session()
+    sess.headers.update(HEADERS)
+
+    # Término de búsqueda: nombre sin tildes primero (forma más frecuente
+    # en el dato almacenado real), con tildes reales como alternativa --
+    # el dato ALMACENADO es inconsistente, unas entidades guardan la
+    # tilde/ñ real y otras la llevan ya despojada (ver investigación
+    # 2026-09-18 documentada arriba).
+    base = municipio.split("/")[0].strip()
+    nfkd = unicodedata.normalize("NFKD", base)
+    sin_tildes = "".join(c for c in nfkd if not unicodedata.combining(c)).replace("-", " ")
+    con_tildes = base.replace("-", " ")
+    terminos = [t for t in dict.fromkeys([sin_tildes, con_tildes]) if len(t) >= 3]
+    if not terminos:
+        terminos = [base]
+
+    rows_aceptadas = []
+    for termino in terminos:
+        try:
+            soup = _navarra_search(sess, termino)
+        except Exception as e:
+            _log(job_id, f"  Navarra {municipio}: error de búsqueda ({e})")
+            continue
+        pagina = 1
+        while True:
+            for r in _navarra_parse_results(soup):
+                if normalizar(r["convocante"] or "") == conv_norm:
+                    rows_aceptadas.append(r)
+            try:
+                nxt = _navarra_next_page(sess, soup)
+            except Exception as e:
+                _log(job_id, f"  Navarra {municipio}: error de paginación ({e})")
+                nxt = None
+            if nxt is None:
+                break
+            soup = nxt
+            pagina += 1
+            if pagina > 300:   # tope de seguridad, no un límite normal (Pamplona ronda 176 páginas reales)
+                break
+            time.sleep(0.3)
+        if rows_aceptadas:
+            break   # ya encontramos con este término, no hace falta probar el otro
+
+    if not rows_aceptadas:
+        _log(job_id, f"  Navarra {municipio}: 0 contratos")
+        return []
+
+    contratos = []
+    detail_cache = {}
+    for row in rows_aceptadas:
+        href = row.get("detalle_href")
+        if not href:
+            continue
+        if href not in detail_cache:
+            try:
+                r = sess.get(urljoin(NAVARRA_SEARCH_URL, href), timeout=30)
+                r.raise_for_status()
+                detail_cache[href] = _navarra_parse_detail(BeautifulSoup(r.text, "html.parser"))
+            except Exception as e:
+                _log(job_id, f"  Navarra {municipio}: error en ficha de detalle ({e})")
+                detail_cache[href] = {"datos_contrato": {}, "adjudicatarios": []}
+            time.sleep(0.3)
+        contratos.append(_navarra_row_a_contrato(row, detail_cache[href], municipio))
+
+    _log(job_id, f"  Navarra {municipio}: {len(contratos)} contratos")
+    return _dedup_contratos_por_url(contratos)
 
 
 def buscar_en_feed_vivo(municipio, anclar=False):
@@ -9111,6 +9775,8 @@ def _job_run(job_id, municipio, provincia="murcia"):
             contratos = buscar_en_pscp(municipio, provincia, job_id)
         elif provincia in PROVINCIAS_PAIS_VASCO:
             contratos = buscar_en_euskadi(municipio, job_id)
+        elif provincia in PROVINCIAS_NAVARRA:
+            contratos = buscar_en_navarra(municipio, job_id)
         else:
             contratos = []
             # Ver buscar_en_zip para el porqué: Comunitat Valenciana/Andalucía
@@ -9266,9 +9932,11 @@ def _job_run(job_id, municipio, provincia="murcia"):
             "total_contratos": len(contratos),
             "contratos":       contratos,
             "alertas":         alertas,
-            # PSCP/Euskadi no tienen perfil de contratante equivalente al de
-            # PLACE (ver Fase 3 y generalización País Vasco 2026-09-06)
+            # PSCP/Euskadi/Navarra no tienen perfil de contratante
+            # equivalente al de PLACE (ver Fase 3 y generalización País
+            # Vasco 2026-09-06)
             "place_profile":   ("" if provincia in PROVINCIAS_CATALUNYA or provincia in PROVINCIAS_PAIS_VASCO
+                                 or provincia in PROVINCIAS_NAVARRA
                                  else place_profile_url(municipio)),
             "timestamp":       time.time(),
         }
@@ -10193,6 +10861,9 @@ def spinner_page(job_id, municipio, provincia="murcia"):
     elif provincia in PROVINCIAS_PAIS_VASCO:
         fuente_txt = "Datos oficiales: KontratazioA (Gobierno Vasco)"
         fuente_corta = "KontratazioA"
+    elif provincia in PROVINCIAS_NAVARRA:
+        fuente_txt = "Datos oficiales: Portal de Contratación de Navarra (Gobierno de Navarra)"
+        fuente_corta = "Portal de Contratación de Navarra"
     elif provincia == "murcia":
         fuente_txt = "Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)"
         fuente_corta = "PLACE (Ministerio de Hacienda) y BORM"
@@ -10784,15 +11455,18 @@ def _footer_html(provincia="todas"):
     _link_borm = '<a href="https://www.borm.es/" target="_blank" rel="noopener">BORM</a>'
     _link_pscp = '<a href="https://contractaciopublica.cat/" target="_blank" rel="noopener">PSCP</a>'
     _link_euskadi = '<a href="https://www.contratacion.euskadi.eus/" target="_blank" rel="noopener">KontratazioA</a>'
+    _link_navarra = '<a href="https://portalcontratacion.navarra.es/es/" target="_blank" rel="noopener">Contratación Navarra</a>'
     if provincia in PROVINCIAS_CATALUNYA:
         fuente_links = _link_pscp
     elif provincia in PROVINCIAS_PAIS_VASCO:
         fuente_links = _link_euskadi
+    elif provincia in PROVINCIAS_NAVARRA:
+        fuente_links = _link_navarra
     elif es_murcia:
         fuente_links = f"{_link_place}\n    {_link_borm}"
     elif provincia == "todas":
         # Vista nacional agregada -- todas las fuentes que usa el sitio.
-        fuente_links = f"{_link_place}\n    {_link_borm}\n    {_link_pscp}\n    {_link_euskadi}"
+        fuente_links = f"{_link_place}\n    {_link_borm}\n    {_link_pscp}\n    {_link_euskadi}\n    {_link_navarra}"
     else:
         # Comunitat Valenciana/Andalucía (Mecanismo A, PLACE, sin BORM --
         # eso es específico de Murcia).
@@ -12382,6 +13056,8 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             fuentes_label = "Fuente: PSCP (Generalitat de Catalunya)"
         elif provincia in PROVINCIAS_PAIS_VASCO:
             fuentes_label = "Fuente: KontratazioA (Gobierno Vasco)"
+        elif provincia in PROVINCIAS_NAVARRA:
+            fuentes_label = "Fuente: Portal de Contratación de Navarra (Gobierno de Navarra)"
         elif provincia == "murcia":
             fuentes_label = "Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia)"
         else:
@@ -12390,7 +13066,8 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         muni_name     = muni_name_d
         muni_enc      = quote_plus(muni_name)
         profile_url   = d.get("place_profile", "" if (provincia in PROVINCIAS_CATALUNYA
-                                                        or provincia in PROVINCIAS_PAIS_VASCO)
+                                                        or provincia in PROVINCIAS_PAIS_VASCO
+                                                        or provincia in PROVINCIAS_NAVARRA)
                                                     else place_profile_url(muni_name))
         profile_html  = (f'<a href="{esc(profile_url)}" target="_blank" class="link" '
                           f'title="Perfil contratante en PLACE" style="font-size:11px">Perfil PLACE ↗</a>'
@@ -13896,9 +14573,9 @@ MAPA_COBERTURA_FLAGS = {
 # COMUNIDAD_AUTONOMA_POR_PROVINCIA/COMUNIDAD_AUTONOMA_LABEL en el resto del
 # sitio (difieren en 5 casos: "valencia"->"valenciana", "paisvasco"->
 # "pais_vasco", "larioja"->"la_rioja", "cyl"->"castilla_y_leon", "clm"->
-# "castilla_la_mancha"). Navarra no tiene ninguna provincia conectada al
-# sitio todavía -- se omite a propósito, así _estado_cobertura_mapa() la
-# deja en "pending" por defecto sin necesidad de listarla.
+# "castilla_la_mancha"; "navarra" coincide en ambos lados, comunidad foral
+# uniprovincial). Ya no queda ninguna comunidad sin listar aquí -- las 19
+# están conectadas al sitio (a fecha 2026-09-18).
 MAPA_COBERTURA_SLUG_A_COMUNIDAD = {
     "andalucia": "andalucia", "aragon": "aragon", "asturias": "asturias",
     "baleares": "baleares", "canarias": "canarias", "cantabria": "cantabria",
@@ -13906,6 +14583,7 @@ MAPA_COBERTURA_SLUG_A_COMUNIDAD = {
     "galicia": "galicia", "madrid": "madrid", "murcia": "murcia",
     "paisvasco": "pais_vasco", "larioja": "la_rioja",
     "ceuta": "ceuta", "melilla": "melilla", "cyl": "castilla_y_leon",
+    "navarra": "navarra",
     "clm": "castilla_la_mancha",
 }
 

@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-18 15:30:03",
+ "generado": "2026-09-18 19:32:09",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
   "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
@@ -47,7 +47,8 @@
   "ciudad_real": "https://www.ine.es/jaxiT3/Tabla.htm?t=2866",
   "cuenca": "https://www.ine.es/jaxiT3/Tabla.htm?t=2869",
   "guadalajara": "https://www.ine.es/jaxiT3/Tabla.htm?t=2872",
-  "toledo": "https://www.ine.es/jaxiT3/Tabla.htm?t=2902"
+  "toledo": "https://www.ine.es/jaxiT3/Tabla.htm?t=2902",
+  "navarra": "https://www.ine.es/jaxiT3/Tabla.htm?t=2884"
  },
  "municipios": {
   "abanilla": {
@@ -14018,6 +14019,12 @@
    "poblacion": 315,
    "anio": 2025
   },
+  "erriberagoitia/ribera alta": {
+   "municipio": "Erriberagoitia/Ribera Alta",
+   "provincia": "pais_vasco",
+   "poblacion": 839,
+   "anio": 2025
+  },
   "valle de arana": {
    "municipio": "Valle de Arana",
    "provincia": "pais_vasco",
@@ -14288,6 +14295,12 @@
    "poblacion": 7178,
    "anio": 2025
   },
+  "arrasate/mondragon": {
+   "municipio": "Arrasate/Mondragón",
+   "provincia": "pais_vasco",
+   "poblacion": 22450,
+   "anio": 2025
+  },
   "asteasu": {
    "municipio": "Asteasu",
    "provincia": "pais_vasco",
@@ -14370,6 +14383,12 @@
    "municipio": "Deba",
    "provincia": "pais_vasco",
    "poblacion": 5362,
+   "anio": 2025
+  },
+  "donostia/san sebastian": {
+   "municipio": "Donostia/San Sebastián",
+   "provincia": "pais_vasco",
+   "poblacion": 189866,
    "anio": 2025
   },
   "eibar": {
@@ -46926,6 +46945,1626 @@
    "municipio": "Yuncos",
    "provincia": "toledo",
    "poblacion": 13189,
+   "anio": 2025
+  },
+  "abaigar": {
+   "municipio": "Abáigar",
+   "provincia": "navarra",
+   "poblacion": 74,
+   "anio": 2025
+  },
+  "abarzuza/abartzuza": {
+   "municipio": "Abárzuza/Abartzuza",
+   "provincia": "navarra",
+   "poblacion": 510,
+   "anio": 2025
+  },
+  "abaurregaina/abaurrea alta": {
+   "municipio": "Abaurregaina/Abaurrea Alta",
+   "provincia": "navarra",
+   "poblacion": 121,
+   "anio": 2025
+  },
+  "abaurrepea/abaurrea baja": {
+   "municipio": "Abaurrepea/Abaurrea Baja",
+   "provincia": "navarra",
+   "poblacion": 30,
+   "anio": 2025
+  },
+  "aberin": {
+   "municipio": "Aberin",
+   "provincia": "navarra",
+   "poblacion": 410,
+   "anio": 2025
+  },
+  "ablitas": {
+   "municipio": "Ablitas",
+   "provincia": "navarra",
+   "poblacion": 2657,
+   "anio": 2025
+  },
+  "adios": {
+   "municipio": "Adiós",
+   "provincia": "navarra",
+   "poblacion": 194,
+   "anio": 2025
+  },
+  "aguilar de codes": {
+   "municipio": "Aguilar de Codés",
+   "provincia": "navarra",
+   "poblacion": 74,
+   "anio": 2025
+  },
+  "aibar/oibar": {
+   "municipio": "Aibar/Oibar",
+   "provincia": "navarra",
+   "poblacion": 754,
+   "anio": 2025
+  },
+  "allin/allin": {
+   "municipio": "Allín/Allin",
+   "provincia": "navarra",
+   "poblacion": 881,
+   "anio": 2025
+  },
+  "allo": {
+   "municipio": "Allo",
+   "provincia": "navarra",
+   "poblacion": 1028,
+   "anio": 2025
+  },
+  "altsasu/alsasua": {
+   "municipio": "Altsasu/Alsasua",
+   "provincia": "navarra",
+   "poblacion": 7717,
+   "anio": 2025
+  },
+  "amescoa baja": {
+   "municipio": "Améscoa Baja",
+   "provincia": "navarra",
+   "poblacion": 729,
+   "anio": 2025
+  },
+  "ancin/antzin": {
+   "municipio": "Ancín/Antzin",
+   "provincia": "navarra",
+   "poblacion": 363,
+   "anio": 2025
+  },
+  "andosilla": {
+   "municipio": "Andosilla",
+   "provincia": "navarra",
+   "poblacion": 2925,
+   "anio": 2025
+  },
+  "ansoain/antsoain": {
+   "municipio": "Ansoáin/Antsoain",
+   "provincia": "navarra",
+   "poblacion": 10663,
+   "anio": 2025
+  },
+  "anue": {
+   "municipio": "Anue",
+   "provincia": "navarra",
+   "poblacion": 501,
+   "anio": 2025
+  },
+  "anorbe": {
+   "municipio": "Añorbe",
+   "provincia": "navarra",
+   "poblacion": 622,
+   "anio": 2025
+  },
+  "aoiz/agoitz": {
+   "municipio": "Aoiz/Agoitz",
+   "provincia": "navarra",
+   "poblacion": 3083,
+   "anio": 2025
+  },
+  "araitz": {
+   "municipio": "Araitz",
+   "provincia": "navarra",
+   "poblacion": 506,
+   "anio": 2025
+  },
+  "arakil": {
+   "municipio": "Arakil",
+   "provincia": "navarra",
+   "poblacion": 990,
+   "anio": 2025
+  },
+  "aranarache/aranaratxe": {
+   "municipio": "Aranarache/Aranaratxe",
+   "provincia": "navarra",
+   "poblacion": 70,
+   "anio": 2025
+  },
+  "aranguren": {
+   "municipio": "Aranguren",
+   "provincia": "navarra",
+   "poblacion": 13216,
+   "anio": 2025
+  },
+  "arano": {
+   "municipio": "Arano",
+   "provincia": "navarra",
+   "poblacion": 108,
+   "anio": 2025
+  },
+  "arantza": {
+   "municipio": "Arantza",
+   "provincia": "navarra",
+   "poblacion": 628,
+   "anio": 2025
+  },
+  "aras": {
+   "municipio": "Aras",
+   "provincia": "navarra",
+   "poblacion": 150,
+   "anio": 2025
+  },
+  "arbizu": {
+   "municipio": "Arbizu",
+   "provincia": "navarra",
+   "poblacion": 1107,
+   "anio": 2025
+  },
+  "arce/artzi": {
+   "municipio": "Arce/Artzi",
+   "provincia": "navarra",
+   "poblacion": 290,
+   "anio": 2025
+  },
+  "los arcos": {
+   "municipio": "Los Arcos",
+   "provincia": "navarra",
+   "poblacion": 1177,
+   "anio": 2025
+  },
+  "arellano": {
+   "municipio": "Arellano",
+   "provincia": "navarra",
+   "poblacion": 165,
+   "anio": 2025
+  },
+  "areso": {
+   "municipio": "Areso",
+   "provincia": "navarra",
+   "poblacion": 260,
+   "anio": 2025
+  },
+  "arguedas": {
+   "municipio": "Arguedas",
+   "provincia": "navarra",
+   "poblacion": 2309,
+   "anio": 2025
+  },
+  "aria": {
+   "municipio": "Aria",
+   "provincia": "navarra",
+   "poblacion": 51,
+   "anio": 2025
+  },
+  "aribe": {
+   "municipio": "Aribe",
+   "provincia": "navarra",
+   "poblacion": 34,
+   "anio": 2025
+  },
+  "armananzas": {
+   "municipio": "Armañanzas",
+   "provincia": "navarra",
+   "poblacion": 47,
+   "anio": 2025
+  },
+  "arroniz": {
+   "municipio": "Arróniz",
+   "provincia": "navarra",
+   "poblacion": 1064,
+   "anio": 2025
+  },
+  "arruazu": {
+   "municipio": "Arruazu",
+   "provincia": "navarra",
+   "poblacion": 121,
+   "anio": 2025
+  },
+  "artajona": {
+   "municipio": "Artajona",
+   "provincia": "navarra",
+   "poblacion": 1783,
+   "anio": 2025
+  },
+  "artazu": {
+   "municipio": "Artazu",
+   "provincia": "navarra",
+   "poblacion": 125,
+   "anio": 2025
+  },
+  "atetz": {
+   "municipio": "Atetz",
+   "provincia": "navarra",
+   "poblacion": 227,
+   "anio": 2025
+  },
+  "auritz/burguete": {
+   "municipio": "Auritz/Burguete",
+   "provincia": "navarra",
+   "poblacion": 235,
+   "anio": 2025
+  },
+  "ayegui/aiegi": {
+   "municipio": "Ayegui/Aiegi",
+   "provincia": "navarra",
+   "poblacion": 2589,
+   "anio": 2025
+  },
+  "azagra": {
+   "municipio": "Azagra",
+   "provincia": "navarra",
+   "poblacion": 3746,
+   "anio": 2025
+  },
+  "azuelo": {
+   "municipio": "Azuelo",
+   "provincia": "navarra",
+   "poblacion": 29,
+   "anio": 2025
+  },
+  "bakaiku": {
+   "municipio": "Bakaiku",
+   "provincia": "navarra",
+   "poblacion": 342,
+   "anio": 2025
+  },
+  "baranain/baranain": {
+   "municipio": "Barañáin/Barañain",
+   "provincia": "navarra",
+   "poblacion": 19642,
+   "anio": 2025
+  },
+  "barasoain": {
+   "municipio": "Barásoain",
+   "provincia": "navarra",
+   "poblacion": 601,
+   "anio": 2025
+  },
+  "barbarin": {
+   "municipio": "Barbarin",
+   "provincia": "navarra",
+   "poblacion": 46,
+   "anio": 2025
+  },
+  "bargota": {
+   "municipio": "Bargota",
+   "provincia": "navarra",
+   "poblacion": 237,
+   "anio": 2025
+  },
+  "barillas": {
+   "municipio": "Barillas",
+   "provincia": "navarra",
+   "poblacion": 240,
+   "anio": 2025
+  },
+  "basaburua": {
+   "municipio": "Basaburua",
+   "provincia": "navarra",
+   "poblacion": 819,
+   "anio": 2025
+  },
+  "baztan": {
+   "municipio": "Baztan",
+   "provincia": "navarra",
+   "poblacion": 7851,
+   "anio": 2025
+  },
+  "beintza-labaien": {
+   "municipio": "Beintza-Labaien",
+   "provincia": "navarra",
+   "poblacion": 228,
+   "anio": 2025
+  },
+  "beire": {
+   "municipio": "Beire",
+   "provincia": "navarra",
+   "poblacion": 274,
+   "anio": 2025
+  },
+  "belascoain": {
+   "municipio": "Belascoáin",
+   "provincia": "navarra",
+   "poblacion": 124,
+   "anio": 2025
+  },
+  "bera": {
+   "municipio": "Bera",
+   "provincia": "navarra",
+   "poblacion": 3779,
+   "anio": 2025
+  },
+  "berbinzana": {
+   "municipio": "Berbinzana",
+   "provincia": "navarra",
+   "poblacion": 670,
+   "anio": 2025
+  },
+  "beriain": {
+   "municipio": "Beriáin",
+   "provincia": "navarra",
+   "poblacion": 4195,
+   "anio": 2025
+  },
+  "berrioplano/berriobeiti": {
+   "municipio": "Berrioplano/Berriobeiti",
+   "provincia": "navarra",
+   "poblacion": 7645,
+   "anio": 2025
+  },
+  "berriozar": {
+   "municipio": "Berriozar",
+   "provincia": "navarra",
+   "poblacion": 11361,
+   "anio": 2025
+  },
+  "bertizarana": {
+   "municipio": "Bertizarana",
+   "provincia": "navarra",
+   "poblacion": 668,
+   "anio": 2025
+  },
+  "betelu": {
+   "municipio": "Betelu",
+   "provincia": "navarra",
+   "poblacion": 375,
+   "anio": 2025
+  },
+  "bidaurreta": {
+   "municipio": "Bidaurreta",
+   "provincia": "navarra",
+   "poblacion": 181,
+   "anio": 2025
+  },
+  "biurrun-olcoz": {
+   "municipio": "Biurrun-Olcoz",
+   "provincia": "navarra",
+   "poblacion": 227,
+   "anio": 2025
+  },
+  "bunuel": {
+   "municipio": "Buñuel",
+   "provincia": "navarra",
+   "poblacion": 2318,
+   "anio": 2025
+  },
+  "burgui/burgi": {
+   "municipio": "Burgui/Burgi",
+   "provincia": "navarra",
+   "poblacion": 187,
+   "anio": 2025
+  },
+  "burlada/burlata": {
+   "municipio": "Burlada/Burlata",
+   "provincia": "navarra",
+   "poblacion": 21280,
+   "anio": 2025
+  },
+  "el busto": {
+   "municipio": "El Busto",
+   "provincia": "navarra",
+   "poblacion": 55,
+   "anio": 2025
+  },
+  "cabanillas": {
+   "municipio": "Cabanillas",
+   "provincia": "navarra",
+   "poblacion": 1373,
+   "anio": 2025
+  },
+  "cabredo": {
+   "municipio": "Cabredo",
+   "provincia": "navarra",
+   "poblacion": 73,
+   "anio": 2025
+  },
+  "cadreita": {
+   "municipio": "Cadreita",
+   "provincia": "navarra",
+   "poblacion": 2187,
+   "anio": 2025
+  },
+  "caparroso": {
+   "municipio": "Caparroso",
+   "provincia": "navarra",
+   "poblacion": 2882,
+   "anio": 2025
+  },
+  "carcar": {
+   "municipio": "Cárcar",
+   "provincia": "navarra",
+   "poblacion": 1156,
+   "anio": 2025
+  },
+  "carcastillo": {
+   "municipio": "Carcastillo",
+   "provincia": "navarra",
+   "poblacion": 2408,
+   "anio": 2025
+  },
+  "cascante": {
+   "municipio": "Cascante",
+   "provincia": "navarra",
+   "poblacion": 4231,
+   "anio": 2025
+  },
+  "caseda": {
+   "municipio": "Cáseda",
+   "provincia": "navarra",
+   "poblacion": 912,
+   "anio": 2025
+  },
+  "castillonuevo/gazteluberri": {
+   "municipio": "Castillonuevo/Gazteluberri",
+   "provincia": "navarra",
+   "poblacion": 14,
+   "anio": 2025
+  },
+  "cendea de olza/oltza zendea": {
+   "municipio": "Cendea de Olza/Oltza Zendea",
+   "provincia": "navarra",
+   "poblacion": 1874,
+   "anio": 2025
+  },
+  "cintruenigo": {
+   "municipio": "Cintruénigo",
+   "provincia": "navarra",
+   "poblacion": 8565,
+   "anio": 2025
+  },
+  "cirauqui/zirauki": {
+   "municipio": "Cirauqui/Zirauki",
+   "provincia": "navarra",
+   "poblacion": 473,
+   "anio": 2025
+  },
+  "ciriza/ziritza": {
+   "municipio": "Ciriza/Ziritza",
+   "provincia": "navarra",
+   "poblacion": 170,
+   "anio": 2025
+  },
+  "cizur": {
+   "municipio": "Cizur",
+   "provincia": "navarra",
+   "poblacion": 3949,
+   "anio": 2025
+  },
+  "corella": {
+   "municipio": "Corella",
+   "provincia": "navarra",
+   "poblacion": 8756,
+   "anio": 2025
+  },
+  "cortes": {
+   "municipio": "Cortes",
+   "provincia": "navarra",
+   "poblacion": 3165,
+   "anio": 2025
+  },
+  "desojo": {
+   "municipio": "Desojo",
+   "provincia": "navarra",
+   "poblacion": 68,
+   "anio": 2025
+  },
+  "dicastillo": {
+   "municipio": "Dicastillo",
+   "provincia": "navarra",
+   "poblacion": 562,
+   "anio": 2025
+  },
+  "donamaria": {
+   "municipio": "Donamaria",
+   "provincia": "navarra",
+   "poblacion": 446,
+   "anio": 2025
+  },
+  "doneztebe/santesteban": {
+   "municipio": "Doneztebe/Santesteban",
+   "provincia": "navarra",
+   "poblacion": 1854,
+   "anio": 2025
+  },
+  "echarri/etxarri": {
+   "municipio": "Echarri/Etxarri",
+   "provincia": "navarra",
+   "poblacion": 78,
+   "anio": 2025
+  },
+  "elgorriaga": {
+   "municipio": "Elgorriaga",
+   "provincia": "navarra",
+   "poblacion": 210,
+   "anio": 2025
+  },
+  "eneriz/eneritz": {
+   "municipio": "Enériz/Eneritz",
+   "provincia": "navarra",
+   "poblacion": 328,
+   "anio": 2025
+  },
+  "eratsun": {
+   "municipio": "Eratsun",
+   "provincia": "navarra",
+   "poblacion": 155,
+   "anio": 2025
+  },
+  "ergoiena": {
+   "municipio": "Ergoiena",
+   "provincia": "navarra",
+   "poblacion": 392,
+   "anio": 2025
+  },
+  "erro": {
+   "municipio": "Erro",
+   "provincia": "navarra",
+   "poblacion": 812,
+   "anio": 2025
+  },
+  "eslava": {
+   "municipio": "Eslava",
+   "provincia": "navarra",
+   "poblacion": 97,
+   "anio": 2025
+  },
+  "esparza de salazar/espartza zaraitzu": {
+   "municipio": "Esparza de Salazar/Espartza Zaraitzu",
+   "provincia": "navarra",
+   "poblacion": 75,
+   "anio": 2025
+  },
+  "espronceda": {
+   "municipio": "Espronceda",
+   "provincia": "navarra",
+   "poblacion": 102,
+   "anio": 2025
+  },
+  "estella-lizarra": {
+   "municipio": "Estella-Lizarra",
+   "provincia": "navarra",
+   "poblacion": 14317,
+   "anio": 2025
+  },
+  "esteribar": {
+   "municipio": "Esteribar",
+   "provincia": "navarra",
+   "poblacion": 2918,
+   "anio": 2025
+  },
+  "etayo": {
+   "municipio": "Etayo",
+   "provincia": "navarra",
+   "poblacion": 72,
+   "anio": 2025
+  },
+  "etxalar": {
+   "municipio": "Etxalar",
+   "provincia": "navarra",
+   "poblacion": 807,
+   "anio": 2025
+  },
+  "etxarri aranatz": {
+   "municipio": "Etxarri Aranatz",
+   "provincia": "navarra",
+   "poblacion": 2551,
+   "anio": 2025
+  },
+  "etxauri": {
+   "municipio": "Etxauri",
+   "provincia": "navarra",
+   "poblacion": 671,
+   "anio": 2025
+  },
+  "eulate": {
+   "municipio": "Eulate",
+   "provincia": "navarra",
+   "poblacion": 278,
+   "anio": 2025
+  },
+  "ezcabarte": {
+   "municipio": "Ezcabarte",
+   "provincia": "navarra",
+   "poblacion": 1901,
+   "anio": 2025
+  },
+  "ezcaroz/ezkaroze": {
+   "municipio": "Ezcároz/Ezkaroze",
+   "provincia": "navarra",
+   "poblacion": 298,
+   "anio": 2025
+  },
+  "ezkurra": {
+   "municipio": "Ezkurra",
+   "provincia": "navarra",
+   "poblacion": 125,
+   "anio": 2025
+  },
+  "ezprogui": {
+   "municipio": "Ezprogui",
+   "provincia": "navarra",
+   "poblacion": 48,
+   "anio": 2025
+  },
+  "falces": {
+   "municipio": "Falces",
+   "provincia": "navarra",
+   "poblacion": 2389,
+   "anio": 2025
+  },
+  "fitero": {
+   "municipio": "Fitero",
+   "provincia": "navarra",
+   "poblacion": 2370,
+   "anio": 2025
+  },
+  "fontellas": {
+   "municipio": "Fontellas",
+   "provincia": "navarra",
+   "poblacion": 1050,
+   "anio": 2025
+  },
+  "funes": {
+   "municipio": "Funes",
+   "provincia": "navarra",
+   "poblacion": 2537,
+   "anio": 2025
+  },
+  "fustinana": {
+   "municipio": "Fustiñana",
+   "provincia": "navarra",
+   "poblacion": 2445,
+   "anio": 2025
+  },
+  "galar": {
+   "municipio": "Galar",
+   "provincia": "navarra",
+   "poblacion": 2427,
+   "anio": 2025
+  },
+  "gallipienzo/galipentzu": {
+   "municipio": "Gallipienzo/Galipentzu",
+   "provincia": "navarra",
+   "poblacion": 100,
+   "anio": 2025
+  },
+  "gallues/galoze": {
+   "municipio": "Gallués/Galoze",
+   "provincia": "navarra",
+   "poblacion": 91,
+   "anio": 2025
+  },
+  "garaioa": {
+   "municipio": "Garaioa",
+   "provincia": "navarra",
+   "poblacion": 92,
+   "anio": 2025
+  },
+  "garde": {
+   "municipio": "Garde",
+   "provincia": "navarra",
+   "poblacion": 132,
+   "anio": 2025
+  },
+  "garinoain": {
+   "municipio": "Garínoain",
+   "provincia": "navarra",
+   "poblacion": 527,
+   "anio": 2025
+  },
+  "garralda": {
+   "municipio": "Garralda",
+   "provincia": "navarra",
+   "poblacion": 183,
+   "anio": 2025
+  },
+  "genevilla": {
+   "municipio": "Genevilla",
+   "provincia": "navarra",
+   "poblacion": 69,
+   "anio": 2025
+  },
+  "goizueta": {
+   "municipio": "Goizueta",
+   "provincia": "navarra",
+   "poblacion": 681,
+   "anio": 2025
+  },
+  "val de goni/gonerri": {
+   "municipio": "Val de Goñi/Goñerri",
+   "provincia": "navarra",
+   "poblacion": 166,
+   "anio": 2025
+  },
+  "guesa/gorza": {
+   "municipio": "Güesa/Gorza",
+   "provincia": "navarra",
+   "poblacion": 36,
+   "anio": 2025
+  },
+  "guesalaz/gesalatz": {
+   "municipio": "Guesálaz/Gesalatz",
+   "provincia": "navarra",
+   "poblacion": 462,
+   "anio": 2025
+  },
+  "guirguillano": {
+   "municipio": "Guirguillano",
+   "provincia": "navarra",
+   "poblacion": 75,
+   "anio": 2025
+  },
+  "hiriberri/villanueva de aezkoa": {
+   "municipio": "Hiriberri/Villanueva de Aezkoa",
+   "provincia": "navarra",
+   "poblacion": 96,
+   "anio": 2025
+  },
+  "huarte/uharte": {
+   "municipio": "Huarte/Uharte",
+   "provincia": "navarra",
+   "poblacion": 7900,
+   "anio": 2025
+  },
+  "ibargoiti": {
+   "municipio": "Ibargoiti",
+   "provincia": "navarra",
+   "poblacion": 279,
+   "anio": 2025
+  },
+  "igantzi": {
+   "municipio": "Igantzi",
+   "provincia": "navarra",
+   "poblacion": 578,
+   "anio": 2025
+  },
+  "iguzquiza": {
+   "municipio": "Igúzquiza",
+   "provincia": "navarra",
+   "poblacion": 307,
+   "anio": 2025
+  },
+  "imotz": {
+   "municipio": "Imotz",
+   "provincia": "navarra",
+   "poblacion": 433,
+   "anio": 2025
+  },
+  "iraneta": {
+   "municipio": "Irañeta",
+   "provincia": "navarra",
+   "poblacion": 172,
+   "anio": 2025
+  },
+  "irurtzun": {
+   "municipio": "Irurtzun",
+   "provincia": "navarra",
+   "poblacion": 2296,
+   "anio": 2025
+  },
+  "isaba/izaba": {
+   "municipio": "Isaba/Izaba",
+   "provincia": "navarra",
+   "poblacion": 384,
+   "anio": 2025
+  },
+  "ituren": {
+   "municipio": "Ituren",
+   "provincia": "navarra",
+   "poblacion": 543,
+   "anio": 2025
+  },
+  "iturmendi": {
+   "municipio": "Iturmendi",
+   "provincia": "navarra",
+   "poblacion": 428,
+   "anio": 2025
+  },
+  "iza/itza": {
+   "municipio": "Iza/Itza",
+   "provincia": "navarra",
+   "poblacion": 1459,
+   "anio": 2025
+  },
+  "izagaondoa": {
+   "municipio": "Izagaondoa",
+   "provincia": "navarra",
+   "poblacion": 153,
+   "anio": 2025
+  },
+  "izalzu/itzaltzu": {
+   "municipio": "Izalzu/Itzaltzu",
+   "provincia": "navarra",
+   "poblacion": 36,
+   "anio": 2025
+  },
+  "jaurrieta": {
+   "municipio": "Jaurrieta",
+   "provincia": "navarra",
+   "poblacion": 179,
+   "anio": 2025
+  },
+  "javier": {
+   "municipio": "Javier",
+   "provincia": "navarra",
+   "poblacion": 106,
+   "anio": 2025
+  },
+  "juslapena/txulapain": {
+   "municipio": "Juslapeña/Txulapain",
+   "provincia": "navarra",
+   "poblacion": 562,
+   "anio": 2025
+  },
+  "lakuntza": {
+   "municipio": "Lakuntza",
+   "provincia": "navarra",
+   "poblacion": 1338,
+   "anio": 2025
+  },
+  "lana": {
+   "municipio": "Lana",
+   "provincia": "navarra",
+   "poblacion": 149,
+   "anio": 2025
+  },
+  "lantz": {
+   "municipio": "Lantz",
+   "provincia": "navarra",
+   "poblacion": 150,
+   "anio": 2025
+  },
+  "lapoblacion": {
+   "municipio": "Lapoblación",
+   "provincia": "navarra",
+   "poblacion": 123,
+   "anio": 2025
+  },
+  "larraga": {
+   "municipio": "Larraga",
+   "provincia": "navarra",
+   "poblacion": 2158,
+   "anio": 2025
+  },
+  "larraona": {
+   "municipio": "Larraona",
+   "provincia": "navarra",
+   "poblacion": 100,
+   "anio": 2025
+  },
+  "larraun": {
+   "municipio": "Larraun",
+   "provincia": "navarra",
+   "poblacion": 918,
+   "anio": 2025
+  },
+  "lazagurria": {
+   "municipio": "Lazagurría",
+   "provincia": "navarra",
+   "poblacion": 170,
+   "anio": 2025
+  },
+  "leache/leatxe": {
+   "municipio": "Leache/Leatxe",
+   "provincia": "navarra",
+   "poblacion": 38,
+   "anio": 2025
+  },
+  "legarda": {
+   "municipio": "Legarda",
+   "provincia": "navarra",
+   "poblacion": 143,
+   "anio": 2025
+  },
+  "legaria": {
+   "municipio": "Legaria",
+   "provincia": "navarra",
+   "poblacion": 111,
+   "anio": 2025
+  },
+  "leitza": {
+   "municipio": "Leitza",
+   "provincia": "navarra",
+   "poblacion": 3011,
+   "anio": 2025
+  },
+  "lekunberri": {
+   "municipio": "Lekunberri",
+   "provincia": "navarra",
+   "poblacion": 1746,
+   "anio": 2025
+  },
+  "leoz/leotz": {
+   "municipio": "Leoz/Leotz",
+   "provincia": "navarra",
+   "poblacion": 202,
+   "anio": 2025
+  },
+  "lerga": {
+   "municipio": "Lerga",
+   "provincia": "navarra",
+   "poblacion": 44,
+   "anio": 2025
+  },
+  "lerin": {
+   "municipio": "Lerín",
+   "provincia": "navarra",
+   "poblacion": 1821,
+   "anio": 2025
+  },
+  "lesaka": {
+   "municipio": "Lesaka",
+   "provincia": "navarra",
+   "poblacion": 2721,
+   "anio": 2025
+  },
+  "lezaun": {
+   "municipio": "Lezaun",
+   "provincia": "navarra",
+   "poblacion": 248,
+   "anio": 2025
+  },
+  "liedena": {
+   "municipio": "Liédena",
+   "provincia": "navarra",
+   "poblacion": 354,
+   "anio": 2025
+  },
+  "lizoain-arriasgoiti/lizoainibar-arriasgoiti": {
+   "municipio": "Lizoain-Arriasgoiti/Lizoainibar-Arriasgoiti",
+   "provincia": "navarra",
+   "poblacion": 287,
+   "anio": 2025
+  },
+  "lodosa": {
+   "municipio": "Lodosa",
+   "provincia": "navarra",
+   "poblacion": 4964,
+   "anio": 2025
+  },
+  "longuida/longida": {
+   "municipio": "Lónguida/Longida",
+   "provincia": "navarra",
+   "poblacion": 308,
+   "anio": 2025
+  },
+  "lumbier": {
+   "municipio": "Lumbier",
+   "provincia": "navarra",
+   "poblacion": 1330,
+   "anio": 2025
+  },
+  "luquin": {
+   "municipio": "Luquin",
+   "provincia": "navarra",
+   "poblacion": 135,
+   "anio": 2025
+  },
+  "luzaide/valcarlos": {
+   "municipio": "Luzaide/Valcarlos",
+   "provincia": "navarra",
+   "poblacion": 336,
+   "anio": 2025
+  },
+  "maneru": {
+   "municipio": "Mañeru",
+   "provincia": "navarra",
+   "poblacion": 452,
+   "anio": 2025
+  },
+  "maranon": {
+   "municipio": "Marañón",
+   "provincia": "navarra",
+   "poblacion": 50,
+   "anio": 2025
+  },
+  "marcilla": {
+   "municipio": "Marcilla",
+   "provincia": "navarra",
+   "poblacion": 2938,
+   "anio": 2025
+  },
+  "melida": {
+   "municipio": "Mélida",
+   "provincia": "navarra",
+   "poblacion": 739,
+   "anio": 2025
+  },
+  "mendavia": {
+   "municipio": "Mendavia",
+   "provincia": "navarra",
+   "poblacion": 3588,
+   "anio": 2025
+  },
+  "mendaza": {
+   "municipio": "Mendaza",
+   "provincia": "navarra",
+   "poblacion": 284,
+   "anio": 2025
+  },
+  "mendigorria": {
+   "municipio": "Mendigorria",
+   "provincia": "navarra",
+   "poblacion": 1261,
+   "anio": 2025
+  },
+  "metauten": {
+   "municipio": "Metauten",
+   "provincia": "navarra",
+   "poblacion": 263,
+   "anio": 2025
+  },
+  "milagro": {
+   "municipio": "Milagro",
+   "provincia": "navarra",
+   "poblacion": 3741,
+   "anio": 2025
+  },
+  "mirafuentes": {
+   "municipio": "Mirafuentes",
+   "provincia": "navarra",
+   "poblacion": 56,
+   "anio": 2025
+  },
+  "miranda de arga": {
+   "municipio": "Miranda de Arga",
+   "provincia": "navarra",
+   "poblacion": 903,
+   "anio": 2025
+  },
+  "monreal/elo": {
+   "municipio": "Monreal/Elo",
+   "provincia": "navarra",
+   "poblacion": 511,
+   "anio": 2025
+  },
+  "monteagudo": {
+   "municipio": "Monteagudo",
+   "provincia": "navarra",
+   "poblacion": 1073,
+   "anio": 2025
+  },
+  "morentin": {
+   "municipio": "Morentin",
+   "provincia": "navarra",
+   "poblacion": 110,
+   "anio": 2025
+  },
+  "mues": {
+   "municipio": "Mues",
+   "provincia": "navarra",
+   "poblacion": 80,
+   "anio": 2025
+  },
+  "murchante": {
+   "municipio": "Murchante",
+   "provincia": "navarra",
+   "poblacion": 4230,
+   "anio": 2025
+  },
+  "murieta": {
+   "municipio": "Murieta",
+   "provincia": "navarra",
+   "poblacion": 345,
+   "anio": 2025
+  },
+  "murillo el cuende": {
+   "municipio": "Murillo el Cuende",
+   "provincia": "navarra",
+   "poblacion": 701,
+   "anio": 2025
+  },
+  "murillo el fruto": {
+   "municipio": "Murillo el Fruto",
+   "provincia": "navarra",
+   "poblacion": 665,
+   "anio": 2025
+  },
+  "muruzabal": {
+   "municipio": "Muruzábal",
+   "provincia": "navarra",
+   "poblacion": 283,
+   "anio": 2025
+  },
+  "navascues/nabaskoze": {
+   "municipio": "Navascués/Nabaskoze",
+   "provincia": "navarra",
+   "poblacion": 114,
+   "anio": 2025
+  },
+  "nazar": {
+   "municipio": "Nazar",
+   "provincia": "navarra",
+   "poblacion": 40,
+   "anio": 2025
+  },
+  "valle de elorz/elortzibar": {
+   "municipio": "Valle de Elorz/Elortzibar",
+   "provincia": "navarra",
+   "poblacion": 8486,
+   "anio": 2025
+  },
+  "obanos": {
+   "municipio": "Obanos",
+   "provincia": "navarra",
+   "poblacion": 924,
+   "anio": 2025
+  },
+  "ochagavia/otsagabia": {
+   "municipio": "Ochagavía/Otsagabia",
+   "provincia": "navarra",
+   "poblacion": 492,
+   "anio": 2025
+  },
+  "oco": {
+   "municipio": "Oco",
+   "provincia": "navarra",
+   "poblacion": 65,
+   "anio": 2025
+  },
+  "odieta": {
+   "municipio": "Odieta",
+   "provincia": "navarra",
+   "poblacion": 367,
+   "anio": 2025
+  },
+  "oiz": {
+   "municipio": "Oiz",
+   "provincia": "navarra",
+   "poblacion": 129,
+   "anio": 2025
+  },
+  "olaibar": {
+   "municipio": "Oláibar",
+   "provincia": "navarra",
+   "poblacion": 399,
+   "anio": 2025
+  },
+  "olazti/olazagutia": {
+   "municipio": "Olazti/Olazagutía",
+   "provincia": "navarra",
+   "poblacion": 1444,
+   "anio": 2025
+  },
+  "olejua": {
+   "municipio": "Olejua",
+   "provincia": "navarra",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "olite/erriberri": {
+   "municipio": "Olite/Erriberri",
+   "provincia": "navarra",
+   "poblacion": 4069,
+   "anio": 2025
+  },
+  "valle de ollo/ollaran": {
+   "municipio": "Valle de Ollo/Ollaran",
+   "provincia": "navarra",
+   "poblacion": 453,
+   "anio": 2025
+  },
+  "oloriz/oloritz": {
+   "municipio": "Olóriz/Oloritz",
+   "provincia": "navarra",
+   "poblacion": 210,
+   "anio": 2025
+  },
+  "orbaizeta": {
+   "municipio": "Orbaizeta",
+   "provincia": "navarra",
+   "poblacion": 186,
+   "anio": 2025
+  },
+  "orbara": {
+   "municipio": "Orbara",
+   "provincia": "navarra",
+   "poblacion": 28,
+   "anio": 2025
+  },
+  "orisoain": {
+   "municipio": "Orísoain",
+   "provincia": "navarra",
+   "poblacion": 72,
+   "anio": 2025
+  },
+  "orkoien": {
+   "municipio": "Orkoien",
+   "provincia": "navarra",
+   "poblacion": 4098,
+   "anio": 2025
+  },
+  "oronz/orontze": {
+   "municipio": "Oronz/Orontze",
+   "provincia": "navarra",
+   "poblacion": 51,
+   "anio": 2025
+  },
+  "oroz-betelu/orotz-betelu": {
+   "municipio": "Oroz-Betelu/Orotz-Betelu",
+   "provincia": "navarra",
+   "poblacion": 143,
+   "anio": 2025
+  },
+  "orreaga/roncesvalles": {
+   "municipio": "Orreaga/Roncesvalles",
+   "provincia": "navarra",
+   "poblacion": 25,
+   "anio": 2025
+  },
+  "oteiza": {
+   "municipio": "Oteiza",
+   "provincia": "navarra",
+   "poblacion": 972,
+   "anio": 2025
+  },
+  "pamplona/iruna": {
+   "municipio": "Pamplona/Iruña",
+   "provincia": "navarra",
+   "poblacion": 209094,
+   "anio": 2025
+  },
+  "peralta/azkoien": {
+   "municipio": "Peralta/Azkoien",
+   "provincia": "navarra",
+   "poblacion": 6071,
+   "anio": 2025
+  },
+  "petilla de aragon": {
+   "municipio": "Petilla de Aragón",
+   "provincia": "navarra",
+   "poblacion": 29,
+   "anio": 2025
+  },
+  "piedramillera": {
+   "municipio": "Piedramillera",
+   "provincia": "navarra",
+   "poblacion": 46,
+   "anio": 2025
+  },
+  "pitillas": {
+   "municipio": "Pitillas",
+   "provincia": "navarra",
+   "poblacion": 520,
+   "anio": 2025
+  },
+  "puente la reina/gares": {
+   "municipio": "Puente la Reina/Gares",
+   "provincia": "navarra",
+   "poblacion": 2972,
+   "anio": 2025
+  },
+  "pueyo/puiu": {
+   "municipio": "Pueyo/Puiu",
+   "provincia": "navarra",
+   "poblacion": 384,
+   "anio": 2025
+  },
+  "ribaforada": {
+   "municipio": "Ribaforada",
+   "provincia": "navarra",
+   "poblacion": 3697,
+   "anio": 2025
+  },
+  "romanzado/erromantzatua": {
+   "municipio": "Romanzado/Erromantzatua",
+   "provincia": "navarra",
+   "poblacion": 180,
+   "anio": 2025
+  },
+  "roncal/erronkari": {
+   "municipio": "Roncal/Erronkari",
+   "provincia": "navarra",
+   "poblacion": 206,
+   "anio": 2025
+  },
+  "saldias": {
+   "municipio": "Saldias",
+   "provincia": "navarra",
+   "poblacion": 125,
+   "anio": 2025
+  },
+  "salinas de oro/jaitz": {
+   "municipio": "Salinas de Oro/Jaitz",
+   "provincia": "navarra",
+   "poblacion": 110,
+   "anio": 2025
+  },
+  "san adrian": {
+   "municipio": "San Adrián",
+   "provincia": "navarra",
+   "poblacion": 6504,
+   "anio": 2025
+  },
+  "san martin de unx": {
+   "municipio": "San Martín de Unx",
+   "provincia": "navarra",
+   "poblacion": 352,
+   "anio": 2025
+  },
+  "sanguesa/zangoza": {
+   "municipio": "Sangüesa/Zangoza",
+   "provincia": "navarra",
+   "poblacion": 4883,
+   "anio": 2025
+  },
+  "sansol": {
+   "municipio": "Sansol",
+   "provincia": "navarra",
+   "poblacion": 89,
+   "anio": 2025
+  },
+  "santacara": {
+   "municipio": "Santacara",
+   "provincia": "navarra",
+   "poblacion": 874,
+   "anio": 2025
+  },
+  "sarries/sartze": {
+   "municipio": "Sarriés/Sartze",
+   "provincia": "navarra",
+   "poblacion": 57,
+   "anio": 2025
+  },
+  "sartaguda": {
+   "municipio": "Sartaguda",
+   "provincia": "navarra",
+   "poblacion": 1349,
+   "anio": 2025
+  },
+  "sesma": {
+   "municipio": "Sesma",
+   "provincia": "navarra",
+   "poblacion": 1248,
+   "anio": 2025
+  },
+  "sorlada": {
+   "municipio": "Sorlada",
+   "provincia": "navarra",
+   "poblacion": 39,
+   "anio": 2025
+  },
+  "sunbilla": {
+   "municipio": "Sunbilla",
+   "provincia": "navarra",
+   "poblacion": 672,
+   "anio": 2025
+  },
+  "tafalla": {
+   "municipio": "Tafalla",
+   "provincia": "navarra",
+   "poblacion": 10854,
+   "anio": 2025
+  },
+  "tiebas-muruarte de reta": {
+   "municipio": "Tiebas-Muruarte de Reta",
+   "provincia": "navarra",
+   "poblacion": 693,
+   "anio": 2025
+  },
+  "tirapu": {
+   "municipio": "Tirapu",
+   "provincia": "navarra",
+   "poblacion": 49,
+   "anio": 2025
+  },
+  "torralba del rio": {
+   "municipio": "Torralba del Río",
+   "provincia": "navarra",
+   "poblacion": 96,
+   "anio": 2025
+  },
+  "torres del rio": {
+   "municipio": "Torres del Río",
+   "provincia": "navarra",
+   "poblacion": 116,
+   "anio": 2025
+  },
+  "tudela": {
+   "municipio": "Tudela",
+   "provincia": "navarra",
+   "poblacion": 38903,
+   "anio": 2025
+  },
+  "tulebras": {
+   "municipio": "Tulebras",
+   "provincia": "navarra",
+   "poblacion": 159,
+   "anio": 2025
+  },
+  "ucar": {
+   "municipio": "Úcar",
+   "provincia": "navarra",
+   "poblacion": 194,
+   "anio": 2025
+  },
+  "uharte arakil": {
+   "municipio": "Uharte Arakil",
+   "provincia": "navarra",
+   "poblacion": 770,
+   "anio": 2025
+  },
+  "ujue/uxue": {
+   "municipio": "Ujué/Uxue",
+   "provincia": "navarra",
+   "poblacion": 168,
+   "anio": 2025
+  },
+  "ultzama": {
+   "municipio": "Ultzama",
+   "provincia": "navarra",
+   "poblacion": 1599,
+   "anio": 2025
+  },
+  "unciti": {
+   "municipio": "Unciti",
+   "provincia": "navarra",
+   "poblacion": 257,
+   "anio": 2025
+  },
+  "unzue/untzue": {
+   "municipio": "Unzué/Untzue",
+   "provincia": "navarra",
+   "poblacion": 164,
+   "anio": 2025
+  },
+  "urdazubi/urdax": {
+   "municipio": "Urdazubi/Urdax",
+   "provincia": "navarra",
+   "poblacion": 354,
+   "anio": 2025
+  },
+  "urdiain": {
+   "municipio": "Urdiain",
+   "provincia": "navarra",
+   "poblacion": 647,
+   "anio": 2025
+  },
+  "urraul alto": {
+   "municipio": "Urraúl Alto",
+   "provincia": "navarra",
+   "poblacion": 136,
+   "anio": 2025
+  },
+  "urraul bajo": {
+   "municipio": "Urraúl Bajo",
+   "provincia": "navarra",
+   "poblacion": 330,
+   "anio": 2025
+  },
+  "urroz": {
+   "municipio": "Urroz",
+   "provincia": "navarra",
+   "poblacion": 175,
+   "anio": 2025
+  },
+  "urroz-villa": {
+   "municipio": "Urroz-Villa",
+   "provincia": "navarra",
+   "poblacion": 403,
+   "anio": 2025
+  },
+  "urzainqui/urzainki": {
+   "municipio": "Urzainqui/Urzainki",
+   "provincia": "navarra",
+   "poblacion": 76,
+   "anio": 2025
+  },
+  "uterga": {
+   "municipio": "Uterga",
+   "provincia": "navarra",
+   "poblacion": 177,
+   "anio": 2025
+  },
+  "uztarroz/uztarroze": {
+   "municipio": "Uztárroz/Uztarroze",
+   "provincia": "navarra",
+   "poblacion": 136,
+   "anio": 2025
+  },
+  "valle de egues/eguesibar": {
+   "municipio": "Valle de Egüés/Eguesibar",
+   "provincia": "navarra",
+   "poblacion": 22825,
+   "anio": 2025
+  },
+  "valle de yerri/deierri": {
+   "municipio": "Valle de Yerri/Deierri",
+   "provincia": "navarra",
+   "poblacion": 1549,
+   "anio": 2025
+  },
+  "valtierra": {
+   "municipio": "Valtierra",
+   "provincia": "navarra",
+   "poblacion": 2505,
+   "anio": 2025
+  },
+  "viana": {
+   "municipio": "Viana",
+   "provincia": "navarra",
+   "poblacion": 4441,
+   "anio": 2025
+  },
+  "vidangoz/bidankoze": {
+   "municipio": "Vidángoz/Bidankoze",
+   "provincia": "navarra",
+   "poblacion": 74,
+   "anio": 2025
+  },
+  "villafranca": {
+   "municipio": "Villafranca",
+   "provincia": "navarra",
+   "poblacion": 3163,
+   "anio": 2025
+  },
+  "villamayor de monjardin": {
+   "municipio": "Villamayor de Monjardín",
+   "provincia": "navarra",
+   "poblacion": 115,
+   "anio": 2025
+  },
+  "villatuerta": {
+   "municipio": "Villatuerta",
+   "provincia": "navarra",
+   "poblacion": 1256,
+   "anio": 2025
+  },
+  "villava/atarrabia": {
+   "municipio": "Villava/Atarrabia",
+   "provincia": "navarra",
+   "poblacion": 9928,
+   "anio": 2025
+  },
+  "yesa": {
+   "municipio": "Yesa",
+   "provincia": "navarra",
+   "poblacion": 297,
+   "anio": 2025
+  },
+  "zabalza/zabaltza": {
+   "municipio": "Zabalza/Zabaltza",
+   "provincia": "navarra",
+   "poblacion": 285,
+   "anio": 2025
+  },
+  "ziordia": {
+   "municipio": "Ziordia",
+   "provincia": "navarra",
+   "poblacion": 359,
+   "anio": 2025
+  },
+  "zizur mayor/zizur nagusia": {
+   "municipio": "Zizur Mayor/Zizur Nagusia",
+   "provincia": "navarra",
+   "poblacion": 16510,
+   "anio": 2025
+  },
+  "zubieta": {
+   "municipio": "Zubieta",
+   "provincia": "navarra",
+   "poblacion": 292,
+   "anio": 2025
+  },
+  "zugarramurdi": {
+   "municipio": "Zugarramurdi",
+   "provincia": "navarra",
+   "poblacion": 213,
+   "anio": 2025
+  },
+  "zuniga": {
+   "municipio": "Zúñiga",
+   "provincia": "navarra",
+   "poblacion": 78,
    "anio": 2025
   }
  }
