@@ -38,9 +38,11 @@ name: Actualizar contratos diariamente
 # y solo entonces pasa a la siguiente. Ya no existe ningún horario que
 # pueda desincronizarse: da igual cuánto tarde cada provincia, el propio
 # orden secuencial + el polling ya se encargan de esperar lo que haga
-# falta. Añadir una provincia nueva (Galicia hoy; Castilla y León/
-# Castilla-La Mancha cuando se conecten) es solo añadir una entrada más a
-# PROVINCIAS_ORDEN, sin tocar nada de horarios.
+# falta. Añadir una provincia nueva es solo añadir una entrada más a
+# PROVINCIAS_ORDEN, sin tocar nada de horarios -- ojo, este paso se quedó
+# pendiente durante varios días al conectar Castilla y León/Castilla-La
+# Mancha/Navarra en app.py (2026-09-19): esas 15 provincias nunca
+# entraron en la rotación automática hasta este commit.
 #
 # Limitación real, no resuelta por este cambio, solo hecha explícita: un
 # runner hosted de GitHub Actions tiene un límite DURO de 6h (360 min) por
@@ -131,6 +133,21 @@ on:
           - lugo
           - ourense
           - pontevedra
+          - avila
+          - burgos
+          - leon
+          - palencia
+          - salamanca
+          - segovia
+          - soria
+          - valladolid
+          - zamora
+          - albacete
+          - ciudad_real
+          - cuenca
+          - guadalajara
+          - toledo
+          - navarra
         default: todas
       solo_fondos_ue:
         description: >-
@@ -467,13 +484,16 @@ jobs:
 
           else
             # --- Recorrido nocturno de la lista completa -------------------
-            # Orden base. Añadir una provincia nueva (Galicia hoy; Castilla
-            # y León / Castilla-La Mancha cuando se conecten) es solo añadir
-            # una entrada más aquí -- nada de horarios que tocar.
+            # Orden base. Añadir una provincia nueva es solo añadir una
+            # entrada más aquí -- nada de horarios que tocar (ver aviso de
+            # cabecera sobre Castilla y León/Castilla-La Mancha/Navarra).
             PROVINCIAS_ORDEN=(murcia girona lleida barcelona tarragona \
               valenciana andalucia pais_vasco \
               huesca teruel zaragoza badajoz caceres \
-              a_coruna lugo ourense pontevedra)
+              a_coruna lugo ourense pontevedra \
+              avila burgos leon palencia salamanca segovia soria valladolid zamora \
+              albacete ciudad_real cuenca guadalajara toledo \
+              navarra)
             n=${#PROVINCIAS_ORDEN[@]}
 
             # Rotación del punto de partida por día del año: ver nota de
