@@ -10578,6 +10578,15 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .as-group{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;}
 .as-group .as-row-result{margin-top:8px;background:var(--surface);}
 .section-title{font-size:13px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:26px 0 12px;}
+
+/* ── "TODAS LAS PROVINCIAS" (2026-09-20, petición de César) -- transición
+   de color suave amarillo<->rojo, NO un parpadeo duro on/off: 1 ciclo cada
+   2s (0,5 Hz), muy por debajo del límite de 3 destellos/seg de WCAG 2.3.1,
+   y con easing (no un cambio brusco) para no contar como "destello" a
+   efectos de fotosensibilidad. Respeta prefers-reduced-motion. */
+@keyframes parpadeoAmarilloRojo{0%,100%{color:var(--yellow);}50%{color:var(--red);}}
+.provincias-parpadeo{animation:parpadeoAmarilloRojo 2s ease-in-out infinite;}
+@media (prefers-reduced-motion: reduce){.provincias-parpadeo{animation:none;color:var(--yellow);}}
 .muni-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
 .muni-tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s;}
 .muni-tile:hover{border-color:var(--accent);}
@@ -11022,7 +11031,7 @@ def _render_alertas(alertas):
 # ─── PLANTILLA COMÚN (header / footer / banner / SEO) ────────────────────────
 
 SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
-SITE_TAGLINE = "ESPAÑA, Y EL DINERO DE TODOS EN MANOS DE QUIÉN"
+SITE_TAGLINE = "EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?"
 BIZUM_TELEFONO = "661657013"
 
 # ─── Consentimiento de cookies + Google AdSense (2026-09-05) ────────────────
@@ -14098,9 +14107,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
       <p class="hero-sub">
         Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
-        — y qué persona — hay detrás de cada adjudicación. Cobertura nacional: las 19 comunidades
-        y ciudades autónomas, con provincias ya completas y otras en marcha (ver el mapa de
-        cobertura más abajo para el estado real de cada una).
+        — y qué persona — hay detrás de cada adjudicación.
       </p>
     </div>
     <div class="adv-search" id="adv-search">
@@ -14125,7 +14132,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     <div class="mapa-indice-indice">{sidebar_ranking_html}</div>
   </div>
   <details style="margin:14px 0 24px">
-    <summary style="cursor:pointer;font-size:12px;color:var(--dim)">Ver todas las provincias en una lista (texto)</summary>
+    <summary class="provincias-parpadeo" style="cursor:pointer;font-size:13px;font-weight:700">TODAS LAS PROVINCIAS</summary>
     <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
   </details>
   <div class="section-title">🔍 Casos de investigación</div>
@@ -15446,8 +15453,9 @@ def render_aviso_legal_html():
 
   <h2>Actividad</h2>
   <p>Plataforma de transparencia y datos públicos sobre contratación del sector
-  público en España. Cubre actualmente la Región de Murcia y la provincia de
-  Girona, con expansión progresiva a todo el territorio nacional.</p>
+  público en España. Cobertura nacional: las 19 comunidades y ciudades autónomas,
+  con distinto grado de detalle según la provincia (ver el
+  <a href="/mapa-cobertura">mapa de cobertura</a> para el estado real de cada una).</p>
 
   <h2>Propiedad intelectual</h2>
   <p>El código fuente de esta plataforma está registrado como obra en Safe
@@ -15458,10 +15466,11 @@ def render_aviso_legal_html():
   <h2>Origen de los datos</h2>
   <p>Los datos de contratos mostrados provienen de fuentes oficiales públicas: la
   Plataforma de Contratación del Sector Público (PLACE) del Ministerio de
-  Hacienda, el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de
-  Serveis de Contractació Pública de Catalunya (PSCP). Se irán incorporando otras
-  plataformas de contratación pública autonómicas y estatales a medida que se
-  amplíe la cobertura territorial.</p>
+  Hacienda, que cubre todo el territorio nacional, además de fuentes
+  autonómicas complementarias como el Boletín Oficial de la Región de Murcia
+  (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya
+  (PSCP). Se seguirán incorporando otras fuentes de contratos menores y
+  organismos públicos a medida que estén disponibles.</p>
   <p>Los nombres de directivos y administradores provienen de registros públicos
   (Registro Mercantil y fuentes empresariales públicas equivalentes).</p>
   <p>Próximamente se incorporarán también datos de subvenciones y fondos
