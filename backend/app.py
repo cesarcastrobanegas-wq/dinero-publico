@@ -12904,6 +12904,163 @@ def _calcular_senales_riesgo_v2(umbral_obras=40000, umbral_servicios=15000, marg
     return señales
 
 
+# ─── PÁGINA DE REVISIÓN DEL ÍNDICE v2 (2026-09-20) ───────────────────────────
+# Ruta AISLADA (/indice-transparencia-v2), sin enlazar desde ningún menú,
+# footer ni sitemap.xml -- pensada solo para que César la revise por URL
+# directa antes de decidir si v2 sustituye o convive con v1 en /rankings.
+# NO toca /rankings ni ninguna otra página existente. Mismo patrón de caché
+# 1h y mismo tope de filas que ya usa v1 (ver hallazgo de rendimiento del
+# 2026-09-20) desde el primer commit, para no repetir aquel problema.
+_INDICE_TRANSPARENCIA_V2_CACHE = {"ts": 0.0, "filas": None}
+_indice_transparencia_v2_cache_lock = threading.Lock()
+
+
+def _indice_transparencia_v2_cacheado():
+    with _indice_transparencia_v2_cache_lock:
+        if (_INDICE_TRANSPARENCIA_V2_CACHE["filas"] is not None
+                and (time.time() - _INDICE_TRANSPARENCIA_V2_CACHE["ts"]) < INDICE_TRANSPARENCIA_CACHE_TTL):
+            return _INDICE_TRANSPARENCIA_V2_CACHE["filas"]
+    filas = _calcular_indice_transparencia_v2()
+    with _indice_transparencia_v2_cache_lock:
+        _INDICE_TRANSPARENCIA_V2_CACHE["filas"] = filas
+        _INDICE_TRANSPARENCIA_V2_CACHE["ts"] = time.time()
+    return filas
+
+
+_INDICE_V2_COMPONENTE_LABEL = {
+    "cuentas":             "Cuentas anuales",
+    "deuda_pub":           "Deuda/hab. publicada",
+    "saldo_pub":           "Saldo no financiero",
+    "ispa_pub":            "Sueldos ISPA",
+    "rendicion_plazo":     "Rendición de cuentas en plazo",
+    "menores":             "Contratos menores",
+    "completitud_campos":  "Completitud de campos (formales)",
+    "actividad":           "Actividad de publicación",
+}
+
+
+def _indice_transparencia_v2_desglose_html(componentes):
+    """Igual que _indice_transparencia_desglose_html pero con los 8
+    componentes de v2 (pesos/etiquetas propios) -- ver _INDICE_V2_PESOS."""
+    filas = ""
+    for clave, peso in _INDICE_V2_PESOS.items():
+        c = componentes.get(clave, {})
+        if c.get("disponible") and c.get("puntos") is not None:
+            icono, valor_html = "✅", f'{c["puntos"]:.0f}/100'
+        else:
+            icono, valor_html = "➖", "no evaluado" if c.get("no_evaluado") else "no disponible"
+        filas += (f'<tr><td>{icono} {esc(_INDICE_V2_COMPONENTE_LABEL.get(clave, clave))} '
+                  f'<span class="it-peso">(peso {peso:g}%)</span></td>'
+                  f'<td class="rk-valor">{valor_html}</td>'
+                  f'<td class="it-detalle">{esc(c.get("detalle", ""))}</td></tr>')
+    return filas
+
+
+def _render_indice_transparencia_v2_html(comunidad="murcia"):
+    """Tabla del Índice v2, EXPERIMENTAL -- mismo patrón que
+    _render_indice_transparencia_html (empates, tope de filas, buscador vía
+    el mismo _IT_BUSCADOR_JS) pero con los 8 componentes de v2 y SIN opción
+    "España" en el selector: el propio diseño de v2 (ver comentario de
+    cabecera de _calcular_indice_transparencia_v2, punto 6) descartó a
+    propósito un ranking nacional -- los saltos de puesto a nivel país eran
+    un artefacto de empates masivos, no cambios reales. v2 solo se compara
+    dentro de una comunidad con cobertura completa (hoy: Murcia)."""
+    filas_datos = _indice_transparencia_v2_cacheado()
+    filas_datos = [f for f in filas_datos if f["comunidad_autonoma"] == comunidad]
+
+    con_indice = [f for f in filas_datos if f["indice"] is not None]
+    con_indice.sort(key=lambda f: f["indice"], reverse=True)
+    sin_indice = len(filas_datos) - len(con_indice)
+    ranking_completo = _ranking_con_empates(con_indice)
+    total_con_indice = len(ranking_completo)
+    ranking_visible = ranking_completo[:_INDICE_TRANSPARENCIA_MAX_FILAS_TABLA]
+    recortado = total_con_indice > len(ranking_visible)
+
+    filas_html = ""
+    for puesto, f in ranking_visible:
+        pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(puesto, f"{puesto}º")
+        muni_q = quote_plus(f["municipio"])
+        q_prov_muni = _q_prov(f["provincia"])
+        indice = f["indice"]
+        color_cls = "it-alto" if indice >= 70 else ("it-medio" if indice >= 40 else "it-bajo")
+        desglose = _indice_transparencia_v2_desglose_html(f["componentes"])
+        filas_html += f"""<tr class="it-row" data-muni="{esc(normalizar(f['municipio']))}">
+          <td class="rk-pos">{pos}</td>
+          <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
+          <td>{esc(PROVINCIA_LABEL.get(f['provincia'], f['provincia']))}</td>
+          <td class="rk-valor"><span class="it-indice {color_cls}">{indice:.1f}</span></td>
+          <td>{f['n_componentes']}/8</td>
+          <td><details class="it-desglose"><summary>Ver desglose ▾</summary>
+            <table class="it-desglose-tbl">{desglose}</table>
+          </details></td>
+        </tr>"""
+    if not filas_html:
+        filas_html = '<tr><td colspan="6" class="empty">Sin municipios con índice v2 calculado en esta comunidad.</td></tr>'
+
+    opciones_comunidad = list(COMUNIDAD_AUTONOMA_LABEL.items())  # sin "España" a propósito, ver docstring
+    selector_comunidad = "".join(
+        f'<a href="/indice-transparencia-v2?comunidad={c}" class="prov-tab{" active" if c == comunidad else ""}">'
+        f'{esc(label)}</a>'
+        for c, label in opciones_comunidad
+    )
+
+    aviso_sin_cobertura = (
+        f'<br><span class="noloc-warn">⚠️ {sin_indice} municipios de esta comunidad sin cobertura de datos '
+        f'suficiente para calcular su índice v2 (menos de {_INDICE_V2_MIN_COMPONENTES} de 8 componentes '
+        f'disponibles) -- no se muestran en la tabla.</span>'
+        if sin_indice else ""
+    )
+    aviso_recorte = (
+        f'<br><span class="noloc-warn">📄 Mostrando los primeros {len(ranking_visible)} de '
+        f'{total_con_indice} municipios con índice v2 calculado.</span>'
+        if recortado else ""
+    )
+
+    return f"""
+  <div class="rk-section-header" id="indice-transparencia-v2">
+    <h2>🧪 Índice de Transparencia v2 (EXPERIMENTAL)</h2>
+    <div class="prov-switch">{selector_comunidad}</div>
+  </div>
+  <p class="hero-sub" style="margin-top:-8px">
+    <b>Propuesta en revisión, NO es la versión publicada del sitio</b> (esa sigue siendo la v1 de /rankings).
+    Añade "menores" con más peso (30%) y "rendición de cuentas en plazo"/"completitud de campos" en vez de
+    adjudicatario/directivo. <b>Aviso importante:</b> el componente "menores" en su estado "consultado, 0
+    registros" puntúa comparando cada municipio contra el % de su propio tramo de población que SÍ tiene
+    contratos menores registrados -- en Cataluña esto hace caer significativamente (hasta 30 puntos) a
+    municipios que en v1 puntuaban muy alto, simplemente por no tener contratos menores registrados ese
+    periodo. No se compara a nivel España: los saltos de puesto nacionales eran un artefacto de empates
+    masivos, no cambios reales -- solo dentro de cada comunidad.
+    {aviso_sin_cobertura}
+    {aviso_recorte}
+  </p>
+  <input type="text" class="it-buscador" placeholder="Buscar municipio…" autocomplete="off"
+         oninput="{esc(_IT_BUSCADOR_JS)}">
+  <div class="muni-card"><div class="tbl-scroll"><table>
+    <tr><th>#</th><th>Municipio</th><th>Provincia</th><th>Índice v2</th><th>Cobertura</th><th>Desglose</th></tr>
+    {filas_html}
+  </table></div></div>"""
+
+
+def render_indice_v2_html(comunidad="murcia"):
+    """Página aislada de revisión de v2 (2026-09-20) -- /indice-transparencia-v2,
+    sin enlazar desde el sitio (ver comentario de cabecera de la sección de
+    arriba). show_ad_banner=False y sin indexar (ver _page_shell) porque es
+    contenido de trabajo interno, no una página pensada para visitas."""
+    comunidad = _comunidad_valida(comunidad)
+    if comunidad == "todas":
+        comunidad = "murcia"
+    body = f"""<span class="back-link"><a href="/rankings">← Volver a Rankings (v1)</a></span>
+  <div class="hero" style="padding-bottom:4px">
+    <div class="hero-tagline">🧪 Índice de Transparencia v2</div>
+    <p class="hero-sub">Página de revisión interna -- no publicada, no indexada, no enlazada desde el sitio.</p>
+  </div>
+  {_render_indice_transparencia_v2_html(comunidad)}"""
+    return _page_shell("Índice v2 (revisión interna) — no publicado", body,
+                        description="Página de trabajo interno, no indexada.",
+                        provincia="todas", show_ad_banner=False,
+                        extra_head='<meta name="robots" content="noindex, nofollow">')
+
+
 def _calcular_ranking_alcaldes():
     """Ranking de sueldos de alcaldes/alcaldesas (ISPA), de mayor a menor
     importe anual. El nombre/partido viene de ALCALDES_CONCEJALES
@@ -16100,6 +16257,13 @@ def _route_get(path, qs, gzip_ok=False):
         datos_nacional = _db_all_municipios()
         datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
         return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs), gzip_ok=gzip_ok)
+
+    if path == "/indice-transparencia-v2":
+        # Ruta AISLADA de revisión interna, ver comentario de cabecera de
+        # render_indice_v2_html -- no enlazada desde ningún sitio, no en
+        # sitemap.xml, noindex. Solo para que César la abra por URL directa.
+        comunidad_v2_qs = qs.get("comunidad", ["murcia"])[0]
+        return _resp(render_indice_v2_html(comunidad_v2_qs), gzip_ok=gzip_ok)
 
     if path == "/fondos-ue":
         provincia_qs = qs.get("provincia", ["todas"])[0]
