@@ -10675,6 +10675,16 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .nu-ver-mas:hover{text-decoration:underline;}
 .home-main-col{min-width:0;}
 
+/* ── home: mapa de cobertura + Índice de Transparencia lado a lado
+   (2026-09-20, petición de César -- el índice estaba poco accesible debajo
+   del mapa) -- mitad y mitad; en el índice, no en el mapa, se recorta si
+   hace falta (ver .mapa-indice-indice .rk-sidebar más abajo). */
+.mapa-indice-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;margin-bottom:14px;}
+.mapa-indice-mapa .map-wrap{max-width:none;}
+.mapa-indice-indice .rk-sidebar-ranking-wrap{grid-column:unset;grid-row:unset;}
+.mapa-indice-indice .rk-sidebar{height:100%;}
+@media(max-width:860px){.mapa-indice-row{grid-template-columns:1fr;}}
+
 /* ── footer ───────────────────────────────────────────────────────────── */
 .instalar-bar{max-width:1340px;margin:48px auto 0;padding:16px 20px;border-radius:8px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);}
 .instalar-text{font-size:12.5px;color:var(--text);line-height:1.6;max-width:1000px;}
@@ -11299,7 +11309,7 @@ _ADV_SEARCH_JS = r"""
   var btn = document.getElementById('as-btn');
   var results = document.getElementById('as-results');
   if (!input || !results) return;
-  var tipo = 'empresa';
+  var tipo = 'ayuntamiento';
   var timer = null;
   var seq = 0;
 
@@ -14095,13 +14105,13 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     </div>
     <div class="adv-search" id="adv-search">
       <div class="as-tabs">
-        <button type="button" class="as-tab" data-tipo="ayuntamiento">Ayuntamiento</button>
-        <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
+        <button type="button" class="as-tab active" data-tipo="ayuntamiento">Ayuntamiento</button>
+        <button type="button" class="as-tab" data-tipo="empresa">Empresa</button>
         <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
         <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
       </div>
       <div class="as-row">
-        <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off">
+        <input type="text" id="as-input" placeholder="Nombre del municipio…" autocomplete="off">
         <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
       </div>
       <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda España · mínimo 2 caracteres.</div>
@@ -14110,7 +14120,10 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     {stats}
   </div>
   <div class="section-title">Cobertura</div>
-  {mapa_html}
+  <div class="mapa-indice-row">
+    <div class="mapa-indice-mapa">{mapa_html}</div>
+    <div class="mapa-indice-indice">{sidebar_ranking_html}</div>
+  </div>
   <details style="margin:14px 0 24px">
     <summary style="cursor:pointer;font-size:12px;color:var(--dim)">Ver todas las provincias en una lista (texto)</summary>
     <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
@@ -14131,7 +14144,6 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       <div class="top1-grid">{top1_html}</div>
       <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
     </div>
-    {sidebar_ranking_html}
   </div>
   <script>window.__PROVINCIA__ = "";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
@@ -14230,13 +14242,13 @@ def render_landing_html(datos, provincia="murcia"):
   </div>
   <div class="adv-search" id="adv-search">
     <div class="as-tabs">
-      <button type="button" class="as-tab" data-tipo="ayuntamiento">Ayuntamiento</button>
-      <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
+      <button type="button" class="as-tab active" data-tipo="ayuntamiento">Ayuntamiento</button>
+      <button type="button" class="as-tab" data-tipo="empresa">Empresa</button>
       <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
       <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
     </div>
     <div class="as-row">
-      <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off" autofocus>
+      <input type="text" id="as-input" placeholder="Nombre del municipio…" autocomplete="off" autofocus>
       <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
     </div>
     <div class="gs-hint">Busca en los {total_c} contratos ya cargados de {esc(label)} · mínimo 2 caracteres.</div>
@@ -15154,8 +15166,30 @@ _MAPA_COBERTURA_JS = '''
       ccaaNames[g.dataset.ccaa] = g.dataset.name;
     });
 
+    // Navegar a la comunidad de un slug, si el mapa es clicable (home) --
+    // en /mapa-cobertura (clickable=False) el <g> no tiene <a> envolvente,
+    // así que closest('a') da null y esto no hace nada, como siempre.
+    function irAComunidad(ccaaSlug) {
+      const g = document.querySelector(`g[data-ccaa="${ccaaSlug}"]`);
+      const a = g && g.closest('a');
+      if (a) location.href = a.getAttribute('href');
+    }
+
+    // BUG (2026-09-20, reportado por César): los <path class="prov-border">
+    // se pintan DESPUÉS de los <g data-ccaa> (para quedar por encima y
+    // poder mostrar tooltip por provincia) y con fill="transparent" --  en
+    // SVG eso los sigue haciendo "pintados" a efectos de hit-testing con
+    // pointer-events:all (a diferencia de fill="none"), así que su ÁREA
+    // RELLENA ENTERA (toda la provincia, no solo el trazo del borde) tapa
+    // el <a>/<g> de la comunidad que hay debajo -- el clic nunca llegaba al
+    // <a>, por eso no navegaba aunque el href fuera correcto. El hover SÍ
+    // funcionaba porque el propio .prov-border ya tenía su mousemove con
+    // tooltip; el click necesita su propio listener aquí, navegando "a
+    // mano" en vez de confiar en el <a> nativo, que nunca recibe el evento.
     document.querySelectorAll('.prov-border').forEach(p => {
       p.style.pointerEvents = 'all';
+      const gPropio = document.querySelector(`g[data-ccaa="${p.dataset.ccaa}"]`);
+      if (gPropio && gPropio.closest('a')) p.style.cursor = 'pointer';  // solo si es clicable (home)
       p.addEventListener('mousemove', evt => {
         const ccaaSlug = p.dataset.ccaa;
         const g = document.querySelector(`g[data-ccaa="${ccaaSlug}"]`);
@@ -15163,6 +15197,7 @@ _MAPA_COBERTURA_JS = '''
         showTooltip(evt, p.dataset.name, ccaaNames[ccaaSlug] || '', state);
       });
       p.addEventListener('mouseleave', hideTooltip);
+      p.addEventListener('click', () => irAComunidad(p.dataset.ccaa));
     });
 
     document.querySelectorAll('g[data-ccaa]').forEach(g => {
@@ -15171,6 +15206,7 @@ _MAPA_COBERTURA_JS = '''
         showTooltip(evt, g.dataset.name, '', g.dataset.state);
       });
       g.addEventListener('mouseleave', hideTooltip);
+      g.addEventListener('click', () => irAComunidad(g.dataset.ccaa));
     });
   })();
 '''
@@ -15188,6 +15224,20 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
     W, H = 980, 760
     estado = _estado_cobertura_mapa()
 
+    # Ceuta/Melilla a escala real miden ~7x5 y ~4x5 unidades en un lienzo de
+    # 980x760 -- unos pocos píxeles, prácticamente invisibles y casi
+    # imposibles de acertar con el ratón (hallazgo de César 2026-09-20,
+    # verificado con una captura recortada: apenas una mota de un par de
+    # píxeles). Se dibujan como un marcador circular de tamaño FIJO
+    # centrado en su posición real en vez de a escala -- mismo patrón que
+    # usan la mayoría de mapas oficiales de España para estas dos ciudades
+    # autónomas. marcadores_fijos guarda el centro/radio para que el bucle
+    # de provincias de más abajo dibuje el área interactiva (hover/clic) del
+    # MISMO tamaño -- si solo se agranda la bandera pero el área clicable
+    # sigue a escala real, el marcador se ve pero no se puede acertar.
+    _RADIO_MARCADOR_FIJO = 10
+    marcadores_fijos = {}
+
     defs = []
     ccaa_groups = []
     for c in MAPA_COBERTURA_CCAA_GEO:
@@ -15196,6 +15246,35 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
         bw, bh = x1 - x0, y1 - y0
         flag_inner = MAPA_COBERTURA_FLAGS.get(slug, '<rect width="3" height="2" fill="#999"/>')
         state = estado.get(slug, "pending")
+
+        if slug in ("ceuta", "melilla"):
+            cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+            r = _RADIO_MARCADOR_FIJO
+            marcadores_fijos[slug] = (cx, cy, r)
+            defs.append(f'<clipPath id="clip-{slug}"><circle cx="{cx}" cy="{cy}" r="{r}"/></clipPath>')
+            muted = ' class="muted"' if state == "pending" else ""
+            hatch = (f'<circle cx="{cx}" cy="{cy}" r="{r}" clip-path="url(#clip-{slug})" fill="url(#hatch)" opacity="0.55"/>'
+                      if state == "partial" else "")
+            flag_svg_block = (
+                f'<svg x="{cx - r}" y="{cy - r}" width="{r * 2}" height="{r * 2}" '
+                f'viewBox="0 0 3 2" preserveAspectRatio="xMidYMid slice">{flag_inner}</svg>'
+            )
+            group_inner = f'''
+    <g data-ccaa="{slug}" data-name="{esc(c["name"])}" data-state="{state}">
+      <g clip-path="url(#clip-{slug})"{muted}>
+        {flag_svg_block}
+      </g>
+      {hatch}
+      <circle cx="{cx}" cy="{cy}" r="{r}" fill="transparent" stroke="#1a1a1a" stroke-width="1.6" class="ccaa-outline"/>
+    </g>'''
+            if clickable:
+                comunidad = MAPA_COBERTURA_SLUG_A_COMUNIDAD.get(slug)
+                destino = _MAPA_CCAA_DESTINO_POR_COMUNIDAD.get(comunidad)
+                if destino:
+                    group_inner = (f'<a class="mc-ccaa-link" href="/?provincia={destino}" '
+                                    f'aria-label="{esc(c["name"])}">{group_inner}</a>')
+            ccaa_groups.append(group_inner)
+            continue
 
         defs.append(f'<clipPath id="clip-{slug}"><path d="{c["d"]}"/></clipPath>')
 
@@ -15241,6 +15320,19 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
 
     province_borders = []
     for p in MAPA_COBERTURA_PROVINCIAS_GEO:
+        if p["ccaaSlug"] in marcadores_fijos:
+            # Mismo marcador de tamaño fijo que su comunidad (ver arriba) --
+            # si esto siguiera dibujando el <path> a escala real, el hover/
+            # clic (que vive en .prov-border, no en el <g> de la comunidad)
+            # seguiría apuntando a un área de un par de píxeles invisible,
+            # aunque la bandera ya se vea agrandada.
+            cx, cy, r = marcadores_fijos[p["ccaaSlug"]]
+            province_borders.append(
+                f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="transparent" stroke="#1a1a1a" stroke-opacity="0.55" '
+                f'stroke-width="0.6" data-prov="{p["id"]}" data-name="{esc(p["name"])}" '
+                f'data-ccaa="{p["ccaaSlug"]}" class="prov-border"/>'
+            )
+            continue
         province_borders.append(
             f'<path d="{p["d"]}" fill="transparent" stroke="#1a1a1a" stroke-opacity="0.55" '
             f'stroke-width="0.6" data-prov="{p["id"]}" data-name="{esc(p["name"])}" '
