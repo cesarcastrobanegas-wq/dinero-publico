@@ -10627,8 +10627,16 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 /* ── home: columna de noticias UE (margen izquierdo) + columna principal ─
    Mismo amarillo que fondos UE (.fue-header h2, badges CORDIS/Cohesion)
    para mantener "UE = amarillo" consistente en todo el sitio. */
-.home-grid{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start;}
-.home-sidebar-stack{display:flex;flex-direction:column;gap:20px;}
+.home-grid{display:grid;grid-template-columns:280px 1fr;grid-template-rows:auto auto;gap:20px;align-items:start;}
+.home-sidebar-stack{display:flex;flex-direction:column;gap:20px;grid-column:1;grid-row:1;}
+.home-main-col{grid-column:2;grid-row:1 / span 2;}
+/* El ranking es un hijo directo de .home-grid (no de .home-sidebar-stack)
+   a propósito -- en escritorio se coloca bajo las noticias UE en la misma
+   columna izquierda (grid-column/row explícitos); en móvil (ver media
+   query más abajo) se resetea a flujo normal, y como en el HTML aparece
+   DESPUÉS de .home-main-col, cae bajo el contenido -- "en móvil, el
+   lateral pasa a bloque plegable bajo el contenido" (2026-09-20). */
+.rk-sidebar-ranking-wrap{grid-column:1;grid-row:2;}
 .noticias-ue-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:2px;position:sticky;top:80px;}
 .nu-panel-title{font-size:13px;font-weight:600;color:var(--yellow);margin-bottom:10px;}
 .noticia-ue-item{padding:10px 0;border-bottom:1px solid var(--border);}
@@ -10667,6 +10675,16 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .static-page li{margin-bottom:6px;}
 .static-page a{color:var(--blue);}
 .static-page .contact-btn{display:inline-block;margin-top:8px;padding:9px 18px;background:var(--accent);color:#000;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;}
+
+/* Botones de compartir (2026-09-20) -- enlaces simples wa.me/sharer.php/
+   intent/t.me/mailto, sin SDK de terceros; el botón de copiar usa Clipboard
+   API con fallback, ver _share_buttons_html. */
+.share-buttons{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:22px 0 4px;padding-top:16px;border-top:1px solid var(--border);}
+.share-label{font-size:12px;color:var(--dim);font-weight:600;margin-right:2px;}
+.share-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--bg);border:1px solid var(--border);font-size:15px;text-decoration:none;cursor:pointer;line-height:1;}
+.share-btn:hover{border-color:var(--accent);}
+button.share-btn{font-family:inherit;}
+@media (max-width:640px){.share-btn{width:38px;height:38px;font-size:16px;}}
 
 /* ── mejoras visuales: importes / iconos / avisos ────────────────────── */
 .importe.big{font-size:16px;color:#5fe37a;}
@@ -10753,8 +10771,9 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .muni-grid{grid-template-columns:1fr;}
 }
 @media (max-width:860px){
-  .home-grid{grid-template-columns:1fr;}
+  .home-grid{grid-template-columns:1fr;grid-template-rows:auto;}
   .noticias-ue-panel{position:static;}
+  .home-sidebar-stack,.home-main-col,.rk-sidebar-ranking-wrap{grid-column:1;grid-row:auto;}
 }
 @keyframes scroll-hint-nudge{
   0%,100%{transform:translateX(0);}
@@ -10804,6 +10823,22 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .it-widget-body{padding:12px 18px 16px;}
 .rk-sidebar-item-actual{background:rgba(63,185,80,.1);border-radius:6px;padding:6px 8px;margin:0 -8px;border-bottom-color:transparent;}
 .rk-sidebar-separador{border-top:1px dashed var(--border);margin:4px 0;}
+
+/* rk-sidebar ahora es un <details> (plegable en móvil, ver .rk-sidebar-
+   ranking-wrap) -- el <summary> hace de cabecera clicable, sin marcador
+   nativo del navegador (mismo patrón que .it-widget summary). */
+.rk-sidebar summary.rk-sidebar-title{cursor:pointer;list-style:none;}
+.rk-sidebar summary.rk-sidebar-title::-webkit-details-marker{display:none;}
+.rk-sidebar summary.rk-sidebar-title::after{content:'▾';margin-left:auto;color:var(--dim);font-size:11px;}
+.rk-sidebar[open] summary.rk-sidebar-title::after{content:'▴';}
+.rk-sidebar-v1-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--dim);background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
+.rk-sidebar-aviso{font-size:10.5px;color:var(--dim);line-height:1.4;margin:-4px 0 12px;}
+.rk-sidebar-selector-label{display:block;font-size:10px;color:var(--dim);margin-bottom:4px;}
+.rk-sidebar-selector{width:100%;margin-bottom:12px;padding:6px 8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px;}
+.rk-sidebar-vermas{margin-top:6px;}
+.rk-sidebar-vermas summary{cursor:pointer;list-style:none;font-size:11px;color:var(--blue);padding:4px 0;}
+.rk-sidebar-vermas summary::-webkit-details-marker{display:none;}
+.rk-sidebar-vermas .rk-sidebar-list{margin-top:8px;}
 
 /* ── gancho de personalización (home nacional) ───────────────────────────── */
 .personaliza-banner{background:linear-gradient(135deg,#1c4fa0 0%,#0b2145 100%);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#fff;}
@@ -11515,11 +11550,20 @@ def _footer_html(provincia="todas"):
 </footer>"""
 
 
-def _page_shell(title, body_html, description="", extra_head="", provincia="todas", show_ad_banner=True):
+def _page_shell(title, body_html, description="", extra_head="", provincia="todas", show_ad_banner=True,
+                 og_path="/"):
     full_title = title if "|" in title else f"{title} | Dinero Público"
     desc = esc(description or "Consulta los contratos públicos adjudicados en España "
                                "con los directivos de las empresas adjudicatarias. "
                                "Datos oficiales PLACE + BORM + PSCP + Registro Mercantil.")
+    # og_path/canonical: antes SIEMPRE apuntaban a "/" (la home) en TODAS las
+    # páginas del sitio -- un bug real, no solo ausencia de etiquetas (las
+    # etiquetas ya existían, solo con la URL equivocada). og_path="/" sigue
+    # siendo el valor por defecto (compatibilidad con todas las llamadas que
+    # no lo pasan), pero cualquier página puede corregirlo pasando su propia
+    # ruta -- ver render_caso_*_html para el caso que motivó el fix
+    # (2026-09-20).
+    og_url = f"{SITE_URL}{og_path}"
     return f"""<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11531,7 +11575,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <title>{esc(full_title)}</title>
 <meta name="description" content="{desc}">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="{esc(SITE_URL)}/">
+<link rel="canonical" href="{esc(og_url)}">
 <link rel="icon" type="image/svg+xml" href="{_pwa_asset('/static/logo.svg')}">
 <link rel="manifest" href="{_pwa_asset('/manifest.json')}">
 <meta name="theme-color" content="{PWA_THEME_COLOR}">
@@ -11543,7 +11587,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <meta property="og:type" content="website">
 <meta property="og:title" content="{esc(full_title)}">
 <meta property="og:description" content="{desc}">
-<meta property="og:url" content="{esc(SITE_URL)}/">
+<meta property="og:url" content="{esc(og_url)}">
 <meta property="og:site_name" content="Dinero Público">
 <meta property="og:locale" content="es_ES">
 <meta property="og:image" content="{esc(SITE_URL)}{_pwa_asset('/static/logo.svg')}">
@@ -13539,32 +13583,96 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8):
       </details>"""
 
 
-def _sidebar_ranking_transparencia_html(top_n=8):
-    """Bloque lateral con el Top N del Índice de Transparencia para la home
-    nacional (2026-09-17, petición de César) -- reutiliza
+def _ranking_con_empates(filas):
+    """Ranking por competición (1,2,2,4 -- no 1,2,2,3): mismos puntos =
+    mismo puesto, y el siguiente valor distinto salta tantas posiciones
+    como empatados hubiera. filas ya viene ordenada desc por 'indice'.
+    Devuelve lista de (puesto, fila).
+
+    Compara por el valor REDONDEADO (el mismo que se muestra, "94/100"),
+    no por el float exacto con un decimal -- hallazgo real al revisar la
+    captura de pantalla (2026-09-20): con el float exacto, Beniel/
+    Villanueva del Río Segura/Archena salían en puestos 4/5/6 distintos
+    pese a mostrar los tres "94/100" en pantalla, que parece un error de
+    verdad aunque no lo sea a nivel de decimales. "Mismo puesto" tiene que
+    referirse a lo que el usuario ve, no a un decimal oculto."""
+    resultado = []
+    puesto_actual = 0
+    valor_anterior = None
+    for i, f in enumerate(filas, 1):
+        valor_mostrado = round(f["indice"])
+        if valor_mostrado != valor_anterior:
+            puesto_actual = i
+            valor_anterior = valor_mostrado
+        resultado.append((puesto_actual, f))
+    return resultado
+
+
+def _sidebar_ranking_transparencia_html(comunidad_actual="murcia", top_n=10):
+    """Bloque lateral con el Índice de Transparencia para la portada
+    (2026-09-17, petición de César; rediseñado 2026-09-20 con selector de
+    región, empates, "ver más" y aviso v1). Reutiliza
     _indice_transparencia_cacheado() tal cual (mismo caché de 1h que ya
-    usa /rankings, ningún cálculo nuevo), solo recorta a los primeros
-    top_n. Si el índice tarda en tener cobertura suficiente en algún
-    momento y sale vacío, el bloque no se pinta (mejor nada que una caja
-    vacía)."""
-    filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
-    filas.sort(key=lambda f: f["indice"], reverse=True)
-    filas = filas[:top_n]
-    if not filas:
+    usa /rankings, ningún cálculo nuevo) -- esto es v1, la versión ya en
+    producción; la v2 (propuesta, en la rama wip/indice-transparencia-v2)
+    NO se conecta aquí a propósito, sigue sin desplegar.
+
+    "En móvil, el lateral pasa a bloque plegable bajo el contenido": el
+    <details> exterior es el mecanismo de plegado; la posición "bajo el
+    contenido" en móvil se resuelve en CSS (ver .rk-sidebar-ranking-wrap),
+    no aquí -- este bloque ya no vive dentro de .home-sidebar-stack."""
+    comunidad_actual = _comunidad_valida(comunidad_actual)
+    if comunidad_actual == "todas":
+        comunidad_actual = "murcia"
+
+    todas_filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
+    filas_region = [f for f in todas_filas
+                     if COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(f["provincia"], f["provincia"]) == comunidad_actual]
+    filas_region.sort(key=lambda f: -f["indice"])
+    ranking = _ranking_con_empates(filas_region)
+
+    if not ranking:
         return ""
-    items = "".join(
-        f'<a class="rk-sidebar-item" href="/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}">'
-        f'<span class="rk-sidebar-pos">{i}.</span>'
-        f'<span class="rk-sidebar-muni">{esc(f["municipio"])}</span>'
-        f'<span class="rk-sidebar-valor">{f["indice"]:.0f}/100</span>'
-        f'</a>'
-        for i, f in enumerate(filas, 1)
+
+    def _fila_html(puesto, f):
+        return (f'<a class="rk-sidebar-item" href="/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}">'
+                f'<span class="rk-sidebar-pos">{puesto}.</span>'
+                f'<span class="rk-sidebar-muni">{esc(f["municipio"])}</span>'
+                f'<span class="rk-sidebar-valor">{f["indice"]:.0f}/100</span>'
+                f'</a>')
+
+    top = ranking[:top_n]
+    resto = ranking[top_n:]
+    top_html = "".join(_fila_html(p, f) for p, f in top)
+
+    ver_mas_html = ""
+    if resto:
+        resto_html = "".join(_fila_html(p, f) for p, f in resto)
+        ver_mas_html = f"""<details class="rk-sidebar-vermas">
+          <summary>Ver más ({len(resto)} más) ▾</summary>
+          <div class="rk-sidebar-list">{resto_html}</div>
+        </details>"""
+
+    opciones_html = "".join(
+        f'<option value="{esc(slug)}"{" selected" if slug == comunidad_actual else ""}>{esc(label)}</option>'
+        for slug, label in sorted(COMUNIDAD_AUTONOMA_LABEL.items(), key=lambda kv: kv[1])
     )
-    return f"""<aside class="rk-sidebar">
-      <div class="rk-sidebar-title">🏅 Índice de Transparencia</div>
-      <div class="rk-sidebar-list">{items}</div>
-      <a class="rk-sidebar-ver btn-ver" href="/rankings#indice-transparencia">Ver ranking completo →</a>
-    </aside>"""
+
+    return f"""<div class="rk-sidebar-ranking-wrap">
+    <details class="rk-sidebar" open>
+      <summary class="rk-sidebar-title">🏅 Índice de Transparencia
+        <span class="rk-sidebar-v1-badge">Índice v1</span></summary>
+      <div class="rk-sidebar-aviso">⚠️ No comparable entre regiones; los datos de origen varían.</div>
+      <label class="rk-sidebar-selector-label" for="rk-sidebar-comunidad">Región</label>
+      <select id="rk-sidebar-comunidad" class="rk-sidebar-selector"
+              onchange="location.href='/?rk_comunidad=' + this.value + '#indice-transparencia'">
+        {opciones_html}
+      </select>
+      <div class="rk-sidebar-list">{top_html}</div>
+      {ver_mas_html}
+      <a class="rk-sidebar-ver btn-ver" href="/rankings?comunidad={esc(comunidad_actual)}#indice-transparencia">Ver ranking completo →</a>
+    </details>
+  </div>"""
 
 
 def _mapa_ccaa_html():
@@ -13678,7 +13786,7 @@ _MAPA_CCAA_JS = r"""(function(){
 })();"""
 
 
-def render_landing_nacional_html(datos):
+def render_landing_nacional_html(datos, rk_comunidad="murcia"):
     """Home agregada: cifras combinadas de todas las provincias cargadas,
     desglose secundario por región, y el top 1 del ranking nacional. Es la
     vista por defecto de '/' (sin ?provincia=); el acceso al listado de
@@ -13800,7 +13908,7 @@ def render_landing_nacional_html(datos):
     # de arriba) para mantener el resto de la función igual que estaba.
     personalizacion_html = _personalizacion_html()
     mapa_html = _mapa_ccaa_html()
-    sidebar_ranking_html = _sidebar_ranking_transparencia_html()
+    sidebar_ranking_html = _sidebar_ranking_transparencia_html(rk_comunidad)
 
     body = f"""<div class="section-title" style="margin-top:0">🔍 Casos de investigación</div>
   <div class="region-grid">{casos_home_html}</div>
@@ -13845,13 +13953,13 @@ def render_landing_nacional_html(datos):
         {noticias_html}
         <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es" target="_blank" rel="noopener">Ver más en la Comisión Europea →</a>
       </aside>
-      {sidebar_ranking_html}
     </div>
     <div class="home-main-col">
       <div class="section-title" style="margin-top:0">🏆 Liderando ahora mismo · Ranking Nacional</div>
       <div class="top1-grid">{top1_html}</div>
       <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
     </div>
+    {sidebar_ranking_html}
   </div>
   <script>window.__PROVINCIA__ = "";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
@@ -14229,7 +14337,56 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
                         provincia=provincia)
 
 
+def _share_buttons_html(path, titulo):
+    """Botones de compartir para el pie de cada caso/noticia (2026-09-20).
+    Enlaces simples (wa.me, sharer.php, intent de X, t.me, mailto) -- sin
+    SDK ni script de terceros cargado, como se pidió. "Copiar enlace" usa
+    Clipboard API con fallback a execCommand, sin dependencias."""
+    url_completa = f"{SITE_URL}{path}"
+    url_enc = quote_plus(url_completa)
+    titulo_enc = quote_plus(titulo)
+    return f"""<div class="share-buttons">
+  <span class="share-label">Compartir:</span>
+  <a class="share-btn" href="https://wa.me/?text={titulo_enc}%20{url_enc}" target="_blank" rel="noopener" aria-label="Compartir en WhatsApp" title="WhatsApp">🟢</a>
+  <a class="share-btn" href="https://www.facebook.com/sharer/sharer.php?u={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en Facebook" title="Facebook">🔵</a>
+  <a class="share-btn" href="https://twitter.com/intent/tweet?text={titulo_enc}&amp;url={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en X" title="X (Twitter)">⚫</a>
+  <a class="share-btn" href="https://t.me/share/url?url={url_enc}&amp;text={titulo_enc}" target="_blank" rel="noopener" aria-label="Compartir en Telegram" title="Telegram">🔷</a>
+  <a class="share-btn" href="mailto:?subject={titulo_enc}&amp;body={url_enc}" aria-label="Compartir por correo" title="Correo">✉️</a>
+  <button type="button" class="share-btn share-copy" data-url="{esc(url_completa)}" aria-label="Copiar enlace" title="Copiar enlace">🔗</button>
+</div>
+<script>
+(function(){{
+  document.querySelectorAll('.share-copy').forEach(function(btn){{
+    btn.addEventListener('click', function(){{
+      var url = btn.getAttribute('data-url');
+      function marcarCopiado(ok){{
+        var original = btn.textContent;
+        btn.textContent = ok ? '✅' : '⚠️';
+        setTimeout(function(){{ btn.textContent = original; }}, 1500);
+      }}
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(url).then(function(){{ marcarCopiado(true); }}).catch(function(){{ marcarCopiado(false); }});
+      }} else {{
+        var ta = document.createElement('textarea');
+        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        try {{ document.execCommand('copy'); marcarCopiado(true); }} catch (e) {{ marcarCopiado(false); }}
+        document.body.removeChild(ta);
+      }}
+    }});
+  }});
+}})();
+</script>"""
+
+
 _CASOS = [
+    {
+        "slug": "archena-ranking-transparencia-dyntra",
+        "titulo": "Archena, primera en el ranking de transparencia de Dyntra: qué mide y qué no",
+        "resumen": "Archena encabeza el ranking regional de Dyntra con el 75% de los indicadores. "
+                   "Es un dato real — pero Dyntra mide si se publica un enlace, no si el contenido es "
+                   "completo o exacto. Lo contrastamos con lo que tenemos indexado nosotros mismos.",
+    },
     {
         "slug": "contratos-menores-culmina",
         "titulo": "Lo que una empresa que no aparecía nos enseñó sobre los contratos menores",
@@ -14272,7 +14429,122 @@ def render_casos_index_html():
                                      "Dinero Público: cómo verificamos lo que mostramos.")
 
 
+def render_caso_archena_dyntra_html():
+    """Publicado 2026-09-20. Todas las cifras verificadas en vivo esa misma
+    sesión: ficha de Archena en producción (32/28.547.149,15€/85,5%/2 sin
+    adjudicatario, cache.db), Dyntra (ficha + ranking regional, capturas de
+    pantalla con Playwright), y las páginas de transparencia.archena.es
+    citadas. El 25,68% de media regional que circuló en varios medios se
+    reconstruye aquí de forma explícita (36 municipios evaluados por
+    Dyntra, media real 32,1%; sobre los 45 municipios reales de la Región
+    contando los 9 no evaluados como 0%, sale 25,68% -- ambos números son
+    "correctos", miden cosas distintas)."""
+    _og_path = "/casos/archena-ranking-transparencia-dyntra"
+    _titulo = "Archena, primera en el ranking de transparencia de Dyntra: qué mide y qué no"
+    body = """<div class="static-page">
+  <h1>Archena, primera en el ranking de transparencia de Dyntra: qué mide y qué no</h1>
+
+  <p>El 19 de septiembre varios medios regionales publicaron, con textos casi idénticos,
+  que el Ayuntamiento de Archena cumple el 75% de los indicadores de transparencia de
+  Dyntra, muy por encima de la media de la Región de Murcia. El dato es real — lo hemos
+  verificado directamente en Dyntra, no solo en las notas de prensa — pero conviene
+  entender qué mide exactamente antes de leerlo como un juicio sobre la gestión
+  municipal.</p>
+
+  <h2>El dato, verificado</h2>
+  <p>En la ficha de Archena en Dyntra figuran <strong>138 de 184 indicadores publicados
+  (75%)</strong>, evaluados y verificados por el equipo de Dyntra el 18 de septiembre de
+  2026. En el ranking regional, Archena aparece primera, por delante de Caravaca de la
+  Cruz (125/184, 67,93%) y Molina de Segura (99/184, 53,8%). Varias de las notas de
+  prensa hablan de «136 indicadores» — la propia ficha de Dyntra dice 138; no hemos
+  encontrado de dónde sale esa cifra distinta.</p>
+
+  <h2>El 25,68% de media regional, desglosado</h2>
+  <p>Esa cifra también circuló en varios medios, y merece una aclaración porque puede
+  leerse de dos formas. El ranking de Dyntra para la Región de Murcia solo tiene ficha
+  evaluada para 36 de los 45 municipios reales — la media de esos 36 es un 32,1%,
+  no 25,68%. El 25,68% sale de dividir entre los <strong>45</strong> municipios reales de
+  la Región, contando como 0% a los 9 que Dyntra todavía no ha evaluado. Ninguna de las
+  dos cuentas está "mal" — son dos preguntas distintas ("¿cómo de transparentes son los
+  ayuntamientos que Dyntra ha mirado?" frente a "¿cómo de transparente es la Región en su
+  conjunto, incluyendo lo que aún no se ha mirado?") — pero conviene saber cuál te están
+  dando.</p>
+  <p>El propio ranking regional es un buen aviso de que conviene tratar estas
+  evaluaciones con cautela cuando no consta que se hayan actualizado: Alhama de Murcia
+  aparece ahora con 16 de 184 indicadores (8,7%), cuando en una edición anterior de
+  Dyntra (con una metodología de 162 indicadores, no 184) figuraba con 141 de 162
+  (87%) — una de las mejores puntuaciones de España en su momento. Puede deberse a un
+  cambio real en lo que publica el ayuntamiento, a un cambio de metodología entre
+  ediciones, o a que la ficha antigua no se haya vuelto a evaluar con el nuevo criterio;
+  no lo sabemos con certeza, y por eso no lo damos por hecho en ningún sentido. El propio
+  portal de transparencia dedicado de Alhama de Murcia
+  (transparencia.alhamademurcia.es) está, a fecha de hoy, "en mantenimiento".</p>
+
+  <h2>Qué mide Dyntra (y qué no)</h2>
+  <p>Los indicadores de Dyntra comprueban, en lo esencial, si el ayuntamiento publica
+  cierta información — normalmente basta con que exista un enlace o un documento
+  accesible. No consta que la metodología evalúe si esa información está completa,
+  actualizada o es exacta: un enlace roto que en su día apuntó a algo válido, o un
+  documento con datos parciales, puede seguir contando como "publicado". Esto no es una
+  crítica a Dyntra — es simplemente el límite de lo que una auditoría de esa escala
+  (miles de ayuntamientos) puede comprobar sin verificar cada documento uno a uno, que es
+  exactamente el trabajo que nosotros sí podemos hacer, municipio a municipio, con lo que
+  tenemos indexado.</p>
+
+  <h2>Contratos menores: lo que encontramos en el propio portal de Archena</h2>
+  <p>El portal de transparencia de Archena publica listados de contratos menores desde
+  2021 hasta 2025, repartidos entre tablas en la propia web y archivos XLSX y PDF por
+  ejercicio. En una lectura preliminar de esos archivos (no integrada todavía en Dinero
+  Público) contamos cerca de 600 contratos y unos 5,9 millones de euros con IVA
+  incluido. Dyntra le da a Archena un 50% en su indicador de "Open Data" (1 de 2
+  indicadores) — no consta una plataforma de datos abiertos reutilizable de forma
+  automática (API o descarga masiva estructurada), aunque los listados anuales sí son
+  archivos descargables. Un matiz más: los listados se publican con retraso — según la
+  fecha de subida del propio archivo, el de 2024 se colgó en abril de 2025 y el de 2025
+  en abril de 2026. <strong>Estos contratos menores todavía no están integrados en
+  Dinero Público</strong> — lo que mostramos de Archena en nuestra ficha son solo los
+  contratos formales de PLACE.</p>
+
+  <h2>Lo que sí tenemos: contratación en PLACE</h2>
+  <p>Dinero Público indexa 32 contratos formales de Archena en PLACE, desde 2023, por un
+  total de 28.547.149,15€. Uno solo — el servicio de recogida de residuos sólidos
+  urbanos, limpieza viaria y zonas verdes, adjudicado por 24.411.787,20€ — concentra el
+  85,5% de ese importe. En 2 de los 32 contratos (un 6%) no hemos podido identificar a la
+  empresa adjudicataria con las fuentes que cruzamos.</p>
+
+  <h2>Nota de transparencia</h2>
+  <p>El autor de Dinero Público mantiene un litigio con el Ayuntamiento de Archena. Este
+  texto se limita a datos públicos, enlazados a su fuente original, para que cualquiera
+  pueda verificarlos por su cuenta — el mismo criterio que aplicamos en cualquier otro
+  caso de este proyecto.</p>
+
+  <p style="font-size:12px;color:var(--dim)">Datos consultados el 20 de septiembre de
+  2026.</p>
+
+  <h2>Fuentes</h2>
+  <ul>
+    <li><a href="https://www.dyntra.org/poi/ayuntamiento-de-archena/?ineedthispage=yes" target="_blank" rel="noopener">dyntra.org</a> — ficha de transparencia de Archena (138/184, 75%; evaluada y verificada el 18/09/2026)</li>
+    <li><a href="https://www.dyntra.org/indices/ayuntamientos-de-espana/region-de-murcia/" target="_blank" rel="noopener">dyntra.org</a> — ranking de transparencia, Región de Murcia</li>
+    <li><a href="https://transparencia.archena.es/t/contratos_menores" target="_blank" rel="noopener">transparencia.archena.es</a> — contratos menores (tablas en vivo)</li>
+    <li><a href="https://transparencia.archena.es/t/contratos" target="_blank" rel="noopener">transparencia.archena.es</a> — contratos menores por ejercicio (XLSX/PDF descargables)</li>
+    <li><a href="/?muni=Archena&amp;provincia=murcia">Dinero Público</a> — ficha de Archena (32 contratos PLACE, 28.547.149,15€)</li>
+  </ul>
+
+  <p><a href="/casos">← Volver a Casos</a></p>
+</div>"""
+    body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
+                         _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
+    return _page_shell("Caso: Archena, primera en transparencia según Dyntra — qué mide y qué no",
+                        body,
+                        description="Archena encabeza el ranking regional de Dyntra con el 75% de los "
+                                     "indicadores. Verificamos el dato, lo contrastamos con lo que Dyntra "
+                                     "mide de verdad, y lo cruzamos con lo que tenemos indexado nosotros.",
+                        og_path=_og_path)
+
+
 def render_caso_contratos_menores_html():
+    _og_path = "/casos/contratos-menores-culmina"
+    _titulo = "Lo que una empresa que no aparecía nos enseñó sobre los contratos menores"
     body = """<div class="static-page">
   <h1>Lo que una empresa que no aparecía nos enseñó sobre los contratos menores</h1>
 
@@ -14333,14 +14605,19 @@ def render_caso_contratos_menores_html():
 
   <p><a href="/casos">← Volver a Casos</a></p>
 </div>"""
+    body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
+                         _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
     return _page_shell("Caso: lo que una empresa que no aparecía nos enseñó sobre los contratos menores",
                         body,
                         description="Por qué una empresa activa en el sector local puede no tener "
                                      "ninguna adjudicación indexada, y cómo eso nos llevó a construir "
-                                     "la sección de contratos menores de Dinero Público.")
+                                     "la sección de contratos menores de Dinero Público.",
+                        og_path=_og_path)
 
 
 def render_caso_sueldo_cero_html():
+    _og_path = "/casos/sueldo-cero-barcelona"
+    _titulo = "Cuando el sueldo de una alcaldesa aparece en 0€ (y no es un error)"
     body = """<div class="static-page">
   <h1>Cuando el sueldo de una alcaldesa aparece en 0€ (y no es un error)</h1>
 
@@ -14368,13 +14645,18 @@ def render_caso_sueldo_cero_html():
 
   <p><a href="/casos">← Volver a Casos</a></p>
 </div>"""
+    body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
+                         _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
     return _page_shell("Caso: el sueldo de alcaldesa en 0€ que no es un error",
                         body,
                         description="Por qué tres alcaldesas de la provincia de Barcelona figuran sin "
-                                     "sueldo municipal, y cómo lo verificamos antes de mostrarlo.")
+                                     "sueldo municipal, y cómo lo verificamos antes de mostrarlo.",
+                        og_path=_og_path)
 
 
 def render_caso_quiebras_vitoria_html():
+    _og_path = "/casos/quiebras-servicios-deportivos-vitoria"
+    _titulo = "Dos empresas, un año, el mismo patrón: los servicios deportivos subcontratados de Vitoria-Gasteiz"
     body = """<div class="static-page">
   <h1>Dos empresas, un año, el mismo patrón: los servicios deportivos subcontratados de Vitoria-Gasteiz</h1>
 
@@ -14441,12 +14723,15 @@ def render_caso_quiebras_vitoria_html():
 
   <p><a href="/casos">← Volver a Casos</a></p>
 </div>"""
+    body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
+                         _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
     return _page_shell("Caso: el patrón de quiebras en los servicios deportivos de Vitoria-Gasteiz",
                         body,
                         description="Disport Eki y Prismaglobal, dos empresas subcontratadas por el "
                                      "Ayuntamiento de Vitoria-Gasteiz para gestionar instalaciones "
                                      "deportivas municipales, entraron en concurso de acreedores con "
-                                     "poco más de un año de diferencia.")
+                                     "poco más de un año de diferencia.",
+                        og_path=_og_path)
 
 
 # Banderas simplificadas de cada comunidad/ciudad autónoma, como marcado SVG
@@ -15018,7 +15303,8 @@ def _route_get(path, qs, gzip_ok=False):
             # quedarse pegada; la copia YA cacheada en el edge necesita una
             # purga aparte (no algo que este proceso pueda hacer).
             datos_todas = _db_all_municipios()
-            return _resp(render_landing_nacional_html(datos_todas),
+            rk_comunidad = qs.get("rk_comunidad", ["murcia"])[0]
+            return _resp(render_landing_nacional_html(datos_todas, rk_comunidad=rk_comunidad),
                          headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok)
 
         datos_snap = _db_all_municipios(provincia=provincia_filtro)
@@ -15045,6 +15331,9 @@ def _route_get(path, qs, gzip_ok=False):
 
     if path == "/casos":
         return _resp(render_casos_index_html(), gzip_ok=gzip_ok)
+
+    if path == "/casos/archena-ranking-transparencia-dyntra":
+        return _resp(render_caso_archena_dyntra_html(), gzip_ok=gzip_ok)
 
     if path == "/casos/contratos-menores-culmina":
         return _resp(render_caso_contratos_menores_html(), gzip_ok=gzip_ok)
