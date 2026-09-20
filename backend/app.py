@@ -10323,10 +10323,22 @@ def _lanzar_enriquecimiento(provincia=None):
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+/* Tema claro con fondo amarillo pálido (2026-09-20, petición de César:
+   "fondo negro -> amarillo, tono a discreción, preservando el contraste").
+   Antes era el tema oscuro de GitHub (bg #0d1117/surface #161b22/texto
+   claro); los colores semánticos (accent/blue/red/green/yellow/purple) se
+   oscurecieron a la vez -- eran claros a propósito para leerse SOBRE fondo
+   oscuro, y sobre un fondo claro esos mismos tonos pierden casi todo el
+   contraste (algunos bajaban de ~4.5:1 a ~2:1). Paleta verificada con
+   cálculo de contraste WCAG (ver auditoría 2026-09-20): texto principal
+   14-16:1, texto secundario ~5.2-5.8:1, todos los acentos ≥4.4:1 sobre bg
+   y superficie -- ver botones background:var(--accent) que además pasan
+   de texto negro a blanco (accent ahora es un naranja oscuro, texto
+   blanco da 6:1 frente a 3.5:1 con negro).*/
 :root{
-  --bg:#0d1117;--surface:#161b22;--border:#30363d;
-  --accent:#f0883e;--blue:#58a6ff;--text:#c9d1d9;--dim:#8b949e;
-  --red:#f85149;--green:#3fb950;--yellow:#d29922;--purple:#d2a8ff;
+  --bg:#fbf0c4;--surface:#fffdf6;--border:#9c8a4a;
+  --accent:#a8440a;--blue:#0969da;--text:#22201a;--dim:#6b6355;
+  --red:#cf222e;--green:#1a7f37;--yellow:#9a6700;--purple:#8250df;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 /* overflow-x:hidden SOLO en html, no en body -- ver INFORME_NOCHE.md (header
@@ -10355,7 +10367,7 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .header-nav{flex-shrink:0;display:flex;align-items:center;gap:10px;}
 .header-nav>a{display:inline-flex;text-decoration:none;padding:8px 16px;border-radius:6px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);font-size:13px;font-weight:600;white-space:nowrap;}
 .header-nav>a:hover{background:rgba(240,136,62,.22);}
-.pwa-install-btn{display:inline-flex;font-family:'IBM Plex Sans',sans-serif;text-decoration:none;padding:8px 16px;border-radius:6px;background:var(--accent);color:#000;border:1px solid var(--accent);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
+.pwa-install-btn{display:inline-flex;font-family:'IBM Plex Sans',sans-serif;text-decoration:none;padding:8px 16px;border-radius:6px;background:var(--accent);color:#fff;border:1px solid var(--accent);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
 .pwa-install-btn[hidden]{display:none;}
 .pwa-install-btn:hover{background:#ffa657;}
 /* ── banner fijo de instalar app (solo móvil) ──────────────────────────── */
@@ -10366,11 +10378,11 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
   50%{box-shadow:0 0 0 8px rgba(240,136,62,0);}
 }
 @media (max-width:700px){
-  .pwa-banner-mobile{display:flex;align-items:center;gap:10px;position:fixed;top:0;left:0;right:0;z-index:200;padding:10px 14px;background:var(--accent);color:#000;font-size:12.5px;font-weight:600;animation:pwaBannerPulse 1.8s ease-in-out infinite;}
+  .pwa-banner-mobile{display:flex;align-items:center;gap:10px;position:fixed;top:0;left:0;right:0;z-index:200;padding:10px 14px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600;animation:pwaBannerPulse 1.8s ease-in-out infinite;}
   .pwa-banner-mobile[hidden]{display:none;}
   .pwa-banner-text{flex:1;line-height:1.3;}
-  .pwa-banner-btn{background:#000;color:var(--accent);border:none;border-radius:5px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;}
-  .pwa-banner-close{background:transparent;border:none;color:#000;font-size:17px;cursor:pointer;padding:0 2px;line-height:1;opacity:.65;}
+  .pwa-banner-btn{background:#000;color:#f0883e;border:none;border-radius:5px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .pwa-banner-close{background:transparent;border:none;color:#fff;font-size:17px;cursor:pointer;padding:0 2px;line-height:1;opacity:.65;}
   .pwa-banner-close:hover{opacity:1;}
 }
 .instalar-bar-highlight{animation:pwaBannerPulse 1s ease-in-out 2;border-color:var(--accent) !important;}
@@ -10387,7 +10399,7 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .cookie-texto a{color:var(--blue);}
 .cookie-botones{display:flex;gap:10px;flex-wrap:wrap;}
 .cookie-btn{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:700;padding:10px 22px;border-radius:6px;cursor:pointer;white-space:nowrap;min-width:120px;text-align:center;}
-.cookie-btn-aceptar{background:var(--accent);color:#000;border:1px solid var(--accent);}
+.cookie-btn-aceptar{background:var(--accent);color:#fff;border:1px solid var(--accent);}
 .cookie-btn-aceptar:hover{background:#ffa657;}
 .cookie-btn-rechazar{background:var(--surface);color:var(--text);border:1px solid var(--border);}
 .cookie-btn-rechazar:hover{border-color:var(--dim);}
@@ -10399,14 +10411,14 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .prov-switch{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
 .prov-tab{text-decoration:none;padding:8px 14px;font-size:13px;font-weight:600;color:var(--dim);background:var(--bg);white-space:nowrap;}
 .prov-tab:hover{color:var(--text);}
-.prov-tab.active{background:var(--accent);color:#000;}
+.prov-tab.active{background:var(--accent);color:#fff;}
 .main{max-width:1340px;margin:28px auto;padding:0 20px;}
 .search-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:24px;}
 .search-bar label{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--dim);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
 .search-bar input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:8px 12px;border-radius:6px;flex:1;min-width:180px;outline:none;}
 .search-bar input:focus{border-color:var(--blue);}
 .btn{padding:8px 18px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;font-family:'IBM Plex Sans',sans-serif;}
-.btn-primary{background:var(--accent);color:#000;}
+.btn-primary{background:var(--accent);color:#fff;}
 .btn-danger{background:var(--red);color:#fff;}
 .stats-bar{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
@@ -10414,8 +10426,8 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 /* alertas anticorrupcion */
 .alertas{margin-bottom:18px;display:flex;flex-direction:column;gap:8px;}
 .alerta{border-radius:6px;padding:10px 16px;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:flex-start;}
-.alerta.alto{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);color:#f8c4c2;}
-.alerta.medio{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:#e6c87a;}
+.alerta.alto{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);color:var(--red);}
+.alerta.medio{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:var(--yellow);}
 .alerta.info{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);color:var(--text);}
 .alerta-ico{font-size:16px;line-height:1;}
 .alerta-titulo{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;opacity:.7;}
@@ -10450,11 +10462,11 @@ tr:last-child td{border-bottom:none;}
 .directivo{color:var(--blue);}
 .cargo{color:var(--dim);font-size:11px;}
 .cargo-match{font-size:10.5px;line-height:1.5;margin-top:5px;padding:5px 8px;border-radius:4px;max-width:260px;}
-.cargo-match-local{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:#e6c87a;}
+.cargo-match-local{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:var(--yellow);}
 .cargo-match-regional{background:rgba(88,166,255,.06);border:3px double rgba(88,166,255,.5);color:var(--text);}
 .cargo-match-detalle{opacity:.85;font-weight:normal;}
 a.link{color:var(--blue);font-size:11px;}
-a.borm-link{color:#e0a0ff;font-size:11px;}
+a.borm-link{color:var(--purple);font-size:11px;}
 .empty{text-align:center;padding:50px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .estado-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;}
 .est-ADJ,.est-RES{background:rgba(63,185,80,.15);color:var(--green);}
@@ -10462,7 +10474,7 @@ a.borm-link{color:#e0a0ff;font-size:11px;}
 .lid{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .fuente-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 5px;border-radius:3px;vertical-align:middle;margin-left:4px;}
 .fuente-place{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);}
-.fuente-borm{background:rgba(224,160,255,.15);color:#e0a0ff;border:1px solid rgba(224,160,255,.3);}
+.fuente-borm{background:rgba(224,160,255,.15);color:var(--purple);border:1px solid rgba(224,160,255,.3);}
 .fuente-pscp{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);}
 a.pscp-link{color:var(--green);}
 /* Fondos UE -- letra amarilla sobre fondo azul a propósito, para
@@ -10572,7 +10584,7 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .as-rr-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;}
 .as-rr-empresa{font-weight:600;font-size:13px;}
 .as-rr-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;}
-.as-rr-importe.big{font-size:15px;color:#5fe37a;font-weight:600;}
+.as-rr-importe.big{font-size:15px;color:var(--green);font-weight:600;}
 .as-rr-sub{font-size:11px;color:var(--dim);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
 .as-rr-titulo{font-size:12px;color:var(--text);margin-top:5px;}
 .as-rr-directivo{font-size:12px;color:var(--blue);margin-top:4px;}
@@ -10614,12 +10626,25 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .rk-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 10px;}
 .muni-tile a.btn-ver:hover{background:rgba(240,136,62,.22);}
 
+/* ── aviso descartable de metodología de rankings (2026-09-20, petición
+   de César: "los baremos se están analizando, el ranking puede variar
+   durante unos días") -- banner, no modal, para no bloquear la página;
+   se recuerda con localStorage (mismo patrón que el resto del sitio para
+   preferencias de UI, sin cookies ni servidor) para no repetirse en cada
+   visita una vez cerrado. */
+.rk-metodologia-aviso{display:flex;gap:12px;align-items:flex-start;background:rgba(154,103,0,.1);border:1px solid rgba(154,103,0,.35);color:var(--text);border-radius:8px;padding:12px 16px;margin:18px 0;font-size:13px;line-height:1.5;}
+.rk-metodologia-aviso[hidden]{display:none;}
+.rk-metodologia-ico{font-size:16px;line-height:1;flex-shrink:0;}
+.rk-metodologia-cerrar{background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:0 4px;margin-left:auto;flex-shrink:0;}
+.rk-metodologia-cerrar:hover{color:var(--text);}
+
 /* ── cabecera home: panel degradado azul (hero + buscador + stats) ──────
    Solo se aplica en la home nacional envolviendo .hero/.adv-search/.stats-bar
    en .hero-panel -- el resto de usos de esas clases (rankings, fondos-ue,
-   landing por provincia) no llevan ese envoltorio y siguen en fondo oscuro. */
+   landing por provincia) no llevan ese envoltorio y siguen con el fondo
+   general del sitio (tema claro/amarillo, ver :root). */
 .hero-panel{background:linear-gradient(135deg,#0b2145 0%,#12336b 55%,#1c4fa0 100%);border-radius:14px;padding:6px 20px 24px;margin-bottom:24px;color:#fff;}
-.hero-panel .hero-tagline{color:var(--yellow);}
+.hero-panel .hero-tagline{color:#f5b700;}
 .hero-panel .hero-sub{color:rgba(255,255,255,.82);}
 .hero-panel .adv-search{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);}
 .hero-panel .as-tab{background:rgba(255,255,255,.08);color:rgba(255,255,255,.72);border-color:rgba(255,255,255,.2);}
@@ -10640,8 +10665,16 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 /* ── home: columna de noticias UE (margen izquierdo) + columna principal ─
    Mismo amarillo que fondos UE (.fue-header h2, badges CORDIS/Cohesion)
    para mantener "UE = amarillo" consistente en todo el sitio. */
-.home-grid{display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start;}
-.home-sidebar-stack{display:flex;flex-direction:column;gap:20px;}
+.home-grid{display:grid;grid-template-columns:280px 1fr;grid-template-rows:auto auto;gap:20px;align-items:start;}
+.home-sidebar-stack{display:flex;flex-direction:column;gap:20px;grid-column:1;grid-row:1;}
+.home-main-col{grid-column:2;grid-row:1 / span 2;}
+/* El ranking es un hijo directo de .home-grid (no de .home-sidebar-stack)
+   a propósito -- en escritorio se coloca bajo las noticias UE en la misma
+   columna izquierda (grid-column/row explícitos); en móvil (ver media
+   query más abajo) se resetea a flujo normal, y como en el HTML aparece
+   DESPUÉS de .home-main-col, cae bajo el contenido -- "en móvil, el
+   lateral pasa a bloque plegable bajo el contenido" (2026-09-20). */
+.rk-sidebar-ranking-wrap{grid-column:1;grid-row:2;}
 .noticias-ue-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:2px;position:sticky;top:80px;}
 .nu-panel-title{font-size:13px;font-weight:600;color:var(--yellow);margin-bottom:10px;}
 .noticia-ue-item{padding:10px 0;border-bottom:1px solid var(--border);}
@@ -10679,17 +10712,27 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .static-page ul{margin:0 0 14px 22px;}
 .static-page li{margin-bottom:6px;}
 .static-page a{color:var(--blue);}
-.static-page .contact-btn{display:inline-block;margin-top:8px;padding:9px 18px;background:var(--accent);color:#000;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;}
+.static-page .contact-btn{display:inline-block;margin-top:8px;padding:9px 18px;background:var(--accent);color:#fff;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;}
+
+/* Botones de compartir (2026-09-20) -- enlaces simples wa.me/sharer.php/
+   intent/t.me/mailto, sin SDK de terceros; el botón de copiar usa Clipboard
+   API con fallback, ver _share_buttons_html. */
+.share-buttons{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:22px 0 4px;padding-top:16px;border-top:1px solid var(--border);}
+.share-label{font-size:12px;color:var(--dim);font-weight:600;margin-right:2px;}
+.share-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--bg);border:1px solid var(--border);font-size:15px;text-decoration:none;cursor:pointer;line-height:1;}
+.share-btn:hover{border-color:var(--accent);}
+button.share-btn{font-family:inherit;}
+@media (max-width:640px){.share-btn{width:38px;height:38px;font-size:16px;}}
 
 /* ── mejoras visuales: importes / iconos / avisos ────────────────────── */
-.importe.big{font-size:16px;color:#5fe37a;}
+.importe.big{font-size:16px;color:var(--green);}
 .icon-tipo{margin-right:5px;}
 .noloc-warn{display:inline-flex;align-items:center;gap:5px;color:var(--yellow);font-size:11px;font-style:italic;}
 .noloc-warn a{color:var(--yellow);text-decoration:underline;}
 .noloc-nota{display:block;font-size:10px;color:var(--dim);font-style:italic;margin-top:2px;}
 .risk-prominent{border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:center;background:rgba(248,81,73,.12);border:2px solid rgba(248,81,73,.5);}
 .risk-prominent .rp-ico{font-size:26px;line-height:1;}
-.risk-prominent .rp-text{font-size:13px;color:#f8c4c2;line-height:1.5;}
+.risk-prominent .rp-text{font-size:13px;color:var(--red);line-height:1.5;}
 .risk-prominent .rp-text b{color:#fff;}
 
 /* ── Índice de Transparencia (rankings) ──────────────────────────────── */
@@ -10766,8 +10809,9 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
   .muni-grid{grid-template-columns:1fr;}
 }
 @media (max-width:860px){
-  .home-grid{grid-template-columns:1fr;}
+  .home-grid{grid-template-columns:1fr;grid-template-rows:auto;}
   .noticias-ue-panel{position:static;}
+  .home-sidebar-stack,.home-main-col,.rk-sidebar-ranking-wrap{grid-column:1;grid-row:auto;}
 }
 @keyframes scroll-hint-nudge{
   0%,100%{transform:translateX(0);}
@@ -10818,6 +10862,27 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .rk-sidebar-item-actual{background:rgba(63,185,80,.1);border-radius:6px;padding:6px 8px;margin:0 -8px;border-bottom-color:transparent;}
 .rk-sidebar-separador{border-top:1px dashed var(--border);margin:4px 0;}
 
+/* rk-sidebar ahora es un <details> (plegable en móvil, ver .rk-sidebar-
+   ranking-wrap) -- el <summary> hace de cabecera clicable, sin marcador
+   nativo del navegador (mismo patrón que .it-widget summary). */
+.rk-sidebar summary.rk-sidebar-title{cursor:pointer;list-style:none;}
+.rk-sidebar summary.rk-sidebar-title::-webkit-details-marker{display:none;}
+.rk-sidebar summary.rk-sidebar-title::after{content:'▾';margin-left:auto;color:var(--dim);font-size:11px;}
+.rk-sidebar[open] summary.rk-sidebar-title::after{content:'▴';}
+.rk-sidebar-v1-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--dim);background:rgba(0,0,0,.05);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
+.rk-info-wrap{position:relative;display:inline-block;}
+.rk-info-btn{width:16px;height:16px;line-height:14px;padding:0;border-radius:50%;border:1px solid var(--border);background:rgba(0,0,0,.05);color:var(--dim);font-size:11px;cursor:help;}
+.rk-info-btn:hover{color:var(--text);border-color:var(--dim);}
+.rk-info-pop{display:none;position:absolute;z-index:20;top:22px;left:0;width:240px;max-width:60vw;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;line-height:1.5;color:var(--dim);font-weight:400;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.rk-info-wrap:hover .rk-info-pop,.rk-info-wrap.rk-info-open .rk-info-pop{display:block;}
+.rk-sidebar-aviso{font-size:10.5px;color:var(--dim);line-height:1.4;margin:-4px 0 12px;}
+.rk-sidebar-selector-label{display:block;font-size:10px;color:var(--dim);margin-bottom:4px;}
+.rk-sidebar-selector{width:100%;margin-bottom:12px;padding:6px 8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px;}
+.rk-sidebar-vermas{margin-top:6px;}
+.rk-sidebar-vermas summary{cursor:pointer;list-style:none;font-size:11px;color:var(--blue);padding:4px 0;}
+.rk-sidebar-vermas summary::-webkit-details-marker{display:none;}
+.rk-sidebar-vermas .rk-sidebar-list{margin-top:8px;}
+
 /* ── gancho de personalización (home nacional) ───────────────────────────── */
 .personaliza-banner{background:linear-gradient(135deg,#1c4fa0 0%,#0b2145 100%);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#fff;}
 .personaliza-banner.oculto{display:none;}
@@ -10825,7 +10890,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .personaliza-input-row{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:220px;position:relative;}
 .personaliza-input-row input{flex:1;min-width:160px;padding:9px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .personaliza-input-row input::placeholder{color:rgba(255,255,255,.6);}
-.personaliza-input-row button{padding:9px 16px;border-radius:6px;border:none;background:var(--accent);color:#000;font-weight:600;cursor:pointer;font-size:12px;white-space:nowrap;}
+.personaliza-input-row button{padding:9px 16px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;font-size:12px;white-space:nowrap;}
 .personaliza-cerrar{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;padding:0 4px;}
 .personaliza-sugerencias{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:15;display:none;}
 .personaliza-sugerencias.show{display:block;}
@@ -10960,7 +11025,7 @@ def _render_alertas(alertas):
 # ─── PLANTILLA COMÚN (header / footer / banner / SEO) ────────────────────────
 
 SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
-SITE_TAGLINE = "El dinero de todos, en manos de quién"
+SITE_TAGLINE = "ESPAÑA, Y EL DINERO DE TODOS EN MANOS DE QUIÉN"
 BIZUM_TELEFONO = "661657013"
 
 # ─── Consentimiento de cookies + Google AdSense (2026-09-05) ────────────────
@@ -11050,8 +11115,8 @@ function _dpCargarAdsense() {} // AdSense todavía no activo (cuenta pendiente d
 # soporta beforeinstallprompt). Colores tomados de las variables CSS ya
 # existentes (--bg y --surface, ver _ALL_CSS_CONTENT) para que la barra de
 # estado/task switcher combine con el sitio real, no un color inventado.
-PWA_THEME_COLOR = "#161b22"       # --surface, mismo fondo que <header>
-PWA_BACKGROUND_COLOR = "#0d1117"  # --bg, fondo de la pantalla de carga
+PWA_THEME_COLOR = "#fffdf6"       # --surface, mismo fondo que <header>
+PWA_BACKGROUND_COLOR = "#fbf0c4"  # --bg, fondo de la pantalla de carga
 
 PWA_MANIFEST = {
     "id": "/",
@@ -11528,11 +11593,20 @@ def _footer_html(provincia="todas"):
 </footer>"""
 
 
-def _page_shell(title, body_html, description="", extra_head="", provincia="todas", show_ad_banner=True):
+def _page_shell(title, body_html, description="", extra_head="", provincia="todas", show_ad_banner=True,
+                 og_path="/"):
     full_title = title if "|" in title else f"{title} | Dinero Público"
     desc = esc(description or "Consulta los contratos públicos adjudicados en España "
                                "con los directivos de las empresas adjudicatarias. "
                                "Datos oficiales PLACE + BORM + PSCP + Registro Mercantil.")
+    # og_path/canonical: antes SIEMPRE apuntaban a "/" (la home) en TODAS las
+    # páginas del sitio -- un bug real, no solo ausencia de etiquetas (las
+    # etiquetas ya existían, solo con la URL equivocada). og_path="/" sigue
+    # siendo el valor por defecto (compatibilidad con todas las llamadas que
+    # no lo pasan), pero cualquier página puede corregirlo pasando su propia
+    # ruta -- ver render_caso_*_html para el caso que motivó el fix
+    # (2026-09-20).
+    og_url = f"{SITE_URL}{og_path}"
     return f"""<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11544,7 +11618,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <title>{esc(full_title)}</title>
 <meta name="description" content="{desc}">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="{esc(SITE_URL)}/">
+<link rel="canonical" href="{esc(og_url)}">
 <link rel="icon" type="image/svg+xml" href="{_pwa_asset('/static/logo.svg')}">
 <link rel="manifest" href="{_pwa_asset('/manifest.json')}">
 <meta name="theme-color" content="{PWA_THEME_COLOR}">
@@ -11556,7 +11630,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <meta property="og:type" content="website">
 <meta property="og:title" content="{esc(full_title)}">
 <meta property="og:description" content="{desc}">
-<meta property="og:url" content="{esc(SITE_URL)}/">
+<meta property="og:url" content="{esc(og_url)}">
 <meta property="og:site_name" content="Dinero Público">
 <meta property="og:locale" content="es_ES">
 <meta property="og:image" content="{esc(SITE_URL)}{_pwa_asset('/static/logo.svg')}">
@@ -11954,6 +12028,26 @@ _INDICE_TRANSPARENCIA_PESOS = {
     "actividad":     20.0,
 }
 _INDICE_TRANSPARENCIA_MIN_COMPONENTES = 3  # por debajo de esto, "cobertura insuficiente"
+_INDICE_TRANSPARENCIA_MAX_FILAS_TABLA = 300  # tope de filas pintadas en /rankings, ver _render_indice_transparencia_html
+
+# "cuentas" (CUENTAS_ANUALES) e "ispa_pub" (RETRIBUCIONES_ISPA) vienen de
+# actualizar_cuentas_anuales.py y actualizar_retribuciones.py, que SIGUEN
+# hardcodeados a estas 5 provincias originales (PROVINCIAS_CUBIERTAS en
+# actualizar_retribuciones.py; MUNICIPIOS_MURCIA/GIRONA/LLEIDA/BARCELONA/
+# TARRAGONA en actualizar_cuentas_anuales.py) -- a diferencia de
+# actualizar_deuda_y_liquidaciones.py (hacienda_eell.json: deuda_pub/
+# saldo_pub), que SÍ se generalizó el 2026-09-13 a todas las provincias de
+# MUNICIPIOS_POR_PROVINCIA y hoy cubre prácticamente toda España (8.042/6.930
+# de 8.086 municipios). Bug encontrado y corregido el 2026-09-20: antes,
+# "cuentas"/"ispa_pub" se marcaban "disponible" para CUALQUIER municipio de
+# España, puntuando 0 si no aparecía en el fichero -- eso castigaba a los
+# ~4.900 municipios fuera de estas 5 provincias por una limitación de
+# COBERTURA DE ESTE PROYECTO (el script nunca se ha ejecutado para ellos),
+# no por su transparencia real, y de paso inflaba /rankings (vista "todas")
+# a las ~8.086 filas de España entera en vez de a los municipios realmente
+# evaluados. Cuando esos dos scripts se generalicen (igual que ya se hizo
+# con deuda/saldo y población), este set deja de hacer falta.
+_INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA = {"murcia", "girona", "lleida", "barcelona", "tarragona"}
 
 # Tramos de población para comparar la actividad de publicación (componente
 # "actividad") solo contra municipios de tamaño parecido -- comparar Lorca
@@ -12040,12 +12134,21 @@ def _calcular_indice_transparencia():
         provincia = pob.get("provincia", "murcia")
         habitantes = pob.get("poblacion")
 
+        # cuentas/ispa_pub: solo "disponible" (0 o 100, señal real) para las
+        # 5 provincias que esos dos scripts realmente rastrean -- fuera de
+        # ahí, se EXCLUYE (no se puntúa 0) porque no significa que el
+        # municipio no publique, sino que no lo hemos mirado (ver comentario
+        # de _INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA arriba).
+        cuentas_ispa_evaluable = provincia in _INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA
+        cuentas_ok = clave in CUENTAS_ANUALES
         componentes = {
             "cuentas": {
-                "disponible": True,
-                "puntos": 100.0 if clave in CUENTAS_ANUALES else 0.0,
-                "detalle": "Cuentas anuales publicadas" if clave in CUENTAS_ANUALES
-                           else "Cuentas anuales no publicadas (o no localizadas)",
+                "disponible": cuentas_ispa_evaluable,
+                "puntos": (100.0 if cuentas_ok else 0.0) if cuentas_ispa_evaluable else None,
+                "detalle": ("Cuentas anuales publicadas" if cuentas_ok
+                            else "Cuentas anuales no publicadas (o no localizadas)")
+                           if cuentas_ispa_evaluable
+                           else "Cuentas anuales: aún no rastreado para esta provincia",
             },
             "deuda_pub": {
                 "disponible": True,
@@ -12061,10 +12164,12 @@ def _calcular_indice_transparencia():
         }
         ispa_ok = RETRIBUCIONES_ISPA.get(clave, {}).get("importe") is not None
         componentes["ispa_pub"] = {
-            "disponible": True,
-            "puntos": 100.0 if ispa_ok else 0.0,
-            "detalle": "Sueldo del alcalde/sa publicado (ISPA)" if ispa_ok
-                       else "Sueldo del alcalde/sa no publicado o no atribuido (ISPA)",
+            "disponible": cuentas_ispa_evaluable,
+            "puntos": (100.0 if ispa_ok else 0.0) if cuentas_ispa_evaluable else None,
+            "detalle": ("Sueldo del alcalde/sa publicado (ISPA)" if ispa_ok
+                        else "Sueldo del alcalde/sa no publicado o no atribuido (ISPA)")
+                       if cuentas_ispa_evaluable
+                       else "ISPA: aún no rastreado para esta provincia",
         }
 
         # % adjudicatario identificado -- SOLO contratos formales (PLACE/
@@ -12119,6 +12224,11 @@ def _calcular_indice_transparencia():
 
         total_contratos = denom_adj + (m["total"] if m else 0)
         actividad_por_1000 = (total_contratos / habitantes * 1000) if habitantes else None
+        # "actividad" solo tiene sentido para municipios que hemos FETCHED
+        # al menos una vez (PLACE o menores) -- ver comentario de la 2ª
+        # pasada más abajo sobre por qué "0 contratos" de un municipio nunca
+        # tocado no es lo mismo que "0 contratos" de uno ya rastreado.
+        fetched = d_formal is not None or m is not None
 
         filas.append({
             "municipio": municipio,
@@ -12127,6 +12237,7 @@ def _calcular_indice_transparencia():
             "habitantes": habitantes,
             "componentes": componentes,
             "_actividad_por_1000": actividad_por_1000,  # temporal, se consume en la 2ª pasada
+            "_fetched": fetched,  # temporal, se consume en la 2ª pasada
             "_total_contratos": total_contratos,
             "_total_contratos_formales": denom_adj,
             "_total_contratos_menores": m["total"] if m else 0,
@@ -12135,9 +12246,21 @@ def _calcular_indice_transparencia():
     # Segunda pasada: percentil de "actividad" DENTRO de cada tramo de
     # población (ver _indice_tramo_poblacion) -- no tiene sentido comparar
     # contratos/1.000 hab. de Lorca contra un pueblo de 300 habitantes.
+    #
+    # Solo entran municipios "_fetched" (con al menos un intento real de
+    # PLACE o menores) -- bug encontrado y corregido el 2026-09-20: antes,
+    # CUALQUIER municipio de España con población conocida entraba aquí, y
+    # uno nunca rastreado por nosotros sacaba "0 contratos" = percentil 0,
+    # como si su ayuntamiento no publicara nada, cuando en realidad es que
+    # aún no hemos ido a mirar (España tiene 8.086 municipios en el censo,
+    # pero solo ~3.169 tienen alguna vez una fila en cache.db). Además de
+    # inexacto, esto inflaba /rankings a miles de filas. Se queda con
+    # "disponible: False" más abajo, igual que los demás componentes por
+    # cobertura insuficiente -- y de paso el percentil de los municipios SÍ
+    # rastreados deja de compararse contra miles de "ceros" fantasma.
     por_tramo = {}
     for f in filas:
-        if f["habitantes"]:
+        if f["habitantes"] and f["_fetched"]:
             por_tramo.setdefault(_indice_tramo_poblacion(f["habitantes"]), []).append(f)
 
     for grupo in por_tramo.values():
@@ -12155,14 +12278,16 @@ def _calcular_indice_transparencia():
                             f"percentil {percentil:.0f} entre municipios de tamaño similar"),
             }
 
-    # Municipios sin población conocida (no debería pasar, POBLACION es
-    # 987/987, pero por si acaso) se quedan sin componente "actividad".
+    # Municipios sin población conocida, o sin ningún rastreo nuestro
+    # (PLACE/menores) todavía, se quedan sin componente "actividad".
     for f in filas:
         f["componentes"].setdefault("actividad", {
             "disponible": False, "puntos": None,
-            "detalle": "Sin población conocida para calcularlo",
+            "detalle": ("Sin población conocida para calcularlo" if not f["habitantes"]
+                        else "Aún no se han rastreado contratos (PLACE/menores) de este municipio"),
         })
         del f["_actividad_por_1000"]
+        del f["_fetched"]
         del f["_total_contratos"]
         del f["_total_contratos_formales"]
         del f["_total_contratos_menores"]
@@ -12884,7 +13009,18 @@ def _render_indice_transparencia_html(comunidad="todas"):
     ranking nacional (o filtrado por comunidad autónoma) de actividad y
     disponibilidad de datos públicos, con el desglose de los 7 componentes
     siempre visible por municipio. Ver el bloque de comentarios de cabecera
-    de _calcular_indice_transparencia para la metodología completa."""
+    de _calcular_indice_transparencia para la metodología completa.
+
+    Corte a _INDICE_TRANSPARENCIA_MAX_FILAS_TABLA (2026-09-20, hallazgo de
+    rendimiento): antes de este corte, la vista "todas" llegó a generar del
+    orden de miles de filas -- cada una con su desglose de 7 componentes
+    inline -- convirtiendo /rankings en una respuesta de ~18 MB / ~130.000
+    líneas de HTML que tardaba varios minutos en cargar (a veces ni
+    llegaba). El puesto (empates incluidos) se calcula SIEMPRE sobre la
+    lista completa antes de cortar, así que un municipio fuera del corte
+    sigue teniendo su puesto real si se busca por el buscador de arriba
+    (/api/rankings-municipio) -- el corte solo afecta a cuántas filas se
+    pintan en la tabla, no al cálculo."""
     filas_datos = _indice_transparencia_cacheado()
     if comunidad != "todas":
         filas_datos = [f for f in filas_datos if f["comunidad_autonoma"] == comunidad]
@@ -12892,10 +13028,14 @@ def _render_indice_transparencia_html(comunidad="todas"):
     con_indice = [f for f in filas_datos if f["indice"] is not None]
     con_indice.sort(key=lambda f: f["indice"], reverse=True)
     sin_indice = len(filas_datos) - len(con_indice)
+    ranking_completo = _ranking_con_empates(con_indice)
+    total_con_indice = len(ranking_completo)
+    ranking_visible = ranking_completo[:_INDICE_TRANSPARENCIA_MAX_FILAS_TABLA]
+    recortado = total_con_indice > len(ranking_visible)
 
     filas_html = ""
-    for i, f in enumerate(con_indice, 1):
-        pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
+    for puesto, f in ranking_visible:
+        pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(puesto, f"{puesto}º")
         muni_q = quote_plus(f["municipio"])
         q_prov_muni = _q_prov(f["provincia"])
         indice = f["indice"]
@@ -12927,6 +13067,12 @@ def _render_indice_transparencia_html(comunidad="todas"):
         f'disponibles) -- no se muestran en la tabla.</span>'
         if sin_indice else ""
     )
+    aviso_recorte = (
+        f'<br><span class="noloc-warn">📄 Mostrando los primeros {len(ranking_visible)} de '
+        f'{total_con_indice} municipios con índice calculado. Usa el buscador de arriba para encontrar '
+        f'cualquier municipio y su puesto real, esté o no en esta tabla.</span>'
+        if recortado else ""
+    )
 
     return f"""
   <div class="rk-section-header" id="indice-transparencia">
@@ -12940,6 +13086,7 @@ def _render_indice_transparencia_html(comunidad="todas"):
     acreditación oficial -- este proyecto no es organismo acreditador. Es un indicador propio pensado para
     comparar municipios entre sí a partir de lo que hemos podido recopilar, no para juzgar su gestión.
     {aviso_sin_cobertura}
+    {aviso_recorte}
   </p>
   <input type="text" class="it-buscador" placeholder="Buscar municipio…" autocomplete="off"
          oninput="{esc(_IT_BUSCADOR_JS)}">
@@ -13088,6 +13235,32 @@ _RK_MUNI_BUSCADOR_JS = r"""(function(){
 })();"""
 
 
+# Aviso descartable de metodología (2026-09-20, petición de César) -- se
+# muestra al entrar en /rankings, se cierra con la X y no vuelve a
+# aparecer en ese navegador (localStorage, sin servidor ni cookie nueva).
+_RK_METODOLOGIA_AVISO_HTML = """<div class="rk-metodologia-aviso" id="rk-metodologia-aviso" hidden>
+  <span class="rk-metodologia-ico">ℹ️</span>
+  <span>Los baremos de esta web se basan en conceptos de transparencia europeos y nacionales, se están
+  analizando, por lo que es posible que el ranking de transparencia varíe durante unos días.</span>
+  <button type="button" class="rk-metodologia-cerrar" id="rk-metodologia-cerrar" aria-label="Cerrar aviso">✕</button>
+</div>
+<script>
+(function(){
+  var KEY = 'dp_rk_aviso_oculto';
+  var el = document.getElementById('rk-metodologia-aviso');
+  var btn = document.getElementById('rk-metodologia-cerrar');
+  if (!el || !btn) return;
+  var oculto = false;
+  try { oculto = localStorage.getItem(KEY) === '1'; } catch (e) {}
+  if (!oculto) el.hidden = false;
+  btn.addEventListener('click', function(){
+    el.hidden = true;
+    try { localStorage.setItem(KEY, '1'); } catch (e) {}
+  });
+})();
+</script>"""
+
+
 def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas"):
     """Dos rankings claramente separados:
     - Nacional: agrega TODAS las provincias cargadas (Murcia + Girona + las que vengan).
@@ -13185,6 +13358,9 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
           <div class="top1-directivo">{sueldo_html}</div>
         </div>"""
 
+    _rk_og_path = (f"/rankings?provincia={provincia_prov}"
+                    + (f"&comunidad={comunidad}" if comunidad != "todas" else ""))
+
     body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
   <div class="hero" style="padding-bottom:4px">
     <div class="hero-tagline">🏆 Rankings</div>
@@ -13193,6 +13369,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
       con su directivo identificado cuando lo tenemos.
     </p>
   </div>
+
+  {_RK_METODOLOGIA_AVISO_HTML}
 
   <div class="rk-section-header" id="buscador-municipio">
     <h2>🔎 Busca tu municipio</h2>
@@ -13210,7 +13388,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
   <div class="rk-section-header">
     <h2>🌍 Ranking Nacional</h2>
-    <span class="rk-badge">Murcia, Cataluña, Comunitat Valenciana y Andalucía</span>
+    <span class="rk-badge">Todas las provincias cargadas</span>
   </div>
   <div class="section-title">Top 10 por número de contratos adjudicados</div>
   <div class="muni-card"><table>
@@ -13242,7 +13420,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>💰 Ranking de Sueldos: Alcaldes y Alcaldesas</h2>
     <span class="rk-badge">ISPA {esc(anio_ispa)} · {len(ranking_alcaldes)} municipios con dato</span>
   </div>
-  <div class="section-title">De mayor a menor retribución anual (Murcia, Cataluña, Comunitat Valenciana y Andalucía)</div>
+  <div class="section-title">De mayor a menor retribución anual (todas las provincias cargadas)</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_alcaldes_html}
@@ -13252,17 +13430,18 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>🏦 Ranking de Deuda por Habitante</h2>
     <span class="rk-badge">Ministerio de Hacienda + INE · {len(ranking_deuda_hab)} municipios con dato</span>
   </div>
-  <div class="section-title">De mayor a menor deuda viva por habitante (Murcia, Cataluña, Comunitat Valenciana y Andalucía)</div>
+  <div class="section-title">De mayor a menor deuda viva por habitante (todas las provincias cargadas)</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Municipio</th><th>Deuda viva</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_deuda_hab_html}
   </table></div></div>
-{_render_indice_transparencia_html(comunidad)}"""
+{_render_indice_transparencia_html(comunidad)}
+  {_share_buttons_html(_rk_og_path, "Rankings de contratación pública — Dinero Público")}"""
 
     return _page_shell("Rankings — Top 10 empresas", body,
                         description="Ranking nacional y por provincia de las empresas con más contratos "
                                      "públicos y mayor importe adjudicado, con sus directivos identificados.",
-                        provincia="todas")
+                        provincia="todas", og_path=_rk_og_path)
 
 
 _FUENTE_UE_LABEL = {
@@ -13857,6 +14036,22 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     if not cards:
         cards = '<div class="empty">Municipio no encontrado.</div>'
 
+    muni_display = datos[0].get("municipio", "") if datos else muni_filter
+    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
+    fuente_desc = "PSCP" if provincia in PROVINCIAS_CATALUNYA else "PLACE"
+    titulo = f"Contratos públicos de {muni_display}" if muni_display else "Contratos Públicos"
+    descripcion = (f"Contratos públicos adjudicados en {muni_display} ({label}): "
+                   f"empresa adjudicataria, importe y directivo/administrador. "
+                   f"Datos oficiales {fuente_desc} + Registro Mercantil.") if muni_display else ""
+    # og_path/canonical propio de esta ficha (2026-09-20, ver fix de
+    # _page_shell) -- antes de este fix TODAS las fichas de municipio
+    # apuntaban su og:url/canonical a "/" (la home), no a sí mismas.
+    og_path = f"/?muni={quote_plus(muni_display)}{_q_prov(provincia)}" if muni_display else "/"
+    # Botones de compartir (2026-09-20, petición de César -- ya existían en
+    # los casos, faltaban en la ficha de municipio) -- solo cuando hay un
+    # municipio concreto que compartir, no en la página de búsqueda vacía.
+    compartir_html = _share_buttons_html(og_path, titulo) if muni_display else ""
+
     ejemplo_muni = _EJEMPLO_MUNI_POR_PROVINCIA.get(provincia, _EJEMPLO_MUNI_POR_PROVINCIA["murcia"])
     body = f"""{back_html}
   <div class="search-bar">
@@ -13868,16 +14063,10 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     </form>
   </div>
   {stats}
-  {cards}"""
+  {cards}
+  {compartir_html}"""
 
-    muni_display = datos[0].get("municipio", "") if datos else muni_filter
-    label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
-    fuente_desc = "PSCP" if provincia in PROVINCIAS_CATALUNYA else "PLACE"
-    titulo = f"Contratos públicos de {muni_display}" if muni_display else "Contratos Públicos"
-    descripcion = (f"Contratos públicos adjudicados en {muni_display} ({label}): "
-                   f"empresa adjudicataria, importe y directivo/administrador. "
-                   f"Datos oficiales {fuente_desc} + Registro Mercantil.") if muni_display else ""
-    return _page_shell(titulo, body, description=descripcion, provincia=provincia)
+    return _page_shell(titulo, body, description=descripcion, provincia=provincia, og_path=og_path)
 
 
 def _personalizacion_html():
@@ -14047,13 +14236,14 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8):
     filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
     filas.sort(key=lambda f: f["indice"], reverse=True)
     clave_muni = normalizar(municipio)
-    fila_actual = next((f for f in filas if normalizar(f["municipio"]) == clave_muni), None)
+    ranking = _ranking_con_empates(filas)  # mismo criterio de empates que el sidebar/rankings (2026-09-20)
+    fila_actual = next((f for _, f in ranking if normalizar(f["municipio"]) == clave_muni), None)
     if fila_actual is None:
         return ""
     total = len(filas)
-    posicion_actual = next(i for i, f in enumerate(filas, 1) if normalizar(f["municipio"]) == clave_muni)
-    top = filas[:top_n]
-    en_top = posicion_actual <= top_n
+    posicion_actual = next(p for p, f in ranking if normalizar(f["municipio"]) == clave_muni)
+    top = ranking[:top_n]
+    en_top = any(normalizar(f["municipio"]) == clave_muni for _, f in top)
 
     def _fila(pos, f, es_actual):
         clase = ' rk-sidebar-item-actual' if es_actual else ''
@@ -14063,7 +14253,7 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8):
                 f'<span class="rk-sidebar-valor">{f["indice"]:.0f}/100</span>'
                 f'</a>')
 
-    items = "".join(_fila(i, f, normalizar(f["municipio"]) == clave_muni) for i, f in enumerate(top, 1))
+    items = "".join(_fila(p, f, normalizar(f["municipio"]) == clave_muni) for p, f in top)
     if not en_top:
         items += (f'<div class="rk-sidebar-separador"></div>'
                    + _fila(posicion_actual, fila_actual, True))
@@ -14079,32 +14269,118 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8):
       </details>"""
 
 
-def _sidebar_ranking_transparencia_html(top_n=8):
-    """Bloque lateral con el Top N del Índice de Transparencia para la home
-    nacional (2026-09-17, petición de César) -- reutiliza
+def _ranking_con_empates(filas):
+    """Ranking por competición (1,2,2,4 -- no 1,2,2,3): mismos puntos =
+    mismo puesto, y el siguiente valor distinto salta tantas posiciones
+    como empatados hubiera. filas ya viene ordenada desc por 'indice'.
+    Devuelve lista de (puesto, fila).
+
+    Compara por el valor REDONDEADO (el mismo que se muestra, "94/100"),
+    no por el float exacto con un decimal -- hallazgo real al revisar la
+    captura de pantalla (2026-09-20): con el float exacto, Beniel/
+    Villanueva del Río Segura/Archena salían en puestos 4/5/6 distintos
+    pese a mostrar los tres "94/100" en pantalla, que parece un error de
+    verdad aunque no lo sea a nivel de decimales. "Mismo puesto" tiene que
+    referirse a lo que el usuario ve, no a un decimal oculto."""
+    resultado = []
+    puesto_actual = 0
+    valor_anterior = None
+    for i, f in enumerate(filas, 1):
+        valor_mostrado = round(f["indice"])
+        if valor_mostrado != valor_anterior:
+            puesto_actual = i
+            valor_anterior = valor_mostrado
+        resultado.append((puesto_actual, f))
+    return resultado
+
+
+def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
+    """Bloque lateral con el Índice de Transparencia para la portada
+    (2026-09-17, petición de César; rediseñado 2026-09-20 con selector de
+    región, empates, "ver más" y aviso v1; vista nacional por defecto y
+    tooltip de metodología añadidos 2026-09-20, petición de César --
+    "vista nacional por defecto, no de una región concreta"). Reutiliza
     _indice_transparencia_cacheado() tal cual (mismo caché de 1h que ya
-    usa /rankings, ningún cálculo nuevo), solo recorta a los primeros
-    top_n. Si el índice tarda en tener cobertura suficiente en algún
-    momento y sale vacío, el bloque no se pinta (mejor nada que una caja
-    vacía)."""
-    filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
-    filas.sort(key=lambda f: f["indice"], reverse=True)
-    filas = filas[:top_n]
-    if not filas:
+    usa /rankings, ningún cálculo nuevo) -- esto es v1, la versión ya en
+    producción; la v2 (propuesta, en la rama wip/indice-transparencia-v2)
+    NO se conecta aquí a propósito, sigue sin desplegar.
+
+    "En móvil, el lateral pasa a bloque plegable bajo el contenido": el
+    <details> exterior es el mecanismo de plegado; la posición "bajo el
+    contenido" en móvil se resuelve en CSS (ver .rk-sidebar-ranking-wrap),
+    no aquí -- este bloque ya no vive dentro de .home-sidebar-stack."""
+    comunidad_actual = _comunidad_valida(comunidad_actual)
+
+    todas_filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
+    if comunidad_actual == "todas":
+        filas_region = todas_filas
+    else:
+        filas_region = [f for f in todas_filas
+                         if COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(f["provincia"], f["provincia"]) == comunidad_actual]
+    filas_region.sort(key=lambda f: -f["indice"])
+    ranking = _ranking_con_empates(filas_region)
+
+    if not ranking:
         return ""
-    items = "".join(
-        f'<a class="rk-sidebar-item" href="/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}">'
-        f'<span class="rk-sidebar-pos">{i}.</span>'
-        f'<span class="rk-sidebar-muni">{esc(f["municipio"])}</span>'
-        f'<span class="rk-sidebar-valor">{f["indice"]:.0f}/100</span>'
-        f'</a>'
-        for i, f in enumerate(filas, 1)
+
+    def _fila_html(puesto, f):
+        return (f'<a class="rk-sidebar-item" href="/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}">'
+                f'<span class="rk-sidebar-pos">{puesto}.</span>'
+                f'<span class="rk-sidebar-muni">{esc(f["municipio"])}</span>'
+                f'<span class="rk-sidebar-valor">{f["indice"]:.0f}/100</span>'
+                f'</a>')
+
+    top = ranking[:top_n]
+    resto = ranking[top_n:]
+    top_html = "".join(_fila_html(p, f) for p, f in top)
+
+    ver_mas_html = ""
+    if resto:
+        resto_html = "".join(_fila_html(p, f) for p, f in resto)
+        ver_mas_html = f"""<details class="rk-sidebar-vermas">
+          <summary>Ver más ({len(resto)} más) ▾</summary>
+          <div class="rk-sidebar-list">{resto_html}</div>
+        </details>"""
+
+    opciones_html = "".join(
+        f'<option value="{esc(slug)}"{" selected" if slug == comunidad_actual else ""}>{esc(label)}</option>'
+        for slug, label in [("todas", "España")] + sorted(COMUNIDAD_AUTONOMA_LABEL.items(), key=lambda kv: kv[1])
     )
-    return f"""<aside class="rk-sidebar">
-      <div class="rk-sidebar-title">🏅 Índice de Transparencia</div>
-      <div class="rk-sidebar-list">{items}</div>
-      <a class="rk-sidebar-ver btn-ver" href="/rankings#indice-transparencia">Ver ranking completo →</a>
-    </aside>"""
+
+    href_ver_completo = ("/rankings#indice-transparencia" if comunidad_actual == "todas"
+                          else f"/rankings?comunidad={esc(comunidad_actual)}#indice-transparencia")
+
+    # Icono "i" con la metodología resumida (click en móvil, hover en
+    # escritorio -- CSS puro con :focus/:hover, sin JS aparte del propio
+    # toggle de :focus vía tabindex). Mismo texto que ya usa /rankings
+    # para no mantener dos redacciones distintas de lo mismo.
+    info_html = '''<span class="rk-info-wrap">
+        <button type="button" class="rk-info-btn" aria-label="Cómo se calcula el Índice de Transparencia"
+                onclick="event.stopPropagation();event.preventDefault();this.parentElement.classList.toggle('rk-info-open')">ⓘ</button>
+        <div class="rk-info-pop">
+          Valoración propia de Dinero Público sobre la actividad y disponibilidad de datos públicos de
+          cada municipio (cuentas anuales, deuda viva, sueldos ISPA, adjudicatarios identificados,
+          actividad de contratación). <b>No es una certificación legal</b> de la Ley 19/2013 de
+          Transparencia ni una acreditación oficial. Sirve para comparar municipios con lo que hemos
+          podido recopilar, no para juzgar su gestión.
+        </div>
+      </span>'''
+
+    return f"""<div class="rk-sidebar-ranking-wrap">
+    <details class="rk-sidebar" open>
+      <summary class="rk-sidebar-title">🏅 Índice de Transparencia
+        <span class="rk-sidebar-v1-badge">Índice v1</span>{info_html}</summary>
+      <div class="rk-sidebar-aviso">⚠️ No comparable entre regiones; los datos de origen varían.</div>
+      <label class="rk-sidebar-selector-label" for="rk-sidebar-comunidad">Región</label>
+      <select id="rk-sidebar-comunidad" class="rk-sidebar-selector"
+              onchange="location.href='/?rk_comunidad=' + this.value + '#indice-transparencia'">
+        {opciones_html}
+      </select>
+      <div class="rk-sidebar-list">{top_html}</div>
+      {ver_mas_html}
+      <a class="rk-sidebar-ver btn-ver" href="{href_ver_completo}">Ver ranking completo →</a>
+    </details>
+  </div>"""
 
 
 def _mapa_ccaa_html():
@@ -14218,7 +14494,7 @@ _MAPA_CCAA_JS = r"""(function(){
 })();"""
 
 
-def render_landing_nacional_html(datos):
+def render_landing_nacional_html(datos, rk_comunidad="todas"):
     """Home agregada: cifras combinadas de todas las provincias cargadas,
     desglose secundario por región, y el top 1 del ranking nacional. Es la
     vista por defecto de '/' (sin ?provincia=); el acceso al listado de
@@ -14328,32 +14604,33 @@ def render_landing_nacional_html(datos):
         noticias_html = ('<div class="empty" style="padding:20px 8px;font-size:12px">'
                           'Aún no hay noticias cargadas.</div>')
 
-    # Bloque de Casos ANTES del hero/buscador, ocupando el sitio del banner
-    # de anuncios de _ad_banner_html() (ver show_ad_banner=False en el
-    # _page_shell() de más abajo, SOLO para esta página -- el resto del
-    # sitio sigue reservando el hueco de anuncio como siempre). Petición de
-    # César 2026-09-16: que sea lo primero que se vea al entrar, no solo
-    # algo debajo del ranking.
-    # Gancho de personalización + mapa interactivo de comunidades
-    # (2026-09-17, petición de César) -- ver _personalizacion_html/
-    # _mapa_ccaa_html para el detalle. Se calculan aquí (no en el bloque
-    # de arriba) para mantener el resto de la función igual que estaba.
+    # Mapa principal de la home = el mapa de cobertura real (/mapa-cobertura,
+    # 19 comunidades con geometría IGN + banderas + estado real de cobertura)
+    # en vez del viejo mapa de tooltips _mapa_ccaa_html (2026-09-20, petición
+    # de César: "sustituye lo que hubiera antes como mapa principal"). clic
+    # en una comunidad navega a /?provincia=X igual que antes, vía
+    # _MAPA_CCAA_DESTINO_POR_COMUNIDAD (mismo destino que ya usaba el mapa
+    # viejo, sin inventar una tabla nueva).
+    #
+    # Bloque de "Casos de investigación" MOVIDO debajo del mapa (2026-09-20,
+    # petición de César -- hasta ahora iba antes del hero/buscador; de paso
+    # resuelve el "bug del 16/09" de que Casos no se veía desde la home:
+    # comprobado que en la home nacional SÍ estaba enlazado, pero faltaba
+    # por completo en la home filtrada por provincia -- ver el bloque
+    # equivalente añadido en render_landing_html).
     personalizacion_html = _personalizacion_html()
-    mapa_html = _mapa_ccaa_html()
-    sidebar_ranking_html = _sidebar_ranking_transparencia_html()
+    mapa_html = f'<style>{_MAPA_COBERTURA_CSS}</style>' + _mapa_cobertura_svg_html(clickable=True)
+    sidebar_ranking_html = _sidebar_ranking_transparencia_html(rk_comunidad)
 
-    body = f"""<div class="section-title" style="margin-top:0">🔍 Casos de investigación</div>
-  <div class="region-grid">{casos_home_html}</div>
-  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
-  {personalizacion_html}
+    body = f"""{personalizacion_html}
   <div class="hero-panel">
     <div class="hero">
       <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
       <p class="hero-sub">
         Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
-        — y qué persona — hay detrás de cada adjudicación. Cubrimos la
-        Región de Murcia, Cataluña, la Comunitat Valenciana y Andalucía,
-        con más territorios en camino.
+        — y qué persona — hay detrás de cada adjudicación. Cobertura nacional: las 19 comunidades
+        y ciudades autónomas, con provincias ya completas y otras en marcha (ver el mapa de
+        cobertura más abajo para el estado real de cada una).
       </p>
     </div>
     <div class="adv-search" id="adv-search">
@@ -14378,6 +14655,9 @@ def render_landing_nacional_html(datos):
     <summary style="cursor:pointer;font-size:12px;color:var(--dim)">Ver todas las provincias en una lista (texto)</summary>
     <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
   </details>
+  <div class="section-title">🔍 Casos de investigación</div>
+  <div class="region-grid">{casos_home_html}</div>
+  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
   <div class="home-grid">
     <div class="home-sidebar-stack">
       <aside class="noticias-ue-panel">
@@ -14385,21 +14665,21 @@ def render_landing_nacional_html(datos):
         {noticias_html}
         <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es" target="_blank" rel="noopener">Ver más en la Comisión Europea →</a>
       </aside>
-      {sidebar_ranking_html}
     </div>
     <div class="home-main-col">
       <div class="section-title" style="margin-top:0">🏆 Liderando ahora mismo · Ranking Nacional</div>
       <div class="top1-grid">{top1_html}</div>
       <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
     </div>
+    {sidebar_ranking_html}
   </div>
   <script>window.__PROVINCIA__ = "";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
 
     return _page_shell("Dinero Público | Contratación pública en España", body,
                         description="Consulta los contratos públicos adjudicados en España con los "
-                                     "directivos de las empresas adjudicatarias. Cubrimos la Región "
-                                     "de Murcia, Cataluña, la Comunitat Valenciana y Andalucía.",
+                                     "directivos de las empresas adjudicatarias. Cobertura nacional, "
+                                     "las 19 comunidades y ciudades autónomas.",
                         provincia="todas", show_ad_banner=False)
 
 
@@ -14474,6 +14754,16 @@ def render_landing_html(datos, provincia="murcia"):
         f"de cada adjudicación."
     )
 
+    # Casos de investigación también en la home filtrada por provincia
+    # (2026-09-20, petición de César -- "Casos" ya se veía en la home
+    # nacional pero faltaba aquí por completo; ese hueco era el "bug del
+    # 16/09" real, no la home nacional). Mismos casos en todas las
+    # provincias (aún no hay casos específicos por provincia).
+    casos_prov_html = "".join(f"""<a class="region-card" href="/casos/{esc(c['slug'])}">
+      <h3>📌 {esc(c['titulo'])}</h3>
+      <div class="region-stats">{esc(c['resumen'])}</div>
+    </a>""" for c in _CASOS)
+
     body = f"""<div class="hero">
     <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
     <p class="hero-sub">{esc(hero_sub)}</p>
@@ -14493,6 +14783,9 @@ def render_landing_html(datos, provincia="murcia"):
     <div id="as-results"></div>
   </div>
   {stats}
+  <div class="section-title">🔍 Casos de investigación</div>
+  <div class="region-grid">{casos_prov_html}</div>
+  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
   <div class="section-title">Municipios · {esc(label)}</div>
   <div class="muni-grid">{tiles}</div>
   <script>window.__PROVINCIA__ = "{provincia}";</script>
@@ -14502,7 +14795,7 @@ def render_landing_html(datos, provincia="murcia"):
                         description=f"Consulta los contratos públicos de los {len(municipios_lista)} "
                                      f"municipios de {label} con los directivos de las empresas "
                                      f"adjudicatarias.",
-                        provincia=provincia)
+                        provincia=provincia, og_path=f"/?provincia={provincia}")
 
 
 def _contrato_json(c, municipio):
@@ -14766,10 +15059,59 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
 
     return _page_shell(f'Búsqueda: {q}', body,
                         description=f'Resultados de "{q}" en contratos públicos de {label}.',
-                        provincia=provincia)
+                        provincia=provincia, og_path=f"/?q={quote_plus(q)}{_q_prov(provincia)}")
+
+
+def _share_buttons_html(path, titulo):
+    """Botones de compartir para el pie de cada caso/noticia (2026-09-20).
+    Enlaces simples (wa.me, sharer.php, intent de X, t.me, mailto) -- sin
+    SDK ni script de terceros cargado, como se pidió. "Copiar enlace" usa
+    Clipboard API con fallback a execCommand, sin dependencias."""
+    url_completa = f"{SITE_URL}{path}"
+    url_enc = quote_plus(url_completa)
+    titulo_enc = quote_plus(titulo)
+    return f"""<div class="share-buttons">
+  <span class="share-label">Compartir:</span>
+  <a class="share-btn" href="https://wa.me/?text={titulo_enc}%20{url_enc}" target="_blank" rel="noopener" aria-label="Compartir en WhatsApp" title="WhatsApp">🟢</a>
+  <a class="share-btn" href="https://www.facebook.com/sharer/sharer.php?u={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en Facebook" title="Facebook">🔵</a>
+  <a class="share-btn" href="https://twitter.com/intent/tweet?text={titulo_enc}&amp;url={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en X" title="X (Twitter)">⚫</a>
+  <a class="share-btn" href="https://t.me/share/url?url={url_enc}&amp;text={titulo_enc}" target="_blank" rel="noopener" aria-label="Compartir en Telegram" title="Telegram">🔷</a>
+  <a class="share-btn" href="mailto:?subject={titulo_enc}&amp;body={url_enc}" aria-label="Compartir por correo" title="Correo">✉️</a>
+  <button type="button" class="share-btn share-copy" data-url="{esc(url_completa)}" aria-label="Copiar enlace" title="Copiar enlace">🔗</button>
+</div>
+<script>
+(function(){{
+  document.querySelectorAll('.share-copy').forEach(function(btn){{
+    btn.addEventListener('click', function(){{
+      var url = btn.getAttribute('data-url');
+      function marcarCopiado(ok){{
+        var original = btn.textContent;
+        btn.textContent = ok ? '✅' : '⚠️';
+        setTimeout(function(){{ btn.textContent = original; }}, 1500);
+      }}
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(url).then(function(){{ marcarCopiado(true); }}).catch(function(){{ marcarCopiado(false); }});
+      }} else {{
+        var ta = document.createElement('textarea');
+        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        try {{ document.execCommand('copy'); marcarCopiado(true); }} catch (e) {{ marcarCopiado(false); }}
+        document.body.removeChild(ta);
+      }}
+    }});
+  }});
+}})();
+</script>"""
 
 
 _CASOS = [
+    {
+        "slug": "archena-ranking-transparencia-dyntra",
+        "titulo": "Archena, primera en el ranking de transparencia de Dyntra: qué mide y qué no",
+        "resumen": "Archena encabeza el ranking regional de Dyntra con el 75% de los indicadores. "
+                   "Es un dato real — pero Dyntra mide si se publica un enlace, no si el contenido es "
+                   "completo o exacto. Lo contrastamos con lo que tenemos indexado nosotros mismos.",
+    },
     {
         "slug": "contratos-menores-culmina",
         "titulo": "Lo que una empresa que no aparecía nos enseñó sobre los contratos menores",
@@ -14812,7 +15154,113 @@ def render_casos_index_html():
                                      "Dinero Público: cómo verificamos lo que mostramos.")
 
 
+def render_caso_archena_dyntra_html():
+    """Publicado 2026-09-20. Todas las cifras verificadas en vivo esa misma
+    sesión: ficha de Archena en producción (32/28.547.149,15€/85,5%/2 sin
+    adjudicatario, cache.db), Dyntra (ficha + ranking regional, capturas de
+    pantalla con Playwright), y las páginas de transparencia.archena.es
+    citadas. El 25,68% de media regional que circuló en varios medios se
+    reconstruye aquí de forma explícita (36 municipios evaluados por
+    Dyntra, media real 32,1%; sobre los 45 municipios reales de la Región
+    contando los 9 no evaluados como 0%, sale 25,68% -- ambos números son
+    "correctos", miden cosas distintas)."""
+    _og_path = "/casos/archena-ranking-transparencia-dyntra"
+    _titulo = "Archena, primera en el ranking de transparencia de Dyntra: qué mide y qué no"
+    body = """<div class="static-page">
+  <h1>Archena, primera en el ranking de transparencia de Dyntra: qué mide y qué no</h1>
+
+  <p>El 19 de septiembre varios medios regionales publicaron, con textos casi idénticos,
+  que el Ayuntamiento de Archena cumple el 75% de los indicadores de transparencia de
+  Dyntra, muy por encima de la media de la Región de Murcia. El dato es real — lo hemos
+  verificado directamente en Dyntra, no solo en las notas de prensa — pero conviene
+  entender qué mide exactamente antes de leerlo como un juicio sobre la gestión
+  municipal.</p>
+
+  <h2>El dato, verificado</h2>
+  <p>En la ficha de Archena en Dyntra figuran <strong>138 de 184 indicadores publicados
+  (75%)</strong>, evaluados y verificados por el equipo de Dyntra el 18 de septiembre de
+  2026. En el ranking regional, Archena aparece primera, por delante de Caravaca de la
+  Cruz (125/184, 67,93%) y Molina de Segura (99/184, 53,8%). Varias de las notas de
+  prensa hablan de «136 indicadores» — la propia ficha de Dyntra dice 138; no hemos
+  encontrado de dónde sale esa cifra distinta.</p>
+
+  <h2>El 25,68% de media regional, desglosado</h2>
+  <p>Esa cifra también circuló en varios medios, y merece una aclaración porque puede
+  leerse de dos formas — y porque el cálculo que sigue es <strong>nuestro</strong>, no
+  una cifra que hayamos encontrado publicada por Dyntra. El ranking de Dyntra para la
+  Región de Murcia solo tiene ficha evaluada para 36 de los 45 municipios reales. El
+  25,68% equivale a dividir entre los 45 municipios de la Región, contando como 0% a
+  los 9 sin ficha; la media de los 36 con ficha es del 32,1%. Es un cálculo nuestro —
+  no hemos encontrado cómo obtiene Dyntra esa media. Ninguna de las dos cuentas está
+  "mal": son dos preguntas distintas ("¿cómo de transparentes son los ayuntamientos que
+  Dyntra ha mirado?" frente a "¿cómo de transparente es la Región en su conjunto,
+  incluyendo lo que aún no se ha mirado?") — pero conviene saber cuál te están dando.</p>
+
+  <h2>Qué mide Dyntra (y qué no)</h2>
+  <p>Los indicadores de Dyntra comprueban, en lo esencial, si el ayuntamiento publica
+  cierta información — normalmente basta con que exista un enlace o un documento
+  accesible. No consta que la metodología evalúe si esa información está completa,
+  actualizada o es exacta: un enlace roto que en su día apuntó a algo válido, o un
+  documento con datos parciales, puede seguir contando como "publicado". Esto no es una
+  crítica a Dyntra — es simplemente el límite de lo que una auditoría de esa escala
+  (miles de ayuntamientos) puede comprobar sin verificar cada documento uno a uno, que es
+  exactamente el trabajo que nosotros sí podemos hacer, municipio a municipio, con lo que
+  tenemos indexado.</p>
+
+  <h2>Contratos menores: lo que encontramos en el propio portal de Archena</h2>
+  <p>El portal de transparencia de Archena publica listados de contratos menores desde
+  2021 hasta 2025, repartidos entre tablas en la propia web y archivos XLSX y PDF por
+  ejercicio. En una lectura preliminar de esos archivos (no integrada todavía en Dinero
+  Público) contamos cerca de 600 contratos y unos 5,9 millones de euros con IVA
+  incluido. Dyntra le da a Archena un 50% en su indicador de "Open Data" (1 de 2
+  indicadores) — no consta una plataforma de datos abiertos reutilizable de forma
+  automática (API o descarga masiva estructurada), aunque los listados anuales sí son
+  archivos descargables. Un matiz más: los listados se publican con retraso — según la
+  fecha de subida del propio archivo, el de 2024 se colgó en abril de 2025 y el de 2025
+  en abril de 2026. <strong>Estos contratos menores todavía no están integrados en
+  Dinero Público</strong> — lo que mostramos de Archena en nuestra ficha son solo los
+  contratos formales de PLACE.</p>
+
+  <h2>Lo que sí tenemos: contratación en PLACE</h2>
+  <p>Dinero Público indexa 32 contratos formales de Archena en PLACE, desde 2023, por un
+  total de 28.547.149,15€. Uno solo — el servicio de recogida de residuos sólidos
+  urbanos, limpieza viaria y zonas verdes, adjudicado por 24.411.787,20€ — concentra el
+  85,5% de ese importe. En 2 de los 32 contratos (un 6%) no hemos podido identificar a la
+  empresa adjudicataria con las fuentes que cruzamos.</p>
+
+  <h2>Nota de transparencia</h2>
+  <p>El autor de Dinero Público mantiene un litigio con el Ayuntamiento de Archena. Este
+  texto se limita a datos públicos, enlazados a su fuente original, para que cualquiera
+  pueda verificarlos por su cuenta — el mismo criterio que aplicamos en cualquier otro
+  caso de este proyecto.</p>
+
+  <p style="font-size:12px;color:var(--dim)">Datos consultados el 20 de septiembre de
+  2026.</p>
+
+  <h2>Fuentes</h2>
+  <ul>
+    <li><a href="https://www.dyntra.org/poi/ayuntamiento-de-archena/?ineedthispage=yes" target="_blank" rel="noopener">dyntra.org</a> — ficha de transparencia de Archena (138/184, 75%; evaluada y verificada el 18/09/2026)</li>
+    <li><a href="https://www.dyntra.org/indices/ayuntamientos-de-espana/region-de-murcia/" target="_blank" rel="noopener">dyntra.org</a> — ranking de transparencia, Región de Murcia</li>
+    <li><a href="https://transparencia.archena.es/t/contratos_menores" target="_blank" rel="noopener">transparencia.archena.es</a> — contratos menores (tablas en vivo)</li>
+    <li><a href="https://transparencia.archena.es/t/contratos" target="_blank" rel="noopener">transparencia.archena.es</a> — contratos menores por ejercicio (XLSX/PDF descargables)</li>
+    <li><a href="/?muni=Archena&amp;provincia=murcia">Dinero Público</a> — ficha de Archena (32 contratos PLACE, 28.547.149,15€)</li>
+  </ul>
+
+  <p><a href="/casos">← Volver a Casos</a></p>
+</div>"""
+    body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
+                         _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
+    return _page_shell("Caso: Archena, primera en transparencia según Dyntra — qué mide y qué no",
+                        body,
+                        description="Archena encabeza el ranking regional de Dyntra con el 75% de los "
+                                     "indicadores. Verificamos el dato, lo contrastamos con lo que Dyntra "
+                                     "mide de verdad, y lo cruzamos con lo que tenemos indexado nosotros.",
+                        og_path=_og_path)
+
+
 def render_caso_contratos_menores_html():
+    _og_path = "/casos/contratos-menores-culmina"
+    _titulo = "Lo que una empresa que no aparecía nos enseñó sobre los contratos menores"
     body = """<div class="static-page">
   <h1>Lo que una empresa que no aparecía nos enseñó sobre los contratos menores</h1>
 
@@ -14873,14 +15321,19 @@ def render_caso_contratos_menores_html():
 
   <p><a href="/casos">← Volver a Casos</a></p>
 </div>"""
+    body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
+                         _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
     return _page_shell("Caso: lo que una empresa que no aparecía nos enseñó sobre los contratos menores",
                         body,
                         description="Por qué una empresa activa en el sector local puede no tener "
                                      "ninguna adjudicación indexada, y cómo eso nos llevó a construir "
-                                     "la sección de contratos menores de Dinero Público.")
+                                     "la sección de contratos menores de Dinero Público.",
+                        og_path=_og_path)
 
 
 def render_caso_sueldo_cero_html():
+    _og_path = "/casos/sueldo-cero-barcelona"
+    _titulo = "Cuando el sueldo de una alcaldesa aparece en 0€ (y no es un error)"
     body = """<div class="static-page">
   <h1>Cuando el sueldo de una alcaldesa aparece en 0€ (y no es un error)</h1>
 
@@ -14908,13 +15361,18 @@ def render_caso_sueldo_cero_html():
 
   <p><a href="/casos">← Volver a Casos</a></p>
 </div>"""
+    body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
+                         _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
     return _page_shell("Caso: el sueldo de alcaldesa en 0€ que no es un error",
                         body,
                         description="Por qué tres alcaldesas de la provincia de Barcelona figuran sin "
-                                     "sueldo municipal, y cómo lo verificamos antes de mostrarlo.")
+                                     "sueldo municipal, y cómo lo verificamos antes de mostrarlo.",
+                        og_path=_og_path)
 
 
 def render_caso_quiebras_vitoria_html():
+    _og_path = "/casos/quiebras-servicios-deportivos-vitoria"
+    _titulo = "Dos empresas, un año, el mismo patrón: los servicios deportivos subcontratados de Vitoria-Gasteiz"
     body = """<div class="static-page">
   <h1>Dos empresas, un año, el mismo patrón: los servicios deportivos subcontratados de Vitoria-Gasteiz</h1>
 
@@ -14981,12 +15439,15 @@ def render_caso_quiebras_vitoria_html():
 
   <p><a href="/casos">← Volver a Casos</a></p>
 </div>"""
+    body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
+                         _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
     return _page_shell("Caso: el patrón de quiebras en los servicios deportivos de Vitoria-Gasteiz",
                         body,
                         description="Disport Eki y Prismaglobal, dos empresas subcontratadas por el "
                                      "Ayuntamiento de Vitoria-Gasteiz para gestionar instalaciones "
                                      "deportivas municipales, entraron en concurso de acreedores con "
-                                     "poco más de un año de diferencia.")
+                                     "poco más de un año de diferencia.",
+                        og_path=_og_path)
 
 
 # Banderas simplificadas de cada comunidad/ciudad autónoma, como marcado SVG
@@ -15163,7 +15624,107 @@ def _estado_cobertura_mapa():
     return estado
 
 
-def render_mapa_cobertura_html():
+# destino de navegación (?provincia=X) por comunidad, reutilizando el
+# mismo mapping que ya usaba el mapa interactivo viejo (_MAPA_CCAA) -- así
+# el mapa de cobertura, al ponerse en la home (2026-09-20), navega igual
+# que el mapa que sustituye, sin inventar una tabla nueva de INE->slug.
+_MAPA_CCAA_DESTINO_POR_COMUNIDAD = {r["comunidad"]: r["destino"] for r in _MAPA_CCAA}
+
+# Estilo compartido por AMBOS usos del mapa de cobertura (página propia y
+# home) -- se inyecta una sola vez vía extra_head en la página propia, y
+# inline (dentro de un <style> del bloque embebido) en la home.
+_MAPA_COBERTURA_CSS = '''
+  .map-wrap {
+    position: relative; width: 100%; max-width: 980px; margin: 0 auto;
+    background: #101a2e; border-radius: 12px; padding: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  svg.mapa-cobertura-svg { width: 100%; height: auto; display: block; }
+  .muted { filter: grayscale(1) opacity(0.35) brightness(1.3); }
+  .ccaa-outline { pointer-events: none; }
+  g[data-ccaa] { cursor: pointer; transition: filter 0.15s ease; }
+  a.mc-ccaa-link { cursor: pointer; }
+  g[data-ccaa]:hover .ccaa-outline { stroke-width: 3; stroke: #ffffff; }
+  g[data-ccaa]:hover g[clip-path] { filter: brightness(1.12) saturate(1.15); }
+  g[data-ccaa]:hover g[clip-path].muted { filter: grayscale(0.7) opacity(0.55) brightness(1.15); }
+  .prov-border { pointer-events: none; }
+  #mc-tooltip {
+    position: fixed; pointer-events: none; background: #0b1220;
+    border: 1px solid #2a3550; color: #eef1f7; padding: 10px 12px;
+    border-radius: 8px; font-size: 0.85rem; max-width: 240px; opacity: 0;
+    transform: translate(-50%, -110%); transition: opacity 0.1s ease;
+    z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  }
+  #mc-tooltip .t-prov { font-weight: 700; font-size: 0.95rem; }
+  #mc-tooltip .t-ccaa { color: #9aa4b8; margin-top: 2px; }
+  #mc-tooltip .t-state { margin-top: 6px; display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
+  .mc-st-done { background: #0da45233; color: #4ee08a; }
+  .mc-st-partial { background: #ffd10033; color: #ffd100; }
+  .mc-st-pending { background: #ffffff22; color: #c7ccd6; }
+  .mc-legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 16px auto 0; max-width: 980px; font-size: 0.82rem; color: var(--dim); }
+  .mc-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .mc-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .mc-note { max-width: 980px; margin: 18px auto 0; font-size: 0.8rem; color: var(--dim); line-height: 1.5; }
+'''
+
+_MAPA_COBERTURA_JS = '''
+  (function() {
+    const tooltip = document.getElementById('mc-tooltip');
+    if (!tooltip) return;
+    const stateLabel = { done: 'Cobertura completa', partial: 'Cobertura parcial', pending: 'Pendiente' };
+    const stateClass = { done: 'mc-st-done', partial: 'mc-st-partial', pending: 'mc-st-pending' };
+
+    function showTooltip(evt, provName, ccaaName, state) {
+      tooltip.innerHTML = `
+        <div class="t-prov">${provName}</div>
+        <div class="t-ccaa">${ccaaName}</div>
+        <div class="t-state ${stateClass[state] || 'mc-st-pending'}">${stateLabel[state] || 'Pendiente'}</div>
+      `;
+      tooltip.style.opacity = '1';
+      moveTooltip(evt);
+    }
+    function moveTooltip(evt) {
+      tooltip.style.left = evt.clientX + 'px';
+      tooltip.style.top = evt.clientY + 'px';
+    }
+    function hideTooltip() { tooltip.style.opacity = '0'; }
+
+    const ccaaNames = {};
+    document.querySelectorAll('g[data-ccaa]').forEach(g => {
+      ccaaNames[g.dataset.ccaa] = g.dataset.name;
+    });
+
+    document.querySelectorAll('.prov-border').forEach(p => {
+      p.style.pointerEvents = 'all';
+      p.addEventListener('mousemove', evt => {
+        const ccaaSlug = p.dataset.ccaa;
+        const g = document.querySelector(`g[data-ccaa="${ccaaSlug}"]`);
+        const state = g ? g.dataset.state : 'pending';
+        showTooltip(evt, p.dataset.name, ccaaNames[ccaaSlug] || '', state);
+      });
+      p.addEventListener('mouseleave', hideTooltip);
+    });
+
+    document.querySelectorAll('g[data-ccaa]').forEach(g => {
+      g.addEventListener('mousemove', evt => {
+        if (evt.target.classList.contains('prov-border')) return;
+        showTooltip(evt, g.dataset.name, '', g.dataset.state);
+      });
+      g.addEventListener('mouseleave', hideTooltip);
+    });
+  })();
+'''
+
+
+def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
+    """Núcleo del mapa de cobertura (SVG + leyenda), compartido entre
+    /mapa-cobertura (página propia) y la home nacional (2026-09-20,
+    petición de César -- el mapa de la home pasa a ser este, no el viejo
+    mapa de tooltips _mapa_ccaa_html). clickable=True envuelve cada
+    comunidad en un <a href="/?provincia=..."> usando el mismo destino que
+    ya usaba el mapa viejo (_MAPA_CCAA_DESTINO_POR_COMUNIDAD) -- en la
+    página propia de /mapa-cobertura (clickable=False) no navega, solo
+    tooltip, igual que siempre."""
     W, H = 980, 760
     estado = _estado_cobertura_mapa()
 
@@ -15182,17 +15743,6 @@ def render_mapa_cobertura_html():
         hatch = (f'<path d="{c["d"]}" clip-path="url(#clip-{slug})" fill="url(#hatch)" opacity="0.55"/>'
                   if state == "partial" else "")
 
-        # Baleares: Mallorca/Menorca/Ibiza/Formentera/Cabrera quedan muy
-        # repartidas dentro del bounding box conjunto de la comunidad --
-        # estirar una sola bandera sobre todo ese rectángulo dejaba a las
-        # islas pequeñas y alejadas con solo una esquirla de la franja en
-        # vez de una mini-bandera limpia (bug conocido del prototipo
-        # entregado por César). Fix: un <svg> de bandera POR SUBTRAYECTO
-        # ("M..." de su "d" SVG, uno por isla/islote), cada uno escalado a
-        # su propio bounding box -- el clip-path del <g> exterior (con la
-        # silueta real completa) sigue recortando cada mini-bandera a la
-        # forma exacta de su isla. Solo hace falta para Baleares (única
-        # comunidad con este problema); el resto sigue con el bounds único.
         if slug == "baleares":
             island_boxes = []
             for sp in re.findall(r'M[^M]*', c["d"]):
@@ -15212,14 +15762,22 @@ def render_mapa_cobertura_html():
                 f'viewBox="0 0 3 2" preserveAspectRatio="none">{flag_inner}</svg>'
             )
 
-        ccaa_groups.append(f'''
+        group_inner = f'''
     <g data-ccaa="{slug}" data-name="{esc(c["name"])}" data-state="{state}">
       <g clip-path="url(#clip-{slug})"{muted}>
         {flag_svg_block}
       </g>
       {hatch}
       <path d="{c["d"]}" fill="transparent" stroke="#1a1a1a" stroke-width="1.6" stroke-linejoin="round" class="ccaa-outline"/>
-    </g>''')
+    </g>'''
+
+        if clickable:
+            comunidad = MAPA_COBERTURA_SLUG_A_COMUNIDAD.get(slug)
+            destino = _MAPA_CCAA_DESTINO_POR_COMUNIDAD.get(comunidad)
+            if destino:
+                group_inner = (f'<a class="mc-ccaa-link" href="/?provincia={destino}" '
+                                f'aria-label="{esc(c["name"])}">{group_inner}</a>')
+        ccaa_groups.append(group_inner)
 
     province_borders = []
     for p in MAPA_COBERTURA_PROVINCIAS_GEO:
@@ -15229,46 +15787,8 @@ def render_mapa_cobertura_html():
             f'data-ccaa="{p["ccaaSlug"]}" class="prov-border"/>'
         )
 
-    style = f'''<style>
-  .map-wrap {{
-    position: relative; width: 100%; max-width: 980px; margin: 0 auto;
-    background: #101a2e; border-radius: 12px; padding: 16px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }}
-  svg#mapa-cobertura {{ width: 100%; height: auto; display: block; }}
-  .muted {{ filter: grayscale(1) opacity(0.35) brightness(1.3); }}
-  .ccaa-outline {{ pointer-events: none; }}
-  g[data-ccaa] {{ cursor: pointer; transition: filter 0.15s ease; }}
-  g[data-ccaa]:hover .ccaa-outline {{ stroke-width: 3; stroke: #ffffff; }}
-  g[data-ccaa]:hover g[clip-path] {{ filter: brightness(1.12) saturate(1.15); }}
-  g[data-ccaa]:hover g[clip-path].muted {{ filter: grayscale(0.7) opacity(0.55) brightness(1.15); }}
-  .prov-border {{ pointer-events: none; }}
-  #mc-tooltip {{
-    position: fixed; pointer-events: none; background: #0b1220;
-    border: 1px solid #2a3550; color: #eef1f7; padding: 10px 12px;
-    border-radius: 8px; font-size: 0.85rem; max-width: 240px; opacity: 0;
-    transform: translate(-50%, -110%); transition: opacity 0.1s ease;
-    z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-  }}
-  #mc-tooltip .t-prov {{ font-weight: 700; font-size: 0.95rem; }}
-  #mc-tooltip .t-ccaa {{ color: #9aa4b8; margin-top: 2px; }}
-  #mc-tooltip .t-state {{ margin-top: 6px; display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }}
-  .mc-st-done {{ background: #0da45233; color: #4ee08a; }}
-  .mc-st-partial {{ background: #ffd10033; color: #ffd100; }}
-  .mc-st-pending {{ background: #ffffff22; color: #c7ccd6; }}
-  .mc-legend {{ display: flex; gap: 18px; flex-wrap: wrap; margin: 16px auto 0; max-width: 980px; font-size: 0.82rem; color: #c7ccd6; }}
-  .mc-legend span {{ display: inline-flex; align-items: center; gap: 6px; }}
-  .mc-dot {{ width: 10px; height: 10px; border-radius: 3px; display: inline-block; }}
-  .mc-note {{ max-width: 980px; margin: 18px auto 0; font-size: 0.8rem; color: #7c8598; line-height: 1.5; }}
-</style>'''
-
-    body = f'''<div class="static-page">
-  <h1>Mapa de cobertura</h1>
-  <p class="sub">Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para
-  ver su estado de cobertura.</p>
-
-  <div class="map-wrap">
-    <svg id="mapa-cobertura" viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg">
+    return f'''<div class="map-wrap">
+    <svg class="mapa-cobertura-svg" id="{svg_id}" viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         {"".join(defs)}
         <pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
@@ -15287,6 +15807,21 @@ def render_mapa_cobertura_html():
     <span><span class="mc-dot" style="background:#cfd3da"></span> Pendiente</span>
   </div>
 
+  <div id="mc-tooltip"></div>
+  <script>{_MAPA_COBERTURA_JS}</script>'''
+
+
+def render_mapa_cobertura_html():
+    style = f'<style>{_MAPA_COBERTURA_CSS}</style>'
+    mapa_html = _mapa_cobertura_svg_html(clickable=False)
+
+    body = f'''<div class="static-page">
+  <h1>Mapa de cobertura</h1>
+  <p class="sub">Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para
+  ver su estado de cobertura.</p>
+
+  {mapa_html}
+
   <p class="mc-note">
     Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico
     Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y
@@ -15294,56 +15829,7 @@ def render_mapa_cobertura_html():
     en cada carga a partir de los municipios ya procesados en nuestra base de datos frente al total
     esperado por provincia.
   </p>
-
-  <div id="mc-tooltip"></div>
-</div>
-
-<script>
-  (function() {{
-    const tooltip = document.getElementById('mc-tooltip');
-    const stateLabel = {{ done: 'Cobertura completa', partial: 'Cobertura parcial', pending: 'Pendiente' }};
-    const stateClass = {{ done: 'mc-st-done', partial: 'mc-st-partial', pending: 'mc-st-pending' }};
-
-    function showTooltip(evt, provName, ccaaName, state) {{
-      tooltip.innerHTML = `
-        <div class="t-prov">${{provName}}</div>
-        <div class="t-ccaa">${{ccaaName}}</div>
-        <div class="t-state ${{stateClass[state] || 'mc-st-pending'}}">${{stateLabel[state] || 'Pendiente'}}</div>
-      `;
-      tooltip.style.opacity = '1';
-      moveTooltip(evt);
-    }}
-    function moveTooltip(evt) {{
-      tooltip.style.left = evt.clientX + 'px';
-      tooltip.style.top = evt.clientY + 'px';
-    }}
-    function hideTooltip() {{ tooltip.style.opacity = '0'; }}
-
-    const ccaaNames = {{}};
-    document.querySelectorAll('g[data-ccaa]').forEach(g => {{
-      ccaaNames[g.dataset.ccaa] = g.dataset.name;
-    }});
-
-    document.querySelectorAll('.prov-border').forEach(p => {{
-      p.style.pointerEvents = 'all';
-      p.addEventListener('mousemove', evt => {{
-        const ccaaSlug = p.dataset.ccaa;
-        const g = document.querySelector(`g[data-ccaa="${{ccaaSlug}}"]`);
-        const state = g ? g.dataset.state : 'pending';
-        showTooltip(evt, p.dataset.name, ccaaNames[ccaaSlug] || '', state);
-      }});
-      p.addEventListener('mouseleave', hideTooltip);
-    }});
-
-    document.querySelectorAll('g[data-ccaa]').forEach(g => {{
-      g.addEventListener('mousemove', evt => {{
-        if (evt.target.classList.contains('prov-border')) return;
-        showTooltip(evt, g.dataset.name, '', g.dataset.state);
-      }});
-      g.addEventListener('mouseleave', hideTooltip);
-    }});
-  }})();
-</script>'''
+</div>'''
 
     return _page_shell("Mapa de cobertura", body, extra_head=style, show_ad_banner=False,
                         description="Mapa de España por comunidades y provincias con el estado de "
@@ -15355,9 +15841,9 @@ def render_quienes_somos_html():
   <h1>Transparencia al servicio de la ciudadanía</h1>
 
   <p>Dinero Público nació con un objetivo claro: hacer accesible a cualquier ciudadano
-  la información sobre cómo se gasta el dinero público. Actualmente cubrimos la
-  Región de Murcia, Cataluña, la Comunitat Valenciana y Andalucía,
-  con expansión progresiva a toda España.</p>
+  la información sobre cómo se gasta el dinero público. Cubrimos ya las 19 comunidades
+  y ciudades autónomas de España, con distinto grado de detalle según la provincia
+  (ver el <a href="/mapa-cobertura">mapa de cobertura</a> para el estado real de cada una).</p>
 
   <p>Cruzamos datos oficiales de la Plataforma de Contratación del Sector Público (PLACE)
   del Ministerio de Hacienda con información registral pública para identificar quién
@@ -15498,8 +15984,8 @@ def _redirect_resp(path):
 
 
 def _error_resp(msg, code=500):
-    body = (f"<html><body style='font-family:sans-serif;padding:40px;background:#0d1117;color:#c9d1d9'>"
-            f"<h2>{esc(msg)}</h2><a href='/' style='color:#58a6ff'>← Volver</a></body></html>")
+    body = (f"<html><body style='font-family:sans-serif;padding:40px;background:#fbf0c4;color:#22201a'>"
+            f"<h2>{esc(msg)}</h2><a href='/' style='color:#0969da'>← Volver</a></body></html>")
     return _resp(body, code=code)
 
 
@@ -15558,7 +16044,8 @@ def _route_get(path, qs, gzip_ok=False):
             # quedarse pegada; la copia YA cacheada en el edge necesita una
             # purga aparte (no algo que este proceso pueda hacer).
             datos_todas = _db_all_municipios()
-            return _resp(render_landing_nacional_html(datos_todas),
+            rk_comunidad = qs.get("rk_comunidad", ["todas"])[0]
+            return _resp(render_landing_nacional_html(datos_todas, rk_comunidad=rk_comunidad),
                          headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok)
 
         datos_snap = _db_all_municipios(provincia=provincia_filtro)
@@ -15585,6 +16072,9 @@ def _route_get(path, qs, gzip_ok=False):
 
     if path == "/casos":
         return _resp(render_casos_index_html(), gzip_ok=gzip_ok)
+
+    if path == "/casos/archena-ranking-transparencia-dyntra":
+        return _resp(render_caso_archena_dyntra_html(), gzip_ok=gzip_ok)
 
     if path == "/casos/contratos-menores-culmina":
         return _resp(render_caso_contratos_menores_html(), gzip_ok=gzip_ok)
