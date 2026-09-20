@@ -12015,6 +12015,26 @@ _INDICE_TRANSPARENCIA_PESOS = {
     "actividad":     20.0,
 }
 _INDICE_TRANSPARENCIA_MIN_COMPONENTES = 3  # por debajo de esto, "cobertura insuficiente"
+_INDICE_TRANSPARENCIA_MAX_FILAS_TABLA = 300  # tope de filas pintadas en /rankings, ver _render_indice_transparencia_html
+
+# "cuentas" (CUENTAS_ANUALES) e "ispa_pub" (RETRIBUCIONES_ISPA) vienen de
+# actualizar_cuentas_anuales.py y actualizar_retribuciones.py, que SIGUEN
+# hardcodeados a estas 5 provincias originales (PROVINCIAS_CUBIERTAS en
+# actualizar_retribuciones.py; MUNICIPIOS_MURCIA/GIRONA/LLEIDA/BARCELONA/
+# TARRAGONA en actualizar_cuentas_anuales.py) -- a diferencia de
+# actualizar_deuda_y_liquidaciones.py (hacienda_eell.json: deuda_pub/
+# saldo_pub), que SÍ se generalizó el 2026-09-13 a todas las provincias de
+# MUNICIPIOS_POR_PROVINCIA y hoy cubre prácticamente toda España (8.042/6.930
+# de 8.086 municipios). Bug encontrado y corregido el 2026-09-20: antes,
+# "cuentas"/"ispa_pub" se marcaban "disponible" para CUALQUIER municipio de
+# España, puntuando 0 si no aparecía en el fichero -- eso castigaba a los
+# ~4.900 municipios fuera de estas 5 provincias por una limitación de
+# COBERTURA DE ESTE PROYECTO (el script nunca se ha ejecutado para ellos),
+# no por su transparencia real, y de paso inflaba /rankings (vista "todas")
+# a las ~8.086 filas de España entera en vez de a los municipios realmente
+# evaluados. Cuando esos dos scripts se generalicen (igual que ya se hizo
+# con deuda/saldo y población), este set deja de hacer falta.
+_INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA = {"murcia", "girona", "lleida", "barcelona", "tarragona"}
 
 # Tramos de población para comparar la actividad de publicación (componente
 # "actividad") solo contra municipios de tamaño parecido -- comparar Lorca
@@ -12101,12 +12121,21 @@ def _calcular_indice_transparencia():
         provincia = pob.get("provincia", "murcia")
         habitantes = pob.get("poblacion")
 
+        # cuentas/ispa_pub: solo "disponible" (0 o 100, señal real) para las
+        # 5 provincias que esos dos scripts realmente rastrean -- fuera de
+        # ahí, se EXCLUYE (no se puntúa 0) porque no significa que el
+        # municipio no publique, sino que no lo hemos mirado (ver comentario
+        # de _INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA arriba).
+        cuentas_ispa_evaluable = provincia in _INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA
+        cuentas_ok = clave in CUENTAS_ANUALES
         componentes = {
             "cuentas": {
-                "disponible": True,
-                "puntos": 100.0 if clave in CUENTAS_ANUALES else 0.0,
-                "detalle": "Cuentas anuales publicadas" if clave in CUENTAS_ANUALES
-                           else "Cuentas anuales no publicadas (o no localizadas)",
+                "disponible": cuentas_ispa_evaluable,
+                "puntos": (100.0 if cuentas_ok else 0.0) if cuentas_ispa_evaluable else None,
+                "detalle": ("Cuentas anuales publicadas" if cuentas_ok
+                            else "Cuentas anuales no publicadas (o no localizadas)")
+                           if cuentas_ispa_evaluable
+                           else "Cuentas anuales: aún no rastreado para esta provincia",
             },
             "deuda_pub": {
                 "disponible": True,
@@ -12122,10 +12151,12 @@ def _calcular_indice_transparencia():
         }
         ispa_ok = RETRIBUCIONES_ISPA.get(clave, {}).get("importe") is not None
         componentes["ispa_pub"] = {
-            "disponible": True,
-            "puntos": 100.0 if ispa_ok else 0.0,
-            "detalle": "Sueldo del alcalde/sa publicado (ISPA)" if ispa_ok
-                       else "Sueldo del alcalde/sa no publicado o no atribuido (ISPA)",
+            "disponible": cuentas_ispa_evaluable,
+            "puntos": (100.0 if ispa_ok else 0.0) if cuentas_ispa_evaluable else None,
+            "detalle": ("Sueldo del alcalde/sa publicado (ISPA)" if ispa_ok
+                        else "Sueldo del alcalde/sa no publicado o no atribuido (ISPA)")
+                       if cuentas_ispa_evaluable
+                       else "ISPA: aún no rastreado para esta provincia",
         }
 
         # % adjudicatario identificado -- SOLO contratos formales (PLACE/
@@ -12180,6 +12211,11 @@ def _calcular_indice_transparencia():
 
         total_contratos = denom_adj + (m["total"] if m else 0)
         actividad_por_1000 = (total_contratos / habitantes * 1000) if habitantes else None
+        # "actividad" solo tiene sentido para municipios que hemos FETCHED
+        # al menos una vez (PLACE o menores) -- ver comentario de la 2ª
+        # pasada más abajo sobre por qué "0 contratos" de un municipio nunca
+        # tocado no es lo mismo que "0 contratos" de uno ya rastreado.
+        fetched = d_formal is not None or m is not None
 
         filas.append({
             "municipio": municipio,
@@ -12188,6 +12224,7 @@ def _calcular_indice_transparencia():
             "habitantes": habitantes,
             "componentes": componentes,
             "_actividad_por_1000": actividad_por_1000,  # temporal, se consume en la 2ª pasada
+            "_fetched": fetched,  # temporal, se consume en la 2ª pasada
             "_total_contratos": total_contratos,
             "_total_contratos_formales": denom_adj,
             "_total_contratos_menores": m["total"] if m else 0,
@@ -12196,9 +12233,21 @@ def _calcular_indice_transparencia():
     # Segunda pasada: percentil de "actividad" DENTRO de cada tramo de
     # población (ver _indice_tramo_poblacion) -- no tiene sentido comparar
     # contratos/1.000 hab. de Lorca contra un pueblo de 300 habitantes.
+    #
+    # Solo entran municipios "_fetched" (con al menos un intento real de
+    # PLACE o menores) -- bug encontrado y corregido el 2026-09-20: antes,
+    # CUALQUIER municipio de España con población conocida entraba aquí, y
+    # uno nunca rastreado por nosotros sacaba "0 contratos" = percentil 0,
+    # como si su ayuntamiento no publicara nada, cuando en realidad es que
+    # aún no hemos ido a mirar (España tiene 8.086 municipios en el censo,
+    # pero solo ~3.169 tienen alguna vez una fila en cache.db). Además de
+    # inexacto, esto inflaba /rankings a miles de filas. Se queda con
+    # "disponible: False" más abajo, igual que los demás componentes por
+    # cobertura insuficiente -- y de paso el percentil de los municipios SÍ
+    # rastreados deja de compararse contra miles de "ceros" fantasma.
     por_tramo = {}
     for f in filas:
-        if f["habitantes"]:
+        if f["habitantes"] and f["_fetched"]:
             por_tramo.setdefault(_indice_tramo_poblacion(f["habitantes"]), []).append(f)
 
     for grupo in por_tramo.values():
@@ -12216,14 +12265,16 @@ def _calcular_indice_transparencia():
                             f"percentil {percentil:.0f} entre municipios de tamaño similar"),
             }
 
-    # Municipios sin población conocida (no debería pasar, POBLACION es
-    # 987/987, pero por si acaso) se quedan sin componente "actividad".
+    # Municipios sin población conocida, o sin ningún rastreo nuestro
+    # (PLACE/menores) todavía, se quedan sin componente "actividad".
     for f in filas:
         f["componentes"].setdefault("actividad", {
             "disponible": False, "puntos": None,
-            "detalle": "Sin población conocida para calcularlo",
+            "detalle": ("Sin población conocida para calcularlo" if not f["habitantes"]
+                        else "Aún no se han rastreado contratos (PLACE/menores) de este municipio"),
         })
         del f["_actividad_por_1000"]
+        del f["_fetched"]
         del f["_total_contratos"]
         del f["_total_contratos_formales"]
         del f["_total_contratos_menores"]
@@ -12418,7 +12469,18 @@ def _render_indice_transparencia_html(comunidad="todas"):
     ranking nacional (o filtrado por comunidad autónoma) de actividad y
     disponibilidad de datos públicos, con el desglose de los 7 componentes
     siempre visible por municipio. Ver el bloque de comentarios de cabecera
-    de _calcular_indice_transparencia para la metodología completa."""
+    de _calcular_indice_transparencia para la metodología completa.
+
+    Corte a _INDICE_TRANSPARENCIA_MAX_FILAS_TABLA (2026-09-20, hallazgo de
+    rendimiento): antes de este corte, la vista "todas" llegó a generar del
+    orden de miles de filas -- cada una con su desglose de 7 componentes
+    inline -- convirtiendo /rankings en una respuesta de ~18 MB / ~130.000
+    líneas de HTML que tardaba varios minutos en cargar (a veces ni
+    llegaba). El puesto (empates incluidos) se calcula SIEMPRE sobre la
+    lista completa antes de cortar, así que un municipio fuera del corte
+    sigue teniendo su puesto real si se busca por el buscador de arriba
+    (/api/rankings-municipio) -- el corte solo afecta a cuántas filas se
+    pintan en la tabla, no al cálculo."""
     filas_datos = _indice_transparencia_cacheado()
     if comunidad != "todas":
         filas_datos = [f for f in filas_datos if f["comunidad_autonoma"] == comunidad]
@@ -12426,9 +12488,13 @@ def _render_indice_transparencia_html(comunidad="todas"):
     con_indice = [f for f in filas_datos if f["indice"] is not None]
     con_indice.sort(key=lambda f: f["indice"], reverse=True)
     sin_indice = len(filas_datos) - len(con_indice)
+    ranking_completo = _ranking_con_empates(con_indice)
+    total_con_indice = len(ranking_completo)
+    ranking_visible = ranking_completo[:_INDICE_TRANSPARENCIA_MAX_FILAS_TABLA]
+    recortado = total_con_indice > len(ranking_visible)
 
     filas_html = ""
-    for puesto, f in _ranking_con_empates(con_indice):
+    for puesto, f in ranking_visible:
         pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(puesto, f"{puesto}º")
         muni_q = quote_plus(f["municipio"])
         q_prov_muni = _q_prov(f["provincia"])
@@ -12461,6 +12527,12 @@ def _render_indice_transparencia_html(comunidad="todas"):
         f'disponibles) -- no se muestran en la tabla.</span>'
         if sin_indice else ""
     )
+    aviso_recorte = (
+        f'<br><span class="noloc-warn">📄 Mostrando los primeros {len(ranking_visible)} de '
+        f'{total_con_indice} municipios con índice calculado. Usa el buscador de arriba para encontrar '
+        f'cualquier municipio y su puesto real, esté o no en esta tabla.</span>'
+        if recortado else ""
+    )
 
     return f"""
   <div class="rk-section-header" id="indice-transparencia">
@@ -12474,6 +12546,7 @@ def _render_indice_transparencia_html(comunidad="todas"):
     acreditación oficial -- este proyecto no es organismo acreditador. Es un indicador propio pensado para
     comparar municipios entre sí a partir de lo que hemos podido recopilar, no para juzgar su gestión.
     {aviso_sin_cobertura}
+    {aviso_recorte}
   </p>
   <input type="text" class="it-buscador" placeholder="Buscar municipio…" autocomplete="off"
          oninput="{esc(_IT_BUSCADOR_JS)}">
