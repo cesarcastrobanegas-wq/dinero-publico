@@ -12606,15 +12606,31 @@ def _calcular_indice_transparencia_v2():
         habitantes = pob.get("poblacion")
         comp = {}
 
-        comp["cuentas"] = {"disponible": True, "puntos": 100.0 if clave in CUENTAS_ANUALES else 0.0,
-                            "detalle": "Cuentas anuales publicadas" if clave in CUENTAS_ANUALES else "No publicadas"}
+        # cuentas/ispa_pub: mismo fix que v1 (2026-09-20, ver
+        # _INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA) -- solo evaluables
+        # (0 real) en las 5 provincias que esos scripts rastrean de verdad;
+        # fuera de ahí, EXCLUIDO (no es que no publiquen, es que no lo hemos
+        # mirado). v2 tenía copiado el mismo bug de v1 (disponible=True
+        # siempre) para estos 4 componentes -- corregido aquí igual.
+        cuentas_ispa_evaluable = provincia in _INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA
+        cuentas_ok = clave in CUENTAS_ANUALES
+        comp["cuentas"] = {
+            "disponible": cuentas_ispa_evaluable,
+            "puntos": (100.0 if cuentas_ok else 0.0) if cuentas_ispa_evaluable else None,
+            "detalle": ("Cuentas anuales publicadas" if cuentas_ok else "No publicadas")
+                       if cuentas_ispa_evaluable else "Aún no rastreado para esta provincia -- EXCLUIDO",
+        }
         comp["deuda_pub"] = {"disponible": True, "puntos": 100.0 if clave in DEUDA_VIVA else 0.0,
                               "detalle": "Deuda viva publicada" if clave in DEUDA_VIVA else "No publicada"}
         comp["saldo_pub"] = {"disponible": True, "puntos": 100.0 if clave in SALDO_NO_FINANCIERO else 0.0,
                               "detalle": "Saldo publicado" if clave in SALDO_NO_FINANCIERO else "No publicado"}
         ispa_ok = RETRIBUCIONES_ISPA.get(clave, {}).get("importe") is not None
-        comp["ispa_pub"] = {"disponible": True, "puntos": 100.0 if ispa_ok else 0.0,
-                             "detalle": "ISPA publicado" if ispa_ok else "No publicado"}
+        comp["ispa_pub"] = {
+            "disponible": cuentas_ispa_evaluable,
+            "puntos": (100.0 if ispa_ok else 0.0) if cuentas_ispa_evaluable else None,
+            "detalle": ("ISPA publicado" if ispa_ok else "No publicado")
+                       if cuentas_ispa_evaluable else "Aún no rastreado para esta provincia -- EXCLUIDO",
+        }
 
         cta = CUENTAS_ANUALES.get(clave)
         if cta and cta.get("ultimo_ejercicio_rendido"):
@@ -12712,20 +12728,42 @@ def _calcular_indice_transparencia_v2():
 
         total_contratos = n_formales + len(menores)
         actividad_por_1000 = (total_contratos / habitantes * 1000) if habitantes else None
+        # "actividad": mismo fix que v1 (2026-09-20) -- solo tiene sentido
+        # para municipios con al menos un fetch real (PLACE o menores); "0
+        # contratos" de uno nunca tocado no es la misma señal que "0
+        # contratos" de uno sí rastreado, y mezclarlos infla el índice a
+        # España entera Y distorsiona el percentil de los que sí tienen
+        # datos reales. Variable propia (no reutiliza "fetched" de v1) para
+        # no acoplar ambas funciones, pero mismo criterio: formal o menor.
+        fetched = d_formal is not None or bool(menores)
 
         filas.append({
             "municipio": municipio, "provincia": provincia,
             "comunidad_autonoma": COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(provincia, provincia),
             "habitantes": habitantes, "componentes": comp,
             "_actividad_por_1000": actividad_por_1000, "_total_contratos": total_contratos,
+            "_fetched": fetched,
             "_indicador_adjudicatario": indicador_adjudicatario, "_indicador_directivo": indicador_directivo,
         })
 
+    # por_tramo: usado por DOS cálculos distintos --
+    #   (1) el percentil de "actividad" más abajo, que SÍ debe excluir a los
+    #       municipios nunca rastreados (ver comentario de "fetched" arriba).
+    #   (2) la segunda pasada de "menores" estado (b) más abajo, que NO debe
+    #       filtrar por "fetched" -- su propia gating de 4 estados (a/b/c/d)
+    #       ya decide qué entra, y filtrar aquí además dejaría "huérfanos"
+    #       en estado _pendiente_score_b sin resolver si un municipio
+    #       "consultado, 0 registros" no tuviera fila en cache.db.
+    # Dos diccionarios separados, mismo agrupado por tramo de población.
     por_tramo = {}
+    por_tramo_actividad = {}
     for f in filas:
         if f["habitantes"]:
-            por_tramo.setdefault(_indice_tramo_poblacion(f["habitantes"]), []).append(f)
-    for grupo in por_tramo.values():
+            tramo = _indice_tramo_poblacion(f["habitantes"])
+            por_tramo.setdefault(tramo, []).append(f)
+            if f["_fetched"]:
+                por_tramo_actividad.setdefault(tramo, []).append(f)
+    for grupo in por_tramo_actividad.values():
         grupo.sort(key=lambda f: f["_actividad_por_1000"])
         n = len(grupo)
         for i, f in enumerate(grupo):
@@ -12733,8 +12771,13 @@ def _calcular_indice_transparencia_v2():
             f["componentes"]["actividad"] = {"disponible": True, "puntos": pct,
                                               "detalle": f"{f['_total_contratos']} contratos/{f['habitantes']} hab., percentil {pct:.0f}"}
     for f in filas:
-        f["componentes"].setdefault("actividad", {"disponible": False, "puntos": None, "detalle": "Sin población"})
+        f["componentes"].setdefault("actividad", {
+            "disponible": False, "puntos": None,
+            "detalle": ("Sin población" if not f["habitantes"]
+                        else "Aún no se han rastreado contratos (PLACE/menores) de este municipio -- EXCLUIDO"),
+        })
         del f["_actividad_por_1000"]
+        del f["_fetched"]
 
     # ---- Segunda pasada: resolver el estado (b) de "menores" -- consultada
     # sin registros, puntuada contra el tramo de población (cuarta
