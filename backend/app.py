@@ -14297,19 +14297,27 @@ def render_caso_contratos_menores_html():
   <h2>Qué hicimos</h2>
   <p>Auditamos, municipio a municipio, cómo publica cada administración sus contratos
   menores. En Cataluña existe un atajo real: la Generalitat mantiene un dataset
-  centralizado (vía API pública de Socrata) que cubre los 221 municipios de la provincia
-  de Girona de una sola vez — resultado: 110.555 contratos menores indexados, 221/221
-  municipios, verificados sin duplicados. En la Región de Murcia no existe ese atajo
+  centralizado (vía API pública de Socrata) que cubre los municipios de Girona, Lleida,
+  Barcelona y Tarragona de una sola vez. En la Región de Murcia no existe ese atajo
   regional; el portal autonómico está prácticamente vacío, así que identificamos las
   fuentes reales una por una: un CSV trimestral en Fuente Álamo (con actualización
-  automática), un fichero ODS en Mula, un XLSX en Molina de Segura, un listado paginado
-  en Lorca (10.451 contratos, 19,3M€) y en Lorquí (344 contratos, 2,49M€), y más tarde
-  el portal de Cartagena (2.290 contratos, 2021-2026).</p>
+  automática, aunque una parte de sus filas no trae fecha), un fichero ODS en Mula, un
+  XLSX en Molina de Segura, los listados de Murcia capital, y un listado paginado en
+  Lorca y en Lorquí. El portal de Cartagena está <strong>en revisión</strong> — lo
+  indexamos con histórico 2021-2026, pero ahora mismo solo conseguimos recuperar el
+  ejercicio en curso; estamos revisándolo antes de decidir cómo mostrarlo.</p>
 
-  <p>Aplicamos también un criterio: más de 5 años de antigüedad no tiene ya valor
-  jurídico a efectos de responsabilidad, así que mostramos histórico desde 2021, sin
-  umbral de importe mínimo, en una sección propia y separada de las adjudicaciones
-  formales de PLACE/BORM/PSCP — para que quede claro qué es cada cosa.</p>
+  <p>La cobertura histórica real varía por fuente, no es un "desde 2021" único para
+  todo el sitio: en Cataluña (RPC) y Lorquí llega a 2021; en Mula, Molina de Segura y
+  Murcia capital, a 2022; en Lorca empieza en 2024 (estamos revisando si su portal
+  permite ir más atrás); en Fuente Álamo llega a 2021 pero con una parte de sus filas
+  sin fecha registrada en origen; en Cartagena está en revisión, como se explica arriba.
+  Para los contratos formales (PLACE/PSCP/Euskadi/Navarra) todavía no registramos la
+  fecha de adjudicación de cada contrato — lo mostramos todo lo que encontramos, pero no
+  podemos decir con precisión desde qué año, municipio a municipio; estamos trabajando
+  en añadir ese dato. En ningún caso aplicamos un umbral de importe mínimo, y los
+  contratos menores se muestran siempre en una sección propia, separada de las
+  adjudicaciones formales — para que quede claro qué es cada cosa.</p>
 
   <h2>Por qué importa</h2>
   <p>Que una empresa no aparezca en nuestros datos de adjudicaciones formales no prueba
@@ -14317,8 +14325,11 @@ def render_caso_contratos_menores_html():
   de gasto. Es un hueco estructural en cómo se publica la contratación pública en España,
   no un fallo de una empresa en particular. Seguimos ampliando, municipio a municipio,
   la lista de fuentes de contratos menores indexadas. Si conoces un portal de
-  transparencia municipal que no hayamos indexado todavía, nos lo puedes decir en la
-  ficha de ese municipio.</p>
+  transparencia municipal que no hayamos indexado todavía, o si eres del propio
+  ayuntamiento y quieres decirnos dónde publicáis vuestros contratos menores (o
+  corregirnos si nos hemos equivocado), escríbenos a
+  <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a> con la
+  URL — nos ahorra tener que buscarla nosotros y acelera que el municipio se conecte.</p>
 
   <p><a href="/casos">← Volver a Casos</a></p>
 </div>"""
