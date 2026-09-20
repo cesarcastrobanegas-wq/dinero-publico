@@ -10310,10 +10310,22 @@ def _lanzar_enriquecimiento(provincia=None):
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+/* Tema claro con fondo amarillo pálido (2026-09-20, petición de César:
+   "fondo negro -> amarillo, tono a discreción, preservando el contraste").
+   Antes era el tema oscuro de GitHub (bg #0d1117/surface #161b22/texto
+   claro); los colores semánticos (accent/blue/red/green/yellow/purple) se
+   oscurecieron a la vez -- eran claros a propósito para leerse SOBRE fondo
+   oscuro, y sobre un fondo claro esos mismos tonos pierden casi todo el
+   contraste (algunos bajaban de ~4.5:1 a ~2:1). Paleta verificada con
+   cálculo de contraste WCAG (ver auditoría 2026-09-20): texto principal
+   14-16:1, texto secundario ~5.2-5.8:1, todos los acentos ≥4.4:1 sobre bg
+   y superficie -- ver botones background:var(--accent) que además pasan
+   de texto negro a blanco (accent ahora es un naranja oscuro, texto
+   blanco da 6:1 frente a 3.5:1 con negro).*/
 :root{
-  --bg:#0d1117;--surface:#161b22;--border:#30363d;
-  --accent:#f0883e;--blue:#58a6ff;--text:#c9d1d9;--dim:#8b949e;
-  --red:#f85149;--green:#3fb950;--yellow:#d29922;--purple:#d2a8ff;
+  --bg:#fbf0c4;--surface:#fffdf6;--border:#9c8a4a;
+  --accent:#a8440a;--blue:#0969da;--text:#22201a;--dim:#6b6355;
+  --red:#cf222e;--green:#1a7f37;--yellow:#9a6700;--purple:#8250df;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 /* overflow-x:hidden SOLO en html, no en body -- ver INFORME_NOCHE.md (header
@@ -10342,7 +10354,7 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .header-nav{flex-shrink:0;display:flex;align-items:center;gap:10px;}
 .header-nav>a{display:inline-flex;text-decoration:none;padding:8px 16px;border-radius:6px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);font-size:13px;font-weight:600;white-space:nowrap;}
 .header-nav>a:hover{background:rgba(240,136,62,.22);}
-.pwa-install-btn{display:inline-flex;font-family:'IBM Plex Sans',sans-serif;text-decoration:none;padding:8px 16px;border-radius:6px;background:var(--accent);color:#000;border:1px solid var(--accent);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
+.pwa-install-btn{display:inline-flex;font-family:'IBM Plex Sans',sans-serif;text-decoration:none;padding:8px 16px;border-radius:6px;background:var(--accent);color:#fff;border:1px solid var(--accent);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
 .pwa-install-btn[hidden]{display:none;}
 .pwa-install-btn:hover{background:#ffa657;}
 /* ── banner fijo de instalar app (solo móvil) ──────────────────────────── */
@@ -10353,11 +10365,11 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
   50%{box-shadow:0 0 0 8px rgba(240,136,62,0);}
 }
 @media (max-width:700px){
-  .pwa-banner-mobile{display:flex;align-items:center;gap:10px;position:fixed;top:0;left:0;right:0;z-index:200;padding:10px 14px;background:var(--accent);color:#000;font-size:12.5px;font-weight:600;animation:pwaBannerPulse 1.8s ease-in-out infinite;}
+  .pwa-banner-mobile{display:flex;align-items:center;gap:10px;position:fixed;top:0;left:0;right:0;z-index:200;padding:10px 14px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600;animation:pwaBannerPulse 1.8s ease-in-out infinite;}
   .pwa-banner-mobile[hidden]{display:none;}
   .pwa-banner-text{flex:1;line-height:1.3;}
-  .pwa-banner-btn{background:#000;color:var(--accent);border:none;border-radius:5px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;}
-  .pwa-banner-close{background:transparent;border:none;color:#000;font-size:17px;cursor:pointer;padding:0 2px;line-height:1;opacity:.65;}
+  .pwa-banner-btn{background:#000;color:#f0883e;border:none;border-radius:5px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .pwa-banner-close{background:transparent;border:none;color:#fff;font-size:17px;cursor:pointer;padding:0 2px;line-height:1;opacity:.65;}
   .pwa-banner-close:hover{opacity:1;}
 }
 .instalar-bar-highlight{animation:pwaBannerPulse 1s ease-in-out 2;border-color:var(--accent) !important;}
@@ -10374,7 +10386,7 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .cookie-texto a{color:var(--blue);}
 .cookie-botones{display:flex;gap:10px;flex-wrap:wrap;}
 .cookie-btn{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:700;padding:10px 22px;border-radius:6px;cursor:pointer;white-space:nowrap;min-width:120px;text-align:center;}
-.cookie-btn-aceptar{background:var(--accent);color:#000;border:1px solid var(--accent);}
+.cookie-btn-aceptar{background:var(--accent);color:#fff;border:1px solid var(--accent);}
 .cookie-btn-aceptar:hover{background:#ffa657;}
 .cookie-btn-rechazar{background:var(--surface);color:var(--text);border:1px solid var(--border);}
 .cookie-btn-rechazar:hover{border-color:var(--dim);}
@@ -10386,14 +10398,14 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .prov-switch{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
 .prov-tab{text-decoration:none;padding:8px 14px;font-size:13px;font-weight:600;color:var(--dim);background:var(--bg);white-space:nowrap;}
 .prov-tab:hover{color:var(--text);}
-.prov-tab.active{background:var(--accent);color:#000;}
+.prov-tab.active{background:var(--accent);color:#fff;}
 .main{max-width:1340px;margin:28px auto;padding:0 20px;}
 .search-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:24px;}
 .search-bar label{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--dim);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
 .search-bar input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:8px 12px;border-radius:6px;flex:1;min-width:180px;outline:none;}
 .search-bar input:focus{border-color:var(--blue);}
 .btn{padding:8px 18px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;font-family:'IBM Plex Sans',sans-serif;}
-.btn-primary{background:var(--accent);color:#000;}
+.btn-primary{background:var(--accent);color:#fff;}
 .btn-danger{background:var(--red);color:#fff;}
 .stats-bar{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
@@ -10401,8 +10413,8 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 /* alertas anticorrupcion */
 .alertas{margin-bottom:18px;display:flex;flex-direction:column;gap:8px;}
 .alerta{border-radius:6px;padding:10px 16px;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:flex-start;}
-.alerta.alto{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);color:#f8c4c2;}
-.alerta.medio{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:#e6c87a;}
+.alerta.alto{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);color:var(--red);}
+.alerta.medio{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:var(--yellow);}
 .alerta.info{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);color:var(--text);}
 .alerta-ico{font-size:16px;line-height:1;}
 .alerta-titulo{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;opacity:.7;}
@@ -10437,11 +10449,11 @@ tr:last-child td{border-bottom:none;}
 .directivo{color:var(--blue);}
 .cargo{color:var(--dim);font-size:11px;}
 .cargo-match{font-size:10.5px;line-height:1.5;margin-top:5px;padding:5px 8px;border-radius:4px;max-width:260px;}
-.cargo-match-local{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:#e6c87a;}
+.cargo-match-local{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:var(--yellow);}
 .cargo-match-regional{background:rgba(88,166,255,.06);border:3px double rgba(88,166,255,.5);color:var(--text);}
 .cargo-match-detalle{opacity:.85;font-weight:normal;}
 a.link{color:var(--blue);font-size:11px;}
-a.borm-link{color:#e0a0ff;font-size:11px;}
+a.borm-link{color:var(--purple);font-size:11px;}
 .empty{text-align:center;padding:50px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .estado-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;}
 .est-ADJ,.est-RES{background:rgba(63,185,80,.15);color:var(--green);}
@@ -10449,7 +10461,7 @@ a.borm-link{color:#e0a0ff;font-size:11px;}
 .lid{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .fuente-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 5px;border-radius:3px;vertical-align:middle;margin-left:4px;}
 .fuente-place{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);}
-.fuente-borm{background:rgba(224,160,255,.15);color:#e0a0ff;border:1px solid rgba(224,160,255,.3);}
+.fuente-borm{background:rgba(224,160,255,.15);color:var(--purple);border:1px solid rgba(224,160,255,.3);}
 .fuente-pscp{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);}
 a.pscp-link{color:var(--green);}
 /* Fondos UE -- letra amarilla sobre fondo azul a propósito, para
@@ -10559,7 +10571,7 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .as-rr-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;}
 .as-rr-empresa{font-weight:600;font-size:13px;}
 .as-rr-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;}
-.as-rr-importe.big{font-size:15px;color:#5fe37a;font-weight:600;}
+.as-rr-importe.big{font-size:15px;color:var(--green);font-weight:600;}
 .as-rr-sub{font-size:11px;color:var(--dim);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
 .as-rr-titulo{font-size:12px;color:var(--text);margin-top:5px;}
 .as-rr-directivo{font-size:12px;color:var(--blue);margin-top:4px;}
@@ -10601,12 +10613,25 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .rk-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 10px;}
 .muni-tile a.btn-ver:hover{background:rgba(240,136,62,.22);}
 
+/* ── aviso descartable de metodología de rankings (2026-09-20, petición
+   de César: "los baremos se están analizando, el ranking puede variar
+   durante unos días") -- banner, no modal, para no bloquear la página;
+   se recuerda con localStorage (mismo patrón que el resto del sitio para
+   preferencias de UI, sin cookies ni servidor) para no repetirse en cada
+   visita una vez cerrado. */
+.rk-metodologia-aviso{display:flex;gap:12px;align-items:flex-start;background:rgba(154,103,0,.1);border:1px solid rgba(154,103,0,.35);color:var(--text);border-radius:8px;padding:12px 16px;margin:18px 0;font-size:13px;line-height:1.5;}
+.rk-metodologia-aviso[hidden]{display:none;}
+.rk-metodologia-ico{font-size:16px;line-height:1;flex-shrink:0;}
+.rk-metodologia-cerrar{background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:0 4px;margin-left:auto;flex-shrink:0;}
+.rk-metodologia-cerrar:hover{color:var(--text);}
+
 /* ── cabecera home: panel degradado azul (hero + buscador + stats) ──────
    Solo se aplica en la home nacional envolviendo .hero/.adv-search/.stats-bar
    en .hero-panel -- el resto de usos de esas clases (rankings, fondos-ue,
-   landing por provincia) no llevan ese envoltorio y siguen en fondo oscuro. */
+   landing por provincia) no llevan ese envoltorio y siguen con el fondo
+   general del sitio (tema claro/amarillo, ver :root). */
 .hero-panel{background:linear-gradient(135deg,#0b2145 0%,#12336b 55%,#1c4fa0 100%);border-radius:14px;padding:6px 20px 24px;margin-bottom:24px;color:#fff;}
-.hero-panel .hero-tagline{color:var(--yellow);}
+.hero-panel .hero-tagline{color:#f5b700;}
 .hero-panel .hero-sub{color:rgba(255,255,255,.82);}
 .hero-panel .adv-search{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);}
 .hero-panel .as-tab{background:rgba(255,255,255,.08);color:rgba(255,255,255,.72);border-color:rgba(255,255,255,.2);}
@@ -10674,7 +10699,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .static-page ul{margin:0 0 14px 22px;}
 .static-page li{margin-bottom:6px;}
 .static-page a{color:var(--blue);}
-.static-page .contact-btn{display:inline-block;margin-top:8px;padding:9px 18px;background:var(--accent);color:#000;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;}
+.static-page .contact-btn{display:inline-block;margin-top:8px;padding:9px 18px;background:var(--accent);color:#fff;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;}
 
 /* Botones de compartir (2026-09-20) -- enlaces simples wa.me/sharer.php/
    intent/t.me/mailto, sin SDK de terceros; el botón de copiar usa Clipboard
@@ -10687,14 +10712,14 @@ button.share-btn{font-family:inherit;}
 @media (max-width:640px){.share-btn{width:38px;height:38px;font-size:16px;}}
 
 /* ── mejoras visuales: importes / iconos / avisos ────────────────────── */
-.importe.big{font-size:16px;color:#5fe37a;}
+.importe.big{font-size:16px;color:var(--green);}
 .icon-tipo{margin-right:5px;}
 .noloc-warn{display:inline-flex;align-items:center;gap:5px;color:var(--yellow);font-size:11px;font-style:italic;}
 .noloc-warn a{color:var(--yellow);text-decoration:underline;}
 .noloc-nota{display:block;font-size:10px;color:var(--dim);font-style:italic;margin-top:2px;}
 .risk-prominent{border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:center;background:rgba(248,81,73,.12);border:2px solid rgba(248,81,73,.5);}
 .risk-prominent .rp-ico{font-size:26px;line-height:1;}
-.risk-prominent .rp-text{font-size:13px;color:#f8c4c2;line-height:1.5;}
+.risk-prominent .rp-text{font-size:13px;color:var(--red);line-height:1.5;}
 .risk-prominent .rp-text b{color:#fff;}
 
 /* ── Índice de Transparencia (rankings) ──────────────────────────────── */
@@ -10831,7 +10856,12 @@ button.share-btn{font-family:inherit;}
 .rk-sidebar summary.rk-sidebar-title::-webkit-details-marker{display:none;}
 .rk-sidebar summary.rk-sidebar-title::after{content:'▾';margin-left:auto;color:var(--dim);font-size:11px;}
 .rk-sidebar[open] summary.rk-sidebar-title::after{content:'▴';}
-.rk-sidebar-v1-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--dim);background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
+.rk-sidebar-v1-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--dim);background:rgba(0,0,0,.05);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
+.rk-info-wrap{position:relative;display:inline-block;}
+.rk-info-btn{width:16px;height:16px;line-height:14px;padding:0;border-radius:50%;border:1px solid var(--border);background:rgba(0,0,0,.05);color:var(--dim);font-size:11px;cursor:help;}
+.rk-info-btn:hover{color:var(--text);border-color:var(--dim);}
+.rk-info-pop{display:none;position:absolute;z-index:20;top:22px;left:0;width:240px;max-width:60vw;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;line-height:1.5;color:var(--dim);font-weight:400;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.rk-info-wrap:hover .rk-info-pop,.rk-info-wrap.rk-info-open .rk-info-pop{display:block;}
 .rk-sidebar-aviso{font-size:10.5px;color:var(--dim);line-height:1.4;margin:-4px 0 12px;}
 .rk-sidebar-selector-label{display:block;font-size:10px;color:var(--dim);margin-bottom:4px;}
 .rk-sidebar-selector{width:100%;margin-bottom:12px;padding:6px 8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px;}
@@ -10847,7 +10877,7 @@ button.share-btn{font-family:inherit;}
 .personaliza-input-row{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:220px;position:relative;}
 .personaliza-input-row input{flex:1;min-width:160px;padding:9px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .personaliza-input-row input::placeholder{color:rgba(255,255,255,.6);}
-.personaliza-input-row button{padding:9px 16px;border-radius:6px;border:none;background:var(--accent);color:#000;font-weight:600;cursor:pointer;font-size:12px;white-space:nowrap;}
+.personaliza-input-row button{padding:9px 16px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;font-size:12px;white-space:nowrap;}
 .personaliza-cerrar{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;padding:0 4px;}
 .personaliza-sugerencias{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:15;display:none;}
 .personaliza-sugerencias.show{display:block;}
@@ -10982,7 +11012,7 @@ def _render_alertas(alertas):
 # ─── PLANTILLA COMÚN (header / footer / banner / SEO) ────────────────────────
 
 SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
-SITE_TAGLINE = "El dinero de todos, en manos de quién"
+SITE_TAGLINE = "ESPAÑA, Y EL DINERO DE TODOS EN MANOS DE QUIÉN"
 BIZUM_TELEFONO = "661657013"
 
 # ─── Consentimiento de cookies + Google AdSense (2026-09-05) ────────────────
@@ -11072,8 +11102,8 @@ function _dpCargarAdsense() {} // AdSense todavía no activo (cuenta pendiente d
 # soporta beforeinstallprompt). Colores tomados de las variables CSS ya
 # existentes (--bg y --surface, ver _ALL_CSS_CONTENT) para que la barra de
 # estado/task switcher combine con el sitio real, no un color inventado.
-PWA_THEME_COLOR = "#161b22"       # --surface, mismo fondo que <header>
-PWA_BACKGROUND_COLOR = "#0d1117"  # --bg, fondo de la pantalla de carga
+PWA_THEME_COLOR = "#fffdf6"       # --surface, mismo fondo que <header>
+PWA_BACKGROUND_COLOR = "#fbf0c4"  # --bg, fondo de la pantalla de carga
 
 PWA_MANIFEST = {
     "id": "/",
@@ -12592,6 +12622,32 @@ _RK_MUNI_BUSCADOR_JS = r"""(function(){
 })();"""
 
 
+# Aviso descartable de metodología (2026-09-20, petición de César) -- se
+# muestra al entrar en /rankings, se cierra con la X y no vuelve a
+# aparecer en ese navegador (localStorage, sin servidor ni cookie nueva).
+_RK_METODOLOGIA_AVISO_HTML = """<div class="rk-metodologia-aviso" id="rk-metodologia-aviso" hidden>
+  <span class="rk-metodologia-ico">ℹ️</span>
+  <span>Los baremos de esta web se basan en conceptos de transparencia europeos y nacionales, se están
+  analizando, por lo que es posible que el ranking de transparencia varíe durante unos días.</span>
+  <button type="button" class="rk-metodologia-cerrar" id="rk-metodologia-cerrar" aria-label="Cerrar aviso">✕</button>
+</div>
+<script>
+(function(){
+  var KEY = 'dp_rk_aviso_oculto';
+  var el = document.getElementById('rk-metodologia-aviso');
+  var btn = document.getElementById('rk-metodologia-cerrar');
+  if (!el || !btn) return;
+  var oculto = false;
+  try { oculto = localStorage.getItem(KEY) === '1'; } catch (e) {}
+  if (!oculto) el.hidden = false;
+  btn.addEventListener('click', function(){
+    el.hidden = true;
+    try { localStorage.setItem(KEY, '1'); } catch (e) {}
+  });
+})();
+</script>"""
+
+
 def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas"):
     """Dos rankings claramente separados:
     - Nacional: agrega TODAS las provincias cargadas (Murcia + Girona + las que vengan).
@@ -12689,6 +12745,9 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
           <div class="top1-directivo">{sueldo_html}</div>
         </div>"""
 
+    _rk_og_path = (f"/rankings?provincia={provincia_prov}"
+                    + (f"&comunidad={comunidad}" if comunidad != "todas" else ""))
+
     body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
   <div class="hero" style="padding-bottom:4px">
     <div class="hero-tagline">🏆 Rankings</div>
@@ -12697,6 +12756,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
       con su directivo identificado cuando lo tenemos.
     </p>
   </div>
+
+  {_RK_METODOLOGIA_AVISO_HTML}
 
   <div class="rk-section-header" id="buscador-municipio">
     <h2>🔎 Busca tu municipio</h2>
@@ -12714,7 +12775,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
   <div class="rk-section-header">
     <h2>🌍 Ranking Nacional</h2>
-    <span class="rk-badge">Murcia, Cataluña, Comunitat Valenciana y Andalucía</span>
+    <span class="rk-badge">Todas las provincias cargadas</span>
   </div>
   <div class="section-title">Top 10 por número de contratos adjudicados</div>
   <div class="muni-card"><table>
@@ -12746,7 +12807,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>💰 Ranking de Sueldos: Alcaldes y Alcaldesas</h2>
     <span class="rk-badge">ISPA {esc(anio_ispa)} · {len(ranking_alcaldes)} municipios con dato</span>
   </div>
-  <div class="section-title">De mayor a menor retribución anual (Murcia, Cataluña, Comunitat Valenciana y Andalucía)</div>
+  <div class="section-title">De mayor a menor retribución anual (todas las provincias cargadas)</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_alcaldes_html}
@@ -12756,19 +12817,18 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>🏦 Ranking de Deuda por Habitante</h2>
     <span class="rk-badge">Ministerio de Hacienda + INE · {len(ranking_deuda_hab)} municipios con dato</span>
   </div>
-  <div class="section-title">De mayor a menor deuda viva por habitante (Murcia, Cataluña, Comunitat Valenciana y Andalucía)</div>
+  <div class="section-title">De mayor a menor deuda viva por habitante (todas las provincias cargadas)</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Municipio</th><th>Deuda viva</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_deuda_hab_html}
   </table></div></div>
-{_render_indice_transparencia_html(comunidad)}"""
+{_render_indice_transparencia_html(comunidad)}
+  {_share_buttons_html(_rk_og_path, "Rankings de contratación pública — Dinero Público")}"""
 
     return _page_shell("Rankings — Top 10 empresas", body,
                         description="Ranking nacional y por provincia de las empresas con más contratos "
                                      "públicos y mayor importe adjudicado, con sus directivos identificados.",
-                        provincia="todas",
-                        og_path=(f"/rankings?provincia={provincia_prov}"
-                                  + (f"&comunidad={comunidad}" if comunidad != "todas" else "")))
+                        provincia="todas", og_path=_rk_og_path)
 
 
 _FUENTE_UE_LABEL = {
@@ -13363,19 +13423,6 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     if not cards:
         cards = '<div class="empty">Municipio no encontrado.</div>'
 
-    ejemplo_muni = _EJEMPLO_MUNI_POR_PROVINCIA.get(provincia, _EJEMPLO_MUNI_POR_PROVINCIA["murcia"])
-    body = f"""{back_html}
-  <div class="search-bar">
-    <label>Municipio</label>
-    <form method="POST" action="/buscar" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
-      <input name="municipio" placeholder="Ej: {ejemplo_muni}" required>
-      <input type="hidden" name="provincia" value="{esc(provincia)}">
-      <button type="submit" class="btn btn-primary">Buscar contratos</button>
-    </form>
-  </div>
-  {stats}
-  {cards}"""
-
     muni_display = datos[0].get("municipio", "") if datos else muni_filter
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
     fuente_desc = "PSCP" if provincia in PROVINCIAS_CATALUNYA else "PLACE"
@@ -13387,6 +13434,25 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     # _page_shell) -- antes de este fix TODAS las fichas de municipio
     # apuntaban su og:url/canonical a "/" (la home), no a sí mismas.
     og_path = f"/?muni={quote_plus(muni_display)}{_q_prov(provincia)}" if muni_display else "/"
+    # Botones de compartir (2026-09-20, petición de César -- ya existían en
+    # los casos, faltaban en la ficha de municipio) -- solo cuando hay un
+    # municipio concreto que compartir, no en la página de búsqueda vacía.
+    compartir_html = _share_buttons_html(og_path, titulo) if muni_display else ""
+
+    ejemplo_muni = _EJEMPLO_MUNI_POR_PROVINCIA.get(provincia, _EJEMPLO_MUNI_POR_PROVINCIA["murcia"])
+    body = f"""{back_html}
+  <div class="search-bar">
+    <label>Municipio</label>
+    <form method="POST" action="/buscar" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
+      <input name="municipio" placeholder="Ej: {ejemplo_muni}" required>
+      <input type="hidden" name="provincia" value="{esc(provincia)}">
+      <button type="submit" class="btn btn-primary">Buscar contratos</button>
+    </form>
+  </div>
+  {stats}
+  {cards}
+  {compartir_html}"""
+
     return _page_shell(titulo, body, description=descripcion, provincia=provincia, og_path=og_path)
 
 
@@ -13615,10 +13681,12 @@ def _ranking_con_empates(filas):
     return resultado
 
 
-def _sidebar_ranking_transparencia_html(comunidad_actual="murcia", top_n=10):
+def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     """Bloque lateral con el Índice de Transparencia para la portada
     (2026-09-17, petición de César; rediseñado 2026-09-20 con selector de
-    región, empates, "ver más" y aviso v1). Reutiliza
+    región, empates, "ver más" y aviso v1; vista nacional por defecto y
+    tooltip de metodología añadidos 2026-09-20, petición de César --
+    "vista nacional por defecto, no de una región concreta"). Reutiliza
     _indice_transparencia_cacheado() tal cual (mismo caché de 1h que ya
     usa /rankings, ningún cálculo nuevo) -- esto es v1, la versión ya en
     producción; la v2 (propuesta, en la rama wip/indice-transparencia-v2)
@@ -13629,12 +13697,13 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="murcia", top_n=10):
     contenido" en móvil se resuelve en CSS (ver .rk-sidebar-ranking-wrap),
     no aquí -- este bloque ya no vive dentro de .home-sidebar-stack."""
     comunidad_actual = _comunidad_valida(comunidad_actual)
-    if comunidad_actual == "todas":
-        comunidad_actual = "murcia"
 
     todas_filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
-    filas_region = [f for f in todas_filas
-                     if COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(f["provincia"], f["provincia"]) == comunidad_actual]
+    if comunidad_actual == "todas":
+        filas_region = todas_filas
+    else:
+        filas_region = [f for f in todas_filas
+                         if COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(f["provincia"], f["provincia"]) == comunidad_actual]
     filas_region.sort(key=lambda f: -f["indice"])
     ranking = _ranking_con_empates(filas_region)
 
@@ -13662,13 +13731,32 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="murcia", top_n=10):
 
     opciones_html = "".join(
         f'<option value="{esc(slug)}"{" selected" if slug == comunidad_actual else ""}>{esc(label)}</option>'
-        for slug, label in sorted(COMUNIDAD_AUTONOMA_LABEL.items(), key=lambda kv: kv[1])
+        for slug, label in [("todas", "España")] + sorted(COMUNIDAD_AUTONOMA_LABEL.items(), key=lambda kv: kv[1])
     )
+
+    href_ver_completo = ("/rankings#indice-transparencia" if comunidad_actual == "todas"
+                          else f"/rankings?comunidad={esc(comunidad_actual)}#indice-transparencia")
+
+    # Icono "i" con la metodología resumida (click en móvil, hover en
+    # escritorio -- CSS puro con :focus/:hover, sin JS aparte del propio
+    # toggle de :focus vía tabindex). Mismo texto que ya usa /rankings
+    # para no mantener dos redacciones distintas de lo mismo.
+    info_html = '''<span class="rk-info-wrap">
+        <button type="button" class="rk-info-btn" aria-label="Cómo se calcula el Índice de Transparencia"
+                onclick="event.stopPropagation();event.preventDefault();this.parentElement.classList.toggle('rk-info-open')">ⓘ</button>
+        <div class="rk-info-pop">
+          Valoración propia de Dinero Público sobre la actividad y disponibilidad de datos públicos de
+          cada municipio (cuentas anuales, deuda viva, sueldos ISPA, adjudicatarios identificados,
+          actividad de contratación). <b>No es una certificación legal</b> de la Ley 19/2013 de
+          Transparencia ni una acreditación oficial. Sirve para comparar municipios con lo que hemos
+          podido recopilar, no para juzgar su gestión.
+        </div>
+      </span>'''
 
     return f"""<div class="rk-sidebar-ranking-wrap">
     <details class="rk-sidebar" open>
       <summary class="rk-sidebar-title">🏅 Índice de Transparencia
-        <span class="rk-sidebar-v1-badge">Índice v1</span></summary>
+        <span class="rk-sidebar-v1-badge">Índice v1</span>{info_html}</summary>
       <div class="rk-sidebar-aviso">⚠️ No comparable entre regiones; los datos de origen varían.</div>
       <label class="rk-sidebar-selector-label" for="rk-sidebar-comunidad">Región</label>
       <select id="rk-sidebar-comunidad" class="rk-sidebar-selector"
@@ -13677,7 +13765,7 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="murcia", top_n=10):
       </select>
       <div class="rk-sidebar-list">{top_html}</div>
       {ver_mas_html}
-      <a class="rk-sidebar-ver btn-ver" href="/rankings?comunidad={esc(comunidad_actual)}#indice-transparencia">Ver ranking completo →</a>
+      <a class="rk-sidebar-ver btn-ver" href="{href_ver_completo}">Ver ranking completo →</a>
     </details>
   </div>"""
 
@@ -13793,7 +13881,7 @@ _MAPA_CCAA_JS = r"""(function(){
 })();"""
 
 
-def render_landing_nacional_html(datos, rk_comunidad="murcia"):
+def render_landing_nacional_html(datos, rk_comunidad="todas"):
     """Home agregada: cifras combinadas de todas las provincias cargadas,
     desglose secundario por región, y el top 1 del ranking nacional. Es la
     vista por defecto de '/' (sin ?provincia=); el acceso al listado de
@@ -13903,32 +13991,33 @@ def render_landing_nacional_html(datos, rk_comunidad="murcia"):
         noticias_html = ('<div class="empty" style="padding:20px 8px;font-size:12px">'
                           'Aún no hay noticias cargadas.</div>')
 
-    # Bloque de Casos ANTES del hero/buscador, ocupando el sitio del banner
-    # de anuncios de _ad_banner_html() (ver show_ad_banner=False en el
-    # _page_shell() de más abajo, SOLO para esta página -- el resto del
-    # sitio sigue reservando el hueco de anuncio como siempre). Petición de
-    # César 2026-09-16: que sea lo primero que se vea al entrar, no solo
-    # algo debajo del ranking.
-    # Gancho de personalización + mapa interactivo de comunidades
-    # (2026-09-17, petición de César) -- ver _personalizacion_html/
-    # _mapa_ccaa_html para el detalle. Se calculan aquí (no en el bloque
-    # de arriba) para mantener el resto de la función igual que estaba.
+    # Mapa principal de la home = el mapa de cobertura real (/mapa-cobertura,
+    # 19 comunidades con geometría IGN + banderas + estado real de cobertura)
+    # en vez del viejo mapa de tooltips _mapa_ccaa_html (2026-09-20, petición
+    # de César: "sustituye lo que hubiera antes como mapa principal"). clic
+    # en una comunidad navega a /?provincia=X igual que antes, vía
+    # _MAPA_CCAA_DESTINO_POR_COMUNIDAD (mismo destino que ya usaba el mapa
+    # viejo, sin inventar una tabla nueva).
+    #
+    # Bloque de "Casos de investigación" MOVIDO debajo del mapa (2026-09-20,
+    # petición de César -- hasta ahora iba antes del hero/buscador; de paso
+    # resuelve el "bug del 16/09" de que Casos no se veía desde la home:
+    # comprobado que en la home nacional SÍ estaba enlazado, pero faltaba
+    # por completo en la home filtrada por provincia -- ver el bloque
+    # equivalente añadido en render_landing_html).
     personalizacion_html = _personalizacion_html()
-    mapa_html = _mapa_ccaa_html()
+    mapa_html = f'<style>{_MAPA_COBERTURA_CSS}</style>' + _mapa_cobertura_svg_html(clickable=True)
     sidebar_ranking_html = _sidebar_ranking_transparencia_html(rk_comunidad)
 
-    body = f"""<div class="section-title" style="margin-top:0">🔍 Casos de investigación</div>
-  <div class="region-grid">{casos_home_html}</div>
-  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
-  {personalizacion_html}
+    body = f"""{personalizacion_html}
   <div class="hero-panel">
     <div class="hero">
       <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
       <p class="hero-sub">
         Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
-        — y qué persona — hay detrás de cada adjudicación. Cubrimos la
-        Región de Murcia, Cataluña, la Comunitat Valenciana y Andalucía,
-        con más territorios en camino.
+        — y qué persona — hay detrás de cada adjudicación. Cobertura nacional: las 19 comunidades
+        y ciudades autónomas, con provincias ya completas y otras en marcha (ver el mapa de
+        cobertura más abajo para el estado real de cada una).
       </p>
     </div>
     <div class="adv-search" id="adv-search">
@@ -13953,6 +14042,9 @@ def render_landing_nacional_html(datos, rk_comunidad="murcia"):
     <summary style="cursor:pointer;font-size:12px;color:var(--dim)">Ver todas las provincias en una lista (texto)</summary>
     <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
   </details>
+  <div class="section-title">🔍 Casos de investigación</div>
+  <div class="region-grid">{casos_home_html}</div>
+  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
   <div class="home-grid">
     <div class="home-sidebar-stack">
       <aside class="noticias-ue-panel">
@@ -13973,8 +14065,8 @@ def render_landing_nacional_html(datos, rk_comunidad="murcia"):
 
     return _page_shell("Dinero Público | Contratación pública en España", body,
                         description="Consulta los contratos públicos adjudicados en España con los "
-                                     "directivos de las empresas adjudicatarias. Cubrimos la Región "
-                                     "de Murcia, Cataluña, la Comunitat Valenciana y Andalucía.",
+                                     "directivos de las empresas adjudicatarias. Cobertura nacional, "
+                                     "las 19 comunidades y ciudades autónomas.",
                         provincia="todas", show_ad_banner=False)
 
 
@@ -14049,6 +14141,16 @@ def render_landing_html(datos, provincia="murcia"):
         f"de cada adjudicación."
     )
 
+    # Casos de investigación también en la home filtrada por provincia
+    # (2026-09-20, petición de César -- "Casos" ya se veía en la home
+    # nacional pero faltaba aquí por completo; ese hueco era el "bug del
+    # 16/09" real, no la home nacional). Mismos casos en todas las
+    # provincias (aún no hay casos específicos por provincia).
+    casos_prov_html = "".join(f"""<a class="region-card" href="/casos/{esc(c['slug'])}">
+      <h3>📌 {esc(c['titulo'])}</h3>
+      <div class="region-stats">{esc(c['resumen'])}</div>
+    </a>""" for c in _CASOS)
+
     body = f"""<div class="hero">
     <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
     <p class="hero-sub">{esc(hero_sub)}</p>
@@ -14068,6 +14170,9 @@ def render_landing_html(datos, provincia="murcia"):
     <div id="as-results"></div>
   </div>
   {stats}
+  <div class="section-title">🔍 Casos de investigación</div>
+  <div class="region-grid">{casos_prov_html}</div>
+  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
   <div class="section-title">Municipios · {esc(label)}</div>
   <div class="muni-grid">{tiles}</div>
   <script>window.__PROVINCIA__ = "{provincia}";</script>
@@ -14906,7 +15011,107 @@ def _estado_cobertura_mapa():
     return estado
 
 
-def render_mapa_cobertura_html():
+# destino de navegación (?provincia=X) por comunidad, reutilizando el
+# mismo mapping que ya usaba el mapa interactivo viejo (_MAPA_CCAA) -- así
+# el mapa de cobertura, al ponerse en la home (2026-09-20), navega igual
+# que el mapa que sustituye, sin inventar una tabla nueva de INE->slug.
+_MAPA_CCAA_DESTINO_POR_COMUNIDAD = {r["comunidad"]: r["destino"] for r in _MAPA_CCAA}
+
+# Estilo compartido por AMBOS usos del mapa de cobertura (página propia y
+# home) -- se inyecta una sola vez vía extra_head en la página propia, y
+# inline (dentro de un <style> del bloque embebido) en la home.
+_MAPA_COBERTURA_CSS = '''
+  .map-wrap {
+    position: relative; width: 100%; max-width: 980px; margin: 0 auto;
+    background: #101a2e; border-radius: 12px; padding: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  svg.mapa-cobertura-svg { width: 100%; height: auto; display: block; }
+  .muted { filter: grayscale(1) opacity(0.35) brightness(1.3); }
+  .ccaa-outline { pointer-events: none; }
+  g[data-ccaa] { cursor: pointer; transition: filter 0.15s ease; }
+  a.mc-ccaa-link { cursor: pointer; }
+  g[data-ccaa]:hover .ccaa-outline { stroke-width: 3; stroke: #ffffff; }
+  g[data-ccaa]:hover g[clip-path] { filter: brightness(1.12) saturate(1.15); }
+  g[data-ccaa]:hover g[clip-path].muted { filter: grayscale(0.7) opacity(0.55) brightness(1.15); }
+  .prov-border { pointer-events: none; }
+  #mc-tooltip {
+    position: fixed; pointer-events: none; background: #0b1220;
+    border: 1px solid #2a3550; color: #eef1f7; padding: 10px 12px;
+    border-radius: 8px; font-size: 0.85rem; max-width: 240px; opacity: 0;
+    transform: translate(-50%, -110%); transition: opacity 0.1s ease;
+    z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  }
+  #mc-tooltip .t-prov { font-weight: 700; font-size: 0.95rem; }
+  #mc-tooltip .t-ccaa { color: #9aa4b8; margin-top: 2px; }
+  #mc-tooltip .t-state { margin-top: 6px; display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
+  .mc-st-done { background: #0da45233; color: #4ee08a; }
+  .mc-st-partial { background: #ffd10033; color: #ffd100; }
+  .mc-st-pending { background: #ffffff22; color: #c7ccd6; }
+  .mc-legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 16px auto 0; max-width: 980px; font-size: 0.82rem; color: var(--dim); }
+  .mc-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .mc-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .mc-note { max-width: 980px; margin: 18px auto 0; font-size: 0.8rem; color: var(--dim); line-height: 1.5; }
+'''
+
+_MAPA_COBERTURA_JS = '''
+  (function() {
+    const tooltip = document.getElementById('mc-tooltip');
+    if (!tooltip) return;
+    const stateLabel = { done: 'Cobertura completa', partial: 'Cobertura parcial', pending: 'Pendiente' };
+    const stateClass = { done: 'mc-st-done', partial: 'mc-st-partial', pending: 'mc-st-pending' };
+
+    function showTooltip(evt, provName, ccaaName, state) {
+      tooltip.innerHTML = `
+        <div class="t-prov">${provName}</div>
+        <div class="t-ccaa">${ccaaName}</div>
+        <div class="t-state ${stateClass[state] || 'mc-st-pending'}">${stateLabel[state] || 'Pendiente'}</div>
+      `;
+      tooltip.style.opacity = '1';
+      moveTooltip(evt);
+    }
+    function moveTooltip(evt) {
+      tooltip.style.left = evt.clientX + 'px';
+      tooltip.style.top = evt.clientY + 'px';
+    }
+    function hideTooltip() { tooltip.style.opacity = '0'; }
+
+    const ccaaNames = {};
+    document.querySelectorAll('g[data-ccaa]').forEach(g => {
+      ccaaNames[g.dataset.ccaa] = g.dataset.name;
+    });
+
+    document.querySelectorAll('.prov-border').forEach(p => {
+      p.style.pointerEvents = 'all';
+      p.addEventListener('mousemove', evt => {
+        const ccaaSlug = p.dataset.ccaa;
+        const g = document.querySelector(`g[data-ccaa="${ccaaSlug}"]`);
+        const state = g ? g.dataset.state : 'pending';
+        showTooltip(evt, p.dataset.name, ccaaNames[ccaaSlug] || '', state);
+      });
+      p.addEventListener('mouseleave', hideTooltip);
+    });
+
+    document.querySelectorAll('g[data-ccaa]').forEach(g => {
+      g.addEventListener('mousemove', evt => {
+        if (evt.target.classList.contains('prov-border')) return;
+        showTooltip(evt, g.dataset.name, '', g.dataset.state);
+      });
+      g.addEventListener('mouseleave', hideTooltip);
+    });
+  })();
+'''
+
+
+def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
+    """Núcleo del mapa de cobertura (SVG + leyenda), compartido entre
+    /mapa-cobertura (página propia) y la home nacional (2026-09-20,
+    petición de César -- el mapa de la home pasa a ser este, no el viejo
+    mapa de tooltips _mapa_ccaa_html). clickable=True envuelve cada
+    comunidad en un <a href="/?provincia=..."> usando el mismo destino que
+    ya usaba el mapa viejo (_MAPA_CCAA_DESTINO_POR_COMUNIDAD) -- en la
+    página propia de /mapa-cobertura (clickable=False) no navega, solo
+    tooltip, igual que siempre."""
     W, H = 980, 760
     estado = _estado_cobertura_mapa()
 
@@ -14925,17 +15130,6 @@ def render_mapa_cobertura_html():
         hatch = (f'<path d="{c["d"]}" clip-path="url(#clip-{slug})" fill="url(#hatch)" opacity="0.55"/>'
                   if state == "partial" else "")
 
-        # Baleares: Mallorca/Menorca/Ibiza/Formentera/Cabrera quedan muy
-        # repartidas dentro del bounding box conjunto de la comunidad --
-        # estirar una sola bandera sobre todo ese rectángulo dejaba a las
-        # islas pequeñas y alejadas con solo una esquirla de la franja en
-        # vez de una mini-bandera limpia (bug conocido del prototipo
-        # entregado por César). Fix: un <svg> de bandera POR SUBTRAYECTO
-        # ("M..." de su "d" SVG, uno por isla/islote), cada uno escalado a
-        # su propio bounding box -- el clip-path del <g> exterior (con la
-        # silueta real completa) sigue recortando cada mini-bandera a la
-        # forma exacta de su isla. Solo hace falta para Baleares (única
-        # comunidad con este problema); el resto sigue con el bounds único.
         if slug == "baleares":
             island_boxes = []
             for sp in re.findall(r'M[^M]*', c["d"]):
@@ -14955,14 +15149,22 @@ def render_mapa_cobertura_html():
                 f'viewBox="0 0 3 2" preserveAspectRatio="none">{flag_inner}</svg>'
             )
 
-        ccaa_groups.append(f'''
+        group_inner = f'''
     <g data-ccaa="{slug}" data-name="{esc(c["name"])}" data-state="{state}">
       <g clip-path="url(#clip-{slug})"{muted}>
         {flag_svg_block}
       </g>
       {hatch}
       <path d="{c["d"]}" fill="transparent" stroke="#1a1a1a" stroke-width="1.6" stroke-linejoin="round" class="ccaa-outline"/>
-    </g>''')
+    </g>'''
+
+        if clickable:
+            comunidad = MAPA_COBERTURA_SLUG_A_COMUNIDAD.get(slug)
+            destino = _MAPA_CCAA_DESTINO_POR_COMUNIDAD.get(comunidad)
+            if destino:
+                group_inner = (f'<a class="mc-ccaa-link" href="/?provincia={destino}" '
+                                f'aria-label="{esc(c["name"])}">{group_inner}</a>')
+        ccaa_groups.append(group_inner)
 
     province_borders = []
     for p in MAPA_COBERTURA_PROVINCIAS_GEO:
@@ -14972,46 +15174,8 @@ def render_mapa_cobertura_html():
             f'data-ccaa="{p["ccaaSlug"]}" class="prov-border"/>'
         )
 
-    style = f'''<style>
-  .map-wrap {{
-    position: relative; width: 100%; max-width: 980px; margin: 0 auto;
-    background: #101a2e; border-radius: 12px; padding: 16px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }}
-  svg#mapa-cobertura {{ width: 100%; height: auto; display: block; }}
-  .muted {{ filter: grayscale(1) opacity(0.35) brightness(1.3); }}
-  .ccaa-outline {{ pointer-events: none; }}
-  g[data-ccaa] {{ cursor: pointer; transition: filter 0.15s ease; }}
-  g[data-ccaa]:hover .ccaa-outline {{ stroke-width: 3; stroke: #ffffff; }}
-  g[data-ccaa]:hover g[clip-path] {{ filter: brightness(1.12) saturate(1.15); }}
-  g[data-ccaa]:hover g[clip-path].muted {{ filter: grayscale(0.7) opacity(0.55) brightness(1.15); }}
-  .prov-border {{ pointer-events: none; }}
-  #mc-tooltip {{
-    position: fixed; pointer-events: none; background: #0b1220;
-    border: 1px solid #2a3550; color: #eef1f7; padding: 10px 12px;
-    border-radius: 8px; font-size: 0.85rem; max-width: 240px; opacity: 0;
-    transform: translate(-50%, -110%); transition: opacity 0.1s ease;
-    z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-  }}
-  #mc-tooltip .t-prov {{ font-weight: 700; font-size: 0.95rem; }}
-  #mc-tooltip .t-ccaa {{ color: #9aa4b8; margin-top: 2px; }}
-  #mc-tooltip .t-state {{ margin-top: 6px; display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }}
-  .mc-st-done {{ background: #0da45233; color: #4ee08a; }}
-  .mc-st-partial {{ background: #ffd10033; color: #ffd100; }}
-  .mc-st-pending {{ background: #ffffff22; color: #c7ccd6; }}
-  .mc-legend {{ display: flex; gap: 18px; flex-wrap: wrap; margin: 16px auto 0; max-width: 980px; font-size: 0.82rem; color: #c7ccd6; }}
-  .mc-legend span {{ display: inline-flex; align-items: center; gap: 6px; }}
-  .mc-dot {{ width: 10px; height: 10px; border-radius: 3px; display: inline-block; }}
-  .mc-note {{ max-width: 980px; margin: 18px auto 0; font-size: 0.8rem; color: #7c8598; line-height: 1.5; }}
-</style>'''
-
-    body = f'''<div class="static-page">
-  <h1>Mapa de cobertura</h1>
-  <p class="sub">Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para
-  ver su estado de cobertura.</p>
-
-  <div class="map-wrap">
-    <svg id="mapa-cobertura" viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg">
+    return f'''<div class="map-wrap">
+    <svg class="mapa-cobertura-svg" id="{svg_id}" viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         {"".join(defs)}
         <pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
@@ -15030,6 +15194,21 @@ def render_mapa_cobertura_html():
     <span><span class="mc-dot" style="background:#cfd3da"></span> Pendiente</span>
   </div>
 
+  <div id="mc-tooltip"></div>
+  <script>{_MAPA_COBERTURA_JS}</script>'''
+
+
+def render_mapa_cobertura_html():
+    style = f'<style>{_MAPA_COBERTURA_CSS}</style>'
+    mapa_html = _mapa_cobertura_svg_html(clickable=False)
+
+    body = f'''<div class="static-page">
+  <h1>Mapa de cobertura</h1>
+  <p class="sub">Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para
+  ver su estado de cobertura.</p>
+
+  {mapa_html}
+
   <p class="mc-note">
     Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico
     Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y
@@ -15037,56 +15216,7 @@ def render_mapa_cobertura_html():
     en cada carga a partir de los municipios ya procesados en nuestra base de datos frente al total
     esperado por provincia.
   </p>
-
-  <div id="mc-tooltip"></div>
-</div>
-
-<script>
-  (function() {{
-    const tooltip = document.getElementById('mc-tooltip');
-    const stateLabel = {{ done: 'Cobertura completa', partial: 'Cobertura parcial', pending: 'Pendiente' }};
-    const stateClass = {{ done: 'mc-st-done', partial: 'mc-st-partial', pending: 'mc-st-pending' }};
-
-    function showTooltip(evt, provName, ccaaName, state) {{
-      tooltip.innerHTML = `
-        <div class="t-prov">${{provName}}</div>
-        <div class="t-ccaa">${{ccaaName}}</div>
-        <div class="t-state ${{stateClass[state] || 'mc-st-pending'}}">${{stateLabel[state] || 'Pendiente'}}</div>
-      `;
-      tooltip.style.opacity = '1';
-      moveTooltip(evt);
-    }}
-    function moveTooltip(evt) {{
-      tooltip.style.left = evt.clientX + 'px';
-      tooltip.style.top = evt.clientY + 'px';
-    }}
-    function hideTooltip() {{ tooltip.style.opacity = '0'; }}
-
-    const ccaaNames = {{}};
-    document.querySelectorAll('g[data-ccaa]').forEach(g => {{
-      ccaaNames[g.dataset.ccaa] = g.dataset.name;
-    }});
-
-    document.querySelectorAll('.prov-border').forEach(p => {{
-      p.style.pointerEvents = 'all';
-      p.addEventListener('mousemove', evt => {{
-        const ccaaSlug = p.dataset.ccaa;
-        const g = document.querySelector(`g[data-ccaa="${{ccaaSlug}}"]`);
-        const state = g ? g.dataset.state : 'pending';
-        showTooltip(evt, p.dataset.name, ccaaNames[ccaaSlug] || '', state);
-      }});
-      p.addEventListener('mouseleave', hideTooltip);
-    }});
-
-    document.querySelectorAll('g[data-ccaa]').forEach(g => {{
-      g.addEventListener('mousemove', evt => {{
-        if (evt.target.classList.contains('prov-border')) return;
-        showTooltip(evt, g.dataset.name, '', g.dataset.state);
-      }});
-      g.addEventListener('mouseleave', hideTooltip);
-    }});
-  }})();
-</script>'''
+</div>'''
 
     return _page_shell("Mapa de cobertura", body, extra_head=style, show_ad_banner=False,
                         description="Mapa de España por comunidades y provincias con el estado de "
@@ -15098,9 +15228,9 @@ def render_quienes_somos_html():
   <h1>Transparencia al servicio de la ciudadanía</h1>
 
   <p>Dinero Público nació con un objetivo claro: hacer accesible a cualquier ciudadano
-  la información sobre cómo se gasta el dinero público. Actualmente cubrimos la
-  Región de Murcia, Cataluña, la Comunitat Valenciana y Andalucía,
-  con expansión progresiva a toda España.</p>
+  la información sobre cómo se gasta el dinero público. Cubrimos ya las 19 comunidades
+  y ciudades autónomas de España, con distinto grado de detalle según la provincia
+  (ver el <a href="/mapa-cobertura">mapa de cobertura</a> para el estado real de cada una).</p>
 
   <p>Cruzamos datos oficiales de la Plataforma de Contratación del Sector Público (PLACE)
   del Ministerio de Hacienda con información registral pública para identificar quién
@@ -15241,8 +15371,8 @@ def _redirect_resp(path):
 
 
 def _error_resp(msg, code=500):
-    body = (f"<html><body style='font-family:sans-serif;padding:40px;background:#0d1117;color:#c9d1d9'>"
-            f"<h2>{esc(msg)}</h2><a href='/' style='color:#58a6ff'>← Volver</a></body></html>")
+    body = (f"<html><body style='font-family:sans-serif;padding:40px;background:#fbf0c4;color:#22201a'>"
+            f"<h2>{esc(msg)}</h2><a href='/' style='color:#0969da'>← Volver</a></body></html>")
     return _resp(body, code=code)
 
 
@@ -15301,7 +15431,7 @@ def _route_get(path, qs, gzip_ok=False):
             # quedarse pegada; la copia YA cacheada en el edge necesita una
             # purga aparte (no algo que este proceso pueda hacer).
             datos_todas = _db_all_municipios()
-            rk_comunidad = qs.get("rk_comunidad", ["murcia"])[0]
+            rk_comunidad = qs.get("rk_comunidad", ["todas"])[0]
             return _resp(render_landing_nacional_html(datos_todas, rk_comunidad=rk_comunidad),
                          headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok)
 
