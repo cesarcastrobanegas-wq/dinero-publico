@@ -12398,8 +12398,8 @@ def _render_indice_transparencia_html(comunidad="todas"):
     sin_indice = len(filas_datos) - len(con_indice)
 
     filas_html = ""
-    for i, f in enumerate(con_indice, 1):
-        pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
+    for puesto, f in _ranking_con_empates(con_indice):
+        pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(puesto, f"{puesto}º")
         muni_q = quote_plus(f["municipio"])
         q_prov_muni = _q_prov(f["provincia"])
         indice = f["indice"]
@@ -12766,7 +12766,9 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     return _page_shell("Rankings — Top 10 empresas", body,
                         description="Ranking nacional y por provincia de las empresas con más contratos "
                                      "públicos y mayor importe adjudicado, con sus directivos identificados.",
-                        provincia="todas")
+                        provincia="todas",
+                        og_path=(f"/rankings?provincia={provincia_prov}"
+                                  + (f"&comunidad={comunidad}" if comunidad != "todas" else "")))
 
 
 _FUENTE_UE_LABEL = {
@@ -13381,7 +13383,11 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     descripcion = (f"Contratos públicos adjudicados en {muni_display} ({label}): "
                    f"empresa adjudicataria, importe y directivo/administrador. "
                    f"Datos oficiales {fuente_desc} + Registro Mercantil.") if muni_display else ""
-    return _page_shell(titulo, body, description=descripcion, provincia=provincia)
+    # og_path/canonical propio de esta ficha (2026-09-20, ver fix de
+    # _page_shell) -- antes de este fix TODAS las fichas de municipio
+    # apuntaban su og:url/canonical a "/" (la home), no a sí mismas.
+    og_path = f"/?muni={quote_plus(muni_display)}{_q_prov(provincia)}" if muni_display else "/"
+    return _page_shell(titulo, body, description=descripcion, provincia=provincia, og_path=og_path)
 
 
 def _personalizacion_html():
@@ -13551,13 +13557,14 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8):
     filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
     filas.sort(key=lambda f: f["indice"], reverse=True)
     clave_muni = normalizar(municipio)
-    fila_actual = next((f for f in filas if normalizar(f["municipio"]) == clave_muni), None)
+    ranking = _ranking_con_empates(filas)  # mismo criterio de empates que el sidebar/rankings (2026-09-20)
+    fila_actual = next((f for _, f in ranking if normalizar(f["municipio"]) == clave_muni), None)
     if fila_actual is None:
         return ""
     total = len(filas)
-    posicion_actual = next(i for i, f in enumerate(filas, 1) if normalizar(f["municipio"]) == clave_muni)
-    top = filas[:top_n]
-    en_top = posicion_actual <= top_n
+    posicion_actual = next(p for p, f in ranking if normalizar(f["municipio"]) == clave_muni)
+    top = ranking[:top_n]
+    en_top = any(normalizar(f["municipio"]) == clave_muni for _, f in top)
 
     def _fila(pos, f, es_actual):
         clase = ' rk-sidebar-item-actual' if es_actual else ''
@@ -13567,7 +13574,7 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8):
                 f'<span class="rk-sidebar-valor">{f["indice"]:.0f}/100</span>'
                 f'</a>')
 
-    items = "".join(_fila(i, f, normalizar(f["municipio"]) == clave_muni) for i, f in enumerate(top, 1))
+    items = "".join(_fila(p, f, normalizar(f["municipio"]) == clave_muni) for p, f in top)
     if not en_top:
         items += (f'<div class="rk-sidebar-separador"></div>'
                    + _fila(posicion_actual, fila_actual, True))
@@ -14070,7 +14077,7 @@ def render_landing_html(datos, provincia="murcia"):
                         description=f"Consulta los contratos públicos de los {len(municipios_lista)} "
                                      f"municipios de {label} con los directivos de las empresas "
                                      f"adjudicatarias.",
-                        provincia=provincia)
+                        provincia=provincia, og_path=f"/?provincia={provincia}")
 
 
 def _contrato_json(c, municipio):
@@ -14334,7 +14341,7 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
 
     return _page_shell(f'Búsqueda: {q}', body,
                         description=f'Resultados de "{q}" en contratos públicos de {label}.',
-                        provincia=provincia)
+                        provincia=provincia, og_path=f"/?q={quote_plus(q)}{_q_prov(provincia)}")
 
 
 def _share_buttons_html(path, titulo):
@@ -14461,24 +14468,15 @@ def render_caso_archena_dyntra_html():
 
   <h2>El 25,68% de media regional, desglosado</h2>
   <p>Esa cifra también circuló en varios medios, y merece una aclaración porque puede
-  leerse de dos formas. El ranking de Dyntra para la Región de Murcia solo tiene ficha
-  evaluada para 36 de los 45 municipios reales — la media de esos 36 es un 32,1%,
-  no 25,68%. El 25,68% sale de dividir entre los <strong>45</strong> municipios reales de
-  la Región, contando como 0% a los 9 que Dyntra todavía no ha evaluado. Ninguna de las
-  dos cuentas está "mal" — son dos preguntas distintas ("¿cómo de transparentes son los
-  ayuntamientos que Dyntra ha mirado?" frente a "¿cómo de transparente es la Región en su
-  conjunto, incluyendo lo que aún no se ha mirado?") — pero conviene saber cuál te están
-  dando.</p>
-  <p>El propio ranking regional es un buen aviso de que conviene tratar estas
-  evaluaciones con cautela cuando no consta que se hayan actualizado: Alhama de Murcia
-  aparece ahora con 16 de 184 indicadores (8,7%), cuando en una edición anterior de
-  Dyntra (con una metodología de 162 indicadores, no 184) figuraba con 141 de 162
-  (87%) — una de las mejores puntuaciones de España en su momento. Puede deberse a un
-  cambio real en lo que publica el ayuntamiento, a un cambio de metodología entre
-  ediciones, o a que la ficha antigua no se haya vuelto a evaluar con el nuevo criterio;
-  no lo sabemos con certeza, y por eso no lo damos por hecho en ningún sentido. El propio
-  portal de transparencia dedicado de Alhama de Murcia
-  (transparencia.alhamademurcia.es) está, a fecha de hoy, "en mantenimiento".</p>
+  leerse de dos formas — y porque el cálculo que sigue es <strong>nuestro</strong>, no
+  una cifra que hayamos encontrado publicada por Dyntra. El ranking de Dyntra para la
+  Región de Murcia solo tiene ficha evaluada para 36 de los 45 municipios reales. El
+  25,68% equivale a dividir entre los 45 municipios de la Región, contando como 0% a
+  los 9 sin ficha; la media de los 36 con ficha es del 32,1%. Es un cálculo nuestro —
+  no hemos encontrado cómo obtiene Dyntra esa media. Ninguna de las dos cuentas está
+  "mal": son dos preguntas distintas ("¿cómo de transparentes son los ayuntamientos que
+  Dyntra ha mirado?" frente a "¿cómo de transparente es la Región en su conjunto,
+  incluyendo lo que aún no se ha mirado?") — pero conviene saber cuál te están dando.</p>
 
   <h2>Qué mide Dyntra (y qué no)</h2>
   <p>Los indicadores de Dyntra comprueban, en lo esencial, si el ayuntamiento publica
