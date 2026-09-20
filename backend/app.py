@@ -5854,6 +5854,18 @@ def _entry_to_contrato(entry_xml):
             if empresa:
                 break
 
+    # ── fecha de adjudicación (cbc:AwardDate, dentro de TenderResult) ─────────
+    # Añadido 2026-09-20 (ver auditoría de "histórico desde 2021" -- el campo
+    # ya existía en el XML de origen de PLACE, junto a WinningParty, y no se
+    # extraía). Solo aplica HACIA ADELANTE: los contratos ya fusionados en
+    # cache.db antes de este cambio se quedan sin este campo (los ZIPs de
+    # origen ya purgados no son reprocesables). Formato ISO "AAAA-MM-DD" tal
+    # cual lo publica PLACE, sin normalizar más.
+    fecha_adjudicacion = ""
+    m_fecha = re.search(r'<(?:[A-Za-z0-9_-]+:)?AwardDate[^>]*>\s*(\d{4}-\d{2}-\d{2})', entry_xml, re.I)
+    if m_fecha:
+        fecha_adjudicacion = m_fecha.group(1)
+
     return {
         "titulo":        titulo[:200],
         "organo":        organo,
@@ -5869,6 +5881,7 @@ def _entry_to_contrato(entry_xml):
         "fuente":        "PLACE",
         "directivo":     "",
         "cargo":         "",
+        "fecha_adjudicacion": fecha_adjudicacion,
     }
 
 
@@ -12194,6 +12207,533 @@ def _indice_transparencia_cacheado():
         _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
         _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
     return filas
+
+
+# ─── ÍNDICE DE TRANSPARENCIA v2 (PROPUESTA, 2026-09-20, CORREGIDA) ──────────
+# EXPERIMENTAL -- no conectado a ninguna ruta ni caché, no se sirve en
+# producción. Vive aquí junto a v1 (que sigue siendo la única versión
+# desplegada) para poder calcularse en local y compararse, a la espera de
+# confirmación de César antes de sustituir/publicar nada.
+#
+# CORRECCIONES 2026-09-20 (segunda vuelta, sobre la primera propuesta del
+# mismo día) tras revisión de César -- ver esa conversación para el detalle
+# completo de cada punto:
+#
+#   (1) "menores" tenía solo dos estados (fuente conectada -> puntúa / nada
+#       conectado -> 0 = "no publica"). Eso confundía "no tenemos scraper
+#       para este municipio" con "el municipio no publica nada", que son
+#       cosas distintas. Ahora son TRES estados -- ver
+#       MENORES_VERIFICADO_NO_PUBLICA más abajo: (a) fuente conectada ->
+#       puntúa con el compuesto de siempre; (b) sin fuente conectada Y sin
+#       verificar a mano -> "no evaluado" (EXCLUIDO del índice de ese
+#       municipio, se marca explícitamente, y el techo de nota de 75 NO se
+#       aplica -- ese techo solo tiene sentido cuando sabemos de verdad que
+#       el municipio no publica); (c) verificado a mano que no publica nada
+#       -> 0 puntos de verdad, SÍ entra en el índice. El set de verificados
+#       está vacío a propósito: de los 38 municipios de Murcia sin fuente,
+#       ninguno ha pasado por la ficha de revisión con el criterio correcto
+#       todavía (la investigación del 12/09 sobre Totana/Torre Pacheco
+#       comprobaba una fuente HTML/PDF concreta, no "¿existe algo público?",
+#       así que no cuenta como verificación para esto). Ver ficha de
+#       revisión propuesta en la conversación.
+#   (2) Cobertura y frescura de "menores" se medían contra un "desde 2021"
+#       fijo para TODOS los municipios -- penalizaba a fuentes cuyo propio
+#       origen nunca tuvo 2021 (Lorca, verificado: su rango real es
+#       2024-10 a 2026-04). Ahora _v2_rango_real_por_fuente() calcula, por
+#       cada fuente, su propio min/max de fecha válida (excluyendo fechas
+#       futuras) observado en TODA la tabla, y ESE es el rango esperado
+#       contra el que se mide cada municipio de esa fuente.
+#   (3) Cartagena solo tiene fechas de 2026 en cache.db -- investigado en
+#       vivo (2026-09-20): no es un bug de nuestro parser
+#       (_parsear_pagina_cartagena sigue extrayendo bien "Fecha de
+#       Adjudicación"). Replicando la petición exacta del scraper contra
+#       cartagena.es en páginas 1/5/20/40/60/77 TODAS devuelven solo 2026;
+#       una consulta acotada a 2021-2022 (en los dos formatos de fecha)
+#       responde "No se han encontrado", y el propio formulario ya trae
+#       value="2026-01-01" como "desde" por defecto. El ayuntamiento parece
+#       haber rotado/purgado su listado de contratos menores al ejercicio
+#       en curso desde que se documentó "2.290 contratos 2021-2026" el
+#       12/09 -- ese histórico puede no ser recuperable desde este
+#       endpoint. No se ha tocado el scraper (nada que arreglar en nuestro
+#       lado); CARTAGENA_DESDE_ANY sigue en 2021 por si el sitio vuelve a
+#       exponerlo.
+#   (4) Confirmado (revisando cada punto de asignación): "empresa"/"nif" de
+#       los contratos formales SIEMPRE vienen de la fuente (PLACE/BORM/PSCP
+#       en _entry_to_contrato, _fila_pscp_a_contrato, etc.), nunca de
+#       nuestro propio enriquecimiento -- buscar_directivo_einforma() y el
+#       resto de funciones de directivos USAN empresa/nif como entrada para
+#       buscar al administrador, no los modifican. "Completitud de campos"
+#       mide la fuente de verdad, no nuestro trabajo posterior.
+#   (5) Señales de riesgo corregidas -- ver _calcular_senales_riesgo_v2:
+#       muestra mínima antes de mostrar cualquier % (menos de N contratos =
+#       "sin datos suficientes", no un 0% falso), comparación contra la
+#       distribución general (percentil), no un % absoluto sin contexto.
+#       IMPORTANTE, sin resolver todavía: el importe NO es "sin IVA" de
+#       forma consistente entre fuentes -- Cartagena lo etiqueta
+#       literalmente "IVA Incluido"; Fuente Álamo prioriza "Importe total"
+#       sobre la columna "sin IVA" cuando existen ambas (línea ~8100); PSCP
+#       formales prioriza import_adjudicacio_amb_iva; Euskadi usa
+#       awardAmount (con IVA) salvo error de captura detectado; RPC
+#       Catalunya (import_adjudicacio) no especifica IVA en su diccionario
+#       de datos oficial (comprobado contra la API de metadatos de
+#       analisi.transparenciacatalunya.cat). Comparar esto contra el umbral
+#       legal (que sí es siempre valor estimado sin IVA) sin corregir
+#       sobreestimaría el riesgo en las fuentes con IVA incluido -- por eso
+#       _calcular_senales_riesgo_v2 NO calcula el % cerca del umbral para
+#       fuentes con IVA incluido confirmado (ver FUENTES_MENORES_CON_IVA)
+#       hasta hacer una auditoría campo por campo del resto.
+#   (6) Ranking nacional de v2 ELIMINADO de esta sección -- los saltos de
+#       puesto a nivel España eran un artefacto de empates masivos (hasta
+#       67 municipios con la misma nota, 657 valores distintos de 8.086),
+#       no cambios reales. v2 solo debe compararse dentro de regiones con
+#       cobertura completa (hoy: Murcia). Para v1 (la versión en
+#       producción), _detectar_empates_v1() marca cada fila con los
+#       municipios que comparten su misma nota redondeada, para que el
+#       ranking deje de aparentar un orden estricto donde hay empate real.
+#
+# Resto de la propuesta original (pesos, componentes pendientes de fuentes
+# externas nuevas -- BDNS/datos.gob.es/PMP Hacienda/portal accesible/
+# modificaciones-prórrogas -- sigue igual, ver conversación 2026-09-20).
+
+# Fuentes de menores cuyo PORTAL DE ORIGEN ofrece API/export reutilizable de
+# verdad (no lo que nosotros construimos) -- el RPC de la Generalitat de
+# Catalunya es un dataset Socrata real (hb6v-jcbf); el resto de fuentes de
+# menores de Murcia son scrapers propios de PDF/HTML sin exportación nativa.
+FUENTES_MENORES_V2_EXPORTABLE = {
+    "rpc-barcelona": True, "rpc-tarragona": True, "rpc-girona": True, "rpc-lleida": True,
+    "murcia-capital": False, "lorca": False, "fuente-alamo": False,
+    "mula": False, "cartagena": False, "molina-segura": False, "lorqui": False,
+}
+
+# Confirmado en vivo (2026-09-20, ver punto 5): estas fuentes guardan el
+# importe CON IVA -- _calcular_senales_riesgo_v2 excluye estas del cálculo
+# del umbral legal (que es sin IVA) hasta auditar el resto una por una.
+FUENTES_MENORES_CON_IVA = {"cartagena", "fuente-alamo"}
+
+# Municipios de Murcia (de los 38 sin fuente conectada) verificados A MANO
+# como "no publica contratos menores en ningún formato localizable" --
+# VACÍO a propósito, ver punto (1) de la cabecera. Rellenar solo tras pasar
+# por la ficha de revisión (publica/desde cuándo/último registro/formato/
+# exportable), nunca a partir de una investigación de otro propósito.
+MENORES_VERIFICADO_NO_PUBLICA = set()
+
+# CORRECCIÓN 2026-09-20 (tercera vuelta): la referencia de cobertura vuelve
+# a ser 2021 fijo por defecto para TODAS las fuentes -- medir contra el
+# "rango real observado en cache.db" (como hacía la versión anterior de
+# este archivo) tiene un fallo grave: si la propia extracción está rota y
+# solo trae un año, el rango se encoge para encajar con el error y el
+# municipio sale con cobertura "100%" premiada por el propio fallo. Ejemplo
+# real: Cartagena medía "1/1 años = 100%" con la versión anterior, cuando
+# en realidad solo tenemos 2026 porque la extracción está rota (ver punto 3
+# más abajo) -- una puntuación perfecta por el motivo equivocado.
+#
+# Las fuentes de esta lista tienen un corte de cobertura que puede ser
+# NUESTRO (extracción/nuestro scraper), no necesariamente del origen -- para
+# esas, "menores" queda "no evaluado" (excluido) en vez de puntuar con lo
+# que tengamos, hasta resolverlo:
+#   - "cartagena": confirmado que la extracción está capada a 2026 (ver
+#     comentario de cabecera, punto 3) -- pendiente de resolver el porqué
+#     exacto en el lado del sitio o si hay una vía alternativa.
+#   - "lorca": nuestro cache.db solo tiene 2024-10 a 2026-04, pero no se ha
+#     revisado el portal real de Lorca para confirmar si esos años previos
+#     (2021-2023) existen y simplemente no los hemos ido a buscar, o si el
+#     propio ayuntamiento nunca los publicó -- pendiente de esa revisión.
+FUENTES_MENORES_CORTE_PENDIENTE_DE_RESOLVER = {"cartagena", "lorca"}
+
+# CORRECCIÓN 2026-09-20 (cuarta vuelta): "menores" pasa de tres a CUATRO
+# estados -- el fallo real encontrado al recalcular Cataluña fue que un
+# municipio con 0 filas en contratos_menors_locales se trataba siempre como
+# "no evaluado" (b) aunque el RPC de la Generalitat SÍ se hubiera consultado
+# de verdad para ese municipio y hubiera devuelto 0 resultados reales -- eso
+# es una señal distinta de "nunca lo hemos intentado" (Murcia, 38
+# municipios). Los cuatro estados ahora:
+#   (a) con datos              -> puntúa con el compuesto de siempre.
+#   (b) consultada, 0 registros -> NO es un 0 automático. Es informativo,
+#       puntuado comparando contra su propio tramo de población (ver
+#       _v2_score_consultada_sin_registros): si tener 0 contratos menores
+#       en RPC es lo normal para municipios de ese tamaño, no debe leerse
+#       como opacidad.
+#   (c) no consultada          -> EXCLUIDO (no_evaluado), igual que antes.
+#   (d) verificada que no publica -> 0 real (MENORES_VERIFICADO_NO_PUBLICA).
+#
+# "fuente_consultada"/"fecha_consulta" por municipio: para Cataluña,
+# construido HOY (2026-09-20) con UNA sola query agregada contra el dataset
+# público hb6v-jcbf ($group=id_organisme_contractant, procediment_
+# adjudicacio='Menor', exercici>=2021) -- cubre TODO el dataset de una vez,
+# así que cualquier código INE que no aparezca en el resultado está
+# confirmado en 0, no "sin consultar". Guardado en
+# backend/menores_consulta_cataluna.json (942/942 municipios: 743 con
+# datos, 199 consultados con 0 registros -- NINGUNO sin consultar). Para
+# Murcia no existe un mecanismo equivalente de consulta agregada (cada
+# fuente es un scraper propio, no una API con `$group`), así que sus 38
+# municipios sin fuente siguen en (c) hasta que se revisen a mano (ver
+# ficha de revisión).
+_MENORES_CONSULTA_CATALUNA_FILE = os.path.join(BASE_DIR, "menores_consulta_cataluna.json")
+
+
+def _cargar_menores_consulta_cataluna():
+    try:
+        with open(_MENORES_CONSULTA_CATALUNA_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+MENORES_CONSULTA_CATALUNA = _cargar_menores_consulta_cataluna()
+
+_INDICE_V2_PESOS = {
+    "cuentas": 10.0, "deuda_pub": 8.0, "saldo_pub": 8.0, "ispa_pub": 7.0,
+    "rendicion_plazo": 12.0,
+    "menores": 30.0,             # mayor peso individual, a propósito
+    "completitud_campos": 10.0,
+    "actividad": 15.0,
+}  # suma 100
+_INDICE_V2_MIN_COMPONENTES = 4
+_INDICE_V2_CAMPOS_FORMAL = ["organo", "empresa", "nif", "importe_num", "licitacion_id", "url", "estado"]
+
+
+def _v2_completitud_contrato(c, campos):
+    return sum(1 for k in campos if c.get(k)) / len(campos)
+
+
+def _v2_menores_por_municipio():
+    """Igual patrón que _indice_menores_stats_por_municipio, pero trayendo
+    fecha/ejercicio/fuente por fila (no solo el agregado) -- lo necesita el
+    componente "menores" de v2 para cobertura de años y frescura."""
+    with _db_lock:
+        rows = _db.execute("""
+            SELECT municipio, provincia, fuente, import_num, data_adjudicacio, exercici
+            FROM contratos_menors_locales
+        """).fetchall()
+    por_muni = {}
+    for muni, prov, fuente, imp, fecha, ejercicio in rows:
+        por_muni.setdefault(normalizar(muni), []).append(
+            {"provincia": prov, "fuente": fuente, "importe": imp, "fecha": fecha, "ejercicio": ejercicio})
+    return por_muni
+
+
+def _v2_parse_fecha(s, hoy):
+    if not s:
+        return None
+    try:
+        from datetime import timedelta as _td
+        y, m, d = s.split("-")
+        f = datetime(int(y), int(m), int(d)).date()
+        if f > hoy + _td(days=60):
+            return None  # fecha futura absurda (hallazgo de calidad de datos, ver auditoría 2026-09-20) -- se descarta
+        return f
+    except Exception:
+        return None
+
+
+def _v2_rango_real_por_fuente(menores_por_muni, hoy):
+    """Punto (2) de la corrección: min/max de fecha VÁLIDA (sin fechas
+    futuras) observado por cada 'fuente' en TODA la tabla, no un '2021' fijo
+    para todas. Se usa como ventana esperada al medir cobertura/frescura de
+    cada municipio de esa fuente -- así Lorca (fuente real 2024-10 a
+    2026-04) no se penaliza por no tener 2021-2023, que su fuente nunca tuvo."""
+    por_fuente = {}
+    for filas_m in menores_por_muni.values():
+        for m in filas_m:
+            f = _v2_parse_fecha(m["fecha"], hoy)
+            if f:
+                lo, hi = por_fuente.get(m["fuente"], (f, f))
+                por_fuente[m["fuente"]] = (min(lo, f), max(hi, f))
+    return por_fuente
+
+
+def _detectar_empates_v1(filas_v1, provincia=None):
+    """Punto (6) de la corrección: v1 (la versión en producción) ordena por
+    nota sin más, lo que aparenta un orden estricto incluso cuando varios
+    municipios comparten la misma nota redondeada. Devuelve un dict
+    clave_municipio -> lista de OTROS municipios con su misma nota (dentro
+    de la misma provincia si se indica), para poder marcarlo en la UI/
+    ranking sin tocar el cálculo del índice en sí."""
+    subset = [f for f in filas_v1 if f["indice"] is not None
+              and (provincia is None or f["provincia"] == provincia)]
+    por_nota = {}
+    for f in subset:
+        por_nota.setdefault(f["indice"], []).append(f["municipio"])
+    empates = {}
+    for f in subset:
+        hermanos = [m for m in por_nota[f["indice"]] if m != f["municipio"]]
+        if hermanos:
+            empates[normalizar(f["municipio"])] = hermanos
+    return empates
+
+
+def _calcular_indice_transparencia_v2():
+    """EXPERIMENTAL, no desplegado. Ver bloque de comentarios de cabecera de
+    esta sección para la propuesta completa. Misma forma de retorno que v1
+    (lista de dicts con componentes/n_componentes/indice) más
+    _indicador_adjudicatario/_indicador_directivo (fuera de la nota)."""
+    hoy = datetime.now().date()
+    menores_por_muni = _v2_menores_por_municipio()
+    rango_por_fuente = _v2_rango_real_por_fuente(menores_por_muni, hoy)
+    formales_idx = {normalizar(d.get("municipio", "")): d for d in _db_all_municipios()}
+
+    filas = []
+    for clave, pob in POBLACION.items():
+        municipio = pob.get("municipio", "")
+        if es_pseudo_municipio(municipio):
+            continue
+        provincia = pob.get("provincia", "murcia")
+        habitantes = pob.get("poblacion")
+        comp = {}
+
+        comp["cuentas"] = {"disponible": True, "puntos": 100.0 if clave in CUENTAS_ANUALES else 0.0,
+                            "detalle": "Cuentas anuales publicadas" if clave in CUENTAS_ANUALES else "No publicadas"}
+        comp["deuda_pub"] = {"disponible": True, "puntos": 100.0 if clave in DEUDA_VIVA else 0.0,
+                              "detalle": "Deuda viva publicada" if clave in DEUDA_VIVA else "No publicada"}
+        comp["saldo_pub"] = {"disponible": True, "puntos": 100.0 if clave in SALDO_NO_FINANCIERO else 0.0,
+                              "detalle": "Saldo publicado" if clave in SALDO_NO_FINANCIERO else "No publicado"}
+        ispa_ok = RETRIBUCIONES_ISPA.get(clave, {}).get("importe") is not None
+        comp["ispa_pub"] = {"disponible": True, "puntos": 100.0 if ispa_ok else 0.0,
+                             "detalle": "ISPA publicado" if ispa_ok else "No publicado"}
+
+        cta = CUENTAS_ANUALES.get(clave)
+        if cta and cta.get("ultimo_ejercicio_rendido"):
+            ultimo = cta["ultimo_ejercicio_rendido"]
+            retraso = (hoy.year - 1) - ultimo
+            pts = 100.0 if retraso <= 0 else 60.0 if retraso == 1 else 30.0 if retraso == 2 else 0.0
+            comp["rendicion_plazo"] = {"disponible": True, "puntos": pts,
+                                        "detalle": f"Último ejercicio rendido: {ultimo} (retraso ~{max(retraso,0)} años)"}
+        else:
+            comp["rendicion_plazo"] = {"disponible": False, "puntos": None,
+                                        "detalle": "Sin dato de último ejercicio rendido -- EXCLUIDO, no es \"no publica\""}
+
+        d_formal = formales_idx.get(clave)
+        contratos_formales = d_formal.get("contratos", []) if d_formal else []
+        n_formales = len(contratos_formales)
+        if n_formales:
+            vals = [_v2_completitud_contrato(c, _INDICE_V2_CAMPOS_FORMAL) for c in contratos_formales]
+            comp["completitud_campos"] = {"disponible": True, "puntos": 100.0 * sum(vals) / len(vals),
+                                           "detalle": f"Completitud media de {len(_INDICE_V2_CAMPOS_FORMAL)} campos clave sobre {n_formales} contratos"}
+        else:
+            comp["completitud_campos"] = {"disponible": False, "puntos": None,
+                                           "detalle": "Sin contratos formales -- EXCLUIDO"}
+
+        num_adj = sum(1 for c in contratos_formales if c.get("empresa") and c.get("empresa") != "No localizada")
+        indicador_adjudicatario = (100.0 * num_adj / n_formales) if n_formales else None
+        num_dir = sum(1 for c in contratos_formales
+                       if c.get("empresa") and c.get("empresa") != "No localizada" and c.get("directivo"))
+        indicador_directivo = (100.0 * num_dir / num_adj) if num_adj else None
+
+        # ---- "menores" en tres estados, ver punto (1) de la corrección ----
+        menores = menores_por_muni.get(clave, [])
+        fuentes = set(m["fuente"] for m in menores) if menores else set()
+        corte_pendiente = bool(fuentes & FUENTES_MENORES_CORTE_PENDIENTE_DE_RESOLVER)
+        if menores and not corte_pendiente:
+            # (a) fuente conectada, sin duda pendiente sobre su corte -> puntúa,
+            # cobertura y frescura medidas contra la referencia 2021 FIJA (vuelta
+            # a la versión original tras la corrección de la 3ª vuelta -- ver
+            # cabecera). El "rango real de la fuente" solo se usaría si, tras
+            # revisar el portal de origen, se confirma que el corte es del
+            # propio origen y no nuestro -- eso no está codificado como
+            # automático a propósito, hay que decidirlo caso por caso.
+            exportable = any(FUENTES_MENORES_V2_EXPORTABLE.get(f, False) for f in fuentes)
+            anios_con_datos, fechas = set(), []
+            for m in menores:
+                f = _v2_parse_fecha(m["fecha"], hoy)
+                if f:
+                    anios_con_datos.add(f.year)
+                    fechas.append(f)
+                elif m["ejercicio"]:
+                    try:
+                        anios_con_datos.add(int(m["ejercicio"]))
+                    except Exception:
+                        pass
+            anios_esperados = set(range(2021, hoy.year + 1))
+            cobertura = len(anios_con_datos & anios_esperados) / len(anios_esperados)
+            ultima = max(fechas) if fechas else None
+            if ultima:
+                dias = (hoy - ultima).days
+                frescura = 100.0 if dias <= 90 else 70.0 if dias <= 180 else 40.0 if dias <= 365 else 10.0
+            else:
+                dias, frescura = None, 0.0
+            sub = 40.0 + 25.0 * cobertura + 25.0 * frescura / 100.0 + 10.0 * (1.0 if exportable else 0.0)
+            comp["menores"] = {"disponible": True, "puntos": sub, "no_evaluado": False,
+                                "detalle": (f"Fuente pública sí ({', '.join(sorted(fuentes))}); "
+                                            f"cobertura {len(anios_con_datos & anios_esperados)}/{len(anios_esperados)} años desde 2021; "
+                                            + (f"último registro {ultima} ({dias} días)" if ultima else "sin fecha válida parseable")
+                                            + f"; export. reutilizable={'sí' if exportable else 'no'}")}
+        elif corte_pendiente:
+            # Fuente conectada pero con corte de cobertura potencialmente
+            # NUESTRO (ver FUENTES_MENORES_CORTE_PENDIENTE_DE_RESOLVER) --
+            # no evaluado hasta resolverlo, para no premiar ni castigar un
+            # fallo de extracción.
+            comp["menores"] = {"disponible": False, "puntos": None, "no_evaluado": True,
+                                "detalle": (f"Fuente conectada ({', '.join(sorted(fuentes))}) pero con corte de "
+                                            f"cobertura pendiente de resolver -- NO EVALUADO (ver comentario de cabecera)")}
+        elif clave in MENORES_VERIFICADO_NO_PUBLICA:
+            # (d) verificado a mano que no publica nada -> 0 real, SÍ entra en el índice.
+            comp["menores"] = {"disponible": True, "puntos": 0.0, "no_evaluado": False,
+                                "detalle": "Verificado a mano: no publica contratos menores en ningún formato localizable"}
+        elif clave in MENORES_CONSULTA_CATALUNA and MENORES_CONSULTA_CATALUNA[clave]["consultado"]:
+            # (b) consultada de verdad (ver MENORES_CONSULTA_CATALUNA, cuarta
+            # corrección) pero sin registros -- NO es un 0 automático. Se
+            # puntúa en la segunda pasada, comparando contra el tramo de
+            # población (ver más abajo); aquí solo se marca como pendiente.
+            comp["menores"] = {"disponible": True, "puntos": None, "no_evaluado": False,
+                                "_pendiente_score_b": True,
+                                "detalle": (f"Consultada el {MENORES_CONSULTA_CATALUNA[clave]['fecha_consulta']} "
+                                            f"({MENORES_CONSULTA_CATALUNA[clave]['fuente']}), 0 registros reales -- "
+                                            f"puntuación pendiente de comparar con su tramo de población")}
+        else:
+            # (c) sin fuente conectada Y sin verificar -> EXCLUIDO, marcado,
+            # nunca confundido con un 0 ni sujeto al techo de nota.
+            comp["menores"] = {"disponible": False, "puntos": None, "no_evaluado": True,
+                                "detalle": "Sin fuente conectada y sin verificar a mano -- NO EVALUADO (no es \"no publica\")"}
+
+        total_contratos = n_formales + len(menores)
+        actividad_por_1000 = (total_contratos / habitantes * 1000) if habitantes else None
+
+        filas.append({
+            "municipio": municipio, "provincia": provincia,
+            "comunidad_autonoma": COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(provincia, provincia),
+            "habitantes": habitantes, "componentes": comp,
+            "_actividad_por_1000": actividad_por_1000, "_total_contratos": total_contratos,
+            "_indicador_adjudicatario": indicador_adjudicatario, "_indicador_directivo": indicador_directivo,
+        })
+
+    por_tramo = {}
+    for f in filas:
+        if f["habitantes"]:
+            por_tramo.setdefault(_indice_tramo_poblacion(f["habitantes"]), []).append(f)
+    for grupo in por_tramo.values():
+        grupo.sort(key=lambda f: f["_actividad_por_1000"])
+        n = len(grupo)
+        for i, f in enumerate(grupo):
+            pct = 100.0 if n <= 1 else 100.0 * i / (n - 1)
+            f["componentes"]["actividad"] = {"disponible": True, "puntos": pct,
+                                              "detalle": f"{f['_total_contratos']} contratos/{f['habitantes']} hab., percentil {pct:.0f}"}
+    for f in filas:
+        f["componentes"].setdefault("actividad", {"disponible": False, "puntos": None, "detalle": "Sin población"})
+        del f["_actividad_por_1000"]
+
+    # ---- Segunda pasada: resolver el estado (b) de "menores" -- consultada
+    # sin registros, puntuada contra el tramo de población (cuarta
+    # corrección). Reutiliza el mismo agrupado por_tramo de arriba. Para
+    # cada tramo: % de municipios CON datos (estado a) entre los que tienen
+    # estado CONOCIDO (a o b, no los excluidos/no evaluados). Un municipio
+    # en (b) puntúa 100 - ese %: si tener contratos menores en RPC es lo
+    # normal para su tramo, no tenerlos SÍ penaliza; si lo normal es no
+    # tenerlos (municipios muy pequeños), no tenerlos apenas penaliza.
+    for tramo, grupo in por_tramo.items():
+        con_datos = sum(1 for f in grupo if f["componentes"]["menores"].get("puntos") is not None
+                         and not f["componentes"]["menores"].get("_pendiente_score_b")
+                         and f["componentes"]["menores"]["disponible"]
+                         and f["componentes"]["menores"]["puntos"] > 0)
+        estado_b = [f for f in grupo if f["componentes"]["menores"].get("_pendiente_score_b")]
+        conocidos = con_datos + len(estado_b)
+        pct_con_datos = (100.0 * con_datos / conocidos) if conocidos else 0.0
+        score_b = round(100.0 - pct_con_datos, 1)
+        for f in estado_b:
+            f["componentes"]["menores"]["puntos"] = score_b
+            f["componentes"]["menores"]["detalle"] += (
+                f" -- en su tramo de población, {pct_con_datos:.0f}% de los municipios consultados SÍ "
+                f"tienen contratos menores en RPC; puntuación = 100 - ese % = {score_b}")
+            del f["componentes"]["menores"]["_pendiente_score_b"]
+
+    for f in filas:
+        disponibles = {k: v for k, v in f["componentes"].items() if v["disponible"] and k in _INDICE_V2_PESOS}
+        f["n_componentes"] = len(disponibles)
+        if len(disponibles) < _INDICE_V2_MIN_COMPONENTES:
+            f["indice"] = None
+            continue
+        peso_total = sum(_INDICE_V2_PESOS[k] for k in disponibles)
+        indice = sum(_INDICE_V2_PESOS[k] * v["puntos"] for k, v in disponibles.items()) / peso_total
+        # Techo: SOLO si "menores" está disponible (no excluido) y puntúa 0
+        # de verdad -- es decir, verificado a mano que no publica. Un
+        # municipio "no evaluado" (b) nunca lleva techo -- no sabemos si
+        # publica o no, sería castigar sin fundamento. Ver punto (1).
+        menores_c = f["componentes"]["menores"]
+        if menores_c["disponible"] and menores_c["puntos"] == 0.0 and not menores_c.get("no_evaluado") and indice > 75.0:
+            indice = 75.0
+            f["_techo_aplicado"] = "verificado que no publica menores -> techo 75"
+        f["indice"] = round(indice, 1)
+
+    return filas
+
+
+_SENALES_V2_MUESTRA_MINIMA = 10  # por debajo de esto, "sin datos suficientes" -- nunca un % ruidoso
+
+
+def _calcular_senales_riesgo_v2(umbral_obras=40000, umbral_servicios=15000, margen=0.10):
+    """Señales de riesgo, EXPERIMENTAL -- nunca entran en el índice, se
+    muestran aparte con lenguaje neutro. Corregidas 2026-09-20 (punto 5):
+      - Muestra mínima (_SENALES_V2_MUESTRA_MINIMA): con menos contratos que
+        eso, "sin datos suficientes" en vez de un % que un solo contrato
+        puede disparar a 100%.
+      - % cerca del umbral se da SIEMPRE junto a la media/percentil del
+        municipio DENTRO de la distribución de todos los municipios con
+        muestra suficiente -- un 15% aislado no dice nada sin saber que la
+        mediana general también anda por ahí.
+      - Fuentes con IVA incluido confirmado (FUENTES_MENORES_CON_IVA) NO
+        entran en el cálculo del umbral -- compararían un importe con IVA
+        contra un umbral legal que es sin IVA, sobreestimando el riesgo.
+        Se marcan aparte como "sin evaluar (IVA no confirmado sin impuestos)".
+    """
+    with _db_lock:
+        rows = _db.execute("""
+            SELECT municipio, fuente, import_num, tipus_contracte, adjudicatari
+            FROM contratos_menors_locales
+        """).fetchall()
+    por_muni = {}
+    for muni, fuente, imp, tipo, adj in rows:
+        por_muni.setdefault(normalizar(muni), []).append((fuente, imp, tipo, adj))
+
+    # Primera pasada: % cerca del umbral por municipio, solo con fuentes sin
+    # IVA confirmado y muestra suficiente -- para poder comparar cada uno
+    # contra la distribución del resto en la segunda pasada.
+    pct_por_municipio = {}
+    for clave, filas_m in por_muni.items():
+        filas_validas = [(imp, tipo) for fuente, imp, tipo, _ in filas_m
+                          if fuente not in FUENTES_MENORES_CON_IVA and imp is not None]
+        if len(filas_validas) < _SENALES_V2_MUESTRA_MINIMA:
+            continue
+        cerca_umbral = 0
+        for imp, tipo in filas_validas:
+            es_obra = (tipo or "").lower().startswith("obr")
+            umbral = umbral_obras if es_obra else umbral_servicios
+            if umbral * (1 - margen) <= imp <= umbral:
+                cerca_umbral += 1
+        pct_por_municipio[clave] = 100.0 * cerca_umbral / len(filas_validas)
+
+    valores_distribucion = sorted(pct_por_municipio.values())
+
+    def _percentil(valor):
+        if not valores_distribucion:
+            return None
+        n = len(valores_distribucion)
+        pos = sum(1 for v in valores_distribucion if v <= valor)
+        return 100.0 * pos / n
+
+    señales = {}
+    for clave, filas_m in por_muni.items():
+        con_iva = any(fuente in FUENTES_MENORES_CON_IVA for fuente, *_ in filas_m)
+        if clave in pct_por_municipio:
+            pct = pct_por_municipio[clave]
+            pct_cerca_umbral = {"valor": round(pct, 1), "percentil_vs_resto": round(_percentil(pct), 0),
+                                 "n_evaluados": sum(1 for f, i, t, a in filas_m
+                                                     if f not in FUENTES_MENORES_CON_IVA and i is not None)}
+        elif con_iva:
+            pct_cerca_umbral = {"valor": None, "motivo": "sin evaluar -- fuente con IVA incluido, no confirmado sin impuestos"}
+        else:
+            pct_cerca_umbral = {"valor": None, "motivo": f"muestra insuficiente (< {_SENALES_V2_MUESTRA_MINIMA} contratos evaluables)"}
+
+        from collections import Counter
+        cnt = Counter(normalizar(adj or "") for _, _, _, adj in filas_m if adj)
+        total_adj = sum(cnt.values())
+        if total_adj >= _SENALES_V2_MUESTRA_MINIMA:
+            top1_pct = 100.0 * cnt.most_common(1)[0][1] / total_adj
+            concentracion = {"top1_pct": round(top1_pct, 1), "n_adjudicatarios_distintos": len(cnt)}
+        else:
+            concentracion = {"top1_pct": None, "motivo": f"muestra insuficiente (< {_SENALES_V2_MUESTRA_MINIMA} adjudicaciones)"}
+
+        señales[clave] = {"pct_cerca_umbral_legal": pct_cerca_umbral, "concentracion_adjudicatarios": concentracion,
+                           "n_contratos": len(filas_m)}
+    return señales
 
 
 def _calcular_ranking_alcaldes():
