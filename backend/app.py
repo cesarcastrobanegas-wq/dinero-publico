@@ -12415,6 +12415,30 @@ def _calcular_ranking_deuda_por_habitante():
     return filas
 
 
+# Contratos con importe EN REVISIÓN, excluidos cautelarmente de los
+# rankings por importe (no del resto del sitio -- la ficha del municipio
+# sigue mostrando el contrato tal cual, esto solo evita que distorsione un
+# "top empresas por importe") hasta verificar el dato real. Mismo trato
+# cautelar que se le dio a Prismaglobal/Vitoria-Gasteiz mientras se
+# investigaba (2026-09-17, commit 0c466c5) -- no publicar una cifra que no
+# cuadra en vez de arreglarla a ciegas.
+#
+# Plentzia, "Servicio de Agenda Local 21" (AGIARAN 2020 S.L.), añadido
+# 2026-09-21: awardAmount=76.033.056 €, awardAmountWithoutVAT=38.016.528 €
+# -- ratio 2,0, NO encaja con el patrón "ceros de más sobre el IVA" (ratio
+# ~1,21×10^n) que sí explica Prismaglobal/Deba/Nabarniz. Ni siquiera el
+# "sin IVA" (38M€) es plausible para un servicio de Agenda Local 21 en un
+# pueblo de ~4.500 habitantes, así que el fix de plausibilidad de IVA ya
+# desplegado (_euskadi_item_a_contrato) NO sirve aquí -- sustituiría un
+# número absurdo por otro también absurdo. Ver INFORME_NOCHE_2026-09-21.md
+# para el detalle completo de la investigación. Quitar de este set en
+# cuanto se verifique el importe real (perfil de contratante original de
+# Plentzia) -- clave = licitacion_id (único, no cambia entre refrescos).
+_CONTRATOS_IMPORTE_EN_REVISION = {
+    "B077-2019-00004740_00000000000000000000001",  # Plentzia, Agenda Local 21, AGIARAN 2020 S.L.
+}
+
+
 def _calcular_rankings(datos):
     """Agrupa todos los contratos cargados por empresa y devuelve dos listas
     Top 10: por número de contratos y por importe total adjudicado. Cada
@@ -12423,6 +12447,8 @@ def _calcular_rankings(datos):
     por_empresa = {}
     for d in datos:
         for c in d.get("contratos", []):
+            if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
             emp = c.get("empresa", "")
             if not emp or emp == "No localizada":
                 continue
