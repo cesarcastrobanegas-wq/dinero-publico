@@ -14173,7 +14173,15 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     # por completo en la home filtrada por provincia -- ver el bloque
     # equivalente añadido en render_landing_html).
     personalizacion_html = _personalizacion_html()
-    mapa_html = f'<style>{_MAPA_COBERTURA_CSS}</style>' + _mapa_cobertura_svg_html(clickable=True)
+    # datos_oficiales_mapa (2026-09-21, petición de César): el tooltip del
+    # mapa muestra ahora las cifras reales de cada provincia (municipios,
+    # habitantes, contratos, importe adjudicado, deuda/hab.) en vez del
+    # badge "Cobertura completa/parcial/pendiente" -- ya no aporta nada
+    # ahora que las 19 comunidades están conectadas. `datos` ya es la lista
+    # nacional completa en esta función, así que no hace falta recargar
+    # nada de cache.db aquí.
+    mapa_html = (f'<style>{_MAPA_COBERTURA_CSS}</style>'
+                 + _mapa_cobertura_svg_html(clickable=True, datos_oficiales=_datos_oficiales_mapa(datos)))
     sidebar_ranking_html = _sidebar_ranking_transparencia_html(rk_comunidad)
 
     body = f"""{personalizacion_html}
@@ -15153,6 +15161,33 @@ MAPA_COBERTURA_SLUG_A_COMUNIDAD = {
     "clm": "castilla_la_mancha",
 }
 
+# id INE de provincia (tal como vienen en mapa_cobertura_provincias.json,
+# ver build.mjs) -> slug de "provincia" tal como lo usa el resto del sitio
+# (MUNICIPIOS_POR_PROVINCIA / PROVINCIA_LABEL / _resumen_por_provincia).
+# Construido a mano contra los 52 ids reales del JSON (mismo criterio que
+# MAPA_COBERTURA_SLUG_A_COMUNIDAD arriba) -- las 3 provincias vascas
+# (01 Araba/Álava, 20 Gipuzkoa, 48 Bizkaia) colapsan en el único slug
+# "pais_vasco" que usa el sitio, igual que ya hace
+# COMUNIDAD_AUTONOMA_POR_PROVINCIA. Usado por _datos_oficiales_mapa() para
+# poner las cifras reales (municipios/habitantes/contratos/importe/deuda)
+# en el tooltip del mapa en vez del badge de cobertura (petición de César
+# 2026-09-21, ver _datos_oficiales_mapa).
+MAPA_COBERTURA_ID_A_PROVINCIA = {
+    "01": "pais_vasco", "02": "albacete", "03": "alicante", "04": "almeria",
+    "05": "avila", "06": "badajoz", "07": "baleares", "08": "barcelona",
+    "09": "burgos", "10": "caceres", "11": "cadiz", "12": "castellon",
+    "13": "ciudad_real", "14": "cordoba", "15": "a_coruna", "16": "cuenca",
+    "17": "girona", "18": "granada", "19": "guadalajara", "20": "pais_vasco",
+    "21": "huelva", "22": "huesca", "23": "jaen", "24": "leon", "25": "lleida",
+    "26": "la_rioja", "27": "lugo", "28": "madrid", "29": "malaga",
+    "30": "murcia", "31": "navarra", "32": "ourense", "33": "asturias",
+    "34": "palencia", "35": "las_palmas", "36": "pontevedra", "37": "salamanca",
+    "38": "santa_cruz_tenerife", "39": "cantabria", "40": "segovia",
+    "41": "sevilla", "42": "soria", "43": "tarragona", "44": "teruel",
+    "45": "toledo", "46": "valencia", "47": "valladolid", "48": "pais_vasco",
+    "49": "zamora", "50": "zaragoza", "51": "ceuta", "52": "melilla",
+}
+
 
 def _estado_cobertura_mapa():
     """Estado done/partial/pending por comunidad para /mapa-cobertura, a
@@ -15176,6 +15211,41 @@ def _estado_cobertura_mapa():
         else:
             estado[slug_mapa] = "partial"
     return estado
+
+
+def _datos_oficiales_mapa(datos):
+    """Cifras oficiales por provincia para el tooltip de /mapa-cobertura y
+    del mapa embebido en la home -- sustituye el badge de estado
+    done/partial/pending ahora que las 19 comunidades están conectadas
+    (petición de César 2026-09-21: "ya cubrimos toda España, mejor mostrar
+    los datos oficiales que tenemos al pasar el cursor por encima" en vez
+    de la leyenda de cobertura). Mismo cálculo por provincia que ya usan
+    las tarjetas de "Cobertura por región" de la home
+    (render_landing_nacional_html) -- se repite aquí en vez de reutilizar
+    ese bucle para no tocar esa función ya verificada en producción;
+    deuda_por_habitante reutiliza _resumen_por_provincia() como esa misma
+    vista. Devuelve un dict indexado por slug de MUNICIPIOS_POR_PROVINCIA
+    (ver MAPA_COBERTURA_ID_A_PROVINCIA para pasar de id INE del SVG a este
+    slug)."""
+    deuda_por_prov = {f["provincia"]: f["deuda_por_habitante"] for f in _resumen_por_provincia()}
+    out = {}
+    for prov, municipios_lista in MUNICIPIOS_POR_PROVINCIA.items():
+        datos_prov = [d for d in datos if d.get("provincia", "murcia") == prov]
+        pseudos_prov = {normalizar(p) for p in _pseudos_de_provincia(prov)}
+        n_con_datos = sum(1 for d in datos_prov
+                           if normalizar(d.get("municipio", "")) not in pseudos_prov)
+        c_prov = sum(d.get("total_contratos", 0) for d in datos_prov)
+        imp_prov = sum(c.get("importe_num", 0.0) for d in datos_prov for c in d.get("contratos", []))
+        hab_prov = sum(v["poblacion"] for v in POBLACION.values() if v.get("provincia") == prov)
+        out[prov] = {
+            "municipios": n_con_datos,
+            "municipios_total": len(municipios_lista),
+            "habitantes": hab_prov,
+            "contratos": c_prov,
+            "importe": imp_prov,
+            "deuda_por_habitante": deuda_por_prov.get(prov),
+        }
+    return out
 
 
 # destino de navegación (?provincia=X) por comunidad, reutilizando el
@@ -15205,19 +15275,13 @@ _MAPA_COBERTURA_CSS = '''
   #mc-tooltip {
     position: fixed; pointer-events: none; background: #0b1220;
     border: 1px solid #2a3550; color: #eef1f7; padding: 10px 12px;
-    border-radius: 8px; font-size: 0.85rem; max-width: 240px; opacity: 0;
+    border-radius: 8px; font-size: 0.85rem; max-width: 260px; opacity: 0;
     transform: translate(-50%, -110%); transition: opacity 0.1s ease;
     z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,0.45);
   }
   #mc-tooltip .t-prov { font-weight: 700; font-size: 0.95rem; }
   #mc-tooltip .t-ccaa { color: #9aa4b8; margin-top: 2px; }
-  #mc-tooltip .t-state { margin-top: 6px; display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
-  .mc-st-done { background: #0da45233; color: #4ee08a; }
-  .mc-st-partial { background: #ffd10033; color: #ffd100; }
-  .mc-st-pending { background: #ffffff22; color: #c7ccd6; }
-  .mc-legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 16px auto 0; max-width: 980px; font-size: 0.82rem; color: var(--dim); }
-  .mc-legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .mc-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  #mc-tooltip .t-row { margin-top: 4px; font-size: 0.8rem; color: #d6dae4; }
   .mc-note { max-width: 980px; margin: 18px auto 0; font-size: 0.8rem; color: var(--dim); line-height: 1.5; }
 '''
 
@@ -15225,14 +15289,31 @@ _MAPA_COBERTURA_JS = '''
   (function() {
     const tooltip = document.getElementById('mc-tooltip');
     if (!tooltip) return;
-    const stateLabel = { done: 'Cobertura completa', partial: 'Cobertura parcial', pending: 'Pendiente' };
-    const stateClass = { done: 'mc-st-done', partial: 'mc-st-partial', pending: 'mc-st-pending' };
 
-    function showTooltip(evt, provName, ccaaName, state) {
+    // Datos oficiales por provincia (municipios/habitantes/contratos/
+    // importe/deuda), en data-* del propio .prov-border -- sustituye el
+    // badge "Cobertura completa/parcial/pendiente" ahora que las 19
+    // comunidades están conectadas (petición de César 2026-09-21). El <g>
+    // de comunidad (fallback cuando el ratón no está sobre ninguna
+    // provincia concreta) no lleva estos data-*, así que ahí solo se
+    // muestra el nombre.
+    function showTooltip(evt, provName, ccaaName, el) {
+      const muni = el && el.dataset.muni;
+      let filas = '';
+      if (muni) {
+        const hab = el.dataset.hab, contr = el.dataset.contratos,
+              imp = el.dataset.imp, deuda = el.dataset.deuda;
+        filas = `
+          <div class="t-row">🏘️ ${muni} municipios${hab ? ' · ' + hab + ' hab.' : ''}</div>
+          <div class="t-row">📄 ${contr} contratos</div>
+          <div class="t-row">💶 ${imp} adjudicado</div>
+          ${deuda ? `<div class="t-row">🏦 ${deuda}/hab. de deuda viva</div>` : ''}
+        `;
+      }
       tooltip.innerHTML = `
         <div class="t-prov">${provName}</div>
         <div class="t-ccaa">${ccaaName}</div>
-        <div class="t-state ${stateClass[state] || 'mc-st-pending'}">${stateLabel[state] || 'Pendiente'}</div>
+        ${filas}
       `;
       tooltip.style.opacity = '1';
       moveTooltip(evt);
@@ -15273,10 +15354,7 @@ _MAPA_COBERTURA_JS = '''
       const gPropio = document.querySelector(`g[data-ccaa="${p.dataset.ccaa}"]`);
       if (gPropio && gPropio.closest('a')) p.style.cursor = 'pointer';  // solo si es clicable (home)
       p.addEventListener('mousemove', evt => {
-        const ccaaSlug = p.dataset.ccaa;
-        const g = document.querySelector(`g[data-ccaa="${ccaaSlug}"]`);
-        const state = g ? g.dataset.state : 'pending';
-        showTooltip(evt, p.dataset.name, ccaaNames[ccaaSlug] || '', state);
+        showTooltip(evt, p.dataset.name, ccaaNames[p.dataset.ccaa] || '', p);
       });
       p.addEventListener('mouseleave', hideTooltip);
       p.addEventListener('click', () => irAComunidad(p.dataset.ccaa));
@@ -15285,7 +15363,7 @@ _MAPA_COBERTURA_JS = '''
     document.querySelectorAll('g[data-ccaa]').forEach(g => {
       g.addEventListener('mousemove', evt => {
         if (evt.target.classList.contains('prov-border')) return;
-        showTooltip(evt, g.dataset.name, '', g.dataset.state);
+        showTooltip(evt, g.dataset.name, '', null);
       });
       g.addEventListener('mouseleave', hideTooltip);
       g.addEventListener('click', () => irAComunidad(g.dataset.ccaa));
@@ -15294,7 +15372,7 @@ _MAPA_COBERTURA_JS = '''
 '''
 
 
-def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
+def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura", datos_oficiales=None):
     """Núcleo del mapa de cobertura (SVG + leyenda), compartido entre
     /mapa-cobertura (página propia) y la home nacional (2026-09-20,
     petición de César -- el mapa de la home pasa a ser este, no el viejo
@@ -15302,7 +15380,14 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
     comunidad en un <a href="/?provincia=..."> usando el mismo destino que
     ya usaba el mapa viejo (_MAPA_CCAA_DESTINO_POR_COMUNIDAD) -- en la
     página propia de /mapa-cobertura (clickable=False) no navega, solo
-    tooltip, igual que siempre."""
+    tooltip, igual que siempre.
+
+    datos_oficiales es el dict que devuelve _datos_oficiales_mapa(datos)
+    (indexado por slug de provincia): si se pasa, cada provincia del SVG
+    lleva sus cifras reales en data-* para el tooltip (2026-09-21, petición
+    de César); el estado done/partial/pending se sigue calculando y
+    coloreando igual (defensivo por si algún día una provincia se queda sin
+    datos), pero ya no se muestra la leyenda ni el badge de texto."""
     W, H = 980, 760
     estado = _estado_cobertura_mapa()
 
@@ -15402,6 +15487,25 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
 
     province_borders = []
     for p in MAPA_COBERTURA_PROVINCIAS_GEO:
+        # Cifras oficiales de esta provincia para el tooltip (municipios/
+        # habitantes/contratos/importe/deuda) -- MAPA_COBERTURA_ID_A_PROVINCIA
+        # pasa del id INE del SVG al slug que usa datos_oficiales. Sin
+        # datos_oficiales (o si esa provincia no está en el dict) sale
+        # datos_attrs="" y el tooltip cae de vuelta a solo mostrar el nombre,
+        # como el mapa venía haciendo antes de esta cifras.
+        slug_prov = MAPA_COBERTURA_ID_A_PROVINCIA.get(p["id"])
+        info = (datos_oficiales or {}).get(slug_prov)
+        if info:
+            deuda_hab = info["deuda_por_habitante"]
+            datos_attrs = (
+                f' data-muni="{info["municipios"]}/{info["municipios_total"]}"'
+                f' data-hab="{fmt_num(info["habitantes"])}"'
+                f' data-contratos="{fmt_num(info["contratos"])}"'
+                f' data-imp="{fmt_eur(info["importe"])}"'
+                f' data-deuda="{fmt_eur(deuda_hab) if deuda_hab is not None else ""}"'
+            )
+        else:
+            datos_attrs = ""
         if p["ccaaSlug"] in marcadores_fijos:
             # Mismo marcador de tamaño fijo que su comunidad (ver arriba) --
             # si esto siguiera dibujando el <path> a escala real, el hover/
@@ -15412,13 +15516,13 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
             province_borders.append(
                 f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="transparent" stroke="#1a1a1a" stroke-opacity="0.55" '
                 f'stroke-width="0.6" data-prov="{p["id"]}" data-name="{esc(p["name"])}" '
-                f'data-ccaa="{p["ccaaSlug"]}" class="prov-border"/>'
+                f'data-ccaa="{p["ccaaSlug"]}"{datos_attrs} class="prov-border"/>'
             )
             continue
         province_borders.append(
             f'<path d="{p["d"]}" fill="transparent" stroke="#1a1a1a" stroke-opacity="0.55" '
             f'stroke-width="0.6" data-prov="{p["id"]}" data-name="{esc(p["name"])}" '
-            f'data-ccaa="{p["ccaaSlug"]}" class="prov-border"/>'
+            f'data-ccaa="{p["ccaaSlug"]}"{datos_attrs} class="prov-border"/>'
         )
 
     return f'''<div class="map-wrap">
@@ -15435,39 +15539,41 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
     </svg>
   </div>
 
-  <div class="mc-legend">
-    <span><span class="mc-dot" style="background:#4ee08a"></span> Cobertura completa</span>
-    <span><span class="mc-dot" style="background:#ffd100"></span> Cobertura parcial</span>
-    <span><span class="mc-dot" style="background:#cfd3da"></span> Pendiente</span>
-  </div>
-
   <div id="mc-tooltip"></div>
   <script>{_MAPA_COBERTURA_JS}</script>'''
 
 
 def render_mapa_cobertura_html():
     style = f'<style>{_MAPA_COBERTURA_CSS}</style>'
-    mapa_html = _mapa_cobertura_svg_html(clickable=False)
+    # Ya cubrimos las 52 provincias (petición de César 2026-09-21: "ya no
+    # hace falta mostrar la cobertura, mejor mostrar los datos oficiales
+    # que tenemos al pasar el cursor por encima") -- se cargan los
+    # municipios reales de cache.db para poder pasarle a
+    # _mapa_cobertura_svg_html las cifras de cada provincia, igual que ya
+    # hacía el mapa embebido de la home (render_landing_nacional_html).
+    datos_todas = _db_all_municipios()
+    datos_oficiales = _datos_oficiales_mapa(datos_todas)
+    mapa_html = _mapa_cobertura_svg_html(clickable=False, datos_oficiales=datos_oficiales)
 
     body = f'''<div class="static-page">
   <h1>Mapa de cobertura</h1>
   <p class="sub">Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para
-  ver su estado de cobertura.</p>
+  ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva.</p>
 
   {mapa_html}
 
   <p class="mc-note">
     Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico
     Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y
-    patrón principal; se omiten escudos y detalles heráldicos finos). El estado de cobertura se calcula
-    en cada carga a partir de los municipios ya procesados en nuestra base de datos frente al total
-    esperado por provincia.
+    patrón principal; se omiten escudos y detalles heráldicos finos). Las cifras de cada provincia se
+    calculan en cada carga a partir de los municipios ya procesados en nuestra base de datos.
   </p>
 </div>'''
 
     return _page_shell("Mapa de cobertura", body, extra_head=style, show_ad_banner=False,
-                        description="Mapa de España por comunidades y provincias con el estado de "
-                                     "cobertura de datos de Dinero Público: completa, parcial o pendiente.")
+                        description="Mapa de España por comunidades y provincias con las cifras "
+                                     "oficiales de contratación pública de Dinero Público: municipios, "
+                                     "habitantes, contratos e importe adjudicado.")
 
 
 def render_quienes_somos_html():
