@@ -5799,11 +5799,30 @@ def _entry_to_contrato(entry_xml):
     importe = fmt_eur(importe_raw) if importe_raw else ""
 
     # ── empresa + NIF (dentro de WinningParty / WinnerParty) ─────────────────
+    # BUG encontrado 2026-09-21 (reportado por César, "Desierto" #1 en el
+    # ranking nacional de más contratos con 544 contratos): cuando
+    # resultado_code ya dice que el concurso NO tuvo adjudicatario
+    # (desierto/desistimiento/renuncia, ver _RESULTADO_SIN_ADJUDICATARIO),
+    # el bucle de más abajo NO debe ni intentar buscar un nombre dentro de
+    # TenderResult -- el fallback "cualquier <Name> que parezca empresa"
+    # (más abajo) estaba cogiendo el propio texto de estado ("Desierto")
+    # como si fuera el nombre del adjudicatario, agregando cientos de
+    # concursos desiertos de toda España bajo una "empresa" ficticia
+    # llamada "Desierto". _RESULTADO_SIN_ADJUDICATARIO ya existía
+    # precisamente para esto (ver _analizar_riesgo/INFORME_NOCHE 2026-07-25)
+    # pero no se usaba aquí, solo se guardaba resultado_code sin consultarlo
+    # antes de la extracción de empresa. Saltar todo el bloque cuando aplica
+    # deja empresa="" -> "No localizada" al final, el valor correcto.
     empresa, nif = "", ""
-    for tr_m in re.finditer(
-        r'<(?:[A-Za-z0-9_-]+:)?TenderResult(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?TenderResult>',
-        entry_xml, re.DOTALL | re.I
-    ):
+    _tender_results_iter = (
+        re.finditer(
+            r'<(?:[A-Za-z0-9_-]+:)?TenderResult(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?TenderResult>',
+            entry_xml, re.DOTALL | re.I
+        )
+        if resultado_code not in _RESULTADO_SIN_ADJUDICATARIO
+        else iter(())  # concurso desierto/desistido/renunciado -- no buscar "empresa", ver comentario arriba
+    )
+    for tr_m in _tender_results_iter:
         tr_block = tr_m.group(1)
         for wp_tag in ("WinningParty", "WinnerParty"):
             wp_m = re.search(
@@ -5837,8 +5856,11 @@ def _entry_to_contrato(entry_xml):
         if empresa:
             break
 
-    # Fallback: cualquier Name en TenderResult que parezca empresa
-    if not empresa:
+    # Fallback: cualquier Name en TenderResult que parezca empresa -- salvo
+    # que ya sepamos que el concurso fue desierto/desistido/renunciado (ver
+    # comentario más arriba): ahí es precisamente donde se colaba "Desierto"
+    # como si fuera un nombre de empresa, el bug real de este hallazgo.
+    if not empresa and resultado_code not in _RESULTADO_SIN_ADJUDICATARIO:
         for tr_m in re.finditer(
             r'<(?:[A-Za-z0-9_-]+:)?TenderResult(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?TenderResult>',
             entry_xml, re.DOTALL | re.I
@@ -10399,7 +10421,21 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .prov-tab{text-decoration:none;padding:8px 14px;font-size:13px;font-weight:600;color:var(--dim);background:var(--bg);white-space:nowrap;}
 .prov-tab:hover{color:var(--text);}
 .prov-tab.active{background:var(--accent);color:#fff;}
-.main{max-width:1340px;margin:28px auto;padding:0 20px;}
+/* padding-top:var(--pwa-banner-offset) -- BUG encontrado 2026-09-21
+   (reportado por César desde móvil, "el gancho de ¿cuál es tu pueblo? no
+   aparece"): el banner de instalación PWA es fixed (fuera del flujo
+   normal), así que NO empuja nada hacia abajo por sí solo. Hasta ahora
+   solo el <header> (sticky top:var(--pwa-banner-offset)) se apartaba de
+   su solape -- pero un elemento sticky ocupa en el FLUJO su altura NATURAL
+   (sin desplazar), no su posición visual ya desplazada, así que .main
+   (el siguiente hermano) arrancaba justo donde el header habría estado
+   SIN el banner, no donde el header termina de verdad visualmente. Efecto:
+   el primer bloque de .main (el gancho de personalización en la home
+   nacional) quedaba tapado bajo el hueco de ~53px del banner/header, con
+   su primera línea invisible. Mismo var CSS que ya rellena
+   pwaAjustarOffset() en el header, aplicado aquí también -- 0px por
+   defecto (sin banner, sin cambio de layout). */
+.main{max-width:1340px;margin:28px auto;padding:0 20px;padding-top:var(--pwa-banner-offset,0px);}
 .search-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:24px;}
 .search-bar label{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--dim);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
 .search-bar input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:8px 12px;border-radius:6px;flex:1;min-width:180px;outline:none;}
@@ -10775,7 +10811,11 @@ button.share-btn{font-family:inherit;}
      bajo el header al saltar desde el enlace del menú. */
   .rk-section-header{scroll-margin-top:130px;}
   .prov-tab{padding:7px 10px;font-size:11px;}
-  .main{padding:0 12px;margin:18px auto;max-width:100%;}
+  /* padding-top repetido aquí a propósito -- esta regla mobile resetea
+     "padding" entero (shorthand) y sin esto anularía el padding-top del
+     .main de escritorio, justo en el viewport donde más hace falta (ver
+     comentario completo junto a la regla .main de escritorio). */
+  .main{padding:0 12px;padding-top:var(--pwa-banner-offset,0px);margin:18px auto;max-width:100%;}
   .hero{padding:22px 6px 4px;}
   .hero-tagline{font-size:16px;}
   .hero-sub{font-size:12px;}
