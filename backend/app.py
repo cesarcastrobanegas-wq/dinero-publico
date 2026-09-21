@@ -10591,6 +10591,15 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .as-group{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;}
 .as-group .as-row-result{margin-top:8px;background:var(--surface);}
 .section-title{font-size:13px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:26px 0 12px;}
+
+/* ── "TODAS LAS PROVINCIAS" (2026-09-20, petición de César) -- transición
+   de color suave amarillo<->rojo, NO un parpadeo duro on/off: 1 ciclo cada
+   2s (0,5 Hz), muy por debajo del límite de 3 destellos/seg de WCAG 2.3.1,
+   y con easing (no un cambio brusco) para no contar como "destello" a
+   efectos de fotosensibilidad. Respeta prefers-reduced-motion. */
+@keyframes parpadeoAmarilloRojo{0%,100%{color:var(--yellow);}50%{color:var(--red);}}
+.provincias-parpadeo{animation:parpadeoAmarilloRojo 2s ease-in-out infinite;}
+@media (prefers-reduced-motion: reduce){.provincias-parpadeo{animation:none;color:var(--yellow);}}
 .muni-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
 .muni-tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s;}
 .muni-tile:hover{border-color:var(--accent);}
@@ -10687,6 +10696,16 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .nu-ver-mas{display:block;margin-top:10px;font-size:11px;color:var(--yellow);text-decoration:none;}
 .nu-ver-mas:hover{text-decoration:underline;}
 .home-main-col{min-width:0;}
+
+/* ── home: mapa de cobertura + Índice de Transparencia lado a lado
+   (2026-09-20, petición de César -- el índice estaba poco accesible debajo
+   del mapa) -- mitad y mitad; en el índice, no en el mapa, se recorta si
+   hace falta (ver .mapa-indice-indice .rk-sidebar más abajo). */
+.mapa-indice-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;margin-bottom:14px;}
+.mapa-indice-mapa .map-wrap{max-width:none;}
+.mapa-indice-indice .rk-sidebar-ranking-wrap{grid-column:unset;grid-row:unset;}
+.mapa-indice-indice .rk-sidebar{height:100%;}
+@media(max-width:860px){.mapa-indice-row{grid-template-columns:1fr;}}
 
 /* ── footer ───────────────────────────────────────────────────────────── */
 .instalar-bar{max-width:1340px;margin:48px auto 0;padding:16px 20px;border-radius:8px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);}
@@ -11025,7 +11044,7 @@ def _render_alertas(alertas):
 # ─── PLANTILLA COMÚN (header / footer / banner / SEO) ────────────────────────
 
 SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
-SITE_TAGLINE = "ESPAÑA, Y EL DINERO DE TODOS EN MANOS DE QUIÉN"
+SITE_TAGLINE = "EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?"
 BIZUM_TELEFONO = "661657013"
 
 # ─── Consentimiento de cookies + Google AdSense (2026-09-05) ────────────────
@@ -11312,7 +11331,7 @@ _ADV_SEARCH_JS = r"""
   var btn = document.getElementById('as-btn');
   var results = document.getElementById('as-results');
   if (!input || !results) return;
-  var tipo = 'empresa';
+  var tipo = 'ayuntamiento';
   var timer = null;
   var seq = 0;
 
@@ -13136,6 +13155,30 @@ def _calcular_ranking_deuda_por_habitante():
     return filas
 
 
+# Contratos con importe EN REVISIÓN, excluidos cautelarmente de los
+# rankings por importe (no del resto del sitio -- la ficha del municipio
+# sigue mostrando el contrato tal cual, esto solo evita que distorsione un
+# "top empresas por importe") hasta verificar el dato real. Mismo trato
+# cautelar que se le dio a Prismaglobal/Vitoria-Gasteiz mientras se
+# investigaba (2026-09-17, commit 0c466c5) -- no publicar una cifra que no
+# cuadra en vez de arreglarla a ciegas.
+#
+# Plentzia, "Servicio de Agenda Local 21" (AGIARAN 2020 S.L.), añadido
+# 2026-09-21: awardAmount=76.033.056 €, awardAmountWithoutVAT=38.016.528 €
+# -- ratio 2,0, NO encaja con el patrón "ceros de más sobre el IVA" (ratio
+# ~1,21×10^n) que sí explica Prismaglobal/Deba/Nabarniz. Ni siquiera el
+# "sin IVA" (38M€) es plausible para un servicio de Agenda Local 21 en un
+# pueblo de ~4.500 habitantes, así que el fix de plausibilidad de IVA ya
+# desplegado (_euskadi_item_a_contrato) NO sirve aquí -- sustituiría un
+# número absurdo por otro también absurdo. Ver INFORME_NOCHE_2026-09-21.md
+# para el detalle completo de la investigación. Quitar de este set en
+# cuanto se verifique el importe real (perfil de contratante original de
+# Plentzia) -- clave = licitacion_id (único, no cambia entre refrescos).
+_CONTRATOS_IMPORTE_EN_REVISION = {
+    "B077-2019-00004740_00000000000000000000001",  # Plentzia, Agenda Local 21, AGIARAN 2020 S.L.
+}
+
+
 def _calcular_rankings(datos):
     """Agrupa todos los contratos cargados por empresa y devuelve dos listas
     Top 10: por número de contratos y por importe total adjudicado. Cada
@@ -13144,6 +13187,8 @@ def _calcular_rankings(datos):
     por_empresa = {}
     for d in datos:
         for c in d.get("contratos", []):
+            if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
             emp = c.get("empresa", "")
             if not emp or emp == "No localizada":
                 continue
@@ -14828,20 +14873,18 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
       <p class="hero-sub">
         Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
-        — y qué persona — hay detrás de cada adjudicación. Cobertura nacional: las 19 comunidades
-        y ciudades autónomas, con provincias ya completas y otras en marcha (ver el mapa de
-        cobertura más abajo para el estado real de cada una).
+        — y qué persona — hay detrás de cada adjudicación.
       </p>
     </div>
     <div class="adv-search" id="adv-search">
       <div class="as-tabs">
-        <button type="button" class="as-tab" data-tipo="ayuntamiento">Ayuntamiento</button>
-        <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
+        <button type="button" class="as-tab active" data-tipo="ayuntamiento">Ayuntamiento</button>
+        <button type="button" class="as-tab" data-tipo="empresa">Empresa</button>
         <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
         <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
       </div>
       <div class="as-row">
-        <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off">
+        <input type="text" id="as-input" placeholder="Nombre del municipio…" autocomplete="off">
         <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
       </div>
       <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda España · mínimo 2 caracteres.</div>
@@ -14850,9 +14893,12 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     {stats}
   </div>
   <div class="section-title">Cobertura</div>
-  {mapa_html}
+  <div class="mapa-indice-row">
+    <div class="mapa-indice-mapa">{mapa_html}</div>
+    <div class="mapa-indice-indice">{sidebar_ranking_html}</div>
+  </div>
   <details style="margin:14px 0 24px">
-    <summary style="cursor:pointer;font-size:12px;color:var(--dim)">Ver todas las provincias en una lista (texto)</summary>
+    <summary class="provincias-parpadeo" style="cursor:pointer;font-size:13px;font-weight:700">TODAS LAS PROVINCIAS</summary>
     <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
   </details>
   <div class="section-title">🔍 Casos de investigación</div>
@@ -14871,7 +14917,6 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       <div class="top1-grid">{top1_html}</div>
       <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
     </div>
-    {sidebar_ranking_html}
   </div>
   <script>window.__PROVINCIA__ = "";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
@@ -14970,13 +15015,13 @@ def render_landing_html(datos, provincia="murcia"):
   </div>
   <div class="adv-search" id="adv-search">
     <div class="as-tabs">
-      <button type="button" class="as-tab" data-tipo="ayuntamiento">Ayuntamiento</button>
-      <button type="button" class="as-tab active" data-tipo="empresa">Empresa</button>
+      <button type="button" class="as-tab active" data-tipo="ayuntamiento">Ayuntamiento</button>
+      <button type="button" class="as-tab" data-tipo="empresa">Empresa</button>
       <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
       <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
     </div>
     <div class="as-row">
-      <input type="text" id="as-input" placeholder="Nombre de la empresa…" autocomplete="off" autofocus>
+      <input type="text" id="as-input" placeholder="Nombre del municipio…" autocomplete="off" autofocus>
       <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
     </div>
     <div class="gs-hint">Busca en los {total_c} contratos ya cargados de {esc(label)} · mínimo 2 caracteres.</div>
@@ -15894,8 +15939,30 @@ _MAPA_COBERTURA_JS = '''
       ccaaNames[g.dataset.ccaa] = g.dataset.name;
     });
 
+    // Navegar a la comunidad de un slug, si el mapa es clicable (home) --
+    // en /mapa-cobertura (clickable=False) el <g> no tiene <a> envolvente,
+    // así que closest('a') da null y esto no hace nada, como siempre.
+    function irAComunidad(ccaaSlug) {
+      const g = document.querySelector(`g[data-ccaa="${ccaaSlug}"]`);
+      const a = g && g.closest('a');
+      if (a) location.href = a.getAttribute('href');
+    }
+
+    // BUG (2026-09-20, reportado por César): los <path class="prov-border">
+    // se pintan DESPUÉS de los <g data-ccaa> (para quedar por encima y
+    // poder mostrar tooltip por provincia) y con fill="transparent" --  en
+    // SVG eso los sigue haciendo "pintados" a efectos de hit-testing con
+    // pointer-events:all (a diferencia de fill="none"), así que su ÁREA
+    // RELLENA ENTERA (toda la provincia, no solo el trazo del borde) tapa
+    // el <a>/<g> de la comunidad que hay debajo -- el clic nunca llegaba al
+    // <a>, por eso no navegaba aunque el href fuera correcto. El hover SÍ
+    // funcionaba porque el propio .prov-border ya tenía su mousemove con
+    // tooltip; el click necesita su propio listener aquí, navegando "a
+    // mano" en vez de confiar en el <a> nativo, que nunca recibe el evento.
     document.querySelectorAll('.prov-border').forEach(p => {
       p.style.pointerEvents = 'all';
+      const gPropio = document.querySelector(`g[data-ccaa="${p.dataset.ccaa}"]`);
+      if (gPropio && gPropio.closest('a')) p.style.cursor = 'pointer';  // solo si es clicable (home)
       p.addEventListener('mousemove', evt => {
         const ccaaSlug = p.dataset.ccaa;
         const g = document.querySelector(`g[data-ccaa="${ccaaSlug}"]`);
@@ -15903,6 +15970,7 @@ _MAPA_COBERTURA_JS = '''
         showTooltip(evt, p.dataset.name, ccaaNames[ccaaSlug] || '', state);
       });
       p.addEventListener('mouseleave', hideTooltip);
+      p.addEventListener('click', () => irAComunidad(p.dataset.ccaa));
     });
 
     document.querySelectorAll('g[data-ccaa]').forEach(g => {
@@ -15911,6 +15979,7 @@ _MAPA_COBERTURA_JS = '''
         showTooltip(evt, g.dataset.name, '', g.dataset.state);
       });
       g.addEventListener('mouseleave', hideTooltip);
+      g.addEventListener('click', () => irAComunidad(g.dataset.ccaa));
     });
   })();
 '''
@@ -15928,6 +15997,20 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
     W, H = 980, 760
     estado = _estado_cobertura_mapa()
 
+    # Ceuta/Melilla a escala real miden ~7x5 y ~4x5 unidades en un lienzo de
+    # 980x760 -- unos pocos píxeles, prácticamente invisibles y casi
+    # imposibles de acertar con el ratón (hallazgo de César 2026-09-20,
+    # verificado con una captura recortada: apenas una mota de un par de
+    # píxeles). Se dibujan como un marcador circular de tamaño FIJO
+    # centrado en su posición real en vez de a escala -- mismo patrón que
+    # usan la mayoría de mapas oficiales de España para estas dos ciudades
+    # autónomas. marcadores_fijos guarda el centro/radio para que el bucle
+    # de provincias de más abajo dibuje el área interactiva (hover/clic) del
+    # MISMO tamaño -- si solo se agranda la bandera pero el área clicable
+    # sigue a escala real, el marcador se ve pero no se puede acertar.
+    _RADIO_MARCADOR_FIJO = 10
+    marcadores_fijos = {}
+
     defs = []
     ccaa_groups = []
     for c in MAPA_COBERTURA_CCAA_GEO:
@@ -15936,6 +16019,35 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
         bw, bh = x1 - x0, y1 - y0
         flag_inner = MAPA_COBERTURA_FLAGS.get(slug, '<rect width="3" height="2" fill="#999"/>')
         state = estado.get(slug, "pending")
+
+        if slug in ("ceuta", "melilla"):
+            cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+            r = _RADIO_MARCADOR_FIJO
+            marcadores_fijos[slug] = (cx, cy, r)
+            defs.append(f'<clipPath id="clip-{slug}"><circle cx="{cx}" cy="{cy}" r="{r}"/></clipPath>')
+            muted = ' class="muted"' if state == "pending" else ""
+            hatch = (f'<circle cx="{cx}" cy="{cy}" r="{r}" clip-path="url(#clip-{slug})" fill="url(#hatch)" opacity="0.55"/>'
+                      if state == "partial" else "")
+            flag_svg_block = (
+                f'<svg x="{cx - r}" y="{cy - r}" width="{r * 2}" height="{r * 2}" '
+                f'viewBox="0 0 3 2" preserveAspectRatio="xMidYMid slice">{flag_inner}</svg>'
+            )
+            group_inner = f'''
+    <g data-ccaa="{slug}" data-name="{esc(c["name"])}" data-state="{state}">
+      <g clip-path="url(#clip-{slug})"{muted}>
+        {flag_svg_block}
+      </g>
+      {hatch}
+      <circle cx="{cx}" cy="{cy}" r="{r}" fill="transparent" stroke="#1a1a1a" stroke-width="1.6" class="ccaa-outline"/>
+    </g>'''
+            if clickable:
+                comunidad = MAPA_COBERTURA_SLUG_A_COMUNIDAD.get(slug)
+                destino = _MAPA_CCAA_DESTINO_POR_COMUNIDAD.get(comunidad)
+                if destino:
+                    group_inner = (f'<a class="mc-ccaa-link" href="/?provincia={destino}" '
+                                    f'aria-label="{esc(c["name"])}">{group_inner}</a>')
+            ccaa_groups.append(group_inner)
+            continue
 
         defs.append(f'<clipPath id="clip-{slug}"><path d="{c["d"]}"/></clipPath>')
 
@@ -15981,6 +16093,19 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura"):
 
     province_borders = []
     for p in MAPA_COBERTURA_PROVINCIAS_GEO:
+        if p["ccaaSlug"] in marcadores_fijos:
+            # Mismo marcador de tamaño fijo que su comunidad (ver arriba) --
+            # si esto siguiera dibujando el <path> a escala real, el hover/
+            # clic (que vive en .prov-border, no en el <g> de la comunidad)
+            # seguiría apuntando a un área de un par de píxeles invisible,
+            # aunque la bandera ya se vea agrandada.
+            cx, cy, r = marcadores_fijos[p["ccaaSlug"]]
+            province_borders.append(
+                f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="transparent" stroke="#1a1a1a" stroke-opacity="0.55" '
+                f'stroke-width="0.6" data-prov="{p["id"]}" data-name="{esc(p["name"])}" '
+                f'data-ccaa="{p["ccaaSlug"]}" class="prov-border"/>'
+            )
+            continue
         province_borders.append(
             f'<path d="{p["d"]}" fill="transparent" stroke="#1a1a1a" stroke-opacity="0.55" '
             f'stroke-width="0.6" data-prov="{p["id"]}" data-name="{esc(p["name"])}" '
@@ -16094,8 +16219,9 @@ def render_aviso_legal_html():
 
   <h2>Actividad</h2>
   <p>Plataforma de transparencia y datos públicos sobre contratación del sector
-  público en España. Cubre actualmente la Región de Murcia y la provincia de
-  Girona, con expansión progresiva a todo el territorio nacional.</p>
+  público en España. Cobertura nacional: las 19 comunidades y ciudades autónomas,
+  con distinto grado de detalle según la provincia (ver el
+  <a href="/mapa-cobertura">mapa de cobertura</a> para el estado real de cada una).</p>
 
   <h2>Propiedad intelectual</h2>
   <p>El código fuente de esta plataforma está registrado como obra en Safe
@@ -16106,10 +16232,11 @@ def render_aviso_legal_html():
   <h2>Origen de los datos</h2>
   <p>Los datos de contratos mostrados provienen de fuentes oficiales públicas: la
   Plataforma de Contratación del Sector Público (PLACE) del Ministerio de
-  Hacienda, el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de
-  Serveis de Contractació Pública de Catalunya (PSCP). Se irán incorporando otras
-  plataformas de contratación pública autonómicas y estatales a medida que se
-  amplíe la cobertura territorial.</p>
+  Hacienda, que cubre todo el territorio nacional, además de fuentes
+  autonómicas complementarias como el Boletín Oficial de la Región de Murcia
+  (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya
+  (PSCP). Se seguirán incorporando otras fuentes de contratos menores y
+  organismos públicos a medida que estén disponibles.</p>
   <p>Los nombres de directivos y administradores provienen de registros públicos
   (Registro Mercantil y fuentes empresariales públicas equivalentes).</p>
   <p>Próximamente se incorporarán también datos de subvenciones y fondos
