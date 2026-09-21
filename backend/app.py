@@ -12490,7 +12490,16 @@ def _calcular_rankings(datos):
             if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
                 continue
             emp = c.get("empresa", "")
-            if not emp or emp == "No localizada":
+            # "Desierto" es un artefacto del parser PLACE anterior al fix de
+            # licitaciones sin adjudicatario (ver _entry_to_contrato y
+            # _RESULTADO_SIN_ADJUDICATARIO): contratos ya cacheados en
+            # cache.db ANTES de ese fix quedaron con empresa="Desierto"
+            # literal, y como cache.db no reprocesa datos ya guardados, el
+            # fix del parser por sí solo no corrige el ranking para esos
+            # contratos históricos. Se excluye aquí igual que "No localizada"
+            # para que el ranking no muestre una licitación desierta como si
+            # fuera la empresa con más contratos.
+            if not emp or emp in ("No localizada", "Desierto"):
                 continue
             key = normalizar(emp)
             g = por_empresa.setdefault(key, {
