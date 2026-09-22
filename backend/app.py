@@ -4114,6 +4114,27 @@ def place_profile_url(municipio):
 # formulario de busqueda (idComunidadAutonoma=9 "Cataluña", idProvincia=17
 # "Gerona"; idComunidadAutonoma=13 "Región de Murcia", idProvincia=30
 # "Murcia"). idTipoEntidad="A" = Ayuntamiento.
+#
+# AMPLIADO 2026-09-21 (Índice de Transparencia nacional, petición de
+# César) a las 46 provincias restantes que el propio formulario cubre --
+# descargado y parseado en vivo el desplegable completo
+# (id="selectProvincia", cada <option> lleva class="idCa_N" con su
+# idComunidadAutonoma real, verificado que N coincide exactamente con el
+# idComunidadAutonoma que ya usaban Murcia/Cataluña de antes de ampliar
+# esto). Verificado con 4 búsquedas reales de control (A Coruña, Albacete,
+# Las Palmas, Ávila): cada una devuelve el municipio esperado.
+#
+# NO están, y no es un fallo de este dict: País Vasco y Navarra (ni
+# siquiera aparecen como Comunidad Autónoma en el desplegable -- confirmado
+# además con una búsqueda real de "Bilbao"/idProvincia=48 y
+# "Pamplona"/idProvincia=31, 0 resultados en ambas: tienen su propio
+# Tribunal de Cuentas foral, mismo motivo por el que
+# actualizar_deuda_y_liquidaciones.py ya documentaba que el fichero de
+# Liquidaciones tampoco las incluye) y Ceuta/Melilla (ni siquiera aparecen
+# como opción de provincia en el formulario). rendicion_cuentas_url() ya
+# cae sola al buscador genérico por nombre para cualquier provincia sin
+# entrada aquí, así que esas 4 siguen funcionando igual que hasta ahora
+# (enlace menos directo, no un enlace roto).
 RENDICION_CUENTAS_IDS = {
     "murcia": {"idComunidadAutonoma": "13", "idProvincia": "30"},
     "girona": {"idComunidadAutonoma": "9", "idProvincia": "17"},
@@ -4126,6 +4147,47 @@ RENDICION_CUENTAS_IDS = {
     "lleida": {"idComunidadAutonoma": "9", "idProvincia": "25"},
     "barcelona": {"idComunidadAutonoma": "9", "idProvincia": "08"},
     "tarragona": {"idComunidadAutonoma": "9", "idProvincia": "43"},
+    "a_coruna": {"idComunidadAutonoma": "11", "idProvincia": "15"},
+    "albacete": {"idComunidadAutonoma": "7", "idProvincia": "2"},
+    "alicante": {"idComunidadAutonoma": "17", "idProvincia": "3"},
+    "almeria": {"idComunidadAutonoma": "1", "idProvincia": "4"},
+    "asturias": {"idComunidadAutonoma": "3", "idProvincia": "33"},
+    "avila": {"idComunidadAutonoma": "8", "idProvincia": "5"},
+    "badajoz": {"idComunidadAutonoma": "10", "idProvincia": "6"},
+    "baleares": {"idComunidadAutonoma": "4", "idProvincia": "7"},
+    "burgos": {"idComunidadAutonoma": "8", "idProvincia": "9"},
+    "caceres": {"idComunidadAutonoma": "10", "idProvincia": "10"},
+    "cadiz": {"idComunidadAutonoma": "1", "idProvincia": "11"},
+    "cantabria": {"idComunidadAutonoma": "6", "idProvincia": "39"},
+    "castellon": {"idComunidadAutonoma": "17", "idProvincia": "12"},
+    "ciudad_real": {"idComunidadAutonoma": "7", "idProvincia": "13"},
+    "cordoba": {"idComunidadAutonoma": "1", "idProvincia": "14"},
+    "cuenca": {"idComunidadAutonoma": "7", "idProvincia": "16"},
+    "granada": {"idComunidadAutonoma": "1", "idProvincia": "18"},
+    "guadalajara": {"idComunidadAutonoma": "7", "idProvincia": "19"},
+    "huelva": {"idComunidadAutonoma": "1", "idProvincia": "21"},
+    "huesca": {"idComunidadAutonoma": "2", "idProvincia": "22"},
+    "jaen": {"idComunidadAutonoma": "1", "idProvincia": "23"},
+    "la_rioja": {"idComunidadAutonoma": "16", "idProvincia": "26"},
+    "las_palmas": {"idComunidadAutonoma": "5", "idProvincia": "35"},
+    "leon": {"idComunidadAutonoma": "8", "idProvincia": "24"},
+    "lugo": {"idComunidadAutonoma": "11", "idProvincia": "27"},
+    "madrid": {"idComunidadAutonoma": "12", "idProvincia": "28"},
+    "malaga": {"idComunidadAutonoma": "1", "idProvincia": "29"},
+    "ourense": {"idComunidadAutonoma": "11", "idProvincia": "32"},
+    "palencia": {"idComunidadAutonoma": "8", "idProvincia": "34"},
+    "pontevedra": {"idComunidadAutonoma": "11", "idProvincia": "36"},
+    "salamanca": {"idComunidadAutonoma": "8", "idProvincia": "37"},
+    "santa_cruz_tenerife": {"idComunidadAutonoma": "5", "idProvincia": "38"},
+    "segovia": {"idComunidadAutonoma": "8", "idProvincia": "40"},
+    "sevilla": {"idComunidadAutonoma": "1", "idProvincia": "41"},
+    "soria": {"idComunidadAutonoma": "8", "idProvincia": "42"},
+    "teruel": {"idComunidadAutonoma": "2", "idProvincia": "44"},
+    "toledo": {"idComunidadAutonoma": "7", "idProvincia": "45"},
+    "valencia": {"idComunidadAutonoma": "17", "idProvincia": "46"},
+    "valladolid": {"idComunidadAutonoma": "8", "idProvincia": "47"},
+    "zamora": {"idComunidadAutonoma": "8", "idProvincia": "49"},
+    "zaragoza": {"idComunidadAutonoma": "2", "idProvincia": "50"},
 }
 
 
@@ -12076,24 +12138,32 @@ _INDICE_TRANSPARENCIA_PESOS = {
 _INDICE_TRANSPARENCIA_MIN_COMPONENTES = 3  # por debajo de esto, "cobertura insuficiente"
 _INDICE_TRANSPARENCIA_MAX_FILAS_TABLA = 300  # tope de filas pintadas en /rankings, ver _render_indice_transparencia_html
 
-# "cuentas" (CUENTAS_ANUALES) e "ispa_pub" (RETRIBUCIONES_ISPA) vienen de
-# actualizar_cuentas_anuales.py y actualizar_retribuciones.py, que SIGUEN
-# hardcodeados a estas 5 provincias originales (PROVINCIAS_CUBIERTAS en
-# actualizar_retribuciones.py; MUNICIPIOS_MURCIA/GIRONA/LLEIDA/BARCELONA/
-# TARRAGONA en actualizar_cuentas_anuales.py) -- a diferencia de
-# actualizar_deuda_y_liquidaciones.py (hacienda_eell.json: deuda_pub/
-# saldo_pub), que SÍ se generalizó el 2026-09-13 a todas las provincias de
-# MUNICIPIOS_POR_PROVINCIA y hoy cubre prácticamente toda España (8.042/6.930
-# de 8.086 municipios). Bug encontrado y corregido el 2026-09-20: antes,
-# "cuentas"/"ispa_pub" se marcaban "disponible" para CUALQUIER municipio de
-# España, puntuando 0 si no aparecía en el fichero -- eso castigaba a los
-# ~4.900 municipios fuera de estas 5 provincias por una limitación de
-# COBERTURA DE ESTE PROYECTO (el script nunca se ha ejecutado para ellos),
-# no por su transparencia real, y de paso inflaba /rankings (vista "todas")
-# a las ~8.086 filas de España entera en vez de a los municipios realmente
-# evaluados. Cuando esos dos scripts se generalicen (igual que ya se hizo
-# con deuda/saldo y población), este set deja de hacer falta.
-_INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA = {"murcia", "girona", "lleida", "barcelona", "tarragona"}
+# "cuentas" (CUENTAS_ANUALES) e "ispa_pub" (RETRIBUCIONES_ISPA) --
+# GENERALIZADOS 2026-09-21/22 (actualizar_cuentas_anuales.py y
+# actualizar_retribuciones.py ya no están limitados a las 5 provincias
+# originales, igual que ya pasó el 2026-09-13 con deuda_pub/saldo_pub vía
+# actualizar_deuda_y_liquidaciones.py). Bug encontrado y corregido el
+# 2026-09-20 (antes de generalizar los scripts, ver historial): estos dos
+# componentes NUNCA deben puntuar 0 para un municipio que esté fuera de la
+# cobertura REAL de su fuente -- eso castigaría una limitación de cobertura
+# de ESTE PROYECTO (o de la fuente oficial en sí), no la transparencia real
+# del municipio. Antes había un único set compartido para ambos
+# componentes (las 5 provincias originales); ahora que los dos scripts
+# cubren prácticamente toda España, hace falta uno POR COMPONENTE, porque
+# sus fuentes oficiales tienen huecos estructurales DISTINTOS entre sí
+# (verificado en vivo el 2026-09-21/22 al generalizar cada script, ver sus
+# docstrings):
+#   - rendiciondecuentas.es (cuentas): NO cubre País Vasco ni Navarra
+#     (tienen su Tribunal de Cuentas foral propio) ni Ceuta/Melilla (no
+#     aparecen en el formulario).
+#   - ISPA (ispa_pub): SÍ cubre País Vasco y Navarra (aparecen en el XLSX
+#     con normalidad); el único hueco real es Ceuta/Melilla (no hay fila
+#     para ellas en absoluto).
+# Fuera de estos 4/2 casos respectivamente, "sin dato" para un municipio
+# real SÍ es señal real (cuentas/sueldo no publicados) y puntúa 0, como
+# cualquier otro municipio de las provincias generalizadas hace meses.
+_INDICE_TRANSPARENCIA_PROVINCIAS_SIN_CUENTAS = {"pais_vasco", "navarra", "ceuta", "melilla"}
+_INDICE_TRANSPARENCIA_PROVINCIAS_SIN_ISPA = {"ceuta", "melilla"}
 
 # Tramos de población para comparar la actividad de publicación (componente
 # "actividad") solo contra municipios de tamaño parecido -- comparar Lorca
@@ -12180,21 +12250,24 @@ def _calcular_indice_transparencia():
         provincia = pob.get("provincia", "murcia")
         habitantes = pob.get("poblacion")
 
-        # cuentas/ispa_pub: solo "disponible" (0 o 100, señal real) para las
-        # 5 provincias que esos dos scripts realmente rastrean -- fuera de
+        # cuentas/ispa_pub: solo "disponible" (0 o 100, señal real) para
+        # provincias dentro de la cobertura REAL de cada fuente -- fuera de
         # ahí, se EXCLUYE (no se puntúa 0) porque no significa que el
-        # municipio no publique, sino que no lo hemos mirado (ver comentario
-        # de _INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA arriba).
-        cuentas_ispa_evaluable = provincia in _INDICE_TRANSPARENCIA_PROVINCIAS_CUENTAS_ISPA
+        # municipio no publique, sino que la fuente oficial no cubre esa
+        # provincia (ver comentario de _INDICE_TRANSPARENCIA_PROVINCIAS_SIN_*
+        # arriba: son gates DISTINTOS por componente, no comparten uno).
+        cuentas_evaluable = provincia not in _INDICE_TRANSPARENCIA_PROVINCIAS_SIN_CUENTAS
+        ispa_evaluable = provincia not in _INDICE_TRANSPARENCIA_PROVINCIAS_SIN_ISPA
         cuentas_ok = clave in CUENTAS_ANUALES
         componentes = {
             "cuentas": {
-                "disponible": cuentas_ispa_evaluable,
-                "puntos": (100.0 if cuentas_ok else 0.0) if cuentas_ispa_evaluable else None,
+                "disponible": cuentas_evaluable,
+                "puntos": (100.0 if cuentas_ok else 0.0) if cuentas_evaluable else None,
                 "detalle": ("Cuentas anuales publicadas" if cuentas_ok
                             else "Cuentas anuales no publicadas (o no localizadas)")
-                           if cuentas_ispa_evaluable
-                           else "Cuentas anuales: aún no rastreado para esta provincia",
+                           if cuentas_evaluable
+                           else "Cuentas anuales: fuente oficial no cubre esta provincia "
+                                "(Tribunal de Cuentas foral propio, o entidad no listada)",
             },
             "deuda_pub": {
                 "disponible": True,
@@ -12210,12 +12283,12 @@ def _calcular_indice_transparencia():
         }
         ispa_ok = RETRIBUCIONES_ISPA.get(clave, {}).get("importe") is not None
         componentes["ispa_pub"] = {
-            "disponible": cuentas_ispa_evaluable,
-            "puntos": (100.0 if ispa_ok else 0.0) if cuentas_ispa_evaluable else None,
+            "disponible": ispa_evaluable,
+            "puntos": (100.0 if ispa_ok else 0.0) if ispa_evaluable else None,
             "detalle": ("Sueldo del alcalde/sa publicado (ISPA)" if ispa_ok
                         else "Sueldo del alcalde/sa no publicado o no atribuido (ISPA)")
-                       if cuentas_ispa_evaluable
-                       else "ISPA: aún no rastreado para esta provincia",
+                       if ispa_evaluable
+                       else "ISPA: entidad no listada en la fuente oficial",
         }
 
         # % adjudicatario identificado -- SOLO contratos formales (PLACE/
