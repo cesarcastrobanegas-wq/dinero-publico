@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-22 03:03:13",
+ "generado": "2026-09-22 16:51:24",
  "municipios": {
   "abanilla": {
    "municipio": "Abanilla",
@@ -40637,6 +40637,174 @@
    "municipio": "Yébenes, Los",
    "provincia": "toledo",
    "id_entidad": 6957,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "beniarda": {
+   "municipio": "Beniardà",
+   "provincia": "alicante",
+   "id_entidad": 161,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "coves de vinroma, les": {
+   "municipio": "Coves de Vinromà, les",
+   "provincia": "castellon",
+   "id_entidad": 1851,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vall d'uixo, la": {
+   "municipio": "Vall d'Uixó, la",
+   "provincia": "castellon",
+   "id_entidad": 1919,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "alcudia, l'": {
+   "municipio": "Alcúdia, l'",
+   "provincia": "valencia",
+   "id_entidad": 6981,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "beniganim": {
+   "municipio": "Benigànim",
+   "provincia": "valencia",
+   "id_entidad": 7025,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "eliana, l'": {
+   "municipio": "Eliana, l'",
+   "provincia": "valencia",
+   "id_entidad": 7074,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "rotova": {
+   "municipio": "Ròtova",
+   "provincia": "valencia",
+   "id_entidad": 7178,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "enova, l'": {
+   "municipio": "Énova, l'",
+   "provincia": "valencia",
+   "id_entidad": 7077,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "valle, el": {
+   "municipio": "Valle, El",
+   "provincia": "granada",
+   "id_entidad": 2826,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "zarza capilla": {
+   "municipio": "Zarza Capilla",
+   "provincia": "badajoz",
+   "id_entidad": 791,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "torla-ordesa": {
+   "municipio": "Torla-Ordesa",
+   "provincia": "huesca",
+   "id_entidad": 3474,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "jarque de moncayo": {
+   "municipio": "Jarque de Moncayo",
+   "provincia": "zaragoza",
+   "id_entidad": 7942,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "oza-cesuras": {
+   "municipio": "Oza-Cesuras",
+   "provincia": "a_coruna",
+   "id_entidad": 202704,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "o barco de valdeorras": {
+   "municipio": "O Barco de Valdeorras",
+   "provincia": "ourense",
+   "id_entidad": 4879,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "a veiga": {
+   "municipio": "A Veiga",
+   "provincia": "ourense",
+   "id_entidad": 4950,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "a illa de arousa": {
+   "municipio": "A Illa de Arousa",
+   "provincia": "pontevedra",
+   "id_entidad": 5284,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "adrada, la": {
+   "municipio": "Adrada, La",
+   "provincia": "avila",
+   "id_entidad": 379,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "miron, el": {
+   "municipio": "Mirón, El",
+   "provincia": "avila",
+   "id_entidad": 492,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "bastida, la": {
+   "municipio": "Bastida, La",
+   "provincia": "salamanca",
+   "id_entidad": 5365,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "encina, la": {
+   "municipio": "Encina, La",
+   "provincia": "salamanca",
+   "id_entidad": 5428,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "orbada, la": {
+   "municipio": "Orbada, La",
+   "provincia": "salamanca",
+   "id_entidad": 5529,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "pena, la": {
+   "municipio": "Peña, La",
+   "provincia": "salamanca",
+   "id_entidad": 5547,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "redonda, la": {
+   "municipio": "Redonda, La",
+   "provincia": "salamanca",
+   "id_entidad": 5570,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sagrada, la": {
+   "municipio": "Sagrada, La",
+   "provincia": "salamanca",
+   "id_entidad": 5577,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "tala, la": {
+   "municipio": "Tala, La",
+   "provincia": "salamanca",
+   "id_entidad": 5619,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "peral, el": {
+   "municipio": "Peral, El",
+   "provincia": "cuenca",
+   "id_entidad": 2351,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "pedregal, el": {
+   "municipio": "Pedregal, El",
+   "provincia": "guadalajara",
+   "id_entidad": 3017,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "toba, la": {
+   "municipio": "Toba, La",
+   "provincia": "guadalajara",
+   "id_entidad": 3072,
    "ultimo_ejercicio_rendido": 2024
   }
  }
