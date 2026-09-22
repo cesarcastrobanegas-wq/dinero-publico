@@ -4114,6 +4114,27 @@ def place_profile_url(municipio):
 # formulario de busqueda (idComunidadAutonoma=9 "Cataluña", idProvincia=17
 # "Gerona"; idComunidadAutonoma=13 "Región de Murcia", idProvincia=30
 # "Murcia"). idTipoEntidad="A" = Ayuntamiento.
+#
+# AMPLIADO 2026-09-21 (Índice de Transparencia nacional, petición de
+# César) a las 46 provincias restantes que el propio formulario cubre --
+# descargado y parseado en vivo el desplegable completo
+# (id="selectProvincia", cada <option> lleva class="idCa_N" con su
+# idComunidadAutonoma real, verificado que N coincide exactamente con el
+# idComunidadAutonoma que ya usaban Murcia/Cataluña de antes de ampliar
+# esto). Verificado con 4 búsquedas reales de control (A Coruña, Albacete,
+# Las Palmas, Ávila): cada una devuelve el municipio esperado.
+#
+# NO están, y no es un fallo de este dict: País Vasco y Navarra (ni
+# siquiera aparecen como Comunidad Autónoma en el desplegable -- confirmado
+# además con una búsqueda real de "Bilbao"/idProvincia=48 y
+# "Pamplona"/idProvincia=31, 0 resultados en ambas: tienen su propio
+# Tribunal de Cuentas foral, mismo motivo por el que
+# actualizar_deuda_y_liquidaciones.py ya documentaba que el fichero de
+# Liquidaciones tampoco las incluye) y Ceuta/Melilla (ni siquiera aparecen
+# como opción de provincia en el formulario). rendicion_cuentas_url() ya
+# cae sola al buscador genérico por nombre para cualquier provincia sin
+# entrada aquí, así que esas 4 siguen funcionando igual que hasta ahora
+# (enlace menos directo, no un enlace roto).
 RENDICION_CUENTAS_IDS = {
     "murcia": {"idComunidadAutonoma": "13", "idProvincia": "30"},
     "girona": {"idComunidadAutonoma": "9", "idProvincia": "17"},
@@ -4126,6 +4147,47 @@ RENDICION_CUENTAS_IDS = {
     "lleida": {"idComunidadAutonoma": "9", "idProvincia": "25"},
     "barcelona": {"idComunidadAutonoma": "9", "idProvincia": "08"},
     "tarragona": {"idComunidadAutonoma": "9", "idProvincia": "43"},
+    "a_coruna": {"idComunidadAutonoma": "11", "idProvincia": "15"},
+    "albacete": {"idComunidadAutonoma": "7", "idProvincia": "2"},
+    "alicante": {"idComunidadAutonoma": "17", "idProvincia": "3"},
+    "almeria": {"idComunidadAutonoma": "1", "idProvincia": "4"},
+    "asturias": {"idComunidadAutonoma": "3", "idProvincia": "33"},
+    "avila": {"idComunidadAutonoma": "8", "idProvincia": "5"},
+    "badajoz": {"idComunidadAutonoma": "10", "idProvincia": "6"},
+    "baleares": {"idComunidadAutonoma": "4", "idProvincia": "7"},
+    "burgos": {"idComunidadAutonoma": "8", "idProvincia": "9"},
+    "caceres": {"idComunidadAutonoma": "10", "idProvincia": "10"},
+    "cadiz": {"idComunidadAutonoma": "1", "idProvincia": "11"},
+    "cantabria": {"idComunidadAutonoma": "6", "idProvincia": "39"},
+    "castellon": {"idComunidadAutonoma": "17", "idProvincia": "12"},
+    "ciudad_real": {"idComunidadAutonoma": "7", "idProvincia": "13"},
+    "cordoba": {"idComunidadAutonoma": "1", "idProvincia": "14"},
+    "cuenca": {"idComunidadAutonoma": "7", "idProvincia": "16"},
+    "granada": {"idComunidadAutonoma": "1", "idProvincia": "18"},
+    "guadalajara": {"idComunidadAutonoma": "7", "idProvincia": "19"},
+    "huelva": {"idComunidadAutonoma": "1", "idProvincia": "21"},
+    "huesca": {"idComunidadAutonoma": "2", "idProvincia": "22"},
+    "jaen": {"idComunidadAutonoma": "1", "idProvincia": "23"},
+    "la_rioja": {"idComunidadAutonoma": "16", "idProvincia": "26"},
+    "las_palmas": {"idComunidadAutonoma": "5", "idProvincia": "35"},
+    "leon": {"idComunidadAutonoma": "8", "idProvincia": "24"},
+    "lugo": {"idComunidadAutonoma": "11", "idProvincia": "27"},
+    "madrid": {"idComunidadAutonoma": "12", "idProvincia": "28"},
+    "malaga": {"idComunidadAutonoma": "1", "idProvincia": "29"},
+    "ourense": {"idComunidadAutonoma": "11", "idProvincia": "32"},
+    "palencia": {"idComunidadAutonoma": "8", "idProvincia": "34"},
+    "pontevedra": {"idComunidadAutonoma": "11", "idProvincia": "36"},
+    "salamanca": {"idComunidadAutonoma": "8", "idProvincia": "37"},
+    "santa_cruz_tenerife": {"idComunidadAutonoma": "5", "idProvincia": "38"},
+    "segovia": {"idComunidadAutonoma": "8", "idProvincia": "40"},
+    "sevilla": {"idComunidadAutonoma": "1", "idProvincia": "41"},
+    "soria": {"idComunidadAutonoma": "8", "idProvincia": "42"},
+    "teruel": {"idComunidadAutonoma": "2", "idProvincia": "44"},
+    "toledo": {"idComunidadAutonoma": "7", "idProvincia": "45"},
+    "valencia": {"idComunidadAutonoma": "17", "idProvincia": "46"},
+    "valladolid": {"idComunidadAutonoma": "8", "idProvincia": "47"},
+    "zamora": {"idComunidadAutonoma": "8", "idProvincia": "49"},
+    "zaragoza": {"idComunidadAutonoma": "2", "idProvincia": "50"},
 }
 
 

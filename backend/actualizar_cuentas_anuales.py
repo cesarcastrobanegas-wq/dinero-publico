@@ -1,10 +1,25 @@
 # encoding: utf-8
 """
-Resuelve, para cada municipio de las 5 provincias que cubre esta app
-(ampliado 2026-08-09), su identificador interno
+Resuelve, para cada municipio de CUALQUIER provincia que
+MUNICIPIOS_POR_PROVINCIA (app.py) cubra, su identificador interno
 (idEntidad) en la Plataforma de Rendición de Cuentas de las Corporaciones
 Locales (rendiciondecuentas.es, Tribunal de Cuentas) y el último ejercicio
 con la Cuenta General rendida, y genera backend/cuentas_anuales.json.
+
+GENERALIZADO 2026-09-21 (Índice de Transparencia nacional, petición de
+César, punto 2 de 3 -- ver actualizar_retribuciones.py para el punto 1,
+mismo encargo): antes iteraba una lista hardcodeada de solo 5 provincias
+(MUNICIPIOS_MURCIA + ...GIRONA + ...LLEIDA + ...BARCELONA + ...TARRAGONA).
+Ahora itera MUNICIPIOS_POR_PROVINCIA completo, mismo patrón que
+actualizar_deuda_y_liquidaciones.py -- cualquier provincia nueva se recoge
+sola, SALVO las 4 que RENDICION_CUENTAS_IDS (app.py) deja fuera a
+propósito porque esta fuente concreta no las cubre (ver su comentario
+ampliado el mismo día para el detalle completo verificado en vivo):
+País Vasco y Navarra (Tribunal de Cuentas foral propio, ni siquiera
+aparecen como Comunidad Autónoma en el desplegable de búsqueda) y
+Ceuta/Melilla (no aparecen como provincia en el formulario). Este
+script salta esas 4 explícitamente en vez de dejar que fallen calladas
+contra RENDICION_CUENTAS_IDS.get() -> None -> KeyError.
 
 Con (idEntidad, último ejercicio rendido) se puede enlazar DIRECTO a la
 ficha de esa Cuenta General concreta:
@@ -41,9 +56,14 @@ import requests
 import requests.sessions
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import (BASE_DIR, MUNICIPIOS_MURCIA, MUNICIPIOS_GIRONA, MUNICIPIOS_LLEIDA,
-                  MUNICIPIOS_BARCELONA, MUNICIPIOS_TARRAGONA, normalizar,
+from app import (BASE_DIR, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL, normalizar,
                   RENDICION_CUENTAS_IDS)
+
+# Provincias que RENDICION_CUENTAS_IDS (app.py) deja fuera a propósito --
+# ver el comentario ampliado ahí el 2026-09-21 para el detalle verificado
+# en vivo (Tribunal de Cuentas foral propio para pais_vasco/navarra,
+# ausentes del formulario para ceuta/melilla).
+_PROVINCIAS_SIN_COBERTURA = {"pais_vasco", "navarra", "ceuta", "melilla"}
 
 # rendiciondecuentas.es declara charset=ISO-8859-1 y, cuando la denominación
 # buscada lleva alguna vocal acentuada (Abarán, Águilas, Anglès...), el
@@ -190,20 +210,41 @@ def _ultimo_ejercicio_rendido(session, id_entidad, url_busqueda, params_busqueda
     return max(ejercicios)
 
 
+def _guardar(resultado):
+    with open(OUT_FILE, "w", encoding="utf-8") as f:
+        json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "municipios": resultado},
+                   f, ensure_ascii=False, indent=1)
+
+
 def main():
-    resultado = {}
+    # Reanudable: con ~8.000 municipios y ~1.6s por municipio (2 peticiones
+    # x PAUSA_SEG) la ejecución completa puede tardar varias horas -- si ya
+    # hay un cuentas_anuales.json de una ejecución anterior (parcial o
+    # completa), se parte de ahí y se saltan los municipios que ya tengan
+    # idEntidad+ejercicio, en vez de volver a pedirlos todos desde cero.
+    try:
+        with open(OUT_FILE, encoding="utf-8") as f:
+            resultado = json.load(f).get("municipios", {})
+    except (FileNotFoundError, json.JSONDecodeError):
+        resultado = {}
+    if resultado:
+        print(f"Reanudando: {len(resultado)} municipios ya en {OUT_FILE}, se saltan.")
+
     sin_match = []
     sin_ejercicio = []
 
-    # Ampliado 2026-08-09 a las 3 provincias catalanas restantes -- mismo
-    # RENDICION_CUENTAS_IDS (app.py) ya con sus idProvincia verificados.
-    tareas = ([(m, "murcia") for m in MUNICIPIOS_MURCIA] +
-              [(m, "girona") for m in MUNICIPIOS_GIRONA] +
-              [(m, "lleida") for m in MUNICIPIOS_LLEIDA] +
-              [(m, "barcelona") for m in MUNICIPIOS_BARCELONA] +
-              [(m, "tarragona") for m in MUNICIPIOS_TARRAGONA])
+    tareas = [(m, clave) for clave, municipios in MUNICIPIOS_POR_PROVINCIA.items()
+              if clave not in _PROVINCIAS_SIN_COBERTURA
+              for m in municipios]
+    print(f"{len(tareas)} municipios a procesar en {len(MUNICIPIOS_POR_PROVINCIA) - len(_PROVINCIAS_SIN_COBERTURA)} "
+          f"provincias (excluidas sin cobertura en esta fuente: {sorted(_PROVINCIAS_SIN_COBERTURA)}).")
 
+    CHECKPOINT_CADA = 50  # guarda progreso cada N municipios NUEVOS procesados
+
+    procesados_esta_ejecucion = 0
     for i, (municipio, provincia) in enumerate(tareas, 1):
+        if normalizar(municipio) in resultado:
+            continue
         provincia_ids = RENDICION_CUENTAS_IDS[provincia]
         # Sesión nueva por municipio -- gesto de aislamiento razonable entre
         # peticiones a un servicio público de terceros, sin coste real (el
@@ -230,19 +271,29 @@ def main():
             print(f"[aviso] {municipio} ({provincia}): fallo de red, se salta -- {e}")
             sin_match.append((provincia, municipio))
 
-        if i % 20 == 0:
+        procesados_esta_ejecucion += 1
+        if procesados_esta_ejecucion % 20 == 0:
             print(f"...{i}/{len(tareas)} procesados ({len(resultado)} con idEntidad+ejercicio)")
+        if procesados_esta_ejecucion % CHECKPOINT_CADA == 0:
+            _guardar(resultado)
         time.sleep(PAUSA_SEG)
 
-    with open(OUT_FILE, "w", encoding="utf-8") as f:
-        json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "municipios": resultado},
-                   f, ensure_ascii=False, indent=1)
+    _guardar(resultado)
 
     print(f"\nMunicipios con idEntidad + ejercicio rendido: {len(resultado)} / {len(tareas)}")
     if sin_match:
         print(f"\nSin idEntidad encontrado ({len(sin_match)}): {sin_match}")
     if sin_ejercicio:
         print(f"\nCon idEntidad pero sin ningún ejercicio rendido ({len(sin_ejercicio)}): {sin_ejercicio}")
+
+    print()
+    for clave, municipios in MUNICIPIOS_POR_PROVINCIA.items():
+        if clave in _PROVINCIAS_SIN_COBERTURA:
+            continue
+        esperados = len(municipios)
+        n_prov = sum(1 for v in resultado.values() if v["provincia"] == clave)
+        print(f"{PROVINCIA_LABEL.get(clave, clave)}: {n_prov}/{esperados}")
+
     print(f"\nGuardado en {OUT_FILE}")
 
 
