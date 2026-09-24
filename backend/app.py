@@ -4,7 +4,7 @@ Fuente: Plataforma de Contratación del Sector Público (datos oficiales CODICE/
 """
 
 import gzip as _gzip
-import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib, random, unicodedata
+import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib, random, unicodedata, math
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from email.utils import parsedate_to_datetime
@@ -8935,10 +8935,11 @@ def enriquecer_directivos_contratos_menores(job_id=None, presupuesto_minutos=30)
     deadline = time.time() + presupuesto_minutos * 60
     with _db_lock:
         filas = _db.execute(
-            "SELECT DISTINCT adjudicatari FROM contratos_menors_locales "
-            "WHERE adjudicatari IS NOT NULL AND adjudicatari <> ''"
+            "SELECT adjudicatari, SUM(import_num) FROM contratos_menors_locales "
+            "WHERE adjudicatari IS NOT NULL AND adjudicatari <> '' GROUP BY adjudicatari"
         ).fetchall()
-    pendientes = [a for (a,) in filas
+    pesos = {a: max(float(t or 0.0), 1.0) for a, t in filas}
+    pendientes = [a for a in pesos
                   if _dir_cache_get(a, "")[0] is None
                   and not _dir_cache_agotado(a, "")]
     # Orden aleatorio (investigación 2026-08-26, tasa de acierto real medida:
@@ -8958,7 +8959,18 @@ def enriquecer_directivos_contratos_menores(job_id=None, presupuesto_minutos=30)
     # ni el mecanismo de caché (_dir_cache_get/set/agotado) -- solo asegura
     # que cada tirada explore una muestra distinta del backlog en vez de
     # quedarse machacando siempre el mismo subconjunto inicial.
-    random.shuffle(pendientes)
+    #
+    # ORDEN (2026-09-24): sorteo PONDERADO por el importe total adjudicado a
+    # cada empresa (Efraimidis-Spirakis: clave = log(U)/peso, de mayor a
+    # menor), en vez de barajar a ciegas. Con ~400 empresas por pasada y un
+    # backlog de decenas de miles (53.938 el 2026-09-24), el orden aleatorio
+    # cubría el 2 % del dinero tras una semana y el 9 % tras 30 noches; el
+    # sorteo ponderado, medido en simulación sobre los datos reales (30 % de
+    # fallos persistentes), el 22 % y el 43 %. Sigue siendo un sorteo, no un
+    # orden fijo: las empresas grandes salen casi siempre primero, pero no
+    # siempre las mismas, así que las que fallan no acaparan todas las
+    # pasadas (el problema que motivó el barajado original).
+    pendientes.sort(key=lambda a: math.log(random.random() or 1e-12) / pesos[a], reverse=True)
     total = len(pendientes)
     _log(job_id, f"Buscando gerente/administrador de {total} adjudicatarios de "
                  f"contratos menores pendientes (einforma · empresia · BORME)…")

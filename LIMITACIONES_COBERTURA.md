@@ -134,5 +134,9 @@ decisión deliberada de alcance, o algo pendiente de hacer.
     ("Sección no habilitada"), Mutxamel y Orihuela (sin módulo de contratos en Governalia; Orihuela
     usa `orihuela.sedelectronica.es`), Castelló de la Plana y La Pobla de Vallbona (el subdominio
     no existe). **Tolosa**: `tolosa.governalia.es` incrusta por error el módulo de Vilamarxant y
-    devuelve datos de otro municipio; no hay fuente de Tolosa. Por eso `_governalia_menores()`
+    devuelve datos de otro municipio; no hay fuente de Tolosa.
+  - **Mini-lote 2026-09-24 (también descartado):** Alboraya y San Miguel de Salinas tienen sitio Governalia
+    pero ninguna página de contratos (Alboraya solo enlaza su perfil del contratante en `alboraya.es`);
+    La Oliva tiene página `/transparencia/contratos/` pero vacía (sin módulo incrustado ni llamadas a la API,
+    igual que Elda/Silla/Picassent). Por eso `_governalia_menores()`
     valida el municipio real de cada fila (`site`) y aborta si no coincide.
