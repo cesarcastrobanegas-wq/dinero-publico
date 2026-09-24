@@ -6376,6 +6376,27 @@ _EXCLUSION_CONTINUACION_ANCLAJE = {
 }
 
 
+# Galicia (2026-09-24, hallazgo al revisar Santiago de Compostela): en PLACE muchos concellos gallegos
+# NO figuran como "Ayuntamiento de X" sino como "Concello de X" -- el órgano principal de Santiago es
+# "Xunta de Goberno do Concello de Santiago de Compostela" -- y el patrón anclado, que exigía
+# "ayuntamiento de", los dejaba fuera por completo (Santiago tenía UN contrato en producción). Medido con
+# el ZIP real de septiembre de 2026: 20 municipios gallegos publican bajo "Concello de" (43 entradas, 19 de
+# ellos SIN ninguna bajo "Ayuntamiento de") frente a 92 municipios / 415 entradas bajo "Ayuntamiento de".
+# Los nombres con artículo llevan además la contracción gallega: "Concello da Estrada" para "A Estrada".
+# Solo se aplica a los municipios gallegos de la app (no cambia ninguna otra provincia).
+_ARTICULO_CONTRACCION_GL = {"a": "da", "o": "do", "as": "das", "os": "dos"}
+_MUNICIPIOS_GALICIA_NORM = None
+
+
+def _es_municipio_gallego(muni_norm):
+    global _MUNICIPIOS_GALICIA_NORM
+    if _MUNICIPIOS_GALICIA_NORM is None:
+        _MUNICIPIOS_GALICIA_NORM = {normalizar(m) for lst in (MUNICIPIOS_A_CORUNA, MUNICIPIOS_LUGO,
+                                                              MUNICIPIOS_OURENSE, MUNICIPIOS_PONTEVEDRA)
+                                    for m in lst}
+    return muni_norm in _MUNICIPIOS_GALICIA_NORM
+
+
 def _regex_anclado(municipio):
     """Regex completo para anclar=True en buscar_en_zip/buscar_en_feed_vivo:
     _prefijo_anclaje + infijo honorífico opcional + nombre del municipio,
@@ -6407,6 +6428,14 @@ def _regex_anclado(municipio):
             # incidente Cieza/Cantabria 2026-09-15.
             sufijo_b = r'\b' if exclusion[-1].isalnum() else ''
             lookahead += f'(?!{re.escape(exclusion)}{sufijo_b})'
+    if _es_municipio_gallego(muni_norm):
+        m_art = re.match(r"^(a|o|as|os) (.+)$", muni_norm)
+        if m_art:
+            art, resto = m_art.groups()
+            nombre = (rf'(?:de {art} {re.escape(resto)}|{_ARTICULO_CONTRACCION_GL[art]} {re.escape(resto)})')
+        else:
+            nombre = rf'de {re.escape(muni_norm)}'
+        return re.compile(rf'\b(?:ayuntamiento|concello) {nombre}{lookahead}\b')
     return re.compile(
         rf'\b{_prefijo_anclaje(municipio)} {_INFIJO_HONORIFICO_RE}{re.escape(muni_norm)}{lookahead}\b'
     )
