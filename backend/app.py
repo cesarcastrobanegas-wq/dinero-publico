@@ -10789,12 +10789,26 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .noticia-ue-item:last-of-type{border-bottom:none;}
 .noticia-ue-item .nu-titulo{display:block;font-size:12.5px;font-weight:600;line-height:1.4;color:var(--text);text-decoration:none;margin-bottom:4px;}
 .noticia-ue-item .nu-titulo:hover{color:var(--yellow);text-decoration:underline;}
-.noticia-ue-item .nu-resumen{font-size:11.5px;color:var(--dim);line-height:1.5;margin-bottom:5px;}
+.noticia-ue-item .nu-resumen{font-size:11.5px;color:var(--dim);line-height:1.5;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .noticia-ue-item .nu-meta{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .noticia-ue-item .nu-meta .nu-fuente{color:var(--yellow);}
 .nu-ver-mas{display:block;margin-top:10px;font-size:11px;color:var(--yellow);text-decoration:none;}
 .nu-ver-mas:hover{text-decoration:underline;}
 .home-main-col{min-width:0;}
+/* Escritorio (2026-09-24, hallazgo de la revisión de la portada): con las noticias UE en columna
+   izquierda y el ranking en la derecha, la fila quedaba descompensada (columna de noticias de
+   ~700 px frente a ~200 del ranking) y dejaba un hueco enorme antes del bloque de instalación.
+   Ahora el ranking va arriba y las noticias debajo, en una fila de 3 columnas: la altura de la
+   fila ya no depende de cuántas noticias haya. En móvil se mantiene el apilado de siempre
+   (ver el media query de 860px más abajo). */
+@media(min-width:861px){
+  .home-grid{grid-template-columns:1fr;grid-template-rows:auto auto;}
+  .home-main-col{grid-column:1;grid-row:1;}
+  .home-sidebar-stack{grid-column:1;grid-row:2;}
+  .noticias-ue-panel{position:static;display:grid;grid-template-columns:repeat(3,1fr);column-gap:24px;row-gap:2px;}
+  .noticias-ue-panel .nu-panel-title,.noticias-ue-panel .nu-ver-mas{grid-column:1 / -1;}
+  .noticias-ue-panel .noticia-ue-item{border-bottom:none;}
+}
 
 /* ── home: mapa de cobertura + Índice de Transparencia lado a lado
    (2026-09-20, petición de César -- el índice estaba poco accesible debajo
@@ -11486,7 +11500,8 @@ _ADV_SEARCH_JS = r"""
       results.appendChild(el('div', 'empty', 'Sin resultados.'));
       return;
     }
-    var head = el('div', 'as-total', data.total_contratos + ' contratos · total acumulado ' + data.total_importe);
+    var head = el('div', 'as-total', data.total_contratos + ' contratos · total acumulado ' + data.total_importe
+      + (data.resultados.length < data.total_contratos ? ' · mostrando los primeros ' + data.resultados.length : ''));
     results.appendChild(head);
     data.resultados.forEach(function(c){ results.appendChild(filaContrato(c)); });
   }
@@ -12645,7 +12660,37 @@ def _indice_transparencia_desglose_html(componentes):
     return filas
 
 
-def _render_indice_transparencia_html(comunidad="todas"):
+# Paginación de las tablas largas de /rankings (2026-09-24, hallazgo de rendimiento): antes se
+# pintaban de golpe ~7.000 filas de sueldos de alcaldes + ~1.000 de deuda por habitante + 300 del
+# Índice con su desglose inline (80.000 nodos DOM, 3 MB de HTML, una página de 400.000 px de
+# alto). Ahora se pinta una página de _RK_POR_PAGINA filas por tabla; las posiciones siguen
+# siendo las reales (se numera desde el inicio de la página, no desde 1) y el buscador de
+# arriba (/api/rankings-municipio) trabaja sobre los datos completos, no sobre la tabla.
+_RK_POR_PAGINA = 100
+
+
+def _rk_pagina(valor, total, por_pagina=_RK_POR_PAGINA):
+    """(pagina_valida, total_paginas) a partir del valor crudo del query string."""
+    try:
+        pagina = int(valor)
+    except (TypeError, ValueError):
+        pagina = 1
+    paginas = max(1, (total + por_pagina - 1) // por_pagina)
+    return min(max(1, pagina), paginas), paginas
+
+
+def _rk_paginacion_html(pagina, paginas, total, url_de, etiqueta="filas"):
+    """Controles Anterior/Siguiente con las clases .pagination ya usadas en las fichas.
+    url_de(n) devuelve el enlace (ya con su ancla) de la página n."""
+    if paginas <= 1:
+        return ""
+    ant = f'<a href="{esc(url_de(pagina - 1))}" class="pag-btn">← Anterior</a>' if pagina > 1 else ""
+    sig = f'<a href="{esc(url_de(pagina + 1))}" class="pag-btn">Siguiente →</a>' if pagina < paginas else ""
+    return (f'<div class="pagination"><span class="pag-info">Página {pagina} de {paginas} · '
+            f'{total} {etiqueta}</span><div class="pag-links">{ant}{sig}</div></div>')
+
+
+def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
     """Sección "Índice de Transparencia Dinero Público" de /rankings --
     ranking nacional (o filtrado por comunidad autónoma) de actividad y
     disponibilidad de datos públicos, con el desglose de los 7 componentes
@@ -12671,8 +12716,11 @@ def _render_indice_transparencia_html(comunidad="todas"):
     sin_indice = len(filas_datos) - len(con_indice)
     ranking_completo = _ranking_con_empates(con_indice)
     total_con_indice = len(ranking_completo)
-    ranking_visible = ranking_completo[:_INDICE_TRANSPARENCIA_MAX_FILAS_TABLA]
-    recortado = total_con_indice > len(ranking_visible)
+    pagina, paginas = _rk_pagina(pagina, total_con_indice)
+    ini = (pagina - 1) * _RK_POR_PAGINA
+    ranking_visible = ranking_completo[ini:ini + _RK_POR_PAGINA]
+    paginacion_html = (_rk_paginacion_html(pagina, paginas, total_con_indice, url_de, "municipios")
+                       if url_de else "")
 
     filas_html = ""
     for puesto, f in ranking_visible:
@@ -12708,12 +12756,7 @@ def _render_indice_transparencia_html(comunidad="todas"):
         f'disponibles) -- no se muestran en la tabla.</span>'
         if sin_indice else ""
     )
-    aviso_recorte = (
-        f'<br><span class="noloc-warn">📄 Mostrando los primeros {len(ranking_visible)} de '
-        f'{total_con_indice} municipios con índice calculado. Usa el buscador de arriba para encontrar '
-        f'cualquier municipio y su puesto real, esté o no en esta tabla.</span>'
-        if recortado else ""
-    )
+    aviso_recorte = ""   # sustituido por la paginación (ver _rk_paginacion_html)
 
     return f"""
   <div class="rk-section-header" id="indice-transparencia">
@@ -12729,12 +12772,13 @@ def _render_indice_transparencia_html(comunidad="todas"):
     {aviso_sin_cobertura}
     {aviso_recorte}
   </p>
-  <input type="text" class="it-buscador" placeholder="Buscar municipio…" autocomplete="off"
+  <input type="text" class="it-buscador" placeholder="Filtrar en esta página… (para buscar en todo el ranking, usa el buscador de arriba)" autocomplete="off"
          oninput="{esc(_IT_BUSCADOR_JS)}">
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Municipio</th><th>Provincia</th><th>Índice</th><th>Cobertura</th><th>Desglose</th></tr>
     {filas_html}
-  </table></div></div>"""
+  </table></div></div>
+  {paginacion_html}"""
 
 
 def _buscar_posicion_municipio(q, limite=10):
@@ -12902,7 +12946,7 @@ _RK_METODOLOGIA_AVISO_HTML = """<div class="rk-metodologia-aviso" id="rk-metodol
 </script>"""
 
 
-def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas"):
+def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas", paginas=None):
     """Dos rankings claramente separados:
     - Nacional: agrega TODAS las provincias cargadas (Murcia + Girona + las que vengan).
     - Provincial: el mismo top 10 x2, filtrable por una provincia concreta.
@@ -12910,6 +12954,21 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     top_n_nac, top_imp_nac = _calcular_rankings(datos_nacional)
     top_n_prov, top_imp_prov = _calcular_rankings(datos_provincia)
     label_prov = PROVINCIA_LABEL.get(provincia_prov, PROVINCIA_LABEL["murcia"])
+    paginas = paginas or {}
+    pags_actuales = {}      # página efectiva de cada tabla larga, para construir los enlaces
+
+    def _url_pag(tabla, n, ancla):
+        """Enlace a la página n de una tabla larga conservando provincia, comunidad y la
+        página en la que esté cada una de las otras tablas."""
+        pags = dict(pags_actuales)
+        pags[tabla] = n
+        partes = [f"provincia={provincia_prov}"]
+        if comunidad != "todas":
+            partes.append(f"comunidad={comunidad}")
+        for clave, param in (("alc", "pag_alc"), ("deuda", "pag_deuda"), ("idx", "pag_idx")):
+            if pags.get(clave, 1) > 1:
+                partes.append(f"{param}={pags[clave]}")
+        return "/rankings?" + "&".join(partes) + "#" + ancla
 
     def _filas(lista, valor_html, q_prov=""):
         filas = ""
@@ -12942,7 +13001,10 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     ranking_alcaldes = _calcular_ranking_alcaldes()
     anio_ispa = next((f["anio"] for f in ranking_alcaldes if f.get("anio")), "")
     filas_alcaldes_html = ""
-    for i, f in enumerate(ranking_alcaldes, 1):
+    pag_alc, npag_alc = _rk_pagina(paginas.get("alc"), len(ranking_alcaldes))
+    pags_actuales["alc"] = pag_alc
+    ini_alc = (pag_alc - 1) * _RK_POR_PAGINA
+    for i, f in enumerate(ranking_alcaldes[ini_alc:ini_alc + _RK_POR_PAGINA], ini_alc + 1):
         pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
         muni_q = quote_plus(f["municipio"])
         q_prov_muni = _q_prov(f["provincia"])
@@ -12965,7 +13027,10 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
     ranking_deuda_hab = _calcular_ranking_deuda_por_habitante()
     filas_deuda_hab_html = ""
-    for i, f in enumerate(ranking_deuda_hab, 1):
+    pag_deuda, npag_deuda = _rk_pagina(paginas.get("deuda"), len(ranking_deuda_hab))
+    pags_actuales["deuda"] = pag_deuda
+    ini_deuda = (pag_deuda - 1) * _RK_POR_PAGINA
+    for i, f in enumerate(ranking_deuda_hab[ini_deuda:ini_deuda + _RK_POR_PAGINA], ini_deuda + 1):
         pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
         muni_q = quote_plus(f["municipio"])
         q_prov_muni = _q_prov(f["provincia"])
@@ -12978,6 +13043,14 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
         </tr>"""
     if not filas_deuda_hab_html:
         filas_deuda_hab_html = '<tr><td colspan="5" class="empty">Aún no hay datos suficientes.</td></tr>'
+
+    _n_idx = len([f for f in _indice_transparencia_cacheado()
+                  if f["indice"] is not None and (comunidad == "todas" or f["comunidad_autonoma"] == comunidad)])
+    pags_actuales["idx"] = _rk_pagina(paginas.get("idx"), _n_idx)[0]
+    pag_alc_html = _rk_paginacion_html(pag_alc, npag_alc, len(ranking_alcaldes),
+                                       lambda n: _url_pag("alc", n, "alcaldes"), "municipios")
+    pag_deuda_html = _rk_paginacion_html(pag_deuda, npag_deuda, len(ranking_deuda_hab),
+                                         lambda n: _url_pag("deuda", n, "deuda-habitante"), "municipios")
 
     selector_prov = "".join(
         f'<a href="/rankings?provincia={prov}" class="prov-tab{" active" if prov == provincia_prov else ""}">'
@@ -13066,6 +13139,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_alcaldes_html}
   </table></div></div>
+  {pag_alc_html}
 
   <div class="rk-section-header" id="deuda-habitante">
     <h2>🏦 Ranking de Deuda por Habitante</h2>
@@ -13076,7 +13150,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <tr><th>#</th><th>Municipio</th><th>Deuda viva</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_deuda_hab_html}
   </table></div></div>
-{_render_indice_transparencia_html(comunidad)}
+  {pag_deuda_html}
+{_render_indice_transparencia_html(comunidad, pags_actuales["idx"], lambda n: _url_pag("idx", n, "indice-transparencia"))}
   {_share_buttons_html(_rk_og_path, "Rankings de contratación pública — Dinero Público")}"""
 
     return _page_shell("Rankings — Top 10 empresas", body,
@@ -14035,6 +14110,9 @@ def _ranking_con_empates(filas):
     return resultado
 
 
+_SIDEBAR_VER_MAS_N = 40
+
+
 def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     """Bloque lateral con el Índice de Transparencia para la portada
     (2026-09-17, petición de César; rediseñado 2026-09-20 con selector de
@@ -14072,7 +14150,11 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
                 f'</a>')
 
     top = ranking[:top_n]
-    resto = ranking[top_n:]
+    # "Ver más" acotado (2026-09-24, hallazgo de rendimiento): antes incrustaba TODO el resto del
+    # ranking (~8.000 municipios, 32.000 nodos DOM dentro de un <details> plegado) en una portada
+    # de solo 3.300 px de alto. Ahora solo los siguientes _SIDEBAR_VER_MAS_N; el ranking completo
+    # está paginado en /rankings.
+    resto = ranking[top_n:top_n + _SIDEBAR_VER_MAS_N]
     top_html = "".join(_fila_html(p, f) for p, f in top)
 
     ver_mas_html = ""
@@ -14334,7 +14416,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     # Columna de noticias UE (presupuesto/fondos/subvenciones) -- ver
     # actualizar_noticias_ue(). Solo titular + resumen corto + enlace
     # directo a ec.europa.eu, nunca el texto completo del comunicado.
-    noticias_ue = _db_noticias_ue(limit=6)
+    noticias_ue = _db_noticias_ue(limit=3)   # 3, no 6: con 6 la columna medía ~700 px frente a ~230 del ranking y dejaba un hueco enorme en la portada
     if noticias_ue:
         noticias_html = "".join(f"""<div class="noticia-ue-item">
           <a class="nu-titulo" href="{esc(n['url'])}" target="_blank" rel="noopener">{esc(n['titulo'])}</a>
@@ -16003,7 +16085,10 @@ def _route_get(path, qs, gzip_ok=False):
         comunidad_qs = _comunidad_valida(qs.get("comunidad", ["todas"])[0])
         datos_nacional = _db_all_municipios()
         datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
-        return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs), gzip_ok=gzip_ok)
+        paginas_qs = {"alc": qs.get("pag_alc", ["1"])[0], "deuda": qs.get("pag_deuda", ["1"])[0],
+                      "idx": qs.get("pag_idx", ["1"])[0]}
+        return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs,
+                                          paginas_qs), gzip_ok=gzip_ok)
 
     if path == "/fondos-ue":
         provincia_qs = qs.get("provincia", ["todas"])[0]
