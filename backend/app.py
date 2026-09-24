@@ -10588,6 +10588,7 @@ a.fue-link{color:var(--yellow);font-size:11px;}
 .cm-aviso .link{color:var(--blue);}
 .cm-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);white-space:nowrap;font-weight:600;}
 .cm-nif{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
+.cm-nota{display:block;font-size:11px;line-height:1.4;color:var(--yellow);margin-top:4px;max-width:420px;}
 .fuente-rpc{background:rgba(240,136,62,.15);color:var(--accent);border:1px solid rgba(240,136,62,.3);}
 /* Comentarios de usuarios (ficha de municipio/empresa) -- mismo patrón
    <details> colapsable que cm-card, acento azul para diferenciarlo de las
@@ -13160,6 +13161,22 @@ _FUENTE_CM_LABEL = {
     "murcia-capital":  "Murcia",
     "san-pedro-pinatar": "S. P. Pinatar",
     "torre-pacheco":   "Torre Pacheco",
+    "cartagena-governalia": "Cartagena (PLACE)",
+}
+
+
+# Notas visibles en la fila de contratos menores concretos cuyo dato de origen
+# es probablemente erróneo. NO es una regla por importe: en Murcia capital
+# hay filas >50.000 € que se dejan tal cual por decisión expresa (ver memoria
+# del proyecto); esto es una lista cerrada, revisada a mano, contrato a
+# contrato. La cifra se muestra igual que la publica la fuente -- la nota da
+# el contexto para no atribuir injustamente un error de tecleo a la empresa.
+_NOTAS_CONTRATO_MENOR = {
+    "CartagenaGov::39918": (
+        "Importe según fuente oficial (PLACE muestra la misma cifra). Un contrato menor "
+        "no puede superar legalmente unos 40.000 € (15.000 € en servicios y suministros): "
+        "probable error de tecleo del ayuntamiento."
+    ),
 }
 
 
@@ -13233,11 +13250,14 @@ def _render_fila_contrato_menor(r):
                 if _dir_cache_agotado(adjudicatari, "") else "")
         dir_html = (f'<span class="noloc-warn">⚠️ No localizado {rm_link}</span>{nota}')
 
+    nota_txt = _NOTAS_CONTRATO_MENOR.get(r.get("id", ""))
+    nota_fila = f'<span class="cm-nota">⚠️ {esc(nota_txt)}</span>' if nota_txt else ""
+
     return f"""<tr>
       <td>
         <div class="empresa">{esc(adjudicatari)}{fuente_badge}</div>
         {nif_html}
-        <div class="cargo">{esc(r.get("descripcio","")[:110])}</div>
+        <div class="cargo">{esc(r.get("descripcio","")[:110])}</div>{nota_fila}
       </td>
       <td class="cm-importe">{fmt_eur(str(r["import_num"])) if r["import_num"] else "—"}</td>
       <td>{dir_html}</td>
@@ -14928,16 +14948,20 @@ def render_caso_contratos_menores_html():
   fuentes reales una por una: un CSV trimestral en Fuente Álamo (con actualización
   automática, aunque una parte de sus filas no trae fecha), un fichero ODS en Mula, un
   XLSX en Molina de Segura, los listados de Murcia capital, un PDF anual con tabla en
-  San Pedro del Pinatar, la API del portal de transparencia de Torre Pacheco, y un listado paginado en Lorca y en Lorquí. El portal de Cartagena está <strong>en revisión</strong> — lo
-  indexamos con histórico 2021-2026, pero ahora mismo solo conseguimos recuperar el
-  ejercicio en curso; estamos revisándolo antes de decidir cómo mostrarlo.</p>
+  San Pedro del Pinatar, la API del portal de transparencia de Torre Pacheco, y un listado paginado en Lorca y en Lorquí. En Cartagena, su portal propio solo devuelve
+  ahora el ejercicio en curso (2026), que indexamos de ahí; los ejercicios 2022-2025 los
+  recuperamos del espejo de PLACE que publica su portal de transparencia (contratos menores
+  que el ayuntamiento comunica a PLACE). Ambas fuentes no son la misma lista: se solapan
+  solo en parte, y por eso no las mezclamos en un mismo año. Ojo con los importes: 2026 va
+  con IVA y 2022-2025 sin IVA. Esa fuente arrastra además errores de origen (importes a 0
+  y algún importe desproporcionado) que mostramos tal como los publica el ayuntamiento.</p>
 
   <p>La cobertura histórica real varía por fuente, no es un "desde 2021" único para
   todo el sitio: en Cataluña (RPC) y Lorquí llega a 2021; en Mula, Molina de Segura,
   Murcia capital y San Pedro del Pinatar, a 2022; en Torre Pacheco, con datos
   significativos solo desde 2024; en Lorca empieza en 2024 (estamos revisando si su portal
   permite ir más atrás); en Fuente Álamo llega a 2021 pero con una parte de sus filas
-  sin fecha registrada en origen; en Cartagena está en revisión, como se explica arriba.
+  sin fecha registrada en origen; en Cartagena, 2026 viene de su portal propio y 2022-2025 de PLACE, como se explica arriba.
   Para los contratos formales (PLACE/PSCP/Euskadi/Navarra) todavía no registramos la
   fecha de adjudicación de cada contrato — lo mostramos todo lo que encontramos, pero no
   podemos decir con precisión desde qué año, municipio a municipio; estamos trabajando

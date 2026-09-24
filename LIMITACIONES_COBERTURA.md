@@ -24,7 +24,16 @@ decisión deliberada de alcance, o algo pendiente de hacer.
   (2026-09-24): Caravaca de la Cruz (su sección de menores está vacía), San Javier (se
   detiene en 2021 y son decretos/facturas, no un listado), Los Alcázares (solo publica
   los financiados por Agenda Urbana y PRTR, no todos), Alhama de Murcia (portal de
-  transparencia en mantenimiento, reintentar).
+  transparencia en mantenimiento, reintentar), Totana (archivo con una sola entrada de 2015 sin
+  adjudicatario ni importe; fichas de 2019 en fase de licitación) y Yecla (su portal Governalia
+  está archivado/suspendido, HTTP 410; las páginas antiguas de la JGL dan 404).
+  - **Cartagena** (2026-09-24, sin desplegar al escribir esto): el portal propio solo devuelve
+    2026; 2022-2025 se recuperan de su portal Governalia (`app.governalia.es`, idP=47226), un
+    espejo de lo que Cartagena comunica a PLACE (13.560 filas, fuente `cartagena-governalia`).
+    No es la misma lista que el portal propio (se solapan ~62 % en 2026), por eso solo se usa
+    hasta 2025. Importes: portal propio CON IVA, Governalia SIN IVA. Arrastra errores de origen:
+    992 filas con adjudicado 0 (se dejan a 0) y un "menor" de 6.000.000 € (id 39918, feria de
+    Málaga 2025, mismo importe en PLACE; se muestra tal cual con una nota visible en su fila, `_NOTAS_CONTRATO_MENOR` en app.py, lista cerrada revisada a mano, no una regla por importe).
   - Mula y Molina de Segura se cargan **a mano** (`actualizar_contratos_menores_murcia_manual.py`,
     necesita odfpy/openpyxl) — no están en el cron diario. Si nadie relanza
     el script, esos datos se quedan congelados sin ningún aviso.

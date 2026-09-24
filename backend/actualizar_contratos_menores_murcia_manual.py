@@ -809,21 +809,49 @@ def actualizar_san_pedro():
 # se toma el primer día).
 TORRE_PACHECO_PAGINA_URL = ("https://governalia.torrepacheco.es/gvn/web/section/modules/"
                             "transparency/egob/procurements/?idP=36813&lang=es")
-TORRE_PACHECO_API_URL = ("https://governalia.torrepacheco.es/gvn/rest/transparency/egob/"
-                         "procurements/dt/all?formatDate=YYYY-MM-DD&iniDate={ini}&endDate={fin}"
-                         "&procurementStatus=&procurementActivity=&procurementProcedure="
-                         "&procurementProcedureCode=Por%20-Procedimiento-&procurementType="
-                         "&procurementMinor=true&procurementAdministration=")
+# Cartagena (añadido 2026-09-24): cartagena.governalia.es/contratos/ es la
+# misma plataforma, en el host compartido app.governalia.es (el ayuntamiento
+# se identifica por idP en la URL del módulo). Es un ESPEJO de lo que Cartagena
+# publica en PLACE (el "Importe de Adjudicación" de PLACE coincide con el campo
+# de la API, verificado en 6 contratos), con dos consecuencias importantes:
+# - Arrastra los errores de origen de PLACE: 1 "contrato menor" de 6.000.000 €
+#   (feria de degustación, casi seguro un error de tecleo del ayuntamiento) y
+#   ~7 % de filas con adjudicado 0 (el ayuntamiento no rellenó el importe). Aquí
+#   se guardan tal cual, SIN sustituir el 0 por el presupuesto.
+# - NO es la misma población que el portal propio cartagena.es (fuente
+#   "cartagena", solo ejercicio en curso): se solapan ~62 % de las filas de
+#   2026 (mismo NIF, importe = sin IVA x 1,00-1,21) y el resto de cada lado no
+#   está en el otro. Por eso esta fuente solo aporta los ejercicios ANTERIORES
+#   a CARTAGENA_GOVERNALIA_HASTA -- 2022-2025, que el portal propio ya no
+#   devuelve -- y 2026 lo sigue dando el portal propio, sin duplicar.
+# Ojo con la base del importe: el portal propio de Cartagena va CON IVA
+# (ratio 1,21 dominante) y Governalia SIN IVA.
+CARTAGENA_GOVERNALIA_PAGINA_URL = ("https://app.governalia.es/gvn/web/section/modules/"
+                                   "transparency/egob/procurements/?idP=47226&lang=es")
+CARTAGENA_GOVERNALIA_HASTA = 2025
 
 
-def actualizar_torre_pacheco():
+def _governalia_menores(pagina_url, municipio, fuente, prefijo_id, hasta_anio=None,
+                        presupuesto_si_cero=True):
+    """Contratos menores de un ayuntamiento cuyo portal de transparencia corre
+    sobre Governalia (ver notas de Torre Pacheco y Cartagena arriba). La API
+    cuelga del mismo origen que la página del módulo. `presupuesto_si_cero`:
+    si el importe adjudicado viene a 0/nulo, usar el presupuesto sin IVA (Torre
+    Pacheco, ~4 filas) o dejarlo a 0 tal como lo publica el ayuntamiento
+    (Cartagena, ~7 % de las filas: no se inventa un importe)."""
+    origen = "/".join(pagina_url.split("/")[:3])
+    api = (origen + "/gvn/rest/transparency/egob/procurements/dt/all?formatDate=YYYY-MM-DD"
+           "&iniDate={ini}&endDate={fin}&procurementStatus=&procurementActivity="
+           "&procurementProcedure=&procurementProcedureCode=Por%20-Procedimiento-"
+           "&procurementType=&procurementMinor=true&procurementAdministration=")
     s = requests.Session()
     s.headers["User-Agent"] = HEADERS["User-Agent"]
-    s.get(TORRE_PACHECO_PAGINA_URL, timeout=60).raise_for_status()   # solo para la cookie de sesión
-    r = s.get(TORRE_PACHECO_API_URL.format(ini=DESDE_ANY, fin=time.localtime().tm_year),
+    s.get(pagina_url, timeout=60).raise_for_status()   # solo para la cookie de sesión
+    fin = min(hasta_anio, time.localtime().tm_year) if hasta_anio else time.localtime().tm_year
+    r = s.get(api.format(ini=DESDE_ANY, fin=fin),
               headers={"X-Requested-With": "XMLHttpRequest", "Content-Type": "application/json",
                        "Accept": "application/json, text/javascript, */*; q=0.01",
-                       "Referer": TORRE_PACHECO_PAGINA_URL}, timeout=180)
+                       "Referer": pagina_url}, timeout=300)
     r.raise_for_status()
     filas = r.json().get("data", [])
     registros = {}
@@ -832,13 +860,17 @@ def actualizar_torre_pacheco():
         fecha = (x.get("award_date") or x.get("date_issue") or "")[:10]
         if not adjudicatario or not re.match(r"^\d{4}-\d{2}-\d{2}$", fecha) or int(fecha[:4]) < DESDE_ANY:
             continue
-        importe = x.get("tax_exclusive_amount") or x.get("estimated_overall_contract_amount_without_taxes") or 0.0
-        registros[f"TorrePacheco::{x['id']}"] = {
-            "id":               f"TorrePacheco::{x['id']}",
-            "municipio":        "Torre Pacheco",
+        if hasta_anio and int(fecha[:4]) > hasta_anio:
+            continue
+        importe = x.get("tax_exclusive_amount") or 0.0
+        if not importe and presupuesto_si_cero:
+            importe = x.get("estimated_overall_contract_amount_without_taxes") or 0.0
+        registros[f"{prefijo_id}::{x['id']}"] = {
+            "id":               f"{prefijo_id}::{x['id']}",
+            "municipio":        municipio,
             "provincia":        "murcia",
-            "fuente":           "torre-pacheco",
-            "organisme":        "Ayuntamiento de Torre Pacheco",
+            "fuente":           fuente,
+            "organisme":        f"Ayuntamiento de {municipio}",
             "adjudicatari":     adjudicatario,
             "nif":              (x.get("winningparty_nif") or "").strip(),
             "import_num":       float(importe),
@@ -852,8 +884,18 @@ def actualizar_torre_pacheco():
     por_anio = {}
     for x in registros:
         por_anio[x["exercici"]] = por_anio.get(x["exercici"], 0) + 1
-    print(f"Torre Pacheco: {len(registros)} contratos menores (de {len(filas)} filas de la API): {dict(sorted(por_anio.items()))}")
+    print(f"{municipio}: {len(registros)} contratos menores (de {len(filas)} filas de la API): {dict(sorted(por_anio.items()))}")
     return registros
+
+
+def actualizar_torre_pacheco():
+    return _governalia_menores(TORRE_PACHECO_PAGINA_URL, "Torre Pacheco", "torre-pacheco", "TorrePacheco")
+
+
+def actualizar_cartagena_governalia():
+    return _governalia_menores(CARTAGENA_GOVERNALIA_PAGINA_URL, "Cartagena", "cartagena-governalia",
+                               "CartagenaGov", hasta_anio=CARTAGENA_GOVERNALIA_HASTA,
+                               presupuesto_si_cero=False)
 
 
 # Fuente -> (función, valor del campo "fuente" de sus registros). Sirve para
@@ -867,6 +909,7 @@ _FUENTES = {
     "murcia-capital":    actualizar_murcia_capital,
     "san-pedro-pinatar": actualizar_san_pedro,
     "torre-pacheco":     actualizar_torre_pacheco,
+    "cartagena-governalia": actualizar_cartagena_governalia,
 }
 
 
