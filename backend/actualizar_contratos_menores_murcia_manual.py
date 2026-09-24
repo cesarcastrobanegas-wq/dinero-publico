@@ -1439,6 +1439,152 @@ def actualizar_pontevedra():
     return registros
 
 
+# Ames (añadido 2026-09-24): un ZIP por año en concellodeames.gal/es/transparencia/contratos ("Contratos
+# menores formalizados en AAAA") con dos PDF semestrales cada uno (~20 páginas). Descarga directa con
+# requests. Tabla de 7 columnas (Nº / EXPEDIENTE / TIPO / OBXECTO / DECRETO APROBACIÓN / IMPORTE /
+# ADXUDICATARIO), igual en 2021-2025, ~700-770 contratos al año.
+# Verificado abriendo los 10 PDF de 2021-2025:
+# - pdfplumber.extract_tables() da 7 columnas en el ~93 % de las filas; el resto sale con 8-9 columnas
+#   (celdas vacías extra) y hay líneas sueltas de 1 columna (duplicados de texto ya contenido en la fila).
+#   Por eso cada fila se interpreta por ANCLAS de contenido (nº, expediente, importe, nombre a continuación)
+#   y no por posición.
+# - Los saltos de numeración (277, 144, 314, 266, 244...) NO son filas perdidas: tampoco están en el texto
+#   del PDF (la fuente los salta); y un nº repetido (134 en 2024-S2) son dos contratos distintos.
+# - El importe se escribe de muchas formas: "17.278,80 €", "449.09 €", "4.480 euros", "1569,20", "85,00 €,",
+#   "4.829.99". num_es() las cubre. Un decreto sin la barra ("21612024" en vez de "2161/2024") se leía como un
+#   importe de 21,6 M EUR: el importe es la celda numérica más a la derecha CON símbolo/separadores.
+# - Importe CON IVA (17.278,80 = 14.280 x 1,21); el máximo es 48.350,23 (<= 48.400) y ninguno lo supera.
+# - La fuente NO trae fecha por contrato (solo el nº de decreto) ni NIF: se usa el inicio del semestre como
+#   fecha aproximada (1 de enero / 1 de julio) -- limitación real de la fuente, avisada en la ficha.
+# - Descartadas: 3 filas de importe ilegible (importe = expediente, celda vacía, "6,315,96 EUR") y 9 sin
+#   adjudicatario (21.854,30 EUR en total).
+# - Expedientes de 2021-S2 sin año ("8021"): por eso el expediente solo se exige no vacío.
+AMES_LISTADO_URL = "https://www.concellodeames.gal/es/transparencia/contratos"
+_RE_AMES_NUM = re.compile(r"^[\d.,\s]+(?:€|euros?)?[,.]?$", re.I)
+
+
+def _am_tipo(t):
+    """El tipo viene con erratas de la fuente ('Servzo', 'Subminitro', 'Servizos.', 'Obra'): se normaliza por
+    prefijo; los mixtos ('Servizo e subministro') y las subvenciones se dejan tal cual."""
+    x = t.lower().strip(" .")
+    if " e " in x or "subvenc" in x:
+        return t.strip(" .").capitalize()
+    if x.startswith("privad") or x.startswith("contrato privado"):
+        return "Privado"
+    if x.startswith("obra"):
+        return "Obras"
+    if x.startswith("serv"):
+        return "Servicios"
+    if x.startswith("sub"):
+        return "Suministros"
+    return t.strip(" .").capitalize()
+
+
+def _am_txt(c):
+    return re.sub(r"\s+", " ", (c or "")).strip()
+
+
+def _am_num(txt):
+    t = re.sub(r"(?i)euros?|€", "", txt).replace(" ", "").rstrip(",.")
+    if not t or not re.search(r"\d", t):
+        return None
+    try:
+        if "," in t:
+            return float(t.replace(".", "").replace(",", "."))
+        if re.match(r"^\d{1,3}(\.\d{3})+$", t):
+            return float(t.replace(".", ""))
+        if re.match(r"^\d{1,3}(\.\d{3})+\.\d{2}$", t):
+            return float(t.replace(".", "", t.count(".") - 1))
+        return float(t)
+    except ValueError:
+        return None
+
+
+def _am_parsear_pdf(contenido):
+    filas, descartadas = [], 0
+    with pdfplumber.open(io.BytesIO(contenido)) as pdf:
+        for pagina in pdf.pages:
+            for tabla in pagina.extract_tables():
+                for r in tabla:
+                    if not r:
+                        continue
+                    c = [_am_txt(x) for x in r]
+                    if len(c) < 6 or not re.match(r"^\d+$", c[0]):
+                        continue
+                    if not c[1]:
+                        continue                                      # fila espuria (solo el número)
+                    cand = [i for i in range(3, len(c)) if c[i] and "/" not in c[i]
+                            and _RE_AMES_NUM.match(c[i]) and _am_num(c[i]) is not None]
+                    fuertes = [i for i in cand if re.search(r"€|euro|[,.]", c[i], re.I)]
+                    ii = (fuertes or cand or [None])[-1]
+                    if ii is None:
+                        descartadas += 1
+                        continue
+                    decreto = c[ii - 1] if ii - 1 >= 3 and re.match(r"^\d+/\d{4}$", c[ii - 1]) else ""
+                    fin = ii - 1 if decreto else ii
+                    filas.append({"n": int(c[0]), "exp": c[1], "tipo": c[2],
+                                  "objeto": " ".join(x for x in c[3:fin] if x),
+                                  "importe": _am_num(c[ii]), "adj": " ".join(x for x in c[ii + 1:] if x)})
+    return filas, descartadas
+
+
+def actualizar_ames():
+    import zipfile
+    r = requests.get(AMES_LISTADO_URL, headers=HEADERS, timeout=60)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    zips = {}
+    for a in soup.find_all("a", href=True):
+        m = re.search(r"Contratos menores formalizados en (\d{4})", a.get_text(" ", strip=True))
+        if m and a["href"].lower().endswith(".zip") and int(m.group(1)) >= DESDE_ANY:
+            zips[int(m.group(1))] = urljoin(AMES_LISTADO_URL, a["href"])
+    print(f"Ames: {len(zips)} ZIP anuales desde {DESDE_ANY} en el listado oficial: {sorted(zips)}")
+    registros, sin_adj, desc_imp = {}, 0, 0
+    for anio, url in sorted(zips.items()):
+        try:
+            z = zipfile.ZipFile(io.BytesIO(requests.get(url, headers=HEADERS, timeout=120).content))
+        except Exception as e:
+            # estricto: un ZIP que falla dejaria medio año fuera sin que se note (ver _fusionar_fuente)
+            raise RuntimeError(f"Ames {anio}: {url} no disponible ({type(e).__name__}: {e})")
+        for nombre in sorted(n for n in z.namelist() if n.lower().endswith(".pdf")):
+            sem = 1 if "primeiro" in nombre.lower() else (2 if "segundo" in nombre.lower() else None)
+            if sem is None:
+                print(f"  Ames {anio}: {nombre} no es un PDF semestral reconocible, saltado")
+                continue
+            try:
+                filas, desc = _am_parsear_pdf(z.read(nombre))
+            except Exception as e:
+                raise RuntimeError(f"Ames {anio} S{sem}: no se pudo procesar ({type(e).__name__}: {e})")
+            desc_imp += desc
+            fecha = f"{anio}-01-01" if sem == 1 else f"{anio}-07-01"
+            n0 = len(registros)
+            for f in filas:
+                if not f["adj"]:
+                    sin_adj += 1
+                    continue
+                clave = hashlib.md5(f"{anio}|{sem}|{f['n']}|{f['exp']}|{f['adj']}|{f['importe']}".encode("utf-8")).hexdigest()[:12]
+                registros[f"Ames::{clave}"] = {
+                    "id":               f"Ames::{clave}",
+                    "municipio":        "Ames",
+                    "provincia":        "a_coruna",
+                    "fuente":           "ames",
+                    "organisme":        "Ayuntamiento de Ames",
+                    "adjudicatari":     f["adj"],
+                    "nif":              "",
+                    "import_num":       f["importe"],
+                    "data_adjudicacio": fecha,
+                    "tipus_contracte":  _am_tipo(f["tipo"]),
+                    "descripcio":       f["objeto"],
+                    "codi_cpv":         "",
+                    "exercici":         str(anio),
+                }
+            print(f"  Ames {anio} S{sem}: {len(registros) - n0} contratos")
+    registros = list(registros.values())
+    print(f"Ames: {len(registros)} contratos menores ({sin_adj} sin adjudicatario y {desc_imp} con importe "
+          f"ilegible descartados)")
+    return registros
+
+
 # Fuente -> (función, valor del campo "fuente" de sus registros). Sirve para
 # relanzar UNA sola fuente (`python ... san-pedro-pinatar`) conservando las
 # demás del JSON existente, en vez de esperar los ~25 min de Murcia capital.
@@ -1454,6 +1600,7 @@ _FUENTES = {
     "vigo":              actualizar_vigo,
     "ferrol":            actualizar_ferrol,
     "pontevedra":        actualizar_pontevedra,
+    "ames":              actualizar_ames,
     "cartagena-governalia": actualizar_cartagena_governalia,
     "ibi-governalia":    actualizar_ibi,
     "sax-governalia":    actualizar_sax,
@@ -1461,21 +1608,45 @@ _FUENTES = {
 }
 
 
+def _fusionar_fuente(previos, nombre, funcion, forzar=False):
+    """Registros de la fuente `nombre` tras ejecutar `funcion`, con una salvaguarda (2026-09-24): si la
+    ejecución falla, o devuelve menos del 90 % de las filas que esa fuente ya tenía en el JSON, se CONSERVAN
+    las anteriores y se avisa. Sin esto, una descarga que falla a medias (Ames devolvió 1.896 de 3.387 filas
+    en una ejecución, sin ningún error) reemplazaba la fuente por un resultado parcial en silencio.
+    Con --forzar se acepta el resultado nuevo aunque sea más pequeño."""
+    antes = [r for r in previos if r.get("fuente") == nombre]
+    try:
+        nuevos = funcion()
+    except Exception as e:
+        print(f"  !! {nombre}: FALLÓ ({type(e).__name__}: {e}); se conservan las {len(antes)} filas anteriores.")
+        return antes
+    if antes and not forzar and len(nuevos) < 0.9 * len(antes):
+        print(f"  !! {nombre}: devolvió {len(nuevos)} filas frente a las {len(antes)} que ya había (< 90 %); "
+              f"se conservan las anteriores. Revisa la fuente o usa --forzar si es correcto.")
+        return antes
+    return nuevos
+
+
 def main():
-    pedidas = sys.argv[1:]
+    args = sys.argv[1:]
+    forzar = "--forzar" in args
+    pedidas = [a for a in args if not a.startswith("--")]
     desconocidas = [f for f in pedidas if f not in _FUENTES]
     if desconocidas:
         sys.exit(f"Fuente(s) desconocida(s): {desconocidas}. Válidas: {sorted(_FUENTES)}")
-    if not pedidas:
-        todos = []
-        for fn in _FUENTES.values():
-            todos += fn()
-    else:
+    try:
         with open(OUT_FILE, encoding="utf-8") as f:
             previos = json.load(f)["registros"]
+    except FileNotFoundError:
+        previos = []
+    if not pedidas:
+        todos = []
+        for nombre, fn in _FUENTES.items():
+            todos += _fusionar_fuente(previos, nombre, fn, forzar)
+    else:
         todos = [r for r in previos if r.get("fuente") not in pedidas]
         for nombre in pedidas:
-            todos += _FUENTES[nombre]()
+            todos += _fusionar_fuente(previos, nombre, _FUENTES[nombre], forzar)
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "registros": todos},
                    f, ensure_ascii=False, indent=1)

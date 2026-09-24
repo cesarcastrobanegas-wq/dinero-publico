@@ -13253,6 +13253,7 @@ _FUENTE_CM_LABEL = {
     "vigo":            "Vigo",
     "ferrol":          "Ferrol",
     "pontevedra":      "Pontevedra",
+    "ames":            "Ames",
     "cartagena-governalia": "Cartagena (PLACE)",
     "ibi-governalia":  "Ibi (PLACE)",
     "sax-governalia":  "Sax (PLACE)",
@@ -13278,6 +13279,11 @@ _NOTAS_FUENTE_CM = {
         "Cobertura de A Coruña desde 2021. Los años anteriores no se incluyen: 2014-2017 son "
         "imputaciones de facturas sin NIF y 2018-2019 usan otro esquema de datos (2020 queda "
         "fuera por el corte general de 2021). Importes con IVA."
+    ),
+    "ames": (
+        "Ames publica sus contratos menores en PDF semestrales sin fecha por contrato ni NIF: la fecha "
+        "mostrada es el inicio del semestre (1 de enero o 1 de julio), no la del contrato. Cobertura desde "
+        "2021; importes con IVA."
     ),
     "pontevedra": (
         "Cobertura de Pontevedra desde abril de 2023: antes no hay contratos menores publicados en su "
@@ -15147,8 +15153,8 @@ def render_caso_contratos_menores_html():
   propia fila.</p>
 
   <p>En Galicia hemos incorporado, de momento, A Coruña (ficheros trimestrales desde 2021),
-  Vigo (informes anuales en PDF desde 2022), Ferrol (listado web desde 2021) y Pontevedra
-  (consulta de su sede electrónica desde 2023). En todos el importe es el adjudicado con IVA. Los
+  Vigo (informes anuales en PDF desde 2022), Ferrol (listado web desde 2021), Pontevedra
+  (consulta de su sede electrónica desde 2023) y Ames (PDF semestrales desde 2021). En todos el importe es el adjudicado con IVA. Los
   contratos menores de Galicia se publican de forma muy desigual entre ayuntamientos y no todos
   los grandes tienen todavía una fuente conectada.</p>
 

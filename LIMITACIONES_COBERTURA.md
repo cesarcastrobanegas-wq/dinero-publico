@@ -166,8 +166,22 @@ decisión deliberada de alcance, o algo pendiente de hacer.
     estadísticas oficiales del portal coinciden AL CÉNTIMO con las sumas por trimestre (2024-T4, 2025-T1, 2025-T2,
     2026-T2, 2026-T3). Importe CON IVA (max 48.398,79), NIF español incluido en el adjudicatario ("NOMBRE NIF Pyme"),
     datos desde el 2T-2023. 10 filas (67.631,55 EUR) sin adjudicatario se descartan.
+  - **Ames** (`ames`, 3.387 contratos 2021-2025, ~13 M EUR): un ZIP anual en concellodeames.gal/es/transparencia/contratos
+    con 2 PDF semestrales (tabla de 7 columnas, ~700-770 contratos/año). extract_tables() da filas con 7, 8 o 9 columnas y
+    líneas sueltas: se interpreta por ANCLAS de contenido, no por posición. Importe CON IVA (max 48.350,23), escrito de
+    formas muy distintas ("449.09 EUR", "4.480 euros", "4.829.99"). SIN fecha por contrato (se usa el inicio del semestre,
+    avisado en la ficha) y sin NIF. Los saltos de numeración de la fuente NO son filas perdidas. Descartados: 3 con importe
+    ilegible y 9 sin adjudicatario (21.854,30 EUR). Un decreto sin la barra ("21612024") se leía como 21,6 M EUR (corregido).
+  - **Salvaguarda del script manual** (2026-09-24): `_fusionar_fuente()` conserva las filas anteriores de una fuente si su
+    ejecución falla o devuelve menos del 90 % de lo que ya había (avisa con `!!`; `--forzar` acepta el resultado nuevo).
+    Motivo: una ejecución de Ames devolvió 1.896 de 3.387 filas sin ningún error y `main()` habría sustituido la fuente por
+    el resultado parcial en silencio. Ames además aborta si falla cualquier ZIP o PDF (un semestre perdido pesa ~9 % y no
+    llegaría al umbral).
+  - **Ourense: descartado** tras verificar su página oficial de transparencia y su sede electrónica: solo enlaza "Contratos
+    (no incluidos los contratos menores)" y el perfil del contratante en PLACE; no hay ninguna sección de menores. El indicio
+    de prensa de que dejó de publicar en 2022 queda confirmado por la propia fuente oficial.
   - **Pendientes de la tanda** (aún sin verificar):
-    Ourense y Ames (verificar en la fuente oficial), Santiago (¿ya entra el órgano "Xunta de Goberno
+    Santiago (¿ya entra el órgano "Xunta de Goberno
     ... (CONTRATOS MENORES)" por PLACE?), Lugo (¿sigue publicando en 2024-25?), Vilagarcía, Narón,
     Arteixo (rendiciondecuentas.es como posible fuente nacional).
 
