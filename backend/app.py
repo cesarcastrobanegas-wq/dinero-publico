@@ -13251,6 +13251,7 @@ _FUENTE_CM_LABEL = {
     "torre-pacheco":   "Torre Pacheco",
     "a-coruna":        "A Coruña",
     "vigo":            "Vigo",
+    "ferrol":          "Ferrol",
     "cartagena-governalia": "Cartagena (PLACE)",
     "ibi-governalia":  "Ibi (PLACE)",
     "sax-governalia":  "Sax (PLACE)",
@@ -15138,8 +15139,9 @@ def render_caso_contratos_menores_html():
   casos mostramos el importe tal como figura en la fuente oficial, con una nota visible en la
   propia fila.</p>
 
-  <p>En Galicia hemos incorporado, de momento, A Coruña (ficheros trimestrales desde 2021) y
-  Vigo (informes anuales en PDF desde 2022). En ambos el importe es el adjudicado con IVA. Los
+  <p>En Galicia hemos incorporado, de momento, A Coruña (ficheros trimestrales desde 2021),
+  Vigo (informes anuales en PDF desde 2022) y Ferrol (listado web desde 2021). En los tres el
+  importe es el adjudicado con IVA. Los
   contratos menores de Galicia se publican de forma muy desigual entre ayuntamientos y no todos
   los grandes tienen todavía una fuente conectada.</p>
 

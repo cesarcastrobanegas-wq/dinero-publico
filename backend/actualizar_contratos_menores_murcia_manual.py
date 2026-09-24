@@ -1233,6 +1233,86 @@ def actualizar_vigo():
     return registros
 
 
+# Ferrol (añadido 2026-09-24): www.ferrol.gal/Transparencia/ContratosMenores es una tabla HTML
+# ESTÁTICA con TODOS los registros (2.762 de 2015-2026, ~1,8 MB) -- la paginación de 25 en 25 es
+# de la propia librería de tablas en el navegador, no del servidor: con un único GET con requests
+# llegan todas las filas. Columnas: Data adxudicación / Asunto / Adxudicatario / Tipo de expediente /
+# Importe total / "Ampliar" (enlace al detalle del expediente).
+# Verificado 2026-09-24 contra el detalle de un expediente reciente: "Importe licitación 12050 ->
+# Importe total 14580,5 EUR" = x 1,21, o sea el importe es CON IVA; desde 2021 el máximo es
+# 48.387,90 EUR (<= 48.400 = 40.000 + 21 %). Los importes por encima de 48.400 son todos de
+# 2015-2017 (otros límites legales; fuera de alcance de todos modos por DESDE_ANY).
+# - La lista NO trae NIF (el detalle sí, en la tabla de "Ofertas"): con nombre solo, igual que Vigo.
+#   Rastrear los 1.575 detalles (~26 min) para sacar el NIF queda como mejora opcional.
+# - "Tipo de expediente" es "Contrato menor" + el ÁREA municipal (Cultura, Festas, Emprego...), no el
+#   tipo de contrato: solo cuando dice "obras" se rellena el tipo ("Obras"); el resto queda vacío.
+# - El identificador del detalle NO es único por fila (68 de 1.575 desde 2021 lo comparten con otra),
+#   así que la clave combina identificador, fecha, adjudicatario, importe y asunto: 25 de ellas son
+#   duplicados EXACTOS (mismo identificador y mismos campos) y se colapsan (quedan 1.550 contratos);
+#   las otras 43 difieren en algún campo (lotes / varios adjudicatarios del mismo expediente) y se
+#   conservan.
+# - Importes: formato "14180,65 EUR" o "18029 EUR" (coma decimal, sin separador de miles);
+#   6 filas desde 2021 vienen a 0 (se dejan a 0) y 7 sin asunto.
+FERROL_URL = "https://www.ferrol.gal/Transparencia/ContratosMenores"
+
+
+def _ferrol_importe(v):
+    t = str(v).replace("€", "").replace("EUR", "").strip()
+    try:
+        return float(t.replace(".", "").replace(",", ".")) if "," in t and "." in t else float(t.replace(",", "."))
+    except ValueError:
+        return None
+
+
+def actualizar_ferrol():
+    r = requests.get(FERROL_URL, headers=dict(HEADERS, **{"Accept-Language": "gl,es;q=0.9"}), timeout=120)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    registros, sin_importe = {}, 0
+    n_filas = 0
+    for tr in soup.select("table tbody tr"):
+        td = [re.sub(r"\s+", " ", c.get_text(" ", strip=True)) for c in tr.find_all("td")]
+        enlace = tr.find("a", href=True)
+        if len(td) < 5:
+            continue
+        n_filas += 1
+        m = re.match(r"^(\d{2})/(\d{2})/(\d{4})$", td[0])
+        importe = _ferrol_importe(td[4])
+        if not m or int(m.group(3)) < DESDE_ANY or not td[2]:
+            continue
+        if importe is None:
+            sin_importe += 1
+            continue
+        fecha = f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
+        ref = enlace["href"].rsplit("/", 1)[-1] if enlace else ""
+        tipo = "Obras" if re.search(r"\bobras\b", td[3], re.I) else ""
+        clave = hashlib.md5(f"{ref}|{fecha}|{td[2]}|{importe}|{td[1][:80]}".encode("utf-8")).hexdigest()[:12]
+        registros[f"Ferrol::{clave}"] = {
+            "id":               f"Ferrol::{clave}",
+            "municipio":        "Ferrol",
+            "provincia":        "a_coruna",
+            "fuente":           "ferrol",
+            "organisme":        "Ayuntamiento de Ferrol",
+            "adjudicatari":     td[2],
+            "nif":              "",
+            "import_num":       importe,
+            "data_adjudicacio": fecha,
+            "tipus_contracte":  tipo,
+            "descripcio":       td[1],
+            "codi_cpv":         "",
+            "exercici":         fecha[:4],
+        }
+    if n_filas == 0:
+        raise RuntimeError("Ferrol: la tabla no trae filas (¿cambió la página?)")
+    registros = list(registros.values())
+    por_anio = {}
+    for x in registros:
+        por_anio[x["exercici"]] = por_anio.get(x["exercici"], 0) + 1
+    print(f"Ferrol: {len(registros)} contratos menores de {n_filas} filas de la tabla "
+          f"({sin_importe} con importe ilegible descartadas): {dict(sorted(por_anio.items()))}")
+    return registros
+
+
 # Fuente -> (función, valor del campo "fuente" de sus registros). Sirve para
 # relanzar UNA sola fuente (`python ... san-pedro-pinatar`) conservando las
 # demás del JSON existente, en vez de esperar los ~25 min de Murcia capital.
@@ -1246,6 +1326,7 @@ _FUENTES = {
     "torre-pacheco":     actualizar_torre_pacheco,
     "a-coruna":          actualizar_a_coruna,
     "vigo":              actualizar_vigo,
+    "ferrol":            actualizar_ferrol,
     "cartagena-governalia": actualizar_cartagena_governalia,
     "ibi-governalia":    actualizar_ibi,
     "sax-governalia":    actualizar_sax,

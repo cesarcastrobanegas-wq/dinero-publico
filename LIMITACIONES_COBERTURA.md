@@ -152,7 +152,17 @@ decisión deliberada de alcance, o algo pendiente de hacer.
     patrón de nombre. El nombre del adjudicatario PRECEDE a sus contratos (validado: 92-100 % de
     coherencia en proveedores inequívocos vs 13 % con la hipótesis contraria). Sin NIF. Importe CON IVA.
     2021 y anteriores excluidos: sus descripciones van en mayúsculas y se confunden con nombres.
-  - **Pendientes de la tanda** (aún sin verificar): Ferrol, Oleiros, Pontevedra (visita manual),
+  - **Ferrol** (`ferrol`, 1.550 contratos 2021-2026, ~19,2 M EUR): tabla HTML estática con TODOS los registros
+    (2.762 de 2015-2026); un GET con `requests` basta. Importe CON IVA (verificado en el detalle: licitación x 1,21).
+    Sin NIF en la lista (el detalle sí lo trae; rastrear 1.575 detalles queda como mejora opcional). "Tipo de
+    expediente" es "Contrato menor" + ÁREA municipal, no el tipo de contrato: solo "obras" rellena el tipo. 25
+    duplicados exactos colapsados. Máximo desde 2021: 48.387,90 EUR (<= 48.400).
+  - **Oleiros: descartado** tras verificar su web, su nota de prensa y su sede electrónica (`sede.oleiros.org`): todo
+    remite a PLACE, sin ningún listado de contratos menores.
+  - **Pontevedra: fuente real, sin construir** (2026-09-24): la sede (`sede.pontevedra.gal/public/contratos/
+    contratos-index.xhtml`) tiene una "Consulta de contratos" (JSF, pagina por AJAX, 2022-2026) con filtro de tipo de
+    procedimiento "Contrato menor"; el adjudicatario trae el NIF pegado y el importe es CON IVE. Requiere navegador.
+  - **Pendientes de la tanda** (aún sin verificar):
     Ourense y Ames (verificar en la fuente oficial), Santiago (¿ya entra el órgano "Xunta de Goberno
     ... (CONTRATOS MENORES)" por PLACE?), Lugo (¿sigue publicando en 2024-25?), Vilagarcía, Narón,
     Arteixo (rendiciondecuentas.es como posible fuente nacional).
