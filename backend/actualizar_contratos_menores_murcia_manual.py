@@ -831,14 +831,32 @@ CARTAGENA_GOVERNALIA_PAGINA_URL = ("https://app.governalia.es/gvn/web/section/mo
 CARTAGENA_GOVERNALIA_HASTA = 2025
 
 
+def _sin_acentos(t):
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", t or "") if unicodedata.category(c) != "Mn")
+
+
 def _governalia_menores(pagina_url, municipio, fuente, prefijo_id, hasta_anio=None,
-                        presupuesto_si_cero=True):
+                        presupuesto_si_cero=True, provincia="murcia"):
     """Contratos menores de un ayuntamiento cuyo portal de transparencia corre
     sobre Governalia (ver notas de Torre Pacheco y Cartagena arriba). La API
     cuelga del mismo origen que la página del módulo. `presupuesto_si_cero`:
     si el importe adjudicado viene a 0/nulo, usar el presupuesto sin IVA (Torre
     Pacheco, ~4 filas) o dejarlo a 0 tal como lo publica el ayuntamiento
-    (Cartagena, ~7 % de las filas: no se inventa un importe)."""
+    (Cartagena, ~7 % de las filas: no se inventa un importe).
+
+    Dos guardas descubiertas al ampliar a la Comunitat Valenciana (2026-09-24):
+    - MUNICIPIO: cada fila trae en `site` el municipio real ("...?L01462567/
+      Vilamarxant"). tolosa.governalia.es (un "Ayuntamiento de Tolosa") incrusta
+      por error el módulo de Vilamarxant y devolvía 786 contratos de OTRO
+      municipio: se descartan las filas cuyo `site` no acabe en `municipio`,
+      y si no queda ninguna se aborta en vez de guardar datos ajenos.
+    - PROCEDIMIENTO: el filtro procurementMinor=true de la API a veces deja
+      pasar filas con otro procedimiento (Vilamarxant: 2 "Abierto simplificado"):
+      solo se guardan las de procedimiento "Contrato menor".
+    Los importes de la API traen 6 cifras significativas (615665,3 llega como
+    615665,0): error <= 0,05 EUR en contratos normales, visible solo en obras
+    de cientos de miles de euros."""
     origen = "/".join(pagina_url.split("/")[:3])
     api = (origen + "/gvn/rest/transparency/egob/procurements/dt/all?formatDate=YYYY-MM-DD"
            "&iniDate={ini}&endDate={fin}&procurementStatus=&procurementActivity="
@@ -862,13 +880,17 @@ def _governalia_menores(pagina_url, municipio, fuente, prefijo_id, hasta_anio=No
             continue
         if hasta_anio and int(fecha[:4]) > hasta_anio:
             continue
+        if _sin_acentos((x.get("site") or "").split("/")[-1]).lower() != _sin_acentos(municipio).lower():
+            continue
+        if (x.get("procedure_type") or "").strip().lower() != "contrato menor":
+            continue
         importe = x.get("tax_exclusive_amount") or 0.0
         if not importe and presupuesto_si_cero:
             importe = x.get("estimated_overall_contract_amount_without_taxes") or 0.0
         registros[f"{prefijo_id}::{x['id']}"] = {
             "id":               f"{prefijo_id}::{x['id']}",
             "municipio":        municipio,
-            "provincia":        "murcia",
+            "provincia":        provincia,
             "fuente":           fuente,
             "organisme":        f"Ayuntamiento de {municipio}",
             "adjudicatari":     adjudicatario,
@@ -881,6 +903,9 @@ def _governalia_menores(pagina_url, municipio, fuente, prefijo_id, hasta_anio=No
             "exercici":         fecha[:4],
         }
     registros = list(registros.values())
+    if filas and not registros:
+        raise RuntimeError(f"Governalia {municipio}: {len(filas)} filas pero ninguna es de este municipio "
+                           f"(site distinto): el módulo de {pagina_url} no es suyo.")
     por_anio = {}
     for x in registros:
         por_anio[x["exercici"]] = por_anio.get(x["exercici"], 0) + 1
@@ -890,6 +915,22 @@ def _governalia_menores(pagina_url, municipio, fuente, prefijo_id, hasta_anio=No
 
 def actualizar_torre_pacheco():
     return _governalia_menores(TORRE_PACHECO_PAGINA_URL, "Torre Pacheco", "torre-pacheco", "TorrePacheco")
+
+
+_GOVERNALIA_APP = "https://app.governalia.es/gvn/web/section/modules/transparency/egob/procurements/?idP={}&lang=es"
+
+
+def actualizar_ibi():
+    return _governalia_menores(_GOVERNALIA_APP.format(72584), "Ibi", "ibi-governalia", "IbiGov", provincia="alicante")
+
+
+def actualizar_sax():
+    return _governalia_menores(_GOVERNALIA_APP.format(54165), "Sax", "sax-governalia", "SaxGov", provincia="alicante")
+
+
+def actualizar_vilamarxant():
+    return _governalia_menores(_GOVERNALIA_APP.format(63100), "Vilamarxant", "vilamarxant-governalia",
+                               "VilamarxantGov", provincia="valencia")
 
 
 def actualizar_cartagena_governalia():
@@ -910,6 +951,9 @@ _FUENTES = {
     "san-pedro-pinatar": actualizar_san_pedro,
     "torre-pacheco":     actualizar_torre_pacheco,
     "cartagena-governalia": actualizar_cartagena_governalia,
+    "ibi-governalia":    actualizar_ibi,
+    "sax-governalia":    actualizar_sax,
+    "vilamarxant-governalia": actualizar_vilamarxant,
 }
 
 

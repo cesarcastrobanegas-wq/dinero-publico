@@ -13162,6 +13162,9 @@ _FUENTE_CM_LABEL = {
     "san-pedro-pinatar": "S. P. Pinatar",
     "torre-pacheco":   "Torre Pacheco",
     "cartagena-governalia": "Cartagena (PLACE)",
+    "ibi-governalia":  "Ibi (PLACE)",
+    "sax-governalia":  "Sax (PLACE)",
+    "vilamarxant-governalia": "Vilamarxant (PLACE)",
 }
 
 
@@ -13172,6 +13175,31 @@ _FUENTE_CM_LABEL = {
 # contrato. La cifra se muestra igual que la publica la fuente -- la nota da
 # el contexto para no atribuir injustamente un error de tecleo a la empresa.
 _NOTAS_CONTRATO_MENOR = {
+    "VilamarxantGov::41819": (
+        "Importe según fuente oficial (PLACE muestra la misma cifra). Un contrato menor no puede "
+        "superar legalmente unos 40.000 €: probable error de clasificación o de tecleo del "
+        "ayuntamiento (p. ej. una obra de emergencia registrada como contrato menor)."
+    ),
+    "VilamarxantGov::44281": (
+        "Importe según fuente oficial (PLACE muestra la misma cifra). Un contrato menor no puede "
+        "superar legalmente unos 40.000 €: probable error de clasificación o de tecleo del "
+        "ayuntamiento (p. ej. una obra de emergencia registrada como contrato menor)."
+    ),
+    "VilamarxantGov::4464": (
+        "Importe según fuente oficial (PLACE muestra la misma cifra). Un contrato menor no puede "
+        "superar legalmente unos 40.000 €: probable error de clasificación o de tecleo del "
+        "ayuntamiento (p. ej. una obra de emergencia registrada como contrato menor)."
+    ),
+    "VilamarxantGov::76237": (
+        "Importe según fuente oficial (PLACE muestra la misma cifra). Un contrato menor no puede "
+        "superar legalmente unos 40.000 €: probable error de clasificación o de tecleo del "
+        "ayuntamiento (p. ej. una obra de emergencia registrada como contrato menor)."
+    ),
+    "VilamarxantGov::44233": (
+        "Importe según fuente oficial (PLACE muestra la misma cifra). Un contrato menor no puede "
+        "superar legalmente unos 40.000 €: probable error de clasificación o de tecleo del "
+        "ayuntamiento (p. ej. una obra de emergencia registrada como contrato menor)."
+    ),
     "CartagenaGov::39918": (
         "Importe según fuente oficial (PLACE muestra la misma cifra). Un contrato menor "
         "no puede superar legalmente unos 40.000 € (15.000 € en servicios y suministros): "
@@ -14955,6 +14983,14 @@ def render_caso_contratos_menores_html():
   solo en parte, y por eso no las mezclamos en un mismo año. Ojo con los importes: 2026 va
   con IVA y 2022-2025 sin IVA. Esa fuente arrastra además errores de origen (importes a 0
   y algún importe desproporcionado) que mostramos tal como los publica el ayuntamiento.</p>
+
+  <p>Fuera de Murcia, algunos ayuntamientos publican sus contratos menores en portales de
+  transparencia de la plataforma Governalia, que reproduce lo que cada ayuntamiento comunica
+  a PLACE. Hemos incorporado los de Ibi y Sax (Alicante) y Vilamarxant (Valencia) desde 2022.
+  Esa fuente arrastra los errores de origen: hay contratos registrados como «menores» con un
+  importe que la ley no permite (por ejemplo, obras de emergencia mal clasificadas). En esos
+  casos mostramos el importe tal como figura en la fuente oficial, con una nota visible en la
+  propia fila.</p>
 
   <p>La cobertura histórica real varía por fuente, no es un "desde 2021" único para
   todo el sitio: en Cataluña (RPC) y Lorquí llega a 2021; en Mula, Molina de Segura,

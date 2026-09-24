@@ -120,3 +120,19 @@ decisión deliberada de alcance, o algo pendiente de hacer.
   - **Corrección de esta misma memoria**: una nota anterior había marcado
     este punto como "pendiente de revisión" — quedó desactualizada, la
     separación ya estaba hecha 3 semanas antes de esa nota.
+
+- **Comunitat Valenciana - contratos menores vía Governalia** (2026-09-24, sin desplegar al escribir esto):
+  fuentes `ibi-governalia` (963, idP 72584), `sax-governalia` (2.710, idP 54165) y
+  `vilamarxant-governalia` (784, idP 63100), todas en `app.governalia.es`, 2022-2026. Espejo de PLACE:
+  importe = adjudicado SIN IVA (6 cifras significativas), verificado contra PLACE en 18 contratos
+  (16 exactos, 2 con diferencia de redondeo en obras de cientos de miles de euros) y contra el
+  resumen anual del propio portal. Vilamarxant: 5 filas "Contrato menor" por encima de 40.000 €
+  (obras de emergencia, hasta 3.679.090 €) con nota visible (`_NOTAS_CONTRATO_MENOR`); se descartan
+  2 filas de procedimiento "Abierto simplificado".
+  - **Descartados tras verificar en vivo:** Elda, Silla, Picassent y Morella (su página de contratos
+    no incrusta ningún módulo y no tienen ninguna página de menores), Villar del Arzobispo y Calvià
+    ("Sección no habilitada"), Mutxamel y Orihuela (sin módulo de contratos en Governalia; Orihuela
+    usa `orihuela.sedelectronica.es`), Castelló de la Plana y La Pobla de Vallbona (el subdominio
+    no existe). **Tolosa**: `tolosa.governalia.es` incrusta por error el módulo de Vilamarxant y
+    devuelve datos de otro municipio; no hay fuente de Tolosa. Por eso `_governalia_menores()`
+    valida el municipio real de cada fila (`site`) y aborta si no coincide.
