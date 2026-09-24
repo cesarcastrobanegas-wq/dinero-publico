@@ -80,6 +80,7 @@ import os
 import re
 import sys
 import time
+import urllib.parse
 
 import openpyxl
 import pdfplumber
@@ -1606,6 +1607,299 @@ def actualizar_ames():
     return registros
 
 
+# Santiago de Compostela (añadido 2026-09-24): santiagodecompostela.gal/gl/transparencia/contratacion/
+# relacion-de-contratos-menores enlaza una página por año (2014-2026, "actualización mensual") con los XLS
+# trimestrales. Los órganos de contratación de Santiago en PLACE ("Xunta de Goberno do Concello de Santiago de
+# Compostela") NO publican menores (procedimientos 1/3/8/9) y no existe ningún órgano "(CONTRATOS MENORES)" en
+# PLACE -- ese dato venía de un agregador: la fuente real es esta.
+# Verificado abriendo los 22 ficheros de 2021 a 2T-2026:
+# - 2021 -> 1T-2026: informe "DETALLE POR ADJUDICATARIOS" del sistema contable, hoja "Contratos", cabecera
+#   DOCUMENTO(NIF) / ADJUDICATARIO / TIPO / [NÚMERO] / F.ENTRADA / DESCRIPCIÓN / IMPORTE, con filas de subtotal
+#   "Total Servicios/Suministros/Obras" intercaladas (se saltan). La fecha es un número de serie de Excel y es la
+#   FECHA DE ENTRADA del documento, no la de adjudicación.
+# - 2T-2026 en adelante: tabla plana del "Registro Central de Contratos" (Núm. expediente / Tipo / Objeto /
+#   Adj. Nombre / Fecha adjudicación / Importe adj (con impuestos)) y SIN NIF.
+# - Importe CON IVA (14.399 = 11.900 x 1,21; 2.541 = 2.100 x 1,21).
+# - El listado agrupado mezcla contratos menores con OTROS documentos contables: los 30 importes por encima de
+#   48.400 EUR (= 40.000 + 21 %) son convenios con el Consorcio (hasta 3,5 M EUR), "entregas a cuenta" a la UTE de
+#   autobuses, liquidaciones o "documentos pre-AD" -- no son contratos menores y se EXCLUYEN (el máximo legal
+#   descarta cualquier duda). Por debajo de ese tope no hay forma fiable de distinguirlos (el prefijo "CM-" solo
+#   existe en parte de las filas), así que se conservan.
+# - El 1T-2026 solo cubre del 1 al 8 de enero y el 2T-2026 empieza el 1 de abril: la fuente no publica el resto
+#   del 1T-2026.
+# - Los ficheros trimestrales se solapan (2022-T4 desde el 1-sep, 2023-T4 desde el 1-sep, 2023-T3 hasta el 2-oct):
+#   se deduplica por (NIF, adjudicatario, fecha, importe, descripción).
+# - NIF de personas físicas enmascarado ("***8151**"): se guarda vacío.
+SANTIAGO_INDICE_URL = "https://santiagodecompostela.gal/gl/transparencia/contratacion/relacion-de-contratos-menores"
+_RE_SC_NIF_ES = re.compile(r"^([A-Z]\d{7}[A-Z0-9]|\d{8}[A-Z]|[XYZ]\d{7}[A-Z])$")
+_SC_TIPOS = {"servicios": "Servicios", "servicio": "Servicios", "suministros": "Suministros",
+             "suministro": "Suministros", "obras": "Obras", "obra": "Obras"}
+
+
+def _sc_txt(c):
+    return re.sub(r"\s+", " ", str(c or "")).strip()
+
+
+def _sc_fecha(v, datemode):
+    try:
+        f = float(v)
+        if f < 30000:
+            return None
+        return xlrd.xldate_as_datetime(f, datemode).date().isoformat()
+    except (TypeError, ValueError):
+        return None
+
+
+def _sc_parsear_xls(contenido):
+    """Filas (dict) de un XLS de Santiago, en cualquiera de sus dos formatos. (filas, n_sobre_tope)."""
+    wb = xlrd.open_workbook(file_contents=contenido)
+    filas, sobre_tope = [], 0
+    for hoja in wb.sheets():
+        cab = None
+        for i in range(min(15, hoja.nrows)):
+            f = [_sc_txt(c).lower() for c in hoja.row_values(i)]
+            if "adjudicatario" in f and "importe" in f:
+                cab = ("agrupado", i, f)
+                break
+            if any(x.startswith("núm. expediente") or x.startswith("num. expediente") for x in f) \
+                    and any(x.startswith("importe adj") for x in f):
+                cab = ("plano", i, f)
+                break
+        if not cab:
+            continue
+        formato, i0, f = cab
+
+        def ix(pref):
+            return next((k for k, x in enumerate(f) if x.startswith(pref)), None)
+        if formato == "agrupado":
+            c = {"doc": ix("documento"), "adj": ix("adjudicatario"), "tipo": ix("tipo"),
+                 "fecha": ix("f.entrada"), "desc": ix("descrip"), "imp": ix("importe")}
+        else:
+            c = {"doc": None, "adj": ix("adj. nombre"), "tipo": ix("tipo"), "fecha": ix("fecha adj"),
+                 "desc": ix("objeto"), "imp": ix("importe adj")}
+        for r in range(i0 + 1, hoja.nrows):
+            v = hoja.row_values(r)
+
+            def g(k):
+                return v[c[k]] if c.get(k) is not None and c[k] < len(v) else ""
+            tipo = _sc_txt(g("tipo"))
+            adj = _sc_txt(g("adj"))
+            if not adj or (formato == "agrupado" and tipo.lower().startswith("total")):
+                continue
+            fecha = _sc_fecha(g("fecha"), wb.datemode)
+            try:
+                importe = float(g("imp"))
+            except (TypeError, ValueError):
+                continue
+            if not fecha:
+                continue
+            if importe > 48400:
+                sobre_tope += 1
+                continue
+            filas.append({"nif": _sc_txt(g("doc")) if c["doc"] is not None else "", "adj": adj, "tipo": tipo,
+                          "fecha": fecha, "desc": _sc_txt(g("desc")), "importe": importe})
+    return filas, sobre_tope
+
+
+def actualizar_santiago():
+    r = requests.get(SANTIAGO_INDICE_URL, headers=HEADERS, timeout=60)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    paginas = {}
+    for a in soup.find_all("a", href=True):
+        m = re.search(r"relacion-de-contratos-menores-ano-(\d{4})", a["href"])
+        if m and int(m.group(1)) >= DESDE_ANY:
+            paginas[int(m.group(1))] = urljoin(SANTIAGO_INDICE_URL, a["href"])
+    if not paginas:
+        raise RuntimeError("Santiago: no se encontraron las páginas anuales (¿cambió el índice?)")
+    print(f"Santiago: {len(paginas)} páginas anuales desde {DESDE_ANY}: {sorted(paginas)}")
+    registros, sobre_tope_total, n_ficheros = {}, 0, 0
+    for anio, url in sorted(paginas.items()):
+        # La web a veces sirve la página del año SIN los enlaces (visto 2026-09-24: 2024 falló en dos ejecuciones y
+        # funcionó en la siguiente petición idéntica): se reintenta antes de rendirse.
+        enlaces = []
+        for intento in range(4):
+            rp = requests.get(url, headers=HEADERS, timeout=60)
+            rp.raise_for_status()
+            # Se aceptan los enlaces de sites/default/files que digan "trimestre" O terminen en .xls: algunos no
+            # terminan en .xls (".../Segundo_trimestre_2024.1") y otros no dicen "trimestre" ("RCR2E5.xls" es el
+            # 1T-2022; un selector solo por nombre lo dejó fuera sin avisar). Cada descarga se valida por su firma
+            # binaria de hoja de cálculo.
+            for a in BeautifulSoup(rp.text, "html.parser").find_all("a", href=True):
+                h = urllib.parse.unquote(a["href"])
+                if ("sites/default/files" in h and not re.search(r"\.(pdf|png|jpe?g|gif)$", h, re.I)
+                        and ("trimestre" in h.lower() or h.lower().endswith(".xls"))):
+                    if urljoin(url, a["href"]) not in enlaces:
+                        enlaces.append(urljoin(url, a["href"]))
+            if enlaces:
+                break
+            time.sleep(3 * (intento + 1))
+        if not enlaces:
+            raise RuntimeError(f"Santiago {anio}: la página no enlaza ningún XLS")
+        for enlace in enlaces:
+            # estricto: un fichero perdido dejaría un trimestre fuera sin que se note (ver _fusionar_fuente)
+            d = requests.get(enlace, headers=HEADERS, timeout=120)
+            d.raise_for_status()
+            if d.content[:4] != b"\xd0\xcf\x11\xe0":       # OLE2: XLS clásico
+                raise RuntimeError(f"Santiago {anio}: {enlace} no es un XLS (firma {d.content[:4]!r})")
+            filas, sobre_tope = _sc_parsear_xls(d.content)
+            sobre_tope_total += sobre_tope
+            n_ficheros += 1
+            for f in filas:
+                if int(f["fecha"][:4]) < DESDE_ANY:
+                    continue
+                desc = re.sub(r"^CM-\s*", "", f["desc"], flags=re.I)
+                clave = hashlib.md5(f"{f['nif']}|{f['adj']}|{f['fecha']}|{f['importe']}|{desc[:80]}".encode("utf-8")).hexdigest()[:12]
+                nif = f["nif"] if _RE_SC_NIF_ES.match(f["nif"]) else ""
+                registros[f"Santiago::{clave}"] = {
+                    "id":               f"Santiago::{clave}",
+                    "municipio":        "Santiago de Compostela",
+                    "provincia":        "a_coruna",
+                    "fuente":           "santiago",
+                    "organisme":        "Ayuntamiento de Santiago de Compostela",
+                    "adjudicatari":     f["adj"],
+                    "nif":              nif,
+                    "import_num":       f["importe"],
+                    "data_adjudicacio": f["fecha"],
+                    "tipus_contracte":  _SC_TIPOS.get(f["tipo"].lower(), f["tipo"]),
+                    "descripcio":       desc,
+                    "codi_cpv":         "",
+                    "exercici":         f["fecha"][:4],
+                }
+    registros = list(registros.values())
+    por_anio = {}
+    for x in registros:
+        por_anio[x["exercici"]] = por_anio.get(x["exercici"], 0) + 1
+    print(f"Santiago: {len(registros)} contratos menores de {n_ficheros} ficheros XLS ({sobre_tope_total} filas por "
+          f"encima de 48.400 EUR excluidas): {dict(sorted(por_anio.items()))}")
+    return registros
+
+
+# Lugo (añadido 2026-09-25): la página de transparencia "Contratos menores" de datosabertos.lugo.gal
+# (NO el node/969, que es una plantilla con texto de relleno "Curabitur eget...") lista un PDF por trimestre desde
+# 2020. El último es el 3T-2025: Lugo dejó de publicar (a 2026-09-25 no existen los de 4T-2025 ni 2026: 404).
+# Verificado abriendo los 20 PDF de 2021-2025:
+# - Tabla de 6 columnas en todos: Núm. expediente / Asunto / Precio adjudicación (IVE incluido) / Adjudicatario /
+#   Fecha adjudicación / Sección iniciadora. Importe CON IVA; SIN NIF; la "sección iniciadora" es el departamento,
+#   no un tipo de contrato (el tipo queda vacío).
+# - Formatos de fecha distintos: dd/mm/aaaa (2021, 2022-T1/T2, 2023-2025) y dd-mm-aa (2022-T3 y T4). Los
+#   expedientes a veces salen con espacios ("2021/C001 /000333").
+# - El PDF del 1T-2022 tiene ~31 % de filas ilegibles en origen (celdas con texto solapado: "Jordi Pedrós4 7M7",
+#   fechas "REVIRAVOL0T3A/ 0D1E/2 L0"): se descartan y el trimestre queda incompleto (262 de ~379 filas).
+# - Los listados se solapan (el de abril-junio 2021 repite el 31-03; "2022-2023" repite filas de trimestrales) y
+#   algunas filas de 2024-T1 son de 2022-2023 (registradas tarde): se deduplica por (expediente, adjudicatario,
+#   importe, fecha). Un mismo expediente puede tener varias filas (varios adjudicatarios / lotes).
+# - Dos filas (68.476,32 EUR, "48 botes de aglomerado", 2023 y 2024) superan el máximo legal de un menor (48.400
+#   = 40.000 + 21 %): se conservan y llevan nota visible (_NOTAS_CONTRATO_MENOR), como el resto de importes
+#   imposibles de origen.
+LUGO_LISTADO_URL = ("https://datosabertos.lugo.gal/es/content/transparencia-informaci%C3%B3n-para-la-ciudadan%C3%ADa-"
+                    "contrataciones-y-servicios-contrataci%C3%B3n-de-bienes-y-servicios/contratos-menores")
+_RE_LUGO_EXP = re.compile(r"^\d{4}/[A-Z]\d{3}/\d+$")
+_RE_LUGO_FECHA = re.compile(r"^(\d{2})[/-](\d{2})[/-](\d{4}|\d{2})$")
+
+
+def _lu_txt(c):
+    return re.sub(r"\s+", " ", (c or "")).strip()
+
+
+def _lu_num(txt):
+    x = re.sub(r"(?i)euros?|€", "", txt).replace(" ", "").rstrip(",.")
+    if not x or not re.search(r"\d", x) or re.search(r"[A-Za-z]", x):
+        return None
+    try:
+        if "," in x:
+            return float(x.replace(".", "").replace(",", "."))
+        if re.match(r"^\d{1,3}(\.\d{3})+$", x):
+            return float(x.replace(".", ""))
+        return float(x)
+    except ValueError:
+        return None
+
+
+def _lu_fecha(txt):
+    m = _RE_LUGO_FECHA.match(txt.replace(" ", ""))
+    if not m:
+        return None
+    d, mo, y = m.groups()
+    y = ("20" + y) if len(y) == 2 else y
+    if not (1 <= int(mo) <= 12 and 1 <= int(d) <= 31 and 2019 <= int(y) <= 2030):
+        return None
+    return f"{y}-{mo}-{d}"
+
+
+def _lu_parsear_pdf(contenido):
+    filas, descartadas = [], 0
+    with pdfplumber.open(io.BytesIO(contenido)) as pdf:
+        for pagina in pdf.pages:
+            for tabla in pagina.extract_tables():
+                for r in tabla:
+                    if not r or len(r) != 6:
+                        continue
+                    c = [_lu_txt(x) for x in r]
+                    c[0] = re.sub(r"\s+", "", c[0])
+                    if c[0].lower().startswith(("núm", "num")) or not _RE_LUGO_EXP.match(c[0]):
+                        continue
+                    imp, fecha = _lu_num(c[2]), _lu_fecha(c[4])
+                    if imp is None or fecha is None or not c[3]:
+                        descartadas += 1
+                        continue
+                    filas.append({"exp": c[0], "asunto": c[1], "importe": imp, "adj": c[3], "fecha": fecha})
+    return filas, descartadas
+
+
+def actualizar_lugo():
+    r = requests.get(LUGO_LISTADO_URL, headers=HEADERS, timeout=60)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    pdfs = []
+    for a in soup.find_all("a", href=True):
+        titulo = a.get_text(" ", strip=True)
+        if a["href"].lower().endswith(".pdf") and re.search(r"CONTRATOS MENORES", titulo, re.I):
+            if re.search(r"2020", titulo) and not re.search(r"2021", titulo):
+                continue                                                     # anteriores a DESDE_ANY
+            enlace = urljoin(LUGO_LISTADO_URL, a["href"])
+            if enlace not in [p[1] for p in pdfs]:
+                pdfs.append((titulo, enlace))
+    if len(pdfs) < 15:
+        raise RuntimeError(f"Lugo: solo {len(pdfs)} PDF en el listado (¿cambió la página?)")
+    print(f"Lugo: {len(pdfs)} PDF de menores desde {DESDE_ANY} en el listado oficial")
+    registros, descartadas = {}, 0
+    for titulo, enlace in pdfs:
+        # estricto: un PDF perdido dejaría un trimestre fuera sin que se note (ver _fusionar_fuente)
+        d = requests.get(enlace, headers=HEADERS, timeout=120)
+        d.raise_for_status()
+        if d.content[:4] != b"%PDF":
+            raise RuntimeError(f"Lugo: {enlace} no es un PDF")
+        filas, desc = _lu_parsear_pdf(d.content)
+        descartadas += desc
+        for f in filas:
+            if int(f["fecha"][:4]) < DESDE_ANY:
+                continue
+            clave = hashlib.md5(f"{f['exp']}|{f['adj']}|{f['importe']}|{f['fecha']}".encode("utf-8")).hexdigest()[:12]
+            registros[f"Lugo::{clave}"] = {
+                "id":               f"Lugo::{clave}",
+                "municipio":        "Lugo",
+                "provincia":        "lugo",
+                "fuente":           "lugo",
+                "organisme":        "Ayuntamiento de Lugo",
+                "adjudicatari":     f["adj"],
+                "nif":              "",
+                "import_num":       f["importe"],
+                "data_adjudicacio": f["fecha"],
+                "tipus_contracte":  "",
+                "descripcio":       f["asunto"],
+                "codi_cpv":         "",
+                "exercici":         f["fecha"][:4],
+            }
+    registros = list(registros.values())
+    por_anio = {}
+    for x in registros:
+        por_anio[x["exercici"]] = por_anio.get(x["exercici"], 0) + 1
+    print(f"Lugo: {len(registros)} contratos menores ({descartadas} filas ilegibles descartadas): "
+          f"{dict(sorted(por_anio.items()))}")
+    return registros
+
+
 # Fuente -> (función, valor del campo "fuente" de sus registros). Sirve para
 # relanzar UNA sola fuente (`python ... san-pedro-pinatar`) conservando las
 # demás del JSON existente, en vez de esperar los ~25 min de Murcia capital.
@@ -1622,6 +1916,8 @@ _FUENTES = {
     "ferrol":            actualizar_ferrol,
     "pontevedra":        actualizar_pontevedra,
     "ames":              actualizar_ames,
+    "santiago":          actualizar_santiago,
+    "lugo":              actualizar_lugo,
     "cartagena-governalia": actualizar_cartagena_governalia,
     "ibi-governalia":    actualizar_ibi,
     "sax-governalia":    actualizar_sax,

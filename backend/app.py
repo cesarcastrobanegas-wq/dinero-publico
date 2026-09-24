@@ -13290,6 +13290,8 @@ _FUENTE_CM_LABEL = {
     "ferrol":          "Ferrol",
     "pontevedra":      "Pontevedra",
     "ames":            "Ames",
+    "santiago":        "Santiago",
+    "lugo":            "Lugo",
     "cartagena-governalia": "Cartagena (PLACE)",
     "ibi-governalia":  "Ibi (PLACE)",
     "sax-governalia":  "Sax (PLACE)",
@@ -13315,6 +13317,17 @@ _NOTAS_FUENTE_CM = {
         "Cobertura de A Coruña desde 2021. Los años anteriores no se incluyen: 2014-2017 son "
         "imputaciones de facturas sin NIF y 2018-2019 usan otro esquema de datos (2020 queda "
         "fuera por el corte general de 2021). Importes con IVA."
+    ),
+    "lugo": (
+        "Lugo dejó de publicar sus contratos menores tras el tercer trimestre de 2025, así que la cobertura "
+        "termina en septiembre de 2025 (empieza en 2021). Sin NIF. Importes con IVA. En el primer trimestre de "
+        "2022 su PDF es en parte ilegible y faltan unas 117 filas."
+    ),
+    "santiago": (
+        "Santiago publica un listado del sistema contable del Concello: la fecha es la de entrada del documento, "
+        "no la de adjudicación, y los NIF de personas físicas no se muestran. Se excluyen unas 30 filas que superan "
+        "el importe máximo legal de un contrato menor (convenios, entregas a cuenta y liquidaciones, no contratos). "
+        "Del 9 de enero al 31 de marzo de 2026 la fuente no publica datos. Importes con IVA."
     ),
     "ames": (
         "Ames publica sus contratos menores en PDF semestrales sin fecha por contrato ni NIF: la fecha "
@@ -13386,6 +13399,16 @@ _NOTAS_CONTRATO_MENOR = {
         "Importe según fuente oficial (PLACE muestra la misma cifra). Un contrato menor no puede "
         "superar legalmente unos 40.000 €: probable error de clasificación o de tecleo del "
         "ayuntamiento (p. ej. una obra de emergencia registrada como contrato menor)."
+    ),
+    "Lugo::e907e4f730f1": (
+        "Importe según la fuente oficial. Un contrato menor no puede superar legalmente unos 48.400 € con IVA "
+        "(40.000 € más IVA en obras; menos en suministros y servicios): probable error de clasificación o de "
+        "importe del ayuntamiento."
+    ),
+    "Lugo::2f192f0e68ab": (
+        "Importe según la fuente oficial. Un contrato menor no puede superar legalmente unos 48.400 € con IVA "
+        "(40.000 € más IVA en obras; menos en suministros y servicios): probable error de clasificación o de "
+        "importe del ayuntamiento."
     ),
     "CartagenaGov::39918": (
         "Importe según fuente oficial (PLACE muestra la misma cifra). Un contrato menor "
@@ -15190,7 +15213,8 @@ def render_caso_contratos_menores_html():
 
   <p>En Galicia hemos incorporado, de momento, A Coruña (ficheros trimestrales desde 2021),
   Vigo (informes anuales en PDF desde 2022), Ferrol (listado web desde 2021), Pontevedra
-  (consulta de su sede electrónica desde 2023) y Ames (PDF semestrales desde 2021). En todos el importe es el adjudicado con IVA. Los
+  (consulta de su sede electrónica desde 2023), Ames (PDF semestrales desde 2021), Santiago de Compostela
+  (XLS trimestrales desde 2021) y Lugo (PDF trimestrales de 2021 a septiembre de 2025). En todos el importe es el adjudicado con IVA. Los
   contratos menores de Galicia se publican de forma muy desigual entre ayuntamientos y no todos
   los grandes tienen todavía una fuente conectada.</p>
 

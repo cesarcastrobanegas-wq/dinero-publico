@@ -180,6 +180,29 @@ decisión deliberada de alcance, o algo pendiente de hacer.
   - **Ourense: descartado** tras verificar su página oficial de transparencia y su sede electrónica: solo enlaza "Contratos
     (no incluidos los contratos menores)" y el perfil del contratante en PLACE; no hay ninguna sección de menores. El indicio
     de prensa de que dejó de publicar en 2022 queda confirmado por la propia fuente oficial.
+  - **Santiago de Compostela** (`santiago`, 8.521 contratos 2021-2T 2026, ~42,3 M EUR): en PLACE sus órganos ("Xunta de
+    Goberno do Concello de Santiago de Compostela", 24-42 entradas/mes) publican procedimientos 1/3/8/9, NINGUNO menor, y
+    no existe ningún órgano "(CONTRATOS MENORES)" en todo PLACE (jun-2025 ni jul-sep 2026): ese dato de Cowork venía de un
+    agregador. La fuente real es `santiagodecompostela.gal/gl/transparencia/relacion-de-contratos-menores` (una página por
+    año, XLS trimestrales, actualización mensual; el dominio `transparencia.santiagodecompostela.gal` ya no existe).
+    Dos formatos: 2021-1T 2026 "detalle por adjudicatarios" del sistema contable (con NIF, filas de subtotal, fecha = FECHA
+    DE ENTRADA del documento) y desde el 2T-2026 tabla plana del Registro Central de Contratos (sin NIF). Importe CON IVA.
+    Se EXCLUYEN 30 filas > 48.400 EUR (convenios con el Consorcio de hasta 3,5 M EUR, "entregas a cuenta" a la UTE de
+    autobuses, liquidaciones): no son contratos. El 1T-2026 solo cubre del 1 al 8 de enero: del 9 de enero al 31 de marzo de
+    2026 no hay datos. Ficheros solapados deduplicados. La web a veces sirve la página del año sin enlaces (reintentos);
+    un selector solo por nombre dejaba fuera `RCR2E5.xls` (= 1T-2022).
+  - **Lugo** (`lugo`, 5.485 contratos 2021-3T 2025, ~25,1 M EUR): PDF trimestrales en la página de transparencia "Contratos
+    menores" de `datosabertos.lugo.gal` (el `node/969` es una plantilla con texto de relleno). DEJÓ DE PUBLICAR tras el
+    3T-2025 (4T-2025 y 2026 dan 404). Tabla de 6 columnas (importe con IVA, sin NIF); fechas `dd/mm/aaaa` y `dd-mm-aa`. El
+    PDF del 1T-2022 tiene ~31 % de filas ilegibles en origen (117 descartadas). 2 filas de 68.476,32 EUR (aglomerado) superan
+    el máximo legal y llevan nota visible.
+  - **BUG DE COBERTURA en el pipeline de PLACE para Galicia (arreglado en local, sin desplegar):** `_regex_anclado()` exigía
+    "ayuntamiento de X" en el órgano, pero muchos concellos figuran como "Concello de X" ("Xunta de Goberno do Concello de
+    Santiago de Compostela"), y los nombres con artículo llevan la contracción gallega ("Concello da Estrada" = "A Estrada"). Con
+    el ZIP real de septiembre de 2026: 168 -> 196 contratos asignados a municipios gallegos (+17 %), 59 -> 73 municipios con
+    contratos, Santiago 1 -> 6, ningún municipio pierde contratos, ningún órgano se asigna a dos municipios. Producción tenía
+    UN contrato de Santiago. Solo afecta a los 313 municipios gallegos de la app. El histórico anterior a los ZIP conservados
+    (3 meses) NO se recupera solo: habría que volver a descargar los ZIP mensuales antiguos.
   - **Pendientes de la tanda** (aún sin verificar):
     Santiago (¿ya entra el órgano "Xunta de Goberno
     ... (CONTRATOS MENORES)" por PLACE?), Lugo (¿sigue publicando en 2024-25?), Vilagarcía, Narón,
