@@ -613,9 +613,211 @@ def actualizar_murcia_capital():
     return registros
 
 
+# San Pedro del Pinatar (añadido 2026-09-24): un PDF anual por ejercicio en
+# el perfil del contratante (2022-2025 confirmados), con TABLA REAL detectable
+# por pdfplumber.extract_tables() (a diferencia de Murcia capital). La
+# estructura de columnas cambia entre años (9/10/11 columnas, con o sin fecha
+# de formalización, con o sin "Canon anual"), así que las columnas se
+# localizan por el texto de la cabecera, no por posición fija. Hechos
+# verificados contra los PDFs reales:
+# - El PDF de 2025 mezcla "Contrato Mayor" y "Contrato Menor" (los mayores
+#   traen procedimiento abierto/negociado): solo se quedan las filas cuyo tipo
+#   de contratación/procedimiento dice "menor".
+# - 2022 y 2025 NO traen fecha por contrato (2023 y 2024 sí, "fecha
+#   formalización") -- para esos dos ejercicios se usa el 1 de enero del año
+#   del fichero como fecha aproximada (mismo criterio que Lorca).
+# - ~10% de las filas tienen varios contratistas ("NIF - Nombre | NIF -
+#   Nombre") con un desglose por lotes cuyo orden NO coincide con el de los
+#   contratistas: no se puede atribuir un importe a cada uno sin adivinar, así
+#   que se guarda UN registro por contrato con los nombres unidos con " / " y
+#   sin NIF (importe total correcto, sin repartir).
+# - Importe = "con impuestos" (mismo criterio que Mula: IVA incluido).
+# - Referencias de expediente con formatos irregulares ("20226433A",
+#   "2022/6644", "2025/4175f") -- por eso una fila de datos se reconoce por
+#   "empieza por 4 dígitos + tiene objeto", no por un regex estricto de
+#   referencia.
+SAN_PEDRO_INDICE_URL = "https://www.sanpedrodelpinatar.es/ayuntamiento/perfil-del-contratante/"
+_RE_SAN_PEDRO_NIF = re.compile(r"^([A-Z0-9]{8,10})\s*-\s*(.+)$")
+
+
+def _sp_limpia(celda):
+    """Texto de una celda del PDF en una sola línea, deshaciendo los guiones
+    de fin de línea ('Jimé-\\nnez' -> 'Jiménez')."""
+    t = re.sub(r"(?<=[a-záéíóúñü])-\s*\n\s*(?=[a-záéíóúñü])", "", celda or "")
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def _sp_columnas(fila):
+    """Mapa {campo: índice} a partir de una fila de cabecera, o None si no lo es."""
+    norm = [re.sub(r"[^a-z]", "", (c or "").lower()
+                   .replace("á", "a").replace("é", "e").replace("í", "i")
+                   .replace("ó", "o").replace("ú", "u")) for c in fila]
+    if not any(n.startswith("numerodereferencia") for n in norm):
+        return None
+    cols = {}
+    for i, n in enumerate(norm):
+        if n.startswith("numerodereferencia"):
+            cols["ref"] = i
+        elif n.startswith("objetodelcontrato"):
+            cols["objeto"] = i
+        elif n.startswith("tipodecontratacion"):
+            cols["tipo_contratacion"] = i
+        elif n.startswith("tipodecontrato"):
+            cols["tipo"] = i
+        elif n.startswith("tipodeprocedimiento"):
+            cols["procedimiento"] = i
+        elif n.startswith("fechaformalizacion"):
+            cols["fecha"] = i
+        elif n.startswith("importetotalofertadosinimpuestos"):
+            cols["sin_iva"] = i
+        elif n.startswith("importetotalofertadoconimpuestos"):
+            cols["con_iva"] = i
+        elif n.startswith("contra") and n.endswith("stas"):
+            cols["contratistas"] = i
+    if not {"ref", "objeto", "contratistas", "con_iva"} <= set(cols):
+        return None
+    return cols
+
+
+def _listar_pdfs_san_pedro():
+    """{año: url} de los PDF de contratos menores del ayuntamiento (excluye
+    el del Patronato Universidad Popular y la instrucción de tramitación),
+    leyendo el índice real -- el año se saca del nombre del fichero."""
+    r = requests.get(SAN_PEDRO_INDICE_URL, headers=HEADERS, timeout=30)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    resultado = {}
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        nombre = href.rsplit("/", 1)[-1].lower()
+        if not nombre.endswith(".pdf") or "menores" not in nombre:
+            continue
+        if any(x in nombre for x in ("patronato", "universidad", "instruccion")):
+            continue
+        m = re.search(r"(20\d{2})", nombre)
+        if m:
+            resultado[int(m.group(1))] = urljoin(SAN_PEDRO_INDICE_URL, href)
+    return resultado
+
+
+def _parsear_pdf_san_pedro(contenido, anio):
+    registros = {}
+    cols = None
+    with pdfplumber.open(io.BytesIO(contenido)) as pdf:
+        for pagina in pdf.pages:
+            for tabla in pagina.extract_tables():
+                for fila in tabla:
+                    nuevas = _sp_columnas(fila)
+                    if nuevas:
+                        cols = nuevas
+                        continue
+                    if not cols or len(fila) <= max(cols.values()):
+                        continue
+                    ref = _sp_limpia(fila[cols["ref"]])
+                    objeto = _sp_limpia(fila[cols["objeto"]])
+                    if not re.match(r"^\d{4}", ref) or not objeto:
+                        continue
+                    clase = (_sp_limpia(fila[cols["tipo_contratacion"]]) if "tipo_contratacion" in cols else "") + " " + \
+                            (_sp_limpia(fila[cols["procedimiento"]]) if "procedimiento" in cols else "")
+                    clase = clase.lower()
+                    if "menor" not in clase or "mayor" in clase:
+                        continue
+                    # Contratistas: dedupe por NIF (algunas filas repiten el mismo
+                    # contratista una vez por lote).
+                    vistos, nombres, nifs = set(), [], []
+                    for parte in (fila[cols["contratistas"]] or "").split("|"):
+                        parte = _sp_limpia(parte)
+                        if not parte:
+                            continue
+                        m = _RE_SAN_PEDRO_NIF.match(parte)
+                        nif, nombre = (m.group(1), m.group(2).strip()) if m else ("", parte)
+                        clave = nif or nombre.lower()
+                        if clave in vistos:
+                            continue
+                        vistos.add(clave)
+                        nombres.append(nombre)
+                        nifs.append(nif)
+                    if not nombres:
+                        continue
+                    importe = _num_es(fila[cols["con_iva"]])
+                    if not importe and "sin_iva" in cols:
+                        importe = _num_es(fila[cols["sin_iva"]])
+                    fecha = f"{anio}-01-01"
+                    if "fecha" in cols:
+                        m = re.match(r"^(\d{2})-(\d{2})-(\d{4})$", _sp_limpia(fila[cols["fecha"]]))
+                        if m:
+                            fecha = f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
+                    adjudicatario = " / ".join(nombres)
+                    nif_unico = nifs[0] if len(nifs) == 1 else ""
+                    tipo = _sp_limpia(fila[cols["tipo"]]) if "tipo" in cols else ""
+                    clave_hash = hashlib.md5(
+                        f"{ref}|{adjudicatario}|{importe}|{objeto}".encode("utf-8")
+                    ).hexdigest()[:12]
+                    registros[f"SanPedroPinatar::{clave_hash}"] = {
+                        "id":               f"SanPedroPinatar::{clave_hash}",
+                        "municipio":        "San Pedro del Pinatar",
+                        "provincia":        "murcia",
+                        "fuente":           "san-pedro-pinatar",
+                        "organisme":        "Ayuntamiento de San Pedro del Pinatar",
+                        "adjudicatari":     adjudicatario,
+                        "nif":              nif_unico,
+                        "import_num":       importe,
+                        "data_adjudicacio": fecha,
+                        "tipus_contracte":  tipo,
+                        "descripcio":       objeto,
+                        "codi_cpv":         "",
+                        "exercici":         str(anio),
+                    }
+    return registros
+
+
+def actualizar_san_pedro():
+    pdfs = {a: u for a, u in _listar_pdfs_san_pedro().items() if a >= DESDE_ANY}
+    print(f"San Pedro del Pinatar: {len(pdfs)} PDF anuales de menores en el índice real: {sorted(pdfs)}")
+    registros = {}
+    for anio, url in sorted(pdfs.items()):
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=120)
+            r.raise_for_status()
+            filas_anio = _parsear_pdf_san_pedro(r.content, anio)
+        except Exception as e:
+            print(f"  San Pedro del Pinatar {anio}: no se pudo procesar ({type(e).__name__}: {e})")
+            continue
+        registros.update(filas_anio)
+        print(f"  San Pedro del Pinatar {anio}: {len(filas_anio)} contratos extraídos")
+    registros = list(registros.values())
+    print(f"San Pedro del Pinatar: {len(registros)} contratos menores extraídos en total")
+    return registros
+
+
+# Fuente -> (función, valor del campo "fuente" de sus registros). Sirve para
+# relanzar UNA sola fuente (`python ... san-pedro-pinatar`) conservando las
+# demás del JSON existente, en vez de esperar los ~25 min de Murcia capital.
+_FUENTES = {
+    "mula":              actualizar_mula,
+    "molina-segura":     actualizar_molina_segura,
+    "lorqui":            actualizar_lorqui,
+    "lorca":             actualizar_lorca,
+    "murcia-capital":    actualizar_murcia_capital,
+    "san-pedro-pinatar": actualizar_san_pedro,
+}
+
+
 def main():
-    todos = (actualizar_mula() + actualizar_molina_segura() + actualizar_lorqui()
-             + actualizar_lorca() + actualizar_murcia_capital())
+    pedidas = sys.argv[1:]
+    desconocidas = [f for f in pedidas if f not in _FUENTES]
+    if desconocidas:
+        sys.exit(f"Fuente(s) desconocida(s): {desconocidas}. Válidas: {sorted(_FUENTES)}")
+    if not pedidas:
+        todos = []
+        for fn in _FUENTES.values():
+            todos += fn()
+    else:
+        with open(OUT_FILE, encoding="utf-8") as f:
+            previos = json.load(f)["registros"]
+        todos = [r for r in previos if r.get("fuente") not in pedidas]
+        for nombre in pedidas:
+            todos += _FUENTES[nombre]()
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "registros": todos},
                    f, ensure_ascii=False, indent=1)

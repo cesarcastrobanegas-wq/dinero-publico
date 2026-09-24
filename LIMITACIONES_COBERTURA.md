@@ -16,11 +16,15 @@ decisión deliberada de alcance, o algo pendiente de hacer.
     porque de verdad no hubo contratos menores o porque ese ayuntamiento no
     los reporta al registro de la Generalitat — los contratos menores no
     tienen obligación legal de publicación centralizada.
-- **Murcia**: solo 5 de los 45 municipios tienen una fuente propia scrapeada
-  (**Lorca, Lorquí, Mula, Molina de Segura, Fuente Álamo**) — los otros 40 no
-  tienen ninguna fuente conectada, no es que "salga 0", es que nunca se
-  consulta nada para ellos. No existe un dataset regional único como el RPC
-  catalán para Murcia.
+- **Murcia** (actualizado 2026-09-24): 8 de los 45 municipios tienen una fuente propia
+  (**Lorca, Lorquí, Mula, Molina de Segura, Fuente Álamo, Cartagena, Murcia capital,
+  San Pedro del Pinatar**) — los otros 37 no tienen ninguna fuente
+  conectada, no es que "salga 0", es que nunca se consulta nada para ellos. No existe
+  un dataset regional único como el RPC catalán para Murcia. Descartados tras verificar
+  (2026-09-24): Caravaca de la Cruz (su sección de menores está vacía), San Javier (se
+  detiene en 2021 y son decretos/facturas, no un listado), Los Alcázares (solo publica
+  los financiados por Agenda Urbana y PRTR, no todos), Alhama de Murcia (portal de
+  transparencia en mantenimiento, reintentar).
   - Mula y Molina de Segura se cargan **a mano** (`actualizar_contratos_menores_murcia_manual.py`,
     necesita odfpy/openpyxl) — no están en el cron diario. Si nadie relanza
     el script, esos datos se quedan congelados sin ningún aviso.
