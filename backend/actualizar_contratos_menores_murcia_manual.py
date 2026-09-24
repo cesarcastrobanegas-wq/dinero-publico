@@ -803,8 +803,8 @@ def actualizar_san_pedro():
 # ATENCIÓN a los campos: `estimated_overall_contract_amount*` es el
 # PRESUPUESTO DE LICITACIÓN (a menudo distinto de lo adjudicado); el importe
 # adjudicado real es `tax_exclusive_amount` (= `amount`) y va SIN IVA -- a
-# diferencia de Mula/San Pedro del Pinatar, que publican con IVA. Solo si el
-# adjudicado viene a 0/nulo (unas 4 filas) se cae al presupuesto sin IVA.
+# diferencia de Mula/San Pedro del Pinatar, que publican con IVA. Si el
+# adjudicado viene a 0/nulo se deja a 0 (antes se usaba el presupuesto: 3 filas, corregido).
 # La fecha es `award_date` (algún registro trae un rango "2025-11-27/2026-04-30":
 # se toma el primer día).
 TORRE_PACHECO_PAGINA_URL = ("https://governalia.torrepacheco.es/gvn/web/section/modules/"
@@ -837,13 +837,15 @@ def _sin_acentos(t):
 
 
 def _governalia_menores(pagina_url, municipio, fuente, prefijo_id, hasta_anio=None,
-                        presupuesto_si_cero=True, provincia="murcia"):
+                        presupuesto_si_cero=False, provincia="murcia"):
     """Contratos menores de un ayuntamiento cuyo portal de transparencia corre
     sobre Governalia (ver notas de Torre Pacheco y Cartagena arriba). La API
-    cuelga del mismo origen que la página del módulo. `presupuesto_si_cero`:
-    si el importe adjudicado viene a 0/nulo, usar el presupuesto sin IVA (Torre
-    Pacheco, ~4 filas) o dejarlo a 0 tal como lo publica el ayuntamiento
-    (Cartagena, ~7 % de las filas: no se inventa un importe).
+    cuelga del mismo origen que la página del módulo. `presupuesto_si_cero`
+    (por defecto False, criterio unificado 2026-09-24): si el importe adjudicado
+    viene a 0/nulo se deja a 0 tal como lo publica el ayuntamiento, sin inventar
+    un importe (Cartagena ~7 % de filas; 2-4 filas en los demás). Torre Pacheco e
+    Ibi usaron antes el presupuesto como respaldo en 4 filas en total
+    (3 y 1), lo que contradecía la nota "importe adjudicado" de la ficha.
 
     Dos guardas descubiertas al ampliar a la Comunitat Valenciana (2026-09-24):
     - MUNICIPIO: cada fila trae en `site` el municipio real ("...?L01462567/

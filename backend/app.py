@@ -10588,6 +10588,7 @@ a.fue-link{color:var(--yellow);font-size:11px;}
 .cm-aviso .link{color:var(--blue);}
 .cm-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);white-space:nowrap;font-weight:600;}
 .cm-nif{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
+.cm-base-nota{font-size:11px;line-height:1.45;color:var(--dim);margin:2px 0 8px;}
 .cm-nota{display:block;font-size:11px;line-height:1.4;color:var(--yellow);margin-top:4px;max-width:420px;}
 .fuente-rpc{background:rgba(240,136,62,.15);color:var(--accent);border:1px solid rgba(240,136,62,.3);}
 /* Comentarios de usuarios (ficha de municipio/empresa) -- mismo patrón
@@ -13168,6 +13169,32 @@ _FUENTE_CM_LABEL = {
 }
 
 
+# Fuentes cuyo importe es el ADJUDICADO SIN IVA (API de Governalia, espejo de
+# PLACE). El resto de fuentes de menores publica otra base (Mula, San Pedro
+# del Pinatar y el portal propio de Cartagena, con IVA; de las demás no está
+# verificada) -- por eso la ficha lo dice de forma visible en vez de dejarlo
+# solo en LIMITACIONES_COBERTURA.md, para que nadie sume totales de bases
+# distintas sin saberlo.
+_FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
+                       "sax-governalia", "vilamarxant-governalia"}
+
+
+def _nota_base_importe_cm(menors):
+    """(sufijo_badge, html_nota) para la sección de contratos menores de un
+    municipio según la base de importe de las fuentes que la componen."""
+    fuentes = {r.get("fuente") for r in menors}
+    sin_iva = fuentes & _FUENTES_CM_SIN_IVA
+    if not sin_iva:
+        return "", ""
+    if fuentes <= _FUENTES_CM_SIN_IVA:
+        return " · sin IVA", ('<div class="cm-base-nota">Importes sin IVA: es el importe adjudicado '
+                              'que publica la fuente oficial (PLACE).</div>')
+    etiquetas = ", ".join(sorted(_FUENTE_CM_LABEL.get(f, f) for f in sin_iva))
+    return "", ('<div class="cm-base-nota">Ojo con la base de los importes: las filas de '
+                f'«{esc(etiquetas)}» van sin IVA (importe adjudicado según PLACE); las demás '
+                'filas pueden incluir IVA. El total de arriba suma ambas bases.</div>')
+
+
 # Notas visibles en la fila de contratos menores concretos cuyo dato de origen
 # es probablemente erróneo. NO es una regla por importe: en Murcia capital
 # hay filas >50.000 € que se dejan tal cual por decisión expresa (ver memoria
@@ -13622,13 +13649,15 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                                    f'<a href="/?muni={muni_enc}&pag_cm=1{q_prov}">Ver todos →</a></div>')
 
             abierto = " open" if page_cm > 1 else ""
+            sufijo_iva, nota_base_cm = _nota_base_importe_cm(menors_muni)
             contratos_menors_html = f"""<details class="cm-card"{abierto}>
                 <summary>
                   📋 Contratos menores (fuentes locales del ayuntamiento)
                   <span class="badge" style="background:rgba(240,136,62,.15);color:var(--accent);border-color:rgba(240,136,62,.3)">
-                    {total_cm_n} · {fmt_eur(str(total_cm))}
+                    {total_cm_n} · {fmt_eur(str(total_cm))}{sufijo_iva}
                   </span>
                 </summary>
+                {nota_base_cm}
                 <div class="tbl-scroll">
                   <table>
                     <tr>
