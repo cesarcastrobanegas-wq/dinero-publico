@@ -140,3 +140,20 @@ decisión deliberada de alcance, o algo pendiente de hacer.
     La Oliva tiene página `/transparencia/contratos/` pero vacía (sin módulo incrustado ni llamadas a la API,
     igual que Elda/Silla/Picassent). Por eso `_governalia_menores()`
     valida el municipio real de cada fila (`site`) y aborta si no coincide.
+
+- **Galicia - contratos menores** (2026-09-24, sin desplegar al escribir esto):
+  - **A Coruña** (`a-coruna`, 12.960 contratos 2021-2026-T1, ~47,1 M EUR): 24 ficheros ODS
+    (trimestrales + 3 "Anexo" anuales) en coruna.gal, descargables con `requests` solo si se envía un
+    Referer (sin él, 403). 2014-2019 quedan fuera (facturas sin NIF y otro esquema, anteriores a 2021).
+    Importe CON IVA (máximo exacto 48.400 EUR = 40.000 + 21 %). NIF de personas físicas enmascarado
+    (22 % de las filas) -> se guarda vacío. 2 filas con importe ilegible descartadas.
+  - **Vigo** (`vigo`, 6.643 contratos 2022-2026, ~38,1 M EUR): PDFs anuales sin tabla generados desde su
+    aplicación de expedientes; el índice solo enlaza hasta 2022 pero 2023-2026 existen con el mismo
+    patrón de nombre. El nombre del adjudicatario PRECEDE a sus contratos (validado: 92-100 % de
+    coherencia en proveedores inequívocos vs 13 % con la hipótesis contraria). Sin NIF. Importe CON IVA.
+    2021 y anteriores excluidos: sus descripciones van en mayúsculas y se confunden con nombres.
+  - **Pendientes de la tanda** (aún sin verificar): Ferrol, Oleiros, Pontevedra (visita manual),
+    Ourense y Ames (verificar en la fuente oficial), Santiago (¿ya entra el órgano "Xunta de Goberno
+    ... (CONTRATOS MENORES)" por PLACE?), Lugo (¿sigue publicando en 2024-25?), Vilagarcía, Narón,
+    Arteixo (rendiciondecuentas.es como posible fuente nacional).
+

@@ -941,6 +941,298 @@ def actualizar_cartagena_governalia():
                                presupuesto_si_cero=False)
 
 
+# A Coruña (añadido 2026-09-24): un fichero por trimestre (y un "Anexo" anual) en
+# coruna.gal/transparencia/.../contratos-menores, descargables con requests
+# siempre que se envíe un Referer de la propia página (sin él, 403). El formato
+# CAMBIA por época (verificado abriendo los 40 ficheros):
+# - 2014-2017 (.xls): imputaciones de FACTURAS ("FRA. Nº 58/2016"), sin NIF,
+#   4.600-5.500 filas: no son contratos -> fuera (además, anteriores a DESDE_ANY).
+# - 2018-2019 (.xlsx/.ods): otro esquema ("Expediente. Código Entidad", "Imp. Adj.
+#   c/imp.") -> fuera de alcance (< DESDE_ANY).
+# - 2021-2026 (.ods): título, (nota), cabecera, UNA FILA DESCRIPTIVA extra, y datos
+#   Referencia / Tipo (A,E,C,Z,O o "Obras/Servicios/Suministro") / Objeto / Fecha
+#   adjudicación / NIF / Nombre adjudicatario / Precio adjudicación / Negociado.
+#   Las cabeceras varían (castellano/gallego, "Fecha adj."/"Fecha adjud."/"Data adx.",
+#   "*Tipo Contrato") y el importe llega a veces como número y a veces como texto
+#   español ("48.338,05 €"): se localizan por nombre normalizado, no por posición.
+# - Importe = precio de adjudicación CON IVA (lo dice la fila descriptiva; el
+#   máximo es exactamente 48.400 EUR = 40.000 + 21 % de IVA, y ninguno lo supera).
+# - NIF de personas físicas enmascarado ("***2693**", o "*"): se guarda vacío.
+#   Nombres de persona en formato "APELLIDOS , NOMBRE" (se normaliza el espacio).
+# - Los "Anexo_*_AAAA" contienen filas tardías que a veces se repiten en un
+#   trimestral (5 duplicadas exactas en 2024): se colapsan por (referencia,
+#   adjudicatario, importe, fecha). La referencia SOLA no es única (32 repetidas:
+#   pagos periódicos bajo el mismo expediente).
+# - 2 filas de ~13.000 no se pueden leer como importe ("9.399.28 EUR", una errata, y
+#   "22.209,07 EUR (2023). 31.882,29 EUR (2024)", contrato plurianual) y se descartan.
+CORUNA_LISTADO_URL = ("https://www.coruna.gal/transparencia/es/claridad-en-la-gestion/"
+                      "contratacion/contratos-menores")
+_CORUNA_TIPOS = {"a": "Obras", "obras": "Obras", "e": "Servicios", "servicios": "Servicios",
+                 "c": "Suministros", "suministro": "Suministros", "suministros": "Suministros",
+                 "z": "Otros", "o": "Otros"}
+
+
+def _ac_norm(t):
+    import unicodedata
+    return re.sub(r"[^a-z]", "", unicodedata.normalize("NFD", str(t).lower()).encode("ascii", "ignore").decode())
+
+
+def _ac_columnas(fila):
+    m = {}
+    for i, c in enumerate(fila):
+        n = _ac_norm(c)
+        if n == "referencia":
+            m["ref"] = i
+        elif n.startswith("tipo") and "tipo" not in m:
+            m["tipo"] = i
+        elif n in ("objeto", "obxecto"):
+            m["objeto"] = i
+        elif n.startswith("fechaadj") or n.startswith("dataadx"):
+            m["fecha"] = i
+        elif n == "nif":
+            m["nif"] = i
+        elif n.startswith("nombreadjudicatario") or n.startswith("nomeadxudicatari"):
+            m["nombre"] = i
+        elif n.startswith("precioadjudicacion") or n.startswith("prezoadxudicacion"):
+            m["precio"] = i
+    return m if {"ref", "fecha", "nif", "nombre", "precio"} <= set(m) else None
+
+
+def _ac_num(v):
+    """Número de la hoja, o texto: formato español ('48.338,05 EUR', '150,00') si trae
+    coma; si no, decimal con punto ('4301.67'). None si no se puede leer."""
+    if isinstance(v, (int, float)):
+        return float(v)
+    t = str(v).strip().replace("€", "").replace("EUR", "").strip()
+    try:
+        return float(t.replace(".", "").replace(",", ".")) if "," in t else float(t)
+    except ValueError:
+        return None
+
+
+def _ac_fecha(v):
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", str(v))
+    if m:
+        return m.group(0)
+    m = re.match(r"(\d{2})/(\d{2})/(\d{4})", str(v))
+    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None
+
+
+def _leer_ods_filas(contenido):
+    """Filas (listas de valores) de la hoja más grande de un ODS. A diferencia del lector de
+    Mula, respeta number-columns-repeated / number-rows-repeated y usa el valor tipado de
+    la celda (fecha ISO / número) cuando existe."""
+    from odf.namespaces import TABLENS, OFFICENS
+    doc = odf_load(io.BytesIO(contenido))
+    mejor = []
+    for tb in doc.spreadsheet.getElementsByType(Table):
+        filas = []
+        for tr in tb.getElementsByType(TableRow):
+            rep = int(tr.getAttrNS(TABLENS, "number-rows-repeated") or 1)
+            vals = []
+            for c in tr.childNodes:
+                if c.qname[1] not in ("table-cell", "covered-table-cell"):
+                    continue
+                r = int(c.getAttrNS(TABLENS, "number-columns-repeated") or 1)
+                texto = "".join(str(p) for p in c.getElementsByType(odf_P)).strip()
+                dv = c.getAttrNS(OFFICENS, "date-value")
+                vv = c.getAttrNS(OFFICENS, "value")
+                val = dv if dv else (vv if vv is not None else texto)
+                vals.extend([val if (r < 50 or val) else ""] * min(r, 50))
+            if any(str(x).strip() for x in vals):
+                filas.extend([vals] * min(rep, 1000))
+        if len(filas) > len(mejor):
+            mejor = filas
+    return mejor
+
+
+def actualizar_a_coruna():
+    hdr = dict(HEADERS, Referer=CORUNA_LISTADO_URL)
+    r = requests.get(CORUNA_LISTADO_URL + "?argIdioma=es", headers=hdr, timeout=60)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    ficheros = []
+    for a in soup.find_all("a", href=True):
+        nombre = a.get_text(" ", strip=True)
+        m = re.match(r"^(20\d{2})\d{0,2}[_-].*\.ods$", nombre, re.I)
+        if "descarga.jsp" in a["href"] and m and int(m.group(1)) >= DESDE_ANY:
+            ficheros.append((nombre, urljoin(CORUNA_LISTADO_URL, a["href"])))
+    print(f"A Coruña: {len(ficheros)} ficheros ODS de {DESDE_ANY} en adelante en el listado")
+    registros, descartadas = {}, 0
+    for nombre, url in ficheros:
+        try:
+            rr = requests.get(url, headers=hdr, timeout=120)
+            rr.raise_for_status()
+            filas = _leer_ods_filas(rr.content)
+        except Exception as e:
+            print(f"  A Coruña: {nombre} no se pudo procesar ({type(e).__name__})")
+            continue
+        c = None
+        for fila in filas:
+            if c is None:
+                c = _ac_columnas(fila)
+                continue
+
+            def g(k):
+                return fila[c[k]] if k in c and c[k] < len(fila) else ""
+            ref = str(g("ref")).strip()
+            adjudicatario = re.sub(r"\s+", " ", str(g("nombre"))).replace(" ,", ",").strip()
+            if not ref or not adjudicatario or _ac_norm(ref).startswith("codigo"):
+                continue
+            fecha, importe = _ac_fecha(g("fecha")), _ac_num(g("precio"))
+            if fecha is None or importe is None:
+                descartadas += 1
+                continue
+            nif = str(g("nif")).strip()
+            tipo = str(g("tipo")).strip()
+            clave = hashlib.md5(f"{ref}|{adjudicatario}|{importe}|{fecha}".encode("utf-8")).hexdigest()[:12]
+            if f"ACoruna::{clave}" in registros:
+                continue
+            registros[f"ACoruna::{clave}"] = {
+                "id":               f"ACoruna::{clave}",
+                "municipio":        "A Coruña",
+                "provincia":        "a_coruna",
+                "fuente":           "a-coruna",
+                "organisme":        "Ayuntamiento de A Coruña",
+                "adjudicatari":     adjudicatario,
+                "nif":              "" if "*" in nif else nif,
+                "import_num":       importe,
+                "data_adjudicacio": fecha,
+                "tipus_contracte":  _CORUNA_TIPOS.get(tipo.lower(), tipo),
+                "descripcio":       re.sub(r"\s+", " ", str(g("objeto"))).strip(),
+                "codi_cpv":         "",
+                "exercici":         fecha[:4],
+            }
+        if c is None:
+            print(f"  A Coruña: {nombre}: NO se encontró la cabecera, fichero saltado")
+    registros = list(registros.values())
+    por_anio = {}
+    for x in registros:
+        por_anio[x["exercici"]] = por_anio.get(x["exercici"], 0) + 1
+    print(f"A Coruña: {len(registros)} contratos menores ({descartadas} filas con importe ilegible descartadas): "
+          f"{dict(sorted(por_anio.items()))}")
+    return registros
+
+
+# Vigo (añadido 2026-09-24): un PDF por año, "informe generado de forma automática desde la
+# aplicación de Xestión de Expedientes Municipais" (220-280 páginas, SIN tabla real). El
+# índice de transparencia.vigo.org solo enlaza hasta 2022, pero los ficheros de 2023-2026
+# existen con el mismo patrón de nombre (/docs/ContratosMenores_AA.pdf): se prueba el
+# patrón año a año y se exige que la respuesta sea de verdad un PDF.
+# Estructura verificada (validada contra proveedores de negocio inequívoco: con la hipótesis
+# "el nombre precede a sus contratos" la descripción es coherente en el 92-100 % de los casos
+# claros -prensa, ópticas, seguros-; con la contraria, solo en el 13 %):
+#     NOMBRE DEL ADJUDICATARIO            <- cabecera de grupo, vale hasta el siguiente nombre
+#     descripción (1 o más líneas)
+#     Data Importe Expediente
+#     dd/mm/aa  1.234,56 €  10933/307
+#     [otra descripción + cabecera + datos del mismo adjudicatario...]
+# - El nombre se distingue de la descripción por no llevar minúsculas: por eso 2021 y anteriores
+#   quedan FUERA (sus descripciones van en mayúsculas y se confundirían con nombres: 1.281
+#   proveedores distintos frente a ~750 en el resto de años).
+# - Importe CON IVA (3.025,00 = 2.500 x 1,21); ninguno supera 48.400 EUR (= 40.000 + 21 %).
+# - Sin NIF (el informe no lo publica). Desde 2024 los nombres de persona vienen con "*" en
+#   lugar de espacio entre apellidos ("GARCIA*DIAZ,ESTHER"): se normaliza a "GARCIA DIAZ, ESTHER".
+# - Un mismo registro puede repetirse entre ficheros de años contiguos (fechas del año anterior
+#   registradas tarde): se colapsa por hash de expediente+nombre+importe+fecha+descripción.
+# - Tipo de contrato: no hay columna; solo se rellena si la descripción lo dice
+#   explícitamente ("Contrato menor de obras/servizos/suministros").
+VIGO_PDF_URL = "https://transparencia.vigo.org/docs/ContratosMenores_{aa}.pdf"
+VIGO_DESDE = 2022
+_RE_VIGO_DATO = re.compile(r"^(\d{2})/(\d{2})/(\d{2})\s+([\d.]+,\d{2})\s*€\s+(\S+)$")
+_RE_VIGO_RUIDO = re.compile(r"^(CONTRATOS MENORES|\(\*\) Este informe|Expedientes Municipais)|P[aá]xina \d+ de \d+$")
+
+
+def _vigo_es_nombre(linea):
+    return (bool(linea) and not re.search(r"[a-záéíóúñü]", linea)
+            and not linea.startswith("Data Importe") and not re.match(r"^\d", linea))
+
+
+def _vigo_parsear(contenido):
+    lineas = []
+    with pdfplumber.open(io.BytesIO(contenido)) as pdf:
+        for pagina in pdf.pages:
+            for linea in (pagina.extract_text() or "").split("\n"):
+                linea = linea.strip()
+                if linea and not _RE_VIGO_RUIDO.search(linea):
+                    lineas.append(linea)
+    salida, nombre, desc, k = [], None, [], 0
+    while k < len(lineas):
+        linea = lineas[k]
+        if linea.startswith("Data Importe"):
+            k += 1
+            continue
+        m = _RE_VIGO_DATO.match(linea)
+        if m:
+            d, mm, aa, imp, exp = m.groups()
+            salida.append((nombre, " ".join(desc).strip(), f"20{aa}-{mm}-{d}",
+                           float(imp.replace(".", "").replace(",", ".")), exp))
+            desc = []
+            k += 1
+            continue
+        if _vigo_es_nombre(linea) and not desc:
+            nombre = linea
+            k += 1
+            while k < len(lineas) and _vigo_es_nombre(lineas[k]):    # nombre largo en varias líneas
+                nombre += " " + lineas[k]
+                k += 1
+            continue
+        desc.append(linea)
+        k += 1
+    return salida
+
+
+def actualizar_vigo():
+    registros = {}
+    for anio in range(VIGO_DESDE, time.localtime().tm_year + 1):
+        url = VIGO_PDF_URL.format(aa=str(anio)[2:])
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=180)
+            r.raise_for_status()
+            if r.content[:4] != b"%PDF":
+                print(f"  Vigo {anio}: {url} no es un PDF, saltado")
+                continue
+            filas = _vigo_parsear(r.content)
+        except Exception as e:
+            print(f"  Vigo {anio}: no se pudo procesar ({type(e).__name__}: {e})")
+            continue
+        n0 = len(registros)
+        for nombre, desc, fecha, importe, exp in filas:
+            if not nombre or int(fecha[:4]) < DESDE_ANY:
+                continue
+            nombre = re.sub(r"\s+", " ", nombre.replace("*", " ")).strip()
+            nombre = re.sub(r",\s*", ", ", nombre)
+            desc = re.sub(r"\s*NUM\.LICITADORES:\s*\d+\.?", "", desc)
+            desc = re.sub(r"\s*FIN CONTRATO:\s*[\d/]+\.?", "", desc)
+            desc = re.sub(r"\s+", " ", desc).strip(" .")
+            desc = desc[:1].upper() + desc[1:]
+            tipo = ""
+            mt = re.search(r"contrato menor (?:privado )?(?:de |para )?(obras?|servi[zc]os?|sub?ministros?)", desc, re.I)
+            if mt:
+                t = mt.group(1).lower()
+                tipo = "Obras" if t.startswith("obra") else ("Servicios" if t.startswith("serv") else "Suministros")
+            clave = hashlib.md5(f"{exp}|{nombre}|{importe}|{fecha}|{desc[:80]}".encode("utf-8")).hexdigest()[:12]
+            registros[f"Vigo::{clave}"] = {
+                "id":               f"Vigo::{clave}",
+                "municipio":        "Vigo",
+                "provincia":        "pontevedra",
+                "fuente":           "vigo",
+                "organisme":        "Ayuntamiento de Vigo",
+                "adjudicatari":     nombre,
+                "nif":              "",
+                "import_num":       importe,
+                "data_adjudicacio": fecha,
+                "tipus_contracte":  tipo,
+                "descripcio":       desc,
+                "codi_cpv":         "",
+                "exercici":         fecha[:4],
+            }
+        print(f"  Vigo {anio}: {len(registros) - n0} contratos nuevos ({len(filas)} bloques en el PDF)")
+    registros = list(registros.values())
+    print(f"Vigo: {len(registros)} contratos menores extraídos en total (desde {VIGO_DESDE})")
+    return registros
+
+
 # Fuente -> (función, valor del campo "fuente" de sus registros). Sirve para
 # relanzar UNA sola fuente (`python ... san-pedro-pinatar`) conservando las
 # demás del JSON existente, en vez de esperar los ~25 min de Murcia capital.
@@ -952,6 +1244,8 @@ _FUENTES = {
     "murcia-capital":    actualizar_murcia_capital,
     "san-pedro-pinatar": actualizar_san_pedro,
     "torre-pacheco":     actualizar_torre_pacheco,
+    "a-coruna":          actualizar_a_coruna,
+    "vigo":              actualizar_vigo,
     "cartagena-governalia": actualizar_cartagena_governalia,
     "ibi-governalia":    actualizar_ibi,
     "sax-governalia":    actualizar_sax,

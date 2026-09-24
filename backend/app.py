@@ -13174,6 +13174,8 @@ _FUENTE_CM_LABEL = {
     "murcia-capital":  "Murcia",
     "san-pedro-pinatar": "S. P. Pinatar",
     "torre-pacheco":   "Torre Pacheco",
+    "a-coruna":        "A Coruña",
+    "vigo":            "Vigo",
     "cartagena-governalia": "Cartagena (PLACE)",
     "ibi-governalia":  "Ibi (PLACE)",
     "sax-governalia":  "Sax (PLACE)",
@@ -13191,20 +13193,41 @@ _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia"
                        "sax-governalia", "vilamarxant-governalia"}
 
 
+# Avisos públicos por fuente, visibles en la sección de contratos menores de la
+# ficha cuando el municipio tiene filas de esa fuente: límites de cobertura o
+# inferencias del parser que el lector debe conocer, no solo la documentación.
+_NOTAS_FUENTE_CM = {
+    "a-coruna": (
+        "Cobertura de A Coruña desde 2021. Los años anteriores no se incluyen: 2014-2017 son "
+        "imputaciones de facturas sin NIF y 2018-2019 usan otro esquema de datos (2020 queda "
+        "fuera por el corte general de 2021). Importes con IVA."
+    ),
+    "vigo": (
+        "En Vigo el adjudicatario no es un campo explícito de la fuente: el informe en PDF lo "
+        "indica como cabecera de grupo encima de sus contratos y así lo hemos asignado (validado "
+        "en casos inequívocos con un 92-100 % de coherencia). Cobertura desde 2022; importes con "
+        "IVA; el informe no publica NIF."
+    ),
+}
+
+
 def _nota_base_importe_cm(menors):
     """(sufijo_badge, html_nota) para la sección de contratos menores de un
-    municipio según la base de importe de las fuentes que la componen."""
+    municipio: base de importe (sin IVA) de las fuentes Governalia más los
+    avisos propios de cada fuente (_NOTAS_FUENTE_CM)."""
     fuentes = {r.get("fuente") for r in menors}
+    avisos = "".join(f'<div class="cm-base-nota">{esc(_NOTAS_FUENTE_CM[f])}</div>'
+                     for f in sorted(fuentes) if f in _NOTAS_FUENTE_CM)
     sin_iva = fuentes & _FUENTES_CM_SIN_IVA
     if not sin_iva:
-        return "", ""
+        return "", avisos
     if fuentes <= _FUENTES_CM_SIN_IVA:
         return " · sin IVA", ('<div class="cm-base-nota">Importes sin IVA: es el importe adjudicado '
-                              'que publica la fuente oficial (PLACE).</div>')
+                              'que publica la fuente oficial (PLACE).</div>') + avisos
     etiquetas = ", ".join(sorted(_FUENTE_CM_LABEL.get(f, f) for f in sin_iva))
     return "", ('<div class="cm-base-nota">Ojo con la base de los importes: las filas de '
                 f'«{esc(etiquetas)}» van sin IVA (importe adjudicado según PLACE); las demás '
-                'filas pueden incluir IVA. El total de arriba suma ambas bases.</div>')
+                'filas pueden incluir IVA. El total de arriba suma ambas bases.</div>') + avisos
 
 
 # Notas visibles en la fila de contratos menores concretos cuyo dato de origen
@@ -15032,6 +15055,11 @@ def render_caso_contratos_menores_html():
   importe que la ley no permite (por ejemplo, obras de emergencia mal clasificadas). En esos
   casos mostramos el importe tal como figura en la fuente oficial, con una nota visible en la
   propia fila.</p>
+
+  <p>En Galicia hemos incorporado, de momento, A Coruña (ficheros trimestrales desde 2021) y
+  Vigo (informes anuales en PDF desde 2022). En ambos el importe es el adjudicado con IVA. Los
+  contratos menores de Galicia se publican de forma muy desigual entre ayuntamientos y no todos
+  los grandes tienen todavía una fuente conectada.</p>
 
   <p>La cobertura histórica real varía por fuente, no es un "desde 2021" único para
   todo el sitio: en Cataluña (RPC) y Lorquí llega a 2021; en Mula, Molina de Segura,
