@@ -10136,7 +10136,7 @@ def _actualizar_todos_bg(job_id, provincia="murcia"):
 def _cargar_contratos_menores_murcia_manual():
     """Carga contratos_menores_murcia_manual.json (generado por
     actualizar_contratos_menores_murcia_manual.py -- Mula, Molina de Segura,
-    Lorquí, Lorca, Murcia capital y San Pedro del Pinatar, fuentes que necesitan librerías pesadas
+    Lorquí, Lorca, Murcia capital, San Pedro del Pinatar y Torre Pacheco, fuentes que necesitan librerías pesadas
     (odfpy/openpyxl/pdfplumber) o un tiempo de proceso alto, y por eso se
     ingieren a mano en vez de en el cron diario, ver ese script) y lo vuelca
     a la tabla compartida
@@ -10158,7 +10158,7 @@ def _cargar_contratos_menores_murcia_manual():
     if registros:
         _guardar_contratos_menors_locales(registros)
         print(f"  [startup] contratos_menores_murcia_manual.json: {len(registros)} "
-              f"contratos menores (Mula/Molina/Lorquí/Lorca/Murcia capital/San Pedro del Pinatar) cargados en contratos_menors_locales.", flush=True)
+              f"contratos menores (Mula/Molina/Lorquí/Lorca/Murcia capital/San Pedro del Pinatar/Torre Pacheco) cargados en contratos_menors_locales.", flush=True)
 
 
 def _inicializar_datos():
@@ -13159,6 +13159,7 @@ _FUENTE_CM_LABEL = {
     "cartagena":       "Cartagena",
     "murcia-capital":  "Murcia",
     "san-pedro-pinatar": "S. P. Pinatar",
+    "torre-pacheco":   "Torre Pacheco",
 }
 
 
@@ -14927,13 +14928,14 @@ def render_caso_contratos_menores_html():
   fuentes reales una por una: un CSV trimestral en Fuente Álamo (con actualización
   automática, aunque una parte de sus filas no trae fecha), un fichero ODS en Mula, un
   XLSX en Molina de Segura, los listados de Murcia capital, un PDF anual con tabla en
-  San Pedro del Pinatar, y un listado paginado en Lorca y en Lorquí. El portal de Cartagena está <strong>en revisión</strong> — lo
+  San Pedro del Pinatar, la API del portal de transparencia de Torre Pacheco, y un listado paginado en Lorca y en Lorquí. El portal de Cartagena está <strong>en revisión</strong> — lo
   indexamos con histórico 2021-2026, pero ahora mismo solo conseguimos recuperar el
   ejercicio en curso; estamos revisándolo antes de decidir cómo mostrarlo.</p>
 
   <p>La cobertura histórica real varía por fuente, no es un "desde 2021" único para
   todo el sitio: en Cataluña (RPC) y Lorquí llega a 2021; en Mula, Molina de Segura,
-  Murcia capital y San Pedro del Pinatar, a 2022; en Lorca empieza en 2024 (estamos revisando si su portal
+  Murcia capital y San Pedro del Pinatar, a 2022; en Torre Pacheco, con datos
+  significativos solo desde 2024; en Lorca empieza en 2024 (estamos revisando si su portal
   permite ir más atrás); en Fuente Álamo llega a 2021 pero con una parte de sus filas
   sin fecha registrada en origen; en Cartagena está en revisión, como se explica arriba.
   Para los contratos formales (PLACE/PSCP/Euskadi/Navarra) todavía no registramos la

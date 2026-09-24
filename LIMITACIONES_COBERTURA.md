@@ -16,9 +16,9 @@ decisión deliberada de alcance, o algo pendiente de hacer.
     porque de verdad no hubo contratos menores o porque ese ayuntamiento no
     los reporta al registro de la Generalitat — los contratos menores no
     tienen obligación legal de publicación centralizada.
-- **Murcia** (actualizado 2026-09-24): 8 de los 45 municipios tienen una fuente propia
+- **Murcia** (actualizado 2026-09-24): 9 de los 45 municipios tienen una fuente propia
   (**Lorca, Lorquí, Mula, Molina de Segura, Fuente Álamo, Cartagena, Murcia capital,
-  San Pedro del Pinatar**) — los otros 37 no tienen ninguna fuente
+  San Pedro del Pinatar, Torre Pacheco**) — los otros 36 no tienen ninguna fuente
   conectada, no es que "salga 0", es que nunca se consulta nada para ellos. No existe
   un dataset regional único como el RPC catalán para Murcia. Descartados tras verificar
   (2026-09-24): Caravaca de la Cruz (su sección de menores está vacía), San Javier (se

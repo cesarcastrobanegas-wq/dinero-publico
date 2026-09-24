@@ -790,6 +790,72 @@ def actualizar_san_pedro():
     return registros
 
 
+# Torre Pacheco (añadido 2026-09-24): su portal de transparencia
+# (transparencia.torrepacheco.es/contratos/) es un iframe de la plataforma
+# Governalia que consume una API JSON REST pública, sin captcha ni login --
+# solo exige la cookie JSESSIONID que da la propia página del módulo y las
+# cabeceras X-Requested-With/Content-Type de una llamada AJAX (sin ellas
+# devuelve 412). Con procurementMinor=true devuelve los contratos menores
+# (procedimiento "Contrato menor", siempre con adjudicatario y NIF). Verificado
+# 2026-09-24: 1.218 filas 2021-2026 (2022: 1, 2023: 4, 2024: 299, 2025: 615,
+# 2026 en curso: 299), ids únicos, mismo total pidiendo por años o de una vez,
+# sin solapamiento con los contratos PLACE que ya tenemos de este municipio.
+# ATENCIÓN a los campos: `estimated_overall_contract_amount*` es el
+# PRESUPUESTO DE LICITACIÓN (a menudo distinto de lo adjudicado); el importe
+# adjudicado real es `tax_exclusive_amount` (= `amount`) y va SIN IVA -- a
+# diferencia de Mula/San Pedro del Pinatar, que publican con IVA. Solo si el
+# adjudicado viene a 0/nulo (unas 4 filas) se cae al presupuesto sin IVA.
+# La fecha es `award_date` (algún registro trae un rango "2025-11-27/2026-04-30":
+# se toma el primer día).
+TORRE_PACHECO_PAGINA_URL = ("https://governalia.torrepacheco.es/gvn/web/section/modules/"
+                            "transparency/egob/procurements/?idP=36813&lang=es")
+TORRE_PACHECO_API_URL = ("https://governalia.torrepacheco.es/gvn/rest/transparency/egob/"
+                         "procurements/dt/all?formatDate=YYYY-MM-DD&iniDate={ini}&endDate={fin}"
+                         "&procurementStatus=&procurementActivity=&procurementProcedure="
+                         "&procurementProcedureCode=Por%20-Procedimiento-&procurementType="
+                         "&procurementMinor=true&procurementAdministration=")
+
+
+def actualizar_torre_pacheco():
+    s = requests.Session()
+    s.headers["User-Agent"] = HEADERS["User-Agent"]
+    s.get(TORRE_PACHECO_PAGINA_URL, timeout=60).raise_for_status()   # solo para la cookie de sesión
+    r = s.get(TORRE_PACHECO_API_URL.format(ini=DESDE_ANY, fin=time.localtime().tm_year),
+              headers={"X-Requested-With": "XMLHttpRequest", "Content-Type": "application/json",
+                       "Accept": "application/json, text/javascript, */*; q=0.01",
+                       "Referer": TORRE_PACHECO_PAGINA_URL}, timeout=180)
+    r.raise_for_status()
+    filas = r.json().get("data", [])
+    registros = {}
+    for x in filas:
+        adjudicatario = (x.get("winningparty_name") or "").strip()
+        fecha = (x.get("award_date") or x.get("date_issue") or "")[:10]
+        if not adjudicatario or not re.match(r"^\d{4}-\d{2}-\d{2}$", fecha) or int(fecha[:4]) < DESDE_ANY:
+            continue
+        importe = x.get("tax_exclusive_amount") or x.get("estimated_overall_contract_amount_without_taxes") or 0.0
+        registros[f"TorrePacheco::{x['id']}"] = {
+            "id":               f"TorrePacheco::{x['id']}",
+            "municipio":        "Torre Pacheco",
+            "provincia":        "murcia",
+            "fuente":           "torre-pacheco",
+            "organisme":        "Ayuntamiento de Torre Pacheco",
+            "adjudicatari":     adjudicatario,
+            "nif":              (x.get("winningparty_nif") or "").strip(),
+            "import_num":       float(importe),
+            "data_adjudicacio": fecha,
+            "tipus_contracte":  x.get("contract_type") or "",
+            "descripcio":       re.sub(r"\s+", " ", x.get("title") or "").strip(),
+            "codi_cpv":         "",
+            "exercici":         fecha[:4],
+        }
+    registros = list(registros.values())
+    por_anio = {}
+    for x in registros:
+        por_anio[x["exercici"]] = por_anio.get(x["exercici"], 0) + 1
+    print(f"Torre Pacheco: {len(registros)} contratos menores (de {len(filas)} filas de la API): {dict(sorted(por_anio.items()))}")
+    return registros
+
+
 # Fuente -> (función, valor del campo "fuente" de sus registros). Sirve para
 # relanzar UNA sola fuente (`python ... san-pedro-pinatar`) conservando las
 # demás del JSON existente, en vez de esperar los ~25 min de Murcia capital.
@@ -800,6 +866,7 @@ _FUENTES = {
     "lorca":             actualizar_lorca,
     "murcia-capital":    actualizar_murcia_capital,
     "san-pedro-pinatar": actualizar_san_pedro,
+    "torre-pacheco":     actualizar_torre_pacheco,
 }
 
 
