@@ -39,7 +39,10 @@ os.makedirs(DATA_DIR, exist_ok=True)
 DATA_FILE  = os.path.join(BASE_DIR, "datos.json")
 ALCALDES_FILE = os.path.join(BASE_DIR, "alcaldes_concejales.json")
 RETRIBUCIONES_FILE = os.path.join(BASE_DIR, "retribuciones_ispa.json")
-CONTRATOS_MENORES_MURCIA_MANUAL_FILE = os.path.join(BASE_DIR, "contratos_menores_murcia_manual.json")
+# Desde 2026-09-24 el fichero va comprimido (.json.gz): pesaba 52,8 MB con 109.000 filas y GitHub avisa a
+# partir de 50 MB y rechaza a 100 MB; comprimido son ~7 MB. La lectura es transparente: si por lo que sea
+# solo existe el .json antiguo, se usa ese (ver _abrir_json_menores_manual).
+CONTRATOS_MENORES_MURCIA_MANUAL_FILE = os.path.join(BASE_DIR, "contratos_menores_murcia_manual.json.gz")
 CUENTAS_ANUALES_FILE = os.path.join(BASE_DIR, "cuentas_anuales.json")
 HACIENDA_EELL_FILE = os.path.join(BASE_DIR, "hacienda_eell.json")
 POBLACION_FILE = os.path.join(BASE_DIR, "poblacion.json")
@@ -10188,17 +10191,21 @@ def _cargar_contratos_menores_murcia_manual():
     _db_contratos_menors_por_municipio. Se ejecuta en cada arranque (barato,
     es un upsert idempotente sobre unos pocos miles de filas como mucho); el
     fichero solo cambia cuando alguien vuelve a lanzar el script a mano."""
-    if not os.path.exists(CONTRATOS_MENORES_MURCIA_MANUAL_FILE):
+    ruta = CONTRATOS_MENORES_MURCIA_MANUAL_FILE
+    if not os.path.exists(ruta):
+        ruta = ruta[:-3] if ruta.endswith(".gz") else ruta          # respaldo: el .json sin comprimir
+    if not os.path.exists(ruta):
         return
     try:
-        with open(CONTRATOS_MENORES_MURCIA_MANUAL_FILE, encoding="utf-8") as f:
+        with (_gzip.open(ruta, "rt", encoding="utf-8") if ruta.endswith(".gz")
+              else open(ruta, encoding="utf-8")) as f:
             d = json.load(f)
         registros = d.get("registros", []) if isinstance(d, dict) else []
     except Exception:
         registros = []
     if registros:
         _guardar_contratos_menors_locales(registros)
-        print(f"  [startup] contratos_menores_murcia_manual.json: {len(registros)} "
+        print(f"  [startup] contratos_menores_murcia_manual: {len(registros)} "
               f"contratos menores (Mula/Molina/Lorquí/Lorca/Murcia capital/San Pedro del Pinatar/Torre Pacheco) cargados en contratos_menors_locales.", flush=True)
 
 

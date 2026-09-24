@@ -6,7 +6,7 @@ ODS, openpyxl para XLSX, xlrd para XLS legado, pdfplumber para tablas en PDF)
 -- mismo patrón manual/periódico que actualizar_alcaldes.py /
 actualizar_retribuciones.py: se ejecuta a mano de vez en cuando (cada
 trimestre/año, cuando el ayuntamiento publique un fichero nuevo) y genera
-contratos_menores_murcia_manual.json, que app.py carga al arrancar y vuelca a
+contratos_menores_murcia_manual.json.gz, que app.py carga al arrancar y vuelca a
 la tabla compartida contratos_menors_locales (ver
 _cargar_contratos_menores_murcia_manual en app.py).
 
@@ -72,9 +72,11 @@ tabla ha cambiado al menos dos veces entre 2021 y 2026**:
 
 Uso:  pip install odfpy openpyxl xlrd pdfplumber && python actualizar_contratos_menores_murcia_manual.py
 """
+import gzip
 import hashlib
 import io
 import json
+import os
 import re
 import sys
 import time
@@ -97,7 +99,26 @@ HEADERS = {
     "Accept-Language": "es-ES,es;q=0.9",
 }
 DESDE_ANY = 2021
-OUT_FILE = f"{BASE_DIR}/contratos_menores_murcia_manual.json"
+OUT_FILE = f"{BASE_DIR}/contratos_menores_murcia_manual.json.gz"   # comprimido desde 2026-09-24 (52,8 MB -> ~7 MB)
+
+
+def _leer_registros_previos():
+    """Registros del fichero de salida (o del .json sin comprimir si es lo único que hay)."""
+    for ruta in (OUT_FILE, OUT_FILE[:-3]):
+        if os.path.exists(ruta):
+            with (gzip.open(ruta, "rt", encoding="utf-8") if ruta.endswith(".gz")
+                  else open(ruta, encoding="utf-8")) as f:
+                return json.load(f)["registros"]
+    return []
+
+
+def _escribir_registros(registros):
+    """Escritura determinista (mtime=0): dos ejecuciones con los mismos datos dan el mismo fichero."""
+    contenido = json.dumps({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "registros": registros},
+                           ensure_ascii=False, indent=1).encode("utf-8")
+    with open(OUT_FILE, "wb") as crudo:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=crudo, compresslevel=9, mtime=0) as z:
+            z.write(contenido)
 
 MULA_LISTADO_URL = "https://mula.es/web/transparencia/informacion-sobre-contratos-y-convenios/"
 MOLINA_LISTADO_URL = ("https://transparencia.molinadesegura.es/publicidad-activa/"
@@ -1634,11 +1655,7 @@ def main():
     desconocidas = [f for f in pedidas if f not in _FUENTES]
     if desconocidas:
         sys.exit(f"Fuente(s) desconocida(s): {desconocidas}. Válidas: {sorted(_FUENTES)}")
-    try:
-        with open(OUT_FILE, encoding="utf-8") as f:
-            previos = json.load(f)["registros"]
-    except FileNotFoundError:
-        previos = []
+    previos = _leer_registros_previos()
     if not pedidas:
         todos = []
         for nombre, fn in _FUENTES.items():
@@ -1647,9 +1664,7 @@ def main():
         todos = [r for r in previos if r.get("fuente") not in pedidas]
         for nombre in pedidas:
             todos += _fusionar_fuente(previos, nombre, _FUENTES[nombre], forzar)
-    with open(OUT_FILE, "w", encoding="utf-8") as f:
-        json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "registros": todos},
-                   f, ensure_ascii=False, indent=1)
+    _escribir_registros(todos)
     print(f"\nTotal: {len(todos)} contratos menores guardados en {OUT_FILE}")
 
 
