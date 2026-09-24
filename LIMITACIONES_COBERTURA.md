@@ -159,9 +159,13 @@ decisión deliberada de alcance, o algo pendiente de hacer.
     duplicados exactos colapsados. Máximo desde 2021: 48.387,90 EUR (<= 48.400).
   - **Oleiros: descartado** tras verificar su web, su nota de prensa y su sede electrónica (`sede.oleiros.org`): todo
     remite a PLACE, sin ningún listado de contratos menores.
-  - **Pontevedra: fuente real, sin construir** (2026-09-24): la sede (`sede.pontevedra.gal/public/contratos/
-    contratos-index.xhtml`) tiene una "Consulta de contratos" (JSF, pagina por AJAX, 2022-2026) con filtro de tipo de
-    procedimiento "Contrato menor"; el adjudicatario trae el NIF pegado y el importe es CON IVE. Requiere navegador.
+  - **Pontevedra** (`pontevedra`, 9.401 contratos 2023-2026, ~40,8 M EUR): la sede
+    (`sede.pontevedra.gal/public/contratos/contratos-index.xhtml`) tiene una "Consulta de contratos" JSF que pagina
+    por AJAX; el conector la reproduce SIN navegador (GET -> POST de búsqueda con tipo 6 "Contrato menor" -> POST de
+    paginación con `rows=20000`, ~5 s para todo). Verificado: idéntico al recorrido con navegador (9.411 filas) y las
+    estadísticas oficiales del portal coinciden AL CÉNTIMO con las sumas por trimestre (2024-T4, 2025-T1, 2025-T2,
+    2026-T2, 2026-T3). Importe CON IVA (max 48.398,79), NIF español incluido en el adjudicatario ("NOMBRE NIF Pyme"),
+    datos desde el 2T-2023. 10 filas (67.631,55 EUR) sin adjudicatario se descartan.
   - **Pendientes de la tanda** (aún sin verificar):
     Ourense y Ames (verificar en la fuente oficial), Santiago (¿ya entra el órgano "Xunta de Goberno
     ... (CONTRATOS MENORES)" por PLACE?), Lugo (¿sigue publicando en 2024-25?), Vilagarcía, Narón,

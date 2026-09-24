@@ -13252,6 +13252,7 @@ _FUENTE_CM_LABEL = {
     "a-coruna":        "A Coruña",
     "vigo":            "Vigo",
     "ferrol":          "Ferrol",
+    "pontevedra":      "Pontevedra",
     "cartagena-governalia": "Cartagena (PLACE)",
     "ibi-governalia":  "Ibi (PLACE)",
     "sax-governalia":  "Sax (PLACE)",
@@ -13277,6 +13278,12 @@ _NOTAS_FUENTE_CM = {
         "Cobertura de A Coruña desde 2021. Los años anteriores no se incluyen: 2014-2017 son "
         "imputaciones de facturas sin NIF y 2018-2019 usan otro esquema de datos (2020 queda "
         "fuera por el corte general de 2021). Importes con IVA."
+    ),
+    "pontevedra": (
+        "Cobertura de Pontevedra desde abril de 2023: antes no hay contratos menores publicados en su "
+        "sede electrónica. Importes con IVA. Los totales por trimestre coinciden con las estadísticas del "
+        "propio portal, salvo 10 contratos (67.631,55 €) que la fuente publica sin adjudicatario y que "
+        "no se muestran."
     ),
     "vigo": (
         "En Vigo el adjudicatario no es un campo explícito de la fuente: el informe en PDF lo "
@@ -15140,8 +15147,8 @@ def render_caso_contratos_menores_html():
   propia fila.</p>
 
   <p>En Galicia hemos incorporado, de momento, A Coruña (ficheros trimestrales desde 2021),
-  Vigo (informes anuales en PDF desde 2022) y Ferrol (listado web desde 2021). En los tres el
-  importe es el adjudicado con IVA. Los
+  Vigo (informes anuales en PDF desde 2022), Ferrol (listado web desde 2021) y Pontevedra
+  (consulta de su sede electrónica desde 2023). En todos el importe es el adjudicado con IVA. Los
   contratos menores de Galicia se publican de forma muy desigual entre ayuntamientos y no todos
   los grandes tienen todavía una fuente conectada.</p>
 

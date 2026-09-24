@@ -1313,6 +1313,132 @@ def actualizar_ferrol():
     return registros
 
 
+# Pontevedra (añadido 2026-09-24): la sede (sede.pontevedra.gal) tiene una "Consulta de contratos"
+# JSF/PrimeFaces con filtro de tipo de procedimiento y una tabla paginada por AJAX (20 filas/página,
+# ~470 páginas de "Contrato menor"). Se puede reproducir SIN navegador: GET de la página (cookie de
+# sesión + ViewState) -> POST de búsqueda con tipoprocedementoSelect=6 ("Contrato menor") -> POST de
+# paginación con contratosTable_first=0 y contratosTable_rows=20000, que devuelve las ~9.400 filas de una
+# vez (~10 MB, ~5 s). El código y el tamaño de página son los que envía la propia página.
+# Verificado 2026-09-24:
+# - Idéntico al recorrido página a página con navegador (9.411 filas), y las estadísticas del propio portal
+#   (contratos-estatisticas.xhtml, "Importe adxudicación (con IVE)" del tipo "Contrato menor") coinciden AL
+#   CÉNTIMO con las sumas por trimestre de estos datos (2024-T4, 2025-T1, 2025-T2, 2026-T2 y 2026-T3).
+# - Importe = adjudicación CON IVA; el máximo es 48.398,79 (<= 48.400 = 40.000 + 21 %), el adjudicado nunca
+#   supera al presupuesto y no hay duplicados. Los datos empiezan en el 2T-2023 (aunque el filtro ofrece 2022).
+# - La celda del adjudicatario es "NOMBRE NIF Pyme": el NIF va al final (a veces extranjero: PT..., ESA...) y
+#   "Pyme" es una marca. Solo se guarda como NIF el que tiene formato español; el resto se deja vacío.
+#   10 filas (67.631,55 EUR, 0,17 %) traen solo "Pyme" (sin adjudicatario) y se descartan: por eso los
+#   totales de este conector son esas 10 filas menores que los de las estadísticas del portal.
+# - El título del procedimiento lleva pegado el código de expediente ("... 2022/DOCCMV5/000518"): se separa.
+PONTEVEDRA_URL = "https://sede.pontevedra.gal/public/contratos/contratos-index.xhtml"
+_RE_PONT_EXP = re.compile(r"\s+(\d{4}/[A-Z0-9]+/\d+)$")
+_RE_PONT_NIF_ES = re.compile(r"^([A-Z]\d{7}[A-Z0-9]|\d{8}[A-Z]|[XYZ]\d{7}[A-Z])$")
+
+
+def _pont_campos(html):
+    """Campos del formulario contratosForm tal como los enviaría el navegador."""
+    soup = BeautifulSoup(html, "html.parser")
+    form = soup.find("form", id="contratosForm")
+    datos = {}
+    for el in form.find_all(["input", "select"]):
+        nombre = el.get("name")
+        if not nombre:
+            continue
+        if el.name == "select":
+            op = el.find("option", selected=True)
+            datos[nombre] = op["value"] if op else ""
+        elif el.get("type") in ("checkbox", "radio") and not el.has_attr("checked"):
+            continue
+        else:
+            datos[nombre] = el.get("value", "")
+    vs = soup.find("input", {"name": "javax.faces.ViewState"})
+    datos["javax.faces.ViewState"] = vs["value"] if vs else ""
+    return datos
+
+
+def actualizar_pontevedra():
+    s = requests.Session()
+    s.headers.update({"User-Agent": HEADERS["User-Agent"], "Accept-Language": "gl,es;q=0.9"})
+    cab = {"Faces-Request": "partial/ajax", "X-Requested-With": "XMLHttpRequest",
+           "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", "Referer": PONTEVEDRA_URL}
+    r = s.get(PONTEVEDRA_URL, timeout=60)
+    r.raise_for_status()
+    datos = _pont_campos(r.text)
+    datos["contratosForm:tipoprocedementoSelect_input"] = "6"      # 6 = "Contrato menor"
+    busqueda = dict(datos, **{"javax.faces.partial.ajax": "true", "javax.faces.source": "contratosForm:search",
+                              "javax.faces.partial.execute": "@all", "javax.faces.partial.render": "contratosForm",
+                              "contratosForm:search": "contratosForm:search"})
+    r1 = s.post(PONTEVEDRA_URL, data=busqueda, headers=cab, timeout=120)
+    r1.raise_for_status()
+    vs = re.search(r'<update id="[^"]*ViewState[^"]*"><!\[CDATA\[([^\]]+)\]\]>', r1.text)
+    if vs:
+        datos["javax.faces.ViewState"] = vs.group(1)
+    paginacion = dict(datos, **{
+        "javax.faces.partial.ajax": "true", "javax.faces.source": "contratosForm:contratosTable",
+        "javax.faces.partial.execute": "contratosForm:contratosTable",
+        "javax.faces.partial.render": "contratosForm:contratosTable",
+        "javax.faces.behavior.event": "page", "javax.faces.partial.event": "page",
+        "contratosForm:contratosTable_pagination": "true", "contratosForm:contratosTable_first": "0",
+        "contratosForm:contratosTable_rows": "20000", "contratosForm:contratosTable_encodeFeature": "true"})
+    r2 = s.post(PONTEVEDRA_URL, data=paginacion, headers=cab, timeout=300)
+    r2.raise_for_status()
+    m = re.search(r'<update id="contratosForm:contratosTable"><!\[CDATA\[(.*?)\]\]></update>', r2.text, re.S)
+    if not m:
+        raise RuntimeError("Pontevedra: la respuesta AJAX no trae la tabla (¿cambió el formulario?)")
+    filas = [[re.sub(r"\s+", " ", c.get_text(" ", strip=True)) for c in tr.find_all("td")]
+             for tr in BeautifulSoup(m.group(1), "html.parser").select("tr[data-ri]")]
+    if not filas:
+        raise RuntimeError("Pontevedra: la tabla no trae filas")
+    registros, sin_adjudicatario = {}, 0
+    for td in filas:
+        if len(td) != 9 or td[5].lower() != "contrato menor":
+            continue
+        titulo, celda, fecha_txt, importe_txt = td[0], td[1], td[2], td[4]
+        mf = re.match(r"^(\d{2})/(\d{2})/(\d{4})$", fecha_txt)
+        try:
+            importe = float(importe_txt.replace("€", "").strip().replace(".", "").replace(",", "."))
+        except ValueError:
+            continue
+        if not mf or int(mf.group(3)) < DESDE_ANY:
+            continue
+        celda = re.sub(r"\s*Pyme$", "", celda).strip()
+        mn = re.match(r"^(.*?)\s*\b([A-Z0-9]{8,12})$", celda)
+        if mn and sum(ch.isdigit() for ch in mn.group(2)) >= 6:
+            nombre, nif = mn.group(1).strip(), mn.group(2)
+        else:
+            nombre, nif = celda, ""
+        if not nombre or nombre.lower() == "pyme":
+            sin_adjudicatario += 1
+            continue
+        me = _RE_PONT_EXP.search(titulo)
+        exp = me.group(1) if me else ""
+        desc = _RE_PONT_EXP.sub("", titulo).strip()
+        fecha = f"{mf.group(3)}-{mf.group(2)}-{mf.group(1)}"
+        clave = hashlib.md5(f"{exp}|{nombre}|{importe}|{fecha}|{desc[:80]}".encode("utf-8")).hexdigest()[:12]
+        registros[f"Pontevedra::{clave}"] = {
+            "id":               f"Pontevedra::{clave}",
+            "municipio":        "Pontevedra",
+            "provincia":        "pontevedra",
+            "fuente":           "pontevedra",
+            "organisme":        "Ayuntamiento de Pontevedra",
+            "adjudicatari":     nombre,
+            "nif":              nif if _RE_PONT_NIF_ES.match(nif) else "",
+            "import_num":       importe,
+            "data_adjudicacio": fecha,
+            "tipus_contracte":  td[6],
+            "descripcio":       desc,
+            "codi_cpv":         "",
+            "exercici":         fecha[:4],
+        }
+    registros = list(registros.values())
+    por_anio = {}
+    for x in registros:
+        por_anio[x["exercici"]] = por_anio.get(x["exercici"], 0) + 1
+    print(f"Pontevedra: {len(registros)} contratos menores de {len(filas)} filas ({sin_adjudicatario} sin "
+          f"adjudicatario descartadas): {dict(sorted(por_anio.items()))}")
+    return registros
+
+
 # Fuente -> (función, valor del campo "fuente" de sus registros). Sirve para
 # relanzar UNA sola fuente (`python ... san-pedro-pinatar`) conservando las
 # demás del JSON existente, en vez de esperar los ~25 min de Murcia capital.
@@ -1327,6 +1453,7 @@ _FUENTES = {
     "a-coruna":          actualizar_a_coruna,
     "vigo":              actualizar_vigo,
     "ferrol":            actualizar_ferrol,
+    "pontevedra":        actualizar_pontevedra,
     "cartagena-governalia": actualizar_cartagena_governalia,
     "ibi-governalia":    actualizar_ibi,
     "sax-governalia":    actualizar_sax,
