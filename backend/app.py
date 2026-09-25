@@ -2316,7 +2316,8 @@ def _cargar_sueldos_concejales():
     return out
 
 
-SUELDOS_CONCEJALES = _cargar_sueldos_concejales()
+# (SUELDOS_CONCEJALES se carga más abajo, tras definir normalizar(): el cargador la usa.)
+SUELDOS_CONCEJALES = {}
 
 
 def _cargar_retribuciones_ispa():
@@ -4292,6 +4293,7 @@ def esc(s):
 
 
 INDICE_CARGOS_PUBLICOS = _construir_indice_cargos_publicos()
+SUELDOS_CONCEJALES = _cargar_sueldos_concejales()
 
 
 def _capitalizar_nombre(s):

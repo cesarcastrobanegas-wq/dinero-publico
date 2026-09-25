@@ -18,9 +18,9 @@ decisión deliberada de alcance, o algo pendiente de hacer.
   `backend/historico/contratos_menores_anteriores_2021-09.json.gz`. Las filas sin fecha (Fuente Álamo, 801) se conservan.
 - **Formales — pendiente de decisión**: PSCP, Euskadi y Navarra traen todo el histórico sin filtro de fecha y los
   contratos guardados no llevan fecha. Auditoría del 2026-09-26 (fecha de adjudicación): PSCP 6.570 de 74.731
-  filas fuera de ventana (8,8 %; rango 2010-12-14 a 2027-01-01). Euskadi (trae "histórico completo"; en una lectura parcial de 229 de 251
-  autoridades el 36 % era anterior a septiembre de 2021, cifra exacta pendiente) y Navarra (7.643 guardados,
-  sin medir): a la espera de la decisión de César.
+  filas fuera de ventana (8,8 %; rango 2010-12-14 a 2027-01-01). Euskadi trae el "histórico completo": 7.226 de 20.093 contratos
+  (36 %) anteriores a septiembre de 2021, rango 2012-02-02 a 2026-12-29 (16 fechas con año imposible, "0008"...).
+  Navarra (7.643 guardados) sin medir. A la espera de la decisión de César.
 
 ## Contratos menores
 
