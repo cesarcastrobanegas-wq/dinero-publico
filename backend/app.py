@@ -4,6 +4,7 @@ Fuente: Plataforma de Contratación del Sector Público (datos oficiales CODICE/
 """
 
 import gzip as _gzip
+import hashlib
 import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib, random, unicodedata, math
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -7693,6 +7694,74 @@ def _recuperar_historico_perdido():
               "recuperación (todos igual o más completos que el seed del repo).", flush=True)
 
 
+BACKFILL_GALICIA_PLACE_FILE = os.path.join(BASE_DIR, "backfill_galicia_place.json.gz")
+_BACKFILL_GALICIA_PLACE_CLAVE = "backfill_galicia_place_sha"
+
+
+def _aplicar_backfill_galicia_place():
+    """Recupera contratos formales de PLACE de municipios gallegos que el patron antiguo de _regex_anclado no
+    reconocia ("Concello de X", "Concello da/do X"; ver el fix de 2026-09-25) en los meses en que aun no existia.
+    Los contratos se calcularon EN LOCAL con backfill_galicia_place.py (una pasada por ZIP mensual) y viajan en un
+    fichero pequeno del repo: no se descarga ningun ZIP en produccion.
+
+    Fusion ADITIVA con la regla contraria a _fusionar_historico_contratos: aqui gana lo YA guardado (que puede
+    llevar directivo enriquecido), solo se anaden las claves (URL o titulo truncado) que el municipio no tiene.
+    Es idempotente por naturaleza; ademas se anota el hash del fichero en `settings` para no recorrer los ~100
+    municipios en cada arranque (si el fichero cambia, se vuelve a aplicar). Un municipio sin fila en cache.db se
+    omite (no se crea una ficha parcial). Mismas guardas que _recuperar_historico_perdido: sin disco fiable no toca
+    nada."""
+    if not _DISCO_CONFIABLE or not os.path.exists(BACKFILL_GALICIA_PLACE_FILE):
+        return
+    try:
+        with open(BACKFILL_GALICIA_PLACE_FILE, "rb") as f:
+            crudo = f.read()
+        huella = hashlib.sha256(crudo).hexdigest()[:16]
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_BACKFILL_GALICIA_PLACE_CLAVE,)).fetchone()
+        if fila and fila[0] == huella:
+            return
+        datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+        anadidos, sin_fila = {}, []
+        for muni, info in datos["municipios"].items():
+            key = normalizar(muni)
+            with _db_lock:
+                row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
+            if not row:
+                sin_fila.append(muni)
+                continue
+            d = json.loads(row[0])
+            actuales = d.get("contratos", [])
+            claves = {c.get("url") or c.get("titulo", "")[:80] for c in actuales}
+            nuevos = []
+            for c in info["contratos"]:
+                k = c.get("url") or c.get("titulo", "")[:80]
+                if k and k not in claves:
+                    claves.add(k)
+                    nuevos.append(c)
+            if not nuevos:
+                continue
+            d["contratos"] = actuales + nuevos
+            d["total_contratos"] = len(d["contratos"])
+            d["alertas"] = analizar_riesgo(d["contratos"])
+            with _db_lock:
+                _db.execute("UPDATE municipios SET data=? WHERE municipio=?",
+                            (json.dumps(d, ensure_ascii=False), key))
+                _db.commit()
+            anadidos[muni] = len(nuevos)
+        if not sin_fila:
+            # Solo se da por aplicado si no se omitio ninguna ficha: si faltaban (p. ej. cache.db aun sin cargar
+            # esa provincia) se reintenta en el siguiente arranque, que es barato (solo lee las filas).
+            with _db_lock:
+                _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                            "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor",
+                            (_BACKFILL_GALICIA_PLACE_CLAVE, huella))
+                _db.commit()
+        print(f"[startup] backfill_galicia_place: {sum(anadidos.values())} contratos anadidos en "
+              f"{len(anadidos)} municipios ({len(sin_fila)} sin ficha, omitidos: {sin_fila}). {anadidos}", flush=True)
+    except Exception as e:
+        print(f"[startup] backfill_galicia_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
 def _dedup_pscp_fases(filas):
     """El mismo lote pasa por Adjudicació -> Formalització -> Execució a lo
     largo de su ciclo de vida (ver nota de PSCP_FASES), y el dataset puede
@@ -10227,6 +10296,7 @@ def _inicializar_datos():
     _db_init()
     _cargar_contratos_menores_murcia_manual()
     _recuperar_historico_perdido()
+    _aplicar_backfill_galicia_place()
     corte = time.time() - RESULT_CACHE_TTL
     with _db_lock:
         recientes = _db.execute("SELECT municipio FROM municipios WHERE ts > ?", (corte,)).fetchall()
