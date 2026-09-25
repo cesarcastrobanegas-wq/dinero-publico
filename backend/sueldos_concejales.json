@@ -1,0 +1,5 @@
+{
+ "generado": "2026-09-26",
+ "descripcion": "Sueldos de concejales publicados con nombre por fuentes oficiales de cada ayuntamiento (ver SUELDOS_CONCEJALES_LOG.md). Registro: municipio, provincia, nombre, cargo, importe, base, periodo, fuente_url, fuente_nombre.",
+ "registros": []
+}

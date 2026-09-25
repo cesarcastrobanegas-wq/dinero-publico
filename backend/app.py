@@ -2277,6 +2277,47 @@ def _cargar_alcaldes_concejales():
 
 ALCALDES_CONCEJALES = _cargar_alcaldes_concejales()
 
+# ─── Sueldos de concejales publicados por el propio ayuntamiento (2026-09-26) ───────────────────────────────
+# El fichero del Ministerio (ALCALDES_CONCEJALES) trae nombre/cargo/partido pero NO importes, y el de ISPA solo el
+# total agregado por ayuntamiento (ver alcalde_concejales_html). Aquí van los importes que el propio
+# ayuntamiento (portal de transparencia, sede electrónica, boletín oficial o su web municipal) publica CON NOMBRE.
+# Nunca agregadores ni prensa. Regla de cada registro (encargo de César): nombre, cargo/concejalía, importe y URL
+# de la fuente oficial; si falta cualquiera de los cuatro, o la base del importe (bruto anual, mensual...) no
+# está clara en la fuente, NO se guarda -- ni se completa con estimaciones. Generado por
+# actualizar_sueldos_concejales.py; el bitácora de cada lote está en SUELDOS_CONCEJALES_LOG.md.
+SUELDOS_CONCEJALES_FILE = os.path.join(BASE_DIR, "sueldos_concejales.json")
+
+
+def _cargar_sueldos_concejales():
+    """{normalizar(municipio): [registro, ...]} desde sueldos_concejales.json. Defensivo: descarta cualquier
+    registro al que le falte nombre, cargo, importe (> 0), base del importe o URL https de la fuente."""
+    out = {}
+    if not os.path.exists(SUELDOS_CONCEJALES_FILE):
+        return out
+    try:
+        with open(SUELDOS_CONCEJALES_FILE, encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        return out
+    for r in registros:
+        try:
+            reg = {"municipio": str(r["municipio"]).strip(), "provincia": str(r.get("provincia", "")).strip(),
+                   "nombre": str(r["nombre"]).strip(), "cargo": str(r["cargo"]).strip(),
+                   "importe": float(r["importe"]), "base": str(r["base"]).strip(),
+                   "periodo": str(r.get("periodo", "")).strip(), "fuente_url": str(r["fuente_url"]).strip(),
+                   "fuente_nombre": str(r.get("fuente_nombre", "")).strip()}
+        except (KeyError, TypeError, ValueError):
+            continue
+        if not (reg["municipio"] and reg["nombre"] and reg["cargo"] and reg["base"] and reg["importe"] > 0
+                and reg["fuente_url"].startswith("https://")):
+            continue
+        out.setdefault(normalizar(reg["municipio"]), []).append(reg)
+    return out
+
+
+SUELDOS_CONCEJALES = _cargar_sueldos_concejales()
+
 
 def _cargar_retribuciones_ispa():
     """Carga retribuciones_ispa.json (generado por actualizar_retribuciones.py
@@ -4334,6 +4375,29 @@ def alcalde_concejales_html(municipio):
     if not alcalde_html and not dd_html:
         return ""
     return f'<div class="alcalde-block">{alcalde_html}{dd_html}</div>'
+
+
+def sueldos_concejales_html(municipio, provincia=None):
+    """Desplegable con los sueldos de concejales que el propio ayuntamiento publica con nombre (ver
+    SUELDOS_CONCEJALES). El importe se muestra TAL COMO figura en la fuente, con su base (bruto anual, mensual...)
+    y su periodo; nunca se convierte ni se estima. Cada fila enlaza a la fuente oficial. "" si no hay datos."""
+    regs = SUELDOS_CONCEJALES.get(normalizar(municipio)) or []
+    if provincia:
+        regs = [r for r in regs if not r["provincia"] or r["provincia"] == provincia]
+    if not regs:
+        return ""
+    items = []
+    for r in sorted(regs, key=lambda x: (-x["importe"], x["nombre"])):
+        periodo = f" · {esc(r['periodo'])}" if r["periodo"] else ""
+        fuente = esc(r["fuente_nombre"]) or "fuente oficial"
+        items.append(
+            f'<li><b class="pol-nombre">{esc(r["nombre"])}</b> <span class="conc-cargo">— {esc(r["cargo"])}</span> '
+            f'<span class="pol-retrib">💰 {fmt_eur(r["importe"])} {esc(r["base"])}{periodo}</span> '
+            f'<a href="{esc(r["fuente_url"])}" target="_blank" rel="noopener nofollow">{fuente} ↗</a></li>')
+    return (f'<details class="concejales-dd sueldos-conc"><summary>Retribuciones de concejales publicadas por el '
+            f'ayuntamiento ({len(regs)})</summary><ul>{"".join(items)}</ul>'
+            f'<div class="pol-retrib-nota">Importes tal como figuran en la fuente oficial enlazada en cada fila, '
+            f'con la base y el periodo que ella indica; no se han convertido ni estimado.</div></details>')
 
 
 def municipio_valido(txt):
@@ -14017,6 +14081,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             <div>
               <h2>🏛 {esc(muni_name)} {habitantes_html} {cuentas_html} {saldo_html} {deuda_html}</h2>
               {alcalde_concejales_html(muni_name)}
+              {sueldos_concejales_html(muni_name, provincia)}
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
               {profile_html}
