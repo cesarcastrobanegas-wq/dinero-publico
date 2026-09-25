@@ -5,6 +5,23 @@ datos reales (`backend/cache.db`) a fecha 2026-08-18. Cada punto indica si es un
 límite real de la fuente de datos (no arreglable sin una fuente nueva), una
 decisión deliberada de alcance, o algo pendiente de hacer.
 
+## Alcance temporal: solo los últimos 5 años (decisión de César, 2026-09-25)
+
+- **Regla**: solo interesan contratos (menores y formales) de los últimos cinco años; a 2026-09-25 eso es
+  desde el **2021-09-01**. Para menores vive en `MENORES_DESDE_FECHA` (`backend/app.py`) y en `DESDE_FECHA` del
+  script manual; el generador del backfill gallego de PLACE tiene su suelo en `MES_MINIMO = "202109"`.
+  Con el paso del tiempo hay que subir esas constantes a mano.
+- **Menores — aplicado (2026-09-26)**: `_guardar_contratos_menors_locales` (punto único de escritura) descarta lo
+  anterior al corte, y el arranque **archiva, no borra** (`_archivar_menores_fuera_de_ventana`) las filas ya
+  cargadas en la tabla `contratos_menors_archivo`. Snapshot de las 9.650 filas del 2026-09-26 (Galicia 3.784,
+  Cataluña RPC 5.828, Lorquí 37, Torre Pacheco 1; 27,2 M€) en
+  `backend/historico/contratos_menores_anteriores_2021-09.json.gz`. Las filas sin fecha (Fuente Álamo, 801) se conservan.
+- **Formales — pendiente de decisión**: PSCP, Euskadi y Navarra traen todo el histórico sin filtro de fecha y los
+  contratos guardados no llevan fecha. Auditoría del 2026-09-26 (fecha de adjudicación): PSCP 6.570 de 74.731
+  filas fuera de ventana (8,8 %; rango 2010-12-14 a 2027-01-01). Euskadi (trae "histórico completo"; en una lectura parcial de 229 de 251
+  autoridades el 36 % era anterior a septiembre de 2021, cifra exacta pendiente) y Navarra (7.643 guardados,
+  sin medir): a la espera de la decisión de César.
+
 ## Contratos menores
 
 - **Cataluña (Girona/Lleida/Barcelona/Tarragona)**: se consulta el dataset RPC

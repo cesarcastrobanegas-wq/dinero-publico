@@ -100,6 +100,10 @@ HEADERS = {
     "Accept-Language": "es-ES,es;q=0.9",
 }
 DESDE_ANY = 2021
+# Alcance (César, 2026-09-25): solo los ÚLTIMOS 5 AÑOS = desde el 2021-09-01. DESDE_ANY sigue acotando qué ficheros/páginas
+# se descargan (por año natural); el corte exacto por fecha se aplica en _fusionar_fuente. Los anteriores están
+# archivados en backend/historico/contratos_menores_anteriores_2021-09.json.gz y en la tabla contratos_menors_archivo.
+DESDE_FECHA = "2021-09-01"
 OUT_FILE = f"{BASE_DIR}/contratos_menores_murcia_manual.json.gz"   # comprimido desde 2026-09-24 (52,8 MB -> ~7 MB)
 
 
@@ -1933,7 +1937,7 @@ def _fusionar_fuente(previos, nombre, funcion, forzar=False):
     Con --forzar se acepta el resultado nuevo aunque sea más pequeño."""
     antes = [r for r in previos if r.get("fuente") == nombre]
     try:
-        nuevos = funcion()
+        nuevos = [r for r in funcion() if not r.get("data_adjudicacio") or r["data_adjudicacio"] >= DESDE_FECHA]
     except Exception as e:
         print(f"  !! {nombre}: FALLÓ ({type(e).__name__}: {e}); se conservan las {len(antes)} filas anteriores.")
         return antes

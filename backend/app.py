@@ -7987,12 +7987,24 @@ def buscar_en_rpc_menors(municipio, provincia, job_id=None):
     return registros
 
 
+# Alcance del proyecto (César, 2026-09-25): solo contratos de los ÚLTIMOS 5 AÑOS -- a esa fecha, desde el
+# 2021-09-01. Los anteriores no se borran: se archivan en contratos_menors_archivo (ver
+# _archivar_menores_fuera_de_ventana) y en backend/historico/. Para subir el corte con el paso del tiempo basta
+# cambiar esta constante: el arranque archiva lo que quede fuera. Las filas SIN fecha se conservan (Fuente Álamo).
+MENORES_DESDE_FECHA = "2021-09-01"
+
+
 def _guardar_contratos_menors_locales(registros):
     """Inserta/actualiza filas en contratos_menors_locales (mismo patrón que
     _guardar_fondos_ue: misma clave = mismo registro, se sobrescribe con el
     dato más reciente). Compartida por todas las fuentes de contratos menores
     locales (Girona RPC, Fuente Álamo, Mula, Molina de Segura...) -- cada
-    registro trae su propio 'provincia'/'fuente' para distinguir origen."""
+    registro trae su propio 'provincia'/'fuente' para distinguir origen.
+
+    Es el ÚNICO punto de escritura de la tabla (RPC, Fuente Álamo, Cartagena y los manuales): aquí se aplica el
+    alcance de MENORES_DESDE_FECHA, así ningún refresco vuelve a meter filas ya archivadas."""
+    registros = [r for r in (registros or [])
+                 if not r.get("data_adjudicacio") or r["data_adjudicacio"] >= MENORES_DESDE_FECHA]
     if not registros:
         return
     ahora = time.time()
@@ -8018,6 +8030,50 @@ def _guardar_contratos_menors_locales(registros):
                  r["exercici"], ahora),
             )
         _db.commit()
+
+
+def _archivar_menores_fuera_de_ventana():
+    """Mueve de contratos_menors_locales a contratos_menors_archivo las filas anteriores a MENORES_DESDE_FECHA.
+    ARCHIVA, no borra: copia primero, comprueba que TODAS las filas a quitar están ya en el archivo y solo entonces
+    las quita de la tabla activa, todo en una transacción (si algo no cuadra, rollback y no se toca nada). Es
+    idempotente (sin filas fuera de ventana no hace nada) y respeta _DISCO_CONFIABLE como las demás migraciones.
+    El snapshot de las 9.650 filas del 2026-09-26 está también en backend/historico/."""
+    if not _DISCO_CONFIABLE:
+        return
+    try:
+        with _db_lock:
+            fuera = ("data_adjudicacio IS NOT NULL AND data_adjudicacio<>'' AND data_adjudicacio < ?", (MENORES_DESDE_FECHA,))
+            n = _db.execute(f"SELECT COUNT(*) FROM contratos_menors_locales WHERE {fuera[0]}", fuera[1]).fetchone()[0]
+            if not n:
+                return
+            cols = ("id, municipio, provincia, fuente, organisme, adjudicatari, nif, import_num, data_adjudicacio, "
+                    "tipus_contracte, descripcio, codi_cpv, exercici, ts")
+            _db.execute("""CREATE TABLE IF NOT EXISTS contratos_menors_archivo (
+                id TEXT PRIMARY KEY, municipio TEXT NOT NULL, provincia TEXT, fuente TEXT, organisme TEXT,
+                adjudicatari TEXT, nif TEXT, import_num REAL, data_adjudicacio TEXT, tipus_contracte TEXT,
+                descripcio TEXT, codi_cpv TEXT, exercici TEXT, ts REAL, archivado_ts REAL)""")
+            por_fuente = dict(_db.execute(f"SELECT fuente, COUNT(*) FROM contratos_menors_locales WHERE {fuera[0]} "
+                                          "GROUP BY fuente", fuera[1]).fetchall())
+            _db.execute(f"INSERT OR IGNORE INTO contratos_menors_archivo ({cols}, archivado_ts) "
+                        f"SELECT {cols}, ? FROM contratos_menors_locales WHERE {fuera[0]}", (time.time(), *fuera[1]))
+            sin_archivar = _db.execute(
+                f"SELECT COUNT(*) FROM contratos_menors_locales WHERE {fuera[0]} "
+                "AND id NOT IN (SELECT id FROM contratos_menors_archivo)", fuera[1]).fetchone()[0]
+            if sin_archivar:
+                _db.rollback()
+                print(f"[startup] archivo de menores: {sin_archivar} de {n} filas no quedaron archivadas; "
+                      "no se toca nada.", flush=True)
+                return
+            _db.execute(f"DELETE FROM contratos_menors_locales WHERE {fuera[0]}", fuera[1])
+            _db.commit()
+        print(f"[startup] contratos menores anteriores a {MENORES_DESDE_FECHA}: {n} filas archivadas en "
+              f"contratos_menors_archivo (fuera del pipeline activo). {por_fuente}", flush=True)
+    except Exception as e:
+        try:
+            _db.rollback()
+        except Exception:
+            pass
+        print(f"[startup] archivo de menores: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
 
 
 def _db_contratos_menors_por_municipio(municipio):
@@ -10295,6 +10351,7 @@ def _inicializar_datos():
     _result_cache."""
     _db_init()
     _cargar_contratos_menores_murcia_manual()
+    _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
     corte = time.time() - RESULT_CACHE_TTL
@@ -13384,9 +13441,9 @@ _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia"
 # inferencias del parser que el lector debe conocer, no solo la documentación.
 _NOTAS_FUENTE_CM = {
     "a-coruna": (
-        "Cobertura de A Coruña desde 2021. Los años anteriores no se incluyen: 2014-2017 son "
-        "imputaciones de facturas sin NIF y 2018-2019 usan otro esquema de datos (2020 queda "
-        "fuera por el corte general de 2021). Importes con IVA."
+        "Cobertura de A Coruña desde septiembre de 2021 (solo se muestran los contratos de los últimos cinco "
+        "años; los anteriores están archivados). Antes de 2021 no hay datos aprovechables: 2014-2017 son "
+        "imputaciones de facturas sin NIF y 2018-2019 usan otro esquema de datos. Importes con IVA."
     ),
     "lugo": (
         "Lugo dejó de publicar sus contratos menores tras el tercer trimestre de 2025, así que la cobertura "
@@ -15288,7 +15345,7 @@ def render_caso_contratos_menores_html():
   contratos menores de Galicia se publican de forma muy desigual entre ayuntamientos y no todos
   los grandes tienen todavía una fuente conectada.</p>
 
-  <p>La cobertura histórica real varía por fuente, no es un "desde 2021" único para
+  <p>Solo mostramos contratos menores de los últimos cinco años (desde septiembre de 2021); los anteriores se archivan y no cuentan en las cifras. La cobertura histórica real varía por fuente, no es un "desde 2021" único para
   todo el sitio: en Cataluña (RPC) y Lorquí llega a 2021; en Mula, Molina de Segura,
   Murcia capital y San Pedro del Pinatar, a 2022; en Torre Pacheco, con datos
   significativos solo desde 2024; en Lorca empieza en 2024 (estamos revisando si su portal
