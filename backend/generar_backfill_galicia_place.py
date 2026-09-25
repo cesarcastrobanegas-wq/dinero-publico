@@ -40,6 +40,10 @@ PLACE_ZIP_URL = ("https://contrataciondelsectorpublico.gob.es/sindicacion/sindic
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36"}
 LIM_RSS_MB = 2500
 LIM_ESCANEO_S = 180
+DESCARGA_INTENTOS = 4
+# Alcance del proyecto (decision de Cesar, 2026-09-25): solo contratos de los ULTIMOS 5 ANOS = desde septiembre de 2021
+# (a esa fecha). El generador no baja de aqui aunque se le pida; si pasa el tiempo se sube el suelo a mano.
+MES_MINIMO = "202109"
 
 
 def meses_atras(desde, hasta):
@@ -76,6 +80,9 @@ def main():
     ap.add_argument("--salida", default=FICHERO)
     ap.add_argument("--zip-local", default="", help="directorio con place_AAAAMM.zip ya descargados (se reutilizan y NO se borran)")
     args = ap.parse_args()
+    if args.hasta < MES_MINIMO:
+        print(f"'hasta' {args.hasta} queda fuera del alcance de 5 anos: se usa {MES_MINIMO}.", flush=True)
+        args.hasta = MES_MINIMO
 
     import psutil
     proc = psutil.Process()
@@ -123,13 +130,26 @@ def main():
             t0 = time.time()
             if not (ruta and os.path.exists(ruta) and os.path.getsize(ruta) > 1_000_000):
                 ruta, propio = os.path.join(tmp, f"place_{mes}.zip"), True
-                r = requests.get(PLACE_ZIP_URL.format(m=mes), headers=HEADERS, stream=True, timeout=(20, 120))
-                if r.status_code != 200:
-                    print(f"{mes}: ZIP no disponible (HTTP {r.status_code}); paro.", flush=True)
+                # PLACE corta a veces la conexion a mitad de un ZIP de ~200 MB (visto 2026-09-25: ConnectionReset,
+                # dos veces): se reintenta desde cero hasta 4 veces antes de rendirse. Un 404 no se reintenta.
+                estado = None
+                for intento in range(1, DESCARGA_INTENTOS + 1):
+                    try:
+                        r = requests.get(PLACE_ZIP_URL.format(m=mes), headers=HEADERS, stream=True, timeout=(20, 120))
+                        if r.status_code != 200:
+                            estado = r.status_code
+                            break
+                        with open(ruta, "wb") as f:
+                            for trozo in r.iter_content(1 << 20):
+                                f.write(trozo)
+                        estado = 200
+                        break
+                    except requests.exceptions.RequestException as e:
+                        print(f"{mes}: descarga cortada (intento {intento}/{DESCARGA_INTENTOS}): {type(e).__name__}", flush=True)
+                        time.sleep(15 * intento)
+                if estado != 200:
+                    print(f"{mes}: ZIP no disponible (HTTP {estado}); paro.", flush=True)
                     break
-                with open(ruta, "wb") as f:
-                    for trozo in r.iter_content(1 << 20):
-                        f.write(trozo)
             t_desc = time.time() - t0
             t0 = time.time()
             todos = A._extraer_contratos_zip(ruta)
