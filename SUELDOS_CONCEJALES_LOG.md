@@ -58,3 +58,46 @@ municipios.
 7. Mejora de calidad: `nuevo_registro` rechaza nombres de una sola palabra (un parseo de Huelva devolvió apellidos sueltos y la verificación por texto no lo detectaba).
 
 **Pendiente en Andalucía**: Mijas (reintento), Fuengirola, Estepona, Benalmádena, Torremolinos, Vélez-Málaga, Chiclana, El Puerto, Roquetas, El Ejido, Motril, Linares, Alcalá de Guadaíra… (siguientes por población).
+
+---
+
+## Lote 2 — Cataluña, Madrid, C. Valenciana, Galicia, La Rioja, Murcia, Canarias (2026-09-26, madrugada)
+
+**Añadidos: 243 concejales en 11 municipios**
+
+| CCAA | Municipio | N | Fuente oficial | Qué se guarda |
+|---|---|---|---|---|
+| Cataluña | L'Hospitalet de Llobregat | 16 | Seu electrònica > Retribucions de càrrecs electes (tablas HTML) | retribució bruta anual 2025 (exclusiva/parcial) + càrrec |
+| Cataluña | Terrassa | 15 | Govern Obert > Retribucions dels càrrecs electes | **mensual bruta (14 pagues)** 2026, sin convertir; cargo genérico "Regidor/a" |
+| Cataluña | Sabadell | 18 | PDF "Retribucions de l'alcaldessa i els regidors" (Ple 11/10/2024) | retribució bruta anual + càrrec |
+| Cataluña | Lleida | 14 | La Paeria > Cartipàs > Retribucions càrrecs electes (PDF, act. 17/08/2026) | retribució anual (mensual × 14, comprobado) |
+| Cataluña | Girona | 10 | Seu electrònica (seu-e.cat) > cargos electos: fichas individuales | "Retribució anual bruta: Any 2026" |
+| Cataluña | Mataró | 13 | Portal de Transparència > Excel "Retribució i dedicació ... 2025" | retribució anual 2025 a 31/12 |
+| Madrid | Madrid | 60 | Portal de Transparencia > "Retribuciones brutas percibidas en nómina por cargos electos 2025" (PDF) | **suma de las mensualidades brutas publicadas** de 2025 (aritmética sobre cifras oficiales; la base indica cuántas mensualidades) |
+| C. Valenciana | Elche | 21 | Portal de Transparencia > Sueldos públicos | "Dedicación exclusiva/75 %/50 % (Anual 2026)" y cargo/concejalía |
+| Galicia | Vigo | 14 | Portal de Transparencia > Retribuciones de los cargos electos (Resolución de la Alcaldía, julio 2023) | retribución anual, dedicación exclusiva y parcial |
+| La Rioja | Logroño | 18 | Ayuntamiento > Corporación local > Retribuciones (PDF, act. 4/06/2026) | retribución anual + cargo + grupo |
+| Murcia | Murcia | 28 | Ayuntamiento > Dedicación y retribuciones de la Corporación (PDF febrero 2024) | retribución anual + puesto |
+| Canarias | Santa Cruz de Tenerife | 16 | Portal de Transparencia > Retribuciones > Altos cargos (tabla 2024) | retribución percibida en 2024 (año completo) |
+
+**Saltados (y por qué)**
+- **Barcelona**: su API de datos de cargos (`cards-export`) devuelve "API timeout error" (fuente caída, comprobado dos veces en la noche). **Reintentar.**
+- **Badalona / Manresa / Sant Boi / Vilanova / Cornellà**: la ficha del cargo no trae importe (remite a un documento aparte) o la web publica escalas por cargo; Badalona enlaza un BOP de julio de 2023 por categorías; Cornellà devuelve 403 y su PDF es del mandato 2019-2023.
+- **Móstoles**: tabla con nombre, cargo y "RETRIBUCIONES" pero sin decir si es anual o mensual → base ambigua, saltado.
+- **Zaragoza, Getafe, Pinto, València, Valladolid, Córdoba**: publican la escala por cargo (con nº de puestos) sin nombres.
+- **Burgos, Oviedo**: documentos mensuales hasta agosto 2025 / resoluciones sueltas por grupo; sin tabla única nombre-importe.
+- **Las Palmas de Gran Canaria**: el PDF con nombres es de octubre 2022 (mandato anterior); la página 2025 no carga sin JavaScript.
+- **Écija**: Excel por años, pero el de 2023 es parcial por el cambio de mandato → no comparable.
+- **Sin fuente localizada**: Bilbao, Vitoria, Donostia, Palma, Alicante, Torrevieja, Gijón, Santander, Cartagena, Pamplona, Albacete, Badajoz, Sant Cugat (retribución solo en la ficha de cada regidor, sin listado accesible), Leganés (fichas individuales sin comprobar).
+- **Reus**: la URL del portal ha cambiado (404). **Alcalá de Henares**: la web no responde. Reintentar ambas.
+
+**Convenciones y anomalías (revisar por la mañana)**
+1. **Madrid es una suma**: cada persona aparece 12 veces en el PDF (una por mes) y guardo la suma; 54 de 60 tienen las 12 mensualidades, 6 son parciales (1, 3, 4, 8 y 9 meses) y la base lo dice. Hay importes muy bajos de concejales sin responsabilidad de gestión (p. ej. 67,83 € en 1 mensualidad): son lo que publica el PDF.
+2. **Elche**: un primer parseo atribuía a una concejala el importe de otra (un concejal sin línea de importe dejaba texto en el buffer y la verificación por cercanía no lo detecta). Corregido tomando como nombre la última línea que no parece un cargo; el concejal sin importe publicado (Miguel Serna Castillejos) queda fuera.
+3. **Mataró**: se saltaron 1 portavoz cuyo cargo dice "Assistència a Plens" (dietas) y 1 regidor al 75 % con solo 8.791 € (periodo parcial); regla: importes < 20.000 € con dedicación no son comparables.
+4. **Lleida**: una fila (Jordina Freixanet) se salta porque la fuente escribe "60,300,10 €" y no cuadra con 4.307,15 × 14; la comprobación mensual × 14 se aplica a todas.
+5. **Terrassa** es mensual (14 pagas) y **no se convierte**; **Vigo** y **Murcia** son documentos fechados (julio 2023 / febrero 2024): el periodo lo dice y los importes pueden haberse actualizado después.
+6. **Sabadell**: el propio PDF oficial escribe "Regidor" para mujeres y "Regidora" para hombres en varias filas; se respeta la fuente.
+7. **Logroño**: 8 concejales con "Indemnización asistencias" (dietas) saltados. **Santa Cruz de Tenerife**: solo filas con año completo; las de 2023 (periodos parciales, celdas combinadas) no se usan.
+8. **Alcalde**: se excluye cuando el Ministerio lo identifica (Cataluña, Murcia) o el documento lo rotula "Alcalde".
+9. **Mejoras de infraestructura**: escritura atómica y guardado tras cada municipio (varias ejecuciones en paralelo sin pisarse); `nuevo_registro` acepta importes de Excel escritos "49777.7"; conector genérico para la plataforma seu-e.cat (43 municipios catalanes sondeados: la mayoría no publica el importe en la ficha; los resultados irán en el lote siguiente).
