@@ -146,11 +146,12 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-29**: 8 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
-Móstoles, Getafe, Leganés, Toledo, Palma — **67.702 contratos** entre los ocho), 1 con lead confirmado de alto
-esfuerzo sin conectar (Alcalá de Henares), 2 con lead sin cerrar por un obstáculo técnico concreto (Valladolid:
-SPA con JS; Zaragoza: paginación de su propia API rota, confirmado y abandonado), varios sin fuente viable
-(Elche, Albacete, Fuenlabrada, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio abajo.
+**Estado a 2026-09-29**: 9 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada — **76.138 contratos** entre los nueve), 1 con lead
+confirmado de alto esfuerzo sin conectar (Alcalá de Henares), 2 con lead sin cerrar por un obstáculo técnico
+concreto (Valladolid: SPA con JS; Zaragoza: paginación de su propia API rota, confirmado y abandonado), varios
+confirmados sin fuente viable tras investigación real, no solo una búsqueda superficial (Elche, Albacete,
+Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -265,13 +266,24 @@ investigación de sueldos de concejales:
   fuentes conectadas hasta ahora. Viable con un parser de texto por líneas y expresiones regulares, pero de
   bastante más esfuerzo que las fuentes con tabla real -- queda documentado para cuando se decida dedicarle el
   tiempo, con los ~30 enlaces PDF (2019-2026) ya localizados en la propia página.
-- **Fuenlabrada (~192.000 hab.)**: el único visor de contratos de su portal de transparencia
-  (`transparencia.ayto-fuenlabrada.es/contratos-y-patrimonio/visor-contratos/`) está **protegido por
-  contraseña** -- no es una fuente pública accesible, sin lead viable esta ronda. El subdominio
-  `gobiernoabierto.ayto-fuenlabrada.es` (por si usara también la plataforma Gobierto, como Getafe) da un bucle
-  de redirección, no parece operativo.
-- **Alcorcón (~170.000 hab.)**: portal de datos abiertos propio (`datosabiertos.ayto-alcorcon.es`, CKAN
-  confirmado vía API) con solo 8 datasets, ninguno de contratación -- sin lead viable esta ronda.
+- **Fuenlabrada (~192.000 hab.) — CONECTADO (2026-09-29, retomado)**: el "visor de contratos" general del
+  portal de transparencia SÍ está protegido por contraseña (confirmado, sin cambios), pero navegando el menú
+  completo de "Contratos y Patrimonio" apareció una sección DISTINTA y pública:
+  `transparencia.ayto-fuenlabrada.es/contratos/menores/`, con informes trimestrales del Ayuntamiento y sus
+  Organismos Autónomos (CIFE/IMLS/OTAF/PMC/PMD) en xls/xlsx/ods, sin contraseña. **8.436 registros desde
+  2021T3** (`actualizar_contratos_menores_fuenlabrada.py`, fuente `fuenlabrada`). Dos bugs reales de formato
+  cambiante entre trimestres corregidos (posición de columna variable según la generación del fichero;
+  detección de celda-fecha de `xlrd` limitada a una columna fija). El subdominio `gobiernoabierto.ayto-
+  fuenlabrada.es` SÍ es operativo (usa la plataforma "ogov.tech", no Gobierto) pero solo expone un dashboard
+  de subvenciones (`/sub`), ningún equivalente de contratos localizado.
+- **Alcorcón (~170.000 hab.) — confirmado sin fuente viable tras 5 vías distintas (2026-09-29)**: (1) portal de
+  datos abiertos CKAN (`datosabiertos.ayto-alcorcon.es`) -- 8 datasets, 2 organizaciones, 0 resultados buscando
+  "contrat" vía API; (2) sección de transparencia "contratos, concesiones, convenios..." -- ninguna mención de
+  "menor" en el HTML completo, solo relación de convenios; (3) "Buen Gobierno" -- nada; (4) Perfil del
+  Contratante propio (`portalciudadano.ayto-alcorcon.es`) -- redirige a la Plataforma de Contratación del
+  Estado genérica para todo lo posterior a marzo de 2018 (mismo caso que Elche/Albacete), y no tiene nada
+  anterior; (5) sin un subdominio `gobiernoabierto`/`transparencia` separado con contenido propio de
+  contratación, a diferencia de Fuenlabrada. Sin lead viable con las herramientas disponibles.
 - **Leganés (~187.000 hab.) — CONECTADO**: mismo formato EXACTO que Alicante (NIF/Adjudicatario/Expediente/
   Objeto/Fecha contrato "DD-MES_ES-AAAA" o fecha real de Excel/Precio sin impuestos/Precio con impuestos/
   Duración), en XLSX -- probablemente una plantilla común. **254 registros desde 2021-09**
