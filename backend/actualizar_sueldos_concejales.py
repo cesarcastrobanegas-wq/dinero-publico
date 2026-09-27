@@ -1754,6 +1754,84 @@ def actualizar_badajoz():
     return out
 
 
+@_fuente("lorca")
+def actualizar_lorca():
+    """Ayuntamiento de Lorca (Murcia) > transparencia.lorca.es > Corporación municipal > PDF "Retribuciones
+    percibidas por los miembros de la Corporación Local de Lorca <año>": un bloque por persona, SIN tabla real
+    -- la 1.ª línea del bloque es el final del cargo + DEDICACIÓN (EXCLUSIVA/PARCIAL, a veces con asteriscos de
+    nota al pie) + RÉGIMEN DE ASISTENCIAS (SI/NO) + el importe; las líneas siguientes son más cargo (a veces
+    ninguna); la ÚLTIMA línea del bloque, justo antes del siguiente bloque, es el nombre. Los concejales que
+    solo cobran por asistencia (sin dedicación fija, "... SI" sin importe al final) se saltan -- no tienen un
+    importe anual que publicar. Alcalde excluido."""
+    pagina = "http://www.transparencia.lorca.es/corporacion-municipal"
+    r = descargar(pagina)
+    m = re.search(r'href="([^"]*RETRIBUCIONES_CORPORACION_LOCAL[^"]*\.pdf)"', r.text, re.I)
+    if not m:
+        raise RuntimeError("Lorca: no se encontró el PDF de retribuciones")
+    from urllib.parse import urljoin
+    url = urljoin(r.url, m.group(1).replace(" ", "%20").replace("&amp;", "&"))
+    contenido = descargar(url, timeout=90).content
+    texto = texto_pdf(contenido)
+    m_anio = re.search(r"CORPORACI[ÓO]N LOCAL DE LORCA (\d{4})", texto, re.I)
+    anio = m_anio.group(1) if m_anio else "?"
+
+    def es_ruido(l):
+        """Cabeceras/pies de página de la tabla: aparecen partidas en trozos distintos según cómo caiga el
+        salto de página (a veces "GRUPO MUNICIPAL X" en una línea y el resto de la cabecera de columnas en
+        otra bien distinta, p. ej. "VERDE ÓRGANOS ANUALES" o "ORGANOS ANUALES" sueltos, sin acento ni el resto
+        de la frase) -- bug real encontrado: un filtro que solo miraba el PREFIJO de la línea dejaba pasar esas
+        variantes como si fueran el nombre de la persona, y arrastraba mal el bloque siguiente. Por eso se
+        busca cualquiera de estas palabras COMO SUBCADENA, en cualquier posición de la línea."""
+        if not l or re.match(r"^\d+$", l):
+            return True
+        lu = l.upper()
+        for palabra in ("GRUPO MUNICIPAL", "RELACIÓN DE", "RETRIBUCIONES PERCIBIDAS", "COLEGIADOS",
+                        "ÓRGANOS", "ORGANOS", "ANUALES", "DE LA CORPORACIÓN", "DEDICACIÓN", "RÉGIMEN DE",
+                        "COMISIÓN INFORMATIVA O PLENO", "ACTUALIZADO A"):
+            if palabra in lu:
+                return True
+        if re.match(r"^\d+\.-", l):
+            return True
+        return False
+
+    RE_DATA = re.compile(r"^(?P<cargo>.*?)\**\s*(?P<dedicacion>EXCLUSIVA|PARCIAL)\s+(?P<asist>SI|NO)\s+(?P<importe>[\d.,]+)\s*$")
+    RE_SIN_IMPORTE = re.compile(r"^.+\s(?:SI|NO)\s*$")   # "... SI" sin dedicación/importe: solo asistencias
+    out, pendiente, continuacion, solo_asistencia = [], None, [], 0
+
+    def cerrar():
+        nonlocal pendiente, continuacion
+        if pendiente and continuacion:
+            nombre = continuacion[-1]
+            cargo = re.sub(r"\s+", " ", (pendiente["cargo"] + " " + " ".join(continuacion[:-1])).strip(" ,"))
+            if not cargo.lower().startswith("alcalde"):
+                out.append(nuevo_registro("Lorca", "murcia", nombre, cargo_frase(cargo), num_es(pendiente["importe"]),
+                                          f"retribución bruta anual (dedicación {pendiente['dedicacion'].lower()})",
+                                          f"año {anio}", url,
+                                          "Portal de Transparencia del Ayuntamiento de Lorca", texto))
+        pendiente, continuacion = None, []
+
+    for l in (x.strip() for x in texto.split("\n")):
+        if es_ruido(l):
+            continue
+        m = RE_DATA.match(l)
+        if m:
+            cerrar()
+            pendiente = m.groupdict()
+            continue
+        if RE_SIN_IMPORTE.match(l) and not any(c.isdigit() for c in l):
+            cerrar()
+            solo_asistencia += 1
+            continue
+        if pendiente is not None:
+            continuacion.append(l)
+    cerrar()
+    if solo_asistencia:
+        print(f"  Lorca: {solo_asistencia} concejales solo con régimen de asistencias (sin importe fijo) saltados")
+    if len(out) < 10:
+        raise RuntimeError(f"Lorca: solo {len(out)} concejales (¿cambió el PDF?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):

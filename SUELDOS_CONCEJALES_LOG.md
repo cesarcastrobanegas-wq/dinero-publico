@@ -358,3 +358,15 @@ Nota pública añadida para Torrevieja.
 
 Nota pública añadida para Badajoz.
 
+---
+
+## Lote 16 — Lorca (2026-09-30, extensión a toda España: Región de Murcia)
+
+**Añadidos: 22 concejales** (Lorca). Total acumulado: **732 registros en 38 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Lorca | transparencia.lorca.es > Corporación municipal > PDF "Retribuciones percibidas por los miembros de la Corporación Local de Lorca 2025" | Sin tabla real: un bloque de texto por persona (cargo + dedicación + régimen de asistencias + importe en la 1.ª línea del bloque, más cargo en líneas siguientes, y el NOMBRE en la última línea del bloque, justo antes del siguiente). 2 concejales que solo cobran por asistencia a sesiones (sin dedicación fija) se saltan -- la fuente no publica un importe anual para ellos. Bug real corregido: un filtro de cabeceras que solo miraba el PREFIJO de cada línea dejaba pasar variantes de la cabecera de la tabla partidas de forma distinta por los saltos de página ("ORGANOS ANUALES" o "VERDE ÓRGANOS ANUALES" sueltos, sin el resto de la frase) como si fueran el nombre de una persona, arrastrando mal el bloque siguiente -- se corrigió buscando esas palabras como subcadena en cualquier posición de la línea, no solo al principio |
+
+Nota pública añadida para Lorca. Otros municipios grandes de la Región de Murcia probados sin éxito esta noche para CONTRATOS MENORES (Alcantarilla, Cieza): ambos solo enlazan a la Plataforma de Contratación del Estado genérica, sin dataset propio -- mismo caso que Elche/Albacete.
+

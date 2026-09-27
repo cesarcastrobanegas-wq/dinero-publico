@@ -44,8 +44,10 @@ decisión deliberada de alcance, o algo pendiente de hacer.
   detiene en 2021 y son decretos/facturas, no un listado), Los Alcázares (solo publica
   los financiados por Agenda Urbana y PRTR, no todos), Alhama de Murcia (portal de
   transparencia en mantenimiento, reintentar), Totana (archivo con una sola entrada de 2015 sin
-  adjudicatario ni importe; fichas de 2019 en fase de licitación) y Yecla (su portal Governalia
-  está archivado/suspendido, HTTP 410; las páginas antiguas de la JGL dan 404).
+  adjudicatario ni importe; fichas de 2019 en fase de licitación), Yecla (su portal Governalia
+  está archivado/suspendido, HTTP 410; las páginas antiguas de la JGL dan 404), Alcantarilla y
+  Cieza (2026-09-30: ambas solo enlazan a la Plataforma de Contratación del Estado genérica desde
+  su portal de transparencia, sin dataset propio -- mismo caso que Elche/Albacete).
   - **Cartagena** (2026-09-24, sin desplegar al escribir esto): el portal propio solo devuelve
     2026; 2022-2025 se recuperan de su portal Governalia (`app.governalia.es`, idP=47226), un
     espejo de lo que Cartagena comunica a PLACE (13.560 filas, fuente `cartagena-governalia`).

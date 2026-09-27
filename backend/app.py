@@ -4422,6 +4422,8 @@ _NOTAS_SUELDOS_CONCEJALES = {
                        "La fuente rotula todos los puestos de teniente de alcalde como «teniente alcaldesa».",
     "badajoz": "Salario anual bruto (14 pagas) de 2025 según el Excel de retribuciones del Ayuntamiento; solo aparecen tenientes de "
                "alcalde y concejales delegados con dedicación, no los concejales de la oposición ni cargos sin retribución fija.",
+    "lorca": "Retribución bruta anual de 2025 según el PDF oficial del Ayuntamiento; 2 concejales que solo cobran por asistencia a "
+             "sesiones (sin dedicación fija) no aparecen porque la fuente no publica un importe anual para ellos.",
     "mostoles": "La tabla oficial (acuerdo plenario de 8 de enero de 2026) da un importe por persona sin indicar el periodo; se muestra tal cual.",
     "almeria": "Importes íntegros anuales de 2026 según el régimen de dedicación aprobado; algunas personas tienen dedicación desde una fecha de 2025 (se indica). "
                "Los cargos se muestran con la grafía de la fuente.",
