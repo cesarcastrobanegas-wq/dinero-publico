@@ -167,11 +167,23 @@ ronda porque todo lo encontrado es fuente primaria municipal):
     mirar la documentación completa del catálogo 147 (o probar con OCDS estándar: quizás el campo de fecha real
     esté en `/ocds/release` o en un JSON anidado tipo `awards[].date` de la propia entrada, no en el nivel raíz
     que se ve en `/award.json`).
-- **Valencia capital (~800.000 hab., Comunitat Valenciana) — portal en plena reorganización**: tiene contratos
-  menores documentados en su portal de transparencia y un histórico de API CKAN (`gobiernoabierto.valencia.es`),
-  pero el rediseño del portal (junio de 2026) ha retirado esa API antigua (redirige a la web nueva, sin CKAN
-  operativo comprobado esta noche). Es el municipio más grande de los seis con NINGÚN dato conectado todavía --
-  prioridad alta para la próxima ronda, revisando la estructura nueva del portal.
+- **Valencia capital (~800.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: el portal antiguo (CKAN)
+  se retiró en junio de 2026; el sustituto real es el buscador oficial `www.valencia.es/cas/ayuntamiento/
+  buscador-contratos-menores` (portlet Liferay, formulario POST). **10.693 registros desde 2021-09**
+  (`actualizar_contratos_menores_valencia_capital.py`, fuente `valencia_capital`). Detalles técnicos:
+  - Sin parámetro de página: el tope real es `maxResultados=500`. Paginado repitiendo la consulta con la fecha
+    más antigua vista + 7 días de margen como nuevo `fechaFin`, deduplicando por clave real.
+  - **Bug real detectado y corregido en la primera prueba**: el "N° de expediente" NO es una clave única por
+    contrato -- un mismo expediente agrupa varios contratos distintos (adjudicatario/objeto/importe/fecha
+    diferentes). La clave única real es el "N° de contrato" (oculto en la URL del título). Deduplicar por
+    expediente colapsaba contratos reales entre sí (327 filas reales → solo 149 tras el bug).
+  - "Estado" (ADJUDICADOS/MODIFICADOS/RESUELTOS) es el estado ACTUAL de cada contrato, no un histórico de fases
+    como PSCP -- se consultan los tres por separado (10.676 + 51 + 22).
+  - Importe SIN IVA (columna propia del buscador, distinta de la de IVA) — añadido a `_FUENTES_CM_SIN_IVA`.
+    Sí publica NIF y un enlace por contrato (a diferencia de RPC/Euskadi/Madrid), aunque ese enlace no se
+    aprovecha todavía (el esquema compartido de `contratos_menors_locales` no tiene columna de URL).
+  - Verificado: 0 filas sin fecha, 0 sin NIF, importes máximos coherentes con el tope legal de obras (~40.000 €,
+    sin anomalías tipo Euskadi). Carga y render probados sin errores.
 - **Valladolid (~298.000 hab., Castilla y León) — lead confirmado, formato incómodo**: publica "Contratos
   menores y volumen de contratación" en `valladolid.gob.es/es/perfil-contratante/...`, un XLSX por trimestre/año
   (no un dataset único), desde al menos 2018. Viable pero requiere descargar y unificar muchos ficheros con
