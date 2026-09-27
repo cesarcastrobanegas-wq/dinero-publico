@@ -264,3 +264,21 @@ Avisos públicos añadidos: Jaén, Pamplona. Nota pública para Salamanca.
 
 Nota pública para Telde.
 
+---
+
+## Lote 10 — Calvià (2026-09-27)
+
+**Añadidos: 12 concejales** (Calvià). Total acumulado: **594 registros en 31 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Calvià | calvia.com > Transparencia > Corporación 2023-2027 > "Retribuciones e indemnizaciones de los miembros de la Corporación" > acuerdo plenario de 23/06/2023 (BOIB nº 93, 8/07/2023) | punto "Primero": por cargo con dedicación exclusiva, las personas y la retribución bruta anual del cargo (8 tenientes de alcalde a 58.550 €, 4 concejales a 49.140 €; 10 pagas + 2 extra). Alcalde excluido. NO se guardan las "indemnizaciones por asistencia" de los puntos Segundo y Tercero (portavoz PSOE 24.570 €, 11 concejales 20.075 €): no son sueldo (mismo criterio que Cartagena). Importes de 2023 (nota pública) |
+
+**Saltados y por qué (comprobado en crudo)**
+- **Torrelavega**: PDF "Retribuciones concejales 2024": solo nombre e importe (cabecera "CARGO / RETRIBUCION" sin cargos), cifras como 60,67 € o 71,66 € (pagos parciales) y sin periodo ni concepto → ambiguo. Aviso público.
+- **La Laguna**: el PDF `RETRIBUCIONES25.pdf` es solo un índice (enlaces a docx/odt); no se siguió.
+- **Arona**: la página de retribuciones lista apartados sin tabla nominal.
+- **Ferrol, Avilés, Torrent (nóminas), Gandia**: sin tabla localizada / no legible; no se afirma nada en la web.
+
+Nota pública para Calvià; aviso para Torrelavega.
+

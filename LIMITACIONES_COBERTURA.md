@@ -116,9 +116,9 @@ si falta algo o es ambiguo se salta y se anota. Nada se estima ni se convierte (
 salvedades de esa fuente** (`_NOTAS_SUELDOS_CONCEJALES` en `app.py`); las fichas de los municipios aparcados muestran un aviso con
 el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
 
-- **Cobertura a 2026-09-27**: 582 registros en 30 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
+- **Cobertura a 2026-09-27**: 594 registros en 31 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
   Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles, Las Rozas; Elche, Castellón de la Plana; Vigo; Logroño; Murcia, Molina de Segura,
-  Cartagena; Huesca; Ciudad Real; Santa Cruz de Tenerife; Telde; Palencia, Salamanca; Eivissa; Vitoria-Gasteiz). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
+  Cartagena; Huesca; Ciudad Real; Santa Cruz de Tenerife; Telde; Palencia, Salamanca; Eivissa, Calvià; Vitoria-Gasteiz). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
 - **Salvedades concretas por fuente**:
   - **Sevilla**: cargo mostrado como "Concejal/a" genérico (el PDF fuente no especifica la concejalía); el importe es lo percibido en
     2024 e incluye cantidades pequeñas de concejales sin dedicación.
@@ -157,6 +157,8 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
     en la lista; nota pública). Con aviso: **Jaén** (PDF escaneado sin texto) y **Pamplona** (no localizado).
   - **Lote 9 (2026-09-27)**: **Telde** entra (retribución anual bruta ×14 de 2025). **Torrent** (Valencia) publica recibos de nómina individuales: no se procesan
     (datos personales innecesarios) y no lleva aviso porque su clave en la base pertenece a un municipio homónimo de Girona.
+  - **Lote 10 (2026-09-27)**: **Calvià** entra (acuerdo plenario de 2023 en el BOIB, retribución por cargo; sin las indemnizaciones por asistencia). **Torrelavega**
+    con aviso (solo nombre e importe, sin cargo ni periodo).
   - Pendientes de reintento por otros motivos: **Barcelona** (su API de cargos devolvía "timeout" en dos comprobaciones),
     **Reus** (por cargo, sin nombres), **Alcalá de Henares** (por categoría, sin importe por persona).
 - **Plataformas descartadas**: `*.sedelectronica.es/employees` exige Cl@ve (Marbella, Orihuela); seu-e.cat solo rellena el importe en

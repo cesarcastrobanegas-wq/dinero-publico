@@ -4419,6 +4419,8 @@ _NOTAS_SUELDOS_CONCEJALES = {
                  "solo marca con asterisco a quienes tienen dedicación exclusiva o parcial. El importe es lo percibido en el ejercicio y la fuente no detalla los conceptos.",
     "telde": "Retribución anual bruta (14 pagas) de 2025 según la web del Ayuntamiento; solo concejales con dedicación (exclusiva, salvo una persona con dedicación parcial que la fuente indica). "
              "Los concejales sin dedicación (asistencias) no aparecen.",
+    "calvia": "Importes brutos anuales del acuerdo plenario de 23 de junio de 2023 (BOIB nº 93), por cargo con dedicación exclusiva: pueden haberse actualizado. "
+              "No aparecen las indemnizaciones por asistencia de los demás concejales (no son sueldo).",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
@@ -4460,6 +4462,7 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "pinto": "El Ayuntamiento publica la retribución anual 2026 por cargo y dedicación, con el número de cargos por partido, sin nombres.",
     "jaen": "El PDF de retribuciones de la corporación que publica el Ayuntamiento es una imagen escaneada sin texto, y no se puede verificar contra la fuente.",
     "pamplona/iruna": "No hemos localizado en la página de transparencia del Ayuntamiento un documento con nombre e importe de los concejales.",
+    "torrelavega": "El PDF «Retribuciones concejales 2024» del Ayuntamiento lista solo nombre e importe (sin el cargo y sin aclarar el periodo ni el concepto de cada cifra), por lo que no se muestra.",
 }
 
 

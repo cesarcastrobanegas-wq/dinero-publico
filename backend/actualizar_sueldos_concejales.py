@@ -1121,6 +1121,49 @@ def actualizar_cartagena():
     return out
 
 
+@_fuente("calvia")
+def actualizar_calvia():
+    """Ajuntament de Calvià > Transparencia > Corporación 2023-2027 > 'Retribuciones e indemnizaciones de los miembros de la Corporación' (enlace 'AQUÍ' =
+    acuerdo plenario de 23/06/2023 publicado en el BOIB nº 93 de 8/07/2023). El punto 'Primero' lista, por cargo, las personas con dedicación exclusiva y la
+    retribución bruta anual de cada cargo ('58.550'00 euros'). Se guardan tenientes de alcalde y concejales; se excluye el alcalde (cubierto aparte) y NO se
+    guardan las 'indemnizaciones por asistencia' de los puntos Segundo y Tercero (no son sueldo). Importes de 2023: pueden haberse actualizado."""
+    from bs4 import BeautifulSoup
+    from urllib.parse import urljoin
+    pagina = "https://www.calvia.com/es/ayuntamiento/transparencia/corporacion-2023-2027/copy_of_estructura-organizativa-del-ajuntament-de-calvia"
+    r = descargar(pagina, verify=False)
+    url = None
+    for a in BeautifulSoup(r.text, "html.parser").find_all("a", href=True):
+        if a.get_text(strip=True).upper().startswith("AQU") and a["href"].lower().endswith(".pdf"):
+            url = urljoin(r.url, a["href"])
+            break
+    if not url:
+        raise RuntimeError("Calvià: no se encontró el enlace al acuerdo plenario")
+    texto = texto_pdf(descargar(url, timeout=120, verify=False).content)
+    plano = re.sub(r"\s+", " ", texto)
+    i, j = plano.find("Primero.-"), plano.find("Los anteriores miembros")
+    if i < 0 or j < i:
+        raise RuntimeError("Calvià: no se reconoce el punto 'Primero' del acuerdo")
+    m_bo = re.search(r"N[uú]m\. (\d+) (\d{1,2} de \w+ de \d{4})", plano)
+    m_ac = re.search(r"Acuerdo plenario de (\d{2}\.\d{2}\.\d{2})", plano)
+    periodo = (f"acuerdo plenario de {m_ac.group(1).replace('.', '/')}" if m_ac else "acuerdo plenario") + (f" (BOIB nº {m_bo.group(1)}, {m_bo.group(2)})" if m_bo else "")
+    verif = texto.replace("'", ",")                      # 58.550'00 -> 58.550,00 (solo para la comprobación contra el texto crudo)
+    cargos = {"Tenientes de Alcalde": "Teniente de Alcalde", "Concejales": "Concejal"}
+    out = []
+    for item in re.split(r"\s(?=\d\. [A-Z])", plano[i:j]):
+        m = re.match(r"^\d\. (?P<cargo>Alcalde-Presidente|Tenientes de Alcalde|Concejales) (?P<nombres>.+?): (?P<imp>[\d.]+'\d{2}) euros distribuidos en (?P<pagas>.+?)\.?$", item)
+        if not m or m.group("cargo") not in cargos:
+            continue
+        importe = num_es(m.group("imp").replace("'", ","))
+        for nom in re.split(r", | y (?=Sr[a]?\. )", m.group("nombres")):
+            nom = re.sub(r"^(Sra?\.|D\.|D[ñn]a\.)\s+", "", nom.strip())
+            out.append(nuevo_registro("Calvià", "baleares", nom, cargos[m.group("cargo")], importe,
+                                      f"retribución bruta anual del cargo en dedicación exclusiva ({m.group('pagas')})", periodo, url,
+                                      "Ajuntament de Calvià: acuerdo plenario de retribuciones (BOIB)", verif))
+    if len(out) < 8:
+        raise RuntimeError(f"Calvià: solo {len(out)} concejales (¿cambió el acuerdo?)")
+    return out
+
+
 @_fuente("telde")
 def actualizar_telde():
     """Ayuntamiento de Telde > Hacienda > Intervención > Retribuciones Cargos Electos, altos cargos y personal directivo (información del año indicado en la
