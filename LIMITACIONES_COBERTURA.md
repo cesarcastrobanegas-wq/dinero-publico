@@ -212,11 +212,45 @@ ronda porque todo lo encontrado es fuente primaria municipal):
   decreto en PDF/ODS/XLS, no un dataset único). **Toledo**: publica el listado de menores mensualmente en su web
   de transparencia (sin confirmar el formato exacto esta ronda). **Guadalajara**: solo contratos MAYORES
   localizados, no menores.
-- **Lead nuevo para otros municipios (no capitales) de la Comunidad de Madrid**: Torrejón de Ardoz
-  (`transparencia.ayto-torrejon.es/t/contratos`) y Pinto (`gobiernoabierto.ayto-pinto.es/contratos-menores`)
-  aparecen con contratos menores en CSV/Excel en sus propios portales -- sin verificar en profundidad esta
-  ronda, pero es una señal de que, aunque no hay agregador regional, varios ayuntamientos medianos de Madrid sí
-  publican su propio dataset y merece la pena mirarlos uno a uno además de los grandes.
+### Resto de la Comunidad de Madrid, por población (2026-09-28)
+
+Madrid capital ya conectada (27.959 registros, ver arriba). Sin agregador regional (comprobado antes), así que
+ayuntamiento a ayuntamiento por población, reutilizando cuando existía el portal ya localizado en la
+investigación de sueldos de concejales:
+
+- **Móstoles (~209.000 hab.) — CONECTADO**: informes MENSUALES oficiales en PDF (portal de transparencia,
+  `mostoles.es/.../contratos-menores-mensuales-<año>`). **2.448 registros desde 2021-09**
+  (`actualizar_contratos_menores_mostoles.py`, fuente `mostoles`), extraídos con `pdfplumber`. Dos bugs reales
+  corregidos en la primera pasada: (1) la URL se des-escapaba antes de descargarla y los PDFs con espacios en
+  el nombre rompían la petición HTTP -- 0 registros en el primer intento; (2) el número de columnas de la tabla
+  cambia según el año (6 en 2022/2023, 8 en 2025) -- las columnas ahora se localizan por el TEXTO de la
+  cabecera, no por posición fija. Falta un mes (noviembre de 2024, formato de tabla no reconocible en ese PDF
+  concreto -- omitido con aviso, no se ha forzado un dato incorrecto).
+- **Getafe (~185.000 hab.) — CONECTADO**: portal de gobierno abierto construido sobre la plataforma **Gobierto**
+  (usada por varios ayuntamientos españoles) -- expone una API pública tipo "SQL sobre CSV"
+  (`gobiernoabierto.getafe.es/api/v1/data/data.csv?sql=...`), descubierta inspeccionando el atributo
+  `data-contracts-endpoint` del HTML del dashboard de transparencia. **1.664 registros desde 2021-09**
+  (`actualizar_contratos_menores_getafe.py`, fuente `getafe`), filtrados server-side por `minor_contract='t'`.
+  Es la fuente más rica conectada hasta ahora: incluye CPV y categoría del contrato (ninguna otra fuente local
+  de menores lo hacía, aparte de PSCP/Euskadi en formales). Limitación real: NO publica NIF del adjudicatario.
+  **Pistas para otros municipios**: si algún otro ayuntamiento de la lista usa también la plataforma Gobierto
+  (buscar un dominio `gobiernoabierto.<municipio>.es` o similar con un dashboard "Contratos y licitaciones"),
+  el mismo patrón de endpoint debería funcionar.
+- **Alcalá de Henares (~195.000 hab.) — lead confirmado, alto esfuerzo, sin conectar**: informes TRIMESTRALES en
+  PDF (`hacienda.ayto-alcaladehenares.es/s-informacion-contratos-menores/`, certificado SSL inválido -- lectura
+  sin verificar, mismo caso que el conector de sueldos de esta misma ciudad). A diferencia de Móstoles, estos
+  PDFs NO tienen una tabla con bordes reconocible por `pdfplumber` (`extract_table()` no encuentra nada) --
+  es un informe contable de líneas envueltas (varias líneas de texto libre por registro, con subtotales
+  "TOTAL PARTIDA"/"TOTAL ACREEDOR" intercaladas que hay que descartar), 67 páginas por trimestre. Además, el NIF
+  de las personas físicas viene PARCIALMENTE ENMASCARADO (p. ej. "***8694**"), a diferencia de todas las demás
+  fuentes conectadas hasta ahora. Viable con un parser de texto por líneas y expresiones regulares, pero de
+  bastante más esfuerzo que las fuentes con tabla real -- queda documentado para cuando se decida dedicarle el
+  tiempo, con los ~30 enlaces PDF (2019-2026) ya localizados en la propia página.
+- **Pendiente de revisar esta ronda**: Fuenlabrada, Alcorcón, Leganés (siguientes en la lista por población).
+- **Lead adicional sin verificar en profundidad**: Torrejón de Ardoz (`transparencia.ayto-torrejon.es/t/contratos`)
+  y Pinto (`gobiernoabierto.ayto-pinto.es/contratos-menores`) aparecen con contratos menores en CSV/Excel en sus
+  propios portales -- señal de que, aunque no hay agregador regional, varios ayuntamientos medianos de Madrid sí
+  publican su propio dataset.
 - **Huesca, Teruel (Aragón) y Salamanca (Castilla y León)**: sin dataset de contratos menores localizado esta
   ronda (Huesca y Teruel remiten a la Plataforma de Contratación del Estado sin dataset propio; Salamanca tiene
   portal de datos abiertos propio -- `opendata.aytosalamanca.es` -- pero no es CKAN estándar y su búsqueda no
