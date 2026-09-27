@@ -282,3 +282,22 @@ Nota pública para Telde.
 
 Nota pública para Calvià; aviso para Torrelavega.
 
+---
+
+## Lote 11 — Sagunto y Alcoy (2026-09-27)
+
+**Añadidos: 34 personas** (Sagunto 12, Alcoy 22). Total acumulado: **628 registros en 33 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Sagunto | aytosagunto.es > PDF "Retribuciones y dedicación del alcalde y los concejales/concejalas de la Corporación 2023/2027" (1.er trimestre de 2026) | SALARIO BRUTO ANUAL (14 pagas) de las filas Exclusiva/Parcial (10 PSOE, 1 EUPV, 1 VOX); 13 filas "Asistencias" (sin salario) saltadas. **El documento no rotula el cargo ni separa al alcalde** (primera fila, 68.666 €): cargo = "Alcalde o concejal (grupo)" con nota pública. La URL del PDF es un enlace con hash (la página no lo expone): hay que actualizarla si sale otro trimestre |
+| Alcoy | alcoi.org > Corporación > Retribuciones > "Cuadro de retribuciones de dedicaciones exclusivas y parciales" > "Año 2023" (mandato 2023-2027) | APELLIDOS, NOMBRE + cargo + grupo + % + salario anual (14 pagas). Alcalde excluido; 1 concejal con solo asistencias y 1 portavoz con "Renuncia" saltados. El conector coge el año más reciente enlazado |
+
+**Saltados y por qué (comprobado en crudo)**
+- **Torremolinos**: lista nombre, cargo y dedicación de la corporación, pero el importe solo aparece como enlace "Ver nómina" (recibo individual) → no se procesa (mismo criterio que Torrent). Aviso público.
+- **El Ejido** (404) y **Benalmádena**, **Orihuela**: sin tabla nominal localizada / sin acceso.
+
+Notas públicas: Sagunto, Alcoy. Aviso: Torremolinos.
+
+**Verificado en producción (tanda 5 del backfill)**: los contratos nuevos de Vilalba (13/13), A Estrada (13/13) y Mos (14/14) aparecen en sus fichas (`&pag=N`), y el aviso público dice "llega hasta septiembre de 2023".
+

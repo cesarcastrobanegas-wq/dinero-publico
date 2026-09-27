@@ -4421,6 +4421,9 @@ _NOTAS_SUELDOS_CONCEJALES = {
              "Los concejales sin dedicación (asistencias) no aparecen.",
     "calvia": "Importes brutos anuales del acuerdo plenario de 23 de junio de 2023 (BOIB nº 93), por cargo con dedicación exclusiva: pueden haberse actualizado. "
               "No aparecen las indemnizaciones por asistencia de los demás concejales (no son sueldo).",
+    "sagunto": "Salario bruto anual (14 pagas) de la tabla oficial del primer trimestre de 2026. El documento no indica el cargo ni separa al alcalde (figura como una persona más con "
+               "dedicación exclusiva): por eso se muestra «alcalde o concejal». Las filas de solo asistencias no tienen salario y no aparecen.",
+    "alcoy": "Salario anual (14 pagas) de 2023 según el cuadro oficial del mandato actual; pueden haberse actualizado. No aparecen las personas con solo asistencias ni quien renunció al sueldo.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
@@ -4463,6 +4466,7 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "jaen": "El PDF de retribuciones de la corporación que publica el Ayuntamiento es una imagen escaneada sin texto, y no se puede verificar contra la fuente.",
     "pamplona/iruna": "No hemos localizado en la página de transparencia del Ayuntamiento un documento con nombre e importe de los concejales.",
     "torrelavega": "El PDF «Retribuciones concejales 2024» del Ayuntamiento lista solo nombre e importe (sin el cargo y sin aclarar el periodo ni el concepto de cada cifra), por lo que no se muestra.",
+    "torremolinos": "La web del Ayuntamiento lista nombre, cargo y dedicación de la corporación, pero el importe solo se publica como recibo de nómina individual, que no procesamos.",
 }
 
 

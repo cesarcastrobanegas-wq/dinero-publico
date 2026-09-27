@@ -1121,6 +1121,80 @@ def actualizar_cartagena():
     return out
 
 
+@_fuente("alcoy")
+def actualizar_alcoy():
+    """Ajuntament d'Alcoi > Corporación > Retribuciones > 'Cuadro de retribuciones de dedicaciones exclusivas y parciales': un PDF por año (el más reciente enlazado;
+    hoy 'Retribuciones Concejales 2023', mandato 2023-2027). Línea por persona: APELLIDOS, NOMBRE | CARGO | GRUPO | % dedicación | SALARIO ANUAL | SALARIO MENSUAL (14 pagas).
+    Se saltan las filas 'Asistencias' y 'Renuncia' (sin salario) y el alcalde (cubierto aparte)."""
+    from bs4 import BeautifulSoup
+    from urllib.parse import urljoin
+    pagina = "https://www.alcoi.org/es/ayuntamiento/Corporacion/retribuciones/retribu_dedic_exclusivas_parciales.html"
+    r = descargar(pagina, verify=False)
+    cand = []
+    for a in BeautifulSoup(r.text, "html.parser").find_all("a", href=True):
+        m = re.match(r"^A[ñn]o (\d{4})", a.get_text(" ", strip=True))
+        if m and a["href"].lower().endswith(".pdf"):
+            cand.append((m.group(1), urljoin(r.url, a["href"])))
+    if not cand:
+        raise RuntimeError("Alcoy: no se encontró el PDF de retribuciones de dedicaciones")
+    anio, url = max(cand)
+    texto = texto_pdf(descargar(url, timeout=120, verify=False).content)
+    re_fila = re.compile(r"^(?P<ap>[^,]+), (?P<no>.+?) (?P<cargo>ALCALDE|TENIENTE DE ALCALDE(?:/PORTAVOZ)?|PORTAVOZ|CONCEJAL SIN DELEGACI[OÓ]N|CONCEJAL CON DELEGACI[OÓ]N) "
+                         r"(?P<grupo>[A-ZÁÉÍÓÚÑ]+) (?P<pct>\d+,\d+) % (?P<anual>[\d.]+,\d{2}) (?P<men>[\d.]+,\d{2})$")
+    out, sin_salario = [], 0
+    for x in (re.sub(r"\s+", " ", l).strip() for l in texto.split("\n")):
+        if " % Asistencias" in x or " % Renuncia" in x:
+            sin_salario += 1
+            continue
+        m = re_fila.match(x)
+        if not m or m.group("cargo") == "ALCALDE":
+            continue
+        out.append(nuevo_registro("Alcoy", "alicante", nombre_persona(m.group("ap"), m.group("no")), f'{cargo_frase(m.group("cargo"))} ({m.group("grupo")})',
+                                  num_es(m.group("anual")), f"salario anual (14 pagas; dedicación {m.group('pct').replace(',00', '')} %)", f"año {anio}", url,
+                                  "Web del Ayuntamiento de Alcoy: retribuciones de dedicaciones exclusivas y parciales", texto))
+    if sin_salario:
+        print(f"  Alcoy: {sin_salario} filas de asistencias/renuncia (sin salario) saltadas")
+    if len(out) < 15:
+        raise RuntimeError(f"Alcoy: solo {len(out)} concejales (¿cambió el PDF?)")
+    return out
+
+
+@_fuente("sagunto")
+def actualizar_sagunto():
+    """Ajuntament de Sagunt > Transparencia: PDF 'Retribuciones y dedicación del alcalde y los concejales/concejalas de la Corporación 2023/2027' (1.er trimestre
+    de 2026). Columnas: grupo político | nombre y apellidos | dedicación (Exclusiva/Parcial/Asistencias) | % | salario bruto/mes (14 pagas) | SALARIO BRUTO ANUAL |
+    retribuciones efectivamente percibidas en el trimestre. Se guarda el SALARIO BRUTO ANUAL de exclusiva/parcial; las filas de 'Asistencias' (sin salario) se saltan.
+    El documento no rotula el cargo ni separa al alcalde (figura como una persona más con dedicación exclusiva): cargo = 'Alcalde o concejal (grupo)'.
+    La URL del PDF es un enlace con hash de la web (la página no lo expone de forma legible): si el Ayuntamiento publica otro trimestre hay que actualizarla."""
+    url = "https://aytosagunto.es/media/0cnm1k0u/copia-de-retribuciones-altos-cargos1-trimestre-2026.pdf"
+    texto = texto_pdf(descargar(url, timeout=120, verify=False).content)
+    m = re.search(r"PERCIBIDAS (\d)\S* trim\. (\d{4})", re.sub(r"\s+", " ", texto))
+    periodo = f"{m.group(1)}.er trimestre de {m.group(2)} (salario bruto anual de la tabla)" if m else "salario bruto anual de la tabla"
+    re_fila = re.compile(r"^(?:(?P<g>[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ-]+(?: [A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ-]+)*) )?(?P<nombre>[A-ZÁÉÍÓÚÑ][^\d€]*?) (?P<ded>Exclusiva|Parcial) (?P<pct>\d+) "
+                         r"(?P<men>[\d.]+,\d{2}) € (?P<anual>[\d.]+,\d{2}) € (?P<perc>[\d.]+,\d{2}) €(?: .*)?$")
+    out, grupo, asist = [], "", 0
+    for x in (re.sub(r"\s+", " ", l).strip() for l in texto.split("\n")):
+        if re.search(r" Asi?stencias ", x + " "):
+            asist += 1
+            g = re.match(r"^([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ-]+(?: [A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ-]+)*) [A-ZÁÉÍÓÚÑ][a-záéíóúñ]", x)
+            if g:
+                grupo = g.group(1)
+            continue
+        m = re_fila.match(x)
+        if not m:
+            continue
+        if m.group("g"):
+            grupo = m.group("g")
+        out.append(nuevo_registro("Sagunto", "valencia", m.group("nombre"), f"Alcalde o concejal ({grupo})", num_es(m.group("anual")),
+                                  f"salario bruto anual (14 pagas; dedicación {m.group('ded').lower()} {m.group('pct')} %)", periodo, url,
+                                  "Web del Ayuntamiento de Sagunto: retribuciones y dedicación de la Corporación", texto))
+    if asist:
+        print(f"  Sagunto: {asist} filas de 'Asistencias' (sin salario) saltadas")
+    if len(out) < 8:
+        raise RuntimeError(f"Sagunto: solo {len(out)} personas (¿cambió el PDF?)")
+    return out
+
+
 @_fuente("calvia")
 def actualizar_calvia():
     """Ajuntament de Calvià > Transparencia > Corporación 2023-2027 > 'Retribuciones e indemnizaciones de los miembros de la Corporación' (enlace 'AQUÍ' =
