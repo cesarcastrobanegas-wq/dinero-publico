@@ -4411,6 +4411,10 @@ _NOTAS_SUELDOS_CONCEJALES = {
                "Los cargos se muestran con la grafía de la fuente.",
     "las rozas de madrid": "Importes del acuerdo con efectos desde el 1 de agosto de 2023; la propia fuente indica que se incrementan según las Leyes de Presupuestos sin nuevo acuerdo, "
                            "así que hoy pueden ser mayores. Los concejales con «variable por asistencias» (sin importe fijo) no aparecen.",
+    "huesca": "La tabla oficial (acuerdo del BOP de 27 de junio de 2023) da nombre, grupo, dedicación e importe bruto anual, pero no la concejalía de cada persona. "
+              "Los importes pueden haberse actualizado desde entonces.",
+    "ciudad real": "Importe = total de retribuciones anuales de 2024 (sueldo base + pagas extra, sin la cotización de la empresa) en el PDF actualizado a 30/12/2024. "
+                   "La fuente escribe el nombre con los apellidos primero y sin coma, y así se muestra. Solo dedicaciones exclusiva y parcial.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
@@ -4447,6 +4451,9 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "pozuelo de alarcon": "El Ayuntamiento publica los cambios de régimen de dedicación en sucesivos boletines oficiales (BOCM) y decretos, sin una tabla consolidada de nombre e importe.",
     "benidorm": "El Ayuntamiento publica cada mes un total bruto por corporativo que mezcla dedicación y asistencias y no indica el cargo o la concejalía.",
     "torrejon de ardoz": "El documento de retribuciones del Ayuntamiento lista los importes por cargo, sin nombres.",
+    "segovia": "El Ayuntamiento publica el acuerdo de Pleno de 23 de diciembre de 2025 con el importe anual por tipo de cargo y dedicación, sin nombres.",
+    "guadalajara": "El Ayuntamiento publica en el BOP el número de cargos con dedicación y las reglas de reparto por grupo, sin nombres ni importe por persona.",
+    "pinto": "El Ayuntamiento publica la retribución anual 2026 por cargo y dedicación, con el número de cargos por partido, sin nombres.",
 }
 
 

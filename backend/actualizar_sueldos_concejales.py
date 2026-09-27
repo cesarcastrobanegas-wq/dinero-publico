@@ -1121,6 +1121,71 @@ def actualizar_cartagena():
     return out
 
 
+@_fuente("ciudad real")
+def actualizar_ciudad_real():
+    """Ayuntamiento de Ciudad Real > Transparencia > Retribuciones anuales de los miembros de la Corporación (PDF 'RETRIBUCIONES ANUALES MIEMBROS DE
+    LA CORPORACIÓN 2.024', actualizado a 30/12/2024). Una línea por persona: unidad | grupo | nivel | nº empleado + NOMBRE (APELLIDOS NOMBRE, sin coma) |
+    código + puesto | situación | S.BASE | prog. | P.EXTRA | C.EMP.SS (cotización de la empresa) | TOTAL RETRIB. Se guarda TOTAL RETRIB., y se comprueba
+    que es S.BASE + P.EXTRA. El nombre se deja en el orden de la fuente ('Apellidos Nombre'): sin coma no se puede separar sin adivinar. Se excluye el alcalde."""
+    url = "https://www.ciudadreal.es/documentos/transparencia/activa/7.-Retribuciones_Concejales_024.3.pdf"
+    texto = texto_pdf(descargar(url, timeout=120).content)
+    m = re.search(r"actualizado (\d{2}/\d{2}/\d{4})", texto)
+    m_anio = re.search(r"CORPORACI[OÓ]N (\d)\.(\d{3})", texto)
+    if not m_anio:
+        raise RuntimeError("Ciudad Real: no se reconoce el año del PDF")
+    anio = m_anio.group(1) + m_anio.group(2)
+    periodo = f"año {anio}" + (f" (actualizado a {m.group(1)})" if m else "")
+    re_fila = re.compile(r"^CONCEJALES A\d 0 (?:\d+)?(?P<nombre>[A-ZÁÉÍÓÚÑÜ' ]+?) \d{3}(?P<puesto>[A-ZÁÉÍÓÚ ]+?) Ocu (?P<base>[\d.]+,\d{2}) \d{4} "
+                         r"(?P<extra>[\d.]+,\d{2}) (?P<ss>[\d.]+,\d{2}) (?P<total>[\d.]+,\d{2})$")
+    out, incoherentes = [], 0
+    for x in (re.sub(r"\s+", " ", l).strip() for l in texto.split("\n")):
+        m = re_fila.match(x)
+        if not m or m.group("puesto").strip().startswith("ALCALDE"):
+            continue
+        base, extra, total = num_es(m.group("base")), num_es(m.group("extra")), num_es(m.group("total"))
+        if abs(base + extra - total) > 0.05:
+            incoherentes += 1
+            continue
+        out.append(nuevo_registro("Ciudad Real", "ciudad_real", _titulo_nombre(m.group("nombre")), cargo_frase(m.group("puesto").strip()), total,
+                                  "total de retribuciones anuales (sueldo base + pagas extra; sin la cotización de la empresa); nombre en el orden de la fuente (apellidos primero)",
+                                  periodo, url, "Portal de transparencia del Ayuntamiento de Ciudad Real", texto))
+    if incoherentes:
+        print(f"  Ciudad Real: {incoherentes} filas con total != base + extra saltadas")
+    if len(out) < 10:
+        raise RuntimeError(f"Ciudad Real: solo {len(out)} concejales (¿cambió el PDF?)")
+    return out
+
+
+@_fuente("huesca")
+def actualizar_huesca():
+    """Ayuntamiento de Huesca > Recursos humanos > Retribuciones (2026, actual) > '2. Retribuciones alcalde y concejales/as con dedicación
+    exclusiva y parcial': tabla NOMBRE | GRUPO | DEDICACIÓN | IMPORTE BRUTO ANUAL | RESOLUCIÓN ALCALDÍA (acuerdo BOP de 27/06/2023). La tabla no
+    da concejalía: cargo = 'Concejal/a' + grupo. Se excluye la alcaldesa (cubierta aparte); el personal eventual de la 3.ª tabla no es concejal."""
+    from bs4 import BeautifulSoup
+    url = "https://www.huesca.es/ayuntamiento/organizacion-administrativa/empleado-publico/retribuciones"
+    r = descargar(url)
+    texto = texto_html(r.text)
+    out = []
+    for tabla in BeautifulSoup(r.text, "html.parser").find_all("table"):
+        trs = tabla.find_all("tr")
+        cab = [re.sub(r"\s+", " ", td.get_text(" ", strip=True)).upper() for td in (trs[0].find_all(["td", "th"]) if trs else [])]
+        if not (len(cab) >= 4 and "GRUPO" in cab[1] and "DEDICACI" in _norm(cab[2]).upper()):
+            continue
+        for tr in trs[1:]:
+            c = [re.sub(r"\s+", " ", td.get_text(" ", strip=True)) for td in tr.find_all(["td", "th"])]
+            if len(c) < 4 or not num_es(c[3]):
+                continue
+            nombre, grupo, dedic = c[0], c[1], c[2]
+            if any("alcalde" in (a["href"] or "").lower() for a in tr.find_all("a", href=True)):
+                continue                         # la resolución de la alcaldesa es 'BOP dedicacion exclusiva Alcaldesa.pdf' (cubierta aparte)
+            out.append(nuevo_registro("Huesca", "huesca", nombre, f"Concejal/a ({grupo})", num_es(c[3]),
+                                      f"importe bruto anual (dedicación {dedic.lower()})", "acuerdo BOP de 27 de junio de 2023 y resoluciones de Alcaldía",
+                                      url, "Web del Ayuntamiento de Huesca: retribuciones", texto))
+    if len(out) < 4:
+        raise RuntimeError(f"Huesca: solo {len(out)} concejales (¿cambió la tabla?)")
+    return out
+
+
 @_fuente("las rozas de madrid")
 def actualizar_las_rozas():
     """Ayuntamiento de Las Rozas de Madrid > Portal de Transparencia > 'Dedicación, retribución, indemnizaciones, compatibilidades y delegaciones

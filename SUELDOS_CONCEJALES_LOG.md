@@ -205,3 +205,26 @@ Avisos públicos añadidos (`_SUELDOS_CONCEJALES_SIN_TABLA`): León, Getafe, Ovi
 - Sin comprobar a fondo (solo búsqueda): Torrevieja (Gobierto), Talavera, Cáceres.
 
 Avisos públicos añadidos: Donostia, Lugo, Pontevedra, Ourense, Pozuelo de Alarcón, Benidorm, Torrejón de Ardoz. Nota pública para Las Rozas.
+
+---
+
+## Lote 7 — Huesca y Ciudad Real (2026-09-27)
+
+**Añadidos: 21 concejales** (Huesca 6, Ciudad Real 15). Total acumulado: **539 registros en 28 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Huesca | huesca.es > Recursos humanos > Retribuciones (2026, actual) > "2. Retribuciones alcalde y concejales/as con dedicación exclusiva y parcial" (acuerdo BOP 27/06/2023) | tabla NOMBRE / GRUPO / DEDICACIÓN / IMPORTE BRUTO ANUAL; cargo = "Concejal/a (grupo)" (la tabla no da concejalía). La alcaldesa se excluye porque su resolución es "BOP dedicacion exclusiva Alcaldesa.pdf". Personal eventual (3.ª tabla) fuera |
+| Ciudad Real | ciudadreal.es > Transparencia > `7.-Retribuciones_Concejales_024.3.pdf` ("Retribuciones anuales miembros de la Corporación 2.024", actualizado a 30/12/2024) | columna TOTAL RETRIB. (se comprueba = S.BASE + P.EXTRA; la cotización de la empresa no cuenta). Nombre con apellidos primero y sin coma: se deja en el orden de la fuente (dividirlo sería adivinar). Alcalde excluido |
+
+**Saltados y por qué (comprobado en crudo)**
+- **Segovia**: acuerdo de Pleno de 23/12/2025 con importe por tipo de cargo y dedicación (6 delegados al 100 %, 4 portavoces al 60 %...), sin nombres.
+- **Guadalajara**: BOP de 14/08/2023 con el número de cargos y reglas de reparto por grupo, sin nombres ni importes por persona.
+- **Pinto**: retribución 2026 por cargo y dedicación, con nº de cargos por partido, sin nombres.
+- **Aranda de Duero**: bases de ejecución por cargo, sin nombres. **Villajoyosa**: la página dice "Próximamente".
+- **Ávila**: solo publica percepciones NETAS de la corporación (no bruto); no se toca sin decidir con César si se admiten netas (Huelva ya usa netas y lo dice).
+- **Teruel** (503 del servidor de su sede) y **Mérida** (la URL de la página da 404; solo un PDF suelto por persona): pendientes de reintento, no se afirma nada en la web.
+- **Barcelona** (cuarta comprobación): su página renderiza "API timeout error or wrong group ID" en cada bloque de cargos electos → sigue pendiente.
+
+Avisos públicos añadidos: Segovia, Guadalajara, Pinto. Notas públicas para Huesca y Ciudad Real.
+

@@ -116,9 +116,9 @@ si falta algo o es ambiguo se salta y se anota. Nada se estima ni se convierte (
 salvedades de esa fuente** (`_NOTAS_SUELDOS_CONCEJALES` en `app.py`); las fichas de los municipios aparcados muestran un aviso con
 el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
 
-- **Cobertura a 2026-09-27**: 518 registros en 26 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
+- **Cobertura a 2026-09-27**: 539 registros en 28 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
   Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles, Las Rozas; Elche, Castellón de la Plana; Vigo; Logroño; Murcia, Molina de Segura,
-  Cartagena; Santa Cruz de Tenerife; Palencia; Eivissa; Vitoria-Gasteiz). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
+  Cartagena; Huesca; Ciudad Real; Santa Cruz de Tenerife; Palencia; Eivissa; Vitoria-Gasteiz). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
 - **Salvedades concretas por fuente**:
   - **Sevilla**: cargo mostrado como "Concejal/a" genérico (el PDF fuente no especifica la concejalía); el importe es lo percibido en
     2024 e incluye cantidades pequeñas de concejales sin dedicación.
@@ -150,6 +150,9 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
     grupo), **Pontevedra** (mandato 2019-2023), **Ourense** (PDF escaneados sin texto), **Pozuelo** (BOCM sueltos), **Benidorm** (totales mensuales
     sin cargo), **Torrejón de Ardoz** (por cargo, sin nombres). **Las Rozas** sí entra, pero con importes del acuerdo de 2023 que la fuente dice
     que se actualizan con las Leyes de Presupuestos. Santiago de Compostela: portal inaccesible desde aquí, pendiente de reintento.
+  - **Lote 7 (2026-09-27)**: **Huesca** y **Ciudad Real** entran (Ciudad Real: nombre con apellidos primero y sin coma, importes de 2024; Huesca: sin
+    concejalía). Con aviso en la ficha: **Segovia**, **Guadalajara** y **Pinto** (por cargo, sin nombres). **Ávila** solo publica percepciones NETAS
+    (pendiente de decidir si se admiten). Teruel y Mérida: pendientes de reintento (503 / 404).
   - Pendientes de reintento por otros motivos: **Barcelona** (su API de cargos devolvía "timeout" en dos comprobaciones),
     **Reus** (por cargo, sin nombres), **Alcalá de Henares** (por categoría, sin importe por persona).
 - **Plataformas descartadas**: `*.sedelectronica.es/employees` exige Cl@ve (Marbella, Orihuela); seu-e.cat solo rellena el importe en
