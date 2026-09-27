@@ -11057,6 +11057,28 @@ def _cargar_contratos_menores_ciudad_real():
               f"(Ciudad Real) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_BURGOS_FILE = os.path.join(BASE_DIR, "contratos_menores_burgos.json.gz")
+
+
+def _cargar_contratos_menores_burgos():
+    """Carga contratos_menores_burgos.json.gz (generado por actualizar_contratos_menores_burgos.py --
+    biblioteca de ~49 PDF del perfil de contratante, clasificados por el título real de cada uno) y lo vuelca
+    a la tabla compartida contratos_menors_locales. Mismo patrón que el resto de fuentes locales."""
+    ruta = CONTRATOS_MENORES_BURGOS_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_burgos: {len(registros)} contratos menores "
+              f"(Burgos) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11088,6 +11110,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_valladolid()
     _cargar_contratos_menores_zaragoza()
     _cargar_contratos_menores_ciudad_real()
+    _cargar_contratos_menores_burgos()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14175,6 +14198,7 @@ _FUENTE_CM_LABEL = {
     "valladolid":      "Valladolid",
     "zaragoza":        "Zaragoza",
     "ciudad_real":     "Ciudad Real",
+    "burgos":          "Burgos",
 }
 
 
@@ -14305,6 +14329,13 @@ _NOTAS_FUENTE_CM = {
         "bloques de texto libre (objeto, importe con IVA, adjudicatario) SIN fecha real ni NIF; desde 2025 son "
         "ficheros XLSX oficiales con NIF y fecha real de adjudicación, pero SIN objeto/descripción del "
         "contrato. Cada fila muestra los campos que su propia era publica, nunca ambos a la vez."
+    ),
+    "burgos": (
+        "Biblioteca de ~49 PDF del perfil de contratante del Ayuntamiento de Burgos, subidos a mano "
+        "trimestre a trimestre desde 2020 con nombres de fichero muy poco fiables (alguno, pese a llamarse "
+        "\"contratos de trabajo\", es en realidad un listado de contratos menores) -- se clasifican por el "
+        "título real de cada PDF, no por su nombre. Fecha real de adjudicación e importe con IVA por "
+        "contrato. Sin NIF del adjudicatario en ninguno de los tres formatos de columnas que usa la fuente."
     ),
 }
 

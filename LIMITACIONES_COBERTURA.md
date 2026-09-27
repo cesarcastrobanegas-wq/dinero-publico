@@ -146,11 +146,11 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-30**: 13 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
-Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real —
-**105.205 contratos** entre los trece), varios confirmados sin fuente viable tras investigación real, no solo
-una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio
-abajo.
+**Estado a 2026-09-30**: 14 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
+Burgos — **111.266 contratos** entre los catorce), varios confirmados sin fuente viable tras investigación
+real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle
+completo por municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -206,6 +206,32 @@ abajo.
      datetime a texto y parsearlo como número daba cifras de billones de euros. Se usa `importe_sin_iva` como
      alternativa; en la única fila donde esa celda TAMBIÉN estaba corrupta, se deja el importe en 0 -- no se
      inventa un valor.
+- **Burgos (~175.000 hab., Castilla y León) — CONECTADO (2026-09-30), "prueba otra vía"**: la página
+  `aytoburgos.es/contratos-menores` es una biblioteca de documentos (Liferay) con ~49 PDF subidos a mano
+  desde 2020, **con nombres de fichero totalmente engañosos** -- el mismo tipo de informe aparece como
+  "Contratos+Menores+1ºT.pdf", "AYTOBURGOSTOTALDEFINITIVO.pdf", "Documento+Final.pdf" o, el caso más
+  llamativo, "CONTRATOS_TRABAJO...pdf"/"Trabajo.pdf"/"trabajo+definitivo.pdf" (nombres que sugieren personal
+  laboral, pero que al abrirlos son "RELACIÓN CONTRATOS MENORES" -- contratación pública normal). Se
+  clasificaron los 49 por su TÍTULO REAL (primera línea de cada PDF), no por el nombre del fichero: 27 son
+  listados por contrato ("CONTRATOS MENORES..."), 22 son solo totales por departamento ("DATOS AGREGADOS"/
+  "AGRUPADOS", sin adjudicatario ni fecha, descartados sin ambigüedad). **6.061 registros desde 2021-09**
+  (`actualizar_contratos_menores_burgos.py`, fuente `burgos`), cobertura casi continua de 2021 a 2026.
+  Tres plantillas de columnas distintas conviven en esos 27 PDF (la cabecera cambia de formato con los años,
+  a veces hasta el orden de las columnas), así que se detectan por el TEXTO de cada cabecera, nunca una
+  posición fija -- igual que Palma/Fuenlabrada. Dos bugs reales de parseo encontrados y corregidos revisando
+  los importes más altos del resultado:
+  1. En la plantilla de 2025, la palabra de cabecera "FECHA" está desplazada más a la derecha que donde de
+     verdad se renderiza el VALOR de la fecha en cada fila -- el valor caía dentro de la columna IMPORTE y se
+     concatenaba con el importe real, multiplicándolo por billones (393,25 + 18/02/2025 → una cifra de
+     billones de euros). Se corrigió extrayendo FECHA e IMPORTE por PATRÓN (regex), no por posición X.
+  2. Un margen de menos de una milésima de punto entre el ancla de una columna (tomada de la cabecera) y la
+     posición real de una palabra de datos (variación de renderizado entre páginas) bastaba para que esa
+     palabra cayera en la columna vecina -- se añadió un margen de tolerancia de 1,5pt a cada frontera de
+     columna.
+  Sin NIF en ninguna de las tres plantillas. Quedan ~9/6.061 filas (0,15 %) con objeto vacío y ~14 (0,23 %)
+  sin adjudicatario reconocible -- registros cuyo nombre/objeto se envuelve en más de dos líneas seguidas y
+  el buffer de continuación no los recompuso del todo; aceptado como límite residual, mismo orden de magnitud
+  que Alcalá de Henares.
 - **Valencia capital (~800.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: el portal antiguo (CKAN)
   se retiró en junio de 2026; el sustituto real es el buscador oficial `www.valencia.es/cas/ayuntamiento/
   buscador-contratos-menores` (portlet Liferay, formulario POST). **10.693 registros desde 2021-09**
@@ -261,7 +287,7 @@ abajo.
 - **León (Castilla y León)**: perfil de contratante consultable en vivo (`sede.aytoleon.es`, contratos menores
   individuales con adjudicatario e importe, SIN fecha de adjudicación visible), pero sin descarga masiva --
   mismo patrón que el buscador legacy de Navarra (viable por scraping, no por dataset).
-  Sin dataset localizado esta ronda: **Burgos**, **Castellón de la Plana** (relaciones de contratos menores por
+  Sin dataset localizado esta ronda: **Castellón de la Plana** (relaciones de contratos menores por
   decreto en PDF/ODS/XLS, no un dataset único). **Toledo**: publica el listado de menores mensualmente en su web
   de transparencia (sin confirmar el formato exacto esta ronda). **Guadalajara**: solo contratos MAYORES
   localizados, no menores.
@@ -341,8 +367,8 @@ investigación de sueldos de concejales:
   ronda (Huesca y Teruel remiten a la Plataforma de Contratación del Estado sin dataset propio; Salamanca tiene
   portal de datos abiertos propio -- `opendata.aytosalamanca.es` -- pero no es CKAN estándar y su búsqueda no
   devolvió un dataset de menores esta noche, habría que navegar el catálogo a mano).
-- **Pendiente de revisar** (siguiente ronda, mismo criterio): Burgos (Castilla y León); resto de municipios de
-  la Comunidad de Madrid por población.
+- **Pendiente de revisar** (siguiente ronda, mismo criterio): resto de municipios de la Comunidad de Madrid
+  por población.
 
 ## Fondos UE
 
