@@ -384,3 +384,17 @@ Nota pública añadida para Lorca. Otros municipios grandes de la Región de Mur
 
 Nota pública añadida para Burgos.
 
+**Leads investigados sin cerrar esta noche** (mismo patrón que Ceuta: la fuente publica el importe por
+CARGO/categoría, no por persona con nombre — hace falta cruzar con un censo de quién ocupa cada cargo, no
+completado por el riesgo de una atribución incorrecta sin la verificación adecuada):
+- **Guadalajara**: BOP con el reparto de dedicaciones exclusivas por grupo político (PP: 8, etc.), sin nombres.
+- **San Cristóbal de La Laguna (Tenerife)**: acuerdo plenario con la retribución por cargo (Alcaldía, 1er
+  Teniente, resto Tenientes, Concejales de grupo), sin nombres en el mismo documento.
+- **Oviedo**: publica un decreto de Alcaldía POR GRUPO POLÍTICO (uno para el PSOE, otro para VOX, otro para
+  IU...) que sí menciona nombres de personas dentro del texto, pero asignados a un % de dedicación (no un
+  importe directo) sobre una base económica que se fija en un decreto distinto -- haría falta juntar varios
+  documentos y multiplicar %×base por persona, no completado esta noche.
+- **Las Palmas de Gran Canaria**: página de "cargos electos" sin documento de retribuciones enlazado
+  directamente (puede requerir JS, no confirmado).
+Los mismos municipios NO tienen contratos menores conectados tampoco; quedan como lead para otra sesión.
+
