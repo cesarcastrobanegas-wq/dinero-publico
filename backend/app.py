@@ -4379,14 +4379,61 @@ def alcalde_concejales_html(municipio):
     return f'<div class="alcalde-block">{alcalde_html}{dd_html}</div>'
 
 
+# Salvedades PÚBLICAS de cada fuente (se muestran dentro del desplegable de la ficha; el detalle interno está en
+# SUELDOS_CONCEJALES_LOG.md y LIMITACIONES_COBERTURA.md). Clave = normalizar(municipio).
+_NOTAS_SUELDOS_CONCEJALES = {
+    "sevilla": "El cargo aparece como «Concejal/a» genérico: el PDF de la fuente no indica la concejalía de cada persona. "
+               "El importe es lo percibido en 2024 según ese documento e incluye cantidades pequeñas de concejales sin dedicación.",
+    "madrid": "El importe es la SUMA de las mensualidades brutas que el Ayuntamiento publica para 2025 (una fila por persona y mes), "
+              "no un importe anual publicado directamente; la base indica cuántas mensualidades suma (algunas personas no cubren los 12 meses).",
+    "eivissa": "La fuente escribe algunos importes con punto decimal («63.407.63 €») y se leen tal cual; los concejales sin retribución no aparecen.",
+    "malaga": "El importe es la retribución anual del cargo según la tabla oficial del mismo documento, no una nómina individual. Solo se incluyen "
+              "tenientes de alcalde y concejales delegados con dedicación exclusiva; portavoces, dedicaciones parciales y cargos con complemento no aparecen.",
+    "huelva": "Los importes son NETOS anuales de 2024, tal como los rotula la fuente.",
+    "cadiz": "Solo aparecen los concejales con un importe anual fijo (14 pagas); quienes solo perciben asistencias, con un tope anual, no se incluyen.",
+    "terrassa": "Los importes son MENSUALES brutos (14 pagas), tal como los publica el Ayuntamiento; no se han convertido a anual. La fuente no indica la concejalía.",
+    "vigo": "Documento fechado: resolución de la Alcaldía de julio de 2023. Los importes pueden haberse actualizado después.",
+    "murcia": "Documento de febrero de 2024, el último que publica el Ayuntamiento en su página de dedicación y retribuciones; los importes pueden haberse actualizado.",
+    "majadahonda": "No aparecen las personas que cambiaron de cargo durante 2025 (la fuente les da dos filas) ni quienes están en régimen de asistencia.",
+    "mataro": "Solo dedicaciones con retribución anual comparable: se omiten las asistencias a plenos y un periodo parcial.",
+    "lleida": "Se omite una fila cuyo importe está mal escrito en la fuente y no cuadra con la retribución mensual × 14.",
+    "santa cruz de tenerife": "Solo retribuciones de año completo (2024); las de periodos parciales no aparecen.",
+    "palencia": "Retribuciones íntegras percibidas en 2025; alguna corresponde a un año parcial.",
+    "cartagena": "Solo concejales con jornada completa o porcentaje; quienes perciben asistencias a plenos no aparecen. El PDF trae algún rótulo con errores de escritura que se respeta.",
+    "logrono": "Solo dedicaciones exclusiva y parcial; las indemnizaciones por asistencia no aparecen.",
+    "molina de segura": "Importes tal como los publica el Ayuntamiento en su portal (retribución bruta anual y dedicación).",
+}
+
+# Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
+# confunda con un olvido nuestro.
+_SUELDOS_CONCEJALES_SIN_TABLA = {
+    "cordoba": "El Ayuntamiento publica la escala de retribuciones por cargo (alcalde, teniente de alcalde, concejal con delegación...) pero no el importe por persona.",
+    "granada": "El Ayuntamiento publica los nombres por categoría en el BOP (2023) y los importes en el acuerdo de Pleno, en documentos distintos; no hay una tabla nombre + importe.",
+    "jerez de la frontera": "El Ayuntamiento publica los acuerdos por cargo y el régimen de dedicación de los delegados en documentos separados, sin el importe por persona.",
+    "zaragoza": "El Ayuntamiento publica una tabla por concepto (alcalde, consejero de gobierno, portavoz, concejal...) sin nombres.",
+    "valencia": "El Ayuntamiento publica el acuerdo plenario de retribuciones por cargos, sin el importe por persona.",
+    "valladolid": "El Ayuntamiento publica las retribuciones por cargo con el número de puestos (documento de diciembre de 2023), sin nombres.",
+    "bilbao": "No hemos localizado en su portal un documento con nombre e importe de los concejales (solo el de personal de libre designación).",
+    "alicante": "No hemos localizado en su portal un documento con nombre e importe de los concejales.",
+    "palma": "El documento de retribuciones enlazado es de 2023, anterior al mandato actual; no hemos localizado una tabla nominal vigente.",
+    "barcelona": "Su portal de transparencia declara publicar los sueldos de cargos electos con nombre, pero al comprobarlo (dos veces) sus datos no se devolvían (error de su API); pendiente de reintentar.",
+    "reus": "El Ayuntamiento publica las remuneraciones 2026 por cargo, sin nombres.",
+    "alcala de henares": "El Ayuntamiento publica las cuantías por categoría y el reparto de dedicaciones por grupo, sin importe por persona.",
+}
+
+
 def sueldos_concejales_html(municipio, provincia=None):
     """Desplegable con los sueldos de concejales que el propio ayuntamiento publica con nombre (ver
     SUELDOS_CONCEJALES). El importe se muestra TAL COMO figura en la fuente, con su base (bruto anual, mensual...)
     y su periodo; nunca se convierte ni se estima. Cada fila enlaza a la fuente oficial. "" si no hay datos."""
-    regs = SUELDOS_CONCEJALES.get(normalizar(municipio)) or []
+    clave = normalizar(municipio)
+    regs = SUELDOS_CONCEJALES.get(clave) or []
     if provincia:
         regs = [r for r in regs if not r["provincia"] or r["provincia"] == provincia]
     if not regs:
+        motivo = _SUELDOS_CONCEJALES_SIN_TABLA.get(clave)
+        if motivo:
+            return (f'<div class="pol-retrib-nota">ℹ️ Sueldos de concejales: no incluidos. {esc(motivo)}</div>')
         return ""
     items = []
     for r in sorted(regs, key=lambda x: (-x["importe"], x["nombre"])):
@@ -4399,7 +4446,9 @@ def sueldos_concejales_html(municipio, provincia=None):
     return (f'<details class="concejales-dd sueldos-conc"><summary>Retribuciones de concejales publicadas por el '
             f'ayuntamiento ({len(regs)})</summary><ul>{"".join(items)}</ul>'
             f'<div class="pol-retrib-nota">Importes tal como figuran en la fuente oficial enlazada en cada fila, '
-            f'con la base y el periodo que ella indica; no se han convertido ni estimado.</div></details>')
+            f'con la base y el periodo que ella indica; no se han convertido ni estimado.'
+            + (f' <b>Nota:</b> {esc(_NOTAS_SUELDOS_CONCEJALES[clave])}' if clave in _NOTAS_SUELDOS_CONCEJALES else "")
+            + '</div></details>')
 
 
 def municipio_valido(txt):
@@ -7762,6 +7811,41 @@ def _recuperar_historico_perdido():
 
 BACKFILL_GALICIA_PLACE_FILE = os.path.join(BASE_DIR, "backfill_galicia_place.json.gz")
 _BACKFILL_GALICIA_PLACE_CLAVE = "backfill_galicia_place_sha"
+
+
+_MESES_ES_LARGO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+                   "noviembre", "diciembre"]
+_BACKFILL_GALICIA_MES_CACHE = []
+
+
+def _backfill_galicia_desde_texto():
+    """'julio de 2024': mes más antiguo cubierto por backfill_galicia_place.json.gz (se lee una vez; "" si no hay fichero)."""
+    if not _BACKFILL_GALICIA_MES_CACHE:
+        texto = ""
+        try:
+            with _gzip.open(BACKFILL_GALICIA_PLACE_FILE, "rt", encoding="utf-8") as f:
+                meses = json.load(f).get("meses") or []
+            if meses:
+                m = min(meses)
+                texto = f"{_MESES_ES_LARGO[int(m[4:6]) - 1]} de {m[:4]}"
+        except Exception:
+            texto = ""
+        _BACKFILL_GALICIA_MES_CACHE.append(texto)
+    return _BACKFILL_GALICIA_MES_CACHE[0]
+
+
+def aviso_backfill_galicia_html(provincia):
+    """Aviso en las fichas gallegas: los contratos formales de PLACE de los concellos cuyo órgano figura como «Concello de X» se
+    recuperan de forma retroactiva (ver _aplicar_backfill_galicia_place); mientras dura, la cobertura es parcial hacia atrás."""
+    if provincia not in ("a_coruna", "lugo", "ourense", "pontevedra"):
+        return ""
+    desde = _backfill_galicia_desde_texto()
+    if not desde:
+        return ""
+    return ('<div class="pol-retrib-nota">ℹ️ Contratos formales (PLACE): hasta septiembre de 2026 el sistema no reconocía como propios los '
+            'contratos de órganos que figuran como «Concello de ...». Se están recuperando meses anteriores; por ahora la '
+            f'recuperación llega hasta {esc(desde)} y sigue en curso hacia atrás (tope: septiembre de 2021). Antes de esa fecha la '
+            'lista puede estar incompleta.</div>')
 
 
 def _aplicar_backfill_galicia_place():
@@ -14096,6 +14180,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             </div>
           </div>
           <div class="source-bar">{esc(fuentes_label)} · {fuentes_str}{age_html}</div>
+          {aviso_backfill_galicia_html(provincia)}
           {alertas_html}
           <div class="tbl-scroll">
             <table>

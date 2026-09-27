@@ -167,7 +167,7 @@ def nombre_persona(apellidos, nombre):
     return " ".join(w.lower() if (i and w.lower() in _PARTICULAS) else cap(w) for i, w in enumerate(palabras))
 
 
-_SIGLAS = {"PSOE", "PP", "VOX", "RRHH", "MRH", "PSC", "ERC", "JXCAT", "BNG", "PNV", "CS", "IU", "TTE.", "UP", "EH", "BILDU", "CC", "PAR", "PRC", "IU-PODEMOS", "UPN", "PSN", "EAJ-PNV"}
+_SIGLAS = {"PSOE", "PP", "VOX", "RRHH", "MRH", "PSC", "ERC", "JXCAT", "BNG", "PNV", "CS", "IU", "TTE.", "UP", "EH", "BILDU", "CC", "PAR", "PRC", "IU-PODEMOS", "MC", "UPN", "PSN", "EAJ-PNV"}
 
 
 def cargo_frase(cargo):
@@ -1059,6 +1059,65 @@ def actualizar_eivissa():
         print(f"  Eivissa: saltadas por importe ilegible en origen: {ilegibles}")
     if len(out) < 8:
         raise RuntimeError(f"Eivissa: solo {len(out)} regidores (¿cambió la tabla?)")
+    return out
+
+
+@_fuente("cartagena")
+def actualizar_cartagena():
+    """Ayuntamiento de Cartagena > Portal de Transparencia > Personal directivo y eventual: PDF 'Retribuciones de la corporación municipal y
+    del personal eventual' (actualizado, p. ej., a 29/05/2026), sección 'Alcaldesa y concejales. Legislatura 2023-2027': PUESTO | GRUPO |
+    NOMBRE Y APELLIDOS | JORNADA | RETRIB. BRUTAS (anuales). Se guardan las filas con jornada completa o porcentaje; las 'ASIST. PLENOS'
+    (asistencias) no son sueldo y se saltan. Algunos nombres se parten en dos líneas en el PDF: se recomponen. Se excluye la alcaldesa."""
+    from bs4 import BeautifulSoup
+    from urllib.parse import urljoin
+    pagina = "https://www.cartagena.es/personal_directivo_eventual.asp"
+    r = descargar(pagina)
+    url = None
+    for a in BeautifulSoup(r.text, "html.parser").find_all("a", href=True):
+        t = a.get_text(" ", strip=True)
+        if t.startswith("Retribuciones de la corporación municipal y del personal eventual") and "PDF" in t.upper():
+            url = urljoin(r.url, a["href"])
+            break
+    if not url:
+        raise RuntimeError("Cartagena: no se encontró el PDF de retribuciones de la corporación")
+    texto = texto_pdf(descargar(url, timeout=120).content)
+    m = re.search(r"actualizado a (\d{2}/\d{2}/\d{4})", texto, re.I)
+    periodo = "legislatura 2023-2027" + (f" (actualizado a {m.group(1)})" if m else "")
+    lineas = [re.sub(r"\s+", " ", x).strip() for x in texto.split("\n")]
+    try:
+        ini = next(i for i, x in enumerate(lineas) if x.lower().startswith("alcaldesa y concejales"))
+    except StopIteration:
+        raise RuntimeError("Cartagena: no se encontró la sección de alcaldesa y concejales")
+    re_fila = re.compile(r"^(?P<puesto>CONCEJAL (?:PP|MC|PSOE|VOX|GRUPO MIXTO|CONCEJAL NO ADSCRITO)|ALCALDESA PP)\s+(?P<resto>.+?)\s+"
+                         r"(?P<jornada>C[O0]MPLETA|\d{2}%|MEDIA)\s+(?P<imp>[\d.]+,\d{2}) €$")
+    out, pendiente, asist = [], "", 0
+    for x in lineas[ini + 1:]:
+        if x.startswith(("Coordinador General", "Documento actualizado", "RETRIB.", "PUESTO", "LEGISLATURA")) or x.isdigit():
+            if x.startswith("Coordinador General"):
+                break
+            continue
+        if x.startswith("ASIST."):
+            asist += 1
+            pendiente = ""
+            continue
+        m = re_fila.match(x)
+        if not m:
+            if re.match(r"^(D\.|Dª)\s", x) and "€" not in x:
+                pendiente = x                       # 1.ª línea de un nombre partido en dos
+            continue
+        nombre = re.sub(r"^(D\.|Dª)\s+", "", ((pendiente + " ") if pendiente and not re.match(r"^(D\.|Dª)\s", m.group("resto")) else "") + m.group("resto"))
+        nombre = re.sub(r"^(D\.|Dª)\s+", "", nombre)
+        pendiente = ""
+        if m.group("puesto").startswith("ALCALDESA"):
+            continue
+        jornada = "completa" if m.group("jornada").startswith("C") else m.group("jornada").lower()
+        out.append(nuevo_registro("Cartagena", "murcia", _titulo_nombre(nombre), cargo_frase(m.group("puesto")), num_es(m.group("imp")),
+                                  f"retribuciones brutas anuales (jornada {jornada})", periodo, url,
+                                  "Portal de Transparencia del Ayuntamiento de Cartagena", texto))
+    if asist:
+        print(f"  Cartagena: {asist} concejales con 'ASIST. PLENOS' (asistencias) saltados")
+    if len(out) < 12:
+        raise RuntimeError(f"Cartagena: solo {len(out)} concejales (¿cambió el PDF?)")
     return out
 
 

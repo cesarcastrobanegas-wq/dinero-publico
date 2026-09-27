@@ -96,13 +96,69 @@ decisión deliberada de alcance, o algo pendiente de hacer.
   ayuntamiento, sin nombre por fila — cuando hay varios concejales con
   dedicación en el mismo consistorio (el caso mayoritario) es imposible
   atribuir el importe a una persona. Se muestran resaltados pero nunca con
-  sueldo.
+  sueldo. **Desde 2026-09-27 hay una segunda vía, aparte, para los
+  municipios cuya web oficial publica una tabla nombre + importe: ver
+  "Sueldos de concejales publicados por el propio ayuntamiento" más abajo.**
 - **Presidentes de Diputación/CCAA**: 5 personas hardcodeadas a mano, sin
   scraper — si hay elecciones o dimisión hay que actualizarlo manualmente.
 - **Alcaldes con 0€**: el motivo (renuncia al sueldo por cobrar ya de la
   Diputación) solo se verificó caso a caso para 3 municipios concretos
   (Sabadell, Sant Boi, Granollers); la nota que se muestra es genérica/
   condicional, no garantiza que sea siempre ese el motivo en otros casos.
+
+## Sueldos de concejales publicados por el propio ayuntamiento (2026-09-26/27)
+
+Regla: solo webs OFICIALES del ayuntamiento (transparencia, sede, boletín oficial, web municipal), nunca agregadores ni prensa.
+Un registro exige nombre + cargo/concejalía + importe + URL de la fuente (+ la base del importe tal como la dice la fuente);
+si falta algo o es ambiguo se salta y se anota. Nada se estima ni se convierte (mensual → anual). Código:
+`backend/actualizar_sueldos_concejales.py`; datos: `backend/sueldos_concejales.json`; bitácora con todos los saltos y anomalías:
+`SUELDOS_CONCEJALES_LOG.md`. **Cada ficha con datos muestra un desplegable con las filas enlazadas a su fuente y una nota con las
+salvedades de esa fuente** (`_NOTAS_SUELDOS_CONCEJALES` en `app.py`); las fichas de los municipios aparcados muestran un aviso con
+el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
+
+- **Cobertura a 2026-09-27**: 403 registros en 21 municipios (Sevilla, Málaga, Cádiz, Huelva; L'Hospitalet, Terrassa, Sabadell,
+  Lleida, Girona, Mataró; Madrid, Majadahonda; Elche; Vigo; Logroño; Murcia, Molina de Segura, Cartagena; Santa Cruz de Tenerife;
+  Palencia; Eivissa). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
+- **Salvedades concretas por fuente**:
+  - **Sevilla**: cargo mostrado como "Concejal/a" genérico (el PDF fuente no especifica la concejalía); el importe es lo percibido en
+    2024 e incluye cantidades pequeñas de concejales sin dedicación.
+  - **Madrid**: importe = SUMA de las 12 mensualidades publicadas (una fila por persona y mes), no un importe anual publicado
+    directamente; algunas personas tienen menos de 12 meses y la base lo indica.
+  - **Eivissa**: algunos importes vienen escritos "63.407.63 €" (punto de millar y punto decimal). Solo se acepta ese patrón exacto
+    (3 grupos, 2 cifras finales) tal como se publica; **si la fuente cambia de formato hay que revisar el parser** (`actualizar_eivissa`).
+  - **Málaga**: importe = retribución anual del CARGO según la tabla del mismo libro Excel (no nómina individual); solo tenientes de
+    alcalde y concejales delegados al 100 %.
+  - **Huelva**: importes NETOS 2024. **Terrassa**: MENSUAL bruto (14 pagas), sin convertir. **Vigo** (julio 2023) y **Murcia**
+    (febrero 2024): documentos fechados, los importes pueden haberse actualizado. **Palencia**: incluye algún año parcial.
+  - Cada conector excluye al alcalde (cubierto aparte), las asistencias a plenos y las filas con importe ilegible o incoherente.
+- **Aparcados por falta de fuente utilizable** (no reintentar salvo fuente nueva; el motivo se muestra en su ficha):
+  - **Córdoba**: escala por cargo (2025), sin importe por persona. **Granada**: BOP con nombres por categoría e importes en el
+    acuerdo de Pleno aparte. **Jerez**: acuerdos por cargo y dedicación de delegados en documentos separados.
+  - **Zaragoza**: tabla por concepto sin nombres. **València**: acuerdo plenario por cargos. **Valladolid**: retribuciones por cargo
+    con nº de puestos (dic. 2023), sin nombres.
+  - **Bilbao** (solo publica personal de libre designación) y **Alicante**: sin documento nominal localizado. **Palma**: el PDF
+    enlazado es de 2023, anterior al mandato.
+  - Pendientes de reintento por otros motivos: **Barcelona** (su API de cargos devolvía "timeout" en dos comprobaciones),
+    **Reus** (por cargo, sin nombres), **Alcalá de Henares** (por categoría, sin importe por persona).
+- **Plataformas descartadas**: `*.sedelectronica.es/employees` exige Cl@ve (Marbella, Orihuela); seu-e.cat solo rellena el importe en
+  la ficha de Girona (43 municipios catalanes sondeados).
+
+## Contratos formales de Galicia en PLACE (backfill del patrón "Concello de X", 2026-09-25/27)
+
+- **Qué era**: el patrón antiguo de `_regex_anclado` no reconocía órganos "Concello de X"/"Concello da/do X", así que los contratos
+  formales de esos municipios no se atribuían. El fix (a1633d4) solo actúa sobre los ZIP mensuales que se procesen desde entonces;
+  los meses anteriores se recuperan con un fichero generado en LOCAL (`backend/backfill_galicia_place.json.gz`, generador
+  `backend/generar_backfill_galicia_place.py`) y aplicado al arrancar con una fusión aditiva (`_aplicar_backfill_galicia_place`).
+  **Nunca se descargan ZIP en producción.**
+- **Desplegado**: 971 contratos (tandas 1-4) en 42 municipios, meses **202407 → 202609**. Cada tanda se probó antes contra una copia
+  REAL de la cache.db de producción (sin pérdidas, sin cambios fuera del fichero, menores intactos). **En marcha**: tanda 5
+  (202406 → 202309) hacia el tope de **septiembre de 2021** (alcance de 5 años); quedan meses hasta 202109.
+- **Límites**: (1) cobertura de meses anteriores a 202407 aún incompleta; (2) solo cubre lo que PLACE publica (Galicia tiene
+  contratos que no pasan por PLACE); (3) el fichero lo genera un script en local, no un cron: para ampliarlo hay que ejecutarlo
+  (`python generar_backfill_galicia_place.py AAAAMM AAAAMM`). El generador se para solo ante desvíos de tiempo o memoria; las paradas
+  observadas fueron carga de otros procesos y una suspensión del equipo, no problemas de datos.
+- **Efecto visible**: las fichas gallegas ganan contratos formales (p. ej. Santiago de Compostela 12 → 116); el peso de un solo
+  contrato puede ser grande (Santiago: transporte público de 128,6 M€).
 
 ## Población, deuda, cuentas anuales
 

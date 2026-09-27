@@ -130,3 +130,27 @@ municipios.
 4. **Infraestructura**: cabecera `Accept` en las peticiones (varios ayuntamientos bloqueaban la petición sin ella: Molina de Segura, Palencia); `main()` guarda tras cada municipio y `_escribir` es atómico.
 
 **Backfill de PLACE (paralelo)**: tandas 3 (+251) y 4 (+63) desplegadas tras probar cada una contra la copia real de producción (commits f8c9a56 y c835ddf); el fichero llega a 971 contratos (meses 202407-202609). La tanda 5 (202406→202309) sigue corriendo; el tope es 202109. El generador se paró en 202409 y 202407 por el vigilante de tiempo (carga de otros procesos; suspensión del equipo de ~21 h), no por datos ni memoria.
+
+---
+
+## Lote 4 — reintentos, Cartagena y notas públicas (2026-09-27)
+
+**Añadidos: 17 concejales** (Cartagena, Murcia). Total acumulado: **403 registros en 21 municipios**.
+
+- **Cartagena**: PDF "Retribuciones de la corporación municipal y del personal eventual" (actualizado a 29/05/2026), sección "Alcaldesa y
+  concejales. Legislatura 2023-2027". 9 concejales con "ASIST. PLENOS" (asistencias) saltados; la alcaldesa excluida; los nombres
+  partidos en dos líneas se recomponen (verificado a ojo, p. ej. "Maria Cristina Mora Menendez de la Vega"). El PDF trae rótulos con errores
+  de escritura ("C0MPLETA" con cero) que el parser acepta como jornada completa.
+
+**Reintentos pedidos (resultado)**
+- **Barcelona**: su API de cargos (`cards-export`) sigue devolviendo "timeout" (tercera comprobación) → sigue pendiente.
+- **Reus**: la página vigente de "Retribució dels càrrecs electes" es una tabla por cargo ("Alcaldessa", "Regidor/a delegat/ada Àrea de ...") con la
+  remuneración 2026, sin nombres → aparcado.
+- **Alcalá de Henares**: la web tiene un certificado SSL inválido (se pudo leer sin verificar el certificado, solo lectura de un dato público):
+  publica cuantías por categoría y el reparto de dedicaciones por grupo, sin importe por persona → aparcado.
+
+**Notas públicas (nuevo, petición de César)**: cada ficha con datos muestra una nota con las salvedades de su fuente (`_NOTAS_SUELDOS_CONCEJALES`);
+las fichas de 12 municipios aparcados (Córdoba, Granada, Jerez, Zaragoza, València, Valladolid, Bilbao, Alicante, Palma, Barcelona, Reus, Alcalá) muestran
+un aviso con el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`). Motivos verificados en crudo: Valladolid (PDF de diciembre 2023 por cargo con nº de puestos),
+Reus, Alcalá, Zaragoza, Córdoba, Granada y Jerez (ver lotes 1-2); Bilbao y Alicante son "no localizado", y así lo dice el aviso.
+Además, las fichas gallegas muestran un aviso sobre el backfill de PLACE (el mes de inicio se lee del propio fichero desplegado).
