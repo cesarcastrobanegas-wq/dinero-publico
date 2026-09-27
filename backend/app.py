@@ -14207,6 +14207,8 @@ _FUENTE_CM_LABEL = {
     "ciudad_real":     "Ciudad Real",
     "burgos":          "Burgos",
     "castello-governalia": "Castelló (PLACE)",
+    "xirivella-governalia": "Xirivella (PLACE)",
+    "santabrigida-governalia": "Sta. Brígida (PLACE)",
 }
 
 
@@ -14218,6 +14220,7 @@ _FUENTE_CM_LABEL = {
 # distintas sin saberlo.
 _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
                        "sax-governalia", "vilamarxant-governalia", "castello-governalia",
+                       "xirivella-governalia", "santabrigida-governalia",
                        "valencia_capital", "alicante", "leganes"}
 
 
@@ -14350,6 +14353,16 @@ _NOTAS_FUENTE_CM = {
         "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la "
         "Plataforma de Contratación del Sector Público (PLACE) -- mismo mecanismo que ya usan Cartagena, Ibi, "
         "Sax y Vilamarxant. Fecha real de adjudicación, NIF del adjudicatario, importe adjudicado SIN IVA."
+    ),
+    "xirivella-governalia": (
+        "API de Governalia del Ayuntamiento de Xirivella (Comunitat Valenciana), espejo de PLACE -- mismo "
+        "mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del "
+        "adjudicatario, importe adjudicado SIN IVA."
+    ),
+    "santabrigida-governalia": (
+        "API de Governalia del Ayuntamiento de Santa Brígida (Gran Canaria), espejo de PLACE -- mismo "
+        "mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del "
+        "adjudicatario, importe adjudicado SIN IVA."
     ),
 }
 

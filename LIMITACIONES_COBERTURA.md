@@ -148,9 +148,9 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-30**: 15 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+**Estado a 2026-09-30**: 17 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
 Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
-Burgos, Castelló de la Plana — **115.673 contratos** entre los quince), varios confirmados sin fuente viable
+Burgos, Castelló de la Plana, Xirivella, Santa Brígida — **116.789 contratos** entre los diecisiete), varios confirmados sin fuente viable
 tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel,
 Salamanca...). Detalle completo por municipio abajo.
 
@@ -249,6 +249,18 @@ Salamanca...). Detalle completo por municipio abajo.
   2021-09** (de 4.866 filas totales de la API). Igual que el resto de fuentes Governalia: importe adjudicado
   SIN IVA, NIF del adjudicatario, fecha real -- 0 filas sin NIF/fecha/descripción, solo 1 con importe 0
   (el propio ayuntamiento no lo rellenó, no inventado).
+- **Xirivella (Comunitat Valenciana) y Santa Brígida (Gran Canaria) — CONECTADOS (2026-09-30), encontrados a
+  partir de una cabecera HTTP**: al investigar Castellón se guardó la cabecera `Content-Security-Policy` que
+  devuelve su servidor Governalia en cada 503 -- esa cabecera lista, en `frame-ancestors`, TODOS los dominios
+  `transparencia.*.es` autorizados a embeber ese servidor, es decir, una lista real de clientes de Governalia:
+  `xirivella.es`, `tudela.es`, `santabrigida.es`, `alzira.es`, `castillalamancha.es` (este último, la Junta,
+  no un municipio). Se probaron los 4 municipios con el mismo patrón `governalia.<municipio>.es` +
+  la técnica del `wp-json/wp/v2/pages/4541` de Castellón: **Xirivella** (idP 63665, **815 registros desde
+  2021-09** de 816 filas de la API) y **Santa Brígida** (idP 70489, **301 registros desde 2021-09**, 301/301
+  filas) funcionan igual que Castellón (0 filas sin NIF/fecha en ninguno de los dos). **Tudela** (Navarra) dio
+  un idP real pero la API devuelve 0 filas -- no se activó como fuente. **Alzira** usa Liferay, no WordPress:
+  sin el atajo del `wp-json`, no se encontró su idP esta noche. Fuentes `xirivella-governalia` y
+  `santabrigida-governalia`, mismo patrón que el resto de fuentes Governalia (importe sin IVA).
 - **Valencia capital (~800.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: el portal antiguo (CKAN)
   se retiró en junio de 2026; el sustituto real es el buscador oficial `www.valencia.es/cas/ayuntamiento/
   buscador-contratos-menores` (portlet Liferay, formulario POST). **10.693 registros desde 2021-09**

@@ -983,6 +983,29 @@ def actualizar_castellon_governalia():
                                "CastelloGov", provincia="castellon")
 
 
+# Xirivella (Valencia) y Santa Brígida (Gran Canaria) -- encontrados 2026-09-30 a partir de la cabecera CSP
+# que el propio servidor de Castellón devuelve en sus 503 (frame-ancestors lista varios clientes reales de
+# Governalia: xirivella.es, tudela.es, santabrigida.es, alzira.es, castillalamancha.es). El idP de cada uno se
+# encontró con la misma técnica que Castellón (wp-json/wp/v2/pages/4541 de su transparencia.<municipio>.es,
+# que es WordPress en los tres primeros -- Alzira usa Liferay, sin este atajo, no se pudo cerrar). Tudela
+# resolvió con idP real pero devuelve 0 filas (posiblemente el idP encontrado no es el de "contratos", o el
+# municipio no tiene aún contratos menores cargados en Governalia) -- no se activa como fuente.
+XIRIVELLA_GOVERNALIA_PAGINA_URL = ("https://governalia.xirivella.es/gvn/web/section/modules/"
+                                   "transparency/egob/procurements/?idP=63665&lang=es")
+SANTA_BRIGIDA_GOVERNALIA_PAGINA_URL = ("https://governalia.santabrigida.es/gvn/web/section/modules/"
+                                      "transparency/egob/procurements/?idP=70489&lang=es")
+
+
+def actualizar_xirivella_governalia():
+    return _governalia_menores(XIRIVELLA_GOVERNALIA_PAGINA_URL, "Xirivella", "xirivella-governalia",
+                               "XirivellaGov", provincia="valencia")
+
+
+def actualizar_santa_brigida_governalia():
+    return _governalia_menores(SANTA_BRIGIDA_GOVERNALIA_PAGINA_URL, "Santa Brígida", "santabrigida-governalia",
+                               "SantaBrigidaGov", provincia="las_palmas")
+
+
 # A Coruña (añadido 2026-09-24): un fichero por trimestre (y un "Anexo" anual) en
 # coruna.gal/transparencia/.../contratos-menores, descargables con requests
 # siempre que se envíe un Referer de la propia página (sin él, 403). El formato
@@ -1943,6 +1966,8 @@ _FUENTES = {
     "sax-governalia":    actualizar_sax,
     "vilamarxant-governalia": actualizar_vilamarxant,
     "castello-governalia": actualizar_castellon_governalia,
+    "xirivella-governalia": actualizar_xirivella_governalia,
+    "santabrigida-governalia": actualizar_santa_brigida_governalia,
 }
 
 
