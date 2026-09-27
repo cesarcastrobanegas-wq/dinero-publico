@@ -397,4 +397,17 @@ completado por el riesgo de una atribución incorrecta sin la verificación adec
 - **Las Palmas de Gran Canaria**: página de "cargos electos" sin documento de retribuciones enlazado
   directamente (puede requerir JS, no confirmado).
 Los mismos municipios NO tienen contratos menores conectados tampoco; quedan como lead para otra sesión.
+- **Segovia**: mismo patrón exacto (acuerdo plenario con "5 CONCEJALES DELEGADOS: 54.104,71 € cada uno",
+  "3 CONCEJALES DELEGADOS: 51.399,47 €"... por categoría y recuento, sin ningún nombre en el documento).
+- **Pamplona**: la página de concejales solo enlaza sus CV individuales, no retribuciones; sin URL de
+  retribuciones localizada esta noche (404 en los patrones probados).
+- **Cáceres**: confirmado sin portal de transparencia propio localizable (WordPress search devuelve el sitio
+  de turismo, dominio distinto); `/transparencia` da 404 y no tiene subdominio dedicado encontrado.
+
+**Patrón detectado esta noche, útil para las próximas sesiones**: la gran mayoría de ayuntamientos medianos
+publican sus retribuciones de concejales por CARGO/CATEGORÍA y recuento (p. ej. "5 concejales delegados,
+54.104,71 € cada uno"), no por persona con nombre -- es el mínimo legal exigido por el art. 75.5 de la Ley
+7/1985, y cumplirlo así es más simple que publicar una tabla nominal. Antes de invertir tiempo en un
+municipio nuevo, conviene comprobar primero si el documento de retribuciones tiene NOMBRES reales (no solo
+cargos) antes de seguir explorando esa fuente.
 
