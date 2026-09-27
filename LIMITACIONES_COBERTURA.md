@@ -81,9 +81,27 @@ decisión deliberada de alcance, o algo pendiente de hacer.
   el resto de fuentes de menores). Sanity check de importe (más de ~50.000 € = por encima del techo legal de un
   contrato menor de obras con margen de IVA) impreso al final del generador para revisión manual, sin excluir nada
   automáticamente (mismo criterio que el resto del proyecto: nunca se adivina, se anota).
-- Volumen real (ejecución 2026-09-27): del orden de varios cientos de contratos por municipio en los más
-  grandes (Basauri, Berriz, Astigarraga, Azkoitia...), 0 en los más pequeños — ver el propio log del generador
-  para el detalle municipio a municipio.
+- **Cobertura final (2026-09-27): 155.708 contratos menores en los 251 municipios** (113 sin ninguno). Volumen muy
+  alto en los municipios grandes de Gipuzkoa/Bizkaia (Irun 31.969, Errenteria 21.085, Hernani 24.869, Tolosa
+  15.926, Eibar 24.126) — puede ser real (compra muy fragmentada) o reflejar cómo la propia API cuenta/agrupa
+  entradas; sin confirmar, anotado para revisar con calma.
+- **Cobertura PARCIAL conocida en 7 municipios grandes** (el generador tenía un tope de seguridad de 200
+  páginas/10.000 contratos que se quedó corto para estos, ya corregido en el script a 700 páginas/15 min por
+  municipio para el futuro, pero no relanzado entero esta noche por el tiempo que costaría — varias horas):
+  **Eibar** (8.851 de 24.126 reales, 37 %), **Elgoibar** (7.435 de 10.537, 71 %), **Errenteria** (10.000 de
+  21.085, 47 %), **Getxo** (7.280 de 12.623, 58 %), **Hernani** (10.000 de 24.869, 40 %), **Irun** (10.000 de
+  31.969, 31 %), **Tolosa** (10.000 de 15.926, 63 %). Para completarlos: relanzar
+  `python actualizar_contratos_menores_euskadi.py Eibar Elgoibar Errenteria Getxo Hernani Irun Tolosa` (con el
+  script ya corregido) — cada uno puede tardar hasta 15 minutos por el volumen.
+- **Aviso automático de importes sospechosos**: 52 de las 155.708 filas superan los 100.000 € (hasta 8.447.000 €
+  en Loiu por "retirada de columnas de antiguo alumbrado", 4.839.353 € en Deba por instalar césped artificial en
+  una pista de tenis...) — mismo tipo de error de origen que el caso Prismaglobal/Vitoria-Gasteiz de noches
+  anteriores, pero sin URL por contrato para verificarlo uno a uno y con demasiado volumen para curarlos a mano
+  como esos casos. `app.py` muestra un aviso automático (`EUSKADI_MENOR_IMPORTE_SOSPECHOSO = 100.000`) en
+  cualquier fila de esta fuente por encima de ese umbral, en vez de ocultarla o inventar una cifra corregida.
+  Portugalete concentra más de una decena de los 52 casos — posible problema específico de esa fuente/municipio,
+  sin confirmar. 4 filas (de 155.708) tienen fecha de adjudicación futura (hasta 2029) — mismo tipo de dato
+  imposible ya documentado para los formales de Euskadi arriba; se dejan tal cual, sin excluir.
 
 ## Contratos menores — mapeo de agregadores regionales, resto de España (2026-09-27)
 
