@@ -10855,6 +10855,28 @@ def _cargar_contratos_menores_getafe():
               f"(Getafe) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_MOSTOLES_FILE = os.path.join(BASE_DIR, "contratos_menores_mostoles.json.gz")
+
+
+def _cargar_contratos_menores_mostoles():
+    """Carga contratos_menores_mostoles.json.gz (generado por actualizar_contratos_menores_mostoles.py --
+    informes mensuales oficiales en PDF del Ayuntamiento de Móstoles) y lo vuelca a la tabla compartida
+    contratos_menors_locales. Mismo patrón que el resto de fuentes locales."""
+    ruta = CONTRATOS_MENORES_MOSTOLES_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_mostoles: {len(registros)} contratos menores "
+              f"(Móstoles) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10877,6 +10899,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_valencia_capital()
     _cargar_contratos_menores_alicante()
     _cargar_contratos_menores_getafe()
+    _cargar_contratos_menores_mostoles()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -13955,6 +13978,7 @@ _FUENTE_CM_LABEL = {
     "valencia_capital": "València",
     "alicante":        "Alicante",
     "getafe":          "Getafe",
+    "mostoles":        "Móstoles",
 }
 
 
@@ -14033,6 +14057,12 @@ _NOTAS_FUENTE_CM = {
         "API pública del portal de gobierno abierto de Getafe (plataforma Gobierto). Trae CPV y categoría del "
         "contrato (única fuente local de menores con CPV, además de PSCP/Euskadi en formales), pero NO publica "
         "NIF del adjudicatario."
+    ),
+    "mostoles": (
+        "Informes mensuales oficiales del Ayuntamiento de Móstoles, publicados en PDF (portal de "
+        "transparencia). Importe con IVA, NIF del adjudicatario. Sin expediente en columna propia (va embebido "
+        "en el texto libre del objeto); falta un mes (noviembre de 2024, formato de tabla no reconocible en ese "
+        "PDF concreto -- omitido, no inventado)."
     ),
 }
 
