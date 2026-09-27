@@ -10789,6 +10789,28 @@ def _cargar_contratos_menores_madrid_capital():
               f"(Madrid capital, datos.madrid.es) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_VALENCIA_CAPITAL_FILE = os.path.join(BASE_DIR, "contratos_menores_valencia_capital.json.gz")
+
+
+def _cargar_contratos_menores_valencia_capital():
+    """Carga contratos_menores_valencia_capital.json.gz (generado por
+    actualizar_contratos_menores_valencia_capital.py -- buscador oficial de contratos menores del Ayuntamiento
+    de Valencia) y lo vuelca a la tabla compartida contratos_menors_locales. Mismo patrón que Madrid/Euskadi."""
+    ruta = CONTRATOS_MENORES_VALENCIA_CAPITAL_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_valencia_capital: {len(registros)} contratos menores "
+              f"(Valencia capital) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10808,6 +10830,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_murcia_manual()
     _cargar_contratos_menores_euskadi()
     _cargar_contratos_menores_madrid_capital()
+    _cargar_contratos_menores_valencia_capital()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -13883,6 +13906,7 @@ _FUENTE_CM_LABEL = {
     "vilamarxant-governalia": "Vilamarxant (PLACE)",
     "euskadi":         "API Euskadi",
     "madrid_capital":  "Madrid",
+    "valencia_capital": "València",
 }
 
 
@@ -13893,7 +13917,7 @@ _FUENTE_CM_LABEL = {
 # solo en LIMITACIONES_COBERTURA.md, para que nadie sume totales de bases
 # distintas sin saberlo.
 _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
-                       "sax-governalia", "vilamarxant-governalia"}
+                       "sax-governalia", "vilamarxant-governalia", "valencia_capital"}
 
 
 # Avisos públicos por fuente, visibles en la sección de contratos menores de la
@@ -13945,6 +13969,12 @@ _NOTAS_FUENTE_CM = {
         "publica NIF del adjudicatario (a diferencia de RPC/Euskadi). Sin CPV y sin enlace por expediente. Solo "
         "Madrid capital, no el resto de municipios de la Comunidad de Madrid (que no tiene agregador propio, ver "
         "LIMITACIONES_COBERTURA.md)."
+    ),
+    "valencia_capital": (
+        "Buscador oficial de contratos menores del Ayuntamiento de Valencia (www.valencia.es), consultado en vivo "
+        "(no un dataset descargable). Fecha real de adjudicación, importe SIN IVA (columna propia del buscador, "
+        "distinta del IVA), NIF del adjudicatario. Solo Valencia capital, no el resto de la Comunitat Valenciana "
+        "(sin agregador propio, ver LIMITACIONES_COBERTURA.md)."
     ),
 }
 
