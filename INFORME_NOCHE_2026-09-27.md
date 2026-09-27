@@ -19,7 +19,8 @@ Partiendo de 386 registros/20 municipios (estado de la noche anterior), esta noc
 - **Municipios nuevos añadidos** (28 en total esta noche): Las Rozas de Madrid, Huesca, Ciudad Real,
   Telde, Calvià, Sagunto, Alcoy, Alcalá de Henares, Pozuelo de Alarcón — sumados a Castellón,
   Vitoria-Gasteiz, Móstoles, Almería, Salamanca de anoche.
-- **Estado final: 673 registros en 35 municipios** (commit `bf522c7`, lote 13). Bitácora completa,
+- **Estado final: 697 registros en 36 municipios** (commit `ba5a7f2`, lote 14 — se sumó Torrevieja
+  después: otra ficha individual por representante, igual que Pozuelo). Bitácora completa,
   con salvedades de cada fuente y motivo de cada aparcado, en `SUELDOS_CONCEJALES_LOG.md` (lotes 6-13).
 - **Casos técnicos interesantes**:
   - *Alcalá de Henares*: no es una tabla — un párrafo por tramo de cargo/dedicación con varias personas
@@ -95,10 +96,16 @@ por un mecanismo distinto (misma API que los formales, no un registro dedicado).
   cerrada) en cualquier fila de fuente Euskadi por encima de 100.000 € (`EUSKADI_MENOR_IMPORTE_SOSPECHOSO`),
   explicando que puede ser un error de origen sin forma de comprobarlo. Portugalete concentra más de una
   decena de los 52 casos — posible problema específico de esa fuente/municipio, sin confirmar.
-- **Falta**: terminar el segundo pase de las 7 ciudades grandes, probar el conjunto final contra una
-  copia real de producción (mismo patrón que el backfill de Galicia) y hacer commit+push del fichero
-  `.json.gz` + los cambios de `app.py` (loader + aviso automático). Nada de esto ha llegado todavía a
-  `main` — el fichero de datos y el aviso están solo en local al escribir esto.
+- **YA DESPLEGADO (commit `5955fc8`)**: probado contra una copia real de producción (155.708 filas cargan sin
+  romper nada más; render de ficha con formales+menores+sueldos mixtos sin errores; el aviso automático se
+  muestra correctamente en las filas altas de Loiu) y subido: `backend/contratos_menores_euskadi.json.gz`,
+  `backend/actualizar_contratos_menores_euskadi.py` y el aviso de `app.py`.
+- **Decisión sobre las 7 ciudades grandes**: se intentó un segundo pase solo para ellas con el script ya
+  corregido (700 páginas), pero Errenteria sola tardó más de 15 minutos (su propio límite de seguridad) sin
+  terminar — completar las 7 en serio son varias horas más. Maté el proceso a mitad (sin pérdida: el fichero
+  que ya estaba en disco, con la cobertura parcial de esas 7 ciudades, es el que se ha desplegado) en vez de
+  seguir esperando esta noche. Quedan documentadas en `LIMITACIONES_COBERTURA.md` con su cobertura exacta
+  (31 %-71 % según la ciudad) y el comando exacto para completarlas cuando se decida dedicarle el tiempo.
 
 ---
 
