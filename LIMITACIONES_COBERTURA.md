@@ -191,9 +191,17 @@ ronda porque todo lo encontrado es fuente primaria municipal):
   formato de fecha distintos según el año).
 - **Palma (~416.000 hab., Illes Balears) — lead confirmado, formato incómodo**: `palma.es/es/contratos-menores`
   publica Excel + PDF por trimestre. Mismo patrón que Valladolid.
-- **Alicante (~337.000 hab., Comunitat Valenciana)**: contratos menores publicados por departamento/servicio
-  (no un dataset agregado), en el portal de transparencia reformado en 2024 -- no se ha encontrado un CSV único;
-  requeriría más investigación para saber si es viable.
+- **Alicante (~337.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: informes trimestrales oficiales
+  en ODS (Junta de Gobierno Local, portal de transparencia). **8.140 registros desde 2021-09**
+  (`actualizar_contratos_menores_alicante.py`, fuente `alicante`). A diferencia de Valencia capital, aquí el
+  Expediente SÍ es una clave única real por contrato (comprobado con un chequeo de colisiones: 1 de 8.141 filas,
+  benigno). Los enlaces a cada ODS trimestral no siguen un patrón de URL predecible -- recogidos a mano
+  navegando `alicante.es/es/contenidos/contratos-menores-del-ayuntamiento-<año>-trimestres`; para un trimestre
+  nuevo hay que localizar su URL igual y añadirla al diccionario `FICHEROS` del script.
+- **Elche (~235.000 hab., Comunitat Valenciana)**: su página de "Contratos menores" en el portal de
+  transparencia municipal REDIRIGE al perfil de contratante genérico de la Plataforma de Contratación del
+  Estado (no tiene fuente propia separada) -- sin lead viable más allá de lo que ya cubre PLACE (que no expone
+  menores de forma sistemática, ver más abajo).
 - **Albacete (~173.000 hab., Castilla-La Mancha)**: sin CSV/dataset localizado esta noche en su portal de
   transparencia; solo referencia genérica a la contratación. Pendiente de mirar con más detalle o contactar/
   solicitar acceso a la información (vía el trámite que el propio portal ofrece).
@@ -201,9 +209,8 @@ ronda porque todo lo encontrado es fuente primaria municipal):
   individuales con adjudicatario e importe, SIN fecha de adjudicación visible), pero sin descarga masiva --
   mismo patrón que el buscador legacy de Navarra (viable por scraping, no por dataset).
   Sin dataset localizado esta ronda: **Burgos**, **Castellón de la Plana** (relaciones de contratos menores por
-  decreto en PDF/ODS/XLS, no un dataset único), **Elche** (solo referencia genérica a la Plataforma de
-  Contratación del Estado, sin CSV propio). **Toledo**: publica el listado de menores mensualmente en su web de
-  transparencia (sin confirmar el formato exacto esta ronda). **Guadalajara**: solo contratos MAYORES
+  decreto en PDF/ODS/XLS, no un dataset único). **Toledo**: publica el listado de menores mensualmente en su web
+  de transparencia (sin confirmar el formato exacto esta ronda). **Guadalajara**: solo contratos MAYORES
   localizados, no menores.
 - **Lead nuevo para otros municipios (no capitales) de la Comunidad de Madrid**: Torrejón de Ardoz
   (`transparencia.ayto-torrejon.es/t/contratos`) y Pinto (`gobiernoabierto.ayto-pinto.es/contratos-menores`)
