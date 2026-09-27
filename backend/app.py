@@ -10833,6 +10833,28 @@ def _cargar_contratos_menores_alicante():
               f"(Alicante) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_GETAFE_FILE = os.path.join(BASE_DIR, "contratos_menores_getafe.json.gz")
+
+
+def _cargar_contratos_menores_getafe():
+    """Carga contratos_menores_getafe.json.gz (generado por actualizar_contratos_menores_getafe.py -- API
+    pública de la plataforma Gobierto, gobiernoabierto.getafe.es) y lo vuelca a la tabla compartida
+    contratos_menors_locales. Mismo patrón que Madrid/Valencia/Alicante/Euskadi."""
+    ruta = CONTRATOS_MENORES_GETAFE_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_getafe: {len(registros)} contratos menores "
+              f"(Getafe) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10854,6 +10876,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_madrid_capital()
     _cargar_contratos_menores_valencia_capital()
     _cargar_contratos_menores_alicante()
+    _cargar_contratos_menores_getafe()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -13931,6 +13954,7 @@ _FUENTE_CM_LABEL = {
     "madrid_capital":  "Madrid",
     "valencia_capital": "València",
     "alicante":        "Alicante",
+    "getafe":          "Getafe",
 }
 
 
@@ -14004,6 +14028,11 @@ _NOTAS_FUENTE_CM = {
         "Informe trimestral oficial de contratos menores del Ayuntamiento de Alicante (Junta de Gobierno Local), "
         "publicado en ODS. Fecha real del contrato, importe SIN IVA, NIF del adjudicatario. Sin CPV ni enlace "
         "por contrato."
+    ),
+    "getafe": (
+        "API pública del portal de gobierno abierto de Getafe (plataforma Gobierto). Trae CPV y categoría del "
+        "contrato (única fuente local de menores con CPV, además de PSCP/Euskadi en formales), pero NO publica "
+        "NIF del adjudicatario."
     ),
 }
 
