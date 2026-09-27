@@ -10944,6 +10944,28 @@ def _cargar_contratos_menores_palma():
               f"(Palma) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_FUENLABRADA_FILE = os.path.join(BASE_DIR, "contratos_menores_fuenlabrada.json.gz")
+
+
+def _cargar_contratos_menores_fuenlabrada():
+    """Carga contratos_menores_fuenlabrada.json.gz (generado por actualizar_contratos_menores_fuenlabrada.py --
+    informes trimestrales oficiales del Ayuntamiento de Fuenlabrada y sus OO.AA) y lo vuelca a la tabla
+    compartida contratos_menors_locales. Mismo patrón que el resto de fuentes locales."""
+    ruta = CONTRATOS_MENORES_FUENLABRADA_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_fuenlabrada: {len(registros)} contratos menores "
+              f"(Fuenlabrada) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10970,6 +10992,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_leganes()
     _cargar_contratos_menores_toledo()
     _cargar_contratos_menores_palma()
+    _cargar_contratos_menores_fuenlabrada()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14052,6 +14075,7 @@ _FUENTE_CM_LABEL = {
     "leganes":         "Leganés",
     "toledo":          "Toledo",
     "palma":           "Palma",
+    "fuenlabrada":     "Fuenlabrada",
 }
 
 
@@ -14152,6 +14176,12 @@ _NOTAS_FUENTE_CM = {
         "Informes trimestrales oficiales del Ayuntamiento de Palma, publicados en Excel. La columna de importe "
         "no indica explícitamente si incluye IVA (se muestra tal cual la publica la fuente). NIF del "
         "adjudicatario solo disponible en los trimestres que lo publican (la mayoría no lo hace)."
+    ),
+    "fuenlabrada": (
+        "Informes trimestrales oficiales del Ayuntamiento de Fuenlabrada y sus Organismos Autónomos (CIFE, "
+        "IMLS, OTAF, PMC, PMD), en `transparencia.ayto-fuenlabrada.es/contratos/menores/` -- sección pública "
+        "distinta del visor de contratos general de ese mismo portal (ese sí está protegido por contraseña). "
+        "Fecha real de aprobación, NIF del adjudicatario."
     ),
 }
 
