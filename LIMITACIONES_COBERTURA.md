@@ -173,10 +173,10 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
   los meses anteriores se recuperan con un fichero generado en LOCAL (`backend/backfill_galicia_place.json.gz`, generador
   `backend/generar_backfill_galicia_place.py`) y aplicado al arrancar con una fusión aditiva (`_aplicar_backfill_galicia_place`).
   **Nunca se descargan ZIP en producción.**
-- **Desplegado**: 1.170 contratos (tandas 1-5) en 42 municipios, meses **202309 → 202609**. Cada tanda se probó antes contra una copia
-  REAL de la cache.db de producción (sin pérdidas, sin cambios fuera del fichero, menores intactos; la 5.ª: 29 fichas, +199 contratos). **Siguiente**:
-  tanda 6 (202308 → 202209) hacia el tope de **septiembre de 2021** (alcance de 5 años); quedan meses hasta 202109.
-- **Límites**: (1) cobertura de meses anteriores a 202309 aún incompleta; (2) solo cubre lo que PLACE publica (Galicia tiene
+- **Desplegado**: 1.472 contratos (tandas 1-6) en 44 municipios, meses **202209 → 202609**. Cada tanda se probó antes contra una copia
+  REAL de la cache.db de producción (sin pérdidas, sin cambios fuera del fichero, menores intactos; la 6.ª: 31 fichas, +302 contratos). **Siguiente**:
+  tanda 7 (202208 → 202109, el tope de **septiembre de 2021** del alcance de 5 años).
+- **Límites**: (1) cobertura de meses anteriores a 202209 aún incompleta; (2) solo cubre lo que PLACE publica (Galicia tiene
   contratos que no pasan por PLACE); (3) el fichero lo genera un script en local, no un cron: para ampliarlo hay que ejecutarlo
   (`python generar_backfill_galicia_place.py AAAAMM AAAAMM`). El generador se para solo ante desvíos de tiempo o memoria; las paradas
   observadas fueron carga de otros procesos y una suspensión del equipo, no problemas de datos.
