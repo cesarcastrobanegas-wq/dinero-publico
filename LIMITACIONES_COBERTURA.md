@@ -146,10 +146,10 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-30**: 12 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
-Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza — **103.685
-contratos** entre los doce), varios confirmados sin fuente viable tras investigación real, no solo una
-búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio
+**Estado a 2026-09-30**: 13 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real —
+**105.205 contratos** entre los trece), varios confirmados sin fuente viable tras investigación real, no solo
+una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio
 abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
@@ -182,6 +182,30 @@ abajo.
     procesos completos) sí admite `rows` grandes sin tope (devuelve sus 5.755 registros de golpe con
     `rows=100000`), pero solo da pares `{ocid, id}` -- no hay forma documentada ni probada de pedir el
     detalle completo de un proceso por id (`/ocds/contracting-process/{id}.json` da 400 "no válido").
+- **Ciudad Real (~75.000 hab., Castilla-La Mancha) — CONECTADO (2026-09-30), "prueba otra vía" tras
+  Zaragoza**: sin buscar portal de transparencia separado ni dataset abierto -- la propia página del perfil
+  de contratante (`ciudadreal.es/ayuntamiento/perfil-contratante/contratos-menores.html`) trae un acordeón con
+  un año por sección, 2020-2026, todo en el mismo HTML. Dos eras conviven en la misma página:
+  - **2020-2024**: cada contrato es un bloque de texto libre embebido en el propio HTML (nada descargable) con
+    4 campos siempre en el mismo orden (objeto/duración/importe con IVA/adjudicatario) -- **sin fecha real de
+    adjudicación ni NIF**. 2020 y 2021 se excluyen enteros por ser ambiguos frente al corte de 2021-09
+    (mismo criterio que el fichero "2021" de Toledo).
+  - **2025 en adelante**: la fuente pasó a publicar XLSX descargables (trimestrales en 2025, acumulativo desde
+    2026) con NIF y fecha real de adjudicación, pero SIN objeto/descripción del contrato.
+  **1.520 registros desde 2022** (`actualizar_contratos_menores_ciudad_real.py`, fuente `ciudad_real`). Tres
+  bugs reales de parseo encontrados y corregidos verificando los importes más altos del resultado (patrón ya
+  habitual en este proyecto -- nunca se descubren mirando solo el recuento total):
+  1. En la era de texto libre, un punto o coma suelto de cierre de frase ("...IVA incluido.") se colaba pegado
+     al número y lo multiplicaba por 100 (5.340,00 → 534.000,00) -- se recortan los separadores sueltos del
+     final antes de parsear.
+  2. También en texto libre, un inciso entre paréntesis como "IVA (10%) y portes incluidos" metía el "10" del
+     porcentaje pegado al número real y lo multiplicaba por 10 (9.147,75 → 91.477.510,00) -- se corta el texto
+     en el primer "€"/"IVA" antes de extraer el número.
+  3. En la era XLSX, ~10 filas de miles tienen la celda de `importe_con_iva` corrupta con una FECHA (`datetime`)
+     en vez de un número -- error de tecleo/formato de la propia fuente al rellenar la hoja. Convertir ese
+     datetime a texto y parsearlo como número daba cifras de billones de euros. Se usa `importe_sin_iva` como
+     alternativa; en la única fila donde esa celda TAMBIÉN estaba corrupta, se deja el importe en 0 -- no se
+     inventa un valor.
 - **Valencia capital (~800.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: el portal antiguo (CKAN)
   se retiró en junio de 2026; el sustituto real es el buscador oficial `www.valencia.es/cas/ayuntamiento/
   buscador-contratos-menores` (portlet Liferay, formulario POST). **10.693 registros desde 2021-09**
@@ -317,8 +341,8 @@ investigación de sueldos de concejales:
   ronda (Huesca y Teruel remiten a la Plataforma de Contratación del Estado sin dataset propio; Salamanca tiene
   portal de datos abiertos propio -- `opendata.aytosalamanca.es` -- pero no es CKAN estándar y su búsqueda no
   devolvió un dataset de menores esta noche, habría que navegar el catálogo a mano).
-- **Pendiente de revisar** (siguiente ronda, mismo criterio): Burgos (Castilla y León); Ciudad Real (Castilla-La
-  Mancha); resto de municipios de la Comunidad de Madrid por población.
+- **Pendiente de revisar** (siguiente ronda, mismo criterio): Burgos (Castilla y León); resto de municipios de
+  la Comunidad de Madrid por población.
 
 ## Fondos UE
 
