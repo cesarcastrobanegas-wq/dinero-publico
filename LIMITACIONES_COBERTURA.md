@@ -146,12 +146,12 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-29**: 9 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
-Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada — **76.138 contratos** entre los nueve), 1 con lead
-confirmado de alto esfuerzo sin conectar (Alcalá de Henares), 2 con lead sin cerrar por un obstáculo técnico
-concreto (Valladolid: SPA con JS; Zaragoza: paginación de su propia API rota, confirmado y abandonado), varios
-confirmados sin fuente viable tras investigación real, no solo una búsqueda superficial (Elche, Albacete,
-Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio abajo.
+**Estado a 2026-09-29**: 10 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares — **91.208 contratos** entre los diez),
+2 con lead sin cerrar por un obstáculo técnico concreto (Valladolid: SPA con JS; Zaragoza: paginación de su
+propia API rota, confirmado y abandonado), varios confirmados sin fuente viable tras investigación real, no
+solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por
+municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -256,16 +256,21 @@ investigación de sueldos de concejales:
   **Pistas para otros municipios**: si algún otro ayuntamiento de la lista usa también la plataforma Gobierto
   (buscar un dominio `gobiernoabierto.<municipio>.es` o similar con un dashboard "Contratos y licitaciones"),
   el mismo patrón de endpoint debería funcionar.
-- **Alcalá de Henares (~195.000 hab.) — lead confirmado, alto esfuerzo, sin conectar**: informes TRIMESTRALES en
-  PDF (`hacienda.ayto-alcaladehenares.es/s-informacion-contratos-menores/`, certificado SSL inválido -- lectura
-  sin verificar, mismo caso que el conector de sueldos de esta misma ciudad). A diferencia de Móstoles, estos
-  PDFs NO tienen una tabla con bordes reconocible por `pdfplumber` (`extract_table()` no encuentra nada) --
-  es un informe contable de líneas envueltas (varias líneas de texto libre por registro, con subtotales
-  "TOTAL PARTIDA"/"TOTAL ACREEDOR" intercaladas que hay que descartar), 67 páginas por trimestre. Además, el NIF
-  de las personas físicas viene PARCIALMENTE ENMASCARADO (p. ej. "***8694**"), a diferencia de todas las demás
-  fuentes conectadas hasta ahora. Viable con un parser de texto por líneas y expresiones regulares, pero de
-  bastante más esfuerzo que las fuentes con tabla real -- queda documentado para cuando se decida dedicarle el
-  tiempo, con los ~30 enlaces PDF (2019-2026) ya localizados en la propia página.
+- **Alcalá de Henares (~195.000 hab.) — CONECTADO (2026-09-29)**: informes TRIMESTRALES en PDF
+  (`hacienda.ayto-alcaladehenares.es/s-informacion-contratos-menores/`, certificado SSL inválido -- lectura sin
+  verificar, mismo caso que el conector de sueldos de esta misma ciudad). **15.070 registros desde 2021T3**
+  (`actualizar_contratos_menores_alcala_henares.py`, fuente `alcala_henares`). Sin tabla con bordes reconocible
+  por `pdfplumber` -- es un informe contable de líneas de texto libre parseado con expresiones regulares, con
+  DOS formatos estructurales distintos según la época: "Tercero" (hasta 2023, sin NIF en absoluto) y "ADO"
+  (2024+, con NIF -- enmascarado para personas físicas tal cual lo publica la fuente, p. ej. "***8694**", nunca
+  se intenta completar). En el formato "ADO" el orden de los campos varía de un trimestre a otro, así que se
+  extraen por PATRÓN (forma del NIF, año coincidente con la fecha, último de 4 números al final de línea) en
+  vez de por posición fija. Tres bugs reales corregidos en iteraciones sucesivas (documentados en el propio
+  script): detección de continuación de nombre poco fiable por la abreviatura de factura variable
+  ("FRA."/"FA."/sin prefijo) que volcaba la descripción entera dentro del nombre; NIF pegado sin espacio al
+  nombre por un artefacto de extracción del PDF; fragmento de código presupuestario con barras pegado al final
+  del nombre. Verificado: 0 sin fecha, 0 sin descripción, importes máximos coherentes con el tope legal de
+  obras, 16 nombres con artefactos residuales menores (0,1 %, aceptado).
 - **Fuenlabrada (~192.000 hab.) — CONECTADO (2026-09-29, retomado)**: el "visor de contratos" general del
   portal de transparencia SÍ está protegido por contraseña (confirmado, sin cambios), pero navegando el menú
   completo de "Contratos y Patrimonio" apareció una sección DISTINTA y pública:
