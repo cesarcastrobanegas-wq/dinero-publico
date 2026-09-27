@@ -11012,6 +11012,29 @@ def _cargar_contratos_menores_valladolid():
               f"(Valladolid) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_ZARAGOZA_FILE = os.path.join(BASE_DIR, "contratos_menores_zaragoza.json.gz")
+
+
+def _cargar_contratos_menores_zaragoza():
+    """Carga contratos_menores_zaragoza.json.gz (generado por actualizar_contratos_menores_zaragoza.py --
+    API REST propia del Ayuntamiento de Zaragoza, contratacion-publica/contrato.json?contratoMenor=true;
+    no la OCDS estándar, que tiene la paginación rota) y lo vuelca a la tabla compartida
+    contratos_menors_locales. Mismo patrón que el resto de fuentes locales."""
+    ruta = CONTRATOS_MENORES_ZARAGOZA_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_zaragoza: {len(registros)} contratos menores "
+              f"(Zaragoza) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11041,6 +11064,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_fuenlabrada()
     _cargar_contratos_menores_alcala_henares()
     _cargar_contratos_menores_valladolid()
+    _cargar_contratos_menores_zaragoza()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14126,6 +14150,7 @@ _FUENTE_CM_LABEL = {
     "fuenlabrada":     "Fuenlabrada",
     "alcala_henares":  "Alcalá de Henares",
     "valladolid":      "Valladolid",
+    "zaragoza":        "Zaragoza",
 }
 
 
@@ -14244,6 +14269,13 @@ _NOTAS_FUENTE_CM = {
         "municipal SICALWIN), filtrados por PROCEDIMIENTO='Contratación menor'. Sin NIF del adjudicatario (no "
         "publicado por esta fuente)."
     ),
+    "zaragoza": (
+        "API propia del Ayuntamiento de Zaragoza (contratacion-publica/contrato, filtro contratoMenor=true) -- "
+        "no la API estándar OCDS que el propio Ayuntamiento documenta como preferente, que tiene la paginación "
+        "rota. Fecha real de adjudicación, importe con IVA, NIF del adjudicatario, CPV. Un puñado de contratos "
+        "(2 en toda la ventana) supera claramente el techo legal de un contrato menor pese a venir marcados como "
+        "tal por la fuente -- probablemente un error de etiquetado de origen; se muestran tal cual, con aviso."
+    ),
 }
 
 
@@ -14333,6 +14365,13 @@ EUSKADI_MENOR_IMPORTE_SOSPECHOSO = 100_000
 # origen como en Euskadi, solo advierte del régimen distinto.
 MADRID_CAPITAL_MENOR_IMPORTE_ALTO = 40_000
 
+# Igual que MADRID_CAPITAL_MENOR_IMPORTE_ALTO pero calibrado con la distribución real de Zaragoza: entre
+# 40.000 y 50.000 € (con IVA) hay 99 contratos de OBRAS legítimos (el tope legal de 40.000 € sin IVA de obras
+# se queda en ese rango una vez con IVA), pero por encima de 50.000 € solo hay 2 en toda la ventana -- y esos
+# 2 sí son claramente anómalos (uno de ellos, 1,77M€, es en realidad un contrato de obra por lotes de varios
+# millones que la fuente marca "contratoMenor: true" por error). Verificado en vivo, no inventado.
+ZARAGOZA_MENOR_IMPORTE_ALTO = 50_000
+
 
 def _render_fila_contrato_menor(r):
     """Fila de la tabla de contratos menores locales -- compartida por todas
@@ -14413,6 +14452,11 @@ def _render_fila_contrato_menor(r):
         nota_txt = ("Importe por encima del techo legal habitual de un contrato menor (dataset oficial del "
                     "Ayuntamiento de Madrid). Probablemente un \"contrato privado\" (régimen distinto, sin ese "
                     "tope) incluido en el mismo dataset -- no necesariamente un error.")
+    if not nota_txt and fuente == "zaragoza" and (r.get("import_num") or 0) > ZARAGOZA_MENOR_IMPORTE_ALTO:
+        nota_txt = ("Importe muy por encima del techo legal de un contrato menor, pese a venir marcado como tal "
+                    "por la API oficial del Ayuntamiento de Zaragoza. Probablemente un error de etiquetado de "
+                    "origen (por ejemplo, un contrato de obras por lotes de varios millones de euros) -- se "
+                    "muestra tal cual, sin corregirlo.")
     nota_fila = f'<span class="cm-nota">⚠️ {esc(nota_txt)}</span>' if nota_txt else ""
 
     return f"""<tr>

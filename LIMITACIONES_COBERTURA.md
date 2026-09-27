@@ -146,10 +146,9 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-30**: 11 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
-Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid — **102.600 contratos**
-entre los once), 1 con lead sin cerrar por un obstáculo técnico concreto (Zaragoza: paginación de su propia API
-rota, confirmado y abandonado), varios confirmados sin fuente viable tras investigación real, no solo una
+**Estado a 2026-09-30**: 12 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza — **103.685
+contratos** entre los doce), varios confirmados sin fuente viable tras investigación real, no solo una
 búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio
 abajo.
 
@@ -158,27 +157,31 @@ abajo.
   CSV mensual desde 2015, con NIF. Ver conector `actualizar_contratos_menores_madrid_capital.py` — 27.959
   registros desde 2021-09. El resto de municipios de la Comunidad de Madrid sigue sin agregador (ver arriba);
   cada uno necesitaría su propia investigación.
-- **Zaragoza (~675.000 hab., Aragón) — investigado a fondo dos rondas, endpoint confirmado NO VIABLE tal cual**:
-  el Ayuntamiento publica un dataset OCDS (Open Contracting Data Standard) en `zaragoza.es/sede/servicio/
-  contratacion-publica/ocds` (catálogo 147). El endpoint `/ocds/award.json` funciona sin filtro (`?rows=N`,
-  formato en la EXTENSIÓN, no en `?rf=...`) y devuelve awards reales desde 2016-04-14 en adelante (título,
-  adjudicatario, fecha `date`), pero **la paginación está rota, confirmado con pruebas exhaustivas
-  (2026-09-29)**:
-  - `after`/`before` (fecha ISO completa) siempre devuelve `{"totalCount":0,...}`, ningún formato de fecha
-    probado lo arregla; `year`/`exercici` se ignoran sin más.
-  - `sort=-date` no cambia el orden (sigue empezando por el registro más antiguo).
-  - **`start` (el offset de paginación) se ignora por completo** -- `start=0` y `start=100000` devuelven
-    EXACTAMENTE los mismos registros, confirmado comparando los `id` uno a uno. Sin `start` funcional no hay
-    forma de pedir "la página siguiente".
-  - `rows` sí funciona, pero con un tope duro entre 1.300 y 1.400 (`rows=1300` → 200 OK, `rows=1400` → 404).
-  - **Conclusión**: con `start` roto y un tope de ~1.300, el endpoint solo puede devolver los ~1.300 contratos
-    MÁS ANTIGUOS de todo el histórico (desde 2016-04), nunca los recientes -- inútil para los últimos 5 años
-    tal como está expuesto ahora. Probado también el recurso base sin sufijo (`ocds.csv`/`ocds.json`, listado
-    en el catálogo de datos abiertos): siempre da 400 "Failed to convert ... BigDecimal", incluso sin ningún
-    parámetro -- parece exigir un parámetro numérico obligatorio no documentado (quizás un `id` de contrato
-    concreto, no un listado). **No viable sin más información del propio Ayuntamiento** (o encontrar
-    documentación oficial del catálogo 147 que explique el parámetro que falta) -- se abandona esta vía por
-    ahora pese a ser el segundo mayor municipio de los seis.
+- **Zaragoza (~675.000 hab., Aragón) — CONECTADO (2026-09-30), tras revisar la documentación oficial de OCDS**:
+  la API OCDS que el Ayuntamiento documenta como preferente (`zaragoza.es/sede/servicio/contratacion-publica/
+  ocds`) tiene la paginación genuinamente rota (ver detalle histórico más abajo, dejado como referencia). La
+  clave para desbloquearlo fue leer su propio PDF de política de publicación
+  (`Politica_Publicacion_OCDS.pdf`), que menciona de pasada una "API no estándar... utilizada para los
+  servicios de visualización" -- esa API SÍ funciona: `contratacion-publica/contrato.json?contratoMenor=true`
+  (documentada en su catálogo Swagger, `zaragoza.es/sede/catalogo/api.json`, tag "Ayuntamiento: Contratacion
+  publica"). Paginación `start`/`rows` real y verificada (páginas de 500, sin solapes, `totalCount` estable:
+  3.887 contratos menores en total en la fuente). Cada contrato trae sus `ofertas`, con la ganadora
+  (`ganador: true`) incluyendo fecha real de adjudicación, importe con y sin IVA, y el NIF+nombre del
+  adjudicatario. **1.085 registros desde 2021-09** (conector `actualizar_contratos_menores_zaragoza.py`). Dato
+  de calidad verificado: solo 3 filas sin NIF y 0 sin fecha/descripción; 2 filas (de 1.085) superan claramente
+  el techo legal de un contrato menor pese a venir marcadas `contratoMenor: true` por la propia fuente
+  (probablemente error de etiquetado de origen, uno de ellos un contrato de obras por lotes de varios
+  millones de euros) -- se muestran tal cual con un aviso visible en la ficha (mismo mecanismo que Madrid
+  capital con `MADRID_CAPITAL_MENOR_IMPORTE_ALTO`), nunca se excluyen ni se corrigen.
+  - *Detalle histórico de por qué la vía OCDS "estándar" no sirve, dejado como referencia por si el
+    Ayuntamiento la arregla en el futuro*: el endpoint `/ocds/award.json` funciona sin filtro (`?rows=N`,
+    formato en la EXTENSIÓN, no en `?rf=...`) y devuelve awards reales desde 2016-04-14 en adelante, pero
+    `after`/`before` siempre devuelve `{"totalCount":0,...}`; `sort=-date` no cambia el orden; **`start` se
+    ignora por completo** (`start=0` y `start=100000` devuelven exactamente los mismos registros); `rows` tiene
+    un tope duro entre 1.300 y 1.400. El endpoint `/ocds/contracting-process.json` (el índice OCDS de
+    procesos completos) sí admite `rows` grandes sin tope (devuelve sus 5.755 registros de golpe con
+    `rows=100000`), pero solo da pares `{ocid, id}` -- no hay forma documentada ni probada de pedir el
+    detalle completo de un proceso por id (`/ocds/contracting-process/{id}.json` da 400 "no válido").
 - **Valencia capital (~800.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: el portal antiguo (CKAN)
   se retiró en junio de 2026; el sustituto real es el buscador oficial `www.valencia.es/cas/ayuntamiento/
   buscador-contratos-menores` (portlet Liferay, formulario POST). **10.693 registros desde 2021-09**
