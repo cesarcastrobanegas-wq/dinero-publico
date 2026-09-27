@@ -332,3 +332,15 @@ Nota pública añadida para Alcalá de Henares; se retira su entrada de `_SUELDO
 
 Nota pública para Pozuelo de Alarcón; se retira su entrada de `_SUELDOS_CONCEJALES_SIN_TABLA`. Aviso para Coslada.
 
+---
+
+## Lote 14 — Torrevieja (2026-09-27, madrugada)
+
+**Añadidos: 24 concejales** (Torrevieja). Total acumulado: **697 registros en 36 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Torrevieja | gobiernoabierto.torrevieja.es > una ficha web por representante (Gobierno Abierto), no una tabla | Cada ficha (`/t/representantes/<id>`) trae cargo, nombre y una tabla "Retribución bruta anual" con el año vigente, el importe y la dedicación (Exclusiva/Parcial/Sin dedicación). Los IDs de la legislatura vigente (2023-2027) se obtienen del menú desplegable de cualquier ficha, que lista TODAS las legislaturas — se toma solo la última. Cuando la dedicación es "Sin dedicación" el importe ya es el TOTAL por asistencias que calcula la propia fuente (no se estima nada). Verificación sin exigir cercanía en el texto (`verificar_adyacencia=False`): cada ficha es de una sola persona, así que no hay riesgo de cruzar el importe de una fila con el nombre de otra (a diferencia de una tabla compartida) — hacía falta porque el menú de navegación de la página (con los nombres de las ~40 personas de ambas legislaturas) queda muy lejos en el texto plano de la tabla de retribución de esa misma persona. Alcalde excluido |
+
+Nota pública añadida para Torrevieja.
+

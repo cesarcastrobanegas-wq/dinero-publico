@@ -1195,6 +1195,66 @@ def actualizar_sagunto():
     return out
 
 
+@_fuente("torrevieja")
+def actualizar_torrevieja():
+    """Ayuntamiento de Torrevieja > Gobierno Abierto > una ficha web por representante (nombre, cargo, retribución
+    bruta anual del año vigente y dedicación), en vez de una tabla. El menú desplegable de cualquier ficha lista a
+    TODOS los representantes agrupados por legislatura ('Legislatura: 2019-2023' / 'Legislatura: 2023-2027'); solo
+    se recorren los de la legislatura vigente (la última que aparece). Se incluyen también los de dedicación
+    'Sin dedicación' (el importe que muestra la fuente ya es el total anual por asistencias, no hay que estimar
+    nada) y 'Parcial'. Se excluye el alcalde (cubierto aparte)."""
+    from bs4 import BeautifulSoup
+    from urllib.parse import urljoin
+    seed = descargar("https://gobiernoabierto.torrevieja.es/t/representantes/694", timeout=60)
+    dd = BeautifulSoup(seed.text, "html.parser").find("div", class_="dropdown-menu")
+    if dd is None:
+        raise RuntimeError("Torrevieja: no se encontró el desplegable de representantes")
+    legislatura, ids_por_legislatura = None, {}
+    for el in dd.find_all(["span", "a"], recursive=False):
+        if el.name == "span" and el.get_text(strip=True).startswith("Legislatura:"):
+            legislatura = el.get_text(strip=True)
+            ids_por_legislatura.setdefault(legislatura, [])
+        elif el.name == "a" and legislatura:
+            m = re.search(r"/representantes/(\d+)", el.get("href", ""))
+            if m:
+                ids_por_legislatura[legislatura].append(m.group(1))
+    legislatura_vigente = list(ids_por_legislatura)[-1]
+    ids = ids_por_legislatura[legislatura_vigente]
+
+    out = []
+    for rid in ids:
+        url = f"https://gobiernoabierto.torrevieja.es/t/representantes/{rid}"
+        r = descargar(url, timeout=60)
+        soup = BeautifulSoup(r.text, "html.parser")
+        cargo_el = soup.find("strong", class_="cargo1")
+        nombre_el = soup.find("strong", style=re.compile("font-size: ?20px"))
+        if not cargo_el or not nombre_el or cargo_el.get_text(strip=True).lower().startswith("alcalde"):
+            continue
+        tabla = next((t for t in soup.find_all("table") if "Retribuci" in t.get_text()), None)
+        fila = tabla.find_all("tr")[1] if tabla else None
+        if fila is None:
+            continue
+        celdas = [re.sub(r"\s+", " ", c.get_text(" ", strip=True)) for c in fila.find_all(["td", "th"])]
+        m = re.match(r"^(\d{4}): ([\d.]+,\d{2})$", celdas[0])
+        if not m:
+            continue
+        dedicacion = celdas[4] if len(celdas) > 4 else ""
+        texto = texto_html(r.text)
+        nombre = re.sub(r"^(D\.|Dña\.?|D)\s+", "", nombre_el.get_text(strip=True))
+        out.append(nuevo_registro("Torrevieja", "alicante", nombre, cargo_frase(cargo_el.get_text(strip=True)),
+                                  num_es(m.group(2)), f"retribución bruta anual percibida en {m.group(1)} según su ficha (dedicación: {dedicacion.lower()}; "
+                                  "si es 'sin dedicación' es el total por asistencias, ya sumado por la fuente)",
+                                  legislatura_vigente, url, "Portal de Gobierno Abierto del Ayuntamiento de Torrevieja: ficha del representante", texto,
+                                  # La ficha de cada representante lista, en un menú de navegación, los NOMBRES de TODOS los demás
+                                  # representantes (otras legislaturas incluidas) muy lejos en el texto de la tabla de retribución de
+                                  # ESTA persona -- sin riesgo de cruce (una ficha = una persona = un importe), así que no hace
+                                  # falta exigir cercanía; basta con que el nombre y el importe existan en la página.
+                                  verificar_adyacencia=False))
+    if len(out) < 15:
+        raise RuntimeError(f"Torrevieja: solo {len(out)} concejales (¿cambió la página?)")
+    return out
+
+
 @_fuente("pozuelo de alarcon")
 def actualizar_pozuelo_de_alarcon():
     """Ayuntamiento de Pozuelo de Alarcón > Corporación Municipal > 'Composición del Pleno': una ficha por

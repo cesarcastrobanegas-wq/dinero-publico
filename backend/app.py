@@ -4442,6 +4442,8 @@ _NOTAS_SUELDOS_CONCEJALES = {
                          "Quien cambió de tramo durante el mandato aparece solo en su tramo actual (se indica la fecha desde la que está en él); no aparecen las personas «sin dedicación ni asistencias».",
     "pozuelo de alarcon": "El importe y el cargo se leen de la ficha individual de cada concejal/a en la web del Ayuntamiento (enlace «Retribuciones y régimen de dedicación»), no de una tabla única. "
                           "Los concejales sin dedicación (solo asistencias) o cuya ficha no muestra importe no aparecen. La alcaldesa está excluida (cubierta aparte).",
+    "torrevieja": "Igual que Pozuelo, cada concejal/a tiene su propia ficha en la web del Ayuntamiento en vez de una tabla única. Cuando la ficha marca «sin dedicación» "
+                 "el importe es el total por asistencias que ya calcula la propia fuente (no una estimación nuestra). Alcalde excluido (cubierto aparte).",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
@@ -13901,6 +13903,15 @@ _NOTAS_CONTRATO_MENOR = {
     ),
 }
 
+# Euskadi (2026-09-27, barrido de 251 municipios vía minor-contract=true): a diferencia de las anomalías de
+# arriba (una lista cerrada revisada fila a fila, con URL de PLACE para comprobar), aquí NO hay URL por
+# registro (la API de Euskadi no la publica para contratos menores) y el volumen (155.708 filas) hace inviable
+# revisar cada una a mano esta noche -- 52 superan este umbral en el primer barrido, con Portugalete
+# concentrando más de una decena, lo que sugiere un problema de origen específico de esa fuente/municipio, no
+# solo errores sueltos. En vez de ocultarlas o inventar una cifra corregida, se avisa en la propia fila
+# (automático, no una lista cerrada) siempre que no haya ya una nota curada para ese id concreto.
+EUSKADI_MENOR_IMPORTE_SOSPECHOSO = 100_000
+
 
 def _render_fila_contrato_menor(r):
     """Fila de la tabla de contratos menores locales -- compartida por todas
@@ -13973,6 +13984,10 @@ def _render_fila_contrato_menor(r):
         dir_html = (f'<span class="noloc-warn">⚠️ No localizado {rm_link}</span>{nota}')
 
     nota_txt = _NOTAS_CONTRATO_MENOR.get(r.get("id", ""))
+    if not nota_txt and fuente == "euskadi" and (r.get("import_num") or 0) > EUSKADI_MENOR_IMPORTE_SOSPECHOSO:
+        nota_txt = ("Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato "
+                    "menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica "
+                    "un enlace por contrato para comprobarlo directamente, así que se muestra tal cual.")
     nota_fila = f'<span class="cm-nota">⚠️ {esc(nota_txt)}</span>' if nota_txt else ""
 
     return f"""<tr>
