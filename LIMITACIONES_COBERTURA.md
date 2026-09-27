@@ -694,3 +694,40 @@ construir solo la Fase 1 (existencia + cargo, gratis) por ahora; las cuentas anu
     ... (CONTRATOS MENORES)" por PLACE?), Lugo (¿sigue publicando en 2024-25?), Vilagarcía, Narón,
     Arteixo (rendiciondecuentas.es como posible fuente nacional).
 
+## Extensión a toda España (2026-09-30, noche autónoma)
+
+Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads investigados y su estado:
+
+- **Las Palmas de Gran Canaria (~382.000 hab.) — lead técnico prometedor sin cerrar**: su portal
+  `transparencia.laspalmasgc.es` es una SPA moderna (Next.js) sin enlaces de descarga directos, pero SÍ
+  expone sus páginas vía la ruta estándar de Next.js `/_next/data/<buildId>/<idioma>/<ruta>.json` (sin
+  necesidad de ejecutar JS) -- técnica útil para cualquier otro municipio que use la misma plataforma. El
+  problema: la tabla real de contratos menores (y la de retribuciones de electos) NO viene pre-cargada en
+  esa respuesta (`datosSSR` vacío; el `dehydratedState` de React Query solo trae metadatos de sección, no las
+  filas) -- se carga aparte, en el navegador, contra un backend cuyo dominio público
+  (`adminlaspalmasgc.cloudtransparencia.es`) resultó ser el PANEL DE ADMINISTRACIÓN (login), no una API
+  pública. La plataforma parece ser un SaaS ("cloudtransparencia.es"/insuit.net) que podrían compartir otros
+  ayuntamientos -- si se identifica su API real de lectura pública en una próxima sesión, podría servir para
+  varios municipios de golpe.
+- **Ceuta — dos hallazgos, ninguno cerrado**:
+  - **Contratos menores**: los enlaces "Contratos menores 2020-2023" de `ceuta.es/ceuta/economica/contratos`
+    NO son un dataset propio de Ceuta -- son un volcado bruto y genérico de PLACE (Plataforma de
+    Contratación del Sector Público) de TODA ESPAÑA (45 MB, cientos de miles de filas de ayuntamientos de
+    toda España, verificado con filas de "Aras de los Olmos" y "Rivas-Vaciamadrid" mezcladas). Sin columna de
+    adjudicatario ni de tipo de procedimiento (menor/formal): inservible tal cual para extraer solo Ceuta ni
+    solo menores. Descartado.
+  - **Sueldos de altos cargos**: `ceuta.es/ceuta/institucional/retribuciones` sí publica un PDF anual
+    ("RETRIBUCIONES ALTOS CARGOS <año>") con CARGO + IMPORTE ANUAL (Presidente, 6 Consejerías, Directores
+    Generales, "Diputado"/"Diputado con portavocía"), pero **sin nombres** -- Ceuta es Ciudad Autónoma, no un
+    ayuntamiento normal, y la tabla es por cargo, no por persona (como Málaga). Hace falta cruzarla con un
+    censo de quién ocupa cada consejería/dirección general (`ceuta.es/gobiernodeceuta/.../el-equipo` da los
+    6 consejeros vigentes en prosa, no en tabla) -- no se completó esta noche por el riesgo de cruzar mal un
+    nombre con un cargo sin la verificación adecuada; se deja documentado para retomar con más tiempo.
+- **Melilla**: sin lead viable esta noche para contratos menores -- el enlace de "Contratación menor" del
+  portal (`melillaportal/...contratacion_menor.jsp`) devuelve una página vacía/rota, y el enlace paralelo de
+  la sede electrónica (`sede.melilla.es/sta/...PTS2_CONTMENOR`) da "recurso no encontrado". Sin retribuciones
+  de concejales tampoco localizadas.
+- **Región de Murcia — contratos menores, municipios grandes probados sin fuente propia**: Alcantarilla y
+  Cieza (ambas solo enlazan a PLACE genérico desde su portal de transparencia, sin dataset propio -- mismo
+  caso que Elche/Albacete).
+
