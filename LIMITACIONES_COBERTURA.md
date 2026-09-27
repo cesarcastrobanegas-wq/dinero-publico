@@ -140,11 +140,17 @@ de Murcia:
   caso especial resuelto de otra forma**: no por un agregador de contratos menores dedicado, sino porque su
   API de contratación (Euskadi, ver más arriba) sirve formales y menores con el mismo mecanismo.
 
-### Investigación ayuntamiento a ayuntamiento por población (2026-09-27, en curso)
+### Investigación ayuntamiento a ayuntamiento por población (2026-09-27/28, en curso)
 
 Para las seis comunidades sin agregador, se investiga empezando por el municipio más poblado de cada una (solo
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
-ronda porque todo lo encontrado es fuente primaria municipal):
+ronda porque todo lo encontrado es fuente primaria municipal).
+
+**Estado a 2026-09-28**: 6 municipios CONECTADOS esta ronda (Madrid capital, Valencia capital, Alicante,
+Móstoles, Getafe, Leganés — 51.158 contratos entre los seis), 1 con lead confirmado de alto esfuerzo sin
+conectar (Alcalá de Henares), 1 con lead sin cerrar por un obstáculo técnico concreto (Valladolid, ver abajo),
+varios sin fuente viable (Elche, Fuenlabrada, Alcorcón, Huesca, Teruel, Salamanca...). Zaragoza y Palma quedan
+con el lead ya documentado de la ronda anterior, sin retomar todavía. Detalle completo por municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -184,11 +190,18 @@ ronda porque todo lo encontrado es fuente primaria municipal):
     aprovecha todavía (el esquema compartido de `contratos_menors_locales` no tiene columna de URL).
   - Verificado: 0 filas sin fecha, 0 sin NIF, importes máximos coherentes con el tope legal de obras (~40.000 €,
     sin anomalías tipo Euskadi). Carga y render probados sin errores.
-- **Valladolid (~298.000 hab., Castilla y León) — lead confirmado, formato incómodo**: publica "Contratos
-  menores y volumen de contratación" en `valladolid.gob.es/es/perfil-contratante/...`, un XLSX por trimestre/año
-  (no un dataset único), desde al menos 2018. Viable pero requiere descargar y unificar muchos ficheros con
-  estructura que puede variar por año (mismo patrón de riesgo ya visto en Madrid capital esta noche: columnas y
-  formato de fecha distintos según el año).
+- **Valladolid (~298.000 hab., Castilla y León) — lead confirmado, retomado sin cerrar (2026-09-28)**: publica
+  "Contratos menores y volumen de contratación" en `valladolid.gob.es/es/perfil-contratante/
+  contratos-menores-volumen-contratacion-tipo-procedimiento/ano-<año>`, con informes ACUMULATIVOS por año
+  (el de cada trimestre incluye los anteriores del mismo año -- "1r trimestre", luego "1r+2º semestre", luego
+  "1º+2º+3º trimestre"... solo hace falta el fichero MÁS RECIENTE de cada año, no todos). Patrón de URL de
+  fichero confirmado en un año antiguo: `.../ano-2022.ficheros/764647-CONTRATACION%20PRIMER%20TRIMESTRE...
+  .xlsx`. **Obstáculo real esta noche**: la página índice de cada año (`ano-2025`, etc.) es una SPA que
+  renderiza sus enlaces de descarga por JavaScript -- una petición HTTP directa (`curl`) devuelve la página sin
+  los `href` reales, y la herramienta de lectura de páginas disponible tampoco los expone en su resumen. Hace
+  falta una herramienta con ejecución de JS (navegador real/Selenium/Playwright) para extraer los enlaces
+  exactos de cada año antes de poder escribir el conector -- el formato del propio fichero (XLSX) no se ha
+  podido inspeccionar todavía por este motivo.
 - **Palma (~416.000 hab., Illes Balears) — lead confirmado, formato incómodo**: `palma.es/es/contratos-menores`
   publica Excel + PDF por trimestre. Mismo patrón que Valladolid.
 - **Alicante (~337.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: informes trimestrales oficiales
