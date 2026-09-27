@@ -7890,6 +7890,10 @@ def aviso_backfill_galicia_html(provincia):
     desde = _backfill_galicia_desde_texto()
     if not desde:
         return ""
+    if desde == "septiembre de 2021":
+        return ('<div class="pol-retrib-nota">ℹ️ Contratos formales (PLACE): hasta septiembre de 2026 el sistema no reconocía como propios los '
+                'contratos de órganos que figuran como «Concello de ...». Se han recuperado los meses anteriores hasta septiembre de 2021 '
+                '(el límite de esta web); cada mes incluye lo que PLACE publicó entonces.</div>')
     return ('<div class="pol-retrib-nota">ℹ️ Contratos formales (PLACE): hasta septiembre de 2026 el sistema no reconocía como propios los '
             'contratos de órganos que figuran como «Concello de ...». Se están recuperando meses anteriores; por ahora la '
             f'recuperación llega hasta {esc(desde)} y sigue en curso hacia atrás (tope: septiembre de 2021). Antes de esa fecha la '
