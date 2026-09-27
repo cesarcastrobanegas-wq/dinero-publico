@@ -10899,6 +10899,29 @@ def _cargar_contratos_menores_leganes():
               f"(Leganés) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_TOLEDO_FILE = os.path.join(BASE_DIR, "contratos_menores_toledo.json.gz")
+
+
+def _cargar_contratos_menores_toledo():
+    """Carga contratos_menores_toledo.json.gz (generado por actualizar_contratos_menores_toledo.py --
+    informes semestrales oficiales en XLSX del Ayuntamiento de Toledo) y lo vuelca a la tabla compartida
+    contratos_menors_locales. Sin fecha por contrato (ver docstring del generador) -- se conserva igual que
+    las demás filas sin fecha del proyecto (Fuente Álamo)."""
+    ruta = CONTRATOS_MENORES_TOLEDO_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_toledo: {len(registros)} contratos menores "
+              f"(Toledo) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10923,6 +10946,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_getafe()
     _cargar_contratos_menores_mostoles()
     _cargar_contratos_menores_leganes()
+    _cargar_contratos_menores_toledo()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14003,6 +14027,7 @@ _FUENTE_CM_LABEL = {
     "getafe":          "Getafe",
     "mostoles":        "Móstoles",
     "leganes":         "Leganés",
+    "toledo":          "Toledo",
 }
 
 
@@ -14092,6 +14117,12 @@ _NOTAS_FUENTE_CM = {
         "Informes mensuales/trimestrales oficiales del Ayuntamiento de Leganés, publicados en XLSX (mismo "
         "formato que Alicante). Importe SIN IVA, NIF del adjudicatario. Puede faltar el mes más reciente si su "
         "fichero todavía no está disponible para descarga en el momento de actualizar (se reintenta solo)."
+    ),
+    "toledo": (
+        "Informes semestrales oficiales del Ayuntamiento de Toledo, publicados en XLSX. Importe con IVA. "
+        "Esta fuente NO publica fecha por contrato (se muestra sin fecha, como el resto de filas sin fecha del "
+        "proyecto) ni NIF en la mayoría de los semestres. Puede haber algún contrato duplicado entre semestres "
+        "consecutivos (sin expediente ni fecha propios no es posible deduplicar con certeza)."
     ),
 }
 
