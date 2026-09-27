@@ -10966,6 +10966,29 @@ def _cargar_contratos_menores_fuenlabrada():
               f"(Fuenlabrada) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_ALCALA_HENARES_FILE = os.path.join(BASE_DIR, "contratos_menores_alcala_henares.json.gz")
+
+
+def _cargar_contratos_menores_alcala_henares():
+    """Carga contratos_menores_alcala_henares.json.gz (generado por
+    actualizar_contratos_menores_alcala_henares.py -- informes trimestrales oficiales en PDF del Ayuntamiento
+    de Alcalá de Henares, parseados línea a línea sin tabla real) y lo vuelca a la tabla compartida
+    contratos_menors_locales. Mismo patrón que el resto de fuentes locales."""
+    ruta = CONTRATOS_MENORES_ALCALA_HENARES_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_alcala_henares: {len(registros)} contratos menores "
+              f"(Alcalá de Henares) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10993,6 +11016,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_toledo()
     _cargar_contratos_menores_palma()
     _cargar_contratos_menores_fuenlabrada()
+    _cargar_contratos_menores_alcala_henares()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14076,6 +14100,7 @@ _FUENTE_CM_LABEL = {
     "toledo":          "Toledo",
     "palma":           "Palma",
     "fuenlabrada":     "Fuenlabrada",
+    "alcala_henares":  "Alcalá de Henares",
 }
 
 
@@ -14182,6 +14207,12 @@ _NOTAS_FUENTE_CM = {
         "IMLS, OTAF, PMC, PMD), en `transparencia.ayto-fuenlabrada.es/contratos/menores/` -- sección pública "
         "distinta del visor de contratos general de ese mismo portal (ese sí está protegido por contraseña). "
         "Fecha real de aprobación, NIF del adjudicatario."
+    ),
+    "alcala_henares": (
+        "Informes trimestrales oficiales del Ayuntamiento de Alcalá de Henares, en PDF sin tabla real "
+        "(parseados línea a línea). Dos formatos según la época: hasta 2023 no publica NIF en absoluto; desde "
+        "2024 sí, pero el de las PERSONAS FÍSICAS viene PARCIALMENTE ENMASCARADO por la propia fuente (solo "
+        "los últimos dígitos, p.ej. \"***8694**\") -- se muestra tal cual, nunca se intenta completar."
     ),
 }
 
