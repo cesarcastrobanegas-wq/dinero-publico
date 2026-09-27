@@ -220,9 +220,10 @@ con el lead ya documentado de la ronda anterior, sin retomar todavía. Detalle c
   transparencia municipal REDIRIGE al perfil de contratante genérico de la Plataforma de Contratación del
   Estado (no tiene fuente propia separada) -- sin lead viable más allá de lo que ya cubre PLACE (que no expone
   menores de forma sistemática, ver más abajo).
-- **Albacete (~173.000 hab., Castilla-La Mancha)**: sin CSV/dataset localizado esta noche en su portal de
-  transparencia; solo referencia genérica a la contratación. Pendiente de mirar con más detalle o contactar/
-  solicitar acceso a la información (vía el trámite que el propio portal ofrece).
+- **Albacete (~173.000 hab., Castilla-La Mancha) — confirmado sin fuente propia (2026-09-29)**: su página de
+  "Contratos menores" en el portal de transparencia (`transparencia-participacion.albacete.es`) redirige
+  directamente a la Plataforma de Contratación del Estado genérica (perfil de contratante nacional), exactamente
+  el mismo caso que Elche -- no publica un dataset ni un listado propio descargable. Sin lead viable.
 - **León (Castilla y León)**: perfil de contratante consultable en vivo (`sede.aytoleon.es`, contratos menores
   individuales con adjudicatario e importe, SIN fecha de adjudicación visible), pero sin descarga masiva --
   mismo patrón que el buscador legacy de Navarra (viable por scraping, no por dataset).

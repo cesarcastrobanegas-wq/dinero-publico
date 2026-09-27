@@ -10922,6 +10922,28 @@ def _cargar_contratos_menores_toledo():
               f"(Toledo) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_PALMA_FILE = os.path.join(BASE_DIR, "contratos_menores_palma.json.gz")
+
+
+def _cargar_contratos_menores_palma():
+    """Carga contratos_menores_palma.json.gz (generado por actualizar_contratos_menores_palma.py -- informes
+    trimestrales oficiales en Excel del Ayuntamiento de Palma) y lo vuelca a la tabla compartida
+    contratos_menors_locales. Mismo patrón que el resto de fuentes locales."""
+    ruta = CONTRATOS_MENORES_PALMA_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_palma: {len(registros)} contratos menores "
+              f"(Palma) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10947,6 +10969,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_mostoles()
     _cargar_contratos_menores_leganes()
     _cargar_contratos_menores_toledo()
+    _cargar_contratos_menores_palma()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14028,6 +14051,7 @@ _FUENTE_CM_LABEL = {
     "mostoles":        "Móstoles",
     "leganes":         "Leganés",
     "toledo":          "Toledo",
+    "palma":           "Palma",
 }
 
 
@@ -14123,6 +14147,11 @@ _NOTAS_FUENTE_CM = {
         "Esta fuente NO publica fecha por contrato (se muestra sin fecha, como el resto de filas sin fecha del "
         "proyecto) ni NIF en la mayoría de los semestres. Puede haber algún contrato duplicado entre semestres "
         "consecutivos (sin expediente ni fecha propios no es posible deduplicar con certeza)."
+    ),
+    "palma": (
+        "Informes trimestrales oficiales del Ayuntamiento de Palma, publicados en Excel. La columna de importe "
+        "no indica explícitamente si incluye IVA (se muestra tal cual la publica la fuente). NIF del "
+        "adjudicatario solo disponible en los trimestres que lo publican (la mayoría no lo hace)."
     ),
 }
 
