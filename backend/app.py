@@ -4424,6 +4424,9 @@ _NOTAS_SUELDOS_CONCEJALES = {
                "alcalde y concejales delegados con dedicación, no los concejales de la oposición ni cargos sin retribución fija.",
     "lorca": "Retribución bruta anual de 2025 según el PDF oficial del Ayuntamiento; 2 concejales que solo cobran por asistencia a "
              "sesiones (sin dedicación fija) no aparecen porque la fuente no publica un importe anual para ellos.",
+    "burgos": "Importe = suma de los brutos mensuales de 2024 (Ayuntamiento + Aguas de Burgos + Promueve Burgos) que publica el "
+              "Ayuntamiento; la fuente no distingue entre concejales con dedicación exclusiva/parcial y los que solo cobran por "
+              "asistencia a sesiones (aquí sí se distingue por el importe y la etiqueta de la propia tabla).",
     "mostoles": "La tabla oficial (acuerdo plenario de 8 de enero de 2026) da un importe por persona sin indicar el periodo; se muestra tal cual.",
     "almeria": "Importes íntegros anuales de 2026 según el régimen de dedicación aprobado; algunas personas tienen dedicación desde una fecha de 2025 (se indica). "
                "Los cargos se muestran con la grafía de la fuente.",

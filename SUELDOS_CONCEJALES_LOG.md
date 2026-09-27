@@ -370,3 +370,17 @@ Nota pública añadida para Badajoz.
 
 Nota pública añadida para Lorca. Otros municipios grandes de la Región de Murcia probados sin éxito esta noche para CONTRATOS MENORES (Alcantarilla, Cieza): ambos solo enlazan a la Plataforma de Contratación del Estado genérica, sin dataset propio -- mismo caso que Elche/Albacete.
 
+---
+
+## Lote 17 — Burgos (2026-09-30, extensión a Castilla y León)
+
+**Añadidos: 27 concejales** (Burgos). Total acumulado: **759 registros en 39 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Burgos | aytoburgos.es > Corporación municipal > PDF "Retribuciones corporativos 2024": tabla real (con líneas) por MES (12 páginas), Nombre \| Dedicación \| Bruto/Neto por 3 entidades (Ayuntamiento, Aguas de Burgos, Promueve Burgos) \| Bruto/Neto TOTALES | Importe = SUMA de los "TOTALES BRUTO" mensuales de cada persona en el año (igual que Madrid). La fuente no marca quién es el alcalde: se excluye por nombre (Daniel de la Rosa Villahoz, dato público, no deducido de la tabla) -- si cambia de alcalde habrá que actualizar el nombre a mano. Bug real corregido: en algún mes concreto el nombre tiene una errata de tecleo en la propia fuente ("BORJ A SUAREZ PEDROSA" en vez de "BORJA...", "CÉSAR BARRIADA HEBOSA" en vez de "...HERBOSA") que abría una entrada nueva y partía a esa persona en dos, una con un importe sospechosamente bajo (1-2 meses en vez de 12) -- se fusionan pares de nombres muy parecidos (SequenceMatcher > 0,82) sumando importes, sin inventar ninguna ortografía nueva |
+
+**Aparcado tras comprobar**: **León** — su PDF de retribuciones anonimiza los nombres a solo iniciales ("M.A.C", "J.A.S"...) en los 5 años publicados (2020-2024): no hay nombre real que guardar, descartado por la propia regla del proyecto (nombre completo verificable, nunca iniciales).
+
+Nota pública añadida para Burgos.
+

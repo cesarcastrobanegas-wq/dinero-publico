@@ -1832,6 +1832,81 @@ def actualizar_lorca():
     return out
 
 
+@_fuente("burgos")
+def actualizar_burgos():
+    """Ayuntamiento de Burgos > Corporación municipal > PDF "Retribuciones corporativos <año>": una tabla real
+    (con líneas) por MES (12 páginas), columnas Nombre | Dedicación (DEDICACIÓN/ASISTENCIAS) | Bruto/Neto de
+    cada una de 3 entidades (Ayuntamiento, Aguas de Burgos, Promueve Burgos) | Bruto/Neto TOTALES. El importe
+    guardado es la SUMA de los "TOTALES BRUTO" mensuales de cada persona en el año (aritmética sobre cifras
+    oficiales, no una estimación), igual que Madrid. La fuente NO etiqueta quién es el alcalde (a diferencia
+    de Madrid): se excluye por nombre, a partir de quién ocupa la alcaldía (dato público, no deducido de esta
+    tabla) -- si cambia de alcalde, esta exclusión habría que actualizarla a mano."""
+    import pdfplumber
+    from collections import defaultdict
+    from difflib import SequenceMatcher
+    from urllib.parse import urljoin
+    ALCALDE_CONOCIDO = "DANIEL DE LA ROSA VILLAHOZ"   # alcalde de Burgos (PSOE) -- dato público, no viene marcado en la fuente
+    pagina = "https://www.aytoburgos.es/corporacionmunicipal"
+    r = descargar(pagina)
+    m = re.search(r'href="(/documents/[^"]*[Rr]etribuciones[^"]*[Cc]orporativos[^"]*(\d{4})[^"]*\.pdf[^"]*)"', r.text)
+    if not m:
+        raise RuntimeError("Burgos: no se encontró el PDF de retribuciones de corporativos")
+    url, anio = urljoin(r.url, m.group(1).replace("&amp;", "&")), m.group(2)
+    contenido = descargar(url, timeout=120).content
+    sumas, tipos, meses = defaultdict(float), {}, defaultdict(int)
+    with pdfplumber.open(io.BytesIO(contenido)) as pdf:
+        texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
+        for pagina_pdf in pdf.pages:
+            t = pagina_pdf.extract_table()
+            if not t:
+                continue
+            for fila in t:
+                if not fila or not fila[0] or fila[0].upper().startswith("NOMBRE"):
+                    continue
+                nombre = re.sub(r"\s+", " ", fila[0]).strip()
+                if len(fila) <= 8:
+                    continue
+                total_bruto = num_es(fila[8])
+                if total_bruto:
+                    sumas[nombre] += total_bruto
+                    meses[nombre] += 1
+                if (fila[1] or "").strip():
+                    tipos[nombre] = fila[1].strip()
+    # bug real de origen encontrado (2026-09-30): algún mes concreto tiene una errata de tecleo en el nombre
+    # ("BORJ A SUAREZ PEDROSA" en vez de "BORJA...", "C�SAR BARRIADA HEBOSA" en vez de "...HERBOSA") -- eso
+    # abre una clave nueva en el diccionario y esa persona queda partida en dos entradas, una de ellas con un
+    # importe mensual sospechosamente bajo (1-2 meses en vez de 12). Se fusionan pares de nombres muy
+    # parecidos (SequenceMatcher > 0.82) quedándose con la ortografía que aparece en más meses; nunca se
+    # inventa una ortografía nueva, solo se suman los importes de la que menos meses tiene a la que más.
+    nombres = sorted(sumas, key=lambda n: -meses[n])
+    fusionados = set()
+    for i, a in enumerate(nombres):
+        if a in fusionados:
+            continue
+        for b in nombres[i + 1:]:
+            if b in fusionados:
+                continue
+            if SequenceMatcher(None, _norm(a), _norm(b)).ratio() > 0.82:
+                sumas[a] += sumas.pop(b)
+                meses[a] += meses.pop(b)
+                fusionados.add(b)
+                print(f"  Burgos: '{b}' fusionado con '{a}' (misma persona, errata de un mes)")
+    if len(sumas) < 20:
+        raise RuntimeError(f"Burgos: solo {len(sumas)} personas (¿cambió el documento?)")
+    out = []
+    for nombre, importe in sumas.items():
+        if nombre.upper() == ALCALDE_CONOCIDO or importe <= 0:
+            continue
+        cargo = ("Concejal con dedicación" if _norm(tipos.get(nombre, "")).startswith("dedicaci")
+                 else "Concejal (régimen de asistencias)")
+        out.append(nuevo_registro("Burgos", "burgos", _titulo_nombre(nombre), cargo, round(importe, 2),
+                                  "suma de los importes brutos mensuales (Ayuntamiento + Aguas de Burgos + "
+                                  f"Promueve Burgos) de {anio}", f"año {anio}", url,
+                                  "Ayuntamiento de Burgos (Retribuciones corporativos)", texto,
+                                  omitir_verificacion=True))
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):
