@@ -34,6 +34,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUT_FILE = os.path.join(BASE_DIR, "sueldos_concejales.json")
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "es-ES,es;q=0.9",
 }
 
@@ -85,6 +86,7 @@ def _formas_importe(importe):
         formas.add(f"{e}.{dec:02d}") if miles != "." else None
         if dec == 0:
             formas.add(e)
+    formas.add(f"{int(ent):,}".replace(",", ".") + f".{dec:02d}")   # notación '63.407.63' (Eivissa)
     plano = f"{importe:.2f}".rstrip("0").rstrip(".")      # celdas de Excel: 49777.7 (sin ceros finales)
     formas.update({plano, plano.replace(".", ",")})
     return formas
@@ -165,7 +167,7 @@ def nombre_persona(apellidos, nombre):
     return " ".join(w.lower() if (i and w.lower() in _PARTICULAS) else cap(w) for i, w in enumerate(palabras))
 
 
-_SIGLAS = {"PSOE", "PP", "VOX", "RRHH", "MRH", "PSC", "ERC", "JXCAT", "BNG", "PNV", "CS", "IU", "TTE.", "UP", "EH", "BILDU", "CC", "PAR", "PRC"}
+_SIGLAS = {"PSOE", "PP", "VOX", "RRHH", "MRH", "PSC", "ERC", "JXCAT", "BNG", "PNV", "CS", "IU", "TTE.", "UP", "EH", "BILDU", "CC", "PAR", "PRC", "IU-PODEMOS", "UPN", "PSN", "EAJ-PNV"}
 
 
 def cargo_frase(cargo):
@@ -904,6 +906,159 @@ def actualizar_santa_cruz_tenerife():
         print(f"  Santa Cruz de Tenerife: {parciales} filas con periodo parcial saltadas")
     if len(out) < 8:
         raise RuntimeError(f"Santa Cruz de Tenerife: solo {len(out)} concejales (¿cambió la página?)")
+    return out
+
+
+def _sin_tratamiento(nombre):
+    """'Dña. María Dolores Moreno Molino' / 'D.  Pablo Pérez' -> sin el tratamiento (D., Dª, Dña., Doña)."""
+    return re.sub(r"^(?:D\.|Dª|Dña\.|Doña|Don)\s+", "", re.sub(r"\s+", " ", (nombre or "").replace("\xa0", " ")).strip())
+
+
+@_fuente("majadahonda")
+def actualizar_majadahonda():
+    """Portal de Transparencia de Majadahonda > Retribuciones percibidas > 'Retribuciones de la Alcaldesa y Concejales 2025' (Excel):
+    Nombre | Cargo | Grupo | CORPORACIÓN 2025 (importe). Se guardan las personas con UNA sola fila e importe > 0; las de dos
+    filas por cambio de cargo a mitad de año (hasta/desde una fecha) se saltan por ambiguas, y las 'En régimen de asistencia' (0 €).
+    Se excluye la alcaldesa (cubierta aparte)."""
+    import openpyxl
+    from bs4 import BeautifulSoup
+    from urllib.parse import urljoin
+    pagina = "https://transparencia.majadahonda.org/retribuciones-de-la-alcaldesa-y-concejales-2025"
+    r = descargar(pagina)
+    url = None
+    for a in BeautifulSoup(r.text, "html.parser").find_all("a", href=True):
+        if "formato Excel" in a.get_text(" ", strip=True) and "Retribuciones brutas" in a.get_text(" ", strip=True):
+            url = urljoin(r.url, a["href"])
+            break
+    if not url:
+        raise RuntimeError("Majadahonda: no se encontró el Excel de retribuciones")
+    wb = openpyxl.load_workbook(io.BytesIO(descargar(url).content), data_only=True)
+    filas = [list(f) for f in wb.worksheets[0].iter_rows(values_only=True)]
+    texto = "\n".join(" ".join("" if c is None else str(c) for c in f) for f in filas)
+    contadas = {}
+    for f in filas:
+        if f and f[0] and f[1] and isinstance(f[3], (int, float)):
+            contadas[_sin_tratamiento(str(f[0]))] = contadas.get(_sin_tratamiento(str(f[0])), 0) + 1
+    out, dobles = [], []
+    for f in filas:
+        if not (f and f[0] and f[1] and isinstance(f[3], (int, float))) or str(f[0]).startswith("Nombre"):
+            continue
+        nombre, cargo, importe = _sin_tratamiento(str(f[0])), re.sub(r"\s+", " ", str(f[1])).strip(), float(f[3])
+        if contadas[nombre] > 1:
+            dobles.append(nombre)
+            continue
+        if importe <= 0 or cargo.lower().startswith("alcalde"):
+            continue
+        out.append(nuevo_registro("Majadahonda", "madrid", nombre, cargo, importe, "retribución bruta anual 2025", "2025", url,
+                                  "Portal de Transparencia del Ayuntamiento de Majadahonda", texto))
+    if dobles:
+        print(f"  Majadahonda: saltadas por dos filas (cambio de cargo en el año): {sorted(set(dobles))}")
+    if len(out) < 8:
+        raise RuntimeError(f"Majadahonda: solo {len(out)} concejales (¿cambió el Excel?)")
+    return out
+
+
+@_fuente("molina de segura")
+def actualizar_molina_de_segura():
+    """Portal de Transparencia de Molina de Segura > Información sobre cargos públicos > 'Las retribuciones percibidas anualmente':
+    tabla Cargo | Nombre | Retribución bruta | Dedicación | Partido de la Corporación 2023-2027 (la propia página se titula
+    'retribuciones percibidas anualmente'). Se excluye el alcalde (cubierto aparte)."""
+    url = "https://transparencia.molinadesegura.es/publicidad-activa/informacion-sobre-cargos-publicos/las-retribuciones-percibidas-anualmente/"
+    r = descargar(url)
+    texto = texto_html(r.text)
+    m = re.search(r"Fecha de última revisión/actualización:\s*(\d{2}/\d{2}/\d{4})", texto)
+    periodo = f"Corporación 2023-2027 (revisado el {m.group(1)})" if m else "Corporación 2023-2027"
+    tablas = filas_tablas_html(r.text, r"^Cargo")
+    if not tablas:
+        raise RuntimeError("Molina de Segura: no se encontró la tabla")
+    out = []
+    for f in tablas[0][1:]:
+        if len(f) < 4 or not num_es(f[2]) or f[0].lower().startswith("alcalde"):
+            continue
+        out.append(nuevo_registro("Molina de Segura", "murcia", f[1], f[0], num_es(f[2]),
+                                  f"retribución bruta anual (dedicación {f[3].lower()})", periodo, url,
+                                  "Portal de Transparencia del Ayuntamiento de Molina de Segura", texto))
+    if len(out) < 8:
+        raise RuntimeError(f"Molina de Segura: solo {len(out)} concejales (¿cambió la tabla?)")
+    return out
+
+
+@_fuente("palencia")
+def actualizar_palencia():
+    """Ayuntamiento de Palencia > Corporación municipal > Retribuciones corporación > 'Retribuciones íntegras de los Miembros de la
+    Corporación con dedicación exclusiva o parcial año AAAA' (PDF del último año publicado): 'Apellidos, Nombre | Cargo | Retribuciones'
+    (retribuciones íntegras percibidas en el año; algunas son de un año parcial por altas/bajas y se muestran tal cual). El nombre
+    de pila y el cargo van seguidos en mayúsculas: se separan en la primera palabra ALCALD*/CONCEJAL*. Se excluye la alcaldesa."""
+    from bs4 import BeautifulSoup
+    from urllib.parse import urljoin
+    pagina = "https://www.aytopalencia.es/ayuntamiento/corporacion-municipal/retribuciones-corporacion"
+    r = descargar(pagina)
+    docs = []
+    for a in BeautifulSoup(r.text, "html.parser").find_all("a", href=True):
+        m = re.match(r"Retribuciones íntegras de los Miembros de la Corporación con dedicación exclusiva o parcial año (\d{4})$", a.get_text(" ", strip=True))
+        if m:
+            docs.append((int(m.group(1)), urljoin(r.url, a["href"])))
+    if not docs:
+        raise RuntimeError("Palencia: no se encontró el PDF de retribuciones")
+    anio, url = max(docs)
+    texto = texto_pdf(descargar(url, timeout=90).content)
+    out = []
+    for linea in [re.sub(r"\s+", " ", x).strip() for x in texto.split("\n")]:
+        m = re.match(r"^([A-ZÁÉÍÓÚÑÜ' -]+), (.+?) ([\d.]+,\d{2})$", linea)
+        if not m:
+            continue
+        resto = m.group(2)
+        k = re.search(r"\b(ALCALD\w*|CONCEJAL\w*)\b", resto)
+        if not k or k.start() == 0:
+            continue
+        nombre, cargo = resto[:k.start()].strip(), resto[k.start():].strip()
+        if cargo.upper().startswith("ALCALD"):
+            continue
+        out.append(nuevo_registro("Palencia", "palencia", nombre_persona(m.group(1), nombre), cargo_frase(cargo), num_es(m.group(3)),
+                                  "retribuciones íntegras percibidas en el año (dedicación exclusiva o parcial)", str(anio), url,
+                                  "Ayuntamiento de Palencia (retribuciones de la Corporación)", texto))
+    if len(out) < 8:
+        raise RuntimeError(f"Palencia: solo {len(out)} concejales (¿cambió el PDF?)")
+    return out
+
+
+@_fuente("eivissa")
+def actualizar_eivissa():
+    """Ayuntamiento de Eivissa > Corporación > Retribuciones regidores: tabla Nombre | Cargo | Dedicación | Régimen | Retribución anual
+    2025 | Indemnizaciones anuales 2025. Filas cuyo importe no es un número claro (p. ej. '63.407.63 €', con punto en vez de coma
+    decimal) se SALTAN y se anotan: no se corrige un dato de la fuente adivinando. Se excluye el alcalde."""
+    url = "https://www.eivissa.es/es/retribucions-regidors"
+    r = descargar(url)
+    texto = texto_html(r.text)
+    tablas = filas_tablas_html(r.text, r"^Nombre")
+    if not tablas:
+        raise RuntimeError("Eivissa: no se encontró la tabla")
+    cab = tablas[0][0]
+    m = re.search(r"(\d{4})", cab[4] if len(cab) > 4 else "")
+    anio = m.group(1) if m else ""
+    out, ilegibles = [], []
+    for f in tablas[0][1:]:
+        if len(f) < 5 or not f[0] or f[1].lower().startswith("alcalde"):
+            continue
+        importe = num_es(f[4])
+        if importe is None:
+            # notación de la fuente '63.407.63 €' (punto de millar Y punto decimal): patrón exacto de 3 grupos con 2 cifras finales,
+            # inequívoco (no puede ser otra cifra) y coherente con las demás filas; cualquier otra rareza se salta.
+            m = re.match(r"^(\d{1,3})\.(\d{3})\.(\d{2})\s*€?$", f[4].strip())
+            if m:
+                importe = float(f"{m.group(1)}{m.group(2)}.{m.group(3)}")
+            elif f[4].strip() in ("-", ""):
+                continue                              # sin retribución (concejal sin dedicación)
+            else:
+                ilegibles.append(f"{f[0]} ({f[4]})")
+                continue
+        out.append(nuevo_registro("Eivissa", "baleares", f[0], f[1][:230], importe,
+                                  f"retribución anual (dedicación {f[2].lower()})", anio, url,
+                                  "Ayuntamiento de Eivissa (retribuciones de los regidores)", texto))
+    if ilegibles:
+        print(f"  Eivissa: saltadas por importe ilegible en origen: {ilegibles}")
+    if len(out) < 8:
+        raise RuntimeError(f"Eivissa: solo {len(out)} regidores (¿cambió la tabla?)")
     return out
 
 

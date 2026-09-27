@@ -101,3 +101,32 @@ municipios.
 7. **Logroño**: 8 concejales con "Indemnización asistencias" (dietas) saltados. **Santa Cruz de Tenerife**: solo filas con año completo; las de 2023 (periodos parciales, celdas combinadas) no se usan.
 8. **Alcalde**: se excluye cuando el Ministerio lo identifica (Cataluña, Murcia) o el documento lo rotula "Alcalde".
 9. **Mejoras de infraestructura**: escritura atómica y guardado tras cada municipio (varias ejecuciones en paralelo sin pisarse); `nuevo_registro` acepta importes de Excel escritos "49777.7"; conector genérico para la plataforma seu-e.cat (43 municipios catalanes sondeados: la mayoría no publica el importe en la ficha; los resultados irán en el lote siguiente).
+
+---
+
+## Lote 3 — Madrid (Majadahonda), Murcia (Molina de Segura), Castilla y León (Palencia), Baleares (Eivissa) (2026-09-27)
+
+**Añadidos: 56 concejales en 4 municipios** (total acumulado: 386 registros en 20 municipios).
+
+| CCAA | Municipio | N | Fuente oficial | Qué se guarda |
+|---|---|---|---|---|
+| Madrid | Majadahonda | 15 | Portal de Transparencia > "Retribuciones de la Alcaldesa y Concejales 2025" (Excel) | retribución bruta anual 2025 + cargo |
+| Murcia | Molina de Segura | 14 | Portal de Transparencia > "Las retribuciones percibidas anualmente" (tabla HTML, revisada 24/09/2026) | retribución bruta anual + dedicación |
+| Castilla y León | Palencia | 13 | Ayuntamiento > Retribuciones corporación > "Retribuciones íntegras ... dedicación exclusiva o parcial año 2025" (PDF) | retribuciones íntegras percibidas en 2025 |
+| Baleares | Eivissa | 14 | Ayuntamiento > Retribuciones regidores (tabla HTML) | retribución anual 2025 + dedicación |
+
+**Sondeo de la plataforma seu-e.cat (43 municipios catalanes)**: solo **Girona** rellena "Retribució anual bruta" en la ficha del cargo. En los otros 42 la ficha no trae el importe (remite a un documento aparte) o el listado no expone fichas (Olot, Salt, Calafell, Sitges, Argentona; Castellbisbal dio timeout). Resultado: 0 registros adicionales.
+
+**Saltados (y por qué)**
+- **Torrent**: publica las nóminas mensuales completas (con IRPF, cotizaciones, base…) de cada concejal; son importes mensuales dentro de un recibo con datos que no corresponde reproducir, y no hay tabla anual → saltado.
+- **Calvià**: solo el acuerdo de Pleno (categorías). **Palma**: el PDF enlazado es de marzo 2023 (anterior al mandato). **Lugo**: por categoría y nº de puestos, sin nombres. **Pontevedra**: mandato 2019-2023 (la sede no expone el 2023-2027). **Santa Lucía de Tirajana**: líneas de presupuesto sin nombres. **Aranda de Duero**: escala por cargo. **Villajoyosa**: "Próximamente".
+- **Marbella y Orihuela**: la sede electrónica (`*.sedelectronica.es/employees`) exige Cl@ve.
+- **Estepona, Benalmádena**: cifras solo en noticias/bases de ejecución del presupuesto, sin tabla nominal en el portal. **Fuengirola**: la web no responde. **Cartagena, Reus (URL cambiada), Alcalá de Henares (SSL)**: pendientes de reintentar.
+
+**Convenciones y anomalías**
+1. **Eivissa**: la fuente escribe algunos importes como "63.407.63 €" (punto de millar y punto decimal). Acepto solo ese patrón exacto (3 grupos, 2 cifras finales; inequívoco y coherente con el resto de filas) y lo señalo aquí para revisión; cualquier otra rareza se salta. Los "-" son concejales sin retribución (no se guardan). El propio cargo trae inconsistencias de género en origen.
+2. **Majadahonda**: 3 personas con dos filas por cambio de cargo a mitad de año (Silván, Montón, Rodríguez) se saltan por ambiguas; las de "régimen de asistencia" (0 €) tampoco.
+3. **Palencia**: 1 concejal con 8.237,42 € (año parcial) se muestra tal cual. Nombre y cargo van seguidos en mayúsculas en el PDF: se separan en la primera palabra ALCALD*/CONCEJAL*.
+4. **Infraestructura**: cabecera `Accept` en las peticiones (varios ayuntamientos bloqueaban la petición sin ella: Molina de Segura, Palencia); `main()` guarda tras cada municipio y `_escribir` es atómico.
+
+**Backfill de PLACE (paralelo)**: tandas 3 (+251) y 4 (+63) desplegadas tras probar cada una contra la copia real de producción (commits f8c9a56 y c835ddf); el fichero llega a 971 contratos (meses 202407-202609). La tanda 5 (202406→202309) sigue corriendo; el tope es 202109. El generador se paró en 202409 y 202407 por el vigilante de tiempo (carga de otros procesos; suspensión del equipo de ~21 h), no por datos ni memoria.
