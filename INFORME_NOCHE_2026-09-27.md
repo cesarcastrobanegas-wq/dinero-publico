@@ -155,16 +155,81 @@ Commit `a057820` (más un ajuste de `LIMITACIONES_COBERTURA.md` en `4fe462b`).
 
 ---
 
+---
+
+## 5. Continuación de la noche: 3 encargos de César tras el primer informe
+
+César pidió, tras leer el informe de arriba: (1) aclarar la contradicción sobre si el recorte de 5 años de
+PSCP/Euskadi/Navarra estaba aplicado o pendiente, y archivar lo que quedara sin archivar; (2) completar las 7
+ciudades vascas con cobertura parcial de menores; (3) seguir la investigación de menores en Madrid/Castilla y
+León/C. Valenciana/Aragón/Baleares/Castilla-La Mancha. Mismo modo autónomo (commit y push por lotes verificados).
+
+### 5.1 La contradicción, aclarada
+
+Las dos frases eran sobre cosas distintas, mal deslindadas en el primer informe: el **código** (fecha real +
+filtro de 5 años + reemplazo seguro con archivado) llevaba desplegado desde `a057820` y estaba verificado contra
+3 municipios reales — **eso sí estaba hecho**. Lo que faltaba era **barrer lo que ya estaba guardado en
+producción ANTES de ese cambio** (65.761 PSCP + 17.579 Euskadi + 7.643 Navarra, de fecha desconocida) — eso sí
+era progresivo/pendiente, y el primer informe lo dejó escrito de las dos formas en sitios distintos del mismo
+documento. Corregido en `LIMITACIONES_COBERTURA.md` (commit `0210c2f`).
+
+**Construido esta noche para archivar lo pendiente**: `backend/depurar_formales_5anios.py` (barrido completo de
+los ~1.500 municipios de PSCP/Euskadi/Navarra, reutilizando los mismos `buscar_en_pscp/euskadi/navarra` ya
+arreglados) genera `correcciones_formales_5anios.json.gz`; un nuevo loader de arranque,
+`_aplicar_correccion_formales_5anios()` en `app.py`, aplica esa corrección contra lo que haya REALMENTE en
+producción en ese momento, con la misma lógica de reemplazo+archivado ya probada de `_job_run` (idempotente,
+hash del fichero en `settings`, igual que `_aplicar_backfill_galicia_place`). El barrido se lanzó esta noche;
+**sigue en marcha al escribir esto** — el fichero de correcciones y el resultado exacto (municipios corregidos,
+contratos archivados) se commitearán en un lote posterior de esta misma noche o al retomar.
+
+### 5.2 Las 7 ciudades vascas, relanzadas
+
+Encontrado el motivo real de que el primer intento se cortara: no era un problema de páginas (el tope de 700 ya
+sobraba para las 7), era el tope de TIEMPO (900 s = 15 min), insuficiente para Irun (640 páginas reales) o
+Hernani (498) a ritmo real de ~1,5-2 s/página. Subido a 4.000 s y arreglado el guardado incremental para que
+guarde tras CADA ciudad (no cada 10) cuando la tanda es pequeña — así una ciudad terminada nunca se pierde si
+hay que cortar el proceso. Relanzadas en orden de menor a mayor volumen (Elgoibar, Getxo, Tolosa, Errenteria,
+Eibar, Hernani, Irun); **en marcha al escribir esto**. Hallazgo curioso: los totales de Elgoibar (7.435), Getxo
+(7.280) y Tolosa (10.402) coinciden EXACTAMENTE con "aceptados + descartados por fecha" de esta pasada —es
+decir, la API devuelve los contratos ordenados por fecha descendente, así que el tope antiguo (aunque cortaba
+antes de terminar) ya había capturado casi todo lo relevante dentro de los 5 años; lo que faltaba era sobre todo
+histórico anterior a 2021 que de todas formas no nos interesa.
+
+### 5.3 Madrid capital — hallazgo grande de la investigación de menores (CONECTADO y desplegado)
+
+El mayor municipio de los seis, y con diferencia el mejor hallazgo: `datos.madrid.es` publica un dataset OFICIAL
+"Contratos menores" (id 300253, Dirección General de Contratación y Servicios), CSV mensual desde 2015, CON NIF
+(a diferencia de RPC/Euskadi). Construido `actualizar_contratos_menores_madrid_capital.py` — corrigió dos
+sorpresas reales del propio portal (año a 2 dígitos en unos ficheros y a 4 en otros; una fila de título rompiendo
+el CSV de 2023) — **27.959 contratos desde 2021-09, desplegado (commit `d61fbbc`)**.
+
+**Resto de la investigación** (commit `0210c2f`, detalle en `LIMITACIONES_COBERTURA.md`): Zaragoza tiene un
+dataset OCDS oficial confirmado pero la sintaxis de consulta con fechas dio error esta noche (pendiente,
+prioridad alta — segundo mayor municipio de los seis); Valencia capital tiene contratos menores pero el portal
+se reorganizó en junio y retiró la API CKAN antigua (mayor municipio de los seis SIN nada conectado, prioridad
+alta); Valladolid y Palma tienen XLSX/PDF trimestral (viable, formato incómodo); Alicante y Albacete sin dataset
+único localizado; pendientes de revisar: León (tiene perfil de contratante consultable pero sin descarga masiva,
+tipo Navarra), Burgos, Salamanca, Castellón, Elche, Huesca, Teruel, Toledo, Ciudad Real, Guadalajara, y el resto
+de municipios de la Comunidad de Madrid.
+
+---
+
 ## Qué falta para la próxima sesión
 
-1. **Terminar la descarga de Euskadi menores**, probarla contra copia real de prod, commit+push del
-   `.json.gz`. Revisar el caso Eibar (24.126 contratos, tope de páginas insuficiente).
-2. **Backfill Galicia**: terminado (llegó al tope de 5 años, septiembre de 2021 — ver
-   `LIMITACIONES_COBERTURA.md`, sección propia). Nada pendiente ahí.
-3. **PSCP/Euskadi/Navarra**: código desplegado; la limpieza del histórico ya guardado es progresiva
-   (se irá viendo con el tiempo, municipio a municipio, sin acción adicional necesaria salvo que
-   quieras forzar un barrido completo algún día).
+1. ~~Terminar la descarga de Euskadi menores~~ hecho (155.708 registros, commit `5955fc8`); las 7 ciudades
+   grandes con cobertura parcial se están completando ahora mismo (ver 5.2) — comprobar si terminaron y, si
+   es así, actualizar `LIMITACIONES_COBERTURA.md` quitando la nota de cobertura parcial de cada una y
+   commitear el `.json.gz` final.
+2. **Backfill Galicia**: terminado. Nada pendiente ahí.
+3. **PSCP/Euskadi/Navarra**: código desplegado Y barrido forzado del histórico ya guardado lanzado esta
+   noche (ver 5.1) — comprobar si `depurar_formales_5anios.py` terminó, verificar el resultado contra copia
+   real de producción y commitear `correcciones_formales_5anios.json.gz`.
 4. **Sueldos de concejales**: seguir con más municipios por población cuando quieras continuar (Gijón,
    Cáceres, Badajoz, Mérida no dieron fruto esta noche; quedan por probar muchas ciudades medianas).
 5. **Registro Mercantil**: decisión tuya sobre si construir la Fase 1 (gratis) del informe de
    viabilidad.
+6. **Menores Madrid/CyL/CV/Aragón/Baleares/CLM**: Madrid capital conectado (27.959 registros). Siguiente
+   prioridad: resolver la sintaxis de fecha del dataset OCDS de Zaragoza (segundo mayor municipio de los
+   seis) y localizar la estructura nueva del portal de Valencia capital (el mayor municipio sin nada
+   conectado). Después, Valladolid/Palma (XLSX/PDF trimestral) y el resto de la lista por población en
+   `LIMITACIONES_COBERTURA.md`.
