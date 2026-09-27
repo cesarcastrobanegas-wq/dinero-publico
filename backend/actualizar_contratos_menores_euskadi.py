@@ -83,9 +83,11 @@ def _item_a_registro(item, municipio):
 LIM_PAGINAS_MUNICIPIO = 700     # 700*50 = 35.000 contratos por municipio -- Eibar (el más grande medido, 24.126
                                  # contratos/483 páginas) queda cubierto entero con margen; tope de seguridad, no
                                  # un límite normal (evita un bucle infinito si totalPages viniera mal calculado).
-LIM_SEGUNDOS_MUNICIPIO = 900     # 15 min máx. por municipio -- si una ciudad tarda más que esto (servidor lento,
-                                 # no volumen) se corta y se sigue con el resto; se avisa en el log para revisarla
-                                 # a mano después (relanzar solo esa: `python actualizar_contratos_menores_euskadi.py <Municipio>`).
+LIM_SEGUNDOS_MUNICIPIO = 4000    # ~67 min máx. por municipio -- subido desde 900 s (2026-09-27): con ~3-4 s/página
+                                 # observados, Irun (640 páginas) o Hernani (498) superaban el tope de 15 min sin
+                                 # haber terminado ni haberse acercado al tope real de páginas (LIM_PAGINAS_MUNICIPIO).
+                                 # Ahora el límite operativo es el de páginas, no el de tiempo; este sigue existiendo
+                                 # solo como red de seguridad ante un servidor colgado.
 
 
 def buscar_menores_municipio(municipio, authority_id):
@@ -183,11 +185,15 @@ def main():
             if reg["import_num"] > umbral_obras:
                 sospechosos.append((municipio, reg["adjudicatari"], reg["import_num"], reg["descripcio"][:80]))
         total_nuevos += len(registros)
-        if i % 10 == 0 or i == len(pedidos) or len(registros) > 50:
+        guardar_ahora = i % 10 == 0 or i == len(pedidos) or len(pedidos) <= 20
+        if guardar_ahora or len(registros) > 50:
             print(f"  [{i}/{len(pedidos)}] {municipio}: {len(registros)} contratos "
                   f"({descartados} descartados por fecha) -- {time.time() - t0:.0f} s transcurridos", flush=True)
-        if i % 10 == 0 or i == len(pedidos):
-            _guardar(existentes)   # progreso a salvo aunque el proceso se corte antes de terminar todos los municipios
+        if guardar_ahora:
+            # len(pedidos) <= 20 cubre las relanzadas puntuales (p.ej. las 7 ciudades con cobertura parcial):
+            # guardar tras CADA municipio, no solo cada 10, para no perder nada si hay que matar el proceso
+            # (lección de la relanzada anterior: Errenteria se cortó por tiempo justo antes de guardar y se perdió).
+            _guardar(existentes)
 
     print(f"\nHecho: {len(existentes)} registros en {FICHERO} ({total_nuevos} nuevos/actualizados esta ejecución, "
           f"{total_descartados} descartados por fecha < {A.MENORES_DESDE_FECHA}).")
