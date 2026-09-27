@@ -178,9 +178,16 @@ los ~1.500 municipios de PSCP/Euskadi/Navarra, reutilizando los mismos `buscar_e
 arreglados) genera `correcciones_formales_5anios.json.gz`; un nuevo loader de arranque,
 `_aplicar_correccion_formales_5anios()` en `app.py`, aplica esa corrección contra lo que haya REALMENTE en
 producción en ese momento, con la misma lógica de reemplazo+archivado ya probada de `_job_run` (idempotente,
-hash del fichero en `settings`, igual que `_aplicar_backfill_galicia_place`). El barrido se lanzó esta noche;
-**sigue en marcha al escribir esto** — el fichero de correcciones y el resultado exacto (municipios corregidos,
-contratos archivados) se commitearán en un lote posterior de esta misma noche o al retomar.
+hash del fichero en `settings`, igual que `_aplicar_backfill_galicia_place`).
+
+**Barrido completado y verificado**: las tres fuentes terminaron sin ningún error (0/942 PSCP, 0/251 Euskadi,
+0/270 Navarra) — 65.805 contratos PSCP en 881 municipios, 12.866 Euskadi en 225, 4.102 Navarra en 224 (1.330
+municipio+fuente en total). Verificado el loader contra una copia real de la `cache.db` de producción: 1.053
+municipio+fuente corregidos, **19.376 contratos archivados** (fuera de los últimos 5 años, nunca borrados), 277
+ya coincidían sin cambios, 0 sin ficha. Los 3 casos de prueba (Albons/PSCP, Amurrio/Euskadi, Tudela/Navarra)
+dieron el mismo resultado exacto que la prueba anterior contra `_job_run` (12→9, 118→59, 447→289). Segunda
+ejecución confirmada como no-op (idempotente). Commit del fichero `correcciones_formales_5anios.json.gz`
+pendiente de push inmediatamente después de este informe.
 
 ### 5.2 Las 7 ciudades vascas, relanzadas
 
@@ -189,11 +196,14 @@ sobraba para las 7), era el tope de TIEMPO (900 s = 15 min), insuficiente para I
 Hernani (498) a ritmo real de ~1,5-2 s/página. Subido a 4.000 s y arreglado el guardado incremental para que
 guarde tras CADA ciudad (no cada 10) cuando la tanda es pequeña — así una ciudad terminada nunca se pierde si
 hay que cortar el proceso. Relanzadas en orden de menor a mayor volumen (Elgoibar, Getxo, Tolosa, Errenteria,
-Eibar, Hernani, Irun); **en marcha al escribir esto**. Hallazgo curioso: los totales de Elgoibar (7.435), Getxo
-(7.280) y Tolosa (10.402) coinciden EXACTAMENTE con "aceptados + descartados por fecha" de esta pasada —es
-decir, la API devuelve los contratos ordenados por fecha descendente, así que el tope antiguo (aunque cortaba
-antes de terminar) ya había capturado casi todo lo relevante dentro de los 5 años; lo que faltaba era sobre todo
-histórico anterior a 2021 que de todas formas no nos interesa.
+Eibar, Hernani, Irun); **completadas y desplegadas (commit `3fa814a`)**. Resultado real (antes → después):
+Elgoibar 7.435→7.435, Getxo 7.280→7.280, Eibar 8.851→8.851 (los tres YA estaban completos: la API devuelve los
+contratos ordenados por fecha descendente, así que el tope antiguo, aunque cortaba antes de terminar, ya había
+capturado casi todo lo relevante dentro de los 5 años — lo que faltaba era histórico anterior a 2021 que de
+todas formas no interesa). Tolosa 10.000→10.402 (+4 %), **Errenteria 10.000→14.461 (+44 %)**, **Hernani
+10.000→17.902 (+79 %)**, **Irun 10.000→19.748 (+97 %)** — mejoras reales y sustanciales en estas tres. Total
+final: **178.221 contratos menores en los 251 municipios** (antes 155.708). Verificado: carga sin errores,
+render de ficha probado, conteos por ciudad contrastados con los logs de la relanzada.
 
 ### 5.3 Madrid capital — hallazgo grande de la investigación de menores (CONECTADO y desplegado)
 

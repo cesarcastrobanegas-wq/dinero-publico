@@ -343,8 +343,16 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
      `_aplicar_correccion_formales_5anios()`, aplica esa corrección contra lo que haya REALMENTE en producción en
      ese momento — misma lógica de reemplazo+archivado de `_job_run`, calculada en el momento contra el dato real
      (no una lista de "a archivar" congelada de antemano) — una sola vez por versión del fichero (hash en
-     `settings`, mismo patrón que `_aplicar_backfill_galicia_place`). Ver el resultado exacto (municipios
-     corregidos, contratos archivados) en `INFORME_NOCHE_2026-09-27.md` una vez desplegado.
+     `settings`, mismo patrón que `_aplicar_backfill_galicia_place`).
+  - **Barrido completado y verificado (2026-09-27)**: las tres fuentes terminaron sin ningún error (0/942 PSCP,
+    0/251 Euskadi, 0/270 Navarra). Resultado: 65.805 contratos PSCP en 881 municipios, 12.866 Euskadi en 225,
+    4.102 Navarra en 224 (1.330 municipio+fuente en total; el resto sin contratos en ventana o sin ese
+    municipio mapeado). **Verificado contra una copia real de la cache.db de producción**: al aplicar el loader,
+    1.053 municipio+fuente se corrigieron, **19.376 contratos se archivaron** (fuera de los últimos 5 años,
+    nunca borrados), 277 ya coincidían sin cambios. Los 3 casos de prueba de la noche dieron el mismo resultado
+    exacto que la prueba anterior contra `_job_run` (Albons 12→9, Amurrio 118→59, Tudela 447→289) — misma
+    lógica, incluso aplicada dos meses "después" en el tiempo simulado no cambia el resultado. Segunda ejecución
+    del loader confirmada como no-op (idempotente, por el hash). Render de ficha probado sin errores.
 - **Salvaguarda de seguridad añadida** (probada en producción real, ver abajo): el reemplazo de una fuente SOLO
   ocurre si (a) la búsqueda terminó sin errores HTTP/de red y (b) la búsqueda fresca trajo al menos 1 contrato — así
   un mapeo roto o un fallo silencioso de la fuente nunca puede vaciar todo el histórico de un municipio por error
