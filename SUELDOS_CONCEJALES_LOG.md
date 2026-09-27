@@ -246,3 +246,21 @@ Avisos públicos añadidos: Segovia, Guadalajara, Pinto. Notas públicas para Hu
 
 Avisos públicos añadidos: Jaén, Pamplona. Nota pública para Salamanca.
 
+---
+
+## Lote 9 — Telde (2026-09-27)
+
+**Añadidos: 16 concejales** (Telde). Total acumulado: **582 registros en 30 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Telde | telde.es > Hacienda > Intervención > "Retribuciones Cargos Electos, altos cargos y personal directivo" (información del año 2025; tabla HTML) | RETRIBUCIÓN ANUAL BRUTA (x14) por persona; cargo = tenencia de alcaldía (si la tiene) + concejalía, o "Concejal de la oposición con dedicación exclusiva (grupo)". La nota de la página dice que todos son dedicación exclusiva salvo una persona (parcial), y así se anota en la base. Alcalde excluido (fila sin importe mensual). 8 tenientes + 6 delegados + 2 de la oposición |
+
+**Saltados y por qué (comprobado en crudo)**
+- **Torrent (Valencia)**: publica **recibos de nómina individuales** mensuales (con retenciones y cotizaciones) → no se procesan (datos personales que no hacen falta; categoría solo "CONCEJAL"). Además la clave "torrent" de la base pertenece a un municipio de Girona, así que tampoco se añade aviso (saldría en la ficha equivocada).
+- **Gandia**: la página de retribuciones no devuelve contenido legible (carga dinámica).
+- **Sant Cugat, Cornellà**: plataforma seu-e.cat (ya sondeada: solo Girona rellena importes).
+- Comprobación previa a este lote: las 25 claves de notas y las 36 de avisos caen en el municipio esperado de la base (ninguna homónima en otra provincia).
+
+Nota pública para Telde.
+

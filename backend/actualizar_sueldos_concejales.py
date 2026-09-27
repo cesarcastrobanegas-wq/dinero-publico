@@ -1121,6 +1121,39 @@ def actualizar_cartagena():
     return out
 
 
+@_fuente("telde")
+def actualizar_telde():
+    """Ayuntamiento de Telde > Hacienda > Intervención > Retribuciones Cargos Electos, altos cargos y personal directivo (información del año indicado en la
+    página). Tabla HTML: nombre (los tenientes de alcalde con su ordinal) | concejalía / grupo | retribución mensual bruta | retribución anual bruta (x14).
+    Se guarda la ANUAL. La nota de la propia página dice quién tiene dedicación parcial (el resto, exclusiva). Se excluye el alcalde (fila sin importe mensual)."""
+    from bs4 import BeautifulSoup
+    url = "https://www.telde.es/areas/hacienda/intervencion/retribuciones-cargos-electos/"
+    r = descargar(url)
+    texto = texto_html(r.text)
+    m = re.search(r"Informaci[oó]n correspondiente al a[nñ]o (\d{4})", texto)
+    periodo = f"año {m.group(1)}" if m else "vigente"
+    parcial = {_norm(x) for x in re.findall(r"excepto (?:Don|Do[ñn]a) ([^,.]+?) que tiene dedicaci[oó]n parcial", texto)}
+    out, grupo_opo = [], False
+    tabla = BeautifulSoup(r.text, "html.parser").find("table")
+    for tr in (tabla.find_all("tr") if tabla else []):
+        c = [re.sub(r"\s+", " ", td.get_text(" ", strip=True)) for td in tr.find_all(["td", "th"])]
+        if len(c) == 4 and c[0].upper().startswith("CONCEJALES/AS DE LA OPOSICI"):
+            grupo_opo = True
+            continue
+        if len(c) != 4 or "euros" not in c[3] or "euros" not in c[2]:
+            continue
+        anual = num_es(c[3].replace("euros", ""))
+        m_t = re.match(r"^(?P<ord>\d+º Teniente de [Aa]lcalde): (?P<nom>.+)$", c[0])
+        nombre = m_t.group("nom") if m_t else c[0]
+        cargo = (f"{m_t.group('ord')}; {c[1]}" if m_t else (f"Concejal de la oposición con dedicación exclusiva ({c[1]})" if grupo_opo else c[1]))
+        dedic = "parcial" if _norm(nombre) in parcial else "exclusiva"
+        out.append(nuevo_registro("Telde", "las_palmas", nombre, cargo, anual, f"retribución anual bruta (14 pagas; dedicación {dedic})", periodo, url,
+                                  "Web del Ayuntamiento de Telde: retribuciones de cargos electos", texto))
+    if len(out) < 12:
+        raise RuntimeError(f"Telde: solo {len(out)} concejales (¿cambió la tabla?)")
+    return out
+
+
 @_fuente("salamanca")
 def actualizar_salamanca():
     """Ayuntamiento de Salamanca > Transparencia > Transparencia activa y organización: PDF 'Retribuciones percibidas por los miembros de la Corporación
