@@ -196,8 +196,12 @@ ronda porque todo lo encontrado es fuente primaria municipal):
   aparecen con contratos menores en CSV/Excel en sus propios portales -- sin verificar en profundidad esta
   ronda, pero es una señal de que, aunque no hay agregador regional, varios ayuntamientos medianos de Madrid sí
   publican su propio dataset y merece la pena mirarlos uno a uno además de los grandes.
-- **Pendiente de revisar** (siguiente ronda, mismo criterio): Burgos, Salamanca (Castilla y León); Huesca, Teruel
-  (Aragón); Ciudad Real (Castilla-La Mancha); resto de municipios de la Comunidad de Madrid por población.
+- **Huesca, Teruel (Aragón) y Salamanca (Castilla y León)**: sin dataset de contratos menores localizado esta
+  ronda (Huesca y Teruel remiten a la Plataforma de Contratación del Estado sin dataset propio; Salamanca tiene
+  portal de datos abiertos propio -- `opendata.aytosalamanca.es` -- pero no es CKAN estándar y su búsqueda no
+  devolvió un dataset de menores esta noche, habría que navegar el catálogo a mano).
+- **Pendiente de revisar** (siguiente ronda, mismo criterio): Burgos (Castilla y León); Ciudad Real (Castilla-La
+  Mancha); resto de municipios de la Comunidad de Madrid por población.
 
 ## Fondos UE
 
