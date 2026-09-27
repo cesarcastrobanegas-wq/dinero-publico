@@ -167,7 +167,7 @@ def nombre_persona(apellidos, nombre):
     return " ".join(w.lower() if (i and w.lower() in _PARTICULAS) else cap(w) for i, w in enumerate(palabras))
 
 
-_SIGLAS = {"PSOE", "PP", "VOX", "RRHH", "MRH", "PSC", "ERC", "JXCAT", "BNG", "PNV", "CS", "IU", "TTE.", "UP", "EH", "BILDU", "CC", "PAR", "PRC", "IU-PODEMOS", "MC", "UPN", "PSN", "EAJ-PNV"}
+_SIGLAS = {"PSOE", "PP", "VOX", "RRHH", "MRH", "PSC", "ERC", "JXCAT", "BNG", "PNV", "CS", "IU", "TTE.", "TTE", "UP", "EH", "BILDU", "CC", "PAR", "PRC", "IU-PODEMOS", "MC", "UPN", "PSN", "EAJ-PNV"}
 
 
 def cargo_frase(cargo):
@@ -1118,6 +1118,156 @@ def actualizar_cartagena():
         print(f"  Cartagena: {asist} concejales con 'ASIST. PLENOS' (asistencias) saltados")
     if len(out) < 12:
         raise RuntimeError(f"Cartagena: solo {len(out)} concejales (¿cambió el PDF?)")
+    return out
+
+
+@_fuente("almeria")
+def actualizar_almeria():
+    """Ayuntamiento de Almería > Transparencia > Retribuciones de los cargos electos: PDF 'Retribuciones y régimen de dedicación miembros
+    Corporación <año>' (el más reciente enlazado). Una línea por persona: GRUPO | CARGO | APELLIDOS, NOMBRE | RÉGIMEN DE DEDICACIÓN |
+    retribuciones íntegras mensuales | íntegras anuales. Se guarda la ANUAL. Se excluye la alcaldesa (cubierta aparte). El servidor de
+    almeriaciudad.es sirve un certificado con la cadena incompleta: la descarga (solo lectura de un documento público) va sin verificar el certificado."""
+    import urllib3
+    from bs4 import BeautifulSoup
+    from urllib.parse import urljoin
+    urllib3.disable_warnings()
+    pagina = "https://almeriaciudad.es/transparencia-municipal/retribuciones-de-los-cargos-electos"
+    r = descargar(pagina, verify=False)
+    cand = []
+    for a in BeautifulSoup(r.text, "html.parser").find_all("a", href=True):
+        m = re.match(r"Retribuciones y r[eé]gimen de dedicaci[oó]n miembros Corporaci[oó]n (\d{4})$", a.get_text(" ", strip=True))
+        if m:
+            cand.append((m.group(1), urljoin(r.url, a["href"])))
+    if not cand:
+        raise RuntimeError("Almería: no se encontró el PDF de retribuciones y régimen de dedicación")
+    anio, url = max(cand)
+    texto = texto_pdf(descargar(url, timeout=120, verify=False).content)
+    re_fila = re.compile(r"^(?P<g>PP|PSOE|VOX|PODEMOS|CS|[A-ZÁÉÍÓÚ-]{2,12}) (?P<cargo>ALCALDESA|ALCALDE|CONCEJAL|(?:\d.*?|DELEGAD[OA]|DLEGAD[OA]) ?(?:DE )?(?:ÁREA|AREA|ÁEA)|PORTAVOZ GRUPO POL+ÍTICO) "
+                         r"(?P<nombre>[^,]+, .+?) (?P<reg>EXCLUSIVA|PARCIAL \d+ ?%)(?P<nota> \(Desde [\d/]+\))? (?P<men>[\d.]+,\d\d) (?P<anual>[\d.]+,\d\d)$")
+    out = []
+    for x in (re.sub(r"\s+", " ", l).strip() for l in texto.split("\n")):
+        m = re_fila.match(x)
+        if not m or m.group("cargo").startswith("ALCALD"):
+            continue
+        partes = [p.strip() for p in m.group("nombre").split(",")]
+        ap, no = (" ".join(partes[:-1]), partes[-1]) if len(partes) >= 2 else ("", partes[0])
+        reg = m.group("reg").lower().replace(" %", "%") + (m.group("nota") or "")
+        out.append(nuevo_registro("Almería", "almeria", nombre_persona(ap, no), f'{cargo_frase(m.group("cargo"))} ({m.group("g")})',
+                                  num_es(m.group("anual")), f"retribuciones íntegras anuales (dedicación {reg})", f"año {anio}", url,
+                                  "Portal de transparencia del Ayuntamiento de Almería", texto))
+    if len(out) < 15:
+        raise RuntimeError(f"Almería: solo {len(out)} concejales (¿cambió el PDF?)")
+    return out
+
+
+@_fuente("mostoles")
+def actualizar_mostoles():
+    """Ayuntamiento de Móstoles > Corporación municipal > Remuneraciones > 'Remuneraciones de los miembros de la Corporación Municipal
+    2023-2027' (acuerdo plenario 2/242 de 8/01/2026). Dos tablas HTML: GRUPO | CARGO | NOMBRE Y APELLIDOS | RETRIBUCIONES (importe en €).
+    La página no indica el periodo del importe: se guarda tal cual, sin llamarlo anual. Se excluye el alcalde (cubierto aparte)."""
+    from bs4 import BeautifulSoup
+    url = "https://www.mostoles.es/es/ayuntamiento/organizacion-municipal-organos-gobierno-personal/corporacion-municipal/remuneraciones/remuneraciones-miembros-corporacion-municipal-2023-2027"
+    try:
+        r = descargar(url, intentos=1)
+    except RuntimeError:
+        url = url.replace("/es/", "/en/", 1)
+        r = descargar(url)
+    texto = texto_html(r.text)
+    m = re.search(r"acuerdo ([\d/]+) de (\d{1,2} de \w+ de \d{4})", texto)
+    periodo = f"acuerdo plenario {m.group(1)} de {m.group(2)}" if m else "vigente"
+    out = []
+    for tabla in BeautifulSoup(r.text, "html.parser").find_all("table"):
+        for tr in tabla.find_all("tr"):
+            c = [re.sub(r"\s+", " ", td.get_text(" ", strip=True)) for td in tr.find_all(["td", "th"])]
+            if len(c) != 4 or c[0] == "GRUPO" or c[1].lower().startswith("alcalde"):
+                continue
+            out.append(nuevo_registro("Móstoles", "madrid", c[2], f"{c[1]} ({c[0]})", num_es(c[3]),
+                                      "retribución publicada por el Ayuntamiento (la tabla no indica el periodo)", periodo, r.url,
+                                      "Web del Ayuntamiento de Móstoles: remuneraciones de la Corporación 2023-2027", texto))
+    if len(out) < 20:
+        raise RuntimeError(f"Móstoles: solo {len(out)} concejales (¿cambió la tabla?)")
+    return out
+
+
+@_fuente("vitoria-gasteiz")
+def actualizar_vitoria():
+    """Ayuntamiento de Vitoria-Gasteiz > Portal de transparencia > 'Retribuciones de los altos cargos del Ayuntamiento': XLS 'Salario mensual
+    según puesto y dedicación' (personal eventual, cargos electos y órganos directivos; p. ej. 'Documento actualizado a 19/03/2025'). Columnas:
+    nombre | código de puesto | denominación | ID | SALARIO MENSUAL | % dedicación. Se toman solo los puestos de cargo electo (tenientes de alcalde
+    2102, concejales delegados de área 2104, con delegación especial 2106 y portavoces 2108); alcaldesa, eventuales y directivos se excluyen.
+    El importe es MENSUAL tal como lo publica la fuente (no se anualiza)."""
+    import xlrd
+    from urllib.parse import urljoin
+    from bs4 import BeautifulSoup
+    pagina = "https://www.vitoria-gasteiz.org/wb021/was/contenidoAction.do?idioma=en&uid=u7c6618d7_148a69ca5e2__7f0e"
+    r = descargar(pagina)
+    url = None
+    for a in BeautifulSoup(r.text, "html.parser").find_all("a", href=True):
+        if _norm(a.get_text(" ", strip=True)).startswith("salario mensual segun puesto"):
+            url = urljoin(r.url, a["href"])
+            break
+    if not url:
+        raise RuntimeError("Vitoria: no se encontró el XLS de salario mensual según puesto y dedicación")
+    hoja = xlrd.open_workbook(file_contents=descargar(url, timeout=120).content).sheet_by_index(0)
+    m = re.search(r"actualizado a (\d{2}/\d{2}/\d{4})", " ".join(str(c) for c in hoja.row_values(0)), re.I)
+    periodo = f"salario mensual vigente (documento actualizado a {m.group(1)})" if m else "salario mensual vigente"
+    filas = [hoja.row_values(i) for i in range(2, hoja.nrows)]
+    texto = "\n".join(f"{f[0]} {f[2]} {f[4]} {f[5]}" for f in filas)
+    out = []
+    for f in filas:
+        if int(f[1] or 0) not in (2102, 2104, 2106, 2108):
+            continue
+        cargo = re.search(r"(TENIENTE.*|CONCEJAL/A.*)$", str(f[2]).strip())
+        if not cargo or not isinstance(f[4], float):
+            continue
+        out.append(nuevo_registro("Vitoria-Gasteiz", "pais_vasco", _titulo_nombre(str(f[0])), cargo_frase(cargo.group(1)), f[4],
+                                  f"salario mensual (dedicación {round(f[5] * 100)} %), no anualizado", periodo, url,
+                                  "Portal de transparencia del Ayuntamiento de Vitoria-Gasteiz", texto))
+    if len(out) < 15:
+        raise RuntimeError(f"Vitoria: solo {len(out)} concejales (¿cambió el XLS?)")
+    return out
+
+
+@_fuente("castellon de la plana")
+def actualizar_castellon():
+    """Ayuntamiento de Castelló de la Plana > Transparencia > 'Las retribuciones percibidas anualmente por altos cargos...': PDF
+    'Retribuciones_Cargos_Electos_<año>' (el del año más reciente enlazado). Una tabla por grupo municipal: Apellidos y Nombre | Cargo |
+    % dedicación | Salario/Retención/Líquido por mes | Total anual acumulado. Solo se toma la fila 'Salario' (bruto) y su total anual.
+    Las personas con algún mes a 0,00 (año parcial) se saltan: su total no es comparable. La alcaldesa se excluye (cubierta aparte)."""
+    from urllib.parse import urljoin
+    pagina = "https://www.castello.es/es/w/retribuciones"
+    r = descargar(pagina)
+    enlaces = re.findall(r'href="([^"]*Retribuciones_Cargos_Electos_(\d{4})\.pdf[^"]*)"', r.text)
+    if not enlaces:
+        raise RuntimeError("Castellón: no se encontró el PDF de retribuciones de cargos electos")
+    href, anio = max(enlaces, key=lambda x: x[1])
+    url = urljoin(r.url, href.replace("&amp;", "&"))
+    texto = texto_pdf(descargar(url, timeout=120).content)
+    re_fila = re.compile(r"^(?P<ap>[^,]+), (?P<no>.+?) (?P<cargo>Alcaldesa|Alcalde|Concejal|Concejala) (?P<pct>\d{1,3}) % Salario (?P<resto>[\d., ]+)$")
+    out, grupo, parciales = [], "", 0
+    for x in (re.sub(r"\s+", " ", l).strip() for l in texto.split("\n")):
+        g = re.match(r"^Retribuciones Grupo (.+)$", x)
+        if g:
+            grupo = g.group(1).strip().title()
+            continue
+        m = re_fila.match(x)
+        if not m:
+            continue
+        cifras = m.group("resto").split()
+        if len(cifras) != 13 or m.group("cargo").startswith("Alcalde"):
+            continue
+        if any(c == "0,00" for c in cifras[:12]):
+            parciales += 1
+            continue
+        nombre = f'{m.group("no")} {m.group("ap")}'
+        cargo = f'{m.group("cargo")} (grupo {grupo}), dedicación {m.group("pct")} %'
+        out.append(nuevo_registro("Castellón de la Plana", "castellon", nombre, cargo, num_es(cifras[12]),
+                                  "total anual acumulado bruto (fila «Salario»), suma de los 12 meses", f"año {anio}", url,
+                                  "Portal de Transparencia del Ayuntamiento de Castelló de la Plana", texto))
+    if parciales:
+        print(f"  Castellón: {parciales} concejales con meses a 0,00 (año parcial) saltados")
+    if len(out) < 15:
+        raise RuntimeError(f"Castellón: solo {len(out)} concejales (¿cambió el PDF?)")
     return out
 
 

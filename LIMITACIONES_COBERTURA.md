@@ -116,9 +116,9 @@ si falta algo o es ambiguo se salta y se anota. Nada se estima ni se convierte (
 salvedades de esa fuente** (`_NOTAS_SUELDOS_CONCEJALES` en `app.py`); las fichas de los municipios aparcados muestran un aviso con
 el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
 
-- **Cobertura a 2026-09-27**: 403 registros en 21 municipios (Sevilla, Málaga, Cádiz, Huelva; L'Hospitalet, Terrassa, Sabadell,
-  Lleida, Girona, Mataró; Madrid, Majadahonda; Elche; Vigo; Logroño; Murcia, Molina de Segura, Cartagena; Santa Cruz de Tenerife;
-  Palencia; Eivissa). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
+- **Cobertura a 2026-09-27**: 504 registros en 25 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
+  Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles; Elche, Castellón de la Plana; Vigo; Logroño; Murcia, Molina de Segura,
+  Cartagena; Santa Cruz de Tenerife; Palencia; Eivissa; Vitoria-Gasteiz). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
 - **Salvedades concretas por fuente**:
   - **Sevilla**: cargo mostrado como "Concejal/a" genérico (el PDF fuente no especifica la concejalía); el importe es lo percibido en
     2024 e incluye cantidades pequeñas de concejales sin dedicación.
@@ -130,6 +130,10 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
     alcalde y concejales delegados al 100 %.
   - **Huelva**: importes NETOS 2024. **Terrassa**: MENSUAL bruto (14 pagas), sin convertir. **Vigo** (julio 2023) y **Murcia**
     (febrero 2024): documentos fechados, los importes pueden haberse actualizado. **Palencia**: incluye algún año parcial.
+  - **Vitoria-Gasteiz**: importe MENSUAL (sin anualizar) y la fuente rotula a todos los tenientes de alcalde como «teniente alcaldesa».
+    **Castellón**: total anual bruto de 2024 (fila «Salario»); una persona con meses a cero se omite. **Móstoles**: la tabla no indica el
+    periodo del importe. **Almería**: importes íntegros anuales de 2026; su servidor tiene la cadena de certificados incompleta y la
+    descarga va sin verificar certificado (lectura de un documento público).
   - Cada conector excluye al alcalde (cubierto aparte), las asistencias a plenos y las filas con importe ilegible o incoherente.
 - **Aparcados por falta de fuente utilizable** (no reintentar salvo fuente nueva; el motivo se muestra en su ficha):
   - **Córdoba**: escala por cargo (2025), sin importe por persona. **Granada**: BOP con nombres por categoría e importes en el
@@ -138,6 +142,10 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
     con nº de puestos (dic. 2023), sin nombres.
   - **Bilbao** (solo publica personal de libre designación) y **Alicante**: sin documento nominal localizado. **Palma**: el PDF
     enlazado es de 2023, anterior al mandato.
+  - **Lote 5 (2026-09-27, aviso también en la ficha)**: **León** (solo iniciales), **Getafe** (por cargo, sin nombres), **Oviedo** (tabla nominal
+    de 2019-2023), **Burgos** (sin cargo; la alcaldesa figura como un corporativo más), **Leganés** (PDF por persona sin nombre dentro y con
+    enlaces cruzados), **A Coruña** y **Toledo** (por cargo, sin nombres), **Santander** (página sin contenido), **Las Palmas** (visor no
+    legible), **Fuenlabrada**, **Alcobendas**, **Rivas-Vaciamadrid**. Detalle en `SUELDOS_CONCEJALES_LOG.md`.
   - Pendientes de reintento por otros motivos: **Barcelona** (su API de cargos devolvía "timeout" en dos comprobaciones),
     **Reus** (por cargo, sin nombres), **Alcalá de Henares** (por categoría, sin importe por persona).
 - **Plataformas descartadas**: `*.sedelectronica.es/employees` exige Cl@ve (Marbella, Orihuela); seu-e.cat solo rellena el importe en

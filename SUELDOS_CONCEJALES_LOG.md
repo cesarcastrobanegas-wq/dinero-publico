@@ -154,3 +154,31 @@ las fichas de 12 municipios aparcados (Córdoba, Granada, Jerez, Zaragoza, Valè
 un aviso con el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`). Motivos verificados en crudo: Valladolid (PDF de diciembre 2023 por cargo con nº de puestos),
 Reus, Alcalá, Zaragoza, Córdoba, Granada y Jerez (ver lotes 1-2); Bilbao y Alicante son "no localizado", y así lo dice el aviso.
 Además, las fichas gallegas muestran un aviso sobre el backfill de PLACE (el mes de inicio se lee del propio fichero desplegado).
+
+---
+
+## Lote 5 — más ciudades por población (2026-09-27)
+
+**Añadidos: 101 concejales** (Castellón de la Plana 25, Vitoria-Gasteiz 26, Móstoles 26, Almería 24). Total acumulado: **504 registros en 25 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Castellón de la Plana | castello.es > "Las retribuciones percibidas anualmente por altos cargos..." > PDF `Retribuciones_Cargos_Electos_2024` (una tabla por grupo) | fila "Salario" (bruto), total anual acumulado de 2024; cargo = Concejal/a + grupo + % dedicación. 1 concejala con meses a 0,00 (año parcial) saltada; alcaldesa excluida |
+| Vitoria-Gasteiz | vitoria-gasteiz.org > Portal de transparencia > Retribuciones de los altos cargos > XLS "Salario mensual según puesto y dedicación" (actualizado a 19/03/2025) | importe MENSUAL tal cual (no se anualiza); solo puestos 2102/2104/2106/2108 (tenientes de alcalde, delegados de área, delegación especial, portavoces); eventuales, directivos y alcaldesa fuera. La fuente rotula todos los tenientes como "teniente alcaldesa" |
+| Móstoles | mostoles.es > Corporación municipal > Remuneraciones 2023-2027 (acuerdo plenario 2/242 de 8/01/2026), dos tablas HTML | importe por persona; la tabla no dice el periodo, no se llama "anual". Alcalde excluido |
+| Almería | almeriaciudad.es > Transparencia > Retribuciones de los cargos electos > PDF "Retribuciones y régimen de dedicación miembros Corporación 2026" | retribuciones íntegras ANUALES + régimen (exclusiva / parcial %). Certificado SSL del servidor con cadena incompleta: descarga sin verificar certificado (solo lectura de un documento público). Alcaldesa excluida |
+
+**Saltados y por qué (comprobado en crudo)**
+- **León**: PDF oficial "Retribuciones concejales 2024" con cargo e importe pero solo **iniciales** (M.A.C., J.A.S...), no el nombre → no cumple "nombre".
+- **Getafe**: cuadros por cargo (número de puestos y retribución anual) sin nombres; las nóminas mensuales son documentos aparte.
+- **Oviedo**: el xlsx nominal es de la corporación 2019-2023 (estimación); para el mandato actual solo hay resoluciones de dedicación por grupo, sin tabla de importes.
+- **Burgos**: PDF mensual/anual por corporativo (dedicación/asistencias) sin cargo (la alcaldesa es un corporativo más); habría que inferir el cargo → saltado.
+- **Leganés**: un PDF por persona con cargo y cuantía, **sin nombre dentro del PDF** (solo en la página que lo enlaza); en la carpeta 109054 los enlaces de declaraciones llevan el nombre de otra persona distinta al cargo del PDF → asociación no fiable.
+- **A Coruña**: solo el acuerdo plenario (certificado) por cargo, sin nombres.
+- **Toledo**: xlsx "salarios y dietas corporación 2025" por tipo de puesto, sin nombres.
+- **Santander**: la página "A.2.4 Retribuciones percibidas anualmente" no devuelve contenido consultable.
+- **Las Palmas de G.C.**: el portal de transparencia carga la tabla de miembros electos con un visor que no se lee sin navegador.
+- **Fuenlabrada, Alcobendas, Rivas-Vaciamadrid, La Rinconada, Osuna** (comprobados antes del lote): sin tabla nombre + importe utilizable (escala BOCM/BOP o acuerdos plenarios por cargo; Alcobendas, open data 403; Rivas solo nombres).
+- Sin verificar a fondo (solo búsqueda, no se afirma nada en la web): Gijón, Salamanca, Alcorcón, Marbella, Dos Hermanas, Guadalajara, Badajoz, Albacete, Pamplona.
+
+Avisos públicos añadidos (`_SUELDOS_CONCEJALES_SIN_TABLA`): León, Getafe, Oviedo, Burgos, Leganés, A Coruña, Toledo, Santander, Las Palmas, Fuenlabrada, Alcobendas, Rivas. Notas públicas para los 4 municipios nuevos.

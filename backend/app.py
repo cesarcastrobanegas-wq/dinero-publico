@@ -4402,6 +4402,13 @@ _NOTAS_SUELDOS_CONCEJALES = {
     "cartagena": "Solo concejales con jornada completa o porcentaje; quienes perciben asistencias a plenos no aparecen. El PDF trae algún rótulo con errores de escritura que se respeta.",
     "logrono": "Solo dedicaciones exclusiva y parcial; las indemnizaciones por asistencia no aparecen.",
     "molina de segura": "Importes tal como los publica el Ayuntamiento en su portal (retribución bruta anual y dedicación).",
+    "castellon de la plana": "Importe = total anual acumulado bruto (fila «Salario») de 2024; el cargo aparece solo como Concejal/a con su grupo y % de dedicación. "
+                             "Una persona con meses a cero (año parcial) no aparece. El documento es del ejercicio 2024.",
+    "vitoria-gasteiz": "Importes MENSUALES (salario mensual según puesto y dedicación, documento actualizado en marzo de 2025); no se han pasado a anual. "
+                       "La fuente rotula todos los puestos de teniente de alcalde como «teniente alcaldesa».",
+    "mostoles": "La tabla oficial (acuerdo plenario de 8 de enero de 2026) da un importe por persona sin indicar el periodo; se muestra tal cual.",
+    "almeria": "Importes íntegros anuales de 2026 según el régimen de dedicación aprobado; algunas personas tienen dedicación desde una fecha de 2025 (se indica). "
+               "Los cargos se muestran con la grafía de la fuente.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
@@ -4419,6 +4426,18 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "barcelona": "Su portal de transparencia declara publicar los sueldos de cargos electos con nombre, pero al comprobarlo (dos veces) sus datos no se devolvían (error de su API); pendiente de reintentar.",
     "reus": "El Ayuntamiento publica las remuneraciones 2026 por cargo, sin nombres.",
     "alcala de henares": "El Ayuntamiento publica las cuantías por categoría y el reparto de dedicaciones por grupo, sin importe por persona.",
+    "leon": "El Ayuntamiento publica las retribuciones de 2024 con las iniciales de cada concejal, no el nombre.",
+    "getafe": "El Ayuntamiento publica el importe anual por cargo (número de puestos y retribución), sin nombres; las nóminas mensuales van en documentos aparte.",
+    "oviedo": "La tabla nominal que publica el Ayuntamiento es del mandato 2019-2023; para el actual solo hay resoluciones de dedicación por grupo, sin tabla de importes por persona.",
+    "burgos": "El Ayuntamiento publica cada mes una tabla por corporativo con dedicación o asistencias, sin indicar el cargo (la alcaldesa figura como un corporativo más).",
+    "leganes": "El Ayuntamiento publica un PDF por persona con cargo y cuantía, pero sin el nombre dentro del documento (solo en la página que lo enlaza) y con enlaces cruzados entre personas.",
+    "a coruna": "El Ayuntamiento publica el acuerdo plenario del régimen de retribuciones por cargo, sin nombres ni importes por persona.",
+    "toledo": "El Ayuntamiento publica la asignación de 2025 por tipo de puesto (alcaldesa, concejal con dedicación exclusiva, dietas), sin nombres.",
+    "santander": "La página de retribuciones percibidas anualmente de su portal de transparencia no muestra contenido consultable.",
+    "las palmas de gran canaria": "Su portal de transparencia carga las retribuciones de los miembros electos con un visor que no hemos podido leer de forma fiable.",
+    "fuenlabrada": "El Ayuntamiento publica la escala del BOCM y el régimen de dedicaciones en documentos distintos, sin una tabla de nombre e importe.",
+    "alcobendas": "El portal de datos abiertos del Ayuntamiento no permite consultar sus retribuciones desde nuestros sistemas.",
+    "rivas-vaciamadrid": "El Ayuntamiento publica los nombres de la corporación sin el importe por persona.",
 }
 
 
