@@ -70,20 +70,35 @@ por un mecanismo distinto (misma API que los formales, no un registro dedicado).
 - `_cargar_contratos_menores_euskadi()` en `app.py`: carga el fichero generado a `contratos_menors_locales`
   al arrancar (mismo patrón que el cargador manual de Murcia). Nota pública añadida en la ficha
   (`_NOTAS_FUENTE_CM["euskadi"]`).
-- **Estado al escribir esto: LA DESCARGA SIGUE CORRIENDO EN SEGUNDO PLANO** (unos 3.700 contratos
-  procesados en ~85 de 251 municipios, con parones de varios minutos en las ciudades grandes: Eibar,
-  por ejemplo, tiene 24.126 contratos menores en total y el tope de seguridad del generador
-  [200 páginas = 10.000 contratos] se quedó corto — solo se guardaron sus primeros 10.000).
-  **Falta**: terminar la descarga completa, probarla contra una copia real de producción (mismo patrón
-  que el backfill de Galicia) y hacer commit+push del fichero `.json.gz` + el loader. El código del
-  loader ya está en `app.py` pero el fichero de datos (`contratos_menores_euskadi.json.gz`) **todavía
-  NO se ha subido** — sin ese fichero el loader no hace nada (es un no-op si el fichero no existe), así
-  que no hay ningún riesgo de que algo a medias llegue a producción.
-- **Anomalía para revisar con calma**: Eibar (24.126 contratos menores en ~5 años, ~13 al día todos los
-  días) es un volumen muy alto para una ciudad de ~27.000 habitantes. Puede ser real (una política de
-  compra muy fragmentada) o un artefacto de cómo cuenta la propia API vasca — vale la pena mirarlo con
-  detalle antes de darlo por bueno sin más, y quizás ampliar el tope de páginas para completar su
-  cobertura real.
+- **Descarga completa terminada**: 155.708 contratos menores en los 251 municipios (113 sin ninguno).
+  Volumen real por ciudad grande: Irun 31.969, Errenteria 21.085, Hernani 24.869, Tolosa 15.926, Eibar
+  24.126, Elgoibar 10.537, Getxo 12.623 — órdenes de magnitud altísimos para su población (Irun, ~62.000
+  habitantes, tendría ~17 contratos menores AL DÍA todos los días durante 5 años). Puede ser real (una
+  política de compra muy fragmentada/granular) o reflejar cómo la propia API vasca cuenta/duplica
+  entradas — queda anotado para revisar con calma, no se ha podido confirmar ni descartar esta noche.
+- **Tope de páginas insuficiente en la primera pasada**: el generador tenía un tope de seguridad de
+  200 páginas (10.000 contratos) por municipio, pensado para un caso normal — 7 ciudades lo agotaron sin
+  llegar al final de su historial real (Eibar, Elgoibar, Errenteria, Getxo, Hernani, Irun, Tolosa,
+  confirmado comparando páginas totales reales — hasta 640 páginas en Irun). **Corregido en el propio
+  script** (tope subido a 700 páginas/35.000 contratos, con un corte por TIEMPO de 15 min/municipio en
+  vez de por páginas como red de seguridad, y guardado incremental cada 10 municipios para no perder
+  progreso si hay que relanzarlo) — el barrido completo ya usó el código viejo (arrancó antes de la
+  mejora), así que se ha relanzado un segundo pase **solo para esas 7 ciudades** con el tope nuevo;
+  sigue en marcha al escribir esto (unas 2-3 horas estimadas, son las 7 ciudades más grandes).
+- **Hallazgo de calidad de datos importante, ya mitigado**: 52 de los 155.708 contratos tienen un
+  importe disparatado para un contrato menor (hasta 8.447.000 € por "retirada de columnas de antiguo
+  alumbrado" en Loiu, 4.839.353 € por instalar césped artificial en una pista de tenis en Deba...) —
+  mismo tipo de error de origen que el caso Prismaglobal/Vitoria-Gasteiz de noches anteriores, pero aquí
+  no hay URL por contrato para verificarlo caso a caso (la fuente no la publica para menores) y el
+  volumen hace inviable curar cada uno a mano como sí se hizo con Prismaglobal/Cartagena/Lugo. En vez de
+  ocultarlos o inventar una cifra corregida, `app.py` ahora muestra un aviso automático (no una lista
+  cerrada) en cualquier fila de fuente Euskadi por encima de 100.000 € (`EUSKADI_MENOR_IMPORTE_SOSPECHOSO`),
+  explicando que puede ser un error de origen sin forma de comprobarlo. Portugalete concentra más de una
+  decena de los 52 casos — posible problema específico de esa fuente/municipio, sin confirmar.
+- **Falta**: terminar el segundo pase de las 7 ciudades grandes, probar el conjunto final contra una
+  copia real de producción (mismo patrón que el backfill de Galicia) y hacer commit+push del fichero
+  `.json.gz` + los cambios de `app.py` (loader + aviso automático). Nada de esto ha llegado todavía a
+  `main` — el fichero de datos y el aviso están solo en local al escribir esto.
 
 ---
 
