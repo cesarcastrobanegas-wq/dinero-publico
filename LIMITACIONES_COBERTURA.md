@@ -166,6 +166,44 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
 - **Plataformas descartadas**: `*.sedelectronica.es/employees` exige Cl@ve (Marbella, Orihuela); seu-e.cat solo rellena el importe en
   la ficha de Girona (43 municipios catalanes sondeados).
 
+## Alcance de 5 años en contratos formales de PSCP/Euskadi/Navarra (2026-09-27)
+
+- **Qué era**: PSCP (Cataluña), Euskadi y Navarra consultan en vivo el histórico COMPLETO de cada municipio (no ZIPs
+  mensuales como PLACE) y hasta ahora se guardaba tal cual, sin fecha ni corte de ningún tipo — la propia web lo
+  admitía ("todavía no registramos la fecha de adjudicación"). Medido en la copia de producción del 25/09: **65.761
+  contratos PSCP, 17.579 Euskadi y 7.643 Navarra ya guardados**, de fechas desconocidas (muchos, probablemente, de
+  antes de 2021).
+- **Qué cambia**: cada fuente SÍ trae una fecha real, no había que inventar nada:
+  - **PSCP**: campo `data_adjudicacio_contracte` (verificado contra varios ajuntaments reales de Girona: fechas
+    plausibles 2019-2023, no un valor relleno). Filtro aplicado en el propio `$where` de la consulta (menos filas
+    que traer) y también en el código.
+  - **Euskadi**: campo `awardDate` de la API (fecha real de adjudicación; 100 % de las filas de contrato menor
+    muestreadas lo traían). Filtro en el código, tras traer cada página.
+  - **Navarra**: el buscador legacy NO tiene un campo de fecha de adjudicación real en la ficha de detalle (comprobado
+    en varias fichas reales) — solo la fecha de PUBLICACIÓN del anuncio en el listado, que se usa como filtro (muy
+    cercana a la real, normalmente el mismo mes). El listado de Navarra llega hasta 2013 sin filtro (medido en
+    Tudela, 600 filas): sin este cambio se habría seguido guardando todo.
+  - Los tres conectores ahora aplican el mismo corte que los menores (`MENORES_DESDE_FECHA`, septiembre de 2021).
+- **Cómo se limpia lo ya guardado**: no hay forma de saber la fecha de un contrato PSCP/Euskadi/Navarra ya guardado
+  ANTES de este cambio (nunca se capturó) sin volver a consultar la fuente. La limpieza es, por tanto,
+  **progresiva y automática**: cada vez que un municipio de estas tres fuentes se refresca con normalidad (visita de
+  un usuario a una ficha caducada, o un refresco por lotes), `_job_run` sustituye TODA la fuente de ese municipio por
+  el resultado fresco (ya filtrado a 5 años) — nunca solo se fusiona, como sí hace PLACE — y **archiva** (no borra)
+  las filas que quedan fuera de la ventana en `contratos_formales_archivo` (mismo patrón que `contratos_menors_archivo`).
+  No se ha lanzado esta noche una pasada forzada sobre los ~900 municipios de estas tres fuentes (habría significado
+  horas de tráfico en vivo contra PSCP/Euskadi/Navarra sin poder verificarlo against producción real antes de cada
+  lote, y sin acceso de escritura directa a producción fuera de este mecanismo de refresco normal) — queda como
+  trabajo pendiente para quien decida priorizarlo (un script tipo `generar_backfill_galicia_place.py` que recorra
+  todos los municipios conectados podría forzarlo de una vez).
+- **Salvaguarda de seguridad añadida** (probada en producción real, ver abajo): el reemplazo de una fuente SOLO
+  ocurre si (a) la búsqueda terminó sin errores HTTP/de red y (b) la búsqueda fresca trajo al menos 1 contrato — así
+  un mapeo roto o un fallo silencioso de la fuente nunca puede vaciar todo el histórico de un municipio por error
+  (se detectó y corrigió este riesgo durante las pruebas de esta misma noche, con un caso real reproducido).
+- **Verificado esta noche** contra una copia real de la cache.db de producción (25/09): Albons (PSCP) 12→9, Amurrio
+  (Euskadi) 118→59, Tudela (Navarra) 447→289 contratos; en los tres casos, las filas restantes tienen fecha ≥
+  2021-09-01, las descartadas quedaron archivadas, y el resto de fuentes/menores del municipio quedaron intactos.
+  Render de ficha (Girona, Tudela) sin errores tras el refresco.
+
 ## Contratos formales de Galicia en PLACE (backfill del patrón "Concello de X", 2026-09-25/27)
 
 - **Qué era**: el patrón antiguo de `_regex_anclado` no reconocía órganos "Concello de X"/"Concello da/do X", así que los contratos

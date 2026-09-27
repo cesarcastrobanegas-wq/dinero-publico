@@ -2032,6 +2032,19 @@ def _db_init():
             data      TEXT NOT NULL,
             ts        REAL NOT NULL
         )""")
+        # Contratos formales (PSCP/Euskadi/Navarra) que salen de la ventana de 5 años (MENORES_DESDE_FECHA) al
+        # reemplazarse por un refresco fresco de esa misma fuente (ver _job_run, alcance 2026-09-27): se
+        # ARCHIVAN aquí, igual que los contratos menores fuera de ventana (contratos_menors_archivo) -- nunca se
+        # borran de verdad. `data` guarda el contrato completo tal como estaba, como JSON.
+        _db.execute("""CREATE TABLE IF NOT EXISTS contratos_formales_archivo (
+            id           TEXT PRIMARY KEY,
+            municipio    TEXT NOT NULL,
+            provincia    TEXT,
+            fuente       TEXT,
+            data         TEXT NOT NULL,
+            ts           REAL,
+            archivado_ts REAL
+        )""")
         _db.execute("""CREATE TABLE IF NOT EXISTS fondos_ue (
             id           TEXT PRIMARY KEY,
             fuente       TEXT NOT NULL,
@@ -6922,6 +6935,7 @@ def _euskadi_item_a_contrato(item, municipio):
         "licitacion_id": item.get("id", ""),
         "url":           item.get("mainEntityOfPage", ""),
         "fuente":        "EUSKADI",
+        "fecha":         item.get("awardDate") or "",
         "directivo":     "",
         "cargo":         "",
     }
@@ -6936,11 +6950,19 @@ def buscar_en_euskadi(municipio, job_id=None):
     HISTÓRICO COMPLETO -- producción necesita los datos reales, no una
     muestra. Identifica al ayuntamiento por su ID numérico propio de
     Euskadi (MUNICIPIOS_PAIS_VASCO_EUSKADI_ID), sin ningún riesgo de
-    colisión de nombre (a diferencia de PLACE, que es texto libre)."""
+    colisión de nombre (a diferencia de PLACE, que es texto libre).
+
+    Alcance de 5 años (2026-09-27, mismo corte que contratos menores, MENORES_DESDE_FECHA): el propio item de la
+    API trae `awardDate` (fecha real de adjudicación, verificado contra la fuente cruda), así que se descartan
+    aquí los contratos anteriores al corte -- antes no se filtraba nada (ver LIMITACIONES_COBERTURA.md).
+    Devuelve (contratos, completo): completo=False si algún HTTP/error cortó la paginación antes de agotar todas
+    las páginas -- _job_run solo hace reemplazo "duro" de esta fuente cuando completo=True, para no arriesgarse a
+    tratar un fallo de red a mitad de camino como si el municipio se hubiera quedado sin esos contratos."""
     authority_id = MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.get(municipio)
     if not authority_id:
-        return []
+        return [], True
     contratos = []
+    completo = True
     pagina = 1
     while True:
         try:
@@ -6957,12 +6979,17 @@ def buscar_en_euskadi(municipio, job_id=None):
             )
             if r.status_code != 200:
                 _log(job_id, f"  Euskadi {municipio}: HTTP {r.status_code} en página {pagina}")
+                completo = False
                 break
             d = r.json()
         except Exception as e:
             _log(job_id, f"  Error consultando Euskadi para {municipio}: {e}")
+            completo = False
             break
         for item in d.get("items", []):
+            fecha = item.get("awardDate") or ""
+            if fecha and fecha < MENORES_DESDE_FECHA:
+                continue
             contratos.append(_euskadi_item_a_contrato(item, municipio))
         total_paginas = d.get("totalPages", 1)
         if pagina >= total_paginas or pagina >= 100:   # tope de seguridad, no un límite normal
@@ -6970,7 +6997,7 @@ def buscar_en_euskadi(municipio, job_id=None):
         pagina += 1
         time.sleep(0.2)   # mismo ritmo respetuoso que el piloto -- API pública sin rate-limit documentado
     _log(job_id, f"  Euskadi {municipio}: {len(contratos)} contratos")
-    return contratos
+    return contratos, completo
 
 
 def _piloto_medir_pais_vasco(job_id=None, max_paginas_por_municipio=5):
@@ -7174,6 +7201,18 @@ def _navarra_parse_detail(soup):
     return {"datos_contrato": datos, "adjudicatarios": adjudicatarios}
 
 
+def _navarra_fecha_iso(fecha_dmy):
+    """'22-09-2026' (formato del listado de Navarra) -> '2026-09-22'. La ficha de detalle NO trae una fecha de
+    adjudicación real distinta (comprobado en varias fichas reales, 2026-09-27): solo existe esta, la de
+    publicación del anuncio en el listado -- se usa como filtro del corte de 5 años, con esa salvedad anotada en
+    LIMITACIONES_COBERTURA.md (la adjudicación real es igual o ligeramente anterior a su publicación)."""
+    try:
+        d, m, y = (fecha_dmy or "").split("-")
+        return f"{y}-{m}-{d}"
+    except ValueError:
+        return ""
+
+
 def _navarra_importe_a_float(s):
     if not s:
         return 0.0
@@ -7210,6 +7249,7 @@ def _navarra_row_a_contrato(row, detalle, municipio):
         "licitacion_id": row.get("detalle_cod") or "",
         "url":           urljoin(NAVARRA_SEARCH_URL, row["detalle_href"]) if row.get("detalle_href") else "",
         "fuente":        "NAVARRA",
+        "fecha":         _navarra_fecha_iso(row.get("fecha_publicado")),
         "directivo":     "",
         "cargo":         "",
     }
@@ -7225,11 +7265,18 @@ def buscar_en_navarra(municipio, job_id=None):
     fila del listado se compara contra el valor EXACTO ya verificado en
     MUNICIPIOS_NAVARRA_CONVOCANTE (normalizado, no por subcadena) antes de
     aceptarla, para no colar contratos de una mancomunidad, gerencia o
-    empresa municipal relacionada pero distinta del propio ayuntamiento."""
+    empresa municipal relacionada pero distinta del propio ayuntamiento.
+
+    Alcance de 5 años (2026-09-27, mismo corte que contratos menores, MENORES_DESDE_FECHA): el listado llega
+    hasta 2013 sin filtro (medido en producción, Tudela), y el buscador legacy no admite un filtro de fecha por
+    parámetro -- se descartan aquí las filas anteriores al corte ANTES de pedir su ficha de detalle (ahorra una
+    petición HTTP por contrato descartado). Solo hay fecha de PUBLICACIÓN del anuncio en el listado, no de
+    adjudicación real (ver _navarra_fecha_iso). Devuelve (contratos, completo) -- ver buscar_en_euskadi."""
     convocante_esperado = MUNICIPIOS_NAVARRA_CONVOCANTE.get(municipio)
     if not convocante_esperado:
-        return []
+        return [], True
     conv_norm = normalizar(convocante_esperado)
+    completo = True
 
     sess = requests.Session()
     sess.headers.update(HEADERS)
@@ -7248,21 +7295,29 @@ def buscar_en_navarra(municipio, job_id=None):
         terminos = [base]
 
     rows_aceptadas = []
+    descartadas_fecha = 0
     for termino in terminos:
         try:
             soup = _navarra_search(sess, termino)
         except Exception as e:
             _log(job_id, f"  Navarra {municipio}: error de búsqueda ({e})")
+            completo = False
             continue
         pagina = 1
         while True:
             for r in _navarra_parse_results(soup):
-                if normalizar(r["convocante"] or "") == conv_norm:
-                    rows_aceptadas.append(r)
+                if normalizar(r["convocante"] or "") != conv_norm:
+                    continue
+                fecha_iso = _navarra_fecha_iso(r.get("fecha_publicado"))
+                if fecha_iso and fecha_iso < MENORES_DESDE_FECHA:
+                    descartadas_fecha += 1
+                    continue
+                rows_aceptadas.append(r)
             try:
                 nxt = _navarra_next_page(sess, soup)
             except Exception as e:
                 _log(job_id, f"  Navarra {municipio}: error de paginación ({e})")
+                completo = False
                 nxt = None
             if nxt is None:
                 break
@@ -7274,9 +7329,12 @@ def buscar_en_navarra(municipio, job_id=None):
         if rows_aceptadas:
             break   # ya encontramos con este término, no hace falta probar el otro
 
+    if descartadas_fecha:
+        _log(job_id, f"  Navarra {municipio}: {descartadas_fecha} filas anteriores a {MENORES_DESDE_FECHA} descartadas")
+
     if not rows_aceptadas:
         _log(job_id, f"  Navarra {municipio}: 0 contratos")
-        return []
+        return [], completo
 
     contratos = []
     detail_cache = {}
@@ -7296,7 +7354,7 @@ def buscar_en_navarra(municipio, job_id=None):
         contratos.append(_navarra_row_a_contrato(row, detail_cache[href], municipio))
 
     _log(job_id, f"  Navarra {municipio}: {len(contratos)} contratos")
-    return _dedup_contratos_por_url(contratos)
+    return _dedup_contratos_por_url(contratos), completo
 
 
 def buscar_en_feed_vivo(municipio, anclar=False):
@@ -7716,6 +7774,7 @@ def _fila_pscp_a_contrato(fila):
         "licitacion_id": fila.get("codi_expedient", ""),
         "url":           url,
         "fuente":        "PSCP",
+        "fecha":         (fila.get("data_adjudicacio_contracte") or "")[:10],
         "directivo":     "",
         "cargo":         "",
     }
@@ -7742,6 +7801,28 @@ def _dedup_contratos_por_url(contratos):
               and c.get("empresa") not in ("No localizada", "")):
             vistos[key] = c
     return [vistos[k] for k in orden]
+
+
+def _archivar_contratos_formales(municipio, provincia, filas):
+    """Archiva (NUNCA borra) filas de contratos_formales que _job_run descarta de un municipio al sustituir una
+    fuente (PSCP/Euskadi/Navarra) por su refresco en vivo -- ver esa función. Mismo patrón que
+    contratos_menors_archivo: upsert por id, guardando el contrato completo como JSON."""
+    if not filas:
+        return
+    ahora = time.time()
+    with _db_lock:
+        for c in filas:
+            clave = c.get("url") or c.get("titulo", "")[:80]
+            if not clave:
+                continue
+            _db.execute(
+                """INSERT INTO contratos_formales_archivo (id, municipio, provincia, fuente, data, ts, archivado_ts)
+                   VALUES (?,?,?,?,?,?,?)
+                   ON CONFLICT(id) DO UPDATE SET data=excluded.data, archivado_ts=excluded.archivado_ts""",
+                (f"{municipio}::{c.get('fuente','')}::{clave}", municipio, provincia, c.get("fuente", ""),
+                 json.dumps(c, ensure_ascii=False), c.get("ts"), ahora),
+            )
+        _db.commit()
 
 
 def _fusionar_historico_contratos(existentes, nuevos):
@@ -7986,29 +8067,39 @@ def buscar_en_pscp(municipio, provincia="girona", job_id=None):
     dado en la Plataforma de Serveis de Contractació Pública de Catalunya
     (vía el espejo de dades obertes, dataset ybgg-dgi6). Generalizado
     2026-08-06 para cualquier provincia de MUNICIPIOS_INE_POR_PROVINCIA
-    (antes hardcodeado a Girona)."""
+    (antes hardcodeado a Girona).
+
+    Alcance de 5 años (2026-09-27, mismo corte que contratos menores, MENORES_DESDE_FECHA): el dataset trae
+    `data_adjudicacio_contracte` (fecha real de adjudicación, verificada contra la fuente cruda en varios
+    ajuntaments reales -- no es un campo relleno con una fecha placeholder). Se filtra en el propio `$where`
+    (menos filas que traer/paginar) y también en el código, por si algún expediente llega sin ese campo.
+    Devuelve (contratos, completo) -- ver buscar_en_euskadi para el porqué de `completo`."""
     ine10 = MUNICIPIOS_INE_POR_PROVINCIA.get(provincia, {}).get(municipio, "")
     if not ine10:
         _log(job_id, f"  PSCP: municipio sin codi_ine10 mapeado ({municipio})")
-        return []
+        return [], True
 
     _log(job_id, "Consultando PSCP (Plataforma de contractació pública de Catalunya)…")
     filas = []
+    completo = True
     limit, offset = 1000, 0
     while True:
         try:
             r = session.get(PSCP_URL, params={
-                "$where": f"codi_ine10='{ine10}' AND fase_publicacio in ({PSCP_FASES})",
+                "$where": (f"codi_ine10='{ine10}' AND fase_publicacio in ({PSCP_FASES}) AND "
+                           f"data_adjudicacio_contracte >= '{MENORES_DESDE_FECHA}T00:00:00.000'"),
                 "$order": "codi_expedient",
                 "$limit": limit,
                 "$offset": offset,
             }, timeout=HTTP_TIMEOUT * 4)  # SODA puede tardar más que PLACE/BORM
             if r.status_code != 200:
                 _log(job_id, f"  PSCP: HTTP {r.status_code}")
+                completo = False
                 break
             pagina = r.json()
         except Exception as e:
             _log(job_id, f"  PSCP no disponible ({type(e).__name__})")
+            completo = False
             break
 
         if not pagina:
@@ -8019,9 +8110,10 @@ def buscar_en_pscp(municipio, provincia="girona", job_id=None):
         offset += limit
 
     filas = _dedup_pscp_fases(filas)
-    contratos = [_fila_pscp_a_contrato(f) for f in filas]
+    contratos = [_fila_pscp_a_contrato(f) for f in filas
+                 if not (f.get("data_adjudicacio_contracte") or "") or f["data_adjudicacio_contracte"][:10] >= MENORES_DESDE_FECHA]
     _log(job_id, f"  PSCP: {len(contratos)} contratos encontrados")
-    return contratos
+    return contratos, completo
 
 
 # ─── RPC — Registre Públic de Contractes (contractes menors, Girona) ────────
@@ -10226,12 +10318,21 @@ def _job_run(job_id, municipio, provincia="murcia"):
     try:
         _log(job_id, f"Iniciando búsqueda de contratos para {municipio}…")
 
+        # fuente_completa: nombre de la fuente ("PSCP"/"EUSKADI"/"NAVARRA") solo si esta búsqueda se completó sin
+        # errores (ver el "completo" que devuelve cada buscar_en_*) -- más abajo autoriza el reemplazo duro de
+        # esa fuente sobre lo ya guardado (alcance de 5 años, 2026-09-27); None dice "no toques nada de lo
+        # guardado" (comportamiento de siempre, fusión aditiva) para PLACE/BORM y para un refresco que falló a
+        # medias, donde SIEMPRE es más seguro conservar lo que ya había (ver _fusionar_historico_contratos).
+        fuente_completa = None
         if provincia in PROVINCIAS_CATALUNYA:
-            contratos = buscar_en_pscp(municipio, provincia, job_id)
+            contratos, ok = buscar_en_pscp(municipio, provincia, job_id)
+            fuente_completa = "PSCP" if ok else None
         elif provincia in PROVINCIAS_PAIS_VASCO:
-            contratos = buscar_en_euskadi(municipio, job_id)
+            contratos, ok = buscar_en_euskadi(municipio, job_id)
+            fuente_completa = "EUSKADI" if ok else None
         elif provincia in PROVINCIAS_NAVARRA:
-            contratos = buscar_en_navarra(municipio, job_id)
+            contratos, ok = buscar_en_navarra(municipio, job_id)
+            fuente_completa = "NAVARRA" if ok else None
         else:
             contratos = []
             # Ver buscar_en_zip para el porqué: Comunitat Valenciana/Andalucía
@@ -10311,6 +10412,26 @@ def _job_run(job_id, municipio, provincia="murcia"):
         # INFORME_NOCHE.md 2026-07-22 que borró histórico real de Archena.
         existentes = _db_obtener_contratos_municipio(municipio)
         if existentes:
+            if fuente_completa and contratos:
+                # PSCP/Euskadi/Navarra consultan en vivo su histórico completo cada vez (no ZIPs mensuales
+                # sueltos como PLACE) y esta búsqueda concreta terminó SIN errores -- lo que ya no aparece aquí
+                # es, con esa garantía, o bien un contrato ahora fuera del alcance de 5 años (ver
+                # MENORES_DESDE_FECHA en buscar_en_pscp/euskadi/navarra) o corregido/retirado en origen, nunca un
+                # hueco de red. Se sustituyen solo las filas de ESA fuente concreta -- las de cualquier otra
+                # (residuo histórico, o mezcla real) se conservan igual que siempre (alcance 2026-09-27).
+                #
+                # `and contratos`: red de seguridad extra (incidente detectado en pruebas, 2026-09-27) -- un
+                # municipio mal mapeado (INE10/authority-id/convocante ausente) o cualquier otro fallo silencioso
+                # que devuelva 0 contratos SIN lanzar una excepción pasaría igualmente como "completo=True". Sin
+                # esta condición, ese fallo silencioso borraría TODO el histórico ya guardado de esa fuente. Una
+                # búsqueda que de verdad se quedó sin contratos en ventana para un municipio con historial previo
+                # es prácticamente imposible (implicaría cero contratos en 5 años); el riesgo de un borrado
+                # accidental es muchísimo mayor que el de conservar unas filas ya fuera de ventana un ciclo más.
+                claves_nuevas = {c.get("url") or c.get("titulo", "")[:80] for c in contratos}
+                descartados = [c for c in existentes if c.get("fuente") == fuente_completa
+                               and (c.get("url") or c.get("titulo", "")[:80]) not in claves_nuevas]
+                _archivar_contratos_formales(municipio, provincia, descartados)
+                existentes = [c for c in existentes if c.get("fuente") != fuente_completa]
             antes = len(contratos)
             contratos = _fusionar_historico_contratos(existentes, contratos)
             _log(job_id, f"Fusionado con histórico ya guardado: {antes} de este refresco + "
@@ -15555,10 +15676,14 @@ def render_caso_contratos_menores_html():
   significativos solo desde 2024; en Lorca empieza en 2024 (estamos revisando si su portal
   permite ir más atrás); en Fuente Álamo llega a 2021 pero con una parte de sus filas
   sin fecha registrada en origen; en Cartagena, 2026 viene de su portal propio y 2022-2025 de PLACE, como se explica arriba.
-  Para los contratos formales (PLACE/PSCP/Euskadi/Navarra) todavía no registramos la
-  fecha de adjudicación de cada contrato — lo mostramos todo lo que encontramos, pero no
-  podemos decir con precisión desde qué año, municipio a municipio; estamos trabajando
-  en añadir ese dato. En ningún caso aplicamos un umbral de importe mínimo, y los
+  Para los contratos formales de PLACE todavía no registramos la fecha de adjudicación de cada
+  contrato — lo mostramos todo lo que encontramos, sin poder decir con precisión desde qué año,
+  municipio a municipio. En PSCP (Cataluña), Euskadi y Navarra sí aplicamos el mismo alcance de
+  cinco años que en menores (desde septiembre de 2021), con la fecha real de adjudicación en PSCP
+  y Euskadi; en Navarra, a falta de esa fecha en la fuente, usamos la de publicación del anuncio
+  (muy cercana, casi siempre el mismo mes). Los contratos de estas tres fuentes que quedan fuera de
+  esa ventana en un municipio ya conectado no se borran: se archivan igual que los menores. En
+  ningún caso aplicamos un umbral de importe mínimo, y los
   contratos menores se muestran siempre en una sección propia, separada de las
   adjudicaciones formales — para que quede claro qué es cada cosa.</p>
 
