@@ -10877,6 +10877,28 @@ def _cargar_contratos_menores_mostoles():
               f"(Móstoles) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_LEGANES_FILE = os.path.join(BASE_DIR, "contratos_menores_leganes.json.gz")
+
+
+def _cargar_contratos_menores_leganes():
+    """Carga contratos_menores_leganes.json.gz (generado por actualizar_contratos_menores_leganes.py --
+    informes mensuales/trimestrales oficiales en XLSX del Ayuntamiento de Leganés) y lo vuelca a la tabla
+    compartida contratos_menors_locales. Mismo patrón que el resto de fuentes locales."""
+    ruta = CONTRATOS_MENORES_LEGANES_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_leganes: {len(registros)} contratos menores "
+              f"(Leganés) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10900,6 +10922,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_alicante()
     _cargar_contratos_menores_getafe()
     _cargar_contratos_menores_mostoles()
+    _cargar_contratos_menores_leganes()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -13979,6 +14002,7 @@ _FUENTE_CM_LABEL = {
     "alicante":        "Alicante",
     "getafe":          "Getafe",
     "mostoles":        "Móstoles",
+    "leganes":         "Leganés",
 }
 
 
@@ -13989,7 +14013,7 @@ _FUENTE_CM_LABEL = {
 # solo en LIMITACIONES_COBERTURA.md, para que nadie sume totales de bases
 # distintas sin saberlo.
 _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
-                       "sax-governalia", "vilamarxant-governalia", "valencia_capital", "alicante"}
+                       "sax-governalia", "vilamarxant-governalia", "valencia_capital", "alicante", "leganes"}
 
 
 # Avisos públicos por fuente, visibles en la sección de contratos menores de la
@@ -14063,6 +14087,11 @@ _NOTAS_FUENTE_CM = {
         "transparencia). Importe con IVA, NIF del adjudicatario. Sin expediente en columna propia (va embebido "
         "en el texto libre del objeto); falta un mes (noviembre de 2024, formato de tabla no reconocible en ese "
         "PDF concreto -- omitido, no inventado)."
+    ),
+    "leganes": (
+        "Informes mensuales/trimestrales oficiales del Ayuntamiento de Leganés, publicados en XLSX (mismo "
+        "formato que Alicante). Importe SIN IVA, NIF del adjudicatario. Puede faltar el mes más reciente si su "
+        "fichero todavía no está disponible para descarga en el momento de actualizar (se reintenta solo)."
     ),
 }
 

@@ -246,7 +246,24 @@ investigación de sueldos de concejales:
   fuentes conectadas hasta ahora. Viable con un parser de texto por líneas y expresiones regulares, pero de
   bastante más esfuerzo que las fuentes con tabla real -- queda documentado para cuando se decida dedicarle el
   tiempo, con los ~30 enlaces PDF (2019-2026) ya localizados en la propia página.
-- **Pendiente de revisar esta ronda**: Fuenlabrada, Alcorcón, Leganés (siguientes en la lista por población).
+- **Fuenlabrada (~192.000 hab.)**: el único visor de contratos de su portal de transparencia
+  (`transparencia.ayto-fuenlabrada.es/contratos-y-patrimonio/visor-contratos/`) está **protegido por
+  contraseña** -- no es una fuente pública accesible, sin lead viable esta ronda. El subdominio
+  `gobiernoabierto.ayto-fuenlabrada.es` (por si usara también la plataforma Gobierto, como Getafe) da un bucle
+  de redirección, no parece operativo.
+- **Alcorcón (~170.000 hab.)**: portal de datos abiertos propio (`datosabiertos.ayto-alcorcon.es`, CKAN
+  confirmado vía API) con solo 8 datasets, ninguno de contratación -- sin lead viable esta ronda.
+- **Leganés (~187.000 hab.) — CONECTADO**: mismo formato EXACTO que Alicante (NIF/Adjudicatario/Expediente/
+  Objeto/Fecha contrato "DD-MES_ES-AAAA" o fecha real de Excel/Precio sin impuestos/Precio con impuestos/
+  Duración), en XLSX -- probablemente una plantilla común. **254 registros desde 2021-09**
+  (`actualizar_contratos_menores_leganes.py`, fuente `leganes`). Los enlaces de la página índice usan IDs
+  opacos sin relación con el periodo -- el script localiza cada fichero por el TEXTO del enlace ("Menores julio
+  2026"...) y recorre la página en cada ejecución en vez de guardar URLs fijas. Dos bugs reales corregidos en
+  la primera pasada: (1) algunas celdas de fecha vienen como `datetime` real de Excel en vez de texto; (2)
+  algunas celdas de importe vienen como número real (no texto) -- aplicarles el reemplazo de punto/coma del
+  formato español las multiplicaba por 10 (2772.0 → 27720). Un solo fichero (agosto de 2026, el más reciente)
+  no se pudo descargar -- devuelve silenciosamente la portada del Ayuntamiento en vez del XLSX (posible archivo
+  aún no propagado del todo); se reintentará solo en la próxima ejecución del script, sin bloquear el resto.
 - **Lead adicional sin verificar en profundidad**: Torrejón de Ardoz (`transparencia.ayto-torrejon.es/t/contratos`)
   y Pinto (`gobiernoabierto.ayto-pinto.es/contratos-menores`) aparecen con contratos menores en CSV/Excel en sus
   propios portales -- señal de que, aunque no hay agregador regional, varios ayuntamientos medianos de Madrid sí
