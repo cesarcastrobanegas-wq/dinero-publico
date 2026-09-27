@@ -183,9 +183,21 @@ ronda porque todo lo encontrado es fuente primaria municipal):
 - **Albacete (~173.000 hab., Castilla-La Mancha)**: sin CSV/dataset localizado esta noche en su portal de
   transparencia; solo referencia genérica a la contratación. Pendiente de mirar con más detalle o contactar/
   solicitar acceso a la información (vía el trámite que el propio portal ofrece).
-- **Pendiente de revisar** (siguiente ronda, mismo criterio): León, Burgos, Salamanca (Castilla y León);
-  Castellón de la Plana, Elche (Comunitat Valenciana); Huesca, Teruel (Aragón); Toledo, Ciudad Real, Guadalajara
-  (Castilla-La Mancha); resto de municipios de la Comunidad de Madrid por población.
+- **León (Castilla y León)**: perfil de contratante consultable en vivo (`sede.aytoleon.es`, contratos menores
+  individuales con adjudicatario e importe, SIN fecha de adjudicación visible), pero sin descarga masiva --
+  mismo patrón que el buscador legacy de Navarra (viable por scraping, no por dataset).
+  Sin dataset localizado esta ronda: **Burgos**, **Castellón de la Plana** (relaciones de contratos menores por
+  decreto en PDF/ODS/XLS, no un dataset único), **Elche** (solo referencia genérica a la Plataforma de
+  Contratación del Estado, sin CSV propio). **Toledo**: publica el listado de menores mensualmente en su web de
+  transparencia (sin confirmar el formato exacto esta ronda). **Guadalajara**: solo contratos MAYORES
+  localizados, no menores.
+- **Lead nuevo para otros municipios (no capitales) de la Comunidad de Madrid**: Torrejón de Ardoz
+  (`transparencia.ayto-torrejon.es/t/contratos`) y Pinto (`gobiernoabierto.ayto-pinto.es/contratos-menores`)
+  aparecen con contratos menores en CSV/Excel en sus propios portales -- sin verificar en profundidad esta
+  ronda, pero es una señal de que, aunque no hay agregador regional, varios ayuntamientos medianos de Madrid sí
+  publican su propio dataset y merece la pena mirarlos uno a uno además de los grandes.
+- **Pendiente de revisar** (siguiente ronda, mismo criterio): Burgos, Salamanca (Castilla y León); Huesca, Teruel
+  (Aragón); Ciudad Real (Castilla-La Mancha); resto de municipios de la Comunidad de Madrid por población.
 
 ## Fondos UE
 
