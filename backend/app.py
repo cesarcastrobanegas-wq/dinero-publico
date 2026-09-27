@@ -4415,6 +4415,8 @@ _NOTAS_SUELDOS_CONCEJALES = {
               "Los importes pueden haberse actualizado desde entonces.",
     "ciudad real": "Importe = total de retribuciones anuales de 2024 (sueldo base + pagas extra, sin la cotización de la empresa) en el PDF actualizado a 30/12/2024. "
                    "La fuente escribe el nombre con los apellidos primero y sin coma, y así se muestra. Solo dedicaciones exclusiva y parcial.",
+    "salamanca": "El PDF del Ayuntamiento (ejercicio 2025) lista a todos los miembros de la Corporación, alcalde incluido, sin indicar el cargo ni la concejalía: "
+                 "solo marca con asterisco a quienes tienen dedicación exclusiva o parcial. El importe es lo percibido en el ejercicio y la fuente no detalla los conceptos.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
@@ -4454,6 +4456,8 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "segovia": "El Ayuntamiento publica el acuerdo de Pleno de 23 de diciembre de 2025 con el importe anual por tipo de cargo y dedicación, sin nombres.",
     "guadalajara": "El Ayuntamiento publica en el BOP el número de cargos con dedicación y las reglas de reparto por grupo, sin nombres ni importe por persona.",
     "pinto": "El Ayuntamiento publica la retribución anual 2026 por cargo y dedicación, con el número de cargos por partido, sin nombres.",
+    "jaen": "El PDF de retribuciones de la corporación que publica el Ayuntamiento es una imagen escaneada sin texto, y no se puede verificar contra la fuente.",
+    "pamplona/iruna": "No hemos localizado en la página de transparencia del Ayuntamiento un documento con nombre e importe de los concejales.",
 }
 
 

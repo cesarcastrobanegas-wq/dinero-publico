@@ -1121,6 +1121,39 @@ def actualizar_cartagena():
     return out
 
 
+@_fuente("salamanca")
+def actualizar_salamanca():
+    """Ayuntamiento de Salamanca > Transparencia > Transparencia activa y organización: PDF 'Retribuciones percibidas por los miembros de la Corporación
+    municipal en el ejercicio <año>' (enlace 'Retribuciones percibidas'). Una línea por persona: APELLIDOS, NOMBRE[*] importe €; '*' = dedicaciones exclusivas /
+    parciales. El PDF no da concejalía ni identifica al alcalde (figura como miembro de la Corporación): cargo = 'Miembro de la Corporación' (+ dedicación si lleva
+    '*'). Se guarda el importe percibido tal cual, sin asumir qué conceptos incluye."""
+    from bs4 import BeautifulSoup
+    from urllib.parse import urljoin
+    pagina = "https://www.aytosalamanca.es/en/transparencia/transparencia-activa-y-organizacion"
+    r = descargar(pagina, verify=False)
+    cand = []
+    for a in BeautifulSoup(r.text, "html.parser").find_all("a", href=True):
+        m = re.search(r"retribuciones-percibidas-miembros-corporacion-(\d{4})", a["href"])
+        if m:
+            cand.append((m.group(1), urljoin(r.url, a["href"])))
+    if not cand:
+        raise RuntimeError("Salamanca: no se encontró el PDF de retribuciones percibidas por los miembros de la corporación")
+    anio, url = max(cand)
+    texto = texto_pdf(descargar(url, timeout=120, verify=False).content)
+    out = []
+    for x in (re.sub(r"\s+", " ", l).strip() for l in texto.split("\n")):
+        m = re.match(r"^(?P<ap>[A-ZÁÉÍÓÚÑÜ' -]+), (?P<no>[A-ZÁÉÍÓÚÑÜ' -]+?)(?P<ast>\*)? (?P<imp>[\d.]+,\d{2}) €$", x)
+        if not m:
+            continue
+        cargo = "Miembro de la Corporación" + (" (dedicación exclusiva o parcial)" if m.group("ast") else "")
+        out.append(nuevo_registro("Salamanca", "salamanca", nombre_persona(m.group("ap"), m.group("no")), cargo, num_es(m.group("imp")),
+                                  "importe percibido en el ejercicio, tal como lo publica el Ayuntamiento (el PDF no detalla conceptos)", f"año {anio}", url,
+                                  "Portal de transparencia del Ayuntamiento de Salamanca", texto))
+    if len(out) < 20:
+        raise RuntimeError(f"Salamanca: solo {len(out)} miembros (¿cambió el PDF?)")
+    return out
+
+
 @_fuente("ciudad real")
 def actualizar_ciudad_real():
     """Ayuntamiento de Ciudad Real > Transparencia > Retribuciones anuales de los miembros de la Corporación (PDF 'RETRIBUCIONES ANUALES MIEMBROS DE

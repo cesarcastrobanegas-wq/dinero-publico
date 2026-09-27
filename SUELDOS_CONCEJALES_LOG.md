@@ -228,3 +228,21 @@ Avisos públicos añadidos: Donostia, Lugo, Pontevedra, Ourense, Pozuelo de Alar
 
 Avisos públicos añadidos: Segovia, Guadalajara, Pinto. Notas públicas para Huesca y Ciudad Real.
 
+---
+
+## Lote 8 — Salamanca (2026-09-27)
+
+**Añadidos: 27 miembros de la Corporación** (Salamanca). Total acumulado: **566 registros en 29 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Salamanca | aytosalamanca.es > Transparencia > Transparencia activa y organización > "Retribuciones percibidas" > PDF "Retribuciones percibidas por los miembros de la Corporación municipal en el ejercicio 2025" | APELLIDOS, NOMBRE + importe percibido en 2025 (11 filas con `*` = dedicación exclusiva/parcial). **El PDF no da concejalía ni distingue al alcalde**: cargo = "Miembro de la Corporación" (+ dedicación si lleva `*`); el alcalde figura entre ellos y no se puede separar con la propia fuente. No se afirma qué conceptos incluye (los importes pequeños de los no marcados parecen asistencias, pero el PDF no lo dice). Mismo criterio que Sevilla (cargo genérico) con nota pública |
+
+**Saltados y por qué (comprobado en crudo)**
+- **Jaén**: el PDF "retribuciones corporación" de su portal es una imagen escaneada (sin capa de texto) → no verificable.
+- **Pamplona/Iruña**: la página de transparencia enlaza organigrama y decretos de organización, sin tabla de nombre e importe → "no localizado".
+- **Fuenlabrada** (recomprobado con la página "Retribuciones percibidas por los cargos electos"): tres documentos (marco retributivo, régimen de dedicación, BOCM de los no-gobierno) separados; sin nombre + importe en el mismo documento.
+- **Algeciras** y **Motril**: las URL de retribuciones dan 404 (las búsquedas las mencionan, no se pudo leer nada). **Fuengirola, Estepona, Roquetas, Gijón, Albacete, Marbella, Dos Hermanas**: sin tabla localizada o sin acceso; no se afirma nada en la web.
+
+Avisos públicos añadidos: Jaén, Pamplona. Nota pública para Salamanca.
+
