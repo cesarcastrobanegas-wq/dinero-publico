@@ -116,8 +116,8 @@ si falta algo o es ambiguo se salta y se anota. Nada se estima ni se convierte (
 salvedades de esa fuente** (`_NOTAS_SUELDOS_CONCEJALES` en `app.py`); las fichas de los municipios aparcados muestran un aviso con
 el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
 
-- **Cobertura a 2026-09-27**: 652 registros en 34 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
-  Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles, Las Rozas; Elche, Castellón de la Plana, Alcoy, Sagunto, Alcalá de Henares; Vigo; Logroño; Murcia, Molina de Segura,
+- **Cobertura a 2026-09-27**: 673 registros en 35 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
+  Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles, Las Rozas; Elche, Castellón de la Plana, Alcoy, Sagunto, Alcalá de Henares, Pozuelo de Alarcón; Vigo; Logroño; Murcia, Molina de Segura,
   Cartagena; Huesca; Ciudad Real; Santa Cruz de Tenerife; Telde; Palencia, Salamanca; Eivissa, Calvià; Vitoria-Gasteiz). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
 - **Salvedades concretas por fuente**:
   - **Sevilla**: cargo mostrado como "Concejal/a" genérico (el PDF fuente no especifica la concejalía); el importe es lo percibido en
@@ -161,6 +161,7 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
     con aviso (solo nombre e importe, sin cargo ni periodo).
   - **Lote 11 (2026-09-27)**: **Sagunto** (cargo genérico «alcalde o concejal»: el PDF no separa al alcalde; URL con hash) y **Alcoy** (salario anual 2023 del mandato actual)
     entran. **Torremolinos** con aviso (solo recibos de nómina individuales, que no se procesan).
+  - **Lote 13 (2026-09-27)**: **Pozuelo de Alarcón** entra (ficha individual por concejal con importe, no una tabla).
   - **Lote 12 (2026-09-27, reintentos)**: **Alcalá de Henares** entra (importe por tramo de cargo/dedicación, no por persona; nota
     pública). **Barcelona** (5.ª comprobación, su API sigue en timeout) y **Reus** (su página de retribuciones da 404 en las dos URL
     probadas) siguen aparcados.

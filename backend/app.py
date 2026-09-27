@@ -4440,6 +4440,8 @@ _NOTAS_SUELDOS_CONCEJALES = {
     "alcoy": "Salario anual (14 pagas) de 2023 según el cuadro oficial del mandato actual; pueden haberse actualizado. No aparecen las personas con solo asistencias ni quien renunció al sueldo.",
     "alcala de henares": "El importe está fijado por tramo de cargo y dedicación, no por persona: todas las personas del mismo tramo cobran igual según la página oficial (actualizada a 14/08/2025). "
                          "Quien cambió de tramo durante el mandato aparece solo en su tramo actual (se indica la fecha desde la que está en él); no aparecen las personas «sin dedicación ni asistencias».",
+    "pozuelo de alarcon": "El importe y el cargo se leen de la ficha individual de cada concejal/a en la web del Ayuntamiento (enlace «Retribuciones y régimen de dedicación»), no de una tabla única. "
+                          "Los concejales sin dedicación (solo asistencias) o cuya ficha no muestra importe no aparecen. La alcaldesa está excluida (cubierta aparte).",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
@@ -4472,7 +4474,6 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "lugo": "El Ayuntamiento publica los importes por tipo de dedicación y grupo, sin el importe asociado a cada nombre.",
     "pontevedra": "La página de retribuciones del Ayuntamiento corresponde al mandato 2019-2023.",
     "ourense": "Los PDF de retribuciones de la corporación que publica el Ayuntamiento son imágenes escaneadas sin texto, y no se pueden verificar contra la fuente.",
-    "pozuelo de alarcon": "El Ayuntamiento publica los cambios de régimen de dedicación en sucesivos boletines oficiales (BOCM) y decretos, sin una tabla consolidada de nombre e importe.",
     "benidorm": "El Ayuntamiento publica cada mes un total bruto por corporativo que mezcla dedicación y asistencias y no indica el cargo o la concejalía.",
     "torrejon de ardoz": "El documento de retribuciones del Ayuntamiento lista los importes por cargo, sin nombres.",
     "segovia": "El Ayuntamiento publica el acuerdo de Pleno de 23 de diciembre de 2025 con el importe anual por tipo de cargo y dedicación, sin nombres.",
@@ -4482,6 +4483,7 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "pamplona/iruna": "No hemos localizado en la página de transparencia del Ayuntamiento un documento con nombre e importe de los concejales.",
     "torrelavega": "El PDF «Retribuciones concejales 2024» del Ayuntamiento lista solo nombre e importe (sin el cargo y sin aclarar el periodo ni el concepto de cada cifra), por lo que no se muestra.",
     "torremolinos": "La web del Ayuntamiento lista nombre, cargo y dedicación de la corporación, pero el importe solo se publica como recibo de nómina individual, que no procesamos.",
+    "coslada": "El Ayuntamiento publica el importe por cargo (alcalde, teniente de alcalde, concejal con delegación...), sin nombres.",
 }
 
 

@@ -1195,6 +1195,50 @@ def actualizar_sagunto():
     return out
 
 
+@_fuente("pozuelo de alarcon")
+def actualizar_pozuelo_de_alarcon():
+    """Ayuntamiento de Pozuelo de Alarcón > Corporación Municipal > 'Composición del Pleno': una ficha por
+    concejal/a (nombre en negrita + cargo + enlace 'Retribuciones y régimen de dedicación' con el importe anual
+    entre paréntesis a continuación, p. ej. '(84.044,94 €)'). Los concejales sin dedicación llevan
+    '(Asistencias, concejal sin dedicación)' o directamente no llevan paréntesis: se saltan (sin importe). Se
+    excluye la alcaldesa (cubierta aparte)."""
+    from bs4 import BeautifulSoup
+    url = "https://www.pozuelodealarcon.org/tu-ayuntamiento/organizacion-municipal/corporacion-municipal"
+    r = descargar(url)
+    texto = texto_html(r.text)
+    out, sin_importe = [], 0
+    for bloque in BeautifulSoup(r.text, "html.parser").find_all("div", class_="col-sm-8"):
+        strong = bloque.find("p") and bloque.find("p").find("strong")
+        ul = bloque.find("ul")
+        if not strong or not ul:
+            continue
+        nombre = re.sub(r"\s+", " ", strong.get_text(" ", strip=True)).strip()
+        cargo_li = ul.find("li", recursive=False)
+        cargo = ""
+        if cargo_li:
+            for br in cargo_li.find_all("br"):
+                br.replace_with(" \x00 ")
+            cargo = re.sub(r"\s*\x00\s*", "; ", re.sub(r"\s+", " ", cargo_li.get_text(" ", strip=True))).strip()
+        if not nombre or cargo.lower().startswith(("alcalde", "alcaldesa")):
+            continue
+        retrib_li = next((li for li in ul.find_all("li", recursive=False)
+                          if "Retribuciones y régimen de dedicación" in li.get_text()), None)
+        if retrib_li is None:
+            continue
+        m = re.search(r"\(([\d.]+,\d{2})\s*€\)", retrib_li.get_text(" ", strip=True))
+        if not m:
+            sin_importe += 1
+            continue
+        out.append(nuevo_registro("Pozuelo de Alarcón", "madrid", nombre, cargo_frase(cargo), num_es(m.group(1)),
+                                  "retribución anual según su ficha en la web del Ayuntamiento (régimen de dedicación)",
+                                  "vigente", url, "Web del Ayuntamiento de Pozuelo de Alarcón: composición del Pleno", texto))
+    if sin_importe:
+        print(f"  Pozuelo de Alarcón: {sin_importe} concejales sin importe (asistencias o sin dedicación) saltados")
+    if len(out) < 10:
+        raise RuntimeError(f"Pozuelo de Alarcón: solo {len(out)} concejales (¿cambió la página?)")
+    return out
+
+
 @_fuente("alcala de henares")
 def actualizar_alcala_de_henares():
     """Ayuntamiento de Alcalá de Henares > 'Retribuciones de los Concejales' (actualizada a 14/08/2025). NO es una

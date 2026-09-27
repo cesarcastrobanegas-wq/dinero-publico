@@ -318,3 +318,17 @@ Notas públicas: Sagunto, Alcoy. Aviso: Torremolinos.
 
 Nota pública añadida para Alcalá de Henares; se retira su entrada de `_SUELDOS_CONCEJALES_SIN_TABLA`.
 
+---
+
+## Lote 13 — Pozuelo de Alarcón recuperado (2026-09-27, madrugada)
+
+**Añadidos: 21 concejales** (Pozuelo de Alarcón). Total acumulado: **673 registros en 35 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Pozuelo de Alarcón | pozuelodealarcon.org > Corporación Municipal > "Composición del Pleno": ficha individual por concejal/a (no una tabla) con nombre, cargo y un enlace "Retribuciones y régimen de dedicación" con el importe anual entre paréntesis | Se recorre cada ficha del DOM (`div.col-sm-8`): nombre, cargo (con los `<br>` internos unidos con "; ") e importe. Los concejales con "(Asistencias, concejal sin dedicación)" o sin paréntesis (1 caso) se saltan. Alcaldesa excluida |
+
+**Aparcado tras comprobar**: **Coslada** (dataset abierto por cargo, sin nombres). **Badajoz** y **Cáceres**: solo mencionados en las búsquedas, sin URL con tabla nominal confirmada esta noche (no se afirma nada).
+
+Nota pública para Pozuelo de Alarcón; se retira su entrada de `_SUELDOS_CONCEJALES_SIN_TABLA`. Aviso para Coslada.
+
