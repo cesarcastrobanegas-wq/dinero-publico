@@ -149,13 +149,22 @@ ronda porque todo lo encontrado es fuente primaria municipal):
   CSV mensual desde 2015, con NIF. Ver conector `actualizar_contratos_menores_madrid_capital.py` — 27.959
   registros desde 2021-09. El resto de municipios de la Comunidad de Madrid sigue sin agregador (ver arriba);
   cada uno necesitaría su propia investigación.
-- **Zaragoza (~675.000 hab., Aragón) — lead confirmado, sin conectar**: el Ayuntamiento publica un dataset OCDS
-  (Open Contracting Data Standard) completo en `zaragoza.es/sede/servicio/contratacion-publica/ocds` (catálogo
-  147 de su portal de datos abiertos), con CSV/JSON/XML y un endpoint `/ocds/award` con parámetros `after`/
-  `before`/`rows`. Incluye contratos menores junto con el resto (habría que filtrar por `procurementMethod` o
-  similar). La consulta exacta con parámetros de fecha devolvió error 400 ("Could not find acceptable
-  representation") en las pruebas de esta noche -- pendiente de resolver la sintaxis correcta antes de construir
-  el conector; es el segundo mayor municipio de los seis y merece prioridad.
+- **Zaragoza (~675.000 hab., Aragón) — lead confirmado, investigado más a fondo, sin conectar**: el Ayuntamiento
+  publica un dataset OCDS (Open Contracting Data Standard) en `zaragoza.es/sede/servicio/contratacion-publica/
+  ocds` (catálogo 147). El endpoint `/ocds/award.json` SÍ funciona sin filtro de fecha (`?rows=N`) y devuelve
+  awards reales desde 2016-04 (título, adjudicatario, fecha `date`), pero:
+  - El parámetro de formato va en la EXTENSIÓN (`.json`), no en `?rf=...` (eso da 400 "Could not find acceptable
+    representation" en todos los formatos probados).
+  - `after`/`before` con fecha completa ISO (`2021-09-01T00:00:00Z`) no da error pero devuelve SIEMPRE
+    `{"totalCount":0,"start":0,"rows":0}` -- el filtro de fecha parece roto o filtra por un campo distinto al
+    `date` que se ve en la respuesta (sin probar exhaustivamente esta noche qué campo es).
+  - `sort=-date` no cambia el orden (sigue devolviendo desde el registro más antiguo, 2016) -- sin un `start`
+    que sepamos calcular (no hay `totalCount` accesible sin el filtro de fecha que no funciona), no es trivial
+    paginar hasta llegar a lo reciente.
+  - Es el segundo mayor municipio de los seis y merece prioridad en la próxima sesión: probablemente hace falta
+    mirar la documentación completa del catálogo 147 (o probar con OCDS estándar: quizás el campo de fecha real
+    esté en `/ocds/release` o en un JSON anidado tipo `awards[].date` de la propia entrada, no en el nivel raíz
+    que se ve en `/award.json`).
 - **Valencia capital (~800.000 hab., Comunitat Valenciana) — portal en plena reorganización**: tiene contratos
   menores documentados en su portal de transparencia y un histórico de API CKAN (`gobiernoabierto.valencia.es`),
   pero el rediseño del portal (junio de 2026) ha retirado esa API antigua (redirige a la web nueva, sin CKAN
