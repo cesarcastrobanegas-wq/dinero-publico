@@ -157,22 +157,27 @@ con el lead ya documentado de la ronda anterior, sin retomar todavía. Detalle c
   CSV mensual desde 2015, con NIF. Ver conector `actualizar_contratos_menores_madrid_capital.py` — 27.959
   registros desde 2021-09. El resto de municipios de la Comunidad de Madrid sigue sin agregador (ver arriba);
   cada uno necesitaría su propia investigación.
-- **Zaragoza (~675.000 hab., Aragón) — lead confirmado, investigado más a fondo, sin conectar**: el Ayuntamiento
-  publica un dataset OCDS (Open Contracting Data Standard) en `zaragoza.es/sede/servicio/contratacion-publica/
-  ocds` (catálogo 147). El endpoint `/ocds/award.json` SÍ funciona sin filtro de fecha (`?rows=N`) y devuelve
-  awards reales desde 2016-04 (título, adjudicatario, fecha `date`), pero:
-  - El parámetro de formato va en la EXTENSIÓN (`.json`), no en `?rf=...` (eso da 400 "Could not find acceptable
-    representation" en todos los formatos probados).
-  - `after`/`before` con fecha completa ISO (`2021-09-01T00:00:00Z`) no da error pero devuelve SIEMPRE
-    `{"totalCount":0,"start":0,"rows":0}` -- el filtro de fecha parece roto o filtra por un campo distinto al
-    `date` que se ve en la respuesta (sin probar exhaustivamente esta noche qué campo es).
-  - `sort=-date` no cambia el orden (sigue devolviendo desde el registro más antiguo, 2016) -- sin un `start`
-    que sepamos calcular (no hay `totalCount` accesible sin el filtro de fecha que no funciona), no es trivial
-    paginar hasta llegar a lo reciente.
-  - Es el segundo mayor municipio de los seis y merece prioridad en la próxima sesión: probablemente hace falta
-    mirar la documentación completa del catálogo 147 (o probar con OCDS estándar: quizás el campo de fecha real
-    esté en `/ocds/release` o en un JSON anidado tipo `awards[].date` de la propia entrada, no en el nivel raíz
-    que se ve en `/award.json`).
+- **Zaragoza (~675.000 hab., Aragón) — investigado a fondo dos rondas, endpoint confirmado NO VIABLE tal cual**:
+  el Ayuntamiento publica un dataset OCDS (Open Contracting Data Standard) en `zaragoza.es/sede/servicio/
+  contratacion-publica/ocds` (catálogo 147). El endpoint `/ocds/award.json` funciona sin filtro (`?rows=N`,
+  formato en la EXTENSIÓN, no en `?rf=...`) y devuelve awards reales desde 2016-04-14 en adelante (título,
+  adjudicatario, fecha `date`), pero **la paginación está rota, confirmado con pruebas exhaustivas
+  (2026-09-29)**:
+  - `after`/`before` (fecha ISO completa) siempre devuelve `{"totalCount":0,...}`, ningún formato de fecha
+    probado lo arregla; `year`/`exercici` se ignoran sin más.
+  - `sort=-date` no cambia el orden (sigue empezando por el registro más antiguo).
+  - **`start` (el offset de paginación) se ignora por completo** -- `start=0` y `start=100000` devuelven
+    EXACTAMENTE los mismos registros, confirmado comparando los `id` uno a uno. Sin `start` funcional no hay
+    forma de pedir "la página siguiente".
+  - `rows` sí funciona, pero con un tope duro entre 1.300 y 1.400 (`rows=1300` → 200 OK, `rows=1400` → 404).
+  - **Conclusión**: con `start` roto y un tope de ~1.300, el endpoint solo puede devolver los ~1.300 contratos
+    MÁS ANTIGUOS de todo el histórico (desde 2016-04), nunca los recientes -- inútil para los últimos 5 años
+    tal como está expuesto ahora. Probado también el recurso base sin sufijo (`ocds.csv`/`ocds.json`, listado
+    en el catálogo de datos abiertos): siempre da 400 "Failed to convert ... BigDecimal", incluso sin ningún
+    parámetro -- parece exigir un parámetro numérico obligatorio no documentado (quizás un `id` de contrato
+    concreto, no un listado). **No viable sin más información del propio Ayuntamiento** (o encontrar
+    documentación oficial del catálogo 147 que explique el parámetro que falta) -- se abandona esta vía por
+    ahora pese a ser el segundo mayor municipio de los seis.
 - **Valencia capital (~800.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: el portal antiguo (CKAN)
   se retiró en junio de 2026; el sustituto real es el buscador oficial `www.valencia.es/cas/ayuntamiento/
   buscador-contratos-menores` (portlet Liferay, formulario POST). **10.693 registros desde 2021-09**
