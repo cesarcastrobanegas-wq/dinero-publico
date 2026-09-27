@@ -138,6 +138,46 @@ de Murcia:
   caso especial resuelto de otra forma**: no por un agregador de contratos menores dedicado, sino porque su
   API de contratación (Euskadi, ver más arriba) sirve formales y menores con el mismo mecanismo.
 
+### Investigación ayuntamiento a ayuntamiento por población (2026-09-27, en curso)
+
+Para las seis comunidades sin agregador, se investiga empezando por el municipio más poblado de cada una (solo
+fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
+ronda porque todo lo encontrado es fuente primaria municipal):
+
+- **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
+  oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
+  CSV mensual desde 2015, con NIF. Ver conector `actualizar_contratos_menores_madrid_capital.py` — 27.959
+  registros desde 2021-09. El resto de municipios de la Comunidad de Madrid sigue sin agregador (ver arriba);
+  cada uno necesitaría su propia investigación.
+- **Zaragoza (~675.000 hab., Aragón) — lead confirmado, sin conectar**: el Ayuntamiento publica un dataset OCDS
+  (Open Contracting Data Standard) completo en `zaragoza.es/sede/servicio/contratacion-publica/ocds` (catálogo
+  147 de su portal de datos abiertos), con CSV/JSON/XML y un endpoint `/ocds/award` con parámetros `after`/
+  `before`/`rows`. Incluye contratos menores junto con el resto (habría que filtrar por `procurementMethod` o
+  similar). La consulta exacta con parámetros de fecha devolvió error 400 ("Could not find acceptable
+  representation") en las pruebas de esta noche -- pendiente de resolver la sintaxis correcta antes de construir
+  el conector; es el segundo mayor municipio de los seis y merece prioridad.
+- **Valencia capital (~800.000 hab., Comunitat Valenciana) — portal en plena reorganización**: tiene contratos
+  menores documentados en su portal de transparencia y un histórico de API CKAN (`gobiernoabierto.valencia.es`),
+  pero el rediseño del portal (junio de 2026) ha retirado esa API antigua (redirige a la web nueva, sin CKAN
+  operativo comprobado esta noche). Es el municipio más grande de los seis con NINGÚN dato conectado todavía --
+  prioridad alta para la próxima ronda, revisando la estructura nueva del portal.
+- **Valladolid (~298.000 hab., Castilla y León) — lead confirmado, formato incómodo**: publica "Contratos
+  menores y volumen de contratación" en `valladolid.gob.es/es/perfil-contratante/...`, un XLSX por trimestre/año
+  (no un dataset único), desde al menos 2018. Viable pero requiere descargar y unificar muchos ficheros con
+  estructura que puede variar por año (mismo patrón de riesgo ya visto en Madrid capital esta noche: columnas y
+  formato de fecha distintos según el año).
+- **Palma (~416.000 hab., Illes Balears) — lead confirmado, formato incómodo**: `palma.es/es/contratos-menores`
+  publica Excel + PDF por trimestre. Mismo patrón que Valladolid.
+- **Alicante (~337.000 hab., Comunitat Valenciana)**: contratos menores publicados por departamento/servicio
+  (no un dataset agregado), en el portal de transparencia reformado en 2024 -- no se ha encontrado un CSV único;
+  requeriría más investigación para saber si es viable.
+- **Albacete (~173.000 hab., Castilla-La Mancha)**: sin CSV/dataset localizado esta noche en su portal de
+  transparencia; solo referencia genérica a la contratación. Pendiente de mirar con más detalle o contactar/
+  solicitar acceso a la información (vía el trámite que el propio portal ofrece).
+- **Pendiente de revisar** (siguiente ronda, mismo criterio): León, Burgos, Salamanca (Castilla y León);
+  Castellón de la Plana, Elche (Comunitat Valenciana); Huesca, Teruel (Aragón); Toledo, Ciudad Real, Guadalajara
+  (Castilla-La Mancha); resto de municipios de la Comunidad de Madrid por población.
+
 ## Fondos UE
 
 - Solo cubre **Murcia y Girona** — Lleida, Barcelona y Tarragona no están
