@@ -150,7 +150,7 @@ ronda porque todo lo encontrado es fuente primaria municipal).
 
 **Estado a 2026-09-30**: 17 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
 Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
-Burgos, Castelló de la Plana, Xirivella, Santa Brígida — **116.789 contratos** entre los diecisiete), varios confirmados sin fuente viable
+Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira — **120.614 contratos** entre los dieciocho), varios confirmados sin fuente viable
 tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel,
 Salamanca...). Detalle completo por municipio abajo.
 
@@ -258,9 +258,12 @@ Salamanca...). Detalle completo por municipio abajo.
   la técnica del `wp-json/wp/v2/pages/4541` de Castellón: **Xirivella** (idP 63665, **815 registros desde
   2021-09** de 816 filas de la API) y **Santa Brígida** (idP 70489, **301 registros desde 2021-09**, 301/301
   filas) funcionan igual que Castellón (0 filas sin NIF/fecha en ninguno de los dos). **Tudela** (Navarra) dio
-  un idP real pero la API devuelve 0 filas -- no se activó como fuente. **Alzira** usa Liferay, no WordPress:
-  sin el atajo del `wp-json`, no se encontró su idP esta noche. Fuentes `xirivella-governalia` y
-  `santabrigida-governalia`, mismo patrón que el resto de fuentes Governalia (importe sin IVA).
+  un idP real pero la API devuelve 0 filas -- no se activó como fuente. **Alzira** también se cerró un rato
+  después: su dominio de transparencia real es `contractes.alzira.es` (WordPress), NO
+  `transparencia.alzira.es` (un portal Liferay antiguo y distinto, que es por lo que no se había encontrado
+  antes al buscar); idP 65247, **3.825 registros desde 2021-09** (de 3.830 filas de la API), 0 sin NIF/fecha.
+  Fuentes `xirivella-governalia`, `santabrigida-governalia` y `alzira-governalia`, mismo patrón que el resto
+  de fuentes Governalia (importe sin IVA).
 - **Valencia capital (~800.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: el portal antiguo (CKAN)
   se retiró en junio de 2026; el sustituto real es el buscador oficial `www.valencia.es/cas/ayuntamiento/
   buscador-contratos-menores` (portlet Liferay, formulario POST). **10.693 registros desde 2021-09**

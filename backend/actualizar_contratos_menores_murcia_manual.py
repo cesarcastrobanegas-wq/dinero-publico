@@ -983,17 +983,21 @@ def actualizar_castellon_governalia():
                                "CastelloGov", provincia="castellon")
 
 
-# Xirivella (Valencia) y Santa Brígida (Gran Canaria) -- encontrados 2026-09-30 a partir de la cabecera CSP
-# que el propio servidor de Castellón devuelve en sus 503 (frame-ancestors lista varios clientes reales de
-# Governalia: xirivella.es, tudela.es, santabrigida.es, alzira.es, castillalamancha.es). El idP de cada uno se
-# encontró con la misma técnica que Castellón (wp-json/wp/v2/pages/4541 de su transparencia.<municipio>.es,
-# que es WordPress en los tres primeros -- Alzira usa Liferay, sin este atajo, no se pudo cerrar). Tudela
-# resolvió con idP real pero devuelve 0 filas (posiblemente el idP encontrado no es el de "contratos", o el
-# municipio no tiene aún contratos menores cargados en Governalia) -- no se activa como fuente.
+# Xirivella (Valencia), Santa Brígida (Gran Canaria) y Alzira (Valencia) -- encontrados 2026-09-30 a partir de
+# la cabecera CSP que el propio servidor de Castellón devuelve en sus 503 (frame-ancestors lista varios
+# clientes reales de Governalia: xirivella.es, tudela.es, santabrigida.es, alzira.es, castillalamancha.es). El
+# idP de cada uno se encontró con la misma técnica que Castellón (wp-json/wp/v2/pages/<id> de su web de
+# transparencia, que es WordPress en los cuatro -- para Alzira el dominio real es `contractes.alzira.es`, NO
+# `transparencia.alzira.es` (ese es un portal Liferay antiguo distinto, sin este atajo), y su página de
+# contratos es el id 4539, no el 4541 de los demás). Tudela resolvió con idP real pero devuelve 0 filas
+# (posiblemente el idP encontrado no es el de "contratos", o el municipio no tiene aún contratos menores
+# cargados en Governalia) -- no se activa como fuente.
 XIRIVELLA_GOVERNALIA_PAGINA_URL = ("https://governalia.xirivella.es/gvn/web/section/modules/"
                                    "transparency/egob/procurements/?idP=63665&lang=es")
 SANTA_BRIGIDA_GOVERNALIA_PAGINA_URL = ("https://governalia.santabrigida.es/gvn/web/section/modules/"
                                       "transparency/egob/procurements/?idP=70489&lang=es")
+ALZIRA_GOVERNALIA_PAGINA_URL = ("https://governalia.alzira.es/gvn/web/section/modules/"
+                                "transparency/egob/procurements/?idP=65247&lang=es")
 
 
 def actualizar_xirivella_governalia():
@@ -1004,6 +1008,11 @@ def actualizar_xirivella_governalia():
 def actualizar_santa_brigida_governalia():
     return _governalia_menores(SANTA_BRIGIDA_GOVERNALIA_PAGINA_URL, "Santa Brígida", "santabrigida-governalia",
                                "SantaBrigidaGov", provincia="las_palmas")
+
+
+def actualizar_alzira_governalia():
+    return _governalia_menores(ALZIRA_GOVERNALIA_PAGINA_URL, "Alzira", "alzira-governalia",
+                               "AlziraGov", provincia="valencia")
 
 
 # A Coruña (añadido 2026-09-24): un fichero por trimestre (y un "Anexo" anual) en
@@ -1968,6 +1977,7 @@ _FUENTES = {
     "castello-governalia": actualizar_castellon_governalia,
     "xirivella-governalia": actualizar_xirivella_governalia,
     "santabrigida-governalia": actualizar_santa_brigida_governalia,
+    "alzira-governalia": actualizar_alzira_governalia,
 }
 
 

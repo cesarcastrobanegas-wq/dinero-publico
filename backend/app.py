@@ -14209,6 +14209,7 @@ _FUENTE_CM_LABEL = {
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
+    "alzira-governalia": "Alzira (PLACE)",
 }
 
 
@@ -14220,7 +14221,7 @@ _FUENTE_CM_LABEL = {
 # distintas sin saberlo.
 _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
                        "sax-governalia", "vilamarxant-governalia", "castello-governalia",
-                       "xirivella-governalia", "santabrigida-governalia",
+                       "xirivella-governalia", "santabrigida-governalia", "alzira-governalia",
                        "valencia_capital", "alicante", "leganes"}
 
 
@@ -14361,6 +14362,11 @@ _NOTAS_FUENTE_CM = {
     ),
     "santabrigida-governalia": (
         "API de Governalia del Ayuntamiento de Santa Brígida (Gran Canaria), espejo de PLACE -- mismo "
+        "mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del "
+        "adjudicatario, importe adjudicado SIN IVA."
+    ),
+    "alzira-governalia": (
+        "API de Governalia del Ayuntamiento de Alzira (Comunitat Valenciana), espejo de PLACE -- mismo "
         "mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del "
         "adjudicatario, importe adjudicado SIN IVA."
     ),
