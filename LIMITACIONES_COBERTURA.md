@@ -208,6 +208,19 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
   2021-09-01, las descartadas quedaron archivadas, y el resto de fuentes/menores del municipio quedaron intactos.
   Render de ficha (Girona, Tudela) sin errores tras el refresco.
 
+## Viabilidad: cruzar concejales/alcaldes con el Registro Mercantil (2026-09-27)
+
+Informe de viabilidad (sin implementar nada) sobre detectar empresa propia de un cargo público y mostrar sus
+cuentas anuales, a petición de César. Ver documento completo:
+`INFORME_VIABILIDAD_REGISTRO_MERCANTIL.md`. Resumen: (i) el cruce por nombre sin DNI es viable como primer filtro
+si se exige nombre completo + una señal de corroboración (provincia del domicilio social, fecha), y SIEMPRE con
+revisión manual antes de publicar una atribución concreta — BORME nunca publica el DNI del administrador, es un
+límite estructural, no de implementación; (ii) existencia de empresa + administrador es gratis y reutiliza la
+infraestructura ya construida (`buscar_directivo`, BORME/BOE, empresia.es), pero las CIFRAS de cuentas anuales
+(balance/PyG) de los últimos 5 años no tienen ninguna vía gratuita a esta escala — BORME solo confirma que hubo
+depósito, sin cifras; el Registro Mercantil directo y einforma/axesor/infocif son de pago por informe. Recomendación:
+construir solo la Fase 1 (existencia + cargo, gratis) por ahora; las cuentas anuales, caso a caso y bajo demanda.
+
 ## Contratos formales de Galicia en PLACE (backfill del patrón "Concello de X", 2026-09-25/27)
 
 - **Qué era**: el patrón antiguo de `_regex_anclado` no reconocía órganos "Concello de X"/"Concello da/do X", así que los contratos
