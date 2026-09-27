@@ -116,8 +116,8 @@ si falta algo o es ambiguo se salta y se anota. Nada se estima ni se convierte (
 salvedades de esa fuente** (`_NOTAS_SUELDOS_CONCEJALES` en `app.py`); las fichas de los municipios aparcados muestran un aviso con
 el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
 
-- **Cobertura a 2026-09-27**: 594 registros en 31 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
-  Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles, Las Rozas; Elche, Castellón de la Plana; Vigo; Logroño; Murcia, Molina de Segura,
+- **Cobertura a 2026-09-27**: 628 registros en 33 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
+  Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles, Las Rozas; Elche, Castellón de la Plana, Alcoy, Sagunto; Vigo; Logroño; Murcia, Molina de Segura,
   Cartagena; Huesca; Ciudad Real; Santa Cruz de Tenerife; Telde; Palencia, Salamanca; Eivissa, Calvià; Vitoria-Gasteiz). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
 - **Salvedades concretas por fuente**:
   - **Sevilla**: cargo mostrado como "Concejal/a" genérico (el PDF fuente no especifica la concejalía); el importe es lo percibido en
@@ -159,6 +159,8 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
     (datos personales innecesarios) y no lleva aviso porque su clave en la base pertenece a un municipio homónimo de Girona.
   - **Lote 10 (2026-09-27)**: **Calvià** entra (acuerdo plenario de 2023 en el BOIB, retribución por cargo; sin las indemnizaciones por asistencia). **Torrelavega**
     con aviso (solo nombre e importe, sin cargo ni periodo).
+  - **Lote 11 (2026-09-27)**: **Sagunto** (cargo genérico «alcalde o concejal»: el PDF no separa al alcalde; URL con hash) y **Alcoy** (salario anual 2023 del mandato actual)
+    entran. **Torremolinos** con aviso (solo recibos de nómina individuales, que no se procesan).
   - Pendientes de reintento por otros motivos: **Barcelona** (su API de cargos devolvía "timeout" en dos comprobaciones),
     **Reus** (por cargo, sin nombres), **Alcalá de Henares** (por categoría, sin importe por persona).
 - **Plataformas descartadas**: `*.sedelectronica.es/employees` exige Cl@ve (Marbella, Orihuela); seu-e.cat solo rellena el importe en
