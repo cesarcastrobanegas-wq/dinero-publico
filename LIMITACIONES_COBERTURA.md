@@ -66,6 +66,58 @@ decisión deliberada de alcance, o algo pendiente de hacer.
   Murcia, AGE, UMU, Provincia de X) ni en municipios que sí tienen datos
   (Lorca).
 
+## Contratos menores — País Vasco vía API de Euskadi (2026-09-27)
+
+- **Descubrimiento**: la misma API REST de Euskadi que ya usábamos para contratos formales
+  (`api.euskadi.eus/procurements/contracts`, `contracting-authority-id` numérico sin ambigüedad) acepta
+  `minor-contract=true` en vez de `false` y devuelve los contratos MENORES de cada ayuntamiento, con la MISMA
+  fecha real de adjudicación (`awardDate`) que los formales. Cubre los 251 municipios ya mapeados en
+  `MUNICIPIOS_PAIS_VASCO_EUSKADI_ID` — el 100 % de los municipios vascos que el proyecto ya tiene conectados —
+  de una sola vez, sin necesitar ayuntamiento a ayuntamiento.
+- **Generador**: `backend/actualizar_contratos_menores_euskadi.py` (cadencia manual/periódica, mismo patrón que
+  `actualizar_contratos_menores_murcia_manual.py`), fichero `backend/contratos_menores_euskadi.json.gz`, cargador
+  `_cargar_contratos_menores_euskadi` en `app.py` (arranque, upsert idempotente sobre `contratos_menors_locales`).
+  Alcance de 5 años aplicado en el propio generador (se descarta lo anterior a `MENORES_DESDE_FECHA`, igual que en
+  el resto de fuentes de menores). Sanity check de importe (más de ~50.000 € = por encima del techo legal de un
+  contrato menor de obras con margen de IVA) impreso al final del generador para revisión manual, sin excluir nada
+  automáticamente (mismo criterio que el resto del proyecto: nunca se adivina, se anota).
+- Volumen real (ejecución 2026-09-27): del orden de varios cientos de contratos por municipio en los más
+  grandes (Basauri, Berriz, Astigarraga, Azkoitia...), 0 en los más pequeños — ver el propio log del generador
+  para el detalle municipio a municipio.
+
+## Contratos menores — mapeo de agregadores regionales, resto de España (2026-09-27)
+
+Comprobado esta noche (no solo buscado: consulta real a la API/CKAN de cada portal) si existe, para otras
+comunidades, un agregador regional equivalente al RPC catalán (que si cubre ayuntamientos) o al CKAN de la Región
+de Murcia:
+
+- **Comunidad de Madrid** (`datos.comunidad.madrid`, CKAN): sin ningún dataset de contratos menores municipales;
+  su búsqueda por "contratos menores ayuntamiento" no devuelve nada relevante (solo estadísticas de contratos
+  laborales y parque de vehículos). El portal de datos abiertos del propio Ayuntamiento de Madrid (`datos.madrid.es`)
+  sí tiene un dataset de contratos menores, pero es solo del Ayuntamiento de Madrid capital, no de otros municipios
+  de la Comunidad.
+- **Castilla y León** (`analisis.datosabiertos.jcyl.es/explore/dataset/contratos-menores/`, OpenDataSoft):
+  128.119 filas, pero **verificado contra el propio dataset** (campo `organo`): son todas de la Junta de Castilla y
+  León (Consejerías, Delegaciones Territoriales) — la administración AUTONÓMICA, no los ayuntamientos. No sirve
+  para cobertura municipal.
+- **Comunitat Valenciana** (`dadesobertes.gva.es`, CKAN + "Consulta Contractes de la Generalitat"): la búsqueda
+  CKAN por "contractes menors ajuntament" no devuelve ningún dataset; la consulta de contractes es de la
+  Generalitat, no de los ayuntamientos.
+- **Aragón** (`opendata.aragon.es`): el dataset de contratos es "Contratos Gobierno de Aragón" — la administración
+  autonómica, mismo patrón.
+- **Illes Balears**: el Registre de Contractes (CAIB) es también de la administración autonómica balear y su
+  sector público instrumental, no de los ayuntamientos.
+- **Castilla-La Mancha**: el Portal de Contratación (`contratacion.castillalamancha.es`) publica los contratos
+  menores del sector público REGIONAL en el perfil del contratante de la Plataforma de Contratación del Estado,
+  no un registro agregado de los ayuntamientos.
+- **Conclusión**: de las comunidades comprobadas, **solo Cataluña (RPC) y la Región de Murcia (CKAN de
+  datosabiertos.regiondemurcia.es, ya conectado) tienen un agregador real que cubre ayuntamientos**. Para el resto
+  (Madrid, Castilla y León, Comunitat Valenciana, Aragón, Illes Balears, Castilla-La Mancha, y las que faltan por
+  comprobar: Andalucía, Galicia [ya con backfill PLACE propio], Extremadura, Cantabria, La Rioja, Canarias,
+  Asturias, Navarra) la única vía es ayuntamiento a ayuntamiento, como ya se viene haciendo. **País Vasco es un
+  caso especial resuelto de otra forma**: no por un agregador de contratos menores dedicado, sino porque su
+  API de contratación (Euskadi, ver más arriba) sirve formales y menores con el mismo mecanismo.
+
 ## Fondos UE
 
 - Solo cubre **Murcia y Girona** — Lleida, Barcelona y Tarragona no están
