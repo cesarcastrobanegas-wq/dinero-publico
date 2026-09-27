@@ -16,11 +16,13 @@ decisión deliberada de alcance, o algo pendiente de hacer.
   cargadas en la tabla `contratos_menors_archivo`. Snapshot de las 9.650 filas del 2026-09-26 (Galicia 3.784,
   Cataluña RPC 5.828, Lorquí 37, Torre Pacheco 1; 27,2 M€) en
   `backend/historico/contratos_menores_anteriores_2021-09.json.gz`. Las filas sin fecha (Fuente Álamo, 801) se conservan.
-- **Formales — pendiente de decisión**: PSCP, Euskadi y Navarra traen todo el histórico sin filtro de fecha y los
-  contratos guardados no llevan fecha. Auditoría del 2026-09-26 (fecha de adjudicación): PSCP 6.570 de 74.731
-  filas fuera de ventana (8,8 %; rango 2010-12-14 a 2027-01-01). Euskadi trae el "histórico completo": 7.226 de 20.093 contratos
-  (36 %) anteriores a septiembre de 2021, rango 2012-02-02 a 2026-12-29 (16 fechas con año imposible, "0008"...).
-  Navarra (7.643 guardados) sin medir. A la espera de la decisión de César.
+- **Formales — decidido y aplicado (2026-09-27)**: la auditoría del 2026-09-26 (PSCP 6.570/74.731 filas fuera de
+  ventana, 8,8 %; Euskadi 7.226/20.093, 36 %; Navarra sin medir) llevó a la misma decisión que menores: recortar
+  a 5 años, archivando (nunca borrando) lo que queda fuera. Ver el detalle completo, qué cambió en el código y
+  cómo se limpió lo que ya estaba guardado en la sección **"Alcance de 5 años en contratos formales de PSCP/
+  Euskadi/Navarra"**, más abajo en este mismo documento (nota: en un resumen anterior esta misma noche este punto
+  se dejó escrito como "pendiente de decisión" a la vez que ya se describía como aplicado más abajo —
+  contradicción señalada por César el 2026-09-27 y corregida aquí).
 
 ## Contratos menores
 
@@ -260,16 +262,22 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
     Tudela, 600 filas): sin este cambio se habría seguido guardando todo.
   - Los tres conectores ahora aplican el mismo corte que los menores (`MENORES_DESDE_FECHA`, septiembre de 2021).
 - **Cómo se limpia lo ya guardado**: no hay forma de saber la fecha de un contrato PSCP/Euskadi/Navarra ya guardado
-  ANTES de este cambio (nunca se capturó) sin volver a consultar la fuente. La limpieza es, por tanto,
-  **progresiva y automática**: cada vez que un municipio de estas tres fuentes se refresca con normalidad (visita de
-  un usuario a una ficha caducada, o un refresco por lotes), `_job_run` sustituye TODA la fuente de ese municipio por
-  el resultado fresco (ya filtrado a 5 años) — nunca solo se fusiona, como sí hace PLACE — y **archiva** (no borra)
-  las filas que quedan fuera de la ventana en `contratos_formales_archivo` (mismo patrón que `contratos_menors_archivo`).
-  No se ha lanzado esta noche una pasada forzada sobre los ~900 municipios de estas tres fuentes (habría significado
-  horas de tráfico en vivo contra PSCP/Euskadi/Navarra sin poder verificarlo against producción real antes de cada
-  lote, y sin acceso de escritura directa a producción fuera de este mecanismo de refresco normal) — queda como
-  trabajo pendiente para quien decida priorizarlo (un script tipo `generar_backfill_galicia_place.py` que recorra
-  todos los municipios conectados podría forzarlo de una vez).
+  ANTES de este cambio (nunca se capturó) sin volver a consultar la fuente. Hay dos vías, ambas activas:
+  1. **Progresiva y automática**: cada vez que un municipio de estas tres fuentes se refresca con normalidad
+     (visita de un usuario a una ficha caducada, o un refresco por lotes), `_job_run` sustituye TODA la fuente de
+     ese municipio por el resultado fresco (ya filtrado a 5 años) — nunca solo se fusiona, como sí hace PLACE — y
+     **archiva** (no borra) las filas que quedan fuera de la ventana en `contratos_formales_archivo` (mismo patrón
+     que `contratos_menors_archivo`).
+  2. **Barrido forzado de una vez (2026-09-27, a petición de César)**: `depurar_formales_5anios.py` recorre en
+     local los ~1.500 municipios conectados de las tres fuentes (942 PSCP, 251 Euskadi, 270 Navarra) reutilizando
+     los mismos `buscar_en_pscp`/`buscar_en_euskadi`/`buscar_en_navarra` ya arreglados, y genera
+     `correcciones_formales_5anios.json.gz` (por cada municipio+fuente, la lista fresca ya filtrada; solo si la
+     búsqueda terminó sin errores y con al menos 1 contrato). Un nuevo loader de arranque,
+     `_aplicar_correccion_formales_5anios()`, aplica esa corrección contra lo que haya REALMENTE en producción en
+     ese momento — misma lógica de reemplazo+archivado de `_job_run`, calculada en el momento contra el dato real
+     (no una lista de "a archivar" congelada de antemano) — una sola vez por versión del fichero (hash en
+     `settings`, mismo patrón que `_aplicar_backfill_galicia_place`). Ver el resultado exacto (municipios
+     corregidos, contratos archivados) en `INFORME_NOCHE_2026-09-27.md` una vez desplegado.
 - **Salvaguarda de seguridad añadida** (probada en producción real, ver abajo): el reemplazo de una fuente SOLO
   ocurre si (a) la búsqueda terminó sin errores HTTP/de red y (b) la búsqueda fresca trajo al menos 1 contrato — así
   un mapeo roto o un fallo silencioso de la fuente nunca puede vaciar todo el histórico de un municipio por error

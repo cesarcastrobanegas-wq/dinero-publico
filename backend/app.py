@@ -8051,6 +8051,86 @@ def _aplicar_backfill_galicia_place():
         print(f"[startup] backfill_galicia_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
+CORRECCION_FORMALES_5ANIOS_FILE = os.path.join(BASE_DIR, "correcciones_formales_5anios.json.gz")
+_CORRECCION_FORMALES_5ANIOS_CLAVE = "correccion_formales_5anios_sha"
+
+
+def _aplicar_correccion_formales_5anios():
+    """Aplica de una vez, contra lo que haya REALMENTE en producción en este arranque, la misma limpieza que
+    _job_run ya hace de forma orgánica (visita a una ficha caducada, o /actualizar-todos) para PSCP/Euskadi/
+    Navarra desde el 2026-09-27 (alcance de 5 años, MENORES_DESDE_FECHA) -- ver esa función para la lógica que
+    aquí se reutiliza tal cual. Hacía falta porque casi ninguno de los ~1.500 municipios de estas tres fuentes
+    había recibido un refresco orgánico desde que el filtro se desplegó (a057820): la inmensa mayoría seguía
+    guardando el histórico completo sin fecha, sin archivar.
+
+    El fichero (`correcciones_formales_5anios.json.gz`, generado EN LOCAL por depurar_formales_5anios.py, un
+    barrido completo de las tres fuentes) trae, por cada clave 'municipio::FUENTE', la lista FRESCA ya filtrada.
+    Solo incluye municipios donde esa búsqueda terminó sin errores y con al menos 1 contrato (misma salvaguarda
+    que _job_run, ver ahí el porqué) -- un municipio ausente aquí simplemente no se toca, nunca se borra por
+    omisión.
+
+    Reemplazo SOLO de la fuente indicada por cada clave, archivado (nunca borrado) de lo que se descarta --
+    exactamente igual que _job_run, solo que disparado por este fichero en vez de por tráfico en vivo (así no
+    hace falta reconstruir la lista de qué archivar de antemano: se calcula aquí mismo contra el dato real de
+    producción en el momento del arranque, más robusto que congelarlo en el fichero). Igual que
+    _aplicar_backfill_galicia_place, se anota el hash del fichero en `settings` para no repetir el barrido de
+    ~1.500 municipios en cada arranque; si el fichero cambia (nueva pasada), se vuelve a aplicar entero."""
+    if not _DISCO_CONFIABLE or not os.path.exists(CORRECCION_FORMALES_5ANIOS_FILE):
+        return
+    try:
+        with open(CORRECCION_FORMALES_5ANIOS_FILE, "rb") as f:
+            crudo = f.read()
+        huella = hashlib.sha256(crudo).hexdigest()[:16]
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?",
+                                (_CORRECCION_FORMALES_5ANIOS_CLAVE,)).fetchone()
+        if fila and fila[0] == huella:
+            return
+        datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+        corregidos, sin_ficha, sin_cambios, total_archivados = 0, [], 0, 0
+        for clave, contratos_frescos in datos.get("correcciones", {}).items():
+            municipio, _, fuente = clave.partition("::")
+            key = normalizar(municipio)
+            with _db_lock:
+                row = _db.execute("SELECT data, provincia FROM municipios WHERE municipio=?", (key,)).fetchone()
+            if not row:
+                sin_ficha.append(municipio)
+                continue
+            data, provincia = row
+            d = json.loads(data)
+            existentes = d.get("contratos", [])
+            claves_nuevas = {c.get("url") or c.get("titulo", "")[:80] for c in contratos_frescos}
+            descartados = [c for c in existentes if c.get("fuente") == fuente
+                           and (c.get("url") or c.get("titulo", "")[:80]) not in claves_nuevas]
+            if descartados:
+                _archivar_contratos_formales(municipio, provincia or "murcia", descartados)
+                total_archivados += len(descartados)
+            restantes = [c for c in existentes if c.get("fuente") != fuente]
+            nuevos_totales = _fusionar_historico_contratos(restantes, contratos_frescos)
+            if not descartados and len(nuevos_totales) == len(existentes):
+                sin_cambios += 1
+                continue
+            d["contratos"] = nuevos_totales
+            d["total_contratos"] = len(nuevos_totales)
+            d["alertas"] = analizar_riesgo(nuevos_totales)
+            with _db_lock:
+                _db.execute("UPDATE municipios SET data=? WHERE municipio=?",
+                            (json.dumps(d, ensure_ascii=False), key))
+                _db.commit()
+            corregidos += 1
+        with _db_lock:
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                        "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor",
+                        (_CORRECCION_FORMALES_5ANIOS_CLAVE, huella))
+            _db.commit()
+        print(f"[startup] correccion_formales_5anios: {corregidos} municipio::fuente corregidos, "
+              f"{total_archivados} contratos archivados (fuera de ventana), {sin_cambios} sin cambios, "
+              f"{len(sin_ficha)} sin ficha en producción (omitidos: {sin_ficha[:10]}"
+              f"{'...' if len(sin_ficha) > 10 else ''}).", flush=True)
+    except Exception as e:
+        print(f"[startup] correccion_formales_5anios: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
 def _dedup_pscp_fases(filas):
     """El mismo lote pasa por Adjudicació -> Formalització -> Execució a lo
     largo de su ciclo de vida (ver nota de PSCP_FASES), y el dataset puede
@@ -10685,6 +10765,30 @@ def _cargar_contratos_menores_euskadi():
               f"(País Vasco, API Euskadi) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_MADRID_CAPITAL_FILE = os.path.join(BASE_DIR, "contratos_menores_madrid_capital.json.gz")
+
+
+def _cargar_contratos_menores_madrid_capital():
+    """Carga contratos_menores_madrid_capital.json.gz (generado por actualizar_contratos_menores_madrid_capital.py
+    -- dataset oficial "Contratos menores" de datos.madrid.es) y lo vuelca a la tabla compartida
+    contratos_menors_locales. Mismo patrón que _cargar_contratos_menores_euskadi: se ejecuta en cada arranque
+    (upsert idempotente), el fichero solo cambia cuando alguien vuelve a lanzar el script a mano (periodicidad
+    mensual de la fuente, no diaria)."""
+    ruta = CONTRATOS_MENORES_MADRID_CAPITAL_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_madrid_capital: {len(registros)} contratos menores "
+              f"(Madrid capital, datos.madrid.es) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10703,9 +10807,11 @@ def _inicializar_datos():
     _db_init()
     _cargar_contratos_menores_murcia_manual()
     _cargar_contratos_menores_euskadi()
+    _cargar_contratos_menores_madrid_capital()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
+    _aplicar_correccion_formales_5anios()
     corte = time.time() - RESULT_CACHE_TTL
     with _db_lock:
         recientes = _db.execute("SELECT municipio FROM municipios WHERE ts > ?", (corte,)).fetchall()
@@ -13776,6 +13882,7 @@ _FUENTE_CM_LABEL = {
     "sax-governalia":  "Sax (PLACE)",
     "vilamarxant-governalia": "Vilamarxant (PLACE)",
     "euskadi":         "API Euskadi",
+    "madrid_capital":  "Madrid",
 }
 
 
@@ -13831,6 +13938,13 @@ _NOTAS_FUENTE_CM = {
         "formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección "
         "cuando el propio dato de origen es matemáticamente imposible, ver memoria del proyecto). No siempre "
         "publica NIF."
+    ),
+    "madrid_capital": (
+        "Dataset oficial \"Contratos menores\" del Ayuntamiento de Madrid (datos.madrid.es, Dirección General de "
+        "Contratación y Servicios), actualización mensual. Fecha real de adjudicación e importe con IVA; sí "
+        "publica NIF del adjudicatario (a diferencia de RPC/Euskadi). Sin CPV y sin enlace por expediente. Solo "
+        "Madrid capital, no el resto de municipios de la Comunidad de Madrid (que no tiene agregador propio, ver "
+        "LIMITACIONES_COBERTURA.md)."
     ),
 }
 
@@ -13912,6 +14026,15 @@ _NOTAS_CONTRATO_MENOR = {
 # (automático, no una lista cerrada) siempre que no haya ya una nota curada para ese id concreto.
 EUSKADI_MENOR_IMPORTE_SOSPECHOSO = 100_000
 
+# Madrid capital (2026-09-27, dataset oficial datos.madrid.es): a diferencia de Euskadi, aquí las cifras por
+# encima del techo legal habitual de un contrato menor (15.000€ servicios/suministros, 40.000€ obras) SÍ tienen
+# una explicación normal la mayoría de las veces -- el propio dataset municipal incluye, junto a los menores
+# propiamente dichos, "contratos privados" (régimen distinto de la LCSP, sin el tope de contrato menor;
+# verificado en vivo: las cifras más altas del dataset son suscripciones a bases de datos tipo Gartner con
+# "CONTRATO PRIVADO" en el propio objeto del contrato). Por eso la nota aquí NO habla de posible error de
+# origen como en Euskadi, solo advierte del régimen distinto.
+MADRID_CAPITAL_MENOR_IMPORTE_ALTO = 40_000
+
 
 def _render_fila_contrato_menor(r):
     """Fila de la tabla de contratos menores locales -- compartida por todas
@@ -13988,6 +14111,10 @@ def _render_fila_contrato_menor(r):
         nota_txt = ("Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato "
                     "menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica "
                     "un enlace por contrato para comprobarlo directamente, así que se muestra tal cual.")
+    if not nota_txt and fuente == "madrid_capital" and (r.get("import_num") or 0) > MADRID_CAPITAL_MENOR_IMPORTE_ALTO:
+        nota_txt = ("Importe por encima del techo legal habitual de un contrato menor (dataset oficial del "
+                    "Ayuntamiento de Madrid). Probablemente un \"contrato privado\" (régimen distinto, sin ese "
+                    "tope) incluido en el mismo dataset -- no necesariamente un error.")
     nota_fila = f'<span class="cm-nota">⚠️ {esc(nota_txt)}</span>' if nota_txt else ""
 
     return f"""<tr>
