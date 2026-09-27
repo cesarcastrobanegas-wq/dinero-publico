@@ -116,8 +116,8 @@ si falta algo o es ambiguo se salta y se anota. Nada se estima ni se convierte (
 salvedades de esa fuente** (`_NOTAS_SUELDOS_CONCEJALES` en `app.py`); las fichas de los municipios aparcados muestran un aviso con
 el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
 
-- **Cobertura a 2026-09-27**: 504 registros en 25 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
-  Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles; Elche, Castellón de la Plana; Vigo; Logroño; Murcia, Molina de Segura,
+- **Cobertura a 2026-09-27**: 518 registros en 26 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
+  Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles, Las Rozas; Elche, Castellón de la Plana; Vigo; Logroño; Murcia, Molina de Segura,
   Cartagena; Santa Cruz de Tenerife; Palencia; Eivissa; Vitoria-Gasteiz). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
 - **Salvedades concretas por fuente**:
   - **Sevilla**: cargo mostrado como "Concejal/a" genérico (el PDF fuente no especifica la concejalía); el importe es lo percibido en
@@ -146,6 +146,10 @@ el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
     de 2019-2023), **Burgos** (sin cargo; la alcaldesa figura como un corporativo más), **Leganés** (PDF por persona sin nombre dentro y con
     enlaces cruzados), **A Coruña** y **Toledo** (por cargo, sin nombres), **Santander** (página sin contenido), **Las Palmas** (visor no
     legible), **Fuenlabrada**, **Alcobendas**, **Rivas-Vaciamadrid**. Detalle en `SUELDOS_CONCEJALES_LOG.md`.
+  - **Lote 6 (2026-09-27, aviso también en la ficha)**: **Donostia** (cargo e importe en un documento, nombres en otro), **Lugo** (por dedicación y
+    grupo), **Pontevedra** (mandato 2019-2023), **Ourense** (PDF escaneados sin texto), **Pozuelo** (BOCM sueltos), **Benidorm** (totales mensuales
+    sin cargo), **Torrejón de Ardoz** (por cargo, sin nombres). **Las Rozas** sí entra, pero con importes del acuerdo de 2023 que la fuente dice
+    que se actualizan con las Leyes de Presupuestos. Santiago de Compostela: portal inaccesible desde aquí, pendiente de reintento.
   - Pendientes de reintento por otros motivos: **Barcelona** (su API de cargos devolvía "timeout" en dos comprobaciones),
     **Reus** (por cargo, sin nombres), **Alcalá de Henares** (por categoría, sin importe por persona).
 - **Plataformas descartadas**: `*.sedelectronica.es/employees` exige Cl@ve (Marbella, Orihuela); seu-e.cat solo rellena el importe en

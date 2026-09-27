@@ -182,3 +182,26 @@ Además, las fichas gallegas muestran un aviso sobre el backfill de PLACE (el me
 - Sin verificar a fondo (solo búsqueda, no se afirma nada en la web): Gijón, Salamanca, Alcorcón, Marbella, Dos Hermanas, Guadalajara, Badajoz, Albacete, Pamplona.
 
 Avisos públicos añadidos (`_SUELDOS_CONCEJALES_SIN_TABLA`): León, Getafe, Oviedo, Burgos, Leganés, A Coruña, Toledo, Santander, Las Palmas, Fuenlabrada, Alcobendas, Rivas. Notas públicas para los 4 municipios nuevos.
+
+---
+
+## Lote 6 — Las Rozas de Madrid y más saltos (2026-09-27)
+
+**Añadidos: 14 concejales** (Las Rozas de Madrid). Total acumulado: **518 registros en 26 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Las Rozas de Madrid | transparencia.lasrozas.es > "Dedicación, retribución, indemnizaciones, compatibilidades y delegaciones" (acuerdo con efectos desde 1/08/2023) | "Retribución bruta anual" por cargo y persona (cada fila = 3 encabezados HTML: cargo, nombre, importe). 10 concejales con "VARIABLE POR ASISTENCIAS" saltados (sin importe fijo); alcalde excluido. La fuente dice que las cantidades se incrementan con las Leyes de Presupuestos sin nuevo acuerdo → pueden ser mayores hoy. Cuadra con el propio acuerdo: 15 dedicaciones exclusivas (alcalde + 14) |
+
+**Saltados y por qué (comprobado en crudo)**
+- **Donostia / San Sebastián**: PDF oficial con cargo, grupo, % dedicación y salario anual bruto (2025) pero **sin nombres**; los nombres de los cargos están en otro documento (declaraciones en el BOG) → cruce entre documentos, no se hace.
+- **Lugo**: importes por tipo de dedicación y grupo ("6 PSOE, 2 PP y 1 Lugonovo: 3.172,40 €"), sin nombres.
+- **Pontevedra**: la página de retribuciones es del mandato 2019-2023.
+- **Ourense**: los PDF de retribuciones de la corporación y de dedicación exclusiva son imágenes escaneadas (0 caracteres de texto) → no verificables contra el texto de la fuente.
+- **Santiago de Compostela**: el portal `transparencia.santiagodecompostela.gal` rechazó la conexión desde aquí (pendiente de reintento, no se afirma nada en la web).
+- **Pozuelo de Alarcón**: cambios de régimen de dedicación en sucesivos BOCM y decretos, sin tabla consolidada de nombre e importe.
+- **Benidorm**: PDF mensual con total bruto por corporativo y "Dedicación exclusiva/Asistencias" como único dato de cargo (mezcla asistencias con sueldo, sin concejalía) → mismo criterio que Burgos.
+- **Torrejón de Ardoz**: documento "Retribuciones anuales Gobierno y Corporación" por cargo, sin nombres.
+- Sin comprobar a fondo (solo búsqueda): Torrevieja (Gobierto), Talavera, Cáceres.
+
+Avisos públicos añadidos: Donostia, Lugo, Pontevedra, Ourense, Pozuelo de Alarcón, Benidorm, Torrejón de Ardoz. Nota pública para Las Rozas.

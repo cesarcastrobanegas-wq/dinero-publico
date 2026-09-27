@@ -4409,6 +4409,8 @@ _NOTAS_SUELDOS_CONCEJALES = {
     "mostoles": "La tabla oficial (acuerdo plenario de 8 de enero de 2026) da un importe por persona sin indicar el periodo; se muestra tal cual.",
     "almeria": "Importes íntegros anuales de 2026 según el régimen de dedicación aprobado; algunas personas tienen dedicación desde una fecha de 2025 (se indica). "
                "Los cargos se muestran con la grafía de la fuente.",
+    "las rozas de madrid": "Importes del acuerdo con efectos desde el 1 de agosto de 2023; la propia fuente indica que se incrementan según las Leyes de Presupuestos sin nuevo acuerdo, "
+                           "así que hoy pueden ser mayores. Los concejales con «variable por asistencias» (sin importe fijo) no aparecen.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
@@ -4438,6 +4440,13 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "fuenlabrada": "El Ayuntamiento publica la escala del BOCM y el régimen de dedicaciones en documentos distintos, sin una tabla de nombre e importe.",
     "alcobendas": "El portal de datos abiertos del Ayuntamiento no permite consultar sus retribuciones desde nuestros sistemas.",
     "rivas-vaciamadrid": "El Ayuntamiento publica los nombres de la corporación sin el importe por persona.",
+    "donostia/san sebastian": "El Ayuntamiento publica cargo, grupo, dedicación y salario anual bruto en un documento, y los nombres de los cargos en otro; no hay una tabla con nombre e importe.",
+    "lugo": "El Ayuntamiento publica los importes por tipo de dedicación y grupo, sin el importe asociado a cada nombre.",
+    "pontevedra": "La página de retribuciones del Ayuntamiento corresponde al mandato 2019-2023.",
+    "ourense": "Los PDF de retribuciones de la corporación que publica el Ayuntamiento son imágenes escaneadas sin texto, y no se pueden verificar contra la fuente.",
+    "pozuelo de alarcon": "El Ayuntamiento publica los cambios de régimen de dedicación en sucesivos boletines oficiales (BOCM) y decretos, sin una tabla consolidada de nombre e importe.",
+    "benidorm": "El Ayuntamiento publica cada mes un total bruto por corporativo que mezcla dedicación y asistencias y no indica el cargo o la concejalía.",
+    "torrejon de ardoz": "El documento de retribuciones del Ayuntamiento lista los importes por cargo, sin nombres.",
 }
 
 

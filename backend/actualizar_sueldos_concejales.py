@@ -1121,6 +1121,42 @@ def actualizar_cartagena():
     return out
 
 
+@_fuente("las rozas de madrid")
+def actualizar_las_rozas():
+    """Ayuntamiento de Las Rozas de Madrid > Portal de Transparencia > 'Dedicación, retribución, indemnizaciones, compatibilidades y delegaciones
+    de altos cargos'. El acuerdo fija la 'Retribución bruta anual' por cargo y persona (efectos 1/08/2023; la propia fuente añade que se
+    incrementan según las Leyes de Presupuestos sin nuevo acuerdo). Cada fila de la página son 3 encabezados: cargo | nombre | importe. Los
+    concejales con 'VARIABLE POR ASISTENCIAS' (sin importe fijo) se saltan. Se excluye el alcalde (cubierto aparte)."""
+    from bs4 import BeautifulSoup
+    url = "https://transparencia.lasrozas.es/institucional-organizativa-y-personal/dedicacion-retribucion-e-indemnizaciones-de-altos-cargos/"
+    r = descargar(url)
+    texto = texto_html(r.text)
+    m = re.search(r"entrar[aá]n en vigor desde el d[ií]a (\d{1,2} de \w+ de \d{4})", texto)
+    periodo = f"acuerdo con efectos desde el {m.group(1)}" if m else "acuerdo vigente"
+    out, variable = [], 0
+    for sec in BeautifulSoup(r.text, "html.parser").find_all("section"):
+        hs = [re.sub(r"\s+", " ", h.get_text(" ", strip=True)) for h in sec.find_all("h6", class_="elementor-heading-title")]
+        if len(hs) != 3 or not re.search(r"\d", hs[2] + "x") and "VARIABLE" not in hs[2].upper():
+            continue
+        cargo, nombre, imp = hs
+        if "VARIABLE" in imp.upper():
+            variable += 1
+            continue
+        if cargo.lower().startswith("alcalde"):
+            continue
+        importe = num_es(imp)
+        if not importe:
+            continue
+        nombre = re.sub(r"^(D\.|Dª|D\.ª|Doña|Don)\s+", "", nombre)
+        out.append(nuevo_registro("Las Rozas de Madrid", "madrid", nombre, cargo, importe, "retribución bruta anual fijada en el acuerdo (12 mensualidades)",
+                                  periodo, url, "Portal de Transparencia del Ayuntamiento de Las Rozas de Madrid", texto))
+    if variable:
+        print(f"  Las Rozas: {variable} concejales 'variable por asistencias' saltados")
+    if len(out) < 10:
+        raise RuntimeError(f"Las Rozas: solo {len(out)} concejales (¿cambió la página?)")
+    return out
+
+
 @_fuente("almeria")
 def actualizar_almeria():
     """Ayuntamiento de Almería > Transparencia > Retribuciones de los cargos electos: PDF 'Retribuciones y régimen de dedicación miembros
