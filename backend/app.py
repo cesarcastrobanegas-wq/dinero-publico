@@ -4420,6 +4420,8 @@ _NOTAS_SUELDOS_CONCEJALES = {
                              "Una persona con meses a cero (año parcial) no aparece. El documento es del ejercicio 2024.",
     "vitoria-gasteiz": "Importes MENSUALES (salario mensual según puesto y dedicación, documento actualizado en marzo de 2025); no se han pasado a anual. "
                        "La fuente rotula todos los puestos de teniente de alcalde como «teniente alcaldesa».",
+    "badajoz": "Salario anual bruto (14 pagas) de 2025 según el Excel de retribuciones del Ayuntamiento; solo aparecen tenientes de "
+               "alcalde y concejales delegados con dedicación, no los concejales de la oposición ni cargos sin retribución fija.",
     "mostoles": "La tabla oficial (acuerdo plenario de 8 de enero de 2026) da un importe por persona sin indicar el periodo; se muestra tal cual.",
     "almeria": "Importes íntegros anuales de 2026 según el régimen de dedicación aprobado; algunas personas tienen dedicación desde una fecha de 2025 (se indica). "
                "Los cargos se muestran con la grafía de la fuente.",

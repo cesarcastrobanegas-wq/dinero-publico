@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-27",
+ "generado": "2026-09-28",
  "descripcion": "Sueldos de concejales publicados con nombre por fuentes oficiales de cada ayuntamiento (ver SUELDOS_CONCEJALES_LOG.md). Registro: municipio, provincia, nombre, cargo, importe, base, periodo, fuente_url, fuente_nombre.",
  "registros": [
   {
@@ -1002,6 +1002,149 @@
    "periodo": "año 2026",
    "fuente_url": "https://almeriaciudad.es/uploads/media/document/retribuciones-y-regimen-de-dedicacion-miembros-corporacion-2026_0.pdf",
    "fuente_nombre": "Portal de transparencia del Ayuntamiento de Almería"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Ruben Galea Gil",
+   "cargo": "Teniente de alcalde",
+   "importe": 71160.32,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Javier Gijon Rodriguez",
+   "cargo": "Teniente de alcalde",
+   "importe": 70412.86,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Ana Maria Casañas Suarez",
+   "cargo": "Concejal/a delegado/a",
+   "importe": 65928.1,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Carlos Urueña Fernandez",
+   "cargo": "Teniente de alcalde",
+   "importe": 65928.1,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Jose Antonio Casablanca del Barco",
+   "cargo": "Teniente de alcalde",
+   "importe": 65928.1,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Juan Parejo Fernandez",
+   "cargo": "Concejal/a delegado/a",
+   "importe": 65928.1,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Eladio Buzo Corzo",
+   "cargo": "Teniente de alcalde",
+   "importe": 52742.48,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Elena Salgado Vaqueriza",
+   "cargo": "Concejal/a delegado/a",
+   "importe": 52742.48,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Gema Maria Cortes Luna",
+   "cargo": "Teniente de alcalde",
+   "importe": 52742.48,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Jose Luis Gonzalez Serrano",
+   "cargo": "Concejal/a delegado/a",
+   "importe": 52742.48,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Juan Perez Marquez",
+   "cargo": "Teniente de alcalde",
+   "importe": 52742.48,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Maria Josefa Dolores Vazquez Rafael",
+   "cargo": "Teniente de alcalde",
+   "importe": 52742.48,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
+  },
+  {
+   "municipio": "Badajoz",
+   "provincia": "badajoz",
+   "nombre": "Mariema del Carmen Seck Moreno",
+   "cargo": "Teniente de alcalde",
+   "importe": 52742.48,
+   "base": "salario anual bruto (14 pagas)",
+   "periodo": "año 2025",
+   "fuente_url": "https://www.aytobadajoz.es/files/archivos/ayto/2026_05/ayuntamiento_badajoz_retribuciones_alcalde_concejales_y_personal_de_confianza_2025.xlsx",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Badajoz"
   },
   {
    "municipio": "Calvià",

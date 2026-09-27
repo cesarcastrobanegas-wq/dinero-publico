@@ -1715,6 +1715,45 @@ def actualizar_castellon():
     return out
 
 
+@_fuente("badajoz")
+def actualizar_badajoz():
+    """Portal de Transparencia del Ayuntamiento de Badajoz > Excel 'Retribuciones alcalde, concejales y personal de
+    confianza <año>': hoja 'Alcalde y Concejales' con APELLIDOS Y NOMBRE (con coma) | PUESTO | Salario bruto mensual
+    (14 pagas) | Salario Anual Bruto. Se guarda el Salario Anual Bruto; se excluye el alcalde."""
+    import openpyxl
+    pagina = "https://www.aytobadajoz.es/es/ayto/participacion-ciudadana/58345/transparencia"
+    r = descargar(pagina)
+    m = re.search(r'href="([^"]*retribuciones_alcalde_concejales_y_personal_de_confianza_(\d{4})\.xlsx)"', r.text)
+    if not m:
+        raise RuntimeError("Badajoz: no se encontró el Excel de retribuciones")
+    from urllib.parse import urljoin
+    url, anio = urljoin(r.url, m.group(1)), m.group(2)
+    wb = openpyxl.load_workbook(io.BytesIO(descargar(url).content), data_only=True)
+    filas = [list(f) for f in wb["Alcalde y Concejales"].iter_rows(values_only=True)]
+    # las celdas de Excel a veces guardan un float con ruido de coma flotante (65928.09999999999 en vez de
+    # 65928.10): si el texto de verificación se construye con str(c) tal cual, ese ruido nunca coincide con
+    # ninguna de las formas "65928,10" que genera _formas_importe -- se redondea a 2 decimales para el texto.
+    texto = "\n".join(" ".join("" if c is None else (f"{c:.2f}" if isinstance(c, float) else str(c)) for c in f)
+                      for f in filas)
+    out = []
+    for f in filas:
+        if not (f and f[0] and f[1] and isinstance(f[3], (int, float))) or str(f[0]).upper().startswith("APELLIDOS"):
+            continue
+        if "," not in str(f[0]):
+            continue
+        apellidos, nombre_pila = str(f[0]).split(",", 1)
+        nombre = nombre_persona(apellidos, nombre_pila)
+        cargo = cargo_frase(str(f[1]))
+        if cargo.lower().startswith("alcalde"):
+            continue
+        out.append(nuevo_registro("Badajoz", "badajoz", nombre, cargo, round(float(f[3]), 2),
+                                  "salario anual bruto (14 pagas)", f"año {anio}", url,
+                                  "Portal de Transparencia del Ayuntamiento de Badajoz", texto))
+    if len(out) < 10:
+        raise RuntimeError(f"Badajoz: solo {len(out)} concejales (¿cambió el Excel?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):

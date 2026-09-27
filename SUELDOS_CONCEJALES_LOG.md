@@ -344,3 +344,17 @@ Nota pública para Pozuelo de Alarcón; se retira su entrada de `_SUELDOS_CONCEJ
 
 Nota pública añadida para Torrevieja.
 
+---
+
+## Lote 15 — Badajoz (2026-09-30, extensión a toda España: Extremadura)
+
+**Añadidos: 13 concejales** (Badajoz). Total acumulado: **710 registros en 37 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Badajoz | aytobadajoz.es > Transparencia > Excel "Retribuciones alcalde, concejales y personal de confianza 2025" (hoja "Alcalde y Concejales") | APELLIDOS Y NOMBRE (con coma) + PUESTO + Salario Anual Bruto (14 pagas). Solo aparecen tenientes de alcalde y concejales delegados con dedicación; la oposición y cargos sin retribución fija no están en esta hoja. Alcalde excluido. Bug real corregido: una celda de importe llega con ruido de coma flotante de Excel (65928.09999999999 en vez de 65928,10) que rompía la verificación contra el texto crudo -- se redondea a 2 decimales antes de construir ese texto |
+
+**Aparcado tras comprobar**: **Cáceres** — sin página de transparencia ni retribuciones localizada esta noche (`/transparencia` da 404, sin subdominio dedicado); se retoma otro día con más tiempo.
+
+Nota pública añadida para Badajoz.
+
