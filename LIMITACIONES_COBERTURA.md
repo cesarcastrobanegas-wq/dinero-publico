@@ -146,12 +146,12 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-29**: 10 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
-Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares — **91.208 contratos** entre los diez),
-2 con lead sin cerrar por un obstáculo técnico concreto (Valladolid: SPA con JS; Zaragoza: paginación de su
-propia API rota, confirmado y abandonado), varios confirmados sin fuente viable tras investigación real, no
-solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por
-municipio abajo.
+**Estado a 2026-09-30**: 11 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid — **102.600 contratos**
+entre los once), 1 con lead sin cerrar por un obstáculo técnico concreto (Zaragoza: paginación de su propia API
+rota, confirmado y abandonado), varios confirmados sin fuente viable tras investigación real, no solo una
+búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio
+abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -196,18 +196,24 @@ municipio abajo.
     aprovecha todavía (el esquema compartido de `contratos_menors_locales` no tiene columna de URL).
   - Verificado: 0 filas sin fecha, 0 sin NIF, importes máximos coherentes con el tope legal de obras (~40.000 €,
     sin anomalías tipo Euskadi). Carga y render probados sin errores.
-- **Valladolid (~298.000 hab., Castilla y León) — lead confirmado, retomado sin cerrar (2026-09-28)**: publica
-  "Contratos menores y volumen de contratación" en `valladolid.gob.es/es/perfil-contratante/
-  contratos-menores-volumen-contratacion-tipo-procedimiento/ano-<año>`, con informes ACUMULATIVOS por año
-  (el de cada trimestre incluye los anteriores del mismo año -- "1r trimestre", luego "1r+2º semestre", luego
-  "1º+2º+3º trimestre"... solo hace falta el fichero MÁS RECIENTE de cada año, no todos). Patrón de URL de
-  fichero confirmado en un año antiguo: `.../ano-2022.ficheros/764647-CONTRATACION%20PRIMER%20TRIMESTRE...
-  .xlsx`. **Obstáculo real esta noche**: la página índice de cada año (`ano-2025`, etc.) es una SPA que
-  renderiza sus enlaces de descarga por JavaScript -- una petición HTTP directa (`curl`) devuelve la página sin
-  los `href` reales, y la herramienta de lectura de páginas disponible tampoco los expone en su resumen. Hace
-  falta una herramienta con ejecución de JS (navegador real/Selenium/Playwright) para extraer los enlaces
-  exactos de cada año antes de poder escribir el conector -- el formato del propio fichero (XLSX) no se ha
-  podido inspeccionar todavía por este motivo.
+- **Valladolid (~298.000 hab., Castilla y León) — CONECTADO (2026-09-30)**: informes anuales de "Contratación"
+  en `valladolid.gob.es/es/perfil-contratante/contratos-menores-volumen-contratacion-tipo-procedimiento/
+  ano-<año>`. **11.392 registros desde 2021** (`actualizar_contratos_menores_valladolid.py`, fuente
+  `valladolid`). Son informes ACUMULATIVOS por año (1er trimestre → 1er semestre → 1º+2º+3º trimestre →
+  ejercicio completo) -- solo hace falta el fichero MÁS RECIENTE de cada año.
+  - **El obstáculo del JavaScript, resuelto sin navegador**: la página índice de 2025/2026 es una SPA en React
+    que no expone los enlaces de descarga en el HTML inicial, pero SÍ contiene un `<a href>` real y estático a
+    una SUBPÁGINA (`.../ano-<año>/ayuntamiento-valladolid`) -- encontrado inspeccionando el HTML crudo con
+    `curl` en vez de necesitar una herramienta con ejecución de JS. Esa subpágina sí tiene los `.ficheros/<id>-
+    <nombre>.xlsx` reales y estáticos. Los años 2021-2024 son completamente estáticos en la propia página
+    principal, sin necesitar el truco.
+  - **Estructura del Excel**: varias hojas; la relevante es "OPERACIONES SICALWIN" (programa de contabilidad
+    municipal), con TODAS las operaciones de contratación del año (no solo menores) -- se filtra por la
+    columna "PROCEDIMIENTO" = "Contratación menor" (los otros valores son "Procedimiento abierto", "Acuerdo
+    marco", "Procedimiento negociado sin publicidad", formales).
+  - Sin NIF (no publicado por esta fuente). Verificado: 0 sin fecha, 0 sin descripción, importes coherentes
+    con el tope legal salvo un caso aislado (prórroga de patrocinio publicitario plurianual, ~165.000 €,
+    aceptado tal cual lo clasifica la propia fuente como "Contratación menor").
 - **Palma (~416.000 hab., Illes Balears) — lead confirmado, formato incómodo**: `palma.es/es/contratos-menores`
   publica Excel + PDF por trimestre. Mismo patrón que Valladolid.
 - **Alicante (~337.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: informes trimestrales oficiales
