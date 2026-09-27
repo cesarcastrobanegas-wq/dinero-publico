@@ -301,3 +301,20 @@ Notas públicas: Sagunto, Alcoy. Aviso: Torremolinos.
 
 **Verificado en producción (tanda 5 del backfill)**: los contratos nuevos de Vilalba (13/13), A Estrada (13/13) y Mos (14/14) aparecen en sus fichas (`&pag=N`), y el aviso público dice "llega hasta septiembre de 2023".
 
+---
+
+## Lote 12 — Reintentos nocturnos: Alcalá de Henares recuperada (2026-09-27, madrugada)
+
+**Añadidos: 24 concejales** (Alcalá de Henares). Total acumulado: **652 registros en 34 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Alcalá de Henares | ayto-alcaladehenares.es > "Retribuciones de los Concejales" (actualizada a 14/08/2025) | La página NO es una tabla: un párrafo por tramo de cargo/dedicación con la lista de personas de ese tramo entre paréntesis y el importe (compartido por todo el tramo) a continuación. Se recuperan nombre + cargo (el del tramo) + importe (el del tramo) por persona. Nombres con nota `{hasta DD/MM/AAAA}` (ya no están en ese tramo) se excluyen; con `{desde DD/MM/AAAA}` se incluyen con esa fecha en el periodo. Certificado SSL inválido: descarga sin verificar (solo lectura de un documento público, igual que Almería) |
+
+**Reintentos de esta noche (resultado)**
+- **Barcelona**: 5.ª comprobación, sigue devolviendo "API timeout error or wrong group ID" en los tres bloques de cargos electos → sigue aparcado.
+- **Reus**: la URL de "Retribucions dels càrrecs electes" (`reus.cat` y `transparencia.reus.cat`) da 404 en ambas variantes probadas esta noche; el índice de transparencia ya no enlaza esa página → sigue aparcado.
+- **Cartagena**: ya estaba añadido (lote 4), no aplica.
+
+Nota pública añadida para Alcalá de Henares; se retira su entrada de `_SUELDOS_CONCEJALES_SIN_TABLA`.
+

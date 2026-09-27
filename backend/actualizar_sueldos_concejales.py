@@ -1195,6 +1195,62 @@ def actualizar_sagunto():
     return out
 
 
+@_fuente("alcala de henares")
+def actualizar_alcala_de_henares():
+    """Ayuntamiento de Alcalá de Henares > 'Retribuciones de los Concejales' (actualizada a 14/08/2025). NO es una
+    tabla: es un párrafo por tramo de cargo/dedicación, con la lista de personas de ese tramo entre paréntesis y el
+    importe (compartido por todo el tramo) a continuación: 'Tenientes de Alcalde (Dª. X, D. Y y Dª Z): 85.754,18 €'.
+    Algunos nombres llevan una nota entre llaves: '{hasta el DD/MM/AAAA}' (ya no está en ese tramo -> se excluye) o
+    '{desde el DD/MM/AAAA}' (entró después del acuerdo -> se incluye, con la fecha en el periodo); un tramo puede
+    llevar el 'desde DD/MM/AAAA' delante de todo el listado en vez de en cada nombre. Los tramos sin nadie
+    ('actualmente no hay ningún concejal en dicha situación') se saltan. Se excluye la alcaldesa (cubierta aparte)."""
+    from urllib.parse import urljoin
+    from bs4 import BeautifulSoup
+    url = "https://www.ayto-alcaladehenares.es/retribuciones-de-los-concejales/"
+    r = descargar(url, verify=False)
+    texto = texto_html(r.text)
+    m = re.search(r"(\d{1,2} \w+ \d{4}) \| Retribuciones de los Concejales", texto)
+    periodo_base = f"acuerdo del Pleno, tal como se publica (actualizado a {m.group(1)})" if m else "acuerdo del Pleno vigente"
+    re_tramo = re.compile(r"^(?P<cargo>.+?)\s*\((?P<names>.*?)\)\s*:?\s*(?P<imp>[\d.]+,\d{2})\s*€")
+    re_desde_tramo = re.compile(r"^desde el (\d{2}/\d{2}/\d{4})\s+(.+)$")
+    re_nota_persona = re.compile(r"\s*\{([^}]*)\}")
+    out = []
+    for p in BeautifulSoup(r.text, "html.parser").find_all(["p", "li"]):
+        t = re.sub(r"\s+", " ", p.get_text(" ", strip=True)).strip()
+        m = re_tramo.match(t)
+        if not m or m.group("cargo").lower().startswith("alcaldesa") or "actualmente no hay ningún concejal" in m.group("names"):
+            continue
+        cargo, names, imp = m.group("cargo").strip(), m.group("names"), num_es(m.group("imp"))
+        desde_tramo = ""
+        md = re_desde_tramo.match(names.strip())
+        if md:
+            desde_tramo, names = md.group(1), md.group(2)
+        # Protege las comas DENTRO de una nota entre llaves (p.ej. '{esta última, hasta el 31/12/2023}') para que
+        # el split de abajo no las trate como separador de persona; y separa también un cierre de llave pegado
+        # directamente al siguiente nombre sin coma ('...García {desde el 18/03/2025} Dª Alba...', visto en la
+        # fuente real) igual que si fuera ' y '.
+        names_prot = re.sub(r"\{[^}]*\}", lambda m: m.group(0).replace(",", "\x00"), names)
+        names_prot = re.sub(r"\}\s+(?=D[ª.]?\s)", "}, ", names_prot)
+        for nombre in re.split(r",\s*| y (?=D[ª.]?\s)", names_prot):
+            nombre = nombre.replace("\x00", ",").strip().rstrip(",")
+            if not nombre or not re.match(r"^D[ª.]?\s", nombre):
+                continue   # ruido suelto tras una coma (p.ej. 'a partir del 01/01/2024'), no un nombre
+            notas = re_nota_persona.findall(nombre)
+            nombre_limpio = re_nota_persona.sub("", nombre).strip()
+            nombre_limpio = re.sub(r"^(D\.|Dª\.?|D)\s+", "", nombre_limpio)
+            if any("hasta el" in n.lower() for n in notas):
+                continue   # ya no está en este tramo: se salta
+            desde_persona = next((re.search(r"desde el (\d{2}/\d{2}/\d{4})", n) for n in notas if "desde el" in n.lower()), None)
+            desde = (desde_persona.group(1) if desde_persona else None) or desde_tramo
+            periodo = periodo_base + (f"; en este tramo desde el {desde}" if desde else "")
+            out.append(nuevo_registro("Alcalá de Henares", "madrid", nombre_limpio, cargo_frase(cargo), imp,
+                                      "importe fijado por tramo de cargo/dedicación (lo comparten todas las personas del tramo)",
+                                      periodo, url, "Web del Ayuntamiento de Alcalá de Henares: retribuciones de los concejales", texto))
+    if len(out) < 10:
+        raise RuntimeError(f"Alcalá de Henares: solo {len(out)} concejales (¿cambió la página?)")
+    return out
+
+
 @_fuente("calvia")
 def actualizar_calvia():
     """Ajuntament de Calvià > Transparencia > Corporación 2023-2027 > 'Retribuciones e indemnizaciones de los miembros de la Corporación' (enlace 'AQUÍ' =

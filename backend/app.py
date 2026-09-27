@@ -44,6 +44,7 @@ RETRIBUCIONES_FILE = os.path.join(BASE_DIR, "retribuciones_ispa.json")
 # partir de 50 MB y rechaza a 100 MB; comprimido son ~7 MB. La lectura es transparente: si por lo que sea
 # solo existe el .json antiguo, se usa ese (ver _abrir_json_menores_manual).
 CONTRATOS_MENORES_MURCIA_MANUAL_FILE = os.path.join(BASE_DIR, "contratos_menores_murcia_manual.json.gz")
+CONTRATOS_MENORES_EUSKADI_FILE = os.path.join(BASE_DIR, "contratos_menores_euskadi.json.gz")
 CUENTAS_ANUALES_FILE = os.path.join(BASE_DIR, "cuentas_anuales.json")
 HACIENDA_EELL_FILE = os.path.join(BASE_DIR, "hacienda_eell.json")
 POBLACION_FILE = os.path.join(BASE_DIR, "poblacion.json")
@@ -4437,6 +4438,8 @@ _NOTAS_SUELDOS_CONCEJALES = {
     "sagunto": "Salario bruto anual (14 pagas) de la tabla oficial del primer trimestre de 2026. El documento no indica el cargo ni separa al alcalde (figura como una persona más con "
                "dedicación exclusiva): por eso se muestra «alcalde o concejal». Las filas de solo asistencias no tienen salario y no aparecen.",
     "alcoy": "Salario anual (14 pagas) de 2023 según el cuadro oficial del mandato actual; pueden haberse actualizado. No aparecen las personas con solo asistencias ni quien renunció al sueldo.",
+    "alcala de henares": "El importe está fijado por tramo de cargo y dedicación, no por persona: todas las personas del mismo tramo cobran igual según la página oficial (actualizada a 14/08/2025). "
+                         "Quien cambió de tramo durante el mandato aparece solo en su tramo actual (se indica la fecha desde la que está en él); no aparecen las personas «sin dedicación ni asistencias».",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se
@@ -4453,7 +4456,6 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "palma": "El documento de retribuciones enlazado es de 2023, anterior al mandato actual; no hemos localizado una tabla nominal vigente.",
     "barcelona": "Su portal de transparencia declara publicar los sueldos de cargos electos con nombre, pero al comprobarlo (dos veces) sus datos no se devolvían (error de su API); pendiente de reintentar.",
     "reus": "El Ayuntamiento publica las remuneraciones 2026 por cargo, sin nombres.",
-    "alcala de henares": "El Ayuntamiento publica las cuantías por categoría y el reparto de dedicaciones por grupo, sin importe por persona.",
     "leon": "El Ayuntamiento publica las retribuciones de 2024 con las iniciales de cada concejal, no el nombre.",
     "getafe": "El Ayuntamiento publica el importe anual por cargo (número de puestos y retribución), sin nombres; las nóminas mensuales van en documentos aparte.",
     "oviedo": "La tabla nominal que publica el Ayuntamiento es del mandato 2019-2023; para el actual solo hay resoluciones de dedicación por grupo, sin tabla de importes por persona.",
@@ -10657,6 +10659,28 @@ def _cargar_contratos_menores_murcia_manual():
               f"contratos menores (Mula/Molina/Lorquí/Lorca/Murcia capital/San Pedro del Pinatar/Torre Pacheco) cargados en contratos_menors_locales.", flush=True)
 
 
+def _cargar_contratos_menores_euskadi():
+    """Carga contratos_menores_euskadi.json.gz (generado por actualizar_contratos_menores_euskadi.py -- API REST
+    pública de Euskadi, minor-contract=true, los 251 municipios de MUNICIPIOS_PAIS_VASCO_EUSKADI_ID) y lo vuelca a
+    la tabla compartida contratos_menors_locales. Mismo patrón que _cargar_contratos_menores_murcia_manual: se
+    ejecuta en cada arranque (upsert idempotente), el fichero solo cambia cuando alguien vuelve a lanzar el script
+    a mano. A diferencia de Murcia (varias fuentes con formatos pesados), aquí es una única API JSON -- se separa
+    de todas formas porque el barrido de 251 municipios tarda varios minutos y no tiene sentido en el arranque."""
+    ruta = CONTRATOS_MENORES_EUSKADI_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_euskadi: {len(registros)} contratos menores "
+              f"(País Vasco, API Euskadi) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -10674,6 +10698,7 @@ def _inicializar_datos():
     _result_cache."""
     _db_init()
     _cargar_contratos_menores_murcia_manual()
+    _cargar_contratos_menores_euskadi()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -13746,6 +13771,7 @@ _FUENTE_CM_LABEL = {
     "ibi-governalia":  "Ibi (PLACE)",
     "sax-governalia":  "Sax (PLACE)",
     "vilamarxant-governalia": "Vilamarxant (PLACE)",
+    "euskadi":         "API Euskadi",
 }
 
 
@@ -13795,6 +13821,12 @@ _NOTAS_FUENTE_CM = {
         "indica como cabecera de grupo encima de sus contratos y así lo hemos asignado (validado "
         "en casos inequívocos con un 92-100 % de coherencia). Cobertura desde 2022; importes con "
         "IVA; el informe no publica NIF."
+    ),
+    "euskadi": (
+        "Datos de la API pública de contratación de Euskadi (Gobierno Vasco), la misma fuente que los contratos "
+        "formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección "
+        "cuando el propio dato de origen es matemáticamente imposible, ver memoria del proyecto). No siempre "
+        "publica NIF."
     ),
 }
 
