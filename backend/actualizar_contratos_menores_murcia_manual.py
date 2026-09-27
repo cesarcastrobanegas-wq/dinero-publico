@@ -967,6 +967,22 @@ def actualizar_cartagena_governalia():
                                presupuesto_si_cero=False)
 
 
+# Castellón de la Plana (añadida 2026-09-30, "prueba otra vía" tras la investigación previa que solo había
+# encontrado decretos individuales en PDF/ODS/XLS sin dataset único): mismo mecanismo Governalia que
+# Cartagena/Torre Pacheco/Ibi/Sax/Vilamarxant, en host propio (governalia.castello.es), espejo de PLACE. El
+# idP (53855) no aparece en ningún enlace de la web -- está escondido en una llamada JS
+# `gvnLoadTransEgobProcurements(53855, 'es', "procurements-frame", 'pro')` embebida en el contenido de
+# transparencia.castello.es/es/contratos/ (encontrada vía la API REST de WordPress de esa página, wp-json/
+# wp/v2/pages/4541, no en el HTML renderizado -- el visor real es un iframe que carga esa llamada por JS).
+CASTELLON_GOVERNALIA_PAGINA_URL = ("https://governalia.castello.es/gvn/web/section/modules/"
+                                   "transparency/egob/procurements/?idP=53855&lang=es")
+
+
+def actualizar_castellon_governalia():
+    return _governalia_menores(CASTELLON_GOVERNALIA_PAGINA_URL, "Castellón de la Plana", "castello-governalia",
+                               "CastelloGov", provincia="castellon")
+
+
 # A Coruña (añadido 2026-09-24): un fichero por trimestre (y un "Anexo" anual) en
 # coruna.gal/transparencia/.../contratos-menores, descargables con requests
 # siempre que se envíe un Referer de la propia página (sin él, 403). El formato
@@ -1926,6 +1942,7 @@ _FUENTES = {
     "ibi-governalia":    actualizar_ibi,
     "sax-governalia":    actualizar_sax,
     "vilamarxant-governalia": actualizar_vilamarxant,
+    "castello-governalia": actualizar_castellon_governalia,
 }
 
 

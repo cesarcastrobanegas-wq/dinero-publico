@@ -14199,6 +14199,7 @@ _FUENTE_CM_LABEL = {
     "zaragoza":        "Zaragoza",
     "ciudad_real":     "Ciudad Real",
     "burgos":          "Burgos",
+    "castello-governalia": "Castelló (PLACE)",
 }
 
 
@@ -14209,7 +14210,8 @@ _FUENTE_CM_LABEL = {
 # solo en LIMITACIONES_COBERTURA.md, para que nadie sume totales de bases
 # distintas sin saberlo.
 _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
-                       "sax-governalia", "vilamarxant-governalia", "valencia_capital", "alicante", "leganes"}
+                       "sax-governalia", "vilamarxant-governalia", "castello-governalia",
+                       "valencia_capital", "alicante", "leganes"}
 
 
 # Avisos públicos por fuente, visibles en la sección de contratos menores de la
@@ -14336,6 +14338,11 @@ _NOTAS_FUENTE_CM = {
         "\"contratos de trabajo\", es en realidad un listado de contratos menores) -- se clasifican por el "
         "título real de cada PDF, no por su nombre. Fecha real de adjudicación e importe con IVA por "
         "contrato. Sin NIF del adjudicatario en ninguno de los tres formatos de columnas que usa la fuente."
+    ),
+    "castello-governalia": (
+        "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la "
+        "Plataforma de Contratación del Sector Público (PLACE) -- mismo mecanismo que ya usan Cartagena, Ibi, "
+        "Sax y Vilamarxant. Fecha real de adjudicación, NIF del adjudicatario, importe adjudicado SIN IVA."
     ),
 }
 

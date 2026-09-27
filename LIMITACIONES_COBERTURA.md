@@ -146,11 +146,11 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-30**: 14 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+**Estado a 2026-09-30**: 15 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
 Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
-Burgos — **111.266 contratos** entre los catorce), varios confirmados sin fuente viable tras investigación
-real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle
-completo por municipio abajo.
+Burgos, Castelló de la Plana — **115.673 contratos** entre los quince), varios confirmados sin fuente viable
+tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel,
+Salamanca...). Detalle completo por municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -232,6 +232,21 @@ completo por municipio abajo.
   sin adjudicatario reconocible -- registros cuyo nombre/objeto se envuelve en más de dos líneas seguidas y
   el buffer de continuación no los recompuso del todo; aceptado como límite residual, mismo orden de magnitud
   que Alcalá de Henares.
+- **Castelló de la Plana (~175.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-30), "prueba otra vía"**:
+  la investigación previa solo había encontrado decretos individuales en PDF/ODS/XLS, sin dataset único. La
+  vía real es la misma que ya usan Cartagena/Torre Pacheco/Ibi/Sax/Vilamarxant: una API de **Governalia**,
+  espejo de PLACE, en este caso en host propio (`governalia.castello.es`). La dificultad no era la API en sí
+  (funciona igual que las demás) sino encontrar su **idP** (identificador de entidad que la API exige) --
+  no aparece en ningún enlace visible de la web, solo dentro de una llamada JS
+  `gvnLoadTransEgobProcurements(53855, 'es', ...)` embebida en el contenido de la página
+  `transparencia.castello.es/es/contratos/`, encontrada consultando la API REST de WordPress de esa página
+  (`wp-json/wp/v2/pages/4541`) en vez de su HTML ya renderizado (el visor real vive en un iframe que carga
+  esa llamada por JS, invisible a un fetch simple). Añadido como una fuente más de `_governalia_menores()`
+  (la función genérica ya compartida con Cartagena/Ibi/Sax/Vilamarxant, en
+  `actualizar_contratos_menores_murcia_manual.py`), fuente `castello-governalia`. **4.407 registros desde
+  2021-09** (de 4.866 filas totales de la API). Igual que el resto de fuentes Governalia: importe adjudicado
+  SIN IVA, NIF del adjudicatario, fecha real -- 0 filas sin NIF/fecha/descripción, solo 1 con importe 0
+  (el propio ayuntamiento no lo rellenó, no inventado).
 - **Valencia capital (~800.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: el portal antiguo (CKAN)
   se retiró en junio de 2026; el sustituto real es el buscador oficial `www.valencia.es/cas/ayuntamiento/
   buscador-contratos-menores` (portlet Liferay, formulario POST). **10.693 registros desde 2021-09**
@@ -287,8 +302,7 @@ completo por municipio abajo.
 - **León (Castilla y León)**: perfil de contratante consultable en vivo (`sede.aytoleon.es`, contratos menores
   individuales con adjudicatario e importe, SIN fecha de adjudicación visible), pero sin descarga masiva --
   mismo patrón que el buscador legacy de Navarra (viable por scraping, no por dataset).
-  Sin dataset localizado esta ronda: **Castellón de la Plana** (relaciones de contratos menores por
-  decreto en PDF/ODS/XLS, no un dataset único). **Toledo**: publica el listado de menores mensualmente en su web
+  Sin dataset localizado esta ronda: **Toledo**: publica el listado de menores mensualmente en su web
   de transparencia (sin confirmar el formato exacto esta ronda). **Guadalajara**: solo contratos MAYORES
   localizados, no menores.
 ### Resto de la Comunidad de Madrid, por población (2026-09-28)
