@@ -146,11 +146,11 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-28**: 6 municipios CONECTADOS esta ronda (Madrid capital, Valencia capital, Alicante,
-Móstoles, Getafe, Leganés — 51.158 contratos entre los seis), 1 con lead confirmado de alto esfuerzo sin
-conectar (Alcalá de Henares), 1 con lead sin cerrar por un obstáculo técnico concreto (Valladolid, ver abajo),
-varios sin fuente viable (Elche, Fuenlabrada, Alcorcón, Huesca, Teruel, Salamanca...). Zaragoza y Palma quedan
-con el lead ya documentado de la ronda anterior, sin retomar todavía. Detalle completo por municipio abajo.
+**Estado a 2026-09-29**: 8 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+Móstoles, Getafe, Leganés, Toledo, Palma — **67.702 contratos** entre los ocho), 1 con lead confirmado de alto
+esfuerzo sin conectar (Alcalá de Henares), 2 con lead sin cerrar por un obstáculo técnico concreto (Valladolid:
+SPA con JS; Zaragoza: paginación de su propia API rota, confirmado y abandonado), varios sin fuente viable
+(Elche, Albacete, Fuenlabrada, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
