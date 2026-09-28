@@ -801,4 +801,21 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   con seguridad la técnica de Málaga/Manacor, que solo funciona con 2-4 categorías simples). Mismo patrón que
   Guadalajara/La Laguna/Segovia -- **no se reintenta**, es un límite de lo que la fuente publica, no de la
   técnica de descarga (confirmado por instrucción explícita de César, 2026-10-01).
+- **Valencia capital (concejales) — confirmado "por categoría sin nombres"**: el "Acuerdo Plenario de
+  28/07/2023" (`valencia.es/cas/ayuntamiento/retribucion-corporacion-2023-2027`, PDF descargado con
+  Playwright vía `page.context.request.get` porque un `curl` directo lo bloquea un WAF con "Request
+  Rejected") da 8 categorías (Alcaldesa, Tenencias de Alcaldía, Concejal Delegado, tres escalones más de
+  dedicación exclusiva, y parcial 75/50/25 %) sin ningún nombre en el documento. Mismo caso que
+  Zaragoza/Valladolid, mismo criterio: no se fuerza.
+- **León (concejales) — confirmado, nombres anonimizados por la propia fuente**: `aytoleon.es` publica PDFs
+  anuales "RETRIBUCIONES CONCEJALES" con cargo e importe... pero el nombre está reducido a solo INICIALES
+  ("M.A.C", "J.A.S"...), no un nombre completo verificable. Descartado, no es un problema de técnica de
+  descarga: la propia fuente no identifica a la persona.
+- **Elche (concejales) — portal de transparencia bloqueado (403)**: `transparencia.elche.es` devuelve 403
+  Forbidden incluso con un navegador real (Playwright); la web principal (`elche.es`) solo enlaza a ese
+  subdominio para transparencia, sin ruta alternativa encontrada esta ronda.
+- **Gandia (menores) — sin lead esta ronda**: `gandia.es` está detrás de Cloudflare (403 con `curl`, pasable
+  con Playwright) pero no tiene WordPress (`/wp-json/` da 404) ni un enlace de "transparencia"/"contractació"
+  visible en la portada renderizada; sin presupuesto de búsqueda web disponible para acelerar la localización,
+  no se insistió más esta ronda.
 
