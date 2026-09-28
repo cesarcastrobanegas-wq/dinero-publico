@@ -6735,6 +6735,72 @@
    "fuente_nombre": "Ayuntamiento de Murcia (dedicación y retribuciones de la Corporación)"
   },
   {
+   "municipio": "Yecla",
+   "provincia": "murcia",
+   "nombre": "Ascensio Juan García",
+   "cargo": "Hasta 17 junio 2023: 1º teniente alcalde, concejal delegado servicios públicos y obras e infraestructuras. a partir de 3 julio 2023: 2º teniente alcalde, concejal delegado servicios públicos y obras , infraestructuras y diseminados.",
+   "importe": 40160.27,
+   "base": "retribución bruta anual 2023 según la propia tabla de la fuente (personas con año completo, sin cambio de titular en la transición de mandato de junio-julio de 2023)",
+   "periodo": "2023",
+   "fuente_url": "https://www.yecla.es/wp-content/uploads/2024/05/Retribuciones-2023-Miembros-Corporacion-Local.pdf",
+   "fuente_nombre": "Ayuntamiento de Yecla"
+  },
+  {
+   "municipio": "Yecla",
+   "provincia": "murcia",
+   "nombre": "Sara Ortuño Soriano",
+   "cargo": "Hasta 17 junio 2023: 3º teniente alcalde, concejal delegado de hacienda y economía, y personal y comercio y mercados. a partir de 3 julio 2023: 1º teniente alcalde, concejal delegado de hacienda, personal y comunicación",
+   "importe": 37387.84,
+   "base": "retribución bruta anual 2023 según la propia tabla de la fuente (personas con año completo, sin cambio de titular en la transición de mandato de junio-julio de 2023)",
+   "periodo": "2023",
+   "fuente_url": "https://www.yecla.es/wp-content/uploads/2024/05/Retribuciones-2023-Miembros-Corporacion-Local.pdf",
+   "fuente_nombre": "Ayuntamiento de Yecla"
+  },
+  {
+   "municipio": "Yecla",
+   "provincia": "murcia",
+   "nombre": "Asunción Molina Bautista",
+   "cargo": "Hasta 17 junio 2023): concejal. a partir de 3 de julio de 2023: concejal.",
+   "importe": 25334.53,
+   "base": "retribución bruta anual 2023 según la propia tabla de la fuente (personas con año completo, sin cambio de titular en la transición de mandato de junio-julio de 2023)",
+   "periodo": "2023",
+   "fuente_url": "https://www.yecla.es/wp-content/uploads/2024/05/Retribuciones-2023-Miembros-Corporacion-Local.pdf",
+   "fuente_nombre": "Ayuntamiento de Yecla"
+  },
+  {
+   "municipio": "Yecla",
+   "provincia": "murcia",
+   "nombre": "M.ª Isabel Pérez Millán",
+   "cargo": "Hasta 17 junio 2023: 2º teniente alcalde, concejal delegado nuevas tecnologías, tráfico y seguridad ciudadana, y empleo y formación. a partir de 3 julio 2023: 4º teniente alcalde, concejal delegado nuevas tecnologías, dinamización y desarro",
+   "importe": 23530.33,
+   "base": "retribución bruta anual 2023 según la propia tabla de la fuente (personas con año completo, sin cambio de titular en la transición de mandato de junio-julio de 2023)",
+   "periodo": "2023",
+   "fuente_url": "https://www.yecla.es/wp-content/uploads/2024/05/Retribuciones-2023-Miembros-Corporacion-Local.pdf",
+   "fuente_nombre": "Ayuntamiento de Yecla"
+  },
+  {
+   "municipio": "Yecla",
+   "provincia": "murcia",
+   "nombre": "Patricia Soriano Vidal",
+   "cargo": "Hasta 17 junio 2023: concejal delegado de política social, igualdad, mujer y familia. a partir de 3 julio 2023: concejal delegado de política social, igualdad, mujer y familia",
+   "importe": 18971.38,
+   "base": "retribución bruta anual 2023 según la propia tabla de la fuente (personas con año completo, sin cambio de titular en la transición de mandato de junio-julio de 2023)",
+   "periodo": "2023",
+   "fuente_url": "https://www.yecla.es/wp-content/uploads/2024/05/Retribuciones-2023-Miembros-Corporacion-Local.pdf",
+   "fuente_nombre": "Ayuntamiento de Yecla"
+  },
+  {
+   "municipio": "Yecla",
+   "provincia": "murcia",
+   "nombre": "Alberto Martínez Marco",
+   "cargo": "Hasta 17 junio 2023: concejal. a partir de 3 de julio de 2023: concejal.",
+   "importe": 18693.9,
+   "base": "retribución bruta anual 2023 según la propia tabla de la fuente (personas con año completo, sin cambio de titular en la transición de mandato de junio-julio de 2023)",
+   "periodo": "2023",
+   "fuente_url": "https://www.yecla.es/wp-content/uploads/2024/05/Retribuciones-2023-Miembros-Corporacion-Local.pdf",
+   "fuente_nombre": "Ayuntamiento de Yecla"
+  },
+  {
    "municipio": "Vitoria-Gasteiz",
    "provincia": "pais_vasco",
    "nombre": "Beatriz Artolazabal Albéniz",

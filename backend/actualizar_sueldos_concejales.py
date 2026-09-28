@@ -1985,6 +1985,44 @@ def actualizar_alcantarilla():
     return out
 
 
+@_fuente("yecla")
+def actualizar_yecla():
+    """Ayuntamiento de Yecla (Murcia) > PDF "Retribuciones 2023 Miembros Corporación Local": tabla real (con
+    líneas) Nombre | Grupo | Dedicación | Competencias | Cargo | Retribuciones año. 2023 fue año de cambio de
+    mandato (17 de junio / 3 de julio de 2023): las personas cuyo CARGO indica "(Cese ...)" o "(Inicio ...)"
+    solo estuvieron una parte del año -- se saltan por año parcial, igual que Majadahonda/Castellón. Las que
+    tienen "Hasta 17 junio: cargo A. A partir de 3 julio: cargo B." sin "Cese"/"Inicio" sí sirvieron el año
+    completo (solo cambiaron de cargo en la transición) y sí se guardan. El importe a veces trae un dígito de
+    nota al pie pegado con un espacio ("61.335,10 1"): se recorta antes de parsear. Alcaldesa excluida."""
+    url = "https://www.yecla.es/wp-content/uploads/2024/05/Retribuciones-2023-Miembros-Corporacion-Local.pdf"
+    contenido = descargar(url, timeout=90).content
+    texto = texto_pdf(contenido)
+    out, parciales = [], []
+    for f in filas_tabla_pdf(contenido):
+        if len(f) < 6 or f[0].lower().startswith("nombre"):
+            continue
+        nombre, cargo = f[0], re.sub(r"\s+", " ", f[4]).strip()
+        if cargo.lower().startswith("alcald"):
+            continue
+        if re.search(r"\b(cese|inicio)\b", cargo, re.I):
+            parciales.append(nombre)
+            continue
+        importe_txt = re.sub(r"\s+\d$", "", f[5].strip())
+        importe = num_es(importe_txt)
+        if not importe:
+            continue
+        out.append(nuevo_registro("Yecla", "murcia", nombre, cargo_frase(cargo)[:240], importe,
+                                  "retribución bruta anual 2023 según la propia tabla de la fuente "
+                                  "(personas con año completo, sin cambio de titular en la transición de "
+                                  "mandato de junio-julio de 2023)", "2023", url,
+                                  "Ayuntamiento de Yecla", texto))
+    if parciales:
+        print(f"  Yecla: {len(parciales)} concejales con año parcial (cambio de mandato) saltados: {parciales}")
+    if len(out) < 3:
+        raise RuntimeError(f"Yecla: solo {len(out)} concejales (¿cambió el PDF?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):

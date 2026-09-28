@@ -436,3 +436,15 @@ Sin nota pública (tabla limpia, sin ambigüedad).
 Sin nota pública. Este municipio ya se había investigado para CONTRATOS MENORES esta noche (confirmado sin
 dataset propio, solo enlaza a PLACE genérico) -- concejales sí funcionó.
 
+---
+
+## Lote 20 — Yecla (2026-09-30, Región de Murcia)
+
+**Añadidos: 6 concejales** (Yecla). Total acumulado: **778 registros en 42 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Yecla | yecla.es > PDF "Retribuciones 2023 Miembros Corporación Local": tabla real (con líneas) Nombre \| Grupo \| Dedicación \| Competencias \| Cargo \| Retribuciones año | 2023 fue año de cambio de mandato (17 junio / 3 julio 2023): 8 personas cuyo cargo indica "(Cese ...)" o "(Inicio ...)" solo estuvieron parte del año -- se saltan por año parcial, igual que Majadahonda/Castellón. Las 6 que sirvieron el año completo (cambiaron de cargo en la transición sin hueco, sin "Cese"/"Inicio" en el texto) sí se guardan. Bug real corregido: el importe a veces trae un dígito de nota al pie pegado con un espacio ("61.335,10 1") -- se recorta antes de parsear en vez de corromper la cifra. Alcaldesa excluida |
+
+Sin nota pública.
+
