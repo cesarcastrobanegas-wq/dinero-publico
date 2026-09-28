@@ -148,11 +148,11 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-10-01**: 21 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+**Estado a 2026-10-01**: 22 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
 Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
 Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria, Torrent, Badajoz,
-San Cristóbal de La Laguna — **135.276 contratos** entre los veintiuno), varios confirmados sin fuente viable
-tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel,
+San Cristóbal de La Laguna, Arona — **135.708 contratos** entre los veintidós), varios confirmados sin fuente
+viable tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel,
 Salamanca...). Detalle completo por municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
@@ -842,6 +842,18 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   - Los enlaces NO siguen un patrón de URL único entre años (2025 usa un nombre, 2023-2024 otro, 2021-2022
     otro distinto): recogidos a mano navegando cada página anual con un navegador real (un `curl` normal no
     encuentra los enlaces, es una SPA/CMS moderno).
+- **Arona (~85.000 hab., Tenerife) — CONECTADO, misma plataforma que Las Palmas GC, cierre rápido**: al
+  buscar más municipios de Canarias en la misma familia de plataforma (Next.js + `/api/proxy/obligaciones/
+  ...`, ver Las Palmas GC más abajo), `transparencia.arona.org` resultó ser la MISMA plataforma -- localizar
+  el endpoint fue mucho más rápido que la primera vez (visitando con Playwright la página "Relación de
+  contratos menores" del propio portal se ve directamente la petición real, sin necesidad de interceptar
+  ningún botón de descarga). **432 registros desde 2021-09** (2022-2026 completos, 2021 excluido entero por
+  ambiguo -- mismo criterio que Las Palmas GC, esta fuente tampoco da fecha por contrato, solo ejercicio).
+  Sin descripción del objeto del contrato (la fuente no la publica en este listado). Solo 2 de 432 filas
+  (0,5 %) superan el techo legal habitual -- tasa baja, coherente con Zaragoza, se muestran tal cual.
+  - **Confirma que vale la pena revisar si otros municipios comparten plataforma** una vez identificada una
+    con éxito: mismo dominio-patrón `transparencia.<municipio>.org/.es`, misma API `/api/proxy/obligaciones/
+    datos-multiples-registros-por-ano/<id>/1/<año>/csv`, solo cambia el id de obligación.
 
 ## Cierre de España, ronda 2 (2026-10-01, Playwright + búsqueda restaurada)
 

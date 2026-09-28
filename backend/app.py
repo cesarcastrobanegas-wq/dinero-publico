@@ -11186,6 +11186,28 @@ def _cargar_contratos_menores_la_laguna():
               f"(San Cristóbal de La Laguna) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_ARONA_FILE = os.path.join(BASE_DIR, "contratos_menores_arona.json.gz")
+
+
+def _cargar_contratos_menores_arona():
+    """Carga contratos_menores_arona.json.gz (generado por actualizar_contratos_menores_arona.py -- misma
+    plataforma Next.js que Las Palmas de Gran Canaria) y lo vuelca a la tabla compartida
+    contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_ARONA_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_arona: {len(registros)} contratos menores "
+              f"(Arona) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11222,6 +11244,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_torrent()
     _cargar_contratos_menores_badajoz()
     _cargar_contratos_menores_la_laguna()
+    _cargar_contratos_menores_arona()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14314,6 +14337,7 @@ _FUENTE_CM_LABEL = {
     "torrent":         "Torrent",
     "badajoz":         "Badajoz",
     "la_laguna":       "San Cristóbal de La Laguna",
+    "arona":           "Arona",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14488,6 +14512,12 @@ _NOTAS_FUENTE_CM = {
         "organismos autónomos OAAM y OAD (uno por año y entidad, enlaces encontrados navegando con un "
         "navegador real). El importe es SIN IGIC, el impuesto indirecto propio de Canarias equivalente al IVA "
         "peninsular (no confundir con \"sin impuestos\" a secas)."
+    ),
+    "arona": (
+        "API real del portal de transparencia (Next.js, misma plataforma que Las Palmas de Gran Canaria) del "
+        "Ayuntamiento de Arona, encontrada con un navegador real (Playwright). Sin fecha por contrato "
+        "(ventana de 5 años aplicada por ejercicio completo; 2021 excluido por ambiguo). Sin descripción del "
+        "objeto del contrato (la fuente no la publica en este listado)."
     ),
     "castello-governalia": (
         "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la "
