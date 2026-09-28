@@ -11142,6 +11142,28 @@ def _cargar_contratos_menores_torrent():
               f"(Torrent) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_BADAJOZ_FILE = os.path.join(BASE_DIR, "contratos_menores_badajoz.json.gz")
+
+
+def _cargar_contratos_menores_badajoz():
+    """Carga contratos_menores_badajoz.json.gz (generado por actualizar_contratos_menores_badajoz.py -- decretos
+    y resoluciones de adjudicación en PDF del Perfil del Contratante, navegado con Playwright) y lo vuelca a la
+    tabla compartida contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_BADAJOZ_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_badajoz: {len(registros)} contratos menores "
+              f"(Badajoz) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11176,6 +11198,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_burgos()
     _cargar_contratos_menores_laspalmasgc()
     _cargar_contratos_menores_torrent()
+    _cargar_contratos_menores_badajoz()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14266,6 +14289,7 @@ _FUENTE_CM_LABEL = {
     "burgos":          "Burgos",
     "laspalmasgc":     "Las Palmas GC",
     "torrent":         "Torrent",
+    "badajoz":         "Badajoz",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14424,6 +14448,16 @@ _NOTAS_FUENTE_CM = {
         "Valenciana), con enlaces encontrados navegando la página con un navegador real (Playwright): un "
         "fetch simple no encuentra los enlaces de descarga. Importe SIN IVA. NIF del adjudicatario solo "
         "disponible en los ficheros hasta 2022 (la fuente deja de publicar esa columna desde 2023)."
+    ),
+    "badajoz": (
+        "Decretos y resoluciones de adjudicación en PDF, enlazados desde el Perfil del Contratante del "
+        "Ayuntamiento de Badajoz (y sus entidades IMSS e IFEBA), navegado con Playwright (selector de año y "
+        "categoría sin URL propia por combinación). Importe SIN IVA salvo que el propio PDF diga otra cosa. "
+        "Los PDF de adjudicación se titulan 'MENOR CON PUBLICIDAD': es probable que esta fuente cubra solo los "
+        "contratos menores publicados con concurrencia pública, no el universo completo de adjudicación "
+        "directa sin publicidad -- de ahí el volumen bajo comparado con otras ciudades de tamaño similar. "
+        "Varios PDF de 2021-2022 y 2025-2026 son documentos escaneados sin capa de texto (no legibles sin "
+        "OCR) y no están incluidos."
     ),
     "castello-governalia": (
         "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la "

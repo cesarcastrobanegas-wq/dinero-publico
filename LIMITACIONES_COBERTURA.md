@@ -148,10 +148,10 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-30**: 19 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+**Estado a 2026-10-01**: 20 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
 Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
-Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria, Torrent —
-**124.652 contratos** entre los diecinueve), varios confirmados sin fuente viable tras investigación real, no
+Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria, Torrent, Badajoz —
+**124.680 contratos** entre los veinte), varios confirmados sin fuente viable tras investigación real, no
 solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por
 municipio abajo.
 
@@ -775,6 +775,35 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
 - **Región de Murcia — contratos menores, municipios grandes probados sin fuente propia**: Alcantarilla y
   Cieza (ambas solo enlazan a PLACE genérico desde su portal de transparencia, sin dataset propio -- mismo
   caso que Elche/Albacete).
+
+## Cierre de España, ronda 3 (2026-10-01, Extremadura)
+
+- **Badajoz (~150.000 hab.) — CONECTADO, primer cierre de Extremadura en cualquier frente**: Perfil del
+  Contratante (`aytobadajoz.es/es/ayto/perfil-del-contratante`), un selector de AÑO + CATEGORÍA sin URL propia
+  por combinación (navegado con Playwright: tres entidades con contratación propia -- Ayuntamiento, IMSS e
+  IFEBA). Cada expediente filtrado por categoría "... - Contrato Menor" enlaza un PDF de "Adjudicación
+  Definitiva" (identificado por su atributo `title`, no por el nombre de fichero, muy inconsistente: desde
+  "1632-23_adjudicacion_contrato_menor.pdf" hasta "tomodule_(97).pdf"). **28 registros desde 2022**
+  (`actualizar_contratos_menores_badajoz.py`, fuente `badajoz`).
+  - **Importante -- alcance probablemente parcial**: los propios PDF de adjudicación se titulan "ADJUDICACION
+    MENOR CON PUBLICIDAD": parece que este selector cubre solo los contratos menores publicados con
+    concurrencia pública (varias empresas invitadas a ofertar), no el universo completo de adjudicación
+    directa sin publicidad -- de ahí que el volumen anual sea bajo (4-14 por año y entidad) frente a otras
+    ciudades de tamaño similar. Se documenta así en la ficha en vez de presentarlo como cobertura completa.
+  - **Tres formatos de PDF distintos, cada uno con su propio patrón de texto** (encontrados probando varios
+    PDF de cada tipo): AYTO ("Adjudicar el expediente referenciado a X, por importe de Y €"), IMSS en tabla
+    ("Adjudicatario propuesto PRESUPUESTO" + fila "NIF NOMBRE IMPORTE€") e IMSS en prosa ("a favor de la
+    empresa X, con NIF/CIF: Y que llevará a cabo... por un precio total de Z €"). De 48 PDF de adjudicación
+    únicos encontrados, 28 se pudieron parsear con estos tres patrones; los 20 restantes son documentos
+    escaneados sin capa de texto (ilegibles sin OCR, no incluidos) o usan una redacción distinta no cubierta.
+  - **Bug encontrado y corregido, con impacto real en el importe**: un primer intento trataba un único punto
+    sin coma como separador decimal, convirtiendo "6.000€" (seis mil euros) en 6,00€ -- corregido para tratar
+    SIEMPRE el punto como separador de miles en notación española (nunca hay notación inglesa en esta fuente).
+    Verificado repasando los importes más altos y más bajos del resultado tras el arreglo: todos coherentes
+    con el tope legal de un contrato menor.
+  - Los saltos de línea de los PDF caen en puntos impredecibles (a veces en mitad de un nombre de empresa o
+    de una frase) -- todos los patrones de extracción se aplican sobre el texto con los espacios en blanco
+    normalizados a uno solo, no sobre el texto con saltos de línea originales.
 
 ## Cierre de España, ronda 2 (2026-10-01, Playwright + búsqueda restaurada)
 
