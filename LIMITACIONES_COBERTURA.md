@@ -148,12 +148,12 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-10-01**: 22 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+**Estado a 2026-10-01**: 23 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
 Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
 Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria, Torrent, Badajoz,
-San Cristóbal de La Laguna, Arona — **135.708 contratos** entre los veintidós), varios confirmados sin fuente
-viable tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel,
-Salamanca...). Detalle completo por municipio abajo.
+San Cristóbal de La Laguna, Arona, Salamanca — **138.659 contratos** entre los veintitrés), varios confirmados
+sin fuente viable tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón,
+Huesca, Teruel...). Detalle completo por municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -908,6 +908,21 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   con Playwright) pero no tiene WordPress (`/wp-json/` da 404) ni un enlace de "transparencia"/"contractació"
   visible en la portada renderizada; sin presupuesto de búsqueda web disponible para acelerar la localización,
   no se insistió más esta ronda.
+
+## Cierre de España, ronda 5 (2026-10-01, Castilla y León)
+
+- **Salamanca (~144.000 hab.) — CONECTADO**: `aytosalamanca.es/web/guest/contratos-menores`, un PDF anual
+  ("Relación de Contratos menores") con tabla real (bordes visibles, se extrae limpio con
+  `pdfplumber.extract_tables()`). Enlaces Liferay sin extensión de fichero en la URL, encontrados navegando
+  con un navegador real. **2.951 registros desde 2021-09** (`actualizar_contratos_menores_salamanca.py`,
+  fuente `salamanca`). Solo hay datos hasta el 1er trimestre de 2024 (el propio fichero se llama
+  "contratosmenores20241t"): no hay nada más reciente publicado, no se inventa ni se busca en otro sitio.
+  - Dos formatos de tabla según el año (detectados por número de columnas, no por año): 2022-2024 con 7
+    columnas y cabecera repetida por página; 2021 con 6 columnas y SIN cabecera en ninguna página.
+  - Dato de calidad verificado: 0 filas sin fecha/NIF/descripción, ids únicos. Un contrato de 2023 (35
+    chalecos de mando ignífugos, PROTEC SOLANA S.L., 506.337,00 €) supera con mucho el techo legal habitual --
+    verificado contra la tabla cruda del PDF (no es un error de extracción, el propio PDF trae ese importe en
+    esa celda): se muestra tal cual, documentado en la ficha.
 
 ## Cierre de España, ronda 4 (2026-10-01, Asturias y Navarra)
 

@@ -11222,6 +11222,28 @@ def _cargar_contratos_menores_arona():
               f"(Arona) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_SALAMANCA_FILE = os.path.join(BASE_DIR, "contratos_menores_salamanca.json.gz")
+
+
+def _cargar_contratos_menores_salamanca():
+    """Carga contratos_menores_salamanca.json.gz (generado por actualizar_contratos_menores_salamanca.py --
+    PDF anuales oficiales con tabla real, enlaces encontrados navegando con un navegador real) y lo vuelca a
+    la tabla compartida contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_SALAMANCA_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_salamanca: {len(registros)} contratos menores "
+              f"(Salamanca) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11259,6 +11281,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_badajoz()
     _cargar_contratos_menores_la_laguna()
     _cargar_contratos_menores_arona()
+    _cargar_contratos_menores_salamanca()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14352,6 +14375,7 @@ _FUENTE_CM_LABEL = {
     "badajoz":         "Badajoz",
     "la_laguna":       "San Cristóbal de La Laguna",
     "arona":           "Arona",
+    "salamanca":       "Salamanca",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14532,6 +14556,13 @@ _NOTAS_FUENTE_CM = {
         "Ayuntamiento de Arona, encontrada con un navegador real (Playwright). Sin fecha por contrato "
         "(ventana de 5 años aplicada por ejercicio completo; 2021 excluido por ambiguo). Sin descripción del "
         "objeto del contrato (la fuente no la publica en este listado)."
+    ),
+    "salamanca": (
+        "Informes anuales oficiales en PDF (tabla real, extraída con pdfplumber), enlaces encontrados "
+        "navegando la web con un navegador real. Solo hay datos hasta el primer trimestre de 2024 (la propia "
+        "fuente no publica nada más reciente). Un contrato de 2023 (35 chalecos de mando ignífugos, "
+        "506.337,00 €) supera con mucho el techo legal habitual de un contrato menor -- se muestra tal cual "
+        "aparece en la tabla oficial de la fuente, sin corregir."
     ),
     "castello-governalia": (
         "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la "
