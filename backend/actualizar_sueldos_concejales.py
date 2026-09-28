@@ -1981,6 +1981,77 @@ def actualizar_las_palmas_de_gran_canaria():
     return out
 
 
+@_fuente("manacor")
+def actualizar_manacor():
+    """Seu Electrònica de l'Ajuntament de Manacor (`manacor.eadministracio.cat`, plataforma decoupled/SPA),
+    Portal de transparència > 1. Institucional > 1.6. Alts càrrecs > 1.6.1. Retribucions: un único BOIB (95,
+    11/07/2023, acord de règim de dedicacions, retribucions i assistències). La ruta hasta ese PDF concreto
+    (`/preview-document/<id>` -> iframe con una URL firmada de un solo uso `/preview/pdf/<token>.pdf`) solo se
+    puede recorrer con un navegador real (Playwright): el token del PDF caduca y no es descargable con una
+    petición HTTP directa sin la sesión del navegador que lo generó (probado, 403).
+
+    Mismo patrón que Málaga: el PDF da el RÉGIMEN de cada persona (dedicació exclusiva/parcial, con el % en el
+    caso de parcial) con su nombre, y el IMPORTE por categoría de régimen en un párrafo aparte (no en la misma
+    línea que cada persona) -- se cruza nombre -> régimen -> importe sin ambigüedad porque el propio documento
+    dice explícitamente qué régimen tiene cada persona nombrada, y usa verificar_adyacencia=False como Málaga.
+    Los regidors sense dedicació (només assistències a sessions, sense import fix per persona) no aparecen."""
+    from playwright.sync_api import sync_playwright
+    url_doc = "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b"
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(url_doc, wait_until="networkidle", timeout=45000)
+        page.wait_for_timeout(1000)
+        iframe_src = page.evaluate("document.querySelector('iframe').src")
+        resp = page.context.request.get(iframe_src)
+        contenido = resp.body()
+        browser.close()
+    texto = texto_pdf(contenido)
+    m_batle = re.search(r"Batle:\s*([\d.,]+)\s*.\s*/any", texto)
+    m_excl = re.search(r"Exclusiva:\s*([\d.,]+)\s*.\s*/any", texto)
+    m_p75 = re.search(r"Parcial 75%:\s*([\d.,]+)", texto)
+    m_p50 = re.search(r"Parcial 50%:\s*([\d.,]+)", texto)
+    if not (m_batle and m_excl and m_p75):
+        raise RuntimeError("Manacor: no se encontraron los importes por régimen (¿cambió el documento?)")
+    tasa_batle, tasa_excl = num_es(m_batle.group(1)), num_es(m_excl.group(1))
+    tasa_p75 = num_es(m_p75.group(1))
+    tasa_p50 = num_es(m_p50.group(1)) if m_p50 else None
+    m_excl_bloc = re.search(r"DEDICACIONS EXCLUSIVES\n(.*?)\nDEDICACIONS PARCIALS", texto, re.S)
+    m_parc_bloc = re.search(r"DEDICACIONS PARCIALS\n(.*?)\nhttps://www\.caib\.es", texto, re.S)
+    if not (m_excl_bloc and m_parc_bloc):
+        raise RuntimeError("Manacor: no se encontraron los bloques de dedicació (¿cambió el documento?)")
+    out = []
+    for linea in m_excl_bloc.group(1).splitlines():
+        m = re.match(r"C.rrec de (.+?):\s*(.+)$", linea.strip())
+        if not m:
+            continue
+        cargo_txt, nombre = m.group(1).strip(), m.group(2).strip()
+        es_batle = _norm(cargo_txt) == "batlia"
+        cargo = "Batle" if es_batle else f"{cargo_frase(cargo_txt)} (dedicació exclusiva)"
+        importe = tasa_batle if es_batle else tasa_excl
+        out.append(nuevo_registro("Manacor", "baleares", nombre, cargo, importe,
+                                  "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+                                  "vigente desde 2023", url_doc,
+                                  "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència", texto,
+                                  verificar_adyacencia=False))
+    for linea in m_parc_bloc.group(1).splitlines():
+        m = re.match(r"C.rrec de (.+?):\s*(.+?)\s*\((\d+)%\)$", linea.strip())
+        if not m:
+            continue
+        cargo_txt, nombre, pct = m.group(1).strip(), m.group(2).strip(), m.group(3)
+        importe = tasa_p75 if pct == "75" else (tasa_p50 if pct == "50" else None)
+        if not importe:
+            continue
+        out.append(nuevo_registro("Manacor", "baleares", nombre, f"{cargo_frase(cargo_txt)} (dedicació parcial {pct}%)",
+                                  importe, "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+                                  "vigente desde 2023", url_doc,
+                                  "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència", texto,
+                                  verificar_adyacencia=False))
+    if len(out) < 7:
+        raise RuntimeError(f"Manacor: solo {len(out)} concejales (¿cambió el documento?)")
+    return out
+
+
 @_fuente("alcantarilla")
 def actualizar_alcantarilla():
     """Ayuntamiento de Alcantarilla (Murcia) > Portal de Transparencia > "Retribuciones (legislatura

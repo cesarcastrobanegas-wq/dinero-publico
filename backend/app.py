@@ -4455,6 +4455,9 @@ _NOTAS_SUELDOS_CONCEJALES = {
                                   "miembros electos, encontrada con Playwright igual que los contratos menores del mismo ayuntamiento). Solo hay datos "
                                   "de 2025 publicados por esta fuente. Los concejales con retribución 0 (oposición sin dedicación fija, solo con "
                                   "asistencias por sesión) no aparecen.",
+    "manacor": "El importe es la retribución anual de su RÉGIMEN de dedicación (exclusiva o parcial con su %) según el acuerdo oficial "
+              "(BOIB 95/2023), no una nómina individual -- igual que Málaga. Los regidors sense dedicació fixa (només assistències a "
+              "sessions) no aparecen.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se

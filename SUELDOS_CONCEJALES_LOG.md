@@ -506,3 +506,18 @@ para cualquier otro municipio que la use.
 
 Sin nota pública adicional (la salvedad de 2025-solamente y la exclusión de retribución 0 ya están en la nota
 de `_NOTAS_SUELDOS_CONCEJALES["las palmas de gran canaria"]`).
+
+---
+
+## Lote 23 — Manacor (2026-09-30, resuelto con Playwright, patrón Málaga)
+
+**Añadidos: 9 concejales** (Manacor, Illes Balears). Total acumulado: **833 registros en 45 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Manacor | Seu Electrònica (`manacor.eadministracio.cat`, plataforma decoupled), Portal de transparència > 1. Institucional > 1.6. Alts càrrecs > 1.6.1. Retribucions: único BOIB (95/2023) con el acord de règim de dedicacions | La página `/employees` normal requiere login Cl@ve (descartada, Grupo b). El PDF real solo es accesible navegando el árbol de categorías del portal de transparència con un navegador real (Playwright): la ruta final es un iframe con una URL de PDF firmada y de un solo uso, no descargable con una petición HTTP directa sin la sesión del navegador (probado, 403). Mismo patrón que Málaga: el importe es por RÉGIMEN (Batle/Exclusiva/Parcial 75%/Parcial 50%), no por persona en la misma línea, pero el propio documento dice sin ambigüedad qué régimen tiene cada persona nombrada -- se usa `verificar_adyacencia=False`. Los regidors sense dedicació fixa (només assistències a sessions) no aparecen |
+
+Confirma que la técnica de Playwright también sirve para navegar árboles de categorías de portales de
+transparencia "decoupled" (no solo para interceptar APIs REST tipo Next.js), y que el patrón "importe por
+régimen/cargo, no por persona" (ya usado en Málaga) sigue siendo válido cuando el propio documento asigna
+sin ambigüedad esa categoría a cada persona nombrada.

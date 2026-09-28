@@ -1433,6 +1433,105 @@
    "fuente_nombre": "Ayuntamiento de Eivissa (retribuciones de los regidores)"
   },
   {
+   "municipio": "Manacor",
+   "provincia": "baleares",
+   "nombre": "Miquel Oliver Gomila",
+   "cargo": "Batle",
+   "importe": 48395.97,
+   "base": "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+   "periodo": "vigente desde 2023",
+   "fuente_url": "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b",
+   "fuente_nombre": "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència"
+  },
+  {
+   "municipio": "Manacor",
+   "provincia": "baleares",
+   "nombre": "Carme Gomila Domínguez",
+   "cargo": "Tinència de batlia i delegació genèrica (dedicació exclusiva)",
+   "importe": 41302.06,
+   "base": "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+   "periodo": "vigente desde 2023",
+   "fuente_url": "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b",
+   "fuente_nombre": "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència"
+  },
+  {
+   "municipio": "Manacor",
+   "provincia": "baleares",
+   "nombre": "Joana Maria Llull Nadal",
+   "cargo": "La delegació especial (dedicació exclusiva)",
+   "importe": 41302.06,
+   "base": "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+   "periodo": "vigente desde 2023",
+   "fuente_url": "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b",
+   "fuente_nombre": "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència"
+  },
+  {
+   "municipio": "Manacor",
+   "provincia": "baleares",
+   "nombre": "Mateu Marcé Riera",
+   "cargo": "La delegació especial (dedicació exclusiva)",
+   "importe": 41302.06,
+   "base": "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+   "periodo": "vigente desde 2023",
+   "fuente_url": "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b",
+   "fuente_nombre": "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència"
+  },
+  {
+   "municipio": "Manacor",
+   "provincia": "baleares",
+   "nombre": "Paula Asegurado Rosso",
+   "cargo": "Tinència de batlia i delegació genèrica (dedicació exclusiva)",
+   "importe": 41302.06,
+   "base": "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+   "periodo": "vigente desde 2023",
+   "fuente_url": "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b",
+   "fuente_nombre": "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència"
+  },
+  {
+   "municipio": "Manacor",
+   "provincia": "baleares",
+   "nombre": "Sebastià Llodrà Oliver",
+   "cargo": "Tinència de batlia i delegació genèrica (dedicació exclusiva)",
+   "importe": 41302.06,
+   "base": "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+   "periodo": "vigente desde 2023",
+   "fuente_url": "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b",
+   "fuente_nombre": "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència"
+  },
+  {
+   "municipio": "Manacor",
+   "provincia": "baleares",
+   "nombre": "Antònia Llodrà Brunet",
+   "cargo": "Tinència de batlia i delegació genèric (dedicació parcial 75%)",
+   "importe": 30976.54,
+   "base": "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+   "periodo": "vigente desde 2023",
+   "fuente_url": "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b",
+   "fuente_nombre": "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència"
+  },
+  {
+   "municipio": "Manacor",
+   "provincia": "baleares",
+   "nombre": "Ferran Montero Sitges",
+   "cargo": "La delegació especial (dedicació parcial 75%)",
+   "importe": 30976.54,
+   "base": "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+   "periodo": "vigente desde 2023",
+   "fuente_url": "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b",
+   "fuente_nombre": "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència"
+  },
+  {
+   "municipio": "Manacor",
+   "provincia": "baleares",
+   "nombre": "Júlia Acosta Miquel",
+   "cargo": "La delegació especial (dedicació parcial 75%)",
+   "importe": 30976.54,
+   "base": "retribució bruta anual segons el règim de dedicació aprovat pel Ple (BOIB 95/2023)",
+   "periodo": "vigente desde 2023",
+   "fuente_url": "https://manacor.eadministracio.cat/preview-document/58e3900f-7aa0-4e9c-b147-469a7dd3d57b",
+   "fuente_nombre": "Seu Electrònica de l'Ajuntament de Manacor: portal de transparència"
+  },
+  {
    "municipio": "L'Hospitalet de Llobregat",
    "provincia": "barcelona",
    "nombre": "David Gómez Luque",
