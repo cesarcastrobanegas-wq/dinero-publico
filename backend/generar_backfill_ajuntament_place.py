@@ -62,7 +62,11 @@ PLACE_ZIP_URL = ("https://contrataciondelsectorpublico.gob.es/sindicacion/sindic
                  "licitacionesPerfilesContratanteCompleto3_{m}.zip")
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36"}
 LIM_RSS_MB = 2500
-LIM_ESCANEO_S = 180
+# Medido en vivo (2026-10-01): el escaneo real (no la descarga) de un ZIP grande puede legítimamente superar
+# los 180 s iniciales (238 s en un mes concreto, sin que RSS ni tiempo se desviaran del resto) -- 180 s resultó
+# un guardarraiel demasiado ajustado para el tamaño real de estos ZIP, no una señal de problema. Subido a 400 s;
+# la comprobación de desviación respecto a la mediana (más abajo) sigue vigente como red de seguridad real.
+LIM_ESCANEO_S = 400
 DESCARGA_INTENTOS = 3
 # Medido en vivo (2026-10-01): ~200 KB/s reales desde este entorno hacia PLACE -- un ZIP mensual de 150-250 MB
 # tarda 13-21 min solo en descargar. El plazo tiene que acomodar eso; 150s (valor inicial, ingenuo) abortaba
