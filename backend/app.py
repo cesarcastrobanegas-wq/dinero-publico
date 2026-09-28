@@ -4451,6 +4451,10 @@ _NOTAS_SUELDOS_CONCEJALES = {
                           "Los concejales sin dedicación (solo asistencias) o cuya ficha no muestra importe no aparecen. La alcaldesa está excluida (cubierta aparte).",
     "torrevieja": "Igual que Pozuelo, cada concejal/a tiene su propia ficha en la web del Ayuntamiento en vez de una tabla única. Cuando la ficha marca «sin dedicación» "
                  "el importe es el total por asistencias que ya calcula la propia fuente (no una estimación nuestra). Alcalde excluido (cubierto aparte).",
+    "las palmas de gran canaria": "Retribución bruta anual de 2025 según la API pública del portal de transparencia (obligación de retribuciones de "
+                                  "miembros electos, encontrada con Playwright igual que los contratos menores del mismo ayuntamiento). Solo hay datos "
+                                  "de 2025 publicados por esta fuente. Los concejales con retribución 0 (oposición sin dedicación fija, solo con "
+                                  "asistencias por sesión) no aparecen.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se

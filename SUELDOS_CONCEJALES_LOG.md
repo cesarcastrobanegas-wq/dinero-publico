@@ -489,3 +489,20 @@ País Vasco, sin ningún cierre nuevo esta ronda:
 
 Ninguno de estos lo suficientemente prometedor como para seguir insistiendo esta noche; quedan documentados
 para no repetir la búsqueda.
+
+---
+
+## Lote 22 — Las Palmas de Gran Canaria (2026-09-30, resuelto con Playwright)
+
+**Añadidos: 22 concejales.** Total acumulado: **824 registros en 44 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Las Palmas de Gran Canaria | Portal de transparencia (`transparencia.laspalmasgc.es`), SPA Next.js. La página `/retribuciones/retribuciones-miembros-electos/2025` dispara al cargar una petición a `/api/proxy/obligaciones/datos-multiples-registros-por-ano/142/1/2025/csv` (id de obligación 142, distinto del 88 de contratos menores del mismo ayuntamiento) -- encontrada con Playwright interceptando el tráfico de red, sin necesidad de pulsar ningún botón esta vez | Solo hay datos publicados para 2025 (comprobado en 2021-2024 y 2026: CSV vacío). Se excluyen las filas con retribución 0 (oposición sin dedicación fija). Bug corregido: la columna `titular` separa nombre y apellidos con un espacio de no ruptura (U+00A0) en vez de un espacio normal -- sustituido antes de guardar |
+
+Mismo ayuntamiento que el Lote de contratos menores de esta noche (ver `LIMITACIONES_COBERTURA.md`): la
+plataforma Next.js + `/api/proxy/obligaciones/...` queda confirmada como técnica reutilizable con Playwright
+para cualquier otro municipio que la use.
+
+Sin nota pública adicional (la salvedad de 2025-solamente y la exclusión de retribución 0 ya están en la nota
+de `_NOTAS_SUELDOS_CONCEJALES["las palmas de gran canaria"]`).

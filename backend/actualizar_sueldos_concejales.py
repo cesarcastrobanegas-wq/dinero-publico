@@ -1939,6 +1939,48 @@ def actualizar_teruel():
     return out
 
 
+@_fuente("las palmas de gran canaria")
+def actualizar_las_palmas_de_gran_canaria():
+    """Portal de Transparencia del Ayuntamiento de Las Palmas de Gran Canaria (`transparencia.laspalmasgc.es`),
+    SPA Next.js: la página `/retribuciones/retribuciones-miembros-electos/2025` no sirve la tabla en el HTML
+    inicial, pero SÍ dispara una petición a una API real al cargar (sin necesidad de pulsar ningún botón,
+    encontrada con Playwright interceptando peticiones de red, igual que para los contratos menores de este
+    mismo ayuntamiento -- ver actualizar_contratos_menores_laspalmasgc.py):
+        /api/proxy/obligaciones/datos-multiples-registros-por-ano/142/1/<año>/csv
+    (142 = id interno de la obligación "Retribuciones... miembros electos", distinto del 88 de contratos
+    menores). Solo hay datos para 2025 (`datos-anualizacion/142` solo devuelve ese año; 2021-2024 y 2026 dan
+    CSV vacío, comprobado). CSV con columnas por NOMBRE (cargo;titular;ejercicio;retribucion;dedicacion), se
+    lee con csv.DictReader. Se excluyen las filas con retribución 0 (concejales de la oposición sin dedicación
+    fija, solo con asistencias por sesión, que esta fuente no desglosa con importe verificable por persona).
+    Bug encontrado y corregido: la columna `titular` separa nombre y apellidos con un ESPACIO DE NO RUPTURA
+    (U+00A0), no un espacio normal -- se sustituye por espacio normal antes de guardar (si no, el nombre se ve
+    bien al renderizarlo pero contiene un carácter invisible distinto en cada hueco)."""
+    import csv as _csv
+    url = "https://transparencia.laspalmasgc.es/retribuciones/retribuciones-miembros-electos/2025"
+    api_url = ("https://transparencia.laspalmasgc.es/api/proxy/obligaciones/"
+               "datos-multiples-registros-por-ano/142/1/2025/csv")
+    r = descargar(api_url)
+    texto = r.content.decode("utf-8-sig")
+    filas = list(_csv.DictReader(io.StringIO(texto), delimiter=";"))
+    out = []
+    for f in filas:
+        importe = num_es(f.get("retribucion"))
+        if not importe:
+            continue   # retribución 0: sin dedicación fija verificable por persona, se omite (ver docstring)
+        nombre = (f.get("titular") or "").replace("\xa0", " ").strip()
+        nombre = re.sub(r"^D\.\s*ª?\s*", "", nombre).strip()
+        nombre = re.sub(r"\s+", " ", nombre)
+        cargo = cargo_frase(f.get("cargo") or "")[:240]
+        dedic = (f.get("dedicacion") or "").strip().lower() or "sin especificar"
+        out.append(nuevo_registro("Las Palmas de Gran Canaria", "las_palmas", nombre, cargo, importe,
+                                  f"retribución bruta anual 2025 (dedicación {dedic})", "2025", url,
+                                  "Portal de Transparencia del Ayuntamiento de Las Palmas de Gran Canaria: "
+                                  "retribuciones de miembros electos", texto))
+    if len(out) < 15:
+        raise RuntimeError(f"Las Palmas de Gran Canaria: solo {len(out)} concejales (¿cambió la API?)")
+    return out
+
+
 @_fuente("alcantarilla")
 def actualizar_alcantarilla():
     """Ayuntamiento de Alcantarilla (Murcia) > Portal de Transparencia > "Retribuciones (legislatura
