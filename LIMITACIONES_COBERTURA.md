@@ -909,3 +909,18 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   visible en la portada renderizada; sin presupuesto de búsqueda web disponible para acelerar la localización,
   no se insistió más esta ronda.
 
+## Cierre de España, ronda 4 (2026-10-01, Asturias y Navarra)
+
+- **Oviedo (concejales) — CONECTADO, primer cierre de Asturias**: ver Lote 25 en `SUELDOS_CONCEJALES_LOG.md`
+  (20 concejales, reconstrucción a partir de 6 resoluciones de Alcaldía con dos modificaciones de 2024).
+- **Gijón (concejales) — CONECTADO**: ver Lote 26 (24 concejales, dataset abierto de `opendata.gijon.es`
+  encontrado interceptando con Playwright el tráfico de una ficha individual).
+- **Pamplona (concejales) — CONECTADO, primer cierre de Navarra**: ver Lote 27 (9 concejales delegados,
+  patrón Málaga sobre solo la categoría segura de la fuente).
+- **Donostia-San Sebastián (concejales) — sin lead esta ronda**: el propio portal de transparencia avisa que
+  está "en fase de renovación"; ni "Órganos de Gobierno" ni el resto de secciones navegadas mencionan
+  retribuciones de concejales, y varias URLs candidatas (`/personal-municipal`,
+  `/participacion-relacion-ciudadanos`) dan 404. Sin presupuesto de búsqueda web disponible para acelerar la
+  localización, no se insistió más esta ronda -- posible candidato para retomar con más tiempo o cuando el
+  sitio termine su renovación.
+
