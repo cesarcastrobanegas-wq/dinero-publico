@@ -11763,6 +11763,11 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .alerta.info{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);color:var(--text);}
 .alerta-ico{font-size:16px;line-height:1;}
 .alerta-titulo{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;opacity:.7;}
+/* llamada a firmar la petición de change.org (pieza /casos/contratos-menores-coladero y portadas) */
+.peticion-cta{background:rgba(240,136,62,.10);border:1px solid rgba(240,136,62,.45);border-left:4px solid var(--accent);border-radius:8px;padding:14px 18px;margin:18px 0 24px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.peticion-cta p{margin:0;font-size:14px;line-height:1.5;color:var(--text);flex:1;min-width:220px;}
+.peticion-cta a.peticion-btn{display:inline-block;background:var(--accent);color:#fff;font-weight:700;font-size:15px;padding:10px 20px;border-radius:6px;text-decoration:none;white-space:nowrap;}
+.peticion-cta a.peticion-btn:hover{filter:brightness(1.08);}
 /* cards municipio */
 .muni-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
 .muni-header{padding:12px 18px;background:rgba(240,136,62,.08);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
@@ -16024,6 +16029,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
   </details>
   <div class="section-title">🔍 Casos de investigación</div>
+  {_peticion_cta_html(_PETICION_CTA_TEXTO_PORTADA)}
   <div class="region-grid">{casos_home_html}</div>
   <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
   <div class="home-grid">
@@ -16151,6 +16157,7 @@ def render_landing_html(datos, provincia="murcia"):
   </div>
   {stats}
   <div class="section-title">🔍 Casos de investigación</div>
+  {_peticion_cta_html(_PETICION_CTA_TEXTO_PORTADA)}
   <div class="region-grid">{casos_prov_html}</div>
   <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
   <div class="section-title">Municipios · {esc(label)}</div>
@@ -16471,7 +16478,32 @@ def _share_buttons_html(path, titulo):
 </script>"""
 
 
+PETICION_CONTRATOS_MENORES_URL = ("https://www.change.org/p/contratos-menores-el-coladero-de-la-"
+                                  "contrataci%C3%B3n-p%C3%BAblica-en-espa%C3%B1a")
+
+
+_PETICION_CTA_TEXTO_PORTADA = ('<strong>Contratos menores: el coladero de la contratación pública.</strong> '
+                               'Auditamos 29 grandes ciudades y pedimos por ley que su publicación sea obligatoria '
+                               'y uniforme. <a href="/casos/contratos-menores-coladero">Lee el caso</a>.')
+
+
+def _peticion_cta_html(texto):
+    """Bloque destacado con el botón "Firma la petición →" (petición de change.org sobre contratos menores).
+    Se usa arriba y abajo de /casos/contratos-menores-coladero y en las dos portadas (nacional y provincial),
+    justo antes del bloque de Casos. Enlace externo: nueva pestaña, rel=noopener."""
+    return (f'<div class="peticion-cta"><p>{texto}</p>'
+            f'<a class="peticion-btn" href="{esc(PETICION_CONTRATOS_MENORES_URL)}" target="_blank" '
+            f'rel="noopener">Firma la petición →</a></div>')
+
+
 _CASOS = [
+    {
+        "slug": "contratos-menores-coladero",
+        "titulo": "El coladero de los contratos menores: lo que encontramos al auditar 29 grandes ciudades",
+        "resumen": "1.069.237 contratos menores en cinco años, y cada administración decide si los publica y "
+                   "cómo. Auditamos las 29 ciudades de más de 100.000 habitantes que nos faltaban: solo 3 "
+                   "ofrecen algo parecido a un dataset abierto real.",
+    },
     {
         "slug": "archena-ranking-transparencia-dyntra",
         "titulo": "Archena, primera en el ranking de transparencia de Dyntra: qué mide y qué no",
@@ -16647,7 +16679,8 @@ def render_caso_contratos_menores_html():
   Cada administración decide cómo —y si— los hace públicos: un portal de transparencia
   propio, una tabla trimestral en PDF, un registro que solo cubre el último ejercicio…
   o nada en absoluto. PLACE, la plataforma nacional que indexamos para las adjudicaciones
-  formales, no los recoge.</p>
+  formales, tiene un canal específico para contratos menores, pero ninguna administración está
+  obligada a usarlo ni a usarlo de la misma forma, así que no sirve como fuente completa.</p>
 
   <h2>Qué hicimos</h2>
   <p>Auditamos, municipio a municipio, cómo publica cada administración sus contratos
@@ -16719,6 +16752,69 @@ def render_caso_contratos_menores_html():
                         description="Por qué una empresa activa en el sector local puede no tener "
                                      "ninguna adjudicación indexada, y cómo eso nos llevó a construir "
                                      "la sección de contratos menores de Dinero Público.",
+                        og_path=_og_path)
+
+
+def render_caso_contratos_menores_coladero_html():
+    """Publicación preparada el 2026-09-29 (texto de César, literal). Cifras de DATOS_PETICION_MENORES.md
+    (corte del 28-09-2026): 1.069.237 contratos / 919 municipios (§1.1-1.3) y la auditoría de las 29
+    ciudades de más de 100.000 hab. sin fuente conectada (§5)."""
+    _og_path = "/casos/contratos-menores-coladero"
+    _titulo = "El coladero de los contratos menores: lo que encontramos al auditar 29 grandes ciudades"
+    cta_arriba = _peticion_cta_html("Hemos lanzado una petición pública para que la publicación de los "
+                                    "contratos menores sea obligatoria y uniforme.")
+    cta_abajo = _peticion_cta_html("Si crees que esto debe cambiar por ley, firma y compártela.")
+    body = f"""<div class="static-page">
+  <h1>El coladero de los contratos menores: lo que encontramos al auditar 29 grandes ciudades</h1>
+
+  {cta_arriba}
+
+  <p>En los últimos cinco años, en los 919 municipios donde hemos podido reunir datos, se han
+  adjudicado 1.069.237 contratos menores — adjudicaciones directas, sin concurso, por debajo del
+  umbral que obliga a licitar. Es solo lo que hemos conseguido rastrear: no existe obligación legal
+  de publicarlos de forma centralizada y uniforme.</p>
+
+  <h2>Lo que ya sabíamos: un parche de fuentes distintas</h2>
+  <p>Llevamos meses conectando, municipio a municipio, portales de contratos menores: CSV, ODS, XLSX,
+  PDF, APIs propias, listados paginados. Cada administración decide cómo publica, si es que
+  publica.</p>
+
+  <h2>Lo que descubrimos al mirar las 29 grandes ciudades que nos faltaban</h2>
+  <p>Auditamos los 29 municipios de más de 100.000 habitantes que todavía no teníamos conectados.
+  El resultado:</p>
+  <ul>
+    <li>12 de los 29 no tienen ni un listado propio actualizado de contratos menores. Siete remiten a PLACE, la
+    Plataforma de Contratación del Sector Público —que sí tiene un canal pensado para esto—, pero lo
+    usan como quieren: algunos suben sus contratos al canal específico de contratos menores, otros cuelgan un PDF suelto en la
+    pestaña de documentos, y otros no subieron nada en todo un mes.</li>
+    <li>Solo 3 de los 29 (Málaga, Córdoba y Gijón) ofrecen algo parecido a un dataset abierto real.
+    El resto son ficheros sueltos, con nombres impredecibles, en al menos 8 formatos distintos.</li>
+    <li>Incluso donde publican, el dato falla: en Almería, el enlace de menores de 2025 lleva a
+    contratos abiertos; en Huelva, el del tercer trimestre de 2023 lleva a un decreto suelto sin
+    relación; en Santa Cruz de Tenerife, el CSV de 2024 ni siquiera dice quién recibió el
+    contrato.</li>
+  </ul>
+
+  <h2>Por qué importa</h2>
+  <p>El problema no es la falta de infraestructura. PLACE ya tiene un canal para publicar contratos
+  menores. Lo que falta es que su uso sea obligatorio y uniforme. Mientras tanto, cada administración
+  decide si te lo cuenta, cómo te lo cuenta, y durante cuánto tiempo.</p>
+
+  <p>Hemos lanzado una petición pública pidiendo que esto cambie por ley.</p>
+
+  {cta_abajo}
+
+  <p style="font-size:12px;color:var(--dim)">Datos a 28 de septiembre de 2026.</p>
+
+  <p><a href="/casos">← Volver a Casos</a></p>
+</div>"""
+    body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
+                         _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
+    return _page_shell("Caso: el coladero de los contratos menores — auditoría de 29 grandes ciudades",
+                        body,
+                        description="1.069.237 contratos menores en cinco años y cada administración decide "
+                                     "si los publica y cómo. Auditamos las 29 ciudades de más de 100.000 "
+                                     "habitantes que nos faltaban. Firma la petición para cambiarlo por ley.",
                         og_path=_og_path)
 
 
@@ -17646,6 +17742,9 @@ def _route_get(path, qs, gzip_ok=False):
 
     if path == "/casos":
         return _resp(render_casos_index_html(), gzip_ok=gzip_ok)
+
+    if path == "/casos/contratos-menores-coladero":
+        return _resp(render_caso_contratos_menores_coladero_html(), gzip_ok=gzip_ok)
 
     if path == "/casos/archena-ranking-transparencia-dyntra":
         return _resp(render_caso_archena_dyntra_html(), gzip_ok=gzip_ok)
