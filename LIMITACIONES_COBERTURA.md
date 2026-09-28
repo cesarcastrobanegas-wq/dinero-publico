@@ -854,6 +854,17 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   - **Confirma que vale la pena revisar si otros municipios comparten plataforma** una vez identificada una
     con éxito: mismo dominio-patrón `transparencia.<municipio>.org/.es`, misma API `/api/proxy/obligaciones/
     datos-multiples-registros-por-ano/<id>/1/<año>/csv`, solo cambia el id de obligación.
+- **Santander (concejales) — descartado, único acuerdo nominal encontrado está caducado**: `transparencia.
+  santander.es` (A.2.4, "Retribuciones percibidas anualmente") enlaza a un PDF real del BOC (21/08/2019) con
+  nombre, cargo e importe individual de la alcaldesa y 13 concejales -- justo el tipo de fuente que se busca.
+  El problema: es el acuerdo de la legislatura 2019-2023, y no hay ningún acuerdo posterior enlazado. Se
+  comprobó contra el listado actual de la Corporación (`santander.es/.../corporacion-municipal`): varios
+  nombres del PDF (Ceruti García de Lago, Díaz Herrera, Díaz Maza, González Huergo, Ruiz Lavín, Sanjuan
+  Iriarte, Nalda Condado) ya NO aparecen en la Corporación vigente, sustituidos por concejales distintos
+  (Gancedo González, García Ruiz, Gómez-Barreda García, Castillo Terán...) -- solo la alcaldesa (Gema Igual
+  Ortiz) coincide en ambos. Usar los importes de 2019 para la Corporación actual asignaría sueldos a personas
+  que ya no ocupan esos cargos: descartado, no por falta de dato sino por estar caducado sin sustituto
+  publicado.
 
 ## Cierre de España, ronda 2 (2026-10-01, Playwright + búsqueda restaurada)
 
