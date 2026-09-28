@@ -6615,6 +6615,27 @@ def _es_municipio_gallego(muni_norm):
     return muni_norm in _MUNICIPIOS_GALICIA_NORM
 
 
+# Comunitat Valenciana / Illes Balears (2026-10-01, hallazgo al verificar la cobertura de contratos formales
+# por comunidad -- misma clase de bug que Galicia, ver arriba): en PLACE muchos ayuntamientos de estas dos
+# comunidades figuran con su nombre catalán/valenciano, "Ajuntament de X", en vez de (o además de)
+# "Ayuntamiento de X" -- el patrón anclado solo reconocía la forma castellana. Verificado con un ZIP real de
+# PLACE (septiembre de 2026, un solo mes): 8 municipios distintos publican bajo "Ajuntament de" -- Calp,
+# Campos, Llucmajor, Rocafort, Santa Maria del Camí, Sóller, Tavernes de la Valldigna y VALENCIA CAPITAL --
+# ninguno de ellos reconocido por el patrón antiguo. Solo se aplica a Alicante/Castellón/Valencia/Baleares (no
+# cambia ninguna otra provincia); no sustituye la forma castellana, se añade como alternativa (algunos
+# municipios usan una u otra según el expediente, a veces ambas).
+_MUNICIPIOS_AJUNTAMENT_NORM = None
+
+
+def _es_municipio_ajuntament(muni_norm):
+    global _MUNICIPIOS_AJUNTAMENT_NORM
+    if _MUNICIPIOS_AJUNTAMENT_NORM is None:
+        _MUNICIPIOS_AJUNTAMENT_NORM = {normalizar(m) for lst in (MUNICIPIOS_ALICANTE, MUNICIPIOS_CASTELLON,
+                                                                  MUNICIPIOS_VALENCIA, MUNICIPIOS_BALEARES)
+                                       for m in lst}
+    return muni_norm in _MUNICIPIOS_AJUNTAMENT_NORM
+
+
 def _regex_anclado(municipio):
     """Regex completo para anclar=True en buscar_en_zip/buscar_en_feed_vivo:
     _prefijo_anclaje + infijo honorífico opcional + nombre del municipio,
@@ -6654,8 +6675,11 @@ def _regex_anclado(municipio):
         else:
             nombre = rf'de {re.escape(muni_norm)}'
         return re.compile(rf'\b(?:ayuntamiento|concello) {nombre}{lookahead}\b')
+    prefijo = _prefijo_anclaje(municipio)
+    if prefijo == "ayuntamiento de" and _es_municipio_ajuntament(muni_norm):
+        prefijo = "(?:ayuntamiento|ajuntament) de"
     return re.compile(
-        rf'\b{_prefijo_anclaje(municipio)} {_INFIJO_HONORIFICO_RE}{re.escape(muni_norm)}{lookahead}\b'
+        rf'\b{prefijo} {_INFIJO_HONORIFICO_RE}{re.escape(muni_norm)}{lookahead}\b'
     )
 
 
@@ -8081,6 +8105,106 @@ def _aplicar_backfill_galicia_place():
               f"{len(anadidos)} municipios ({len(sin_fila)} sin ficha, omitidos: {sin_fila}). {anadidos}", flush=True)
     except Exception as e:
         print(f"[startup] backfill_galicia_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
+BACKFILL_AJUNTAMENT_PLACE_FILE = os.path.join(BASE_DIR, "backfill_ajuntament_place.json.gz")
+_BACKFILL_AJUNTAMENT_PLACE_CLAVE = "backfill_ajuntament_place_sha"
+_BACKFILL_AJUNTAMENT_MES_CACHE = []
+
+
+def _backfill_ajuntament_desde_texto():
+    """'julio de 2024': mes más antiguo cubierto por backfill_ajuntament_place.json.gz (se lee una vez; "" si no hay fichero)."""
+    if not _BACKFILL_AJUNTAMENT_MES_CACHE:
+        texto = ""
+        try:
+            with _gzip.open(BACKFILL_AJUNTAMENT_PLACE_FILE, "rt", encoding="utf-8") as f:
+                meses = json.load(f).get("meses") or []
+            if meses:
+                m = min(meses)
+                texto = f"{_MESES_ES_LARGO[int(m[4:6]) - 1]} de {m[:4]}"
+        except Exception:
+            texto = ""
+        _BACKFILL_AJUNTAMENT_MES_CACHE.append(texto)
+    return _BACKFILL_AJUNTAMENT_MES_CACHE[0]
+
+
+def aviso_backfill_ajuntament_html(provincia):
+    """Aviso en las fichas de Comunitat Valenciana/Illes Balears: los contratos formales de PLACE de los ayuntamientos
+    cuyo órgano figura como «Ajuntament de X» (en vez de «Ayuntamiento de X») se recuperan de forma retroactiva
+    (ver _aplicar_backfill_ajuntament_place, mismo mecanismo que Galicia); mientras dura, la cobertura es parcial
+    hacia atrás."""
+    if provincia not in ("alicante", "castellon", "valencia", "baleares"):
+        return ""
+    desde = _backfill_ajuntament_desde_texto()
+    if not desde:
+        return ""
+    if desde == "septiembre de 2021":
+        return ('<div class="pol-retrib-nota">ℹ️ Contratos formales (PLACE): hasta octubre de 2026 el sistema no reconocía como propios los '
+                'contratos de órganos que figuran como «Ajuntament de ...». Se han recuperado los meses anteriores hasta septiembre de 2021 '
+                '(el límite de esta web); cada mes incluye lo que PLACE publicó entonces.</div>')
+    return ('<div class="pol-retrib-nota">ℹ️ Contratos formales (PLACE): hasta octubre de 2026 el sistema no reconocía como propios los '
+            'contratos de órganos que figuran como «Ajuntament de ...». Se están recuperando meses anteriores; por ahora la '
+            f'recuperación llega hasta {esc(desde)} y sigue en curso hacia atrás (tope: septiembre de 2021). Antes de esa fecha la '
+            'lista puede estar incompleta.</div>')
+
+
+def _aplicar_backfill_ajuntament_place():
+    """Recupera contratos formales de PLACE de municipios de Comunitat Valenciana/Illes Balears que el patrón antiguo
+    de _regex_anclado no reconocía ("Ajuntament de X"; ver el fix de 2026-10-01, misma clase de bug que Galicia) en
+    los meses en que aún no existía. Los contratos se calcularon EN LOCAL con generar_backfill_ajuntament_place.py
+    (una pasada por ZIP mensual) y viajan en un fichero pequeño del repo: no se descarga ningún ZIP en producción.
+
+    Misma fusión aditiva, misma lógica de idempotencia por hash en `settings`, misma salvaguarda de "sin fila se
+    reintenta en el siguiente arranque" -- ver _aplicar_backfill_galicia_place, de la que este es un calco literal
+    salvo fichero/clave/municipios."""
+    if not _DISCO_CONFIABLE or not os.path.exists(BACKFILL_AJUNTAMENT_PLACE_FILE):
+        return
+    try:
+        with open(BACKFILL_AJUNTAMENT_PLACE_FILE, "rb") as f:
+            crudo = f.read()
+        huella = hashlib.sha256(crudo).hexdigest()[:16]
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_BACKFILL_AJUNTAMENT_PLACE_CLAVE,)).fetchone()
+        if fila and fila[0] == huella:
+            return
+        datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+        anadidos, sin_fila = {}, []
+        for muni, info in datos["municipios"].items():
+            key = normalizar(muni)
+            with _db_lock:
+                row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
+            if not row:
+                sin_fila.append(muni)
+                continue
+            d = json.loads(row[0])
+            actuales = d.get("contratos", [])
+            claves = {c.get("url") or c.get("titulo", "")[:80] for c in actuales}
+            nuevos = []
+            for c in info["contratos"]:
+                k = c.get("url") or c.get("titulo", "")[:80]
+                if k and k not in claves:
+                    claves.add(k)
+                    nuevos.append(c)
+            if not nuevos:
+                continue
+            d["contratos"] = actuales + nuevos
+            d["total_contratos"] = len(d["contratos"])
+            d["alertas"] = analizar_riesgo(d["contratos"])
+            with _db_lock:
+                _db.execute("UPDATE municipios SET data=? WHERE municipio=?",
+                            (json.dumps(d, ensure_ascii=False), key))
+                _db.commit()
+            anadidos[muni] = len(nuevos)
+        if not sin_fila:
+            with _db_lock:
+                _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                            "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor",
+                            (_BACKFILL_AJUNTAMENT_PLACE_CLAVE, huella))
+                _db.commit()
+        print(f"[startup] backfill_ajuntament_place: {sum(anadidos.values())} contratos anadidos en "
+              f"{len(anadidos)} municipios ({len(sin_fila)} sin ficha, omitidos: {sin_fila}). {anadidos}", flush=True)
+    except Exception as e:
+        print(f"[startup] backfill_ajuntament_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
 CORRECCION_FORMALES_5ANIOS_FILE = os.path.join(BASE_DIR, "correcciones_formales_5anios.json.gz")
@@ -11285,6 +11409,7 @@ def _inicializar_datos():
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
+    _aplicar_backfill_ajuntament_place()
     _aplicar_correccion_formales_5anios()
     corte = time.time() - RESULT_CACHE_TTL
     with _db_lock:
@@ -15224,6 +15349,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           </div>
           <div class="source-bar">{esc(fuentes_label)} · {fuentes_str}{age_html}</div>
           {aviso_backfill_galicia_html(provincia)}
+          {aviso_backfill_ajuntament_html(provincia)}
           {alertas_html}
           <div class="tbl-scroll">
             <table>

@@ -585,6 +585,25 @@ infraestructura ya construida (`buscar_directivo`, BORME/BOE, empresia.es), pero
 depósito, sin cifras; el Registro Mercantil directo y einforma/axesor/infocif son de pago por informe. Recomendación:
 construir solo la Fase 1 (existencia + cargo, gratis) por ahora; las cuentas anuales, caso a caso y bajo demanda.
 
+## Contratos formales de Comunitat Valenciana/Illes Balears en PLACE (backfill del patrón "Ajuntament de X", 2026-10-01)
+
+- **Qué era**: verificando la cobertura de contratos formales por comunidad (pasada de muestreo pedida por César, misma idea que
+  destapó el bug de Galicia) se encontró la misma clase de bug: `_regex_anclado` solo reconocía "Ayuntamiento de X" y no la forma
+  catalana/valenciana "Ajuntament de X", que muchos municipios de Alicante/Castellón/Valencia/Baleares usan en el campo `organo` de
+  PLACE (algunos usan una forma u otra según el expediente, a veces ambas). El fix añade "ajuntament de" como alternativa SOLO para
+  los municipios de esas 4 provincias (`_es_municipio_ajuntament`), sin tocar el resto de España.
+- **Medido antes de desplegar**: con los 4 únicos meses de PLACE ya en caché local (jun-sep 2026), el patrón nuevo reconoce 357
+  contratos que el antiguo no veía, en 14 municipios -- destacan **València capital (+141)** y **Calp (+112)**; el resto (Llucmajor,
+  Tavernes de la Valldigna, Moncada, Sóller, Campos, Sumacàrcer, Real, Rocafort, Sencelles, Calvià, Santa Maria del Camí, Son
+  Servera) con menos de 25 cada uno.
+- **Backfill**: igual que Galicia, el fix (app.py) solo actúa sobre los ZIP que se procesen desde ahora; los meses anteriores se
+  recuperan con un fichero generado en LOCAL (`backend/backfill_ajuntament_place.json.gz`, generador
+  `backend/generar_backfill_ajuntament_place.py`) y aplicado al arrancar con fusión aditiva (`_aplicar_backfill_ajuntament_place`).
+  **Nunca se descargan ZIP en producción.** Estado del backfill hacia atrás: en curso (ver commits siguientes para el alcance real
+  desplegado).
+- **Límites**: los mismos tres que Galicia -- (1) cada mes cubre solo lo que PLACE publicó ese mes; (2) solo cubre lo que pasa por
+  PLACE; (3) ampliar el backfill requiere ejecutar el generador a mano.
+
 ## Contratos formales de Galicia en PLACE (backfill del patrón "Concello de X", 2026-09-25/27)
 
 - **Qué era**: el patrón antiguo de `_regex_anclado` no reconocía órganos "Concello de X"/"Concello da/do X", así que los contratos
@@ -929,6 +948,24 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   con esta fuente, cuáles de esos delegados tienen dedicación exclusiva y cuáles parcial al 50 % o al 33 %.
   Asumir que todos son "exclusiva" sería adivinar. Sin una tercera fuente que fije el régimen por persona, no
   se cierra.
+
+## Cierre de España, ronda 7 (2026-10-01, sin presupuesto de WebSearch)
+
+- **Nota de sesión**: esta ronda se quedó sin presupuesto de `WebSearch` (200/200 usadas) a mitad de la
+  exploración -- la búsqueda de nuevas fuentes de menores/concejales quedó limitada a navegación directa por
+  URL (`WebFetch`), mucho menos eficaz para localizar portales que no siguen un patrón conocido. Se priorizó
+  el frente de contratos formales (fix "Ajuntament de X", no depende de búsqueda) y se documenta aquí el único
+  lead nuevo encontrado con navegación directa, sin cerrar.
+- **Zaragoza (concejales) — lead real, sin cierre esta ronda**: el portal de transparencia
+  (`zaragoza.es/sede/portal/organizacion/retribuciones`) da importes reales por categoría 2026 (Alcaldesa
+  92.973,30 €; Consejero de Gobierno 89.254,48 €; Concejal Delegado 74.378,64 €; Concejal 72.705,78 €) --
+  mismo patrón que Málaga/Oviedo/Pamplona, en principio cerrable. La página de composición del gobierno
+  (`.../gobiernozaragoza/composicion`) da los 9 nombres de la Alcaldesa + Tenientes de Alcalde (legislatura
+  2023-2027: Natalia Chueca, Ángel Carlos Lorén, Víctor Manuel Serrano, Sara Fernández, Blanca Solans, Tatiana
+  Gaudes, Carlos Gimeno, Mª Ángeles Orós, Alfonso Mendoza) pero SIN indicar el área de cada uno ni distinguir
+  quién es "Consejero de Gobierno" de quién es "Concejal Delegado" -- y no se localizó el decreto de
+  nombramiento/estructura que sí lo daría, ni el listado completo del Pleno (para la categoría "Concejal" raso).
+  Candidato claro para la próxima ronda con presupuesto de búsqueda disponible.
 
 ## Cierre de España, ronda 6 (2026-10-01, Ceuta/Melilla reconfirmados, CLM sin cierre)
 
