@@ -4462,6 +4462,12 @@ _NOTAS_SUELDOS_CONCEJALES = {
                 "Ayuntamiento (acuerdo del Pleno de 28/07/2023). El cargo mostrado es genérico («Concejal/a - Consejo Municipal»): "
                 "la fuente no da la concejalía o delegación de cada persona en este listado exportable, solo en su ficha individual. "
                 "Los concejales sin dedicación fija (sueldo 0 en la fuente) no aparecen.",
+    "oviedo": "El importe es la retribución anual de su RÉGIMEN de dedicación (Concejal/a de Gobierno, Delegado/a, o de "
+             "oposición con dedicación exclusiva/parcial), fijado por acuerdo plenario de 4/07/2023, no una nómina individual "
+             "-- igual que Málaga/Manacor. Reconstruido a partir de 6 resoluciones de Alcaldía que nombran a cada concejal/a "
+             "con su régimen exacto, incluidas 2 resoluciones de 2024 que modifican el régimen de varias personas (altas, "
+             "bajas y cambios de dedicación) -- se aplica el estado más reciente localizado. Los concejales sin dedicación "
+             "fija (solo asistencias) no aparecen. Alcalde excluido (cubierto aparte).",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se

@@ -536,3 +536,19 @@ municipios**.
 Primer cierre de un lead que llevaba varias noches aparcado por "fuente caída": confirma que vale la pena
 reintentar con un navegador real los leads marcados solo como error transitorio, no solo los marcados
 explícitamente "SPA sin HTML". Cierra además la ciudad más grande pendiente de todo el rastreo.
+
+---
+
+## Lote 25 — Oviedo (2026-10-01, primer cierre de Asturias, patrón Málaga con reconstrucción multi-documento)
+
+**Añadidos: 20 concejales** (Oviedo, capital de Asturias). Total acumulado: **889 registros en 47
+municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Oviedo | Portal de transparencia > "Régimen de dedicación y retribuciones de los concejales": 6 resoluciones de Alcaldía en PDF (legislatura 2023-2027) -- una para los 8 Concejales de Gobierno (62.000 €/año) y 3 Concejales Delegados (54.000 €/año), y una por cada grupo de la oposición (PSOE, VOX, IU) con su concejal/a de dedicación exclusiva (52.000 €/año) y el resto en parcial 75 %/50 % sobre esa base, más 2 resoluciones de 2024 que modifican el régimen de varias personas | Mismo patrón que Málaga/Manacor (importe por régimen, no por persona en la misma línea, pero el propio documento asigna sin ambigüedad el régimen a cada persona nombrada). La particularidad de Oviedo: son 6 documentos distintos con una cadena de modificaciones -- se leyeron los 2 de 2024 (2023/13387→IU sube una concejala a exclusiva; 2024/9375→un concejal de IU se jubila y otro sube a exclusiva; 2024/12391→entra un concejal nuevo del PSOE, otra baja de exclusiva a parcial 75 %, un tercero pierde su dedicación) y se aplicaron como altas/bajas/cambios de régimen explícitos en el conector (mismo tratamiento que el `ALCALDE_CONOCIDO` hardcodeado de Burgos: hechos puntuales documentados, no un patrón regex repetible), no forzando una lectura automática de los 6 PDF como si fueran independientes entre sí. **Dos bugs de PDF corregidos**: (1) cada salto de página inserta un bloque de texto del sello de firma electrónica invertido carácter a carácter, que puede partir el nombre de un concejal por la mitad si no se elimina antes de aplicar los patrones (encontrado con "Doña Lourdes García López" sin emparejar); (2) el PDF de IU usa "Don" en vez de "D." para dos personas, un alternativa que faltaba en el patrón de extracción de nombres |
+
+Primer cierre de Asturias en cualquier frente. Confirma que la técnica de "régimen por documento + nombre
+asignado sin ambigüedad" (Málaga/Manacor) escala también a fuentes con varios documentos de modificación
+encadenados, siempre que cada cambio se trate como un hecho puntual verificado, no se intente generalizar
+por regex.

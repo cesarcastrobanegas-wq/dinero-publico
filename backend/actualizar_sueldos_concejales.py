@@ -2263,6 +2263,148 @@ def actualizar_aranjuez():
     return out
 
 
+@_fuente("oviedo")
+def actualizar_oviedo():
+    """Ayuntamiento de Oviedo (Asturias) > Portal de transparencia > "Régimen de dedicación y retribuciones de
+    los concejales": ocho resoluciones de Alcaldía en PDF (legislatura 2023-2027), cada una nombrando personas
+    reales con su régimen de dedicación exacto:
+      - 2023/10575: los 8 Concejales de Gobierno (62.000 €/año) y los 3 Concejales Delegados (54.000 €/año),
+        todos con dedicación exclusiva -- ambos importes vienen del propio acuerdo plenario citado en el PDF.
+      - 2023/10678 (PSOE), 2023/11028 (VOX), 2023/10677 (IU): un concejal/a con dedicación exclusiva y el
+        resto con dedicación parcial (75 % o 50 %) por cada grupo de la oposición, sobre una base de
+        52.000 €/año (también del acuerdo plenario) -- el importe parcial se calcula sobre esa base (75 % =
+        39.000 €, 50 % = 26.000 €; el propio PDF de VOX/PSOE confirma 39.000 € como cifra literal en el texto
+        para quienes tienen incompatibilidad con la Universidad de Oviedo, así que no es una cifra inventada).
+      - 2023/13387 e 2024/9375 modifican el régimen de dos concejales de IU (una sube de parcial 75 % a
+        exclusiva; el otro se jubila y renuncia, y el tercero sube de parcial 50 % a exclusiva) -- se aplican
+        como ceses/altas explícitos, no por regex genérico (cada resolución de modificación es un caso único,
+        igual que el `ALCALDE_CONOCIDO` hardcodeado de Burgos: un hecho puntual documentado, no un patrón
+        repetible).
+      - 2024/12391 modifica el régimen de tres concejales del PSOE (uno nuevo entra con exclusiva, otro baja
+        de exclusiva a parcial 75 %, el tercero pierde su dedicación parcial) -- mismo tratamiento.
+    Sin resoluciones de modificación posteriores a agosto de 2024 localizadas en la página: se asume que este
+    es el estado vigente a la fecha de esta actualización. El Alcalde no aparece en ninguna de estas
+    resoluciones (su régimen se fija aparte) y no se incluye."""
+    base_url = "https://transparencia.oviedo.es/documents/35138/140647/"
+    docs = {
+        "gobierno_delegados": base_url + "Resol+2023-10575+dedic+excl+Conc+Gob+y+deleg.pdf/"
+                                          "0625118a-fbd6-4fcf-9a1f-81bc958acfab?t=1769433380085",
+        "psoe":     base_url + "Resol+2023-10678+dedic+excl+Concej+PSOE.pdf/"
+                                "e8d6d3ea-bcbe-4596-a1f9-7028d9026890?t=1769433380007",
+        "vox":      base_url + "Resolus+2023-11028+excl+Concejales+Vox.pdf/"
+                                "47ea35dd-6363-4c11-9b55-0ca41c6097f9?t=1769433379941",
+        "iu":       base_url + "Resol+2023-10677+dedic+excl+Concej+IU.pdf/"
+                                "cacc7b5e-92df-4315-8041-7f0fdf8d600b?t=1769433379873",
+        "iu_2024":  base_url + "2024-9375+DE+FECHA++18-06-2024_EXTRA.pdf/"
+                                "816152d8-e016-4967-a287-d8c182427de7?t=1769433380157",
+        "psoe_2024": base_url + "2024-12391+DE+FECHA++19-08-2024_EXTRA.pdf/"
+                                 "ce5429db-1679-4ac8-8632-cd20b9edf47c?t=1769433380216",
+    }
+    RATE_GOBIERNO, RATE_DELEGADO, RATE_BASE = 62000.0, 54000.0, 52000.0
+    RATE_75, RATE_50 = round(RATE_BASE * 0.75, 2), round(RATE_BASE * 0.50, 2)
+
+    # Los PDF de Oviedo llevan, en cada salto de página, un bloque de texto DEL SELLO DE FIRMA ELECTRÓNICA
+    # invertido carácter a carácter ("átse\notnemucod..." = "esta\ndocumento..." al revés) seguido de la
+    # cabecera repetida del documento -- si no se quita, puede partir el nombre de un concejal justo por la
+    # mitad (bug real encontrado: "Doña Lourdes García López" quedaba sin emparejar con su "Dedicación
+    # exclusiva" porque el bloque de ruido se colaba en medio de las dos frases).
+    _RUIDO_PIE_PAGINA = re.compile(
+        r"átse\notnemucod.*?4\.-\s*Secretario.*?FIRMA \d{2}/\d{2}/\d{4} \d{2}:\d{2}(:\d{2})?\s*", re.DOTALL)
+
+    def _texto_limpio(contenido):
+        t = texto_pdf(contenido)
+        t = _RUIDO_PIE_PAGINA.sub(" ", t)
+        return re.sub(r"\s+", " ", t).strip()
+
+    textos = {}
+    for clave, url in docs.items():
+        textos[clave] = _texto_limpio(descargar(url).content)
+
+    out = []
+
+    # -- Concejales de Gobierno (62.000 €) y Delegados (54.000 €), ambos con dedicación exclusiva --
+    t = textos["gobierno_delegados"]
+    for m in re.finditer(r"(?:-\s*)?(?:D\.|Do[ñn]a|Dña\.)\s*([A-ZÁÉÍÓÚÑ][^:]+?):\s*([^.]+?)\.\s*Dedicaci[oó]n exclusiva",
+                        t):
+        nombre, cargo_desc = m.group(1).strip(), m.group(2).strip()
+        es_delegado = "delegad" in cargo_desc.lower()
+        cargo = f"Concejal/a {'Delegado/a' if es_delegado else 'de Gobierno'} ({cargo_desc[:200]})"
+        importe = RATE_DELEGADO if es_delegado else RATE_GOBIERNO
+        out.append(nuevo_registro("Oviedo", "asturias", nombre, cargo, importe,
+                                  "retribución bruta anual según el acuerdo plenario de 4 de julio de 2023",
+                                  "vigente desde 2023", docs["gobierno_delegados"], "Ayuntamiento de Oviedo: "
+                                  "resolución de régimen de dedicación de Concejales de Gobierno y Delegados",
+                                  t, verificar_adyacencia=False))
+    if len(out) != 11:
+        raise RuntimeError(f"Oviedo: {len(out)} Concejales de Gobierno/Delegados (se esperaban 11, "
+                            "¿cambió el documento?)")
+
+    def _oposicion(clave, grupo):
+        t = textos[clave]
+        gente = []
+        m_excl = re.search(r"a\.-\s*Dedicaci[oó]n exclusiva\.(.+?)b\.-\s*Dedicaci[oó]n parcial", t, re.DOTALL)
+        if m_excl:
+            for mm in re.finditer(r"-\s*(?:Do[ñn]a|Dña\.|D\.|Don)\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ ]+?),",
+                                  m_excl.group(1)):
+                gente.append((mm.group(1).strip(), "exclusiva"))
+        m_parc = re.search(r"b\.-\s*Dedicaci[oó]n parcial\.(.+?)(?:\Z)", t, re.DOTALL)
+        if m_parc:
+            for mm in re.finditer(r"(?:Do[ñn]a|Dña\.|D\.|Don)\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ ]+?),\s*"
+                                  r"dedicaci[oó]n parcial del (\d+)%", m_parc.group(1)):
+                gente.append((mm.group(1).strip(), mm.group(2) + "%"))
+        return gente, t
+
+    grupos = {
+        "psoe": _oposicion("psoe", "Grupo Municipal Socialista"),
+        "vox":  _oposicion("vox", "Grupo Municipal VOX"),
+        "iu":   _oposicion("iu", "Grupo Municipal Izquierda Unida-Convocatoria por Oviedo"),
+    }
+
+    # -- Modificaciones puntuales posteriores (hechos concretos y fechados, no un patrón regex) --
+    # IU, 2023/13387 (05/09/2023): Cristina Pontón García sube de parcial 75% a exclusiva.
+    gente_iu = [(n, "exclusiva") if n == "Cristina Pontón García" else (n, d) for n, d in grupos["iu"][0]]
+    # IU, 2024/9375 (18/06/2024): Gaspar Llamazares Trigo se jubila y cesa; Alejandro Suárez González sube de
+    # parcial 50% a exclusiva.
+    gente_iu = [(n, "exclusiva") if n == "Alejandro Suárez González" else (n, d)
+                for n, d in gente_iu if n != "Gaspar Llamazares Trigo"]
+    # PSOE, 2024/12391 (19/08/2024): entra Carlos Fernández Llaneza con exclusiva; María Luisa Ponga Martos
+    # baja de exclusiva a parcial 75%; Javier Ballina Díaz pierde su dedicación parcial (deja de cobrar).
+    gente_psoe = [(n, "parcial75") if n == "Maria Luisa Ponga Martos" else (n, d)
+                  for n, d in grupos["psoe"][0] if n != "Javier Ballina Díaz"]
+    gente_psoe.append(("Carlos Fernández Llaneza", "exclusiva"))
+
+    fuentes_oposicion = {
+        "psoe": (gente_psoe, "Grupo Municipal Socialista", docs["psoe"],
+                "Ayuntamiento de Oviedo: resolución de régimen de dedicación de concejales del Grupo "
+                "Municipal Socialista (modificada por la Resolución 2024/12391)"),
+        "vox": (grupos["vox"][0], "Grupo Municipal VOX", docs["vox"],
+               "Ayuntamiento de Oviedo: resolución de régimen de dedicación de concejales del Grupo VOX"),
+        "iu": (gente_iu, "Grupo Municipal Izquierda Unida-Convocatoria por Oviedo", docs["iu"],
+              "Ayuntamiento de Oviedo: resolución de régimen de dedicación de concejales de IU-Convocatoria "
+              "por Oviedo (modificada por las Resoluciones 2023/13387 y 2024/9375)"),
+    }
+    _texto_extra = {"psoe": textos.get("psoe_2024", ""), "iu": textos.get("iu_2024", "")}
+    for clave, (gente, grupo, url, fuente_nombre) in fuentes_oposicion.items():
+        # el nombre del grupo puede no aparecer tal cual en el PDF; para psoe/iu se añade también el texto de
+        # su resolución de modificación de 2024, porque algunos nombres (altas/cambios de régimen) solo
+        # aparecen ahí, no en la resolución original de 2023
+        texto_verif = textos[clave] + " " + grupo + " " + _texto_extra.get(clave, "")
+        for nombre, dedic in gente:
+            importe = {"exclusiva": RATE_BASE, "75%": RATE_75, "parcial75": RATE_75,
+                      "50%": RATE_50}.get(dedic)
+            if not importe:
+                continue
+            etiqueta = "exclusiva" if dedic in ("exclusiva",) else (
+                "parcial 75%" if dedic in ("75%", "parcial75") else "parcial 50%")
+            out.append(nuevo_registro("Oviedo", "asturias", nombre, f"Concejal/a ({grupo}, oposición)", importe,
+                                      f"retribución bruta anual, dedicación {etiqueta}, según el acuerdo "
+                                      "plenario de 4 de julio de 2023", "vigente", url, fuente_nombre,
+                                      texto_verif, verificar_adyacencia=False))
+    if len(out) < 18:
+        raise RuntimeError(f"Oviedo: solo {len(out)} concejales en total (¿cambió algún documento?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):
