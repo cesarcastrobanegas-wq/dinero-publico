@@ -2455,6 +2455,48 @@ def actualizar_gijon():
     return out
 
 
+@_fuente("pamplona")
+def actualizar_pamplona():
+    """Ayuntamiento de Pamplona/Iruña (Navarra) > "Organigrama y plantilla orgánica" da las retribuciones por
+    CATEGORÍA (Alcalde, Concejal delegado con dedicación exclusiva: 56.348,04 €, Concejal no delegado con
+    dedicación exclusiva: 42.144,48 €, dedicación parcial/asistencias), acuerdo de Pleno de 4/07/2023 -- mismo
+    patrón que Málaga/Manacor. Solo se usa la categoría "Concejal delegado", porque es la única que se puede
+    asignar a personas concretas sin ambigüedad: la página `/concejalias-delegadas` lista, en formato
+    estructurado (`<li><strong>Concejalía delegada...</strong>NOMBRE</li>`), exactamente las 9 concejalías
+    delegadas con el nombre de su titular. La categoría "Concejal no delegado con dedicación exclusiva" NO se
+    usa: no hay una lista pública de quién, entre el resto de concejales, ha optado por esa dedicación en vez
+    de la parcial/asistencias -- asignarla sería adivinar."""
+    from bs4 import BeautifulSoup
+    url_rate = "https://www.pamplona.es/ayuntamiento/organigrama-y-plantilla-organica"
+    url_lista = "https://www.pamplona.es/concejalias-delegadas"
+    texto_rate = texto_html(descargar(url_rate).text)
+    m_rate = re.search(r"Concejal delegado con dedicaci[oó]n exclusiva\s+([\d.,]+)\s*€", texto_rate)
+    if not m_rate:
+        raise RuntimeError("Pamplona: no se encontró la retribución de concejal delegado (¿cambió la página?)")
+    importe = num_es(m_rate.group(1))
+    r = descargar(url_lista)
+    soup = BeautifulSoup(r.text, "html.parser")
+    # el importe solo aparece en texto_rate (otra página), no en texto_lista (que solo tiene nombres y cargos)
+    texto_lista = texto_html(r.text) + " " + texto_rate
+    out = []
+    for li in soup.find_all("li"):
+        strong = li.find("strong")
+        if not strong or "concejalía delegada" not in strong.get_text(strip=True).lower():
+            continue
+        nombre = re.sub(r"\s+", " ", li.get_text(" ", strip=True)[len(strong.get_text(strip=True)):]).strip()
+        nombre = nombre.strip("\xa0: ").strip()
+        if not nombre or len(nombre.split()) < 2:
+            continue
+        out.append(nuevo_registro("Pamplona", "navarra", nombre, "Concejal/a delegado/a", importe,
+                                  "retribución bruta anual según el acuerdo de Pleno de 4 de julio de 2023 "
+                                  "(dedicación exclusiva de concejal delegado)", "vigente", url_lista,
+                                  "Ayuntamiento de Pamplona/Iruña: Concejalías delegadas", texto_lista,
+                                  verificar_adyacencia=False))
+    if len(out) < 7:
+        raise RuntimeError(f"Pamplona: solo {len(out)} concejalías delegadas (¿cambió la página?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):

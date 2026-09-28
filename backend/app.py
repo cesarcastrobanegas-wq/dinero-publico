@@ -4472,6 +4472,10 @@ _NOTAS_SUELDOS_CONCEJALES = {
             "corporación 2023-2027. Una persona (María Caunedo Fernández) tiene un importe mucho menor que el resto "
             "(13.085,62 € frente a ~65.000 €): se muestra tal cual lo publica la fuente, sin corregir ni excluir, "
             "probablemente por incorporación a mitad de mandato.",
+    "pamplona": "El importe es la retribución anual de la categoría «Concejal delegado con dedicación exclusiva» según el "
+               "acuerdo de Pleno de 4/07/2023, no una nómina individual -- igual que Málaga/Manacor. Solo se incluyen las "
+               "9 concejalías delegadas (con titular publicado por su nombre); la categoría «Concejal no delegado con "
+               "dedicación exclusiva» no se incluye porque no hay una lista pública de quién la ocupa.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se

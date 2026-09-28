@@ -568,3 +568,19 @@ Segundo cierre de Asturias en la misma noche. Confirma otra vez que vale la pena
 red de una ficha individual con Playwright incluso cuando el portal de transparencia "normal" no da ningún
 listado agregado: a menudo hay una API de datos abiertos completa detrás que el portal solo usa fichero a
 fichero.
+
+---
+
+## Lote 27 — Pamplona (2026-10-01, primer cierre de Navarra, patrón Málaga)
+
+**Añadidos: 9 concejales** (Pamplona/Iruña, capital de Navarra). Total acumulado: **922 registros en 49
+municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Pamplona | "Organigrama y plantilla orgánica" da las retribuciones por categoría (acuerdo de Pleno de 4/07/2023): Concejal delegado con dedicación exclusiva (56.348,04 €), Concejal no delegado con dedicación exclusiva (42.144,48 €), dedicación parcial/asistencias. La página `/concejalias-delegadas` lista, en HTML estructurado (`<li><strong>Concejalía delegada...</strong>NOMBRE</li>`), exactamente las 9 concejalías delegadas con su titular | Solo se usa la categoría "Concejal delegado" (las 9 personas nombradas sin ambigüedad); la categoría "Concejal no delegado con dedicación exclusiva" NO se usa porque no hay ninguna lista pública de quién, entre el resto de la Corporación, ha optado por esa dedicación en vez de la parcial o el régimen de asistencias -- asignarla sería adivinar |
+
+Primer cierre de Navarra en cualquier frente. Mismo patrón "categoría con nombre asignado sin ambigüedad"
+(Málaga/Manacor/Oviedo), pero aplicando el criterio de "no forzar" a la SEGUNDA categoría de la propia
+fuente (concejal no delegado): se cierra solo la parte que es segura, no se descarta todo el municipio por
+no poder cerrar el 100 %.
