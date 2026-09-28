@@ -460,3 +460,32 @@ Sin nota pública.
 | Aranjuez | aranjuez.es > "miembro" es un custom post type real de WordPress (`/wp-json/wp/v2/miembro`, una ficha por representante) con "Retribuciones (Salario Bruto): X€ en N pagas. Porcentaje de dedicación: Y%." embebido en la biografía | El Alcalde se excluye por la taxonomía `categoria_miembros` (id 1105 = "Alcalde", resuelta consultando `/wp-json/wp/v2/categoria_miembros/1105`), no por su nombre. Las personas sin dedicación exclusiva/parcial tienen "Porcentaje de dedicación: Plenos y Comisiones Informativas" en vez de un %, pero sí traen un importe fijo real -- se guardan igual. Se usa `verificar_adyacencia=False`: la biografía en primera persona que precede al párrafo de retribuciones tiene longitud muy variable (a veces > 450 caracteres), así que el nombre y el importe pueden quedar más lejos entre sí que la ventana de verificación por defecto; no hay riesgo de cruzar datos de personas distintas porque cada ficha es de una sola persona |
 
 Sin nota pública.
+
+---
+
+## Ronda de rastreo sistemático sin nuevos cierres (2026-09-30, madrugada)
+
+Tras Aranjuez se probó sistemáticamente la técnica de WordPress (`wp-json/wp/v2/types` para detectar custom
+post types tipo "miembro", y `wp-json/wp/v2/search` para encontrar la página de retribuciones) en un lote
+amplio de municipios de Madrid, Murcia, Castilla y León, Castilla-La Mancha, Baleares, Asturias, Cantabria y
+País Vasco, sin ningún cierre nuevo esta ronda:
+
+- **Con WordPress pero sin página de retribuciones localizable**: Getafe (custom types vacíos), Torrelavega
+  (Cantabria: custom post type "persona" real con 25 fichas de la corporación, pero sin campo de retribución
+  ni en el contenido ni en ACF -- el dato debe vivir en otro sitio del portal, no encontrado esta noche).
+- **Sin WordPress / plataforma no accesible por esta vía**: Zaragoza, Valladolid, Toledo, Fuenlabrada,
+  Alcorcón, Leganés, Móstoles (todos ya conectados para MENORES, pendientes solo de concejales) -- sus enlaces
+  de "Retribuciones"/"Transparencia" devuelven 404 o páginas sin contenido extraíble con un fetch simple.
+- **Soria**: portal en `soria.sedelectronica.es` (plataforma genérica, mismo caso que Orihuela/Xàtiva) sin
+  sección de retribuciones localizable.
+- **Manacor (Balears)**: página `/ca/retribucions-municipals` existe pero es una SPA (Drupal decoupled) sin
+  contenido extraíble con un fetch simple.
+- **Bilbao**: CMS antiguo ("Satellite") con rutas opacas; sin enlace de transparencia/retribuciones
+  localizado.
+- Gobernalia: probado un lote amplio de municipios más (Baleares al completo, más pueblos de Murcia,
+  Castilla-La Mancha, Castilla y León, Extremadura, norte de España) sin ningún subdominio nuevo -- los siete
+  que aparecen en la cabecera CSP de Castellón (ver `LIMITACIONES_COBERTURA.md`) parecen ser todos los que hay
+  accesibles por esa vía.
+
+Ninguno de estos lo suficientemente prometedor como para seguir insistiendo esta noche; quedan documentados
+para no repetir la búsqueda.
