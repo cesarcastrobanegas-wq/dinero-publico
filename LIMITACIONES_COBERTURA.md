@@ -909,6 +909,36 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   visible en la portada renderizada; sin presupuesto de búsqueda web disponible para acelerar la localización,
   no se insistió más esta ronda.
 
+## Cierre de España, ronda 6 (2026-10-01, Ceuta/Melilla reconfirmados, CLM sin cierre)
+
+- **Ceuta (retribuciones altos cargos) — reconfirmado, sigue por categoría sin nombres**: el PDF
+  "RETRIBUCIONES ALTOS CARGOS 2025" (`ceuta.es/ceuta/institucional/retribuciones`) sigue publicando por
+  CARGO (Presidente, Vicepresidentes, Consejeros...), nunca por nombre. Mismo hallazgo que en rondas
+  anteriores, sin cambios.
+- **Melilla (retribuciones cargos electos) — reconfirmado, sigue por categoría sin nombres**: encontrada esta
+  vez la ruta completa hasta el PDF real (`sede.melilla.es`, "Retribuciones Cargos Electos y Altos Cargos" →
+  ficha del año → documento PDF real, distinto del enlace roto documentado en rondas anteriores), pero el
+  contenido es el mismo problema de fondo: "CONSEJEROS Y DIPUTADOS DE LA ASAMBLEA... CATEGORIA... TOTAL
+  ANUAL", sin ninguna columna de nombre. Confirmado con evidencia nueva (PDF descargado y leído esta ronda),
+  no solo con el hallazgo antiguo.
+- **Guadalajara (menores) — confirmado, fuente propia solo hasta 2018**: sus PDF trimestrales propios de
+  contratos menores terminan en el 4º trimestre de 2018; el propio texto de la página dice que desde 2019 los
+  contratos menores se consultan en la Plataforma de Contratación del Estado (mismo patrón que Elche/
+  Albacete/Mérida/Ponferrada). Fuera por completo de la ventana de 5 años.
+- **Toledo y Albacete (concejales) — sin comprobar esta ronda, sitios inaccesibles**: `toledo.es` y
+  `transparencia-participacion.albacete.es` dieron errores de conexión a nivel de red (`ERR_SOCKET_NOT_
+  CONNECTED` / `ERR_CONNECTION_REFUSED`) incluso con Playwright, mientras que otros sitios (`google.com`,
+  `arona.org`) respondían con normalidad en el mismo momento -- parece una caída puntual de esos dos sitios,
+  no un problema de la técnica. Pendientes de reintentar en otra sesión.
+- **Cuenca (concejales) — lead real pero sin cierre, roster de áreas no publicado**: `gobiernoabierto.cuenca.
+  es` tiene un PDF real de retribuciones ("Certificado retribuciones corporación y grupos") con solo 2
+  categorías (Alcalde 55.734 €, Concejal/a con dedicación exclusiva 48.832 €/53.316,34 € según el acuerdo
+  vigente) -- en principio cruzable como Málaga/Manacor/Pamplona. El problema: el documento que debería listar
+  qué Concejal/a concreto ocupa cada Área de Gobierno ("Organización Municipal") está marcado "Pendiente
+  2023" en el propio portal, y el decreto de delegaciones de competencias delega por ÁREA sin repetir el
+  nombre de la persona en el mismo texto. No se pudo cerrar sin adivinar qué persona concreta hay detrás de
+  cada área -- queda documentado para retomar si se localiza esa lista en otra sesión.
+
 ## Cierre de España, ronda 5 (2026-10-01, Castilla y León)
 
 - **Salamanca (~144.000 hab.) — CONECTADO**: `aytosalamanca.es/web/guest/contratos-menores`, un PDF anual
