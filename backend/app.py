@@ -12589,36 +12589,80 @@ _ADV_SEARCH_JS = r"""
     return row;
   }
 
+  // Paginación de los resultados del buscador avanzado (2026-10-01, mismo hallazgo de rendimiento que
+  // /rankings, ver _RK_POR_PAGINA): "empresa" puede devolver hasta 500 filas y "directivo" hasta 200 grupos
+  // -- pintarlos todos de golpe en el DOM (cada fila son varios nodos) cuelga la pestaña al hacer scroll con
+  // búsquedas frecuentes ("construcciones" → 2.483 contratos, cortados a 500). La API ya trae el recorte
+  // completo en un solo fetch (no hace falta volver a pedir al servidor por página); aquí solo se pagina qué
+  // trozo de esos datos, ya en memoria, se pinta en el DOM -- Anterior/Siguiente vuelven a pintar sin red.
+  var POR_PAGINA = 100;
+
+  function controlesPaginacion(pagina, total, irAPagina) {
+    var paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+    if (paginas <= 1) return null;
+    var nav = el('div', 'pagination');
+    nav.appendChild(el('span', 'pag-info', 'Página ' + pagina + ' de ' + paginas + ' · ' + total + ' resultados'));
+    var links = el('div', 'pag-links');
+    if (pagina > 1) {
+      var ant = document.createElement('button');
+      ant.type = 'button'; ant.className = 'pag-btn'; ant.textContent = '← Anterior';
+      ant.addEventListener('click', function(){ irAPagina(pagina - 1); });
+      links.appendChild(ant);
+    }
+    if (pagina < paginas) {
+      var sig = document.createElement('button');
+      sig.type = 'button'; sig.className = 'pag-btn'; sig.textContent = 'Siguiente →';
+      sig.addEventListener('click', function(){ irAPagina(pagina + 1); });
+      links.appendChild(sig);
+    }
+    nav.appendChild(links);
+    return nav;
+  }
+
   function renderEmpresa(data) {
-    results.innerHTML = '';
     if (!data.resultados || !data.resultados.length) {
+      results.innerHTML = '';
       results.appendChild(el('div', 'empty', 'Sin resultados.'));
       return;
     }
-    var head = el('div', 'as-total', data.total_contratos + ' contratos · total acumulado ' + data.total_importe
-      + (data.resultados.length < data.total_contratos ? ' · mostrando los primeros ' + data.resultados.length : ''));
-    results.appendChild(head);
-    data.resultados.forEach(function(c){ results.appendChild(filaContrato(c)); });
+    function pintar(pagina) {
+      results.innerHTML = '';
+      var head = el('div', 'as-total', data.total_contratos + ' contratos · total acumulado ' + data.total_importe
+        + (data.resultados.length < data.total_contratos ? ' · mostrando los primeros ' + data.resultados.length : ''));
+      results.appendChild(head);
+      var ini = (pagina - 1) * POR_PAGINA;
+      data.resultados.slice(ini, ini + POR_PAGINA).forEach(function(c){ results.appendChild(filaContrato(c)); });
+      var nav = controlesPaginacion(pagina, data.resultados.length, pintar);
+      if (nav) results.appendChild(nav);
+    }
+    pintar(1);
   }
 
   function renderDirectivo(data) {
-    results.innerHTML = '';
     if (!data.grupos || !data.grupos.length) {
+      results.innerHTML = '';
       results.appendChild(el('div', 'empty', 'Sin resultados.'));
       return;
     }
-    var head = el('div', 'as-total', data.n_empresas + ' empresa(s) vinculada(s) · total global ' + data.total_importe);
-    results.appendChild(head);
-    data.grupos.forEach(function(g){
-      var card = el('div', 'as-group');
-      var top = el('div', 'as-rr-top');
-      top.appendChild(el('span', 'as-rr-empresa', g.empresa));
-      top.appendChild(el('span', 'as-rr-importe big', g.total_importe));
-      card.appendChild(top);
-      card.appendChild(el('div', 'as-rr-sub', (g.cargo || 'Directivo') + ' · ' + g.n_contratos + ' contrato(s)'));
-      g.contratos.forEach(function(c){ card.appendChild(filaContrato(c)); });
-      results.appendChild(card);
-    });
+    function pintar(pagina) {
+      results.innerHTML = '';
+      var head = el('div', 'as-total', data.n_empresas + ' empresa(s) vinculada(s) · total global ' + data.total_importe);
+      results.appendChild(head);
+      var ini = (pagina - 1) * POR_PAGINA;
+      data.grupos.slice(ini, ini + POR_PAGINA).forEach(function(g){
+        var card = el('div', 'as-group');
+        var top = el('div', 'as-rr-top');
+        top.appendChild(el('span', 'as-rr-empresa', g.empresa));
+        top.appendChild(el('span', 'as-rr-importe big', g.total_importe));
+        card.appendChild(top);
+        card.appendChild(el('div', 'as-rr-sub', (g.cargo || 'Directivo') + ' · ' + g.n_contratos + ' contrato(s)'));
+        g.contratos.forEach(function(c){ card.appendChild(filaContrato(c)); });
+        results.appendChild(card);
+      });
+      var nav = controlesPaginacion(pagina, data.grupos.length, pintar);
+      if (nav) results.appendChild(nav);
+    }
+    pintar(1);
   }
 
   function renderLicitacion(data) {
