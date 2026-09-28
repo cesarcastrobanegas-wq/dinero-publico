@@ -448,3 +448,15 @@ dataset propio, solo enlaza a PLACE genérico) -- concejales sí funcionó.
 
 Sin nota pública.
 
+
+---
+
+## Lote 21 — Aranjuez (2026-09-30, extensión a la Comunidad de Madrid)
+
+**Añadidos: 24 concejales** (Aranjuez). Total acumulado: **802 registros en 43 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Aranjuez | aranjuez.es > "miembro" es un custom post type real de WordPress (`/wp-json/wp/v2/miembro`, una ficha por representante) con "Retribuciones (Salario Bruto): X€ en N pagas. Porcentaje de dedicación: Y%." embebido en la biografía | El Alcalde se excluye por la taxonomía `categoria_miembros` (id 1105 = "Alcalde", resuelta consultando `/wp-json/wp/v2/categoria_miembros/1105`), no por su nombre. Las personas sin dedicación exclusiva/parcial tienen "Porcentaje de dedicación: Plenos y Comisiones Informativas" en vez de un %, pero sí traen un importe fijo real -- se guardan igual. Se usa `verificar_adyacencia=False`: la biografía en primera persona que precede al párrafo de retribuciones tiene longitud muy variable (a veces > 450 caracteres), así que el nombre y el importe pueden quedar más lejos entre sí que la ventana de verificación por defecto; no hay riesgo de cruzar datos de personas distintas porque cada ficha es de una sola persona |
+
+Sin nota pública.

@@ -2023,6 +2023,54 @@ def actualizar_yecla():
     return out
 
 
+@_fuente("aranjuez")
+def actualizar_aranjuez():
+    """Ayuntamiento de Aranjuez (Madrid) > "miembro" es un custom post type de WordPress (una ficha por
+    representante, `/wp-json/wp/v2/miembro`), con el texto "Retribuciones (Salario Bruto): X€ en N pagas.
+    Porcentaje de dedicación: Y%." embebido en la biografía de cada uno (a veces Y% es un texto, "Plenos y
+    Comisiones Informativas", para quienes no tienen dedicación exclusiva/parcial -- se guarda igual, es un
+    importe fijo real, solo cambia cómo lo rotula la fuente). El Alcalde se identifica por la taxonomía
+    `categoria_miembros` (id 1105 = "Alcalde", resuelta consultando `/wp-json/wp/v2/categoria_miembros/1105`
+    -- no por su nombre, que podría cambiar)."""
+    base_api = "https://www.aranjuez.es/wp-json/wp/v2"
+    r = descargar(f"{base_api}/miembro?per_page=100")
+    miembros = r.json()
+    if len(miembros) < 15:
+        raise RuntimeError(f"Aranjuez: solo {len(miembros)} miembros (¿cambió la API?)")
+    out = []
+    for item in miembros:
+        if 1105 in (item.get("categoria_miembros") or []):
+            continue   # Alcalde (id de categoría verificado, no el nombre)
+        nombre = re.sub(r"^D[ªa]?\.?\s*", "", item["title"]["rendered"]).strip()
+        content = item.get("content", {}).get("rendered", "")
+        # texto_html separa cada elemento inline con un salto de línea (un <strong>/<span> por campo): se
+        # colapsa todo a espacios simples antes de aplicar el patrón, si no "Retribuciones\n(Salario Bruto):"
+        # no coincide con un patrón pensado para texto en una sola línea. El nombre completo solo viene en el
+        # título de la ficha (title), NUNCA en la biografía (content, escrita en primera persona) -- hay que
+        # anteponerlo o la verificación de nuevo_registro no encuentra el nombre junto al importe.
+        texto = item["title"]["rendered"] + ". " + re.sub(r"\s+", " ", texto_html(content)).strip()
+        m = re.search(r"Retribuciones\s*\(Salario Bruto\):\s*([\d.,]+)\s*€\s*en\s*(\d+)\s*pagas\.\s*"
+                     r"Porcentaje de dedicaci[oó]n:\s*([^.]+?)\s*\.", texto)
+        if not m:
+            continue
+        importe = num_es(m.group(1))
+        if not importe:
+            continue
+        dedicacion = m.group(3).strip()
+        cargo = f"Concejal (dedicación {dedicacion})" if "%" in dedicacion else f"Concejal ({dedicacion})"
+        # verificar_adyacencia=False: la ficha de cada persona empieza con una biografía en primera persona de
+        # longitud muy variable (a veces > 450 caracteres) antes de llegar al párrafo de retribuciones -- el
+        # nombre y el importe pueden quedar más lejos entre sí que la ventana de verificación por defecto. No
+        # hay riesgo de cruzar el importe de una persona con el nombre de otra (cada ficha es de una persona).
+        out.append(nuevo_registro("Aranjuez", "madrid", nombre, cargo, importe,
+                                  f"salario bruto anual ({m.group(2)} pagas) según su propia ficha en la web",
+                                  "vigente", item["link"], "Ayuntamiento de Aranjuez", texto,
+                                  verificar_adyacencia=False))
+    if len(out) < 15:
+        raise RuntimeError(f"Aranjuez: solo {len(out)} concejales (¿cambió el formato de las fichas?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):
