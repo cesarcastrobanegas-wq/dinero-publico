@@ -4458,6 +4458,10 @@ _NOTAS_SUELDOS_CONCEJALES = {
     "manacor": "El importe es la retribución anual de su RÉGIMEN de dedicación (exclusiva o parcial con su %) según el acuerdo oficial "
               "(BOIB 95/2023), no una nómina individual -- igual que Málaga. Los regidors sense dedicació fixa (només assistències a "
               "sessions) no aparecen.",
+    "barcelona": "Retribución bruta anual con dedicación exclusiva, dato en línea actualizado a diario que publica el propio "
+                "Ayuntamiento (acuerdo del Pleno de 28/07/2023). El cargo mostrado es genérico («Concejal/a - Consejo Municipal»): "
+                "la fuente no da la concejalía o delegación de cada persona en este listado exportable, solo en su ficha individual. "
+                "Los concejales sin dedicación fija (sueldo 0 en la fuente) no aparecen.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se

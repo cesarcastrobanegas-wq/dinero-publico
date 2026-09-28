@@ -2052,6 +2052,85 @@ def actualizar_manacor():
     return out
 
 
+@_fuente("barcelona")
+def actualizar_barcelona():
+    """Portal de Transparencia del Ayuntamiento de Barcelona > Información institucional > Altos cargos > 'Datos
+    de los cargos municipales y personal eventual', pestaña 'Cargos electos del gobierno municipal'. La página
+    es una SPA que en intentos anteriores (ver SUELDOS_CONCEJALES_LOG.md) devolvía "API timeout error or wrong
+    group ID" al consultarla con una petición HTTP simple -- probado varias veces en noches distintas. Con
+    Playwright (clicar la pestaña y el botón CSV de exportación) se descubrió que el endpoint real SÍ responde
+    con una petición HTTP directa (`/cards-export/csv/minerva_subtheme_bcncardsexport`): el error previo parece
+    haber sido un problema temporal del backend municipal, no una limitación de la técnica de descarga.
+
+    El CSV exporta TODOS los bloques de la página (cargos electos, comisionados, consejos de distrito, síndico
+    de agravios, gerencias, personal eventual...), con la cabecera `Nom;Carrec;...` repetida antes de cada
+    bloque. Solo se toman los bloques INICIALES cuyas filas tienen Carrec == "Alcalde" o "Concejal(a) - Consejo
+    Municipal" -- que son, en ese orden, exactamente el Alcalde, los Tenientes de alcaldía y el resto de
+    concejales del Pleno (41 personas en total, verificado contra lo que renderiza la propia pestaña "Cargos
+    electos del gobierno municipal"). Se para en el primer bloque que NO cumpla ese patrón (empieza con
+    "Comisionada..."): los bloques posteriores (consejos de distrito, gerencias...) NO son concejales del
+    Ayuntamiento y no se usan, aunque reutilicen la misma cabecera y algunos repitan nombres ya cubiertos
+    (la propia fuente explica que cada persona solo cobra por UN cargo, el que aparece primero). Se excluyen
+    las 4 personas con Sou = 0 (concejales sin dedicación fija).
+
+    Bug de origen encontrado y corregido: el CSV mezcla codificaciones dentro del MISMO fichero -- la mayoría
+    de líneas son UTF-8 válido, pero varias decenas (nombres con "è", "ò"...) están en Latin-1/cp1252 suelto, y
+    alguna más mezcla ambas dentro de la misma línea (acentos en Unicode NFD, p. ej. "Núria" como u+combining
+    acute). Se decodifica línea a línea probando UTF-8 y si falla cp1252, con Latin-1 con reemplazo como último
+    recurso, y se normaliza todo a NFC al final."""
+    import csv as _csv
+    url = "https://ajuntament.barcelona.cat/transparencia/es/datos-de-los-cargos-municipales-y-eventuales"
+    api_url = "https://ajuntament.barcelona.cat/transparencia/es/cards-export/csv/minerva_subtheme_bcncardsexport"
+    crudo = descargar(api_url).content
+    lineas_dec = []
+    for linea in crudo.split(b"\n"):
+        for enc in ("utf-8", "cp1252"):
+            try:
+                s = linea.decode(enc)
+                break
+            except UnicodeDecodeError:
+                s = None
+        if s is None:
+            s = linea.decode("latin-1", errors="replace")
+        lineas_dec.append(unicodedata.normalize("NFC", s))
+    texto = "\n".join(lineas_dec)
+    bloques, actual = [], []
+    for linea in texto.splitlines():
+        if linea.startswith("Nom;Carrec"):
+            if actual:
+                bloques.append(actual)
+            actual = []
+        elif linea.strip():
+            actual.append(linea)
+    if actual:
+        bloques.append(actual)
+    patron_concejal = re.compile(r"^(Alcalde|Concejal[a]? - Consejo Municipal)$")
+    filas = []
+    for b in bloques:
+        rs = list(_csv.reader(b, delimiter=";"))
+        if rs and all(len(r) > 4 and patron_concejal.match(r[1]) for r in rs):
+            filas.extend(rs)
+        else:
+            break
+    if len(filas) < 30:
+        raise RuntimeError(f"Barcelona: solo {len(filas)} filas de cargos electos (¿cambió el formato del CSV?)")
+    out = []
+    for r in filas:
+        nombre, cargo_base, partido = r[0].strip(), r[1].strip(), (r[3] or "").strip()
+        importe = num_es(r[4])
+        if not importe:
+            continue   # Sou = 0: concejal/a sin dedicación fija (solo asistencias), se omite (ver docstring)
+        cargo = f"{cargo_base} ({partido})" if partido else cargo_base
+        out.append(nuevo_registro("Barcelona", "barcelona", nombre, cargo, importe,
+                                  "retribución bruta anual (dedicación exclusiva, acuerdo del Pleno de 28/07/2023); "
+                                  "dato actualizado en línea a diario según indica la propia fuente", "vigente", url,
+                                  "Portal de Transparencia del Ayuntamiento de Barcelona: cargos electos del "
+                                  "gobierno municipal", texto))
+    if len(out) < 20:
+        raise RuntimeError(f"Barcelona: solo {len(out)} concejales con sueldo > 0 (¿cambió el documento?)")
+    return out
+
+
 @_fuente("alcantarilla")
 def actualizar_alcantarilla():
     """Ayuntamiento de Alcantarilla (Murcia) > Portal de Transparencia > "Retribuciones (legislatura

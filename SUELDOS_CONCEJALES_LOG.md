@@ -521,3 +521,18 @@ Confirma que la técnica de Playwright también sirve para navegar árboles de c
 transparencia "decoupled" (no solo para interceptar APIs REST tipo Next.js), y que el patrón "importe por
 régimen/cargo, no por persona" (ya usado en Málaga) sigue siendo válido cuando el propio documento asigna
 sin ambigüedad esa categoría a cada persona nombrada.
+
+---
+
+## Lote 24 — Barcelona (2026-09-30, cierre del lead aparcado desde hace varias noches)
+
+**Añadidos: 36 concejales** (Barcelona, la 2.ª ciudad de España). Total acumulado: **869 registros en 46
+municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Barcelona | Portal de Transparencia > Información institucional > Altos cargos > "Datos de los cargos municipales y personal eventual", pestaña "Cargos electos del gobierno municipal". Export CSV real: `/transparencia/es/cards-export/csv/minerva_subtheme_bcncardsexport`, encontrado con Playwright (clic en la pestaña + botón CSV) pero descargable después con una petición HTTP directa | En 5 comprobaciones de noches anteriores esta fuente daba "API timeout error or wrong group ID" con una petición HTTP simple -- con Playwright se confirmó que el endpoint real SÍ responde hoy; el fallo previo parece haber sido temporal del backend municipal, no una limitación de la técnica. El CSV exporta TODOS los bloques de la página con la misma cabecera repetida (cargos electos, comisionados, consejos de distrito, gerencias, personal eventual...); solo se toman los bloques iniciales cuyas filas son exactamente "Alcalde" o "Concejal(a) - Consejo Municipal" (41 personas = Alcalde + 5 tenientes + 35 concejales del Pleno, parada automática en el primer bloque que no cumple el patrón). Se excluyen 4 personas con sueldo 0 (sin dedicación fija). **Bug de origen corregido**: el CSV mezcla codificaciones dentro del mismo fichero (mayoría UTF-8, varias decenas de líneas en Latin-1/cp1252 sueltas, alguna con acentos Unicode NFD) -- se decodifica línea a línea con reintento UTF-8 → cp1252 → Latin-1 y se normaliza a NFC |
+
+Primer cierre de un lead que llevaba varias noches aparcado por "fuente caída": confirma que vale la pena
+reintentar con un navegador real los leads marcados solo como error transitorio, no solo los marcados
+explícitamente "SPA sin HTML". Cierra además la ciudad más grande pendiente de todo el rastreo.
