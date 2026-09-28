@@ -11164,6 +11164,28 @@ def _cargar_contratos_menores_badajoz():
               f"(Badajoz) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_LA_LAGUNA_FILE = os.path.join(BASE_DIR, "contratos_menores_la_laguna.json.gz")
+
+
+def _cargar_contratos_menores_la_laguna():
+    """Carga contratos_menores_la_laguna.json.gz (generado por actualizar_contratos_menores_la_laguna.py --
+    XLSX oficiales del Ayuntamiento y sus organismos autónomos OAAM/OAD) y lo vuelca a la tabla compartida
+    contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_LA_LAGUNA_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_la_laguna: {len(registros)} contratos menores "
+              f"(San Cristóbal de La Laguna) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11199,6 +11221,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_laspalmasgc()
     _cargar_contratos_menores_torrent()
     _cargar_contratos_menores_badajoz()
+    _cargar_contratos_menores_la_laguna()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14290,6 +14313,7 @@ _FUENTE_CM_LABEL = {
     "laspalmasgc":     "Las Palmas GC",
     "torrent":         "Torrent",
     "badajoz":         "Badajoz",
+    "la_laguna":       "San Cristóbal de La Laguna",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14306,7 +14330,7 @@ _FUENTE_CM_LABEL = {
 _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
                        "sax-governalia", "vilamarxant-governalia", "castello-governalia",
                        "xirivella-governalia", "santabrigida-governalia", "alzira-governalia",
-                       "valencia_capital", "alicante", "leganes", "torrent"}
+                       "valencia_capital", "alicante", "leganes", "torrent", "la_laguna"}
 
 
 # Avisos públicos por fuente, visibles en la sección de contratos menores de la
@@ -14458,6 +14482,12 @@ _NOTAS_FUENTE_CM = {
         "directa sin publicidad -- de ahí el volumen bajo comparado con otras ciudades de tamaño similar. "
         "Varios PDF de 2021-2022 y 2025-2026 son documentos escaneados sin capa de texto (no legibles sin "
         "OCR) y no están incluidos."
+    ),
+    "la_laguna": (
+        "XLSX oficiales del portal de transparencia del Ayuntamiento de San Cristóbal de La Laguna y sus "
+        "organismos autónomos OAAM y OAD (uno por año y entidad, enlaces encontrados navegando con un "
+        "navegador real). El importe es SIN IGIC, el impuesto indirecto propio de Canarias equivalente al IVA "
+        "peninsular (no confundir con \"sin impuestos\" a secas)."
     ),
     "castello-governalia": (
         "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la "

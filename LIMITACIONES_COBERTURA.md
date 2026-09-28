@@ -148,12 +148,12 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-10-01**: 20 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+**Estado a 2026-10-01**: 21 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
 Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
-Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria, Torrent, Badajoz —
-**124.680 contratos** entre los veinte), varios confirmados sin fuente viable tras investigación real, no
-solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por
-municipio abajo.
+Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria, Torrent, Badajoz,
+San Cristóbal de La Laguna — **135.276 contratos** entre los veintiuno), varios confirmados sin fuente viable
+tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel,
+Salamanca...). Detalle completo por municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -826,6 +826,22 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   el orden del texto -- una tarea bastante más grande que el resto de fuentes de esta noche. Se deja
   documentado como pendiente real para una sesión futura con más tiempo dedicado solo a esto, en vez de forzar
   un resultado con nombres truncados.
+- **San Cristóbal de La Laguna (~156.000 hab., Tenerife) — CONECTADO, cierre grande de Canarias**: portal de
+  transparencia (`aytolalaguna.es/ayuntamiento/presupuestos-y-finanzas/contratos-menores/`), con una página
+  por año que enlaza tres XLSX oficiales -- uno por entidad con contratación propia: Ayuntamiento, OAAM
+  (Organismo Autónomo de Actividades Municipales) y OAD (Organismo Autónomo de Desarrollo). Columnas limpias y
+  CONSISTENTES en los 5 años comprobados: N. Exp. | NIF | Nombre adjudicatario | Importe sin IGIC | IGIC |
+  Importe con IGIC | Tipo | Fecha adjudicación | CPV | Objeto. **10.596 registros desde 2021-09**
+  (`actualizar_contratos_menores_la_laguna.py`, fuente `la_laguna`) -- el mayor cierre individual de esta
+  ronda con diferencia. Dato de calidad verificado: 0 filas sin fecha/NIF/descripción/importe, ids únicos, los
+  importes más altos del resultado (39.999,30 €, 39.998,99 €...) justo por debajo del tope legal de 40.000 €
+  para obras, sin ninguna anomalía.
+  - **IGIC, no IVA**: Canarias tiene su propio impuesto indirecto (Impuesto General Indirecto Canario) en vez
+    del IVA peninsular -- se guarda el importe SIN IGIC en la misma columna que el resto de fuentes usa para
+    "sin IVA", con una nota aclaratoria en la ficha para no confundirlo.
+  - Los enlaces NO siguen un patrón de URL único entre años (2025 usa un nombre, 2023-2024 otro, 2021-2022
+    otro distinto): recogidos a mano navegando cada página anual con un navegador real (un `curl` normal no
+    encuentra los enlaces, es una SPA/CMS moderno).
 
 ## Cierre de España, ronda 2 (2026-10-01, Playwright + búsqueda restaurada)
 
