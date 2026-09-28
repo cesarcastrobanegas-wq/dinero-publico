@@ -2405,6 +2405,56 @@ def actualizar_oviedo():
     return out
 
 
+@_fuente("gijon")
+def actualizar_gijon():
+    """Ayuntamiento de Gijón/Xixón (Asturias, ~267.000 hab., la ciudad más grande de la comunidad) publica un
+    dataset abierto de "autoridades" en JSON (`opendata.gijon.es/descargar.php?id=543&tipo=JSON`, encontrado
+    interceptando con Playwright las peticiones de red de una ficha individual de concejal/a en
+    `proposiciones.gijon.es/cargo.html?id=<n>`, el portal de transparencia normal solo enlaza a esas fichas
+    una por una). El JSON trae el HISTÓRICO COMPLETO de cargos desde hace varios mandatos (168 personas): cada
+    "autoridad" tiene un campo `retribuciones` (string numérico o `{}` si no aplica) y una lista `organos` con
+    un registro por cada órgano/cargo que ha ocupado a lo largo del tiempo, cada uno con su propio
+    `nombreorgano` (p.ej. "Corporación 2023-2027") y `cargoorgano` (p.ej. "Concejal", "Alcaldesa", "Segundo
+    teniente de Alcaldesa"...). Se filtra por personas con un `organo` cuyo `nombreorgano` sea exactamente
+    "Corporación 2023-2027" (la legislatura vigente) Y que tengan un valor real (no vacío) en `retribuciones`
+    -- el cargo mostrado es el de ESE mismo `organo`, no uno cualquiera de su historial."""
+    url_api = "https://opendata.gijon.es/descargar.php?id=543&tipo=JSON"
+    url_fuente = "https://www.gijon.es/es/transparencia"
+    r = descargar(url_api)
+    try:
+        d = r.json()
+    except Exception:
+        d = json.loads(r.content.decode("utf-8", errors="replace"))
+    autoridades = d.get("autoridad", [])
+    if len(autoridades) < 50:
+        raise RuntimeError(f"Gijón: solo {len(autoridades)} autoridades en el dataset (¿cambió el JSON?)")
+    out = []
+    for a in autoridades:
+        retr_txt = a.get("retribuciones")
+        if not isinstance(retr_txt, str):
+            continue   # {} = sin valor para esta persona
+        importe = num_es(retr_txt)
+        if not importe:
+            continue
+        organos = a.get("organos", {}).get("organo", [])
+        if isinstance(organos, dict):
+            organos = [organos]
+        organo_actual = next((o for o in organos if o.get("nombreorgano") == "Corporación 2023-2027"), None)
+        if not organo_actual:
+            continue   # persona del histórico, no de la legislatura vigente
+        nombre = re.sub(r"\s+", " ", (a.get("nombreautoridad") or "")).strip()
+        cargo = (organo_actual.get("cargoorgano") or "Concejal/a").strip()
+        texto = f"{nombre} {cargo} {retr_txt}"
+        out.append(nuevo_registro("Gijón", "asturias", nombre, cargo, importe,
+                                  "retribución bruta anual según el dataset abierto de autoridades municipales, "
+                                  "corporación 2023-2027", "vigente", url_fuente,
+                                  "Ayuntamiento de Gijón/Xixón: Datos Abiertos, dataset de autoridades", texto))
+    if len(out) < 15:
+        raise RuntimeError(f"Gijón: solo {len(out)} concejales con retribución en la corporación vigente "
+                            "(¿cambió el JSON?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):

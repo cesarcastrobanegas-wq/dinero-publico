@@ -4468,6 +4468,10 @@ _NOTAS_SUELDOS_CONCEJALES = {
              "con su régimen exacto, incluidas 2 resoluciones de 2024 que modifican el régimen de varias personas (altas, "
              "bajas y cambios de dedicación) -- se aplica el estado más reciente localizado. Los concejales sin dedicación "
              "fija (solo asistencias) no aparecen. Alcalde excluido (cubierto aparte).",
+    "gijon": "Retribución bruta anual del dataset abierto de autoridades municipales (opendata.gijon.es), filtrado a la "
+            "corporación 2023-2027. Una persona (María Caunedo Fernández) tiene un importe mucho menor que el resto "
+            "(13.085,62 € frente a ~65.000 €): se muestra tal cual lo publica la fuente, sin corregir ni excluir, "
+            "probablemente por incorporación a mitad de mandato.",
 }
 
 # Municipios grandes en los que NO se muestra la tabla y por qué (comprobado en 2026-09-26/27): se avisa en su ficha para que no se

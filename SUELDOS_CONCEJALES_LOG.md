@@ -552,3 +552,19 @@ Primer cierre de Asturias en cualquier frente. Confirma que la técnica de "rég
 asignado sin ambigüedad" (Málaga/Manacor) escala también a fuentes con varios documentos de modificación
 encadenados, siempre que cada cambio se trate como un hecho puntual verificado, no se intente generalizar
 por regex.
+
+---
+
+## Lote 26 — Gijón (2026-10-01, dataset abierto encontrado interceptando una ficha individual)
+
+**Añadidos: 24 concejales** (Gijón/Xixón, la ciudad más grande de Asturias). Total acumulado: **913
+registros en 48 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Gijón | El portal de transparencia normal (`gijon.es/es/transparencia` → "Cargos Electos") solo enlaza, uno a uno, a una ficha individual por persona en `proposiciones.gijon.es/cargo.html?id=<n>` (con su retribución visible en pantalla) -- interceptando con Playwright el tráfico de red de una de esas fichas se encontró el dataset REAL completo detrás: `opendata.gijon.es/descargar.php?id=543&tipo=JSON`, con el histórico de 168 "autoridades" desde varios mandatos | El JSON da, por persona, un campo `retribuciones` y una lista de todos los `organos` que ha ocupado a lo largo del tiempo, cada uno con su propio nombre de corporación y cargo -- se filtra por quienes tienen un `organo` con `nombreorgano` == "Corporación 2023-2027" (la legislatura vigente) Y un valor real de retribución, usando el cargo de ESE mismo `organo` (no uno cualquiera de su historial, que podría ser de un mandato anterior). Una persona (María Caunedo Fernández) tiene un importe muy inferior al resto (13.085,62 € frente a ~65.000 €), probablemente por incorporación a mitad de mandato -- se muestra tal cual, sin corregir |
+
+Segundo cierre de Asturias en la misma noche. Confirma otra vez que vale la pena interceptar el tráfico de
+red de una ficha individual con Playwright incluso cuando el portal de transparencia "normal" no da ningún
+listado agregado: a menudo hay una API de datos abiertos completa detrás que el portal solo usa fichero a
+fichero.
