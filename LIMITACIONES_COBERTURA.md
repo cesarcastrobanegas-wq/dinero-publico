@@ -804,6 +804,28 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   - Los saltos de línea de los PDF caen en puntos impredecibles (a veces en mitad de un nombre de empresa o
     de una frase) -- todos los patrones de extracción se aplican sobre el texto con los espacios en blanco
     normalizados a uno solo, no sobre el texto con saltos de línea originales.
+- **Mérida (~59.000 hab., capital de Extremadura) — descartado, fuente solo histórica**: su página de
+  "Contratos menores" (`merida.es/tu-ayuntamiento/transparencia/contratos/contratos-menores/`) tiene una
+  tabla real (DataTables), pero el propio texto de la página dice que solo cubre "desde el año 2016 hasta la
+  entrada en vigor de la nueva ley" (9 de marzo de 2018) -- todo lo posterior se publica solo en PLACE. Fuera
+  del todo de la ventana de 5 años (2021-09 en adelante): descartado, no por dificultad técnica sino porque no
+  hay dato dentro de la ventana.
+- **Ponferrada (~62.000 hab., Castilla y León) — descartado, mismo patrón que Elche/Albacete**: su "Perfil del
+  contratante" redirige directamente a la Plataforma de Contratación del Sector Público para todo lo posterior
+  al 8 de marzo de 2018, sin dataset propio.
+- **Talavera de la Reina (~83.000 hab., Castilla-La Mancha) — fuente real localizada, PARSEO DESCARTADO por
+  riesgo de inventar datos**: `transparencia.talavera.es/contratos-menores/` (portal WordPress con gestor de
+  descargas) publica PDF trimestrales reales desde 2022 con REFERENCIA, CIF entidad, NEGOCIADO, CIF y nombre
+  del ADJUDICATARIO, TIPO DE CONTRATO, OBJETO, EJERCICIO, FECHA, IMPORTE sin IVA, IVA y DURACIÓN -- una fuente
+  genuinamente buena. El problema es el PDF en sí: cada registro ocupa 2-3 líneas físicas cuyas columnas NO se
+  alinean entre sí (la maquetación intercala, en el orden de lectura de `pdfplumber`, fragmentos de la fila
+  actual con fragmentos de la siguiente), así que hasta el NOMBRE del adjudicatario puede quedar partido entre
+  dos líneas (verificado: un intento de extracción por patrones de texto normalizado devolvía "S.L." como
+  nombre completo del adjudicatario en varias filas, en vez de la razón social real). Arreglarlo bien
+  requeriría reconstruir la tabla por posición real de cada palabra (coordenadas x/y de `pdfplumber`), no por
+  el orden del texto -- una tarea bastante más grande que el resto de fuentes de esta noche. Se deja
+  documentado como pendiente real para una sesión futura con más tiempo dedicado solo a esto, en vez de forzar
+  un resultado con nombres truncados.
 
 ## Cierre de España, ronda 2 (2026-10-01, Playwright + búsqueda restaurada)
 
