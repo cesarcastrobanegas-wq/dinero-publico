@@ -1075,3 +1075,27 @@ Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades 
   aparición; la fuente NO entra en `_FUENTES_CM_SIN_IVA` y la ficha avisa de que no se puede afirmar que todos
   lleven IVA. Tres formatos de columnas (4T-2021/1T-2024, 2T-2024/4T-2025, 2026), leídos por nombre de cabecera.
   Sin CIF hasta 1T-2024. 1 contrato con importe 0 y 1 por encima de 48.400 € (48.521 €), mostrados tal cual.
+- **Almería (~205.000 hab., Andalucía) — CONECTADO (2026-09-29), sin 2025**: `almeriaciudad.es/transparencia/contratos-menores/`,
+  un fichero anual "Contratos menores AAAA (Versión XLS)"; el script localiza cada enlace por su TEXTO en cada
+  ejecución (los nombres de fichero no siguen ningún patrón). **1.765 contratos** (2021: 79, 2022: 438, 2023: 678,
+  2024: 358, 2026: 212), 13,95 M€ (`actualizar_contratos_menores_almeria.py`, fuente `almeria`). Fecha real por
+  contrato (datetime, número de serie de Excel en el .xls de 2023 o texto dd/mm/aaaa), importe con IVA, sin NIF.
+  **Error de la fuente detectado y descartado solo**: el enlace "Contratos menores 2025 (Version XLS)" apunta a
+  `contratos-abiertos-2025_0.xlsx` (contratos ABIERTOS: 37 de 103 importes > 48.400 €). Salvaguarda: un fichero con
+  más del 10 % de importes > 48.400 € no se carga (la mediana no servía: ~30.700 € en el de abiertos). 2025 solo
+  existe en PDF, y **no se puede reconstruir con fiabilidad**: `pdfplumber` solo detecta la cabecera como tabla, y
+  reconstruirla por posición de caracteres mezcla dos contratos en la misma línea (celdas centradas en vertical).
+  `menores_1.xlsx` (mismo nombre que el PDF de 2025) resulta ser enero-abril de 2026, no 2025. Queda avisado en
+  la ficha. Filas casi duplicadas (mismo expediente, adjudicatario, importe y fecha) colapsadas; expedientes con
+  varios adjudicatarios, mantenidos. 6 contratos > 48.400 € mostrados tal cual (el mayor, 753.043 € por 39 escudos
+  de pecho, parece un error de origen).
+- **Granada — NO conectado, fuente parcial**: `transparencia.granada.org/transparente/textAnual.html` publica XLSX
+  anuales 2021-2025 con fecha real, pero solo **61 / 57 / 36 / 40 / 20** contratos al año (frente a ~1.000/año en
+  Málaga o ~7.500 en Gijón): parecen ser solo los menores tramitados por el Servicio de Contratación (todos con
+  anuncio en PLACE), no el total del Ayuntamiento. Conectarlo daría una imagen engañosamente baja de Granada; se
+  deja documentado. Cuatro formatos de columnas distintos en cinco años.
+- **Córdoba — NO conectado esta ronda, coste desproporcionado**: dataset CKAN `datosabiertos.cordoba.es`
+  (`contratacion-administrativa-contratos-menores`) con 22 PDF trimestrales 1T-2021 → 2T-2026 en al menos 4
+  maquetaciones distintas; `pdfplumber` no detecta tablas en ninguno, y desde 2025 las páginas están rotadas (el
+  texto extraído sale invertido: "ABODRÓC ED OTNEIMATNUYA"). Solo hay XLS/ODS para 2023 (anual), 1T y 3T de 2024 y
+  2T-2026 — no basta para una serie continua. Lead viable pero caro (parser de PDF por posición con rotación, por era).

@@ -11427,6 +11427,28 @@ def _cargar_contratos_menores_malaga():
               f"(Málaga) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_ALMERIA_FILE = os.path.join(BASE_DIR, "contratos_menores_almeria.json.gz")
+
+
+def _cargar_contratos_menores_almeria():
+    """Carga contratos_menores_almeria.json.gz (generado por actualizar_contratos_menores_almeria.py -- XLSX/XLS
+    anuales del portal de transparencia de Almería; 2025 sin datos, ver el script) y lo vuelca a la tabla
+    compartida contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_ALMERIA_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_almeria: {len(registros)} contratos menores "
+              f"(Almería) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11467,6 +11489,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_salamanca()
     _cargar_contratos_menores_gijon()
     _cargar_contratos_menores_malaga()
+    _cargar_contratos_menores_almeria()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14613,6 +14636,7 @@ _FUENTE_CM_LABEL = {
     "salamanca":       "Salamanca",
     "gijon":           "Gijón",
     "malaga":          "Málaga",
+    "almeria":         "Almería",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14636,6 +14660,13 @@ _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia"
 # ficha cuando el municipio tiene filas de esa fuente: límites de cobertura o
 # inferencias del parser que el lector debe conocer, no solo la documentación.
 _NOTAS_FUENTE_CM = {
+    "almeria": (
+        "Ficheros anuales del portal de transparencia del Ayuntamiento de Almería, con fecha real de "
+        "adjudicación e importe con IVA, sin NIF. Falta 2025: el Ayuntamiento solo lo publica en un PDF que no "
+        "se puede leer de forma fiable, y su enlace de «contratos menores 2025» en Excel lleva en realidad a un "
+        "fichero de contratos abiertos. Seis contratos superan el importe máximo legal de un menor (el mayor, "
+        "753.043 € por 39 escudos, parece un error de la propia fuente); se muestran tal cual se publican."
+    ),
     "malaga": (
         "Informes trimestrales del portal de datos abiertos del Ayuntamiento de Málaga. La fuente NO publica "
         "la fecha de cada contrato: la fecha mostrada es el primer día del trimestre del informe, no la de "
