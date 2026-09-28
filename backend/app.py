@@ -6303,7 +6303,12 @@ def _entries_con_estado_todas_bytes(raw_bytes):
 # mecanismo queda listo (cp_organo ya se extrae en cada contrato) por si
 # migra el esquema a clave compuesta (municipio, provincia) en el futuro y
 # hace falta reactivarlo para un caso similar.
-_CP_ESPERADO_ANCLAJE = {}
+_CP_ESPERADO_ANCLAJE = {
+    # Jerez de la Frontera (Cádiz, cp 11xxx) -- ver el fix de "ayuntamiento de jerez" a secas en _regex_anclado
+    # (2026-10-01): guarda extra por si el \b del regex dejara pasar algo de Jerez de los Caballeros (Badajoz,
+    # cp 06xxx), municipio real distinto con el mismo nombre corto.
+    "jerez de la frontera": "11",
+}
 
 
 def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None):
@@ -6675,6 +6680,16 @@ def _regex_anclado(municipio):
         else:
             nombre = rf'de {re.escape(muni_norm)}'
         return re.compile(rf'\b(?:ayuntamiento|concello) {nombre}{lookahead}\b')
+    if muni_norm == "jerez de la frontera":
+        # Hallazgo 2026-10-01 (pasada de verificación de cobertura formales, muestreo de Andalucía: Jerez daba 0
+        # contratos en 3 meses de PLACE frente a ~50 de Huelva/Dos Hermanas, poblaciones similares). El órgano
+        # real en PLACE es "Ayuntamiento de Jerez" A SECAS -- el municipio se identifica así en sus propios
+        # expedientes (nombre mundialmente conocido sin el sufijo), el patrón exigía siempre "de la frontera"
+        # completo y no reconocía nada. Se acepta el nombre corto como alternativa, sin dejar de reconocer
+        # también la forma completa. Exclusión explícita de "de los caballeros" (Jerez de los Caballeros,
+        # Badajoz, municipio real distinto) por si \b dejara pasar el nombre corto seguido de esa continuación
+        # -- además del cruce por código postal ya añadido en _CP_ESPERADO_ANCLAJE.
+        return re.compile(r'\bayuntamiento de jerez(?: de la frontera)?(?! de los caballeros)\b')
     prefijo = _prefijo_anclaje(municipio)
     if prefijo == "ayuntamiento de" and _es_municipio_ajuntament(muni_norm):
         prefijo = "(?:ayuntamiento|ajuntament) de"

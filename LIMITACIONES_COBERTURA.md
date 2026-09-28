@@ -585,6 +585,23 @@ infraestructura ya construida (`buscar_directivo`, BORME/BOE, empresia.es), pero
 depósito, sin cifras; el Registro Mercantil directo y einforma/axesor/infocif son de pago por informe. Recomendación:
 construir solo la Fase 1 (existencia + cargo, gratis) por ahora; las cuentas anuales, caso a caso y bajo demanda.
 
+## Contratos formales de Jerez de la Frontera en PLACE (bug "Ayuntamiento de Jerez" a secas, 2026-10-01)
+
+- **Qué era**: en el muestreo de verificación de Andalucía (comparar recuento PLACE contra población esperable),
+  Jerez de la Frontera (214.920 hab.) dio **0 contratos en 3 meses**, frente a ~50 de Huelva/Dos Hermanas
+  (poblaciones similares). El órgano real en PLACE es **"Ayuntamiento de Jerez" a secas** (sin "de la Frontera"
+  -- el municipio se identifica así en sus propios expedientes, probablemente por ser el nombre mundialmente
+  conocido); `_regex_anclado` exigía siempre el nombre completo y no reconocía nada.
+- **Fix** (`_regex_anclado`): caso especial que acepta "Ayuntamiento de Jerez" con o sin "de la Frontera", con
+  exclusión explícita de "de los Caballeros" (Jerez de los Caballeros, Badajoz, municipio real distinto que
+  también aparece en los mismos ZIP) más un cruce por código postal (`_CP_ESPERADO_ANCLAJE["jerez de la
+  frontera"] = "11"`, Cádiz) como segunda guarda. Verificado contra los 5 órganos reales distintos que contienen
+  "jerez" en 3 meses de PLACE: reconoce el ayuntamiento, sigue excluyendo Jerez de los Caballeros (2 variantes),
+  el aeropuerto (Aena) y la empresa municipal de vivienda.
+- **Alcance**: cambio aislado a un único municipio (rama `if muni_norm == "jerez de la frontera"`), no puede
+  afectar al patrón de ningún otro municipio. Backfill del histórico pendiente (mismo mecanismo que Galicia/
+  Ajuntament, o incluido si se generaliza el generador).
+
 ## Contratos formales de Comunitat Valenciana/Illes Balears en PLACE (backfill del patrón "Ajuntament de X", 2026-10-01)
 
 - **Qué era**: verificando la cobertura de contratos formales por comunidad (pasada de muestreo pedida por César, misma idea que
