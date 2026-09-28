@@ -8220,6 +8220,83 @@
    "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Sevilla"
   },
   {
+   "municipio": "Teruel",
+   "provincia": "teruel",
+   "nombre": "Carmen Romero Górriz",
+   "cargo": "Concejal (D. Exclusiva, grupo P.P.)",
+   "importe": 46888.38,
+   "base": "importe bruto anual según la propia tabla de la fuente",
+   "periodo": "vigente",
+   "fuente_url": "https://www.teruel.es/portal-de-transparencia/retribuciones-de-los-miembros-de-la-corporacion/",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Teruel"
+  },
+  {
+   "municipio": "Teruel",
+   "provincia": "teruel",
+   "nombre": "Jesús Artigot Martínez",
+   "cargo": "Concejal (D. Exclusiva, grupo P.P.)",
+   "importe": 46888.38,
+   "base": "importe bruto anual según la propia tabla de la fuente",
+   "periodo": "vigente",
+   "fuente_url": "https://www.teruel.es/portal-de-transparencia/retribuciones-de-los-miembros-de-la-corporacion/",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Teruel"
+  },
+  {
+   "municipio": "Teruel",
+   "provincia": "teruel",
+   "nombre": "Juan C. Cruzado Punter",
+   "cargo": "Concejal (D. Exclusiva, grupo P.P.)",
+   "importe": 46888.38,
+   "base": "importe bruto anual según la propia tabla de la fuente",
+   "periodo": "vigente",
+   "fuente_url": "https://www.teruel.es/portal-de-transparencia/retribuciones-de-los-miembros-de-la-corporacion/",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Teruel"
+  },
+  {
+   "municipio": "Teruel",
+   "provincia": "teruel",
+   "nombre": "Carlos Méndez Muñoz",
+   "cargo": "Concejal (D. Exclusiva, grupo P.P.)",
+   "importe": 23444.12,
+   "base": "importe bruto anual según la propia tabla de la fuente",
+   "periodo": "vigente",
+   "fuente_url": "https://www.teruel.es/portal-de-transparencia/retribuciones-de-los-miembros-de-la-corporacion/",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Teruel"
+  },
+  {
+   "municipio": "Teruel",
+   "provincia": "teruel",
+   "nombre": "Elena Fernández Deveney",
+   "cargo": "Concejal (D. Parcial, grupo VOX)",
+   "importe": 23444.12,
+   "base": "importe bruto anual según la propia tabla de la fuente",
+   "periodo": "vigente",
+   "fuente_url": "https://www.teruel.es/portal-de-transparencia/retribuciones-de-los-miembros-de-la-corporacion/",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Teruel"
+  },
+  {
+   "municipio": "Teruel",
+   "provincia": "teruel",
+   "nombre": "Elena Paricio Damián",
+   "cargo": "Concejal (D. Parcial, grupo TE Existe)",
+   "importe": 23444.12,
+   "base": "importe bruto anual según la propia tabla de la fuente",
+   "periodo": "vigente",
+   "fuente_url": "https://www.teruel.es/portal-de-transparencia/retribuciones-de-los-miembros-de-la-corporacion/",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Teruel"
+  },
+  {
+   "municipio": "Teruel",
+   "provincia": "teruel",
+   "nombre": "José A. Guillén Gracia",
+   "cargo": "Concejal (D. Parcial, grupo PSOE)",
+   "importe": 23444.12,
+   "base": "importe bruto anual según la propia tabla de la fuente",
+   "periodo": "vigente",
+   "fuente_url": "https://www.teruel.es/portal-de-transparencia/retribuciones-de-los-miembros-de-la-corporacion/",
+   "fuente_nombre": "Portal de Transparencia del Ayuntamiento de Teruel"
+  },
+  {
    "municipio": "Sagunto",
    "provincia": "valencia",
    "nombre": "Darío Moreno Lerga",

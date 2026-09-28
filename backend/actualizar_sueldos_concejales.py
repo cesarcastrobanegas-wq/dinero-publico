@@ -1907,6 +1907,38 @@ def actualizar_burgos():
     return out
 
 
+@_fuente("teruel")
+def actualizar_teruel():
+    """Ayuntamiento de Teruel > Portal de Transparencia > "Retribuciones de los miembros de la Corporación":
+    tabla HTML real (TablePress) con NOMBRE Y APELLIDOS | GRUPO POLÍTICO | TIPO DE DEDICACIÓN | IMPORTE BRUTO
+    ANUAL | Decreto de Alcaldía. La alcaldesa no aparece en esta tabla (su retribución se publica aparte, no
+    en esta página) -- no hace falta excluirla a mano."""
+    from bs4 import BeautifulSoup
+    url = "https://www.teruel.es/portal-de-transparencia/retribuciones-de-los-miembros-de-la-corporacion/"
+    r = descargar(url)
+    texto = texto_html(r.text)
+    soup = BeautifulSoup(r.text, "html.parser")
+    tabla = soup.find("table", id="tablepress-24")
+    if not tabla:
+        raise RuntimeError("Teruel: no se encontró la tabla de retribuciones (¿cambió el id de TablePress?)")
+    out = []
+    for fila in tabla.find("tbody").find_all("tr"):
+        celdas = [c.get_text(" ", strip=True) for c in fila.find_all("td")]
+        if len(celdas) < 4:
+            continue
+        nombre, grupo, dedicacion, importe_txt = celdas[0], celdas[1], celdas[2], celdas[3]
+        importe = num_es(importe_txt)
+        if not importe:
+            continue
+        cargo = f"Concejal ({dedicacion}, grupo {grupo})" if grupo else f"Concejal ({dedicacion})"
+        out.append(nuevo_registro("Teruel", "teruel", nombre, cargo, importe,
+                                  "importe bruto anual según la propia tabla de la fuente", "vigente", url,
+                                  "Portal de Transparencia del Ayuntamiento de Teruel", texto))
+    if len(out) < 5:
+        raise RuntimeError(f"Teruel: solo {len(out)} concejales (¿cambió la tabla?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):

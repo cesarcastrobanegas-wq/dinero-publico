@@ -411,3 +411,15 @@ publican sus retribuciones de concejales por CARGO/CATEGORÍA y recuento (p. ej.
 municipio nuevo, conviene comprobar primero si el documento de retribuciones tiene NOMBRES reales (no solo
 cargos) antes de seguir explorando esa fuente.
 
+---
+
+## Lote 18 — Teruel (2026-09-30, extensión a Aragón)
+
+**Añadidos: 7 concejales** (Teruel). Total acumulado: **766 registros en 40 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Teruel | teruel.es > Portal de Transparencia > "Retribuciones de los miembros de la Corporación": tabla HTML real (TablePress, no PDF) | NOMBRE Y APELLIDOS + GRUPO POLÍTICO + TIPO DE DEDICACIÓN (exclusiva/parcial) + IMPORTE BRUTO ANUAL + Decreto de Alcaldía. La alcaldesa no aparece en esta tabla (su retribución se publica en otro sitio) -- no hace falta excluirla a mano. Encontrado con la API REST de WordPress (`wp-json/wp/v2/search`), misma técnica que ya usamos para Castellón en contratos menores |
+
+Sin nota pública (tabla limpia, sin ambigüedad).
+
