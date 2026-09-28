@@ -11120,6 +11120,28 @@ def _cargar_contratos_menores_laspalmasgc():
               f"(Las Palmas de Gran Canaria) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_TORRENT_FILE = os.path.join(BASE_DIR, "contratos_menores_torrent.json.gz")
+
+
+def _cargar_contratos_menores_torrent():
+    """Carga contratos_menores_torrent.json.gz (generado por actualizar_contratos_menores_torrent.py --
+    informes trimestrales en XLSX del Perfil del contratante, con enlaces encontrados navegando la página con
+    un navegador real) y lo vuelca a la tabla compartida contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_TORRENT_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_torrent: {len(registros)} contratos menores "
+              f"(Torrent) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11153,6 +11175,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_ciudad_real()
     _cargar_contratos_menores_burgos()
     _cargar_contratos_menores_laspalmasgc()
+    _cargar_contratos_menores_torrent()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14242,6 +14265,7 @@ _FUENTE_CM_LABEL = {
     "ciudad_real":     "Ciudad Real",
     "burgos":          "Burgos",
     "laspalmasgc":     "Las Palmas GC",
+    "torrent":         "Torrent",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14258,7 +14282,7 @@ _FUENTE_CM_LABEL = {
 _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
                        "sax-governalia", "vilamarxant-governalia", "castello-governalia",
                        "xirivella-governalia", "santabrigida-governalia", "alzira-governalia",
-                       "valencia_capital", "alicante", "leganes"}
+                       "valencia_capital", "alicante", "leganes", "torrent"}
 
 
 # Avisos públicos por fuente, visibles en la sección de contratos menores de la
@@ -14394,6 +14418,12 @@ _NOTAS_FUENTE_CM = {
         "propia fuente no publica esa columna ese año). Alrededor de un 10 % de las filas supera el techo "
         "legal habitual de un contrato menor -- se muestran tal cual, tal como las publica la propia "
         "obligación de transparencia municipal, sin filtrar ni corregir."
+    ),
+    "torrent": (
+        "Informes trimestrales en XLSX del Perfil del contratante del Ayuntamiento de Torrent (Comunitat "
+        "Valenciana), con enlaces encontrados navegando la página con un navegador real (Playwright): un "
+        "fetch simple no encuentra los enlaces de descarga. Importe SIN IVA. NIF del adjudicatario solo "
+        "disponible en los ficheros hasta 2022 (la fuente deja de publicar esa columna desde 2023)."
     ),
     "castello-governalia": (
         "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la "

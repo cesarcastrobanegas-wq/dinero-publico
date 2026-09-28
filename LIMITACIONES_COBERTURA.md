@@ -148,12 +148,12 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-30**: 18 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+**Estado a 2026-09-30**: 19 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
 Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
-Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria — **123.759
-contratos** entre los dieciocho), varios confirmados sin fuente viable tras investigación real, no solo una
-búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio
-abajo.
+Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria, Torrent —
+**124.652 contratos** entre los diecinueve), varios confirmados sin fuente viable tras investigación real, no
+solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por
+municipio abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -313,6 +313,19 @@ abajo.
   transparencia municipal REDIRIGE al perfil de contratante genérico de la Plataforma de Contratación del
   Estado (no tiene fuente propia separada) -- sin lead viable más allá de lo que ya cubre PLACE (que no expone
   menores de forma sistemática, ver más abajo).
+- **Torrent (~85.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-30)**: "Perfil del contratante > Datos"
+  (torrent.es), sección "Contratos menores": informes trimestrales en XLSX desde 2019. Un fetch simple con
+  `curl` no encuentra los enlaces de descarga (la página es una SPA/Elementor) -- encontrados navegando con
+  Playwright. **893 registros desde 2021-09** (`actualizar_contratos_menores_torrent.py`, fuente `torrent`).
+  Los enlaces no siguen un patrón de URL predecible (mezcla `wp-content/uploads/...` con nombres de fichero
+  inconsistentes y una carpeta legacy `torrentPublic/docroot/...` para 2019-2022) -- recogidos a mano.
+  **Dos bugs de formato encontrados y corregidos**: (1) las columnas cambian de nombre entre eras (hasta 2022
+  trae NIF del adjudicatario, desde 2023 no; el importe pasa de llamarse "Importe Lic. sin imp." a "Importe
+  adj. Sin impuest") -- se leen siempre por nombre de columna normalizado, nunca por posición; (2) varios
+  ficheros llevan filas de título/fecha antes de la cabecera real (misma clase de problema que el ODS de
+  Alicante) -- se busca la fila cuya celda sea exactamente "Expediente", no se asume que es la primera fila.
+  8 filas con la celda de importe genuinamente en blanco en la propia fuente (no un 0 real) se omiten en vez
+  de guardarse como 0€. Importe SIN IVA.
 - **Albacete (~173.000 hab., Castilla-La Mancha) — confirmado sin fuente propia (2026-09-29)**: su página de
   "Contratos menores" en el portal de transparencia (`transparencia-participacion.albacete.es`) redirige
   directamente a la Plataforma de Contratación del Estado genérica (perfil de contratante nacional), exactamente
@@ -762,4 +775,30 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
 - **Región de Murcia — contratos menores, municipios grandes probados sin fuente propia**: Alcantarilla y
   Cieza (ambas solo enlazan a PLACE genérico desde su portal de transparencia, sin dataset propio -- mismo
   caso que Elche/Albacete).
+
+## Cierre de España, ronda 2 (2026-10-01, Playwright + búsqueda restaurada)
+
+- **Bilbao — descartado con evidencia técnica, no solo "no encontrado"**: TODOS los caminos hacia la
+  transparencia de Bilbao (`bilbao.eus/transparencia`, `/gardentasuna`, `/opendata`) son una redirección
+  meta-refresh a `www.bilbao.net/...` -- un dominio distinto (`.net`, no `.eus`) que devuelve **connection
+  refused** en el puerto 443 (confirmado con `curl -v`, no es un timeout ni un bloqueo de red nuestro: el
+  servidor rechaza la conexión activamente). Es un fallo de infraestructura del propio Ayuntamiento (un
+  dominio legacy decomisionado al que su web actual sigue redirigiendo), no un límite de la técnica de
+  scraping -- no hay nada que Playwright ni ninguna otra herramienta pueda hacer mientras ese dominio no
+  responda. Descartado para concejales; no se ha buscado su lead de menores esta ronda.
+- **Getafe (concejales) — descartado por ambigüedad real, no por falta de dato**: `gobiernoabierto.getafe.es`
+  publica los importes por 9 categorías de "Concejal/a Delegado/a" (dedicación exclusiva) y el roster de
+  `/personas` da nombre + cargo de las 27 personas de la Corporación, pero cruzando ambos no cuadra: hay 12-14
+  personas con un cargo que suena a "delegado" (contando tenientes de alcaldía con y sin la palabra literal
+  "Delegado/a" en su título) y la fuente dice que son exactamente 9. Sin otra fuente que liste esas 9 personas
+  por su nombre, cualquier asignación sería adivinar -- no se fuerza (mismo criterio que rechazó Alcalá de
+  Henares "sin dedicación ni asistencias" o el resto de casos "por categoría" documentados abajo).
+- **Zaragoza y Valladolid (concejales) — confirmado "por categoría sin nombres", límite estructural**:
+  ambas fuentes (`zaragoza.es/sede/portal/organizacion/retribuciones#corporacion`, `valladolid.es/transparencia
+  /.../retribuciones-miembros-corporacion`) dan tablas de importe por CARGO (8-9 categorías: Alcalde, Consejero
+  de Gobierno, Portavoz, Portavoz Adjunto, Concejal Delegado, Concejal, Asistencias...), sin ningún nombre en
+  la misma tabla ni un roster público que permita cruzar sin ambigüedad (demasiadas categorías para aplicar
+  con seguridad la técnica de Málaga/Manacor, que solo funciona con 2-4 categorías simples). Mismo patrón que
+  Guadalajara/La Laguna/Segovia -- **no se reintenta**, es un límite de lo que la fuente publica, no de la
+  técnica de descarga (confirmado por instrucción explícita de César, 2026-10-01).
 
