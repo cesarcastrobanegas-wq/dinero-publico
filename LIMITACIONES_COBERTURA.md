@@ -1044,3 +1044,21 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   localización, no se insistió más esta ronda -- posible candidato para retomar con más tiempo o cuando el
   sitio termine su renovación.
 
+
+## Ronda autónoma 2026-09-29: ciudades >100.000 hab. de la auditoría de DATOS_PETICION_MENORES.md §5
+
+Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades >100.000 hab. sin fuente, ver
+`DATOS_PETICION_MENORES.md` §5) dejó como descargables. Cada una se verifica en crudo antes de subirla.
+
+- **Gijón (~270.000 hab., Asturias) — CONECTADO (2026-09-29)**: dataset abierto oficial
+  `opendata.gijon.es/descargar.php?id=725&tipo=TSV` (el mismo de `gijon.es/es/datos/contrataciones_menores_adjudicadas`
+  y del OpenDataSoft `observa.gijon.es`). Un solo TSV con todo el histórico desde 2018 (63.978 filas), actualizado
+  casi a diario (última adjudicación 25-09-2026). **37.226 contratos en ventana** (`actualizar_contratos_menores_gijon.py`,
+  fuente `gijon`), 72,0 M€. Primer municipio de Asturias con menores. Verificado en crudo: `PRECIO_DE_ADJUDICACIÓN`
+  lleva IVA (= base + `IMPORTE_DEL_IVA`, fila a fila); `CODIGO_CONTRATO`+`LOTE` es clave única (0 repetidas);
+  `FASE` siempre "ADJUDICADO" y procedimiento siempre "Contrato menor"; 1 fila sin fecha (descartada) y 11 sin CIF.
+  Incluye al Ayuntamiento (12.138) y 8 entes de su sector público (Fundación de Cultura 9.505, EMTUSA 4.366, Divertia
+  4.140…), con el ente real en `organisme`. Un solo contrato supera 48.400 € (101.199,70 €), mostrado tal cual.
+  Salvaguarda: si una descarga trae menos de 20.000 filas en ventana, el script no sobrescribe el fichero. La prensa
+  local (2025) dice que los gastos de menos de 5.000 € pasan a tramitarse como "gastos menores" y podrían dejar de
+  figurar aquí: no se aprecia todavía en los datos (2025: 8.157 filas, igual que 2024), a vigilar.

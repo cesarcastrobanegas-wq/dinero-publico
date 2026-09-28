@@ -11383,6 +11383,28 @@ def _cargar_contratos_menores_salamanca():
               f"(Salamanca) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_GIJON_FILE = os.path.join(BASE_DIR, "contratos_menores_gijon.json.gz")
+
+
+def _cargar_contratos_menores_gijon():
+    """Carga contratos_menores_gijon.json.gz (generado por actualizar_contratos_menores_gijon.py -- dataset
+    abierto oficial opendata.gijon.es id=725, un TSV con todo el histórico, Ayuntamiento + sector público
+    municipal) y lo vuelca a la tabla compartida contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_GIJON_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_gijon: {len(registros)} contratos menores "
+              f"(Gijón) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11421,6 +11443,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_la_laguna()
     _cargar_contratos_menores_arona()
     _cargar_contratos_menores_salamanca()
+    _cargar_contratos_menores_gijon()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14565,6 +14588,7 @@ _FUENTE_CM_LABEL = {
     "la_laguna":       "San Cristóbal de La Laguna",
     "arona":           "Arona",
     "salamanca":       "Salamanca",
+    "gijon":           "Gijón",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14588,6 +14612,12 @@ _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia"
 # ficha cuando el municipio tiene filas de esa fuente: límites de cobertura o
 # inferencias del parser que el lector debe conocer, no solo la documentación.
 _NOTAS_FUENTE_CM = {
+    "gijon": (
+        "Dataset abierto oficial del Ayuntamiento de Gijón (opendata.gijon.es), actualizado casi a diario. "
+        "Incluye el Ayuntamiento y su sector público municipal (fundaciones, patronatos y empresas "
+        "municipales como EMTUSA o Divertia): el ente que adjudica figura en cada contrato. Fecha real de "
+        "adjudicación. Importes con IVA."
+    ),
     "a-coruna": (
         "Cobertura de A Coruña desde septiembre de 2021 (solo se muestran los contratos de los últimos cinco "
         "años; los anteriores están archivados). Antes de 2021 no hay datos aprovechables: 2014-2017 son "
