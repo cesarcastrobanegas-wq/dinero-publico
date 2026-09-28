@@ -148,11 +148,12 @@ Para las seis comunidades sin agregador, se investiga empezando por el municipio
 fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
 ronda porque todo lo encontrado es fuente primaria municipal).
 
-**Estado a 2026-09-30**: 17 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+**Estado a 2026-09-30**: 18 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
 Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
-Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira — **120.614 contratos** entre los dieciocho), varios confirmados sin fuente viable
-tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel,
-Salamanca...). Detalle completo por municipio abajo.
+Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria — **123.759
+contratos** entre los dieciocho), varios confirmados sin fuente viable tras investigación real, no solo una
+búsqueda superficial (Elche, Albacete, Alcorcón, Huesca, Teruel, Salamanca...). Detalle completo por municipio
+abajo.
 
 - **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
   oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
@@ -713,17 +714,33 @@ construir solo la Fase 1 (existencia + cargo, gratis) por ahora; las cuentas anu
 
 Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads investigados y su estado:
 
-- **Las Palmas de Gran Canaria (~382.000 hab.) — lead técnico prometedor sin cerrar**: su portal
-  `transparencia.laspalmasgc.es` es una SPA moderna (Next.js) sin enlaces de descarga directos, pero SÍ
-  expone sus páginas vía la ruta estándar de Next.js `/_next/data/<buildId>/<idioma>/<ruta>.json` (sin
-  necesidad de ejecutar JS) -- técnica útil para cualquier otro municipio que use la misma plataforma. El
-  problema: la tabla real de contratos menores (y la de retribuciones de electos) NO viene pre-cargada en
-  esa respuesta (`datosSSR` vacío; el `dehydratedState` de React Query solo trae metadatos de sección, no las
-  filas) -- se carga aparte, en el navegador, contra un backend cuyo dominio público
-  (`adminlaspalmasgc.cloudtransparencia.es`) resultó ser el PANEL DE ADMINISTRACIÓN (login), no una API
-  pública. La plataforma parece ser un SaaS ("cloudtransparencia.es"/insuit.net) que podrían compartir otros
-  ayuntamientos -- si se identifica su API real de lectura pública en una próxima sesión, podría servir para
-  varios municipios de golpe.
+- **Las Palmas de Gran Canaria (~382.000 hab.) — CONECTADO (2026-09-30), resuelto con Playwright**: el intento
+  previo con la técnica `/_next/data/<buildId>/...` (sin ejecutar JS) solo traía metadatos de sección, nunca
+  las filas reales (`datosSSR` vacío, `dehydratedState` de React Query sin datos) -- ver el párrafo anterior,
+  dejado como registro histórico del intento fallido. El backend público que sí se llegó a identificar
+  entonces (`adminlaspalmasgc.cloudtransparencia.es`) era el panel de ADMINISTRACIÓN (login), un callejón sin
+  salida por esa vía.
+  - **La solución fue abrir un navegador de verdad (Playwright, headless) y observar el tráfico de red**,
+    tanto en la carga normal de la página como, sobre todo, al PULSAR el botón "Descargar nuestros datos" que
+    la propia página ofrece (csv/ods/excel/json/xml) e interceptar la petición real que dispara esa descarga
+    con `page.expect_download()`. Eso reveló el endpoint público real, totalmente distinto del dominio de
+    administración:
+    `transparencia.laspalmasgc.es/api/proxy/obligaciones/datos-multiples-registros-por-ano/88/1/<año>/csv`
+    (88 = id interno de la obligación "Relación de contratos menores"). Es una URL pública normal: una vez
+    encontrada, ya no hace falta navegador para las descargas en sí, solo peticiones HTTP directas.
+  - **3.145 registros** desde 2021-09 (conector `actualizar_contratos_menores_laspalmasgc.py`, fuente
+    `laspalmasgc`), años 2022-2026 completos; 2021 excluido entero por ambiguo frente al corte del
+    2021-09-01 (la fuente no da fecha por contrato, solo ejercicio, igual que Toledo/Fuente Álamo).
+  - El conjunto de columnas varía por año (p.ej. 2023 no trae `cif_adjudicatario` en absoluto, 0/619 filas
+    con NIF ese año) -- se lee por nombre de columna con `csv.DictReader`, nunca por posición.
+  - Dato de calidad verificado y NO corregido: 326 de 3.145 filas (10,4 %) superan el techo legal habitual de
+    un contrato menor (hasta 427.975 €), una proporción mucho mayor que en Zaragoza (2/1.085, 0,1 %).
+    Revisados los importes en crudo, sin señales de error de columna ni de concatenación -- se documenta como
+    característica propia de la fuente (la propia obligación de transparencia municipal las publica así) y se
+    muestran todas tal cual, sin filtrar, con nota explicativa en `_NOTAS_FUENTE_CM`.
+  - **Técnica reutilizable**: la plataforma (Next.js + `/api/proxy/obligaciones/...`) es la misma familia que
+    la de retribuciones de concejales del mismo ayuntamiento (mismo dominio, solo cambia el id de obligación)
+    -- candidato inmediato para la siguiente ronda de sueldos de concejales.
 - **Ceuta — dos hallazgos, ninguno cerrado**:
   - **Contratos menores**: los enlaces "Contratos menores 2020-2023" de `ceuta.es/ceuta/economica/contratos`
     NO son un dataset propio de Ceuta -- son un volcado bruto y genérico de PLACE (Plataforma de

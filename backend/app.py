@@ -11086,6 +11086,29 @@ def _cargar_contratos_menores_burgos():
               f"(Burgos) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_LASPALMASGC_FILE = os.path.join(BASE_DIR, "contratos_menores_laspalmasgc.json.gz")
+
+
+def _cargar_contratos_menores_laspalmasgc():
+    """Carga contratos_menores_laspalmasgc.json.gz (generado por actualizar_contratos_menores_laspalmasgc.py
+    -- API real del portal de transparencia (Next.js), encontrada con un navegador real interceptando la
+    descarga CSV) y lo vuelca a la tabla compartida contratos_menors_locales. Mismo patrón que el resto de
+    fuentes locales."""
+    ruta = CONTRATOS_MENORES_LASPALMASGC_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_laspalmasgc: {len(registros)} contratos menores "
+              f"(Las Palmas de Gran Canaria) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11118,6 +11141,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_zaragoza()
     _cargar_contratos_menores_ciudad_real()
     _cargar_contratos_menores_burgos()
+    _cargar_contratos_menores_laspalmasgc()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14206,6 +14230,7 @@ _FUENTE_CM_LABEL = {
     "zaragoza":        "Zaragoza",
     "ciudad_real":     "Ciudad Real",
     "burgos":          "Burgos",
+    "laspalmasgc":     "Las Palmas GC",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14349,6 +14374,15 @@ _NOTAS_FUENTE_CM = {
         "\"contratos de trabajo\", es en realidad un listado de contratos menores) -- se clasifican por el "
         "título real de cada PDF, no por su nombre. Fecha real de adjudicación e importe con IVA por "
         "contrato. Sin NIF del adjudicatario en ninguno de los tres formatos de columnas que usa la fuente."
+    ),
+    "laspalmasgc": (
+        "API real del portal de transparencia (Next.js) del Ayuntamiento de Las Palmas de Gran Canaria, "
+        "encontrada con un navegador real (Playwright) interceptando la descarga CSV que ofrece la propia "
+        "página. Sin fecha por contrato (ventana de 5 años aplicada por ejercicio completo; 2021 excluido "
+        "por ambiguo). Importe con IVA. NIF del adjudicatario disponible casi siempre, salvo en 2023 (la "
+        "propia fuente no publica esa columna ese año). Alrededor de un 10 % de las filas supera el techo "
+        "legal habitual de un contrato menor -- se muestran tal cual, tal como las publica la propia "
+        "obligación de transparencia municipal, sin filtrar ni corregir."
     ),
     "castello-governalia": (
         "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la "
