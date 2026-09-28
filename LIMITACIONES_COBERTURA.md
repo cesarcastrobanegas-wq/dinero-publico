@@ -1062,3 +1062,16 @@ Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades 
   Salvaguarda: si una descarga trae menos de 20.000 filas en ventana, el script no sobrescribe el fichero. La prensa
   local (2025) dice que los gastos de menos de 5.000 € pasan a tramitarse como "gastos menores" y podrían dejar de
   figurar aquí: no se aprecia todavía en los datos (2025: 8.157 filas, igual que 2024), a vigilar.
+- **Málaga (~600.000 hab., Andalucía) — CONECTADO (2026-09-29), con dos salvedades visibles en la ficha**: portal
+  CKAN `datosabiertos.malaga.eu`, un dataset por trimestre con XLSX, localizados en cada ejecución por la API
+  (`package_search`), sin URLs a mano. **4.948 contratos, 4T-2021 → 2T-2026 (19 trimestres)**, 37,85 M€
+  (`actualizar_contratos_menores_malaga.py`, fuente `malaga`). Primer municipio de Andalucía con menores.
+  Verificado fichero a fichero: el nº de contratos leídos coincide con las filas reales de cada XLSX (descontando
+  título, cabecera y pie). **Salvedad 1, sin fecha por contrato**: ningún XLSX desde 2021 la publica (la única
+  columna "Fecha" está en una hoja auxiliar casi vacía de 3T/4T-2023, no en la hoja "PUBLICAR"). Se usa el primer
+  día del trimestre, mismo criterio que Ames, y por eso 3T-2021 se excluye entero (cae en parte antes del
+  2021-09-01). **Salvedad 2, base de IVA no homogénea**: 17 expedientes aparecen en dos informes seguidos (2T y 3T
+  de 2025) y varios cambian de importe exactamente x1,21 (12.000 → 14.520; 4.840 → 4.000). Se guarda la primera
+  aparición; la fuente NO entra en `_FUENTES_CM_SIN_IVA` y la ficha avisa de que no se puede afirmar que todos
+  lleven IVA. Tres formatos de columnas (4T-2021/1T-2024, 2T-2024/4T-2025, 2026), leídos por nombre de cabecera.
+  Sin CIF hasta 1T-2024. 1 contrato con importe 0 y 1 por encima de 48.400 € (48.521 €), mostrados tal cual.
