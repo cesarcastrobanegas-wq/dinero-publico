@@ -423,3 +423,16 @@ cargos) antes de seguir explorando esa fuente.
 
 Sin nota pública (tabla limpia, sin ambigüedad).
 
+---
+
+## Lote 19 — Alcantarilla (2026-09-30, Región de Murcia)
+
+**Añadidos: 6 concejales** (Alcantarilla). Total acumulado: **772 registros en 41 municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Alcantarilla | alcantarilla.es > Portal de Transparencia > "Retribuciones (legislatura 2023/2027)": una ficha por persona (tarjeta Elementor con nombre, cargo y párrafo de retribución) | Solo se guardan las 6 personas con retribución FIJA anual ("X € anuales"); las 13 con solo asistencias a Pleno/Comisiones (sin dedicación) no tienen un importe anual que publicar, igual que Cádiz/Logroño. Alcaldesa excluida. Bug real corregido: una ficha escribe el importe con un ESPACIO como separador de miles ("45 000 €" en vez de "45.000 €") -- se admite y se limpia antes de parsear, en vez de descartar la fila |
+
+Sin nota pública. Este municipio ya se había investigado para CONTRATOS MENORES esta noche (confirmado sin
+dataset propio, solo enlaza a PLACE genérico) -- concejales sí funcionó.
+

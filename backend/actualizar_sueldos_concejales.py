@@ -1939,6 +1939,52 @@ def actualizar_teruel():
     return out
 
 
+@_fuente("alcantarilla")
+def actualizar_alcantarilla():
+    """Ayuntamiento de Alcantarilla (Murcia) > Portal de Transparencia > "Retribuciones (legislatura
+    2023/2027)": una ficha por persona (bloque `eael-team-item` de Elementor) con NOMBRE (h2, con prefijo
+    D./Dª.) + CARGO (h3) + un párrafo con "Retribuciones: X € anuales." o "Retribuciones: X € por asistencia a
+    Pleno...". Solo se guardan las personas con retribución FIJA anual ("X € anuales"); las de solo asistencia
+    (sin dedicación) no tienen un importe anual que publicar, igual que Cádiz/Logroño. Alcaldesa excluida."""
+    from bs4 import BeautifulSoup
+    url = ("https://www.alcantarilla.es/portal-de-transparencia/el-ayuntamiento/cargos-de-representacion/"
+           "retribuciones-legislatura-2023-2027/")
+    r = descargar(url)
+    texto = texto_html(r.text)
+    soup = BeautifulSoup(r.text, "html.parser")
+    items = soup.find_all("div", class_="eael-team-item")
+    if len(items) < 15:
+        raise RuntimeError(f"Alcantarilla: solo {len(items)} fichas (¿cambió la página?)")
+    out, solo_asistencia = [], 0
+    for it in items:
+        h2, h3, p = it.find("h2"), it.find("h3"), it.find("p", class_="eael-team-text")
+        if not (h2 and h3 and p):
+            continue
+        nombre = re.sub(r"^D\.?ª?\.?\s*", "", h2.get_text(strip=True)).strip()
+        cargo = h3.get_text(strip=True)
+        if cargo.lower().startswith("alcald"):
+            continue
+        # bug real de origen encontrado (2026-09-30): una ficha escribe el importe con un ESPACIO como
+        # separador de miles en vez de un punto ("45 000 €" en vez de "45.000 €") -- se admite y se quita
+        # antes de parsear, nunca se descarta la fila por esto.
+        m = re.search(r"Retribuciones:\s*([\d.,\s]+?)\s*€\s*anuales", p.get_text(" ", strip=True))
+        if not m:
+            solo_asistencia += 1
+            continue
+        importe = num_es(m.group(1).replace(" ", ""))
+        if not importe:
+            continue
+        out.append(nuevo_registro("Alcantarilla", "murcia", nombre, cargo, importe,
+                                  "retribución fija bruta anual según la propia ficha de la fuente",
+                                  "legislatura 2023/2027", url,
+                                  "Portal de Transparencia del Ayuntamiento de Alcantarilla", texto))
+    if solo_asistencia:
+        print(f"  Alcantarilla: {solo_asistencia} concejales solo con asistencias (sin importe fijo) saltados")
+    if len(out) < 5:
+        raise RuntimeError(f"Alcantarilla: solo {len(out)} concejales (¿cambió la página?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):
