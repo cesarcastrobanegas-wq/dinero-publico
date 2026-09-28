@@ -909,6 +909,27 @@ Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads in
   visible en la portada renderizada; sin presupuesto de búsqueda web disponible para acelerar la localización,
   no se insistió más esta ronda.
 
+## Cierre de España, ronda 7 (2026-10-01, León y Talavera de la Reina)
+
+- **León (menores) — lead real pero desproporcionadamente caro, no perseguido esta ronda**: el Perfil del
+  Contratante (`sede.aytoleon.es/eAdmin/PerfilContratante.do?action=verContratosMenores&tipo=menores`) es una
+  tabla EN VIVO real (identificador, referencia, descripción, estado, importe) sin exportación masiva ni API
+  -- solo 10 filas por página y sin columna de adjudicatario/fecha visible en la propia tabla (hay que abrir
+  cada fila individualmente para ese dato, como ya se documentó en rondas anteriores). Dado el volumen
+  aparente (identificadores en el orden de las decenas de miles), cerrarlo bien requeriría cientos de visitas
+  de página individuales con Playwright -- mucho más caro que cualquier otra fuente cerrada esta noche. Se
+  deja documentado como lead viable pero de coste desproporcionado, para una sesión dedicada solo a esto.
+- **Talavera de la Reina (concejales) — descartado, régimen de dedicación no está en el documento de
+  estructura**: `transparencia.talavera.es` publica un documento real de retribuciones por categoría (Alcalde,
+  Concejal Delegado con dedicación exclusiva, parcial 50 %, parcial 33 %) y otro documento real de estructura
+  de Gobierno con los nombres de cada Área y Concejalía delegada (patrón que en otras ciudades -- Oviedo,
+  Cuenca -- permite cruzar categoría↔persona). Aquí NO se puede cruzar con seguridad: el decreto de estructura
+  (Resolución 2023-3492) nombra a los titulares de cada Área y Concejalía delegada pero NUNCA menciona su
+  régimen de dedicación (ni la palabra "dedicación" aparece en el documento) -- no hay forma de saber, solo
+  con esta fuente, cuáles de esos delegados tienen dedicación exclusiva y cuáles parcial al 50 % o al 33 %.
+  Asumir que todos son "exclusiva" sería adivinar. Sin una tercera fuente que fije el régimen por persona, no
+  se cierra.
+
 ## Cierre de España, ronda 6 (2026-10-01, Ceuta/Melilla reconfirmados, CLM sin cierre)
 
 - **Ceuta (retribuciones altos cargos) — reconfirmado, sigue por categoría sin nombres**: el PDF
