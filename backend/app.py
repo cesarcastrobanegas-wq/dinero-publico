@@ -2157,6 +2157,11 @@ def _db_init():
             _db.execute("ALTER TABLE municipios ADD COLUMN provincia TEXT DEFAULT 'murcia'")
         except sqlite3.OperationalError:
             pass  # ya existe
+        # Índice por provincia (2026-09-30, petición de César): sin él, cada COUNT/SELECT ... WHERE provincia=? recorría
+        # la tabla entera (~460 MB de JSON en total) -- el mapa de cobertura de la portada hace uno por provincia
+        # y tardaba 12-14 s en la copia de producción del 25-09. IF NOT EXISTS: se crea una vez y los arranques
+        # siguientes no hacen nada.
+        _db.execute("CREATE INDEX IF NOT EXISTS idx_municipios_provincia ON municipios(provincia)")
         try:
             # Municipio canónico (mismo listado que MUNICIPIOS_MURCIA/GIRONA,
             # o el pseudo-municipio de la provincia -- ver MUNICIPIOS_PSEUDO)
