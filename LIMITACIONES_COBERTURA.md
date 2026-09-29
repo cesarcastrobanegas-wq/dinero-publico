@@ -1152,3 +1152,20 @@ Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades 
   contratante, en cuatro series (servicios, suministro, obras y TUS) con maquetaciones distintas; la de servicios
   sale fragmentada (128 tablas en 6 páginas por celdas combinadas) y obras/suministro traen 8-12 filas por
   trimestre. Viable con un parser por serie; no prioritario.
+- **Cádiz (~110.000 hab., Andalucía) — CONECTADO (2026-09-29), solo 2023**: único listado propio del Ayuntamiento
+  (`transparencia.cadiz.es/contratos-menores/`, PDF de 157 páginas con tabla real de 6 columnas; el resto de años
+  "toda la información en la Plataforma de Contratación del Estado"). **943 contratos** (928 adjudicados en 2023 y
+  15 en enero de 2024 con expediente de 2023), 1,83 M€ con IVA, fecha real, sin NIF
+  (`actualizar_contratos_menores_cadiz.py`, fuente `cadiz`). Verificado: las 952 claves "2023/NNN" de la tabla
+  cubren todos los expedientes; los 16 "códigos" del texto que no están en la tabla son trozos de fecha
+  ("2023/02") y referencias dentro del objeto, no contratos.
+- **Telde (~104.000 hab., Canarias) — CONECTADO (2026-09-29), solo 2025**: única relación propia publicada
+  (`telde.es/.../contratos-menores/`, ODS "RELACIÓN DE CONTRATOS MENORES AÑO: 2025"). **93 contratos**, 0,82 M€,
+  fecha real (cada contrato ocupa dos filas: datos + "Adjudicación:dd/mm/aaaa", emparejadas en orden, 0 huérfanas),
+  sin NIF; la fuente no dice si el importe lleva IGIC (`actualizar_contratos_menores_telde.py`, fuente `telde`).
+  Variantes resueltas: anotación de hoja de cálculo "No ordenado, pulse…" pegada a varias celdas (se recorta),
+  expedientes con guion ("18364-2025") o truncados ("11864/202"). Leída sin dependencias (ZIP + content.xml).
+- **Huelva — NO conectado**: los 4 XLSX trimestrales de 2022 (~180 contratos en todo el año) **no traen el nombre
+  del adjudicatario** (solo expediente, objeto, duración, importes y fecha), y de 2023 solo hay PDF del 1T y 2T
+  (el enlace del 3T lleva a un decreto suelto). El feed de menores de PLACE trae unos 60 contratos de Huelva al
+  mes, lo que sugiere que esos XLSX eran además parciales.

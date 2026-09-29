@@ -11515,6 +11515,49 @@ def _cargar_contratos_menores_santa_cruz():
               f"(Santa Cruz de Tenerife) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_CADIZ_FILE = os.path.join(BASE_DIR, "contratos_menores_cadiz.json.gz")
+
+
+def _cargar_contratos_menores_cadiz():
+    """Carga contratos_menores_cadiz.json.gz (generado por actualizar_contratos_menores_cadiz.py -- único listado
+    propio del Ayuntamiento de Cádiz, ejercicio 2023, PDF con tabla real) y lo vuelca a la tabla compartida
+    contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_CADIZ_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_cadiz: {len(registros)} contratos menores "
+              f"(Cádiz) cargados en contratos_menors_locales.", flush=True)
+
+
+CONTRATOS_MENORES_TELDE_FILE = os.path.join(BASE_DIR, "contratos_menores_telde.json.gz")
+
+
+def _cargar_contratos_menores_telde():
+    """Carga contratos_menores_telde.json.gz (generado por actualizar_contratos_menores_telde.py -- relación de
+    2025 en ODS, único listado propio publicado) y lo vuelca a la tabla compartida contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_TELDE_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_telde: {len(registros)} contratos menores "
+              f"(Telde) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11559,6 +11602,8 @@ def _inicializar_datos():
     _cargar_contratos_menores_sevilla()
     _cargar_contratos_menores_torrejon()
     _cargar_contratos_menores_santa_cruz()
+    _cargar_contratos_menores_cadiz()
+    _cargar_contratos_menores_telde()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14709,6 +14754,8 @@ _FUENTE_CM_LABEL = {
     "sevilla":         "Sevilla",
     "torrejon":        "Torrejón de Ardoz",
     "santa_cruz":      "Santa Cruz de Tenerife",
+    "cadiz":           "Cádiz",
+    "telde":           "Telde",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14733,6 +14780,16 @@ _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia"
 # ficha cuando el municipio tiene filas de esa fuente: límites de cobertura o
 # inferencias del parser que el lector debe conocer, no solo la documentación.
 _NOTAS_FUENTE_CM = {
+    "telde": (
+        "Solo 2025: es la única relación de contratos menores que publica el Ayuntamiento de Telde en su portal "
+        "de transparencia (93 contratos; para el detalle remite a la Plataforma de Contratación del Estado). Fecha "
+        "real de adjudicación, sin NIF. La fuente no indica si el importe incluye el IGIC."
+    ),
+    "cadiz": (
+        "Solo 2023: es el único listado de contratos menores que publica el propio Ayuntamiento de Cádiz en su "
+        "portal de transparencia (para el resto de años remite a la Plataforma de Contratación del Estado). Fecha "
+        "real de adjudicación e importe con IVA; sin NIF."
+    ),
     "santa_cruz": (
         "Relaciones anuales en PDF del Ayuntamiento de Santa Cruz de Tenerife (2022-2025), con fecha real de "
         "adjudicación y la concejalía u organismo que contrata; sin NIF. Importes con impuestos incluidos (IGIC). "
