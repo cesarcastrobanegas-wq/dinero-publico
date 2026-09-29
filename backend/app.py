@@ -12313,6 +12313,8 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
    banner de cookies está visible se sube lo que mida (--cookie-offset, ver el script de _page_shell). */
 .peticion-flotante{position:fixed;right:16px;bottom:calc(16px + var(--cookie-offset,0px) + env(safe-area-inset-bottom,0px));z-index:150;display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;font-weight:700;font-size:12.5px;letter-spacing:.4px;text-transform:uppercase;padding:9px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35);white-space:nowrap;}
 .peticion-flotante:hover{filter:brightness(1.08);}
+.peticion-flotante{transition:opacity .15s ease;}
+.peticion-flotante.peticion-flotante-oculto{opacity:0;pointer-events:none;}
 .peticion-flotante:focus-visible{outline:2px solid var(--text);outline-offset:2px;}
 @media (max-width:700px){.peticion-flotante{right:12px;bottom:calc(12px + var(--cookie-offset,0px) + env(safe-area-inset-bottom,0px));font-size:11.5px;padding:8px 12px;}}
 @media print{.peticion-flotante{display:none;}}
@@ -13876,8 +13878,34 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     if (!pop) return;
     var actual = null, tCerrar = null, porHover = false;
     var hover = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    // Hueco libre de la pantalla: por debajo del banner de instalar la app y de la cabecera fija, por encima del banner de
+    // cookies y del botón flotante de la petición, para que el popover no tape ninguno de ellos.
+    function visibleFijo(el) {{
+      return el && !el.hidden && getComputedStyle(el).display !== 'none' ? el.getBoundingClientRect() : null;
+    }}
+    function hueco(vh) {{
+      var sup = 8, inf = vh - 8, b;
+      if ((b = visibleFijo(document.getElementById('pwa-banner-mobile')))) sup = Math.max(sup, b.bottom + 8);
+      if ((b = visibleFijo(document.querySelector('header'))) && b.bottom > 0 && b.top <= sup) sup = Math.max(sup, b.bottom + 8);
+      if ((b = visibleFijo(document.getElementById('cookie-banner')))) inf = Math.min(inf, b.top - 8);
+      if ((b = visibleFijo(document.querySelector('.peticion-flotante')))) inf = Math.min(inf, b.top - 8);
+      return [sup, inf];
+    }}
+    // El botón flotante de la petición se aparta (se desvanece) mientras coincida con un círculo "i" o con el popover
+    // abierto: nunca tapa el círculo de información.
+    var flot = document.querySelector('.peticion-flotante');
+    function cruza(a, b) {{
+      return a && b && !(a.right + 6 <= b.left || b.right + 6 <= a.left || a.bottom + 6 <= b.top || b.bottom + 6 <= a.top);
+    }}
+    function revisarFlotante() {{
+      if (!flot) return;
+      var f = flot.getBoundingClientRect(), tapa = !pop.hidden && cruza(f, pop.getBoundingClientRect());
+      var bs = document.querySelectorAll('.it-info-btn');
+      for (var i = 0; !tapa && i < bs.length; i++) tapa = cruza(f, bs[i].getBoundingClientRect());
+      flot.classList.toggle('peticion-flotante-oculto', tapa);
+    }}
     function colocar() {{
-      if (!actual) return;
+      if (!actual) {{ revisarFlotante(); return; }}
       var r = actual.getBoundingClientRect();
       var vw = document.documentElement.clientWidth, vh = window.innerHeight;
       if (r.bottom < 0 || r.top > vh) {{ cerrar(); return; }}
@@ -13885,7 +13913,9 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
       // interno (max-height) -- nunca encima del propio botón.
       pop.style.maxHeight = '';
       var w = pop.offsetWidth, h = pop.offsetHeight;
-      var abajo = vh - r.bottom - 16, arriba = r.top - 16, top;
+      var hq = hueco(vh), sup = hq[0], inf = hq[1];
+      if (r.top < sup || r.bottom > inf || Math.max(inf - r.bottom, r.top - sup) < 160) {{ sup = 8; inf = vh - 8; }}
+      var abajo = inf - r.bottom - 8, arriba = r.top - 8 - sup, top;
       if (h <= abajo) top = r.bottom + 8;
       else if (h <= arriba) top = r.top - 8 - h;
       else if (abajo >= arriba) {{ pop.style.maxHeight = abajo + 'px'; top = r.bottom + 8; }}
@@ -13893,6 +13923,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
       var left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), vw - w - 8);
       pop.style.left = Math.max(8, left) + 'px';
       pop.style.top = top + 'px';
+      revisarFlotante();
     }}
     function abrir(btn, hoverOrigen) {{
       clearTimeout(tCerrar);
@@ -13908,6 +13939,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
       pop.hidden = true;
       if (actual) actual.setAttribute('aria-expanded', 'false');
       actual = null;
+      revisarFlotante();
     }}
     document.addEventListener('click', function(e) {{
       var btn = e.target.closest ? e.target.closest('.it-info-btn') : null;
@@ -13926,6 +13958,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     }});
     window.addEventListener('scroll', colocar, {{passive: true}});
     window.addEventListener('resize', colocar);
+    revisarFlotante();
     if (hover) {{
       document.addEventListener('mouseover', function(e) {{
         var btn = e.target.closest ? e.target.closest('.it-info-btn') : null;
