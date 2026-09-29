@@ -1230,3 +1230,36 @@ municipio; ahora el total se reconoce por su valor (suma de los demás). Siguen 
 solo publica el municipio fusionado Ezkio-Itsaso) y **Torrent (Valencia, ~85.000 hab.) y Cabanes (Castellón)**, que
 comparten clave con Torrent y Cabanes de Girona — la ficha de Torrent (Valencia) muestra hoy la población de Torrent
 (Girona). Arreglarlo exige cambiar la clave de POBLACION (y DEUDA_VIVA, etc.) a municipio+provincia en todo app.py.
+
+## Homónimos exactos en el Índice de Transparencia (2026-09-29)
+
+Solo 2 nombres existen exactamente igual en dos provincias de la app: **Torrent** (Girona / Valencia) y **Cabanes**
+(Girona / Castellón) — detectado sobre las listas completas, no a mano. Como POBLACION, la tabla `municipios`
+(contratos formales), deuda, saldo, cuentas y sueldo del alcalde se guardan solo por nombre, cada dato puede ser del
+otro municipio (comprobado: la fila "Cabanes" de Girona llevaba el sueldo de alcaldía y el saldo de Cabanes de
+Castellón; "Torrent" de Girona, el formato del portal de Torrent de Valencia). Mientras la clave no pase a
+municipio+provincia, el índice v2 (`_indice_homonimos`):
+
+- deja **no disponibles** actividad, adjudicatario, directivo y formato (salen de la fila compartida o de un dict sin
+  provincia);
+- cuenta cuentas/deuda/saldo/retribuciones y menores solo si el registro dice ser de la misma provincia.
+
+Resultado: Torrent (Girona) queda con 5 componentes propios; Cabanes (Girona) con 2, así que sale del ranking como
+"cobertura insuficiente". **Torrent (Valencia, ~85.000 hab.) y Cabanes (Castellón) no aparecen en el índice** (no
+tienen fila propia de población). Efecto colateral en el resto: como mucho 0,1 puntos en el tramo de <1.000 hab.
+Cualquier homónimo nuevo que entre en las listas se trata igual automáticamente.
+
+### Añadido: regla de provincia por código postal y recuperación completa (2026-09-29, noche)
+
+- Al verificar la recuperación aparecieron órganos de OTRA provincia que casaban con el patrón: "Ayuntamiento Sant
+  Joan D Alacant" (sin apóstrofo ni "de") caía en Sant Joan (Baleares) y "Ayuntamiento de El Carpio" (CP 47, un
+  Carpio de Valladolid que la app no tiene con ese nombre) en El Carpio (Córdoba). Regla nueva
+  (`_cp_de_otra_provincia`): si el órgano trae un CP válido, tiene que ser de una provincia donde exista un municipio
+  de la app con ese nombre; sin CP (la mitad de los contratos) o con CP imposible no se descarta nada. En agosto de
+  2026 los 22 contratos que corta eran todos de otro municipio; en la copia de producción, los 177 guardados también.
+  Además: apóstrofo opcional en el patrón (Sant Joan d'Alacant recupera 133 contratos) y exclusiones que conservan el
+  guion ("de Rio-Tinto" excluye "de Riotinto").
+- Recuperación retroactiva terminada: **9.986 contratos en 247 municipios, sep 2021 - sep 2026** (Rivas-Vaciamadrid
+  688, El Ejido 516, El Campello 486, Dénia 421, La Línea 333...). Verificada sin contratos que casen con otro
+  municipio, sin duplicados y sin CP de otra provincia.
+- Los contratos recuperados entran sin directivo enriquecido: el enriquecimiento de producción los irá completando.
