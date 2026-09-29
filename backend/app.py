@@ -6326,6 +6326,7 @@ def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None):
         return []
 
     # Regex organo (compilar una vez por municipio)
+    anclado = _muni_re is not None
     if _muni_re is None:
         _muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
 
@@ -6339,6 +6340,8 @@ def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None):
             if not c or not _muni_re.search(normalizar(c.get("organo", ""))):
                 continue
             if cp_esperado and not c.get("cp", "").startswith(cp_esperado):
+                continue
+            if anclado and _cp_de_otra_provincia(c, municipio):
                 continue
             contratos.append(c)
         except Exception:
@@ -6746,7 +6749,9 @@ def _variantes_nombre_municipio(muni_norm):
 def _patron_nombre_municipio(variante):
     """Regex de una variante: guion o espacio indistintos ("Rivas-Vaciamadrid" / "Rivas Vaciamadrid"; y guion
     opcional: "Chinchilla de Monte-Aragón" / "Montearagón")."""
-    return re.escape(variante).replace(r"\-", "[- ]?")
+    # Apóstrofo opcional o sustituido (2026-09-29): "Ayuntamiento Sant Joan D Alacant" = "Sant Joan d'Alacant"; la
+    # jerarquía oficial de PLACE usa además "´" ("Sant Joan d´Alacant").
+    return re.escape(variante).replace(r"\-", "[- ]?").replace("'", "['´’` ]?")
 
 
 def _prefiltro_bytes_municipio(municipio):
@@ -6829,6 +6834,43 @@ _CP_PREFIJO_PROVINCIA = {
     "zamora": "49", "zaragoza": "50", "ceuta": "51", "melilla": "52", "pais_vasco": ("01", "20", "48"),
 }
 _CP_HOMONIMOS = None
+
+
+# Regla de provincia por código postal (2026-09-29). Verificando la primera tanda de la recuperación retroactiva
+# aparecieron órganos de OTRA provincia cuyo nombre casa con el patrón: "Ayuntamiento Sant Joan D Alacant" (sin
+# apóstrofo ni "de") caía en Sant Joan (Baleares), 91 contratos; "Ayuntamiento de El Carpio" con CP 47 (Carpio,
+# Valladolid, que en la app no se llama así) caía en El Carpio (Córdoba), 8. Medido en agosto de 2026 con las reglas
+# nuevas: los 22 contratos cuyo CP es de una provincia donde no existe ese nombre eran TODOS de otro municipio; en la
+# copia de producción del 25-09, los 177 contratos PLACE guardados con CP de otra provincia, también. Regla: si el
+# órgano trae un CP válido, tiene que ser de una provincia donde exista un municipio de la app con ese nombre. Sin CP
+# (la mitad de los contratos) o con un CP imposible (Chandrexa de Queixa trae "92...") no se descarta nada. Solo con
+# el patrón anclado: Murcia sigue con el suyo (decisión aparte, ver buscar_en_zip).
+_CP_PROVINCIAS_POR_NOMBRE = None
+
+
+def _cp_provincias_de_nombre(municipio):
+    """Tupla de prefijos de CP de las provincias donde existe `municipio` (por nombre normalizado), o None."""
+    global _CP_PROVINCIAS_POR_NOMBRE
+    if _CP_PROVINCIAS_POR_NOMBRE is None:
+        por = {}
+        for prov, lst in MUNICIPIOS_POR_PROVINCIA.items():
+            pref = _CP_PREFIJO_PROVINCIA.get(prov)
+            if not pref:
+                continue
+            for m in lst:
+                por.setdefault(normalizar(m), set()).update(pref if isinstance(pref, tuple) else (pref,))
+        _CP_PROVINCIAS_POR_NOMBRE = {k: tuple(sorted(v)) for k, v in por.items()}
+    return _CP_PROVINCIAS_POR_NOMBRE.get(normalizar(municipio))
+
+
+def _cp_de_otra_provincia(c, municipio):
+    """True solo si el contrato trae un CP VÁLIDO (5 dígitos, provincia 01-52) que no es de ninguna provincia donde
+    exista `municipio`."""
+    cp = (c.get("cp") or "").strip()
+    if not (len(cp) == 5 and cp.isdigit() and 1 <= int(cp[:2]) <= 52):
+        return False
+    provs = _cp_provincias_de_nombre(municipio)
+    return bool(provs) and not cp.startswith(provs)
 
 
 def _cp_esperado_anclaje(municipio):
@@ -6982,6 +7024,8 @@ def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
         if not muni_re.search(normalizar(c.get("organo", ""))):
             continue
         if cp_esperado and not c.get("cp", "").startswith(cp_esperado):
+            continue
+        if anclar and _cp_de_otra_provincia(c, municipio):
             continue
         contratos.append(dict(c))  # copia -- nunca mutar el dict compartido en caché
     return contratos
@@ -8520,7 +8564,7 @@ def _aplicar_correccion_formales_5anios():
         print(f"[startup] correccion_formales_5anios: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
-_DEPURACION_ANCLAJE_VERSION = "2026-09-29"
+_DEPURACION_ANCLAJE_VERSION = "2026-09-29b"   # "b": + regla de provincia por CP y apóstrofo opcional (vuelve a pasar)
 _DEPURACION_ANCLAJE_CLAVE = "depuracion_anclaje_place_version"
 
 
@@ -8571,8 +8615,10 @@ def _depurar_asignacion_place_por_nombre():
                 if rx.search(org):
                     if cp and not (c.get("cp") or "").startswith(cp):
                         fuera.append(c)            # homónimo: el código postal es de otra provincia
-                elif rx_sin_otros.search(org):
-                    fuera.append(c)                # el nombre sigue con el de otro municipio real
+                    elif _cp_de_otra_provincia(c, nombre):
+                        fuera.append(c)            # CP de una provincia donde no existe ese nombre
+                elif rx_sin_otros.search(org) or _cp_de_otra_provincia(c, nombre):
+                    fuera.append(c)                # el nombre sigue con el de otro municipio real, o CP ajeno
                 else:
                     sin_explicar += 1
             if sin_explicar:
@@ -8596,7 +8642,7 @@ def _depurar_asignacion_place_por_nombre():
                         (_DEPURACION_ANCLAJE_CLAVE, _DEPURACION_ANCLAJE_VERSION))
             _db.commit()
         print(f"[startup] depuracion_anclaje_place: {archivados} contratos archivados en {len(tocados)} municipios "
-              f"(otro municipio real con nombre que empieza igual, u homónimo de otra provincia); contratos que no "
+              f"(otro municipio real con nombre que empieza igual, homónimo, o CP de otra provincia); contratos que no "
               f"casan con el patrón por otro motivo y se DEJAN: {sum(n for _, n in bloqueados)} en {len(bloqueados)} "
               f"municipios {bloqueados[:40]}. Detalle: {tocados}", flush=True)
     except Exception as e:

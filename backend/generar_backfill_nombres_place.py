@@ -241,6 +241,8 @@ def main():
                         cpn = A._cp_esperado_anclaje(m)
                         if cpn and not c.get("cp", "").startswith(cpn):
                             continue
+                        if A._cp_de_otra_provincia(c, m):
+                            continue                     # CP de otra provincia (Sant Joan <- Sant Joan d'Alacant)
                         cpv = cp_ant.get(A.normalizar(m))
                         if rx_viejo[(p, m)].search(on) and not (cpv and not c.get("cp", "").startswith(cpv)):
                             continue                     # ya lo asignaba el patrón anterior
