@@ -108,6 +108,10 @@ NOMBRES_INE_OVERRIDE = {
     # (el nombre completo que da _PREFIJOS_LABEL tras quitar "Comunidad
     # Foral de ").
     "navarra": ["Navarra"],
+    # 2026-09-29: PROVINCIA_LABEL dice "Ciudad Autónoma de Ceuta/Melilla" y el script avisaba en cada ejecución
+    # "no se encontró tabla INE" -- ninguna de las dos tenía población.
+    "ceuta": ["Ceuta"],
+    "melilla": ["Melilla"],
 }
 
 
@@ -207,6 +211,33 @@ OUT_FILE = f"{BASE_DIR}/poblacion.json"
 ALIAS_POBLACION = {
     "Castell-Platja d'Aro": "Castell d'Aro, Platja d'Aro i s'Agaró",
     "Masarac": "Masarac i Vilarnadal",
+    # 2026-09-29 (a petición de César, tras ver que Castellón de la Plana no tenía población y por tanto no
+    # entraba en el Índice de Transparencia): repaso completo de los municipios de la app sin población contra
+    # la salida "Sin emparejar" de este script. Nombre oficial INE -> nombre en la app. Casi todos son la forma
+    # en valenciano/euskera/catalán de un municipio que la app guarda en castellano (o al revés), fusiones con
+    # nombre compuesto y el artículo invertido del INE.
+    "Castelló de la Plana": "Castellón de la Plana",
+    "Alfarp": "Alfarb",
+    "Erriberabeitia": "Ribera Baja",
+    "Valdegovía/Gaubea": "Valdegovia-Gaubea",
+    "Leaburu": "Leaburu-Txarama",
+    "Leintz-Gatzaga": "Leintz Gatzaga",
+    "Soraluze-Placencia de las Armas": "Soraluze",
+    "Abanto y Ciérvana-Abanto Zierbena": "Abanto Zierbena",
+    "Arratzu": "Arrazu",
+    "Erandio": "la Anteiglesia de Erandio",
+    "Abadiño": "la Anteiglesia de Abadiño",   # además se perdía por el bug del agregado, ver _filas_total
+    "Karrantza Harana/Valle de Carranza": "Carranza",
+    "Munitibar-Arbatzegi Gerrikaitz": "Munitibar-Arbatzegi-Gerrikaitz",
+    "Trucios-Turtzioz": "Trucíos",
+    "Frontera": "La Frontera",
+    "Pobla, Sa": "Sa Pobla",
+    "Salines, Ses": "Ses Salines",
+    "Zarza-Capilla": "Zarza Capilla",
+    "Aldehuela de Jerte": "Aldehuela del Jerte",
+    "Puebla de Albortón": "La Puebla de Albortón",
+    # "Ezkio-Itsaso" NO tiene alias: el INE solo publica el municipio fusionado y la app tiene "Ezkio" e "Itsaso"
+    # por separado -- asignar la cifra del fusionado a uno de los dos sería inventar un dato.
 }
 
 
@@ -222,7 +253,19 @@ def _filas_total(datos_json):
     totales = [s for s in datos_json if ". Total. Total habitantes." in s.get("Nombre", "")]
     if not totales:
         raise RuntimeError("no se encontraron series 'Total. Total habitantes.' en la tabla")
-    return totales[1:]  # descarta el agregado provincial
+    # 2026-09-29: el agregado NO siempre es la primera serie -- en Bizkaia (tabla 2905) la primera es Abadiño, que
+    # se descartaba (sin población en la app) mientras el agregado "Bizkaia" quedaba dentro como si fuera un
+    # municipio. El agregado se identifica por su valor: es la suma de todos los demás. Si no aparece ninguno así,
+    # se mantiene el criterio antiguo (descartar la primera).
+    def _valor(s):
+        try:
+            return float(s["Data"][0]["Valor"])
+        except (KeyError, IndexError, TypeError, ValueError):
+            return 0.0
+    suma = sum(_valor(s) for s in totales)
+    agregados = [i for i, s in enumerate(totales) if suma and abs(2 * _valor(s) - suma) <= 0.005 * suma]
+    i_agregado = agregados[0] if len(agregados) == 1 else 0
+    return totales[:i_agregado] + totales[i_agregado + 1:]
 
 
 def main():

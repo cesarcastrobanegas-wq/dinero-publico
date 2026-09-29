@@ -1181,3 +1181,52 @@ Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades 
   + 3 no localizados. **El siguiente salto de cobertura no es otro conector municipal sino el feed de menores de
   PLACE** (`DATOS_PETICION_MENORES.md` §5.1): decisión estructural pendiente de César (duplicados con las fuentes
   propias ya conectadas, base de IVA, alcance).
+
+## Asignación de contratos formales por nombre del órgano — arreglo de nombres (2026-09-29)
+
+Auditoría de un mes completo de PLACE (ZIP de agosto de 2026, 20.360 contratos adjudicados/formalizados) contra la
+**jerarquía oficial** de cada órgano (`ParentLocatedParty`: "<Municipio> / Ayuntamientos / <Provincia>"):
+
+- **No asignados a su municipio: 251 de 6.555** contratos con órgano municipal (3,8 %). Causa principal: las listas
+  de la app usan el formato INE con el artículo al final ("Ejido, El", "Cabezas de San Juan, Las") y PLACE escribe
+  "Ayuntamiento de El Ejido". Consecuencia en producción: **El Ejido, Rivas-Vaciamadrid, Dénia, El Campello, La
+  Rinconada, La Línea de la Concepción y El Puerto de Santa María tenían 0 contratos formales**.
+- **Arreglo** (`_variantes_nombre_municipio`, `_regex_anclado`): orden natural del artículo, guion/espacio
+  indistintos ("Rivas Vaciamadrid"), "de" opcional ("Ayuntamiento Dénia", "Concello Soutomaior"), más fórmulas
+  honoríficas ("de Villa de Arico", "de la Leal Villa de El Escorial", "de la Villa y Puerto de Garachico") y un
+  alias verificado (Santa María de Guía). Resultado en el mismo mes: **+316 contratos en 86 municipios, 0 falsos
+  positivos** contra la jerarquía oficial.
+- **Colisiones de prefijo, ahora automáticas** (`_continuaciones_de_otros_municipios`): aceptar el orden natural
+  hacía que "El Burgo" (Málaga) casara con "El Burgo de Ebro", "El Viso" con "El Viso del Alcor", "Navàs" con
+  "Navas de Bureba"... En vez de ampliar a mano `_EXCLUSION_CONTINUACION_ANCLAJE`, cada municipio excluye como
+  continuación el nombre de cualquier otro municipio de la app que empiece igual. Efecto colateral bueno: quita
+  **228 asignaciones erróneas que ya existían** en ese mes (Sevilla se quedaba contratos de Sevilla la Nueva,
+  Fuenlabrada los de Fuenlabrada de los Montes, València los de Valencia de Alcántara, San Fernando los de San
+  Fernando de Henares, "Pozuelo" de Albacete los de Pozuelo de Alarcón...). Las 228 confirmadas contra la jerarquía.
+- **Homónimos** (`_cp_esperado_anclaje`): nombres idénticos en orden natural pero guardados distinto ("La Zarza"
+  de Badajoz y "Zarza, La" de Valladolid, "La Frontera" de Tenerife y "Frontera, La" de Cuenca) se desambiguan por
+  el código postal del órgano (prefijo INE de la provincia). Los homónimos con el MISMO nombre exacto siguen sin
+  resolver: comparten fila en la tabla `municipios` (clave sin provincia), problema aparte ya conocido (Cieza).
+- **Lo ya guardado**: `_depurar_asignacion_place_por_nombre` revalida una vez los contratos de PLACE guardados y
+  ARCHIVA (no borra) los que ya no corresponden — en la copia de producción del 25-09, **212 contratos en 63
+  municipios**; solo retira los que se explican por la colisión con otro municipio o por el CP de un homónimo.
+  Lo que faltaba se recupera hacia atrás con `generar_backfill_nombres_place.py` (fichero
+  `backfill_nombres_place.json.gz`, fusión aditiva al arrancar).
+- **Sigue sin resolver (para DIR3, cuando se conecte el feed nacional de PLACE)**: ~80 contratos/mes de organismos
+  municipales sin "ayuntamiento" en el nombre (patronatos, empresas y distritos: Fuenlabrada, Rivamadrid, Coruña
+  Espectáculos, "Gobierno de Zaragoza", distritos y áreas de Madrid, Gerencia de Urbanismo de Sevilla) y municipios
+  que PLACE nombra distinto que la app (Las Rozas, Borriana, Xixona, Moixent, Benicàssim, "San Vicente Raspeig"...).
+- **Contratos menores**: no usan esta lógica (RPC por código INE, Euskadi por id de municipio, el resto son fuentes
+  de un solo municipio).
+
+## Población (poblacion.json) — municipios que faltaban (2026-09-29)
+
+22 municipios de la app no tenían población (y por tanto no entraban en el Índice de Transparencia): **Castellón de
+la Plana** (183.711 hab.), Ceuta, Melilla, Erandio, Abadiño, Sa Pobla, Ses Salines, La Frontera y otros 14 de
+nombre bilingüe o fusionado. Arreglado con alias INE→app en `actualizar_poblacion.py` y la tabla de Ceuta/Melilla.
+Además `_filas_total` descartaba a ciegas la PRIMERA fila de cada tabla como total provincial: en Bizkaia la primera
+es Abadiño (el total va más abajo), así que Abadiño se perdía y el total "Bizkaia" quedaba como si fuera un
+municipio; ahora el total se reconoce por su valor (suma de los demás). Siguen sin población: Ezkio e Itsaso (el INE
+solo publica el municipio fusionado Ezkio-Itsaso) y **Torrent (Valencia, ~85.000 hab.) y Cabanes (Castellón)**, que
+comparten clave con Torrent y Cabanes de Girona — la ficha de Torrent (Valencia) muestra hoy la población de Torrent
+(Girona). Arreglarlo exige cambiar la clave de POBLACION (y DEUDA_VIVA, etc.) a municipio+provincia en todo app.py.

@@ -6319,19 +6319,17 @@ def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None):
     """Parsea un .atom en bytes buscando contratos del municipio."""
 
     # ── Criba rápida a nivel de fichero (bytes) ───────────────────────────────
-    muni_b = (' ' + municipio).encode('utf-8')
-    muni_b_lo = (' ' + municipio.lower()).encode('utf-8')
-    if muni_b not in raw_bytes and muni_b_lo not in raw_bytes:
+    # Variantes de bytes (2026-09-29): sin el artículo invertido del formato INE y con guion/espacio -- ver
+    # _prefiltro_bytes_municipio; antes "Ejido, El" no pasaba nunca esta criba.
+    muni_b_variants = _prefiltro_bytes_municipio(municipio)
+    if not any(v in raw_bytes for v in muni_b_variants):
         return []
-
-    # Variantes de bytes para filtrar entries
-    muni_b_variants = (muni_b, muni_b_lo, (' ' + municipio.upper()).encode('utf-8'))
 
     # Regex organo (compilar una vez por municipio)
     if _muni_re is None:
         _muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
 
-    cp_esperado = _CP_ESPERADO_ANCLAJE.get(normalizar(municipio))
+    cp_esperado = _cp_esperado_anclaje(municipio)
 
     contratos = []
     # _entries_con_estado_bytes ya filtra por estado Y municipio; parsear solo las candidatas
@@ -6454,6 +6452,10 @@ def _prefijo_anclaje(municipio):
 # acotado a los 2 casos vistos en datos reales -- no una lista exhaustiva
 # de honoríficos españoles, solo lo verificado.
 _INFIJO_HONORIFICO_RE = r'(?:la (?:hist[oó]rica )?villa de )?'
+# Ampliado 2026-09-29 (auditoría de órganos contra la jerarquía oficial de PLACE, ZIP de agosto de 2026): más
+# fórmulas reales vistas -- "Ayuntamiento de VILLA DE Arico", "de LA LEAL VILLA DE El Escorial", "de LA VILLA Y
+# PUERTO DE Garachico". Sigue siendo solo lo verificado en datos reales, no una lista exhaustiva.
+_INFIJO_HONORIFICO_RE = r'(?:(?:la )?(?:leal |historica |hist[oó]rica )?villa (?:y puerto )?de )?'
 
 # Colisiones verificadas 2026-09-15 (piloto Baleares) contra un ZIP real: el
 # patrón anclado normal (\bayuntamiento de {municipio}\b) también hace
@@ -6645,7 +6647,7 @@ def _es_municipio_ajuntament(muni_norm):
     return muni_norm in _MUNICIPIOS_AJUNTAMENT_NORM
 
 
-def _regex_anclado(municipio):
+def _regex_anclado(municipio, excluir_otros_municipios=True):
     """Regex completo para anclar=True en buscar_en_zip/buscar_en_feed_vivo:
     _prefijo_anclaje + infijo honorífico opcional + nombre del municipio,
     con exclusión de continuación si aplica (ver _EXCLUSION_CONTINUACION_
@@ -6661,11 +6663,16 @@ def _regex_anclado(municipio):
     mismo comportamiento de siempre para las entradas que no necesitan
     más de una."""
     muni_norm = normalizar(municipio)
-    exclusiones = _EXCLUSION_CONTINUACION_ANCLAJE.get(muni_norm)
+    exclusiones = _EXCLUSION_CONTINUACION_ANCLAJE.get(muni_norm) or ()
+    if isinstance(exclusiones, str):
+        exclusiones = (exclusiones,)
+    # + colisiones de prefijo calculadas automáticamente contra todos los municipios de la app (2026-09-29, ver
+    # _continuaciones_de_otros_municipios): imprescindibles desde que se acepta el orden natural del artículo.
+    if excluir_otros_municipios:
+        exclusiones = tuple(exclusiones) + tuple(c for c in _continuaciones_de_otros_municipios(muni_norm)
+                                                 if c not in exclusiones)
     lookahead = ''
     if exclusiones:
-        if isinstance(exclusiones, str):
-            exclusiones = (exclusiones,)
         for exclusion in exclusiones:
             # \b final solo si la exclusión termina en letra/dígito (para no
             # rechazar también un prefijo más largo, p.ej. "del rio" no debe
@@ -6675,14 +6682,15 @@ def _regex_anclado(municipio):
             # límite de palabra) y la exclusión quedaría rota en silencio, ver
             # incidente Cieza/Cantabria 2026-09-15.
             sufijo_b = r'\b' if exclusion[-1].isalnum() else ''
-            lookahead += f'(?!{re.escape(exclusion)}{sufijo_b})'
+            lookahead += f'(?!{_patron_nombre_municipio(exclusion)}{sufijo_b})'
     if _es_municipio_gallego(muni_norm):
         m_art = re.match(r"^(a|o|as|os) (.+)$", muni_norm)
         if m_art:
             art, resto = m_art.groups()
-            nombre = (rf'(?:de {art} {re.escape(resto)}|{_ARTICULO_CONTRACCION_GL[art]} {re.escape(resto)})')
+            nombre = (rf'(?:de {art} {_patron_nombre_municipio(resto)}|{_ARTICULO_CONTRACCION_GL[art]} {_patron_nombre_municipio(resto)})')
         else:
-            nombre = rf'de {re.escape(muni_norm)}'
+            # "de" opcional (2026-09-29): "Alcaldia del Concello Soutomaior" -- visto en PLACE, agosto de 2026.
+            nombre = rf'(?:de )?{_patron_nombre_municipio(muni_norm)}'
         return re.compile(rf'\b(?:ayuntamiento|concello) {nombre}{lookahead}\b')
     if muni_norm == "jerez de la frontera":
         # Hallazgo 2026-10-01 (pasada de verificación de cobertura formales, muestreo de Andalucía: Jerez daba 0
@@ -6697,9 +6705,153 @@ def _regex_anclado(municipio):
     prefijo = _prefijo_anclaje(municipio)
     if prefijo == "ayuntamiento de" and _es_municipio_ajuntament(muni_norm):
         prefijo = "(?:ayuntamiento|ajuntament) de"
+    if prefijo != "ciudad autonoma de":
+        # "de" opcional (y "del" -- "Ayuntamiento del Real Sitio de San Ildefonso"): "Junta de Gobierno del
+        # Ayuntamiento Dénia", "Alcaldia del Ayuntamiento Llerena", "Ayuntamiento San Juan de Aznalfarache".
+        prefijo = prefijo[:-len(" de")] + "(?: del?)?"
+    nombres = "|".join(_patron_nombre_municipio(v) for v in _variantes_nombre_municipio(muni_norm))
     return re.compile(
-        rf'\b{prefijo} {_INFIJO_HONORIFICO_RE}{re.escape(muni_norm)}{lookahead}\b'
+        rf'\b{prefijo} {_INFIJO_HONORIFICO_RE}(?:{nombres}){lookahead}\b'
     )
+
+
+# Arreglo rápido de nombres (2026-09-29, auditoría de órganos contra la jerarquía oficial de PLACE, ZIP de
+# agosto de 2026): 251 contratos de 6.555 con órgano municipal no se asignaban a su municipio. La causa principal:
+# las listas de municipios usan el formato INE con el artículo al final ("Ejido, El", "Cabezas de San Juan, Las",
+# "Serratella, la", "Alqueria de la Comtessa, L'") y PLACE escribe el nombre en orden natural ("Ayuntamiento de El
+# Ejido") -- el patrón anclado buscaba literalmente "ayuntamiento de ejido, el" y no encontraba nunca nada. Se
+# acepta también el orden natural, sin dejar de aceptar el INE. El arreglo estructural (asignar por el código DIR3
+# del órgano, no por su nombre) queda para cuando se conecte el feed nacional de PLACE.
+_ARTICULO_INVERTIDO_RE = re.compile(r"^(.+), (el|la|los|las|lo|l'|es|sa|ses|s'|els|les|o|a|os|as)$")
+
+# Nombre corto o distinto con el que el propio ayuntamiento firma en PLACE (verificado en datos reales, no teórico).
+_ALIAS_ORGANO_MUNICIPIO = {
+    "santa maria de guia de gran canaria": ("Santa María de Guía",),
+}
+
+
+def _variantes_nombre_municipio(muni_norm):
+    """Formas normalizadas con las que un municipio puede aparecer tras "Ayuntamiento de" en PLACE."""
+    variantes = [muni_norm]
+    m = _ARTICULO_INVERTIDO_RE.match(muni_norm)
+    if m:
+        resto, art = m.groups()
+        variantes.append(f"{art}{resto}" if art.endswith("'") else f"{art} {resto}")
+    variantes.extend(normalizar(a) for a in _ALIAS_ORGANO_MUNICIPIO.get(muni_norm, ()))
+    # "Villa de Otura" firma como "Ayuntamiento de LA Villa de Otura".
+    variantes.extend(f"la {v}" for v in list(variantes) if v.startswith("villa "))
+    return variantes
+
+
+def _patron_nombre_municipio(variante):
+    """Regex de una variante: guion o espacio indistintos ("Rivas-Vaciamadrid" / "Rivas Vaciamadrid"; y guion
+    opcional: "Chinchilla de Monte-Aragón" / "Montearagón")."""
+    return re.escape(variante).replace(r"\-", "[- ]?")
+
+
+def _prefiltro_bytes_municipio(municipio):
+    """Subcadenas (bytes) de las que al menos una tiene que estar en un .atom para que pueda contener un contrato
+    del municipio -- criba rápida de parsear_atom_bytes. Usa el nombre SIN el artículo invertido ("Ejido", no
+    "Ejido, El", que nunca aparece así en PLACE) y la variante con espacio en vez de guion."""
+    base = municipio
+    m = _ARTICULO_INVERTIDO_RE.match(normalizar(municipio))
+    if m:
+        base = municipio[:municipio.rfind(",")]
+    formas = {base, base.replace("-", " "), base.replace("-", "")}
+    # + la primera palabra suelta (si es larga): criba más tolerante a mayúsculas raras dentro del nombre
+    # ("Chinchilla de Montearagón" frente a "Monte-Aragón"); el patrón completo se aplica después igual.
+    primera = re.split(r"[\s-]", base.strip())[0]
+    if len(primera) >= 5:
+        formas.add(primera)
+    formas.update(_ALIAS_ORGANO_MUNICIPIO.get(normalizar(municipio), ()))
+    out = []
+    for f in formas:
+        for v in (f, f.lower(), f.upper()):
+            out.append((' ' + v).encode('utf-8'))
+    return tuple(dict.fromkeys(out))
+
+
+# Colisiones de prefijo automáticas (2026-09-29). Al aceptar el orden natural ("El Burgo" para "Burgo, El"),
+# el patrón de un municipio pasa a coincidir también con el comienzo del nombre de OTRO municipio real: "El
+# Burgo" (Málaga) con "El Burgo de Ebro" (Zaragoza), "El Viso" (Córdoba) con "El Viso del Alcor" (Sevilla), "La
+# Victoria" (Córdoba) con "La Victoria de Acentejo" (Tenerife), "L'Alcúdia" con "L'Alcúdia de Crespins",
+# "Navàs" (Barcelona) con "Navas de Bureba" (Burgos)... -- todas vistas en el ZIP de agosto de 2026 al validar el
+# arreglo contra la jerarquía oficial de PLACE. Es la misma clase de colisión que _EXCLUSION_CONTINUACION_ANCLAJE
+# resuelve a mano; aquí se calcula para TODAS las parejas de municipios de la app (cada nombre, en orden INE,
+# natural y sin artículo, contra el comienzo de todos los demás), en vez de esperar a encontrarlas una a una.
+_FORMAS_MUNICIPIOS = None
+
+
+def _formas_comparables(muni_norm):
+    formas = {v.replace("-", " ") for v in _variantes_nombre_municipio(muni_norm)}
+    m = _ARTICULO_INVERTIDO_RE.match(muni_norm)
+    if m:
+        formas.add(m.group(1).replace("-", " "))      # sin artículo: "burgo de ebro"
+    return formas
+
+
+def _continuaciones_de_otros_municipios(muni_norm):
+    import bisect
+    global _FORMAS_MUNICIPIOS
+    if _FORMAS_MUNICIPIOS is None:
+        formas = set()
+        for lst in MUNICIPIOS_POR_PROVINCIA.values():
+            for m in lst:
+                n = normalizar(m)
+                formas.update((f, n) for f in _formas_comparables(n))
+        _FORMAS_MUNICIPIOS = sorted(formas)
+    conts = set()
+    for fa in {v.replace("-", " ") for v in _variantes_nombre_municipio(muni_norm)}:
+        i = bisect.bisect_left(_FORMAS_MUNICIPIOS, (fa + " ",))
+        while i < len(_FORMAS_MUNICIPIOS) and _FORMAS_MUNICIPIOS[i][0].startswith(fa + " "):
+            fb, dueno = _FORMAS_MUNICIPIOS[i]
+            if dueno != muni_norm:
+                conts.add(fb[len(fa):])
+            i += 1
+    return tuple(sorted(conts))
+
+
+# Homónimos (2026-09-29): nombres que en orden natural son idénticos pero la app guarda distinto -- "La Zarza"
+# (Badajoz) y "Zarza, La" (Valladolid), "La Frontera" (Tenerife) y "Frontera, La" (Cuenca). Con el orden natural
+# aceptado, "Ayuntamiento de La Zarza" coincidiría con los dos; se desambigua por el código postal del órgano
+# (prefijo = código INE de la provincia), mismo mecanismo que _CP_ESPERADO_ANCLAJE ya usa para Jerez. Los
+# homónimos con el MISMO nombre exacto en dos provincias no se tocan aquí: comparten fila en la tabla
+# `municipios` (clave sin provincia), problema aparte ya documentado en MUNICIPIOS_CANTABRIA (Cieza).
+_CP_PREFIJO_PROVINCIA = {
+    "albacete": "02", "alicante": "03", "almeria": "04", "avila": "05", "badajoz": "06",
+    "baleares": "07", "barcelona": "08", "burgos": "09", "caceres": "10", "cadiz": "11", "castellon": "12",
+    "ciudad_real": "13", "cordoba": "14", "a_coruna": "15", "cuenca": "16", "girona": "17", "granada": "18",
+    "guadalajara": "19", "huelva": "21", "huesca": "22", "jaen": "23", "leon": "24", "lleida": "25",
+    "la_rioja": "26", "lugo": "27", "madrid": "28", "malaga": "29", "murcia": "30", "navarra": "31",
+    "ourense": "32", "asturias": "33", "palencia": "34", "las_palmas": "35", "pontevedra": "36",
+    "salamanca": "37", "santa_cruz_tenerife": "38", "cantabria": "39", "segovia": "40", "sevilla": "41",
+    "soria": "42", "tarragona": "43", "teruel": "44", "toledo": "45", "valencia": "46", "valladolid": "47",
+    "zamora": "49", "zaragoza": "50", "ceuta": "51", "melilla": "52", "pais_vasco": ("01", "20", "48"),
+}
+_CP_HOMONIMOS = None
+
+
+def _cp_esperado_anclaje(municipio):
+    """Prefijo(s) de código postal que tiene que tener el órgano para asignarle el contrato, o None."""
+    import collections
+    global _CP_HOMONIMOS
+    n = normalizar(municipio)
+    if n in _CP_ESPERADO_ANCLAJE:
+        return _CP_ESPERADO_ANCLAJE[n]
+    if _CP_HOMONIMOS is None:
+        por_forma = collections.defaultdict(set)
+        for prov, lst in MUNICIPIOS_POR_PROVINCIA.items():
+            for m in lst:
+                nm = normalizar(m)
+                for v in _variantes_nombre_municipio(nm):
+                    por_forma[v.replace("-", " ")].add((nm, prov))
+        homonimos = {}
+        for grupo in por_forma.values():
+            if len({nm for nm, _ in grupo}) > 1:
+                for nm, prov in grupo:
+                    homonimos[nm] = _CP_PREFIJO_PROVINCIA.get(prov)
+        _CP_HOMONIMOS = homonimos
+    return _CP_HOMONIMOS.get(n)
 
 
 def _nombre_organismo_municipal(municipio, provincia):
@@ -6822,7 +6974,7 @@ def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
         muni_re = _regex_anclado(municipio)
     else:
         muni_re = re.compile(rf'\b{re.escape(normalizar(municipio))}\b')
-    cp_esperado = _CP_ESPERADO_ANCLAJE.get(normalizar(municipio))
+    cp_esperado = _cp_esperado_anclaje(municipio)
 
     todos = _contratos_de_zip_cacheado(zip_path, job_id)
     contratos = []
@@ -8226,6 +8378,68 @@ def _aplicar_backfill_ajuntament_place():
         print(f"[startup] backfill_ajuntament_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
+BACKFILL_NOMBRES_PLACE_FILE = os.path.join(BASE_DIR, "backfill_nombres_place.json.gz")
+_BACKFILL_NOMBRES_PLACE_CLAVE = "backfill_nombres_place_sha"
+
+
+def _aplicar_backfill_nombres_place():
+    """Recupera contratos formales de PLACE que el patrón de _regex_anclado anterior al arreglo de nombres del
+    2026-09-29 no asignaba a su municipio (artículo en orden natural -- "Ayuntamiento de El Ejido" para "Ejido, El"
+    --, guiones, "Ayuntamiento Dénia" sin "de", fórmulas honoríficas, "Concello Soutomaior"...; ver
+    _variantes_nombre_municipio). Calculado EN LOCAL con generar_backfill_nombres_place.py (una pasada por ZIP
+    mensual). Calco literal de _aplicar_backfill_ajuntament_place salvo fichero/clave: fusión aditiva (gana lo ya
+    guardado), idempotente por hash en `settings`, y un municipio sin fila en cache.db se reintenta en el siguiente
+    arranque."""
+    if not _DISCO_CONFIABLE or not os.path.exists(BACKFILL_NOMBRES_PLACE_FILE):
+        return
+    try:
+        with open(BACKFILL_NOMBRES_PLACE_FILE, "rb") as f:
+            crudo = f.read()
+        huella = hashlib.sha256(crudo).hexdigest()[:16]
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_BACKFILL_NOMBRES_PLACE_CLAVE,)).fetchone()
+        if fila and fila[0] == huella:
+            return
+        datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+        anadidos, sin_fila = {}, []
+        for muni, info in datos["municipios"].items():
+            key = normalizar(muni)
+            with _db_lock:
+                row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
+            if not row:
+                sin_fila.append(muni)
+                continue
+            d = json.loads(row[0])
+            actuales = d.get("contratos", [])
+            claves = {c.get("url") or c.get("titulo", "")[:80] for c in actuales}
+            nuevos = []
+            for c in info["contratos"]:
+                k = c.get("url") or c.get("titulo", "")[:80]
+                if k and k not in claves:
+                    claves.add(k)
+                    nuevos.append(c)
+            if not nuevos:
+                continue
+            d["contratos"] = actuales + nuevos
+            d["total_contratos"] = len(d["contratos"])
+            d["alertas"] = analizar_riesgo(d["contratos"])
+            with _db_lock:
+                _db.execute("UPDATE municipios SET data=? WHERE municipio=?",
+                            (json.dumps(d, ensure_ascii=False), key))
+                _db.commit()
+            anadidos[muni] = len(nuevos)
+        if not sin_fila:
+            with _db_lock:
+                _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                            "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor",
+                            (_BACKFILL_NOMBRES_PLACE_CLAVE, huella))
+                _db.commit()
+        print(f"[startup] backfill_nombres_place: {sum(anadidos.values())} contratos anadidos en "
+              f"{len(anadidos)} municipios ({len(sin_fila)} sin ficha, omitidos: {sin_fila[:20]}). {anadidos}", flush=True)
+    except Exception as e:
+        print(f"[startup] backfill_nombres_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
 CORRECCION_FORMALES_5ANIOS_FILE = os.path.join(BASE_DIR, "correcciones_formales_5anios.json.gz")
 _CORRECCION_FORMALES_5ANIOS_CLAVE = "correccion_formales_5anios_sha"
 
@@ -8304,6 +8518,89 @@ def _aplicar_correccion_formales_5anios():
               f"{'...' if len(sin_ficha) > 10 else ''}).", flush=True)
     except Exception as e:
         print(f"[startup] correccion_formales_5anios: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
+_DEPURACION_ANCLAJE_VERSION = "2026-09-29"
+_DEPURACION_ANCLAJE_CLAVE = "depuracion_anclaje_place_version"
+
+
+def _depurar_asignacion_place_por_nombre():
+    """Revalida UNA vez (por versión de las reglas) los contratos formales de PLACE ya guardados en cache.db contra el
+    patrón anclado VIGENTE (_regex_anclado + _cp_esperado_anclaje), y ARCHIVA (nunca borra, ver
+    _archivar_contratos_formales) los que ya no le corresponden al municipio.
+
+    Por qué (2026-09-29, auditoría de órganos contra la jerarquía oficial de PLACE, ZIP de agosto de 2026): el
+    patrón antiguo asignaba a un municipio los contratos de OTRO cuyo nombre empieza igual -- "Sevilla" se quedaba
+    los de "Sevilla la Nueva" (Madrid), "Fuenlabrada" los de "Fuenlabrada de los Montes" (Badajoz), "València" los
+    de "Valencia de Alcántara" (Cáceres), "San Fernando" (Cádiz) los de "San Fernando de Henares"... -- 228 en un solo
+    mes, todos confirmados contra la jerarquía oficial (ver _continuaciones_de_otros_municipios). Arreglar el patrón
+    solo evita los nuevos: lo ya guardado se fusiona siempre de forma aditiva y nunca se habría ido.
+
+    Solo contratos con fuente PLACE y órgano no vacío (sin órgano no se puede revalidar: se dejan), solo provincias
+    con patrón anclado (Murcia usa el patrón suelto de siempre, ver buscar_en_zip). Guarda de seguridad: solo se
+    retira un contrato si su descarte se EXPLICA por las reglas nuevas -- el órgano sí casa con el patrón sin las
+    exclusiones automáticas (luego lo excluye el nombre de otro municipio real que empieza igual) o casa pero su
+    código postal es de la provincia de un homónimo. Cualquier otro contrato que no case (órgano que el patrón no
+    reconoce por otro motivo) se DEJA y se cuenta en el log, nunca se retira por omisión."""
+    if not _DISCO_CONFIABLE:
+        return
+    try:
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_DEPURACION_ANCLAJE_CLAVE,)).fetchone()
+        if fila and fila[0] == _DEPURACION_ANCLAJE_VERSION:
+            return
+        with _db_lock:
+            filas = _db.execute("SELECT municipio, data, provincia FROM municipios WHERE provincia <> 'murcia'").fetchall()
+        tocados, archivados, bloqueados = {}, 0, []
+        for key, data, provincia in filas:
+            try:
+                d = json.loads(data)
+            except Exception:
+                continue
+            contratos = d.get("contratos", [])
+            place = [c for c in contratos if c.get("fuente") == "PLACE" and (c.get("organo") or "").strip()]
+            if not place:
+                continue
+            nombre = d.get("municipio") or key
+            rx = _regex_anclado(nombre)
+            rx_sin_otros = _regex_anclado(nombre, excluir_otros_municipios=False)
+            cp = _cp_esperado_anclaje(nombre)
+            fuera, sin_explicar = [], 0
+            for c in place:
+                org = normalizar(c.get("organo", ""))
+                if rx.search(org):
+                    if cp and not (c.get("cp") or "").startswith(cp):
+                        fuera.append(c)            # homónimo: el código postal es de otra provincia
+                elif rx_sin_otros.search(org):
+                    fuera.append(c)                # el nombre sigue con el de otro municipio real
+                else:
+                    sin_explicar += 1
+            if sin_explicar:
+                bloqueados.append((nombre, sin_explicar))
+            if not fuera:
+                continue
+            ids_fuera = {id(c) for c in fuera}
+            _archivar_contratos_formales(nombre, provincia or "", fuera)
+            restantes = [c for c in contratos if id(c) not in ids_fuera]
+            d["contratos"] = restantes
+            d["total_contratos"] = len(restantes)
+            d["alertas"] = analizar_riesgo(restantes)
+            with _db_lock:
+                _db.execute("UPDATE municipios SET data=? WHERE municipio=?", (json.dumps(d, ensure_ascii=False), key))
+                _db.commit()
+            tocados[nombre] = len(fuera)
+            archivados += len(fuera)
+        with _db_lock:
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                        "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor",
+                        (_DEPURACION_ANCLAJE_CLAVE, _DEPURACION_ANCLAJE_VERSION))
+            _db.commit()
+        print(f"[startup] depuracion_anclaje_place: {archivados} contratos archivados en {len(tocados)} municipios "
+              f"(otro municipio real con nombre que empieza igual, u homónimo de otra provincia); contratos que no "
+              f"casan con el patrón por otro motivo y se DEJAN: {sum(n for _, n in bloqueados)} en {len(bloqueados)} "
+              f"municipios {bloqueados[:40]}. Detalle: {tocados}", flush=True)
+    except Exception as e:
+        print(f"[startup] depuracion_anclaje_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
 def _dedup_pscp_fases(filas):
@@ -11613,6 +11910,8 @@ def _inicializar_datos():
     _aplicar_backfill_galicia_place()
     _aplicar_backfill_ajuntament_place()
     _aplicar_correccion_formales_5anios()
+    _aplicar_backfill_nombres_place()
+    _depurar_asignacion_place_por_nombre()
     corte = time.time() - RESULT_CACHE_TTL
     with _db_lock:
         recientes = _db.execute("SELECT municipio FROM municipios WHERE ts > ?", (corte,)).fetchall()

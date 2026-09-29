@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-29 06:33:12",
+ "generado": "2026-09-29 16:17:50",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
   "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
@@ -18,6 +18,8 @@
   "malaga": "https://www.ine.es/jaxiT3/Tabla.htm?t=2882",
   "sevilla": "https://www.ine.es/jaxiT3/Tabla.htm?t=2895",
   "pais_vasco": "https://www.ine.es/jaxiT3/Tabla.htm?t=2854",
+  "ceuta": "https://www.ine.es/jaxiT3/Tabla.htm?t=2908",
+  "melilla": "https://www.ine.es/jaxiT3/Tabla.htm?t=2909",
   "las_palmas": "https://www.ine.es/jaxiT3/Tabla.htm?t=2889",
   "santa_cruz_tenerife": "https://www.ine.es/jaxiT3/Tabla.htm?t=2892",
   "baleares": "https://www.ine.es/jaxiT3/Tabla.htm?t=2860",
@@ -7029,6 +7031,12 @@
    "poblacion": 912,
    "anio": 2025
   },
+  "castellon de la plana": {
+   "municipio": "Castellón de la Plana",
+   "provincia": "castellon",
+   "poblacion": 183711,
+   "anio": 2025
+  },
   "castillo de villamalefa": {
    "municipio": "Castillo de Villamalefa",
    "provincia": "castellon",
@@ -7759,6 +7767,12 @@
    "municipio": "Alfara del Patriarca",
    "provincia": "valencia",
    "poblacion": 3740,
+   "anio": 2025
+  },
+  "alfarb": {
+   "municipio": "Alfarb",
+   "provincia": "valencia",
+   "poblacion": 1763,
    "anio": 2025
   },
   "alfarrasi": {
@@ -14139,6 +14153,12 @@
    "poblacion": 332,
    "anio": 2025
   },
+  "ribera baja": {
+   "municipio": "Ribera Baja",
+   "provincia": "pais_vasco",
+   "poblacion": 1477,
+   "anio": 2025
+  },
   "agurain": {
    "municipio": "Agurain",
    "provincia": "pais_vasco",
@@ -14161,6 +14181,12 @@
    "municipio": "Urkabustaiz",
    "provincia": "pais_vasco",
    "poblacion": 1470,
+   "anio": 2025
+  },
+  "valdegovia-gaubea": {
+   "municipio": "Valdegovia-Gaubea",
+   "provincia": "pais_vasco",
+   "poblacion": 1064,
    "anio": 2025
   },
   "villabuena de alava": {
@@ -14529,6 +14555,12 @@
    "poblacion": 6087,
    "anio": 2025
   },
+  "leaburu-txarama": {
+   "municipio": "Leaburu-Txarama",
+   "provincia": "pais_vasco",
+   "poblacion": 390,
+   "anio": 2025
+  },
   "legazpi": {
    "municipio": "Legazpi",
    "provincia": "pais_vasco",
@@ -14539,6 +14571,12 @@
    "municipio": "Legorreta",
    "provincia": "pais_vasco",
    "poblacion": 1457,
+   "anio": 2025
+  },
+  "leintz gatzaga": {
+   "municipio": "Leintz Gatzaga",
+   "provincia": "pais_vasco",
+   "poblacion": 205,
    "anio": 2025
   },
   "lezo": {
@@ -14631,6 +14669,12 @@
    "poblacion": 1496,
    "anio": 2025
   },
+  "soraluze": {
+   "municipio": "Soraluze",
+   "provincia": "pais_vasco",
+   "poblacion": 3857,
+   "anio": 2025
+  },
   "tolosa": {
    "municipio": "Tolosa",
    "provincia": "pais_vasco",
@@ -14709,6 +14753,18 @@
    "poblacion": 9678,
    "anio": 2025
   },
+  "la anteiglesia de abadino": {
+   "municipio": "la Anteiglesia de Abadiño",
+   "provincia": "pais_vasco",
+   "poblacion": 7768,
+   "anio": 2025
+  },
+  "abanto zierbena": {
+   "municipio": "Abanto Zierbena",
+   "provincia": "pais_vasco",
+   "poblacion": 9379,
+   "anio": 2025
+  },
   "ajangiz": {
    "municipio": "Ajangiz",
    "provincia": "pais_vasco",
@@ -14755,6 +14811,12 @@
    "municipio": "Arrankudiaga-Zollo",
    "provincia": "pais_vasco",
    "poblacion": 1018,
+   "anio": 2025
+  },
+  "arrazu": {
+   "municipio": "Arrazu",
+   "provincia": "pais_vasco",
+   "poblacion": 417,
    "anio": 2025
   },
   "arrieta": {
@@ -14893,6 +14955,12 @@
    "municipio": "Elorrio",
    "provincia": "pais_vasco",
    "poblacion": 7277,
+   "anio": 2025
+  },
+  "la anteiglesia de erandio": {
+   "municipio": "la Anteiglesia de Erandio",
+   "provincia": "pais_vasco",
+   "poblacion": 24659,
    "anio": 2025
   },
   "ereno": {
@@ -15039,6 +15107,12 @@
    "poblacion": 224,
    "anio": 2025
   },
+  "carranza": {
+   "municipio": "Carranza",
+   "provincia": "pais_vasco",
+   "poblacion": 2715,
+   "anio": 2025
+  },
   "kortezubi": {
    "municipio": "Kortezubi",
    "provincia": "pais_vasco",
@@ -15159,6 +15233,12 @@
    "poblacion": 18129,
    "anio": 2025
   },
+  "munitibar-arbatzegi-gerrikaitz": {
+   "municipio": "Munitibar-Arbatzegi-Gerrikaitz",
+   "provincia": "pais_vasco",
+   "poblacion": 467,
+   "anio": 2025
+  },
   "murueta": {
    "municipio": "Murueta",
    "provincia": "pais_vasco",
@@ -15255,6 +15335,12 @@
    "poblacion": 362,
    "anio": 2025
   },
+  "trucios": {
+   "municipio": "Trucíos",
+   "provincia": "pais_vasco",
+   "poblacion": 515,
+   "anio": 2025
+  },
   "ubide": {
    "municipio": "Ubide",
    "provincia": "pais_vasco",
@@ -15331,6 +15417,18 @@
    "municipio": "Ziortza-Bolibar",
    "provincia": "pais_vasco",
    "poblacion": 401,
+   "anio": 2025
+  },
+  "ceuta": {
+   "municipio": "Ceuta",
+   "provincia": "ceuta",
+   "poblacion": 83595,
+   "anio": 2025
+  },
+  "melilla": {
+   "municipio": "Melilla",
+   "provincia": "melilla",
+   "poblacion": 86780,
    "anio": 2025
   },
   "agaete": {
@@ -15607,6 +15705,12 @@
    "municipio": "Fasnia",
    "provincia": "santa_cruz_tenerife",
    "poblacion": 3145,
+   "anio": 2025
+  },
+  "la frontera": {
+   "municipio": "La Frontera",
+   "provincia": "santa_cruz_tenerife",
+   "poblacion": 4660,
    "anio": 2025
   },
   "fuencaliente de la palma": {
@@ -16119,6 +16223,12 @@
    "poblacion": 3231,
    "anio": 2025
   },
+  "sa pobla": {
+   "municipio": "Sa Pobla",
+   "provincia": "baleares",
+   "poblacion": 14990,
+   "anio": 2025
+  },
   "pollenca": {
    "municipio": "Pollença",
    "provincia": "baleares",
@@ -16135,6 +16245,12 @@
    "municipio": "Puigpunyent",
    "provincia": "baleares",
    "poblacion": 2049,
+   "anio": 2025
+  },
+  "ses salines": {
+   "municipio": "Ses Salines",
+   "provincia": "baleares",
+   "poblacion": 5248,
    "anio": 2025
   },
   "sant antoni de portmany": {
@@ -20409,6 +20525,12 @@
    "poblacion": 3339,
    "anio": 2025
   },
+  "zarza capilla": {
+   "municipio": "Zarza Capilla",
+   "provincia": "badajoz",
+   "poblacion": 295,
+   "anio": 2025
+  },
   "abadia": {
    "municipio": "Abadía",
    "provincia": "caceres",
@@ -20503,6 +20625,12 @@
    "municipio": "Aldeanueva del Camino",
    "provincia": "caceres",
    "poblacion": 696,
+   "anio": 2025
+  },
+  "aldehuela del jerte": {
+   "municipio": "Aldehuela del Jerte",
+   "provincia": "caceres",
+   "poblacion": 348,
    "anio": 2025
   },
   "alia": {
@@ -25633,6 +25761,12 @@
    "municipio": "Pradilla de Ebro",
    "provincia": "zaragoza",
    "poblacion": 553,
+   "anio": 2025
+  },
+  "la puebla de alborton": {
+   "municipio": "La Puebla de Albortón",
+   "provincia": "zaragoza",
+   "poblacion": 133,
    "anio": 2025
   },
   "la puebla de alfinden": {
