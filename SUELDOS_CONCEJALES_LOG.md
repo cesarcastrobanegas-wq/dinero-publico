@@ -598,3 +598,10 @@ municipios**.
 
 Cómo se cerró: con presupuesto de búsqueda web, el buscador encontró el decreto de nombramientos en el catálogo
 de normativa municipal, que la navegación a mano de la ronda 7 no había localizado.
+
+**Intentado y no cerrado en la misma ronda (2026-09-29)**
+- **Granada**: el patrón sería el mismo (importes por categoría + nombres en BOP), pero hay cuatro categorías con
+  importe distinto (tenientes de alcalde 63.271,02 €; delegados y oposición con exclusiva 57.798 €; parcial
+  43.348,69 €), cambios de composición durante el mandato (p. ej. la incorporación posterior de Jorge Saavedra con
+  dedicación exclusiva) y el buscador de BOP de `granada.org` (`wgr.nsf/boletinnum`) devuelve hoy error de Akamai.
+  Asignar cada persona a su categoría vigente exigiría reconstruir la cadena de decretos 2023-2026: no se fuerza.

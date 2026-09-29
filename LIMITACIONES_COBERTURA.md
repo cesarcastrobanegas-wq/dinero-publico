@@ -1173,3 +1173,11 @@ Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades 
   decreto de nombramientos que faltaba en la ronda 7 está en `zaragoza.es/sede/servicio/normativa/8245` (y su
   contenido, en la página de consejeros y concejales delegados). Los 6 concejales delegados siguen fuera por la
   posible categoría de portavoz adjunto/comisión sin lista oficial. Ver `SUELDOS_CONCEJALES_LOG.md`.
+- **Balance de la ronda 2026-09-29 (menores)**: de las 29 ciudades >100.000 hab. sin fuente, quedan conectadas
+  **8** (Gijón 37.226, Torrejón 3.535, Santa Cruz 3.785, Málaga 4.948, Almería 1.765, Sevilla 1.229, Cádiz 943,
+  Telde 93 = **53.524 contratos nuevos**). No conectadas con motivo técnico documentado arriba: Córdoba, Granada,
+  Roquetas, Santander, Huelva. Siguen fuera por la fuente: Oviedo (servidor BI inaccesible), Pamplona (apuntes
+  contables, no contratos), Alcobendas (403), Logroño y Marbella (solo años antiguos), y los 7 que remiten a PLACE
+  + 3 no localizados. **El siguiente salto de cobertura no es otro conector municipal sino el feed de menores de
+  PLACE** (`DATOS_PETICION_MENORES.md` §5.1): decisión estructural pendiente de César (duplicados con las fuentes
+  propias ya conectadas, base de IVA, alcance).
