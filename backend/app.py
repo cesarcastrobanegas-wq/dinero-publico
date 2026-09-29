@@ -4472,6 +4472,11 @@ _NOTAS_SUELDOS_CONCEJALES = {
             "corporación 2023-2027. Una persona (María Caunedo Fernández) tiene un importe mucho menor que el resto "
             "(13.085,62 € frente a ~65.000 €): se muestra tal cual lo publica la fuente, sin corregir ni excluir, "
             "probablemente por incorporación a mitad de mandato.",
+    "zaragoza": "El importe es la retribución anual de 2026 de la categoría «Consejero de Gobierno» de la tabla de la "
+                "Corporación, no una nómina individual; los 8 consejeros se nombran en el decreto de Alcaldía y en la "
+                "página de composición del Gobierno. No se incluyen los concejales delegados (74.378,64 €) porque no hay "
+                "una lista oficial de quién es además portavoz adjunto o de comisión, que cobra más; ni la oposición, cuya "
+                "categoría (concejal, portavoz) tampoco se publica con nombre. Alcaldesa excluida (cubierta aparte).",
     "pamplona": "El importe es la retribución anual de la categoría «Concejal delegado con dedicación exclusiva» según el "
                "acuerdo de Pleno de 4/07/2023, no una nómina individual -- igual que Málaga/Manacor. Solo se incluyen las "
                "9 concejalías delegadas (con titular publicado por su nombre); la categoría «Concejal no delegado con "
@@ -4484,7 +4489,6 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "cordoba": "El Ayuntamiento publica la escala de retribuciones por cargo (alcalde, teniente de alcalde, concejal con delegación...) pero no el importe por persona.",
     "granada": "El Ayuntamiento publica los nombres por categoría en el BOP (2023) y los importes en el acuerdo de Pleno, en documentos distintos; no hay una tabla nombre + importe.",
     "jerez de la frontera": "El Ayuntamiento publica los acuerdos por cargo y el régimen de dedicación de los delegados en documentos separados, sin el importe por persona.",
-    "zaragoza": "El Ayuntamiento publica una tabla por concepto (alcalde, consejero de gobierno, portavoz, concejal...) sin nombres.",
     "valencia": "El Ayuntamiento publica el acuerdo plenario de retribuciones por cargos, sin el importe por persona.",
     "valladolid": "El Ayuntamiento publica las retribuciones por cargo con el número de puestos (documento de diciembre de 2023), sin nombres.",
     "bilbao": "No hemos localizado en su portal un documento con nombre e importe de los concejales (solo el de personal de libre designación).",

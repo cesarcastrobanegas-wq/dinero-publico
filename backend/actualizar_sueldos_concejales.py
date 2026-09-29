@@ -2497,6 +2497,50 @@ def actualizar_pamplona():
     return out
 
 
+@_fuente("zaragoza")
+def actualizar_zaragoza():
+    """Ayuntamiento de Zaragoza (Aragón). Patrón Málaga/Pamplona (importe por CATEGORÍA + nombre asignado sin
+    ambigüedad por otro documento oficial del mismo Ayuntamiento):
+    - `zaragoza.es/sede/portal/organizacion/retribuciones`, tabla "Corporación": retribución anual por concepto,
+      columnas 2026, 2025... (ALCALDE 92.973,30; CONSEJERO DE GOBIERNO 89.254,48; PORTAVOZ DE GRUPO; PORTAVOZ
+      COMISIÓN; PORTAVOZ ADJUNTO; CONCEJAL DELEGADO 74.378,64; CONCEJAL; ASISTENCIAS).
+    - `.../consejerosyconcejales/consejeros-gobierno` (lo mismo que el Decreto de Alcaldía de nombramientos, texto
+      consolidado a 04-02-2025, normativa/8245): los 8 Consejeros de Gobierno con nombre y área.
+    Solo se usa la categoría "Consejero de Gobierno": 8 personas nombradas sin ambigüedad y cuya categoría es la
+    más alta que pueden tener salvo la Alcaldía (un consejero que además sea portavoz del grupo -- Lorén, según su
+    ficha oficial -- cobra igualmente como consejero, que está por encima de portavoz). La categoría "Concejal
+    Delegado" (6 personas) NO se usa: no hay lista oficial de quién es portavoz adjunto o de comisión, que cobra más
+    (82.995,78 €), y uno de ellos podría serlo. La Alcaldesa se excluye en main (cubierta aparte)."""
+    url_retr = "https://www.zaragoza.es/sede/portal/organizacion/retribuciones"
+    url_lista = "https://www.zaragoza.es/sede/portal/organizacion/administrativa/consejerosyconcejales/consejeros-gobierno"
+    texto_retr = texto_html(descargar(url_retr).text)
+    m = re.search(r"CORPORACI[OÓ]N.{0,400}?RETRIBUCION ANUAL (20\d\d).{0,600}?CONSEJERO DE GOBIERNO\s+([\d.,]+)",
+                  texto_retr, re.I | re.S)
+    if not m:
+        raise RuntimeError("Zaragoza: no se encontró la fila CONSEJERO DE GOBIERNO en la tabla de la Corporación")
+    anio, importe = m.group(1), num_es(m.group(2))
+    texto_lista = texto_html(descargar(url_lista).text)
+    i = texto_lista.find("Consejeros y Consejeras")
+    j = texto_lista.find("Concejales y Concejalas", i)
+    if i < 0 or j < 0:
+        raise RuntimeError("Zaragoza: no se encontró el bloque de Consejeros en la página (¿cambió?)")
+    bloque = texto_lista[i:j]
+    pares = re.findall(r"(Consejer[oa] de [^:]+?):\s*D[ªa]?\.?\s*([^.]+?)\s*\.", bloque)
+    out = []
+    for cargo, nombre in pares:
+        nombre = re.sub(r"\s+", " ", nombre).strip()
+        # la fuente escribe "lnfraestructuras", "lnterior", "lnstitucionales" (ele minúscula por I mayúscula)
+        cargo = re.sub(r"\bl(n[a-záéíóú])", r"I\1", cargo.strip())
+        out.append(nuevo_registro("Zaragoza", "zaragoza", nombre, cargo, importe,
+                                  f"retribución bruta anual {anio} de la categoría «Consejero de Gobierno» según la tabla "
+                                  "de retribuciones de la Corporación del Ayuntamiento", anio, url_lista,
+                                  "Ayuntamiento de Zaragoza: Consejeros de Gobierno y tabla de retribuciones de la Corporación",
+                                  texto_lista + " " + texto_retr, verificar_adyacencia=False))
+    if len(out) != 8:
+        raise RuntimeError(f"Zaragoza: {len(out)} consejeros en vez de 8 (¿cambió la composición del Gobierno?)")
+    return out
+
+
 # ── main ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _leer():
     if not os.path.exists(OUT_FILE):

@@ -584,3 +584,17 @@ Primer cierre de Navarra en cualquier frente. Mismo patrón "categoría con nomb
 (Málaga/Manacor/Oviedo), pero aplicando el criterio de "no forzar" a la SEGUNDA categoría de la propia
 fuente (concejal no delegado): se cierra solo la parte que es segura, no se descarta todo el municipio por
 no poder cerrar el 100 %.
+
+---
+
+## Lote 28 — Zaragoza (2026-09-29, cierre del lead de la ronda 7, patrón Málaga/Pamplona)
+
+**Añadidos: 8 consejeros de gobierno** (Zaragoza, 5.ª ciudad de España). Total acumulado: **930 registros en 50
+municipios**.
+
+| Municipio | Fuente oficial | Qué se guarda / salvedad |
+|---|---|---|
+| Zaragoza | Tabla "Corporación" de `zaragoza.es/sede/portal/organizacion/retribuciones` (retribución anual por concepto, 2020-2026: Alcalde 92.973,30; Consejero de Gobierno 89.254,48; Portavoz de grupo 87.394,02; Portavoz de comisión y portavoz adjunto 82.995,78; Concejal delegado 74.378,64; Concejal 72.705,78) + página `consejerosyconcejales/consejeros-gobierno`, que reproduce el Decreto de Alcaldía de nombramientos (texto consolidado a 04-02-2025, `normativa/8245`) con los 8 consejeros por nombre y área | Solo la categoría **Consejero de Gobierno**: las 8 personas están nombradas sin ambigüedad y es la categoría más alta que pueden tener fuera de la Alcaldía (Lorén es además portavoz del PP según su ficha oficial, pero consejero está por encima de portavoz). **No se incluyen los 6 concejales delegados** (74.378,64 €): no hay lista oficial de quién es portavoz adjunto o de comisión (82.995,78 €) y uno de ellos podría serlo. Tampoco la oposición (portavoces/concejales sin nombre por categoría). Comprobado que los 15 concejales del PP son exactamente la alcaldesa + 8 consejeros + 6 delegados. La fuente escribe "lnfraestructuras/lnterior/lnstitucionales" (ele por I): corregido en el cargo. Alcaldesa excluida (cubierta aparte) |
+
+Cómo se cerró: con presupuesto de búsqueda web, el buscador encontró el decreto de nombramientos en el catálogo
+de normativa municipal, que la navegación a mano de la ronda 7 no había localizado.

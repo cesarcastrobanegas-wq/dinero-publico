@@ -1169,3 +1169,7 @@ Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades 
   del adjudicatario** (solo expediente, objeto, duración, importes y fecha), y de 2023 solo hay PDF del 1T y 2T
   (el enlace del 3T lleva a un decreto suelto). El feed de menores de PLACE trae unos 60 contratos de Huelva al
   mes, lo que sugiere que esos XLSX eran además parciales.
+- **Zaragoza (concejales) — CERRADO (2026-09-29), lote 28**: 8 consejeros de gobierno con 89.254,48 € (2026). El
+  decreto de nombramientos que faltaba en la ronda 7 está en `zaragoza.es/sede/servicio/normativa/8245` (y su
+  contenido, en la página de consejeros y concejales delegados). Los 6 concejales delegados siguen fuera por la
+  posible categoría de portavoz adjunto/comisión sin lista oficial. Ver `SUELDOS_CONCEJALES_LOG.md`.

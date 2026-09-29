@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-28",
+ "generado": "2026-09-29",
  "descripcion": "Sueldos de concejales publicados con nombre por fuentes oficiales de cada ayuntamiento (ver SUELDOS_CONCEJALES_LOG.md). Registro: municipio, provincia, nombre, cargo, importe, base, periodo, fuente_url, fuente_nombre.",
  "registros": [
   {
@@ -10143,6 +10143,94 @@
    "periodo": "1.er trimestre de 2026 (salario bruto anual de la tabla)",
    "fuente_url": "https://aytosagunto.es/media/0cnm1k0u/copia-de-retribuciones-altos-cargos1-trimestre-2026.pdf",
    "fuente_nombre": "Web del Ayuntamiento de Sagunto: retribuciones y dedicación de la Corporación"
+  },
+  {
+   "municipio": "Zaragoza",
+   "provincia": "zaragoza",
+   "nombre": "Alfonso Mendoza Trell",
+   "cargo": "Consejero de Participación Ciudadana y Régimen Interior",
+   "importe": 89254.48,
+   "base": "retribución bruta anual 2026 de la categoría «Consejero de Gobierno» según la tabla de retribuciones de la Corporación del Ayuntamiento",
+   "periodo": "2026",
+   "fuente_url": "https://www.zaragoza.es/sede/portal/organizacion/administrativa/consejerosyconcejales/consejeros-gobierno",
+   "fuente_nombre": "Ayuntamiento de Zaragoza: Consejeros de Gobierno y tabla de retribuciones de la Corporación"
+  },
+  {
+   "municipio": "Zaragoza",
+   "provincia": "zaragoza",
+   "nombre": "Blanca Solans García",
+   "cargo": "Consejera de Hacienda y Fondos Europeos",
+   "importe": 89254.48,
+   "base": "retribución bruta anual 2026 de la categoría «Consejero de Gobierno» según la tabla de retribuciones de la Corporación del Ayuntamiento",
+   "periodo": "2026",
+   "fuente_url": "https://www.zaragoza.es/sede/portal/organizacion/administrativa/consejerosyconcejales/consejeros-gobierno",
+   "fuente_nombre": "Ayuntamiento de Zaragoza: Consejeros de Gobierno y tabla de retribuciones de la Corporación"
+  },
+  {
+   "municipio": "Zaragoza",
+   "provincia": "zaragoza",
+   "nombre": "Carlos Gimeno Casado",
+   "cargo": "Consejero de Economía, Transformación Digital y Transparencia",
+   "importe": 89254.48,
+   "base": "retribución bruta anual 2026 de la categoría «Consejero de Gobierno» según la tabla de retribuciones de la Corporación del Ayuntamiento",
+   "periodo": "2026",
+   "fuente_url": "https://www.zaragoza.es/sede/portal/organizacion/administrativa/consejerosyconcejales/consejeros-gobierno",
+   "fuente_nombre": "Ayuntamiento de Zaragoza: Consejeros de Gobierno y tabla de retribuciones de la Corporación"
+  },
+  {
+   "municipio": "Zaragoza",
+   "provincia": "zaragoza",
+   "nombre": "María Tatiana Gaudes Lalmolda",
+   "cargo": "Consejera de Medio Ambiente y Movilidad",
+   "importe": 89254.48,
+   "base": "retribución bruta anual 2026 de la categoría «Consejero de Gobierno» según la tabla de retribuciones de la Corporación del Ayuntamiento",
+   "periodo": "2026",
+   "fuente_url": "https://www.zaragoza.es/sede/portal/organizacion/administrativa/consejerosyconcejales/consejeros-gobierno",
+   "fuente_nombre": "Ayuntamiento de Zaragoza: Consejeros de Gobierno y tabla de retribuciones de la Corporación"
+  },
+  {
+   "municipio": "Zaragoza",
+   "provincia": "zaragoza",
+   "nombre": "María Ángeles Orós Lorente",
+   "cargo": "Consejera de Políticas Sociales",
+   "importe": 89254.48,
+   "base": "retribución bruta anual 2026 de la categoría «Consejero de Gobierno» según la tabla de retribuciones de la Corporación del Ayuntamiento",
+   "periodo": "2026",
+   "fuente_url": "https://www.zaragoza.es/sede/portal/organizacion/administrativa/consejerosyconcejales/consejeros-gobierno",
+   "fuente_nombre": "Ayuntamiento de Zaragoza: Consejeros de Gobierno y tabla de retribuciones de la Corporación"
+  },
+  {
+   "municipio": "Zaragoza",
+   "provincia": "zaragoza",
+   "nombre": "Sara María Fernández Escuer",
+   "cargo": "Consejera de Cultura, Educación y Turismo",
+   "importe": 89254.48,
+   "base": "retribución bruta anual 2026 de la categoría «Consejero de Gobierno» según la tabla de retribuciones de la Corporación del Ayuntamiento",
+   "periodo": "2026",
+   "fuente_url": "https://www.zaragoza.es/sede/portal/organizacion/administrativa/consejerosyconcejales/consejeros-gobierno",
+   "fuente_nombre": "Ayuntamiento de Zaragoza: Consejeros de Gobierno y tabla de retribuciones de la Corporación"
+  },
+  {
+   "municipio": "Zaragoza",
+   "provincia": "zaragoza",
+   "nombre": "Víctor Manuel Serrano Entío",
+   "cargo": "Consejero de Urbanismo, Infraestructuras, Energía y Vivienda",
+   "importe": 89254.48,
+   "base": "retribución bruta anual 2026 de la categoría «Consejero de Gobierno» según la tabla de retribuciones de la Corporación del Ayuntamiento",
+   "periodo": "2026",
+   "fuente_url": "https://www.zaragoza.es/sede/portal/organizacion/administrativa/consejerosyconcejales/consejeros-gobierno",
+   "fuente_nombre": "Ayuntamiento de Zaragoza: Consejeros de Gobierno y tabla de retribuciones de la Corporación"
+  },
+  {
+   "municipio": "Zaragoza",
+   "provincia": "zaragoza",
+   "nombre": "Ángel Carlos Lorén Villa",
+   "cargo": "Consejero de Presidencia, Relaciones Institucionales y Seguridad Ciudadana",
+   "importe": 89254.48,
+   "base": "retribución bruta anual 2026 de la categoría «Consejero de Gobierno» según la tabla de retribuciones de la Corporación del Ayuntamiento",
+   "periodo": "2026",
+   "fuente_url": "https://www.zaragoza.es/sede/portal/organizacion/administrativa/consejerosyconcejales/consejeros-gobierno",
+   "fuente_nombre": "Ayuntamiento de Zaragoza: Consejeros de Gobierno y tabla de retribuciones de la Corporación"
   }
  ]
 }
