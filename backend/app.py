@@ -12208,7 +12208,7 @@ CSS = """
    html, body ya no crea ese segundo contenedor y el sticky vuelve a anclarse
    al scroll real del documento.*/
 html{overflow-x:hidden;}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:72px;}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:var(--pwa-banner-offset,0px);z-index:10;}
 .header-brand{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
 .header-brand>div{min-width:0;}
@@ -12303,6 +12303,28 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .peticion-cta p{margin:0;font-size:14px;line-height:1.5;color:var(--text);flex:1;min-width:220px;}
 .peticion-cta a.peticion-btn{display:inline-block;background:var(--accent);color:#fff;font-weight:700;font-size:15px;padding:10px 20px;border-radius:6px;text-decoration:none;white-space:nowrap;}
 .peticion-cta a.peticion-btn:hover{filter:brightness(1.08);}
+/* botón flotante "Firma la petición" (2026-09-30, petición de César): en todas las páginas de _page_shell, esquina
+   inferior derecha. Por debajo del banner de cookies/PWA (z 300/200) y del popover del índice (z 400); cuando el
+   banner de cookies está visible se sube lo que mida (--cookie-offset, ver el script de _page_shell). */
+.peticion-flotante{position:fixed;right:16px;bottom:calc(16px + var(--cookie-offset,0px) + env(safe-area-inset-bottom,0px));z-index:150;display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;font-weight:700;font-size:12.5px;letter-spacing:.4px;text-transform:uppercase;padding:9px 14px;border-radius:999px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35);white-space:nowrap;}
+.peticion-flotante:hover{filter:brightness(1.08);}
+.peticion-flotante:focus-visible{outline:2px solid var(--text);outline-offset:2px;}
+@media (max-width:700px){.peticion-flotante{right:12px;bottom:calc(12px + var(--cookie-offset,0px) + env(safe-area-inset-bottom,0px));font-size:11.5px;padding:8px 12px;}}
+@media print{.peticion-flotante{display:none;}}
+/* círculo "i" del Índice de Transparencia (2026-09-30): portada, /rankings y ficha. UN solo popover por página
+   (#it-info-pop, position:fixed, colocado por JS junto al botón) -- dentro de la tabla con scroll de /rankings o del
+   widget con overflow:hidden de la ficha, un popover absoluto quedaría recortado. */
+.it-info-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;margin-left:4px;border-radius:50%;border:1px solid var(--dim);background:transparent;color:var(--dim);font:italic 700 11px/1 Georgia,'Times New Roman',serif;cursor:pointer;vertical-align:middle;flex-shrink:0;}
+.it-info-btn::after{content:'';position:absolute;inset:-9px;}
+.it-info-btn:hover,.it-info-btn[aria-expanded="true"]{color:var(--text);border-color:var(--text);}
+.it-info-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+.it-info-pop{position:fixed;z-index:400;width:380px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.5;color:var(--text);font-weight:400;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.it-info-pop[hidden]{display:none;}
+.it-info-pop p{margin:0 0 8px;}
+.it-info-pop ul{margin:0 0 8px;padding-left:18px;}
+.it-info-pop li{margin:2px 0;}
+.it-info-pop .it-info-aviso{color:var(--dim);font-size:11.5px;}
+.it-info-pop a{color:var(--blue);font-weight:600;}
 /* cards municipio */
 .muni-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
 .muni-header{padding:12px 18px;background:rgba(240,136,62,.08);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
@@ -12781,11 +12803,6 @@ button.share-btn{font-family:inherit;}
 .rk-sidebar summary.rk-sidebar-title::after{content:'▾';margin-left:auto;color:var(--dim);font-size:11px;}
 .rk-sidebar[open] summary.rk-sidebar-title::after{content:'▴';}
 .rk-sidebar-v1-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--dim);background:rgba(0,0,0,.05);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
-.rk-info-wrap{position:relative;display:inline-block;}
-.rk-info-btn{width:16px;height:16px;line-height:14px;padding:0;border-radius:50%;border:1px solid var(--border);background:rgba(0,0,0,.05);color:var(--dim);font-size:11px;cursor:help;}
-.rk-info-btn:hover{color:var(--text);border-color:var(--dim);}
-.rk-info-pop{display:none;position:absolute;z-index:20;top:22px;left:0;width:240px;max-width:60vw;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;line-height:1.5;color:var(--dim);font-weight:400;box-shadow:0 8px 24px rgba(0,0,0,.4);}
-.rk-info-wrap:hover .rk-info-pop,.rk-info-wrap.rk-info-open .rk-info-pop{display:block;}
 .rk-sidebar-aviso{font-size:10.5px;color:var(--dim);line-height:1.4;margin:-4px 0 12px;}
 .rk-sidebar-selector-label{display:block;font-size:10px;color:var(--dim);margin-bottom:4px;}
 .rk-sidebar-selector{width:100%;margin-bottom:12px;padding:6px 8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px;}
@@ -13622,6 +13639,9 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 {body_html}
 </div>
 {_footer_html(provincia)}
+{_it_info_pop_html()}
+<a class="peticion-flotante" href="{esc(PETICION_CONTRATOS_MENORES_URL)}" target="_blank" rel="noopener"
+   aria-label="Firma la petición sobre contratos menores en change.org (se abre en una pestaña nueva)">✍️ Firma la petición</a>
 <script>
   if ('serviceWorker' in navigator) {{
     window.addEventListener('load', function() {{
@@ -13827,6 +13847,95 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
       }}
     }}
     intentarEngancharTcf();
+  }})();
+
+  // Botón flotante de la petición: se sube lo que mida el banner de cookies mientras esté visible, para no taparlo
+  // ni quedar tapado (ver .peticion-flotante).
+  (function() {{
+    var cb = document.getElementById('cookie-banner');
+    if (!cb) return;
+    function ajustar() {{
+      var h = (!cb.hidden && getComputedStyle(cb).display !== 'none') ? cb.getBoundingClientRect().height : 0;
+      document.documentElement.style.setProperty('--cookie-offset', h + 'px');
+    }}
+    ajustar();
+    if (window.MutationObserver) new MutationObserver(ajustar).observe(cb, {{attributes: true, attributeFilter: ['hidden', 'style', 'class']}});
+    window.addEventListener('resize', ajustar);
+  }})();
+
+  // Círculo "i" del Índice de Transparencia: un único popover (#it-info-pop) colocado junto al botón pulsado. Tap/clic
+  // abre y cierra; en escritorio (hover real) también al pasar el ratón. Se cierra con Esc, clic fuera o si el botón
+  // sale de la pantalla al hacer scroll.
+  (function() {{
+    var pop = document.getElementById('it-info-pop');
+    if (!pop) return;
+    var actual = null, tCerrar = null, porHover = false;
+    var hover = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    function colocar() {{
+      if (!actual) return;
+      var r = actual.getBoundingClientRect();
+      var vw = document.documentElement.clientWidth, vh = window.innerHeight;
+      if (r.bottom < 0 || r.top > vh) {{ cerrar(); return; }}
+      // Debajo del botón si cabe, si no encima; si no cabe por ningún lado, en el lado con más sitio y con scroll
+      // interno (max-height) -- nunca encima del propio botón.
+      pop.style.maxHeight = '';
+      var w = pop.offsetWidth, h = pop.offsetHeight;
+      var abajo = vh - r.bottom - 16, arriba = r.top - 16, top;
+      if (h <= abajo) top = r.bottom + 8;
+      else if (h <= arriba) top = r.top - 8 - h;
+      else if (abajo >= arriba) {{ pop.style.maxHeight = abajo + 'px'; top = r.bottom + 8; }}
+      else {{ pop.style.maxHeight = arriba + 'px'; top = r.top - 8 - pop.offsetHeight; }}
+      var left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), vw - w - 8);
+      pop.style.left = Math.max(8, left) + 'px';
+      pop.style.top = top + 'px';
+    }}
+    function abrir(btn, hoverOrigen) {{
+      clearTimeout(tCerrar);
+      porHover = !!hoverOrigen;
+      if (actual && actual !== btn) actual.setAttribute('aria-expanded', 'false');
+      actual = btn;
+      btn.setAttribute('aria-expanded', 'true');
+      pop.hidden = false;
+      colocar();
+    }}
+    function cerrar() {{
+      clearTimeout(tCerrar);
+      pop.hidden = true;
+      if (actual) actual.setAttribute('aria-expanded', 'false');
+      actual = null;
+    }}
+    document.addEventListener('click', function(e) {{
+      var btn = e.target.closest ? e.target.closest('.it-info-btn') : null;
+      if (btn) {{
+        e.preventDefault();          // dentro de <summary>: que no pliegue/despliegue el <details>
+        e.stopPropagation();
+        // abierto por hover + clic = se queda fijo (no se cierra al salir el ratón); abierto por clic/tap + clic = cierra
+        if (actual === btn && !pop.hidden) {{ if (porHover) porHover = false; else cerrar(); }}
+        else abrir(btn, false);
+        return;
+      }}
+      if (!pop.hidden && !pop.contains(e.target)) cerrar();
+    }}, true);
+    document.addEventListener('keydown', function(e) {{
+      if (e.key === 'Escape' && !pop.hidden) {{ var b = actual; cerrar(); if (b) b.focus(); }}
+    }});
+    window.addEventListener('scroll', colocar, {{passive: true}});
+    window.addEventListener('resize', colocar);
+    if (hover) {{
+      document.addEventListener('mouseover', function(e) {{
+        var btn = e.target.closest ? e.target.closest('.it-info-btn') : null;
+        if (btn) {{ if (actual !== btn || pop.hidden) abrir(btn, true); else clearTimeout(tCerrar); }}
+        else if (actual && pop.contains(e.target)) clearTimeout(tCerrar);
+      }});
+      document.addEventListener('mouseout', function(e) {{
+        if (!actual || !porHover) return;
+        var sale = e.target.closest ? (e.target.closest('.it-info-btn') || (pop.contains(e.target) ? pop : null)) : null;
+        if (!sale) return;
+        var hacia = e.relatedTarget;
+        if (hacia && (pop.contains(hacia) || hacia === actual || (actual.contains && actual.contains(hacia)))) return;
+        tCerrar = setTimeout(cerrar, 250);
+      }});
+    }}
   }})();
 </script>
 </body></html>"""
@@ -14725,7 +14834,7 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
   <input type="text" class="it-buscador" placeholder="Filtrar en esta página… (para buscar en todo el ranking, usa el buscador de arriba)" autocomplete="off"
          oninput="{esc(_IT_BUSCADOR_JS)}">
   <div class="muni-card"><div class="tbl-scroll"><table>
-    <tr><th>#</th><th>Municipio</th><th>Provincia</th><th>Índice</th><th>Cobertura</th><th>Desglose</th></tr>
+    <tr><th>#</th><th>Municipio</th><th>Provincia</th><th>Índice {_IT_INFO_BTN_HTML}</th><th>Cobertura</th><th>Desglose</th></tr>
     {filas_html}
   </table></div></div>
   {paginacion_html}"""
@@ -16342,7 +16451,7 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8):
 
     return f"""<details class="it-widget">
         <summary>🏅 Índice de Transparencia
-          <span class="badge">{fila_actual["indice"]:.1f}/100 · #{posicion_actual} de {total}</span>
+          <span class="badge">{fila_actual["indice"]:.1f}/100 · #{posicion_actual} de {total}</span>{_IT_INFO_BTN_HTML}
         </summary>
         <div class="it-widget-body">
           <div class="rk-sidebar-list">{items}</div>
@@ -16377,6 +16486,48 @@ def _ranking_con_empates(filas):
 
 
 _SIDEBAR_VER_MAS_N = 40
+
+
+INDICE_TRANSPARENCIA_METODOLOGIA_URL = ("https://github.com/cesarcastrobanegas-wq/dinero-publico/blob/main/"
+                                        "INDICE_TRANSPARENCIA_METODOLOGIA.md")
+
+# Botón "i" junto a la nota del Índice (2026-09-30, petición de César). Abre el popover compartido #it-info-pop (ver
+# _it_info_pop_html y el script de _page_shell): clic/tap en cualquier pantalla, además hover en escritorio. Dentro de
+# un <summary> el script anula el plegado del <details> al pulsarlo.
+_IT_INFO_BTN_HTML = ('<button type="button" class="it-info-btn" aria-haspopup="dialog" aria-expanded="false" '
+                     'aria-controls="it-info-pop" aria-label="Qué es el Índice de Transparencia y cómo se calcula" '
+                     'title="Cómo se calcula">i</button>')
+
+
+def _it_info_pop_html():
+    """Resumen en lenguaje llano del Índice v2 (no la tabla completa de INDICE_TRANSPARENCIA_METODOLOGIA.md). Pesos
+    leídos de _INDICE_TRANSPARENCIA_PESOS, así que no se desincroniza si cambian."""
+    p = _INDICE_TRANSPARENCIA_PESOS
+
+    def f(x):
+        return f"{x:g}".replace(".", ",") + " %"
+
+    contratacion = ["menores", "adjudicatario", "actividad", "directivo", "formato"]
+    cuentas = ["cuentas", "deuda_pub", "saldo_pub"]
+    detalle_contr = (f'menores {f(p["menores"])} · adjudicatario identificado {f(p["adjudicatario"])} · '
+                     f'volumen publicado {f(p["actividad"])} · directivos de las empresas {f(p["directivo"])} · '
+                     f'formato del portal {f(p["formato"])}')
+    detalle_cuentas = (f'cuentas rendidas a tiempo {f(p["cuentas"])} · deuda viva {f(p["deuda_pub"])} · '
+                       f'saldo presupuestario {f(p["saldo_pub"])}')
+    return f"""<div id="it-info-pop" class="it-info-pop" role="dialog" aria-label="Cómo funciona el Índice de Transparencia" hidden>
+  <p><b>Qué mide:</b> cuánta información pública de cada ayuntamiento reunimos de fuentes oficiales (contratos,
+  cuentas, deuda, sueldos). No mide si gestiona bien o mal.</p>
+  <ul>
+    <li><b>Contratación {f(sum(p[k] for k in contratacion))}</b>: {detalle_contr}.</li>
+    <li><b>Cuentas y deuda {f(sum(p[k] for k in cuentas))}</b>: {detalle_cuentas}.</li>
+    <li><b>Sueldos de cargos electos {f(p["retribuciones"])}</b>.</li>
+  </ul>
+  <p>Un dato que no tenemos no cuenta como 0: su peso se reparte entre el resto. Hacen falta al menos
+  {_INDICE_TRANSPARENCIA_MIN_COMPONENTES} de los {len(p)} componentes.</p>
+  <p class="it-info-aviso">Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley
+  19/2013 de Transparencia.</b></p>
+  <a href="{esc(INDICE_TRANSPARENCIA_METODOLOGIA_URL)}" target="_blank" rel="noopener">Metodología completa →</a>
+</div>"""
 
 
 def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
@@ -16439,21 +16590,8 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     href_ver_completo = ("/rankings#indice-transparencia" if comunidad_actual == "todas"
                           else f"/rankings?comunidad={esc(comunidad_actual)}#indice-transparencia")
 
-    # Icono "i" con la metodología resumida (click en móvil, hover en
-    # escritorio -- CSS puro con :focus/:hover, sin JS aparte del propio
-    # toggle de :focus vía tabindex). Mismo texto que ya usa /rankings
-    # para no mantener dos redacciones distintas de lo mismo.
-    info_html = '''<span class="rk-info-wrap">
-        <button type="button" class="rk-info-btn" aria-label="Cómo se calcula el Índice de Transparencia"
-                onclick="event.stopPropagation();event.preventDefault();this.parentElement.classList.toggle('rk-info-open')">ⓘ</button>
-        <div class="rk-info-pop">
-          Valoración propia de Dinero Público sobre la actividad y disponibilidad de datos públicos de
-          cada municipio (cuentas anuales, deuda viva, sueldos ISPA, adjudicatarios identificados,
-          actividad de contratación). <b>No es una certificación legal</b> de la Ley 19/2013 de
-          Transparencia ni una acreditación oficial. Sirve para comparar municipios con lo que hemos
-          podido recopilar, no para juzgar su gestión.
-        </div>
-      </span>'''
+    # Icono "i": popover compartido con el resumen de la metodología v2 (ver _IT_INFO_BTN_HTML).
+    info_html = _IT_INFO_BTN_HTML
 
     return f"""<div class="rk-sidebar-ranking-wrap">
     <details class="rk-sidebar" open>
