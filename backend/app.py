@@ -6788,10 +6788,13 @@ _FORMAS_MUNICIPIOS = None
 
 
 def _formas_comparables(muni_norm):
-    formas = {v.replace("-", " ") for v in _variantes_nombre_municipio(muni_norm)}
+    """Formas del nombre (orden INE, natural y sin artículo) CON su guion original: la comparación de prefijos se hace
+    con el guion como espacio, pero la continuación excluida conserva el guion para que _patron_nombre_municipio lo
+    haga opcional ("de Rio-Tinto" excluye también "de Riotinto", como lo escribe PLACE)."""
+    formas = set(_variantes_nombre_municipio(muni_norm))
     m = _ARTICULO_INVERTIDO_RE.match(muni_norm)
     if m:
-        formas.add(m.group(1).replace("-", " "))      # sin artículo: "burgo de ebro"
+        formas.add(m.group(1))      # sin artículo: "burgo de ebro"
     return formas
 
 
@@ -6803,15 +6806,15 @@ def _continuaciones_de_otros_municipios(muni_norm):
         for lst in MUNICIPIOS_POR_PROVINCIA.values():
             for m in lst:
                 n = normalizar(m)
-                formas.update((f, n) for f in _formas_comparables(n))
+                formas.update((f.replace("-", " "), n, f) for f in _formas_comparables(n))
         _FORMAS_MUNICIPIOS = sorted(formas)
     conts = set()
     for fa in {v.replace("-", " ") for v in _variantes_nombre_municipio(muni_norm)}:
         i = bisect.bisect_left(_FORMAS_MUNICIPIOS, (fa + " ",))
         while i < len(_FORMAS_MUNICIPIOS) and _FORMAS_MUNICIPIOS[i][0].startswith(fa + " "):
-            fb, dueno = _FORMAS_MUNICIPIOS[i]
+            fb, dueno, original = _FORMAS_MUNICIPIOS[i]
             if dueno != muni_norm:
-                conts.add(fb[len(fa):])
+                conts.add(original[len(fa):])      # misma longitud: el guion se cambió 1 a 1 por espacio
             i += 1
     return tuple(sorted(conts))
 
