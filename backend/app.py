@@ -11493,6 +11493,28 @@ def _cargar_contratos_menores_torrejon():
               f"(Torrejón de Ardoz) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_SANTA_CRUZ_FILE = os.path.join(BASE_DIR, "contratos_menores_santa_cruz.json.gz")
+
+
+def _cargar_contratos_menores_santa_cruz():
+    """Carga contratos_menores_santa_cruz.json.gz (generado por actualizar_contratos_menores_santa_cruz.py -- PDF
+    anuales oficiales 2022-2025 reconstruidos por posición) y lo vuelca a la tabla compartida
+    contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_SANTA_CRUZ_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_santa_cruz: {len(registros)} contratos menores "
+              f"(Santa Cruz de Tenerife) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11536,6 +11558,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_almeria()
     _cargar_contratos_menores_sevilla()
     _cargar_contratos_menores_torrejon()
+    _cargar_contratos_menores_santa_cruz()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14685,6 +14708,7 @@ _FUENTE_CM_LABEL = {
     "almeria":         "Almería",
     "sevilla":         "Sevilla",
     "torrejon":        "Torrejón de Ardoz",
+    "santa_cruz":      "Santa Cruz de Tenerife",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14709,6 +14733,13 @@ _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia"
 # ficha cuando el municipio tiene filas de esa fuente: límites de cobertura o
 # inferencias del parser que el lector debe conocer, no solo la documentación.
 _NOTAS_FUENTE_CM = {
+    "santa_cruz": (
+        "Relaciones anuales en PDF del Ayuntamiento de Santa Cruz de Tenerife (2022-2025), con fecha real de "
+        "adjudicación y la concejalía u organismo que contrata; sin NIF. Importes con impuestos incluidos (IGIC). "
+        "Ojo: los PDF de 2023 y 2024 están incompletos según el propio Ayuntamiento, que en su resumen oficial "
+        "declara 1.204 y 1.267 contratos menores esos años, frente a los 806 y 768 que lista el PDF. 2021 no se "
+        "muestra porque su relación no trae fecha por contrato."
+    ),
     "torrejon": (
         "Listados trimestrales oficiales del Ayuntamiento de Torrejón de Ardoz (PDF de 2022 a 2024, Excel desde "
         "2025), con fecha real de adjudicación y CIF. Importe = base imponible SIN IVA (la fuente publica base e "

@@ -1133,3 +1133,22 @@ Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades 
   como tablas separadas): se reconstruye emparejando tabla a tabla, solo si el nº de tablas y de filas cuadra
   exactamente (215 contratos con fecha real oct-dic 2024). **1T-2022 excluido**: solo publica el importe con IVA,
   sin base imponible, y mezclarlo rompería la base sin IVA del municipio (avisado en la ficha). No hay 2021.
+- **Santa Cruz de Tenerife (~212.000 hab., Canarias) — CONECTADO (2026-09-29), 2022-2025, con hueco declarado**:
+  PDF anual "Contratos menores <AÑO>" de `santacruzdetenerife.es/gobiernoabierto/transparencia/contratos`, agrupado
+  por concejalía/organismo. **3.785 contratos** (2022: 1.083, 2023: 804, 2024: 768, 2025: 1.130), 19,40 M€ con
+  impuestos incluidos (IGIC), fecha real, organismo contratante (57 distintos), sin NIF
+  (`actualizar_contratos_menores_santa_cruz.py`, fuente `santa_cruz`). Las filas de datos NO tienen líneas de
+  rejilla (pdfplumber solo reconoce la cabecera como tabla): se reconstruye por POSICIÓN con las x de las celdas
+  de cabecera y el código "MEN<año><nº>" como inicio de fila. **Verificado: filas leídas = códigos MEN distintos en
+  el texto de cada PDF (1.083 / 806 / 768 / 1.163)**; el script se para si difieren más de un 2 %. Líneas sin
+  código en la 1.ª columna = encabezado de bloque (organismo), no continuación del contrato anterior; la cabecera
+  de columnas repetida por bloque y la línea "viernes, … Página N de M" se filtran. La duración se cuela a veces
+  en la columna de importe: el importe se extrae por expresión regular. **Hueco real de la fuente**: el resumen
+  oficial del propio Ayuntamiento (`Resumen_menores_<año>_CSV.csv`) declara 1.204 menores en 2023 y 1.267 en 2024,
+  pero los PDF solo listan 806 y 768 (-33 % y -39 %); el de 2025 sí cuadra (1.163 frente a 1.162). Avisado en la
+  ficha. No se usa el CSV porque no trae adjudicatario (2023-2024) o es solo un resumen (2025). 2021 excluido: sin
+  fecha por contrato (solo totales por trimestre).
+- **Santander — NO conectado, coste desproporcionado para el volumen**: 65 relaciones 2021-2026 en el perfil del
+  contratante, en cuatro series (servicios, suministro, obras y TUS) con maquetaciones distintas; la de servicios
+  sale fragmentada (128 tablas en 6 páginas por celdas combinadas) y obras/suministro traen 8-12 filas por
+  trimestre. Viable con un parser por serie; no prioritario.
