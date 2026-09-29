@@ -1121,3 +1121,15 @@ Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades 
   generaciones). 3T-2024, 3T-2025 y 4T-2025 son **PDF escaneados sin capa de texto** (0 caracteres extraíbles):
   la serie tendría tres trimestres vacíos. Desde el 01-02-2026 publica en el feed de menores de PLACE (ver
   `DATOS_PETICION_MENORES.md` §5.1), que este proyecto aún no usa.
+- **Torrejón de Ardoz (~143.000 hab., Comunidad de Madrid) — CONECTADO (2026-09-29)**:
+  `ayto-torrejon.es/concejalias/contratacion/contratos-formalizados`, "LISTADO CONTRATOS MENORES <TRIMESTRE> <AÑO>":
+  PDF con tabla real 2T-2022 → 4T-2024 y XLSX desde 1T-2025. **3.535 contratos** (2022: 917, 2023: 930, 2024: 778,
+  2025: 608, 2026: 302), **10,81 M€ SIN IVA** (`actualizar_contratos_menores_torrejon.py`, fuente `torrejon`,
+  añadida a `_FUENTES_CM_SIN_IVA`: se guarda la base imponible, que la fuente publica separada del IVA). Fecha real
+  y CIF. Máximo 39.998,34 €; 12 contratos con importe 0 (mostrados tal cual). Las MISMAS 10 columnas en PDF y
+  XLSX, con tres variantes reales resueltas: (1) 1T-2023 no está enlazado en la página actual pero sigue en su URL
+  original (añadido a mano); (2) 3T-2023 escribe "Importe IVA inluido" (errata, columna no usada); (3) **4T-2024
+  imprime la hoja partida en dos** (16 páginas con 9 columnas y 16 páginas solo con la fecha, que `pdfplumber` lee
+  como tablas separadas): se reconstruye emparejando tabla a tabla, solo si el nº de tablas y de filas cuadra
+  exactamente (215 contratos con fecha real oct-dic 2024). **1T-2022 excluido**: solo publica el importe con IVA,
+  sin base imponible, y mezclarlo rompería la base sin IVA del municipio (avisado en la ficha). No hay 2021.

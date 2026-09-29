@@ -11471,6 +11471,28 @@ def _cargar_contratos_menores_sevilla():
               f"(Sevilla) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_TORREJON_FILE = os.path.join(BASE_DIR, "contratos_menores_torrejon.json.gz")
+
+
+def _cargar_contratos_menores_torrejon():
+    """Carga contratos_menores_torrejon.json.gz (generado por actualizar_contratos_menores_torrejon.py --
+    listados trimestrales oficiales en PDF/XLSX; importe = base imponible SIN IVA) y lo vuelca a la tabla
+    compartida contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_TORREJON_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_torrejon: {len(registros)} contratos menores "
+              f"(Torrejón de Ardoz) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11513,6 +11535,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_malaga()
     _cargar_contratos_menores_almeria()
     _cargar_contratos_menores_sevilla()
+    _cargar_contratos_menores_torrejon()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14661,6 +14684,7 @@ _FUENTE_CM_LABEL = {
     "malaga":          "Málaga",
     "almeria":         "Almería",
     "sevilla":         "Sevilla",
+    "torrejon":        "Torrejón de Ardoz",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14677,13 +14701,20 @@ _FUENTE_CM_LABEL = {
 _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
                        "sax-governalia", "vilamarxant-governalia", "castello-governalia",
                        "xirivella-governalia", "santabrigida-governalia", "alzira-governalia",
-                       "valencia_capital", "alicante", "leganes", "torrent", "la_laguna", "sevilla"}
+                       "valencia_capital", "alicante", "leganes", "torrent", "la_laguna", "sevilla",
+                       "torrejon"}
 
 
 # Avisos públicos por fuente, visibles en la sección de contratos menores de la
 # ficha cuando el municipio tiene filas de esa fuente: límites de cobertura o
 # inferencias del parser que el lector debe conocer, no solo la documentación.
 _NOTAS_FUENTE_CM = {
+    "torrejon": (
+        "Listados trimestrales oficiales del Ayuntamiento de Torrejón de Ardoz (PDF de 2022 a 2024, Excel desde "
+        "2025), con fecha real de adjudicación y CIF. Importe = base imponible SIN IVA (la fuente publica base e "
+        "IVA por separado). Falta el primer trimestre de 2022: ese listado solo publica el importe con IVA, y "
+        "mezclarlo cambiaría la base de todo el municipio. No hay listados de 2021."
+    ),
     "sevilla": (
         "Relaciones mensuales en PDF publicadas por el Ayuntamiento de Sevilla en sevilla.org (contratación), "
         "con fecha real de adjudicación, CIF y unidad que tramita cada contrato. Importes SIN IVA (la fuente "
