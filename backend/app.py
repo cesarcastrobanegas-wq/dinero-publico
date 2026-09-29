@@ -11449,6 +11449,28 @@ def _cargar_contratos_menores_almeria():
               f"(Almería) cargados en contratos_menors_locales.", flush=True)
 
 
+CONTRATOS_MENORES_SEVILLA_FILE = os.path.join(BASE_DIR, "contratos_menores_sevilla.json.gz")
+
+
+def _cargar_contratos_menores_sevilla():
+    """Carga contratos_menores_sevilla.json.gz (generado por actualizar_contratos_menores_sevilla.py -- PDF
+    mensuales oficiales de sevilla.org con tabla real; importe SIN IVA) y lo vuelca a la tabla compartida
+    contratos_menors_locales."""
+    ruta = CONTRATOS_MENORES_SEVILLA_FILE
+    if not os.path.exists(ruta):
+        return
+    try:
+        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+            d = json.load(f)
+        registros = d.get("registros", []) if isinstance(d, dict) else []
+    except Exception:
+        registros = []
+    if registros:
+        _guardar_contratos_menors_locales(registros)
+        print(f"  [startup] contratos_menores_sevilla: {len(registros)} contratos menores "
+              f"(Sevilla) cargados en contratos_menors_locales.", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -11490,6 +11512,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_gijon()
     _cargar_contratos_menores_malaga()
     _cargar_contratos_menores_almeria()
+    _cargar_contratos_menores_sevilla()
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -14637,6 +14660,7 @@ _FUENTE_CM_LABEL = {
     "gijon":           "Gijón",
     "malaga":          "Málaga",
     "almeria":         "Almería",
+    "sevilla":         "Sevilla",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -14653,13 +14677,18 @@ _FUENTE_CM_LABEL = {
 _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia",
                        "sax-governalia", "vilamarxant-governalia", "castello-governalia",
                        "xirivella-governalia", "santabrigida-governalia", "alzira-governalia",
-                       "valencia_capital", "alicante", "leganes", "torrent", "la_laguna"}
+                       "valencia_capital", "alicante", "leganes", "torrent", "la_laguna", "sevilla"}
 
 
 # Avisos públicos por fuente, visibles en la sección de contratos menores de la
 # ficha cuando el municipio tiene filas de esa fuente: límites de cobertura o
 # inferencias del parser que el lector debe conocer, no solo la documentación.
 _NOTAS_FUENTE_CM = {
+    "sevilla": (
+        "Relaciones mensuales en PDF publicadas por el Ayuntamiento de Sevilla en sevilla.org (contratación), "
+        "con fecha real de adjudicación, CIF y unidad que tramita cada contrato. Importes SIN IVA (la fuente "
+        "publica el IVA en columna aparte). Cobertura desde septiembre de 2021 hasta el último mes publicado."
+    ),
     "almeria": (
         "Ficheros anuales del portal de transparencia del Ayuntamiento de Almería, con fecha real de "
         "adjudicación e importe con IVA, sin NIF. Falta 2025: el Ayuntamiento solo lo publica en un PDF que no "
@@ -14879,8 +14908,10 @@ def _nota_base_importe_cm(menors):
     if not sin_iva:
         return "", avisos
     if fuentes <= _FUENTES_CM_SIN_IVA:
+        # Antes decía "(PLACE)" para todas: falso para València, Alicante, Leganés, Torrent, La Laguna y
+        # Sevilla, que son portales propios -- la procedencia exacta ya la da la nota de cada fuente.
         return " · sin IVA", ('<div class="cm-base-nota">Importes sin IVA: es el importe adjudicado '
-                              'que publica la fuente oficial (PLACE).</div>') + avisos
+                              'que publica la fuente oficial.</div>') + avisos
     etiquetas = ", ".join(sorted(_FUENTE_CM_LABEL.get(f, f) for f in sin_iva))
     return "", ('<div class="cm-base-nota">Ojo con la base de los importes: las filas de '
                 f'«{esc(etiquetas)}» van sin IVA (importe adjudicado según PLACE); las demás '

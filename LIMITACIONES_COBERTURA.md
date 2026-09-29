@@ -1099,3 +1099,25 @@ Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades 
   maquetaciones distintas; `pdfplumber` no detecta tablas en ninguno, y desde 2025 las páginas están rotadas (el
   texto extraído sale invertido: "ABODRÓC ED OTNEIMATNUYA"). Solo hay XLS/ODS para 2023 (anual), 1T y 3T de 2024 y
   2T-2026 — no basta para una serie continua. Lead viable pero caro (parser de PDF por posición con rotación, por era).
+- **Sevilla (~690.000 hab., Andalucía) — CONECTADO (2026-09-29)**: `sevilla.org/servicios/contratacion/contratos/<AÑO>`,
+  un PDF MENSUAL con tabla real ("Contratos adjudicados mediante procedimiento menor"), 66 PDF sep-2021 → ago-2026.
+  **1.229 contratos** (2021: 122, 2022: 253, 2023: 286, 2024: 189, 2025: 240, 2026: 139), **6,05 M€ SIN IVA**
+  (`actualizar_contratos_menores_sevilla.py`, fuente `sevilla`, añadida a `_FUENTES_CM_SIN_IVA`: el importe
+  adjudicado va sin IVA y el IVA en columna aparte, p.ej. 3.955,00 + 831,00 = 21 %). Fecha real, CIF (100 % de las
+  filas) y unidad tramitadora. Ningún contrato supera 40.000 € (máximo 39.010,95 €). Volumen bajo para una ciudad de
+  ese tamaño (~250/año): es lo que publica la propia fuente. **Siete variantes reales de la fuente resueltas, cada
+  una encontrada porque un mes salía vacío o con cifras imposibles**: (1) cabecera de 14, 15 o 17 columnas, leída por
+  nombre; (2) en los PDF de 2025 la cabecera no es la 1.ª fila (antes va una fila de letras "A B C … Q"); (3) "EXP",
+  "EXP." o "Nº EXPEDIENTE"; (4) "ADJUDICATARIO" o "ADJUDICATORIO" (errata de la fuente, agosto 2024); (5) "IMPORTE
+  ADJUD." o "IMPORTE ADJ SIN IVA"; (6) cuatro formatos de fecha (14/06/2021, 12-12-2024, 03/07/24 y 2025-01-15);
+  (7) **importes con punto decimal ("3000.00") mezclados con formato español ("14.880,00") en el mismo PDF** --
+  quitar siempre los puntos convertía 3.000 € en 300.000 € (bug detectado porque salían menores de 1,5 M€). Julio y
+  agosto de 2026 se publican como "borrador-<mes>.pdf", sin la palabra "menores": se incluyen a propósito.
+- **Aviso "Importes sin IVA" de la ficha corregido**: decía "es el importe adjudicado que publica la fuente oficial
+  (PLACE)" para cualquier fuente sin IVA, y es falso para València, Alicante, Leganés, Torrent, La Laguna y Sevilla
+  (portales propios). Ahora dice "la fuente oficial" y la procedencia la da la nota de cada fuente.
+- **Roquetas de Mar — NO conectado, huecos irrecuperables**: 20 relaciones trimestrales 1T-2021 → 4T-2025 alojadas
+  como documentos en PLACE, en seis formatos distintos (HTML con extensión .xls, .htm, .xltx, .xlsx y PDF de dos
+  generaciones). 3T-2024, 3T-2025 y 4T-2025 son **PDF escaneados sin capa de texto** (0 caracteres extraíbles):
+  la serie tendría tres trimestres vacíos. Desde el 01-02-2026 publica en el feed de menores de PLACE (ver
+  `DATOS_PETICION_MENORES.md` §5.1), que este proyecto aún no usa.
