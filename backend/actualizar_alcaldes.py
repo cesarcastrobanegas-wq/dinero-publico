@@ -198,6 +198,15 @@ ALIAS_MUNICIPIO = {
     "pastoriza": "A Pastoriza",
     "frontera": "La Frontera",
     "puebla de alborton": "La Puebla de Albortón",
+    # Detectados 2026-09-30 al regenerar la deuda viva de Hacienda: "Abanto y Ciérvana/Abanto-Zierbena" (con guion),
+    # "Benlloch" (grafía castellana antigua), "El Grado-Lo Grau" (bilingüe con guion) y "Algimia Alfara (de)".
+    "abanto-zierbena": "Abanto Zierbena",
+    "benlloch": "Benlloc",
+    "el grado-lo grau": "El Grado",
+    "algimia alfara (de)": "Algímia d'Alfara",
+    "medina-sidonia": "Medina Sidonia",
+    # Errata del propio Ministerio en la liquidación 2025 ("Poquín" por "Piquín").
+    "a ribeira de poquin": "A Ribeira de Piquín",
 }
 
 # Girona se curó a mano al estilo "núcleo, artículo, en minúscula" (p.ej.

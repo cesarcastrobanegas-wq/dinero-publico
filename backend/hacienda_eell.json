@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 19:34:58",
+ "generado": "2026-09-30 21:04:09",
  "deuda_viva": {
   "fuente_url": "https://www.hacienda.gob.es/cdi/sist%20financiacion%20y%20deuda/informacioneells/2025/deuda-viva-ayuntamientos-202512.xlsx",
   "municipios": {
@@ -627,6 +627,11 @@
     "municipio": "Línea de la Concepción, La",
     "provincia": "cadiz",
     "deuda_eur": 117491724.87
+   },
+   "medina sidonia": {
+    "municipio": "Medina Sidonia",
+    "provincia": "cadiz",
+    "deuda_eur": 661183.0
    },
    "olvera": {
     "municipio": "Olvera",
@@ -2385,6 +2390,11 @@
    },
    "zufre": {
     "municipio": "Zufre",
+    "provincia": "huelva",
+    "deuda_eur": 0.0
+   },
+   "zarza-perrunal, la": {
+    "municipio": "Zarza-Perrunal, La",
     "provincia": "huelva",
     "deuda_eur": 0.0
    },
@@ -4375,6 +4385,11 @@
    },
    "gistain": {
     "municipio": "Gistaín",
+    "provincia": "huesca",
+    "deuda_eur": 0.0
+   },
+   "el grado": {
+    "municipio": "El Grado",
     "provincia": "huesca",
     "deuda_eur": 0.0
    },
@@ -7153,6 +7168,11 @@
     "provincia": "zaragoza",
     "deuda_eur": 0.0
    },
+   "la puebla de alborton": {
+    "municipio": "La Puebla de Albortón",
+    "provincia": "zaragoza",
+    "deuda_eur": 29.0
+   },
    "la puebla de alfinden": {
     "municipio": "La Puebla de Alfindén",
     "provincia": "zaragoza",
@@ -8168,6 +8188,11 @@
     "provincia": "baleares",
     "deuda_eur": 0.0
    },
+   "sa pobla": {
+    "municipio": "Sa Pobla",
+    "provincia": "baleares",
+    "deuda_eur": 157166.04
+   },
    "puigpunyent": {
     "municipio": "Puigpunyent",
     "provincia": "baleares",
@@ -8235,6 +8260,11 @@
    },
    "selva": {
     "municipio": "Selva",
+    "provincia": "baleares",
+    "deuda_eur": 0.0
+   },
+   "ses salines": {
+    "municipio": "Ses Salines",
     "provincia": "baleares",
     "deuda_eur": 0.0
    },
@@ -8505,6 +8535,11 @@
    },
    "fasnia": {
     "municipio": "Fasnia",
+    "provincia": "santa_cruz_tenerife",
+    "deuda_eur": 0.0
+   },
+   "la frontera": {
+    "municipio": "La Frontera",
     "provincia": "santa_cruz_tenerife",
     "deuda_eur": 0.0
    },
@@ -30593,6 +30628,11 @@
     "provincia": "badajoz",
     "deuda_eur": 0.0
    },
+   "zarza capilla": {
+    "municipio": "Zarza Capilla",
+    "provincia": "badajoz",
+    "deuda_eur": 85116.0
+   },
    "la zarza": {
     "municipio": "La Zarza",
     "provincia": "badajoz",
@@ -30685,6 +30725,11 @@
    },
    "aldeanueva del camino": {
     "municipio": "Aldeanueva del Camino",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "aldehuela del jerte": {
+    "municipio": "Aldehuela del Jerte",
     "provincia": "caceres",
     "deuda_eur": 0.0
    },
@@ -31753,6 +31798,11 @@
     "provincia": "a_coruna",
     "deuda_eur": 0.0
    },
+   "a bana": {
+    "municipio": "A Baña",
+    "provincia": "a_coruna",
+    "deuda_eur": 0.0
+   },
    "bergondo": {
     "municipio": "Bergondo",
     "provincia": "a_coruna",
@@ -31802,6 +31852,11 @@
     "municipio": "Cambre",
     "provincia": "a_coruna",
     "deuda_eur": 8.0
+   },
+   "a capela": {
+    "municipio": "A Capela",
+    "provincia": "a_coruna",
+    "deuda_eur": 0.0
    },
    "carballo": {
     "municipio": "Carballo",
@@ -31853,6 +31908,11 @@
     "provincia": "a_coruna",
     "deuda_eur": 0.0
    },
+   "a coruna": {
+    "municipio": "A Coruña",
+    "provincia": "a_coruna",
+    "deuda_eur": 51213127.0
+   },
    "culleredo": {
     "municipio": "Culleredo",
     "provincia": "a_coruna",
@@ -31902,6 +31962,11 @@
     "municipio": "Laxe",
     "provincia": "a_coruna",
     "deuda_eur": 0.0
+   },
+   "a laracha": {
+    "municipio": "A Laracha",
+    "provincia": "a_coruna",
+    "deuda_eur": 600024.0
    },
    "lousame": {
     "municipio": "Lousame",
@@ -32018,6 +32083,16 @@
     "provincia": "a_coruna",
     "deuda_eur": 0.0
    },
+   "o pino": {
+    "municipio": "O Pino",
+    "provincia": "a_coruna",
+    "deuda_eur": 0.0
+   },
+   "a pobra do caraminal": {
+    "municipio": "A Pobra do Caramiñal",
+    "provincia": "a_coruna",
+    "deuda_eur": 2055960.0
+   },
    "ponteceso": {
     "municipio": "Ponteceso",
     "provincia": "a_coruna",
@@ -32025,6 +32100,11 @@
    },
    "pontedeume": {
     "municipio": "Pontedeume",
+    "provincia": "a_coruna",
+    "deuda_eur": 0.0
+   },
+   "as pontes de garcia rodriguez": {
+    "municipio": "As Pontes de García Rodríguez",
     "provincia": "a_coruna",
     "deuda_eur": 0.0
    },
@@ -32077,6 +32157,11 @@
     "municipio": "Sobrado",
     "provincia": "a_coruna",
     "deuda_eur": 0.0
+   },
+   "as somozas": {
+    "municipio": "As Somozas",
+    "provincia": "a_coruna",
+    "deuda_eur": 29.0
    },
    "teo": {
     "municipio": "Teo",
@@ -32213,6 +32298,11 @@
     "provincia": "lugo",
     "deuda_eur": 0.0
    },
+   "o corgo": {
+    "municipio": "O Corgo",
+    "provincia": "lugo",
+    "deuda_eur": 0.0
+   },
    "cospeito": {
     "municipio": "Cospeito",
     "provincia": "lugo",
@@ -32225,6 +32315,11 @@
    },
    "folgoso do courel": {
     "municipio": "Folgoso do Courel",
+    "provincia": "lugo",
+    "deuda_eur": 0.0
+   },
+   "a fonsagrada": {
+    "municipio": "A Fonsagrada",
     "provincia": "lugo",
     "deuda_eur": 0.0
    },
@@ -32252,6 +32347,11 @@
     "municipio": "Guntín",
     "provincia": "lugo",
     "deuda_eur": 0.0
+   },
+   "o incio": {
+    "municipio": "O Incio",
+    "provincia": "lugo",
+    "deuda_eur": 307789.0
    },
    "xove": {
     "municipio": "Xove",
@@ -32308,6 +32408,11 @@
     "provincia": "lugo",
     "deuda_eur": 0.0
    },
+   "as nogais": {
+    "municipio": "As Nogais",
+    "provincia": "lugo",
+    "deuda_eur": 70283.0
+   },
    "ourol": {
     "municipio": "Ourol",
     "provincia": "lugo",
@@ -32333,6 +32438,16 @@
     "provincia": "lugo",
     "deuda_eur": 0.0
    },
+   "o paramo": {
+    "municipio": "O Páramo",
+    "provincia": "lugo",
+    "deuda_eur": 0.0
+   },
+   "a pastoriza": {
+    "municipio": "A Pastoriza",
+    "provincia": "lugo",
+    "deuda_eur": 0.0
+   },
    "pedrafita do cebreiro": {
     "municipio": "Pedrafita do Cebreiro",
     "provincia": "lugo",
@@ -32342,6 +32457,16 @@
     "municipio": "Pol",
     "provincia": "lugo",
     "deuda_eur": 2210458.43
+   },
+   "a pobra do brollon": {
+    "municipio": "A Pobra do Brollón",
+    "provincia": "lugo",
+    "deuda_eur": 836785.0
+   },
+   "a pontenova": {
+    "municipio": "A Pontenova",
+    "provincia": "lugo",
+    "deuda_eur": 0.0
    },
    "portomarin": {
     "municipio": "Portomarín",
@@ -32388,6 +32513,11 @@
     "provincia": "lugo",
     "deuda_eur": 1482185.0
    },
+   "o savinao": {
+    "municipio": "O Saviñao",
+    "provincia": "lugo",
+    "deuda_eur": 0.0
+   },
    "sober": {
     "municipio": "Sober",
     "provincia": "lugo",
@@ -32405,6 +32535,16 @@
    },
    "triacastela": {
     "municipio": "Triacastela",
+    "provincia": "lugo",
+    "deuda_eur": 0.0
+   },
+   "o valadouro": {
+    "municipio": "O Valadouro",
+    "provincia": "lugo",
+    "deuda_eur": 0.0
+   },
+   "o vicedo": {
+    "municipio": "O Vicedo",
     "provincia": "lugo",
     "deuda_eur": 0.0
    },
@@ -32438,6 +32578,11 @@
     "provincia": "ourense",
     "deuda_eur": 386101.0
    },
+   "a arnoia": {
+    "municipio": "A Arnoia",
+    "provincia": "ourense",
+    "deuda_eur": 0.0
+   },
    "avion": {
     "municipio": "Avión",
     "provincia": "ourense",
@@ -32463,6 +32608,11 @@
     "provincia": "ourense",
     "deuda_eur": 190000.0
    },
+   "o barco de valdeorras": {
+    "municipio": "O Barco de Valdeorras",
+    "provincia": "ourense",
+    "deuda_eur": 65049.0
+   },
    "beade": {
     "municipio": "Beade",
     "provincia": "ourense",
@@ -32473,8 +32623,23 @@
     "provincia": "ourense",
     "deuda_eur": 0.0
    },
+   "os blancos": {
+    "municipio": "Os Blancos",
+    "provincia": "ourense",
+    "deuda_eur": 3833274.04
+   },
    "boboras": {
     "municipio": "Boborás",
+    "provincia": "ourense",
+    "deuda_eur": 0.0
+   },
+   "a bola": {
+    "municipio": "A Bola",
+    "provincia": "ourense",
+    "deuda_eur": 181070.79
+   },
+   "o bolo": {
+    "municipio": "O Bolo",
     "provincia": "ourense",
     "deuda_eur": 0.0
    },
@@ -32492,6 +32657,11 @@
     "municipio": "Carballeda de Avia",
     "provincia": "ourense",
     "deuda_eur": 644363.96
+   },
+   "o carballino": {
+    "municipio": "O Carballiño",
+    "provincia": "ourense",
+    "deuda_eur": 74150.37
    },
    "cartelle": {
     "municipio": "Cartelle",
@@ -32563,6 +32733,16 @@
     "provincia": "ourense",
     "deuda_eur": 0.0
    },
+   "a gudina": {
+    "municipio": "A Gudiña",
+    "provincia": "ourense",
+    "deuda_eur": 867054.29
+   },
+   "o irixo": {
+    "municipio": "O Irixo",
+    "provincia": "ourense",
+    "deuda_eur": 0.0
+   },
    "xunqueira de ambia": {
     "municipio": "Xunqueira de Ambía",
     "provincia": "ourense",
@@ -32618,6 +32798,16 @@
     "provincia": "ourense",
     "deuda_eur": 47213.0
    },
+   "a merca": {
+    "municipio": "A Merca",
+    "provincia": "ourense",
+    "deuda_eur": 51.0
+   },
+   "a mezquita": {
+    "municipio": "A Mezquita",
+    "provincia": "ourense",
+    "deuda_eur": 289936.43
+   },
    "montederramo": {
     "municipio": "Montederramo",
     "provincia": "ourense",
@@ -32663,6 +32853,16 @@
     "provincia": "ourense",
     "deuda_eur": 0.0
    },
+   "o pereiro de aguiar": {
+    "municipio": "O Pereiro de Aguiar",
+    "provincia": "ourense",
+    "deuda_eur": 1.0
+   },
+   "a peroxa": {
+    "municipio": "A Peroxa",
+    "provincia": "ourense",
+    "deuda_eur": 0.0
+   },
    "petin": {
     "municipio": "Petín",
     "provincia": "ourense",
@@ -32677,6 +32877,11 @@
     "municipio": "Porqueira",
     "provincia": "ourense",
     "deuda_eur": 414922.71
+   },
+   "a pobra de trives": {
+    "municipio": "A Pobra de Trives",
+    "provincia": "ourense",
+    "deuda_eur": 0.0
    },
    "pontedeva": {
     "municipio": "Pontedeva",
@@ -32718,6 +32923,11 @@
     "provincia": "ourense",
     "deuda_eur": 549254.99
    },
+   "a rua": {
+    "municipio": "A Rúa",
+    "provincia": "ourense",
+    "deuda_eur": 1335789.44
+   },
    "rubia": {
     "municipio": "Rubiá",
     "provincia": "ourense",
@@ -32753,6 +32963,11 @@
     "provincia": "ourense",
     "deuda_eur": 0.0
    },
+   "a teixeira": {
+    "municipio": "A Teixeira",
+    "provincia": "ourense",
+    "deuda_eur": 0.0
+   },
    "toen": {
     "municipio": "Toén",
     "provincia": "ourense",
@@ -32762,6 +32977,11 @@
     "municipio": "Trasmiras",
     "provincia": "ourense",
     "deuda_eur": 0.0
+   },
+   "a veiga": {
+    "municipio": "A Veiga",
+    "provincia": "ourense",
+    "deuda_eur": 300000.0
    },
    "verea": {
     "municipio": "Verea",
@@ -32848,6 +33068,11 @@
     "provincia": "pontevedra",
     "deuda_eur": 1050163.0
    },
+   "a caniza": {
+    "municipio": "A Caniza",
+    "provincia": "pontevedra",
+    "deuda_eur": 2588903.68
+   },
    "catoira": {
     "municipio": "Catoira",
     "provincia": "pontevedra",
@@ -32873,6 +33098,11 @@
     "provincia": "pontevedra",
     "deuda_eur": 274978.0
    },
+   "a estrada": {
+    "municipio": "A Estrada",
+    "provincia": "pontevedra",
+    "deuda_eur": 4565832.0
+   },
    "forcarei": {
     "municipio": "Forcarei",
     "provincia": "pontevedra",
@@ -32893,10 +33123,25 @@
     "provincia": "pontevedra",
     "deuda_eur": 60.0
    },
+   "o grove": {
+    "municipio": "O Grove",
+    "provincia": "pontevedra",
+    "deuda_eur": 3039491.0
+   },
+   "a guarda": {
+    "municipio": "A Guarda",
+    "provincia": "pontevedra",
+    "deuda_eur": 0.0
+   },
    "lalin": {
     "municipio": "Lalín",
     "provincia": "pontevedra",
     "deuda_eur": 7670802.0
+   },
+   "a lama": {
+    "municipio": "A Lama",
+    "provincia": "pontevedra",
+    "deuda_eur": 119439.0
    },
    "marin": {
     "municipio": "Marín",
@@ -32938,6 +33183,11 @@
     "provincia": "pontevedra",
     "deuda_eur": 834072.13
    },
+   "as neves": {
+    "municipio": "As Neves",
+    "provincia": "pontevedra",
+    "deuda_eur": 78.0
+   },
    "nigran": {
     "municipio": "Nigrán",
     "provincia": "pontevedra",
@@ -32957,6 +33207,11 @@
     "municipio": "Pontevedra",
     "provincia": "pontevedra",
     "deuda_eur": 466736.0
+   },
+   "o porrino": {
+    "municipio": "O Porriño",
+    "provincia": "pontevedra",
+    "deuda_eur": 2906385.18
    },
    "portas": {
     "municipio": "Portas",
@@ -32997,6 +33252,11 @@
     "municipio": "Rodeiro",
     "provincia": "pontevedra",
     "deuda_eur": 0.0
+   },
+   "o rosal": {
+    "municipio": "O Rosal",
+    "provincia": "pontevedra",
+    "deuda_eur": 542394.0
    },
    "salceda de caselas": {
     "municipio": "Salceda de Caselas",
@@ -33062,6 +33322,11 @@
     "municipio": "Vilanova de Arousa",
     "provincia": "pontevedra",
     "deuda_eur": 4481115.39
+   },
+   "a illa de arousa": {
+    "municipio": "A Illa de Arousa",
+    "provincia": "pontevedra",
+    "deuda_eur": 1133998.0
    },
    "cerdedo cotobade": {
     "municipio": "Cerdedo Cotobade",
@@ -35748,6 +36013,11 @@
     "provincia": "pais_vasco",
     "deuda_eur": 0.0
    },
+   "valdegovia-gaubea": {
+    "municipio": "Valdegovia-Gaubea",
+    "provincia": "pais_vasco",
+    "deuda_eur": 63866.0
+   },
    "valle de arana": {
     "municipio": "Valle de Arana",
     "provincia": "pais_vasco",
@@ -36038,6 +36308,11 @@
     "provincia": "pais_vasco",
     "deuda_eur": 105593.0
    },
+   "leaburu-txarama": {
+    "municipio": "Leaburu-Txarama",
+    "provincia": "pais_vasco",
+    "deuda_eur": 80627.0
+   },
    "legazpi": {
     "municipio": "Legazpi",
     "provincia": "pais_vasco",
@@ -36122,6 +36397,11 @@
     "municipio": "Errenteria",
     "provincia": "pais_vasco",
     "deuda_eur": 9685638.0
+   },
+   "leintz gatzaga": {
+    "municipio": "Leintz Gatzaga",
+    "provincia": "pais_vasco",
+    "deuda_eur": 0.0
    },
    "donostia/san sebastian": {
     "municipio": "Donostia/San Sebastián",
@@ -36223,6 +36503,16 @@
     "provincia": "pais_vasco",
     "deuda_eur": 63299.0
    },
+   "la anteiglesia de abadino": {
+    "municipio": "la Anteiglesia de Abadiño",
+    "provincia": "pais_vasco",
+    "deuda_eur": 0.0
+   },
+   "abanto zierbena": {
+    "municipio": "Abanto Zierbena",
+    "provincia": "pais_vasco",
+    "deuda_eur": 1565799.0
+   },
    "amorebieta-etxano": {
     "municipio": "Amorebieta-Etxano",
     "provincia": "pais_vasco",
@@ -36242,6 +36532,11 @@
     "municipio": "Arantzazu",
     "provincia": "pais_vasco",
     "deuda_eur": 212259.0
+   },
+   "munitibar-arbatzegi-gerrikaitz": {
+    "municipio": "Munitibar-Arbatzegi-Gerrikaitz",
+    "provincia": "pais_vasco",
+    "deuda_eur": 162038.0
    },
    "artzentales": {
     "municipio": "Artzentales",
@@ -36312,6 +36607,11 @@
     "municipio": "Busturia",
     "provincia": "pais_vasco",
     "deuda_eur": 1.0
+   },
+   "carranza": {
+    "municipio": "Carranza",
+    "provincia": "pais_vasco",
+    "deuda_eur": 71309.0
    },
    "artea": {
     "municipio": "Artea",
@@ -36633,6 +36933,11 @@
     "provincia": "pais_vasco",
     "deuda_eur": 0.0
    },
+   "trucios": {
+    "municipio": "Trucíos",
+    "provincia": "pais_vasco",
+    "deuda_eur": 0.0
+   },
    "ubide": {
     "municipio": "Ubide",
     "provincia": "pais_vasco",
@@ -36688,6 +36993,11 @@
     "provincia": "pais_vasco",
     "deuda_eur": 121.0
    },
+   "la anteiglesia de erandio": {
+    "municipio": "la Anteiglesia de Erandio",
+    "provincia": "pais_vasco",
+    "deuda_eur": 2408708.0
+   },
    "loiu": {
     "municipio": "Loiu",
     "provincia": "pais_vasco",
@@ -36742,6 +37052,11 @@
     "municipio": "Zierbena",
     "provincia": "pais_vasco",
     "deuda_eur": 389.0
+   },
+   "arrazu": {
+    "municipio": "Arrazu",
+    "provincia": "pais_vasco",
+    "deuda_eur": 5.0
    },
    "ziortza-bolibar": {
     "municipio": "Ziortza-Bolibar",
@@ -38458,6 +38773,11 @@
     "provincia": "castellon",
     "deuda_eur": 4901025.0
    },
+   "benlloc": {
+    "municipio": "Benlloc",
+    "provincia": "castellon",
+    "deuda_eur": 240766.0
+   },
    "borriol": {
     "municipio": "Borriol",
     "provincia": "castellon",
@@ -39142,6 +39462,11 @@
     "municipio": "Algemesí",
     "provincia": "valencia",
     "deuda_eur": 22251.0
+   },
+   "algimia d'alfara": {
+    "municipio": "Algímia d'Alfara",
+    "provincia": "valencia",
+    "deuda_eur": 0.0
    },
    "alginet": {
     "municipio": "Alginet",
@@ -44355,6 +44680,13 @@
     "importe_eur": 1141759.8,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "sa pobla": {
+    "municipio": "Sa Pobla",
+    "provincia": "baleares",
+    "ejercicio": 2025,
+    "importe_eur": 1680502.47,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "sencelles": {
     "municipio": "Sencelles",
     "provincia": "baleares",
@@ -44416,6 +44748,13 @@
     "provincia": "baleares",
     "ejercicio": 2025,
     "importe_eur": 1027666.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "ses salines": {
+    "municipio": "Ses Salines",
+    "provincia": "baleares",
+    "ejercicio": 2025,
+    "importe_eur": -359935.77,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "soller": {
@@ -47610,6 +47949,13 @@
     "importe_eur": 74928.46,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "aldehuela del jerte": {
+    "municipio": "Aldehuela del Jerte",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 84408.51,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "alia": {
     "municipio": "Alía",
     "provincia": "caceres",
@@ -49045,6 +49391,13 @@
     "importe_eur": 2724119.57,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "benlloc": {
+    "municipio": "Benlloc",
+    "provincia": "castellon",
+    "ejercicio": 2025,
+    "importe_eur": -103024.4,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "borriol": {
     "municipio": "Borriol",
     "provincia": "castellon",
@@ -50368,6 +50721,13 @@
     "importe_eur": -5157559.34,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "a bana": {
+    "municipio": "A Baña",
+    "provincia": "a_coruna",
+    "ejercicio": 2025,
+    "importe_eur": 15727.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "bergondo": {
     "municipio": "Bergondo",
     "provincia": "a_coruna",
@@ -50415,6 +50775,13 @@
     "provincia": "a_coruna",
     "ejercicio": 2025,
     "importe_eur": 27387.23,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a capela": {
+    "municipio": "A Capela",
+    "provincia": "a_coruna",
+    "ejercicio": 2025,
+    "importe_eur": -477468.46,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "carballo": {
@@ -50471,6 +50838,13 @@
     "provincia": "a_coruna",
     "ejercicio": 2025,
     "importe_eur": 797657.07,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a coruna": {
+    "municipio": "A Coruña",
+    "provincia": "a_coruna",
+    "ejercicio": 2025,
+    "importe_eur": -12808002.99,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "culleredo": {
@@ -50541,6 +50915,13 @@
     "provincia": "a_coruna",
     "ejercicio": 2025,
     "importe_eur": -160850.31,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a laracha": {
+    "municipio": "A Laracha",
+    "provincia": "a_coruna",
+    "ejercicio": 2025,
+    "importe_eur": 3115077.12,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "lousame": {
@@ -50690,6 +51071,13 @@
     "importe_eur": 444718.6,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "o pino": {
+    "municipio": "O Pino",
+    "provincia": "a_coruna",
+    "ejercicio": 2025,
+    "importe_eur": 926806.76,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "ponteceso": {
     "municipio": "Ponteceso",
     "provincia": "a_coruna",
@@ -50702,6 +51090,20 @@
     "provincia": "a_coruna",
     "ejercicio": 2025,
     "importe_eur": 469085.13,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "as pontes de garcia rodriguez": {
+    "municipio": "As Pontes de García Rodríguez",
+    "provincia": "a_coruna",
+    "ejercicio": 2025,
+    "importe_eur": -1946445.16,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "porto do son": {
+    "municipio": "Porto do Son",
+    "provincia": "a_coruna",
+    "ejercicio": 2025,
+    "importe_eur": 214913.46,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "ribeira": {
@@ -50737,6 +51139,13 @@
     "provincia": "a_coruna",
     "ejercicio": 2025,
     "importe_eur": 152822.98,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "as somozas": {
+    "municipio": "As Somozas",
+    "provincia": "a_coruna",
+    "ejercicio": 2025,
+    "importe_eur": 1617164.49,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "teo": {
@@ -50821,6 +51230,13 @@
     "provincia": "a_coruna",
     "ejercicio": 2025,
     "importe_eur": 27209.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "oza-cesuras": {
+    "municipio": "Oza-Cesuras",
+    "provincia": "a_coruna",
+    "ejercicio": 2025,
+    "importe_eur": 333956.23,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "acebron, el": {
@@ -54897,6 +55313,13 @@
     "importe_eur": -485482.48,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "zarza-perrunal, la": {
+    "municipio": "Zarza-Perrunal, La",
+    "provincia": "huelva",
+    "ejercicio": 2025,
+    "importe_eur": 159397.76,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "abiego": {
     "municipio": "Abiego",
     "provincia": "huesca",
@@ -55371,6 +55794,13 @@
     "provincia": "huesca",
     "ejercicio": 2025,
     "importe_eur": -4220981.06,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "el grado": {
+    "municipio": "El Grado",
+    "provincia": "huesca",
+    "ejercicio": 2025,
+    "importe_eur": -36634.49,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "granen": {
@@ -59503,6 +59933,13 @@
     "importe_eur": 744026.52,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "o corgo": {
+    "municipio": "O Corgo",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": 280353.7,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "cospeito": {
     "municipio": "Cospeito",
     "provincia": "lugo",
@@ -59522,6 +59959,13 @@
     "provincia": "lugo",
     "ejercicio": 2025,
     "importe_eur": -131021.18,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a fonsagrada": {
+    "municipio": "A Fonsagrada",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": 141333.83,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "foz": {
@@ -59550,6 +59994,13 @@
     "provincia": "lugo",
     "ejercicio": 2025,
     "importe_eur": -400357.18,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "o incio": {
+    "municipio": "O Incio",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": 134454.61,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "xove": {
@@ -59615,6 +60066,13 @@
     "importe_eur": -56947.25,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "as nogais": {
+    "municipio": "As Nogais",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": 67955.35,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "ourol": {
     "municipio": "Ourol",
     "provincia": "lugo",
@@ -59627,6 +60085,20 @@
     "provincia": "lugo",
     "ejercicio": 2025,
     "importe_eur": -1189782.47,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "o paramo": {
+    "municipio": "O Páramo",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": 240822.1,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a pastoriza": {
+    "municipio": "A Pastoriza",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": 198432.85,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "pedrafita do cebreiro": {
@@ -59643,11 +60115,32 @@
     "importe_eur": 561630.81,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "a pobra do brollon": {
+    "municipio": "A Pobra do Brollón",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": 264663.94,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a pontenova": {
+    "municipio": "A Pontenova",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": -90421.41,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "ribadeo": {
     "municipio": "Ribadeo",
     "provincia": "lugo",
     "ejercicio": 2025,
     "importe_eur": -379649.3,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a ribeira de piquin": {
+    "municipio": "A Ribeira de Piquín",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": 9775.02,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "riotorto": {
@@ -59669,6 +60162,13 @@
     "provincia": "lugo",
     "ejercicio": 2025,
     "importe_eur": -153912.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "o savinao": {
+    "municipio": "O Saviñao",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": -50531.31,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "sober": {
@@ -59697,6 +60197,13 @@
     "provincia": "lugo",
     "ejercicio": 2025,
     "importe_eur": -152413.54,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "o vicedo": {
+    "municipio": "O Vicedo",
+    "provincia": "lugo",
+    "ejercicio": 2025,
+    "importe_eur": 155977.67,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "viveiro": {
@@ -61176,6 +61683,13 @@
     "importe_eur": -2015204.73,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "a arnoia": {
+    "municipio": "A Arnoia",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": 35613.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "avion": {
     "municipio": "Avión",
     "provincia": "ourense",
@@ -61204,6 +61718,13 @@
     "importe_eur": 144706.14,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "o barco de valdeorras": {
+    "municipio": "O Barco de Valdeorras",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": -393115.71,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "beade": {
     "municipio": "Beade",
     "provincia": "ourense",
@@ -61218,6 +61739,13 @@
     "importe_eur": -49853.7,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "os blancos": {
+    "municipio": "Os Blancos",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": 588542.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "calvos de randin": {
     "municipio": "Calvos de Randín",
     "provincia": "ourense",
@@ -61230,6 +61758,13 @@
     "provincia": "ourense",
     "ejercicio": 2025,
     "importe_eur": 842194.07,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "o carballino": {
+    "municipio": "O Carballiño",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": 284764.48,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "cartelle": {
@@ -61330,6 +61865,20 @@
     "importe_eur": 31097.37,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "a gudina": {
+    "municipio": "A Gudiña",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": 423569.31,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "o irixo": {
+    "municipio": "O Irixo",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": -268616.8,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "xunqueira de ambia": {
     "municipio": "Xunqueira de Ambía",
     "provincia": "ourense",
@@ -61393,6 +61942,20 @@
     "importe_eur": -217923.12,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "a merca": {
+    "municipio": "A Merca",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": 422329.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a mezquita": {
+    "municipio": "A Mezquita",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": 285818.46,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "monterrei": {
     "municipio": "Monterrei",
     "provincia": "ourense",
@@ -61433,6 +61996,20 @@
     "provincia": "ourense",
     "ejercicio": 2025,
     "importe_eur": 406597.51,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "o pereiro de aguiar": {
+    "municipio": "O Pereiro de Aguiar",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": -77116.53,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a peroxa": {
+    "municipio": "A Peroxa",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": -460573.19,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "petin": {
@@ -61505,6 +62082,13 @@
     "importe_eur": 353200.79,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "a rua": {
+    "municipio": "A Rúa",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": 607988.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "rubia": {
     "municipio": "Rubiá",
     "provincia": "ourense",
@@ -61552,6 +62136,13 @@
     "provincia": "ourense",
     "ejercicio": 2025,
     "importe_eur": -592488.07,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a teixeira": {
+    "municipio": "A Teixeira",
+    "provincia": "ourense",
+    "ejercicio": 2025,
+    "importe_eur": 313726.86,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "toen": {
@@ -63269,6 +63860,13 @@
     "importe_eur": 951828.35,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "a estrada": {
+    "municipio": "A Estrada",
+    "provincia": "pontevedra",
+    "ejercicio": 2025,
+    "importe_eur": -5188306.06,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "forcarei": {
     "municipio": "Forcarei",
     "provincia": "pontevedra",
@@ -63290,11 +63888,32 @@
     "importe_eur": -479773.68,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "o grove": {
+    "municipio": "O Grove",
+    "provincia": "pontevedra",
+    "ejercicio": 2025,
+    "importe_eur": 820065.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a guarda": {
+    "municipio": "A Guarda",
+    "provincia": "pontevedra",
+    "ejercicio": 2025,
+    "importe_eur": -1002044.6,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "lalin": {
     "municipio": "Lalín",
     "provincia": "pontevedra",
     "ejercicio": 2025,
     "importe_eur": -71350.81,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "a lama": {
+    "municipio": "A Lama",
+    "provincia": "pontevedra",
+    "ejercicio": 2025,
+    "importe_eur": 161438.89,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "meano": {
@@ -63332,6 +63951,13 @@
     "importe_eur": 1430726.22,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "as neves": {
+    "municipio": "As Neves",
+    "provincia": "pontevedra",
+    "ejercicio": 2025,
+    "importe_eur": -49112.09,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "nigran": {
     "municipio": "Nigrán",
     "provincia": "pontevedra",
@@ -63358,6 +63984,13 @@
     "provincia": "pontevedra",
     "ejercicio": 2025,
     "importe_eur": 2520554.5,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "o porrino": {
+    "municipio": "O Porriño",
+    "provincia": "pontevedra",
+    "ejercicio": 2025,
+    "importe_eur": 83377.54,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "portas": {
@@ -65591,6 +66224,13 @@
     "provincia": "santa_cruz_tenerife",
     "ejercicio": 2025,
     "importe_eur": 2853804.38,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "la frontera": {
+    "municipio": "La Frontera",
+    "provincia": "santa_cruz_tenerife",
+    "ejercicio": 2025,
+    "importe_eur": 1011788.66,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "fuencaliente de la palma": {
@@ -71828,6 +72468,13 @@
     "provincia": "valencia",
     "ejercicio": 2025,
     "importe_eur": 130809946.57,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "algimia d'alfara": {
+    "municipio": "Algímia d'Alfara",
+    "provincia": "valencia",
+    "ejercicio": 2025,
+    "importe_eur": 127788.88,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "alginet": {
@@ -80006,6 +80653,13 @@
     "importe_eur": 5464575.58,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
+   "medina sidonia": {
+    "municipio": "Medina Sidonia",
+    "provincia": "cadiz",
+    "ejercicio": 2024,
+    "importe_eur": 392810.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
    "olvera": {
     "municipio": "Olvera",
     "provincia": "cadiz",
@@ -80685,11 +81339,11 @@
     "importe_eur": 575089.48,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
-   "porto do son": {
-    "municipio": "Porto do Son",
+   "a pobra do caraminal": {
+    "municipio": "A Pobra do Caramiñal",
     "provincia": "a_coruna",
     "ejercicio": 2024,
-    "importe_eur": 72626.21,
+    "importe_eur": -1247507.8,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
    "rianxo": {
@@ -80711,13 +81365,6 @@
     "provincia": "a_coruna",
     "ejercicio": 2024,
     "importe_eur": 2993499.93,
-    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
-   },
-   "oza-cesuras": {
-    "municipio": "Oza-Cesuras",
-    "provincia": "a_coruna",
-    "ejercicio": 2024,
-    "importe_eur": 713034.8,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
    "albaladejo del cuende": {
@@ -83954,18 +84601,18 @@
     "importe_eur": 396435.48,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
-   "a ribeira de piquin": {
-    "municipio": "A Ribeira de Piquín",
-    "provincia": "lugo",
-    "ejercicio": 2024,
-    "importe_eur": 436241.75,
-    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
-   },
    "sarria": {
     "municipio": "Sarria",
     "provincia": "lugo",
     "ejercicio": 2024,
     "importe_eur": -2360876.52,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "o valadouro": {
+    "municipio": "O Valadouro",
+    "provincia": "lugo",
+    "ejercicio": 2024,
+    "importe_eur": -107074.25,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
    "vilalba": {
@@ -84654,6 +85301,20 @@
     "importe_eur": -314346.94,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
+   "a bola": {
+    "municipio": "A Bola",
+    "provincia": "ourense",
+    "ejercicio": 2024,
+    "importe_eur": 295193.57,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "o bolo": {
+    "municipio": "O Bolo",
+    "provincia": "ourense",
+    "ejercicio": 2024,
+    "importe_eur": 32990.44,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
    "carballeda de avia": {
     "municipio": "Carballeda de Avia",
     "provincia": "ourense",
@@ -84694,6 +85355,13 @@
     "provincia": "ourense",
     "ejercicio": 2024,
     "importe_eur": 120626.38,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "a veiga": {
+    "municipio": "A Veiga",
+    "provincia": "ourense",
+    "ejercicio": 2024,
+    "importe_eur": -38750.59,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
    "verin": {
@@ -85095,6 +85763,13 @@
     "importe_eur": -152793.67,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
+   "a caniza": {
+    "municipio": "A Caniza",
+    "provincia": "pontevedra",
+    "ejercicio": 2024,
+    "importe_eur": 145223.04,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
    "catoira": {
     "municipio": "Catoira",
     "provincia": "pontevedra",
@@ -85135,6 +85810,20 @@
     "provincia": "pontevedra",
     "ejercicio": 2024,
     "importe_eur": 810880.87,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "o rosal": {
+    "municipio": "O Rosal",
+    "provincia": "pontevedra",
+    "ejercicio": 2024,
+    "importe_eur": -346539.09,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "a illa de arousa": {
+    "municipio": "A Illa de Arousa",
+    "provincia": "pontevedra",
+    "ejercicio": 2024,
+    "importe_eur": 756989.98,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
    "aldeacipreste": {
@@ -88824,6 +89513,13 @@
     "provincia": "zaragoza",
     "ejercicio": 2024,
     "importe_eur": -41613.6,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "la puebla de alborton": {
+    "municipio": "La Puebla de Albortón",
+    "provincia": "zaragoza",
+    "ejercicio": 2024,
+    "importe_eur": -341201.7,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
    "purujosa": {

@@ -193,6 +193,11 @@ def _emparejar_en_lista(nombre_oficial, lista_municipios):
             for parte_m in m.split("/"):
                 if normalizar(_sin_apostrofes_curvos(parte_m)) in candidatos:
                     return m
+    # Al revés (2026-09-30): la lista de la app pospone el artículo ("Zarza-Perrunal, La") y Hacienda lo antepone o lo
+    # pega a la coma ("Zarza-Perrunal,La" -> "la Zarza-Perrunal" en los candidatos).
+    for m in lista_municipios:
+        if any(normalizar(_sin_apostrofes_curvos(f)) in candidatos for f in _formas_nucleo_articulo(m)):
+            return m
     for buscado in candidatos:
         alias = ALIAS_MUNICIPIO.get(buscado)
         if alias and alias in lista_municipios:
@@ -212,7 +217,10 @@ def _emparejar_en_lista(nombre_oficial, lista_municipios):
 # re.IGNORECASE + "Es"/"Ets" (artículo aranés) añadidos 2026-08-09 al
 # ejecutar sobre Lleida/Barcelona/Tarragona: Hacienda no siempre capitaliza
 # el artículo entre paréntesis ("Esquirol (l')", "Bòrdes (Es)").
-_RE_PARENTESIS_ARTICULO = re.compile(r"^(.*)\s\((L'|El|La|Los|Las|Els|Les|Es|Ets)\)$", re.IGNORECASE)
+# Ampliado 2026-09-30 con los artículos gallegos (O/A/Os/As) y baleares (Sa/Ses/S'): Hacienda escribe "Coruña (A)",
+# "Grove (O)", "Pobla (Sa)" y 65 municipios (A Coruña incluida) se quedaban sin deuda ni saldo -- y el Índice les
+# ponía 0 en "deuda/saldo publicado" cuando Hacienda sí los publica.
+_RE_PARENTESIS_ARTICULO = re.compile(r"^(.*)\s\((L'|El|La|Los|Las|Els|Les|Es|Ets|O|A|Os|As|Sa|Ses|S')\)$", re.IGNORECASE)
 
 
 def _limpiar_nombre_hacienda(nombre):
