@@ -13749,39 +13749,39 @@ def _pwa_asset(path):
 def spinner_page(job_id, municipio, provincia="murcia"):
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
     if provincia in PROVINCIAS_CATALUNYA:
-        fuente_txt = "Datos oficiales: PSCP (Generalitat de Catalunya)"
+        fuente_txt = _t("Datos oficiales: PSCP (Generalitat de Catalunya)")
         fuente_corta = "PSCP"
     elif provincia in PROVINCIAS_PAIS_VASCO:
-        fuente_txt = "Datos oficiales: KontratazioA (Gobierno Vasco)"
+        fuente_txt = _t("Datos oficiales: KontratazioA (Gobierno Vasco)")
         fuente_corta = "KontratazioA"
     elif provincia in PROVINCIAS_NAVARRA:
-        fuente_txt = "Datos oficiales: Portal de Contratación de Navarra (Gobierno de Navarra)"
-        fuente_corta = "Portal de Contratación de Navarra"
+        fuente_txt = _t("Datos oficiales: Portal de Contratación de Navarra (Gobierno de Navarra)")
+        fuente_corta = _t("Portal de Contratación de Navarra")
     elif provincia == "murcia":
-        fuente_txt = "Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)"
-        fuente_corta = "PLACE (Ministerio de Hacienda) y BORM"
+        fuente_txt = _t("Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)")
+        fuente_corta = _t("PLACE (Ministerio de Hacienda) y BORM")
     else:
-        fuente_txt = "Datos oficiales: PLACE (Ministerio de Hacienda)"
-        fuente_corta = "PLACE (Ministerio de Hacienda)"
-    redirect_url = f"/?muni={quote_plus(municipio)}" + _q_prov(provincia)
+        fuente_txt = _t("Datos oficiales: PLACE (Ministerio de Hacienda)")
+        fuente_corta = _t("PLACE (Ministerio de Hacienda)")
+    redirect_url = _i18n_url(_i18n_idioma(), "/", f"muni={quote_plus(municipio)}" + _q_prov(provincia))
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>{_ANALYTICS_LOADER_JS}</script>
-<title>Buscando — {esc(municipio)}</title>
+<title>{_t("Buscando — {municipio}").format(municipio=esc(municipio))}</title>
 <link rel="stylesheet" href="{_pwa_asset('/static/style.css')}"></head>
 <body>
 <header>
   <div class="logo">DINERO&nbsp;PÚBLICO</div>
-  <div><h1>Contratos Públicos · {esc(label)}</h1>
+  <div><h1>{_t("Contratos Públicos")} · {esc(label)}</h1>
   <p>{esc(fuente_txt)}</p></div>
 </header>
 <div class="main">
   <div class="sp-wrap">
     <div class="sp-ring" id="ring"></div>
-    <div class="sp-label">Analizando contratos de <strong>{esc(municipio)}</strong><br>
-    Descargando datos de {esc(fuente_corta)}…</div>
-    <div class="sp-log" id="log">Iniciando…</div>
-    <div class="err-box" id="err"><span id="errmsg"></span><a href="/">← Volver</a></div>
+    <div class="sp-label">{_t("Analizando contratos de")} <strong>{esc(municipio)}</strong><br>
+    {_t("Descargando datos de {fuente}…").format(fuente=esc(fuente_corta))}</div>
+    <div class="sp-log" id="log">{_t("Iniciando…")}</div>
+    <div class="err-box" id="err"><span id="errmsg"></span><a href="/">← {_t("Volver")}</a></div>
   </div>
 </div>
 <script>
@@ -13796,7 +13796,7 @@ async function poll(){{
     if(d.status==="done"){{window.location.href="{redirect_url}";return;}}
     if(d.status==="error"){{
       document.getElementById("ring").style.display="none";
-      document.getElementById("errmsg").textContent="Error: "+(d.error||"desconocido");
+      document.getElementById("errmsg").textContent={json.dumps(_t("Error:") + " ")}+(d.error||{json.dumps(_t("desconocido"))});
       document.getElementById("err").style.display="block";
       return;
     }}
@@ -16850,10 +16850,10 @@ def render_fondos_ue_html(fondos, provincia="todas"):
     n_cohesion = sum(1 for f in fondos if f["fuente"] == "cohesion")
 
     stats = f"""<div class="stats-bar">
-      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{len(fondos)}</span>Proyectos/operaciones</div>
-      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{fmt_eur(str(total_importe))}</span>Importe total</div>
-      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{n_cordis}</span>CORDIS (Horizon Europe)</div>
-      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{n_cohesion}</span>Cohesion Data (FEDER/FSE)</div>
+      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{len(fondos)}</span>{_t("Proyectos/operaciones")}</div>
+      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{fmt_eur(str(total_importe))}</span>{_t("Importe total")}</div>
+      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{n_cordis}</span>{_t("CORDIS (Horizon Europe)")}</div>
+      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{n_cohesion}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
     </div>"""
 
     selector_prov = "".join(
@@ -16864,18 +16864,15 @@ def render_fondos_ue_html(fondos, provincia="todas"):
 
     filas = "".join(_render_fila_fondo_ue(f) for f in fondos[:300])
     if not filas:
-        filas = '<tr><td colspan="4" class="empty">Sin datos de fondos UE todavía para esta provincia.</td></tr>'
+        filas = f'<tr><td colspan="4" class="empty">{_t("Sin datos de fondos UE todavía para esta provincia.")}</td></tr>'
     aviso_limite = (f'<div class="gs-hint" style="margin-bottom:10px">Mostrando los primeros 300 de '
                      f'{len(fondos)}, ordenados por importe.</div>') if len(fondos) > 300 else ""
 
-    body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
+    body = f"""<span class="back-link"><a href="/">← {_t("Volver al inicio")}</a></span>
   <div class="hero" style="padding-bottom:4px">
-    <div class="hero-tagline" style="color:var(--yellow)">🇪🇺 Fondos y proyectos financiados por la UE</div>
+    <div class="hero-tagline" style="color:var(--yellow)">🇪🇺 {_t("Fondos y proyectos financiados por la UE")}</div>
     <p class="hero-sub">
-      Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales
-      (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea en
-      la Región de Murcia y la provincia de Girona. Fuentes oficiales de la Comisión
-      Europea, sin scraping -- descarga/consulta directa de sus datasets abiertos.
+      {_t("Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea en la Región de Murcia y la provincia de Girona. Fuentes oficiales de la Comisión Europea, sin scraping -- descarga/consulta directa de sus datasets abiertos.")}
     </p>
   </div>
   <div class="prov-switch" style="margin-bottom:14px">{selector_prov}</div>
@@ -16884,19 +16881,19 @@ def render_fondos_ue_html(fondos, provincia="todas"):
     {aviso_limite}
     <table>
       <tr>
-        <th>Proyecto / Beneficiario</th>
-        <th>Importe</th>
-        <th>Fuente / Programa</th>
-        <th>Fechas</th>
+        <th>{_t("Proyecto / Beneficiario")}</th>
+        <th>{_t("Importe")}</th>
+        <th>{_t("Fuente / Programa")}</th>
+        <th>{_t("Fechas")}</th>
       </tr>
       {filas}
     </table>
   </div>"""
 
-    return _page_shell("Fondos UE — Proyectos financiados por la Unión Europea", body,
-                        description="Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon "
-                                     "Europe, Cohesion Data FEDER/FSE) en la Región de Murcia y la provincia "
-                                     "de Girona.",
+    return _page_shell(_t("Fondos UE — Proyectos financiados por la Unión Europea"), body,
+                        description=_t("Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon "
+                                       "Europe, Cohesion Data FEDER/FSE) en la Región de Murcia y la provincia "
+                                       "de Girona."),
                         provincia="todas")
 
 
@@ -17721,17 +17718,17 @@ def _mapa_ccaa_html():
 
         if sin_datos:
             tooltip_inner = (f'<div class="mt-titulo">{esc(r["label"])}</div>'
-                              f'<div class="mt-sin-datos">Aún sin datos en Dinero Público.</div>')
+                              f'<div class="mt-sin-datos">{_t("Aún sin datos en Dinero Público.")}</div>')
         else:
             filas = []
             if stats.get("poblacion"):
-                filas.append(f'<div class="mt-fila"><span>Habitantes</span><b>{fmt_num(stats["poblacion"])}</b></div>')
+                filas.append(f'<div class="mt-fila"><span>{_t("Habitantes")}</span><b>{fmt_num(stats["poblacion"])}</b></div>')
             if stats.get("deuda_por_habitante") is not None:
-                filas.append(f'<div class="mt-fila"><span>Deuda/hab.</span><b>{fmt_eur(stats["deuda_por_habitante"])}</b></div>')
+                filas.append(f'<div class="mt-fila"><span>{_t("Deuda/hab.")}</span><b>{fmt_eur(stats["deuda_por_habitante"])}</b></div>')
             if stats.get("saldo_n"):
-                etiqueta_saldo = "Superávit" if stats["saldo_eur"] >= 0 else "Déficit"
-                filas.append(f'<div class="mt-fila"><span>{etiqueta_saldo} agreg.</span><b>{fmt_eur(abs(stats["saldo_eur"]))}</b></div>')
-            filas_html = "".join(filas) if filas else '<div class="mt-sin-datos">Sin datos agregados todavía.</div>'
+                etiqueta_saldo = _t("Superávit agreg.") if stats["saldo_eur"] >= 0 else _t("Déficit agreg.")
+                filas.append(f'<div class="mt-fila"><span>{etiqueta_saldo}</span><b>{fmt_eur(abs(stats["saldo_eur"]))}</b></div>')
+            filas_html = "".join(filas) if filas else f'<div class="mt-sin-datos">{_t("Sin datos agregados todavía.")}</div>'
             tooltip_inner = f'<div class="mt-titulo">{esc(r["label"])}</div>{filas_html}'
 
         # <g> (no <a>) para comunidades sin destino -- <span> no es un
@@ -18350,38 +18347,39 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
     if resultados:
         filas = "".join(_render_fila_contrato(c, municipio_label=m, municipio=m, provincia=p)
                          for m, p, c in resultados[:300])
-        aviso = (f'<div class="gs-hint" style="margin-bottom:10px">Mostrando los primeros 300 de '
-                 f'{len(resultados)} resultados.</div>') if len(resultados) > 300 else ""
+        aviso = (f'<div class="gs-hint" style="margin-bottom:10px">'
+                 f'{_t("Mostrando los primeros 300 de {n} resultados.").format(n=len(resultados))}</div>'
+                 ) if len(resultados) > 300 else ""
         tabla = f"""{aviso}<table>
           <tr>
-            <th>Empresa adjudicataria / Contrato</th>
-            <th>Importe</th>
-            <th>Directivo / Cargo</th>
-            <th>Estado / Fuente</th>
+            <th>{_t("Empresa adjudicataria / Contrato")}</th>
+            <th>{_t("Importe")}</th>
+            <th>{_t("Directivo / Cargo")}</th>
+            <th>{_t("Estado / Fuente")}</th>
           </tr>
           {filas}
         </table>"""
     else:
-        tabla = '<div class="empty">Sin resultados para tu búsqueda.</div>'
+        tabla = f'<div class="empty">{_t("Sin resultados para tu búsqueda.")}</div>'
 
     q_prov = _q_prov(provincia)
     comentarios_html = (render_comentarios_html("busqueda", q, f"/?q={quote_plus(q)}{q_prov}", titulo=q)
                          if resultados else "")
 
-    body = f"""<span class="back-link"><a href="/{_q_prov_first(provincia)}">← Volver al inicio</a></span>
+    body = f"""<span class="back-link"><a href="/{_q_prov_first(provincia)}">← {_t("Volver al inicio")}</a></span>
   <div class="global-search">
     <form method="GET" action="/" class="gs-row">
-      <input name="q" value="{esc(q)}" placeholder="Buscar por empresa, directivo o municipio…" autofocus>
+      <input name="q" value="{esc(q)}" placeholder="{_t("Buscar por empresa, directivo o municipio…")}" autofocus>
       <input type="hidden" name="provincia" value="{esc(provincia)}">
-      <button type="submit" class="btn btn-primary">Buscar</button>
+      <button type="submit" class="btn btn-primary">{_t("Buscar")}</button>
     </form>
-    <div class="gs-hint">{len(resultados)} resultado{'s' if len(resultados) != 1 else ''} para "{esc(q)}"</div>
+    <div class="gs-hint">{(_t('{n} resultado para "{q}"') if len(resultados) == 1 else _t('{n} resultados para "{q}"')).format(n=len(resultados), q=esc(q))}</div>
   </div>
   <div class="muni-card">{tabla}</div>
   {comentarios_html}"""
 
-    return _page_shell(f'Búsqueda: {q}', body,
-                        description=f'Resultados de "{q}" en contratos públicos de {label}.',
+    return _page_shell(_t("Búsqueda: {q}").format(q=q), body,
+                        description=_t('Resultados de "{q}" en contratos públicos de {territorio}.').format(q=q, territorio=label),
                         provincia=provincia, og_path=f"/?q={quote_plus(q)}{_q_prov(provincia)}")
 
 
@@ -19504,10 +19502,10 @@ _MAPA_COBERTURA_JS = '''
         const hab = el.dataset.hab, contr = el.dataset.contratos,
               imp = el.dataset.imp, deuda = el.dataset.deuda;
         filas = `
-          <div class="t-row">🏘️ ${muni} municipios${hab ? ' · ' + hab + ' hab.' : ''}</div>
-          <div class="t-row">📄 ${contr} contratos</div>
-          <div class="t-row">💶 ${imp} adjudicado</div>
-          ${deuda ? `<div class="t-row">🏦 ${deuda}/hab. de deuda viva</div>` : ''}
+          <div class="t-row">🏘️ ${TF("{n} municipios", {n: muni})}${hab ? ' · ' + TF("{n} hab.", {n: hab}) : ''}</div>
+          <div class="t-row">📄 ${TF("{n} contratos", {n: contr})}</div>
+          <div class="t-row">💶 ${TF("{importe} adjudicado", {importe: imp})}</div>
+          ${deuda ? `<div class="t-row">🏦 ${TF("{importe}/hab. de deuda viva", {importe: deuda})}</div>` : ''}
         `;
       }
       tooltip.innerHTML = `
@@ -19756,24 +19754,20 @@ def render_mapa_cobertura_html():
     mapa_html = _mapa_cobertura_svg_html(clickable=False, datos_oficiales=datos_oficiales)
 
     body = f'''<div class="static-page">
-  <h1>Mapa de cobertura</h1>
-  <p class="sub">Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para
-  ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva.</p>
+  <h1>{_t("Mapa de cobertura")}</h1>
+  <p class="sub">{_t("Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva.")}</p>
 
   {mapa_html}
 
   <p class="mc-note">
-    Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico
-    Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y
-    patrón principal; se omiten escudos y detalles heráldicos finos). Las cifras de cada provincia se
-    calculan en cada carga a partir de los municipios ya procesados en nuestra base de datos.
+    {_t("Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y patrón principal; se omiten escudos y detalles heráldicos finos). Las cifras de cada provincia se calculan en cada carga a partir de los municipios ya procesados en nuestra base de datos.")}
   </p>
 </div>'''
 
-    return _page_shell("Mapa de cobertura", body, extra_head=style, show_ad_banner=False,
-                        description="Mapa de España por comunidades y provincias con las cifras "
-                                     "oficiales de contratación pública de Dinero Público: municipios, "
-                                     "habitantes, contratos e importe adjudicado.")
+    return _page_shell(_t("Mapa de cobertura"), body, extra_head=style, show_ad_banner=False,
+                        description=_t("Mapa de España por comunidades y provincias con las cifras "
+                                       "oficiales de contratación pública de Dinero Público: municipios, "
+                                       "habitantes, contratos e importe adjudicado."))
 
 
 def render_quienes_somos_html():
