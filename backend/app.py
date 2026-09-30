@@ -12801,7 +12801,10 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
   .cookie-botones{justify-content:stretch;}
   .cookie-btn{flex:1;}
 }
-.prov-switch{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+/* flex-wrap (2026-09-30): con 20 comunidades o 52 provincias las pestañas no caben en una fila, y con overflow:hidden
+   las sobrantes quedaban cortadas e inalcanzables (en móvil ni se veía la pestaña activa). Ahora bajan de línea. */
+.prov-switch{display:flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--bg);}
+.rk-section-header .prov-switch{flex:1 1 100%;}
 .prov-tab{text-decoration:none;padding:8px 14px;font-size:13px;font-weight:600;color:var(--dim);background:var(--bg);white-space:nowrap;}
 .prov-tab:hover{color:var(--text);}
 .prov-tab.active{background:var(--accent);color:#fff;}
@@ -15639,7 +15642,8 @@ _RK_METODOLOGIA_AVISO_HTML = """<div class="rk-metodologia-aviso" id="rk-metodol
 </script>"""
 
 
-def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas", paginas=None):
+def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas", paginas=None,
+                         comunidades=None):
     """Dos rankings claramente separados:
     - Nacional: agrega TODAS las provincias cargadas (Murcia + Girona + las que vengan).
     - Provincial: el mismo top 10 x2, filtrable por una provincia concreta.
@@ -15649,19 +15653,48 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     label_prov = PROVINCIA_LABEL.get(provincia_prov, PROVINCIA_LABEL["murcia"])
     paginas = paginas or {}
     pags_actuales = {}      # página efectiva de cada tabla larga, para construir los enlaces
+    # Filtro por comunidad autónoma de los rankings de alcaldes y de deuda por habitante (2026-09-30, pedido en la
+    # reestructuración del 20-09: "vista nacional + selector por región", como el Índice). Parámetro propio de cada
+    # tabla (comunidad_alc / comunidad_deuda) para que elegir región en una no cambie las otras.
+    comunidades = {"alc": "todas", "deuda": "todas", **(comunidades or {})}
 
-    def _url_pag(tabla, n, ancla):
-        """Enlace a la página n de una tabla larga conservando provincia, comunidad y la
-        página en la que esté cada una de las otras tablas."""
-        pags = dict(pags_actuales)
-        pags[tabla] = n
+    def _url_rk(pags, coms, ancla):
         partes = [f"provincia={provincia_prov}"]
         if comunidad != "todas":
             partes.append(f"comunidad={comunidad}")
+        for clave in ("alc", "deuda"):
+            if coms.get(clave, "todas") != "todas":
+                partes.append(f"comunidad_{clave}={coms[clave]}")
         for clave, param in (("alc", "pag_alc"), ("deuda", "pag_deuda"), ("idx", "pag_idx")):
             if pags.get(clave, 1) > 1:
                 partes.append(f"{param}={pags[clave]}")
         return "/rankings?" + "&".join(partes) + "#" + ancla
+
+    def _url_pag(tabla, n, ancla):
+        """Enlace a la página n de una tabla larga conservando provincia, comunidades y la
+        página en la que esté cada una de las otras tablas."""
+        pags = dict(pags_actuales)
+        pags[tabla] = n
+        return _url_rk(pags, comunidades, ancla)
+
+    def _selector_comunidad_tabla(tabla, ancla):
+        """Pestañas España + comunidades para una tabla; al cambiar de región esa tabla vuelve a la página 1."""
+        tabs = []
+        for c, label in [("todas", "España")] + list(COMUNIDAD_AUTONOMA_LABEL.items()):
+            pags = dict(pags_actuales)
+            pags[tabla] = 1
+            href = esc(_url_rk(pags, {**comunidades, tabla: c}, ancla))
+            activa = " active" if c == comunidades[tabla] else ""
+            tabs.append(f'<a href="{href}" class="prov-tab{activa}">{esc(label)}</a>')
+        return f'<div class="prov-switch">{"".join(tabs)}</div>'
+
+    def _de_comunidad(f, tabla):
+        c = comunidades[tabla]
+        return c == "todas" or COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(f["provincia"], f["provincia"]) == c
+
+    def _ambito(tabla):
+        c = comunidades[tabla]
+        return "toda España" if c == "todas" else COMUNIDAD_AUTONOMA_LABEL.get(c, c)
 
     def _filas(lista, valor_html, q_prov=""):
         filas = ""
@@ -15691,7 +15724,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     tabla_n_prov = _filas(top_n_prov, lambda g: f'<b>{g["n"]}</b> contratos', q_prov=q_prov_link)
     tabla_imp_prov = _filas(top_imp_prov, lambda g: fmt_eur(str(g["importe"])), q_prov=q_prov_link)
 
-    ranking_alcaldes = _calcular_ranking_alcaldes()
+    ranking_alcaldes = [f for f in _calcular_ranking_alcaldes() if _de_comunidad(f, "alc")]
     anio_ispa = next((f["anio"] for f in ranking_alcaldes if f.get("anio")), "")
     filas_alcaldes_html = ""
     pag_alc, npag_alc = _rk_pagina(paginas.get("alc"), len(ranking_alcaldes))
@@ -15718,7 +15751,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     if not filas_alcaldes_html:
         filas_alcaldes_html = '<tr><td colspan="7" class="empty">Aún no hay datos suficientes.</td></tr>'
 
-    ranking_deuda_hab = _calcular_ranking_deuda_por_habitante()
+    ranking_deuda_hab = [f for f in _calcular_ranking_deuda_por_habitante() if _de_comunidad(f, "deuda")]
     filas_deuda_hab_html = ""
     pag_deuda, npag_deuda = _rk_pagina(paginas.get("deuda"), len(ranking_deuda_hab))
     pags_actuales["deuda"] = pag_deuda
@@ -15740,6 +15773,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     _n_idx = len([f for f in _indice_transparencia_cacheado()
                   if f["indice"] is not None and (comunidad == "todas" or f["comunidad_autonoma"] == comunidad)])
     pags_actuales["idx"] = _rk_pagina(paginas.get("idx"), _n_idx)[0]
+    selector_alc_html = _selector_comunidad_tabla("alc", "alcaldes")
+    selector_deuda_html = _selector_comunidad_tabla("deuda", "deuda-habitante")
     pag_alc_html = _rk_paginacion_html(pag_alc, npag_alc, len(ranking_alcaldes),
                                        lambda n: _url_pag("alc", n, "alcaldes"), "municipios")
     pag_deuda_html = _rk_paginacion_html(pag_deuda, npag_deuda, len(ranking_deuda_hab),
@@ -15825,9 +15860,10 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
   <div class="rk-section-header" id="alcaldes">
     <h2>💰 Ranking de Sueldos: Alcaldes y Alcaldesas</h2>
-    <span class="rk-badge">ISPA {esc(anio_ispa)} · {len(ranking_alcaldes)} municipios con dato</span>
+    <span class="rk-badge">ISPA {esc(anio_ispa)} · {fmt_num(len(ranking_alcaldes))} municipios con dato</span>
+    {selector_alc_html}
   </div>
-  <div class="section-title">De mayor a menor retribución anual (todas las provincias cargadas)</div>
+  <div class="section-title">De mayor a menor retribución anual ({esc(_ambito("alc"))})</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_alcaldes_html}
@@ -15836,9 +15872,10 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
   <div class="rk-section-header" id="deuda-habitante">
     <h2>🏦 Ranking de Deuda por Habitante</h2>
-    <span class="rk-badge">Ministerio de Hacienda + INE · {len(ranking_deuda_hab)} municipios con dato</span>
+    <span class="rk-badge">Ministerio de Hacienda + INE · {fmt_num(len(ranking_deuda_hab))} municipios con dato</span>
+    {selector_deuda_html}
   </div>
-  <div class="section-title">De mayor a menor deuda viva por habitante (todas las provincias cargadas)</div>
+  <div class="section-title">De mayor a menor deuda viva por habitante ({esc(_ambito("deuda"))})</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
     <tr><th>#</th><th>Municipio</th><th>Deuda viva</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
     {filas_deuda_hab_html}
@@ -19621,8 +19658,10 @@ def _route_get(path, qs, gzip_ok=False):
         datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
         paginas_qs = {"alc": qs.get("pag_alc", ["1"])[0], "deuda": qs.get("pag_deuda", ["1"])[0],
                       "idx": qs.get("pag_idx", ["1"])[0]}
+        comunidades_qs = {"alc": _comunidad_valida(qs.get("comunidad_alc", ["todas"])[0]),
+                          "deuda": _comunidad_valida(qs.get("comunidad_deuda", ["todas"])[0])}
         return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs,
-                                          paginas_qs), gzip_ok=gzip_ok)
+                                          paginas_qs, comunidades_qs), gzip_ok=gzip_ok)
 
     if path == "/fondos-ue":
         provincia_qs = qs.get("provincia", ["todas"])[0]
