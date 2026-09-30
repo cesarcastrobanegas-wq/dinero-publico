@@ -4683,16 +4683,16 @@ def alcalde_concejales_html(municipio, provincia=None):
                 # cargo público. No se puede afirmar el motivo exacto para
                 # CUALQUIER municipio con 0€ (no se ha verificado uno a
                 # uno), así que el texto queda en condicional.
-                nota = ("Un sueldo de 0 € en ISPA no significa que no cobre nada -- suele "
-                        "indicar que quien ocupa el cargo ha renunciado al sueldo de alcalde/sa "
-                        "por percibir ya retribución de otro cargo público (frecuente cuando "
-                        "también forma parte del gobierno de una Diputación). Verificado así en "
-                        "varios municipios de la provincia de Barcelona.")
-                retrib_html = (f' <span class="pol-retrib" title="{esc(nota)}">💰 0 €/año{anio_html} '
-                                f'<span class="pol-retrib-nota">(posible renuncia por doble cargo ℹ️)</span></span>')
+                nota = _t("Un sueldo de 0 € en ISPA no significa que no cobre nada -- suele "
+                          "indicar que quien ocupa el cargo ha renunciado al sueldo de alcalde/sa "
+                          "por percibir ya retribución de otro cargo público (frecuente cuando "
+                          "también forma parte del gobierno de una Diputación). Verificado así en "
+                          "varios municipios de la provincia de Barcelona.")
+                retrib_html = (f' <span class="pol-retrib" title="{esc(nota)}">💰 0 €{_t("/año")}{anio_html} '
+                                f'<span class="pol-retrib-nota">{_t("(posible renuncia por doble cargo ℹ️)")}</span></span>')
             else:
-                retrib_html = f' <span class="pol-retrib">💰 {fmt_eur(retrib["importe"])}/año{anio_html}</span>'
-        alcalde_html = (f'<span class="alcalde-info">👤 Alcalde/sa: '
+                retrib_html = f' <span class="pol-retrib">💰 {fmt_eur(retrib["importe"])}{_t("/año")}{anio_html}</span>'
+        alcalde_html = (f'<span class="alcalde-info">👤 {_t("Alcalde/sa:")} '
                          f'<b class="pol-nombre">{esc(nombre_alcalde)}</b>{sufijo}{retrib_html}</span>')
 
     concejales = info.get("concejales") or []
@@ -4712,7 +4712,7 @@ def alcalde_concejales_html(municipio, provincia=None):
 
     dd_html = ""
     if concejales:
-        dd_html = (f'<details class="concejales-dd"><summary>Concejales ({len(concejales)})</summary>'
+        dd_html = (f'<details class="concejales-dd"><summary>{_t("Concejales ({n})").format(n=len(concejales))}</summary>'
                    f'<ul>{"".join(items)}</ul></details>')
 
     if not alcalde_html and not dd_html:
@@ -4877,7 +4877,7 @@ def sueldos_concejales_html(municipio, provincia=None):
             f'ayuntamiento ({len(regs)})</summary><ul>{"".join(items)}</ul>'
             f'<div class="pol-retrib-nota">Importes tal como figuran en la fuente oficial enlazada en cada fila, '
             f'con la base y el periodo que ella indica; no se han convertido ni estimado.'
-            + (f' <b>Nota:</b> {esc(_NOTAS_SUELDOS_CONCEJALES[clave])}' if clave in _NOTAS_SUELDOS_CONCEJALES else "")
+            + (f' <b>{_t("Nota:")}</b> {esc(_NOTAS_SUELDOS_CONCEJALES[clave])}' if clave in _NOTAS_SUELDOS_CONCEJALES else "")
             + '</div></details>')
 
 
@@ -11599,8 +11599,10 @@ def buscar_directivo(empresa, nif=""):
 
 # ─── ANÁLISIS ANTICORRUPCIÓN ─────────────────────────────────────────────────
 
-def analizar_riesgo(contratos):
-    """Genera indicadores de riesgo sobre la lista de contratos."""
+def analizar_riesgo(contratos, traducir=False):
+    """Genera indicadores de riesgo sobre la lista de contratos. Lo que se GUARDA (d["alertas"]) va siempre en
+    castellano (traducir=False); la ficha, fuera del castellano, las recalcula al pintar con traducir=True."""
+    _tt = _t if traducir else (lambda texto: texto)
     if not contratos:
         return []
 
@@ -11626,10 +11628,9 @@ def analizar_riesgo(contratos):
             alertas.append({
                 "nivel": "alto",
                 "icono": "⚠️",
-                "texto": (
-                    f"<strong>{esc(emp)}</strong> acumula el {pct}% de las adjudicaciones "
-                    f"({count} de {total} contratos) — posible concentración de contratación."
-                ),
+                "texto": _tt("<strong>{empresa}</strong> acumula el {pct}% de las adjudicaciones ({n} de {total} "
+                            "contratos) — posible concentración de contratación.").format(
+                    empresa=esc(emp), pct=pct, n=count, total=total),
             })
 
     # Empresa con > 50% del importe total
@@ -11641,10 +11642,8 @@ def analizar_riesgo(contratos):
                 alertas.append({
                     "nivel": "medio",
                     "icono": "🔍",
-                    "texto": (
-                        f"<strong>{esc(emp)}</strong> concentra el {pct}% del importe total adjudicado "
-                        f"({fmt_eur(str(imp))})."
-                    ),
+                    "texto": _tt("<strong>{empresa}</strong> concentra el {pct}% del importe total adjudicado "
+                                "({importe}).").format(empresa=esc(emp), pct=pct, importe=fmt_eur(str(imp))),
                 })
 
     # Contratos sin empresa: distingue los declarados SIN adjudicatario por la
@@ -11660,24 +11659,26 @@ def analizar_riesgo(contratos):
         desiertos = sum(1 for c in sin_empresa_lista
                         if c.get("resultado_code") in _RESULTADO_SIN_ADJUDICATARIO)
         no_identificados = sin_empresa - desiertos
-        plural = "s" if sin_empresa != 1 else ""
+        n_contratos = (_tt("{n} contrato") if sin_empresa == 1 else _tt("{n} contratos")).format(n=sin_empresa)
         if desiertos and no_identificados:
             texto = (
-                f"<b>{sin_empresa} contrato{plural}</b> ({pct}%) sin empresa adjudicataria: "
-                f"<b>{desiertos}</b> declarado{'s' if desiertos != 1 else ''} desierto{'s' if desiertos != 1 else ''} "
-                f"o sin adjudicatario por la fuente (renuncia/desistimiento), y "
-                f"<b>{no_identificados}</b> no identificado{'s' if no_identificados != 1 else ''} "
-                f"(hubo adjudicatario pero no se ha podido cruzar)."
+                f"<b>{n_contratos}</b> ({pct}%) " + _tt("sin empresa adjudicataria:") + f" <b>{desiertos}</b> "
+                + (_tt("declarado desierto") if desiertos == 1 else _tt("declarados desiertos")) + " "
+                + _tt("o sin adjudicatario por la fuente (renuncia/desistimiento), y") + f" <b>{no_identificados}</b> "
+                + (_tt("no identificado") if no_identificados == 1 else _tt("no identificados")) + " "
+                + _tt("(hubo adjudicatario pero no se ha podido cruzar).")
             )
         elif desiertos:
             texto = (
-                f"<b>{sin_empresa} contrato{plural}</b> ({pct}%) declarado{plural} desierto{plural} "
-                f"o sin adjudicatario por la fuente (renuncia/desistimiento) — no es una limitación del cruce."
+                f"<b>{n_contratos}</b> ({pct}%) "
+                + (_tt("declarado desierto") if sin_empresa == 1 else _tt("declarados desiertos")) + " "
+                + _tt("o sin adjudicatario por la fuente (renuncia/desistimiento) — no es una limitación del cruce.")
             )
         else:
             texto = (
-                f"<b>{sin_empresa} contrato{plural}</b> ({pct}%) sin empresa adjudicataria identificada "
-                f"(hubo adjudicatario pero no se ha podido cruzar con la empresa)."
+                f"<b>{n_contratos}</b> ({pct}%) "
+                + _tt("sin empresa adjudicataria identificada (hubo adjudicatario pero no se ha podido cruzar con la "
+                     "empresa).")
             )
         alertas.append({"nivel": "opacidad", "icono": "🚩", "texto": texto})
 
@@ -11737,9 +11738,13 @@ def _cache_age_str(municipio, provincia=None):
     if not entry:
         return ""
     mins = int((time.time() - entry["ts"]) / 60)
-    if mins < 2:   return "hace menos de 2 min"
-    if mins < 60:  return f"hace {mins} min"
-    return f"hace {mins // 60}h {mins % 60}min"
+    return _edad_txt(mins)
+
+
+def _edad_txt(mins):
+    if mins < 2:   return _t("hace menos de 2 min")
+    if mins < 60:  return _t("hace {m} min").format(m=mins)
+    return _t("hace {h}h {m}min").format(h=mins // 60, m=mins % 60)
 
 def _cache_invalidate(municipio, provincia=None):
     key = clave_municipio(municipio, provincia)
@@ -13825,7 +13830,7 @@ def _render_alertas(alertas):
             html_parts.append(
                 f'<div class="alerta {nivel}">'
                 f'<span class="alerta-ico">{icono}</span>'
-                f'<div><div class="alerta-titulo">Indicador de riesgo</div>{texto}</div>'
+                f'<div><div class="alerta-titulo">{_t("Indicador de riesgo")}</div>{texto}</div>'
                 f'</div>'
             )
         html_parts.append('</div>')
@@ -14855,11 +14860,23 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 </body></html>"""
 
 
+def _cargo_txt(cargo):
+    """Cargos que pone la propia app (no los del Registro Mercantil, que son datos) en el idioma de la petición."""
+    return _t("Autónomo / Persona física") if cargo == "Autónomo / Persona física" else cargo
+
+
+def _estado_txt(estado):
+    return {"Adjudicado": _t("Adjudicado"), "Resuelto": _t("Resuelto"), "Formalizado": _t("Formalizado"),
+            "En ejecución": _t("En ejecución")}.get(estado, estado)
+
+
 def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=None):
     """Genera la fila <tr> de un contrato. Reutilizada por la vista de
     municipio y por los resultados de búsqueda global."""
     imp = c.get("importe", "") or "No localizado"
     imp_cls = "importe" if imp != "No localizado" else "importe noloc"
+    if imp == "No localizado":
+        imp = _t("No localizado")
     try:
         if c.get("importe_num", 0) and float(c.get("importe_num", 0)) > 100000:
             imp_cls += " big"
@@ -14873,64 +14890,62 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
             if match["tipo"] == "local":
                 match_html = (
                     f'<div class="cargo-match cargo-match-local">'
-                    f'⚠️ Coincidencia de nombre — verificar<br>'
-                    f'<span class="cargo-match-detalle">Mismo nombre y apellidos que {esc(match["cargo"].lower())} '
-                    f'de {esc(match["municipio"])}. No implica necesariamente relación — dato para verificar.</span>'
+                    f'⚠️ {_t("Coincidencia de nombre — verificar")}<br>'
+                    f'<span class="cargo-match-detalle">{_t("Mismo nombre y apellidos que {cargo} de {municipio}. No implica necesariamente relación — dato para verificar.").format(cargo=esc(match["cargo"].lower()), municipio=esc(match["municipio"]))}</span>'
                     f'</div>'
                 )
             else:
                 match_html = (
                     f'<div class="cargo-match cargo-match-regional">'
-                    f'🔎 Coincidencia de nombre (otro municipio) — verificar<br>'
-                    f'<span class="cargo-match-detalle">Mismo nombre y apellidos que {esc(match["cargo"].lower())} '
-                    f'de {esc(match["municipio"])}. No implica necesariamente relación — dato para verificar.</span>'
+                    f'🔎 {_t("Coincidencia de nombre (otro municipio) — verificar")}<br>'
+                    f'<span class="cargo-match-detalle">{_t("Mismo nombre y apellidos que {cargo} de {municipio}. No implica necesariamente relación — dato para verificar.").format(cargo=esc(match["cargo"].lower()), municipio=esc(match["municipio"]))}</span>'
                     f'</div>'
                 )
         else:
             match_html = ""
         dir_html = (f'<div class="directivo">{esc(directivo)}</div>'
-                     f'<div class="cargo">{esc(c.get("cargo",""))}</div>{match_html}')
+                     f'<div class="cargo">{esc(_cargo_txt(c.get("cargo","")))}</div>{match_html}')
     else:
         empresa_q = quote_plus(c.get("empresa", ""))
         registro_label, registro_url = _registro_correcto(c.get("nif", ""))
         rm_link = (f'<a href="{esc(registro_url)}" target="_blank" rel="noopener" '
-                   f'title="Buscar {esc(c.get("empresa",""))} en el {esc(registro_label)}">'
+                   f'title="{_t("Buscar {empresa} en el {registro}").format(empresa=esc(c.get("empresa","")), registro=esc(registro_label))}">'
                    f'{esc(registro_label)} ↗</a>') if empresa_q else ""
-        nota = ('<span class="noloc-nota">Empresa sin datos registrales públicos</span>'
+        nota = (f'<span class="noloc-nota">{_t("Empresa sin datos registrales públicos")}</span>'
                 if c.get("rm_agotado") else "")
-        dir_html = (f'<span class="noloc-warn">⚠️ No localizado {rm_link}</span>{nota}')
+        dir_html = (f'<span class="noloc-warn">⚠️ {_t("No localizado")} {rm_link}</span>{nota}')
 
     est = c.get("estado", "")
-    est_label = {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(est, est)
+    est_label = _estado_txt({"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(est, est))
     url = c.get("url", "")
     fuente = c.get("fuente", "PLACE")
 
     if fuente == "BORM":
         borm_html_url = c.get("borm_html_url", "")
         html_link = (f' <a class="link borm-link" href="{esc(borm_html_url)}" target="_blank" '
-                     f'title="Ver HTML en BORM">HTML ↗</a>') if borm_html_url else ""
+                     f'title="{_t("Ver HTML en BORM")}">{_t("HTML ↗")}</a>') if borm_html_url else ""
         link_html = (f'<a class="link borm-link" href="{esc(url)}" target="_blank" '
-                     f'title="Ver PDF en BORM">BORM PDF ↗</a>{html_link}')
+                     f'title="{_t("Ver PDF en BORM")}">{_t("BORM PDF ↗")}</a>{html_link}')
     elif fuente == "PSCP" and url:
         link_html = (f'<a class="link pscp-link" href="{esc(url)}" target="_blank" '
-                     f'title="Fitxa a contractaciopublica.cat">PSCP ↗</a>')
+                     f'title="{_t("Fitxa a contractaciopublica.cat")}">{_t("PSCP ↗")}</a>')
     elif url:
-        link_html = f'<a class="link" href="{esc(url)}" target="_blank" title="Ficha en PLACE">PLACE ↗</a>'
+        link_html = f'<a class="link" href="{esc(url)}" target="_blank" title="{_t("Ficha en PLACE")}">{_t("PLACE ↗")}</a>'
     else:
         link_html = ""
 
     borm_url = c.get("borm_url", "")
     borm_extra = (f' <a class="link borm-link" href="{esc(borm_url)}" target="_blank" '
-                  f'title="Ver publicación BORM">BORM ↗</a>') if borm_url else ""
+                  f'title="{_t("Ver publicación BORM")}">{_t("BORM ↗")}</a>') if borm_url else ""
 
     lid = c.get("licitacion_id", "")
     titulo = c.get("titulo", "")
     icono = _icono_contrato(titulo)
 
     if lid and titulo:
-        contrato_line = f'Licit. {esc(lid)} — {esc(titulo[:110])}'
+        contrato_line = f'{_t("Licit.")} {esc(lid)} — {esc(titulo[:110])}'
     elif lid:
-        contrato_line = f'Licit. {esc(lid)}'
+        contrato_line = f'{_t("Licit.")} {esc(lid)}'
     else:
         contrato_line = esc(titulo[:110])
     contrato_html = (f'<div class="contrato-title"><span class="icon-tipo">{icono}</span>{contrato_line}</div>'
@@ -16282,7 +16297,7 @@ def _render_fila_fondo_ue(f):
         ff = f.get("fecha_fin", "")[:10]
         fechas = f'{esc(fi)}{" → " + esc(ff) if ff else ""}'
 
-    link_html = (f'<a class="fue-link" href="{esc(f["url"])}" target="_blank" rel="noopener">Ver proyecto ↗</a>'
+    link_html = (f'<a class="fue-link" href="{esc(f["url"])}" target="_blank" rel="noopener">{_t("Ver proyecto ↗")}</a>'
                  if f.get("url") else "")
 
     return f"""<tr>
@@ -16629,12 +16644,15 @@ def _nota_base_importe_cm(menors):
     if fuentes <= _FUENTES_CM_SIN_IVA:
         # Antes decía "(PLACE)" para todas: falso para València, Alicante, Leganés, Torrent, La Laguna y
         # Sevilla, que son portales propios -- la procedencia exacta ya la da la nota de cada fuente.
-        return " · sin IVA", ('<div class="cm-base-nota">Importes sin IVA: es el importe adjudicado '
-                              'que publica la fuente oficial.</div>') + avisos
+        return " · " + _t("sin IVA"), ('<div class="cm-base-nota">'
+                                        + _t("Importes sin IVA: es el importe adjudicado que publica la fuente oficial.")
+                                        + '</div>') + avisos
     etiquetas = ", ".join(sorted(_FUENTE_CM_LABEL.get(f, f) for f in sin_iva))
-    return "", ('<div class="cm-base-nota">Ojo con la base de los importes: las filas de '
-                f'«{esc(etiquetas)}» van sin IVA (importe adjudicado según PLACE); las demás '
-                'filas pueden incluir IVA. El total de arriba suma ambas bases.</div>') + avisos
+    return "", ('<div class="cm-base-nota">'
+                + _t("Ojo con la base de los importes: las filas de «{fuentes}» van sin IVA (importe adjudicado según "
+                     "PLACE); las demás filas pueden incluir IVA. El total de arriba suma ambas bases.").format(
+                    fuentes=esc(etiquetas))
+                + '</div>') + avisos
 
 
 # Notas visibles en la fila de contratos menores concretos cuyo dato de origen
@@ -16759,12 +16777,14 @@ def _render_fila_contrato_menor(r):
     if match:
         cls = "cargo-match-local" if match["tipo"] == "local" else "cargo-match-regional"
         icono = "⚠️" if match["tipo"] == "local" else "🔎"
-        otro_muni = "" if match["tipo"] == "local" else " (otro municipio)"
+        aviso = (_t("Coincidencia de nombre — verificar") if match["tipo"] == "local"
+                 else _t("Coincidencia de nombre (otro municipio) — verificar"))
+        detalle = _t("Mismo nombre y apellidos que {cargo} de {municipio}. No implica necesariamente relación — dato "
+                     "para verificar.").format(cargo=esc(match["cargo"].lower()), municipio=esc(match["municipio"]))
         match_html = (
             f'<div class="cargo-match {cls}">'
-            f'{icono} Coincidencia de nombre{otro_muni} — verificar<br>'
-            f'<span class="cargo-match-detalle">Mismo nombre y apellidos que {esc(match["cargo"].lower())} '
-            f'de {esc(match["municipio"])}. No implica necesariamente relación — dato para verificar.</span>'
+            f'{icono} {aviso}<br>'
+            f'<span class="cargo-match-detalle">{detalle}</span>'
             f'</div>'
         )
     else:
@@ -16772,7 +16792,7 @@ def _render_fila_contrato_menor(r):
 
     if dir_nombre:
         dir_html = (f'<div class="directivo">{esc(dir_nombre)}</div>'
-                     f'<div class="cargo">{esc(dir_cargo)}</div>{match_html}')
+                     f'<div class="cargo">{esc(_cargo_txt(dir_cargo))}</div>{match_html}')
     else:
         # Sin NIF (ninguna fuente de menores lo publica, ver
         # enriquecer_directivos_contratos_menores), así que _registro_correcto("")
@@ -16781,30 +16801,30 @@ def _render_fila_contrato_menor(r):
         empresa_q = quote_plus(adjudicatari)
         registro_label, registro_url = _registro_correcto(r.get("nif", ""))
         rm_link = (f'<a href="{esc(registro_url)}" target="_blank" rel="noopener" '
-                   f'title="Buscar {esc(adjudicatari)} en el {esc(registro_label)}">'
+                   f'title="{_t("Buscar {empresa} en el {registro}").format(empresa=esc(adjudicatari), registro=esc(registro_label))}">'
                    f'{esc(registro_label)} ↗</a>') if empresa_q else ""
-        nota = ('<span class="noloc-nota">Empresa sin datos registrales públicos</span>'
+        nota = (f'<span class="noloc-nota">{_t("Empresa sin datos registrales públicos")}</span>'
                 if _dir_cache_agotado(adjudicatari, "") else "")
-        dir_html = (f'<span class="noloc-warn">⚠️ No localizado {rm_link}</span>{nota}')
+        dir_html = (f'<span class="noloc-warn">⚠️ {_t("No localizado")} {rm_link}</span>{nota}')
 
     nota_txt = _NOTAS_CONTRATO_MENOR.get(r.get("id", ""))
     if not nota_txt and fuente == "euskadi" and (r.get("import_num") or 0) > EUSKADI_MENOR_IMPORTE_SOSPECHOSO:
-        nota_txt = ("Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato "
-                    "menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica "
-                    "un enlace por contrato para comprobarlo directamente, así que se muestra tal cual.")
+        nota_txt = _t("Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato "
+                      "menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica "
+                      "un enlace por contrato para comprobarlo directamente, así que se muestra tal cual.")
     if not nota_txt and fuente == "place-menores" and (r.get("import_num") or 0) > PLACE_MENOR_IMPORTE_IMPOSIBLE:
-        nota_txt = ("Importe sin IVA por encima del máximo legal de cualquier contrato menor (40.000 € en obras, "
-                    "15.000 € en el resto) según el conjunto de datos oficial de PLACE. Probablemente un error de "
-                    "origen (dígitos de más) o un contrato que no es menor; se muestra tal cual, sin corregirlo.")
+        nota_txt = _t("Importe sin IVA por encima del máximo legal de cualquier contrato menor (40.000 € en obras, "
+                      "15.000 € en el resto) según el conjunto de datos oficial de PLACE. Probablemente un error de "
+                      "origen (dígitos de más) o un contrato que no es menor; se muestra tal cual, sin corregirlo.")
     if not nota_txt and fuente == "madrid_capital" and (r.get("import_num") or 0) > MADRID_CAPITAL_MENOR_IMPORTE_ALTO:
-        nota_txt = ("Importe por encima del techo legal habitual de un contrato menor (dataset oficial del "
-                    "Ayuntamiento de Madrid). Probablemente un \"contrato privado\" (régimen distinto, sin ese "
-                    "tope) incluido en el mismo dataset -- no necesariamente un error.")
+        nota_txt = _t('Importe por encima del techo legal habitual de un contrato menor (dataset oficial del '
+                      'Ayuntamiento de Madrid). Probablemente un "contrato privado" (régimen distinto, sin ese '
+                      'tope) incluido en el mismo dataset -- no necesariamente un error.')
     if not nota_txt and fuente == "zaragoza" and (r.get("import_num") or 0) > ZARAGOZA_MENOR_IMPORTE_ALTO:
-        nota_txt = ("Importe muy por encima del techo legal de un contrato menor, pese a venir marcado como tal "
-                    "por la API oficial del Ayuntamiento de Zaragoza. Probablemente un error de etiquetado de "
-                    "origen (por ejemplo, un contrato de obras por lotes de varios millones de euros) -- se "
-                    "muestra tal cual, sin corregirlo.")
+        nota_txt = _t("Importe muy por encima del techo legal de un contrato menor, pese a venir marcado como tal "
+                      "por la API oficial del Ayuntamiento de Zaragoza. Probablemente un error de etiquetado de "
+                      "origen (por ejemplo, un contrato de obras por lotes de varios millones de euros) -- se "
+                      "muestra tal cual, sin corregirlo.")
     nota_fila = f'<span class="cm-nota">⚠️ {esc(nota_txt)}</span>' if nota_txt else ""
 
     return f"""<tr>
@@ -16900,18 +16920,18 @@ def render_comentarios_html(tipo, clave_raw, redirect_url, titulo="esta ficha"):
             for c in comentarios
         )
     else:
-        filas = '<div class="empty" style="padding:14px 0">Todavía no hay comentarios. Sé el primero.</div>'
+        filas = f'<div class="empty" style="padding:14px 0">{_t("Todavía no hay comentarios. Sé el primero.")}</div>'
 
     return f"""<details class="comentarios-card" id="comentarios" open>
-      <summary>💬 Comentarios <span class="badge">{len(comentarios)}</span></summary>
+      <summary>💬 {_t("Comentarios")} <span class="badge">{len(comentarios)}</span></summary>
       <div class="comentarios-list">{filas}</div>
       <form method="POST" action="/comentario" class="comentario-form">
         <input type="hidden" name="tipo" value="{esc(tipo)}">
         <input type="hidden" name="clave" value="{esc(clave_raw)}">
         <input type="hidden" name="redirect" value="{esc(redirect_url)}">
-        <input name="nombre" maxlength="60" placeholder="Tu nombre (opcional)">
+        <input name="nombre" maxlength="60" placeholder="{_t("Tu nombre (opcional)")}">
         <textarea name="texto" maxlength="1000" required placeholder="Deja tu comentario sobre {esc(titulo)}…"></textarea>
-        <button type="submit" class="btn btn-primary">Enviar comentario</button>
+        <button type="submit" class="btn btn-primary">{_t("Enviar comentario")}</button>
       </form>
     </details>"""
 
@@ -16937,17 +16957,18 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     stats = ""
     if datos:
         stats = f"""<div class="stats-bar">
-          <div class="stat"><span>{total_m}</span>Municipios</div>
-          <div class="stat"><span>{total_c}</span>Contratos</div>
-          <div class="stat"><span>{total_e}</span>Empresas únicas</div>
-          <div class="stat"><span>{fmt_eur(str(total_imp))}</span>Importe total</div>
+          <div class="stat"><span>{total_m}</span>{_t("Municipios")}</div>
+          <div class="stat"><span>{total_c}</span>{_t("Contratos")}</div>
+          <div class="stat"><span>{total_e}</span>{_t("Empresas únicas")}</div>
+          <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
         </div>"""
 
-    back_html = f'<span class="back-link"><a href="/{q_prov_first}">← Ver todos los municipios</a></span>'
+    back_html = f'<span class="back-link"><a href="/{q_prov_first}">← {_t("Ver todos los municipios")}</a></span>'
 
     cards = ""
     for d in datos:
-        alertas_html = _render_alertas(d.get("alertas", []))
+        alertas_html = _render_alertas(d.get("alertas", []) if _i18n_idioma() == "es"
+                                       else analizar_riesgo(d.get("contratos", []), traducir=True))
 
         muni_name_d = d.get("municipio", "")
         contratos_all = d.get("contratos", [])
@@ -16964,7 +16985,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                          for c in contratos_shown)
 
         if not filas:
-            filas = '<tr><td colspan="4" class="empty">Sin contratos adjudicados encontrados para este municipio</td></tr>'
+            filas = f'<tr><td colspan="4" class="empty">{_t("Sin contratos adjudicados encontrados para este municipio")}</td></tr>'
 
         n_place = sum(1 for c in contratos_all if c.get("fuente", "PLACE") == "PLACE")
         n_borm  = sum(1 for c in contratos_all if c.get("fuente") == "BORM")
@@ -16975,15 +16996,15 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         if n_pscp:  fuentes_desc.append(f"PSCP: {n_pscp}")
         fuentes_str = " · ".join(fuentes_desc) if fuentes_desc else "—"
         if provincia in PROVINCIAS_CATALUNYA:
-            fuentes_label = "Fuente: PSCP (Generalitat de Catalunya)"
+            fuentes_label = _t("Fuente: PSCP (Generalitat de Catalunya)")
         elif provincia in PROVINCIAS_PAIS_VASCO:
-            fuentes_label = "Fuente: KontratazioA (Gobierno Vasco)"
+            fuentes_label = _t("Fuente: KontratazioA (Gobierno Vasco)")
         elif provincia in PROVINCIAS_NAVARRA:
-            fuentes_label = "Fuente: Portal de Contratación de Navarra (Gobierno de Navarra)"
+            fuentes_label = _t("Fuente: Portal de Contratación de Navarra (Gobierno de Navarra)")
         elif provincia == "murcia":
-            fuentes_label = "Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia)"
+            fuentes_label = _t("Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia)")
         else:
-            fuentes_label = "Fuente: PLACE (Ministerio de Hacienda)"
+            fuentes_label = _t("Fuente: PLACE (Ministerio de Hacienda)")
 
         muni_name     = muni_name_d
         muni_enc      = quote_plus(muni_name)
@@ -16992,7 +17013,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                                                         or provincia in PROVINCIAS_NAVARRA)
                                                     else place_profile_url(muni_name))
         profile_html  = (f'<a href="{esc(profile_url)}" target="_blank" class="link" '
-                          f'title="Perfil contratante en PLACE" style="font-size:11px">Perfil PLACE ↗</a>'
+                          f'title="{_t("Perfil contratante en PLACE")}" style="font-size:11px">{_t("Perfil PLACE ↗")}</a>'
                           if profile_url else "")
         # Cuentas anuales (Plataforma de Rendición de Cuentas) -- no se
         # muestra en pseudo-municipios ("Región de Murcia", AGE, UMU...): no
@@ -17005,18 +17026,16 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                 fuente_pob = POBLACION_FUENTE_URL.get(pob_info.get("provincia", ""), "")
                 if fuente_pob:
                     habitantes_html = (f'<a href="{esc(fuente_pob)}" target="_blank" rel="noopener" '
-                                        f'class="cuentas-link" title="Población oficial a 1 de enero de '
-                                        f'{esc(pob_info.get("anio", ""))} (INE, Padrón Municipal)">'
-                                        f'👥 {fmt_num(pob_info["poblacion"])} hab. ↗</a>')
+                                        f'class="cuentas-link" title="{_t("Población oficial a 1 de enero de {anio} (INE, Padrón Municipal)").format(anio=esc(pob_info.get("anio", "")))}">'
+                                        f'👥 {_t("{n} hab.").format(n=fmt_num(pob_info["poblacion"]))} ↗</a>')
 
         cuentas_html = ""
         if not es_pseudo_municipio(muni_name):
             cuentas_url = rendicion_cuentas_url(muni_name, d.get("provincia", provincia))
             if cuentas_url:
                 cuentas_html = (f'<a href="{esc(cuentas_url)}" target="_blank" rel="noopener" '
-                                 f'class="cuentas-link" title="Cuenta General y resultado de las '
-                                 f'cuentas anuales en la Plataforma de Rendición de Cuentas">'
-                                 f'📊 Cuentas anuales ↗</a>')
+                                 f'class="cuentas-link" title="{_t("Cuenta General y resultado de las cuentas anuales en la Plataforma de Rendición de Cuentas")}">'
+                                 f'📊 {_t("Cuentas anuales")} ↗</a>')
         # Importe (saldo no financiero, superávit/déficit real del último
         # ejercicio remitido) y deuda viva municipal -- Ministerio de
         # Hacienda, ver actualizar_deuda_y_liquidaciones.py. No todos los
@@ -17030,37 +17049,34 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                 ejercicio_saldo = saldo_info.get("ejercicio", "")
                 importe_saldo = saldo_info["importe_eur"]
                 fuente_saldo = saldo_info.get("fuente_url", "")
-                etiqueta = "Superávit" if importe_saldo >= 0 else "Déficit"
+                etiqueta = _t("Superávit") if importe_saldo >= 0 else _t("Déficit")
                 saldo_html = (f'<a href="{esc(fuente_saldo)}" target="_blank" rel="noopener" '
-                               f'class="cuentas-link" title="Saldo presupuestario no financiero '
-                               f'({etiqueta.lower()}) del ejercicio {esc(ejercicio_saldo)}, '
-                               f'Ministerio de Hacienda">'
+                               f'class="cuentas-link" title="{_t("Saldo presupuestario no financiero ({tipo}) del ejercicio {ejercicio}, Ministerio de Hacienda").format(tipo=etiqueta.lower(), ejercicio=esc(ejercicio_saldo))}">'
                                f'💶 {etiqueta} {esc(ejercicio_saldo)}: {fmt_eur(abs(importe_saldo))} ↗</a>')
             deuda_info = DEUDA_VIVA.get(clave_municipio(muni_name, d.get("provincia", provincia)))
             if deuda_info and DEUDA_VIVA_FUENTE_URL:
                 pob_info = POBLACION.get(clave_municipio(muni_name, d.get("provincia", provincia)))
                 por_habitante = ""
                 if pob_info and pob_info.get("poblacion"):
-                    por_habitante = f' ({fmt_eur(deuda_info["deuda_eur"] / pob_info["poblacion"])}/hab.)'
+                    por_habitante = f' ({fmt_eur(deuda_info["deuda_eur"] / pob_info["poblacion"])}{_t("/hab.")})'
                 deuda_html = (f'<a href="{esc(DEUDA_VIVA_FUENTE_URL)}" target="_blank" rel="noopener" '
-                               f'class="cuentas-link" title="Deuda viva municipal a 31/12, '
-                               f'Ministerio de Hacienda">'
-                               f'🏦 Deuda viva: {fmt_eur(deuda_info["deuda_eur"])}{por_habitante} ↗</a>')
+                               f'class="cuentas-link" title="{_t("Deuda viva municipal a 31/12, Ministerio de Hacienda")}">'
+                               f'🏦 {_t("Deuda viva:")} {fmt_eur(deuda_info["deuda_eur"])}{por_habitante} ↗</a>')
         age_str       = _cache_age_str(muni_name, d.get("provincia", provincia))
         ts            = d.get("timestamp", 0)
         if not age_str and ts:
             mins = int((time.time() - ts) / 60)
-            age_str = (f"hace {mins} min" if mins < 60
-                       else f"hace {mins//60}h {mins%60}min")
-        age_html = f'<span style="font-size:11px;color:var(--dim);font-family:\'IBM Plex Mono\',monospace"> · datos {esc(age_str)}</span>' if age_str else ""
+            age_str = (_t("hace {m} min").format(m=mins) if mins < 60
+                       else _t("hace {h}h {m}min").format(h=mins // 60, m=mins % 60))
+        age_html = f'<span style="font-size:11px;color:var(--dim);font-family:\'IBM Plex Mono\',monospace"> · {_t("datos {edad}").format(edad=esc(age_str))}</span>' if age_str else ""
 
         # Paginación
         pag_html = ""
         if total_muni > PAGE_SIZE:
             if is_paged:
-                prev_link = (f'<a href="/?muni={muni_enc}&pag={page-1}{q_prov}" class="pag-btn">← Anterior</a>'
+                prev_link = (f'<a href="/?muni={muni_enc}&pag={page-1}{q_prov}" class="pag-btn">← {_t("Anterior")}</a>'
                              if page > 1 else '')
-                next_link = (f'<a href="/?muni={muni_enc}&pag={page+1}{q_prov}" class="pag-btn">Siguiente →</a>'
+                next_link = (f'<a href="/?muni={muni_enc}&pag={page+1}{q_prov}" class="pag-btn">{_t("Siguiente →")}</a>'
                              if page < total_pages else '')
                 pag_html = (f'<div class="pagination">'
                             f'<span class="pag-info">Página {page} de {total_pages} · {total_muni} contratos</span>'
@@ -17068,7 +17084,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                             f'</div>')
             else:
                 pag_html = (f'<div class="pag-more">Mostrando los primeros {PAGE_SIZE} de {total_muni} contratos. '
-                            f'<a href="/?muni={muni_enc}&pag=1{q_prov}">Ver todos →</a></div>')
+                            f'<a href="/?muni={muni_enc}&pag=1{q_prov}">{_t("Ver todos →")}</a></div>')
 
         # Fondos y proyectos UE cruzados con este municipio (ver
         # _cruzar_municipio_fondo_ue) -- solo se muestra si hay al menos uno,
@@ -17081,17 +17097,17 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             filas_fue = "".join(_render_fila_fondo_ue(f) for f in fondos_ue_muni)
             fondos_ue_html = f"""<div class="fue-card" style="margin-top:14px">
             <div class="section-title" style="color:var(--yellow);margin:0 0 8px">
-              🇪🇺 Fondos y proyectos financiados por la UE
+              🇪🇺 {_t("Fondos y proyectos financiados por la UE")}
               <span class="badge" style="background:rgba(88,166,255,.15);color:var(--yellow);border-color:rgba(88,166,255,.3)">
                 {len(fondos_ue_muni)} · {fmt_eur(str(total_fue))}
               </span>
             </div>
             <table>
               <tr>
-                <th>Proyecto / Beneficiario</th>
-                <th>Importe</th>
-                <th>Fuente / Programa</th>
-                <th>Fechas</th>
+                <th>{_t("Proyecto / Beneficiario")}</th>
+                <th>{_t("Importe")}</th>
+                <th>{_t("Fuente / Programa")}</th>
+                <th>{_t("Fechas")}</th>
               </tr>
               {filas_fue}
             </table>
@@ -17135,9 +17151,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             pag_cm_html = ""
             if total_cm_n > PAGE_SIZE:
                 if is_paged:
-                    prev_cm = (f'<a href="/?muni={muni_enc}&pag={page}&pag_cm={page_cm-1}{q_prov}" class="pag-btn">← Anterior</a>'
+                    prev_cm = (f'<a href="/?muni={muni_enc}&pag={page}&pag_cm={page_cm-1}{q_prov}" class="pag-btn">← {_t("Anterior")}</a>'
                                if page_cm > 1 else '')
-                    next_cm = (f'<a href="/?muni={muni_enc}&pag={page}&pag_cm={page_cm+1}{q_prov}" class="pag-btn">Siguiente →</a>'
+                    next_cm = (f'<a href="/?muni={muni_enc}&pag={page}&pag_cm={page_cm+1}{q_prov}" class="pag-btn">{_t("Siguiente →")}</a>'
                                if page_cm < total_pages_cm else '')
                     pag_cm_html = (f'<div class="pagination">'
                                    f'<span class="pag-info">Página {page_cm} de {total_pages_cm} · {total_cm_n} contratos</span>'
@@ -17145,13 +17161,13 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                                    f'</div>')
                 else:
                     pag_cm_html = (f'<div class="pag-more">Mostrando los primeros {PAGE_SIZE} de {total_cm_n}. '
-                                   f'<a href="/?muni={muni_enc}&pag_cm=1{q_prov}">Ver todos →</a></div>')
+                                   f'<a href="/?muni={muni_enc}&pag_cm=1{q_prov}">{_t("Ver todos →")}</a></div>')
 
             abierto = " open" if page_cm > 1 else ""
             sufijo_iva, nota_base_cm = _nota_base_importe_cm(menors_muni)
             contratos_menors_html = f"""<details class="cm-card"{abierto}>
                 <summary>
-                  📋 Contratos menores (fuentes locales del ayuntamiento)
+                  📋 {_t("Contratos menores (fuentes locales del ayuntamiento)")}
                   <span class="badge" style="background:rgba(240,136,62,.15);color:var(--accent);border-color:rgba(240,136,62,.3)">
                     {total_cm_n} · {fmt_eur(str(total_cm))}{sufijo_iva}
                   </span>
@@ -17160,15 +17176,15 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                 <div class="tbl-scroll">
                   <table>
                     <tr>
-                      <th>Adjudicatario / Objeto</th>
-                      <th>Importe</th>
-                      <th>Directivo</th>
-                      <th>Tipo</th>
-                      <th>Fecha</th>
+                      <th>{_t("Adjudicatario / Objeto")}</th>
+                      <th>{_t("Importe")}</th>
+                      <th>{_t("Directivo")}</th>
+                      <th>{_t("Tipo")}</th>
+                      <th>{_t("Fecha")}</th>
                     </tr>
                     {filas_cm}
                   </table>
-                  <span class="scroll-hint" aria-hidden="true">sigue <span class="scroll-hint-arrow">›</span></span>
+                  <span class="scroll-hint" aria-hidden="true">{_t("sigue")} <span class="scroll-hint-arrow">›</span></span>
                 </div>
                 {pag_cm_html}
               </details>"""
@@ -17190,15 +17206,19 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             # registro único, a diferencia de las licitaciones formales.
             organismo_d = _nombre_organismo_municipal(muni_name_d, provincia)
             transp_url_cm = f"https://www.google.com/search?q={quote_plus(organismo_d + ' transparencia contratos menores')}"
+            enlace_ley = (f'<a href="https://www.boe.es/buscar/act.php?id=BOE-A-2013-12887" target="_blank" '
+                          f'class="link">{_t("Ley 19/2013, de transparencia")}</a>')
+            enlace_portal = (f'<a href="{esc(transp_url_cm)}" target="_blank" class="link">'
+                             f'{_t("buscar el portal de transparencia de {organismo} ↗").format(organismo=esc(organismo_d))}</a>')
+            texto_cm = _t("<b>Contratos menores:</b> no hay registros de este tipo para {municipio} en las fuentes que "
+                          "consultamos. Los contratos menores no siempre tienen obligación legal de publicación "
+                          "centralizada -- muchos ayuntamientos los tramitan sin subirlos a ningún registro abierto que "
+                          "esta web pueda consultar, así que esto no significa necesariamente que no existan. Cualquier "
+                          "vecino o concejal puede solicitarlos formalmente al ayuntamiento por la vía de acceso a la "
+                          "información pública ({ley}) -- {portal}").format(
+                municipio=esc(muni_name_d), ley=enlace_ley, portal=enlace_portal)
             contratos_menors_html = f"""<div class="cm-aviso">
-                📋 <b>Contratos menores:</b> no hay registros de este tipo para {esc(muni_name_d)} en las
-                fuentes que consultamos. Los contratos menores no siempre tienen obligación legal de
-                publicación centralizada -- muchos ayuntamientos los tramitan sin subirlos a ningún
-                registro abierto que esta web pueda consultar, así que esto no significa necesariamente
-                que no existan. Cualquier vecino o concejal puede solicitarlos formalmente al
-                ayuntamiento por la vía de acceso a la información pública
-                (<a href="https://www.boe.es/buscar/act.php?id=BOE-A-2013-12887" target="_blank" class="link">Ley 19/2013, de transparencia</a>)
-                -- <a href="{esc(transp_url_cm)}" target="_blank" class="link">buscar el portal de transparencia de {esc(organismo_d)} ↗</a>
+                📋 {texto_cm}
               </div>"""
 
         cards += f"""<div class="muni-card">
@@ -17213,9 +17233,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
               <form method="POST" action="/actualizar" style="display:inline">
                 <input type="hidden" name="municipio" value="{esc(muni_name)}">
                 <input type="hidden" name="provincia" value="{esc(provincia)}">
-                <button type="submit" class="btn" style="padding:3px 10px;font-size:11px;background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);">↻ Actualizar</button>
+                <button type="submit" class="btn" style="padding:3px 10px;font-size:11px;background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);">↻ {_t("Actualizar")}</button>
               </form>
-              <span class="badge">{d.get('total_contratos', 0)} contratos</span>
+              <span class="badge">{_t("{n} contratos").format(n=d.get('total_contratos', 0))}</span>
             </div>
           </div>
           <div class="source-bar">{esc(fuentes_label)} · {fuentes_str}{age_html}</div>
@@ -17225,14 +17245,14 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           <div class="tbl-scroll">
             <table>
               <tr>
-                <th>Empresa adjudicataria / Contrato</th>
-                <th>Importe</th>
-                <th>Directivo / Cargo</th>
-                <th>Estado / Fuente</th>
+                <th>{_t("Empresa adjudicataria / Contrato")}</th>
+                <th>{_t("Importe")}</th>
+                <th>{_t("Directivo / Cargo")}</th>
+                <th>{_t("Estado / Fuente")}</th>
               </tr>
               {filas}
             </table>
-            <span class="scroll-hint" aria-hidden="true">sigue <span class="scroll-hint-arrow">›</span></span>
+            <span class="scroll-hint" aria-hidden="true">{_t("sigue")} <span class="scroll-hint-arrow">›</span></span>
           </div>
           {pag_html}
           {it_widget_html}
@@ -17242,15 +17262,16 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         </div>"""
 
     if not cards:
-        cards = '<div class="empty">Municipio no encontrado.</div>'
+        cards = f'<div class="empty">{_t("Municipio no encontrado.")}</div>'
 
     muni_display = datos[0].get("municipio", "") if datos else muni_filter
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
     fuente_desc = "PSCP" if provincia in PROVINCIAS_CATALUNYA else "PLACE"
-    titulo = f"Contratos públicos de {muni_display}" if muni_display else "Contratos Públicos"
-    descripcion = (f"Contratos públicos adjudicados en {muni_display} ({label}): "
-                   f"empresa adjudicataria, importe y directivo/administrador. "
-                   f"Datos oficiales {fuente_desc} + Registro Mercantil.") if muni_display else ""
+    titulo = (_t("Contratos públicos de {municipio}").format(municipio=muni_display) if muni_display
+              else _t("Contratos Públicos"))
+    descripcion = _t("Contratos públicos adjudicados en {municipio} ({territorio}): empresa adjudicataria, importe y "
+                     "directivo/administrador. Datos oficiales {fuente} + Registro Mercantil.").format(
+        municipio=muni_display, territorio=label, fuente=fuente_desc) if muni_display else ""
     # og_path/canonical propio de esta ficha (2026-09-20, ver fix de
     # _page_shell) -- antes de este fix TODAS las fichas de municipio
     # apuntaban su og:url/canonical a "/" (la home), no a sí mismas.
@@ -17263,11 +17284,11 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     ejemplo_muni = _EJEMPLO_MUNI_POR_PROVINCIA.get(provincia, _EJEMPLO_MUNI_POR_PROVINCIA["murcia"])
     body = f"""{back_html}
   <div class="search-bar">
-    <label>Municipio</label>
+    <label>{_t("Municipio")}</label>
     <form method="POST" action="/buscar" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
       <input name="municipio" placeholder="Ej: {ejemplo_muni}" required>
       <input type="hidden" name="provincia" value="{esc(provincia)}">
-      <button type="submit" class="btn btn-primary">Buscar contratos</button>
+      <button type="submit" class="btn btn-primary">{_t("Buscar contratos")}</button>
     </form>
   </div>
   {stats}
@@ -17467,12 +17488,12 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8, provincia=None):
                    + _fila(posicion_actual, fila_actual, True))
 
     return f"""<details class="it-widget">
-        <summary>🏅 Índice de Transparencia
+        <summary>🏅 {_t("Índice de Transparencia")}
           <span class="badge">{fila_actual["indice"]:.1f}/100 · #{posicion_actual} de {total}</span>{_it_info_btn_html()}
         </summary>
         <div class="it-widget-body">
           <div class="rk-sidebar-list">{items}</div>
-          <a class="rk-sidebar-ver btn-ver" href="/rankings#indice-transparencia">Ver ranking completo →</a>
+          <a class="rk-sidebar-ver btn-ver" href="/rankings#indice-transparencia">{_t("Ver ranking completo →")}</a>
         </div>
       </details>"""
 

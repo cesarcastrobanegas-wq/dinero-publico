@@ -29,7 +29,7 @@ def _extraer():
         ruta = os.path.join(BASE, fuente)
         arbol = ast.parse(open(ruta, encoding="utf-8").read(), filename=fuente)
         for nodo in ast.walk(arbol):
-            if isinstance(nodo, ast.Call) and isinstance(nodo.func, ast.Name) and nodo.func.id in ("_t", "_td"):
+            if isinstance(nodo, ast.Call) and isinstance(nodo.func, ast.Name) and nodo.func.id in ("_t", "_td", "_tt"):
                 arg = nodo.args[0] if nodo.args else None
                 if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
                     textos.setdefault(arg.value, []).append(f"{fuente}:{nodo.lineno}")
