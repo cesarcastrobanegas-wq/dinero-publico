@@ -10198,6 +10198,62 @@ def _db_comentarios_insertar(tipo, clave_raw, texto, nombre=""):
         _db.commit()
 
 
+# ─── Aviso por correo de cada comentario nuevo (2026-09-30, encargo de César) ────────────────────────────────────
+# Vía Resend (API HTTP, https://resend.com/docs/api-reference/emails/send-email), con `requests`, sin dependencias
+# nuevas. Todo por variables de entorno, nada en el código (el repositorio es público):
+#   RESEND_API_KEY             clave de la API de Resend (obligatoria; sin ella no se envía nada)
+#   AVISO_COMENTARIOS_EMAIL    destinatario (obligatoria)
+#   AVISO_COMENTARIOS_FROM     remitente; por defecto el de pruebas de Resend, que solo entrega al correo de la
+#                              propia cuenta de Resend. Con el dominio verificado: "Dinero Público <avisos@dinero-publico.com>"
+# Se envía en un hilo aparte (publicar el comentario no espera a Resend) y con tope por hora, para que una ráfaga de
+# spam en el formulario no se convierta en cientos de correos. Si falla, se registra y el comentario queda guardado.
+_AVISO_COMENTARIOS_MAX_HORA = 30
+_aviso_comentarios_envios = collections.deque()
+_aviso_comentarios_lock = threading.Lock()
+
+
+def _avisar_comentario_por_correo(tipo, etiqueta, texto, nombre, url_relativa):
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    destino = os.environ.get("AVISO_COMENTARIOS_EMAIL", "").strip()
+    if not api_key or not destino:
+        return
+    ahora = time.time()
+    with _aviso_comentarios_lock:
+        while _aviso_comentarios_envios and ahora - _aviso_comentarios_envios[0] > 3600:
+            _aviso_comentarios_envios.popleft()
+        if len(_aviso_comentarios_envios) >= _AVISO_COMENTARIOS_MAX_HORA:
+            print(f"[aviso-comentarios] tope de {_AVISO_COMENTARIOS_MAX_HORA}/hora alcanzado; no se envía", flush=True)
+            return
+        _aviso_comentarios_envios.append(ahora)
+    try:
+        from zoneinfo import ZoneInfo
+        cuando = datetime.fromtimestamp(ahora, ZoneInfo("Europe/Madrid")).strftime("%d/%m/%Y %H:%M (hora peninsular)")
+    except Exception:
+        cuando = time.strftime("%d/%m/%Y %H:%M UTC", time.gmtime(ahora))
+    donde = f"Municipio: {etiqueta}" if tipo == "municipio" else f"Búsqueda: {etiqueta}"
+    enlace = f"{SITE_URL}{url_relativa}#comentarios"
+    autor = nombre or "(sin nombre)"
+    cuerpo = (f"Nuevo comentario en Dinero Público\n\n{donde}\nCuándo: {cuando}\n"
+              f"Autor: {autor}\nEnlace: {enlace}\n\n--- Comentario ---\n{texto}\n")
+    payload = {
+        "from": os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or "Dinero Público <onboarding@resend.dev>",
+        "to": [destino],
+        "subject": f"Nuevo comentario · {etiqueta}"[:150],
+        "text": cuerpo,
+    }
+
+    def _enviar():
+        try:
+            r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
+                              headers={"Authorization": f"Bearer {api_key}"})
+            if r.status_code >= 300:
+                print(f"[aviso-comentarios] Resend respondió {r.status_code}: {r.text[:300]}", flush=True)
+        except Exception as e:
+            print(f"[aviso-comentarios] error al enviar: {type(e).__name__}: {e}", flush=True)
+
+    threading.Thread(target=_enviar, daemon=True).start()
+
+
 def _db_comentarios_por(tipo, clave_raw):
     """Comentarios guardados para este municipio/empresa, más reciente primero."""
     with _db_lock:
@@ -17214,6 +17270,7 @@ def _it_info_pop_html():
   {_INDICE_TRANSPARENCIA_MIN_COMPONENTES} de los {len(p)} componentes.</p>
   <p class="it-info-aviso">Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley
   19/2013 de Transparencia.</b></p>
+  <a href="/metodologia">Cómo se calcula y qué no medimos →</a>
 </div>"""
 
 
@@ -19949,6 +20006,7 @@ def _route_post(path, params):
                 redirect_url = "/"
             if tipo in ("municipio", "busqueda") and clave_raw and texto:
                 _db_comentarios_insertar(tipo, clave_raw, texto, nombre)
+                _avisar_comentario_por_correo(tipo, clave_raw, texto, nombre, redirect_url.split("#")[0])
             return _redirect_resp(redirect_url + "#comentarios" if "#" not in redirect_url else redirect_url)
 
         if path == "/admin/purgar-place-cache":
