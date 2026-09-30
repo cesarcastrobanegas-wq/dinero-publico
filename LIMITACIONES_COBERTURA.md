@@ -1291,8 +1291,8 @@ vuelve a lanzar el generador.
   borra).
 
 **Resultado** (61 meses, 202109 → 202609; carga verificada sobre la copia de producción del 25-09, versión
-definitiva del 30-09 con las reglas de la revisión de abajo): 915.907 contratos en 3.562 municipios; **849.898
-guardados** y 66.009 descartados porque ya los trae la fuente propia. Residuo conocido: el emparejamiento uno a uno es
+definitiva del 30-09 con las reglas de la revisión de abajo y la clave compuesta): 917.441 contratos en 3.567
+municipios; **851.432 guardados** y 66.009 descartados porque ya los trae la fuente propia. Residuo conocido: el emparejamiento uno a uno es
 voraz y puede dejar algún duplicado cuando dos contratos del feed compiten por el mismo contrato propio (cota
 superior medida: 395, el 0,05 % del feed). El feed es pobre al principio (6.237
 contratos en sep-dic 2021, 81.592 en 2022) y se generaliza desde 2023 (~190.000-225.000 al año).

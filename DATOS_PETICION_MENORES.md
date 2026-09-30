@@ -1,7 +1,10 @@
 # Datos para petición pública: contratos menores en España
 
 Documento de trabajo. **Actualizado el 2026-09-30** con el feed oficial de contratos menores de PLACE ya conectado
-(la versión anterior, del 28-09, contaba 1.069.237 contratos en 919 municipios). Cada cifra indica su consulta SQL
+(la versión anterior, del 28-09, contaba 1.069.237 contratos en 919 municipios) y, esa misma noche, con la **clave
+compuesta municipio+provincia**: los 16 pares de municipios con el mismo nombre en dos provincias ya no comparten datos
+y los 14 que faltaban en la app entran con los suyos (+1.534 contratos y +3 municipios con datos: Mieres de Asturias,
+Villanueva de los Infantes de Ciudad Real, El Molar de Madrid...). Ninguna conclusión cambia; solo algunos contadores. Cada cifra indica su consulta SQL
 exacta o el script que la calcula (`backend/analisis_peticion_menores/`, ver Apéndice) y su alcance real.
 
 ## ⚠️ Antes de usar cualquier cifra de este documento
@@ -18,7 +21,7 @@ exacta o el script que la calcula (`backend/analisis_peticion_menores/`, ver Ap�
    Solo la sección 3 normaliza a una base común, y solo para las fuentes donde la base está confirmada; desde el
    30-09 eso incluye el feed de PLACE (importe sin IVA explícito), así que esa sección ya cubre casi la mitad de los
    contratos.
-4. **Sigue sin ser "toda España"**: son los **4.447 municipios** (de unos 8.130) con algún contrato menor en alguna
+4. **Sigue sin ser "toda España"**: son los **4.450 municipios** (de unos 8.130) con algún contrato menor en alguna
    fuente conectada. El feed de PLACE solo recoge lo que cada ayuntamiento registra en su perfil de la Plataforma,
    que **no es obligatorio**: un municipio que no aparece puede publicar sus menores en su web o en PDF. Cataluña y
    País Vasco se cubren por sus agregadores regionales (RPC, API Euskadi); Navarra, Ceuta y Melilla no tienen ninguna
@@ -30,19 +33,19 @@ exacta o el script que la calcula (`backend/analisis_peticion_menores/`, ver Ap�
 
 | # | Cifra | Valor | Alcance | Fuente de datos |
 |---|---|---|---|---|
-| 1.1 | Contratos menores indexados en la ventana de 5 años | **1.976.530** | Municipios con fuente conectada | `contratos_menors_locales`, `data_adjudicacio >= '2021-09-01'` |
-| 1.2 | Importe total (bruto, bases IVA mezcladas) | **6.803.390.020,72 €** | Idem. **No usar como cifra limpia**, ver §1.2 | Idem |
-| 1.3 | Municipios con al menos un contrato menor en alguna fuente | **4.447** de ~8.130 (54,7 %) | — | `COUNT(DISTINCT municipio)` |
-| 1.3b | De ellos, contratos que vienen solo del feed oficial de PLACE | **849.898** contratos (43 % del total) en **3.562** municipios | Donde el municipio tiene fuente propia, del feed solo entra lo que esta no trae | `fuente = 'place-menores'` |
-| 1.4 | Municipios de >20.000 hab. SIN ningún contrato menor en ninguna fuente | **44** de 430 (10 %) | Ver §1.4 | Cruce `contratos_menors_locales` × `poblacion.json` |
+| 1.1 | Contratos menores indexados en la ventana de 5 años | **1.978.064** | Municipios con fuente conectada | `contratos_menors_locales`, `data_adjudicacio >= '2021-09-01'` |
+| 1.2 | Importe total (bruto, bases IVA mezcladas) | **6.810.029.388,29 €** | Idem. **No usar como cifra limpia**, ver §1.2 | Idem |
+| 1.3 | Municipios con al menos un contrato menor en alguna fuente | **4.450** de ~8.130 (54,7 %) | — | `COUNT(DISTINCT municipio)` |
+| 1.3b | De ellos, contratos que vienen solo del feed oficial de PLACE | **851.432** contratos (43 % del total) en **3.565** municipios | Donde el municipio tiene fuente propia, del feed solo entra lo que esta no trae | `fuente = 'place-menores'` |
+| 1.4 | Municipios de >20.000 hab. SIN ningún contrato menor en ninguna fuente | **44** de 432 (10 %) | Ver §1.4 | Cruce `contratos_menors_locales` × `poblacion.json` |
 | 2.1 | Formatos/plataformas distintos integrados | **9 tipos** (inventario del 28-09 sobre 48 conectores; desde entonces +8 conectores y el feed, ver §2) | — | Inspección del código de cada conector |
 | 2.2 | Fuentes que exigieron Playwright o ingeniería inversa de una API oculta | **13 de 48** (27 %) a 28-09 | — | Idem |
-| 3.1 | Contratos con importe normalizable a base SIN IVA de forma verificada | **919.462** (46,5 % del total en ventana) | 20 de 58 fuentes con base IVA confirmada; el feed de PLACE aporta la mayoría | Ver §3 |
-| 3.2 | Tramo 13.000-14.999 € (sin IVA) vs. tramo de igual anchura 11.000-12.999 € | **55.068 vs. 24.987 → 2,2 veces más** (500 € antes del umbral: 33.580 vs. 5.271 → 6,4 veces) | Solo el subconjunto normalizable (§3.1) | `analisis2.py` |
-| 3.3 | Tramo 38.000-39.999 € (sin IVA) vs. tramo de igual anchura 36.000-37.999 € | **7.280 vs. 2.074 → 3,5 veces más** (1.000 € antes del umbral: 5.786 vs. 1.169 → 4,9 veces) | Idem | Idem |
+| 3.1 | Contratos con importe normalizable a base SIN IVA de forma verificada | **920.996** (46,6 % del total en ventana) | 20 de 58 fuentes con base IVA confirmada; el feed de PLACE aporta la mayoría | Ver §3 |
+| 3.2 | Tramo 13.000-14.999 € (sin IVA) vs. tramo de igual anchura 11.000-12.999 € | **55.143 vs. 25.022 → 2,2 veces más** (500 € antes del umbral: 33.622 vs. 5.277 → 6,4 veces) | Solo el subconjunto normalizable (§3.1) | `analisis2.py` |
+| 3.3 | Tramo 38.000-39.999 € (sin IVA) vs. tramo de igual anchura 36.000-37.999 € | **7.288 vs. 2.077 → 3,5 veces más** (1.000 € antes del umbral: 5.792 vs. 1.169 → 5,0 veces) | Idem | Idem |
 | 3.4 | Municipios con mayor concentración bajo el umbral de 15.000 € (con más de 1.000 contratos) | **Pájara 25,0 %**, San Cristóbal de La Laguna 23,8 %, Arrecife 22,7 %, Ourense 22,0 %, Utrera 21,6 % | Solo fuentes normalizables | `analisis4_extra.py` |
 | 4.1 | Contratos con importe 0 € o sin importe | **11.220** (0,57 %); 8.086 del feed de PLACE | — | SQL en §4 |
-| 4.2 | Contratos con importe > 40.000 € bruto | **2.789** (0,14 %); **409** (0,021 %) superan incluso 48.400 € (= 40.000 € + IVA) | Mezcla bases IVA, ver §4.2 | SQL en §4 |
+| 4.2 | Contratos con importe > 40.000 € bruto | **2.790** (0,14 %); **410** (0,021 %) superan incluso 48.400 € (= 40.000 € + IVA) | Mezcla bases IVA, ver §4.2 | SQL en §4 |
 | 4.3 | Contratos con fecha de adjudicación vacía | **7.385** (0,37 % de la tabla) | El 82 % en 2 fuentes (Las Palmas GC y Toledo) | SQL en §4 |
 | 5.1 | De las 29 ciudades >100.000 hab. que el 28-09 no tenían fuente conectada | **24 ya tienen contratos menores** (feed de PLACE o conector nuevo); sin ninguno: Oviedo, Pamplona, Dos Hermanas, Parla y León | Estado a 30-09 | §5 |
 
@@ -57,19 +60,19 @@ SELECT COUNT(*), SUM(import_num)
 FROM contratos_menors_locales
 WHERE data_adjudicacio >= '2021-09-01';
 ```
-→ **1.976.530 contratos, 6.803.390.020,72 € en bruto.**
+→ **1.978.064 contratos, 6.810.029.388,29 € en bruto.**
 
 **El importe NO es una cifra limpia.** Es la suma directa de `import_num` de las 55 fuentes con filas en la ventana
 (de 58 conectadas; 3 tienen la fecha vacía en el 100 % de sus registros, ver §4.3), sin normalizar IVA: mezcla
-contratos publicados con IVA, sin IVA, y de algunas fuentes no se sabe. Además incluye 287 importes imposibles del
+contratos publicados con IVA, sin IVA, y de algunas fuentes no se sabe. Además incluye 288 importes imposibles del
 feed de PLACE (hasta 71,5 M€, ver §4.2). No se puede dar aquí un "importe total nacional" fiable; la sección 3 da un
-importe limpio para el 46,5 % de los contratos.
+importe limpio para el 46,6 % de los contratos.
 
 Otros datos del mismo corte:
-- Filas totales en la tabla (incluida cualquier fecha): 1.983.915.
+- Filas totales en la tabla (incluida cualquier fecha): 1.985.449.
 - Filas con fecha anterior a 2021-09-01: **0** (archivadas fuera de esta tabla).
 - Filas con fecha vacía: 7.385, ver §4.3.
-- Municipios con al menos 1 fila en ventana: **4.447**.
+- Municipios con al menos 1 fila en ventana: **4.450**.
 
 ### 1.3 Desglose por fuente
 
@@ -83,7 +86,7 @@ GROUP BY fuente ORDER BY n DESC;
 
 | Fuente | Contratos | Municipios | Desde | Hasta |
 |---|---:|---:|---|---|
-| **Feed oficial de menores de PLACE** (toda España salvo Cataluña y País Vasco) | **849.898** | **3.562** | 2021-09-01 | 2026-09-28 |
+| **Feed oficial de menores de PLACE** (toda España salvo Cataluña y País Vasco) | **851.432** | **3.565** | 2021-09-01 | 2026-09-28 |
 | RPC Barcelona | 341.726 | 264 | 2021-09-01 | 2028-08-28¹ |
 | API Euskadi | 178.221 | 138 | 2021-09-01 | 2029-03-09¹ |
 | RPC Tarragona | 149.739 | 160 | 2021-09-01 | 2029-09-18¹ |
@@ -161,22 +164,22 @@ de Gran Canaria** (3.145 registros), **Toledo** (2.899) y **Arona** (432). Ver �
 | CCAA | Contratos | Municipios con datos | Municipios (INE) |
 |---|---:|---:|---:|
 | Cataluña (RPC) | 652.563 | 743 | 947 |
-| Comunitat Valenciana | 222.799 | 435 | 540 |
+| Comunitat Valenciana | 222.799 | 435 | 542 |
 | País Vasco (API Euskadi; Zalla por el feed de PLACE) | 181.349 | 139 | 251 |
 | Andalucía | 173.479 | 547 | 785 |
-| Castilla-La Mancha | 157.471 | 639 | 917 |
-| Comunidad de Madrid | 111.211 | 118 | 178 |
+| Castilla-La Mancha | 157.850 | 641 | 919 |
+| Comunidad de Madrid | 111.261 | 119 | 179 |
 | Región de Murcia | 100.464 | 37 | 45 |
 | Galicia | 79.271 | 177 | 313 |
 | Canarias | 78.304 | 79 | 88 |
-| Castilla y León | 68.151 | 513 | 2.242 |
-| Asturias | 52.024 | 61 | 77 |
+| Castilla y León | 68.151 | 513 | 2.248 |
+| Asturias | 53.128 | 62 | 78 |
 | Illes Balears | 27.061 | 47 | 67 |
 | Aragón | 24.832 | 464 | 731 |
-| Extremadura | 24.547 | 325 | 387 |
-| Cantabria | 14.192 | 76 | 101 |
+| Extremadura | 24.547 | 325 | 388 |
+| Cantabria | 14.193 | 77 | 102 |
 | La Rioja | 8.812 | 48 | 174 |
-| **Navarra** | **0** | **0** | 270 |
+| **Navarra** | **0** | **0** | 272 |
 | **Ceuta y Melilla** | **0** | **0** | 2 |
 
 **Navarra, Ceuta y Melilla no tienen ningún contrato menor en ninguna fuente**: Navarra publica en su propio Portal
@@ -187,12 +190,12 @@ comunidades de municipios muy pequeños, muchos de los cuales no registran ning�
 ### 1.4 Municipios de más de 20.000 hab. sin ningún contrato menor
 
 **Metodología** (`analisis3_cobertura20k.py`):
-1. Municipios de `poblacion.json` (INE, Padrón) con población ≥ 20.000 hab.: **430**.
+1. Municipios de `poblacion.json` (INE, Padrón) con población ≥ 20.000 hab.: **432**.
 2. Cataluña y País Vasco se tratan como **"cubiertos por agregador regional"** en bloque.
 3. Para el resto, un municipio cuenta como "con fuente" si tiene al menos un contrato en `contratos_menors_locales`
    (conector propio o feed de PLACE).
 
-**Resultado: 44 de 430 municipios (10 %) no tienen ningún contrato menor en ninguna fuente** (el 28-09 eran 303 de
+**Resultado: 44 de 432 municipios (10 %) no tienen ningún contrato menor en ninguna fuente** (el 28-09 eran 303 de
 426). Por comunidad: Andalucía 12, Comunidad de Madrid 5, Comunitat Valenciana 5, Navarra 4, Canarias 4, Galicia 3,
 Región de Murcia 3, Asturias 2, Castilla y León 2, Illes Balears 2, Ceuta 1 y Melilla 1.
 
@@ -315,7 +318,7 @@ fuentes conectadas, **20 tienen la base de IVA verificada** (lista sincronizada 
 - **Excluidas por base no verificada** (38): los 4 RPC de Cataluña, Euskadi, Madrid capital, Murcia capital, Gijón,
   Málaga y el resto de conectores municipales.
 
-Esto deja **919.462 contratos analizables sobre 1.976.530 (46,5 %)** en 3.553 municipios. El feed de PLACE aporta la
+Esto deja **920.996 contratos analizables sobre 1.978.064 (46,6 %)** en 3.558 municipios. El feed de PLACE aporta la
 gran mayoría, así que la muestra ya es de ámbito casi nacional, **pero no incluye Cataluña ni el País Vasco** (sus
 agregadores no confirman la base de IVA). El 28-09 esta sección cubría solo 60.930 contratos (5,7 %) y las
 proporciones eran otras (3,2x y 2,7x): no mezclar cifras de las dos versiones.
@@ -331,17 +334,17 @@ python backend/analisis_peticion_menores/analisis2.py <copia de cache.db>
 
 | Tramo (sin IVA) | Nº contratos |
 |---|---:|
-| 11.000 – 12.999 € (tramo de control, igual anchura) | 24.987 |
-| **13.000 – 14.999 € (justo por debajo del umbral)** | **55.068** |
-| 15.000 – 16.999 € (justo por encima) | 3.838 |
+| 11.000 – 12.999 € (tramo de control, igual anchura) | 25.022 |
+| **13.000 – 14.999 € (justo por debajo del umbral)** | **55.143** |
+| 15.000 – 16.999 € (justo por encima) | 3.843 |
 
 **El tramo justo debajo del umbral tiene 2,2 veces más contratos que el tramo de control de igual anchura**, y justo
-por encima caen 14 veces menos (3.838). Ventana más estrecha (500 € de ancho):
+por encima caen 14 veces menos (3.843). Ventana más estrecha (500 € de ancho):
 
 | Tramo estrecho (sin IVA) | Nº contratos |
 |---|---:|
-| 12.500 – 12.999 € | 5.271 |
-| **14.500 – 14.999 € (500 € antes del umbral)** | **33.580** |
+| 12.500 – 12.999 € | 5.277 |
+| **14.500 – 14.999 € (500 € antes del umbral)** | **33.622** |
 | 15.000 – 15.499 € | 1.594 |
 
 **En los 500 € anteriores al umbral hay 6,4 veces más contratos que en los 500 € equivalentes 2.000 € más abajo.**
@@ -350,8 +353,8 @@ por encima caen 14 veces menos (3.838). Ventana más estrecha (500 € de ancho)
 
 | Tramo (sin IVA) | Nº contratos |
 |---|---:|
-| 36.000 – 37.999 € (tramo de control) | 2.074 |
-| **38.000 – 39.999 € (justo por debajo del umbral)** | **7.280** |
+| 36.000 – 37.999 € (tramo de control) | 2.077 |
+| **38.000 – 39.999 € (justo por debajo del umbral)** | **7.288** |
 | 40.000 – 41.999 € (justo por encima) | 42 |
 
 **3,5 veces más contratos justo debajo del umbral que en el tramo de control**, y casi nada justo encima (42).
@@ -360,7 +363,7 @@ Ventana estrecha:
 | Tramo estrecho (sin IVA) | Nº contratos |
 |---|---:|
 | 37.000 – 37.999 € | 1.169 |
-| **39.000 – 39.999 € (1.000 € antes del umbral)** | **5.786** |
+| **39.000 – 39.999 € (1.000 € antes del umbral)** | **5.792** |
 | 40.000 – 40.999 € | 31 |
 
 **No se ha separado obras de servicios/suministros** (el campo `tipus_contracte` no está normalizado entre fuentes):
@@ -424,12 +427,12 @@ SELECT COUNT(*) FROM contratos_menors_locales WHERE data_adjudicacio >= '2021-09
 SELECT COUNT(*) FROM contratos_menors_locales WHERE data_adjudicacio >= '2021-09-01' AND import_num > 48400;
 ```
 → **2.789 contratos con importe BRUTO > 40.000 €** (0,14 %). Mezcla bases de IVA: un contrato de 40.001 € con IVA
-son ~33.000 € sin IVA, legal como obra. Siendo generosos con el IVA (40.000 € × 1,21 = 48.400 €), quedan **409
+son ~33.000 € sin IVA, legal como obra. Siendo generosos con el IVA (40.000 € × 1,21 = 48.400 €), quedan **410
 (0,021 %)** que no pueden ser un contrato menor legal con ninguna base:
 
 | Fuente | Nº > 48.400 € | Importe máximo |
 |---|---:|---:|
-| Feed de PLACE | 210 | 71.540.000,00 € |
+| Feed de PLACE | 211 | 71.540.000,00 € |
 | Murcia capital | 92 | 2.297.456,25 € |
 | API Euskadi | 59 | 8.447.000,00 € |
 | Madrid capital | 21 | 231.251,57 € |
@@ -438,7 +441,7 @@ son ~33.000 € sin IVA, legal como obra. Siendo generosos con el IVA (40.000 �
 | Resto (12 fuentes) | 16 | 6.000.000,00 € (Cartagena, Governalia) |
 
 **El feed de PLACE es un caso aparte, porque su importe es SIN IVA**: ahí basta con superar 40.000 € para ser
-imposible como contrato menor (máximo legal de obras). Son **287** contratos del feed, hasta 71,5 M€ ("Reparación de
+imposible como contrato menor (máximo legal de obras). Son **288** contratos del feed, hasta 71,5 M€ ("Reparación de
 la Vía Verde", El Viso del Alcor) o 28,9 M€ (Cullera). La web los muestra tal cual con un aviso automático en la fila
 ("Importe sin IVA por encima del máximo legal de cualquier contrato menor..."), igual que los de Euskadi por encima
 de 100.000 € y una lista cerrada de casos puntuales de otras fuentes. Son errores o anomalías **de origen**, no del
@@ -449,7 +452,7 @@ proyecto, y están señalados en la propia web.
 ```sql
 SELECT COUNT(*) FROM contratos_menors_locales WHERE data_adjudicacio = '' OR data_adjudicacio IS NULL;
 ```
-→ **7.385 de 1.983.915 filas totales (0,37 %)**, sin cambios respecto al 28-09 (el feed de PLACE trae fecha en todos
+→ **7.385 de 1.985.449 filas totales (0,37 %)**, sin cambios respecto al 28-09 (el feed de PLACE trae fecha en todos
 sus contratos):
 
 | Fuente | Nº sin fecha | % de esa fuente |
@@ -622,6 +625,7 @@ cuentas, deuda y sueldos regenerados el 30-09):
 |---|---:|---:|
 | Municipios con nota de menores | 931 (11,5 %) | **4.445 (54,8 %)** |
 | Nota de menores = 100 | 891 de 931 | 1.864 de 4.445 (90-99: 640; 75-90: 921; 60-75: 1.010; <60: 10) |
+| Con la clave compuesta (misma noche) | — | 8.130 municipios con nota (+17 homónimos: los 14 que faltaban, Torrent de Valencia, Cabanes de Castellón y Cabanes de Girona, que antes no llegaba al mínimo de componentes); menores en 4.461 (54,9 %); mediana 69,4 |
 | Mediana del índice (P25 / P75) | 70,4 (62,2 / 78,5) | 69,4 (61,6 / 77,1) |
 | Municipios con 90 o más | 1,4 % | 1,0 % |
 | Puestos movidos (mediana / P90) | — | 315 / 1.329 |
