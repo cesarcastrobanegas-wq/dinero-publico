@@ -1263,3 +1263,63 @@ Cualquier homónimo nuevo que entre en las listas se trata igual automáticament
   688, El Ejido 516, El Campello 486, Dénia 421, La Línea 333...). Verificada sin contratos que casen con otro
   municipio, sin duplicados y sin CP de otra provincia.
 - Los contratos recuperados entran sin directivo enriquecido: el enriquecimiento de producción los irá completando.
+
+## Feed oficial de contratos menores de PLACE (conectado el 2026-09-30)
+
+Conjunto de datos de Hacienda "Contratos menores publicados en los perfiles del contratante ubicados en la
+Plataforma de Contratación del Sector Público" (sindicación 1143, ZIP mensuales). Generador
+`backend/actualizar_contratos_menores_place.py` (fase `descargar` + fase `generar`, EN LOCAL), ficheros
+`backend/contratos_menores_place_AAAA-MM.json.gz` (uno por mes de adjudicación), cargador
+`_cargar_contratos_menores_place` en app.py (idempotente por huella; fuente `place-menores`). Se carga en un hilo
+al FINAL del arranque: la primera vez tarda unos 8 minutos (en local), durante los que la web ya responde y los
+contratos del feed van apareciendo; cargarlo dentro del arranque lo llevaba a 600 s, por encima del `--timeout 300` de
+gunicorn. **Cadencia manual**,
+como el resto de conectores de menores: el feed se actualiza a diario en origen, pero aquí solo cambia cuando se
+vuelve a lanzar el generador.
+
+**Decisiones aplicadas** (propuestas el 29-09, "conecta ahora el feed" el 30-09):
+- Alcance: toda España **salvo Cataluña y País Vasco** (ya tienen agregador regional: RPC, API Euskadi). Ayuntamientos
+  y sus entes (distritos, áreas de gobierno, organismos autónomos, empresas municipales).
+- Municipio asignado por la **jerarquía oficial** del órgano ("<Municipio> / Ayuntamientos / <Provincia>"), nunca por
+  el texto del nombre; respaldo por el código INE del DIR3 (`L01<INE>`) o del NIF municipal (`P<INE>00`) y, para entes
+  cuyo nombre ocupa el hueco del municipio (Organismo Autónomo Madrid Salud...), por la localidad de su dirección.
+- Importe **sin IVA** (TaxExclusiveAmount del adjudicado). 3.626 contratos sin importe en origen: se guardan con 0 €,
+  misma convención que el resto de fuentes.
+- **Manda la fuente propia**: donde el municipio ya tiene conector, del feed solo entra lo que no casa con él (mismo
+  adjudicatario por NIF o nombre, importe compatible con o sin IVA, fecha ±7 días). La regla también se aplica cuando
+  la fuente propia llega DESPUÉS del feed (`_retirar_duplicados_place`, en el punto único de escritura: archiva, no
+  borra).
+
+**Resultado** (61 meses, 202109 → 202609; carga verificada sobre la copia de producción del 25-09): 912.246
+contratos en 3.556 municipios; **849.479 guardados** y 62.767 descartados porque ya los trae la fuente propia; 0
+duplicados restantes en los 44 municipios con fuente propia y feed a la vez. El feed es pobre al principio (6.237
+contratos en sep-dic 2021, 81.592 en 2022) y se generaliza desde 2023 (~190.000-225.000 al año).
+
+**Hallazgos al emparejar con las fuentes propias** (sin estos ajustes quedaban miles de duplicados):
+- **Governalia no publica la fecha de adjudicación** sino la de su publicación semanal: en Cartagena, de 10.620
+  contratos que casan con el feed por NIF e importe exactos, la fecha de Governalia va 8-17 días DESPUÉS (mediana 11,
+  casi siempre sábado). Para las 8 fuentes `*-governalia` se acepta que la fecha propia vaya hasta 31 días por detrás.
+  Consecuencia aparte: la "fecha de adjudicación" que mostramos de esas 8 fuentes es en realidad fecha de publicación.
+- **Málaga** no publica fecha por contrato (su conector usa el primer día del trimestre): casa si la fecha del feed
+  cae en ese trimestre.
+- Nombres de adjudicatario comparados solo con letras y números ("Bang Branding, S.L." = "BANG BRANDING S.L"):
+  Murcia (fuente propia sin NIF) no casaba.
+- Torrejón y Madrid: las coincidencias restantes están a ~300 días (contratos recurrentes de un año a otro), no son
+  duplicados.
+
+**Importes imposibles en origen**: 287 contratos con importe sin IVA por encima de 40.000 € (máximo legal de un
+contrato menor de obras; 15.000 € el resto), hasta 71,5 M€ ("Reparación de la Vía Verde", El Viso del Alcor) o
+28,9 M€ (Cullera). Aviso automático en la fila (`PLACE_MENOR_IMPORTE_IMPOSIBLE`), nunca se ocultan ni se corrigen.
+Otros 1.456 no son de obras y superan los 15.000 €: pueden ser errores de tipo o de importe; sin aviso por ahora.
+
+**No asignados** (5.238 de 924.000, 0,6 %): Vizcaya (fuera de alcance, además no casa con la lista vasca);
+**Mieres (Asturias), Villanueva de los Infantes (Ciudad Real) y Cieza (Cantabria)**, excluidos de las listas de la app
+a propósito por homónimos exactos con Girona/Valladolid/Murcia (clave sin provincia, mismo problema que
+Torrent/Cabanes); municipios que **faltan en las listas de la app**: Alfarp, El Poble Nou de Benitatxell, Montitxelvo,
+Alcúdia (Baleares), El Molar, Moya, Pozuel de Ariza, Cortelazor la Real, Aýna, Higuera... Las **entidades locales
+menores, parroquias rurales, mancomunidades y consorcios** (7.478 contratos) no se asignan al municipio: son otra
+entidad.
+
+**Fuera del Índice de Transparencia, por ahora** (decisión pendiente de César): el feed no entra en los componentes
+"menores" ni "directivo" (`WHERE fuente <> 'place-menores'`). Comprobado: con el feed cargado, las notas de los 8.108
+municipios son idénticas a las de antes. Opciones medidas para decidir, en `DATOS_PETICION_MENORES.md` §6.

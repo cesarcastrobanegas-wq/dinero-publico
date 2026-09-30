@@ -2129,6 +2129,9 @@ def _db_init():
                 _db.execute(f"ALTER TABLE contratos_menors_locales ADD COLUMN {_col} TEXT DEFAULT {_default}")
             except sqlite3.OperationalError:
                 pass  # ya existe
+        # (2026-09-30) para emparejar duplicados entre el feed de menores de PLACE y las fuentes propias municipio a
+        # municipio (_cargar_contratos_menores_place / _retirar_duplicados_place) sin recorrer ~1M filas por consulta.
+        _db.execute("CREATE INDEX IF NOT EXISTS idx_cml_muni_prov ON contratos_menors_locales(municipio, provincia)")
         # Migración de un solo uso (2026-08-03): el primer backfill en
         # producción guardaba id=codi_expedient a secas, sin namespacear por
         # municipio -- como codi_expedient se repite entre municipios
@@ -8936,6 +8939,200 @@ def _guardar_contratos_menors_locales(registros):
                  r["exercici"], ahora),
             )
         _db.commit()
+    propios = [r for r in registros if r.get("fuente") != FUENTE_CM_PLACE]
+    if propios:
+        _retirar_duplicados_place(propios)
+
+
+# ─── Feed oficial de contratos menores de PLACE (2026-09-30) ─────────────────────────────────────────────────────────
+# Decisión de César (propuesta del 29-09, "conecta ahora el feed" el 30-09): donde el municipio tiene fuente propia,
+# MANDA LA FUENTE PROPIA; del feed solo entra lo que no case con ella. Emparejamiento: mismo adjudicatario (NIF, o
+# nombre normalizado si una de las dos no trae NIF), fecha de adjudicación a ±7 días e importe compatible (el feed es
+# SIN IVA y trae también el total con IVA; las fuentes propias publican una u otra base, a menudo sin decirlo).
+# Medido el 29-09: ninguna contiene a la otra (Torrejón: 60 % de lo propio está en el feed; Sevilla: 53 %).
+import collections
+
+FUENTE_CM_PLACE = "place-menores"
+_PLACE_MENORES_DIAS = 7
+
+
+def _nombre_comparable_cm(nombre):
+    """Nombre del adjudicatario solo con letras y números ("Bang Branding, S.L." = "BANG BRANDING S.L")."""
+    return re.sub(r"[^a-z0-9]", "", normalizar(nombre or ""))
+
+
+def _clave_adjudicatario_cm(nif, nombre):
+    n = re.sub(r"[^A-Z0-9]", "", (nif or "").upper())
+    return ("nif", n) if len(n) >= 8 else ("nom", _nombre_comparable_cm(nombre))
+
+
+def _importes_compatibles_cm(propio, place_sin_iva, place_con_iva=None):
+    if propio is None or place_sin_iva is None:
+        return False
+    cands = [place_sin_iva * k for k in (1.0, 1.04, 1.07, 1.10, 1.21)]   # IVA/IGIC habituales
+    if place_con_iva:
+        cands.append(place_con_iva)
+    return any(abs(propio - c) <= max(1.0, 0.002 * c) for c in cands)
+
+
+def _dias_entre(a, b):
+    from datetime import date
+    try:
+        return abs((date.fromisoformat(a[:10]) - date.fromisoformat(b[:10])).days)
+    except Exception:
+        return 10 ** 6
+
+
+# Las fuentes de la plataforma Governalia (Cartagena, Ibi, Sax, Vilamarxant, Castelló, Xirivella, Santa Brígida,
+# Alzira) NO publican la fecha de adjudicación sino la de su publicación semanal: medido en Cartagena (2022-2025),
+# de 10.620 contratos que casan con el feed por NIF e importe exactos, la fecha de Governalia va 8-17 días DESPUÉS
+# (mediana 11, casi siempre sábado). Para ellas se acepta que la fecha propia vaya hasta 31 días por detrás.
+_PLACE_MENORES_DIAS_PUBLICACION = 31
+
+
+# Fuentes propias SIN fecha por contrato que guardan el inicio del trimestre (Málaga, ver
+# actualizar_contratos_menores_malaga.py): casan si la fecha del feed cae en ese mismo trimestre.
+_FUENTES_CM_FECHA_TRIMESTRE = {"malaga"}
+
+
+def _fechas_compatibles_cm(fecha_propia, fecha_feed, fuente_propia):
+    dif = _dias_entre(fecha_propia or "", fecha_feed or "")
+    if dif <= _PLACE_MENORES_DIAS:
+        return True
+    if fuente_propia in _FUENTES_CM_FECHA_TRIMESTRE and fecha_propia and fecha_feed:
+        trimestre = lambda f: (f[:4], (int(f[5:7]) - 1) // 3)
+        return trimestre(fecha_propia) == trimestre(fecha_feed)
+    if (fuente_propia or "").endswith("-governalia") and dif <= _PLACE_MENORES_DIAS_PUBLICACION:
+        return (fecha_propia or "")[:10] >= (fecha_feed or "")[:10]     # solo si la propia va DETRÁS
+    return False
+
+
+def _casa_con_propios(reg, idx):
+    """reg: registro del feed; idx: {clave adjudicatario: [(importe, fecha, fuente), ...]} de las fuentes propias."""
+    claves = [_clave_adjudicatario_cm(reg.get("nif"), reg.get("adjudicatari")),
+              ("nom", _nombre_comparable_cm(reg.get("adjudicatari")))]
+    for k in dict.fromkeys(claves):
+        for imp, fecha, fuente in idx.get(k, ()):
+            if (_fechas_compatibles_cm(fecha, reg.get("data_adjudicacio"), fuente)
+                    and _importes_compatibles_cm(imp, reg.get("import_num"), reg.get("import_con_iva"))):
+                return True
+    return False
+
+
+def _indice_propios_cm(filas):
+    idx = collections.defaultdict(list)
+    for nif, nombre, imp, fecha, fuente in filas:
+        idx[_clave_adjudicatario_cm(nif, nombre)].append((imp, fecha, fuente))
+        idx[("nom", _nombre_comparable_cm(nombre))].append((imp, fecha, fuente))
+    return idx
+
+
+def _retirar_duplicados_place(propios):
+    """Cuando una fuente propia escribe contratos de un municipio, retira (ARCHIVA en contratos_menors_archivo, no
+    borra) las filas del feed de PLACE de ese municipio que son el mismo contrato. Así la regla "manda la fuente
+    propia" se cumple aunque la fuente propia llegue después que el feed (un conector nuevo, un refresco)."""
+    grupos = collections.defaultdict(list)
+    for r in propios:
+        grupos[(r["municipio"], r.get("provincia", ""))].append((r.get("nif"), r.get("adjudicatari"),
+                                                                  r.get("import_num"), r.get("data_adjudicacio"),
+                                                                  r.get("fuente")))
+    retirar = []
+    with _db_lock:
+        for (muni, prov), filas in grupos.items():
+            place = _db.execute("SELECT id, nif, adjudicatari, import_num, data_adjudicacio FROM contratos_menors_locales "
+                                "WHERE municipio=? AND provincia=? AND fuente=?", (muni, prov, FUENTE_CM_PLACE)).fetchall()
+            if not place:
+                continue
+            idx = _indice_propios_cm(filas)
+            for pid, nif, adj, imp, fecha in place:
+                if _casa_con_propios({"nif": nif, "adjudicatari": adj, "import_num": imp, "data_adjudicacio": fecha},
+                                     idx):
+                    retirar.append(pid)
+        if retirar:
+            _db.execute("""CREATE TABLE IF NOT EXISTS contratos_menors_archivo (
+                id TEXT PRIMARY KEY, municipio TEXT NOT NULL, provincia TEXT, fuente TEXT, organisme TEXT,
+                adjudicatari TEXT, nif TEXT, import_num REAL, data_adjudicacio TEXT, tipus_contracte TEXT,
+                descripcio TEXT, codi_cpv TEXT, exercici TEXT, ts REAL, archivado_ts REAL)""")
+            ahora = time.time()
+            for i in range(0, len(retirar), 500):
+                lote = retirar[i:i + 500]
+                marcas = ",".join("?" * len(lote))
+                cols = ("id, municipio, provincia, fuente, organisme, adjudicatari, nif, import_num, data_adjudicacio, "
+                        "tipus_contracte, descripcio, codi_cpv, exercici, ts")
+                _db.execute(f"INSERT OR IGNORE INTO contratos_menors_archivo ({cols}, archivado_ts) SELECT {cols}, ? "
+                            f"FROM contratos_menors_locales WHERE id IN ({marcas})", [ahora] + lote)
+                _db.execute(f"DELETE FROM contratos_menors_locales WHERE id IN ({marcas})", lote)
+            _db.commit()
+    if retirar:
+        print(f"  [menores] {len(retirar)} contratos del feed de PLACE archivados: ya los trae la fuente propia "
+              f"({len(grupos)} municipios revisados).", flush=True)
+
+
+_PLACE_MENORES_CLAVE = "contratos_menores_place_hash"
+_place_menores_lock = threading.Lock()     # una sola carga a la vez (se lanza en hilo desde _inicializar_datos)
+
+
+def _cargar_contratos_menores_place():
+    """Carga backend/contratos_menores_place_AAAA.json.gz (generados por actualizar_contratos_menores_place.py: feed
+    oficial de contratos menores de PLACE, ayuntamientos y sus entes, toda España salvo Cataluña y País Vasco, importe
+    SIN IVA). Idempotente por huella en `settings`: si los ficheros no han cambiado no hace nada (son ~1M de filas; no
+    tiene sentido revolcarlas en cada arranque). Por municipio: descarta lo que ya trae una fuente propia
+    (_casa_con_propios) y guarda el resto por el punto único de escritura. Se ejecuta DESPUÉS de todas las fuentes
+    propias de _inicializar_datos."""
+    import glob
+    rutas = sorted(glob.glob(os.path.join(BASE_DIR, "contratos_menores_place_*.json.gz")))
+    if not _DISCO_CONFIABLE or not rutas:
+        return
+    if not _place_menores_lock.acquire(blocking=False):
+        return                                  # ya hay una carga en marcha
+    try:
+        h = hashlib.sha256()
+        for r in rutas:
+            with open(r, "rb") as f:
+                h.update(f.read())
+        huella = h.hexdigest()[:16]
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_PLACE_MENORES_CLAVE,)).fetchone()
+        if fila and fila[0] == huella:
+            return
+        total = guardados = duplicados = 0
+        munis = set()
+        for ruta in rutas:
+            with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+                registros = json.load(f).get("registros", [])
+            grupos = collections.defaultdict(list)
+            for r in registros:
+                if r.get("import_num") is None:
+                    r["import_num"] = 0.0       # 3.626 del feed sin importe: misma convención que el resto de fuentes
+                grupos[(r["municipio"], r["provincia"])].append(r)
+            nuevos = []
+            for (muni, prov), regs in grupos.items():
+                with _db_lock:
+                    filas = _db.execute("SELECT nif, adjudicatari, import_num, data_adjudicacio, fuente FROM contratos_menors_locales "
+                                        "WHERE municipio=? AND provincia=? AND fuente<>?", (muni, prov, FUENTE_CM_PLACE)).fetchall()
+                idx = _indice_propios_cm(filas) if filas else None
+                for r in regs:
+                    if idx and _casa_con_propios(r, idx):
+                        duplicados += 1
+                    else:
+                        nuevos.append(r)
+                munis.add((muni, prov))
+            total += len(registros)
+            guardados += len(nuevos)
+            _guardar_contratos_menors_locales(nuevos)
+            del registros, grupos, nuevos
+        with _db_lock:
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                        "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (_PLACE_MENORES_CLAVE, huella))
+            _db.commit()
+        print(f"  [startup] contratos_menores_place: {total} contratos del feed de PLACE en {len(munis)} municipios; "
+              f"{guardados} guardados, {duplicados} descartados porque ya los trae la fuente propia del municipio.",
+              flush=True)
+    except Exception as e:
+        print(f"  [startup] contratos_menores_place: ERROR {type(e).__name__}: {e} (no se marca como cargado; se "
+              f"reintenta en el próximo arranque)", flush=True)
+    finally:
+        _place_menores_lock.release()
 
 
 def _archivar_menores_fuera_de_ventana():
@@ -11975,6 +12172,11 @@ def _inicializar_datos():
             _cache_set(d.get("municipio", muni_key), d)
     for _prov in MUNICIPIOS_PSEUDO:
         _asegurar_pseudo_municipio_fondos(_prov)
+    # Feed de menores de PLACE: al FINAL del arranque (después de todas las fuentes propias: manda la fuente propia) y
+    # en un hilo aparte -- la primera carga (~850.000 filas) tarda varios minutos y gunicorn mata el worker si el
+    # arranque pasa de --timeout (300 s); lanzado antes, además, frenaba el resto del arranque (GIL). En los arranques
+    # siguientes la huella no cambia y termina en menos de un segundo.
+    threading.Thread(target=_cargar_contratos_menores_place, name="carga-place-menores", daemon=True).start()
 
 
 # ─── ENRIQUECIMIENTO EN BACKGROUND (empresia / BORME) ────────────────────────
@@ -14252,12 +14454,17 @@ def _indice_menores_stats_por_municipio():
               ON d.clave = CASE WHEN c.nif IS NOT NULL AND c.nif <> ''
                                  THEN upper(trim(c.nif))
                                  ELSE normalizar(c.adjudicatari) END
+            WHERE c.fuente <> 'place-menores'
             GROUP BY c.municipio
         """).fetchall()
     return {municipio: {"total": total, "con_directivo": con_directivo or 0}
             for municipio, total, con_directivo in rows}
 
 
+# (2026-09-30) El feed de menores de PLACE (fuente 'place-menores') está conectado pero FUERA del índice -- en
+# _indice_menores_stats_por_municipio y _indice_menores_detalle_por_municipio -- hasta que César decida cómo puntúa:
+# es un agregador nacional (con la regla de agregadores, ~2.000 municipios pasarían de "no disponible" a ~99 en
+# menores) y cambia también el denominador de "directivo". Ver LIMITACIONES_COBERTURA.md.
 def _indice_menores_detalle_por_municipio():
     """Componente "menores" (v2): una consulta agregada por municipio, provincia y año -- nº de contratos, cuántos con
     adjudicatario identificado y la última fecha. Reutiliza la idea de la rama wip/indice-transparencia-v2 (cobertura
@@ -14269,6 +14476,7 @@ def _indice_menores_detalle_por_municipio():
                             THEN 1 ELSE 0 END),
                    MAX(data_adjudicacio), group_concat(DISTINCT fuente)
             FROM contratos_menors_locales
+            WHERE fuente <> 'place-menores'
             GROUP BY municipio, provincia, anio
         """).fetchall()
     out = {}
@@ -15390,6 +15598,7 @@ _FUENTE_CM_LABEL = {
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
     "alzira-governalia": "Alzira (PLACE)",
+    "place-menores":   "PLACE",
 }
 
 
@@ -15403,13 +15612,20 @@ _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia"
                        "sax-governalia", "vilamarxant-governalia", "castello-governalia",
                        "xirivella-governalia", "santabrigida-governalia", "alzira-governalia",
                        "valencia_capital", "alicante", "leganes", "torrent", "la_laguna", "sevilla",
-                       "torrejon"}
+                       "torrejon", "place-menores"}
 
 
 # Avisos públicos por fuente, visibles en la sección de contratos menores de la
 # ficha cuando el municipio tiene filas de esa fuente: límites de cobertura o
 # inferencias del parser que el lector debe conocer, no solo la documentación.
 _NOTAS_FUENTE_CM = {
+    "place-menores": (
+        "Conjunto de datos oficial de contratos menores de la Plataforma de Contratación del Sector Público: solo lo "
+        "que el ayuntamiento (o sus organismos y empresas) registra en su perfil de PLACE, que no es obligatorio -- "
+        "muchos publican sus menores en su propia web o en PDF. Importe adjudicado SIN IVA, con NIF del "
+        "adjudicatario. Si el ayuntamiento tiene además una fuente propia conectada, del feed solo se muestran los "
+        "contratos que esa fuente no trae (mismo adjudicatario, fecha ±7 días e importe)."
+    ),
     "telde": (
         "Solo 2025: es la única relación de contratos menores que publica el Ayuntamiento de Telde en su portal "
         "de transparencia (93 contratos; para el detalle remite a la Plataforma de Contratación del Estado). Fecha "
@@ -15725,6 +15941,11 @@ _NOTAS_CONTRATO_MENOR = {
 # (automático, no una lista cerrada) siempre que no haya ya una nota curada para ese id concreto.
 EUSKADI_MENOR_IMPORTE_SOSPECHOSO = 100_000
 
+# Feed de menores de PLACE (2026-09-30): el importe es SIN IVA, así que por encima de 40.000 € (máximo legal de un
+# contrato menor de obras; 15.000 € el resto) es imposible para un contrato menor -- 289 casos en 5 años, hasta
+# 71,5 M€ ("Reparación de la Vía Verde", El Viso del Alcor). Aviso automático, nunca se oculta ni se corrige.
+PLACE_MENOR_IMPORTE_IMPOSIBLE = 40_000
+
 # Madrid capital (2026-09-27, dataset oficial datos.madrid.es): a diferencia de Euskadi, aquí las cifras por
 # encima del techo legal habitual de un contrato menor (15.000€ servicios/suministros, 40.000€ obras) SÍ tienen
 # una explicación normal la mayoría de las veces -- el propio dataset municipal incluye, junto a los menores
@@ -15817,6 +16038,10 @@ def _render_fila_contrato_menor(r):
         nota_txt = ("Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato "
                     "menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica "
                     "un enlace por contrato para comprobarlo directamente, así que se muestra tal cual.")
+    if not nota_txt and fuente == "place-menores" and (r.get("import_num") or 0) > PLACE_MENOR_IMPORTE_IMPOSIBLE:
+        nota_txt = ("Importe sin IVA por encima del máximo legal de cualquier contrato menor (40.000 € en obras, "
+                    "15.000 € en el resto) según el conjunto de datos oficial de PLACE. Probablemente un error de "
+                    "origen (dígitos de más) o un contrato que no es menor; se muestra tal cual, sin corregirlo.")
     if not nota_txt and fuente == "madrid_capital" and (r.get("import_num") or 0) > MADRID_CAPITAL_MENOR_IMPORTE_ALTO:
         nota_txt = ("Importe por encima del techo legal habitual de un contrato menor (dataset oficial del "
                     "Ayuntamiento de Madrid). Probablemente un \"contrato privado\" (régimen distinto, sin ese "
