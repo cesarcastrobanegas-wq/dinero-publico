@@ -10163,16 +10163,22 @@ def _db_fondos_ue(provincia=None):
     return [dict(zip(cols, r)) for r in rows]
 
 
-def _db_fondos_ue_por_municipio(municipio):
+def _db_fondos_ue_por_municipio(municipio, provincia=None):
     """Fondos UE ya cruzados con este municipio exacto (columna municipio_match,
     calculada en la ingesta -- ver _cruzar_municipio_fondo_ue). Se usa para
-    mostrar el bloque amarillo/azul de fondos UE en la ficha de cada ayuntamiento."""
+    mostrar el bloque amarillo/azul de fondos UE en la ficha de cada ayuntamiento.
+
+    Clave compuesta (2026-09-30): el cruce ya se hace dentro de la provincia del fondo (columna `provincia`), así que
+    municipio_match + provincia identifica al municipio. Sin filtrar por provincia, la ficha de un homónimo mostraba
+    los fondos del otro (Mieres de Asturias los de Mieres de Girona, Cieza de Cantabria los de Cieza de Murcia...)."""
+    sql = ("SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
+           "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
+           "FROM fondos_ue WHERE municipio_match=?")
     with _db_lock:
-        rows = _db.execute(
-            "SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
-            "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
-            "FROM fondos_ue WHERE municipio_match=? ORDER BY importe_num DESC", (municipio,),
-        ).fetchall()
+        if provincia:
+            rows = _db.execute(sql + " AND provincia=? ORDER BY importe_num DESC", (municipio, provincia)).fetchall()
+        else:
+            rows = _db.execute(sql + " ORDER BY importe_num DESC", (municipio,)).fetchall()
     cols = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario",
             "nif", "rol", "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts")
     return [dict(zip(cols, r)) for r in rows]
@@ -16668,7 +16674,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # _cruzar_municipio_fondo_ue) -- solo se muestra si hay al menos uno,
         # mismo estilo amarillo/azul que /fondos-ue para diferenciarlos de los
         # contratos públicos normales.
-        fondos_ue_muni = _db_fondos_ue_por_municipio(muni_name_d)
+        fondos_ue_muni = _db_fondos_ue_por_municipio(muni_name_d, d.get("provincia", provincia))
         fondos_ue_html = ""
         if fondos_ue_muni:
             total_fue = sum(f["importe_num"] for f in fondos_ue_muni)
@@ -17562,7 +17568,7 @@ def render_landing_html(datos, provincia="murcia"):
         n = d.get("total_contratos", 0) if d else 0
         imp = sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])) if d else 0.0
         muni_enc = quote_plus(muni)
-        fondos_ue_muni = _db_fondos_ue_por_municipio(muni)
+        fondos_ue_muni = _db_fondos_ue_por_municipio(muni, provincia)
         fue_html = ""
         if fondos_ue_muni:
             total_fue = sum(f["importe_num"] for f in fondos_ue_muni)

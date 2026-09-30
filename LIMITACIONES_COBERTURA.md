@@ -1381,5 +1381,5 @@ Qué cambia:
 - **Menores de la ficha**: se leen por nombre sin diacríticos y provincia canónica, así que también juntan las
   grafías distintas de una misma ciudad ("Valencia" de su fuente propia y "València" del feed).
 
-Pendiente fuera de esto: fondos UE (`municipio_match`) sigue cruzando la localidad del beneficiario solo por nombre.
+Fondos UE (resuelto el mismo día): el cruce ya se hacía dentro de la provincia del fondo (solo hay de Murcia y Girona), pero la ficha los leía solo por nombre (`municipio_match`), así que un homónimo veía los del otro (Cieza de Cantabria, el fondo de Cieza de Murcia). Ahora se leen por nombre + provincia; comprobado que ningún fondo está cruzado con un municipio de otra provincia.
 
