@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 17:43:16",
+ "generado": "2026-09-30 19:34:58",
  "deuda_viva": {
   "fuente_url": "https://www.hacienda.gob.es/cdi/sist%20financiacion%20y%20deuda/informacioneells/2025/deuda-viva-ayuntamientos-202512.xlsx",
   "municipios": {
@@ -38498,6 +38498,11 @@
     "provincia": "castellon",
     "deuda_eur": 300000.0
    },
+   "castellon de la plana": {
+    "municipio": "Castellón de la Plana",
+    "provincia": "castellon",
+    "deuda_eur": 35792897.0
+   },
    "castillo de villamalefa": {
     "municipio": "Castillo de Villamalefa",
     "provincia": "castellon",
@@ -49087,6 +49092,13 @@
     "provincia": "castellon",
     "ejercicio": 2025,
     "importe_eur": 167694.12,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "castellon de la plana": {
+    "municipio": "Castellón de la Plana",
+    "provincia": "castellon",
+    "ejercicio": 2025,
+    "importe_eur": -18533258.66,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "castillo de villamalefa": {

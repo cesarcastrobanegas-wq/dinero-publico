@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 17:45:52",
+ "generado": "2026-09-30 19:36:14",
  "anio": 2024,
  "municipios": {
   "agost": {
@@ -12341,6 +12341,13 @@
    "provincia": "castellon",
    "importe": 3640.0,
    "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castellon de la plana": {
+   "municipio": "Castellón de la Plana",
+   "provincia": "castellon",
+   "importe": 77721.84,
+   "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
   "castillo de villamalefa": {

@@ -149,6 +149,10 @@ ALIAS_MUNICIPIO = {
     "goni": "Val de Goñi/Goñerri",
     "noain (valle de elorz)": "Valle de Elorz/Elortzibar",
     "noain (elortzibar)": "Valle de Elorz/Elortzibar",
+    # Detectado 2026-09-30 (César): Hacienda (deuda viva y saldo) y la ISPA escriben la capital de Castellón solo en
+    # valenciano, "Castelló de la Plana", y la app la guarda como "Castellón de la Plana" -- se quedaba sin deuda,
+    # saldo ni sueldo del alcalde (población y cuentas sí casaban).
+    "castello de la plana": "Castellón de la Plana",
 }
 
 # Girona se curó a mano al estilo "núcleo, artículo, en minúscula" (p.ej.
