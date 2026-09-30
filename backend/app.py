@@ -2593,7 +2593,7 @@ def _detectar_coincidencia_cargo(nombre_persona, municipio_contrato, provincia_c
 
 
 def _db_set_municipio(municipio, resultado, provincia="murcia"):
-    key = normalizar(municipio)
+    key = clave_municipio(municipio, provincia)
     # Mutar el dict del caller in-place (NO una copia): el llamador (p.ej.
     # _job_run, o el hilo de enriquecimiento tras cargar un municipio con
     # _db_get_municipio) a veces sigue usando esa misma referencia
@@ -2635,7 +2635,7 @@ def _db_count_municipios(provincia):
     return row[0] if row else 0
 
 
-def _db_get_municipio(municipio):
+def _db_get_municipio(municipio, provincia=None):
     """Lee UN municipio directamente de SQLite (SELECT por clave primaria),
     bajo demanda -- sin pasar por ningún caché permanente en RAM. Contraparte
     de _db_all_municipios() para cuando solo hace falta uno.
@@ -2650,8 +2650,11 @@ def _db_get_municipio(municipio):
     aquí (o a _db_all_municipios) lo que necesita en el momento, y Python
     libera la memoria en cuanto termina esa petición -- exactamente igual
     de "bajo demanda" que ya hacía _db_obtener_contratos_municipio() para
-    la fusión de histórico, solo que devolviendo el dict completo."""
-    key = normalizar(municipio)
+    la fusión de histórico, solo que devolviendo el dict completo.
+
+    Clave compuesta (2026-09-30): para un homónimo hace falta la provincia (ver clave_municipio); `municipio` puede
+    ser también directamente una clave ya calculada ("torrent|valencia")."""
+    key = municipio if "|" in (municipio or "") else clave_municipio(municipio, provincia)
     with _db_lock:
         row = _db.execute("SELECT data, provincia FROM municipios WHERE municipio=?", (key,)).fetchone()
     if not row:
@@ -2665,12 +2668,12 @@ def _db_get_municipio(municipio):
         return None
 
 
-def _db_obtener_contratos_municipio(municipio):
+def _db_obtener_contratos_municipio(municipio, provincia=None):
     """Contratos ya guardados para este municipio ANTES de un nuevo refresco
     -- se usa para fusionar en vez de sustituir (ver _fusionar_historico_
     contratos e INFORME_NOCHE.md 2026-07-22: el refresco sustitutivo anterior
     borró histórico real de al menos Archena)."""
-    key = normalizar(municipio)
+    key = clave_municipio(municipio, provincia)
     with _db_lock:
         row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
     if not row:
@@ -2679,6 +2682,77 @@ def _db_obtener_contratos_municipio(municipio):
         return json.loads(row[0]).get("contratos", [])
     except Exception:
         return []
+
+
+_MIGRACION_CLAVES_HOMONIMOS = ("migracion_claves_homonimos", "2026-09-30")
+
+
+def _migrar_claves_homonimos():
+    """Clave compuesta (2026-09-30): una fila guardada con la clave corta de un nombre que hoy es homónimo ("torrent",
+    "cabanes", "cieza"...) puede mezclar contratos de los dos municipios (el refresco de uno escribía en la fila del
+    otro). Se reparte UNA vez por versión: cada contrato va a la provincia que dice su fuente (PSCP -> la catalana,
+    EUSKADI -> País Vasco, NAVARRA -> Navarra) o su código postal; los que no dicen nada se quedan en la provincia de
+    la fila. La fila original se ARCHIVA completa en `municipios_archivo_homonimos` antes de borrarla."""
+    if not _DISCO_CONFIABLE:
+        return
+    clave_cfg, version = _MIGRACION_CLAVES_HOMONIMOS
+    with _db_lock:
+        fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave_cfg,)).fetchone()
+    if fila and fila[0] == version:
+        return
+    homs = _nombres_homonimos()
+    with _db_lock:
+        _db.execute("CREATE TABLE IF NOT EXISTS municipios_archivo_homonimos (municipio TEXT, data TEXT, ts REAL, "
+                    "provincia TEXT, archivado_ts REAL)")
+        filas = [r for r in _db.execute("SELECT municipio, data, ts, provincia FROM municipios").fetchall()
+                 if r[0] in homs]
+    resumen = {}
+    for key, data, ts, prov_fila in filas:
+        try:
+            d = json.loads(data)
+        except Exception:
+            continue
+        provs = homs[key]
+        por_prov = {}
+        for c in d.get("contratos", []):
+            fuente = (c.get("fuente") or "").upper()
+            destino = None
+            if fuente == "PSCP":
+                destino = next((p for p in provs if p in PROVINCIAS_CATALUNYA), None)
+            elif fuente == "EUSKADI":
+                destino = next((p for p in provs if p in PROVINCIAS_PAIS_VASCO), None)
+            elif fuente == "NAVARRA":
+                destino = next((p for p in provs if p in PROVINCIAS_NAVARRA), None)
+            if destino is None and (c.get("cp") or "").strip():
+                cp = c["cp"].strip()
+                for p in provs:
+                    pref = _CP_PREFIJO_PROVINCIA.get(p)
+                    if pref and cp.startswith(pref if isinstance(pref, tuple) else (pref,)):
+                        destino = p
+                        break
+            por_prov.setdefault(destino or (prov_fila if prov_fila in provs else sorted(provs)[0]), []).append(c)
+        if prov_fila in provs:
+            por_prov.setdefault(prov_fila, [])
+        for p, contratos in por_prov.items():
+            nombre = next((x for x in MUNICIPIOS_POR_PROVINCIA[p] if normalizar(x) == key), d.get("municipio", key))
+            nueva = dict(d)
+            nueva.update({"municipio": nombre, "contratos": contratos, "total_contratos": len(contratos),
+                          "alertas": analizar_riesgo(contratos)})
+            if p != prov_fila:
+                nueva["timestamp"] = 0      # que el próximo refresco la rehaga entera
+            _db_set_municipio(nombre, nueva, provincia=p)
+        with _db_lock:
+            _db.execute("INSERT INTO municipios_archivo_homonimos VALUES (?,?,?,?,?)",
+                        (key, data, ts, prov_fila, time.time()))
+            _db.execute("DELETE FROM municipios WHERE municipio=?", (key,))
+            _db.commit()
+        resumen[key] = {p: len(c) for p, c in por_prov.items()}
+    with _db_lock:
+        _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET "
+                    "valor=excluded.valor", (clave_cfg, version))
+        _db.commit()
+    print(f"  [startup] claves de homónimos: {len(resumen)} filas con clave corta repartidas por provincia "
+          f"(la original, archivada): {resumen}", flush=True)
 
 
 def _db_clear_municipios(provincia=None):
@@ -4277,7 +4351,7 @@ def rendicion_cuentas_url(municipio, provincia):
     cifra vive detrás de un visualizador Java con sesión de varios pasos
     (ver docstring de actualizar_cuentas_anuales.py) que no es replicable
     como enlace estable para el usuario final."""
-    info = CUENTAS_ANUALES.get(normalizar(municipio))
+    info = CUENTAS_ANUALES.get(clave_municipio(municipio, provincia))
     if info and info.get("id_entidad") and info.get("ultimo_ejercicio_rendido"):
         params = {"idEntidad": info["id_entidad"], "ejercicio": info["ultimo_ejercicio_rendido"]}
         return ("https://www.rendiciondecuentas.es/es/consultadeentidadesycuentas/"
@@ -4324,7 +4398,7 @@ def _capitalizar_nombre(s):
     return " ".join(p.capitalize() for p in (s or "").split())
 
 
-def alcalde_concejales_html(municipio):
+def alcalde_concejales_html(municipio, provincia=None):
     """Bloque HTML de alcalde/alcaldesa + desplegable de concejales para la
     ficha de un ayuntamiento, a partir de ALCALDES_CONCEJALES (Ministerio de
     Política Territorial y Memoria Democrática, ver actualizar_alcaldes.py).
@@ -4340,7 +4414,7 @@ def alcalde_concejales_html(municipio):
     distintivo (siempre "Concejal"), así que no hay forma fiable de saber
     qué importe corresponde a qué persona cuando hay varios -- instrucción
     del 2026-08-02, mejor no mostrar dato que atribuirlo mal."""
-    info = ALCALDES_CONCEJALES.get(normalizar(municipio))
+    info = ALCALDES_CONCEJALES.get(clave_municipio(municipio, provincia))
     if not info:
         return ""
 
@@ -4350,7 +4424,7 @@ def alcalde_concejales_html(municipio):
     if nombre_alcalde:
         partido_alcalde = alcalde.get("partido", "")
         sufijo = f" ({esc(partido_alcalde)})" if partido_alcalde else ""
-        retrib = RETRIBUCIONES_ISPA.get(normalizar(municipio))
+        retrib = RETRIBUCIONES_ISPA.get(clave_municipio(municipio, provincia))
         retrib_html = ""
         if retrib and retrib.get("importe") is not None:
             anio = retrib.get("anio", "")
@@ -4537,7 +4611,7 @@ def sueldos_concejales_html(municipio, provincia=None):
     """Desplegable con los sueldos de concejales que el propio ayuntamiento publica con nombre (ver
     SUELDOS_CONCEJALES). El importe se muestra TAL COMO figura en la fuente, con su base (bruto anual, mensual...)
     y su periodo; nunca se convierte ni se estima. Cada fila enlaza a la fuente oficial. "" si no hay datos."""
-    clave = normalizar(municipio)
+    clave = clave_municipio(municipio, provincia)
     regs = SUELDOS_CONCEJALES.get(clave) or []
     if provincia:
         regs = [r for r in regs if not r["provincia"] or r["provincia"] == provincia]
@@ -5315,7 +5389,21 @@ MUNICIPIOS_BARCELONA_INE.update({"Santa Fe del Penedès": "0824950006"})
 # _job_run) y sus menores entran por el feed de PLACE. Zalla: 3.128 contratos menores en el feed (2021-2026).
 MUNICIPIOS_PAIS_VASCO_SIN_KONTRATAZIOA = ["Zalla", "Elantxobe"]
 
-# Homónimos SIN RESOLVER (2026-09-30): municipios reales que no están en la app, o están sin datos propios, porque
+# Homónimos que se excluyeron de las listas mientras la clave era solo el nombre (ver los comentarios "EXCLUIDO A
+# PROPÓSITO" de cada lista): vuelven el 2026-09-30 con la clave compuesta municipio+provincia (clave_municipio).
+MUNICIPIOS_CANTABRIA.append("Cieza")
+MUNICIPIOS_ASTURIAS.append("Mieres")
+MUNICIPIOS_CACERES.append("Arroyomolinos")
+MUNICIPIOS_MADRID.append("El Molar")
+MUNICIPIOS_LEON.append("Sobrado")
+MUNICIPIOS_SALAMANCA.append("Sancti-Spíritus")
+MUNICIPIOS_SORIA.append("Rebollar")
+MUNICIPIOS_VALLADOLID.append("Campillo, El")
+MUNICIPIOS_ZAMORA.extend(["Fonfría", "Villaescusa"])
+MUNICIPIOS_CIUDAD_REAL.append("Villanueva de los Infantes")
+MUNICIPIOS_CUENCA.append("Moya")
+
+# Homónimos SIN RESOLVER (2026-09-30, ya RESUELTOS con clave_municipio; lista conservada solo como referencia): municipios reales que no están en la app, o están sin datos propios, porque
 # comparten nombre exacto con otro de otra provincia y la app guarda sus datos solo por nombre (clave primaria de la
 # tabla `municipios`, POBLACION, deuda, cuentas...). (municipio, provincia, provincia del homónimo que sí está).
 # Los 14 primeros se excluyeron de las listas en su día (comentarios de cada lista); Torrent y Cabanes están en las
@@ -5329,6 +5417,8 @@ HOMONIMOS_SIN_RESOLVER = [
     ("Moya", "cuenca", "las_palmas"), ("Castejón", "navarra", "cuenca"), ("Sada", "navarra", "a_coruna"),
     ("Torrent", "valencia", "girona"), ("Cabanes", "castellon", "girona"),
 ]
+
+MUNICIPIOS_NAVARRA.extend(["Castejón", "Sada"])   # homónimos de Cuenca y A Coruña, ver clave_municipio
 
 MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GIRONA,
                             "lleida": MUNICIPIOS_LLEIDA, "barcelona": MUNICIPIOS_BARCELONA,
@@ -5620,6 +5710,19 @@ def _provincia_o_todas(txt):
     'todas' o inválido) se trata como "sin filtro"."""
     return txt if txt in MUNICIPIOS_POR_PROVINCIA else "todas"
 
+def render_elegir_homonimo_html(nombre):
+    """Página mínima para un nombre repetido en varias provincias pedido sin &provincia= (clave compuesta)."""
+    n = normalizar(nombre)
+    opciones = []
+    for prov in sorted(_nombres_homonimos().get(n, ())):
+        m = next((x for x in MUNICIPIOS_POR_PROVINCIA[prov] if normalizar(x) == n), nombre)
+        opciones.append(f'<li><a href="/?muni={quote_plus(m)}&provincia={prov}">{esc(m)} '
+                        f'({esc(PROVINCIA_LABEL.get(prov, prov))})</a></li>')
+    cuerpo = (f'<div class="main-inner"><h2>{esc(nombre)}</h2><p>Hay varios municipios con este nombre. '
+              f'¿Cuál buscas?</p><ul>{"".join(opciones)}</ul></div>')
+    return _page_shell(f"{nombre}: elige el municipio", cuerpo, description=f"Municipios llamados {nombre}")
+
+
 def _q_prov(provincia):
     """Query string "&provincia=X" para enlaces que deben preservar la
     provincia actual -- "" si es "murcia" o "todas" (las dos provincias
@@ -5635,6 +5738,85 @@ def _q_prov_first(provincia):
     de la querystring ("?provincia=X" en vez de "&provincia=X")."""
     return f"?provincia={provincia}" if provincia not in ("murcia", "todas") else ""
 
+# ─── CLAVE COMPUESTA MUNICIPIO+PROVINCIA (2026-09-30, encargo de César) ───────────────────────────────────────────────
+# Hasta ahora TODO se indexaba por normalizar(municipio): tabla `municipios` (clave primaria), caché, POBLACION,
+# deuda, saldo, cuentas, sueldos... Dos municipios con el mismo nombre en provincias distintas compartían fila y datos
+# (Torrent de Girona llevaba el formato del portal de Torrent de Valencia; Cabanes de Girona, el sueldo y el saldo de
+# Cabanes de Castellón) o, para evitarlo, se dejaban fuera de las listas (Mieres de Asturias, Cieza de Cantabria...).
+# Ahora la clave es clave_municipio(nombre, provincia):
+#   - nombre que existe en UNA sola provincia (el 99,8 %) -> normalizar(nombre), exactamente la clave de siempre: sus
+#     filas y ficheros no se tocan;
+#   - nombre que existe en VARIAS provincias -> "normalizar(nombre)|provincia".
+# Todas las lecturas y escrituras por municipio pasan por aquí con su provincia. Un homónimo nuevo que entre en las
+# listas se trata igual automáticamente (las filas que ya existieran con la clave corta se reparten al arrancar, ver
+# _migrar_claves_homonimos).
+_NOMBRES_HOMONIMOS = None
+
+
+def _nombres_homonimos():
+    global _NOMBRES_HOMONIMOS
+    if _NOMBRES_HOMONIMOS is None:
+        import collections
+        provs = collections.defaultdict(set)
+        for prov, lst in MUNICIPIOS_POR_PROVINCIA.items():
+            for m in lst:
+                provs[normalizar(m)].add(prov)
+        _NOMBRES_HOMONIMOS = {n: frozenset(ps) for n, ps in provs.items() if len(ps) > 1}
+    return _NOMBRES_HOMONIMOS
+
+
+def es_homonimo(nombre):
+    return normalizar(nombre or "") in _nombres_homonimos()
+
+
+def clave_municipio(nombre, provincia=None):
+    """Clave de un municipio en la tabla `municipios`, la caché y los diccionarios de datos oficiales. Para un nombre
+    repetido en varias provincias, sin una provincia válida devuelve la clave corta (que ya no existe para ellos):
+    quien llama tiene que resolver antes a qué provincia se refiere (ver resolver_provincia_municipio)."""
+    n = normalizar(nombre or "")
+    provs = _nombres_homonimos().get(n)
+    if provs and provincia in provs:
+        return f"{n}|{provincia}"
+    return n
+
+
+def resolver_provincia_municipio(nombre, provincia=None):
+    """Provincia de un municipio dado por nombre (+ provincia opcional de la URL). Para un homónimo sin provincia
+    válida: Murcia si es una de ellas (los enlaces de Murcia no llevan &provincia=, ver _q_prov); si no, None
+    (la ficha muestra entonces a elegir entre los municipios con ese nombre)."""
+    n = normalizar(nombre or "")
+    provs = _nombres_homonimos().get(n)
+    if provs:
+        if provincia in provs:
+            return provincia
+        return "murcia" if "murcia" in provs else None
+    if provincia in MUNICIPIOS_POR_PROVINCIA and any(normalizar(m) == n for m in MUNICIPIOS_POR_PROVINCIA[provincia]):
+        return provincia
+    for prov, lst in MUNICIPIOS_POR_PROVINCIA.items():
+        if any(normalizar(m) == n for m in lst):
+            return prov
+    return provincia
+
+
+def _reindexar_por_clave(dic, listas=False):
+    """Vuelve a indexar EN SU SITIO un diccionario de datos oficiales ({clave: registro} o {clave: [registros]}) por
+    clave_municipio(registro.municipio, registro.provincia). Los ficheros los generan los scripts con el nombre o ya con
+    la clave compuesta; así la app no depende de cómo vengan indexados."""
+    nuevo = {}
+    for k, v in dic.items():
+        if listas and isinstance(v, list):
+            for r in v:
+                prov = r.get("provincia") if isinstance(r, dict) else None
+                nuevo.setdefault(clave_municipio((r.get("municipio") if isinstance(r, dict) else None) or k.split("|")[0],
+                                                 prov) if prov else k, []).append(r)
+        elif isinstance(v, dict) and v.get("provincia"):
+            nuevo[clave_municipio(v.get("municipio") or k.split("|")[0], v["provincia"])] = v
+        else:
+            nuevo[k] = v
+    dic.clear()
+    dic.update(nuevo)
+
+
 def municipio_valido_provincia(municipio, provincia):
     """Generalizado: busca en la lista de municipios de la provincia dada
     (o Murcia si la provincia no se reconoce, mismo fallback que siempre)."""
@@ -5643,6 +5825,11 @@ def municipio_valido_provincia(municipio, provincia):
         if normalizar(m) == buscado:
             return m
     return None
+
+
+for _dic_datos in (POBLACION, DEUDA_VIVA, SALDO_NO_FINANCIERO, CUENTAS_ANUALES, RETRIBUCIONES_ISPA, ALCALDES_CONCEJALES):
+    _reindexar_por_clave(_dic_datos)
+_reindexar_por_clave(SUELDOS_CONCEJALES, listas=True)
 
 
 # ─── PSEUDO-MUNICIPIOS (ámbito autonómico/provincial, no un ayuntamiento) ────
@@ -6351,7 +6538,7 @@ _CP_ESPERADO_ANCLAJE = {
 }
 
 
-def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None):
+def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None, provincia=None):
     """Parsea un .atom en bytes buscando contratos del municipio."""
 
     # ── Criba rápida a nivel de fichero (bytes) ───────────────────────────────
@@ -6377,7 +6564,7 @@ def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None):
                 continue
             if cp_esperado and not c.get("cp", "").startswith(cp_esperado):
                 continue
-            if anclado and _cp_de_otra_provincia(c, municipio):
+            if anclado and _cp_de_otra_provincia(c, municipio, provincia):
                 continue
             contratos.append(c)
         except Exception:
@@ -6902,7 +7089,28 @@ def _cp_provincias_de_nombre(municipio):
     return _CP_PROVINCIAS_POR_NOMBRE.get(normalizar(municipio))
 
 
-def _cp_de_otra_provincia(c, municipio):
+def _cp_de_otra_provincia(c, municipio, provincia=None):
+    """Clave compuesta (2026-09-30): para un homónimo exacto con su provincia (Torrent de Valencia, Cieza de
+    Cantabria...) el CP tiene que ser de ESA provincia, y un contrato sin CP válido no se puede atribuir a uno u otro:
+    se descarta (True). Para el resto, la regla de siempre (_cp_de_otra_provincia_nombre)."""
+    if provincia and es_homonimo(municipio):
+        pref = _CP_PREFIJO_PROVINCIA.get(provincia)
+        if not pref:
+            return False
+        cp = (c.get("cp") or "").strip()
+        cp_valido = len(cp) == 5 and cp.isdigit()
+        if cp_valido:
+            return not cp.startswith(pref if isinstance(pref, tuple) else (pref,))
+        # Sin CP: solo es ambiguo si otro homónimo también se busca en PLACE (Torrent o Cabanes de Girona van por la
+        # PSCP, así que un "Ayuntamiento de Torrent" de PLACE sin CP solo puede ser el de Valencia).
+        rivales_place = [pv for pv in _nombres_homonimos().get(normalizar(municipio), ()) if pv != provincia
+                         and pv not in PROVINCIAS_CATALUNYA and pv not in PROVINCIAS_NAVARRA
+                         and pv not in PROVINCIAS_PAIS_VASCO]
+        return bool(rivales_place)
+    return _cp_de_otra_provincia_nombre(c, municipio)
+
+
+def _cp_de_otra_provincia_nombre(c, municipio):
     """True solo si el contrato trae un CP VÁLIDO (5 dígitos, provincia 01-52) que no es de ninguna provincia donde
     exista `municipio`."""
     cp = (c.get("cp") or "").strip()
@@ -7018,7 +7226,7 @@ def _contratos_de_zip_cacheado(zip_path, job_id=None):
         return contratos
 
 
-def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
+def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False, provincia=None):
     """Filtra por municipio los contratos ya extraídos de zip_path (ver
     _contratos_de_zip_cacheado) -- misma lógica de coincidencia que antes
     (organo anclado/suelto + CP de desambiguación), pero sin reabrir ni
@@ -7064,7 +7272,7 @@ def buscar_en_zip(zip_path, municipio, job_id=None, anclar=False):
             continue
         if cp_esperado and not c.get("cp", "").startswith(cp_esperado):
             continue
-        if anclar and _cp_de_otra_provincia(c, municipio):
+        if anclar and _cp_de_otra_provincia(c, municipio, provincia):
             continue
         contratos.append(dict(c))  # copia -- nunca mutar el dict compartido en caché
     return contratos
@@ -7673,7 +7881,7 @@ def buscar_en_navarra(municipio, job_id=None):
     return _dedup_contratos_por_url(contratos), completo
 
 
-def buscar_en_feed_vivo(municipio, anclar=False):
+def buscar_en_feed_vivo(municipio, anclar=False, provincia=None):
     """Consulta el feed en vivo de PLACE (últimas ~200 entradas de toda España).
     anclar=True: mismo patrón anclado que buscar_en_zip (_regex_anclado) --
     ver esa función para el porqué (Comunitat Valenciana/Andalucía/Ceuta/
@@ -7684,7 +7892,7 @@ def buscar_en_feed_vivo(municipio, anclar=False):
     try:
         r = session.get(PLACE_FEED_LIVE, timeout=HTTP_TIMEOUT)
         if r.status_code == 200:
-            return parsear_atom_bytes(r.content, municipio, muni_re)
+            return parsear_atom_bytes(r.content, municipio, muni_re, provincia=provincia)
     except Exception:
         pass
     return []
@@ -8322,7 +8530,7 @@ def _aplicar_backfill_galicia_place():
         datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
         anadidos, sin_fila = {}, []
         for muni, info in datos["municipios"].items():
-            key = normalizar(muni)
+            key = clave_municipio(muni, (info or {}).get("provincia"))
             with _db_lock:
                 row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
             if not row:
@@ -8424,7 +8632,7 @@ def _aplicar_backfill_ajuntament_place():
         datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
         anadidos, sin_fila = {}, []
         for muni, info in datos["municipios"].items():
-            key = normalizar(muni)
+            key = clave_municipio(muni, (info or {}).get("provincia"))
             with _db_lock:
                 row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
             if not row:
@@ -8486,7 +8694,7 @@ def _aplicar_backfill_nombres_place():
         datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
         anadidos, sin_fila = {}, []
         for muni, info in datos["municipios"].items():
-            key = normalizar(muni)
+            key = clave_municipio(muni, (info or {}).get("provincia"))
             with _db_lock:
                 row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
             if not row:
@@ -8562,7 +8770,12 @@ def _aplicar_correccion_formales_5anios():
         corregidos, sin_ficha, sin_cambios, total_archivados = 0, [], 0, 0
         for clave, contratos_frescos in datos.get("correcciones", {}).items():
             municipio, _, fuente = clave.partition("::")
-            key = normalizar(municipio)
+            # clave compuesta: la provincia sale de la fuente (PSCP -> Cataluña, NAVARRA -> Navarra, EUSKADI -> País Vasco)
+            _provs_h = _nombres_homonimos().get(normalizar(municipio), ())
+            _prov_f = next((pv for pv in _provs_h if (fuente == "PSCP" and pv in PROVINCIAS_CATALUNYA)
+                            or (fuente == "NAVARRA" and pv in PROVINCIAS_NAVARRA)
+                            or (fuente == "EUSKADI" and pv in PROVINCIAS_PAIS_VASCO)), None)
+            key = clave_municipio(municipio, _prov_f)
             with _db_lock:
                 row = _db.execute("SELECT data, provincia FROM municipios WHERE municipio=?", (key,)).fetchone()
             if not row:
@@ -8654,9 +8867,9 @@ def _depurar_asignacion_place_por_nombre():
                 if rx.search(org):
                     if cp and not (c.get("cp") or "").startswith(cp):
                         fuera.append(c)            # homónimo: el código postal es de otra provincia
-                    elif _cp_de_otra_provincia(c, nombre):
+                    elif _cp_de_otra_provincia(c, nombre, provincia):
                         fuera.append(c)            # CP de una provincia donde no existe ese nombre
-                elif rx_sin_otros.search(org) or _cp_de_otra_provincia(c, nombre):
+                elif rx_sin_otros.search(org) or _cp_de_otra_provincia(c, nombre, provincia):
                     fuera.append(c)                # el nombre sigue con el de otro municipio real, o CP ajeno
                 else:
                     sin_explicar += 1
@@ -9268,18 +9481,40 @@ def _archivar_menores_fuera_de_ventana():
         print(f"[startup] archivo de menores: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
 
 
-def _db_contratos_menors_por_municipio(municipio):
-    """Lee contratos_menors_locales para un municipio exacto -- se usa para
+_EQUIV_MENORES_FICHA = {"ts": 0.0, "mapa": None}
+
+
+def _db_contratos_menors_por_municipio(municipio, provincia=None):
+    """Lee contratos_menors_locales para un municipio -- se usa para
     mostrar la sección colapsable de contratos menores en la ficha del
     ayuntamiento (cualquier fuente: Girona RPC, Fuente Álamo, Mula, Molina de
-    Segura...)."""
+    Segura...).
+
+    Clave compuesta (2026-09-30): con provincia, se leen todas las grafías equivalentes de ESE municipio (nombre sin
+    diacríticos + provincia canónica, ver _clave_municipio_cm): distingue homónimos de provincias distintas y junta
+    las fuentes que guardan otra grafía ("Valencia" de la fuente propia y "València" del feed). Mapa cacheado 10 min."""
+    pares = [(municipio, provincia)] if provincia else []
+    if provincia:
+        ahora = time.time()
+        if _EQUIV_MENORES_FICHA["mapa"] is None or ahora - _EQUIV_MENORES_FICHA["ts"] > 600:
+            with _db_lock:
+                filas = _db.execute("SELECT DISTINCT municipio, provincia FROM contratos_menors_locales").fetchall()
+            mapa = collections.defaultdict(list)
+            for m, pv in filas:
+                mapa[_clave_municipio_cm(m, pv)].append((m, pv))
+            _EQUIV_MENORES_FICHA.update(ts=ahora, mapa=mapa)
+        pares = _EQUIV_MENORES_FICHA["mapa"].get(_clave_municipio_cm(municipio, provincia)) or pares
+    cols_sql = ("SELECT id, municipio, provincia, fuente, organisme, adjudicatari, nif, "
+                "import_num, data_adjudicacio, tipus_contracte, descripcio, codi_cpv, exercici, ts "
+                "FROM contratos_menors_locales ")
     with _db_lock:
-        rows = _db.execute(
-            "SELECT id, municipio, provincia, fuente, organisme, adjudicatari, nif, "
-            "import_num, data_adjudicacio, tipus_contracte, descripcio, codi_cpv, exercici, ts "
-            "FROM contratos_menors_locales WHERE municipio=? ORDER BY data_adjudicacio DESC",
-            (municipio,),
-        ).fetchall()
+        if pares:
+            rows = []
+            for m, pv in pares:
+                rows += _db.execute(cols_sql + "WHERE municipio=? AND provincia=?", (m, pv)).fetchall()
+            rows.sort(key=lambda r: r[8] or "", reverse=True)
+        else:
+            rows = _db.execute(cols_sql + "WHERE municipio=? ORDER BY data_adjudicacio DESC", (municipio,)).fetchall()
     cols = ("id", "municipio", "provincia", "fuente", "organisme", "adjudicatari", "nif",
             "import_num", "data_adjudicacio", "tipus_contracte", "descripcio", "codi_cpv",
             "exercici", "ts")
@@ -11146,16 +11381,16 @@ def analizar_riesgo(contratos):
 
 # ─── CACHÉ DE RESULTADOS — helpers ───────────────────────────────────────────
 
-def _cache_get(municipio):
-    key = normalizar(municipio)
+def _cache_get(municipio, provincia=None):
+    key = clave_municipio(municipio, provincia)
     with _cache_lock:
         entry = _result_cache.get(key)
     if entry and (time.time() - entry["ts"]) < RESULT_CACHE_TTL:
         return entry["resultado"]
     return None
 
-def _cache_set(municipio, resultado):
-    key = normalizar(municipio)
+def _cache_set(municipio, resultado, provincia=None):
+    key = clave_municipio(municipio, provincia or (resultado or {}).get("provincia"))
     with _cache_lock:
         _result_cache[key] = {"ts": time.time(), "resultado": resultado}
     _purgar_result_cache_caducado()
@@ -11188,8 +11423,8 @@ def _purgar_result_cache_caducado():
     if caducadas:
         print(f"  [cache] {len(caducadas)} entradas caducadas purgadas de _result_cache.", flush=True)
 
-def _cache_age_str(municipio):
-    key = normalizar(municipio)
+def _cache_age_str(municipio, provincia=None):
+    key = clave_municipio(municipio, provincia)
     with _cache_lock:
         entry = _result_cache.get(key)
     if not entry:
@@ -11199,8 +11434,8 @@ def _cache_age_str(municipio):
     if mins < 60:  return f"hace {mins} min"
     return f"hace {mins // 60}h {mins % 60}min"
 
-def _cache_invalidate(municipio):
-    key = normalizar(municipio)
+def _cache_invalidate(municipio, provincia=None):
+    key = clave_municipio(municipio, provincia)
     with _cache_lock:
         _result_cache.pop(key, None)
 
@@ -11241,7 +11476,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
 
             # 1. Feed en vivo
             _log(job_id, "Consultando feed en vivo de PLACE…")
-            vivos = buscar_en_feed_vivo(municipio, anclar=anclar_place)
+            vivos = buscar_en_feed_vivo(municipio, anclar=anclar_place, provincia=provincia)
             contratos += vivos
             _log(job_id, f"  Feed en vivo: {len(vivos)} contratos")
 
@@ -11281,7 +11516,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
                          + (" (BORM simultáneo)…" if provincia == "murcia" else "…"))
 
             with ThreadPoolExecutor(max_workers=4) as ex:
-                futs = {ex.submit(buscar_en_zip, zp, municipio, job_id, anclar_place): ("ZIP", am)
+                futs = {ex.submit(buscar_en_zip, zp, municipio, job_id, anclar_place, provincia): ("ZIP", am)
                         for am, zp in zips}
                 if provincia == "murcia":
                     borm_fut = HTTP_POOL.submit(buscar_en_borm, municipio, job_id)
@@ -11308,7 +11543,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
         # NUNCA sustituye lo ya persistido, se fusiona con ello (ver
         # _fusionar_historico_contratos). Corrige el bug documentado en
         # INFORME_NOCHE.md 2026-07-22 que borró histórico real de Archena.
-        existentes = _db_obtener_contratos_municipio(municipio)
+        existentes = _db_obtener_contratos_municipio(municipio, provincia)
         if existentes:
             if fuente_completa and contratos:
                 # PSCP/Euskadi/Navarra consultan en vivo su histórico completo cada vez (no ZIPs mensuales
@@ -11415,7 +11650,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
             "timestamp":       time.time(),
         }
 
-        _cache_set(municipio, resultado)
+        _cache_set(municipio, resultado, provincia)
         _db_set_municipio(municipio, resultado, provincia=provincia)
 
         if contratos_ccaa_murcia:
@@ -11459,7 +11694,7 @@ def _refrescar_provincia_secuencial(job_id, provincia, offset=0):
         with _jobs_lock:
             _jobs[sub_job_id] = {"status": "running", "log": [], "error": None}
         try:
-            _cache_invalidate(municipio)
+            _cache_invalidate(municipio, provincia)
             _job_run(sub_job_id, municipio, provincia=provincia)
         except Exception as e:
             print(f"  [actualizar-todos:{provincia}] Error en {municipio}: {e}", flush=True)
@@ -12215,6 +12450,7 @@ def _inicializar_datos():
     deserializa el contenido completo de los que de verdad van a entrar en
     _result_cache."""
     _db_init()
+    _migrar_claves_homonimos()
     _cargar_contratos_menores_murcia_manual()
     _cargar_contratos_menores_euskadi()
     _cargar_contratos_menores_madrid_capital()
@@ -12256,9 +12492,9 @@ def _inicializar_datos():
     with _db_lock:
         recientes = _db.execute("SELECT municipio FROM municipios WHERE ts > ?", (corte,)).fetchall()
     for (muni_key,) in recientes:
-        d = _db_get_municipio(muni_key)
+        d = _db_get_municipio(muni_key) if "|" in muni_key else _db_get_municipio(muni_key, None)
         if d:
-            _cache_set(d.get("municipio", muni_key), d)
+            _cache_set(d.get("municipio", muni_key), d, d.get("provincia"))
     for _prov in MUNICIPIOS_PSEUDO:
         _asegurar_pseudo_municipio_fondos(_prov)
     # Feed de menores de PLACE: al FINAL del arranque (después de todas las fuentes propias: manda la fuente propia) y
@@ -12391,7 +12627,7 @@ def _enriquecer_directivos_bg(provincia=None):
                     c["intentado"] = True
                     tocado = True
                     continue
-                pendientes.append((municipio, _contrato_key(c), empresa_c, c.get("nif", "")))
+                pendientes.append((municipio, provincia_d, _contrato_key(c), empresa_c, c.get("nif", "")))
 
             if tocado:
                 _db_set_municipio(municipio, d, provincia=provincia_d)
@@ -12416,10 +12652,10 @@ def _enriquecer_directivos_bg(provincia=None):
         def _flush_actual():
             nonlocal d_actual, cambios_muni_actual
             if d_actual is not None and cambios_muni_actual:
-                _db_set_municipio(muni_actual, d_actual, provincia=muni_actual_provincia)
+                _db_set_municipio(muni_actual[0], d_actual, provincia=muni_actual_provincia)
             cambios_muni_actual = False
 
-        for idx, (municipio, key, empresa, nif) in enumerate(pendientes, 1):
+        for idx, (municipio, provincia_p, key, empresa, nif) in enumerate(pendientes, 1):
             print(f"  [{idx}/{len(pendientes)}] {empresa} (NIF:{nif})", flush=True)
             cached_n, cached_c = _dir_cache_get(empresa, nif)
             if cached_n is not None:
@@ -12433,11 +12669,11 @@ def _enriquecer_directivos_bg(provincia=None):
             else:
                 print(f"    No localizado.", flush=True)
 
-            if municipio != muni_actual:
+            if (municipio, provincia_p) != muni_actual:
                 _flush_actual()
-                muni_actual = municipio
-                d_actual = _db_get_municipio(municipio)
-                muni_actual_provincia = d_actual.get("provincia", "murcia") if d_actual else "murcia"
+                muni_actual = (municipio, provincia_p)
+                d_actual = _db_get_municipio(municipio, provincia_p)
+                muni_actual_provincia = d_actual.get("provincia", provincia_p) if d_actual else provincia_p
 
             if d_actual:
                 for c in d_actual.get("contratos", []):
@@ -14470,7 +14706,7 @@ _INDICE_FORMATO_PORTAL = {
     "fuenlabrada": (100, "XLS/XLSX/ODS trimestral"),
     "valladolid": (100, "XLSX anual"),
     "san cristobal de la laguna": (100, "XLSX/ODS anual por entidad"),
-    "torrent": (100, "XLSX trimestral"),
+    "torrent|valencia": (100, "XLSX trimestral"),
     "almeria": (100, "XLSX anual acumulado (2025 solo en PDF)"),
     "torrejon de ardoz": (100, "XLSX trimestral desde 2025 (PDF hasta 2024)"),
     "ciudad real": (100, "XLSX trimestral desde 2025 (texto libre en la web hasta 2024)"),
@@ -14539,7 +14775,7 @@ def _indice_menores_stats_por_municipio():
     directivo/administrador identificado en la caché `directores` (componente "directivo", igual que en v1)."""
     with _db_lock:
         rows = _db.execute("""
-            SELECT c.municipio,
+            SELECT c.municipio, c.provincia,
                    COUNT(*) AS total,
                    SUM(CASE WHEN d.nombre IS NOT NULL AND d.nombre <> '' THEN 1 ELSE 0 END) AS con_directivo
             FROM contratos_menors_locales c
@@ -14547,10 +14783,16 @@ def _indice_menores_stats_por_municipio():
               ON d.clave = CASE WHEN c.nif IS NOT NULL AND c.nif <> ''
                                  THEN upper(trim(c.nif))
                                  ELSE normalizar(c.adjudicatari) END
-            GROUP BY c.municipio
+            GROUP BY c.municipio, c.provincia
         """).fetchall()
-    return {municipio: {"total": total, "con_directivo": con_directivo or 0}
-            for municipio, total, con_directivo in rows}
+    # clave compuesta (2026-09-30): por municipio Y provincia, con la provincia canónica de las grafías viejas
+    out = {}
+    for municipio, prov, total, con_directivo in rows:
+        k = clave_municipio(municipio, _PROVINCIA_CANONICA_CM.get(prov or "", prov))
+        o = out.setdefault(k, {"total": 0, "con_directivo": 0})
+        o["total"] += total
+        o["con_directivo"] += con_directivo or 0
+    return out
 
 
 # Feed de menores de PLACE ('place-menores', 2026-09-30): DENTRO del índice (opción A de César), pero NO con la regla
@@ -14573,7 +14815,8 @@ def _indice_menores_detalle_por_municipio():
         """).fetchall()
     out = {}
     for muni, prov, anio, n, n_adj, ultima, fuentes in rows:
-        d = out.setdefault((normalizar(muni), prov or ""), {"anios": set(), "total": 0, "con_adj": 0,
+        d = out.setdefault((normalizar(muni), _PROVINCIA_CANONICA_CM.get(prov or "", prov or "")),
+                           {"anios": set(), "total": 0, "con_adj": 0,
                                                              "ultima": "", "fuentes": set()})
         if anio and anio.isdigit():
             d["anios"].add(int(anio))
@@ -14650,7 +14893,7 @@ def _indice_puntos_menores(det, hoy):
 # claves pasen a municipio+provincia: actividad, adjudicatario, directivo y formato (derivados de la fila compartida
 # o de un dict sin provincia) quedan NO DISPONIBLES, y cuentas/deuda/saldo/retribuciones solo cuentan si el registro
 # dice ser de la misma provincia que la fila del índice. Se calcula de las listas, así que un homónimo nuevo entra solo.
-_INDICE_HOMONIMOS = None
+_INDICE_HOMONIMOS = frozenset()   # clave compuesta (2026-09-30): ya no hay datos compartidos entre homónimos
 
 
 def _indice_homonimos():
@@ -14687,7 +14930,7 @@ def _calcular_indice_transparencia():
     menores_por_nombre = {}
     for (n, p), d in menores_det.items():
         menores_por_nombre.setdefault(n, []).append((p, d))
-    formales_idx = {normalizar(d.get("municipio", "")): d for d in _db_all_municipios()}
+    formales_idx = {clave_municipio(d.get("municipio", ""), d.get("provincia")): d for d in _db_all_municipios()}
 
     filas = []
     for clave, pob in POBLACION.items():
@@ -14780,7 +15023,7 @@ def _calcular_indice_transparencia():
         # ---- directivo identificado: igual que v1 ----
         num_dir_formal = sum(1 for c in contratos_formales
                              if c.get("empresa") and c.get("empresa") != "No localizada" and c.get("directivo"))
-        m = None if homonimo else menores_stats.get(municipio)
+        m = None if homonimo else menores_stats.get(clave)
         num_dir = num_dir_formal + (m["con_directivo"] if m else 0)
         denom_dir = num_adj + (m["total"] if m else 0)
         comp["directivo"] = (
@@ -14793,7 +15036,7 @@ def _calcular_indice_transparencia():
              "detalle": _NO_DISP_HOMONIMO if homonimo else "Sin adjudicatarios conocidos para calcularlo"})
 
         # ---- menores (v2): solo con fuente conectada; sin fuente = no disponible (nunca 0) hasta conectar PLACE ----
-        cands = menores_por_nombre.get(clave, [])
+        cands = menores_por_nombre.get(normalizar(municipio), [])
         det = next((d for p, d in cands if p == provincia), None) or (
             cands[0][1] if len(cands) == 1 and not homonimo else None)   # homónimo: solo la de SU provincia
         if det and det["total"]:
@@ -14914,9 +15157,10 @@ def _calcular_ranking_alcaldes():
         if not nombre:
             continue
         municipio = retrib.get("municipio") or info.get("municipio", "")
-        pob_info = POBLACION.get(normalizar(municipio))
+        prov_r = retrib.get("provincia") or info.get("provincia")
+        pob_info = POBLACION.get(clave_municipio(municipio, prov_r))
         habitantes = pob_info["poblacion"] if pob_info else None
-        deuda_info = DEUDA_VIVA.get(normalizar(municipio))
+        deuda_info = DEUDA_VIVA.get(clave_municipio(municipio, prov_r))
         deuda_por_habitante = None
         if deuda_info and habitantes:
             deuda_por_habitante = deuda_info["deuda_eur"] / habitantes
@@ -15164,11 +15408,7 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
         if sin_indice else ""
     )
     aviso_recorte = ""   # sustituido por la paginación (ver _rk_paginacion_html)
-    aviso_homonimos = (
-        f'<br><span class="noloc-warn">⚠️ {len(HOMONIMOS_SIN_RESOLVER)} municipios no disponibles por homónimo sin '
-        f'resolver (mismo nombre que otro municipio de otra provincia; la app aún guarda sus datos solo por nombre): '
-        + ", ".join(f"{esc(m)} ({esc(PROVINCIA_LABEL.get(p, p).replace('Provincia de ', ''))})"
-                    for m, p, _ in HOMONIMOS_SIN_RESOLVER) + ".</span>")
+    aviso_homonimos = ""   # homónimos resueltos con la clave compuesta municipio+provincia (2026-09-30)
 
     return f"""
   <div class="rk-section-header" id="indice-transparencia">
@@ -15218,7 +15458,7 @@ def _buscar_posicion_municipio(q, limite=10):
 
     def _rank(lista_ordenada, clave_muni):
         for i, f in enumerate(lista_ordenada, 1):
-            if normalizar(f["municipio"]) == clave_muni:
+            if clave_municipio(f["municipio"], f.get("provincia")) == clave_muni:
                 return i
         return None
 
@@ -15227,7 +15467,7 @@ def _buscar_posicion_municipio(q, limite=10):
 
     resultados = []
     for f in coincidencias[:limite]:
-        clave_muni = normalizar(f["municipio"])
+        clave_muni = clave_municipio(f["municipio"], f.get("provincia"))
         indice_com_ordenado = sorted(
             [x for x in indice_filas
              if x["comunidad_autonoma"] == f["comunidad_autonoma"] and x["indice"] is not None],
@@ -15269,7 +15509,7 @@ def _buscar_posicion_municipio(q, limite=10):
         # existente (un SELECT por PK), ningún dato nuevo ni fuente nueva,
         # solo se expone aquí para no tener que dar de alta un endpoint
         # aparte solo para esto.
-        d_muni = _db_get_municipio(f["municipio"])
+        d_muni = _db_get_municipio(f["municipio"], f.get("provincia"))
         if d_muni and d_muni.get("contratos"):
             item["contratos"] = {
                 "total": d_muni.get("total_contratos", len(d_muni["contratos"])),
@@ -16354,7 +16594,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # Población oficial (INE, Padrón Municipal) -- ver actualizar_poblacion.py.
         habitantes_html = ""
         if not es_pseudo_municipio(muni_name):
-            pob_info = POBLACION.get(normalizar(muni_name))
+            pob_info = POBLACION.get(clave_municipio(muni_name, d.get("provincia", provincia)))
             if pob_info:
                 fuente_pob = POBLACION_FUENTE_URL.get(pob_info.get("provincia", ""), "")
                 if fuente_pob:
@@ -16379,7 +16619,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         saldo_html = ""
         deuda_html = ""
         if not es_pseudo_municipio(muni_name):
-            saldo_info = SALDO_NO_FINANCIERO.get(normalizar(muni_name))
+            saldo_info = SALDO_NO_FINANCIERO.get(clave_municipio(muni_name, d.get("provincia", provincia)))
             if saldo_info and saldo_info.get("importe_eur") is not None:
                 ejercicio_saldo = saldo_info.get("ejercicio", "")
                 importe_saldo = saldo_info["importe_eur"]
@@ -16390,9 +16630,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                                f'({etiqueta.lower()}) del ejercicio {esc(ejercicio_saldo)}, '
                                f'Ministerio de Hacienda">'
                                f'💶 {etiqueta} {esc(ejercicio_saldo)}: {fmt_eur(abs(importe_saldo))} ↗</a>')
-            deuda_info = DEUDA_VIVA.get(normalizar(muni_name))
+            deuda_info = DEUDA_VIVA.get(clave_municipio(muni_name, d.get("provincia", provincia)))
             if deuda_info and DEUDA_VIVA_FUENTE_URL:
-                pob_info = POBLACION.get(normalizar(muni_name))
+                pob_info = POBLACION.get(clave_municipio(muni_name, d.get("provincia", provincia)))
                 por_habitante = ""
                 if pob_info and pob_info.get("poblacion"):
                     por_habitante = f' ({fmt_eur(deuda_info["deuda_eur"] / pob_info["poblacion"])}/hab.)'
@@ -16400,7 +16640,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                                f'class="cuentas-link" title="Deuda viva municipal a 31/12, '
                                f'Ministerio de Hacienda">'
                                f'🏦 Deuda viva: {fmt_eur(deuda_info["deuda_eur"])}{por_habitante} ↗</a>')
-        age_str       = _cache_age_str(muni_name)
+        age_str       = _cache_age_str(muni_name, d.get("provincia", provincia))
         ts            = d.get("timestamp", 0)
         if not age_str and ts:
             mins = int((time.time() - ts) / 60)
@@ -16456,7 +16696,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # municipios de la provincia": no tendría sentido repetir el mismo
         # Top N nacional en 45+ cards seguidas. Pseudo-municipios excluidos
         # (nunca tienen índice, ver _calcular_indice_transparencia).
-        it_widget_html = (_widget_indice_transparencia_muni_html(muni_name_d)
+        it_widget_html = (_widget_indice_transparencia_muni_html(muni_name_d, provincia=d.get("provincia", provincia))
                            if is_paged and not es_pseudo_municipio(muni_name_d) else "")
 
         # Contratos menores de fuentes LOCALES (Girona/RPC, Fuente Álamo, Mula,
@@ -16465,7 +16705,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # muchos contratos de importe bajo (compras rutinarias), no
         # formalizaciones grandes.
         contratos_menors_html = ""
-        menors_muni = _db_contratos_menors_por_municipio(muni_name_d)
+        menors_muni = _db_contratos_menors_por_municipio(muni_name_d, d.get("provincia", provincia))
         if menors_muni:
             total_cm = sum(r["import_num"] for r in menors_muni)
             total_cm_n = len(menors_muni)
@@ -16559,7 +16799,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           <div class="muni-header">
             <div>
               <h2>🏛 {esc(muni_name)} {habitantes_html} {cuentas_html} {saldo_html} {deuda_html}</h2>
-              {alcalde_concejales_html(muni_name)}
+              {alcalde_concejales_html(muni_name, d.get("provincia", provincia))}
               {sueldos_concejales_html(muni_name, provincia)}
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
@@ -16592,7 +16832,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           {it_widget_html}
           {fondos_ue_html}
           {contratos_menors_html}
-          {render_comentarios_html("municipio", muni_name, f"/?muni={muni_enc}{q_prov}", titulo=muni_name)}
+          {render_comentarios_html("municipio", (f"{muni_name}|{d.get('provincia', provincia)}" if es_homonimo(muni_name) else muni_name), f"/?muni={muni_enc}{q_prov}", titulo=muni_name)}
         </div>"""
 
     if not cards:
@@ -16782,7 +17022,7 @@ _PERSONALIZACION_JS = r"""(function(){
 })();"""
 
 
-def _widget_indice_transparencia_muni_html(municipio, top_n=8):
+def _widget_indice_transparencia_muni_html(municipio, top_n=8, provincia=None):
     """Widget compacto del Índice de Transparencia para la ficha de UN
     ayuntamiento concreto (2026-09-18, petición de César) -- reutiliza
     _indice_transparencia_cacheado() tal cual (mismo caché de 1h que ya
@@ -16797,15 +17037,15 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8):
     nada que una caja vacía o con un "N/A" que no aporta."""
     filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
     filas.sort(key=lambda f: f["indice"], reverse=True)
-    clave_muni = normalizar(municipio)
+    clave_muni = clave_municipio(municipio, provincia)
     ranking = _ranking_con_empates(filas)  # mismo criterio de empates que el sidebar/rankings (2026-09-20)
-    fila_actual = next((f for _, f in ranking if normalizar(f["municipio"]) == clave_muni), None)
+    fila_actual = next((f for _, f in ranking if clave_municipio(f["municipio"], f.get("provincia")) == clave_muni), None)
     if fila_actual is None:
         return ""
     total = len(filas)
-    posicion_actual = next(p for p, f in ranking if normalizar(f["municipio"]) == clave_muni)
+    posicion_actual = next(p for p, f in ranking if clave_municipio(f["municipio"], f.get("provincia")) == clave_muni)
     top = ranking[:top_n]
-    en_top = any(normalizar(f["municipio"]) == clave_muni for _, f in top)
+    en_top = any(clave_municipio(f["municipio"], f.get("provincia")) == clave_muni for _, f in top)
 
     def _fila(pos, f, es_actual):
         clase = ' rk-sidebar-item-actual' if es_actual else ''
@@ -16815,7 +17055,7 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8):
                 f'<span class="rk-sidebar-valor">{f["indice"]:.1f}/100</span>'
                 f'</a>')
 
-    items = "".join(_fila(p, f, normalizar(f["municipio"]) == clave_muni) for p, f in top)
+    items = "".join(_fila(p, f, clave_municipio(f["municipio"], f.get("provincia")) == clave_muni) for p, f in top)
     if not en_top:
         items += (f'<div class="rk-sidebar-separador"></div>'
                    + _fila(posicion_actual, fila_actual, True))
@@ -17295,7 +17535,7 @@ def render_landing_html(datos, provincia="murcia"):
     municipios_lista = MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
     q_prov = _q_prov(provincia)
-    por_muni = {normalizar(d.get("municipio", "")): d for d in datos}
+    por_muni = {clave_municipio(d.get("municipio", ""), d.get("provincia")): d for d in datos}
 
     total_m = len(datos)
     total_c = sum(d.get("total_contratos", 0) for d in datos)
@@ -17346,7 +17586,7 @@ def render_landing_html(datos, provincia="murcia"):
     for pseudo_nombre in _pseudos_de_provincia(provincia):
         tiles += _muni_tile(pseudo_nombre, por_muni.get(normalizar(pseudo_nombre)))
     for muni in sorted(municipios_lista, key=lambda m: normalizar(m)):
-        tiles += _muni_tile(muni, por_muni.get(normalizar(muni)))
+        tiles += _muni_tile(muni, por_muni.get(clave_municipio(muni, provincia)))
 
     # "de la {label}" da por hecho género femenino (Región de Murcia,
     # Provincia de X, Comunidad de Madrid, Illes Balears...) -- roto para
@@ -17435,14 +17675,14 @@ def api_buscar(tipo, q, datos):
         # filtrar por la provincia de la página desde la que se lanza --
         # reutiliza el mismo POST /buscar que el buscador clásico de la
         # cabecera (ver formulario municipio/provincia en filaMunicipio()).
-        por_muni = {normalizar(d.get("municipio", "")): d for d in _db_all_municipios()}
+        por_muni = {clave_municipio(d.get("municipio", ""), d.get("provincia")): d for d in _db_all_municipios()}
         resultados = []
         for prov, lista_muni in MUNICIPIOS_POR_PROVINCIA.items():
             nombres = list(_pseudos_de_provincia(prov)) + list(lista_muni)
             for muni in nombres:
                 if q_norm not in normalizar(muni):
                     continue
-                d = por_muni.get(normalizar(muni))
+                d = por_muni.get(clave_municipio(muni, prov))
                 cached = d is not None
                 total_imp = sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])) if cached else 0.0
                 resultados.append({
@@ -18907,13 +19147,21 @@ def _route_get(path, qs, gzip_ok=False):
             # vez de cargar TODOS los municipios de la provincia para
             # quedarse solo con este: ya bastaba con uno, render_html()
             # siempre filtró internamente a un único match.
-            d_muni = _db_get_municipio(muni_filter)
-            if provincia_filtro == "todas":
-                # averiguar a que provincia pertenece el municipio para que
-                # /?muni=Olot funcione sin necesidad de &provincia=girona
-                provincia = d_muni.get("provincia", "murcia") if d_muni else "murcia"
+            if es_homonimo(muni_filter):
+                # Clave compuesta (2026-09-30): nombre repetido en varias provincias -> hace falta saber cuál.
+                prov_h = resolver_provincia_municipio(muni_filter, provincia_filtro)
+                if prov_h is None:
+                    return _resp(render_elegir_homonimo_html(muni_filter), gzip_ok=gzip_ok)
+                d_muni = _db_get_municipio(muni_filter, prov_h)
+                provincia = prov_h
             else:
-                provincia = provincia_filtro
+                d_muni = _db_get_municipio(muni_filter)
+                if provincia_filtro == "todas":
+                    # averiguar a que provincia pertenece el municipio para que
+                    # /?muni=Olot funcione sin necesidad de &provincia=girona
+                    provincia = d_muni.get("provincia", "murcia") if d_muni else "murcia"
+                else:
+                    provincia = provincia_filtro
             datos_snap = [d_muni] if d_muni else []
             try:
                 page = max(1, int(qs.get("pag", ["1"])[0]))
@@ -19199,19 +19447,21 @@ def _route_post(path, params):
                 return _error_resp(f"Municipio no válido o no pertenece a {label}.", 400)
             redirect_url = f"/?muni={quote_plus(mun_ok)}" + _q_prov(provincia)
             # Servir desde caché si los datos son recientes (salvo si fuerza actualización)
+            if es_homonimo(mun_ok):
+                redirect_url = f"/?muni={quote_plus(mun_ok)}&provincia={provincia}"
             if not force:
-                cached = _cache_get(mun_ok)
+                cached = _cache_get(mun_ok, provincia)
                 if cached is None:
                     # Intentar restaurar desde disco (TTL igual) -- un único
                     # SELECT por clave, no una lista completa en RAM.
-                    d = _db_get_municipio(mun_ok)
+                    d = _db_get_municipio(mun_ok, provincia)
                     if d and (time.time() - d.get("timestamp", 0)) < RESULT_CACHE_TTL:
-                        _cache_set(mun_ok, d)
+                        _cache_set(mun_ok, d, provincia)
                         cached = d
                 if cached:
                     return _redirect_resp(redirect_url)
             else:
-                _cache_invalidate(mun_ok)
+                _cache_invalidate(mun_ok, provincia)
             job_id = str(uuid.uuid4())
             with _jobs_lock:
                 _jobs[job_id] = {"status": "running", "log": [], "error": None}
@@ -19289,7 +19539,7 @@ def _route_post(path, params):
             mun_ok = municipio_valido_provincia(municipio, provincia)
             if not mun_ok:
                 return _redirect_resp("/" + _q_prov_first(provincia))
-            _cache_invalidate(mun_ok)
+            _cache_invalidate(mun_ok, provincia)
             job_id = str(uuid.uuid4())
             with _jobs_lock:
                 _jobs[job_id] = {"status": "running", "log": [], "error": None}

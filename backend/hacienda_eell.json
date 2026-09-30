@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 14:53:40",
+ "generado": "2026-09-30 17:43:16",
  "deuda_viva": {
   "fuente_url": "https://www.hacienda.gob.es/cdi/sist%20financiacion%20y%20deuda/informacioneells/2025/deuda-viva-ayuntamientos-202512.xlsx",
   "municipios": {
@@ -2078,7 +2078,7 @@
     "provincia": "huelva",
     "deuda_eur": 0.0
    },
-   "campillo, el": {
+   "campillo, el|huelva": {
     "municipio": "Campillo, El",
     "provincia": "huelva",
     "deuda_eur": 75926.0
@@ -5358,7 +5358,7 @@
     "provincia": "teruel",
     "deuda_eur": 0.0
    },
-   "fonfria": {
+   "fonfria|teruel": {
     "municipio": "Fonfría",
     "provincia": "teruel",
     "deuda_eur": 0.0
@@ -7743,6 +7743,11 @@
     "provincia": "asturias",
     "deuda_eur": 724599.0
    },
+   "mieres|asturias": {
+    "municipio": "Mieres",
+    "provincia": "asturias",
+    "deuda_eur": 16762.0
+   },
    "morcin": {
     "municipio": "Morcín",
     "provincia": "asturias",
@@ -8333,7 +8338,7 @@
     "provincia": "las_palmas",
     "deuda_eur": 1823431.0
    },
-   "moya": {
+   "moya|las_palmas": {
     "municipio": "Moya",
     "provincia": "las_palmas",
     "deuda_eur": 0.0
@@ -8808,6 +8813,11 @@
     "provincia": "cantabria",
     "deuda_eur": 19496.0
    },
+   "cieza|cantabria": {
+    "municipio": "Cieza",
+    "provincia": "cantabria",
+    "deuda_eur": 0.0
+   },
    "cillorigo de liebana": {
     "municipio": "Cillorigo de Liébana",
     "provincia": "cantabria",
@@ -9193,7 +9203,7 @@
     "provincia": "cantabria",
     "deuda_eur": 0.0
    },
-   "villaescusa": {
+   "villaescusa|cantabria": {
     "municipio": "Villaescusa",
     "provincia": "cantabria",
     "deuda_eur": 0.0
@@ -13058,6 +13068,11 @@
     "provincia": "leon",
     "deuda_eur": 0.0
    },
+   "sobrado|leon": {
+    "municipio": "Sobrado",
+    "provincia": "leon",
+    "deuda_eur": 0.0
+   },
    "soto de la vega": {
     "municipio": "Soto de la Vega",
     "provincia": "leon",
@@ -15618,6 +15633,11 @@
     "provincia": "salamanca",
     "deuda_eur": 7081.43
    },
+   "sancti-spiritus|salamanca": {
+    "municipio": "Sancti-Spíritus",
+    "provincia": "salamanca",
+    "deuda_eur": 96139.0
+   },
    "sanchon de la ribera": {
     "municipio": "Sanchón de la Ribera",
     "provincia": "salamanca",
@@ -17778,6 +17798,11 @@
     "provincia": "soria",
     "deuda_eur": 0.0
    },
+   "rebollar|soria": {
+    "municipio": "Rebollar",
+    "provincia": "soria",
+    "deuda_eur": 0.0
+   },
    "recuerda": {
     "municipio": "Recuerda",
     "provincia": "soria",
@@ -18220,6 +18245,11 @@
    },
    "campaspero": {
     "municipio": "Campaspero",
+    "provincia": "valladolid",
+    "deuda_eur": 0.0
+   },
+   "campillo, el|valladolid": {
+    "municipio": "Campillo, El",
     "provincia": "valladolid",
     "deuda_eur": 0.0
    },
@@ -19133,7 +19163,7 @@
     "provincia": "valladolid",
     "deuda_eur": 0.0
    },
-   "villanueva de los infantes": {
+   "villanueva de los infantes|valladolid": {
     "municipio": "Villanueva de los Infantes",
     "provincia": "valladolid",
     "deuda_eur": 0.0
@@ -19510,6 +19540,11 @@
    },
    "figueruela de arriba": {
     "municipio": "Figueruela de Arriba",
+    "provincia": "zamora",
+    "deuda_eur": 0.0
+   },
+   "fonfria|zamora": {
+    "municipio": "Fonfría",
     "provincia": "zamora",
     "deuda_eur": 0.0
    },
@@ -20267,6 +20302,11 @@
     "municipio": "Villadepera",
     "provincia": "zamora",
     "deuda_eur": 0.0
+   },
+   "villaescusa|zamora": {
+    "municipio": "Villaescusa",
+    "provincia": "zamora",
+    "deuda_eur": 197088.64
    },
    "villafafila": {
     "municipio": "Villafáfila",
@@ -21318,6 +21358,11 @@
     "provincia": "ciudad_real",
     "deuda_eur": 0.0
    },
+   "villanueva de los infantes|ciudad_real": {
+    "municipio": "Villanueva de los Infantes",
+    "provincia": "ciudad_real",
+    "deuda_eur": 0.0
+   },
    "villanueva de san carlos": {
     "municipio": "Villanueva de San Carlos",
     "provincia": "ciudad_real",
@@ -21668,7 +21713,7 @@
     "provincia": "cuenca",
     "deuda_eur": 340159.0
    },
-   "castejon": {
+   "castejon|cuenca": {
     "municipio": "Castejón",
     "provincia": "cuenca",
     "deuda_eur": 0.0
@@ -21955,6 +22000,11 @@
    },
    "motilla del palancar": {
     "municipio": "Motilla del Palancar",
+    "provincia": "cuenca",
+    "deuda_eur": 0.0
+   },
+   "moya|cuenca": {
+    "municipio": "Moya",
     "provincia": "cuenca",
     "deuda_eur": 0.0
    },
@@ -26703,7 +26753,7 @@
     "provincia": "girona",
     "deuda_eur": 0.0
    },
-   "cabanes": {
+   "cabanes|girona": {
     "municipio": "Cabanes",
     "provincia": "girona",
     "deuda_eur": 300000.0
@@ -27053,7 +27103,7 @@
     "provincia": "girona",
     "deuda_eur": 1950000.0
    },
-   "mieres": {
+   "mieres|girona": {
     "municipio": "Mieres",
     "provincia": "girona",
     "deuda_eur": 0.0
@@ -27478,7 +27528,7 @@
     "provincia": "girona",
     "deuda_eur": 0.0
    },
-   "torrent": {
+   "torrent|girona": {
     "municipio": "Torrent",
     "provincia": "girona",
     "deuda_eur": 0.0
@@ -29243,7 +29293,7 @@
     "provincia": "tarragona",
     "deuda_eur": 294199.55
    },
-   "el molar": {
+   "el molar|tarragona": {
     "municipio": "el Molar",
     "provincia": "tarragona",
     "deuda_eur": 0.0
@@ -30328,7 +30378,7 @@
     "provincia": "badajoz",
     "deuda_eur": 0.0
    },
-   "sancti-spiritus": {
+   "sancti-spiritus|badajoz": {
     "municipio": "Sancti-Spíritus",
     "provincia": "badajoz",
     "deuda_eur": 0.0
@@ -30665,6 +30715,11 @@
    },
    "arroyomolinos de la vera": {
     "municipio": "Arroyomolinos de la Vera",
+    "provincia": "caceres",
+    "deuda_eur": 0.0
+   },
+   "arroyomolinos|caceres": {
+    "municipio": "Arroyomolinos",
     "provincia": "caceres",
     "deuda_eur": 0.0
    },
@@ -31313,7 +31368,7 @@
     "provincia": "caceres",
     "deuda_eur": 44281.0
    },
-   "rebollar": {
+   "rebollar|caceres": {
     "municipio": "Rebollar",
     "provincia": "caceres",
     "deuda_eur": 0.0
@@ -31993,7 +32048,7 @@
     "provincia": "a_coruna",
     "deuda_eur": 0.0
    },
-   "sada": {
+   "sada|a_coruna": {
     "municipio": "Sada",
     "provincia": "a_coruna",
     "deuda_eur": 0.0
@@ -32018,7 +32073,7 @@
     "provincia": "a_coruna",
     "deuda_eur": 0.0
    },
-   "sobrado": {
+   "sobrado|a_coruna": {
     "municipio": "Sobrado",
     "provincia": "a_coruna",
     "deuda_eur": 0.0
@@ -33083,7 +33138,7 @@
     "provincia": "madrid",
     "deuda_eur": 94910229.31
    },
-   "arroyomolinos": {
+   "arroyomolinos|madrid": {
     "municipio": "Arroyomolinos",
     "provincia": "madrid",
     "deuda_eur": 1431442.0
@@ -33427,6 +33482,11 @@
     "municipio": "Miraflores de la Sierra",
     "provincia": "madrid",
     "deuda_eur": 399035.0
+   },
+   "el molar|madrid": {
+    "municipio": "El Molar",
+    "provincia": "madrid",
+    "deuda_eur": 56.0
    },
    "los molinos": {
     "municipio": "Los Molinos",
@@ -33993,7 +34053,7 @@
     "provincia": "murcia",
     "deuda_eur": 30475330.27
    },
-   "cieza": {
+   "cieza|murcia": {
     "municipio": "Cieza",
     "provincia": "murcia",
     "deuda_eur": 206540.0
@@ -34472,6 +34532,11 @@
     "municipio": "Cáseda",
     "provincia": "navarra",
     "deuda_eur": 0.0
+   },
+   "castejon|navarra": {
+    "municipio": "Castejón",
+    "provincia": "navarra",
+    "deuda_eur": 1912752.0
    },
    "castillonuevo/gazteluberri": {
     "municipio": "Castillonuevo/Gazteluberri",
@@ -35175,6 +35240,11 @@
    },
    "orreaga/roncesvalles": {
     "municipio": "Orreaga/Roncesvalles",
+    "provincia": "navarra",
+    "deuda_eur": 0.0
+   },
+   "sada|navarra": {
+    "municipio": "Sada",
     "provincia": "navarra",
     "deuda_eur": 0.0
    },
@@ -38398,6 +38468,11 @@
     "provincia": "castellon",
     "deuda_eur": 2982309.0
    },
+   "cabanes|castellon": {
+    "municipio": "Cabanes",
+    "provincia": "castellon",
+    "deuda_eur": 0.0
+   },
    "calig": {
     "municipio": "Càlig",
     "provincia": "castellon",
@@ -40127,6 +40202,11 @@
     "municipio": "Torrella",
     "provincia": "valencia",
     "deuda_eur": 58490.53
+   },
+   "torrent|valencia": {
+    "municipio": "Torrent",
+    "provincia": "valencia",
+    "deuda_eur": 17796629.0
    },
    "torres torres": {
     "municipio": "Torres Torres",
@@ -47567,6 +47647,13 @@
     "importe_eur": 216066.82,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "arroyomolinos|caceres": {
+    "municipio": "Arroyomolinos",
+    "provincia": "caceres",
+    "ejercicio": 2025,
+    "importe_eur": 84041.27,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "banos de montemayor": {
     "municipio": "Baños de Montemayor",
     "provincia": "caceres",
@@ -48281,7 +48368,7 @@
     "importe_eur": 1377.23,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "rebollar": {
+   "rebollar|caceres": {
     "municipio": "Rebollar",
     "provincia": "caceres",
     "ejercicio": 2025,
@@ -48967,7 +49054,7 @@
     "importe_eur": 12478236.77,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "cabanes": {
+   "cabanes|castellon": {
     "municipio": "Cabanes",
     "provincia": "castellon",
     "ejercicio": 2025,
@@ -50612,7 +50699,7 @@
     "importe_eur": -1921305.4,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "sada": {
+   "sada|a_coruna": {
     "municipio": "Sada",
     "provincia": "a_coruna",
     "ejercicio": 2025,
@@ -50633,7 +50720,7 @@
     "importe_eur": 231507.18,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "sobrado": {
+   "sobrado|a_coruna": {
     "municipio": "Sobrado",
     "provincia": "a_coruna",
     "ejercicio": 2025,
@@ -51058,6 +51145,13 @@
     "provincia": "cuenca",
     "ejercicio": 2025,
     "importe_eur": 6962.35,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "moya|cuenca": {
+    "municipio": "Moya",
+    "provincia": "cuenca",
+    "ejercicio": 2025,
+    "importe_eur": 1252565.15,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "olmeda de la cuesta": {
@@ -51529,6 +51623,13 @@
     "importe_eur": -252719.46,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "cabanes|girona": {
+    "municipio": "Cabanes",
+    "provincia": "girona",
+    "ejercicio": 2025,
+    "importe_eur": 11992.43,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "cabanelles": {
     "municipio": "Cabanelles",
     "provincia": "girona",
@@ -51970,7 +52071,7 @@
     "importe_eur": 275080.03,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "mieres": {
+   "mieres|girona": {
     "municipio": "Mieres",
     "provincia": "girona",
     "ejercicio": 2025,
@@ -52544,7 +52645,7 @@
     "importe_eur": -28102.44,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "torrent": {
+   "torrent|girona": {
     "municipio": "Torrent",
     "provincia": "girona",
     "ejercicio": 2025,
@@ -54469,7 +54570,7 @@
     "importe_eur": 15077.45,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "campillo, el": {
+   "campillo, el|huelva": {
     "municipio": "Campillo, El",
     "provincia": "huelva",
     "ejercicio": 2025,
@@ -59684,7 +59785,7 @@
     "importe_eur": 10633205.83,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "arroyomolinos": {
+   "arroyomolinos|madrid": {
     "municipio": "Arroyomolinos",
     "provincia": "madrid",
     "ejercicio": 2025,
@@ -59997,6 +60098,13 @@
     "provincia": "madrid",
     "ejercicio": 2025,
     "importe_eur": 1135463.29,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "el molar|madrid": {
+    "municipio": "El Molar",
+    "provincia": "madrid",
+    "ejercicio": 2025,
+    "importe_eur": 1638873.85,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "moralzarzal": {
@@ -61700,6 +61808,13 @@
     "importe_eur": -2416167.57,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "mieres|asturias": {
+    "municipio": "Mieres",
+    "provincia": "asturias",
+    "ejercicio": 2025,
+    "importe_eur": -1938996.03,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "morcin": {
     "municipio": "Morcín",
     "provincia": "asturias",
@@ -62946,7 +63061,7 @@
     "importe_eur": 13185835.03,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "moya": {
+   "moya|las_palmas": {
     "municipio": "Moya",
     "provincia": "las_palmas",
     "ejercicio": 2025,
@@ -65809,6 +65924,13 @@
     "importe_eur": 278589.71,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "cieza|cantabria": {
+    "municipio": "Cieza",
+    "provincia": "cantabria",
+    "ejercicio": 2025,
+    "importe_eur": 13851.28,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "cillorigo de liebana": {
     "municipio": "Cillorigo de Liébana",
     "provincia": "cantabria",
@@ -68336,6 +68458,13 @@
     "importe_eur": 105322.13,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "rebollar|soria": {
+    "municipio": "Rebollar",
+    "provincia": "soria",
+    "ejercicio": 2025,
+    "importe_eur": -2120.52,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "recuerda": {
     "municipio": "Recuerda",
     "provincia": "soria",
@@ -69022,7 +69151,7 @@
     "importe_eur": -311966.09,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "el molar": {
+   "el molar|tarragona": {
     "municipio": "el Molar",
     "provincia": "tarragona",
     "ejercicio": 2025,
@@ -69946,7 +70075,7 @@
     "importe_eur": 18086.37,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "fonfria": {
+   "fonfria|teruel": {
     "municipio": "Fonfría",
     "provincia": "teruel",
     "ejercicio": 2025,
@@ -72942,6 +73071,13 @@
     "importe_eur": 574377.98,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "torrent|valencia": {
+    "municipio": "Torrent",
+    "provincia": "valencia",
+    "ejercicio": 2025,
+    "importe_eur": 113561071.59,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "tous": {
     "municipio": "Tous",
     "provincia": "valencia",
@@ -73206,6 +73342,13 @@
     "provincia": "valladolid",
     "ejercicio": 2025,
     "importe_eur": 121510.17,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "campillo, el|valladolid": {
+    "municipio": "Campillo, El",
+    "provincia": "valladolid",
+    "ejercicio": 2025,
+    "importe_eur": 9951.73,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "canalejas de penafiel": {
@@ -74195,7 +74338,7 @@
     "importe_eur": 1909.53,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
-   "villanueva de los infantes": {
+   "villanueva de los infantes|valladolid": {
     "municipio": "Villanueva de los Infantes",
     "provincia": "valladolid",
     "ejercicio": 2025,
@@ -74606,6 +74749,13 @@
     "provincia": "zamora",
     "ejercicio": 2025,
     "importe_eur": 160043.39,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "fonfria|zamora": {
+    "municipio": "Fonfría",
+    "provincia": "zamora",
+    "ejercicio": 2025,
+    "importe_eur": -9475.74,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "friera de valverde": {
@@ -75334,6 +75484,13 @@
     "provincia": "zamora",
     "ejercicio": 2025,
     "importe_eur": 46300.5,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "villaescusa|zamora": {
+    "municipio": "Villaescusa",
+    "provincia": "zamora",
+    "ejercicio": 2025,
+    "importe_eur": 1067.98,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "villafafila": {
@@ -80299,6 +80456,13 @@
     "importe_eur": 462500.74,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
+   "villanueva de los infantes|ciudad_real": {
+    "municipio": "Villanueva de los Infantes",
+    "provincia": "ciudad_real",
+    "ejercicio": 2024,
+    "importe_eur": -1192675.61,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
    "villar del pozo": {
     "municipio": "Villar del Pozo",
     "provincia": "ciudad_real",
@@ -82896,6 +83060,13 @@
     "importe_eur": 838140.28,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
+   "sobrado|leon": {
+    "municipio": "Sobrado",
+    "provincia": "leon",
+    "ejercicio": 2024,
+    "importe_eur": -12327.05,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
    "trabadelo": {
     "municipio": "Trabadelo",
     "provincia": "leon",
@@ -84394,7 +84565,7 @@
     "importe_eur": 1175504.74,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
-   "cieza": {
+   "cieza|murcia": {
     "municipio": "Cieza",
     "provincia": "murcia",
     "ejercicio": 2024,
@@ -85598,7 +85769,7 @@
     "importe_eur": 25128.84,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
-   "villaescusa": {
+   "villaescusa|cantabria": {
     "municipio": "Villaescusa",
     "provincia": "cantabria",
     "ejercicio": 2024,

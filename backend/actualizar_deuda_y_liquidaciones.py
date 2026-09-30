@@ -76,7 +76,7 @@ import openpyxl
 import requests
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import BASE_DIR, normalizar, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL
+from app import BASE_DIR, normalizar, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL, clave_municipio
 from actualizar_alcaldes import _sin_apostrofes_curvos, _formas_nucleo_articulo, ALIAS_MUNICIPIO
 
 HEADERS = {
@@ -305,7 +305,7 @@ def _procesar_deuda_viva(wb, provincia_mayus_a_clave):
         if not muni:
             sin_match.append((clave, nombre_crudo))
             continue
-        clave_normalizada = normalizar(muni)
+        clave_normalizada = clave_municipio(muni, clave)   # clave compuesta para homónimos (2026-09-30)
         # Colisión de nombre entre provincias (ver actualizar_poblacion.py
         # para el detalle completo: "Cabanes" en Girona/Castellón, "Torrent"
         # en Girona/Valencia) -- mejor sin dato que un dato de otro municipio.
@@ -360,7 +360,7 @@ def _procesar_liquidaciones(wb, ejercicio, provincia_mayus_a_clave):
         if not muni:
             sin_match.append((clave, nombre_crudo))
             continue
-        clave_normalizada = normalizar(muni)
+        clave_normalizada = clave_municipio(muni, clave)   # clave compuesta para homónimos (2026-09-30)
         # Misma colisión de nombre entre provincias que en _procesar_deuda_viva.
         if clave_normalizada in resultado and resultado[clave_normalizada]["provincia"] != clave:
             print(f"  [aviso] colisión de nombre: '{muni}' ya existe en "

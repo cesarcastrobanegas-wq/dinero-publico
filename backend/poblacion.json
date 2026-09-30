@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 14:14:03",
+ "generado": "2026-09-30 17:40:15",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
   "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
@@ -167,7 +167,7 @@
    "poblacion": 13089,
    "anio": 2025
   },
-  "cieza": {
+  "cieza|murcia": {
    "municipio": "Cieza",
    "provincia": "murcia",
    "poblacion": 35577,
@@ -491,7 +491,7 @@
    "poblacion": 286,
    "anio": 2025
   },
-  "cabanes": {
+  "cabanes|girona": {
    "municipio": "Cabanes",
    "provincia": "girona",
    "poblacion": 995,
@@ -917,7 +917,7 @@
    "poblacion": 111,
    "anio": 2025
   },
-  "mieres": {
+  "mieres|girona": {
    "municipio": "Mieres",
    "provincia": "girona",
    "poblacion": 369,
@@ -1433,7 +1433,7 @@
    "poblacion": 337,
    "anio": 2025
   },
-  "torrent": {
+  "torrent|girona": {
    "municipio": "Torrent",
    "provincia": "girona",
    "poblacion": 182,
@@ -5423,7 +5423,7 @@
    "poblacion": 703,
    "anio": 2025
   },
-  "el molar": {
+  "el molar|tarragona": {
    "municipio": "el Molar",
    "provincia": "tarragona",
    "poblacion": 295,
@@ -7029,6 +7029,12 @@
    "municipio": "Borriol",
    "provincia": "castellon",
    "poblacion": 6018,
+   "anio": 2025
+  },
+  "cabanes|castellon": {
+   "municipio": "Cabanes",
+   "provincia": "castellon",
+   "poblacion": 3475,
    "anio": 2025
   },
   "calig": {
@@ -9105,6 +9111,12 @@
    "municipio": "Torrella",
    "provincia": "valencia",
    "poblacion": 151,
+   "anio": 2025
+  },
+  "torrent|valencia": {
+   "municipio": "Torrent",
+   "provincia": "valencia",
+   "poblacion": 90928,
    "anio": 2025
   },
   "torres torres": {
@@ -11741,7 +11753,7 @@
    "poblacion": 2749,
    "anio": 2025
   },
-  "campillo, el": {
+  "campillo, el|huelva": {
    "municipio": "Campillo, El",
    "provincia": "huelva",
    "poblacion": 2003,
@@ -15551,7 +15563,7 @@
    "poblacion": 21172,
    "anio": 2025
   },
-  "moya": {
+  "moya|las_palmas": {
    "municipio": "Moya",
    "provincia": "las_palmas",
    "poblacion": 8007,
@@ -16529,6 +16541,12 @@
    "poblacion": 33450,
    "anio": 2025
   },
+  "cieza|cantabria": {
+   "municipio": "Cieza",
+   "provincia": "cantabria",
+   "poblacion": 528,
+   "anio": 2025
+  },
   "cillorigo de liebana": {
    "municipio": "Cillorigo de Liébana",
    "provincia": "cantabria",
@@ -16991,7 +17009,7 @@
    "poblacion": 1670,
    "anio": 2025
   },
-  "villaescusa": {
+  "villaescusa|cantabria": {
    "municipio": "Villaescusa",
    "provincia": "cantabria",
    "poblacion": 3970,
@@ -18137,7 +18155,7 @@
    "poblacion": 60419,
    "anio": 2025
   },
-  "arroyomolinos": {
+  "arroyomolinos|madrid": {
    "municipio": "Arroyomolinos",
    "provincia": "madrid",
    "poblacion": 38075,
@@ -18555,6 +18573,12 @@
    "municipio": "Miraflores de la Sierra",
    "provincia": "madrid",
    "poblacion": 7350,
+   "anio": 2025
+  },
+  "el molar|madrid": {
+   "municipio": "El Molar",
+   "provincia": "madrid",
+   "poblacion": 9999,
    "anio": 2025
   },
   "los molinos": {
@@ -19329,6 +19353,12 @@
    "municipio": "Llanes",
    "provincia": "asturias",
    "poblacion": 13486,
+   "anio": 2025
+  },
+  "mieres|asturias": {
+   "municipio": "Mieres",
+   "provincia": "asturias",
+   "poblacion": 36373,
    "anio": 2025
   },
   "morcin": {
@@ -20309,7 +20339,7 @@
    "poblacion": 5227,
    "anio": 2025
   },
-  "sancti-spiritus": {
+  "sancti-spiritus|badajoz": {
    "municipio": "Sancti-Spíritus",
    "provincia": "badajoz",
    "poblacion": 141,
@@ -20703,6 +20733,12 @@
    "municipio": "Arroyo de la Luz",
    "provincia": "caceres",
    "poblacion": 5495,
+   "anio": 2025
+  },
+  "arroyomolinos|caceres": {
+   "municipio": "Arroyomolinos",
+   "provincia": "caceres",
+   "poblacion": 816,
    "anio": 2025
   },
   "arroyomolinos de la vera": {
@@ -21491,7 +21527,7 @@
    "poblacion": 268,
    "anio": 2025
   },
-  "rebollar": {
+  "rebollar|caceres": {
    "municipio": "Rebollar",
    "provincia": "caceres",
    "poblacion": 203,
@@ -23639,7 +23675,7 @@
    "poblacion": 81,
    "anio": 2025
   },
-  "fonfria": {
+  "fonfria|teruel": {
    "municipio": "Fonfría",
    "provincia": "teruel",
    "poblacion": 35,
@@ -26735,7 +26771,7 @@
    "poblacion": 4358,
    "anio": 2025
   },
-  "sada": {
+  "sada|a_coruna": {
    "municipio": "Sada",
    "provincia": "a_coruna",
    "poblacion": 17421,
@@ -26765,7 +26801,7 @@
    "poblacion": 1430,
    "anio": 2025
   },
-  "sobrado": {
+  "sobrado|a_coruna": {
    "municipio": "Sobrado",
    "provincia": "a_coruna",
    "poblacion": 1830,
@@ -32783,6 +32819,12 @@
    "poblacion": 373,
    "anio": 2025
   },
+  "sobrado|leon": {
+   "municipio": "Sobrado",
+   "provincia": "leon",
+   "poblacion": 275,
+   "anio": 2025
+  },
   "soto de la vega": {
    "municipio": "Soto de la Vega",
    "provincia": "leon",
@@ -35933,6 +35975,12 @@
    "poblacion": 206,
    "anio": 2025
   },
+  "sancti-spiritus|salamanca": {
+   "municipio": "Sancti-Spíritus",
+   "provincia": "salamanca",
+   "poblacion": 713,
+   "anio": 2025
+  },
   "sando": {
    "municipio": "Sando",
    "provincia": "salamanca",
@@ -38447,6 +38495,12 @@
    "poblacion": 470,
    "anio": 2025
   },
+  "rebollar|soria": {
+   "municipio": "Rebollar",
+   "provincia": "soria",
+   "poblacion": 36,
+   "anio": 2025
+  },
   "recuerda": {
    "municipio": "Recuerda",
    "provincia": "soria",
@@ -38979,6 +39033,12 @@
    "municipio": "Campaspero",
    "provincia": "valladolid",
    "poblacion": 1001,
+   "anio": 2025
+  },
+  "campillo, el|valladolid": {
+   "municipio": "Campillo, El",
+   "provincia": "valladolid",
+   "poblacion": 204,
    "anio": 2025
   },
   "camporredondo": {
@@ -40067,7 +40127,7 @@
    "poblacion": 147,
    "anio": 2025
   },
-  "villanueva de los infantes": {
+  "villanueva de los infantes|valladolid": {
    "municipio": "Villanueva de los Infantes",
    "provincia": "valladolid",
    "poblacion": 116,
@@ -40527,6 +40587,12 @@
    "municipio": "Figueruela de Arriba",
    "provincia": "zamora",
    "poblacion": 310,
+   "anio": 2025
+  },
+  "fonfria|zamora": {
+   "municipio": "Fonfría",
+   "provincia": "zamora",
+   "poblacion": 794,
    "anio": 2025
   },
   "fresno de la polvorosa": {
@@ -41433,6 +41499,12 @@
    "municipio": "Villadepera",
    "provincia": "zamora",
    "poblacion": 165,
+   "anio": 2025
+  },
+  "villaescusa|zamora": {
+   "municipio": "Villaescusa",
+   "provincia": "zamora",
+   "poblacion": 237,
    "anio": 2025
   },
   "villafafila": {
@@ -42719,6 +42791,12 @@
    "poblacion": 1831,
    "anio": 2025
   },
+  "villanueva de los infantes|ciudad_real": {
+   "municipio": "Villanueva de los Infantes",
+   "provincia": "ciudad_real",
+   "poblacion": 4733,
+   "anio": 2025
+  },
   "villanueva de san carlos": {
    "municipio": "Villanueva de San Carlos",
    "provincia": "ciudad_real",
@@ -43121,7 +43199,7 @@
    "poblacion": 3177,
    "anio": 2025
   },
-  "castejon": {
+  "castejon|cuenca": {
    "municipio": "Castejón",
    "provincia": "cuenca",
    "poblacion": 120,
@@ -43479,6 +43557,12 @@
    "municipio": "Motilla del Palancar",
    "provincia": "cuenca",
    "poblacion": 6432,
+   "anio": 2025
+  },
+  "moya|cuenca": {
+   "municipio": "Moya",
+   "provincia": "cuenca",
+   "poblacion": 133,
    "anio": 2025
   },
   "narboneta": {
@@ -47579,6 +47663,12 @@
    "poblacion": 912,
    "anio": 2025
   },
+  "castejon|navarra": {
+   "municipio": "Castejón",
+   "provincia": "navarra",
+   "poblacion": 4725,
+   "anio": 2025
+  },
   "castillonuevo/gazteluberri": {
    "municipio": "Castillonuevo/Gazteluberri",
    "provincia": "navarra",
@@ -48441,6 +48531,12 @@
    "municipio": "Roncal/Erronkari",
    "provincia": "navarra",
    "poblacion": 206,
+   "anio": 2025
+  },
+  "sada|navarra": {
+   "municipio": "Sada",
+   "provincia": "navarra",
+   "poblacion": 130,
    "anio": 2025
   },
   "saldias": {

@@ -101,10 +101,7 @@ de contratos ajenos + recuperación retroactiva de 61 meses, 9.986 contratos en 
 ## Límites conocidos
 
 - Contratos menores: ~55 % de cobertura con el feed de PLACE (30-09). Formato: 67 municipios clasificados.
-- Municipios con el mismo nombre exacto en dos provincias (Torrent y Cabanes) comparten fila (clave sin
-  provincia); otros 14 homónimos no están en la app por el mismo motivo. Los 16 se listan en /rankings como "no
-  disponibles por homónimo sin resolver" (`HOMONIMOS_SIN_RESOLVER`). Torrent (Valencia) y Cabanes (Castellón) no tienen población propia y no entran en el índice; en sus
-  homónimos de Girona, actividad, adjudicatario, directivo y formato son no disponibles, y los demás componentes solo
-  cuentan si el registro es de la misma provincia (Cabanes de Girona queda con cobertura insuficiente).
+- Municipios con el mismo nombre en dos provincias: resuelto el 30-09 con la clave compuesta municipio+provincia
+  (`clave_municipio`); los 16 pares tienen cada uno sus propios datos y componentes.
 - ~80 contratos formales al mes de organismos municipales sin "ayuntamiento" en el nombre, y los municipios que
   PLACE nombra distinto que la app, siguen sin asignarse hasta conectar la asignación por código DIR3.

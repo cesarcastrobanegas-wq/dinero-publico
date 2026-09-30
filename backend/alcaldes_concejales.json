@@ -1,5 +1,5 @@
 {
- "generado": "2026-08-09 14:43:30",
+ "generado": "2026-09-30 18:50:47",
  "municipios": {
   "abrera": {
    "municipio": "Abrera",
@@ -5573,7 +5573,7 @@
      "partido": "CM"
     },
     {
-     "nombre": "DANIEL PEREZ VILAJOSANA",
+     "nombre": "RAMON GARCIA ALVAREZ",
      "cargo": "Concejal",
      "partido": "CUP-AMUNT"
     },
@@ -8883,19 +8883,14 @@
    "municipio": "les Masies de Voltregà",
    "provincia": "barcelona",
    "alcalde": {
-    "nombre": "VERÒNICA RUIZ LEIVA",
-    "partido": "CP",
+    "nombre": "GIL CODINA ALEJANDRE",
+    "partido": "ARA PL",
     "fecha_posesion": "17/06/2023"
    },
    "concejales": [
     {
-     "nombre": "VERÒNICA RUIZ LEIVA",
-     "cargo": "Alcalde",
-     "partido": "CP"
-    },
-    {
      "nombre": "GIL CODINA ALEJANDRE",
-     "cargo": "Concejal",
+     "cargo": "Alcalde",
      "partido": "ARA PL"
     },
     {
@@ -8917,6 +8912,11 @@
      "nombre": "DOMENEC PLATERO VICENTE",
      "cargo": "Concejal",
      "partido": "CM"
+    },
+    {
+     "nombre": "VERÒNICA RUIZ LEIVA",
+     "cargo": "Concejal",
+     "partido": "CP"
     },
     {
      "nombre": "GEMMA SÁNCHEZ LÓPEZ",
@@ -15256,6 +15256,11 @@
      "partido": "ARASES"
     },
     {
+     "nombre": "ENRIC CARBONELL JORBA",
+     "cargo": "Teniente de Alcalde",
+     "partido": "PSC-CP"
+    },
+    {
      "nombre": "ÓSCAR RODRÍGUEZ ANDREU",
      "cargo": "Teniente de Alcalde",
      "partido": "PSC-CP"
@@ -15271,11 +15276,6 @@
      "partido": "ERC I MÉS - AM"
     },
     {
-     "nombre": "OLGA MUÑOZ TOLOSA",
-     "cargo": "Concejal",
-     "partido": "ERC I MÉS - AM"
-    },
-    {
      "nombre": "CARLOTA CERDÀ GARCIA",
      "cargo": "Concejal",
      "partido": "ERC I MÉS - AM"
@@ -15286,9 +15286,9 @@
      "partido": "ERC I MÉS - AM"
     },
     {
-     "nombre": "ENRIC CARBONELL JORBA",
+     "nombre": "JUAN CARLOS MIQUELA OLIVA",
      "cargo": "Concejal",
-     "partido": "PSC-CP"
+     "partido": "ERC I MÉS - AM"
     },
     {
      "nombre": "LORENA CUESTA POZO",
@@ -15816,6 +15816,32 @@
      "nombre": "ZULMA ITZAINA TORVISCO",
      "cargo": "Concejal",
      "partido": "SPSI-C"
+    }
+   ]
+  },
+  "sant jaume de frontanya": {
+   "municipio": "Sant Jaume de Frontanyà",
+   "provincia": "barcelona",
+   "alcalde": {
+    "nombre": "MANEL ANSELMO AMADOR",
+    "partido": "CXSJF-CP",
+    "fecha_posesion": "17/06/2023"
+   },
+   "concejales": [
+    {
+     "nombre": "MANEL ANSELMO AMADOR",
+     "cargo": "Alcalde",
+     "partido": "CXSJF-CP"
+    },
+    {
+     "nombre": "NIL ANSELMO SERRES",
+     "cargo": "Concejal",
+     "partido": "CXSJF-CP"
+    },
+    {
+     "nombre": "MARIA ISABEL FORNELL PRAT",
+     "cargo": "Concejal",
+     "partido": "CXSJF-CP"
     }
    ]
   },
@@ -18357,6 +18383,52 @@
      "nombre": "JORDI ORRIOLS VILARO",
      "cargo": "Concejal",
      "partido": "POBLE UNIT"
+    }
+   ]
+  },
+  "santa fe del penedes": {
+   "municipio": "Santa Fe del Penedès",
+   "provincia": "barcelona",
+   "alcalde": {
+    "nombre": "JORDI BOSCH MORGADES",
+    "partido": "CM",
+    "fecha_posesion": "17/06/2023"
+   },
+   "concejales": [
+    {
+     "nombre": "JORDI BOSCH MORGADES",
+     "cargo": "Alcalde",
+     "partido": "CM"
+    },
+    {
+     "nombre": "ANNA MARIA CASAN I FORNS",
+     "cargo": "Concejal",
+     "partido": "CM"
+    },
+    {
+     "nombre": "JOSEP MONTANE GIRALT",
+     "cargo": "Concejal",
+     "partido": "CM"
+    },
+    {
+     "nombre": "MIQUEL BERNET MONTANÉ",
+     "cargo": "Concejal",
+     "partido": "CM"
+    },
+    {
+     "nombre": "DANIEL GÓMEZ CAÑETE",
+     "cargo": "Concejal",
+     "partido": "F.I.C."
+    },
+    {
+     "nombre": "MARIA DEL PILAR VALDIVIESO CHAMORRO",
+     "cargo": "Concejal",
+     "partido": "F.I.C."
+    },
+    {
+     "nombre": "MARIA TERESA SADURNÍ HILL",
+     "cargo": "Concejal",
+     "partido": "F.I.C."
     }
    ]
   },
@@ -23948,7 +24020,7 @@
     }
    ]
   },
-  "cabanes": {
+  "cabanes|girona": {
    "municipio": "Cabanes",
    "provincia": "girona",
    "alcalde": {
@@ -27984,7 +28056,7 @@
     }
    ]
   },
-  "mieres": {
+  "mieres|girona": {
    "municipio": "Mieres",
    "provincia": "girona",
    "alcalde": {
@@ -32735,7 +32807,7 @@
     }
    ]
   },
-  "torrent": {
+  "torrent|girona": {
    "municipio": "Torrent",
    "provincia": "girona",
    "alcalde": {
@@ -41005,12 +41077,12 @@
      "partido": "FO - AM"
     },
     {
-     "nombre": "Marc Codina Capdevila",
+     "nombre": "SUSANNA FAJULA I COS",
      "cargo": "Concejal",
      "partido": "FO - AM"
     },
     {
-     "nombre": "SUSANNA FAJULA I COS",
+     "nombre": "JORDI CANES OBIOLS",
      "cargo": "Concejal",
      "partido": "FO - AM"
     }
@@ -44166,13 +44238,13 @@
    "municipio": "Tornabous",
    "provincia": "lleida",
    "alcalde": {
-    "nombre": "DAVID VILARÓ GORDILLO",
+    "nombre": "ELISENDA TORRES SOLÉ",
     "partido": "PV-AMUNT",
-    "fecha_posesion": "17/06/2023"
+    "fecha_posesion": "03/09/2026"
    },
    "concejales": [
     {
-     "nombre": "DAVID VILARÓ GORDILLO",
+     "nombre": "ELISENDA TORRES SOLÉ",
      "cargo": "Alcalde",
      "partido": "PV-AMUNT"
     },
@@ -44187,9 +44259,14 @@
      "partido": "ERC - AM"
     },
     {
-     "nombre": "REMUS DAN CHIBAC",
+     "nombre": "ANDREI MARCEL SOPON",
      "cargo": "Concejal",
      "partido": "ERC - AM"
+    },
+    {
+     "nombre": "DAVID VILARÓ GORDILLO",
+     "cargo": "Concejal",
+     "partido": "PV-AMUNT"
     },
     {
      "nombre": "RAMON OROMÍ I FARRE",
@@ -44198,11 +44275,6 @@
     },
     {
      "nombre": "RUTH SOTERAS I FARRE",
-     "cargo": "Concejal",
-     "partido": "PV-AMUNT"
-    },
-    {
-     "nombre": "VICTOR FRANCO CASTELLÀ",
      "cargo": "Concejal",
      "partido": "PV-AMUNT"
     }
@@ -47133,11 +47205,6 @@
      "partido": "PP"
     },
     {
-     "nombre": "GONZALO MANUEL LOPEZ PRETEL",
-     "cargo": "Teniente de Alcalde",
-     "partido": "VOX"
-    },
-    {
      "nombre": "RICARDO SEGADO GARCÍA",
      "cargo": "Concejal",
      "partido": "MC CARTAGENA"
@@ -47239,6 +47306,11 @@
     },
     {
      "nombre": "BEATRIZ SANCHEZ DEL ÁLAMO",
+     "cargo": "Concejal",
+     "partido": "VOX"
+    },
+    {
+     "nombre": "GONZALO MANUEL LOPEZ PRETEL",
      "cargo": "Concejal",
      "partido": "VOX"
     },
@@ -47441,7 +47513,7 @@
     }
    ]
   },
-  "cieza": {
+  "cieza|murcia": {
    "municipio": "Cieza",
    "provincia": "murcia",
    "alcalde": {
@@ -53374,6 +53446,72 @@
     }
    ]
   },
+  "falset": {
+   "municipio": "Falset",
+   "provincia": "tarragona",
+   "alcalde": {
+    "nombre": "CARLOS BRULL FORNT",
+    "partido": "IPF - AM",
+    "fecha_posesion": "17/06/2023"
+   },
+   "concejales": [
+    {
+     "nombre": "CARLOS BRULL FORNT",
+     "cargo": "Alcalde",
+     "partido": "IPF - AM"
+    },
+    {
+     "nombre": "ÀNGELS ROCAMORA GUIU",
+     "cargo": "Teniente de Alcalde",
+     "partido": "IPF - AM"
+    },
+    {
+     "nombre": "ROBERT COLL BASCUÑANA",
+     "cargo": "Teniente de Alcalde",
+     "partido": "IPF - AM"
+    },
+    {
+     "nombre": "JORDI MUNTANÉ RUIZ",
+     "cargo": "Teniente de Alcalde",
+     "partido": "IPF - AM"
+    },
+    {
+     "nombre": "ROGER BATLLEVELL CASTELLÓ",
+     "cargo": "Concejal",
+     "partido": "CM"
+    },
+    {
+     "nombre": "JAIME CAPDEVILA ORTÍ",
+     "cargo": "Concejal",
+     "partido": "CP"
+    },
+    {
+     "nombre": "ANTONI MUNTANÉ MOLINA",
+     "cargo": "Concejal",
+     "partido": "IPF - AM"
+    },
+    {
+     "nombre": "ROSA MARIA POY RODA",
+     "cargo": "Concejal",
+     "partido": "IPF - AM"
+    },
+    {
+     "nombre": "MARIA PEÑAS DE LOS AIRES",
+     "cargo": "Concejal",
+     "partido": "IPF - AM"
+    },
+    {
+     "nombre": "MAGÍ BATLLEVELL PERPIÑÀ",
+     "cargo": "Concejal",
+     "partido": "IPF - AM"
+    },
+    {
+     "nombre": "MONTSANT OSSO TORNÉ",
+     "cargo": "Concejal",
+     "partido": "IPF - AM"
+    }
+   ]
+  },
   "la fatarella": {
    "municipio": "la Fatarella",
    "provincia": "tarragona",
@@ -54668,7 +54806,7 @@
     }
    ]
   },
-  "el molar": {
+  "el molar|tarragona": {
    "municipio": "el Molar",
    "provincia": "tarragona",
    "alcalde": {
@@ -57732,6 +57870,72 @@
     }
    ]
   },
+  "sant jaume dels domenys": {
+   "municipio": "Sant Jaume dels Domenys",
+   "provincia": "tarragona",
+   "alcalde": {
+    "nombre": "MAGI PALLARÈS MORGADES",
+    "partido": "CSJ - ARA PL",
+    "fecha_posesion": "17/06/2023"
+   },
+   "concejales": [
+    {
+     "nombre": "MAGI PALLARÈS MORGADES",
+     "cargo": "Alcalde",
+     "partido": "CSJ - ARA PL"
+    },
+    {
+     "nombre": "MARIA DOLORS MIQUEL SERRANO",
+     "cargo": "Teniente de Alcalde",
+     "partido": "CM"
+    },
+    {
+     "nombre": "Marc Salvadó Torres",
+     "cargo": "Teniente de Alcalde",
+     "partido": "CSJ - ARA PL"
+    },
+    {
+     "nombre": "Julian Gonzalez Moreno",
+     "cargo": "Teniente de Alcalde",
+     "partido": "CSJ - ARA PL"
+    },
+    {
+     "nombre": "MARC PALAU MORGADES",
+     "cargo": "Concejal",
+     "partido": "CM"
+    },
+    {
+     "nombre": "MARIA DELS ÀNGELS BADIA JANÉ",
+     "cargo": "Concejal",
+     "partido": "CM"
+    },
+    {
+     "nombre": "Yazmina Roman Bueno",
+     "cargo": "Concejal",
+     "partido": "CSJ - ARA PL"
+    },
+    {
+     "nombre": "MARTA MONTSERRAT VENTURA TORRAS",
+     "cargo": "Concejal",
+     "partido": "ERC - AM"
+    },
+    {
+     "nombre": "XAVIER URGELL I CALAF",
+     "cargo": "Concejal",
+     "partido": "ERC - AM"
+    },
+    {
+     "nombre": "Mireia Gol i Ventura",
+     "cargo": "Concejal",
+     "partido": "ERC - AM"
+    },
+    {
+     "nombre": "Rosa Maria (Mia) Balsells i Font",
+     "cargo": "Concejal",
+     "partido": "ERC - AM"
+    }
+   ]
+  },
   "santa barbara": {
    "municipio": "Santa Bàrbara",
    "provincia": "tarragona",
@@ -59436,6 +59640,62 @@
      "nombre": "DANIEL VALVERDE ANGLES",
      "cargo": "Concejal",
      "partido": "PSC-CP"
+    }
+   ]
+  },
+  "vila-rodona": {
+   "municipio": "Vila-rodona",
+   "provincia": "tarragona",
+   "alcalde": {
+    "nombre": "JOSEP MARIA COMAS PIE",
+    "partido": "COMPROMIS X VILA RODONA - CP",
+    "fecha_posesion": "17/06/2023"
+   },
+   "concejales": [
+    {
+     "nombre": "JOSEP MARIA COMAS PIE",
+     "cargo": "Alcalde",
+     "partido": "COMPROMIS X VILA RODONA - CP"
+    },
+    {
+     "nombre": "RAPHAEL VERLAAT",
+     "cargo": "Concejal",
+     "partido": "COMPROMIS X VILA RODONA - CP"
+    },
+    {
+     "nombre": "JESSICA ZANDUNDO POMAR",
+     "cargo": "Concejal",
+     "partido": "COMPROMIS X VILA RODONA - CP"
+    },
+    {
+     "nombre": "FRANCESCA ADRIANA SANS CARMONA",
+     "cargo": "Concejal",
+     "partido": "COMPROMIS X VILA RODONA - CP"
+    },
+    {
+     "nombre": "CRISTOBAL (TOFOL) RAMIREZ LUIS",
+     "cargo": "Concejal",
+     "partido": "COMPROMIS X VILA RODONA - CP"
+    },
+    {
+     "nombre": "RAMON MARIA BRICOLLÉ MONTRAGULL",
+     "cargo": "Concejal",
+     "partido": "SV-AM"
+    },
+    {
+     "nombre": "MARIA ROSA DIAZ RIUS",
+     "cargo": "Concejal",
+     "partido": "SV-AM"
+    },
+    {
+     "nombre": "JOAN CARLES ARMEIJACH PADRÓ",
+     "cargo": "Concejal",
+     "partido": "SV-AM"
+    },
+    {
+     "nombre": "AGNÉS GONZÁLEZ BRICOLLÉ",
+     "cargo": "Concejal",
+     "partido": "SV-AM"
     }
    ]
   },

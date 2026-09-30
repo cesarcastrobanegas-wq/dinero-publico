@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 14:54:40",
+ "generado": "2026-09-30 17:45:52",
  "anio": 2024,
  "municipios": {
   "agost": {
@@ -2529,6 +2529,13 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
+  "mieres|asturias": {
+   "municipio": "Mieres",
+   "provincia": "asturias",
+   "importe": 50731.31,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
   "morcin": {
    "municipio": "Morcín",
    "provincia": "asturias",
@@ -4713,7 +4720,7 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
-  "sancti-spiritus": {
+  "sancti-spiritus|badajoz": {
    "municipio": "Sancti-Spíritus",
    "provincia": "badajoz",
    "importe": 18997.17,
@@ -10019,6 +10026,13 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
+  "arroyomolinos|caceres": {
+   "municipio": "Arroyomolinos",
+   "provincia": "caceres",
+   "importe": 33505.36,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
   "arroyomolinos de la vera": {
    "municipio": "Arroyomolinos de la Vera",
    "provincia": "caceres",
@@ -10824,7 +10838,7 @@
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
-  "rebollar": {
+  "rebollar|caceres": {
    "municipio": "Rebollar",
    "provincia": "caceres",
    "importe": 17066.44,
@@ -11622,6 +11636,13 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
+  "cieza|cantabria": {
+   "municipio": "Cieza",
+   "provincia": "cantabria",
+   "importe": 1145.87,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
   "cillorigo de liebana": {
    "municipio": "Cillorigo de Liébana",
    "provincia": "cantabria",
@@ -12287,7 +12308,7 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
-  "cabanes": {
+  "cabanes|castellon": {
    "municipio": "Cabanes",
    "provincia": "castellon",
    "importe": 32999.96,
@@ -13554,6 +13575,13 @@
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
+  "villanueva de los infantes|ciudad_real": {
+   "municipio": "Villanueva de los Infantes",
+   "provincia": "ciudad_real",
+   "importe": 15537.64,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
   "villanueva de san carlos": {
    "municipio": "Villanueva de San Carlos",
    "provincia": "ciudad_real",
@@ -14590,7 +14618,7 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
-  "sada": {
+  "sada|a_coruna": {
    "municipio": "Sada",
    "provincia": "a_coruna",
    "importe": 37281.1,
@@ -14625,7 +14653,7 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
-  "sobrado": {
+  "sobrado|a_coruna": {
    "municipio": "Sobrado",
    "provincia": "a_coruna",
    "importe": 44412.42,
@@ -15253,6 +15281,13 @@
    "provincia": "cuenca",
    "importe": 42127.6,
    "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "moya|cuenca": {
+   "municipio": "Moya",
+   "provincia": "cuenca",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
   "olmeda de la cuesta": {
@@ -16361,6 +16396,13 @@
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
+  "cabanes|girona": {
+   "municipio": "Cabanes",
+   "provincia": "girona",
+   "importe": 26532.0,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
   "cadaques": {
    "municipio": "Cadaqués",
    "provincia": "girona",
@@ -16795,7 +16837,7 @@
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
-  "mieres": {
+  "mieres|girona": {
    "municipio": "Mieres",
    "provincia": "girona",
    "importe": 10323.64,
@@ -17362,7 +17404,7 @@
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
-  "torrent": {
+  "torrent|girona": {
    "municipio": "Torrent",
    "provincia": "girona",
    "importe": 30069.9,
@@ -20015,7 +20057,7 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
-  "campillo, el": {
+  "campillo, el|huelva": {
    "municipio": "Campillo, El",
    "provincia": "huelva",
    "importe": 28996.27,
@@ -26070,6 +26112,13 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
+  "el molar|madrid": {
+   "municipio": "El Molar",
+   "provincia": "madrid",
+   "importe": 35407.85,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
   "los molinos": {
    "municipio": "Los Molinos",
    "provincia": "madrid",
@@ -27260,7 +27309,7 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
-  "cieza": {
+  "cieza|murcia": {
    "municipio": "Cieza",
    "provincia": "murcia",
    "importe": 57754.1,
@@ -27944,6 +27993,13 @@
    "provincia": "navarra",
    "importe": 16198.16,
    "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "castejon|navarra": {
+   "municipio": "Castejón",
+   "provincia": "navarra",
+   "importe": 37255.4,
+   "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
   "castillonuevo/gazteluberri": {
@@ -28938,6 +28994,13 @@
    "provincia": "navarra",
    "importe": 0.0,
    "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "sada|navarra": {
+   "municipio": "Sada",
+   "provincia": "navarra",
+   "importe": 3600.0,
+   "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
   "saldias": {
@@ -34274,6 +34337,13 @@
    "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
+  "sancti-spiritus|salamanca": {
+   "municipio": "Sancti-Spíritus",
+   "provincia": "salamanca",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
   "sando": {
    "municipio": "Sando",
    "provincia": "salamanca",
@@ -37851,6 +37921,13 @@
    "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
+  "rebollar|soria": {
+   "municipio": "Rebollar",
+   "provincia": "soria",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
   "recuerda": {
    "municipio": "Recuerda",
    "provincia": "soria",
@@ -38831,7 +38908,7 @@
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
-  "el molar": {
+  "el molar|tarragona": {
    "municipio": "el Molar",
    "provincia": "tarragona",
    "importe": 13453.9,
@@ -39979,7 +40056,7 @@
    "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
-  "fonfria": {
+  "fonfria|teruel": {
    "municipio": "Fonfría",
    "provincia": "teruel",
    "importe": 0.0,
@@ -43430,6 +43507,13 @@
    "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
+  "torrent|valencia": {
+   "municipio": "Torrent",
+   "provincia": "valencia",
+   "importe": 67485.04,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
   "torres torres": {
    "municipio": "Torres Torres",
    "provincia": "valencia",
@@ -43770,6 +43854,13 @@
    "municipio": "Campaspero",
    "provincia": "valladolid",
    "importe": 10271.68,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "campillo, el|valladolid": {
+   "municipio": "Campillo, El",
+   "provincia": "valladolid",
+   "importe": 5720.76,
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
@@ -44956,7 +45047,7 @@
    "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
-  "villanueva de los infantes": {
+  "villanueva de los infantes|valladolid": {
    "municipio": "Villanueva de los Infantes",
    "provincia": "valladolid",
    "importe": 300.0,
@@ -45465,6 +45556,13 @@
    "provincia": "zamora",
    "importe": 1019.78,
    "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
+  "fonfria|zamora": {
+   "municipio": "Fonfría",
+   "provincia": "zamora",
+   "importe": 5452.0,
+   "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
   "fresno de la ribera": {

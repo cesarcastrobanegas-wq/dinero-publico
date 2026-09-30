@@ -1354,3 +1354,32 @@ enriquecer en el Registro Mercantil; se corrige solo según avanza el enriquecim
   pendiente de decisión: clave compuesta municipio+provincia (~120 puntos de `app.py`, 6 generadores y migración de
   la clave primaria de `municipios` en producción).
 
+## Clave compuesta municipio+provincia (2026-09-30) -- homónimos RESUELTOS
+
+Hasta ahora todo se indexaba solo por el nombre del municipio (clave primaria de la tabla `municipios`, caché,
+población, deuda, saldo, cuentas, sueldos...). Ahora pasa todo por `clave_municipio(nombre, provincia)`:
+- nombre que existe en **una sola provincia** (el 99,8 %): la clave de siempre, `normalizar(nombre)` -- sus filas y
+  ficheros no cambian, sin migración;
+- nombre que existe en **varias provincias**: `normalizar(nombre)|provincia` ("torrent|valencia").
+
+Qué cambia:
+- **16 pares de homónimos** con datos propios cada uno: vuelven a las listas los 14 que se habían excluido (Mieres de
+  Asturias, Villanueva de los Infantes de Ciudad Real, Cieza de Cantabria, El Molar de Madrid, Arroyomolinos de
+  Cáceres, Sobrado de León, Sancti-Spíritus de Salamanca, Rebollar de Soria, El Campillo de Valladolid, Fonfría y
+  Villaescusa de Zamora, Moya de Cuenca, Castejón y Sada de Navarra) y Torrent/Cabanes dejan de compartir fila.
+- **Migración única al arrancar** (`_migrar_claves_homonimos`): cada fila guardada con la clave corta de un homónimo
+  se reparte por provincia (PSCP -> la catalana, Euskadi/Navarra -> la suya, si no por el código postal del contrato)
+  y la original se ARCHIVA completa en `municipios_archivo_homonimos`.
+- **Contratos formales de PLACE**: para un homónimo exacto, el CP del órgano tiene que ser de su provincia; sin CP
+  solo se descarta si el otro homónimo también se busca en PLACE (si el otro va por PSCP/Euskadi/Navarra no hay duda).
+- **Datos oficiales**: los generadores (población, deuda/saldo, ISPA, cuentas, alcaldes) indexan por la clave
+  compuesta; la app además reindexa al cargar (`_reindexar_por_clave`) a partir de la provincia de cada registro.
+- **Ficha**: `/?muni=Torrent` sin provincia muestra a elegir entre los dos; los enlaces de Murcia (que no llevan
+  `&provincia=`) resuelven a Murcia (Cieza). Los comentarios de un homónimo no se mezclan con los del otro.
+- **Índice**: desaparece el tratamiento especial de homónimos (datos no disponibles, `_INDICE_HOMONIMOS`); cada uno
+  tiene sus componentes. Desaparece también la lista "no disponibles por homónimo sin resolver" de /rankings.
+- **Menores de la ficha**: se leen por nombre sin diacríticos y provincia canónica, así que también juntan las
+  grafías distintas de una misma ciudad ("Valencia" de su fuente propia y "València" del feed).
+
+Pendiente fuera de esto: fondos UE (`municipio_match`) sigue cruzando la localidad del beneficiario solo por nombre.
+

@@ -30,7 +30,7 @@ import openpyxl
 import requests
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import (BASE_DIR, MUNICIPIOS_MURCIA, MUNICIPIOS_GIRONA, MUNICIPIOS_LLEIDA,
+from app import (BASE_DIR, clave_municipio, MUNICIPIOS_MURCIA, MUNICIPIOS_GIRONA, MUNICIPIOS_LLEIDA,
                   MUNICIPIOS_BARCELONA, MUNICIPIOS_TARRAGONA, normalizar)
 
 HEADERS = {
@@ -264,7 +264,7 @@ def main():
         if not muni:
             sin_match_alcaldes.append((provincia, fila.get("Municipio")))
             continue
-        clave = normalizar(muni)
+        clave = clave_municipio(muni, PROV_A_KEY[provincia])   # clave compuesta para homónimos (2026-09-30)
         resultado.setdefault(clave, {
             "municipio": muni, "provincia": PROV_A_KEY[provincia],
             "alcalde": None, "concejales": [],
@@ -286,7 +286,7 @@ def main():
         if not muni:
             sin_match_conc.add((provincia, fila.get("Municipio")))
             continue
-        clave = normalizar(muni)
+        clave = clave_municipio(muni, PROV_A_KEY[provincia])   # clave compuesta para homónimos (2026-09-30)
         resultado.setdefault(clave, {
             "municipio": muni, "provincia": PROV_A_KEY[provincia],
             "alcalde": None, "concejales": [],

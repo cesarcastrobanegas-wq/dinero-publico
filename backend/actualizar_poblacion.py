@@ -55,7 +55,7 @@ import time
 import requests
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import BASE_DIR, normalizar, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL
+from app import BASE_DIR, normalizar, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL, clave_municipio
 from actualizar_alcaldes import _sin_apostrofes_curvos, _formas_nucleo_articulo, ALIAS_MUNICIPIO
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36"}
@@ -320,7 +320,7 @@ def main():
                 sin_match.append((clave, nombre_crudo))
                 continue
             dato = serie["Data"][0]
-            clave_normalizada = normalizar(muni)
+            clave_normalizada = clave_municipio(muni, clave)   # clave compuesta para homónimos (2026-09-30)
             # Colisión real detectada al generalizar a más provincias
             # (2026-09-13): "Cabanes" existe en Girona Y Castellón, "Torrent"
             # en Girona Y Valencia -- resultado/POBLACION se indexan solo por

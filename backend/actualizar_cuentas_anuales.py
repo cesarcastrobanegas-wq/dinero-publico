@@ -56,7 +56,7 @@ import requests
 import requests.sessions
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import (BASE_DIR, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL, normalizar,
+from app import (BASE_DIR, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL, normalizar, clave_municipio,
                   RENDICION_CUENTAS_IDS)
 from actualizar_alcaldes import _formas_nucleo_articulo
 
@@ -368,7 +368,7 @@ def main():
 
     procesados_esta_ejecucion = 0
     for i, (municipio, provincia) in enumerate(tareas, 1):
-        if normalizar(municipio) in resultado:
+        if clave_municipio(municipio, provincia) in resultado:
             continue
         provincia_ids = RENDICION_CUENTAS_IDS[provincia]
         # Sesión nueva por municipio -- gesto de aislamiento razonable entre
@@ -386,7 +386,7 @@ def main():
             if not ejercicio:
                 sin_ejercicio.append((provincia, municipio))
                 continue
-            resultado[normalizar(municipio)] = {
+            resultado[clave_municipio(municipio, provincia)] = {
                 "municipio": municipio,
                 "provincia": provincia,
                 "id_entidad": int(id_entidad),

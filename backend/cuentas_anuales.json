@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 16:17:10",
+ "generado": "2026-09-30 18:32:01",
  "municipios": {
   "abanilla": {
    "municipio": "Abanilla",
@@ -96,12 +96,6 @@
    "provincia": "murcia",
    "id_entidad": 4571,
    "ultimo_ejercicio_rendido": 2023
-  },
-  "cieza": {
-   "municipio": "Cieza",
-   "provincia": "murcia",
-   "id_entidad": 4573,
-   "ultimo_ejercicio_rendido": 2024
   },
   "fortuna": {
    "municipio": "Fortuna",
@@ -390,12 +384,6 @@
    "provincia": "girona",
    "id_entidad": 2477,
    "ultimo_ejercicio_rendido": 2025
-  },
-  "cabanes": {
-   "municipio": "Cabanes",
-   "provincia": "girona",
-   "id_entidad": 9261,
-   "ultimo_ejercicio_rendido": 2024
   },
   "cadaques": {
    "municipio": "Cadaqués",
@@ -810,12 +798,6 @@
    "provincia": "girona",
    "id_entidad": 2547,
    "ultimo_ejercicio_rendido": 2024
-  },
-  "mieres": {
-   "municipio": "Mieres",
-   "provincia": "girona",
-   "id_entidad": 2548,
-   "ultimo_ejercicio_rendido": 2025
   },
   "mollet de peralada": {
    "municipio": "Mollet de Peralada",
@@ -1326,12 +1308,6 @@
    "provincia": "girona",
    "id_entidad": 2634,
    "ultimo_ejercicio_rendido": 2025
-  },
-  "torrent": {
-   "municipio": "Torrent",
-   "provincia": "girona",
-   "id_entidad": 2635,
-   "ultimo_ejercicio_rendido": 2024
   },
   "torroella de fluvia": {
    "municipio": "Torroella de Fluvià",
@@ -5543,12 +5519,6 @@
    "municipio": "el Milà",
    "provincia": "tarragona",
    "id_entidad": 6423,
-   "ultimo_ejercicio_rendido": 2024
-  },
-  "el molar": {
-   "municipio": "el Molar",
-   "provincia": "tarragona",
-   "id_entidad": 6425,
    "ultimo_ejercicio_rendido": 2024
   },
   "el montmell": {
@@ -10519,12 +10489,6 @@
    "id_entidad": 3231,
    "ultimo_ejercicio_rendido": 2024
   },
-  "campillo, el": {
-   "municipio": "Campillo, El",
-   "provincia": "huelva",
-   "id_entidad": 3232,
-   "ultimo_ejercicio_rendido": 2024
-  },
   "campofrio": {
    "municipio": "Campofrío",
    "provincia": "huelva",
@@ -12241,12 +12205,6 @@
    "id_entidad": 5239,
    "ultimo_ejercicio_rendido": 2024
   },
-  "moya": {
-   "municipio": "Moya",
-   "provincia": "las_palmas",
-   "id_entidad": 5240,
-   "ultimo_ejercicio_rendido": 2024
-  },
   "pajara": {
    "municipio": "Pájara",
    "provincia": "las_palmas",
@@ -13537,12 +13495,6 @@
    "id_entidad": 5837,
    "ultimo_ejercicio_rendido": 2024
   },
-  "villaescusa": {
-   "municipio": "Villaescusa",
-   "provincia": "cantabria",
-   "id_entidad": 5838,
-   "ultimo_ejercicio_rendido": 2024
-  },
   "voto": {
    "municipio": "Voto",
    "provincia": "cantabria",
@@ -14501,12 +14453,6 @@
    "municipio": "Arganda del Rey",
    "provincia": "madrid",
    "id_entidad": 4288,
-   "ultimo_ejercicio_rendido": 2024
-  },
-  "arroyomolinos": {
-   "municipio": "Arroyomolinos",
-   "provincia": "madrid",
-   "id_entidad": 9251,
    "ultimo_ejercicio_rendido": 2024
   },
   "el atazar": {
@@ -17467,12 +17413,6 @@
    "id_entidad": 1690,
    "ultimo_ejercicio_rendido": 2024
   },
-  "rebollar": {
-   "municipio": "Rebollar",
-   "provincia": "caceres",
-   "id_entidad": 1691,
-   "ultimo_ejercicio_rendido": 2024
-  },
   "riolobos": {
    "municipio": "Riolobos",
    "provincia": "caceres",
@@ -19518,12 +19458,6 @@
    "provincia": "teruel",
    "id_entidad": 6609,
    "ultimo_ejercicio_rendido": 2025
-  },
-  "fonfria": {
-   "municipio": "Fonfría",
-   "provincia": "teruel",
-   "id_entidad": 6610,
-   "ultimo_ejercicio_rendido": 2024
   },
   "formiche alto": {
    "municipio": "Formiche Alto",
@@ -22597,12 +22531,6 @@
    "id_entidad": 2189,
    "ultimo_ejercicio_rendido": 2024
   },
-  "sada": {
-   "municipio": "Sada",
-   "provincia": "a_coruna",
-   "id_entidad": 2190,
-   "ultimo_ejercicio_rendido": 2024
-  },
   "san sadurnino": {
    "municipio": "San Sadurniño",
    "provincia": "a_coruna",
@@ -22625,12 +22553,6 @@
    "municipio": "Santiso",
    "provincia": "a_coruna",
    "id_entidad": 2195,
-   "ultimo_ejercicio_rendido": 2024
-  },
-  "sobrado": {
-   "municipio": "Sobrado",
-   "provincia": "a_coruna",
-   "id_entidad": 2196,
    "ultimo_ejercicio_rendido": 2024
   },
   "as somozas": {
@@ -35203,12 +35125,6 @@
    "id_entidad": 7441,
    "ultimo_ejercicio_rendido": 2024
   },
-  "villanueva de los infantes": {
-   "municipio": "Villanueva de los Infantes",
-   "provincia": "valladolid",
-   "id_entidad": 7442,
-   "ultimo_ejercicio_rendido": 2025
-  },
   "villardefrades": {
    "municipio": "Villardefrades",
    "provincia": "valladolid",
@@ -40938,6 +40854,168 @@
    "provincia": "toledo",
    "id_entidad": 6815,
    "ultimo_ejercicio_rendido": 2024
+  },
+  "arroyomolinos|caceres": {
+   "municipio": "Arroyomolinos",
+   "provincia": "caceres",
+   "id_entidad": 9250,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "arroyomolinos|madrid": {
+   "municipio": "Arroyomolinos",
+   "provincia": "madrid",
+   "id_entidad": 9251,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cabanes|castellon": {
+   "municipio": "Cabanes",
+   "provincia": "castellon",
+   "id_entidad": 9262,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "cabanes|girona": {
+   "municipio": "Cabanes",
+   "provincia": "girona",
+   "id_entidad": 9261,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "campillo, el|huelva": {
+   "municipio": "Campillo, El",
+   "provincia": "huelva",
+   "id_entidad": 3232,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "campillo, el|valladolid": {
+   "municipio": "Campillo, El",
+   "provincia": "valladolid",
+   "id_entidad": 7260,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cieza|cantabria": {
+   "municipio": "Cieza",
+   "provincia": "cantabria",
+   "id_entidad": 5760,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "cieza|murcia": {
+   "municipio": "Cieza",
+   "provincia": "murcia",
+   "id_entidad": 4573,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "el molar|madrid": {
+   "municipio": "El Molar",
+   "provincia": "madrid",
+   "id_entidad": 4358,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "el molar|tarragona": {
+   "municipio": "el Molar",
+   "provincia": "tarragona",
+   "id_entidad": 6425,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "fonfria|teruel": {
+   "municipio": "Fonfría",
+   "provincia": "teruel",
+   "id_entidad": 6610,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "fonfria|zamora": {
+   "municipio": "Fonfría",
+   "provincia": "zamora",
+   "id_entidad": 7631,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "mieres|asturias": {
+   "municipio": "Mieres",
+   "provincia": "asturias",
+   "id_entidad": 4998,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "mieres|girona": {
+   "municipio": "Mieres",
+   "provincia": "girona",
+   "id_entidad": 2548,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "moya|cuenca": {
+   "municipio": "Moya",
+   "provincia": "cuenca",
+   "id_entidad": 2333,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "moya|las_palmas": {
+   "municipio": "Moya",
+   "provincia": "las_palmas",
+   "id_entidad": 5240,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "rebollar|caceres": {
+   "municipio": "Rebollar",
+   "provincia": "caceres",
+   "id_entidad": 1691,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "rebollar|soria": {
+   "municipio": "Rebollar",
+   "provincia": "soria",
+   "id_entidad": 6278,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "sada|a_coruna": {
+   "municipio": "Sada",
+   "provincia": "a_coruna",
+   "id_entidad": 2190,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "sobrado|a_coruna": {
+   "municipio": "Sobrado",
+   "provincia": "a_coruna",
+   "id_entidad": 2196,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "sobrado|leon": {
+   "municipio": "Sobrado",
+   "provincia": "leon",
+   "id_entidad": 3743,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "torrent|girona": {
+   "municipio": "Torrent",
+   "provincia": "girona",
+   "id_entidad": 2635,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "torrent|valencia": {
+   "municipio": "Torrent",
+   "provincia": "valencia",
+   "id_entidad": 7205,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "villaescusa|cantabria": {
+   "municipio": "Villaescusa",
+   "provincia": "cantabria",
+   "id_entidad": 5838,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "villaescusa|zamora": {
+   "municipio": "Villaescusa",
+   "provincia": "zamora",
+   "id_entidad": 7784,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "villanueva de los infantes|ciudad_real": {
+   "municipio": "Villanueva de los Infantes",
+   "provincia": "ciudad_real",
+   "id_entidad": 2033,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "villanueva de los infantes|valladolid": {
+   "municipio": "Villanueva de los Infantes",
+   "provincia": "valladolid",
+   "id_entidad": 7442,
+   "ultimo_ejercicio_rendido": 2025
   }
  }
 }

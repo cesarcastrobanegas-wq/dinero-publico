@@ -72,7 +72,7 @@ import openpyxl
 import requests
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import BASE_DIR, normalizar, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL
+from app import BASE_DIR, normalizar, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL, clave_municipio
 from actualizar_alcaldes import _sin_apostrofes_curvos, _formas_nucleo_articulo, ALIAS_MUNICIPIO
 
 # Alias específicos del XLSX de ISPA que no coinciden con el listado propio
@@ -250,7 +250,7 @@ def main():
             importe_num = float(importe)
         except (TypeError, ValueError):
             continue
-        clave_normalizada = normalizar(muni)
+        clave_normalizada = clave_municipio(muni, clave)   # clave compuesta para homónimos (2026-09-30)
         # Colisión de nombre entre provincias (mismo caso que
         # actualizar_deuda_y_liquidaciones.py/actualizar_poblacion.py) --
         # mejor sin dato que un dato de otro municipio.
