@@ -63,7 +63,11 @@ def _po_leer(ruta):
 
     def _cerrar():
         mid, mstr = entrada.get("msgid", ""), entrada.get("msgstr", "")
-        if mid and mstr and not fuzzy:
+        # Una traducción con un marcador {x} que no está en el original (o con llaves sueltas) haría fallar el
+        # .format() y tumbaría la página: se descarta y sale el castellano.
+        marcadores_ok = set(re.findall(r"\{[a-z_]+\}", mstr)) <= set(re.findall(r"\{[a-z_]+\}", mid))
+        llaves_ok = re.sub(r"\{[a-z_]+\}", "", mstr).count("{") == re.sub(r"\{[a-z_]+\}", "", mid).count("{")
+        if mid and mstr and not fuzzy and marcadores_ok and llaves_ok:
             catalogo[mid] = mstr
 
     try:
@@ -123,9 +127,10 @@ def _t_diferido(texto):
     return _t(texto.plantilla).format(**valores) if valores else _t(texto.plantilla)
 
 
-# Textos del JavaScript: se marcan en el JS como T("texto") o TF("texto con {x}", {x: valor}) -- SIEMPRE con comillas
+# Textos del JavaScript: se marcan en el JS como T(<texto>) o TF(<texto con {x}>, {x: valor}) -- SIEMPRE con comillas
 # dobles, para que el extractor los encuentre -- y los enlaces internos que construye el JS con LP("/ruta"). La tabla
-# de traducciones de cada página lleva solo esos textos (los que aparecen como T("...")/TF("...") en este fichero).
+# de traducciones de cada página lleva solo esos textos (los que aparecen como T(<...>)/TF(<...>) en este fichero; los ejemplos de este comentario no
+# llevan comillas a propósito, para que el extractor no los recoja).
 _I18N_RE_JS = re.compile(r'\bTF?\("([^"\\]*)"')
 try:
     _I18N_JS_MSGIDS = frozenset(_I18N_RE_JS.findall(open(os.path.abspath(__file__), encoding="utf-8").read()))
@@ -4863,20 +4868,21 @@ def sueldos_concejales_html(municipio, provincia=None):
     if not regs:
         motivo = _SUELDOS_CONCEJALES_SIN_TABLA.get(clave)
         if motivo:
-            return (f'<div class="pol-retrib-nota">ℹ️ Sueldos de concejales: no incluidos. {esc(motivo)}</div>')
+            return (f'<div class="pol-retrib-nota">ℹ️ {_t("Sueldos de concejales: no incluidos.")} {esc(motivo)}</div>')
         return ""
     items = []
     for r in sorted(regs, key=lambda x: (-x["importe"], x["nombre"])):
         periodo = f" · {esc(r['periodo'])}" if r["periodo"] else ""
-        fuente = esc(r["fuente_nombre"]) or "fuente oficial"
+        fuente = esc(r["fuente_nombre"]) or _t("fuente oficial")
         items.append(
             f'<li><b class="pol-nombre">{esc(r["nombre"])}</b> <span class="conc-cargo">— {esc(r["cargo"])}</span> '
             f'<span class="pol-retrib">💰 {fmt_eur(r["importe"])} {esc(r["base"])}{periodo}</span> '
             f'<a href="{esc(r["fuente_url"])}" target="_blank" rel="noopener nofollow">{fuente} ↗</a></li>')
-    return (f'<details class="concejales-dd sueldos-conc"><summary>Retribuciones de concejales publicadas por el '
-            f'ayuntamiento ({len(regs)})</summary><ul>{"".join(items)}</ul>'
-            f'<div class="pol-retrib-nota">Importes tal como figuran en la fuente oficial enlazada en cada fila, '
-            f'con la base y el periodo que ella indica; no se han convertido ni estimado.'
+    return (f'<details class="concejales-dd sueldos-conc"><summary>'
+            f'{_t("Retribuciones de concejales publicadas por el ayuntamiento ({n})").format(n=len(regs))}'
+            f'</summary><ul>{"".join(items)}</ul>'
+            f'<div class="pol-retrib-nota">'
+            f'{_t("Importes tal como figuran en la fuente oficial enlazada en cada fila, con la base y el periodo que ella indica; no se han convertido ni estimado.")}'
             + (f' <b>{_t("Nota:")}</b> {esc(_NOTAS_SUELDOS_CONCEJALES[clave])}' if clave in _NOTAS_SUELDOS_CONCEJALES else "")
             + '</div></details>')
 
@@ -17283,7 +17289,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
   <div class="search-bar">
     <label>{_t("Municipio")}</label>
     <form method="POST" action="/buscar" style="display:flex;gap:10px;flex:1;flex-wrap:wrap;align-items:center;">
-      <input name="municipio" placeholder="Ej: {ejemplo_muni}" required>
+      <input name="municipio" placeholder="{_t("Ej: {ejemplos}").format(ejemplos=ejemplo_muni)}" required>
       <input type="hidden" name="provincia" value="{esc(provincia)}">
       <button type="submit" class="btn btn-primary">{_t("Buscar contratos")}</button>
     </form>
