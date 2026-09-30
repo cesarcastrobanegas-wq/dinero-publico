@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-21 20:40:50",
+ "generado": "2026-09-30 14:54:40",
  "anio": 2024,
  "municipios": {
   "agost": {
@@ -7107,6 +7107,13 @@
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
+  "elantxobe": {
+   "municipio": "Elantxobe",
+   "provincia": "pais_vasco",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
   "elorrio": {
    "municipio": "Elorrio",
    "provincia": "pais_vasco",
@@ -7601,6 +7608,13 @@
    "municipio": "Zaldibar",
    "provincia": "pais_vasco",
    "importe": 45099.89,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "zalla": {
+   "municipio": "Zalla",
+   "provincia": "pais_vasco",
+   "importe": 65472.06,
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
@@ -38621,6 +38635,13 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
+  "falset": {
+   "municipio": "Falset",
+   "provincia": "tarragona",
+   "importe": 7850.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
   "la fatarella": {
    "municipio": "la Fatarella",
    "provincia": "tarragona",
@@ -39132,6 +39153,13 @@
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
+  "sant jaume dels domenys": {
+   "municipio": "Sant Jaume dels Domenys",
+   "provincia": "tarragona",
+   "importe": 9095.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
   "sant jaume d'enveja": {
    "municipio": "Sant Jaume d'Enveja",
    "provincia": "tarragona",
@@ -39361,6 +39389,13 @@
    "provincia": "tarragona",
    "importe": 8670.0,
    "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "vila-rodona": {
+   "municipio": "Vila-rodona",
+   "provincia": "tarragona",
+   "importe": 3915.0,
+   "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
   "vila-seca": {

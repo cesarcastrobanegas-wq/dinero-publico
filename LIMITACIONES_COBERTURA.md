@@ -1290,9 +1290,11 @@ vuelve a lanzar el generador.
   la fuente propia llega DESPUÉS del feed (`_retirar_duplicados_place`, en el punto único de escritura: archiva, no
   borra).
 
-**Resultado** (61 meses, 202109 → 202609; carga verificada sobre la copia de producción del 25-09): 912.246
-contratos en 3.556 municipios; **849.479 guardados** y 62.767 descartados porque ya los trae la fuente propia; 0
-duplicados restantes en los 44 municipios con fuente propia y feed a la vez. El feed es pobre al principio (6.237
+**Resultado** (61 meses, 202109 → 202609; carga verificada sobre la copia de producción del 25-09, versión
+definitiva del 30-09 con las reglas de la revisión de abajo): 915.907 contratos en 3.562 municipios; **849.898
+guardados** y 66.009 descartados porque ya los trae la fuente propia. Residuo conocido: el emparejamiento uno a uno es
+voraz y puede dejar algún duplicado cuando dos contratos del feed compiten por el mismo contrato propio (cota
+superior medida: 395, el 0,05 % del feed). El feed es pobre al principio (6.237
 contratos en sep-dic 2021, 81.592 en 2022) y se generaliza desde 2023 (~190.000-225.000 al año).
 
 **Hallazgos al emparejar con las fuentes propias** (sin estos ajustes quedaban miles de duplicados):
@@ -1320,6 +1322,35 @@ Alcúdia (Baleares), El Molar, Moya, Pozuel de Ariza, Cortelazor la Real, Aýna,
 menores, parroquias rurales, mancomunidades y consorcios** (7.478 contratos) no se asignan al municipio: son otra
 entidad.
 
-**Fuera del Índice de Transparencia, por ahora** (decisión pendiente de César): el feed no entra en los componentes
-"menores" ni "directivo" (`WHERE fuente <> 'place-menores'`). Comprobado: con el feed cargado, las notas de los 8.108
-municipios son idénticas a las de antes. Opciones medidas para decidir, en `DATOS_PETICION_MENORES.md` §6.
+**En el Índice de Transparencia (opción A de César, 2026-09-30)**: el feed cuenta en "menores" y "directivo". NO con
+la regla de agregadores de RPC/Euskadi (con ella casi todo municipio presente sacaba ~99-100: presencia binaria), sino
+graduado como un portal: publicar 40 + años cubiertos 20 + frescura 20 + % adjudicatario 20, con los años esperados
+**desde 2023** para los municipios que solo tienen el feed (`_PLACE_MENORES_ANIO_REFERENCIA`: en 2021-2022 el propio
+feed apenas tiene datos). Efecto conocido y aceptado: "directivo" baja donde entran adjudicatarios del feed aún sin
+enriquecer en el Registro Mercantil; se corrige solo según avanza el enriquecimiento.
+
+### Revisión del 2026-09-30 (integración en el índice y datos sueltos)
+
+- **Emparejamiento con fuentes propias, más reglas** (sin ellas quedaban duplicados): (1) municipio comparado sin
+  diacríticos y con provincia canónica -- 3 fuentes propias guardan otra grafía: "Valencia" frente a "València",
+  provincia `ciudad-real` (Ciudad Real) e `illes_balears` (Palma), inconsistencias antiguas de esos conectores que
+  no se han renombrado; (2) fuentes propias SIN fecha (Las Palmas GC, Toledo, Arona): casan por el mismo año de
+  ejercicio -- había 1.087 duplicados en Las Palmas y 438 en Arona; (3) emparejamiento **uno a uno**: cada contrato
+  propio absorbe como mucho un contrato del feed (antes uno solo tapaba varios recurrentes).
+- **Grafías del feed** que no casaban con las listas de la app: diacríticos que `normalizar()` no quita ("L'Alcùdia",
+  "Aýna") y alias Alfarp→Alfarb, Montitxelvo→Montichelvo, El Poble Nou de Benitatxell→Benitachell, Cortelazor la
+  Real→Cortelazor. No faltaban en la app.
+- **Municipios que sí faltaban en las listas** (cruce con el padrón del INE), añadidos: Falset, Vila-rodona y Sant
+  Jaume dels Domenys (Tarragona), Santa Fe del Penedès y Sant Jaume de Frontanyà (Barcelona, este sin código PSCP: 0
+  contratos en la PSCP), Zalla y Elantxobe (País Vasco: no están en KontratazioA; sus formales se buscan por PLACE y
+  sus menores entran por el feed -- Zalla, 3.128). Población, deuda, saldo, sueldo ISPA y cuentas regenerados con los
+  scripts de siempre para que no salgan con 0 por no estar en esos ficheros. Ezkio e Itsaso (separados en 2025)
+  siguen sin población: el INE aún publica "Ezkio-Itsaso".
+- **Homónimos sin resolver**, visibles en /rankings (`HOMONIMOS_SIN_RESOLVER`): 16 municipios reales sin datos
+  propios por compartir nombre exacto con otro de otra provincia (la app guarda sus datos solo por nombre): Mieres
+  (Asturias), Villanueva de los Infantes (Ciudad Real), Cieza (Cantabria), El Molar (Madrid), Arroyomolinos (Cáceres),
+  Sobrado (León), Sancti-Spíritus (Salamanca), Rebollar (Soria), El Campillo (Valladolid), Fonfría y Villaescusa
+  (Zamora), Moya (Cuenca), Castejón y Sada (Navarra), más Torrent (Valencia) y Cabanes (Castellón). Arreglo de fondo
+  pendiente de decisión: clave compuesta municipio+provincia (~120 puntos de `app.py`, 6 generadores y migración de
+  la clave primaria de `municipios` en producción).
+

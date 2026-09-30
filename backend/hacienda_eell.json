@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 06:14:16",
+ "generado": "2026-09-30 14:53:40",
  "deuda_viva": {
   "fuente_url": "https://www.hacienda.gob.es/cdi/sist%20financiacion%20y%20deuda/informacioneells/2025/deuda-viva-ayuntamientos-202512.xlsx",
   "municipios": {
@@ -26073,6 +26073,11 @@
     "provincia": "barcelona",
     "deuda_eur": 0.0
    },
+   "sant jaume de frontanya": {
+    "municipio": "Sant Jaume de Frontanyà",
+    "provincia": "barcelona",
+    "deuda_eur": 0.0
+   },
    "sant joan despi": {
     "municipio": "Sant Joan Despí",
     "provincia": "barcelona",
@@ -26232,6 +26237,11 @@
     "municipio": "Santa Eulàlia de Ronçana",
     "provincia": "barcelona",
     "deuda_eur": 5244993.02
+   },
+   "santa fe del penedes": {
+    "municipio": "Santa Fe del Penedès",
+    "provincia": "barcelona",
+    "deuda_eur": 1043.0
    },
    "santa margarida de montbui": {
     "municipio": "Santa Margarida de Montbui",
@@ -29083,6 +29093,11 @@
     "provincia": "tarragona",
     "deuda_eur": 1270068.64
    },
+   "falset": {
+    "municipio": "Falset",
+    "provincia": "tarragona",
+    "deuda_eur": 1803724.0
+   },
    "la fatarella": {
     "municipio": "la Fatarella",
     "provincia": "tarragona",
@@ -29483,6 +29498,11 @@
     "provincia": "tarragona",
     "deuda_eur": 0.0
    },
+   "sant jaume dels domenys": {
+    "municipio": "Sant Jaume dels Domenys",
+    "provincia": "tarragona",
+    "deuda_eur": 93113.0
+   },
    "santa barbara": {
     "municipio": "Santa Bàrbara",
     "provincia": "tarragona",
@@ -29642,6 +29662,11 @@
     "municipio": "Vilaplana",
     "provincia": "tarragona",
     "deuda_eur": 0.0
+   },
+   "vila-rodona": {
+    "municipio": "Vila-rodona",
+    "provincia": "tarragona",
+    "deuda_eur": 526161.0
    },
    "vila-seca": {
     "municipio": "Vila-seca",
@@ -36258,6 +36283,11 @@
     "provincia": "pais_vasco",
     "deuda_eur": 0.0
    },
+   "elantxobe": {
+    "municipio": "Elantxobe",
+    "provincia": "pais_vasco",
+    "deuda_eur": 0.0
+   },
    "elorrio": {
     "municipio": "Elorrio",
     "provincia": "pais_vasco",
@@ -36570,6 +36600,11 @@
    },
    "zaldibar": {
     "municipio": "Zaldibar",
+    "provincia": "pais_vasco",
+    "deuda_eur": 0.0
+   },
+   "zalla": {
+    "municipio": "Zalla",
     "provincia": "pais_vasco",
     "deuda_eur": 0.0
    },
@@ -45367,6 +45402,13 @@
     "provincia": "barcelona",
     "ejercicio": 2025,
     "importe_eur": 604099.0,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant jaume de frontanya": {
+    "municipio": "Sant Jaume de Frontanyà",
+    "provincia": "barcelona",
+    "ejercicio": 2025,
+    "importe_eur": 3462.72,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "sant joan despi": {
@@ -68847,6 +68889,13 @@
     "importe_eur": 147034.73,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
+   "falset": {
+    "municipio": "Falset",
+    "provincia": "tarragona",
+    "ejercicio": 2025,
+    "importe_eur": -639256.74,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
    "la fatarella": {
     "municipio": "la Fatarella",
     "provincia": "tarragona",
@@ -69216,6 +69265,13 @@
     "provincia": "tarragona",
     "ejercicio": 2025,
     "importe_eur": 514536.79,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
+   },
+   "sant jaume dels domenys": {
+    "municipio": "Sant Jaume dels Domenys",
+    "provincia": "tarragona",
+    "ejercicio": 2025,
+    "importe_eur": 34036.06,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2025eell-estabilidadpresupuestariasaldosnofinanciero-30072026.xlsx"
    },
    "santa coloma de queralt": {
@@ -78689,6 +78745,13 @@
     "importe_eur": 4868955.48,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
+   "santa fe del penedes": {
+    "municipio": "Santa Fe del Penedès",
+    "provincia": "barcelona",
+    "ejercicio": 2024,
+    "importe_eur": 429403.22,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
    "santa margarida i els monjos": {
     "municipio": "Santa Margarida i els Monjos",
     "provincia": "barcelona",
@@ -86653,6 +86716,13 @@
     "provincia": "tarragona",
     "ejercicio": 2024,
     "importe_eur": 382039.89,
+    "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
+   },
+   "vila-rodona": {
+    "municipio": "Vila-rodona",
+    "provincia": "tarragona",
+    "ejercicio": 2024,
+    "importe_eur": -250272.21,
     "fuente_url": "https://www.hacienda.gob.es/cdi/estabilidad%20presupuestaria/informacioncclls/liquidacion2024eell-estabilidadpresupuestariasaldosnofinanciero-13022026.xlsx"
    },
    "la vilella alta": {

@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-22 16:51:24",
+ "generado": "2026-09-30 16:17:10",
  "municipios": {
   "abanilla": {
    "municipio": "Abanilla",
@@ -40805,6 +40805,138 @@
    "municipio": "Toba, La",
    "provincia": "guadalajara",
    "id_entidad": 3072,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "santa fe del penedes": {
+   "municipio": "Santa Fe del Penedès",
+   "provincia": "barcelona",
+   "id_entidad": 1113,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sant jaume de frontanya": {
+   "municipio": "Sant Jaume de Frontanyà",
+   "provincia": "barcelona",
+   "id_entidad": 1076,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "falset": {
+   "municipio": "Falset",
+   "provincia": "tarragona",
+   "id_entidad": 6395,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "sant jaume dels domenys": {
+   "municipio": "Sant Jaume dels Domenys",
+   "provincia": "tarragona",
+   "id_entidad": 6479,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "vila-rodona": {
+   "municipio": "Vila-rodona",
+   "provincia": "tarragona",
+   "id_entidad": 6514,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "hornachuelos": {
+   "municipio": "Hornachuelos",
+   "provincia": "cordoba",
+   "id_entidad": 2075,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "taha, la": {
+   "municipio": "Taha, La",
+   "provincia": "granada",
+   "id_entidad": 2820,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "cartaya": {
+   "municipio": "Cartaya",
+   "provincia": "huelva",
+   "id_entidad": 3235,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "iznate": {
+   "municipio": "Iznate",
+   "provincia": "malaga",
+   "id_entidad": 4515,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sencelles": {
+   "municipio": "Sencelles",
+   "provincia": "baleares",
+   "id_entidad": 853,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "sotes": {
+   "municipio": "Sotés",
+   "provincia": "la_rioja",
+   "id_entidad": 4173,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "lena": {
+   "municipio": "Lena",
+   "provincia": "asturias",
+   "id_entidad": 4995,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "adanero": {
+   "municipio": "Adanero",
+   "provincia": "avila",
+   "id_entidad": 378,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "fuentes de ano": {
+   "municipio": "Fuentes de Año",
+   "provincia": "avila",
+   "id_entidad": 444,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "gotarrendura": {
+   "municipio": "Gotarrendura",
+   "provincia": "avila",
+   "id_entidad": 453,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "penausende": {
+   "municipio": "Peñausende",
+   "provincia": "zamora",
+   "id_entidad": 7703,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "san carlos del valle": {
+   "municipio": "San Carlos del Valle",
+   "provincia": "ciudad_real",
+   "id_entidad": 2014,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "graja de iniesta": {
+   "municipio": "Graja de Iniesta",
+   "provincia": "cuenca",
+   "id_entidad": 2298,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "calzada de oropesa": {
+   "municipio": "Calzada de Oropesa",
+   "provincia": "toledo",
+   "id_entidad": 6788,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "cazalegas": {
+   "municipio": "Cazalegas",
+   "provincia": "toledo",
+   "id_entidad": 6802,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "cervera de los montes": {
+   "municipio": "Cervera de los Montes",
+   "provincia": "toledo",
+   "id_entidad": 6806,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "domingo perez": {
+   "municipio": "Domingo Pérez",
+   "provincia": "toledo",
+   "id_entidad": 6815,
    "ultimo_ejercicio_rendido": 2024
   }
  }

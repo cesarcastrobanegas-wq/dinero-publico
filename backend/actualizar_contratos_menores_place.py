@@ -188,7 +188,10 @@ ALIAS = {("borriana", "castellon"): "Burriana", ("san bartolome de lanzarote", "
          ("cangas", "pontevedra"): "Cangas de Morrazo", ("las rozas", "madrid"): "Las Rozas de Madrid",
          ("benicassim", "castellon"): "Benicasim", ("lborea", "albacete"): "Alborea",
          ("alcoba", "ciudad_real"): "Alcoba de los Montes", ("herbes", "castellon"): "Herbers",
-         ("palma de mallorca", "baleares"): "Palma"}
+         ("palma de mallorca", "baleares"): "Palma",
+         # grafía valenciana/oficial en PLACE, castellana en las listas de la app (2026-09-30)
+         ("alfarp", "valencia"): "Alfarb", ("montitxelvo", "valencia"): "Montichelvo",
+         ("el poble nou de benitatxell", "alicante"): "Benitachell", ("cortelazor la real", "huelva"): "Cortelazor"}
 # Prefijos que PLACE pone a veces en el hueco del municipio (fórmulas honoríficas u órganos del propio ayuntamiento).
 PREFIJOS = r"^(villa de |ciudad de |muy noble y leal villa de |junta de gobierno( local)? del? (excmo\. |ilmo\. )?ayuntamiento de |ayuntamiento de )"
 # Entidades locales que NO son el municipio: entidades locales menores/autónomas, mancomunidades, consorcios...
@@ -216,6 +219,9 @@ class Asignador:
             for n in (base, label, clave.replace("_", " ")):
                 self.prov_por_nombre[A.normalizar(n)] = clave
         self.excluidas = set(A.PROVINCIAS_CATALUNYA) | set(A.PROVINCIAS_PAIS_VASCO)
+        # País Vasco: fuera solo los municipios que cubre la API de Euskadi; los que no están en KontratazioA (Zalla,
+        # Elantxobe) publican en PLACE y sí entran.
+        self.cubiertos_euskadi = set(getattr(A, "MUNICIPIOS_PAIS_VASCO_EUSKADI_ID", {}))
         self.idx = collections.defaultdict(set)
         self.laxo = collections.defaultdict(set)
         for prov, lst in A.MUNICIPIOS_POR_PROVINCIA.items():
@@ -225,8 +231,14 @@ class Asignador:
                 self.laxo[(prov, self._laxa(m))].add(m)
         self.por_ine = {}
 
+    def _norm(self, nombre):
+        """normalizar() de la app no quita todos los diacríticos ("L'Alcùdia", "Aýna"): se quitan antes."""
+        import unicodedata
+        sin = "".join(c for c in unicodedata.normalize("NFD", nombre or "") if unicodedata.category(c) != "Mn")
+        return self.A.normalizar(sin).replace("´", "'").replace("’", "'")
+
     def _formas(self, nombre):
-        n = self.A.normalizar(nombre).replace("´", "'").replace("’", "'")
+        n = self._norm(nombre)
         formas = set()
         for parte in {n} | set(re.split(r"\s*/\s*", n)):
             for f in set(self.A._variantes_nombre_municipio(parte)) | {parte}:
@@ -237,7 +249,7 @@ class Asignador:
         """Forma laxa: sin artículos, sin 'de/del', sin apóstrofos ni guiones ("Vall de Gallinera, la" = "Vall de
         Gallinera"; "Alqueries, les" = "Les Alqueries"; "San Vicente del Raspeig" = "San Vicente Raspeig"). Solo se usa
         si identifica UN único municipio de esa provincia."""
-        n = self.A.normalizar(re.split(r"\s*/\s*", nombre)[0]).replace("´", "'").replace("’", "'")
+        n = self._norm(re.split(r"\s*/\s*", nombre)[0])
         n = re.sub(r"\b(el|la|los|las|les|els|l'|d'|s'|es|sa|ses|o|a|os|as|de|del|dels)\b", " ", n.replace("'", "' "))
         return re.sub(r"[^a-z0-9]", "", n)
 
@@ -258,7 +270,7 @@ class Asignador:
         return self.provincia(p[i + 1] if i + 1 < len(p) else "")
 
     def nombre_a_municipio(self, nombre, prov):
-        n = self.A.normalizar(nombre).strip()
+        n = self._norm(nombre).strip()
         if (n, prov) in ALIAS:
             return ALIAS[(n, prov)]
         for cand in dict.fromkeys([n, re.sub(PREFIJOS, "", n)]):
@@ -348,14 +360,19 @@ def fase_generar(meses, zips, A):
             est["sin asignar"] += 1
             p = r["padres"]
             i = p.index("Ayuntamientos") if "Ayuntamientos" in p else 0
-            sin[(p[i - 1] if i else "?", p[i + 1] if i + 1 < len(p) else "?")] += 1
+            etiqueta = (p[i - 1] if i else "?", p[i + 1] if i + 1 < len(p) else "?")
+            prov_h = asg.provincia_de(r)
+            if prov_h and (asg._norm(etiqueta[0]), prov_h) in {(asg._norm(m), pv) for m, pv, _ in
+                                                                getattr(A, "HOMONIMOS_SIN_RESOLVER", [])}:
+                etiqueta = ("[homónimo sin resolver] " + etiqueta[0], etiqueta[1])
+            sin[etiqueta] += 1
     log(f"asignación: {dict(est)}")
     log(f"sin asignar (top 40): {sin.most_common(40)}")
 
     por_anio = collections.defaultdict(list)
     fuera = collections.Counter()
     for k, (m, prov) in asignado.items():
-        if prov in asg.excluidas:
+        if prov in asg.excluidas and not (prov == "pais_vasco" and m not in asg.cubiertos_euskadi):
             fuera[prov] += 1
             continue
         r = ultimo[k]

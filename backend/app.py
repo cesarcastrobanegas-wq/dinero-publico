@@ -5302,6 +5302,34 @@ MUNICIPIOS_NAVARRA = [
 # Comunitat Valenciana (3), Andalucía (8) y País Vasco (1, ver nota en
 # PROVINCIAS_PAIS_VASCO más abajo) generalizados a producción 2026-09-06
 # (ver memoria del proyecto para el diagnóstico/piloto de cada una).
+# Municipios que faltaban en las listas (2026-09-30, revisión contra el padrón del INE al conectar el feed de menores
+# de PLACE). Cataluña: codi_ine10 sacado del propio dataset PSCP (ybgg-dgi6, organismo "Ajuntament de X"); Sant Jaume
+# de Frontanyà (~30 hab.) no tiene ningún contrato en la PSCP, así que va sin código (su búsqueda PSCP no trae nada).
+MUNICIPIOS_TARRAGONA += ["Falset", "Sant Jaume dels Domenys", "Vila-rodona"]
+MUNICIPIOS_TARRAGONA_INE.update({"Falset": "4305550006", "Sant Jaume dels Domenys": "4313780001",
+                                 "Vila-rodona": "4317040003"})
+MUNICIPIOS_BARCELONA += ["Santa Fe del Penedès", "Sant Jaume de Frontanyà"]
+MUNICIPIOS_BARCELONA_INE.update({"Santa Fe del Penedès": "0824950006"})
+# País Vasco: municipios que NO están en el directorio de KontratazioA (API de Euskadi, ver
+# MUNICIPIOS_PAIS_VASCO_EUSKADI_ID) y publican en PLACE -- sus contratos formales se buscan por la vía de PLACE (ver
+# _job_run) y sus menores entran por el feed de PLACE. Zalla: 3.128 contratos menores en el feed (2021-2026).
+MUNICIPIOS_PAIS_VASCO_SIN_KONTRATAZIOA = ["Zalla", "Elantxobe"]
+
+# Homónimos SIN RESOLVER (2026-09-30): municipios reales que no están en la app, o están sin datos propios, porque
+# comparten nombre exacto con otro de otra provincia y la app guarda sus datos solo por nombre (clave primaria de la
+# tabla `municipios`, POBLACION, deuda, cuentas...). (municipio, provincia, provincia del homónimo que sí está).
+# Los 14 primeros se excluyeron de las listas en su día (comentarios de cada lista); Torrent y Cabanes están en las
+# listas pero comparten fila con los de Girona (ver _INDICE_HOMONIMOS). Visibles en /rankings; arreglo de fondo
+# pendiente: clave compuesta municipio+provincia (LIMITACIONES_COBERTURA.md).
+HOMONIMOS_SIN_RESOLVER = [
+    ("Mieres", "asturias", "girona"), ("Villanueva de los Infantes", "ciudad_real", "valladolid"),
+    ("Cieza", "cantabria", "murcia"), ("El Molar", "madrid", "tarragona"), ("Arroyomolinos", "caceres", "madrid"),
+    ("Sobrado", "leon", "a_coruna"), ("Sancti-Spíritus", "salamanca", "badajoz"), ("Rebollar", "soria", "caceres"),
+    ("El Campillo", "valladolid", "huelva"), ("Fonfría", "zamora", "teruel"), ("Villaescusa", "zamora", "cantabria"),
+    ("Moya", "cuenca", "las_palmas"), ("Castejón", "navarra", "cuenca"), ("Sada", "navarra", "a_coruna"),
+    ("Torrent", "valencia", "girona"), ("Cabanes", "castellon", "girona"),
+]
+
 MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GIRONA,
                             "lleida": MUNICIPIOS_LLEIDA, "barcelona": MUNICIPIOS_BARCELONA,
                             "tarragona": MUNICIPIOS_TARRAGONA,
@@ -5311,7 +5339,7 @@ MUNICIPIOS_POR_PROVINCIA = {"murcia": MUNICIPIOS_MURCIA, "girona": MUNICIPIOS_GI
                             "cordoba": MUNICIPIOS_CORDOBA, "granada": MUNICIPIOS_GRANADA,
                             "huelva": MUNICIPIOS_HUELVA, "jaen": MUNICIPIOS_JAEN,
                             "malaga": MUNICIPIOS_MALAGA, "sevilla": MUNICIPIOS_SEVILLA,
-                            "pais_vasco": list(MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.keys()),
+                            "pais_vasco": list(MUNICIPIOS_PAIS_VASCO_EUSKADI_ID.keys()) + MUNICIPIOS_PAIS_VASCO_SIN_KONTRATAZIOA,
                             "ceuta": MUNICIPIOS_CEUTA, "melilla": MUNICIPIOS_MELILLA,
                             "las_palmas": MUNICIPIOS_LAS_PALMAS,
                             "santa_cruz_tenerife": MUNICIPIOS_SANTA_CRUZ_TENERIFE,
@@ -8961,6 +8989,38 @@ def _nombre_comparable_cm(nombre):
     return re.sub(r"[^a-z0-9]", "", normalizar(nombre or ""))
 
 
+# Algunas fuentes propias guardan el municipio o la provincia con otra grafía que la lista de la app ("Valencia" frente
+# a "València", provincia "ciudad-real" o "illes_balears"): para emparejar duplicados con el feed se comparan por
+# nombre sin diacríticos y provincia canónica (medido el 30-09: Valencia, Ciudad Real y Palma no se cruzaban).
+_PROVINCIA_CANONICA_CM = {"ciudad-real": "ciudad_real", "illes_balears": "baleares"}
+
+
+def _clave_municipio_cm(municipio, provincia):
+    sin = "".join(c for c in unicodedata.normalize("NFD", municipio or "") if unicodedata.category(c) != "Mn")
+    return normalizar(sin), _PROVINCIA_CANONICA_CM.get(provincia or "", provincia or "")
+
+
+_EQUIV_PLACE_CACHE = None     # nombres del feed: solo cambian al cargar el feed (se invalida en _cargar_contratos_menores_place)
+
+
+def _nombres_equivalentes_cm(solo_place):
+    """{clave canónica: [(municipio, provincia) tal como están en la tabla]} de las filas del feed (solo_place=True) o
+    de las fuentes propias (False). Una consulta DISTINCT sobre el índice (municipio, provincia); la del feed se cachea
+    porque _retirar_duplicados_place la pide en cada escritura de una fuente propia."""
+    global _EQUIV_PLACE_CACHE
+    if solo_place and _EQUIV_PLACE_CACHE is not None:
+        return _EQUIV_PLACE_CACHE
+    with _db_lock:
+        filas = _db.execute(f"SELECT DISTINCT municipio, provincia FROM contratos_menors_locales WHERE fuente "
+                            f"{'=' if solo_place else '<>'} ?", (FUENTE_CM_PLACE,)).fetchall()
+    out = collections.defaultdict(list)
+    for m, pv in filas:
+        out[_clave_municipio_cm(m, pv)].append((m, pv))
+    if solo_place:
+        _EQUIV_PLACE_CACHE = out
+    return out
+
+
 def _clave_adjudicatario_cm(nif, nombre):
     n = re.sub(r"[^A-Z0-9]", "", (nif or "").upper())
     return ("nif", n) if len(n) >= 8 else ("nom", _nombre_comparable_cm(nombre))
@@ -9008,22 +9068,38 @@ def _fechas_compatibles_cm(fecha_propia, fecha_feed, fuente_propia):
 
 
 def _casa_con_propios(reg, idx):
-    """reg: registro del feed; idx: {clave adjudicatario: [(importe, fecha, fuente), ...]} de las fuentes propias."""
+    """reg: registro del feed; idx: {clave adjudicatario: [entrada, ...]} de las fuentes propias (ver _indice_propios_cm).
+    Emparejamiento UNO A UNO: cada contrato propio absorbe como mucho un contrato del feed (sin esto, un único contrato
+    propio "tapaba" varios del feed recurrentes del mismo adjudicatario e importe -- Arona: 438 del feed para 432
+    propios). Fuente propia SIN fecha (Las Palmas GC, Toledo, Arona): casa por el mismo año de ejercicio."""
     claves = [_clave_adjudicatario_cm(reg.get("nif"), reg.get("adjudicatari")),
               ("nom", _nombre_comparable_cm(reg.get("adjudicatari")))]
+    fecha_feed = reg.get("data_adjudicacio") or ""
     for k in dict.fromkeys(claves):
-        for imp, fecha, fuente in idx.get(k, ()):
-            if (_fechas_compatibles_cm(fecha, reg.get("data_adjudicacio"), fuente)
-                    and _importes_compatibles_cm(imp, reg.get("import_num"), reg.get("import_con_iva"))):
+        for e in idx.get(k, ()):
+            if e["usado"] or not _importes_compatibles_cm(e["imp"], reg.get("import_num"), reg.get("import_con_iva")):
+                continue
+            if e["fecha"]:
+                ok = _fechas_compatibles_cm(e["fecha"], fecha_feed, e["fuente"])
+            else:
+                ok = bool(e["ejercicio"]) and str(e["ejercicio"])[:4] == fecha_feed[:4]
+            if ok:
+                e["usado"] = True
                 return True
     return False
 
 
 def _indice_propios_cm(filas):
+    """filas: (nif, adjudicatario, importe, fecha, fuente[, ejercicio]). La misma entrada queda bajo la clave de NIF y
+    la de nombre, así que marcarla como usada vale para las dos."""
     idx = collections.defaultdict(list)
-    for nif, nombre, imp, fecha, fuente in filas:
-        idx[_clave_adjudicatario_cm(nif, nombre)].append((imp, fecha, fuente))
-        idx[("nom", _nombre_comparable_cm(nombre))].append((imp, fecha, fuente))
+    for fila in filas:
+        nif, nombre, imp, fecha, fuente = fila[:5]
+        e = {"imp": imp, "fecha": fecha, "fuente": fuente, "ejercicio": fila[5] if len(fila) > 5 else "", "usado": False}
+        idx[_clave_adjudicatario_cm(nif, nombre)].append(e)
+        k2 = ("nom", _nombre_comparable_cm(nombre))
+        if k2 != _clave_adjudicatario_cm(nif, nombre):
+            idx[k2].append(e)
     return idx
 
 
@@ -9035,12 +9111,15 @@ def _retirar_duplicados_place(propios):
     for r in propios:
         grupos[(r["municipio"], r.get("provincia", ""))].append((r.get("nif"), r.get("adjudicatari"),
                                                                   r.get("import_num"), r.get("data_adjudicacio"),
-                                                                  r.get("fuente")))
+                                                                  r.get("fuente"), r.get("exercici")))
     retirar = []
+    equivalentes = _nombres_equivalentes_cm(solo_place=True)
     with _db_lock:
         for (muni, prov), filas in grupos.items():
-            place = _db.execute("SELECT id, nif, adjudicatari, import_num, data_adjudicacio FROM contratos_menors_locales "
-                                "WHERE municipio=? AND provincia=? AND fuente=?", (muni, prov, FUENTE_CM_PLACE)).fetchall()
+            place = []
+            for m2, p2 in equivalentes.get(_clave_municipio_cm(muni, prov), []):
+                place += _db.execute("SELECT id, nif, adjudicatari, import_num, data_adjudicacio FROM contratos_menors_locales "
+                                     "WHERE municipio=? AND provincia=? AND fuente=?", (m2, p2, FUENTE_CM_PLACE)).fetchall()
             if not place:
                 continue
             idx = _indice_propios_cm(filas)
@@ -9097,6 +9176,8 @@ def _cargar_contratos_menores_place():
             return
         total = guardados = duplicados = 0
         munis = set()
+        propios_equiv = _nombres_equivalentes_cm(solo_place=False)
+        idx_por_muni = {}      # un índice por municipio para TODA la carga: el uno a uno vale entre ficheros mensuales
         for ruta in rutas:
             with _gzip.open(ruta, "rt", encoding="utf-8") as f:
                 registros = json.load(f).get("registros", [])
@@ -9107,10 +9188,16 @@ def _cargar_contratos_menores_place():
                 grupos[(r["municipio"], r["provincia"])].append(r)
             nuevos = []
             for (muni, prov), regs in grupos.items():
-                with _db_lock:
-                    filas = _db.execute("SELECT nif, adjudicatari, import_num, data_adjudicacio, fuente FROM contratos_menors_locales "
-                                        "WHERE municipio=? AND provincia=? AND fuente<>?", (muni, prov, FUENTE_CM_PLACE)).fetchall()
-                idx = _indice_propios_cm(filas) if filas else None
+                cm = _clave_municipio_cm(muni, prov)
+                if cm not in idx_por_muni:
+                    filas = []
+                    with _db_lock:
+                        for m2, p2 in propios_equiv.get(cm, []):
+                            filas += _db.execute("SELECT nif, adjudicatari, import_num, data_adjudicacio, fuente, exercici "
+                                                 "FROM contratos_menors_locales WHERE municipio=? AND provincia=? AND "
+                                                 "fuente<>?", (m2, p2, FUENTE_CM_PLACE)).fetchall()
+                    idx_por_muni[cm] = _indice_propios_cm(filas) if filas else None
+                idx = idx_por_muni[cm]
                 for r in regs:
                     if idx and _casa_con_propios(r, idx):
                         duplicados += 1
@@ -9125,6 +9212,8 @@ def _cargar_contratos_menores_place():
             _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
                         "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (_PLACE_MENORES_CLAVE, huella))
             _db.commit()
+        global _EQUIV_PLACE_CACHE
+        _EQUIV_PLACE_CACHE = None                # hay nombres nuevos del feed
         print(f"  [startup] contratos_menores_place: {total} contratos del feed de PLACE en {len(munis)} municipios; "
               f"{guardados} guardados, {duplicados} descartados porque ya los trae la fuente propia del municipio.",
               flush=True)
@@ -11136,7 +11225,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
         if provincia in PROVINCIAS_CATALUNYA:
             contratos, ok = buscar_en_pscp(municipio, provincia, job_id)
             fuente_completa = "PSCP" if ok else None
-        elif provincia in PROVINCIAS_PAIS_VASCO:
+        elif provincia in PROVINCIAS_PAIS_VASCO and municipio in MUNICIPIOS_PAIS_VASCO_EUSKADI_ID:
             contratos, ok = buscar_en_euskadi(municipio, job_id)
             fuente_completa = "EUSKADI" if ok else None
         elif provincia in PROVINCIAS_NAVARRA:
@@ -12533,6 +12622,10 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .it-info-pop ul{margin:0 0 8px;padding-left:18px;}
 .it-info-pop li{margin:2px 0;}
 .it-info-pop .it-info-aviso{color:var(--dim);font-size:11.5px;}
+.it-info-pop ul.it-info-pesos{list-style:none;padding:0;margin:0 0 8px;font-size:12px;}
+.it-info-pop ul.it-info-pesos li{display:flex;justify-content:space-between;gap:12px;margin:0;padding:1px 0 1px 12px;}
+.it-info-pop ul.it-info-pesos li.it-info-bloque{padding-left:0;margin-top:5px;border-bottom:1px solid var(--border);}
+@media (max-width:700px){.it-info-pop{font-size:11.5px;line-height:1.35;padding:10px 12px;}.it-info-pop p{margin:0 0 6px;}.it-info-pop ul.it-info-pesos{font-size:11px;margin-bottom:6px;}.it-info-pop ul.it-info-pesos li{padding-top:0;padding-bottom:0;}.it-info-pop ul.it-info-pesos li.it-info-bloque{margin-top:3px;}}
 .it-info-pop a{color:var(--blue);font-weight:600;}
 /* cards municipio */
 .muni-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
@@ -14454,17 +14547,17 @@ def _indice_menores_stats_por_municipio():
               ON d.clave = CASE WHEN c.nif IS NOT NULL AND c.nif <> ''
                                  THEN upper(trim(c.nif))
                                  ELSE normalizar(c.adjudicatari) END
-            WHERE c.fuente <> 'place-menores'
             GROUP BY c.municipio
         """).fetchall()
     return {municipio: {"total": total, "con_directivo": con_directivo or 0}
             for municipio, total, con_directivo in rows}
 
 
-# (2026-09-30) El feed de menores de PLACE (fuente 'place-menores') está conectado pero FUERA del índice -- en
-# _indice_menores_stats_por_municipio y _indice_menores_detalle_por_municipio -- hasta que César decida cómo puntúa:
-# es un agregador nacional (con la regla de agregadores, ~2.000 municipios pasarían de "no disponible" a ~99 en
-# menores) y cambia también el denominador de "directivo". Ver LIMITACIONES_COBERTURA.md.
+# Feed de menores de PLACE ('place-menores', 2026-09-30): DENTRO del índice (opción A de César), pero NO con la regla
+# de agregadores de RPC/Euskadi -- con esa regla casi todo municipio presente sacaba ~99-100 (el feed trae NIF en el
+# 99,6 %): puntuación binaria por presencia, el mismo amontonamiento cerca de 100 que se corrigió en el resto del índice.
+# Se gradúa con años cubiertos y frescura (criterio de wip/indice-transparencia-v2), con los años esperados desde
+# _PLACE_MENORES_ANIO_REFERENCIA (ver _indice_puntos_menores).
 def _indice_menores_detalle_por_municipio():
     """Componente "menores" (v2): una consulta agregada por municipio, provincia y año -- nº de contratos, cuántos con
     adjudicatario identificado y la última fecha. Reutiliza la idea de la rama wip/indice-transparencia-v2 (cobertura
@@ -14476,7 +14569,6 @@ def _indice_menores_detalle_por_municipio():
                             THEN 1 ELSE 0 END),
                    MAX(data_adjudicacio), group_concat(DISTINCT fuente)
             FROM contratos_menors_locales
-            WHERE fuente <> 'place-menores'
             GROUP BY municipio, provincia, anio
         """).fetchall()
     out = {}
@@ -14503,6 +14595,13 @@ def _es_fuente_cm_agregadora(fuente):
     return (fuente or "").startswith("rpc-") or fuente == "euskadi"
 
 
+# Primer año con el feed de menores de PLACE generalizado: 6.237 contratos en sep-dic 2021, 81.592 en 2022 y
+# 188.000-225.000/año desde 2023 (presencia por municipio: 1.967 en 2022 frente a ~2.550-2.650 desde 2023). Medir los
+# años cubiertos desde 2021 castigaría a todos por un hueco del propio feed, no del ayuntamiento (mismo criterio de
+# "rango real de la fuente" que wip/indice-transparencia-v2).
+_PLACE_MENORES_ANIO_REFERENCIA = 2023
+
+
 def _indice_puntos_menores(det, hoy):
     """0-100 para un municipio CON fuente de menores conectada. Subcomponentes y peso: publicarlos 40 + años cubiertos
     desde 2021 20 + frescura del último registro 20 + % de contratos con adjudicatario identificado 20. Si TODAS las
@@ -14517,7 +14616,9 @@ def _indice_puntos_menores(det, hoy):
                    f"{100 * pct_adj:.0f} % con adjudicatario identificado; años cubiertos y frescura: no disponibles "
                    f"(en un registro agregado, no tener contratos recientes significa no haber contratado)")
         return puntos, detalle
-    anios_esperados = set(range(2021, hoy.year + 1))
+    solo_place = (det["fuentes"] - {""}) == {"place-menores"}
+    anio_ref = _PLACE_MENORES_ANIO_REFERENCIA if solo_place else 2021
+    anios_esperados = set(range(anio_ref, hoy.year + 1))
     cobertura = len(det["anios"] & anios_esperados) / len(anios_esperados)
     ultima = None
     try:
@@ -14534,8 +14635,9 @@ def _indice_puntos_menores(det, hoy):
         dias, frescura = None, 0.0
     pct_adj = det["con_adj"] / det["total"] if det["total"] else 0.0
     puntos = 40.0 + 20.0 * cobertura + 20.0 * frescura / 100.0 + 20.0 * pct_adj
-    detalle = (f"{det['total']} contratos menores; {len(det['anios'] & anios_esperados)}/{len(anios_esperados)} años "
-               f"desde 2021; último {ultima.isoformat() if ultima else 'sin fecha válida'}"
+    detalle = (f"{det['total']} contratos menores{' (solo feed de PLACE)' if solo_place else ''}; "
+               f"{len(det['anios'] & anios_esperados)}/{len(anios_esperados)} años desde {anio_ref}; "
+               f"último {ultima.isoformat() if ultima else 'sin fecha válida'}"
                f"{f' ({dias} días)' if dias is not None else ''}; {100 * pct_adj:.0f} % con adjudicatario identificado")
     return puntos, detalle
 
@@ -15062,6 +15164,11 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
         if sin_indice else ""
     )
     aviso_recorte = ""   # sustituido por la paginación (ver _rk_paginacion_html)
+    aviso_homonimos = (
+        f'<br><span class="noloc-warn">⚠️ {len(HOMONIMOS_SIN_RESOLVER)} municipios no disponibles por homónimo sin '
+        f'resolver (mismo nombre que otro municipio de otra provincia; la app aún guarda sus datos solo por nombre): '
+        + ", ".join(f"{esc(m)} ({esc(PROVINCIA_LABEL.get(p, p).replace('Provincia de ', ''))})"
+                    for m, p, _ in HOMONIMOS_SIN_RESOLVER) + ".</span>")
 
     return f"""
   <div class="rk-section-header" id="indice-transparencia">
@@ -15075,6 +15182,7 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
     acreditación oficial -- este proyecto no es organismo acreditador. Es un indicador propio pensado para
     comparar municipios entre sí a partir de lo que hemos podido recopilar, no para juzgar su gestión.
     {aviso_sin_cobertura}
+    {aviso_homonimos}
     {aviso_recorte}
   </p>
   <input type="text" class="it-buscador" placeholder="Filtrar en esta página… (para buscar en todo el ranking, usa el buscador de arriba)" autocomplete="off"
@@ -16763,28 +16871,27 @@ _IT_INFO_BTN_HTML = ('<button type="button" class="it-info-btn" aria-haspopup="d
 
 
 def _it_info_pop_html():
-    """Resumen en lenguaje llano del Índice v2 (no la tabla completa de INDICE_TRANSPARENCIA_METODOLOGIA.md). Pesos
-    leídos de _INDICE_TRANSPARENCIA_PESOS, así que no se desincroniza si cambian."""
+    """Resumen en lenguaje llano del Índice v2 (no la tabla completa de INDICE_TRANSPARENCIA_METODOLOGIA.md): qué mide,
+    el peso de CADA componente (leído de _INDICE_TRANSPARENCIA_PESOS y con los nombres de _INDICE_COMPONENTE_LABEL,
+    los mismos del desglose de /rankings, así que no se desincroniza si cambian) y el total por bloque."""
     p = _INDICE_TRANSPARENCIA_PESOS
 
     def f(x):
         return f"{x:g}".replace(".", ",") + " %"
 
-    contratacion = ["menores", "adjudicatario", "actividad", "directivo", "formato"]
-    cuentas = ["cuentas", "deuda_pub", "saldo_pub"]
-    detalle_contr = (f'menores {f(p["menores"])} · adjudicatario identificado {f(p["adjudicatario"])} · '
-                     f'volumen publicado {f(p["actividad"])} · directivos de las empresas {f(p["directivo"])} · '
-                     f'formato del portal {f(p["formato"])}')
-    detalle_cuentas = (f'cuentas rendidas a tiempo {f(p["cuentas"])} · deuda viva {f(p["deuda_pub"])} · '
-                       f'saldo presupuestario {f(p["saldo_pub"])}')
+    bloques = (("Contratación", ["menores", "adjudicatario", "actividad", "directivo", "formato"]),
+               ("Cuentas y deuda", ["cuentas", "deuda_pub", "saldo_pub"]),
+               ("Sueldos", ["retribuciones"]))
+    assert {k for _, ks in bloques for k in ks} == set(p), "componente del índice sin bloque en el popover"
+    filas = "".join(
+        f'<li class="it-info-bloque"><span>{nombre}</span><b>{f(sum(p[k] for k in ks))}</b></li>'
+        + "".join(f'<li><span>{esc(_INDICE_COMPONENTE_LABEL.get(k, k))}</span><span>{f(p[k])}</span></li>'
+                  for k in sorted(ks, key=lambda k: -p[k]))
+        for nombre, ks in bloques)
     return f"""<div id="it-info-pop" class="it-info-pop" role="dialog" aria-label="Cómo funciona el Índice de Transparencia" hidden>
   <p><b>Qué mide:</b> cuánta información pública de cada ayuntamiento reunimos de fuentes oficiales (contratos,
   cuentas, deuda, sueldos). No mide si gestiona bien o mal.</p>
-  <ul>
-    <li><b>Contratación {f(sum(p[k] for k in contratacion))}</b>: {detalle_contr}.</li>
-    <li><b>Cuentas y deuda {f(sum(p[k] for k in cuentas))}</b>: {detalle_cuentas}.</li>
-    <li><b>Sueldos de cargos electos {f(p["retribuciones"])}</b>.</li>
-  </ul>
+  <ul class="it-info-pesos">{filas}</ul>
   <p>Un dato que no tenemos no cuenta como 0: su peso se reparte entre el resto. Hacen falta al menos
   {_INDICE_TRANSPARENCIA_MIN_COMPONENTES} de los {len(p)} componentes.</p>
   <p class="it-info-aviso">Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley

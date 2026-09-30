@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 06:15:24",
+ "generado": "2026-09-30 14:14:03",
  "fuente_url": {
   "murcia": "https://www.ine.es/jaxiT3/Tabla.htm?t=2883",
   "girona": "https://www.ine.es/jaxiT3/Tabla.htm?t=2870",
@@ -4343,6 +4343,12 @@
    "poblacion": 1477,
    "anio": 2025
   },
+  "sant jaume de frontanya": {
+   "municipio": "Sant Jaume de Frontanyà",
+   "provincia": "barcelona",
+   "poblacion": 25,
+   "anio": 2025
+  },
   "sant joan de vilatorrada": {
    "municipio": "Sant Joan de Vilatorrada",
    "provincia": "barcelona",
@@ -4557,6 +4563,12 @@
    "municipio": "Santa Eulàlia de Ronçana",
    "provincia": "barcelona",
    "poblacion": 7953,
+   "anio": 2025
+  },
+  "santa fe del penedes": {
+   "municipio": "Santa Fe del Penedès",
+   "provincia": "barcelona",
+   "poblacion": 365,
    "anio": 2025
   },
   "santa margarida de montbui": {
@@ -5231,6 +5243,12 @@
    "poblacion": 3863,
    "anio": 2025
   },
+  "falset": {
+   "municipio": "Falset",
+   "provincia": "tarragona",
+   "poblacion": 2890,
+   "anio": 2025
+  },
   "la fatarella": {
    "municipio": "la Fatarella",
    "provincia": "tarragona",
@@ -5723,6 +5741,12 @@
    "poblacion": 16119,
    "anio": 2025
   },
+  "sant jaume dels domenys": {
+   "municipio": "Sant Jaume dels Domenys",
+   "provincia": "tarragona",
+   "poblacion": 2819,
+   "anio": 2025
+  },
   "sant jaume d'enveja": {
    "municipio": "Sant Jaume d'Enveja",
    "provincia": "tarragona",
@@ -5925,6 +5949,12 @@
    "municipio": "Vilaplana",
    "provincia": "tarragona",
    "poblacion": 549,
+   "anio": 2025
+  },
+  "vila-rodona": {
+   "municipio": "Vila-rodona",
+   "provincia": "tarragona",
+   "poblacion": 1382,
    "anio": 2025
   },
   "vila-seca": {
@@ -14951,6 +14981,12 @@
    "poblacion": 824,
    "anio": 2025
   },
+  "elantxobe": {
+   "municipio": "Elantxobe",
+   "provincia": "pais_vasco",
+   "poblacion": 320,
+   "anio": 2025
+  },
   "elorrio": {
    "municipio": "Elorrio",
    "provincia": "pais_vasco",
@@ -15381,6 +15417,12 @@
    "municipio": "Zaldibar",
    "provincia": "pais_vasco",
    "poblacion": 3066,
+   "anio": 2025
+  },
+  "zalla": {
+   "municipio": "Zalla",
+   "provincia": "pais_vasco",
+   "poblacion": 8334,
    "anio": 2025
   },
   "zamudio": {

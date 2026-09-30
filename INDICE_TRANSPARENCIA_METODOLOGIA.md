@@ -21,7 +21,7 @@ La misma regla se aplica dentro de un componente (ver "menores" en agregadores).
 
 | Componente | Peso v2 | Peso v1 | Cómo se puntúa |
 |---|---:|---:|---|
-| Contratos menores publicados | **20** | — | Solo con fuente conectada. Portal municipal: publicarlos 40 + años cubiertos desde 2021 20 + frescura del último registro 20 (≤90 días 100, ≤180 70, ≤365 40, más 10) + % con adjudicatario identificado 20. Agregador regional (RPC Cataluña, API Euskadi): años y frescura **no disponibles**; nota = (40 + 20 × %adjudicatario) / 60. Sin fuente: no disponible. |
+| Contratos menores publicados | **20** | — | Solo con fuente conectada. Portal municipal: publicarlos 40 + años cubiertos desde 2021 20 + frescura del último registro 20 (≤90 días 100, ≤180 70, ≤365 40, más 10) + % con adjudicatario identificado 20. Agregador regional (RPC Cataluña, API Euskadi): años y frescura **no disponibles**; nota = (40 + 20 × %adjudicatario) / 60. **Feed de menores de PLACE** (desde el 30-09): misma fórmula que un portal, con años esperados desde **2023**. Sin ningún contrato menor: no disponible. |
 | Adjudicatario identificado | **15** | 20 | % de contratos formales (PLACE/PSCP/Euskadi/Navarra) con adjudicatario identificado. |
 | Retribuciones de cargos electos | **10** | 10 (sí/no alcalde) | 100 si publica el sueldo de los concejales con nombre e importe (tabla revisada a mano, `sueldos_concejales.json`); **50 si solo consta el del alcalde** (ISPA); 0 si ni eso. No disponible solo en Ceuta/Melilla (ISPA no las cubre). |
 | Formato del portal propio | **5** | — | Portal donde el ayuntamiento publica sus menores: dataset/API o fichero estructurado 100, tabla web o consulta 66, PDF con texto 33, PDF escaneado o sin listado propio (remite a PLACE) 0. Solo para los municipios clasificados a mano (conector propio + auditoría de las 29 ciudades >100.000 hab.); el resto, no disponible. |
@@ -34,9 +34,15 @@ La misma regla se aplica dentro de un componente (ver "menores" en agregadores).
 ## Por qué cada cambio respecto a la v1
 
 - **Contratos menores (nuevo, 20 %)**: son la mayor parte del gasto contractual fragmentado y lo que menos se
-  publica de forma reutilizable; la v1 no los medía. Hoy solo es calculable en el **11,5 %** de los municipios con
-  índice (931 de 8.108); en el resto es no disponible hasta conectar el feed nacional de menores de PLACE. Cuando se
-  conecte, un municipio con fuente y 0 contratos sí será un 0 real (ver `DATOS_PETICION_MENORES.md` §6).
+  publica de forma reutilizable; la v1 no los medía. Con el feed nacional de menores de PLACE (30-09, opción A de
+  César) es calculable en el **~55 %** de los municipios (antes 11,5 %). Un municipio sin ningún contrato menor en
+  ninguna fuente sigue siendo **no disponible**, no 0 (opción B descartada): registrar los menores en PLACE no es
+  obligatorio y muchos pueblos los publican en su web o en PDF.
+- **Feed de PLACE graduado, no como agregador** (30-09): con la regla de agregadores casi todo municipio presente en
+  el feed sacaba ~99-100 (el feed trae NIF en el 99,6 %), un componente binario por presencia que habría vuelto a
+  amontonar las notas cerca de 100. Se gradúa como un portal (años cubiertos y frescura, criterio de la rama
+  wip/indice-transparencia-v2) con los años esperados desde 2023, primer año con el feed generalizado (en 2021-2022
+  apenas tiene datos). Efecto aceptado: un pueblo con 1-2 contratos antiguos en el feed puntúa bajo en menores.
 - **Menores en agregadores regionales, sin años ni frescura** (corrección del 29-09): en el RPC o en Euskadi, que un
   pueblo pequeño no tenga contratos recientes significa que no contrató, no que dejara de publicar. Con esos dos
   subcomponentes, Viladamat bajaba de 93,7 a 70,6 y Granyanella de 96,6 a 72,7 por tener 3 contratos antiguos,
@@ -94,9 +100,10 @@ de contratos ajenos + recuperación retroactiva de 61 meses, 9.986 contratos en 
 
 ## Límites conocidos
 
-- Contratos menores: 11,5 % de cobertura hoy. Formato: 67 municipios clasificados.
-- Municipios con el mismo nombre exacto en dos provincias (hoy Torrent y Cabanes) comparten fila (clave sin
-  provincia). Torrent (Valencia) y Cabanes (Castellón) no tienen población propia y no entran en el índice; en sus
+- Contratos menores: ~55 % de cobertura con el feed de PLACE (30-09). Formato: 67 municipios clasificados.
+- Municipios con el mismo nombre exacto en dos provincias (Torrent y Cabanes) comparten fila (clave sin
+  provincia); otros 14 homónimos no están en la app por el mismo motivo. Los 16 se listan en /rankings como "no
+  disponibles por homónimo sin resolver" (`HOMONIMOS_SIN_RESOLVER`). Torrent (Valencia) y Cabanes (Castellón) no tienen población propia y no entran en el índice; en sus
   homónimos de Girona, actividad, adjudicatario, directivo y formato son no disponibles, y los demás componentes solo
   cuentan si el registro es de la misma provincia (Cabanes de Girona queda con cobertura insuficiente).
 - ~80 contratos formales al mes de organismos municipales sin "ayuntamiento" en el nombre, y los municipios que
