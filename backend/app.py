@@ -102,6 +102,27 @@ def _i18n_idioma():
     return _I18N_IDIOMA.get()
 
 
+class _TextoDiferido(str):
+    """Texto que se calcula una vez (p. ej. los detalles del Índice de Transparencia, cacheados para todas las
+    peticiones) pero se traduce al pintarlo. ES un str con el texto en castellano -- caché, JSON, comparaciones y
+    cualquier uso antiguo siguen igual -- y además guarda la plantilla y sus valores para _t_diferido()."""
+
+
+def _td(plantilla, **valores):
+    """Marca un texto para traducción diferida (el extractor lo recoge igual que _t). Los valores pueden ser a su
+    vez _td(...) (se traducen también)."""
+    obj = _TextoDiferido(plantilla.format(**valores) if valores else plantilla)
+    obj.plantilla, obj.valores = plantilla, valores
+    return obj
+
+
+def _t_diferido(texto):
+    if not isinstance(texto, _TextoDiferido):
+        return texto
+    valores = {k: _t_diferido(v) for k, v in texto.valores.items()}
+    return _t(texto.plantilla).format(**valores) if valores else _t(texto.plantilla)
+
+
 # Textos del JavaScript: se marcan en el JS como T("texto") o TF("texto con {x}", {x: valor}) -- SIEMPRE con comillas
 # dobles, para que el extractor los encuentre -- y los enlaces internos que construye el JS con LP("/ruta"). La tabla
 # de traducciones de cada página lleva solo esos textos (los que aparecen como T("...")/TF("...") en este fichero).
@@ -15179,9 +15200,9 @@ def _indice_puntos_menores(det, hoy):
     if agregadora:
         pct_adj = det["con_adj"] / det["total"] if det["total"] else 0.0
         puntos = (40.0 + 20.0 * pct_adj) / 60.0 * 100.0
-        detalle = (f"{det['total']} contratos menores (fuente agregadora regional); "
-                   f"{100 * pct_adj:.0f} % con adjudicatario identificado; años cubiertos y frescura: no disponibles "
-                   f"(en un registro agregado, no tener contratos recientes significa no haber contratado)")
+        detalle = _td("{n} contratos menores (fuente agregadora regional); {pct} % con adjudicatario identificado; "
+                      "años cubiertos y frescura: no disponibles (en un registro agregado, no tener contratos recientes "
+                      "significa no haber contratado)", n=det["total"], pct=f"{100 * pct_adj:.0f}")
         return puntos, detalle
     solo_place = (det["fuentes"] - {""}) == {"place-menores"}
     anio_ref = _PLACE_MENORES_ANIO_REFERENCIA if solo_place else 2021
@@ -15202,10 +15223,12 @@ def _indice_puntos_menores(det, hoy):
         dias, frescura = None, 0.0
     pct_adj = det["con_adj"] / det["total"] if det["total"] else 0.0
     puntos = 40.0 + 20.0 * cobertura + 20.0 * frescura / 100.0 + 20.0 * pct_adj
-    detalle = (f"{det['total']} contratos menores{' (solo feed de PLACE)' if solo_place else ''}; "
-               f"{len(det['anios'] & anios_esperados)}/{len(anios_esperados)} años desde {anio_ref}; "
-               f"último {ultima.isoformat() if ultima else 'sin fecha válida'}"
-               f"{f' ({dias} días)' if dias is not None else ''}; {100 * pct_adj:.0f} % con adjudicatario identificado")
+    detalle = _td("{n} contratos menores{origen}; {cubiertos}/{esperados} años desde {desde}; último {ultima}{dias}; "
+                  "{pct} % con adjudicatario identificado", n=det["total"],
+                  origen=_td(" (solo feed de PLACE)") if solo_place else "",
+                  cubiertos=len(det["anios"] & anios_esperados), esperados=len(anios_esperados), desde=anio_ref,
+                  ultima=ultima.isoformat() if ultima else _td("sin fecha válida"),
+                  dias=_td(" ({n} días)", n=dias) if dias is not None else "", pct=f"{100 * pct_adj:.0f}")
     return puntos, detalle
 
 
@@ -15269,8 +15292,8 @@ def _calcular_indice_transparencia():
         def _de_otra_provincia(registro):
             """Solo en homónimos exactos: el registro (indexado por nombre) es del municipio de OTRA provincia."""
             return homonimo and isinstance(registro, dict) and registro.get("provincia") not in (None, "", provincia)
-        _NO_DISP_HOMONIMO = ("Homónimo exacto en otra provincia: el dato se guarda solo por nombre y no se puede "
-                             "atribuir con seguridad a este municipio (pendiente de clave municipio+provincia)")
+        _NO_DISP_HOMONIMO = _td("Homónimo exacto en otra provincia: el dato se guarda solo por nombre y no se puede "
+                                "atribuir con seguridad a este municipio (pendiente de clave municipio+provincia)")
 
         # ---- cuentas / deuda / saldo: mismas señales que v1, pesos nuevos ----
         # cuentas (v2, graduado): según el último ejercicio rendido a rendiciondecuentas.es frente al último EXIGIBLE
@@ -15281,28 +15304,31 @@ def _calcular_indice_transparencia():
             comp["cuentas"] = {"disponible": False, "puntos": None, "detalle": _NO_DISP_HOMONIMO}
         elif not cuentas_evaluable:
             comp["cuentas"] = {"disponible": False, "puntos": None,
-                               "detalle": "Cuentas anuales: la fuente oficial no cubre esta provincia "
-                                          "(Tribunal de Cuentas foral, o no listada)"}
+                               "detalle": _td("Cuentas anuales: la fuente oficial no cubre esta provincia "
+                                              "(Tribunal de Cuentas foral, o no listada)")}
         elif not isinstance(ult_rendido, int):
             comp["cuentas"] = {"disponible": True, "puntos": 0.0,
-                               "detalle": "Cuentas anuales no rendidas (o no localizadas) en rendiciondecuentas.es"}
+                               "detalle": _td("Cuentas anuales no rendidas (o no localizadas) en rendiciondecuentas.es")}
         else:
             retraso = max(0, ejercicio_exigible - ult_rendido)
             comp["cuentas"] = {
                 "disponible": True, "puntos": 100.0 if retraso == 0 else 50.0 if retraso == 1 else 0.0,
-                "detalle": (f"Último ejercicio rendido: {ult_rendido} (exigible hoy: {ejercicio_exigible}) -- "
-                            + ("al día" if retraso == 0 else f"{retraso} año{'s' if retraso > 1 else ''} de retraso")),
+                "detalle": _td("Último ejercicio rendido: {ult} (exigible hoy: {exigible}) -- {estado}",
+                               ult=ult_rendido, exigible=ejercicio_exigible,
+                               estado=(_td("al día") if retraso == 0 else _td("{n} año de retraso", n=retraso)
+                                       if retraso == 1 else _td("{n} años de retraso", n=retraso))),
             }
         comp["deuda_pub"] = ({"disponible": False, "puntos": None, "detalle": _NO_DISP_HOMONIMO}
                              if homonimo and (clave not in DEUDA_VIVA or _de_otra_provincia(DEUDA_VIVA.get(clave))) else
                              {"disponible": True, "puntos": 100.0 if clave in DEUDA_VIVA else 0.0,
-                              "detalle": "Deuda viva publicada" if clave in DEUDA_VIVA else "Deuda viva no publicada"})
+                              "detalle": _td("Deuda viva publicada") if clave in DEUDA_VIVA
+                                         else _td("Deuda viva no publicada")})
         comp["saldo_pub"] = ({"disponible": False, "puntos": None, "detalle": _NO_DISP_HOMONIMO}
                              if homonimo and (clave not in SALDO_NO_FINANCIERO
                                               or _de_otra_provincia(SALDO_NO_FINANCIERO.get(clave))) else
                              {"disponible": True, "puntos": 100.0 if clave in SALDO_NO_FINANCIERO else 0.0,
-                              "detalle": "Saldo presupuestario publicado" if clave in SALDO_NO_FINANCIERO
-                                         else "Saldo presupuestario no publicado"})
+                              "detalle": _td("Saldo presupuestario publicado") if clave in SALDO_NO_FINANCIERO
+                                         else _td("Saldo presupuestario no publicado")})
 
         # ---- retribuciones (v2): 100 alcalde + concejales con importe por persona; 50 solo alcalde; 0 nada ----
         # Corrección 2026-09-29 (decisión de César): la escala 0/50/100 se aplica a TODOS. Antes, "solo el alcalde"
@@ -15315,22 +15341,24 @@ def _calcular_indice_transparencia():
         regs_conc = [r for r in (SUELDOS_CONCEJALES.get(clave) or []) if not r["provincia"] or r["provincia"] == provincia]
         if regs_conc:
             comp["retribuciones"] = {"disponible": True, "puntos": 100.0,
-                                     "detalle": f"Publica el sueldo de {len(regs_conc)} concejales con nombre e importe"
-                                                + (" y el del alcalde (ISPA)" if ispa_ok else "")}
+                                     "detalle": (_td("Publica el sueldo de {n} concejales con nombre e importe y el "
+                                                     "del alcalde (ISPA)", n=len(regs_conc)) if ispa_ok else
+                                                 _td("Publica el sueldo de {n} concejales con nombre e importe",
+                                                     n=len(regs_conc)))}
         elif ispa_ok:
             comp["retribuciones"] = {"disponible": True, "puntos": 50.0,
-                                     "detalle": ("Portal revisado: solo el sueldo del alcalde (ISPA), sin importe por concejal"
+                                     "detalle": (_td("Portal revisado: solo el sueldo del alcalde (ISPA), sin importe por concejal")
                                                  if clave in _SUELDOS_CONCEJALES_SIN_TABLA and not homonimo else
-                                                 "Sueldo del alcalde publicado (ISPA); sin importe por concejal localizado")}
+                                                 _td("Sueldo del alcalde publicado (ISPA); sin importe por concejal localizado"))}
         elif ispa_evaluable or (clave in _SUELDOS_CONCEJALES_SIN_TABLA and not homonimo):
             comp["retribuciones"] = {"disponible": True, "puntos": 0.0,
-                                     "detalle": ("Portal revisado: ni alcalde (ISPA) ni concejales con importe"
+                                     "detalle": (_td("Portal revisado: ni alcalde (ISPA) ni concejales con importe")
                                                  if clave in _SUELDOS_CONCEJALES_SIN_TABLA else
-                                                 "Sueldo del alcalde no publicado o no atribuido (ISPA)")}
+                                                 _td("Sueldo del alcalde no publicado o no atribuido (ISPA)"))}
         else:
             comp["retribuciones"] = {"disponible": False, "puntos": None,
                                      "detalle": _NO_DISP_HOMONIMO if homonimo else
-                                                "ISPA: entidad no listada en la fuente oficial"}
+                                                _td("ISPA: entidad no listada en la fuente oficial")}
 
         # ---- adjudicatario identificado: igual que v1 (solo formales PLACE/PSCP), peso 15 ----
         d_formal = None if homonimo else formales_idx.get(clave)
@@ -15339,10 +15367,10 @@ def _calcular_indice_transparencia():
         num_adj = sum(1 for c in contratos_formales if c.get("empresa") and c.get("empresa") != "No localizada")
         comp["adjudicatario"] = (
             {"disponible": True, "puntos": 100.0 * num_adj / denom_adj,
-             "detalle": f"{num_adj}/{denom_adj} contratos formales con adjudicatario identificado"}
+             "detalle": _td("{num}/{den} contratos formales con adjudicatario identificado", num=num_adj, den=denom_adj)}
             if denom_adj else
             {"disponible": False, "puntos": None,
-             "detalle": _NO_DISP_HOMONIMO if homonimo else "Sin contratos formales (PLACE/PSCP) para calcularlo"})
+             "detalle": _NO_DISP_HOMONIMO if homonimo else _td("Sin contratos formales (PLACE/PSCP) para calcularlo")})
 
         # ---- directivo identificado: igual que v1 ----
         num_dir_formal = sum(1 for c in contratos_formales
@@ -15352,12 +15380,12 @@ def _calcular_indice_transparencia():
         denom_dir = num_adj + (m["total"] if m else 0)
         comp["directivo"] = (
             {"disponible": True, "puntos": 100.0 * num_dir / denom_dir,
-             "detalle": (f"{num_dir}/{denom_dir} adjudicatarios conocidos con directivo identificado "
-                         f"({num_dir_formal}/{num_adj} formales + {m['con_directivo'] if m else 0}/"
-                         f"{m['total'] if m else 0} menores)")}
+             "detalle": _td("{num}/{den} adjudicatarios conocidos con directivo identificado ({num_f}/{den_f} "
+                            "formales + {num_m}/{den_m} menores)", num=num_dir, den=denom_dir, num_f=num_dir_formal,
+                            den_f=num_adj, num_m=m["con_directivo"] if m else 0, den_m=m["total"] if m else 0)}
             if denom_dir else
             {"disponible": False, "puntos": None,
-             "detalle": _NO_DISP_HOMONIMO if homonimo else "Sin adjudicatarios conocidos para calcularlo"})
+             "detalle": _NO_DISP_HOMONIMO if homonimo else _td("Sin adjudicatarios conocidos para calcularlo")})
 
         # ---- menores (v2): solo con fuente conectada; sin fuente = no disponible (nunca 0) hasta conectar PLACE ----
         cands = menores_por_nombre.get(normalizar(municipio), [])
@@ -15368,14 +15396,14 @@ def _calcular_indice_transparencia():
             comp["menores"] = {"disponible": True, "puntos": pts, "detalle": detalle}
         else:
             comp["menores"] = {"disponible": False, "puntos": None,
-                               "detalle": "Sin fuente de contratos menores conectada todavía (no es \"no publica\")"}
+                               "detalle": _td('Sin fuente de contratos menores conectada todavía (no es "no publica")')}
 
         # ---- formato del portal propio (v2): solo municipios clasificados a mano ----
         fmt = None if homonimo else _INDICE_FORMATO_PORTAL.get(clave)
         comp["formato"] = ({"disponible": True, "puntos": float(fmt[0]), "detalle": fmt[1]} if fmt else
                            {"disponible": False, "puntos": None,
                             "detalle": _NO_DISP_HOMONIMO if homonimo else
-                                       "Portal propio de contratos menores aún no clasificado"})
+                                       _td("Portal propio de contratos menores aún no clasificado")})
 
         # ---- actividad (v2): SOLO contratos formales -- PLACE/PSCP cubren por igual a toda España, así que ya no
         # sube el percentil de quien tiene fuente de menores conectada (sesgo de cobertura de v1) ----
@@ -15389,8 +15417,9 @@ def _calcular_indice_transparencia():
             "_total_formales": denom_adj,
         })
 
-    _NO_DISP_HOMONIMO_ACTIVIDAD = ("Homónimo exacto en otra provincia: población y contratos formales se guardan "
-                                   "solo por nombre y pueden ser del otro municipio (pendiente de clave municipio+provincia)")
+    _NO_DISP_HOMONIMO_ACTIVIDAD = _td("Homónimo exacto en otra provincia: población y contratos formales se guardan "
+                                      "solo por nombre y pueden ser del otro municipio (pendiente de clave "
+                                      "municipio+provincia)")
     # Percentil de "actividad" dentro de cada tramo de población, solo entre municipios con contratos formales
     # rastreados (un municipio nunca rastreado no es "0 contratos").
     por_tramo = {}
@@ -15404,16 +15433,16 @@ def _calcular_indice_transparencia():
             percentil = 100.0 if n <= 1 else 100.0 * i / (n - 1)
             f["componentes"]["actividad"] = {
                 "disponible": True, "puntos": percentil,
-                "detalle": (f"{f['_total_formales']} contratos formales / {f['habitantes']} hab. "
-                            f"({f['_actividad_por_1000']:.2f}/1.000 hab.), percentil {percentil:.0f} entre municipios "
-                            f"de tamaño similar"),
+                "detalle": _td("{n} contratos formales / {hab} hab. ({por_mil}/1.000 hab.), percentil {pct} entre "
+                               "municipios de tamaño similar", n=f["_total_formales"], hab=f["habitantes"],
+                               por_mil=f"{f['_actividad_por_1000']:.2f}", pct=f"{percentil:.0f}"),
             }
     for f in filas:
         f["componentes"].setdefault("actividad", {
             "disponible": False, "puntos": None,
             "detalle": (_NO_DISP_HOMONIMO_ACTIVIDAD if f["_homonimo"]
-                        else "Sin población conocida para calcularlo" if not f["habitantes"]
-                        else "Aún no se han rastreado contratos formales (PLACE/PSCP) de este municipio"),
+                        else _td("Sin población conocida para calcularlo") if not f["habitantes"]
+                        else _td("Aún no se han rastreado contratos formales (PLACE/PSCP) de este municipio")),
         })
         del f["_actividad_por_1000"], f["_fetched"], f["_total_formales"], f["_homonimo"]
 
@@ -15605,6 +15634,23 @@ _INDICE_COMPONENTE_LABEL = {
     "directivo":     "Directivo identificado",
 }
 
+
+def _indice_componente_label(clave):
+    """Nombre del componente en el idioma de la petición (mismos textos que _INDICE_COMPONENTE_LABEL, que se
+    mantiene en castellano para /metodologia y el código)."""
+    return {
+        "menores": _t("Contratos menores publicados"),
+        "adjudicatario": _t("Adjudicatario identificado"),
+        "retribuciones": _t("Retribuciones de cargos electos"),
+        "formato": _t("Formato del portal propio"),
+        "actividad": _t("Actividad de publicación"),
+        "cuentas": _t("Cuentas anuales"),
+        "deuda_pub": _t("Deuda/hab. publicada"),
+        "saldo_pub": _t("Saldo no financiero"),
+        "directivo": _t("Directivo identificado"),
+    }.get(clave, clave)
+
+
 # JS del buscador de la tabla del Índice de Transparencia -- filtro por
 # texto puro cliente, sin backend nuevo (la tabla ya trae los ~978
 # municipios reales renderizados, ver _render_indice_transparencia_html).
@@ -15627,11 +15673,11 @@ def _indice_transparencia_desglose_html(componentes):
         if c.get("disponible"):
             icono, valor_html = "✅", f'{c["puntos"]:.0f}/100'
         else:
-            icono, valor_html = "➖", "no disponible"
-        filas += (f'<tr><td>{icono} {esc(_INDICE_COMPONENTE_LABEL.get(clave, clave))} '
-                  f'<span class="it-peso">(peso {peso:g}%)</span></td>'
+            icono, valor_html = "➖", _t("no disponible")
+        filas += (f'<tr><td>{icono} {esc(_indice_componente_label(clave))} '
+                  f'<span class="it-peso">({_t("peso {peso}%").format(peso=f"{peso:g}")})</span></td>'
                   f'<td class="rk-valor">{valor_html}</td>'
-                  f'<td class="it-detalle">{esc(c.get("detalle", ""))}</td></tr>')
+                  f'<td class="it-detalle">{esc(_t_diferido(c.get("detalle", "")))}</td></tr>')
     return filas
 
 
@@ -15659,10 +15705,12 @@ def _rk_paginacion_html(pagina, paginas, total, url_de, etiqueta="filas"):
     url_de(n) devuelve el enlace (ya con su ancla) de la página n."""
     if paginas <= 1:
         return ""
-    ant = f'<a href="{esc(url_de(pagina - 1))}" class="pag-btn">← Anterior</a>' if pagina > 1 else ""
-    sig = f'<a href="{esc(url_de(pagina + 1))}" class="pag-btn">Siguiente →</a>' if pagina < paginas else ""
-    return (f'<div class="pagination"><span class="pag-info">Página {pagina} de {paginas} · '
-            f'{total} {etiqueta}</span><div class="pag-links">{ant}{sig}</div></div>')
+    ant = f'<a href="{esc(url_de(pagina - 1))}" class="pag-btn">{_t("← Anterior")}</a>' if pagina > 1 else ""
+    sig = f'<a href="{esc(url_de(pagina + 1))}" class="pag-btn">{_t("Siguiente →")}</a>' if pagina < paginas else ""
+    info = _t("Página {pagina} de {paginas} · {total} {etiqueta}").format(pagina=pagina, paginas=paginas, total=total,
+                                                                          etiqueta=etiqueta)
+    return (f'<div class="pagination"><span class="pag-info">{info}</span>'
+            f'<div class="pag-links">{ant}{sig}</div></div>')
 
 
 def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
@@ -15694,7 +15742,7 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
     pagina, paginas = _rk_pagina(pagina, total_con_indice)
     ini = (pagina - 1) * _RK_POR_PAGINA
     ranking_visible = ranking_completo[ini:ini + _RK_POR_PAGINA]
-    paginacion_html = (_rk_paginacion_html(pagina, paginas, total_con_indice, url_de, "municipios")
+    paginacion_html = (_rk_paginacion_html(pagina, paginas, total_con_indice, url_de, _t("municipios"))
                        if url_de else "")
 
     filas_html = ""
@@ -15711,14 +15759,14 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
           <td>{esc(PROVINCIA_LABEL.get(f['provincia'], f['provincia']))}</td>
           <td class="rk-valor"><span class="it-indice {color_cls}">{indice:.1f}</span></td>
           <td>{f['n_componentes']}/{len(_INDICE_TRANSPARENCIA_PESOS)}</td>
-          <td><details class="it-desglose"><summary>Ver desglose ▾</summary>
+          <td><details class="it-desglose"><summary>{_t("Ver desglose ▾")}</summary>
             <table class="it-desglose-tbl">{desglose}</table>
           </details></td>
         </tr>"""
     if not filas_html:
-        filas_html = '<tr><td colspan="6" class="empty">Aún no hay datos suficientes.</td></tr>'
+        filas_html = f'<tr><td colspan="6" class="empty">{_t("Aún no hay datos suficientes.")}</td></tr>'
 
-    opciones_comunidad = [("todas", "España")] + list(COMUNIDAD_AUTONOMA_LABEL.items())
+    opciones_comunidad = [("todas", _t("España"))] + list(COMUNIDAD_AUTONOMA_LABEL.items())
     selector_comunidad = "".join(
         f'<a href="/rankings?comunidad={c}#indice-transparencia" class="prov-tab{" active" if c == comunidad else ""}">'
         f'{esc(label)}</a>'
@@ -15726,9 +15774,11 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
     )
 
     aviso_sin_cobertura = (
-        f'<br><span class="noloc-warn">⚠️ {sin_indice} municipios sin cobertura de datos suficiente '
-        f'para calcular su índice (menos de {_INDICE_TRANSPARENCIA_MIN_COMPONENTES} de {len(_INDICE_TRANSPARENCIA_PESOS)} componentes '
-        f'disponibles) -- no se muestran en la tabla.</span>'
+        '<br><span class="noloc-warn">⚠️ ' + _t(
+            "{n} municipios sin cobertura de datos suficiente para calcular su índice (menos de {minimo} de {total} "
+            "componentes disponibles) -- no se muestran en la tabla.").format(
+            n=sin_indice, minimo=_INDICE_TRANSPARENCIA_MIN_COMPONENTES, total=len(_INDICE_TRANSPARENCIA_PESOS))
+        + '</span>'
         if sin_indice else ""
     )
     aviso_recorte = ""   # sustituido por la paginación (ver _rk_paginacion_html)
@@ -15736,23 +15786,19 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
 
     return f"""
   <div class="rk-section-header" id="indice-transparencia">
-    <h2>📊 Índice de Transparencia Dinero Público</h2>
+    <h2>📊 {_t("Índice de Transparencia Dinero Público")}</h2>
     <div class="prov-switch">{selector_comunidad}</div>
   </div>
   <p class="hero-sub" style="margin-top:-8px">
-    Valoración propia de Dinero Público sobre la actividad y disponibilidad de datos públicos de cada
-    municipio, calculada a partir de fuentes oficiales (contratación, cuentas anuales, deuda viva, sueldos
-    ISPA). <b>No es una certificación legal de cumplimiento de la Ley 19/2013 de Transparencia</b> ni una
-    acreditación oficial -- este proyecto no es organismo acreditador. Es un indicador propio pensado para
-    comparar municipios entre sí a partir de lo que hemos podido recopilar, no para juzgar su gestión.
+    {_t("Valoración propia de Dinero Público sobre la actividad y disponibilidad de datos públicos de cada municipio, calculada a partir de fuentes oficiales (contratación, cuentas anuales, deuda viva, sueldos ISPA). <b>No es una certificación legal de cumplimiento de la Ley 19/2013 de Transparencia</b> ni una acreditación oficial -- este proyecto no es organismo acreditador. Es un indicador propio pensado para comparar municipios entre sí a partir de lo que hemos podido recopilar, no para juzgar su gestión.")}
     {aviso_sin_cobertura}
     {aviso_homonimos}
     {aviso_recorte}
   </p>
-  <input type="text" class="it-buscador" placeholder="Filtrar en esta página… (para buscar en todo el ranking, usa el buscador de arriba)" autocomplete="off"
+  <input type="text" class="it-buscador" placeholder="{_t("Filtrar en esta página… (para buscar en todo el ranking, usa el buscador de arriba)")}" autocomplete="off"
          oninput="{esc(_IT_BUSCADOR_JS)}">
   <div class="muni-card"><div class="tbl-scroll"><table>
-    <tr><th>#</th><th>Municipio</th><th>Provincia</th><th>Índice {_it_info_btn_html()}</th><th>Cobertura</th><th>Desglose</th></tr>
+    <tr><th>#</th><th>{_t("Municipio")}</th><th>{_t("Provincia")}</th><th>{_t("Índice")} {_it_info_btn_html()}</th><th>{_t("Cobertura")}</th><th>{_t("Desglose")}</th></tr>
     {filas_html}
   </table></div></div>
   {paginacion_html}"""
@@ -15855,28 +15901,28 @@ _RK_MUNI_BUSCADOR_JS = r"""(function(){
   function pintar(data, miSeq){
     if (miSeq !== seq) return;
     if (data.error) { out.innerHTML = '<div class="gs-hint">' + data.error + '</div>'; return; }
-    if (!data.resultados.length) { out.innerHTML = '<div class="gs-hint">Sin coincidencias.</div>'; return; }
+    if (!data.resultados.length) { out.innerHTML = '<div class="gs-hint">' + T("Sin coincidencias.") + '</div>'; return; }
     var html = '';
     data.resultados.forEach(function(r){
       html += '<div class="muni-card rk-muni-result"><div class="top1-label">📍 '
-        + '<a class="rk-empresa" href="' + r.ficha_url + '">' + r.municipio + '</a> · '
+        + '<a class="rk-empresa" href="' + LP(r.ficha_url) + '">' + r.municipio + '</a> · '
         + r.provincia_label + '</div>';
       if (r.indice) {
-        html += '<div class="rk-muni-linea">📊 Índice de Transparencia: <b>' + r.indice.valor_fmt + '</b>'
-          + ' — #' + r.indice.rank_nacional + ' de ' + r.indice.total_nacional + ' (nacional), '
-          + '#' + r.indice.rank_comunidad + ' de ' + r.indice.total_comunidad + ' en ' + r.comunidad_autonoma_label + '</div>';
+        html += '<div class="rk-muni-linea">📊 ' + T("Índice de Transparencia") + ': <b>' + r.indice.valor_fmt + '</b>'
+          + ' — ' + TF("#{p} de {n} (nacional), #{pc} de {nc} en {comunidad}", {p: r.indice.rank_nacional, n: r.indice.total_nacional,
+                       pc: r.indice.rank_comunidad, nc: r.indice.total_comunidad, comunidad: r.comunidad_autonoma_label}) + '</div>';
       } else {
-        html += '<div class="rk-muni-linea noloc-warn">📊 Índice de Transparencia: cobertura insuficiente</div>';
+        html += '<div class="rk-muni-linea noloc-warn">📊 ' + T("Índice de Transparencia") + ': ' + T("cobertura insuficiente") + '</div>';
       }
       if (r.deuda_habitante) {
-        html += '<div class="rk-muni-linea">🏦 Deuda/habitante: <b>' + r.deuda_habitante.valor_fmt + '</b>'
-          + ' — #' + r.deuda_habitante.rank_nacional + ' de ' + r.deuda_habitante.total_nacional + '</div>';
+        html += '<div class="rk-muni-linea">🏦 ' + T("Deuda/habitante") + ': <b>' + r.deuda_habitante.valor_fmt + '</b>'
+          + ' — ' + TF("#{p} de {n}", {p: r.deuda_habitante.rank_nacional, n: r.deuda_habitante.total_nacional}) + '</div>';
       } else {
-        html += '<div class="rk-muni-linea noloc-warn">🏦 Deuda/habitante: sin dato</div>';
+        html += '<div class="rk-muni-linea noloc-warn">🏦 ' + T("Deuda/habitante") + ': ' + T("sin dato") + '</div>';
       }
       if (r.alcalde) {
         html += '<div class="rk-muni-linea">💰 ' + r.alcalde.nombre + ': <b>' + r.alcalde.importe_fmt + '</b>'
-          + ' — #' + r.alcalde.rank_nacional + ' de ' + r.alcalde.total_nacional + '</div>';
+          + ' — ' + TF("#{p} de {n}", {p: r.alcalde.rank_nacional, n: r.alcalde.total_nacional}) + '</div>';
       }
       html += '</div>';
     });
@@ -15900,13 +15946,7 @@ _RK_MUNI_BUSCADOR_JS = r"""(function(){
 # Aviso descartable de metodología (2026-09-20, petición de César) -- se
 # muestra al entrar en /rankings, se cierra con la X y no vuelve a
 # aparecer en ese navegador (localStorage, sin servidor ni cookie nueva).
-_RK_METODOLOGIA_AVISO_HTML = """<div class="rk-metodologia-aviso" id="rk-metodologia-aviso" hidden>
-  <span class="rk-metodologia-ico">ℹ️</span>
-  <span>Los baremos de esta web se basan en conceptos de transparencia europeos y nacionales, se están
-  analizando, por lo que es posible que el ranking de transparencia varíe durante unos días.</span>
-  <button type="button" class="rk-metodologia-cerrar" id="rk-metodologia-cerrar" aria-label="Cerrar aviso">✕</button>
-</div>
-<script>
+_RK_METODOLOGIA_AVISO_JS = """<script>
 (function(){
   var KEY = 'dp_rk_aviso_oculto';
   var el = document.getElementById('rk-metodologia-aviso');
@@ -15921,6 +15961,15 @@ _RK_METODOLOGIA_AVISO_HTML = """<div class="rk-metodologia-aviso" id="rk-metodol
   });
 })();
 </script>"""
+
+
+def _rk_metodologia_aviso_html():
+    return f"""<div class="rk-metodologia-aviso" id="rk-metodologia-aviso" hidden>
+  <span class="rk-metodologia-ico">ℹ️</span>
+  <span>{_t("Los baremos de esta web se basan en conceptos de transparencia europeos y nacionales, se están analizando, por lo que es posible que el ranking de transparencia varíe durante unos días.")}</span>
+  <button type="button" class="rk-metodologia-cerrar" id="rk-metodologia-cerrar" aria-label="{_t("Cerrar aviso")}">✕</button>
+</div>
+""" + _RK_METODOLOGIA_AVISO_JS
 
 
 def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas", paginas=None,
@@ -15961,7 +16010,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     def _selector_comunidad_tabla(tabla, ancla):
         """Pestañas España + comunidades para una tabla; al cambiar de región esa tabla vuelve a la página 1."""
         tabs = []
-        for c, label in [("todas", "España")] + list(COMUNIDAD_AUTONOMA_LABEL.items()):
+        for c, label in [("todas", _t("España"))] + list(COMUNIDAD_AUTONOMA_LABEL.items()):
             pags = dict(pags_actuales)
             pags[tabla] = 1
             href = esc(_url_rk(pags, {**comunidades, tabla: c}, ancla))
@@ -15975,7 +16024,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
     def _ambito(tabla):
         c = comunidades[tabla]
-        return "toda España" if c == "todas" else COMUNIDAD_AUTONOMA_LABEL.get(c, c)
+        return _t("toda España") if c == "todas" else COMUNIDAD_AUTONOMA_LABEL.get(c, c)
 
     def _filas(lista, valor_html, q_prov=""):
         filas = ""
@@ -15985,7 +16034,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
                 dir_html = (f'<div class="directivo">{esc(g["directivo"])}</div>'
                             f'<div class="cargo">{esc(g["cargo"])}</div>')
             else:
-                dir_html = '<span class="noloc-warn">⚠️ No localizado</span>'
+                dir_html = f'<span class="noloc-warn">⚠️ {_t("No localizado")}</span>'
             emp_q = quote_plus(g["empresa"])
             filas += f"""<tr>
               <td class="rk-pos">{pos}</td>
@@ -15994,15 +16043,15 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
               <td>{dir_html}</td>
             </tr>"""
         if not filas:
-            filas = '<tr><td colspan="4" class="empty">Aún no hay datos suficientes.</td></tr>'
+            filas = f'<tr><td colspan="4" class="empty">{_t("Aún no hay datos suficientes.")}</td></tr>'
         return filas
 
     # Los enlaces de empresa del ranking nacional no se filtran por provincia
     # (la empresa puede tener contratos en más de una); los del provincial sí.
-    tabla_n_nac = _filas(top_n_nac, lambda g: f'<b>{g["n"]}</b> contratos')
+    tabla_n_nac = _filas(top_n_nac, lambda g: _t("<b>{n}</b> contratos").format(n=g["n"]))
     tabla_imp_nac = _filas(top_imp_nac, lambda g: fmt_eur(str(g["importe"])))
     q_prov_link = f"&provincia={provincia_prov}"
-    tabla_n_prov = _filas(top_n_prov, lambda g: f'<b>{g["n"]}</b> contratos', q_prov=q_prov_link)
+    tabla_n_prov = _filas(top_n_prov, lambda g: _t("<b>{n}</b> contratos").format(n=g["n"]), q_prov=q_prov_link)
     tabla_imp_prov = _filas(top_imp_prov, lambda g: fmt_eur(str(g["importe"])), q_prov=q_prov_link)
 
     ranking_alcaldes = [f for f in _calcular_ranking_alcaldes() if _de_comunidad(f, "alc")]
@@ -16016,21 +16065,21 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
         muni_q = quote_plus(f["municipio"])
         q_prov_muni = _q_prov(f["provincia"])
         partido_html = (esc(f["partido"]) if f["partido"]
-                         else '<span class="noloc-warn">Sin partido registrado</span>')
+                         else f'<span class="noloc-warn">{_t("Sin partido registrado")}</span>')
         habitantes_html = fmt_num(f["habitantes"]) if f["habitantes"] else "—"
-        deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + "/hab."
+        deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + _t("/hab.")
                            if f["deuda_por_habitante"] is not None else "—")
         filas_alcaldes_html += f"""<tr>
           <td class="rk-pos">{pos}</td>
           <td><b class="pol-nombre">{esc(f['nombre'])}</b></td>
           <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
           <td>{partido_html}</td>
-          <td class="rk-valor">{fmt_eur(f['importe'])}/año</td>
+          <td class="rk-valor">{fmt_eur(f['importe'])}{_t("/año")}</td>
           <td>{habitantes_html}</td>
           <td class="rk-valor">{deuda_hab_html}</td>
         </tr>"""
     if not filas_alcaldes_html:
-        filas_alcaldes_html = '<tr><td colspan="7" class="empty">Aún no hay datos suficientes.</td></tr>'
+        filas_alcaldes_html = f'<tr><td colspan="7" class="empty">{_t("Aún no hay datos suficientes.")}</td></tr>'
 
     ranking_deuda_hab = [f for f in _calcular_ranking_deuda_por_habitante() if _de_comunidad(f, "deuda")]
     filas_deuda_hab_html = ""
@@ -16046,10 +16095,10 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
           <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
           <td>{fmt_eur(f['deuda_eur'])}</td>
           <td>{fmt_num(f['habitantes'])}</td>
-          <td class="rk-valor">{fmt_eur(f['deuda_por_habitante'])}/hab.</td>
+          <td class="rk-valor">{fmt_eur(f['deuda_por_habitante'])}{_t("/hab.")}</td>
         </tr>"""
     if not filas_deuda_hab_html:
-        filas_deuda_hab_html = '<tr><td colspan="5" class="empty">Aún no hay datos suficientes.</td></tr>'
+        filas_deuda_hab_html = f'<tr><td colspan="5" class="empty">{_t("Aún no hay datos suficientes.")}</td></tr>'
 
     _n_idx = len([f for f in _indice_transparencia_cacheado()
                   if f["indice"] is not None and (comunidad == "todas" or f["comunidad_autonoma"] == comunidad)])
@@ -16057,9 +16106,9 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     selector_alc_html = _selector_comunidad_tabla("alc", "alcaldes")
     selector_deuda_html = _selector_comunidad_tabla("deuda", "deuda-habitante")
     pag_alc_html = _rk_paginacion_html(pag_alc, npag_alc, len(ranking_alcaldes),
-                                       lambda n: _url_pag("alc", n, "alcaldes"), "municipios")
+                                       lambda n: _url_pag("alc", n, "alcaldes"), _t("municipios"))
     pag_deuda_html = _rk_paginacion_html(pag_deuda, npag_deuda, len(ranking_deuda_hab),
-                                         lambda n: _url_pag("deuda", n, "deuda-habitante"), "municipios")
+                                         lambda n: _url_pag("deuda", n, "deuda-habitante"), _t("municipios"))
 
     selector_prov = "".join(
         f'<a href="/rankings?provincia={prov}" class="prov-tab{" active" if prov == provincia_prov else ""}">'
@@ -16069,14 +16118,14 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
     resumen_prov_html = ""
     for f in _resumen_por_provincia():
-        deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + "/hab." if f["deuda_por_habitante"] is not None else "—")
+        deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + _t("/hab.") if f["deuda_por_habitante"] is not None else "—")
         pres_html = (f'👤 {esc(f["presidente_nombre"])} — {esc(f["presidente_cargo"])}'
-                     if f["presidente_nombre"] else '<span class="noloc-warn">Sin datos</span>')
-        sueldo_html = (f'💰 {fmt_eur(f["presidente_sueldo"])}/año (ISPA {esc(f["presidente_anio"])})'
+                     if f["presidente_nombre"] else f'<span class="noloc-warn">{_t("Sin datos")}</span>')
+        sueldo_html = (f'💰 {fmt_eur(f["presidente_sueldo"])}{_t("/año")} (ISPA {esc(f["presidente_anio"])})'
                        if f["presidente_sueldo"] is not None else "")
         resumen_prov_html += f"""<div class="top1-card">
           <div class="top1-label">📍 {esc(f['label'])}</div>
-          <div class="top1-valor">🏦 {deuda_hab_html} de deuda viva</div>
+          <div class="top1-valor">🏦 {_t("{importe} de deuda viva").format(importe=deuda_hab_html)}</div>
           <div class="top1-directivo">{pres_html}</div>
           <div class="top1-directivo">{sueldo_html}</div>
         </div>"""
@@ -16084,88 +16133,87 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     _rk_og_path = (f"/rankings?provincia={provincia_prov}"
                     + (f"&comunidad={comunidad}" if comunidad != "todas" else ""))
 
-    body = f"""<span class="back-link"><a href="/">← Volver al inicio</a></span>
+    body = f"""<span class="back-link"><a href="/">{_t("← Volver al inicio")}</a></span>
   <div class="hero" style="padding-bottom:4px">
-    <div class="hero-tagline">🏆 Rankings</div>
+    <div class="hero-tagline">🏆 {_t("Rankings")}</div>
     <p class="hero-sub">
-      Clasificación de las empresas adjudicatarias con más contratos y mayor importe acumulado,
-      con su directivo identificado cuando lo tenemos.
+      {_t("Clasificación de las empresas adjudicatarias con más contratos y mayor importe acumulado, con su directivo identificado cuando lo tenemos.")}
     </p>
   </div>
 
-  {_RK_METODOLOGIA_AVISO_HTML}
+  {_rk_metodologia_aviso_html()}
 
   <div class="rk-section-header" id="buscador-municipio">
-    <h2>🔎 Busca tu municipio</h2>
-    <span class="rk-badge">Todas sus posiciones de un vistazo</span>
+    <h2>🔎 {_t("Busca tu municipio")}</h2>
+    <span class="rk-badge">{_t("Todas sus posiciones de un vistazo")}</span>
   </div>
-  <input type="text" id="rk-muni-input" class="it-buscador" placeholder="Nombre del municipio…" autocomplete="off">
+  <input type="text" id="rk-muni-input" class="it-buscador" placeholder="{_t("Nombre del municipio…")}" autocomplete="off">
   <div id="rk-muni-resultados"></div>
   <script>{_RK_MUNI_BUSCADOR_JS}</script>
 
   <div class="rk-section-header">
-    <h2>📍 Resumen por Provincia</h2>
-    <span class="rk-badge">Deuda viva agregada · Presidente/a de Diputación (Comunidad Autónoma en Murcia)</span>
+    <h2>📍 {_t("Resumen por Provincia")}</h2>
+    <span class="rk-badge">{_t("Deuda viva agregada · Presidente/a de Diputación (Comunidad Autónoma en Murcia)")}</span>
   </div>
   <div class="top1-grid">{resumen_prov_html}</div>
 
   <div class="rk-section-header">
-    <h2>🌍 Ranking Nacional</h2>
-    <span class="rk-badge">Todas las provincias cargadas</span>
+    <h2>🌍 {_t("Ranking Nacional")}</h2>
+    <span class="rk-badge">{_t("Todas las provincias cargadas")}</span>
   </div>
-  <div class="section-title">Top 10 por número de contratos adjudicados</div>
+  <div class="section-title">{_t("Top 10 por número de contratos adjudicados")}</div>
   <div class="muni-card"><table>
-    <tr><th>#</th><th>Empresa</th><th>Contratos</th><th>Directivo / Cargo</th></tr>
+    <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_nac}
   </table></div>
-  <div class="section-title">Top 10 por importe total adjudicado</div>
+  <div class="section-title">{_t("Top 10 por importe total adjudicado")}</div>
   <div class="muni-card"><table>
-    <tr><th>#</th><th>Empresa</th><th>Importe total</th><th>Directivo / Cargo</th></tr>
+    <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Importe total")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_imp_nac}
   </table></div>
 
   <div class="rk-section-header">
-    <h2>📍 Ranking por Provincia</h2>
+    <h2>📍 {_t("Ranking por Provincia")}</h2>
     <div class="prov-switch">{selector_prov}</div>
   </div>
-  <div class="section-title">Top 10 por número de contratos — {esc(label_prov)}</div>
+  <div class="section-title">{_t("Top 10 por número de contratos")} — {esc(label_prov)}</div>
   <div class="muni-card"><table>
-    <tr><th>#</th><th>Empresa</th><th>Contratos</th><th>Directivo / Cargo</th></tr>
+    <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_prov}
   </table></div>
-  <div class="section-title">Top 10 por importe total — {esc(label_prov)}</div>
+  <div class="section-title">{_t("Top 10 por importe total")} — {esc(label_prov)}</div>
   <div class="muni-card"><table>
-    <tr><th>#</th><th>Empresa</th><th>Importe total</th><th>Directivo / Cargo</th></tr>
+    <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Importe total")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_imp_prov}
   </table></div>
 
   <div class="rk-section-header" id="alcaldes">
-    <h2>💰 Ranking de Sueldos: Alcaldes y Alcaldesas</h2>
-    <span class="rk-badge">ISPA {esc(anio_ispa)} · {fmt_num(len(ranking_alcaldes))} municipios con dato</span>
+    <h2>💰 {_t("Ranking de Sueldos: Alcaldes y Alcaldesas")}</h2>
+    <span class="rk-badge">ISPA {esc(anio_ispa)} · {_t("{n} municipios con dato").format(n=fmt_num(len(ranking_alcaldes)))}</span>
     {selector_alc_html}
   </div>
-  <div class="section-title">De mayor a menor retribución anual ({esc(_ambito("alc"))})</div>
+  <div class="section-title">{_t("De mayor a menor retribución anual ({ambito})").format(ambito=esc(_ambito("alc")))}</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
-    <tr><th>#</th><th>Alcalde/sa</th><th>Municipio</th><th>Partido</th><th>Sueldo anual</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
+    <tr><th>#</th><th>{_t("Alcalde/sa")}</th><th>{_t("Municipio")}</th><th>{_t("Partido")}</th><th>{_t("Sueldo anual")}</th><th>{_t("Habitantes")}</th><th>{_t("Deuda/hab.")}</th></tr>
     {filas_alcaldes_html}
   </table></div></div>
   {pag_alc_html}
 
   <div class="rk-section-header" id="deuda-habitante">
-    <h2>🏦 Ranking de Deuda por Habitante</h2>
-    <span class="rk-badge">Ministerio de Hacienda + INE · {fmt_num(len(ranking_deuda_hab))} municipios con dato</span>
+    <h2>🏦 {_t("Ranking de Deuda por Habitante")}</h2>
+    <span class="rk-badge">{_t("Ministerio de Hacienda + INE")} · {_t("{n} municipios con dato").format(n=fmt_num(len(ranking_deuda_hab)))}</span>
     {selector_deuda_html}
   </div>
-  <div class="section-title">De mayor a menor deuda viva por habitante ({esc(_ambito("deuda"))})</div>
+  <div class="section-title">{_t("De mayor a menor deuda viva por habitante ({ambito})").format(ambito=esc(_ambito("deuda")))}</div>
   <div class="muni-card"><div class="tbl-scroll"><table>
-    <tr><th>#</th><th>Municipio</th><th>Deuda viva</th><th>Habitantes</th><th>Deuda/hab.</th></tr>
+    <tr><th>#</th><th>{_t("Municipio")}</th><th>{_t("Deuda viva")}</th><th>{_t("Habitantes")}</th><th>{_t("Deuda/hab.")}</th></tr>
     {filas_deuda_hab_html}
   </table></div></div>
   {pag_deuda_html}
 {_render_indice_transparencia_html(comunidad, pags_actuales["idx"], lambda n: _url_pag("idx", n, "indice-transparencia"))}
-  {_share_buttons_html(_rk_og_path, "Rankings de contratación pública — Dinero Público")}"""
+  {_share_buttons_html(_rk_og_path, _t("Rankings de contratación pública — Dinero Público"))}"""
 
-    return _page_shell("Rankings — Top 10 empresas", body,
+    return _page_shell(_t("Rankings — Top 10 empresas"), body,
                         description="Ranking nacional y por provincia de las empresas con más contratos "
                                      "públicos y mayor importe adjudicado, con sus directivos identificados.",
                         provincia="todas", og_path=_rk_og_path)
@@ -17479,24 +17527,21 @@ def _it_info_pop_html():
     def f(x):
         return f"{x:g}".replace(".", ",") + " %"
 
-    bloques = (("Contratación", ["menores", "adjudicatario", "actividad", "directivo", "formato"]),
-               ("Cuentas y deuda", ["cuentas", "deuda_pub", "saldo_pub"]),
-               ("Sueldos", ["retribuciones"]))
+    bloques = ((_t("Contratación"), ["menores", "adjudicatario", "actividad", "directivo", "formato"]),
+               (_t("Cuentas y deuda"), ["cuentas", "deuda_pub", "saldo_pub"]),
+               (_t("Sueldos"), ["retribuciones"]))
     assert {k for _, ks in bloques for k in ks} == set(p), "componente del índice sin bloque en el popover"
     filas = "".join(
         f'<li class="it-info-bloque"><span>{nombre}</span><b>{f(sum(p[k] for k in ks))}</b></li>'
-        + "".join(f'<li><span>{esc(_INDICE_COMPONENTE_LABEL.get(k, k))}</span><span>{f(p[k])}</span></li>'
+        + "".join(f'<li><span>{esc(_indice_componente_label(k))}</span><span>{f(p[k])}</span></li>'
                   for k in sorted(ks, key=lambda k: -p[k]))
         for nombre, ks in bloques)
-    return f"""<div id="it-info-pop" class="it-info-pop" role="dialog" aria-label="Cómo funciona el Índice de Transparencia" hidden>
-  <p><b>Qué mide:</b> cuánta información pública de cada ayuntamiento reunimos de fuentes oficiales (contratos,
-  cuentas, deuda, sueldos). No mide si gestiona bien o mal.</p>
+    return f"""<div id="it-info-pop" class="it-info-pop" role="dialog" aria-label="{_t("Cómo funciona el Índice de Transparencia")}" hidden>
+  <p>{_t("<b>Qué mide:</b> cuánta información pública de cada ayuntamiento reunimos de fuentes oficiales (contratos, cuentas, deuda, sueldos). No mide si gestiona bien o mal.")}</p>
   <ul class="it-info-pesos">{filas}</ul>
-  <p>Un dato que no tenemos no cuenta como 0: su peso se reparte entre el resto. Hacen falta al menos
-  {_INDICE_TRANSPARENCIA_MIN_COMPONENTES} de los {len(p)} componentes.</p>
-  <p class="it-info-aviso">Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley
-  19/2013 de Transparencia.</b></p>
-  <a href="/metodologia">Cómo se calcula y qué no medimos →</a>
+  <p>{_t("Un dato que no tenemos no cuenta como 0: su peso se reparte entre el resto. Hacen falta al menos {minimo} de los {total} componentes.").format(minimo=_INDICE_TRANSPARENCIA_MIN_COMPONENTES, total=len(p))}</p>
+  <p class="it-info-aviso">{_t("Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley 19/2013 de Transparencia.</b>")}</p>
+  <a href="/metodologia">{_t("Cómo se calcula y qué no medimos →")}</a>
 </div>"""
 
 
