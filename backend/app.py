@@ -13196,6 +13196,37 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .share-label{font-size:12px;color:var(--dim);font-weight:600;margin-right:2px;}
 .share-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--bg);border:1px solid var(--border);font-size:15px;text-decoration:none;cursor:pointer;line-height:1;}
 .share-btn:hover{border-color:var(--accent);}
+.it-lider{background:var(--surface);border:2px solid var(--accent);border-radius:14px;padding:16px 18px;margin:18px 0 22px;}
+.it-lider-cab{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;}
+.it-lider-cab h2{font-size:17px;margin:0;}
+.it-lider-cab h2 .it-info-btn{margin-left:6px;vertical-align:middle;}
+.it-lider-sub{font-size:12px;color:var(--dim);}
+.it-lider-cuerpo{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;margin-top:10px;}
+.it-lider-top{display:flex;align-items:center;gap:14px;flex:1 1 280px;min-width:0;}
+.it-lider-nota{font-size:44px;font-weight:800;color:var(--accent);line-height:1;white-space:nowrap;}
+.it-lider-nota small{font-size:15px;font-weight:600;color:var(--dim);}
+.it-lider-quien{display:flex;flex-direction:column;min-width:0;}
+.it-lider-nombre{font-size:22px;font-weight:800;color:var(--text);text-decoration:none;overflow-wrap:anywhere;}
+.it-lider-nombre:hover{text-decoration:underline;}
+.it-lider-region{font-size:13px;color:var(--dim);margin-bottom:4px;}
+.it-lider-empate{font-size:12px;color:var(--dim);font-style:italic;}
+.it-lider-lista{list-style:none;margin:0;padding:0;flex:1 1 220px;font-size:14px;}
+.it-lider-lista li{display:flex;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px dashed var(--border);}
+.it-lider-lista li:last-child{border-bottom:0;}
+.it-lider-lista a{flex:1;color:var(--text);text-decoration:none;min-width:0;overflow-wrap:anywhere;}
+.it-lider-lista a:hover{text-decoration:underline;}
+.it-lider-pos{color:var(--dim);min-width:2.2em;}.it-lider-mini{font-weight:700;}
+.it-lider-pie{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:12px;}
+.it-lider-pie .btn-ver{margin:0;}
+.it-lider-metodo{font-size:13px;}
+@media (max-width:640px){.it-lider{padding:14px;}.it-lider-nota{font-size:36px;}.it-lider-nombre{font-size:19px;}}
+.share-btn svg{width:18px;height:18px;display:block;color:var(--text);}
+.share-btn.share-wa,.share-btn.share-fb,.share-btn.share-x,.share-btn.share-tg{border-color:transparent;}
+.share-btn.share-wa{background:#25D366;}.share-btn.share-fb{background:#0866FF;}
+.share-btn.share-x{background:#000;}.share-btn.share-tg{background:#26A5E4;}
+.share-btn.share-wa svg,.share-btn.share-fb svg,.share-btn.share-x svg,.share-btn.share-tg svg{color:#fff;}
+.share-btn.share-x{box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);}
+.share-btn:hover{filter:brightness(1.08);}
 button.share-btn{font-family:inherit;}
 @media (max-width:640px){.share-btn{width:38px;height:38px;font-size:16px;}}
 
@@ -14102,6 +14133,7 @@ def _footer_html(provincia="todas"):
     <a href="/quienes-somos">Quiénes Somos</a>
     <a href="/casos">Casos</a>
     <a href="/mapa-cobertura">Mapa de cobertura</a>
+    <a href="/metodologia">Metodología</a>
     <span class="ft-sep">|</span>
     <span class="ft-label">Enlaces de interés:</span>
     <a href="https://civio.es" target="_blank" rel="noopener">CIVIO</a>
@@ -17096,7 +17128,9 @@ def _ranking_con_empates(filas):
     puesto_actual = 0
     valor_anterior = None
     for i, f in enumerate(filas, 1):
-        valor_mostrado = round(f["indice"])
+        # Un decimal (2026-09-30): desde la v2 la nota se muestra con un decimal ("93,4") y con el redondeo a entero
+        # 93,4 / 93,3 / 93,2 salían los tres "2.º".
+        valor_mostrado = round(f["indice"], 1)
         if valor_mostrado != valor_anterior:
             puesto_actual = i
             valor_anterior = valor_mostrado
@@ -17107,8 +17141,7 @@ def _ranking_con_empates(filas):
 _SIDEBAR_VER_MAS_N = 40
 
 
-INDICE_TRANSPARENCIA_METODOLOGIA_URL = ("https://github.com/cesarcastrobanegas-wq/dinero-publico/blob/main/"
-                                        "INDICE_TRANSPARENCIA_METODOLOGIA.md")
+
 
 # Botón "i" junto a la nota del Índice (2026-09-30, petición de César). Abre el popover compartido #it-info-pop (ver
 # _it_info_pop_html y el script de _page_shell): clic/tap en cualquier pantalla, además hover en escritorio. Dentro de
@@ -17144,8 +17177,56 @@ def _it_info_pop_html():
   {_INDICE_TRANSPARENCIA_MIN_COMPONENTES} de los {len(p)} componentes.</p>
   <p class="it-info-aviso">Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley
   19/2013 de Transparencia.</b></p>
-  <a href="{esc(INDICE_TRANSPARENCIA_METODOLOGIA_URL)}" target="_blank" rel="noopener">Metodología completa →</a>
 </div>"""
+
+
+def _nota_coma(x):
+    return f"{x:.1f}".replace(".", ",")
+
+
+def _lider_indice_portada_html():
+    """"Liderando ahora mismo" del Índice de Transparencia en la portada nacional (encargo de César 2026-09-30:
+    más presencia que la línea 1 del lateral). Mismo caché que /rankings (_indice_transparencia_cacheado), puestos
+    con empates (_ranking_con_empates): si varios comparten el 1.º, salen todos. "Ver ranking por tu región" lleva
+    al selector por comunidad autónoma de /rankings."""
+    filas = sorted((f for f in _indice_transparencia_cacheado() if f["indice"] is not None), key=lambda f: -f["indice"])
+    ranking = _ranking_con_empates(filas)
+    if not ranking:
+        return ""
+    lideres = [f for p, f in ranking if p == 1]
+    siguientes = [(p, f) for p, f in ranking if p > 1][:3]
+
+    def _url(f):
+        return f'/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}'
+
+    def _region(f):
+        return esc(COMUNIDAD_AUTONOMA_LABEL.get(f["comunidad_autonoma"], f["comunidad_autonoma"]))
+
+    lideres_html = "".join(
+        f'<a class="it-lider-nombre" href="{_url(f)}">{esc(f["municipio"])}</a>'
+        f'<span class="it-lider-region">{esc(PROVINCIA_LABEL.get(f["provincia"], f["provincia"]))} · {_region(f)}</span>'
+        for f in lideres[:3])
+    empate = f'<div class="it-lider-empate">Empate a {len(lideres)} en el primer puesto</div>' if len(lideres) > 1 else ""
+    siguientes_html = "".join(
+        f'<li><span class="it-lider-pos">{p}.º</span><a href="{_url(f)}">{esc(f["municipio"])}</a>'
+        f'<span class="it-lider-mini">{_nota_coma(f["indice"])}</span></li>' for p, f in siguientes)
+    return f"""<section class="it-lider" aria-labelledby="it-lider-titulo">
+    <div class="it-lider-cab">
+      <h2 id="it-lider-titulo">🏅 Liderando ahora mismo · Índice de Transparencia{_IT_INFO_BTN_HTML}</h2>
+      <span class="it-lider-sub">{fmt_num(len(filas))} municipios con nota · España</span>
+    </div>
+    <div class="it-lider-cuerpo">
+      <div class="it-lider-top">
+        <div class="it-lider-nota">{_nota_coma(lideres[0]["indice"])}<small>/100</small></div>
+        <div class="it-lider-quien">{lideres_html}{empate}</div>
+      </div>
+      <ol class="it-lider-lista">{siguientes_html}</ol>
+    </div>
+    <div class="it-lider-pie">
+      <a class="btn-ver" href="/rankings#indice-transparencia">Ver ranking por tu región →</a>
+      <a class="it-lider-metodo" href="/metodologia">Cómo se calcula</a>
+    </div>
+  </section>"""
 
 
 def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
@@ -17500,6 +17581,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     </div>
     {stats}
   </div>
+  {_lider_indice_portada_html()}
   <div class="section-title">Cobertura</div>
   <div class="mapa-indice-row">
     <div class="mapa-indice-mapa">{mapa_html}</div>
@@ -17522,7 +17604,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       </aside>
     </div>
     <div class="home-main-col">
-      <div class="section-title" style="margin-top:0">🏆 Liderando ahora mismo · Ranking Nacional</div>
+      <div class="section-title" style="margin-top:0">🏆 Empresas líderes · Ranking Nacional</div>
       <div class="top1-grid">{top1_html}</div>
       <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
     </div>
@@ -17917,6 +17999,24 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
                         provincia=provincia, og_path=f"/?q={quote_plus(q)}{_q_prov(provincia)}")
 
 
+# Logotipos de las redes para los botones de compartir (2026-09-30): antes eran emojis de círculos de color (🟢🔵⚫🔷),
+# nunca hubo logos propios. SVG en línea de Simple Icons (licencia CC0, simpleicons.org) -- sin fichero ni librería
+# externa que cargar, como el resto del sitio. Correo y enlace, iconos de trazo propios.
+_SHARE_ICONOS = {
+    "whatsapp": '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>',
+    "facebook": '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>',
+    "x": '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>',
+    "telegram": '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>',
+    "correo": '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" '
+              'stroke-width="2" stroke-linejoin="round" d="M3 5.5h18v13H3z M3.5 6l8.5 7 8.5-7"/></svg>',
+    "enlace": '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" '
+              'stroke-width="2" stroke-linecap="round" d="M10 14a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1 1 '
+              'M14 10a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1-1"/></svg>',
+    "ok": '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" '
+          'stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+}
+
+
 def _share_buttons_html(path, titulo):
     """Botones de compartir para el pie de cada caso/noticia (2026-09-20).
     Enlaces simples (wa.me, sharer.php, intent de X, t.me, mailto) -- sin
@@ -17927,12 +18027,12 @@ def _share_buttons_html(path, titulo):
     titulo_enc = quote_plus(titulo)
     return f"""<div class="share-buttons">
   <span class="share-label">Compartir:</span>
-  <a class="share-btn" href="https://wa.me/?text={titulo_enc}%20{url_enc}" target="_blank" rel="noopener" aria-label="Compartir en WhatsApp" title="WhatsApp">🟢</a>
-  <a class="share-btn" href="https://www.facebook.com/sharer/sharer.php?u={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en Facebook" title="Facebook">🔵</a>
-  <a class="share-btn" href="https://twitter.com/intent/tweet?text={titulo_enc}&amp;url={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en X" title="X (Twitter)">⚫</a>
-  <a class="share-btn" href="https://t.me/share/url?url={url_enc}&amp;text={titulo_enc}" target="_blank" rel="noopener" aria-label="Compartir en Telegram" title="Telegram">🔷</a>
-  <a class="share-btn" href="mailto:?subject={titulo_enc}&amp;body={url_enc}" aria-label="Compartir por correo" title="Correo">✉️</a>
-  <button type="button" class="share-btn share-copy" data-url="{esc(url_completa)}" aria-label="Copiar enlace" title="Copiar enlace">🔗</button>
+  <a class="share-btn share-wa" href="https://wa.me/?text={titulo_enc}%20{url_enc}" target="_blank" rel="noopener" aria-label="Compartir en WhatsApp" title="WhatsApp">{_SHARE_ICONOS["whatsapp"]}</a>
+  <a class="share-btn share-fb" href="https://www.facebook.com/sharer/sharer.php?u={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en Facebook" title="Facebook">{_SHARE_ICONOS["facebook"]}</a>
+  <a class="share-btn share-x" href="https://twitter.com/intent/tweet?text={titulo_enc}&amp;url={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en X" title="X (Twitter)">{_SHARE_ICONOS["x"]}</a>
+  <a class="share-btn share-tg" href="https://t.me/share/url?url={url_enc}&amp;text={titulo_enc}" target="_blank" rel="noopener" aria-label="Compartir en Telegram" title="Telegram">{_SHARE_ICONOS["telegram"]}</a>
+  <a class="share-btn" href="mailto:?subject={titulo_enc}&amp;body={url_enc}" aria-label="Compartir por correo" title="Correo">{_SHARE_ICONOS["correo"]}</a>
+  <button type="button" class="share-btn share-copy" data-url="{esc(url_completa)}" aria-label="Copiar enlace" title="Copiar enlace">{_SHARE_ICONOS["enlace"]}</button>
 </div>
 <script>
 (function(){{
@@ -17940,9 +18040,10 @@ def _share_buttons_html(path, titulo):
     btn.addEventListener('click', function(){{
       var url = btn.getAttribute('data-url');
       function marcarCopiado(ok){{
-        var original = btn.textContent;
-        btn.textContent = ok ? '✅' : '⚠️';
-        setTimeout(function(){{ btn.textContent = original; }}, 1500);
+        var original = btn.innerHTML;
+        btn.innerHTML = ok ? '{_SHARE_ICONOS["ok"]}' : '⚠️';
+        btn.title = ok ? 'Enlace copiado' : 'No se pudo copiar';
+        setTimeout(function(){{ btn.innerHTML = original; btn.title = 'Copiar enlace'; }}, 1500);
       }}
       if (navigator.clipboard && navigator.clipboard.writeText) {{
         navigator.clipboard.writeText(url).then(function(){{ marcarCopiado(true); }}).catch(function(){{ marcarCopiado(false); }});
@@ -18032,6 +18133,312 @@ def render_casos_index_html():
     return _page_shell("Casos", body,
                         description="Investigaciones y casos concretos detrás de los datos de "
                                      "Dinero Público: cómo verificamos lo que mostramos.")
+
+
+# ─── Casos del 2026-09-30 (encargo de César: 4 piezas cortas de 200-400 palabras) + página de metodología ─────────
+# Cifras verificadas esa misma noche: feed de menores de PLACE (ficheros contratos_menores_place_*.json.gz),
+# copia de producción del 25-09 (Cartagena por fuente y año), LIMITACIONES_COBERTURA.md (arreglo de nombres de
+# órganos del 29-09 y emparejamiento con Governalia del 30-09) e INDICE_TRANSPARENCIA_METODOLOGIA.md.
+
+def _enlace_ficha(nombre_lista, provincia, texto=None):
+    """Enlace a la ficha de un municipio por su nombre tal cual está en MUNICIPIOS_POR_PROVINCIA."""
+    return (f'<a href="/?muni={quote_plus(nombre_lista)}&amp;provincia={esc(provincia)}">'
+            f'{esc(texto or nombre_lista)}</a>')
+
+
+def _caso_pagina(og_path, titulo, cuerpo_html, description):
+    body = f"""<div class="static-page">
+  <h1>{esc(titulo)}</h1>
+{cuerpo_html}
+  {_share_buttons_html(og_path, titulo)}
+  <p><a href="/casos">← Volver a Casos</a></p>
+</div>"""
+    return _page_shell(f"Caso: {titulo}", body, description=description, og_path=og_path)
+
+
+def render_caso_menores_imposibles_html():
+    viso = _enlace_ficha("Viso del Alcor, El", "sevilla", "El Viso del Alcor (Sevilla)")
+    cuerpo = f"""
+  <p>Un contrato menor es, por ley, un contrato pequeño: como máximo 40.000 € sin IVA si es de obras y 15.000 € si
+  es de servicios o suministros (Ley 9/2017 de Contratos del Sector Público). Por eso se puede adjudicar a dedo, sin
+  concurso.</p>
+
+  <p>En el registro oficial de contratos menores de la Plataforma de Contratación del Sector Público (PLACE), que
+  cargamos entero desde septiembre de 2021, hay uno que rompe cualquier escala: «Reparación de la Vía Verde», del
+  Ayuntamiento de {viso}, adjudicado el 18 de abril de 2024 por <strong>71.540.000 € sin IVA</strong>.</p>
+
+  <h2>Una pista: el importe es el código del contrato</h2>
+  <p>El importe coincide cifra a cifra con el código CPV del contrato, 71540000 (el código europeo que clasifica el
+  tipo de servicio). Lo más probable es que alguien tecleara el código en la casilla del importe. No lo hemos
+  confirmado con el ayuntamiento, así que en la web lo mostramos tal cual se publicó.</p>
+
+  <h2>No es el único</h2>
+  <p>En la web mostramos otros <strong>286</strong> contratos menores de PLACE con un importe sin IVA por encima de
+  40.000 €, el máximo legal de cualquier contrato menor. El segundo es de {_enlace_ficha("Cullera", "valencia")}:
+  28,9 millones en «obras de adecuación de pavimento, instalación de mobiliario urbano y pilonas telescópicas». Le
+  siguen {_enlace_ficha("Picanya", "valencia")} (12,1 millones, riego inteligente de un parque),
+  {_enlace_ficha("Cartagena", "murcia")} (6 millones, promoción en la Feria de Málaga) y
+  {_enlace_ficha("Salobre", "albacete")}, en Albacete (5,5 millones en «servicios de mantenimiento»).</p>
+
+  <p>Algunos serán erratas como la de El Viso. Otros pueden ser contratos mal clasificados como menores, o importes
+  globales anotados en un solo contrato. Desde fuera no se puede saber cuál es cuál. Y ahí está el problema: el
+  registro oficial acepta un «menor» de 71 millones sin ninguna validación.</p>
+
+  <h2>Qué hacemos con ellos</h2>
+  <p>No los ocultamos ni los corregimos, porque no sabemos cuál sería la cifra buena. Cada uno lleva un aviso
+  visible en su fila: «importe sin IVA por encima del máximo legal de cualquier contrato menor». Hay además otros
+  1.456 contratos que no son de obras y superan los 15.000 €: pueden ser errores de tipo de contrato o de importe, y
+  de momento no llevan aviso.</p>
+
+  <p>Si encuentras uno de tu municipio y sabes qué pasó, puedes contarlo en los comentarios de su ficha.</p>"""
+    return _caso_pagina("/casos/contrato-menor-71-millones-viso-del-alcor",
+                        "Un contrato «menor» de 71,5 millones: los 287 importes imposibles del registro oficial",
+                        cuerpo,
+                        "El Viso del Alcor declaró un contrato menor de 71,5 M€, y otros 286 superan el máximo legal "
+                        "de 40.000 € sin IVA en el registro oficial de PLACE.")
+
+
+def render_caso_cartagena_historico_html():
+    cuerpo = f"""
+  <p>{_enlace_ficha("Cartagena", "murcia")} es uno de los pocos municipios de la Región de Murcia que publica sus
+  contratos menores en un listado propio: un buscador en cartagena.es donde se puede filtrar por fechas. En
+  septiembre de 2026 lo conectamos a Dinero Público, con contratos desde 2021.</p>
+
+  <h2>Lo que se perdió</h2>
+  <p>Pocos días después, al refrescar los datos, el buscador dejó de devolver los años anteriores. Pidiéramos las
+  fechas que pidiéramos, solo respondía con los contratos del año en curso, 2026. Lo comprobamos a mano, fuera de
+  nuestro programa, con el mismo resultado: no era un fallo nuestro, era el portal. No sabemos si fue un cambio
+  deliberado o un problema técnico del ayuntamiento, y no le atribuimos ninguna intención. El efecto sí fue claro:
+  la ficha de Cartagena se quedó solo con 2026. Cuatro años de contratos desaparecieron de la vista pública.</p>
+
+  <h2>Cómo se recuperó</h2>
+  <p>La solución llegó por otro camino. Cartagena usa también Governalia, una plataforma de transparencia municipal,
+  y su módulo de contratos es un espejo de lo que el ayuntamiento comunica a la Plataforma de Contratación del
+  Sector Público (PLACE). De ahí recuperamos <strong>13.560 contratos menores de 2022 a 2025</strong>. El año 2021 no
+  está en Governalia.</p>
+
+  <p>No son exactamente la misma lista que la del portal propio: en 2026, el único año en que tenemos las dos, solo
+  coinciden en torno al 62 %. Por eso usamos cada fuente donde es la única: Governalia hasta 2025 y el portal
+  propio para 2026. Tampoco cuentan igual: el portal propio da los importes con IVA y Governalia sin IVA, y la ficha
+  lo indica.</p>
+
+  <h2>Los errores también se copian</h2>
+  <p>El espejo arrastra los errores del original: 992 contratos figuran adjudicados por 0 € y hay un «menor» de 6
+  millones de euros (promoción de productos de Cartagena en la Feria de Málaga 2025) que aparece igual en PLACE. Los
+  mostramos tal cual, con una nota en la fila.</p>
+
+  <p>La lección: un dato público que depende de un único buscador municipal puede desaparecer de un día para otro,
+  sin aviso. Por eso, siempre que existe, buscamos una segunda fuente oficial para el mismo dato.</p>"""
+    return _caso_pagina("/casos/cartagena-historico-contratos-menores",
+                        "Cómo Cartagena perdió su histórico de contratos menores (y cómo lo recuperamos)",
+                        cuerpo,
+                        "El portal de Cartagena dejó de mostrar sus contratos menores de años anteriores. Los "
+                        "recuperamos desde otra fuente oficial: 13.560 contratos de 2022 a 2025.")
+
+
+def render_caso_governalia_fechas_html():
+    munis = ", ".join(_enlace_ficha(n, p) for n, p in (
+        ("Alzira", "valencia"), ("Cartagena", "murcia"), ("Castellón de la Plana", "castellon"), ("Ibi", "alicante"),
+        ("Santa Brígida", "las_palmas"), ("Sax", "alicante"), ("Vilamarxant", "valencia")))
+    cuerpo = f"""
+  <p>La fecha de adjudicación parece un dato sencillo: el día en que el ayuntamiento decide a quién da un contrato.
+  En ocho de nuestras fuentes no lo era.</p>
+
+  <p>{munis} y {_enlace_ficha("Xirivella", "valencia")} publican sus contratos menores a través de Governalia, una
+  plataforma de transparencia municipal. Para cada contrato, su sistema da una fecha que parece la de
+  adjudicación.</p>
+
+  <h2>Cómo lo descubrimos</h2>
+  <p>El 30 de septiembre de 2026 conectamos el registro oficial de contratos menores de la Plataforma de Contratación
+  del Sector Público (PLACE), que cubre casi toda España. Muchos de esos ayuntamientos ya estaban en la web con su
+  propia fuente, así que había que evitar contar dos veces el mismo contrato. La regla: si coinciden la empresa (por
+  NIF o por nombre), el importe y la fecha, con una semana de margen como mucho, es el mismo contrato, y manda la
+  fuente del propio ayuntamiento.</p>
+
+  <p>Con Governalia la regla fallaba. En Cartagena, 10.620 contratos coincidían con PLACE en NIF e importe exactos,
+  pero la fecha de Governalia iba siempre de 8 a 17 días por detrás (11 días de mediana) y casi siempre caía en
+  sábado. No era la fecha de adjudicación: era la fecha en que la plataforma publica su lote semanal.</p>
+
+  <h2>Duplicados fantasma</h2>
+  <p>Si no lo hubiéramos visto, habríamos tenido miles de duplicados fantasma: el mismo contrato dos veces en la
+  ficha, una con la fecha real y otra con la de publicación. El número de contratos y el importe total de esos
+  municipios se habrían inflado.</p>
+
+  <p>El arreglo: para estas ocho fuentes aceptamos que su fecha vaya hasta 31 días por detrás de la de PLACE. Y
+  avisamos de lo que implica: en esos municipios, la «fecha» que mostramos para los contratos de su fuente propia es
+  en realidad la de publicación, no la de adjudicación.</p>
+
+  <p>Lo contamos porque es un buen ejemplo de un problema general: dos fuentes oficiales pueden llamar igual a
+  cosas distintas. No basta con comprobar que hay datos; antes de cruzarlos hay que medir qué significa cada
+  campo.</p>"""
+    return _caso_pagina("/casos/governalia-fechas-duplicados",
+                        "La fecha que no era: por qué ocho portales municipales nos daban contratos duplicados",
+                        cuerpo,
+                        "Ocho portales municipales en Governalia publican la fecha de su lote semanal, no la de "
+                        "adjudicación. Así lo detectamos y así evitamos contar dos veces los mismos contratos.")
+
+
+def render_caso_contratos_sin_ayuntamiento_html():
+    ceros = ", ".join(_enlace_ficha(n, p, t) for n, p, t in (
+        ("Ejido, El", "almeria", "El Ejido"), ("Rivas-Vaciamadrid", "madrid", None), ("Dénia", "alicante", None),
+        ("Campello, el", "alicante", "El Campello"), ("Rinconada, La", "sevilla", "La Rinconada"),
+        ("Línea de la Concepción, La", "cadiz", "La Línea de la Concepción")))
+    puerto = _enlace_ficha("Puerto de Santa María, El", "cadiz", "El Puerto de Santa María")
+    cuerpo = f"""
+  <p>Los contratos formales (los que se licitan, no los menores) se publican en la Plataforma de Contratación del
+  Sector Público (PLACE). PLACE no dice «este contrato es del municipio número tal»: dice quién lo firmó, con un
+  texto libre. «Ayuntamiento de El Ejido», «Junta de Gobierno Local del Ayuntamiento de Dénia», «Concello
+  Soutomaior». Nosotros tenemos que traducir ese texto a un municipio.</p>
+
+  <h2>Mismo municipio, otro nombre</h2>
+  <p>Nuestras listas de municipios siguen el formato del INE, que pone el artículo al final: «Ejido, El», «Puerto
+  de Santa María, El». PLACE lo escribe en orden natural, y además con variaciones: a veces con guion y a veces sin
+  él («Rivas Vaciamadrid»), a veces sin el «de» («Ayuntamiento Dénia») y a veces con fórmulas honoríficas («de la
+  Leal Villa de El Escorial», «de la Villa y Puerto de Garachico»).</p>
+
+  <p>El resultado eran contratos que ningún municipio reclamaba. En septiembre de 2026 revisamos un mes completo de
+  PLACE (agosto: 20.360 contratos) comparándolo con la jerarquía oficial de cada órgano, que sí dice a qué
+  ayuntamiento pertenece. {ceros} y {puerto} aparecían en la web con <strong>cero contratos formales</strong>. No es
+  que no contrataran: sus contratos estaban ahí, sin asignar.</p>
+
+  <h2>316 contratos que aparecen</h2>
+  <p>Al reconocer esas variantes del nombre aparecieron, solo en ese mes, <strong>316 contratos más en 86
+  municipios</strong>, sin ningún falso positivo al compararlos con la jerarquía oficial. Luego repasamos hacia atrás
+  los meses ya guardados para recuperar los que faltaban.</p>
+
+  <h2>Y el problema contrario</h2>
+  <p>Aceptar el orden natural destapó el error inverso: «El Viso» (Córdoba) empezaba a quedarse contratos de «El
+  Viso del Alcor». Y ya antes, Sevilla se quedaba contratos de Sevilla la Nueva, Fuenlabrada los de Fuenlabrada de
+  los Montes y València los de Valencia de Alcántara. Ahora ningún municipio acepta como suyo un contrato cuyo órgano
+  lleva el nombre, más largo, de otro municipio. Eso quitó 228 asignaciones erróneas que ya existían en ese mes. Los
+  contratos mal asignados no se borran: se archivan.</p>
+
+  <p>Queda trabajo pendiente: patronatos, empresas municipales y distritos que no llevan «ayuntamiento» en el nombre
+  (unos 80 contratos al mes) siguen sin asignarse a su municipio.</p>"""
+    return _caso_pagina("/casos/contratos-sin-ayuntamiento-place",
+                        "316 contratos sin dueño: cuando PLACE escribe el nombre del ayuntamiento a su manera",
+                        cuerpo,
+                        "Por cómo PLACE escribe el nombre del órgano, El Ejido, Rivas-Vaciamadrid o Dénia aparecían "
+                        "con cero contratos formales. Al arreglarlo aparecieron 316 contratos en un solo mes.")
+
+
+_CASOS_NUEVOS_20260930 = [
+    {"slug": "contrato-menor-71-millones-viso-del-alcor", "render": render_caso_menores_imposibles_html,
+     "titulo": "Un contrato «menor» de 71,5 millones: los 287 importes imposibles del registro oficial",
+     "resumen": "El Viso del Alcor declaró como contrato menor una reparación de 71,5 millones de euros. Otros 286 "
+                "contratos menores superan el máximo legal de 40.000 € sin IVA en el registro oficial."},
+    {"slug": "cartagena-historico-contratos-menores", "render": render_caso_cartagena_historico_html,
+     "titulo": "Cómo Cartagena perdió su histórico de contratos menores (y cómo lo recuperamos)",
+     "resumen": "De un día para otro, el portal de Cartagena solo mostraba el año en curso. Recuperamos 13.560 "
+                "contratos de 2022 a 2025 desde otra fuente oficial."},
+    {"slug": "governalia-fechas-duplicados", "render": render_caso_governalia_fechas_html,
+     "titulo": "La fecha que no era: por qué ocho portales municipales nos daban contratos duplicados",
+     "resumen": "Ocho portales publicaban la fecha de su lote semanal, no la de adjudicación. Sin detectarlo, el "
+                "mismo contrato habría salido dos veces."},
+    {"slug": "contratos-sin-ayuntamiento-place", "render": render_caso_contratos_sin_ayuntamiento_html,
+     "titulo": "316 contratos sin dueño: cuando PLACE escribe el nombre del ayuntamiento a su manera",
+     "resumen": "El Ejido, Rivas-Vaciamadrid o Dénia aparecían con cero contratos formales. Estaban ahí, pero con "
+                "un nombre que no reconocíamos."},
+]
+_CASOS[1:1] = [{k: v for k, v in c.items() if k != "render"} for c in _CASOS_NUEVOS_20260930]
+_CASOS_RENDER_POR_SLUG = {c["slug"]: c["render"] for c in _CASOS_NUEVOS_20260930}
+
+
+def render_metodologia_html():
+    """Metodología para personas, dentro del sitio (encargo de César 2026-09-30): el Índice y las limitaciones de
+    cobertura contados en texto corrido, a partir de INDICE_TRANSPARENCIA_METODOLOGIA.md y LIMITACIONES_COBERTURA.md.
+    Los pesos se leen de _INDICE_TRANSPARENCIA_PESOS, así que no se desincronizan si cambian."""
+    p = _INDICE_TRANSPARENCIA_PESOS
+
+    def w(k):
+        return f"{p[k]:g}".replace(".", ",") + " %"
+
+    tabla = "".join(
+        f"<tr><td>{esc(_INDICE_COMPONENTE_LABEL.get(k, k))}</td><td style=\"text-align:right\">{w(k)}</td></tr>"
+        for k in sorted(p, key=lambda k: -p[k]))
+    body = f"""<div class="static-page">
+  <h1>Cómo funciona Dinero Público: metodología y límites</h1>
+
+  <p>Dinero Público reúne en un solo sitio datos oficiales sobre el dinero de los ayuntamientos españoles: los
+  contratos que adjudican, sus cuentas y su deuda, y lo que cobran sus alcaldes y concejales. Todo sale de fuentes
+  públicas (la Plataforma de Contratación del Sector Público, registros autonómicos, portales municipales, el
+  Ministerio de Hacienda, el Tribunal de Cuentas). No inventamos ni estimamos datos: si algo no está publicado, lo
+  decimos. Esta página explica cómo calculamos el Índice de Transparencia y, sobre todo, qué no podemos ver.</p>
+
+  <h2>Qué mide el Índice de Transparencia</h2>
+  <p>El índice responde a una pregunta concreta: <strong>¿cuánta información pública de este ayuntamiento hemos
+  podido reunir, y de qué calidad es?</strong> Da una nota de 0 a 100 a cada municipio.</p>
+  <p>No mide si un ayuntamiento gestiona bien o mal, ni si gasta mucho o poco. Un municipio puede sacar buena nota
+  y contratar mal, o al revés. Y no es una certificación de que cumpla la Ley 19/2013 de Transparencia: es una
+  valoración propia, y Dinero Público no es un organismo acreditador.</p>
+
+  <h2>Cómo se calcula</h2>
+  <p>La nota es la media ponderada de nueve componentes. Cada uno vale de 0 a 100 y pesa lo siguiente:</p>
+  <table class="tabla-simple" style="max-width:520px;width:100%;border-collapse:collapse">
+    <thead><tr><th style="text-align:left">Componente</th><th style="text-align:right">Peso</th></tr></thead>
+    <tbody>{tabla}</tbody>
+  </table>
+  <p>Hay una regla que lo cambia todo: <strong>un dato que no tenemos no cuenta como cero</strong>. Si un componente
+  no se puede calcular porque la fuente oficial no cubre ese municipio, o porque nosotros aún no la hemos conectado,
+  queda fuera y su peso se reparte entre los demás. Solo puntúa cero lo que la fuente oficial sí cubre y el
+  ayuntamiento no publica. Así no castigamos a nadie por un hueco nuestro. Para que la nota sea fiable exigimos al
+  menos {_INDICE_TRANSPARENCIA_MIN_COMPONENTES} componentes con datos; si no, el municipio aparece como «cobertura
+  insuficiente».</p>
+
+  <h2>Por qué pesan así</h2>
+  <p><strong>Contratos menores ({w("menores")}), el componente que más pesa.</strong> Son contratos pequeños que se
+  adjudican sin concurso, y son justo lo que menos se publica de forma ordenada. Premiamos que se publiquen, que
+  cubran varios años, que estén al día y que digan quién es el adjudicatario. Si no encontramos ningún contrato menor
+  de un municipio en ninguna fuente, el componente queda fuera, no a cero: publicarlos en la Plataforma de
+  Contratación no es obligatorio y muchos pueblos lo hacen en su web o en PDF.</p>
+  <p><strong>Contratos formales: adjudicatario identificado ({w("adjudicatario")}) y actividad de publicación
+  ({w("actividad")}).</strong> Los contratos licitados se publican en plataformas que cubren a toda España por
+  igual, así que son una buena vara de medir común. La actividad cuenta contratos por cada 1.000 habitantes y
+  compara a cada municipio solo con los de su tamaño: un pueblo de 800 habitantes no compite con Madrid.</p>
+  <p><strong>Cuentas anuales ({w("cuentas")}).</strong> Vale 100 si el ayuntamiento ha rendido su último ejercicio
+  exigible por ley al Tribunal de Cuentas, 50 si va un año tarde y 0 si va dos o más.</p>
+  <p><strong>Sueldos ({w("retribuciones")}).</strong> 100 si el ayuntamiento publica lo que cobra cada concejal, con
+  nombre e importe; 50 si solo consta el sueldo del alcalde (que publica el Ministerio); 0 si ni eso.</p>
+  <p><strong>Directivo identificado ({w("directivo")}).</strong> De las empresas que reciben contratos, en cuántas
+  podemos ver quién las dirige según el Registro Mercantil. Depende en parte de nuestro propio cruce de datos, que
+  avanza poco a poco.</p>
+  <p><strong>Deuda ({w("deuda_pub")}) y saldo presupuestario ({w("saldo_pub")}).</strong> Pesan poco porque casi
+  todos los ayuntamientos los tienen publicados en el Ministerio de Hacienda: con más peso, las notas se
+  amontonarían arriba sin distinguir a nadie.</p>
+  <p><strong>Formato ({w("formato")}).</strong> Premia publicar los contratos menores en un formato que se pueda
+  reutilizar (un fichero de datos mejor que un PDF escaneado). Pesa poco porque solo lo hemos revisado a mano en
+  unos 70 municipios; en el resto queda fuera.</p>
+
+  <h2>Qué no podemos ver</h2>
+  <p><strong>Contratos menores.</strong> No existe ninguna obligación de publicarlos en un registro central, y cada
+  administración decide si los publica y cómo. Los reunimos de varias fuentes: el registro oficial de menores de la
+  Plataforma de Contratación (desde 2021, pero con pocos datos hasta 2023), los registros de Cataluña y Euskadi y
+  los portales propios de algunas ciudades. Aun así, en torno a la mitad de los municipios no tienen ningún
+  contrato menor en ninguna fuente. Eso no significa que no contraten: significa que no los vemos.</p>
+  <p><strong>Solo los últimos cinco años.</strong> Mostramos contratos desde septiembre de 2021.</p>
+  <p><strong>Contratos de organismos municipales.</strong> Los contratos se asignan a su municipio leyendo el nombre
+  del órgano que los firma. Los patronatos, empresas municipales y distritos que no llevan «ayuntamiento» en el
+  nombre (unos 80 contratos al mes) todavía se quedan sin asignar.</p>
+  <p><strong>Sueldos de concejales.</strong> El Ministerio publica el sueldo de cada alcalde, pero el de los
+  concejales solo como un total por ayuntamiento, sin nombres. Por eso solo mostramos sueldos individuales donde el
+  propio ayuntamiento los publica con nombre.</p>
+  <p><strong>Cuentas anuales.</strong> El Tribunal de Cuentas no las recoge para País Vasco y Navarra (tienen su
+  propio sistema foral) ni para Ceuta y Melilla. Allí ese componente queda fuera.</p>
+  <p><strong>Fondos europeos.</strong> En la mayoría de los registros de fondos de cohesión no consta el nombre del
+  beneficiario, así que solo podemos atribuir una parte a cada municipio.</p>
+
+  <h2>Errores de origen</h2>
+  <p>Las fuentes oficiales también se equivocan: hay contratos menores de 71 millones de euros, adjudicaciones a 0 €
+  o fechas que en realidad son de publicación. Nunca corregimos ni ocultamos un dato oficial, porque no sabemos cuál
+  sería la cifra buena. Lo mostramos tal cual, con un aviso visible, y lo contamos en <a href="/casos">Casos</a>.
+  El estado de cada fuente por comunidad está en el <a href="/mapa-cobertura">mapa de cobertura</a>.</p>
+
+  <p>Si ves un error, cuéntalo en los comentarios de la ficha del municipio.</p>
+</div>"""
+    return _page_shell("Metodología", body,
+                       description="Cómo se calcula el Índice de Transparencia de Dinero Público, por qué pesa así "
+                                   "cada componente y qué limitaciones de cobertura tienen los datos.",
+                       og_path="/metodologia")
 
 
 def render_caso_archena_dyntra_html():
@@ -19232,6 +19639,12 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/casos":
         return _resp(render_casos_index_html(), gzip_ok=gzip_ok)
 
+    if path == "/metodologia":
+        return _resp(render_metodologia_html(), gzip_ok=gzip_ok)
+
+    if path.startswith("/casos/") and path[len("/casos/"):] in _CASOS_RENDER_POR_SLUG:
+        return _resp(_CASOS_RENDER_POR_SLUG[path[len("/casos/"):]](), gzip_ok=gzip_ok)
+
     if path == "/casos/contratos-menores-coladero":
         return _resp(render_caso_contratos_menores_coladero_html(), gzip_ok=gzip_ok)
 
@@ -19249,6 +19662,12 @@ def _route_get(path, qs, gzip_ok=False):
 
     if path == "/aviso-legal":
         return _resp(render_aviso_legal_html(), gzip_ok=gzip_ok)
+
+    if path == "/ads.txt":
+        # Autorización de vendedores de AdSense (estándar IAB ads.txt): texto plano en la raíz del dominio.
+        body = f"google.com, {ADSENSE_CLIENT_ID.removeprefix('ca-')}, DIRECT, f08c47fec0942fa0\n"
+        return _resp(body, content_type="text/plain; charset=utf-8",
+                     headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok)
 
     if path == "/robots.txt":
         body = f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
@@ -19268,6 +19687,7 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quienes-somos</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/mapa-cobertura</loc><changefreq>weekly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/metodologia</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/casos</loc><changefreq>weekly</changefreq></url>"] + [
                 f"  <url><loc>{esc(SITE_URL)}/casos/{esc(c['slug'])}</loc><changefreq>monthly</changefreq></url>"
