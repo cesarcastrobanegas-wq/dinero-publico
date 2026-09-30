@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 19:36:14",
+ "generado": "2026-09-30 19:57:50",
  "anio": 2024,
  "municipios": {
   "agost": {
@@ -4909,6 +4909,13 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
+  "zarza capilla": {
+   "municipio": "Zarza Capilla",
+   "provincia": "badajoz",
+   "importe": 16872.91,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
   "abrera": {
    "municipio": "Abrera",
    "provincia": "barcelona",
@@ -6960,6 +6967,13 @@
    "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
+  "arrazu": {
+   "municipio": "Arrazu",
+   "provincia": "pais_vasco",
+   "importe": 236.5,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
   "arrieta": {
    "municipio": "Arrieta",
    "provincia": "pais_vasco",
@@ -7567,6 +7581,13 @@
    "provincia": "pais_vasco",
    "importe": 16206.96,
    "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "trucios": {
+   "municipio": "Trucíos",
+   "provincia": "pais_vasco",
+   "importe": 6190.0,
+   "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
   "ubide": {
@@ -9988,6 +10009,13 @@
    "municipio": "Aldeanueva del Camino",
    "provincia": "caceres",
    "importe": 22580.74,
+   "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "aldehuela del jerte": {
+   "municipio": "Aldehuela del Jerte",
+   "provincia": "caceres",
+   "importe": 15336.31,
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
@@ -16095,11 +16123,25 @@
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
+  "leaburu-txarama": {
+   "municipio": "Leaburu-Txarama",
+   "provincia": "pais_vasco",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
+   "anio": 2024
+  },
   "legazpi": {
    "municipio": "Legazpi",
    "provincia": "pais_vasco",
    "importe": 57186.0,
    "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "leintz gatzaga": {
+   "municipio": "Leintz Gatzaga",
+   "provincia": "pais_vasco",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
   "lezo": {
@@ -16162,6 +16204,13 @@
    "municipio": "Segura",
    "provincia": "pais_vasco",
    "importe": 40077.2,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "soraluze": {
+   "municipio": "Soraluze",
+   "provincia": "pais_vasco",
+   "importe": 36818.6,
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
@@ -21954,11 +22003,25 @@
    "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
+  "sa pobla": {
+   "municipio": "Sa Pobla",
+   "provincia": "baleares",
+   "importe": 38845.8,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
   "porreres": {
    "municipio": "Porreres",
    "provincia": "baleares",
    "importe": 45000.0,
    "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "ses salines": {
+   "municipio": "Ses Salines",
+   "provincia": "baleares",
+   "importe": 34668.24,
+   "regimen_dedicacion": "Parcial",
    "anio": 2024
   },
   "sant antoni de portmany": {
@@ -34929,6 +34992,13 @@
    "municipio": "Fasnia",
    "provincia": "santa_cruz_tenerife",
    "importe": 29000.02,
+   "regimen_dedicacion": "Exclusiva",
+   "anio": 2024
+  },
+  "la frontera": {
+   "municipio": "La Frontera",
+   "provincia": "santa_cruz_tenerife",
+   "importe": 47439.23,
    "regimen_dedicacion": "Exclusiva",
    "anio": 2024
   },
@@ -47936,6 +48006,13 @@
    "provincia": "zaragoza",
    "importe": 6000.0,
    "regimen_dedicacion": "Parcial",
+   "anio": 2024
+  },
+  "la puebla de alborton": {
+   "municipio": "La Puebla de Albortón",
+   "provincia": "zaragoza",
+   "importe": 0.0,
+   "regimen_dedicacion": "Sin dedicación",
    "anio": 2024
   },
   "puendeluna": {

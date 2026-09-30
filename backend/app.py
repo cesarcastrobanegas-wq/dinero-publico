@@ -2584,7 +2584,9 @@ def _detectar_coincidencia_cargo(nombre_persona, municipio_contrato, provincia_c
         return None
     muni_norm = normalizar(municipio_contrato or "")
     for cand in candidatos:
-        if normalizar(cand["municipio"]) == muni_norm:
+        # Con alcaldes/concejales de toda España (2026-09-30) hay municipios homónimos (Torrent de Girona y de
+        # Valencia...): "local" exige también la misma provincia cuando se conoce la del contrato.
+        if normalizar(cand["municipio"]) == muni_norm and (not provincia_contrato or cand["provincia"] == provincia_contrato):
             return {"tipo": "local", **cand}
     for cand in candidatos:
         if cand["provincia"] == provincia_contrato:

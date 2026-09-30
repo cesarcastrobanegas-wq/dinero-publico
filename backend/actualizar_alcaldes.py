@@ -3,9 +3,9 @@
 Descarga alcaldes y concejales de la legislatura vigente desde la app
 "concejalesApp" del Ministerio de Política Territorial y Memoria
 Democrática (https://concejales.redsara.es/consulta/) y genera
-backend/alcaldes_concejales.json filtrado a los municipios de las 5
-provincias que cubre esta app (Murcia, Girona, Lleida, Barcelona, Tarragona
--- ampliado 2026-08-09, ver MUNICIPIOS_POR_PROV_MIN más abajo).
+backend/alcaldes_concejales.json con los municipios de TODAS las provincias
+de MUNICIPIOS_POR_PROVINCIA (ampliado a toda España el 2026-09-30; antes
+solo Murcia y Cataluña, ver _provincia_ministerio_a_clave más abajo).
 
 No hay una API pública documentada (sin token/Swagger): son descargas
 XLSX directas por URL. Por eso este script no se llama desde las rutas
@@ -30,8 +30,7 @@ import openpyxl
 import requests
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import (BASE_DIR, clave_municipio, MUNICIPIOS_MURCIA, MUNICIPIOS_GIRONA, MUNICIPIOS_LLEIDA,
-                  MUNICIPIOS_BARCELONA, MUNICIPIOS_TARRAGONA, normalizar)
+from app import BASE_DIR, clave_municipio, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL, normalizar
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
@@ -43,18 +42,41 @@ URL_CONCEJALES = "https://concejales.redsara.es/consulta/getConcejalesLegislatur
 
 OUT_FILE = f"{BASE_DIR}/alcaldes_concejales.json"
 
-# provincia (tal como aparece en el XLSX del Ministerio) -> lista de
-# municipios oficial de esta app, para poder normalizar/emparejar nombres.
-# Ampliado 2026-08-09 a las 3 provincias catalanas restantes -- las claves
-# "Lleida"/"Barcelona"/"Tarragona" son la nomenclatura INE estándar, mismo
-# patrón ya verificado con "Girona"; revisar sin_match_alcaldes/sin_match_conc
-# tras la primera ejecución por si el XLSX usa una grafía distinta.
-MUNICIPIOS_POR_PROV_MIN = {
-    "Murcia": MUNICIPIOS_MURCIA, "Girona": MUNICIPIOS_GIRONA,
-    "Lleida": MUNICIPIOS_LLEIDA, "Barcelona": MUNICIPIOS_BARCELONA, "Tarragona": MUNICIPIOS_TARRAGONA,
+# Provincia tal como aparece en la columna "Provincia" del XLSX del
+# Ministerio -> clave interna de la app. Hasta el 2026-09-30 era un dict fijo
+# de 5 provincias (Murcia + Cataluña); ahora se deriva de PROVINCIA_LABEL
+# quitando el prefijo ("Provincia de ", "Región de "...), igual que
+# _provincia_ispa_a_clave() de actualizar_retribuciones.py, con los mismos
+# nombres irregulares (verificados en el XLSX real: 52 nombres distintos,
+# las 3 provincias vascas van a la clave única "pais_vasco").
+_PREFIJOS_LABEL = ("Provincia de ", "Región de ", "Comunidad de ",
+                    "Principado de ", "Ciudad Autónoma de ", "Comunidad Foral de ")
+PROVINCIA_MINISTERIO_OVERRIDE = {
+    "pais_vasco": ["Araba/Alava", "Gipuzkoa", "Bizkaia"],
+    "alicante": ["Alacant/Alicante"],
+    "castellon": ["Castelló/Castellón"],
+    "valencia": ["València/Valencia"],
+    "a_coruna": ["Coruña, A"],
+    "las_palmas": ["Palmas, Las"],
+    "la_rioja": ["Rioja, La"],
 }
-PROV_A_KEY = {"Murcia": "murcia", "Girona": "girona",
-              "Lleida": "lleida", "Barcelona": "barcelona", "Tarragona": "tarragona"}
+
+
+def _provincia_ministerio_a_clave():
+    resultado = {}
+    for clave in MUNICIPIOS_POR_PROVINCIA:
+        if clave in PROVINCIA_MINISTERIO_OVERRIDE:
+            nombres = PROVINCIA_MINISTERIO_OVERRIDE[clave]
+        else:
+            label = PROVINCIA_LABEL.get(clave, "")
+            for pref in _PREFIJOS_LABEL:
+                if label.startswith(pref):
+                    label = label[len(pref):]
+                    break
+            nombres = [label] if label else []
+        for nombre in nombres:
+            resultado[normalizar(nombre)] = clave
+    return resultado
 
 
 def _descargar_xlsx(session, url):
@@ -153,6 +175,29 @@ ALIAS_MUNICIPIO = {
     # valenciano, "Castelló de la Plana", y la app la guarda como "Castellón de la Plana" -- se quedaba sin deuda,
     # saldo ni sueldo del alcalde (población y cuentas sí casaban).
     "castello de la plana": "Castellón de la Plana",
+    # Detectados 2026-09-30 al ampliar actualizar_alcaldes.py a toda España (XLSX del Ministerio de Política
+    # Territorial): nombres cortos, guiones o artículos que la lista de la app escribe de otra forma. Los vascos
+    # son los mismos que ALIAS_ISPA de actualizar_retribuciones.py (prefijo "la Anteiglesia de", forma bilingüe
+    # completa...). Sin alias a propósito: "Ezkio-Itsaso" (Gipuzkoa), que la lista de la app guarda como dos
+    # municipios separados, "Ezkio" e "Itsaso" -- repartirle el alcalde a uno de los dos sería inventar.
+    "abadino": "la Anteiglesia de Abadiño",
+    "erandio": "la Anteiglesia de Erandio",
+    "munitibar-arbatzegi gerrikaitz": "Munitibar-Arbatzegi-Gerrikaitz",
+    "abanto y ciervana-abanto zierbena": "Abanto Zierbena",
+    "valle de carranza": "Carranza",
+    "trucios-turtzioz": "Trucíos",
+    "arratzu": "Arrazu",
+    "valdegovia": "Valdegovia-Gaubea",
+    "leaburu": "Leaburu-Txarama",
+    "leintz-gatzaga": "Leintz Gatzaga",
+    "soraluze-placencia de las armas": "Soraluze",
+    "zarza-capilla": "Zarza Capilla",
+    "aldehuela de jerte": "Aldehuela del Jerte",
+    "oza cesuras": "Oza-Cesuras",
+    "o porto do son": "Porto do Son",
+    "pastoriza": "A Pastoriza",
+    "frontera": "La Frontera",
+    "puebla de alborton": "La Puebla de Albortón",
 }
 
 # Girona se curó a mano al estilo "núcleo, artículo, en minúscula" (p.ej.
@@ -187,7 +232,7 @@ ALIAS_MUNICIPIO = {
 # patrón exige que sea EXACTAMENTE eso tras una coma final en un nombre de
 # municipio ya filtrado por el propio catálogo del Ministerio, no una
 # coincidencia libre en cualquier texto, así que el riesgo real es mínimo.
-_RE_NUCLEO_ARTICULO = re.compile(r"^(.+),\s*(El|La|Los|Las|L'|Els|Les|Es|Ets|O|A|Os|As)\s*$", re.IGNORECASE)
+_RE_NUCLEO_ARTICULO = re.compile(r"^(.+),\s*(El|La|Los|Las|L'|Els|Les|Es|Ets|Sa|Ses|S'|O|A|Os|As)\s*$", re.IGNORECASE)
 
 # "de + el" -> "del", "de + els" -> "dels" (única contracción real en
 # catalán con el artículo pospuesto). El nomenclátor PSCP de origen de
@@ -218,7 +263,7 @@ def _formas_nucleo_articulo(nombre):
         return set()
     nucleo, articulo = m.groups()
     articulo = articulo.lower()
-    sep = "" if articulo == "l'" else " "
+    sep = "" if articulo in ("l'", "s'") else " "
     formas = {f"{articulo}{sep}{nucleo}"}
     contraida = _CONTRACCION_DE.get(articulo)
     if contraida:
@@ -226,22 +271,35 @@ def _formas_nucleo_articulo(nombre):
     return formas
 
 
-def _emparejar_municipio(nombre_oficial, provincia):
+def _emparejar_municipio(nombre_oficial, lista_municipios):
     """El nombre de municipio del XLSX del Ministerio puede no coincidir
     carácter a carácter con el listado propio de la app (acentos, orden
-    'la Bisbal' vs 'Bisbal, la', apóstrofes curvos, etc.) -- empareja por
-    forma normalizada, con alias explícitos para los casos de reordenación,
-    y probando también las formas con el artículo reordenado a prefijo (ver
-    _formas_nucleo_articulo, necesario para Lleida/Barcelona/Tarragona)."""
-    candidatos_normalizados = {normalizar(_sin_apostrofes_curvos(nombre_oficial))}
-    for forma in _formas_nucleo_articulo(nombre_oficial):
-        candidatos_normalizados.add(normalizar(_sin_apostrofes_curvos(forma)))
-    for m in MUNICIPIOS_POR_PROV_MIN[provincia]:
-        if normalizar(_sin_apostrofes_curvos(m)) in candidatos_normalizados:
+    'la Bisbal' vs 'Bisbal, la', apóstrofes curvos, nombres bilingües con
+    "/" en uno u otro lado...) -- empareja por forma normalizada, probando
+    también las formas con el artículo reordenado a prefijo (ver
+    _formas_nucleo_articulo) y, al final, los alias explícitos. Misma lógica
+    que _emparejar_en_lista() de actualizar_retribuciones.py."""
+    partes = nombre_oficial.split("/") if "/" in nombre_oficial else [nombre_oficial]
+    candidatos = set()
+    for parte in partes:
+        candidatos.add(normalizar(_sin_apostrofes_curvos(parte)))
+        for forma in _formas_nucleo_articulo(parte):
+            candidatos.add(normalizar(_sin_apostrofes_curvos(forma)))
+    for m in lista_municipios:
+        if normalizar(_sin_apostrofes_curvos(m)) in candidatos:
             return m
-    for buscado in candidatos_normalizados:
+        if "/" in m:
+            for parte_m in m.split("/"):
+                if normalizar(_sin_apostrofes_curvos(parte_m)) in candidatos:
+                    return m
+    # Al revés: la lista de la app pospone el artículo ("Vall de Gallinera, la") y el Ministerio lo antepone
+    # ("la Vall de Gallinera").
+    for m in lista_municipios:
+        if any(normalizar(_sin_apostrofes_curvos(f)) in candidatos for f in _formas_nucleo_articulo(m)):
+            return m
+    for buscado in candidatos:
         alias = ALIAS_MUNICIPIO.get(buscado)
-        if alias and alias in MUNICIPIOS_POR_PROV_MIN[provincia]:
+        if alias and alias in lista_municipios:
             return alias
     return None
 
@@ -256,21 +314,25 @@ def main():
     print("Descargando concejales...")
     wb_con = _descargar_xlsx(session, URL_CONCEJALES)
 
+    prov_a_clave = _provincia_ministerio_a_clave()
+    sin_provincia = set()
     resultado = {}  # clave normalizada de municipio -> {municipio, provincia, alcalde, concejales}
 
     n_alcaldes_match = 0
     sin_match_alcaldes = []
     for fila in _filas(wb_alc.active):
-        provincia = fila.get("Provincia")
-        if provincia not in MUNICIPIOS_POR_PROV_MIN:
+        prov = prov_a_clave.get(normalizar(fila.get("Provincia") or ""))
+        if not prov:
+            sin_provincia.add(fila.get("Provincia"))
             continue
-        muni = _emparejar_municipio(fila.get("Municipio", ""), provincia)
+        provincia = fila.get("Provincia")
+        muni = _emparejar_municipio(fila.get("Municipio", ""), MUNICIPIOS_POR_PROVINCIA[prov])
         if not muni:
             sin_match_alcaldes.append((provincia, fila.get("Municipio")))
             continue
-        clave = clave_municipio(muni, PROV_A_KEY[provincia])   # clave compuesta para homónimos (2026-09-30)
+        clave = clave_municipio(muni, prov)   # clave compuesta para homónimos (2026-09-30)
         resultado.setdefault(clave, {
-            "municipio": muni, "provincia": PROV_A_KEY[provincia],
+            "municipio": muni, "provincia": prov,
             "alcalde": None, "concejales": [],
         })
         resultado[clave]["alcalde"] = {
@@ -283,16 +345,18 @@ def main():
     n_conc_match = 0
     sin_match_conc = set()
     for fila in _filas(wb_con.active):
-        provincia = fila.get("Provincia")
-        if provincia not in MUNICIPIOS_POR_PROV_MIN:
+        prov = prov_a_clave.get(normalizar(fila.get("Provincia") or ""))
+        if not prov:
+            sin_provincia.add(fila.get("Provincia"))
             continue
-        muni = _emparejar_municipio(fila.get("Municipio", ""), provincia)
+        provincia = fila.get("Provincia")
+        muni = _emparejar_municipio(fila.get("Municipio", ""), MUNICIPIOS_POR_PROVINCIA[prov])
         if not muni:
             sin_match_conc.add((provincia, fila.get("Municipio")))
             continue
-        clave = clave_municipio(muni, PROV_A_KEY[provincia])   # clave compuesta para homónimos (2026-09-30)
+        clave = clave_municipio(muni, prov)   # clave compuesta para homónimos (2026-09-30)
         resultado.setdefault(clave, {
-            "municipio": muni, "provincia": PROV_A_KEY[provincia],
+            "municipio": muni, "provincia": prov,
             "alcalde": None, "concejales": [],
         })
         cargo = (fila.get("Cargo") or "").strip()
@@ -307,18 +371,20 @@ def main():
         json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "municipios": resultado},
                    f, ensure_ascii=False, indent=1)
 
-    total_esperado = sum(len(m) for m in MUNICIPIOS_POR_PROV_MIN.values())
+    total_esperado = sum(len(m) for m in MUNICIPIOS_POR_PROVINCIA.values())
     print(f"\nAlcaldes emparejados: {n_alcaldes_match}")
     print(f"Filas de concejales emparejadas: {n_conc_match}")
     print(f"Municipios con datos: {len(resultado)} / {total_esperado} esperados")
     if sin_match_alcaldes:
-        print(f"\nSin emparejar (alcaldes), {len(sin_match_alcaldes)}: {sin_match_alcaldes[:20]}")
+        print(f"\nSin emparejar (alcaldes), {len(sin_match_alcaldes)}: {sin_match_alcaldes}")
     if sin_match_conc:
-        print(f"\nSin emparejar (concejales), {len(sin_match_conc)}: {list(sin_match_conc)[:20]}")
-    todos_municipios = [m for lista in MUNICIPIOS_POR_PROV_MIN.values() for m in lista]
-    faltan = [m for m in todos_municipios if normalizar(m) not in resultado]
+        print(f"\nSin emparejar (concejales), {len(sin_match_conc)}: {sorted(sin_match_conc, key=str)[:40]}")
+    if sin_provincia:
+        print(f"\nProvincias del XLSX sin clave en la app: {sorted(map(str, sin_provincia))}")
+    faltan = [(m, p) for p, lista in MUNICIPIOS_POR_PROVINCIA.items() for m in lista
+              if clave_municipio(m, p) not in resultado]
     if faltan:
-        print(f"\nMunicipios de la app SIN ningún dato encontrado ({len(faltan)}): {faltan}")
+        print(f"\nMunicipios de la app SIN ningún dato encontrado ({len(faltan)}): {faltan[:60]}")
     print(f"\nGuardado en {OUT_FILE}")
 
 
