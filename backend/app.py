@@ -13765,7 +13765,10 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .dd-cab h2{font-size:17px;margin:0;}
 .dd-sub{font-size:12px;color:var(--dim);}
 .dd-tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;}
-.dd-tarjeta{border:1px dashed var(--border);border-radius:10px;padding:12px 14px;max-width:620px;}
+.dd-tarjeta{border:1px dashed var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;}
+.dd-titulo-contrato{font-size:15px;font-weight:700;color:var(--text);text-decoration:none;margin-top:4px;overflow-wrap:anywhere;}
+a.dd-titulo-contrato:hover{text-decoration:underline;}
+.dd-tarjeta .dd-fuente{margin-top:6px;}
 .dd-etiqueta{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);}
 .dd-nombre{display:block;font-size:22px;font-weight:800;color:var(--text);text-decoration:none;margin-top:4px;overflow-wrap:anywhere;}
 .dd-nombre:hover{text-decoration:underline;}
@@ -17867,7 +17870,46 @@ def _fecha_corte_deuda_viva():
     return f"{ultimo:02d}/{mes:02d}/{anio}" if ultimo else ""
 
 
-def _datos_destacados_portada_html():
+def _mayor_contrato_html(datos):
+    """Tarjeta "El mayor contrato adjudicado" (encargo de César 2026-10-01): el contrato FORMAL de mayor importe entre
+    los cargados (los menores quedan fuera: por definición son pequeños y sus importes gigantes son erratas de origen,
+    ver el caso de El Viso del Alcor). Excluye los importes en revisión (_CONTRATOS_IMPORTE_EN_REVISION), igual que los
+    rankings. Es un dato factual, sin normalizar por población; la nota avisa de que en los contratos plurianuales el
+    importe cubre toda la duración (p. ej. recogida de residuos a 8 años)."""
+    mayor, muni_mayor = None, None
+    for d in datos or []:
+        for c in d.get("contratos", []):
+            if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
+            # PLACE: solo lo ADJUDICADO por lote (ver _adjudicaciones_place); el presupuesto de una licitación de varios
+            # lotes no es "un contrato" (València, 1.204 M€ de presupuesto de 4 lotes, ganaba antes del arreglo).
+            if (c.get("fuente") or "PLACE") == "PLACE" and c.get("importe_tipo") != "adjudicado":
+                continue
+            v = c.get("importe_num") or 0.0
+            if v > 0 and (mayor is None or v > (mayor.get("importe_num") or 0.0)):
+                mayor, muni_mayor = c, d
+    if not mayor:
+        return ""
+    titulo = (mayor.get("titulo") or "").strip()
+    titulo_corto = titulo if len(titulo) <= 110 else titulo[:107].rstrip() + "…"
+    empresa = mayor.get("empresa", "")
+    empresa_html = (esc(empresa) if empresa and empresa != "No localizada" else _t("adjudicatario no identificado"))
+    municipio, provincia = muni_mayor.get("municipio", ""), muni_mayor.get("provincia", "")
+    url_ficha = f'/?muni={quote_plus(municipio)}{_q_prov(provincia)}'
+    fuente = mayor.get("fuente", "PLACE") or "PLACE"
+    url = mayor.get("url", "")
+    titulo_html = (f'<a class="dd-titulo-contrato" href="{esc(url)}" target="_blank" rel="noopener">{esc(titulo_corto)} ↗</a>'
+                   if url.startswith("http") else f'<span class="dd-titulo-contrato">{esc(titulo_corto)}</span>')
+    return f"""<div class="dd-tarjeta">
+        <div class="dd-etiqueta">{_t("El mayor contrato adjudicado")}</div>
+        <div class="dd-cifra">{fmt_eur(mayor["importe_num"])}</div>
+        {titulo_html}
+        <div class="dd-lugar"><a href="{url_ficha}">{esc(municipio)}</a> · {empresa_html}</div>
+        <div class="dd-nota">{_t("Importe de adjudicación publicado por {fuente}; en contratos plurianuales incluye toda su duración.").format(fuente=esc(fuente))}</div>
+      </div>"""
+
+
+def _datos_destacados_portada_html(datos=None):
     """"Datos destacados" de la portada nacional (encargo de César 2026-10-01): bloque FINANCIERO, separado y etiquetado
     para no confundirlo con el Índice de Transparencia. De momento, la mayor ciudad sin deuda viva.
 
@@ -17881,32 +17923,38 @@ def _datos_destacados_portada_html():
             continue
         pob = (POBLACION.get(clave) or {}).get("poblacion")
         sin_deuda.append((pob or 0, d))
-    if not sin_deuda:
+    habitantes, mayor = max(sin_deuda, key=lambda x: x[0]) if sin_deuda else (0, None)
+    tarjeta_contrato = _mayor_contrato_html(datos)
+    if not habitantes and not tarjeta_contrato:
         return ""
-    habitantes, mayor = max(sin_deuda, key=lambda x: x[0])
     if not habitantes:
-        return ""
+        return _dd_bloque_html("", tarjeta_contrato)
     fecha = _fecha_corte_deuda_viva()
     municipio, provincia = mayor["municipio"], mayor.get("provincia", "")
     url = f'/?muni={quote_plus(municipio)}{_q_prov(provincia)}'
     fuente = (_t("Deuda viva a {fecha}, Ministerio de Hacienda").format(fecha=fecha) if fecha
               else _t("Deuda viva, Ministerio de Hacienda"))
+    tarjeta_deuda = f"""<div class="dd-tarjeta">
+        <div class="dd-etiqueta">{_t("La mayor ciudad sin deuda")}</div>
+        <a class="dd-nombre" href="{url}">{esc(municipio)}</a>
+        <div class="dd-lugar">{esc(PROVINCIA_LABEL.get(provincia, provincia))} · {_t("{n} habitantes").format(n=fmt_num(habitantes))}</div>
+        <div class="dd-cifra">0 €<small> {_t("de deuda viva")}</small></div>
+        <div class="dd-nota">{_t("Es uno de los {n} ayuntamientos de España sin deuda viva.").format(n=fmt_num(len(sin_deuda)))}</div>
+        <div class="dd-fuente">{_t("Fuente:")} <a href="{esc(DEUDA_VIVA_FUENTE_URL)}" target="_blank" rel="noopener">{esc(fuente)} ↗</a></div>
+      </div>"""
+    return _dd_bloque_html(tarjeta_deuda, tarjeta_contrato)
+
+
+def _dd_bloque_html(*tarjetas):
     return f"""<section class="dd-bloque" aria-labelledby="dd-titulo">
     <div class="dd-cab">
       <h2 id="dd-titulo">💶 {_t("Datos destacados · Finanzas municipales")}</h2>
       <span class="dd-sub">{_t("Datos económicos oficiales; no forman parte del Índice de Transparencia.")}</span>
     </div>
     <div class="dd-tarjetas">
-      <div class="dd-tarjeta">
-        <div class="dd-etiqueta">{_t("La mayor ciudad sin deuda")}</div>
-        <a class="dd-nombre" href="{url}">{esc(municipio)}</a>
-        <div class="dd-lugar">{esc(PROVINCIA_LABEL.get(provincia, provincia))} · {_t("{n} habitantes").format(n=fmt_num(habitantes))}</div>
-        <div class="dd-cifra">0 €<small> {_t("de deuda viva")}</small></div>
-        <div class="dd-nota">{_t("Es uno de los {n} ayuntamientos de España sin deuda viva.").format(n=fmt_num(len(sin_deuda)))}</div>
-      </div>
+      {"".join(tarjetas)}
     </div>
     <div class="dd-pie">
-      <span class="dd-fuente">{_t("Fuente:")} <a href="{esc(DEUDA_VIVA_FUENTE_URL)}" target="_blank" rel="noopener">{esc(fuente)} ↗</a></span>
       <a class="btn-ver" href="/rankings#deuda-habitante">{_t("Ver ranking de deuda por habitante →")}</a>
     </div>
   </section>"""
@@ -18310,7 +18358,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     {stats}
   </div>
   {_lider_indice_portada_html()}
-  {_datos_destacados_portada_html()}
+  {_datos_destacados_portada_html(datos)}
   <div class="section-title">{_t("Cobertura")}</div>
   <div class="mapa-indice-row">
     <div class="mapa-indice-mapa">{mapa_html}</div>
