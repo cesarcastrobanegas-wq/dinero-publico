@@ -23,6 +23,204 @@ import requests
 from bs4 import BeautifulSoup
 import psutil
 
+
+# ─── INTERFAZ MULTIIDIOMA (gallego, catalán, euskera) — estructura, 2026-09-30 ────────────────────────────────
+# Solo la INTERFAZ (menús, botones, etiquetas, textos fijos); el contenido editorial (/casos, /metodologia) y los
+# datos de las fichas siguen en castellano. Piezas:
+#   - Catálogos gettext estándar en backend/locale/<idioma>.po (editables con Poedit o cualquier herramienta de
+#     traducción). Se leen aquí al arrancar, sin paso de compilación a .mo. Los genera y actualiza
+#     backend/i18n_extraer.py a partir de las llamadas _t("...") de este fichero.
+#   - _t("texto en castellano") devuelve la traducción del idioma de la petición en curso (o el propio texto si no
+#     hay traducción: nunca rompe). Con variables: _t("Página {n} de {total}").format(n=..., total=...), para que se
+#     traduzca la frase entera. Solo LITERALES dentro de _t(): el extractor no ve variables.
+#   - El idioma va en el prefijo de la ruta: /gl/..., /ca/..., /eu/... (sin prefijo = castellano). Se resuelve en una
+#     sola capa (_route_get_i18n/_route_post_i18n): se quita el prefijo, se fija el idioma en un ContextVar (un valor
+#     por petición e hilo, sin tocar la firma de ninguna función de render) y a la salida se reescriben los enlaces
+#     internos del HTML para que conserven el prefijo.
+#   - I18N_PUBLICADOS (variable de entorno, p. ej. "gl,ca,eu"): idiomas visibles. Solo esos llevan pestañas en la
+#     cabecera, hreflang y se indexan; los demás funcionan (para probarlos) pero con noindex.
+import contextvars
+
+I18N_IDIOMAS = {"gl": ("Galego", "gl_ES"), "ca": ("Català", "ca_ES"), "eu": ("Euskara", "eu_ES")}
+I18N_LOCALE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locale")
+_I18N_IDIOMA = contextvars.ContextVar("i18n_idioma", default="es")
+_I18N_RUTA = contextvars.ContextVar("i18n_ruta", default=("/", ""))   # (ruta sin prefijo, query string)
+
+
+def _i18n_publicados():
+    return [x for x in (s.strip() for s in os.environ.get("I18N_PUBLICADOS", "").split(",")) if x in I18N_IDIOMAS]
+
+
+def _po_unescape(s):
+    return (s.replace("\\\\", "\x00").replace("\\n", "\n").replace("\\t", "\t").replace('\\"', '"')
+            .replace("\x00", "\\"))
+
+
+def _po_leer(ruta):
+    """{msgid: msgstr} de un .po (entradas simples, sin plurales ni contextos). Las traducciones vacías o marcadas
+    como fuzzy no se cargan: mejor el castellano que una traducción dudosa."""
+    catalogo, entrada, campo, fuzzy = {}, {}, None, False
+
+    def _cerrar():
+        mid, mstr = entrada.get("msgid", ""), entrada.get("msgstr", "")
+        if mid and mstr and not fuzzy:
+            catalogo[mid] = mstr
+
+    try:
+        lineas = open(ruta, encoding="utf-8").read().splitlines()
+    except OSError:
+        return {}
+    for linea in lineas + [""]:
+        linea = linea.strip()
+        if not linea:
+            if entrada:
+                _cerrar()
+            entrada, campo, fuzzy = {}, None, False
+        elif linea.startswith("#,"):
+            fuzzy = fuzzy or "fuzzy" in linea
+        elif linea.startswith("#"):
+            continue
+        elif linea.startswith(("msgid ", "msgstr ")):
+            campo, _, resto = linea.partition(" ")
+            entrada[campo] = _po_unescape(resto.strip()[1:-1])
+        elif linea.startswith('"') and campo:
+            entrada[campo] = entrada.get(campo, "") + _po_unescape(linea[1:-1])
+    return catalogo
+
+
+_I18N_CATALOGOS = {lang: _po_leer(os.path.join(I18N_LOCALE_DIR, f"{lang}.po")) for lang in I18N_IDIOMAS}
+
+
+def _t(texto):
+    lang = _I18N_IDIOMA.get()
+    if lang == "es":
+        return texto
+    return _I18N_CATALOGOS.get(lang, {}).get(texto, texto)
+
+
+def _i18n_idioma():
+    return _I18N_IDIOMA.get()
+
+
+def _i18n_separar_prefijo(path):
+    """'/gl/rankings' -> ('gl', '/rankings'); '/gl' o '/gl/' -> ('gl', '/'); sin prefijo -> ('es', path)."""
+    for lang in I18N_IDIOMAS:
+        if path == f"/{lang}" or path.startswith(f"/{lang}/"):
+            return lang, path[len(lang) + 1:] or "/"
+    return "es", path
+
+
+def _i18n_url(lang, ruta, query=""):
+    base = ruta if lang == "es" else f"/{lang}{ruta}"
+    return base + (f"?{query}" if query else "")
+
+
+def _i18n_selector_html():
+    """Pestañas de idioma de la cabecera: solo si hay idiomas publicados. Cada una lleva a la MISMA página en ese
+    idioma (misma ruta y query)."""
+    publicados = _i18n_publicados()
+    if not publicados:
+        return ""
+    actual = _I18N_IDIOMA.get()
+    ruta, query = _I18N_RUTA.get()
+    opciones = [("es", "Castellano")] + [(l, I18N_IDIOMAS[l][0]) for l in publicados]
+    activo = ' class="activo" aria-current="true"'
+    enlaces = "".join(
+        f'<a href="{html.escape(_i18n_url(l, ruta, query))}" hreflang="{l}" lang="{l}" data-i18n-fijo'
+        f'{activo if l == actual else ""}>{html.escape(nombre)}</a>'
+        for l, nombre in opciones)
+    return f'<nav class="idiomas" aria-label="Idioma">{enlaces}</nav>'
+
+
+# Rutas que NO llevan prefijo de idioma aunque la página esté traducida: ficheros estáticos y API.
+_I18N_RE_ENLACE = re.compile(
+    r'((?:href|action)=")/(?!/)(?!(?:static/|api/|sw\.js|manifest\.json|ads\.txt|robots\.txt|sitemap\.xml'
+    r'|admin/|(?:gl|ca|eu)(?:/|"|\?|#)))')
+_I18N_RE_DATA_FIJO = re.compile(r'<a href="([^"]*)"([^>]*?)data-i18n-fijo')
+
+
+def _i18n_reescribir_html(texto, lang):
+    """Solo para idiomas distintos del castellano: enlaces internos con prefijo, lang/og:locale, canonical y og:url
+    de la versión en ese idioma, hreflang si está publicado y noindex si no lo está."""
+    pref = f"/{lang}"
+    # Los enlaces del selector de idioma ya llevan su prefijo correcto (o ninguno, el de castellano): se protegen.
+    fijos = []
+
+    def _proteger(m):
+        fijos.append(m.group(0))
+        return f"\x00FIJO{len(fijos) - 1}\x00"
+
+    texto = _I18N_RE_DATA_FIJO.sub(_proteger, texto)
+    texto = _I18N_RE_ENLACE.sub(lambda m: f"{m.group(1)}{pref}/", texto)
+    texto = re.sub(r"\x00FIJO(\d+)\x00", lambda m: fijos[int(m.group(1))], texto)
+    texto = texto.replace("location.href='/", f"location.href='{pref}/")
+    texto = texto.replace('<html lang="es">', f'<html lang="{lang}">', 1)
+    texto = texto.replace('content="es_ES"', f'content="{I18N_IDIOMAS[lang][1]}"', 1)
+    site = re.escape(SITE_URL)
+    texto = re.sub(rf'(<link rel="canonical" href="){site}/', rf"\g<1>{SITE_URL}{pref}/", texto, count=1)
+    texto = re.sub(rf'(<meta property="og:url" content="){site}/', rf"\g<1>{SITE_URL}{pref}/", texto, count=1)
+    if lang in _i18n_publicados():
+        texto = texto.replace("</head>", _i18n_hreflang_html() + "</head>", 1)
+    else:
+        texto = texto.replace('<meta name="robots" content="index, follow">',
+                              '<meta name="robots" content="noindex, follow">', 1)
+    return texto
+
+
+def _i18n_hreflang_html():
+    ruta, query = _I18N_RUTA.get()
+    enlaces = [("es", _i18n_url("es", ruta, query))] + [(l, _i18n_url(l, ruta, query)) for l in _i18n_publicados()]
+    return "".join(f'<link rel="alternate" hreflang="{l}" href="{html.escape(SITE_URL + u)}">' for l, u in enlaces) + \
+        f'<link rel="alternate" hreflang="x-default" href="{html.escape(SITE_URL + _i18n_url("es", ruta, query))}">'
+
+
+def _i18n_ajustar_respuesta(resp, lang, gzip_ok):
+    """Aplica _i18n_reescribir_html a una respuesta ya construida SIN gzip (la ruta se llama con gzip_ok=False
+    cuando hay prefijo), prefija las redirecciones internas y comprime al final si el cliente lo acepta."""
+    code, headers, body = resp
+    headers = dict(headers)
+    loc = headers.get("Location", "")
+    if loc.startswith("/") and not loc.startswith("//") and _i18n_separar_prefijo(loc)[0] == "es":
+        headers["Location"] = f"/{lang}{loc}"
+    ctype = headers.get("Content-Type", "")
+    if body and ctype.startswith("text/html") and headers.get("Content-Encoding") != "gzip":
+        body = _i18n_reescribir_html(body.decode("utf-8"), lang).encode("utf-8")
+    if lang not in _i18n_publicados() and ctype.startswith("text/html"):
+        headers["X-Robots-Tag"] = "noindex"
+    if (gzip_ok and body and headers.get("Content-Encoding") != "gzip"
+            and ctype.startswith(("text/", "application/json", "application/xml", "application/javascript"))):
+        body = _gzip.compress(body, compresslevel=6)
+        headers["Content-Encoding"] = "gzip"
+    if "Content-Length" in headers or body:
+        headers["Content-Length"] = str(len(body))
+    return code, headers, body
+
+
+def _route_get_i18n(path, qs, gzip_ok=False, query_string=""):
+    lang, ruta = _i18n_separar_prefijo(path)
+    if lang != "es" and path == f"/{lang}":
+        return 301, {"Location": f"/{lang}/" + (f"?{query_string}" if query_string else ""), "Content-Length": "0"}, b""
+    t1, t2 = _I18N_IDIOMA.set(lang), _I18N_RUTA.set((ruta, query_string))
+    try:
+        if lang == "es":
+            return _route_get(ruta, qs, gzip_ok=gzip_ok)
+        return _i18n_ajustar_respuesta(_route_get(ruta, qs, gzip_ok=False), lang, gzip_ok)
+    finally:
+        _I18N_IDIOMA.reset(t1)
+        _I18N_RUTA.reset(t2)
+
+
+def _route_post_i18n(path, params):
+    lang, ruta = _i18n_separar_prefijo(path)
+    t1, t2 = _I18N_IDIOMA.set(lang), _I18N_RUTA.set((ruta, ""))
+    try:
+        if lang == "es":
+            return _route_post(ruta, params)
+        return _i18n_ajustar_respuesta(_route_post(ruta, params), lang, False)
+    finally:
+        _I18N_IDIOMA.reset(t1)
+        _I18N_RUTA.reset(t2)
+
 # ─── CONFIGURACIÓN ───────────────────────────────────────────────────────────
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
@@ -13255,6 +13453,9 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .share-label{font-size:12px;color:var(--dim);font-weight:600;margin-right:2px;}
 .share-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--bg);border:1px solid var(--border);font-size:15px;text-decoration:none;cursor:pointer;line-height:1;}
 .share-btn:hover{border-color:var(--accent);}
+.idiomas{display:flex;flex-wrap:wrap;gap:4px;font-size:12px;margin-top:6px;}
+.idiomas a{padding:3px 8px;border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--dim);background:var(--surface);}
+.idiomas a.activo{background:var(--accent);border-color:var(--accent);color:#fff;}
 .it-lider{background:var(--surface);border:2px solid var(--accent);border-radius:14px;padding:16px 18px;margin:18px 0 22px;}
 .it-lider-cab{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;}
 .it-lider-cab h2{font-size:17px;margin:0;}
@@ -14123,16 +14324,17 @@ def _header_html(provincia="todas"):
   <a href="/" class="header-brand" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
     <div class="logo-svg">{LOGO_SVG}</div>
     <div>
-      <h1 style="color:var(--text)">Dinero Público · Contratación pública en España</h1>
+      <h1 style="color:var(--text)">Dinero Público · {_t("Contratación pública en España")}</h1>
       <p>{esc(SITE_TAGLINE)}</p>
     </div>
   </a>
   <nav class="header-nav">
-    <a href="{rankings_href}">🏆 Rankings</a>
-    <a href="{rankings_href}#alcaldes">💰 Sueldos Alcaldes</a>
-    <a href="/fondos-ue" style="color:var(--yellow)">🇪🇺 Fondos UE</a>
-    <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>📲 Instalar app</button>
+    <a href="{rankings_href}">🏆 {_t("Rankings")}</a>
+    <a href="{rankings_href}#alcaldes">💰 {_t("Sueldos Alcaldes")}</a>
+    <a href="/fondos-ue" style="color:var(--yellow)">🇪🇺 {_t("Fondos UE")}</a>
+    <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>📲 {_t("Instalar app")}</button>
   </nav>
+  {_i18n_selector_html()}
 </header>"""
 
 
@@ -14161,40 +14363,34 @@ def _footer_html(provincia="todas"):
     brand_label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["todas"])
     return f"""<div class="instalar-bar">
   <div class="instalar-text">
-    <b>📲 Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin
-    tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la
-    cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome,
-    Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad
-    (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio».
+    {_t("<b>📲 Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio».")}
   </div>
 </div>
 <div class="colabora-bar">
   <div class="colabora-text">
-    <b>🤝 Colabora</b> — La transparencia no se regala, se construye.
-    Si este proyecto te ha servido para saber en qué se gasta el dinero de todos,
-    ayúdanos a que siga en pie.
+    {_t("<b>🤝 Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie.")}
   </div>
-  <span class="colabora-bizum" title="Envía un Bizum a este número desde tu app del banco">
+  <span class="colabora-bizum" title="{_t("Envía un Bizum a este número desde tu app del banco")}">
     💙 Bizum: {BIZUM_TELEFONO}
   </span>
 </div>
 <footer class="site-footer">
-  <div class="ft-brand">© Dinero Público — datos oficiales públicos, {esc(brand_label)}</div>
+  <div class="ft-brand">© Dinero Público — {_t("datos oficiales públicos")}, {esc(brand_label)}</div>
   <div class="ft-links">
     {fuente_links}
     <a href="https://www.boe.es/" target="_blank" rel="noopener">BOE</a>
     <a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener">Registro Mercantil</a>
-    <a href="/rankings{_q_prov_first(provincia)}">Rankings</a>
-    <a href="/rankings{_q_prov_first(provincia)}#alcaldes">Sueldos Alcaldes</a>
-    <a href="/fondos-ue">Fondos UE</a>
-    <a href="/aviso-legal">Aviso Legal</a>
-    <a href="#" id="cookie-preferencias">Preferencias de cookies</a>
-    <a href="/quienes-somos">Quiénes Somos</a>
-    <a href="/casos">Casos</a>
-    <a href="/mapa-cobertura">Mapa de cobertura</a>
-    <a href="/metodologia">Metodología</a>
+    <a href="/rankings{_q_prov_first(provincia)}">{_t("Rankings")}</a>
+    <a href="/rankings{_q_prov_first(provincia)}#alcaldes">{_t("Sueldos Alcaldes")}</a>
+    <a href="/fondos-ue">{_t("Fondos UE")}</a>
+    <a href="/aviso-legal">{_t("Aviso Legal")}</a>
+    <a href="#" id="cookie-preferencias">{_t("Preferencias de cookies")}</a>
+    <a href="/quienes-somos">{_t("Quiénes Somos")}</a>
+    <a href="/casos">{_t("Casos")}</a>
+    <a href="/mapa-cobertura">{_t("Mapa de cobertura")}</a>
+    <a href="/metodologia">{_t("Metodología")}</a>
     <span class="ft-sep">|</span>
-    <span class="ft-label">Enlaces de interés:</span>
+    <span class="ft-label">{_t("Enlaces de interés:")}</span>
     <a href="https://civio.es" target="_blank" rel="noopener">CIVIO</a>
     <a href="https://transparencia.org.es" target="_blank" rel="noopener">Transparency International España</a>
     <a href="https://www.hayderecho.com" target="_blank" rel="noopener">Fundación Hay Derecho</a>
@@ -14217,6 +14413,9 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     # ruta -- ver render_caso_*_html para el caso que motivó el fix
     # (2026-09-20).
     og_url = f"{SITE_URL}{og_path}"
+    aviso_cookies = _t("Usamos cookies propias y de terceros (Google Analytics y, en el futuro, publicidad de Google "
+                       "AdSense) para analizar el uso del sitio y, si las aceptas, mostrar anuncios — {enlace}.").format(
+        enlace=f'<a href="/aviso-legal">{_t("más información")}</a>')
     return f"""<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -14252,21 +14451,18 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 {extra_head}</head>
 <body>
 <div id="pwa-banner-mobile" class="pwa-banner-mobile" hidden>
-  <span class="pwa-banner-text">📲 Instala la app — acceso directo desde tu móvil</span>
-  <button type="button" id="pwa-banner-btn" class="pwa-banner-btn">Instalar</button>
-  <button type="button" id="pwa-banner-close" class="pwa-banner-close" aria-label="Cerrar aviso">✕</button>
+  <span class="pwa-banner-text">📲 {_t("Instala la app — acceso directo desde tu móvil")}</span>
+  <button type="button" id="pwa-banner-btn" class="pwa-banner-btn">{_t("Instalar")}</button>
+  <button type="button" id="pwa-banner-close" class="pwa-banner-close" aria-label="{_t("Cerrar aviso")}">✕</button>
 </div>
 <div id="cookie-banner" class="cookie-banner" hidden>
   <div class="cookie-content">
     <div class="cookie-texto">
-      🍪 Usamos cookies propias y de terceros (Google Analytics y, en el
-      futuro, publicidad de Google AdSense) para analizar el uso del sitio y,
-      si las aceptas, mostrar anuncios — <a href="/aviso-legal">más
-      información</a>.
+      🍪 {aviso_cookies}
     </div>
     <div class="cookie-botones">
-      <button type="button" id="cookie-rechazar" class="cookie-btn cookie-btn-rechazar">Rechazar</button>
-      <button type="button" id="cookie-aceptar" class="cookie-btn cookie-btn-aceptar">Aceptar</button>
+      <button type="button" id="cookie-rechazar" class="cookie-btn cookie-btn-rechazar">{_t("Rechazar")}</button>
+      <button type="button" id="cookie-aceptar" class="cookie-btn cookie-btn-aceptar">{_t("Aceptar")}</button>
     </div>
   </div>
 </div>
@@ -14278,7 +14474,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 {_footer_html(provincia)}
 {_it_info_pop_html()}
 <a class="peticion-flotante" href="{esc(PETICION_CONTRATOS_MENORES_URL)}" target="_blank" rel="noopener"
-   aria-label="Firma la petición sobre contratos menores en change.org (se abre en una pestaña nueva)">✍️ Firma la petición</a>
+   aria-label="{_t("Firma la petición sobre contratos menores en change.org (se abre en una pestaña nueva)")}">✍️ {_t("Firma la petición")}</a>
 <script>
   if ('serviceWorker' in navigator) {{
     window.addEventListener('load', function() {{
@@ -18120,13 +18316,13 @@ def _share_buttons_html(path, titulo):
     url_enc = quote_plus(url_completa)
     titulo_enc = quote_plus(titulo)
     return f"""<div class="share-buttons">
-  <span class="share-label">Compartir:</span>
-  <a class="share-btn share-wa" href="https://wa.me/?text={titulo_enc}%20{url_enc}" target="_blank" rel="noopener" aria-label="Compartir en WhatsApp" title="WhatsApp">{_SHARE_ICONOS["whatsapp"]}</a>
-  <a class="share-btn share-fb" href="https://www.facebook.com/sharer/sharer.php?u={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en Facebook" title="Facebook">{_SHARE_ICONOS["facebook"]}</a>
-  <a class="share-btn share-x" href="https://twitter.com/intent/tweet?text={titulo_enc}&amp;url={url_enc}" target="_blank" rel="noopener" aria-label="Compartir en X" title="X (Twitter)">{_SHARE_ICONOS["x"]}</a>
-  <a class="share-btn share-tg" href="https://t.me/share/url?url={url_enc}&amp;text={titulo_enc}" target="_blank" rel="noopener" aria-label="Compartir en Telegram" title="Telegram">{_SHARE_ICONOS["telegram"]}</a>
-  <a class="share-btn" href="mailto:?subject={titulo_enc}&amp;body={url_enc}" aria-label="Compartir por correo" title="Correo">{_SHARE_ICONOS["correo"]}</a>
-  <button type="button" class="share-btn share-copy" data-url="{esc(url_completa)}" aria-label="Copiar enlace" title="Copiar enlace">{_SHARE_ICONOS["enlace"]}</button>
+  <span class="share-label">{_t("Compartir:")}</span>
+  <a class="share-btn share-wa" href="https://wa.me/?text={titulo_enc}%20{url_enc}" target="_blank" rel="noopener" aria-label="{_t("Compartir en WhatsApp")}" title="WhatsApp">{_SHARE_ICONOS["whatsapp"]}</a>
+  <a class="share-btn share-fb" href="https://www.facebook.com/sharer/sharer.php?u={url_enc}" target="_blank" rel="noopener" aria-label="{_t("Compartir en Facebook")}" title="Facebook">{_SHARE_ICONOS["facebook"]}</a>
+  <a class="share-btn share-x" href="https://twitter.com/intent/tweet?text={titulo_enc}&amp;url={url_enc}" target="_blank" rel="noopener" aria-label="{_t("Compartir en X")}" title="X (Twitter)">{_SHARE_ICONOS["x"]}</a>
+  <a class="share-btn share-tg" href="https://t.me/share/url?url={url_enc}&amp;text={titulo_enc}" target="_blank" rel="noopener" aria-label="{_t("Compartir en Telegram")}" title="Telegram">{_SHARE_ICONOS["telegram"]}</a>
+  <a class="share-btn" href="mailto:?subject={titulo_enc}&amp;body={url_enc}" aria-label="{_t("Compartir por correo")}" title="{_t("Correo")}">{_SHARE_ICONOS["correo"]}</a>
+  <button type="button" class="share-btn share-copy" data-url="{esc(url_completa)}" aria-label="{_t("Copiar enlace")}" title="{_t("Copiar enlace")}">{_SHARE_ICONOS["enlace"]}</button>
 </div>
 <script>
 (function(){{
@@ -18136,8 +18332,8 @@ def _share_buttons_html(path, titulo):
       function marcarCopiado(ok){{
         var original = btn.innerHTML;
         btn.innerHTML = ok ? '{_SHARE_ICONOS["ok"]}' : '⚠️';
-        btn.title = ok ? 'Enlace copiado' : 'No se pudo copiar';
-        setTimeout(function(){{ btn.innerHTML = original; btn.title = 'Copiar enlace'; }}, 1500);
+        btn.title = ok ? {json.dumps(_t("Enlace copiado"))} : {json.dumps(_t("No se pudo copiar"))};
+        setTimeout(function(){{ btn.innerHTML = original; btn.title = {json.dumps(_t("Copiar enlace"))}; }}, 1500);
       }}
       if (navigator.clipboard && navigator.clipboard.writeText) {{
         navigator.clipboard.writeText(url).then(function(){{ marcarCopiado(true); }}).catch(function(){{ marcarCopiado(false); }});
@@ -20233,7 +20429,8 @@ def app(environ, start_response):
     gzip_ok = "gzip" in environ.get("HTTP_ACCEPT_ENCODING", "")
 
     if method == "GET":
-        code, headers, body = _route_get(path, qs, gzip_ok=gzip_ok)
+        code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
+                                              query_string=environ.get("QUERY_STRING", ""))
     elif method == "POST":
         try:
             length = int(environ.get("CONTENT_LENGTH") or 0)
@@ -20241,7 +20438,7 @@ def app(environ, start_response):
             length = 0
         raw = environ["wsgi.input"].read(length).decode("utf-8") if length else ""
         params = parse_qs(raw, keep_blank_values=True)
-        code, headers, body = _route_post(path, params)
+        code, headers, body = _route_post_i18n(path, params)
     else:
         code, headers, body = 405, {"Content-Length": "0"}, b""
 
@@ -20271,14 +20468,14 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         qs = parse_qs(parsed.query)
         gzip_ok = "gzip" in self.headers.get("Accept-Encoding", "")
-        self._write(*_route_get(parsed.path, qs, gzip_ok=gzip_ok))
+        self._write(*_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok, query_string=parsed.query))
 
     def do_POST(self):
         try:
             length = int(self.headers.get("Content-Length", 0) or 0)
             raw = self.rfile.read(length).decode("utf-8") if length else ""
             params = parse_qs(raw, keep_blank_values=True)
-            self._write(*_route_post(self.path, params))
+            self._write(*_route_post_i18n(urlparse(self.path).path, params))
         except Exception as e:
             self._write(*_error_resp(f"Error: {e}", 500))
 

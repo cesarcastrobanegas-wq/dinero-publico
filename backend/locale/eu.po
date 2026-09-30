@@ -1,0 +1,147 @@
+# Dinero Público — interfaz en Basque (eu).
+# Generado por backend/i18n_extraer.py; se puede editar a mano o con Poedit. Solo la interfaz: el
+# contenido editorial y los datos siguen en castellano.
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: eu\n"
+
+#: app.py:14327
+msgid "Contratación pública en España"
+msgstr ""
+
+#: app.py:14332 app.py:14383
+msgid "Rankings"
+msgstr ""
+
+#: app.py:14333 app.py:14384
+msgid "Sueldos Alcaldes"
+msgstr ""
+
+#: app.py:14334 app.py:14385
+msgid "Fondos UE"
+msgstr ""
+
+#: app.py:14335
+msgid "Instalar app"
+msgstr ""
+
+#: app.py:14366
+msgid "<b>📲 Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio»."
+msgstr ""
+
+#: app.py:14371
+msgid "<b>🤝 Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie."
+msgstr ""
+
+#: app.py:14373
+msgid "Envía un Bizum a este número desde tu app del banco"
+msgstr ""
+
+#: app.py:14378
+msgid "datos oficiales públicos"
+msgstr ""
+
+#: app.py:14386
+msgid "Aviso Legal"
+msgstr ""
+
+#: app.py:14387
+msgid "Preferencias de cookies"
+msgstr ""
+
+#: app.py:14388
+msgid "Quiénes Somos"
+msgstr ""
+
+#: app.py:14389
+msgid "Casos"
+msgstr ""
+
+#: app.py:14390
+msgid "Mapa de cobertura"
+msgstr ""
+
+#: app.py:14391
+msgid "Metodología"
+msgstr ""
+
+#: app.py:14393
+msgid "Enlaces de interés:"
+msgstr ""
+
+#: app.py:14416
+msgid "Usamos cookies propias y de terceros (Google Analytics y, en el futuro, publicidad de Google AdSense) para analizar el uso del sitio y, si las aceptas, mostrar anuncios — {enlace}."
+msgstr ""
+
+#: app.py:14418
+msgid "más información"
+msgstr ""
+
+#: app.py:14454
+msgid "Instala la app — acceso directo desde tu móvil"
+msgstr ""
+
+#: app.py:14455
+msgid "Instalar"
+msgstr ""
+
+#: app.py:14456
+msgid "Cerrar aviso"
+msgstr ""
+
+#: app.py:14464
+msgid "Rechazar"
+msgstr ""
+
+#: app.py:14465
+msgid "Aceptar"
+msgstr ""
+
+#: app.py:14477
+msgid "Firma la petición sobre contratos menores en change.org (se abre en una pestaña nueva)"
+msgstr ""
+
+#: app.py:14477
+msgid "Firma la petición"
+msgstr ""
+
+#: app.py:18319
+msgid "Compartir:"
+msgstr ""
+
+#: app.py:18320
+msgid "Compartir en WhatsApp"
+msgstr ""
+
+#: app.py:18321
+msgid "Compartir en Facebook"
+msgstr ""
+
+#: app.py:18322
+msgid "Compartir en X"
+msgstr ""
+
+#: app.py:18323
+msgid "Compartir en Telegram"
+msgstr ""
+
+#: app.py:18324
+msgid "Compartir por correo"
+msgstr ""
+
+#: app.py:18324
+msgid "Correo"
+msgstr ""
+
+#: app.py:18325 app.py:18325 app.py:18336
+msgid "Copiar enlace"
+msgstr ""
+
+#: app.py:18335
+msgid "Enlace copiado"
+msgstr ""
+
+#: app.py:18335
+msgid "No se pudo copiar"
+msgstr ""
