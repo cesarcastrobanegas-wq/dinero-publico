@@ -102,6 +102,30 @@ def _i18n_idioma():
     return _I18N_IDIOMA.get()
 
 
+# Textos del JavaScript: se marcan en el JS como T("texto") o TF("texto con {x}", {x: valor}) -- SIEMPRE con comillas
+# dobles, para que el extractor los encuentre -- y los enlaces internos que construye el JS con LP("/ruta"). La tabla
+# de traducciones de cada página lleva solo esos textos (los que aparecen como T("...")/TF("...") en este fichero).
+_I18N_RE_JS = re.compile(r'\bTF?\("([^"\\]*)"')
+try:
+    _I18N_JS_MSGIDS = frozenset(_I18N_RE_JS.findall(open(os.path.abspath(__file__), encoding="utf-8").read()))
+except OSError:
+    _I18N_JS_MSGIDS = frozenset()
+
+
+def _i18n_js_head():
+    """<script> del <head>: helpers T/TF/LP (en todos los idiomas) + tabla de traducciones y prefijo (no castellano)."""
+    lang = _I18N_IDIOMA.get()
+    datos = ""
+    if lang != "es":
+        cat = _I18N_CATALOGOS.get(lang, {})
+        tabla = {m: cat[m] for m in _I18N_JS_MSGIDS if m in cat}
+        tabla_json = json.dumps(tabla, ensure_ascii=False).replace("</", "<\\/")
+        datos = f'window.__T__={tabla_json};window.__LP__="/{lang}";'
+    return (datos + "function T(s){var d=window.__T__;return d&&d[s]||s;}"
+            "function TF(s,o){s=T(s);for(var k in o)s=s.split('{'+k+'}').join(o[k]);return s;}"
+            "function LP(u){return (window.__LP__||'')+u;}")
+
+
 def _i18n_separar_prefijo(path):
     """'/gl/rankings' -> ('gl', '/rankings'); '/gl' o '/gl/' -> ('gl', '/'); sin prefijo -> ('es', path)."""
     for lang in I18N_IDIOMAS:
@@ -14067,10 +14091,10 @@ LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200" widt
 _ADV_SEARCH_JS = r"""
 (function(){
   var PLACEHOLDERS = {
-    ayuntamiento: 'Nombre del municipio…',
-    empresa: 'Nombre de la empresa…',
-    directivo: 'Nombre del directivo o empresario…',
-    licitacion: 'Número de licitación (ej: 321/2026)…'
+    ayuntamiento: T("Nombre del municipio…"),
+    empresa: T("Nombre de la empresa…"),
+    directivo: T("Nombre del directivo o empresario…"),
+    licitacion: T("Número de licitación (ej: 321/2026)…")
   };
   var tabs = document.querySelectorAll('#adv-search .as-tab');
   var input = document.getElementById('as-input');
@@ -14135,17 +14159,17 @@ _ADV_SEARCH_JS = r"""
     var paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
     if (paginas <= 1) return null;
     var nav = el('div', 'pagination');
-    nav.appendChild(el('span', 'pag-info', 'Página ' + pagina + ' de ' + paginas + ' · ' + total + ' resultados'));
+    nav.appendChild(el('span', 'pag-info', TF("Página {p} de {n} · {t} resultados", {p: pagina, n: paginas, t: total})));
     var links = el('div', 'pag-links');
     if (pagina > 1) {
       var ant = document.createElement('button');
-      ant.type = 'button'; ant.className = 'pag-btn'; ant.textContent = '← Anterior';
+      ant.type = 'button'; ant.className = 'pag-btn'; ant.textContent = T("← Anterior");
       ant.addEventListener('click', function(){ irAPagina(pagina - 1); });
       links.appendChild(ant);
     }
     if (pagina < paginas) {
       var sig = document.createElement('button');
-      sig.type = 'button'; sig.className = 'pag-btn'; sig.textContent = 'Siguiente →';
+      sig.type = 'button'; sig.className = 'pag-btn'; sig.textContent = T("Siguiente →");
       sig.addEventListener('click', function(){ irAPagina(pagina + 1); });
       links.appendChild(sig);
     }
@@ -14156,13 +14180,13 @@ _ADV_SEARCH_JS = r"""
   function renderEmpresa(data) {
     if (!data.resultados || !data.resultados.length) {
       results.innerHTML = '';
-      results.appendChild(el('div', 'empty', 'Sin resultados.'));
+      results.appendChild(el('div', 'empty', T("Sin resultados.")));
       return;
     }
     function pintar(pagina) {
       results.innerHTML = '';
-      var head = el('div', 'as-total', data.total_contratos + ' contratos · total acumulado ' + data.total_importe
-        + (data.resultados.length < data.total_contratos ? ' · mostrando los primeros ' + data.resultados.length : ''));
+      var head = el('div', 'as-total', TF("{n} contratos · total acumulado {importe}", {n: data.total_contratos, importe: data.total_importe})
+        + (data.resultados.length < data.total_contratos ? TF(" · mostrando los primeros {n}", {n: data.resultados.length}) : ''));
       results.appendChild(head);
       var ini = (pagina - 1) * POR_PAGINA;
       data.resultados.slice(ini, ini + POR_PAGINA).forEach(function(c){ results.appendChild(filaContrato(c)); });
@@ -14175,12 +14199,12 @@ _ADV_SEARCH_JS = r"""
   function renderDirectivo(data) {
     if (!data.grupos || !data.grupos.length) {
       results.innerHTML = '';
-      results.appendChild(el('div', 'empty', 'Sin resultados.'));
+      results.appendChild(el('div', 'empty', T("Sin resultados.")));
       return;
     }
     function pintar(pagina) {
       results.innerHTML = '';
-      var head = el('div', 'as-total', data.n_empresas + ' empresa(s) vinculada(s) · total global ' + data.total_importe);
+      var head = el('div', 'as-total', TF("{n} empresa(s) vinculada(s) · total global {importe}", {n: data.n_empresas, importe: data.total_importe}));
       results.appendChild(head);
       var ini = (pagina - 1) * POR_PAGINA;
       data.grupos.slice(ini, ini + POR_PAGINA).forEach(function(g){
@@ -14189,7 +14213,7 @@ _ADV_SEARCH_JS = r"""
         top.appendChild(el('span', 'as-rr-empresa', g.empresa));
         top.appendChild(el('span', 'as-rr-importe big', g.total_importe));
         card.appendChild(top);
-        card.appendChild(el('div', 'as-rr-sub', (g.cargo || 'Directivo') + ' · ' + g.n_contratos + ' contrato(s)'));
+        card.appendChild(el('div', 'as-rr-sub', (g.cargo || T("Directivo")) + ' · ' + TF("{n} contrato(s)", {n: g.n_contratos})));
         g.contratos.forEach(function(c){ card.appendChild(filaContrato(c)); });
         results.appendChild(card);
       });
@@ -14202,7 +14226,7 @@ _ADV_SEARCH_JS = r"""
   function renderLicitacion(data) {
     results.innerHTML = '';
     if (!data.encontrado) {
-      results.appendChild(el('div', 'empty', 'No se ha encontrado ninguna licitación con ese número.'));
+      results.appendChild(el('div', 'empty', T("No se ha encontrado ninguna licitación con ese número.")));
       return;
     }
     results.appendChild(filaContrato(data.contrato));
@@ -14215,9 +14239,9 @@ _ADV_SEARCH_JS = r"""
     if (m.cached) top.appendChild(el('span', 'as-rr-importe', m.total_importe));
     row.appendChild(top);
     row.appendChild(el('div', 'as-rr-sub', '📍 ' + m.provincia_label +
-      (m.cached ? ' · ' + m.total_contratos + ' contratos' : ' · aún sin datos cargados')));
+      (m.cached ? ' · ' + TF("{n} contratos", {n: m.total_contratos}) : ' · ' + T("aún sin datos cargados"))));
     var form = document.createElement('form');
-    form.method = 'POST'; form.action = '/buscar'; form.style.marginTop = '8px';
+    form.method = 'POST'; form.action = LP('/buscar'); form.style.marginTop = '8px';
     var iMuni = document.createElement('input');
     iMuni.type = 'hidden'; iMuni.name = 'municipio'; iMuni.value = m.municipio;
     var iProv = document.createElement('input');
@@ -14225,7 +14249,7 @@ _ADV_SEARCH_JS = r"""
     var btnVer = document.createElement('button');
     btnVer.type = 'submit'; btnVer.className = 'btn btn-primary';
     btnVer.style.padding = '6px 14px'; btnVer.style.fontSize = '12px';
-    btnVer.textContent = m.cached ? 'Ver contratos →' : 'Buscar contratos →';
+    btnVer.textContent = m.cached ? T("Ver contratos →") : T("Buscar contratos →");
     form.appendChild(iMuni); form.appendChild(iProv); form.appendChild(btnVer);
     row.appendChild(form);
     return row;
@@ -14234,10 +14258,10 @@ _ADV_SEARCH_JS = r"""
   function renderAyuntamiento(data) {
     results.innerHTML = '';
     if (!data.resultados || !data.resultados.length) {
-      results.appendChild(el('div', 'empty', 'Sin municipios que coincidan.'));
+      results.appendChild(el('div', 'empty', T("Sin municipios que coincidan.")));
       return;
     }
-    var head = el('div', 'as-total', data.resultados.length + ' municipio(s) encontrado(s).');
+    var head = el('div', 'as-total', TF("{n} municipio(s) encontrado(s).", {n: data.resultados.length}));
     results.appendChild(head);
     data.resultados.forEach(function(m){ results.appendChild(filaMunicipio(m)); });
   }
@@ -14247,7 +14271,7 @@ _ADV_SEARCH_JS = r"""
     if (q.length < 2) { results.innerHTML = ''; return; }
     var mySeq = ++seq;
     results.innerHTML = '';
-    results.appendChild(el('div', 'as-loading', 'Buscando…'));
+    results.appendChild(el('div', 'as-loading', T("Buscando…")));
     fetch('/api/buscar?tipo=' + encodeURIComponent(tipo) + '&q=' + encodeURIComponent(q) +
           '&provincia=' + encodeURIComponent(window.__PROVINCIA__ || 'todas'))
       .then(function(r){ return r.json(); })
@@ -14262,7 +14286,7 @@ _ADV_SEARCH_JS = r"""
       .catch(function(){
         if (mySeq !== seq) return;
         results.innerHTML = '';
-        results.appendChild(el('div', 'empty', 'Error al buscar. Inténtalo de nuevo.'));
+        results.appendChild(el('div', 'empty', T("Error al buscar. Inténtalo de nuevo.")));
       });
   }
 
@@ -14318,6 +14342,10 @@ def _ad_banner_html():
     return ''
 
 
+def _site_tagline():
+    return _t("EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?")
+
+
 def _header_html(provincia="todas"):
     rankings_href = "/rankings" + _q_prov_first(provincia)
     return f"""<header>
@@ -14325,7 +14353,7 @@ def _header_html(provincia="todas"):
     <div class="logo-svg">{LOGO_SVG}</div>
     <div>
       <h1 style="color:var(--text)">Dinero Público · {_t("Contratación pública en España")}</h1>
-      <p>{esc(SITE_TAGLINE)}</p>
+      <p>{esc(_site_tagline())}</p>
     </div>
   </a>
   <nav class="header-nav">
@@ -14425,6 +14453,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 {_ADSENSE_LOADER_JS}
 </script>
 <title>{esc(full_title)}</title>
+<script>{_i18n_js_head()}</script>
 <meta name="description" content="{desc}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{esc(og_url)}">
@@ -15723,7 +15752,7 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
   <input type="text" class="it-buscador" placeholder="Filtrar en esta página… (para buscar en todo el ranking, usa el buscador de arriba)" autocomplete="off"
          oninput="{esc(_IT_BUSCADOR_JS)}">
   <div class="muni-card"><div class="tbl-scroll"><table>
-    <tr><th>#</th><th>Municipio</th><th>Provincia</th><th>Índice {_IT_INFO_BTN_HTML}</th><th>Cobertura</th><th>Desglose</th></tr>
+    <tr><th>#</th><th>Municipio</th><th>Provincia</th><th>Índice {_it_info_btn_html()}</th><th>Cobertura</th><th>Desglose</th></tr>
     {filas_html}
   </table></div></div>
   {paginacion_html}"""
@@ -17213,13 +17242,13 @@ def _personalizacion_html():
     esta función no lee ni escribe nada en el servidor, solo pinta el
     HTML/JS que hace las peticiones normales de lectura."""
     return f"""<div class="personaliza-banner" id="personaliza-banner">
-    <div class="personaliza-texto">📍 <b>¿Cuál es tu municipio?</b> Te enseñamos lo que ha gastado tu ayuntamiento y su puesto en los rankings.</div>
+    <div class="personaliza-texto">📍 {_t("<b>¿Cuál es tu municipio?</b> Te enseñamos lo que ha gastado tu ayuntamiento y su puesto en los rankings.")}</div>
     <div class="personaliza-input-row">
-      <input type="text" id="personaliza-input" placeholder="Escribe tu municipio…" autocomplete="off">
+      <input type="text" id="personaliza-input" placeholder="{_t("Escribe tu municipio…")}" autocomplete="off">
       <div class="personaliza-sugerencias" id="personaliza-sugerencias"></div>
-      <button type="button" id="personaliza-btn">Ver</button>
+      <button type="button" id="personaliza-btn">{_t("Ver")}</button>
     </div>
-    <button type="button" class="personaliza-cerrar" id="personaliza-cerrar" aria-label="Cerrar">✕</button>
+    <button type="button" class="personaliza-cerrar" id="personaliza-cerrar" aria-label="{_t("Cerrar")}">✕</button>
   </div>
   <div class="personaliza-resultado oculto" id="personaliza-resultado"></div>
   <script>{_PERSONALIZACION_JS}</script>"""
@@ -17250,28 +17279,28 @@ _PERSONALIZACION_JS = r"""(function(){
   function pintarResultado(item){
     var filas = '';
     if (item.contratos){
-      filas += '<div class="pr-stat"><div class="pr-stat-label">Contratos cargados</div><div class="pr-stat-valor">'
+      filas += '<div class="pr-stat"><div class="pr-stat-label">' + T("Contratos cargados") + '</div><div class="pr-stat-valor">'
         + item.contratos.total + ' · ' + item.contratos.importe_total_fmt + '</div></div>';
     }
     if (item.indice){
-      filas += '<div class="pr-stat"><div class="pr-stat-label">Índice de Transparencia</div><div class="pr-stat-valor">'
-        + item.indice.valor_fmt + '/100 (#' + item.indice.rank_nacional + ' de ' + item.indice.total_nacional + ')</div></div>';
+      filas += '<div class="pr-stat"><div class="pr-stat-label">' + T("Índice de Transparencia") + '</div><div class="pr-stat-valor">'
+        + item.indice.valor_fmt + '/100 (#' + item.indice.rank_nacional + ' ' + T("de") + ' ' + item.indice.total_nacional + ')</div></div>';
     }
     if (item.deuda_habitante){
-      filas += '<div class="pr-stat"><div class="pr-stat-label">Deuda por habitante</div><div class="pr-stat-valor">'
-        + item.deuda_habitante.valor_fmt + ' (#' + item.deuda_habitante.rank_nacional + ' de ' + item.deuda_habitante.total_nacional + ')</div></div>';
+      filas += '<div class="pr-stat"><div class="pr-stat-label">' + T("Deuda por habitante") + '</div><div class="pr-stat-valor">'
+        + item.deuda_habitante.valor_fmt + ' (#' + item.deuda_habitante.rank_nacional + ' ' + T("de") + ' ' + item.deuda_habitante.total_nacional + ')</div></div>';
     }
     if (item.alcalde){
-      filas += '<div class="pr-stat"><div class="pr-stat-label">Sueldo alcalde/sa</div><div class="pr-stat-valor">'
+      filas += '<div class="pr-stat"><div class="pr-stat-label">' + T("Sueldo alcalde/sa") + '</div><div class="pr-stat-valor">'
         + item.alcalde.nombre + ' · ' + item.alcalde.importe_fmt + '</div></div>';
     }
     if (!filas){
-      filas = '<div class="pr-stat"><div class="pr-stat-label">Sin datos suficientes todavía para este municipio.</div></div>';
+      filas = '<div class="pr-stat"><div class="pr-stat-label">' + T("Sin datos suficientes todavía para este municipio.") + '</div></div>';
     }
-    resultadoBox.innerHTML = '<button type="button" class="pr-cerrar" id="personaliza-resultado-cerrar">✕ cambiar</button>'
+    resultadoBox.innerHTML = '<button type="button" class="pr-cerrar" id="personaliza-resultado-cerrar">✕ ' + T("cambiar") + '</button>'
       + '<h3>📍 ' + item.municipio + ' (' + item.provincia_label + ')</h3>'
       + '<div class="pr-grid">' + filas + '</div>'
-      + '<a class="btn-ver" href="' + item.ficha_url + '" style="display:inline-block;margin-top:10px">Ver ficha completa →</a>';
+      + '<a class="btn-ver" href="' + LP(item.ficha_url) + '" style="display:inline-block;margin-top:10px">' + T("Ver ficha completa →") + '</a>';
     resultadoBox.classList.remove('oculto');
     document.getElementById('personaliza-resultado-cerrar').addEventListener('click', function(){
       resultadoBox.classList.add('oculto');
@@ -17391,7 +17420,7 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8, provincia=None):
 
     return f"""<details class="it-widget">
         <summary>🏅 Índice de Transparencia
-          <span class="badge">{fila_actual["indice"]:.1f}/100 · #{posicion_actual} de {total}</span>{_IT_INFO_BTN_HTML}
+          <span class="badge">{fila_actual["indice"]:.1f}/100 · #{posicion_actual} de {total}</span>{_it_info_btn_html()}
         </summary>
         <div class="it-widget-body">
           <div class="rk-sidebar-list">{items}</div>
@@ -17435,9 +17464,10 @@ _SIDEBAR_VER_MAS_N = 40
 # Botón "i" junto a la nota del Índice (2026-09-30, petición de César). Abre el popover compartido #it-info-pop (ver
 # _it_info_pop_html y el script de _page_shell): clic/tap en cualquier pantalla, además hover en escritorio. Dentro de
 # un <summary> el script anula el plegado del <details> al pulsarlo.
-_IT_INFO_BTN_HTML = ('<button type="button" class="it-info-btn" aria-haspopup="dialog" aria-expanded="false" '
-                     'aria-controls="it-info-pop" aria-label="Qué es el Índice de Transparencia y cómo se calcula" '
-                     'title="Cómo se calcula">i</button>')
+def _it_info_btn_html():
+    return ('<button type="button" class="it-info-btn" aria-haspopup="dialog" aria-expanded="false" '
+            f'aria-controls="it-info-pop" aria-label="{_t("Qué es el Índice de Transparencia y cómo se calcula")}" '
+            f'title="{_t("Cómo se calcula")}">i</button>')
 
 
 def _it_info_pop_html():
@@ -17496,14 +17526,15 @@ def _lider_indice_portada_html():
         f'<a class="it-lider-nombre" href="{_url(f)}">{esc(f["municipio"])}</a>'
         f'<span class="it-lider-region">{esc(PROVINCIA_LABEL.get(f["provincia"], f["provincia"]))} · {_region(f)}</span>'
         for f in lideres[:3])
-    empate = f'<div class="it-lider-empate">Empate a {len(lideres)} en el primer puesto</div>' if len(lideres) > 1 else ""
+    empate = (f'<div class="it-lider-empate">{_t("Empate a {n} en el primer puesto").format(n=len(lideres))}</div>'
+              if len(lideres) > 1 else "")
     siguientes_html = "".join(
         f'<li><span class="it-lider-pos">{p}.º</span><a href="{_url(f)}">{esc(f["municipio"])}</a>'
         f'<span class="it-lider-mini">{_nota_coma(f["indice"])}</span></li>' for p, f in siguientes)
     return f"""<section class="it-lider" aria-labelledby="it-lider-titulo">
     <div class="it-lider-cab">
-      <h2 id="it-lider-titulo">🏅 Liderando ahora mismo · Índice de Transparencia{_IT_INFO_BTN_HTML}</h2>
-      <span class="it-lider-sub">{fmt_num(len(filas))} municipios con nota · España</span>
+      <h2 id="it-lider-titulo">🏅 {_t("Liderando ahora mismo · Índice de Transparencia")}{_it_info_btn_html()}</h2>
+      <span class="it-lider-sub">{_t("{n} municipios con nota · España").format(n=fmt_num(len(filas)))}</span>
     </div>
     <div class="it-lider-cuerpo">
       <div class="it-lider-top">
@@ -17513,8 +17544,8 @@ def _lider_indice_portada_html():
       <ol class="it-lider-lista">{siguientes_html}</ol>
     </div>
     <div class="it-lider-pie">
-      <a class="btn-ver" href="/rankings#indice-transparencia">Ver ranking por tu región →</a>
-      <a class="it-lider-metodo" href="/metodologia">Cómo se calcula</a>
+      <a class="btn-ver" href="/rankings#indice-transparencia">{_t("Ver ranking por tu región →")}</a>
+      <a class="it-lider-metodo" href="/metodologia">{_t("Cómo se calcula")}</a>
     </div>
   </section>"""
 
@@ -17567,34 +17598,34 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     if resto:
         resto_html = "".join(_fila_html(p, f) for p, f in resto)
         ver_mas_html = f"""<details class="rk-sidebar-vermas">
-          <summary>Ver más ({len(resto)} más) ▾</summary>
+          <summary>{_t("Ver más ({n} más) ▾").format(n=len(resto))}</summary>
           <div class="rk-sidebar-list">{resto_html}</div>
         </details>"""
 
     opciones_html = "".join(
         f'<option value="{esc(slug)}"{" selected" if slug == comunidad_actual else ""}>{esc(label)}</option>'
-        for slug, label in [("todas", "España")] + sorted(COMUNIDAD_AUTONOMA_LABEL.items(), key=lambda kv: kv[1])
+        for slug, label in [("todas", _t("España"))] + sorted(COMUNIDAD_AUTONOMA_LABEL.items(), key=lambda kv: kv[1])
     )
 
     href_ver_completo = ("/rankings#indice-transparencia" if comunidad_actual == "todas"
                           else f"/rankings?comunidad={esc(comunidad_actual)}#indice-transparencia")
 
-    # Icono "i": popover compartido con el resumen de la metodología v2 (ver _IT_INFO_BTN_HTML).
-    info_html = _IT_INFO_BTN_HTML
+    # Icono "i": popover compartido con el resumen de la metodología v2 (ver _it_info_btn_html()).
+    info_html = _it_info_btn_html()
 
     return f"""<div class="rk-sidebar-ranking-wrap">
     <details class="rk-sidebar" open>
-      <summary class="rk-sidebar-title">🏅 Índice de Transparencia
-        <span class="rk-sidebar-v1-badge">Índice v2</span>{info_html}</summary>
-      <div class="rk-sidebar-aviso">⚠️ No comparable entre regiones; los datos de origen varían.</div>
-      <label class="rk-sidebar-selector-label" for="rk-sidebar-comunidad">Región</label>
+      <summary class="rk-sidebar-title">🏅 {_t("Índice de Transparencia")}
+        <span class="rk-sidebar-v1-badge">{_t("Índice v2")}</span>{info_html}</summary>
+      <div class="rk-sidebar-aviso">⚠️ {_t("No comparable entre regiones; los datos de origen varían.")}</div>
+      <label class="rk-sidebar-selector-label" for="rk-sidebar-comunidad">{_t("Región")}</label>
       <select id="rk-sidebar-comunidad" class="rk-sidebar-selector"
-              onchange="location.href='/?rk_comunidad=' + this.value + '#indice-transparencia'">
+              onchange="location.href=LP('/?rk_comunidad=' + this.value + '#indice-transparencia')">
         {opciones_html}
       </select>
       <div class="rk-sidebar-list">{top_html}</div>
       {ver_mas_html}
-      <a class="rk-sidebar-ver btn-ver" href="{href_ver_completo}">Ver ranking completo →</a>
+      <a class="rk-sidebar-ver btn-ver" href="{href_ver_completo}">{_t("Ver ranking completo →")}</a>
     </details>
   </div>"""
 
@@ -17727,10 +17758,10 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     total_imp = sum(c.get("importe_num", 0.0) for d in datos for c in d.get("contratos", []))
 
     stats = f"""<div class="stats-bar">
-      <div class="stat"><span>{total_m}</span>Municipios</div>
-      <div class="stat"><span>{total_c}</span>Contratos</div>
-      <div class="stat"><span>{total_e}</span>Empresas únicas</div>
-      <div class="stat"><span>{fmt_eur(str(total_imp))}</span>Importe total</div>
+      <div class="stat"><span>{total_m}</span>{_t("Municipios")}</div>
+      <div class="stat"><span>{total_c}</span>{_t("Contratos")}</div>
+      <div class="stat"><span>{total_e}</span>{_t("Empresas únicas")}</div>
+      <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
     </div>"""
 
     # Cobertura por región -- una sola tarjeta por provincia con TODO junto
@@ -17758,12 +17789,12 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         hab_prov = sum(v["poblacion"] for v in POBLACION.values() if v.get("provincia") == prov)
         hab_html = f" · <b>{fmt_num(hab_prov)}</b> hab." if hab_prov else ""
         deuda_hab = deuda_por_prov.get(prov)
-        deuda_html = (f'<div class="region-deuda">🏦 {fmt_eur(deuda_hab)}/hab. de deuda viva</div>'
+        deuda_html = (f'<div class="region-deuda">🏦 {_t("{importe}/hab. de deuda viva").format(importe=fmt_eur(deuda_hab))}</div>'
                       if deuda_hab is not None else "")
         cobertura_html += f"""<a href="/?provincia={prov}" class="region-card">
           <h3>📍 {esc(label)}</h3>
-          <div class="region-stats"><b>{n_con_datos}</b>/{len(municipios_lista)} municipios{hab_html} · <b>{c_prov}</b> contratos</div>
-          <div class="region-imp">{fmt_eur(str(imp_prov))} adjudicado</div>
+          <div class="region-stats"><b>{n_con_datos}</b>/{len(municipios_lista)} {_t("municipios")}{hab_html} · <b>{c_prov}</b> {_t("contratos")}</div>
+          <div class="region-imp">{_t("{importe} adjudicado").format(importe=fmt_eur(str(imp_prov)))}</div>
           {deuda_html}
         </a>"""
 
@@ -17774,13 +17805,13 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         if not lista:
             return f"""<div class="top1-card">
               <div class="top1-label">{etiqueta}</div>
-              <div class="empty" style="padding:14px 0">Aún no hay datos suficientes.</div>
+              <div class="empty" style="padding:14px 0">{_t("Aún no hay datos suficientes.")}</div>
             </div>"""
         g = lista[0]
         if g["directivo"]:
             dir_html = f'{esc(g["directivo"])} — {esc(g["cargo"])}'
         else:
-            dir_html = '<span class="noloc-warn">⚠️ No localizado</span>'
+            dir_html = f'<span class="noloc-warn">⚠️ {_t("No localizado")}</span>'
         emp_q = quote_plus(g["empresa"])
         return f"""<div class="top1-card">
           <div class="top1-label">{etiqueta}</div>
@@ -17790,8 +17821,8 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         </div>"""
 
     top1_html = (
-        _top1_card(top_n_nac, "🥇 Más contratos", lambda g: f'{g["n"]} contratos') +
-        _top1_card(top_imp_nac, "🥇 Mayor importe", lambda g: fmt_eur(str(g["importe"])))
+        _top1_card(top_n_nac, "🥇 " + _t("Más contratos"), lambda g: _t("{n} contratos").format(n=g["n"])) +
+        _top1_card(top_imp_nac, "🥇 " + _t("Mayor importe"), lambda g: fmt_eur(str(g["importe"])))
     )
 
     # Bloque "Casos de investigación" en la propia portada (2026-09-16,
@@ -17818,7 +17849,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         </div>""" for n in noticias_ue)
     else:
         noticias_html = ('<div class="empty" style="padding:20px 8px;font-size:12px">'
-                          'Aún no hay noticias cargadas.</div>')
+                          + _t("Aún no hay noticias cargadas.") + '</div>')
 
     # Mapa principal de la home = el mapa de cobertura real (/mapa-cobertura,
     # 19 comunidades con geometría IGN + banderas + estado real de cobertura)
@@ -17849,63 +17880,62 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     body = f"""{personalizacion_html}
   <div class="hero-panel">
     <div class="hero">
-      <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
+      <div class="hero-tagline">{esc(_site_tagline())}</div>
       <p class="hero-sub">
-        Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa
-        — y qué persona — hay detrás de cada adjudicación.
+        {_t("Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás de cada adjudicación.")}
       </p>
     </div>
     <div class="adv-search" id="adv-search">
       <div class="as-tabs">
-        <button type="button" class="as-tab active" data-tipo="ayuntamiento">Ayuntamiento</button>
-        <button type="button" class="as-tab" data-tipo="empresa">Empresa</button>
-        <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
-        <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
+        <button type="button" class="as-tab active" data-tipo="ayuntamiento">{_t("Ayuntamiento")}</button>
+        <button type="button" class="as-tab" data-tipo="empresa">{_t("Empresa")}</button>
+        <button type="button" class="as-tab" data-tipo="directivo">{_t("Directivo")}</button>
+        <button type="button" class="as-tab" data-tipo="licitacion">{_t("Licitación")}</button>
       </div>
       <div class="as-row">
-        <input type="text" id="as-input" placeholder="Nombre del municipio…" autocomplete="off">
-        <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
+        <input type="text" id="as-input" placeholder="{_t("Nombre del municipio…")}" autocomplete="off">
+        <button type="button" id="as-btn" class="btn btn-primary">{_t("Buscar")}</button>
       </div>
-      <div class="gs-hint">Busca en los {total_c} contratos ya cargados de toda España · mínimo 2 caracteres.</div>
+      <div class="gs-hint">{_t("Busca en los {n} contratos ya cargados de toda España · mínimo 2 caracteres.").format(n=total_c)}</div>
       <div id="as-results"></div>
     </div>
     {stats}
   </div>
   {_lider_indice_portada_html()}
-  <div class="section-title">Cobertura</div>
+  <div class="section-title">{_t("Cobertura")}</div>
   <div class="mapa-indice-row">
     <div class="mapa-indice-mapa">{mapa_html}</div>
     <div class="mapa-indice-indice">{sidebar_ranking_html}</div>
   </div>
   <details style="margin:14px 0 24px">
-    <summary class="provincias-parpadeo" style="cursor:pointer;font-size:13px;font-weight:700">TODAS LAS PROVINCIAS</summary>
+    <summary class="provincias-parpadeo" style="cursor:pointer;font-size:13px;font-weight:700">{_t("TODAS LAS PROVINCIAS")}</summary>
     <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
   </details>
-  <div class="section-title">🔍 Casos de investigación</div>
-  {_peticion_cta_html(_PETICION_CTA_TEXTO_PORTADA)}
+  <div class="section-title">🔍 {_t("Casos de investigación")}</div>
+  {_peticion_cta_html(_peticion_cta_texto_portada())}
   <div class="region-grid">{casos_home_html}</div>
-  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
+  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">{_t("Ver todos los casos →")}</a></div>
   <div class="home-grid">
     <div class="home-sidebar-stack">
       <aside class="noticias-ue-panel">
-        <div class="nu-panel-title">🇪🇺 Noticias UE · Presupuesto y fondos</div>
+        <div class="nu-panel-title">🇪🇺 {_t("Noticias UE · Presupuesto y fondos")}</div>
         {noticias_html}
-        <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es" target="_blank" rel="noopener">Ver más en la Comisión Europea →</a>
+        <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es" target="_blank" rel="noopener">{_t("Ver más en la Comisión Europea →")}</a>
       </aside>
     </div>
     <div class="home-main-col">
-      <div class="section-title" style="margin-top:0">🏆 Empresas líderes · Ranking Nacional</div>
+      <div class="section-title" style="margin-top:0">🏆 {_t("Empresas líderes · Ranking Nacional")}</div>
       <div class="top1-grid">{top1_html}</div>
-      <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">Ver ranking completo →</a></div>
+      <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">{_t("Ver ranking completo →")}</a></div>
     </div>
   </div>
   <script>window.__PROVINCIA__ = "";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
 
-    return _page_shell("Dinero Público | Contratación pública en España", body,
-                        description="Consulta los contratos públicos adjudicados en España con los "
-                                     "directivos de las empresas adjudicatarias. Cobertura nacional, "
-                                     "las 19 comunidades y ciudades autónomas.",
+    return _page_shell("Dinero Público | " + _t("Contratación pública en España"), body,
+                        description=_t("Consulta los contratos públicos adjudicados en España con los directivos "
+                                       "de las empresas adjudicatarias. Cobertura nacional, las 19 comunidades y "
+                                       "ciudades autónomas."),
                         provincia="todas", show_ad_banner=False)
 
 
@@ -17927,10 +17957,10 @@ def render_landing_html(datos, provincia="murcia"):
     total_imp = sum(c.get("importe_num", 0.0) for d in datos for c in d.get("contratos", []))
 
     stats = f"""<div class="stats-bar">
-      <div class="stat"><span>{total_m}</span>Municipios</div>
-      <div class="stat"><span>{total_c}</span>Contratos</div>
-      <div class="stat"><span>{total_e}</span>Empresas únicas</div>
-      <div class="stat"><span>{fmt_eur(str(total_imp))}</span>Importe total</div>
+      <div class="stat"><span>{total_m}</span>{_t("Municipios")}</div>
+      <div class="stat"><span>{total_c}</span>{_t("Contratos")}</div>
+      <div class="stat"><span>{total_e}</span>{_t("Empresas únicas")}</div>
+      <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
     </div>"""
 
     def _muni_tile(muni, d):
@@ -17947,14 +17977,14 @@ def render_landing_html(datos, provincia="murcia"):
         if fondos_ue_muni:
             total_fue = sum(f["importe_num"] for f in fondos_ue_muni)
             fue_html = (f'<div class="mt-row" style="color:var(--yellow)">'
-                        f'<span>🇪🇺 Fondos UE</span><b>{len(fondos_ue_muni)}</b></div>'
+                        f'<span>🇪🇺 {_t("Fondos UE")}</span><b>{len(fondos_ue_muni)}</b></div>'
                         f'<div class="mt-imp" style="color:var(--yellow)">{fmt_eur(str(total_fue))}</div>')
         return f"""<div class="muni-tile">
           <h3>🏛 {esc(muni)}</h3>
-          <div class="mt-row"><span>Contratos</span><b>{n}</b></div>
+          <div class="mt-row"><span>{_t("Contratos")}</span><b>{n}</b></div>
           <div class="mt-imp">{fmt_eur(str(imp))}</div>
           {fue_html}
-          <a class="btn-ver" href="/?muni={muni_enc}{q_prov}">Ver contratos →</a>
+          <a class="btn-ver" href="/?muni={muni_enc}{q_prov}">{_t("Ver contratos →")}</a>
         </div>"""
 
     tiles = ""
@@ -17974,11 +18004,11 @@ def render_landing_html(datos, provincia="murcia"):
     # Principado"). Único caso hoy, override puntual en vez de un dict de
     # género completo para una lista de 25 territorios.
     prep_label = "del" if provincia == "asturias" else "de la"
-    hero_sub = (
-        f"Contratos públicos de los {len(municipios_lista)} municipios {prep_label} {label}, "
-        f"cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás "
-        f"de cada adjudicación."
-    )
+    # "del/de la" + nombre oficial del territorio: se deja fuera de la frase traducible (el nombre del territorio es
+    # un dato, no interfaz).
+    hero_sub = _t("Contratos públicos de los {n} municipios {de_la} {territorio}, cruzados con el Registro Mercantil "
+                  "para saber qué empresa — y qué persona — hay detrás de cada adjudicación.").format(
+        n=len(municipios_lista), de_la=prep_label, territorio=label)
 
     # Casos de investigación también en la home filtrada por provincia
     # (2026-09-20, petición de César -- "Casos" ya se veía en la home
@@ -17991,37 +18021,37 @@ def render_landing_html(datos, provincia="murcia"):
     </a>""" for c in _CASOS)
 
     body = f"""<div class="hero">
-    <div class="hero-tagline">{esc(SITE_TAGLINE)}</div>
+    <div class="hero-tagline">{esc(_site_tagline())}</div>
     <p class="hero-sub">{esc(hero_sub)}</p>
   </div>
   <div class="adv-search" id="adv-search">
     <div class="as-tabs">
-      <button type="button" class="as-tab active" data-tipo="ayuntamiento">Ayuntamiento</button>
-      <button type="button" class="as-tab" data-tipo="empresa">Empresa</button>
-      <button type="button" class="as-tab" data-tipo="directivo">Directivo</button>
-      <button type="button" class="as-tab" data-tipo="licitacion">Licitación</button>
+      <button type="button" class="as-tab active" data-tipo="ayuntamiento">{_t("Ayuntamiento")}</button>
+      <button type="button" class="as-tab" data-tipo="empresa">{_t("Empresa")}</button>
+      <button type="button" class="as-tab" data-tipo="directivo">{_t("Directivo")}</button>
+      <button type="button" class="as-tab" data-tipo="licitacion">{_t("Licitación")}</button>
     </div>
     <div class="as-row">
-      <input type="text" id="as-input" placeholder="Nombre del municipio…" autocomplete="off" autofocus>
-      <button type="button" id="as-btn" class="btn btn-primary">Buscar</button>
+      <input type="text" id="as-input" placeholder="{_t("Nombre del municipio…")}" autocomplete="off" autofocus>
+      <button type="button" id="as-btn" class="btn btn-primary">{_t("Buscar")}</button>
     </div>
-    <div class="gs-hint">Busca en los {total_c} contratos ya cargados de {esc(label)} · mínimo 2 caracteres.</div>
+    <div class="gs-hint">{_t("Busca en los {n} contratos ya cargados de {territorio} · mínimo 2 caracteres.").format(n=total_c, territorio=esc(label))}</div>
     <div id="as-results"></div>
   </div>
   {stats}
-  <div class="section-title">🔍 Casos de investigación</div>
-  {_peticion_cta_html(_PETICION_CTA_TEXTO_PORTADA)}
+  <div class="section-title">🔍 {_t("Casos de investigación")}</div>
+  {_peticion_cta_html(_peticion_cta_texto_portada())}
   <div class="region-grid">{casos_prov_html}</div>
-  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">Ver todos los casos →</a></div>
-  <div class="section-title">Municipios · {esc(label)}</div>
+  <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">{_t("Ver todos los casos →")}</a></div>
+  <div class="section-title">{_t("Municipios")} · {esc(label)}</div>
   <div class="muni-grid">{tiles}</div>
   <script>window.__PROVINCIA__ = "{provincia}";</script>
   <script>{_ADV_SEARCH_JS}</script>"""
 
-    return _page_shell(f"Dinero Público | Contratos públicos {label}", body,
-                        description=f"Consulta los contratos públicos de los {len(municipios_lista)} "
-                                     f"municipios de {label} con los directivos de las empresas "
-                                     f"adjudicatarias.",
+    return _page_shell("Dinero Público | " + _t("Contratos públicos {territorio}").format(territorio=label), body,
+                        description=_t("Consulta los contratos públicos de los {n} municipios de {territorio} con "
+                                       "los directivos de las empresas adjudicatarias.").format(
+                            n=len(municipios_lista), territorio=label),
                         provincia=provincia, og_path=f"/?provincia={provincia}")
 
 
@@ -18354,9 +18384,10 @@ PETICION_CONTRATOS_MENORES_URL = ("https://www.change.org/p/contratos-menores-el
                                   "contrataci%C3%B3n-p%C3%BAblica-en-espa%C3%B1a")
 
 
-_PETICION_CTA_TEXTO_PORTADA = ('<strong>Contratos menores: el coladero de la contratación pública.</strong> '
-                               'Auditamos 29 grandes ciudades y pedimos por ley que su publicación sea obligatoria '
-                               'y uniforme. <a href="/casos/contratos-menores-coladero">Lee el caso</a>.')
+def _peticion_cta_texto_portada():
+    return _t('<strong>Contratos menores: el coladero de la contratación pública.</strong> Auditamos 29 grandes '
+              'ciudades y pedimos por ley que su publicación sea obligatoria y uniforme. '
+              '<a href="/casos/contratos-menores-coladero">Lee el caso</a>.')
 
 
 def _peticion_cta_html(texto):
@@ -18365,7 +18396,7 @@ def _peticion_cta_html(texto):
     justo antes del bloque de Casos. Enlace externo: nueva pestaña, rel=noopener."""
     return (f'<div class="peticion-cta"><p>{texto}</p>'
             f'<a class="peticion-btn" href="{esc(PETICION_CONTRATOS_MENORES_URL)}" target="_blank" '
-            f'rel="noopener">Firma la petición →</a></div>')
+            f'rel="noopener">{_t("Firma la petición →")}</a></div>')
 
 
 _CASOS = [

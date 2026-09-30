@@ -13,12 +13,14 @@ Uso:  python backend/i18n_extraer.py          (sin dependencias: solo la bibliot
 """
 import ast
 import os
+import re
 import sys
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 FUENTES = ["app.py"]
 IDIOMAS = {"gl": "Galician", "ca": "Catalan", "eu": "Basque"}
 LOCALE = os.path.join(BASE, "locale")
+RE_JS = re.compile(r'\bTF?\("([^"\\]*)"')
 
 
 def _extraer():
@@ -33,6 +35,11 @@ def _extraer():
                     textos.setdefault(arg.value, []).append(f"{fuente}:{nodo.lineno}")
                 else:
                     avisos.append(f"{fuente}:{nodo.lineno}: _t() sin literal, no se puede extraer")
+        # Textos del JavaScript incrustado: T("...") y TF("...", {...}) (siempre con comillas dobles; ver
+        # _i18n_js_head en app.py, que usa esta misma expresión para saber qué textos enviar al navegador).
+        for n_linea, linea in enumerate(open(ruta, encoding="utf-8"), 1):
+            for m in RE_JS.finditer(linea):
+                textos.setdefault(m.group(1), []).append(f"{fuente}:{n_linea}")
     orden = sorted(textos, key=lambda t: (textos[t][0].split(":")[0], int(textos[t][0].split(":")[1])))
     return [(t, textos[t]) for t in orden], avisos
 
