@@ -47,6 +47,16 @@ _I18N_IDIOMA = contextvars.ContextVar("i18n_idioma", default="es")
 _I18N_RUTA = contextvars.ContextVar("i18n_ruta", default=("/", ""))   # (ruta sin prefijo, query string)
 
 
+# Páginas de contenido editorial: se leen en castellano también bajo /gl/, /ca/ o /eu/ (solo cambia la interfaz), así
+# que esas versiones NO son una traducción: canonical a la página en castellano, noindex y sin hreflang, para que
+# Google no las trate como duplicados. Tampoco van al sitemap por idioma.
+_I18N_RUTAS_EDITORIALES = ("/casos", "/metodologia", "/quienes-somos", "/aviso-legal")
+
+
+def _i18n_ruta_editorial(ruta):
+    return any(ruta == r or ruta.startswith(r + "/") for r in _I18N_RUTAS_EDITORIALES)
+
+
 def _i18n_publicados():
     return [x for x in (s.strip() for s in os.environ.get("I18N_PUBLICADOS", "").split(",")) if x in I18N_IDIOMAS]
 
@@ -207,18 +217,24 @@ def _i18n_reescribir_html(texto, lang):
     texto = texto.replace('<html lang="es">', f'<html lang="{lang}">', 1)
     texto = texto.replace('content="es_ES"', f'content="{I18N_IDIOMAS[lang][1]}"', 1)
     site = re.escape(SITE_URL)
-    texto = re.sub(rf'(<link rel="canonical" href="){site}/', rf"\g<1>{SITE_URL}{pref}/", texto, count=1)
-    texto = re.sub(rf'(<meta property="og:url" content="){site}/', rf"\g<1>{SITE_URL}{pref}/", texto, count=1)
-    if lang in _i18n_publicados():
-        texto = texto.replace("</head>", _i18n_hreflang_html() + "</head>", 1)
-    else:
+    editorial = _i18n_ruta_editorial(_I18N_RUTA.get()[0])
+    if not editorial:   # editorial: canonical y og:url se quedan en la página en castellano
+        texto = re.sub(rf'(<link rel="canonical" href="){site}/', rf"\g<1>{SITE_URL}{pref}/", texto, count=1)
+        texto = re.sub(rf'(<meta property="og:url" content="){site}/', rf"\g<1>{SITE_URL}{pref}/", texto, count=1)
+    if editorial or lang not in _i18n_publicados():
         texto = texto.replace('<meta name="robots" content="index, follow">',
                               '<meta name="robots" content="noindex, follow">', 1)
     return texto
 
 
-def _i18n_hreflang_html():
+def _i18n_hreflang_html(og_path=None):
+    """<link rel="alternate" hreflang> de la página actual en castellano y en cada idioma publicado (+ x-default).
+    Vacío si no hay idiomas publicados o si la página es editorial (no tiene versión traducida)."""
     ruta, query = _I18N_RUTA.get()
+    if not _i18n_publicados() or _i18n_ruta_editorial(ruta):
+        return ""
+    if og_path:   # la misma URL que el canonical de la página (Google pide que hreflang apunte a las canónicas)
+        ruta, _, query = og_path.partition("?")
     enlaces = [("es", _i18n_url("es", ruta, query))] + [(l, _i18n_url(l, ruta, query)) for l in _i18n_publicados()]
     return "".join(f'<link rel="alternate" hreflang="{l}" href="{html.escape(SITE_URL + u)}">' for l, u in enlaces) + \
         f'<link rel="alternate" hreflang="x-default" href="{html.escape(SITE_URL + _i18n_url("es", ruta, query))}">'
@@ -235,7 +251,7 @@ def _i18n_ajustar_respuesta(resp, lang, gzip_ok):
     ctype = headers.get("Content-Type", "")
     if body and ctype.startswith("text/html") and headers.get("Content-Encoding") != "gzip":
         body = _i18n_reescribir_html(body.decode("utf-8"), lang).encode("utf-8")
-    if lang not in _i18n_publicados() and ctype.startswith("text/html"):
+    if (lang not in _i18n_publicados() or _i18n_ruta_editorial(_I18N_RUTA.get()[0])) and ctype.startswith("text/html"):
         headers["X-Robots-Tag"] = "noindex"
     if (gzip_ok and body and headers.get("Content-Encoding") != "gzip"
             and ctype.startswith(("text/", "application/json", "application/xml", "application/javascript"))):
@@ -5971,7 +5987,7 @@ def render_elegir_homonimo_html(nombre):
                         f'({esc(PROVINCIA_LABEL.get(prov, prov))})</a></li>')
     cuerpo = (f'<div class="main-inner"><h2>{esc(nombre)}</h2><p>Hay varios municipios con este nombre. '
               f'¿Cuál buscas?</p><ul>{"".join(opciones)}</ul></div>')
-    return _page_shell(f"{nombre}: elige el municipio", cuerpo, description=f"Municipios llamados {nombre}")
+    return _page_shell(f"{nombre}: elige el municipio", cuerpo, description=f"Municipios llamados {nombre}", og_path=f"/?muni={quote_plus(nombre)}")
 
 
 def _q_prov(provincia):
@@ -14485,7 +14501,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 {_ADSENSE_LOADER_JS}
 </script>
 <title>{esc(full_title)}</title>
-<script>{_i18n_js_head()}</script>
+<script>{_i18n_js_head()}</script>{_i18n_hreflang_html(og_path)}
 <meta name="description" content="{desc}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{esc(og_url)}">
@@ -16151,8 +16167,11 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
           <div class="top1-directivo">{sueldo_html}</div>
         </div>"""
 
-    _rk_og_path = (f"/rankings?provincia={provincia_prov}"
-                    + (f"&comunidad={comunidad}" if comunidad != "todas" else ""))
+    # Mismas URLs que la sitemap (sin ?provincia=murcia, la provincia por defecto) -- 2026-10-01: antes el canonical
+    # decía /rankings?provincia=murcia y la sitemap /rankings.
+    _rk_og_path = "/rankings" + _q_prov_first(provincia_prov)
+    if comunidad != "todas":
+        _rk_og_path += ("&" if "?" in _rk_og_path else "?") + f"comunidad={comunidad}"
 
     body = f"""<span class="back-link"><a href="/">{_t("← Volver al inicio")}</a></span>
   <div class="hero" style="padding-bottom:4px">
@@ -16900,7 +16919,7 @@ def render_fondos_ue_html(fondos, provincia="todas"):
                         description=_t("Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon "
                                        "Europe, Cohesion Data FEDER/FSE) en la Región de Murcia y la provincia "
                                        "de Girona."),
-                        provincia="todas")
+                        provincia="todas", og_path="/fondos-ue" + (f"?provincia={provincia}" if provincia != "todas" else ""))
 
 
 def render_comentarios_html(tipo, clave_raw, redirect_url, titulo="esta ficha"):
@@ -18523,7 +18542,7 @@ def render_casos_index_html():
 </div>"""
     return _page_shell("Casos", body,
                         description="Investigaciones y casos concretos detrás de los datos de "
-                                     "Dinero Público: cómo verificamos lo que mostramos.")
+                                     "Dinero Público: cómo verificamos lo que mostramos.", og_path="/casos")
 
 
 # ─── Casos del 2026-09-30 (encargo de César: 4 piezas cortas de 200-400 palabras) + página de metodología ─────────
@@ -19773,7 +19792,7 @@ def render_mapa_cobertura_html():
     return _page_shell(_t("Mapa de cobertura"), body, extra_head=style, show_ad_banner=False,
                         description=_t("Mapa de España por comunidades y provincias con las cifras "
                                        "oficiales de contratación pública de Dinero Público: municipios, "
-                                       "habitantes, contratos e importe adjudicado."))
+                                       "habitantes, contratos e importe adjudicado."), og_path="/mapa-cobertura")
 
 
 def render_quienes_somos_html():
@@ -19819,7 +19838,7 @@ def render_quienes_somos_html():
     return _page_shell("Quiénes Somos", body,
                         description="Quiénes somos y por qué existe Dinero Público: transparencia sobre "
                                      "la contratación pública en la Región de Murcia, Cataluña, la "
-                                     "Comunitat Valenciana y Andalucía.")
+                                     "Comunitat Valenciana y Andalucía.", og_path="/quienes-somos")
 
 
 def render_aviso_legal_html():
@@ -19893,7 +19912,7 @@ def render_aviso_legal_html():
 </div>"""
     return _page_shell("Aviso Legal", body,
                         description="Aviso legal, privacidad y base legal para el tratamiento de datos "
-                                     "públicos en Dinero Público.")
+                                     "públicos en Dinero Público.", og_path="/aviso-legal")
 
 
 # ─── ENRUTADO HTTP (compartido: servidor de desarrollo + WSGI/gunicorn) ──────
@@ -20093,6 +20112,16 @@ def _route_get(path, qs, gzip_ok=False):
             urls.append(f"  <url><loc>{esc(SITE_URL)}/rankings?comunidad={com}</loc><changefreq>daily</changefreq></url>")
         for m, prov in entradas:
             urls.append(f"  <url><loc>{esc(SITE_URL)}/?muni={quote_plus(m)}{_q_prov(prov)}</loc><changefreq>daily</changefreq></url>")
+        # Idiomas publicados (I18N_PUBLICADOS): la misma URL con su prefijo, salvo las páginas editoriales, que no
+        # tienen versión traducida (ver _I18N_RUTAS_EDITORIALES).
+        base_loc = f"<loc>{esc(SITE_URL)}/"
+        por_idioma = []
+        for lang in _i18n_publicados():
+            for u in urls:
+                ruta = "/" + u.split(base_loc, 1)[1].split("</loc>", 1)[0]
+                if not _i18n_ruta_editorial(ruta.split("?", 1)[0]):
+                    por_idioma.append(u.replace(base_loc, f"<loc>{esc(SITE_URL)}/{lang}/", 1))
+        urls += por_idioma
         body = ('<?xml version="1.0" encoding="UTF-8"?>\n'
                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                 + "\n".join(urls) + "\n</urlset>\n")
