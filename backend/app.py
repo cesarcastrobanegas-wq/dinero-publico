@@ -13528,6 +13528,22 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .idiomas{display:flex;flex-wrap:wrap;gap:4px;font-size:12px;margin-top:6px;}
 .idiomas a{padding:3px 8px;border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--dim);background:var(--surface);}
 .idiomas a.activo{background:var(--accent);border-color:var(--accent);color:#fff;}
+.dd-bloque{background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--green);border-radius:14px;padding:16px 18px;margin:0 0 22px;}
+.dd-cab{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;}
+.dd-cab h2{font-size:17px;margin:0;}
+.dd-sub{font-size:12px;color:var(--dim);}
+.dd-tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;}
+.dd-tarjeta{border:1px dashed var(--border);border-radius:10px;padding:12px 14px;max-width:620px;}
+.dd-etiqueta{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);}
+.dd-nombre{display:block;font-size:22px;font-weight:800;color:var(--text);text-decoration:none;margin-top:4px;overflow-wrap:anywhere;}
+.dd-nombre:hover{text-decoration:underline;}
+.dd-lugar{font-size:13px;color:var(--dim);}
+.dd-cifra{font-size:30px;font-weight:800;color:var(--green);margin-top:6px;line-height:1.1;}
+.dd-cifra small{font-size:14px;font-weight:600;color:var(--dim);}
+.dd-nota{font-size:13px;margin-top:4px;}
+.dd-pie{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin-top:12px;}
+.dd-pie .btn-ver{margin:0;}
+.dd-fuente{font-size:12px;color:var(--dim);}
 .it-lider{background:var(--surface);border:2px solid var(--accent);border-radius:14px;padding:16px 18px;margin:18px 0 22px;}
 .it-lider-cab{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;}
 .it-lider-cab h2{font-size:17px;margin:0;}
@@ -17592,6 +17608,62 @@ def _nota_coma(x):
     return f"{x:.1f}".replace(".", ",")
 
 
+def _fecha_corte_deuda_viva():
+    """"31/12/2025" a partir del nombre del fichero de Hacienda (deuda-viva-ayuntamientos-AAAAMM.xlsx); "" si no casa."""
+    m = re.search(r"-(\d{4})(\d{2})\.xlsx?$", DEUDA_VIVA_FUENTE_URL or "")
+    if not m:
+        return ""
+    anio, mes = int(m.group(1)), int(m.group(2))
+    ultimo = {1: 31, 2: 29 if anio % 4 == 0 else 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30,
+              12: 31}.get(mes)
+    return f"{ultimo:02d}/{mes:02d}/{anio}" if ultimo else ""
+
+
+def _datos_destacados_portada_html():
+    """"Datos destacados" de la portada nacional (encargo de César 2026-10-01): bloque FINANCIERO, separado y etiquetado
+    para no confundirlo con el Índice de Transparencia. De momento, la mayor ciudad sin deuda viva.
+
+    Solo entran municipios con la deuda publicada por Hacienda (están en DEUDA_VIVA) y deuda exactamente 0: el fichero
+    del Ministerio trae los 8.132 ayuntamientos con cifra (un 0 es un 0 real, no "sin dato"; verificado el 30-09 --
+    cuadrado con el Banco de España). Entre esos, el de más habitantes (POBLACION, INE). Con ~5.240 municipios a 0 €,
+    "la menor deuda por habitante" sería un empate enorme: por eso la ciudad más grande y el recuento total."""
+    sin_deuda = []
+    for clave, d in DEUDA_VIVA.items():
+        if d.get("deuda_eur") != 0 or es_pseudo_municipio(d.get("municipio", "")):
+            continue
+        pob = (POBLACION.get(clave) or {}).get("poblacion")
+        sin_deuda.append((pob or 0, d))
+    if not sin_deuda:
+        return ""
+    habitantes, mayor = max(sin_deuda, key=lambda x: x[0])
+    if not habitantes:
+        return ""
+    fecha = _fecha_corte_deuda_viva()
+    municipio, provincia = mayor["municipio"], mayor.get("provincia", "")
+    url = f'/?muni={quote_plus(municipio)}{_q_prov(provincia)}'
+    fuente = (_t("Deuda viva a {fecha}, Ministerio de Hacienda").format(fecha=fecha) if fecha
+              else _t("Deuda viva, Ministerio de Hacienda"))
+    return f"""<section class="dd-bloque" aria-labelledby="dd-titulo">
+    <div class="dd-cab">
+      <h2 id="dd-titulo">💶 {_t("Datos destacados · Finanzas municipales")}</h2>
+      <span class="dd-sub">{_t("Datos económicos oficiales; no forman parte del Índice de Transparencia.")}</span>
+    </div>
+    <div class="dd-tarjetas">
+      <div class="dd-tarjeta">
+        <div class="dd-etiqueta">{_t("La mayor ciudad sin deuda")}</div>
+        <a class="dd-nombre" href="{url}">{esc(municipio)}</a>
+        <div class="dd-lugar">{esc(PROVINCIA_LABEL.get(provincia, provincia))} · {_t("{n} habitantes").format(n=fmt_num(habitantes))}</div>
+        <div class="dd-cifra">0 €<small> {_t("de deuda viva")}</small></div>
+        <div class="dd-nota">{_t("Es uno de los {n} ayuntamientos de España sin deuda viva.").format(n=fmt_num(len(sin_deuda)))}</div>
+      </div>
+    </div>
+    <div class="dd-pie">
+      <span class="dd-fuente">{_t("Fuente:")} <a href="{esc(DEUDA_VIVA_FUENTE_URL)}" target="_blank" rel="noopener">{esc(fuente)} ↗</a></span>
+      <a class="btn-ver" href="/rankings#deuda-habitante">{_t("Ver ranking de deuda por habitante →")}</a>
+    </div>
+  </section>"""
+
+
 def _lider_indice_portada_html():
     """"Liderando ahora mismo" del Índice de Transparencia en la portada nacional (encargo de César 2026-09-30:
     más presencia que la línea 1 del lateral). Mismo caché que /rankings (_indice_transparencia_cacheado), puestos
@@ -17990,6 +18062,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     {stats}
   </div>
   {_lider_indice_portada_html()}
+  {_datos_destacados_portada_html()}
   <div class="section-title">{_t("Cobertura")}</div>
   <div class="mapa-indice-row">
     <div class="mapa-indice-mapa">{mapa_html}</div>
