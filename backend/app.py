@@ -13243,6 +13243,7 @@ def _inicializar_datos():
     def _carga_place_menores():
         _cargar_contratos_menores_place()
         _recasar_governalia_ventana_larga()      # una sola vez (marca en settings); ver _GOVERNALIA_DIAS_EXTRA
+        _nombre_pf_conocido("", "")              # construye ya el índice de nombres de personas físicas (ver ahí)
     threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True).start()
     # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
     # al RSS (búsqueda text=España) en vez de esperar al cron diario.
@@ -17236,10 +17237,13 @@ ZARAGOZA_MENOR_IMPORTE_ALTO = 50_000
 #   - si la fila NO trae NIF (Murcia capital, Fuente Álamo, Lorquí, parte de Mula): cuando ese mismo nombre (palabras
 #     en cualquier orden) figura con DNI/NIE en otra fuente oficial de la misma provincia y nunca con NIF de
 #     sociedad. Nunca por la forma del nombre (ver _parece_sociedad y el fallo de las falsas personas físicas).
-_AUTONOMOS_PROVINCIAS = {"murcia"}
+# 02-10-2026: extendido a toda España por decisión de César (None = todas las provincias; antes {"murcia"}).
+_AUTONOMOS_PROVINCIAS = None
 _RE_DNI = re.compile(r"^\d{8}[A-Z]$")
 _RE_NIE = re.compile(r"^[XYZ]\d{7}[A-Z]$")
-_PF_POR_NOMBRE_CACHE = {}      # provincia -> (ts, {nombre normalizado: "pf"|"soc"|"ambos"})
+_PF_NOMBRES = {"ts": 0.0, "datos": None, "construyendo": False}   # datos: frozenset de (provincia, nombre normalizado)
+_PF_NOMBRES_LOCK = threading.Lock()
+_PF_NOMBRES_TTL = 6 * 3600
 
 
 def _nif_limpio(nif):
@@ -17251,30 +17255,55 @@ def _nombre_clave_pf(nombre):
     return " ".join(sorted(re.findall(r"[a-z0-9]+", normalizar(nombre or ""))))
 
 
-def _tipos_por_nombre_cm(provincia):
-    ahora = time.time()
-    hit = _PF_POR_NOMBRE_CACHE.get(provincia)
-    if hit and ahora - hit[0] < 600:
-        return hit[1]
-    with _db_lock:
-        filas = _db.execute("SELECT nif, adjudicatari FROM contratos_menors_locales WHERE provincia=? AND nif<>'' "
-                            "AND nif IS NOT NULL", (provincia,)).fetchall()
-    tipos = {}
-    for nif, adj in filas:
-        n = _nif_limpio(nif)
-        t = "pf" if (_RE_DNI.match(n) or _RE_NIE.match(n)) else ("soc" if _RE_NIF_SOCIEDAD.match(n) else None)
-        if not t or not adj:
-            continue
-        k = _nombre_clave_pf(adj)
-        tipos[k] = t if tipos.get(k) in (None, t) else "ambos"
-    _PF_POR_NOMBRE_CACHE[provincia] = (ahora, tipos)
-    return tipos
+def _construir_pf_nombres():
+    """UN recorrido de contratos_menors_locales para toda España (02-10-2026: por provincia eran 3-7 s cada una porque
+    la tabla no tiene índice por provincia sola, ~3 min y +180 MB con todas). Guarda solo los (provincia, nombre) que
+    figuran con DNI/NIE y nunca con NIF de sociedad."""
+    try:
+        tipos = {}
+        # conexión propia de solo lectura: el recorrido dura unos segundos y no debe bloquear _db_lock (las peticiones)
+        con = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True, timeout=30)
+        try:
+            filas = con.execute("SELECT provincia, nif, adjudicatari FROM contratos_menors_locales "
+                                "WHERE nif<>'' AND nif IS NOT NULL").fetchall()
+        finally:
+            con.close()
+        for prov, nif, adj in filas:
+            n = _nif_limpio(nif)
+            t = "pf" if (_RE_DNI.match(n) or _RE_NIE.match(n)) else ("soc" if _RE_NIF_SOCIEDAD.match(n) else None)
+            if not t or not adj:
+                continue
+            k = (prov or "", _nombre_clave_pf(adj))
+            tipos[k] = t if tipos.get(k) in (None, t) else "ambos"
+        del filas
+        datos = frozenset(k for k, t in tipos.items() if t == "pf")
+        del tipos
+        with _PF_NOMBRES_LOCK:
+            _PF_NOMBRES.update(ts=time.time(), datos=datos)
+        print(f"[menores] personas físicas por nombre: {len(datos)} nombres", flush=True)
+    except Exception as e:
+        print(f"[menores] personas físicas por nombre: ERROR ({type(e).__name__}: {e})", flush=True)
+    finally:
+        with _PF_NOMBRES_LOCK:
+            _PF_NOMBRES["construyendo"] = False
+
+
+def _nombre_pf_conocido(provincia, nombre):
+    """True si ese nombre figura con DNI/NIE (y nunca con NIF de sociedad) en alguna fuente de la provincia. Nunca
+    bloquea una petición: si el índice no está o ha caducado, lo reconstruye en segundo plano y mientras tanto contesta
+    con lo que haya (al principio, nada: solo se identifica por NIF)."""
+    with _PF_NOMBRES_LOCK:
+        datos = _PF_NOMBRES["datos"]
+        if (datos is None or time.time() - _PF_NOMBRES["ts"] > _PF_NOMBRES_TTL) and not _PF_NOMBRES["construyendo"]:
+            _PF_NOMBRES["construyendo"] = True
+            threading.Thread(target=_construir_pf_nombres, name="pf-nombres", daemon=True).start()
+    return bool(datos) and (provincia, _nombre_clave_pf(nombre)) in datos
 
 
 def _persona_fisica_cm(r):
     """None, o de dónde sale que el adjudicatario es una persona física: "nif" o "otra_fuente"."""
     provincia = r.get("provincia") or ""
-    if provincia not in _AUTONOMOS_PROVINCIAS:
+    if _AUTONOMOS_PROVINCIAS is not None and provincia not in _AUTONOMOS_PROVINCIAS:
         return None
     adj = r.get("adjudicatari") or ""
     n = _nif_limpio(r.get("nif"))
@@ -17282,7 +17311,7 @@ def _persona_fisica_cm(r):
         return "nif" if (_RE_DNI.match(n) or _RE_NIE.match(n)) and not _parece_sociedad(adj) else None
     if not adj or _parece_sociedad(adj):
         return None
-    return "otra_fuente" if _tipos_por_nombre_cm(provincia).get(_nombre_clave_pf(adj)) == "pf" else None
+    return "otra_fuente" if _nombre_pf_conocido(provincia, adj) else None
 
 
 def _nif_mostrar(nif):
