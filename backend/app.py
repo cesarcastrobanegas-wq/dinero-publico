@@ -17300,16 +17300,42 @@ def _nombre_pf_conocido(provincia, nombre):
     return bool(datos) and (provincia, _nombre_clave_pf(nombre)) in datos
 
 
+# NIF enmascarado EN ORIGEN ("***0568**", "XXXXX750E", "05*****8F"...): las administraciones solo enmascaran el DNI/NIE
+# de las personas físicas (el CIF de una sociedad no es un dato personal). 63.588 contratos en la copia de prod.
+_RE_NIF_ENMASCARADO = re.compile(r"^(?=.*[*]|.*X{4,})[0-9A-Z*]{6,12}$")   # también enmascarado del todo
+# Formas jurídicas y palabras de entidad EN CUALQUIER PARTE del nombre (con la puntuación quitada): _parece_sociedad
+# solo mira el final, y aparecían "S.A.L.", "S.L.L.", "S.COOP. PEQUEÑA" o "ABANTO SUMINISTROS S.L. (MIGUEL ...)".
+_RE_ENTIDAD_EN_NOMBRE = re.compile(
+    r"\b(s l l|s a l|s l u|s a u|s l p|s l|s a|s coop\w*|coop\w*|c b|s c p|scp|sll|sal|slu|sau|slp|sl|sa|asoc\w*|ltd|gmbh|"
+    r"inc|sociedad|cooperativa|fundacion|asociacion)\b")
+
+
+def _nombre_de_entidad(nombre):
+    return _parece_sociedad(nombre) or bool(_RE_ENTIDAD_EN_NOMBRE.search(
+        " ".join(re.findall(r"[a-z0-9]+", normalizar(nombre or "")))))
+
+
+_NOMBRE_GENERICO_PF = re.compile(r"^\W*(persona f[ií]sica|particular)\W*$", re.I)
+
+
 def _persona_fisica_cm(r):
-    """None, o de dónde sale que el adjudicatario es una persona física: "nif" o "otra_fuente"."""
+    """None, o de dónde sale que el adjudicatario es una persona física: "nif", "nif_enmascarado" u "otra_fuente"."""
     provincia = r.get("provincia") or ""
     if _AUTONOMOS_PROVINCIAS is not None and provincia not in _AUTONOMOS_PROVINCIAS:
         return None
     adj = r.get("adjudicatari") or ""
+    if _nombre_de_entidad(adj):
+        return None
+    crudo = re.sub(r"[\s.\-]", "", (r.get("nif") or "").upper())
+    if crudo and _RE_NIF_ENMASCARADO.match(crudo):
+        # Euskadi enmascara también CIF ("XXXXX0807", termina en cifra); un DNI/NIE termina siempre en letra
+        if crudo.startswith("XXXX") and crudo[-1].isdigit():
+            return None
+        return "nif_enmascarado"
     n = _nif_limpio(r.get("nif"))
     if n:
-        return "nif" if (_RE_DNI.match(n) or _RE_NIE.match(n)) and not _parece_sociedad(adj) else None
-    if not adj or _parece_sociedad(adj):
+        return "nif" if (_RE_DNI.match(n) or _RE_NIE.match(n)) else None
+    if not adj:
         return None
     return "otra_fuente" if _nombre_pf_conocido(provincia, adj) else None
 
@@ -17382,10 +17408,12 @@ def _render_fila_contrato_menor(r):
 
     pf = _persona_fisica_cm(r)
     if pf:
-        origen = (_t("Según su DNI/NIE en la fuente oficial") if pf == "nif"
-                  else _t("Su nombre figura con DNI/NIE en otra fuente oficial"))
-        dir_html = (f'<div class="directivo">{esc(adjudicatari)}</div>'
-                    f'<div class="cargo">{_t("Autónomo / persona física")}</div>'
+        origen = {"nif": _t("Según su DNI/NIE en la fuente oficial"),
+                  "nif_enmascarado": _t("La fuente oficial publica su DNI/NIE enmascarado, como el de toda persona física"),
+                  }.get(pf) or _t("Su nombre figura con DNI/NIE en otra fuente oficial")
+        nombre_pf = "" if _NOMBRE_GENERICO_PF.match(adjudicatari or "") else adjudicatari
+        dir_html = ((f'<div class="directivo">{esc(nombre_pf)}</div>' if nombre_pf else "")
+                    + f'<div class="cargo">{_t("Autónomo / persona física")}</div>'
                     f'<span class="noloc-nota">{origen}</span>{match_html}')
     elif dir_nombre:
         dir_html = (f'<div class="directivo">{esc(dir_nombre)}</div>'
