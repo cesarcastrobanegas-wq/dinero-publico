@@ -9760,6 +9760,16 @@ def _dias_entre(a, b):
 # (mediana 11, casi siempre sábado). Para ellas se acepta que la fecha propia vaya hasta 31 días por detrás.
 _PLACE_MENORES_DIAS_PUBLICACION = 31
 
+# Ventana PROPIA para las fuentes de Governalia que publican con mucho más retraso (medido el 01-10-2026 emparejando
+# NIF e importe con el feed: mediana 24 días en Castelló, 19 en Alzira y 28 en Santa Brígida, con colas de 3-4 meses).
+# Prueba placebo: a la misma distancia pero con la fecha propia ANTES que la del feed (imposible si es el mismo
+# contrato) salen 0-1 parejas en Castelló y Santa Brígida y como mucho 12 por tramo en Alzira, frente a cientos en el
+# lado bueno: son duplicados reales. Con 120 días quedan en el feed 121 de 3.071 (Castelló), 194 de 2.525 (Alzira) y
+# 10 de 274 (Santa Brígida), frente a 1.112, 938 y 179 con 31. En estas fuentes, además, se elige la pareja de fecha
+# más cercana (no la primera que aparece): con una ventana larga, un adjudicatario con contratos repetidos del mismo
+# importe (Alzira: 389 pares a menos de 90 días en su propia fuente) se emparejaría mal.
+_GOVERNALIA_DIAS_EXTRA = {"castello-governalia": 120, "alzira-governalia": 120, "santabrigida-governalia": 120}
+
 
 # Fuentes propias SIN fecha por contrato que guardan el inicio del trimestre (Málaga, ver
 # actualizar_contratos_menores_malaga.py): casan si la fecha del feed cae en ese mismo trimestre.
@@ -9773,7 +9783,8 @@ def _fechas_compatibles_cm(fecha_propia, fecha_feed, fuente_propia):
     if fuente_propia in _FUENTES_CM_FECHA_TRIMESTRE and fecha_propia and fecha_feed:
         trimestre = lambda f: (f[:4], (int(f[5:7]) - 1) // 3)
         return trimestre(fecha_propia) == trimestre(fecha_feed)
-    if (fuente_propia or "").endswith("-governalia") and dif <= _PLACE_MENORES_DIAS_PUBLICACION:
+    if (fuente_propia or "").endswith("-governalia") and dif <= _GOVERNALIA_DIAS_EXTRA.get(
+            fuente_propia, _PLACE_MENORES_DIAS_PUBLICACION):
         return (fecha_propia or "")[:10] >= (fecha_feed or "")[:10]     # solo si la propia va DETRÁS
     return False
 
@@ -9786,6 +9797,7 @@ def _casa_con_propios(reg, idx):
     claves = [_clave_adjudicatario_cm(reg.get("nif"), reg.get("adjudicatari")),
               ("nom", _nombre_comparable_cm(reg.get("adjudicatari")))]
     fecha_feed = reg.get("data_adjudicacio") or ""
+    mejor = None           # fuentes de _GOVERNALIA_DIAS_EXTRA: la pareja de fecha más cercana, no la primera
     for k in dict.fromkeys(claves):
         for e in idx.get(k, ()):
             if e["usado"] or not _importes_compatibles_cm(e["imp"], reg.get("import_num"), reg.get("import_con_iva")):
@@ -9794,9 +9806,17 @@ def _casa_con_propios(reg, idx):
                 ok = _fechas_compatibles_cm(e["fecha"], fecha_feed, e["fuente"])
             else:
                 ok = bool(e["ejercicio"]) and str(e["ejercicio"])[:4] == fecha_feed[:4]
-            if ok:
+            if not ok:
+                continue
+            if e["fuente"] not in _GOVERNALIA_DIAS_EXTRA:
                 e["usado"] = True
                 return True
+            dif = _dias_entre(e["fecha"] or "", fecha_feed)
+            if mejor is None or dif < mejor[0]:
+                mejor = (dif, e)
+    if mejor:
+        mejor[1]["usado"] = True
+        return True
     return False
 
 
@@ -9812,6 +9832,82 @@ def _indice_propios_cm(filas):
         if k2 != _clave_adjudicatario_cm(nif, nombre):
             idx[k2].append(e)
     return idx
+
+
+def _archivar_filas_cm(ids):
+    """Mueve (no borra) filas de contratos_menors_locales a contratos_menors_archivo. Llamar con _db_lock tomado."""
+    if not ids:
+        return
+    _db.execute("""CREATE TABLE IF NOT EXISTS contratos_menors_archivo (
+        id TEXT PRIMARY KEY, municipio TEXT NOT NULL, provincia TEXT, fuente TEXT, organisme TEXT,
+        adjudicatari TEXT, nif TEXT, import_num REAL, data_adjudicacio TEXT, tipus_contracte TEXT,
+        descripcio TEXT, codi_cpv TEXT, exercici TEXT, ts REAL, archivado_ts REAL)""")
+    ahora = time.time()
+    for i in range(0, len(ids), 500):
+        lote = ids[i:i + 500]
+        marcas = ",".join("?" * len(lote))
+        cols = ("id, municipio, provincia, fuente, organisme, adjudicatari, nif, import_num, data_adjudicacio, "
+                "tipus_contracte, descripcio, codi_cpv, exercici, ts")
+        _db.execute(f"INSERT OR IGNORE INTO contratos_menors_archivo ({cols}, archivado_ts) SELECT {cols}, ? "
+                    f"FROM contratos_menors_locales WHERE id IN ({marcas})", [ahora] + lote)
+        _db.execute(f"DELETE FROM contratos_menors_locales WHERE id IN ({marcas})", lote)
+    _db.commit()
+
+
+_GOVERNALIA_VENTANA_CLAVE = "governalia_ventana_larga_v1"
+
+
+def _recasar_governalia_ventana_larga():
+    """Aplica UNA VEZ (marca en `settings`) la ventana de _GOVERNALIA_DIAS_EXTRA a lo ya cargado: el feed no se vuelve a
+    cargar si sus ficheros no cambian, así que sin esto los duplicados de Castelló, Alzira y Santa Brígida seguirían
+    hasta el siguiente refresco de su fuente. Uno a uno respetando lo ya hecho: primero los contratos del feed YA
+    archivados consumen su pareja propia, y solo después se emparejan los que siguen visibles (si no, un contrato
+    propio podría "tapar" a un segundo contrato distinto del mismo adjudicatario e importe)."""
+    if not _DISCO_CONFIABLE:
+        return
+    with _db_lock:
+        if _db.execute("SELECT 1 FROM settings WHERE clave=?", (_GOVERNALIA_VENTANA_CLAVE,)).fetchone():
+            return
+        if not _db.execute("SELECT 1 FROM settings WHERE clave=?", (_PLACE_MENORES_CLAVE,)).fetchone():
+            return                              # el feed aún no está cargado: su carga ya aplica la ventana nueva
+    try:
+        equivalentes = _nombres_equivalentes_cm(solo_place=True)
+        resumen = {}
+        for fuente in _GOVERNALIA_DIAS_EXTRA:
+            with _db_lock:
+                propios = _db.execute("SELECT municipio, provincia, nif, adjudicatari, import_num, data_adjudicacio, "
+                                      "fuente, exercici FROM contratos_menors_locales WHERE fuente=?", (fuente,)).fetchall()
+            grupos = collections.defaultdict(list)
+            for m, pv, *resto in propios:
+                grupos[(m, pv)].append(tuple(resto))
+            retirar = []
+            with _db_lock:
+                for (muni, prov), filas in grupos.items():
+                    idx = _indice_propios_cm(filas)
+                    for m2, p2 in equivalentes.get(_clave_municipio_cm(muni, prov), []):
+                        q = ("SELECT id, nif, adjudicatari, import_num, data_adjudicacio FROM {t} WHERE municipio=? AND "
+                             "provincia=? AND fuente=? ORDER BY data_adjudicacio, id")
+                        try:
+                            ya = _db.execute(q.format(t="contratos_menors_archivo"), (m2, p2, FUENTE_CM_PLACE)).fetchall()
+                        except sqlite3.OperationalError:
+                            ya = []
+                        for _id, nif, adj, imp, fecha in ya:
+                            _casa_con_propios({"nif": nif, "adjudicatari": adj, "import_num": imp,
+                                               "data_adjudicacio": fecha}, idx)
+                        for _id, nif, adj, imp, fecha in _db.execute(q.format(t="contratos_menors_locales"),
+                                                                     (m2, p2, FUENTE_CM_PLACE)).fetchall():
+                            if _casa_con_propios({"nif": nif, "adjudicatari": adj, "import_num": imp,
+                                                  "data_adjudicacio": fecha}, idx):
+                                retirar.append(_id)
+                _archivar_filas_cm(retirar)
+            resumen[fuente] = len(retirar)
+        with _db_lock:
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET "
+                        "valor=excluded.valor", (_GOVERNALIA_VENTANA_CLAVE, json.dumps(resumen)))
+            _db.commit()
+        print(f"[menores] ventana larga de Governalia: archivados del feed de PLACE {resumen}", flush=True)
+    except Exception as e:
+        print(f"[menores] ventana larga de Governalia: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
 def _retirar_duplicados_place(propios):
@@ -9838,21 +9934,7 @@ def _retirar_duplicados_place(propios):
                 if _casa_con_propios({"nif": nif, "adjudicatari": adj, "import_num": imp, "data_adjudicacio": fecha},
                                      idx):
                     retirar.append(pid)
-        if retirar:
-            _db.execute("""CREATE TABLE IF NOT EXISTS contratos_menors_archivo (
-                id TEXT PRIMARY KEY, municipio TEXT NOT NULL, provincia TEXT, fuente TEXT, organisme TEXT,
-                adjudicatari TEXT, nif TEXT, import_num REAL, data_adjudicacio TEXT, tipus_contracte TEXT,
-                descripcio TEXT, codi_cpv TEXT, exercici TEXT, ts REAL, archivado_ts REAL)""")
-            ahora = time.time()
-            for i in range(0, len(retirar), 500):
-                lote = retirar[i:i + 500]
-                marcas = ",".join("?" * len(lote))
-                cols = ("id, municipio, provincia, fuente, organisme, adjudicatari, nif, import_num, data_adjudicacio, "
-                        "tipus_contracte, descripcio, codi_cpv, exercici, ts")
-                _db.execute(f"INSERT OR IGNORE INTO contratos_menors_archivo ({cols}, archivado_ts) SELECT {cols}, ? "
-                            f"FROM contratos_menors_locales WHERE id IN ({marcas})", [ahora] + lote)
-                _db.execute(f"DELETE FROM contratos_menors_locales WHERE id IN ({marcas})", lote)
-            _db.commit()
+        _archivar_filas_cm(retirar)
     if retirar:
         print(f"  [menores] {len(retirar)} contratos del feed de PLACE archivados: ya los trae la fuente propia "
               f"({len(grupos)} municipios revisados).", flush=True)
@@ -13081,7 +13163,10 @@ def _inicializar_datos():
     # en un hilo aparte -- la primera carga (~850.000 filas) tarda varios minutos y gunicorn mata el worker si el
     # arranque pasa de --timeout (300 s); lanzado antes, además, frenaba el resto del arranque (GIL). En los arranques
     # siguientes la huella no cambia y termina en menos de un segundo.
-    threading.Thread(target=_cargar_contratos_menores_place, name="carga-place-menores", daemon=True).start()
+    def _carga_place_menores():
+        _cargar_contratos_menores_place()
+        _recasar_governalia_ventana_larga()      # una sola vez (marca en settings); ver _GOVERNALIA_DIAS_EXTRA
+    threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True).start()
 
 
 # ─── ENRIQUECIMIENTO EN BACKGROUND (empresia / BORME) ────────────────────────
@@ -19126,15 +19211,18 @@ def render_caso_governalia_fechas_html():
   portales; en los demás el retraso existe pero no cae en un día fijo. Por eso no bastaba con una regla del tipo «si
   es sábado, restar una semana»: hacía falta medir cada fuente.</p>
 
-  <p>El arreglo: para estas ocho fuentes aceptamos que su fecha vaya hasta 31 días por detrás de la de PLACE. Y
+  <p>El arreglo: para estas fuentes aceptamos que su fecha vaya por detrás de la de PLACE: hasta 31 días en cinco de
+  ellas y hasta 120 en Castellón, Alzira y Santa Brígida, que publican con más retraso. Y
   avisamos de lo que implica: en esos municipios, la «fecha» que mostramos para los contratos de su fuente propia es
   en realidad la de publicación, no la de adjudicación.</p>
 
-  <p>El margen de 31 días recoge el 87 % de las parejas medidas. El resto se separa más, sobre todo en Castellón,
-  Alzira y Santa Brígida, donde una parte de los contratos tarda más de un mes en aparecer en Governalia. Ahí la
-  regla puede dejar pasar algún duplicado, y lo estamos revisando fuente por fuente antes de ampliar el margen: un
-  margen demasiado grande tiene el riesgo contrario, juntar como si fueran uno dos contratos distintos de la misma
-  empresa por el mismo importe.</p>
+  <p>Con un margen único de 31 días se nos escapaba el 13 % de las parejas, sobre todo en esos tres municipios: sus
+  fichas mostraban dos veces 1.921 contratos (991 en Castellón, 761 en Alzira y 169 en Santa Brígida). Antes de
+  ampliar el margen comprobamos que no eran coincidencias con una prueba placebo: buscar parejas a la misma
+  distancia pero en la dirección imposible, con la fecha de Governalia antes que la de PLACE. Salieron prácticamente
+  cero, frente a cientos en la dirección buena. Y para no juntar como uno dos contratos distintos de la misma
+  empresa por el mismo importe, cada contrato se empareja como mucho con otro, siempre con el de fecha más
+  cercana.</p>
 
   <p>Lo contamos porque es un buen ejemplo de un problema general: dos fuentes oficiales pueden llamar igual a
   cosas distintas. No basta con comprobar que hay datos; antes de cruzarlos hay que medir qué significa cada
