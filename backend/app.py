@@ -6521,8 +6521,118 @@ _SUFIJOS_EMPRESA = re.compile(
 # 7 Desierto definitivo. Los códigos 1/2/8/9/10 sí tienen adjudicatario.
 _RESULTADO_SIN_ADJUDICATARIO = {"3", "4", "5", "6", "7"}
 
-def _entry_to_contrato(entry_xml):
-    """Convierte el XML crudo de un <entry> a dict de contrato. Retorna None si no relevante."""
+# ─── IMPORTE ADJUDICADO POR LOTE (2026-10-01, encargo de César) ──────────────────────────────────────────────────────
+# El "Importe" del <summary> de PLACE es el PRESUPUESTO base de licitación (sin impuestos) de TODA la licitación, no
+# lo adjudicado: medido en el ZIP de agosto de 2026, coincide con lo adjudicado solo en el 32 % de las licitaciones
+# (mediana +6 %, p90 +73 %), y las 2.702 con varios adjudicatarios se atribuían enteras al primero (València: 1.204 M€
+# de presupuesto de 4 lotes a una sola empresa). Lo adjudicado está en cada cac:TenderResult (uno por lote o grupo de
+# lotes): WinningParty + AwardedTenderedProject/LegalMonetaryTotal/TaxExclusiveAmount. Ahora se agrupa por
+# adjudicatario (un registro por empresa, con la suma de sus lotes) y solo se usa si es coherente con el presupuesto:
+#   - < 5 % del presupuesto: casi siempre un PRECIO UNITARIO (0,35 €, 3,93 €... en acuerdos marco) -> presupuesto;
+#   - > 150 %: acuerdos marco que repiten el importe total en cada adjudicatario -> presupuesto;
+#   - algún adjudicatario sin importe, o importe 0 -> presupuesto;
+#   - varios adjudicatarios y presupuesto 0 en el resumen (acuerdos marco de centralización: cada fabricante con
+#     el total, 500 M€ cada uno) -> presupuesto.
+# En esos casos queda como antes (un solo registro, el primer adjudicatario) con importe_tipo="presupuesto".
+_RE_TENDER_RESULT = re.compile(
+    r'<(?:[A-Za-z0-9_-]+:)?TenderResult(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?TenderResult>', re.DOTALL | re.I)
+_RE_AWARDED_PROJECT = re.compile(
+    r'<(?:[A-Za-z0-9_-]+:)?AwardedTenderedProject(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?AwardedTenderedProject>',
+    re.DOTALL | re.I)
+_ADJUDICADO_RATIO_MIN = 0.05
+_ADJUDICADO_RATIO_MAX = 1.5
+
+
+def _ganador_tender_result(tr_block):
+    """(empresa, nif) del WinningParty/WinnerParty de un bloque TenderResult; ("", "") si no hay."""
+    for wp_tag in ("WinningParty", "WinnerParty"):
+        wp_m = re.search(
+            rf'<(?:[A-Za-z0-9_-]+:)?{wp_tag}(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?{wp_tag}>',
+            tr_block, re.DOTALL | re.I
+        )
+        if not wp_m:
+            continue
+        wp_block = wp_m.group(1)
+        nif = ""
+        nif_m = re.search(
+            r'schemeName=["\']NIF["\'][^>]*>([A-Za-z][0-9]{7}[A-Za-z0-9])<', wp_block, re.I
+        )
+        if not nif_m:
+            nif_m = re.search(r'<[^>]*ID[^>]*>([A-Za-z][0-9]{7}[A-Za-z0-9])<', wp_block, re.I)
+        if nif_m:
+            nif = nif_m.group(1).upper()
+        pn_m = re.search(
+            r'<(?:[A-Za-z0-9_-]+:)?PartyName(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?PartyName>',
+            wp_block, re.DOTALL | re.I
+        )
+        name_m = re.search(
+            r'<(?:[A-Za-z0-9_-]+:)?Name(?:\s[^>]*)?>([^<]+)</(?:[A-Za-z0-9_-]+:)?Name>',
+            pn_m.group(1) if pn_m else wp_block, re.I
+        )
+        if name_m:
+            return html.unescape(name_m.group(1).strip()), nif
+    return "", ""
+
+
+def _adjudicaciones_place(entry_xml):
+    """Adjudicatarios de una licitación de PLACE, agrupados por empresa en orden de aparición:
+    [{"empresa", "nif", "importe" (float, suma sin impuestos de sus lotes; None si algún lote no lo trae),
+      "lotes" [ids], "resultado_code"}]. Los TenderResult desiertos/desistidos/renunciados (código propio del lote,
+    ver _RESULTADO_SIN_ADJUDICATARIO) se saltan: una licitación con un lote desierto y otro adjudicado ya no se queda
+    sin adjudicatario."""
+    grupos = {}
+    for tr_m in _RE_TENDER_RESULT.finditer(entry_xml):
+        tr_block = tr_m.group(1)
+        rc = _re_tag("ResultCode", tr_block)
+        if rc in _RESULTADO_SIN_ADJUDICATARIO:
+            continue
+        empresa, nif = _ganador_tender_result(tr_block)
+        if not empresa:
+            continue
+        importes, lotes = [], []
+        for atp_m in _RE_AWARDED_PROJECT.finditer(tr_block):
+            atp = atp_m.group(1)
+            lote = _re_tag("ProcurementProjectLotID", atp)
+            if lote:
+                lotes.append(lote)
+            lmt = _re_tag_block("LegalMonetaryTotal", atp)
+            v = (_re_tag("TaxExclusiveAmount", lmt) or _re_tag("PayableAmount", lmt)) if lmt else ""
+            try:
+                importes.append(float(v.replace(",", ".")))
+            except ValueError:
+                importes.append(None)
+        if not importes:
+            importes = [None]
+        g = grupos.setdefault(nif or normalizar(empresa), {"empresa": empresa, "nif": nif, "importe": 0.0,
+                                                           "lotes": [], "resultado_code": rc})
+        if g["importe"] is not None and None not in importes:
+            g["importe"] += sum(importes)
+        else:
+            g["importe"] = None
+        g["lotes"] += [l for l in lotes if l not in g["lotes"]]
+    for g in grupos.values():
+        g["lotes"].sort(key=lambda l: (len(l), l))
+    return list(grupos.values())
+
+
+def _adjudicado_fiable(adjs, presupuesto):
+    """True si los importes adjudicados de `adjs` se pueden usar en lugar del presupuesto (ver cabecera)."""
+    if not adjs or any(not a["importe"] or a["importe"] <= 0 for a in adjs):
+        return False
+    total = sum(a["importe"] for a in adjs)
+    if presupuesto <= 0 and len(adjs) > 1:
+        return False   # sin presupuesto no se puede comprobar que no se repita el total en cada uno (acuerdos marco)
+    if presupuesto > 0 and not (_ADJUDICADO_RATIO_MIN * presupuesto <= total <= _ADJUDICADO_RATIO_MAX * presupuesto):
+        return False
+    return True
+
+
+def _entry_to_contratos(entry_xml):
+    """Convierte el XML crudo de un <entry> en la lista de contratos que representa: uno por adjudicatario con lo que
+    se le adjudicó (ver _adjudicaciones_place), o uno solo con el presupuesto cuando lo adjudicado no es fiable.
+    El primero conserva la URL de la licitación (misma clave que los ya guardados, que así se actualizan en su sitio);
+    los demás llevan la URL con "#adj-<NIF>" (clave propia en _dedup_contratos_por_url/_fusionar_historico_contratos).
+    Lista vacía si no es relevante."""
 
     # ── estado primero (salida rápida) ────────────────────────────────────────
     estado = ""
@@ -6554,7 +6664,7 @@ def _entry_to_contrato(entry_xml):
             estado = estado_sum
 
     if estado not in ("ADJ", "RES", "FOR"):
-        return None
+        return []
 
     # ── título ───────────────────────────────────────────────────────────────
     m = re.search(r'<(?:[A-Za-z0-9_-]+:)?title(?:\s[^>]*)?>([^<]*)</(?:[A-Za-z0-9_-]+:)?title>',
@@ -6622,57 +6732,18 @@ def _entry_to_contrato(entry_xml):
     # pero no se usaba aquí, solo se guardaba resultado_code sin consultarlo
     # antes de la extracción de empresa. Saltar todo el bloque cuando aplica
     # deja empresa="" -> "No localizada" al final, el valor correcto.
-    empresa, nif = "", ""
-    _tender_results_iter = (
-        re.finditer(
-            r'<(?:[A-Za-z0-9_-]+:)?TenderResult(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?TenderResult>',
-            entry_xml, re.DOTALL | re.I
-        )
-        if resultado_code not in _RESULTADO_SIN_ADJUDICATARIO
-        else iter(())  # concurso desierto/desistido/renunciado -- no buscar "empresa", ver comentario arriba
-    )
-    for tr_m in _tender_results_iter:
-        tr_block = tr_m.group(1)
-        for wp_tag in ("WinningParty", "WinnerParty"):
-            wp_m = re.search(
-                rf'<(?:[A-Za-z0-9_-]+:)?{wp_tag}(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?{wp_tag}>',
-                tr_block, re.DOTALL | re.I
-            )
-            if not wp_m:
-                continue
-            wp_block = wp_m.group(1)
-            # NIF
-            nif_m = re.search(
-                r'schemeName=["\']NIF["\'][^>]*>([A-Za-z][0-9]{7}[A-Za-z0-9])<', wp_block, re.I
-            )
-            if not nif_m:
-                nif_m = re.search(r'<[^>]*ID[^>]*>([A-Za-z][0-9]{7}[A-Za-z0-9])<', wp_block, re.I)
-            if nif_m:
-                nif = nif_m.group(1).upper()
-            # Nombre
-            pn_m = re.search(
-                r'<(?:[A-Za-z0-9_-]+:)?PartyName(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?PartyName>',
-                wp_block, re.DOTALL | re.I
-            )
-            block = pn_m.group(1) if pn_m else wp_block
-            name_m = re.search(
-                r'<(?:[A-Za-z0-9_-]+:)?Name(?:\s[^>]*)?>([^<]+)</(?:[A-Za-z0-9_-]+:)?Name>',
-                block, re.I
-            )
-            if name_m:
-                empresa = html.unescape(name_m.group(1).strip())
-                break
-        if empresa:
-            break
+    # 2026-10-01: lote a lote (_adjudicaciones_place), saltando solo los lotes desiertos -- antes bastaba con que el
+    # PRIMER ResultCode de la licitación fuera desierto para no buscar adjudicatario en ningún lote.
+    adjs = _adjudicaciones_place(entry_xml)
+    empresa, nif = (adjs[0]["empresa"], adjs[0]["nif"]) if adjs else ("", "")
 
     # Fallback: cualquier Name en TenderResult que parezca empresa -- salvo
     # que ya sepamos que el concurso fue desierto/desistido/renunciado (ver
     # comentario más arriba): ahí es precisamente donde se colaba "Desierto"
     # como si fuera un nombre de empresa, el bug real de este hallazgo.
     if not empresa and resultado_code not in _RESULTADO_SIN_ADJUDICATARIO:
-        for tr_m in re.finditer(
-            r'<(?:[A-Za-z0-9_-]+:)?TenderResult(?:\s[^>]*)?>(.+?)</(?:[A-Za-z0-9_-]+:)?TenderResult>',
-            entry_xml, re.DOTALL | re.I
+        for tr_m in _RE_TENDER_RESULT.finditer(
+            entry_xml
         ):
             for name_m in re.finditer(
                 r'<(?:[A-Za-z0-9_-]+:)?Name(?:\s[^>]*)?>([^<]{3,80})</(?:[A-Za-z0-9_-]+:)?Name>',
@@ -6685,14 +6756,17 @@ def _entry_to_contrato(entry_xml):
             if empresa:
                 break
 
-    return {
+    presupuesto_num = float(importe_raw.replace(",", ".")) if importe_raw else 0.0
+    base = {
         "titulo":        titulo[:200],
         "organo":        organo,
         "cp":            cp_organo,
         "empresa":       empresa or "No localizada",
         "nif":           nif,
         "importe":       importe or "No localizado",
-        "importe_num":   float(importe_raw.replace(",", ".")) if importe_raw else 0.0,
+        "importe_num":   presupuesto_num,
+        "importe_tipo":  "presupuesto",
+        "presupuesto_num": presupuesto_num,
         "estado":        estado,
         "resultado_code": resultado_code,
         "licitacion_id": licitacion_id,
@@ -6701,6 +6775,21 @@ def _entry_to_contrato(entry_xml):
         "directivo":     "",
         "cargo":         "",
     }
+    if adjs:
+        base["resultado_code"] = adjs[0]["resultado_code"] or resultado_code
+    if not url or not _adjudicado_fiable(adjs, presupuesto_num):
+        return [base]
+    filas = []
+    for i, a in enumerate(adjs):
+        c = dict(base, empresa=a["empresa"], nif=a["nif"], importe=fmt_eur(f"{a['importe']:.2f}"),
+                 importe_num=round(a["importe"], 2), importe_tipo="adjudicado",
+                 resultado_code=a["resultado_code"] or resultado_code)
+        if len(adjs) > 1 or len(a["lotes"]) > 1:
+            c["lotes"] = a["lotes"]
+        if i:
+            c["url"] = f"{url}#adj-{a['nif'] or i}"
+        filas.append(c)
+    return filas
 
 
 _OPEN_ENTRY_B  = b'<entry>'
@@ -6861,14 +6950,15 @@ def parsear_atom_bytes(raw_bytes, municipio, _muni_re=None, provincia=None):
     # _entries_con_estado_bytes ya filtra por estado Y municipio; parsear solo las candidatas
     for entry_xml in _entries_con_estado_bytes(raw_bytes, muni_b_variants):
         try:
-            c = _entry_to_contrato(entry_xml)
+            filas = _entry_to_contratos(entry_xml)
+            c = filas[0] if filas else None
             if not c or not _muni_re.search(normalizar(c.get("organo", ""))):
                 continue
             if cp_esperado and not c.get("cp", "").startswith(cp_esperado):
                 continue
             if anclado and _cp_de_otra_provincia(c, municipio, provincia):
                 continue
-            contratos.append(c)
+            contratos.extend(filas)
         except Exception:
             pass
     return contratos
@@ -7492,11 +7582,9 @@ def _extraer_contratos_zip(zip_path, job_id=None):
         out = []
         for entry_xml in _entries_con_estado_todas_bytes(raw):
             try:
-                c = _entry_to_contrato(entry_xml)
+                out.extend(_entry_to_contratos(entry_xml))
             except Exception:
-                c = None
-            if c:
-                out.append(c)
+                pass
         return out
 
     contratos = []
@@ -7666,11 +7754,9 @@ def _piloto_extraer_contratos_place_todos(zip_paths, job_id=None):
                 except UnicodeDecodeError:
                     entry_xml = raw[s:e].decode("latin-1", errors="replace")
                 try:
-                    c = _entry_to_contrato(entry_xml)
+                    out.extend(_entry_to_contratos(entry_xml))
                 except Exception:
-                    c = None
-                if c:
-                    out.append(c)
+                    pass
             return out
 
         contratos = []
@@ -9031,6 +9117,116 @@ def _aplicar_backfill_nombres_place():
               f"{len(anadidos)} municipios ({len(sin_fila)} sin ficha, omitidos: {sin_fila[:20]}). {anadidos}", flush=True)
     except Exception as e:
         print(f"[startup] backfill_nombres_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
+IMPORTE_ADJUDICADO_PLACE_FILE = os.path.join(BASE_DIR, "importe_adjudicado_place.json.gz")
+_IMPORTE_ADJUDICADO_PLACE_CLAVE = "importe_adjudicado_place_sha"
+_RE_ID_EVL = re.compile(r"idEvl=([^&#\s]+)")
+
+
+def _corregir_importes_place(contratos, lic):
+    """Aplica a los contratos PLACE de un municipio lo adjudicado por lote (`lic`: idEvl -> [presupuesto, tipo,
+    [[empresa, nif, importe_num, lotes, resultado_code], ...]], ver generar_importe_adjudicado_place.py). Devuelve
+    (contratos, n_corregidos, n_anadidos): corrige en su sitio el registro guardado (importe y, si el guardado no es el
+    primer adjudicatario, también la empresa) y añade los demás adjudicatarios con la URL + "#adj-<NIF>", igual que
+    _entry_to_contratos. Idempotente."""
+    claves = {c.get("url") or c.get("titulo", "")[:80] for c in contratos}
+    salida, corregidos, anadidos = [], 0, 0
+    for c in contratos:
+        salida.append(c)
+        url = c.get("url") or ""
+        if c.get("fuente") != "PLACE" or "#adj-" in url:
+            continue
+        m = _RE_ID_EVL.search(url)
+        reg = lic.get(m.group(1)) if m else None
+        if not reg:
+            continue
+        presupuesto, tipo, filas = reg
+        antes = json.dumps(c, sort_keys=True, ensure_ascii=False)
+        emp0, nif0, imp0, lotes0, rc0 = filas[0]
+        c["presupuesto_num"] = presupuesto
+        c["importe_tipo"] = tipo
+        if tipo == "adjudicado":
+            c["importe_num"] = imp0
+            c["importe"] = fmt_eur(f"{imp0:.2f}")
+        mismo = ((nif0 and nif0 == (c.get("nif") or "").upper())
+                 or normalizar(emp0) == normalizar(c.get("empresa", "")))
+        if emp0 and emp0 != "No localizada" and not mismo:
+            c["empresa"], c["nif"], c["directivo"], c["cargo"] = emp0, nif0, "", ""
+            c.pop("intentado", None)
+        if rc0:
+            c["resultado_code"] = rc0
+        if lotes0:
+            c["lotes"] = lotes0
+        if json.dumps(c, sort_keys=True, ensure_ascii=False) != antes:
+            corregidos += 1
+        if tipo != "adjudicado":
+            continue
+        for i, (emp, nif, imp, lotes, rc) in enumerate(filas[1:], 1):
+            url_i = f"{url}#adj-{nif or i}"
+            if url_i in claves:
+                continue
+            claves.add(url_i)
+            nuevo = dict(c, empresa=emp, nif=nif, importe_num=imp, importe=fmt_eur(f"{imp:.2f}"),
+                         resultado_code=rc or c.get("resultado_code", ""), url=url_i, directivo="", cargo="")
+            nuevo.pop("intentado", None)
+            nuevo.pop("lotes", None)
+            if lotes:
+                nuevo["lotes"] = lotes
+            salida.append(nuevo)
+            anadidos += 1
+    return salida, corregidos, anadidos
+
+
+def _aplicar_importe_adjudicado_place():
+    """Corrige UNA VEZ el histórico de contratos formales de PLACE ya guardado: importe = lo adjudicado por lote y un
+    registro por adjudicatario (ver _adjudicaciones_place). Fichero generado EN LOCAL con
+    generar_importe_adjudicado_place.py; idempotente por hash en `settings` como los backfills."""
+    if not _DISCO_CONFIABLE or not os.path.exists(IMPORTE_ADJUDICADO_PLACE_FILE):
+        return
+    try:
+        with open(IMPORTE_ADJUDICADO_PLACE_FILE, "rb") as f:
+            crudo = f.read()
+        huella = hashlib.sha256(crudo).hexdigest()[:16]
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_IMPORTE_ADJUDICADO_PLACE_CLAVE,)).fetchone()
+        if fila and fila[0] == huella:
+            return
+        lic = json.loads(_gzip.decompress(crudo).decode("utf-8"))["lic"]
+        del crudo
+        with _db_lock:
+            claves = [k for (k,) in _db.execute("SELECT municipio FROM municipios")]
+        n_munis = n_corr = n_anad = 0
+        for key in claves:
+            with _db_lock:
+                row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
+            if not row or "PLACE" not in row[0]:
+                continue
+            try:
+                d = json.loads(row[0])
+            except ValueError:
+                continue
+            contratos, corr, anad = _corregir_importes_place(d.get("contratos", []), lic)
+            if not corr and not anad:
+                continue
+            d["contratos"] = contratos
+            d["total_contratos"] = len(contratos)
+            d["alertas"] = analizar_riesgo(contratos)
+            with _db_lock:
+                _db.execute("UPDATE municipios SET data=? WHERE municipio=?", (json.dumps(d, ensure_ascii=False), key))
+                _db.commit()
+            n_munis += 1
+            n_corr += corr
+            n_anad += anad
+        with _db_lock:
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                        "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor",
+                        (_IMPORTE_ADJUDICADO_PLACE_CLAVE, huella))
+            _db.commit()
+        print(f"[startup] importe_adjudicado_place: {n_corr} contratos corregidos y {n_anad} adjudicatarios "
+              f"anadidos en {n_munis} municipios ({len(lic)} licitaciones en el fichero)", flush=True)
+    except Exception as e:
+        print(f"[startup] importe_adjudicado_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
 CORRECCION_FORMALES_5ANIOS_FILE = os.path.join(BASE_DIR, "correcciones_formales_5anios.json.gz")
@@ -12856,6 +13052,7 @@ def _inicializar_datos():
     _aplicar_backfill_ajuntament_place()
     _aplicar_correccion_formales_5anios()
     _aplicar_backfill_nombres_place()
+    _aplicar_importe_adjudicado_place()
     _depurar_asignacion_place_por_nombre()
     corte = time.time() - RESULT_CACHE_TTL
     with _db_lock:
@@ -14943,6 +15140,16 @@ def _estado_txt(estado):
             "En ejecución": _t("En ejecución")}.get(estado, estado)
 
 
+def _tl_lotes(lotes):
+    """'lote 3' / 'lotes 1, 2 y 5' (hasta 6; más -> 'N lotes')."""
+    lotes = [str(x) for x in lotes]
+    if len(lotes) == 1:
+        return esc(_t("lote {lote}").format(lote=lotes[0]))
+    if len(lotes) > 6:
+        return esc(_t("{n} lotes").format(n=len(lotes)))
+    return esc(_t("lotes {lotes}").format(lotes=", ".join(lotes)))
+
+
 def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=None):
     """Genera la fila <tr> de un contrato. Reutilizada por la vista de
     municipio y por los resultados de búsqueda global."""
@@ -14955,6 +15162,13 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
             imp_cls += " big"
     except (TypeError, ValueError):
         pass
+    # PLACE (2026-10-01): lo adjudicado por lote; si no es fiable, el presupuesto -- y se dice (ver _adjudicaciones_place)
+    if c.get("importe_tipo") == "presupuesto" and c.get("importe_num"):
+        imp_nota = f'<span class="noloc-nota">{_t("presupuesto de licitación")}</span>'
+    elif c.get("importe_tipo") == "adjudicado" and c.get("lotes"):
+        imp_nota = f'<span class="noloc-nota">{_tl_lotes(c["lotes"])}</span>'
+    else:
+        imp_nota = ""
 
     directivo, cargo_dir = _directivo_contrato(c)
     if directivo:
@@ -15041,7 +15255,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
         <div class="empresa">{esc(c.get('empresa', '—'))}{ute_html} {fuente_badge}</div>
         {contrato_html}{muni_html}
       </td>
-      <td class="{imp_cls}">{esc(imp)}</td>
+      <td class="{imp_cls}">{esc(imp)}{imp_nota}</td>
       <td>{dir_html}</td>
       <td>
         <span class="estado-badge est-{esc(est)}">{esc(est_label)}</span>
@@ -18258,6 +18472,7 @@ def _contrato_json(c, municipio):
         "titulo": c.get("titulo", ""),
         "importe": c.get("importe", "") or "No localizado",
         "importe_num": c.get("importe_num", 0.0) or 0.0,
+        "importe_tipo": c.get("importe_tipo", ""),
         "estado": {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(c.get("estado", ""), c.get("estado", "")),
         "directivo": _directivo_contrato(c)[0],
         "cargo": _directivo_contrato(c)[1],
@@ -18943,6 +19158,13 @@ def render_metodologia_html():
   propio sistema foral) ni para Ceuta y Melilla. Allí ese componente queda fuera.</p>
   <p><strong>Fondos europeos.</strong> En la mayoría de los registros de fondos de cohesión no consta el nombre del
   beneficiario, así que solo podemos atribuir una parte a cada municipio.</p>
+
+  <h2>Qué importe mostramos</h2>
+  <p>De cada contrato mostramos lo <strong>adjudicado</strong>, sin IVA. En la Plataforma de Contratación, una
+  licitación puede dividirse en lotes y cada lote ir a una empresa distinta: mostramos una fila por empresa con la
+  suma de sus lotes. Cuando lo adjudicado que publica la Plataforma no es utilizable (precios unitarios de unos
+  céntimos en lugar del total, o acuerdos marco que repiten el importe completo en cada empresa) mostramos el
+  presupuesto de licitación y lo indicamos debajo de la cifra.</p>
 
   <h2>Errores de origen</h2>
   <p>Las fuentes oficiales también se equivocan: hay contratos menores de 71 millones de euros, adjudicaciones a 0 €
