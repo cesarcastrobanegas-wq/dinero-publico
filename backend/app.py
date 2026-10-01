@@ -18988,6 +18988,28 @@ def render_caso_menores_imposibles_html():
   globales anotados en un solo contrato. Desde fuera no se puede saber cuál es cuál. Y ahí está el problema: el
   registro oficial acepta un «menor» de 71 millones sin ninguna validación.</p>
 
+  <h2>Dónde están y cuánto suman</h2>
+  <p>No es un fallo de un solo ayuntamiento. Los contratos menores por encima de 40.000 € sin IVA están repartidos
+  por unos 170 municipios de 34 provincias. La provincia de Valencia concentra casi uno de cada cuatro (69), seguida
+  de Castellón y Santa Cruz de Tenerife (19 cada una) y Alicante (17). Por municipios, {_enlace_ficha("Torrent",
+  "valencia")} acumula 15 y {_enlace_ficha("Algeciras", "cadiz")}, 9.</p>
+
+  <p>La mayoría se pasan del límite por poco: unos dos tercios están entre 40.000 y 100.000 €, una cifra que encaja
+  con un contrato de obras algo mayor de lo permitido o con un contrato que en realidad se licitó y se anotó en el
+  canal equivocado. Unos 77 están entre 100.000 € y un millón, 16 entre uno y diez millones, y solo tres pasan de
+  diez millones (El Viso, Cullera y Picanya). Casi la mitad son de obras; el resto, servicios, suministros y
+  contratos privados o patrimoniales.</p>
+
+  <p>Juntos suman unos 185 millones de euros. Parece mucho, pero hay que leerlo con cuidado: solo el de El Viso
+  aporta 71,5 millones, y sin él el conjunto se queda en unos 113 millones, alrededor del 3 % de todo lo que recoge
+  el registro (3.680 millones en 851.000 contratos menores desde septiembre de 2021). Que el 3 % del importe esté en
+  contratos que no deberían existir como menores dice poco del gasto total, pero bastante del control que se hace
+  sobre lo que se publica.</p>
+
+  <p>Tampoco hay señales de que se esté corrigiendo: hubo 23 casos en 2022, 54 en 2023, 81 en 2024 y 77 en 2025, y
+  en 2026 ya van 49 a finales de septiembre. Parte del aumento es simplemente que cada año más ayuntamientos publican
+  sus contratos menores en PLACE; aun así, el registro sigue aceptando cualquier importe sin preguntar.</p>
+
   <h2>Qué hacemos con ellos</h2>
   <p>No los ocultamos ni los corregimos, porque no sabemos cuál sería la cifra buena. Cada uno lleva un aviso
   visible en su fila: «importe sin IVA por encima del máximo legal de cualquier contrato menor». Hay además otros
@@ -19025,6 +19047,24 @@ def render_caso_cartagena_historico_html():
   coinciden en torno al 62 %. Por eso usamos cada fuente donde es la única: Governalia hasta 2025 y el portal
   propio para 2026. Tampoco cuentan igual: el portal propio da los importes con IVA y Governalia sin IVA, y la ficha
   lo indica.</p>
+
+  <h2>Qué hay en esos cuatro años</h2>
+  <p>Los 13.560 contratos recuperados suman 49,6 millones de euros sin IVA: 2.183 en 2022 (6,6 millones), 4.136 en
+  2023 (13,4 millones), 4.005 en 2024 (11,9 millones) y 3.236 en 2025 (17,7 millones; el salto de ese año se debe
+  sobre todo al contrato de 6 millones del que hablamos más abajo). Dos de cada tres son de servicios, casi tres de
+  cada diez de suministros y apenas un 5 % de obras.</p>
+
+  <p>Son contratos pequeños de verdad: la mitad no pasa de 1.000 € y tres de cada cuatro están por debajo de
+  3.000 €. Se reparten entre 2.681 adjudicatarios distintos, desde grandes empresas de servicios hasta autónomos
+  del municipio. Precisamente porque cada uno es pequeño, solo se ve el conjunto cuando están todos juntos, y eso es
+  lo que se había perdido.</p>
+
+  <h2>Una tercera fuente</h2>
+  <p>El 30 de septiembre de 2026 añadimos el registro oficial de contratos menores de PLACE para toda España. En
+  Cartagena aportó 3.246 contratos más que no estaban ni en el portal municipal ni en Governalia (1.136 de ellos de
+  2026). Que tres fuentes oficiales sobre los mismos contratos de un mismo ayuntamiento no den la misma lista es,
+  en sí mismo, un dato: ninguna de las tres es completa, y la ficha de Cartagena muestra las tres, sin duplicar los
+  contratos que coinciden.</p>
 
   <h2>Los errores también se copian</h2>
   <p>El espejo arrastra los errores del original: 992 contratos figuran adjudicados por 0 € y hay un «menor» de 6
@@ -19068,9 +19108,33 @@ def render_caso_governalia_fechas_html():
   ficha, una con la fecha real y otra con la de publicación. El número de contratos y el importe total de esos
   municipios se habrían inflado.</p>
 
+  <h2>Cada portal, su propio retraso</h2>
+  <p>Para escribir esta pieza volvimos a medirlo en las ocho fuentes, emparejando los contratos de Governalia con
+  los del registro de PLACE que tienen el mismo NIF y el mismo importe exacto. Salieron 19.513 parejas y un retraso
+  mediano de 11 días, pero cada portal tiene el suyo:</p>
+  <ul>
+    <li>{_enlace_ficha("Sax", "alicante")}: 3 días de mediana; casi siempre la misma semana.</li>
+    <li>{_enlace_ficha("Xirivella", "valencia")}: 7 días.</li>
+    <li>{_enlace_ficha("Ibi", "alicante")}: 9 días, y seis de cada diez fechas caen en sábado.</li>
+    <li>{_enlace_ficha("Cartagena", "murcia")}: unos 10 días, con la mitad de las fechas en sábado.</li>
+    <li>{_enlace_ficha("Vilamarxant", "valencia")}: 11 días.</li>
+    <li>{_enlace_ficha("Alzira", "valencia")}: 19 días.</li>
+    <li>{_enlace_ficha("Castellón de la Plana", "castellon")}: 24 días.</li>
+    <li>{_enlace_ficha("Santa Brígida", "las_palmas")}: 28 días.</li>
+  </ul>
+  <p>El patrón del sábado, que fue lo que nos puso sobre la pista en Cartagena, solo aparece en tres de los ocho
+  portales; en los demás el retraso existe pero no cae en un día fijo. Por eso no bastaba con una regla del tipo «si
+  es sábado, restar una semana»: hacía falta medir cada fuente.</p>
+
   <p>El arreglo: para estas ocho fuentes aceptamos que su fecha vaya hasta 31 días por detrás de la de PLACE. Y
   avisamos de lo que implica: en esos municipios, la «fecha» que mostramos para los contratos de su fuente propia es
   en realidad la de publicación, no la de adjudicación.</p>
+
+  <p>El margen de 31 días recoge el 87 % de las parejas medidas. El resto se separa más, sobre todo en Castellón,
+  Alzira y Santa Brígida, donde una parte de los contratos tarda más de un mes en aparecer en Governalia. Ahí la
+  regla puede dejar pasar algún duplicado, y lo estamos revisando fuente por fuente antes de ampliar el margen: un
+  margen demasiado grande tiene el riesgo contrario, juntar como si fueran uno dos contratos distintos de la misma
+  empresa por el mismo importe.</p>
 
   <p>Lo contamos porque es un buen ejemplo de un problema general: dos fuentes oficiales pueden llamar igual a
   cosas distintas. No basta con comprobar que hay datos; antes de cruzarlos hay que medir qué significa cada
@@ -19109,6 +19173,23 @@ def render_caso_contratos_sin_ayuntamiento_html():
   <p>Al reconocer esas variantes del nombre aparecieron, solo en ese mes, <strong>316 contratos más en 86
   municipios</strong>, sin ningún falso positivo al compararlos con la jerarquía oficial. Luego repasamos hacia atrás
   los meses ya guardados para recuperar los que faltaban.</p>
+
+  <h2>Cinco años después: casi 10.000</h2>
+  <p>Ese repaso hacia atrás recorrió los 61 ficheros mensuales de PLACE desde septiembre de 2021, uno a uno.
+  Recuperó <strong>9.986 contratos formales en 247 municipios de 35 provincias</strong>, que hasta entonces no
+  aparecían en ninguna ficha. Los que más ganaron:</p>
+  <ul>
+    <li>{_enlace_ficha("Rivas-Vaciamadrid", "madrid")}: 688 contratos.</li>
+    <li>{_enlace_ficha("Ejido, El", "almeria", "El Ejido")}: 516.</li>
+    <li>{_enlace_ficha("Campello, el", "alicante", "El Campello")}: 486.</li>
+    <li>{_enlace_ficha("Dénia", "alicante")}: 421.</li>
+    <li>{_enlace_ficha("Línea de la Concepción, La", "cadiz", "La Línea de la Concepción")}: 333.</li>
+    <li>{_enlace_ficha("Rinconada, La", "sevilla", "La Rinconada")}: 265.</li>
+    <li>{_enlace_ficha("Palacios y Villafranca, Los", "sevilla", "Los Palacios y Villafranca")} y
+      {_enlace_ficha("Vall d'Uixó, la", "castellon", "La Vall d'Uixó")}: 256 cada uno.</li>
+  </ul>
+  <p>Para un municipio de ese tamaño, pasar de cero a varios cientos de contratos lo cambia todo: también
+  pesaba en su nota del Índice de Transparencia, que tiene en cuenta cuántos contratos publica cada ayuntamiento. El error no era de ellos: era nuestro, al leer su nombre.</p>
 
   <h2>Y el problema contrario</h2>
   <p>Aceptar el orden natural destapó el error inverso: «El Viso» (Córdoba) empezaba a quedarse contratos de «El
@@ -19544,6 +19625,36 @@ def render_caso_sueldo_cero_html():
   llame la atención, añadimos una nota visible junto a la cifra explicando el motivo
   verificado — en vez de dejar que el lector saque su propia conclusión sobre un dato
   que, sin contexto, parece decir algo que no es cierto.</p>
+
+  <h2>Un tercio de los alcaldes, a cero</h2>
+  <p>Sabadell, Sant Boi y Granollers son los casos llamativos, pero el 0 € es mucho más común de lo que parece. En
+  los datos de 2024 del ISPA (el registro del Ministerio de Hacienda sobre retribuciones de los cargos de las
+  entidades locales), <strong>2.291 de los 6.923 alcaldes y alcaldesas con dato figuran con 0 €</strong>, un 33 %.
+  Todos ellos tienen el mismo régimen: «sin dedicación».</p>
+
+  <p>Eso tiene una explicación legal sencilla. Según la Ley de Bases de Régimen Local, solo los cargos con
+  dedicación exclusiva o parcial cobran un sueldo; los que no tienen dedicación pueden recibir indemnizaciones por
+  asistir a los plenos y a otros órganos, que no son un sueldo. Y en los municipios pequeños lo normal es no tener
+  dedicación: la alcaldía se compagina con otro trabajo.</p>
+
+  <p>Los datos lo confirman. Por tamaño de municipio, figuran con 0 €:</p>
+  <ul>
+    <li>Menos de 1.000 habitantes: la mitad de los alcaldes (2.138 de 4.228).</li>
+    <li>De 1.000 a 5.000: el 8 % (122 de 1.531).</li>
+    <li>De 5.000 a 20.000: el 2,6 % (20 de 777).</li>
+    <li>Más de 20.000: solo 11 de 387.</li>
+  </ul>
+
+  <h2>Los once casos grandes</h2>
+  <p>Por encima de 20.000 habitantes, el 0 € es raro y es donde más llama la atención. Además de Sabadell, Sant Boi
+  y Granollers, figuran así Estepona, Ferrol, Igualada, El Masnou, Villanueva de la Cañada, Bormujos, Almoradí y Los
+  Llanos de Aridane. Los tres de la provincia de Barcelona con los que empezamos son los que hemos verificado uno a
+  uno. Del resto no conocemos el motivo y no lo suponemos: puede ser también una renuncia por otro cargo, un
+  cambio de alcalde durante el año o un dato mal comunicado. Por eso la nota de la web está en condicional («posible
+  renuncia por doble cargo») y no afirma nada que no hayamos comprobado.</p>
+
+  <p>Si sabes por qué el alcalde o la alcaldesa de tu municipio figura con 0 €, puedes contarlo en los comentarios
+  de su ficha.</p>
 
   <p><a href="/casos">← Volver a Casos</a></p>
 </div>"""
