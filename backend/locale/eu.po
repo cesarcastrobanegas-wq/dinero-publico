@@ -78,7 +78,7 @@ msgstr "Enpresa bera bere IFZaren arabera zenbatzen da batera."
 msgid "{n} contrato"
 msgstr "{n} kontratu"
 
-#: app.py:12088 app.py:17739 app.py:18509 app.py:14738 app.py:20355
+#: app.py:12088 app.py:17816 app.py:18586 app.py:14738 app.py:20432
 msgid "{n} contratos"
 msgstr "{n} kontratu"
 
@@ -122,11 +122,11 @@ msgstr "enpresa esleipendun identifikaturik gabe (esleipenduna egon zen, baina e
 msgid "hace menos de 2 min"
 msgstr "duela 2 min baino gutxiago"
 
-#: app.py:12172 app.py:17568
+#: app.py:12172 app.py:17645
 msgid "hace {m} min"
 msgstr "duela {m} min"
 
-#: app.py:12173 app.py:17569
+#: app.py:12173 app.py:17646
 msgid "hace {h}h {m}min"
 msgstr "duela {h}h {m}min"
 
@@ -262,7 +262,7 @@ msgstr "Errorea bilatzean. Saiatu berriro."
 msgid "EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?"
 msgstr "GUZTION DIRUA ∞ NOREN ESKUETAN?"
 
-#: app.py:14851 app.py:18622
+#: app.py:14851 app.py:18699
 msgid "Contratación pública en España"
 msgstr "Kontratazio publikoa Espainian"
 
@@ -274,7 +274,7 @@ msgstr "Sailkapenak"
 msgid "Sueldos Alcaldes"
 msgstr "Alkateen soldatak"
 
-#: app.py:14858 app.py:14909 app.py:18667
+#: app.py:14858 app.py:14909 app.py:18744
 msgid "Fondos UE"
 msgstr "EBko funtsak"
 
@@ -390,7 +390,7 @@ msgstr "{n} lote"
 msgid "lotes {lotes}"
 msgstr "loteak: {lotes}"
 
-#: app.py:15359 app.py:15403 app.py:17299 app.py:18499 app.py:16540
+#: app.py:15359 app.py:15403 app.py:17376 app.py:18576 app.py:16540
 msgid "No localizado"
 msgstr "Aurkitu gabe"
 
@@ -398,11 +398,11 @@ msgstr "Aurkitu gabe"
 msgid "presupuesto de licitación"
 msgstr "lizitazio-aurrekontua"
 
-#: app.py:15399 app.py:17295
+#: app.py:15399 app.py:17372
 msgid "Buscar {empresa} en el {registro}"
 msgstr "Bilatu {empresa} hemen: {registro}"
 
-#: app.py:15401 app.py:17297
+#: app.py:15401 app.py:17374
 msgid "Empresa sin datos registrales públicos"
 msgstr "Erregistro-datu publikorik gabeko enpresa"
 
@@ -602,7 +602,7 @@ msgstr "Atari propioaren formatua"
 msgid "Actividad de publicación"
 msgstr "Argitalpen-jarduera"
 
-#: app.py:16148 app.py:17537
+#: app.py:16148 app.py:17614
 msgid "Cuentas anuales"
 msgstr "Urteko kontuak"
 
@@ -630,7 +630,7 @@ msgstr "pisua: % {peso}"
 msgid "← Anterior"
 msgstr "← Aurrekoa"
 
-#: app.py:16210 app.py:17578 app.py:17657 app.py:14668
+#: app.py:16210 app.py:17655 app.py:17734 app.py:14668
 msgid "Siguiente →"
 msgstr "Hurrengoa →"
 
@@ -642,11 +642,11 @@ msgstr "{pagina}/{paginas} orria · {total} {etiqueta}"
 msgid "Ver desglose ▾"
 msgstr "Ikusi xehetasunak ▾"
 
-#: app.py:16268 app.py:16585 app.py:16604 app.py:16549 app.py:18493
+#: app.py:16268 app.py:16585 app.py:16604 app.py:16549 app.py:18570
 msgid "Aún no hay datos suficientes."
 msgstr "Oraindik ez dago datu nahikorik."
 
-#: app.py:16270 app.py:16516 app.py:18291
+#: app.py:16270 app.py:16516 app.py:18368
 msgid "España"
 msgstr "Espainia"
 
@@ -666,7 +666,7 @@ msgstr "Dinero Públicoren balorazio propioa udalerri bakoitzaren jarduerari eta
 msgid "Filtrar en esta página… (para buscar en todo el ranking, usa el buscador de arriba)"
 msgstr "Iragazi orri honetan… (sailkapen osoan bilatzeko, erabili goiko bilatzailea)"
 
-#: app.py:16303 app.py:16703 app.py:16715 app.py:17789
+#: app.py:16303 app.py:16703 app.py:16715 app.py:17866
 msgid "Municipio"
 msgstr "Udalerria"
 
@@ -678,7 +678,7 @@ msgstr "Probintzia"
 msgid "Índice"
 msgstr "Indizea"
 
-#: app.py:16303 app.py:18591
+#: app.py:16303 app.py:18668
 msgid "Cobertura"
 msgstr "Estaldura"
 
@@ -726,7 +726,7 @@ msgstr "<b>{n}</b> kontratu"
 msgid "Sin partido registrado"
 msgstr "Alderdirik erregistratu gabe"
 
-#: app.py:16573 app.py:16601 app.py:16624 app.py:17560
+#: app.py:16573 app.py:16601 app.py:16624 app.py:17637
 msgid "/hab."
 msgstr "/biz."
 
@@ -734,7 +734,7 @@ msgstr "/biz."
 msgid "/año"
 msgstr "/urte"
 
-#: app.py:16612 app.py:16614 app.py:16246 app.py:18481
+#: app.py:16612 app.py:16614 app.py:16246 app.py:18558
 msgid "municipios"
 msgstr "udalerri"
 
@@ -762,7 +762,7 @@ msgstr "Bilatu zure udalerria"
 msgid "Todas sus posiciones de un vistazo"
 msgstr "Bere posizio guztiak begirada batean"
 
-#: app.py:16656 app.py:18581 app.py:18722 app.py:14590
+#: app.py:16656 app.py:18658 app.py:18799 app.py:14590
 msgid "Nombre del municipio…"
 msgstr "Udalerriaren izena…"
 
@@ -786,15 +786,15 @@ msgstr "Kargatutako probintzia guztiak"
 msgid "Top 10 por número de contratos adjudicados"
 msgstr "Top 10, esleitutako kontratu kopuruaren arabera"
 
-#: app.py:16672 app.py:16677 app.py:16687 app.py:16692 app.py:18576
+#: app.py:16672 app.py:16677 app.py:16687 app.py:16692 app.py:18653
 msgid "Empresa"
 msgstr "Enpresa"
 
-#: app.py:16672 app.py:16687 app.py:18447 app.py:18648 app.py:17459
+#: app.py:16672 app.py:16687 app.py:18524 app.py:18725 app.py:17536
 msgid "Contratos"
 msgstr "Kontratuak"
 
-#: app.py:16672 app.py:16677 app.py:16687 app.py:16692 app.py:17752
+#: app.py:16672 app.py:16677 app.py:16687 app.py:16692 app.py:17829
 msgid "Directivo / Cargo"
 msgstr "Zuzendaria / Kargua"
 
@@ -802,7 +802,7 @@ msgstr "Zuzendaria / Kargua"
 msgid "Top 10 por importe total adjudicado"
 msgstr "Top 10, esleitutako zenbateko osoaren arabera"
 
-#: app.py:16677 app.py:16692 app.py:17345 app.py:18449 app.py:18650
+#: app.py:16677 app.py:16692 app.py:17422 app.py:18526 app.py:18727
 msgid "Importe total"
 msgstr "Zenbateko osoa"
 
@@ -842,11 +842,11 @@ msgstr "Alderdia"
 msgid "Sueldo anual"
 msgstr "Urteko soldata"
 
-#: app.py:16703 app.py:16715 app.py:18347
+#: app.py:16703 app.py:16715 app.py:18424
 msgid "Habitantes"
 msgstr "Biztanleak"
 
-#: app.py:16703 app.py:16715 app.py:18349
+#: app.py:16703 app.py:16715 app.py:18426
 msgid "Deuda/hab."
 msgstr "Zorra/biz."
 
@@ -890,654 +890,666 @@ msgstr "Zenbatekoak BEZik gabe: iturri ofizialak argitaratzen duen esleitutako z
 msgid "Ojo con la base de los importes: las filas de «{fuentes}» van sin IVA (importe adjudicado según PLACE); las demás filas pueden incluir IVA. El total de arriba suma ambas bases."
 msgstr "Kontuz zenbatekoen oinarriarekin: «{fuentes}» iturriko errenkadak BEZik gabe daude (PLACEren araberako esleitutako zenbatekoa); gainerako errenkadek BEZa izan dezakete. Goiko guztizkoak bi oinarriak batzen ditu."
 
-#: app.py:17271 app.py:15380
+#: app.py:17341 app.py:15380
 msgid "Coincidencia de nombre — verificar"
 msgstr "Izen-bat-etortzea — egiaztatu"
 
-#: app.py:17272 app.py:15387
+#: app.py:17342 app.py:15387
 msgid "Coincidencia de nombre (otro municipio) — verificar"
 msgstr "Izen-bat-etortzea (beste udalerri bat) — egiaztatu"
 
-#: app.py:17273 app.py:15381 app.py:15388
+#: app.py:17343 app.py:15381 app.py:15388
 msgid "Mismo nombre y apellidos que {cargo} de {municipio}. No implica necesariamente relación — dato para verificar."
 msgstr "Izen-abizen berak ditu {municipio}(e)ko {cargo} batek. Ez du nahitaez harremanik adierazten — egiaztatzeko datua."
 
-#: app.py:17303
+#: app.py:17356
+msgid "Según su DNI/NIE en la fuente oficial"
+msgstr "Iturri ofizialeko NANaren/AIZren arabera"
+
+#: app.py:17357
+msgid "Su nombre figura con DNI/NIE en otra fuente oficial"
+msgstr "Haren izena NAN/AIZ batekin agertzen da beste iturri ofizial batean"
+
+#: app.py:17359
+msgid "Autónomo / persona física"
+msgstr "Autonomoa / pertsona fisikoa"
+
+#: app.py:17380
 msgid "Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica un enlace por contrato para comprobarlo directamente, así que se muestra tal cual."
 msgstr "Euskadiko APIaren araberako zenbatekoa, kontratu txiki batek legez onartzen duenaren oso gainetik. Jatorrizko iturriaren akatsa izan daiteke (digitu gehiegi); iturri honek ez du kontratu bakoitzeko estekarik argitaratzen zuzenean egiaztatzeko, beraz dagoen bezala erakusten da."
 
-#: app.py:17307
+#: app.py:17384
 msgid "Importe sin IVA por encima del máximo legal de cualquier contrato menor (40.000 € en obras, 15.000 € en el resto) según el conjunto de datos oficial de PLACE. Probablemente un error de origen (dígitos de más) o un contrato que no es menor; se muestra tal cual, sin corregirlo."
 msgstr "BEZik gabeko zenbatekoa, edozein kontratu txikiren legezko gehienekoaren gainetik (40.000 € obretan, 15.000 € gainerakoetan), PLACEren datu-multzo ofizialaren arabera. Seguruenik jatorriko akatsa (digitu gehiegi) edo txikia ez den kontratu bat; dagoen bezala erakusten da, zuzendu gabe."
 
-#: app.py:17311
+#: app.py:17388
 msgid "Importe por encima del techo legal habitual de un contrato menor (dataset oficial del Ayuntamiento de Madrid). Probablemente un \"contrato privado\" (régimen distinto, sin ese tope) incluido en el mismo dataset -- no necesariamente un error."
 msgstr "Kontratu txiki baten ohiko legezko mugaren gainetiko zenbatekoa (Madrilgo Udalaren datu-multzo ofiziala). Seguruenik datu-multzo berean sartutako \"kontratu pribatu\" bat (araubide desberdina, muga hori gabe) -- ez nahitaez akats bat."
 
-#: app.py:17315
+#: app.py:17392
 msgid "Importe muy por encima del techo legal de un contrato menor, pese a venir marcado como tal por la API oficial del Ayuntamiento de Zaragoza. Probablemente un error de etiquetado de origen (por ejemplo, un contrato de obras por lotes de varios millones de euros) -- se muestra tal cual, sin corregirlo."
 msgstr "Kontratu txiki baten legezko mugaren oso gainetiko zenbatekoa, Zaragozako Udalaren API ofizialak horrela markatuta badakar ere. Seguruenik jatorriko etiketatze-akatsa (adibidez, hainbat milioi euroko sortakako obra-kontratu bat) -- dagoen bezala erakusten da, zuzendu gabe."
 
-#: app.py:17344
+#: app.py:17421
 msgid "Proyectos/operaciones"
 msgstr "Proiektuak/eragiketak"
 
-#: app.py:17346
+#: app.py:17423
 msgid "CORDIS (Horizon Europe)"
 msgstr "CORDIS (Horizon Europe)"
 
-#: app.py:17347
+#: app.py:17424
 msgid "Cohesion Data (FEDER/FSE)"
 msgstr "Cohesion Data (FEDER/FSE)"
 
-#: app.py:17356
+#: app.py:17433
 msgid "Todas"
 msgstr "Guztiak"
 
-#: app.py:17360
+#: app.py:17437
 msgid "Por ahora tenemos datos de {n} de las {total} provincias: {lista}. El resto, pendiente de conectar."
 msgstr "Oraingoz {total} probintzietatik {n}ren datuak ditugu: {lista}. Gainerakoak konektatzeko daude."
 
-#: app.py:17363
+#: app.py:17440
 msgid "Todavía no hay datos de fondos UE cargados."
 msgstr "Oraindik ez dago EBko funtsen daturik kargatuta."
 
-#: app.py:17367
+#: app.py:17444
 msgid "Sin datos de fondos UE todavía para esta provincia."
 msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
 
-#: app.py:17371 app.py:18994
+#: app.py:17448 app.py:19071
 msgid "Volver al inicio"
 msgstr "Itzuli hasierara"
 
-#: app.py:17373 app.py:17599
+#: app.py:17450 app.py:17676
 msgid "Fondos y proyectos financiados por la UE"
 msgstr "EBk finantzatutako funtsak eta proiektuak"
 
-#: app.py:17375
+#: app.py:17452
 msgid "Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea. Fuentes oficiales de la Comisión Europea, sin scraping -- descarga/consulta directa de sus datasets abiertos."
 msgstr "Europako finantzaketa jaso duten ikerketa-proiektuak (CORDIS / Horizon Europe) eta egiturazko funtsak (Cohesion Data, FEDER/FSE 2014-2020). Europako Batzordearen iturri ofizialak, scrapingik gabe -- haien datu-multzo irekien deskarga/kontsulta zuzena."
 
-#: app.py:17385 app.py:17606
+#: app.py:17462 app.py:17683
 msgid "Proyecto / Beneficiario"
 msgstr "Proiektua / Onuraduna"
 
-#: app.py:17386 app.py:17751 app.py:18981 app.py:17607 app.py:17681
+#: app.py:17463 app.py:17828 app.py:19058 app.py:17684 app.py:17758
 msgid "Importe"
 msgstr "Zenbatekoa"
 
-#: app.py:17387 app.py:17608
+#: app.py:17464 app.py:17685
 msgid "Fuente / Programa"
 msgstr "Iturria / Programa"
 
-#: app.py:17388 app.py:17609
+#: app.py:17465 app.py:17686
 msgid "Fechas"
 msgstr "Datak"
 
-#: app.py:17394
+#: app.py:17471
 msgid "Fondos UE — Proyectos financiados por la Unión Europea"
 msgstr "EBko funtsak — Europar Batasunak finantzatutako proiektuak"
 
-#: app.py:17395
+#: app.py:17472
 msgid "Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon Europe, Cohesion Data FEDER/FSE) en {lista}."
 msgstr "Europar Batasunak finantzatutako proiektuak eta funtsak (CORDIS, Horizon Europe, Cohesion Data FEDER/FSE): {lista}."
 
-#: app.py:17421
+#: app.py:17498
 msgid "Todavía no hay comentarios. Sé el primero."
 msgstr "Oraindik ez dago iruzkinik. Izan zaitez lehena."
 
-#: app.py:17424
+#: app.py:17501
 msgid "Comentarios"
 msgstr "Iruzkinak"
 
-#: app.py:17430
+#: app.py:17507
 msgid "Tu nombre (opcional)"
 msgstr "Zure izena (aukerakoa)"
 
-#: app.py:17432
+#: app.py:17509
 msgid "Enviar comentario"
 msgstr "Bidali iruzkina"
 
-#: app.py:17464
+#: app.py:17541
 msgid "Ver todos los municipios"
 msgstr "Ikusi udalerri guztiak"
 
-#: app.py:17487
+#: app.py:17564
 msgid "Sin contratos adjudicados encontrados para este municipio"
 msgstr "Ez da udalerri honetarako esleitutako kontraturik aurkitu"
 
-#: app.py:17498
+#: app.py:17575
 msgid "Fuente: PSCP (Generalitat de Catalunya)"
 msgstr "Iturria: PSCP (Kataluniako Generalitata)"
 
-#: app.py:17500
+#: app.py:17577
 msgid "Fuente: KontratazioA (Gobierno Vasco)"
 msgstr "Iturria: KontratazioA (Eusko Jaurlaritza)"
 
-#: app.py:17502
+#: app.py:17579
 msgid "Fuente: Portal de Contratación de Navarra (Gobierno de Navarra)"
 msgstr "Iturria: Nafarroako Kontratazio Ataria (Nafarroako Gobernua)"
 
-#: app.py:17504
+#: app.py:17581
 msgid "Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia)"
 msgstr "Iturriak: PLACE (Ogasun Ministerioa) + BORM (Murtziako Eskualdea)"
 
-#: app.py:17506
+#: app.py:17583
 msgid "Fuente: PLACE (Ministerio de Hacienda)"
 msgstr "Iturria: PLACE (Ogasun Ministerioa)"
 
-#: app.py:17515
+#: app.py:17592
 msgid "Perfil contratante en PLACE"
 msgstr "Kontratatzailearen profila PLACEn"
 
-#: app.py:17515
+#: app.py:17592
 msgid "Perfil PLACE ↗"
 msgstr "PLACE profila ↗"
 
-#: app.py:17528
+#: app.py:17605
 msgid "Población oficial a 1 de enero de {anio} (INE, Padrón Municipal)"
 msgstr "Biztanleria ofiziala {anio}ko urtarrilaren 1ean (INE, Udal Errolda)"
 
-#: app.py:17529 app.py:20354
+#: app.py:17606 app.py:20431
 msgid "{n} hab."
 msgstr "{n} biz."
 
-#: app.py:17536
+#: app.py:17613
 msgid "Cuenta General y resultado de las cuentas anuales en la Plataforma de Rendición de Cuentas"
 msgstr "Kontu Orokorra eta urteko kontuen emaitza Kontuak Emateko Plataforman"
 
-#: app.py:17551
+#: app.py:17628
 msgid "Superávit"
 msgstr "Superabita"
 
-#: app.py:17551
+#: app.py:17628
 msgid "Déficit"
 msgstr "Defizita"
 
-#: app.py:17553
+#: app.py:17630
 msgid "Saldo presupuestario no financiero ({tipo}) del ejercicio {ejercicio}, Ministerio de Hacienda"
 msgstr "Aurrekontu-saldo ez-finantzarioa ({tipo}), {ejercicio} ekitaldia, Ogasun Ministerioa"
 
-#: app.py:17562
+#: app.py:17639
 msgid "Deuda viva municipal a 31/12, Ministerio de Hacienda"
 msgstr "Udalaren zor bizia abenduaren 31n, Ogasun Ministerioa"
 
-#: app.py:17563
+#: app.py:17640
 msgid "Deuda viva:"
 msgstr "Zor bizia:"
 
-#: app.py:17570
+#: app.py:17647
 msgid "datos {edad}"
 msgstr "datuak: {edad}"
 
-#: app.py:17576 app.py:17655
+#: app.py:17653 app.py:17732
 msgid "Anterior"
 msgstr "Aurrekoa"
 
-#: app.py:17586 app.py:17665
+#: app.py:17663 app.py:17742
 msgid "Ver todos →"
 msgstr "Ikusi guztiak →"
 
-#: app.py:17671
+#: app.py:17748
 msgid "Contratos menores (fuentes locales del ayuntamiento)"
 msgstr "Kontratu txikiak (udalaren tokiko iturriak)"
 
-#: app.py:17680
+#: app.py:17757
 msgid "Adjudicatario / Objeto"
 msgstr "Esleipenduna / Xedea"
 
-#: app.py:17683
+#: app.py:17760
 msgid "Tipo"
 msgstr "Mota"
 
-#: app.py:17684
+#: app.py:17761
 msgid "Fecha"
 msgstr "Data"
 
-#: app.py:17711
+#: app.py:17788
 msgid "Ley 19/2013, de transparencia"
 msgstr "Gardentasunari buruzko 19/2013 Legea"
 
-#: app.py:17713
+#: app.py:17790
 msgid "buscar el portal de transparencia de {organismo} ↗"
 msgstr "bilatu {organismo} erakundearen gardentasun-ataria ↗"
 
-#: app.py:17714
+#: app.py:17791
 msgid "<b>Contratos menores:</b> no hay registros de este tipo para {municipio} en las fuentes que consultamos. Los contratos menores no siempre tienen obligación legal de publicación centralizada -- muchos ayuntamientos los tramitan sin subirlos a ningún registro abierto que esta web pueda consultar, así que esto no significa necesariamente que no existan. Cualquier vecino o concejal puede solicitarlos formalmente al ayuntamiento por la vía de acceso a la información pública ({ley}) -- {portal}"
 msgstr "<b>Kontratu txikiak:</b> ez dago mota honetako erregistrorik {municipio} udalerrirako kontsultatzen ditugun iturrietan. Kontratu txikiek ez dute beti argitalpen zentralizatuko legezko betebeharrik -- udal askok webgune honek kontsulta dezakeen inongo erregistro irekitara igo gabe izapidetzen dituzte, beraz horrek ez du nahitaez esan nahi existitzen ez direnik. Edozein bizilagunek edo zinegotzik formalki eska diezazkioke udalari, informazio publikoa eskuratzeko bidetik ({ley}) -- {portal}"
 
-#: app.py:17737
+#: app.py:17814
 msgid "Actualizar"
 msgstr "Eguneratu"
 
-#: app.py:17750 app.py:18980
+#: app.py:17827 app.py:19057
 msgid "Empresa adjudicataria / Contrato"
 msgstr "Enpresa esleipenduna / Kontratua"
 
-#: app.py:17753 app.py:18983
+#: app.py:17830 app.py:19060
 msgid "Estado / Fuente"
 msgstr "Egoera / Iturria"
 
-#: app.py:17757 app.py:17688
+#: app.py:17834 app.py:17765
 msgid "sigue"
 msgstr "jarraitzen du"
 
-#: app.py:17767
+#: app.py:17844
 msgid "Municipio no encontrado."
 msgstr "Ez da udalerria aurkitu."
 
-#: app.py:17772
+#: app.py:17849
 msgid "Contratos públicos de {municipio}"
 msgstr "Kontratu publikoak: {municipio}"
 
-#: app.py:17773 app.py:14245
+#: app.py:17850 app.py:14245
 msgid "Contratos Públicos"
 msgstr "Kontratu publikoak"
 
-#: app.py:17774
+#: app.py:17851
 msgid "Contratos públicos adjudicados en {municipio} ({territorio}): empresa adjudicataria, importe y directivo/administrador. Datos oficiales {fuente} + Registro Mercantil."
 msgstr "Kontratu publikoak: {municipio} ({territorio}): enpresa esleipenduna, zenbatekoa eta zuzendaria/administratzailea. Datu ofizialak: {fuente} + Merkataritza Erregistroa."
 
-#: app.py:17791
+#: app.py:17868
 msgid "Ej: {ejemplos}"
 msgstr "Adib.: {ejemplos}"
 
-#: app.py:17793
+#: app.py:17870
 msgid "Buscar contratos"
 msgstr "Bilatu kontratuak"
 
-#: app.py:17816
+#: app.py:17893
 msgid "<b>¿Cuál es tu municipio?</b> Te enseñamos lo que ha gastado tu ayuntamiento y su puesto en los rankings."
 msgstr "<b>Zein da zure udalerria?</b> Zure udalak zer gastatu duen eta sailkapenetan zer postu duen erakusten dizugu."
 
-#: app.py:17818
+#: app.py:17895
 msgid "Escribe tu municipio…"
 msgstr "Idatzi zure udalerria…"
 
-#: app.py:17820
+#: app.py:17897
 msgid "Ver"
 msgstr "Ikusi"
 
-#: app.py:17822
+#: app.py:17899
 msgid "Cerrar"
 msgstr "Itxi"
 
-#: app.py:17853
+#: app.py:17930
 msgid "Contratos cargados"
 msgstr "Kargatutako kontratuak"
 
-#: app.py:17860 app.py:17864
+#: app.py:17937 app.py:17941
 msgid "de"
 msgstr "/"
 
-#: app.py:17863
+#: app.py:17940
 msgid "Deuda por habitante"
 msgstr "Biztanleko zorra"
 
-#: app.py:17867
+#: app.py:17944
 msgid "Sueldo alcalde/sa"
 msgstr "Alkatearen soldata"
 
-#: app.py:17871
+#: app.py:17948
 msgid "Sin datos suficientes todavía para este municipio."
 msgstr "Oraindik ez dago datu nahikorik udalerri honetarako."
 
-#: app.py:17873
+#: app.py:17950
 msgid "cambiar"
 msgstr "aldatu"
 
-#: app.py:17876
+#: app.py:17953
 msgid "Ver ficha completa →"
 msgstr "Ikusi fitxa osoa →"
 
-#: app.py:17995 app.py:18302 app.py:16413 app.py:16418 app.py:17857
+#: app.py:18072 app.py:18379 app.py:16413 app.py:16418 app.py:17934
 msgid "Índice de Transparencia"
 msgstr "Gardentasun Indizea"
 
-#: app.py:18001 app.py:18313 app.py:18616
+#: app.py:18078 app.py:18390 app.py:18693
 msgid "Ver ranking completo →"
 msgstr "Ikusi sailkapen osoa →"
 
-#: app.py:18043
+#: app.py:18120
 msgid "Qué es el Índice de Transparencia y cómo se calcula"
 msgstr "Zer da Gardentasun Indizea eta nola kalkulatzen da"
 
-#: app.py:18044 app.py:18232
+#: app.py:18121 app.py:18309
 msgid "Cómo se calcula"
 msgstr "Nola kalkulatzen da"
 
-#: app.py:18056
+#: app.py:18133
 msgid "Contratación"
 msgstr "Kontratazioa"
 
-#: app.py:18057
+#: app.py:18134
 msgid "Cuentas y deuda"
 msgstr "Kontuak eta zorra"
 
-#: app.py:18058
+#: app.py:18135
 msgid "Sueldos"
 msgstr "Soldatak"
 
-#: app.py:18065
+#: app.py:18142
 msgid "Cómo funciona el Índice de Transparencia"
 msgstr "Nola funtzionatzen du Gardentasun Indizeak"
 
-#: app.py:18067
+#: app.py:18144
 msgid "<b>Qué mide:</b> cuánta información pública de cada ayuntamiento reunimos de fuentes oficiales (contratos, cuentas, deuda, sueldos). No mide si gestiona bien o mal."
 msgstr "<b>Zer neurtzen du:</b> udal bakoitzaren zenbat informazio publiko biltzen dugun iturri ofizialetatik (kontratuak, kontuak, zorra, soldatak). Ez du neurtzen ondo ala gaizki kudeatzen duen."
 
-#: app.py:18069
+#: app.py:18146
 msgid "Un dato que no tenemos no cuenta como 0: su peso se reparte entre el resto. Hacen falta al menos {minimo} de los {total} componentes."
 msgstr "Ez dugun datu batek ez du 0 gisa zenbatzen: haren pisua gainerakoen artean banatzen da. Gutxienez {total} osagaietatik {minimo} behar dira."
 
-#: app.py:18070
+#: app.py:18147
 msgid "Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley 19/2013 de Transparencia.</b>"
 msgstr "Dinero Públicoren balorazio propioa. <b>Ez da Gardentasunari buruzko 19/2013 Legea betetzen denaren ziurtagiria.</b>"
 
-#: app.py:18071
+#: app.py:18148
 msgid "Cómo se calcula y qué no medimos →"
 msgstr "Nola kalkulatzen den eta zer ez dugun neurtzen →"
 
-#: app.py:18082 app.py:16416 app.py:17858
+#: app.py:18159 app.py:16416 app.py:17935
 msgid "Mide la disponibilidad de datos públicos, no la buena gestión ni la ausencia de corrupción."
 msgstr "Datu publikoen eskuragarritasuna neurtzen du, ez kudeaketa ona ezta ustelkeriarik eza ere."
 
-#: app.py:18123
+#: app.py:18200
 msgid "adjudicatario no identificado"
 msgstr "esleipendun identifikatu gabea"
 
-#: app.py:18131
+#: app.py:18208
 msgid "El mayor contrato adjudicado"
 msgstr "Esleitutako kontraturik handiena"
 
-#: app.py:18135
+#: app.py:18212
 msgid "Importe de adjudicación publicado por {fuente}; en contratos plurianuales incluye toda su duración."
 msgstr "{fuente} iturriak argitaratutako esleipen-zenbatekoa; urte anitzeko kontratuetan iraupen osoa hartzen du."
 
-#: app.py:18162
+#: app.py:18239
 msgid "Deuda viva a {fecha}, Ministerio de Hacienda"
 msgstr "Zor bizia {fecha} egunean, Ogasun Ministerioa"
 
-#: app.py:18163
+#: app.py:18240
 msgid "Deuda viva, Ministerio de Hacienda"
 msgstr "Zor bizia, Ogasun Ministerioa"
 
-#: app.py:18165
+#: app.py:18242
 msgid "La mayor ciudad sin deuda"
 msgstr "Zorrik gabeko hiririk handiena"
 
-#: app.py:18167
+#: app.py:18244
 msgid "{n} habitantes"
 msgstr "{n} biztanle"
 
-#: app.py:18168
+#: app.py:18245
 msgid "de deuda viva"
 msgstr "zor bizi"
 
-#: app.py:18169
+#: app.py:18246
 msgid "Es uno de los {n} ayuntamientos de España sin deuda viva."
 msgstr "Zor bizirik gabeko Espainiako {n} udaletako bat da."
 
-#: app.py:18170
+#: app.py:18247
 msgid "Fuente:"
 msgstr "Iturria:"
 
-#: app.py:18178
+#: app.py:18255
 msgid "Datos destacados · Finanzas municipales"
 msgstr "Datu nabarmenak · Udal finantzak"
 
-#: app.py:18179
+#: app.py:18256
 msgid "Datos económicos oficiales; no forman parte del Índice de Transparencia."
 msgstr "Datu ekonomiko ofizialak; ez dira Gardentasun Indizearen parte."
 
-#: app.py:18185
+#: app.py:18262
 msgid "Ver ranking de deuda por habitante →"
 msgstr "Ikusi biztanleko zorraren sailkapena →"
 
-#: app.py:18212
+#: app.py:18289
 msgid "Empate a {n} en el primer puesto"
 msgstr "{n}ko berdinketa lehen postuan"
 
-#: app.py:18219
+#: app.py:18296
 msgid "Liderando ahora mismo · Índice de Transparencia"
 msgstr "Orain buruan · Gardentasun Indizea"
 
-#: app.py:18220
+#: app.py:18297
 msgid "{n} municipios con nota · España"
 msgstr "{n} udalerri notarekin · Espainia"
 
-#: app.py:18231
+#: app.py:18308
 msgid "Ver ranking por tu región →"
 msgstr "Ikusi zure eskualdeko sailkapena →"
 
-#: app.py:18285
+#: app.py:18362
 msgid "Ver más ({n} más) ▾"
 msgstr "Ikusi gehiago ({n} gehiago) ▾"
 
-#: app.py:18303
+#: app.py:18380
 msgid "Índice v2"
 msgstr "Indizea v2"
 
-#: app.py:18305
+#: app.py:18382
 msgid "No comparable entre regiones; los datos de origen varían."
 msgstr "Ez da eskualdeen artean konparagarria; jatorriko datuak aldatu egiten dira."
 
-#: app.py:18306
+#: app.py:18383
 msgid "Región"
 msgstr "Eskualdea"
 
-#: app.py:18343
+#: app.py:18420
 msgid "Aún sin datos en Dinero Público."
 msgstr "Oraindik daturik ez Dinero Públicon."
 
-#: app.py:18351
+#: app.py:18428
 msgid "Superávit agreg."
 msgstr "Superabita (bat.)"
 
-#: app.py:18351
+#: app.py:18428
 msgid "Déficit agreg."
 msgstr "Defizita (bat.)"
 
-#: app.py:18353
+#: app.py:18430
 msgid "Sin datos agregados todavía."
 msgstr "Oraindik ez dago datu bateraturik."
 
-#: app.py:18446 app.py:18647 app.py:18733 app.py:17458
+#: app.py:18523 app.py:18724 app.py:18810 app.py:17535
 msgid "Municipios"
 msgstr "Udalerriak"
 
-#: app.py:18448 app.py:18649 app.py:17460
+#: app.py:18525 app.py:18726 app.py:17537
 msgid "Empresas únicas"
 msgstr "Enpresa bakarrak"
 
-#: app.py:18477 app.py:20357
+#: app.py:18554 app.py:20434
 msgid "{importe}/hab. de deuda viva"
 msgstr "{importe}/biz. zor bizi"
 
-#: app.py:18481
+#: app.py:18558
 msgid "contratos"
 msgstr "kontratu"
 
-#: app.py:18482 app.py:20356
+#: app.py:18559 app.py:20433
 msgid "{importe} adjudicado"
 msgstr "{importe} esleituta"
 
-#: app.py:18509
+#: app.py:18586
 msgid "Más contratos"
 msgstr "Kontratu gehien"
 
-#: app.py:18510
+#: app.py:18587
 msgid "Mayor importe"
 msgstr "Zenbateko handiena"
 
-#: app.py:18537
+#: app.py:18614
 msgid "No hay comunicados recientes de la Comisión Europea sobre España."
 msgstr "Ez dago Europako Batzordearen azken prentsa-oharrik Espainiari buruz."
 
-#: app.py:18570
+#: app.py:18647
 msgid "Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás de cada adjudicación."
 msgstr "Espainiako kontratu publikoak Merkataritza Erregistroarekin gurutzatuta, esleipen bakoitzaren atzean zer enpresa — eta zer pertsona — dagoen jakiteko."
 
-#: app.py:18575 app.py:18716
+#: app.py:18652 app.py:18793
 msgid "Ayuntamiento"
 msgstr "Udala"
 
-#: app.py:18577 app.py:18718 app.py:17682 app.py:14712
+#: app.py:18654 app.py:18795 app.py:17759 app.py:14712
 msgid "Directivo"
 msgstr "Zuzendaria"
 
-#: app.py:18578 app.py:18719
+#: app.py:18655 app.py:18796
 msgid "Licitación"
 msgstr "Lizitazioa"
 
-#: app.py:18582 app.py:18723 app.py:18999
+#: app.py:18659 app.py:18800 app.py:19076
 msgid "Buscar"
 msgstr "Bilatu"
 
-#: app.py:18584
+#: app.py:18661
 msgid "Busca en los {n} contratos ya cargados de toda España · mínimo 2 caracteres."
 msgstr "Bilatu Espainia osoko {n} kontratu kargatuen artean · gutxienez 2 karaktere."
 
-#: app.py:18595
+#: app.py:18672
 msgid "Pincha una provincia en el mapa, o abre aquí la lista en texto"
 msgstr "Sakatu probintzia bat mapan, edo ireki hemen zerrenda testu gisa"
 
-#: app.py:18601 app.py:18729
+#: app.py:18678 app.py:18806
 msgid "Casos de investigación"
 msgstr "Ikerketa-kasuak"
 
-#: app.py:18604 app.py:18732
+#: app.py:18681 app.py:18809
 msgid "Ver todos los casos →"
 msgstr "Ikusi kasu guztiak →"
 
-#: app.py:18608
+#: app.py:18685
 msgid "Noticias UE sobre España"
 msgstr "EBko albisteak Espainiari buruz"
 
-#: app.py:18610
+#: app.py:18687
 msgid "Ver más en la Comisión Europea →"
 msgstr "Ikusi gehiago Europako Batzordean →"
 
-#: app.py:18614
+#: app.py:18691
 msgid "Empresas líderes · Ranking Nacional"
 msgstr "Enpresa nagusiak · Estatuko sailkapena"
 
-#: app.py:18623
+#: app.py:18700
 msgid "Consulta los contratos públicos adjudicados en España con los directivos de las empresas adjudicatarias. Cobertura nacional, las 19 comunidades y ciudades autónomas."
 msgstr "Kontsultatu Espainian esleitutako kontratu publikoak, enpresa esleipendunen zuzendariekin. Estatu osoko estaldura: 19 autonomia-erkidegoak eta hiri autonomoak."
 
-#: app.py:18674 app.py:14748
+#: app.py:18751 app.py:14748
 msgid "Ver contratos →"
 msgstr "Ikusi kontratuak →"
 
-#: app.py:18696
+#: app.py:18773
 msgid "Contratos públicos de los {n} municipios {de_la} {territorio}, cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás de cada adjudicación."
 msgstr "{territorio}: {n} udalerrietako kontratu publikoak, Merkataritza Erregistroarekin gurutzatuta, esleipen bakoitzaren atzean zer enpresa — eta zer pertsona — dagoen jakiteko."
 
-#: app.py:18725
+#: app.py:18802
 msgid "Busca en los {n} contratos ya cargados de {territorio} · mínimo 2 caracteres."
 msgstr "Bilatu {territorio}: {n} kontratu kargatuen artean · gutxienez 2 karaktere."
 
-#: app.py:18738
+#: app.py:18815
 msgid "Contratos públicos {territorio}"
 msgstr "Kontratu publikoak: {territorio}"
 
-#: app.py:18739
+#: app.py:18816
 msgid "Consulta los contratos públicos de los {n} municipios de {territorio} con los directivos de las empresas adjudicatarias."
 msgstr "Kontsultatu {territorio}: {n} udalerrietako kontratu publikoak, enpresa esleipendunen zuzendariekin."
 
-#: app.py:18976
+#: app.py:19053
 msgid "Mostrando los primeros 300 de {n} resultados."
 msgstr "{n} emaitzetatik lehenengo 300ak erakusten."
 
-#: app.py:18988
+#: app.py:19065
 msgid "Sin resultados para tu búsqueda."
 msgstr "Ez dago emaitzarik zure bilaketarako."
 
-#: app.py:18997
+#: app.py:19074
 msgid "Buscar por empresa, directivo o municipio…"
 msgstr "Bilatu enpresa, zuzendari edo udalerriaren arabera…"
 
-#: app.py:19001
+#: app.py:19078
 msgid "{n} resultado para \"{q}\""
 msgstr "{n} emaitza \"{q}\" bilaketarako"
 
-#: app.py:19001
+#: app.py:19078
 msgid "{n} resultados para \"{q}\""
 msgstr "{n} emaitza \"{q}\" bilaketarako"
 
-#: app.py:19006
+#: app.py:19083
 msgid "Búsqueda: {q}"
 msgstr "Bilaketa: {q}"
 
-#: app.py:19007
+#: app.py:19084
 msgid "Resultados de \"{q}\" en contratos públicos de {territorio}."
 msgstr "\"{q}\" bilaketaren emaitzak kontratu publikoetan: {territorio}."
 
-#: app.py:19038
+#: app.py:19115
 msgid "Compartir:"
 msgstr "Partekatu:"
 
-#: app.py:19039
+#: app.py:19116
 msgid "Compartir en WhatsApp"
 msgstr "Partekatu WhatsAppen"
 
-#: app.py:19040
+#: app.py:19117
 msgid "Compartir en Facebook"
 msgstr "Partekatu Facebooken"
 
-#: app.py:19041
+#: app.py:19118
 msgid "Compartir en X"
 msgstr "Partekatu X-en"
 
-#: app.py:19042
+#: app.py:19119
 msgid "Compartir en Telegram"
 msgstr "Partekatu Telegramen"
 
-#: app.py:19043
+#: app.py:19120
 msgid "Compartir por correo"
 msgstr "Partekatu posta bidez"
 
-#: app.py:19043
+#: app.py:19120
 msgid "Correo"
 msgstr "Posta"
 
-#: app.py:19044 app.py:19044 app.py:19055
+#: app.py:19121 app.py:19121 app.py:19132
 msgid "Copiar enlace"
 msgstr "Kopiatu esteka"
 
-#: app.py:19054
+#: app.py:19131
 msgid "Enlace copiado"
 msgstr "Esteka kopiatuta"
 
-#: app.py:19054
+#: app.py:19131
 msgid "No se pudo copiar"
 msgstr "Ezin izan da kopiatu"
 
-#: app.py:19077
+#: app.py:19154
 msgid "<strong>Contratos menores: el coladero de la contratación pública.</strong> Auditamos 29 grandes ciudades y pedimos por ley que su publicación sea obligatoria y uniforme. <a href=\"/casos/contratos-menores-coladero\">Lee el caso</a>."
 msgstr "<strong>Kontratu txikiak: kontratazio publikoaren iragazkia.</strong> 29 hiri handi auditatu ditugu eta legez eskatzen dugu haien argitalpena derrigorrezkoa eta bateratua izatea. <a href=\"/casos/contratos-menores-coladero\">Irakurri kasua</a>."
 
-#: app.py:19088
+#: app.py:19165
 msgid "Firma la petición →"
 msgstr "Sinatu eskaera →"
 
-#: app.py:20354
+#: app.py:20431
 msgid "{n} municipios"
 msgstr "{n} udalerri"
 
-#: app.py:20607
+#: app.py:20684
 msgid "Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva."
 msgstr "Lurralde bakoitza bere banderarekin koloreztatuta — pasatu sagua probintzia baten gainetik haren zifra ofizialak ikusteko: udalerriak, biztanleak, kontratuak, esleitutako zenbatekoa eta zor bizia."
 
-#: app.py:20612
+#: app.py:20689
 msgid "Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y patrón principal; se omiten escudos y detalles heráldicos finos). Las cifras de cada provincia se calculan en cada carga a partir de los municipios ya procesados en nuestra base de datos."
 msgstr "Probintzien eta erkidegoen geometria Institutu Geografiko Nazionalaren kartografia ofizialetik hartua (es-atlas bidez). Banderak eskuz marraztutako bertsio sinplifikatuak dira (koloreak eta eredu nagusia; armarriak eta xehetasun heraldiko finak kanpoan uzten dira). Probintzia bakoitzeko zifrak karga bakoitzean kalkulatzen dira, gure datu-basean prozesatutako udalerrietatik abiatuta."
 
-#: app.py:20616 app.py:14914 app.py:20606
+#: app.py:20693 app.py:14914 app.py:20683
 msgid "Mapa de cobertura"
 msgstr "Estaldura-mapa"
 
-#: app.py:20617
+#: app.py:20694
 msgid "Mapa de España por comunidades y provincias con las cifras oficiales de contratación pública de Dinero Público: municipios, habitantes, contratos e importe adjudicado."
 msgstr "Espainiako mapa erkidegoka eta probintziaka, Dinero Públicoren kontratazio publikoko zifra ofizialekin: udalerriak, biztanleak, kontratuak eta esleitutako zenbatekoa."

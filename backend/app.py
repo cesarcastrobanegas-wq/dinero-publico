@@ -17226,6 +17226,76 @@ MADRID_CAPITAL_MENOR_IMPORTE_ALTO = 40_000
 ZARAGOZA_MENOR_IMPORTE_ALTO = 50_000
 
 
+# ─── AUTÓNOMOS EN CONTRATOS MENORES (2026-10-01, encargo de César: Región de Murcia primero) ─────────────────────────
+# Cuando el adjudicatario de un contrato menor es una persona física, la propia fuente ya da su nombre como
+# adjudicatario (y su DNI/NIE): no hace falta ninguna fuente nueva, un autónomo no tiene administrador aparte de sí
+# mismo. Medido en las fuentes de Murcia (copia de prod, 01-10): PLACE 10.693 con DNI + 168 NIE, Cartagena 4.242 +
+# 120, Lorca 2.037... Antes la columna "Directivo" decía "No localizado" con un enlace al Registro Mercantil, donde un
+# autónomo no está. Se reconoce como persona física:
+#   - por su NIF: DNI (8 cifras + letra) o NIE (X/Y/Z + 7 cifras + letra);
+#   - si la fila NO trae NIF (Murcia capital, Fuente Álamo, Lorquí, parte de Mula): cuando ese mismo nombre (palabras
+#     en cualquier orden) figura con DNI/NIE en otra fuente oficial de la misma provincia y nunca con NIF de
+#     sociedad. Nunca por la forma del nombre (ver _parece_sociedad y el fallo de las falsas personas físicas).
+_AUTONOMOS_PROVINCIAS = {"murcia"}
+_RE_DNI = re.compile(r"^\d{8}[A-Z]$")
+_RE_NIE = re.compile(r"^[XYZ]\d{7}[A-Z]$")
+_PF_POR_NOMBRE_CACHE = {}      # provincia -> (ts, {nombre normalizado: "pf"|"soc"|"ambos"})
+
+
+def _nif_limpio(nif):
+    return re.sub(r"[^A-Z0-9]", "", (nif or "").upper())
+
+
+def _nombre_clave_pf(nombre):
+    """Palabras del nombre sin acentos y ordenadas: "GARCIA LOPEZ, ANGEL" == "Ángel García López"."""
+    return " ".join(sorted(re.findall(r"[a-z0-9]+", normalizar(nombre or ""))))
+
+
+def _tipos_por_nombre_cm(provincia):
+    ahora = time.time()
+    hit = _PF_POR_NOMBRE_CACHE.get(provincia)
+    if hit and ahora - hit[0] < 600:
+        return hit[1]
+    with _db_lock:
+        filas = _db.execute("SELECT nif, adjudicatari FROM contratos_menors_locales WHERE provincia=? AND nif<>'' "
+                            "AND nif IS NOT NULL", (provincia,)).fetchall()
+    tipos = {}
+    for nif, adj in filas:
+        n = _nif_limpio(nif)
+        t = "pf" if (_RE_DNI.match(n) or _RE_NIE.match(n)) else ("soc" if _RE_NIF_SOCIEDAD.match(n) else None)
+        if not t or not adj:
+            continue
+        k = _nombre_clave_pf(adj)
+        tipos[k] = t if tipos.get(k) in (None, t) else "ambos"
+    _PF_POR_NOMBRE_CACHE[provincia] = (ahora, tipos)
+    return tipos
+
+
+def _persona_fisica_cm(r):
+    """None, o de dónde sale que el adjudicatario es una persona física: "nif" o "otra_fuente"."""
+    provincia = r.get("provincia") or ""
+    if provincia not in _AUTONOMOS_PROVINCIAS:
+        return None
+    adj = r.get("adjudicatari") or ""
+    n = _nif_limpio(r.get("nif"))
+    if n:
+        return "nif" if (_RE_DNI.match(n) or _RE_NIE.match(n)) and not _parece_sociedad(adj) else None
+    if not adj or _parece_sociedad(adj):
+        return None
+    return "otra_fuente" if _tipos_por_nombre_cm(provincia).get(_nombre_clave_pf(adj)) == "pf" else None
+
+
+def _nif_mostrar(nif):
+    """DNI/NIE de una persona física, enmascarado como prevé la disposición adicional 7.ª de la LOPDGDD (***4567** /
+    ****4567*); el NIF de una sociedad, tal cual."""
+    n = _nif_limpio(nif)
+    if _RE_DNI.match(n):
+        return "***" + n[3:7] + "**"
+    if _RE_NIE.match(n):
+        return "****" + n[4:8] + "*"
+    return (nif or "").strip()
+
+
 def _render_fila_contrato_menor(r):
     """Fila de la tabla de contratos menores locales -- compartida por todas
     las fuentes (Girona/RPC, Fuente Álamo, Mula, Molina de Segura...). No
@@ -17245,7 +17315,7 @@ def _render_fila_contrato_menor(r):
     adjudicatari = r.get("adjudicatari", "")
     fuente = r.get("fuente", "")
     fuente_badge = f'<span class="fuente-badge fuente-rpc">{esc(_FUENTE_CM_LABEL.get(fuente, fuente or "?"))}</span>'
-    nif_html = f'<div class="cm-nif">{esc(r["nif"])}</div>' if r.get("nif") else ""
+    nif_html = f'<div class="cm-nif">{esc(_nif_mostrar(r["nif"]))}</div>' if r.get("nif") else ""
 
     # Gerente/administrador del adjudicatario, con el MISMO detector y caché
     # que fondos UE (ver _render_fila_fondo_ue) -- lectura de caché aquí,
@@ -17281,7 +17351,14 @@ def _render_fila_contrato_menor(r):
     else:
         match_html = ""
 
-    if dir_nombre:
+    pf = _persona_fisica_cm(r)
+    if pf:
+        origen = (_t("Según su DNI/NIE en la fuente oficial") if pf == "nif"
+                  else _t("Su nombre figura con DNI/NIE en otra fuente oficial"))
+        dir_html = (f'<div class="directivo">{esc(adjudicatari)}</div>'
+                    f'<div class="cargo">{_t("Autónomo / persona física")}</div>'
+                    f'<span class="noloc-nota">{origen}</span>{match_html}')
+    elif dir_nombre:
         dir_html = (f'<div class="directivo">{esc(dir_nombre)}</div>'
                      f'<div class="cargo">{esc(_cargo_txt(dir_cargo))}</div>{match_html}')
     else:
