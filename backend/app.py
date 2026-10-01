@@ -12018,11 +12018,28 @@ def _concentracion_html(contratos_formales, menores):
         lineas.append(_t("La empresa con más contratos formales de los que tenemos de este municipio es <strong>{empresa}</strong>, "
                          "que concentra el {pct} % ({num} de {den} con adjudicatario identificado).").format(
             empresa=esc(emp), pct=_pct_txt(100 * n / total), num=fmt_num(n), den=fmt_num(total)))
+    imp_f = collections.Counter()
+    nombre_f = {}
+    for c in contratos_formales or []:
+        emp = c.get("empresa", "")
+        if not emp or emp in ("No localizada", "Desierto") or not (c.get("importe_num") or 0) > 0:
+            continue
+        n = re.sub(r"[^A-Z0-9]", "", (c.get("nif") or "").upper())
+        clave = ("nif", n) if len(n) >= 8 else ("nom", normalizar(emp))
+        imp_f[clave] += c["importe_num"]
+        nombre_f.setdefault(clave, emp.strip())
+    if len(pares_f) >= _CONCENTRACION_MIN_FORMALES and imp_f:
+        clave, imp = imp_f.most_common(1)[0]
+        total_imp = sum(imp_f.values())
+        lineas.append(_t("Por importe, la empresa que más ha recibido en contratos formales es <strong>{empresa}</strong>: "
+                         "el {pct} % del total ({importe} de {total}).").format(
+            empresa=esc(nombre_f[clave]), pct=_pct_txt(100 * imp / total_imp), importe=fmt_eur(str(imp)),
+            total=fmt_eur(str(total_imp))))
     if not lineas:
         return ""
     items = "".join(f"<li>{x}</li>" for x in lineas)
     return (f'<div class="concentracion"><span class="concentracion-tit">{_t("Reparto entre empresas")}</span>'
-            f'<ul>{items}</ul><span class="concentracion-nota">{_t("Por número de contratos. Una misma empresa se cuenta junta por su NIF.")}</span></div>')
+            f'<ul>{items}</ul><span class="concentracion-nota">{_t("Una misma empresa se cuenta junta por su NIF.")}</span></div>')
 
 
 def _pct_txt(x):
@@ -12051,30 +12068,9 @@ def analizar_riesgo(contratos, traducir=False):
     if not empresas_count:
         return alertas
 
-    # Empresa con > 50% de adjudicaciones
-    for emp, count in empresas_count.items():
-        pct = round(100 * count / total)
-        if pct > 50:
-            alertas.append({
-                "nivel": "alto",
-                "icono": "⚠️",
-                "texto": _tt("<strong>{empresa}</strong> acumula el {pct}% de las adjudicaciones ({n} de {total} "
-                            "contratos) — posible concentración de contratación.").format(
-                    empresa=esc(emp), pct=pct, n=count, total=total),
-            })
-
-    # Empresa con > 50% del importe total
-    total_importe = sum(empresas_importe.values())
-    if total_importe > 0:
-        for emp, imp in empresas_importe.items():
-            pct = round(100 * imp / total_importe)
-            if pct > 50 and empresas_count.get(emp, 0) >= 2:
-                alertas.append({
-                    "nivel": "medio",
-                    "icono": "🔍",
-                    "texto": _tt("<strong>{empresa}</strong> concentra el {pct}% del importe total adjudicado "
-                                "({importe}).").format(empresa=esc(emp), pct=pct, importe=fmt_eur(str(imp))),
-                })
+    # Las dos alertas de concentración (>50 % de los contratos / >50 % del importe, con ⚠️ y "posible concentración
+    # de contratación") se quitaron el 01-10-2026 por decisión de César: el dato se da ahora NEUTRO en el bloque
+    # "Reparto entre empresas" de la ficha (_concentracion_html), por número y por importe.
 
     # Contratos sin empresa: distingue los declarados SIN adjudicatario por la
     # propia fuente (desierto/desistimiento/renuncia, código de resultado de
@@ -17469,8 +17465,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
 
     cards = ""
     for d in datos:
-        alertas_html = _render_alertas(d.get("alertas", []) if _i18n_idioma() == "es"
-                                       else analizar_riesgo(d.get("contratos", []), traducir=True))
+        # Se recalcula al pintar (no se usa d["alertas"] guardado): así un cambio de criterio llega a todas las fichas
+        # sin esperar a que cada municipio se refresque (01-10-2026: alertas de concentración retiradas).
+        alertas_html = _render_alertas(analizar_riesgo(d.get("contratos", []), traducir=_i18n_idioma() != "es"))
 
         muni_name_d = d.get("municipio", "")
         contratos_all = d.get("contratos", [])
