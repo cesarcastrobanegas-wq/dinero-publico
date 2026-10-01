@@ -10661,6 +10661,20 @@ def _db_fondos_ue(provincia=None):
     return [dict(zip(cols, r)) for r in rows]
 
 
+def _db_fondos_ue_provincias():
+    """Provincias con algún proyecto en fondos_ue, en el orden de MUNICIPIOS_POR_PROVINCIA."""
+    with _db_lock:
+        hay = {p for (p,) in _db.execute("SELECT DISTINCT provincia FROM fondos_ue")}
+    return [p for p in MUNICIPIOS_POR_PROVINCIA if p in hay]
+
+
+def _lista_y(nombres):
+    """'A', 'A y B', 'A, B y C' (la "y" traducida)."""
+    if len(nombres) <= 1:
+        return "".join(nombres)
+    return ", ".join(nombres[:-1]) + " " + _t("y") + " " + nombres[-1]
+
+
 def _db_fondos_ue_por_municipio(municipio, provincia=None):
     """Fondos UE ya cruzados con este municipio exacto (columna municipio_match,
     calculada en la ingesta -- ver _cruzar_municipio_fondo_ue). Se usa para
@@ -17148,11 +17162,20 @@ def render_fondos_ue_html(fondos, provincia="todas"):
       <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{n_cohesion}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
     </div>"""
 
+    # Cobertura REAL (2026-10-01, aviso de César): solo las provincias con datos llevan pestaña y salen en el texto;
+    # antes se listaban las 50 provincias (48 vacías) y el texto decía "Murcia y Girona" fijo.
+    provs_datos = _db_fondos_ue_provincias()
     selector_prov = "".join(
-        f'<a href="/fondos-ue?provincia={prov}" class="prov-tab{" active" if prov == provincia else ""}">'
-        f'{esc(PROVINCIA_LABEL.get(prov, prov))}</a>'
-        for prov in MUNICIPIOS_POR_PROVINCIA
-    )
+        f'<a href="/fondos-ue{"" if prov == "todas" else "?provincia=" + prov}" '
+        f'class="prov-tab{" active" if prov == provincia else ""}">'
+        f'{esc(_t("Todas") if prov == "todas" else PROVINCIA_LABEL.get(prov, prov))}</a>'
+        for prov in ["todas"] + provs_datos
+    ) if len(provs_datos) > 1 else ""
+    nombres_cob = [PROVINCIA_LABEL.get(p, p).replace("Provincia de ", "provincia de ") for p in provs_datos]
+    cobertura_txt = (_t("Por ahora tenemos datos de {n} de las {total} provincias: {lista}. El resto, pendiente de "
+                        "conectar.").format(n=len(provs_datos), total=len(MUNICIPIOS_POR_PROVINCIA),
+                                            lista=esc(_lista_y(nombres_cob)))
+                     if provs_datos else _t("Todavía no hay datos de fondos UE cargados."))
 
     filas = "".join(_render_fila_fondo_ue(f) for f in fondos[:300])
     if not filas:
@@ -17164,7 +17187,8 @@ def render_fondos_ue_html(fondos, provincia="todas"):
   <div class="hero" style="padding-bottom:4px">
     <div class="hero-tagline" style="color:var(--yellow)">🇪🇺 {_t("Fondos y proyectos financiados por la UE")}</div>
     <p class="hero-sub">
-      {_t("Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea en la Región de Murcia y la provincia de Girona. Fuentes oficiales de la Comisión Europea, sin scraping -- descarga/consulta directa de sus datasets abiertos.")}
+      {_t("Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea. Fuentes oficiales de la Comisión Europea, sin scraping -- descarga/consulta directa de sus datasets abiertos.")}
+      {cobertura_txt}
     </p>
   </div>
   <div class="prov-switch" style="margin-bottom:14px">{selector_prov}</div>
@@ -17184,8 +17208,8 @@ def render_fondos_ue_html(fondos, provincia="todas"):
 
     return _page_shell(_t("Fondos UE — Proyectos financiados por la Unión Europea"), body,
                         description=_t("Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon "
-                                       "Europe, Cohesion Data FEDER/FSE) en la Región de Murcia y la provincia "
-                                       "de Girona."),
+                                       "Europe, Cohesion Data FEDER/FSE) en {lista}.").format(
+                                           lista=_lista_y(nombres_cob) or "España"),
                         provincia="todas", og_path="/fondos-ue" + (f"?provincia={provincia}" if provincia != "todas" else ""))
 
 
