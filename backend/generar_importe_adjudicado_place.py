@@ -180,8 +180,12 @@ def main():
             with cond:
                 cond.wait_for(lambda: mes in listos)
                 ruta, propio, estado = listos[mes]
+            if ruta and not zipfile.is_zipfile(ruta):
+                # 01-10-2026: tras ~55 descargas seguidas el cortafuegos de PLACE responde 200 con una página HTML
+                # ("The Web Application Firewall has denied your transaction") en lugar del ZIP
+                ruta, estado = "", "respuesta que no es un ZIP (¿cortafuegos de PLACE?)"
             if not ruta:
-                log(f"{mes}: ZIP no disponible ({estado}); paro.")
+                log(f"{mes}: ZIP no disponible ({estado}); paro. Reintentar más tarde: el script continúa donde lo dejó.")
                 break
             t0 = time.time()
             with zipfile.ZipFile(ruta) as z:
