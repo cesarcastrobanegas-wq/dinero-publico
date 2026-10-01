@@ -50,7 +50,7 @@ _I18N_RUTA = contextvars.ContextVar("i18n_ruta", default=("/", ""))   # (ruta si
 # Páginas de contenido editorial: se leen en castellano también bajo /gl/, /ca/ o /eu/ (solo cambia la interfaz), así
 # que esas versiones NO son una traducción: canonical a la página en castellano, noindex y sin hreflang, para que
 # Google no las trate como duplicados. Tampoco van al sitemap por idioma.
-_I18N_RUTAS_EDITORIALES = ("/casos", "/metodologia", "/quienes-somos", "/aviso-legal")
+_I18N_RUTAS_EDITORIALES = ("/casos", "/metodologia", "/quienes-somos", "/quien-soy", "/aviso-legal")
 
 
 def _i18n_ruta_editorial(ruta):
@@ -11304,6 +11304,26 @@ def _actualizar_fondos_ue_bg(job_id):
 # existe traducción (la mayoría) y cae a inglés si no -- confirmado el
 # 2026-07-29, ver INFORME_NOCHE.md.
 NOTICIAS_UE_RSS_URL = "https://ec.europa.eu/commission/presscorner/api/rss?language=es"
+# Solo ESPAÑA y solo en castellano (2026-10-01, encargo de César). El RSS no trae el país en los metadatos (solo
+# POLICY_AREA), pero acepta una búsqueda de texto (`text=`) y un tamaño de página (`pagesize=`, máx. 100; `size=` no
+# hace nada): con text=España devuelve los ~100 comunicados más recientes que mencionan España en cualquier parte. Se
+# guardan los que lo mencionan en el TÍTULO o el RESUMEN (en el cuerpo puede ser una mención de pasada) y que están en
+# castellano (enlace /detail/es/; sin traducción, el RSS los da en inglés con /detail/en/, y traducirlos no es barato:
+# se quitan). Fuera también los resúmenes diarios genéricos ("Noticias diarias", "Daily News").
+NOTICIAS_UE_RSS_URL_ESPANA = ("https://ec.europa.eu/commission/presscorner/api/rss?language=es&pagesize=100"
+                              "&text=Espa%C3%B1a")
+_RE_NOTICIA_ESPANA = re.compile(r"\bespan(a|ol|ola|oles|olas)\b")
+_RE_NOTICIA_DIGEST = re.compile(r"^(noticias diarias|daily news)\b")
+
+
+def _noticia_ue_espana(titulo, resumen, url):
+    """True si el comunicado está en castellano y habla de España en el título o el resumen."""
+    if "/detail/es/" not in (url or ""):
+        return False
+    t = normalizar(titulo or "")
+    if _RE_NOTICIA_DIGEST.search(t):
+        return False
+    return bool(_RE_NOTICIA_ESPANA.search(t + " " + normalizar(resumen or "")))
 
 NOTICIAS_UE_POLICY_AREAS = {"BUDG", "REGIO", "RECOVERY", "ESF", "COHESION", "AGRI", "EMPL"}
 NOTICIAS_UE_KEYWORDS = [
@@ -11342,10 +11362,11 @@ def _db_noticias_ue(limit=6):
     publicación del propio comunicado, no por cuándo se cacheó)."""
     with _db_lock:
         rows = _db.execute(
-            "SELECT titulo, resumen, url, fecha_ts FROM noticias_ue "
-            "ORDER BY fecha_ts DESC LIMIT ?", (limit,)
+            "SELECT titulo, resumen, url, fecha_ts FROM noticias_ue ORDER BY fecha_ts DESC"
         ).fetchall()
-    return [{"titulo": t, "resumen": r, "url": u, "fecha_ts": f} for t, r, u, f in rows]
+    # el filtro de España se aplica también al LEER: las guardadas antes del 01-10-2026 eran de toda la UE
+    return [{"titulo": t, "resumen": r, "url": u, "fecha_ts": f} for t, r, u, f in rows
+            if _noticia_ue_espana(t, r, u)][:limit]
 
 
 def actualizar_noticias_ue(job_id=None):
@@ -11355,7 +11376,7 @@ def actualizar_noticias_ue(job_id=None):
     (POST /actualizar-noticias-ue), mismo patrón que actualizar_fondos_ue."""
     _log(job_id, "Consultando RSS de comunicados de prensa de la Comisión Europea…")
     try:
-        r = session.get(NOTICIAS_UE_RSS_URL, timeout=30)
+        r = session.get(NOTICIAS_UE_RSS_URL_ESPANA, timeout=60)
         r.raise_for_status()
     except Exception as e:
         _log(job_id, f"  RSS Comisión Europea no disponible ({type(e).__name__})")
@@ -11383,10 +11404,7 @@ def actualizar_noticias_ue(job_id=None):
             if texto_cat.startswith("POLICY_AREA="):
                 policy_areas.update(texto_cat.split("=", 1)[1].split(","))
 
-        texto_norm = normalizar(titulo + " " + descripcion)
-        relevante = bool(policy_areas & NOTICIAS_UE_POLICY_AREAS) or any(
-            kw in texto_norm for kw in NOTICIAS_UE_KEYWORDS)
-        if not relevante:
+        if not _noticia_ue_espana(titulo, descripcion, link):
             continue
 
         try:
@@ -11404,7 +11422,7 @@ def actualizar_noticias_ue(job_id=None):
         })
 
     _guardar_noticias_ue(filas)
-    _log(job_id, f"  RSS Comisión Europea: {len(filas)} noticias de presupuesto/fondos guardadas "
+    _log(job_id, f"  RSS Comisión Europea: {len(filas)} noticias sobre España guardadas "
                  f"(de {len(items)} comunicados recibidos)")
     return len(filas)
 
@@ -11947,6 +11965,69 @@ def buscar_directivo(empresa, nif=""):
 
 
 # ─── ANÁLISIS ANTICORRUPCIÓN ─────────────────────────────────────────────────
+
+# ─── CONCENTRACIÓN POR EMPRESA (2026-10-01, encargo de César) ───────────────────────────────────────────────────────
+# Dato NEUTRO en la ficha: qué parte de los contratos (por número) se lleva la empresa que más contratos tiene. Sin
+# "alerta" ni colores de aviso: el hecho y cómo se ha calculado, y que el lector saque sus conclusiones. Una misma
+# empresa se agrupa por NIF (o por nombre normalizado si no hay NIF); quedan fuera los contratos sin adjudicatario
+# identificado. Solo se muestra con un mínimo de contratos (con 5 contratos, un 40 % no dice nada).
+_CONCENTRACION_MIN_MENORES = 20
+_CONCENTRACION_MIN_FORMALES = 10
+
+
+def _empresa_top(pares):
+    """pares: [(nombre, nif)] de contratos con adjudicatario. (nombre más usado, n de la empresa con más, total)."""
+    cuenta, nombres = collections.Counter(), collections.defaultdict(collections.Counter)
+    for nombre, nif in pares:
+        n = re.sub(r"[^A-Z0-9]", "", (nif or "").upper())
+        clave = ("nif", n) if len(n) >= 8 else ("nom", normalizar(nombre))
+        cuenta[clave] += 1
+        nombres[clave][nombre.strip()] += 1
+    if not cuenta:
+        return None
+    clave, n = cuenta.most_common(1)[0]
+    return nombres[clave].most_common(1)[0][0], n, sum(cuenta.values())
+
+
+def _concentracion_html(contratos_formales, menores):
+    lineas = []
+    pares_m, anios = [], []
+    for r in menores or []:
+        adj = (r.get("adjudicatari") or "").strip()
+        f = (r.get("data_adjudicacio") or "")[:4]
+        if f.isdigit():
+            anios.append(int(f))
+        if adj and adj not in ("No localizada", "Desierto"):
+            pares_m.append((adj, r.get("nif", "")))
+    top = _empresa_top(pares_m) if len(pares_m) >= _CONCENTRACION_MIN_MENORES else None
+    if top:
+        emp, n, total = top
+        if anios:
+            desde, hasta = min(anios), max(anios)
+            periodo = _t("en los últimos {n} años ({desde}-{hasta})").format(n=hasta - desde + 1, desde=desde, hasta=hasta)
+        else:
+            periodo = _t("en los datos disponibles")
+        lineas.append(_t("La empresa con más contratos menores adjudicados {periodo} es <strong>{empresa}</strong>, que "
+                         "concentra el {pct} % ({num} de {den} con adjudicatario identificado).").format(
+            empresa=esc(emp), pct=_pct_txt(100 * n / total), periodo=periodo, num=fmt_num(n), den=fmt_num(total)))
+    pares_f = [(c.get("empresa", ""), c.get("nif", "")) for c in contratos_formales or []
+               if c.get("empresa") and c.get("empresa") not in ("No localizada", "Desierto")]
+    top = _empresa_top(pares_f) if len(pares_f) >= _CONCENTRACION_MIN_FORMALES else None
+    if top:
+        emp, n, total = top
+        lineas.append(_t("La empresa con más contratos formales de los que tenemos de este municipio es <strong>{empresa}</strong>, "
+                         "que concentra el {pct} % ({num} de {den} con adjudicatario identificado).").format(
+            empresa=esc(emp), pct=_pct_txt(100 * n / total), num=fmt_num(n), den=fmt_num(total)))
+    if not lineas:
+        return ""
+    items = "".join(f"<li>{x}</li>" for x in lineas)
+    return (f'<div class="concentracion"><span class="concentracion-tit">{_t("Reparto entre empresas")}</span>'
+            f'<ul>{items}</ul><span class="concentracion-nota">{_t("Por número de contratos. Una misma empresa se cuenta junta por su NIF.")}</span></div>')
+
+
+def _pct_txt(x):
+    return f"{x:.0f}" if x >= 10 else f"{x:.1f}".replace(".", ",")
+
 
 def analizar_riesgo(contratos, traducir=False):
     """Genera indicadores de riesgo sobre la lista de contratos. Lo que se GUARDA (d["alertas"]) va siempre en
@@ -13167,6 +13248,10 @@ def _inicializar_datos():
         _cargar_contratos_menores_place()
         _recasar_governalia_ventana_larga()      # una sola vez (marca en settings); ver _GOVERNALIA_DIAS_EXTRA
     threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True).start()
+    # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
+    # al RSS (búsqueda text=España) en vez de esperar al cron diario.
+    if len(_db_noticias_ue(limit=3)) < 3:
+        threading.Thread(target=actualizar_noticias_ue, name="noticias-ue", daemon=True).start()
 
 
 # ─── ENRIQUECIMIENTO EN BACKGROUND (empresia / BORME) ────────────────────────
@@ -13883,6 +13968,23 @@ a.dd-titulo-contrato:hover{text-decoration:underline;}
 .it-lider-cab h2{font-size:17px;margin:0;}
 .it-lider-cab h2 .it-info-btn{margin-left:6px;vertical-align:middle;}
 .it-lider-sub{font-size:12px;color:var(--dim);}
+/* lista de provincias dentro del bloque del mapa (2026-10-01): una sola vía, el mapa; la lista solo a petición */
+.mapa-lista-provincias{margin:10px 0 4px;}
+.mapa-lista-provincias summary{cursor:pointer;font-size:12.5px;color:var(--dim);text-decoration:underline;text-underline-offset:3px;}
+.mapa-lista-provincias[open] summary{color:var(--text);}
+/* Bizum en "Quién soy" (2026-10-01) */
+.bizum-caja{margin:14px 0;padding:14px 16px;border:1px solid var(--accent);border-radius:10px;background:rgba(240,136,62,.08);display:grid;gap:6px;}
+.bizum-tit{font-weight:700;font-size:15px;margin:0;}
+.bizum-num{font-size:20px;font-weight:800;letter-spacing:.04em;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0;font-variant-numeric:tabular-nums;}
+/* reparto entre empresas (2026-10-01): dato neutro, sin colores de aviso */
+.concentracion{margin:8px 0 12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13.5px;line-height:1.5;}
+.concentracion-tit{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:4px;}
+.concentracion ul{margin:0;padding-left:18px;display:grid;gap:3px;}
+.concentracion-nota{display:block;margin-top:6px;font-size:11.5px;color:var(--dim);}
+/* aclaración permanente del Índice de Transparencia (2026-10-01): visible siempre junto al nombre */
+.it-aclara{display:block;margin:6px 0 10px;padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;line-height:1.4;color:var(--text);background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.45);}
+.it-aclara-mini{display:block;margin:4px 0 0;padding:3px 8px;font-size:11.5px;font-weight:600;}
+summary .it-aclara-mini{white-space:normal;}
 .it-lider-cuerpo{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;margin-top:10px;}
 .it-lider-top{display:flex;align-items:center;gap:14px;flex:1 1 280px;min-width:0;}
 .it-lider-nota{font-size:44px;font-weight:800;color:var(--accent);line-height:1;white-space:nowrap;}
@@ -14811,7 +14913,7 @@ def _footer_html(provincia="todas"):
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
     <a href="/aviso-legal">{_t("Aviso Legal")}</a>
     <a href="#" id="cookie-preferencias">{_t("Preferencias de cookies")}</a>
-    <a href="/quienes-somos">{_t("Quiénes Somos")}</a>
+    <a href="/quien-soy">{_t("Quién soy")}</a>
     <a href="/casos">{_t("Casos")}</a>
     <a href="/mapa-cobertura">{_t("Mapa de cobertura")}</a>
     <a href="/metodologia">{_t("Metodología")}</a>
@@ -16192,6 +16294,7 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
     <h2>📊 {_t("Índice de Transparencia Dinero Público")}</h2>
     <div class="prov-switch">{selector_comunidad}</div>
   </div>
+  {_it_aclaracion_html()}
   <p class="hero-sub" style="margin-top:-8px">
     {_t("Valoración propia de Dinero Público sobre la actividad y disponibilidad de datos públicos de cada municipio, calculada a partir de fuentes oficiales (contratación, cuentas anuales, deuda viva, sueldos ISPA). <b>No es una certificación legal de cumplimiento de la Ley 19/2013 de Transparencia</b> ni una acreditación oficial -- este proyecto no es organismo acreditador. Es un indicador propio pensado para comparar municipios entre sí a partir de lo que hemos podido recopilar, no para juzgar su gestión.")}
     {aviso_sin_cobertura}
@@ -16313,7 +16416,8 @@ _RK_MUNI_BUSCADOR_JS = r"""(function(){
       if (r.indice) {
         html += '<div class="rk-muni-linea">📊 ' + T("Índice de Transparencia") + ': <b>' + r.indice.valor_fmt + '</b>'
           + ' — ' + TF("#{p} de {n} (nacional), #{pc} de {nc} en {comunidad}", {p: r.indice.rank_nacional, n: r.indice.total_nacional,
-                       pc: r.indice.rank_comunidad, nc: r.indice.total_comunidad, comunidad: r.comunidad_autonoma_label}) + '</div>';
+                       pc: r.indice.rank_comunidad, nc: r.indice.total_comunidad, comunidad: r.comunidad_autonoma_label})
+          + '<span class="it-aclara it-aclara-mini">' + T("Mide la disponibilidad de datos públicos, no la buena gestión ni la ausencia de corrupción.") + '</span></div>';
       } else {
         html += '<div class="rk-muni-linea noloc-warn">📊 ' + T("Índice de Transparencia") + ': ' + T("cobertura insuficiente") + '</div>';
       }
@@ -17526,6 +17630,8 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # formalizaciones grandes.
         contratos_menors_html = ""
         menors_muni = _db_contratos_menors_por_municipio(muni_name_d, d.get("provincia", provincia))
+        concentracion_html = (_concentracion_html(contratos_all, menors_muni)
+                              if is_paged and not es_pseudo_municipio(muni_name_d) else "")
         if menors_muni:
             total_cm = sum(r["import_num"] for r in menors_muni)
             total_cm_n = len(menors_muni)
@@ -17639,6 +17745,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           <div class="source-bar">{esc(fuentes_label)} · {fuentes_str}{age_html}</div>
           {aviso_backfill_galicia_html(provincia)}
           {aviso_backfill_ajuntament_html(provincia)}
+          {concentracion_html}
           {alertas_html}
           <div class="tbl-scroll">
             <table>
@@ -17750,7 +17857,9 @@ _PERSONALIZACION_JS = r"""(function(){
         + item.contratos.total + ' · ' + item.contratos.importe_total_fmt + '</div></div>';
     }
     if (item.indice){
-      filas += '<div class="pr-stat"><div class="pr-stat-label">' + T("Índice de Transparencia") + '</div><div class="pr-stat-valor">'
+      filas += '<div class="pr-stat"><div class="pr-stat-label">' + T("Índice de Transparencia")
+        + '<span class="it-aclara it-aclara-mini">' + T("Mide la disponibilidad de datos públicos, no la buena gestión ni la ausencia de corrupción.") + '</span>'
+        + '</div><div class="pr-stat-valor">'
         + item.indice.valor_fmt + '/100 (#' + item.indice.rank_nacional + ' ' + T("de") + ' ' + item.indice.total_nacional + ')</div></div>';
     }
     if (item.deuda_habitante){
@@ -17888,6 +17997,7 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8, provincia=None):
     return f"""<details class="it-widget">
         <summary>🏅 {_t("Índice de Transparencia")}
           <span class="badge">{fila_actual["indice"]:.1f}/100 · #{posicion_actual} de {total}</span>{_it_info_btn_html()}
+          {_it_aclaracion_html(mini=True)}
         </summary>
         <div class="it-widget-body">
           <div class="rk-sidebar-list">{items}</div>
@@ -17956,12 +18066,23 @@ def _it_info_pop_html():
                   for k in sorted(ks, key=lambda k: -p[k]))
         for nombre, ks in bloques)
     return f"""<div id="it-info-pop" class="it-info-pop" role="dialog" aria-label="{_t("Cómo funciona el Índice de Transparencia")}" hidden>
+  <p>{_it_aclaracion_html()}</p>
   <p>{_t("<b>Qué mide:</b> cuánta información pública de cada ayuntamiento reunimos de fuentes oficiales (contratos, cuentas, deuda, sueldos). No mide si gestiona bien o mal.")}</p>
   <ul class="it-info-pesos">{filas}</ul>
   <p>{_t("Un dato que no tenemos no cuenta como 0: su peso se reparte entre el resto. Hacen falta al menos {minimo} de los {total} componentes.").format(minimo=_INDICE_TRANSPARENCIA_MIN_COMPONENTES, total=len(p))}</p>
   <p class="it-info-aviso">{_t("Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley 19/2013 de Transparencia.</b>")}</p>
   <a href="/metodologia">{_t("Cómo se calcula y qué no medimos →")}</a>
 </div>"""
+
+
+# Aclaración PERMANENTE junto al nombre del índice (2026-10-01, encargo de César: "imposible de pasar por alto", en
+# todos los sitios donde aparece el nombre, no solo en /metodologia). El nombre no cambia.
+_IT_ACLARACION = "Mide la disponibilidad de datos públicos, no la buena gestión ni la ausencia de corrupción."
+
+
+def _it_aclaracion_html(mini=False):
+    clase = "it-aclara it-aclara-mini" if mini else "it-aclara"
+    return f'<span class="{clase}">{_t("Mide la disponibilidad de datos públicos, no la buena gestión ni la ausencia de corrupción.")}</span>'
 
 
 def _nota_coma(x):
@@ -18101,6 +18222,7 @@ def _lider_indice_portada_html():
       <h2 id="it-lider-titulo">🏅 {_t("Liderando ahora mismo · Índice de Transparencia")}{_it_info_btn_html()}</h2>
       <span class="it-lider-sub">{_t("{n} municipios con nota · España").format(n=fmt_num(len(filas)))}</span>
     </div>
+    {_it_aclaracion_html()}
     <div class="it-lider-cuerpo">
       <div class="it-lider-top">
         <div class="it-lider-nota">{_nota_coma(lideres[0]["indice"])}<small>/100</small></div>
@@ -18181,7 +18303,8 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     return f"""<div class="rk-sidebar-ranking-wrap">
     <details class="rk-sidebar" open>
       <summary class="rk-sidebar-title">🏅 {_t("Índice de Transparencia")}
-        <span class="rk-sidebar-v1-badge">{_t("Índice v2")}</span>{info_html}</summary>
+        <span class="rk-sidebar-v1-badge">{_t("Índice v2")}</span>{info_html}
+        {_it_aclaracion_html(mini=True)}</summary>
       <div class="rk-sidebar-aviso">⚠️ {_t("No comparable entre regiones; los datos de origen varían.")}</div>
       <label class="rk-sidebar-selector-label" for="rk-sidebar-comunidad">{_t("Región")}</label>
       <select id="rk-sidebar-comunidad" class="rk-sidebar-selector"
@@ -18414,7 +18537,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         </div>""" for n in noticias_ue)
     else:
         noticias_html = ('<div class="empty" style="padding:20px 8px;font-size:12px">'
-                          + _t("Aún no hay noticias cargadas.") + '</div>')
+                          + _t("No hay comunicados recientes de la Comisión Europea sobre España.") + '</div>')
 
     # Mapa principal de la home = el mapa de cobertura real (/mapa-cobertura,
     # 19 comunidades con geometría IGN + banderas + estado real de cobertura)
@@ -18470,13 +18593,14 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
   {_datos_destacados_portada_html(datos)}
   <div class="section-title">{_t("Cobertura")}</div>
   <div class="mapa-indice-row">
-    <div class="mapa-indice-mapa">{mapa_html}</div>
+    <div class="mapa-indice-mapa">{mapa_html}
+      <details class="mapa-lista-provincias">
+        <summary>{_t("Pincha una provincia en el mapa, o abre aquí la lista en texto")}</summary>
+        <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
+      </details>
+    </div>
     <div class="mapa-indice-indice">{sidebar_ranking_html}</div>
   </div>
-  <details style="margin:14px 0 24px">
-    <summary class="provincias-parpadeo" style="cursor:pointer;font-size:13px;font-weight:700">{_t("TODAS LAS PROVINCIAS")}</summary>
-    <div class="region-grid" style="margin-top:14px">{cobertura_html}</div>
-  </details>
   <div class="section-title">🔍 {_t("Casos de investigación")}</div>
   {_peticion_cta_html(_peticion_cta_texto_portada())}
   <div class="region-grid">{casos_home_html}</div>
@@ -18484,9 +18608,9 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
   <div class="home-grid">
     <div class="home-sidebar-stack">
       <aside class="noticias-ue-panel">
-        <div class="nu-panel-title">🇪🇺 {_t("Noticias UE · Presupuesto y fondos")}</div>
+        <div class="nu-panel-title">🇪🇺 {_t("Noticias UE sobre España")}</div>
         {noticias_html}
-        <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es" target="_blank" rel="noopener">{_t("Ver más en la Comisión Europea →")}</a>
+        <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es?text=Espa%C3%B1a" target="_blank" rel="noopener">{_t("Ver más en la Comisión Europea →")}</a>
       </aside>
     </div>
     <div class="home-main-col">
@@ -20498,50 +20622,65 @@ def render_mapa_cobertura_html():
                                        "habitantes, contratos e importe adjudicado."), og_path="/mapa-cobertura")
 
 
+def _bizum_html():
+    """Bloque de Bizum: el número sale de la variable de entorno BIZUM_NUMERO (nunca escrito en el código); sin ella
+    no se muestra nada y la página ofrece solo las otras formas de colaborar."""
+    numero = re.sub(r"[^0-9+ ]", "", os.environ.get("BIZUM_NUMERO", "")).strip()
+    if not numero:
+        return ""
+    return f"""<div class="bizum-caja">
+    <p class="bizum-tit">Apoya el proyecto por Bizum</p>
+    <p class="bizum-num"><span id="bizum-numero">{esc(numero)}</span>
+      <button type="button" class="btn" onclick="(function(b){{var t=document.getElementById('bizum-numero').textContent;
+        if(navigator.clipboard){{navigator.clipboard.writeText(t).then(function(){{b.textContent='Copiado';}},function(){{}});}}}})(this)">Copiar</button></p>
+    <p>Cualquier cantidad ayuda a pagar el servidor y el tiempo. En el concepto, si quieres, pon «Dinero Público».</p>
+  </div>"""
+
+
 def render_quienes_somos_html():
-    body = """<div class="static-page">
-  <h1>Transparencia al servicio de la ciudadanía</h1>
+    """"Quién soy" (2026-10-01, encargo de César): contar la verdad -- una sola persona, sin presupuesto ni equipo --
+    en primera persona del singular, y una llamada clara a colaborar o apoyar por Bizum. URL /quien-soy (la antigua
+    /quienes-somos redirige)."""
+    body = f"""<div class="static-page">
+  <h1>Quién soy</h1>
 
-  <p>Dinero Público nació con un objetivo claro: hacer accesible a cualquier ciudadano
-  la información sobre cómo se gasta el dinero público. Cubrimos ya las 19 comunidades
-  y ciudades autónomas de España, con distinto grado de detalle según la provincia
-  (ver el <a href="/mapa-cobertura">mapa de cobertura</a> para el estado real de cada una).</p>
+  <p>Dinero Público lo hago yo solo: César Castro Banegas. No hay una organización detrás, ni un equipo, ni
+  presupuesto. No lo financia ningún partido, ninguna empresa ni ninguna administración. Detrás hay miles de horas
+  de código.</p>
 
-  <p>Cruzamos datos oficiales de la Plataforma de Contratación del Sector Público (PLACE)
-  del Ministerio de Hacienda con información registral pública para identificar quién
-  está detrás de cada empresa que recibe contratos públicos.</p>
+  <p>Empecé con los contratos de la Región de Murcia. Hoy la web cubre las 19 comunidades y ciudades autónomas de España, con distinto grado
+  de detalle según la provincia: el estado real de cada una está en el <a href="/mapa-cobertura">mapa de
+  cobertura</a>.</p>
 
-  <p>No somos un partido político. No tenemos agenda ideológica. Creemos que la
-  transparencia es la mejor herramienta contra la corrupción, y que los ciudadanos
-  tienen derecho a saber quién se beneficia del dinero de todos.</p>
+  <h2>Qué hago y qué no</h2>
+  <p>Reúno datos que ya son públicos y oficiales, pero que están dispersos en decenas de portales, formatos y
+  registros: los contratos de la Plataforma de Contratación del Sector Público, los registros autonómicos, los
+  portales municipales, la deuda y las cuentas del Ministerio de Hacienda, los sueldos de alcaldes y concejales.
+  Los cruzo, los ordeno y los pongo en un solo sitio.</p>
+  <p>No acuso a nadie ni saco conclusiones por el lector. Cuando un dato parece raro, lo enseño tal como lo
+  publica la fuente oficial y explico lo que sé y lo que no. Y cuando me equivoco, lo corrijo y lo cuento: en
+  <a href="/casos">Casos</a> hay ejemplos de errores míos y de las fuentes. Cómo se calcula cada cosa está en la
+  <a href="/metodologia">metodología</a>.</p>
 
-  <p>Todos los datos que mostramos son públicos y oficiales.</p>
-
-  <h2>Para quién</h2>
+  <h2>Cómo puedes colaborar</h2>
+  <p>Un proyecto de una sola persona depende de quien lo usa. Puedes ayudar de varias formas:</p>
   <ul>
-    <li>📰 Periodistas de investigación</li>
-    <li>🏛️ Grupos municipales de oposición</li>
-    <li>🤝 ONGs y asociaciones ciudadanas</li>
-    <li>👤 Cualquier ciudadano</li>
+    <li><strong>Avisa de errores.</strong> Si ves algo mal en la ficha de tu municipio, cuéntalo en sus comentarios.</li>
+    <li><strong>Envíame datos.</strong> Si tu ayuntamiento publica sus contratos menores en algún sitio que no
+    tengo, escríbeme.</li>
+    <li><strong>Compártelo.</strong> Cada persona que lo conoce es alguien más mirando cómo se gasta el dinero de
+    todos.</li>
+    <li><strong>Apóyalo económicamente.</strong> Mantener el servidor y seguir añadiendo fuentes cuesta dinero y
+    tiempo.</li>
   </ul>
-
-  <h2>Fuentes de datos</h2>
-  <ul>
-    <li>PLACE (Ministerio de Hacienda) — contratos públicos</li>
-    <li>PSCP (Generalitat de Catalunya) — contratos públicos de Girona</li>
-    <li>BORM (Boletín Oficial Región de Murcia) — publicaciones oficiales</li>
-    <li>Registro Mercantil — directivos y administradores</li>
-    <li>einforma.com, axesor.es, infocif.es — datos empresariales públicos</li>
-    <li>(próximamente) EU Funding &amp; Tenders / CORDIS — subvenciones y fondos europeos</li>
-  </ul>
+  {_bizum_html()}
 
   <h2>Contacto</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
 </div>"""
-    return _page_shell("Quiénes Somos", body,
-                        description="Quiénes somos y por qué existe Dinero Público: transparencia sobre "
-                                     "la contratación pública en la Región de Murcia, Cataluña, la "
-                                     "Comunitat Valenciana y Andalucía.", og_path="/quienes-somos")
+    return _page_shell("Quién soy", body,
+                        description="Dinero Público lo hace una sola persona, sin equipo ni presupuesto: quién soy, "
+                                     "qué hago con los datos públicos y cómo puedes colaborar.", og_path="/quien-soy")
 
 
 def render_aviso_legal_html():
@@ -20742,6 +20881,8 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(render_fondos_ue_html(fondos, provincia_fue), gzip_ok=gzip_ok)
 
     if path == "/quienes-somos":
+        return 301, {"Location": "/quien-soy", "Content-Length": "0"}, b""
+    if path == "/quien-soy":
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
 
     if path == "/mapa-cobertura":
@@ -20800,7 +20941,7 @@ def _route_get(path, qs, gzip_ok=False):
         urls = [f"  <url><loc>{esc(SITE_URL)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>",
                 f"  <url><loc>{esc(SITE_URL)}/rankings</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
-                f"  <url><loc>{esc(SITE_URL)}/quienes-somos</loc><changefreq>monthly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/quien-soy</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/mapa-cobertura</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/metodologia</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>",
