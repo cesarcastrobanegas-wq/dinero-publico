@@ -3108,8 +3108,65 @@ def _parece_sociedad(empresa, nif=""):
             or bool(_RE_ENTIDAD.search(empresa or "")))
 
 
+# ─── ADMINISTRADORES DEL BORME (rama wip/administradores-borme-v2, PENDIENTE de confirmación de César) ─────────────
+# backend/administradores_borme.json lo genera administradores_borme.py a partir del índice local de actos del BORME
+# (borme_actos.py, datos abiertos del BOE): el órgano de administración vigente de cada sociedad adjudicataria según
+# sus nombramientos y ceses publicados, con la fecha y el anuncio del BORME de origen. Cuando lo hay, manda sobre lo que
+# trajo el enriquecimiento antiguo. Se aplica AL MOSTRAR (_directivo_corregido, _dir_cache_get), nunca se escribe en los
+# contratos guardados: quitar el fichero deja el sitio exactamente como estaba. Junto a cada nombre del BORME se
+# muestra la fecha del nombramiento, el enlace al anuncio oficial y un enlace para pedir la rectificación (propuesta
+# mínima de RGPD del informe, §7.1). Las personas físicas (autónomos) no pasan por aquí: no tienen administrador.
+ADMINISTRADORES_BORME_FILE = os.path.join(BASE_DIR, "administradores_borme.json")
+
+
+def _cargar_administradores_borme():
+    try:
+        with open(ADMINISTRADORES_BORME_FILE, encoding="utf-8") as f:
+            return json.load(f).get("administradores", {})
+    except (OSError, ValueError):
+        return {}
+
+
+ADMINISTRADORES_BORME = _cargar_administradores_borme()
+
+
+def _administrador_borme_info(empresa, nif=""):
+    """El registro del BORME (nombre, cargo, desde, fuente...) de una sociedad no extinguida, o None."""
+    b = None
+    n = (nif or "").upper().strip()
+    if n:
+        b = ADMINISTRADORES_BORME.get(n)
+    if not b and empresa:
+        b = ADMINISTRADORES_BORME.get(normalizar(empresa))
+    return b if b and not b.get("extinguida") else None
+
+
+def _administrador_borme(empresa, nif=""):
+    b = _administrador_borme_info(empresa, nif)
+    return (b["nombre"], b["cargo"]) if b else None
+
+
+def _borme_fuente_html(empresa, nif=""):
+    """Fecha del nombramiento, enlace al anuncio del BORME y enlace de rectificación, o "" si el dato no es del BORME."""
+    b = _administrador_borme_info(empresa, nif)
+    if not b:
+        return ""
+    desde = b.get("desde") or ""
+    fecha = f"{desde[6:8]}/{desde[4:6]}/{desde[:4]}" if len(desde) == 8 else ""
+    doc = b.get("fuente") or ""
+    enlace = (f' <a href="https://www.boe.es/diario_borme/txt.php?id={quote_plus(doc)}" target="_blank" rel="noopener">'
+              f'{_t("anuncio")} ↗</a>') if doc else ""
+    asunto = quote_plus(f"Rectificación: administrador de {empresa}")
+    return (f'<span class="noloc-nota">{_t("Según el BORME")}{(", " + fecha) if fecha else ""}.{enlace} · '
+            f'<a href="mailto:contacto@dinero-publico.com?subject={asunto}">{_t("Pedir rectificación")}</a></span>')
+
+
 def _directivo_corregido(empresa, nif, nombre, cargo):
-    """(nombre, cargo) a mostrar: una "persona física" deducida por el nombre que en realidad es una entidad -> nada."""
+    """(nombre, cargo) a mostrar: el del BORME si lo hay; si lo guardado es una "persona física" deducida por el nombre
+    que en realidad es una entidad -> nada."""
+    b = _administrador_borme(empresa, nif)
+    if b:
+        return b
     if cargo == "Autónomo / Persona física" and _parece_sociedad(empresa, nif):
         return "", ""
     return nombre or "", cargo or ""
@@ -3121,6 +3178,9 @@ def _directivo_contrato(c):
 
 def _dir_cache_get(empresa, nif=""):
     """Devuelve (nombre, cargo) si hay hit válido; (None, None) si hay que buscar."""
+    b = _administrador_borme(empresa, nif)
+    if b:
+        return b
     key = _dir_cache_key(empresa, nif)
     with _db_lock:
         row = _db.execute("SELECT nombre, cargo, ts FROM directores WHERE clave=?", (key,)).fetchone()
@@ -15597,7 +15657,9 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
 
     directivo, cargo_dir = _directivo_contrato(c)
     if directivo:
-        match = _detectar_coincidencia_cargo(directivo, municipio or municipio_label, provincia)
+        # el BORME escribe "APELLIDOS NOMBRE" y el índice de cargos públicos "Nombre Apellidos": se prueban variantes
+        match = next((m for m in (_detectar_coincidencia_cargo(v, municipio or municipio_label, provincia)
+                                  for v in _variantes_nombre_para_detector(directivo)) if m), None)
         if match:
             if match["tipo"] == "local":
                 match_html = (
@@ -15616,7 +15678,8 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
         else:
             match_html = ""
         dir_html = (f'<div class="directivo">{esc(directivo)}</div>'
-                     f'<div class="cargo">{esc(_cargo_txt(cargo_dir))}</div>{match_html}')
+                     f'<div class="cargo">{esc(_cargo_txt(cargo_dir))}</div>'
+                     f'{_borme_fuente_html(c.get("empresa", ""), c.get("nif", ""))}{match_html}')
     else:
         empresa_q = quote_plus(c.get("empresa", ""))
         registro_label, registro_url = _registro_correcto(c.get("nif", ""))
@@ -16430,6 +16493,7 @@ def _calcular_rankings(datos):
             g["importe"] += c.get("importe_num", 0.0) or 0.0
             if not g["directivo"]:
                 g["directivo"], g["cargo"] = _directivo_contrato(c)
+                g["nif"] = c.get("nif", "")
 
     lista = list(por_empresa.values())
     top_n = sorted(lista, key=lambda g: g["n"], reverse=True)[:10]
@@ -16849,7 +16913,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
             pos = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}º")
             if g["directivo"]:
                 dir_html = (f'<div class="directivo">{esc(g["directivo"])}</div>'
-                            f'<div class="cargo">{esc(g["cargo"])}</div>')
+                            f'<div class="cargo">{esc(g["cargo"])}</div>'
+                            f'{_borme_fuente_html(g["empresa"], g.get("nif", ""))}')
             else:
                 dir_html = f'<span class="noloc-warn">⚠️ {_t("No localizado")}</span>'
             emp_q = quote_plus(g["empresa"])
@@ -17737,7 +17802,8 @@ def _render_fila_contrato_menor(r):
                     f'<span class="noloc-nota">{origen}</span>{match_html}')
     elif dir_nombre:
         dir_html = (f'<div class="directivo">{esc(dir_nombre)}</div>'
-                     f'<div class="cargo">{esc(_cargo_txt(dir_cargo))}</div>{match_html}')
+                     f'<div class="cargo">{esc(_cargo_txt(dir_cargo))}</div>'
+                     f'{_borme_fuente_html(adjudicatari, r.get("nif", ""))}{match_html}')
     else:
         # Sin NIF (ninguna fuente de menores lo publica, ver
         # enriquecer_directivos_contratos_menores), así que _registro_correcto("")
@@ -18962,7 +19028,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
             </div>"""
         g = lista[0]
         if g["directivo"]:
-            dir_html = f'{esc(g["directivo"])} — {esc(g["cargo"])}'
+            dir_html = f'{esc(g["directivo"])} — {esc(g["cargo"])}{_borme_fuente_html(g["empresa"], g.get("nif", ""))}'
         else:
             dir_html = f'<span class="noloc-warn">⚠️ {_t("No localizado")}</span>'
         emp_q = quote_plus(g["empresa"])

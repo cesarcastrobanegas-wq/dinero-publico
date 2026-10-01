@@ -31,3 +31,5 @@ backend/cache.db-shm
 backend/cache_db_backup_pre_refresco_aditivo_*.db
 backend/cache_db_backup_pre_refresco_aditivo_*.db-wal
 backend/cache_db_backup_pre_refresco_aditivo_*.db-shm
+backend/borme_actos.db*
+backend/administradores_borme.json
