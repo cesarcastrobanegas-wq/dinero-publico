@@ -1,0 +1,57 @@
+<!-- description: Oito portais municipais en Governalia publican a data do seu lote semanal, non a de adxudicación. Así o detectamos e así evitamos contar dúas veces os mesmos contratos. -->
+<h1>A data que non era: por que oito portais municipais nos daban contratos duplicados</h1>
+
+  <p>A data de adxudicación parece un dato sinxelo: o día en que o concello decide a quen lle dá un contrato.
+  En oito das nosas fontes non o era.</p>
+
+  <p><a href="/?muni=Alzira&amp;provincia=valencia">Alzira</a>, <a href="/?muni=Cartagena&amp;provincia=murcia">Cartagena</a>, <a href="/?muni=Castell%C3%B3n+de+la+Plana&amp;provincia=castellon">Castellón de la Plana</a>, <a href="/?muni=Ibi&amp;provincia=alicante">Ibi</a>, <a href="/?muni=Santa+Br%C3%ADgida&amp;provincia=las_palmas">Santa Brígida</a>, <a href="/?muni=Sax&amp;provincia=alicante">Sax</a>, <a href="/?muni=Vilamarxant&amp;provincia=valencia">Vilamarxant</a> e <a href="/?muni=Xirivella&amp;provincia=valencia">Xirivella</a> publican os seus contratos menores a través de Governalia, unha
+  plataforma de transparencia municipal. Para cada contrato, o seu sistema dá unha data que parece a de
+  adxudicación.</p>
+
+  <h2>Como o descubrimos</h2>
+  <p>O 30 de setembro de 2026 conectamos o rexistro oficial de contratos menores da Plataforma de Contratación
+  do Sector Público (PLACE), que cobre case toda España. Moitos deses concellos xa estaban na web coa súa
+  propia fonte, así que había que evitar contar dúas veces o mesmo contrato. A regra: se coinciden a empresa (por
+  NIF ou por nome), o importe e a data, cunha semana de marxe como moito, é o mesmo contrato, e manda a
+  fonte do propio concello.</p>
+
+  <p>Con Governalia a regra fallaba. En Cartagena, 10.620 contratos coincidían con PLACE en NIF e importe exactos,
+  pero a data de Governalia ía sempre de 8 a 17 días por detrás (11 días de mediana) e case sempre caía en
+  sábado. Non era a data de adxudicación: era a data en que a plataforma publica o seu lote semanal.</p>
+
+  <h2>Duplicados pantasma</h2>
+  <p>Se non o vísemos, teriamos miles de duplicados pantasma: o mesmo contrato dúas veces na
+  ficha, unha coa data real e outra coa de publicación. O número de contratos e o importe total deses
+  municipios teríanse inflado.</p>
+
+  <h2>Cada portal, o seu propio atraso</h2>
+  <p>Para escribir esta peza volvemos medilo nas oito fontes, emparellando os contratos de Governalia cos
+  do rexistro de PLACE que teñen o mesmo NIF e o mesmo importe exacto. Saíron 19.513 parellas e unha mediana
+  de 11 días de atraso, pero cada portal ten a súa:</p>
+  <ul>
+    <li><a href="/?muni=Sax&amp;provincia=alicante">Sax</a>: 3 días de mediana; case sempre a mesma semana.</li>
+    <li><a href="/?muni=Xirivella&amp;provincia=valencia">Xirivella</a>: 7 días.</li>
+    <li><a href="/?muni=Ibi&amp;provincia=alicante">Ibi</a>: 9 días, e seis de cada dez datas caen en sábado.</li>
+    <li><a href="/?muni=Cartagena&amp;provincia=murcia">Cartagena</a>: uns 10 días, coa metade das datas en sábado.</li>
+    <li><a href="/?muni=Vilamarxant&amp;provincia=valencia">Vilamarxant</a>: 11 días.</li>
+    <li><a href="/?muni=Alzira&amp;provincia=valencia">Alzira</a>: 19 días.</li>
+    <li><a href="/?muni=Castell%C3%B3n+de+la+Plana&amp;provincia=castellon">Castellón de la Plana</a>: 24 días.</li>
+    <li><a href="/?muni=Santa+Br%C3%ADgida&amp;provincia=las_palmas">Santa Brígida</a>: 28 días.</li>
+  </ul>
+  <p>O padrón do sábado, que foi o que nos puxo na pista en Cartagena, só aparece en tres dos oito
+  portais; nos demais o atraso existe pero non cae nun día fixo. Por iso non abondaba cunha regra do tipo «se
+  é sábado, restar unha semana»: facía falta medir cada fonte.</p>
+
+  <p>O arranxo: para estas oito fontes aceptamos que a súa data vaia ata 31 días por detrás da de PLACE. E
+  avisamos do que implica: nesos municipios, a «data» que mostramos para os contratos da súa fonte propia é
+  en realidade a de publicación, non a de adxudicación.</p>
+
+  <p>A marxe de 31 días recolle o 87 % das parellas medidas. O resto sepárase máis, sobre todo en Castellón,
+  Alzira e Santa Brígida, onde unha parte dos contratos tarda máis dun mes en aparecer en Governalia. Aí a
+  regra pode deixar pasar algún duplicado, e estámolo revisando fonte por fonte antes de ampliar a marxe: unha
+  marxe demasiado grande ten o risco contrario, xuntar coma se fosen un dous contratos distintos da mesma
+  empresa polo mesmo importe.</p>
+
+  <p>Contámolo porque é un bo exemplo dun problema xeral: dúas fontes oficiais poden chamar igual a
+  cousas distintas. Non abonda con comprobar que hai datos; antes de cruzalos hai que medir que significa cada
+  campo.</p>

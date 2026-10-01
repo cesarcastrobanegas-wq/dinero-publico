@@ -19229,6 +19229,109 @@ _CASOS[1:1] = [{k: v for k, v in c.items() if k != "render"} for c in _CASOS_NUE
 _CASOS_RENDER_POR_SLUG = {c["slug"]: c["render"] for c in _CASOS_NUEVOS_20260930}
 
 
+# ─── TRADUCCIONES DE /casos (2026-10-01, encargo de César: BORRADOR gl/ca/eu, sin publicar) ─────────────────────────
+# backend/casos_i18n/<idioma>/<slug>.html: primera línea "<!-- description: ... -->" y después el cuerpo de la pieza
+# desde el <h1> (sin botones de compartir ni "volver"), con los mismos enlaces que el original.
+#   - Sin publicar: /gl/casos/<slug> sigue mostrando el castellano; el borrador se ve con ?borrador=1 (siempre
+#     noindex y canonical al castellano, como toda ruta editorial bajo prefijo) y lleva un aviso de borrador.
+#   - Publicar: variable de entorno I18N_CASOS_PUBLICADOS (p. ej. "gl,ca").
+#   - Cifras: son piezas de datos verificados, así que una traducción NUNCA se sirve si cada número del original no
+#     aparece igual (y las mismas veces) en ella; si no cuadra, se sirve el castellano y queda en el log. El mismo
+#     control, para todas a la vez: python backend/i18n_casos_comprobar.py
+CASOS_I18N_DIR = os.path.join(BASE_DIR, "casos_i18n")
+_RE_CIFRA = re.compile(r"\d+(?:[.,]\d+)*")
+_CASOS_I18N_VALIDACION = {}      # (slug, lang, mtime) -> (ok, faltan, sobran)
+_CASOS_I18N_TEXTOS = {
+    "gl": {"prefijo": "Caso", "volver": "← Volver a Casos",
+           "borrador": "Borrador de tradución, pendente de revisión. O texto de referencia é o orixinal en castelán."},
+    "ca": {"prefijo": "Cas", "volver": "← Tornar a Casos",
+           "borrador": "Esborrany de traducció, pendent de revisió. El text de referència és l'original en castellà."},
+    "eu": {"prefijo": "Kasua", "volver": "← Itzuli Kasuetara",
+           "borrador": "Itzulpen-zirriborroa, berrikusteke. Erreferentziazko testua gaztelaniazko jatorrizkoa da."},
+}
+
+
+def _cifras_texto(html_txt):
+    """Números de un fragmento HTML tal como se leen (sin etiquetas ni atributos): '13.560', '71,5', '2024'..."""
+    return collections.Counter(_RE_CIFRA.findall(html.unescape(re.sub(r"<[^>]+>", " ", html_txt or ""))))
+
+
+def _caso_partes(texto):
+    """(description, cuerpo) de un fichero de casos_i18n o de un fragmento extraído."""
+    m = re.match(r"\s*<!--\s*description:\s*(.*?)\s*-->\s*", texto, re.S)
+    return (m.group(1), texto[m.end():]) if m else ("", texto)
+
+
+def _caso_es_fragmento(slug):
+    """Pieza en castellano tal como se publica: (description, cuerpo desde el <h1> hasta los botones de compartir)."""
+    token = _I18N_IDIOMA.set("es")
+    try:
+        code, _h, body = _route_get("/casos/" + slug, {}, gzip_ok=False)
+    finally:
+        _I18N_IDIOMA.reset(token)
+    if code != 200:
+        return None
+    s_html = body.decode("utf-8")
+    m = re.search(r'(?s)<div class="static-page">\s*(<h1>.*?)\s*<div class="share', s_html)
+    d = re.search(r'<meta name="description" content="([^"]*)"', s_html)
+    return (html.unescape(d.group(1)) if d else "", m.group(1)) if m else None
+
+
+def _comparar_cifras_caso(slug, lang):
+    """(ok, faltan, sobran): cifras del original que no están en la traducción y al revés (multiconjuntos)."""
+    ruta = os.path.join(CASOS_I18N_DIR, lang, slug + ".html")
+    clave = (slug, lang, os.path.getmtime(ruta))
+    if clave in _CASOS_I18N_VALIDACION:
+        return _CASOS_I18N_VALIDACION[clave]
+    es = _caso_es_fragmento(slug)
+    if not es:
+        res = (False, collections.Counter({"(sin original)": 1}), collections.Counter())
+    else:
+        with open(ruta, encoding="utf-8") as f:
+            desc_tr, cuerpo_tr = _caso_partes(f.read())
+        c_es = _cifras_texto(es[1]) + _cifras_texto(es[0])
+        c_tr = _cifras_texto(cuerpo_tr) + _cifras_texto(desc_tr)
+        faltan, sobran = c_es - c_tr, c_tr - c_es
+        res = (not faltan and not sobran, faltan, sobran)
+    _CASOS_I18N_VALIDACION[clave] = res
+    return res
+
+
+def _casos_i18n_publicados():
+    return [x for x in (s.strip() for s in os.environ.get("I18N_CASOS_PUBLICADOS", "").split(",")) if x in I18N_IDIOMAS]
+
+
+def _caso_traducido_html(slug, qs):
+    """Página traducida de una pieza de /casos, o None (se sirve el castellano). Ver cabecera del bloque."""
+    lang = _I18N_IDIOMA.get()
+    if lang == "es" or lang not in _CASOS_I18N_TEXTOS or not re.fullmatch(r"[a-z0-9-]+", slug or ""):
+        return None
+    ruta = os.path.join(CASOS_I18N_DIR, lang, slug + ".html")
+    publicado = lang in _casos_i18n_publicados()
+    if not os.path.exists(ruta) or not (publicado or (qs.get("borrador") or [""])[0] == "1"):
+        return None
+    ok, faltan, sobran = _comparar_cifras_caso(slug, lang)
+    if not ok:
+        print(f"[casos-i18n] {lang}/{slug}: las cifras no cuadran con el original (faltan {dict(faltan)}, sobran "
+              f"{dict(sobran)}); se sirve el castellano", flush=True)
+        return None
+    with open(ruta, encoding="utf-8") as f:
+        desc, cuerpo = _caso_partes(f.read())
+    tx = _CASOS_I18N_TEXTOS[lang]
+    m = re.search(r"<h1>(.*?)</h1>", cuerpo, re.S)
+    titulo = html.unescape(re.sub(r"<[^>]+>", "", m.group(1))).strip() if m else slug
+    aviso = ("" if publicado else
+             f'<p style="border:1px dashed var(--yellow);border-radius:8px;padding:8px 12px;font-size:13px">'
+             f'⚠️ {esc(tx["borrador"])}</p>\n')
+    og_path = "/casos/" + slug
+    body = f"""<div class="static-page">
+{aviso}{cuerpo.strip()}
+  {_share_buttons_html(og_path, titulo)}
+  <p><a href="/casos">{esc(tx["volver"])}</a></p>
+</div>"""
+    return _page_shell(f'{tx["prefijo"]}: {titulo}', body, description=desc, og_path=og_path)
+
+
 def render_metodologia_html():
     """Metodología para personas, dentro del sitio (encargo de César 2026-09-30): el Índice y las limitaciones de
     cobertura contados en texto corrido, a partir de INDICE_TRANSPARENCIA_METODOLOGIA.md y LIMITACIONES_COBERTURA.md.
@@ -20562,6 +20665,10 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/metodologia":
         return _resp(render_metodologia_html(), gzip_ok=gzip_ok)
 
+    if path.startswith("/casos/"):
+        _tr = _caso_traducido_html(path[len("/casos/"):], qs)      # borrador/traducción publicada (gl/ca/eu)
+        if _tr:
+            return _resp(_tr, gzip_ok=gzip_ok)
     if path.startswith("/casos/") and path[len("/casos/"):] in _CASOS_RENDER_POR_SLUG:
         return _resp(_CASOS_RENDER_POR_SLUG[path[len("/casos/"):]](), gzip_ok=gzip_ok)
 

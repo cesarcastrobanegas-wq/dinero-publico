@@ -1,0 +1,57 @@
+<!-- description: Vuit portals municipals a Governalia publiquen la data del seu lot setmanal, no la d'adjudicació. Així ho vam detectar i així evitem comptar dues vegades els mateixos contractes. -->
+<h1>La data que no ho era: per què vuit portals municipals ens donaven contractes duplicats</h1>
+
+  <p>La data d'adjudicació sembla una dada senzilla: el dia en què l'ajuntament decideix a qui dona un contracte.
+  En vuit de les nostres fonts no ho era.</p>
+
+  <p><a href="/?muni=Alzira&amp;provincia=valencia">Alzira</a>, <a href="/?muni=Cartagena&amp;provincia=murcia">Cartagena</a>, <a href="/?muni=Castell%C3%B3n+de+la+Plana&amp;provincia=castellon">Castellón de la Plana</a>, <a href="/?muni=Ibi&amp;provincia=alicante">Ibi</a>, <a href="/?muni=Santa+Br%C3%ADgida&amp;provincia=las_palmas">Santa Brígida</a>, <a href="/?muni=Sax&amp;provincia=alicante">Sax</a>, <a href="/?muni=Vilamarxant&amp;provincia=valencia">Vilamarxant</a> i <a href="/?muni=Xirivella&amp;provincia=valencia">Xirivella</a> publiquen els seus contractes menors a través de Governalia, una
+  plataforma de transparència municipal. Per a cada contracte, el seu sistema dona una data que sembla la
+  d'adjudicació.</p>
+
+  <h2>Com ho vam descobrir</h2>
+  <p>El 30 de setembre de 2026 vam connectar el registre oficial de contractes menors de la Plataforma de Contractació
+  del Sector Públic (PLACE), que cobreix gairebé tot Espanya. Molts d'aquests ajuntaments ja eren al web amb la seva
+  pròpia font, de manera que calia evitar comptar dues vegades el mateix contracte. La regla: si coincideixen l'empresa (pel
+  NIF o pel nom), l'import i la data, amb una setmana de marge com a màxim, és el mateix contracte, i mana la
+  font del mateix ajuntament.</p>
+
+  <p>Amb Governalia la regla fallava. A Cartagena, 10.620 contractes coincidien amb PLACE en NIF i import exactes,
+  però la data de Governalia anava sempre de 8 a 17 dies per darrere (11 dies de mediana) i gairebé sempre queia en
+  dissabte. No era la data d'adjudicació: era la data en què la plataforma publica el seu lot setmanal.</p>
+
+  <h2>Duplicats fantasma</h2>
+  <p>Si no ho haguéssim vist, hauríem tingut milers de duplicats fantasma: el mateix contracte dues vegades a la
+  fitxa, una amb la data real i una altra amb la de publicació. El nombre de contractes i l'import total d'aquests
+  municipis s'haurien inflat.</p>
+
+  <h2>Cada portal, el seu propi retard</h2>
+  <p>Per escriure aquesta peça ho vam tornar a mesurar a les vuit fonts, aparellant els contractes de Governalia amb
+  els del registre de PLACE que tenen el mateix NIF i el mateix import exacte. En van sortir 19.513 parelles i una mediana
+  d'11 dies de retard, però cada portal té la seva:</p>
+  <ul>
+    <li><a href="/?muni=Sax&amp;provincia=alicante">Sax</a>: 3 dies de mediana; gairebé sempre la mateixa setmana.</li>
+    <li><a href="/?muni=Xirivella&amp;provincia=valencia">Xirivella</a>: 7 dies.</li>
+    <li><a href="/?muni=Ibi&amp;provincia=alicante">Ibi</a>: 9 dies, i sis de cada deu dates cauen en dissabte.</li>
+    <li><a href="/?muni=Cartagena&amp;provincia=murcia">Cartagena</a>: uns 10 dies, amb la meitat de les dates en dissabte.</li>
+    <li><a href="/?muni=Vilamarxant&amp;provincia=valencia">Vilamarxant</a>: 11 dies.</li>
+    <li><a href="/?muni=Alzira&amp;provincia=valencia">Alzira</a>: 19 dies.</li>
+    <li><a href="/?muni=Castell%C3%B3n+de+la+Plana&amp;provincia=castellon">Castellón de la Plana</a>: 24 dies.</li>
+    <li><a href="/?muni=Santa+Br%C3%ADgida&amp;provincia=las_palmas">Santa Brígida</a>: 28 dies.</li>
+  </ul>
+  <p>El patró del dissabte, que va ser el que ens va posar sobre la pista a Cartagena, només apareix en tres dels vuit
+  portals; en els altres el retard existeix però no cau en un dia fix. Per això no n'hi havia prou amb una regla del tipus «si
+  és dissabte, restar una setmana»: calia mesurar cada font.</p>
+
+  <p>La solució: per a aquestes vuit fonts acceptem que la seva data vagi fins a 31 dies per darrere de la de PLACE. I
+  avisem del que implica: en aquests municipis, la «data» que mostrem per als contractes de la seva font pròpia és
+  en realitat la de publicació, no la d'adjudicació.</p>
+
+  <p>El marge de 31 dies recull el 87 % de les parelles mesurades. La resta se separa més, sobretot a Castellón,
+  Alzira i Santa Brígida, on una part dels contractes triga més d'un mes a aparèixer a Governalia. Allà la
+  regla pot deixar passar algun duplicat, i ho estem revisant font per font abans d'ampliar el marge: un
+  marge massa gran té el risc contrari, ajuntar com si fossin un de sol dos contractes diferents de la mateixa
+  empresa pel mateix import.</p>
+
+  <p>Ho expliquem perquè és un bon exemple d'un problema general: dues fonts oficials poden anomenar igual
+  coses diferents. No n'hi ha prou de comprovar que hi ha dades; abans d'encreuar-les cal mesurar què significa cada
+  camp.</p>
