@@ -3035,6 +3035,39 @@ def _db_clear_municipios(provincia=None):
 def _dir_cache_key(empresa, nif=""):
     return nif.upper().strip() if nif else normalizar(empresa)
 
+# ─── FALSAS "PERSONAS FÍSICAS" (2026-10-01, encargo de César) ──────────────────────────────────────────────────────
+# buscar_directivo() decidía "Autónomo / Persona física" solo por la forma del nombre (2-4 palabras sin sufijo) e
+# ignoraba el NIF: empresas como ENDESA ENERGÍA S.A.U., Aigües de Barcelona o Cruz Roja se mostraban con su propio
+# nombre como si fueran un autónomo (3.713 adjudicatarios y el 31,7 % del importe en la copia de producción del 25-09).
+# Ahora: (1) la heurística no se aplica a lo que parece una entidad; (2) lo ya guardado así deja de mostrarse (y la
+# próxima pasada del enriquecimiento lo vuelve a buscar por las fuentes normales).
+_RE_NIF_SOCIEDAD = re.compile(r"^[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J]$")
+# Formas y palabras que no llevan nunca las personas físicas (medido sobre las 23.048 "personas físicas" guardadas).
+_RE_ENTIDAD = re.compile(
+    r"\b(s\.?\s?c\.?\s?p|scp|s\.?\s?l\.?\s?p|gmbh|ltd|limited|inc|b\.?v|s\.?a\.?s|srl|s\.?r\.?l|u\.?t\.?e|c\.?b|"
+    r"fundaci[oó]n?|fundacio|asociaci[oó]n|associaci[oó]|cooperativa|comunidad de bienes|comunitat de b[eé]ns|"
+    r"sociedad|societat|federaci[oó]n?|federacio|club|consorci[oa]?|instituto?|institut|grupo|grup|ayuntamiento|"
+    r"ajuntament|diputaci[oó]n?|universidad|universitat|colegio|col.legi|hermandad|cofrad[ií]a|parroquia|"
+    r"asociados|associats|hermanos|germans|hnos)\b", re.I)
+
+
+def _parece_sociedad(empresa, nif=""):
+    """NIF de persona jurídica, forma jurídica o palabra de entidad en el nombre: NUNCA es un autónomo."""
+    return (bool(_RE_NIF_SOCIEDAD.match((nif or "").upper().strip())) or bool(_SUFIJOS_EMPRESA.search(empresa or ""))
+            or bool(_RE_ENTIDAD.search(empresa or "")))
+
+
+def _directivo_corregido(empresa, nif, nombre, cargo):
+    """(nombre, cargo) a mostrar: una "persona física" deducida por el nombre que en realidad es una entidad -> nada."""
+    if cargo == "Autónomo / Persona física" and _parece_sociedad(empresa, nif):
+        return "", ""
+    return nombre or "", cargo or ""
+
+
+def _directivo_contrato(c):
+    return _directivo_corregido(c.get("empresa", ""), c.get("nif", ""), c.get("directivo", ""), c.get("cargo", ""))
+
+
 def _dir_cache_get(empresa, nif=""):
     """Devuelve (nombre, cargo) si hay hit válido; (None, None) si hay que buscar."""
     key = _dir_cache_key(empresa, nif)
@@ -3043,6 +3076,8 @@ def _dir_cache_get(empresa, nif=""):
     if not row:
         return None, None
     nombre, cargo, ts = row
+    if cargo == "Autónomo / Persona física" and _parece_sociedad(empresa, nif):
+        return None, None          # falsa "persona física": se vuelve a buscar (ver _directivo_corregido)
     ttl = DIR_CACHE_POS_TTL if nombre else DIR_CACHE_NEG_TTL
     if time.time() - ts > ttl:
         return None, None
@@ -11583,7 +11618,7 @@ def buscar_directivo(empresa, nif=""):
     tiene_conectores = any(p.lower() in _CONECTORES for p in palabras)
     if (2 <= len(palabras) <= 4
             and not tiene_conectores
-            and not _SUFIJOS_EMPRESA.search(empresa)
+            and not _parece_sociedad(empresa, nif)
             and len(palabras_limpias) == len(palabras)):
         # Bug encontrado en producción 2026-08-27: este return nunca pasaba
         # por _dir_cache_set, así que un adjudicatario-persona-física jamás
@@ -14921,7 +14956,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     except (TypeError, ValueError):
         pass
 
-    directivo = c.get("directivo", "")
+    directivo, cargo_dir = _directivo_contrato(c)
     if directivo:
         match = _detectar_coincidencia_cargo(directivo, municipio or municipio_label, provincia)
         if match:
@@ -14942,7 +14977,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
         else:
             match_html = ""
         dir_html = (f'<div class="directivo">{esc(directivo)}</div>'
-                     f'<div class="cargo">{esc(_cargo_txt(c.get("cargo","")))}</div>{match_html}')
+                     f'<div class="cargo">{esc(_cargo_txt(cargo_dir))}</div>{match_html}')
     else:
         empresa_q = quote_plus(c.get("empresa", ""))
         registro_label, registro_url = _registro_correcto(c.get("nif", ""))
@@ -15427,7 +15462,7 @@ def _calcular_indice_transparencia():
 
         # ---- directivo identificado: igual que v1 ----
         num_dir_formal = sum(1 for c in contratos_formales
-                             if c.get("empresa") and c.get("empresa") != "No localizada" and c.get("directivo"))
+                             if c.get("empresa") and c.get("empresa") != "No localizada" and _directivo_contrato(c)[0])
         m = None if homonimo else menores_stats.get(clave)
         num_dir = num_dir_formal + (m["con_directivo"] if m else 0)
         denom_dir = num_adj + (m["total"] if m else 0)
@@ -15665,9 +15700,8 @@ def _calcular_rankings(datos):
             })
             g["n"] += 1
             g["importe"] += c.get("importe_num", 0.0) or 0.0
-            if not g["directivo"] and c.get("directivo"):
-                g["directivo"] = c.get("directivo")
-                g["cargo"] = c.get("cargo", "")
+            if not g["directivo"]:
+                g["directivo"], g["cargo"] = _directivo_contrato(c)
 
     lista = list(por_empresa.values())
     top_n = sorted(lista, key=lambda g: g["n"], reverse=True)[:10]
@@ -18225,8 +18259,8 @@ def _contrato_json(c, municipio):
         "importe": c.get("importe", "") or "No localizado",
         "importe_num": c.get("importe_num", 0.0) or 0.0,
         "estado": {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(c.get("estado", ""), c.get("estado", "")),
-        "directivo": c.get("directivo", ""),
-        "cargo": c.get("cargo", ""),
+        "directivo": _directivo_contrato(c)[0],
+        "cargo": _directivo_contrato(c)[1],
         "url": c.get("url", ""),
         "licitacion_id": c.get("licitacion_id", ""),
     }
@@ -18288,11 +18322,11 @@ def api_buscar(tipo, q, datos):
         for d in datos:
             muni = d.get("municipio", "")
             for c in d.get("contratos", []):
-                directivo = c.get("directivo", "")
+                directivo, cargo_dir = _directivo_contrato(c)
                 if directivo and q_norm in normalizar(directivo):
                     emp = c.get("empresa", "")
                     g = grupos.setdefault(emp, {"empresa": emp, "directivo": directivo,
-                                                 "cargo": c.get("cargo", ""), "contratos": [], "total": 0.0})
+                                                 "cargo": cargo_dir, "contratos": [], "total": 0.0})
                     g["contratos"].append(_contrato_json(c, muni))
                     g["total"] += c.get("importe_num", 0.0) or 0.0
         lista = sorted(grupos.values(), key=lambda g: g["total"], reverse=True)
@@ -18438,7 +18472,7 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
         prov_d = d.get("provincia", "murcia")
         for c in d.get("contratos", []):
             if (q_norm in normalizar(c.get("empresa", ""))
-                    or q_norm in normalizar(c.get("directivo", ""))
+                    or q_norm in normalizar(_directivo_contrato(c)[0])
                     or q_norm in normalizar(muni)):
                 resultados.append((muni, prov_d, c))
 
