@@ -154,6 +154,32 @@ _RE_FILA_RESULTADO = re.compile(
 ALIAS_BUSQUEDA = {
     "Torla-Ordesa": "Torla",
     "Jarque de Moncayo": "Jarque",
+    # 2026-10-02: los 21 "sin idEntidad" que quedaban tras las reglas de tildes/artículo/bilingües. Cada alias se
+    # comprobó en vivo: da UN único ayuntamiento en su provincia. Tres tipos:
+    #   - cambio de nombre oficial que el portal no ha recogido;
+    "la Bisbal de Montsant": "Bisbal de Falset",
+    "Valle de Ancares": "Candín",
+    "Mata de Morella, la": "La Mata",
+    "Alcosser": "Alcocer de Planes",
+    "Alquerías del Niño Perdido": "Les Alqueries",
+    #   - la otra forma oficial (castellana/valenciana) o una grafía distinta;
+    "Herbers": "Herbés",
+    "Alfarb": "Alfarp",
+    "Algímia d'Alfara": "Algimia de Alfara",
+    "Benissuera": "Benisuera",
+    "Massalavés": "Masalavés",
+    "Cogollos de la Vega": "Cogollos Vega",
+    "Torredelcampo": "Torre del Campo",
+    "Zarzosa de Riopisuerga": "Zarzosa de Río Pisuerga",
+    "Santa María Ribarredonda": "Santa María Rivarredonda",
+    "Fuente-Álamo": "Fuentealamo",
+    "dels Prats de Rei": "Prats de Rei",
+    #   - una tilde que el portal pone (o quita) y el buscador exige tal cual.
+    "Albanchez": "Albánchez",
+    "Belmez": "Bélmez",
+    "Güéjar Sierra": "Güejar Sierra",
+    "Espeluy": "Espelúy",
+    "Ciruena": "Cirueña",
 }
 
 # à/è/ò (vocales catalanas) <-> á/é/ó (vocales castellanas): el propio

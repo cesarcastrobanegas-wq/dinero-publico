@@ -1,5 +1,5 @@
 {
- "generado": "2026-10-02 19:34:56",
+ "generado": "2026-10-02 20:28:34",
  "municipios": {
   "abanilla": {
    "municipio": "Abanilla",
@@ -41202,6 +41202,132 @@
    "provincia": "zamora",
    "id_entidad": 7661,
    "ultimo_ejercicio_rendido": 2023
+  },
+  "dels prats de rei": {
+   "municipio": "dels Prats de Rei",
+   "provincia": "barcelona",
+   "id_entidad": 1035,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la bisbal de montsant": {
+   "municipio": "la Bisbal de Montsant",
+   "provincia": "tarragona",
+   "id_entidad": 6367,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "alcosser": {
+   "municipio": "Alcosser",
+   "provincia": "alicante",
+   "id_entidad": 141,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "alquerias del nino perdido": {
+   "municipio": "Alquerías del Niño Perdido",
+   "provincia": "castellon",
+   "id_entidad": 1813,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "herbers": {
+   "municipio": "Herbers",
+   "provincia": "castellon",
+   "id_entidad": 1862,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "mata de morella, la": {
+   "municipio": "Mata de Morella, la",
+   "provincia": "castellon",
+   "id_entidad": 1869,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "alfarb": {
+   "municipio": "Alfarb",
+   "provincia": "valencia",
+   "id_entidad": 6987,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "algimia d'alfara": {
+   "municipio": "Algímia d'Alfara",
+   "provincia": "valencia",
+   "id_entidad": 6992,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "benissuera": {
+   "municipio": "Benissuera",
+   "provincia": "valencia",
+   "id_entidad": 7032,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "massalaves": {
+   "municipio": "Massalavés",
+   "provincia": "valencia",
+   "id_entidad": 7118,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "albanchez": {
+   "municipio": "Albanchez",
+   "provincia": "almeria",
+   "id_entidad": 279,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "belmez": {
+   "municipio": "Belmez",
+   "provincia": "cordoba",
+   "id_entidad": 2048,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "cogollos de la vega": {
+   "municipio": "Cogollos de la Vega",
+   "provincia": "granada",
+   "id_entidad": 2720,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "guejar sierra": {
+   "municipio": "Güéjar Sierra",
+   "provincia": "granada",
+   "id_entidad": 2751,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "espeluy": {
+   "municipio": "Espeluy",
+   "provincia": "jaen",
+   "id_entidad": 3527,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "torredelcampo": {
+   "municipio": "Torredelcampo",
+   "provincia": "jaen",
+   "id_entidad": 3577,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ciruena": {
+   "municipio": "Ciruena",
+   "provincia": "la_rioja",
+   "id_entidad": 4084,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "santa maria ribarredonda": {
+   "municipio": "Santa María Ribarredonda",
+   "provincia": "burgos",
+   "id_entidad": 1440,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "zarzosa de riopisuerga": {
+   "municipio": "Zarzosa de Riopisuerga",
+   "provincia": "burgos",
+   "id_entidad": 1538,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "valle de ancares": {
+   "municipio": "Valle de Ancares",
+   "provincia": "leon",
+   "id_entidad": 3626,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "fuente-alamo": {
+   "municipio": "Fuente-Álamo",
+   "provincia": "albacete",
+   "id_entidad": 40555,
+   "ultimo_ejercicio_rendido": 2025
   }
  }
 }

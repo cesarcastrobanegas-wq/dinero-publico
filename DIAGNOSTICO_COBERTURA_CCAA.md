@@ -107,7 +107,10 @@ La comprobación en vivo contra rendiciondecuentas.es separa dos casos que el fi
 - **Sin cuenta rendida (dato real, no fallo)**: 718 municipios están en el portal pero no tienen ninguna cuenta
   rendida en los ejercicios que muestra. Entre ellos Jaén, Mijas, El Puerto de Santa María, Vélez-Málaga, Utrera,
   Puerto Real, Écija, Mazarrón, Castro-Urdiales, Arcos de la Frontera y Seseña. Su 0 en el Índice es correcto.
-- **Siguen sin localizar**: 21 municipios pequeños (el mayor, Torredelcampo, Jaén).
+- **Otros 21 con alias a mano**: el portal los tiene con otro nombre ("Torre del Campo", "Alfarp", "Herbés", "Candín"
+  para Valle de Ancares, "Bisbal de Falset" para la Bisbal de Montsant...). Cada alias se comprobó en vivo (un único
+  ayuntamiento en su provincia) y está en `ALIAS_BUSQUEDA`. Los 21 tienen cuenta rendida: 6.867 -> 6.888. Ya no queda
+  ningún municipio sin localizar en las 46 provincias que cubre el portal.
 
 Propuesta sin hacer: guardar también esos 718 con su identificador para que la ficha diga "no consta ninguna cuenta
 rendida" con enlace al portal, en vez de no decir nada.
