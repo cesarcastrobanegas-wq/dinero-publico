@@ -373,8 +373,29 @@ def _ultimo_ejercicio_rendido(session, id_entidad, url_busqueda, params_busqueda
                   re.findall(r'consultarCuenta\.html\?idEntidad=(\d+)&amp;ejercicio=(\d+)', r.text)
                   if _id == str(id_entidad)]
     if not ejercicios:
-        return None
-    return max(ejercicios)
+        return None, _estados_ejercicios(r.text, id_entidad)
+    return max(ejercicios), {}
+
+
+_RE_CELDA_EJERCICIO = re.compile(r'<td>\s*(?:<a href="consultarCuenta\.html[^"]*"\s*>)?\s*<img alt="([^"]+)"')
+
+
+def _estados_ejercicios(html, id_entidad):
+    """{ejercicio: estado} de la fila de la entidad, con el texto del propio portal ("Cuenta no rendida", "Cuenta
+    rendida no disponible", "No aplica"...), o {} si la tabla no se puede leer sin ambigüedad.
+
+    Añadido 2026-10-02 para los municipios sin ningún enlace a una cuenta: la ausencia de enlace NO basta para decir
+    "no ha rendido", porque la leyenda del portal incluye "Cuenta rendida no disponible" (rendida, sin enlace). Solo
+    se afirma que no consta ninguna cuenta cuando el portal marca "Cuenta no rendida" en TODOS los ejercicios."""
+    anios = list(dict.fromkeys(int(a) for a in re.findall(r"Ejercicio\s+(\d{4})", html)))
+    ini = html.find(f'consultarCuentasEjercicios.html?idEntidad={id_entidad}"')
+    if ini < 0 or not anios:
+        return {}
+    fin = html.find("</tr>", ini)
+    celdas = _RE_CELDA_EJERCICIO.findall(html[html.find("</td>", ini):fin])
+    if len(celdas) != len(anios):
+        return {}
+    return dict(zip(anios, celdas))
 
 
 def _guardar(resultado):
@@ -410,7 +431,8 @@ def main():
 
     procesados_esta_ejecucion = 0
     for i, (municipio, provincia) in enumerate(tareas, 1):
-        if clave_municipio(municipio, provincia) in resultado:
+        # los que constan SIN cuenta rendida se vuelven a mirar en cada ejecución (pueden haber rendido desde entonces)
+        if (resultado.get(clave_municipio(municipio, provincia)) or {}).get("ultimo_ejercicio_rendido"):
             continue
         provincia_ids = RENDICION_CUENTAS_IDS[provincia]
         # Sesión nueva por municipio -- gesto de aislamiento razonable entre
@@ -424,16 +446,27 @@ def main():
                 sin_match.append((provincia, municipio))
                 continue
             time.sleep(PAUSA_SEG)
-            ejercicio = _ultimo_ejercicio_rendido(session, id_entidad, url_busqueda, params_busqueda)
-            if not ejercicio:
-                sin_ejercicio.append((provincia, municipio))
-                continue
-            resultado[clave_municipio(municipio, provincia)] = {
+            ejercicio, estados = _ultimo_ejercicio_rendido(session, id_entidad, url_busqueda, params_busqueda)
+            registro = {
                 "municipio": municipio,
                 "provincia": provincia,
                 "id_entidad": int(id_entidad),
                 "ultimo_ejercicio_rendido": ejercicio,
             }
+            if not ejercicio:
+                sin_ejercicio.append((provincia, municipio))
+                rendidas_sin_enlace = [a for a, e in estados.items() if e == "Cuenta rendida no disponible"]
+                if rendidas_sin_enlace:
+                    # rendida, pero el portal no deja consultarla: cuenta como rendida, con enlace al buscador
+                    registro["ultimo_ejercicio_rendido"] = max(rendidas_sin_enlace)
+                    registro["no_consultable"] = True
+                elif estados and all(e == "Cuenta no rendida" for e in estados.values()):
+                    registro["ejercicios_no_rendidos"] = sorted(estados)
+                else:
+                    resultado.pop(clave_municipio(municipio, provincia), None)
+                    continue                      # tabla ilegible o "No aplica": no se afirma nada
+                registro["busqueda"] = params_busqueda["denominacion"]
+            resultado[clave_municipio(municipio, provincia)] = registro
         except requests.RequestException as e:
             print(f"[aviso] {municipio} ({provincia}): fallo de red, se salta -- {e}")
             sin_match.append((provincia, municipio))
@@ -447,7 +480,11 @@ def main():
 
     _guardar(resultado)
 
-    print(f"\nMunicipios con idEntidad + ejercicio rendido: {len(resultado)} / {len(tareas)}")
+    con_ejercicio = sum(1 for v in resultado.values() if v.get("ultimo_ejercicio_rendido"))
+    print(f"\nMunicipios con idEntidad + ejercicio rendido: {con_ejercicio} / {len(tareas)}")
+    print(f"De ellos, rendida pero no consultable: {sum(1 for v in resultado.values() if v.get('no_consultable'))}")
+    print(f"Sin ninguna cuenta rendida segun el portal: "
+          f"{sum(1 for v in resultado.values() if v.get('ejercicios_no_rendidos'))}")
     if sin_match:
         print(f"\nSin idEntidad encontrado ({len(sin_match)}): {sin_match}")
     if sin_ejercicio:
@@ -458,7 +495,7 @@ def main():
         if clave in _PROVINCIAS_SIN_COBERTURA:
             continue
         esperados = len(municipios)
-        n_prov = sum(1 for v in resultado.values() if v["provincia"] == clave)
+        n_prov = sum(1 for v in resultado.values() if v["provincia"] == clave and v.get("ultimo_ejercicio_rendido"))
         print(f"{PROVINCIA_LABEL.get(clave, clave)}: {n_prov}/{esperados}")
 
     print(f"\nGuardado en {OUT_FILE}")

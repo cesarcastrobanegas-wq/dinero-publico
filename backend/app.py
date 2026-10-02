@@ -4653,7 +4653,7 @@ def rendicion_cuentas_url(municipio, provincia):
     (ver docstring de actualizar_cuentas_anuales.py) que no es replicable
     como enlace estable para el usuario final."""
     info = CUENTAS_ANUALES.get(clave_municipio(municipio, provincia))
-    if info and info.get("id_entidad") and info.get("ultimo_ejercicio_rendido"):
+    if info and info.get("id_entidad") and info.get("ultimo_ejercicio_rendido") and not info.get("no_consultable"):
         params = {"idEntidad": info["id_entidad"], "ejercicio": info["ultimo_ejercicio_rendido"]}
         return ("https://www.rendiciondecuentas.es/es/consultadeentidadesycuentas/"
                 f"buscarCuentas/consultarCuenta.html?{urlencode(params)}")
@@ -4665,7 +4665,9 @@ def rendicion_cuentas_url(municipio, provincia):
         "idComunidadAutonoma": ids["idComunidadAutonoma"],
         "idProvincia": ids["idProvincia"],
         "idTipoEntidad": "A",
-        "denominacion": municipio,
+        # sin cuenta consultable: el término con el que el generador SÍ encontró la entidad (el portal no siempre
+        # la tiene con el nombre de la ficha: "Torre del Campo", "Alcoy/Alcoi"...)
+        "denominacion": (info or {}).get("busqueda") or municipio,
         "submitFormBusquedaEntidades": "Buscar",
     }
     return ("https://www.rendiciondecuentas.es/es/consultadeentidadesycuentas/"
@@ -15809,8 +15811,12 @@ def _calcular_indice_transparencia():
                                "detalle": _td("Cuentas anuales: la fuente oficial no cubre esta provincia "
                                               "(Tribunal de Cuentas foral, o no listada)")}
         elif not isinstance(ult_rendido, int):
+            _no_rend = (CUENTAS_ANUALES.get(clave) or {}).get("ejercicios_no_rendidos")
             comp["cuentas"] = {"disponible": True, "puntos": 0.0,
-                               "detalle": _td("Cuentas anuales no rendidas (o no localizadas) en rendiciondecuentas.es")}
+                               "detalle": (_td("No consta ninguna cuenta rendida de los ejercicios {desde}-{hasta} en "
+                                               "rendiciondecuentas.es", desde=_no_rend[0], hasta=_no_rend[-1])
+                                           if _no_rend else
+                                           _td("Cuentas anuales no rendidas (o no localizadas) en rendiciondecuentas.es"))}
         else:
             retraso = max(0, ejercicio_exigible - ult_rendido)
             comp["cuentas"] = {
@@ -15825,9 +15831,16 @@ def _calcular_indice_transparencia():
                              {"disponible": True, "puntos": 100.0 if clave in DEUDA_VIVA else 0.0,
                               "detalle": _td("Deuda viva publicada") if clave in DEUDA_VIVA
                                          else _td("Deuda viva no publicada")})
+        # Régimen foral (decisión de César, 2026-10-02): el fichero de liquidaciones de Hacienda no cubre País Vasco
+        # ni Navarra, así que un saldo ausente ahí es un hueco de la fuente, no del municipio: no disponible, no 0.
+        saldo_foral = (provincia in PROVINCIAS_PAIS_VASCO or provincia in PROVINCIAS_NAVARRA) \
+            and clave not in SALDO_NO_FINANCIERO
         comp["saldo_pub"] = ({"disponible": False, "puntos": None, "detalle": _NO_DISP_HOMONIMO}
                              if homonimo and (clave not in SALDO_NO_FINANCIERO
                                               or _de_otra_provincia(SALDO_NO_FINANCIERO.get(clave))) else
+                             {"disponible": False, "puntos": None,
+                              "detalle": _td("Saldo presupuestario: la fuente oficial (Hacienda) no cubre el régimen foral")}
+                             if saldo_foral else
                              {"disponible": True, "puntos": 100.0 if clave in SALDO_NO_FINANCIERO else 0.0,
                               "detalle": _td("Saldo presupuestario publicado") if clave in SALDO_NO_FINANCIERO
                                          else _td("Saldo presupuestario no publicado")})
@@ -17664,7 +17677,14 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         cuentas_html = ""
         if not es_pseudo_municipio(muni_name):
             cuentas_url = rendicion_cuentas_url(muni_name, d.get("provincia", provincia))
-            if cuentas_url:
+            _cu_info = CUENTAS_ANUALES.get(clave_municipio(muni_name, d.get("provincia", provincia))) or {}
+            _cu_no_rend = _cu_info.get("ejercicios_no_rendidos")
+            if cuentas_url and _cu_no_rend and not _cu_info.get("ultimo_ejercicio_rendido"):
+                # el portal marca "Cuenta no rendida" en todos los ejercicios que muestra (ver actualizar_cuentas_anuales.py)
+                cuentas_html = (f'<a href="{esc(cuentas_url)}" target="_blank" rel="noopener" class="cuentas-link" '
+                                 f'title="{_t("La Plataforma de Rendición de Cuentas marca como no rendidas las cuentas de {desde} a {hasta}").format(desde=_cu_no_rend[0], hasta=_cu_no_rend[-1])}">'
+                                 f'📊 {_t("Cuentas anuales: no consta ninguna cuenta rendida ({desde}-{hasta})").format(desde=_cu_no_rend[0], hasta=_cu_no_rend[-1])} ↗</a>')
+            elif cuentas_url:
                 cuentas_html = (f'<a href="{esc(cuentas_url)}" target="_blank" rel="noopener" '
                                  f'class="cuentas-link" title="{_t("Cuenta General y resultado de las cuentas anuales en la Plataforma de Rendición de Cuentas")}">'
                                  f'📊 {_t("Cuentas anuales")} ↗</a>')
