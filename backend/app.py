@@ -4701,6 +4701,33 @@ def _capitalizar_nombre(s):
     return " ".join(p.capitalize() for p in (s or "").split())
 
 
+# Relevos en la alcaldía que el registro oficial de cargos (concejales.redsara.es) todavía no recoge. Mientras el
+# registro siga dando el nombre anterior, la web muestra a quien ocupa hoy el cargo y deja claro que el sueldo de
+# ISPA es el último dato oficial DEL CARGO, percibido por la persona anterior -- no el sueldo de quien lo ocupa ahora.
+# En cuanto el registro publique el nombre nuevo (o ISPA un ejercicio posterior al relevo) la entrada deja de
+# aplicarse sola. Clave = (municipio, provincia).
+RELEVOS_ALCALDIA = {
+    ("Murcia", "murcia"): {
+        "anterior_registro": "JOSE FRANCISCO BALLESTA GERMAN",   # tal como figura en el registro
+        "anterior": "José Ballesta",
+        "actual": "Rebeca Pérez López",
+        "partido": "PP",
+        "desde": "mayo de 2026",
+        "anio_relevo": 2026,
+    },
+}
+
+
+def relevo_alcaldia(municipio, provincia, nombre_registro, anio_ispa=None):
+    """La entrada de RELEVOS_ALCALDIA que aplica a este municipio, o None."""
+    r = RELEVOS_ALCALDIA.get((municipio, provincia))
+    if not r or normalizar(nombre_registro) != normalizar(r["anterior_registro"]):
+        return None
+    if isinstance(anio_ispa, int) and anio_ispa >= r["anio_relevo"]:
+        return None
+    return r
+
+
 def alcalde_concejales_html(municipio, provincia=None):
     """Bloque HTML de alcalde/alcaldesa + desplegable de concejales para la
     ficha de un ayuntamiento, a partir de ALCALDES_CONCEJALES (Ministerio de
@@ -4724,10 +4751,17 @@ def alcalde_concejales_html(municipio, provincia=None):
     alcalde = info.get("alcalde") or {}
     nombre_alcalde = _capitalizar_nombre(alcalde.get("nombre", ""))
     alcalde_html = ""
+    relevo = None
     if nombre_alcalde:
         partido_alcalde = alcalde.get("partido", "")
-        sufijo = f" ({esc(partido_alcalde)})" if partido_alcalde else ""
         retrib = RETRIBUCIONES_ISPA.get(clave_municipio(municipio, provincia))
+        relevo = relevo_alcaldia(municipio, info.get("provincia") or provincia, alcalde.get("nombre", ""),
+                                 (retrib or {}).get("anio"))
+        if relevo:
+            nombre_alcalde, partido_alcalde = relevo["actual"], relevo["partido"]
+        sufijo = f" ({esc(partido_alcalde)})" if partido_alcalde else ""
+        if relevo:
+            sufijo += " · " + _t("desde {fecha}").format(fecha=esc(relevo["desde"]))
         retrib_html = ""
         if retrib and retrib.get("importe") is not None:
             anio = retrib.get("anio", "")
@@ -4750,6 +4784,10 @@ def alcalde_concejales_html(municipio, provincia=None):
                                 f'<span class="pol-retrib-nota">{_t("(posible renuncia por doble cargo ℹ️)")}</span></span>')
             else:
                 retrib_html = f' <span class="pol-retrib">💰 {fmt_eur(retrib["importe"])}{_t("/año")}{anio_html}</span>'
+            if relevo:
+                retrib_html += (f' <span class="pol-retrib-nota">'
+                                f'{_t("Último dato oficial del cargo: lo percibió {anterior}, alcalde hasta {fecha}. No es el sueldo de quien lo ocupa ahora.").format(anterior=esc(relevo["anterior"]), fecha=esc(relevo["desde"]))}'
+                                f'</span>')
         alcalde_html = (f'<span class="alcalde-info">👤 {_t("Alcalde/sa:")} '
                          f'<b class="pol-nombre">{esc(nombre_alcalde)}</b>{sufijo}{retrib_html}</span>')
 
@@ -4759,6 +4797,8 @@ def alcalde_concejales_html(municipio, provincia=None):
 
     items = []
     for c in concejales:
+        if relevo and normalizar(c.get("nombre", "")) == normalizar(relevo["anterior_registro"]):
+            continue                                  # el registro aún lo lista como alcalde
         nombre_c = esc(_capitalizar_nombre(c.get("nombre", "")))
         cargo_c = esc(c.get("cargo", ""))
         partido_c = c.get("partido", "")
@@ -13337,6 +13377,13 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .header-nav{flex-shrink:0;display:flex;align-items:center;gap:10px;}
 .header-nav>a{display:inline-flex;text-decoration:none;padding:8px 16px;border-radius:6px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);font-size:13px;font-weight:600;white-space:nowrap;}
 .header-nav>a:hover{background:rgba(240,136,62,.22);}
+/* Ventanas de 700-1100px (portátil sin maximizar): el menú no encoge y dejaba a la marca sin ancho, con el título
+   partido letra a letra. La marca conserva un ancho mínimo y, si no caben los dos, el menú baja a otra línea. */
+@media (max-width:1100px){
+  header{flex-wrap:wrap;row-gap:10px;}
+  .header-brand{flex:1 1 380px;}
+  .header-nav{flex-wrap:wrap;}
+}
 .pwa-install-btn{display:inline-flex;font-family:'IBM Plex Sans',sans-serif;text-decoration:none;padding:8px 16px;border-radius:6px;background:var(--accent);color:#fff;border:1px solid var(--accent);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
 .pwa-install-btn[hidden]{display:none;}
 .pwa-install-btn:hover{background:#ffa657;}
@@ -15869,9 +15916,11 @@ def _calcular_ranking_alcaldes():
         deuda_por_habitante = None
         if deuda_info and habitantes:
             deuda_por_habitante = deuda_info["deuda_eur"] / habitantes
+        relevo = relevo_alcaldia(municipio, prov_r, nombre, retrib.get("anio"))
         filas.append({
-            "nombre": _capitalizar_nombre(nombre),
-            "partido": (info.get("alcalde") or {}).get("partido", ""),
+            "nombre": relevo["actual"] if relevo else _capitalizar_nombre(nombre),
+            "relevo": relevo,
+            "partido": relevo["partido"] if relevo else (info.get("alcalde") or {}).get("partido", ""),
             "municipio": municipio,
             "provincia": retrib.get("provincia") or info.get("provincia", ""),
             "importe": importe,
@@ -16422,12 +16471,19 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
         habitantes_html = fmt_num(f["habitantes"]) if f["habitantes"] else "—"
         deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + _t("/hab.")
                            if f["deuda_por_habitante"] is not None else "—")
+        # el año de ISPA va en cada fila: es el último dato oficial del cargo, no un sueldo en tiempo real
+        anio_fila_html = f' <span class="pol-retrib-nota">ISPA {esc(f["anio"])}</span>' if f.get("anio") else ""
+        relevo_html = ""
+        if f.get("relevo"):
+            relevo_html = (f'<div class="pol-retrib-nota">'
+                           f'{_t("Alcaldesa desde {fecha}. El importe es el último dato oficial del cargo: lo percibió {anterior}.").format(fecha=esc(f["relevo"]["desde"]), anterior=esc(f["relevo"]["anterior"]))}'
+                           f'</div>')
         filas_alcaldes_html += f"""<tr>
           <td class="rk-pos">{pos}</td>
-          <td><b class="pol-nombre">{esc(f['nombre'])}</b></td>
+          <td><b class="pol-nombre">{esc(f['nombre'])}</b>{relevo_html}</td>
           <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
           <td>{partido_html}</td>
-          <td class="rk-valor">{fmt_eur(f['importe'])}{_t("/año")}</td>
+          <td class="rk-valor">{fmt_eur(f['importe'])}{_t("/año")}{anio_fila_html}</td>
           <td>{habitantes_html}</td>
           <td class="rk-valor">{deuda_hab_html}</td>
         </tr>"""
