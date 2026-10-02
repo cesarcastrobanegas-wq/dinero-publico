@@ -4901,7 +4901,6 @@ _SUELDOS_CONCEJALES_SIN_TABLA = {
     "guadalajara": "El Ayuntamiento publica en el BOP el número de cargos con dedicación y las reglas de reparto por grupo, sin nombres ni importe por persona.",
     "pinto": "El Ayuntamiento publica la retribución anual 2026 por cargo y dedicación, con el número de cargos por partido, sin nombres.",
     "jaen": "El PDF de retribuciones de la corporación que publica el Ayuntamiento es una imagen escaneada sin texto, y no se puede verificar contra la fuente.",
-    "pamplona/iruna": "No hemos localizado en la página de transparencia del Ayuntamiento un documento con nombre e importe de los concejales.",
     "torrelavega": "El PDF «Retribuciones concejales 2024» del Ayuntamiento lista solo nombre e importe (sin el cargo y sin aclarar el periodo ni el concepto de cada cifra), por lo que no se muestra.",
     "torremolinos": "La web del Ayuntamiento lista nombre, cargo y dedicación de la corporación, pero el importe solo se publica como recibo de nómina individual, que no procesamos.",
     "coslada": "El Ayuntamiento publica el importe por cargo (alcalde, teniente de alcalde, concejal con delegación...), sin nombres.",

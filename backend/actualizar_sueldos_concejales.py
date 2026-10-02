@@ -2487,7 +2487,7 @@ def actualizar_pamplona():
         nombre = nombre.strip("\xa0: ").strip()
         if not nombre or len(nombre.split()) < 2:
             continue
-        out.append(nuevo_registro("Pamplona", "navarra", nombre, "Concejal/a delegado/a", importe,
+        out.append(nuevo_registro("Pamplona/Iruña", "navarra", nombre, "Concejal/a delegado/a", importe,
                                   "retribución bruta anual según el acuerdo de Pleno de 4 de julio de 2023 "
                                   "(dedicación exclusiva de concejal delegado)", "vigente", url_lista,
                                   "Ayuntamiento de Pamplona/Iruña: Concejalías delegadas", texto_lista,
