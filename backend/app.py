@@ -2110,7 +2110,7 @@ session.mount("https://", adapter)
 
 # ─── EJECUCIÓN HTTP ──────────────────────────────────────────────────────────
 HTTP_TIMEOUT = 5            # timeout para feeds PLACE/BORM (peticiones rápidas)
-DIRECTIVOS_TIMEOUT = 15    # timeout para búsquedas de directivos (páginas empresia/BOE más lentas)
+DIRECTIVOS_TIMEOUT = 15    # timeout para búsquedas de directivos (páginas del BOE más lentas)
 HTTP_POOL = ThreadPoolExecutor(max_workers=10)   # pool compartido para todas las peticiones HTTP
 
 _jobs: dict = {}
@@ -11108,7 +11108,7 @@ def enriquecer_beneficiarios_cohesion(job_id=None, presupuesto_minutos=60):
 def enriquecer_directivos_fondos_ue(job_id=None, presupuesto_minutos=30):
     """Busca gerente/administrador de los beneficiarios de fondos UE con el
     MISMO detector y caché que ya se usa para los adjudicatarios de contratos
-    públicos (buscar_directivo: einforma → empresia → BORME anuncios →
+    públicos (buscar_directivo: solo BORME desde 2026-10-02; antes
     búsqueda web, caché persistente en la tabla `directores`).
 
     No añade columnas nuevas a `fondos_ue`: el resultado se guarda en la
@@ -11133,7 +11133,7 @@ def enriquecer_directivos_fondos_ue(job_id=None, presupuesto_minutos=30):
                   and not _dir_cache_agotado(b, nif or "")]
     total = len(pendientes)
     _log(job_id, f"Buscando gerente/administrador de {total} beneficiarios de "
-                 f"fondos UE pendientes (einforma · empresia · BORME)…")
+                 f"fondos UE pendientes (BORME)…")
     encontrados = procesados = 0
     for beneficiario, nif in pendientes:
         if time.time() >= deadline:
@@ -11157,7 +11157,7 @@ def enriquecer_directivos_contratos_menores(job_id=None, presupuesto_minutos=30)
     (contratos_menors_locales -- Girona/Lleida/Barcelona/Tarragona RPC, Fuente
     Álamo, Lorca/Lorquí/Mula/Molina de Segura) con el MISMO detector y caché
     que ya se usa para los contratos públicos normales y los beneficiarios de
-    fondos UE (buscar_directivo: persona física → einforma → empresia →
+    fondos UE (buscar_directivo: persona física → BORME; hasta 2026-10-02 también
     BORME anuncios → búsqueda web, caché persistente en la tabla `directores`).
 
     Ninguna fuente de contratos menores publica NIF/CIF del adjudicatario
@@ -11214,7 +11214,7 @@ def enriquecer_directivos_contratos_menores(job_id=None, presupuesto_minutos=30)
     pendientes.sort(key=lambda a: math.log(random.random() or 1e-12) / pesos[a], reverse=True)
     total = len(pendientes)
     _log(job_id, f"Buscando gerente/administrador de {total} adjudicatarios de "
-                 f"contratos menores pendientes (einforma · empresia · BORME)…")
+                 f"contratos menores pendientes (BORME)…")
     encontrados = procesados = 0
     for adjudicatari in pendientes:
         if time.time() >= deadline:
@@ -11453,7 +11453,7 @@ def _actualizar_noticias_ue_bg(job_id):
         _actualizando_noticias_ue_lock.release()
 
 
-# ─── DIRECTIVOS (empresia/BORME via BOE) ────────────────────────────────────
+# ─── DIRECTIVOS (solo BORME via BOE desde 2026-10-02) ────────────────────────────────────
 
 def _extraer_texto(html_text):
     soup = BeautifulSoup(html_text, "html.parser")
@@ -11654,158 +11654,6 @@ def _extraer_de_borme_empresa(boe_texto, empresa, sufijos_empresa_re):
 _CONECTORES = {"y", "e", "de", "del", "los", "las", "el", "la", "para", "en"}
 
 
-def buscar_directivo_einforma(empresa, nif=""):
-    """Fuente 1: einforma.com (actualmente retorna 404 para la mayoría — solo intento rápido)."""
-    if not empresa or empresa == "No localizada":
-        return "", ""
-    try:
-        url = f"https://www.einforma.com/servlet/app/prod/EMPRESA_BUSCADOR_NOMBRE/nombre/{quote_plus(empresa)}"
-        r = session.get(url, timeout=DIRECTIVOS_TIMEOUT, allow_redirects=True)
-        if r.status_code != 200:
-            return "", ""
-        soup = BeautifulSoup(r.text, "html.parser")
-        primer = (soup.select_one("a[href*='/informe-empresa'], a[href*='/cif/'], a[href*='/empresa/']") or
-                  soup.find("a", href=re.compile(r"einforma\.com/\S*empresa\S*", re.I)))
-        if not primer:
-            return "", ""
-        href = primer.get("href", "")
-        if not href.startswith("http"):
-            href = "https://www.einforma.com" + href
-        r2 = session.get(href, timeout=DIRECTIVOS_TIMEOUT)
-        if r2.status_code != 200:
-            return "", ""
-        soup2 = BeautifulSoup(r2.text, "html.parser")
-        for sel in ("div.administradores", "section.administradores", "#administradores",
-                    "div.cargos", ".empresa-directivos__list"):
-            bloque = soup2.select_one(sel)
-            if bloque:
-                n, c = _extraer_directivo(bloque.get_text(" ", strip=True))
-                if n:
-                    return n, c
-        return _extraer_directivo(soup2.get_text(" ", strip=True))
-    except Exception:
-        pass
-    return "", ""
-
-
-def buscar_directivo_empresia(empresa, nif=""):
-    """
-    Fuente 2 (principal): empresia.es → eventos BORME → texto BOE → administrador.
-
-    Estrategia:
-      1. Busca la empresa en empresia.es
-      2. Recoge links de eventos BORME del resultado de búsqueda y del perfil
-      3. Por cada evento extrae la ref BORME-A-YYYY-NNN-PP
-      4. Descarga el texto plano del anuncio desde BOE (/diario_borme/txt.php)
-      5. Parsea buscando nombramientos de administradores (prioriza Administrador > Apoderado)
-    """
-    if not empresa or empresa == "No localizada":
-        return "", ""
-    try:
-        r = session.get(
-            "https://empresia.es/busqueda/",
-            params={"q": empresa},
-            timeout=DIRECTIVOS_TIMEOUT,
-        )
-        if r.status_code != 200:
-            return "", ""
-        soup = BeautifulSoup(r.text, "html.parser")
-
-        evento_links = []
-        perfil_href = None
-        seen_ev = set()
-        for a in soup.find_all("a", href=re.compile(r"^/empresa/")):
-            href = a.get("href", "")
-            if "/evento/" in href and href not in seen_ev:
-                evento_links.append(href)
-                seen_ev.add(href)
-            elif perfil_href is None:
-                parts = [p for p in href.split("/") if p]
-                if len(parts) == 2:
-                    perfil_href = href
-
-        # Si pocos eventos en la búsqueda, ir al perfil a buscar más
-        if len(evento_links) < 3 and perfil_href:
-            try:
-                time.sleep(0.4)
-                r2 = session.get("https://empresia.es" + perfil_href, timeout=DIRECTIVOS_TIMEOUT)
-                if r2.status_code == 200:
-                    soup2 = BeautifulSoup(r2.text, "html.parser")
-                    for a in soup2.find_all("a", href=re.compile(r"^/empresa/")):
-                        href = a.get("href", "")
-                        if "/evento/" in href and href not in seen_ev:
-                            evento_links.append(href)
-                            seen_ev.add(href)
-            except Exception:
-                pass
-
-        print(f"  [empresia] {empresa[:40]}: {len(evento_links)} eventos", flush=True)
-
-        # Palabras significativas del nombre de empresa para validar el BORME
-        _palabras_emp = [
-            w for w in re.split(r"[\s,\.&]+", empresa)
-            if len(w) > 3 and not _SUFIJOS_EMPRESA.match(w)
-        ]
-
-        def _borme_menciona_empresa(boe_text):
-            """Verifica que el texto BORME es de la empresa buscada."""
-            txt_low = boe_text.lower()
-            return any(p.lower() in txt_low for p in _palabras_emp[:2])
-
-        for ev_href in evento_links[:12]:
-            try:
-                time.sleep(0.3)
-                r_ev = session.get("https://empresia.es" + ev_href, timeout=DIRECTIVOS_TIMEOUT)
-                if r_ev.status_code != 200:
-                    continue
-                borme_m = _BORME_REF_RE.search(r_ev.text)
-                if not borme_m:
-                    continue
-                borme_id = borme_m.group(0).upper()
-                boe_texto = _fetch_borme_texto(borme_id)
-                if boe_texto and _borme_menciona_empresa(boe_texto):
-                    # Extraer desde la sección de esta empresa específica en el boletín
-                    n, c = _extraer_de_borme_empresa(boe_texto, empresa, _SUFIJOS_EMPRESA)
-                    if n:
-                        print(f"    OK {borme_id} => {n} [{c}]", flush=True)
-                        return n, c
-                # Fallback: texto del evento en empresia
-                ev_text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", r_ev.text))
-                if _borme_menciona_empresa(ev_text):
-                    n, c = _extraer_de_borme_empresa(ev_text, empresa, _SUFIJOS_EMPRESA)
-                    if n:
-                        print(f"    OK evento empresia => {n} [{c}]", flush=True)
-                        return n, c
-            except Exception:
-                continue
-
-        # Fallback cuando no hay eventos: buscar refs BORME en el HTML del perfil directamente
-        if not evento_links and perfil_href:
-            try:
-                time.sleep(0.4)
-                r_perfil = session.get("https://empresia.es" + perfil_href, timeout=DIRECTIVOS_TIMEOUT)
-                if r_perfil.status_code == 200:
-                    seen_borme = set()
-                    for borme_m in _BORME_REF_RE.finditer(r_perfil.text):
-                        borme_id = borme_m.group(0).upper()
-                        if borme_id in seen_borme:
-                            continue
-                        seen_borme.add(borme_id)
-                        boe_texto = _fetch_borme_texto(borme_id)
-                        if not boe_texto or not _borme_menciona_empresa(boe_texto):
-                            continue
-                        n, c = _extraer_de_borme_empresa(boe_texto, empresa, _SUFIJOS_EMPRESA)
-                        if n:
-                            print(f"    OK perfil {borme_id} => {n} [{c}]", flush=True)
-                            return n, c
-            except Exception:
-                pass
-
-    except Exception:
-        pass
-    return "", ""
-
-
 def buscar_directivo_borme_anuncios(empresa, nif=""):
     """
     Fuente 3 (fallback): busca refs BORME en la página de resultados del BOE
@@ -11847,81 +11695,15 @@ def buscar_directivo_borme_anuncios(empresa, nif=""):
     return "", ""
 
 
-_ddg_bloqueado_hasta = 0.0  # circuit-breaker temporal (epoch): DuckDuckGo puede
-# exigir captcha si detecta tráfico de bot. Antes era un booleano permanente
-# para toda la sesión -- en la tirada de Girona (175 min, 221 municipios) un
-# captcha en el municipio 2 desactivó esta fuente para el resto de la tirada
-# completa. Ahora se reactiva sola pasado el cooldown, para no perder la
-# fuente 4 durante horas por un único bloqueo puntual.
-DDG_COOLDOWN = 15 * 60  # 15 minutos
-
-def buscar_directivo_web(empresa, nif=""):
-    """
-    Fuente 4 (último recurso): búsqueda de texto en DuckDuckGo (Google bloquea el
-    scraping directo) restringida a portales mercantiles conocidos, extrayendo el
-    cargo/nombre del snippet o, si no aparece, de la primera ficha enlazada.
-    Si DDG responde con un captcha, se desactiva temporalmente (DDG_COOLDOWN)
-    en vez de para el resto de la sesión.
-    """
-    global _ddg_bloqueado_hasta
-    if not empresa or empresa == "No localizada" or time.time() < _ddg_bloqueado_hasta:
-        return "", ""
-    query = (
-        f'"{empresa}" administrador OR gerente OR apoderado OR autónomo '
-        f'site:einforma.com OR site:empresia.es OR site:axesor.es OR '
-        f'site:empresite.eleconomista.es OR site:infoempresa.com'
-    )
-    try:
-        r = session.get(
-            "https://lite.duckduckgo.com/lite/",
-            params={"q": query},
-            timeout=DIRECTIVOS_TIMEOUT,
-        )
-        if r.status_code == 202 or "Select all squares" in r.text:
-            _ddg_bloqueado_hasta = time.time() + DDG_COOLDOWN
-            print(f"  [web] DuckDuckGo pide captcha — fuente desactivada {DDG_COOLDOWN // 60} min.", flush=True)
-            return "", ""
-        if r.status_code != 200:
-            return "", ""
-        n, c = _extraer_directivo(_extraer_texto(r.text))
-        if n:
-            return n, c
-
-        soup = BeautifulSoup(r.text, "html.parser")
-        vistos = set()
-        for a in soup.find_all("a", href=re.compile(
-                r"(einforma|empresia|axesor|empresite\.eleconomista|infoempresa)\.[a-z]+", re.I)):
-            href = a.get("href", "")
-            if not href.startswith("http") or href in vistos:
-                continue
-            vistos.add(href)
-            try:
-                time.sleep(0.3)
-                r2 = session.get(href, timeout=DIRECTIVOS_TIMEOUT)
-                if r2.status_code == 200:
-                    n, c = _extraer_directivo(_extraer_texto(r2.text))
-                    if n:
-                        return n, c
-            except Exception:
-                continue
-            if len(vistos) >= 3:
-                break
-    except Exception:
-        pass
-    return "", ""
-
-
 def buscar_directivo(empresa, nif=""):
-    """Busca directivo: persona física → empresia → BORME anuncios → búsqueda web. Usa caché persistente.
+    """Busca directivo: persona física (heurística local, sin red) → anuncios del BORME en boe.es. Usa caché
+    persistente.
 
-    einforma (antigua fuente 1) se quitó de la cadena el 2026-08-26:
-    probado en vivo contra 5 empresas reales, devolvía HTTP 404 en 5/5 --
-    coincide con lo que ya advertía el propio docstring de
-    buscar_directivo_einforma ("actualmente retorna 404 para la mayoría").
-    Mantenerla en la cadena solo añadía una petición HTTP completa
-    desperdiciada por empresa (más tiempo de presupuesto de 30 min gastado
-    sin encontrar nada, menos empresas cubiertas por tirada). La función
-    se deja definida por si el sitio vuelve a funcionar más adelante."""
+    Decisión de César (2026-10-02): la ÚNICA fuente externa de directivos es la oficial (BORME, boe.es). Se
+    eliminaron del código las consultas a empresia.es y la búsqueda web (DuckDuckGo hacia einforma, empresia,
+    axesor, empresite e infoempresa), además de la función de einforma que ya estaba fuera de la cadena desde
+    el 2026-08-26. No volver a añadir portales mercantiles privados ni buscadores: los directivos que el BORME
+    no dé se quedan sin dato hasta la rama de administradores del BORME."""
     if not empresa or empresa == "No localizada":
         return "", ""
     palabras = empresa.strip().split()
@@ -11952,8 +11734,7 @@ def buscar_directivo(empresa, nif=""):
         return cached_n, cached_c
 
     nombre, cargo = "", ""
-    for fuente in (buscar_directivo_empresia,
-                   buscar_directivo_borme_anuncios, buscar_directivo_web):
+    for fuente in (buscar_directivo_borme_anuncios,):
         try:
             nombre, cargo = fuente(empresa, nif)
         except Exception:
@@ -12321,7 +12102,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
 
         if empresas_lista:
             _log(job_id, f"Buscando directivos de {len(empresas_lista)} empresas "
-                 f"(einforma · empresia · BORME)…")
+                 f"(BORME)…")
         directivos = {}
         futs = {HTTP_POOL.submit(buscar_directivo, emp, nif): emp
                 for emp, nif in empresas_lista}
@@ -13252,7 +13033,7 @@ def _inicializar_datos():
         threading.Thread(target=actualizar_noticias_ue, name="noticias-ue", daemon=True).start()
 
 
-# ─── ENRIQUECIMIENTO EN BACKGROUND (empresia / BORME) ────────────────────────
+# ─── ENRIQUECIMIENTO EN BACKGROUND (BORME) ────────────────────────
 
 def _contrato_key(c):
     """Clave estable para identificar un contrato independientemente de su posición en memoria."""
@@ -13299,7 +13080,7 @@ def _limpiar_cache_negativos():
 def _enriquecer_directivos_bg(provincia=None):
     """
     Hilo de fondo: para cada empresa o autónomo sin directivo,
-    busca via einforma → empresia.es → BORME → BOE → búsqueda web y guarda el resultado.
+    busca en los anuncios del BORME (boe.es, única fuente externa desde 2026-10-02) y guarda el resultado.
 
     Reescrito 2026-09-14 (arreglo de fondo del OOM que tumbó el
     precalentamiento de Huelva/Jaén, ver memoria del proyecto): antes este
