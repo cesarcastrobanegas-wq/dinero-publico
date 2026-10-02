@@ -91,3 +91,40 @@ resto de datos son los de hoy. 8.131 municipios. Scripts: `backend/analisis_cobe
 3. Cuentas: revisar los "sin dato" de más de 20.000 habitantes (29 municipios), empezando por València y Jaén.
 4. Ayuntamiento a ayuntamiento por población: menores de las 17 ciudades de la lista; sueldos de concejales de los
    383 municipios de más de 20.000 habitantes sin tabla.
+
+## Sesión 2 (02-10, tarde)
+
+### Cuentas anuales: tres reglas nuevas de localización
+
+La comprobación en vivo contra rendiciondecuentas.es separa dos casos que el fichero no distinguía:
+
+- **Fallo de localización (arreglado)**: el buscador del portal no encuentra "València" (lo tiene como "Valencia"),
+  ni "el Prat de Llobregat" (lo tiene sin artículo), ni "Alcoy" (lo tiene como "Alcoy/Alcoi"). Tres reglas nuevas en
+  `_buscar_id_entidad` (`actualizar_cuentas_anuales.py`), siempre con coincidencia exacta del nombre: término sin
+  tildes, término sin artículo inicial y cualquiera de las dos mitades de una denominación bilingüe. Reintento de los
+  770 municipios que faltaban: **31 recuperados, 1.052.090 habitantes** (València 840.792, el Prat de Llobregat 66.338,
+  Alcoy 61.468, Llíria 25.333, la Seu d'Urgell 13.009, la Roca del Vallès 11.014 y 25 más pequeños). 6.836 -> 6.867.
+- **Sin cuenta rendida (dato real, no fallo)**: 718 municipios están en el portal pero no tienen ninguna cuenta
+  rendida en los ejercicios que muestra. Entre ellos Jaén, Mijas, El Puerto de Santa María, Vélez-Málaga, Utrera,
+  Puerto Real, Écija, Mazarrón, Castro-Urdiales, Arcos de la Frontera y Seseña. Su 0 en el Índice es correcto.
+- **Siguen sin localizar**: 21 municipios pequeños (el mayor, Torredelcampo, Jaén).
+
+Propuesta sin hacer: guardar también esos 718 con su identificador para que la ficha diga "no consta ninguna cuenta
+rendida" con enlace al portal, en vez de no decir nada.
+
+### Backfill nacional de formales de PLACE: piloto
+
+`backend/generar_backfill_formales_place.py` (nuevo) guarda, mes a mes, todo contrato formal de PLACE que el patrón
+vigente asigna a un municipio (mismas tres condiciones que `buscar_en_zip` con anclaje), en
+`backend/backfill_formales_place/AAAAMM.json.gz`. Objetivo: 6.616 municipios (fuera Murcia, Cataluña, País Vasco y
+Navarra, que ya tienen histórico). Piloto con los tres ZIP que había en disco:
+
+| ZIP | Contratos en el ZIP | Asignados a municipios (nuevos) | Municipios | Tamaño |
+|---|---:|---:|---:|---:|
+| 2026-09 (parcial) | 9.168 | 2.544 | 821 | 303 KB |
+| 2026-08 (completo) | 30.982 | 6.338 | 1.333 | 715 KB |
+| 2026-07 (parcial) | 17.243 | 3.554 | 975 | 394 KB |
+
+Para comparar: la copia de producción del 25-09 tiene 12.416 contratos de PLACE en total (6.625 fuera de Murcia).
+Un mes completo aporta unos 6.300; 61 meses pueden quedar en 250.000-350.000 contratos y 30-45 MB comprimidos.
+Falta la función de app.py que lo aplique al arrancar y medir el efecto en memoria y disco de producción.

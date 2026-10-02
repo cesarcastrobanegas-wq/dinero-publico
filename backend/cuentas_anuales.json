@@ -1,5 +1,5 @@
 {
- "generado": "2026-09-30 18:32:01",
+ "generado": "2026-10-02 19:34:56",
  "municipios": {
   "abanilla": {
    "municipio": "Abanilla",
@@ -41016,6 +41016,192 @@
    "provincia": "valladolid",
    "id_entidad": 7442,
    "ultimo_ejercicio_rendido": 2025
+  },
+  "el palau d'anglesola": {
+   "municipio": "el Palau d'Anglesola",
+   "provincia": "lleida",
+   "id_entidad": 3948,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "el pont de bar": {
+   "municipio": "el Pont de Bar",
+   "provincia": "lleida",
+   "id_entidad": 3957,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la pobla de segur": {
+   "municipio": "la Pobla de Segur",
+   "provincia": "lleida",
+   "id_entidad": 3956,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la seu d'urgell": {
+   "municipio": "la Seu d'Urgell",
+   "provincia": "lleida",
+   "id_entidad": 3987,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "el pla del penedes": {
+   "municipio": "el Pla del Penedès",
+   "provincia": "barcelona",
+   "id_entidad": 1027,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "el prat de llobregat": {
+   "municipio": "el Prat de Llobregat",
+   "provincia": "barcelona",
+   "id_entidad": 1033,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la nou de bergueda": {
+   "municipio": "la Nou de Berguedà",
+   "provincia": "barcelona",
+   "id_entidad": 1005,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la palma de cervello": {
+   "municipio": "la Palma de Cervelló",
+   "provincia": "barcelona",
+   "id_entidad": 1021,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la pobla de claramunt": {
+   "municipio": "la Pobla de Claramunt",
+   "provincia": "barcelona",
+   "id_entidad": 1028,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la roca del valles": {
+   "municipio": "la Roca del Vallès",
+   "provincia": "barcelona",
+   "id_entidad": 1045,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la torre de claramunt": {
+   "municipio": "la Torre de Claramunt",
+   "provincia": "barcelona",
+   "id_entidad": 1144,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "les masies de voltrega": {
+   "municipio": "les Masies de Voltregà",
+   "provincia": "barcelona",
+   "id_entidad": 981,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "el pla de santa maria": {
+   "municipio": "el Pla de Santa Maria",
+   "provincia": "tarragona",
+   "id_entidad": 6448,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la bisbal del penedes": {
+   "municipio": "la Bisbal del Penedès",
+   "provincia": "tarragona",
+   "id_entidad": 6368,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la morera de montsant": {
+   "municipio": "la Morera de Montsant",
+   "provincia": "tarragona",
+   "id_entidad": 6436,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "la nou de gaia": {
+   "municipio": "la Nou de Gaià",
+   "provincia": "tarragona",
+   "id_entidad": 6437,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la riba": {
+   "municipio": "la Riba",
+   "provincia": "tarragona",
+   "id_entidad": 6465,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "la vilella alta": {
+   "municipio": "la Vilella Alta",
+   "provincia": "tarragona",
+   "id_entidad": 6517,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "la vilella baixa": {
+   "municipio": "la Vilella Baixa",
+   "provincia": "tarragona",
+   "id_entidad": 6518,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "alcoy": {
+   "municipio": "Alcoy",
+   "provincia": "alicante",
+   "id_entidad": 143,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "algar de palancia": {
+   "municipio": "Algar de Palància",
+   "provincia": "valencia",
+   "id_entidad": 6990,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "belgida": {
+   "municipio": "Bèlgida",
+   "provincia": "valencia",
+   "id_entidad": 7009,
+   "ultimo_ejercicio_rendido": 2025
+  },
+  "lliria": {
+   "municipio": "Llíria",
+   "provincia": "valencia",
+   "id_entidad": 7105,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "valencia": {
+   "municipio": "València",
+   "provincia": "valencia",
+   "id_entidad": 7212,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "illar": {
+   "municipio": "Íllar",
+   "provincia": "almeria",
+   "id_entidad": 326,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "guajares, los": {
+   "municipio": "Guájares, Los",
+   "provincia": "granada",
+   "id_entidad": 2749,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "itrabo": {
+   "municipio": "Ítrabo",
+   "provincia": "granada",
+   "id_entidad": 2760,
+   "ultimo_ejercicio_rendido": 2023
+  },
+  "aisa": {
+   "municipio": "Aísa",
+   "provincia": "huesca",
+   "id_entidad": 3299,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "manon": {
+   "municipio": "Mañón",
+   "provincia": "a_coruna",
+   "id_entidad": 2159,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "ejeme": {
+   "municipio": "Éjeme",
+   "provincia": "salamanca",
+   "id_entidad": 5427,
+   "ultimo_ejercicio_rendido": 2024
+  },
+  "mahide": {
+   "municipio": "Mahíde",
+   "provincia": "zamora",
+   "id_entidad": 7661,
+   "ultimo_ejercicio_rendido": 2023
   }
  }
 }

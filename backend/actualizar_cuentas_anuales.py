@@ -167,6 +167,7 @@ ALIAS_BUSQUEDA = {
 # candidato adicional, nunca como único intento.
 _ACENTO_CATALAN_A_CASTELLANO = str.maketrans("àèòÀÈÒ", "áéóÁÉÓ")
 _ACENTO_CASTELLANO_A_CATALAN = str.maketrans("áéóÁÉÓ", "àèòÀÈÒ")
+_SIN_TILDES = str.maketrans("áàéèíïóòúüÁÀÉÈÍÏÓÒÚÜ", "aaeeiioouuAAEEIIOOUU")
 
 
 def _variantes_acento(termino):
@@ -252,8 +253,21 @@ def _buscar_id_entidad(session, municipio, provincia_ids):
     # Se añade ANTES del bucle de acentos para que también le llegue el
     # swap de acento (l'Énova -> l' Énova -> l' Ènova).
     candidatos_extra.extend(f.replace("l'", "l' ", 1) for f in formas_articulo if f.startswith("l'"))
+    # Artículo INICIAL (estilo catalán de esta app: "el Prat de Llobregat"): el portal lo registra sin él
+    # ("Prat de Llobregat") y la palabra más larga ("Llobregat") da muchos resultados -- hallazgo real
+    # 2026-10-02 al diagnosticar la cobertura por comunidad (66.000 hab. sin cuentas por esto).
+    sin_articulo_inicial = re.sub(r"^(?:el|la|els|les|los|las)\s+|^l'\s*", "", base_limpio, flags=re.I)
+    if sin_articulo_inicial != base_limpio:
+        candidatos_extra.append(sin_articulo_inicial)
     for base in (municipio, base_limpio, *candidatos_extra):
         candidatos_extra.extend(_variantes_acento(base))
+    # Sin ninguna tilde en las vocales: "València" -> el portal solo tiene "Valencia", y la búsqueda con "è" (o
+    # con el "é" de _variantes_acento) da 0 resultados -- mismo hallazgo 2026-10-02 (València capital, 840.000
+    # hab., sin cuentas por esto). Se dejan ñ/ç como están.
+    for base in (municipio, base_limpio):
+        sin_tildes = base.translate(_SIN_TILDES)
+        if sin_tildes != base:
+            candidatos_extra.append(sin_tildes)
 
     # objetivos: normalizar() ya iguala á/à, é/è, ó/ò (ver su tabla de
     # sustituciones), así que NO hace falta añadir aparte las variantes de
@@ -284,9 +298,11 @@ def _buscar_id_entidad(session, municipio, provincia_ids):
         r = _get_con_reintentos(session, f"{BASE_URL}/buscarEntidades/index.html", params=params)
         filas = _RE_FILA_RESULTADO.findall(r.text)
         if filas:
+            # Denominaciones bilingües del portal ("Alcoy/Alcoi", hallazgo 2026-10-02): vale cualquiera de
+            # las dos mitades, además de la denominación entera.
             exactas = [id_ for id_, denom in filas
-                       if normalizar(denom) in objetivos
-                       or normalizar(_limpiar_sufijo_ine(denom)) in objetivos]
+                       if any(normalizar(d) in objetivos or normalizar(_limpiar_sufijo_ine(d)) in objetivos
+                              for d in {denom, *(p.strip() for p in denom.split("/") if p.strip())})]
             if len(exactas) == 1:
                 return exactas[0], r.url, params
         if not exacto_obligatorio and len(filas) == 1:
