@@ -106,6 +106,9 @@ def main():
     ap.add_argument("desde", help="mes mas reciente, AAAAMM")
     ap.add_argument("hasta", help="mes mas antiguo, AAAAMM")
     ap.add_argument("--salida", default=CARPETA, help="carpeta de salida (un AAAAMM.json.gz por mes)")
+    ap.add_argument("--minutos", type=float, default=0,
+                    help="no empezar descargas nuevas pasados estos minutos (PLACE no admite reanudar: una descarga "
+                         "a medias se pierde si el proceso se corta; 0 = sin límite)")
     ap.add_argument("--zip-local", default="", help="directorio con place_AAAAMM.zip ya descargados (no se borran)")
     args = ap.parse_args()
     if args.hasta < MES_MINIMO:
@@ -175,6 +178,8 @@ def main():
     for m in meses:
         cola.put(m)
 
+    t_arranque = time.time()
+
     def trabajador():
         while True:
             huecos.acquire()
@@ -183,6 +188,12 @@ def main():
             except queue.Empty:
                 huecos.release()
                 return
+            if args.minutos and time.time() - t_arranque > args.minutos * 60:
+                with cond:                                        # fuera de plazo: este mes queda para la siguiente
+                    listos[mes] = (None, False, "fuera de plazo")
+                    cond.notify_all()
+                huecos.release()
+                continue
             cand = os.path.join(args.zip_local, f"place_{mes}.zip") if args.zip_local else ""
             if cand and os.path.exists(cand) and os.path.getsize(cand) > 1_000_000:
                 res = (cand, False, 200)
