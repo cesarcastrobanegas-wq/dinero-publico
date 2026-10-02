@@ -387,7 +387,7 @@ def _estados_ejercicios(html, id_entidad):
     Añadido 2026-10-02 para los municipios sin ningún enlace a una cuenta: la ausencia de enlace NO basta para decir
     "no ha rendido", porque la leyenda del portal incluye "Cuenta rendida no disponible" (rendida, sin enlace). Solo
     se afirma que no consta ninguna cuenta cuando el portal marca "Cuenta no rendida" en TODOS los ejercicios."""
-    anios = list(dict.fromkeys(int(a) for a in re.findall(r"Ejercicio\s+(\d{4})", html)))
+    anios = list(dict.fromkeys(int(a) for a in re.findall(r"Ejercicio\s*(?:<span>)?\s*(\d{4})", html)))
     ini = html.find(f'consultarCuentasEjercicios.html?idEntidad={id_entidad}"')
     if ini < 0 or not anios:
         return {}

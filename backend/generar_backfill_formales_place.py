@@ -35,8 +35,16 @@ import threading
 import time
 import traceback
 
+import generar_backfill_nombres_place as _base
 from generar_backfill_nombres_place import (DESCARGAS_PARALELAS, LIM_ESCANEO_S, LIM_RSS_MB, MES_MINIMO, clave,
                                             descargar, meses_atras)
+
+# PLACE sirve a ~75 KB/s por conexión en horas malas: un ZIP de 190 MB no cabe en los 2400 s del generador de
+# nombres y se reintentaba desde cero (medido el 2026-10-02 con 202603).
+_base.DESCARGA_PLAZO_S = 7200
+# Los ZIP se descargan a una carpeta que sobrevive a un corte del proceso (el límite de 2 h de las tareas en segundo
+# plano): primero a .part y, completos, a place_AAAAMM.zip. Se borran al terminar de procesar cada mes.
+ZIPS = os.path.join(tempfile.gettempdir(), "backfill_formales_zips")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CARPETA = os.path.join(BASE_DIR, "backfill_formales_place")
@@ -77,6 +85,7 @@ def main():
     if args.hasta < MES_MINIMO:
         args.hasta = MES_MINIMO
     os.makedirs(args.salida, exist_ok=True)
+    os.makedirs(ZIPS, exist_ok=True)
     log(f"=== arranque: {args.desde} -> {args.hasta}, salida={args.salida} ===")
 
     import psutil
@@ -152,8 +161,14 @@ def main():
             if cand and os.path.exists(cand) and os.path.getsize(cand) > 1_000_000:
                 res = (cand, False, 200)
             else:
-                r, estado = descargar(mes, os.path.join(tmp, f"place_{mes}.zip"))
-                res = (r, True, estado)
+                final = os.path.join(ZIPS, f"place_{mes}.zip")
+                if os.path.exists(final) and os.path.getsize(final) > 1_000_000:
+                    res = (final, True, 200)                      # quedó completo de una ejecución anterior
+                else:
+                    r, estado = descargar(mes, final + ".part")
+                    if r:
+                        os.replace(r, final)
+                    res = (final if r else None, True, estado)
             with cond:
                 listos[mes] = res
                 cond.notify_all()

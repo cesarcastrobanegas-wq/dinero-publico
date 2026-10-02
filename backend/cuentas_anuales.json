@@ -1,5 +1,5 @@
 {
- "generado": "2026-10-02 20:28:34",
+ "generado": "2026-10-02 22:09:38",
  "municipios": {
   "abanilla": {
    "municipio": "Abanilla",
@@ -41328,6 +41328,8622 @@
    "provincia": "albacete",
    "id_entidad": 40555,
    "ultimo_ejercicio_rendido": 2025
+  },
+  "albudeite": {
+   "municipio": "Albudeite",
+   "provincia": "murcia",
+   "id_entidad": 4557,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Albudeite"
+  },
+  "campos del rio": {
+   "municipio": "Campos del Río",
+   "provincia": "murcia",
+   "id_entidad": 4568,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Campos del Río"
+  },
+  "ceuti": {
+   "municipio": "Ceutí",
+   "provincia": "murcia",
+   "id_entidad": 4572,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ceutí"
+  },
+  "jumilla": {
+   "municipio": "Jumilla",
+   "provincia": "murcia",
+   "id_entidad": 4577,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Jumilla"
+  },
+  "librilla": {
+   "municipio": "Librilla",
+   "provincia": "murcia",
+   "id_entidad": 4578,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Librilla"
+  },
+  "mazarron": {
+   "municipio": "Mazarrón",
+   "provincia": "murcia",
+   "id_entidad": 4581,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Mazarrón"
+  },
+  "moratalla": {
+   "municipio": "Moratalla",
+   "provincia": "murcia",
+   "id_entidad": 4583,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Moratalla"
+  },
+  "pliego": {
+   "municipio": "Pliego",
+   "provincia": "murcia",
+   "id_entidad": 4587,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pliego"
+  },
+  "benigembla": {
+   "municipio": "Benigembla",
+   "provincia": "alicante",
+   "id_entidad": 167,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Benigembla"
+  },
+  "abla": {
+   "municipio": "Abla",
+   "provincia": "almeria",
+   "id_entidad": 276,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Abla"
+  },
+  "albox": {
+   "municipio": "Albox",
+   "provincia": "almeria",
+   "id_entidad": 281,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Albox"
+  },
+  "alcudia de monteagud": {
+   "municipio": "Alcudia de Monteagud",
+   "provincia": "almeria",
+   "id_entidad": 284,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcudia de Monteagud"
+  },
+  "alcontar": {
+   "municipio": "Alcóntar",
+   "provincia": "almeria",
+   "id_entidad": 283,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcóntar"
+  },
+  "almocita": {
+   "municipio": "Almócita",
+   "provincia": "almeria",
+   "id_entidad": 289,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almócita"
+  },
+  "antas": {
+   "municipio": "Antas",
+   "provincia": "almeria",
+   "id_entidad": 291,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Antas"
+  },
+  "armuna de almanzora": {
+   "municipio": "Armuña de Almanzora",
+   "provincia": "almeria",
+   "id_entidad": 293,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Armuña de Almanzora"
+  },
+  "beires": {
+   "municipio": "Beires",
+   "provincia": "almeria",
+   "id_entidad": 298,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Beires"
+  },
+  "benitagla": {
+   "municipio": "Benitagla",
+   "provincia": "almeria",
+   "id_entidad": 300,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Benitagla"
+  },
+  "benizalon": {
+   "municipio": "Benizalón",
+   "provincia": "almeria",
+   "id_entidad": 301,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Benizalón"
+  },
+  "berja": {
+   "municipio": "Berja",
+   "provincia": "almeria",
+   "id_entidad": 303,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Berja"
+  },
+  "carboneras": {
+   "municipio": "Carboneras",
+   "provincia": "almeria",
+   "id_entidad": 306,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carboneras"
+  },
+  "castro de filabres": {
+   "municipio": "Castro de Filabres",
+   "provincia": "almeria",
+   "id_entidad": 307,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castro de Filabres"
+  },
+  "chercos": {
+   "municipio": "Chercos",
+   "provincia": "almeria",
+   "id_entidad": 308,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Chercos"
+  },
+  "cobdar": {
+   "municipio": "Cóbdar",
+   "provincia": "almeria",
+   "id_entidad": 310,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cóbdar"
+  },
+  "dalias": {
+   "municipio": "Dalías",
+   "provincia": "almeria",
+   "id_entidad": 312,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Dalías"
+  },
+  "enix": {
+   "municipio": "Enix",
+   "provincia": "almeria",
+   "id_entidad": 314,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Enix"
+  },
+  "felix": {
+   "municipio": "Felix",
+   "provincia": "almeria",
+   "id_entidad": 315,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Felix"
+  },
+  "garrucha": {
+   "municipio": "Garrucha",
+   "provincia": "almeria",
+   "id_entidad": 321,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Garrucha"
+  },
+  "huecija": {
+   "municipio": "Huécija",
+   "provincia": "almeria",
+   "id_entidad": 323,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huécija"
+  },
+  "huercal-overa": {
+   "municipio": "Huércal-Overa",
+   "provincia": "almeria",
+   "id_entidad": 325,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huércal-Overa"
+  },
+  "lucainena de las torres": {
+   "municipio": "Lucainena de las Torres",
+   "provincia": "almeria",
+   "id_entidad": 332,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Lucainena de las Torres"
+  },
+  "lucar": {
+   "municipio": "Lúcar",
+   "provincia": "almeria",
+   "id_entidad": 333,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Lúcar"
+  },
+  "olula de castro": {
+   "municipio": "Olula de Castro",
+   "provincia": "almeria",
+   "id_entidad": 341,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Olula de Castro"
+  },
+  "oria": {
+   "municipio": "Oria",
+   "provincia": "almeria",
+   "id_entidad": 343,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Oria"
+  },
+  "padules": {
+   "municipio": "Padules",
+   "provincia": "almeria",
+   "id_entidad": 344,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Padules"
+  },
+  "pulpi": {
+   "municipio": "Pulpí",
+   "provincia": "almeria",
+   "id_entidad": 348,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pulpí"
+  },
+  "ragol": {
+   "municipio": "Rágol",
+   "provincia": "almeria",
+   "id_entidad": 350,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Rágol"
+  },
+  "santa cruz de marchena": {
+   "municipio": "Santa Cruz de Marchena",
+   "provincia": "almeria",
+   "id_entidad": 353,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa Cruz de Marchena"
+  },
+  "sufli": {
+   "municipio": "Suflí",
+   "provincia": "almeria",
+   "id_entidad": 360,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Suflí"
+  },
+  "tahal": {
+   "municipio": "Tahal",
+   "provincia": "almeria",
+   "id_entidad": 363,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Tahal"
+  },
+  "turre": {
+   "municipio": "Turre",
+   "provincia": "almeria",
+   "id_entidad": 367,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Turre"
+  },
+  "uleila del campo": {
+   "municipio": "Uleila del Campo",
+   "provincia": "almeria",
+   "id_entidad": 369,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Uleila del Campo"
+  },
+  "velefique": {
+   "municipio": "Velefique",
+   "provincia": "almeria",
+   "id_entidad": 371,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Velefique"
+  },
+  "velez-blanco": {
+   "municipio": "Vélez-Blanco",
+   "provincia": "almeria",
+   "id_entidad": 372,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vélez-Blanco"
+  },
+  "zurgena": {
+   "municipio": "Zurgena",
+   "provincia": "almeria",
+   "id_entidad": 377,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Zurgena"
+  },
+  "alcala de los gazules": {
+   "municipio": "Alcalá de los Gazules",
+   "provincia": "cadiz",
+   "id_entidad": 1759,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcalá de los Gazules"
+  },
+  "algodonales": {
+   "municipio": "Algodonales",
+   "provincia": "cadiz",
+   "id_entidad": 1763,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Algodonales"
+  },
+  "arcos de la frontera": {
+   "municipio": "Arcos de la Frontera",
+   "provincia": "cadiz",
+   "id_entidad": 1764,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Arcos de la Frontera"
+  },
+  "barbate": {
+   "municipio": "Barbate",
+   "provincia": "cadiz",
+   "id_entidad": 1765,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Barbate"
+  },
+  "benalup-casas viejas": {
+   "municipio": "Benalup-Casas Viejas",
+   "provincia": "cadiz",
+   "id_entidad": 1767,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Benalup-Casas Viejas"
+  },
+  "benaocaz": {
+   "municipio": "Benaocaz",
+   "provincia": "cadiz",
+   "id_entidad": 1768,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Benaocaz"
+  },
+  "bornos": {
+   "municipio": "Bornos",
+   "provincia": "cadiz",
+   "id_entidad": 1769,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Bornos"
+  },
+  "chipiona": {
+   "municipio": "Chipiona",
+   "provincia": "cadiz",
+   "id_entidad": 1774,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Chipiona"
+  },
+  "conil de la frontera": {
+   "municipio": "Conil de la Frontera",
+   "provincia": "cadiz",
+   "id_entidad": 1775,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Conil de la Frontera"
+  },
+  "medina sidonia": {
+   "municipio": "Medina Sidonia",
+   "provincia": "cadiz",
+   "id_entidad": 40621,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Medina Sidonia"
+  },
+  "prado del rey": {
+   "municipio": "Prado del Rey",
+   "provincia": "cadiz",
+   "id_entidad": 1785,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Prado del Rey"
+  },
+  "puerto real": {
+   "municipio": "Puerto Real",
+   "provincia": "cadiz",
+   "id_entidad": 1787,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puerto Real"
+  },
+  "puerto serrano": {
+   "municipio": "Puerto Serrano",
+   "provincia": "cadiz",
+   "id_entidad": 1788,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puerto Serrano"
+  },
+  "puerto de santa maria, el": {
+   "municipio": "Puerto de Santa María, El",
+   "provincia": "cadiz",
+   "id_entidad": 1786,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puerto de Santa María"
+  },
+  "rota": {
+   "municipio": "Rota",
+   "provincia": "cadiz",
+   "id_entidad": 1789,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Rota"
+  },
+  "san jose del valle": {
+   "municipio": "San José del Valle",
+   "provincia": "cadiz",
+   "id_entidad": 1791,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San José del Valle"
+  },
+  "torre alhaquime": {
+   "municipio": "Torre Alháquime",
+   "provincia": "cadiz",
+   "id_entidad": 1796,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torre Alháquime"
+  },
+  "zahara": {
+   "municipio": "Zahara",
+   "provincia": "cadiz",
+   "id_entidad": 1802,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Zahara"
+  },
+  "anora": {
+   "municipio": "Añora",
+   "provincia": "cordoba",
+   "id_entidad": 2045,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Añora"
+  },
+  "benameji": {
+   "municipio": "Benamejí",
+   "provincia": "cordoba",
+   "id_entidad": 2049,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Benamejí"
+  },
+  "carpio, el": {
+   "municipio": "Carpio, El",
+   "provincia": "cordoba",
+   "id_entidad": 2057,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carpio"
+  },
+  "castro del rio": {
+   "municipio": "Castro del Río",
+   "provincia": "cordoba",
+   "id_entidad": 2058,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castro del Río"
+  },
+  "dona mencia": {
+   "municipio": "Doña Mencía",
+   "provincia": "cordoba",
+   "id_entidad": 2061,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Doña Mencía"
+  },
+  "fernan-nunez": {
+   "municipio": "Fernán-Núñez",
+   "provincia": "cordoba",
+   "id_entidad": 2066,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fernán-Núñez"
+  },
+  "fuente la lancha": {
+   "municipio": "Fuente la Lancha",
+   "provincia": "cordoba",
+   "id_entidad": 2067,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fuente la Lancha"
+  },
+  "fuente-tojar": {
+   "municipio": "Fuente-Tójar",
+   "provincia": "cordoba",
+   "id_entidad": 2070,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fuente-Tójar"
+  },
+  "granjuela, la": {
+   "municipio": "Granjuela, La",
+   "provincia": "cordoba",
+   "id_entidad": 2071,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Granjuela"
+  },
+  "guijo, el": {
+   "municipio": "Guijo, El",
+   "provincia": "cordoba",
+   "id_entidad": 2073,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Guijo"
+  },
+  "hinojosa del duque": {
+   "municipio": "Hinojosa del Duque",
+   "provincia": "cordoba",
+   "id_entidad": 2074,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Hinojosa del Duque"
+  },
+  "nueva carteya": {
+   "municipio": "Nueva Carteya",
+   "provincia": "cordoba",
+   "id_entidad": 2085,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Nueva Carteya"
+  },
+  "posadas": {
+   "municipio": "Posadas",
+   "provincia": "cordoba",
+   "id_entidad": 2092,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Posadas"
+  },
+  "priego de cordoba": {
+   "municipio": "Priego de Córdoba",
+   "provincia": "cordoba",
+   "id_entidad": 2094,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Priego de Córdoba"
+  },
+  "santa eufemia": {
+   "municipio": "Santa Eufemia",
+   "provincia": "cordoba",
+   "id_entidad": 2099,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa Eufemia"
+  },
+  "santaella": {
+   "municipio": "Santaella",
+   "provincia": "cordoba",
+   "id_entidad": 2100,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santaella"
+  },
+  "villaviciosa de cordoba": {
+   "municipio": "Villaviciosa de Córdoba",
+   "provincia": "cordoba",
+   "id_entidad": 2112,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaviciosa de Córdoba"
+  },
+  "zuheros": {
+   "municipio": "Zuheros",
+   "provincia": "cordoba",
+   "id_entidad": 2114,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Zuheros"
+  },
+  "agron": {
+   "municipio": "Agrón",
+   "provincia": "granada",
+   "id_entidad": 2672,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Agrón"
+  },
+  "alamedilla": {
+   "municipio": "Alamedilla",
+   "provincia": "granada",
+   "id_entidad": 2673,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alamedilla"
+  },
+  "albondon": {
+   "municipio": "Albondón",
+   "provincia": "granada",
+   "id_entidad": 2675,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Albondón"
+  },
+  "albunan": {
+   "municipio": "Albuñán",
+   "provincia": "granada",
+   "id_entidad": 2676,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Albuñán"
+  },
+  "algarinejo": {
+   "municipio": "Algarinejo",
+   "provincia": "granada",
+   "id_entidad": 2681,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Algarinejo"
+  },
+  "alicun de ortega": {
+   "municipio": "Alicún de Ortega",
+   "provincia": "granada",
+   "id_entidad": 2684,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alicún de Ortega"
+  },
+  "almegijar": {
+   "municipio": "Almegíjar",
+   "provincia": "granada",
+   "id_entidad": 2685,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almegíjar"
+  },
+  "alquife": {
+   "municipio": "Alquife",
+   "provincia": "granada",
+   "id_entidad": 2688,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alquife"
+  },
+  "atarfe": {
+   "municipio": "Atarfe",
+   "provincia": "granada",
+   "id_entidad": 2691,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Atarfe"
+  },
+  "benalua": {
+   "municipio": "Benalúa",
+   "provincia": "granada",
+   "id_entidad": 2695,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Benalúa"
+  },
+  "cacin": {
+   "municipio": "Cacín",
+   "provincia": "granada",
+   "id_entidad": 2701,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cacín"
+  },
+  "calicasas": {
+   "municipio": "Calicasas",
+   "provincia": "granada",
+   "id_entidad": 2705,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Calicasas"
+  },
+  "castillejar": {
+   "municipio": "Castilléjar",
+   "provincia": "granada",
+   "id_entidad": 2712,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castilléjar"
+  },
+  "cortes de baza": {
+   "municipio": "Cortes de Baza",
+   "provincia": "granada",
+   "id_entidad": 2722,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cortes de Baza"
+  },
+  "cuevas del campo": {
+   "municipio": "Cuevas del Campo",
+   "provincia": "granada",
+   "id_entidad": 2724,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cuevas del Campo"
+  },
+  "canar": {
+   "municipio": "Cáñar",
+   "provincia": "granada",
+   "id_entidad": 2708,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cáñar"
+  },
+  "cullar": {
+   "municipio": "Cúllar",
+   "provincia": "granada",
+   "id_entidad": 2725,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cúllar"
+  },
+  "dehesas viejas": {
+   "municipio": "Dehesas Viejas",
+   "provincia": "granada",
+   "id_entidad": 56611,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Dehesas Viejas"
+  },
+  "dehesas de guadix": {
+   "municipio": "Dehesas de Guadix",
+   "provincia": "granada",
+   "id_entidad": 2728,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Dehesas de Guadix"
+  },
+  "diezma": {
+   "municipio": "Diezma",
+   "provincia": "granada",
+   "id_entidad": 2730,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Diezma"
+  },
+  "domingo perez de granada": {
+   "municipio": "Domingo Pérez de Granada",
+   "provincia": "granada",
+   "id_entidad": 56610,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Domingo"
+  },
+  "dolar": {
+   "municipio": "Dólar",
+   "provincia": "granada",
+   "id_entidad": 2732,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Dólar"
+  },
+  "fornes": {
+   "municipio": "Fornes",
+   "provincia": "granada",
+   "id_entidad": 56607,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fornes"
+  },
+  "freila": {
+   "municipio": "Freila",
+   "provincia": "granada",
+   "id_entidad": 2738,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Freila"
+  },
+  "gor": {
+   "municipio": "Gor",
+   "provincia": "granada",
+   "id_entidad": 2744,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Gor"
+  },
+  "huelago": {
+   "municipio": "Huélago",
+   "provincia": "granada",
+   "id_entidad": 2753,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huélago"
+  },
+  "huetor de santillan": {
+   "municipio": "Huétor de Santillán",
+   "provincia": "granada",
+   "id_entidad": 2756,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huétor de Santillán"
+  },
+  "iznalloz": {
+   "municipio": "Iznalloz",
+   "provincia": "granada",
+   "id_entidad": 2761,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Iznalloz"
+  },
+  "jete": {
+   "municipio": "Jete",
+   "provincia": "granada",
+   "id_entidad": 2764,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Jete"
+  },
+  "jatar": {
+   "municipio": "Játar",
+   "provincia": "granada",
+   "id_entidad": 56608,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Játar"
+  },
+  "lanjaron": {
+   "municipio": "Lanjarón",
+   "provincia": "granada",
+   "id_entidad": 2768,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Lanjarón"
+  },
+  "lanteira": {
+   "municipio": "Lanteira",
+   "provincia": "granada",
+   "id_entidad": 2769,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Lanteira"
+  },
+  "lecrin": {
+   "municipio": "Lecrín",
+   "provincia": "granada",
+   "id_entidad": 2770,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Lecrín"
+  },
+  "lachar": {
+   "municipio": "Láchar",
+   "provincia": "granada",
+   "id_entidad": 2767,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Láchar"
+  },
+  "malaha, la": {
+   "municipio": "Malahá, La",
+   "provincia": "granada",
+   "id_entidad": 2776,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Malahá"
+  },
+  "maracena": {
+   "municipio": "Maracena",
+   "provincia": "granada",
+   "id_entidad": 2777,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Maracena"
+  },
+  "moclin": {
+   "municipio": "Moclín",
+   "provincia": "granada",
+   "id_entidad": 2779,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Moclín"
+  },
+  "montejicar": {
+   "municipio": "Montejícar",
+   "provincia": "granada",
+   "id_entidad": 2783,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Montejícar"
+  },
+  "montillana": {
+   "municipio": "Montillana",
+   "provincia": "granada",
+   "id_entidad": 2784,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Montillana"
+  },
+  "nevada": {
+   "municipio": "Nevada",
+   "provincia": "granada",
+   "id_entidad": 2789,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Nevada"
+  },
+  "nivar": {
+   "municipio": "Nívar",
+   "provincia": "granada",
+   "id_entidad": 2791,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Nívar"
+  },
+  "otivar": {
+   "municipio": "Otívar",
+   "provincia": "granada",
+   "id_entidad": 2795,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Otívar"
+  },
+  "pedro martinez": {
+   "municipio": "Pedro Martínez",
+   "provincia": "granada",
+   "id_entidad": 2799,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pedro Martínez"
+  },
+  "peligros": {
+   "municipio": "Peligros",
+   "provincia": "granada",
+   "id_entidad": 2800,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Peligros"
+  },
+  "pulianas": {
+   "municipio": "Pulianas",
+   "provincia": "granada",
+   "id_entidad": 2810,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pulianas"
+  },
+  "purullena": {
+   "municipio": "Purullena",
+   "provincia": "granada",
+   "id_entidad": 2811,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Purullena"
+  },
+  "pinar": {
+   "municipio": "Píñar",
+   "provincia": "granada",
+   "id_entidad": 2805,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Píñar"
+  },
+  "rubite": {
+   "municipio": "Rubite",
+   "provincia": "granada",
+   "id_entidad": 2813,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Rubite"
+  },
+  "salar": {
+   "municipio": "Salar",
+   "provincia": "granada",
+   "id_entidad": 2814,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Salar"
+  },
+  "salobrena": {
+   "municipio": "Salobreña",
+   "provincia": "granada",
+   "id_entidad": 2815,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Salobreña"
+  },
+  "sorvilan": {
+   "municipio": "Sorvilán",
+   "provincia": "granada",
+   "id_entidad": 2819,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sorvilán"
+  },
+  "torre-cardela": {
+   "municipio": "Torre-Cardela",
+   "provincia": "granada",
+   "id_entidad": 2821,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torre-Cardela"
+  },
+  "ugijar": {
+   "municipio": "Ugíjar",
+   "provincia": "granada",
+   "id_entidad": 2825,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ugíjar"
+  },
+  "ventas de huelma": {
+   "municipio": "Ventas de Huelma",
+   "provincia": "granada",
+   "id_entidad": 2831,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ventas de Huelma"
+  },
+  "orgiva": {
+   "municipio": "Órgiva",
+   "provincia": "granada",
+   "id_entidad": 2794,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Órgiva"
+  },
+  "aroche": {
+   "municipio": "Aroche",
+   "provincia": "huelva",
+   "id_entidad": 3222,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Aroche"
+  },
+  "arroyomolinos de leon": {
+   "municipio": "Arroyomolinos de León",
+   "provincia": "huelva",
+   "id_entidad": 3223,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Arroyomolinos de León"
+  },
+  "cerro de andevalo, el": {
+   "municipio": "Cerro de Andévalo, El",
+   "provincia": "huelva",
+   "id_entidad": 3237,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cerro de Andévalo"
+  },
+  "corteconcepcion": {
+   "municipio": "Corteconcepción",
+   "provincia": "huelva",
+   "id_entidad": 3239,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Corteconcepción"
+  },
+  "cumbres de san bartolome": {
+   "municipio": "Cumbres de San Bartolomé",
+   "provincia": "huelva",
+   "id_entidad": 3243,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cumbres de San Bartolomé"
+  },
+  "encinasola": {
+   "municipio": "Encinasola",
+   "provincia": "huelva",
+   "id_entidad": 3245,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Encinasola"
+  },
+  "hinojos": {
+   "municipio": "Hinojos",
+   "provincia": "huelva",
+   "id_entidad": 3254,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Hinojos"
+  },
+  "linares de la sierra": {
+   "municipio": "Linares de la Sierra",
+   "provincia": "huelva",
+   "id_entidad": 3259,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Linares de la Sierra"
+  },
+  "marines, los": {
+   "municipio": "Marines, Los",
+   "provincia": "huelva",
+   "id_entidad": 3262,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Marines"
+  },
+  "minas de riotinto": {
+   "municipio": "Minas de Riotinto",
+   "provincia": "huelva",
+   "id_entidad": 3263,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Minas de Riotinto"
+  },
+  "nerva": {
+   "municipio": "Nerva",
+   "provincia": "huelva",
+   "id_entidad": 3266,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Nerva"
+  },
+  "niebla": {
+   "municipio": "Niebla",
+   "provincia": "huelva",
+   "id_entidad": 3267,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Niebla"
+  },
+  "palma del condado, la": {
+   "municipio": "Palma del Condado, La",
+   "provincia": "huelva",
+   "id_entidad": 3268,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Palma del Condado"
+  },
+  "paymogo": {
+   "municipio": "Paymogo",
+   "provincia": "huelva",
+   "id_entidad": 3271,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Paymogo"
+  },
+  "puebla de guzman": {
+   "municipio": "Puebla de Guzmán",
+   "provincia": "huelva",
+   "id_entidad": 3272,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puebla de Guzmán"
+  },
+  "villalba del alcor": {
+   "municipio": "Villalba del Alcor",
+   "provincia": "huelva",
+   "id_entidad": 3288,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villalba del Alcor"
+  },
+  "genave": {
+   "municipio": "Génave",
+   "provincia": "jaen",
+   "id_entidad": 3531,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Génave"
+  },
+  "jaen": {
+   "municipio": "Jaén",
+   "provincia": "jaen",
+   "id_entidad": 3543,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Jaén"
+  },
+  "jodar": {
+   "municipio": "Jódar",
+   "provincia": "jaen",
+   "id_entidad": 3546,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Jódar"
+  },
+  "noalejo": {
+   "municipio": "Noalejo",
+   "provincia": "jaen",
+   "id_entidad": 3558,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Noalejo"
+  },
+  "sabiote": {
+   "municipio": "Sabiote",
+   "provincia": "jaen",
+   "id_entidad": 3568,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sabiote"
+  },
+  "torredonjimeno": {
+   "municipio": "Torredonjimeno",
+   "provincia": "jaen",
+   "id_entidad": 3579,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torredonjimeno"
+  },
+  "alameda": {
+   "municipio": "Alameda",
+   "provincia": "malaga",
+   "id_entidad": 4454,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alameda"
+  },
+  "alcaucin": {
+   "municipio": "Alcaucín",
+   "provincia": "malaga",
+   "id_entidad": 4455,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcaucín"
+  },
+  "alfarnatejo": {
+   "municipio": "Alfarnatejo",
+   "provincia": "malaga",
+   "id_entidad": 4457,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alfarnatejo"
+  },
+  "alhaurin el grande": {
+   "municipio": "Alhaurín el Grande",
+   "provincia": "malaga",
+   "id_entidad": 4461,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alhaurín el Grande"
+  },
+  "almargen": {
+   "municipio": "Almargen",
+   "provincia": "malaga",
+   "id_entidad": 4463,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almargen"
+  },
+  "alozaina": {
+   "municipio": "Alozaina",
+   "provincia": "malaga",
+   "id_entidad": 4466,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alozaina"
+  },
+  "ardales": {
+   "municipio": "Ardales",
+   "provincia": "malaga",
+   "id_entidad": 4471,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ardales"
+  },
+  "arenas": {
+   "municipio": "Arenas",
+   "provincia": "malaga",
+   "id_entidad": 4472,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Arenas"
+  },
+  "arriate": {
+   "municipio": "Arriate",
+   "provincia": "malaga",
+   "id_entidad": 4473,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Arriate"
+  },
+  "atajate": {
+   "municipio": "Atajate",
+   "provincia": "malaga",
+   "id_entidad": 4474,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Atajate"
+  },
+  "benalauria": {
+   "municipio": "Benalauría",
+   "provincia": "malaga",
+   "id_entidad": 4477,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Benalauría"
+  },
+  "benaojan": {
+   "municipio": "Benaoján",
+   "provincia": "malaga",
+   "id_entidad": 4481,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Benaoján"
+  },
+  "canillas de aceituno": {
+   "municipio": "Canillas de Aceituno",
+   "provincia": "malaga",
+   "id_entidad": 4486,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Canillas de Aceituno"
+  },
+  "casabermeja": {
+   "municipio": "Casabermeja",
+   "provincia": "malaga",
+   "id_entidad": 4492,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Casabermeja"
+  },
+  "canete la real": {
+   "municipio": "Cañete la Real",
+   "provincia": "malaga",
+   "id_entidad": 4488,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cañete la Real"
+  },
+  "comares": {
+   "municipio": "Comares",
+   "provincia": "malaga",
+   "id_entidad": 4497,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Comares"
+  },
+  "cartama": {
+   "municipio": "Cártama",
+   "provincia": "malaga",
+   "id_entidad": 4491,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cártama"
+  },
+  "genalguacil": {
+   "municipio": "Genalguacil",
+   "provincia": "malaga",
+   "id_entidad": 4510,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Genalguacil"
+  },
+  "guaro": {
+   "municipio": "Guaro",
+   "provincia": "malaga",
+   "id_entidad": 4511,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Guaro"
+  },
+  "igualeja": {
+   "municipio": "Igualeja",
+   "provincia": "malaga",
+   "id_entidad": 4513,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Igualeja"
+  },
+  "jimera de libar": {
+   "municipio": "Jimera de Líbar",
+   "provincia": "malaga",
+   "id_entidad": 4516,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Jimera de Líbar"
+  },
+  "mijas": {
+   "municipio": "Mijas",
+   "provincia": "malaga",
+   "id_entidad": 4523,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Mijas"
+  },
+  "moclinejo": {
+   "municipio": "Moclinejo",
+   "provincia": "malaga",
+   "id_entidad": 4524,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Moclinejo"
+  },
+  "monda": {
+   "municipio": "Monda",
+   "provincia": "malaga",
+   "id_entidad": 4526,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Monda"
+  },
+  "montejaque": {
+   "municipio": "Montejaque",
+   "provincia": "malaga",
+   "id_entidad": 4527,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Montejaque"
+  },
+  "ojen": {
+   "municipio": "Ojén",
+   "provincia": "malaga",
+   "id_entidad": 4529,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ojén"
+  },
+  "pizarra": {
+   "municipio": "Pizarra",
+   "provincia": "malaga",
+   "id_entidad": 4532,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pizarra"
+  },
+  "pujerra": {
+   "municipio": "Pujerra",
+   "provincia": "malaga",
+   "id_entidad": 4533,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pujerra"
+  },
+  "riogordo": {
+   "municipio": "Riogordo",
+   "provincia": "malaga",
+   "id_entidad": 4535,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Riogordo"
+  },
+  "sedella": {
+   "municipio": "Sedella",
+   "provincia": "malaga",
+   "id_entidad": 4539,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sedella"
+  },
+  "totalan": {
+   "municipio": "Totalán",
+   "provincia": "malaga",
+   "id_entidad": 4545,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Totalán"
+  },
+  "valle de abdalajis": {
+   "municipio": "Valle de Abdalajís",
+   "provincia": "malaga",
+   "id_entidad": 4546,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valle de Abdalajís"
+  },
+  "velez-malaga": {
+   "municipio": "Vélez-Málaga",
+   "provincia": "malaga",
+   "id_entidad": 4547,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vélez-Málaga"
+  },
+  "archez": {
+   "municipio": "Árchez",
+   "provincia": "malaga",
+   "id_entidad": 4469,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Árchez"
+  },
+  "alcala del rio": {
+   "municipio": "Alcalá del Río",
+   "provincia": "sevilla",
+   "id_entidad": 6054,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcalá del Río"
+  },
+  "alcolea del rio": {
+   "municipio": "Alcolea del Río",
+   "provincia": "sevilla",
+   "id_entidad": 6055,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcolea del Río"
+  },
+  "algamitas": {
+   "municipio": "Algámitas",
+   "provincia": "sevilla",
+   "id_entidad": 6057,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Algámitas"
+  },
+  "almaden de la plata": {
+   "municipio": "Almadén de la Plata",
+   "provincia": "sevilla",
+   "id_entidad": 6058,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almadén de la Plata"
+  },
+  "aznalcazar": {
+   "municipio": "Aznalcázar",
+   "provincia": "sevilla",
+   "id_entidad": 6061,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Aznalcázar"
+  },
+  "aznalcollar": {
+   "municipio": "Aznalcóllar",
+   "provincia": "sevilla",
+   "id_entidad": 6062,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Aznalcóllar"
+  },
+  "burguillos": {
+   "municipio": "Burguillos",
+   "provincia": "sevilla",
+   "id_entidad": 6068,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Burguillos"
+  },
+  "carmona": {
+   "municipio": "Carmona",
+   "provincia": "sevilla",
+   "id_entidad": 6074,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carmona"
+  },
+  "carrion de los cespedes": {
+   "municipio": "Carrión de los Céspedes",
+   "provincia": "sevilla",
+   "id_entidad": 6075,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carrión de los Céspedes"
+  },
+  "casariche": {
+   "municipio": "Casariche",
+   "provincia": "sevilla",
+   "id_entidad": 6076,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Casariche"
+  },
+  "castillo de las guardas, el": {
+   "municipio": "Castillo de las Guardas, El",
+   "provincia": "sevilla",
+   "id_entidad": 6081,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castillo de las Guardas"
+  },
+  "cazalla de la sierra": {
+   "municipio": "Cazalla de la Sierra",
+   "provincia": "sevilla",
+   "id_entidad": 6082,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cazalla de la Sierra"
+  },
+  "canada rosal": {
+   "municipio": "Cañada Rosal",
+   "provincia": "sevilla",
+   "id_entidad": 6073,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cañada Rosal"
+  },
+  "constantina": {
+   "municipio": "Constantina",
+   "provincia": "sevilla",
+   "id_entidad": 6083,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Constantina"
+  },
+  "coripe": {
+   "municipio": "Coripe",
+   "provincia": "sevilla",
+   "id_entidad": 6085,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Coripe"
+  },
+  "cuervo de sevilla, el": {
+   "municipio": "Cuervo de Sevilla, El",
+   "provincia": "sevilla",
+   "id_entidad": 6088,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cuervo de Sevilla"
+  },
+  "estepa": {
+   "municipio": "Estepa",
+   "provincia": "sevilla",
+   "id_entidad": 6092,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Estepa"
+  },
+  "gilena": {
+   "municipio": "Gilena",
+   "provincia": "sevilla",
+   "id_entidad": 6097,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Gilena"
+  },
+  "guillena": {
+   "municipio": "Guillena",
+   "provincia": "sevilla",
+   "id_entidad": 6100,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Guillena"
+  },
+  "huevar del aljarafe": {
+   "municipio": "Huévar del Aljarafe",
+   "provincia": "sevilla",
+   "id_entidad": 6102,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huévar del Aljarafe"
+  },
+  "lebrija": {
+   "municipio": "Lebrija",
+   "provincia": "sevilla",
+   "id_entidad": 6105,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Lebrija"
+  },
+  "lora de estepa": {
+   "municipio": "Lora de Estepa",
+   "provincia": "sevilla",
+   "id_entidad": 6106,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Lora de Estepa"
+  },
+  "luisiana, la": {
+   "municipio": "Luisiana, La",
+   "provincia": "sevilla",
+   "id_entidad": 6108,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Luisiana"
+  },
+  "madrono, el": {
+   "municipio": "Madroño, El",
+   "provincia": "sevilla",
+   "id_entidad": 6109,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Madroño"
+  },
+  "montellano": {
+   "municipio": "Montellano",
+   "provincia": "sevilla",
+   "id_entidad": 6116,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Montellano"
+  },
+  "palmar de troya, el": {
+   "municipio": "Palmar de Troya, El",
+   "provincia": "sevilla",
+   "id_entidad": 57400,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Palmar de Troya"
+  },
+  "paradas": {
+   "municipio": "Paradas",
+   "provincia": "sevilla",
+   "id_entidad": 6123,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Paradas"
+  },
+  "penaflor": {
+   "municipio": "Peñaflor",
+   "provincia": "sevilla",
+   "id_entidad": 6126,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Peñaflor"
+  },
+  "ronquillo, el": {
+   "municipio": "Ronquillo, El",
+   "provincia": "sevilla",
+   "id_entidad": 6135,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ronquillo"
+  },
+  "rubio, el": {
+   "municipio": "Rubio, El",
+   "provincia": "sevilla",
+   "id_entidad": 6136,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Rubio"
+  },
+  "salteras": {
+   "municipio": "Salteras",
+   "provincia": "sevilla",
+   "id_entidad": 6137,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Salteras"
+  },
+  "san juan de aznalfarache": {
+   "municipio": "San Juan de Aznalfarache",
+   "provincia": "sevilla",
+   "id_entidad": 6138,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San Juan de Aznalfarache"
+  },
+  "sanlucar la mayor": {
+   "municipio": "Sanlúcar la Mayor",
+   "provincia": "sevilla",
+   "id_entidad": 6140,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sanlúcar la Mayor"
+  },
+  "santiponce": {
+   "municipio": "Santiponce",
+   "provincia": "sevilla",
+   "id_entidad": 6141,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santiponce"
+  },
+  "saucejo, el": {
+   "municipio": "Saucejo, El",
+   "provincia": "sevilla",
+   "id_entidad": 6142,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Saucejo"
+  },
+  "utrera": {
+   "municipio": "Utrera",
+   "provincia": "sevilla",
+   "id_entidad": 6147,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Utrera"
+  },
+  "villaverde del rio": {
+   "municipio": "Villaverde del Río",
+   "provincia": "sevilla",
+   "id_entidad": 6153,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaverde del Río"
+  },
+  "viso del alcor, el": {
+   "municipio": "Viso del Alcor, El",
+   "provincia": "sevilla",
+   "id_entidad": 6154,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Viso del Alcor"
+  },
+  "ecija": {
+   "municipio": "Écija",
+   "provincia": "sevilla",
+   "id_entidad": 6090,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Écija"
+  },
+  "banyalbufar": {
+   "municipio": "Banyalbufar",
+   "provincia": "baleares",
+   "id_entidad": 799,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Banyalbufar"
+  },
+  "binissalem": {
+   "municipio": "Binissalem",
+   "provincia": "baleares",
+   "id_entidad": 800,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Binissalem"
+  },
+  "deia": {
+   "municipio": "Deià",
+   "provincia": "baleares",
+   "id_entidad": 811,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Deià"
+  },
+  "escorca": {
+   "municipio": "Escorca",
+   "provincia": "baleares",
+   "id_entidad": 813,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Escorca"
+  },
+  "puigpunyent": {
+   "municipio": "Puigpunyent",
+   "provincia": "baleares",
+   "id_entidad": 839,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puigpunyent"
+  },
+  "selva": {
+   "municipio": "Selva",
+   "provincia": "baleares",
+   "id_entidad": 852,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Selva"
+  },
+  "sineu": {
+   "municipio": "Sineu",
+   "provincia": "baleares",
+   "id_entidad": 854,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sineu"
+  },
+  "alaior": {
+   "municipio": "Alaior",
+   "provincia": "baleares",
+   "id_entidad": 792,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alaior"
+  },
+  "alfoz de lloredo": {
+   "municipio": "Alfoz de Lloredo",
+   "provincia": "cantabria",
+   "id_entidad": 5739,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alfoz de Lloredo"
+  },
+  "anievas": {
+   "municipio": "Anievas",
+   "provincia": "cantabria",
+   "id_entidad": 5741,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Anievas"
+  },
+  "arnuero": {
+   "municipio": "Arnuero",
+   "provincia": "cantabria",
+   "id_entidad": 5744,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Arnuero"
+  },
+  "bareyo": {
+   "municipio": "Bareyo",
+   "provincia": "cantabria",
+   "id_entidad": 5749,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Bareyo"
+  },
+  "castro-urdiales": {
+   "municipio": "Castro-Urdiales",
+   "provincia": "cantabria",
+   "id_entidad": 5759,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castro-Urdiales"
+  },
+  "guriezo": {
+   "municipio": "Guriezo",
+   "provincia": "cantabria",
+   "id_entidad": 5768,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Guriezo"
+  },
+  "laredo": {
+   "municipio": "Laredo",
+   "provincia": "cantabria",
+   "id_entidad": 5773,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Laredo"
+  },
+  "las rozas de valdearroyo": {
+   "municipio": "Las Rozas de Valdearroyo",
+   "provincia": "cantabria",
+   "id_entidad": 5803,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Las Rozas de Valdearroyo"
+  },
+  "ruesga": {
+   "municipio": "Ruesga",
+   "provincia": "cantabria",
+   "id_entidad": 5805,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ruesga"
+  },
+  "santona": {
+   "municipio": "Santoña",
+   "provincia": "cantabria",
+   "id_entidad": 5818,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santoña"
+  },
+  "los tojos": {
+   "municipio": "Los Tojos",
+   "provincia": "cantabria",
+   "id_entidad": 5824,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Los Tojos"
+  },
+  "udias": {
+   "municipio": "Udías",
+   "provincia": "cantabria",
+   "id_entidad": 5828,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Udías"
+  },
+  "vega de pas": {
+   "municipio": "Vega de Pas",
+   "provincia": "cantabria",
+   "id_entidad": 5836,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vega de Pas"
+  },
+  "villafufre": {
+   "municipio": "Villafufre",
+   "provincia": "cantabria",
+   "id_entidad": 5839,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villafufre"
+  },
+  "aguilar del rio alhama": {
+   "municipio": "Aguilar del Río Alhama",
+   "provincia": "la_rioja",
+   "id_entidad": 4038,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Aguilar del Río Alhama"
+  },
+  "azofra": {
+   "municipio": "Azofra",
+   "provincia": "la_rioja",
+   "id_entidad": 4056,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Azofra"
+  },
+  "berceo": {
+   "municipio": "Berceo",
+   "provincia": "la_rioja",
+   "id_entidad": 4061,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Berceo"
+  },
+  "cabezon de cameros": {
+   "municipio": "Cabezón de Cameros",
+   "provincia": "la_rioja",
+   "id_entidad": 4069,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cabezón de Cameros"
+  },
+  "camprovin": {
+   "municipio": "Camprovín",
+   "provincia": "la_rioja",
+   "id_entidad": 4071,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Camprovín"
+  },
+  "cidamon": {
+   "municipio": "Cidamón",
+   "provincia": "la_rioja",
+   "id_entidad": 4082,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cidamón"
+  },
+  "daroca de rioja": {
+   "municipio": "Daroca de Rioja",
+   "provincia": "la_rioja",
+   "id_entidad": 4091,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Daroca de Rioja"
+  },
+  "estollo": {
+   "municipio": "Estollo",
+   "provincia": "la_rioja",
+   "id_entidad": 4094,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Estollo"
+  },
+  "haro": {
+   "municipio": "Haro",
+   "provincia": "la_rioja",
+   "id_entidad": 4105,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Haro"
+  },
+  "huercanos": {
+   "municipio": "Huércanos",
+   "provincia": "la_rioja",
+   "id_entidad": 4113,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huércanos"
+  },
+  "jalon de cameros": {
+   "municipio": "Jalón de Cameros",
+   "provincia": "la_rioja",
+   "id_entidad": 4115,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Jalón de Cameros"
+  },
+  "matute": {
+   "municipio": "Matute",
+   "provincia": "la_rioja",
+   "id_entidad": 4127,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Matute"
+  },
+  "muro de aguas": {
+   "municipio": "Muro de Aguas",
+   "provincia": "la_rioja",
+   "id_entidad": 4131,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Muro de Aguas"
+  },
+  "navajun": {
+   "municipio": "Navajún",
+   "provincia": "la_rioja",
+   "id_entidad": 4135,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Navajún"
+  },
+  "pazuengos": {
+   "municipio": "Pazuengos",
+   "provincia": "la_rioja",
+   "id_entidad": 4144,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pazuengos"
+  },
+  "robres del castillo": {
+   "municipio": "Robres del Castillo",
+   "provincia": "la_rioja",
+   "id_entidad": 4156,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Robres del Castillo"
+  },
+  "san roman de cameros": {
+   "municipio": "San Román de Cameros",
+   "provincia": "la_rioja",
+   "id_entidad": 4162,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San Román de Cameros"
+  },
+  "santurde de rioja": {
+   "municipio": "Santurde de Rioja",
+   "provincia": "la_rioja",
+   "id_entidad": 4169,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santurde de Rioja"
+  },
+  "santurdejo": {
+   "municipio": "Santurdejo",
+   "provincia": "la_rioja",
+   "id_entidad": 4170,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santurdejo"
+  },
+  "soto en cameros": {
+   "municipio": "Soto en Cameros",
+   "provincia": "la_rioja",
+   "id_entidad": 4174,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Soto en Cameros"
+  },
+  "tobia": {
+   "municipio": "Tobía",
+   "provincia": "la_rioja",
+   "id_entidad": 4177,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Tobía"
+  },
+  "valdemadera": {
+   "municipio": "Valdemadera",
+   "provincia": "la_rioja",
+   "id_entidad": 4187,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdemadera"
+  },
+  "ventosa": {
+   "municipio": "Ventosa",
+   "provincia": "la_rioja",
+   "id_entidad": 4189,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ventosa"
+  },
+  "ventrosa": {
+   "municipio": "Ventrosa",
+   "provincia": "la_rioja",
+   "id_entidad": 4190,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ventrosa"
+  },
+  "villarroya": {
+   "municipio": "Villarroya",
+   "provincia": "la_rioja",
+   "id_entidad": 4199,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villarroya"
+  },
+  "viniegra de abajo": {
+   "municipio": "Viniegra de Abajo",
+   "provincia": "la_rioja",
+   "id_entidad": 4204,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Viniegra de Abajo"
+  },
+  "viniegra de arriba": {
+   "municipio": "Viniegra de Arriba",
+   "provincia": "la_rioja",
+   "id_entidad": 4205,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Viniegra de Arriba"
+  },
+  "caso": {
+   "municipio": "Caso",
+   "provincia": "asturias",
+   "id_entidad": 4977,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Caso"
+  },
+  "illano": {
+   "municipio": "Illano",
+   "provincia": "asturias",
+   "id_entidad": 4991,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Illano"
+  },
+  "penamellera alta": {
+   "municipio": "Peñamellera Alta",
+   "provincia": "asturias",
+   "id_entidad": 5007,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Peñamellera Alta"
+  },
+  "ribadedeva": {
+   "municipio": "Ribadedeva",
+   "provincia": "asturias",
+   "id_entidad": 5016,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ribadedeva"
+  },
+  "san martin de oscos": {
+   "municipio": "San Martín de Oscos",
+   "provincia": "asturias",
+   "id_entidad": 5021,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San Martín de Oscos"
+  },
+  "santa eulalia de oscos": {
+   "municipio": "Santa Eulalia de Oscos",
+   "provincia": "asturias",
+   "id_entidad": 5024,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa Eulalia de Oscos"
+  },
+  "yernes y tameza": {
+   "municipio": "Yernes y Tameza",
+   "provincia": "asturias",
+   "id_entidad": 5040,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Yernes y Tameza"
+  },
+  "acedera": {
+   "municipio": "Acedera",
+   "provincia": "badajoz",
+   "id_entidad": 626,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Acedera"
+  },
+  "la albuera": {
+   "municipio": "La Albuera",
+   "provincia": "badajoz",
+   "id_entidad": 630,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "La Albuera"
+  },
+  "alconchel": {
+   "municipio": "Alconchel",
+   "provincia": "badajoz",
+   "id_entidad": 632,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alconchel"
+  },
+  "atalaya": {
+   "municipio": "Atalaya",
+   "provincia": "badajoz",
+   "id_entidad": 638,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Atalaya"
+  },
+  "baterno": {
+   "municipio": "Baterno",
+   "provincia": "badajoz",
+   "id_entidad": 642,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Baterno"
+  },
+  "bienvenida": {
+   "municipio": "Bienvenida",
+   "provincia": "badajoz",
+   "id_entidad": 645,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Bienvenida"
+  },
+  "cabeza del buey": {
+   "municipio": "Cabeza del Buey",
+   "provincia": "badajoz",
+   "id_entidad": 648,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cabeza del Buey"
+  },
+  "carmonita": {
+   "municipio": "Carmonita",
+   "provincia": "badajoz",
+   "id_entidad": 656,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carmonita"
+  },
+  "castuera": {
+   "municipio": "Castuera",
+   "provincia": "badajoz",
+   "id_entidad": 661,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castuera"
+  },
+  "cheles": {
+   "municipio": "Cheles",
+   "provincia": "badajoz",
+   "id_entidad": 662,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cheles"
+  },
+  "corte de peleas": {
+   "municipio": "Corte de Peleas",
+   "provincia": "badajoz",
+   "id_entidad": 666,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Corte de Peleas"
+  },
+  "cristina": {
+   "municipio": "Cristina",
+   "provincia": "badajoz",
+   "id_entidad": 667,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cristina"
+  },
+  "entrin bajo": {
+   "municipio": "Entrín Bajo",
+   "provincia": "badajoz",
+   "id_entidad": 670,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Entrín Bajo"
+  },
+  "feria": {
+   "municipio": "Feria",
+   "provincia": "badajoz",
+   "id_entidad": 674,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Feria"
+  },
+  "fregenal de la sierra": {
+   "municipio": "Fregenal de la Sierra",
+   "provincia": "badajoz",
+   "id_entidad": 675,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fregenal de la Sierra"
+  },
+  "garbayuela": {
+   "municipio": "Garbayuela",
+   "provincia": "badajoz",
+   "id_entidad": 681,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Garbayuela"
+  },
+  "la haba": {
+   "municipio": "La Haba",
+   "provincia": "badajoz",
+   "id_entidad": 686,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "La Haba"
+  },
+  "higuera la real": {
+   "municipio": "Higuera la Real",
+   "provincia": "badajoz",
+   "id_entidad": 692,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Higuera la Real"
+  },
+  "hinojosa del valle": {
+   "municipio": "Hinojosa del Valle",
+   "provincia": "badajoz",
+   "id_entidad": 693,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Hinojosa del Valle"
+  },
+  "maguilla": {
+   "municipio": "Maguilla",
+   "provincia": "badajoz",
+   "id_entidad": 701,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Maguilla"
+  },
+  "malpartida de la serena": {
+   "municipio": "Malpartida de la Serena",
+   "provincia": "badajoz",
+   "id_entidad": 703,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Malpartida de la Serena"
+  },
+  "medellin": {
+   "municipio": "Medellín",
+   "provincia": "badajoz",
+   "id_entidad": 705,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Medellín"
+  },
+  "medina de las torres": {
+   "municipio": "Medina de las Torres",
+   "provincia": "badajoz",
+   "id_entidad": 706,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Medina de las Torres"
+  },
+  "la nava de santiago": {
+   "municipio": "La Nava de Santiago",
+   "provincia": "badajoz",
+   "id_entidad": 715,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "La Nava de Santiago"
+  },
+  "peraleda del zaucejo": {
+   "municipio": "Peraleda del Zaucejo",
+   "provincia": "badajoz",
+   "id_entidad": 726,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Peraleda del Zaucejo"
+  },
+  "puebla de alcocer": {
+   "municipio": "Puebla de Alcocer",
+   "provincia": "badajoz",
+   "id_entidad": 727,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puebla de Alcocer"
+  },
+  "puebla del maestre": {
+   "municipio": "Puebla del Maestre",
+   "provincia": "badajoz",
+   "id_entidad": 732,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puebla del Maestre"
+  },
+  "retamal de llerena": {
+   "municipio": "Retamal de Llerena",
+   "provincia": "badajoz",
+   "id_entidad": 738,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Retamal de Llerena"
+  },
+  "risco": {
+   "municipio": "Risco",
+   "provincia": "badajoz",
+   "id_entidad": 740,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Risco"
+  },
+  "la roca de la sierra": {
+   "municipio": "La Roca de la Sierra",
+   "provincia": "badajoz",
+   "id_entidad": 741,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "La Roca de la Sierra"
+  },
+  "sancti-spiritus|badajoz": {
+   "municipio": "Sancti-Spíritus",
+   "provincia": "badajoz",
+   "id_entidad": 746,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sancti-Spíritus"
+  },
+  "solana de los barros": {
+   "municipio": "Solana de los Barros",
+   "provincia": "badajoz",
+   "id_entidad": 753,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Solana de los Barros"
+  },
+  "tamurejo": {
+   "municipio": "Tamurejo",
+   "provincia": "badajoz",
+   "id_entidad": 757,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Tamurejo"
+  },
+  "torremayor": {
+   "municipio": "Torremayor",
+   "provincia": "badajoz",
+   "id_entidad": 759,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torremayor"
+  },
+  "trujillanos": {
+   "municipio": "Trujillanos",
+   "provincia": "badajoz",
+   "id_entidad": 762,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Trujillanos"
+  },
+  "valdetorres": {
+   "municipio": "Valdetorres",
+   "provincia": "badajoz",
+   "id_entidad": 766,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdetorres"
+  },
+  "valencia del mombuey": {
+   "municipio": "Valencia del Mombuey",
+   "provincia": "badajoz",
+   "id_entidad": 768,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valencia del Mombuey"
+  },
+  "valverde de burguillos": {
+   "municipio": "Valverde de Burguillos",
+   "provincia": "badajoz",
+   "id_entidad": 773,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valverde de Burguillos"
+  },
+  "valverde de leganes": {
+   "municipio": "Valverde de Leganés",
+   "provincia": "badajoz",
+   "id_entidad": 774,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valverde de Leganés"
+  },
+  "villagonzalo": {
+   "municipio": "Villagonzalo",
+   "provincia": "badajoz",
+   "id_entidad": 779,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villagonzalo"
+  },
+  "villanueva del fresno": {
+   "municipio": "Villanueva del Fresno",
+   "provincia": "badajoz",
+   "id_entidad": 782,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villanueva del Fresno"
+  },
+  "zahinos": {
+   "municipio": "Zahínos",
+   "provincia": "badajoz",
+   "id_entidad": 787,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Zahínos"
+  },
+  "aldeanueva de la vera": {
+   "municipio": "Aldeanueva de la Vera",
+   "provincia": "caceres",
+   "id_entidad": 1553,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Aldeanueva de la Vera"
+  },
+  "banos de montemayor": {
+   "municipio": "Baños de Montemayor",
+   "provincia": "caceres",
+   "id_entidad": 1562,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Baños de Montemayor"
+  },
+  "bohonal de ibor": {
+   "municipio": "Bohonal de Ibor",
+   "provincia": "caceres",
+   "id_entidad": 1568,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Bohonal de Ibor"
+  },
+  "brozas": {
+   "municipio": "Brozas",
+   "provincia": "caceres",
+   "id_entidad": 1570,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Brozas"
+  },
+  "cabezabellosa": {
+   "municipio": "Cabezabellosa",
+   "provincia": "caceres",
+   "id_entidad": 1572,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cabezabellosa"
+  },
+  "cabezuela del valle": {
+   "municipio": "Cabezuela del Valle",
+   "provincia": "caceres",
+   "id_entidad": 1573,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cabezuela del Valle"
+  },
+  "casas de don gomez": {
+   "municipio": "Casas de Don Gómez",
+   "provincia": "caceres",
+   "id_entidad": 1591,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Casas de Don Gómez"
+  },
+  "la cumbre": {
+   "municipio": "La Cumbre",
+   "provincia": "caceres",
+   "id_entidad": 1607,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "La Cumbre"
+  },
+  "higuera de albalat": {
+   "municipio": "Higuera de Albalat",
+   "provincia": "caceres",
+   "id_entidad": 1634,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Higuera"
+  },
+  "hoyos": {
+   "municipio": "Hoyos",
+   "provincia": "caceres",
+   "id_entidad": 1637,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Hoyos"
+  },
+  "huelaga": {
+   "municipio": "Huélaga",
+   "provincia": "caceres",
+   "id_entidad": 1638,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huélaga"
+  },
+  "membrio": {
+   "municipio": "Membrío",
+   "provincia": "caceres",
+   "id_entidad": 1656,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Membrío"
+  },
+  "mirabel": {
+   "municipio": "Mirabel",
+   "provincia": "caceres",
+   "id_entidad": 1660,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Mirabel"
+  },
+  "nunomoral": {
+   "municipio": "Nuñomoral",
+   "provincia": "caceres",
+   "id_entidad": 1672,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Nuñomoral"
+  },
+  "ruanes": {
+   "municipio": "Ruanes",
+   "provincia": "caceres",
+   "id_entidad": 1700,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ruanes"
+  },
+  "salvatierra de santiago": {
+   "municipio": "Salvatierra de Santiago",
+   "provincia": "caceres",
+   "id_entidad": 1702,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Salvatierra de Santiago"
+  },
+  "santa cruz de la sierra": {
+   "municipio": "Santa Cruz de la Sierra",
+   "provincia": "caceres",
+   "id_entidad": 1705,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa Cruz de la Sierra"
+  },
+  "santa cruz de paniagua": {
+   "municipio": "Santa Cruz de Paniagua",
+   "provincia": "caceres",
+   "id_entidad": 1706,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa Cruz de Paniagua"
+  },
+  "santiago de alcantara": {
+   "municipio": "Santiago de Alcántara",
+   "provincia": "caceres",
+   "id_entidad": 1708,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santiago de Alcántara"
+  },
+  "saucedilla": {
+   "municipio": "Saucedilla",
+   "provincia": "caceres",
+   "id_entidad": 1712,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Saucedilla"
+  },
+  "serradilla": {
+   "municipio": "Serradilla",
+   "provincia": "caceres",
+   "id_entidad": 1714,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Serradilla"
+  },
+  "talavan": {
+   "municipio": "Talaván",
+   "provincia": "caceres",
+   "id_entidad": 1717,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Talaván"
+  },
+  "talaveruela de la vera": {
+   "municipio": "Talaveruela de la Vera",
+   "provincia": "caceres",
+   "id_entidad": 1718,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Talaveruela de la Vera"
+  },
+  "tornavacas": {
+   "municipio": "Tornavacas",
+   "provincia": "caceres",
+   "id_entidad": 1722,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Tornavacas"
+  },
+  "valdemorales": {
+   "municipio": "Valdemorales",
+   "provincia": "caceres",
+   "id_entidad": 1740,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdemorales"
+  },
+  "viandar de la vera": {
+   "municipio": "Viandar de la Vera",
+   "provincia": "caceres",
+   "id_entidad": 1745,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Viandar de la Vera"
+  },
+  "villamiel": {
+   "municipio": "Villamiel",
+   "provincia": "caceres",
+   "id_entidad": 1749,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villamiel"
+  },
+  "zarza la mayor": {
+   "municipio": "Zarza la Mayor",
+   "provincia": "caceres",
+   "id_entidad": 1757,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Zarza la Mayor"
+  },
+  "navalperal de pinares": {
+   "municipio": "Navalperal de Pinares",
+   "provincia": "avila",
+   "id_entidad": 521,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Navalperal de Pinares"
+  },
+  "san juan del olmo": {
+   "municipio": "San Juan del Olmo",
+   "provincia": "avila",
+   "id_entidad": 570,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San Juan del Olmo"
+  },
+  "torre, la": {
+   "municipio": "Torre, La",
+   "provincia": "avila",
+   "id_entidad": 606,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torre"
+  },
+  "villaflor": {
+   "municipio": "Villaflor",
+   "provincia": "avila",
+   "id_entidad": 613,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaflor"
+  },
+  "villarejo del valle": {
+   "municipio": "Villarejo del Valle",
+   "provincia": "avila",
+   "id_entidad": 620,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villarejo del Valle"
+  },
+  "barbadillo del pez": {
+   "municipio": "Barbadillo del Pez",
+   "provincia": "burgos",
+   "id_entidad": 1202,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Barbadillo del Pez"
+  },
+  "cabanes de esgueva": {
+   "municipio": "Cabañes de Esgueva",
+   "provincia": "burgos",
+   "id_entidad": 1220,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cabañes de Esgueva"
+  },
+  "castildelgado": {
+   "municipio": "Castildelgado",
+   "provincia": "burgos",
+   "id_entidad": 1238,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castildelgado"
+  },
+  "cillaperlata": {
+   "municipio": "Cillaperlata",
+   "provincia": "burgos",
+   "id_entidad": 1252,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cillaperlata"
+  },
+  "fontioso": {
+   "municipio": "Fontioso",
+   "provincia": "burgos",
+   "id_entidad": 1270,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fontioso"
+  },
+  "jaramillo de la fuente": {
+   "municipio": "Jaramillo de la Fuente",
+   "provincia": "burgos",
+   "id_entidad": 1314,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Jaramillo de la Fuente"
+  },
+  "junta de villalba de losa": {
+   "municipio": "Junta de Villalba de Losa",
+   "provincia": "burgos",
+   "id_entidad": 1317,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Junta de Villalba de Losa"
+  },
+  "manciles": {
+   "municipio": "Manciles",
+   "provincia": "burgos",
+   "id_entidad": 1328,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Manciles"
+  },
+  "mecerreyes": {
+   "municipio": "Mecerreyes",
+   "provincia": "burgos",
+   "id_entidad": 1330,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Mecerreyes"
+  },
+  "merindad de valdeporres": {
+   "municipio": "Merindad de Valdeporres",
+   "provincia": "burgos",
+   "id_entidad": 1337,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Merindad de Valdeporres"
+  },
+  "monterrubio de la demanda": {
+   "municipio": "Monterrubio de la Demanda",
+   "provincia": "burgos",
+   "id_entidad": 1346,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Monterrubio de la Demanda"
+  },
+  "neila": {
+   "municipio": "Neila",
+   "provincia": "burgos",
+   "id_entidad": 1352,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Neila"
+  },
+  "pedrosa del paramo": {
+   "municipio": "Pedrosa del Páramo",
+   "provincia": "burgos",
+   "id_entidad": 1371,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pedrosa del Páramo"
+  },
+  "puentedura": {
+   "municipio": "Puentedura",
+   "provincia": "burgos",
+   "id_entidad": 1386,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puentedura"
+  },
+  "quintanilla de la mata": {
+   "municipio": "Quintanilla de la Mata",
+   "provincia": "burgos",
+   "id_entidad": 1395,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Quintanilla de la Mata"
+  },
+  "quintanilla del coco": {
+   "municipio": "Quintanilla del Coco",
+   "provincia": "burgos",
+   "id_entidad": 1397,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Quintanilla del Coco"
+  },
+  "retuerta": {
+   "municipio": "Retuerta",
+   "provincia": "burgos",
+   "id_entidad": 1409,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Retuerta"
+  },
+  "rezmondo": {
+   "municipio": "Rezmondo",
+   "provincia": "burgos",
+   "id_entidad": 1414,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Rezmondo"
+  },
+  "rabanos": {
+   "municipio": "Rábanos",
+   "provincia": "burgos",
+   "id_entidad": 1402,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Rábanos"
+  },
+  "san millan de lara": {
+   "municipio": "San Millán de Lara",
+   "provincia": "burgos",
+   "id_entidad": 1430,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San Millán de Lara"
+  },
+  "santibanez de esgueva": {
+   "municipio": "Santibáñez de Esgueva",
+   "provincia": "burgos",
+   "id_entidad": 1442,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santibáñez de Esgueva"
+  },
+  "santibanez del val": {
+   "municipio": "Santibáñez del Val",
+   "provincia": "burgos",
+   "id_entidad": 1443,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santibáñez del Val"
+  },
+  "santo domingo de silos": {
+   "municipio": "Santo Domingo de Silos",
+   "provincia": "burgos",
+   "id_entidad": 1444,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santo Domingo de Silos"
+  },
+  "tinieblas de la sierra": {
+   "municipio": "Tinieblas de la Sierra",
+   "provincia": "burgos",
+   "id_entidad": 1459,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Tinieblas de la Sierra"
+  },
+  "tobar": {
+   "municipio": "Tobar",
+   "provincia": "burgos",
+   "id_entidad": 1460,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Tobar"
+  },
+  "torresandino": {
+   "municipio": "Torresandino",
+   "provincia": "burgos",
+   "id_entidad": 1466,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torresandino"
+  },
+  "valmala": {
+   "municipio": "Valmala",
+   "provincia": "burgos",
+   "id_entidad": 1493,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valmala"
+  },
+  "villamiel de la sierra": {
+   "municipio": "Villamiel de la Sierra",
+   "provincia": "burgos",
+   "id_entidad": 1515,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villamiel de la Sierra"
+  },
+  "vizcainos": {
+   "municipio": "Vizcaínos",
+   "provincia": "burgos",
+   "id_entidad": 1536,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vizcaínos"
+  },
+  "bercianos del real camino": {
+   "municipio": "Bercianos del Real Camino",
+   "provincia": "leon",
+   "id_entidad": 3609,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Bercianos del Real Camino"
+  },
+  "cacabelos": {
+   "municipio": "Cacabelos",
+   "provincia": "leon",
+   "id_entidad": 3621,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cacabelos"
+  },
+  "calzada del coto": {
+   "municipio": "Calzada del Coto",
+   "provincia": "leon",
+   "id_entidad": 3622,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Calzada del Coto"
+  },
+  "campazas": {
+   "municipio": "Campazas",
+   "provincia": "leon",
+   "id_entidad": 3623,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Campazas"
+  },
+  "carucedo": {
+   "municipio": "Carucedo",
+   "provincia": "leon",
+   "id_entidad": 3631,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carucedo"
+  },
+  "cebanico": {
+   "municipio": "Cebanico",
+   "provincia": "leon",
+   "id_entidad": 3640,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cebanico"
+  },
+  "gordaliza del pino": {
+   "municipio": "Gordaliza del Pino",
+   "provincia": "leon",
+   "id_entidad": 3663,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Gordaliza del Pino"
+  },
+  "magaz de cepeda": {
+   "municipio": "Magaz de Cepeda",
+   "provincia": "leon",
+   "id_entidad": 3678,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Magaz de Cepeda"
+  },
+  "valderas": {
+   "municipio": "Valderas",
+   "provincia": "leon",
+   "id_entidad": 3761,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valderas"
+  },
+  "villaobispo de otero": {
+   "municipio": "Villaobispo de Otero",
+   "provincia": "leon",
+   "id_entidad": 3793,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaobispo de Otero"
+  },
+  "villaornate y castro": {
+   "municipio": "Villaornate y Castro",
+   "provincia": "leon",
+   "id_entidad": 3794,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaornate y Castro"
+  },
+  "boada de campos": {
+   "municipio": "Boada de Campos",
+   "provincia": "palencia",
+   "id_entidad": 5060,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Boada de Campos"
+  },
+  "bustillo del paramo de carrion": {
+   "municipio": "Bustillo del Páramo de Carrión",
+   "provincia": "palencia",
+   "id_entidad": 5064,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Bustillo del Páramo de Carrión"
+  },
+  "calahorra de boedo": {
+   "municipio": "Calahorra de Boedo",
+   "provincia": "palencia",
+   "id_entidad": 5065,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Calahorra de Boedo"
+  },
+  "capillas": {
+   "municipio": "Capillas",
+   "provincia": "palencia",
+   "id_entidad": 5067,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Capillas"
+  },
+  "fresno del rio": {
+   "municipio": "Fresno del Río",
+   "provincia": "palencia",
+   "id_entidad": 5092,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fresno del Río"
+  },
+  "meneses de campos": {
+   "municipio": "Meneses de Campos",
+   "provincia": "palencia",
+   "id_entidad": 5118,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Meneses de Campos"
+  },
+  "pedrosa de la vega": {
+   "municipio": "Pedrosa de la Vega",
+   "provincia": "palencia",
+   "id_entidad": 5134,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pedrosa de la Vega"
+  },
+  "pino del rio": {
+   "municipio": "Pino del Río",
+   "provincia": "palencia",
+   "id_entidad": 5137,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pino del Río"
+  },
+  "paramo de boedo": {
+   "municipio": "Páramo de Boedo",
+   "provincia": "palencia",
+   "id_entidad": 5130,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Páramo de Boedo"
+  },
+  "requena de campos": {
+   "municipio": "Requena de Campos",
+   "provincia": "palencia",
+   "id_entidad": 5152,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Requena de Campos"
+  },
+  "santa cecilia del alcor": {
+   "municipio": "Santa Cecilia del Alcor",
+   "provincia": "palencia",
+   "id_entidad": 5165,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa Cecilia del Alcor"
+  },
+  "villarrabe": {
+   "municipio": "Villarrabé",
+   "provincia": "palencia",
+   "id_entidad": 5214,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villarrabé"
+  },
+  "villota del paramo": {
+   "municipio": "Villota del Páramo",
+   "provincia": "palencia",
+   "id_entidad": 5225,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villota del Páramo"
+  },
+  "agallas": {
+   "municipio": "Agallas",
+   "provincia": "salamanca",
+   "id_entidad": 5324,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Agallas"
+  },
+  "ahigal de villarino": {
+   "municipio": "Ahigal de Villarino",
+   "provincia": "salamanca",
+   "id_entidad": 5326,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ahigal de Villarino"
+  },
+  "cabeza del caballo": {
+   "municipio": "Cabeza del Caballo",
+   "provincia": "salamanca",
+   "id_entidad": 5381,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cabeza del Caballo"
+  },
+  "cantagallo": {
+   "municipio": "Cantagallo",
+   "provincia": "salamanca",
+   "id_entidad": 5394,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cantagallo"
+  },
+  "carrascal del obispo": {
+   "municipio": "Carrascal del Obispo",
+   "provincia": "salamanca",
+   "id_entidad": 5401,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carrascal del Obispo"
+  },
+  "cepeda": {
+   "municipio": "Cepeda",
+   "provincia": "salamanca",
+   "id_entidad": 5409,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cepeda"
+  },
+  "cubo de don sancho, el": {
+   "municipio": "Cubo de Don Sancho, El",
+   "provincia": "salamanca",
+   "id_entidad": 5423,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cubo de Don Sancho"
+  },
+  "herguijuela de ciudad rodrigo": {
+   "municipio": "Herguijuela de Ciudad Rodrigo",
+   "provincia": "salamanca",
+   "id_entidad": 5465,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Herguijuela de Ciudad Rodrigo"
+  },
+  "madronal": {
+   "municipio": "Madroñal",
+   "provincia": "salamanca",
+   "id_entidad": 5484,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Madroñal"
+  },
+  "poveda de las cintas": {
+   "municipio": "Poveda de las Cintas",
+   "provincia": "salamanca",
+   "id_entidad": 5560,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Poveda de las Cintas"
+  },
+  "pozos de hinojo": {
+   "municipio": "Pozos de Hinojo",
+   "provincia": "salamanca",
+   "id_entidad": 5561,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pozos de Hinojo"
+  },
+  "puerto de bejar": {
+   "municipio": "Puerto de Béjar",
+   "provincia": "salamanca",
+   "id_entidad": 5567,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puerto de Béjar"
+  },
+  "robliza de cojos": {
+   "municipio": "Robliza de Cojos",
+   "provincia": "salamanca",
+   "id_entidad": 5574,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Robliza de Cojos"
+  },
+  "sanchotello": {
+   "municipio": "Sanchotello",
+   "provincia": "salamanca",
+   "id_entidad": 5596,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sanchotello"
+  },
+  "trabanca": {
+   "municipio": "Trabanca",
+   "provincia": "salamanca",
+   "id_entidad": 5631,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Trabanca"
+  },
+  "villaflores": {
+   "municipio": "Villaflores",
+   "provincia": "salamanca",
+   "id_entidad": 5653,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaflores"
+  },
+  "vidola, la": {
+   "municipio": "Vídola, La",
+   "provincia": "salamanca",
+   "id_entidad": 5652,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vídola"
+  },
+  "sancti-spiritus|salamanca": {
+   "municipio": "Sancti-Spíritus",
+   "provincia": "salamanca",
+   "id_entidad": 5597,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sancti-Spíritus"
+  },
+  "aldealengua de santa maria": {
+   "municipio": "Aldealengua de Santa María",
+   "provincia": "segovia",
+   "id_entidad": 5849,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Aldealengua de Santa María"
+  },
+  "cuevas de provanco": {
+   "municipio": "Cuevas de Provanco",
+   "provincia": "segovia",
+   "id_entidad": 5900,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cuevas de Provanco"
+  },
+  "laguna de contreras": {
+   "municipio": "Laguna de Contreras",
+   "provincia": "segovia",
+   "id_entidad": 5936,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Laguna de Contreras"
+  },
+  "montejo de la vega de la serrezuela": {
+   "municipio": "Montejo de la Vega de la Serrezuela",
+   "provincia": "segovia",
+   "id_entidad": 5956,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Montejo de la Vega de la Serrezuela"
+  },
+  "moral de hornuez": {
+   "municipio": "Moral de Hornuez",
+   "provincia": "segovia",
+   "id_entidad": 5958,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Moral de Hornuez"
+  },
+  "valdevacas de montejo": {
+   "municipio": "Valdevacas de Montejo",
+   "provincia": "segovia",
+   "id_entidad": 6031,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdevacas de Montejo"
+  },
+  "villaverde de montejo": {
+   "municipio": "Villaverde de Montejo",
+   "provincia": "segovia",
+   "id_entidad": 6045,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaverde de Montejo"
+  },
+  "calatanazor": {
+   "municipio": "Calatañazor",
+   "provincia": "soria",
+   "id_entidad": 6197,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Calatañazor"
+  },
+  "carabantes": {
+   "municipio": "Carabantes",
+   "provincia": "soria",
+   "id_entidad": 6201,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carabantes"
+  },
+  "caracena": {
+   "municipio": "Caracena",
+   "provincia": "soria",
+   "id_entidad": 6202,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Caracena"
+  },
+  "carrascosa de abajo": {
+   "municipio": "Carrascosa de Abajo",
+   "provincia": "soria",
+   "id_entidad": 6203,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carrascosa de Abajo"
+  },
+  "cihuela": {
+   "municipio": "Cihuela",
+   "provincia": "soria",
+   "id_entidad": 6213,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cihuela"
+  },
+  "deza": {
+   "municipio": "Deza",
+   "provincia": "soria",
+   "id_entidad": 6222,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Deza"
+  },
+  "fresno de caracena": {
+   "municipio": "Fresno de Caracena",
+   "provincia": "soria",
+   "id_entidad": 6229,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fresno de Caracena"
+  },
+  "muriel de la fuente": {
+   "municipio": "Muriel de la Fuente",
+   "provincia": "soria",
+   "id_entidad": 6260,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Muriel de la Fuente"
+  },
+  "nafria de ucero": {
+   "municipio": "Nafría de Ucero",
+   "provincia": "soria",
+   "id_entidad": 6262,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Nafría de Ucero"
+  },
+  "salduero": {
+   "municipio": "Salduero",
+   "provincia": "soria",
+   "id_entidad": 6289,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Salduero"
+  },
+  "santa maria de huerta": {
+   "municipio": "Santa María de Huerta",
+   "provincia": "soria",
+   "id_entidad": 6295,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa María de Huerta"
+  },
+  "santa maria de las hoyas": {
+   "municipio": "Santa María de las Hoyas",
+   "provincia": "soria",
+   "id_entidad": 6296,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa María de las Hoyas"
+  },
+  "ucero": {
+   "municipio": "Ucero",
+   "provincia": "soria",
+   "id_entidad": 6312,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ucero"
+  },
+  "villaciervos": {
+   "municipio": "Villaciervos",
+   "provincia": "soria",
+   "id_entidad": 6326,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaciervos"
+  },
+  "villanueva de gormaz": {
+   "municipio": "Villanueva de Gormaz",
+   "provincia": "soria",
+   "id_entidad": 6327,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villanueva de Gormaz"
+  },
+  "canillas de esgueva": {
+   "municipio": "Canillas de Esgueva",
+   "provincia": "valladolid",
+   "id_entidad": 7263,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Canillas de Esgueva"
+  },
+  "encinas de esgueva": {
+   "municipio": "Encinas de Esgueva",
+   "provincia": "valladolid",
+   "id_entidad": 7289,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Encinas de Esgueva"
+  },
+  "penaflor de hornija": {
+   "municipio": "Peñaflor de Hornija",
+   "provincia": "valladolid",
+   "id_entidad": 7341,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Peñaflor de Hornija"
+  },
+  "tiedra": {
+   "municipio": "Tiedra",
+   "provincia": "valladolid",
+   "id_entidad": 7387,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Tiedra"
+  },
+  "cobreros": {
+   "municipio": "Cobreros",
+   "provincia": "zamora",
+   "id_entidad": 7613,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cobreros"
+  },
+  "cuelgamures": {
+   "municipio": "Cuelgamures",
+   "provincia": "zamora",
+   "id_entidad": 7621,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cuelgamures"
+  },
+  "fresno de la polvorosa": {
+   "municipio": "Fresno de la Polvorosa",
+   "provincia": "zamora",
+   "id_entidad": 7633,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fresno de la Polvorosa"
+  },
+  "fuentespreadas": {
+   "municipio": "Fuentespreadas",
+   "provincia": "zamora",
+   "id_entidad": 7642,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fuentespreadas"
+  },
+  "gallegos del rio": {
+   "municipio": "Gallegos del Río",
+   "provincia": "zamora",
+   "id_entidad": 7645,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Gallegos del Río"
+  },
+  "moreruela de los infanzones": {
+   "municipio": "Moreruela de los Infanzones",
+   "provincia": "zamora",
+   "id_entidad": 7688,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Moreruela de los Infanzones"
+  },
+  "pinilla de toro": {
+   "municipio": "Pinilla de Toro",
+   "provincia": "zamora",
+   "id_entidad": 7710,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pinilla de Toro"
+  },
+  "pozoantiguo": {
+   "municipio": "Pozoantiguo",
+   "provincia": "zamora",
+   "id_entidad": 7716,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pozoantiguo"
+  },
+  "valcabado": {
+   "municipio": "Valcabado",
+   "provincia": "zamora",
+   "id_entidad": 7770,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valcabado"
+  },
+  "vega de tera": {
+   "municipio": "Vega de Tera",
+   "provincia": "zamora",
+   "id_entidad": 7774,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vega de Tera"
+  },
+  "vegalatrave": {
+   "municipio": "Vegalatrave",
+   "provincia": "zamora",
+   "id_entidad": 7776,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vegalatrave"
+  },
+  "villabrazaro": {
+   "municipio": "Villabrázaro",
+   "provincia": "zamora",
+   "id_entidad": 7781,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villabrázaro"
+  },
+  "villalonso": {
+   "municipio": "Villalonso",
+   "provincia": "zamora",
+   "id_entidad": 7793,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villalonso"
+  },
+  "ballestero, el": {
+   "municipio": "Ballestero, El",
+   "provincia": "albacete",
+   "id_entidad": 60,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ballestero"
+  },
+  "casas de juan nunez": {
+   "municipio": "Casas de Juan Núñez",
+   "provincia": "albacete",
+   "id_entidad": 68,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Casas de Juan Núñez"
+  },
+  "fuensanta": {
+   "municipio": "Fuensanta",
+   "provincia": "albacete",
+   "id_entidad": 79,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fuensanta"
+  },
+  "higueruela": {
+   "municipio": "Higueruela",
+   "provincia": "albacete",
+   "id_entidad": 86,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Higueruela"
+  },
+  "hoya-gonzalo": {
+   "municipio": "Hoya-Gonzalo",
+   "provincia": "albacete",
+   "id_entidad": 87,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Gonzalo"
+  },
+  "minaya": {
+   "municipio": "Minaya",
+   "provincia": "albacete",
+   "id_entidad": 95,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Minaya"
+  },
+  "navas de jorquera": {
+   "municipio": "Navas de Jorquera",
+   "provincia": "albacete",
+   "id_entidad": 101,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Navas de Jorquera"
+  },
+  "penas de san pedro": {
+   "municipio": "Peñas de San Pedro",
+   "provincia": "albacete",
+   "id_entidad": 106,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Peñas de San Pedro"
+  },
+  "pozohondo": {
+   "municipio": "Pozohondo",
+   "provincia": "albacete",
+   "id_entidad": 111,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pozohondo"
+  },
+  "vianos": {
+   "municipio": "Vianos",
+   "provincia": "albacete",
+   "id_entidad": 124,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vianos"
+  },
+  "villalgordo del jucar": {
+   "municipio": "Villalgordo del Júcar",
+   "provincia": "albacete",
+   "id_entidad": 126,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villalgordo del Júcar"
+  },
+  "villaverde de guadalimar": {
+   "municipio": "Villaverde de Guadalimar",
+   "provincia": "albacete",
+   "id_entidad": 132,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaverde de Guadalimar"
+  },
+  "abenojar": {
+   "municipio": "Abenójar",
+   "provincia": "ciudad_real",
+   "id_entidad": 1937,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Abenójar"
+  },
+  "albaladejo": {
+   "municipio": "Albaladejo",
+   "provincia": "ciudad_real",
+   "id_entidad": 1940,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Albaladejo"
+  },
+  "almaden": {
+   "municipio": "Almadén",
+   "provincia": "ciudad_real",
+   "id_entidad": 1947,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almadén"
+  },
+  "almadenejos": {
+   "municipio": "Almadenejos",
+   "provincia": "ciudad_real",
+   "id_entidad": 1948,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almadenejos"
+  },
+  "arenales de san gregorio": {
+   "municipio": "Arenales de San Gregorio",
+   "provincia": "ciudad_real",
+   "id_entidad": 1954,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Arenales de San Gregorio"
+  },
+  "cabezarados": {
+   "municipio": "Cabezarados",
+   "provincia": "ciudad_real",
+   "id_entidad": 1962,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cabezarados"
+  },
+  "corral de calatrava": {
+   "municipio": "Corral de Calatrava",
+   "provincia": "ciudad_real",
+   "id_entidad": 1973,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Corral de Calatrava"
+  },
+  "granatula de calatrava": {
+   "municipio": "Granátula de Calatrava",
+   "provincia": "ciudad_real",
+   "id_entidad": 1982,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Granátula de Calatrava"
+  },
+  "hinojosas de calatrava": {
+   "municipio": "Hinojosas de Calatrava",
+   "provincia": "ciudad_real",
+   "id_entidad": 1985,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Hinojosas de Calatrava"
+  },
+  "llanos del caudillo": {
+   "municipio": "Llanos del Caudillo",
+   "provincia": "ciudad_real",
+   "id_entidad": 1988,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Llanos del Caudillo"
+  },
+  "puebla de don rodrigo": {
+   "municipio": "Puebla de Don Rodrigo",
+   "provincia": "ciudad_real",
+   "id_entidad": 2006,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puebla de Don Rodrigo"
+  },
+  "puerto lapice": {
+   "municipio": "Puerto Lápice",
+   "provincia": "ciudad_real",
+   "id_entidad": 2008,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puerto Lápice"
+  },
+  "solana del pino": {
+   "municipio": "Solana del Pino",
+   "provincia": "ciudad_real",
+   "id_entidad": 2020,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Solana del Pino"
+  },
+  "terrinches": {
+   "municipio": "Terrinches",
+   "provincia": "ciudad_real",
+   "id_entidad": 2021,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Terrinches"
+  },
+  "valenzuela de calatrava": {
+   "municipio": "Valenzuela de Calatrava",
+   "provincia": "ciudad_real",
+   "id_entidad": 2028,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valenzuela de Calatrava"
+  },
+  "villamayor de calatrava": {
+   "municipio": "Villamayor de Calatrava",
+   "provincia": "ciudad_real",
+   "id_entidad": 2031,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villamayor de Calatrava"
+  },
+  "villanueva de san carlos": {
+   "municipio": "Villanueva de San Carlos",
+   "provincia": "ciudad_real",
+   "id_entidad": 2035,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villanueva de San Carlos"
+  },
+  "abia de la obispalia": {
+   "municipio": "Abia de la Obispalía",
+   "provincia": "cuenca",
+   "id_entidad": 2211,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Abia de la Obispalía"
+  },
+  "alcantud": {
+   "municipio": "Alcantud",
+   "provincia": "cuenca",
+   "id_entidad": 2219,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcantud"
+  },
+  "alcohujate": {
+   "municipio": "Alcohujate",
+   "provincia": "cuenca",
+   "id_entidad": 2221,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcohujate"
+  },
+  "alcazar del rey": {
+   "municipio": "Alcázar del Rey",
+   "provincia": "cuenca",
+   "id_entidad": 2220,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcázar del Rey"
+  },
+  "almarcha, la": {
+   "municipio": "Almarcha, La",
+   "provincia": "cuenca",
+   "id_entidad": 2225,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almarcha"
+  },
+  "almendros": {
+   "municipio": "Almendros",
+   "provincia": "cuenca",
+   "id_entidad": 2226,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almendros"
+  },
+  "almonacid del marquesado": {
+   "municipio": "Almonacid del Marquesado",
+   "provincia": "cuenca",
+   "id_entidad": 2228,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almonacid del Marquesado"
+  },
+  "altarejos": {
+   "municipio": "Altarejos",
+   "provincia": "cuenca",
+   "id_entidad": 2229,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Altarejos"
+  },
+  "arandilla del arroyo": {
+   "municipio": "Arandilla del Arroyo",
+   "provincia": "cuenca",
+   "id_entidad": 2230,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Arandilla del Arroyo"
+  },
+  "arcos de la sierra": {
+   "municipio": "Arcos de la Sierra",
+   "provincia": "cuenca",
+   "id_entidad": 2232,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Arcos de la Sierra"
+  },
+  "atalaya del canavate": {
+   "municipio": "Atalaya del Cañavate",
+   "provincia": "cuenca",
+   "id_entidad": 2235,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Atalaya del Cañavate"
+  },
+  "barajas de melo": {
+   "municipio": "Barajas de Melo",
+   "provincia": "cuenca",
+   "id_entidad": 2236,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Barajas de Melo"
+  },
+  "bascunana de san pedro": {
+   "municipio": "Bascuñana de San Pedro",
+   "provincia": "cuenca",
+   "id_entidad": 2238,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Bascuñana de San Pedro"
+  },
+  "belmontejo": {
+   "municipio": "Belmontejo",
+   "provincia": "cuenca",
+   "id_entidad": 2241,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Belmontejo"
+  },
+  "beteta": {
+   "municipio": "Beteta",
+   "provincia": "cuenca",
+   "id_entidad": 2242,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Beteta"
+  },
+  "campos del paraiso": {
+   "municipio": "Campos del Paraíso",
+   "provincia": "cuenca",
+   "id_entidad": 2251,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Campos del Paraíso"
+  },
+  "canalejas del arroyo": {
+   "municipio": "Canalejas del Arroyo",
+   "provincia": "cuenca",
+   "id_entidad": 2252,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Canalejas del Arroyo"
+  },
+  "carboneras de guadazaon": {
+   "municipio": "Carboneras de Guadazaón",
+   "provincia": "cuenca",
+   "id_entidad": 2261,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carboneras de Guadazaón"
+  },
+  "cardenete": {
+   "municipio": "Cardenete",
+   "provincia": "cuenca",
+   "id_entidad": 2262,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cardenete"
+  },
+  "carrascosa": {
+   "municipio": "Carrascosa",
+   "provincia": "cuenca",
+   "id_entidad": 2263,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carrascosa"
+  },
+  "casas de fernando alonso": {
+   "municipio": "Casas de Fernando Alonso",
+   "provincia": "cuenca",
+   "id_entidad": 2266,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Casas de Fernando Alonso"
+  },
+  "casas de guijarro": {
+   "municipio": "Casas de Guijarro",
+   "provincia": "cuenca",
+   "id_entidad": 2268,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Casas de Guijarro"
+  },
+  "castejon|cuenca": {
+   "municipio": "Castejón",
+   "provincia": "cuenca",
+   "id_entidad": 2272,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castejón"
+  },
+  "castillejo de iniesta": {
+   "municipio": "Castillejo de Iniesta",
+   "provincia": "cuenca",
+   "id_entidad": 2274,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castillejo de Iniesta"
+  },
+  "castillejo-sierra": {
+   "municipio": "Castillejo-Sierra",
+   "provincia": "cuenca",
+   "id_entidad": 2275,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castillejo-Sierra"
+  },
+  "castillo de garcimunoz": {
+   "municipio": "Castillo de Garcimuñoz",
+   "provincia": "cuenca",
+   "id_entidad": 2276,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castillo de Garcimuñoz"
+  },
+  "canada juncosa": {
+   "municipio": "Cañada Juncosa",
+   "provincia": "cuenca",
+   "id_entidad": 2254,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cañada Juncosa"
+  },
+  "canavate, el": {
+   "municipio": "Cañavate, El",
+   "provincia": "cuenca",
+   "id_entidad": 2256,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cañavate"
+  },
+  "canaveras": {
+   "municipio": "Cañaveras",
+   "provincia": "cuenca",
+   "id_entidad": 2257,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cañaveras"
+  },
+  "canaveruelas": {
+   "municipio": "Cañaveruelas",
+   "provincia": "cuenca",
+   "id_entidad": 2258,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cañaveruelas"
+  },
+  "canizares": {
+   "municipio": "Cañizares",
+   "provincia": "cuenca",
+   "id_entidad": 2260,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cañizares"
+  },
+  "chillaron de cuenca": {
+   "municipio": "Chillarón de Cuenca",
+   "provincia": "cuenca",
+   "id_entidad": 2279,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Chillarón de Cuenca"
+  },
+  "cierva, la": {
+   "municipio": "Cierva, La",
+   "provincia": "cuenca",
+   "id_entidad": 2281,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cierva"
+  },
+  "cueva del hierro": {
+   "municipio": "Cueva del Hierro",
+   "provincia": "cuenca",
+   "id_entidad": 2283,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cueva del Hierro"
+  },
+  "enguidanos": {
+   "municipio": "Enguídanos",
+   "provincia": "cuenca",
+   "id_entidad": 2284,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Enguídanos"
+  },
+  "fresneda de la sierra": {
+   "municipio": "Fresneda de la Sierra",
+   "provincia": "cuenca",
+   "id_entidad": 2286,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fresneda de la Sierra"
+  },
+  "frontera, la": {
+   "municipio": "Frontera, La",
+   "provincia": "cuenca",
+   "id_entidad": 2287,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Frontera"
+  },
+  "fuentelespino de haro": {
+   "municipio": "Fuentelespino de Haro",
+   "provincia": "cuenca",
+   "id_entidad": 2289,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fuentelespino de Haro"
+  },
+  "fuentenava de jabaga": {
+   "municipio": "Fuentenava de Jábaga",
+   "provincia": "cuenca",
+   "id_entidad": 2291,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fuentenava de Jábaga"
+  },
+  "fuentes": {
+   "municipio": "Fuentes",
+   "provincia": "cuenca",
+   "id_entidad": 2292,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fuentes"
+  },
+  "fuertescusa": {
+   "municipio": "Fuertescusa",
+   "provincia": "cuenca",
+   "id_entidad": 2293,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Fuertescusa"
+  },
+  "garaballa": {
+   "municipio": "Garaballa",
+   "provincia": "cuenca",
+   "id_entidad": 2295,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Garaballa"
+  },
+  "graja de campalbo": {
+   "municipio": "Graja de Campalbo",
+   "provincia": "cuenca",
+   "id_entidad": 2297,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Graja de Campalbo"
+  },
+  "henarejos": {
+   "municipio": "Henarejos",
+   "provincia": "cuenca",
+   "id_entidad": 2299,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Henarejos"
+  },
+  "hito, el": {
+   "municipio": "Hito, El",
+   "provincia": "cuenca",
+   "id_entidad": 2303,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Hito"
+  },
+  "honrubia": {
+   "municipio": "Honrubia",
+   "provincia": "cuenca",
+   "id_entidad": 2304,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Honrubia"
+  },
+  "huerta de la obispalia": {
+   "municipio": "Huerta de la Obispalía",
+   "provincia": "cuenca",
+   "id_entidad": 2311,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huerta de la Obispalía"
+  },
+  "huete": {
+   "municipio": "Huete",
+   "provincia": "cuenca",
+   "id_entidad": 2313,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huete"
+  },
+  "lagunaseca": {
+   "municipio": "Lagunaseca",
+   "provincia": "cuenca",
+   "id_entidad": 2316,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Lagunaseca"
+  },
+  "landete": {
+   "municipio": "Landete",
+   "provincia": "cuenca",
+   "id_entidad": 2317,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Landete"
+  },
+  "masegosa": {
+   "municipio": "Masegosa",
+   "provincia": "cuenca",
+   "id_entidad": 2322,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Masegosa"
+  },
+  "mira": {
+   "municipio": "Mira",
+   "provincia": "cuenca",
+   "id_entidad": 2325,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Mira"
+  },
+  "montalbanejo": {
+   "municipio": "Montalbanejo",
+   "provincia": "cuenca",
+   "id_entidad": 2327,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Montalbanejo"
+  },
+  "narboneta": {
+   "municipio": "Narboneta",
+   "provincia": "cuenca",
+   "id_entidad": 2335,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Narboneta"
+  },
+  "pajaroncillo": {
+   "municipio": "Pajaroncillo",
+   "provincia": "cuenca",
+   "id_entidad": 2343,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pajaroncillo"
+  },
+  "pajaron": {
+   "municipio": "Pajarón",
+   "provincia": "cuenca",
+   "id_entidad": 2342,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pajarón"
+  },
+  "paracuellos": {
+   "municipio": "Paracuellos",
+   "provincia": "cuenca",
+   "id_entidad": 2346,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Paracuellos"
+  },
+  "paredes": {
+   "municipio": "Paredes",
+   "provincia": "cuenca",
+   "id_entidad": 2347,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Paredes"
+  },
+  "peraleja, la": {
+   "municipio": "Peraleja, La",
+   "provincia": "cuenca",
+   "id_entidad": 2352,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Peraleja"
+  },
+  "pinarejo": {
+   "municipio": "Pinarejo",
+   "provincia": "cuenca",
+   "id_entidad": 2355,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pinarejo"
+  },
+  "portalrubio de guadamejud": {
+   "municipio": "Portalrubio de Guadamejud",
+   "provincia": "cuenca",
+   "id_entidad": 2358,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Portalrubio de Guadamejud"
+  },
+  "poyatos": {
+   "municipio": "Poyatos",
+   "provincia": "cuenca",
+   "id_entidad": 2360,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Poyatos"
+  },
+  "pozoamargo": {
+   "municipio": "Pozoamargo",
+   "provincia": "cuenca",
+   "id_entidad": 2361,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pozoamargo"
+  },
+  "pozorrubielos de la mancha": {
+   "municipio": "Pozorrubielos de la Mancha",
+   "provincia": "cuenca",
+   "id_entidad": 2362,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pozorrubielos de la Mancha"
+  },
+  "pozuelo, el": {
+   "municipio": "Pozuelo, El",
+   "provincia": "cuenca",
+   "id_entidad": 2364,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pozuelo"
+  },
+  "puebla de almenara": {
+   "municipio": "Puebla de Almenara",
+   "provincia": "cuenca",
+   "id_entidad": 2367,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puebla de Almenara"
+  },
+  "puebla del salvador": {
+   "municipio": "Puebla del Salvador",
+   "provincia": "cuenca",
+   "id_entidad": 2369,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puebla del Salvador"
+  },
+  "reillo": {
+   "municipio": "Reíllo",
+   "provincia": "cuenca",
+   "id_entidad": 2372,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Reíllo"
+  },
+  "saelices": {
+   "municipio": "Saelices",
+   "provincia": "cuenca",
+   "id_entidad": 2375,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Saelices"
+  },
+  "salmeroncillos": {
+   "municipio": "Salmeroncillos",
+   "provincia": "cuenca",
+   "id_entidad": 2377,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Salmeroncillos"
+  },
+  "san lorenzo de la parrilla": {
+   "municipio": "San Lorenzo de la Parrilla",
+   "provincia": "cuenca",
+   "id_entidad": 2380,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San Lorenzo de la Parrilla"
+  },
+  "santa maria del campo rus": {
+   "municipio": "Santa María del Campo Rus",
+   "provincia": "cuenca",
+   "id_entidad": 2385,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa María del Campo Rus"
+  },
+  "santa maria del val": {
+   "municipio": "Santa María del Val",
+   "provincia": "cuenca",
+   "id_entidad": 2386,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa María del Val"
+  },
+  "tinajas": {
+   "municipio": "Tinajas",
+   "provincia": "cuenca",
+   "id_entidad": 2394,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Tinajas"
+  },
+  "torralba": {
+   "municipio": "Torralba",
+   "provincia": "cuenca",
+   "id_entidad": 2395,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torralba"
+  },
+  "torrejoncillo del rey": {
+   "municipio": "Torrejoncillo del Rey",
+   "provincia": "cuenca",
+   "id_entidad": 2396,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torrejoncillo del Rey"
+  },
+  "torrubia del castillo": {
+   "municipio": "Torrubia del Castillo",
+   "provincia": "cuenca",
+   "id_entidad": 2398,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torrubia del Castillo"
+  },
+  "ucles": {
+   "municipio": "Uclés",
+   "provincia": "cuenca",
+   "id_entidad": 2402,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Uclés"
+  },
+  "valdemeca": {
+   "municipio": "Valdemeca",
+   "provincia": "cuenca",
+   "id_entidad": 2405,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdemeca"
+  },
+  "valdemorillo de la sierra": {
+   "municipio": "Valdemorillo de la Sierra",
+   "provincia": "cuenca",
+   "id_entidad": 2406,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdemorillo de la Sierra"
+  },
+  "valdemoro-sierra": {
+   "municipio": "Valdemoro-Sierra",
+   "provincia": "cuenca",
+   "id_entidad": 2407,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdemoro-Sierra"
+  },
+  "valdeolivas": {
+   "municipio": "Valdeolivas",
+   "provincia": "cuenca",
+   "id_entidad": 2408,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdeolivas"
+  },
+  "valeras, las": {
+   "municipio": "Valeras, Las",
+   "provincia": "cuenca",
+   "id_entidad": 2410,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valeras"
+  },
+  "valhermoso de la fuente": {
+   "municipio": "Valhermoso de la Fuente",
+   "provincia": "cuenca",
+   "id_entidad": 2411,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valhermoso de la Fuente"
+  },
+  "valsalobre": {
+   "municipio": "Valsalobre",
+   "provincia": "cuenca",
+   "id_entidad": 2412,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valsalobre"
+  },
+  "vellisca": {
+   "municipio": "Vellisca",
+   "provincia": "cuenca",
+   "id_entidad": 2417,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vellisca"
+  },
+  "villagarcia del llano": {
+   "municipio": "Villagarcía del Llano",
+   "provincia": "cuenca",
+   "id_entidad": 2420,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villagarcía del Llano"
+  },
+  "villalba de la sierra": {
+   "municipio": "Villalba de la Sierra",
+   "provincia": "cuenca",
+   "id_entidad": 2421,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villalba de la Sierra"
+  },
+  "villalgordo del marquesado": {
+   "municipio": "Villalgordo del Marquesado",
+   "provincia": "cuenca",
+   "id_entidad": 2423,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villalgordo del Marquesado"
+  },
+  "villalpardo": {
+   "municipio": "Villalpardo",
+   "provincia": "cuenca",
+   "id_entidad": 2424,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villalpardo"
+  },
+  "villanueva de guadamejud": {
+   "municipio": "Villanueva de Guadamejud",
+   "provincia": "cuenca",
+   "id_entidad": 2426,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villanueva de Guadamejud"
+  },
+  "villanueva de la jara": {
+   "municipio": "Villanueva de la Jara",
+   "provincia": "cuenca",
+   "id_entidad": 2427,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villanueva de la Jara"
+  },
+  "villar de olalla": {
+   "municipio": "Villar de Olalla",
+   "provincia": "cuenca",
+   "id_entidad": 2431,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villar de Olalla"
+  },
+  "villar del humo": {
+   "municipio": "Villar del Humo",
+   "provincia": "cuenca",
+   "id_entidad": 2432,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villar del Humo"
+  },
+  "villar del infantado": {
+   "municipio": "Villar del Infantado",
+   "provincia": "cuenca",
+   "id_entidad": 2433,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villar del Infantado"
+  },
+  "villar y velasco": {
+   "municipio": "Villar y Velasco",
+   "provincia": "cuenca",
+   "id_entidad": 2434,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villar y Velasco"
+  },
+  "villarejo de la penuela": {
+   "municipio": "Villarejo de la Peñuela",
+   "provincia": "cuenca",
+   "id_entidad": 2436,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villarejo de la Peñuela"
+  },
+  "villarejo-periesteban": {
+   "municipio": "Villarejo-Periesteban",
+   "provincia": "cuenca",
+   "id_entidad": 2437,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villarejo-Periesteban"
+  },
+  "villarta": {
+   "municipio": "Villarta",
+   "provincia": "cuenca",
+   "id_entidad": 2440,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villarta"
+  },
+  "villas de la ventosa": {
+   "municipio": "Villas de la Ventosa",
+   "provincia": "cuenca",
+   "id_entidad": 2441,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villas de la Ventosa"
+  },
+  "vindel": {
+   "municipio": "Vindel",
+   "provincia": "cuenca",
+   "id_entidad": 2444,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Vindel"
+  },
+  "villora": {
+   "municipio": "Víllora",
+   "provincia": "cuenca",
+   "id_entidad": 2443,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Víllora"
+  },
+  "yemeda": {
+   "municipio": "Yémeda",
+   "provincia": "cuenca",
+   "id_entidad": 2445,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Yémeda"
+  },
+  "zafra de zancara": {
+   "municipio": "Zafra de Záncara",
+   "provincia": "cuenca",
+   "id_entidad": 2446,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Zafra de Záncara"
+  },
+  "zarza de tajo": {
+   "municipio": "Zarza de Tajo",
+   "provincia": "cuenca",
+   "id_entidad": 2448,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Zarza de Tajo"
+  },
+  "zarzuela": {
+   "municipio": "Zarzuela",
+   "provincia": "cuenca",
+   "id_entidad": 2449,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Zarzuela"
+  },
+  "albalate de zorita": {
+   "municipio": "Albalate de Zorita",
+   "provincia": "guadalajara",
+   "id_entidad": 2845,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Albalate de Zorita"
+  },
+  "alcolea del pinar": {
+   "municipio": "Alcolea del Pinar",
+   "provincia": "guadalajara",
+   "id_entidad": 2850,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcolea del Pinar"
+  },
+  "alique": {
+   "municipio": "Alique",
+   "provincia": "guadalajara",
+   "id_entidad": 2856,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alique"
+  },
+  "angon": {
+   "municipio": "Angón",
+   "provincia": "guadalajara",
+   "id_entidad": 2863,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Angón"
+  },
+  "arbeteta": {
+   "municipio": "Arbeteta",
+   "provincia": "guadalajara",
+   "id_entidad": 2869,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Arbeteta"
+  },
+  "atanzon": {
+   "municipio": "Atanzón",
+   "provincia": "guadalajara",
+   "id_entidad": 2874,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Atanzón"
+  },
+  "baides": {
+   "municipio": "Baides",
+   "provincia": "guadalajara",
+   "id_entidad": 2878,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Baides"
+  },
+  "bodera, la": {
+   "municipio": "Bodera, La",
+   "provincia": "guadalajara",
+   "id_entidad": 2883,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Bodera"
+  },
+  "campillo de ranas": {
+   "municipio": "Campillo de Ranas",
+   "provincia": "guadalajara",
+   "id_entidad": 2890,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Campillo de Ranas"
+  },
+  "canredondo": {
+   "municipio": "Canredondo",
+   "provincia": "guadalajara",
+   "id_entidad": 2892,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Canredondo"
+  },
+  "caspuenas": {
+   "municipio": "Caspueñas",
+   "provincia": "guadalajara",
+   "id_entidad": 2899,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Caspueñas"
+  },
+  "castejon de henares": {
+   "municipio": "Castejón de Henares",
+   "provincia": "guadalajara",
+   "id_entidad": 2900,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Castejón de Henares"
+  },
+  "centenera": {
+   "municipio": "Centenera",
+   "provincia": "guadalajara",
+   "id_entidad": 2906,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Centenera"
+  },
+  "checa": {
+   "municipio": "Checa",
+   "provincia": "guadalajara",
+   "id_entidad": 2907,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Checa"
+  },
+  "chequilla": {
+   "municipio": "Chequilla",
+   "provincia": "guadalajara",
+   "id_entidad": 2908,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Chequilla"
+  },
+  "chillaron del rey": {
+   "municipio": "Chillarón del Rey",
+   "provincia": "guadalajara",
+   "id_entidad": 2909,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Chillarón del Rey"
+  },
+  "cogolludo": {
+   "municipio": "Cogolludo",
+   "provincia": "guadalajara",
+   "id_entidad": 2917,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cogolludo"
+  },
+  "esplegares": {
+   "municipio": "Esplegares",
+   "provincia": "guadalajara",
+   "id_entidad": 2931,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Esplegares"
+  },
+  "estriegana": {
+   "municipio": "Estriégana",
+   "provincia": "guadalajara",
+   "id_entidad": 2933,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Estriégana"
+  },
+  "herreria": {
+   "municipio": "Herrería",
+   "provincia": "guadalajara",
+   "id_entidad": 2949,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Herrería"
+  },
+  "hortezuela de ocen": {
+   "municipio": "Hortezuela de Océn",
+   "provincia": "guadalajara",
+   "id_entidad": 2956,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Hortezuela de Océn"
+  },
+  "huertahernando": {
+   "municipio": "Huertahernando",
+   "provincia": "guadalajara",
+   "id_entidad": 2959,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huertahernando"
+  },
+  "huermeces del cerro": {
+   "municipio": "Huérmeces del Cerro",
+   "provincia": "guadalajara",
+   "id_entidad": 2958,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Huérmeces del Cerro"
+  },
+  "illana": {
+   "municipio": "Illana",
+   "provincia": "guadalajara",
+   "id_entidad": 2962,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Illana"
+  },
+  "irueste": {
+   "municipio": "Irueste",
+   "provincia": "guadalajara",
+   "id_entidad": 2965,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Irueste"
+  },
+  "jirueque": {
+   "municipio": "Jirueque",
+   "provincia": "guadalajara",
+   "id_entidad": 2967,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Jirueque"
+  },
+  "loranca de tajuna": {
+   "municipio": "Loranca de Tajuña",
+   "provincia": "guadalajara",
+   "id_entidad": 2969,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Loranca de Tajuña"
+  },
+  "lupiana": {
+   "municipio": "Lupiana",
+   "provincia": "guadalajara",
+   "id_entidad": 2970,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Lupiana"
+  },
+  "luzaga": {
+   "municipio": "Luzaga",
+   "provincia": "guadalajara",
+   "id_entidad": 2971,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Luzaga"
+  },
+  "mandayona": {
+   "municipio": "Mandayona",
+   "provincia": "guadalajara",
+   "id_entidad": 2976,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Mandayona"
+  },
+  "matillas": {
+   "municipio": "Matillas",
+   "provincia": "guadalajara",
+   "id_entidad": 2982,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Matillas"
+  },
+  "mochales": {
+   "municipio": "Mochales",
+   "provincia": "guadalajara",
+   "id_entidad": 2995,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Mochales"
+  },
+  "negredo": {
+   "municipio": "Negredo",
+   "provincia": "guadalajara",
+   "id_entidad": 3005,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Negredo"
+  },
+  "ocentejo": {
+   "municipio": "Ocentejo",
+   "provincia": "guadalajara",
+   "id_entidad": 3006,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ocentejo"
+  },
+  "olmeda de cobeta": {
+   "municipio": "Olmeda de Cobeta",
+   "provincia": "guadalajara",
+   "id_entidad": 3008,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Olmeda de Cobeta"
+  },
+  "pardos": {
+   "municipio": "Pardos",
+   "provincia": "guadalajara",
+   "id_entidad": 3013,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pardos"
+  },
+  "peralveche": {
+   "municipio": "Peralveche",
+   "provincia": "guadalajara",
+   "id_entidad": 3021,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Peralveche"
+  },
+  "pioz": {
+   "municipio": "Pioz",
+   "provincia": "guadalajara",
+   "id_entidad": 3024,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pioz"
+  },
+  "pobo de duenas, el": {
+   "municipio": "Pobo de Dueñas, El",
+   "provincia": "guadalajara",
+   "id_entidad": 3026,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pobo de Dueñas"
+  },
+  "palmaces de jadraque": {
+   "municipio": "Pálmaces de Jadraque",
+   "provincia": "guadalajara",
+   "id_entidad": 3012,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Pálmaces de Jadraque"
+  },
+  "rebollosa de jadraque": {
+   "municipio": "Rebollosa de Jadraque",
+   "provincia": "guadalajara",
+   "id_entidad": 3035,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Rebollosa de Jadraque"
+  },
+  "riba de saelices": {
+   "municipio": "Riba de Saelices",
+   "provincia": "guadalajara",
+   "id_entidad": 3039,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Riba de Saelices"
+  },
+  "rillo de gallo": {
+   "municipio": "Rillo de Gallo",
+   "provincia": "guadalajara",
+   "id_entidad": 3040,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Rillo de Gallo"
+  },
+  "riofrio del llano": {
+   "municipio": "Riofrío del Llano",
+   "provincia": "guadalajara",
+   "id_entidad": 3041,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Riofrío del Llano"
+  },
+  "rueda de la sierra": {
+   "municipio": "Rueda de la Sierra",
+   "provincia": "guadalajara",
+   "id_entidad": 3046,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Rueda de la Sierra"
+  },
+  "sacecorbo": {
+   "municipio": "Sacecorbo",
+   "provincia": "guadalajara",
+   "id_entidad": 3047,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sacecorbo"
+  },
+  "sacedon": {
+   "municipio": "Sacedón",
+   "provincia": "guadalajara",
+   "id_entidad": 3048,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sacedón"
+  },
+  "saelices de la sal": {
+   "municipio": "Saelices de la Sal",
+   "provincia": "guadalajara",
+   "id_entidad": 3049,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Saelices de la Sal"
+  },
+  "san andres del rey": {
+   "municipio": "San Andrés del Rey",
+   "provincia": "guadalajara",
+   "id_entidad": 3052,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San Andrés del Rey"
+  },
+  "sauca": {
+   "municipio": "Saúca",
+   "provincia": "guadalajara",
+   "id_entidad": 3054,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Saúca"
+  },
+  "siguenza": {
+   "municipio": "Sigüenza",
+   "provincia": "guadalajara",
+   "id_entidad": 3060,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sigüenza"
+  },
+  "sotodosos": {
+   "municipio": "Sotodosos",
+   "provincia": "guadalajara",
+   "id_entidad": 3064,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sotodosos"
+  },
+  "taravilla": {
+   "municipio": "Taravilla",
+   "provincia": "guadalajara",
+   "id_entidad": 3067,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Taravilla"
+  },
+  "torija": {
+   "municipio": "Torija",
+   "provincia": "guadalajara",
+   "id_entidad": 3076,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torija"
+  },
+  "torrecuadradilla": {
+   "municipio": "Torrecuadradilla",
+   "provincia": "guadalajara",
+   "id_entidad": 3079,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torrecuadradilla"
+  },
+  "torrejon del rey": {
+   "municipio": "Torrejón del Rey",
+   "provincia": "guadalajara",
+   "id_entidad": 3080,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torrejón del Rey"
+  },
+  "torrubia": {
+   "municipio": "Torrubia",
+   "provincia": "guadalajara",
+   "id_entidad": 3085,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torrubia"
+  },
+  "valdeavellano": {
+   "municipio": "Valdeavellano",
+   "provincia": "guadalajara",
+   "id_entidad": 3097,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdeavellano"
+  },
+  "valfermoso de tajuna": {
+   "municipio": "Valfermoso de Tajuña",
+   "provincia": "guadalajara",
+   "id_entidad": 3106,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valfermoso de Tajuña"
+  },
+  "valhermoso": {
+   "municipio": "Valhermoso",
+   "provincia": "guadalajara",
+   "id_entidad": 3107,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valhermoso"
+  },
+  "valtablado del rio": {
+   "municipio": "Valtablado del Río",
+   "provincia": "guadalajara",
+   "id_entidad": 3108,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valtablado del Río"
+  },
+  "villanueva de alcoron": {
+   "municipio": "Villanueva de Alcorón",
+   "provincia": "guadalajara",
+   "id_entidad": 3111,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villanueva de Alcorón"
+  },
+  "villaseca de henares": {
+   "municipio": "Villaseca de Henares",
+   "provincia": "guadalajara",
+   "id_entidad": 3115,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villaseca de Henares"
+  },
+  "villel de mesa": {
+   "municipio": "Villel de Mesa",
+   "provincia": "guadalajara",
+   "id_entidad": 3117,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villel de Mesa"
+  },
+  "yebra": {
+   "municipio": "Yebra",
+   "provincia": "guadalajara",
+   "id_entidad": 3120,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Yebra"
+  },
+  "yelamos de abajo": {
+   "municipio": "Yélamos de Abajo",
+   "provincia": "guadalajara",
+   "id_entidad": 3121,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Yélamos de Abajo"
+  },
+  "yelamos de arriba": {
+   "municipio": "Yélamos de Arriba",
+   "provincia": "guadalajara",
+   "id_entidad": 3122,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Yélamos de Arriba"
+  },
+  "alcabon": {
+   "municipio": "Alcabón",
+   "provincia": "toledo",
+   "id_entidad": 6762,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Alcabón"
+  },
+  "aldeanueva de barbarroya": {
+   "municipio": "Aldeanueva de Barbarroya",
+   "provincia": "toledo",
+   "id_entidad": 6767,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Aldeanueva de Barbarroya"
+  },
+  "almendral de la canada": {
+   "municipio": "Almendral de la Cañada",
+   "provincia": "toledo",
+   "id_entidad": 6769,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Almendral de la Cañada"
+  },
+  "anover de tajo": {
+   "municipio": "Añover de Tajo",
+   "provincia": "toledo",
+   "id_entidad": 6772,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Añover de Tajo"
+  },
+  "barcience": {
+   "municipio": "Barcience",
+   "provincia": "toledo",
+   "id_entidad": 6776,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Barcience"
+  },
+  "cabezamesada": {
+   "municipio": "Cabezamesada",
+   "provincia": "toledo",
+   "id_entidad": 6785,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cabezamesada"
+  },
+  "campillo de la jara, el": {
+   "municipio": "Campillo de la Jara, El",
+   "provincia": "toledo",
+   "id_entidad": 6791,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Campillo de la Jara"
+  },
+  "camunas": {
+   "municipio": "Camuñas",
+   "provincia": "toledo",
+   "id_entidad": 6792,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Camuñas"
+  },
+  "cardiel de los montes": {
+   "municipio": "Cardiel de los Montes",
+   "provincia": "toledo",
+   "id_entidad": 6793,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cardiel de los Montes"
+  },
+  "carranque": {
+   "municipio": "Carranque",
+   "provincia": "toledo",
+   "id_entidad": 6796,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Carranque"
+  },
+  "casarrubios del monte": {
+   "municipio": "Casarrubios del Monte",
+   "provincia": "toledo",
+   "id_entidad": 6799,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Casarrubios del Monte"
+  },
+  "cebolla": {
+   "municipio": "Cebolla",
+   "provincia": "toledo",
+   "id_entidad": 6803,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Cebolla"
+  },
+  "erustes": {
+   "municipio": "Erustes",
+   "provincia": "toledo",
+   "id_entidad": 6817,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Erustes"
+  },
+  "estrella, la": {
+   "municipio": "Estrella, La",
+   "provincia": "toledo",
+   "id_entidad": 6822,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Estrella"
+  },
+  "guardia, la": {
+   "municipio": "Guardia, La",
+   "provincia": "toledo",
+   "id_entidad": 6828,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Guardia"
+  },
+  "hinojosa de san vicente": {
+   "municipio": "Hinojosa de San Vicente",
+   "provincia": "toledo",
+   "id_entidad": 6831,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Hinojosa de San Vicente"
+  },
+  "hontanar": {
+   "municipio": "Hontanar",
+   "provincia": "toledo",
+   "id_entidad": 6832,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Hontanar"
+  },
+  "illan de vacas": {
+   "municipio": "Illán de Vacas",
+   "provincia": "toledo",
+   "id_entidad": 6837,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Illán de Vacas"
+  },
+  "marjaliza": {
+   "municipio": "Marjaliza",
+   "provincia": "toledo",
+   "id_entidad": 6849,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Marjaliza"
+  },
+  "mesegar de tajo": {
+   "municipio": "Mesegar de Tajo",
+   "provincia": "toledo",
+   "id_entidad": 6857,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Mesegar de Tajo"
+  },
+  "montesclaros": {
+   "municipio": "Montesclaros",
+   "provincia": "toledo",
+   "id_entidad": 6862,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Montesclaros"
+  },
+  "mora": {
+   "municipio": "Mora",
+   "provincia": "toledo",
+   "id_entidad": 6863,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Mora"
+  },
+  "nava de ricomalillo, la": {
+   "municipio": "Nava de Ricomalillo, La",
+   "provincia": "toledo",
+   "id_entidad": 6865,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Nava de Ricomalillo"
+  },
+  "otero": {
+   "municipio": "Otero",
+   "provincia": "toledo",
+   "id_entidad": 6883,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Otero"
+  },
+  "puebla de montalban, la": {
+   "municipio": "Puebla de Montalbán, La",
+   "provincia": "toledo",
+   "id_entidad": 6893,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Puebla de Montalbán"
+  },
+  "romeral, el": {
+   "municipio": "Romeral, El",
+   "provincia": "toledo",
+   "id_entidad": 6906,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Romeral"
+  },
+  "san bartolome de las abiertas": {
+   "municipio": "San Bartolomé de las Abiertas",
+   "provincia": "toledo",
+   "id_entidad": 6907,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San Bartolomé de las Abiertas"
+  },
+  "san martin de pusa": {
+   "municipio": "San Martín de Pusa",
+   "provincia": "toledo",
+   "id_entidad": 6909,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "San Martín de Pusa"
+  },
+  "santa ana de pusa": {
+   "municipio": "Santa Ana de Pusa",
+   "provincia": "toledo",
+   "id_entidad": 6912,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santa Ana de Pusa"
+  },
+  "santo domingo-caudilla": {
+   "municipio": "Santo Domingo-Caudilla",
+   "provincia": "toledo",
+   "id_entidad": 6916,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Santo Domingo-Caudilla"
+  },
+  "sartajada": {
+   "municipio": "Sartajada",
+   "provincia": "toledo",
+   "id_entidad": 6917,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sartajada"
+  },
+  "segurilla": {
+   "municipio": "Segurilla",
+   "provincia": "toledo",
+   "id_entidad": 6918,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Segurilla"
+  },
+  "sesena": {
+   "municipio": "Seseña",
+   "provincia": "toledo",
+   "id_entidad": 6919,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Seseña"
+  },
+  "sevilleja de la jara": {
+   "municipio": "Sevilleja de la Jara",
+   "provincia": "toledo",
+   "id_entidad": 6920,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sevilleja de la Jara"
+  },
+  "sonseca": {
+   "municipio": "Sonseca",
+   "provincia": "toledo",
+   "id_entidad": 6921,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sonseca"
+  },
+  "sotillo de las palomas": {
+   "municipio": "Sotillo de las Palomas",
+   "provincia": "toledo",
+   "id_entidad": 6922,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Sotillo de las Palomas"
+  },
+  "tembleque": {
+   "municipio": "Tembleque",
+   "provincia": "toledo",
+   "id_entidad": 6924,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Tembleque"
+  },
+  "torrico": {
+   "municipio": "Torrico",
+   "provincia": "toledo",
+   "id_entidad": 6930,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Torrico"
+  },
+  "ugena": {
+   "municipio": "Ugena",
+   "provincia": "toledo",
+   "id_entidad": 6934,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ugena"
+  },
+  "valdeverdeja": {
+   "municipio": "Valdeverdeja",
+   "provincia": "toledo",
+   "id_entidad": 6936,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Valdeverdeja"
+  },
+  "ventas de san julian, las": {
+   "municipio": "Ventas de San Julián, Las",
+   "provincia": "toledo",
+   "id_entidad": 6941,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Ventas de San Julián"
+  },
+  "villacanas": {
+   "municipio": "Villacañas",
+   "provincia": "toledo",
+   "id_entidad": 6943,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villacañas"
+  },
+  "villarrubia de santiago": {
+   "municipio": "Villarrubia de Santiago",
+   "provincia": "toledo",
+   "id_entidad": 6952,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Villarrubia de Santiago"
+  },
+  "viso de san juan, el": {
+   "municipio": "Viso de San Juan, El",
+   "provincia": "toledo",
+   "id_entidad": 6956,
+   "ultimo_ejercicio_rendido": null,
+   "ejercicios_no_rendidos": [
+    2023,
+    2024,
+    2025
+   ],
+   "busqueda": "Viso de San Juan"
   }
  }
 }
