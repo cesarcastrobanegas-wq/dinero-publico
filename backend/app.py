@@ -4939,6 +4939,62 @@ def sueldos_concejales_html(municipio, provincia=None):
             + '</div></details>')
 
 
+FACTURAS_NAVARRA_FILE = os.path.join(BASE_DIR, "facturas_trimestrales_navarra.json.gz")
+FACTURAS_NAVARRA_MAX_FILAS = 100
+_FACTURAS_NAVARRA = None
+
+
+def _facturas_navarra():
+    """{clave_municipio: {"documentos": [...], "facturas": [...]}} de facturas_trimestrales_navarra.json.gz (generado
+    por actualizar_facturas_navarra.py). Se lee una vez, la primera vez que se pide una ficha navarra."""
+    global _FACTURAS_NAVARRA
+    if _FACTURAS_NAVARRA is None:
+        datos = {}
+        try:
+            with _gzip.open(FACTURAS_NAVARRA_FILE, "rt", encoding="utf-8") as f:
+                for muni, info in json.load(f).get("municipios", {}).items():
+                    datos[clave_municipio(muni, info.get("provincia") or "navarra")] = info
+        except Exception:
+            datos = {}
+        _FACTURAS_NAVARRA = datos
+    return _FACTURAS_NAVARRA
+
+
+def facturas_navarra_html(municipio, provincia=None):
+    """Desplegable "Facturas trimestrales Navarra" de la ficha. Decisión de César (2026-10-02): son las relaciones
+    trimestrales de facturas del Portal de Contratación de Navarra, NO contratos menores estándar -- van aparte, con
+    su propia etiqueta, y no entran en contratos_menors_locales, ni en el Índice, ni en los rankings. El importe se
+    muestra con la base que indica cada ayuntamiento, sin convertir. "" si el municipio no tiene."""
+    if provincia not in PROVINCIAS_NAVARRA:
+        return ""
+    info = _facturas_navarra().get(clave_municipio(municipio, provincia))
+    if not info or not info.get("facturas"):
+        return ""
+    facturas, docs = info["facturas"], info["documentos"]
+    anios = sorted({f["anio"] for f in facturas})
+    bases = sorted({f["importe_base"] for f in facturas})
+    filas = []
+    for f in sorted(facturas, key=lambda x: -x["importe"])[:FACTURAS_NAVARRA_MAX_FILAS]:
+        doc = docs[f["doc"]]
+        nif = f' <span class="conc-cargo">({esc(f["nif"])})</span>' if f.get("nif") else ""
+        filas.append(
+            f'<li><b class="pol-nombre">{esc(f["adjudicatario"])}</b>{nif} <span class="conc-cargo">— {esc(f["objeto"])}</span> '
+            f'<span class="pol-retrib">{fmt_eur(f["importe"])}</span> '
+            f'<span class="conc-cargo">{esc(f.get("fecha") or str(f["anio"]))}</span> '
+            f'<a href="{esc(doc["url"])}" target="_blank" rel="noopener nofollow">{_t("documento")} ↗</a></li>')
+    enlaces = " · ".join(f'<a href="{esc(d["url"])}" target="_blank" rel="noopener nofollow">{esc(str(d["anio"]))}: {esc(d["titulo"])}</a>'
+                         for d in docs)
+    mostradas = (_t("Se muestran las {n} de mayor importe; el resto está en los documentos enlazados.").format(n=len(filas))
+                 if len(facturas) > len(filas) else "")
+    return (f'<details class="concejales-dd facturas-navarra"><summary>🧾 '
+            f'{_t("Facturas trimestrales Navarra ({n} facturas, {desde}-{hasta})").format(n=fmt_num(len(facturas)), desde=anios[0], hasta=anios[-1])}'
+            f'</summary><div class="pol-retrib-nota">'
+            f'{_t("Relaciones trimestrales de facturas que el ayuntamiento publica en el Portal de Contratación de Navarra. Son facturas, no contratos menores: no se suman a ellos ni cuentan en el Índice.")} '
+            f'{_t("Importe tal como figura en la fuente ({base}), sin convertir.").format(base=esc(", ".join(bases)))} {mostradas}'
+            f'</div><ul>{"".join(filas)}</ul>'
+            f'<div class="pol-retrib-nota">{_t("Documentos:")} {enlaces}</div></details>')
+
+
 def municipio_valido(txt):
     buscado = normalizar(txt)
     for m in MUNICIPIOS_MURCIA:
@@ -17694,6 +17750,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           {it_widget_html}
           {fondos_ue_html}
           {contratos_menors_html}
+          {facturas_navarra_html(muni_name, d.get("provincia", provincia))}
           {render_comentarios_html("municipio", (f"{muni_name}|{d.get('provincia', provincia)}" if es_homonimo(muni_name) else muni_name), f"/?muni={muni_enc}{q_prov}", titulo=muni_name)}
         </div>"""
 
