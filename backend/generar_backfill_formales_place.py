@@ -16,6 +16,7 @@ los meses ya generados se releen al arrancar para reconstruir las claves vistas.
 Uso (desde backend/):
     python generar_backfill_formales_place.py 202609 202109
     python generar_backfill_formales_place.py 202608 202608 --zip-local place_cache --salida C:/otra/carpeta
+    python generar_backfill_formales_place.py consolidar     # meses -> backfill_formales_place_prov/<provincia>.json.gz
 
 Fuera del objetivo: Murcia (patrón propio sin anclar e histórico ya completo) y las provincias con fuente regional.
 Progreso en %TEMP%/backfill_formales_place.log (stdout queda mudo por `import app`)."""
@@ -75,7 +76,32 @@ def escribir_mes(carpeta, mes, datos):
     os.replace(tmp, ruta_mes(carpeta, mes))
 
 
+def consolidar(carpeta, destino):
+    """Meses -> un fichero por provincia ({"municipios": {municipio: [contratos]}}), que es lo que aplica app.py
+    (_aplicar_backfill_formales_place). No importa app.py. Los ficheros de provincia se reescriben enteros."""
+    meses = sorted((f[:6] for f in os.listdir(carpeta) if re.fullmatch(r"\d{6}\.json\.gz", f)), reverse=True)
+    por_prov = collections.defaultdict(lambda: collections.defaultdict(list))
+    for mes in meses:                                             # del más reciente al más antiguo
+        for m, v in leer_mes(carpeta, mes)["municipios"].items():
+            por_prov[v["provincia"]][m].extend(v["contratos"])
+    os.makedirs(destino, exist_ok=True)
+    for f in os.listdir(destino):
+        if f.endswith(".json.gz"):
+            os.remove(os.path.join(destino, f))
+    total = 0
+    for prov, munis in sorted(por_prov.items()):
+        n = sum(len(cs) for cs in munis.values())
+        total += n
+        escribir_mes(destino, prov, {"provincia": prov, "meses": [meses[-1], meses[0]], "municipios": munis})
+        print(f"{prov}: {n} contratos en {len(munis)} municipios, "
+              f"{os.path.getsize(ruta_mes(destino, prov)) >> 10} KB")
+    print(f"TOTAL: {total} contratos, {len(por_prov)} provincias, meses {meses[-1]}..{meses[0]} ({len(meses)})")
+
+
 def main():
+    if sys.argv[1:2] == ["consolidar"]:
+        consolidar(CARPETA, CARPETA + "_prov")
+        return
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("desde", help="mes mas reciente, AAAAMM")
     ap.add_argument("hasta", help="mes mas antiguo, AAAAMM")

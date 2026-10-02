@@ -9216,6 +9216,82 @@ def _aplicar_backfill_nombres_place():
         print(f"[startup] backfill_nombres_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
+BACKFILL_FORMALES_PLACE_DIR = os.path.join(BASE_DIR, "backfill_formales_place_prov")
+_BACKFILL_FORMALES_PLACE_CLAVE = "backfill_formales_place_sha::"     # + provincia
+
+
+def _aplicar_backfill_formales_place():
+    """Histórico de contratos formales de PLACE (desde septiembre de 2021) de las provincias que solo tenían los
+    meses procesados desde que se conectaron (diagnóstico de cobertura por comunidad, 2026-10-02: 0,25-1,6 contratos
+    por 1.000 habitantes frente a 4-7 en Murcia, Cataluña, País Vasco y Navarra). Calculado EN LOCAL con
+    generar_backfill_formales_place.py (una pasada por ZIP mensual, mismas condiciones que buscar_en_zip con
+    anclaje) y consolidado en un fichero por provincia, para no tener todo el histórico en memoria a la vez.
+
+    Misma fusión que _aplicar_backfill_nombres_place: aditiva (gana lo ya guardado), idempotente por hash en
+    `settings` (uno por provincia), y un municipio sin fila en cache.db deja su provincia sin marcar para
+    reintentarla en el siguiente arranque."""
+    if not _DISCO_CONFIABLE or not os.path.isdir(BACKFILL_FORMALES_PLACE_DIR):
+        return
+    total, municipios, provincias, sin_fila_total = 0, 0, 0, []
+    for fichero in sorted(os.listdir(BACKFILL_FORMALES_PLACE_DIR)):
+        if not fichero.endswith(".json.gz"):
+            continue
+        provincia = fichero[:-len(".json.gz")]
+        try:
+            with open(os.path.join(BACKFILL_FORMALES_PLACE_DIR, fichero), "rb") as f:
+                crudo = f.read()
+            huella = hashlib.sha256(crudo).hexdigest()[:16]
+            clave_hash = _BACKFILL_FORMALES_PLACE_CLAVE + provincia
+            with _db_lock:
+                fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave_hash,)).fetchone()
+            if fila and fila[0] == huella:
+                continue
+            datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+            del crudo
+            sin_fila = []
+            for muni, contratos in datos["municipios"].items():
+                key = clave_municipio(muni, provincia)
+                with _db_lock:
+                    row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
+                if not row:
+                    sin_fila.append(muni)
+                    continue
+                d = json.loads(row[0])
+                actuales = d.get("contratos", [])
+                claves = {c.get("url") or c.get("titulo", "")[:80] for c in actuales}
+                nuevos = []
+                for c in contratos:
+                    k = c.get("url") or c.get("titulo", "")[:80]
+                    if k and k not in claves:
+                        claves.add(k)
+                        nuevos.append(c)
+                if not nuevos:
+                    continue
+                d["contratos"] = actuales + nuevos
+                d["total_contratos"] = len(d["contratos"])
+                d["alertas"] = analizar_riesgo(d["contratos"])
+                with _db_lock:
+                    _db.execute("UPDATE municipios SET data=? WHERE municipio=?",
+                                (json.dumps(d, ensure_ascii=False), key))
+                    _db.commit()
+                total += len(nuevos)
+                municipios += 1
+            if not sin_fila:
+                with _db_lock:
+                    _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                                "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (clave_hash, huella))
+                    _db.commit()
+            sin_fila_total += sin_fila
+            provincias += 1
+            del datos
+        except Exception as e:
+            print(f"[startup] backfill_formales_place: ERROR en {provincia}, no se aplico "
+                  f"({type(e).__name__}: {e})", flush=True)
+    if provincias:
+        print(f"[startup] backfill_formales_place: {total} contratos anadidos en {municipios} municipios de "
+              f"{provincias} provincias ({len(sin_fila_total)} sin ficha, omitidos: {sin_fila_total[:20]}).", flush=True)
+
+
 IMPORTE_ADJUDICADO_PLACE_FILE = os.path.join(BASE_DIR, "importe_adjudicado_place.json.gz")
 _IMPORTE_ADJUDICADO_PLACE_CLAVE = "importe_adjudicado_place_sha"
 _RE_ID_EVL = re.compile(r"idEvl=([^&#\s]+)")
@@ -13103,6 +13179,7 @@ def _inicializar_datos():
     _aplicar_backfill_ajuntament_place()
     _aplicar_correccion_formales_5anios()
     _aplicar_backfill_nombres_place()
+    _aplicar_backfill_formales_place()
     _aplicar_importe_adjudicado_place()
     _depurar_asignacion_place_por_nombre()
     corte = time.time() - RESULT_CACHE_TTL
