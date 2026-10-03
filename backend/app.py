@@ -15024,7 +15024,7 @@ def _header_html(provincia="todas"):
     <a href="{rankings_href}">{_t("Rankings")}</a>
     <a href="{rankings_href}#alcaldes">{_t("Sueldos Alcaldes")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
-    <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>📲 {_t("Instalar app")}</button>
+    <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>{_t("Instalar app")}</button>
   </nav>
   {_i18n_selector_html()}
 </header>"""
@@ -15055,15 +15055,15 @@ def _footer_html(provincia="todas"):
     brand_label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["todas"])
     return f"""<div class="instalar-bar">
   <div class="instalar-text">
-    {_t("<b>📲 Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio».")}
+    {_t("<b>Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio».")}
   </div>
 </div>
 <div class="colabora-bar">
   <div class="colabora-text">
-    {_t("<b>🤝 Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie.")}
+    {_t("<b>Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie.")}
   </div>
   <span class="colabora-bizum" title="{_t("Envía un Bizum a este número desde tu app del banco")}">
-    💙 Bizum: {BIZUM_TELEFONO}
+    Bizum: {BIZUM_TELEFONO}
   </span>
 </div>
 <footer class="site-footer">
@@ -15144,7 +15144,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 {extra_head}</head>
 <body>
 <div id="pwa-banner-mobile" class="pwa-banner-mobile" hidden>
-  <span class="pwa-banner-text">📲 {_t("Instala la app — acceso directo desde tu móvil")}</span>
+  <span class="pwa-banner-text">{_t("Instala la app — acceso directo desde tu móvil")}</span>
   <button type="button" id="pwa-banner-btn" class="pwa-banner-btn">{_t("Instalar")}</button>
   <button type="button" id="pwa-banner-close" class="pwa-banner-close" aria-label="{_t("Cerrar aviso")}">✕</button>
 </div>
@@ -18231,7 +18231,7 @@ def _personalizacion_html():
     esta función no lee ni escribe nada en el servidor, solo pinta el
     HTML/JS que hace las peticiones normales de lectura."""
     return f"""<div class="personaliza-banner" id="personaliza-banner">
-    <div class="personaliza-texto">📍 {_t("<b>¿Cuál es tu municipio?</b> Te enseñamos lo que ha gastado tu ayuntamiento y su puesto en los rankings.")}</div>
+    <div class="personaliza-texto">{_t("<b>¿Cuál es tu municipio?</b> Te enseñamos lo que ha gastado tu ayuntamiento y su puesto en los rankings.")}</div>
     <div class="personaliza-input-row">
       <input type="text" id="personaliza-input" placeholder="{_t("Escribe tu municipio…")}" autocomplete="off">
       <div class="personaliza-sugerencias" id="personaliza-sugerencias"></div>

@@ -283,12 +283,12 @@ msgid "Instalar app"
 msgstr "Instal·lar l'app"
 
 #: app.py:14891
-msgid "<b>📲 Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio»."
-msgstr "<b>📲 Instal·la-la com a app</b> — al mòbil o a l'ordinador, gratis i sense botigues d'aplicacions. Busca el botó <b>«Instal·lar l'app»</b> a la capçalera de dalt; si no apareix, a <b>Android/Windows (Chrome, Edge)</b> fes servir el menú ⋮ → «Instal·la l'aplicació», i a <b>iPhone/iPad (Safari)</b> el botó Comparteix → «Afegeix a la pantalla d'inici»."
+msgid "<b>Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio»."
+msgstr "<b>Instal·la-la com a app</b> — al mòbil o a l'ordinador, gratis i sense botigues d'aplicacions. Busca el botó <b>«Instal·lar l'app»</b> a la capçalera de dalt; si no apareix, a <b>Android/Windows (Chrome, Edge)</b> fes servir el menú ⋮ → «Instal·la l'aplicació», i a <b>iPhone/iPad (Safari)</b> el botó Comparteix → «Afegeix a la pantalla d'inici»."
 
 #: app.py:14896
-msgid "<b>🤝 Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie."
-msgstr "<b>🤝 Col·labora</b> — La transparència no es regala, es construeix. Si aquest projecte t'ha servit per saber en què es gasten els diners de tothom, ajuda'ns a mantenir-lo."
+msgid "<b>Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie."
+msgstr "<b>Col·labora</b> — La transparència no es regala, es construeix. Si aquest projecte t'ha servit per saber en què es gasten els diners de tothom, ajuda'ns a mantenir-lo."
 
 #: app.py:14898
 msgid "Envía un Bizum a este número desde tu app del banco"

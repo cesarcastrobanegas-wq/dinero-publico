@@ -283,12 +283,12 @@ msgid "Instalar app"
 msgstr "Instalar app"
 
 #: app.py:14891
-msgid "<b>📲 Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio»."
-msgstr "<b>📲 Instálaa como app</b> — no teu móbil ou no teu ordenador, de balde e sen tendas de aplicacións. Busca o botón <b>«Instalar app»</b> na cabeceira de enriba; se non aparece, en <b>Android/Windows (Chrome, Edge)</b> usa o menú ⋮ → «Instalar aplicación», e en <b>iPhone/iPad (Safari)</b> o botón Compartir → «Engadir á pantalla de inicio»."
+msgid "<b>Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio»."
+msgstr "<b>Instálaa como app</b> — no teu móbil ou no teu ordenador, de balde e sen tendas de aplicacións. Busca o botón <b>«Instalar app»</b> na cabeceira de enriba; se non aparece, en <b>Android/Windows (Chrome, Edge)</b> usa o menú ⋮ → «Instalar aplicación», e en <b>iPhone/iPad (Safari)</b> o botón Compartir → «Engadir á pantalla de inicio»."
 
 #: app.py:14896
-msgid "<b>🤝 Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie."
-msgstr "<b>🤝 Colabora</b> — A transparencia non se regala, constrúese. Se este proxecto che serviu para saber en que se gasta o diñeiro de todos, axúdanos a que siga en pé."
+msgid "<b>Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie."
+msgstr "<b>Colabora</b> — A transparencia non se regala, constrúese. Se este proxecto che serviu para saber en que se gasta o diñeiro de todos, axúdanos a que siga en pé."
 
 #: app.py:14898
 msgid "Envía un Bizum a este número desde tu app del banco"

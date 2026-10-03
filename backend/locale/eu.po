@@ -283,12 +283,12 @@ msgid "Instalar app"
 msgstr "Instalatu aplikazioa"
 
 #: app.py:14891
-msgid "<b>📲 Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio»."
-msgstr "<b>📲 Instalatu aplikazio gisa</b> — mugikorrean edo ordenagailuan, doan eta aplikazio-dendarik gabe. Bilatu <b>«Instalatu aplikazioa»</b> botoia goiko goiburuan; agertzen ez bada, <b>Android/Windows-en (Chrome, Edge)</b> erabili ⋮ menua → «Instalatu aplikazioa», eta <b>iPhone/iPad-en (Safari)</b> Partekatu botoia → «Gehitu hasierako pantailan»."
+msgid "<b>Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio»."
+msgstr "<b>Instalatu aplikazio gisa</b> — mugikorrean edo ordenagailuan, doan eta aplikazio-dendarik gabe. Bilatu <b>«Instalatu aplikazioa»</b> botoia goiko goiburuan; agertzen ez bada, <b>Android/Windows-en (Chrome, Edge)</b> erabili ⋮ menua → «Instalatu aplikazioa», eta <b>iPhone/iPad-en (Safari)</b> Partekatu botoia → «Gehitu hasierako pantailan»."
 
 #: app.py:14896
-msgid "<b>🤝 Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie."
-msgstr "<b>🤝 Lagundu</b> — Gardentasuna ez da oparitzen, eraiki egiten da. Proiektu honek guztion dirua zertan gastatzen den jakiteko balio izan badizu, lagun iezaguzu zutik jarraitzen."
+msgid "<b>Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie."
+msgstr "<b>Lagundu</b> — Gardentasuna ez da oparitzen, eraiki egiten da. Proiektu honek guztion dirua zertan gastatzen den jakiteko balio izan badizu, lagun iezaguzu zutik jarraitzen."
 
 #: app.py:14898
 msgid "Envía un Bizum a este número desde tu app del banco"
