@@ -9254,7 +9254,19 @@ def _aplicar_backfill_formales_place():
                 with _db_lock:
                     row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
                 if not row:
-                    sin_fila.append(muni)
+                    if not municipio_valido_provincia(muni, provincia):
+                        sin_fila.append(muni)
+                        continue
+                    # Municipio de la lista que aún no tenía ficha (p.ej. un homónimo desde la clave compuesta): se
+                    # crea con el histórico y timestamp 0, como caducada, para que el próximo refresco le añada los
+                    # meses recientes (fusión aditiva). Si no, su provincia se reintentaría en cada arranque.
+                    _db_set_municipio(muni, {
+                        "municipio": muni, "organismo": _nombre_organismo_municipal(muni, provincia),
+                        "total_contratos": len(contratos), "contratos": list(contratos),
+                        "alertas": analizar_riesgo(list(contratos)), "place_profile": place_profile_url(muni),
+                        "timestamp": 0}, provincia=provincia)
+                    total += len(contratos)
+                    municipios += 1
                     continue
                 d = json.loads(row[0])
                 actuales = d.get("contratos", [])
