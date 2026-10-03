@@ -41,8 +41,10 @@ services:
       - key: DATA_DIR
         value: /var/data
     healthCheckPath: /
+    # Tamaño real 10 GB: medido en producción el 2026-10-03 con shutil.disk_usage (10.043 MiB de sistema de
+    # ficheros, /api/diagnostico-arranque -> "disco"); antes ponía 2 GB, desactualizado.
     # Confirmado por César en el dashboard de Render (2026-07-30): disco
-    # persistente de pago de 2GB ya activo y montado en /var/data -- no se
+    # persistente de pago ya activo y montado en /var/data -- no se
     # ha creado ni modificado nada aquí, esto solo documenta lo que ya
     # existe. IMPORTANTE antes de un futuro "sync" del blueprint: Render
     # empareja discos existentes con este bloque por el campo `name` de
@@ -54,4 +56,4 @@ services:
     disks:
       - name: cache-data
         mountPath: /var/data
-        sizeGB: 2
+        sizeGB: 10

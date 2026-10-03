@@ -2243,25 +2243,19 @@ if os.path.abspath(_DB_SEED_FILE) != os.path.abspath(DB_FILE):
         except OSError:
             pass  # no crítico -- en el peor caso se repite este chequeo en el próximo arranque
 
-# Backup de seguridad de una sola vez, ANTES de aplicar el fix de refresco
-# aditivo (ver INFORME_NOCHE.md 2026-07-22): copia el cache.db tal cual está
-# en este primer arranque con el código nuevo -- incompleto para algún
-# municipio ya afectado por el bug de refresco sustitutivo, pero es lo único
-# que hay en este disco, y es mejor tener esta foto que ninguna. Vive en el
-# mismo DATA_DIR (mismo disco persistente), no requiere credenciales
-# adicionales. El nombre fijo (sin timestamp) hace que el `if` de abajo sea
-# idempotente: solo copia la primera vez que arranca este código.
+# Backup de seguridad del 2026-07-22 (antes del fix de refresco aditivo, ver INFORME_NOCHE.md): se creaba en el
+# primer arranque si no existía. Retirado el 2026-10-03 por decisión de César (241 MB en el disco de producción, foto
+# de hace más de dos meses): ya no se crea, y si sigue en el disco persistente se borra. Solo en producción
+# (DATA_DIR distinto del directorio del código): en local no se toca nada.
 _DB_BACKUP_PRE_REFRESCO_ADITIVO = os.path.join(DATA_DIR, "cache_db_backup_pre_refresco_aditivo_20260722.db")
-if os.path.exists(DB_FILE) and not os.path.exists(_DB_BACKUP_PRE_REFRESCO_ADITIVO):
-    shutil.copy2(DB_FILE, _DB_BACKUP_PRE_REFRESCO_ADITIVO)
-    # Copiar también los sidecars de WAL si el proceso anterior no hizo un
-    # checkpoint limpio al parar -- si no, el backup podría no reflejar los
-    # últimos commits todavía no volcados al fichero principal.
-    for _ext in ("-wal", "-shm"):
-        if os.path.exists(DB_FILE + _ext):
-            shutil.copy2(DB_FILE + _ext, _DB_BACKUP_PRE_REFRESCO_ADITIVO + _ext)
-    print(f"[startup] Backup de seguridad de cache.db antes del fix de refresco aditivo: "
-          f"{_DB_BACKUP_PRE_REFRESCO_ADITIVO}", flush=True)
+if os.path.abspath(DATA_DIR) != os.path.abspath(BASE_DIR):
+    for _ext in ("", "-wal", "-shm"):
+        if os.path.exists(_DB_BACKUP_PRE_REFRESCO_ADITIVO + _ext):
+            try:
+                os.remove(_DB_BACKUP_PRE_REFRESCO_ADITIVO + _ext)
+                print(f"[startup] borrado el backup antiguo {_DB_BACKUP_PRE_REFRESCO_ADITIVO + _ext}", flush=True)
+            except OSError as _e:
+                print(f"[startup] no se pudo borrar {_DB_BACKUP_PRE_REFRESCO_ADITIVO + _ext}: {_e}", flush=True)
 
 _db = sqlite3.connect(DB_FILE, check_same_thread=False, timeout=30)
 _db.execute("PRAGMA journal_mode=WAL")
