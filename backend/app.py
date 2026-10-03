@@ -16092,10 +16092,17 @@ def _calcular_indice_transparencia():
     for f in filas:
         if f["habitantes"] and f["_fetched"]:
             por_tramo.setdefault(_indice_tramo_poblacion(f["habitantes"]), []).append(f)
+    import bisect
     for grupo in por_tramo.values():
         grupo.sort(key=lambda f: f["_actividad_por_1000"])
         n = len(grupo)
-        for i, f in enumerate(grupo):
+        valores = [f["_actividad_por_1000"] for f in grupo]
+        for f in grupo:
+            # Empates (2026-10-03, decisión de César): misma nota para el mismo valor -- el % de municipios del tramo
+            # con actividad ESTRICTAMENTE menor. Antes el percentil salía de la posición en la lista ordenada, y entre
+            # empatados esa posición dependía del orden de las provincias: con 0 contratos, un pueblo de Murcia
+            # sacaba 0 y uno de Navarra hasta 80.
+            i = bisect.bisect_left(valores, f["_actividad_por_1000"])
             percentil = 100.0 if n <= 1 else 100.0 * i / (n - 1)
             f["componentes"]["actividad"] = {
                 "disponible": True, "puntos": percentil,
@@ -20005,6 +20012,11 @@ def render_metodologia_html():
   Público para todos los demás municipios (unos 250.000 contratos). Como la actividad compara a cada municipio con
   los de su tamaño en toda España, Murcia, Cataluña y el País Vasco bajan algunos puntos: no publican menos que
   antes, sino que ahora se les compara con municipios que por fin tienen sus datos completos.</p>
+  <p><strong>Octubre de 2026: empates en la actividad.</strong> Dos municipios del mismo tamaño con la misma
+  actividad reciben ahora la misma nota: la parte de municipios de su tamaño que publican menos. Antes, entre
+  municipios empatados, sobre todo los que no tienen ningún contrato formal, la nota dependía del orden en que
+  procesábamos las provincias, y algunos sumaban hasta 80 puntos sin publicar nada. Por eso bajan Castilla y León y
+  Castilla-La Mancha, con muchos pueblos sin contratos formales.</p>
   <p><strong>Octubre de 2026: saldo presupuestario en País Vasco y Navarra.</strong> El fichero de Hacienda no cubre
   el régimen foral, así que en esas dos comunidades ese componente queda fuera en lugar de puntuar 0.</p>
 
