@@ -9218,6 +9218,9 @@ def _aplicar_backfill_nombres_place():
 
 BACKFILL_FORMALES_PLACE_DIR = os.path.join(BASE_DIR, "backfill_formales_place_prov")
 _BACKFILL_FORMALES_PLACE_CLAVE = "backfill_formales_place_sha::"     # + provincia
+# Marca de los contratos que entraron por este histórico: el componente "directivo" del Índice no los cuenta
+# mientras el BORME no haya buscado a su adjudicatario (ver _calcular_indice_transparencia).
+ORIGEN_BACKFILL_FORMALES = "backfill_formales_place"
 
 
 def _aplicar_backfill_formales_place():
@@ -9260,6 +9263,7 @@ def _aplicar_backfill_formales_place():
                     # Municipio de la lista que aún no tenía ficha (p.ej. un homónimo desde la clave compuesta): se
                     # crea con el histórico y timestamp 0, como caducada, para que el próximo refresco le añada los
                     # meses recientes (fusión aditiva). Si no, su provincia se reintentaría en cada arranque.
+                    contratos = [dict(c, origen=ORIGEN_BACKFILL_FORMALES) for c in contratos]
                     _db_set_municipio(muni, {
                         "municipio": muni, "organismo": _nombre_organismo_municipal(muni, provincia),
                         "total_contratos": len(contratos), "contratos": list(contratos),
@@ -9276,7 +9280,7 @@ def _aplicar_backfill_formales_place():
                     k = c.get("url") or c.get("titulo", "")[:80]
                     if k and k not in claves:
                         claves.add(k)
-                        nuevos.append(c)
+                        nuevos.append(dict(c, origen=ORIGEN_BACKFILL_FORMALES))
                 if not nuevos:
                     continue
                 d["contratos"] = actuales + nuevos
@@ -15755,6 +15759,16 @@ def _calcular_indice_transparencia():
     for (n, p), d in menores_det.items():
         menores_por_nombre.setdefault(n, []).append((p, d))
     formales_idx = {clave_municipio(d.get("municipio", ""), d.get("provincia")): d for d in _db_all_municipios()}
+    # Resultado vigente de la búsqueda de directivo por adjudicatario (misma regla que _dir_cache_get: un negativo
+    # caducado es "hay que volver a buscar"). Para un contrato del histórico de formales (ORIGEN_BACKFILL_FORMALES),
+    # que llega sin el campo directivo, cuenta lo que diga la caché; si su empresa aún no se ha buscado, no cuenta --
+    # decisión de César (2026-10-03): el histórico recién añadido no penaliza mientras el BORME no lo alcance.
+    ahora = time.time()
+    with _db_lock:
+        dir_cache = {}
+        for clave_d, nombre_d, ts_d in _db.execute("SELECT clave, nombre, ts FROM directores").fetchall():
+            if ahora - (ts_d or 0) <= (DIR_CACHE_POS_TTL if nombre_d else DIR_CACHE_NEG_TTL):
+                dir_cache[clave_d] = bool(nombre_d)
 
     filas = []
     for clave, pob in POBLACION.items():
@@ -15861,19 +15875,37 @@ def _calcular_indice_transparencia():
              "detalle": _NO_DISP_HOMONIMO if homonimo else _td("Sin contratos formales (PLACE/PSCP) para calcularlo")})
 
         # ---- directivo identificado: igual que v1 ----
-        num_dir_formal = sum(1 for c in contratos_formales
-                             if c.get("empresa") and c.get("empresa") != "No localizada" and _directivo_contrato(c)[0])
+        num_dir_formal, pendientes_borme = 0, 0
+        for c in contratos_formales:
+            if not (c.get("empresa") and c.get("empresa") != "No localizada"):
+                continue
+            if _directivo_contrato(c)[0]:
+                num_dir_formal += 1
+            elif c.get("origen") == ORIGEN_BACKFILL_FORMALES:
+                encontrado = dir_cache.get(_dir_cache_key(c.get("empresa", ""), c.get("nif", "")))
+                if encontrado is None:
+                    pendientes_borme += 1
+                elif encontrado:
+                    num_dir_formal += 1
         m = None if homonimo else menores_stats.get(clave)
         num_dir = num_dir_formal + (m["con_directivo"] if m else 0)
-        denom_dir = num_adj + (m["total"] if m else 0)
+        denom_dir = num_adj - pendientes_borme + (m["total"] if m else 0)
         comp["directivo"] = (
             {"disponible": True, "puntos": 100.0 * num_dir / denom_dir,
-             "detalle": _td("{num}/{den} adjudicatarios conocidos con directivo identificado ({num_f}/{den_f} "
-                            "formales + {num_m}/{den_m} menores)", num=num_dir, den=denom_dir, num_f=num_dir_formal,
-                            den_f=num_adj, num_m=m["con_directivo"] if m else 0, den_m=m["total"] if m else 0)}
+             "detalle": (_td("{num}/{den} adjudicatarios conocidos con directivo identificado ({num_f}/{den_f} "
+                             "formales + {num_m}/{den_m} menores; {pend} formales del histórico aún pendientes de "
+                             "buscar en el BORME, no cuentan)", num=num_dir, den=denom_dir, num_f=num_dir_formal,
+                             den_f=num_adj - pendientes_borme, num_m=m["con_directivo"] if m else 0,
+                             den_m=m["total"] if m else 0, pend=pendientes_borme)
+                         if pendientes_borme else
+                         _td("{num}/{den} adjudicatarios conocidos con directivo identificado ({num_f}/{den_f} "
+                             "formales + {num_m}/{den_m} menores)", num=num_dir, den=denom_dir, num_f=num_dir_formal,
+                             den_f=num_adj, num_m=m["con_directivo"] if m else 0, den_m=m["total"] if m else 0))}
             if denom_dir else
             {"disponible": False, "puntos": None,
-             "detalle": _NO_DISP_HOMONIMO if homonimo else _td("Sin adjudicatarios conocidos para calcularlo")})
+             "detalle": _NO_DISP_HOMONIMO if homonimo else
+                        _td("Adjudicatarios del histórico aún pendientes de buscar en el BORME") if pendientes_borme else
+                        _td("Sin adjudicatarios conocidos para calcularlo")})
 
         # ---- menores (v2): solo con fuente conectada; sin fuente = no disponible (nunca 0) hasta conectar PLACE ----
         cands = menores_por_nombre.get(normalizar(municipio), [])
@@ -19734,13 +19766,24 @@ def render_metodologia_html():
   nombre e importe; 50 si solo consta el sueldo del alcalde (que publica el Ministerio); 0 si ni eso.</p>
   <p><strong>Directivo identificado ({w("directivo")}).</strong> De las empresas que reciben contratos, en cuántas
   podemos ver quién las dirige según el Registro Mercantil. Depende en parte de nuestro propio cruce de datos, que
-  avanza poco a poco.</p>
+  avanza poco a poco. Los contratos del histórico añadido en octubre de 2026 cuya empresa todavía no hemos buscado en
+  el BORME no cuentan, ni a favor ni en contra, hasta que la busquemos.</p>
   <p><strong>Deuda ({w("deuda_pub")}) y saldo presupuestario ({w("saldo_pub")}).</strong> Pesan poco porque casi
   todos los ayuntamientos los tienen publicados en el Ministerio de Hacienda: con más peso, las notas se
   amontonarían arriba sin distinguir a nadie.</p>
   <p><strong>Formato ({w("formato")}).</strong> Premia publicar los contratos menores en un formato que se pueda
   reutilizar (un fichero de datos mejor que un PDF escaneado). Pesa poco porque solo lo hemos revisado a mano en
   unos 70 municipios; en el resto queda fuera.</p>
+
+  <h2>Cambios en el Índice</h2>
+  <p><strong>Octubre de 2026: histórico de contratos formales en toda España.</strong> Hasta ahora solo la Región de
+  Murcia, Cataluña, el País Vasco y Navarra tenían cinco años de contratos formales; el resto de comunidades, solo
+  los últimos meses. Hemos añadido el histórico desde septiembre de 2021 de la Plataforma de Contratación del Sector
+  Público para todos los demás municipios (unos 250.000 contratos). Como la actividad compara a cada municipio con
+  los de su tamaño en toda España, Murcia, Cataluña y el País Vasco bajan algunos puntos: no publican menos que
+  antes, sino que ahora se les compara con municipios que por fin tienen sus datos completos.</p>
+  <p><strong>Octubre de 2026: saldo presupuestario en País Vasco y Navarra.</strong> El fichero de Hacienda no cubre
+  el régimen foral, así que en esas dos comunidades ese componente queda fuera en lugar de puntuar 0.</p>
 
   <h2>Qué no podemos ver</h2>
   <p><strong>Contratos menores.</strong> No existe ninguna obligación de publicarlos en un registro central, y cada
