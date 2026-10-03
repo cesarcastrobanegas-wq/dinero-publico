@@ -19384,6 +19384,9 @@ def _estado_carga():
                                "rankings_con_parametros": v["rankings_con_parametros"]}
                               for k, v in por_agente.items()), key=lambda x: -x["segundos"])[:20],
         "hilos": _hilos_ahora(),
+        # Si el pid que atiende no es el que importó el módulo, gunicorn precargó la app y la copió al proceso que
+        # atiende (--preload): los hilos de fondo arrancados al importar se quedaron en el otro proceso.
+        "proceso": {"pid_atiende": os.getpid(), "pid_padre": os.getppid(), **_PROCESO_IMPORTACION},
         "indice_calculado_hace_s": (round(ahora - _INDICE_TRANSPARENCIA_CACHE["ts"])
                                     if _INDICE_TRANSPARENCIA_CACHE.get("ts") else None),
         "cpu_proceso_pct": cpu,
@@ -22061,6 +22064,8 @@ class Handler(BaseHTTPRequestHandler):
 # `gunicorn backend.app:app`, que solo importa `app` sin pasar por
 # `if __name__ == "__main__"`), así los datos están cargados en memoria
 # antes de servir la primera petición.
+_PROCESO_IMPORTACION = {"pid": os.getpid(), "argv": list(__import__("sys").argv)[:12],
+                        "gunicorn_cmd_args": bool(os.environ.get("GUNICORN_CMD_ARGS"))}   # ver _estado_carga
 _inicializar_datos()
 _lanzar_enriquecimiento()   # enriquecer sociedades ya guardadas sin directivo
 
