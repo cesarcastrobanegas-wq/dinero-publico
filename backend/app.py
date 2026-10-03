@@ -13375,6 +13375,10 @@ def _limpiar_cache_negativos():
 # (2026-10-03: tras desplegar el histórico de formales, portada 31 s y búsqueda 28 s con el barrido en marcha).
 _peticiones_en_curso = 0
 _peticiones_lock = threading.Lock()
+_PETICIONES_ACTIVAS = {}                                   # diagnóstico de carga (2026-10-03), ver app()
+_PETICIONES_RECIENTES = __import__("collections").deque(maxlen=2000)
+# Fase del hilo de directivos para el diagnóstico: "esperando", "fase1" (recorre las fichas), "fase2" (busca) o "fin".
+_ESTADO_DIRECTIVOS = {"fase": "sin_arrancar", "hecho": 0, "total": 0, "desde": 0.0}
 CEDER_TURNO_MAX_S = 2.0      # como mucho se espera esto seguido: con tráfico constante el barrido sigue avanzando
 
 
@@ -13444,6 +13448,7 @@ def _enriquecer_directivos_bg(provincia=None):
         # cuya empresa ya no está agotada (re-buscables con la estrategia
         # actual) y (b) recopilar los pendientes de enriquecer.
         pendientes = []
+        _ESTADO_DIRECTIVOS.update(fase="fase1", hecho=0, total=0, desde=time.time())
         agotados = {}    # (empresa, nif) -> _dir_cache_agotado, una consulta por empresa y no por contrato
 
         def _agotado(empresa, nif):
@@ -13453,6 +13458,7 @@ def _enriquecer_directivos_bg(provincia=None):
             return agotados[k]
 
         for d in _db_iter_municipios(provincia=provincia):
+            _ESTADO_DIRECTIVOS["hecho"] += 1
             _ceder_a_peticiones()
             municipio = d.get("municipio", "")
             provincia_d = d.get("provincia", "murcia")
@@ -13506,7 +13512,9 @@ def _enriquecer_directivos_bg(provincia=None):
             cambios_muni_actual = False
 
         del agotados
+        _ESTADO_DIRECTIVOS.update(fase="fase2", hecho=0, total=len(pendientes), desde=time.time())
         for idx, (municipio, provincia_p, key, empresa, nif) in enumerate(pendientes, 1):
+            _ESTADO_DIRECTIVOS["hecho"] = idx
             _ceder_a_peticiones()
             print(f"  [{idx}/{len(pendientes)}] {empresa} (NIF:{nif})", flush=True)
             cached_n, cached_c = _dir_cache_get(empresa, nif)
@@ -13540,6 +13548,7 @@ def _enriquecer_directivos_bg(provincia=None):
             time.sleep(1.2)  # delay entre peticiones
 
         _flush_actual()
+        _ESTADO_DIRECTIVOS.update(fase="fin", desde=time.time())
         print(f"  [enriquecimiento] Fin: {encontrados}/{len(pendientes)} directivos encontrados.", flush=True)
 
     finally:
@@ -19318,7 +19327,44 @@ def _diagnostico_arranque():
         "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
         "municipios_en_cache_resultado_ahora": n_municipios_en_cache,
         "memoria_rss_mb": memoria_rss_mb,
+        "carga": _estado_carga(),
         "disco": _uso_disco(),
+    }
+
+
+def _estado_carga():
+    """Peticiones en curso y de los últimos 10 minutos, fase del hilo de directivos, CPU e hilos (2026-10-03: para
+    ver si la lentitud de páginas ligeras coincide con los 4 hilos de gunicorn ocupados en páginas pesadas)."""
+    ahora = time.time()
+    with _peticiones_lock:
+        activas = [dict(v) for v in _PETICIONES_ACTIVAS.values()]
+        recientes = [r for r in _PETICIONES_RECIENTES if ahora - r[1] <= 600]
+    en_curso = sorted(({"ruta": a["ruta"], "segundos": round(ahora - a["inicio"], 1), "bot": a["bot"]}
+                       for a in activas), key=lambda x: -x["segundos"])
+    por_ruta = {}
+    for ruta, ini, dur, bot in recientes:
+        r = por_ruta.setdefault(ruta, {"n": 0, "bots": 0, "suma_s": 0.0, "max_s": 0.0})
+        r["n"] += 1
+        r["bots"] += int(bot)
+        r["suma_s"] += dur
+        r["max_s"] = max(r["max_s"], dur)
+    resumen = sorted(({"ruta": k, "n": v["n"], "bots": v["bots"], "media_s": round(v["suma_s"] / v["n"], 2),
+                       "max_s": round(v["max_s"], 1)} for k, v in por_ruta.items()), key=lambda x: -x["n"] * x["media_s"])
+    try:
+        cpu = psutil.Process().cpu_percent(interval=0.3)
+    except Exception:
+        cpu = None
+    est = dict(_ESTADO_DIRECTIVOS)
+    est["hace_s"] = round(ahora - est["desde"]) if est.get("desde") else None
+    return {
+        "peticiones_en_curso": en_curso,
+        "ultimos_10_min": {"peticiones": len(recientes), "de_bots": sum(1 for r in recientes if r[3]),
+                           "por_ruta": resumen[:25]},
+        "hilo_directivos": est,
+        "indice_calculado_hace_s": (round(ahora - _INDICE_TRANSPARENCIA_CACHE["ts"])
+                                    if _INDICE_TRANSPARENCIA_CACHE.get("ts") else None),
+        "cpu_proceso_pct": cpu,
+        "hilos_python": threading.active_count(),
     }
 
 
@@ -21868,17 +21914,36 @@ def _route_post(path, params):
 
 # ─── WSGI (producción: gunicorn backend.app:app) ─────────────────────────────
 
+_RE_UA_BOT = re.compile(r"bot|crawl|spider|slurp|preview|facebookexternalhit|python-requests|python-urllib|curl|wget|"
+                        r"headless|scrapy|httpclient|okhttp|go-http|java/|libwww|axios|node-fetch", re.I)
+
+
+def _ruta_diagnostico(path, query):
+    """Ruta sin valores de la consulta (solo qué parámetros lleva), p. ej. "/?muni&provincia"."""
+    claves = sorted(parse_qs(query or "").keys())
+    return path + ("?" + "&".join(claves) if claves else "")
+
+
 def app(environ, start_response):
     """Callable WSGI estándar — es lo que gunicorn/render.yaml invocan. Cuenta la petición en _peticiones_en_curso
-    mientras se calcula la respuesta (ver _ceder_a_peticiones)."""
+    mientras se calcula la respuesta (ver _ceder_a_peticiones) y la registra para /api/diagnostico-arranque
+    (_PETICIONES_ACTIVAS y _PETICIONES_RECIENTES: ruta sin valores, segundos, si parece un bot; sin IP ni datos)."""
     global _peticiones_en_curso
+    ident = object()
+    info = {"ruta": _ruta_diagnostico(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", "")),
+            "inicio": time.time(), "bot": bool(_RE_UA_BOT.search(environ.get("HTTP_USER_AGENT", "") or "")),
+            "metodo": environ.get("REQUEST_METHOD", "GET")}
     with _peticiones_lock:
         _peticiones_en_curso += 1
+        _PETICIONES_ACTIVAS[id(ident)] = info
     try:
         return _app_wsgi(environ, start_response)
     finally:
+        fin = time.time()
         with _peticiones_lock:
             _peticiones_en_curso -= 1
+            _PETICIONES_ACTIVAS.pop(id(ident), None)
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], fin - info["inicio"], info["bot"]))
 
 
 def _app_wsgi(environ, start_response):
