@@ -13309,14 +13309,30 @@ def _inicializar_datos():
             _cache_set(d.get("municipio", muni_key), d, d.get("provincia"))
     for _prov in MUNICIPIOS_PSEUDO:
         _asegurar_pseudo_municipio_fondos(_prov)
-    # Feed de menores de PLACE: al FINAL del arranque (después de todas las fuentes propias: manda la fuente propia) y
-    # en un hilo aparte -- la primera carga (~850.000 filas) tarda varios minutos y gunicorn mata el worker si el
-    # arranque pasa de --timeout (300 s); lanzado antes, además, frenaba el resto del arranque (GIL). En los arranques
-    # siguientes la huella no cambia y termina en menos de un segundo.
-    def _carga_place_menores():
-        _cargar_contratos_menores_place()
-        _recasar_governalia_ventana_larga()      # una sola vez (marca en settings); ver _GOVERNALIA_DIAS_EXTRA
-        _nombre_pf_conocido("", "")              # construye ya el índice de nombres de personas físicas (ver ahí)
+    # Los hilos de fondo (feed de menores, precálculo del Índice, noticias UE, directivos) ya no se lanzan aquí: ver
+    # _arrancar_hilos_de_fondo, que se llama al final del módulo o, bajo gunicorn --preload, en cada trabajador
+    # (post_fork en gunicorn.conf.py).
+
+
+def _carga_place_menores():
+    """Feed de menores de PLACE: al FINAL del arranque (después de todas las fuentes propias: manda la fuente propia) y
+    en un hilo aparte -- la primera carga (~850.000 filas) tarda varios minutos y gunicorn mata el worker si el
+    arranque pasa de --timeout (300 s); lanzado antes, además, frenaba el resto del arranque (GIL). En los arranques
+    siguientes la huella no cambia y termina en menos de un segundo."""
+    _cargar_contratos_menores_place()
+    _recasar_governalia_ventana_larga()      # una sola vez (marca en settings); ver _GOVERNALIA_DIAS_EXTRA
+    _nombre_pf_conocido("", "")              # construye ya el índice de nombres de personas físicas (ver ahí)
+
+
+def _arrancar_hilos_de_fondo():
+    """Arranca los hilos que viven mientras dura el proceso: feed de menores de PLACE, precálculo del Índice, noticias
+    UE (si faltan) y barrido de directivos.
+
+    2026-10-03: en Render corre gunicorn con --preload (GUNICORN_CMD_ARGS): la app se importa en el proceso maestro y
+    el que atiende es una copia hecha después. Lanzados al importar, estos hilos se quedaban en el maestro -- el que
+    atiende no tenía ninguno, sus cachés en memoria (Índice, nombres de personas físicas) no le servían y, si un hilo
+    del maestro tenía _db_lock cogido al hacer la copia, el trabajador lo heredaba bloqueado. Por eso, bajo gunicorn,
+    se lanzan desde el hook post_fork (gunicorn.conf.py -> _tras_fork), una vez en cada trabajador."""
     hilo_feed = threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True)
     hilo_feed.start()
     threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
@@ -13324,6 +13340,20 @@ def _inicializar_datos():
     # al RSS (búsqueda text=España) en vez de esperar al cron diario.
     if len(_db_noticias_ue(limit=3)) < 3:
         threading.Thread(target=actualizar_noticias_ue, name="noticias-ue", daemon=True).start()
+    _lanzar_enriquecimiento()   # enriquecer sociedades ya guardadas sin directivo
+
+
+def _tras_fork():
+    """Hook post_fork de gunicorn (gunicorn.conf.py), ya dentro del proceso trabajador: conexión SQLite y cerrojo
+    propios -- una conexión SQLite no debe cruzar un fork, y un cerrojo heredado podría venir cogido -- y los hilos de
+    fondo (ver _arrancar_hilos_de_fondo)."""
+    global _db, _db_lock
+    _db_lock = threading.Lock()
+    _db = sqlite3.connect(DB_FILE, check_same_thread=False, timeout=30)
+    _db.execute("PRAGMA journal_mode=WAL")
+    _db.create_function("normalizar", 1, normalizar)     # igual que la conexión original (ver más arriba)
+    _PROCESO_IMPORTACION["post_fork_pid"] = os.getpid()
+    _arrancar_hilos_de_fondo()
 
 
 # ─── ENRIQUECIMIENTO EN BACKGROUND (BORME) ────────────────────────
@@ -19332,6 +19362,31 @@ def _diagnostico_arranque():
     }
 
 
+def _memoria_procesos():
+    """Memoria del proceso que atiende y de su padre (con gunicorn, el maestro) y de los otros hijos del padre: RSS y,
+    en Linux, PSS (reparte entre procesos las páginas compartidas tras la copia) y USS (solo las propias). La suma de
+    PSS es la mejor estimación del consumo real del contenedor (2026-10-03)."""
+    def mem(p):
+        try:
+            m = p.memory_full_info()
+            d = {"pid": p.pid, "nombre": p.name()[:30], "rss_mb": round(m.rss / 1048576, 1)}
+            for campo in ("pss", "uss"):
+                if hasattr(m, campo):
+                    d[campo + "_mb"] = round(getattr(m, campo) / 1048576, 1)
+            return d
+        except Exception as e:
+            return {"pid": getattr(p, "pid", None), "error": type(e).__name__}
+    try:
+        yo = psutil.Process()
+        padre = yo.parent()
+        procesos = [padre] + (padre.children() if padre else [yo])
+        filas = [mem(p) for p in procesos if p is not None]
+        total = {k: round(sum(f.get(k, 0) for f in filas), 1) for k in ("rss_mb", "pss_mb", "uss_mb")}
+        return {"procesos": filas, "suma": total}
+    except Exception as e:
+        return {"error": type(e).__name__}
+
+
 def _hilos_ahora():
     """Dónde está cada hilo del proceso ahora mismo: nombre y las 3 últimas funciones de su pila (sin datos)."""
     import sys as _sys
@@ -19387,6 +19442,7 @@ def _estado_carga():
         # Si el pid que atiende no es el que importó el módulo, gunicorn precargó la app y la copió al proceso que
         # atiende (--preload): los hilos de fondo arrancados al importar se quedaron en el otro proceso.
         "proceso": {"pid_atiende": os.getpid(), "pid_padre": os.getppid(), **_PROCESO_IMPORTACION},
+        "memoria_procesos": _memoria_procesos(),
         "indice_calculado_hace_s": (round(ahora - _INDICE_TRANSPARENCIA_CACHE["ts"])
                                     if _INDICE_TRANSPARENCIA_CACHE.get("ts") else None),
         "cpu_proceso_pct": cpu,
@@ -21957,6 +22013,12 @@ def _familia_ua(ua):
     return "otro_cliente" if _RE_UA_BOT.search(ua or "") else "navegador"
 
 
+# Rastreadores bloqueados con 403 (decisión de César 2026-10-03, medido con /api/diagnostico-arranque: en 10 minutos
+# KeenableBot gastó 944 s de CPU, nueve veces más que todos los visitantes reales juntos, recorriendo /rankings con
+# todas las combinaciones de filtros; Bytespider y PetalBot hacían lo mismo a menor escala).
+_RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot", re.I)
+
+
 def _ruta_diagnostico(path, query):
     """Ruta sin valores de la consulta (solo qué parámetros lleva), p. ej. "/?muni&provincia"."""
     claves = sorted(parse_qs(query or "").keys())
@@ -21972,6 +22034,11 @@ def app(environ, start_response):
     info = {"ruta": _ruta_diagnostico(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", "")),
             "inicio": time.time(), "bot": bool(_RE_UA_BOT.search(environ.get("HTTP_USER_AGENT", "") or "")),
             "metodo": environ.get("REQUEST_METHOD", "GET"), "agente": _familia_ua(environ.get("HTTP_USER_AGENT", ""))}
+    if _RE_UA_BLOQUEADO.search(environ.get("HTTP_USER_AGENT", "") or ""):
+        with _peticiones_lock:
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + " (403)"))
+        start_response("403 Forbidden", [("Content-Type", "text/plain; charset=utf-8"), ("Content-Length", "9")])
+        return [b"Forbidden"]
     with _peticiones_lock:
         _peticiones_en_curso += 1
         _PETICIONES_ACTIVAS[id(ident)] = info
@@ -22067,7 +22134,11 @@ class Handler(BaseHTTPRequestHandler):
 _PROCESO_IMPORTACION = {"pid": os.getpid(), "argv": list(__import__("sys").argv)[:12],
                         "gunicorn_cmd_args": bool(os.environ.get("GUNICORN_CMD_ARGS"))}   # ver _estado_carga
 _inicializar_datos()
-_lanzar_enriquecimiento()   # enriquecer sociedades ya guardadas sin directivo
+# Bajo gunicorn, gunicorn.conf.py pone DINERO_HILOS_EN_POST_FORK=1 y los hilos se lanzan en cada trabajador (_tras_fork);
+# en local (python app.py) o en los scripts que importan app, aquí mismo, como siempre.
+_PROCESO_IMPORTACION["hilos_en_post_fork"] = os.environ.get("DINERO_HILOS_EN_POST_FORK") == "1"
+if not _PROCESO_IMPORTACION["hilos_en_post_fork"]:
+    _arrancar_hilos_de_fondo()
 
 if __name__ == "__main__":
     _host = "0.0.0.0"
