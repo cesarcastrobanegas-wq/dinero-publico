@@ -21660,26 +21660,56 @@ def _route_get(path, qs, gzip_ok=False):
         admin_token = os.environ.get("ADMIN_TOKEN", "")
         if not admin_token or qs.get("token", [""])[0] != admin_token:
             return _error_resp("No autorizado.", 403)
+        # 2026-10-03 (decisión de César): antes se leía la copia ENTERA en memoria (data = f.read()) -- con la base en
+        # ~937 MB eso sumaba casi 1 GB a los ~775 MB del contenedor, al borde de los 2 GB del plan. Ahora:
+        #  - la copia consistente se hace con una conexión de solo lectura propia (sqlite3.backup por bloques), sin
+        #    retener _db_lock -- la web sigue usando la base mientras tanto (WAL permite lectores en paralelo);
+        #  - se envía desde el disco por trozos de 1 MB (el cuerpo es un generador) y el temporal se borra al acabar.
+        # Restos de exportaciones anteriores que no llegaron a enviarse (el cliente cortó antes de empezar):
+        for _viejo in os.listdir(DATA_DIR):
+            if _viejo.startswith(".cache_db_export_") and _viejo.endswith(".tmp"):
+                _ruta_vieja = os.path.join(DATA_DIR, _viejo)
+                try:
+                    if time.time() - os.path.getmtime(_ruta_vieja) > 3600:
+                        os.remove(_ruta_vieja)
+                except OSError:
+                    pass
         tmp_path = os.path.join(DATA_DIR, f".cache_db_export_{uuid.uuid4().hex}.tmp")
         try:
-            with _db_lock:
-                dst = sqlite3.connect(tmp_path)
-                try:
-                    _db.backup(dst)
-                finally:
-                    dst.close()
-            with open(tmp_path, "rb") as f:
-                data = f.read()
-        finally:
+            origen = sqlite3.connect(DB_FILE, timeout=30)
+            dst = sqlite3.connect(tmp_path)
+            try:
+                origen.backup(dst, pages=2048, sleep=0.005)
+            finally:
+                dst.close()
+                origen.close()
+        except Exception:
             try:
                 os.remove(tmp_path)
             except OSError:
                 pass
-        return _resp(
-            data, content_type="application/octet-stream",
-            headers={"Content-Disposition": 'attachment; filename="cache.db"'},
-            gzip_ok=False,
-        )
+            raise
+        tamano = os.path.getsize(tmp_path)
+
+        def _trozos():
+            f = open(tmp_path, "rb")
+            try:
+                while True:
+                    trozo = f.read(1 << 20)
+                    if not trozo:
+                        break
+                    yield trozo
+            finally:
+                # también si el servidor cierra el generador al completar Content-Length o el cliente corta: primero
+                # se cierra el fichero (en Windows no se puede borrar abierto) y luego se borra
+                f.close()
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
+        return 200, {"Content-Type": "application/octet-stream",
+                     "Content-Disposition": 'attachment; filename="cache.db"',
+                     "Content-Length": str(tamano)}, _trozos()
 
     if path.startswith("/api/job/"):
         job_id = path[len("/api/job/"):]
@@ -22074,6 +22104,8 @@ def _app_wsgi(environ, start_response):
 
     status_line = f"{code} {_HTTP_STATUS_TEXT.get(code, 'OK')}"
     start_response(status_line, list(headers.items()))
+    if not isinstance(body, (bytes, bytearray)):
+        return body          # cuerpo por trozos (generador), p. ej. /admin/cache-db
     return [body]
 
 
@@ -22091,8 +22123,12 @@ class Handler(BaseHTTPRequestHandler):
         for k, v in headers.items():
             self.send_header(k, v)
         self.end_headers()
-        if body:
-            self.wfile.write(body)
+        if isinstance(body, (bytes, bytearray)):
+            if body:
+                self.wfile.write(body)
+        else:
+            for trozo in body:   # cuerpo por trozos (ver /admin/cache-db)
+                self.wfile.write(trozo)
 
     def do_GET(self):
         global _peticiones_en_curso
