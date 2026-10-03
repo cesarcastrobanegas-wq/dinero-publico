@@ -13573,9 +13573,14 @@ CSS = """
    de texto negro a blanco (accent ahora es un naranja oscuro, texto
    blanco da 6:1 frente a 3.5:1 con negro).*/
 :root{
-  --bg:#fbf0c4;--surface:#fffdf6;--border:#9c8a4a;
-  --accent:#a8440a;--blue:#0969da;--text:#22201a;--dim:#6b6355;
-  --red:#cf222e;--green:#1a7f37;--yellow:#9a6700;--purple:#8250df;
+  /* Rediseño minimalista (2026-10-03, encargo de César): un único fondo neutro, tarjetas blancas con borde gris fino
+     y un solo acento -- el azul marino del logo para acciones y enlaces, y un dorado oscuro para cifras destacadas.
+     Rojo y verde solo con significado (deuda, superávit/déficit...), nunca como adorno. Contraste comprobado: texto
+     ~15:1, secundario ~6:1, azul marino ~13:1 y dorado ~4,9:1 sobre blanco. */
+  --bg:#f5f6f8;--surface:#ffffff;--border:#dde1e7;
+  --accent:#1b2f5c;--blue:#22477e;--text:#1b2230;--dim:#5a6372;
+  --red:#cf222e;--green:#1a7f37;--yellow:#8a6510;--purple:#8250df;
+  --gold:#8a6510;--tint:#f1f3f7;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 /* overflow-x:hidden SOLO en html, no en body -- ver INFORME_NOCHE.md (header
@@ -13602,8 +13607,8 @@ header h1{overflow-wrap:break-word;}
 header h1{font-size:15px;font-weight:600;}
 header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .header-nav{flex-shrink:0;display:flex;align-items:center;gap:10px;}
-.header-nav>a{display:inline-flex;text-decoration:none;padding:8px 16px;border-radius:6px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);font-size:13px;font-weight:600;white-space:nowrap;}
-.header-nav>a:hover{background:rgba(240,136,62,.22);}
+.header-nav>a{display:inline-flex;text-decoration:none;padding:8px 16px;border-radius:6px;background:var(--tint);color:var(--accent);border:1px solid var(--border);font-size:13px;font-weight:600;white-space:nowrap;}
+.header-nav>a:hover{background:var(--tint);}
 /* Ventanas de 700-1100px (portátil sin maximizar): el menú no encoge y dejaba a la marca sin ancho, con el título
    partido letra a letra. La marca conserva un ancho mínimo y, si no caben los dos, el menú baja a otra línea. */
 @media (max-width:1100px){
@@ -13618,8 +13623,8 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .pwa-banner-mobile{display:none;}
 .pwa-banner-mobile[hidden]{display:none;}
 @keyframes pwaBannerPulse{
-  0%,100%{box-shadow:0 0 0 0 rgba(240,136,62,.55);}
-  50%{box-shadow:0 0 0 8px rgba(240,136,62,0);}
+  0%,100%{box-shadow:0 0 0 0 rgba(27,47,92,.55);}
+  50%{box-shadow:0 0 0 8px rgba(27,47,92,0);}
 }
 @media (max-width:700px){
   .pwa-banner-mobile{display:flex;align-items:center;gap:10px;position:fixed;top:0;left:0;right:0;z-index:200;padding:10px 14px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600;animation:pwaBannerPulse 1.8s ease-in-out infinite;}
@@ -13689,11 +13694,11 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .alerta{border-radius:6px;padding:10px 16px;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:flex-start;}
 .alerta.alto{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);color:var(--red);}
 .alerta.medio{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:var(--yellow);}
-.alerta.info{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);color:var(--text);}
+.alerta.info{background:var(--tint);border:1px solid var(--border);color:var(--text);}
 .alerta-ico{font-size:16px;line-height:1;}
 .alerta-titulo{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;opacity:.7;}
 /* llamada a firmar la petición de change.org (pieza /casos/contratos-menores-coladero y portadas) */
-.peticion-cta{background:rgba(240,136,62,.10);border:1px solid rgba(240,136,62,.45);border-left:4px solid var(--accent);border-radius:8px;padding:14px 18px;margin:18px 0 24px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.peticion-cta{background:var(--tint);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 18px;margin:18px 0 24px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
 .peticion-cta p{margin:0;font-size:14px;line-height:1.5;color:var(--text);flex:1;min-width:220px;}
 .peticion-cta a.peticion-btn{display:inline-block;background:var(--accent);color:#fff;font-weight:700;font-size:15px;padding:10px 20px;border-radius:6px;text-decoration:none;white-space:nowrap;}
 .peticion-cta a.peticion-btn:hover{filter:brightness(1.08);}
@@ -13727,7 +13732,7 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .it-info-pop a{color:var(--blue);font-weight:600;}
 /* cards municipio */
 .muni-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
-.muni-header{padding:12px 18px;background:rgba(240,136,62,.08);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+.muni-header{padding:12px 18px;background:var(--tint);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
 .muni-header h2{font-size:14px;font-weight:600;color:var(--accent);}
 .cuentas-link{font-size:10px;font-weight:600;color:var(--dim);text-decoration:none;border:1px solid var(--border);border-radius:4px;padding:2px 6px;vertical-align:middle;white-space:nowrap;}
 .cuentas-link:hover{color:var(--text);border-color:var(--dim);}
@@ -13742,7 +13747,7 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .concejales-dd a{color:var(--purple);text-decoration:none;}
 .concejales-dd a:hover{text-decoration:underline;}
 .conc-cargo{color:var(--dim);}
-.badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px;background:var(--tint);color:var(--blue);border:1px solid var(--border);}
 .source-bar{padding:5px 18px;font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);padding:9px 14px;text-align:left;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);}
@@ -13757,27 +13762,27 @@ tr:last-child td{border-bottom:none;}
 .cargo{color:var(--dim);font-size:11px;}
 .cargo-match{font-size:10.5px;line-height:1.5;margin-top:5px;padding:5px 8px;border-radius:4px;max-width:260px;}
 .cargo-match-local{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:var(--yellow);}
-.cargo-match-regional{background:rgba(88,166,255,.06);border:3px double rgba(88,166,255,.5);color:var(--text);}
+.cargo-match-regional{background:var(--tint);border:3px double var(--border);color:var(--text);}
 .cargo-match-detalle{opacity:.85;font-weight:normal;}
 a.link{color:var(--blue);font-size:11px;}
 a.borm-link{color:var(--purple);font-size:11px;}
 .empty{text-align:center;padding:50px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .estado-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;}
 .est-ADJ,.est-RES{background:rgba(63,185,80,.15);color:var(--green);}
-.est-FOR{background:rgba(88,166,255,.15);color:var(--blue);}
+.est-FOR{background:var(--tint);color:var(--blue);}
 .lid{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .fuente-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 5px;border-radius:3px;vertical-align:middle;margin-left:4px;}
-.fuente-place{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);}
+.fuente-place{background:var(--tint);color:var(--blue);border:1px solid var(--border);}
 .fuente-borm{background:rgba(224,160,255,.15);color:var(--purple);border:1px solid rgba(224,160,255,.3);}
 .fuente-pscp{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);}
 a.pscp-link{color:var(--green);}
 /* Fondos UE -- letra amarilla sobre fondo azul a propósito, para
    diferenciarlos a simple vista de los contratos públicos normales
    (naranja/azul). Antes del 2026-07-23 era violeta -- ver INFORME_NOCHE.md. */
-.fuente-cordis{background:rgba(88,166,255,.15);color:var(--yellow);border:1px solid rgba(88,166,255,.3);}
-.fuente-cohesion{background:rgba(88,166,255,.15);color:var(--yellow);border:1px solid rgba(88,166,255,.35);}
-.fue-card{background:var(--surface);border:1px solid rgba(88,166,255,.35);border-radius:8px;margin-bottom:18px;overflow:hidden;}
-.fue-header{padding:12px 18px;background:rgba(88,166,255,.15);border-bottom:1px solid var(--border);}
+.fuente-cordis{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
+.fuente-cohesion{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
+.fue-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
+.fue-header{padding:12px 18px;background:var(--tint);border-bottom:1px solid var(--border);}
 .fue-header h2{font-size:14px;font-weight:600;color:var(--yellow);}
 .fue-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--yellow);white-space:nowrap;font-weight:600;}
 a.fue-link{color:var(--yellow);font-size:11px;}
@@ -13787,24 +13792,24 @@ a.fue-link{color:var(--yellow);font-size:11px;}
    una tercera fuente de naturaleza distinta (registre de menors, no
    licitació formal). Colapsable con <details> -- son muchos contratos de
    importe bajo, no tiene sentido mostrarlos todos abiertos por defecto. */
-.cm-card{background:var(--surface);border:1px solid rgba(240,136,62,.35);border-radius:8px;margin-top:14px;overflow:hidden;}
-.cm-card summary{padding:12px 18px;background:rgba(240,136,62,.12);cursor:pointer;font-size:14px;font-weight:600;color:var(--accent);list-style:none;}
+.cm-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-top:14px;overflow:hidden;}
+.cm-card summary{padding:12px 18px;background:var(--tint);cursor:pointer;font-size:14px;font-weight:600;color:var(--accent);list-style:none;}
 .cm-card summary::-webkit-details-marker{display:none;}
 /* Aviso cuando la sección de contratos menores queda vacía (ver
    render_html) -- informativo, no un error, mismo tono que .instalar-bar
    pero escalado al tamaño de una tarjeta de municipio en vez de un footer. */
-.cm-aviso{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);border-radius:8px;margin-top:14px;padding:12px 16px;font-size:12.5px;line-height:1.5;color:var(--dim);}
+.cm-aviso{background:var(--tint);border:1px solid var(--border);border-radius:8px;margin-top:14px;padding:12px 16px;font-size:12.5px;line-height:1.5;color:var(--dim);}
 .cm-aviso .link{color:var(--blue);}
 .cm-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--accent);white-space:nowrap;font-weight:600;}
 .cm-nif{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .cm-base-nota{font-size:11px;line-height:1.45;color:var(--dim);margin:2px 0 8px;}
 .cm-nota{display:block;font-size:11px;line-height:1.4;color:var(--yellow);margin-top:4px;max-width:420px;}
-.fuente-rpc{background:rgba(240,136,62,.15);color:var(--accent);border:1px solid rgba(240,136,62,.3);}
+.fuente-rpc{background:var(--tint);color:var(--accent);border:1px solid var(--border);}
 /* Comentarios de usuarios (ficha de municipio/empresa) -- mismo patrón
    <details> colapsable que cm-card, acento azul para diferenciarlo de las
    fuentes de datos oficiales (naranja/amarillo/verde). */
-.comentarios-card{background:var(--surface);border:1px solid rgba(88,166,255,.35);border-radius:8px;margin-top:14px;overflow:hidden;}
-.comentarios-card summary{padding:12px 18px;background:rgba(88,166,255,.1);cursor:pointer;font-size:14px;font-weight:600;color:var(--blue);list-style:none;}
+.comentarios-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-top:14px;overflow:hidden;}
+.comentarios-card summary{padding:12px 18px;background:var(--tint);cursor:pointer;font-size:14px;font-weight:600;color:var(--blue);list-style:none;}
 .comentarios-card summary::-webkit-details-marker{display:none;}
 .comentarios-list{padding:4px 18px;}
 .comentario-item{padding:10px 0;border-bottom:1px solid rgba(48,54,61,.5);}
@@ -13843,8 +13848,8 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .pagination{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;flex-wrap:wrap;gap:8px;}
 .pag-info{font-family:'IBM Plex Mono',monospace;color:var(--dim);}
 .pag-links{display:flex;gap:6px;}
-.pag-btn{padding:5px 12px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);border-radius:4px;color:var(--blue);text-decoration:none;font-size:12px;}
-.pag-btn:hover{background:rgba(88,166,255,.2);}
+.pag-btn{padding:5px 12px;background:var(--tint);border:1px solid var(--border);border-radius:4px;color:var(--blue);text-decoration:none;font-size:12px;}
+.pag-btn:hover{background:var(--tint);}
 .pag-more{padding:10px 18px;border-top:1px solid var(--border);font-size:12px;}
 .pag-more a{color:var(--blue);}
 .back-link{font-size:12px;color:var(--dim);margin-bottom:12px;display:block;}
@@ -13867,7 +13872,7 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .adv-search{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 22px;margin:22px 0;width:100%;}
 .as-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
 .as-tab{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:7px 16px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--dim);cursor:pointer;font-weight:600;}
-.as-tab.active{background:rgba(240,136,62,.15);color:var(--accent);border-color:rgba(240,136,62,.4);}
+.as-tab.active{background:var(--tint);color:var(--accent);border-color:var(--border);}
 .as-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;width:100%;}
 .as-row input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:12px 16px;border-radius:6px;flex:1;min-width:220px;outline:none;}
 .as-row input:focus{border-color:var(--blue);}
@@ -13903,9 +13908,9 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .muni-tile .mt-row{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
 .muni-tile .mt-row b{color:var(--text);font-weight:600;}
 .muni-tile .mt-imp{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--green);font-weight:600;}
-.muni-tile a.btn-ver{margin-top:4px;text-align:center;padding:7px 10px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;}
-a.btn-ver{display:inline-block;padding:8px 16px;background:rgba(240,136,62,.12);color:var(--accent);border:1px solid rgba(240,136,62,.35);border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;}
-a.btn-ver:hover{background:rgba(240,136,62,.22);}
+.muni-tile a.btn-ver{margin-top:4px;text-align:center;padding:7px 10px;background:var(--tint);color:var(--accent);border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;}
+a.btn-ver{display:inline-block;padding:8px 16px;background:var(--tint);color:var(--accent);border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;}
+a.btn-ver:hover{background:var(--tint);}
 .region-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:24px;}
 .region-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:8px;text-decoration:none;transition:border-color .15s;}
 .region-card:hover{border-color:var(--accent);}
@@ -13920,7 +13925,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
    ya se aplicaba entre .cobertura-btn y .region-imp antes de fusionarlas. */
 .region-deuda{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--red);opacity:.9;}
 .top1-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:8px;}
-.top1-card{background:var(--surface);border:1px solid rgba(240,136,62,.35);border-radius:8px;padding:16px 20px;}
+.top1-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;}
 .top1-label{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:8px;}
 .top1-empresa{display:block;font-size:16px;font-weight:600;color:var(--text);text-decoration:none;margin-bottom:4px;}
 .top1-empresa:hover{color:var(--accent);text-decoration:underline;}
@@ -13929,7 +13934,7 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 .rk-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:32px 0 4px;padding-bottom:10px;border-bottom:2px solid var(--accent);scroll-margin-top:96px;}
 .rk-section-header h2{font-size:18px;color:var(--text);}
 .rk-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 10px;}
-.muni-tile a.btn-ver:hover{background:rgba(240,136,62,.22);}
+.muni-tile a.btn-ver:hover{background:var(--tint);}
 
 /* ── aviso descartable de metodología de rankings (2026-09-20, petición
    de César: "los baremos se están analizando, el ranking puede variar
@@ -14018,13 +14023,13 @@ a.btn-ver:hover{background:rgba(240,136,62,.22);}
 @media(max-width:860px){.mapa-indice-row{grid-template-columns:1fr;}}
 
 /* ── footer ───────────────────────────────────────────────────────────── */
-.instalar-bar{max-width:1340px;margin:48px auto 0;padding:16px 20px;border-radius:8px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);}
+.instalar-bar{max-width:1340px;margin:48px auto 0;padding:16px 20px;border-radius:8px;background:var(--tint);border:1px solid var(--border);}
 .instalar-text{font-size:12.5px;color:var(--text);line-height:1.6;max-width:1000px;}
 .instalar-text b{color:var(--blue);}
-.colabora-bar{max-width:1340px;margin:14px auto 0;padding:16px 20px;border-radius:8px;background:rgba(240,136,62,.08);border:1px solid rgba(240,136,62,.3);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;}
+.colabora-bar{max-width:1340px;margin:14px auto 0;padding:16px 20px;border-radius:8px;background:var(--tint);border:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;}
 .colabora-text{font-size:12.5px;color:var(--text);line-height:1.6;max-width:760px;}
 .colabora-text b{color:var(--accent);}
-.colabora-bizum{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);background:var(--surface);border:1px solid rgba(240,136,62,.4);border-radius:6px;padding:8px 16px;white-space:nowrap;}
+.colabora-bizum{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 16px;white-space:nowrap;}
 .site-footer{max-width:1340px;margin:0 auto;padding:22px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center;}
 .site-footer .ft-links{display:flex;flex-wrap:wrap;gap:16px;align-items:center;}
 .site-footer a{color:var(--dim);font-size:12px;text-decoration:none;}
@@ -14082,7 +14087,7 @@ a.dd-titulo-contrato:hover{text-decoration:underline;}
 .mapa-lista-provincias summary{cursor:pointer;font-size:12.5px;color:var(--dim);text-decoration:underline;text-underline-offset:3px;}
 .mapa-lista-provincias[open] summary{color:var(--text);}
 /* Bizum en "Quién soy" (2026-10-01) */
-.bizum-caja{margin:14px 0;padding:14px 16px;border:1px solid var(--accent);border-radius:10px;background:rgba(240,136,62,.08);display:grid;gap:6px;}
+.bizum-caja{margin:14px 0;padding:14px 16px;border:1px solid var(--accent);border-radius:10px;background:var(--tint);display:grid;gap:6px;}
 .bizum-tit{font-weight:700;font-size:15px;margin:0;}
 .bizum-num{font-size:20px;font-weight:800;letter-spacing:.04em;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0;font-variant-numeric:tabular-nums;}
 /* reparto entre empresas (2026-10-01): dato neutro, sin colores de aviso */
@@ -14202,7 +14207,7 @@ button.share-btn{font-family:inherit;}
   .scroll-hint{
     display:flex;align-items:center;gap:2px;
     position:absolute;top:16px;right:6px;z-index:2;pointer-events:none;
-    background:rgba(22,27,34,.92);border:1px solid rgba(88,166,255,.45);color:var(--blue);
+    background:rgba(22,27,34,.92);border:1px solid var(--border);color:var(--blue);
     font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.3px;
     padding:4px 8px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.4);
     animation:scroll-hint-nudge 1.6s ease-in-out infinite;
@@ -14259,7 +14264,7 @@ button.share-btn{font-family:inherit;}
    para las filas, solo añade el contenedor <details> y el resalte de la
    fila del propio municipio. */
 .it-widget{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-top:14px;overflow:hidden;}
-.it-widget summary{padding:12px 18px;background:rgba(88,166,255,.08);cursor:pointer;font-size:14px;font-weight:600;color:var(--text);list-style:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.it-widget summary{padding:12px 18px;background:var(--tint);cursor:pointer;font-size:14px;font-weight:600;color:var(--text);list-style:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .it-widget summary::-webkit-details-marker{display:none;}
 .it-widget-body{padding:12px 18px 16px;}
 .rk-sidebar-item-actual{background:rgba(63,185,80,.1);border-radius:6px;padding:6px 8px;margin:0 -8px;border-bottom-color:transparent;}
@@ -14293,7 +14298,7 @@ button.share-btn{font-family:inherit;}
 .personaliza-sugerencias{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:15;display:none;}
 .personaliza-sugerencias.show{display:block;}
 .personaliza-sug-item{padding:8px 12px;font-size:12px;color:var(--text);cursor:pointer;}
-.personaliza-sug-item:hover{background:rgba(88,166,255,.1);}
+.personaliza-sug-item:hover{background:var(--tint);}
 .personaliza-resultado{background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:16px 20px;margin-bottom:20px;}
 .personaliza-resultado.oculto{display:none;}
 .personaliza-resultado h3{margin:0 0 10px;font-size:14px;}
@@ -14306,6 +14311,56 @@ button.share-btn{font-family:inherit;}
   .personaliza-banner{flex-direction:column;align-items:stretch;}
   .personaliza-input-row{width:100%;}
 }
+/* ── Rediseño minimalista (2026-10-03): tarjetas blancas, borde gris fino, sombra suave; la jerarquía la marcan el
+   tamaño y el peso de la letra, no el relleno de color. ── */
+header{border-bottom:1px solid var(--border);box-shadow:0 1px 2px rgba(16,24,40,.04);}
+header p{color:var(--dim);}
+.header-nav>a{background:var(--surface);border:1px solid var(--border);color:var(--accent);}
+.header-nav>a:hover{background:var(--tint);}
+.header-nav>a[style]{color:var(--accent)!important;}
+.it-lider,.dd-bloque,.rk-sidebar,.region-card,.muni-card,.top1-card,.noticias-ue-panel,.fue-card,.cm-card,
+.comentarios-card,.adv-search,.peticion-cta,.instalar-bar,.colabora-bar,.personaliza-resultado,.bizum-caja{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.05);}
+.dd-tarjeta{border:1px solid var(--border);border-style:solid;}
+.muni-header,.fue-header,.cm-card summary,.comentarios-card summary,.it-widget summary{background:transparent;}
+.cm-aviso,.alerta.info{background:var(--surface);border:1px solid var(--border);}
+.region-card h3{color:var(--text);}
+.region-card:hover{border-color:var(--accent);}
+.stat{background:var(--surface);border:1px solid var(--border);}
+.stat span{color:var(--gold);}
+.section-title{color:var(--dim);font-weight:600;}
+h2,.rk-section-header h2{font-weight:600;}
+/* bloque principal de la portada: de panel azul con degradado a tarjeta blanca */
+.hero-panel{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:0 1px 2px rgba(16,24,40,.05);}
+.hero-panel .hero-tagline{color:var(--accent);}
+.hero-panel .hero-sub{color:var(--dim);}
+.hero-panel .adv-search{background:var(--tint);border-color:var(--border);box-shadow:none;}
+.hero-panel .as-tab{background:var(--surface);color:var(--dim);border-color:var(--border);}
+.hero-panel .as-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.hero-panel .as-row input{background:var(--surface);border-color:var(--border);color:var(--text);}
+.hero-panel .as-row input::placeholder{color:var(--dim);}
+.hero-panel .as-row input:focus{border-color:var(--accent);}
+.hero-panel #as-btn{background:var(--accent);color:#fff;}
+.hero-panel #as-btn:hover{background:#24407a;}
+.hero-panel .gs-hint{color:var(--dim);}
+.hero-panel .stats-bar .stat{background:var(--surface);border-color:var(--border);color:var(--dim);}
+.hero-panel .stats-bar .stat span{color:var(--gold);}
+/* barra "¿Cuál es tu municipio?" */
+.personaliza-banner{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:0 1px 2px rgba(16,24,40,.05);}
+.personaliza-input-row input{background:var(--surface);border-color:var(--border);color:var(--text);}
+.personaliza-input-row input::placeholder{color:var(--dim);}
+.personaliza-cerrar{color:var(--dim);}
+/* botón de la petición: azul marino, sin mayúsculas, y oculto hasta pasar la cabecera y el bloque principal */
+.peticion-flotante{background:var(--accent);text-transform:none;letter-spacing:0;font-weight:600;font-size:13px;
+  box-shadow:0 2px 8px rgba(16,24,40,.18);transition:opacity .2s ease,transform .2s ease;}
+.peticion-flotante.peticion-flotante-arriba{opacity:0;pointer-events:none;transform:translateY(8px);}
+.peticion-cta a.peticion-btn{background:var(--accent);}
+/* cifras e importes: dorado (dato destacado), no verde -- el verde/rojo queda para lo que significa algo */
+.importe,.pol-retrib,.rk-valor,.as-rr-importe,.region-imp,.dd-cifra,.top1-valor,.rk-sidebar-valor{color:var(--gold);}
+.dd-etiqueta{color:var(--dim);}
+.dd-cifra.dd-sin-deuda{color:var(--green);}   /* aquí el verde sí significa algo: sin deuda */
+.it-aclara{background:var(--tint);border:1px solid var(--border);color:var(--text);font-weight:500;}
+.pwa-banner-btn{background:#fff;color:var(--accent);}
 """
 
 # Version de cache-busting para los estaticos servidos con Cache-Control de
@@ -14966,9 +15021,9 @@ def _header_html(provincia="todas"):
     </div>
   </a>
   <nav class="header-nav">
-    <a href="{rankings_href}">🏆 {_t("Rankings")}</a>
-    <a href="{rankings_href}#alcaldes">💰 {_t("Sueldos Alcaldes")}</a>
-    <a href="/fondos-ue" style="color:var(--yellow)">🇪🇺 {_t("Fondos UE")}</a>
+    <a href="{rankings_href}">{_t("Rankings")}</a>
+    <a href="{rankings_href}#alcaldes">{_t("Sueldos Alcaldes")}</a>
+    <a href="/fondos-ue">{_t("Fondos UE")}</a>
     <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>📲 {_t("Instalar app")}</button>
   </nav>
   {_i18n_selector_html()}
@@ -15111,8 +15166,21 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 </div>
 {_footer_html(provincia)}
 {_it_info_pop_html()}
-<a class="peticion-flotante" href="{esc(PETICION_CONTRATOS_MENORES_URL)}" target="_blank" rel="noopener"
-   aria-label="{_t("Firma la petición sobre contratos menores en change.org (se abre en una pestaña nueva)")}">✍️ {_t("Firma la petición")}</a>
+<a class="peticion-flotante peticion-flotante-arriba" href="{esc(PETICION_CONTRATOS_MENORES_URL)}" target="_blank" rel="noopener"
+   aria-label="{_t("Firma la petición sobre contratos menores en change.org (se abre en una pestaña nueva)")}">{_t("Firma la petición")}</a>
+<script>
+  (function() {{
+    // Rediseño 2026-10-03: el botón de la petición no acompaña todo el recorrido desde arriba; aparece tras pasar la
+    // cabecera y el bloque principal (90 % de la pantalla, mínimo 600 px).
+    var f = document.querySelector('.peticion-flotante');
+    if (!f) return;
+    function actualizar() {{
+      f.classList.toggle('peticion-flotante-arriba', window.scrollY < Math.max(600, window.innerHeight * 0.9));
+    }}
+    actualizar();
+    window.addEventListener('scroll', actualizar, {{passive: true}});
+  }})();
+</script>
 <script>
   if ('serviceWorker' in navigator) {{
     window.addEventListener('load', function() {{
@@ -16489,7 +16557,7 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
 
     return f"""
   <div class="rk-section-header" id="indice-transparencia">
-    <h2>📊 {_t("Índice de Transparencia Dinero Público")}</h2>
+    <h2>{_t("Índice de Transparencia Dinero Público")}</h2>
     <div class="prov-switch">{selector_comunidad}</div>
   </div>
   {_it_aclaracion_html()}
@@ -16859,7 +16927,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
   {_rk_metodologia_aviso_html()}
 
   <div class="rk-section-header" id="buscador-municipio">
-    <h2>🔎 {_t("Busca tu municipio")}</h2>
+    <h2>{_t("Busca tu municipio")}</h2>
     <span class="rk-badge">{_t("Todas sus posiciones de un vistazo")}</span>
   </div>
   <input type="text" id="rk-muni-input" class="it-buscador" placeholder="{_t("Nombre del municipio…")}" autocomplete="off">
@@ -16867,13 +16935,13 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
   <script>{_RK_MUNI_BUSCADOR_JS}</script>
 
   <div class="rk-section-header">
-    <h2>📍 {_t("Resumen por Provincia")}</h2>
+    <h2>{_t("Resumen por Provincia")}</h2>
     <span class="rk-badge">{_t("Deuda viva agregada · Presidente/a de Diputación (Comunidad Autónoma en Murcia)")}</span>
   </div>
   <div class="top1-grid">{resumen_prov_html}</div>
 
   <div class="rk-section-header">
-    <h2>🌍 {_t("Ranking Nacional")}</h2>
+    <h2>{_t("Ranking Nacional")}</h2>
     <span class="rk-badge">{_t("Todas las provincias cargadas")}</span>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos adjudicados")}</div>
@@ -16888,7 +16956,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
   </table></div>
 
   <div class="rk-section-header">
-    <h2>📍 {_t("Ranking por Provincia")}</h2>
+    <h2>{_t("Ranking por Provincia")}</h2>
     <div class="prov-switch">{selector_prov}</div>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos")} — {esc(label_prov)}</div>
@@ -16903,7 +16971,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
   </table></div>
 
   <div class="rk-section-header" id="alcaldes">
-    <h2>💰 {_t("Ranking de Sueldos: Alcaldes y Alcaldesas")}</h2>
+    <h2>{_t("Ranking de Sueldos: Alcaldes y Alcaldesas")}</h2>
     <span class="rk-badge">ISPA {esc(anio_ispa)} · {_t("{n} municipios con dato").format(n=fmt_num(len(ranking_alcaldes)))}</span>
     {selector_alc_html}
   </div>
@@ -16915,7 +16983,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
   {pag_alc_html}
 
   <div class="rk-section-header" id="deuda-habitante">
-    <h2>🏦 {_t("Ranking de Deuda por Habitante")}</h2>
+    <h2>{_t("Ranking de Deuda por Habitante")}</h2>
     <span class="rk-badge">{_t("Ministerio de Hacienda + INE")} · {_t("{n} municipios con dato").format(n=fmt_num(len(ranking_deuda_hab)))}</span>
     {selector_deuda_html}
   </div>
@@ -17683,10 +17751,10 @@ def render_fondos_ue_html(fondos, provincia="todas"):
     n_cohesion = sum(1 for f in fondos if f["fuente"] == "cohesion")
 
     stats = f"""<div class="stats-bar">
-      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{len(fondos)}</span>{_t("Proyectos/operaciones")}</div>
-      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{fmt_eur(str(total_importe))}</span>{_t("Importe total")}</div>
-      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{n_cordis}</span>{_t("CORDIS (Horizon Europe)")}</div>
-      <div class="stat" style="border-color:rgba(88,166,255,.35)"><span style="color:var(--yellow)">{n_cohesion}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
+      <div class="stat" style="border-color:var(--border)"><span style="color:var(--yellow)">{len(fondos)}</span>{_t("Proyectos/operaciones")}</div>
+      <div class="stat" style="border-color:var(--border)"><span style="color:var(--yellow)">{fmt_eur(str(total_importe))}</span>{_t("Importe total")}</div>
+      <div class="stat" style="border-color:var(--border)"><span style="color:var(--yellow)">{n_cordis}</span>{_t("CORDIS (Horizon Europe)")}</div>
+      <div class="stat" style="border-color:var(--border)"><span style="color:var(--yellow)">{n_cohesion}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
     </div>"""
 
     # Cobertura REAL (2026-10-01, aviso de César): solo las provincias con datos llevan pestaña y salen en el texto;
@@ -17946,7 +18014,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             fondos_ue_html = f"""<div class="fue-card" style="margin-top:14px">
             <div class="section-title" style="color:var(--yellow);margin:0 0 8px">
               🇪🇺 {_t("Fondos y proyectos financiados por la UE")}
-              <span class="badge" style="background:rgba(88,166,255,.15);color:var(--yellow);border-color:rgba(88,166,255,.3)">
+              <span class="badge" style="background:var(--tint);color:var(--yellow);border-color:var(--border)">
                 {len(fondos_ue_muni)} · {fmt_eur(str(total_fue))}
               </span>
             </div>
@@ -18018,7 +18086,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             contratos_menors_html = f"""<details class="cm-card"{abierto}>
                 <summary>
                   📋 {_t("Contratos menores (fuentes locales del ayuntamiento)")}
-                  <span class="badge" style="background:rgba(240,136,62,.15);color:var(--accent);border-color:rgba(240,136,62,.3)">
+                  <span class="badge" style="background:var(--tint);color:var(--accent);border-color:var(--border)">
                     {total_cm_n} · {fmt_eur(str(total_cm))}{sufijo_iva}
                   </span>
                 </summary>
@@ -18074,7 +18142,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         cards += f"""<div class="muni-card">
           <div class="muni-header">
             <div>
-              <h2>🏛 {esc(muni_name)} {habitantes_html} {cuentas_html} {saldo_html} {deuda_html}</h2>
+              <h2>{esc(muni_name)} {habitantes_html} {cuentas_html} {saldo_html} {deuda_html}</h2>
               {alcalde_concejales_html(muni_name, d.get("provincia", provincia))}
               {sueldos_concejales_html(muni_name, provincia)}
             </div>
@@ -18083,7 +18151,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
               <form method="POST" action="/actualizar" style="display:inline">
                 <input type="hidden" name="municipio" value="{esc(muni_name)}">
                 <input type="hidden" name="provincia" value="{esc(provincia)}">
-                <button type="submit" class="btn" style="padding:3px 10px;font-size:11px;background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);">↻ {_t("Actualizar")}</button>
+                <button type="submit" class="btn" style="padding:3px 10px;font-size:11px;background:var(--tint);color:var(--blue);border:1px solid var(--border);">↻ {_t("Actualizar")}</button>
               </form>
               <span class="badge">{_t("{n} contratos").format(n=d.get('total_contratos', 0))}</span>
             </div>
@@ -18521,7 +18589,7 @@ def _datos_destacados_portada_html(datos=None):
         <div class="dd-etiqueta">{_t("La mayor ciudad sin deuda")}</div>
         <a class="dd-nombre" href="{url}">{esc(municipio)}</a>
         <div class="dd-lugar">{esc(PROVINCIA_LABEL.get(provincia, provincia))} · {_t("{n} habitantes").format(n=fmt_num(habitantes))}</div>
-        <div class="dd-cifra">0 €<small> {_t("de deuda viva")}</small></div>
+        <div class="dd-cifra dd-sin-deuda">0 €<small> {_t("de deuda viva")}</small></div>
         <div class="dd-nota">{_t("Es uno de los {n} ayuntamientos de España sin deuda viva.").format(n=fmt_num(len(sin_deuda)))}</div>
         <div class="dd-fuente">{_t("Fuente:")} <a href="{esc(DEUDA_VIVA_FUENTE_URL)}" target="_blank" rel="noopener">{esc(fuente)} ↗</a></div>
       </div>"""
@@ -18531,7 +18599,7 @@ def _datos_destacados_portada_html(datos=None):
 def _dd_bloque_html(*tarjetas):
     return f"""<section class="dd-bloque" aria-labelledby="dd-titulo">
     <div class="dd-cab">
-      <h2 id="dd-titulo">💶 {_t("Datos destacados · Finanzas municipales")}</h2>
+      <h2 id="dd-titulo">{_t("Datos destacados · Finanzas municipales")}</h2>
       <span class="dd-sub">{_t("Datos económicos oficiales; no forman parte del Índice de Transparencia.")}</span>
     </div>
     <div class="dd-tarjetas">
@@ -18572,7 +18640,7 @@ def _lider_indice_portada_html():
         f'<span class="it-lider-mini">{_nota_coma(f["indice"])}</span></li>' for p, f in siguientes)
     return f"""<section class="it-lider" aria-labelledby="it-lider-titulo">
     <div class="it-lider-cab">
-      <h2 id="it-lider-titulo">🏅 {_t("Liderando ahora mismo · Índice de Transparencia")}{_it_info_btn_html()}</h2>
+      <h2 id="it-lider-titulo">{_t("Liderando ahora mismo · Índice de Transparencia")}{_it_info_btn_html()}</h2>
       <span class="it-lider-sub">{_t("{n} municipios con nota · España").format(n=fmt_num(len(filas)))}</span>
     </div>
     {_it_aclaracion_html()}
@@ -18655,7 +18723,7 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
 
     return f"""<div class="rk-sidebar-ranking-wrap">
     <details class="rk-sidebar" open>
-      <summary class="rk-sidebar-title">🏅 {_t("Índice de Transparencia")}
+      <summary class="rk-sidebar-title">{_t("Índice de Transparencia")}
         <span class="rk-sidebar-v1-badge">{_t("Índice v2")}</span>{info_html}
         {_it_aclaracion_html(mini=True)}</summary>
       <div class="rk-sidebar-aviso">⚠️ {_t("No comparable entre regiones; los datos de origen varían.")}</div>
@@ -18862,8 +18930,8 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         </div>"""
 
     top1_html = (
-        _top1_card(top_n_nac, "🥇 " + _t("Más contratos"), lambda g: _t("{n} contratos").format(n=g["n"])) +
-        _top1_card(top_imp_nac, "🥇 " + _t("Mayor importe"), lambda g: fmt_eur(str(g["importe"])))
+        _top1_card(top_n_nac, _t("Más contratos"), lambda g: _t("{n} contratos").format(n=g["n"])) +
+        _top1_card(top_imp_nac, _t("Mayor importe"), lambda g: fmt_eur(str(g["importe"])))
     )
 
     # Bloque "Casos de investigación" en la propia portada (2026-09-16,
@@ -18874,7 +18942,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     # render_casos_index_html) y las clases .region-grid/.region-card ya
     # existentes -- mismo patrón que "Cobertura" más arriba, sin CSS nuevo.
     casos_home_html = "".join(f"""<a class="region-card" href="/casos/{esc(c['slug'])}">
-      <h3>📌 {esc(c['titulo'])}</h3>
+      <h3>{esc(c['titulo'])}</h3>
       <div class="region-stats">{esc(c['resumen'])}</div>
     </a>""" for c in _CASOS)
 
@@ -18954,20 +19022,20 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     </div>
     <div class="mapa-indice-indice">{sidebar_ranking_html}</div>
   </div>
-  <div class="section-title">🔍 {_t("Casos de investigación")}</div>
+  <div class="section-title">{_t("Casos de investigación")}</div>
   {_peticion_cta_html(_peticion_cta_texto_portada())}
   <div class="region-grid">{casos_home_html}</div>
   <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">{_t("Ver todos los casos →")}</a></div>
   <div class="home-grid">
     <div class="home-sidebar-stack">
       <aside class="noticias-ue-panel">
-        <div class="nu-panel-title">🇪🇺 {_t("Noticias UE sobre España")}</div>
+        <div class="nu-panel-title">{_t("Noticias UE sobre España")}</div>
         {noticias_html}
         <a class="nu-ver-mas" href="https://ec.europa.eu/commission/presscorner/home/es?text=Espa%C3%B1a" target="_blank" rel="noopener">{_t("Ver más en la Comisión Europea →")}</a>
       </aside>
     </div>
     <div class="home-main-col">
-      <div class="section-title" style="margin-top:0">🏆 {_t("Empresas líderes · Ranking Nacional")}</div>
+      <div class="section-title" style="margin-top:0">{_t("Empresas líderes · Ranking Nacional")}</div>
       <div class="top1-grid">{top1_html}</div>
       <div style="margin:-6px 0 24px"><a href="/rankings" class="btn-ver">{_t("Ver ranking completo →")}</a></div>
     </div>
@@ -19059,7 +19127,7 @@ def render_landing_html(datos, provincia="murcia"):
     # 16/09" real, no la home nacional). Mismos casos en todas las
     # provincias (aún no hay casos específicos por provincia).
     casos_prov_html = "".join(f"""<a class="region-card" href="/casos/{esc(c['slug'])}">
-      <h3>📌 {esc(c['titulo'])}</h3>
+      <h3>{esc(c['titulo'])}</h3>
       <div class="region-stats">{esc(c['resumen'])}</div>
     </a>""" for c in _CASOS)
 
@@ -19082,7 +19150,7 @@ def render_landing_html(datos, provincia="murcia"):
     <div id="as-results"></div>
   </div>
   {stats}
-  <div class="section-title">🔍 {_t("Casos de investigación")}</div>
+  <div class="section-title">{_t("Casos de investigación")}</div>
   {_peticion_cta_html(_peticion_cta_texto_portada())}
   <div class="region-grid">{casos_prov_html}</div>
   <div style="margin:-6px 0 24px"><a href="/casos" class="btn-ver">{_t("Ver todos los casos →")}</a></div>
@@ -19521,7 +19589,7 @@ _CASOS = [
 
 def render_casos_index_html():
     items_html = "".join(f"""<a class="region-card" href="/casos/{esc(c['slug'])}">
-      <h3>📌 {esc(c['titulo'])}</h3>
+      <h3>{esc(c['titulo'])}</h3>
       <div class="region-stats">{esc(c['resumen'])}</div>
     </a>""" for c in _CASOS)
     body = f"""<div class="static-page">
@@ -20715,8 +20783,8 @@ _MAPA_CCAA_DESTINO_POR_COMUNIDAD = {r["comunidad"]: r["destino"] for r in _MAPA_
 _MAPA_COBERTURA_CSS = '''
   .map-wrap {
     position: relative; width: 100%; max-width: 980px; margin: 0 auto;
-    background: #101a2e; border-radius: 12px; padding: 16px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    background: #eef1f5; border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+    box-shadow: none;
   }
   svg.mapa-cobertura-svg { width: 100%; height: auto; display: block; }
   .muted { filter: grayscale(1) opacity(0.35) brightness(1.3); }
