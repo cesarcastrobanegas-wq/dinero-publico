@@ -2892,6 +2892,56 @@ def _db_all_municipios(provincia=None):
     return out
 
 
+def _db_iter_municipios(provincia=None, lote=40):
+    """Como _db_all_municipios, pero de uno en uno: lee la tabla por lotes de `lote` filas (por rowid, soltando el
+    lock entre lotes) y entrega cada ficha ya deserializada. Quien la use no debe guardarse las fichas enteras --
+    solo lo que necesite de cada una --, así el pico de memoria es el de un lote y no el de toda la base.
+    Introducida 2026-10-03: con el histórico de formales de PLACE, _db_all_municipios() pasaba de 1,9 GB y el
+    contenedor de Render (2 GB) se reiniciaba en bucle."""
+    ultimo = 0
+    while True:
+        with _db_lock:
+            if provincia:
+                rows = _db.execute("SELECT rowid, data, provincia FROM municipios WHERE rowid>? AND provincia=? "
+                                   "ORDER BY rowid LIMIT ?", (ultimo, provincia, lote)).fetchall()
+            else:
+                rows = _db.execute("SELECT rowid, data, provincia FROM municipios WHERE rowid>? ORDER BY rowid LIMIT ?",
+                                   (ultimo, lote)).fetchall()
+        if not rows:
+            return
+        for rid, data, prov in rows:
+            ultimo = rid
+            try:
+                d = json.loads(data)
+            except Exception:
+                continue
+            d.setdefault("provincia", prov or "murcia")
+            yield d
+        del rows
+
+
+# Campos de cada contrato que usan portada, rankings y mapa (_calcular_rankings, _mayor_contrato_html,
+# _datos_oficiales_mapa, _muni_tile, cifras de cabecera; _directivo_contrato necesita empresa/nif/directivo/cargo).
+_CAMPOS_CONTRATO_LIGERO = ("empresa", "nif", "directivo", "cargo", "importe_num", "importe_tipo", "licitacion_id",
+                           "fuente")
+
+
+def _db_municipios_ligeros(provincia=None):
+    """Lista de fichas reducidas -- municipio, provincia, total_contratos y, de cada contrato, solo
+    _CAMPOS_CONTRATO_LIGERO -- para las páginas que recorren toda la base varias veces (portada, rankings, mapa). Se
+    construye leyendo ficha a ficha (_db_iter_municipios), así que nunca está la base entera en memoria a la vez.
+    Los contratos de estas fichas NO llevan título ni enlace: quien los necesite los recupera de su ficha completa
+    (ver _mayor_contrato_html)."""
+    out = []
+    for d in _db_iter_municipios(provincia):
+        contratos = d.get("contratos", [])
+        out.append({"municipio": d.get("municipio", ""), "provincia": d.get("provincia", "murcia"),
+                    "total_contratos": d.get("total_contratos", len(contratos)),
+                    "contratos": [{k: c[k] for k in _CAMPOS_CONTRATO_LIGERO if k in c} for c in contratos]})
+        del d, contratos
+    return out
+
+
 def _db_count_municipios(provincia):
     """COUNT(*) ligero por provincia -- para /mapa-cobertura (estado done/
     partial/pending), que solo necesita el número de filas, no los datos
@@ -2970,8 +3020,10 @@ def _migrar_claves_homonimos():
     with _db_lock:
         _db.execute("CREATE TABLE IF NOT EXISTS municipios_archivo_homonimos (municipio TEXT, data TEXT, ts REAL, "
                     "provincia TEXT, archivado_ts REAL)")
-        filas = [r for r in _db.execute("SELECT municipio, data, ts, provincia FROM municipios").fetchall()
-                 if r[0] in homs]
+        # primero solo las claves (no todo el JSON de la base, ver _db_iter_municipios) y luego las filas que tocan
+        claves_hom = [r[0] for r in _db.execute("SELECT municipio FROM municipios").fetchall() if r[0] in homs]
+        filas = [_db.execute("SELECT municipio, data, ts, provincia FROM municipios WHERE municipio=?", (k,)).fetchone()
+                 for k in claves_hom]
     resumen = {}
     for key, data, ts, prov_fila in filas:
         try:
@@ -9581,9 +9633,17 @@ def _depurar_asignacion_place_por_nombre():
         if fila and fila[0] == _DEPURACION_ANCLAJE_VERSION:
             return
         with _db_lock:
-            filas = _db.execute("SELECT municipio, data, provincia FROM municipios WHERE provincia <> 'murcia'").fetchall()
+            claves_dep = [r[0] for r in _db.execute("SELECT municipio FROM municipios WHERE provincia <> 'murcia'")]
+
+        def _filas_dep():
+            # una fila cada vez (no todo el JSON de la base a la vez, ver _db_iter_municipios)
+            for k in claves_dep:
+                with _db_lock:
+                    r = _db.execute("SELECT municipio, data, provincia FROM municipios WHERE municipio=?", (k,)).fetchone()
+                if r:
+                    yield r
         tocados, archivados, bloqueados = {}, 0, []
-        for key, data, provincia in filas:
+        for key, data, provincia in _filas_dep():
             try:
                 d = json.loads(data)
             except Exception:
@@ -13371,7 +13431,7 @@ def _enriquecer_directivos_bg(provincia=None):
         # cuya empresa ya no está agotada (re-buscables con la estrategia
         # actual) y (b) recopilar los pendientes de enriquecer.
         pendientes = []
-        for d in _db_all_municipios(provincia=provincia):
+        for d in _db_iter_municipios(provincia=provincia):
             municipio = d.get("municipio", "")
             provincia_d = d.get("provincia", "murcia")
             tocado = False
@@ -15806,7 +15866,6 @@ def _calcular_indice_transparencia():
     menores_por_nombre = {}
     for (n, p), d in menores_det.items():
         menores_por_nombre.setdefault(n, []).append((p, d))
-    formales_idx = {clave_municipio(d.get("municipio", ""), d.get("provincia")): d for d in _db_all_municipios()}
     # Resultado vigente de la búsqueda de directivo por adjudicatario (misma regla que _dir_cache_get: un negativo
     # caducado es "hay que volver a buscar"). Para un contrato del histórico de formales (ORIGEN_BACKFILL_FORMALES),
     # que llega sin el campo directivo, cuenta lo que diga la caché; si su empresa aún no se ha buscado, no cuenta --
@@ -15817,6 +15876,27 @@ def _calcular_indice_transparencia():
         for clave_d, nombre_d, ts_d in _db.execute("SELECT clave, nombre, ts FROM directores").fetchall():
             if ahora - (ts_d or 0) <= (DIR_CACHE_POS_TTL if nombre_d else DIR_CACHE_NEG_TTL):
                 dir_cache[clave_d] = bool(nombre_d)
+
+    # Una pasada por cache.db, ficha a ficha (_db_iter_municipios), guardando de cada una solo los recuentos que usan
+    # "adjudicatario", "directivo" y "actividad" -- nunca las fichas enteras (2026-10-03, ver _db_iter_municipios).
+    formales_res = {}
+    for d in _db_iter_municipios():
+        n_total, n_adj, n_dir, n_pend = 0, 0, 0, 0
+        for c in d.get("contratos", []):
+            n_total += 1
+            if not (c.get("empresa") and c.get("empresa") != "No localizada"):
+                continue
+            n_adj += 1
+            if _directivo_contrato(c)[0]:
+                n_dir += 1
+            elif c.get("origen") == ORIGEN_BACKFILL_FORMALES:
+                encontrado = dir_cache.get(_dir_cache_key(c.get("empresa", ""), c.get("nif", "")))
+                if encontrado is None:
+                    n_pend += 1
+                elif encontrado:
+                    n_dir += 1
+        formales_res[clave_municipio(d.get("municipio", ""), d.get("provincia"))] = (n_total, n_adj, n_dir, n_pend)
+        del d
 
     filas = []
     for clave, pob in POBLACION.items():
@@ -15911,10 +15991,8 @@ def _calcular_indice_transparencia():
                                                 _td("ISPA: entidad no listada en la fuente oficial")}
 
         # ---- adjudicatario identificado: igual que v1 (solo formales PLACE/PSCP), peso 15 ----
-        d_formal = None if homonimo else formales_idx.get(clave)
-        contratos_formales = d_formal.get("contratos", []) if d_formal else []
-        denom_adj = len(contratos_formales)
-        num_adj = sum(1 for c in contratos_formales if c.get("empresa") and c.get("empresa") != "No localizada")
+        res_formal = None if homonimo else formales_res.get(clave)
+        denom_adj, num_adj, num_dir_formal, pendientes_borme = res_formal or (0, 0, 0, 0)
         comp["adjudicatario"] = (
             {"disponible": True, "puntos": 100.0 * num_adj / denom_adj,
              "detalle": _td("{num}/{den} contratos formales con adjudicatario identificado", num=num_adj, den=denom_adj)}
@@ -15923,18 +16001,6 @@ def _calcular_indice_transparencia():
              "detalle": _NO_DISP_HOMONIMO if homonimo else _td("Sin contratos formales (PLACE/PSCP) para calcularlo")})
 
         # ---- directivo identificado: igual que v1 ----
-        num_dir_formal, pendientes_borme = 0, 0
-        for c in contratos_formales:
-            if not (c.get("empresa") and c.get("empresa") != "No localizada"):
-                continue
-            if _directivo_contrato(c)[0]:
-                num_dir_formal += 1
-            elif c.get("origen") == ORIGEN_BACKFILL_FORMALES:
-                encontrado = dir_cache.get(_dir_cache_key(c.get("empresa", ""), c.get("nif", "")))
-                if encontrado is None:
-                    pendientes_borme += 1
-                elif encontrado:
-                    num_dir_formal += 1
         m = None if homonimo else menores_stats.get(clave)
         num_dir = num_dir_formal + (m["con_directivo"] if m else 0)
         denom_dir = num_adj - pendientes_borme + (m["total"] if m else 0)
@@ -15980,7 +16046,7 @@ def _calcular_indice_transparencia():
             "comunidad_autonoma": COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(provincia, provincia),
             "habitantes": habitantes, "componentes": comp,
             "_actividad_por_1000": (denom_adj / habitantes * 1000) if habitantes else None,
-            "_fetched": d_formal is not None,
+            "_fetched": res_formal is not None,
             "_homonimo": homonimo,
             "_total_formales": denom_adj,
         })
@@ -18333,6 +18399,12 @@ def _mayor_contrato_html(datos):
                 mayor, muni_mayor = c, d
     if not mayor:
         return ""
+    if "titulo" not in mayor and "url" not in mayor:
+        # ficha reducida (_db_municipios_ligeros): el título y el enlace se leen de la ficha completa
+        completa = _db_get_municipio(muni_mayor.get("municipio", ""), muni_mayor.get("provincia")) or {}
+        mayor = next((c for c in completa.get("contratos", [])
+                      if c.get("licitacion_id") == mayor.get("licitacion_id")
+                      and c.get("importe_num") == mayor.get("importe_num")), mayor)
     titulo = (mayor.get("titulo") or "").strip()
     titulo_corto = titulo if len(titulo) <= 110 else titulo[:107].rstrip() + "…"
     empresa = mayor.get("empresa", "")
@@ -18989,7 +19061,10 @@ def api_buscar(tipo, q, datos):
         # filtrar por la provincia de la página desde la que se lanza --
         # reutiliza el mismo POST /buscar que el buscador clásico de la
         # cabecera (ver formulario municipio/provincia en filaMunicipio()).
-        por_muni = {clave_municipio(d.get("municipio", ""), d.get("provincia")): d for d in _db_all_municipios()}
+        # solo (total de contratos, importe) de cada ficha, leídas de una en una (ver _db_iter_municipios)
+        por_muni = {clave_municipio(d.get("municipio", ""), d.get("provincia")):
+                    (d.get("total_contratos", 0), sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])))
+                    for d in _db_iter_municipios()}
         resultados = []
         for prov, lista_muni in MUNICIPIOS_POR_PROVINCIA.items():
             nombres = list(_pseudos_de_provincia(prov)) + list(lista_muni)
@@ -18998,13 +19073,13 @@ def api_buscar(tipo, q, datos):
                     continue
                 d = por_muni.get(clave_municipio(muni, prov))
                 cached = d is not None
-                total_imp = sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])) if cached else 0.0
+                total_imp = d[1] if cached else 0.0
                 resultados.append({
                     "municipio": muni,
                     "provincia": prov,
                     "provincia_label": PROVINCIA_LABEL.get(prov, prov),
                     "cached": cached,
-                    "total_contratos": d.get("total_contratos", 0) if cached else 0,
+                    "total_contratos": d[0] if cached else 0,
                     "total_importe": fmt_eur(str(total_imp)) if cached else "",
                 })
         resultados.sort(key=lambda r: (not r["cached"], normalizar(r["municipio"])))
@@ -19123,7 +19198,7 @@ def _stats_localizacion():
     == "de verdad no está en el registro") frente a las que aún no se han
     intentado lo suficiente (pendientes de que les toque en el cron)."""
     total_f = sin_f = 0
-    for d in _db_all_municipios():
+    for d in _db_iter_municipios():
         for c in d.get("contratos", []):
             total_f += 1
             if not c.get("directivo"):
@@ -20818,7 +20893,7 @@ def render_mapa_cobertura_html():
     # municipios reales de cache.db para poder pasarle a
     # _mapa_cobertura_svg_html las cifras de cada provincia, igual que ya
     # hacía el mapa embebido de la home (render_landing_nacional_html).
-    datos_todas = _db_all_municipios()
+    datos_todas = _db_municipios_ligeros()
     datos_oficiales = _datos_oficiales_mapa(datos_todas)
     mapa_html = _mapa_cobertura_svg_html(clickable=False, datos_oficiales=datos_oficiales)
 
@@ -21054,7 +21129,7 @@ def _route_get(path, qs, gzip_ok=False):
             return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page, page_cm=page_cm, provincia=provincia), gzip_ok=gzip_ok)
 
         if q:
-            datos_snap = _db_all_municipios(provincia_filtro if provincia_filtro != "todas" else None)
+            datos_snap = _db_iter_municipios(provincia_filtro if provincia_filtro != "todas" else None)
             return _resp(render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro), gzip_ok=gzip_ok)
 
         if provincia_filtro == "todas":
@@ -21071,18 +21146,18 @@ def _route_get(path, qs, gzip_ok=False):
             # cabecera (mismo patrón que /sw.js más abajo) evita que vuelva a
             # quedarse pegada; la copia YA cacheada en el edge necesita una
             # purga aparte (no algo que este proceso pueda hacer).
-            datos_todas = _db_all_municipios()
+            datos_todas = _db_municipios_ligeros()
             rk_comunidad = qs.get("rk_comunidad", ["todas"])[0]
             return _resp(render_landing_nacional_html(datos_todas, rk_comunidad=rk_comunidad),
                          headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok)
 
-        datos_snap = _db_all_municipios(provincia=provincia_filtro)
+        datos_snap = _db_municipios_ligeros(provincia=provincia_filtro)
         return _resp(render_landing_html(datos_snap, provincia=provincia_filtro), gzip_ok=gzip_ok)
 
     if path == "/rankings":
         provincia_prov = _provincia_valida(qs.get("provincia", ["murcia"])[0])
         comunidad_qs = _comunidad_valida(qs.get("comunidad", ["todas"])[0])
-        datos_nacional = _db_all_municipios()
+        datos_nacional = _db_municipios_ligeros()
         datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
         paginas_qs = {"alc": qs.get("pag_alc", ["1"])[0], "deuda": qs.get("pag_deuda", ["1"])[0],
                       "idx": qs.get("pag_idx", ["1"])[0]}
@@ -21154,7 +21229,7 @@ def _route_get(path, qs, gzip_ok=False):
         # no una consulta ligera solo de columnas (verificado en vivo antes
         # de commitear esto: casi se cuela un sitemap con nombres en
         # minúsculas sin acentos).
-        entradas = [(d.get("municipio", ""), d.get("provincia", "murcia")) for d in _db_all_municipios()]
+        entradas = [(d.get("municipio", ""), d.get("provincia", "murcia")) for d in _db_iter_municipios()]
         urls = [f"  <url><loc>{esc(SITE_URL)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>",
                 f"  <url><loc>{esc(SITE_URL)}/rankings</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
@@ -21308,9 +21383,9 @@ def _route_get(path, qs, gzip_ok=False):
         q = qs.get("q", [""])[0]
         provincia_param = qs.get("provincia", [""])[0]
         if provincia_param in MUNICIPIOS_POR_PROVINCIA:
-            datos_snap = _db_all_municipios(provincia=provincia_param)
+            datos_snap = _db_iter_municipios(provincia=provincia_param)
         else:
-            datos_snap = _db_all_municipios()   # "" o "todas" -> sin filtro, busca en toda España
+            datos_snap = _db_iter_municipios()   # "" o "todas" -> sin filtro, busca en toda España
         resultado = api_buscar(tipo, q, datos_snap)
         return _resp(json.dumps(resultado, ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
