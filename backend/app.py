@@ -9223,6 +9223,54 @@ _BACKFILL_FORMALES_PLACE_CLAVE = "backfill_formales_place_sha::"     # + provinc
 ORIGEN_BACKFILL_FORMALES = "backfill_formales_place"
 
 
+_RETIRADA_BACKFILL_FORMALES_CLAVE = "backfill_formales_place_retirado_v1"
+
+
+def _retirar_backfill_formales_place():
+    """RETIRADA URGENTE (2026-10-03): con el histórico de formales aplicado, cargar todos los municipios a la vez
+    (_db_all_municipios: Índice, hilo de directivos, rankings) supera los 2 GB del plan de Render y el contenedor se
+    reinicia en bucle. Quita de cada ficha los contratos marcados con ORIGEN_BACKFILL_FORMALES (solo esos: lo demás no
+    se toca), un municipio cada vez para no repetir el pico, y anota en `settings` que ya se hizo. El histórico se
+    volverá a aplicar cuando esas lecturas no carguen toda la base de golpe."""
+    if not _DISCO_CONFIABLE:
+        return
+    try:
+        with _db_lock:
+            if _db.execute("SELECT 1 FROM settings WHERE clave=?", (_RETIRADA_BACKFILL_FORMALES_CLAVE,)).fetchone():
+                return
+            claves = [r[0] for r in _db.execute("SELECT municipio FROM municipios").fetchall()]
+        quitados, fichas = 0, 0
+        for key in claves:
+            with _db_lock:
+                row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
+            if not row or ORIGEN_BACKFILL_FORMALES not in row[0]:
+                continue
+            d = json.loads(row[0])
+            antes = d.get("contratos", [])
+            quedan = [c for c in antes if c.get("origen") != ORIGEN_BACKFILL_FORMALES]
+            if len(quedan) == len(antes):
+                continue
+            d["contratos"] = quedan
+            d["total_contratos"] = len(quedan)
+            d["alertas"] = analizar_riesgo(quedan)
+            with _db_lock:
+                _db.execute("UPDATE municipios SET data=? WHERE municipio=?", (json.dumps(d, ensure_ascii=False), key))
+                _db.commit()
+            quitados += len(antes) - len(quedan)
+            fichas += 1
+            del d, antes, quedan
+        with _db_lock:
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET "
+                        "valor=excluded.valor", (_RETIRADA_BACKFILL_FORMALES_CLAVE, str(quitados)))
+            for (clave_s,) in _db.execute("SELECT clave FROM settings WHERE clave LIKE ?",
+                                          (_BACKFILL_FORMALES_PLACE_CLAVE + "%",)).fetchall():
+                _db.execute("DELETE FROM settings WHERE clave=?", (clave_s,))
+            _db.commit()
+        print(f"[startup] backfill_formales_place RETIRADO: {quitados} contratos quitados de {fichas} fichas.", flush=True)
+    except Exception as e:
+        print(f"[startup] retirada de backfill_formales_place: ERROR ({type(e).__name__}: {e})", flush=True)
+
+
 def _aplicar_backfill_formales_place():
     """Histórico de contratos formales de PLACE (desde septiembre de 2021) de las provincias que solo tenían los
     meses procesados desde que se conectaron (diagnóstico de cobertura por comunidad, 2026-10-02: 0,25-1,6 contratos
@@ -13195,7 +13243,7 @@ def _inicializar_datos():
     _aplicar_backfill_ajuntament_place()
     _aplicar_correccion_formales_5anios()
     _aplicar_backfill_nombres_place()
-    _aplicar_backfill_formales_place()
+    _retirar_backfill_formales_place()
     _aplicar_importe_adjudicado_place()
     _depurar_asignacion_place_por_nombre()
     corte = time.time() - RESULT_CACHE_TTL
@@ -19766,8 +19814,7 @@ def render_metodologia_html():
   nombre e importe; 50 si solo consta el sueldo del alcalde (que publica el Ministerio); 0 si ni eso.</p>
   <p><strong>Directivo identificado ({w("directivo")}).</strong> De las empresas que reciben contratos, en cuántas
   podemos ver quién las dirige según el Registro Mercantil. Depende en parte de nuestro propio cruce de datos, que
-  avanza poco a poco. Los contratos del histórico añadido en octubre de 2026 cuya empresa todavía no hemos buscado en
-  el BORME no cuentan, ni a favor ni en contra, hasta que la busquemos.</p>
+  avanza poco a poco.</p>
   <p><strong>Deuda ({w("deuda_pub")}) y saldo presupuestario ({w("saldo_pub")}).</strong> Pesan poco porque casi
   todos los ayuntamientos los tienen publicados en el Ministerio de Hacienda: con más peso, las notas se
   amontonarían arriba sin distinguir a nadie.</p>
@@ -19776,12 +19823,6 @@ def render_metodologia_html():
   unos 70 municipios; en el resto queda fuera.</p>
 
   <h2>Cambios en el Índice</h2>
-  <p><strong>Octubre de 2026: histórico de contratos formales en toda España.</strong> Hasta ahora solo la Región de
-  Murcia, Cataluña, el País Vasco y Navarra tenían cinco años de contratos formales; el resto de comunidades, solo
-  los últimos meses. Hemos añadido el histórico desde septiembre de 2021 de la Plataforma de Contratación del Sector
-  Público para todos los demás municipios (unos 250.000 contratos). Como la actividad compara a cada municipio con
-  los de su tamaño en toda España, Murcia, Cataluña y el País Vasco bajan algunos puntos: no publican menos que
-  antes, sino que ahora se les compara con municipios que por fin tienen sus datos completos.</p>
   <p><strong>Octubre de 2026: saldo presupuestario en País Vasco y Navarra.</strong> El fichero de Hacienda no cubre
   el régimen foral, así que en esas dos comunidades ese componente queda fuera en lugar de puntuar 0.</p>
 
