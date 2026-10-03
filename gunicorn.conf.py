@@ -17,8 +17,12 @@ os.environ["DINERO_HILOS_EN_POST_FORK"] = "1"
 def post_fork(server, worker):
     # Con --preload la app ya está importada (como "backend.app") y el trabajador la hereda; sin --preload se importa
     # aquí mismo, ya dentro del trabajador.
-    modulo = sys.modules.get("backend.app")
-    if modulo is None:
-        import backend.app as modulo
-    modulo._tras_fork()
-    server.log.info("post_fork: hilos de fondo lanzados en el trabajador %s", os.getpid())
+    try:
+        modulo = sys.modules.get("backend.app")
+        if modulo is None:
+            import backend.app as modulo
+        modulo._tras_fork()
+        server.log.info("post_fork: hilos de fondo lanzados en el trabajador %s", os.getpid())
+    except Exception:
+        # Un fallo aquí no debe tumbar el trabajador: sin hilos de fondo la web sigue atendiendo (como hasta ahora).
+        server.log.exception("post_fork: no se pudieron lanzar los hilos de fondo")
