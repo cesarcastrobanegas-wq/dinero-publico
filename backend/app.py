@@ -2142,6 +2142,11 @@ _ultima_purga_result_cache = 0.0
 # DATA_DIR ya se resuelve arriba, junto a BASE_DIR (la usan tanto cache.db
 # como place_cache/).
 DB_FILE = os.path.join(DATA_DIR, "cache.db")
+# Copia fija que sirve /admin/cache-db (reanudable con Range): se reutiliza entre intentos durante este tiempo.
+CACHE_DB_COPIA = os.path.join(DATA_DIR, ".cache_db_export_copia.db")
+CACHE_DB_COPIA_VIGENCIA_S = 2 * 3600
+_cache_db_copia_lock = threading.Lock()
+_RANGO_PETICION = contextvars.ContextVar("rango_peticion", default="")   # cabecera Range de la petición en curso
 DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo para migración inicial
 
 # Primer arranque con disco nuevo/vacío (DATA_DIR distinto de BASE_DIR y sin
@@ -21367,8 +21372,9 @@ def render_aviso_legal_html():
 # así que el comportamiento es idéntico en ambos casos.
 
 _HTTP_STATUS_TEXT = {
-    200: "OK", 303: "See Other", 400: "Bad Request",
-    404: "Not Found", 405: "Method Not Allowed", 500: "Internal Server Error",
+    200: "OK", 206: "Partial Content", 301: "Moved Permanently", 303: "See Other", 400: "Bad Request",
+    403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed", 416: "Range Not Satisfiable",
+    500: "Internal Server Error",
 }
 
 
@@ -21650,49 +21656,79 @@ def _route_get(path, qs, gzip_ok=False):
         )
 
     if path == "/admin/cache-db":
-        # Sirve el SQLite en bruto para que el cron de GitHub Actions haga una
-        # copia versionada (Git LFS) tras un refresco completo con éxito. Mismo
-        # patrón de protección que /actualizar-todos: ADMIN_TOKEN obligatorio
-        # (403 si falta o no coincide). El fichero se sirve desde un snapshot
-        # consistente (sqlite3.backup bajo _db_lock), NUNCA leyendo cache.db
-        # directamente del disco, para no entregar un fichero a medio escribir
-        # con WAL activo. Ver INFORME_NOCHE.md 2026-07-25.
+        # Sirve el SQLite en bruto (copia de seguridad: cron semanal de GitHub Actions y descargas a mano). ADMIN_TOKEN
+        # obligatorio (403 si falta o no coincide). Nunca se lee cache.db directamente del disco (WAL activo): se sirve
+        # una copia consistente hecha con sqlite3.backup.
+        #
+        # 2026-10-03 (decisiones de César):
+        #  - sin cargar la base en memoria: la copia se hace con una conexión de solo lectura propia, por bloques y sin
+        #    retener _db_lock, y se envía desde el disco por trozos de 1 MB;
+        #  - descarga REANUDABLE (cabecera Range: bytes=N-, la que manda `curl -C -`): una descarga de ~937 MB a 1-2 MB/s
+        #    se cortó a los 145 MB por un reset de conexión en el camino. Para poder reanudar, la copia tiene que ser LA
+        #    MISMA entre intentos: se guarda en CACHE_DB_COPIA y se reutiliza; una petición SIN Range solo hace una copia
+        #    nueva si la guardada tiene más de CACHE_DB_COPIA_VIGENCIA_S, y una petición CON Range nunca la rehace (si
+        #    no hay copia, 416). La huella (sha256) de cada copia se publica en ?info=1 para comprobar al final que el
+        #    fichero descargado es exactamente esa copia (una reanudación sobre otra copia no pasaría la comprobación).
         admin_token = os.environ.get("ADMIN_TOKEN", "")
         if not admin_token or qs.get("token", [""])[0] != admin_token:
             return _error_resp("No autorizado.", 403)
-        # 2026-10-03 (decisión de César): antes se leía la copia ENTERA en memoria (data = f.read()) -- con la base en
-        # ~937 MB eso sumaba casi 1 GB a los ~775 MB del contenedor, al borde de los 2 GB del plan. Ahora:
-        #  - la copia consistente se hace con una conexión de solo lectura propia (sqlite3.backup por bloques), sin
-        #    retener _db_lock -- la web sigue usando la base mientras tanto (WAL permite lectores en paralelo);
-        #  - se envía desde el disco por trozos de 1 MB (el cuerpo es un generador) y el temporal se borra al acabar.
-        # Restos de exportaciones anteriores que no llegaron a enviarse (el cliente cortó antes de empezar):
-        for _viejo in os.listdir(DATA_DIR):
-            if _viejo.startswith(".cache_db_export_") and _viejo.endswith(".tmp"):
-                _ruta_vieja = os.path.join(DATA_DIR, _viejo)
+        with _cache_db_copia_lock:
+            # restos de la versión anterior (temporales con nombre aleatorio) que no se llegaron a borrar
+            for _viejo in os.listdir(DATA_DIR):
+                if _viejo.startswith(".cache_db_export_") and _viejo.endswith(".tmp"):
+                    try:
+                        if time.time() - os.path.getmtime(os.path.join(DATA_DIR, _viejo)) > 3600:
+                            os.remove(os.path.join(DATA_DIR, _viejo))
+                    except OSError:
+                        pass
+            rango = (_RANGO_PETICION.get() or "").strip()
+            m_rango = re.fullmatch(r"bytes=(\d+)-", rango) if rango else None
+            existe = os.path.exists(CACHE_DB_COPIA) and os.path.exists(CACHE_DB_COPIA + ".sha256")
+            vigente = existe and time.time() - os.path.getmtime(CACHE_DB_COPIA) < CACHE_DB_COPIA_VIGENCIA_S
+            if not m_rango and not vigente and "info" not in qs:
+                tmp_path = CACHE_DB_COPIA + ".nueva"
                 try:
-                    if time.time() - os.path.getmtime(_ruta_vieja) > 3600:
-                        os.remove(_ruta_vieja)
-                except OSError:
-                    pass
-        tmp_path = os.path.join(DATA_DIR, f".cache_db_export_{uuid.uuid4().hex}.tmp")
-        try:
-            origen = sqlite3.connect(DB_FILE, timeout=30)
-            dst = sqlite3.connect(tmp_path)
-            try:
-                origen.backup(dst, pages=2048, sleep=0.005)
-            finally:
-                dst.close()
-                origen.close()
-        except Exception:
-            try:
-                os.remove(tmp_path)
-            except OSError:
-                pass
-            raise
-        tamano = os.path.getsize(tmp_path)
+                    origen = sqlite3.connect(DB_FILE, timeout=30)
+                    dst = sqlite3.connect(tmp_path)
+                    try:
+                        origen.backup(dst, pages=2048, sleep=0.005)
+                    finally:
+                        dst.close()
+                        origen.close()
+                    h = hashlib.sha256()
+                    with open(tmp_path, "rb") as f:
+                        for trozo in iter(lambda: f.read(1 << 20), b""):
+                            h.update(trozo)
+                    with open(tmp_path + ".sha256", "w") as f:
+                        f.write(h.hexdigest())
+                    # os.replace: quien esté descargando la copia anterior la sigue leyendo (descriptor abierto)
+                    os.replace(tmp_path + ".sha256", CACHE_DB_COPIA + ".sha256")
+                    os.replace(tmp_path, CACHE_DB_COPIA)
+                except Exception:
+                    for _t in (tmp_path, tmp_path + ".sha256"):
+                        try:
+                            os.remove(_t)
+                        except OSError:
+                            pass
+                    raise
+                existe = True
+            if not existe:
+                return 416, {"Content-Type": "text/plain; charset=utf-8", "Content-Length": "0"}, b""
+            tamano = os.path.getsize(CACHE_DB_COPIA)
+            creada = os.path.getmtime(CACHE_DB_COPIA)
+            with open(CACHE_DB_COPIA + ".sha256") as f:
+                sha = f.read().strip()
+            if "info" in qs:
+                return _resp(json.dumps({"bytes": tamano, "sha256": sha,
+                                         "creada": datetime.fromtimestamp(creada).isoformat(timespec="seconds")}),
+                             content_type="application/json; charset=utf-8")
+            inicio = int(m_rango.group(1)) if m_rango else 0
+            if inicio >= tamano:
+                return 416, {"Content-Range": f"bytes */{tamano}", "Content-Length": "0"}, b""
+            f = open(CACHE_DB_COPIA, "rb")          # abierto ya: si luego se reemplaza la copia, esta sigue igual
+        f.seek(inicio)
 
         def _trozos():
-            f = open(tmp_path, "rb")
             try:
                 while True:
                     trozo = f.read(1 << 20)
@@ -21700,16 +21736,16 @@ def _route_get(path, qs, gzip_ok=False):
                         break
                     yield trozo
             finally:
-                # también si el servidor cierra el generador al completar Content-Length o el cliente corta: primero
-                # se cierra el fichero (en Windows no se puede borrar abierto) y luego se borra
                 f.close()
-                try:
-                    os.remove(tmp_path)
-                except OSError:
-                    pass
-        return 200, {"Content-Type": "application/octet-stream",
+        cabeceras = {"Content-Type": "application/octet-stream",
                      "Content-Disposition": 'attachment; filename="cache.db"',
-                     "Content-Length": str(tamano)}, _trozos()
+                     "Accept-Ranges": "bytes", "ETag": f'"{sha[:32]}"',
+                     "X-Cache-Db-Sha256": sha,
+                     "Content-Length": str(tamano - inicio)}
+        if m_rango:
+            cabeceras["Content-Range"] = f"bytes {inicio}-{tamano - 1}/{tamano}"
+            return 206, cabeceras, _trozos()
+        return 200, cabeceras, _trozos()
 
     if path.startswith("/api/job/"):
         job_id = path[len("/api/job/"):]
@@ -22089,8 +22125,12 @@ def _app_wsgi(environ, start_response):
     gzip_ok = "gzip" in environ.get("HTTP_ACCEPT_ENCODING", "")
 
     if method == "GET":
-        code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
-                                              query_string=environ.get("QUERY_STRING", ""))
+        t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
+        try:
+            code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
+                                                  query_string=environ.get("QUERY_STRING", ""))
+        finally:
+            _RANGO_PETICION.reset(t_rango)
     elif method == "POST":
         try:
             length = int(environ.get("CONTENT_LENGTH") or 0)
@@ -22138,7 +22178,11 @@ class Handler(BaseHTTPRequestHandler):
             parsed = urlparse(self.path)
             qs = parse_qs(parsed.query)
             gzip_ok = "gzip" in self.headers.get("Accept-Encoding", "")
-            self._write(*_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok, query_string=parsed.query))
+            t_rango = _RANGO_PETICION.set(self.headers.get("Range", "") or "")
+            try:
+                self._write(*_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok, query_string=parsed.query))
+            finally:
+                _RANGO_PETICION.reset(t_rango)
         finally:
             with _peticiones_lock:
                 _peticiones_en_curso -= 1
