@@ -19249,7 +19249,40 @@ def _diagnostico_arranque():
         "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
         "municipios_en_cache_resultado_ahora": n_municipios_en_cache,
         "memoria_rss_mb": memoria_rss_mb,
+        "disco": _uso_disco(),
     }
+
+
+def _uso_disco():
+    """Espacio del disco de DATA_DIR y lo que ocupan sus ficheros grandes (2026-10-03, petición de César para
+    vigilar el disco de 2 GB tras el histórico de formales): total/usado/libre, cache.db con su -wal y los ZIP
+    mensuales de PLACE de place_cache/. Solo tamaños, sin datos."""
+    def mb(n):
+        return round(n / 1024 / 1024, 1)
+    out = {}
+    try:
+        u = shutil.disk_usage(DATA_DIR)
+        out.update({"total_mb": mb(u.total), "usado_mb": mb(u.used), "libre_mb": mb(u.free)})
+    except Exception as e:
+        out["error"] = type(e).__name__
+    for nombre in ("cache.db", "cache.db-wal", "cache.db-shm"):
+        ruta = os.path.join(DATA_DIR, nombre)
+        if os.path.exists(ruta):
+            out[nombre.replace(".", "_").replace("-", "_") + "_mb"] = mb(os.path.getsize(ruta))
+    try:
+        zips = {f: mb(os.path.getsize(os.path.join(CACHE_DIR, f))) for f in sorted(os.listdir(CACHE_DIR))
+                if f.endswith(".zip")}
+        out["place_cache_zips_mb"] = zips
+        out["place_cache_total_mb"] = round(sum(zips.values()), 1)
+    except Exception:
+        out["place_cache_zips_mb"] = {}
+    try:
+        otros = [(f, os.path.getsize(os.path.join(DATA_DIR, f))) for f in os.listdir(DATA_DIR)
+                 if os.path.isfile(os.path.join(DATA_DIR, f)) and not f.startswith("cache.db")]
+        out["otros_ficheros_mb"] = {f: mb(n) for f, n in sorted(otros, key=lambda x: -x[1])[:8] if n > 1024 * 1024}
+    except Exception:
+        pass
+    return out
 
 
 def _stats_localizacion():
