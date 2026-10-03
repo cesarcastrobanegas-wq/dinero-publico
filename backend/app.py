@@ -21445,7 +21445,13 @@ def _route_get(path, qs, gzip_ok=False):
                      headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok)
 
     if path == "/robots.txt":
-        body = f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
+        # 2026-10-03 (decisión de César, medido con /api/diagnostico-arranque): los rastreadores recorrían /rankings con
+        # todas las combinaciones de filtros y páginas (comunidad_alc, comunidad_deuda, pag_alc, pag_idx, provincia...)
+        # en cada idioma -- 15-20 s de CPU cada una, ocupando los 4 hilos. /rankings sin parámetros sigue permitido;
+        # cualquier /rankings con "?" no. Mismo bloqueo para cada prefijo de idioma (incluido el que no esté publicado).
+        bloqueos = "".join(f"Disallow: {pref}/rankings?\n" for pref in ("", *(f"/{l}" for l in I18N_IDIOMAS)))
+        # bloqueos ANTES de "Allow: /": hay rastreadores que aplican la primera regla que casa, no la más larga
+        body = f"User-agent: *\n{bloqueos}Allow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
 
     if path == "/sitemap.xml":
@@ -21471,12 +21477,8 @@ def _route_get(path, qs, gzip_ok=False):
             if prov == "murcia":
                 continue  # sin parámetro, ya cubierto por las URLs de arriba
             urls.append(f"  <url><loc>{esc(SITE_URL)}/{_q_prov_first(prov)}</loc><changefreq>daily</changefreq></url>")
-            urls.append(f"  <url><loc>{esc(SITE_URL)}/rankings{_q_prov_first(prov)}</loc><changefreq>daily</changefreq></url>")
-        # Índice de Transparencia: mismo patrón que el filtro por provincia de
-        # arriba, pero por comunidad autónoma (sección dentro de /rankings,
-        # no una ruta propia). "todas" ya cubierto por /rankings sin parámetro.
-        for com in COMUNIDAD_AUTONOMA_LABEL:
-            urls.append(f"  <url><loc>{esc(SITE_URL)}/rankings?comunidad={com}</loc><changefreq>daily</changefreq></url>")
+        # /rankings con parámetros (provincia, comunidad...) ya no va en el sitemap: robots.txt lo bloquea desde el
+        # 2026-10-03 (ver /robots.txt); solo /rankings a secas, arriba.
         for m, prov in entradas:
             urls.append(f"  <url><loc>{esc(SITE_URL)}/?muni={quote_plus(m)}{_q_prov(prov)}</loc><changefreq>daily</changefreq></url>")
         # Idiomas publicados (I18N_PUBLICADOS): la misma URL con su prefijo, salvo las páginas editoriales, que no
