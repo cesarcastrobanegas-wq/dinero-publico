@@ -13561,7 +13561,7 @@ def _lanzar_enriquecimiento(provincia=None):
     escanea esa provincia en vez de cache.db entero (ver su docstring,
     incidente Sevilla 2026-09-14) -- pasarla siempre que se conozca cuál
     provincia disparó este ciclo (p.ej. desde _job_run, en medio de un lote)."""
-    threading.Thread(target=_enriquecer_directivos_bg, args=(provincia,), daemon=True).start()
+    threading.Thread(target=_enriquecer_directivos_bg, args=(provincia,), name="directivos", daemon=True).start()
 
 
 # ─── HTML / UI ───────────────────────────────────────────────────────────────
@@ -19332,6 +19332,19 @@ def _diagnostico_arranque():
     }
 
 
+def _hilos_ahora():
+    """Dónde está cada hilo del proceso ahora mismo: nombre y las 3 últimas funciones de su pila (sin datos)."""
+    import sys as _sys
+    import traceback as _tb
+    nombres = {t.ident: t.name for t in threading.enumerate()}
+    out = []
+    for ident, marco in _sys._current_frames().items():
+        pila = _tb.extract_stack(marco)[-3:]
+        out.append({"hilo": nombres.get(ident, str(ident)),
+                    "pila": [f"{f.name}:{f.lineno}" for f in pila]})
+    return out
+
+
 def _estado_carga():
     """Peticiones en curso y de los últimos 10 minutos, fase del hilo de directivos, CPU e hilos (2026-10-03: para
     ver si la lentitud de páginas ligeras coincide con los 4 hilos de gunicorn ocupados en páginas pesadas)."""
@@ -19339,10 +19352,16 @@ def _estado_carga():
     with _peticiones_lock:
         activas = [dict(v) for v in _PETICIONES_ACTIVAS.values()]
         recientes = [r for r in _PETICIONES_RECIENTES if ahora - r[1] <= 600]
-    en_curso = sorted(({"ruta": a["ruta"], "segundos": round(ahora - a["inicio"], 1), "bot": a["bot"]}
-                       for a in activas), key=lambda x: -x["segundos"])
+    en_curso = sorted(({"ruta": a["ruta"], "segundos": round(ahora - a["inicio"], 1), "bot": a["bot"],
+                        "agente": a.get("agente")} for a in activas), key=lambda x: -x["segundos"])
+    por_agente = {}
+    for ruta, ini, dur, bot, agente in recientes:
+        g = por_agente.setdefault(agente, {"n": 0, "segundos": 0.0, "rankings_con_parametros": 0})
+        g["n"] += 1
+        g["segundos"] += dur
+        g["rankings_con_parametros"] += int("rankings?" in ruta)
     por_ruta = {}
-    for ruta, ini, dur, bot in recientes:
+    for ruta, ini, dur, bot, _agente in recientes:
         r = por_ruta.setdefault(ruta, {"n": 0, "bots": 0, "suma_s": 0.0, "max_s": 0.0})
         r["n"] += 1
         r["bots"] += int(bot)
@@ -19361,6 +19380,10 @@ def _estado_carga():
         "ultimos_10_min": {"peticiones": len(recientes), "de_bots": sum(1 for r in recientes if r[3]),
                            "por_ruta": resumen[:25]},
         "hilo_directivos": est,
+        "por_agente": sorted(({"agente": k, "n": v["n"], "segundos": round(v["segundos"]),
+                               "rankings_con_parametros": v["rankings_con_parametros"]}
+                              for k, v in por_agente.items()), key=lambda x: -x["segundos"])[:20],
+        "hilos": _hilos_ahora(),
         "indice_calculado_hace_s": (round(ahora - _INDICE_TRANSPARENCIA_CACHE["ts"])
                                     if _INDICE_TRANSPARENCIA_CACHE.get("ts") else None),
         "cpu_proceso_pct": cpu,
@@ -21920,6 +21943,17 @@ _RE_UA_BOT = re.compile(r"bot|crawl|spider|slurp|preview|facebookexternalhit|pyt
                         r"headless|scrapy|httpclient|okhttp|go-http|java/|libwww|axios|node-fetch", re.I)
 
 
+_RE_UA_FAMILIA = re.compile(r"([A-Za-z][\w.-]*(?:bot|crawler|spider|agent|fetcher|preview)[\w.-]*)", re.I)
+
+
+def _familia_ua(ua):
+    """Nombre del rastreador sacado del user-agent ("Googlebot", "GPTBot", "bingbot"...), "navegador" si no lo es."""
+    m = _RE_UA_FAMILIA.search(ua or "")
+    if m:
+        return m.group(1)[:40]
+    return "otro_cliente" if _RE_UA_BOT.search(ua or "") else "navegador"
+
+
 def _ruta_diagnostico(path, query):
     """Ruta sin valores de la consulta (solo qué parámetros lleva), p. ej. "/?muni&provincia"."""
     claves = sorted(parse_qs(query or "").keys())
@@ -21934,7 +21968,7 @@ def app(environ, start_response):
     ident = object()
     info = {"ruta": _ruta_diagnostico(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", "")),
             "inicio": time.time(), "bot": bool(_RE_UA_BOT.search(environ.get("HTTP_USER_AGENT", "") or "")),
-            "metodo": environ.get("REQUEST_METHOD", "GET")}
+            "metodo": environ.get("REQUEST_METHOD", "GET"), "agente": _familia_ua(environ.get("HTTP_USER_AGENT", ""))}
     with _peticiones_lock:
         _peticiones_en_curso += 1
         _PETICIONES_ACTIVAS[id(ident)] = info
@@ -21945,7 +21979,7 @@ def app(environ, start_response):
         with _peticiones_lock:
             _peticiones_en_curso -= 1
             _PETICIONES_ACTIVAS.pop(id(ident), None)
-            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], fin - info["inicio"], info["bot"]))
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], fin - info["inicio"], info["bot"], info["agente"]))
 
 
 def _app_wsgi(environ, start_response):
