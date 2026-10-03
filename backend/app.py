@@ -13323,7 +13323,9 @@ def _inicializar_datos():
         _cargar_contratos_menores_place()
         _recasar_governalia_ventana_larga()      # una sola vez (marca en settings); ver _GOVERNALIA_DIAS_EXTRA
         _nombre_pf_conocido("", "")              # construye ya el índice de nombres de personas físicas (ver ahí)
-    threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True).start()
+    hilo_feed = threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True)
+    hilo_feed.start()
+    threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
     # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
     # al RSS (búsqueda text=España) en vez de esperar al cron diario.
     if len(_db_noticias_ue(limit=3)) < 3:
@@ -13372,6 +13374,23 @@ def _limpiar_cache_negativos():
     _settings_set(_CLAVE_ULTIMA_LIMPIEZA_NEG, ahora)
     if deleted:
         print(f"  [enriquecimiento] {deleted} entradas negativas eliminadas del caché.", flush=True)
+
+
+# Peticiones web en curso (Handler.do_GET/do_POST). Los hilos de fondo que gastan CPU (el barrido de directivos)
+# ceden el turno mientras haya alguna, para que las páginas no vayan lentas justo después de un reinicio
+# (2026-10-03: tras desplegar el histórico de formales, portada 31 s y búsqueda 28 s con el barrido en marcha).
+_peticiones_en_curso = 0
+_peticiones_lock = threading.Lock()
+CEDER_TURNO_MAX_S = 2.0      # como mucho se espera esto seguido: con tráfico constante el barrido sigue avanzando
+
+
+def _ceder_a_peticiones():
+    """Si hay peticiones web en curso, espera (hasta CEDER_TURNO_MAX_S) a que terminen; si no, solo suelta el GIL."""
+    espera = 0.0
+    while _peticiones_en_curso > 0 and espera < CEDER_TURNO_MAX_S:
+        time.sleep(0.05)
+        espera += 0.05
+    time.sleep(0)
 
 
 def _enriquecer_directivos_bg(provincia=None):
@@ -13431,13 +13450,24 @@ def _enriquecer_directivos_bg(provincia=None):
         # cuya empresa ya no está agotada (re-buscables con la estrategia
         # actual) y (b) recopilar los pendientes de enriquecer.
         pendientes = []
+        agotados = {}    # (empresa, nif) -> _dir_cache_agotado, una consulta por empresa y no por contrato
+
+        def _agotado(empresa, nif):
+            k = (empresa, nif)
+            if k not in agotados:
+                agotados[k] = _dir_cache_agotado(empresa, nif)
+            return agotados[k]
+
         for d in _db_iter_municipios(provincia=provincia):
+            _ceder_a_peticiones()
             municipio = d.get("municipio", "")
             provincia_d = d.get("provincia", "murcia")
             tocado = False
-            for c in d.get("contratos", []):
+            for i_c, c in enumerate(d.get("contratos", [])):
+                if i_c % 500 == 499:
+                    _ceder_a_peticiones()
                 if not c.get("directivo") and c.get("intentado"):
-                    if _dir_cache_agotado(c.get("empresa", ""), c.get("nif", "")):
+                    if _agotado(c.get("empresa", ""), c.get("nif", "")):
                         if not c.get("rm_agotado"):
                             c["rm_agotado"] = True
                             tocado = True
@@ -13448,7 +13478,7 @@ def _enriquecer_directivos_bg(provincia=None):
                 empresa_c = c.get("empresa", "")
                 if not empresa_c or empresa_c == "No localizada" or c.get("directivo") or c.get("intentado"):
                     continue
-                if _dir_cache_agotado(empresa_c, c.get("nif", "")):
+                if _agotado(empresa_c, c.get("nif", "")):
                     c["rm_agotado"] = True
                     c["intentado"] = True
                     tocado = True
@@ -13481,7 +13511,9 @@ def _enriquecer_directivos_bg(provincia=None):
                 _db_set_municipio(muni_actual[0], d_actual, provincia=muni_actual_provincia)
             cambios_muni_actual = False
 
+        del agotados
         for idx, (municipio, provincia_p, key, empresa, nif) in enumerate(pendientes, 1):
+            _ceder_a_peticiones()
             print(f"  [{idx}/{len(pendientes)}] {empresa} (NIF:{nif})", flush=True)
             cached_n, cached_c = _dir_cache_get(empresa, nif)
             if cached_n is not None:
@@ -16106,15 +16138,50 @@ def _indice_transparencia_cacheado():
     a /rankings. TTL de 1h, igual de orden de magnitud que el resto de datos
     periódicos del sitio (ninguno de los 7 componentes cambia más rápido que
     el cron diario)."""
-    with _indice_transparencia_cache_lock:
-        if (_INDICE_TRANSPARENCIA_CACHE["filas"] is not None
-                and (time.time() - _INDICE_TRANSPARENCIA_CACHE["ts"]) < INDICE_TRANSPARENCIA_CACHE_TTL):
-            return _INDICE_TRANSPARENCIA_CACHE["filas"]
-    filas = _calcular_indice_transparencia()
-    with _indice_transparencia_cache_lock:
-        _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
-        _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
+    def _vigente():
+        with _indice_transparencia_cache_lock:
+            if (_INDICE_TRANSPARENCIA_CACHE["filas"] is not None
+                    and (time.time() - _INDICE_TRANSPARENCIA_CACHE["ts"]) < INDICE_TRANSPARENCIA_CACHE_TTL):
+                return _INDICE_TRANSPARENCIA_CACHE["filas"]
+        return None
+    filas = _vigente()
+    if filas is not None:
+        return filas
+    # Un solo cálculo a la vez: si ya lo está haciendo otra petición o el precálculo de arranque
+    # (_precalcular_indice_bg), se espera a ese resultado en vez de lanzar otro igual en paralelo.
+    with _indice_calculo_lock:
+        filas = _vigente()
+        if filas is not None:
+            return filas
+        filas = _calcular_indice_transparencia()
+        with _indice_transparencia_cache_lock:
+            _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
+            _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
     return filas
+
+
+_indice_calculo_lock = threading.Lock()
+
+
+def _precalcular_indice_bg(esperar=None):
+    """Calcula el Índice en segundo plano nada más arrancar (cuando termina la carga del feed de menores, que entra en
+    el cálculo) y lo renueva antes de que caduque, para que ningún visitante espere el cálculo (~80 s con el
+    histórico de formales; decisión de César 2026-10-03)."""
+    if esperar is not None:
+        esperar.join()
+    while True:
+        try:
+            t0 = time.time()
+            with _indice_calculo_lock:
+                filas = _calcular_indice_transparencia()
+                with _indice_transparencia_cache_lock:
+                    _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
+                    _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
+            print(f"[indice] precalculado en {time.time() - t0:.0f} s ({len(filas)} municipios)", flush=True)
+            del filas
+        except Exception as e:
+            print(f"[indice] precálculo: ERROR ({type(e).__name__}: {e})", flush=True)
+        time.sleep(INDICE_TRANSPARENCIA_CACHE_TTL * 0.75)
 
 
 def _calcular_ranking_alcaldes():
@@ -21695,7 +21762,19 @@ def _route_post(path, params):
 # ─── WSGI (producción: gunicorn backend.app:app) ─────────────────────────────
 
 def app(environ, start_response):
-    """Callable WSGI estándar — es lo que gunicorn/render.yaml invocan."""
+    """Callable WSGI estándar — es lo que gunicorn/render.yaml invocan. Cuenta la petición en _peticiones_en_curso
+    mientras se calcula la respuesta (ver _ceder_a_peticiones)."""
+    global _peticiones_en_curso
+    with _peticiones_lock:
+        _peticiones_en_curso += 1
+    try:
+        return _app_wsgi(environ, start_response)
+    finally:
+        with _peticiones_lock:
+            _peticiones_en_curso -= 1
+
+
+def _app_wsgi(environ, start_response):
     method = environ.get("REQUEST_METHOD", "GET")
     path = environ.get("PATH_INFO", "/")
     qs = parse_qs(environ.get("QUERY_STRING", ""))
@@ -21738,12 +21817,29 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
 
     def do_GET(self):
-        parsed = urlparse(self.path)
-        qs = parse_qs(parsed.query)
-        gzip_ok = "gzip" in self.headers.get("Accept-Encoding", "")
-        self._write(*_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok, query_string=parsed.query))
+        global _peticiones_en_curso
+        with _peticiones_lock:
+            _peticiones_en_curso += 1
+        try:
+            parsed = urlparse(self.path)
+            qs = parse_qs(parsed.query)
+            gzip_ok = "gzip" in self.headers.get("Accept-Encoding", "")
+            self._write(*_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok, query_string=parsed.query))
+        finally:
+            with _peticiones_lock:
+                _peticiones_en_curso -= 1
 
     def do_POST(self):
+        global _peticiones_en_curso
+        with _peticiones_lock:
+            _peticiones_en_curso += 1
+        try:
+            self._do_post()
+        finally:
+            with _peticiones_lock:
+                _peticiones_en_curso -= 1
+
+    def _do_post(self):
         try:
             length = int(self.headers.get("Content-Length", 0) or 0)
             raw = self.rfile.read(length).decode("utf-8") if length else ""
