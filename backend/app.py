@@ -3116,7 +3116,10 @@ def _parece_sociedad(empresa, nif=""):
 # contratos guardados: quitar el fichero deja el sitio exactamente como estaba. Junto a cada nombre del BORME se
 # muestra la fecha del nombramiento, el enlace al anuncio oficial y un enlace para pedir la rectificación (propuesta
 # mínima de RGPD del informe, §7.1). Las personas físicas (autónomos) no pasan por aquí: no tienen administrador.
-ADMINISTRADORES_BORME_FILE = os.path.join(BASE_DIR, "administradores_borme.json")
+# En el disco persistente (DATA_DIR), nunca en el repositorio (decisión de César 2026-10-04, §7.2 del informe: el canal
+# de rectificación no sirve si los nombres quedan para siempre en el historial público de GitHub). Lo sube el flujo
+# diario de GitHub Actions (administradores-borme-diario.yml) a POST /admin/administradores-borme.
+ADMINISTRADORES_BORME_FILE = os.path.join(DATA_DIR, "administradores_borme.json")
 
 
 def _cargar_administradores_borme():
@@ -3128,6 +3131,38 @@ def _cargar_administradores_borme():
 
 
 ADMINISTRADORES_BORME = _cargar_administradores_borme()
+
+
+def _subir_administradores_borme(token, crudo):
+    """POST /admin/administradores-borme?token=... con el fichero generado por administradores_borme.py (JSON, en
+    gzip o no). Lo valida, lo guarda en el disco persistente (escritura atómica) y lo recarga en memoria sin reiniciar.
+    Devuelve (código, cuerpo JSON). Nunca devuelve ni registra nombres: solo recuentos."""
+    global ADMINISTRADORES_BORME
+    admin_token = os.environ.get("ADMIN_TOKEN", "")
+    if not admin_token or token != admin_token:
+        return 403, {"error": "No autorizado."}
+    try:
+        if crudo[:2] == bytes([0x1F, 0x8B]):          # gzip
+            crudo = _gzip.decompress(crudo)
+        datos = json.loads(crudo.decode("utf-8"))
+        nuevos = datos.get("administradores")
+        if not isinstance(nuevos, dict) or len(nuevos) < 1000:
+            return 400, {"error": "Fichero no válido: falta 'administradores' o tiene menos de 1.000 sociedades."}
+        muestra = next(iter(nuevos.values()))
+        if not all(k in muestra for k in ("nombre", "cargo")):
+            return 400, {"error": "Fichero no válido: registros sin nombre/cargo."}
+    except (ValueError, OSError, AttributeError) as e:
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    tmp = ADMINISTRADORES_BORME_FILE + ".nuevo"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(datos, f, ensure_ascii=False)
+    os.replace(tmp, ADMINISTRADORES_BORME_FILE)
+    anteriores = len(ADMINISTRADORES_BORME)
+    ADMINISTRADORES_BORME = nuevos
+    print(f"[admin] administradores_borme: {len(nuevos)} sociedades (antes {anteriores}), periodo "
+          f"{datos.get('periodo')}", flush=True)
+    return 200, {"sociedades": len(nuevos), "antes": anteriores, "periodo": datos.get("periodo"),
+                 "generado": datos.get("generado")}
 
 
 def _administrador_borme_info(empresa, nif=""):
@@ -3177,10 +3212,17 @@ def _directivo_contrato(c):
 
 
 def _dir_cache_get(empresa, nif=""):
-    """Devuelve (nombre, cargo) si hay hit válido; (None, None) si hay que buscar."""
+    """(nombre, cargo) A MOSTRAR: el administrador del BORME si lo hay; si no, lo guardado en `directores`.
+    (None, None) si hay que buscar. Para lo que se ESCRIBE en la base usar _dir_cache_get_registro: los nombres del
+    BORME solo se aplican al mostrar, para que quitar a alguien del fichero (rectificación) lo quite de todo el sitio."""
     b = _administrador_borme(empresa, nif)
     if b:
         return b
+    return _dir_cache_get_registro(empresa, nif)
+
+
+def _dir_cache_get_registro(empresa, nif=""):
+    """Solo lo guardado en la tabla `directores` (sin el BORME). (None, None) si hay que buscar."""
     key = _dir_cache_key(empresa, nif)
     with _db_lock:
         row = _db.execute("SELECT nombre, cargo, ts FROM directores WHERE clave=?", (key,)).fetchone()
@@ -12084,7 +12126,7 @@ def buscar_directivo(empresa, nif=""):
         _dir_cache_set(empresa, nif, nombre_pf, cargo_pf)
         return nombre_pf, cargo_pf
 
-    cached_n, cached_c = _dir_cache_get(empresa, nif)
+    cached_n, cached_c = _dir_cache_get_registro(empresa, nif)   # nunca el BORME: lo que devuelve se guarda
     if cached_n is not None:
         return cached_n, cached_c
 
@@ -13573,6 +13615,8 @@ def _enriquecer_directivos_bg(provincia=None):
                 empresa_c = c.get("empresa", "")
                 if not empresa_c or empresa_c == "No localizada" or c.get("directivo") or c.get("intentado"):
                     continue
+                if _administrador_borme(empresa_c, c.get("nif", "")):
+                    continue          # ya se muestra el del BORME (al mostrar, sin guardarlo en el contrato)
                 if _agotado(empresa_c, c.get("nif", "")):
                     c["rm_agotado"] = True
                     c["intentado"] = True
@@ -13612,7 +13656,7 @@ def _enriquecer_directivos_bg(provincia=None):
             _ESTADO_DIRECTIVOS["hecho"] = idx
             _ceder_a_peticiones()
             print(f"  [{idx}/{len(pendientes)}] {empresa} (NIF:{nif})", flush=True)
-            cached_n, cached_c = _dir_cache_get(empresa, nif)
+            cached_n, cached_c = _dir_cache_get_registro(empresa, nif)   # nunca el BORME: se escribe en el contrato
             if cached_n is not None:
                 nombre, cargo = cached_n, cached_c
                 print(f"    caché: {nombre!r}", flush=True)
@@ -22197,6 +22241,23 @@ def _app_wsgi(environ, start_response):
                                                   query_string=environ.get("QUERY_STRING", ""))
         finally:
             _RANGO_PETICION.reset(t_rango)
+    elif method == "POST" and path == "/admin/administradores-borme":
+        # cuerpo binario (JSON en gzip), no formulario: ver _subir_administradores_borme
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = qs.get("token", [""])[0]
+        admin_token = os.environ.get("ADMIN_TOKEN", "")
+        if not admin_token or token != admin_token:
+            code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
+        elif length > 100 * 1024 * 1024:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            crudo = environ["wsgi.input"].read(length) if length else b""
+            code, cuerpo = _subir_administradores_borme(token, crudo)
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
     elif method == "POST":
         try:
             length = int(environ.get("CONTENT_LENGTH") or 0)

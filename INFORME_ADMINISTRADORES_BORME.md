@@ -158,3 +158,23 @@ del 01-01-2021 al 30-09-2026 (1.499 días laborables).
   errores. Quitar `administradores_borme.json` deja el sitio exactamente como `main`.
 - Sigue faltando decidir el §7 (nombres a escala, fichero en el repositorio o en el disco de Render, cron diario,
   histórico 2009-2020). La API (/api/buscar) devuelve el nombre del BORME pero aún no la fecha ni el anuncio.
+
+## 10. Decisiones de César del 04-10 y rama `wip/administradores-borme-v3` (sobre `main` 7473813, SIN desplegar)
+
+- §7.1 RGPD: aprobado tal como está (órgano de administración, fecha, enlace al anuncio, canal de rectificación).
+- §7.2 El fichero vive en el disco de Render (`DATA_DIR/administradores_borme.json`), nunca en el repositorio; sigue en
+  `.gitignore` y no está en el historial de ninguna rama. Se sube con `POST /admin/administradores-borme?token=...`
+  (JSON o JSON en gzip): comprueba el token ANTES de leer el cuerpo (tope 100 MB), valida (>= 1.000 sociedades, con
+  nombre y cargo), escribe de forma atómica y recarga sin reiniciar. Solo devuelve y registra recuentos.
+- Los nombres del BORME solo se aplican al mostrar: el enriquecimiento ya no los lee para guardar
+  (`_dir_cache_get_registro`) y salta las sociedades que ya tienen administrador en el BORME. Así, quitar a alguien del
+  fichero (rectificación) lo quita de todo el sitio.
+- §7.3 Cron diario: `.github/workflows/administradores-borme-diario.yml`, días laborables 09:30 UTC. Índice del BORME en
+  la caché de Actions (la primera vez, descarga completa 2021-hoy: varias horas); días nuevos; base de producción por la
+  descarga reanudable; regenera; sube. Sin artefactos y sin nombres en los registros. `borme_actos.py` ya no da por
+  descargado un día que falló por red, ni un día reciente sin documentos (puede no haber salido aún).
+- §7.4 Histórico 2009-2020: no por ahora.
+- Probado en local con la copia de producción del 03-10: 71.716 sociedades (periodo 01-01-2021 a 02-10-2026), +11 MB
+  de memoria; ficha, /rankings, portada, /gl/ y /ca/ con fecha, anuncio y rectificación; mismos tiempos con y sin el
+  fichero; ningún nombre del BORME escrito en la base (tabla `directores` idéntica; contratos guardados sin cambios de
+  directivo).

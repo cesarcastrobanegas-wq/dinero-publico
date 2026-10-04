@@ -165,6 +165,7 @@ def conectar():
 
 
 _lock = threading.Lock()
+_FALLO = object()  # error de red o del servidor, distinto de un 404 (dia sin BORME): ese dia se reintenta
 
 
 def _get(sesion, url, **kw):
@@ -178,7 +179,7 @@ def _get(sesion, url, **kw):
         except requests.RequestException:
             pass
         time.sleep(3 * (intento + 1))
-    return None
+    return _FALLO
 
 
 def descargar_doc(sesion, db, fecha, item):
@@ -188,7 +189,7 @@ def descargar_doc(sesion, db, fecha, item):
             return 0
     r = _get(sesion, item["url_html"])
     time.sleep(PAUSA)
-    if r is None:
+    if r is None or r is _FALLO:
         return -1
     r.encoding = "utf-8"
     texto = texto_de_html(r.text)
@@ -215,7 +216,7 @@ def descargar(desde, hasta):
         if d.weekday() < 5 and not db.execute("SELECT 1 FROM dias WHERE fecha=?", (f,)).fetchone():
             r = _get(sesion, API_SUMARIO.format(fecha=f))
             items = []
-            if r is not None:
+            if r is not None and r is not _FALLO:
                 try:
                     diario = r.json()["data"]["sumario"]["diario"]
                     for dia in (diario if isinstance(diario, list) else [diario]):
@@ -228,7 +229,8 @@ def descargar(desde, hasta):
                     items = []
             with ThreadPoolExecutor(WORKERS) as ex:
                 res = list(ex.map(lambda it: descargar_doc(sesion, db, f, it), items))
-            if all(x >= 0 for x in res):
+            # un dia reciente sin documentos puede ser que el BORME aun no haya salido: no se da por hecho
+            if r is not _FALLO and all(x >= 0 for x in res) and (items or (dt.date.today() - d).days > 3):
                 db.execute("INSERT OR REPLACE INTO dias VALUES (?,?)", (f, len(items)))
                 db.commit()
             total_docs += len(items)
