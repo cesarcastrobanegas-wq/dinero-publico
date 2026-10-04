@@ -8,6 +8,7 @@ import hashlib
 import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib, random, unicodedata, math
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
+import ctypes, gc, sys as _sys
 from email.utils import parsedate_to_datetime
 from urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urljoin
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -2889,6 +2890,19 @@ def _db_all_municipios(provincia=None):
         except Exception:
             pass
     return out
+
+
+def _liberar_memoria():
+    """gc + malloc_trim de glibc: devuelve al sistema la memoria que Python ya liberó. En Linux, con varios hilos,
+    glibc guarda la memoria libre en zonas por hilo y no la devuelve sola: tras el reprocesado de PLACE del 04-10 el
+    proceso se quedó en 1,6-1,9 GB de RSS con mucho menos en uso (en local, Windows, el mismo trabajo deja +100 MB).
+    Se llama después de los trabajos pesados (extraer un ZIP, precalcular el Índice, cada provincia del refresco)."""
+    gc.collect()
+    if _sys.platform.startswith("linux"):
+        try:
+            ctypes.CDLL("libc.so.6").malloc_trim(0)
+        except Exception:
+            pass
 
 
 def _db_iter_municipios(provincia=None, lote=40):
@@ -7951,10 +7965,11 @@ def _extraer_contratos_zip(zip_path, job_id=None):
                 pass
         return out
 
+    # Un .atom detrás de otro (2026-10-04): el análisis es Python puro y con 4 hilos solo se multiplicaba el pico de
+    # memoria (medido con el ZIP de septiembre: 115 s con 1 hilo frente a 96 s con 4, y la mitad de pico).
     contratos = []
-    with ThreadPoolExecutor(max_workers=4) as ex:
-        for parcial in ex.map(_procesar, atom_names):
-            contratos.extend(parcial)
+    for name in atom_names:
+        contratos.extend(_procesar(name))
     return contratos
 
 
@@ -7983,6 +7998,7 @@ def _contratos_de_zip_cacheado(zip_path, job_id=None):
         contratos = _extraer_contratos_zip(zip_path, job_id)
         _log(job_id, f"  {nombre}: {len(contratos)} contratos ADJ/RES/FOR en total (toda España).")
         _ZIP_CONTRATOS_CACHE[clave] = contratos
+        _liberar_memoria()
         while len(_ZIP_CONTRATOS_CACHE) > _ZIP_CONTRATOS_CACHE_MAX:
             _ZIP_CONTRATOS_CACHE.pop(next(iter(_ZIP_CONTRATOS_CACHE)))
         return contratos
@@ -12820,16 +12836,17 @@ def _reprocesar_meses_place(meses):
             print(f"[reprocesar-place] {provincia}: {est['actualizados']} fichas actualizadas, "
                   f"{est['contratos_nuevos']} contratos nuevos (acumulado)", flush=True)
         del indices
+        _liberar_memoria()
         est["estado"] = "provincia_murcia"
         _refrescar_provincia_secuencial("reprocesar-place-murcia", "murcia")
         est.update(estado="terminado", fin=time.strftime("%Y-%m-%d %H:%M:%S"), provincia="")
         print(f"[reprocesar-place] terminado: {est['actualizados']} fichas, {est['contratos_nuevos']} contratos "
               f"nuevos de {meses}", flush=True)
-        _lanzar_enriquecimiento()
     except Exception as e:
         est.update(estado="error", error=f"{type(e).__name__}: {e}")
         print(f"[reprocesar-place] ERROR {type(e).__name__}: {e}", flush=True)
     finally:
+        _liberar_memoria()
         _reprocesado_place_lock.release()
 
 
@@ -12860,6 +12877,7 @@ def _refrescar_provincia_secuencial(job_id, provincia, offset=0):
         time.sleep(4)  # pausa entre municipios
 
     print(f"  [actualizar-todos:{provincia}] Refresco completo terminado.", flush=True)
+    _liberar_memoria()
 
 
 def _actualizar_todos_bg(job_id, provincia="murcia"):
@@ -16636,6 +16654,7 @@ def _precalcular_indice_bg(esperar=None):
                     _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
             print(f"[indice] precalculado en {time.time() - t0:.0f} s ({len(filas)} municipios)", flush=True)
             del filas
+            _liberar_memoria()
         except Exception as e:
             print(f"[indice] precálculo: ERROR ({type(e).__name__}: {e})", flush=True)
         time.sleep(INDICE_TRANSPARENCIA_CACHE_TTL * 0.75)
