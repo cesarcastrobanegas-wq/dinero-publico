@@ -12723,6 +12723,33 @@ _reprocesado_place_lock = threading.Lock()
 _CAMPOS_ENRIQUECIDOS = ("directivo", "cargo", "rm_agotado", "intentado", "origen", "borm_url")
 
 
+def _indice_organos_zip(zip_path):
+    """{órgano normalizado: [contratos]} de un ZIP ya extraído (_contratos_de_zip_cacheado). Para recorrer miles de
+    municipios: buscar_en_zip normaliza el órgano de TODOS los contratos del mes en cada llamada (decenas de miles por
+    municipio); aquí se normaliza una vez y cada municipio solo prueba su patrón contra los órganos distintos."""
+    indice = {}
+    for c in _contratos_de_zip_cacheado(zip_path):
+        indice.setdefault(normalizar(c.get("organo", "")), []).append(c)
+    return indice
+
+
+def _buscar_en_indice_organos(indice, municipio, provincia):
+    """Mismo resultado que buscar_en_zip(..., anclar=True, provincia=provincia) sobre el ZIP de `indice`."""
+    muni_re = _regex_anclado(municipio)
+    cp_esperado = _cp_esperado_anclaje(municipio)
+    out = []
+    for organo_n, lista in indice.items():
+        if not muni_re.search(organo_n):
+            continue
+        for c in lista:
+            if cp_esperado and not c.get("cp", "").startswith(cp_esperado):
+                continue
+            if _cp_de_otra_provincia(c, municipio, provincia):
+                continue
+            out.append(dict(c))   # copia -- nunca mutar el dict compartido en caché
+    return out
+
+
 def _reprocesar_meses_place(meses):
     """Vuelve a pasar los ZIP de PLACE de `meses` (["202609", "202610"]) por todos los municipios que se nutren de
     PLACE y añade a cada ficha lo que falte (2026-10-04, §0 de INFORME_LICITACIONES_SUBVENCIONES.md: los ZIP de esos
@@ -12750,8 +12777,7 @@ def _reprocesar_meses_place(meses):
             est["zips"][m] = os.path.getsize(p) // 1024 // 1024
             zips.append(p)
         est["estado"] = "extrayendo"
-        for p in zips:
-            _contratos_de_zip_cacheado(p)
+        indices = [_indice_organos_zip(p) for p in zips]
         est["estado"] = "fusionando"
         for provincia, municipios in MUNICIPIOS_POR_PROVINCIA.items():
             if provincia in PROVINCIAS_CATALUNYA or provincia in PROVINCIAS_NAVARRA or provincia == "murcia":
@@ -12762,8 +12788,8 @@ def _reprocesar_meses_place(meses):
                     continue
                 est["municipios"] += 1
                 encontrados = []
-                for p in zips:
-                    encontrados += buscar_en_zip(p, municipio, anclar=True, provincia=provincia)
+                for indice in indices:
+                    encontrados += _buscar_en_indice_organos(indice, municipio, provincia)
                 if not encontrados:
                     continue
                 d = _db_get_municipio(municipio, provincia)
@@ -12793,6 +12819,7 @@ def _reprocesar_meses_place(meses):
                 time.sleep(0.02)          # cede el turno a las peticiones web entre ficha y ficha
             print(f"[reprocesar-place] {provincia}: {est['actualizados']} fichas actualizadas, "
                   f"{est['contratos_nuevos']} contratos nuevos (acumulado)", flush=True)
+        del indices
         est["estado"] = "provincia_murcia"
         _refrescar_provincia_secuencial("reprocesar-place-murcia", "murcia")
         est.update(estado="terminado", fin=time.strftime("%Y-%m-%d %H:%M:%S"), provincia="")
