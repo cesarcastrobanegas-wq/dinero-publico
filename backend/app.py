@@ -23,6 +23,10 @@ BORM_PDF_URL    = "https://www.borm.es/services/anuncio/{id}/pdf"
 import requests
 from bs4 import BeautifulSoup
 import psutil
+try:                                   # bajo gunicorn la app es "backend.app" (paquete); en local, un módulo suelto
+    from . import licitaciones_place as LIC
+except ImportError:
+    import licitaciones_place as LIC
 
 
 # ─── INTERFAZ MULTIIDIOMA (gallego, catalán, euskera) — estructura, 2026-09-30 ────────────────────────────────
@@ -2456,6 +2460,21 @@ def _db_init():
             ts      REAL NOT NULL
         )""")
         _db.commit()
+        # Convocatorias abiertas (2026-10-04). licitaciones: una fila por entrada de PLACE (su <id>); las que ya no
+        # están en plazo de presentación (EV/ADJ/RES/ANUL/borradas) se quedan solo con id, fecha y estado, para que
+        # una versión abierta más antigua leída después (otro ZIP, otra página) no la vuelva a abrir.
+        # subvenciones: la sube el flujo de GitHub Actions (ver _subir_subvenciones); se sustituye entera.
+        _db.execute("""CREATE TABLE IF NOT EXISTS licitaciones (
+            id TEXT PRIMARY KEY, actualizado TEXT, estado TEXT, fin_plazo TEXT, titulo TEXT, url TEXT,
+            expediente TEXT, organo TEXT, nif_organo TEXT, dir3 TEXT, ambito TEXT, provincia TEXT, comunidad TEXT,
+            municipio TEXT, cpv TEXT, cpv2 TEXT, tipo TEXT, procedimiento TEXT, presupuesto REAL, valor_estimado REAL,
+            lotes INTEGER, busqueda TEXT, visto REAL)""")
+        _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_plazo ON licitaciones(estado, fin_plazo)")
+        _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_muni ON licitaciones(municipio)")
+        _db.execute(_SQL_TABLA_SUBVENCIONES.format(tabla="subvenciones"))
+        for _sql in _SQL_INDICES_SUBVENCIONES:
+            _db.execute(_sql.format(tabla="subvenciones"))
+        _db.commit()
 
         # Recalcula municipio_match para TODAS las filas en cada arranque (no
         # solo cuando la columna es nueva): es una tabla pequeña (unos pocos
@@ -2903,6 +2922,16 @@ def _liberar_memoria():
             ctypes.CDLL("libc.so.6").malloc_trim(0)
         except Exception:
             pass
+
+
+_SQL_TABLA_SUBVENCIONES = """CREATE TABLE IF NOT EXISTS {tabla} (
+    bdns TEXT PRIMARY KEY, registrada TEXT, titulo TEXT, titulo_cooficial TEXT, nivel1 TEXT, nivel2 TEXT, organo TEXT,
+    nuts TEXT, provincia TEXT, comunidad TEXT, municipio TEXT, presupuesto REAL, beneficiarios TEXT, sector TEXT,
+    finalidad TEXT, instrumento TEXT, inicio TEXT, fin TEXT, texto_fin TEXT, url_bases TEXT, mrr INTEGER,
+    busqueda TEXT)"""
+_SQL_INDICES_SUBVENCIONES = ("CREATE INDEX IF NOT EXISTS idx_{tabla}_fin ON {tabla}(fin)",
+                             "CREATE INDEX IF NOT EXISTS idx_{tabla}_muni ON {tabla}(municipio)",
+                             "CREATE INDEX IF NOT EXISTS idx_{tabla}_prov ON {tabla}(provincia)")
 
 
 def _db_iter_municipios(provincia=None, lote=40):
@@ -12850,6 +12879,323 @@ def _reprocesar_meses_place(meses):
         _reprocesado_place_lock.release()
 
 
+# ─── CONVOCATORIAS ABIERTAS: LICITACIONES (PLACE) ─────────────────────────────────────────────────────────────────
+# Decisión de César (2026-10-04): sección "Convocatorias abiertas" con licitaciones (PLACE) y subvenciones (BDNS). Las
+# licitaciones salen del MISMO feed que los contratos del Índice (sindicacion_643), que hasta ahora descartaba todo lo
+# que no estuviera adjudicado. Un hilo de fondo ("licitaciones", lanzado tras post_fork) las mantiene al día:
+#  - cada ZIP mensual de place_cache/ cuya versión (fecha y tamaño del fichero) no se haya leído aún se recorre .atom a
+#    .atom (los ZIP los baja y renueva el refresco nocturno; este hilo no descarga ZIP);
+#  - cada LIC_CICLO_S se leen las páginas nuevas del Atom en vivo, siguiendo el enlace "next" hasta lo ya visto.
+# "Vigente" = última versión en PUB y fecha fin de presentación no vencida (ver licitaciones_place.py).
+LIC_CICLO_S = 3 * 3600
+LIC_MAX_PAGINAS_ATOM = 40
+_LIC_ESTADO = {"estado": "sin_arrancar"}
+_LIC_COLUMNAS = ("id", "actualizado", "estado", "fin_plazo", "titulo", "url", "expediente", "organo", "nif_organo",
+                 "dir3", "ambito", "provincia", "comunidad", "municipio", "cpv", "cpv2", "tipo", "procedimiento",
+                 "presupuesto", "valor_estimado", "lotes", "busqueda", "visto")
+_SQL_LIC_UPSERT = (f"INSERT INTO licitaciones ({', '.join(_LIC_COLUMNAS)}) VALUES ({', '.join('?' * len(_LIC_COLUMNAS))}) "
+                   f"ON CONFLICT(id) DO UPDATE SET "
+                   + ", ".join(f"{c}=excluded.{c}" for c in _LIC_COLUMNAS[1:])
+                   + " WHERE excluded.actualizado >= licitaciones.actualizado")
+_RE_ORGANO_MUNICIPAL = re.compile(r"\b(?:ayuntamiento|concello|ajuntament|udala|ciudad autonoma)\b")
+_LIC_MUNI_MEMO = {}
+_LIC_REGEX_MUNI = {}
+
+
+def _ahora_madrid():
+    """Fecha y hora peninsular sin depender de tzdata (no está en todos los Windows): horario de verano europeo, del
+    último domingo de marzo al último domingo de octubre, a la 01:00 UTC."""
+    ahora = datetime.now(timezone.utc)
+
+    def _ultimo_domingo(mes):
+        d = datetime(ahora.year, mes, 31, 1, tzinfo=timezone.utc)
+        return d - timedelta(days=(d.weekday() + 1) % 7)
+
+    verano = _ultimo_domingo(3) <= ahora < _ultimo_domingo(10)
+    return (ahora + timedelta(hours=2 if verano else 1)).replace(tzinfo=None)
+
+
+def _licitacion_municipio(organo, cp, provincia):
+    """Clave de la ficha del ayuntamiento que convoca (mismos patrones anclados que el Índice: _regex_anclado y las
+    comprobaciones de código postal), o "" si el órgano no es un ayuntamiento conocido."""
+    n = normalizar(organo or "")
+    if not _RE_ORGANO_MUNICIPAL.search(n):
+        return ""
+    k = (n, cp, provincia)
+    if k in _LIC_MUNI_MEMO:
+        return _LIC_MUNI_MEMO[k]
+    candidatas = [provincia] if provincia in MUNICIPIOS_POR_PROVINCIA else []
+    if cp and len(cp) == 5:
+        for pv, pref in _CP_PREFIJO_PROVINCIA.items():
+            if cp.startswith(pref if isinstance(pref, tuple) else (pref,)) and pv not in candidatas:
+                candidatas.insert(0, pv)
+    c = {"organo": organo, "cp": cp}
+    res = ""
+    for pv in candidatas:
+        for m in MUNICIPIOS_POR_PROVINCIA.get(pv, []):
+            rx = _LIC_REGEX_MUNI.get((m, pv))
+            if rx is None:
+                rx = _LIC_REGEX_MUNI[(m, pv)] = _regex_anclado(m)
+            if not rx.search(n):
+                continue
+            esperado = _cp_esperado_anclaje(m)
+            if esperado and not (cp or "").startswith(esperado):
+                continue
+            if _cp_de_otra_provincia(c, m, pv):
+                continue
+            res = clave_municipio(m, pv)
+            break
+        if res:
+            break
+    if len(_LIC_MUNI_MEMO) < 50000:
+        _LIC_MUNI_MEMO[k] = res
+    return res
+
+
+def _licitacion_fila(r, visto):
+    """Fila de la tabla `licitaciones` a partir de LIC.analizar_entrada()."""
+    if r["estado"] not in LIC.ESTADOS_ABIERTOS:
+        return (r["id"], r["actualizado"], r["estado"]) + (None,) * (len(_LIC_COLUMNAS) - 4) + (visto,)
+    provincia = r["provincia"]
+    comunidad = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(provincia) or r["comunidad"]
+    municipio = _licitacion_municipio(r["organo"], r["cp_organo"], provincia) if r["ambito"] in ("local", "otros") else ""
+    if municipio and not provincia:
+        provincia = municipio.split("|")[1] if "|" in municipio else ""
+    return (r["id"], r["actualizado"], r["estado"], r["fin_plazo"], r["titulo"][:500], r["url"], r["expediente"][:120],
+            r["organo"][:300], r["nif_organo"], r["dir3"], r["ambito"], provincia, comunidad, municipio, r["cpv"],
+            r["cpv"][:2], r["tipo"], r["procedimiento"], r["presupuesto"], r["valor_estimado"], r["lotes"],
+            normalizar(f'{r["titulo"]} {r["organo"]} {r["expediente"]}')[:800], visto)
+
+
+def _licitaciones_ingerir_atom(raw):
+    """Guarda las entradas de un .atom (bytes). Devuelve (entradas, abiertas, fecha más antigua, fecha más reciente)."""
+    visto = time.time()
+    filas, n, abiertas, fechas = [], 0, 0, []
+    for e in LIC.entradas(raw):
+        r = LIC.analizar_entrada(e)
+        if not r:
+            continue
+        n += 1
+        abiertas += r["estado"] in LIC.ESTADOS_ABIERTOS
+        if r["actualizado"]:
+            fechas.append(r["actualizado"])
+        filas.append(_licitacion_fila(r, visto))
+    for ref, cuando in LIC.borradas(raw):
+        filas.append((ref, cuando, "BORRADA") + (None,) * (len(_LIC_COLUMNAS) - 4) + (visto,))
+    for i in range(0, len(filas), 200):
+        with _db_lock:
+            _db.executemany(_SQL_LIC_UPSERT, filas[i:i + 200])
+            _db.commit()
+        time.sleep(0.02)                 # cede el turno a las peticiones web
+    return n, abiertas, (min(fechas) if fechas else ""), (max(fechas) if fechas else "")
+
+
+def _licitaciones_desde_zips():
+    """Recorre los ZIP de place_cache/ que tengan una versión nueva (fecha+tamaño) desde la última lectura."""
+    for f in sorted(os.listdir(CACHE_DIR)):
+        if not (f.startswith("place_") and f.endswith(".zip")):
+            continue
+        ruta = os.path.join(CACHE_DIR, f)
+        if not _zip_place_valido(ruta)[0]:
+            continue
+        version = f"{int(os.path.getmtime(ruta))}:{os.path.getsize(ruta)}"
+        clave = "licitaciones_zip::" + f
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
+        if fila and fila[0] == version:
+            continue
+        _LIC_ESTADO.update(estado="leyendo_zip", zip=f)
+        n = abiertas = 0
+        with zipfile.ZipFile(ruta) as z:
+            for nombre in sorted(x for x in z.namelist() if x.endswith(".atom")):
+                raw = z.read(nombre)
+                a, b, _, _ = _licitaciones_ingerir_atom(raw)
+                n, abiertas = n + a, abiertas + b
+                del raw
+        with _db_lock:
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET "
+                        "valor=excluded.valor", (clave, version))
+            _db.commit()
+        print(f"[licitaciones] {f}: {n} entradas ({abiertas} en PUB)", flush=True)
+        _liberar_memoria()
+
+
+def _licitaciones_desde_atom():
+    """Páginas nuevas del Atom en vivo, de la más reciente hacia atrás hasta llegar a lo ya guardado."""
+    with _db_lock:
+        fila = _db.execute("SELECT max(actualizado) FROM licitaciones").fetchone()
+    marca = (fila[0] or "") if fila else ""
+    url, paginas, nuevas = PLACE_FEED_LIVE, 0, 0
+    while url and paginas < LIC_MAX_PAGINAS_ATOM:
+        _LIC_ESTADO.update(estado="leyendo_atom", pagina=paginas + 1)
+        r = session.get(url, timeout=(20, 180))
+        if r.status_code != 200:
+            print(f"[licitaciones] Atom: HTTP {r.status_code} en la página {paginas + 1}", flush=True)
+            break
+        raw = r.content
+        del r
+        n, _, mas_antigua, _ = _licitaciones_ingerir_atom(raw)
+        paginas, nuevas = paginas + 1, nuevas + n
+        sig = LIC.pagina_siguiente(raw)
+        del raw
+        if not marca or not mas_antigua or mas_antigua <= marca:
+            break
+        url = sig if sig.startswith("http") else (PLACE_FEED_LIVE.rsplit("/", 1)[0] + "/" + sig if sig else "")
+        time.sleep(1)
+    _LIC_ESTADO.update(atom_paginas=paginas, atom_entradas=nuevas)
+
+
+def _licitaciones_purgar():
+    """Fuera las que ya no sirven: cerradas hace más de 4 meses y abiertas con el plazo vencido hace más de 2."""
+    corte_cerradas = time.time() - 120 * 86400
+    corte_plazo = (_ahora_madrid() - timedelta(days=60)).strftime("%Y-%m-%d %H:%M")
+    with _db_lock:
+        cur = _db.execute("DELETE FROM licitaciones WHERE (estado != 'PUB' AND visto < ?) OR "
+                          "(estado = 'PUB' AND fin_plazo < ?)", (corte_cerradas, corte_plazo))
+        _db.commit()
+    return cur.rowcount
+
+
+def _licitaciones_ciclo():
+    t0 = time.time()
+    _licitaciones_desde_zips()
+    try:
+        _licitaciones_desde_atom()
+    except Exception as e:                  # PLACE lento o caído: los ZIP del cron siguen trayendo lo de cada día
+        print(f"[licitaciones] Atom: {type(e).__name__}: {e}", flush=True)
+    borradas = _licitaciones_purgar()
+    ahora = _ahora_madrid().strftime("%Y-%m-%d %H:%M")
+    with _db_lock:
+        vigentes = _db.execute("SELECT count(*) FROM licitaciones WHERE estado='PUB' AND fin_plazo >= ?",
+                               (ahora,)).fetchone()[0]
+        total = _db.execute("SELECT count(*) FROM licitaciones").fetchone()[0]
+    _LIC_ESTADO.update(estado="esperando", ultimo_ciclo=time.strftime("%Y-%m-%d %H:%M:%S"),
+                       duracion_s=int(time.time() - t0), vigentes=vigentes, filas=total, purgadas=borradas)
+    print(f"[licitaciones] ciclo en {time.time() - t0:.0f} s: {vigentes} vigentes, {total} filas", flush=True)
+
+
+def _licitaciones_bg(esperar=None):
+    if esperar is not None:
+        esperar.join()                       # después de la carga del feed de menores (arranque)
+    time.sleep(60)
+    while True:
+        try:
+            _licitaciones_ciclo()
+        except Exception as e:
+            _LIC_ESTADO.update(estado="error", error=f"{type(e).__name__}: {e}")
+            print(f"[licitaciones] ERROR {type(e).__name__}: {e}", flush=True)
+        _liberar_memoria()
+        time.sleep(LIC_CICLO_S)
+
+
+# ─── CONVOCATORIAS ABIERTAS: SUBVENCIONES (BDNS) ──────────────────────────────────────────────────────────────────
+# Las genera el flujo de GitHub Actions subvenciones-bdns.yml (backend/subvenciones_bdns.py: carga inicial desde 2024
+# repartida en varias noches y después el día a día, a 1 petición por segundo) y las sube aquí: NDJSON en gzip, una
+# convocatoria por línea, solo las que no están cerradas por fechas. Se lee línea a línea a una tabla nueva que
+# sustituye a la anterior de golpe (nada del fichero entero en memoria). Vigencia calculada por fechas, nunca con el
+# campo "abierto" de la API (decisión de César 2026-10-04).
+# Pestaña oculta hasta que César revise el aviso legal de reutilización de la BDNS: SUBVENCIONES_PUBLICAS.
+SUBVENCIONES_PUBLICAS = os.environ.get("CONVOCATORIAS_SUBVENCIONES", "") == "1"
+_SUBV_COLUMNAS = ("bdns", "registrada", "titulo", "titulo_cooficial", "nivel1", "nivel2", "organo", "nuts", "provincia",
+                  "comunidad", "municipio", "presupuesto", "beneficiarios", "sector", "finalidad", "instrumento",
+                  "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda")
+_SUBV_MUNI_POR_NOMBRE = {}
+
+
+def _subvencion_municipio(nivel1, nivel2, organo, provincia):
+    """Ficha del ayuntamiento que convoca: BDNS da nivel1=LOCAL, nivel2=municipio (en mayúsculas, a veces bilingüe
+    "ALICANTE/ALACANT") y nivel3=órgano. Solo ayuntamientos, no diputaciones ni mancomunidades."""
+    if (nivel1 or "").upper() != "LOCAL" or not _RE_ORGANO_MUNICIPAL.search(normalizar(organo or "")):
+        return ""
+    if not _SUBV_MUNI_POR_NOMBRE:
+        for pv, ms in MUNICIPIOS_POR_PROVINCIA.items():
+            for m in ms:
+                for v in _variantes_nombre_municipio(normalizar(m)):
+                    _SUBV_MUNI_POR_NOMBRE.setdefault(v, []).append((m, pv))
+    for nombre in (nivel2 or "").split("/"):
+        cands = _SUBV_MUNI_POR_NOMBRE.get(normalizar(nombre.strip()), [])
+        if provincia:
+            cands = [c for c in cands if c[1] == provincia]
+        if len(cands) == 1:
+            return clave_municipio(*cands[0])
+    return ""
+
+
+def _subvencion_fila(d):
+    provincia = LIC.provincia_de_nuts(d.get("nuts", ""))
+    comunidad = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(provincia) or LIC.comunidad_de_nuts(d.get("nuts", ""))
+    municipio = _subvencion_municipio(d.get("nivel1"), d.get("nivel2"), d.get("organo"), provincia)
+    if municipio and not provincia:
+        provincia = municipio.split("|")[1] if "|" in municipio else ""
+    try:
+        presupuesto = float(d.get("presupuesto")) if d.get("presupuesto") not in (None, "") else None
+    except (TypeError, ValueError):
+        presupuesto = None
+    return (str(d["bdns"]), d.get("registrada", ""), (d.get("titulo") or "")[:1000],
+            (d.get("titulo_cooficial") or "")[:1000], d.get("nivel1", ""), d.get("nivel2", ""), d.get("organo", ""),
+            d.get("nuts", ""), provincia, comunidad, municipio, presupuesto, d.get("beneficiarios", ""),
+            d.get("sector", ""), d.get("finalidad", ""), d.get("instrumento", ""), d.get("inicio") or "",
+            d.get("fin") or "", (d.get("texto_fin") or "")[:500], d.get("url_bases", ""), 1 if d.get("mrr") else 0,
+            normalizar(f'{d.get("titulo", "")} {d.get("titulo_cooficial", "")} {d.get("organo", "")} '
+                       f'{d.get("nivel2", "")}')[:1500])
+
+
+def _subir_subvenciones(crudo):
+    """Sustituye la tabla `subvenciones` por el NDJSON (gzip) recibido. Devuelve (código, cuerpo). Solo recuentos."""
+    nueva = "subvenciones_nueva"
+    with _db_lock:
+        _db.execute(f"DROP TABLE IF EXISTS {nueva}")
+        _db.execute(_SQL_TABLA_SUBVENCIONES.format(tabla=nueva))
+        _db.commit()
+    n, malas, lote = 0, 0, []
+    sql = f"INSERT OR REPLACE INTO {nueva} ({', '.join(_SUBV_COLUMNAS)}) VALUES ({', '.join('?' * len(_SUBV_COLUMNAS))})"
+    try:
+        flujo = _gzip.GzipFile(fileobj=io.BytesIO(crudo)) if crudo[:2] == bytes([0x1F, 0x8B]) else io.BytesIO(crudo)
+        for linea in flujo:
+            if not linea.strip():
+                continue
+            try:
+                lote.append(_subvencion_fila(json.loads(linea)))
+            except (ValueError, KeyError, TypeError):
+                malas += 1
+                continue
+            if len(lote) >= 500:
+                with _db_lock:
+                    _db.executemany(sql, lote)
+                    _db.commit()
+                n += len(lote)
+                lote = []
+                time.sleep(0.02)
+        if lote:
+            with _db_lock:
+                _db.executemany(sql, lote)
+                _db.commit()
+            n += len(lote)
+    except (OSError, EOFError) as e:
+        with _db_lock:
+            _db.execute(f"DROP TABLE IF EXISTS {nueva}")
+            _db.commit()
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    if n < 1000:
+        with _db_lock:
+            _db.execute(f"DROP TABLE IF EXISTS {nueva}")
+            _db.commit()
+        return 400, {"error": f"Fichero no válido: solo {n} convocatorias legibles ({malas} con error)."}
+    with _db_lock:
+        antes = _db.execute("SELECT count(*) FROM subvenciones").fetchone()[0]
+        _db.execute("DROP TABLE subvenciones")
+        _db.execute(f"ALTER TABLE {nueva} RENAME TO subvenciones")
+        for _sql in _SQL_INDICES_SUBVENCIONES:
+            _db.execute(f"DROP INDEX IF EXISTS {_sql.split()[5]}".replace("{tabla}", nueva))
+            _db.execute(_sql.format(tabla="subvenciones"))
+        _db.commit()
+        con_muni = _db.execute("SELECT count(*) FROM subvenciones WHERE municipio != ''").fetchone()[0]
+    _liberar_memoria()
+    print(f"[subvenciones] {n} convocatorias cargadas (antes {antes}; {con_muni} enlazadas a un municipio; "
+          f"{malas} líneas con error)", flush=True)
+    return 200, {"convocatorias": n, "antes": antes, "con_municipio": con_muni, "lineas_con_error": malas}
+
+
 def _refrescar_provincia_secuencial(job_id, provincia, offset=0):
     """Refresca secuencialmente todos los municipios de UNA provincia,
     actualizando `_jobs[job_id]["procesados"]` con el progreso acumulado
@@ -13698,6 +14044,7 @@ def _arrancar_hilos_de_fondo():
     hilo_feed = threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True)
     hilo_feed.start()
     threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
+    threading.Thread(target=_licitaciones_bg, args=(hilo_feed,), name="licitaciones", daemon=True).start()
     # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
     # al RSS (búsqueda text=España) en vez de esperar al cron diario.
     if len(_db_noticias_ue(limit=3)) < 3:
@@ -14185,6 +14532,15 @@ a.pscp-link{color:var(--green);}
 .fuente-cordis{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
 .fuente-cohesion{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
 .fue-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
+.conv-filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px;}
+.conv-filtros .conv-q{flex:1 1 220px;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);}
+.conv-filtros .conv-sel{flex:0 1 auto;max-width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);}
+.conv-filtros .conv-btn{padding:8px 14px;border:0;border-radius:6px;background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer;}
+.conv-filtros .conv-quitar{font-size:12px;color:var(--dim);}
+.conv-muni{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:14px;font-size:13px;}
+.conv-muni .lid{color:var(--dim);font-size:12px;}
+.fue-card td a.conv-tit{color:var(--accent);font-weight:600;text-decoration:none;}
+.fue-card td a.conv-tit:hover{text-decoration:underline;}
 .fue-header{padding:12px 18px;background:var(--tint);border-bottom:1px solid var(--border);}
 .fue-header h2{font-size:14px;font-weight:600;color:var(--yellow);}
 .fue-importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--yellow);white-space:nowrap;font-weight:600;}
@@ -15427,6 +15783,7 @@ def _header_html(provincia="todas"):
     <a href="{rankings_href}">{_t("Rankings")}</a>
     <a href="{rankings_href}#alcaldes">{_t("Sueldos Alcaldes")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
+    <a href="/convocatorias">{_t("Convocatorias abiertas")}</a>
     <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>{_t("Instalar app")}</button>
   </nav>
   {_i18n_selector_html()}
@@ -15478,6 +15835,7 @@ def _footer_html(provincia="todas"):
     <a href="/rankings{_q_prov_first(provincia)}">{_t("Rankings")}</a>
     <a href="/rankings{_q_prov_first(provincia)}#alcaldes">{_t("Sueldos Alcaldes")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
+    <a href="/convocatorias">{_t("Convocatorias abiertas")}</a>
     <a href="/aviso-legal">{_t("Aviso Legal")}</a>
     <a href="#" id="cookie-preferencias">{_t("Preferencias de cookies")}</a>
     <a href="/quien-soy">{_t("Quién soy")}</a>
@@ -18218,6 +18576,427 @@ def render_fondos_ue_html(fondos, provincia="todas"):
                         provincia="todas", og_path="/fondos-ue" + (f"?provincia={provincia}" if provincia != "todas" else ""))
 
 
+# ─── CONVOCATORIAS ABIERTAS (página) ──────────────────────────────────────────────────────────────────────────────
+_CONV_POR_PAGINA = 50
+_CONV_IMPORTES = {"1": (None, 15000), "2": (15000, 100000), "3": (100000, 1000000), "4": (1000000, None)}
+_CONV_AMBITOS_LIC = ("estatal", "autonomico", "local", "otros")
+_CONV_AMBITOS_SUB = ("ESTADO", "AUTONOMICA", "LOCAL", "OTROS")
+# Tipos de beneficiario de la BDNS (texto de tiposBeneficiarios) -> filtro
+_CONV_BENEFICIARIOS = {"particulares": "PERSONAS FÍSICAS QUE NO DESARROLLAN",
+                       "pymes": "PYME Y PERSONAS FÍSICAS QUE DESARROLLAN",
+                       "entidades": "PERSONAS JURÍDICAS QUE NO DESARROLLAN",
+                       "grandes": "GRAN EMPRESA"}
+
+
+def _conv_etiquetas():
+    """Textos de los filtros, traducidos en el momento (el idioma es de cada petición)."""
+    return {
+        "ambito_lic": {"estatal": _t("Estado"), "autonomico": _t("Comunidades autónomas"), "local": _t("Entidades locales"),
+                       "otros": _t("Otros entes públicos")},
+        "ambito_sub": {"ESTADO": _t("Estado"), "AUTONOMICA": _t("Comunidades autónomas"), "LOCAL": _t("Entidades locales"),
+                       "OTROS": _t("Otros entes públicos")},
+        "tipo": {"obras": _t("Obras"), "servicios": _t("Servicios"), "suministros": _t("Suministros")},
+        "importe": {"1": _t("Menos de 15.000 €"), "2": _t("De 15.000 a 100.000 €"), "3": _t("De 100.000 € a 1 millón"),
+                    "4": _t("Más de 1 millón")},
+        "plazo": {"7": _t("Cierran en 7 días"), "30": _t("Cierran en 30 días")},
+        "benef": {"particulares": _t("Particulares"), "pymes": _t("Pymes y autónomos"),
+                  "entidades": _t("Entidades sin ánimo de lucro"), "grandes": _t("Grandes empresas")},
+    }
+
+
+def _conv_parametros(qs):
+    """Filtros válidos de la query string (cualquier valor desconocido se ignora)."""
+    g = lambda k: (qs.get(k, [""])[0] or "").strip()
+    f = {"tab": "subvenciones" if g("tab") == "subvenciones" and SUBVENCIONES_PUBLICAS else "licitaciones"}
+    if g("provincia") in MUNICIPIOS_POR_PROVINCIA:
+        f["provincia"] = g("provincia")
+    elif g("comunidad") in COMUNIDAD_AUTONOMA_LABEL:
+        f["comunidad"] = g("comunidad")
+    if g("muni"):
+        f["muni"] = g("muni")[:120]
+    if g("q"):
+        f["q"] = g("q")[:100]
+    if g("plazo") in ("7", "30"):
+        f["plazo"] = g("plazo")
+    if f["tab"] == "licitaciones":
+        if g("tipo") in LIC.TIPOS_FILTRO:
+            f["tipo"] = g("tipo")
+        if g("sector") in LIC.CPV_DIVISIONES:
+            f["sector"] = g("sector")
+        if g("ambito") in _CONV_AMBITOS_LIC:
+            f["ambito"] = g("ambito")
+        if g("importe") in _CONV_IMPORTES:
+            f["importe"] = g("importe")
+    else:
+        if g("ambito") in _CONV_AMBITOS_SUB:
+            f["ambito"] = g("ambito")
+        if g("benef") in _CONV_BENEFICIARIOS:
+            f["benef"] = g("benef")
+        if g("vista") in ("proximas", "sin_fecha"):
+            f["vista"] = g("vista")
+    try:
+        f["pag"] = max(1, int(g("pag") or 1))
+    except ValueError:
+        f["pag"] = 1
+    return f
+
+
+def _conv_url(f, **cambios):
+    d = {k: v for k, v in dict(f, **cambios).items() if v not in (None, "", 1) or (k == "pag" and v != 1 and v)}
+    d.pop("pag", None) if d.get("pag") == 1 else None
+    if d.get("tab") == "licitaciones":
+        d.pop("tab")
+    return "/convocatorias" + ("?" + urlencode(d) if d else "")
+
+
+def _conv_where_texto(q, where, args):
+    for palabra in normalizar(q).split()[:6]:
+        where.append("busqueda LIKE ?")
+        args.append(f"%{palabra}%")
+
+
+def _conv_consulta_licitaciones(f):
+    ahora = _ahora_madrid()
+    where, args = ["estado = 'PUB'", "fin_plazo >= ?"], [ahora.strftime("%Y-%m-%d %H:%M")]
+    if f.get("plazo"):
+        where.append("fin_plazo <= ?")
+        args.append((ahora + timedelta(days=int(f["plazo"]))).strftime("%Y-%m-%d 23:59"))
+    if f.get("provincia"):
+        where.append("provincia = ?"); args.append(f["provincia"])
+    elif f.get("comunidad"):
+        where.append("comunidad = ?"); args.append(f["comunidad"])
+    if f.get("muni"):
+        where.append("municipio = ?"); args.append(f["muni"])
+    if f.get("tipo"):
+        codigos = sorted(LIC.TIPOS_FILTRO[f["tipo"]])
+        where.append(f"tipo IN ({', '.join('?' * len(codigos))})"); args += codigos
+    if f.get("sector"):
+        where.append("cpv2 = ?"); args.append(f["sector"])
+    if f.get("ambito"):
+        where.append("ambito = ?"); args.append(f["ambito"])
+    if f.get("importe"):
+        lo, hi = _CONV_IMPORTES[f["importe"]]
+        if lo is not None:
+            where.append("presupuesto >= ?"); args.append(lo)
+        if hi is not None:
+            where.append("presupuesto < ?"); args.append(hi)
+    if f.get("q"):
+        _conv_where_texto(f["q"], where, args)
+    w = " AND ".join(where)
+    with _db_lock:
+        total = _db.execute(f"SELECT count(*) FROM licitaciones WHERE {w}", args).fetchone()[0]
+        filas = _db.execute(f"SELECT titulo, url, organo, provincia, municipio, tipo, cpv2, presupuesto, fin_plazo, "
+                            f"lotes, procedimiento FROM licitaciones WHERE {w} ORDER BY fin_plazo, id LIMIT ? OFFSET ?",
+                            args + [_CONV_POR_PAGINA, (f["pag"] - 1) * _CONV_POR_PAGINA]).fetchall()
+    return total, filas
+
+
+def _conv_consulta_subvenciones(f):
+    hoy = _ahora_madrid().strftime("%Y-%m-%d")
+    vista = f.get("vista", "abiertas")
+    if vista == "sin_fecha":
+        where, args, orden = ["fin = ''", "(inicio = '' OR inicio <= ?)"], [hoy], "registrada DESC"
+    elif vista == "proximas":
+        where, args, orden = ["inicio > ?"], [hoy], "inicio, fin"
+    else:
+        where, args, orden = ["fin >= ?", "(inicio = '' OR inicio <= ?)"], [hoy, hoy], "fin, registrada DESC"
+        if f.get("plazo"):
+            where.append("fin <= ?")
+            args.append((_ahora_madrid() + timedelta(days=int(f["plazo"]))).strftime("%Y-%m-%d"))
+    if f.get("provincia"):
+        where.append("provincia = ?"); args.append(f["provincia"])
+    elif f.get("comunidad"):
+        where.append("comunidad = ?"); args.append(f["comunidad"])
+    if f.get("muni"):
+        where.append("municipio = ?"); args.append(f["muni"])
+    if f.get("ambito"):
+        where.append("nivel1 = ?"); args.append(f["ambito"])
+    if f.get("benef"):
+        where.append("beneficiarios LIKE ?"); args.append(f"%{_CONV_BENEFICIARIOS[f['benef']]}%")
+    if f.get("q"):
+        _conv_where_texto(f["q"], where, args)
+    w = " AND ".join(where)
+    with _db_lock:
+        total = _db.execute(f"SELECT count(*) FROM subvenciones WHERE {w}", args).fetchone()[0]
+        filas = _db.execute(f"SELECT bdns, titulo, titulo_cooficial, nivel1, nivel2, organo, provincia, presupuesto, "
+                            f"beneficiarios, finalidad, inicio, fin, texto_fin, registrada FROM subvenciones WHERE {w} "
+                            f"ORDER BY {orden} LIMIT ? OFFSET ?",
+                            args + [_CONV_POR_PAGINA, (f["pag"] - 1) * _CONV_POR_PAGINA]).fetchall()
+    return total, filas
+
+
+def _conv_fecha(txt):
+    """'2026-10-18 14:00' o '2026-10-18' -> '18/10/2026 14:00' / '18/10/2026'."""
+    if not txt or len(txt) < 10:
+        return ""
+    return f"{txt[8:10]}/{txt[5:7]}/{txt[:4]}" + (f" {txt[11:16]}" if len(txt) >= 16 else "")
+
+
+def _conv_dias(txt):
+    try:
+        fin = datetime.strptime(txt[:10], "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return ""
+    dias = (fin - _ahora_madrid().date()).days
+    if dias <= 0:
+        return _t("cierra hoy")
+    if dias == 1:
+        return _t("cierra mañana")
+    return _t("en {n} días").format(n=dias)
+
+
+def _conv_enlace_oficial(url):
+    return url if (url or "").startswith(("https://", "http://")) else ""
+
+
+def _conv_nombre_muni(clave):
+    m, _, pv = (clave or "").partition("|")
+    return m, pv
+
+
+def _conv_fila_licitacion(r):
+    titulo, url, organo, provincia, municipio, tipo, cpv2, presupuesto, fin, lotes, procedimiento = r
+    enlace = _conv_enlace_oficial(url)
+    titulo_html = (f'<a class="conv-tit" href="{esc(enlace)}" target="_blank" rel="noopener">{esc(titulo or _t("(sin título)"))}</a>'
+                   if enlace else esc(titulo or ""))
+    detalles = [esc(organo or "")]
+    if provincia:
+        detalles.append(esc(PROVINCIA_LABEL.get(provincia, provincia)))
+    if tipo in LIC.TIPOS:
+        detalles.append(esc(_t(LIC.TIPOS[tipo])))
+    if cpv2 in LIC.CPV_DIVISIONES:
+        detalles.append(esc(_t(LIC.CPV_DIVISIONES[cpv2])))
+    if procedimiento in LIC.PROCEDIMIENTOS:
+        detalles.append(esc(_t(LIC.PROCEDIMIENTOS[procedimiento])))
+    if lotes:
+        detalles.append(_t("{n} lotes").format(n=lotes))
+    importe = fmt_eur(str(presupuesto)) if presupuesto else "—"
+    return (f'<tr><td>{titulo_html}<div class="lid">{" · ".join(d for d in detalles if d)}</div></td>'
+            f'<td class="fue-importe">{importe}<div class="lid">{_t("sin IVA")}</div></td>'
+            f'<td style="white-space:nowrap">{esc(_conv_fecha(fin))}<div class="lid">{esc(_conv_dias(fin))}</div></td></tr>')
+
+
+def _conv_fila_subvencion(r, vista):
+    bdns, titulo, titulo_cof, nivel1, nivel2, organo, provincia, presupuesto, benef, finalidad, ini, fin, texto_fin, reg = r
+    if _I18N_IDIOMA.get() in ("gl", "ca") and titulo_cof:
+        titulo = titulo_cof
+    enlace = f"https://www.infosubvenciones.es/bdnstrans/GE/es/convocatorias/{quote_plus(str(bdns))}"
+    detalles = [esc(organo or ""), esc((nivel2 or "").title()) if nivel1 in ("LOCAL", "AUTONOMICA") else ""]
+    if finalidad:
+        detalles.append(esc(finalidad))
+    if benef:
+        detalles.append(esc(benef.split(" | ")[0].capitalize()))
+    importe = fmt_eur(str(presupuesto)) if presupuesto else "—"
+    if vista == "sin_fecha":
+        plazo = (f'{_t("Plazo según bases")}<div class="lid">{esc(texto_fin or "")}</div>'
+                 f'<div class="lid">{_t("registrada el {f}").format(f=esc(_conv_fecha(reg)))}</div>')
+    elif vista == "proximas":
+        plazo = f'{_t("Abre el {f}").format(f=esc(_conv_fecha(ini)))}<div class="lid">{_t("cierra el {f}").format(f=esc(_conv_fecha(fin)))}</div>'
+    else:
+        plazo = f'{esc(_conv_fecha(fin))}<div class="lid">{esc(_conv_dias(fin))}</div>'
+    return (f'<tr><td><a class="conv-tit" href="{esc(enlace)}" target="_blank" rel="noopener">{esc(titulo or "")}</a>'
+            f'<div class="lid">{" · ".join(d for d in detalles if d)} · BDNS {esc(str(bdns))}</div></td>'
+            f'<td class="fue-importe">{importe}</td><td style="white-space:nowrap">{plazo}</td></tr>')
+
+
+def _conv_textos_para_traducir():
+    """No se llama: deja a la vista de i18n_extraer.py los nombres de tipos, procedimientos y sectores de
+    licitaciones_place.py, que la página traduce con _t(variable)."""
+    return (
+        _t("Abierto"),
+        _t("Abierto simplificado"),
+        _t("Administración pública"),
+        _t("Administrativo especial"),
+        _t("Agricultura y ganadería"),
+        _t("Agricultura, jardinería y forestales"),
+        _t("Agua"),
+        _t("Alimentación y bebidas"),
+        _t("Arquitectura e ingeniería"),
+        _t("Asociación para la innovación"),
+        _t("Basado en sistema dinámico"),
+        _t("Colaboración público-privada"),
+        _t("Combustibles y energía"),
+        _t("Concesión de obras"),
+        _t("Concesión de obras públicas"),
+        _t("Concesión de servicios"),
+        _t("Concurso de proyectos"),
+        _t("Contrato menor"),
+        _t("Correos y telecomunicaciones"),
+        _t("Cuero y textil"),
+        _t("Cultura, ocio y deporte"),
+        _t("Derivado de acuerdo marco"),
+        _t("Derivado de asociación para la innovación"),
+        _t("Diálogo competitivo"),
+        _t("Educación y formación"),
+        _t("Equipos de oficina e informáticos"),
+        _t("Financieros y seguros"),
+        _t("Gestión de servicios públicos"),
+        _t("Hostelería y restauración"),
+        _t("Impresos y publicaciones"),
+        _t("Inmobiliarios"),
+        _t("Instalación"),
+        _t("Instrumentos musicales y deporte"),
+        _t("Investigación y desarrollo"),
+        _t("Laboratorio y precisión"),
+        _t("Licitación con negociación"),
+        _t("Limpieza, residuos y medio ambiente"),
+        _t("Maquinaria agrícola"),
+        _t("Maquinaria de minería y construcción"),
+        _t("Maquinaria industrial"),
+        _t("Material eléctrico"),
+        _t("Material médico y farmacéutico"),
+        _t("Materiales de construcción"),
+        _t("Minería"),
+        _t("Mobiliario y limpieza"),
+        _t("Negociado con publicidad"),
+        _t("Negociado sin publicidad"),
+        _t("Normas internas"),
+        _t("Obras"),
+        _t("Obras de construcción"),
+        _t("Otros"),
+        _t("Otros servicios comunitarios"),
+        _t("Patrimonial"),
+        _t("Privado"),
+        _t("Productos químicos"),
+        _t("Radio, televisión y telecomunicaciones"),
+        _t("Reparación y mantenimiento"),
+        _t("Restringido"),
+        _t("Ropa y calzado"),
+        _t("Salud y servicios sociales"),
+        _t("Seguridad y defensa"),
+        _t("Servicios"),
+        _t("Servicios a empresas"),
+        _t("Servicios de transporte auxiliares"),
+        _t("Servicios informáticos"),
+        _t("Servicios petrolíferos"),
+        _t("Software"),
+        _t("Suministros"),
+        _t("Suministros públicos"),
+        _t("Transporte"),
+        _t("Vehículos y transporte"),
+    )
+
+def _conv_select(nombre, valor, opciones, vacio):
+    ops = "".join(f'<option value="{esc(k)}"{" selected" if k == valor else ""}>{esc(v)}</option>'
+                  for k, v in opciones)
+    return (f'<select name="{nombre}" class="conv-sel"><option value="">{esc(vacio)}</option>{ops}</select>')
+
+
+def render_convocatorias_html(qs):
+    f = _conv_parametros(qs)
+    et = _conv_etiquetas()
+    zona_val = f"p:{f['provincia']}" if f.get("provincia") else (f"c:{f['comunidad']}" if f.get("comunidad") else "")
+    zonas = ([(f"c:{c}", lbl) for c, lbl in sorted(COMUNIDAD_AUTONOMA_LABEL.items(), key=lambda x: normalizar(x[1]))]
+             + [(f"p:{p}", "· " + PROVINCIA_LABEL.get(p, p).replace("Provincia de ", ""))
+                for p in sorted(MUNICIPIOS_POR_PROVINCIA, key=lambda p: normalizar(PROVINCIA_LABEL.get(p, p).replace("Provincia de ", "")))])
+    zona_html = (f'<select name="zona" class="conv-sel"><option value="">{esc(_t("Toda España"))}</option>'
+                 + "".join(f'<option value="{esc(k)}"{" selected" if k == zona_val else ""}>{esc(v)}</option>'
+                           for k, v in zonas) + "</select>")
+    tab = f["tab"]
+    pestanas = (f'<div class="prov-switch" style="margin-bottom:14px">'
+                f'<a href="/convocatorias" class="prov-tab{" active" if tab == "licitaciones" else ""}">'
+                f'{_t("Licitaciones")}</a>'
+                + (f'<a href="/convocatorias?tab=subvenciones" class="prov-tab{" active" if tab == "subvenciones" else ""}">'
+                   f'{_t("Subvenciones")}</a>' if SUBVENCIONES_PUBLICAS else "")
+                + '</div>')
+    ocultos = '<input type="hidden" name="tab" value="subvenciones">' if tab == "subvenciones" else ""
+    if f.get("muni"):
+        ocultos += f'<input type="hidden" name="muni" value="{esc(f["muni"])}">'
+    campos = [f'<input type="search" name="q" value="{esc(f.get("q", ""))}" placeholder="{esc(_t("Buscar en el título o el organismo"))}" class="conv-q">',
+              zona_html]
+    if tab == "licitaciones":
+        campos += [_conv_select("tipo", f.get("tipo", ""), et["tipo"].items(), _t("Cualquier tipo")),
+                   _conv_select("sector", f.get("sector", ""),
+                                sorted(((k, _t(v)) for k, v in LIC.CPV_DIVISIONES.items()), key=lambda x: normalizar(x[1])),
+                                _t("Cualquier sector")),
+                   _conv_select("ambito", f.get("ambito", ""), et["ambito_lic"].items(), _t("Cualquier organismo")),
+                   _conv_select("importe", f.get("importe", ""), et["importe"].items(), _t("Cualquier importe")),
+                   _conv_select("plazo", f.get("plazo", ""), et["plazo"].items(), _t("Cualquier plazo"))]
+    else:
+        campos += [_conv_select("ambito", f.get("ambito", ""), et["ambito_sub"].items(), _t("Cualquier administración")),
+                   _conv_select("benef", f.get("benef", ""), et["benef"].items(), _t("Cualquier beneficiario")),
+                   _conv_select("plazo", f.get("plazo", ""), et["plazo"].items(), _t("Cualquier plazo"))]
+    formulario = (f'<form method="get" action="/convocatorias" class="conv-filtros">{ocultos}{"".join(campos)}'
+                  f'<button type="submit" class="conv-btn">{_t("Filtrar")}</button>'
+                  f'<a href="{esc(_conv_url({"tab": tab, "muni": f.get("muni")}))}" class="conv-quitar">{_t("Quitar filtros")}</a></form>')
+
+    aviso_muni = ""
+    if f.get("muni"):
+        m, pv = _conv_nombre_muni(f["muni"])
+        d_m = _db_get_municipio(f["muni"]) if "|" in f["muni"] else _db_get_municipio(f["muni"], None)
+        nombre = (d_m or {}).get("municipio") or m
+        aviso_muni = (f'<div class="gs-hint" style="margin:0 0 10px;font-size:13px">'
+                      f'{_t("Solo las convocatorias del Ayuntamiento de {m}.").format(m=esc(nombre))} '
+                      f'<a href="{esc(_conv_url(dict(f, muni=None, pag=1)))}">{_t("Ver todas")}</a></div>')
+
+    if tab == "licitaciones":
+        total, filas = _conv_consulta_licitaciones(f)
+        cab = f'<th>{_t("Licitación")}</th><th>{_t("Presupuesto")}</th><th>{_t("Fin de plazo")}</th>'
+        cuerpo = "".join(_conv_fila_licitacion(r) for r in filas)
+        ult = _LIC_ESTADO.get("ultimo_ciclo", "")
+        fuente = _t("Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP).")
+        if ult:
+            fuente += " " + _t("Última actualización: {f}.").format(f=esc(_conv_fecha(ult)))
+        vistas_html = ""
+    else:
+        vista = f.get("vista", "abiertas")
+        total, filas = _conv_consulta_subvenciones(f)
+        cab = f'<th>{_t("Convocatoria")}</th><th>{_t("Presupuesto")}</th><th>{_t("Plazo")}</th>'
+        cuerpo = "".join(_conv_fila_subvencion(r, vista) for r in filas)
+        fuente = _t("Convocatorias de ayudas y subvenciones con el plazo de solicitud abierto, según la Base de Datos Nacional de Subvenciones (BDNS). El plazo se calcula con las fechas publicadas.")
+        vistas = [("abiertas", _t("Abiertas")), ("proximas", _t("Abren pronto")), ("sin_fecha", _t("Plazo según bases"))]
+        vistas_html = ('<div class="prov-switch" style="margin-bottom:10px">' + "".join(
+            f'<a href="{esc(_conv_url(dict(f, vista=None if v == "abiertas" else v, pag=1)))}" '
+            f'class="prov-tab{" active" if v == vista else ""}">{esc(lbl)}</a>' for v, lbl in vistas) + "</div>")
+        if vista == "sin_fecha":
+            vistas_html += (f'<div class="gs-hint" style="margin:0 0 10px;font-size:13px">'
+                            f'{_t("Estas convocatorias no publican la fecha de fin en la BDNS (suele contarse desde la publicación del extracto en el boletín). No sabemos si siguen abiertas: consulta las bases antes de presentar nada.")}</div>')
+    if not cuerpo:
+        cuerpo = f'<tr><td colspan="3" class="empty">{_t("No hay convocatorias abiertas con estos filtros.")}</td></tr>'
+    pagina, paginas = _rk_pagina(f["pag"], total, _CONV_POR_PAGINA)
+    pag_html = _rk_paginacion_html(pagina, paginas, total, lambda n: _conv_url(f, pag=n), etiqueta=_t("convocatorias"))
+
+    body = f"""<span class="back-link"><a href="/">← {_t("Volver al inicio")}</a></span>
+  <div class="hero" style="padding-bottom:4px">
+    <div class="hero-tagline">📣 {_t("Convocatorias abiertas")}</div>
+    <p class="hero-sub">{fuente} {_t("Los plazos y requisitos que valen son los de la publicación oficial: entra siempre en el enlace antes de presentar nada.")}</p>
+  </div>
+  {pestanas}
+  {vistas_html}
+  {aviso_muni}
+  {formulario}
+  <div class="fue-card">
+    <div class="gs-hint" style="margin:10px 14px">{_t("{n} convocatorias").format(n=f"{total:,}".replace(",", "."))}</div>
+    <table>
+      <tr>{cab}</tr>
+      {cuerpo}
+    </table>
+  </div>
+  {pag_html}"""
+    return _page_shell(_t("Convocatorias abiertas: licitaciones y subvenciones"), body,
+                       description=_t("Licitaciones públicas con el plazo abierto en toda España, con filtros por zona, tipo, sector, importe y plazo. Datos oficiales de la Plataforma de Contratación del Sector Público."),
+                       provincia="todas", og_path="/convocatorias")
+
+
+def _convocatorias_muni_html(municipio, provincia):
+    """Enlace desde la ficha del municipio a sus convocatorias abiertas, con el recuento."""
+    clave = clave_municipio(municipio, provincia)
+    ahora = _ahora_madrid()
+    with _db_lock:
+        n_lic = _db.execute("SELECT count(*) FROM licitaciones WHERE municipio=? AND estado='PUB' AND fin_plazo>=?",
+                            (clave, ahora.strftime("%Y-%m-%d %H:%M"))).fetchone()[0]
+        n_sub = (_db.execute("SELECT count(*) FROM subvenciones WHERE municipio=? AND fin>=? AND (inicio='' OR inicio<=?)",
+                             (clave, ahora.strftime("%Y-%m-%d"), ahora.strftime("%Y-%m-%d"))).fetchone()[0]
+                 if SUBVENCIONES_PUBLICAS else 0)
+    enlace_lic = f'/convocatorias?muni={quote_plus(clave)}'
+    partes = [f'<a href="{esc(enlace_lic)}">{_t("{n} licitaciones").format(n=n_lic) if n_lic != 1 else _t("1 licitación")}</a>']
+    if SUBVENCIONES_PUBLICAS:
+        partes.append(f'<a href="{esc(enlace_lic)}&amp;tab=subvenciones">'
+                      f'{_t("{n} subvenciones").format(n=n_sub) if n_sub != 1 else _t("1 subvención")}</a>')
+    return (f'<div class="conv-muni">📣 <b>{_t("Convocatorias abiertas ahora")}:</b> {" · ".join(partes)}'
+            f' <span class="lid">({_t("de este ayuntamiento, con el plazo abierto")})</span></div>')
+
+
 def render_comentarios_html(tipo, clave_raw, redirect_url, titulo="esta ficha"):
     """Bloque 'Deja tu comentario' -- formulario simple sin gestión activa ni
     email: se guarda directamente en la tabla comentarios y se muestra
@@ -18584,6 +19363,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             <span class="scroll-hint" aria-hidden="true">{_t("sigue")} <span class="scroll-hint-arrow">›</span></span>
           </div>
           {pag_html}
+          {_convocatorias_muni_html(muni_name_d, d.get("provincia", provincia)) if is_paged and not es_pseudo_municipio(muni_name_d) else ""}
           {it_widget_html}
           {fondos_ue_html}
           {contratos_menors_html}
@@ -19848,6 +20628,7 @@ def _uso_disco():
         out["place_zip_ultimo_fallo"] = {m: time.strftime("%Y-%m-%d %H:%M", time.gmtime(t))
                                          for m, t in _PLACE_ZIP_ULTIMO_FALLO.items()}
         out["place_reprocesado"] = dict(_REPROCESADO_PLACE)
+        out["licitaciones"] = dict(_LIC_ESTADO)
     except Exception:
         out["place_cache_zips_mb"] = {}
     try:
@@ -20611,6 +21392,16 @@ def render_metodologia_html():
   suma de sus lotes. Cuando lo adjudicado que publica la Plataforma no es utilizable (precios unitarios de unos
   céntimos en lugar del total, o acuerdos marco que repiten el importe completo en cada empresa) mostramos el
   presupuesto de licitación y lo indicamos debajo de la cifra.</p>
+
+  <h2>Convocatorias abiertas</h2>
+  <p>La sección <a href="/convocatorias">Convocatorias abiertas</a> reúne las licitaciones públicas con el plazo de
+  presentación de ofertas abierto. Salen de la Plataforma de Contratación del Sector Público, el mismo origen que
+  los contratos del Índice, y se actualizan varias veces al día. Que una licitación esté abierta lo decide
+  <strong>la fecha fin de presentación</strong>, no el estado que publica la Plataforma: medimos que dos de cada tres
+  licitaciones que la Plataforma sigue marcando «en plazo» ya lo tienen vencido. No incluimos los anuncios previos.
+  Las comunidades con plataforma propia (Cataluña, País Vasco, Navarra y otras) publican allí buena parte de sus
+  licitaciones, así que aquí solo aparecen las que también llevan a la Plataforma estatal. El enlace de cada
+  licitación lleva a su ficha oficial: los plazos y requisitos que valen son los de allí.</p>
 
   <h2>Errores de origen</h2>
   <p>Las fuentes oficiales también se equivocan: hay contratos menores de 71 millones de euros, adjudicaciones a 0 €
@@ -21853,6 +22644,14 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs,
                                           paginas_qs, comunidades_qs), gzip_ok=gzip_ok)
 
+    if path == "/convocatorias":
+        zona = qs.get("zona", [""])[0]
+        if zona.startswith("p:"):
+            qs = dict(qs, provincia=[zona[2:]])
+        elif zona.startswith("c:"):
+            qs = dict(qs, comunidad=[zona[2:]])
+        return _resp(render_convocatorias_html(qs), gzip_ok=gzip_ok)
+
     if path == "/fondos-ue":
         provincia_qs = qs.get("provincia", ["todas"])[0]
         provincia_fue = provincia_qs if provincia_qs in MUNICIPIOS_POR_PROVINCIA else "todas"
@@ -21909,7 +22708,8 @@ def _route_get(path, qs, gzip_ok=False):
         # todas las combinaciones de filtros y páginas (comunidad_alc, comunidad_deuda, pag_alc, pag_idx, provincia...)
         # en cada idioma -- 15-20 s de CPU cada una, ocupando los 4 hilos. /rankings sin parámetros sigue permitido;
         # cualquier /rankings con "?" no. Mismo bloqueo para cada prefijo de idioma (incluido el que no esté publicado).
-        bloqueos = "".join(f"Disallow: {pref}/rankings?\n" for pref in ("", *(f"/{l}" for l in I18N_IDIOMAS)))
+        bloqueos = "".join(f"Disallow: {pref}/{ruta}?\n" for ruta in ("rankings", "convocatorias")
+                           for pref in ("", *(f"/{l}" for l in I18N_IDIOMAS)))
         # bloqueos ANTES de "Allow: /": hay rastreadores que aplican la primera regla que casa, no la más larga
         body = f"User-agent: *\n{bloqueos}Allow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
@@ -21926,6 +22726,7 @@ def _route_get(path, qs, gzip_ok=False):
         urls = [f"  <url><loc>{esc(SITE_URL)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>",
                 f"  <url><loc>{esc(SITE_URL)}/rankings</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/convocatorias</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quien-soy</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/mapa-cobertura</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/metodologia</loc><changefreq>monthly</changefreq></url>",
@@ -22521,6 +23322,21 @@ def _app_wsgi(environ, start_response):
                                                   query_string=environ.get("QUERY_STRING", ""))
         finally:
             _RANGO_PETICION.reset(t_rango)
+    elif method == "POST" and path == "/admin/subvenciones":
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = qs.get("token", [""])[0]
+        admin_token = os.environ.get("ADMIN_TOKEN", "")
+        if not admin_token or token != admin_token:
+            code, cuerpo = 403, {"error": "No autorizado."}
+        elif length > 200 * 1024 * 1024:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"")
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
     elif method == "POST" and path == "/admin/administradores-borme":
         # cuerpo binario (JSON en gzip), no formulario: ver _subir_administradores_borme
         try:
