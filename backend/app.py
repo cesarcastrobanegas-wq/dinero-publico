@@ -7,7 +7,7 @@ import gzip as _gzip
 import hashlib
 import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, hashlib, random, unicodedata, math
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urljoin
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -7224,60 +7224,174 @@ def _anomes_anterior():
     return f"{now.year - 1}12" if now.month == 1 else f"{now.year}{now.month - 1:02d}"
 
 
-def descargar_zip_place(anomes, job_id=None):
-    """Descarga el ZIP mensual de PLACE con reintentos y reanudación parcial."""
-    cache_path = os.path.join(CACHE_DIR, f"place_{anomes}.zip")
-    if os.path.exists(cache_path):
-        _log(job_id, f"ZIP {anomes} en caché local.")
-        return cache_path
+# ZIP del mes en curso y del anterior (2026-10-04, §0 de INFORME_LICITACIONES_SUBVENCIONES.md). PLACE REGENERA cada
+# día el ZIP del mes en curso (Last-Modified diario hacia las 04:00 UTC) y deja la versión final del mes el día 1 del
+# siguiente. Antes se descargaba una vez y se reutilizaba para siempre: en producción quedaron place_202609.zip con
+# 16 MB (los primeros días del mes) y place_202610.zip con 0 MB, y el Índice perdió la mayoría de los contratos
+# formales de PLACE de esos dos meses. Ahora:
+#  - un ZIP se vuelve a pedir si se bajó antes de que su mes estuviera cerrado: el del mes en curso cuando tiene más
+#    de PLACE_ZIP_REFRESCO_HORAS; el de un mes ya terminado si se bajó antes del día 2 del mes siguiente (así el mes
+#    anterior se revalida una vez justo después de cerrarse, con sus últimos días dentro);
+#  - un fichero que no abre como ZIP (vacío, truncado, una página de error) nunca se da por bueno: se vuelve a pedir;
+#  - la descarga va a un temporal y solo sustituye a la copia buena cuando el nuevo se ha validado entero;
+#  - un ZIP válido pero sospechosamente pequeño se usa igual, pero queda AVISADO en el registro y en
+#    /api/diagnostico-arranque (_PLACE_ZIP_AVISOS).
+PLACE_ZIP_REFRESCO_HORAS = 20
+PLACE_ZIP_MIN_MB_MES_CERRADO = 40      # los meses completos de 2026 pesan 80-160 MB
+_place_zip_lock = threading.Lock()     # una sola descarga de ZIP a la vez (jobs del cron y fichas a la carta)
+_PLACE_ZIP_AVISOS = {}                 # anomes -> texto del aviso (tamaño sospechoso, descarga fallida...)
+# PLACE no acepta Range (devuelve el fichero entero) y a veces sirve a ~70 KB/s o se cuelga a mitad: una descarga
+# fallida no se reintenta hasta pasadas PLACE_ZIP_ESPERA_FALLO_S, para que el refresco nocturno (que pide los ZIP en
+# cada municipio) no repita el intento miles de veces en la misma noche.
+PLACE_ZIP_ESPERA_FALLO_S = 2 * 3600
+_PLACE_ZIP_ULTIMO_FALLO = {}           # anomes -> time.time() del último intento fallido
 
+
+def _zip_place_valido(path):
+    """(True, "") si `path` abre como ZIP y trae algún .atom; si no, (False, motivo). Un ZIP truncado no tiene el
+    directorio central (va al final del fichero), así que no abre: esto descarta descargas cortadas a medias."""
+    try:
+        if os.path.getsize(path) < 1024:
+            return False, "vacío"
+        with zipfile.ZipFile(path) as z:
+            if not any(n.endswith(".atom") for n in z.namelist()):
+                return False, "sin ficheros .atom"
+        return True, ""
+    except (OSError, zipfile.BadZipFile) as e:
+        return False, type(e).__name__
+
+
+def _zip_place_cierre(anomes):
+    """Momento (UTC) a partir del cual el ZIP de `anomes` ya es la versión final: el día 2 del mes siguiente."""
+    a, m = int(anomes[:4]), int(anomes[4:])
+    a, m = (a + 1, 1) if m == 12 else (a, m + 1)
+    return datetime(a, m, 2, tzinfo=timezone.utc)
+
+
+def _zip_place_caducado(anomes, path):
+    ahora = datetime.now(timezone.utc)
+    bajado = datetime.fromtimestamp(os.path.getmtime(path), timezone.utc)
+    cierre = _zip_place_cierre(anomes)
+    if ahora < cierre:
+        return ahora - bajado > timedelta(hours=PLACE_ZIP_REFRESCO_HORAS)
+    return bajado < cierre
+
+
+def _zip_place_aviso_tamano(anomes, path):
+    """Texto de aviso si el ZIP pesa mucho menos de lo esperable (se usa igual: es un ZIP válido de PLACE)."""
+    mb = os.path.getsize(path) / 1024 / 1024
+    ahora = datetime.now(timezone.utc)
+    if ahora >= _zip_place_cierre(anomes):
+        if mb < PLACE_ZIP_MIN_MB_MES_CERRADO:
+            return f"ZIP {anomes} ya cerrado con solo {mb:.1f} MB (esperable > {PLACE_ZIP_MIN_MB_MES_CERRADO} MB)"
+    elif anomes == ahora.strftime("%Y%m") and ahora.day >= 6 and mb < ahora.day * 0.5:
+        return f"ZIP {anomes} con solo {mb:.1f} MB a día {ahora.day} (esperable > {ahora.day * 0.5:.0f} MB)"
+    return ""
+
+
+def _descargar_zip_place_temporal(anomes, job_id=None):
+    """Descarga el ZIP mensual a un temporal con reintentos. Devuelve la ruta del temporal ya validado, o None."""
     url = PLACE_ZIP_BASE.format(anomes=anomes)
-    temp_path = cache_path + ".tmp"
+    temp_path = os.path.join(CACHE_DIR, f"place_{anomes}.zip.tmp")
+    # Un temporal de otro día sería de otra versión del ZIP: reanudarlo mezclaría dos ficheros distintos.
+    if os.path.exists(temp_path) and time.time() - os.path.getmtime(temp_path) > 3600:
+        os.remove(temp_path)
     _log(job_id, f"Descargando datos oficiales PLACE {anomes}…")
-
     for intento in range(5):
         try:
             descargado = os.path.getsize(temp_path) if os.path.exists(temp_path) else 0
             hdrs = {"Range": f"bytes={descargado}-"} if descargado > 0 else {}
             r = session.get(url, timeout=(20, 120), stream=True, headers=hdrs)
-
             if r.status_code == 416:
-                os.rename(temp_path, cache_path)
-                _purgar_place_cache_antiguos(job_id)
-                return cache_path
-            if r.status_code not in (200, 206):
+                pass                       # ya estaba entero: se valida abajo
+            elif r.status_code not in (200, 206):
                 _log(job_id, f"HTTP {r.status_code} — ZIP no disponible para {anomes}")
                 return None
-
-            content_len = int(r.headers.get("content-length", 0))
-            total = descargado + content_len if r.status_code == 206 else content_len
-            modo = "ab" if r.status_code == 206 else "wb"
-            if r.status_code == 200:
-                descargado = 0
-
-            ultimo_pct = -1
-            with open(temp_path, modo) as f:
-                for chunk in r.iter_content(512 * 1024):
-                    f.write(chunk)
-                    descargado += len(chunk)
-                    if total:
-                        pct = int(100 * descargado / total)
-                        if pct != ultimo_pct and pct % 10 == 0:
-                            _log(job_id, f"  ↓ {anomes}: {pct}% "
-                                 f"({descargado // 1024 // 1024} MB / {total // 1024 // 1024} MB)")
-                            ultimo_pct = pct
-
-            os.rename(temp_path, cache_path)
-            _log(job_id, f"ZIP {anomes} descargado ({descargado // 1024 // 1024} MB).")
-            _purgar_place_cache_antiguos(job_id)
-            return cache_path
-
+            else:
+                content_len = int(r.headers.get("content-length", 0))
+                if r.status_code == 200:   # PLACE no suele aceptar Range: empieza de cero
+                    descargado = 0
+                total = descargado + content_len if content_len else 0
+                ultimo_pct = -1
+                with open(temp_path, "ab" if r.status_code == 206 else "wb") as f:
+                    for chunk in r.iter_content(512 * 1024):
+                        f.write(chunk)
+                        descargado += len(chunk)
+                        if total:
+                            pct = int(100 * descargado / total)
+                            if pct != ultimo_pct and pct % 10 == 0:
+                                _log(job_id, f"  ↓ {anomes}: {pct}% "
+                                     f"({descargado // 1024 // 1024} MB / {total // 1024 // 1024} MB)")
+                                ultimo_pct = pct
+                if total and descargado < total:
+                    raise IOError(f"conexión cortada ({descargado} de {total} bytes)")
+            valido, motivo = _zip_place_valido(temp_path)
+            if valido:
+                return temp_path
+            _log(job_id, f"  ZIP {anomes} descargado pero no válido ({motivo}): se vuelve a pedir entero.")
+            print(f"[place] ZIP {anomes} descargado pero no válido ({motivo}); reintento", flush=True)
+            os.remove(temp_path)
         except Exception as e:
             _log(job_id, f"  Intento {intento+1}/5 interrumpido ({type(e).__name__}). Reanudando…")
-            time.sleep(4 * (intento + 1))
-
+            print(f"[place] ZIP {anomes}: intento {intento+1}/5 interrumpido ({type(e).__name__}: {e})", flush=True)
+        time.sleep(4 * (intento + 1))
     _log(job_id, f"No se pudo descargar el ZIP de {anomes} tras 5 intentos.")
+    print(f"[place] ZIP {anomes}: no se pudo descargar tras 5 intentos", flush=True)
     return None
+
+
+def descargar_zip_place(anomes, job_id=None):
+    """Ruta del ZIP mensual de PLACE en la caché del disco, descargándolo o renovándolo si hace falta (ver arriba).
+    None si no hay ninguna copia válida."""
+    cache_path = os.path.join(CACHE_DIR, f"place_{anomes}.zip")
+    valido = os.path.exists(cache_path) and _zip_place_valido(cache_path)[0]
+    if valido and not _zip_place_caducado(anomes, cache_path):
+        _log(job_id, f"ZIP {anomes} en caché local.")
+        return cache_path
+    # Tras un intento fallido reciente no se vuelve a probar todavía: se usa lo que haya (o nada).
+    if time.time() - _PLACE_ZIP_ULTIMO_FALLO.get(anomes, 0) < PLACE_ZIP_ESPERA_FALLO_S:
+        return cache_path if valido else None
+    # Si otro hilo ya lo está descargando, no se espera (puede tardar mucho): se usa la copia válida si la hay y, si
+    # no, ese mes se salta en esta pasada (igual que antes con un fichero roto) y se recoge en la siguiente.
+    if not _place_zip_lock.acquire(blocking=False):
+        _log(job_id, f"ZIP {anomes}: descarga en curso en otro hilo; "
+                     f"{'se usa la copia actual' if valido else 'se salta en esta pasada'}.")
+        return cache_path if valido else None
+    try:
+        valido = os.path.exists(cache_path) and _zip_place_valido(cache_path)[0]
+        if valido and not _zip_place_caducado(anomes, cache_path):
+            return cache_path              # lo acaba de renovar otro hilo
+        if os.path.exists(cache_path):
+            _log(job_id, f"ZIP {anomes} en caché {'desactualizado' if valido else 'no válido'} "
+                         f"({os.path.getsize(cache_path) // 1024 // 1024} MB): se vuelve a descargar.")
+        temp = _descargar_zip_place_temporal(anomes, job_id)
+        if not temp:
+            _PLACE_ZIP_ULTIMO_FALLO[anomes] = time.time()
+        if temp:
+            _PLACE_ZIP_ULTIMO_FALLO.pop(anomes, None)
+            os.replace(temp, cache_path)
+            mb = os.path.getsize(cache_path) // 1024 // 1024
+            aviso = _zip_place_aviso_tamano(anomes, cache_path)
+            if aviso:
+                _PLACE_ZIP_AVISOS[anomes] = aviso
+                _log(job_id, f"  AVISO: {aviso}")
+                print(f"[place] AVISO: {aviso}", flush=True)
+            else:
+                _PLACE_ZIP_AVISOS.pop(anomes, None)
+            _log(job_id, f"ZIP {anomes} descargado y validado ({mb} MB).")
+            print(f"[place] ZIP {anomes} descargado y validado ({mb} MB).", flush=True)
+            _purgar_place_cache_antiguos(job_id)
+            return cache_path
+        if valido:
+            _PLACE_ZIP_AVISOS[anomes] = f"no se pudo renovar el ZIP {anomes}: se sigue usando la copia anterior"
+            _log(job_id, f"  AVISO: {_PLACE_ZIP_AVISOS[anomes]}")
+            return cache_path
+        _PLACE_ZIP_AVISOS[anomes] = f"no hay ninguna copia válida del ZIP {anomes}"
+        if os.path.exists(cache_path):
+            os.remove(cache_path)          # que nadie use un fichero roto
+        return None
+    finally:
+        _place_zip_lock.release()
 
 
 CIUDADES_AUTONOMAS = {"ceuta", "melilla"}
@@ -7853,14 +7967,22 @@ def _contratos_de_zip_cacheado(zip_path, job_id=None):
     descargados (mismo anomes = mismo fichero siempre), así que no hace
     falta invalidar por contenido, solo acotar cuántos quedan en RAM a la
     vez (_ZIP_CONTRATOS_CACHE_MAX)."""
+    # Clave con fecha y tamaño: el ZIP del mes en curso se renueva cada día en el mismo fichero (descargar_zip_place)
+    # y una clave solo por ruta seguiría sirviendo los contratos de la versión vieja.
+    try:
+        clave = (zip_path, os.path.getmtime(zip_path), os.path.getsize(zip_path))
+    except OSError:
+        clave = (zip_path, 0, 0)
     with _ZIP_CONTRATOS_CACHE_LOCK:
-        if zip_path in _ZIP_CONTRATOS_CACHE:
-            return _ZIP_CONTRATOS_CACHE[zip_path]
+        if clave in _ZIP_CONTRATOS_CACHE:
+            return _ZIP_CONTRATOS_CACHE[clave]
+        for vieja in [k for k in _ZIP_CONTRATOS_CACHE if k[0] == zip_path]:
+            _ZIP_CONTRATOS_CACHE.pop(vieja)
         nombre = os.path.basename(zip_path)
         _log(job_id, f"  Extrayendo {nombre} completo (primera vez en este proceso)…")
         contratos = _extraer_contratos_zip(zip_path, job_id)
         _log(job_id, f"  {nombre}: {len(contratos)} contratos ADJ/RES/FOR en total (toda España).")
-        _ZIP_CONTRATOS_CACHE[zip_path] = contratos
+        _ZIP_CONTRATOS_CACHE[clave] = contratos
         while len(_ZIP_CONTRATOS_CACHE) > _ZIP_CONTRATOS_CACHE_MAX:
             _ZIP_CONTRATOS_CACHE.pop(next(iter(_ZIP_CONTRATOS_CACHE)))
         return contratos
@@ -12594,6 +12716,94 @@ def _job_run(job_id, municipio, provincia="murcia"):
         with _jobs_lock:
             _jobs[job_id]["status"] = "error"
             _jobs[job_id]["error"] = str(e)
+
+
+_REPROCESADO_PLACE = {"estado": "sin_lanzar"}
+_reprocesado_place_lock = threading.Lock()
+_CAMPOS_ENRIQUECIDOS = ("directivo", "cargo", "rm_agotado", "intentado", "origen", "borm_url")
+
+
+def _reprocesar_meses_place(meses):
+    """Vuelve a pasar los ZIP de PLACE de `meses` (["202609", "202610"]) por todos los municipios que se nutren de
+    PLACE y añade a cada ficha lo que falte (2026-10-04, §0 de INFORME_LICITACIONES_SUBVENCIONES.md: los ZIP de esos
+    meses se quedaron a medias en producción). Mismo filtro que el refresco nocturno (buscar_en_zip, con anclaje) y misma fusión (_fusionar_historico_contratos), pero sin ninguna consulta externa: ni feed en vivo
+    ni directivos. Lo ya guardado de cada contrato que vuelve a aparecer (directivo, cargo, origen, enlace BORM) se
+    conserva; los directivos de los nuevos los rellena después el hilo de enriquecimiento, como siempre.
+    La provincia de Murcia no pasa por aquí: su refresco separa además CCAA/AGE/UMU en fichas propias y eso solo lo
+    hace bien el refresco normal (_job_run), que se lanza al final para sus municipios. Se recorre provincia a provincia y municipio a municipio, leyendo y escribiendo una
+    ficha cada vez (nada de la base entera en memoria)."""
+    est = _REPROCESADO_PLACE
+    try:
+        est.update(estado="descargando", meses=meses, inicio=time.strftime("%Y-%m-%d %H:%M:%S"),
+                   zips={}, municipios=0, actualizados=0, contratos_nuevos=0, provincia="", error="")
+        zips = []
+        for m in meses:
+            p = None
+            for _ in range(6):            # hasta ~6 intentos de 5 descargas, esperando si otro hilo está bajándolo
+                _PLACE_ZIP_ULTIMO_FALLO.pop(m, None)
+                p = descargar_zip_place(m)
+                if p and _zip_place_valido(p)[0] and not _zip_place_caducado(m, p):
+                    break
+                time.sleep(120)
+            if not p or not _zip_place_valido(p)[0]:
+                raise RuntimeError(f"sin ZIP válido de {m}")
+            est["zips"][m] = os.path.getsize(p) // 1024 // 1024
+            zips.append(p)
+        est["estado"] = "extrayendo"
+        for p in zips:
+            _contratos_de_zip_cacheado(p)
+        est["estado"] = "fusionando"
+        for provincia, municipios in MUNICIPIOS_POR_PROVINCIA.items():
+            if provincia in PROVINCIAS_CATALUNYA or provincia in PROVINCIAS_NAVARRA or provincia == "murcia":
+                continue
+            est["provincia"] = provincia
+            for municipio in municipios:
+                if provincia in PROVINCIAS_PAIS_VASCO and municipio in MUNICIPIOS_PAIS_VASCO_EUSKADI_ID:
+                    continue
+                est["municipios"] += 1
+                encontrados = []
+                for p in zips:
+                    encontrados += buscar_en_zip(p, municipio, anclar=True, provincia=provincia)
+                if not encontrados:
+                    continue
+                d = _db_get_municipio(municipio, provincia)
+                if not d:
+                    continue               # sin ficha todavía: la creará el refresco normal con todo
+                existentes = d.get("contratos", [])
+                previos = {(c.get("url") or c.get("titulo", "")[:80]): c for c in existentes}
+                encontrados = _dedup_contratos_por_url(encontrados)
+                for c in encontrados:
+                    viejo = previos.get(c.get("url") or c.get("titulo", "")[:80])
+                    if viejo:
+                        for k in _CAMPOS_ENRIQUECIDOS:
+                            if k in viejo and not c.get(k):
+                                c[k] = viejo[k]
+                nuevos = sum(1 for c in encontrados if (c.get("url") or c.get("titulo", "")[:80]) not in previos)
+                fusion = _fusionar_historico_contratos(existentes, encontrados)
+                if not nuevos and fusion == existentes:
+                    continue
+                d["contratos"] = fusion
+                d["total_contratos"] = len(fusion)
+                d["alertas"] = analizar_riesgo(fusion)
+                _db_set_municipio(municipio, d, provincia=provincia)
+                _cache_invalidate(municipio, provincia)
+                est["actualizados"] += 1
+                est["contratos_nuevos"] += nuevos
+                del d, existentes, previos, encontrados, fusion
+                time.sleep(0.02)          # cede el turno a las peticiones web entre ficha y ficha
+            print(f"[reprocesar-place] {provincia}: {est['actualizados']} fichas actualizadas, "
+                  f"{est['contratos_nuevos']} contratos nuevos (acumulado)", flush=True)
+        est["estado"] = "provincia_murcia"
+        _refrescar_provincia_secuencial("reprocesar-place-murcia", "murcia")
+        est.update(estado="terminado", fin=time.strftime("%Y-%m-%d %H:%M:%S"), provincia="")
+        print(f"[reprocesar-place] terminado: {est['actualizados']} fichas, {est['contratos_nuevos']} contratos "
+              f"nuevos de {meses}", flush=True)
+        _lanzar_enriquecimiento()
+    except Exception as e:
+        est.update(estado="error", error=f"{type(e).__name__}: {e}")
+        print(f"[reprocesar-place] ERROR {type(e).__name__}: {e}", flush=True)
+    finally:
+        _reprocesado_place_lock.release()
 
 
 def _refrescar_provincia_secuencial(job_id, provincia, offset=0):
@@ -19586,6 +19796,12 @@ def _uso_disco():
                 if f.endswith(".zip")}
         out["place_cache_zips_mb"] = zips
         out["place_cache_total_mb"] = round(sum(zips.values()), 1)
+        out["place_cache_zips_bajados"] = {f: time.strftime("%Y-%m-%d %H:%M", time.gmtime(os.path.getmtime(
+            os.path.join(CACHE_DIR, f)))) for f in zips}
+        out["place_zip_avisos"] = dict(_PLACE_ZIP_AVISOS)
+        out["place_zip_ultimo_fallo"] = {m: time.strftime("%Y-%m-%d %H:%M", time.gmtime(t))
+                                         for m, t in _PLACE_ZIP_ULTIMO_FALLO.items()}
+        out["place_reprocesado"] = dict(_REPROCESADO_PLACE)
     except Exception:
         out["place_cache_zips_mb"] = {}
     try:
@@ -21957,6 +22173,24 @@ def _route_post(path, params):
                 _db_comentarios_insertar(tipo, clave_raw, texto, nombre)
                 _avisar_comentario_por_correo(tipo, clave_raw, texto, nombre, redirect_url.split("#")[0])
             return _redirect_resp(redirect_url + "#comentarios" if "#" not in redirect_url else redirect_url)
+
+        if path == "/admin/reprocesar-place":
+            # Reprocesado puntual de meses de PLACE (ver _reprocesar_meses_place). Un solo reprocesado a la vez; el
+            # progreso se ve en /api/diagnostico-arranque ("place").
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            meses = [m for m in params.get("meses", [""])[0].split(",") if re.fullmatch(r"20\d{4}", m)]
+            if not meses:
+                return _error_resp("Indica meses=AAAAMM[,AAAAMM].", 400)
+            if not _reprocesado_place_lock.acquire(blocking=False):
+                return _resp(json.dumps({"lanzado": False, "motivo": "ya hay un reprocesado en curso",
+                                         "estado": _REPROCESADO_PLACE}, ensure_ascii=False),
+                             content_type="application/json; charset=utf-8", code=409)
+            threading.Thread(target=_reprocesar_meses_place, args=(meses,), name="reprocesar-place",
+                             daemon=True).start()
+            return _resp(json.dumps({"lanzado": True, "meses": meses}, ensure_ascii=False),
+                         content_type="application/json; charset=utf-8")
 
         if path == "/admin/purgar-place-cache":
             # Disparo manual de _purgar_place_cache_antiguos() -- la purga
