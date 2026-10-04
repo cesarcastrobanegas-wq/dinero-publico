@@ -13096,6 +13096,7 @@ def _licitaciones_bg(esperar=None):
 # campo "abierto" de la API (decisión de César 2026-10-04).
 # Pestaña oculta hasta que César revise el aviso legal de reutilización de la BDNS: SUBVENCIONES_PUBLICAS.
 SUBVENCIONES_PUBLICAS = os.environ.get("CONVOCATORIAS_SUBVENCIONES", "") == "1"
+SUBV_MINIMO_SUBIDA = 1000           # una subida con menos convocatorias se rechaza (fichero roto o carga a medias)
 _SUBV_COLUMNAS = ("bdns", "registrada", "titulo", "titulo_cooficial", "nivel1", "nivel2", "organo", "nuts", "provincia",
                   "comunidad", "municipio", "presupuesto", "beneficiarios", "sector", "finalidad", "instrumento",
                   "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda")
@@ -13176,7 +13177,7 @@ def _subir_subvenciones(crudo):
             _db.execute(f"DROP TABLE IF EXISTS {nueva}")
             _db.commit()
         return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
-    if n < 1000:
+    if n < SUBV_MINIMO_SUBIDA:
         with _db_lock:
             _db.execute(f"DROP TABLE IF EXISTS {nueva}")
             _db.commit()
@@ -13190,6 +13191,9 @@ def _subir_subvenciones(crudo):
             _db.execute(_sql.format(tabla="subvenciones"))
         _db.commit()
         con_muni = _db.execute("SELECT count(*) FROM subvenciones WHERE municipio != ''").fetchone()[0]
+        _db.execute("INSERT INTO settings (clave, valor) VALUES ('subvenciones_actualizado', ?) "
+                    "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (_ahora_madrid().strftime("%Y-%m-%d %H:%M"),))
+        _db.commit()
     _liberar_memoria()
     print(f"[subvenciones] {n} convocatorias cargadas (antes {antes}; {con_muni} enlazadas a un municipio; "
           f"{malas} líneas con error)", flush=True)
@@ -18944,6 +18948,14 @@ def render_convocatorias_html(qs):
         cab = f'<th>{_t("Convocatoria")}</th><th>{_t("Presupuesto")}</th><th>{_t("Plazo")}</th>'
         cuerpo = "".join(_conv_fila_subvencion(r, vista) for r in filas)
         fuente = _t("Convocatorias de ayudas y subvenciones con el plazo de solicitud abierto, según la Base de Datos Nacional de Subvenciones (BDNS). El plazo se calcula con las fechas publicadas.")
+        # Condiciones de reutilización de la BDNS (aviso legal del SNPSAP): citar el origen con esta fórmula, dar la
+        # fecha de actualización y no sugerir que la IGAE participa o patrocina.
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave='subvenciones_actualizado'").fetchone()
+        fuente += " " + _t("Origen de los datos: Intervención General de la Administración del Estado (BDNS).")
+        if fila:
+            fuente += " " + _t("Última actualización: {f}.").format(f=esc(_conv_fecha(fila[0])))
+        fuente += " " + _t("La Intervención General no participa ni patrocina esta web.")
         vistas = [("abiertas", _t("Abiertas")), ("proximas", _t("Abren pronto")), ("sin_fecha", _t("Plazo según bases"))]
         vistas_html = ('<div class="prov-switch" style="margin-bottom:10px">' + "".join(
             f'<a href="{esc(_conv_url(dict(f, vista=None if v == "abiertas" else v, pag=1)))}" '

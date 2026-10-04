@@ -1,0 +1,67 @@
+name: Subvenciones de la BDNS (diario)
+
+# Pestaña "Subvenciones" de Convocatorias abiertas (decisión de César 2026-10-04). Ver backend/subvenciones_bdns.py.
+#  - La BDNS no permite pedir "solo las abiertas" y el plazo solo viene en el detalle de cada convocatoria: hay que
+#    pedirlas una a una, a 1 por segundo. La carga inicial desde 2024 (~200.000) se reparte en varias noches; el
+#    progreso se guarda en la caché de Actions (bdns.db) y cada noche sigue donde lo dejó la anterior.
+#  - Después, cada noche: convocatorias nuevas y revisión de las que no publican fecha fin.
+#  - Se sube a Render (POST /admin/subvenciones) un NDJSON con las que no están cerradas por fechas; la web lo carga
+#    línea a línea y sustituye la tabla de golpe. Gratis: Actions no cobra en repositorios públicos.
+# Los registros solo muestran recuentos; no se publica ningún artefacto.
+
+on:
+  schedule:
+    # Dos pasadas al día (mismo ritmo de 1 petición por segundo) para que la carga inicial dure ~1 semana y no ~2;
+    # ninguna coincide con el refresco nocturno de contratos (01:00-07:00 UTC), que es el que carga Render.
+    - cron: "15 19 * * *"
+    - cron: "15 7 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: subvenciones-bdns
+  cancel-in-progress: false
+
+jobs:
+  subvenciones:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependencias
+        run: pip install requests
+
+      - name: Estado guardado (caché)
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/bdns.db
+          key: bdns-${{ github.run_id }}
+          restore-keys: bdns-
+
+      - name: Convocatorias nuevas y pendientes (1 petición por segundo)
+        run: python backend/subvenciones_bdns.py actualizar --desde 2024-01-01 --minutos 300
+
+      - name: Guardar el estado en la caché
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: backend/bdns.db
+          key: bdns-${{ github.run_id }}
+
+      - name: Exportar y subir a Render
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          python backend/subvenciones_bdns.py exportar --salida subvenciones.ndjson.gz
+          curl -sS --max-time 600 -X POST -H "Content-Type: application/gzip" \
+            --data-binary @subvenciones.ndjson.gz \
+            "https://dinero-publico.com/admin/subvenciones?token=${ADMIN_TOKEN}"
+          echo
+          rm -f subvenciones.ndjson.gz
