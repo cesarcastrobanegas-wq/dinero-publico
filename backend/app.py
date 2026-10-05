@@ -14357,7 +14357,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 .header-brand>div{min-width:0;}
 header h1{overflow-wrap:break-word;}
 .logo-svg{flex-shrink:0;line-height:0;}
-.logo-svg svg{width:160px;height:auto;display:block;}
+.logo-dp{display:inline-grid;grid-template-columns:auto 2px auto;column-gap:5px;align-items:center;
+  font-family:'Space Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;color:#1B2A4A;font-size:29px;
+  line-height:.98;letter-spacing:-.01em;white-space:nowrap;}
+.logo-dp .dp-i{font-weight:700;}
+.logo-dp .dp-r{font-weight:500;}
+.logo-dp .dp-sep{grid-column:2;grid-row:1/3;align-self:stretch;background:#c9ccd6;margin:2px 0;}
 header h1{font-size:15px;font-weight:600;}
 header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .header-nav{flex-shrink:0;display:flex;align-items:center;gap:10px;}
@@ -14925,7 +14930,7 @@ button.share-btn{font-family:inherit;}
   .header-brand{flex:1 1 100%;}
   header h1{font-size:15px;}
   header p{font-size:11px;}
-  .logo-svg svg{width:96px;}
+  .logo-dp{font-size:19px;column-gap:4px;}
   .header-nav{flex:1 1 100%;flex-wrap:wrap;justify-content:flex-start;}
   .header-nav>a{padding:7px 10px;font-size:11px;}
   .pwa-install-btn{padding:7px 10px;font-size:11px;}
@@ -15331,8 +15336,8 @@ function _dpCargarAdsense() {} // AdSense todavía no activo (cuenta pendiente d
 # soporta beforeinstallprompt). Colores tomados de las variables CSS ya
 # existentes (--bg y --surface, ver _ALL_CSS_CONTENT) para que la barra de
 # estado/task switcher combine con el sitio real, no un color inventado.
-PWA_THEME_COLOR = "#fffdf6"       # --surface, mismo fondo que <header>
-PWA_BACKGROUND_COLOR = "#fbf0c4"  # --bg, fondo de la pantalla de carga
+PWA_THEME_COLOR = "#ffffff"       # --surface del rediseño (2026-10-03), mismo fondo que <header>
+PWA_BACKGROUND_COLOR = "#f5f6f8"  # --bg del rediseño, fondo de la pantalla de carga (el logo va en #1B2A4A encima)
 
 PWA_MANIFEST = {
     "id": "/",
@@ -15383,7 +15388,7 @@ PWA_MANIFEST = {
 # mano).
 _PWA_STATIC_PATHS_BASE = [
     "/static/style.css",
-    "/static/logo.svg",
+    "/static/favicon-32.png",
     "/static/icon-192.png",
     "/static/icon-512.png",
     "/static/apple-touch-icon.png",
@@ -15458,62 +15463,15 @@ def _registro_correcto(nif):
         return "Registro de Cooperativas", REGISTRO_COOPERATIVAS_URL
     return "Registro Mercantil", REGISTRO_MERCANTIL_URL
 
-LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200" width="220" height="88">
-  <defs>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="glowStrong">
-      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#f0883e;stop-opacity:0.3"/>
-      <stop offset="100%" style="stop-color:#0d1117;stop-opacity:0"/>
-    </radialGradient>
-  </defs>
-  <rect width="500" height="200" fill="#0d1117"/>
-  <text x="8"   y="22" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.25">€</text>
-  <text x="24"  y="18" font-family="Arial" font-size="9"  fill="#f0883e" opacity="0.15">€</text>
-  <text x="38"  y="25" font-family="Arial" font-size="13" fill="#f0883e" opacity="0.3">€</text>
-  <text x="54"  y="16" font-family="Arial" font-size="8"  fill="#f0883e" opacity="0.2">€</text>
-  <text x="66"  y="24" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.18">€</text>
-  <text x="82"  y="19" font-family="Arial" font-size="10" fill="#f0883e" opacity="0.12">€</text>
-  <text x="96"  y="26" font-family="Arial" font-size="9"  fill="#f0883e" opacity="0.08">€</text>
-  <text x="6"   y="42" font-family="Arial" font-size="10" fill="#f0883e" opacity="0.3">€</text>
-  <text x="20"  y="48" font-family="Arial" font-size="14" fill="#f0883e" opacity="0.2">€</text>
-  <text x="36"  y="40" font-family="Arial" font-size="9"  fill="#f0883e" opacity="0.25">€</text>
-  <text x="50"  y="46" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.15">€</text>
-  <text x="64"  y="38" font-family="Arial" font-size="8"  fill="#f0883e" opacity="0.1">€</text>
-  <text x="4"   y="66" font-family="Arial" font-size="12" fill="#f0883e" opacity="0.35">€</text>
-  <text x="18"  y="70" font-family="Arial" font-size="9"  fill="#f0883e" opacity="0.22">€</text>
-  <text x="32"  y="63" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.28">€</text>
-  <text x="5"   y="90" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.4">€</text>
-  <text x="19"  y="94" font-family="Arial" font-size="14" fill="#f0883e" opacity="0.25">€</text>
-  <text x="4"   y="115" font-family="Arial" font-size="10" fill="#f0883e" opacity="0.4">€</text>
-  <text x="18"  y="119" font-family="Arial" font-size="13" fill="#f0883e" opacity="0.22">€</text>
-  <text x="5"   y="140" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.35">€</text>
-  <text x="6"   y="164" font-family="Arial" font-size="12" fill="#f0883e" opacity="0.3">€</text>
-  <text x="7"   y="186" font-family="Arial" font-size="11" fill="#f0883e" opacity="0.25">€</text>
-  <circle cx="100" cy="100" r="55" fill="url(#eyeGlow)"/>
-  <path d="M 45 100 Q 100 55 155 100" fill="#0d1117" stroke="#f0883e" stroke-width="2.5"/>
-  <path d="M 45 100 Q 100 140 155 100" fill="#0d1117" stroke="#f0883e" stroke-width="2.5"/>
-  <line x1="70"  y1="72"  x2="73"  y2="80"  stroke="#f0883e" stroke-width="1.5" opacity="0.6"/>
-  <line x1="85"  y1="62"  x2="86"  y2="71"  stroke="#f0883e" stroke-width="1.5" opacity="0.6"/>
-  <line x1="100" y1="58"  x2="100" y2="67"  stroke="#f0883e" stroke-width="2"   opacity="0.7"/>
-  <line x1="115" y1="62"  x2="114" y2="71"  stroke="#f0883e" stroke-width="1.5" opacity="0.6"/>
-  <line x1="130" y1="72"  x2="127" y2="80"  stroke="#f0883e" stroke-width="1.5" opacity="0.6"/>
-  <circle cx="100" cy="100" r="28" fill="#1a0a00" stroke="#f0883e" stroke-width="2" filter="url(#glow)"/>
-  <circle cx="100" cy="100" r="22" fill="none" stroke="#f0883e" stroke-width="0.8" opacity="0.4"/>
-  <circle cx="100" cy="100" r="11" fill="#f0883e" filter="url(#glowStrong)"/>
-  <circle cx="100" cy="100" r="7" fill="#0d1117"/>
-  <circle cx="106" cy="94" r="3.5" fill="#ffffff" opacity="0.55"/>
-  <line x1="168" y1="15" x2="168" y2="185" stroke="#f0883e" stroke-width="1" opacity="0.35"/>
-  <text x="188" y="88" font-family="'IBM Plex Mono','Courier New',monospace" font-size="50" font-weight="700" letter-spacing="2" fill="#f0883e" filter="url(#glow)">DINERO</text>
-  <text x="188" y="138" font-family="'IBM Plex Mono','Courier New',monospace" font-size="50" font-weight="700" letter-spacing="2" fill="#ffffff">PÚBLICO</text>
-  <text x="190" y="164" font-family="'IBM Plex Mono','Courier New',monospace" font-size="10" letter-spacing="3" fill="#8b949e">¿EN QUÉ SE GASTA TU DINERO?</text>
-</svg>"""
+# Logotipo (2026-10-05, encargo de César): lockup tipográfico "D|inero / P|úblico" en Space Grotesk (D y P en 700, el
+# resto en 500) y #1B2A4A, según la hoja logo-dinero-publico.pdf. Sustituye al SVG del ojo naranja. Es texto (HTML y
+# CSS, ver .logo-dp), no una imagen: se ve nítido a cualquier tamaño y pesa casi nada. Los iconos (favicon, app
+# instalada, apple-touch-icon) y la imagen para redes (og-image.png) son el monograma D/P, en backend/static/.
+LOGO_HTML = ('<span class="logo-dp" role="img" aria-label="Dinero Público">'
+             '<span class="dp-i" style="grid-area:1/1">D</span><span class="dp-sep"></span>'
+             '<span class="dp-r" style="grid-area:1/3">inero</span>'
+             '<span class="dp-i" style="grid-area:2/1">P</span>'
+             '<span class="dp-r" style="grid-area:2/3">úblico</span></span>')
 
 _ADV_SEARCH_JS = r"""
 (function(){
@@ -15777,7 +15735,7 @@ def _header_html(provincia="todas"):
     rankings_href = "/rankings" + _q_prov_first(provincia)
     return f"""<header>
   <a href="/" class="header-brand" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
-    <div class="logo-svg">{LOGO_SVG}</div>
+    <div class="logo-svg">{LOGO_HTML}</div>
     <div>
       <h1 style="color:var(--text)">Dinero Público · {_t("Contratación pública en España")}</h1>
       <p>{esc(_site_tagline())}</p>
@@ -15886,7 +15844,12 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <meta name="description" content="{desc}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{esc(og_url)}">
-<link rel="icon" type="image/svg+xml" href="{_pwa_asset('/static/logo.svg')}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap">
+<link rel="icon" href="{_pwa_asset('/static/favicon.ico')}" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="{_pwa_asset('/static/favicon-32.png')}">
+<link rel="icon" type="image/png" sizes="16x16" href="{_pwa_asset('/static/favicon-16.png')}">
 <link rel="manifest" href="{_pwa_asset('/manifest.json')}">
 <meta name="theme-color" content="{PWA_THEME_COLOR}">
 <link rel="apple-touch-icon" href="{_pwa_asset('/static/apple-touch-icon.png')}">
@@ -15900,11 +15863,15 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <meta property="og:url" content="{esc(og_url)}">
 <meta property="og:site_name" content="Dinero Público">
 <meta property="og:locale" content="es_ES">
-<meta property="og:image" content="{esc(SITE_URL)}{_pwa_asset('/static/logo.svg')}">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="{esc(SITE_URL)}{_pwa_asset('/static/og-image.png')}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Dinero Público">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{esc(full_title)}">
 <meta name="twitter:description" content="{desc}">
-<meta name="twitter:image" content="{esc(SITE_URL)}{_pwa_asset('/static/logo.svg')}">
+<meta name="twitter:image" content="{esc(SITE_URL)}{_pwa_asset('/static/og-image.png')}">
 <link rel="stylesheet" href="{_pwa_asset('/static/style.css')}">
 {extra_head}</head>
 <body>
@@ -22775,16 +22742,13 @@ def _route_get(path, qs, gzip_ok=False):
             headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
         )
 
-    if path == "/static/logo.svg":
-        return _resp(
-            LOGO_SVG, content_type="image/svg+xml; charset=utf-8",
-            headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
-        )
-
-    if path in ("/static/icon-192.png", "/static/icon-512.png", "/static/apple-touch-icon.png"):
-        # Iconos PWA -- ficheros PNG reales en backend/static/ (generados una
-        # sola vez recortando LOGO_SVG a la zona del icono, ver informe de
-        # viabilidad 2026-08-05), no contenido generado en caliente como el
+    if path == "/favicon.ico":            # los navegadores lo piden aquí aunque la página diga otra cosa
+        path = "/static/favicon.ico"
+    if path in ("/static/icon-192.png", "/static/icon-512.png", "/static/apple-touch-icon.png",
+                "/static/favicon-16.png", "/static/favicon-32.png", "/static/favicon.ico", "/static/og-image.png"):
+        # Iconos -- ficheros reales en backend/static/ (monograma D/P del
+        # logotipo de 2026-10-05, generados una sola vez con Space Grotesk;
+        # antes, recortes del SVG del ojo), no contenido generado en caliente como el
         # resto del sitio. Se sirven desde BASE_DIR (código desplegado), no
         # desde DATA_DIR (disco persistente de datos), porque son un asset
         # del código, no un dato que cambie.
@@ -22795,7 +22759,7 @@ def _route_get(path, qs, gzip_ok=False):
         except OSError:
             return 404, {"Content-Length": "0"}, b""
         return _resp(
-            data, content_type="image/png",
+            data, content_type="image/x-icon" if path.endswith(".ico") else "image/png",
             headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=False,
         )
 
