@@ -216,6 +216,35 @@ def estado(db=None):
           f"({(con or 0) * 100 // max(tot, 1)} %)", flush=True)
 
 
+def carga_completa(desde, salida_github=""):
+    """¿Ha terminado la carga inicial? Todos los meses desde `desde` listados y ninguna convocatoria sin detalle.
+    La PRIMERA vez que se cumple lo anota en la base (tabla avisos) y devuelve True; después, siempre False: el aviso
+    a César (issue + correo de GitHub, ver subvenciones-bdns.yml) sale una sola vez. Con salida_github escribe
+    completa=true|false en $GITHUB_OUTPUT."""
+    db = conectar()
+    db.execute("CREATE TABLE IF NOT EXISTS avisos (clave TEXT PRIMARY KEY, cuando TEXT)")
+    hoy = dt.date.today()
+    esperados = {m.strftime("%Y-%m") for m in _meses(desde, hoy)}
+    listados = {r[0] for r in db.execute("SELECT mes FROM meses")}
+    faltan_meses = len(esperados - listados)
+    pendientes = db.execute("SELECT count(*) FROM convocatorias WHERE revisado IS NULL").fetchone()[0]
+    total = db.execute("SELECT count(*) FROM convocatorias").fetchone()[0]
+    ya = db.execute("SELECT cuando FROM avisos WHERE clave='carga_inicial_completa'").fetchone()
+    completa = faltan_meses == 0 and pendientes == 0 and total > 0
+    primera = completa and not ya
+    if primera:
+        db.execute("INSERT INTO avisos VALUES ('carga_inicial_completa', ?)", (dt.datetime.now(dt.timezone.utc).isoformat(timespec="minutes")[:16],))
+        db.commit()
+    print(f"carga inicial: {total} convocatorias, {pendientes} pendientes de detalle, {faltan_meses} meses sin listar"
+          f" -> {'COMPLETA (primera vez: se avisa)' if primera else ('completa (ya avisado el ' + ya[0] + ')' if ya else 'en curso')}",
+          flush=True)
+    if salida_github:
+        with open(salida_github, "a", encoding="utf-8") as f:
+            f.write(f"completa={'true' if primera else 'false'}\n")
+            f.write(f"total={total}\n")
+    return primera
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd")
@@ -225,11 +254,15 @@ if __name__ == "__main__":
     e = sub.add_parser("exportar")
     e.add_argument("--salida", required=True)
     sub.add_parser("estado")
+    c = sub.add_parser("carga-completa")
+    c.add_argument("--desde", default="2024-01-01")
     args = ap.parse_args()
     if args.cmd == "actualizar":
         actualizar(dt.date.fromisoformat(args.desde), args.minutos)
     elif args.cmd == "exportar":
         sys.exit(0 if exportar(args.salida) else 1)
+    elif args.cmd == "carga-completa":
+        carga_completa(dt.date.fromisoformat(args.desde), os.environ.get("GITHUB_OUTPUT", ""))
     elif args.cmd == "estado":
         estado()
     else:

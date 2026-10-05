@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  issues: write          # solo para el aviso único de carga completa (ver el último paso)
 
 concurrency:
   group: subvenciones-bdns
@@ -48,6 +49,10 @@ jobs:
       - name: Convocatorias nuevas y pendientes (1 petición por segundo)
         run: python backend/subvenciones_bdns.py actualizar --desde 2024-01-01 --minutos 300
 
+      - name: ¿Carga inicial completa?
+        id: carga
+        run: python backend/subvenciones_bdns.py carga-completa --desde 2024-01-01
+
       - name: Guardar el estado en la caché
         if: always()
         uses: actions/cache/save@v4
@@ -76,3 +81,21 @@ jobs:
             esac
           done
           rm -f subvenciones.ndjson.gz
+
+      # Aviso a César, UNA sola vez (la marca queda en bdns.db): cuando la carga inicial termina, para que decida si
+      # activa la pestaña de Subvenciones. Dos vías, por si una no llega: un issue (GitHub manda correo por cada issue
+      # nuevo del repositorio) y este paso terminando en error a propósito (mismo correo "Run failed" que los fallos).
+      - name: Aviso - issue de carga completa
+        if: always() && steps.carga.outputs.completa == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "${{ github.repository }}" \
+            --title "Carga de subvenciones completa: lista para activar la pestaña" \
+            --body "La carga inicial de la BDNS (desde 2024) ha terminado: ${{ steps.carga.outputs.total }} convocatorias con detalle y ninguna pendiente. La web ya tiene los datos; la pestaña Subvenciones de Convocatorias abiertas sigue oculta hasta que se active (CONVOCATORIAS_SUBVENCIONES=1). A partir de ahora cada pasada solo trae las nuevas y revisa las que no publican fecha fin. Aviso automático de subvenciones-bdns.yml (solo se envía una vez)."
+
+      - name: "AVISO: carga de subvenciones completa (no es un error)"
+        if: always() && steps.carga.outputs.completa == 'true'
+        run: |
+          echo "::error::AVISO, no es un error: la carga inicial de subvenciones ha terminado (${{ steps.carga.outputs.total }} convocatorias). Ya se puede activar la pestaña. Este paso falla a propósito una sola vez para que llegue el correo de GitHub."
+          exit 1
