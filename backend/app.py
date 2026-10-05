@@ -15737,7 +15737,7 @@ def _header_html(provincia="todas"):
   <a href="/" class="header-brand" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
     <div class="logo-svg">{LOGO_HTML}</div>
     <div>
-      <h1 style="color:var(--text)">Dinero Público · {_t("Contratación pública en España")}</h1>
+      <h1 style="color:var(--text)">{_t("Contratación pública en España")}</h1>
       <p>{esc(_site_tagline())}</p>
     </div>
   </a>
