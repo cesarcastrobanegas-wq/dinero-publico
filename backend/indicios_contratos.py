@@ -15,6 +15,15 @@ Regla 1, "posible fraccionamiento" (versión estricta aprobada por César el 05-
 mismo tipo; al menos 2 menores en 30 días, cada uno por encima del 40 % del umbral, cuyas descripciones comparten
 alguna palabra significativa, y cuya suma supera el umbral. Puntuación 0-100 para ordenar la cola (ver puntuar()).
 
+Ajustes de César (05-10, tras ver 40 ejemplos): espectáculos y fiestas (artistas distintos, que pueden justificarse por
+exclusividad) se quedan, con la puntuación rebajada y la categoría "espectaculos" para revisarlos aparte; obras y
+servicios de emergencia (DANA, incendios, temporales: art. 120 LCSP) se quedan con aviso y puntuación rebajada; los
+lotes del mismo día con objetos parecidos pero distintos (calles, edificios) se quedan como están.
+
+Regla 2, "menor por encima del umbral": un contrato de la lista de menores cuyo importe supera el umbral de su tipo
+INCLUSO descontando un 21 % de IVA (importe >= 1,21 x umbral), para no confundir la base del IVA con una irregularidad
+(aprobado por César el 05-10). También puede ser un error de la fuente o un contrato mal clasificado como menor.
+
 Uso:
     python backend/indicios_contratos.py --cache cache.db --salida candidatos.ndjson.gz [--muestra 25]
 Sin --muestra solo imprime recuentos (se ejecuta en GitHub Actions, cuyo registro es público).
@@ -30,7 +39,14 @@ import sqlite3
 import sys
 import unicodedata
 
-VERSION_REGLA_1 = "fraccionamiento-v1"
+VERSION_REGLA_1 = "fraccionamiento-v2"
+VERSION_REGLA_2 = "menor-sobre-umbral-v1"
+FACTOR_IVA = 1.21
+PENALIZACION = {"espectaculos": 25, "emergencia": 20}
+_RE_ESPECTACULO = re.compile(r"ACTUACI|CONCIERT|CONCERT|ESPECT|ORQUEST|ARTIST|CACHE|FIESTA|FESTES|FESTIVAL|VERBENA|"
+                             r"CHARANGA|DISCOMOVIL|GRUPO MUSICAL|MUSICA EN DIRECTO|PREGON|FUEGOS ARTIFICIALES")
+_RE_EMERGENCIA = re.compile(r"\bDANA\b|EMERGENCI|INCENDI|TEMPORAL DE (?:LLUVIA|VIENTO|NIEVE|MAR)|TEMPORALES|INUNDACI|RIADA|BORRASCA|CATASTROF|TORMENTA|"
+                            r"GOTA FRIA|DESPRENDIMIENTO|DERRUMBE|ERUPCI|VOLCAN")
 UMBRAL = {"obras": 40000.0, "servicios": 15000.0, "suministros": 15000.0}
 VENTANA_DIAS = 30
 MINIMO_RELATIVO = 0.40            # cada contrato del grupo, al menos el 40 % del umbral
@@ -169,6 +185,38 @@ def puntuar(grupo, suma, umbral, sin_iva, con_nif):
     return sum(pts.values()), pts, pegados, dias
 
 
+def candidato_regla2(r, muni, t, fecha, imp):
+    umbral = UMBRAL[t]
+    ratio = imp / umbral
+    fuente = r["fuente"] or ""
+    nif = (r["nif"] or "").upper().strip()
+    sin_iva = fuente in FUENTES_SIN_IVA
+    avisos = []
+    if not sin_iva:
+        avisos.append("base de IVA sin verificar: aun así supera el umbral descontando un 21 % de IVA")
+    if not nif:
+        avisos.append("sin NIF del adjudicatario")
+    puntos = {"exceso": round(min((ratio - FACTOR_IVA) / 2.0, 1.0) * 40) + 30, "fiabilidad": (15 if sin_iva else 0) +
+              (5 if nif else 0)}
+    if ratio > 25:
+        avisos.append("importe desproporcionado para un menor: probable error de la fuente (importe o tipo)")
+        puntos["posible_error_de_origen"] = -40
+    categoria = "espectaculos" if _RE_ESPECTACULO.search(normalizar(r["descripcio"])) else (
+        "emergencia" if _RE_EMERGENCIA.search(normalizar(r["descripcio"])) else "")
+    if categoria == "emergencia":
+        avisos.append("posible tramitación de emergencia (art. 120 LCSP)")
+        puntos["categoria"] = -PENALIZACION["emergencia"]
+    huella = hashlib.sha256(f'{VERSION_REGLA_2}|{r["id"]}'.encode()).hexdigest()[:20]
+    return {"huella": huella, "regla": VERSION_REGLA_2, "categoria": categoria, "municipio": muni["municipio"],
+            "provincia": muni["provincia"] or "", "organismo": r["organisme"] or "",
+            "adjudicatario": r["adjudicatari"] or "", "nif": nif_mostrar(nif), "persona_fisica": es_persona_fisica(nif),
+            "tipo": t, "umbral": umbral, "n_contratos": 1, "suma": round(imp, 2), "dias": 0, "pegados_al_umbral": 0,
+            "desde": fecha.isoformat(), "hasta": fecha.isoformat(), "puntuacion": max(0, sum(puntos.values())),
+            "puntos": puntos, "avisos": avisos,
+            "contratos": [{"id": r["id"], "fecha": fecha.isoformat(), "importe": imp,
+                           "descripcion": (r["descripcio"] or "")[:300], "fuente": fuente}]}
+
+
 def analizar(cache, hoy):
     db = sqlite3.connect(cache)
     db.row_factory = sqlite3.Row
@@ -193,6 +241,7 @@ def analizar(cache, hoy):
     for (m_nombre, m_prov), filas_muni in por_municipio():
         muni = {"municipio": m_nombre, "provincia": m_prov}
         grupos = collections.defaultdict(list)
+        r2_muni = []
         for r in filas_muni:
             stats["contratos"] += 1
             t = tipo_contrato(r["tipus_contracte"])
@@ -202,7 +251,9 @@ def analizar(cache, hoy):
                 stats["no_evaluables"] += 1
                 continue
             if imp >= UMBRAL[t]:
-                continue                     # eso es la regla 2 (menor por encima del umbral), no esta
+                if imp >= FACTOR_IVA * UMBRAL[t]:
+                    r2_muni.append(candidato_regla2(r, muni, t, f, float(imp)))
+                continue                     # la regla 1 solo mira contratos por debajo del umbral
             nif = (r["nif"] or "").upper().strip()
             emp = nif or "N:" + nombre_empresa(r["adjudicatari"])
             if emp in ("N:", ""):
@@ -211,6 +262,18 @@ def analizar(cache, hoy):
                 "id": r["id"], "fecha": f, "importe": float(imp), "descripcion": (r["descripcio"] or "")[:300],
                 "fuente": r["fuente"] or "", "palabras": palabras(r["descripcio"]),
                 "adjudicatario": r["adjudicatari"] or "", "organismo": r["organisme"] or "", "nif": nif})
+        # Regla 2: el mismo contrato publicado por dos fuentes (feed de PLACE y portal propio) cuenta una vez: mismo
+        # adjudicatario e importe a ±1 % (o ×1,21 por IVA), aunque la fecha difiera; se queda el de PLACE (sin IVA).
+        r2_muni.sort(key=lambda c: c["contratos"][0]["fuente"] != "place-menores")
+        elegidos = []
+        for c in r2_muni:
+            emp = c["nif"] or nombre_empresa(c["adjudicatario"])
+            if any((e["nif"] or nombre_empresa(e["adjudicatario"])) == emp and
+                   any(0.99 <= c["suma"] / e["suma"] * f <= 1.01 for f in (1, 1.21, 1 / 1.21)) for e in elegidos):
+                stats["regla2_duplicados_quitados"] += 1
+                continue
+            elegidos.append(c)
+        candidatos.extend(elegidos)
         for (org, emp, t), filas in grupos.items():
             if len(filas) < 2:
                 continue
@@ -234,11 +297,22 @@ def analizar(cache, hoy):
                 avisos.append(f"{identicos} registro(s) idéntico(s) unidos: posible publicación duplicada en la fuente")
             if len({c["fuente"] for c in grupo}) > 1:
                 avisos.append("contratos de fuentes distintas: comprobar que no son el mismo contrato duplicado")
+            categoria = ""
+            if all(_RE_ESPECTACULO.search(normalizar(c["descripcion"])) for c in grupo):
+                categoria = "espectaculos"
+                avisos.append("espectáculos o fiestas: contratar a artistas distintos puede justificarse por "
+                              "exclusividad; revisar si es una misma programación partida")
+            elif any(_RE_EMERGENCIA.search(normalizar(c["descripcion"])) for c in grupo):
+                categoria = "emergencia"
+                avisos.append("posible tramitación de emergencia (art. 120 LCSP: DANA, incendio, temporal...)")
+            if categoria:
+                desglose["categoria"] = -PENALIZACION[categoria]
+                puntos = max(0, puntos - PENALIZACION[categoria])
             nif_ej = next((c["nif"] for c in grupo if c["nif"]), "")
             huella = hashlib.sha256(f'{VERSION_REGLA_1}|{muni["municipio"]}|{muni["provincia"]}|{org}|{emp}|{t}|'
                                     f'{min(c["fecha"] for c in grupo)}'.encode()).hexdigest()[:20]
             candidatos.append({
-                "huella": huella, "regla": VERSION_REGLA_1, "municipio": muni["municipio"],
+                "huella": huella, "regla": VERSION_REGLA_1, "categoria": categoria, "municipio": muni["municipio"],
                 "provincia": muni["provincia"] or "", "organismo": grupo[0]["organismo"],
                 "adjudicatario": grupo[0]["adjudicatario"], "nif": nif_mostrar(nif_ej),
                 "persona_fisica": es_persona_fisica(nif_ej), "tipo": t, "umbral": UMBRAL[t],
@@ -261,17 +335,22 @@ def main():
     with gzip.open(a.salida, "wt", encoding="utf-8") as f:
         for c in candidatos:
             f.write(json.dumps(c, ensure_ascii=False) + "\n")
-    tramos = collections.Counter("80-100" if c["puntuacion"] >= 80 else "60-79" if c["puntuacion"] >= 60 else
-                                 "40-59" if c["puntuacion"] >= 40 else "<40" for c in candidatos)
     print(f"contratos leídos: {stats['contratos']} ({stats['no_evaluables']} sin tipo/fecha/importe válidos) | "
           f"grupos empresa+organismo+tipo con 2 o más: {stats['grupos']} | duplicados entre fuentes quitados: "
-          f"{stats['duplicados_quitados']} | registros idénticos unidos: {stats['registros_identicos_unidos']}")
-    print(f"candidatos regla 1: {len(candidatos)} | por puntuación: {dict(sorted(tramos.items()))} | por tipo: "
-          f"{dict(collections.Counter(c['tipo'] for c in candidatos))}")
+          f"{stats['duplicados_quitados']} | registros idénticos unidos: {stats['registros_identicos_unidos']} | "
+          f"regla 2, duplicados entre fuentes quitados: {stats['regla2_duplicados_quitados']}")
+    for regla in (VERSION_REGLA_1, VERSION_REGLA_2):
+        cs = [c for c in candidatos if c["regla"] == regla]
+        tr = collections.Counter("80-100" if c["puntuacion"] >= 80 else "60-79" if c["puntuacion"] >= 60 else
+                                 "40-59" if c["puntuacion"] >= 40 else "<40" for c in cs)
+        print(f"{regla}: {len(cs)} candidatos | por puntuación: {dict(sorted(tr.items()))} | por tipo: "
+              f"{dict(collections.Counter(c['tipo'] for c in cs))} | por categoría: "
+              f"{dict(collections.Counter(c['categoria'] or 'general' for c in cs))}")
     if a.muestra:
         sys.stdout.reconfigure(encoding="utf-8")
-        for c in candidatos[:a.muestra]:
-            print(f"\n[{c['puntuacion']}] {c['municipio']} ({c['provincia']}) · {c['organismo']} -> {c['adjudicatario']} "
+        for c in [c for c in candidatos if c["regla"] == VERSION_REGLA_1][:a.muestra] + \
+                 [c for c in candidatos if c["regla"] == VERSION_REGLA_2][:max(10, a.muestra // 3)]:
+            print(f"\n[{c['regla']} {c['puntuacion']}{' ' + c['categoria'] if c['categoria'] else ''}] {c['municipio']} ({c['provincia']}) · {c['organismo']} -> {c['adjudicatario']} "
                   f"{c['nif']} · {c['tipo']} · {c['n_contratos']} contratos, {c['suma']:,.2f} € en {c['dias']} días "
                   f"(umbral {c['umbral']:,.0f}) · puntos {c['puntos']}")
             for k in c["contratos"]:

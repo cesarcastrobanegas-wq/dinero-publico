@@ -9,6 +9,7 @@ import json, os, re, html, io, shutil, sqlite3, zipfile, threading, uuid, time, 
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 import ctypes, gc, sys as _sys
+import hmac
 from email.utils import parsedate_to_datetime
 from urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urljoin
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -2469,6 +2470,16 @@ def _db_init():
             expediente TEXT, organo TEXT, nif_organo TEXT, dir3 TEXT, ambito TEXT, provincia TEXT, comunidad TEXT,
             municipio TEXT, cpv TEXT, cpv2 TEXT, tipo TEXT, procedimiento TEXT, presupuesto REAL, valor_estimado REAL,
             lotes INTEGER, busqueda TEXT, visto REAL)""")
+        # Cola de revisión interna (2026-10-05, ver INFORME_BOT_CASOS.md): candidatos de backend/indicios_contratos.py
+        # que solo ve César en /admin/revision. Nada de aquí se publica.
+        _db.execute("""CREATE TABLE IF NOT EXISTS revision_candidatos (
+            huella TEXT PRIMARY KEY, regla TEXT, categoria TEXT, puntuacion REAL, municipio TEXT, provincia TEXT,
+            comunidad TEXT, organismo TEXT, adjudicatario TEXT, tipo TEXT, suma REAL, datos TEXT,
+            estado TEXT DEFAULT 'pendiente', motivo TEXT, nota TEXT, detectado TEXT, actualizado TEXT, revisado TEXT,
+            vigente INTEGER DEFAULT 1)""")
+        _db.execute("CREATE INDEX IF NOT EXISTS idx_rev_cola ON revision_candidatos(estado, puntuacion)")
+        _db.execute("CREATE TABLE IF NOT EXISTS revision_descartes (huella TEXT PRIMARY KEY, descartado TEXT)")
+        _db.execute("CREATE TABLE IF NOT EXISTS revision_registro (ts TEXT, huella TEXT, accion TEXT, detalle TEXT)")
         _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_plazo ON licitaciones(estado, fin_plazo)")
         _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_muni ON licitaciones(municipio)")
         _db.execute(_SQL_TABLA_SUBVENCIONES.format(tabla="subvenciones"))
@@ -13200,6 +13211,352 @@ def _subir_subvenciones(crudo):
     return 200, {"convocatorias": n, "antes": antes, "con_municipio": con_muni, "lineas_con_error": malas}
 
 
+# ─── COLA DE REVISIÓN INTERNA ("bot de casos", 2026-10-05) ──────────────────────────────────────────────────────────
+# Decisiones de César (INFORME_BOT_CASOS.md §7): regla 1 estricta y regla 2 con IVA descontado, calculadas cada semana
+# en GitHub Actions (revision-indicios-semanal.yml) y subidas aquí; cola en /admin/revision con acceso por cookie
+# firmada (nunca ?token= en la URL), lenguaje neutro, autónomos con el DNI enmascarado (ya viene así del script) y los
+# candidatos descartados borrados a los 6 meses (se guarda solo su huella para que no vuelvan a salir).
+# NADA de esto se publica: "Convertir en caso" solo marca el candidato y deja descargar una ficha de trabajo.
+REVISION_SESION_S = 8 * 3600
+REVISION_BORRAR_DESCARTES_DIAS = 180
+REVISION_POR_PAGINA = 50
+REVISION_MOTIVOS = {"legitimo": "Justificado / legítimo", "error_datos": "Error de los datos", "duplicado": "Duplicado",
+                    "emergencia": "Emergencia justificada", "otro": "Otro motivo"}
+REVISION_ESTADOS = {"pendiente": "Pendientes", "seguimiento": "En seguimiento", "caso": "Convertidos en caso",
+                    "descartado": "Descartados"}
+REVISION_REGLAS = {"fraccionamiento-v2": "Posible fraccionamiento", "menor-sobre-umbral-v1": "Menor por encima del umbral"}
+_revision_fallos = collections.deque()          # intentos de acceso fallidos (marca de tiempo), para frenar ataques
+_revision_fallos_lock = threading.Lock()
+
+
+def _revision_clave():
+    return ("revision|" + os.environ.get("ADMIN_TOKEN", "")).encode()
+
+
+def _revision_cookie_nueva():
+    caduca = int(time.time()) + REVISION_SESION_S
+    firma = hmac.new(_revision_clave(), f"sesion|{caduca}".encode(), hashlib.sha256).hexdigest()
+    return f"{caduca}.{firma}"
+
+
+def _revision_cookie_valida(environ):
+    if not os.environ.get("ADMIN_TOKEN"):
+        return ""
+    for trozo in (environ.get("HTTP_COOKIE") or "").split(";"):
+        nombre, _, valor = trozo.strip().partition("=")
+        if nombre == "dp_rev" and "." in valor:
+            caduca, _, firma = valor.partition(".")
+            esperada = hmac.new(_revision_clave(), f"sesion|{caduca}".encode(), hashlib.sha256).hexdigest()
+            if caduca.isdigit() and int(caduca) > time.time() and hmac.compare_digest(firma, esperada):
+                return valor
+    return ""
+
+
+def _revision_csrf(cookie):
+    return hmac.new(_revision_clave(), f"csrf|{cookie}".encode(), hashlib.sha256).hexdigest()[:32]
+
+
+def _revision_registrar(huella, accion, detalle=""):
+    with _db_lock:
+        _db.execute("INSERT INTO revision_registro VALUES (?, ?, ?, ?)",
+                    (time.strftime("%Y-%m-%d %H:%M:%S"), huella, accion, detalle[:500]))
+        _db.commit()
+
+
+def _subir_revision_candidatos(crudo):
+    """Carga los candidatos de la semana (NDJSON en gzip de indicios_contratos.py). Nuevos -> pendientes; los que ya
+    estaban se actualizan sin tocar la decisión tomada; los pendientes que ya no se detectan se retiran; los descartados
+    hace más de 6 meses se borran (queda su huella). Solo devuelve recuentos."""
+    ahora = time.strftime("%Y-%m-%d %H:%M:%S")
+    with _db_lock:
+        descartes = {r[0] for r in _db.execute("SELECT huella FROM revision_descartes")}
+        existentes = dict(_db.execute("SELECT huella, estado FROM revision_candidatos").fetchall())
+    nuevos = actualizados = saltados = malas = 0
+    vistos = set()
+    lote_ins, lote_upd = [], []
+    try:
+        flujo = _gzip.GzipFile(fileobj=io.BytesIO(crudo)) if crudo[:2] == bytes([0x1F, 0x8B]) else io.BytesIO(crudo)
+        for linea in flujo:
+            if not linea.strip():
+                continue
+            try:
+                c = json.loads(linea)
+                h = c["huella"]
+            except (ValueError, KeyError, TypeError):
+                malas += 1
+                continue
+            vistos.add(h)
+            if h in descartes:
+                saltados += 1
+                continue
+            com = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(c.get("provincia", ""), "")
+            fila = (c.get("regla", ""), c.get("categoria", ""), float(c.get("puntuacion", 0)), c.get("municipio", ""),
+                    c.get("provincia", ""), com, c.get("organismo", "")[:300], c.get("adjudicatario", "")[:300],
+                    c.get("tipo", ""), float(c.get("suma", 0)), json.dumps(c, ensure_ascii=False))
+            if h in existentes:
+                lote_upd.append(fila + (ahora, h))
+                actualizados += 1
+            else:
+                lote_ins.append((h,) + fila + (ahora, ahora))
+                nuevos += 1
+    except (OSError, EOFError) as e:
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    if not vistos:
+        return 400, {"error": "Fichero vacío."}
+    with _db_lock:
+        for i in range(0, len(lote_ins), 500):
+            _db.executemany("INSERT INTO revision_candidatos (huella, regla, categoria, puntuacion, municipio, provincia, "
+                            "comunidad, organismo, adjudicatario, tipo, suma, datos, detectado, actualizado, vigente) "
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)", lote_ins[i:i + 500])
+        for i in range(0, len(lote_upd), 500):
+            _db.executemany("UPDATE revision_candidatos SET regla=?, categoria=?, puntuacion=?, municipio=?, provincia=?, "
+                            "comunidad=?, organismo=?, adjudicatario=?, tipo=?, suma=?, datos=?, actualizado=?, "
+                            "vigente=1 WHERE huella=?", lote_upd[i:i + 500])
+        retirados = [h for h, est in existentes.items() if est == "pendiente" and h not in vistos]
+        for i in range(0, len(retirados), 500):
+            _db.executemany("DELETE FROM revision_candidatos WHERE huella=?", [(h,) for h in retirados[i:i + 500]])
+        decididos = [h for h, est in existentes.items() if est != "pendiente" and h not in vistos]
+        _db.executemany("UPDATE revision_candidatos SET vigente=0 WHERE huella=?", [(h,) for h in decididos])
+        corte = time.strftime("%Y-%m-%d", time.localtime(time.time() - REVISION_BORRAR_DESCARTES_DIAS * 86400))
+        borrados = _db.execute("DELETE FROM revision_candidatos WHERE estado='descartado' AND revisado < ?",
+                               (corte,)).rowcount
+        _db.commit()
+    _revision_registrar("", "subida", f"{nuevos} nuevos, {actualizados} actualizados, {len(retirados)} retirados, "
+                                      f"{saltados} ya descartados, {borrados} descartes borrados")
+    _liberar_memoria()
+    print(f"[revision] subida: {nuevos} nuevos, {actualizados} actualizados, {len(retirados)} retirados, "
+          f"{saltados} ya descartados antes, {borrados} descartados de más de 6 meses borrados", flush=True)
+    return 200, {"nuevos": nuevos, "actualizados": actualizados, "retirados": len(retirados),
+                 "ya_descartados": saltados, "descartes_borrados": borrados, "lineas_con_error": malas}
+
+
+_REVISION_CSS = """body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#f5f6f8;color:#1c2333;margin:0}
+.rv{max-width:1200px;margin:0 auto;padding:18px}h1{font-size:20px;margin:0 0 4px}.sub{color:#5b6475;font-size:13px}
+.aviso{background:#fff7e0;border:1px solid #e8d48a;border-radius:6px;padding:8px 12px;font-size:13px;margin:12px 0}
+form.f{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}select,input,textarea,button{font:inherit;font-size:13px}
+select,input[type=text],textarea{padding:6px;border:1px solid #cfd4dd;border-radius:5px;background:#fff}
+button{padding:6px 12px;border-radius:5px;border:1px solid #1b2f5c;background:#1b2f5c;color:#fff;cursor:pointer}
+button.sec{background:#fff;color:#1b2f5c}.c{background:#fff;border:1px solid #dde1e7;border-radius:8px;margin:8px 0}
+.c summary{padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.p{font-weight:700;min-width:34px;text-align:center;border-radius:5px;padding:2px 6px;background:#eef1f6}
+.p.a{background:#1b2f5c;color:#fff}.cat{font-size:11px;border:1px solid #cfd4dd;border-radius:10px;padding:1px 7px}
+.det{padding:0 12px 12px}table{border-collapse:collapse;width:100%;font-size:12px}td,th{border-bottom:1px solid #eef0f4;
+padding:4px 6px;text-align:left;vertical-align:top}th{color:#5b6475;font-weight:600}.num{text-align:right;white-space:nowrap}
+.av{color:#8a5a00;font-size:12px;margin:4px 0}.acc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.est{font-size:12px;color:#5b6475}.pag a{margin-right:10px}"""
+
+
+def _revision_pagina(titulo, cuerpo):
+    html_ = (f'<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" '
+             f'content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
+             f'<title>{esc(titulo)}</title><style>{_REVISION_CSS}</style></head><body><div class="rv">{cuerpo}'
+             f'</div></body></html>')
+    return 200, {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex",
+                 "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY",
+                 "Content-Length": str(len(html_.encode("utf-8")))}, html_.encode("utf-8")
+
+
+def _revision_login_html(error=""):
+    return _revision_pagina("Revisión interna", f"""<h1>Revisión interna</h1>
+<p class="sub">Acceso restringido.</p>{f'<div class="aviso">{esc(error)}</div>' if error else ''}
+<form method="post" action="/admin/revision/entrar" class="f"><input type="password" name="clave" autocomplete="current-password"
+ placeholder="Clave" style="padding:6px;border:1px solid #cfd4dd;border-radius:5px"><button type="submit">Entrar</button></form>""")
+
+
+def _revision_cola_html(qs, cookie):
+    g = lambda k, d="": (qs.get(k, [d])[0] or d)
+    estado = g("estado", "pendiente") if g("estado", "pendiente") in REVISION_ESTADOS else "pendiente"
+    regla = g("regla") if g("regla") in REVISION_REGLAS else ""
+    categoria = g("categoria") if g("categoria") in ("general", "espectaculos", "emergencia") else ""
+    comunidad = g("comunidad") if g("comunidad") in COMUNIDAD_AUTONOMA_LABEL else ""
+    tipo = g("tipo") if g("tipo") in ("obras", "servicios", "suministros") else ""
+    try:
+        pag = max(1, int(g("pag", "1")))
+    except ValueError:
+        pag = 1
+    where, args = ["estado = ?"], [estado]
+    if regla:
+        where.append("regla = ?"); args.append(regla)
+    if categoria:
+        where.append("categoria = ?"); args.append("" if categoria == "general" else categoria)
+    if comunidad:
+        where.append("comunidad = ?"); args.append(comunidad)
+    if tipo:
+        where.append("tipo = ?"); args.append(tipo)
+    w = " AND ".join(where)
+    with _db_lock:
+        total = _db.execute(f"SELECT count(*) FROM revision_candidatos WHERE {w}", args).fetchone()[0]
+        filas = _db.execute(f"SELECT huella, datos, estado, motivo, nota, detectado, revisado, vigente FROM "
+                            f"revision_candidatos WHERE {w} ORDER BY puntuacion DESC, suma DESC LIMIT ? OFFSET ?",
+                            args + [REVISION_POR_PAGINA, (pag - 1) * REVISION_POR_PAGINA]).fetchall()
+        recuento = dict(_db.execute("SELECT estado, count(*) FROM revision_candidatos GROUP BY estado").fetchall())
+        ultima = _db.execute("SELECT ts, detalle FROM revision_registro WHERE accion='subida' ORDER BY ts DESC LIMIT 1"
+                             ).fetchone()
+    csrf = _revision_csrf(cookie)
+
+    def sel(nombre, valor, opciones, vacio):
+        return (f'<select name="{nombre}"><option value="">{esc(vacio)}</option>' + "".join(
+            f'<option value="{esc(k)}"{" selected" if k == valor else ""}>{esc(v)}</option>' for k, v in opciones) +
+            "</select>")
+
+    filtros = (f'<form class="f" method="get" action="/admin/revision">'
+               + sel("estado", estado, [(k, f"{v} ({recuento.get(k, 0)})") for k, v in REVISION_ESTADOS.items()], "Estado")
+               + sel("regla", regla, REVISION_REGLAS.items(), "Todas las reglas")
+               + sel("categoria", categoria, [("general", "General"), ("espectaculos", "Espectáculos y fiestas"),
+                                               ("emergencia", "Emergencias")], "Todas las categorías")
+               + sel("comunidad", comunidad, sorted(COMUNIDAD_AUTONOMA_LABEL.items(), key=lambda x: normalizar(x[1])),
+                     "Todas las comunidades")
+               + sel("tipo", tipo, [("obras", "Obras"), ("servicios", "Servicios"), ("suministros", "Suministros")],
+                     "Todos los tipos")
+               + '<button type="submit">Filtrar</button></form>')
+    bloques = []
+    for huella, datos, est, motivo, nota, detectado, revisado, vigente in filas:
+        c = json.loads(datos)
+        contratos = "".join(
+            f'<tr><td>{esc(k["fecha"])}</td><td class="num">{fmt_eur(str(k["importe"]))}</td>'
+            f'<td>{esc(k["descripcion"])}</td><td>{esc(k["fuente"])}</td></tr>' for k in c.get("contratos", []))
+        avisos = "".join(f'<div class="av">⚠ {esc(a)}</div>' for a in c.get("avisos", []))
+        if not vigente:
+            avisos += '<div class="av">⚠ En la última pasada semanal ya no se detecta (los datos han cambiado).</div>'
+        muni_q = quote_plus(c.get("municipio", ""))
+        acciones = (f'<form method="post" action="/admin/revision/accion" class="acc">'
+                    f'<input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="huella" value="{esc(huella)}">'
+                    f'<input type="text" name="nota" value="{esc(nota or "")}" placeholder="Nota (opcional)" size="40">'
+                    + sel("motivo", motivo or "", REVISION_MOTIVOS.items(), "Motivo del descarte")
+                    + '<button type="submit" name="accion" value="descartar" class="sec">Descartar</button>'
+                      '<button type="submit" name="accion" value="seguimiento" class="sec">Seguir</button>'
+                      '<button type="submit" name="accion" value="caso">Convertir en caso</button>'
+                    + ('<button type="submit" name="accion" value="reabrir" class="sec">Volver a pendiente</button>'
+                       if est != "pendiente" else "")
+                    + f' <a href="/admin/revision/ficha?huella={esc(huella)}">Ficha de trabajo (.md)</a>'
+                    f' · <a href="/?muni={muni_q}" target="_blank" rel="noopener">Ficha del municipio</a></form>')
+        estado_txt = (f'<div class="est">Detectado: {esc(detectado or "")}'
+                      + (f' · revisado: {esc(revisado)}' if revisado else "")
+                      + (f' · motivo: {esc(REVISION_MOTIVOS.get(motivo, motivo))}' if motivo else "") + "</div>")
+        bloques.append(
+            f'<details class="c"><summary><span class="p{" a" if c["puntuacion"] >= 80 else ""}">{int(c["puntuacion"])}</span>'
+            f'<b>{esc(c.get("municipio", ""))}</b> · {esc(c.get("organismo", ""))} → {esc(c.get("adjudicatario", ""))} '
+            f'{esc(c.get("nif", ""))} · {esc(c.get("tipo", ""))} · {c.get("n_contratos", 1)} contrato(s), '
+            f'{fmt_eur(str(c.get("suma", 0)))} en {c.get("dias", 0)} día(s) (umbral {fmt_eur(str(c.get("umbral", 0)))})'
+            f' <span class="cat">{esc(REVISION_REGLAS.get(c.get("regla"), c.get("regla", "")))}</span>'
+            + (f' <span class="cat">{esc(c["categoria"])}</span>' if c.get("categoria") else "")
+            + f'</summary><div class="det"><table><tr><th>Fecha</th><th>Importe</th><th>Descripción</th><th>Fuente</th></tr>'
+            f'{contratos}</table>{avisos}<div class="est">Puntos: {esc(json.dumps(c.get("puntos", {}), ensure_ascii=False))}</div>'
+            f'{estado_txt}{acciones}</div></details>')
+    paginas = max(1, (total + REVISION_POR_PAGINA - 1) // REVISION_POR_PAGINA)
+    base_q = {k: v for k, v in (("estado", estado), ("regla", regla), ("categoria", categoria), ("comunidad", comunidad),
+                                ("tipo", tipo)) if v}
+    pag_html = '<div class="pag">' + (f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag - 1))}">← Anterior</a>'
+                                      if pag > 1 else "") + f'Página {pag} de {paginas} · {total} candidatos ' + (
+        f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag + 1))}">Siguiente →</a>' if pag < paginas else "") + "</div>"
+    cuerpo = (f'<h1>Revisión interna: indicadores para revisar</h1>'
+              f'<p class="sub">Uso interno. Un indicador NO es una irregularidad: solo señala dónde mirar. Nada de esta '
+              f'lista se publica; antes de publicar un caso hay que comprobarlo en la fuente oficial y pedir la versión '
+              f'del ayuntamiento. Desde el RDL 3/2020, sumar menores al mismo contratista no es ilegal por sí mismo: lo '
+              f'prohibido es partir el objeto del contrato (arts. 99.2 y 118.2 LCSP).</p>'
+              + (f'<p class="sub">Última pasada semanal: {esc(ultima[0])} ({esc(ultima[1])}).</p>' if ultima else
+                 '<p class="sub">Todavía no ha llegado ninguna pasada semanal.</p>')
+              + f'{filtros}{pag_html}{"".join(bloques) or "<p>No hay candidatos con estos filtros.</p>"}{pag_html}'
+              f'<form method="post" action="/admin/revision/salir"><input type="hidden" name="csrf" value="{csrf}">'
+              f'<button type="submit" class="sec">Salir</button></form>')
+    return _revision_pagina("Revisión interna", cuerpo)
+
+
+def _revision_ficha_md(huella):
+    with _db_lock:
+        fila = _db.execute("SELECT datos, estado, nota FROM revision_candidatos WHERE huella=?", (huella,)).fetchone()
+    if not fila:
+        return None
+    c = json.loads(fila[0])
+    lineas = [f"# Ficha de trabajo (uso interno, no publicar tal cual)", "",
+              f"- Regla: {REVISION_REGLAS.get(c.get('regla'), c.get('regla'))} ({c.get('regla')})",
+              f"- Municipio: {c.get('municipio')} ({c.get('provincia')})", f"- Organismo: {c.get('organismo')}",
+              f"- Adjudicatario: {c.get('adjudicatario')} {c.get('nif', '')}", f"- Tipo: {c.get('tipo')} · umbral "
+              f"{c.get('umbral'):,.0f} € sin IVA", f"- {c.get('n_contratos')} contrato(s), {c.get('suma'):,.2f} € entre "
+              f"{c.get('desde')} y {c.get('hasta')}", f"- Puntuación: {c.get('puntuacion')} · estado: {fila[1]}",
+              f"- Nota: {fila[2] or ''}", "", "## Contratos", "", "| Fecha | Importe | Descripción | Fuente | Id |",
+              "|---|---|---|---|---|"]
+    lineas += [f"| {k['fecha']} | {k['importe']:,.2f} € | {k['descripcion']} | {k['fuente']} | {k['id']} |"
+               for k in c.get("contratos", [])]
+    lineas += ["", "## Avisos de calidad del dato", ""] + [f"- {a}" for a in c.get("avisos", [])] + [
+        "", "## Antes de publicar", "", "- Comprobar cada contrato en la fuente oficial (enlace y documento).",
+        "- Pedir la versión del ayuntamiento (informe del art. 118.2 LCSP).",
+        "- Contar hechos verificados, no la conclusión del indicador. Lenguaje neutro.",
+        "- Autónomos: no publicar el DNI."]
+    return "\n".join(lineas) + "\n"
+
+
+def _revision_wsgi(method, path, qs, environ):
+    """Todas las rutas /admin/revision*. Devuelve (code, headers, body)."""
+    cookie = _revision_cookie_valida(environ)
+    seguro = (environ.get("HTTP_X_FORWARDED_PROTO") or environ.get("wsgi.url_scheme")) == "https"
+    if method == "POST":
+        try:
+            length = min(int(environ.get("CONTENT_LENGTH") or 0), 20000)
+        except ValueError:
+            length = 0
+        params = parse_qs(environ["wsgi.input"].read(length).decode("utf-8") if length else "", keep_blank_values=True)
+        p = lambda k: (params.get(k, [""])[0] or "").strip()
+        if path == "/admin/revision/entrar":
+            ahora = time.time()
+            with _revision_fallos_lock:
+                while _revision_fallos and ahora - _revision_fallos[0] > 3600:
+                    _revision_fallos.popleft()
+                bloqueado = len(_revision_fallos) >= 10
+            admin = os.environ.get("ADMIN_TOKEN", "")
+            if bloqueado:
+                _, h, b = _revision_login_html("Demasiados intentos fallidos. Prueba dentro de una hora.")
+                return 429, h, b
+            if admin and hmac.compare_digest(p("clave").encode(), admin.encode()):
+                valor = _revision_cookie_nueva()
+                return 303, {"Location": "/admin/revision", "Content-Length": "0", "Cache-Control": "no-store",
+                             "Set-Cookie": f"dp_rev={valor}; Path=/admin/revision; Max-Age={REVISION_SESION_S}; "
+                                           f"HttpOnly; SameSite=Strict" + ("; Secure" if seguro else "")}, b""
+            with _revision_fallos_lock:
+                _revision_fallos.append(ahora)
+            time.sleep(1)
+            return _revision_login_html("Clave incorrecta.")
+        if not cookie or p("csrf") != _revision_csrf(cookie):
+            return 403, {"Content-Type": "text/plain; charset=utf-8", "Content-Length": "13"}, b"No autorizado"
+        if path == "/admin/revision/salir":
+            return 303, {"Location": "/admin/revision", "Content-Length": "0",
+                         "Set-Cookie": "dp_rev=; Path=/admin/revision; Max-Age=0; HttpOnly; SameSite=Strict"}, b""
+        if path == "/admin/revision/accion":
+            huella, accion, motivo, nota = p("huella"), p("accion"), p("motivo"), p("nota")[:1000]
+            nuevo = {"descartar": "descartado", "seguimiento": "seguimiento", "caso": "caso", "reabrir": "pendiente"}.get(accion)
+            if not nuevo:
+                return 400, {"Content-Type": "text/plain; charset=utf-8", "Content-Length": "15"}, b"Accion no valida"
+            if nuevo == "descartado" and motivo not in REVISION_MOTIVOS:
+                motivo = "otro"
+            hoy = time.strftime("%Y-%m-%d %H:%M:%S")
+            with _db_lock:
+                _db.execute("UPDATE revision_candidatos SET estado=?, motivo=?, nota=?, revisado=? WHERE huella=?",
+                            (nuevo, motivo if nuevo == "descartado" else "", nota, hoy if nuevo != "pendiente" else None,
+                             huella))
+                if nuevo == "descartado":
+                    _db.execute("INSERT OR REPLACE INTO revision_descartes VALUES (?, ?)", (huella, hoy[:10]))
+                elif nuevo == "pendiente":
+                    _db.execute("DELETE FROM revision_descartes WHERE huella=?", (huella,))
+                _db.commit()
+            _revision_registrar(huella, nuevo, motivo if nuevo == "descartado" else "")
+            volver = environ.get("HTTP_REFERER", "") or "/admin/revision"
+            return 303, {"Location": volver if "/admin/revision" in volver else "/admin/revision",
+                         "Content-Length": "0"}, b""
+        return 404, {"Content-Length": "0"}, b""
+    # GET
+    if not cookie:
+        return _revision_login_html()
+    if path == "/admin/revision/ficha":
+        md = _revision_ficha_md(qs.get("huella", [""])[0])
+        if md is None:
+            return 404, {"Content-Length": "0"}, b""
+        cuerpo = md.encode("utf-8")
+        return 200, {"Content-Type": "text/markdown; charset=utf-8", "Cache-Control": "no-store",
+                     "Content-Disposition": f'attachment; filename="ficha_{qs.get("huella", [""])[0][:12]}.md"',
+                     "Content-Length": str(len(cuerpo))}, cuerpo
+    return _revision_cola_html(qs, cookie)
+
+
 def _refrescar_provincia_secuencial(job_id, provincia, offset=0):
     """Refresca secuencialmente todos los municipios de UNA provincia,
     actualizando `_jobs[job_id]["procesados"]` con el progreso acumulado
@@ -22515,6 +22872,7 @@ def render_aviso_legal_html():
 
 _HTTP_STATUS_TEXT = {
     200: "OK", 206: "Partial Content", 301: "Moved Permanently", 303: "See Other", 400: "Bad Request",
+    409: "Conflict", 413: "Payload Too Large", 429: "Too Many Requests",
     403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed", 416: "Range Not Satisfiable",
     500: "Internal Server Error",
 }
@@ -22690,7 +23048,7 @@ def _route_get(path, qs, gzip_ok=False):
         bloqueos = "".join(f"Disallow: {pref}/{ruta}?\n" for ruta in ("rankings", "convocatorias")
                            for pref in ("", *(f"/{l}" for l in I18N_IDIOMAS)))
         # bloqueos ANTES de "Allow: /": hay rastreadores que aplican la primera regla que casa, no la más larga
-        body = f"User-agent: *\n{bloqueos}Allow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
+        body = f"User-agent: *\nDisallow: /admin/\n{bloqueos}Allow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
 
     if path == "/sitemap.xml":
@@ -23291,7 +23649,24 @@ def _app_wsgi(environ, start_response):
     qs = parse_qs(environ.get("QUERY_STRING", ""))
     gzip_ok = "gzip" in environ.get("HTTP_ACCEPT_ENCODING", "")
 
-    if method == "GET":
+    if path == "/admin/revision" or path.startswith("/admin/revision/"):
+        code, headers, body = _revision_wsgi(method, path, qs, environ)
+    elif method == "POST" and path == "/admin/revision-candidatos":
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = qs.get("token", [""])[0]
+        admin_token = os.environ.get("ADMIN_TOKEN", "")
+        if not admin_token or token != admin_token:
+            code, cuerpo = 403, {"error": "No autorizado."}
+        elif length > 100 * 1024 * 1024:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            code, cuerpo = _subir_revision_candidatos(environ["wsgi.input"].read(length) if length else b"")
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
+    elif method == "GET":
         t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
         try:
             code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
