@@ -92,8 +92,19 @@ jobs:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
           gzip -9 -k administradores_borme.json
-          curl -sS --fail --max-time 300 -X POST -H "Content-Type: application/gzip" \
-            --data-binary @administradores_borme.json.gz \
-            "https://dinero-publico.com/admin/administradores-borme?token=${ADMIN_TOKEN}"
-          echo
+          # Reintento con límite (2026-10-05): si la web se está reiniciando (cada guardado en main la redespliega),
+          # se reintenta ante 502/503/504/sin respuesta durante como mucho 5 minutos; después, fallo de verdad.
+          fin=$(( $(date +%s) + 300 ))
+          while true; do
+            codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST -H "Content-Type: application/gzip" \
+              --data-binary @administradores_borme.json.gz \
+              "https://dinero-publico.com/admin/administradores-borme?token=${ADMIN_TOKEN}" || echo 000)
+            case "$codigo" in
+              000|502|503|504|520|521|522|523|524)
+                [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
+              200) cat respuesta.json; echo; break ;;
+              *) echo "::error::Subida rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
+            esac
+          done
           rm -f administradores_borme.json administradores_borme.json.gz cache.db
