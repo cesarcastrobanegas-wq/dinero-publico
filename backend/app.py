@@ -13326,8 +13326,45 @@ def _subir_revision_candidatos(crudo):
     _liberar_memoria()
     print(f"[revision] subida: {nuevos} nuevos, {actualizados} actualizados, {len(retirados)} retirados, "
           f"{saltados} ya descartados antes, {borrados} descartados de más de 6 meses borrados", flush=True)
+    por_regla = collections.Counter(f[1] for f in lote_ins)
+    nuevos_90 = sum(1 for f in lote_ins if f[3] >= 90)
+    aviso = _aviso_revision_por_correo(por_regla, nuevos_90) if nuevos else "sin novedades: no se envía"
     return 200, {"nuevos": nuevos, "actualizados": actualizados, "retirados": len(retirados),
-                 "ya_descartados": saltados, "descartes_borrados": borrados, "lineas_con_error": malas}
+                 "ya_descartados": saltados, "descartes_borrados": borrados, "lineas_con_error": malas,
+                 "aviso_correo": aviso}
+
+
+def _aviso_revision_por_correo(por_regla, nuevos_90):
+    """Resumen semanal por correo a César (encargo del 05-10): SOLO números agregados y el enlace a la cola; nunca
+    empresas, organismos ni importes (el detalle sigue detrás de la clave). Mismo mecanismo que el aviso de comentarios
+    (_avisar_comentario_por_correo: API de Resend con RESEND_API_KEY). Destino: AVISO_REVISION_EMAIL o, si no está,
+    AVISO_COMENTARIOS_EMAIL -- la dirección no va en el código porque el repositorio es público. Devuelve un texto
+    corto con el resultado, que la subida devuelve al flujo de Actions (sin datos personales)."""
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    destino = (os.environ.get("AVISO_REVISION_EMAIL", "") or os.environ.get("AVISO_COMENTARIOS_EMAIL", "")).strip()
+    if not api_key or not destino:
+        print("[revision] aviso por correo: falta RESEND_API_KEY o la dirección de destino en Render", flush=True)
+        return "no enviado: falta configurar RESEND_API_KEY y AVISO_REVISION_EMAIL (o AVISO_COMENTARIOS_EMAIL) en Render"
+    total = sum(por_regla.values())
+    cuerpo = (f"Cola de revisión interna de Dinero Público: pasada semanal del {time.strftime('%d/%m/%Y')}.\n\n"
+              f"Candidatos nuevos desde la última vez: {total}\n"
+              f"  - Posible fraccionamiento: {por_regla.get('fraccionamiento-v2', 0)}\n"
+              f"  - Menor por encima del umbral: {por_regla.get('menor-sobre-umbral-v1', 0)}\n"
+              f"  - Con puntuación 90 o más: {nuevos_90}\n\n"
+              f"Un indicador no es una irregularidad: solo señala dónde mirar.\n\n"
+              f"Revisar: {SITE_URL}/admin/revision\n")
+    payload = {"from": os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or "Dinero Público <onboarding@resend.dev>",
+               "to": [destino], "subject": f"Cola de revisión: {total} candidatos nuevos", "text": cuerpo}
+    try:
+        r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
+                          headers={"Authorization": f"Bearer {api_key}"})
+        if r.status_code < 300:
+            return "enviado"
+        print(f"[revision] aviso por correo: Resend respondió {r.status_code}: {r.text[:300]}", flush=True)
+        return f"no enviado: Resend respondió {r.status_code}"
+    except Exception as e:
+        print(f"[revision] aviso por correo: {type(e).__name__}: {e}", flush=True)
+        return f"no enviado: {type(e).__name__}"
 
 
 _REVISION_CSS = """body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#f5f6f8;color:#1c2333;margin:0}
