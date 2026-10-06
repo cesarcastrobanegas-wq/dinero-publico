@@ -325,6 +325,15 @@ jobs:
             fi
           fi
 
+      # Por qué provincia toca empezar: lo deja apuntado la ejecución anterior (ver "Punto de partida" en el paso
+      # siguiente). Clave nueva en cada ejecución y restore-keys por prefijo = se recupera la más reciente.
+      - name: Punto de partida de la rotación (caché)
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/rotacion-provincias
+          key: rotacion-provincias-${{ github.run_id }}
+          restore-keys: rotacion-provincias-
+
       - name: Recorrer todas las provincias (contratos + RPC Cataluña)
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
@@ -616,28 +625,46 @@ jobs:
               navarra)
             n=${#PROVINCIAS_ORDEN[@]}
 
-            # Rotación del punto de partida por día del año: ver nota de
-            # cabecera -- el ciclo completo puede no caber en el límite duro
-            # de 6h de un runner de GitHub Actions, así que sin esto las
-            # provincias del final de la lista (Galicia hoy) podrían no
-            # recibir refresco automático nunca si el ciclo nunca llega a
-            # completarse del todo. `10#` evita que bash interprete el día
-            # como octal cuando empieza por 0 (ej. día 007).
-            dia=$(date -u +%j)
-            offset=$(( 10#$dia % n ))
-            echo "Día del año UTC: ${dia} -- punto de partida de esta noche: índice ${offset} (${PROVINCIAS_ORDEN[$offset]})"
+            # Punto de partida (2026-10-06, decisión de César): cada noche sigue donde se quedó la anterior. El
+            # ciclo completo no cabe en una noche (caben unas 4-6 provincias) y antes el punto de partida avanzaba
+            # solo UNA provincia por noche (día del año % n): se repetían casi las mismas y una provincia que se
+            # saltaba tardaba días en volver a entrar. Ahora, tras cada provincia intentada (termine bien o mal,
+            # para que una que falle siempre no bloquee a las demás), se apunta la siguiente en ROTACION_FICHERO,
+            # que viaja de una ejecución a otra en la caché de Actions (pasos "Punto de partida..." de antes y
+            # después de este). Sin fichero (primera vez, caché caducada) o con un nombre que ya no está en la
+            # lista, se cae al cálculo antiguo por día del año. `10#` evita que bash interprete el día como octal.
+            ROTACION_FICHERO="$HOME/rotacion-provincias/siguiente.txt"
+            mkdir -p "$(dirname "$ROTACION_FICHERO")"
+            offset=""
+            guardada=$(tr -d '[:space:]' < "$ROTACION_FICHERO" 2>/dev/null || true)
+            if [ -n "$guardada" ]; then
+              for i in $(seq 0 $((n - 1))); do
+                if [ "${PROVINCIAS_ORDEN[$i]}" = "$guardada" ]; then offset=$i; fi
+              done
+            fi
+            if [ -n "$offset" ]; then
+              echo "Punto de partida de esta noche: ${guardada} (donde se quedó la ejecución anterior)"
+            else
+              dia=$(date -u +%j)
+              offset=$(( 10#$dia % n ))
+              echo "Sin punto de partida guardado ('${guardada}'): se usa el día del año UTC ${dia} -> índice ${offset} (${PROVINCIAS_ORDEN[$offset]})"
+            fi
+
+            echo "${PROVINCIAS_ORDEN[$offset]}" > "$ROTACION_FICHERO"
+            echo "ROTACION_GUARDAR=1" >> "$GITHUB_ENV"
 
             for i in $(seq 0 $((n - 1))); do
               idx=$(( (offset + i) % n ))
               prov="${PROVINCIAS_ORDEN[$idx]}"
 
               if [ "$(date +%s)" -ge "$deadline_total" ]; then
-                echo "::warning::Presupuesto total de ${MAX_MIN_TOTAL} min agotado. Provincias sin procesar esta noche (se recogerán en noches siguientes gracias a la rotación): ${PROVINCIAS_ORDEN[@]:$idx}"
+                echo "::warning::Presupuesto total de ${MAX_MIN_TOTAL} min agotado. La próxima noche se empieza por ${prov}."
                 fallo=1
                 break
               fi
 
               procesar_provincia "$prov"
+              echo "${PROVINCIAS_ORDEN[$(( (idx + 1) % n ))]}" > "$ROTACION_FICHERO"
             done
           fi
 
@@ -723,3 +750,11 @@ jobs:
           fi
           exit "$fallo"
 
+      # always(): también si el paso anterior falla o GitHub lo cancela por tiempo, que es justo cuando más
+      # importa no perder por dónde iba. Solo el recorrido completo pone ROTACION_GUARDAR; los disparos manuales no.
+      - name: Guardar el punto de partida de la próxima noche
+        if: always() && env.ROTACION_GUARDAR == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/rotacion-provincias
+          key: rotacion-provincias-${{ github.run_id }}
