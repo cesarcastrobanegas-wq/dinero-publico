@@ -149,6 +149,14 @@ on:
           - toledo
           - navarra
         default: todas
+      lista:
+        description: >-
+          Opcional: varias provincias separadas por espacios (ej. "toledo
+          navarra murcia"), en ese orden y sin rotación. Si se rellena,
+          manda sobre "provincia". Para recuperar a mano las que una noche
+          se quedaron sin refrescar.
+        type: string
+        default: ""
       solo_fondos_ue:
         description: >-
           Salta el recorrido de provincias y lanza solo /actualizar-fondos-ue
@@ -322,6 +330,7 @@ jobs:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           BASE_URL: https://dinero-publico.onrender.com
           PROVINCIA_INPUT: ${{ github.event.inputs.provincia || 'todas' }}
+          LISTA_INPUT: ${{ github.event.inputs.lista || '' }}
           SOLO_FONDOS_UE: ${{ github.event.inputs.solo_fondos_ue || 'false' }}
         run: |
           set -uo pipefail
@@ -425,7 +434,8 @@ jobs:
           # Espera a que un job_id llegue a 'done'. Aborta (return 1) si el job
           # da 'error', si 'not_found' persiste 3 ciclos seguidos (el
           # contenedor se reinició y perdió el estado en memoria), o si se
-          # agota el presupuesto de ESTA provincia/tarea. Mientras tanto
+          # agota el presupuesto de ESTA provincia/tarea (return 2: el trabajo
+          # sigue vivo en el servidor, ver esperar_fin_trabajo). Mientras tanto
           # imprime cada ciclo, y ese propio tráfico de polling es el keep-alive.
           poll_hasta_done() {
             local job_id="$1" etiqueta="$2" max_min="${3:-$MAX_MIN_PROVINCIA}" notfound=0 st
@@ -458,7 +468,33 @@ jobs:
               fi
 
               if [ "$(date +%s)" -ge "$deadline_local" ]; then
-                echo "::error::Timeout de ${max_min} min sin completar ${etiqueta} (status=$st). Se sigue con la siguiente provincia."
+                echo "::error::Timeout de ${max_min} min sin completar ${etiqueta} (status=$st)."
+                return 2
+              fi
+              sleep "$INTERVAL"
+            done
+          }
+
+          # --- Trabajo que sigue vivo tras agotar su tiempo (2026-10-06) -------
+          # Agotar el presupuesto de una provincia NO para su trabajo en el servidor, y el servidor solo admite un
+          # refresco completo a la vez: si se disparaba la siguiente sin más, la rechazaba al instante con "Ya hay
+          # un refresco completo en curso", y así una tras otra (el 06-10 Soria se llevó por delante 10 provincias
+          # en 7 segundos; el 24-09 Cáceres, 21). Ahora se espera a que el trabajo anterior termine de verdad
+          # (deje de estar 'running', o desaparezca 3 ciclos seguidos = contenedor reiniciado) antes de seguir.
+          # Límite: el presupuesto total de la noche; si se agota esperando, el bucle se corta solo.
+          esperar_fin_trabajo() {
+            local job_id="$1" etiqueta="$2" notfound=0 st
+            echo "== ${etiqueta} sigue en marcha en el servidor: se espera a que termine antes de disparar la siguiente =="
+            while true; do
+              st=$(get_status "$job_id")
+              echo "$(date -u +%H:%M:%S)Z  ${etiqueta}=${st} (esperando a que termine)"
+              if [ "$st" = "not_found" ]; then notfound=$(( notfound + 1 )); else notfound=0; fi
+              if [ "$st" = "done" ] || [ "$st" = "error" ] || [ "$notfound" -ge 3 ]; then
+                echo "${etiqueta} terminó (${st}) fuera de su presupuesto."
+                return 0
+              fi
+              if [ "$(date +%s)" -ge "$deadline_total" ]; then
+                echo "::warning::${etiqueta} sigue en marcha y se agotó el presupuesto total de la noche: no se disparan más provincias."
                 return 1
               fi
               sleep "$INTERVAL"
@@ -484,11 +520,16 @@ jobs:
               fallo=1
             else
               echo "job_todos=$job_todos"
-              if poll_hasta_done "$job_todos" "todos-${prov}"; then
+              local rc_todos=0
+              poll_hasta_done "$job_todos" "todos-${prov}" || rc_todos=$?
+              if [ "$rc_todos" -eq 0 ]; then
                 echo "Contratos de ${prov} completados ('done')."
               else
-                echo "::warning::Refresco de contratos de ${prov} no completó dentro de su presupuesto. Se sigue con la siguiente provincia; el progreso parcial ya quedó checkpointeado en disco."
+                echo "::warning::Refresco de contratos de ${prov} no completó dentro de su presupuesto; el progreso parcial ya quedó checkpointeado en disco."
                 fallo=1
+                if [ "$rc_todos" -eq 2 ]; then
+                  esperar_fin_trabajo "$job_todos" "todos-${prov}" || true
+                fi
               fi
             fi
 
@@ -543,6 +584,18 @@ jobs:
 
           if [ "$SOLO_FONDOS_UE" = "true" ]; then
             echo "== SOLO_FONDOS_UE=true: saltando el recorrido de provincias =="
+
+          elif [ -n "${LISTA_INPUT// /}" ]; then
+            # Disparo manual de varias provincias, en el orden dado (workflow_dispatch, entrada "lista").
+            echo "== Disparo manual: lista ${LISTA_INPUT} =="
+            for prov in $LISTA_INPUT; do
+              if [ "$(date +%s)" -ge "$deadline_total" ]; then
+                echo "::warning::Presupuesto total de ${MAX_MIN_TOTAL} min agotado: ${prov} y las siguientes de la lista se quedan sin procesar."
+                fallo=1
+                break
+              fi
+              procesar_provincia "$prov"
+            done
 
           elif [ "$PROVINCIA_INPUT" != "todas" ]; then
             # Disparo manual de una sola provincia (workflow_dispatch).
