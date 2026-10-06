@@ -13,7 +13,7 @@
 # Si no hay ninguna fuente con contratos nuevos, no guarda nada y no hay reinicio.
 #
 # Fuera de este flujo (ver EXCLUIDOS en flujo_menores_semanal.py): el registro de menores de la Plataforma de
-# Contratación, Badajoz y las tres fuentes que el ayuntamiento dejó de publicar (Cádiz, Telde, Salamanca).
+# Contratación y las dos fuentes que el ayuntamiento dejó de publicar (Cádiz y Salamanca, que se quedan como histórico).
 name: Contratos menores de ayuntamientos (semanal)
 
 on:

@@ -26,9 +26,7 @@ PREFIJO = "actualizar_contratos_menores_"
 # Fuera del flujo semanal, con su motivo (se listan en el resumen para que no se olviden).
 EXCLUIDOS = {
     "place": "registro de menores de la Plataforma: necesita todos los ZIP mensuales desde 2021 (flujo aparte)",
-    "badajoz": "necesita un navegador automatizado (Playwright); 28 contratos",
     "cadiz": "el ayuntamiento solo publicó el listado de 2023",
-    "telde": "el ayuntamiento solo publicó el listado de 2025",
     "salamanca": "el ayuntamiento no publica nada posterior al primer trimestre de 2024",
 }
 MINUTOS = {"murcia_manual": 150, "euskadi": 150}      # el resto, MINUTOS_POR_DEFECTO

@@ -14087,26 +14087,48 @@ def _cargar_contratos_menores_torrent():
               f"(Torrent) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_BADAJOZ_FILE = os.path.join(BASE_DIR, "contratos_menores_badajoz.json.gz")
+# Fuentes propias de contratos menores RETIRADAS (2026-10-06, decisión de César): Badajoz (28 contratos sacados de
+# decretos en PDF con un navegador automatizado, hasta 09/2024) y Telde (un único listado, el de 2025, 93 contratos).
+# El registro de menores de la Plataforma de Contratación ya trae más de las dos (1.331 y 294), así que mantenerlas
+# no aportaba nada y había que regenerarlas a mano. Se quitaron sus generadores y sus ficheros; esto retira, UNA vez,
+# lo que ya estaba cargado en la base: sus filas se ARCHIVAN (no se borran) y vuelven a la vista los contratos de la
+# Plataforma de esos dos municipios que se habían archivado por ser el mismo contrato que traía la fuente propia.
+_FUENTES_MENORES_RETIRADAS = {"badajoz": ("Badajoz", "badajoz"), "telde": ("Telde", "las_palmas")}
+_FUENTES_MENORES_RETIRADAS_CLAVE = "menores_fuentes_retiradas_badajoz_telde_v1"
 
 
-def _cargar_contratos_menores_badajoz():
-    """Carga contratos_menores_badajoz.json.gz (generado por actualizar_contratos_menores_badajoz.py -- decretos
-    y resoluciones de adjudicación en PDF del Perfil del Contratante, navegado con Playwright) y lo vuelca a la
-    tabla compartida contratos_menors_locales."""
-    ruta = CONTRATOS_MENORES_BADAJOZ_FILE
-    if not os.path.exists(ruta):
+def _retirar_fuentes_menores():
+    if not _DISCO_CONFIABLE:
         return
+    cols = ("id, municipio, provincia, fuente, organisme, adjudicatari, nif, import_num, data_adjudicacio, "
+            "tipus_contracte, descripcio, codi_cpv, exercici, ts")
     try:
-        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
-            d = json.load(f)
-        registros = d.get("registros", []) if isinstance(d, dict) else []
-    except Exception:
-        registros = []
-    if registros:
-        _guardar_contratos_menors_locales(registros)
-        print(f"  [startup] contratos_menores_badajoz: {len(registros)} contratos menores "
-              f"(Badajoz) cargados en contratos_menors_locales.", flush=True)
+        with _db_lock:
+            if _db.execute("SELECT 1 FROM settings WHERE clave=?", (_FUENTES_MENORES_RETIRADAS_CLAVE,)).fetchone():
+                return
+            resumen = {}
+            for fuente, (muni, prov) in _FUENTES_MENORES_RETIRADAS.items():
+                ids = [r[0] for r in _db.execute("SELECT id FROM contratos_menors_locales WHERE fuente=?", (fuente,))]
+                _archivar_filas_cm(ids)
+                try:
+                    vuelven = [r[0] for r in _db.execute(
+                        "SELECT id FROM contratos_menors_archivo WHERE fuente=? AND municipio=? AND provincia=? "
+                        "AND data_adjudicacio >= ?", (FUENTE_CM_PLACE, muni, prov, MENORES_DESDE_FECHA))]
+                except sqlite3.OperationalError:
+                    vuelven = []                 # todavía no existe la tabla de archivo: nada que devolver
+                for i in range(0, len(vuelven), 500):
+                    lote = vuelven[i:i + 500]
+                    marcas = ",".join("?" * len(lote))
+                    _db.execute(f"INSERT OR IGNORE INTO contratos_menors_locales ({cols}) SELECT {cols} "
+                                f"FROM contratos_menors_archivo WHERE id IN ({marcas})", lote)
+                    _db.execute(f"DELETE FROM contratos_menors_archivo WHERE id IN ({marcas})", lote)
+                resumen[fuente] = {"archivados": len(ids), "devueltos_de_la_plataforma": len(vuelven)}
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET "
+                        "valor=excluded.valor", (_FUENTES_MENORES_RETIRADAS_CLAVE, json.dumps(resumen)))
+            _db.commit()
+        print(f"  [startup] fuentes de menores retiradas: {resumen}", flush=True)
+    except Exception as e:
+        print(f"  [startup] fuentes de menores retiradas: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
 CONTRATOS_MENORES_LA_LAGUNA_FILE = os.path.join(BASE_DIR, "contratos_menores_la_laguna.json.gz")
@@ -14329,27 +14351,6 @@ def _cargar_contratos_menores_cadiz():
               f"(Cádiz) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_TELDE_FILE = os.path.join(BASE_DIR, "contratos_menores_telde.json.gz")
-
-
-def _cargar_contratos_menores_telde():
-    """Carga contratos_menores_telde.json.gz (generado por actualizar_contratos_menores_telde.py -- relación de
-    2025 en ODS, único listado propio publicado) y lo vuelca a la tabla compartida contratos_menors_locales."""
-    ruta = CONTRATOS_MENORES_TELDE_FILE
-    if not os.path.exists(ruta):
-        return
-    try:
-        with _gzip.open(ruta, "rt", encoding="utf-8") as f:
-            d = json.load(f)
-        registros = d.get("registros", []) if isinstance(d, dict) else []
-    except Exception:
-        registros = []
-    if registros:
-        _guardar_contratos_menors_locales(registros)
-        print(f"  [startup] contratos_menores_telde: {len(registros)} contratos menores "
-              f"(Telde) cargados en contratos_menors_locales.", flush=True)
-
-
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -14385,7 +14386,6 @@ def _inicializar_datos():
     _cargar_contratos_menores_burgos()
     _cargar_contratos_menores_laspalmasgc()
     _cargar_contratos_menores_torrent()
-    _cargar_contratos_menores_badajoz()
     _cargar_contratos_menores_la_laguna()
     _cargar_contratos_menores_arona()
     _cargar_contratos_menores_salamanca()
@@ -14396,7 +14396,7 @@ def _inicializar_datos():
     _cargar_contratos_menores_torrejon()
     _cargar_contratos_menores_santa_cruz()
     _cargar_contratos_menores_cadiz()
-    _cargar_contratos_menores_telde()
+    _retirar_fuentes_menores()          # Badajoz y Telde, una sola vez
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
     _aplicar_backfill_galicia_place()
@@ -16867,7 +16867,6 @@ _INDICE_FORMATO_PORTAL = {
     "almeria": (100, "XLSX anual acumulado (2025 solo en PDF)"),
     "torrejon de ardoz": (100, "XLSX trimestral desde 2025 (PDF hasta 2024)"),
     "ciudad real": (100, "XLSX trimestral desde 2025 (texto libre en la web hasta 2024)"),
-    "telde": (100, "ODS anual (solo 2025)"),
     "fuente alamo de murcia": (100, "CSV trimestral"),
     "mula": (100, "ODS"),
     "molina de segura": (100, "XLSX"),
@@ -16892,7 +16891,6 @@ _INDICE_FORMATO_PORTAL = {
     "alcala de henares": (33, "PDF trimestral"),
     "mostoles": (33, "PDF mensual"),
     "burgos": (33, "PDF trimestrales sueltos"),
-    "badajoz": (33, "Un PDF de decreto por contrato"),
     "salamanca": (33, "PDF anual con tabla"),
     "vigo": (33, "PDF anual"),
     "lugo": (33, "PDF trimestral"),
@@ -18251,7 +18249,6 @@ _FUENTE_CM_LABEL = {
     "burgos":          "Burgos",
     "laspalmasgc":     "Las Palmas GC",
     "torrent":         "Torrent",
-    "badajoz":         "Badajoz",
     "la_laguna":       "San Cristóbal de La Laguna",
     "arona":           "Arona",
     "salamanca":       "Salamanca",
@@ -18262,7 +18259,6 @@ _FUENTE_CM_LABEL = {
     "torrejon":        "Torrejón de Ardoz",
     "santa_cruz":      "Santa Cruz de Tenerife",
     "cadiz":           "Cádiz",
-    "telde":           "Telde",
     "castello-governalia": "Castelló (PLACE)",
     "xirivella-governalia": "Xirivella (PLACE)",
     "santabrigida-governalia": "Sta. Brígida (PLACE)",
@@ -18294,11 +18290,6 @@ _NOTAS_FUENTE_CM = {
         "muchos publican sus menores en su propia web o en PDF. Importe adjudicado SIN IVA, con NIF del "
         "adjudicatario. Si el ayuntamiento tiene además una fuente propia conectada, del feed solo se muestran los "
         "contratos que esa fuente no trae (mismo adjudicatario, fecha ±7 días e importe)."
-    ),
-    "telde": (
-        "Solo 2025: es la única relación de contratos menores que publica el Ayuntamiento de Telde en su portal "
-        "de transparencia (93 contratos; para el detalle remite a la Plataforma de Contratación del Estado). Fecha "
-        "real de adjudicación, sin NIF. La fuente no indica si el importe incluye el IGIC."
     ),
     "cadiz": (
         "Solo 2023: es el único listado de contratos menores que publica el propio Ayuntamiento de Cádiz en su "
@@ -18478,16 +18469,6 @@ _NOTAS_FUENTE_CM = {
         "Valenciana), con enlaces encontrados navegando la página con un navegador real (Playwright): un "
         "fetch simple no encuentra los enlaces de descarga. Importe SIN IVA. NIF del adjudicatario solo "
         "disponible en los ficheros hasta 2022 (la fuente deja de publicar esa columna desde 2023)."
-    ),
-    "badajoz": (
-        "Decretos y resoluciones de adjudicación en PDF, enlazados desde el Perfil del Contratante del "
-        "Ayuntamiento de Badajoz (y sus entidades IMSS e IFEBA), navegado con Playwright (selector de año y "
-        "categoría sin URL propia por combinación). Importe SIN IVA salvo que el propio PDF diga otra cosa. "
-        "Los PDF de adjudicación se titulan 'MENOR CON PUBLICIDAD': es probable que esta fuente cubra solo los "
-        "contratos menores publicados con concurrencia pública, no el universo completo de adjudicación "
-        "directa sin publicidad -- de ahí el volumen bajo comparado con otras ciudades de tamaño similar. "
-        "Varios PDF de 2021-2022 y 2025-2026 son documentos escaneados sin capa de texto (no legibles sin "
-        "OCR) y no están incluidos."
     ),
     "la_laguna": (
         "XLSX oficiales del portal de transparencia del Ayuntamiento de San Cristóbal de La Laguna y sus "
