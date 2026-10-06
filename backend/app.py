@@ -20971,6 +20971,7 @@ def _estado_carga():
                                     if _INDICE_TRANSPARENCIA_CACHE.get("ts") else None),
         "cpu_proceso_pct": cpu,
         "hilos_python": threading.active_count(),
+        "paginas_cache": _paginas_cache_estado(),
     }
 
 
@@ -21747,6 +21748,18 @@ def render_metodologia_html():
   Plataforma de Contratación (desde 2021, pero con pocos datos hasta 2023), los registros de Cataluña y Euskadi y
   los portales propios de algunas ciudades. Aun así, en torno a la mitad de los municipios no tienen ningún
   contrato menor en ninguna fuente. Eso no significa que no contraten: significa que no los vemos.</p>
+  <p><strong>Contratos menores, muy desiguales entre comunidades.</strong> Cataluña y el País Vasco tienen un
+  registro autonómico que reúne los contratos menores de sus ayuntamientos. En Andalucía, Castilla-La Mancha,
+  Extremadura, Illes Balears, Cantabria y La Rioja no existe nada parecido, y casi todos los contratos menores que
+  mostramos allí son los que cada ayuntamiento lleva por su cuenta al registro de la Plataforma de Contratación. Por
+  eso esas comunidades aparecen con muchos menos contratos menores por habitante: no es que contraten menos, es que
+  publican menos en un sitio donde podamos leerlos.</p>
+  <p><strong>Navarra, Ceuta y Melilla, sin contratos menores.</strong> No hemos encontrado ninguna fuente que los
+  publique de forma que podamos recogerlos, así que no mostramos ninguno. En Navarra enseñamos aparte las facturas
+  trimestrales que publican algunos ayuntamientos, que no son contratos.</p>
+  <p><strong>Ayuntamientos gallegos que publican en la plataforma de la Xunta.</strong> Algunos concellos publican
+  sus licitaciones en Contratos de Galicia, la plataforma de la Xunta, y no en la estatal. Esos contratos todavía no
+  los recogemos, así que esos concellos aparecen con menos contratos formales de los que tienen.</p>
   <p><strong>Solo los últimos cinco años.</strong> Mostramos contratos desde septiembre de 2021.</p>
   <p><strong>Contratos de organismos municipales.</strong> Los contratos se asignan a su municipio leyendo el nombre
   del órgano que los firma. Los patronatos, empresas municipales y distritos que no llevan «ayuntamiento» en el
@@ -22936,6 +22949,125 @@ def _error_resp(msg, code=500):
     return _resp(body, code=code)
 
 
+# ─── CACHÉ DE PÁGINAS MONTADAS: portada nacional y /rankings (2026-10-06) ─────────────────────────────────────────
+# Medido en producción: la portada tardaba 7 s y /rankings 5,5-20 s en CADA visita (recorren todos los municipios para
+# volver a montar el mismo HTML), y con un solo proceso esas páginas frenaban a todas las demás. Ahora el HTML ya
+# montado se guarda comprimido en memoria:
+#  - hasta _PAGINAS_TTL segundos se sirve tal cual;
+#  - pasado ese tiempo (y hasta _PAGINAS_MAX_VIEJA) se sirve la copia que hay y se vuelve a montar en un hilo aparte,
+#    de una en una, así nadie espera;
+#  - sin copia, o demasiado vieja, se monta en la propia petición; si llegan varias iguales a la vez, solo la primera
+#    monta y las demás esperan su resultado.
+# La clave lleva el idioma y los parámetros YA validados (no la query tal cual: un ?fbclid= no crea entradas nuevas);
+# como mucho _PAGINAS_MAX entradas, se tira la que lleva más tiempo sin pedirse. Solo se guarda el gzip.
+_PAGINAS_TTL = 600
+_PAGINAS_MAX_VIEJA = 3 * 3600
+_PAGINAS_MAX = 48
+_paginas_cache = collections.OrderedDict()     # clave -> {"gz": bytes, "ts": float, "refrescando": bool}
+_paginas_cerrojos = {}                         # clave -> Lock (montajes iguales a la vez)
+_paginas_lock = threading.Lock()
+_paginas_fondo = threading.Semaphore(1)        # los montajes en segundo plano, de uno en uno
+_paginas_stats = {"servidas": 0, "servidas_viejas": 0, "montadas": 0, "montadas_fondo": 0, "errores_fondo": 0}
+
+
+def _pagina_guardar(clave, html_txt):
+    gz = _gzip.compress(html_txt.encode("utf-8"), compresslevel=6)
+    with _paginas_lock:
+        _paginas_cache[clave] = {"gz": gz, "ts": time.time(), "refrescando": False}
+        _paginas_cache.move_to_end(clave)
+        while len(_paginas_cache) > _PAGINAS_MAX:
+            vieja, _ = _paginas_cache.popitem(last=False)
+            _paginas_cerrojos.pop(vieja, None)
+    return gz
+
+
+def _pagina_remontar(clave, montar):
+    with _paginas_fondo:
+        try:
+            _pagina_guardar(clave, montar())
+            with _paginas_lock:
+                _paginas_stats["montadas_fondo"] += 1
+        except Exception as e:
+            print(f"  [paginas] no se pudo volver a montar {clave}: {type(e).__name__}: {e}", flush=True)
+            with _paginas_lock:
+                _paginas_stats["errores_fondo"] += 1
+                if clave in _paginas_cache:
+                    _paginas_cache[clave]["refrescando"] = False
+
+
+def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False):
+    """Respuesta HTML de una página cara. `params`: lista de (nombre, valor) ya validados, que es a la vez la clave
+    y la query con la que se monta (los enlaces del selector de idioma salen de _I18N_RUTA). `montar()` devuelve el
+    HTML."""
+    params = tuple(params)
+    clave = (_i18n_idioma(), ruta) + params
+    query = urlencode(params)
+
+    def _montar():
+        tk = _I18N_RUTA.set((ruta, query))
+        try:
+            return montar()
+        finally:
+            _I18N_RUTA.reset(tk)
+
+    ahora = time.time()
+    lanzar = False
+    cerrojo = None
+    with _paginas_lock:
+        e = _paginas_cache.get(clave)
+        edad = ahora - e["ts"] if e else None
+        if e and edad < _PAGINAS_MAX_VIEJA:
+            _paginas_cache.move_to_end(clave)
+            gz = e["gz"]
+            if edad >= _PAGINAS_TTL:
+                _paginas_stats["servidas_viejas"] += 1
+                if not e["refrescando"]:
+                    e["refrescando"] = lanzar = True
+            else:
+                _paginas_stats["servidas"] += 1
+        else:
+            gz = None
+            cerrojo = _paginas_cerrojos.setdefault(clave, threading.Lock())
+    if lanzar:
+        ctx = contextvars.copy_context()       # el hilo necesita el idioma de esta petición
+        threading.Thread(target=ctx.run, args=(_pagina_remontar, clave, _montar), daemon=True,
+                         name="pagina-cache").start()
+    if gz is None:
+        with cerrojo:
+            with _paginas_lock:
+                e = _paginas_cache.get(clave)
+                gz = e["gz"] if e and time.time() - e["ts"] < _PAGINAS_TTL else None
+            if gz is None:
+                gz = _pagina_guardar(clave, _montar())
+                with _paginas_lock:
+                    _paginas_stats["montadas"] += 1
+    hdrs = dict(headers or {})
+    hdrs["Content-Type"] = "text/html; charset=utf-8"
+    if gzip_ok:
+        cuerpo = gz
+        hdrs["Content-Encoding"] = "gzip"
+    else:
+        cuerpo = _gzip.decompress(gz)
+    hdrs["Content-Length"] = str(len(cuerpo))
+    return 200, hdrs, cuerpo
+
+
+def _paginas_cache_estado():
+    ahora = time.time()
+    with _paginas_lock:
+        return {**_paginas_stats, "entradas": len(_paginas_cache),
+                "kb": sum(len(e["gz"]) for e in _paginas_cache.values()) // 1024,
+                "frescas": sum(1 for e in _paginas_cache.values() if ahora - e["ts"] < _PAGINAS_TTL)}
+
+
+def _pag_entero(txt):
+    """Número de página de la query como entero >= 1 (para que 'x', '', '01' y '1' sean la misma entrada)."""
+    try:
+        return max(1, int(txt))
+    except (TypeError, ValueError):
+        return 1
+
+
 def _route_get(path, qs, gzip_ok=False):
     if path == "/":
         # Cualquier ?provincia= que no sea una provincia real (ausente,
@@ -22998,10 +23130,16 @@ def _route_get(path, qs, gzip_ok=False):
             # cabecera (mismo patrón que /sw.js más abajo) evita que vuelva a
             # quedarse pegada; la copia YA cacheada en el edge necesita una
             # purga aparte (no algo que este proceso pueda hacer).
-            datos_todas = _db_municipios_ligeros()
+            # Desde el 2026-10-06 el HTML montado se guarda unos minutos en memoria (_pagina_cacheada); la cabecera
+            # sigue igual: es para proxys y navegadores, no para esta copia.
             rk_comunidad = qs.get("rk_comunidad", ["todas"])[0]
-            return _resp(render_landing_nacional_html(datos_todas, rk_comunidad=rk_comunidad),
-                         headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok)
+            if rk_comunidad != "todas" and rk_comunidad not in COMUNIDAD_AUTONOMA_LABEL:
+                return _resp(render_landing_nacional_html(_db_municipios_ligeros(), rk_comunidad=rk_comunidad),
+                             headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok)
+            return _pagina_cacheada(
+                "/", [("rk_comunidad", rk_comunidad)] if rk_comunidad != "todas" else [],
+                lambda: render_landing_nacional_html(_db_municipios_ligeros(), rk_comunidad=rk_comunidad),
+                headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok)
 
         datos_snap = _db_municipios_ligeros(provincia=provincia_filtro)
         return _resp(render_landing_html(datos_snap, provincia=provincia_filtro), gzip_ok=gzip_ok)
@@ -23009,14 +23147,26 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/rankings":
         provincia_prov = _provincia_valida(qs.get("provincia", ["murcia"])[0])
         comunidad_qs = _comunidad_valida(qs.get("comunidad", ["todas"])[0])
-        datos_nacional = _db_municipios_ligeros()
-        datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
-        paginas_qs = {"alc": qs.get("pag_alc", ["1"])[0], "deuda": qs.get("pag_deuda", ["1"])[0],
-                      "idx": qs.get("pag_idx", ["1"])[0]}
+        paginas_qs = {"alc": str(_pag_entero(qs.get("pag_alc", ["1"])[0])),
+                      "deuda": str(_pag_entero(qs.get("pag_deuda", ["1"])[0])),
+                      "idx": str(_pag_entero(qs.get("pag_idx", ["1"])[0]))}
         comunidades_qs = {"alc": _comunidad_valida(qs.get("comunidad_alc", ["todas"])[0]),
                           "deuda": _comunidad_valida(qs.get("comunidad_deuda", ["todas"])[0])}
-        return _resp(render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs,
-                                          paginas_qs, comunidades_qs), gzip_ok=gzip_ok)
+
+        def _montar_rankings():
+            datos_nacional = _db_municipios_ligeros()
+            datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
+            return render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs,
+                                        paginas_qs, comunidades_qs)
+
+        # Solo los parámetros que el visitante ha puesto y no son el valor por defecto: misma página = misma entrada.
+        params_rk = [(n, v) for n, v, defecto in (
+            ("provincia", provincia_prov, None if "provincia" in qs else provincia_prov),
+            ("comunidad", comunidad_qs, "todas"),
+            ("comunidad_alc", comunidades_qs["alc"], "todas"), ("comunidad_deuda", comunidades_qs["deuda"], "todas"),
+            ("pag_alc", paginas_qs["alc"], "1"), ("pag_deuda", paginas_qs["deuda"], "1"),
+            ("pag_idx", paginas_qs["idx"], "1")) if v != defecto]
+        return _pagina_cacheada("/rankings", params_rk, _montar_rankings, gzip_ok=gzip_ok)
 
     if path == "/convocatorias":
         zona = qs.get("zona", [""])[0]
