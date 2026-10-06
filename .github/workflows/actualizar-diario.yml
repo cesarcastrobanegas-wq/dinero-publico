@@ -148,6 +148,15 @@ on:
           - guadalajara
           - toledo
           - navarra
+          - madrid
+          - asturias
+          - cantabria
+          - la_rioja
+          - baleares
+          - las_palmas
+          - santa_cruz_tenerife
+          - ceuta
+          - melilla
         default: todas
       lista:
         description: >-
@@ -622,7 +631,11 @@ jobs:
               a_coruna lugo ourense pontevedra \
               avila burgos leon palencia salamanca segovia soria valladolid zamora \
               albacete ciudad_real cuenca guadalajara toledo \
-              navarra)
+              navarra \
+              madrid asturias cantabria la_rioja baleares las_palmas santa_cruz_tenerife ceuta melilla)
+            # La última fila (2026-10-06): conectadas en la web desde mediados de septiembre (pilotos del 14 al 16)
+            # pero nunca añadidas aquí; sus fichas llevaban sin refresco automático desde entonces. Mismo feed
+            # nacional de PLACE que el resto, sin tratamiento especial.
             n=${#PROVINCIAS_ORDEN[@]}
 
             # Punto de partida (2026-10-06, decisión de César): cada noche sigue donde se quedó la anterior. El
@@ -632,7 +645,7 @@ jobs:
             # para que una que falle siempre no bloquee a las demás), se apunta la siguiente en ROTACION_FICHERO,
             # que viaja de una ejecución a otra en la caché de Actions (pasos "Punto de partida..." de antes y
             # después de este). Sin fichero (primera vez, caché caducada) o con un nombre que ya no está en la
-            # lista, se cae al cálculo antiguo por día del año. `10#` evita que bash interprete el día como octal.
+            # lista, se empieza por una provincia fija.
             ROTACION_FICHERO="$HOME/rotacion-provincias/siguiente.txt"
             mkdir -p "$(dirname "$ROTACION_FICHERO")"
             offset=""
@@ -645,9 +658,12 @@ jobs:
             if [ -n "$offset" ]; then
               echo "Punto de partida de esta noche: ${guardada} (donde se quedó la ejecución anterior)"
             else
-              dia=$(date -u +%j)
-              offset=$(( 10#$dia % n ))
-              echo "Sin punto de partida guardado ('${guardada}'): se usa el día del año UTC ${dia} -> índice ${offset} (${PROVINCIAS_ORDEN[$offset]})"
+              # Valladolid: donde tocaba empezar la noche del 07-10-2026, la primera con este mecanismo.
+              offset=0
+              for i in $(seq 0 $((n - 1))); do
+                if [ "${PROVINCIAS_ORDEN[$i]}" = "valladolid" ]; then offset=$i; fi
+              done
+              echo "Sin punto de partida guardado ('${guardada}'): se empieza por ${PROVINCIAS_ORDEN[$offset]}"
             fi
 
             echo "${PROVINCIAS_ORDEN[$offset]}" > "$ROTACION_FICHERO"
