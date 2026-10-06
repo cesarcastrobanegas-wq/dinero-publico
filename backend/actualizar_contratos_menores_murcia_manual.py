@@ -93,7 +93,9 @@ from odf.text import P as odf_P
 from urllib.parse import urljoin
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
-from app import BASE_DIR
+# Antes: `from app import BASE_DIR`, que arrancaba la aplicación entera (hilos de fondo incluidos) solo para saber
+# esta carpeta. Es la misma: app.py vive aquí.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",

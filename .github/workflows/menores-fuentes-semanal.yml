@@ -1,0 +1,118 @@
+# Contratos menores de ayuntamientos: refresco semanal de las fuentes propias (2026-10-06, decisión de César).
+#
+# Cada ayuntamiento publica sus contratos menores a su manera (API, datos abiertos, Excel, ODS, PDF) y hay un
+# generador por fuente en backend/actualizar_contratos_menores_*.py. Hasta ahora se ejecutaban a mano, porque necesitan
+# librerías que producción no tiene (pdfplumber, openpyxl, xlrd, odfpy). Aquí sí se pueden instalar.
+#
+# backend/flujo_menores_semanal.py los ejecuta uno a uno y solo deja el fichero nuevo si el generador terminó bien y
+# no trae menos del 90 % de los contratos que había; si no, conserva el anterior y lo apunta como problema.
+#
+# El resultado se guarda en main (la web carga esos ficheros al arrancar). OJO: guardar en main hace que Render
+# reinicie la web unos minutos, y un reinicio en mitad del refresco nocturno le mata el trabajo en curso. Por eso
+# este flujo va los domingos por la tarde y, antes de guardar, espera a que no haya un refresco nocturno en marcha.
+# Si no hay ninguna fuente con contratos nuevos, no guarda nada y no hay reinicio.
+#
+# Fuera de este flujo (ver EXCLUIDOS en flujo_menores_semanal.py): el registro de menores de la Plataforma de
+# Contratación, Badajoz y las tres fuentes que el ayuntamiento dejó de publicar (Cádiz, Telde, Salamanca).
+name: Contratos menores de ayuntamientos (semanal)
+
+on:
+  schedule:
+    - cron: "30 14 * * 0"      # domingos 14:30 UTC: lejos del refresco nocturno (01-13 UTC contando retrasos)
+  workflow_dispatch:
+    inputs:
+      solo:
+        description: >-
+          Opcional: fuentes concretas separadas por comas (ej. "gijon,zaragoza"), con el nombre del generador
+          (actualizar_contratos_menores_<nombre>.py). Vacío = todas las del flujo.
+        type: string
+        default: ""
+      guardar:
+        description: Guardar en main los ficheros que cambien (desmarcar para solo probar y ver el resumen).
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  actions: read            # para ver si el refresco nocturno está en marcha antes de guardar
+
+concurrency:
+  group: menores-fuentes-semanal
+  cancel-in-progress: false
+
+jobs:
+  menores:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependencias
+        run: pip install -r requirements.txt pdfplumber==0.11.9 openpyxl==3.1.5 xlrd==2.0.2 odfpy==1.4.1
+
+      - name: Ejecutar los generadores, uno a uno
+        id: generar
+        env:
+          SOLO: ${{ github.event.inputs.solo || '' }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ -n "${SOLO// /}" ]; then
+            python backend/flujo_menores_semanal.py --solo "$SOLO"
+          else
+            python backend/flujo_menores_semanal.py
+          fi
+          git status --short
+
+      - name: Guardar en main los ficheros que han cambiado
+        if: steps.generar.outputs.cambios != '0' && (github.event_name == 'schedule' || github.event.inputs.guardar == 'true')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FUENTES: ${{ steps.generar.outputs.fuentes_cambio }}
+        run: |
+          set -uo pipefail
+          # No guardar mientras el refresco nocturno esté en marcha (el reinicio de la web le mataría el trabajo).
+          # Como mucho 3 horas de espera; si sigue, no se guarda y se reintenta la semana siguiente.
+          fin=$(( $(date +%s) + 3 * 3600 ))
+          while true; do
+            n=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow actualizar-diario.yml --limit 20 \
+                  --json status --jq '[.[] | select(.status != "completed")] | length' || echo "?")
+            if [ "$n" = "0" ]; then break; fi
+            if [ "$(date +%s)" -ge "$fin" ]; then
+              echo "::error::El refresco nocturno sigue en marcha tras 3 h de espera (o no se pudo consultar: '$n'). No se guarda nada esta semana."
+              exit 1
+            fi
+            echo "Refresco nocturno en marcha ($n): se espera 5 min antes de guardar..."
+            sleep 300
+          done
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/contratos_menores_*.json.gz
+          if git diff --cached --quiet; then
+            echo "Nada que guardar."
+            exit 0
+          fi
+          git commit -q -m "Auto-commit: contratos menores de ayuntamientos (${FUENTES})"
+          for intento in 1 2 3 4 5; do
+            if git push -q; then
+              echo "Guardado en main: ${FUENTES}. Render reiniciará la web en unos minutos."
+              exit 0
+            fi
+            echo "push rechazado -- reintento ${intento}/5 tras traer main..."
+            git pull -q --rebase || { echo "::error::No se pudo traer main."; exit 1; }
+            sleep 10
+          done
+          echo "::error::git push falló tras 5 intentos."
+          exit 1
+
+      - name: Aviso si alguna fuente dio problemas
+        if: always() && steps.generar.outputs.problemas != '' && steps.generar.outputs.problemas != '0'
+        env:
+          FUENTES: ${{ steps.generar.outputs.fuentes_problema }}
+        run: |
+          echo "::error::Fuentes con problemas (se conserva su fichero anterior): ${FUENTES}. Detalle en el resumen de la ejecución."
+          exit 1
