@@ -22941,9 +22941,13 @@ def _error_resp(msg, code=500):
 #    monta y las demás esperan su resultado.
 # La clave lleva el idioma y los parámetros YA validados (no la query tal cual: un ?fbclid= no crea entradas nuevas);
 # como mucho _PAGINAS_MAX entradas, se tira la que lleva más tiempo sin pedirse. Solo se guarda el gzip.
+# Búsqueda (/?q=, 2026-10-07): misma caché, pero con cupo propio (_PAGINAS_CUPO), porque cada texto buscado es una
+# entrada distinta y un rastreador probando palabras no debe echar a la portada ni a los rankings. Como la página de
+# resultados enseña los comentarios de esa búsqueda, publicar un comentario vacía ese grupo (_paginas_invalidar).
 _PAGINAS_TTL = 600
 _PAGINAS_MAX_VIEJA = 3 * 3600
 _PAGINAS_MAX = 48
+_PAGINAS_CUPO = {"busqueda": 24}               # máximo de entradas de un grupo dentro de las _PAGINAS_MAX
 _paginas_cache = collections.OrderedDict()     # clave -> {"gz": bytes, "ts": float, "refrescando": bool}
 _paginas_cerrojos = {}                         # clave -> Lock (montajes iguales a la vez)
 _paginas_lock = threading.Lock()
@@ -22951,21 +22955,37 @@ _paginas_fondo = threading.Semaphore(1)        # los montajes en segundo plano, 
 _paginas_stats = {"servidas": 0, "servidas_viejas": 0, "montadas": 0, "montadas_fondo": 0, "errores_fondo": 0}
 
 
-def _pagina_guardar(clave, html_txt):
+def _pagina_guardar(clave, html_txt, grupo=None):
     gz = _gzip.compress(html_txt.encode("utf-8"), compresslevel=6)
     with _paginas_lock:
-        _paginas_cache[clave] = {"gz": gz, "ts": time.time(), "refrescando": False}
+        _paginas_cache[clave] = {"gz": gz, "ts": time.time(), "refrescando": False, "grupo": grupo}
         _paginas_cache.move_to_end(clave)
+        if grupo in _PAGINAS_CUPO:
+            del_grupo = [k for k, e in _paginas_cache.items() if e.get("grupo") == grupo]
+            for vieja in del_grupo[:max(0, len(del_grupo) - _PAGINAS_CUPO[grupo])]:      # las más antiguas primero
+                del _paginas_cache[vieja]
+                _paginas_cerrojos.pop(vieja, None)
         while len(_paginas_cache) > _PAGINAS_MAX:
             vieja, _ = _paginas_cache.popitem(last=False)
             _paginas_cerrojos.pop(vieja, None)
     return gz
 
 
-def _pagina_remontar(clave, montar):
+def _paginas_invalidar(grupo):
+    """Tira todas las entradas de un grupo (p. ej. al publicarse un comentario que esas páginas enseñan)."""
+    with _paginas_lock:
+        for k in [k for k, e in _paginas_cache.items() if e.get("grupo") == grupo]:
+            del _paginas_cache[k]
+            _paginas_cerrojos.pop(k, None)
+
+
+def _pagina_remontar(clave, montar, grupo=None):
     with _paginas_fondo:
         try:
-            _pagina_guardar(clave, montar())
+            with _paginas_lock:
+                sigue = clave in _paginas_cache        # invalidada mientras esperaba turno: no se resucita
+            if sigue:
+                _pagina_guardar(clave, montar(), grupo)
             with _paginas_lock:
                 _paginas_stats["montadas_fondo"] += 1
         except Exception as e:
@@ -22976,7 +22996,7 @@ def _pagina_remontar(clave, montar):
                     _paginas_cache[clave]["refrescando"] = False
 
 
-def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False):
+def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False, grupo=None):
     """Respuesta HTML de una página cara. `params`: lista de (nombre, valor) ya validados, que es a la vez la clave
     y la query con la que se monta (los enlaces del selector de idioma salen de _I18N_RUTA). `montar()` devuelve el
     HTML."""
@@ -23011,7 +23031,7 @@ def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False):
             cerrojo = _paginas_cerrojos.setdefault(clave, threading.Lock())
     if lanzar:
         ctx = contextvars.copy_context()       # el hilo necesita el idioma de esta petición
-        threading.Thread(target=ctx.run, args=(_pagina_remontar, clave, _montar), daemon=True,
+        threading.Thread(target=ctx.run, args=(_pagina_remontar, clave, _montar, grupo), daemon=True,
                          name="pagina-cache").start()
     if gz is None:
         with cerrojo:
@@ -23019,7 +23039,7 @@ def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False):
                 e = _paginas_cache.get(clave)
                 gz = e["gz"] if e and time.time() - e["ts"] < _PAGINAS_TTL else None
             if gz is None:
-                gz = _pagina_guardar(clave, _montar())
+                gz = _pagina_guardar(clave, _montar(), grupo)
                 with _paginas_lock:
                     _paginas_stats["montadas"] += 1
     hdrs = dict(headers or {})
@@ -23038,7 +23058,8 @@ def _paginas_cache_estado():
     with _paginas_lock:
         return {**_paginas_stats, "entradas": len(_paginas_cache),
                 "kb": sum(len(e["gz"]) for e in _paginas_cache.values()) // 1024,
-                "frescas": sum(1 for e in _paginas_cache.values() if ahora - e["ts"] < _PAGINAS_TTL)}
+                "frescas": sum(1 for e in _paginas_cache.values() if ahora - e["ts"] < _PAGINAS_TTL),
+                "de_busqueda": sum(1 for e in _paginas_cache.values() if e.get("grupo") == "busqueda")}
 
 
 def _pag_entero(txt):
@@ -23094,8 +23115,14 @@ def _route_get(path, qs, gzip_ok=False):
             return _resp(render_html(datos_snap, muni_filter=muni_filter, page=page, page_cm=page_cm, provincia=provincia), gzip_ok=gzip_ok)
 
         if q:
-            datos_snap = _db_iter_municipios(provincia_filtro if provincia_filtro != "todas" else None)
-            return _resp(render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro), gzip_ok=gzip_ok)
+            def _montar_busqueda():
+                datos_snap = _db_iter_municipios(provincia_filtro if provincia_filtro != "todas" else None)
+                return render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro)
+
+            if len(q) > 100:                    # textos larguísimos: sin caché (no se van a repetir)
+                return _resp(_montar_busqueda(), gzip_ok=gzip_ok)
+            params_q = [("q", q)] + ([("provincia", provincia_filtro)] if provincia_filtro != "todas" else [])
+            return _pagina_cacheada("/", params_q, _montar_busqueda, gzip_ok=gzip_ok, grupo="busqueda")
 
         if provincia_filtro == "todas":
             # Cache-Control: no-cache -- 2026-09-16: home nacional encontrada
@@ -23520,6 +23547,8 @@ def _route_post(path, params):
                 redirect_url = "/"
             if tipo in ("municipio", "busqueda") and clave_raw and texto:
                 _db_comentarios_insertar(tipo, clave_raw, texto, nombre)
+                if tipo == "busqueda":
+                    _paginas_invalidar("busqueda")      # la página de resultados enseña sus comentarios
                 _avisar_comentario_por_correo(tipo, clave_raw, texto, nombre, redirect_url.split("#")[0])
             return _redirect_resp(redirect_url + "#comentarios" if "#" not in redirect_url else redirect_url)
 
