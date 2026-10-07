@@ -12542,8 +12542,56 @@ def _log(job_id, msg):
                 _jobs[job_id].setdefault("log", []).append(msg)
 
 
+# ─── MEDICIÓN DEL REFRESCO POR PROVINCIA (2026-10-07, solo medir: no cambia lo que hace el refresco) ──────────────
+# La noche del 07-10 solo cupieron 2 provincias (Valladolid 124 min, Zamora >134) y la tarde anterior las mismas
+# fuentes iban 3-5 veces más rápido. Para saber si es el servidor de PLACE en horario de oficina o la web cargada,
+# cada refresco de provincia (/actualizar-todos) apunta cuánto reloj y cuánta CPU propia se va en cada paso de
+# _job_run. El resumen queda en el registro del trabajo, en la salida del servidor y en /api/diagnostico-arranque
+# ("refresco_fases", guardado también en `settings` para que sobreviva a un reinicio).
+# Lectura: un paso con mucho reloj y poca CPU espera a alguien de fuera (red); si `cpu_proceso_s` se acerca al reloj
+# total, el proceso entero estaba ocupado (otras peticiones, hilos de fondo) y el refresco esperaba turno.
+_FASES_REFRESCO = threading.local()            # .acum = {paso: [reloj_s, cpu_hilo_s]} solo dentro de un refresco de provincia
+_REFRESCO_FASES_CLAVE = "refresco_fases_v1"
+_REFRESCO_FASES_MAX = 80
+
+
+def _fase_tiempo(nombre, marca):
+    """Suma al paso `nombre` el tiempo desde `marca` = (reloj, cpu del hilo) y devuelve la marca nueva. Fuera de un
+    refresco de provincia (búsqueda suelta de un visitante) no apunta nada."""
+    ahora = (time.time(), time.thread_time())
+    acum = getattr(_FASES_REFRESCO, "acum", None)
+    if acum is not None:
+        e = acum.setdefault(nombre, [0.0, 0.0])
+        e[0] += ahora[0] - marca[0]
+        e[1] += ahora[1] - marca[1]
+    return ahora
+
+
+def _refresco_fases_guardar(resumen):
+    try:
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_REFRESCO_FASES_CLAVE,)).fetchone()
+            lista = json.loads(fila[0]) if fila and fila[0] else []
+            lista = (lista + [resumen])[-_REFRESCO_FASES_MAX:]
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET "
+                        "valor=excluded.valor", (_REFRESCO_FASES_CLAVE, json.dumps(lista, ensure_ascii=False)))
+            _db.commit()
+    except Exception as e:
+        print(f"  [fases] no se pudo guardar la medición ({type(e).__name__}: {e})", flush=True)
+
+
+def _refresco_fases_leer():
+    try:
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_REFRESCO_FASES_CLAVE,)).fetchone()
+        return json.loads(fila[0]) if fila and fila[0] else []
+    except Exception:
+        return []
+
+
 def _job_run(job_id, municipio, provincia="murcia"):
     try:
+        _tf = (time.time(), time.thread_time())
         _log(job_id, f"Iniciando búsqueda de contratos para {municipio}…")
 
         # fuente_completa: nombre de la fuente ("PSCP"/"EUSKADI"/"NAVARRA") solo si esta búsqueda se completó sin
@@ -12555,12 +12603,15 @@ def _job_run(job_id, municipio, provincia="murcia"):
         if provincia in PROVINCIAS_CATALUNYA:
             contratos, ok = buscar_en_pscp(municipio, provincia, job_id)
             fuente_completa = "PSCP" if ok else None
+            _tf = _fase_tiempo("fuente_autonomica_pscp", _tf)
         elif provincia in PROVINCIAS_PAIS_VASCO and municipio in MUNICIPIOS_PAIS_VASCO_EUSKADI_ID:
             contratos, ok = buscar_en_euskadi(municipio, job_id)
             fuente_completa = "EUSKADI" if ok else None
+            _tf = _fase_tiempo("fuente_autonomica_euskadi", _tf)
         elif provincia in PROVINCIAS_NAVARRA:
             contratos, ok = buscar_en_navarra(municipio, job_id)
             fuente_completa = "NAVARRA" if ok else None
+            _tf = _fase_tiempo("fuente_autonomica_navarra", _tf)
         else:
             contratos = []
             # Ver buscar_en_zip para el porqué: Comunitat Valenciana/Andalucía
@@ -12574,6 +12625,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
             vivos = buscar_en_feed_vivo(municipio, anclar=anclar_place, provincia=provincia)
             contratos += vivos
             _log(job_id, f"  Feed en vivo: {len(vivos)} contratos")
+            _tf = _fase_tiempo("place_consulta_en_vivo", _tf)
 
             # 2. Construir lista de ZIPs: los 2 más recientes + todos los ya cacheados
             _zips_vistos = set()
@@ -12609,6 +12661,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
             # desperdiciada que nunca va a encontrar nada.
             _log(job_id, f"Procesando {len(zips)} ZIPs en paralelo"
                          + (" (BORM simultáneo)…" if provincia == "murcia" else "…"))
+            _tf = _fase_tiempo("place_ficheros_mensuales_descarga", _tf)
 
             with ThreadPoolExecutor(max_workers=4) as ex:
                 futs = {ex.submit(buscar_en_zip, zp, municipio, job_id, anclar_place, provincia): ("ZIP", am)
@@ -12624,6 +12677,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
                         _log(job_id, f"  ZIP {etiqueta}: {len(nuevos)} contratos")
                     else:
                         _log(job_id, f"  BORM: {len(nuevos)} contratos adicionales")
+            _tf = _fase_tiempo("place_ficheros_mensuales_lectura", _tf)
 
         # Deduplicar por URL (dentro de la misma fuente) — PLACE y BORM pueden tener URLs distintas para el mismo contrato
         contratos = _dedup_contratos_por_url(contratos)
@@ -12666,6 +12720,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
                  f"{len(existentes)} ya guardados -> {len(contratos)} tras fusión")
 
         _log(job_id, f"Total contratos únicos: {len(contratos)}")
+        _tf = _fase_tiempo("fusion_con_lo_guardado", _tf)
 
         # Directivos — todas las empresas únicas identificadas
         emp_nif = {}  # empresa → nif
@@ -12696,6 +12751,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
                 if not c["directivo"] and _dir_cache_agotado(emp, c.get("nif", "")):
                     c["rm_agotado"] = True
                     c["intentado"] = True
+        _tf = _fase_tiempo("administradores", _tf)
 
         # Separa los contratos cuyo órgano contratante es la propia CCAA de
         # Murcia (Consejerías, institutos...) de los del Ayuntamiento de
@@ -12757,6 +12813,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
         if es_age_target:
             _guardar_pseudo_municipio_age(municipio, contratos_age, job_id)
             _guardar_pseudo_municipio_umu(municipio, contratos_umu, job_id)
+        _tf = _fase_tiempo("alertas_y_guardar", _tf)
 
         with _jobs_lock:
             _jobs[job_id]["status"] = "done"
@@ -12767,6 +12824,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
         # incidente Sevilla 2026-09-14): evita releer/deserializar cache.db
         # entero en mitad de un lote de /actualizar-todos.
         _lanzar_enriquecimiento(provincia=provincia)
+        _tf = _fase_tiempo("lanzar_enriquecimiento_de_fondo", _tf)
 
     except Exception as e:
         with _jobs_lock:
@@ -13603,11 +13661,18 @@ def _refrescar_provincia_secuencial(job_id, provincia, offset=0):
     municipios = MUNICIPIOS_POR_PROVINCIA.get(provincia, MUNICIPIOS_MURCIA)
     print(f"  [actualizar-todos:{provincia}] Iniciando refresco de {len(municipios)} municipios…", flush=True)
 
+    # Medición (ver _fase_tiempo): solo apunta tiempos, no cambia nada de lo que se hace.
+    _FASES_REFRESCO.acum = {}
+    m_inicio = (time.time(), time.thread_time(), time.process_time())
+    mas_lento = ("", 0.0)
+    errores = 0
+
     for idx, municipio in enumerate(municipios, 1):
         print(f"  [actualizar-todos:{provincia}] [{idx}/{len(municipios)}] {municipio}", flush=True)
         sub_job_id = f"{job_id}-{provincia}-{idx}"
         with _jobs_lock:
             _jobs[sub_job_id] = {"status": "running", "log": [], "error": None}
+        t_muni = time.time()
         try:
             _cache_invalidate(municipio, provincia)
             _job_run(sub_job_id, municipio, provincia=provincia)
@@ -13615,12 +13680,45 @@ def _refrescar_provincia_secuencial(job_id, provincia, offset=0):
             print(f"  [actualizar-todos:{provincia}] Error en {municipio}: {e}", flush=True)
         finally:
             with _jobs_lock:
+                if (_jobs.get(sub_job_id) or {}).get("status") == "error":
+                    errores += 1
                 _jobs.pop(sub_job_id, None)
                 if job_id in _jobs:
                     _jobs[job_id]["procesados"] = offset + idx
+        if time.time() - t_muni > mas_lento[1]:
+            mas_lento = (municipio, time.time() - t_muni)
+        m_pausa = (time.time(), time.thread_time())
         time.sleep(4)  # pausa entre municipios
+        _fase_tiempo("pausa_fija_entre_municipios", m_pausa)
 
     print(f"  [actualizar-todos:{provincia}] Refresco completo terminado.", flush=True)
+    try:
+        acum = _FASES_REFRESCO.acum
+        reloj = time.time() - m_inicio[0]
+        resumen = {
+            "provincia": provincia, "municipios": len(municipios), "municipios_con_error": errores,
+            "inicio_utc": time.strftime("%Y-%m-%d %H:%M", time.gmtime(m_inicio[0])),
+            "fin_utc": time.strftime("%Y-%m-%d %H:%M", time.gmtime()),
+            "reloj_min": round(reloj / 60, 1),
+            "cpu_hilo_refresco_s": round(time.thread_time() - m_inicio[1]),
+            "cpu_proceso_s": round(time.process_time() - m_inicio[2]),
+            "reloj_s": round(reloj),
+            "municipio_mas_lento": [mas_lento[0], round(mas_lento[1], 1)],
+            "pasos": {k: {"reloj_s": round(v[0], 1), "cpu_hilo_s": round(v[1], 1),
+                          "pct_reloj": round(100 * v[0] / reloj, 1) if reloj else 0}
+                      for k, v in sorted(acum.items(), key=lambda kv: -kv[1][0])},
+        }
+        linea = (f"[tiempos] {provincia}: {resumen['reloj_min']} min, {len(municipios)} municipios; CPU del proceso "
+                 f"{resumen['cpu_proceso_s']} s, del refresco {resumen['cpu_hilo_refresco_s']} s; pasos (reloj): "
+                 + "; ".join(f"{k} {v['reloj_s']:.0f} s ({v['pct_reloj']:.0f} %)" for k, v in resumen["pasos"].items())
+                 + f"; más lento: {mas_lento[0]} {mas_lento[1]:.0f} s")
+        print("  " + linea, flush=True)
+        _log(job_id, linea)
+        _refresco_fases_guardar(resumen)
+    except Exception as e:
+        print(f"  [fases] medición no disponible ({type(e).__name__}: {e})", flush=True)
+    finally:
+        _FASES_REFRESCO.acum = None
     _liberar_memoria()
 
 
@@ -20953,6 +21051,7 @@ def _estado_carga():
         "cpu_proceso_pct": cpu,
         "hilos_python": threading.active_count(),
         "paginas_cache": _paginas_cache_estado(),
+        "refresco_fases": _refresco_fases_leer()[-12:],
     }
 
 
