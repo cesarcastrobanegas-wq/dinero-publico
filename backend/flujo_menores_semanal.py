@@ -28,8 +28,12 @@ EXCLUIDOS = {
     "place": "registro de menores de la Plataforma: necesita todos los ZIP mensuales desde 2021 (flujo aparte)",
     "cadiz": "el ayuntamiento solo publicó el listado de 2023",
     "salamanca": "el ayuntamiento no publica nada posterior al primer trimestre de 2024",
+    # Sus servidores rechazan las conexiones desde GitHub (prueba del 2026-10-06: Sevilla no contesta, València
+    # devuelve 403). Los generadores funcionan desde un PC; hasta darles otra vía, siguen siendo manuales.
+    "sevilla": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (sigue manual)",
+    "valencia_capital": "el servidor del ayuntamiento rechaza las conexiones desde GitHub, error 403 (sigue manual)",
 }
-MINUTOS = {"murcia_manual": 150, "euskadi": 150}      # el resto, MINUTOS_POR_DEFECTO
+MINUTOS = {"murcia_manual": 150, "euskadi": 210}      # el resto, MINUTOS_POR_DEFECTO
 MINUTOS_POR_DEFECTO = 40
 MINIMO_RELATIVO = 0.9
 MINIMO_PARA_COMPARAR = 20       # con menos contratos que esto no se aplica el 90 % (un contrato menos ya sería un 5 %)

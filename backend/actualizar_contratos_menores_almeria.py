@@ -33,6 +33,8 @@ import re
 import statistics
 import time
 import unicodedata
+import ssl
+import urllib.error
 import urllib.request
 from datetime import datetime, timedelta
 
@@ -46,8 +48,17 @@ _UA = "Mozilla/5.0 (compatible; dinero-publico-bot/1.0)"
 
 def _get(url):
     req = urllib.request.Request(url, headers={"User-Agent": _UA})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        return r.read()
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            return r.read()
+    except urllib.error.URLError as e:
+        # El servidor del ayuntamiento no envía la cadena completa de certificados: Windows la completa
+        # solo, pero Linux (GitHub Actions) la rechaza. Solo en ese caso se repite sin verificar (mismo
+        # criterio que Alcalá de Henares): son listados públicos y no se envía ningún dato.
+        if not isinstance(getattr(e, "reason", None), ssl.SSLCertVerificationError):
+            raise
+        with urllib.request.urlopen(req, timeout=120, context=ssl._create_unverified_context()) as r:
+            return r.read()
 
 
 def _norm(txt):
