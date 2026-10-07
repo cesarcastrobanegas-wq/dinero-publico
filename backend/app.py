@@ -22909,6 +22909,8 @@ def render_quienes_somos_html():
   </ul>
   {_bizum_html()}
 
+  <p><em>{_t('¿Hablas gallego, catalán o euskera y ves algo mejorable en esta página? Escríbenos a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</em></p>
+
   <h2>{_t("Contacto")}</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
 </div>"""

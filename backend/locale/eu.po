@@ -2218,110 +2218,114 @@ msgstr "<strong>Partekatu.</strong> Ezagutzen duen pertsona bakoitza guztion dir
 msgid "<strong>Apóyalo económicamente.</strong> Mantener el servidor y seguir añadiendo fuentes cuesta dinero y tiempo."
 msgstr "<strong>Lagundu ekonomikoki.</strong> Zerbitzaria mantentzeak eta iturriak gehitzen jarraitzeak dirua eta denbora eskatzen du."
 
-#: app.py:22912 app.py:22971
+#: app.py:22912
+msgid "¿Hablas gallego, catalán o euskera y ves algo mejorable en esta página? Escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
+msgstr "Euskalduna zara eta orrialde honetan hobetu daitekeen zerbait ikusten duzu? Idatz iezaguzu <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> helbidera."
+
+#: app.py:22914 app.py:22973
 msgid "Contacto"
 msgstr "Harremanetarako"
 
-#: app.py:22915 app.py:16299 app.py:22890
+#: app.py:22917 app.py:16299 app.py:22890
 msgid "Quién soy"
 msgstr "Nor naiz"
 
-#: app.py:22916
+#: app.py:22918
 msgid "Dinero Público lo hace una sola persona, sin equipo ni presupuesto: quién soy, qué hago con los datos públicos y cómo puedes colaborar."
 msgstr "Dinero Público pertsona bakar batek egiten du, talderik eta aurrekonturik gabe: nor naizen, zer egiten dudan datu publikoekin eta nola lagundu dezakezun."
 
-#: app.py:22927
+#: app.py:22929
 msgid "Esta página es una traducción. En caso de discrepancia, prevalece la <a href=\"{url}\">versión en castellano</a>. Si hablas este idioma y ves algo que suene raro, escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> y dinos cómo lo dirías tú — cualquier ayuda para mejorarlo es bienvenida."
 msgstr "Orrialde hau itzulpen bat da. Bertsioen artean alderik balego, <a href=\"{url}\">gaztelaniazko bertsioa</a> nagusituko da. Euskalduna bazara eta zerbait arraroa ikusten baduzu, idatz iezaguzu <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> helbidera eta esan iezaguzu zuk nola esango zenukeen — hobetzen laguntzeko edozein ekarpen ongi etorria da."
 
-#: app.py:22936
+#: app.py:22938
 msgid "Aviso Legal y Privacidad"
 msgstr "Lege-oharra eta pribatutasuna"
 
-#: app.py:22939
+#: app.py:22941
 msgid "Titular"
 msgstr "Titularra"
 
-#: app.py:22942
+#: app.py:22944
 msgid "Dominio"
 msgstr "Domeinua"
 
-#: app.py:22945
+#: app.py:22947
 msgid "Actividad"
 msgstr "Jarduera"
 
-#: app.py:22946
+#: app.py:22948
 msgid "Plataforma de transparencia y datos públicos sobre contratación del sector público en España. Cobertura nacional: las 17 comunidades autónomas y 2 ciudades autónomas, con distinto grado de detalle según la provincia (ver el <a href=\"/mapa-cobertura\">mapa de cobertura</a> para el estado real de cada una)."
 msgstr "Espainiako sektore publikoaren kontratazioari buruzko gardentasun- eta datu publikoen plataforma. Estatu osoko estaldura: 17 autonomia-erkidegoak eta 2 hiri autonomoak, probintziaren arabera xehetasun-maila desberdinarekin (ikusi <a href=\"/mapa-cobertura\">estaldura-mapa</a> bakoitzaren benetako egoera ezagutzeko)."
 
-#: app.py:22948
+#: app.py:22950
 msgid "Propiedad intelectual"
 msgstr "Jabetza intelektuala"
 
-#: app.py:22949
+#: app.py:22951
 msgid "El código fuente de esta plataforma está registrado como obra en Safe Creative con todos los derechos reservados, número de registro <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (23 de julio de 2026)."
 msgstr "Plataforma honen iturburu-kodea obra gisa erregistratuta dago Safe Creative-n, eskubide guztiak erreserbatuta; erregistro-zenbakia: <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (2026ko uztailaren 23a)."
 
-#: app.py:22951
+#: app.py:22953
 msgid "Origen de los datos"
 msgstr "Datuen jatorria"
 
-#: app.py:22952
+#: app.py:22954
 msgid "Los datos de contratos mostrados provienen de fuentes oficiales públicas: la Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda, que cubre todo el territorio nacional, además de fuentes autonómicas complementarias como el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Se seguirán incorporando otras fuentes de contratos menores y organismos públicos a medida que estén disponibles."
 msgstr "Erakusten diren kontratuen datuak iturri ofizial publikoetatik datoz: Ogasun Ministerioaren Sektore Publikoko Kontratazio Plataforma (PLACE), estatuko lurralde osoa hartzen duena, eta iturri autonomiko osagarriak, hala nola Murtziako Eskualdeko Aldizkari Ofiziala (BORM) eta Kataluniako Plataforma de Serveis de Contractació Pública (PSCP). Kontratu txikien eta erakunde publikoen beste iturri batzuk gehitzen jarraituko dugu, eskuragarri dauden heinean."
 
-#: app.py:22953
+#: app.py:22955
 msgid "Los nombres de directivos y administradores provienen de registros públicos (Registro Mercantil y fuentes empresariales públicas equivalentes)."
 msgstr "Zuzendarien eta administratzaileen izenak erregistro publikoetatik datoz (Merkataritza Erregistroa eta enpresa-iturri publiko baliokideak)."
 
-#: app.py:22954
+#: app.py:22956
 msgid "Próximamente se incorporarán también datos de subvenciones y fondos europeos."
 msgstr "Laster diru-laguntzen eta Europako funtsen datuak ere gehituko dira."
 
-#: app.py:22956
+#: app.py:22958
 msgid "Base legal para el tratamiento de datos"
 msgstr "Datuak tratatzeko lege-oinarria"
 
-#: app.py:22957
+#: app.py:22959
 msgid "El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD)."
 msgstr "Enpresa esleipendunen administratzaile edo ahaldun gisa agertzen diren pertsona fisikoen izenen tratamendua informazioaren interes publikoan oinarritzen da, bai eta izen horiek jendearentzat eskuragarri dauden iturrietatik etortzean ere (Datuak Babesteko Erregelamendu Orokorraren 9.2.e artikulua eta 3/2018 Lege Organikoa, Datu Pertsonalak Babesteari eta eskubide digitalak bermatzeari buruzkoa — LOPDGDD)."
 
-#: app.py:22959
+#: app.py:22961
 msgid "Ejercicio de derechos RGPD"
 msgstr "DBEOko eskubideak baliatzea"
 
-#: app.py:22960
+#: app.py:22962
 msgid "Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 msgstr "Datuak eskuratzeko, zuzentzeko, ezabatzeko, tratamenduari aurka egiteko edo hura mugatzeko eskubideak baliatzeko, idatzi helbide honetara: <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 
-#: app.py:22962
+#: app.py:22964
 msgid "Cookies y publicidad"
 msgstr "Cookieak eta publizitatea"
 
-#: app.py:22963
+#: app.py:22965
 msgid "Este sitio usa cookies propias, necesarias para su funcionamiento básico, y cookies de terceros que solo se activan si das tu consentimiento explícito en el banner que aparece al entrar:"
 msgstr "Gune honek cookie propioak erabiltzen ditu, oinarrizko funtzionamendurako beharrezkoak, eta hirugarrenen cookieak, sartzean agertzen den oharrean berariazko baimena ematen baduzu soilik aktibatzen direnak:"
 
-#: app.py:22965
+#: app.py:22967
 msgid "<b>Google Analytics</b> — estadísticas de uso agregadas del sitio."
 msgstr "<b>Google Analytics</b> — gunearen erabilera-estatistika agregatuak."
 
-#: app.py:22966
+#: app.py:22968
 msgid "<b>Google AdSense</b> — cuando esté activo, para mostrar publicidad, en algunos casos personalizada según tus intereses."
 msgstr "<b>Google AdSense</b> — aktibo dagoenean, publizitatea erakusteko, kasu batzuetan zure interesen arabera pertsonalizatua."
 
-#: app.py:22968
+#: app.py:22970
 msgid "Puedes aceptar o rechazar estas cookies en cualquier momento desde el enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier página del sitio — rechazarlas no impide usar la web con normalidad, solo desactiva las estadísticas y la publicidad."
 msgstr "Cookie hauek edozein unetan onartu edo baztertu ditzakezu, guneko edozein orrialderen oinean dagoen <b>«Cookie-hobespenak»</b> estekatik — baztertzeak ez du weba normal erabiltzea eragozten, estatistikak eta publizitatea bakarrik desaktibatzen ditu."
 
-#: app.py:22969
+#: app.py:22971
 msgid "Más información sobre cómo Google usa los datos en sitios que utilizan sus servicios de publicidad: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Cómo usa Google los datos de los sitios o las apps que utilizan sus servicios</a>."
 msgstr "Informazio gehiago Googlek bere publizitate-zerbitzuak erabiltzen dituzten guneetako datuak nola erabiltzen dituen jakiteko: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Nola erabiltzen dituen Googlek bere zerbitzuak erabiltzen dituzten guneetako edo aplikazioetako datuak</a>."
 
-#: app.py:22974 app.py:16297
+#: app.py:22976 app.py:16297
 msgid "Aviso Legal"
 msgstr "Lege-oharra"
 
-#: app.py:22975
+#: app.py:22977
 msgid "Aviso legal, privacidad y base legal para el tratamiento de datos públicos en Dinero Público."
 msgstr "Lege-oharra, pribatutasuna eta datu publikoak tratatzeko lege-oinarria Dinero Público webgunean."
