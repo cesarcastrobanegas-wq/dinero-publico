@@ -13284,6 +13284,25 @@ REVISION_MOTIVOS = {"legitimo": "Justificado / legítimo", "error_datos": "Error
 REVISION_ESTADOS = {"pendiente": "Pendientes", "seguimiento": "En seguimiento", "caso": "Convertidos en caso",
                     "descartado": "Descartados"}
 REVISION_REGLAS = {"fraccionamiento-v2": "Posible fraccionamiento", "menor-sobre-umbral-v1": "Menor por encima del umbral"}
+# Presentación de la cola (2026-10-07, encargo de César: 8.183 candidatos son inabarcables de golpe). Nada de esto
+# cambia qué detecta el bot (backend/indicios_contratos.py), solo en qué orden se enseña y un atajo para revisar un
+# puñado cada semana.
+#  - "exceso" = cuántas veces supera la suma el umbral legal del contrato menor de su tipo (15.000 o 40.000 €): es
+#    comparable entre obras, servicios y suministros, cosa que el importe a secas no es.
+#  - Los candidatos que el propio bot marca como "probable error de la fuente" (más de 25 veces el umbral: casi
+#    siempre una errata de importe) van al final en los órdenes por exceso e importe; si no, taparían todo lo demás.
+#  - Vista "semana": los _REVISION_SEMANA_POR_REGLA más claros de cada regla. "Claro" = pendiente, todavía vigente,
+#    categoría general (ni espectáculos ni emergencias, que tienen explicación frecuente) y sin los avisos de calidad
+#    que suelen acabar en descarte (probable error, posible duplicado entre fuentes o dentro de una). Al decidir uno
+#    (descartar, seguir, convertir en caso) sale de pendientes y entra el siguiente.
+_REVISION_EXCESO = "(suma / max(1.0, coalesce(json_extract(datos, '$.umbral'), 1.0)))"
+_REVISION_ERROR = "(datos LIKE '%probable error de la fuente%')"
+_REVISION_DUDOSO = ("(datos LIKE '%probable error de la fuente%' OR datos LIKE '%fuentes distintas%' "
+                    "OR datos LIKE '%publicación duplicada%')")
+REVISION_ORDENES = {"exceso": ("Más veces por encima del umbral", f"{_REVISION_ERROR} ASC, {_REVISION_EXCESO} DESC, puntuacion DESC"),
+                    "importe": ("Mayor importe", f"{_REVISION_ERROR} ASC, suma DESC"),
+                    "puntuacion": ("Mayor puntuación del bot", "puntuacion DESC, suma DESC")}
+_REVISION_SEMANA_POR_REGLA = 5
 _revision_fallos = collections.deque()          # intentos de acceso fallidos (marca de tiempo), para frenar ataques
 _revision_fallos_lock = threading.Lock()
 
@@ -13439,7 +13458,8 @@ button.sec{background:#fff;color:#1b2f5c}.c{background:#fff;border:1px solid #dd
 .det{padding:0 12px 12px}table{border-collapse:collapse;width:100%;font-size:12px}td,th{border-bottom:1px solid #eef0f4;
 padding:4px 6px;text-align:left;vertical-align:top}th{color:#5b6475;font-weight:600}.num{text-align:right;white-space:nowrap}
 .av{color:#8a5a00;font-size:12px;margin:4px 0}.acc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
-.est{font-size:12px;color:#5b6475}.pag a{margin-right:10px}"""
+.est{font-size:12px;color:#5b6475}.pag a{margin-right:10px}.pag{font-size:13px;margin:8px 0}
+.atajos{font-size:14px;margin:14px 0 4px;padding:8px 12px;background:#fff;border:1px solid #dde1e7;border-radius:8px}"""
 
 
 def _revision_pagina(titulo, cuerpo):
@@ -13466,6 +13486,10 @@ def _revision_cola_html(qs, cookie):
     categoria = g("categoria") if g("categoria") in ("general", "espectaculos", "emergencia") else ""
     comunidad = g("comunidad") if g("comunidad") in COMUNIDAD_AUTONOMA_LABEL else ""
     tipo = g("tipo") if g("tipo") in ("obras", "servicios", "suministros") else ""
+    orden = g("orden", "exceso") if g("orden", "exceso") in REVISION_ORDENES else "exceso"
+    semana = g("vista") == "semana"
+    if semana:
+        estado = "pendiente"
     try:
         pag = max(1, int(g("pag", "1")))
     except ValueError:
@@ -13480,11 +13504,27 @@ def _revision_cola_html(qs, cookie):
     if tipo:
         where.append("tipo = ?"); args.append(tipo)
     w = " AND ".join(where)
+    campos = "huella, datos, estado, motivo, nota, detectado, revisado, vigente"
+    def _consultar(exceso, orden_sql):
+        if semana:
+            filas = []
+            for r in ([regla] if regla else list(REVISION_REGLAS)):
+                extra = "" if regla else " AND regla = ?"
+                filas += _db.execute(
+                    f"SELECT {campos} FROM revision_candidatos WHERE {w}{extra} AND vigente = 1 AND categoria = '' "
+                    f"AND NOT {_REVISION_DUDOSO} ORDER BY puntuacion DESC, {exceso} DESC LIMIT ?",
+                    args + ([] if regla else [r]) + [_REVISION_SEMANA_POR_REGLA]).fetchall()
+            return filas
+        return _db.execute(f"SELECT {campos} FROM revision_candidatos WHERE {w} ORDER BY {orden_sql} "
+                           f"LIMIT ? OFFSET ?", args + [REVISION_POR_PAGINA, (pag - 1) * REVISION_POR_PAGINA]).fetchall()
+
     with _db_lock:
         total = _db.execute(f"SELECT count(*) FROM revision_candidatos WHERE {w}", args).fetchone()[0]
-        filas = _db.execute(f"SELECT huella, datos, estado, motivo, nota, detectado, revisado, vigente FROM "
-                            f"revision_candidatos WHERE {w} ORDER BY puntuacion DESC, suma DESC LIMIT ? OFFSET ?",
-                            args + [REVISION_POR_PAGINA, (pag - 1) * REVISION_POR_PAGINA]).fetchall()
+        try:
+            filas = _consultar(_REVISION_EXCESO, REVISION_ORDENES[orden][1])
+        except sqlite3.OperationalError:
+            # SQLite sin funciones JSON: se ordena por el importe en vez de por las veces sobre el umbral.
+            filas = _consultar("suma", f"{_REVISION_ERROR} ASC, suma DESC" if orden != "puntuacion" else "puntuacion DESC, suma DESC")
         recuento = dict(_db.execute("SELECT estado, count(*) FROM revision_candidatos GROUP BY estado").fetchall())
         ultima = _db.execute("SELECT ts, detalle FROM revision_registro WHERE accion='subida' ORDER BY ts DESC LIMIT 1"
                              ).fetchone()
@@ -13504,7 +13544,21 @@ def _revision_cola_html(qs, cookie):
                      "Todas las comunidades")
                + sel("tipo", tipo, [("obras", "Obras"), ("servicios", "Servicios"), ("suministros", "Suministros")],
                      "Todos los tipos")
+               + ('<input type="hidden" name="vista" value="semana">' if semana else
+                  '<select name="orden">' + "".join(
+                      f'<option value="{k}"{" selected" if k == orden else ""}>Orden: {esc(v[0])}</option>'
+                      for k, v in REVISION_ORDENES.items()) + "</select>")
                + '<button type="submit">Filtrar</button></form>')
+    aqui_q = {k: v for k, v in (("regla", regla), ("categoria", categoria), ("comunidad", comunidad), ("tipo", tipo)) if v}
+    atajos = ('<div class="atajos">'
+              + (f'<b>⭐ Para esta semana</b> · <a href="/admin/revision?{urlencode(dict(aqui_q, estado=estado, orden=orden))}">'
+                 f'Toda la cola</a>' if semana else
+                 f'<a href="/admin/revision?{urlencode(dict({k: v for k, v in aqui_q.items() if k != "categoria"}, vista="semana"))}">'
+                 f'⭐ Para esta semana: los más claros</a> · <b>Toda la cola</b>')
+              + f' · Pendientes: {recuento.get("pendiente", 0)} · ya decididos: '
+                f'{sum(v for k, v in recuento.items() if k != "pendiente")} (descartados {recuento.get("descartado", 0)})</div>')
+    volver = "/admin/revision?" + urlencode(dict(aqui_q, **({"vista": "semana"} if semana else
+                                                            {"estado": estado, "orden": orden, "pag": pag})))
     bloques = []
     for huella, datos, est, motivo, nota, detectado, revisado, vigente in filas:
         c = json.loads(datos)
@@ -13517,6 +13571,7 @@ def _revision_cola_html(qs, cookie):
         muni_q = quote_plus(c.get("municipio", ""))
         acciones = (f'<form method="post" action="/admin/revision/accion" class="acc">'
                     f'<input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="huella" value="{esc(huella)}">'
+                    f'<input type="hidden" name="volver" value="{esc(volver)}">'
                     f'<input type="text" name="nota" value="{esc(nota or "")}" placeholder="Nota (opcional)" size="40">'
                     + sel("motivo", motivo or "", REVISION_MOTIVOS.items(), "Motivo del descarte")
                     + '<button type="submit" name="accion" value="descartar" class="sec">Descartar</button>'
@@ -13533,7 +13588,8 @@ def _revision_cola_html(qs, cookie):
             f'<details class="c"><summary><span class="p{" a" if c["puntuacion"] >= 80 else ""}">{int(c["puntuacion"])}</span>'
             f'<b>{esc(c.get("municipio", ""))}</b> · {esc(c.get("organismo", ""))} → {esc(c.get("adjudicatario", ""))} '
             f'{esc(c.get("nif", ""))} · {esc(c.get("tipo", ""))} · {c.get("n_contratos", 1)} contrato(s), '
-            f'{fmt_eur(str(c.get("suma", 0)))} en {c.get("dias", 0)} día(s) (umbral {fmt_eur(str(c.get("umbral", 0)))})'
+            f'{fmt_eur(str(c.get("suma", 0)))} en {c.get("dias", 0)} día(s) (umbral {fmt_eur(str(c.get("umbral", 0)))}'
+            + (f' · <b>×{c.get("suma", 0) / c["umbral"]:.1f}</b>'.replace(".", ",") if c.get("umbral") else "") + ")"
             f' <span class="cat">{esc(REVISION_REGLAS.get(c.get("regla"), c.get("regla", "")))}</span>'
             + (f' <span class="cat">{esc(c["categoria"])}</span>' if c.get("categoria") else "")
             + f'</summary><div class="det"><table><tr><th>Fecha</th><th>Importe</th><th>Descripción</th><th>Fuente</th></tr>'
@@ -13541,8 +13597,13 @@ def _revision_cola_html(qs, cookie):
             f'{estado_txt}{acciones}</div></details>')
     paginas = max(1, (total + REVISION_POR_PAGINA - 1) // REVISION_POR_PAGINA)
     base_q = {k: v for k, v in (("estado", estado), ("regla", regla), ("categoria", categoria), ("comunidad", comunidad),
-                                ("tipo", tipo)) if v}
-    pag_html = '<div class="pag">' + (f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag - 1))}">← Anterior</a>'
+                                ("tipo", tipo), ("orden", orden)) if v}
+    if semana:
+        paginas = 1
+    pag_html = ('<div class="pag">Los ' + str(len(filas)) + ' más claros ahora mismo (hasta '
+                + str(_REVISION_SEMANA_POR_REGLA) + ' por regla): pendientes, vigentes, categoría general y sin avisos de '
+                'probable error ni de posible duplicado; por puntuación y, a igualdad, por veces sobre el umbral. Al '
+                'decidir uno entra el siguiente.</div>') if semana else '<div class="pag">' + (f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag - 1))}">← Anterior</a>'
                                       if pag > 1 else "") + f'Página {pag} de {paginas} · {total} candidatos ' + (
         f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag + 1))}">Siguiente →</a>' if pag < paginas else "") + "</div>"
     cuerpo = (f'<h1>Revisión interna: indicadores para revisar</h1>'
@@ -13552,7 +13613,8 @@ def _revision_cola_html(qs, cookie):
               f'prohibido es partir el objeto del contrato (arts. 99.2 y 118.2 LCSP).</p>'
               + (f'<p class="sub">Última pasada semanal: {esc(ultima[0])} ({esc(ultima[1])}).</p>' if ultima else
                  '<p class="sub">Todavía no ha llegado ninguna pasada semanal.</p>')
-              + f'{filtros}{pag_html}{"".join(bloques) or "<p>No hay candidatos con estos filtros.</p>"}{pag_html}'
+              + f'{atajos}{filtros}{pag_html}{"".join(bloques) or "<p>No hay candidatos con estos filtros.</p>"}'
+              + ("" if semana else pag_html) +
               f'<form method="post" action="/admin/revision/salir"><input type="hidden" name="csrf" value="{csrf}">'
               f'<button type="submit" class="sec">Salir</button></form>')
     return _revision_pagina("Revisión interna", cuerpo)
@@ -13635,9 +13697,12 @@ def _revision_wsgi(method, path, qs, environ):
                     _db.execute("DELETE FROM revision_descartes WHERE huella=?", (huella,))
                 _db.commit()
             _revision_registrar(huella, nuevo, motivo if nuevo == "descartado" else "")
-            volver = environ.get("HTTP_REFERER", "") or "/admin/revision"
-            return 303, {"Location": volver if "/admin/revision" in volver else "/admin/revision",
-                         "Content-Length": "0"}, b""
+            # La página va con Referrer-Policy: no-referrer, así que el formulario trae de dónde venía. Solo se acepta
+            # una ruta interna del propio panel.
+            volver = p("volver")
+            if not re.fullmatch(r"/admin/revision\?[A-Za-z0-9_=&%+.\-]{0,300}", volver):
+                volver = "/admin/revision"
+            return 303, {"Location": volver, "Content-Length": "0"}, b""
         return 404, {"Content-Length": "0"}, b""
     # GET
     if not cookie:
