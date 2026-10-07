@@ -22918,8 +22918,16 @@ def render_quienes_somos_html():
 
 
 def render_aviso_legal_html():
+    # Solo en las versiones traducidas: es texto jurídico y la traducción no la ha revisado un jurista. El enlace va
+    # con la dirección completa para que apunte a la versión en castellano (los enlaces internos se prefijan solos).
+    nota = ""
+    if _i18n_idioma() != "es":
+        nota = ("<p><em>" + _t('Esta página es una traducción. En caso de discrepancia, prevalece la '
+                               '<a href="{url}">versión en castellano</a>.').format(url=esc(SITE_URL) + "/aviso-legal")
+                + "</em></p>\n")
     body = f"""<div class="static-page">
   <h1>{_t("Aviso Legal y Privacidad")}</h1>
+  {nota}
 
   <h2>{_t("Titular")}</h2>
   <p>César Castro Banegas.</p>
