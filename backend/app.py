@@ -15556,6 +15556,8 @@ button.share-btn{font-family:inherit;}
 .personaliza-input-row input::placeholder{color:rgba(255,255,255,.6);}
 .personaliza-input-row button{padding:9px 16px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;font-size:12px;white-space:nowrap;}
 .personaliza-cerrar{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;padding:0 4px;}
+.personaliza-aviso{flex-basis:100%;font-size:12px;color:var(--red);}
+.personaliza-aviso:empty{display:none;}
 .personaliza-sugerencias{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-top:4px;max-height:220px;overflow-y:auto;z-index:15;display:none;}
 .personaliza-sugerencias.show{display:block;}
 .personaliza-sug-item{padding:8px 12px;font-size:12px;color:var(--text);cursor:pointer;}
@@ -19884,6 +19886,7 @@ def _personalizacion_html():
       <button type="button" id="personaliza-btn">{_t("Ver")}</button>
     </div>
     <button type="button" class="personaliza-cerrar" id="personaliza-cerrar" aria-label="{_t("Cerrar")}">✕</button>
+    <div class="personaliza-aviso" id="personaliza-aviso" role="status"></div>
   </div>
   <div class="personaliza-resultado oculto" id="personaliza-resultado"></div>
   <script>{_PERSONALIZACION_JS}</script>"""
@@ -19906,9 +19909,24 @@ _PERSONALIZACION_JS = r"""(function(){
   function guardar(obj){
     try { localStorage.setItem(LS_KEY, JSON.stringify(obj)); } catch(e){}
   }
-  function ocultarBanner(permanente){
-    banner.classList.add('oculto');
-    if (permanente){ try { localStorage.setItem(LS_OCULTO, '1'); } catch(e){} }
+  // Arreglo del 2026-10-07 ("el gancho no aparece en el móvil"): el banner se quedaba oculto PARA SIEMPRE en ese
+  // navegador en tres casos -- escribir un municipio que no existe (se guardaba igual y en cada visita se ocultaba
+  // el banner para buscarlo, sin encontrar nada), pulsar "cambiar" en el resultado (solo escondía el resultado) y
+  // cerrarlo con la X (marca permanente). Ahora: solo se guarda un municipio que EXISTE; si el guardado deja de
+  // encontrarse, se olvida y vuelve el banner; "cambiar" olvida el municipio y vuelve a preguntar; y la X lo
+  // esconde 30 días (LS_OCULTO guarda la fecha; el "1" de la versión anterior cuenta como caducado).
+  var aviso = document.getElementById('personaliza-aviso');
+  var DIAS_OCULTO = 30;
+  function ocultarBanner(){ banner.classList.add('oculto'); }
+  function mostrarBanner(){ banner.classList.remove('oculto'); }
+  function avisar(txt){ if (aviso) aviso.textContent = txt || ''; }
+  function olvidar(){
+    try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_OCULTO); } catch(e){}
+  }
+  function descartadoHacePoco(){
+    var n = 0;
+    try { n = parseInt(localStorage.getItem(LS_OCULTO) || '0', 10) || 0; } catch(e){}
+    return n > 1e12 && (Date.now() - n) < DIAS_OCULTO * 864e5;
   }
 
   function pintarResultado(item){
@@ -19941,34 +19959,51 @@ _PERSONALIZACION_JS = r"""(function(){
     resultadoBox.classList.remove('oculto');
     document.getElementById('personaliza-resultado-cerrar').addEventListener('click', function(){
       resultadoBox.classList.add('oculto');
+      olvidar();
+      avisar('');
+      mostrarBanner();
+      if (input){ input.value = ''; try { input.focus(); } catch(e){} }
     });
   }
 
-  function buscarYMostrar(nombreExacto){
+  // sinResultado(): el servidor contesta pero no hay ningún municipio así. conError(): no se pudo preguntar.
+  function buscarYMostrar(nombreExacto, sinResultado, conError){
     fetch('/api/rankings-municipio?q=' + encodeURIComponent(nombreExacto))
       .then(function(r){ return r.json(); })
       .then(function(data){
-        var match = (data.resultados || []).find(function(x){
+        var lista = (data && data.resultados) || [];
+        var match = lista.find(function(x){
           return x.municipio.toLowerCase() === nombreExacto.toLowerCase();
-        }) || data.resultados[0];
+        }) || lista[0];
         if (match){
+          guardar({municipio: match.municipio});
+          avisar('');
           pintarResultado(match);
-          ocultarBanner(true);
-        }
+          ocultarBanner();
+        } else if (sinResultado){ sinResultado(); }
       })
-      .catch(function(){});
+      .catch(function(){ if (conError) conError(); });
+  }
+  function noEncontrado(){
+    mostrarBanner();
+    avisar(T("No encontramos ese municipio. Prueba con otro nombre."));
   }
 
   // Si ya hay municipio guardado, saltar directo al resultado sin mostrar el banner.
   var previo = guardado();
   if (previo && previo.municipio){
-    ocultarBanner(false);
-    buscarYMostrar(previo.municipio);
-  } else if (localStorage.getItem(LS_OCULTO) === '1') {
-    ocultarBanner(false);
+    ocultarBanner();
+    buscarYMostrar(previo.municipio,
+                   function(){ olvidar(); mostrarBanner(); },      // ya no existe con ese nombre: se vuelve a preguntar
+                   function(){ mostrarBanner(); });                // sin conexión: se enseña el banner, sin olvidar nada
+  } else if (descartadoHacePoco()) {
+    ocultarBanner();
   }
 
-  if (cerrar) cerrar.addEventListener('click', function(){ ocultarBanner(true); });
+  if (cerrar) cerrar.addEventListener('click', function(){
+    ocultarBanner();
+    try { localStorage.setItem(LS_OCULTO, String(Date.now())); } catch(e){}
+  });
 
   var timer = null;
   if (input) input.addEventListener('input', function(){
@@ -19991,8 +20026,7 @@ _PERSONALIZACION_JS = r"""(function(){
               var nombre = el.getAttribute('data-muni');
               input.value = nombre;
               sugs.classList.remove('show');
-              guardar({municipio: nombre});
-              buscarYMostrar(nombre);
+              buscarYMostrar(nombre, noEncontrado, noEncontrado);
             });
           });
         })
@@ -20003,8 +20037,7 @@ _PERSONALIZACION_JS = r"""(function(){
   function enviar(){
     var q = input.value.trim();
     if (q.length < 2) return;
-    guardar({municipio: q});
-    buscarYMostrar(q);
+    buscarYMostrar(q, noEncontrado, noEncontrado);
     sugs.classList.remove('show');
   }
   if (btn) btn.addEventListener('click', enviar);
