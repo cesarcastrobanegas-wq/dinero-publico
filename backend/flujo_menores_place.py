@@ -9,8 +9,8 @@ ahorra es la descarga: los ZIP de meses cerrados no cambian y se guardan entre e
 vuelven a bajar el del mes en curso y el del mes anterior, que la Plataforma sigue regenerando.
 
 Pasos: 1) descargar lo que falte; 2) generar los ficheros; 3) comparar cada fichero con el que hay en el repositorio
-y dejar solo los que cambian de verdad (los que traen los mismos contratos se restauran: así no se guardan 68 MB cada
-semana). Salvaguarda: si el total de contratos baja más de un 3 %, o algún mes con más de 200 contratos pierde más
+y dejar solo los que cambian de forma apreciable (ver UMBRAL_*; el resto se restaura: así no se guardan decenas de
+MB cada semana por uno o dos contratos). Salvaguarda: si el total de contratos baja más de un 3 %, o algún mes con más de 200 contratos pierde más
 de un 10 %, no se toca nada y se avisa.
 
 Uso:  python backend/flujo_menores_place.py [--zips DIR]
@@ -32,6 +32,27 @@ PRIMER_MES = "202109"
 MIN_TOTAL = 0.97
 MIN_MES = 0.90
 MES_CON_PESO = 200
+# Umbral para guardar un mes (2026-10-07, decisión de César: "solo los meses con un cambio apreciable"). En la
+# prueba del 06-10 cambiaban 42 de 62 ficheros, pero 31 de ellos por 1-5 contratos; guardarlos todos reescribía unos
+# 50 MB por semana. Un mes se guarda si cambian (nuevos + modificados + desaparecidos) al menos UMBRAL_CONTRATOS
+# contratos, o al menos el UMBRAL_PCT % del mes con un mínimo de UMBRAL_MINIMO (para los meses pequeños de 2021).
+# Lo que no llega no se pierde: se compara siempre con lo guardado, así que se va acumulando hasta pasar el umbral.
+UMBRAL_CONTRATOS = 50
+UMBRAL_PCT = 1.0
+UMBRAL_MINIMO = 10
+
+
+def contratos_que_cambian(antes, despues):
+    """Contratos nuevos o modificados + contratos que desaparecen, entre dos listas de un mismo mes."""
+    h_antes, h_despues = set(huella(antes)), set(huella(despues))
+    ids_despues = {r.get("id") for r in despues}
+    return len(h_despues - h_antes) + sum(1 for r in antes if r.get("id") not in ids_despues)
+
+
+def se_guarda(n_antes, cambian):
+    if n_antes == 0:
+        return cambian > 0                      # mes nuevo
+    return cambian >= UMBRAL_CONTRATOS or cambian >= max(UMBRAL_MINIMO, UMBRAL_PCT * n_antes / 100)
 MINUTOS_DESCARGA = 200
 MINUTOS_GENERAR = 100
 
@@ -133,19 +154,30 @@ def main():
                  + ([f"Meses que pierden más de un 10 %: {'; '.join(menguan)}."] if menguan else [])
                  + ([f"Ficheros ilegibles: {', '.join(ilegibles)}."] if ilegibles else []))
 
-    cambiados = []
+    guardados, aplazados = [], []
     for rel, regs in despues.items():
-        if rel in antes and huella(regs) == huella(antes[rel]):
-            restaurar(rel, True)                    # mismos contratos: se deja el fichero que ya estaba
+        previos = antes.get(rel, [])
+        cambian = contratos_que_cambian(previos, regs)
+        fila = (os.path.basename(rel)[24:31], len(previos), len(regs), cambian)
+        if se_guarda(len(previos), cambian):
+            guardados.append(fila)
         else:
-            cambiados.append((os.path.basename(rel)[24:31], len(antes.get(rel, [])), len(regs)))
-    lineas = [f"ZIP hasta {desde[:4]}-{desde[4:]}. Total: {total_antes} -> {total_despues} contratos "
-              f"({total_despues - total_antes:+d}). Ficheros mensuales que cambian: {len(cambiados)} de {len(despues)}. "
-              f"Descarga {t_desc / 60:.0f} min, generación {t_gen / 60:.0f} min.", ""]
-    if cambiados:
-        lineas += ["| Mes de adjudicación | Antes | Ahora |", "|---|---|---|"]
-        lineas += [f"| {m} | {a} | {d} ({d - a:+d}) |" for m, a, d in sorted(cambiados)]
-    terminar(len(cambiados), False, lineas)
+            restaurar(rel, rel in antes)            # sin cambios, o por debajo del umbral: se deja el que estaba
+            if cambian:
+                aplazados.append(fila)
+    lineas = [f"ZIP hasta {desde[:4]}-{desde[4:]}. Total generado: {total_antes} -> {total_despues} contratos "
+              f"({total_despues - total_antes:+d}). Descarga {t_desc / 60:.0f} min, generación {t_gen / 60:.0f} min.", "",
+              f"**Meses que se guardan: {len(guardados)}** de {len(despues)} ({sum(f[3] for f in guardados)} contratos "
+              f"nuevos, modificados o retirados). Umbral: {UMBRAL_CONTRATOS} contratos, o el {UMBRAL_PCT:g} % del mes "
+              f"(mínimo {UMBRAL_MINIMO}).",
+              f"Meses con cambios por debajo del umbral, que esperan a acumular más: {len(aplazados)} "
+              f"({sum(f[3] for f in aplazados)} contratos).", ""]
+    if guardados:
+        lineas += ["| Mes guardado | Antes | Ahora | Contratos que cambian |", "|---|---|---|---|"]
+        lineas += [f"| {m} | {a} | {d} ({d - a:+d}) | {c} |" for m, a, d, c in sorted(guardados)]
+    if aplazados:
+        lineas += ["", "Aplazados: " + ", ".join(f"{m} ({c})" for m, a, d, c in sorted(aplazados)) + "."]
+    terminar(len(guardados), False, lineas)
 
 
 if __name__ == "__main__":
