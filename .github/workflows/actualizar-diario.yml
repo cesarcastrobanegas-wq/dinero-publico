@@ -448,6 +448,15 @@ jobs:
           fallo=0               # se pone a 1 si algún refresco crítico no llega
                                  # a 'done' -- no aborta el step, solo hace que
                                  # termine en exit 1 al final para el aviso por email.
+          # Qué cuenta como fallo (2026-10-07): la ejecución salía en rojo TODAS las noches -- y llegaba el correo --
+          # solo porque una provincia tardaba más de su presupuesto o porque no cabían todas, que es lo normal: las
+          # provincias lentas terminan igualmente (se las espera) y la rotación sigue la noche siguiente donde se
+          # quedó. Ahora eso es un aviso, no un fallo. Fallo de verdad: un trabajo que termina en error, la web que
+          # se reinicia y pierde el trabajo, no conseguir lanzar una provincia, los extras críticos (fondos UE) o
+          # una noche en la que no se completa NINGUNA provincia.
+          completadas=0         # provincias cuyos contratos llegaron a 'done' (dentro o fuera de su tiempo)
+          lentas=0              # de ellas, las que necesitaron más que su presupuesto
+          a_medias=""           # provincia que seguía en marcha al acabarse el presupuesto de la noche
 
           # Espera a que un job_id llegue a 'done'. Aborta (return 1) si el job
           # da 'error', si 'not_found' persiste 3 ciclos seguidos (el
@@ -486,7 +495,7 @@ jobs:
               fi
 
               if [ "$(date +%s)" -ge "$deadline_local" ]; then
-                echo "::error::Timeout de ${max_min} min sin completar ${etiqueta} (status=$st)."
+                echo "::warning::${etiqueta} lleva ${max_min} min sin terminar (status=$st)."
                 return 2
               fi
               sleep "$INTERVAL"
@@ -507,9 +516,13 @@ jobs:
               st=$(get_status "$job_id")
               echo "$(date -u +%H:%M:%S)Z  ${etiqueta}=${st} (esperando a que termine)"
               if [ "$st" = "not_found" ]; then notfound=$(( notfound + 1 )); else notfound=0; fi
-              if [ "$st" = "done" ] || [ "$st" = "error" ] || [ "$notfound" -ge 3 ]; then
+              if [ "$st" = "done" ]; then
                 echo "${etiqueta} terminó (${st}) fuera de su presupuesto."
                 return 0
+              fi
+              if [ "$st" = "error" ] || [ "$notfound" -ge 3 ]; then
+                echo "::error::${etiqueta} terminó mal (${st}) fuera de su presupuesto."
+                return 3
               fi
               if [ "$(date +%s)" -ge "$deadline_total" ]; then
                 echo "::warning::${etiqueta} sigue en marcha y se agotó el presupuesto total de la noche: no se disparan más provincias."
@@ -542,12 +555,21 @@ jobs:
               poll_hasta_done "$job_todos" "todos-${prov}" || rc_todos=$?
               if [ "$rc_todos" -eq 0 ]; then
                 echo "Contratos de ${prov} completados ('done')."
-              else
-                echo "::warning::Refresco de contratos de ${prov} no completó dentro de su presupuesto; el progreso parcial ya quedó checkpointeado en disco."
-                fallo=1
-                if [ "$rc_todos" -eq 2 ]; then
-                  esperar_fin_trabajo "$job_todos" "todos-${prov}" || true
+                completadas=$(( completadas + 1 ))
+              elif [ "$rc_todos" -eq 2 ]; then
+                # Solo va lenta: se espera a que termine. No es un fallo (ver arriba).
+                local rc_espera=0
+                esperar_fin_trabajo "$job_todos" "todos-${prov}" || rc_espera=$?
+                if [ "$rc_espera" -eq 0 ]; then
+                  completadas=$(( completadas + 1 )); lentas=$(( lentas + 1 ))
+                elif [ "$rc_espera" -eq 3 ]; then
+                  fallo=1
+                else
+                  a_medias="$prov"
                 fi
+              else
+                echo "::error::El refresco de contratos de ${prov} terminó en error o se perdió (¿reinicio de la web?)."
+                fallo=1
               fi
             fi
 
@@ -609,7 +631,6 @@ jobs:
             for prov in $LISTA_INPUT; do
               if [ "$(date +%s)" -ge "$deadline_total" ]; then
                 echo "::warning::Presupuesto total de ${MAX_MIN_TOTAL} min agotado: ${prov} y las siguientes de la lista se quedan sin procesar."
-                fallo=1
                 break
               fi
               procesar_provincia "$prov"
@@ -674,8 +695,7 @@ jobs:
               prov="${PROVINCIAS_ORDEN[$idx]}"
 
               if [ "$(date +%s)" -ge "$deadline_total" ]; then
-                echo "::warning::Presupuesto total de ${MAX_MIN_TOTAL} min agotado. La próxima noche se empieza por ${prov}."
-                fallo=1
+                echo "::notice::Presupuesto total de ${MAX_MIN_TOTAL} min agotado. La próxima noche se empieza por ${prov}."
                 break
               fi
 
@@ -761,8 +781,15 @@ jobs:
             poll_hasta_done "$job_dcm" "directivos-menores" 30 || echo "::warning::Directivos de contratos menores no completado; se continúa igualmente."
           fi
 
+          if [ "$SOLO_FONDOS_UE" != "true" ]; then
+            echo "::notice::Provincias completadas: ${completadas} (${lentas} tardaron más que su presupuesto de ${MAX_MIN_PROVINCIA} min)${a_medias:+; ${a_medias} seguía en marcha al acabar el tiempo y termina por su cuenta}."
+            if [ "$completadas" -eq 0 ]; then
+              echo "::error::No se completó ninguna provincia en toda la ejecución."
+              fallo=1
+            fi
+          fi
           if [ "$fallo" -ne 0 ]; then
-            echo "::error::Uno o más refrescos críticos de esta noche no se completaron. El job se marca como fallido para que llegue el aviso por email."
+            echo "::error::Fallo real en el refresco (un trabajo en error, la web reiniciada a mitad, una provincia que no se pudo lanzar, los fondos UE o ninguna provincia completada). El job se marca como fallido para que llegue el aviso por email."
           fi
           exit "$fallo"
 
