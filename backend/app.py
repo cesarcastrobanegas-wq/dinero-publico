@@ -22918,16 +22918,20 @@ def render_quienes_somos_html():
 
 
 def render_aviso_legal_html():
-    # Solo en las versiones traducidas: es texto jurídico y la traducción no la ha revisado un jurista. El enlace va
-    # con la dirección completa para que apunte a la versión en castellano (los enlaces internos se prefijan solos).
-    # Si el idioma aún no tiene traducida la propia nota (euskera, en pausa), la página sale en castellano y no se pone.
-    nota = ""
-    aviso_es = ('Esta página es una traducción. En caso de discrepancia, prevalece la '
-                '<a href="{url}">versión en castellano</a>.')
-    aviso = _t('Esta página es una traducción. En caso de discrepancia, prevalece la '
-               '<a href="{url}">versión en castellano</a>.')
-    if _i18n_idioma() != "es" and aviso != aviso_es:
+    # Nota bajo el título (2026-10-07). En las versiones traducidas: es texto jurídico y la traducción no la ha
+    # revisado un jurista ni un hablante nativo, así que prevalece el castellano y se pide ayuda para mejorarla. El
+    # enlace a la versión en castellano va con la dirección completa (los enlaces internos se prefijan solos).
+    # Si el idioma aún no tiene traducida la propia nota (euskera, en pausa), la página sale en castellano y no
+    # se pone. En castellano, solo la llamada a colaborar.
+    aviso_es = ('Esta página es una traducción. En caso de discrepancia, prevalece la <a href="{url}">versión en castellano</a>. Si hablas este idioma y ves algo que suene raro, escríbenos a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a> y dinos cómo lo dirías tú — cualquier ayuda para mejorarlo es bienvenida.')
+    aviso = _t('Esta página es una traducción. En caso de discrepancia, prevalece la <a href="{url}">versión en castellano</a>. Si hablas este idioma y ves algo que suene raro, escríbenos a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a> y dinos cómo lo dirías tú — cualquier ayuda para mejorarlo es bienvenida.')
+    if _i18n_idioma() == "es":
+        nota = ("<p><em>¿Hablas gallego, catalán o euskera y quieres ayudarnos a revisar la traducción? Escríbenos a "
+                '<a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.</em></p>\n')
+    elif aviso != aviso_es:
         nota = "<p><em>" + aviso.format(url=esc(SITE_URL) + "/aviso-legal") + "</em></p>\n"
+    else:
+        nota = ""
     body = f"""<div class="static-page">
   <h1>{_t("Aviso Legal y Privacidad")}</h1>
   {nota}

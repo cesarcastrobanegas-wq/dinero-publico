@@ -2218,7 +2218,7 @@ msgstr "<strong>Comparteix-lo.</strong> Cada persona que el coneix és algú mé
 msgid "<strong>Apóyalo económicamente.</strong> Mantener el servidor y seguir añadiendo fuentes cuesta dinero y tiempo."
 msgstr "<strong>Dona-li suport econòmic.</strong> Mantenir el servidor i continuar afegint fonts costa diners i temps."
 
-#: app.py:22912 app.py:22967
+#: app.py:22912 app.py:22971
 msgid "Contacto"
 msgstr "Contacte"
 
@@ -2231,97 +2231,100 @@ msgid "Dinero Público lo hace una sola persona, sin equipo ni presupuesto: qui�
 msgstr "Dinero Público el fa una sola persona, sense equip ni pressupost: qui soc, què faig amb les dades públiques i com pots col·laborar."
 
 #: app.py:22927
-msgid "Esta página es una traducción. En caso de discrepancia, prevalece la <a href=\"{url}\">versión en castellano</a>."
-msgstr "Aquesta pàgina és una traducció. En cas de discrepància, preval la <a href=\"{url}\">versió en castellà</a>."
+msgid "Esta página es una traducción. En caso de discrepancia, prevalece la <a href=\"{url}\">versión en castellano</a>. Si hablas este idioma y ves algo que suene raro, escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> y dinos cómo lo dirías tú — cualquier ayuda para mejorarlo es bienvenida."
+msgstr "Aquesta pàgina és una traducció. En cas de discrepància, preval la <a href=\"{url}\">versió en castellà</a>. Si parles català i veus alguna cosa que no soni natural, escriu-nos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> i digues-nos com ho diries tu — qualsevol ajuda per millorar-ho és benvinguda."
 
-#: app.py:22932
+#: app.py:22936
 msgid "Aviso Legal y Privacidad"
 msgstr "Avís legal i privacitat"
 
-#: app.py:22935
+#: app.py:22939
 msgid "Titular"
 msgstr "Titular"
 
-#: app.py:22938
+#: app.py:22942
 msgid "Dominio"
 msgstr "Domini"
 
-#: app.py:22941
+#: app.py:22945
 msgid "Actividad"
 msgstr "Activitat"
 
-#: app.py:22942
+#: app.py:22946
 msgid "Plataforma de transparencia y datos públicos sobre contratación del sector público en España. Cobertura nacional: las 17 comunidades autónomas y 2 ciudades autónomas, con distinto grado de detalle según la provincia (ver el <a href=\"/mapa-cobertura\">mapa de cobertura</a> para el estado real de cada una)."
 msgstr "Plataforma de transparència i dades públiques sobre contractació del sector públic a Espanya. Cobertura estatal: les 17 comunitats autònomes i 2 ciutats autònomes, amb un grau de detall diferent segons la província (vegeu el <a href=\"/mapa-cobertura\">mapa de cobertura</a> per a l'estat real de cadascuna)."
 
-#: app.py:22944
+#: app.py:22948
 msgid "Propiedad intelectual"
 msgstr "Propietat intel·lectual"
 
-#: app.py:22945
+#: app.py:22949
 msgid "El código fuente de esta plataforma está registrado como obra en Safe Creative con todos los derechos reservados, número de registro <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (23 de julio de 2026)."
 msgstr "El codi font d'aquesta plataforma està registrat com a obra a Safe Creative amb tots els drets reservats, número de registre <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (23 de juliol de 2026)."
 
-#: app.py:22947
+#: app.py:22951
 msgid "Origen de los datos"
 msgstr "Origen de les dades"
 
-#: app.py:22948
+#: app.py:22952
 msgid "Los datos de contratos mostrados provienen de fuentes oficiales públicas: la Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda, que cubre todo el territorio nacional, además de fuentes autonómicas complementarias como el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Se seguirán incorporando otras fuentes de contratos menores y organismos públicos a medida que estén disponibles."
 msgstr "Les dades de contractes que es mostren provenen de fonts oficials públiques: la Plataforma de Contractació del Sector Públic (PLACE) del Ministeri d'Hisenda, que cobreix tot el territori estatal, a més de fonts autonòmiques complementàries com el Butlletí Oficial de la Regió de Múrcia (BORM) i la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). S'hi continuaran incorporant altres fonts de contractes menors i organismes públics a mesura que estiguin disponibles."
 
-#: app.py:22949
+#: app.py:22953
 msgid "Los nombres de directivos y administradores provienen de registros públicos (Registro Mercantil y fuentes empresariales públicas equivalentes)."
 msgstr "Els noms de directius i administradors provenen de registres públics (Registre Mercantil i fonts empresarials públiques equivalents)."
 
-#: app.py:22950
+#: app.py:22954
 msgid "Próximamente se incorporarán también datos de subvenciones y fondos europeos."
 msgstr "Properament s'hi incorporaran també dades de subvencions i fons europeus."
 
-#: app.py:22952
+#: app.py:22956
 msgid "Base legal para el tratamiento de datos"
 msgstr "Base legal per al tractament de dades"
 
-#: app.py:22953
+#: app.py:22957
 msgid "El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD)."
 msgstr "El tractament dels noms de persones físiques que apareixen com a administradors o apoderats d'empreses adjudicatàries s'empara en l'interès públic de la informació i en el fet que procedeixen de fonts accessibles al públic (art. 9.2.e del Reglament General de Protecció de Dades i Llei Orgànica 3/2018, de Protecció de Dades Personals i garantia dels drets digitals — LOPDGDD)."
 
-#: app.py:22955
+#: app.py:22959
 msgid "Ejercicio de derechos RGPD"
 msgstr "Exercici de drets RGPD"
 
-#: app.py:22956
+#: app.py:22960
 msgid "Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 msgstr "Per exercir els teus drets d'accés, rectificació, supressió, oposició o limitació del tractament, escriu a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 
-#: app.py:22958
+#: app.py:22962
 msgid "Cookies y publicidad"
 msgstr "Galetes i publicitat"
 
-#: app.py:22959
+#: app.py:22963
 msgid "Este sitio usa cookies propias, necesarias para su funcionamiento básico, y cookies de terceros que solo se activan si das tu consentimiento explícito en el banner que aparece al entrar:"
 msgstr "Aquest lloc utilitza galetes pròpies, necessàries per al seu funcionament bàsic, i galetes de tercers que només s'activen si dones el teu consentiment explícit al bàner que apareix en entrar:"
 
-#: app.py:22961
+#: app.py:22965
 msgid "<b>Google Analytics</b> — estadísticas de uso agregadas del sitio."
 msgstr "<b>Google Analytics</b> — estadístiques d'ús agregades del lloc."
 
-#: app.py:22962
+#: app.py:22966
 msgid "<b>Google AdSense</b> — cuando esté activo, para mostrar publicidad, en algunos casos personalizada según tus intereses."
 msgstr "<b>Google AdSense</b> — quan estigui actiu, per mostrar publicitat, en alguns casos personalitzada segons els teus interessos."
 
-#: app.py:22964
+#: app.py:22968
 msgid "Puedes aceptar o rechazar estas cookies en cualquier momento desde el enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier página del sitio — rechazarlas no impide usar la web con normalidad, solo desactiva las estadísticas y la publicidad."
 msgstr "Pots acceptar o rebutjar aquestes galetes en qualsevol moment des de l'enllaç <b>«Preferències de galetes»</b> al peu de pàgina de qualsevol pàgina del lloc — rebutjar-les no impedeix utilitzar el web amb normalitat, només desactiva les estadístiques i la publicitat."
 
-#: app.py:22965
+#: app.py:22969
 msgid "Más información sobre cómo Google usa los datos en sitios que utilizan sus servicios de publicidad: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Cómo usa Google los datos de los sitios o las apps que utilizan sus servicios</a>."
 msgstr "Més informació sobre com Google utilitza les dades en llocs que fan servir els seus serveis de publicitat: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Com utilitza Google les dades dels llocs o de les aplicacions que fan servir els seus serveis</a>."
 
-#: app.py:22970 app.py:16297
+#: app.py:22974 app.py:16297
 msgid "Aviso Legal"
 msgstr "Avís legal"
 
-#: app.py:22971
+#: app.py:22975
 msgid "Aviso legal, privacidad y base legal para el tratamiento de datos públicos en Dinero Público."
 msgstr "Avís legal, privacitat i base legal per al tractament de dades públiques a Dinero Público."
+
+#~ msgid "Esta página es una traducción. En caso de discrepancia, prevalece la <a href=\"{url}\">versión en castellano</a>."
+#~ msgstr "Aquesta pàgina és una traducció. En cas de discrepància, preval la <a href=\"{url}\">versió en castellà</a>."
