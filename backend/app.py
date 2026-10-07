@@ -7977,6 +7977,62 @@ def _nombre_organismo_municipal(municipio, provincia):
 _ZIP_CONTRATOS_CACHE = {}
 _ZIP_CONTRATOS_CACHE_LOCK = threading.Lock()
 _ZIP_CONTRATOS_CACHE_MAX = 4
+# Memoria (2026-10-07): esta caché guarda en RAM TODOS los contratos de España de cada ZIP mensual ya leído (tres ZIP,
+# 460 MB en disco) y antes no se vaciaba nunca: tras el refresco nocturno el proceso se quedaba el resto del día en
+# 1,5-1,8 GB de los 2 GB del servidor (medido el 06-10 y el 07-10; recién arrancado ronda los 700-850 MB). Ahora un
+# hilo la vacía cuando lleva _ZIP_CACHE_OCIOSA_S sin usarse y no hay un refresco de provincia en marcha. Durante el
+# refresco no cambia nada (las provincias van seguidas y cada municipio la usa); la próxima vez que haga falta, el
+# ZIP se vuelve a leer del disco.
+_ZIP_CACHE_OCIOSA_S = 20 * 60
+_zip_cache_estado = {"ultimo_uso": 0.0, "vaciados": 0, "ultimo_vaciado": "", "liberados_mb": 0}
+
+
+def _zip_cache_vaciar_si_ociosa():
+    """Vacía _ZIP_CONTRATOS_CACHE si lleva _ZIP_CACHE_OCIOSA_S sin usarse y no hay refresco de provincia en marcha.
+    Devuelve True si la vació."""
+    with _ZIP_CONTRATOS_CACHE_LOCK:
+        ociosa = (bool(_ZIP_CONTRATOS_CACHE) and time.time() - _zip_cache_estado["ultimo_uso"] > _ZIP_CACHE_OCIOSA_S
+                  and not _actualizando_todos_lock.locked())
+        if not ociosa:
+            return False
+        n = sum(len(v) for v in _ZIP_CONTRATOS_CACHE.values())
+        _ZIP_CONTRATOS_CACHE.clear()
+    antes = psutil.Process().memory_info().rss
+    _liberar_memoria()
+    mb = round((antes - psutil.Process().memory_info().rss) / 1048576)
+    _zip_cache_estado.update(vaciados=_zip_cache_estado["vaciados"] + 1, liberados_mb=mb,
+                             ultimo_vaciado=time.strftime("%Y-%m-%d %H:%M", time.gmtime()))
+    print(f"  [memoria] caché de ZIP de PLACE vaciada ({n} contratos en RAM, {mb} MB devueltos al sistema)", flush=True)
+    return True
+
+
+def _zip_cache_vigilar():
+    """Hilo de fondo: cada 5 minutos comprueba si toca vaciar la caché de ZIP (ver arriba)."""
+    while True:
+        time.sleep(300)
+        try:
+            if not _zip_cache_vaciar_si_ociosa():
+                # Además, cada 5 minutos se devuelve al sistema la memoria que Python ya soltó: montar una página cara
+                # (búsqueda, rankings) reserva decenas de MB que glibc no devuelve sola, y con los rastreadores pidiendo
+                # cientos de páginas distintas el proceso pasaba de 700 a 1.100 MB en 3 horas sin ningún refresco
+                # (medido el 07-10). Es barato: solo recorta lo que ya está libre.
+                antes = psutil.Process().memory_info().rss
+                _liberar_memoria()
+                _zip_cache_estado["recorte_periodico_mb"] = round((antes - psutil.Process().memory_info().rss) / 1048576)
+                _zip_cache_estado["recortes"] = _zip_cache_estado.get("recortes", 0) + 1
+        except Exception as e:
+            print(f"  [memoria] vigilancia de la caché de ZIP: {type(e).__name__}: {e}", flush=True)
+
+
+def _zip_cache_diagnostico():
+    with _ZIP_CONTRATOS_CACHE_LOCK:
+        return {"zips_en_ram": len(_ZIP_CONTRATOS_CACHE), "contratos_en_ram": sum(len(v) for v in _ZIP_CONTRATOS_CACHE.values()),
+                "sin_uso_min": (round((time.time() - _zip_cache_estado["ultimo_uso"]) / 60)
+                                if _zip_cache_estado["ultimo_uso"] else None),
+                "vaciados": _zip_cache_estado["vaciados"], "ultimo_vaciado": _zip_cache_estado["ultimo_vaciado"],
+                "liberados_mb_ultima_vez": _zip_cache_estado["liberados_mb"],
+                "recortes_periodicos": _zip_cache_estado.get("recortes", 0),
+                "ultimo_recorte_mb": _zip_cache_estado.get("recorte_periodico_mb")}
 
 
 def _extraer_contratos_zip(zip_path, job_id=None):
@@ -8030,6 +8086,7 @@ def _contratos_de_zip_cacheado(zip_path, job_id=None):
     except OSError:
         clave = (zip_path, 0, 0)
     with _ZIP_CONTRATOS_CACHE_LOCK:
+        _zip_cache_estado["ultimo_uso"] = time.time()
         if clave in _ZIP_CONTRATOS_CACHE:
             return _ZIP_CONTRATOS_CACHE[clave]
         for vieja in [k for k in _ZIP_CONTRATOS_CACHE if k[0] == zip_path]:
@@ -14607,6 +14664,7 @@ def _arrancar_hilos_de_fondo():
     hilo_feed.start()
     threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
     threading.Thread(target=_licitaciones_bg, args=(hilo_feed,), name="licitaciones", daemon=True).start()
+    threading.Thread(target=_zip_cache_vigilar, name="memoria-zips", daemon=True).start()
     # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
     # al RSS (búsqueda text=España) en vez de esperar al cron diario.
     if len(_db_noticias_ue(limit=3)) < 3:
@@ -17691,6 +17749,56 @@ def _calcular_rankings(datos):
     return top_n, top_imp
 
 
+# Top 10 de empresas ya calculado (2026-10-07). Cada página de /rankings -- y hay miles de combinaciones de página,
+# provincia y comunidad -- cargaba TODOS los municipios y recorría TODOS los contratos dos veces (nacional y
+# provincia) solo para sacar estas dos listas de 10: 5 s en producción (17 s si coincidía con otra petición), siempre
+# con el mismo resultado. Ahora se calculan de una pasada el top nacional y el de cada provincia, leyendo ficha a
+# ficha (sin tener la base entera en memoria), y se guardan _RK_EMPRESAS_TTL segundos. Mismo criterio y mismo orden
+# que _calcular_rankings (que sigue existiendo para quien ya tiene los datos cargados).
+_RK_EMPRESAS_TTL = 900
+_rk_empresas = {"ts": 0.0, "nacional": ([], []), "provincias": {}}
+_rk_empresas_lock = threading.Lock()
+
+
+def _rankings_empresas_cacheado(provincia=None):
+    """(top 10 por nº de contratos, top 10 por importe) del conjunto nacional (provincia=None) o de una provincia."""
+    with _rk_empresas_lock:              # si llegan varias a la vez, calcula una y las demás esperan su resultado
+        if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
+            nac, por_prov = {}, {}
+            for d in _db_iter_municipios():
+                grupos_prov = por_prov.setdefault(d.get("provincia", "murcia"), {})
+                for c in d.get("contratos", []):
+                    if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                        continue
+                    emp = c.get("empresa", "")
+                    if not emp or emp in ("No localizada", "Desierto"):
+                        continue
+                    key = normalizar(emp)
+                    imp = c.get("importe_num", 0.0) or 0.0
+                    for grupos in (nac, grupos_prov):
+                        g = grupos.get(key)
+                        if g is None:
+                            g = grupos[key] = {"empresa": emp, "n": 0, "importe": 0.0, "directivo": "", "cargo": ""}
+                        g["n"] += 1
+                        g["importe"] += imp
+                        if not g["directivo"]:
+                            g["directivo"], g["cargo"] = _directivo_contrato(c)
+                            g["nif"] = c.get("nif", "")
+                del d
+
+            def _tops(grupos):
+                lista = list(grupos.values())
+                return (sorted(lista, key=lambda g: g["n"], reverse=True)[:10],
+                        sorted(lista, key=lambda g: g["importe"], reverse=True)[:10])
+
+            _rk_empresas.update(nacional=_tops(nac), provincias={pv: _tops(g) for pv, g in por_prov.items()},
+                                ts=time.time())
+            del nac, por_prov
+        if provincia is None:
+            return _rk_empresas["nacional"]
+        return _rk_empresas["provincias"].get(provincia, ([], []))
+
+
 _INDICE_COMPONENTE_LABEL = {
     "menores":       "Contratos menores publicados",
     "adjudicatario": "Adjudicatario identificado",
@@ -18049,8 +18157,9 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     - Nacional: agrega TODAS las provincias cargadas (Murcia + Girona + las que vengan).
     - Provincial: el mismo top 10 x2, filtrable por una provincia concreta.
     """
-    top_n_nac, top_imp_nac = _calcular_rankings(datos_nacional)
-    top_n_prov, top_imp_prov = _calcular_rankings(datos_provincia)
+    # datos_nacional/datos_provincia ya no se usan: los top salen de _rankings_empresas_cacheado (ver ahí).
+    top_n_nac, top_imp_nac = _rankings_empresas_cacheado(None)
+    top_n_prov, top_imp_prov = _rankings_empresas_cacheado(provincia_prov)
     label_prov = PROVINCIA_LABEL.get(provincia_prov, PROVINCIA_LABEL["murcia"])
     paginas = paginas or {}
     pags_actuales = {}      # página efectiva de cada tabla larga, para construir los enlaces
@@ -18296,8 +18405,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
   {_share_buttons_html(_rk_og_path, _t("Rankings de contratación pública — Dinero Público"))}"""
 
     return _page_shell(_t("Rankings — Top 10 empresas"), body,
-                        description="Ranking nacional y por provincia de las empresas con más contratos "
-                                     "públicos y mayor importe adjudicado, con sus directivos identificados.",
+                        description=_t("Ranking nacional y por provincia de las empresas con más contratos "
+                                       "públicos y mayor importe adjudicado, con sus directivos identificados."),
                         provincia="todas", og_path=_rk_og_path)
 
 
@@ -18452,179 +18561,181 @@ _FUENTES_CM_SIN_IVA = {"torre-pacheco", "cartagena-governalia", "ibi-governalia"
 # Avisos públicos por fuente, visibles en la sección de contratos menores de la
 # ficha cuando el municipio tiene filas de esa fuente: límites de cobertura o
 # inferencias del parser que el lector debe conocer, no solo la documentación.
+# Cada nota es un texto de traducción diferida (_td): se guarda en castellano y se traduce al pintarla
+# (_t_diferido en _nota_base_importe_cm), como el resto de la interfaz. 2026-10-07.
 _NOTAS_FUENTE_CM = {
-    "place-menores": (
+    "place-menores": _td(
         "Conjunto de datos oficial de contratos menores de la Plataforma de Contratación del Sector Público: solo lo "
         "que el ayuntamiento (o sus organismos y empresas) registra en su perfil de PLACE, que no es obligatorio -- "
         "muchos publican sus menores en su propia web o en PDF. Importe adjudicado SIN IVA, con NIF del "
         "adjudicatario. Si el ayuntamiento tiene además una fuente propia conectada, del feed solo se muestran los "
         "contratos que esa fuente no trae (mismo adjudicatario, fecha ±7 días e importe)."
     ),
-    "cadiz": (
+    "cadiz": _td(
         "Solo 2023: es el único listado de contratos menores que publica el propio Ayuntamiento de Cádiz en su "
         "portal de transparencia (para el resto de años remite a la Plataforma de Contratación del Estado). Fecha "
         "real de adjudicación e importe con IVA; sin NIF."
     ),
-    "santa_cruz": (
+    "santa_cruz": _td(
         "Relaciones anuales en PDF del Ayuntamiento de Santa Cruz de Tenerife (2022-2025), con fecha real de "
         "adjudicación y la concejalía u organismo que contrata; sin NIF. Importes con impuestos incluidos (IGIC). "
         "Ojo: los PDF de 2023 y 2024 están incompletos según el propio Ayuntamiento, que en su resumen oficial "
         "declara 1.204 y 1.267 contratos menores esos años, frente a los 806 y 768 que lista el PDF. 2021 no se "
         "muestra porque su relación no trae fecha por contrato."
     ),
-    "torrejon": (
+    "torrejon": _td(
         "Listados trimestrales oficiales del Ayuntamiento de Torrejón de Ardoz (PDF de 2022 a 2024, Excel desde "
         "2025), con fecha real de adjudicación y CIF. Importe = base imponible SIN IVA (la fuente publica base e "
         "IVA por separado). Falta el primer trimestre de 2022: ese listado solo publica el importe con IVA, y "
         "mezclarlo cambiaría la base de todo el municipio. No hay listados de 2021."
     ),
-    "sevilla": (
+    "sevilla": _td(
         "Relaciones mensuales en PDF publicadas por el Ayuntamiento de Sevilla en sevilla.org (contratación), "
         "con fecha real de adjudicación, CIF y unidad que tramita cada contrato. Importes SIN IVA (la fuente "
         "publica el IVA en columna aparte). Cobertura desde septiembre de 2021 hasta el último mes publicado."
     ),
-    "almeria": (
+    "almeria": _td(
         "Ficheros anuales del portal de transparencia del Ayuntamiento de Almería, con fecha real de "
         "adjudicación e importe con IVA, sin NIF. Falta 2025: el Ayuntamiento solo lo publica en un PDF que no "
         "se puede leer de forma fiable, y su enlace de «contratos menores 2025» en Excel lleva en realidad a un "
         "fichero de contratos abiertos. Seis contratos superan el importe máximo legal de un menor (el mayor, "
         "753.043 € por 39 escudos, parece un error de la propia fuente); se muestran tal cual se publican."
     ),
-    "malaga": (
+    "malaga": _td(
         "Informes trimestrales del portal de datos abiertos del Ayuntamiento de Málaga. La fuente NO publica "
         "la fecha de cada contrato: la fecha mostrada es el primer día del trimestre del informe, no la de "
         "adjudicación. Cobertura desde el cuarto trimestre de 2021. La base del importe no es homogénea (algunos "
         "contratos cambian de importe con o sin IVA de un informe a otro), así que no se puede afirmar que "
         "todos lleven IVA. Sin NIF hasta el primer trimestre de 2024."
     ),
-    "gijon": (
+    "gijon": _td(
         "Dataset abierto oficial del Ayuntamiento de Gijón (opendata.gijon.es), actualizado casi a diario. "
         "Incluye el Ayuntamiento y su sector público municipal (fundaciones, patronatos y empresas "
         "municipales como EMTUSA o Divertia): el ente que adjudica figura en cada contrato. Fecha real de "
         "adjudicación. Importes con IVA."
     ),
-    "a-coruna": (
+    "a-coruna": _td(
         "Cobertura de A Coruña desde septiembre de 2021 (solo se muestran los contratos de los últimos cinco "
         "años; los anteriores están archivados). Antes de 2021 no hay datos aprovechables: 2014-2017 son "
         "imputaciones de facturas sin NIF y 2018-2019 usan otro esquema de datos. Importes con IVA."
     ),
-    "lugo": (
+    "lugo": _td(
         "Lugo dejó de publicar sus contratos menores tras el tercer trimestre de 2025, así que la cobertura "
         "termina en septiembre de 2025 (empieza en 2021). Sin NIF. Importes con IVA. En el primer trimestre de "
         "2022 su PDF es en parte ilegible y faltan unas 117 filas."
     ),
-    "santiago": (
+    "santiago": _td(
         "Santiago publica un listado del sistema contable del Concello: la fecha es la de entrada del documento, "
         "no la de adjudicación, y los NIF de personas físicas no se muestran. Se excluyen unas 30 filas que superan "
         "el importe máximo legal de un contrato menor (convenios, entregas a cuenta y liquidaciones, no contratos). "
         "Del 9 de enero al 31 de marzo de 2026 la fuente no publica datos. Importes con IVA."
     ),
-    "ames": (
+    "ames": _td(
         "Ames publica sus contratos menores en PDF semestrales sin fecha por contrato ni NIF: la fecha "
         "mostrada es el inicio del semestre (1 de enero o 1 de julio), no la del contrato. Cobertura desde "
         "2021; importes con IVA."
     ),
-    "pontevedra": (
+    "pontevedra": _td(
         "Cobertura de Pontevedra desde abril de 2023: antes no hay contratos menores publicados en su "
         "sede electrónica. Importes con IVA. Los totales por trimestre coinciden con las estadísticas del "
         "propio portal, salvo 10 contratos (67.631,55 €) que la fuente publica sin adjudicatario y que "
         "no se muestran."
     ),
-    "vigo": (
+    "vigo": _td(
         "En Vigo el adjudicatario no es un campo explícito de la fuente: el informe en PDF lo "
         "indica como cabecera de grupo encima de sus contratos y así lo hemos asignado (validado "
         "en casos inequívocos con un 92-100 % de coherencia). Cobertura desde 2022; importes con "
         "IVA; el informe no publica NIF."
     ),
-    "euskadi": (
+    "euskadi": _td(
         "Datos de la API pública de contratación de Euskadi (Gobierno Vasco), la misma fuente que los contratos "
         "formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección "
         "cuando el propio dato de origen es matemáticamente imposible, ver memoria del proyecto). No siempre "
         "publica NIF."
     ),
-    "madrid_capital": (
+    "madrid_capital": _td(
         "Dataset oficial \"Contratos menores\" del Ayuntamiento de Madrid (datos.madrid.es, Dirección General de "
         "Contratación y Servicios), actualización mensual. Fecha real de adjudicación e importe con IVA; sí "
         "publica NIF del adjudicatario (a diferencia de RPC/Euskadi). Sin CPV y sin enlace por expediente. Solo "
         "Madrid capital, no el resto de municipios de la Comunidad de Madrid (que no tiene agregador propio, ver "
         "LIMITACIONES_COBERTURA.md)."
     ),
-    "valencia_capital": (
+    "valencia_capital": _td(
         "Buscador oficial de contratos menores del Ayuntamiento de Valencia (www.valencia.es), consultado en vivo "
         "(no un dataset descargable). Fecha real de adjudicación, importe SIN IVA (columna propia del buscador, "
         "distinta del IVA), NIF del adjudicatario. Solo Valencia capital, no el resto de la Comunitat Valenciana "
         "(sin agregador propio, ver LIMITACIONES_COBERTURA.md)."
     ),
-    "alicante": (
+    "alicante": _td(
         "Informe trimestral oficial de contratos menores del Ayuntamiento de Alicante (Junta de Gobierno Local), "
         "publicado en ODS. Fecha real del contrato, importe SIN IVA, NIF del adjudicatario. Sin CPV ni enlace "
         "por contrato."
     ),
-    "getafe": (
+    "getafe": _td(
         "API pública del portal de gobierno abierto de Getafe (plataforma Gobierto). Trae CPV y categoría del "
         "contrato (única fuente local de menores con CPV, además de PSCP/Euskadi en formales), pero NO publica "
         "NIF del adjudicatario."
     ),
-    "mostoles": (
+    "mostoles": _td(
         "Informes mensuales oficiales del Ayuntamiento de Móstoles, publicados en PDF (portal de "
         "transparencia). Importe con IVA, NIF del adjudicatario. Sin expediente en columna propia (va embebido "
         "en el texto libre del objeto); falta un mes (noviembre de 2024, formato de tabla no reconocible en ese "
         "PDF concreto -- omitido, no inventado)."
     ),
-    "leganes": (
+    "leganes": _td(
         "Informes mensuales/trimestrales oficiales del Ayuntamiento de Leganés, publicados en XLSX (mismo "
         "formato que Alicante). Importe SIN IVA, NIF del adjudicatario. Puede faltar el mes más reciente si su "
         "fichero todavía no está disponible para descarga en el momento de actualizar (se reintenta solo)."
     ),
-    "toledo": (
+    "toledo": _td(
         "Informes semestrales oficiales del Ayuntamiento de Toledo, publicados en XLSX. Importe con IVA. "
         "Esta fuente NO publica fecha por contrato (se muestra sin fecha, como el resto de filas sin fecha del "
         "proyecto) ni NIF en la mayoría de los semestres. Puede haber algún contrato duplicado entre semestres "
         "consecutivos (sin expediente ni fecha propios no es posible deduplicar con certeza)."
     ),
-    "palma": (
+    "palma": _td(
         "Informes trimestrales oficiales del Ayuntamiento de Palma, publicados en Excel. La columna de importe "
         "no indica explícitamente si incluye IVA (se muestra tal cual la publica la fuente). NIF del "
         "adjudicatario solo disponible en los trimestres que lo publican (la mayoría no lo hace)."
     ),
-    "fuenlabrada": (
+    "fuenlabrada": _td(
         "Informes trimestrales oficiales del Ayuntamiento de Fuenlabrada y sus Organismos Autónomos (CIFE, "
         "IMLS, OTAF, PMC, PMD), en `transparencia.ayto-fuenlabrada.es/contratos/menores/` -- sección pública "
         "distinta del visor de contratos general de ese mismo portal (ese sí está protegido por contraseña). "
         "Fecha real de aprobación, NIF del adjudicatario."
     ),
-    "alcala_henares": (
+    "alcala_henares": _td(
         "Informes trimestrales oficiales del Ayuntamiento de Alcalá de Henares, en PDF sin tabla real "
         "(parseados línea a línea). Dos formatos según la época: hasta 2023 no publica NIF en absoluto; desde "
         "2024 sí, pero el de las PERSONAS FÍSICAS viene PARCIALMENTE ENMASCARADO por la propia fuente (solo "
         "los últimos dígitos, p.ej. \"***8694**\") -- se muestra tal cual, nunca se intenta completar."
     ),
-    "valladolid": (
+    "valladolid": _td(
         "Informes anuales de \"Contratación\" del Ayuntamiento de Valladolid (programa de contabilidad "
         "municipal SICALWIN), filtrados por PROCEDIMIENTO='Contratación menor'. Sin NIF del adjudicatario (no "
         "publicado por esta fuente)."
     ),
-    "zaragoza": (
+    "zaragoza": _td(
         "API propia del Ayuntamiento de Zaragoza (contratacion-publica/contrato, filtro contratoMenor=true) -- "
         "no la API estándar OCDS que el propio Ayuntamiento documenta como preferente, que tiene la paginación "
         "rota. Fecha real de adjudicación, importe con IVA, NIF del adjudicatario, CPV. Un puñado de contratos "
         "(2 en toda la ventana) supera claramente el techo legal de un contrato menor pese a venir marcados como "
         "tal por la fuente -- probablemente un error de etiquetado de origen; se muestran tal cual, con aviso."
     ),
-    "ciudad_real": (
+    "ciudad_real": _td(
         "Página única del perfil de contratante del Ayuntamiento de Ciudad Real, con dos eras: 2022-2024 son "
         "bloques de texto libre (objeto, importe con IVA, adjudicatario) SIN fecha real ni NIF; desde 2025 son "
         "ficheros XLSX oficiales con NIF y fecha real de adjudicación, pero SIN objeto/descripción del "
         "contrato. Cada fila muestra los campos que su propia era publica, nunca ambos a la vez."
     ),
-    "burgos": (
+    "burgos": _td(
         "Biblioteca de ~49 PDF del perfil de contratante del Ayuntamiento de Burgos, subidos a mano "
         "trimestre a trimestre desde 2020 con nombres de fichero muy poco fiables (alguno, pese a llamarse "
         "\"contratos de trabajo\", es en realidad un listado de contratos menores) -- se clasifican por el "
         "título real de cada PDF, no por su nombre. Fecha real de adjudicación e importe con IVA por "
         "contrato. Sin NIF del adjudicatario en ninguno de los tres formatos de columnas que usa la fuente."
     ),
-    "laspalmasgc": (
+    "laspalmasgc": _td(
         "API real del portal de transparencia (Next.js) del Ayuntamiento de Las Palmas de Gran Canaria, "
         "encontrada con un navegador real (Playwright) interceptando la descarga CSV que ofrece la propia "
         "página. Sin fecha por contrato (ventana de 5 años aplicada por ejercicio completo; 2021 excluido "
@@ -18633,47 +18744,47 @@ _NOTAS_FUENTE_CM = {
         "legal habitual de un contrato menor -- se muestran tal cual, tal como las publica la propia "
         "obligación de transparencia municipal, sin filtrar ni corregir."
     ),
-    "torrent": (
+    "torrent": _td(
         "Informes trimestrales en XLSX del Perfil del contratante del Ayuntamiento de Torrent (Comunitat "
         "Valenciana), con enlaces encontrados navegando la página con un navegador real (Playwright): un "
         "fetch simple no encuentra los enlaces de descarga. Importe SIN IVA. NIF del adjudicatario solo "
         "disponible en los ficheros hasta 2022 (la fuente deja de publicar esa columna desde 2023)."
     ),
-    "la_laguna": (
+    "la_laguna": _td(
         "XLSX oficiales del portal de transparencia del Ayuntamiento de San Cristóbal de La Laguna y sus "
         "organismos autónomos OAAM y OAD (uno por año y entidad, enlaces encontrados navegando con un "
         "navegador real). El importe es SIN IGIC, el impuesto indirecto propio de Canarias equivalente al IVA "
         "peninsular (no confundir con \"sin impuestos\" a secas)."
     ),
-    "arona": (
+    "arona": _td(
         "API real del portal de transparencia (Next.js, misma plataforma que Las Palmas de Gran Canaria) del "
         "Ayuntamiento de Arona, encontrada con un navegador real (Playwright). Sin fecha por contrato "
         "(ventana de 5 años aplicada por ejercicio completo; 2021 excluido por ambiguo). Sin descripción del "
         "objeto del contrato (la fuente no la publica en este listado)."
     ),
-    "salamanca": (
+    "salamanca": _td(
         "Informes anuales oficiales en PDF (tabla real, extraída con pdfplumber), enlaces encontrados "
         "navegando la web con un navegador real. Solo hay datos hasta el primer trimestre de 2024 (la propia "
         "fuente no publica nada más reciente). Un contrato de 2023 (35 chalecos de mando ignífugos, "
         "506.337,00 €) supera con mucho el techo legal habitual de un contrato menor -- se muestra tal cual "
         "aparece en la tabla oficial de la fuente, sin corregir."
     ),
-    "castello-governalia": (
+    "castello-governalia": _td(
         "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la "
         "Plataforma de Contratación del Sector Público (PLACE) -- mismo mecanismo que ya usan Cartagena, Ibi, "
         "Sax y Vilamarxant. Fecha real de adjudicación, NIF del adjudicatario, importe adjudicado SIN IVA."
     ),
-    "xirivella-governalia": (
+    "xirivella-governalia": _td(
         "API de Governalia del Ayuntamiento de Xirivella (Comunitat Valenciana), espejo de PLACE -- mismo "
         "mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del "
         "adjudicatario, importe adjudicado SIN IVA."
     ),
-    "santabrigida-governalia": (
+    "santabrigida-governalia": _td(
         "API de Governalia del Ayuntamiento de Santa Brígida (Gran Canaria), espejo de PLACE -- mismo "
         "mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del "
         "adjudicatario, importe adjudicado SIN IVA."
     ),
-    "alzira-governalia": (
+    "alzira-governalia": _td(
         "API de Governalia del Ayuntamiento de Alzira (Comunitat Valenciana), espejo de PLACE -- mismo "
         "mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del "
         "adjudicatario, importe adjudicado SIN IVA."
@@ -18686,7 +18797,7 @@ def _nota_base_importe_cm(menors):
     municipio: base de importe (sin IVA) de las fuentes Governalia más los
     avisos propios de cada fuente (_NOTAS_FUENTE_CM)."""
     fuentes = {r.get("fuente") for r in menors}
-    avisos = "".join(f'<div class="cm-base-nota">{esc(_NOTAS_FUENTE_CM[f])}</div>'
+    avisos = "".join(f'<div class="cm-base-nota">{esc(_t_diferido(_NOTAS_FUENTE_CM[f]))}</div>'
                      for f in sorted(fuentes) if f in _NOTAS_FUENTE_CM)
     sin_iva = fuentes & _FUENTES_CM_SIN_IVA
     if not sin_iva:
@@ -19058,8 +19169,9 @@ def render_fondos_ue_html(fondos, provincia="todas"):
     filas = "".join(_render_fila_fondo_ue(f) for f in fondos[:300])
     if not filas:
         filas = f'<tr><td colspan="4" class="empty">{_t("Sin datos de fondos UE todavía para esta provincia.")}</td></tr>'
-    aviso_limite = (f'<div class="gs-hint" style="margin-bottom:10px">Mostrando los primeros 300 de '
-                     f'{len(fondos)}, ordenados por importe.</div>') if len(fondos) > 300 else ""
+    aviso_limite = ('<div class="gs-hint" style="margin-bottom:10px">'
+                    + _t("Mostrando los primeros {n} de {total}, ordenados por importe.").format(n=300, total=len(fondos))
+                    + '</div>') if len(fondos) > 300 else ""
 
     body = f"""<span class="back-link"><a href="/">← {_t("Volver al inicio")}</a></span>
   <div class="hero" style="padding-bottom:4px">
@@ -19711,7 +19823,8 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                             f'<div class="pag-links">{prev_link}{next_link}</div>'
                             f'</div>')
             else:
-                pag_html = (f'<div class="pag-more">Mostrando los primeros {PAGE_SIZE} de {total_muni} contratos. '
+                pag_html = ('<div class="pag-more">'
+                            + _t("Mostrando los primeros {n} de {total} contratos.").format(n=PAGE_SIZE, total=total_muni) + ' '
                             f'<a href="/?muni={muni_enc}&pag=1{q_prov}">{_t("Ver todos →")}</a></div>')
 
         # Fondos y proyectos UE cruzados con este municipio (ver
@@ -19790,7 +19903,8 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                                    f'<div class="pag-links">{prev_cm}{next_cm}</div>'
                                    f'</div>')
                 else:
-                    pag_cm_html = (f'<div class="pag-more">Mostrando los primeros {PAGE_SIZE} de {total_cm_n}. '
+                    pag_cm_html = ('<div class="pag-more">'
+                                   + _t("Mostrando los primeros {n} de {total}.").format(n=PAGE_SIZE, total=total_cm_n) + ' '
                                    f'<a href="/?muni={muni_enc}&pag_cm=1{q_prov}">{_t("Ver todos →")}</a></div>')
 
             abierto = " open" if page_cm > 1 else ""
@@ -20652,7 +20766,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         </a>"""
 
     # Top 1 del ranking nacional (agregando todas las provincias)
-    top_n_nac, top_imp_nac = _calcular_rankings(datos)
+    top_n_nac, top_imp_nac = _rankings_empresas_cacheado(None)
 
     def _top1_card(lista, etiqueta, valor_html):
         if not lista:
@@ -21154,6 +21268,8 @@ def _estado_carga():
         "hilos_python": threading.active_count(),
         "paginas_cache": _paginas_cache_estado(),
         "refresco_fases": _refresco_fases_leer()[-12:],
+        "cache_zips_place": _zip_cache_diagnostico(),
+        "rastreadores_frenados": _bots_diagnostico(),
     }
 
 
@@ -23050,7 +23166,7 @@ def render_aviso_legal_html():
 
   <h2>{_t("Origen de los datos")}</h2>
   <p>{_t("Los datos de contratos mostrados provienen de fuentes oficiales públicas: la Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda, que cubre todo el territorio nacional, además de fuentes autonómicas complementarias como el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Se seguirán incorporando otras fuentes de contratos menores y organismos públicos a medida que estén disponibles.")}</p>
-  <p>{_t("Los nombres de directivos y administradores provienen de registros públicos (Registro Mercantil y fuentes empresariales públicas equivalentes).")}</p>
+  <p>{_t("Los nombres de directivos y administradores provienen del Boletín Oficial del Registro Mercantil (BORME), que publica el Boletín Oficial del Estado. No se consultan directorios de empresas privados.")}</p>
   <p>{_t("Próximamente se incorporarán también datos de subvenciones y fondos europeos.")}</p>
 
   <h2>{_t("Base legal para el tratamiento de datos")}</h2>
@@ -23345,10 +23461,7 @@ def _route_get(path, qs, gzip_ok=False):
                           "deuda": _comunidad_valida(qs.get("comunidad_deuda", ["todas"])[0])}
 
         def _montar_rankings():
-            datos_nacional = _db_municipios_ligeros()
-            datos_provincia = [d for d in datos_nacional if d.get("provincia", "murcia") == provincia_prov]
-            return render_rankings_html(datos_nacional, datos_provincia, provincia_prov, comunidad_qs,
-                                        paginas_qs, comunidades_qs)
+            return render_rankings_html(None, None, provincia_prov, comunidad_qs, paginas_qs, comunidades_qs)
 
         # Solo los parámetros que el visitante ha puesto y no son el valor por defecto: misma página = misma entrada.
         params_rk = [(n, v) for n, v, defecto in (
@@ -23990,6 +24103,52 @@ def _familia_ua(ua):
 _RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot", re.I)
 
 
+# Cupo de páginas CARAS para rastreadores (2026-10-07, decisión delegada por César). Las búsquedas (/?q=) y los
+# rankings con parámetros cuestan 5-17 s de CPU cada uno la primera vez, y los rastreadores piden combinaciones
+# distintas sin parar (Amazonbot: 150 peticiones cada 10 minutos; en 6,8 h, 485 páginas montadas y solo 31 servidas
+# de la caché), con un solo proceso que atiende a todos. Cada familia de rastreador puede pedir _BOTS_CUPO de esas
+# páginas de golpe y después una cada _BOTS_REPONE_S segundos; por encima recibe un 429 con Retry-After, sin
+# calcular nada. No afecta a navegadores, ni a las fichas, la portada, /rankings sin parámetros o el resto de
+# páginas, que los rastreadores siguen leyendo sin límite. No se bloquea en robots.txt: las búsquedas por empresa
+# son lo más parecido a una ficha de empresa y conviene que los buscadores las sigan viendo, solo más despacio.
+_BOTS_CUPO = 6
+_BOTS_REPONE_S = 100
+_RE_RUTA_CARA_INICIO = re.compile(r"^(?:/(?:gl|ca|eu))?/$")
+_RE_RUTA_CARA_RANKINGS = re.compile(r"^(?:/(?:gl|ca|eu))?/rankings$")
+_bots_cupos = {}                 # familia -> [fichas disponibles, última reposición]
+_bots_lock = threading.Lock()
+_bots_frenadas = collections.Counter()
+
+
+def _ruta_cara_para_bots(path, query):
+    if not query:
+        return False
+    if _RE_RUTA_CARA_RANKINGS.match(path):
+        return True
+    return bool(_RE_RUTA_CARA_INICIO.match(path)) and bool(parse_qs(query).get("q", [""])[0].strip())
+
+
+def _bot_sin_cupo(familia):
+    """True si esta familia de rastreador ha agotado su cupo de páginas caras (y hay que contestar 429)."""
+    ahora = time.time()
+    with _bots_lock:
+        if len(_bots_cupos) > 300:
+            _bots_cupos.clear()
+        c = _bots_cupos.setdefault(familia, [float(_BOTS_CUPO), ahora])
+        c[0] = min(float(_BOTS_CUPO), c[0] + (ahora - c[1]) / _BOTS_REPONE_S)
+        c[1] = ahora
+        if c[0] >= 1:
+            c[0] -= 1
+            return False
+        _bots_frenadas[familia] += 1
+        return True
+
+
+def _bots_diagnostico():
+    with _bots_lock:
+        return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12))}
+
+
 def _ruta_diagnostico(path, query):
     """Ruta sin valores de la consulta (solo qué parámetros lleva), p. ej. "/?muni&provincia"."""
     claves = sorted(parse_qs(query or "").keys())
@@ -24010,6 +24169,15 @@ def app(environ, start_response):
             _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + " (403)"))
         start_response("403 Forbidden", [("Content-Type", "text/plain; charset=utf-8"), ("Content-Length", "9")])
         return [b"Forbidden"]
+    if (info["bot"] and info["metodo"] == "GET"
+            and _ruta_cara_para_bots(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
+            and _bot_sin_cupo(info["agente"])):
+        with _peticiones_lock:
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + " (429)"))
+        cuerpo = b"Demasiadas peticiones. Vuelve a intentarlo mas tarde.\n"
+        start_response("429 Too Many Requests", [("Content-Type", "text/plain; charset=utf-8"), ("Retry-After", "600"),
+                                                 ("Content-Length", str(len(cuerpo)))])
+        return [cuerpo]
     with _peticiones_lock:
         _peticiones_en_curso += 1
         _PETICIONES_ACTIVAS[id(ident)] = info
