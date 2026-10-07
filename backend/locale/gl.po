@@ -2218,7 +2218,7 @@ msgstr "<strong>Compárteo.</strong> Cada persoa que o coñece é alguén máis 
 msgid "<strong>Apóyalo económicamente.</strong> Mantener el servidor y seguir añadiendo fuentes cuesta dinero y tiempo."
 msgstr "<strong>Apóiao economicamente.</strong> Manter o servidor e seguir engadindo fontes custa diñeiro e tempo."
 
-#: app.py:22912 app.py:22964
+#: app.py:22912 app.py:22967
 msgid "Contacto"
 msgstr "Contacto"
 
@@ -2230,98 +2230,98 @@ msgstr "Quen son"
 msgid "Dinero Público lo hace una sola persona, sin equipo ni presupuesto: quién soy, qué hago con los datos públicos y cómo puedes colaborar."
 msgstr "Dinero Público faino unha soa persoa, sen equipo nin orzamento: quen son, que fago cos datos públicos e como podes colaborar."
 
-#: app.py:22925
+#: app.py:22927
 msgid "Esta página es una traducción. En caso de discrepancia, prevalece la <a href=\"{url}\">versión en castellano</a>."
 msgstr "Esta páxina é unha tradución. En caso de discrepancia, prevalece a <a href=\"{url}\">versión en castelán</a>."
 
-#: app.py:22929
+#: app.py:22932
 msgid "Aviso Legal y Privacidad"
 msgstr "Aviso legal e privacidade"
 
-#: app.py:22932
+#: app.py:22935
 msgid "Titular"
 msgstr "Titular"
 
-#: app.py:22935
+#: app.py:22938
 msgid "Dominio"
 msgstr "Dominio"
 
-#: app.py:22938
+#: app.py:22941
 msgid "Actividad"
 msgstr "Actividade"
 
-#: app.py:22939
+#: app.py:22942
 msgid "Plataforma de transparencia y datos públicos sobre contratación del sector público en España. Cobertura nacional: las 17 comunidades autónomas y 2 ciudades autónomas, con distinto grado de detalle según la provincia (ver el <a href=\"/mapa-cobertura\">mapa de cobertura</a> para el estado real de cada una)."
 msgstr "Plataforma de transparencia e datos públicos sobre contratación do sector público en España. Cobertura nacional: as 17 comunidades autónomas e 2 cidades autónomas, con distinto grao de detalle segundo a provincia (ver o <a href=\"/mapa-cobertura\">mapa de cobertura</a> para o estado real de cada unha)."
 
-#: app.py:22941
+#: app.py:22944
 msgid "Propiedad intelectual"
 msgstr "Propiedade intelectual"
 
-#: app.py:22942
+#: app.py:22945
 msgid "El código fuente de esta plataforma está registrado como obra en Safe Creative con todos los derechos reservados, número de registro <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (23 de julio de 2026)."
 msgstr "O código fonte desta plataforma está rexistrado como obra en Safe Creative con todos os dereitos reservados, número de rexistro <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (23 de xullo de 2026)."
 
-#: app.py:22944
+#: app.py:22947
 msgid "Origen de los datos"
 msgstr "Orixe dos datos"
 
-#: app.py:22945
+#: app.py:22948
 msgid "Los datos de contratos mostrados provienen de fuentes oficiales públicas: la Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda, que cubre todo el territorio nacional, además de fuentes autonómicas complementarias como el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Se seguirán incorporando otras fuentes de contratos menores y organismos públicos a medida que estén disponibles."
 msgstr "Os datos de contratos amosados proveñen de fontes oficiais públicas: a Plataforma de Contratación do Sector Público (PLACE) do Ministerio de Facenda, que cobre todo o territorio nacional, ademais de fontes autonómicas complementarias como o Boletín Oficial da Rexión de Murcia (BORM) e a Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Seguiranse incorporando outras fontes de contratos menores e organismos públicos a medida que estean dispoñibles."
 
-#: app.py:22946
+#: app.py:22949
 msgid "Los nombres de directivos y administradores provienen de registros públicos (Registro Mercantil y fuentes empresariales públicas equivalentes)."
 msgstr "Os nomes de directivos e administradores proveñen de rexistros públicos (Rexistro Mercantil e fontes empresariais públicas equivalentes)."
 
-#: app.py:22947
+#: app.py:22950
 msgid "Próximamente se incorporarán también datos de subvenciones y fondos europeos."
 msgstr "Proximamente incorporaranse tamén datos de subvencións e fondos europeos."
 
-#: app.py:22949
+#: app.py:22952
 msgid "Base legal para el tratamiento de datos"
 msgstr "Base legal para o tratamento de datos"
 
-#: app.py:22950
+#: app.py:22953
 msgid "El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD)."
 msgstr "O tratamento dos nomes de persoas físicas que aparecen como administradores ou apoderados de empresas adxudicatarias ampárase no interese público da información e en que proceden de fontes accesibles ao público (art. 9.2.e do Regulamento Xeral de Protección de Datos e Lei Orgánica 3/2018, de Protección de Datos Persoais e garantía dos dereitos dixitais — LOPDGDD)."
 
-#: app.py:22952
+#: app.py:22955
 msgid "Ejercicio de derechos RGPD"
 msgstr "Exercicio de dereitos RXPD"
 
-#: app.py:22953
+#: app.py:22956
 msgid "Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 msgstr "Para exercer os teus dereitos de acceso, rectificación, supresión, oposición ou limitación do tratamento, escribe a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 
-#: app.py:22955
+#: app.py:22958
 msgid "Cookies y publicidad"
 msgstr "Cookies e publicidade"
 
-#: app.py:22956
+#: app.py:22959
 msgid "Este sitio usa cookies propias, necesarias para su funcionamiento básico, y cookies de terceros que solo se activan si das tu consentimiento explícito en el banner que aparece al entrar:"
 msgstr "Este sitio usa cookies propias, necesarias para o seu funcionamento básico, e cookies de terceiros que só se activan se dás o teu consentimento explícito no aviso que aparece ao entrar:"
 
-#: app.py:22958
+#: app.py:22961
 msgid "<b>Google Analytics</b> — estadísticas de uso agregadas del sitio."
 msgstr "<b>Google Analytics</b> — estatísticas de uso agregadas do sitio."
 
-#: app.py:22959
+#: app.py:22962
 msgid "<b>Google AdSense</b> — cuando esté activo, para mostrar publicidad, en algunos casos personalizada según tus intereses."
 msgstr "<b>Google AdSense</b> — cando estea activo, para amosar publicidade, nalgúns casos personalizada segundo os teus intereses."
 
-#: app.py:22961
+#: app.py:22964
 msgid "Puedes aceptar o rechazar estas cookies en cualquier momento desde el enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier página del sitio — rechazarlas no impide usar la web con normalidad, solo desactiva las estadísticas y la publicidad."
 msgstr "Podes aceptar ou rexeitar estas cookies en calquera momento desde a ligazón <b>«Preferencias de cookies»</b> no pé de páxina de calquera páxina do sitio — rexeitalas non impide usar a web con normalidade, só desactiva as estatísticas e a publicidade."
 
-#: app.py:22962
+#: app.py:22965
 msgid "Más información sobre cómo Google usa los datos en sitios que utilizan sus servicios de publicidad: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Cómo usa Google los datos de los sitios o las apps que utilizan sus servicios</a>."
 msgstr "Máis información sobre como Google usa os datos en sitios que utilizan os seus servizos de publicidade: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Como usa Google os datos dos sitios ou das aplicacións que utilizan os seus servizos</a>."
 
-#: app.py:22967 app.py:16297
+#: app.py:22970 app.py:16297
 msgid "Aviso Legal"
 msgstr "Aviso legal"
 
-#: app.py:22968
+#: app.py:22971
 msgid "Aviso legal, privacidad y base legal para el tratamiento de datos públicos en Dinero Público."
 msgstr "Aviso legal, privacidade e base legal para o tratamento de datos públicos en Dinero Público."
