@@ -20687,8 +20687,8 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
 
     return _page_shell("Dinero Público | " + _t("Contratación pública en España"), body,
                         description=_t("Consulta los contratos públicos adjudicados en España con los directivos "
-                                       "de las empresas adjudicatarias. Cobertura nacional, las 19 comunidades y "
-                                       "ciudades autónomas."),
+                                       "de las empresas adjudicatarias. Cobertura nacional, las 17 comunidades "
+                                       "autónomas y 2 ciudades autónomas."),
                         provincia="todas", show_ad_banner=False)
 
 
@@ -22881,9 +22881,11 @@ def render_quienes_somos_html():
 
   <p>Dinero Público lo hago yo solo: César Castro Banegas. No hay una organización detrás, ni un equipo, ni
   presupuesto. No lo financia ningún partido, ninguna empresa ni ninguna administración. Detrás hay miles de horas
-  de código.</p>
+  de trabajo.</p>
 
-  <p>Empecé con los contratos de la Región de Murcia. Hoy la web cubre las 19 comunidades y ciudades autónomas de España, con distinto grado
+  <p><strong>PRÓXIMAMENTE, SE INCORPORARÁN UN ABOGADO, UN ECONOMISTA Y UN PERIODISTA.</strong></p>
+
+  <p>Empecé con los contratos de la Región de Murcia. Hoy la web cubre las 17 comunidades autónomas y 2 ciudades autónomas de España, con distinto grado
   de detalle según la provincia: el estado real de cada una está en el <a href="/mapa-cobertura">mapa de
   cobertura</a>.</p>
 
@@ -22930,7 +22932,7 @@ def render_aviso_legal_html():
 
   <h2>Actividad</h2>
   <p>Plataforma de transparencia y datos públicos sobre contratación del sector
-  público en España. Cobertura nacional: las 19 comunidades y ciudades autónomas,
+  público en España. Cobertura nacional: las 17 comunidades autónomas y 2 ciudades autónomas,
   con distinto grado de detalle según la provincia (ver el
   <a href="/mapa-cobertura">mapa de cobertura</a> para el estado real de cada una).</p>
 

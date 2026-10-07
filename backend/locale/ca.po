@@ -2043,8 +2043,8 @@ msgid "Empresas líderes · Ranking Nacional"
 msgstr "Empreses líders · Rànquing estatal"
 
 #: app.py:20249
-msgid "Consulta los contratos públicos adjudicados en España con los directivos de las empresas adjudicatarias. Cobertura nacional, las 19 comunidades y ciudades autónomas."
-msgstr "Consulta els contractes públics adjudicats a Espanya amb els directius de les empreses adjudicatàries. Cobertura estatal: les 19 comunitats i ciutats autònomes."
+msgid "Consulta los contratos públicos adjudicados en España con los directivos de las empresas adjudicatarias. Cobertura nacional, las 17 comunidades autónomas y 2 ciudades autónomas."
+msgstr "Consulta els contractes públics adjudicats a Espanya amb els directius de les empreses adjudicatàries. Cobertura estatal: les 17 comunitats autònomes i 2 ciutats autònomes."
 
 #: app.py:20300 app.py:15679
 msgid "Ver contratos →"

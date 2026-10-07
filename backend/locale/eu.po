@@ -2043,8 +2043,8 @@ msgid "Empresas líderes · Ranking Nacional"
 msgstr "Enpresa nagusiak · Estatuko sailkapena"
 
 #: app.py:20249
-msgid "Consulta los contratos públicos adjudicados en España con los directivos de las empresas adjudicatarias. Cobertura nacional, las 19 comunidades y ciudades autónomas."
-msgstr "Kontsultatu Espainian esleitutako kontratu publikoak, enpresa esleipendunen zuzendariekin. Estatu osoko estaldura: 19 autonomia-erkidegoak eta hiri autonomoak."
+msgid "Consulta los contratos públicos adjudicados en España con los directivos de las empresas adjudicatarias. Cobertura nacional, las 17 comunidades autónomas y 2 ciudades autónomas."
+msgstr "Kontsultatu Espainian esleitutako kontratu publikoak, enpresa esleipendunen zuzendariekin. Estatu osoko estaldura: 17 autonomia-erkidegoak eta 2 hiri autonomoak."
 
 #: app.py:20300 app.py:15679
 msgid "Ver contratos →"
