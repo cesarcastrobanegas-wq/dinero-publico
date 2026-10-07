@@ -56,7 +56,8 @@ _I18N_RUTA = contextvars.ContextVar("i18n_ruta", default=("/", ""))   # (ruta si
 # Páginas de contenido editorial: se leen en castellano también bajo /gl/, /ca/ o /eu/ (solo cambia la interfaz), así
 # que esas versiones NO son una traducción: canonical a la página en castellano, noindex y sin hreflang, para que
 # Google no las trate como duplicados. Tampoco van al sitemap por idioma.
-_I18N_RUTAS_EDITORIALES = ("/casos", "/metodologia", "/quienes-somos", "/quien-soy", "/aviso-legal")
+# "Quién soy" y "Aviso legal" salieron de esta lista el 2026-10-07: ya se traducen (ver render_quienes_somos_html).
+_I18N_RUTAS_EDITORIALES = ("/casos", "/metodologia")
 
 
 def _i18n_ruta_editorial(ruta):
@@ -22866,135 +22867,98 @@ def _bizum_html():
     numero = re.sub(r"[^0-9+ ]", "", os.environ.get("BIZUM_NUMERO", "")).strip()
     if not numero:
         return ""
+    copiado = esc(_t("Copiado")).replace("'", "")
     return f"""<div class="bizum-caja">
-    <p class="bizum-tit">Apoya el proyecto por Bizum</p>
+    <p class="bizum-tit">{_t("Apoya el proyecto por Bizum")}</p>
     <p class="bizum-num"><span id="bizum-numero">{esc(numero)}</span>
       <button type="button" class="btn" onclick="(function(b){{var t=document.getElementById('bizum-numero').textContent;
-        if(navigator.clipboard){{navigator.clipboard.writeText(t).then(function(){{b.textContent='Copiado';}},function(){{}});}}}})(this)">Copiar</button></p>
-    <p>Cualquier cantidad ayuda a pagar el servidor y el tiempo. En el concepto, si quieres, pon «Dinero Público».</p>
+        if(navigator.clipboard){{navigator.clipboard.writeText(t).then(function(){{b.textContent='{copiado}';}},function(){{}});}}}})(this)">{_t("Copiar")}</button></p>
+    <p>{_t("Cualquier cantidad ayuda a pagar el servidor y el tiempo. En el concepto, si quieres, pon «Dinero Público».")}</p>
   </div>"""
 
 
+# "Quién soy" y "Aviso legal" traducidas (2026-10-07, encargo de César): hasta hoy eran texto fijo en castellano y
+# figuraban en _I18N_RUTAS_EDITORIALES, así que bajo /gl/ y /ca/ se leían en castellano. Ahora cada párrafo pasa por
+# _t(), como el resto de la interfaz: se traduce en backend/locale/<idioma>.po y, si falta una traducción, ese
+# párrafo sale en castellano (nunca rompe). Un párrafo = un _t() con su HTML dentro (enlaces, negritas), para que
+# quien traduzca pueda mover las palabras; los enlaces internos los prefija _i18n_reescribir_html a la salida.
 def render_quienes_somos_html():
     """"Quién soy" (2026-10-01, encargo de César): contar la verdad -- una sola persona, sin presupuesto ni equipo --
     en primera persona del singular, y una llamada clara a colaborar o apoyar por Bizum. URL /quien-soy (la antigua
     /quienes-somos redirige)."""
     body = f"""<div class="static-page">
-  <h1>Quién soy</h1>
+  <h1>{_t("Quién soy")}</h1>
 
-  <p>Dinero Público lo hago yo solo: César Castro Banegas. No hay una organización detrás, ni un equipo, ni
-  presupuesto. No lo financia ningún partido, ninguna empresa ni ninguna administración. Detrás hay miles de horas
-  de trabajo.</p>
+  <p>{_t("Dinero Público lo hago yo solo: César Castro Banegas. No hay una organización detrás, ni un equipo, ni presupuesto. No lo financia ningún partido, ninguna empresa ni ninguna administración. Detrás hay miles de horas de trabajo.")}</p>
 
-  <p><strong>PRÓXIMAMENTE, SE INCORPORARÁN UN ABOGADO, UN ECONOMISTA Y UN PERIODISTA.</strong></p>
+  <p><strong>{_t("PRÓXIMAMENTE, SE INCORPORARÁN UN ABOGADO, UN ECONOMISTA Y UN PERIODISTA.")}</strong></p>
 
-  <p>Empecé con los contratos de la Región de Murcia. Hoy la web cubre las 17 comunidades autónomas y 2 ciudades autónomas de España, con distinto grado
-  de detalle según la provincia: el estado real de cada una está en el <a href="/mapa-cobertura">mapa de
-  cobertura</a>.</p>
+  <p>{_t('Empecé con los contratos de la Región de Murcia. Hoy la web cubre las 17 comunidades autónomas y 2 ciudades autónomas de España, con distinto grado de detalle según la provincia: el estado real de cada una está en el <a href="/mapa-cobertura">mapa de cobertura</a>.')}</p>
 
-  <h2>Qué hago y qué no</h2>
-  <p>Reúno datos que ya son públicos y oficiales, pero que están dispersos en decenas de portales, formatos y
-  registros: los contratos de la Plataforma de Contratación del Sector Público, los registros autonómicos, los
-  portales municipales, la deuda y las cuentas del Ministerio de Hacienda, los sueldos de alcaldes y concejales.
-  Los cruzo, los ordeno y los pongo en un solo sitio.</p>
-  <p>No acuso a nadie ni saco conclusiones por el lector. Cuando un dato parece raro, lo enseño tal como lo
-  publica la fuente oficial y explico lo que sé y lo que no. Y cuando me equivoco, lo corrijo y lo cuento: en
-  <a href="/casos">Casos</a> hay ejemplos de errores míos y de las fuentes. Cómo se calcula cada cosa está en la
-  <a href="/metodologia">metodología</a>.</p>
+  <h2>{_t("Qué hago y qué no")}</h2>
+  <p>{_t("Reúno datos que ya son públicos y oficiales, pero que están dispersos en decenas de portales, formatos y registros: los contratos de la Plataforma de Contratación del Sector Público, los registros autonómicos, los portales municipales, la deuda y las cuentas del Ministerio de Hacienda, los sueldos de alcaldes y concejales. Los cruzo, los ordeno y los pongo en un solo sitio.")}</p>
+  <p>{_t('No acuso a nadie ni saco conclusiones por el lector. Cuando un dato parece raro, lo enseño tal como lo publica la fuente oficial y explico lo que sé y lo que no. Y cuando me equivoco, lo corrijo y lo cuento: en <a href="/casos">Casos</a> hay ejemplos de errores míos y de las fuentes. Cómo se calcula cada cosa está en la <a href="/metodologia">metodología</a>.')}</p>
 
-  <h2>Cómo puedes colaborar</h2>
-  <p>Un proyecto de una sola persona depende de quien lo usa. Puedes ayudar de varias formas:</p>
+  <h2>{_t("Cómo puedes colaborar")}</h2>
+  <p>{_t("Un proyecto de una sola persona depende de quien lo usa. Puedes ayudar de varias formas:")}</p>
   <ul>
-    <li><strong>Avisa de errores.</strong> Si ves algo mal en la ficha de tu municipio, cuéntalo en sus comentarios.</li>
-    <li><strong>Envíame datos.</strong> Si tu ayuntamiento publica sus contratos menores en algún sitio que no
-    tengo, escríbeme.</li>
-    <li><strong>Compártelo.</strong> Cada persona que lo conoce es alguien más mirando cómo se gasta el dinero de
-    todos.</li>
-    <li><strong>Apóyalo económicamente.</strong> Mantener el servidor y seguir añadiendo fuentes cuesta dinero y
-    tiempo.</li>
+    <li>{_t("<strong>Avisa de errores.</strong> Si ves algo mal en la ficha de tu municipio, cuéntalo en sus comentarios.")}</li>
+    <li>{_t("<strong>Envíame datos.</strong> Si tu ayuntamiento publica sus contratos menores en algún sitio que no tengo, escríbeme.")}</li>
+    <li>{_t("<strong>Compártelo.</strong> Cada persona que lo conoce es alguien más mirando cómo se gasta el dinero de todos.")}</li>
+    <li>{_t("<strong>Apóyalo económicamente.</strong> Mantener el servidor y seguir añadiendo fuentes cuesta dinero y tiempo.")}</li>
   </ul>
   {_bizum_html()}
 
-  <h2>Contacto</h2>
+  <h2>{_t("Contacto")}</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
 </div>"""
-    return _page_shell("Quién soy", body,
-                        description="Dinero Público lo hace una sola persona, sin equipo ni presupuesto: quién soy, "
-                                     "qué hago con los datos públicos y cómo puedes colaborar.", og_path="/quien-soy")
+    return _page_shell(_t("Quién soy"), body,
+                        description=_t("Dinero Público lo hace una sola persona, sin equipo ni presupuesto: quién soy, "
+                                       "qué hago con los datos públicos y cómo puedes colaborar."), og_path="/quien-soy")
 
 
 def render_aviso_legal_html():
     body = f"""<div class="static-page">
-  <h1>Aviso Legal y Privacidad</h1>
+  <h1>{_t("Aviso Legal y Privacidad")}</h1>
 
-  <h2>Titular</h2>
+  <h2>{_t("Titular")}</h2>
   <p>César Castro Banegas.</p>
 
-  <h2>Dominio</h2>
+  <h2>{_t("Dominio")}</h2>
   <p>{esc(SITE_URL)}</p>
 
-  <h2>Actividad</h2>
-  <p>Plataforma de transparencia y datos públicos sobre contratación del sector
-  público en España. Cobertura nacional: las 17 comunidades autónomas y 2 ciudades autónomas,
-  con distinto grado de detalle según la provincia (ver el
-  <a href="/mapa-cobertura">mapa de cobertura</a> para el estado real de cada una).</p>
+  <h2>{_t("Actividad")}</h2>
+  <p>{_t('Plataforma de transparencia y datos públicos sobre contratación del sector público en España. Cobertura nacional: las 17 comunidades autónomas y 2 ciudades autónomas, con distinto grado de detalle según la provincia (ver el <a href="/mapa-cobertura">mapa de cobertura</a> para el estado real de cada una).')}</p>
 
-  <h2>Propiedad intelectual</h2>
-  <p>El código fuente de esta plataforma está registrado como obra en Safe
-  Creative con todos los derechos reservados, número de registro
-  <a href="https://www.safecreative.org/work/2607236515551" target="_blank"
-  rel="noopener">2607236515551</a> (23 de julio de 2026).</p>
+  <h2>{_t("Propiedad intelectual")}</h2>
+  <p>{_t('El código fuente de esta plataforma está registrado como obra en Safe Creative con todos los derechos reservados, número de registro <a href="https://www.safecreative.org/work/2607236515551" target="_blank" rel="noopener">2607236515551</a> (23 de julio de 2026).')}</p>
 
-  <h2>Origen de los datos</h2>
-  <p>Los datos de contratos mostrados provienen de fuentes oficiales públicas: la
-  Plataforma de Contratación del Sector Público (PLACE) del Ministerio de
-  Hacienda, que cubre todo el territorio nacional, además de fuentes
-  autonómicas complementarias como el Boletín Oficial de la Región de Murcia
-  (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya
-  (PSCP). Se seguirán incorporando otras fuentes de contratos menores y
-  organismos públicos a medida que estén disponibles.</p>
-  <p>Los nombres de directivos y administradores provienen de registros públicos
-  (Registro Mercantil y fuentes empresariales públicas equivalentes).</p>
-  <p>Próximamente se incorporarán también datos de subvenciones y fondos
-  europeos.</p>
+  <h2>{_t("Origen de los datos")}</h2>
+  <p>{_t("Los datos de contratos mostrados provienen de fuentes oficiales públicas: la Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda, que cubre todo el territorio nacional, además de fuentes autonómicas complementarias como el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Se seguirán incorporando otras fuentes de contratos menores y organismos públicos a medida que estén disponibles.")}</p>
+  <p>{_t("Los nombres de directivos y administradores provienen de registros públicos (Registro Mercantil y fuentes empresariales públicas equivalentes).")}</p>
+  <p>{_t("Próximamente se incorporarán también datos de subvenciones y fondos europeos.")}</p>
 
-  <h2>Base legal para el tratamiento de datos</h2>
-  <p>El tratamiento de los nombres de personas físicas que aparecen como
-  administradores o apoderados de empresas adjudicatarias se ampara en el interés
-  público de la información y en que proceden de fuentes accesibles al público
-  (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018,
-  de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD).</p>
+  <h2>{_t("Base legal para el tratamiento de datos")}</h2>
+  <p>{_t("El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD).")}</p>
 
-  <h2>Ejercicio de derechos RGPD</h2>
-  <p>Para ejercer tus derechos de acceso, rectificación, supresión, oposición o
-  limitación del tratamiento, escribe a
-  <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.</p>
+  <h2>{_t("Ejercicio de derechos RGPD")}</h2>
+  <p>{_t('Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
 
-  <h2>Cookies y publicidad</h2>
-  <p>Este sitio usa cookies propias, necesarias para su funcionamiento básico,
-  y cookies de terceros que solo se activan si das tu consentimiento
-  explícito en el banner que aparece al entrar:</p>
+  <h2>{_t("Cookies y publicidad")}</h2>
+  <p>{_t("Este sitio usa cookies propias, necesarias para su funcionamiento básico, y cookies de terceros que solo se activan si das tu consentimiento explícito en el banner que aparece al entrar:")}</p>
   <ul>
-    <li><b>Google Analytics</b> — estadísticas de uso agregadas del sitio.</li>
-    <li><b>Google AdSense</b> — cuando esté activo, para mostrar publicidad,
-    en algunos casos personalizada según tus intereses.</li>
+    <li>{_t("<b>Google Analytics</b> — estadísticas de uso agregadas del sitio.")}</li>
+    <li>{_t("<b>Google AdSense</b> — cuando esté activo, para mostrar publicidad, en algunos casos personalizada según tus intereses.")}</li>
   </ul>
-  <p>Puedes aceptar o rechazar estas cookies en cualquier momento desde el
-  enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier
-  página del sitio — rechazarlas no impide usar la web con normalidad, solo
-  desactiva las estadísticas y la publicidad.</p>
-  <p>Más información sobre cómo Google usa los datos en sitios que utilizan
-  sus servicios de publicidad:
-  <a href="https://policies.google.com/technologies/partner-sites" target="_blank"
-  rel="noopener">Cómo usa Google los datos de los sitios o las apps que
-  utilizan sus servicios</a>.</p>
+  <p>{_t("Puedes aceptar o rechazar estas cookies en cualquier momento desde el enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier página del sitio — rechazarlas no impide usar la web con normalidad, solo desactiva las estadísticas y la publicidad.")}</p>
+  <p>{_t('Más información sobre cómo Google usa los datos en sitios que utilizan sus servicios de publicidad: <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Cómo usa Google los datos de los sitios o las apps que utilizan sus servicios</a>.')}</p>
 
-  <h2>Contacto</h2>
+  <h2>{_t("Contacto")}</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
 </div>"""
-    return _page_shell("Aviso Legal", body,
-                        description="Aviso legal, privacidad y base legal para el tratamiento de datos "
-                                     "públicos en Dinero Público.", og_path="/aviso-legal")
+    return _page_shell(_t("Aviso Legal"), body,
+                        description=_t("Aviso legal, privacidad y base legal para el tratamiento de datos "
+                                       "públicos en Dinero Público."), og_path="/aviso-legal")
 
 
 # ─── ENRUTADO HTTP (compartido: servidor de desarrollo + WSGI/gunicorn) ──────
