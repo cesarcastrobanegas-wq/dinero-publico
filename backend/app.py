@@ -15587,7 +15587,7 @@ header p{color:var(--dim);}
 .region-card h3{color:var(--text);}
 .region-card:hover{border-color:var(--accent);}
 .stat{background:var(--surface);border:1px solid var(--border);}
-.stat span{color:var(--gold);}
+.stat span{color:var(--accent);}
 .section-title{color:var(--dim);font-weight:600;}
 h2,.rk-section-header h2{font-weight:600;}
 /* bloque principal de la portada: de panel azul con degradado a tarjeta blanca */
@@ -15604,7 +15604,7 @@ h2,.rk-section-header h2{font-weight:600;}
 .hero-panel #as-btn:hover{background:#24407a;}
 .hero-panel .gs-hint{color:var(--dim);}
 .hero-panel .stats-bar .stat{background:var(--surface);border-color:var(--border);color:var(--dim);}
-.hero-panel .stats-bar .stat span{color:var(--gold);}
+.hero-panel .stats-bar .stat span{color:var(--accent);}
 /* barra "¿Cuál es tu municipio?" */
 .personaliza-banner{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:0 1px 2px rgba(16,24,40,.05);}
 .personaliza-input-row input{background:var(--surface);border-color:var(--border);color:var(--text);}
@@ -15615,8 +15615,11 @@ h2,.rk-section-header h2{font-weight:600;}
   box-shadow:0 2px 8px rgba(16,24,40,.18);transition:opacity .2s ease,transform .2s ease;}
 .peticion-flotante.peticion-flotante-arriba{opacity:0;pointer-events:none;transform:translateY(8px);}
 .peticion-cta a.peticion-btn{background:var(--accent);}
-/* cifras e importes: dorado (dato destacado), no verde -- el verde/rojo queda para lo que significa algo */
-.importe,.pol-retrib,.rk-valor,.as-rr-importe,.region-imp,.dd-cifra,.top1-valor,.rk-sidebar-valor{color:var(--gold);}
+/* Números (2026-10-07, decisión de César): las cifras destacadas van en el azul de títulos y enlaces (--accent).
+   Se quedan con su color las que significan algo: nota del Índice (.it-alto/.it-medio/.it-bajo), deuda
+   (.region-deuda, .dd-sin-deuda), estados (.est-*) y alertas. En Fondos UE solo cambian los importes: títulos,
+   enlaces y etiquetas de fuente siguen en dorado, que ahí distingue el dinero europeo. */
+.importe,.importe.big,.pol-retrib,.rk-valor,.as-rr-importe,.as-rr-importe.big,.region-imp,.dd-cifra,.top1-valor,.rk-sidebar-valor,.fue-importe,.muni-tile .mt-imp{color:var(--accent);}
 .dd-etiqueta{color:var(--dim);}
 .dd-cifra.dd-sin-deuda{color:var(--green);}   /* aquí el verde sí significa algo: sin deuda */
 .it-aclara{background:var(--tint);border:1px solid var(--border);color:var(--text);font-weight:500;}
@@ -18963,10 +18966,10 @@ def render_fondos_ue_html(fondos, provincia="todas"):
     n_cohesion = sum(1 for f in fondos if f["fuente"] == "cohesion")
 
     stats = f"""<div class="stats-bar">
-      <div class="stat" style="border-color:var(--border)"><span style="color:var(--yellow)">{len(fondos)}</span>{_t("Proyectos/operaciones")}</div>
-      <div class="stat" style="border-color:var(--border)"><span style="color:var(--yellow)">{fmt_eur(str(total_importe))}</span>{_t("Importe total")}</div>
-      <div class="stat" style="border-color:var(--border)"><span style="color:var(--yellow)">{n_cordis}</span>{_t("CORDIS (Horizon Europe)")}</div>
-      <div class="stat" style="border-color:var(--border)"><span style="color:var(--yellow)">{n_cohesion}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
+      <div class="stat" style="border-color:var(--border)"><span>{len(fondos)}</span>{_t("Proyectos/operaciones")}</div>
+      <div class="stat" style="border-color:var(--border)"><span>{fmt_eur(str(total_importe))}</span>{_t("Importe total")}</div>
+      <div class="stat" style="border-color:var(--border)"><span>{n_cordis}</span>{_t("CORDIS (Horizon Europe)")}</div>
+      <div class="stat" style="border-color:var(--border)"><span>{n_cohesion}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
     </div>"""
 
     # Cobertura REAL (2026-10-01, aviso de César): solo las provincias con datos llevan pestaña y salen en el texto;
@@ -20731,7 +20734,7 @@ def render_landing_html(datos, provincia="murcia"):
             total_fue = sum(f["importe_num"] for f in fondos_ue_muni)
             fue_html = (f'<div class="mt-row" style="color:var(--yellow)">'
                         f'<span>🇪🇺 {_t("Fondos UE")}</span><b>{len(fondos_ue_muni)}</b></div>'
-                        f'<div class="mt-imp" style="color:var(--yellow)">{fmt_eur(str(total_fue))}</div>')
+                        f'<div class="mt-imp">{fmt_eur(str(total_fue))}</div>')
         return f"""<div class="muni-tile">
           <h3>🏛 {esc(muni)}</h3>
           <div class="mt-row"><span>{_t("Contratos")}</span><b>{n}</b></div>
