@@ -8755,6 +8755,33 @@ def buscar_en_navarra(municipio, job_id=None):
     return _dedup_contratos_por_url(contratos), completo
 
 
+# El feed en vivo de PLACE es UNO para toda España (las últimas ~200 entradas): la respuesta es la misma se pregunte por
+# el municipio que se pregunte. Hasta el 2026-10-08 se descargaba una vez POR MUNICIPIO, y la medición por pasos de esa
+# noche (refresco_fases) mostró que esa espera se llevaba el 51-72 % del tiempo de cada provincia de PLACE (5-14 s
+# por municipio, casi sin CPU: 49 minutos de los 67 de Cuenca). Ahora la descarga se guarda _FEED_VIVO_TTL segundos
+# y cada municipio solo filtra esa copia. Si la descarga falla no se guarda nada y se reintenta en el siguiente.
+_FEED_VIVO_TTL = 600
+_feed_vivo = {"ts": 0.0, "contenido": None, "descargas": 0, "reutilizadas": 0, "fallos": 0}
+_feed_vivo_lock = threading.Lock()
+
+
+def _feed_vivo_contenido():
+    """Bytes del feed en vivo de PLACE (descargado como mucho una vez cada _FEED_VIVO_TTL segundos), o None."""
+    with _feed_vivo_lock:              # si llegan varios a la vez, descarga uno y los demás esperan esa respuesta
+        if _feed_vivo["contenido"] is not None and time.time() - _feed_vivo["ts"] < _FEED_VIVO_TTL:
+            _feed_vivo["reutilizadas"] += 1
+            return _feed_vivo["contenido"]
+        try:
+            r = session.get(PLACE_FEED_LIVE, timeout=HTTP_TIMEOUT)
+            if r.status_code == 200:
+                _feed_vivo.update(ts=time.time(), contenido=r.content, descargas=_feed_vivo["descargas"] + 1)
+                return r.content
+        except Exception:
+            pass
+        _feed_vivo["fallos"] += 1
+        return None
+
+
 def buscar_en_feed_vivo(municipio, anclar=False, provincia=None):
     """Consulta el feed en vivo de PLACE (últimas ~200 entradas de toda España).
     anclar=True: mismo patrón anclado que buscar_en_zip (_regex_anclado) --
@@ -8764,9 +8791,9 @@ def buscar_en_feed_vivo(municipio, anclar=False, provincia=None):
     if anclar:
         muni_re = _regex_anclado(municipio)
     try:
-        r = session.get(PLACE_FEED_LIVE, timeout=HTTP_TIMEOUT)
-        if r.status_code == 200:
-            return parsear_atom_bytes(r.content, municipio, muni_re, provincia=provincia)
+        contenido = _feed_vivo_contenido()
+        if contenido is not None:
+            return parsear_atom_bytes(contenido, municipio, muni_re, provincia=provincia)
     except Exception:
         pass
     return []
@@ -13811,7 +13838,13 @@ def _refrescar_provincia_secuencial(job_id, provincia, offset=0):
         if time.time() - t_muni > mas_lento[1]:
             mas_lento = (municipio, time.time() - t_muni)
         m_pausa = (time.time(), time.thread_time())
-        time.sleep(4)  # pausa entre municipios
+        # Pausa entre municipios. Eran 4 s fijos para todos: el 20-42 % del tiempo de cada provincia (medición del
+        # 2026-10-08). En las provincias de PLACE ya no hay ninguna petición externa por municipio salvo las
+        # búsquedas en el BORME (el feed en vivo se reutiliza y los ZIP se leen del disco), así que basta medio
+        # segundo para dejar respirar a la web. Donde cada municipio es una consulta a la plataforma de su comunidad
+        # (Cataluña, País Vasco, Navarra) se dejan 2 s por cortesía con esos servidores.
+        time.sleep(2 if (provincia in PROVINCIAS_CATALUNYA or provincia in PROVINCIAS_PAIS_VASCO
+                         or provincia in PROVINCIAS_NAVARRA) else 0.5)
         _fase_tiempo("pausa_fija_entre_municipios", m_pausa)
 
     print(f"  [actualizar-todos:{provincia}] Refresco completo terminado.", flush=True)
@@ -21269,6 +21302,7 @@ def _estado_carga():
         "paginas_cache": _paginas_cache_estado(),
         "refresco_fases": _refresco_fases_leer()[-12:],
         "cache_zips_place": _zip_cache_diagnostico(),
+        "feed_vivo_place": {k: v for k, v in _feed_vivo.items() if k != "contenido"},
         "rastreadores_frenados": _bots_diagnostico(),
     }
 
