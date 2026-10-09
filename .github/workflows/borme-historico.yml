@@ -1,0 +1,86 @@
+name: Histórico del BORME (2009-2020)
+
+# Descarga, una sola vez, los boletines del BORME anteriores al índice diario (que empieza en 2021), para que el cruce
+# de administradores vea también los nombramientos de 2009 a 2020. Solo se lanza a mano.
+#
+# Condiciones (César, 2026-10-09), porque el repositorio es PÚBLICO:
+#  - El índice vive SOLO en la caché de Actions (clave borme-historico-...). No se sube como artefacto y este flujo no
+#    escribe en el registro ni un nombre ni una muestra: solo recuentos por día (boletines y anuncios).
+#  - Al BOE, una petición cada vez con pausa, identificándonos en el User-Agent (borme_actos.UA).
+#  - No toca producción: no descarga la base ni sube nada a la web. El fichero de administradores lo sigue generando
+#    y subiendo el flujo diario (administradores-borme-diario.yml), que usará este índice cuando esté completo.
+#
+# Unas 17 horas en total (~20 s por día laborable). Cada ejecución trabaja como mucho `minutos` y, si quedan días y ha
+# avanzado, se relanza sola; los días ya guardados se saltan, así que cortar y relanzar no pierde nada.
+
+on:
+  workflow_dispatch:
+    inputs:
+      desde:
+        description: "Día más reciente (se baja hacia atrás)"
+        default: "2020-12-31"
+      hasta:
+        description: "Día más antiguo (el BORME es dato abierto desde el 2009-01-02)"
+        default: "2009-01-02"
+      minutos:
+        description: "Minutos de descarga por ejecución"
+        default: "270"
+
+permissions:
+  contents: read
+  actions: write        # solo para relanzarse a sí mismo (gh workflow run)
+
+concurrency:
+  group: borme-historico
+  cancel-in-progress: false
+
+jobs:
+  borme-historico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependencias
+        run: pip install requests
+
+      - name: Índice histórico (caché)
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/borme_actos_historico.db
+          key: borme-historico-${{ github.run_id }}
+          restore-keys: borme-historico-
+
+      - name: Descargar (una petición cada vez)
+        id: descarga
+        run: |
+          cd backend
+          antes=$(python borme_actos.py pendientes --desde "${{ inputs.desde }}" --hasta "${{ inputs.hasta }}" --db borme_actos_historico.db)
+          echo "Días laborables pendientes al empezar: ${antes}"
+          python borme_actos.py descargar --desde "${{ inputs.desde }}" --hasta "${{ inputs.hasta }}" \
+            --db borme_actos_historico.db --trabajadores 1 --pausa 0.4 --sin-texto --minutos "${{ inputs.minutos }}" | tail -5
+          despues=$(python borme_actos.py pendientes --desde "${{ inputs.desde }}" --hasta "${{ inputs.hasta }}" --db borme_actos_historico.db)
+          python borme_actos.py estado --db borme_actos_historico.db
+          echo "antes=${antes}" >> "$GITHUB_OUTPUT"
+          echo "despues=${despues}" >> "$GITHUB_OUTPUT"
+          echo "### Histórico del BORME: quedan ${despues} días laborables (al empezar, ${antes})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar el índice en la caché
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: backend/borme_actos_historico.db
+          key: borme-historico-${{ github.run_id }}
+
+      - name: Relanzar si quedan días
+        if: ${{ steps.descarga.outputs.despues != '0' && steps.descarga.outputs.despues != steps.descarga.outputs.antes }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run borme-historico.yml --repo "${{ github.repository }}" \
+            -f desde="${{ inputs.desde }}" -f hasta="${{ inputs.hasta }}" -f minutos="${{ inputs.minutos }}"
+          echo "Relanzado: quedan ${{ steps.descarga.outputs.despues }} días."

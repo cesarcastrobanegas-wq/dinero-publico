@@ -150,8 +150,8 @@ def normalizar_denominacion(nombre):
 
 
 # ── Base de datos local ────────────────────────────────────────────────────────────────────────────────────────
-def conectar():
-    db = sqlite3.connect(BORME_DB, check_same_thread=False, timeout=60)
+def conectar(ruta=None):
+    db = sqlite3.connect(ruta or BORME_DB, check_same_thread=False, timeout=60)
     db.execute("PRAGMA journal_mode=WAL")
     db.execute("""CREATE TABLE IF NOT EXISTS documentos (
         id TEXT PRIMARY KEY, fecha TEXT, provincia TEXT, n_anuncios INTEGER, crudo BLOB)""")
@@ -182,13 +182,13 @@ def _get(sesion, url, **kw):
     return _FALLO
 
 
-def descargar_doc(sesion, db, fecha, item):
+def descargar_doc(sesion, db, fecha, item, pausa=PAUSA, con_texto=True):
     doc_id = item["identificador"]
     with _lock:
         if db.execute("SELECT 1 FROM documentos WHERE id=?", (doc_id,)).fetchone():
             return 0
     r = _get(sesion, item["url_html"])
-    time.sleep(PAUSA)
+    time.sleep(pausa)
     if r is None or r is _FALLO:
         return -1
     r.encoding = "utf-8"
@@ -196,7 +196,8 @@ def descargar_doc(sesion, db, fecha, item):
     anuncios = analizar(texto)
     with _lock:
         db.execute("INSERT OR REPLACE INTO documentos VALUES (?,?,?,?,?)",
-                   (doc_id, fecha, item.get("titulo", ""), len(anuncios), gzip.compress(texto.encode("utf-8"))))
+                   (doc_id, fecha, item.get("titulo", ""), len(anuncios),
+                    gzip.compress(texto.encode("utf-8")) if con_texto else b""))
         db.executemany("INSERT OR REPLACE INTO anuncios VALUES (?,?,?,?,?,?)",
                        [(doc_id, n, fecha, soc, normalizar_denominacion(soc), json.dumps(actos, ensure_ascii=False))
                         for n, soc, actos in anuncios])
@@ -204,17 +205,25 @@ def descargar_doc(sesion, db, fecha, item):
     return len(anuncios)
 
 
-def descargar(desde, hasta):
-    db = conectar()
+def descargar(desde, hasta, ruta=None, trabajadores=WORKERS, pausa=PAUSA, minutos=None, con_texto=True):
+    """Descarga de `desde` hacia atrás hasta `hasta`; los días ya guardados se saltan, así que es reanudable.
+    Para el histórico (2026-10-09, condiciones de César): `trabajadores=1` y una pausa entre peticiones -- una sola
+    petición al BOE cada vez --, `minutos` para terminar sola antes del límite del flujo, y `con_texto=False` para no
+    guardar el texto completo de cada boletín (solo los anuncios ya analizados, que es lo que usa el cruce)."""
+    db = conectar(ruta)
     sesion = requests.Session()
     sesion.headers.update(UA)
     d = desde
     t0 = time.time()
     total_docs = total_anuncios = 0
     while d >= hasta:
+        if minutos and time.time() - t0 > minutos * 60:
+            print(f"Plazo de {minutos} min agotado en {d}: se retoma en la próxima ejecución.", flush=True)
+            break
         f = d.strftime("%Y%m%d")
         if d.weekday() < 5 and not db.execute("SELECT 1 FROM dias WHERE fecha=?", (f,)).fetchone():
             r = _get(sesion, API_SUMARIO.format(fecha=f))
+            time.sleep(pausa)
             items = []
             if r is not None and r is not _FALLO:
                 try:
@@ -227,8 +236,8 @@ def descargar(desde, hasta):
                                 items += its if isinstance(its, list) else [its]
                 except Exception:
                     items = []
-            with ThreadPoolExecutor(WORKERS) as ex:
-                res = list(ex.map(lambda it: descargar_doc(sesion, db, f, it), items))
+            with ThreadPoolExecutor(max(1, trabajadores)) as ex:
+                res = list(ex.map(lambda it: descargar_doc(sesion, db, f, it, pausa, con_texto), items))
             # un dia reciente sin documentos puede ser que el BORME aun no haya salido: no se da por hecho
             if r is not _FALLO and all(x >= 0 for x in res) and (items or (dt.date.today() - d).days > 3):
                 db.execute("INSERT OR REPLACE INTO dias VALUES (?,?)", (f, len(items)))
@@ -241,12 +250,24 @@ def descargar(desde, hasta):
         d -= dt.timedelta(days=1)
 
 
-def estado():
-    db = conectar()
+def estado(ruta=None):
+    db = conectar(ruta)
     print("días:", db.execute("SELECT count(*), min(fecha), max(fecha) FROM dias").fetchone())
     print("documentos:", db.execute("SELECT count(*), sum(n_anuncios) FROM documentos").fetchone())
     print("sociedades distintas:", db.execute("SELECT count(DISTINCT soc_norm) FROM anuncios").fetchone()[0])
-    print("tamaño:", os.path.getsize(BORME_DB) // 1024 // 1024, "MB")
+    print("tamaño:", os.path.getsize(ruta or BORME_DB) // 1024 // 1024, "MB")
+
+
+def pendientes(desde, hasta, ruta=None):
+    """Días laborables del intervalo que aún no están en el índice (los festivos sin BORME cuentan hasta que se piden)."""
+    db = conectar(ruta)
+    hechos = {f for (f,) in db.execute("SELECT fecha FROM dias")}
+    d, n = desde, 0
+    while d >= hasta:
+        if d.weekday() < 5 and d.strftime("%Y%m%d") not in hechos:
+            n += 1
+        d -= dt.timedelta(days=1)
+    return n
 
 
 if __name__ == "__main__":
@@ -255,11 +276,24 @@ if __name__ == "__main__":
     p = sub.add_parser("descargar")
     p.add_argument("--desde", required=True)
     p.add_argument("--hasta", required=True)
-    sub.add_parser("estado")
+    p.add_argument("--db", default=None, help="fichero del índice (por defecto, BORME_DB)")
+    p.add_argument("--trabajadores", type=int, default=WORKERS)
+    p.add_argument("--pausa", type=float, default=PAUSA, help="segundos de espera tras cada petición")
+    p.add_argument("--minutos", type=float, default=None, help="deja de empezar días nuevos pasado este tiempo")
+    p.add_argument("--sin-texto", action="store_true", help="no guarda el texto completo de cada boletín")
+    e = sub.add_parser("estado")
+    e.add_argument("--db", default=None)
+    q = sub.add_parser("pendientes")
+    q.add_argument("--desde", required=True)
+    q.add_argument("--hasta", required=True)
+    q.add_argument("--db", default=None)
     a = ap.parse_args()
     if a.cmd == "descargar":
-        descargar(dt.date.fromisoformat(a.desde), dt.date.fromisoformat(a.hasta))
+        descargar(dt.date.fromisoformat(a.desde), dt.date.fromisoformat(a.hasta), ruta=a.db,
+                  trabajadores=a.trabajadores, pausa=a.pausa, minutos=a.minutos, con_texto=not a.sin_texto)
     elif a.cmd == "estado":
-        estado()
+        estado(a.db)
+    elif a.cmd == "pendientes":
+        print(pendientes(dt.date.fromisoformat(a.desde), dt.date.fromisoformat(a.hasta), a.db))
     else:
         ap.print_help()
