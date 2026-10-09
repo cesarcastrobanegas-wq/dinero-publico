@@ -15543,6 +15543,8 @@ a.dd-titulo-contrato:hover{text-decoration:underline;}
 /* Bizum en "Quién soy" (2026-10-01) */
 .bizum-caja{margin:14px 0;padding:14px 16px;border:1px solid var(--accent);border-radius:10px;background:var(--tint);display:grid;gap:6px;}
 .bizum-tit{font-weight:700;font-size:15px;margin:0;}
+.bizum-num.iban-num{font-size:17px;letter-spacing:.02em;}
+.iban-num span{overflow-wrap:anywhere;}
 .bizum-num{font-size:20px;font-weight:800;letter-spacing:.04em;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0;font-variant-numeric:tabular-nums;}
 /* reparto entre empresas (2026-10-01): dato neutro, sin colores de aviso */
 .concentracion{margin:8px 0 12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13.5px;line-height:1.5;}
@@ -23254,6 +23256,29 @@ def _bizum_html():
   </div>"""
 
 
+DONACIONES_TITULAR = "César Castro Banegas"
+DONACIONES_CONCEPTO = "Donación Dinero Público"
+
+
+def _iban_html():
+    """Bloque de transferencia bancaria, debajo del Bizum (2026-10-09, encargo de César): el IBAN sale de la variable
+    de entorno DONACIONES_IBAN (nunca escrito en el código: el repositorio es público); sin ella no se muestra nada.
+    Se enseña en grupos de cuatro, como se lee un IBAN, y el botón lo copia sin espacios, como lo piden los bancos."""
+    iban = re.sub(r"[^A-Za-z0-9]", "", os.environ.get("DONACIONES_IBAN", "")).upper()
+    if not iban:
+        return ""
+    agrupado = " ".join(iban[i:i + 4] for i in range(0, len(iban), 4))
+    copiado = esc(_t("Copiado")).replace("'", "")
+    return f"""<div class="bizum-caja">
+    <p class="bizum-tit">{_t("Apoya el proyecto por transferencia bancaria")}</p>
+    <p>{_t("Titular: {nombre}").format(nombre=esc(DONACIONES_TITULAR))}</p>
+    <p class="bizum-num iban-num"><span id="iban-numero">{esc(agrupado)}</span>
+      <button type="button" class="btn" onclick="(function(b){{var t=document.getElementById('iban-numero').textContent.split(' ').join('');
+        if(navigator.clipboard){{navigator.clipboard.writeText(t).then(function(){{b.textContent='{copiado}';}},function(){{}});}}}})(this)">{_t("Copiar")}</button></p>
+    <p>{_t("Concepto sugerido: «{concepto}»").format(concepto=esc(DONACIONES_CONCEPTO))}</p>
+  </div>"""
+
+
 # "Quién soy" y "Aviso legal" traducidas (2026-10-07, encargo de César): hasta hoy eran texto fijo en castellano y
 # figuraban en _I18N_RUTAS_EDITORIALES, así que bajo /gl/ y /ca/ se leían en castellano. Ahora cada párrafo pasa por
 # _t(), como el resto de la interfaz: se traduce en backend/locale/<idioma>.po y, si falta una traducción, ese
@@ -23285,6 +23310,7 @@ def render_quienes_somos_html():
     <li>{_t("<strong>Apóyalo económicamente.</strong> Mantener el servidor y seguir añadiendo fuentes cuesta dinero y tiempo.")}</li>
   </ul>
   {_bizum_html()}
+  {_iban_html()}
 
   <p><em>{_t('¿Hablas gallego, catalán o euskera y ves algo mejorable en esta página? Escríbenos a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</em></p>
 
