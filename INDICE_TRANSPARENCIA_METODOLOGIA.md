@@ -1,6 +1,6 @@
-# Índice de Transparencia Dinero Público — metodología (v2)
+# Índice de Transparencia Dinero Público — metodología (v2.1)
 
-Versión 2, 29-09-2026. La v1 (7 componentes, agosto de 2026) y su distribución real en producción están en
+Versión 2.1, 09-10-2026 (umbral de evidencia y suavizado, ver su sección; **en rama local, sin desplegar**). Versión 2, 29-09-2026. La v1 (7 componentes, agosto de 2026) y su distribución real en producción están en
 `INDICE_TRANSPARENCIA_V1_LINEA_BASE.md`. El código es `_calcular_indice_transparencia` en `backend/app.py`.
 
 **Qué es y qué no es.** Una valoración propia de la disponibilidad y calidad de los datos públicos de cada
@@ -16,20 +16,22 @@ La misma regla se aplica dentro de un componente (ver "menores" en agregadores).
 
 - Nota = media ponderada (0-100) de los componentes disponibles, redondeada a 1 decimal (también en la portada).
 - **Umbral mínimo: 4 componentes disponibles** (v1: 3). Por debajo, el municipio sale como "cobertura insuficiente".
+- **Umbral de evidencia (v2.1): 10 contratos** (formales + menores guardados). Por debajo, la nota se calcula y se
+  enseña en la ficha con la etiqueta «muestra pequeña», pero el municipio no entra en rankings ni tiene puesto.
 
 ## Componentes y pesos
 
 | Componente | Peso v2 | Peso v1 | Cómo se puntúa |
 |---|---:|---:|---|
 | Contratos menores publicados | **20** | — | Solo con fuente conectada. Portal municipal: publicarlos 40 + años cubiertos desde 2021 20 + frescura del último registro 20 (≤90 días 100, ≤180 70, ≤365 40, más 10) + % con adjudicatario identificado 20. Agregador regional (RPC Cataluña, API Euskadi): años y frescura **no disponibles**; nota = (40 + 20 × %adjudicatario) / 60. **Feed de menores de PLACE** (desde el 30-09): misma fórmula que un portal, con años esperados desde **2023**. Sin ningún contrato menor: no disponible. |
-| Adjudicatario identificado | **15** | 20 | % de contratos formales (PLACE/PSCP/Euskadi/Navarra) con adjudicatario identificado. |
+| Adjudicatario identificado | **15** | 20 | % de contratos formales (PLACE/PSCP/Euskadi/Navarra) con adjudicatario identificado, **suavizado (v2.1)**: (num + 10·p₀) / (den + 10), con p₀ = media nacional. |
 | Retribuciones de cargos electos | **10** | 10 (sí/no alcalde) | 100 si publica el sueldo de los concejales con nombre e importe (tabla revisada a mano, `sueldos_concejales.json`); **50 si solo consta el del alcalde** (ISPA); 0 si ni eso. No disponible solo en Ceuta/Melilla (ISPA no las cubre). |
 | Formato del portal propio | **5** | — | Portal donde el ayuntamiento publica sus menores: dataset/API o fichero estructurado 100, tabla web o consulta 66, PDF con texto 33, PDF escaneado o sin listado propio (remite a PLACE) 0. Solo para los municipios clasificados a mano (conector propio + auditoría de las 29 ciudades >100.000 hab.); el resto, no disponible. |
 | Actividad de publicación | **15** | 20 | Contratos **formales** por 1.000 habitantes, en percentil dentro de su tramo de población (<1.000, <5.000, <20.000, <100.000, >100.000). |
 | Cuentas anuales | **10** | 15 (binario) | Según el último ejercicio rendido a rendiciondecuentas.es frente al último **exigible por ley**: al día 100, un año de retraso 50, dos o más o sin rendir 0. No disponible en País Vasco, Navarra, Ceuta y Melilla (Tribunal de Cuentas foral o no listadas). |
 | Deuda viva publicada | **7,5** | 12,5 | Binario (Ministerio de Hacienda). |
 | Saldo no financiero publicado | **7,5** | 12,5 | Binario (Ministerio de Hacienda). |
-| Directivo identificado | **10** | 10 | % de adjudicatarios (formales + menores) con directivo/administrador identificado. |
+| Directivo identificado | **10** | 10 | % de adjudicatarios (formales + menores) con directivo/administrador identificado, **suavizado (v2.1)** con la misma fórmula. |
 
 ## Por qué cada cambio respecto a la v1
 
@@ -65,6 +67,68 @@ La misma regla se aplica dentro de un componente (ver "menores" en agregadores).
   clasificados; el resto no disponible, nunca una nota por defecto.
 - **Umbral de 3 a 4 componentes**: con 9 componentes posibles, 3 era demasiado poco. Ningún municipio pasa de
   "cobertura suficiente" a "insuficiente" con el cambio (los 48 con exactamente 4 siguen dentro).
+
+## v2.1 (09-10-2026): umbral de evidencia y suavizado
+
+**Diagnóstico.** El top nacional de la v2 lo ocupaban pueblos de menos de 100 habitantes con 3-4 contratos
+(Cellorigo: 15 hab., 4 contratos, 93,3; 9 de los 20 primeros tenían menos de 10 contratos). Tres causas que se
+suman: la actividad por 1.000 habitantes se dispara con poblaciones minúsculas; adjudicatario y directivo dan 100 %
+con muestras de 4; y menores y formato, no disponibles, reparten su peso entre los componentes fáciles.
+
+**Cambios** (código: `_INDICE_MIN_CONTRATOS_RANKING`, `_INDICE_SUAVIZADO_K`, `_indice_filas_ranking` en `backend/app.py`):
+
+- **Umbral de evidencia**: constante `_INDICE_MIN_CONTRATOS_RANKING = 10`. Cuenta los contratos formales más los
+  menores que la base guarda del municipio (todo el periodo guardado, hoy desde 2021). Por debajo, la ficha muestra
+  la nota con la etiqueta «muestra pequeña», la explicación y el desglose, y el municipio queda fuera de todo lo que
+  ordena o da puesto: tabla de /rankings, lateral de portada, «Liderando ahora mismo», lista de la ficha, buscador de
+  posiciones y «tu municipio». Para subir el umbral basta cambiar la constante: la interfaz y los textos la leen de ahí.
+- **Suavizado bayesiano** en adjudicatario y directivo: nota = (num + K·p₀) / (den + K), con K = 10 y p₀ = media
+  nacional del componente, calculada como suma de numeradores entre suma de denominadores de todos los municipios
+  (no como media de las notas municipales, que arrastraría el mismo problema de las muestras pequeñas). Equivale a
+  añadir a cada municipio 10 contratos «medios». El detalle del desglose conserva el recuento real y añade la nota
+  suavizada. No cambia qué municipios tienen el componente disponible. En la medición p₀ fue 92,0 % (adjudicatario)
+  y 32,6 % (directivo).
+- **Portada**: «Liderando ahora mismo» muestra el líder de cada tramo de población (<1.000, 1.000-5.000,
+  5.000-20.000, 20.000-100.000, >100.000) en una fila compacta con nombre y nota, y mantiene el enlace al ranking. A
+  igual nota sale el que tiene más contratos, con «+n» si hay más empatados.
+
+**Lo que no cambia**: pesos, componentes, la regla «no disponible no es 0», el mínimo de 4 componentes y el
+percentil de actividad (se sigue calculando entre todos los municipios del tramo, estén o no en el ranking).
+
+**Medición** sobre la copia real de producción del 03-10-2026 (tablas completas en
+`INDICE_TRANSPARENCIA_V2_1_MEDICION.md`: top 20 nacional y por tramo, y las 50 capitales):
+
+| | v2 | v2.1 |
+|---|---:|---:|
+| Municipios con nota | 8.082 | 8.082 |
+| En el ranking | 8.082 | 4.315 |
+| «Muestra pequeña» | — | 3.767 (46,6 %; 1,82 M hab.) |
+| Mediana de los que están en el ranking | 73,5 | 77,6 |
+| Máximo | 95,4 | 95,2 |
+| Con 90 o más | 115 | 33 |
+
+- **Umbral de referencia**: con 5 quedarían fuera 3.028 (37,5 %); con 10, 3.767 (46,6 %); con 20, 4.520 (55,9 %).
+  Casi todo el efecto está en los pueblos: con 10 sale el 68 % de los de menos de 1.000 hab., el 20 % de los de
+  1.000-5.000, el 4 % de los de 5.000-20.000, 2 municipios de 20.000-100.000 y ninguno de más de 100.000.
+- **Efecto desigual por comunidad** en los de menos de 1.000 hab.: siguen en el ranking el 11 % de los de Castilla y
+  León (223 de 2.007), el 17 % de La Rioja y el 18 % de Navarra, frente al 65 % de Cataluña y el 71 % de la
+  Comunitat Valenciana. Es un reflejo de cuántos contratos tenemos de cada sitio (los registros autonómicos traen
+  más menores), no solo de cuánto contratan.
+- **Nuevo top 20 nacional**: Melilla 95,2, Girona 93,1, Lleida 92,4, Aguilar de la Frontera y Vitoria-Gasteiz 92,1,
+  Calvià 91,9, Logroño 91,5... El municipio con menos contratos del top 20 tiene 66 (Cofrentes); en la v2, 9 de los
+  20 tenían menos de 10. Cellorigo pasa de 93,3 a 85,2 y queda como «muestra pequeña».
+- **Líderes por tramo**: Duesaigües 91,4 (<1.000), Begur 91,4 (1.000-5.000), Aguilar de la Frontera 92,1
+  (5.000-20.000), Melilla 95,2 (20.000-100.000), Girona 93,1 (>100.000). El top 20 de menos de 1.000 hab. es entero
+  catalán (registro autonómico de menores).
+- **Capitales de provincia**: las 50 suben de puesto (mediana +762), pero casi todo es porque la lista pasa de 8.082
+  a 4.315. Comparando solo entre los municipios que quedan en el ranking, el suavizado mueve a las capitales una
+  mediana de +66 puestos (44 suben, 5 bajan, 1 igual; extremos −38 Cáceres y +165 Salamanca). Sus notas apenas
+  cambian (mediana 0,0; la mayor, León −0,5): tienen cientos o miles de contratos.
+- **Suavizado por sí solo**: 3.374 municipios cambian 1 punto o más y 930 cambian 5 o más (de −12,6 a +19,4), casi
+  todos de muestra pequeña. Sube quien tenía 0 de pocos en directivo y baja quien tenía 4 de 4.
+
+**Límites de esta medición**: la copia es del 03-10; desde entonces el cruce de administradores con el BORME ha
+avanzado en producción, así que la media nacional de «directivo» será hoy más alta y las cifras exactas variarán.
 
 ## Comparación v1 → v2 (misma copia real de producción, 25-09-2026)
 

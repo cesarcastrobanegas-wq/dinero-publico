@@ -15516,25 +15516,28 @@ a.dd-titulo-contrato:hover{text-decoration:underline;}
 .it-aclara{display:block;margin:6px 0 10px;padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;line-height:1.4;color:var(--text);background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.45);}
 .it-aclara-mini{display:block;margin:4px 0 0;padding:3px 8px;font-size:11.5px;font-weight:600;}
 summary .it-aclara-mini{white-space:normal;}
-.it-lider-cuerpo{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;margin-top:10px;}
-.it-lider-top{display:flex;align-items:center;gap:14px;flex:1 1 280px;min-width:0;}
-.it-lider-nota{font-size:44px;font-weight:800;color:var(--accent);line-height:1;white-space:nowrap;}
-.it-lider-nota small{font-size:15px;font-weight:600;color:var(--dim);}
-.it-lider-quien{display:flex;flex-direction:column;min-width:0;}
-.it-lider-nombre{font-size:22px;font-weight:800;color:var(--text);text-decoration:none;overflow-wrap:anywhere;}
-.it-lider-nombre:hover{text-decoration:underline;}
-.it-lider-region{font-size:13px;color:var(--dim);margin-bottom:4px;}
-.it-lider-empate{font-size:12px;color:var(--dim);font-style:italic;}
-.it-lider-lista{list-style:none;margin:0;padding:0;flex:1 1 220px;font-size:14px;}
-.it-lider-lista li{display:flex;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px dashed var(--border);}
-.it-lider-lista li:last-child{border-bottom:0;}
-.it-lider-lista a{flex:1;color:var(--text);text-decoration:none;min-width:0;overflow-wrap:anywhere;}
-.it-lider-lista a:hover{text-decoration:underline;}
-.it-lider-pos{color:var(--dim);min-width:2.2em;}.it-lider-mini{font-weight:700;}
+/* líder por tramo de población (v2.1, 2026-10-09): una fila compacta, nombre y nota */
+.it-tramos{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;}
+.it-tramo{display:flex;flex-direction:column;gap:2px;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--tint);}
+.it-tramo-etq{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);}
+.it-tramo-nombre{font-size:15px;font-weight:700;color:var(--text);text-decoration:none;overflow-wrap:anywhere;line-height:1.25;}
+.it-tramo-nombre:hover{text-decoration:underline;}
+.it-tramo-nota{font-size:18px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;}
+.it-tramo-empate{font-size:11px;font-weight:600;color:var(--dim);}
+.it-muestra{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:var(--text);background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.45);white-space:nowrap;}
+.it-muestra-nota{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--dim);}
+.it-muestra-desglose{margin-bottom:10px;}
+.it-muestra-desglose .it-desglose-tbl td{white-space:normal;}
+@media (max-width:640px){.it-muestra-desglose .it-desglose-tbl tr{display:block;padding:5px 0;border-bottom:1px dashed var(--border);}
+  .it-muestra-desglose .it-desglose-tbl td{display:inline;padding:0 6px 0 0;}
+  .it-muestra-desglose .it-desglose-tbl td:last-child{display:block;color:var(--dim);padding:2px 0 0;}}
 .it-lider-pie{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:12px;}
 .it-lider-pie .btn-ver{margin:0;}
 .it-lider-metodo{font-size:13px;}
-@media (max-width:640px){.it-lider{padding:14px;}.it-lider-nota{font-size:36px;}.it-lider-nombre{font-size:19px;}}
+@media (max-width:900px){.it-tramos{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media (max-width:640px){.it-lider{padding:14px;}.it-tramos{grid-template-columns:1fr;gap:0;}
+  .it-tramo{flex-direction:row;align-items:baseline;gap:8px;border:0;border-bottom:1px dashed var(--border);border-radius:0;background:none;padding:7px 0;}
+  .it-tramo:last-child{border-bottom:0;}.it-tramo-etq{flex:0 0 8.5em;}.it-tramo-nombre{flex:1;}.it-tramo-nota{font-size:15px;}}
 .share-btn svg{width:18px;height:18px;display:block;color:var(--text);}
 .share-btn.share-wa,.share-btn.share-fb,.share-btn.share-x,.share-btn.share-tg{border-color:transparent;}
 .share-btn.share-wa{background:#25D366;}.share-btn.share-fb{background:#0866FF;}
@@ -17087,6 +17090,17 @@ _INDICE_TRANSPARENCIA_PESOS = {
 _INDICE_TRANSPARENCIA_MIN_COMPONENTES = 4  # v2: de 3 a 4 (ahora hay 9 componentes posibles)
 _INDICE_TRANSPARENCIA_MAX_FILAS_TABLA = 300  # tope de filas pintadas en /rankings, ver _render_indice_transparencia_html
 
+# v2.1 (2026-10-09, encargo de César): el top nacional lo ocupaban pueblos de menos de 100 habitantes con 3-4
+# contratos (Cellorigo: 15 hab., 4 contratos, 93,3). Dos correcciones, ver INDICE_TRANSPARENCIA_METODOLOGIA.md:
+#   - Umbral de evidencia: con menos de _INDICE_MIN_CONTRATOS_RANKING contratos (formales + menores guardados) la nota
+#     se sigue calculando y se enseña en la ficha con la etiqueta "muestra pequeña", pero el municipio queda fuera de
+#     rankings y posiciones. Para subirlo o bajarlo basta cambiar esta constante: todo lo demás la lee de aquí.
+#   - Suavizado bayesiano de "adjudicatario" y "directivo": (num + K·p0) / (den + K), con p0 = media nacional del
+#     componente (suma de numeradores / suma de denominadores de todos los municipios). Con 4 contratos, 4 de 4 deja
+#     de ser un 100; con cientos, el suavizado apenas mueve la nota.
+_INDICE_MIN_CONTRATOS_RANKING = 10
+_INDICE_SUAVIZADO_K = 10
+
 # "cuentas" (CUENTAS_ANUALES) y el sí/no del alcalde (RETRIBUCIONES_ISPA): huecos ESTRUCTURALES de cada fuente
 # oficial, distintos entre sí -- fuera de ellos, "sin dato" sí es señal real y puntúa 0 (ver historial v1):
 #   - rendiciondecuentas.es (cuentas): NO cubre País Vasco ni Navarra (Tribunal de Cuentas foral) ni Ceuta/Melilla.
@@ -17336,10 +17350,11 @@ def _calcular_indice_transparencia():
     ni hace peticiones de red. Metodología y porqué de cada peso en INDICE_TRANSPARENCIA_METODOLOGIA.md.
 
     Devuelve una lista de dicts (sin ordenar), uno por municipio, con municipio, provincia, comunidad_autonoma,
-    habitantes, componentes ({clave: {"disponible", "puntos", "detalle"}} -- siempre las 9 claves), n_componentes e
+    habitantes, componentes ({clave: {"disponible", "puntos", "detalle"}} -- siempre las 9 claves), n_componentes,
     indice (media ponderada 0-100 sobre los componentes disponibles, o None si hay menos de
-    _INDICE_TRANSPARENCIA_MIN_COMPONENTES). Regla común a TODOS los componentes: la falta de dato se EXCLUYE y su peso
-    se reparte entre los disponibles del municipio -- nunca puntúa 0 por un hueco de cobertura de este proyecto."""
+    _INDICE_TRANSPARENCIA_MIN_COMPONENTES), n_contratos (formales + menores guardados) y en_ranking (v2.1: con nota y
+    con al menos _INDICE_MIN_CONTRATOS_RANKING contratos; ver _indice_filas_ranking). Regla común a TODOS los
+    componentes: la falta de dato se EXCLUYE y su peso se reparte entre los disponibles del municipio -- nunca puntúa 0 por un hueco de cobertura de este proyecto."""
     hoy = datetime.now().date()
     ejercicio_exigible = _indice_ultimo_ejercicio_exigible(hoy)
     menores_stats = _indice_menores_stats_por_municipio()
@@ -17530,7 +17545,25 @@ def _calcular_indice_transparencia():
             "_fetched": res_formal is not None,
             "_homonimo": homonimo,
             "_total_formales": denom_adj,
+            # v2.1: evidencia del municipio (umbral de ranking) y recuentos en bruto para el suavizado
+            "n_contratos": denom_adj + (det["total"] if det else 0),
+            "_adj": (num_adj, denom_adj),
+            "_dir": (num_dir, denom_dir),
         })
+
+    # v2.1 -- suavizado bayesiano de "adjudicatario" y "directivo" (ver _INDICE_SUAVIZADO_K). La media nacional sale
+    # de los recuentos en bruto de todos los municipios; el detalle conserva el recuento real y añade la nota suavizada.
+    for comp_k, bruto_k in (("adjudicatario", "_adj"), ("directivo", "_dir")):
+        den_nac = sum(f[bruto_k][1] for f in filas)
+        p0 = (sum(f[bruto_k][0] for f in filas) / den_nac) if den_nac else 0.0
+        for f in filas:
+            num, den = f.pop(bruto_k)
+            c = f["componentes"][comp_k]
+            if not (c["disponible"] and den):
+                continue
+            c["puntos"] = 100.0 * (num + _INDICE_SUAVIZADO_K * p0) / (den + _INDICE_SUAVIZADO_K)
+            c["detalle"] = _td("{recuento}; nota suavizada {nota} (media nacional {media} %)", recuento=c["detalle"],
+                               nota=_nota_coma(c["puntos"]), media=_nota_coma(100.0 * p0))
 
     _NO_DISP_HOMONIMO_ACTIVIDAD = _td("Homónimo exacto en otra provincia: población y contratos formales se guardan "
                                       "solo por nombre y pueden ser del otro municipio (pendiente de clave "
@@ -17573,11 +17606,23 @@ def _calcular_indice_transparencia():
         f["n_componentes"] = len(disponibles)
         if len(disponibles) < _INDICE_TRANSPARENCIA_MIN_COMPONENTES:
             f["indice"] = None
+            f["en_ranking"] = False
             continue
         peso_total = sum(_INDICE_TRANSPARENCIA_PESOS[k] for k in disponibles)
         f["indice"] = round(sum(_INDICE_TRANSPARENCIA_PESOS[k] * v["puntos"] for k, v in disponibles.items())
                             / peso_total, 1)
+        f["en_ranking"] = f["n_contratos"] >= _INDICE_MIN_CONTRATOS_RANKING
     return filas
+
+
+def _indice_filas_ranking(filas=None):
+    """Municipios que entran en rankings y posiciones del Índice: con nota y con evidencia suficiente
+    (_INDICE_MIN_CONTRATOS_RANKING). Los de "muestra pequeña" tienen nota en su ficha, pero no puesto."""
+    return [f for f in (_indice_transparencia_cacheado() if filas is None else filas) if f["en_ranking"]]
+
+
+def _indice_muestra_pequena(f):
+    return f["indice"] is not None and not f["en_ranking"]
 
 
 
@@ -17944,9 +17989,10 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
     if comunidad != "todas":
         filas_datos = [f for f in filas_datos if f["comunidad_autonoma"] == comunidad]
 
-    con_indice = [f for f in filas_datos if f["indice"] is not None]
+    con_indice = _indice_filas_ranking(filas_datos)
     con_indice.sort(key=lambda f: f["indice"], reverse=True)
-    sin_indice = len(filas_datos) - len(con_indice)
+    muestra_pequena = sum(1 for f in filas_datos if _indice_muestra_pequena(f))
+    sin_indice = len(filas_datos) - len(con_indice) - muestra_pequena
     ranking_completo = _ranking_con_empates(con_indice)
     total_con_indice = len(ranking_completo)
     pagina, paginas = _rk_pagina(pagina, total_con_indice)
@@ -17991,6 +18037,12 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
         + '</span>'
         if sin_indice else ""
     )
+    if muestra_pequena:
+        aviso_sin_cobertura += (
+            '<br><span class="noloc-warn">' + _t(
+                "{n} municipios con nota pero con menos de {minimo} contratos guardados (muestra pequeña): su nota "
+                "se ve en su ficha, pero no entran en el ranking.").format(
+                n=fmt_num(muestra_pequena), minimo=_INDICE_MIN_CONTRATOS_RANKING) + '</span>')
     aviso_recorte = ""   # sustituido por la paginación (ver _rk_paginacion_html)
     aviso_homonimos = ""   # homónimos resueltos con la clave compuesta municipio+provincia (2026-09-30)
 
@@ -18032,10 +18084,7 @@ def _buscar_posicion_municipio(q, limite=10):
     indice_filas = _indice_transparencia_cacheado()
     deuda_ordenada = _calcular_ranking_deuda_por_habitante()      # ya viene ordenado desc
     alcaldes_ordenados = _calcular_ranking_alcaldes()             # ya viene ordenado desc
-    indice_nac_ordenado = sorted(
-        [f for f in indice_filas if f["indice"] is not None],
-        key=lambda f: f["indice"], reverse=True,
-    )
+    indice_nac_ordenado = sorted(_indice_filas_ranking(indice_filas), key=lambda f: f["indice"], reverse=True)
 
     def _rank(lista_ordenada, clave_muni):
         for i, f in enumerate(lista_ordenada, 1):
@@ -18050,8 +18099,7 @@ def _buscar_posicion_municipio(q, limite=10):
     for f in coincidencias[:limite]:
         clave_muni = clave_municipio(f["municipio"], f.get("provincia"))
         indice_com_ordenado = sorted(
-            [x for x in indice_filas
-             if x["comunidad_autonoma"] == f["comunidad_autonoma"] and x["indice"] is not None],
+            [x for x in indice_nac_ordenado if x["comunidad_autonoma"] == f["comunidad_autonoma"]],
             key=lambda x: x["indice"], reverse=True,
         )
         item = {
@@ -18061,7 +18109,9 @@ def _buscar_posicion_municipio(q, limite=10):
             "ficha_url": f"/?muni={quote_plus(f['municipio'])}{_q_prov(f['provincia'])}",
             "indice": None, "deuda_habitante": None, "alcalde": None,
         }
-        if f["indice"] is not None:
+        if _indice_muestra_pequena(f):      # v2.1: nota sin puesto (ver _INDICE_MIN_CONTRATOS_RANKING)
+            item["indice"] = {"valor_fmt": f'{f["indice"]:.1f}', "muestra_pequena": True}
+        elif f["indice"] is not None:
             item["indice"] = {
                 "valor_fmt": f'{f["indice"]:.1f}',
                 "rank_nacional": _rank(indice_nac_ordenado, clave_muni),
@@ -18118,7 +18168,11 @@ _RK_MUNI_BUSCADOR_JS = r"""(function(){
       html += '<div class="muni-card rk-muni-result"><div class="top1-label">📍 '
         + '<a class="rk-empresa" href="' + LP(r.ficha_url) + '">' + r.municipio + '</a> · '
         + r.provincia_label + '</div>';
-      if (r.indice) {
+      if (r.indice && r.indice.muestra_pequena) {
+        html += '<div class="rk-muni-linea">📊 ' + T("Índice de Transparencia") + ': <b>' + r.indice.valor_fmt + '</b>'
+          + ' — <span class="it-muestra">' + T("muestra pequeña") + '</span> ' + T("(pocos contratos: sin puesto en el ranking)")
+          + '<span class="it-aclara it-aclara-mini">' + T("Mide la disponibilidad de datos públicos, no la buena gestión ni la ausencia de corrupción.") + '</span></div>';
+      } else if (r.indice) {
         html += '<div class="rk-muni-linea">📊 ' + T("Índice de Transparencia") + ': <b>' + r.indice.valor_fmt + '</b>'
           + ' — ' + TF("#{p} de {n} (nacional), #{pc} de {nc} en {comunidad}", {p: r.indice.rank_nacional, n: r.indice.total_nacional,
                        pc: r.indice.rank_comunidad, nc: r.indice.total_comunidad, comunidad: r.comunidad_autonoma_label})
@@ -18321,8 +18375,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     if not filas_deuda_hab_html:
         filas_deuda_hab_html = f'<tr><td colspan="5" class="empty">{_t("Aún no hay datos suficientes.")}</td></tr>'
 
-    _n_idx = len([f for f in _indice_transparencia_cacheado()
-                  if f["indice"] is not None and (comunidad == "todas" or f["comunidad_autonoma"] == comunidad)])
+    _n_idx = len([f for f in _indice_filas_ranking()
+                  if comunidad == "todas" or f["comunidad_autonoma"] == comunidad])
     pags_actuales["idx"] = _rk_pagina(paginas.get("idx"), _n_idx)[0]
     selector_alc_html = _selector_comunidad_tabla("alc", "alcaldes")
     selector_deuda_html = _selector_comunidad_tabla("deuda", "deuda-habitante")
@@ -20151,7 +20205,9 @@ _PERSONALIZACION_JS = r"""(function(){
       filas += '<div class="pr-stat"><div class="pr-stat-label">' + T("Índice de Transparencia")
         + '<span class="it-aclara it-aclara-mini">' + T("Mide la disponibilidad de datos públicos, no la buena gestión ni la ausencia de corrupción.") + '</span>'
         + '</div><div class="pr-stat-valor">'
-        + item.indice.valor_fmt + '/100 (#' + item.indice.rank_nacional + ' ' + T("de") + ' ' + item.indice.total_nacional + ')</div></div>';
+        + item.indice.valor_fmt + '/100 ' + (item.indice.muestra_pequena
+            ? '<span class="it-muestra">' + T("muestra pequeña") + '</span>'
+            : '(#' + item.indice.rank_nacional + ' ' + T("de") + ' ' + item.indice.total_nacional + ')') + '</div></div>';
     }
     if (item.deuda_habitante){
       filas += '<div class="pr-stat"><div class="pr-stat-label">' + T("Deuda por habitante") + '</div><div class="pr-stat-valor">'
@@ -20275,13 +20331,29 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8, provincia=None):
     calculado (cobertura insuficiente, ver _calcular_indice_transparencia),
     no se muestra nada -- mismo criterio que el sidebar de la home: mejor
     nada que una caja vacía o con un "N/A" que no aporta."""
-    filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
+    todas = _indice_transparencia_cacheado()
+    filas = _indice_filas_ranking(todas)
     filas.sort(key=lambda f: f["indice"], reverse=True)
     clave_muni = clave_municipio(municipio, provincia)
     ranking = _ranking_con_empates(filas)  # mismo criterio de empates que el sidebar/rankings (2026-09-20)
     fila_actual = next((f for _, f in ranking if clave_municipio(f["municipio"], f.get("provincia")) == clave_muni), None)
     if fila_actual is None:
-        return ""
+        # v2.1: con nota pero con pocos contratos -- la nota se enseña con la etiqueta "muestra pequeña", sin puesto.
+        pequena = next((f for f in todas if _indice_muestra_pequena(f)
+                        and clave_municipio(f["municipio"], f.get("provincia")) == clave_muni), None)
+        if pequena is None:
+            return ""
+        return f"""<details class="it-widget">
+        <summary>🏅 {_t("Índice de Transparencia")}
+          <span class="badge">{pequena["indice"]:.1f}/100</span><span class="it-muestra">{_t("muestra pequeña")}</span>{_it_info_btn_html()}
+          {_it_aclaracion_html(mini=True)}
+        </summary>
+        <div class="it-widget-body">
+          <p class="it-muestra-nota">{_t("Tenemos {n} contratos de este municipio; con menos de {minimo} la nota se apoya en muy pocos datos y puede cambiar mucho con un solo contrato. Por eso no entra en el ranking ni tiene puesto.").format(n=fmt_num(pequena["n_contratos"]), minimo=_INDICE_MIN_CONTRATOS_RANKING)}</p>
+          <div class="it-muestra-desglose"><table class="it-desglose-tbl">{_indice_transparencia_desglose_html(pequena["componentes"])}</table></div>
+          <a class="rk-sidebar-ver btn-ver" href="/rankings#indice-transparencia">{_t("Ver ranking completo →")}</a>
+        </div>
+      </details>"""
     total = len(filas)
     posicion_actual = next(p for p, f in ranking if clave_municipio(f["municipio"], f.get("provincia")) == clave_muni)
     top = ranking[:top_n]
@@ -20376,6 +20448,7 @@ def _it_info_pop_html():
   <p>{_t("<b>Qué mide:</b> cuánta información pública de cada ayuntamiento reunimos de fuentes oficiales (contratos, cuentas, deuda, sueldos). No mide si gestiona bien o mal.")}</p>
   <ul class="it-info-pesos">{filas}</ul>
   <p>{_t("Un dato que no tenemos no cuenta como 0: su peso se reparte entre el resto. Hacen falta al menos {minimo} de los {total} componentes.").format(minimo=_INDICE_TRANSPARENCIA_MIN_COMPONENTES, total=len(p))}</p>
+  <p>{_t("Con menos de {minimo} contratos guardados, la nota lleva la etiqueta «muestra pequeña» y el municipio no entra en el ranking.").format(minimo=_INDICE_MIN_CONTRATOS_RANKING)}</p>
   <p class="it-info-aviso">{_t("Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley 19/2013 de Transparencia.</b>")}</p>
   <a href="/metodologia">{_t("Cómo se calcula y qué no medimos →")}</a>
 </div>"""
@@ -20507,41 +20580,42 @@ def _lider_indice_portada_html():
     más presencia que la línea 1 del lateral). Mismo caché que /rankings (_indice_transparencia_cacheado), puestos
     con empates (_ranking_con_empates): si varios comparten el 1.º, salen todos. "Ver ranking por tu región" lleva
     al selector por comunidad autónoma de /rankings."""
-    filas = sorted((f for f in _indice_transparencia_cacheado() if f["indice"] is not None), key=lambda f: -f["indice"])
-    ranking = _ranking_con_empates(filas)
-    if not ranking:
+    # v2.1 (2026-10-09): un líder por tramo de población en vez de un único líder nacional -- los mismos tramos con
+    # los que se compara la "actividad" (_INDICE_TRANSPARENCIA_TRAMOS_POBLACION). Solo municipios del ranking
+    # (_indice_filas_ranking: con nota y sin "muestra pequeña"). A igual nota, primero el que tiene más contratos.
+    filas = [f for f in _indice_filas_ranking() if f["habitantes"]]
+    if not filas:
         return ""
-    lideres = [f for p, f in ranking if p == 1]
-    siguientes = [(p, f) for p, f in ranking if p > 1][:3]
+    por_tramo = {}
+    for f in filas:
+        por_tramo.setdefault(_indice_tramo_poblacion(f["habitantes"]), []).append(f)
+    limites = _INDICE_TRANSPARENCIA_TRAMOS_POBLACION
+    etiquetas = ([(limites[0], _t("Menos de {n} hab.").format(n=fmt_num(limites[0])))]
+                 + [(sup, _t("{desde} a {hasta} hab.").format(desde=fmt_num(inf), hasta=fmt_num(sup)))
+                    for inf, sup in zip(limites, limites[1:])]
+                 + [(None, _t("Más de {n} hab.").format(n=fmt_num(limites[-1])))])
 
-    def _url(f):
-        return f'/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}'
-
-    def _region(f):
-        return esc(COMUNIDAD_AUTONOMA_LABEL.get(f["comunidad_autonoma"], f["comunidad_autonoma"]))
-
-    lideres_html = "".join(
-        f'<a class="it-lider-nombre" href="{_url(f)}">{esc(f["municipio"])}</a>'
-        f'<span class="it-lider-region">{esc(PROVINCIA_LABEL.get(f["provincia"], f["provincia"]))} · {_region(f)}</span>'
-        for f in lideres[:3])
-    empate = (f'<div class="it-lider-empate">{_t("Empate a {n} en el primer puesto").format(n=len(lideres))}</div>'
-              if len(lideres) > 1 else "")
-    siguientes_html = "".join(
-        f'<li><span class="it-lider-pos">{p}.º</span><a href="{_url(f)}">{esc(f["municipio"])}</a>'
-        f'<span class="it-lider-mini">{_nota_coma(f["indice"])}</span></li>' for p, f in siguientes)
+    tramos_html = ""
+    for tramo, etiqueta in etiquetas:
+        grupo = por_tramo.get(tramo)
+        if not grupo:
+            continue
+        lider = min(grupo, key=lambda f: (-f["indice"], -f["n_contratos"], normalizar(f["municipio"])))
+        empatados = sum(1 for f in grupo if f["indice"] == lider["indice"]) - 1
+        empate = (f' <span class="it-tramo-empate" title="{_t("Otros municipios del tramo con la misma nota")}">+{empatados}</span>'
+                  if empatados else "")
+        tramos_html += (
+            f'<li class="it-tramo"><span class="it-tramo-etq">{etiqueta}</span>'
+            f'<a class="it-tramo-nombre" href="/?muni={quote_plus(lider["municipio"])}{_q_prov(lider["provincia"])}" '
+            f'title="{esc(PROVINCIA_LABEL.get(lider["provincia"], lider["provincia"]))}">{esc(lider["municipio"])}</a>'
+            f'<span class="it-tramo-nota">{_nota_coma(lider["indice"])}{empate}</span></li>')
     return f"""<section class="it-lider" aria-labelledby="it-lider-titulo">
     <div class="it-lider-cab">
       <h2 id="it-lider-titulo">{_t("Liderando ahora mismo · Índice de Transparencia")}{_it_info_btn_html()}</h2>
-      <span class="it-lider-sub">{_t("{n} municipios con nota · España").format(n=fmt_num(len(filas)))}</span>
+      <span class="it-lider-sub">{_t("{n} municipios en el ranking · líder por tamaño de municipio").format(n=fmt_num(len(filas)))}</span>
     </div>
     {_it_aclaracion_html()}
-    <div class="it-lider-cuerpo">
-      <div class="it-lider-top">
-        <div class="it-lider-nota">{_nota_coma(lideres[0]["indice"])}<small>/100</small></div>
-        <div class="it-lider-quien">{lideres_html}{empate}</div>
-      </div>
-      <ol class="it-lider-lista">{siguientes_html}</ol>
-    </div>
+    <ul class="it-tramos">{tramos_html}</ul>
     <div class="it-lider-pie">
       <a class="btn-ver" href="/rankings#indice-transparencia">{_t("Ver ranking por tu región →")}</a>
       <a class="it-lider-metodo" href="/metodologia">{_t("Cómo se calcula")}</a>
@@ -20566,7 +20640,7 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     no aquí -- este bloque ya no vive dentro de .home-sidebar-stack."""
     comunidad_actual = _comunidad_valida(comunidad_actual)
 
-    todas_filas = [f for f in _indice_transparencia_cacheado() if f["indice"] is not None]
+    todas_filas = _indice_filas_ranking()
     if comunidad_actual == "todas":
         filas_region = todas_filas
     else:
@@ -22033,6 +22107,13 @@ def render_metodologia_html():
   ayuntamiento no publica. Así no castigamos a nadie por un hueco nuestro. Para que la nota sea fiable exigimos al
   menos {_INDICE_TRANSPARENCIA_MIN_COMPONENTES} componentes con datos; si no, el municipio aparece como «cobertura
   insuficiente».</p>
+  <p><strong>Muestra pequeña.</strong> Con tres o cuatro contratos cualquier porcentaje sale extremo: cuatro de
+  cuatro es un 100 %, y un solo contrato más o menos lo cambia todo. Por eso, si de un municipio tenemos menos de
+  {_INDICE_MIN_CONTRATOS_RANKING} contratos (formales y menores sumados), su nota se sigue calculando y se enseña en
+  su ficha con la etiqueta «muestra pequeña», pero el municipio no entra en los rankings ni tiene puesto. Además, los
+  dos porcentajes que más sufren con pocos datos (adjudicatario identificado y directivo identificado) se suavizan
+  hacia la media nacional: es como añadir a cada municipio {_INDICE_SUAVIZADO_K} contratos «medios». Con cientos de
+  contratos el efecto es inapreciable; con cuatro, la nota deja de ser un 100 automático.</p>
 
   <h2>Por qué pesan así</h2>
   <p><strong>Contratos menores ({w("menores")}), el componente que más pesa.</strong> Son contratos pequeños que se

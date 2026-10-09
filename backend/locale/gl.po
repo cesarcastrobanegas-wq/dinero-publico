@@ -86,2421 +86,2463 @@ msgstr "Importe tal como figura na fonte ({base}), sen converter."
 msgid "Documentos:"
 msgstr "Documentos:"
 
-#: app.py:11391
+#: app.py:11418
 msgid "y"
 msgstr "e"
 
-#: app.py:12422
+#: app.py:12449
 msgid "en los últimos {n} años ({desde}-{hasta})"
 msgstr "nos últimos {n} anos ({desde}-{hasta})"
 
-#: app.py:12424
+#: app.py:12451
 msgid "en los datos disponibles"
 msgstr "nos datos dispoñibles"
 
-#: app.py:12425
+#: app.py:12452
 msgid "La empresa con más contratos menores adjudicados {periodo} es <strong>{empresa}</strong>, que concentra el {pct} % ({num} de {den} con adjudicatario identificado)."
 msgstr "A empresa con máis contratos menores adxudicados {periodo} é <strong>{empresa}</strong>, que concentra o {pct} % ({num} de {den} con adxudicatario identificado)."
 
-#: app.py:12433
+#: app.py:12460
 msgid "La empresa con más contratos formales de los que tenemos de este municipio es <strong>{empresa}</strong>, que concentra el {pct} % ({num} de {den} con adjudicatario identificado)."
 msgstr "A empresa con máis contratos formais dos que temos deste municipio é <strong>{empresa}</strong>, que concentra o {pct} % ({num} de {den} con adxudicatario identificado)."
 
-#: app.py:12449
+#: app.py:12476
 msgid "Por importe, la empresa que más ha recibido en contratos formales es <strong>{empresa}</strong>: el {pct} % del total ({importe} de {total})."
 msgstr "Por importe, a empresa que máis recibiu en contratos formais é <strong>{empresa}</strong>: o {pct} % do total ({importe} de {total})."
 
-#: app.py:12456
+#: app.py:12483
 msgid "Reparto entre empresas"
 msgstr "Reparto entre empresas"
 
-#: app.py:12457
+#: app.py:12484
 msgid "Una misma empresa se cuenta junta por su NIF."
 msgstr "Unha mesma empresa cóntase xunta polo seu NIF."
 
-#: app.py:12503
+#: app.py:12530
 msgid "{n} contrato"
 msgstr "{n} contrato"
 
-#: app.py:12503 app.py:19982 app.py:20791 app.py:16248 app.py:22811
+#: app.py:12530 app.py:20064 app.py:20893 app.py:16279 app.py:22921
 msgid "{n} contratos"
 msgstr "{n} contratos"
 
-#: app.py:12506
+#: app.py:12533
 msgid "sin empresa adjudicataria:"
 msgstr "sen empresa adxudicataria:"
 
-#: app.py:12508
+#: app.py:12535
 msgid "o sin adjudicatario por la fuente (renuncia/desistimiento), y"
 msgstr "ou sen adxudicatario segundo a fonte (renuncia/desistencia), e"
 
-#: app.py:12509
+#: app.py:12536
 msgid "no identificado"
 msgstr "non identificado"
 
-#: app.py:12509
+#: app.py:12536
 msgid "no identificados"
 msgstr "non identificados"
 
-#: app.py:12510
+#: app.py:12537
 msgid "(hubo adjudicatario pero no se ha podido cruzar)."
 msgstr "(houbo adxudicatario pero non se puido cruzar)."
 
-#: app.py:12515 app.py:12507
+#: app.py:12542 app.py:12534
 msgid "declarado desierto"
 msgstr "declarado deserto"
 
-#: app.py:12515 app.py:12507
+#: app.py:12542 app.py:12534
 msgid "declarados desiertos"
 msgstr "declarados desertos"
 
-#: app.py:12516
+#: app.py:12543
 msgid "o sin adjudicatario por la fuente (renuncia/desistimiento) — no es una limitación del cruce."
 msgstr "ou sen adxudicatario segundo a fonte (renuncia/desistencia) — non é unha limitación do cruzamento."
 
-#: app.py:12521
+#: app.py:12548
 msgid "sin empresa adjudicataria identificada (hubo adjudicatario pero no se ha podido cruzar con la empresa)."
 msgstr "sen empresa adxudicataria identificada (houbo adxudicatario pero non se puido cruzar coa empresa)."
 
-#: app.py:12586
+#: app.py:12613
 msgid "hace menos de 2 min"
 msgstr "hai menos de 2 min"
 
-#: app.py:12587 app.py:19809
+#: app.py:12614 app.py:19891
 msgid "hace {m} min"
 msgstr "hai {m} min"
 
-#: app.py:12588 app.py:19810
+#: app.py:12615 app.py:19892
 msgid "hace {h}h {m}min"
 msgstr "hai {h}h {m}min"
 
-#: app.py:15779
+#: app.py:15810
 msgid "Datos oficiales: PSCP (Generalitat de Catalunya)"
 msgstr "Datos oficiais: PSCP (Generalitat de Catalunya)"
 
-#: app.py:15782
+#: app.py:15813
 msgid "Datos oficiales: KontratazioA (Gobierno Vasco)"
 msgstr "Datos oficiais: KontratazioA (Goberno Vasco)"
 
-#: app.py:15785
+#: app.py:15816
 msgid "Datos oficiales: Portal de Contratación de Navarra (Gobierno de Navarra)"
 msgstr "Datos oficiais: Portal de Contratación de Navarra (Goberno de Navarra)"
 
-#: app.py:15786
+#: app.py:15817
 msgid "Portal de Contratación de Navarra"
 msgstr "Portal de Contratación de Navarra"
 
-#: app.py:15788
+#: app.py:15819
 msgid "Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)"
 msgstr "Datos oficiais: PLACE (Ministerio de Facenda) + BORM (Boletín Oficial da Rexión de Murcia)"
 
-#: app.py:15789
+#: app.py:15820
 msgid "PLACE (Ministerio de Hacienda) y BORM"
 msgstr "PLACE (Ministerio de Facenda) e BORM"
 
-#: app.py:15791
+#: app.py:15822
 msgid "Datos oficiales: PLACE (Ministerio de Hacienda)"
 msgstr "Datos oficiais: PLACE (Ministerio de Facenda)"
 
-#: app.py:15792
+#: app.py:15823
 msgid "PLACE (Ministerio de Hacienda)"
 msgstr "PLACE (Ministerio de Facenda)"
 
-#: app.py:15797
+#: app.py:15828
 msgid "Buscando — {municipio}"
 msgstr "Buscando — {municipio}"
 
-#: app.py:15808
+#: app.py:15839
 msgid "Analizando contratos de"
 msgstr "Analizando os contratos de"
 
-#: app.py:15809
+#: app.py:15840
 msgid "Descargando datos de {fuente}…"
 msgstr "Descargando datos de {fuente}…"
 
-#: app.py:15810
+#: app.py:15841
 msgid "Iniciando…"
 msgstr "Iniciando…"
 
-#: app.py:15811
+#: app.py:15842
 msgid "Volver"
 msgstr "Volver"
 
-#: app.py:15826
+#: app.py:15857
 msgid "desconocido"
 msgstr "descoñecido"
 
-#: app.py:15826
+#: app.py:15857
 msgid "Error:"
 msgstr "Erro:"
 
-#: app.py:15860
+#: app.py:15891
 msgid "Indicador de riesgo"
 msgstr "Indicador de risco"
 
-#: app.py:16101
+#: app.py:16132
 msgid "Nombre de la empresa…"
 msgstr "Nome da empresa…"
 
-#: app.py:16102
+#: app.py:16133
 msgid "Nombre del directivo o empresario…"
 msgstr "Nome do directivo ou empresario…"
 
-#: app.py:16103
+#: app.py:16134
 msgid "Número de licitación (ej: 321/2026)…"
 msgstr "Número de licitación (ex.: 321/2026)…"
 
-#: app.py:16168
+#: app.py:16199
 msgid "Página {p} de {n} · {t} resultados"
 msgstr "Páxina {p} de {n} · {t} resultados"
 
-#: app.py:16189 app.py:16208
+#: app.py:16220 app.py:16239
 msgid "Sin resultados."
 msgstr "Sen resultados."
 
-#: app.py:16194
+#: app.py:16225
 msgid "{n} contratos · total acumulado {importe}"
 msgstr "{n} contratos · total acumulado {importe}"
 
-#: app.py:16195
+#: app.py:16226
 msgid " · mostrando los primeros {n}"
 msgstr " · amosando os primeiros {n}"
 
-#: app.py:16213
+#: app.py:16244
 msgid "{n} empresa(s) vinculada(s) · total global {importe}"
 msgstr "{n} empresa(s) vinculada(s) · total global {importe}"
 
-#: app.py:16222
+#: app.py:16253
 msgid "{n} contrato(s)"
 msgstr "{n} contrato(s)"
 
-#: app.py:16235
+#: app.py:16266
 msgid "No se ha encontrado ninguna licitación con ese número."
 msgstr "Non se atopou ningunha licitación con ese número."
 
-#: app.py:16248
+#: app.py:16279
 msgid "aún sin datos cargados"
 msgstr "aínda sen datos cargados"
 
-#: app.py:16258
+#: app.py:16289
 msgid "Buscar contratos →"
 msgstr "Buscar contratos →"
 
-#: app.py:16267
+#: app.py:16298
 msgid "Sin municipios que coincidan."
 msgstr "Non hai municipios que coincidan."
 
-#: app.py:16270
+#: app.py:16301
 msgid "{n} municipio(s) encontrado(s)."
 msgstr "{n} municipio(s) atopado(s)."
 
-#: app.py:16280
+#: app.py:16311
 msgid "Buscando…"
 msgstr "Buscando…"
 
-#: app.py:16295
+#: app.py:16326
 msgid "Error al buscar. Inténtalo de nuevo."
 msgstr "Erro ao buscar. Téntao de novo."
 
-#: app.py:16352
+#: app.py:16383
 msgid "EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?"
 msgstr "O DIÑEIRO DE TODOS ∞ EN MANS DE QUEN?"
 
-#: app.py:16361 app.py:20904
+#: app.py:16392 app.py:21006
 msgid "Contratación pública en España"
 msgstr "Contratación pública en España"
 
-#: app.py:16366 app.py:16418 app.py:18329
+#: app.py:16397 app.py:16449 app.py:18411
 msgid "Rankings"
 msgstr "Clasificacións"
 
-#: app.py:16367 app.py:16419
+#: app.py:16398 app.py:16450
 msgid "Sueldos Alcaldes"
 msgstr "Soldos dos alcaldes"
 
-#: app.py:16368 app.py:16420 app.py:20949
+#: app.py:16399 app.py:16451 app.py:21051
 msgid "Fondos UE"
 msgstr "Fondos UE"
 
-#: app.py:16369 app.py:16421 app.py:19596
+#: app.py:16400 app.py:16452 app.py:19678
 msgid "Convocatorias abiertas"
 msgstr "Convocatorias abertas"
 
-#: app.py:16370
+#: app.py:16401
 msgid "Instalar app"
 msgstr "Instalar app"
 
-#: app.py:16401
+#: app.py:16432
 msgid "<b>Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio»."
 msgstr "<b>Instálaa como app</b> — no teu móbil ou no teu ordenador, de balde e sen tendas de aplicacións. Busca o botón <b>«Instalar app»</b> na cabeceira de enriba; se non aparece, en <b>Android/Windows (Chrome, Edge)</b> usa o menú ⋮ → «Instalar aplicación», e en <b>iPhone/iPad (Safari)</b> o botón Compartir → «Engadir á pantalla de inicio»."
 
-#: app.py:16406
+#: app.py:16437
 msgid "<b>Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie."
 msgstr "<b>Colabora</b> — A transparencia non se regala, constrúese. Se este proxecto che serviu para saber en que se gasta o diñeiro de todos, axúdanos a que siga en pé."
 
-#: app.py:16408
+#: app.py:16439
 msgid "Envía un Bizum a este número desde tu app del banco"
 msgstr "Envía un Bizum a este número dende a app do teu banco"
 
-#: app.py:16413
+#: app.py:16444
 msgid "datos oficiales públicos"
 msgstr "datos oficiais públicos"
 
-#: app.py:16423
+#: app.py:16454
 msgid "Preferencias de cookies"
 msgstr "Preferencias de cookies"
 
-#: app.py:16425
+#: app.py:16456
 msgid "Casos"
 msgstr "Casos"
 
-#: app.py:16427
+#: app.py:16458
 msgid "Metodología"
 msgstr "Metodoloxía"
 
-#: app.py:16429
+#: app.py:16460
 msgid "Enlaces de interés:"
 msgstr "Ligazóns de interese:"
 
-#: app.py:16452
+#: app.py:16483
 msgid "Usamos cookies propias y de terceros (Google Analytics y, en el futuro, publicidad de Google AdSense) para analizar el uso del sitio y, si las aceptas, mostrar anuncios — {enlace}."
 msgstr "Usamos cookies propias e de terceiros (Google Analytics e, no futuro, publicidade de Google AdSense) para analizar o uso do sitio e, se as aceptas, amosar anuncios — {enlace}."
 
-#: app.py:16454
+#: app.py:16485
 msgid "más información"
 msgstr "máis información"
 
-#: app.py:16500
+#: app.py:16531
 msgid "Instala la app — acceso directo desde tu móvil"
 msgstr "Instala a app — acceso directo dende o teu móbil"
 
-#: app.py:16501
+#: app.py:16532
 msgid "Instalar"
 msgstr "Instalar"
 
-#: app.py:16502 app.py:18149
+#: app.py:16533 app.py:18231
 msgid "Cerrar aviso"
 msgstr "Pechar aviso"
 
-#: app.py:16510
+#: app.py:16541
 msgid "Rechazar"
 msgstr "Rexeitar"
 
-#: app.py:16511
+#: app.py:16542
 msgid "Aceptar"
 msgstr "Aceptar"
 
-#: app.py:16523
+#: app.py:16554
 msgid "Firma la petición sobre contratos menores en change.org (se abre en una pestaña nueva)"
 msgstr "Asina a petición sobre contratos menores en change.org (ábrese nunha lapela nova)"
 
-#: app.py:16523
+#: app.py:16554
 msgid "Firma la petición"
 msgstr "Asina a petición"
 
-#: app.py:16869
+#: app.py:16900
 msgid "Autónomo / Persona física"
 msgstr "Autónomo / Persoa física"
 
-#: app.py:16873
+#: app.py:16904
 msgid "Adjudicado"
 msgstr "Adxudicado"
 
-#: app.py:16873
+#: app.py:16904
 msgid "Resuelto"
 msgstr "Resolto"
 
-#: app.py:16873
+#: app.py:16904
 msgid "Formalizado"
 msgstr "Formalizado"
 
-#: app.py:16874
+#: app.py:16905
 msgid "En ejecución"
 msgstr "En execución"
 
-#: app.py:16881
+#: app.py:16912
 msgid "lote {lote}"
 msgstr "lote {lote}"
 
-#: app.py:16883 app.py:19399
+#: app.py:16914 app.py:19481
 msgid "{n} lotes"
 msgstr "{n} lotes"
 
-#: app.py:16884
+#: app.py:16915
 msgid "lotes {lotes}"
 msgstr "lotes {lotes}"
 
-#: app.py:16893 app.py:16940 app.py:19103 app.py:20781 app.py:18218
+#: app.py:16924 app.py:16971 app.py:19185 app.py:20883 app.py:18300
 msgid "No localizado"
 msgstr "Non localizado"
 
-#: app.py:16901
+#: app.py:16932
 msgid "presupuesto de licitación"
 msgstr "orzamento de licitación"
 
-#: app.py:16936 app.py:19099
+#: app.py:16967 app.py:19181
 msgid "Buscar {empresa} en el {registro}"
 msgstr "Buscar {empresa} no {registro}"
 
-#: app.py:16938 app.py:19101
+#: app.py:16969 app.py:19183
 msgid "Empresa sin datos registrales públicos"
 msgstr "Empresa sen datos rexistrais públicos"
 
-#: app.py:16950
+#: app.py:16981
 msgid "Ver HTML en BORM"
 msgstr "Ver HTML no BORM"
 
-#: app.py:16950
+#: app.py:16981
 msgid "HTML ↗"
 msgstr "HTML ↗"
 
-#: app.py:16952
+#: app.py:16983
 msgid "Ver PDF en BORM"
 msgstr "Ver PDF no BORM"
 
-#: app.py:16952
+#: app.py:16983
 msgid "BORM PDF ↗"
 msgstr "BORM PDF ↗"
 
-#: app.py:16955
+#: app.py:16986
 msgid "Fitxa a contractaciopublica.cat"
 msgstr "Ficha en contractaciopublica.cat"
 
-#: app.py:16955
+#: app.py:16986
 msgid "PSCP ↗"
 msgstr "PSCP ↗"
 
-#: app.py:16957
+#: app.py:16988
 msgid "Ficha en PLACE"
 msgstr "Ficha na PLACE"
 
-#: app.py:16957
+#: app.py:16988
 msgid "PLACE ↗"
 msgstr "PLACE ↗"
 
-#: app.py:16963
+#: app.py:16994
 msgid "Ver publicación BORM"
 msgstr "Ver publicación no BORM"
 
-#: app.py:16963
+#: app.py:16994
 msgid "BORM ↗"
 msgstr "BORM ↗"
 
-#: app.py:16970 app.py:16972
+#: app.py:17001 app.py:17003
 msgid "Licit."
 msgstr "Licit."
 
-#: app.py:17240
+#: app.py:17282
 msgid "{n} contratos menores (fuente agregadora regional); {pct} % con adjudicatario identificado; años cubiertos y frescura: no disponibles (en un registro agregado, no tener contratos recientes significa no haber contratado)"
 msgstr "{n} contratos menores (fonte agregadora rexional); {pct} % con adxudicatario identificado; anos cubertos e frescura: non dispoñibles (nun rexistro agregado, non ter contratos recentes significa non ter contratado)"
 
-#: app.py:17263
+#: app.py:17305
 msgid "{n} contratos menores{origen}; {cubiertos}/{esperados} años desde {desde}; último {ultima}{dias}; {pct} % con adjudicatario identificado"
 msgstr "{n} contratos menores{origen}; {cubiertos}/{esperados} anos dende {desde}; último {ultima}{dias}; {pct} % con adxudicatario identificado"
 
-#: app.py:17265
+#: app.py:17307
 msgid " (solo feed de PLACE)"
 msgstr " (só feed da PLACE)"
 
-#: app.py:17267
+#: app.py:17309
 msgid "sin fecha válida"
 msgstr "sen data válida"
 
-#: app.py:17268
+#: app.py:17310
 msgid " ({n} días)"
 msgstr " ({n} días)"
 
-#: app.py:17362
+#: app.py:17405
 msgid "Homónimo exacto en otra provincia: el dato se guarda solo por nombre y no se puede atribuir con seguridad a este municipio (pendiente de clave municipio+provincia)"
 msgstr "Homónimo exacto noutra provincia: o dato gárdase só polo nome e non se pode atribuír con seguridade a este municipio (pendente da clave municipio+provincia)"
 
-#: app.py:17374
+#: app.py:17417
 msgid "Cuentas anuales: la fuente oficial no cubre esta provincia (Tribunal de Cuentas foral, o no listada)"
 msgstr "Contas anuais: a fonte oficial non cobre esta provincia (Tribunal de Contas foral, ou non listada)"
 
-#: app.py:17379
+#: app.py:17422
 msgid "No consta ninguna cuenta rendida de los ejercicios {desde}-{hasta} en rendiciondecuentas.es"
 msgstr "Non consta ningunha conta rendida dos exercicios {desde}-{hasta} en rendiciondecuentas.es"
 
-#: app.py:17382
+#: app.py:17425
 msgid "Cuentas anuales no rendidas (o no localizadas) en rendiciondecuentas.es"
 msgstr "Contas anuais non rendidas (ou non localizadas) en rendiciondecuentas.es"
 
-#: app.py:17387
+#: app.py:17430
 msgid "Último ejercicio rendido: {ult} (exigible hoy: {exigible}) -- {estado}"
 msgstr "Último exercicio rendido: {ult} (esixible hoxe: {exigible}) -- {estado}"
 
-#: app.py:17389
+#: app.py:17432
 msgid "al día"
 msgstr "ao día"
 
-#: app.py:17389
+#: app.py:17432
 msgid "{n} año de retraso"
 msgstr "{n} ano de atraso"
 
-#: app.py:17390
+#: app.py:17433
 msgid "{n} años de retraso"
 msgstr "{n} anos de atraso"
 
-#: app.py:17395
+#: app.py:17438
 msgid "Deuda viva publicada"
 msgstr "Débeda viva publicada"
 
-#: app.py:17396
+#: app.py:17439
 msgid "Deuda viva no publicada"
 msgstr "Débeda viva non publicada"
 
-#: app.py:17405
+#: app.py:17448
 msgid "Saldo presupuestario: la fuente oficial (Hacienda) no cubre el régimen foral"
 msgstr "Saldo orzamentario: a fonte oficial (Facenda) non cobre o réxime foral"
 
-#: app.py:17408
+#: app.py:17451
 msgid "Saldo presupuestario publicado"
 msgstr "Saldo orzamentario publicado"
 
-#: app.py:17409
+#: app.py:17452
 msgid "Saldo presupuestario no publicado"
 msgstr "Saldo orzamentario non publicado"
 
-#: app.py:17422
+#: app.py:17465
 msgid "Publica el sueldo de {n} concejales con nombre e importe y el del alcalde (ISPA)"
 msgstr "Publica o soldo de {n} concelleiros con nome e importe e o do alcalde (ISPA)"
 
-#: app.py:17424
+#: app.py:17467
 msgid "Publica el sueldo de {n} concejales con nombre e importe"
 msgstr "Publica o soldo de {n} concelleiros con nome e importe"
 
-#: app.py:17428
+#: app.py:17471
 msgid "Portal revisado: solo el sueldo del alcalde (ISPA), sin importe por concejal"
 msgstr "Portal revisado: só o soldo do alcalde (ISPA), sen importe por concelleiro"
 
-#: app.py:17430
+#: app.py:17473
 msgid "Sueldo del alcalde publicado (ISPA); sin importe por concejal localizado"
 msgstr "Soldo do alcalde publicado (ISPA); sen importe por concelleiro localizado"
 
-#: app.py:17433
+#: app.py:17476
 msgid "Portal revisado: ni alcalde (ISPA) ni concejales con importe"
 msgstr "Portal revisado: nin alcalde (ISPA) nin concelleiros con importe"
 
-#: app.py:17435
+#: app.py:17478
 msgid "Sueldo del alcalde no publicado o no atribuido (ISPA)"
 msgstr "Soldo do alcalde non publicado ou non atribuído (ISPA)"
 
-#: app.py:17439
+#: app.py:17482
 msgid "ISPA: entidad no listada en la fuente oficial"
 msgstr "ISPA: entidade non listada na fonte oficial"
 
-#: app.py:17446
+#: app.py:17489
 msgid "{num}/{den} contratos formales con adjudicatario identificado"
 msgstr "{num}/{den} contratos formais con adxudicatario identificado"
 
-#: app.py:17449
+#: app.py:17492
 msgid "Sin contratos formales (PLACE/PSCP) para calcularlo"
 msgstr "Sen contratos formais (PLACE/PSCP) para calculalo"
 
-#: app.py:17457
+#: app.py:17500
 msgid "{num}/{den} adjudicatarios conocidos con directivo identificado ({num_f}/{den_f} formales + {num_m}/{den_m} menores; {pend} formales del histórico aún pendientes de buscar en el BORME, no cuentan)"
 msgstr "{num}/{den} adxudicatarios coñecidos con directivo identificado ({num_f}/{den_f} formais + {num_m}/{den_m} menores; {pend} formais do histórico aínda pendentes de buscar no BORME, non contan)"
 
-#: app.py:17463
+#: app.py:17506
 msgid "{num}/{den} adjudicatarios conocidos con directivo identificado ({num_f}/{den_f} formales + {num_m}/{den_m} menores)"
 msgstr "{num}/{den} adxudicatarios coñecidos con directivo identificado ({num_f}/{den_f} formais + {num_m}/{den_m} menores)"
 
-#: app.py:17469
+#: app.py:17512
 msgid "Adjudicatarios del histórico aún pendientes de buscar en el BORME"
 msgstr "Adxudicatarios do histórico aínda pendentes de buscar no BORME"
 
-#: app.py:17470
+#: app.py:17513
 msgid "Sin adjudicatarios conocidos para calcularlo"
 msgstr "Sen adxudicatarios coñecidos para calculalo"
 
-#: app.py:17481
+#: app.py:17524
 msgid "Sin fuente de contratos menores conectada todavía (no es \"no publica\")"
 msgstr "Aínda sen fonte de contratos menores conectada (non é \"non publica\")"
 
-#: app.py:17488
+#: app.py:17531
 msgid "Portal propio de contratos menores aún no clasificado"
 msgstr "Portal propio de contratos menores aínda non clasificado"
 
-#: app.py:17502
+#: app.py:17560
+msgid "{recuento}; nota suavizada {nota} (media nacional {media} %)"
+msgstr "{recuento}; nota suavizada {nota} (media nacional {media} %)"
+
+#: app.py:17563
 msgid "Homónimo exacto en otra provincia: población y contratos formales se guardan solo por nombre y pueden ser del otro municipio (pendiente de clave municipio+provincia)"
 msgstr "Homónimo exacto noutra provincia: poboación e contratos formais gárdanse só polo nome e poden ser do outro municipio (pendente da clave municipio+provincia)"
 
-#: app.py:17525
+#: app.py:17586
 msgid "{n} contratos formales / {hab} hab. ({por_mil}/1.000 hab.), percentil {pct} entre municipios de tamaño similar"
 msgstr "{n} contratos formais / {hab} hab. ({por_mil}/1.000 hab.), percentil {pct} entre municipios de tamaño semellante"
 
-#: app.py:17533
+#: app.py:17594
 msgid "Sin población conocida para calcularlo"
 msgstr "Sen poboación coñecida para calculalo"
 
-#: app.py:17534
+#: app.py:17595
 msgid "Aún no se han rastreado contratos formales (PLACE/PSCP) de este municipio"
 msgstr "Aínda non se rastrexaron contratos formais (PLACE/PSCP) deste municipio"
 
-#: app.py:17819
+#: app.py:17892
 msgid "Contratos menores publicados"
 msgstr "Contratos menores publicados"
 
-#: app.py:17820
+#: app.py:17893
 msgid "Adjudicatario identificado"
 msgstr "Adxudicatario identificado"
 
-#: app.py:17821
+#: app.py:17894
 msgid "Retribuciones de cargos electos"
 msgstr "Retribucións dos cargos electos"
 
-#: app.py:17822
+#: app.py:17895
 msgid "Formato del portal propio"
 msgstr "Formato do portal propio"
 
-#: app.py:17823
+#: app.py:17896
 msgid "Actividad de publicación"
 msgstr "Actividade de publicación"
 
-#: app.py:17824 app.py:19778
+#: app.py:17897 app.py:19860
 msgid "Cuentas anuales"
 msgstr "Contas anuais"
 
-#: app.py:17825
+#: app.py:17898
 msgid "Deuda/hab. publicada"
 msgstr "Débeda/hab. publicada"
 
-#: app.py:17826
+#: app.py:17899
 msgid "Saldo no financiero"
 msgstr "Saldo non financeiro"
 
-#: app.py:17827
+#: app.py:17900
 msgid "Directivo identificado"
 msgstr "Directivo identificado"
 
-#: app.py:17853
+#: app.py:17926
 msgid "no disponible"
 msgstr "non dispoñible"
 
-#: app.py:17855
+#: app.py:17928
 msgid "peso {peso}%"
 msgstr "peso {peso}%"
 
-#: app.py:17885 app.py:16172
+#: app.py:17958 app.py:16203
 msgid "← Anterior"
 msgstr "← Anterior"
 
-#: app.py:17886 app.py:19819 app.py:19899 app.py:16178
+#: app.py:17959 app.py:19901 app.py:19981 app.py:16209
 msgid "Siguiente →"
 msgstr "Seguinte →"
 
-#: app.py:17887
+#: app.py:17960
 msgid "Página {pagina} de {paginas} · {total} {etiqueta}"
 msgstr "Páxina {pagina} de {paginas} · {total} {etiqueta}"
 
-#: app.py:17939
+#: app.py:18013
 msgid "Ver desglose ▾"
 msgstr "Ver desagregación ▾"
 
-#: app.py:17944 app.py:18270 app.py:18289 app.py:18227 app.py:20775
+#: app.py:18018 app.py:18352 app.py:18371 app.py:18309 app.py:20877
 msgid "Aún no hay datos suficientes."
 msgstr "Aínda non hai datos suficientes."
 
-#: app.py:17946 app.py:18193 app.py:20573
+#: app.py:18020 app.py:18275 app.py:20675
 msgid "España"
 msgstr "España"
 
-#: app.py:17954
+#: app.py:18028
 msgid "{n} municipios sin cobertura de datos suficiente para calcular su índice (menos de {minimo} de {total} componentes disponibles) -- no se muestran en la tabla."
 msgstr "{n} municipios sen cobertura de datos suficiente para calcular o seu índice (menos de {minimo} de {total} compoñentes dispoñibles) -- non se amosan na táboa."
 
-#: app.py:17966
+#: app.py:18037
+msgid "{n} municipios con nota pero con menos de {minimo} contratos guardados (muestra pequeña): su nota se ve en su ficha, pero no entran en el ranking."
+msgstr "{n} municipios con nota pero con menos de {minimo} contratos gardados (mostra pequena): a súa nota vese na súa ficha, pero non entran na clasificación."
+
+#: app.py:18046
 msgid "Índice de Transparencia Dinero Público"
 msgstr "Índice de Transparencia Dinero Público"
 
-#: app.py:17971
+#: app.py:18051
 msgid "Valoración propia de Dinero Público sobre la actividad y disponibilidad de datos públicos de cada municipio, calculada a partir de fuentes oficiales (contratación, cuentas anuales, deuda viva, sueldos ISPA). <b>No es una certificación legal de cumplimiento de la Ley 19/2013 de Transparencia</b> ni una acreditación oficial -- este proyecto no es organismo acreditador. Es un indicador propio pensado para comparar municipios entre sí a partir de lo que hemos podido recopilar, no para juzgar su gestión."
 msgstr "Valoración propia de Dinero Público sobre a actividade e dispoñibilidade de datos públicos de cada municipio, calculada a partir de fontes oficiais (contratación, contas anuais, débeda viva, soldos ISPA). <b>Non é unha certificación legal de cumprimento da Lei 19/2013 de transparencia</b> nin unha acreditación oficial -- este proxecto non é organismo acreditador. É un indicador propio pensado para comparar municipios entre si a partir do que puidemos recompilar, non para xulgar a súa xestión."
 
-#: app.py:17976
+#: app.py:18056
 msgid "Filtrar en esta página… (para buscar en todo el ranking, usa el buscador de arriba)"
 msgstr "Filtrar nesta páxina… (para buscar en toda a clasificación, usa o buscador de enriba)"
 
-#: app.py:17979 app.py:18388 app.py:18400 app.py:20034
+#: app.py:18059 app.py:18470 app.py:18482 app.py:20116
 msgid "Municipio"
 msgstr "Municipio"
 
-#: app.py:17979
+#: app.py:18059
 msgid "Provincia"
 msgstr "Provincia"
 
-#: app.py:17979
+#: app.py:18059
 msgid "Índice"
 msgstr "Índice"
 
-#: app.py:17979 app.py:20873
+#: app.py:18059 app.py:20975
 msgid "Cobertura"
 msgstr "Cobertura"
 
-#: app.py:17979
+#: app.py:18059
 msgid "Desglose"
 msgstr "Desagregación"
 
-#: app.py:18082
+#: app.py:18160
 msgid "Sin coincidencias."
 msgstr "Sen coincidencias."
 
-#: app.py:18090
+#: app.py:18168
+msgid "(pocos contratos: sin puesto en el ranking)"
+msgstr "(poucos contratos: sen posto na clasificación)"
+
+#: app.py:18172
 msgid "#{p} de {n} (nacional), #{pc} de {nc} en {comunidad}"
 msgstr "#{p} de {n} (nacional), #{pc} de {nc} en {comunidad}"
 
-#: app.py:18094
+#: app.py:18176
 msgid "cobertura insuficiente"
 msgstr "cobertura insuficiente"
 
-#: app.py:18097 app.py:18100
+#: app.py:18179 app.py:18182
 msgid "Deuda/habitante"
 msgstr "Débeda/habitante"
 
-#: app.py:18098 app.py:18104
+#: app.py:18180 app.py:18186
 msgid "#{p} de {n}"
 msgstr "#{p} de {n}"
 
-#: app.py:18100
+#: app.py:18182
 msgid "sin dato"
 msgstr "sen dato"
 
-#: app.py:18148
+#: app.py:18230
 msgid "Los baremos de esta web se basan en conceptos de transparencia europeos y nacionales, se están analizando, por lo que es posible que el ranking de transparencia varíe durante unos días."
 msgstr "Os baremos desta web baséanse en conceptos de transparencia europeos e nacionais e estanse analizando, polo que é posible que a clasificación de transparencia varíe durante uns días."
 
-#: app.py:18207
+#: app.py:18289
 msgid "toda España"
 msgstr "toda España"
 
-#: app.py:18232 app.py:18235
+#: app.py:18314 app.py:18317
 msgid "<b>{n}</b> contratos"
 msgstr "<b>{n}</b> contratos"
 
-#: app.py:18249
+#: app.py:18331
 msgid "Sin partido registrado"
 msgstr "Sen partido rexistrado"
 
-#: app.py:18251 app.py:18286 app.py:18309 app.py:19801
+#: app.py:18333 app.py:18368 app.py:18391 app.py:19883
 msgid "/hab."
 msgstr "/hab."
 
-#: app.py:18258
+#: app.py:18340
 msgid "Alcaldesa desde {fecha}. El importe es el último dato oficial del cargo: lo percibió {anterior}."
 msgstr "Alcaldesa dende {fecha}. O importe é o último dato oficial do cargo: percibiuno {anterior}."
 
-#: app.py:18265 app.py:18312 app.py:4991 app.py:4994
+#: app.py:18347 app.py:18394 app.py:4991 app.py:4994
 msgid "/año"
 msgstr "/ano"
 
-#: app.py:18297 app.py:18299 app.py:17922 app.py:20763
+#: app.py:18379 app.py:18381 app.py:17996 app.py:20865
 msgid "municipios"
 msgstr "municipios"
 
-#: app.py:18311
+#: app.py:18393
 msgid "Sin datos"
 msgstr "Sen datos"
 
-#: app.py:18316
+#: app.py:18398
 msgid "{importe} de deuda viva"
 msgstr "{importe} de débeda viva"
 
-#: app.py:18327
+#: app.py:18409
 msgid "← Volver al inicio"
 msgstr "← Volver ao inicio"
 
-#: app.py:18331
+#: app.py:18413
 msgid "Clasificación de las empresas adjudicatarias con más contratos y mayor importe acumulado, con su directivo identificado cuando lo tenemos."
 msgstr "Clasificación das empresas adxudicatarias con máis contratos e maior importe acumulado, co seu directivo identificado cando o temos."
 
-#: app.py:18338
+#: app.py:18420
 msgid "Busca tu municipio"
 msgstr "Busca o teu municipio"
 
-#: app.py:18339
+#: app.py:18421
 msgid "Todas sus posiciones de un vistazo"
 msgstr "Todas as súas posicións dunha ollada"
 
-#: app.py:18341 app.py:20863 app.py:21004 app.py:16100
+#: app.py:18423 app.py:20965 app.py:21106 app.py:16131
 msgid "Nombre del municipio…"
 msgstr "Nome do municipio…"
 
-#: app.py:18346
+#: app.py:18428
 msgid "Resumen por Provincia"
 msgstr "Resumo por provincia"
 
-#: app.py:18347
+#: app.py:18429
 msgid "Deuda viva agregada · Presidente/a de Diputación (Comunidad Autónoma en Murcia)"
 msgstr "Débeda viva agregada · Presidente/a da Deputación (Comunidade Autónoma en Murcia)"
 
-#: app.py:18352
+#: app.py:18434
 msgid "Ranking Nacional"
 msgstr "Clasificación nacional"
 
-#: app.py:18353
+#: app.py:18435
 msgid "Todas las provincias cargadas"
 msgstr "Todas as provincias cargadas"
 
-#: app.py:18355
+#: app.py:18437
 msgid "Top 10 por número de contratos adjudicados"
 msgstr "Top 10 por número de contratos adxudicados"
 
-#: app.py:18357 app.py:18362 app.py:18372 app.py:18377 app.py:20858
+#: app.py:18439 app.py:18444 app.py:18454 app.py:18459 app.py:20960
 msgid "Empresa"
 msgstr "Empresa"
 
-#: app.py:18357 app.py:18372 app.py:20729 app.py:20930 app.py:19693
+#: app.py:18439 app.py:18454 app.py:20831 app.py:21032 app.py:19775
 msgid "Contratos"
 msgstr "Contratos"
 
-#: app.py:18357 app.py:18362 app.py:18372 app.py:18377 app.py:19995
+#: app.py:18439 app.py:18444 app.py:18454 app.py:18459 app.py:20077
 msgid "Directivo / Cargo"
 msgstr "Directivo / Cargo"
 
-#: app.py:18360
+#: app.py:18442
 msgid "Top 10 por importe total adjudicado"
 msgstr "Top 10 por importe total adxudicado"
 
-#: app.py:18362 app.py:18377 app.py:19149 app.py:20731 app.py:20932
+#: app.py:18444 app.py:18459 app.py:19231 app.py:20833 app.py:21034
 msgid "Importe total"
 msgstr "Importe total"
 
-#: app.py:18367
+#: app.py:18449
 msgid "Ranking por Provincia"
 msgstr "Clasificación por provincia"
 
-#: app.py:18370
+#: app.py:18452
 msgid "Top 10 por número de contratos"
 msgstr "Top 10 por número de contratos"
 
-#: app.py:18375
+#: app.py:18457
 msgid "Top 10 por importe total"
 msgstr "Top 10 por importe total"
 
-#: app.py:18382
+#: app.py:18464
 msgid "Ranking de Sueldos: Alcaldes y Alcaldesas"
 msgstr "Clasificación de soldos: alcaldes e alcaldesas"
 
-#: app.py:18383 app.py:18395
+#: app.py:18465 app.py:18477
 msgid "{n} municipios con dato"
 msgstr "{n} municipios con dato"
 
-#: app.py:18386
+#: app.py:18468
 msgid "De mayor a menor retribución anual ({ambito})"
 msgstr "De maior a menor retribución anual ({ambito})"
 
-#: app.py:18388
+#: app.py:18470
 msgid "Alcalde/sa"
 msgstr "Alcalde/sa"
 
-#: app.py:18388
+#: app.py:18470
 msgid "Partido"
 msgstr "Partido"
 
-#: app.py:18388
+#: app.py:18470
 msgid "Sueldo anual"
 msgstr "Soldo anual"
 
-#: app.py:18388 app.py:18400 app.py:20629
+#: app.py:18470 app.py:18482 app.py:20731
 msgid "Habitantes"
 msgstr "Habitantes"
 
-#: app.py:18388 app.py:18400 app.py:20631
+#: app.py:18470 app.py:18482 app.py:20733
 msgid "Deuda/hab."
 msgstr "Débeda/hab."
 
-#: app.py:18394
+#: app.py:18476
 msgid "Ranking de Deuda por Habitante"
 msgstr "Clasificación de débeda por habitante"
 
-#: app.py:18395
+#: app.py:18477
 msgid "Ministerio de Hacienda + INE"
 msgstr "Ministerio de Facenda + INE"
 
-#: app.py:18398
+#: app.py:18480
 msgid "De mayor a menor deuda viva por habitante ({ambito})"
 msgstr "De maior a menor débeda viva por habitante ({ambito})"
 
-#: app.py:18400
+#: app.py:18482
 msgid "Deuda viva"
 msgstr "Débeda viva"
 
-#: app.py:18405
+#: app.py:18487
 msgid "Rankings de contratación pública — Dinero Público"
 msgstr "Clasificacións de contratación pública — Dinero Público"
 
-#: app.py:18407
+#: app.py:18489
 msgid "Rankings — Top 10 empresas"
 msgstr "Clasificacións — Top 10 empresas"
 
-#: app.py:18408
+#: app.py:18490
 msgid "Ranking nacional y por provincia de las empresas con más contratos públicos y mayor importe adjudicado, con sus directivos identificados."
 msgstr "Clasificación nacional e por provincia das empresas con máis contratos públicos e maior importe adxudicado, cos seus directivos identificados."
 
-#: app.py:18476
+#: app.py:18558
 msgid "Ver proyecto ↗"
 msgstr "Ver proxecto ↗"
 
-#: app.py:18567
+#: app.py:18649
 msgid "Conjunto de datos oficial de contratos menores de la Plataforma de Contratación del Sector Público: solo lo que el ayuntamiento (o sus organismos y empresas) registra en su perfil de PLACE, que no es obligatorio -- muchos publican sus menores en su propia web o en PDF. Importe adjudicado SIN IVA, con NIF del adjudicatario. Si el ayuntamiento tiene además una fuente propia conectada, del feed solo se muestran los contratos que esa fuente no trae (mismo adjudicatario, fecha ±7 días e importe)."
 msgstr "Conxunto de datos oficial de contratos menores da Plataforma de Contratación do Sector Público: só o que o concello (ou os seus organismos e empresas) rexistra no seu perfil de PLACE, que non é obrigatorio -- moitos publican os seus menores na súa propia web ou en PDF. Importe adxudicado SEN IVE, con NIF do adxudicatario. Se o concello ten ademais unha fonte propia conectada, do feed só se amosan os contratos que esa fonte non trae (mesmo adxudicatario, data ±7 días e importe)."
 
-#: app.py:18574
+#: app.py:18656
 msgid "Solo 2023: es el único listado de contratos menores que publica el propio Ayuntamiento de Cádiz en su portal de transparencia (para el resto de años remite a la Plataforma de Contratación del Estado). Fecha real de adjudicación e importe con IVA; sin NIF."
 msgstr "Só 2023: é a única listaxe de contratos menores que publica o propio Concello de Cádiz no seu portal de transparencia (para o resto de anos remite á Plataforma de Contratación do Estado). Data real de adxudicación e importe con IVE; sen NIF."
 
-#: app.py:18579
+#: app.py:18661
 msgid "Relaciones anuales en PDF del Ayuntamiento de Santa Cruz de Tenerife (2022-2025), con fecha real de adjudicación y la concejalía u organismo que contrata; sin NIF. Importes con impuestos incluidos (IGIC). Ojo: los PDF de 2023 y 2024 están incompletos según el propio Ayuntamiento, que en su resumen oficial declara 1.204 y 1.267 contratos menores esos años, frente a los 806 y 768 que lista el PDF. 2021 no se muestra porque su relación no trae fecha por contrato."
 msgstr "Relacións anuais en PDF do Concello de Santa Cruz de Tenerife (2022-2025), con data real de adxudicación e a concellería ou organismo que contrata; sen NIF. Importes con impostos incluídos (IGIC). Ollo: os PDF de 2023 e 2024 están incompletos segundo o propio Concello, que no seu resumo oficial declara 1.204 e 1.267 contratos menores neses anos, fronte aos 806 e 768 que lista o PDF. 2021 non se amosa porque a súa relación non trae data por contrato."
 
-#: app.py:18586
+#: app.py:18668
 msgid "Listados trimestrales oficiales del Ayuntamiento de Torrejón de Ardoz (PDF de 2022 a 2024, Excel desde 2025), con fecha real de adjudicación y CIF. Importe = base imponible SIN IVA (la fuente publica base e IVA por separado). Falta el primer trimestre de 2022: ese listado solo publica el importe con IVA, y mezclarlo cambiaría la base de todo el municipio. No hay listados de 2021."
 msgstr "Listaxes trimestrais oficiais do Concello de Torrejón de Ardoz (PDF de 2022 a 2024, Excel desde 2025), con data real de adxudicación e CIF. Importe = base impoñible SEN IVE (a fonte publica base e IVE por separado). Falta o primeiro trimestre de 2022: esa listaxe só publica o importe con IVE, e mesturalo cambiaría a base de todo o concello. Non hai listaxes de 2021."
 
-#: app.py:18592
+#: app.py:18674
 msgid "Relaciones mensuales en PDF publicadas por el Ayuntamiento de Sevilla en sevilla.org (contratación), con fecha real de adjudicación, CIF y unidad que tramita cada contrato. Importes SIN IVA (la fuente publica el IVA en columna aparte). Cobertura desde septiembre de 2021 hasta el último mes publicado."
 msgstr "Relacións mensuais en PDF publicadas polo Concello de Sevilla en sevilla.org (contratación), con data real de adxudicación, CIF e unidade que tramita cada contrato. Importes SEN IVE (a fonte publica o IVE en columna á parte). Cobertura desde setembro de 2021 ata o último mes publicado."
 
-#: app.py:18597
+#: app.py:18679
 msgid "Ficheros anuales del portal de transparencia del Ayuntamiento de Almería, con fecha real de adjudicación e importe con IVA, sin NIF. Falta 2025: el Ayuntamiento solo lo publica en un PDF que no se puede leer de forma fiable, y su enlace de «contratos menores 2025» en Excel lleva en realidad a un fichero de contratos abiertos. Seis contratos superan el importe máximo legal de un menor (el mayor, 753.043 € por 39 escudos, parece un error de la propia fuente); se muestran tal cual se publican."
 msgstr "Ficheiros anuais do portal de transparencia do Concello de Almería, con data real de adxudicación e importe con IVE, sen NIF. Falta 2025: o Concello só o publica nun PDF que non se pode ler de forma fiable, e a súa ligazón de «contratos menores 2025» en Excel leva en realidade a un ficheiro de contratos abertos. Seis contratos superan o importe máximo legal dun menor (o maior, 753.043 € por 39 escudos, parece un erro da propia fonte); amósanse tal cal se publican."
 
-#: app.py:18604
+#: app.py:18686
 msgid "Informes trimestrales del portal de datos abiertos del Ayuntamiento de Málaga. La fuente NO publica la fecha de cada contrato: la fecha mostrada es el primer día del trimestre del informe, no la de adjudicación. Cobertura desde el cuarto trimestre de 2021. La base del importe no es homogénea (algunos contratos cambian de importe con o sin IVA de un informe a otro), así que no se puede afirmar que todos lleven IVA. Sin NIF hasta el primer trimestre de 2024."
 msgstr "Informes trimestrais do portal de datos abertos do Concello de Málaga. A fonte NON publica a data de cada contrato: a data amosada é o primeiro día do trimestre do informe, non a de adxudicación. Cobertura desde o cuarto trimestre de 2021. A base do importe non é homoxénea (algúns contratos cambian de importe con ou sen IVE dun informe a outro), así que non se pode afirmar que todos leven IVE. Sen NIF ata o primeiro trimestre de 2024."
 
-#: app.py:18611
+#: app.py:18693
 msgid "Dataset abierto oficial del Ayuntamiento de Gijón (opendata.gijon.es), actualizado casi a diario. Incluye el Ayuntamiento y su sector público municipal (fundaciones, patronatos y empresas municipales como EMTUSA o Divertia): el ente que adjudica figura en cada contrato. Fecha real de adjudicación. Importes con IVA."
 msgstr "Conxunto de datos aberto oficial do Concello de Xixón (opendata.gijon.es), actualizado case a diario. Inclúe o Concello e o seu sector público municipal (fundacións, padroados e empresas municipais como EMTUSA ou Divertia): o ente que adxudica figura en cada contrato. Data real de adxudicación. Importes con IVE."
 
-#: app.py:18617
+#: app.py:18699
 msgid "Cobertura de A Coruña desde septiembre de 2021 (solo se muestran los contratos de los últimos cinco años; los anteriores están archivados). Antes de 2021 no hay datos aprovechables: 2014-2017 son imputaciones de facturas sin NIF y 2018-2019 usan otro esquema de datos. Importes con IVA."
 msgstr "Cobertura da Coruña desde setembro de 2021 (só se amosan os contratos dos últimos cinco anos; os anteriores están arquivados). Antes de 2021 non hai datos aproveitables: 2014-2017 son imputacións de facturas sen NIF e 2018-2019 usan outro esquema de datos. Importes con IVE."
 
-#: app.py:18622
+#: app.py:18704
 msgid "Lugo dejó de publicar sus contratos menores tras el tercer trimestre de 2025, así que la cobertura termina en septiembre de 2025 (empieza en 2021). Sin NIF. Importes con IVA. En el primer trimestre de 2022 su PDF es en parte ilegible y faltan unas 117 filas."
 msgstr "Lugo deixou de publicar os seus contratos menores tras o terceiro trimestre de 2025, así que a cobertura remata en setembro de 2025 (comeza en 2021). Sen NIF. Importes con IVE. No primeiro trimestre de 2022 o seu PDF é en parte ilexible e faltan unhas 117 filas."
 
-#: app.py:18627
+#: app.py:18709
 msgid "Santiago publica un listado del sistema contable del Concello: la fecha es la de entrada del documento, no la de adjudicación, y los NIF de personas físicas no se muestran. Se excluyen unas 30 filas que superan el importe máximo legal de un contrato menor (convenios, entregas a cuenta y liquidaciones, no contratos). Del 9 de enero al 31 de marzo de 2026 la fuente no publica datos. Importes con IVA."
 msgstr "Santiago publica unha listaxe do sistema contable do Concello: a data é a de entrada do documento, non a de adxudicación, e os NIF de persoas físicas non se amosan. Exclúense unhas 30 filas que superan o importe máximo legal dun contrato menor (convenios, entregas a conta e liquidacións, non contratos). Do 9 de xaneiro ao 31 de marzo de 2026 a fonte non publica datos. Importes con IVE."
 
-#: app.py:18633
+#: app.py:18715
 msgid "Ames publica sus contratos menores en PDF semestrales sin fecha por contrato ni NIF: la fecha mostrada es el inicio del semestre (1 de enero o 1 de julio), no la del contrato. Cobertura desde 2021; importes con IVA."
 msgstr "Ames publica os seus contratos menores en PDF semestrais sen data por contrato nin NIF: a data amosada é o inicio do semestre (1 de xaneiro ou 1 de xullo), non a do contrato. Cobertura desde 2021; importes con IVE."
 
-#: app.py:18638
+#: app.py:18720
 msgid "Cobertura de Pontevedra desde abril de 2023: antes no hay contratos menores publicados en su sede electrónica. Importes con IVA. Los totales por trimestre coinciden con las estadísticas del propio portal, salvo 10 contratos (67.631,55 €) que la fuente publica sin adjudicatario y que no se muestran."
 msgstr "Cobertura de Pontevedra desde abril de 2023: antes non hai contratos menores publicados na súa sede electrónica. Importes con IVE. Os totais por trimestre coinciden coas estatísticas do propio portal, agás 10 contratos (67.631,55 €) que a fonte publica sen adxudicatario e que non se amosan."
 
-#: app.py:18644
+#: app.py:18726
 msgid "En Vigo el adjudicatario no es un campo explícito de la fuente: el informe en PDF lo indica como cabecera de grupo encima de sus contratos y así lo hemos asignado (validado en casos inequívocos con un 92-100 % de coherencia). Cobertura desde 2022; importes con IVA; el informe no publica NIF."
 msgstr "En Vigo o adxudicatario non é un campo explícito da fonte: o informe en PDF indícao como cabeceira de grupo enriba dos seus contratos e así o asignamos (validado en casos inequívocos cun 92-100 % de coherencia). Cobertura desde 2022; importes con IVE; o informe non publica NIF."
 
-#: app.py:18650
+#: app.py:18732
 msgid "Datos de la API pública de contratación de Euskadi (Gobierno Vasco), la misma fuente que los contratos formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección cuando el propio dato de origen es matemáticamente imposible, ver memoria del proyecto). No siempre publica NIF."
 msgstr "Datos da API pública de contratación de Euskadi (Goberno Vasco), a mesma fonte que os contratos formais dos concellos vascos: data real de adxudicación e importe con IVE (cunha corrección cando o propio dato de orixe é matematicamente imposible, ver memoria do proxecto). Non sempre publica NIF."
 
-#: app.py:18656
+#: app.py:18738
 msgid "Dataset oficial \"Contratos menores\" del Ayuntamiento de Madrid (datos.madrid.es, Dirección General de Contratación y Servicios), actualización mensual. Fecha real de adjudicación e importe con IVA; sí publica NIF del adjudicatario (a diferencia de RPC/Euskadi). Sin CPV y sin enlace por expediente. Solo Madrid capital, no el resto de municipios de la Comunidad de Madrid (que no tiene agregador propio, ver LIMITACIONES_COBERTURA.md)."
 msgstr "Conxunto de datos oficial \"Contratos menores\" do Concello de Madrid (datos.madrid.es, Dirección Xeral de Contratación e Servizos), actualización mensual. Data real de adxudicación e importe con IVE; si publica NIF do adxudicatario (a diferenza de RPC/Euskadi). Sen CPV e sen ligazón por expediente. Só Madrid capital, non o resto de concellos da Comunidade de Madrid (que non ten agregador propio, ver LIMITACIONES_COBERTURA.md)."
 
-#: app.py:18663
+#: app.py:18745
 msgid "Buscador oficial de contratos menores del Ayuntamiento de Valencia (www.valencia.es), consultado en vivo (no un dataset descargable). Fecha real de adjudicación, importe SIN IVA (columna propia del buscador, distinta del IVA), NIF del adjudicatario. Solo Valencia capital, no el resto de la Comunitat Valenciana (sin agregador propio, ver LIMITACIONES_COBERTURA.md)."
 msgstr "Buscador oficial de contratos menores do Concello de Valencia (www.valencia.es), consultado en vivo (non é un conxunto de datos descargable). Data real de adxudicación, importe SEN IVE (columna propia do buscador, distinta do IVE), NIF do adxudicatario. Só Valencia capital, non o resto da Comunitat Valenciana (sen agregador propio, ver LIMITACIONES_COBERTURA.md)."
 
-#: app.py:18669
+#: app.py:18751
 msgid "Informe trimestral oficial de contratos menores del Ayuntamiento de Alicante (Junta de Gobierno Local), publicado en ODS. Fecha real del contrato, importe SIN IVA, NIF del adjudicatario. Sin CPV ni enlace por contrato."
 msgstr "Informe trimestral oficial de contratos menores do Concello de Alacante (Xunta de Goberno Local), publicado en ODS. Data real do contrato, importe SEN IVE, NIF do adxudicatario. Sen CPV nin ligazón por contrato."
 
-#: app.py:18674
+#: app.py:18756
 msgid "API pública del portal de gobierno abierto de Getafe (plataforma Gobierto). Trae CPV y categoría del contrato (única fuente local de menores con CPV, además de PSCP/Euskadi en formales), pero NO publica NIF del adjudicatario."
 msgstr "API pública do portal de goberno aberto de Getafe (plataforma Gobierto). Trae CPV e categoría do contrato (única fonte local de menores con CPV, ademais de PSCP/Euskadi en formais), pero NON publica NIF do adxudicatario."
 
-#: app.py:18679
+#: app.py:18761
 msgid "Informes mensuales oficiales del Ayuntamiento de Móstoles, publicados en PDF (portal de transparencia). Importe con IVA, NIF del adjudicatario. Sin expediente en columna propia (va embebido en el texto libre del objeto); falta un mes (noviembre de 2024, formato de tabla no reconocible en ese PDF concreto -- omitido, no inventado)."
 msgstr "Informes mensuais oficiais do Concello de Móstoles, publicados en PDF (portal de transparencia). Importe con IVE, NIF do adxudicatario. Sen expediente en columna propia (vai incluído no texto libre do obxecto); falta un mes (novembro de 2024, formato de táboa non recoñecible nese PDF concreto -- omitido, non inventado)."
 
-#: app.py:18685
+#: app.py:18767
 msgid "Informes mensuales/trimestrales oficiales del Ayuntamiento de Leganés, publicados en XLSX (mismo formato que Alicante). Importe SIN IVA, NIF del adjudicatario. Puede faltar el mes más reciente si su fichero todavía no está disponible para descarga en el momento de actualizar (se reintenta solo)."
 msgstr "Informes mensuais/trimestrais oficiais do Concello de Leganés, publicados en XLSX (mesmo formato que Alacante). Importe SEN IVE, NIF do adxudicatario. Pode faltar o mes máis recente se o seu ficheiro aínda non está dispoñible para descarga no momento de actualizar (reinténtase só)."
 
-#: app.py:18690
+#: app.py:18772
 msgid "Informes semestrales oficiales del Ayuntamiento de Toledo, publicados en XLSX. Importe con IVA. Esta fuente NO publica fecha por contrato (se muestra sin fecha, como el resto de filas sin fecha del proyecto) ni NIF en la mayoría de los semestres. Puede haber algún contrato duplicado entre semestres consecutivos (sin expediente ni fecha propios no es posible deduplicar con certeza)."
 msgstr "Informes semestrais oficiais do Concello de Toledo, publicados en XLSX. Importe con IVE. Esta fonte NON publica data por contrato (amósase sen data, como o resto de filas sen data do proxecto) nin NIF na maioría dos semestres. Pode haber algún contrato duplicado entre semestres consecutivos (sen expediente nin data propios non é posible deduplicar con certeza)."
 
-#: app.py:18696
+#: app.py:18778
 msgid "Informes trimestrales oficiales del Ayuntamiento de Palma, publicados en Excel. La columna de importe no indica explícitamente si incluye IVA (se muestra tal cual la publica la fuente). NIF del adjudicatario solo disponible en los trimestres que lo publican (la mayoría no lo hace)."
 msgstr "Informes trimestrais oficiais do Concello de Palma, publicados en Excel. A columna de importe non indica explicitamente se inclúe IVE (amósase tal cal a publica a fonte). NIF do adxudicatario só dispoñible nos trimestres que o publican (a maioría non o fai)."
 
-#: app.py:18701
+#: app.py:18783
 msgid "Informes trimestrales oficiales del Ayuntamiento de Fuenlabrada y sus Organismos Autónomos (CIFE, IMLS, OTAF, PMC, PMD), en `transparencia.ayto-fuenlabrada.es/contratos/menores/` -- sección pública distinta del visor de contratos general de ese mismo portal (ese sí está protegido por contraseña). Fecha real de aprobación, NIF del adjudicatario."
 msgstr "Informes trimestrais oficiais do Concello de Fuenlabrada e os seus Organismos Autónomos (CIFE, IMLS, OTAF, PMC, PMD), en `transparencia.ayto-fuenlabrada.es/contratos/menores/` -- sección pública distinta do visor de contratos xeral dese mesmo portal (ese si está protexido por contrasinal). Data real de aprobación, NIF do adxudicatario."
 
-#: app.py:18707
+#: app.py:18789
 msgid "Informes trimestrales oficiales del Ayuntamiento de Alcalá de Henares, en PDF sin tabla real (parseados línea a línea). Dos formatos según la época: hasta 2023 no publica NIF en absoluto; desde 2024 sí, pero el de las PERSONAS FÍSICAS viene PARCIALMENTE ENMASCARADO por la propia fuente (solo los últimos dígitos, p.ej. \"***8694**\") -- se muestra tal cual, nunca se intenta completar."
 msgstr "Informes trimestrais oficiais do Concello de Alcalá de Henares, en PDF sen táboa real (analizados liña a liña). Dous formatos segundo a época: ata 2023 non publica NIF en absoluto; desde 2024 si, pero o das PERSOAS FÍSICAS vén PARCIALMENTE ENMASCARADO pola propia fonte (só os últimos díxitos, p. ex. \"***8694**\") -- amósase tal cal, nunca se intenta completar."
 
-#: app.py:18713
+#: app.py:18795
 msgid "Informes anuales de \"Contratación\" del Ayuntamiento de Valladolid (programa de contabilidad municipal SICALWIN), filtrados por PROCEDIMIENTO='Contratación menor'. Sin NIF del adjudicatario (no publicado por esta fuente)."
 msgstr "Informes anuais de \"Contratación\" do Concello de Valladolid (programa de contabilidade municipal SICALWIN), filtrados por PROCEDIMIENTO='Contratación menor'. Sen NIF do adxudicatario (non publicado por esta fonte)."
 
-#: app.py:18718
+#: app.py:18800
 msgid "API propia del Ayuntamiento de Zaragoza (contratacion-publica/contrato, filtro contratoMenor=true) -- no la API estándar OCDS que el propio Ayuntamiento documenta como preferente, que tiene la paginación rota. Fecha real de adjudicación, importe con IVA, NIF del adjudicatario, CPV. Un puñado de contratos (2 en toda la ventana) supera claramente el techo legal de un contrato menor pese a venir marcados como tal por la fuente -- probablemente un error de etiquetado de origen; se muestran tal cual, con aviso."
 msgstr "API propia do Concello de Zaragoza (contratacion-publica/contrato, filtro contratoMenor=true) -- non a API estándar OCDS que o propio Concello documenta como preferente, que ten a paxinación rota. Data real de adxudicación, importe con IVE, NIF do adxudicatario, CPV. Un puñado de contratos (2 en toda a ventá) supera claramente o teito legal dun contrato menor malia vir marcados como tal pola fonte -- probablemente un erro de etiquetaxe de orixe; amósanse tal cal, con aviso."
 
-#: app.py:18725
+#: app.py:18807
 msgid "Página única del perfil de contratante del Ayuntamiento de Ciudad Real, con dos eras: 2022-2024 son bloques de texto libre (objeto, importe con IVA, adjudicatario) SIN fecha real ni NIF; desde 2025 son ficheros XLSX oficiales con NIF y fecha real de adjudicación, pero SIN objeto/descripción del contrato. Cada fila muestra los campos que su propia era publica, nunca ambos a la vez."
 msgstr "Páxina única do perfil de contratante do Concello de Ciudad Real, con dúas eras: 2022-2024 son bloques de texto libre (obxecto, importe con IVE, adxudicatario) SEN data real nin NIF; desde 2025 son ficheiros XLSX oficiais con NIF e data real de adxudicación, pero SEN obxecto/descrición do contrato. Cada fila amosa os campos que a súa propia era publica, nunca ambos á vez."
 
-#: app.py:18731
+#: app.py:18813
 msgid "Biblioteca de ~49 PDF del perfil de contratante del Ayuntamiento de Burgos, subidos a mano trimestre a trimestre desde 2020 con nombres de fichero muy poco fiables (alguno, pese a llamarse \"contratos de trabajo\", es en realidad un listado de contratos menores) -- se clasifican por el título real de cada PDF, no por su nombre. Fecha real de adjudicación e importe con IVA por contrato. Sin NIF del adjudicatario en ninguno de los tres formatos de columnas que usa la fuente."
 msgstr "Biblioteca de ~49 PDF do perfil de contratante do Concello de Burgos, subidos a man trimestre a trimestre desde 2020 con nomes de ficheiro moi pouco fiables (algún, malia chamarse \"contratos de trabajo\", é en realidade unha listaxe de contratos menores) -- clasifícanse polo título real de cada PDF, non polo seu nome. Data real de adxudicación e importe con IVE por contrato. Sen NIF do adxudicatario en ningún dos tres formatos de columnas que usa a fonte."
 
-#: app.py:18738
+#: app.py:18820
 msgid "API real del portal de transparencia (Next.js) del Ayuntamiento de Las Palmas de Gran Canaria, encontrada con un navegador real (Playwright) interceptando la descarga CSV que ofrece la propia página. Sin fecha por contrato (ventana de 5 años aplicada por ejercicio completo; 2021 excluido por ambiguo). Importe con IVA. NIF del adjudicatario disponible casi siempre, salvo en 2023 (la propia fuente no publica esa columna ese año). Alrededor de un 10 % de las filas supera el techo legal habitual de un contrato menor -- se muestran tal cual, tal como las publica la propia obligación de transparencia municipal, sin filtrar ni corregir."
 msgstr "API real do portal de transparencia (Next.js) do Concello das Palmas de Gran Canaria, atopada cun navegador real (Playwright) interceptando a descarga CSV que ofrece a propia páxina. Sen data por contrato (ventá de 5 anos aplicada por exercicio completo; 2021 excluído por ambiguo). Importe con IVE. NIF do adxudicatario dispoñible case sempre, agás en 2023 (a propia fonte non publica esa columna ese ano). Arredor dun 10 % das filas supera o teito legal habitual dun contrato menor -- amósanse tal cal, como as publica a propia obriga de transparencia municipal, sen filtrar nin corrixir."
 
-#: app.py:18747
+#: app.py:18829
 msgid "Informes trimestrales en XLSX del Perfil del contratante del Ayuntamiento de Torrent (Comunitat Valenciana), con enlaces encontrados navegando la página con un navegador real (Playwright): un fetch simple no encuentra los enlaces de descarga. Importe SIN IVA. NIF del adjudicatario solo disponible en los ficheros hasta 2022 (la fuente deja de publicar esa columna desde 2023)."
 msgstr "Informes trimestrais en XLSX do Perfil do contratante do Concello de Torrent (Comunitat Valenciana), con ligazóns atopadas navegando a páxina cun navegador real (Playwright): unha petición simple non atopa as ligazóns de descarga. Importe SEN IVE. NIF do adxudicatario só dispoñible nos ficheiros ata 2022 (a fonte deixa de publicar esa columna desde 2023)."
 
-#: app.py:18753
+#: app.py:18835
 msgid "XLSX oficiales del portal de transparencia del Ayuntamiento de San Cristóbal de La Laguna y sus organismos autónomos OAAM y OAD (uno por año y entidad, enlaces encontrados navegando con un navegador real). El importe es SIN IGIC, el impuesto indirecto propio de Canarias equivalente al IVA peninsular (no confundir con \"sin impuestos\" a secas)."
 msgstr "XLSX oficiais do portal de transparencia do Concello de San Cristóbal de La Laguna e os seus organismos autónomos OAAM e OAD (un por ano e entidade, ligazóns atopadas navegando cun navegador real). O importe é SEN IGIC, o imposto indirecto propio de Canarias equivalente ao IVE peninsular (non confundir con \"sen impostos\" sen máis)."
 
-#: app.py:18759
+#: app.py:18841
 msgid "API real del portal de transparencia (Next.js, misma plataforma que Las Palmas de Gran Canaria) del Ayuntamiento de Arona, encontrada con un navegador real (Playwright). Sin fecha por contrato (ventana de 5 años aplicada por ejercicio completo; 2021 excluido por ambiguo). Sin descripción del objeto del contrato (la fuente no la publica en este listado)."
 msgstr "API real do portal de transparencia (Next.js, mesma plataforma que As Palmas de Gran Canaria) do Concello de Arona, atopada cun navegador real (Playwright). Sen data por contrato (ventá de 5 anos aplicada por exercicio completo; 2021 excluído por ambiguo). Sen descrición do obxecto do contrato (a fonte non a publica nesta listaxe)."
 
-#: app.py:18765
+#: app.py:18847
 msgid "Informes anuales oficiales en PDF (tabla real, extraída con pdfplumber), enlaces encontrados navegando la web con un navegador real. Solo hay datos hasta el primer trimestre de 2024 (la propia fuente no publica nada más reciente). Un contrato de 2023 (35 chalecos de mando ignífugos, 506.337,00 €) supera con mucho el techo legal habitual de un contrato menor -- se muestra tal cual aparece en la tabla oficial de la fuente, sin corregir."
 msgstr "Informes anuais oficiais en PDF (táboa real, extraída con pdfplumber), ligazóns atopadas navegando a web cun navegador real. Só hai datos ata o primeiro trimestre de 2024 (a propia fonte non publica nada máis recente). Un contrato de 2023 (35 chalecos de mando ignífugos, 506.337,00 €) supera con moito o teito legal habitual dun contrato menor -- amósase tal cal aparece na táboa oficial da fonte, sen corrixir."
 
-#: app.py:18772
+#: app.py:18854
 msgid "API de Governalia del Ayuntamiento de Castelló de la Plana (governalia.castello.es), espejo de la Plataforma de Contratación del Sector Público (PLACE) -- mismo mecanismo que ya usan Cartagena, Ibi, Sax y Vilamarxant. Fecha real de adjudicación, NIF del adjudicatario, importe adjudicado SIN IVA."
 msgstr "API de Governalia do Concello de Castelló de la Plana (governalia.castello.es), espello da Plataforma de Contratación do Sector Público (PLACE) -- mesmo mecanismo que xa usan Cartagena, Ibi, Sax e Vilamarxant. Data real de adxudicación, NIF do adxudicatario, importe adxudicado SEN IVE."
 
-#: app.py:18777
+#: app.py:18859
 msgid "API de Governalia del Ayuntamiento de Xirivella (Comunitat Valenciana), espejo de PLACE -- mismo mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del adjudicatario, importe adjudicado SIN IVA."
 msgstr "API de Governalia do Concello de Xirivella (Comunitat Valenciana), espello de PLACE -- mesmo mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Data real de adxudicación, NIF do adxudicatario, importe adxudicado SEN IVE."
 
-#: app.py:18782
+#: app.py:18864
 msgid "API de Governalia del Ayuntamiento de Santa Brígida (Gran Canaria), espejo de PLACE -- mismo mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del adjudicatario, importe adjudicado SIN IVA."
 msgstr "API de Governalia do Concello de Santa Brígida (Gran Canaria), espello de PLACE -- mesmo mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Data real de adxudicación, NIF do adxudicatario, importe adxudicado SEN IVE."
 
-#: app.py:18787
+#: app.py:18869
 msgid "API de Governalia del Ayuntamiento de Alzira (Comunitat Valenciana), espejo de PLACE -- mismo mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Fecha real de adjudicación, NIF del adjudicatario, importe adjudicado SIN IVA."
 msgstr "API de Governalia do Concello de Alzira (Comunitat Valenciana), espello de PLACE -- mesmo mecanismo que Castelló/Cartagena/Ibi/Sax/Vilamarxant. Data real de adxudicación, NIF do adxudicatario, importe adxudicado SEN IVE."
 
-#: app.py:18809
+#: app.py:18891
 msgid "Importes sin IVA: es el importe adjudicado que publica la fuente oficial."
 msgstr "Importes sen IVE: é o importe adxudicado que publica a fonte oficial."
 
-#: app.py:18813
+#: app.py:18895
 msgid "Ojo con la base de los importes: las filas de «{fuentes}» van sin IVA (importe adjudicado según PLACE); las demás filas pueden incluir IVA. El total de arriba suma ambas bases."
 msgstr "Ollo coa base dos importes: as filas de «{fuentes}» van sen IVE (importe adxudicado segundo a PLACE); as demais filas poden incluír IVE. O total de enriba suma as dúas bases."
 
-#: app.py:19065 app.py:16916
+#: app.py:19147 app.py:16947
 msgid "Coincidencia de nombre — verificar"
 msgstr "Coincidencia de nome — verificar"
 
-#: app.py:19066 app.py:16923
+#: app.py:19148 app.py:16954
 msgid "Coincidencia de nombre (otro municipio) — verificar"
 msgstr "Coincidencia de nome (outro municipio) — verificar"
 
-#: app.py:19067 app.py:16917 app.py:16924
+#: app.py:19149 app.py:16948 app.py:16955
 msgid "Mismo nombre y apellidos que {cargo} de {municipio}. No implica necesariamente relación — dato para verificar."
 msgstr "Mesmo nome e apelidos que {cargo} de {municipio}. Non implica necesariamente relación — dato para verificar."
 
-#: app.py:19080
+#: app.py:19162
 msgid "Según su DNI/NIE en la fuente oficial"
 msgstr "Segundo o seu DNI/NIE na fonte oficial"
 
-#: app.py:19081
+#: app.py:19163
 msgid "La fuente oficial publica su DNI/NIE enmascarado, como el de toda persona física"
 msgstr "A fonte oficial publica o seu DNI/NIE enmascarado, como o de toda persoa física"
 
-#: app.py:19082
+#: app.py:19164
 msgid "Su nombre figura con DNI/NIE en otra fuente oficial"
 msgstr "O seu nome figura con DNI/NIE noutra fonte oficial"
 
-#: app.py:19085
+#: app.py:19167
 msgid "Autónomo / persona física"
 msgstr "Autónomo / persoa física"
 
-#: app.py:19107
+#: app.py:19189
 msgid "Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica un enlace por contrato para comprobarlo directamente, así que se muestra tal cual."
 msgstr "Importe segundo a API de Euskadi, moi por riba do que permite legalmente un contrato menor. Pode ser un erro da fonte de orixe (díxitos de máis); esta fonte non publica unha ligazón por contrato para comprobalo directamente, así que se amosa tal cal."
 
-#: app.py:19111
+#: app.py:19193
 msgid "Importe sin IVA por encima del máximo legal de cualquier contrato menor (40.000 € en obras, 15.000 € en el resto) según el conjunto de datos oficial de PLACE. Probablemente un error de origen (dígitos de más) o un contrato que no es menor; se muestra tal cual, sin corregirlo."
 msgstr "Importe sen IVE por riba do máximo legal de calquera contrato menor (40.000 € en obras, 15.000 € no resto) segundo o conxunto de datos oficial da PLACE. Probablemente un erro de orixe (díxitos de máis) ou un contrato que non é menor; amósase tal cal, sen corrixilo."
 
-#: app.py:19115
+#: app.py:19197
 msgid "Importe por encima del techo legal habitual de un contrato menor (dataset oficial del Ayuntamiento de Madrid). Probablemente un \"contrato privado\" (régimen distinto, sin ese tope) incluido en el mismo dataset -- no necesariamente un error."
 msgstr "Importe por riba do teito legal habitual dun contrato menor (dataset oficial do Concello de Madrid). Probablemente un \"contrato privado\" (réxime distinto, sen ese teito) incluído no mesmo dataset -- non necesariamente un erro."
 
-#: app.py:19119
+#: app.py:19201
 msgid "Importe muy por encima del techo legal de un contrato menor, pese a venir marcado como tal por la API oficial del Ayuntamiento de Zaragoza. Probablemente un error de etiquetado de origen (por ejemplo, un contrato de obras por lotes de varios millones de euros) -- se muestra tal cual, sin corregirlo."
 msgstr "Importe moi por riba do teito legal dun contrato menor, a pesar de vir marcado como tal pola API oficial do Concello de Zaragoza. Probablemente un erro de etiquetaxe de orixe (por exemplo, un contrato de obras por lotes de varios millóns de euros) -- amósase tal cal, sen corrixilo."
 
-#: app.py:19148
+#: app.py:19230
 msgid "Proyectos/operaciones"
 msgstr "Proxectos/operacións"
 
-#: app.py:19150
+#: app.py:19232
 msgid "CORDIS (Horizon Europe)"
 msgstr "CORDIS (Horizon Europe)"
 
-#: app.py:19151
+#: app.py:19233
 msgid "Cohesion Data (FEDER/FSE)"
 msgstr "Cohesion Data (FEDER/FSE)"
 
-#: app.py:19160
+#: app.py:19242
 msgid "Todas"
 msgstr "Todas"
 
-#: app.py:19164
+#: app.py:19246
 msgid "Por ahora tenemos datos de {n} de las {total} provincias: {lista}. El resto, pendiente de conectar."
 msgstr "Polo de agora temos datos de {n} das {total} provincias: {lista}. O resto, pendente de conectar."
 
-#: app.py:19167
+#: app.py:19249
 msgid "Todavía no hay datos de fondos UE cargados."
 msgstr "Aínda non hai datos de fondos UE cargados."
 
-#: app.py:19171
+#: app.py:19253
 msgid "Sin datos de fondos UE todavía para esta provincia."
 msgstr "Aínda sen datos de fondos UE para esta provincia."
 
-#: app.py:19173
+#: app.py:19255
 msgid "Mostrando los primeros {n} de {total}, ordenados por importe."
 msgstr "Amósanse os primeiros {n} de {total}, ordenados por importe."
 
-#: app.py:19176 app.py:19594 app.py:21412
+#: app.py:19258 app.py:19676 app.py:21515
 msgid "Volver al inicio"
 msgstr "Volver ao inicio"
 
-#: app.py:19178 app.py:19841
+#: app.py:19260 app.py:19923
 msgid "Fondos y proyectos financiados por la UE"
 msgstr "Fondos e proxectos financiados pola UE"
 
-#: app.py:19180
+#: app.py:19262
 msgid "Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea. Fuentes oficiales de la Comisión Europea, sin scraping -- descarga/consulta directa de sus datasets abiertos."
 msgstr "Proxectos de investigación (CORDIS / Horizon Europe) e fondos estruturais (Cohesion Data, FEDER/FSE 2014-2020) que recibiron financiamento europeo. Fontes oficiais da Comisión Europea, sen scraping -- descarga/consulta directa dos seus datasets abertos."
 
-#: app.py:19190 app.py:19848
+#: app.py:19272 app.py:19930
 msgid "Proyecto / Beneficiario"
 msgstr "Proxecto / Beneficiario"
 
-#: app.py:19191 app.py:19994 app.py:21399 app.py:19849 app.py:19924
+#: app.py:19273 app.py:20076 app.py:21502 app.py:19931 app.py:20006
 msgid "Importe"
 msgstr "Importe"
 
-#: app.py:19192 app.py:19850
+#: app.py:19274 app.py:19932
 msgid "Fuente / Programa"
 msgstr "Fonte / Programa"
 
-#: app.py:19193 app.py:19851
+#: app.py:19275 app.py:19933
 msgid "Fechas"
 msgstr "Datas"
 
-#: app.py:19199
+#: app.py:19281
 msgid "Fondos UE — Proyectos financiados por la Unión Europea"
 msgstr "Fondos UE — Proxectos financiados pola Unión Europea"
 
-#: app.py:19200
+#: app.py:19282
 msgid "Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon Europe, Cohesion Data FEDER/FSE) en {lista}."
 msgstr "Proxectos e fondos financiados pola Unión Europea (CORDIS, Horizon Europe, Cohesion Data FEDER/FSE) en {lista}."
 
-#: app.py:19221 app.py:19223
+#: app.py:19303 app.py:19305
 msgid "Estado"
 msgstr "Estado"
 
-#: app.py:19221 app.py:19223
+#: app.py:19303 app.py:19305
 msgid "Comunidades autónomas"
 msgstr "Comunidades autónomas"
 
-#: app.py:19221 app.py:19223
+#: app.py:19303 app.py:19305
 msgid "Entidades locales"
 msgstr "Entidades locais"
 
-#: app.py:19222 app.py:19224
+#: app.py:19304 app.py:19306
 msgid "Otros entes públicos"
 msgstr "Outros entes públicos"
 
-#: app.py:19226
+#: app.py:19308
 msgid "Menos de 15.000 €"
 msgstr "Menos de 15.000 €"
 
-#: app.py:19226
+#: app.py:19308
 msgid "De 15.000 a 100.000 €"
 msgstr "De 15.000 a 100.000 €"
 
-#: app.py:19226
+#: app.py:19308
 msgid "De 100.000 € a 1 millón"
 msgstr "De 100.000 € a 1 millón"
 
-#: app.py:19227
+#: app.py:19309
 msgid "Más de 1 millón"
 msgstr "Máis de 1 millón"
 
-#: app.py:19228
+#: app.py:19310
 msgid "Cierran en 7 días"
 msgstr "Pechan en 7 días"
 
-#: app.py:19228
+#: app.py:19310
 msgid "Cierran en 30 días"
 msgstr "Pechan en 30 días"
 
-#: app.py:19229
+#: app.py:19311
 msgid "Particulares"
 msgstr "Particulares"
 
-#: app.py:19229
+#: app.py:19311
 msgid "Pymes y autónomos"
 msgstr "Pemes e autónomos"
 
-#: app.py:19230
+#: app.py:19312
 msgid "Entidades sin ánimo de lucro"
 msgstr "Entidades sen ánimo de lucro"
 
-#: app.py:19230
+#: app.py:19312
 msgid "Grandes empresas"
 msgstr "Grandes empresas"
 
-#: app.py:19369
+#: app.py:19451
 msgid "cierra hoy"
 msgstr "pecha hoxe"
 
-#: app.py:19371
+#: app.py:19453
 msgid "cierra mañana"
 msgstr "pecha mañá"
 
-#: app.py:19372
+#: app.py:19454
 msgid "en {n} días"
 msgstr "en {n} días"
 
-#: app.py:19387
+#: app.py:19469
 msgid "(sin título)"
 msgstr "(sen título)"
 
-#: app.py:19402 app.py:18808
+#: app.py:19484 app.py:18890
 msgid "sin IVA"
 msgstr "sen IVE"
 
-#: app.py:19418 app.py:19582
+#: app.py:19500 app.py:19664
 msgid "Plazo según bases"
 msgstr "Prazo segundo as bases"
 
-#: app.py:19419
+#: app.py:19501
 msgid "registrada el {f}"
 msgstr "rexistrada o {f}"
 
-#: app.py:19421
+#: app.py:19503
 msgid "Abre el {f}"
 msgstr "Abre o {f}"
 
-#: app.py:19421
+#: app.py:19503
 msgid "cierra el {f}"
 msgstr "pecha o {f}"
 
-#: app.py:19433
+#: app.py:19515
 msgid "Abierto"
 msgstr "Aberto"
 
-#: app.py:19434
+#: app.py:19516
 msgid "Abierto simplificado"
 msgstr "Aberto simplificado"
 
-#: app.py:19435
+#: app.py:19517
 msgid "Administración pública"
 msgstr "Administración pública"
 
-#: app.py:19436
+#: app.py:19518
 msgid "Administrativo especial"
 msgstr "Administrativo especial"
 
-#: app.py:19437
+#: app.py:19519
 msgid "Agricultura y ganadería"
 msgstr "Agricultura e gandaría"
 
-#: app.py:19438
+#: app.py:19520
 msgid "Agricultura, jardinería y forestales"
 msgstr "Agricultura, xardinaría e forestais"
 
-#: app.py:19439
+#: app.py:19521
 msgid "Agua"
 msgstr "Auga"
 
-#: app.py:19440
+#: app.py:19522
 msgid "Alimentación y bebidas"
 msgstr "Alimentación e bebidas"
 
-#: app.py:19441
+#: app.py:19523
 msgid "Arquitectura e ingeniería"
 msgstr "Arquitectura e enxeñaría"
 
-#: app.py:19442
+#: app.py:19524
 msgid "Asociación para la innovación"
 msgstr "Asociación para a innovación"
 
-#: app.py:19443
+#: app.py:19525
 msgid "Basado en sistema dinámico"
 msgstr "Baseado en sistema dinámico"
 
-#: app.py:19444
+#: app.py:19526
 msgid "Colaboración público-privada"
 msgstr "Colaboración público-privada"
 
-#: app.py:19445
+#: app.py:19527
 msgid "Combustibles y energía"
 msgstr "Combustibles e enerxía"
 
-#: app.py:19446
+#: app.py:19528
 msgid "Concesión de obras"
 msgstr "Concesión de obras"
 
-#: app.py:19447
+#: app.py:19529
 msgid "Concesión de obras públicas"
 msgstr "Concesión de obras públicas"
 
-#: app.py:19448
+#: app.py:19530
 msgid "Concesión de servicios"
 msgstr "Concesión de servizos"
 
-#: app.py:19449
+#: app.py:19531
 msgid "Concurso de proyectos"
 msgstr "Concurso de proxectos"
 
-#: app.py:19450
+#: app.py:19532
 msgid "Contrato menor"
 msgstr "Contrato menor"
 
-#: app.py:19451
+#: app.py:19533
 msgid "Correos y telecomunicaciones"
 msgstr "Correos e telecomunicacións"
 
-#: app.py:19452
+#: app.py:19534
 msgid "Cuero y textil"
 msgstr "Coiro e téxtil"
 
-#: app.py:19453
+#: app.py:19535
 msgid "Cultura, ocio y deporte"
 msgstr "Cultura, lecer e deporte"
 
-#: app.py:19454
+#: app.py:19536
 msgid "Derivado de acuerdo marco"
 msgstr "Derivado de acordo marco"
 
-#: app.py:19455
+#: app.py:19537
 msgid "Derivado de asociación para la innovación"
 msgstr "Derivado de asociación para a innovación"
 
-#: app.py:19456
+#: app.py:19538
 msgid "Diálogo competitivo"
 msgstr "Diálogo competitivo"
 
-#: app.py:19457
+#: app.py:19539
 msgid "Educación y formación"
 msgstr "Educación e formación"
 
-#: app.py:19458
+#: app.py:19540
 msgid "Equipos de oficina e informáticos"
 msgstr "Equipos de oficina e informáticos"
 
-#: app.py:19459
+#: app.py:19541
 msgid "Financieros y seguros"
 msgstr "Financeiros e seguros"
 
-#: app.py:19460
+#: app.py:19542
 msgid "Gestión de servicios públicos"
 msgstr "Xestión de servizos públicos"
 
-#: app.py:19461
+#: app.py:19543
 msgid "Hostelería y restauración"
 msgstr "Hostalaría e restauración"
 
-#: app.py:19462
+#: app.py:19544
 msgid "Impresos y publicaciones"
 msgstr "Impresos e publicacións"
 
-#: app.py:19463
+#: app.py:19545
 msgid "Inmobiliarios"
 msgstr "Inmobiliarios"
 
-#: app.py:19464
+#: app.py:19546
 msgid "Instalación"
 msgstr "Instalación"
 
-#: app.py:19465
+#: app.py:19547
 msgid "Instrumentos musicales y deporte"
 msgstr "Instrumentos musicais e deporte"
 
-#: app.py:19466
+#: app.py:19548
 msgid "Investigación y desarrollo"
 msgstr "Investigación e desenvolvemento"
 
-#: app.py:19467
+#: app.py:19549
 msgid "Laboratorio y precisión"
 msgstr "Laboratorio e precisión"
 
-#: app.py:19468
+#: app.py:19550
 msgid "Licitación con negociación"
 msgstr "Licitación con negociación"
 
-#: app.py:19469
+#: app.py:19551
 msgid "Limpieza, residuos y medio ambiente"
 msgstr "Limpeza, residuos e medio ambiente"
 
-#: app.py:19470
+#: app.py:19552
 msgid "Maquinaria agrícola"
 msgstr "Maquinaria agrícola"
 
-#: app.py:19471
+#: app.py:19553
 msgid "Maquinaria de minería y construcción"
 msgstr "Maquinaria de minaría e construción"
 
-#: app.py:19472
+#: app.py:19554
 msgid "Maquinaria industrial"
 msgstr "Maquinaria industrial"
 
-#: app.py:19473
+#: app.py:19555
 msgid "Material eléctrico"
 msgstr "Material eléctrico"
 
-#: app.py:19474
+#: app.py:19556
 msgid "Material médico y farmacéutico"
 msgstr "Material médico e farmacéutico"
 
-#: app.py:19475
+#: app.py:19557
 msgid "Materiales de construcción"
 msgstr "Materiais de construción"
 
-#: app.py:19476
+#: app.py:19558
 msgid "Minería"
 msgstr "Minaría"
 
-#: app.py:19477
+#: app.py:19559
 msgid "Mobiliario y limpieza"
 msgstr "Mobiliario e limpeza"
 
-#: app.py:19478
+#: app.py:19560
 msgid "Negociado con publicidad"
 msgstr "Negociado con publicidade"
 
-#: app.py:19479
+#: app.py:19561
 msgid "Negociado sin publicidad"
 msgstr "Negociado sen publicidade"
 
-#: app.py:19480
+#: app.py:19562
 msgid "Normas internas"
 msgstr "Normas internas"
 
-#: app.py:19481 app.py:19225
+#: app.py:19563 app.py:19307
 msgid "Obras"
 msgstr "Obras"
 
-#: app.py:19482
+#: app.py:19564
 msgid "Obras de construcción"
 msgstr "Obras de construción"
 
-#: app.py:19483
+#: app.py:19565
 msgid "Otros"
 msgstr "Outros"
 
-#: app.py:19484
+#: app.py:19566
 msgid "Otros servicios comunitarios"
 msgstr "Outros servizos comunitarios"
 
-#: app.py:19485
+#: app.py:19567
 msgid "Patrimonial"
 msgstr "Patrimonial"
 
-#: app.py:19486
+#: app.py:19568
 msgid "Privado"
 msgstr "Privado"
 
-#: app.py:19487
+#: app.py:19569
 msgid "Productos químicos"
 msgstr "Produtos químicos"
 
-#: app.py:19488
+#: app.py:19570
 msgid "Radio, televisión y telecomunicaciones"
 msgstr "Radio, televisión e telecomunicacións"
 
-#: app.py:19489
+#: app.py:19571
 msgid "Reparación y mantenimiento"
 msgstr "Reparación e mantemento"
 
-#: app.py:19490
+#: app.py:19572
 msgid "Restringido"
 msgstr "Restrinxido"
 
-#: app.py:19491
+#: app.py:19573
 msgid "Ropa y calzado"
 msgstr "Roupa e calzado"
 
-#: app.py:19492
+#: app.py:19574
 msgid "Salud y servicios sociales"
 msgstr "Saúde e servizos sociais"
 
-#: app.py:19493
+#: app.py:19575
 msgid "Seguridad y defensa"
 msgstr "Seguridade e defensa"
 
-#: app.py:19494 app.py:19225
+#: app.py:19576 app.py:19307
 msgid "Servicios"
 msgstr "Servizos"
 
-#: app.py:19495
+#: app.py:19577
 msgid "Servicios a empresas"
 msgstr "Servizos a empresas"
 
-#: app.py:19496
+#: app.py:19578
 msgid "Servicios de transporte auxiliares"
 msgstr "Servizos de transporte auxiliares"
 
-#: app.py:19497
+#: app.py:19579
 msgid "Servicios informáticos"
 msgstr "Servizos informáticos"
 
-#: app.py:19498
+#: app.py:19580
 msgid "Servicios petrolíferos"
 msgstr "Servizos petrolíferos"
 
-#: app.py:19499
+#: app.py:19581
 msgid "Software"
 msgstr "Software"
 
-#: app.py:19500 app.py:19225
+#: app.py:19582 app.py:19307
 msgid "Suministros"
 msgstr "Subministracións"
 
-#: app.py:19501
+#: app.py:19583
 msgid "Suministros públicos"
 msgstr "Subministracións públicas"
 
-#: app.py:19502
+#: app.py:19584
 msgid "Transporte"
 msgstr "Transporte"
 
-#: app.py:19503
+#: app.py:19585
 msgid "Vehículos y transporte"
 msgstr "Vehículos e transporte"
 
-#: app.py:19519
+#: app.py:19601
 msgid "Toda España"
 msgstr "Toda España"
 
-#: app.py:19525
+#: app.py:19607
 msgid "Licitaciones"
 msgstr "Licitacións"
 
-#: app.py:19527
+#: app.py:19609
 msgid "Subvenciones"
 msgstr "Subvencións"
 
-#: app.py:19532
+#: app.py:19614
 msgid "Buscar en el título o el organismo"
 msgstr "Buscar no título ou no organismo"
 
-#: app.py:19535
+#: app.py:19617
 msgid "Cualquier tipo"
 msgstr "Calquera tipo"
 
-#: app.py:19538
+#: app.py:19620
 msgid "Cualquier sector"
 msgstr "Calquera sector"
 
-#: app.py:19539
+#: app.py:19621
 msgid "Cualquier organismo"
 msgstr "Calquera organismo"
 
-#: app.py:19540
+#: app.py:19622
 msgid "Cualquier importe"
 msgstr "Calquera importe"
 
-#: app.py:19541 app.py:19545
+#: app.py:19623 app.py:19627
 msgid "Cualquier plazo"
 msgstr "Calquera prazo"
 
-#: app.py:19543
+#: app.py:19625
 msgid "Cualquier administración"
 msgstr "Calquera administración"
 
-#: app.py:19544
+#: app.py:19626
 msgid "Cualquier beneficiario"
 msgstr "Calquera beneficiario"
 
-#: app.py:19547
+#: app.py:19629
 msgid "Filtrar"
 msgstr "Filtrar"
 
-#: app.py:19548
+#: app.py:19630
 msgid "Quitar filtros"
 msgstr "Quitar filtros"
 
-#: app.py:19556
+#: app.py:19638
 msgid "Solo las convocatorias del Ayuntamiento de {m}."
 msgstr "Só as convocatorias do Concello de {m}."
 
-#: app.py:19557
+#: app.py:19639
 msgid "Ver todas"
 msgstr "Ver todas"
 
-#: app.py:19561 app.py:19571
+#: app.py:19643 app.py:19653
 msgid "Presupuesto"
 msgstr "Orzamento"
 
-#: app.py:19561
+#: app.py:19643
 msgid "Fin de plazo"
 msgstr "Fin de prazo"
 
-#: app.py:19564
+#: app.py:19646
 msgid "Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP)."
 msgstr "Licitacións co prazo de presentación de ofertas aberto, segundo a Plataforma de Contratación do Sector Público (PLACSP)."
 
-#: app.py:19566 app.py:19580
+#: app.py:19648 app.py:19662
 msgid "Última actualización: {f}."
 msgstr "Última actualización: {f}."
 
-#: app.py:19571
+#: app.py:19653
 msgid "Convocatoria"
 msgstr "Convocatoria"
 
-#: app.py:19571
+#: app.py:19653
 msgid "Plazo"
 msgstr "Prazo"
 
-#: app.py:19573
+#: app.py:19655
 msgid "Convocatorias de ayudas y subvenciones con el plazo de solicitud abierto, según la Base de Datos Nacional de Subvenciones (BDNS). El plazo se calcula con las fechas publicadas."
 msgstr "Convocatorias de axudas e subvencións co prazo de solicitude aberto, segundo a Base de Datos Nacional de Subvencións (BDNS). O prazo calcúlase coas datas publicadas."
 
-#: app.py:19578
+#: app.py:19660
 msgid "Origen de los datos: Intervención General de la Administración del Estado (BDNS)."
 msgstr "Orixe dos datos: Intervención General de la Administración del Estado (BDNS)."
 
-#: app.py:19581
+#: app.py:19663
 msgid "La Intervención General no participa ni patrocina esta web."
 msgstr "A Intervención General non participa nin patrocina esta web."
 
-#: app.py:19582
+#: app.py:19664
 msgid "Abiertas"
 msgstr "Abertas"
 
-#: app.py:19582
+#: app.py:19664
 msgid "Abren pronto"
 msgstr "Abren axiña"
 
-#: app.py:19588
+#: app.py:19670
 msgid "Estas convocatorias no publican la fecha de fin en la BDNS (suele contarse desde la publicación del extracto en el boletín). No sabemos si siguen abiertas: consulta las bases antes de presentar nada."
 msgstr "Estas convocatorias non publican a data de fin na BDNS (adoita contarse dende a publicación do extracto no boletín). Non sabemos se seguen abertas: consulta as bases antes de presentar nada."
 
-#: app.py:19590
+#: app.py:19672
 msgid "No hay convocatorias abiertas con estos filtros."
 msgstr "Non hai convocatorias abertas con estes filtros."
 
-#: app.py:19592
+#: app.py:19674
 msgid "convocatorias"
 msgstr "convocatorias"
 
-#: app.py:19597
+#: app.py:19679
 msgid "Los plazos y requisitos que valen son los de la publicación oficial: entra siempre en el enlace antes de presentar nada."
 msgstr "Os prazos e requisitos que valen son os da publicación oficial: entra sempre na ligazón antes de presentar nada."
 
-#: app.py:19604
+#: app.py:19686
 msgid "{n} convocatorias"
 msgstr "{n} convocatorias"
 
-#: app.py:19611
+#: app.py:19693
 msgid "Convocatorias abiertas: licitaciones y subvenciones"
 msgstr "Convocatorias abertas: licitacións e subvencións"
 
-#: app.py:19612
+#: app.py:19694
 msgid "Licitaciones públicas con el plazo abierto en toda España, con filtros por zona, tipo, sector, importe y plazo. Datos oficiales de la Plataforma de Contratación del Sector Público."
 msgstr "Licitacións públicas co prazo aberto en toda España, con filtros por zona, tipo, sector, importe e prazo. Datos oficiais da Plataforma de Contratación do Sector Público."
 
-#: app.py:19627
+#: app.py:19709
 msgid "1 licitación"
 msgstr "1 licitación"
 
-#: app.py:19627
+#: app.py:19709
 msgid "{n} licitaciones"
 msgstr "{n} licitacións"
 
-#: app.py:19630
+#: app.py:19712
 msgid "1 subvención"
 msgstr "1 subvención"
 
-#: app.py:19630
+#: app.py:19712
 msgid "{n} subvenciones"
 msgstr "{n} subvencións"
 
-#: app.py:19631
+#: app.py:19713
 msgid "Convocatorias abiertas ahora"
 msgstr "Convocatorias abertas agora"
 
-#: app.py:19632
+#: app.py:19714
 msgid "de este ayuntamiento, con el plazo abierto"
 msgstr "deste concello, co prazo aberto"
 
-#: app.py:19655
+#: app.py:19737
 msgid "Todavía no hay comentarios. Sé el primero."
 msgstr "Aínda non hai comentarios. Sé o primeiro."
 
-#: app.py:19658
+#: app.py:19740
 msgid "Comentarios"
 msgstr "Comentarios"
 
-#: app.py:19664
+#: app.py:19746
 msgid "Tu nombre (opcional)"
 msgstr "O teu nome (opcional)"
 
-#: app.py:19666
+#: app.py:19748
 msgid "Enviar comentario"
 msgstr "Enviar comentario"
 
-#: app.py:19698
+#: app.py:19780
 msgid "Ver todos los municipios"
 msgstr "Ver todos os municipios"
 
-#: app.py:19721
+#: app.py:19803
 msgid "Sin contratos adjudicados encontrados para este municipio"
 msgstr "Non se atoparon contratos adxudicados para este municipio"
 
-#: app.py:19732
+#: app.py:19814
 msgid "Fuente: PSCP (Generalitat de Catalunya)"
 msgstr "Fonte: PSCP (Generalitat de Catalunya)"
 
-#: app.py:19734
+#: app.py:19816
 msgid "Fuente: KontratazioA (Gobierno Vasco)"
 msgstr "Fonte: KontratazioA (Goberno Vasco)"
 
-#: app.py:19736
+#: app.py:19818
 msgid "Fuente: Portal de Contratación de Navarra (Gobierno de Navarra)"
 msgstr "Fonte: Portal de Contratación de Navarra (Goberno de Navarra)"
 
-#: app.py:19738
+#: app.py:19820
 msgid "Fuentes: PLACE (Ministerio de Hacienda) + BORM (Región de Murcia)"
 msgstr "Fontes: PLACE (Ministerio de Facenda) + BORM (Rexión de Murcia)"
 
-#: app.py:19740
+#: app.py:19822
 msgid "Fuente: PLACE (Ministerio de Hacienda)"
 msgstr "Fonte: PLACE (Ministerio de Facenda)"
 
-#: app.py:19749
+#: app.py:19831
 msgid "Perfil contratante en PLACE"
 msgstr "Perfil do contratante na PLACE"
 
-#: app.py:19749
+#: app.py:19831
 msgid "Perfil PLACE ↗"
 msgstr "Perfil PLACE ↗"
 
-#: app.py:19762
+#: app.py:19844
 msgid "Población oficial a 1 de enero de {anio} (INE, Padrón Municipal)"
 msgstr "Poboación oficial a 1 de xaneiro de {anio} (INE, Padrón Municipal)"
 
-#: app.py:19763 app.py:22810
+#: app.py:19845 app.py:22920
 msgid "{n} hab."
 msgstr "{n} hab."
 
-#: app.py:19773
+#: app.py:19855
 msgid "La Plataforma de Rendición de Cuentas marca como no rendidas las cuentas de {desde} a {hasta}"
 msgstr "A Plataforma de Rendición de Contas marca como non rendidas as contas de {desde} a {hasta}"
 
-#: app.py:19774
+#: app.py:19856
 msgid "Cuentas anuales: no consta ninguna cuenta rendida ({desde}-{hasta})"
 msgstr "Contas anuais: non consta ningunha conta rendida ({desde}-{hasta})"
 
-#: app.py:19777
+#: app.py:19859
 msgid "Cuenta General y resultado de las cuentas anuales en la Plataforma de Rendición de Cuentas"
 msgstr "Conta Xeral e resultado das contas anuais na Plataforma de Rendición de Contas"
 
-#: app.py:19792
+#: app.py:19874
 msgid "Superávit"
 msgstr "Superávit"
 
-#: app.py:19792
+#: app.py:19874
 msgid "Déficit"
 msgstr "Déficit"
 
-#: app.py:19794
+#: app.py:19876
 msgid "Saldo presupuestario no financiero ({tipo}) del ejercicio {ejercicio}, Ministerio de Hacienda"
 msgstr "Saldo orzamentario non financeiro ({tipo}) do exercicio {ejercicio}, Ministerio de Facenda"
 
-#: app.py:19803
+#: app.py:19885
 msgid "Deuda viva municipal a 31/12, Ministerio de Hacienda"
 msgstr "Débeda viva municipal a 31/12, Ministerio de Facenda"
 
-#: app.py:19804
+#: app.py:19886
 msgid "Deuda viva:"
 msgstr "Débeda viva:"
 
-#: app.py:19811
+#: app.py:19893
 msgid "datos {edad}"
 msgstr "datos {edad}"
 
-#: app.py:19817 app.py:19897
+#: app.py:19899 app.py:19979
 msgid "Anterior"
 msgstr "Anterior"
 
-#: app.py:19827
+#: app.py:19909
 msgid "Mostrando los primeros {n} de {total} contratos."
 msgstr "Amósanse os primeiros {n} de {total} contratos."
 
-#: app.py:19828 app.py:19908
+#: app.py:19910 app.py:19990
 msgid "Ver todos →"
 msgstr "Ver todos →"
 
-#: app.py:19907
+#: app.py:19989
 msgid "Mostrando los primeros {n} de {total}."
 msgstr "Amósanse os primeiros {n} de {total}."
 
-#: app.py:19914
+#: app.py:19996
 msgid "Contratos menores (fuentes locales del ayuntamiento)"
 msgstr "Contratos menores (fontes locais do concello)"
 
-#: app.py:19923
+#: app.py:20005
 msgid "Adjudicatario / Objeto"
 msgstr "Adxudicatario / Obxecto"
 
-#: app.py:19926
+#: app.py:20008
 msgid "Tipo"
 msgstr "Tipo"
 
-#: app.py:19927
+#: app.py:20009
 msgid "Fecha"
 msgstr "Data"
 
-#: app.py:19954
+#: app.py:20036
 msgid "Ley 19/2013, de transparencia"
 msgstr "Lei 19/2013, de transparencia"
 
-#: app.py:19956
+#: app.py:20038
 msgid "buscar el portal de transparencia de {organismo} ↗"
 msgstr "buscar o portal de transparencia de {organismo} ↗"
 
-#: app.py:19957
+#: app.py:20039
 msgid "<b>Contratos menores:</b> no hay registros de este tipo para {municipio} en las fuentes que consultamos. Los contratos menores no siempre tienen obligación legal de publicación centralizada -- muchos ayuntamientos los tramitan sin subirlos a ningún registro abierto que esta web pueda consultar, así que esto no significa necesariamente que no existan. Cualquier vecino o concejal puede solicitarlos formalmente al ayuntamiento por la vía de acceso a la información pública ({ley}) -- {portal}"
 msgstr "<b>Contratos menores:</b> non hai rexistros deste tipo para {municipio} nas fontes que consultamos. Os contratos menores non sempre teñen obriga legal de publicación centralizada -- moitos concellos tramítanos sen subilos a ningún rexistro aberto que esta web poida consultar, así que isto non significa necesariamente que non existan. Calquera veciño ou concelleiro pode solicitalos formalmente ao concello pola vía de acceso á información pública ({ley}) -- {portal}"
 
-#: app.py:19980
+#: app.py:20062
 msgid "Actualizar"
 msgstr "Actualizar"
 
-#: app.py:19993 app.py:21398
+#: app.py:20075 app.py:21501
 msgid "Empresa adjudicataria / Contrato"
 msgstr "Empresa adxudicataria / Contrato"
 
-#: app.py:19996 app.py:21401
+#: app.py:20078 app.py:21504
 msgid "Estado / Fuente"
 msgstr "Estado / Fonte"
 
-#: app.py:20000 app.py:19931
+#: app.py:20082 app.py:20013
 msgid "sigue"
 msgstr "segue"
 
-#: app.py:20012
+#: app.py:20094
 msgid "Municipio no encontrado."
 msgstr "Municipio non atopado."
 
-#: app.py:20017
+#: app.py:20099
 msgid "Contratos públicos de {municipio}"
 msgstr "Contratos públicos de {municipio}"
 
-#: app.py:20018 app.py:15802
+#: app.py:20100 app.py:15833
 msgid "Contratos Públicos"
 msgstr "Contratos públicos"
 
-#: app.py:20019
+#: app.py:20101
 msgid "Contratos públicos adjudicados en {municipio} ({territorio}): empresa adjudicataria, importe y directivo/administrador. Datos oficiales {fuente} + Registro Mercantil."
 msgstr "Contratos públicos adxudicados en {municipio} ({territorio}): empresa adxudicataria, importe e directivo/administrador. Datos oficiais {fuente} + Rexistro Mercantil."
 
-#: app.py:20036
+#: app.py:20118
 msgid "Ej: {ejemplos}"
 msgstr "Ex.: {ejemplos}"
 
-#: app.py:20038
+#: app.py:20120
 msgid "Buscar contratos"
 msgstr "Buscar contratos"
 
-#: app.py:20061
+#: app.py:20143
 msgid "<b>¿Cuál es tu municipio?</b> Te enseñamos lo que ha gastado tu ayuntamiento y su puesto en los rankings."
 msgstr "<b>Cal é o teu municipio?</b> Ensinámosche o que gastou o teu concello e o seu posto nas clasificacións."
 
-#: app.py:20063
+#: app.py:20145
 msgid "Escribe tu municipio…"
 msgstr "Escribe o teu municipio…"
 
-#: app.py:20065
+#: app.py:20147
 msgid "Ver"
 msgstr "Ver"
 
-#: app.py:20067
+#: app.py:20149
 msgid "Cerrar"
 msgstr "Pechar"
 
-#: app.py:20114
+#: app.py:20196
 msgid "Contratos cargados"
 msgstr "Contratos cargados"
 
-#: app.py:20121 app.py:20125
+#: app.py:20205 app.py:20209
 msgid "de"
 msgstr "de"
 
-#: app.py:20124
+#: app.py:20208
 msgid "Deuda por habitante"
 msgstr "Débeda por habitante"
 
-#: app.py:20128
+#: app.py:20212
 msgid "Sueldo alcalde/sa"
 msgstr "Soldo alcalde/sa"
 
-#: app.py:20132
+#: app.py:20216
 msgid "Sin datos suficientes todavía para este municipio."
 msgstr "Aínda sen datos suficientes para este municipio."
 
-#: app.py:20134
+#: app.py:20218
 msgid "cambiar"
 msgstr "cambiar"
 
-#: app.py:20137
+#: app.py:20221
 msgid "Ver ficha completa →"
 msgstr "Ver ficha completa →"
 
-#: app.py:20168
+#: app.py:20252
 msgid "No encontramos ese municipio. Prueba con otro nombre."
 msgstr "Non atopamos ese concello. Proba con outro nome."
 
-#: app.py:20271 app.py:20584 app.py:18089 app.py:18094 app.py:20118
+#: app.py:20343 app.py:18168 app.py:20204
+msgid "muestra pequeña"
+msgstr "mostra pequena"
+
+#: app.py:20347
+msgid "Tenemos {n} contratos de este municipio; con menos de {minimo} la nota se apoya en muy pocos datos y puede cambiar mucho con un solo contrato. Por eso no entra en el ranking ni tiene puesto."
+msgstr "Temos {n} contratos deste municipio; con menos de {minimo} a nota apóiase en moi poucos datos e pode cambiar moito cun só contrato. Por iso non entra na clasificación nin ten posto."
+
+#: app.py:20371 app.py:20686 app.py:20342 app.py:18167 app.py:18171
 msgid "Índice de Transparencia"
 msgstr "Índice de Transparencia"
 
-#: app.py:20277 app.py:20595 app.py:20898
+#: app.py:20377 app.py:20697 app.py:21000 app.py:20349
 msgid "Ver ranking completo →"
 msgstr "Ver clasificación completa →"
 
-#: app.py:20319
+#: app.py:20419
 msgid "Qué es el Índice de Transparencia y cómo se calcula"
 msgstr "Que é o Índice de Transparencia e como se calcula"
 
-#: app.py:20320 app.py:20514
+#: app.py:20420 app.py:20616
 msgid "Cómo se calcula"
 msgstr "Como se calcula"
 
-#: app.py:20332
+#: app.py:20432
 msgid "Contratación"
 msgstr "Contratación"
 
-#: app.py:20333
+#: app.py:20433
 msgid "Cuentas y deuda"
 msgstr "Contas e débeda"
 
-#: app.py:20334
+#: app.py:20434
 msgid "Sueldos"
 msgstr "Soldos"
 
-#: app.py:20341
+#: app.py:20441
 msgid "Cómo funciona el Índice de Transparencia"
 msgstr "Como funciona o Índice de Transparencia"
 
-#: app.py:20343
+#: app.py:20443
 msgid "<b>Qué mide:</b> cuánta información pública de cada ayuntamiento reunimos de fuentes oficiales (contratos, cuentas, deuda, sueldos). No mide si gestiona bien o mal."
 msgstr "<b>Que mide:</b> canta información pública de cada concello reunimos de fontes oficiais (contratos, contas, débeda, soldos). Non mide se xestiona ben ou mal."
 
-#: app.py:20345
+#: app.py:20445
 msgid "Un dato que no tenemos no cuenta como 0: su peso se reparte entre el resto. Hacen falta al menos {minimo} de los {total} componentes."
 msgstr "Un dato que non temos non conta como 0: o seu peso repártese entre o resto. Cómpren polo menos {minimo} dos {total} compoñentes."
 
-#: app.py:20346
+#: app.py:20446
+msgid "Con menos de {minimo} contratos guardados, la nota lleva la etiqueta «muestra pequeña» y el municipio no entra en el ranking."
+msgstr "Con menos de {minimo} contratos gardados, a nota leva a etiqueta «mostra pequena» e o municipio non entra na clasificación."
+
+#: app.py:20447
 msgid "Valoración propia de Dinero Público. <b>No es una certificación de cumplimiento de la Ley 19/2013 de Transparencia.</b>"
 msgstr "Valoración propia de Dinero Público. <b>Non é unha certificación de cumprimento da Lei 19/2013 de transparencia.</b>"
 
-#: app.py:20347
+#: app.py:20448
 msgid "Cómo se calcula y qué no medimos →"
 msgstr "Como se calcula e que non medimos →"
 
-#: app.py:20358 app.py:18092 app.py:20119
+#: app.py:20459 app.py:18169 app.py:18174 app.py:20201
 msgid "Mide la disponibilidad de datos públicos, no la buena gestión ni la ausencia de corrupción."
 msgstr "Mide a dispoñibilidade de datos públicos, non a boa xestión nin a ausencia de corrupción."
 
-#: app.py:20405
+#: app.py:20506
 msgid "adjudicatario no identificado"
 msgstr "adxudicatario non identificado"
 
-#: app.py:20413
+#: app.py:20514
 msgid "El mayor contrato adjudicado"
 msgstr "O maior contrato adxudicado"
 
-#: app.py:20417
+#: app.py:20518
 msgid "Importe de adjudicación publicado por {fuente}; en contratos plurianuales incluye toda su duración."
 msgstr "Importe de adxudicación publicado por {fuente}; nos contratos plurianuais inclúe toda a súa duración."
 
-#: app.py:20444
+#: app.py:20545
 msgid "Deuda viva a {fecha}, Ministerio de Hacienda"
 msgstr "Débeda viva a {fecha}, Ministerio de Facenda"
 
-#: app.py:20445
+#: app.py:20546
 msgid "Deuda viva, Ministerio de Hacienda"
 msgstr "Débeda viva, Ministerio de Facenda"
 
-#: app.py:20447
+#: app.py:20548
 msgid "La mayor ciudad sin deuda"
 msgstr "A maior cidade sen débeda"
 
-#: app.py:20449
+#: app.py:20550
 msgid "{n} habitantes"
 msgstr "{n} habitantes"
 
-#: app.py:20450
+#: app.py:20551
 msgid "de deuda viva"
 msgstr "de débeda viva"
 
-#: app.py:20451
+#: app.py:20552
 msgid "Es uno de los {n} ayuntamientos de España sin deuda viva."
 msgstr "É un dos {n} concellos de España sen débeda viva."
 
-#: app.py:20452
+#: app.py:20553
 msgid "Fuente:"
 msgstr "Fonte:"
 
-#: app.py:20460
+#: app.py:20561
 msgid "Datos destacados · Finanzas municipales"
 msgstr "Datos destacados · Finanzas municipais"
 
-#: app.py:20461
+#: app.py:20562
 msgid "Datos económicos oficiales; no forman parte del Índice de Transparencia."
 msgstr "Datos económicos oficiais; non forman parte do Índice de Transparencia."
 
-#: app.py:20467
+#: app.py:20568
 msgid "Ver ranking de deuda por habitante →"
 msgstr "Ver clasificación de débeda por habitante →"
 
-#: app.py:20494
-msgid "Empate a {n} en el primer puesto"
-msgstr "Empate a {n} no primeiro posto"
+#: app.py:20588
+msgid "Menos de {n} hab."
+msgstr "Menos de {n} hab."
 
-#: app.py:20501
+#: app.py:20589
+msgid "{desde} a {hasta} hab."
+msgstr "{desde} a {hasta} hab."
+
+#: app.py:20591
+msgid "Más de {n} hab."
+msgstr "Máis de {n} hab."
+
+#: app.py:20600
+msgid "Otros municipios del tramo con la misma nota"
+msgstr "Outros municipios do tramo coa mesma nota"
+
+#: app.py:20609
 msgid "Liderando ahora mismo · Índice de Transparencia"
 msgstr "Liderando agora mesmo · Índice de Transparencia"
 
-#: app.py:20502
-msgid "{n} municipios con nota · España"
-msgstr "{n} municipios con nota · España"
+#: app.py:20610
+msgid "{n} municipios en el ranking · líder por tamaño de municipio"
+msgstr "{n} municipios na clasificación · líder por tamaño de municipio"
 
-#: app.py:20513
+#: app.py:20615
 msgid "Ver ranking por tu región →"
 msgstr "Ver clasificación pola túa rexión →"
 
-#: app.py:20567
+#: app.py:20669
 msgid "Ver más ({n} más) ▾"
 msgstr "Ver máis ({n} máis) ▾"
 
-#: app.py:20585
+#: app.py:20687
 msgid "Índice v2"
 msgstr "Índice v2"
 
-#: app.py:20587
+#: app.py:20689
 msgid "No comparable entre regiones; los datos de origen varían."
 msgstr "Non comparable entre rexións; os datos de orixe varían."
 
-#: app.py:20588
+#: app.py:20690
 msgid "Región"
 msgstr "Rexión"
 
-#: app.py:20625
+#: app.py:20727
 msgid "Aún sin datos en Dinero Público."
 msgstr "Aínda sen datos en Dinero Público."
 
-#: app.py:20633
+#: app.py:20735
 msgid "Superávit agreg."
 msgstr "Superávit agreg."
 
-#: app.py:20633
+#: app.py:20735
 msgid "Déficit agreg."
 msgstr "Déficit agreg."
 
-#: app.py:20635
+#: app.py:20737
 msgid "Sin datos agregados todavía."
 msgstr "Aínda sen datos agregados."
 
-#: app.py:20728 app.py:20929 app.py:21015 app.py:19692
+#: app.py:20830 app.py:21031 app.py:21117 app.py:19774
 msgid "Municipios"
 msgstr "Municipios"
 
-#: app.py:20730 app.py:20931 app.py:19694
+#: app.py:20832 app.py:21033 app.py:19776
 msgid "Empresas únicas"
 msgstr "Empresas únicas"
 
-#: app.py:20759 app.py:22813
+#: app.py:20861 app.py:22923
 msgid "{importe}/hab. de deuda viva"
 msgstr "{importe}/hab. de débeda viva"
 
-#: app.py:20763
+#: app.py:20865
 msgid "contratos"
 msgstr "contratos"
 
-#: app.py:20764 app.py:22812
+#: app.py:20866 app.py:22922
 msgid "{importe} adjudicado"
 msgstr "{importe} adxudicado"
 
-#: app.py:20791
+#: app.py:20893
 msgid "Más contratos"
 msgstr "Máis contratos"
 
-#: app.py:20792
+#: app.py:20894
 msgid "Mayor importe"
 msgstr "Maior importe"
 
-#: app.py:20819
+#: app.py:20921
 msgid "No hay comunicados recientes de la Comisión Europea sobre España."
 msgstr "Non hai comunicados recentes da Comisión Europea sobre España."
 
-#: app.py:20852
+#: app.py:20954
 msgid "Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás de cada adjudicación."
 msgstr "Contratos públicos de España cruzados co Rexistro Mercantil para saber que empresa — e que persoa — hai detrás de cada adxudicación."
 
-#: app.py:20857 app.py:20998
+#: app.py:20959 app.py:21100
 msgid "Ayuntamiento"
 msgstr "Concello"
 
-#: app.py:20859 app.py:21000 app.py:19925 app.py:16222
+#: app.py:20961 app.py:21102 app.py:20007 app.py:16253
 msgid "Directivo"
 msgstr "Directivo"
 
-#: app.py:20860 app.py:21001 app.py:19561
+#: app.py:20962 app.py:21103 app.py:19643
 msgid "Licitación"
 msgstr "Licitación"
 
-#: app.py:20864 app.py:21005 app.py:21417
+#: app.py:20966 app.py:21107 app.py:21520
 msgid "Buscar"
 msgstr "Buscar"
 
-#: app.py:20866
+#: app.py:20968
 msgid "Busca en los {n} contratos ya cargados de toda España · mínimo 2 caracteres."
 msgstr "Busca nos {n} contratos xa cargados de toda España · mínimo 2 caracteres."
 
-#: app.py:20877
+#: app.py:20979
 msgid "Pincha una provincia en el mapa, o abre aquí la lista en texto"
 msgstr "Preme nunha provincia no mapa, ou abre aquí a lista en texto"
 
-#: app.py:20883 app.py:21011
+#: app.py:20985 app.py:21113
 msgid "Casos de investigación"
 msgstr "Casos de investigación"
 
-#: app.py:20886 app.py:21014
+#: app.py:20988 app.py:21116
 msgid "Ver todos los casos →"
 msgstr "Ver todos os casos →"
 
-#: app.py:20890
+#: app.py:20992
 msgid "Noticias UE sobre España"
 msgstr "Novas da UE sobre España"
 
-#: app.py:20892
+#: app.py:20994
 msgid "Ver más en la Comisión Europea →"
 msgstr "Ver máis na Comisión Europea →"
 
-#: app.py:20896
+#: app.py:20998
 msgid "Empresas líderes · Ranking Nacional"
 msgstr "Empresas líderes · Clasificación nacional"
 
-#: app.py:20905
+#: app.py:21007
 msgid "Consulta los contratos públicos adjudicados en España con los directivos de las empresas adjudicatarias. Cobertura nacional, las 17 comunidades autónomas y 2 ciudades autónomas."
 msgstr "Consulta os contratos públicos adxudicados en España cos directivos das empresas adxudicatarias. Cobertura nacional: as 17 comunidades autónomas e 2 cidades autónomas."
 
-#: app.py:20956 app.py:16258
+#: app.py:21058 app.py:16289
 msgid "Ver contratos →"
 msgstr "Ver contratos →"
 
-#: app.py:20978
+#: app.py:21080
 msgid "Contratos públicos de los {n} municipios {de_la} {territorio}, cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás de cada adjudicación."
 msgstr "Contratos públicos dos {n} municipios de {territorio}, cruzados co Rexistro Mercantil para saber que empresa — e que persoa — hai detrás de cada adxudicación."
 
-#: app.py:21007
+#: app.py:21109
 msgid "Busca en los {n} contratos ya cargados de {territorio} · mínimo 2 caracteres."
 msgstr "Busca nos {n} contratos xa cargados de {territorio} · mínimo 2 caracteres."
 
-#: app.py:21020
+#: app.py:21122
 msgid "Contratos públicos {territorio}"
 msgstr "Contratos públicos {territorio}"
 
-#: app.py:21021
+#: app.py:21123
 msgid "Consulta los contratos públicos de los {n} municipios de {territorio} con los directivos de las empresas adjudicatarias."
 msgstr "Consulta os contratos públicos dos {n} municipios de {territorio} cos directivos das empresas adxudicatarias."
 
-#: app.py:21394
+#: app.py:21497
 msgid "Mostrando los primeros 300 de {n} resultados."
 msgstr "Amosando os primeiros 300 de {n} resultados."
 
-#: app.py:21406
+#: app.py:21509
 msgid "Sin resultados para tu búsqueda."
 msgstr "Sen resultados para a túa busca."
 
-#: app.py:21415
+#: app.py:21518
 msgid "Buscar por empresa, directivo o municipio…"
 msgstr "Buscar por empresa, directivo ou municipio…"
 
-#: app.py:21419
+#: app.py:21522
 msgid "{n} resultado para \"{q}\""
 msgstr "{n} resultado para \"{q}\""
 
-#: app.py:21419
+#: app.py:21522
 msgid "{n} resultados para \"{q}\""
 msgstr "{n} resultados para \"{q}\""
 
-#: app.py:21424
+#: app.py:21527
 msgid "Búsqueda: {q}"
 msgstr "Busca: {q}"
 
-#: app.py:21425
+#: app.py:21528
 msgid "Resultados de \"{q}\" en contratos públicos de {territorio}."
 msgstr "Resultados de \"{q}\" en contratos públicos de {territorio}."
 
-#: app.py:21456
+#: app.py:21559
 msgid "Compartir:"
 msgstr "Compartir:"
 
-#: app.py:21457
+#: app.py:21560
 msgid "Compartir en WhatsApp"
 msgstr "Compartir en WhatsApp"
 
-#: app.py:21458
+#: app.py:21561
 msgid "Compartir en Facebook"
 msgstr "Compartir en Facebook"
 
-#: app.py:21459
+#: app.py:21562
 msgid "Compartir en X"
 msgstr "Compartir en X"
 
-#: app.py:21460
+#: app.py:21563
 msgid "Compartir en Telegram"
 msgstr "Compartir en Telegram"
 
-#: app.py:21461
+#: app.py:21564
 msgid "Compartir por correo"
 msgstr "Compartir por correo"
 
-#: app.py:21461
+#: app.py:21564
 msgid "Correo"
 msgstr "Correo"
 
-#: app.py:21462 app.py:21462 app.py:21473
+#: app.py:21565 app.py:21565 app.py:21576
 msgid "Copiar enlace"
 msgstr "Copiar ligazón"
 
-#: app.py:21472
+#: app.py:21575
 msgid "Enlace copiado"
 msgstr "Ligazón copiada"
 
-#: app.py:21472
+#: app.py:21575
 msgid "No se pudo copiar"
 msgstr "Non se puido copiar"
 
-#: app.py:21495
+#: app.py:21598
 msgid "<strong>Contratos menores: el coladero de la contratación pública.</strong> Auditamos 29 grandes ciudades y pedimos por ley que su publicación sea obligatoria y uniforme. <a href=\"/casos/contratos-menores-coladero\">Lee el caso</a>."
 msgstr "<strong>Contratos menores: o coadoiro da contratación pública.</strong> Auditamos 29 grandes cidades e pedimos por lei que a súa publicación sexa obrigatoria e uniforme. <a href=\"/casos/contratos-menores-coladero\">Le o caso</a>."
 
-#: app.py:21506
+#: app.py:21609
 msgid "Firma la petición →"
 msgstr "Asina a petición →"
 
-#: app.py:22810
+#: app.py:22920
 msgid "{n} municipios"
 msgstr "{n} municipios"
 
-#: app.py:23063
+#: app.py:23173
 msgid "Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva."
 msgstr "Cada territorio, coloreado coa súa propia bandeira — pasa o rato por unha provincia para ver as súas cifras oficiais: municipios, habitantes, contratos, importe adxudicado e débeda viva."
 
-#: app.py:23068
+#: app.py:23178
 msgid "Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y patrón principal; se omiten escudos y detalles heráldicos finos). Las cifras de cada provincia se calculan en cada carga a partir de los municipios ya procesados en nuestra base de datos."
 msgstr "Xeometría de provincias e comunidades tomada da cartografía oficial do Instituto Xeográfico Nacional (vía es-atlas). As bandeiras son unha versión simplificada debuxada a man (cores e patrón principal; omítense escudos e detalles heráldicos finos). As cifras de cada provincia calcúlanse en cada carga a partir dos municipios xa procesados na nosa base de datos."
 
-#: app.py:23072 app.py:16426 app.py:23062
+#: app.py:23182 app.py:16457 app.py:23172
 msgid "Mapa de cobertura"
 msgstr "Mapa de cobertura"
 
-#: app.py:23073
+#: app.py:23183
 msgid "Mapa de España por comunidades y provincias con las cifras oficiales de contratación pública de Dinero Público: municipios, habitantes, contratos e importe adjudicado."
 msgstr "Mapa de España por comunidades e provincias coas cifras oficiais de contratación pública de Dinero Público: municipios, habitantes, contratos e importe adxudicado."
 
-#: app.py:23084
+#: app.py:23194
 msgid "Copiado"
 msgstr "Copiado"
 
-#: app.py:23086
+#: app.py:23196
 msgid "Apoya el proyecto por Bizum"
 msgstr "Apoia o proxecto por Bizum"
 
-#: app.py:23089
+#: app.py:23199
 msgid "Copiar"
 msgstr "Copiar"
 
-#: app.py:23090
+#: app.py:23200
 msgid "Cualquier cantidad ayuda a pagar el servidor y el tiempo. En el concepto, si quieres, pon «Dinero Público»."
 msgstr "Calquera cantidade axuda a pagar o servidor e o tempo. No concepto, se queres, pon «Dinero Público»."
 
-#: app.py:23106
+#: app.py:23216
 msgid "Dinero Público lo hago yo solo: César Castro Banegas. No hay una organización detrás, ni un equipo, ni presupuesto. No lo financia ningún partido, ninguna empresa ni ninguna administración. Detrás hay miles de horas de trabajo."
 msgstr "Dinero Público fágoo eu só: César Castro Banegas. Non hai unha organización detrás, nin un equipo, nin orzamento. Non o financia ningún partido, ningunha empresa nin ningunha administración. Detrás hai miles de horas de traballo."
 
-#: app.py:23108
+#: app.py:23218
 msgid "PRÓXIMAMENTE, SE INCORPORARÁN UN ABOGADO, UN ECONOMISTA Y UN PERIODISTA."
 msgstr "PROXIMAMENTE, INCORPORARANSE UN AVOGADO, UN ECONOMISTA E UN XORNALISTA."
 
-#: app.py:23110
+#: app.py:23220
 msgid "Empecé con los contratos de la Región de Murcia. Hoy la web cubre las 17 comunidades autónomas y 2 ciudades autónomas de España, con distinto grado de detalle según la provincia: el estado real de cada una está en el <a href=\"/mapa-cobertura\">mapa de cobertura</a>."
 msgstr "Comecei cos contratos da Rexión de Murcia. Hoxe a web cobre as 17 comunidades autónomas e 2 cidades autónomas de España, con distinto grao de detalle segundo a provincia: o estado real de cada unha está no <a href=\"/mapa-cobertura\">mapa de cobertura</a>."
 
-#: app.py:23112
+#: app.py:23222
 msgid "Qué hago y qué no"
 msgstr "Que fago e que non"
 
-#: app.py:23113
+#: app.py:23223
 msgid "Reúno datos que ya son públicos y oficiales, pero que están dispersos en decenas de portales, formatos y registros: los contratos de la Plataforma de Contratación del Sector Público, los registros autonómicos, los portales municipales, la deuda y las cuentas del Ministerio de Hacienda, los sueldos de alcaldes y concejales. Los cruzo, los ordeno y los pongo en un solo sitio."
 msgstr "Reúno datos que xa son públicos e oficiais, pero que están dispersos en decenas de portais, formatos e rexistros: os contratos da Plataforma de Contratación do Sector Público, os rexistros autonómicos, os portais municipais, a débeda e as contas do Ministerio de Facenda, os soldos de alcaldes e concelleiros. Crúzoos, ordénoos e póñoos nun só sitio."
 
-#: app.py:23114
+#: app.py:23224
 msgid "No acuso a nadie ni saco conclusiones por el lector. Cuando un dato parece raro, lo enseño tal como lo publica la fuente oficial y explico lo que sé y lo que no. Y cuando me equivoco, lo corrijo y lo cuento: en <a href=\"/casos\">Casos</a> hay ejemplos de errores míos y de las fuentes. Cómo se calcula cada cosa está en la <a href=\"/metodologia\">metodología</a>."
 msgstr "Non acuso a ninguén nin saco conclusións polo lector. Cando un dato parece raro, amósoo tal como o publica a fonte oficial e explico o que sei e o que non. E cando me equivoco, corríxoo e cóntoo: en <a href=\"/casos\">Casos</a> hai exemplos de erros meus e das fontes. Como se calcula cada cousa está na <a href=\"/metodologia\">metodoloxía</a>."
 
-#: app.py:23116
+#: app.py:23226
 msgid "Cómo puedes colaborar"
 msgstr "Como podes colaborar"
 
-#: app.py:23117
+#: app.py:23227
 msgid "Un proyecto de una sola persona depende de quien lo usa. Puedes ayudar de varias formas:"
 msgstr "Un proxecto dunha soa persoa depende de quen o usa. Podes axudar de varias formas:"
 
-#: app.py:23119
+#: app.py:23229
 msgid "<strong>Avisa de errores.</strong> Si ves algo mal en la ficha de tu municipio, cuéntalo en sus comentarios."
 msgstr "<strong>Avisa de erros.</strong> Se ves algo mal na ficha do teu concello, cóntao nos seus comentarios."
 
-#: app.py:23120
+#: app.py:23230
 msgid "<strong>Envíame datos.</strong> Si tu ayuntamiento publica sus contratos menores en algún sitio que no tengo, escríbeme."
 msgstr "<strong>Envíame datos.</strong> Se o teu concello publica os seus contratos menores nalgún sitio que non teño, escríbeme."
 
-#: app.py:23121
+#: app.py:23231
 msgid "<strong>Compártelo.</strong> Cada persona que lo conoce es alguien más mirando cómo se gasta el dinero de todos."
 msgstr "<strong>Compárteo.</strong> Cada persoa que o coñece é alguén máis mirando como se gasta o diñeiro de todos."
 
-#: app.py:23122
+#: app.py:23232
 msgid "<strong>Apóyalo económicamente.</strong> Mantener el servidor y seguir añadiendo fuentes cuesta dinero y tiempo."
 msgstr "<strong>Apóiao economicamente.</strong> Manter o servidor e seguir engadindo fontes custa diñeiro e tempo."
 
-#: app.py:23126
+#: app.py:23236
 msgid "¿Hablas gallego, catalán o euskera y ves algo mejorable en esta página? Escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 msgstr "Falas galego e ves algo mellorable nesta páxina? Escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 
-#: app.py:23128 app.py:23187
+#: app.py:23238 app.py:23297
 msgid "Contacto"
 msgstr "Contacto"
 
-#: app.py:23131 app.py:16424 app.py:23104
+#: app.py:23241 app.py:16455 app.py:23214
 msgid "Quién soy"
 msgstr "Quen son"
 
-#: app.py:23132
+#: app.py:23242
 msgid "Dinero Público lo hace una sola persona, sin equipo ni presupuesto: quién soy, qué hago con los datos públicos y cómo puedes colaborar."
 msgstr "Dinero Público faino unha soa persoa, sen equipo nin orzamento: quen son, que fago cos datos públicos e como podes colaborar."
 
-#: app.py:23143
+#: app.py:23253
 msgid "Esta página es una traducción. En caso de discrepancia, prevalece la <a href=\"{url}\">versión en castellano</a>. Si hablas este idioma y ves algo que suene raro, escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> y dinos cómo lo dirías tú — cualquier ayuda para mejorarlo es bienvenida."
 msgstr "Esta páxina é unha tradución. En caso de discrepancia, prevalece a <a href=\"{url}\">versión en castelán</a>. Se falas galego e ves algo que soe raro, escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> e dinos como o dirías ti — calquera axuda para melloralo é benvida."
 
-#: app.py:23152
+#: app.py:23262
 msgid "Aviso Legal y Privacidad"
 msgstr "Aviso legal e privacidade"
 
-#: app.py:23155
+#: app.py:23265
 msgid "Titular"
 msgstr "Titular"
 
-#: app.py:23158
+#: app.py:23268
 msgid "Dominio"
 msgstr "Dominio"
 
-#: app.py:23161
+#: app.py:23271
 msgid "Actividad"
 msgstr "Actividade"
 
-#: app.py:23162
+#: app.py:23272
 msgid "Plataforma de transparencia y datos públicos sobre contratación del sector público en España. Cobertura nacional: las 17 comunidades autónomas y 2 ciudades autónomas, con distinto grado de detalle según la provincia (ver el <a href=\"/mapa-cobertura\">mapa de cobertura</a> para el estado real de cada una)."
 msgstr "Plataforma de transparencia e datos públicos sobre contratación do sector público en España. Cobertura nacional: as 17 comunidades autónomas e 2 cidades autónomas, con distinto grao de detalle segundo a provincia (ver o <a href=\"/mapa-cobertura\">mapa de cobertura</a> para o estado real de cada unha)."
 
-#: app.py:23164
+#: app.py:23274
 msgid "Propiedad intelectual"
 msgstr "Propiedade intelectual"
 
-#: app.py:23165
+#: app.py:23275
 msgid "El código fuente de esta plataforma está registrado como obra en Safe Creative con todos los derechos reservados, número de registro <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (23 de julio de 2026)."
 msgstr "O código fonte desta plataforma está rexistrado como obra en Safe Creative con todos os dereitos reservados, número de rexistro <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (23 de xullo de 2026)."
 
-#: app.py:23167
+#: app.py:23277
 msgid "Origen de los datos"
 msgstr "Orixe dos datos"
 
-#: app.py:23168
+#: app.py:23278
 msgid "Los datos de contratos mostrados provienen de fuentes oficiales públicas: la Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda, que cubre todo el territorio nacional, además de fuentes autonómicas complementarias como el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Se seguirán incorporando otras fuentes de contratos menores y organismos públicos a medida que estén disponibles."
 msgstr "Os datos de contratos amosados proveñen de fontes oficiais públicas: a Plataforma de Contratación do Sector Público (PLACE) do Ministerio de Facenda, que cobre todo o territorio nacional, ademais de fontes autonómicas complementarias como o Boletín Oficial da Rexión de Murcia (BORM) e a Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Seguiranse incorporando outras fontes de contratos menores e organismos públicos a medida que estean dispoñibles."
 
-#: app.py:23169
+#: app.py:23279
 msgid "Los nombres de directivos y administradores provienen del Boletín Oficial del Registro Mercantil (BORME), que publica el Boletín Oficial del Estado. No se consultan directorios de empresas privados."
 msgstr "Os nomes de directivos e administradores proveñen do Boletín Oficial do Rexistro Mercantil (BORME), que publica o Boletín Oficial do Estado. Non se consultan directorios de empresas privados."
 
-#: app.py:23170
+#: app.py:23280
 msgid "Próximamente se incorporarán también datos de subvenciones y fondos europeos."
 msgstr "Proximamente incorporaranse tamén datos de subvencións e fondos europeos."
 
-#: app.py:23172
+#: app.py:23282
 msgid "Base legal para el tratamiento de datos"
 msgstr "Base legal para o tratamento de datos"
 
-#: app.py:23173
+#: app.py:23283
 msgid "El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD)."
 msgstr "O tratamento dos nomes de persoas físicas que aparecen como administradores ou apoderados de empresas adxudicatarias ampárase no interese público da información e en que proceden de fontes accesibles ao público (art. 9.2.e do Regulamento Xeral de Protección de Datos e Lei Orgánica 3/2018, de Protección de Datos Persoais e garantía dos dereitos dixitais — LOPDGDD)."
 
-#: app.py:23175
+#: app.py:23285
 msgid "Ejercicio de derechos RGPD"
 msgstr "Exercicio de dereitos RXPD"
 
-#: app.py:23176
+#: app.py:23286
 msgid "Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 msgstr "Para exercer os teus dereitos de acceso, rectificación, supresión, oposición ou limitación do tratamento, escribe a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 
-#: app.py:23178
+#: app.py:23288
 msgid "Cookies y publicidad"
 msgstr "Cookies e publicidade"
 
-#: app.py:23179
+#: app.py:23289
 msgid "Este sitio usa cookies propias, necesarias para su funcionamiento básico, y cookies de terceros que solo se activan si das tu consentimiento explícito en el banner que aparece al entrar:"
 msgstr "Este sitio usa cookies propias, necesarias para o seu funcionamento básico, e cookies de terceiros que só se activan se dás o teu consentimento explícito no aviso que aparece ao entrar:"
 
-#: app.py:23181
+#: app.py:23291
 msgid "<b>Google Analytics</b> — estadísticas de uso agregadas del sitio."
 msgstr "<b>Google Analytics</b> — estatísticas de uso agregadas do sitio."
 
-#: app.py:23182
+#: app.py:23292
 msgid "<b>Google AdSense</b> — cuando esté activo, para mostrar publicidad, en algunos casos personalizada según tus intereses."
 msgstr "<b>Google AdSense</b> — cando estea activo, para amosar publicidade, nalgúns casos personalizada segundo os teus intereses."
 
-#: app.py:23184
+#: app.py:23294
 msgid "Puedes aceptar o rechazar estas cookies en cualquier momento desde el enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier página del sitio — rechazarlas no impide usar la web con normalidad, solo desactiva las estadísticas y la publicidad."
 msgstr "Podes aceptar ou rexeitar estas cookies en calquera momento desde a ligazón <b>«Preferencias de cookies»</b> no pé de páxina de calquera páxina do sitio — rexeitalas non impide usar a web con normalidade, só desactiva as estatísticas e a publicidade."
 
-#: app.py:23185
+#: app.py:23295
 msgid "Más información sobre cómo Google usa los datos en sitios que utilizan sus servicios de publicidad: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Cómo usa Google los datos de los sitios o las apps que utilizan sus servicios</a>."
 msgstr "Máis información sobre como Google usa os datos en sitios que utilizan os seus servizos de publicidade: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Como usa Google os datos dos sitios ou das aplicacións que utilizan os seus servizos</a>."
 
-#: app.py:23190 app.py:16422
+#: app.py:23300 app.py:16453
 msgid "Aviso Legal"
 msgstr "Aviso legal"
 
-#: app.py:23191
+#: app.py:23301
 msgid "Aviso legal, privacidad y base legal para el tratamiento de datos públicos en Dinero Público."
 msgstr "Aviso legal, privacidade e base legal para o tratamento de datos públicos en Dinero Público."
+
+#~ msgid "Empate a {n} en el primer puesto"
+#~ msgstr "Empate a {n} no primeiro posto"
+
+#~ msgid "{n} municipios con nota · España"
+#~ msgstr "{n} municipios con nota · España"
 
 #~ msgid "Los nombres de directivos y administradores provienen de registros públicos (Registro Mercantil y fuentes empresariales públicas equivalentes)."
 #~ msgstr "Os nomes de directivos e administradores proveñen de rexistros públicos (Rexistro Mercantil e fontes empresariais públicas equivalentes)."
