@@ -14863,16 +14863,22 @@ def _limpiar_cache_negativos():
                  _settings_get_float(_CLAVE_ULTIMA_LIMPIEZA_NEG, 0.0))
     if ahora - ultima < LIMPIEZA_NEGATIVOS_INTERVALO:
         return
+    # 2026-10-10: antes se BORRABAN. Dos efectos no buscados: (1) al borrar se perdía la cuenta de intentos, así que
+    # ninguna empresa llegaba nunca a DIR_INTENTOS_MAX y las mismas ~25.000 se volvían a buscar cada día para siempre;
+    # (2) el Índice dejaba de saber que esas empresas ya se habían buscado, sus contratos del histórico volvían a
+    # "pendientes, no cuentan" y la nota subía tras cada limpieza y bajaba según se rebuscaban (Melilla: 89,1 por la
+    # tarde y 94,0 por la noche del 09-10). Ahora la fila se queda y solo se marca para reintentar (ts = 0: caducada
+    # para _dir_cache_get_registro), conservando sus intentos.
     with _db_lock:
-        deleted = _db.execute(
-            "DELETE FROM directores WHERE (nombre = '' OR nombre IS NULL) AND intentos < ?",
+        marcadas = _db.execute(
+            "UPDATE directores SET ts = 0 WHERE (nombre = '' OR nombre IS NULL) AND intentos < ? AND ts > 0",
             (DIR_INTENTOS_MAX,),
         ).rowcount
         _db.commit()
     _ULTIMA_LIMPIEZA_NEGATIVOS = ahora
     _settings_set(_CLAVE_ULTIMA_LIMPIEZA_NEG, ahora)
-    if deleted:
-        print(f"  [enriquecimiento] {deleted} entradas negativas eliminadas del caché.", flush=True)
+    if marcadas:
+        print(f"  [enriquecimiento] {marcadas} entradas negativas marcadas para reintentar.", flush=True)
 
 
 # Peticiones web en curso (Handler.do_GET/do_POST). Los hilos de fondo que gastan CPU (el barrido de directivos)
@@ -17487,16 +17493,17 @@ def _calcular_indice_transparencia():
     menores_por_nombre = {}
     for (n, p), d in menores_det.items():
         menores_por_nombre.setdefault(n, []).append((p, d))
-    # Resultado vigente de la búsqueda de directivo por adjudicatario (misma regla que _dir_cache_get: un negativo
-    # caducado es "hay que volver a buscar"). Para un contrato del histórico de formales (ORIGEN_BACKFILL_FORMALES),
-    # que llega sin el campo directivo, cuenta lo que diga la caché; si su empresa aún no se ha buscado, no cuenta --
-    # decisión de César (2026-10-03): el histórico recién añadido no penaliza mientras el BORME no lo alcance.
-    ahora = time.time()
+    # Resultado de la búsqueda de directivo por adjudicatario. Para un contrato del histórico de formales
+    # (ORIGEN_BACKFILL_FORMALES), que llega sin el campo directivo, cuenta lo que diga la caché; si su empresa aún no
+    # se ha buscado NUNCA, no cuenta -- decisión de César (2026-10-03): el histórico recién añadido no penaliza
+    # mientras el BORME no lo alcance. 2026-10-10: "ya buscada" es tener fila en `directores`, sin mirar caducidades
+    # (una empresa buscada sin resultado no vuelve a "pendiente" porque toque reintentarla), y lo encontrado cuenta
+    # solo si se enseña (_administrador_guardado_visible). Con el histórico del BORME cargado no hay pendientes: el
+    # índice masivo ya ha respondido por todas las sociedades.
+    sin_pendientes = _borme_historico_cargado()
     with _db_lock:
-        dir_cache = {}
-        for clave_d, nombre_d, ts_d in _db.execute("SELECT clave, nombre, ts FROM directores").fetchall():
-            if ahora - (ts_d or 0) <= (DIR_CACHE_POS_TTL if nombre_d else DIR_CACHE_NEG_TTL):
-                dir_cache[clave_d] = bool(nombre_d)
+        dir_cache = {clave_d: _administrador_guardado_visible(nombre_d or "", cargo_d or "")
+                     for clave_d, nombre_d, cargo_d in _db.execute("SELECT clave, nombre, cargo FROM directores")}
 
     # Una pasada por cache.db, ficha a ficha (_db_iter_municipios), guardando de cada una solo los recuentos que usan
     # "adjudicatario", "directivo" y "actividad" -- nunca las fichas enteras (2026-10-03, ver _db_iter_municipios).
@@ -17512,7 +17519,7 @@ def _calcular_indice_transparencia():
                 n_dir += 1
             elif c.get("origen") == ORIGEN_BACKFILL_FORMALES:
                 encontrado = dir_cache.get(_dir_cache_key(c.get("empresa", ""), c.get("nif", "")))
-                if encontrado is None:
+                if encontrado is None and not sin_pendientes:
                     n_pend += 1
                 elif encontrado:
                     n_dir += 1
