@@ -96,39 +96,43 @@ con muestras de 4; y menores y formato, no disponibles, reparten su peso entre l
 **Lo que no cambia**: pesos, componentes, la regla «no disponible no es 0», el mínimo de 4 componentes y el
 percentil de actividad (se sigue calculando entre todos los municipios del tramo, estén o no en el ranking).
 
-**Medición** sobre la copia real de producción del 03-10-2026 (tablas completas en
+**Medición** sobre la copia real de producción del **09-10-2026** (tablas completas en
 `INDICE_TRANSPARENCIA_V2_1_MEDICION.md`). «A» = umbral contando formales + menores (lo que hace el código); «B» =
 contando solo contratos formales, medido como alternativa:
 
 | | v2 | v2.1 · A | v2.1 · B |
 |---|---:|---:|---:|
-| Municipios con nota | 8.082 | 8.082 | 8.082 |
-| En el ranking | 8.082 | 4.315 | 3.150 |
-| «Muestra pequeña» | — | 3.767 (46,6 %) | 4.932 (61,0 %) |
-| Población fuera | — | 1,82 M | 3,27 M |
-| Con 90 o más | 115 | 73 | 73 |
+| Municipios con nota | 8.083 | 8.083 | 8.083 |
+| En el ranking | 8.083 | 4.316 | 3.155 |
+| «Muestra pequeña» | — | 3.767 (46,6 %) | 4.928 (61,0 %) |
+| Población fuera | — | 1,83 M | 3,06 M |
+| Con 90 o más | 81 | 45 | 45 |
 
 - **Umbral de referencia (A)**: con 5 quedarían fuera 3.028 (37,5 %); con 10, 3.767 (46,6 %); con 20, 4.520 (55,9 %).
   Con 10 sale el 68 % de los municipios de menos de 1.000 hab., el 20 % de los de 1.000-5.000, el 4 % de los de
   5.000-20.000, 2 de 20.000-100.000 y ninguno de más de 100.000.
-- **Contar solo formales (B)** deja fuera a 1.165 municipios más: el 87 % de los de menos de 1.000 hab. (quedan 640
-  de 4.934; Castilla y León 3,6 %, Castilla-La Mancha 7,5 %, País Vasco 9,4 %, Cataluña 28 %). No iguala el reparto
-  entre comunidades y además saca a ciudades cuyos contratos formales no tenemos asignados por un problema de nombre
-  en PLACE, no por falta de contratos: Jerez de la Frontera (213.634 hab., 0 formales y 3.393 menores), Las Rozas,
-  San Vicente del Raspeig, Burriana. El top de cada tramo es el mismo con A y con B.
-- **Sin el suavizado de directivo vuelven al top municipios con muy pocos contratos**: el top 20 nacional incluye a
-  San Miguel de Aguayo (11 contratos), Griegos (15) y Soportújar (19); el líder de menos de 1.000 hab. es Griegos
-  (154 hab., 15 contratos, 92,2). Cellorigo queda en 92,1 como «muestra pequeña». El umbral de 10 quita los casos
-  de 3-4 contratos, no los de 11-20.
-- **Líderes por tramo**: Griegos 92,2 (<1.000), Toques 92,5 (1.000-5.000), Aguilar de la Frontera 92,3
-  (5.000-20.000), Melilla 95,4 (20.000-100.000), Girona 93,1 (>100.000).
+- **Contar solo formales (B)** deja fuera a 1.161 municipios más: el 87 % de los de menos de 1.000 hab. (quedan 642
+  de 4.935; Castilla y León 3,6 %, Castilla-La Mancha 7,5 %, País Vasco 9,4 %, Cataluña 28 %). No iguala el reparto
+  entre comunidades y saca a ciudades cuyos contratos formales no tenemos asignados por un problema de nombre en
+  PLACE (San Vicente del Raspeig y Las Rozas, 0 formales con 2.192 y 517 menores). El top de cada tramo es el mismo
+  con A y con B.
+- **Sin el suavizado de directivo siguen en el top municipios con muy pocos contratos**: en el top 20 nacional están
+  Fuendetodos (13 contratos), Griegos (15) y Soportújar (19); el líder de menos de 1.000 hab. es Griegos (154 hab.,
+  15 contratos, 92,2). El umbral de 10 quita los casos de 3-4 contratos (Cellorigo queda en 88,8 como «muestra
+  pequeña»), no los de 11-20. Con el umbral en 20 el municipio con menos contratos del top 20 nacional tendría 29.
+- **Líderes por tramo**: Griegos 92,2 (<1.000), Toques 91,6 (1.000-5.000), Aguilar de la Frontera 92,1
+  (5.000-20.000), Calvià 91,2 (20.000-100.000), Girona 93,1 (>100.000).
 - **Capitales de provincia**: las 50 siguen en el ranking con A y con B. Sus notas no cambian (entre −0,1 y +0,1);
   el puesto mejora por el acortamiento de la lista y, entre los mismos municipios, el suavizado las mueve una
-  mediana de −12 puestos (de −48 a +25).
-- **Suavizado por sí solo**: 2.342 municipios cambian 1 punto o más y 238 cambian 5 o más (de −1,9 a +19,4); las
-  subidas grandes son de municipios con 0 de 1 o 0 de 2 en adjudicatario.
+  mediana de −20 puestos (de −46 a +24).
+- **Suavizado por sí solo**: 2.354 municipios cambian 1 punto o más y 241 cambian 5 o más (de −1,9 a +19,4); las
+  subidas grandes son de municipios con 0 de 1 o 0 de 2 en adjudicatario. Media nacional de adjudicatario: 92,0 %.
 
-**Pendiente**: repetir la medición sobre una copia de producción del día antes de desplegar.
+**Ajeno a la v2.1, visto al comparar las copias del 03-10 y del 09-10**: «directivo» ha bajado de media 3,5 puntos
+(1.295 municipios cambian 5 o más) porque los contratos del histórico que el 03-10 estaban «pendientes de buscar en
+el BORME» ya se han buscado y, donde no se encontró administrador, ahora cuentan en el denominador. Melilla pasa de
+97,7 a 48,5 en ese componente (nota 95,4 → 86,4) y deja de ser líder; Logroño, de 72,5 a 45,4. Pasa igual en la v2
+que hay en producción.
 
 ## Comparación v1 → v2 (misma copia real de producción, 25-09-2026)
 
