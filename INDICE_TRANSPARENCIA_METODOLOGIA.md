@@ -31,7 +31,7 @@ La misma regla se aplica dentro de un componente (ver "menores" en agregadores).
 | Cuentas anuales | **10** | 15 (binario) | Según el último ejercicio rendido a rendiciondecuentas.es frente al último **exigible por ley**: al día 100, un año de retraso 50, dos o más o sin rendir 0. No disponible en País Vasco, Navarra, Ceuta y Melilla (Tribunal de Cuentas foral o no listadas). |
 | Deuda viva publicada | **7,5** | 12,5 | Binario (Ministerio de Hacienda). |
 | Saldo no financiero publicado | **7,5** | 12,5 | Binario (Ministerio de Hacienda). |
-| Directivo identificado | **10** | 10 | % de adjudicatarios (formales + menores) con directivo/administrador identificado, **suavizado (v2.1)** con la misma fórmula. |
+| Directivo identificado | **10** | 10 | % de adjudicatarios (formales + menores) con directivo/administrador identificado. No se suaviza. |
 
 ## Por qué cada cambio respecto a la v1
 
@@ -82,12 +82,13 @@ con muestras de 4; y menores y formato, no disponibles, reparten su peso entre l
   la nota con la etiqueta «muestra pequeña», la explicación y el desglose, y el municipio queda fuera de todo lo que
   ordena o da puesto: tabla de /rankings, lateral de portada, «Liderando ahora mismo», lista de la ficha, buscador de
   posiciones y «tu municipio». Para subir el umbral basta cambiar la constante: la interfaz y los textos la leen de ahí.
-- **Suavizado bayesiano** en adjudicatario y directivo: nota = (num + K·p₀) / (den + K), con K = 10 y p₀ = media
-  nacional del componente, calculada como suma de numeradores entre suma de denominadores de todos los municipios
-  (no como media de las notas municipales, que arrastraría el mismo problema de las muestras pequeñas). Equivale a
-  añadir a cada municipio 10 contratos «medios». El detalle del desglose conserva el recuento real y añade la nota
-  suavizada. No cambia qué municipios tienen el componente disponible. En la medición p₀ fue 92,0 % (adjudicatario)
-  y 32,6 % (directivo).
+- **Suavizado bayesiano solo en adjudicatario**: nota = (num + K·p₀) / (den + K), con K = 10 y p₀ = media nacional
+  del componente, calculada como suma de numeradores entre suma de denominadores de todos los municipios (92,0 % en
+  la medición). Equivale a añadir a cada municipio 10 contratos «medios». El detalle del desglose conserva el
+  recuento real y añade la nota suavizada. No cambia qué municipios tienen el componente disponible.
+- **Directivo no se suaviza** (decisión de César, 09-10, tras ver la primera medición): su media nacional es baja
+  (32,6 %) y depende del avance de nuestro cruce con el BORME, así que tirar hacia ella bajaba de 100 a 48 a quien
+  tenía 3 de 3 por un motivo ajeno al ayuntamiento.
 - **Portada**: «Liderando ahora mismo» muestra el líder de cada tramo de población (<1.000, 1.000-5.000,
   5.000-20.000, 20.000-100.000, >100.000) en una fila compacta con nombre y nota, y mantiene el enlace al ranking. A
   igual nota sale el que tiene más contratos, con «+n» si hay más empatados.
@@ -96,39 +97,38 @@ con muestras de 4; y menores y formato, no disponibles, reparten su peso entre l
 percentil de actividad (se sigue calculando entre todos los municipios del tramo, estén o no en el ranking).
 
 **Medición** sobre la copia real de producción del 03-10-2026 (tablas completas en
-`INDICE_TRANSPARENCIA_V2_1_MEDICION.md`: top 20 nacional y por tramo, y las 50 capitales):
+`INDICE_TRANSPARENCIA_V2_1_MEDICION.md`). «A» = umbral contando formales + menores (lo que hace el código); «B» =
+contando solo contratos formales, medido como alternativa:
 
-| | v2 | v2.1 |
-|---|---:|---:|
-| Municipios con nota | 8.082 | 8.082 |
-| En el ranking | 8.082 | 4.315 |
-| «Muestra pequeña» | — | 3.767 (46,6 %; 1,82 M hab.) |
-| Mediana de los que están en el ranking | 73,5 | 77,6 |
-| Máximo | 95,4 | 95,2 |
-| Con 90 o más | 115 | 33 |
+| | v2 | v2.1 · A | v2.1 · B |
+|---|---:|---:|---:|
+| Municipios con nota | 8.082 | 8.082 | 8.082 |
+| En el ranking | 8.082 | 4.315 | 3.150 |
+| «Muestra pequeña» | — | 3.767 (46,6 %) | 4.932 (61,0 %) |
+| Población fuera | — | 1,82 M | 3,27 M |
+| Con 90 o más | 115 | 73 | 73 |
 
-- **Umbral de referencia**: con 5 quedarían fuera 3.028 (37,5 %); con 10, 3.767 (46,6 %); con 20, 4.520 (55,9 %).
-  Casi todo el efecto está en los pueblos: con 10 sale el 68 % de los de menos de 1.000 hab., el 20 % de los de
-  1.000-5.000, el 4 % de los de 5.000-20.000, 2 municipios de 20.000-100.000 y ninguno de más de 100.000.
-- **Efecto desigual por comunidad** en los de menos de 1.000 hab.: siguen en el ranking el 11 % de los de Castilla y
-  León (223 de 2.007), el 17 % de La Rioja y el 18 % de Navarra, frente al 65 % de Cataluña y el 71 % de la
-  Comunitat Valenciana. Es un reflejo de cuántos contratos tenemos de cada sitio (los registros autonómicos traen
-  más menores), no solo de cuánto contratan.
-- **Nuevo top 20 nacional**: Melilla 95,2, Girona 93,1, Lleida 92,4, Aguilar de la Frontera y Vitoria-Gasteiz 92,1,
-  Calvià 91,9, Logroño 91,5... El municipio con menos contratos del top 20 tiene 66 (Cofrentes); en la v2, 9 de los
-  20 tenían menos de 10. Cellorigo pasa de 93,3 a 85,2 y queda como «muestra pequeña».
-- **Líderes por tramo**: Duesaigües 91,4 (<1.000), Begur 91,4 (1.000-5.000), Aguilar de la Frontera 92,1
-  (5.000-20.000), Melilla 95,2 (20.000-100.000), Girona 93,1 (>100.000). El top 20 de menos de 1.000 hab. es entero
-  catalán (registro autonómico de menores).
-- **Capitales de provincia**: las 50 suben de puesto (mediana +762), pero casi todo es porque la lista pasa de 8.082
-  a 4.315. Comparando solo entre los municipios que quedan en el ranking, el suavizado mueve a las capitales una
-  mediana de +66 puestos (44 suben, 5 bajan, 1 igual; extremos −38 Cáceres y +165 Salamanca). Sus notas apenas
-  cambian (mediana 0,0; la mayor, León −0,5): tienen cientos o miles de contratos.
-- **Suavizado por sí solo**: 3.374 municipios cambian 1 punto o más y 930 cambian 5 o más (de −12,6 a +19,4), casi
-  todos de muestra pequeña. Sube quien tenía 0 de pocos en directivo y baja quien tenía 4 de 4.
+- **Umbral de referencia (A)**: con 5 quedarían fuera 3.028 (37,5 %); con 10, 3.767 (46,6 %); con 20, 4.520 (55,9 %).
+  Con 10 sale el 68 % de los municipios de menos de 1.000 hab., el 20 % de los de 1.000-5.000, el 4 % de los de
+  5.000-20.000, 2 de 20.000-100.000 y ninguno de más de 100.000.
+- **Contar solo formales (B)** deja fuera a 1.165 municipios más: el 87 % de los de menos de 1.000 hab. (quedan 640
+  de 4.934; Castilla y León 3,6 %, Castilla-La Mancha 7,5 %, País Vasco 9,4 %, Cataluña 28 %). No iguala el reparto
+  entre comunidades y además saca a ciudades cuyos contratos formales no tenemos asignados por un problema de nombre
+  en PLACE, no por falta de contratos: Jerez de la Frontera (213.634 hab., 0 formales y 3.393 menores), Las Rozas,
+  San Vicente del Raspeig, Burriana. El top de cada tramo es el mismo con A y con B.
+- **Sin el suavizado de directivo vuelven al top municipios con muy pocos contratos**: el top 20 nacional incluye a
+  San Miguel de Aguayo (11 contratos), Griegos (15) y Soportújar (19); el líder de menos de 1.000 hab. es Griegos
+  (154 hab., 15 contratos, 92,2). Cellorigo queda en 92,1 como «muestra pequeña». El umbral de 10 quita los casos
+  de 3-4 contratos, no los de 11-20.
+- **Líderes por tramo**: Griegos 92,2 (<1.000), Toques 92,5 (1.000-5.000), Aguilar de la Frontera 92,3
+  (5.000-20.000), Melilla 95,4 (20.000-100.000), Girona 93,1 (>100.000).
+- **Capitales de provincia**: las 50 siguen en el ranking con A y con B. Sus notas no cambian (entre −0,1 y +0,1);
+  el puesto mejora por el acortamiento de la lista y, entre los mismos municipios, el suavizado las mueve una
+  mediana de −12 puestos (de −48 a +25).
+- **Suavizado por sí solo**: 2.342 municipios cambian 1 punto o más y 238 cambian 5 o más (de −1,9 a +19,4); las
+  subidas grandes son de municipios con 0 de 1 o 0 de 2 en adjudicatario.
 
-**Límites de esta medición**: la copia es del 03-10; desde entonces el cruce de administradores con el BORME ha
-avanzado en producción, así que la media nacional de «directivo» será hoy más alta y las cifras exactas variarán.
+**Pendiente**: repetir la medición sobre una copia de producción del día antes de desplegar.
 
 ## Comparación v1 → v2 (misma copia real de producción, 25-09-2026)
 

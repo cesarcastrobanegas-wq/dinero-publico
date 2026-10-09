@@ -17095,9 +17095,11 @@ _INDICE_TRANSPARENCIA_MAX_FILAS_TABLA = 300  # tope de filas pintadas en /rankin
 #   - Umbral de evidencia: con menos de _INDICE_MIN_CONTRATOS_RANKING contratos (formales + menores guardados) la nota
 #     se sigue calculando y se enseña en la ficha con la etiqueta "muestra pequeña", pero el municipio queda fuera de
 #     rankings y posiciones. Para subirlo o bajarlo basta cambiar esta constante: todo lo demás la lee de aquí.
-#   - Suavizado bayesiano de "adjudicatario" y "directivo": (num + K·p0) / (den + K), con p0 = media nacional del
-#     componente (suma de numeradores / suma de denominadores de todos los municipios). Con 4 contratos, 4 de 4 deja
-#     de ser un 100; con cientos, el suavizado apenas mueve la nota.
+#   - Suavizado bayesiano de "adjudicatario": (num + K·p0) / (den + K), con p0 = media nacional del componente
+#     (suma de numeradores / suma de denominadores de todos los municipios). Con 4 contratos, 4 de 4 deja de ser un
+#     100; con cientos, el suavizado apenas mueve la nota. "Directivo" NO se suaviza (decisión de César, 09-10): su
+#     media nacional es baja y depende de nuestro cruce con el BORME, así que tirar hacia ella hundía a quien tenía
+#     3 de 3 por un motivo ajeno al ayuntamiento.
 _INDICE_MIN_CONTRATOS_RANKING = 10
 _INDICE_SUAVIZADO_K = 10
 
@@ -17545,25 +17547,24 @@ def _calcular_indice_transparencia():
             "_fetched": res_formal is not None,
             "_homonimo": homonimo,
             "_total_formales": denom_adj,
-            # v2.1: evidencia del municipio (umbral de ranking) y recuentos en bruto para el suavizado
+            # v2.1: evidencia del municipio (umbral de ranking) y recuento en bruto para el suavizado
             "n_contratos": denom_adj + (det["total"] if det else 0),
+            "n_formales": denom_adj,
             "_adj": (num_adj, denom_adj),
-            "_dir": (num_dir, denom_dir),
         })
 
-    # v2.1 -- suavizado bayesiano de "adjudicatario" y "directivo" (ver _INDICE_SUAVIZADO_K). La media nacional sale
-    # de los recuentos en bruto de todos los municipios; el detalle conserva el recuento real y añade la nota suavizada.
-    for comp_k, bruto_k in (("adjudicatario", "_adj"), ("directivo", "_dir")):
-        den_nac = sum(f[bruto_k][1] for f in filas)
-        p0 = (sum(f[bruto_k][0] for f in filas) / den_nac) if den_nac else 0.0
-        for f in filas:
-            num, den = f.pop(bruto_k)
-            c = f["componentes"][comp_k]
-            if not (c["disponible"] and den):
-                continue
-            c["puntos"] = 100.0 * (num + _INDICE_SUAVIZADO_K * p0) / (den + _INDICE_SUAVIZADO_K)
-            c["detalle"] = _td("{recuento}; nota suavizada {nota} (media nacional {media} %)", recuento=c["detalle"],
-                               nota=_nota_coma(c["puntos"]), media=_nota_coma(100.0 * p0))
+    # v2.1 -- suavizado bayesiano de "adjudicatario" (ver _INDICE_SUAVIZADO_K). La media nacional sale de los
+    # recuentos en bruto de todos los municipios; el detalle conserva el recuento real y añade la nota suavizada.
+    den_nac = sum(f["_adj"][1] for f in filas)
+    p0 = (sum(f["_adj"][0] for f in filas) / den_nac) if den_nac else 0.0
+    for f in filas:
+        num, den = f.pop("_adj")
+        c = f["componentes"]["adjudicatario"]
+        if not (c["disponible"] and den):
+            continue
+        c["puntos"] = 100.0 * (num + _INDICE_SUAVIZADO_K * p0) / (den + _INDICE_SUAVIZADO_K)
+        c["detalle"] = _td("{recuento}; nota suavizada {nota} (media nacional {media} %)", recuento=c["detalle"],
+                           nota=_nota_coma(c["puntos"]), media=_nota_coma(100.0 * p0))
 
     _NO_DISP_HOMONIMO_ACTIVIDAD = _td("Homónimo exacto en otra provincia: población y contratos formales se guardan "
                                       "solo por nombre y pueden ser del otro municipio (pendiente de clave "
@@ -22110,10 +22111,10 @@ def render_metodologia_html():
   <p><strong>Muestra pequeña.</strong> Con tres o cuatro contratos cualquier porcentaje sale extremo: cuatro de
   cuatro es un 100 %, y un solo contrato más o menos lo cambia todo. Por eso, si de un municipio tenemos menos de
   {_INDICE_MIN_CONTRATOS_RANKING} contratos (formales y menores sumados), su nota se sigue calculando y se enseña en
-  su ficha con la etiqueta «muestra pequeña», pero el municipio no entra en los rankings ni tiene puesto. Además, los
-  dos porcentajes que más sufren con pocos datos (adjudicatario identificado y directivo identificado) se suavizan
-  hacia la media nacional: es como añadir a cada municipio {_INDICE_SUAVIZADO_K} contratos «medios». Con cientos de
-  contratos el efecto es inapreciable; con cuatro, la nota deja de ser un 100 automático.</p>
+  su ficha con la etiqueta «muestra pequeña», pero el municipio no entra en los rankings ni tiene puesto. Además, el
+  porcentaje de contratos con adjudicatario identificado se suaviza hacia la media nacional: es como añadir a cada
+  municipio {_INDICE_SUAVIZADO_K} contratos «medios». Con cientos de contratos el efecto es inapreciable; con cuatro,
+  la nota deja de ser un 100 automático.</p>
 
   <h2>Por qué pesan así</h2>
   <p><strong>Contratos menores ({w("menores")}), el componente que más pesa.</strong> Son contratos pequeños que se
