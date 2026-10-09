@@ -3177,15 +3177,70 @@ def _parece_sociedad(empresa, nif=""):
 ADMINISTRADORES_BORME_FILE = os.path.join(DATA_DIR, "administradores_borme.json")
 
 
+ADMINISTRADORES_BORME_META = {"periodo": None, "generado": None, "resumen": None}
+
+
 def _cargar_administradores_borme():
     try:
         with open(ADMINISTRADORES_BORME_FILE, encoding="utf-8") as f:
-            return json.load(f).get("administradores", {})
+            datos = json.load(f)
+        ADMINISTRADORES_BORME_META.update(periodo=datos.get("periodo"), generado=datos.get("generado"),
+                                          resumen=datos.get("resumen"))
+        return datos.get("administradores", {})
     except (OSError, ValueError):
         return {}
 
 
 ADMINISTRADORES_BORME = _cargar_administradores_borme()
+
+# ─── Solo el órgano de administración (decisiones de César, 2026-10-09) ───────────────────────────────────────────
+# 1. Apoderados y socios NO se muestran nunca: no son órgano de administración. Siguen en la tabla `directores` (no
+#    se borra nada), pero ninguna página los enseña y el extractor de la búsqueda empresa a empresa ya no los acepta.
+# 2. Cuando el fichero del BORME cubre desde 2009 (_borme_historico_cargado: lo dice el "periodo" del propio fichero,
+#    sin tocar código ni variables), el BORME pasa a ser la ÚNICA fuente de administradores:
+#      - los administradores antiguos de `directores` (de las fuentes privadas retiradas el 02-10, sin fecha ni
+#        anuncio) dejan de mostrarse si el BORME no los confirma o sustituye -- ocultos, no borrados;
+#      - la búsqueda empresa a empresa en boe.es se apaga (ya no aporta nada que el índice masivo no dé);
+#      - una sociedad mercantil sin administrador se muestra como "No consta en el BORME desde 2009".
+_CARGO_PERSONA_FISICA = "Autónomo / Persona física"
+_BORME_HISTORICO_DESDE = "20090131"     # el BORME existe como dato abierto desde el 02-01-2009
+
+
+def _cargo_no_es_administracion(cargo):
+    c = normalizar(cargo or "")
+    return c.startswith("apoderad") or c.startswith("socio")
+
+
+def _borme_historico_cargado():
+    periodo = ADMINISTRADORES_BORME_META.get("periodo")
+    return bool(ADMINISTRADORES_BORME) and bool(periodo) and str(periodo[0] or "9") <= _BORME_HISTORICO_DESDE
+
+
+def _administrador_guardado_visible(nombre, cargo):
+    """¿Se puede enseñar un (nombre, cargo) de la tabla `directores` o de un contrato guardado? Las personas físicas
+    sí (son el propio adjudicatario); apoderados y socios, nunca; el resto, solo mientras no esté cargado el histórico."""
+    if not nombre:
+        return False
+    if cargo == _CARGO_PERSONA_FISICA:
+        return True
+    return not _cargo_no_es_administracion(cargo) and not _borme_historico_cargado()
+
+
+def _es_sociedad_mercantil(empresa, nif=""):
+    """Sociedad que debe publicar en el BORME: NIF A/B o forma jurídica mercantil en el nombre (no asociaciones,
+    fundaciones, cooperativas, UTE ni administraciones, que van a otros registros)."""
+    n = (nif or "").upper().strip()
+    if n:
+        return n[:1] in ("A", "B")
+    return bool(_SUFIJOS_EMPRESA.search(empresa or "")) and not _RE_ENTIDAD.search(empresa or "")
+
+
+def _sin_administrador_html(empresa, nif, rm_link="", agotado=False):
+    """Celda del administrador cuando no hay ninguno que mostrar."""
+    if _borme_historico_cargado() and _es_sociedad_mercantil(empresa, nif):
+        return (f'<span class="noloc-nota">{_t("No consta en el BORME desde 2009")} {rm_link}</span>')
+    nota = f'<span class="noloc-nota">{_t("Empresa sin datos registrales públicos")}</span>' if agotado else ""
+    return f'<span class="noloc-warn">⚠️ {_t("No localizado")} {rm_link}</span>{nota}'
 
 
 def _subir_administradores_borme(token, crudo):
@@ -3214,6 +3269,8 @@ def _subir_administradores_borme(token, crudo):
     os.replace(tmp, ADMINISTRADORES_BORME_FILE)
     anteriores = len(ADMINISTRADORES_BORME)
     ADMINISTRADORES_BORME = nuevos
+    ADMINISTRADORES_BORME_META.update(periodo=datos.get("periodo"), generado=datos.get("generado"),
+                                      resumen=datos.get("resumen"))
     print(f"[admin] administradores_borme: {len(nuevos)} sociedades (antes {anteriores}), periodo "
           f"{datos.get('periodo')}", flush=True)
     return 200, {"sociedades": len(nuevos), "antes": anteriores, "periodo": datos.get("periodo"),
@@ -3259,6 +3316,8 @@ def _directivo_corregido(empresa, nif, nombre, cargo):
         return b
     if cargo == "Autónomo / Persona física" and _parece_sociedad(empresa, nif):
         return "", ""
+    if not _administrador_guardado_visible(nombre, cargo):
+        return "", ""           # apoderado o socio, o administrador antiguo que el BORME no respalda
     return nombre or "", cargo or ""
 
 
@@ -3273,7 +3332,10 @@ def _dir_cache_get(empresa, nif=""):
     b = _administrador_borme(empresa, nif)
     if b:
         return b
-    return _dir_cache_get_registro(empresa, nif)
+    nombre, cargo = _dir_cache_get_registro(empresa, nif)
+    if nombre and not _administrador_guardado_visible(nombre, cargo):
+        return "", ""           # guardado pero no se enseña (ver _administrador_guardado_visible); no es "pendiente"
+    return nombre, cargo
 
 
 def _dir_cache_get_registro(empresa, nif=""):
@@ -11840,7 +11902,8 @@ def enriquecer_directivos_fondos_ue(job_id=None, presupuesto_minutos=30):
         nombre, cargo = buscar_directivo(beneficiario, nif)
         if nombre:
             encontrados += 1
-        time.sleep(1.2)  # mismo delay entre peticiones que el enriquecimiento de contratos
+        if not _borme_historico_cargado():
+            time.sleep(1.2)  # mismo delay entre peticiones que el enriquecimiento de contratos
         if procesados % 50 == 0:
             _log(job_id, f"  … {procesados}/{total} procesados ({encontrados} encontrados)")
     _log(job_id, f"  Gerentes/administradores de fondos UE: {encontrados}/{procesados} "
@@ -11921,7 +11984,8 @@ def enriquecer_directivos_contratos_menores(job_id=None, presupuesto_minutos=30)
         nombre, cargo = buscar_directivo(adjudicatari, "")
         if nombre:
             encontrados += 1
-        time.sleep(1.2)  # mismo delay entre peticiones que el resto de enriquecimientos
+        if not _borme_historico_cargado():
+            time.sleep(1.2)  # mismo delay entre peticiones que el resto de enriquecimientos
         if procesados % 50 == 0:
             _log(job_id, f"  … {procesados}/{total} procesados ({encontrados} encontrados)")
     _log(job_id, f"  Gerentes/administradores de contratos menores: {encontrados}/{procesados} "
@@ -12336,6 +12400,8 @@ def _extraer_de_borme_empresa(boe_texto, empresa, sufijos_empresa_re):
         # Contexto: desde 100 chars antes hasta 800 chars después
         context = boe_clean[max(0, idx - 100):idx + 900]
         n, c = _extraer_directivo_nombramiento(context)
+        if n and _cargo_no_es_administracion(c):
+            n, c = "", ""           # apoderados y socios no son órgano de administración (2026-10-09)
         if n:
             cargo_norm = normalizar(c)
             prio = next((i for i, cp in enumerate(_CARGO_PRIORITY) if cp in cargo_norm), 500)
@@ -12429,11 +12495,16 @@ def buscar_directivo(empresa, nif=""):
     if cached_n is not None:
         return cached_n, cached_c
 
+    if _borme_historico_cargado():
+        return "", ""           # con el histórico cargado, el índice masivo del BORME es la única fuente: sin red
+
     nombre, cargo = "", ""
     for fuente in (buscar_directivo_borme_anuncios,):
         try:
             nombre, cargo = fuente(empresa, nif)
         except Exception:
+            nombre, cargo = "", ""
+        if nombre and _cargo_no_es_administracion(cargo):
             nombre, cargo = "", ""
         if nombre:
             break
@@ -14975,7 +15046,8 @@ def _enriquecer_directivos_bg(provincia=None):
                         cambios_muni_actual = True
                         break
 
-            time.sleep(1.2)  # delay entre peticiones
+            if not _borme_historico_cargado():
+                time.sleep(1.2)  # delay entre peticiones
 
         _flush_actual()
         _ESTADO_DIRECTIVOS.update(fase="fin", desde=time.time())
@@ -17009,9 +17081,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
         rm_link = (f'<a href="{esc(registro_url)}" target="_blank" rel="noopener" '
                    f'title="{_t("Buscar {empresa} en el {registro}").format(empresa=esc(c.get("empresa","")), registro=esc(registro_label))}">'
                    f'{esc(registro_label)} ↗</a>') if empresa_q else ""
-        nota = (f'<span class="noloc-nota">{_t("Empresa sin datos registrales públicos")}</span>'
-                if c.get("rm_agotado") else "")
-        dir_html = (f'<span class="noloc-warn">⚠️ {_t("No localizado")} {rm_link}</span>{nota}')
+        dir_html = _sin_administrador_html(c.get("empresa", ""), c.get("nif", ""), rm_link, bool(c.get("rm_agotado")))
 
     est = c.get("estado", "")
     est_label = _estado_txt({"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(est, est))
@@ -17240,27 +17310,36 @@ def _indice_tramo_poblacion(habitantes):
 
 
 def _indice_menores_stats_por_municipio():
-    """Una sola consulta SQL: para cada municipio, nº total de contratos menores y cuántos tienen
-    directivo/administrador identificado en la caché `directores` (componente "directivo", igual que en v1)."""
+    """Para cada municipio, nº total de contratos menores y cuántos tienen un administrador QUE SE ENSEÑA (componente
+    "directivo"). 2026-10-09: antes contaba cualquier nombre guardado en `directores` (también apoderados y socios, que
+    ya no se muestran) y no contaba los administradores del BORME, que no se guardan en esa tabla: la nota no
+    coincidía con lo que se ve en la ficha. Ahora aplica la misma regla que la ficha (_dir_cache_get), sin caducidades.
+    Se recorre por grupos (municipio, adjudicatario) sin traer a memoria más que una fila cada vez."""
     with _db_lock:
-        rows = _db.execute("""
-            SELECT c.municipio, c.provincia,
-                   COUNT(*) AS total,
-                   SUM(CASE WHEN d.nombre IS NOT NULL AND d.nombre <> '' THEN 1 ELSE 0 END) AS con_directivo
-            FROM contratos_menors_locales c
-            LEFT JOIN directores d
-              ON d.clave = CASE WHEN c.nif IS NOT NULL AND c.nif <> ''
-                                 THEN upper(trim(c.nif))
-                                 ELSE normalizar(c.adjudicatari) END
-            GROUP BY c.municipio, c.provincia
-        """).fetchall()
-    # clave compuesta (2026-09-30): por municipio Y provincia, con la provincia canónica de las grafías viejas
-    out = {}
-    for municipio, prov, total, con_directivo in rows:
-        k = clave_municipio(municipio, _PROVINCIA_CANONICA_CM.get(prov or "", prov))
-        o = out.setdefault(k, {"total": 0, "con_directivo": 0})
-        o["total"] += total
-        o["con_directivo"] += con_directivo or 0
+        guardados = {k: (n or "", c or "") for k, n, c in _db.execute(
+            "SELECT clave, nombre, cargo FROM directores WHERE nombre IS NOT NULL AND nombre <> ''")}
+    out, visible = {}, {}
+    with _db_lock:
+        cur = _db.execute("SELECT municipio, provincia, adjudicatari, nif, COUNT(*) FROM contratos_menors_locales "
+                          "GROUP BY municipio, provincia, adjudicatari, nif")
+        for municipio, prov, adjudicatari, nif, n in cur:
+            k = clave_municipio(municipio, _PROVINCIA_CANONICA_CM.get(prov or "", prov))
+            o = out.setdefault(k, {"total": 0, "con_directivo": 0})
+            o["total"] += n
+            if not adjudicatari:
+                continue
+            ka = (adjudicatari, nif or "")
+            v = visible.get(ka)
+            if v is None:
+                if _administrador_borme(adjudicatari, nif or ""):
+                    v = True
+                else:
+                    nombre, cargo = guardados.get(_dir_cache_key(adjudicatari, nif or ""), ("", ""))
+                    v = (_administrador_guardado_visible(nombre, cargo)
+                         and not (cargo == _CARGO_PERSONA_FISICA and _parece_sociedad(adjudicatari, nif or "")))
+                visible[ka] = v
+            if v:
+                o["con_directivo"] += n
     return out
 
 
@@ -18341,7 +18420,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
                             f'<div class="cargo">{esc(g["cargo"])}</div>'
                             f'{_borme_fuente_html(g["empresa"], g.get("nif", ""))}')
             else:
-                dir_html = f'<span class="noloc-warn">⚠️ {_t("No localizado")}</span>'
+                dir_html = _sin_administrador_html(g["empresa"], g.get("nif", ""))
             emp_q = quote_plus(g["empresa"])
             filas += f"""<tr>
               <td class="rk-pos">{pos}</td>
@@ -19224,9 +19303,7 @@ def _render_fila_contrato_menor(r):
         rm_link = (f'<a href="{esc(registro_url)}" target="_blank" rel="noopener" '
                    f'title="{_t("Buscar {empresa} en el {registro}").format(empresa=esc(adjudicatari), registro=esc(registro_label))}">'
                    f'{esc(registro_label)} ↗</a>') if empresa_q else ""
-        nota = (f'<span class="noloc-nota">{_t("Empresa sin datos registrales públicos")}</span>'
-                if _dir_cache_agotado(adjudicatari, "") else "")
-        dir_html = (f'<span class="noloc-warn">⚠️ {_t("No localizado")} {rm_link}</span>{nota}')
+        dir_html = _sin_administrador_html(adjudicatari, r.get("nif", ""), rm_link, _dir_cache_agotado(adjudicatari, ""))
 
     nota_txt = _NOTAS_CONTRATO_MENOR.get(r.get("id", ""))
     if not nota_txt and fuente == "euskadi" and (r.get("import_num") or 0) > EUSKADI_MENOR_IMPORTE_SOSPECHOSO:
@@ -20924,7 +21001,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         if g["directivo"]:
             dir_html = f'{esc(g["directivo"])} — {esc(g["cargo"])}{_borme_fuente_html(g["empresa"], g.get("nif", ""))}'
         else:
-            dir_html = f'<span class="noloc-warn">⚠️ {_t("No localizado")}</span>'
+            dir_html = _sin_administrador_html(g["empresa"], g.get("nif", ""))
         emp_q = quote_plus(g["empresa"])
         return f"""<div class="top1-card">
           <div class="top1-label">{etiqueta}</div>
@@ -21395,6 +21472,9 @@ def _estado_carga():
         cpu = None
     est = dict(_ESTADO_DIRECTIVOS)
     est["hace_s"] = round(ahora - est["desde"]) if est.get("desde") else None
+    est["borme"] = {"sociedades": len(ADMINISTRADORES_BORME), "periodo": ADMINISTRADORES_BORME_META.get("periodo"),
+                    "generado": ADMINISTRADORES_BORME_META.get("generado"), "historico_cargado": _borme_historico_cargado(),
+                    "resumen": ADMINISTRADORES_BORME_META.get("resumen")}
     return {
         "peticiones_en_curso": en_curso,
         "ultimos_10_min": {"peticiones": len(recientes), "de_bots": sum(1 for r in recientes if r[3]),
