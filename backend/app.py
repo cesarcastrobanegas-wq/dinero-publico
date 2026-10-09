@@ -11465,10 +11465,42 @@ _aviso_comentarios_envios = collections.deque()
 _aviso_comentarios_lock = threading.Lock()
 
 
+def _aviso_comentarios_config():
+    """Estado de la configuración del aviso SIN datos sensibles: nunca la clave ni la dirección completa."""
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    destino = os.environ.get("AVISO_COMENTARIOS_EMAIL", "").strip()
+    usuario, _, dominio = destino.partition("@")
+    return {
+        "resend_api_key_cargada": bool(api_key),
+        "resend_api_key_forma": (f"{len(api_key)} caracteres, empieza por 're_': {api_key.startswith('re_')}"
+                                 if api_key else None),
+        "destino_cargado": bool(destino),
+        "destino": (f"{usuario[:2]}***@{dominio}" if dominio else ("(sin @)" if destino else None)),
+        "remitente": os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or "Dinero Público <onboarding@resend.dev>",
+        "remitente_de_pruebas": not os.environ.get("AVISO_COMENTARIOS_FROM", "").strip(),
+    }
+
+
+def _aviso_comentarios_enviar(payload, api_key):
+    """Una petición a Resend. Devuelve (código HTTP o None, texto de la respuesta o del error) y lo deja SIEMPRE en
+    el registro, también cuando sale bien: antes solo se anotaban los fallos y un envío aceptado no dejaba rastro."""
+    try:
+        r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
+                          headers={"Authorization": f"Bearer {api_key}"})
+        print(f"[aviso-comentarios] Resend respondió {r.status_code}: {r.text[:300]}", flush=True)
+        return r.status_code, r.text[:600]
+    except Exception as e:
+        print(f"[aviso-comentarios] error al enviar: {type(e).__name__}: {e}", flush=True)
+        return None, f"{type(e).__name__}: {e}"
+
+
 def _avisar_comentario_por_correo(tipo, etiqueta, texto, nombre, url_relativa):
     api_key = os.environ.get("RESEND_API_KEY", "").strip()
     destino = os.environ.get("AVISO_COMENTARIOS_EMAIL", "").strip()
     if not api_key or not destino:
+        print("[aviso-comentarios] no se envía: falta "
+              + " y ".join(n for n, v in (("RESEND_API_KEY", api_key), ("AVISO_COMENTARIOS_EMAIL", destino)) if not v)
+              + " en el entorno de este proceso", flush=True)
         return
     ahora = time.time()
     with _aviso_comentarios_lock:
@@ -11495,16 +11527,20 @@ def _avisar_comentario_por_correo(tipo, etiqueta, texto, nombre, url_relativa):
         "text": cuerpo,
     }
 
-    def _enviar():
-        try:
-            r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
-                              headers={"Authorization": f"Bearer {api_key}"})
-            if r.status_code >= 300:
-                print(f"[aviso-comentarios] Resend respondió {r.status_code}: {r.text[:300]}", flush=True)
-        except Exception as e:
-            print(f"[aviso-comentarios] error al enviar: {type(e).__name__}: {e}", flush=True)
+    threading.Thread(target=_aviso_comentarios_enviar, args=(payload, api_key), daemon=True).start()
 
-    threading.Thread(target=_enviar, daemon=True).start()
+
+def _db_comentarios_borrar(tipo, clave_raw, texto):
+    """Borra los comentarios de una ficha cuyo texto coincide exactamente (solo desde /admin/comentario-borrar).
+    Devuelve los borrados (nombre, texto y fecha) para que quien lo pide vea qué se ha quitado."""
+    with _db_lock:
+        filas = _db.execute("SELECT id, nombre, texto, ts FROM comentarios WHERE tipo=? AND clave=? AND texto=?",
+                            (tipo, normalizar(clave_raw), texto.strip())).fetchall()
+        for fila in filas:
+            _db.execute("DELETE FROM comentarios WHERE id=?", (fila[0],))
+        _db.commit()
+    return [{"nombre": n, "texto": t, "fecha_utc": time.strftime("%d/%m/%Y %H:%M", time.gmtime(ts))}
+            for _, n, t, ts in filas]
 
 
 def _db_comentarios_por(tipo, clave_raw):
@@ -23991,6 +24027,43 @@ def _route_post(path, params):
             threading.Thread(target=_reprocesar_meses_place, args=(meses,), name="reprocesar-place",
                              daemon=True).start()
             return _resp(json.dumps({"lanzado": True, "meses": meses}, ensure_ascii=False),
+                         content_type="application/json; charset=utf-8")
+
+        if path == "/admin/aviso-comentarios-prueba":
+            # Diagnóstico del aviso por correo de comentarios (2026-10-09): dice si las variables están cargadas en
+            # ESTE proceso (sin enseñar la clave ni la dirección entera) y hace un envío de prueba esperando la
+            # respuesta de Resend, que devuelve tal cual. No guarda ningún comentario.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            estado = _aviso_comentarios_config()
+            api_key = os.environ.get("RESEND_API_KEY", "").strip()
+            destino = os.environ.get("AVISO_COMENTARIOS_EMAIL", "").strip()
+            if api_key and destino:
+                codigo, respuesta = _aviso_comentarios_enviar({
+                    "from": estado["remitente"], "to": [destino],
+                    "subject": "Prueba del aviso de comentarios · Dinero Público",
+                    "text": "Prueba del aviso de comentarios de Dinero Público. Si lees esto, el envío funciona.\n",
+                }, api_key)
+                estado["resend_codigo"], estado["resend_respuesta"] = codigo, respuesta
+            else:
+                estado["resend_codigo"], estado["resend_respuesta"] = None, "no se intenta: falta alguna variable"
+            return _resp(json.dumps(estado, ensure_ascii=False), content_type="application/json; charset=utf-8")
+
+        if path == "/admin/comentario-borrar":
+            # Borrado de comentarios (2026-10-09): no había ninguna forma de quitar uno. Por ficha y texto exacto.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            tipo = params.get("tipo", ["municipio"])[0]
+            clave_raw = params.get("clave", [""])[0].strip()
+            texto = params.get("texto", [""])[0]
+            if tipo not in ("municipio", "busqueda") or not clave_raw or not texto.strip():
+                return _error_resp("Faltan tipo, clave o texto.", 400)
+            borrados = _db_comentarios_borrar(tipo, clave_raw, texto)
+            if tipo == "busqueda":
+                _paginas_invalidar("busqueda")
+            return _resp(json.dumps({"borrados": borrados}, ensure_ascii=False),
                          content_type="application/json; charset=utf-8")
 
         if path == "/admin/purgar-place-cache":
