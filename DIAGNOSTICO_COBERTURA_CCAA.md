@@ -131,3 +131,44 @@ Navarra, que ya tienen histórico). Piloto con los tres ZIP que había en disco:
 Para comparar: la copia de producción del 25-09 tiene 12.416 contratos de PLACE en total (6.625 fuera de Murcia).
 Un mes completo aporta unos 6.300; 61 meses pueden quedar en 250.000-350.000 contratos y 30-45 MB comprimidos.
 Falta la función de app.py que lo aplique al arrancar y medir el efecto en memoria y disco de producción.
+
+### Decisiones de César (02-10, noche)
+
+1. Backfill de formales: no desplegar hasta probarlo contra la copia de producción, medir el crecimiento de la base
+   y recalcular la tabla.
+2. Saldo no financiero en País Vasco y Navarra: **no disponible** (hecho en la rama).
+3. Facturas trimestrales de Navarra: solo si traen adjudicatario + importe + objeto, y **etiquetadas aparte** como
+   "Facturas trimestrales Navarra", nunca mezcladas con los contratos menores.
+4. y 5. Desplegar el arreglo de sueldos de Pamplona y el de cuentas anuales.
+6. Fichas sin cuenta rendida: decir "no consta ninguna cuenta rendida" con enlace al portal (hecho en la rama; el
+   portal distingue "Cuenta no rendida" de "Cuenta rendida no disponible", y solo se afirma con la primera en todos
+   los ejercicios que muestra).
+
+### Facturas trimestrales de Navarra: inventario
+
+`backend/analisis_cobertura_ccaa/navarra_facturas_inventario.py` y `navarra_facturas_muestra.py`.
+
+- 1.344 documentos de 140 entidades (2018-2026; 200-266 por año desde 2021). Se casan con 130 de los 272 municipios
+  navarros, que suman 584.285 de 683.500 habitantes (85 %). Sin casar a la primera: 10 entidades (Arce/Artzi,
+  Baztan, Aranguren, Metauten, Allín, Cendea de Cizur, Larraona, Lantz y dos organismos dependientes).
+- Formato del documento más reciente de cada entidad: **104 PDF, 32 hojas de cálculo (31 xlsx, 1 xls), 3 docx, 1 ods**.
+- De las 32 hojas de cálculo, 16 traen adjudicatario + importe + objeto en la cabecera (9 además con NIF); otras 8
+  traen adjudicatario e importe sin objeto; el resto son volcados contables (Tudela, Mendigorría, Aoiz) o no se leen.
+- Los PDF no están clasificados todavía: hay que ver cuántos son tablas con texto y cuántos escaneados.
+
+## Backfill nacional de formales: resultado (03-10)
+
+61 meses de PLACE (09/2021-09/2026), 249.457 contratos de 6.616 municipios en 43 provincias; 23 MB en
+`backend/backfill_formales_place_prov/`. Probado contra la copia de producción del 25-09 con el código de hoy, una vez
+sin el histórico y otra con él (tablas en `analisis_cobertura_ccaa/diag_tabla_sin.json` y `diag_tabla_con.json`).
+
+- Primer arranque: 225.806-226.295 contratos añadidos (el resto ya estaban), 7 homónimos sin ficha creados; +77 s
+  solo la primera vez, los arranques siguientes no repiten nada (hash por provincia).
+- Base compactada: 457 MB sin histórico -> 611 MB con él (+154 MB; sin compactar, unos +190 MB).
+- Formales por 1.000 hab.: España 2,14 -> 6,68. Fuera de la referencia todas pasan de 0,25-1,64 a 3,7-16,8, al nivel
+  de la referencia (4,1-7,0). Municipios con contratos formales: 37,7 % -> 73,2 %.
+- Índice (mediana): sube fuera de la referencia (Andalucía 63,0 -> 67,7; C. Valenciana 64,5 -> 74,7; Extremadura
+  61,5 -> 69,7) y BAJA en la referencia (Murcia 78,0 -> 69,4; Cataluña 85,7 -> 81,1; País Vasco 79,4 -> 70,4). No
+  es un fallo: "actividad" es un percentil dentro de cada tramo de población en toda España, y la referencia
+  puntuaba alto porque el resto no tenía histórico. El componente "directivo" baja donde entra el histórico
+  (Andalucía 20,7 -> 6,7 de media): esos contratos no tienen directivo y desde el 02-10 solo se rellena con el BORME.

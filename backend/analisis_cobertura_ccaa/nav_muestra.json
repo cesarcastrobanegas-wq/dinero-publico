@@ -1,0 +1,1897 @@
+[
+ {
+  "entidad": "AYUNTAMIENTO DE SALINAS DE ORO",
+  "anio": "2026",
+  "titulo": "FACTURAS PRIMER TRIMESTRE",
+  "uid": "2603311501267CA567DE",
+  "tipo": "xlsx",
+  "bytes": 24316,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif",
+   "objeto"
+  ],
+  "cabecera": [
+   "tipo",
+   "ud. tramitadora",
+   "numero",
+   "ejercicio",
+   "num. reg.",
+   "fecha reg.",
+   "importe liquido",
+   "cif/nif",
+   "nombre proveedor",
+   "num. fac. prov",
+   "dir3 og",
+   "dir3 ut",
+   "nombre estado",
+   "concepto"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Garínoain",
+  "anio": "2026",
+  "titulo": "Relación de Contratos menores 2026 (T1)",
+  "uid": "2604021126317722D2D5",
+  "tipo": "pdf",
+  "bytes": 229672,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE OLORIZ",
+  "anio": "2026",
+  "titulo": "Relación de Contratos menores 2026 (T1)",
+  "uid": "260402123706BAD029D5",
+  "tipo": "pdf",
+  "bytes": 245637,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE UNZUE",
+  "anio": "2026",
+  "titulo": "Relación de Contratos menores 2026 (T1)",
+  "uid": "260402164734FE40B832",
+  "tipo": "pdf",
+  "bytes": 230478,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ORISOAIN",
+  "anio": "2026",
+  "titulo": "Relación de Contratos menores 2026 (T1)",
+  "uid": "260402165441886FBF46",
+  "tipo": "pdf",
+  "bytes": 219368,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Pueyo",
+  "anio": "2026",
+  "titulo": "Relación de Contratos menores 2026 (T1)",
+  "uid": "260402165711A79E202B",
+  "tipo": "pdf",
+  "bytes": 335402,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento del Valle de Egüés",
+  "anio": "2026",
+  "titulo": "Relación facturas 1er trimestre 2026",
+  "uid": "260409115841090C7AAA",
+  "tipo": "pdf",
+  "bytes": 583290,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Igantziko Udala/Ayuntamiento de Igantzi",
+  "anio": "2026",
+  "titulo": "2026KO 1. HH KOPURU TXIKIKO KONTRATU-FAKTURA ERLAZIOA",
+  "uid": "260413155535628A4AF0",
+  "tipo": "pdf",
+  "bytes": 45568,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Etxalar",
+  "anio": "2026",
+  "titulo": "CONTRATOS MENORES-1er TRIMESTRE 2026",
+  "uid": "2604141228149AB6D95C",
+  "tipo": "pdf",
+  "bytes": 120368,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Tudela",
+  "anio": "2026",
+  "titulo": "Relación Trimestral Facturas 2026-1T",
+  "uid": "26041513311140AF8FAC",
+  "tipo": "xls",
+  "bytes": 247296,
+  "campos": [
+   "adjudicatario",
+   "importe"
+  ],
+  "cabecera": [
+   "periodo",
+   "numero",
+   "codigo",
+   "fecha documento",
+   "fecha contabilizacion",
+   "area gestora",
+   "partida de gastos",
+   "nombre partida",
+   "acreedor",
+   "nombre acreedor",
+   "factura",
+   "numero de factura",
+   "fecha recepcion",
+   "i.v.a"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Galar",
+  "anio": "2026",
+  "titulo": "T1",
+  "uid": "260415151554D2E4CF70",
+  "tipo": "xlsx",
+  "bytes": 18600,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif"
+  ],
+  "cabecera": [
+   "importe liquido",
+   "cif/nif",
+   "nombre proveedor"
+  ],
+  "hojas": 3
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE MENDAVIA",
+  "anio": "2026",
+  "titulo": "RELACION TRIMESTRA FACTURAS 1-2026",
+  "uid": "260416144038F7FC7A52",
+  "tipo": "pdf",
+  "bytes": 3045641,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Cortes",
+  "anio": "2026",
+  "titulo": "Primer trimestre contratos menores 2026",
+  "uid": "2604171104102E62E5D6",
+  "tipo": "pdf",
+  "bytes": 50527,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento del Valle de Yerri",
+  "anio": "2026",
+  "titulo": "RELACIÓN FACTURAS 1 TRIMESTRE 2026",
+  "uid": "260420115528B696B6A8",
+  "tipo": "xlsx",
+  "bytes": 42993,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif",
+   "objeto"
+  ],
+  "cabecera": [
+   "tipo",
+   "ud. tramitadora",
+   "numero",
+   "ejercicio",
+   "nombre proveedor",
+   "fecha reg.",
+   "concepto",
+   "importe liquido",
+   "cif/nif",
+   "num. fac. prov",
+   "num. reg.",
+   "nombre estado",
+   "fecha factura proveedor",
+   "dir3 og"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Etxarri Aranatz",
+  "anio": "2026",
+  "titulo": "FACTURAS 2026-1ER TRIMESTRE",
+  "uid": "2604201405275514E3D7",
+  "tipo": "pdf",
+  "bytes": 288807,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Lesaka",
+  "anio": "2026",
+  "titulo": "LESAKAKO UDALEKO ZENBATEKO TXIKIKO KONTRATUEN ZERRENDA 1.2026/ RELACION DE CONTRATOS DE MENOR CUANTIA. AYUNTAMIENTO DE LESAKA 1.2026",
+  "uid": "2604221200208346B579",
+  "tipo": "pdf",
+  "bytes": 54593,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE MENDIGORRIA",
+  "anio": "2026",
+  "titulo": "Facturas de contratos menores del primer trimestre de 2026",
+  "uid": "260424152323472902DD",
+  "tipo": "xlsx",
+  "bytes": 31465,
+  "campos": [
+   "objeto"
+  ],
+  "cabecera": [
+   "fecha",
+   "num. reg.",
+   "interesado",
+   "descripcion",
+   "tipo operacion",
+   "consig. inicial",
+   "mod. credito",
+   "oblig / derecho",
+   "pago / cobro",
+   "cuenta",
+   "descuentos",
+   "partida"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Ansoáin",
+  "anio": "2026",
+  "titulo": "RELACIÓN DE FACTURAS CONTRATOS MENORES 2026 1º trimestre",
+  "uid": "260428101440DA8AEF44",
+  "tipo": "pdf",
+  "bytes": 70371,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Murchante",
+  "anio": "2026",
+  "titulo": "Primer trimestre contratos menores año 2026",
+  "uid": "26042811303842EE2BF1",
+  "tipo": "pdf",
+  "bytes": 210694,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE IZA",
+  "anio": "2026",
+  "titulo": "2026- Primer Trimestre",
+  "uid": "2604291307045CC9F1D0",
+  "tipo": "pdf",
+  "bytes": 10851,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO CENDEA DE OLZA/OLTZA ZENDEA",
+  "anio": "2026",
+  "titulo": "CONTRATOS MENOR CUANTÍA 1º TRIMESTRE 2026",
+  "uid": "260505091950348F73BA",
+  "tipo": "pdf",
+  "bytes": 289779,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento del Valle de Baztan",
+  "anio": "2026",
+  "titulo": "RELACIÓN DE FACTURAS C.MENORES 1ºTRIMESTRE 2026",
+  "uid": "260507145125DFAEB4EA",
+  "tipo": "pdf",
+  "bytes": 158045,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Alsasua/Altsasu",
+  "anio": "2026",
+  "titulo": "RELACIÓN FACTURAS 1/2026",
+  "uid": "260513113949B9307E90",
+  "tipo": "pdf",
+  "bytes": 241216,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Pamplona",
+  "anio": "2026",
+  "titulo": "Relación Contratos Menores primer trimestre 2026",
+  "uid": "2605141252250128FF41",
+  "tipo": "pdf",
+  "bytes": 420696,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Burlada",
+  "anio": "2026",
+  "titulo": "Relación de contratos menores Proyecto Nogalera 2025",
+  "uid": "260527140006A067159C",
+  "tipo": "pdf",
+  "bytes": 244004,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Zizur Mayor",
+  "anio": "2026",
+  "titulo": "Relación contratos menores 1º trimestre 2026",
+  "uid": "26052810302633E987D4",
+  "tipo": "pdf",
+  "bytes": 73850,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Arróniz",
+  "anio": "2026",
+  "titulo": "CONTRATOS MENOR CUANTIA 1ºT-2026",
+  "uid": "260612112951C704EB3C",
+  "tipo": "pdf",
+  "bytes": 636223,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Fitero",
+  "anio": "2026",
+  "titulo": "Adjudicacion Asfaltado de la variante",
+  "uid": "260617073339F0F2F882",
+  "tipo": "pdf",
+  "bytes": 375784,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE SESMA",
+  "anio": "2026",
+  "titulo": "contratos menores primer trimestre 2026",
+  "uid": "260618142650E3F4B508",
+  "tipo": "ods",
+  "bytes": 10851,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Elgorriaga",
+  "anio": "2026",
+  "titulo": "Adjudicación contrato  obra denominada ?Nuevos colectores de  pluviales y fecales en la Calle San Pedro de Elgorriaga (Navarra)?, a BETILAN  ERAIKUNT",
+  "uid": "2606241250109827CCAA",
+  "tipo": "pdf",
+  "bytes": 322273,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Valle de Aranguren",
+  "anio": "2026",
+  "titulo": "FACTURAS 1º TRIM AÑO 2026",
+  "uid": "260630142613CE68D854",
+  "tipo": "pdf",
+  "bytes": 39925,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ESTELLA-LIZARRA",
+  "anio": "2026",
+  "titulo": "CONTRATOS MENORES 2T",
+  "uid": "2607081357344F8B0800",
+  "tipo": "xlsx",
+  "bytes": 1279007,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0,
+  "error": "KeyError: \"There is no item named '[Content_Types].xml' in the archive\""
+ },
+ {
+  "entidad": "Ayuntamiento de Arantza",
+  "anio": "2026",
+  "titulo": "2026KO 1º ETA 2º HH KOPURU TXIKIKO KONTRATUEN / FAKTUREN ERLAZIOA",
+  "uid": "26072411370281874549",
+  "tipo": "pdf",
+  "bytes": 130678,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Berbinzana",
+  "anio": "2026",
+  "titulo": "ADJUDICACIÓN DEL CONTRATO DE SUMINISTRO PARQUE INFANTIL",
+  "uid": "260726171605EBA8AE69",
+  "tipo": "pdf",
+  "bytes": 427766,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Cascante",
+  "anio": "2026",
+  "titulo": "RELACION TRIMESTRAL DE FACTURAS 1º TRIMESTRE 2026",
+  "uid": "260824110237292A71A3",
+  "tipo": "pdf",
+  "bytes": 187030,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ARGUEDAS",
+  "anio": "2026",
+  "titulo": "Relación trimestral de facturas",
+  "uid": "26082811392928C52544",
+  "tipo": "pdf",
+  "bytes": 388671,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO LARRAGA",
+  "anio": "2026",
+  "titulo": "CONTRATOS MENORES",
+  "uid": "260914110855093AF675",
+  "tipo": "docx",
+  "bytes": 19548,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "GERENCIA DE URBANISMO DEL AYUNTAMIENTO DE PAMPLONA",
+  "anio": "2026",
+  "titulo": "contratos menores Gerencia Urbanismo 1º trimestre 2026",
+  "uid": "260914130109623355FF",
+  "tipo": "pdf",
+  "bytes": 285294,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE  SANSOL",
+  "anio": "2026",
+  "titulo": "Construcción de columbarios en el cementerio municipal de Sansol",
+  "uid": "260921144840A6610B97",
+  "tipo": "pdf",
+  "bytes": 281894,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Viana",
+  "anio": "2025",
+  "titulo": "DUS 5000 Relacion de contratos menores 2025 RENOV ALUMBRADO PUBLICO",
+  "uid": "250217084732CB8C8D2B",
+  "tipo": "pdf",
+  "bytes": 161913,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Olazti/Olazagutía",
+  "anio": "2025",
+  "titulo": "Adjudicación obras trabajos forestales 2025",
+  "uid": "25040809395424BFDA7F",
+  "tipo": "pdf",
+  "bytes": 249836,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Guesalaz",
+  "anio": "2025",
+  "titulo": "FACTURAS PRIMER TRIMESTRE",
+  "uid": "2505121122081E181B40",
+  "tipo": "xlsx",
+  "bytes": 39324,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif",
+   "objeto"
+  ],
+  "cabecera": [
+   "tipo",
+   "ud. tramitadora",
+   "numero",
+   "ejercicio",
+   "num. reg.",
+   "fecha reg.",
+   "importe liquido",
+   "cif/nif",
+   "nombre proveedor",
+   "num. fac. prov",
+   "dir3 og",
+   "dir3 ut",
+   "nombre estado",
+   "concepto"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de La Cendea de Cizur",
+  "anio": "2025",
+  "titulo": "CONTRATOS MENORES 1 TRIM 2025",
+  "uid": "2505141457565B94E32D",
+  "tipo": "pdf",
+  "bytes": 30368,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE BAKAIKU",
+  "anio": "2025",
+  "titulo": "Relación contratos de menor cuantía 1º trimestre",
+  "uid": "2505270850271C7706FB",
+  "tipo": "pdf",
+  "bytes": 83372,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Iturmendi",
+  "anio": "2025",
+  "titulo": "PRIMER TRIMESTRE",
+  "uid": "250604104855FBA04155",
+  "tipo": "pdf",
+  "bytes": 83471,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Milagro",
+  "anio": "2025",
+  "titulo": "RELACIÓN DE GASTOS PRIMER TRIMESTRE 2025",
+  "uid": "25071512442919FCCE5A",
+  "tipo": "xlsx",
+  "bytes": 48246,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif",
+   "objeto"
+  ],
+  "cabecera": [
+   "f.registro",
+   "organico",
+   "funcional",
+   "economico",
+   "partida",
+   "dni/cif tercero",
+   "tercero",
+   "descripcion",
+   "importe partida",
+   "ejercicio"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Donamaria/Donamariako udala",
+  "anio": "2025",
+  "titulo": "Contratos menores primer trimestre",
+  "uid": "250806102446C8D4F62E",
+  "tipo": "pdf",
+  "bytes": 451528,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Urrozko Udala/Ayuntamiento de Urroz",
+  "anio": "2025",
+  "titulo": "Contratos menores primer trimestre",
+  "uid": "25080610511159BB16E5",
+  "tipo": "pdf",
+  "bytes": 467885,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Oiz/Oizko udala",
+  "anio": "2025",
+  "titulo": "Contratos menores primer trimestre",
+  "uid": "2508061115451C16B745",
+  "tipo": "pdf",
+  "bytes": 426559,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Beintza-Labaien/Beintza-Labaiengo Udala",
+  "anio": "2025",
+  "titulo": "Contratos menores primer trimestre",
+  "uid": "2508291110595CD858C0",
+  "tipo": "pdf",
+  "bytes": 29929,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ARANARACHE",
+  "anio": "2025",
+  "titulo": "Relación trimestral facturas T1-2025",
+  "uid": "2509010917415F09EE79",
+  "tipo": "pdf",
+  "bytes": 150637,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Eulate",
+  "anio": "2025",
+  "titulo": "Relación trimestral facturas T1-2025",
+  "uid": "2509010934274CA6291E",
+  "tipo": "pdf",
+  "bytes": 168694,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Larraona",
+  "anio": "2025",
+  "titulo": "Relación trimestral facturas T1-2025",
+  "uid": "250901095446EF89921E",
+  "tipo": "pdf",
+  "bytes": 155436,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE FUNES",
+  "anio": "2025",
+  "titulo": "RELACIÓN TRIMESTRAL DE FACTURAS PRIMER TRIMESTRE 2025",
+  "uid": "251020134358EA089E68",
+  "tipo": "pdf",
+  "bytes": 489338,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ROMANZADO",
+  "anio": "2025",
+  "titulo": "CONTRATOS MENORES DE 1 DE ENERO A 27 DE OCTUBRE",
+  "uid": "251027103224EE1A81D1",
+  "tipo": "xlsx",
+  "bytes": 10019,
+  "campos": [
+   "adjudicatario",
+   "nif"
+  ],
+  "cabecera": [
+   "contratos menores (contra fra.) de 2025",
+   "adjudicatario",
+   "dni/cif"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Lodosa",
+  "anio": "2025",
+  "titulo": "Adjudicación contrato informe de evaluación estructural estudios pevios restauración basilica de Montserrat",
+  "uid": "2510301343377C2BE49B",
+  "tipo": "pdf",
+  "bytes": 935609,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE AZAGRA",
+  "anio": "2025",
+  "titulo": "CONTRATOS MENORES REFORMA CLUB JUVENIL",
+  "uid": "251103121353B7F7EE58",
+  "tipo": "xlsx",
+  "bytes": 12179,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "objeto"
+  ],
+  "cabecera": [
+   "nº",
+   "nº factura",
+   "proveedor",
+   "concepto de gasto",
+   "importe factura",
+   "iva",
+   "irpf",
+   "total"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ODIETA",
+  "anio": "2025",
+  "titulo": "Contratos menores 1º Trimestre 2025",
+  "uid": "251103123259578897A7",
+  "tipo": "pdf",
+  "bytes": 494155,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de fontellas",
+  "anio": "2025",
+  "titulo": "1º TRIMESTRE 2025",
+  "uid": "251109084425997CFCCD",
+  "tipo": "xlsx",
+  "bytes": 26971,
+  "campos": [
+   "importe",
+   "objeto"
+  ],
+  "cabecera": [
+   "fecha",
+   "factura",
+   "prevista",
+   "importe",
+   "descripcion",
+   "estado"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Ochagavía",
+  "anio": "2025",
+  "titulo": "Red explora: \"Gestión de visitantes en Ochagavía.Delimitación itinerarios urbanos\"",
+  "uid": "25111314184241711D8B",
+  "tipo": "pdf",
+  "bytes": 376392,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Legarda",
+  "anio": "2025",
+  "titulo": "4º TRIMESTRE 2025. FACTURA MENOR CUANTÍA",
+  "uid": "251118142411AFF2B5A4",
+  "tipo": "pdf",
+  "bytes": 79120,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Roncal",
+  "anio": "2025",
+  "titulo": "Relación trimestral de facturas (Contratos Menores) - 3º y 4º Trimestre 2025",
+  "uid": "251119111030EF8A79FC",
+  "tipo": "pdf",
+  "bytes": 88731,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE CINTRUENIGO",
+  "anio": "2025",
+  "titulo": "INSTALACION DE BAÑO PUBLICO EN EL FRONTON MUNICIPAL",
+  "uid": "25122209093391641627",
+  "tipo": "xlsx",
+  "bytes": 4027191,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0,
+  "error": "KeyError: \"There is no item named '[Content_Types].xml' in the archive\""
+ },
+ {
+  "entidad": "Ayuntamiento de Torralba Del Río",
+  "anio": "2025",
+  "titulo": "FACTURA SUMINISTRO MOBILIARIO URBANO EMBELLECIMIENTO TORRALBA DEL RIO",
+  "uid": "2512301152386A5BAE2A",
+  "tipo": "pdf",
+  "bytes": 34699,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Arbizu",
+  "anio": "2025",
+  "titulo": "Contratos menores",
+  "uid": "2601051502442502BBDA",
+  "tipo": "xlsx",
+  "bytes": 11311,
+  "campos": [
+   "adjudicatario",
+   "importe"
+  ],
+  "cabecera": [
+   "contrato menor.",
+   "empresa",
+   "importe",
+   "fecha"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "AYUNTAMIENTO BERRIOZAR",
+  "anio": "2025",
+  "titulo": "relacion contratos menores primer trimestre 2025",
+  "uid": "2601081026391FDB4D61",
+  "tipo": "pdf",
+  "bytes": 374409,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Barañain",
+  "anio": "2025",
+  "titulo": "Facturas contratos menores 1T 2025",
+  "uid": "26010813294094CFE9C1",
+  "tipo": "pdf",
+  "bytes": 777646,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE AOIZ",
+  "anio": "2025",
+  "titulo": "Relación trimestral fact. Patr. Escuela Música Aoiz 1º sem. 2025",
+  "uid": "26011512085562978714",
+  "tipo": "xlsx",
+  "bytes": 15308,
+  "campos": [
+   "objeto"
+  ],
+  "cabecera": [
+   "fecha",
+   "interesado",
+   "descripcion",
+   "oblig / derecho"
+  ],
+  "hojas": 3
+ },
+ {
+  "entidad": "Ayuntamiento de Uharte Arakil",
+  "anio": "2025",
+  "titulo": "Adjudicación de las ?Obras para la ejecución de la instalación eléctrica en baja tensión para solar fotovoltaica de 30kwn en el edificio de la escuela",
+  "uid": "260123103611C382D76B",
+  "tipo": "pdf",
+  "bytes": 824453,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE TIEBAS-MURUARTE DE RETA",
+  "anio": "2025",
+  "titulo": "Contratos menores primer trimestre",
+  "uid": "26030311101561702F06",
+  "tipo": "pdf",
+  "bytes": 525618,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE LERÍN",
+  "anio": "2025",
+  "titulo": "Relación contratos menor cuantía 2025",
+  "uid": "260305131250D38F0C05",
+  "tipo": "pdf",
+  "bytes": 7741,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Carcar",
+  "anio": "2025",
+  "titulo": "CONTRATOS MENOR CUANTÍA",
+  "uid": "260313093313A5F4CD16",
+  "tipo": "xlsx",
+  "bytes": 80400,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif",
+   "objeto"
+  ],
+  "cabecera": [
+   "fecha factura proveedor",
+   "ejercicio",
+   "cif/nif",
+   "nombre proveedor",
+   "concepto",
+   "base1",
+   "iva1",
+   "importe1",
+   "total"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Berako Udala / Ayuntamiento de Bera",
+  "anio": "2025",
+  "titulo": "CONTRATO OBRA REPARACIÓN SOCAVÓN EXISTENTE EN BARRIO KAULE",
+  "uid": "2603170827415C42E45A",
+  "tipo": "pdf",
+  "bytes": 368302,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE PUENTE LA REINA / GARES",
+  "anio": "2025",
+  "titulo": "Relacion de facturas contratos menores 2025",
+  "uid": "260507104825B0A50C7A",
+  "tipo": "pdf",
+  "bytes": 167283,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Berrioplano",
+  "anio": "2025",
+  "titulo": "2025 relacion facturas",
+  "uid": "2605191152515AAF6B1C",
+  "tipo": "pdf",
+  "bytes": 356020,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Urdazubi/Urdax",
+  "anio": "2025",
+  "titulo": "Contrato menor Obras Modificación de las arquetas de ubicación de los caudalímetroas de los depósitos de agua potable en Landibar, Leorlas y Alkerdi",
+  "uid": "260525110814ABD64DB4",
+  "tipo": "pdf",
+  "bytes": 25094,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Andosilla",
+  "anio": "2025",
+  "titulo": "Primer trimestre",
+  "uid": "260603093924DA65CC13",
+  "tipo": "pdf",
+  "bytes": 193379,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE BURGUI",
+  "anio": "2025",
+  "titulo": "REHABILITACIÓN DE CUBIERTA AYUNTAMIENTO DE BURGUI/BURGI",
+  "uid": "26083110544971E45692",
+  "tipo": "pdf",
+  "bytes": 145998,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Abaurrea Baja/Abaurrepea",
+  "anio": "2025",
+  "titulo": "4 Trimestre 2025",
+  "uid": "260925132437194FEA9C",
+  "tipo": "xlsx",
+  "bytes": 10570,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Abarzuza",
+  "anio": "2024",
+  "titulo": "PAVIMENTACION SIN REDES, CALLE SAN ANDRES DE ABARZUZA",
+  "uid": "240524135811AC6CF13C",
+  "tipo": "pdf",
+  "bytes": 122758,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Esteribar",
+  "anio": "2024",
+  "titulo": "contratos menores 1º trimestre",
+  "uid": "240610143344A8308766",
+  "tipo": "pdf",
+  "bytes": 88353,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Etxauri",
+  "anio": "2024",
+  "titulo": "Dirección de obra reforma lavadero de Etxauri",
+  "uid": "2409201003280790340F",
+  "tipo": "pdf",
+  "bytes": 229236,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento del Distrito de Metauten",
+  "anio": "2024",
+  "titulo": "RELACION FACTURAS PRIMER TRIMESTRE 2024",
+  "uid": "240923114500A1D61BE8",
+  "tipo": "xlsx",
+  "bytes": 19566,
+  "campos": [
+   "objeto"
+  ],
+  "cabecera": [
+   "fecha",
+   "num. reg.",
+   "interesado",
+   "descripcion",
+   "tipo operacion",
+   "consig. inicial",
+   "mod. credito",
+   "oblig / derecho",
+   "pago / cobro"
+  ],
+  "hojas": 3
+ },
+ {
+  "entidad": "Ayuntamiento de Tafalla",
+  "anio": "2024",
+  "titulo": "Adjudicación obras de arreglos en la Plaza de Toros",
+  "uid": "240925080858E069E464",
+  "tipo": "pdf",
+  "bytes": 510877,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Corella",
+  "anio": "2024",
+  "titulo": "FACTURAS 1º, 2º Y 3º TRIMESTRE",
+  "uid": "24110513013567DBF9BC",
+  "tipo": "pdf",
+  "bytes": 182104,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Monteagudo",
+  "anio": "2024",
+  "titulo": "Factura",
+  "uid": "24111211393052FABAB5",
+  "tipo": "pdf",
+  "bytes": 393969,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Allo",
+  "anio": "2024",
+  "titulo": "Relación de facturas (desde el 01/01/2024 Hasta el 30/09/2024)",
+  "uid": "241125100054AD8ABB23",
+  "tipo": "xlsx",
+  "bytes": 63294,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "objeto"
+  ],
+  "cabecera": [
+   "fecha",
+   "factura",
+   "proveedor",
+   "prevista",
+   "importe",
+   "descripcion"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Zugarramurdi",
+  "anio": "2024",
+  "titulo": "Facturas Contratcion menor 1T",
+  "uid": "241128132422BEAB7613",
+  "tipo": "pdf",
+  "bytes": 793006,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ARCE ARTZI",
+  "anio": "2024",
+  "titulo": "Honorarios correspondientes a la medición, levantamiento de planos redacción del Proyecto de reconstrucción del puente ?Esqueleto? de Urdíroz en el va",
+  "uid": "2411290926369CA2D011",
+  "tipo": "pdf",
+  "bytes": 123270,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE LONGUIDA",
+  "anio": "2024",
+  "titulo": "HONORARIOS POR LA REDACCIÓN DEL PROYECTO DE ?MEJORA DE INFRAESTRUCTURAS LOCALES EN EL VALLE DE LÓNGUIDA/LONGIDA (NAVARRA), AÑO 2024?.",
+  "uid": "241129093538525487ED",
+  "tipo": "pdf",
+  "bytes": 143098,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE GARAIOA",
+  "anio": "2024",
+  "titulo": "cuarto trimestres 2024",
+  "uid": "241205105507BA0B2F04",
+  "tipo": "xlsx",
+  "bytes": 10139,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "objeto"
+  ],
+  "cabecera": [
+   "razon social",
+   "nº factura",
+   "concepto",
+   "importe (iva no incluido)"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Marcilla",
+  "anio": "2024",
+  "titulo": "RELACION DE CONTRATOS DE MENOR CUANTÍA 2º TRIMESTRE 2024",
+  "uid": "241210134114F6578312",
+  "tipo": "docx",
+  "bytes": 104049,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ZUBIETA",
+  "anio": "2024",
+  "titulo": "AYUNTAMIENTO DE ZUBIETA",
+  "uid": "241210143439896C56F2",
+  "tipo": "xlsx",
+  "bytes": 11449,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif",
+   "objeto"
+  ],
+  "cabecera": [
+   "entrada",
+   "fecha registro",
+   "partida",
+   "nif",
+   "tercero",
+   "descripcion",
+   "importe"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Cadreita",
+  "anio": "2024",
+  "titulo": "FACTURAS Y CONTRATOS PRIMER TRIMESTRE 2024",
+  "uid": "24123110554306D63644",
+  "tipo": "pdf",
+  "bytes": 33548,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Goizueta",
+  "anio": "2024",
+  "titulo": "Relacion de contratos menor cuantia 1-T-2024",
+  "uid": "250117123345D7764F59",
+  "tipo": "pdf",
+  "bytes": 577851,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ETAYO",
+  "anio": "2024",
+  "titulo": "ACUERDO DE ADJUDICACIÓN Y FACTURAS",
+  "uid": "25021313421540315274",
+  "tipo": "pdf",
+  "bytes": 261254,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Gallués",
+  "anio": "2024",
+  "titulo": "Adjudicación de contrato de menor cuantía ayuntamiento de Gallués para  Renovación del abastecimiento de agua a Uscarrés por 27644,72 € iva excluído.a",
+  "uid": "250219105603B7BD6EFA",
+  "tipo": "pdf",
+  "bytes": 545605,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Beriain",
+  "anio": "2024",
+  "titulo": "Contratos menores primer trimestre 2024",
+  "uid": "2505131709482E3DC44A",
+  "tipo": "pdf",
+  "bytes": 43437,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Buñuel",
+  "anio": "2024",
+  "titulo": "CONTRATOS MENORES- RELACIÓN ANUAL DE FACTURAS 2024",
+  "uid": "250515123021289BEC34",
+  "tipo": "pdf",
+  "bytes": 4163730,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Caparroso",
+  "anio": "2024",
+  "titulo": "Relación contratos menores 1º Trimestre año 2024",
+  "uid": "250520143947F6557614",
+  "tipo": "pdf",
+  "bytes": 526771,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE BIURRUN-OLCOZ",
+  "anio": "2024",
+  "titulo": "CONTRATOS MENOR CUANTIA 2024",
+  "uid": "250530121327965835A3",
+  "tipo": "xlsx",
+  "bytes": 11711,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "objeto"
+  ],
+  "cabecera": [
+   "objeto",
+   "adjudicataria",
+   "importe sin iva"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Artajona",
+  "anio": "2024",
+  "titulo": "copia facturas",
+  "uid": "25061010275479AC3314",
+  "tipo": "xlsx",
+  "bytes": 187091,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif",
+   "objeto"
+  ],
+  "cabecera": [
+   "tipo",
+   "numero",
+   "nombre proveedor",
+   "importe liquido",
+   "fecha reg.",
+   "num. fac. prov",
+   "cif/nif",
+   "num. reg.",
+   "nombre estado",
+   "concepto",
+   "fecha fact. prov.",
+   "irpf",
+   "base1",
+   "iva1"
+  ],
+  "hojas": 2
+ },
+ {
+  "entidad": "Ayuntamiento de Eneritz",
+  "anio": "2023",
+  "titulo": "Enériz 1º trimestre 2023. Relación trimestral de facturas",
+  "uid": "2306260958024F8E7DFD",
+  "tipo": "pdf",
+  "bytes": 338384,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE MURUZABAL",
+  "anio": "2023",
+  "titulo": "1º trimestre 2023. Relación trimestral de facturas menor cuantía",
+  "uid": "230626101207BA1F7FCC",
+  "tipo": "pdf",
+  "bytes": 336574,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Tirapu",
+  "anio": "2023",
+  "titulo": "1º trimestre 2023. Relación trimestral de facturas menor cuantía",
+  "uid": "2306261033091D452C14",
+  "tipo": "pdf",
+  "bytes": 331350,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Obanos",
+  "anio": "2023",
+  "titulo": "1º trimestre 2023. Relación trimestral de facturas menor cuantía",
+  "uid": "2306261034540AB98F88",
+  "tipo": "pdf",
+  "bytes": 362734,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Úcar",
+  "anio": "2023",
+  "titulo": "1º trimestre 2023. Relación trimestral de facturas menor cuantía",
+  "uid": "230626105810CE8159EB",
+  "tipo": "pdf",
+  "bytes": 336515,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE UTERGA",
+  "anio": "2023",
+  "titulo": "1º trimestre 2023. Relación trimestral de facturas menor cuantía",
+  "uid": "2306261216455848FF11",
+  "tipo": "pdf",
+  "bytes": 336680,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE SAN ADRIÁN",
+  "anio": "2023",
+  "titulo": "Relación 1º trimestre 2023 - Contratos Menores",
+  "uid": "230803114255815EECCF",
+  "tipo": "pdf",
+  "bytes": 84749,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Castejón",
+  "anio": "2023",
+  "titulo": "PAVIMENTACIÓN PARCIAL CALLES DE CASTEJÓN",
+  "uid": "230829092726E833B118",
+  "tipo": "pdf",
+  "bytes": 112878,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Villava",
+  "anio": "2023",
+  "titulo": "CONTRATOS MENORES 1. TRIMESTRE 2023",
+  "uid": "23092111154730513758",
+  "tipo": "xlsx",
+  "bytes": 66457,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "objeto"
+  ],
+  "cabecera": [
+   "num. reg. fac.",
+   "fecha reg.",
+   "proveedor",
+   "descripcion",
+   "importe"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Ultzama",
+  "anio": "2023",
+  "titulo": "RELACION CONTRATOS MENORES 1º TRIMESTRE 2023 AYUNTAMIENTO DE ULTZAMA",
+  "uid": "230925135148EF80A758",
+  "tipo": "pdf",
+  "bytes": 190992,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Lekunberri / Lekunberriko Udala",
+  "anio": "2023",
+  "titulo": "RELACION FACTURAS 2023",
+  "uid": "231226132653B0E5273D",
+  "tipo": "pdf",
+  "bytes": 515960,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Ujué",
+  "anio": "2023",
+  "titulo": "REHABILITACION BAJOS ESCUELA FASE 2.",
+  "uid": "231227195108A97FBC6B",
+  "tipo": "docx",
+  "bytes": 12487,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE SANTACARA",
+  "anio": "2023",
+  "titulo": "Relación facturas contratos menores trimestre 1",
+  "uid": "2401171412162247E7AF",
+  "tipo": "pdf",
+  "bytes": 105090,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE AMESCOA BAJA",
+  "anio": "2023",
+  "titulo": "CONTRATOS MENORES 1º TRIM",
+  "uid": "2401191356069DA8BDD6",
+  "tipo": "xlsx",
+  "bytes": 13448,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif",
+   "objeto"
+  ],
+  "cabecera": [
+   "imp.base",
+   "iva",
+   "reten.",
+   "imp.total",
+   "objeto",
+   "adjudicatario",
+   "cif",
+   "fecha fra"
+  ],
+  "hojas": 3
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE OROZ-BETELU",
+  "anio": "2023",
+  "titulo": "ARREGLO PISTA HORMIGON QUEBRADO",
+  "uid": "2401241403550950AFD7",
+  "tipo": "pdf",
+  "bytes": 32007,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE LIEDENA",
+  "anio": "2023",
+  "titulo": "Contratos menores Liédena",
+  "uid": "240124173700A2F83B95",
+  "tipo": "xlsx",
+  "bytes": 10509,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 1
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE CIRAUQUI",
+  "anio": "2023",
+  "titulo": "FACTURA ARREGLO CAMINOS CIRAUQUI",
+  "uid": "240308120026A92115AB",
+  "tipo": "pdf",
+  "bytes": 34259,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ARANO",
+  "anio": "2023",
+  "titulo": "Relacion de contratos menores 2023-1-T",
+  "uid": "240325072200582F1D0A",
+  "tipo": "pdf",
+  "bytes": 463861,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE MÉLIDA",
+  "anio": "2022",
+  "titulo": "Relación trimestral contratos menores. Trimestre 1",
+  "uid": "2201071138483CDFACF6",
+  "tipo": "pdf",
+  "bytes": 175586,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento del Valle de Elorz",
+  "anio": "2022",
+  "titulo": "Contratos menores 4T?2022",
+  "uid": "220610113758D073FF04",
+  "tipo": "pdf",
+  "bytes": 275269,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE LANTZ",
+  "anio": "2022",
+  "titulo": "OBRAS DE ABASTECIMIENTO EN EL AYUNTAMIENTO DE lantz",
+  "uid": "221021095314F53E085B",
+  "tipo": "pdf",
+  "bytes": 370121,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE SADA",
+  "anio": "2022",
+  "titulo": "RENOVACION ALUMBRADO PUBLICO LEDS DE SADA",
+  "uid": "221028184940D7FF7CFC",
+  "tipo": "pdf",
+  "bytes": 2467035,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE ADIÓS",
+  "anio": "2022",
+  "titulo": "1º trimestre 2022. Relación trimestral facturas contratos menor cuantía",
+  "uid": "2211041236099652D5C8",
+  "tipo": "pdf",
+  "bytes": 89141,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE AZUELO",
+  "anio": "2022",
+  "titulo": "RELACION CONTRATOS MENORES AZUELO",
+  "uid": "2211251404305253E42A",
+  "tipo": "pdf",
+  "bytes": 216996,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Ezcabarte",
+  "anio": "2022",
+  "titulo": "Resolución adjudicación obra acera azoz",
+  "uid": "22121217180740BF3F6D",
+  "tipo": "pdf",
+  "bytes": 1112420,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Sartaguda",
+  "anio": "2022",
+  "titulo": "3T 2022",
+  "uid": "221219144508A38D2EEB",
+  "tipo": "pdf",
+  "bytes": 154017,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Ayuntamiento de Sunbilla /Sunbilla Udala",
+  "anio": "2022",
+  "titulo": "CONTRATOS MENORES AÑO 2022",
+  "uid": "23100508064770EF8A12",
+  "tipo": "xlsx",
+  "bytes": 13365,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "objeto"
+  ],
+  "cabecera": [
+   "tipo de contrato",
+   "descripcion",
+   "adjudicatario",
+   "factura",
+   "fecha",
+   "importe sin iva"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE OLITE",
+  "anio": "2022",
+  "titulo": "Dirección de las obras de infraestructura de riego en terrenos comunales del sector IV-4  de la zona regable del Canal de Navarra en Olite-Erriberri",
+  "uid": "231020101613CED35B5E",
+  "tipo": "pdf",
+  "bytes": 938213,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DEL VALLE DE ALLIN",
+  "anio": "2022",
+  "titulo": "Listado facturas 1T 2022",
+  "uid": "240109100318EE3EF23B",
+  "tipo": "xlsx",
+  "bytes": 19507,
+  "campos": [
+   "adjudicatario",
+   "importe"
+  ],
+  "cabecera": [
+   "proveedor",
+   "fecha factura",
+   "factura",
+   "importe"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Valtierra",
+  "anio": "2022",
+  "titulo": "Relación certificada Facturas IDAE DUS5000",
+  "uid": "2410211422471DF29DDE",
+  "tipo": "pdf",
+  "bytes": 1399030,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "Patronato de Cultura Etxe Zaharra del Ayuntamiento de Noain (Valle de Elorz)",
+  "anio": "2021",
+  "titulo": "Contratos menores Patronato Cultura Noáin 1º Trimestre 2021",
+  "uid": "210426081104C5145175",
+  "tipo": "xlsx",
+  "bytes": 8992,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "objeto"
+  ],
+  "cabecera": [
+   "referencia operacion",
+   "codigo operacion",
+   "fecha contable",
+   "aplicacion presupuestaria",
+   "importe",
+   "descripcion de la aplicacion",
+   "descripcion",
+   "tercero",
+   "nombre o razon social del tercero"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Peralta",
+  "anio": "2021",
+  "titulo": "Relación trimestral contratos menor cuantía primer trimestre del Ayuntamiento de Peralta",
+  "uid": "210709110823C685E528",
+  "tipo": "pdf",
+  "bytes": 397263,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE GARRALDA",
+  "anio": "2021",
+  "titulo": "Relación contratos menores",
+  "uid": "210812095844C2717F87",
+  "tipo": "pdf",
+  "bytes": 218490,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE EZPROGUI",
+  "anio": "2020",
+  "titulo": "Contratos menor cuantía 2T",
+  "uid": "201111100146529BC221",
+  "tipo": "xlsx",
+  "bytes": 10625,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif"
+  ],
+  "cabecera": [
+   "tipo contrato",
+   "adjudicataria",
+   "nif/dni",
+   "importe iva excl.",
+   "importe iva incl.",
+   "fecha adjudicacion"
+  ],
+  "hojas": 3
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE JAVIER",
+  "anio": "2020",
+  "titulo": "Relación contratos menor cuantía 4T",
+  "uid": "2011120942076E73DB68",
+  "tipo": "xlsx",
+  "bytes": 9769,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif"
+  ],
+  "cabecera": [
+   "tipo contrato",
+   "adjudicataria",
+   "nif/dni",
+   "importe iva excl.",
+   "importe iva incl.",
+   "fecha adjudicacion"
+  ],
+  "hojas": 3
+ },
+ {
+  "entidad": "Ayuntamiento de Villamayor de Monjardin",
+  "anio": "2020",
+  "titulo": "RELACIÓN 2ª TRIMESTRE CONTRATOS MENOR CUANTÍA",
+  "uid": "20112018221272C0E91C",
+  "tipo": "xlsx",
+  "bytes": 10315,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif"
+  ],
+  "cabecera": [
+   "tipo de contrato",
+   "adjudicataria",
+   "nif/dni",
+   "importe iva excluido",
+   "importe iva incluido",
+   "fecha adjudicacion",
+   "organo adjudicador"
+  ],
+  "hojas": 1
+ },
+ {
+  "entidad": "Ayuntamiento de Huarte",
+  "anio": "2020",
+  "titulo": "relación anual de contratos menores",
+  "uid": "210222090606B831E18C",
+  "tipo": "xlsx",
+  "bytes": 42505,
+  "campos": [
+   "adjudicatario",
+   "importe",
+   "nif",
+   "objeto"
+  ],
+  "cabecera": [
+   "tipo de contrato",
+   "denominacion del contrato",
+   "objeto",
+   "contratista",
+   "nif",
+   "importe iva excluido"
+  ],
+  "hojas": 6
+ },
+ {
+  "entidad": "AYUNTAMIENTO DE BETELU",
+  "anio": "2019",
+  "titulo": "Renovación y aislamiento térmico de la cubierta de edificio municipal de betelu. Dirección de obra y Coordinación de Seguridad y Salud",
+  "uid": "231220131954D18149B5",
+  "tipo": "pdf",
+  "bytes": 80389,
+  "campos": [],
+  "cabecera": [],
+  "hojas": 0
+ }
+]
