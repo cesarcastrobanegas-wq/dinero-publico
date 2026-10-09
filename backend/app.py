@@ -3197,11 +3197,14 @@ ADMINISTRADORES_BORME = _cargar_administradores_borme()
 # 1. Apoderados y socios NO se muestran nunca: no son órgano de administración. Siguen en la tabla `directores` (no
 #    se borra nada), pero ninguna página los enseña y el extractor de la búsqueda empresa a empresa ya no los acepta.
 # 2. Cuando el fichero del BORME cubre desde 2009 (_borme_historico_cargado: lo dice el "periodo" del propio fichero,
-#    sin tocar código ni variables), el BORME pasa a ser la ÚNICA fuente de administradores:
-#      - los administradores antiguos de `directores` (de las fuentes privadas retiradas el 02-10, sin fecha ni
-#        anuncio) dejan de mostrarse si el BORME no los confirma o sustituye -- ocultos, no borrados;
+#    sin tocar código ni variables):
 #      - la búsqueda empresa a empresa en boe.es se apaga (ya no aporta nada que el índice masivo no dé);
 #      - una sociedad mercantil sin administrador se muestra como "No consta en el BORME desde 2009".
+# 3. Los administradores antiguos de `directores` (de las fuentes privadas retiradas el 02-10, sin fecha ni anuncio)
+#    que el BORME no confirma ni sustituye se SIGUEN mostrando: ocultarlos NO se activa solo al cargar el histórico
+#    (decisión de César, 09-10 noche: se decide con la medición real delante; si el histórico recupera poco, la
+#    alternativa es marcarlos como "dato anterior, sin fuente"). El interruptor es _OCULTAR_ADMINISTRADORES_ANTIGUOS.
+_OCULTAR_ADMINISTRADORES_ANTIGUOS = False
 _CARGO_PERSONA_FISICA = "Autónomo / Persona física"
 _BORME_HISTORICO_DESDE = "20090131"     # el BORME existe como dato abierto desde el 02-01-2009
 
@@ -3218,12 +3221,15 @@ def _borme_historico_cargado():
 
 def _administrador_guardado_visible(nombre, cargo):
     """¿Se puede enseñar un (nombre, cargo) de la tabla `directores` o de un contrato guardado? Las personas físicas
-    sí (son el propio adjudicatario); apoderados y socios, nunca; el resto, solo mientras no esté cargado el histórico."""
+    sí (son el propio adjudicatario); apoderados y socios, nunca; el resto sí, salvo que se haya decidido ocultar los
+    administradores antiguos sin respaldo del BORME (_OCULTAR_ADMINISTRADORES_ANTIGUOS) y el histórico esté cargado."""
     if not nombre:
         return False
     if cargo == _CARGO_PERSONA_FISICA:
         return True
-    return not _cargo_no_es_administracion(cargo) and not _borme_historico_cargado()
+    if _cargo_no_es_administracion(cargo):
+        return False
+    return not (_OCULTAR_ADMINISTRADORES_ANTIGUOS and _borme_historico_cargado())
 
 
 def _es_sociedad_mercantil(empresa, nif=""):
