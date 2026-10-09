@@ -1,6 +1,6 @@
 # Índice de Transparencia Dinero Público — metodología (v2.1)
 
-Versión 2.1, 09-10-2026 (umbral de evidencia y suavizado, ver su sección; **en rama local, sin desplegar**). Versión 2, 29-09-2026. La v1 (7 componentes, agosto de 2026) y su distribución real en producción están en
+Versión 2.1, 09-10-2026 (umbral de evidencia y suavizado, ver su sección; desplegada el 09-10-2026). Versión 2, 29-09-2026. La v1 (7 componentes, agosto de 2026) y su distribución real en producción están en
 `INDICE_TRANSPARENCIA_V1_LINEA_BASE.md`. El código es `_calcular_indice_transparencia` en `backend/app.py`.
 
 **Qué es y qué no es.** Una valoración propia de la disponibilidad y calidad de los datos públicos de cada
@@ -16,7 +16,7 @@ La misma regla se aplica dentro de un componente (ver "menores" en agregadores).
 
 - Nota = media ponderada (0-100) de los componentes disponibles, redondeada a 1 decimal (también en la portada).
 - **Umbral mínimo: 4 componentes disponibles** (v1: 3). Por debajo, el municipio sale como "cobertura insuficiente".
-- **Umbral de evidencia (v2.1): 10 contratos** (formales + menores guardados). Por debajo, la nota se calcula y se
+- **Umbral de evidencia (v2.1): 20 contratos** (formales + menores guardados). Por debajo, la nota se calcula y se
   enseña en la ficha con la etiqueta «muestra pequeña», pero el municipio no entra en rankings ni tiene puesto.
 
 ## Componentes y pesos
@@ -77,7 +77,7 @@ con muestras de 4; y menores y formato, no disponibles, reparten su peso entre l
 
 **Cambios** (código: `_INDICE_MIN_CONTRATOS_RANKING`, `_INDICE_SUAVIZADO_K`, `_indice_filas_ranking` en `backend/app.py`):
 
-- **Umbral de evidencia**: constante `_INDICE_MIN_CONTRATOS_RANKING = 10`. Cuenta los contratos formales más los
+- **Umbral de evidencia**: constante `_INDICE_MIN_CONTRATOS_RANKING = 20`. Cuenta los contratos formales más los
   menores que la base guarda del municipio (todo el periodo guardado, hoy desde 2021). Por debajo, la ficha muestra
   la nota con la etiqueta «muestra pequeña», la explicación y el desglose, y el municipio queda fuera de todo lo que
   ordena o da puesto: tabla de /rankings, lateral de portada, «Liderando ahora mismo», lista de la ficha, buscador de
@@ -96,35 +96,39 @@ con muestras de 4; y menores y formato, no disponibles, reparten su peso entre l
 **Lo que no cambia**: pesos, componentes, la regla «no disponible no es 0», el mínimo de 4 componentes y el
 percentil de actividad (se sigue calculando entre todos los municipios del tramo, estén o no en el ranking).
 
+**Decisiones de César (09-10-2026)**, con las mediciones delante: umbral **20** (se midió primero con 10: quitaba los
+casos de 3-4 contratos, pero dejaba en el top 20 nacional a Fuendetodos con 13, Griegos con 15 y Soportújar con
+19); el umbral cuenta **formales + menores** (contar solo formales no iguala el reparto entre comunidades y deja
+fuera a ciudades cuyos formales no tenemos asignados por un problema de nombre en PLACE: San Vicente del Raspeig y
+Las Rozas tienen 0 formales y 2.192 y 517 menores); y suavizado solo en adjudicatario.
+
 **Medición** sobre la copia real de producción del **09-10-2026** (tablas completas en
-`INDICE_TRANSPARENCIA_V2_1_MEDICION.md`). «A» = umbral contando formales + menores (lo que hace el código); «B» =
-contando solo contratos formales, medido como alternativa:
+`INDICE_TRANSPARENCIA_V2_1_MEDICION.md`, que incluye como referencia la alternativa «B», umbral contando solo
+contratos formales):
 
-| | v2 | v2.1 · A | v2.1 · B |
-|---|---:|---:|---:|
-| Municipios con nota | 8.083 | 8.083 | 8.083 |
-| En el ranking | 8.083 | 4.316 | 3.155 |
-| «Muestra pequeña» | — | 3.767 (46,6 %) | 4.928 (61,0 %) |
-| Población fuera | — | 1,83 M | 3,06 M |
-| Con 90 o más | 81 | 45 | 45 |
+| | v2 | v2.1 (umbral 20) |
+|---|---:|---:|
+| Municipios con nota | 8.083 | 8.083 |
+| En el ranking | 8.083 | 3.563 |
+| «Muestra pequeña» | — | 4.520 (55,9 %; 2,67 M hab.) |
+| Mediana de los que están en el ranking | 72,8 | 78,3 |
+| Con 90 o más | 81 | 41 |
 
-- **Umbral de referencia (A)**: con 5 quedarían fuera 3.028 (37,5 %); con 10, 3.767 (46,6 %); con 20, 4.520 (55,9 %).
-  Con 10 sale el 68 % de los municipios de menos de 1.000 hab., el 20 % de los de 1.000-5.000, el 4 % de los de
-  5.000-20.000, 2 de 20.000-100.000 y ninguno de más de 100.000.
-- **Contar solo formales (B)** deja fuera a 1.161 municipios más: el 87 % de los de menos de 1.000 hab. (quedan 642
-  de 4.935; Castilla y León 3,6 %, Castilla-La Mancha 7,5 %, País Vasco 9,4 %, Cataluña 28 %). No iguala el reparto
-  entre comunidades y saca a ciudades cuyos contratos formales no tenemos asignados por un problema de nombre en
-  PLACE (San Vicente del Raspeig y Las Rozas, 0 formales con 2.192 y 517 menores). El top de cada tramo es el mismo
-  con A y con B.
-- **Sin el suavizado de directivo siguen en el top municipios con muy pocos contratos**: en el top 20 nacional están
-  Fuendetodos (13 contratos), Griegos (15) y Soportújar (19); el líder de menos de 1.000 hab. es Griegos (154 hab.,
-  15 contratos, 92,2). El umbral de 10 quita los casos de 3-4 contratos (Cellorigo queda en 88,8 como «muestra
-  pequeña»), no los de 11-20. Con el umbral en 20 el municipio con menos contratos del top 20 nacional tendría 29.
-- **Líderes por tramo**: Griegos 92,2 (<1.000), Toques 91,6 (1.000-5.000), Aguilar de la Frontera 92,1
+- **Umbral de referencia**: con 5 quedarían fuera 3.028 (37,5 %); con 10, 3.767 (46,6 %); con 20, 4.520 (55,9 %).
+  Con 20 sale el 79 % de los municipios de menos de 1.000 hab., el 32 % de los de 1.000-5.000, el 6 % de los de
+  5.000-20.000, 5 de 20.000-100.000 y ninguno de más de 100.000.
+- **Efecto desigual por comunidad** en los de menos de 1.000 hab.: siguen en el ranking el 5 % de los de Castilla y
+  León (106 de 2.007) y el 3 % de Navarra (4 de 155), frente al 53 % de Cataluña y el 62 % de la Comunitat
+  Valenciana. Refleja cuántos contratos tenemos de cada sitio (los registros autonómicos traen más menores), no solo
+  cuánto contratan. El top 20 de ese tramo tiene 19 municipios catalanes.
+- **Top nacional**: Girona 93,1, Lleida 92,5, Aguilar de la Frontera 92,1, Duesaigües 91,9, Vitoria-Gasteiz 91,8...
+  El municipio con menos contratos del top 20 tiene 29 (Fígols i Alinyà). Cellorigo (4 contratos) queda en 88,8
+  como «muestra pequeña».
+- **Líderes por tramo**: Duesaigües 91,9 (<1.000), Toques 91,6 (1.000-5.000), Aguilar de la Frontera 92,1
   (5.000-20.000), Calvià 91,2 (20.000-100.000), Girona 93,1 (>100.000).
-- **Capitales de provincia**: las 50 siguen en el ranking con A y con B. Sus notas no cambian (entre −0,1 y +0,1);
-  el puesto mejora por el acortamiento de la lista y, entre los mismos municipios, el suavizado las mueve una
-  mediana de −20 puestos (de −46 a +24).
+- **Capitales de provincia**: las 50 siguen en el ranking. Sus notas no cambian (entre −0,1 y +0,1); el puesto
+  mejora por el acortamiento de la lista y, entre los mismos municipios, el suavizado las mueve una mediana de −8
+  puestos (de −32 a +23).
 - **Suavizado por sí solo**: 2.354 municipios cambian 1 punto o más y 241 cambian 5 o más (de −1,9 a +19,4); las
   subidas grandes son de municipios con 0 de 1 o 0 de 2 en adjudicatario. Media nacional de adjudicatario: 92,0 %.
 

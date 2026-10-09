@@ -17100,7 +17100,7 @@ _INDICE_TRANSPARENCIA_MAX_FILAS_TABLA = 300  # tope de filas pintadas en /rankin
 #     100; con cientos, el suavizado apenas mueve la nota. "Directivo" NO se suaviza (decisión de César, 09-10): su
 #     media nacional es baja y depende de nuestro cruce con el BORME, así que tirar hacia ella hundía a quien tenía
 #     3 de 3 por un motivo ajeno al ayuntamiento.
-_INDICE_MIN_CONTRATOS_RANKING = 10
+_INDICE_MIN_CONTRATOS_RANKING = 20   # 10 en la primera medición; 20 por decisión de César (09-10): con 10 seguían en el top pueblos de 13-19 contratos
 _INDICE_SUAVIZADO_K = 10
 
 # "cuentas" (CUENTAS_ANUALES) y el sí/no del alcalde (RETRIBUCIONES_ISPA): huecos ESTRUCTURALES de cada fuente
