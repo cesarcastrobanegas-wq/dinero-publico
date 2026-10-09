@@ -15446,6 +15446,7 @@ a.btn-ver:hover{background:var(--tint);}
 .colabora-bar{max-width:1340px;margin:14px auto 0;padding:16px 20px;border-radius:8px;background:var(--tint);border:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;}
 .colabora-text{font-size:12.5px;color:var(--text);line-height:1.6;max-width:760px;}
 .colabora-text b{color:var(--accent);}
+a.colabora-bizum{text-decoration:none;cursor:pointer;}a.colabora-bizum:hover{border-color:var(--accent);}#colabora{scroll-margin-top:130px;}
 .colabora-bizum{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 16px;white-space:nowrap;}
 .site-footer{max-width:1340px;margin:0 auto;padding:22px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center;}
 .site-footer .ft-links{display:flex;flex-wrap:wrap;gap:16px;align-items:center;}
@@ -15904,7 +15905,8 @@ def _render_alertas(alertas):
 
 SITE_URL = os.environ.get("SITE_URL", "https://dinero-publico.com")
 SITE_TAGLINE = "EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?"
-BIZUM_TELEFONO = "661657013"
+# El número de Bizum NO va en el código (2026-10-09, decisión de César): sale de la variable de entorno BIZUM_NUMERO
+# y solo se enseña en "Quién soy" (_bizum_html); el pie de todas las páginas lleva un botón "Colabora" hacia allí.
 
 # ─── Consentimiento de cookies + Google AdSense (2026-09-05) ────────────────
 # Antes de esto, Google Analytics se cargaba sin ningún consentimiento en
@@ -16441,9 +16443,7 @@ def _footer_html(provincia="todas"):
   <div class="colabora-text">
     {_t("<b>Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie.")}
   </div>
-  <span class="colabora-bizum" title="{_t("Envía un Bizum a este número desde tu app del banco")}">
-    Bizum: {BIZUM_TELEFONO}
-  </span>
+  <a class="colabora-bizum" href="/quien-soy#colabora">{_t("Colabora →")}</a>
 </div>
 <footer class="site-footer">
   <div class="ft-brand">© Dinero Público — {_t("datos oficiales públicos")}, {esc(brand_label)}</div>
@@ -22991,6 +22991,15 @@ _MAPA_COBERTURA_JS = '''
 '''
 
 
+def _mapa_ccaa_nombre_svg(nombre, x, y):
+    """Nombre de la comunidad como texto DENTRO de su enlace del mapa (2026-10-09). El enlace solo envolvía el dibujo
+    y su nombre iba en aria-label: los lectores en modo texto (extractores, algunos rastreadores) no leen ese atributo
+    y enseñaban la ruta en crudo, "/?provincia=sevilla", 19 veces. El texto no se ve ni estorba al ratón (atributos en
+    línea, sin depender de ninguna hoja de estilos); quien usa lector de pantalla sigue oyendo el aria-label."""
+    return (f'<text class="mc-ccaa-nombre" x="{x:.1f}" y="{y:.1f}" font-size="1" opacity="0" '
+            f'pointer-events="none">{esc(nombre)}</text>')
+
+
 def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura", datos_oficiales=None):
     """Núcleo del mapa de cobertura (SVG + leyenda), compartido entre
     /mapa-cobertura (página propia) y la home nacional (2026-09-20,
@@ -23058,7 +23067,8 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura", datos_ofi
                 destino = _MAPA_CCAA_DESTINO_POR_COMUNIDAD.get(comunidad)
                 if destino:
                     group_inner = (f'<a class="mc-ccaa-link" href="/?provincia={destino}" '
-                                    f'aria-label="{esc(c["name"])}">{group_inner}</a>')
+                                    f'aria-label="{esc(c["name"])}">{_mapa_ccaa_nombre_svg(c["name"], cx, cy)}'
+                                    f'{group_inner}</a>')
             ccaa_groups.append(group_inner)
             continue
 
@@ -23101,7 +23111,8 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura", datos_ofi
             destino = _MAPA_CCAA_DESTINO_POR_COMUNIDAD.get(comunidad)
             if destino:
                 group_inner = (f'<a class="mc-ccaa-link" href="/?provincia={destino}" '
-                                f'aria-label="{esc(c["name"])}">{group_inner}</a>')
+                                f'aria-label="{esc(c["name"])}">'
+                                f'{_mapa_ccaa_nombre_svg(c["name"], x0 + bw / 2, y0 + bh / 2)}{group_inner}</a>')
         ccaa_groups.append(group_inner)
 
     province_borders = []
@@ -23229,7 +23240,7 @@ def render_quienes_somos_html():
   <p>{_t("Reúno datos que ya son públicos y oficiales, pero que están dispersos en decenas de portales, formatos y registros: los contratos de la Plataforma de Contratación del Sector Público, los registros autonómicos, los portales municipales, la deuda y las cuentas del Ministerio de Hacienda, los sueldos de alcaldes y concejales. Los cruzo, los ordeno y los pongo en un solo sitio.")}</p>
   <p>{_t('No acuso a nadie ni saco conclusiones por el lector. Cuando un dato parece raro, lo enseño tal como lo publica la fuente oficial y explico lo que sé y lo que no. Y cuando me equivoco, lo corrijo y lo cuento: en <a href="/casos">Casos</a> hay ejemplos de errores míos y de las fuentes. Cómo se calcula cada cosa está en la <a href="/metodologia">metodología</a>.')}</p>
 
-  <h2>{_t("Cómo puedes colaborar")}</h2>
+  <h2 id="colabora">{_t("Cómo puedes colaborar")}</h2>
   <p>{_t("Un proyecto de una sola persona depende de quien lo usa. Puedes ayudar de varias formas:")}</p>
   <ul>
     <li>{_t("<strong>Avisa de errores.</strong> Si ves algo mal en la ficha de tu municipio, cuéntalo en sus comentarios.")}</li>

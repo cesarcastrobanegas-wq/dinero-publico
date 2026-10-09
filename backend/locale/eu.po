@@ -122,7 +122,7 @@ msgstr "Enpresa bera bere IFZaren arabera zenbatzen da batera."
 msgid "{n} contrato"
 msgstr "{n} kontratu"
 
-#: app.py:12530 app.py:20070 app.py:20899 app.py:16284 app.py:22927
+#: app.py:12530 app.py:20070 app.py:20899 app.py:16286 app.py:22927
 msgid "{n} contratos"
 msgstr "{n} kontratu"
 
@@ -174,173 +174,173 @@ msgstr "duela {m} min"
 msgid "hace {h}h {m}min"
 msgstr "duela {h}h {m}min"
 
-#: app.py:15815
+#: app.py:15816
 msgid "Datos oficiales: PSCP (Generalitat de Catalunya)"
 msgstr "Datu ofizialak: PSCP (Kataluniako Generalitata)"
 
-#: app.py:15818
+#: app.py:15819
 msgid "Datos oficiales: KontratazioA (Gobierno Vasco)"
 msgstr "Datu ofizialak: KontratazioA (Eusko Jaurlaritza)"
 
-#: app.py:15821
+#: app.py:15822
 msgid "Datos oficiales: Portal de Contratación de Navarra (Gobierno de Navarra)"
 msgstr "Datu ofizialak: Nafarroako Kontratazio Ataria (Nafarroako Gobernua)"
 
-#: app.py:15822
+#: app.py:15823
 msgid "Portal de Contratación de Navarra"
 msgstr "Nafarroako Kontratazio Ataria"
 
-#: app.py:15824
+#: app.py:15825
 msgid "Datos oficiales: PLACE (Ministerio de Hacienda) + BORM (Boletín Oficial Región de Murcia)"
 msgstr "Datu ofizialak: PLACE (Ogasun Ministerioa) + BORM (Murtziako Eskualdeko Aldizkari Ofiziala)"
 
-#: app.py:15825
+#: app.py:15826
 msgid "PLACE (Ministerio de Hacienda) y BORM"
 msgstr "PLACE (Ogasun Ministerioa) eta BORM"
 
-#: app.py:15827
+#: app.py:15828
 msgid "Datos oficiales: PLACE (Ministerio de Hacienda)"
 msgstr "Datu ofizialak: PLACE (Ogasun Ministerioa)"
 
-#: app.py:15828
+#: app.py:15829
 msgid "PLACE (Ministerio de Hacienda)"
 msgstr "PLACE (Ogasun Ministerioa)"
 
-#: app.py:15833
+#: app.py:15834
 msgid "Buscando — {municipio}"
 msgstr "Bilatzen — {municipio}"
 
-#: app.py:15844
+#: app.py:15845
 msgid "Analizando contratos de"
 msgstr "Kontratuak aztertzen:"
 
-#: app.py:15845
+#: app.py:15846
 msgid "Descargando datos de {fuente}…"
 msgstr "Datuak deskargatzen: {fuente}…"
 
-#: app.py:15846
+#: app.py:15847
 msgid "Iniciando…"
 msgstr "Hasten…"
 
-#: app.py:15847
+#: app.py:15848
 msgid "Volver"
 msgstr "Itzuli"
 
-#: app.py:15862
+#: app.py:15863
 msgid "desconocido"
 msgstr "ezezaguna"
 
-#: app.py:15862
+#: app.py:15863
 msgid "Error:"
 msgstr "Errorea:"
 
-#: app.py:15896
+#: app.py:15897
 msgid "Indicador de riesgo"
 msgstr "Arrisku-adierazlea"
 
-#: app.py:16137
+#: app.py:16139
 msgid "Nombre de la empresa…"
 msgstr "Enpresaren izena…"
 
-#: app.py:16138
+#: app.py:16140
 msgid "Nombre del directivo o empresario…"
 msgstr "Zuzendariaren edo enpresaburuaren izena…"
 
-#: app.py:16139
+#: app.py:16141
 msgid "Número de licitación (ej: 321/2026)…"
 msgstr "Lizitazio-zenbakia (adib.: 321/2026)…"
 
-#: app.py:16204
+#: app.py:16206
 msgid "Página {p} de {n} · {t} resultados"
 msgstr "{p}/{n} orria · {t} emaitza"
 
-#: app.py:16225 app.py:16244
+#: app.py:16227 app.py:16246
 msgid "Sin resultados."
 msgstr "Emaitzarik ez."
 
-#: app.py:16230
+#: app.py:16232
 msgid "{n} contratos · total acumulado {importe}"
 msgstr "{n} kontratu · metatutako guztizkoa: {importe}"
 
-#: app.py:16231
+#: app.py:16233
 msgid " · mostrando los primeros {n}"
 msgstr " · lehenengoak erakusten dira: {n}"
 
-#: app.py:16249
+#: app.py:16251
 msgid "{n} empresa(s) vinculada(s) · total global {importe}"
 msgstr "{n} enpresa lotu · guztizko orokorra: {importe}"
 
-#: app.py:16258
+#: app.py:16260
 msgid "{n} contrato(s)"
 msgstr "{n} kontratu"
 
-#: app.py:16271
+#: app.py:16273
 msgid "No se ha encontrado ninguna licitación con ese número."
 msgstr "Ez da zenbaki hori duen lizitaziorik aurkitu."
 
-#: app.py:16284
+#: app.py:16286
 msgid "aún sin datos cargados"
 msgstr "oraindik daturik kargatu gabe"
 
-#: app.py:16294
+#: app.py:16296
 msgid "Buscar contratos →"
 msgstr "Bilatu kontratuak →"
 
-#: app.py:16303
+#: app.py:16305
 msgid "Sin municipios que coincidan."
 msgstr "Ez dago bat datorren udalerririk."
 
-#: app.py:16306
+#: app.py:16308
 msgid "{n} municipio(s) encontrado(s)."
 msgstr "{n} udalerri aurkitu dira."
 
-#: app.py:16316
+#: app.py:16318
 msgid "Buscando…"
 msgstr "Bilatzen…"
 
-#: app.py:16331
+#: app.py:16333
 msgid "Error al buscar. Inténtalo de nuevo."
 msgstr "Errorea bilatzean. Saiatu berriro."
 
-#: app.py:16388
+#: app.py:16390
 msgid "EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?"
 msgstr "GUZTION DIRUA ∞ NOREN ESKUETAN?"
 
-#: app.py:16397 app.py:21012
+#: app.py:16399 app.py:21012
 msgid "Contratación pública en España"
 msgstr "Kontratazio publikoa Espainian"
 
-#: app.py:16402 app.py:16454 app.py:18417
+#: app.py:16404 app.py:16454 app.py:18417
 msgid "Rankings"
 msgstr "Sailkapenak"
 
-#: app.py:16403 app.py:16455
+#: app.py:16405 app.py:16455
 msgid "Sueldos Alcaldes"
 msgstr "Alkateen soldatak"
 
-#: app.py:16404 app.py:16456 app.py:21057
+#: app.py:16406 app.py:16456 app.py:21057
 msgid "Fondos UE"
 msgstr "EBko funtsak"
 
-#: app.py:16405 app.py:16457 app.py:19684
+#: app.py:16407 app.py:16457 app.py:19684
 msgid "Convocatorias abiertas"
 msgstr "Deialdi irekiak"
 
-#: app.py:16406
+#: app.py:16408
 msgid "Instalar app"
 msgstr "Instalatu aplikazioa"
 
-#: app.py:16437
+#: app.py:16439
 msgid "<b>Instálala como app</b> — en tu móvil o en tu ordenador, gratis y sin tiendas de aplicaciones. Busca el botón <b>«Instalar app»</b> en la cabecera de arriba; si no aparece, en <b>Android/Windows (Chrome, Edge)</b> usa el menú ⋮ → «Instalar aplicación», y en <b>iPhone/iPad (Safari)</b> el botón Compartir → «Añadir a pantalla de inicio»."
 msgstr "<b>Instalatu aplikazio gisa</b> — mugikorrean edo ordenagailuan, doan eta aplikazio-dendarik gabe. Bilatu <b>«Instalatu aplikazioa»</b> botoia goiko goiburuan; agertzen ez bada, <b>Android/Windows-en (Chrome, Edge)</b> erabili ⋮ menua → «Instalatu aplikazioa», eta <b>iPhone/iPad-en (Safari)</b> Partekatu botoia → «Gehitu hasierako pantailan»."
 
-#: app.py:16442
+#: app.py:16444
 msgid "<b>Colabora</b> — La transparencia no se regala, se construye. Si este proyecto te ha servido para saber en qué se gasta el dinero de todos, ayúdanos a que siga en pie."
 msgstr "<b>Lagundu</b> — Gardentasuna ez da oparitzen, eraiki egiten da. Proiektu honek guztion dirua zertan gastatzen den jakiteko balio izan badizu, lagun iezaguzu zutik jarraitzen."
 
-#: app.py:16444
-msgid "Envía un Bizum a este número desde tu app del banco"
-msgstr "Bidali Bizum bat zenbaki honetara zure bankuko aplikaziotik"
+#: app.py:16446
+msgid "Colabora →"
+msgstr "Lagundu →"
 
 #: app.py:16449
 msgid "datos oficiales públicos"
@@ -686,11 +686,11 @@ msgstr "ez dago eskuragarri"
 msgid "peso {peso}%"
 msgstr "pisua: % {peso}"
 
-#: app.py:17964 app.py:16208
+#: app.py:17964 app.py:16210
 msgid "← Anterior"
 msgstr "← Aurrekoa"
 
-#: app.py:17965 app.py:19907 app.py:19987 app.py:16214
+#: app.py:17965 app.py:19907 app.py:19987 app.py:16216
 msgid "Siguiente →"
 msgstr "Hurrengoa →"
 
@@ -834,7 +834,7 @@ msgstr "Bilatu zure udalerria"
 msgid "Todas sus posiciones de un vistazo"
 msgstr "Bere posizio guztiak begirada batean"
 
-#: app.py:18429 app.py:20971 app.py:21112 app.py:16136
+#: app.py:18429 app.py:20971 app.py:21112 app.py:16138
 msgid "Nombre del municipio…"
 msgstr "Udalerriaren izena…"
 
@@ -1922,7 +1922,7 @@ msgstr "Ez da udalerria aurkitu."
 msgid "Contratos públicos de {municipio}"
 msgstr "Kontratu publikoak: {municipio}"
 
-#: app.py:20106 app.py:15838
+#: app.py:20106 app.py:15839
 msgid "Contratos Públicos"
 msgstr "Kontratu publikoak"
 
@@ -2202,7 +2202,7 @@ msgstr "Espainiako kontratu publikoak Merkataritza Erregistroarekin gurutzatuta,
 msgid "Ayuntamiento"
 msgstr "Udala"
 
-#: app.py:20967 app.py:21108 app.py:20013 app.py:16258
+#: app.py:20967 app.py:21108 app.py:20013 app.py:16260
 msgid "Directivo"
 msgstr "Zuzendaria"
 
@@ -2246,7 +2246,7 @@ msgstr "Enpresa nagusiak · Estatuko sailkapena"
 msgid "Consulta los contratos públicos adjudicados en España con los directivos de las empresas adjudicatarias. Cobertura nacional, las 17 comunidades autónomas y 2 ciudades autónomas."
 msgstr "Kontsultatu Espainian esleitutako kontratu publikoak, enpresa esleipendunen zuzendariekin. Estatu osoko estaldura: 17 autonomia-erkidegoak eta 2 hiri autonomoak."
 
-#: app.py:21064 app.py:16294
+#: app.py:21064 app.py:16296
 msgid "Ver contratos →"
 msgstr "Ikusi kontratuak →"
 
@@ -2346,197 +2346,200 @@ msgstr "Sinatu eskaera →"
 msgid "{n} municipios"
 msgstr "{n} udalerri"
 
-#: app.py:23179
+#: app.py:23190
 msgid "Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva."
 msgstr "Lurralde bakoitza bere banderarekin koloreztatuta — pasatu sagua probintzia baten gainetik haren zifra ofizialak ikusteko: udalerriak, biztanleak, kontratuak, esleitutako zenbatekoa eta zor bizia."
 
-#: app.py:23184
+#: app.py:23195
 msgid "Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y patrón principal; se omiten escudos y detalles heráldicos finos). Las cifras de cada provincia se calculan en cada carga a partir de los municipios ya procesados en nuestra base de datos."
 msgstr "Probintzien eta erkidegoen geometria Institutu Geografiko Nazionalaren kartografia ofizialetik hartua (es-atlas bidez). Banderak eskuz marraztutako bertsio sinplifikatuak dira (koloreak eta eredu nagusia; armarriak eta xehetasun heraldiko finak kanpoan uzten dira). Probintzia bakoitzeko zifrak karga bakoitzean kalkulatzen dira, gure datu-basean prozesatutako udalerrietatik abiatuta."
 
-#: app.py:23188 app.py:16462 app.py:23178
+#: app.py:23199 app.py:16462 app.py:23189
 msgid "Mapa de cobertura"
 msgstr "Estaldura-mapa"
 
-#: app.py:23189
+#: app.py:23200
 msgid "Mapa de España por comunidades y provincias con las cifras oficiales de contratación pública de Dinero Público: municipios, habitantes, contratos e importe adjudicado."
 msgstr "Espainiako mapa erkidegoka eta probintziaka, Dinero Públicoren kontratazio publikoko zifra ofizialekin: udalerriak, biztanleak, kontratuak eta esleitutako zenbatekoa."
 
-#: app.py:23200
+#: app.py:23211
 msgid "Copiado"
 msgstr "Kopiatuta"
 
-#: app.py:23202
+#: app.py:23213
 msgid "Apoya el proyecto por Bizum"
 msgstr "Lagundu proiektuari Bizum bidez"
 
-#: app.py:23205
+#: app.py:23216
 msgid "Copiar"
 msgstr "Kopiatu"
 
-#: app.py:23206
+#: app.py:23217
 msgid "Cualquier cantidad ayuda a pagar el servidor y el tiempo. En el concepto, si quieres, pon «Dinero Público»."
 msgstr "Edozein zenbatekok laguntzen du zerbitzaria eta denbora ordaintzen. Kontzeptuan, nahi baduzu, jarri «Dinero Público»."
 
-#: app.py:23222
+#: app.py:23233
 msgid "Dinero Público lo hago yo solo: César Castro Banegas. No hay una organización detrás, ni un equipo, ni presupuesto. No lo financia ningún partido, ninguna empresa ni ninguna administración. Detrás hay miles de horas de trabajo."
 msgstr "Dinero Público nik bakarrik egiten dut: César Castro Banegas. Ez dago erakunderik atzean, ez talderik, ez aurrekonturik. Ez du alderdi batek, enpresa batek edo administrazio batek finantzatzen. Atzean milaka lan-ordu daude."
 
-#: app.py:23224
+#: app.py:23235
 msgid "PRÓXIMAMENTE, SE INCORPORARÁN UN ABOGADO, UN ECONOMISTA Y UN PERIODISTA."
 msgstr "LASTER, ABOKATU BAT, EKONOMISTA BAT ETA KAZETARI BAT SARTUKO DIRA."
 
-#: app.py:23226
+#: app.py:23237
 msgid "Empecé con los contratos de la Región de Murcia. Hoy la web cubre las 17 comunidades autónomas y 2 ciudades autónomas de España, con distinto grado de detalle según la provincia: el estado real de cada una está en el <a href=\"/mapa-cobertura\">mapa de cobertura</a>."
 msgstr "Murtziako Eskualdeko kontratuekin hasi nintzen. Gaur egun webak Espainiako 17 autonomia-erkidegoak eta 2 hiri autonomoak hartzen ditu, probintziaren arabera xehetasun-maila desberdinarekin: bakoitzaren benetako egoera <a href=\"/mapa-cobertura\">estaldura-mapan</a> dago."
 
-#: app.py:23228
+#: app.py:23239
 msgid "Qué hago y qué no"
 msgstr "Zer egiten dudan eta zer ez"
 
-#: app.py:23229
+#: app.py:23240
 msgid "Reúno datos que ya son públicos y oficiales, pero que están dispersos en decenas de portales, formatos y registros: los contratos de la Plataforma de Contratación del Sector Público, los registros autonómicos, los portales municipales, la deuda y las cuentas del Ministerio de Hacienda, los sueldos de alcaldes y concejales. Los cruzo, los ordeno y los pongo en un solo sitio."
 msgstr "Dagoeneko publikoak eta ofizialak diren datuak biltzen ditut, baina hamarnaka atari, formatu eta erregistrotan sakabanatuta daudenak: Sektore Publikoko Kontratazio Plataformako kontratuak, erregistro autonomikoak, udal-atariak, Ogasun Ministerioaren zorra eta kontuak, alkateen eta zinegotzien soldatak. Gurutzatu, ordenatu eta leku bakarrean jartzen ditut."
 
-#: app.py:23230
+#: app.py:23241
 msgid "No acuso a nadie ni saco conclusiones por el lector. Cuando un dato parece raro, lo enseño tal como lo publica la fuente oficial y explico lo que sé y lo que no. Y cuando me equivoco, lo corrijo y lo cuento: en <a href=\"/casos\">Casos</a> hay ejemplos de errores míos y de las fuentes. Cómo se calcula cada cosa está en la <a href=\"/metodologia\">metodología</a>."
 msgstr "Ez dut inor salatzen, ezta irakurlearen ordez ondoriorik ateratzen ere. Datu bat arraroa dirudienean, iturri ofizialak argitaratzen duen bezala erakusten dut, eta dakidana eta ez dakidana azaltzen dut. Eta okertzen naizenean, zuzendu eta kontatu egiten dut: <a href=\"/casos\">Kasuak</a> atalean nire eta iturrien akatsen adibideak daude. Gauza bakoitza nola kalkulatzen den <a href=\"/metodologia\">metodologian</a> dago."
 
-#: app.py:23232
+#: app.py:23243
 msgid "Cómo puedes colaborar"
 msgstr "Nola lagundu dezakezun"
 
-#: app.py:23233
+#: app.py:23244
 msgid "Un proyecto de una sola persona depende de quien lo usa. Puedes ayudar de varias formas:"
 msgstr "Pertsona bakar baten proiektua erabiltzen duenaren mende dago. Hainbat modutan lagundu dezakezu:"
 
-#: app.py:23235
+#: app.py:23246
 msgid "<strong>Avisa de errores.</strong> Si ves algo mal en la ficha de tu municipio, cuéntalo en sus comentarios."
 msgstr "<strong>Jakinarazi akatsak.</strong> Zure udalerriaren fitxan zerbait gaizki ikusten baduzu, kontatu bertako iruzkinetan."
 
-#: app.py:23236
+#: app.py:23247
 msgid "<strong>Envíame datos.</strong> Si tu ayuntamiento publica sus contratos menores en algún sitio que no tengo, escríbeme."
 msgstr "<strong>Bidali datuak.</strong> Zure udalak kontratu txikiak nik ez dudan lekuren batean argitaratzen baditu, idatzi iezadazu."
 
-#: app.py:23237
+#: app.py:23248
 msgid "<strong>Compártelo.</strong> Cada persona que lo conoce es alguien más mirando cómo se gasta el dinero de todos."
 msgstr "<strong>Partekatu.</strong> Ezagutzen duen pertsona bakoitza guztion dirua nola gastatzen den begiratzen duen beste norbait da."
 
-#: app.py:23238
+#: app.py:23249
 msgid "<strong>Apóyalo económicamente.</strong> Mantener el servidor y seguir añadiendo fuentes cuesta dinero y tiempo."
 msgstr "<strong>Lagundu ekonomikoki.</strong> Zerbitzaria mantentzeak eta iturriak gehitzen jarraitzeak dirua eta denbora eskatzen du."
 
-#: app.py:23242
+#: app.py:23253
 msgid "¿Hablas gallego, catalán o euskera y ves algo mejorable en esta página? Escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 msgstr "Euskalduna zara eta orrialde honetan hobetu daitekeen zerbait ikusten duzu? Idatz iezaguzu <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> helbidera."
 
-#: app.py:23244 app.py:23303
+#: app.py:23255 app.py:23314
 msgid "Contacto"
 msgstr "Harremanetarako"
 
-#: app.py:23247 app.py:16460 app.py:23220
+#: app.py:23258 app.py:16460 app.py:23231
 msgid "Quién soy"
 msgstr "Nor naiz"
 
-#: app.py:23248
+#: app.py:23259
 msgid "Dinero Público lo hace una sola persona, sin equipo ni presupuesto: quién soy, qué hago con los datos públicos y cómo puedes colaborar."
 msgstr "Dinero Público pertsona bakar batek egiten du, talderik eta aurrekonturik gabe: nor naizen, zer egiten dudan datu publikoekin eta nola lagundu dezakezun."
 
-#: app.py:23259
+#: app.py:23270
 msgid "Esta página es una traducción. En caso de discrepancia, prevalece la <a href=\"{url}\">versión en castellano</a>. Si hablas este idioma y ves algo que suene raro, escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> y dinos cómo lo dirías tú — cualquier ayuda para mejorarlo es bienvenida."
 msgstr "Orrialde hau itzulpen bat da. Bertsioen artean alderik balego, <a href=\"{url}\">gaztelaniazko bertsioa</a> nagusituko da. Euskalduna bazara eta zerbait arraroa ikusten baduzu, idatz iezaguzu <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> helbidera eta esan iezaguzu zuk nola esango zenukeen — hobetzen laguntzeko edozein ekarpen ongi etorria da."
 
-#: app.py:23268
+#: app.py:23279
 msgid "Aviso Legal y Privacidad"
 msgstr "Lege-oharra eta pribatutasuna"
 
-#: app.py:23271
+#: app.py:23282
 msgid "Titular"
 msgstr "Titularra"
 
-#: app.py:23274
+#: app.py:23285
 msgid "Dominio"
 msgstr "Domeinua"
 
-#: app.py:23277
+#: app.py:23288
 msgid "Actividad"
 msgstr "Jarduera"
 
-#: app.py:23278
+#: app.py:23289
 msgid "Plataforma de transparencia y datos públicos sobre contratación del sector público en España. Cobertura nacional: las 17 comunidades autónomas y 2 ciudades autónomas, con distinto grado de detalle según la provincia (ver el <a href=\"/mapa-cobertura\">mapa de cobertura</a> para el estado real de cada una)."
 msgstr "Espainiako sektore publikoaren kontratazioari buruzko gardentasun- eta datu publikoen plataforma. Estatu osoko estaldura: 17 autonomia-erkidegoak eta 2 hiri autonomoak, probintziaren arabera xehetasun-maila desberdinarekin (ikusi <a href=\"/mapa-cobertura\">estaldura-mapa</a> bakoitzaren benetako egoera ezagutzeko)."
 
-#: app.py:23280
+#: app.py:23291
 msgid "Propiedad intelectual"
 msgstr "Jabetza intelektuala"
 
-#: app.py:23281
+#: app.py:23292
 msgid "El código fuente de esta plataforma está registrado como obra en Safe Creative con todos los derechos reservados, número de registro <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (23 de julio de 2026)."
 msgstr "Plataforma honen iturburu-kodea obra gisa erregistratuta dago Safe Creative-n, eskubide guztiak erreserbatuta; erregistro-zenbakia: <a href=\"https://www.safecreative.org/work/2607236515551\" target=\"_blank\" rel=\"noopener\">2607236515551</a> (2026ko uztailaren 23a)."
 
-#: app.py:23283
+#: app.py:23294
 msgid "Origen de los datos"
 msgstr "Datuen jatorria"
 
-#: app.py:23284
+#: app.py:23295
 msgid "Los datos de contratos mostrados provienen de fuentes oficiales públicas: la Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda, que cubre todo el territorio nacional, además de fuentes autonómicas complementarias como el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Se seguirán incorporando otras fuentes de contratos menores y organismos públicos a medida que estén disponibles."
 msgstr "Erakusten diren kontratuen datuak iturri ofizial publikoetatik datoz: Ogasun Ministerioaren Sektore Publikoko Kontratazio Plataforma (PLACE), estatuko lurralde osoa hartzen duena, eta iturri autonomiko osagarriak, hala nola Murtziako Eskualdeko Aldizkari Ofiziala (BORM) eta Kataluniako Plataforma de Serveis de Contractació Pública (PSCP). Kontratu txikien eta erakunde publikoen beste iturri batzuk gehitzen jarraituko dugu, eskuragarri dauden heinean."
 
-#: app.py:23285
+#: app.py:23296
 msgid "Los nombres de directivos y administradores provienen del Boletín Oficial del Registro Mercantil (BORME), que publica el Boletín Oficial del Estado. No se consultan directorios de empresas privados."
 msgstr "Zuzendarien eta administratzaileen izenak Merkataritza Erregistroaren Aldizkari Ofizialetik (BORME) datoz, Estatuko Aldizkari Ofizialak argitaratzen duena. Ez da enpresa-direktorio pribaturik kontsultatzen."
 
-#: app.py:23286
+#: app.py:23297
 msgid "Próximamente se incorporarán también datos de subvenciones y fondos europeos."
 msgstr "Laster diru-laguntzen eta Europako funtsen datuak ere gehituko dira."
 
-#: app.py:23288
+#: app.py:23299
 msgid "Base legal para el tratamiento de datos"
 msgstr "Datuak tratatzeko lege-oinarria"
 
-#: app.py:23289
+#: app.py:23300
 msgid "El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD)."
 msgstr "Enpresa esleipendunen administratzaile edo ahaldun gisa agertzen diren pertsona fisikoen izenen tratamendua informazioaren interes publikoan oinarritzen da, bai eta izen horiek jendearentzat eskuragarri dauden iturrietatik etortzean ere (Datuak Babesteko Erregelamendu Orokorraren 9.2.e artikulua eta 3/2018 Lege Organikoa, Datu Pertsonalak Babesteari eta eskubide digitalak bermatzeari buruzkoa — LOPDGDD)."
 
-#: app.py:23291
+#: app.py:23302
 msgid "Ejercicio de derechos RGPD"
 msgstr "DBEOko eskubideak baliatzea"
 
-#: app.py:23292
+#: app.py:23303
 msgid "Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 msgstr "Datuak eskuratzeko, zuzentzeko, ezabatzeko, tratamenduari aurka egiteko edo hura mugatzeko eskubideak baliatzeko, idatzi helbide honetara: <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 
-#: app.py:23294
+#: app.py:23305
 msgid "Cookies y publicidad"
 msgstr "Cookieak eta publizitatea"
 
-#: app.py:23295
+#: app.py:23306
 msgid "Este sitio usa cookies propias, necesarias para su funcionamiento básico, y cookies de terceros que solo se activan si das tu consentimiento explícito en el banner que aparece al entrar:"
 msgstr "Gune honek cookie propioak erabiltzen ditu, oinarrizko funtzionamendurako beharrezkoak, eta hirugarrenen cookieak, sartzean agertzen den oharrean berariazko baimena ematen baduzu soilik aktibatzen direnak:"
 
-#: app.py:23297
+#: app.py:23308
 msgid "<b>Google Analytics</b> — estadísticas de uso agregadas del sitio."
 msgstr "<b>Google Analytics</b> — gunearen erabilera-estatistika agregatuak."
 
-#: app.py:23298
+#: app.py:23309
 msgid "<b>Google AdSense</b> — cuando esté activo, para mostrar publicidad, en algunos casos personalizada según tus intereses."
 msgstr "<b>Google AdSense</b> — aktibo dagoenean, publizitatea erakusteko, kasu batzuetan zure interesen arabera pertsonalizatua."
 
-#: app.py:23300
+#: app.py:23311
 msgid "Puedes aceptar o rechazar estas cookies en cualquier momento desde el enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier página del sitio — rechazarlas no impide usar la web con normalidad, solo desactiva las estadísticas y la publicidad."
 msgstr "Cookie hauek edozein unetan onartu edo baztertu ditzakezu, guneko edozein orrialderen oinean dagoen <b>«Cookie-hobespenak»</b> estekatik — baztertzeak ez du weba normal erabiltzea eragozten, estatistikak eta publizitatea bakarrik desaktibatzen ditu."
 
-#: app.py:23301
+#: app.py:23312
 msgid "Más información sobre cómo Google usa los datos en sitios que utilizan sus servicios de publicidad: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Cómo usa Google los datos de los sitios o las apps que utilizan sus servicios</a>."
 msgstr "Informazio gehiago Googlek bere publizitate-zerbitzuak erabiltzen dituzten guneetako datuak nola erabiltzen dituen jakiteko: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Nola erabiltzen dituen Googlek bere zerbitzuak erabiltzen dituzten guneetako edo aplikazioetako datuak</a>."
 
-#: app.py:23306 app.py:16458
+#: app.py:23317 app.py:16458
 msgid "Aviso Legal"
 msgstr "Lege-oharra"
 
-#: app.py:23307
+#: app.py:23318
 msgid "Aviso legal, privacidad y base legal para el tratamiento de datos públicos en Dinero Público."
 msgstr "Lege-oharra, pribatutasuna eta datu publikoak tratatzeko lege-oinarria Dinero Público webgunean."
+
+#~ msgid "Envía un Bizum a este número desde tu app del banco"
+#~ msgstr "Bidali Bizum bat zenbaki honetara zure bankuko aplikaziotik"
 
 #~ msgid "Empate a {n} en el primer puesto"
 #~ msgstr "Berdinketa lehen postuan ({n})"
