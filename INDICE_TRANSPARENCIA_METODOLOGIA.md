@@ -132,11 +132,17 @@ contratos formales):
 - **Suavizado por sí solo**: 2.354 municipios cambian 1 punto o más y 241 cambian 5 o más (de −1,9 a +19,4); las
   subidas grandes son de municipios con 0 de 1 o 0 de 2 en adjudicatario. Media nacional de adjudicatario: 92,0 %.
 
-**Ajeno a la v2.1, visto al comparar las copias del 03-10 y del 09-10**: «directivo» ha bajado de media 3,5 puntos
-(1.295 municipios cambian 5 o más) porque los contratos del histórico que el 03-10 estaban «pendientes de buscar en
-el BORME» ya se han buscado y, donde no se encontró administrador, ahora cuentan en el denominador. Melilla pasa de
-97,7 a 48,5 en ese componente (nota 95,4 → 86,4) y deja de ser líder; Logroño, de 72,5 a 45,4. Pasa igual en la v2
-que hay en producción.
+**Verificado en producción tras desplegar (09-10-2026, 16:32)**: 3.563 municipios en el ranking y 4.520 de «muestra
+pequeña», igual que en la medición. Las notas de producción salen algo más altas que las de la medición local (hasta
+unos 3 puntos) porque en local falta el fichero de administradores del BORME, que solo existe en el disco de
+producción y sube «directivo»: Melilla 89,1 en producción frente a 86,4 en local; Logroño 90,2 frente a 88,9. Por
+eso los líderes reales por tramo son Fígols i Alinyà 92,3 (29 contratos), Begur 91,7, Aguilar de la Frontera 92,1,
+Calvià 91,7 y Girona 93,2. Los recuentos por umbral no dependen de ese fichero.
+
+**Ajeno a la v2.1**: «directivo» ha bajado desde el 03-10 en los municipios con mucho histórico, porque los contratos
+que entonces estaban «pendientes de buscar en el BORME» ya se han buscado y, donde no se encontró administrador,
+cuentan en el denominador. En producción Melilla está en 63 (832 de 1.315; el 03-10 medía 97,7 con casi todo
+pendiente) y ha dejado de liderar; Logroño, en 59. Pasa igual con la fórmula de la v2.
 
 ## Comparación v1 → v2 (misma copia real de producción, 25-09-2026)
 
