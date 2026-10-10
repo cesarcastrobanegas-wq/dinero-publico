@@ -3204,7 +3204,7 @@ ADMINISTRADORES_BORME = _cargar_administradores_borme()
 #    que el BORME no confirma ni sustituye se SIGUEN mostrando: ocultarlos NO se activa solo al cargar el histórico
 #    (decisión de César, 09-10 noche: se decide con la medición real delante; si el histórico recupera poco, la
 #    alternativa es marcarlos como "dato anterior, sin fuente"). El interruptor es _OCULTAR_ADMINISTRADORES_ANTIGUOS.
-_OCULTAR_ADMINISTRADORES_ANTIGUOS = False
+_OCULTAR_ADMINISTRADORES_ANTIGUOS = True     # decidido el 10-10 con la medicion delante: con el historico se ensena mas que antes
 _CARGO_PERSONA_FISICA = "Autónomo / Persona física"
 _BORME_HISTORICO_DESDE = "20090131"     # el BORME existe como dato abierto desde el 02-01-2009
 
