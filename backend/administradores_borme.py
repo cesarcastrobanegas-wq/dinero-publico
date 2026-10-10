@@ -181,10 +181,14 @@ def adjudicatarios(cache_path):
     c = _abrir(cache_path)
     adj = {}
 
-    def _suma(emp, nif, formales, imp_f, menores, imp_m):
-        a = adj.setdefault(clave_directores(emp, nif), {"nif": nif, "nombres": {}, "nf": 0, "impf": 0.0, "nm": 0, "impm": 0.0})
+    def _suma(emp, nif, formales, imp_f, menores, imp_m, guardado=None):
+        a = adj.setdefault(clave_directores(emp, nif), {"nif": nif, "nombres": {}, "nf": 0, "impf": 0.0, "nm": 0, "impm": 0.0,
+                                                        "guardado": {}})
         a["nombres"].setdefault(emp, None)
         a["nf"] += formales; a["impf"] += imp_f; a["nm"] += menores; a["impm"] += imp_m
+        if guardado:            # qué lleva guardado el propio contrato formal (lo que se enseñaría sin el BORME)
+            g = a["guardado"].setdefault(guardado, [0, 0.0])
+            g[0] += formales; g[1] += imp_f
 
     for (data,) in c.execute("SELECT data FROM municipios"):
         try:
@@ -198,7 +202,8 @@ def adjudicatarios(cache_path):
                     imp = float(ct.get("importe_num") or 0)
                 except (TypeError, ValueError):
                     imp = 0.0
-                _suma(emp, ct.get("nif", "") or "", 1, imp, 0, 0.0)
+                _suma(emp, ct.get("nif", "") or "", 1, imp, 0, 0.0,
+                      clase_guardado(ct.get("directivo", ""), ct.get("cargo", ""), emp, ct.get("nif", "") or ""))
         del d
     for emp, nif, n, imp in c.execute("SELECT adjudicatari, nif, COUNT(*), SUM(import_num) FROM contratos_menors_locales "
                                       "WHERE adjudicatari IS NOT NULL AND adjudicatari <> '' GROUP BY adjudicatari, nif"):
@@ -239,6 +244,52 @@ def tipo_adjudicatario(nombre, nif):
     if 2 <= len(palabras) <= 4 and all(re.match(r"^[A-Za-zÁÉÍÓÚÑÜáéíóúñüàèòïç·'-]+$", p) for p in palabras):
         return TIPO_PERSONA
     return TIPO_DUDOSO
+
+
+CLASES_GUARDADO = ("administrador antiguo sin respaldo del BORME", "apoderado o socio (oculto)", "persona física", "nada")
+
+
+def clase_guardado(nombre, cargo, empresa, nif):
+    """Qué es lo guardado para un contrato o un adjudicatario (misma regla que app.py al mostrar, sin el BORME)."""
+    if not nombre:
+        return "nada"
+    c = _norm_app(cargo)
+    if c.startswith("autonomo"):
+        return "persona física" if tipo_adjudicatario(empresa, nif) in (TIPO_PERSONA, TIPO_DUDOSO) else "nada"
+    if c.startswith("apoderad") or c.startswith("socio"):
+        return "apoderado o socio (oculto)"
+    return "administrador antiguo sin respaldo del BORME"
+
+
+def resumen_visible(adj, situacion, directores):
+    """Recuentos de lo que se enseña en los contratos: lo del BORME manda; si no lo hay, lo guardado."""
+    filas = {k: {"contratos_formales": 0, "importe_formales": 0.0, "contratos_menores": 0, "importe_menores": 0.0}
+             for k in ("según el BORME",) + CLASES_GUARDADO}
+    for clave, a in adj.items():
+        nombre0 = next(iter(a["nombres"]))
+        if situacion[clave] in ("con administrador", "por nombre (NIF con varias sociedades)"):
+            f = filas["según el BORME"]
+            f["contratos_formales"] += a["nf"]; f["importe_formales"] += a["impf"]
+            f["contratos_menores"] += a["nm"]; f["importe_menores"] += a["impm"]
+            continue
+        for clase, (n, imp) in a["guardado"].items():
+            filas[clase]["contratos_formales"] += n; filas[clase]["importe_formales"] += imp
+        d = directores.get(clave) or directores.get(_norm_app(nombre0)) or ("", "")
+        f = filas[clase_guardado(d[0] or "", d[1] or "", nombre0, a["nif"])]
+        f["contratos_menores"] += a["nm"]; f["importe_menores"] += a["impm"]
+    for f in filas.values():
+        f["importe_formales"], f["importe_menores"] = round(f["importe_formales"]), round(f["importe_menores"])
+    return filas
+
+
+def _imprimir_visible(filas):
+    tf = sum(f["contratos_formales"] for f in filas.values()) or 1
+    ti = sum(f["importe_formales"] for f in filas.values()) or 1
+    tm = sum(f["contratos_menores"] for f in filas.values()) or 1
+    print(f"{'QUÉ SE ENSEÑA EN CADA CONTRATO':46s} {'formales':>9s} {'%':>6s} {'M€ form.':>9s} {'%':>6s} {'menores':>10s} {'%':>6s}")
+    for k, f in filas.items():
+        print(f"{k:46s} {f['contratos_formales']:9,d} {100 * f['contratos_formales'] / tf:5.1f}% {f['importe_formales'] / 1e6:9,.0f} "
+              f"{100 * f['importe_formales'] / ti:5.1f}% {f['contratos_menores']:10,d} {100 * f['contratos_menores'] / tm:5.1f}%")
 
 
 def cruzar(adj, den, estado, solo_primera_grafia=False):
@@ -354,6 +405,7 @@ def main():
     for k, v in sorted(stats.items(), key=lambda kv: -kv[1]):
         print(f"  {k:70s} {v:7,d}")
     _imprimir_resumen(resumen)
+    _imprimir_visible(resumen_visible(adj, situacion, directores))
     print(f"con administrador vigente según el BORME: {sum(1 for c in salida if c in adj):,} adjudicatarios, "
           f"{len(salida):,} claves ({time.time() - t0:.0f} s)")
     if a.solo_recuentos:
