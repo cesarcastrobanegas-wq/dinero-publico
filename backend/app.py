@@ -3154,7 +3154,15 @@ _RE_ENTIDAD = re.compile(
     r"fundaci[oó]n?|fundacio|asociaci[oó]n|associaci[oó]|cooperativa|comunidad de bienes|comunitat de b[eé]ns|"
     r"sociedad|societat|federaci[oó]n?|federacio|club|consorci[oa]?|instituto?|institut|grupo|grup|ayuntamiento|"
     r"ajuntament|diputaci[oó]n?|universidad|universitat|colegio|col.legi|hermandad|cofrad[ií]a|parroquia|"
-    r"asociados|associats|hermanos|germans|hnos)\b", re.I)
+    r"asociados|associats|hermanos|germans|hnos|"
+    # 2026-10-10: administraciones y entidades en otros idiomas (beneficiarios de fondos UE): "Municipality of
+    # Girona" o "Communauté urbaine Perpignan Méditerranée" se guardaban como "Autónomo / Persona física".
+    r"municipality|municipio|municipi|mairie|commune|comune|communaut[eé]|county|council|conseil|consell|concello|"
+    r"province|provincia|r[eé]gion|regione|department|d[eé]partement|generalitat|gobierno|govern|government|"
+    r"minist[eè]rio?|ministry|minist[eè]re|agencia|ag[eè]ncia|agency|agence|university|universit[eéà]|"
+    r"institute|foundation|fondation|association|soci[eé]t[eé]|centre|center|centro|c[aá]mara|chamber|chambre|"
+    r"consortium|syndicat|mancomunidad|mancomunitat|cabildo|concejo|junta|patronato|servicio|servei|"
+    r"plc|s\.?a\.?r\.?l|a/s|oy|kft|sp\.? z o\.?o)\b", re.I)
 
 
 def _parece_sociedad(empresa, nif=""):
@@ -3238,7 +3246,7 @@ def _es_sociedad_mercantil(empresa, nif=""):
     n = (nif or "").upper().strip()
     if n:
         return n[:1] in ("A", "B")
-    return bool(_SUFIJOS_EMPRESA.search(empresa or "")) and not _RE_ENTIDAD.search(empresa or "")
+    return bool(_SUFIJOS_EMPRESA.search(empresa or ""))
 
 
 def _sin_administrador_html(empresa, nif, rm_link="", agotado=False):
@@ -3312,6 +3320,18 @@ def _borme_fuente_html(empresa, nif=""):
     asunto = quote_plus(f"Rectificación: administrador de {empresa}")
     return (f'<span class="noloc-nota">{_t("Según el BORME")}{(", " + fecha) if fecha else ""}.{enlace} · '
             f'<a href="mailto:contacto@dinero-publico.com?subject={asunto}">{_t("Pedir rectificación")}</a></span>')
+
+
+def _borme_fuente_api(empresa, nif=""):
+    """Para las respuestas JSON: de dónde sale el administrador (2026-10-10). Vacío si no viene del BORME."""
+    b = _administrador_borme_info(empresa, nif)
+    if not b:
+        return {}
+    desde, doc = b.get("desde") or "", b.get("fuente") or ""
+    return {"directivo_fuente": "BORME",
+            "directivo_desde": f"{desde[:4]}-{desde[4:6]}-{desde[6:8]}" if len(desde) == 8 else "",
+            "directivo_anuncio": f"https://www.boe.es/diario_borme/txt.php?id={quote_plus(doc)}" if doc else "",
+            "directivo_rectificacion": "contacto@dinero-publico.com"}
 
 
 def _directivo_corregido(empresa, nif, nombre, cargo):
@@ -18142,9 +18162,9 @@ def _render_indice_transparencia_html(comunidad="todas", pagina=1, url_de=None):
         desglose = _indice_transparencia_desglose_html(f["componentes"])
         filas_html += f"""<tr class="it-row" data-muni="{esc(normalizar(f['municipio']))}">
           <td class="rk-pos">{pos}</td>
-          <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(f['municipio'])}</a></td>
+          <td><a class="rk-empresa" href="/?muni={muni_q}{q_prov_muni}">{esc(_nombre_natural(f['municipio']))}</a></td>
           <td>{esc(PROVINCIA_LABEL.get(f['provincia'], f['provincia']))}</td>
-          <td class="rk-valor"><span class="it-indice {color_cls}">{indice:.1f}</span></td>
+          <td class="rk-valor"><span class="it-indice {color_cls}">{_nota_coma(indice)}</span></td>
           <td>{f['n_componentes']}/{len(_INDICE_TRANSPARENCIA_PESOS)}</td>
           <td><details class="it-desglose"><summary>{_t("Ver desglose ▾")}</summary>
             <table class="it-desglose-tbl">{desglose}</table>
@@ -18241,10 +18261,10 @@ def _buscar_posicion_municipio(q, limite=10):
             "indice": None, "deuda_habitante": None, "alcalde": None,
         }
         if _indice_muestra_pequena(f):      # v2.1: nota sin puesto (ver _INDICE_MIN_CONTRATOS_RANKING)
-            item["indice"] = {"valor_fmt": f'{f["indice"]:.1f}', "muestra_pequena": True}
+            item["indice"] = {"valor_fmt": _nota_coma(f["indice"]), "muestra_pequena": True}
         elif f["indice"] is not None:
             item["indice"] = {
-                "valor_fmt": f'{f["indice"]:.1f}',
+                "valor_fmt": _nota_coma(f["indice"]),
                 "rank_nacional": _rank(indice_nac_ordenado, clave_muni),
                 "total_nacional": len(indice_nac_ordenado),
                 "rank_comunidad": _rank(indice_com_ordenado, clave_muni),
@@ -18646,9 +18666,13 @@ def _render_fila_fondo_ue(f):
         # caché que los adjudicatarios de contratos públicos (buscar_directivo,
         # ver enriquecer_directivos_fondos_ue) -- lectura de caché aquí,
         # nunca se lanza la búsqueda en el hilo de render.
-        dir_nombre, dir_cargo = _dir_cache_get(f["beneficiario"], f.get("nif", "") or "")
-        gerente_html = (f'<div class="lid" style="margin-top:2px">👤 {esc(dir_nombre)} — {esc(dir_cargo)}</div>'
-                         if dir_nombre else "")
+        # 2026-10-10 (RGPD): aquí solo se enseña un administrador si viene del BORME, y siempre con su fecha, el
+        # enlace al anuncio y el canal de rectificación (_borme_fuente_html), como en el resto del sitio. Antes se
+        # pintaba el nombre a secas, y además lo que hubiera en `directores`: entidades públicas extranjeras
+        # ("Municipality of Girona") salían como "Autónomo / Persona física".
+        adm = _administrador_borme_info(f["beneficiario"], f.get("nif", "") or "")
+        gerente_html = (f'<div class="lid" style="margin-top:2px">👤 {esc(adm["nombre"])} — {esc(_cargo_txt(adm["cargo"]))}</div>'
+                        f'{_borme_fuente_html(f["beneficiario"], f.get("nif", "") or "")}' if adm else "")
 
         # Mismo detector que ya usan los contratos públicos (cargo público vs
         # adjudicatario/directivo) -- aquí aplicado al beneficiario del fondo
@@ -19905,9 +19929,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     stats = ""
     if datos:
         stats = f"""<div class="stats-bar">
-          <div class="stat"><span>{total_m}</span>{_t("Municipios")}</div>
-          <div class="stat"><span>{total_c}</span>{_t("Contratos")}</div>
-          <div class="stat"><span>{total_e}</span>{_t("Empresas únicas")}</div>
+          <div class="stat"><span>{fmt_num(total_m)}</span>{_t("Municipios")}</div>
+          <div class="stat"><span>{fmt_num(total_c)}</span>{_t("Contratos")}</div>
+          <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
           <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
         </div>"""
 
@@ -20474,7 +20498,7 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8, provincia=None):
             return ""
         return f"""<details class="it-widget">
         <summary>🏅 {_t("Índice de Transparencia")}
-          <span class="badge">{pequena["indice"]:.1f}/100</span><span class="it-muestra">{_t("muestra pequeña")}</span>{_it_info_btn_html()}
+          <span class="badge">{_nota_coma(pequena["indice"])}/100</span><span class="it-muestra">{_t("muestra pequeña")}</span>{_it_info_btn_html()}
           {_it_aclaracion_html(mini=True)}
         </summary>
         <div class="it-widget-body">
@@ -20492,8 +20516,8 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8, provincia=None):
         clase = ' rk-sidebar-item-actual' if es_actual else ''
         return (f'<a class="rk-sidebar-item{clase}" href="/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}">'
                 f'<span class="rk-sidebar-pos">{pos}.</span>'
-                f'<span class="rk-sidebar-muni">{esc(f["municipio"])}</span>'
-                f'<span class="rk-sidebar-valor">{f["indice"]:.1f}/100</span>'
+                f'<span class="rk-sidebar-muni">{esc(_nombre_natural(f["municipio"]))}</span>'
+                f'<span class="rk-sidebar-valor">{_nota_coma(f["indice"])}/100</span>'
                 f'</a>')
 
     items = "".join(_fila(p, f, clave_municipio(f["municipio"], f.get("provincia")) == clave_muni) for p, f in top)
@@ -20503,7 +20527,7 @@ def _widget_indice_transparencia_muni_html(municipio, top_n=8, provincia=None):
 
     return f"""<details class="it-widget">
         <summary>🏅 {_t("Índice de Transparencia")}
-          <span class="badge">{fila_actual["indice"]:.1f}/100 · #{posicion_actual} de {total}</span>{_it_info_btn_html()}
+          <span class="badge">{_nota_coma(fila_actual["indice"])}/100 · #{fmt_num(posicion_actual)} de {fmt_num(total)}</span>{_it_info_btn_html()}
           {_it_aclaracion_html(mini=True)}
         </summary>
         <div class="it-widget-body">
@@ -20591,6 +20615,21 @@ _IT_ACLARACION = "Mide la disponibilidad de datos públicos, no la buena gestió
 def _it_aclaracion_html(mini=False):
     clase = "it-aclara it-aclara-mini" if mini else "it-aclara"
     return f'<span class="{clase}">{_t("Mide la disponibilidad de datos públicos, no la buena gestión ni la ausencia de corrupción.")}</span>'
+
+
+_RE_ARTICULO_DETRAS = re.compile(r"^(.+), (El|La|Los|Las|Els|Les|Es|Sa|Ses|O|A|Os|As|L'|el|la|los|las|els|les|es|sa|ses|o|a|os|as|l')$")
+
+
+def _nombre_natural(nombre):
+    """Nombre del municipio como se dice: "Pedroso, El" -> "El Pedroso", "Bisbal d'Empordà, la" -> "la Bisbal
+    d'Empordà", "Alqueria de la Comtessa, l'" -> "l'Alqueria de la Comtessa"; también en cada mitad de un nombre
+    bilingüe ("Alfàs del Pi, l'/Alfaz del Pi"). Solo para MOSTRAR: enlaces y claves siguen con el nombre oficial."""
+    def uno(n):
+        m = _RE_ARTICULO_DETRAS.match(n.strip())
+        if not m:
+            return n
+        return m.group(2) + ("" if m.group(2).endswith("'") else " ") + m.group(1)
+    return "/".join(uno(p) for p in (nombre or "").split("/"))
 
 
 def _nota_coma(x):
@@ -20736,7 +20775,7 @@ def _lider_indice_portada_html():
         tramos_html += (
             f'<li class="it-tramo"><span class="it-tramo-etq">{etiqueta}</span>'
             f'<a class="it-tramo-nombre" href="/?muni={quote_plus(lider["municipio"])}{_q_prov(lider["provincia"])}" '
-            f'title="{esc(PROVINCIA_LABEL.get(lider["provincia"], lider["provincia"]))}">{esc(lider["municipio"])}</a>'
+            f'title="{esc(PROVINCIA_LABEL.get(lider["provincia"], lider["provincia"]))}">{esc(_nombre_natural(lider["municipio"]))}</a>'
             f'<span class="it-tramo-nota">{_nota_coma(lider["indice"])}{empate}</span></li>')
     return f"""<section class="it-lider" aria-labelledby="it-lider-titulo">
     <div class="it-lider-cab">
@@ -20784,8 +20823,8 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     def _fila_html(puesto, f):
         return (f'<a class="rk-sidebar-item" href="/?muni={quote_plus(f["municipio"])}{_q_prov(f["provincia"])}">'
                 f'<span class="rk-sidebar-pos">{puesto}.</span>'
-                f'<span class="rk-sidebar-muni">{esc(f["municipio"])}</span>'
-                f'<span class="rk-sidebar-valor">{f["indice"]:.1f}/100</span>'
+                f'<span class="rk-sidebar-muni">{esc(_nombre_natural(f["municipio"]))}</span>'
+                f'<span class="rk-sidebar-valor">{_nota_coma(f["indice"])}/100</span>'
                 f'</a>')
 
     top = ranking[:top_n]
@@ -20818,7 +20857,7 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     return f"""<div class="rk-sidebar-ranking-wrap">
     <details class="rk-sidebar" open>
       <summary class="rk-sidebar-title">{_t("Índice de Transparencia")}
-        <span class="rk-sidebar-v1-badge">{_t("Índice v2")}</span>{info_html}
+        <span class="rk-sidebar-v1-badge">{_t("Índice v2.1")}</span>{info_html}
         {_it_aclaracion_html(mini=True)}</summary>
       <div class="rk-sidebar-aviso">⚠️ {_t("No comparable entre regiones; los datos de origen varían.")}</div>
       <label class="rk-sidebar-selector-label" for="rk-sidebar-comunidad">{_t("Región")}</label>
@@ -20953,6 +20992,9 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     header se quitó por redundante -- ver instrucción del 2026-08-02)."""
     total_m = len(datos)
     total_c = sum(d.get("total_contratos", 0) for d in datos)
+    # 2026-10-10: el contador enseñaba solo los contratos formales; los menores (seis veces más) no figuraban.
+    with _db_lock:
+        total_menores = _db.execute("SELECT COUNT(*) FROM contratos_menors_locales").fetchone()[0]
     total_e = len(set(
         normalizar(c.get("empresa", ""))
         for d in datos for c in d.get("contratos", [])
@@ -20961,9 +21003,10 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     total_imp = sum(c.get("importe_num", 0.0) for d in datos for c in d.get("contratos", []))
 
     stats = f"""<div class="stats-bar">
-      <div class="stat"><span>{total_m}</span>{_t("Municipios")}</div>
-      <div class="stat"><span>{total_c}</span>{_t("Contratos")}</div>
-      <div class="stat"><span>{total_e}</span>{_t("Empresas únicas")}</div>
+      <div class="stat"><span>{fmt_num(total_m)}</span>{_t("Municipios")}</div>
+      <div class="stat"><span>{fmt_num(total_c)}</span>{_t("Contratos formales")}</div>
+      <div class="stat"><span>{fmt_num(total_menores)}</span>{_t("Contratos menores")}</div>
+      <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
       <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
     </div>"""
 
@@ -21099,7 +21142,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         <input type="text" id="as-input" placeholder="{_t("Nombre del municipio…")}" autocomplete="off">
         <button type="button" id="as-btn" class="btn btn-primary">{_t("Buscar")}</button>
       </div>
-      <div class="gs-hint">{_t("Busca en los {n} contratos ya cargados de toda España · mínimo 2 caracteres.").format(n=total_c)}</div>
+      <div class="gs-hint">{_t("Busca en los {n} contratos ya cargados de toda España · mínimo 2 caracteres.").format(n=fmt_num(total_c))}</div>
       <div id="as-results"></div>
     </div>
     {stats}
@@ -21162,9 +21205,9 @@ def render_landing_html(datos, provincia="murcia"):
     total_imp = sum(c.get("importe_num", 0.0) for d in datos for c in d.get("contratos", []))
 
     stats = f"""<div class="stats-bar">
-      <div class="stat"><span>{total_m}</span>{_t("Municipios")}</div>
-      <div class="stat"><span>{total_c}</span>{_t("Contratos")}</div>
-      <div class="stat"><span>{total_e}</span>{_t("Empresas únicas")}</div>
+      <div class="stat"><span>{fmt_num(total_m)}</span>{_t("Municipios")}</div>
+      <div class="stat"><span>{fmt_num(total_c)}</span>{_t("Contratos")}</div>
+      <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
       <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
     </div>"""
 
@@ -21240,7 +21283,7 @@ def render_landing_html(datos, provincia="murcia"):
       <input type="text" id="as-input" placeholder="{_t("Nombre del municipio…")}" autocomplete="off" autofocus>
       <button type="button" id="as-btn" class="btn btn-primary">{_t("Buscar")}</button>
     </div>
-    <div class="gs-hint">{_t("Busca en los {n} contratos ya cargados de {territorio} · mínimo 2 caracteres.").format(n=total_c, territorio=esc(label))}</div>
+    <div class="gs-hint">{_t("Busca en los {n} contratos ya cargados de {territorio} · mínimo 2 caracteres.").format(n=fmt_num(total_c), territorio=esc(label))}</div>
     <div id="as-results"></div>
   </div>
   {stats}
@@ -21272,6 +21315,7 @@ def _contrato_json(c, municipio):
         "estado": {"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(c.get("estado", ""), c.get("estado", "")),
         "directivo": _directivo_contrato(c)[0],
         "cargo": _directivo_contrato(c)[1],
+        **_borme_fuente_api(c.get("empresa", ""), c.get("nif", "")),
         "url": c.get("url", ""),
         "licitacion_id": c.get("licitacion_id", ""),
     }
