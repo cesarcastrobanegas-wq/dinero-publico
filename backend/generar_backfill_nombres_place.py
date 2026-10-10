@@ -59,7 +59,8 @@ LIM_ESCANEO_S = 600
 DESCARGA_INTENTOS = 4
 DESCARGA_PLAZO_S = 2400
 DESCARGAS_PARALELAS = 3
-MES_MINIMO = "202109"
+from alcance import alcance_mes
+MES_MINIMO = alcance_mes()             # primer mes de la ventana móvil de 5 años (alcance.py)
 COMMIT_ANTERIOR = "de98df9"   # último commit de main antes del arreglo de nombres
 
 

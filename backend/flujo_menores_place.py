@@ -28,7 +28,8 @@ from flujo_menores_semanal import anterior, huella, registros_de, restaurar
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(BASE_DIR)
 GENERADOR = os.path.join(BASE_DIR, "actualizar_contratos_menores_place.py")
-PRIMER_MES = "202109"
+from alcance import alcance_mes
+PRIMER_MES = alcance_mes()             # primer mes de la ventana móvil de 5 años (alcance.py)
 MIN_TOTAL = 0.97
 MIN_MES = 0.90
 MES_CON_PESO = 200

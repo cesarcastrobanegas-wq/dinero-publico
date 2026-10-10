@@ -29,7 +29,8 @@ from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FICHERO = os.path.join(BASE_DIR, "contratos_menores_cadiz.json.gz")
-MENORES_DESDE_FECHA = "2021-09-01"   # mismo corte que MENORES_DESDE_FECHA en app.py -- mantener sincronizado a mano
+from alcance import alcance_desde
+MENORES_DESDE_FECHA = alcance_desde()   # ventana móvil de 5 años (alcance.py), la misma que usa app.py
 PDF_2023 = "https://transparencia.cadiz.es/wp-content/uploads/2024/05/Contratos-Menores-Ayuntamiento-Cadiz-2023.pdf"
 _UA = "Mozilla/5.0 (compatible; dinero-publico-bot/1.0)"
 

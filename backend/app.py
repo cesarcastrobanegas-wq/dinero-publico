@@ -28,6 +28,10 @@ try:                                   # bajo gunicorn la app es "backend.app" (
     from . import licitaciones_place as LIC
 except ImportError:
     import licitaciones_place as LIC
+try:
+    from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
+except ImportError:
+    from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 
 
 # ─── INTERFAZ MULTIIDIOMA (gallego, catalán, euskera) — estructura, 2026-09-30 ────────────────────────────────
@@ -3249,6 +3253,34 @@ def _sin_administrador_html(empresa, nif, rm_link="", agotado=False):
     return f'<span class="noloc-warn">⚠️ {_t("No localizado")} {rm_link}</span>{nota}'
 
 
+def _vaciar_caches_de_nombres():
+    """Tras cargar un fichero de administradores nuevo (2026-10-10): vacía ya las cachés que enseñan nombres -- las
+    mayores empresas de los rankings (15 min) y las páginas montadas (10 min) -- y recalcula el Índice en segundo
+    plano (hasta 1 h de caché), para que un nombre retirado por una rectificación deje de verse en el acto y no
+    cuando caduque cada caché. El Índice anterior se sigue sirviendo mientras se calcula el nuevo."""
+    with _rk_empresas_lock:
+        _rk_empresas["ts"] = 0.0
+    with _paginas_lock:
+        _paginas_cache.clear()
+        _paginas_cerrojos.clear()
+
+    def _recalcular():
+        try:
+            with _indice_calculo_lock:
+                filas = _calcular_indice_transparencia()
+                with _indice_transparencia_cache_lock:
+                    _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
+                    _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
+            with _paginas_lock:               # las páginas montadas mientras tanto llevan el Índice anterior
+                _paginas_cache.clear()
+                _paginas_cerrojos.clear()
+            print(f"[admin] índice recalculado tras cargar administradores ({len(filas)} municipios)", flush=True)
+        except Exception as e:
+            print(f"[admin] índice tras cargar administradores: ERROR ({type(e).__name__}: {e})", flush=True)
+
+    threading.Thread(target=_recalcular, name="indice-tras-administradores", daemon=True).start()
+
+
 def _subir_administradores_borme(token, crudo):
     """POST /admin/administradores-borme?token=... con el fichero generado por administradores_borme.py (JSON, en
     gzip o no). Lo valida, lo guarda en el disco persistente (escritura atómica) y lo recarga en memoria sin reiniciar.
@@ -3277,6 +3309,7 @@ def _subir_administradores_borme(token, crudo):
     ADMINISTRADORES_BORME = nuevos
     ADMINISTRADORES_BORME_META.update(periodo=datos.get("periodo"), generado=datos.get("generado"),
                                       resumen=datos.get("resumen"))
+    _vaciar_caches_de_nombres()
     print(f"[admin] administradores_borme: {len(nuevos)} sociedades (antes {anteriores}), periodo "
           f"{datos.get('periodo')}", flush=True)
     return 200, {"sociedades": len(nuevos), "antes": anteriores, "periodo": datos.get("periodo"),
@@ -7148,6 +7181,11 @@ def _entry_to_contratos(entry_xml):
         "directivo":     "",
         "cargo":         "",
     }
+    # Fecha de adjudicación (2026-10-10): hasta hoy los contratos de PLACE se guardaban SIN fecha, así que no se les
+    # podía aplicar el alcance de 5 años ni al entrar ni en el Índice. Solo se añade cuando la fuente la trae.
+    m_fecha = re.search(r"<cbc:AwardDate>\s*(\d{4}-\d{2}-\d{2})", entry_xml)
+    if m_fecha and m_fecha.group(1)[:4] >= "1990":       # la fuente trae alguna fecha absurda ("0026-..."): no se guarda
+        base["fecha"] = m_fecha.group(1)
     if adjs:
         base["resultado_code"] = adjs[0]["resultado_code"] or resultado_code
     if not url or not _adjudicado_fiable(adjs, presupuesto_num):
@@ -8454,7 +8492,7 @@ def buscar_en_euskadi(municipio, job_id=None):
             break
         for item in d.get("items", []):
             fecha = item.get("awardDate") or ""
-            if fecha and fecha < MENORES_DESDE_FECHA:
+            if not dentro_del_alcance(fecha):
                 continue
             contratos.append(_euskadi_item_a_contrato(item, municipio))
         total_paginas = d.get("totalPages", 1)
@@ -8775,7 +8813,7 @@ def buscar_en_navarra(municipio, job_id=None):
                 if normalizar(r["convocante"] or "") != conv_norm:
                     continue
                 fecha_iso = _navarra_fecha_iso(r.get("fecha_publicado"))
-                if fecha_iso and fecha_iso < MENORES_DESDE_FECHA:
+                if not dentro_del_alcance(fecha_iso):
                     descartadas_fecha += 1
                     continue
                 rows_aceptadas.append(r)
@@ -8796,7 +8834,7 @@ def buscar_en_navarra(municipio, job_id=None):
             break   # ya encontramos con este término, no hace falta probar el otro
 
     if descartadas_fecha:
-        _log(job_id, f"  Navarra {municipio}: {descartadas_fecha} filas anteriores a {MENORES_DESDE_FECHA} descartadas")
+        _log(job_id, f"  Navarra {municipio}: {descartadas_fecha} filas anteriores a {alcance_desde()} descartadas")
 
     if not rows_aceptadas:
         _log(job_id, f"  Navarra {municipio}: 0 contratos")
@@ -8907,6 +8945,12 @@ _BORM_FECHA_RE = re.compile(
     r'(\d{1,2}\s+de\s+\w+\s+de\s+\d{4}|\d{1,2}/\d{1,2}/\d{4})',
     re.I,
 )
+
+
+def _fecha_borm_iso(texto):
+    """"12-03-2024" (o "BORM 12-03-2024", o con barras) -> "2024-03-12"; "" si no se reconoce."""
+    m = re.search(r"(\d{1,2})[-/](\d{1,2})[-/](\d{4})", texto or "")
+    return f"{m.group(3)}-{int(m.group(2)):02d}-{int(m.group(1)):02d}" if m else ""
 
 
 def _parse_borm_contrato(texto, id_anuncio, sumario, fecha_pub):
@@ -9030,6 +9074,7 @@ def _parse_borm_contrato(texto, id_anuncio, sumario, fecha_pub):
         "borm_html_url": borm_html,
         "fuente":        "BORM",
         "fuente_label":  f"BORM {fecha_pub}",
+        "fecha":         _fecha_borm_iso(fecha_pub),      # fecha de publicación del anuncio (2026-10-10)
         "directivo":     "",
         "cargo":         "",
     }
@@ -9054,7 +9099,12 @@ def _enlazar_borm_place(contratos):
 # Primer año que consulta buscar_en_borm (ver nota ahí sobre el porqué de
 # no ir más atrás -- decisión sin documentar heredada del código original,
 # no una política deliberada como RPC_MENORS_DESDE_ANY).
-BORM_ANIO_INICIO = 2020
+def _borm_anio_inicio():
+    """Primer año que se consulta en el BORM: el del corte de 5 años (antes, 2020 fijo). El BORM solo deja acotar la
+    búsqueda por fechas del anuncio, así que el corte se aplica aquí por año completo y, anuncio a anuncio, por su
+    fecha de publicación cuando la trae (ver _recortar_nuevos_al_alcance en el refresco)."""
+    return alcance_anio()
+
 
 
 def _borm_buscar_pagina(municipio, fecha_desde, fecha_hasta, job_id=None):
@@ -9126,7 +9176,7 @@ def buscar_en_borm(municipio, job_id=None):
 
     hoy = datetime.now()
     anuncios_por_id = {}
-    for anio in range(BORM_ANIO_INICIO, hoy.year + 1):
+    for anio in range(_borm_anio_inicio(), hoy.year + 1):
         fecha_desde = f"01/01/{anio}"
         fecha_hasta = f"31/12/{anio}" if anio < hoy.year else hoy.strftime("%d/%m/%Y")
         pagina = _borm_buscar_pagina(municipio, fecha_desde, fecha_hasta, job_id)
@@ -9316,6 +9366,39 @@ def _archivar_contratos_formales(municipio, provincia, filas):
                  json.dumps(c, ensure_ascii=False), c.get("ts"), ahora),
             )
         _db.commit()
+
+
+def _clave_contrato(c):
+    return c.get("url") or c.get("titulo", "")[:80]
+
+
+def _recortar_nuevos_al_alcance(existentes, nuevos):
+    """Alcance de 5 años para lo que ENTRA NUEVO (2026-10-10): de los contratos recién encontrados se quitan los que
+    tienen fecha anterior al corte y NO estaban ya guardados. Los que ya estaban se dejan pasar (se actualizan en su
+    sitio: lo guardado no se toca) y los que llegan sin fecha también (no se puede descartar lo que no se sabe
+    cuándo fue). Devuelve (lista recortada, cuántos se han quitado)."""
+    ya = {_clave_contrato(c) for c in existentes}
+    dentro = [c for c in nuevos if dentro_del_alcance(c.get("fecha")) or _clave_contrato(c) in ya]
+    return dentro, len(nuevos) - len(dentro)
+
+
+def _separar_no_devueltos(existentes, fuente, claves_nuevas):
+    """Contratos guardados de una fuente "completa" (PSCP/Euskadi/Navarra) que la consulta de hoy ya no devuelve.
+    Devuelve (a_archivar, resto): se archivan solo los que tienen fecha DENTRO de la ventana (la fuente los ha
+    retirado o corregido); los de fecha anterior al corte no vuelven porque la consulta ya no los pide -- lo ya
+    guardado no se archiva por moverse la ventana -- y los que no tienen fecha tampoco se tocan. `resto` es lo que
+    sigue guardado de `existentes` (todo lo de otras fuentes y lo conservado de esta), en su orden."""
+    corte = alcance_desde()
+    a_archivar, resto = [], []
+    for c in existentes:
+        if c.get("fuente") == fuente:
+            if _clave_contrato(c) in claves_nuevas:
+                continue                      # vuelve en la consulta: entra con su versión nueva
+            if (c.get("fecha") or "")[:10] >= corte:
+                a_archivar.append(c)
+                continue
+        resto.append(c)
+    return a_archivar, resto
 
 
 def _fusionar_historico_contratos(existentes, nuevos):
@@ -9950,6 +10033,76 @@ def _aplicar_importe_adjudicado_place():
         print(f"[startup] importe_adjudicado_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
+FECHAS_FORMALES_PLACE_FILE = os.path.join(BASE_DIR, "fechas_formales_place.json.gz")
+_FECHAS_FORMALES_CLAVE = "fechas_formales_sha"
+_RE_IDEVL = re.compile(r"idEvl=([^&#\s\"<]+)")
+
+
+def _aplicar_fechas_formales():
+    """Rellena UNA VEZ la fecha de adjudicación de los contratos formales ya guardados sin ella (2026-10-10): los de
+    PLACE, con el fichero generado EN LOCAL por generar_fechas_formales_place.py ({idEvl: fecha}); los del BORM, con
+    la fecha de publicación que ya llevan en su etiqueta ("BORM 12-03-2024"). SOLO añade el campo `fecha` a contratos
+    que no lo tienen: no añade, quita ni cambia ningún contrato ni ningún otro campo. Idempotente por hash en
+    `settings` como los demás backfills; sin fichero, se rellenan solo los del BORM (marca propia)."""
+    if not _DISCO_CONFIABLE:
+        return
+    try:
+        fechas, huella = {}, "solo-borm-v1"
+        if os.path.exists(FECHAS_FORMALES_PLACE_FILE):
+            with open(FECHAS_FORMALES_PLACE_FILE, "rb") as f:
+                crudo = f.read()
+            huella = hashlib.sha256(crudo).hexdigest()[:16]
+            fechas = json.loads(_gzip.decompress(crudo).decode("utf-8")).get("fechas", {})
+            del crudo
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_FECHAS_FORMALES_CLAVE,)).fetchone()
+        if fila and fila[0] == huella:
+            return
+        with _db_lock:
+            claves = [k for (k,) in _db.execute("SELECT municipio FROM municipios")]
+        n_munis = n_place = n_borm = 0
+        for key in claves:
+            with _db_lock:
+                row = _db.execute("SELECT data FROM municipios WHERE municipio=?", (key,)).fetchone()
+            if not row or ("PLACE" not in row[0] and "BORM" not in row[0]):
+                continue
+            try:
+                d = json.loads(row[0])
+            except ValueError:
+                continue
+            tocados = 0
+            for c in d.get("contratos", []):
+                if c.get("fecha"):
+                    continue
+                if c.get("fuente") == "PLACE":
+                    m = _RE_IDEVL.search(c.get("url") or "")
+                    fecha = fechas.get(m.group(1)) if m else None
+                    if fecha:
+                        c["fecha"] = fecha
+                        n_place += 1
+                        tocados += 1
+                elif c.get("fuente") == "BORM":
+                    fecha = _fecha_borm_iso(c.get("fuente_label"))
+                    if fecha:
+                        c["fecha"] = fecha
+                        n_borm += 1
+                        tocados += 1
+            if not tocados:
+                continue
+            with _db_lock:
+                _db.execute("UPDATE municipios SET data=? WHERE municipio=?", (json.dumps(d, ensure_ascii=False), key))
+                _db.commit()
+            n_munis += 1
+        with _db_lock:
+            _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                        "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (_FECHAS_FORMALES_CLAVE, huella))
+            _db.commit()
+        print(f"[startup] fechas_formales: fecha rellenada en {n_place} contratos de PLACE y {n_borm} del BORM, en "
+              f"{n_munis} municipios ({len(fechas)} licitaciones en el fichero)", flush=True)
+    except Exception as e:
+        print(f"[startup] fechas_formales: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
 CORRECCION_FORMALES_5ANIOS_FILE = os.path.join(BASE_DIR, "correcciones_formales_5anios.json.gz")
 _CORRECCION_FORMALES_5ANIOS_CLAVE = "correccion_formales_5anios_sha"
 
@@ -10003,13 +10156,11 @@ def _aplicar_correccion_formales_5anios():
             data, provincia = row
             d = json.loads(data)
             existentes = d.get("contratos", [])
-            claves_nuevas = {c.get("url") or c.get("titulo", "")[:80] for c in contratos_frescos}
-            descartados = [c for c in existentes if c.get("fuente") == fuente
-                           and (c.get("url") or c.get("titulo", "")[:80]) not in claves_nuevas]
+            claves_nuevas = {_clave_contrato(c) for c in contratos_frescos}
+            descartados, restantes = _separar_no_devueltos(existentes, fuente, claves_nuevas)
             if descartados:
                 _archivar_contratos_formales(municipio, provincia or "murcia", descartados)
                 total_archivados += len(descartados)
-            restantes = [c for c in existentes if c.get("fuente") != fuente]
             nuevos_totales = _fusionar_historico_contratos(restantes, contratos_frescos)
             if not descartados and len(nuevos_totales) == len(existentes):
                 sin_cambios += 1
@@ -10170,7 +10321,7 @@ def buscar_en_pscp(municipio, provincia="girona", job_id=None):
         try:
             r = session.get(PSCP_URL, params={
                 "$where": (f"codi_ine10='{ine10}' AND fase_publicacio in ({PSCP_FASES}) AND "
-                           f"data_adjudicacio_contracte >= '{MENORES_DESDE_FECHA}T00:00:00.000'"),
+                           f"data_adjudicacio_contracte >= '{alcance_desde()}T00:00:00.000'"),
                 "$order": "codi_expedient",
                 "$limit": limit,
                 "$offset": offset,
@@ -10194,7 +10345,7 @@ def buscar_en_pscp(municipio, provincia="girona", job_id=None):
 
     filas = _dedup_pscp_fases(filas)
     contratos = [_fila_pscp_a_contrato(f) for f in filas
-                 if not (f.get("data_adjudicacio_contracte") or "") or f["data_adjudicacio_contracte"][:10] >= MENORES_DESDE_FECHA]
+                 if dentro_del_alcance(f.get("data_adjudicacio_contracte") or "")]
     _log(job_id, f"  PSCP: {len(contratos)} contratos encontrados")
     return contratos, completo
 
@@ -10364,11 +10515,14 @@ def buscar_en_rpc_menors(municipio, provincia, job_id=None):
     return registros
 
 
-# Alcance del proyecto (César, 2026-09-25): solo contratos de los ÚLTIMOS 5 AÑOS -- a esa fecha, desde el
-# 2021-09-01. Los anteriores no se borran: se archivan en contratos_menors_archivo (ver
-# _archivar_menores_fuera_de_ventana) y en backend/historico/. Para subir el corte con el paso del tiempo basta
-# cambiar esta constante: el arranque archiva lo que quede fuera. Las filas SIN fecha se conservan (Fuente Álamo).
-MENORES_DESDE_FECHA = "2021-09-01"
+# Alcance del proyecto: solo contratos de los ÚLTIMOS 5 AÑOS. Desde el 2026-10-10 (decisión de César) es una ventana
+# MÓVIL que se calcula sola (alcance.py: hoy menos 5 años, al día 1 del mes) y se aplica a lo que ENTRA NUEVO; lo ya
+# guardado no se archiva ni se borra al moverse la ventana. El archivado que se hizo en septiembre de 2026 (lo
+# anterior al 2021-09-01, en contratos_menors_archivo y backend/historico/) conserva su corte FIJO, ARCHIVO_HASTA:
+# _archivar_menores_fuera_de_ventana sigue existiendo para que esas filas no vuelvan, pero ya no archiva nada más.
+# Las filas SIN fecha se conservan (Fuente Álamo). MENORES_DESDE_FECHA queda como el corte vigente AL ARRANCAR, para
+# los scripts que lo leen de aquí; dentro de la web se usa siempre alcance_desde().
+MENORES_DESDE_FECHA = alcance_desde()
 
 
 def _guardar_contratos_menors_locales(registros):
@@ -10380,8 +10534,19 @@ def _guardar_contratos_menors_locales(registros):
 
     Es el ÚNICO punto de escritura de la tabla (RPC, Fuente Álamo, Cartagena y los manuales): aquí se aplica el
     alcance de MENORES_DESDE_FECHA, así ningún refresco vuelve a meter filas ya archivadas."""
-    registros = [r for r in (registros or [])
-                 if not r.get("data_adjudicacio") or r["data_adjudicacio"] >= MENORES_DESDE_FECHA]
+    registros = registros or []
+    con_fecha_vieja = [r for r in registros if not dentro_del_alcance(r.get("data_adjudicacio"))]
+    if con_fecha_vieja:
+        # Anteriores al corte: solo pasan (para actualizarse en su sitio) los que YA están guardados; nunca entran
+        # nuevos, y lo archivado en su día (anterior a ARCHIVO_HASTA) no vuelve.
+        with _db_lock:
+            guardados = set()
+            ids = [r["id"] for r in con_fecha_vieja if (r.get("data_adjudicacio") or "")[:10] >= ARCHIVO_HASTA]
+            for i in range(0, len(ids), 500):
+                lote = ids[i:i + 500]
+                guardados.update(x[0] for x in _db.execute(
+                    f"SELECT id FROM contratos_menors_locales WHERE id IN ({','.join('?' * len(lote))})", lote))
+        registros = [r for r in registros if dentro_del_alcance(r.get("data_adjudicacio")) or r["id"] in guardados]
     if not registros:
         return
     ahora = time.time()
@@ -10747,7 +10912,8 @@ def _cargar_contratos_menores_place():
 
 
 def _archivar_menores_fuera_de_ventana():
-    """Mueve de contratos_menors_locales a contratos_menors_archivo las filas anteriores a MENORES_DESDE_FECHA.
+    """Mueve de contratos_menors_locales a contratos_menors_archivo las filas anteriores a ARCHIVO_HASTA (corte FIJO
+    del archivado de septiembre de 2026: con la ventana móvil ya no se archiva nada más, ver alcance.py).
     ARCHIVA, no borra: copia primero, comprueba que TODAS las filas a quitar están ya en el archivo y solo entonces
     las quita de la tabla activa, todo en una transacción (si algo no cuadra, rollback y no se toca nada). Es
     idempotente (sin filas fuera de ventana no hace nada) y respeta _DISCO_CONFIABLE como las demás migraciones.
@@ -10756,7 +10922,7 @@ def _archivar_menores_fuera_de_ventana():
         return
     try:
         with _db_lock:
-            fuera = ("data_adjudicacio IS NOT NULL AND data_adjudicacio<>'' AND data_adjudicacio < ?", (MENORES_DESDE_FECHA,))
+            fuera = ("data_adjudicacio IS NOT NULL AND data_adjudicacio<>'' AND data_adjudicacio < ?", (ARCHIVO_HASTA,))
             n = _db.execute(f"SELECT COUNT(*) FROM contratos_menors_locales WHERE {fuera[0]}", fuera[1]).fetchone()[0]
             if not n:
                 return
@@ -10780,7 +10946,7 @@ def _archivar_menores_fuera_de_ventana():
                 return
             _db.execute(f"DELETE FROM contratos_menors_locales WHERE {fuera[0]}", fuera[1])
             _db.commit()
-        print(f"[startup] contratos menores anteriores a {MENORES_DESDE_FECHA}: {n} filas archivadas en "
+        print(f"[startup] contratos menores anteriores a {ARCHIVO_HASTA}: {n} filas archivadas en "
               f"contratos_menors_archivo (fuera del pipeline activo). {por_fuente}", flush=True)
     except Exception as e:
         try:
@@ -12891,6 +13057,10 @@ def _job_run(job_id, municipio, provincia="murcia"):
         # _fusionar_historico_contratos). Corrige el bug documentado en
         # INFORME_NOCHE.md 2026-07-22 que borró histórico real de Archena.
         existentes = _db_obtener_contratos_municipio(municipio, provincia)
+        # Alcance de 5 años para lo que entra nuevo (también en la primera carga de un municipio).
+        contratos, fuera_alcance = _recortar_nuevos_al_alcance(existentes or [], contratos)
+        if fuera_alcance:
+            _log(job_id, f"Alcance de 5 años: {fuera_alcance} contratos nuevos anteriores a {alcance_desde()} no se incorporan")
         if existentes:
             if fuente_completa and contratos:
                 # PSCP/Euskadi/Navarra consultan en vivo su histórico completo cada vez (no ZIPs mensuales
@@ -12907,11 +13077,11 @@ def _job_run(job_id, municipio, provincia="murcia"):
                 # búsqueda que de verdad se quedó sin contratos en ventana para un municipio con historial previo
                 # es prácticamente imposible (implicaría cero contratos en 5 años); el riesgo de un borrado
                 # accidental es muchísimo mayor que el de conservar unas filas ya fuera de ventana un ciclo más.
-                claves_nuevas = {c.get("url") or c.get("titulo", "")[:80] for c in contratos}
-                descartados = [c for c in existentes if c.get("fuente") == fuente_completa
-                               and (c.get("url") or c.get("titulo", "")[:80]) not in claves_nuevas]
+                # 2026-10-10 (ventana móvil): lo que no vuelve por ser anterior al corte NO se archiva (ni lo que no
+                # tiene fecha): ver _separar_no_devueltos.
+                claves_nuevas = {_clave_contrato(c) for c in contratos}
+                descartados, existentes = _separar_no_devueltos(existentes, fuente_completa, claves_nuevas)
                 _archivar_contratos_formales(municipio, provincia, descartados)
-                existentes = [c for c in existentes if c.get("fuente") != fuente_completa]
             antes = len(contratos)
             contratos = _fusionar_historico_contratos(existentes, contratos)
             _log(job_id, f"Fusionado con histórico ya guardado: {antes} de este refresco + "
@@ -13116,6 +13286,7 @@ def _reprocesar_meses_place(meses):
                         for k in _CAMPOS_ENRIQUECIDOS:
                             if k in viejo and not c.get(k):
                                 c[k] = viejo[k]
+                encontrados, _fuera = _recortar_nuevos_al_alcance(existentes, encontrados)
                 nuevos = sum(1 for c in encontrados if (c.get("url") or c.get("titulo", "")[:80]) not in previos)
                 fusion = _fusionar_historico_contratos(existentes, encontrados)
                 if not nuevos and fusion == existentes:
@@ -14480,7 +14651,7 @@ def _retirar_fuentes_menores():
                 try:
                     vuelven = [r[0] for r in _db.execute(
                         "SELECT id FROM contratos_menors_archivo WHERE fuente=? AND municipio=? AND provincia=? "
-                        "AND data_adjudicacio >= ?", (FUENTE_CM_PLACE, muni, prov, MENORES_DESDE_FECHA))]
+                        "AND data_adjudicacio >= ?", (FUENTE_CM_PLACE, muni, prov, ARCHIVO_HASTA))]
                 except sqlite3.OperationalError:
                     vuelven = []                 # todavía no existe la tabla de archivo: nada que devolver
                 for i in range(0, len(vuelven), 500):
@@ -14772,6 +14943,7 @@ def _inicializar_datos():
     _aplicar_backfill_nombres_place()
     _aplicar_backfill_formales_place()   # con el arreglo de memoria (_db_iter_municipios), 2026-10-03
     _aplicar_importe_adjudicado_place()
+    _aplicar_fechas_formales()            # después de los backfills: rellena la fecha de lo que haya guardado
     _depurar_asignacion_place_por_nombre()
     corte = time.time() - RESULT_CACHE_TTL
     with _db_lock:
@@ -17333,7 +17505,8 @@ def _indice_menores_stats_por_municipio():
     out, visible = {}, {}
     with _db_lock:
         cur = _db.execute("SELECT municipio, provincia, adjudicatari, nif, COUNT(*) FROM contratos_menors_locales "
-                          "GROUP BY municipio, provincia, adjudicatari, nif")
+                          "WHERE data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ? "
+                          "GROUP BY municipio, provincia, adjudicatari, nif", (alcance_desde(),))   # solo la ventana de 5 años
         for municipio, prov, adjudicatari, nif, n in cur:
             k = clave_municipio(municipio, _PROVINCIA_CANONICA_CM.get(prov or "", prov))
             o = out.setdefault(k, {"total": 0, "con_directivo": 0})
@@ -17371,8 +17544,9 @@ def _indice_menores_detalle_por_municipio():
                             THEN 1 ELSE 0 END),
                    MAX(data_adjudicacio), group_concat(DISTINCT fuente)
             FROM contratos_menors_locales
+            WHERE data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ?
             GROUP BY municipio, provincia, anio
-        """).fetchall()
+        """, (alcance_desde(),)).fetchall()                # solo la ventana de 5 años (los sin fecha cuentan)
     out = {}
     for muni, prov, anio, n, n_adj, ultima, fuentes in rows:
         d = out.setdefault((normalizar(muni), _PROVINCIA_CANONICA_CM.get(prov or "", prov or "")),
@@ -17420,7 +17594,8 @@ def _indice_puntos_menores(det, hoy):
                       "significa no haber contratado)", n=det["total"], pct=f"{100 * pct_adj:.0f}")
         return puntos, detalle
     solo_place = (det["fuentes"] - {""}) == {"place-menores"}
-    anio_ref = _PLACE_MENORES_ANIO_REFERENCIA if solo_place else 2021
+    # años esperados: desde el primero de la fuente o, si es posterior, desde el año del corte de 5 años
+    anio_ref = max(_PLACE_MENORES_ANIO_REFERENCIA if solo_place else 2021, alcance_anio(hoy))
     anios_esperados = set(range(anio_ref, hoy.year + 1))
     cobertura = len(det["anios"] & anios_esperados) / len(anios_esperados)
     ultima = None
@@ -17508,9 +17683,14 @@ def _calcular_indice_transparencia():
     # Una pasada por cache.db, ficha a ficha (_db_iter_municipios), guardando de cada una solo los recuentos que usan
     # "adjudicatario", "directivo" y "actividad" -- nunca las fichas enteras (2026-10-03, ver _db_iter_municipios).
     formales_res = {}
+    # Alcance de 5 años (2026-10-10, decisión de César): el Índice solo cuenta contratos DENTRO de la ventana. Un
+    # contrato guardado de fecha anterior se sigue mostrando en la ficha, pero no puntúa. Los que no tienen fecha
+    # (hasta hoy, todos los de PLACE) cuentan: no se puede descartar lo que no se sabe cuándo fue.
     for d in _db_iter_municipios():
         n_total, n_adj, n_dir, n_pend = 0, 0, 0, 0
         for c in d.get("contratos", []):
+            if not dentro_del_alcance(c.get("fecha")):
+                continue
             n_total += 1
             if not (c.get("empresa") and c.get("empresa") != "No localizada"):
                 continue

@@ -35,7 +35,8 @@ CACHE = os.path.join(tempfile.gettempdir(), "facturas_navarra_docs")
 URL_DOC = "https://hacienda.navarra.es/sicpportal/mtoGenerarDocumentoFacturaTrimestral.aspx?UID="
 URL_LISTADO = "https://hacienda.navarra.es/sicpportal/mtoBuscadorFacturasTrimestrales.aspx"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36"
-DESDE_ANIO = 2021          # alcance del proyecto: últimos 5 años
+from alcance import alcance_anio
+DESDE_ANIO = alcance_anio()   # alcance del proyecto: últimos 5 años (ventana móvil, alcance.py)
 
 # Entidades con documentos en hoja de cálculo con los tres campos (muestra del 2026-10-02, ver
 # analisis_cobertura_ccaa/navarra_facturas_muestra.py) -> municipio tal como está en MUNICIPIOS_NAVARRA de app.py.

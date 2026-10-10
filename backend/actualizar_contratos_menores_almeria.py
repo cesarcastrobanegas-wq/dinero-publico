@@ -40,7 +40,8 @@ from datetime import datetime, timedelta
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FICHERO = os.path.join(BASE_DIR, "contratos_menores_almeria.json.gz")
-MENORES_DESDE_FECHA = "2021-09-01"   # mismo corte que MENORES_DESDE_FECHA en app.py -- mantener sincronizado a mano
+from alcance import alcance_desde
+MENORES_DESDE_FECHA = alcance_desde()   # ventana móvil de 5 años (alcance.py), la misma que usa app.py
 INDICE = "https://almeriaciudad.es/transparencia/contratos-menores/"
 BASE = "https://almeriaciudad.es"
 _UA = "Mozilla/5.0 (compatible; dinero-publico-bot/1.0)"

@@ -38,7 +38,8 @@ import urllib.request
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FICHERO = os.path.join(BASE_DIR, "contratos_menores_malaga.json.gz")
-MENORES_DESDE_FECHA = "2021-09-01"   # mismo corte que MENORES_DESDE_FECHA en app.py -- mantener sincronizado a mano
+from alcance import alcance_desde
+MENORES_DESDE_FECHA = alcance_desde()   # ventana móvil de 5 años (alcance.py), la misma que usa app.py
 PRIMER_TRIMESTRE = (2021, 4)         # 3T-2021 excluido: sin fecha por contrato, cae en parte antes de la ventana
 API = ("https://datosabiertos.malaga.eu/api/3/action/package_search?q=title:%22contratos%20menores%22"
        "%20ayuntamiento&rows=200")

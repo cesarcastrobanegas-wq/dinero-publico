@@ -39,7 +39,8 @@ from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FICHERO = os.path.join(BASE_DIR, "contratos_menores_torrejon.json.gz")
-MENORES_DESDE_FECHA = "2021-09-01"   # mismo corte que MENORES_DESDE_FECHA en app.py -- mantener sincronizado a mano
+from alcance import alcance_desde
+MENORES_DESDE_FECHA = alcance_desde()   # ventana móvil de 5 años (alcance.py), la misma que usa app.py
 INDICE = "https://www.ayto-torrejon.es/concejalias/contratacion/contratos-formalizados"
 BASE = "https://www.ayto-torrejon.es"
 ENLACES_EXTRA = ["https://www.ayto-torrejon.es/sites/default/files/LISTADO%20CONTRATOS%20MENORES%20PRIMER%20TRIMESTRE%202023.pdf"]

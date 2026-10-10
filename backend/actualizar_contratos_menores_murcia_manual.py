@@ -101,11 +101,12 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
     "Accept-Language": "es-ES,es;q=0.9",
 }
-DESDE_ANY = 2021
+from alcance import alcance_anio, alcance_desde
+DESDE_ANY = alcance_anio()          # año del corte de 5 años (ventana móvil, alcance.py)
 # Alcance (César, 2026-09-25): solo los ÚLTIMOS 5 AÑOS = desde el 2021-09-01. DESDE_ANY sigue acotando qué ficheros/páginas
 # se descargan (por año natural); el corte exacto por fecha se aplica en _fusionar_fuente. Los anteriores están
 # archivados en backend/historico/contratos_menores_anteriores_2021-09.json.gz y en la tabla contratos_menors_archivo.
-DESDE_FECHA = "2021-09-01"
+DESDE_FECHA = alcance_desde()
 OUT_FILE = f"{BASE_DIR}/contratos_menores_murcia_manual.json.gz"   # comprimido desde 2026-09-24 (52,8 MB -> ~7 MB)
 
 

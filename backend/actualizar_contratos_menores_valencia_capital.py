@@ -48,7 +48,8 @@ from datetime import datetime, timedelta
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FICHERO = os.path.join(BASE_DIR, "contratos_menores_valencia_capital.json.gz")
 
-MENORES_DESDE_FECHA = "2021-09-01"    # mismo corte que MENORES_DESDE_FECHA en app.py -- mantener sincronizado a mano
+from alcance import alcance_desde
+MENORES_DESDE_FECHA = alcance_desde()   # ventana móvil de 5 años (alcance.py), la misma que usa app.py
 BUSCADOR_URL = "https://www.valencia.es/cas/ayuntamiento/buscador-contratos-menores"
 NS = "_contratos_menores_ContratosMenoresPortlet_INSTANCE_GB76u1gGDWNH_"
 SOLAPE_DIAS = 7          # margen de solape al repaginar (ver docstring: el corte de fecha no es exacto)

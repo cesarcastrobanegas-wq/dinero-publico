@@ -43,7 +43,8 @@ LIM_ESCANEO_S = 180
 DESCARGA_INTENTOS = 4
 # Alcance del proyecto (decision de Cesar, 2026-09-25): solo contratos de los ULTIMOS 5 ANOS = desde septiembre de 2021
 # (a esa fecha). El generador no baja de aqui aunque se le pida; si pasa el tiempo se sube el suelo a mano.
-MES_MINIMO = "202109"
+from alcance import alcance_mes
+MES_MINIMO = alcance_mes()             # primer mes de la ventana móvil de 5 años (alcance.py)
 
 
 def meses_atras(desde, hasta):

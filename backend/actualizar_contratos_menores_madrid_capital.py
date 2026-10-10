@@ -48,7 +48,8 @@ import urllib.request
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FICHERO = os.path.join(BASE_DIR, "contratos_menores_madrid_capital.json.gz")
 
-MENORES_DESDE_FECHA = "2021-09-01"   # mismo corte que MENORES_DESDE_FECHA en app.py -- mantener sincronizado a mano
+from alcance import alcance_desde
+MENORES_DESDE_FECHA = alcance_desde()   # ventana móvil de 5 años (alcance.py), la misma que usa app.py
 
 # (año representativo -> resource id del CSV en datos.madrid.es, dataset 300253). "2021" es ya solo el periodo
 # "desde marzo" (el único que puede tener filas >= MENORES_DESDE_FECHA).

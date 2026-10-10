@@ -42,7 +42,8 @@ ZIP_URL = ("https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_
            "contratosMenoresPerfilesContratantes_{m}.zip")
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36"}
 FUENTE = "place-menores"
-DESDE_FECHA = "2021-09-01"
+from alcance import alcance_desde, alcance_mes
+DESDE_FECHA = alcance_desde()          # ventana móvil de 5 años (alcance.py)
 HASTA_FECHA = f"{time.localtime().tm_year + 1}-12-31"
 LOG_PATH = os.path.join(tempfile.gettempdir(), "contratos_menores_place.log")
 _SESION = requests.Session()
@@ -407,7 +408,7 @@ def main():
     ap.add_argument("--zips", default=os.path.join(tempfile.gettempdir(), "place_menores_zips"))
     args = ap.parse_args()
     os.makedirs(args.zips, exist_ok=True)
-    meses = list(meses_atras(args.desde, max(args.hasta, "202109")))
+    meses = list(meses_atras(args.desde, max(args.hasta, alcance_mes())))
     if args.fase == "descargar":
         sys.exit(0 if fase_descargar(meses, args.zips) else 1)
     argv = sys.argv[:]                    # `import app` reasigna sys.argv: se guarda antes (ver lecciones del proyecto)
