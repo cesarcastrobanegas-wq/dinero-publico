@@ -3157,11 +3157,13 @@ _RE_ENTIDAD = re.compile(
     r"asociados|associats|hermanos|germans|hnos|"
     # 2026-10-10: administraciones y entidades en otros idiomas (beneficiarios de fondos UE): "Municipality of
     # Girona" o "Communauté urbaine Perpignan Méditerranée" se guardaban como "Autónomo / Persona física".
+    # Fuera a propósito las que también son APELLIDOS (Cámara, Concejo, Gobierno, Cabildo, Junta): con ellas, 100
+    # personas reales dejaban de tratarse como personas (comprobado contra los 607.000 nombres de la base).
     r"municipality|municipio|municipi|mairie|commune|comune|communaut[eé]|county|council|conseil|consell|concello|"
-    r"province|provincia|r[eé]gion|regione|department|d[eé]partement|generalitat|gobierno|govern|government|"
+    r"province|provincia|r[eé]gion|regione|department|d[eé]partement|generalitat|govern|government|"
     r"minist[eè]rio?|ministry|minist[eè]re|agencia|ag[eè]ncia|agency|agence|university|universit[eéà]|"
-    r"institute|foundation|fondation|association|soci[eé]t[eé]|centre|center|centro|c[aá]mara|chamber|chambre|"
-    r"consortium|syndicat|mancomunidad|mancomunitat|cabildo|concejo|junta|patronato|servicio|servei|"
+    r"institute|foundation|fondation|association|soci[eé]t[eé]|centre|center|centro|chamber|chambre|"
+    r"consortium|syndicat|mancomunidad|mancomunitat|patronato|servicio|servei|"
     r"plc|s\.?a\.?r\.?l|a/s|oy|kft|sp\.? z o\.?o)\b", re.I)
 
 
