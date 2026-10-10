@@ -84,6 +84,15 @@ jobs:
           echo "cache.db: $(stat -c%s cache.db) bytes, integrity_check=${resultado}"
           [ "$resultado" = "ok" ] || { echo "::error::cache.db no válido, no se toca nada en producción."; exit 1; }
 
+      # Índice histórico 2009-2020: borme-historico.yml lo descarga una vez y lo deja en la caché; aquí solo se lee.
+      # Si no está, el generador sigue con el índice diario, como antes.
+      - name: Índice histórico del BORME (caché, solo lectura)
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/borme_actos_historico.db
+          key: borme-historico-diario-no-existe
+          restore-keys: borme-historico-
+
       - name: Regenerar el fichero de administradores
         run: python backend/administradores_borme.py --cache cache.db --salida administradores_borme.json
 
