@@ -3338,7 +3338,7 @@ def _aviso_subida_rechazada_por_correo(ruta, motivo):
               f"Lo habitual es que el flujo de Actions haya corrido con su caché vacía o a medias: conviene mirar su "
               f"última ejecución. Si la bajada es real y hay que aceptarla, repetir la subida a mano añadiendo "
               f"&forzar=si a la dirección.\n")
-    payload = {"from": os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or "Dinero Público <onboarding@resend.dev>",
+    payload = {"from": _avisos_remitente(),
                "to": [destino], "subject": f"Subida rechazada: {ruta}"[:150], "text": cuerpo}
 
     def _enviar():
@@ -11786,11 +11786,19 @@ def _db_comentarios_insertar(tipo, clave_raw, texto, nombre=""):
 # nuevas. Todo por variables de entorno, nada en el código (el repositorio es público):
 #   RESEND_API_KEY             clave de la API de Resend (obligatoria; sin ella no se envía nada)
 #   AVISO_COMENTARIOS_EMAIL    destinatario (obligatoria)
-#   AVISO_COMENTARIOS_FROM     remitente; por defecto el de pruebas de Resend, que solo entrega al correo de la
-#                              propia cuenta de Resend. Con el dominio verificado: "Dinero Público <avisos@dinero-publico.com>"
+#   AVISO_COMENTARIOS_FROM     remitente (opcional). Por defecto, desde el 2026-10-12, el del dominio propio, ya
+#                              verificado en Resend (región UE): ver AVISOS_REMITENTE. Si la variable está puesta
+#                              en Render, manda ella.
 # Se envía en un hilo aparte (publicar el comentario no espera a Resend) y con tope por hora, para que una ráfaga de
 # spam en el formulario no se convierta en cientos de correos. Si falla, se registra y el comentario queda guardado.
 _AVISO_COMENTARIOS_MAX_HORA = 30
+# Remitente de TODOS los avisos por correo (comentarios, cola de revisión, subidas rechazadas). Antes era el de pruebas
+# de Resend (onboarding@resend.dev), que solo entrega a la dirección de la propia cuenta de Resend.
+AVISOS_REMITENTE = "Dinero Público <avisos@dinero-publico.com>"
+
+
+def _avisos_remitente():
+    return os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or AVISOS_REMITENTE
 _aviso_comentarios_envios = collections.deque()
 _aviso_comentarios_lock = threading.Lock()
 
@@ -11806,8 +11814,8 @@ def _aviso_comentarios_config():
                                  if api_key else None),
         "destino_cargado": bool(destino),
         "destino": (f"{usuario[:2]}***@{dominio}" if dominio else ("(sin @)" if destino else None)),
-        "remitente": os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or "Dinero Público <onboarding@resend.dev>",
-        "remitente_de_pruebas": not os.environ.get("AVISO_COMENTARIOS_FROM", "").strip(),
+        "remitente": _avisos_remitente(),
+        "remitente_de_pruebas": "resend.dev" in _avisos_remitente(),
     }
 
 
@@ -11851,7 +11859,7 @@ def _avisar_comentario_por_correo(tipo, etiqueta, texto, nombre, url_relativa):
     cuerpo = (f"Nuevo comentario en Dinero Público\n\n{donde}\nCuándo: {cuando}\n"
               f"Autor: {autor}\nEnlace: {enlace}\n\n--- Comentario ---\n{texto}\n")
     payload = {
-        "from": os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or "Dinero Público <onboarding@resend.dev>",
+        "from": _avisos_remitente(),
         "to": [destino],
         "subject": f"Nuevo comentario · {etiqueta}"[:150],
         "text": cuerpo,
@@ -13917,7 +13925,7 @@ def _aviso_revision_por_correo(por_regla, nuevos_90):
               f"  - Con puntuación 90 o más: {nuevos_90}\n\n"
               f"Un indicador no es una irregularidad: solo señala dónde mirar.\n\n"
               f"Revisar: {SITE_URL}/admin/revision\n")
-    payload = {"from": os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or "Dinero Público <onboarding@resend.dev>",
+    payload = {"from": _avisos_remitente(),
                "to": [destino], "subject": f"Cola de revisión: {total} candidatos nuevos", "text": cuerpo}
     try:
         r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
