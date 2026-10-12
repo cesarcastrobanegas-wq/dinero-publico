@@ -17074,7 +17074,16 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
         deferredPrompt.userChoice.then(function() {{ deferredPrompt = null; }});
       }});
     }}
+    // Contador propio (sin cookies ni identificadores): avisa de la instalación y de las páginas vistas desde la
+    // app ya instalada. Ver _visitas_evento.
+    function dpEvento(tipo) {{
+      try {{ if (navigator.sendBeacon) navigator.sendBeacon('/api/evento', tipo); }} catch (e) {{}}
+    }}
+    if ((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) {{
+      dpEvento('app');
+    }}
     window.addEventListener('appinstalled', function() {{
+      dpEvento('instalacion');
       if (installBtn) installBtn.hidden = true;
       pwaOcultarBanner();
       deferredPrompt = null;
@@ -23888,7 +23897,7 @@ def render_aviso_legal_html():
 # así que el comportamiento es idéntico en ambos casos.
 
 _HTTP_STATUS_TEXT = {
-    200: "OK", 206: "Partial Content", 301: "Moved Permanently", 303: "See Other", 400: "Bad Request",
+    200: "OK", 204: "No Content", 206: "Partial Content", 301: "Moved Permanently", 303: "See Other", 400: "Bad Request",
     409: "Conflict", 413: "Payload Too Large", 429: "Too Many Requests",
     403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed", 416: "Range Not Satisfiable",
     500: "Internal Server Error",
@@ -24873,6 +24882,341 @@ def _bots_diagnostico():
         return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12))}
 
 
+# ─── CONTADOR DE VISITAS PROPIO (2026-10-12) ───────────────────────────────────────────────────────
+# Encargo de César: saber cuántas visitas son de personas y cuántas de rastreadores, y cuánto ancho de banda se lleva
+# cada uno. Sin cookies y sin datos personales:
+#  - se guardan SOLO sumas por día (tabla visitas_dia): peticiones, páginas vistas, bytes y segundos, por tipo de
+#    cliente (personas / cada rastreador por su nombre), por ruta SIN valores ("/?muni&provincia") y por red;
+#  - la IP nunca se guarda entera: para "red" se recorta a su bloque (a.b.c.0/24, o los tres primeros grupos en IPv6);
+#  - "visitantes" es una aproximación: huella de IP + navegador con una sal aleatoria que se renueva cada SEMANA
+#    (lunes a domingo) y se borra con las huellas al acabar la semana, de modo que no se puede volver de la huella a
+#    la IP ni seguir a nadie de una semana a otra. Hace falta que dure la semana para saber cuántos visitantes
+#    vuelven otro día ("recurrentes"). De cada día y cada semana pasados solo quedan los números;
+#  - instalaciones de la app (evento appinstalled) y páginas vistas desde la app instalada (modo standalone): las
+#    avisa la propia página con un POST a /api/evento, sin identificador alguno;
+#  - descargas de datos: cualquier respuesta pública que se sirva como fichero adjunto.
+# Se acumula en memoria y se vuelca a la base como mucho una vez por minuto, desde la propia petición (sin hilo).
+# Se ve en /admin/visitas?token=... Las peticiones a /admin/ y al diagnóstico se cuentan aparte ("interno").
+_VISITAS_VOLCAR_CADA_S = 60
+_VISITAS_REDES_POR_DIA = 100        # de los días pasados se conservan solo las redes con más bytes
+_VISITAS_REDES_DIAS = 30
+_visitas_lock = threading.Lock()
+_visitas_pend = {}                  # (dia, clase, nombre) -> [peticiones, paginas, bytes, segundos]
+_visitas_huellas_pend = {}          # (semana, huella) -> [días vistos, vino desde la app instalada]
+_visitas_estado = {"ultimo_volcado": 0.0, "tabla": False, "sal": None, "sal_semana": "", "dia_cerrado": ""}
+_VISITAS_EVENTOS = {"instalacion": "instalacion", "app": "app_pagina"}
+_RE_UA_CLIENTE = re.compile(r"^\s*([A-Za-z][\w.-]{1,30})")
+
+
+def _visitas_cliente(ua):
+    """(es_persona, nombre). Personas: lo que se presenta como navegador. El resto, con el nombre del rastreador."""
+    ua = (ua or "").strip()
+    if not ua:
+        return False, "(sin user-agent)"
+    familia = _familia_ua(ua)
+    if familia == "navegador":
+        return True, "personas"
+    if familia == "otro_cliente":
+        m = _RE_UA_CLIENTE.match(ua)
+        nombre = m.group(1) if m else "otro"
+        return False, ("otro" if nombre.lower() == "mozilla" else nombre)[:40]
+    return False, familia
+
+
+def _visitas_red(environ):
+    """Bloque de red del cliente, nunca la IP entera. Render pone la IP real en X-Forwarded-For."""
+    ip = (environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip()
+    if ":" in ip:
+        return ":".join(ip.split(":")[:3]) + "::/48", ip
+    trozos = ip.split(".")
+    return (".".join(trozos[:3]) + ".0/24" if len(trozos) == 4 else "desconocida"), ip
+
+
+def _visitas_tabla():
+    if _visitas_estado["tabla"]:
+        return
+    with _db_lock:
+        _db.execute("CREATE TABLE IF NOT EXISTS visitas_dia (dia TEXT, clase TEXT, nombre TEXT, peticiones INTEGER, "
+                    "paginas INTEGER, bytes INTEGER, segundos REAL, PRIMARY KEY (dia, clase, nombre))")
+        _db.execute("CREATE TABLE IF NOT EXISTS visitas_huellas (semana TEXT, huella TEXT, dias TEXT, app INTEGER, "
+                    "PRIMARY KEY (semana, huella))")
+        _db.commit()
+    _visitas_estado["tabla"] = True
+
+
+def _visitas_semana(cuando=None):
+    """Semana ISO ("2026-W42", de lunes a domingo) de un momento, por defecto ahora en hora peninsular."""
+    iso = (cuando or _ahora_madrid()).isocalendar()
+    return f"{iso[0]}-W{iso[1]:02d}"
+
+
+def _visitas_sal(semana):
+    """Sal de la semana para las huellas de visitante. Vive en la base solo esa semana (los reinicios no la cambian)."""
+    if _visitas_estado["sal_semana"] != semana:
+        sal = _settings_get("visitas_sal_" + semana)
+        if not sal:
+            sal = os.urandom(16).hex()
+            _settings_set("visitas_sal_" + semana, sal)
+        _visitas_estado.update(sal=sal, sal_semana=semana)
+    return _visitas_estado["sal"]
+
+
+def _visitas_huella(environ, semana):
+    _red, ip = _visitas_red(environ)
+    if not ip:
+        return None
+    _visitas_tabla()
+    return hashlib.sha256(f"{_visitas_sal(semana)}|{ip}|{environ.get('HTTP_USER_AGENT', '')}".encode()).hexdigest()[:16]
+
+
+def _visitas_evento(environ, tipo):
+    """POST /api/evento: lo que solo sabe el navegador (se ha instalado la app; esta página se ve desde la app
+    instalada). Solo cuenta si viene de un navegador. Devuelve True si se ha contado."""
+    nombre = _VISITAS_EVENTOS.get(tipo)
+    persona, _n = _visitas_cliente(environ.get("HTTP_USER_AGENT", ""))
+    if not nombre or not persona:
+        return False
+    try:
+        ahora = _ahora_madrid()
+        dia, semana = ahora.strftime("%Y-%m-%d"), _visitas_semana(ahora)
+        huella = _visitas_huella(environ, semana) if tipo == "app" else None
+        with _visitas_lock:
+            _visitas_pend.setdefault((dia, "evento", nombre), [0, 0, 0, 0.0])[0] += 1
+            if huella:
+                h = _visitas_huellas_pend.setdefault((semana, huella), [set(), 0])
+                h[0].add(dia)
+                h[1] = 1
+        return True
+    except Exception as e:
+        print(f"[visitas] no se pudo anotar el evento: {type(e).__name__}: {e}", flush=True)
+        return False
+
+
+def _visitas_anotar(environ, estado, cabeceras, respuesta, segundos):
+    """Suma una petición servida al contador. Nunca debe romper la respuesta: cualquier fallo se ignora."""
+    try:
+        path = environ.get("PATH_INFO", "/") or "/"
+        if path == "/api/evento":
+            return                      # lo cuenta _visitas_evento
+        cab = {str(k).lower(): str(v) for k, v in (cabeceras or [])}
+        try:
+            n_bytes = int(cab.get("content-length", ""))
+        except ValueError:
+            n_bytes = sum(len(t) for t in respuesta) if isinstance(respuesta, (list, tuple)) else 0
+        if environ.get("REQUEST_METHOD", "GET") == "HEAD":
+            n_bytes = 0
+        codigo = (estado or "")[:3]
+        ahora = _ahora_madrid()
+        dia, semana = ahora.strftime("%Y-%m-%d"), _visitas_semana(ahora)
+        persona, nombre = _visitas_cliente(environ.get("HTTP_USER_AGENT", ""))
+        interno = path.startswith("/admin/") or path == "/api/diagnostico-arranque"
+        pagina = int(codigo == "200" and environ.get("REQUEST_METHOD", "GET") == "GET"
+                     and cab.get("content-type", "").startswith("text/html") and not interno)
+        ruta = _ruta_diagnostico(path, environ.get("QUERY_STRING", ""))[:120]
+        red, ip = _visitas_red(environ)
+        if interno:
+            claves = [("interno", nombre)]
+        else:
+            claves = [("persona" if persona else "bot", nombre), ("ruta_persona" if persona else "ruta_bot", ruta),
+                      ("red_persona" if persona else "red_bot", red), ("estado", codigo or "?")]
+        if not interno and codigo == "200" and cab.get("content-disposition", "").startswith("attachment"):
+            claves.append(("evento", "descarga_persona" if persona else "descarga_bot"))
+        huella = _visitas_huella(environ, semana) if persona and pagina and ip else None
+        with _visitas_lock:
+            for clase, nom in claves:
+                v = _visitas_pend.setdefault((dia, clase, nom), [0, 0, 0, 0.0])
+                v[0] += 1
+                v[1] += pagina
+                v[2] += n_bytes
+                v[3] += segundos
+            if huella:
+                _visitas_huellas_pend.setdefault((semana, huella), [set(), 0])[0].add(dia)
+            toca = time.time() - _visitas_estado["ultimo_volcado"] >= _VISITAS_VOLCAR_CADA_S
+        if toca:
+            _visitas_volcar()
+    except Exception as e:
+        print(f"[visitas] no se pudo anotar: {type(e).__name__}: {e}", flush=True)
+
+
+def _visitas_volcar():
+    """Pasa a la base lo acumulado en memoria y, al cambiar de día, cierra los días y las semanas anteriores."""
+    with _visitas_lock:
+        pend = dict(_visitas_pend)
+        huellas = dict(_visitas_huellas_pend)
+        _visitas_pend.clear()
+        _visitas_huellas_pend.clear()
+        _visitas_estado["ultimo_volcado"] = time.time()
+    _visitas_tabla()
+    ahora = _ahora_madrid()
+    hoy, semana_actual = ahora.strftime("%Y-%m-%d"), _visitas_semana(ahora)
+    sube = ("INSERT INTO visitas_dia (dia, clase, nombre, peticiones, paginas, bytes, segundos) VALUES (?,?,?,?,0,0,0) "
+            "ON CONFLICT(dia, clase, nombre) DO UPDATE SET peticiones=excluded.peticiones")
+    with _db_lock:
+        _db.executemany("INSERT INTO visitas_dia (dia, clase, nombre, peticiones, paginas, bytes, segundos) "
+                        "VALUES (?,?,?,?,?,?,?) ON CONFLICT(dia, clase, nombre) DO UPDATE SET "
+                        "peticiones=peticiones+excluded.peticiones, paginas=paginas+excluded.paginas, "
+                        "bytes=bytes+excluded.bytes, segundos=segundos+excluded.segundos",
+                        [(d, c, n, v[0], v[1], v[2], round(v[3], 3)) for (d, c, n), v in pend.items()])
+        for (semana, huella), (dias, app) in huellas.items():
+            fila = _db.execute("SELECT dias, app FROM visitas_huellas WHERE semana=? AND huella=?", (semana, huella)).fetchone()
+            if fila:
+                dias = dias | set(filter(None, (fila[0] or "").split(",")))
+                app = app or fila[1] or 0
+            _db.execute("INSERT OR REPLACE INTO visitas_huellas (semana, huella, dias, app) VALUES (?,?,?,?)",
+                        (semana, huella, ",".join(sorted(dias)), app))
+        if _visitas_estado["dia_cerrado"] != hoy:
+            # Días ya cerrados: de las huellas queda solo cuántas eran cada día.
+            por_dia = collections.Counter()
+            por_semana = {}
+            for semana, dias, app in _db.execute("SELECT semana, dias, app FROM visitas_huellas").fetchall():
+                dd = [d for d in (dias or "").split(",") if d]
+                for d in dd:
+                    por_dia[d] += 1
+                w = por_semana.setdefault(semana, [0, 0, 0])
+                w[0] += 1
+                w[1] += int(len(dd) >= 2)
+                w[2] += int(bool(app))
+            for d, n in por_dia.items():
+                if d < hoy:
+                    _db.execute(sube, (d, "visitantes", "personas", n))
+            # Semanas ya cerradas: quedan tres números y se borran las huellas y la sal.
+            for semana, (unicos, recurrentes, de_app) in por_semana.items():
+                if semana < semana_actual:
+                    for nombre, n in (("unicos", unicos), ("recurrentes", recurrentes), ("unicos_app", de_app)):
+                        _db.execute(sube, (semana, "semana", nombre, n))
+                    _db.execute("DELETE FROM visitas_huellas WHERE semana=?", (semana,))
+            _db.execute("DELETE FROM settings WHERE clave LIKE 'visitas_sal_%' AND clave < ?", ("visitas_sal_" + semana_actual,))
+            desde_redes = (ahora - timedelta(days=3)).strftime("%Y-%m-%d")
+            for (dia,) in _db.execute("SELECT DISTINCT dia FROM visitas_dia WHERE dia < ? AND dia >= ? AND clase IN "
+                                      "('red_persona', 'red_bot')", (hoy, desde_redes)).fetchall():
+                for clase in ("red_persona", "red_bot"):
+                    _db.execute("DELETE FROM visitas_dia WHERE dia=? AND clase=? AND nombre NOT IN (SELECT nombre FROM "
+                                "visitas_dia WHERE dia=? AND clase=? ORDER BY bytes DESC LIMIT ?)",
+                                (dia, clase, dia, clase, _VISITAS_REDES_POR_DIA))
+            limite = (ahora - timedelta(days=_VISITAS_REDES_DIAS)).strftime("%Y-%m-%d")
+            _db.execute("DELETE FROM visitas_dia WHERE dia < ? AND clase IN ('red_persona', 'red_bot')", (limite,))
+            _visitas_estado["dia_cerrado"] = hoy
+        _db.commit()
+
+
+def _visitas_tamano(n):
+    for u in ("B", "KB", "MB", "GB"):
+        if n < 1024 or u == "GB":
+            return f"{n:.0f} {u}" if u == "B" else f"{n:.1f} {u}".replace(".", ",")
+        n /= 1024
+
+
+def _visitas_pagina(qs):
+    """/admin/visitas?token=...&dias=14 -- solo lectura, solo sumas."""
+    admin_token = os.environ.get("ADMIN_TOKEN", "")
+    if not admin_token or qs.get("token", [""])[0] != admin_token:
+        return _resp(json.dumps({"error": "No autorizado."}), content_type="application/json; charset=utf-8", code=403)
+    try:
+        dias = max(1, min(120, int(qs.get("dias", ["14"])[0])))
+    except ValueError:
+        dias = 14
+    _visitas_volcar()
+    hoy = _ahora_madrid().strftime("%Y-%m-%d")
+    desde = (_ahora_madrid() - timedelta(days=dias - 1)).strftime("%Y-%m-%d")
+    with _db_lock:
+        filas = _db.execute("SELECT dia, clase, nombre, peticiones, paginas, bytes, segundos FROM visitas_dia "
+                            "WHERE dia >= ? AND clase != 'semana'", (desde,)).fetchall()
+        semanas = {}
+        for sem, nombre, n in _db.execute("SELECT dia, nombre, peticiones FROM visitas_dia WHERE clase='semana'").fetchall():
+            semanas.setdefault(sem, {})[nombre] = n
+        vivas = _db.execute("SELECT dias, app FROM visitas_huellas WHERE semana=?", (_visitas_semana(),)).fetchall()
+    visitantes_hoy = sum(1 for d, _a in vivas if hoy in (d or "").split(","))
+    semanas[_visitas_semana() + " (en curso)"] = {
+        "unicos": len(vivas), "recurrentes": sum(1 for d, _a in vivas if len([x for x in (d or "").split(",") if x]) >= 2),
+        "unicos_app": sum(1 for _d, a in vivas if a)}
+    por_dia = {}
+    suma = {}       # clase -> nombre -> [peticiones, paginas, bytes, segundos]
+    for dia, clase, nombre, pet, pag, byt, seg in filas:
+        d = por_dia.setdefault(dia, {"persona": [0, 0, 0], "bot": [0, 0, 0], "visitantes": 0, "evento": {}})
+        if clase == "evento":
+            d["evento"][nombre] = d["evento"].get(nombre, 0) + pet
+        if clase in ("persona", "bot"):
+            d[clase][0] += pet
+            d[clase][1] += pag
+            d[clase][2] += byt
+        elif clase == "visitantes":
+            d["visitantes"] = pet
+        s = suma.setdefault(clase, {}).setdefault(nombre, [0, 0, 0, 0.0])
+        s[0] += pet
+        s[1] += pag
+        s[2] += byt
+        s[3] += seg
+    if hoy in por_dia:
+        por_dia[hoy]["visitantes"] = visitantes_hoy
+    tot_p = sum(d["persona"][2] for d in por_dia.values())
+    tot_b = sum(d["bot"][2] for d in por_dia.values())
+    pct = lambda a, b: f"{100 * a / b:.0f} %" if b else "–"
+    num = lambda n: f"{n:,}".replace(",", ".")
+
+    def tabla(titulo, cabecera, cuerpo, nota=""):
+        return (f"<h2>{titulo}</h2>" + (f'<p class="n">{nota}</p>' if nota else "") + "<table><tr>"
+                + "".join(f"<th>{c}</th>" for c in cabecera) + "</tr>"
+                + ("".join("<tr>" + "".join(f"<td>{c}</td>" for c in f) + "</tr>" for f in cuerpo)
+                   or f'<tr><td colspan="{len(cabecera)}">Sin datos todavía.</td></tr>') + "</table>")
+
+    dias_html = tabla(
+        "Por día", ["Día", "Visitantes (aprox.)", "Páginas vistas por personas", "Páginas vistas en la app instalada",
+                    "Instalaciones de la app", "Descargas de datos", "Peticiones de personas",
+                    "Peticiones de bots", "Bytes a personas", "Bytes a bots", "Bots sobre el total de bytes"],
+        [[d, num(v["visitantes"]), num(v["persona"][1]), num(v["evento"].get("app_pagina", 0)),
+          num(v["evento"].get("instalacion", 0)),
+          num(v["evento"].get("descarga_persona", 0))
+          + (f' (+{num(v["evento"]["descarga_bot"])} de bots)' if v["evento"].get("descarga_bot") else ""),
+          num(v["persona"][0]), num(v["bot"][0]),
+          _visitas_tamano(v["persona"][2]), _visitas_tamano(v["bot"][2]), pct(v["bot"][2], v["bot"][2] + v["persona"][2])]
+         for d, v in sorted(por_dia.items(), reverse=True)],
+        "Visitantes: aproximación sin cookies (ver la nota del final). El día de hoy va en curso.")
+    semanas_html = tabla(
+        "Por semana (lunes a domingo)", ["Semana", "Visitantes únicos (aprox.)", "Recurrentes (vinieron dos días o más)",
+                                         "% recurrentes", "Únicos desde la app instalada"],
+        [[sem, num(v.get("unicos", 0)), num(v.get("recurrentes", 0)), pct(v.get("recurrentes", 0), v.get("unicos", 0)),
+          num(v.get("unicos_app", 0))] for sem, v in sorted(semanas.items(), reverse=True)[:26]],
+        "«Recurrente» solo se puede medir dentro de la misma semana: al acabar, las huellas se borran.")
+
+    def ranking(clase, titulo, etiqueta, n=20, nota=""):
+        datos = sorted(suma.get(clase, {}).items(), key=lambda x: -x[1][2])[:n]
+        total = sum(v[2] for v in suma.get(clase, {}).values())
+        return tabla(titulo, [etiqueta, "Peticiones", "Páginas", "Bytes", "% de sus bytes", "Segundos de servidor"],
+                     [[esc(k), num(v[0]), num(v[1]), _visitas_tamano(v[2]), pct(v[2], total), f"{v[3]:.0f}"]
+                      for k, v in datos], nota)
+
+    cuerpo = (
+        f'<p class="n">Últimos {dias} días (<a href="?token={esc(admin_token)}&dias=7">7</a> · '
+        f'<a href="?token={esc(admin_token)}&dias=30">30</a> · <a href="?token={esc(admin_token)}&dias=90">90</a>). '
+        f'Bytes servidos: {_visitas_tamano(tot_p)} a personas y {_visitas_tamano(tot_b)} a bots '
+        f'(<b>{pct(tot_b, tot_b + tot_p)}</b> del total).</p>' + dias_html + semanas_html
+        + ranking("bot", "Bots por nombre", "Rastreador", 40)
+        + ranking("ruta_bot", "Rutas que más piden los bots", "Ruta (sin valores)")
+        + ranking("ruta_persona", "Rutas que más piden las personas", "Ruta (sin valores)")
+        + ranking("red_bot", "Redes de bots con más tráfico", "Red (IP recortada)", nota=f"De los días ya cerrados se guardan las {_VISITAS_REDES_POR_DIA} redes con más bytes, durante {_VISITAS_REDES_DIAS} días.")
+        + ranking("red_persona", "Redes de «personas» con más tráfico", "Red (IP recortada)", nota="Una red con miles de peticiones y aspecto de navegador suele ser un extractor que se hace pasar por persona.")
+        + ranking("estado", "Códigos de respuesta", "Código")
+        + ranking("interno", "Tráfico interno (/admin y diagnóstico: flujos de Actions, copias)", "Cliente")
+        + '<p class="n">Cómo se cuenta: «personas» es todo lo que se presenta como un navegador; un extractor que '
+          'finja serlo cuenta como persona. «Visitantes» es el número de combinaciones distintas de IP y navegador que '
+          'han visto alguna página, calculado con una huella que se borra al acabar la semana: no hay cookies, no '
+          'se guarda ninguna IP entera y no se puede seguir a nadie de una semana a otra. Quien cambia de red (móvil, '
+          'casa, trabajo) cuenta como varios visitantes, así que los únicos salen algo altos y los recurrentes algo bajos. '
+          'Las instalaciones solo las avisan Chrome, Edge y Android; en iPhone no existe ese aviso, pero sus visitas '
+          'desde la app sí se cuentan. Los bytes son los del cuerpo de '
+          'cada respuesta, ya comprimido.</p>')
+    html_ = ('<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" '
+             'content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
+             '<title>Visitas</title><style>body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;'
+             'background:#f5f6f8;color:#1c2333;margin:0;padding:18px}h1{font-size:20px;margin:0 0 6px}'
+             'h2{font-size:15px;margin:22px 0 6px}.n{color:#5b6475;font-size:13px;max-width:900px}'
+             'table{border-collapse:collapse;background:#fff;font-size:13px;display:block;overflow-x:auto;max-width:100%}'
+             'th,td{border:1px solid #dfe3ea;padding:4px 9px;text-align:right;white-space:nowrap}'
+             'th:first-child,td:first-child{text-align:left}th{background:#eef1f6}</style></head><body>'
+             f'<h1>Visitas de Dinero Público</h1>{cuerpo}</body></html>')
+    return _resp(html_, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer"})
+
+
 def _ruta_diagnostico(path, query):
     """Ruta sin valores de la consulta (solo qué parámetros lleva), p. ej. "/?muni&provincia"."""
     claves = sorted(parse_qs(query or "").keys())
@@ -24892,6 +25236,7 @@ def app(environ, start_response):
         with _peticiones_lock:
             _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + " (403)"))
         start_response("403 Forbidden", [("Content-Type", "text/plain; charset=utf-8"), ("Content-Length", "9")])
+        _visitas_anotar(environ, "403", [("Content-Length", "9")], None, 0.0)
         return [b"Forbidden"]
     if (info["bot"] and info["metodo"] == "GET"
             and _ruta_cara_para_bots(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
@@ -24901,14 +25246,24 @@ def app(environ, start_response):
         cuerpo = b"Demasiadas peticiones. Vuelve a intentarlo mas tarde.\n"
         start_response("429 Too Many Requests", [("Content-Type", "text/plain; charset=utf-8"), ("Retry-After", "600"),
                                                  ("Content-Length", str(len(cuerpo)))])
+        _visitas_anotar(environ, "429", [("Content-Length", str(len(cuerpo)))], None, 0.0)
         return [cuerpo]
     with _peticiones_lock:
         _peticiones_en_curso += 1
         _PETICIONES_ACTIVAS[id(ident)] = info
+    captura = {}
+
+    def _anotando(estado, cabeceras, exc_info=None):
+        captura["estado"], captura["cabeceras"] = estado, cabeceras
+        return start_response(estado, cabeceras, exc_info) if exc_info else start_response(estado, cabeceras)
+
+    respuesta = None
     try:
-        return _app_wsgi(environ, start_response)
+        respuesta = _app_wsgi(environ, _anotando)
+        return respuesta
     finally:
         fin = time.time()
+        _visitas_anotar(environ, captura.get("estado"), captura.get("cabeceras"), respuesta, fin - info["inicio"])
         with _peticiones_lock:
             _peticiones_en_curso -= 1
             _PETICIONES_ACTIVAS.pop(id(ident), None)
@@ -24939,6 +25294,15 @@ def _app_wsgi(environ, start_response):
                                                         forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
+    elif method == "GET" and path == "/admin/visitas":
+        code, headers, body = _visitas_pagina(qs)
+    elif method == "POST" and path == "/api/evento":
+        try:
+            length = min(int(environ.get("CONTENT_LENGTH") or 0), 64)
+        except ValueError:
+            length = 0
+        _visitas_evento(environ, (environ["wsgi.input"].read(length) if length else b"").decode("ascii", "ignore").strip())
+        code, headers, body = 204, {"Content-Length": "0", "Cache-Control": "no-store"}, b""
     elif method == "GET":
         t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
         try:
