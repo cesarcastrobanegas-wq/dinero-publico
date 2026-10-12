@@ -1,0 +1,61 @@
+name: Fondos UE de toda España (semanal)
+
+# /fondos-ue con todas las provincias (encargo de César, 2026-10-12). Ver backend/fondos_ue_espana.py.
+#  - Descarga Cohesion Data (FEDER/FSE 2014-2020, todas las operaciones con España) y el volcado de CORDIS (Horizon
+#    Europe, organizaciones españolas), decide de qué provincia es cada una (o si es regional, estatal o de
+#    cooperación entre países) y sube el resultado a Render: POST /admin/fondos-ue, que sustituye la tabla de golpe.
+#  - Se hace aquí y no dentro de la web porque el volcado de CORDIS entero en memoria ya tumbó el contenedor en julio.
+#  - Sin nombres de beneficiarios (la web conserva los que ya tenía de Murcia y Girona). El fichero no se guarda en el
+#    repositorio ni como artefacto; los registros solo muestran recuentos.
+#  - La subida está protegida: si llega más de un 20 % por debajo de lo que hay, la web responde 409 y no cambia nada.
+#  - Tarda unos 5 minutos. Miércoles por la tarde: fuera del refresco nocturno (06:35-13:00 UTC reales) y de los flujos
+#    de menores (jueves y domingo), que al guardar en main reinician la web.
+
+on:
+  schedule:
+    - cron: "30 16 * * 3"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fondos-ue-espana
+  cancel-in-progress: false
+
+jobs:
+  fondos-ue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependencias
+        run: pip install requests
+
+      - name: Generar (Cohesion Data + CORDIS)
+        run: python backend/fondos_ue_espana.py generar --salida fondos_ue.ndjson.gz
+
+      - name: Subir a Render
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          # Mismo reintento con límite que subvenciones: si la web se está reiniciando, se espera como mucho 5 minutos.
+          fin=$(( $(date +%s) + 300 ))
+          while true; do
+            codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 600 -X POST -H "Content-Type: application/gzip" \
+              --data-binary @fondos_ue.ndjson.gz \
+              "https://dinero-publico.com/admin/fondos-ue?token=${ADMIN_TOKEN}" || echo 000)
+            case "$codigo" in
+              000|502|503|504|520|521|522|523|524)
+                [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
+              200) cat respuesta.json; echo; break ;;
+              *) echo "::error::Subida rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
+            esac
+          done
+          rm -f fondos_ue.ndjson.gz
