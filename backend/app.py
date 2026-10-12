@@ -23885,6 +23885,7 @@ def render_aviso_legal_html():
   </ul>
   <p>{_t("Puedes aceptar o rechazar estas cookies en cualquier momento desde el enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier página del sitio — rechazarlas no impide usar la web con normalidad, solo desactiva las estadísticas y la publicidad.")}</p>
   <p>{_t('Más información sobre cómo Google usa los datos en sitios que utilizan sus servicios de publicidad: <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Cómo usa Google los datos de los sitios o las apps que utilizan sus servicios</a>.')}</p>
+  <p>{_t("Aparte de lo anterior, el sitio lleva un recuento propio de visitas que no usa cookies ni guarda direcciones IP. Para no contar dos veces al mismo visitante se calcula una huella a partir de la dirección IP y del navegador, mezclada con una clave aleatoria que se destruye cada semana junto con las huellas. Solo se conservan sumas (visitas por día y por semana): no permite identificar a nadie ni seguirle de una semana a otra.")}</p>
 
   <h2>{_t("Contacto")}</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
@@ -24240,6 +24241,10 @@ def _route_get(path, qs, gzip_ok=False):
         # cualquier /rankings con "?" no. Mismo bloqueo para cada prefijo de idioma (incluido el que no esté publicado).
         bloqueos = "".join(f"Disallow: {pref}/{ruta}?\n" for ruta in ("rankings", "convocatorias")
                            for pref in ("", *(f"/{l}" for l in I18N_IDIOMAS)))
+        # 2026-10-12 (decisión de César): fuera también las fichas PAGINADAS (/?muni=...&pag=3&pag_cm=12, en cada
+        # idioma): era lo que más pedían los rastreadores y a un buscador no le aportan nada, porque la ficha sin
+        # paginar ya lleva el municipio. Cualquier dirección con pag= o pag_cm= (también pag_alc=, pag_idx=...).
+        bloqueos += "Disallow: /*pag=\nDisallow: /*pag_\n"
         # bloqueos ANTES de "Allow: /": hay rastreadores que aplican la primera regla que casa, no la más larga
         body = f"User-agent: *\nDisallow: /admin/\n{bloqueos}Allow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
@@ -24839,7 +24844,11 @@ def _familia_ua(ua):
 # Rastreadores bloqueados con 403 (decisión de César 2026-10-03, medido con /api/diagnostico-arranque: en 10 minutos
 # KeenableBot gastó 944 s de CPU, nueve veces más que todos los visitantes reales juntos, recorriendo /rankings con
 # todas las combinaciones de filtros; Bytespider y PetalBot hacían lo mismo a menor escala).
-_RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot", re.I)
+#
+# 2026-10-12 (decisión de César, medido con el diagnóstico en dos muestras de 10 minutos: el 93-98 % de las peticiones
+# eran de rastreadores): se añaden SERankingBacklinksBot y MJ12bot (rastreadores de herramientas SEO, no traen visitas)
+# y Amazonbot (150 peticiones cada 10 minutos, casi todas a fichas paginadas en los cuatro idiomas).
+_RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot|SERankingBacklinksBot|MJ12bot|Amazonbot", re.I)
 
 
 # Cupo de páginas CARAS para rastreadores (2026-10-07, decisión delegada por César). Las búsquedas (/?q=) y los
