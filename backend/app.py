@@ -3296,7 +3296,65 @@ def _vaciar_caches_de_nombres():
     threading.Thread(target=_recalcular, name="indice-tras-administradores", daemon=True).start()
 
 
-def _subir_administradores_borme(token, crudo):
+# ─── PROTECCIÓN DE LAS SUBIDAS (2026-10-12) ────────────────────────────────────────────────────────
+# Las rutas POST /admin/... que SUSTITUYEN datos de producción con lo que les sube un flujo de Actions aceptaban
+# cualquier fichero válido. Si el flujo corre con su caché vacía (pasó al cambiar de repositorio el 12-10) sube una
+# fracción de lo habitual y la web lo daba por bueno. Ahora, si lo recibido trae bastantes menos registros que lo que
+# ya hay, la subida se rechaza con un 409 sin tocar nada y se avisa por correo. Para aceptar a propósito una bajada
+# real: repetir la subida a mano con &forzar=si. Los flujos de Actions nunca lo envían.
+SUBIDA_CAIDA_MAXIMA = 0.20          # se rechaza si llega más de un 20 % por debajo de lo que hay
+SUBIDA_MINIMO_PARA_COMPARAR = 50    # con menos registros que estos no se compara (primera carga, tablas pequeñas)
+
+
+def _subida_demasiado_pequena(antes, recibidos):
+    return (antes >= SUBIDA_MINIMO_PARA_COMPARAR
+            and recibidos < antes * (1 - SUBIDA_CAIDA_MAXIMA))
+
+
+def _rechazar_subida(ruta, que, antes, recibidos, motivo=""):
+    """Respuesta 409 de una subida rechazada por la protección, más el aviso por correo. Solo recuentos."""
+    caida = round(100 * (1 - recibidos / antes), 1) if antes else 0.0
+    motivo = motivo or (f"llegan {recibidos} {que} y hay {antes} ({caida} % menos; el máximo admitido es "
+                        f"{round(SUBIDA_CAIDA_MAXIMA * 100)} %)")
+    print(f"[proteccion] subida a {ruta} RECHAZADA: {motivo}", flush=True)
+    aviso = _aviso_subida_rechazada_por_correo(ruta, motivo)
+    return 409, {"error": f"Subida rechazada por la protección: {motivo}. No se ha cambiado nada.",
+                 "antes": antes, "recibidos": recibidos, "caida_pct": caida,
+                 "para_forzar": "repetir la subida a mano con &forzar=si", "aviso_correo": aviso}
+
+
+def _aviso_subida_rechazada_por_correo(ruta, motivo):
+    """Correo a César cuando la protección rechaza una subida: la ruta y los recuentos, nada más. Mismo mecanismo y
+    mismas variables de Render que el aviso de la cola de revisión. Se envía en un hilo aparte para no retener la
+    respuesta. Devuelve un texto corto con lo que se ha hecho."""
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    destino = (os.environ.get("AVISO_REVISION_EMAIL", "") or os.environ.get("AVISO_COMENTARIOS_EMAIL", "")).strip()
+    if not api_key or not destino:
+        print("[proteccion] aviso por correo: falta RESEND_API_KEY o la dirección de destino en Render", flush=True)
+        return "no enviado: falta configurar RESEND_API_KEY y AVISO_REVISION_EMAIL (o AVISO_COMENTARIOS_EMAIL) en Render"
+    cuerpo = (f"Dinero Público ha RECHAZADO una subida de datos el {_ahora_madrid().strftime('%d/%m/%Y a las %H:%M')}.\n\n"
+              f"Ruta: POST {ruta}\nMotivo: {motivo}\n\n"
+              f"Los datos de la web NO se han tocado: siguen los que había.\n\n"
+              f"Lo habitual es que el flujo de Actions haya corrido con su caché vacía o a medias: conviene mirar su "
+              f"última ejecución. Si la bajada es real y hay que aceptarla, repetir la subida a mano añadiendo "
+              f"&forzar=si a la dirección.\n")
+    payload = {"from": os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or "Dinero Público <onboarding@resend.dev>",
+               "to": [destino], "subject": f"Subida rechazada: {ruta}"[:150], "text": cuerpo}
+
+    def _enviar():
+        try:
+            r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
+                              headers={"Authorization": f"Bearer {api_key}"})
+            if r.status_code >= 300:
+                print(f"[proteccion] aviso por correo: Resend respondió {r.status_code}: {r.text[:300]}", flush=True)
+        except Exception as e:
+            print(f"[proteccion] aviso por correo: {type(e).__name__}: {e}", flush=True)
+
+    threading.Thread(target=_enviar, name="aviso-subida-rechazada", daemon=True).start()
+    return "enviándose"
+
+
+def _subir_administradores_borme(token, crudo, forzar=False):
     """POST /admin/administradores-borme?token=... con el fichero generado por administradores_borme.py (JSON, en
     gzip o no). Lo valida, lo guarda en el disco persistente (escritura atómica) y lo recarga en memoria sin reiniciar.
     Devuelve (código, cuerpo JSON). Nunca devuelve ni registra nombres: solo recuentos."""
@@ -3316,6 +3374,17 @@ def _subir_administradores_borme(token, crudo):
             return 400, {"error": "Fichero no válido: registros sin nombre/cargo."}
     except (ValueError, OSError, AttributeError) as e:
         return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    if not forzar:
+        if _subida_demasiado_pequena(len(ADMINISTRADORES_BORME), len(nuevos)):
+            return _rechazar_subida("/admin/administradores-borme", "sociedades", len(ADMINISTRADORES_BORME), len(nuevos))
+        # El fichero generado sin el índice histórico (2009-2020) puede traer casi las mismas sociedades y aun así
+        # perder los nombramientos antiguos: se nota en que el periodo empieza más tarde.
+        ini_antes = str((ADMINISTRADORES_BORME_META.get("periodo") or [""])[0])[:4]
+        ini_nuevo = str((datos.get("periodo") or [""])[0])[:4]
+        if ADMINISTRADORES_BORME and ini_antes.isdigit() and (not ini_nuevo.isdigit() or int(ini_nuevo) > int(ini_antes)):
+            return _rechazar_subida("/admin/administradores-borme", "sociedades", len(ADMINISTRADORES_BORME), len(nuevos),
+                                    motivo=f"el periodo del fichero empieza en {ini_nuevo or 'fecha desconocida'} y el "
+                                           f"que hay empieza en {ini_antes}: falta el índice histórico del BORME")
     tmp = ADMINISTRADORES_BORME_FILE + ".nuevo"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False)
@@ -13610,7 +13679,7 @@ def _subvencion_fila(d):
                        f'{d.get("nivel2", "")}')[:1500])
 
 
-def _subir_subvenciones(crudo):
+def _subir_subvenciones(crudo, forzar=False):
     """Sustituye la tabla `subvenciones` por el NDJSON (gzip) recibido. Devuelve (código, cuerpo). Solo recuentos."""
     nueva = "subvenciones_nueva"
     with _db_lock:
@@ -13653,6 +13722,14 @@ def _subir_subvenciones(crudo):
         return 400, {"error": f"Fichero no válido: solo {n} convocatorias legibles ({malas} con error)."}
     with _db_lock:
         antes = _db.execute("SELECT count(*) FROM subvenciones").fetchone()[0]
+        recibidas = _db.execute(f"SELECT count(*) FROM {nueva}").fetchone()[0]
+    if not forzar and _subida_demasiado_pequena(antes, recibidas):
+        with _db_lock:
+            _db.execute(f"DROP TABLE IF EXISTS {nueva}")
+            _db.commit()
+        _liberar_memoria()
+        return _rechazar_subida("/admin/subvenciones", "convocatorias", antes, recibidas)
+    with _db_lock:
         _db.execute("DROP TABLE subvenciones")
         _db.execute(f"ALTER TABLE {nueva} RENAME TO subvenciones")
         for _sql in _SQL_INDICES_SUBVENCIONES:
@@ -13740,7 +13817,7 @@ def _revision_registrar(huella, accion, detalle=""):
         _db.commit()
 
 
-def _subir_revision_candidatos(crudo):
+def _subir_revision_candidatos(crudo, forzar=False):
     """Carga los candidatos de la semana (NDJSON en gzip de indicios_contratos.py). Nuevos -> pendientes; los que ya
     estaban se actualizan sin tocar la decisión tomada; los pendientes que ya no se detectan se retiran; los descartados
     hace más de 6 meses se borran (queda su huella). Solo devuelve recuentos."""
@@ -13780,6 +13857,16 @@ def _subir_revision_candidatos(crudo):
         return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
     if not vistos:
         return 400, {"error": "Fichero vacío."}
+    # Protección (2026-10-12): los pendientes que no vienen en el fichero se RETIRAN, así que una subida a medias
+    # vaciaría la cola. Se compara con el tamaño de la última subida aceptada (los decididos y descartados también
+    # vienen en el fichero, así que la cifra es estable de una semana a otra).
+    try:
+        anterior = int(_settings_get("revision_subida_candidatos", 0) or 0)
+    except (TypeError, ValueError):
+        anterior = 0
+    if not forzar and _subida_demasiado_pequena(anterior, len(vistos)):
+        return _rechazar_subida("/admin/revision-candidatos", "candidatos", anterior, len(vistos))
+    _settings_set("revision_subida_candidatos", str(len(vistos)))
     with _db_lock:
         for i in range(0, len(lote_ins), 500):
             _db.executemany("INSERT INTO revision_candidatos (huella, regla, categoria, puntuacion, municipio, provincia, "
@@ -24848,7 +24935,8 @@ def _app_wsgi(environ, start_response):
         elif length > 100 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
         else:
-            code, cuerpo = _subir_revision_candidatos(environ["wsgi.input"].read(length) if length else b"")
+            code, cuerpo = _subir_revision_candidatos(environ["wsgi.input"].read(length) if length else b"",
+                                                        forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "GET":
@@ -24870,7 +24958,8 @@ def _app_wsgi(environ, start_response):
         elif length > 200 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
         else:
-            code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"")
+            code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"",
+                                                  forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/administradores-borme":
@@ -24887,7 +24976,7 @@ def _app_wsgi(environ, start_response):
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
         else:
             crudo = environ["wsgi.input"].read(length) if length else b""
-            code, cuerpo = _subir_administradores_borme(token, crudo)
+            code, cuerpo = _subir_administradores_borme(token, crudo, forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST":
