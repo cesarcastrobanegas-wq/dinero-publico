@@ -1,0 +1,38 @@
+name: Sembrar la caché de subvenciones (a mano, una vez)
+
+# Tras el cambio de repositorio (12-10-2026) la base de la BDNS (bdns.db), que solo vive en la caché de Actions, se
+# quedó en el repositorio archivado. Este flujo la toma de un adjunto TEMPORAL del repositorio privado de copias
+# (release `siembra-temporal`), comprueba su huella y la guarda en la caché con la clave que usa subvenciones-bdns.yml.
+# No imprime contenido: solo tamaño, huella y recuento.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha256:
+        description: "SHA-256 esperado de bdns.db"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  sembrar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Descargar el adjunto temporal y comprobarlo
+        env:
+          GH_TOKEN: ${{ secrets.COPIAS_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p backend
+          gh release download siembra-temporal --repo "${{ github.repository_owner }}/dinero-publico-copias" --pattern bdns.db.gz
+          gunzip -c bdns.db.gz > backend/bdns.db && rm -f bdns.db.gz
+          echo "${{ inputs.sha256 }}  backend/bdns.db" | sha256sum -c -
+          python3 -c "import sqlite3; c=sqlite3.connect('backend/bdns.db'); print(c.execute('PRAGMA integrity_check').fetchone()[0], c.execute('SELECT COUNT(*) FROM convocatorias').fetchone()[0], 'convocatorias')"
+
+      - name: Guardar en la caché
+        uses: actions/cache/save@v4
+        with:
+          path: backend/bdns.db
+          key: bdns-${{ github.run_id }}
