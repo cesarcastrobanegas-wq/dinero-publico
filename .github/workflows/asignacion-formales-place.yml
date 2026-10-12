@@ -22,6 +22,9 @@ on:
       hasta:
         description: "Mes más antiguo (AAAAMM)"
         default: "202109"
+      subir:
+        description: "Subir los contratos al disco de la web al terminar (si/no)"
+        default: "no"
 
 permissions:
   contents: read
@@ -74,6 +77,31 @@ jobs:
           path: asignacion_place
           key: asignacion-place-${{ github.run_id }}
 
+      # Paso 4: los contratos de las que ganan municipio llevan adjudicatarios (también autónomos con nombre y NIF), así
+      # que NO salen como artefacto: van directos de la caché al disco de Render, una provincia cada vez, con el
+      # ADMIN_TOKEN (como el fichero del BORME). Solo si se pide al lanzar el flujo. La respuesta trae solo recuentos.
+      - name: Subir los contratos a la web (solo si se pide)
+        if: steps.generar.outputs.codigo == '0' && inputs.subir == 'si'
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          for f in asignacion_place/prov/*.json.gz; do
+            prov=$(basename "$f" .json.gz)
+            fin=$(( $(date +%s) + 300 ))
+            while true; do
+              codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST -H "Content-Type: application/gzip" \
+                --data-binary @"$f" "https://dinero-publico.com/admin/asignacion-formales?token=${ADMIN_TOKEN}&provincia=${prov}" || echo 000)
+              case "$codigo" in
+                000|502|503|504|520|521|522|523|524)
+                  [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                  echo "HTTP ${codigo}: reintento en 30 s"; sleep 30 ;;
+                200) cat respuesta.json; echo; break ;;
+                *) echo "::error::Subida de ${prov} rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
+              esac
+            done
+            sleep 5
+          done
+
       - name: Resultado (artefacto, sin adjudicatarios)
         if: steps.generar.outputs.codigo == '0'
         uses: actions/upload-artifact@v4
@@ -83,5 +111,6 @@ jobs:
             asignacion_place/asignacion_place.json.gz
             asignacion_place/asignacion_place_resumen.txt
             asignacion_place/asignacion_place_entidades.json
+            asignacion_place/asignacion_place_entes_municipales.json
           if-no-files-found: error
           retention-days: 7

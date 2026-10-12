@@ -192,7 +192,10 @@ ALIAS = {("borriana", "castellon"): "Burriana", ("san bartolome de lanzarote", "
          ("palma de mallorca", "baleares"): "Palma",
          # grafía valenciana/oficial en PLACE, castellana en las listas de la app (2026-09-30)
          ("alfarp", "valencia"): "Alfarb", ("montitxelvo", "valencia"): "Montichelvo",
-         ("el poble nou de benitatxell", "alicante"): "Benitachell", ("cortelazor la real", "huelva"): "Cortelazor"}
+         ("el poble nou de benitatxell", "alicante"): "Benitachell", ("cortelazor la real", "huelva"): "Cortelazor",
+         # sin destino en la asignación de formales de 2021-2026 (2026-10-11)
+         ("villanueva de sijena", "huesca"): "Villanueva de Sigena", ("villarin de campos", "zamora"): "Villarrín de Campos",
+         ("alcocer de planes", "alicante"): "Alcosser"}
 # Prefijos que PLACE pone a veces en el hueco del municipio (fórmulas honoríficas u órganos del propio ayuntamiento).
 PREFIJOS = r"^(villa de |ciudad de |muy noble y leal villa de |junta de gobierno( local)? del? (excmo\. |ilmo\. )?ayuntamiento de |ayuntamiento de )"
 # Entidades locales que NO son el municipio: entidades locales menores/autónomas, mancomunidades, consorcios...

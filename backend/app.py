@@ -9916,6 +9916,14 @@ _BACKFILL_FORMALES_PLACE_CLAVE = "backfill_formales_place_sha::"     # + provinc
 # Marca de los contratos que entraron por este histórico: el componente "directivo" del Índice no los cuenta
 # mientras el BORME no haya buscado a su adjudicatario (ver _calcular_indice_transparencia).
 ORIGEN_BACKFILL_FORMALES = "backfill_formales_place"
+# Fase 2 de cobertura (2026-10-11): licitaciones de PLACE que el patrón por nombre no asignaba a ningún municipio y
+# que asignador_place.py sí asigna por la jerarquía oficial del órgano o su DIR3 (Las Rozas, Burriana, los distritos
+# de Madrid, las empresas y organismos municipales). Mismo formato y misma fusión aditiva que el histórico anterior.
+# Estos ficheros NO están en el repositorio (es público y llevan adjudicatarios, entre ellos autónomos con nombre y
+# NIF; decisión de César, 2026-10-11): viven solo en el disco persistente y llegan por POST con el token de
+# administración, como el fichero del BORME (ver _subir_asignacion_formales).
+ASIGNACION_FORMALES_PLACE_DIR = os.path.join(DATA_DIR, "asignacion_formales_place_prov")
+_ASIGNACION_FORMALES_PLACE_CLAVE = "asignacion_formales_place_sha::"  # + provincia
 
 
 _RETIRADA_BACKFILL_FORMALES_CLAVE = "backfill_formales_place_retirado_v1"
@@ -9975,19 +9983,26 @@ def _aplicar_backfill_formales_place():
 
     Misma fusión que _aplicar_backfill_nombres_place: aditiva (gana lo ya guardado), idempotente por hash en
     `settings` (uno por provincia), y un municipio sin fila en cache.db deja su provincia sin marcar para
-    reintentarla en el siguiente arranque."""
-    if not _DISCO_CONFIABLE or not os.path.isdir(BACKFILL_FORMALES_PLACE_DIR):
+    reintentarla en el siguiente arranque.
+
+    Después, y con la misma regla, las licitaciones de la fase 2 (ASIGNACION_FORMALES_PLACE_DIR)."""
+    _aplicar_formales_por_provincia(BACKFILL_FORMALES_PLACE_DIR, _BACKFILL_FORMALES_PLACE_CLAVE, "backfill_formales_place")
+    _aplicar_formales_por_provincia(ASIGNACION_FORMALES_PLACE_DIR, _ASIGNACION_FORMALES_PLACE_CLAVE, "asignacion_formales_place")
+
+
+def _aplicar_formales_por_provincia(directorio, prefijo_clave, etiqueta):
+    if not _DISCO_CONFIABLE or not os.path.isdir(directorio):
         return
     total, municipios, provincias, sin_fila_total = 0, 0, 0, []
-    for fichero in sorted(os.listdir(BACKFILL_FORMALES_PLACE_DIR)):
+    for fichero in sorted(os.listdir(directorio)):
         if not fichero.endswith(".json.gz"):
             continue
         provincia = fichero[:-len(".json.gz")]
         try:
-            with open(os.path.join(BACKFILL_FORMALES_PLACE_DIR, fichero), "rb") as f:
+            with open(os.path.join(directorio, fichero), "rb") as f:
                 crudo = f.read()
             huella = hashlib.sha256(crudo).hexdigest()[:16]
-            clave_hash = _BACKFILL_FORMALES_PLACE_CLAVE + provincia
+            clave_hash = prefijo_clave + provincia
             with _db_lock:
                 fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave_hash,)).fetchone()
             if fila and fila[0] == huella:
@@ -10044,11 +10059,49 @@ def _aplicar_backfill_formales_place():
             provincias += 1
             del datos
         except Exception as e:
-            print(f"[startup] backfill_formales_place: ERROR en {provincia}, no se aplico "
+            print(f"[startup] {etiqueta}: ERROR en {provincia}, no se aplico "
                   f"({type(e).__name__}: {e})", flush=True)
     if provincias:
-        print(f"[startup] backfill_formales_place: {total} contratos anadidos en {municipios} municipios de "
+        print(f"[startup] {etiqueta}: {total} contratos anadidos en {municipios} municipios de "
               f"{provincias} provincias ({len(sin_fila_total)} sin ficha, omitidos: {sin_fila_total[:20]}).", flush=True)
+    return total, municipios
+
+
+def _subir_asignacion_formales(token, provincia, crudo):
+    """POST /admin/asignacion-formales?token=...&provincia=... con el fichero de una provincia generado por
+    generar_asignacion_place.py ({"municipios": {municipio: [contratos]}}, en gzip). Lo valida, lo guarda en el disco
+    persistente (escritura atómica) y lo aplica en el momento con la misma fusión aditiva del arranque. Devuelve
+    (código, cuerpo JSON) solo con recuentos: nunca nombres ni NIF."""
+    admin_token = os.environ.get("ADMIN_TOKEN", "")
+    if not admin_token or token != admin_token:
+        return 403, {"error": "No autorizado."}
+    if provincia not in MUNICIPIOS_POR_PROVINCIA:
+        return 400, {"error": "Provincia no válida."}
+    try:
+        datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+        munis = datos.get("municipios")
+        if not isinstance(munis, dict) or not munis:
+            return 400, {"error": "Fichero no válido: falta 'municipios'."}
+        ajenos = [m for m in munis if not municipio_valido_provincia(m, provincia)]
+        if ajenos:
+            return 400, {"error": f"Fichero no válido: {len(ajenos)} municipios no son de {provincia}."}
+        if not all(isinstance(cs, list) and all(isinstance(c, dict) and c.get("titulo") for c in cs) for cs in munis.values()):
+            return 400, {"error": "Fichero no válido: contratos sin título."}
+        n_contratos = sum(len(cs) for cs in munis.values())
+    except (ValueError, OSError, AttributeError, EOFError) as e:
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    del datos
+    os.makedirs(ASIGNACION_FORMALES_PLACE_DIR, exist_ok=True)
+    destino = os.path.join(ASIGNACION_FORMALES_PLACE_DIR, f"{provincia}.json.gz")
+    with open(destino + ".nuevo", "wb") as f:
+        f.write(crudo)
+    os.replace(destino + ".nuevo", destino)
+    anadidos, fichas = _aplicar_formales_por_provincia(ASIGNACION_FORMALES_PLACE_DIR, _ASIGNACION_FORMALES_PLACE_CLAVE,
+                                                       "asignacion_formales_place") or (0, 0)
+    print(f"[admin] asignacion_formales_place: {provincia}, {n_contratos} contratos en el fichero, {anadidos} anadidos "
+          f"en {fichas} fichas", flush=True)
+    return 200, {"provincia": provincia, "municipios": len(munis), "contratos": n_contratos, "anadidos": anadidos,
+                 "fichas": fichas}
 
 
 IMPORTE_ADJUDICADO_PLACE_FILE = os.path.join(BASE_DIR, "importe_adjudicado_place.json.gz")
@@ -27062,6 +27115,23 @@ def _app_wsgi(environ, start_response):
         else:
             code, cuerpo = _subir_fondos_ue(environ["wsgi.input"].read(length) if length else b"",
                                             forzar=qs.get("forzar", [""])[0] == "si")
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
+    elif method == "POST" and path == "/admin/asignacion-formales":
+        # cuerpo binario (JSON en gzip) de UNA provincia: ver _subir_asignacion_formales
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = qs.get("token", [""])[0]
+        admin_token = os.environ.get("ADMIN_TOKEN", "")
+        if not admin_token or token != admin_token:
+            code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
+        elif length > 20 * 1024 * 1024:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            crudo = environ["wsgi.input"].read(length) if length else b""
+            code, cuerpo = _subir_asignacion_formales(token, qs.get("provincia", [""])[0], crudo)
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/administradores-borme":

@@ -13,6 +13,9 @@ on:
       rama:
         description: "Rama con el generador a medir"
         default: "main"
+      solo_socio_unico:
+        description: "si = solo buscar actos de socio único de unas sociedades locales (borme_socio_unico.py)"
+        default: "no"
 
 permissions:
   contents: read
@@ -22,7 +25,38 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Consulta puntual (fase 2 de cobertura): ¿de quién son unas sociedades locales? Solo lee los dos índices de la
+  # caché; del socio único solo imprime administraciones y sociedades, nunca personas físicas.
+  socio_unico:
+    if: inputs.solo_socio_unico == 'si'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.rama }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Índice diario del BORME (caché, solo lectura)
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/borme_actos.db
+          key: borme-actos-medicion-no-existe
+          restore-keys: borme-actos-
+      - name: Índice histórico (caché, solo lectura)
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/borme_actos_historico.db
+          key: borme-historico-medicion-no-existe
+          restore-keys: borme-historico-
+      - name: Actos de socio único
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python backend/borme_socio_unico.py
+
   medir:
+    if: inputs.solo_socio_unico != 'si'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
