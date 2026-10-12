@@ -16339,6 +16339,11 @@ SITE_TAGLINE = "EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?"
 # valor, así que el hueco "Espacio publicitario" se queda exactamente igual
 # que antes hasta que César dé también el slot ID.
 GA_MEASUREMENT_ID = "G-86Q210M1DC"
+# Google Search Console (2026-10-12): alta por etiqueta HTML. El codigo de verificacion no es secreto (va en el HTML de
+# todas las paginas), pero se pone en Render (GOOGLE_SITE_VERIFICATION) para no tocar el codigo al darlo de alta.
+# Sin la variable no se emite nada. Solo letras, cifras, guiones y guion bajo.
+_GSC_CODIGO = re.sub(r"[^A-Za-z0-9_-]", "", os.environ.get("GOOGLE_SITE_VERIFICATION", ""))[:100]
+_GSC_META = f'<meta name="google-site-verification" content="{_GSC_CODIGO}">' if _GSC_CODIGO else ""
 ADSENSE_CLIENT_ID = "ca-pub-7682507700250366"
 ADSENSE_SLOT_ID = ""     # ej. "1234567890" -- pendiente de unidad de anuncio aprobada
 COOKIE_CONSENT_KEY = "cookieConsent"
@@ -16921,6 +16926,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <link rel="icon" href="{_pwa_asset('/static/favicon.ico')}" sizes="48x48">
 <link rel="icon" type="image/png" sizes="32x32" href="{_pwa_asset('/static/favicon-32.png')}">
 <link rel="icon" type="image/png" sizes="16x16" href="{_pwa_asset('/static/favicon-16.png')}">
+{_GSC_META}
 <link rel="manifest" href="{_pwa_asset('/manifest.json')}">
 <meta name="theme-color" content="{PWA_THEME_COLOR}">
 <link rel="apple-touch-icon" href="{_pwa_asset('/static/apple-touch-icon.png')}">
