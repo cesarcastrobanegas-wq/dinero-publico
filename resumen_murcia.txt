@@ -1,0 +1,163 @@
+RESUMEN — DINERO PÚBLICO: CONTRATOS REGIÓN DE MURCIA
+Generado: 2026-07-12 04:17 · Actualizado: 2026-07-12 13:07 (pasada de
+re-enriquecimiento con el fix de abreviaturas BORME ya terminada)
+================================================================================
+
+ESTADO DE PARTIDA
+------------------
+Los 45 municipios oficiales de la Región de Murcia (lista MUNICIPIOS_MURCIA en
+app.py) ya estaban descargados en cache.db desde una ejecución previa
+(2026-06-23) — no hizo falta volver a scrapear PLACE para ninguno.
+
+Nota sobre la lista de municipios del prompt original: incluía "Sucina", que
+no es un municipio independiente de la Región de Murcia (es una diputación
+de Murcia capital), así que se excluyó. El resto de nombres con variantes
+("Alcázares (Los)", "Torre-Pacheco", "Fuente Álamo") se mapearon a su forma
+oficial ya usada en la app (Los Alcázares, Torre Pacheco, Fuente Álamo de
+Murcia).
+
+TABLA POR MUNICIPIO (estado final tras terminar la pasada de
+re-enriquecimiento con el fix de abreviaturas BORME — 13:07 del 12/07)
+----------------------------------------------------------------
+Municipio                    Contratos       Importe (EUR)  % Directivos*
+--------------------------------------------------------------------------
+Abanilla                            21        1,940,890.72         95.2%
+Abarán                              19        2,177,411.59         88.2%
+Águilas                             79       17,638,047.01         94.2%
+Albudeite                            0                0.00           —
+Alcantarilla                        71       12,156,832.54         90.5%
+Los Alcázares                       56       50,976,956.54         84.9%
+Aledo                                6          205,808.33         83.3%
+Alguazas                            12        1,286,269.05         90.0%
+Alhama de Murcia                    67       35,357,697.58         82.5%
+Archena                             29       28,249,161.93        100.0%
+Beniel                              30        1,925,284.03         96.7%
+Blanca                              57        4,198,866.35         88.0%
+Bullas                              40        5,767,996.42         74.4%
+Calasparra                          32        4,061,670.14         88.9%
+Campos del Río                       4          247,586.80        100.0%
+Caravaca de la Cruz                 75       23,328,699.91         96.9%
+Cartagena                          942      268,520,191.59         82.8%
+Cehegín                             45        3,849,224.65         90.9%
+Ceutí                               56        3,656,621.36         84.0%
+Cieza                              138       12,123,629.33         82.5%
+Fortuna                             32        3,162,775.87         93.8%
+Fuente Álamo de Murcia              28       15,513,256.91         87.5%
+Jumilla                            139       24,766,563.07         80.6%
+Librilla                             4          550,325.14         66.7%
+Lorca                              262       54,036,588.03         89.9%
+Lorquí                              36        3,385,111.55         89.7%
+Mazarrón                            90       13,377,244.41         93.6%
+Molina de Segura                   601       37,503,393.53         82.2%
+Moratalla                           15          965,821.95         84.6%
+Mula                                70        8,016,063.28         85.2%
+Murcia                            1886    1,477,823,509.86         84.1%
+Ojós                                 0                0.00           —
+Pliego                              11          837,644.01        100.0%
+Puerto Lumbreras                    32       39,500,277.03         93.1%
+Ricote                              15        1,151,304.97         93.3%
+San Javier                         323      285,087,899.70         86.5%
+San Pedro del Pinatar              110       15,255,572.58         89.7%
+Santomera                           58        5,408,781.02         93.5%
+Torre Pacheco                      121       27,875,032.66         85.8%
+Las Torres de Cotillas              87        7,963,043.71         92.4%
+Totana                              69        8,392,054.76         77.2%
+Ulea                                11          796,267.19        100.0%
+La Unión                            43        7,749,150.61         90.2%
+Villanueva del Río Segura           24        1,952,485.55         81.8%
+Yecla                               60       21,102,875.63         83.6%
+--------------------------------------------------------------------------
+TOTAL                             5906    2,539,841,888.89         85.2%
+                                                          (4584/5381 empresas)
+
+* % de empresas adjudicatarias localizadas (excluye "No localizada") a las
+  que se les ha encontrado directivo/administrador o, en el caso de
+  autónomos, titular. Progresión completa de esta tarea:
+  63% (23-jun, ejecución original)
+  → 65% (tras incluir autónomos en el re-enriquecimiento)
+  → 74% (primera pasada tras corregir el bug de abreviaturas BORME)
+  → 85.2% (segunda pasada, ya terminada — resultado final de esta sesión).
+  El hilo de enriquecimiento de fondo (_enriquecer_directivos_bg) sigue
+  activo por diseño de la app: cualquier contrato nuevo que aparezca sin
+  directivo se reintentará automáticamente en el futuro sin intervención
+  manual, pero la pasada específica de esta sesión ya ha terminado
+  (1057/1854 directivos nuevos encontrados en esta última pasada).
+
+MUNICIPIOS SIN CONTRATOS EN PLACE
+-----------------------------------
+Albudeite y Ojós no devuelven contratos adjudicados/resueltos en la
+Plataforma de Contratación del Sector Público (PLACE). Son los dos
+municipios más pequeños de la región; es plausible que su contratación
+menor no pase por PLACE. No investigado más a fondo por no ser objeto de
+esta tarea.
+
+LOS 3 CASOS INVESTIGADOS A MANO
+-----------------------------------
+Tras la primera pasada automática, tres empresas seguían "No localizado"
+pese a las 4 fuentes de búsqueda. Se investigaron a mano contra fuentes
+públicas (BOE/BORME, axesor, einforma, empresia.es, iberinform, y la web
+oficial de la empresa cuando existía) y se cargaron los resultados
+directamente en cache.db (32 contratos actualizados en total, en todos los
+municipios donde aparecen estas empresas):
+
+  · SIRIUS IRONWORKS INNOVACIONES SLU (NIF B75705863)
+    → Noelia Fernández López — Administrador Único
+    Confianza: ALTA. Verificado leyendo directamente el texto oficial del
+    BORME (BORME-A-2025-27-02, constitución 31/12/2024, nombramiento
+    inscrito 31/01/2025).
+
+  · REHABILITACIONES Y CONSTRUCCIONES GALAN E HIJOS, S.L. (NIF B73121378)
+    → Juan García López — Administrador Único (desde 16/01/2015)
+    Confianza: ALTA. Tres fuentes independientes (axesor, infonif.economia3,
+    empresia.es) coinciden, con detalle corroborante: sustituyó como
+    administrador a Juan García Espín en esa misma fecha.
+
+  · PAPARAJOTE DISEÑO Y COMUNICACIÓN, S.L. (NIF B73731085)
+    → Pilar Larrotcha Martínez-Carrasco / Sonia de la Iglesia García
+    Cargo registrado como: "Socias (cargo mercantil exacto no confirmado)"
+    Confianza: MEDIA. Confirmadas como socias/directoras creativas del
+    estudio por su propia web (paparajote.com/estudio) y como órganos
+    sociales activos en axesor, pero no se pudo verificar si la figura
+    mercantil exacta es administración solidaria, mancomunada u otra,
+    porque su alta en BORME es de 2011 y el buscador de anuncios del BOE
+    no indexa tan atrás. La incertidumbre queda reflejada en el propio
+    campo "cargo" de la app para que no se lea como un dato cerrado.
+
+CAUSA RAÍZ Y HALLAZGO CON IMPACTO REGIONAL
+-----------------------------------
+Investigando el caso de Sirius Ironworks se encontró la causa real por la
+que el scraping automático fallaba: el BORME abrevia los cargos societarios
+("Adm. Unico:", "Apo.Sol.:" en vez de "Administrador Único:", "Apoderado
+Solidario:"), y el regex de extracción de app.py solo reconocía la palabra
+completa. Se corrigió el patrón (_BORME_NOM_RE) para reconocer también las
+formas abreviadas, con una tabla de expansión (_CARGO_ABREV) que las
+convierte a su forma legible completa.
+
+Este no era un problema aislado de 3 empresas: era el motivo de una buena
+parte de todos los "No localizado" de los 45 municipios. Tras aplicar el
+fix y relanzar el re-enriquecimiento, el % global de directivos resueltos
+subió de 65% a 74% (y sigue subiendo mientras el hilo de fondo continúa).
+
+TRABAJO REALIZADO EN ESTA SESIÓN (cronológico)
+-----------------------------------
+1. Bug corregido: el hilo de enriquecimiento excluía a los autónomos del
+   re-procesado (filtraba solo empresas con sufijo SL/SA/SLU). Se quitó
+   ese filtro — los autónomos se resuelven al instante, sin red.
+2. Añadida una 4ª fuente de búsqueda (DuckDuckGo, ya que Google bloquea el
+   scraping directo) con circuit-breaker automático si aparece un captcha.
+3. Primera pasada de re-enriquecimiento: 434/2320 directivos nuevos.
+4. Investigación manual de los 3 casos restantes (ver arriba) → hallazgo
+   del bug de abreviaturas BORME → fix aplicado (_BORME_NOM_RE +
+   _CARGO_ABREV) → 32 contratos parcheados directamente en cache.db con
+   los 3 resultados verificados → servidor reiniciado.
+5. Segunda pasada de re-enriquecimiento: terminada. 1057/1854 directivos
+   nuevos encontrados, subiendo el total regional de 74% a 85.2% de
+   empresas con directivo localizado.
+
+SERVIDOR
+--------
+Reiniciado tras aplicar el fix de abreviaturas BORME y los 3 casos
+manuales. El hilo de enriquecimiento de fondo sigue activo por diseño
+(reintenta automáticamente cualquier contrato futuro sin directivo), pero
+la pasada de esta sesión ya completó su recorrido sobre las 1854 empresas
+pendientes.

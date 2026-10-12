@@ -1,0 +1,70 @@
+name: Indicadores para revisar (semanal)
+
+# Cola de revisión interna de César (INFORME_BOT_CASOS.md): reglas 1 (posible fraccionamiento, versión estricta) y 2
+# (menor por encima del umbral incluso descontando el IVA) sobre los contratos menores de la base de producción.
+#  - Semanal: las fuentes de menores se actualizan por meses o trimestres; a diario repetiría casi siempre lo mismo.
+#  - Aquí y no en Render: recorre ~2 millones de contratos (~10 min, cientos de MB de memoria).
+#  - El resultado se sube a POST /admin/revision-candidatos y solo lo ve César en /admin/revision. NADA se publica.
+# PRIVACIDAD: el repositorio y sus registros son públicos. El script solo imprime recuentos (sin --muestra) y no se
+# publica ningún artefacto. Mantenerlo así.
+
+on:
+  schedule:
+    - cron: "0 14 * * 6"     # sábados 14:00 UTC: lejos del refresco nocturno (01-07 UTC) y de las pasadas de la BDNS
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: revision-indicios
+  cancel-in-progress: false
+
+jobs:
+  indicios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Base de producción (descarga reanudable)
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          for i in $(seq 1 15); do
+            if curl -sS --fail -C - -o cache.db "https://dinero-publico.com/admin/cache-db?token=${ADMIN_TOKEN}"; then
+              break
+            fi
+            echo "Corte en el intento ${i}, reanudando en 15 s..."
+            sleep 15
+          done
+          resultado=$(python -c "import sqlite3; print(sqlite3.connect('cache.db').execute('PRAGMA integrity_check').fetchone()[0])")
+          echo "cache.db: $(stat -c%s cache.db) bytes, integrity_check=${resultado}"
+          [ "$resultado" = "ok" ] || { echo "::error::cache.db no válido, no se sube nada."; exit 1; }
+
+      - name: Calcular los indicadores (solo recuentos en el registro)
+        run: python backend/indicios_contratos.py --cache cache.db --salida candidatos.ndjson.gz
+
+      - name: Subir a la cola de revisión
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          # Reintento con límite: si la web se está reiniciando (502...), como mucho 5 minutos; después, fallo de verdad.
+          fin=$(( $(date +%s) + 300 ))
+          while true; do
+            codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST -H "Content-Type: application/gzip" \
+              --data-binary @candidatos.ndjson.gz \
+              "https://dinero-publico.com/admin/revision-candidatos?token=${ADMIN_TOKEN}" || echo 000)
+            case "$codigo" in
+              000|502|503|504|520|521|522|523|524)
+                [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
+              200) cat respuesta.json; echo; break ;;
+              *) echo "::error::Subida rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
+            esac
+          done
+          rm -f candidatos.ndjson.gz cache.db respuesta.json

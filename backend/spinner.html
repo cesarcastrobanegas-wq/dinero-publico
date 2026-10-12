@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buscando — Lorca</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+:root{
+  --bg:#0d1117;--surface:#161b22;--border:#30363d;
+  --accent:#f0883e;--blue:#58a6ff;--text:#c9d1d9;--dim:#8b949e;
+  --red:#f85149;--green:#3fb950;--yellow:#d29922;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10;}
+.logo{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:3px;border:1px solid var(--accent);padding:4px 8px;border-radius:3px;}
+header h1{font-size:15px;font-weight:600;}
+header p{font-size:12px;color:var(--dim);margin-top:2px;}
+.main{max-width:1340px;margin:28px auto;padding:0 20px;}
+.search-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:24px;}
+.search-bar label{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--dim);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
+.search-bar input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;padding:8px 12px;border-radius:6px;flex:1;min-width:180px;outline:none;}
+.search-bar input:focus{border-color:var(--blue);}
+.btn{padding:8px 18px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;font-family:'IBM Plex Sans',sans-serif;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-danger{background:var(--red);color:#fff;}
+.stats-bar{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+.stat span{color:var(--accent);font-size:20px;display:block;font-weight:600;}
+/* alertas anticorrupcion */
+.alertas{margin-bottom:18px;display:flex;flex-direction:column;gap:8px;}
+.alerta{border-radius:6px;padding:10px 16px;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:flex-start;}
+.alerta.alto{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.4);color:#f8c4c2;}
+.alerta.medio{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.4);color:#e6c87a;}
+.alerta.info{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);color:var(--text);}
+.alerta-ico{font-size:16px;line-height:1;}
+.alerta-titulo{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;opacity:.7;}
+/* cards municipio */
+.muni-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
+.muni-header{padding:12px 18px;background:rgba(240,136,62,.08);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.muni-header h2{font-size:14px;font-weight:600;color:var(--accent);}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px;background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);}
+.source-bar{padding:5px 18px;font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);padding:9px 14px;text-align:left;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);}
+td{padding:9px 14px;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:top;line-height:1.5;}
+tr:last-child td{border-bottom:none;}
+.empresa{font-weight:600;}
+.contrato-title{font-size:11px;color:var(--dim);margin-top:3px;}
+.importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
+.importe.noloc{color:var(--dim);font-style:italic;font-weight:normal;}
+.directivo{color:var(--blue);}
+.cargo{color:var(--dim);font-size:11px;}
+a.link{color:var(--blue);font-size:11px;}
+.empty{text-align:center;padding:50px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.estado-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;}
+.est-ADJ,.est-RES{background:rgba(63,185,80,.15);color:var(--green);}
+.est-FOR{background:rgba(88,166,255,.15);color:var(--blue);}
+.lid{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
+</style>
+
+<style>
+.sp-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;gap:24px;}
+.sp-ring{width:56px;height:56px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sp-label{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--dim);text-align:center;line-height:2;}
+.sp-label strong{color:var(--accent);}
+.sp-log{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);max-width:600px;width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:12px 16px;max-height:220px;overflow-y:auto;line-height:1.8;}
+.err-box{background:rgba(248,81,73,.1);border:1px solid var(--red);border-radius:8px;padding:20px 28px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--red);display:none;max-width:500px;}
+.err-box a{color:var(--blue);display:block;margin-top:12px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">DINERO&nbsp;PÚBLICO</div>
+  <div><h1>Contratos Públicos · Región de Murcia</h1>
+  <p>Datos oficiales: Plataforma de Contratación del Sector Público (PLACE)</p></div>
+</header>
+<div class="main">
+  <div class="sp-wrap">
+    <div class="sp-ring" id="ring"></div>
+    <div class="sp-label">Analizando contratos de <strong>Lorca</strong><br>
+    Descargando datos oficiales del Ministerio de Hacienda…</div>
+    <div class="sp-log" id="log">Iniciando…</div>
+    <div class="err-box" id="err"><span id="errmsg"></span><a href="/">← Volver</a></div>
+  </div>
+</div>
+<script>
+const JOB="90d6fe07-182e-4bcf-8d30-914184252454";
+const logEl=document.getElementById("log");
+async function poll(){
+  try{
+    const r=await fetch("/api/job/"+JOB);
+    const d=await r.json();
+    if(d.log&&d.log.length)logEl.innerHTML=d.log.map(l=>`<div>${l}</div>`).join("");
+    logEl.scrollTop=logEl.scrollHeight;
+    if(d.status==="done"){window.location.href="/";return;}
+    if(d.status==="error"){
+      document.getElementById("ring").style.display="none";
+      document.getElementById("errmsg").textContent="Error: "+(d.error||"desconocido");
+      document.getElementById("err").style.display="block";
+      return;
+    }
+    setTimeout(poll,1200);
+  }catch(e){setTimeout(poll,2500);}
+}
+poll();
+</script></body></html>

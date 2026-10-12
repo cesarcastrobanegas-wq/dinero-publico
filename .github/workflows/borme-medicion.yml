@@ -1,0 +1,96 @@
+name: Medición del cruce con el BORME (solo recuentos)
+
+# Mide, SIN tocar producción, cuántas sociedades adjudicatarias tendrían administrador según el BORME con el índice
+# diario (2021-hoy) y con el histórico (2009-2020) que haya en la caché. Solo se lanza a mano.
+#
+# El repositorio es PÚBLICO: este flujo imprime únicamente recuentos e importes agregados (nunca nombres de personas
+# ni de empresas, ni muestras), no sube artefactos y no envía nada a la web. Baja la base de producción solo para leer
+# la lista de adjudicatarios y la borra al terminar.
+
+on:
+  workflow_dispatch:
+    inputs:
+      rama:
+        description: "Rama con el generador a medir"
+        default: "main"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: borme-medicion
+  cancel-in-progress: false
+
+jobs:
+  medir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.rama }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependencias
+        run: pip install requests
+
+      - name: Índice diario del BORME (caché, solo lectura)
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/borme_actos.db
+          key: borme-actos-medicion-no-existe
+          restore-keys: borme-actos-
+
+      - name: Índice histórico (caché, solo lectura)
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/borme_actos_historico.db
+          key: borme-historico-medicion-no-existe
+          restore-keys: borme-historico-
+
+      - name: Base de producción (descarga reanudable, solo lectura)
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          for i in $(seq 1 15); do
+            if curl -sS --fail -C - -o cache.db "https://dinero-publico.com/admin/cache-db?token=${ADMIN_TOKEN}"; then
+              break
+            fi
+            echo "Corte en el intento ${i}, reanudando en 15 s..."
+            sleep 15
+          done
+          resultado=$(python -c "import sqlite3; print(sqlite3.connect('cache.db').execute('PRAGMA integrity_check').fetchone()[0])")
+          echo "cache.db: $(stat -c%s cache.db) bytes, integrity_check=${resultado}"
+          [ "$resultado" = "ok" ] || { echo "::error::cache.db no válido."; exit 1; }
+
+      - name: Estado de los índices
+        run: |
+          cd backend
+          python borme_actos.py estado
+          if [ -f borme_actos_historico.db ]; then
+            python borme_actos.py estado --db borme_actos_historico.db
+            echo "Días laborables del histórico aún sin descargar: $(python borme_actos.py pendientes --desde 2020-12-31 --hasta 2009-01-02 --db borme_actos_historico.db)"
+          else
+            echo "Todavía no hay índice histórico en la caché."
+          fi
+
+      - name: "Como hoy: 2021-hoy, primera grafía de cada NIF"
+        run: python backend/administradores_borme.py --cache cache.db --sin-historico --solo-primera-grafia --solo-recuentos
+
+      - name: "A: 2021-hoy, todas las grafías de cada NIF"
+        run: python backend/administradores_borme.py --cache cache.db --sin-historico --solo-recuentos
+
+      - name: "A + B: con el histórico 2009-2020"
+        run: |
+          if [ -f backend/borme_actos_historico.db ]; then
+            python backend/administradores_borme.py --cache cache.db --solo-recuentos
+          else
+            echo "Sin índice histórico: no se mide."
+          fi
+
+      - name: Borrar la base
+        if: always()
+        run: rm -f cache.db

@@ -1,0 +1,101 @@
+name: Subvenciones de la BDNS (diario)
+
+# Pestaña "Subvenciones" de Convocatorias abiertas (decisión de César 2026-10-04). Ver backend/subvenciones_bdns.py.
+#  - La BDNS no permite pedir "solo las abiertas" y el plazo solo viene en el detalle de cada convocatoria: hay que
+#    pedirlas una a una, a 1 por segundo. La carga inicial desde 2024 (~200.000) se reparte en varias noches; el
+#    progreso se guarda en la caché de Actions (bdns.db) y cada noche sigue donde lo dejó la anterior.
+#  - Después, cada noche: convocatorias nuevas y revisión de las que no publican fecha fin.
+#  - Se sube a Render (POST /admin/subvenciones) un NDJSON con las que no están cerradas por fechas; la web lo carga
+#    línea a línea y sustituye la tabla de golpe. Gratis: Actions no cobra en repositorios públicos.
+# Los registros solo muestran recuentos; no se publica ningún artefacto.
+
+on:
+  schedule:
+    # Dos pasadas al día (mismo ritmo de 1 petición por segundo) para que la carga inicial dure ~1 semana y no ~2;
+    # ninguna coincide con el refresco nocturno de contratos (01:00-07:00 UTC), que es el que carga Render.
+    - cron: "15 19 * * *"
+    - cron: "15 7 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write          # solo para el aviso único de carga completa (ver el último paso)
+
+concurrency:
+  group: subvenciones-bdns
+  cancel-in-progress: false
+
+jobs:
+  subvenciones:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependencias
+        run: pip install requests
+
+      - name: Estado guardado (caché)
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/bdns.db
+          key: bdns-${{ github.run_id }}
+          restore-keys: bdns-
+
+      - name: Convocatorias nuevas y pendientes (1 petición por segundo)
+        run: python backend/subvenciones_bdns.py actualizar --desde 2024-01-01 --minutos 300
+
+      - name: ¿Carga inicial completa?
+        id: carga
+        run: python backend/subvenciones_bdns.py carga-completa --desde 2024-01-01
+
+      - name: Guardar el estado en la caché
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: backend/bdns.db
+          key: bdns-${{ github.run_id }}
+
+      - name: Exportar y subir a Render
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          python backend/subvenciones_bdns.py exportar --salida subvenciones.ndjson.gz
+          # Reintento con límite (2026-10-05): si la web se está reiniciando (cada guardado en main la redespliega),
+          # se reintenta ante 502/503/504/sin respuesta durante como mucho 5 minutos; después, fallo de verdad.
+          fin=$(( $(date +%s) + 300 ))
+          while true; do
+            codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 600 -X POST -H "Content-Type: application/gzip" \
+              --data-binary @subvenciones.ndjson.gz \
+              "https://dinero-publico.com/admin/subvenciones?token=${ADMIN_TOKEN}" || echo 000)
+            case "$codigo" in
+              000|502|503|504|520|521|522|523|524)
+                [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
+              200) cat respuesta.json; echo; break ;;
+              *) echo "::error::Subida rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
+            esac
+          done
+          rm -f subvenciones.ndjson.gz
+
+      # Aviso a César, UNA sola vez (la marca queda en bdns.db): cuando la carga inicial termina, para que decida si
+      # activa la pestaña de Subvenciones. Dos vías, por si una no llega: un issue (GitHub manda correo por cada issue
+      # nuevo del repositorio) y este paso terminando en error a propósito (mismo correo "Run failed" que los fallos).
+      - name: Aviso - issue de carga completa
+        if: always() && steps.carga.outputs.completa == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "${{ github.repository }}" \
+            --title "Carga de subvenciones completa: lista para activar la pestaña" \
+            --body "La carga inicial de la BDNS (desde 2024) ha terminado: ${{ steps.carga.outputs.total }} convocatorias con detalle y ninguna pendiente. La web ya tiene los datos; la pestaña Subvenciones de Convocatorias abiertas sigue oculta hasta que se active (CONVOCATORIAS_SUBVENCIONES=1). A partir de ahora cada pasada solo trae las nuevas y revisa las que no publican fecha fin. Aviso automático de subvenciones-bdns.yml (solo se envía una vez)."
+
+      - name: "AVISO: carga de subvenciones completa (no es un error)"
+        if: always() && steps.carga.outputs.completa == 'true'
+        run: |
+          echo "::error::AVISO, no es un error: la carga inicial de subvenciones ha terminado (${{ steps.carga.outputs.total }} convocatorias). Ya se puede activar la pestaña. Este paso falla a propósito una sola vez para que llegue el correo de GitHub."
+          exit 1

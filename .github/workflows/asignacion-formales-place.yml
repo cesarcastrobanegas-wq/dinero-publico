@@ -1,0 +1,87 @@
+name: Asignación de los formales de PLACE por jerarquía y DIR3 (fase 2, una vez)
+
+# Recorre los ZIP mensuales de contratos formales de PLACE y calcula el destino de cada licitación adjudicada de una
+# entidad local con asignador_place.py: su municipio (por la jerarquía oficial del órgano o su DIR3) o una entidad
+# propia (diputación, cabildo, mancomunidad, consorcio...). Solo se lanza a mano. No toca producción ni usa su base.
+#
+# El repositorio es público:
+#   - el ARTEFACTO lleva solo identificadores de licitación, municipios y nombres de entidades públicas;
+#   - los contratos completos (con adjudicatarios) que necesitará el paso siguiente se quedan en la CACHÉ de Actions,
+#     junto con el registro por meses que permite reanudar; no salen en los registros.
+# Si no termina en una ejecución (plazo, o corte del cortafuegos de PLACE), se vuelve a lanzar y continúa.
+
+on:
+  workflow_dispatch:
+    inputs:
+      rama:
+        description: "Rama con el generador"
+        default: "main"
+      desde:
+        description: "Mes más reciente (AAAAMM)"
+        default: "202610"
+      hasta:
+        description: "Mes más antiguo (AAAAMM)"
+        default: "202109"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asignacion-formales-place
+  cancel-in-progress: false
+
+jobs:
+  asignacion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.rama }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependencias
+        run: pip install -r requirements.txt
+
+      - name: Meses ya procesados (caché)
+        uses: actions/cache/restore@v4
+        with:
+          path: asignacion_place
+          key: asignacion-place-${{ github.run_id }}
+          restore-keys: asignacion-place-
+
+      - name: Leer los ZIP mensuales y asignar
+        id: generar
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          mkdir -p asignacion_place
+          cd backend
+          codigo=0
+          python generar_asignacion_place.py "${{ inputs.desde }}" "${{ inputs.hasta }}" --salida ../asignacion_place --minutos 290 || codigo=$?
+          echo "codigo=${codigo}" >> "$GITHUB_OUTPUT"
+          ls ../asignacion_place/reg | wc -l
+          if [ "$codigo" = "2" ]; then echo "::warning::Incompleto: volver a lanzar el flujo para continuar."; elif [ "$codigo" != "0" ]; then exit "$codigo"; fi
+
+      # always(): si algo falla, los meses ya hechos no se pierden.
+      - name: Guardar el avance en la caché
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: asignacion_place
+          key: asignacion-place-${{ github.run_id }}
+
+      - name: Resultado (artefacto, sin adjudicatarios)
+        if: steps.generar.outputs.codigo == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: asignacion-place
+          path: |
+            asignacion_place/asignacion_place.json.gz
+            asignacion_place/asignacion_place_resumen.txt
+            asignacion_place/asignacion_place_entidades.json
+          if-no-files-found: error
+          retention-days: 7

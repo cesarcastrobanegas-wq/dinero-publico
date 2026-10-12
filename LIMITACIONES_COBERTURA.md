@@ -1,0 +1,1385 @@
+# Limitaciones de cobertura conocidas — Dinero Público
+
+Documento de referencia, no exhaustivo pero sí verificado contra el código y los
+datos reales (`backend/cache.db`) a fecha 2026-08-18. Cada punto indica si es un
+límite real de la fuente de datos (no arreglable sin una fuente nueva), una
+decisión deliberada de alcance, o algo pendiente de hacer.
+
+## Alcance temporal: solo los últimos 5 años (decisión de César, 2026-09-25)
+
+- **Regla**: solo interesan contratos (menores y formales) de los últimos cinco años; a 2026-09-25 eso es
+  desde el **2021-09-01**. Para menores vive en `MENORES_DESDE_FECHA` (`backend/app.py`) y en `DESDE_FECHA` del
+  script manual; el generador del backfill gallego de PLACE tiene su suelo en `MES_MINIMO = "202109"`.
+  Con el paso del tiempo hay que subir esas constantes a mano.
+- **Menores — aplicado (2026-09-26)**: `_guardar_contratos_menors_locales` (punto único de escritura) descarta lo
+  anterior al corte, y el arranque **archiva, no borra** (`_archivar_menores_fuera_de_ventana`) las filas ya
+  cargadas en la tabla `contratos_menors_archivo`. Snapshot de las 9.650 filas del 2026-09-26 (Galicia 3.784,
+  Cataluña RPC 5.828, Lorquí 37, Torre Pacheco 1; 27,2 M€) en
+  `backend/historico/contratos_menores_anteriores_2021-09.json.gz`. Las filas sin fecha (Fuente Álamo, 801) se conservan.
+- **Formales — decidido y aplicado (2026-09-27)**: la auditoría del 2026-09-26 (PSCP 6.570/74.731 filas fuera de
+  ventana, 8,8 %; Euskadi 7.226/20.093, 36 %; Navarra sin medir) llevó a la misma decisión que menores: recortar
+  a 5 años, archivando (nunca borrando) lo que queda fuera. Ver el detalle completo, qué cambió en el código y
+  cómo se limpió lo que ya estaba guardado en la sección **"Alcance de 5 años en contratos formales de PSCP/
+  Euskadi/Navarra"**, más abajo en este mismo documento (nota: en un resumen anterior esta misma noche este punto
+  se dejó escrito como "pendiente de decisión" a la vez que ya se describía como aplicado más abajo —
+  contradicción señalada por César el 2026-09-27 y corregida aquí).
+
+## Contratos menores
+
+- **Cataluña (Girona/Lleida/Barcelona/Tarragona)**: se consulta el dataset RPC
+  de la Generalitat (`hb6v-jcbf`) para los 987 municipios reales, pero:
+  - **Sin NIF y sin URL por expediente** — la fuente no publica ninguno de
+    los dos campos.
+  - **53/221 Girona, 79/231 Lleida, 45/309 Barcelona, 21/181 Tarragona**
+    (238/987 en total, ~24%) devuelven 0 filas. No se puede distinguir si es
+    porque de verdad no hubo contratos menores o porque ese ayuntamiento no
+    los reporta al registro de la Generalitat — los contratos menores no
+    tienen obligación legal de publicación centralizada.
+- **Murcia** (actualizado 2026-09-24): 9 de los 45 municipios tienen una fuente propia
+  (**Lorca, Lorquí, Mula, Molina de Segura, Fuente Álamo, Cartagena, Murcia capital,
+  San Pedro del Pinatar, Torre Pacheco**) — los otros 36 no tienen ninguna fuente
+  conectada, no es que "salga 0", es que nunca se consulta nada para ellos. No existe
+  un dataset regional único como el RPC catalán para Murcia. Descartados tras verificar
+  (2026-09-24): Caravaca de la Cruz (su sección de menores está vacía), San Javier (se
+  detiene en 2021 y son decretos/facturas, no un listado), Los Alcázares (solo publica
+  los financiados por Agenda Urbana y PRTR, no todos), Alhama de Murcia (portal de
+  transparencia en mantenimiento, reintentar), Totana (archivo con una sola entrada de 2015 sin
+  adjudicatario ni importe; fichas de 2019 en fase de licitación), Yecla (su portal Governalia
+  está archivado/suspendido, HTTP 410; las páginas antiguas de la JGL dan 404), Alcantarilla y
+  Cieza (2026-09-30: ambas solo enlazan a la Plataforma de Contratación del Estado genérica desde
+  su portal de transparencia, sin dataset propio -- mismo caso que Elche/Albacete).
+  - **Cartagena** (2026-09-24, sin desplegar al escribir esto): el portal propio solo devuelve
+    2026; 2022-2025 se recuperan de su portal Governalia (`app.governalia.es`, idP=47226), un
+    espejo de lo que Cartagena comunica a PLACE (13.560 filas, fuente `cartagena-governalia`).
+    No es la misma lista que el portal propio (se solapan ~62 % en 2026), por eso solo se usa
+    hasta 2025. Importes: portal propio CON IVA, Governalia SIN IVA. Arrastra errores de origen:
+    992 filas con adjudicado 0 (se dejan a 0) y un "menor" de 6.000.000 € (id 39918, feria de
+    Málaga 2025, mismo importe en PLACE; se muestra tal cual con una nota visible en su fila, `_NOTAS_CONTRATO_MENOR` en app.py, lista cerrada revisada a mano, no una regla por importe).
+  - Mula y Molina de Segura se cargan **a mano** (`actualizar_contratos_menores_murcia_manual.py`,
+    necesita odfpy/openpyxl) — no están en el cron diario. Si nadie relanza
+    el script, esos datos se quedan congelados sin ningún aviso.
+- **Estado (2026-08-18): DONE.** Se añadió un aviso visible (`.cm-aviso` en
+  `app.py`, dentro de `render_html`) en la ficha de cualquier municipio real
+  (no pseudo-municipio) sin ninguna fila en `contratos_menors_locales`,
+  explicando que los contratos menores no siempre tienen obligación de
+  publicación centralizada y que cualquier vecino o concejal puede
+  solicitarlos formalmente al ayuntamiento por vía de acceso a la información
+  pública (enlace a la Ley 19/2013 + búsqueda del portal de transparencia del
+  ayuntamiento). Verificado con Playwright en desktop y móvil (390px), sin
+  overflow, y confirmado que NO aparece en pseudo-municipios (Región de
+  Murcia, AGE, UMU, Provincia de X) ni en municipios que sí tienen datos
+  (Lorca).
+
+## Contratos menores — País Vasco vía API de Euskadi (2026-09-27)
+
+- **Descubrimiento**: la misma API REST de Euskadi que ya usábamos para contratos formales
+  (`api.euskadi.eus/procurements/contracts`, `contracting-authority-id` numérico sin ambigüedad) acepta
+  `minor-contract=true` en vez de `false` y devuelve los contratos MENORES de cada ayuntamiento, con la MISMA
+  fecha real de adjudicación (`awardDate`) que los formales. Cubre los 251 municipios ya mapeados en
+  `MUNICIPIOS_PAIS_VASCO_EUSKADI_ID` — el 100 % de los municipios vascos que el proyecto ya tiene conectados —
+  de una sola vez, sin necesitar ayuntamiento a ayuntamiento.
+- **Generador**: `backend/actualizar_contratos_menores_euskadi.py` (cadencia manual/periódica, mismo patrón que
+  `actualizar_contratos_menores_murcia_manual.py`), fichero `backend/contratos_menores_euskadi.json.gz`, cargador
+  `_cargar_contratos_menores_euskadi` en `app.py` (arranque, upsert idempotente sobre `contratos_menors_locales`).
+  Alcance de 5 años aplicado en el propio generador (se descarta lo anterior a `MENORES_DESDE_FECHA`, igual que en
+  el resto de fuentes de menores). Sanity check de importe (más de ~50.000 € = por encima del techo legal de un
+  contrato menor de obras con margen de IVA) impreso al final del generador para revisión manual, sin excluir nada
+  automáticamente (mismo criterio que el resto del proyecto: nunca se adivina, se anota).
+- **Cobertura final (2026-09-27, completada tras la relanzada de las 7 ciudades grandes): 178.221 contratos
+  menores en los 251 municipios** (113 sin ninguno). Volumen muy alto en los municipios grandes de Gipuzkoa/
+  Bizkaia (Irun 19.748, Hernani 17.902, Errenteria 14.461, Tolosa 10.402, Eibar 8.851) — puede ser real (compra
+  muy fragmentada) o reflejar cómo la propia API cuenta/agrupa entradas; sin confirmar, anotado para revisar con
+  calma.
+- ~~Cobertura PARCIAL conocida en 7 municipios grandes~~ **completada (2026-09-27)**: el tope de tiempo real
+  (900 s, no el de páginas) cortaba antes de terminar en las ciudades más grandes -- subido a 4.000 s y
+  relanzadas las 7 una a una. Resultado real por ciudad (antes → después): Eibar 8.851→8.851 (ya estaba
+  completo, el tope antiguo no perdía nada dentro de la ventana de 5 años), Elgoibar 7.435→7.435 (igual),
+  Getxo 7.280→7.280 (igual), Tolosa 10.000→10.402, **Errenteria 10.000→14.461** (+44 %), **Hernani
+  10.000→17.902** (+79 %), **Irun 10.000→19.748** (+97 %) — la API devuelve los contratos por fecha
+  descendente, así que el tope antiguo ya capturaba casi todo lo reciente en la mayoría de los casos; donde no
+  (Errenteria/Hernani/Irun) la ganancia es real y sustancial. Verificado contra copia real de producción antes
+  de subir.
+- **Aviso automático de importes sospechosos**: 39 de las 178.221 filas superan los 100.000 € (hasta 8.447.000 €
+  en Loiu por "retirada de columnas de antiguo alumbrado", 4.839.353 € en Deba por instalar césped artificial en
+  una pista de tenis...) — mismo tipo de error de origen que el caso Prismaglobal/Vitoria-Gasteiz de noches
+  anteriores, pero sin URL por contrato para verificarlo uno a uno y con demasiado volumen para curarlos a mano
+  como esos casos. `app.py` muestra un aviso automático (`EUSKADI_MENOR_IMPORTE_SOSPECHOSO = 100.000`) en
+  cualquier fila de esta fuente por encima de ese umbral, en vez de ocultarla o inventar una cifra corregida.
+  Portugalete concentra 13 de los 39 casos — posible problema específico de esa fuente/municipio, sin confirmar.
+  4 filas (de 178.221) tienen fecha de adjudicación futura (hasta 2029) — mismo tipo de dato imposible ya
+  documentado para los formales de Euskadi arriba; se dejan tal cual, sin excluir.
+
+## Contratos menores — mapeo de agregadores regionales, resto de España (2026-09-27)
+
+Comprobado esta noche (no solo buscado: consulta real a la API/CKAN de cada portal) si existe, para otras
+comunidades, un agregador regional equivalente al RPC catalán (que si cubre ayuntamientos) o al CKAN de la Región
+de Murcia:
+
+- **Comunidad de Madrid** (`datos.comunidad.madrid`, CKAN): sin ningún dataset de contratos menores municipales;
+  su búsqueda por "contratos menores ayuntamiento" no devuelve nada relevante (solo estadísticas de contratos
+  laborales y parque de vehículos). El portal de datos abiertos del propio Ayuntamiento de Madrid (`datos.madrid.es`)
+  sí tiene un dataset de contratos menores, pero es solo del Ayuntamiento de Madrid capital, no de otros municipios
+  de la Comunidad.
+- **Castilla y León** (`analisis.datosabiertos.jcyl.es/explore/dataset/contratos-menores/`, OpenDataSoft):
+  128.119 filas, pero **verificado contra el propio dataset** (campo `organo`): son todas de la Junta de Castilla y
+  León (Consejerías, Delegaciones Territoriales) — la administración AUTONÓMICA, no los ayuntamientos. No sirve
+  para cobertura municipal.
+- **Comunitat Valenciana** (`dadesobertes.gva.es`, CKAN + "Consulta Contractes de la Generalitat"): la búsqueda
+  CKAN por "contractes menors ajuntament" no devuelve ningún dataset; la consulta de contractes es de la
+  Generalitat, no de los ayuntamientos.
+- **Aragón** (`opendata.aragon.es`): el dataset de contratos es "Contratos Gobierno de Aragón" — la administración
+  autonómica, mismo patrón.
+- **Illes Balears**: el Registre de Contractes (CAIB) es también de la administración autonómica balear y su
+  sector público instrumental, no de los ayuntamientos.
+- **Castilla-La Mancha**: el Portal de Contratación (`contratacion.castillalamancha.es`) publica los contratos
+  menores del sector público REGIONAL en el perfil del contratante de la Plataforma de Contratación del Estado,
+  no un registro agregado de los ayuntamientos.
+- **Conclusión**: de las comunidades comprobadas, **solo Cataluña (RPC) y la Región de Murcia (CKAN de
+  datosabiertos.regiondemurcia.es, ya conectado) tienen un agregador real que cubre ayuntamientos**. Para el resto
+  (Madrid, Castilla y León, Comunitat Valenciana, Aragón, Illes Balears, Castilla-La Mancha, y las que faltan por
+  comprobar: Andalucía, Galicia [ya con backfill PLACE propio], Extremadura, Cantabria, La Rioja, Canarias,
+  Asturias, Navarra) la única vía es ayuntamiento a ayuntamiento, como ya se viene haciendo. **País Vasco es un
+  caso especial resuelto de otra forma**: no por un agregador de contratos menores dedicado, sino porque su
+  API de contratación (Euskadi, ver más arriba) sirve formales y menores con el mismo mecanismo.
+
+### Investigación ayuntamiento a ayuntamiento por población (2026-09-27/28, en curso)
+
+Para las seis comunidades sin agregador, se investiga empezando por el municipio más poblado de cada una (solo
+fuentes oficiales; cualquier lead de agregador/prensa se marcaría "sin confirmar", pero no ha hecho falta esta
+ronda porque todo lo encontrado es fuente primaria municipal).
+
+**Estado a 2026-10-01**: 23 municipios CONECTADOS en total (Madrid capital, Valencia capital, Alicante,
+Móstoles, Getafe, Leganés, Toledo, Palma, Fuenlabrada, Alcalá de Henares, Valladolid, Zaragoza, Ciudad Real,
+Burgos, Castelló de la Plana, Xirivella, Santa Brígida, Alzira, Las Palmas de Gran Canaria, Torrent, Badajoz,
+San Cristóbal de La Laguna, Arona, Salamanca — **138.659 contratos** entre los veintitrés), varios confirmados
+sin fuente viable tras investigación real, no solo una búsqueda superficial (Elche, Albacete, Alcorcón,
+Huesca, Teruel...). Detalle completo por municipio abajo.
+
+- **Madrid capital (~3,3 M hab., con diferencia el mayor municipio de los seis) — CONECTADO esta noche**: dataset
+  oficial "Contratos menores" de `datos.madrid.es` (id 300253, Dirección General de Contratación y Servicios),
+  CSV mensual desde 2015, con NIF. Ver conector `actualizar_contratos_menores_madrid_capital.py` — 27.959
+  registros desde 2021-09. El resto de municipios de la Comunidad de Madrid sigue sin agregador (ver arriba);
+  cada uno necesitaría su propia investigación.
+- **Zaragoza (~675.000 hab., Aragón) — CONECTADO (2026-09-30), tras revisar la documentación oficial de OCDS**:
+  la API OCDS que el Ayuntamiento documenta como preferente (`zaragoza.es/sede/servicio/contratacion-publica/
+  ocds`) tiene la paginación genuinamente rota (ver detalle histórico más abajo, dejado como referencia). La
+  clave para desbloquearlo fue leer su propio PDF de política de publicación
+  (`Politica_Publicacion_OCDS.pdf`), que menciona de pasada una "API no estándar... utilizada para los
+  servicios de visualización" -- esa API SÍ funciona: `contratacion-publica/contrato.json?contratoMenor=true`
+  (documentada en su catálogo Swagger, `zaragoza.es/sede/catalogo/api.json`, tag "Ayuntamiento: Contratacion
+  publica"). Paginación `start`/`rows` real y verificada (páginas de 500, sin solapes, `totalCount` estable:
+  3.887 contratos menores en total en la fuente). Cada contrato trae sus `ofertas`, con la ganadora
+  (`ganador: true`) incluyendo fecha real de adjudicación, importe con y sin IVA, y el NIF+nombre del
+  adjudicatario. **1.085 registros desde 2021-09** (conector `actualizar_contratos_menores_zaragoza.py`). Dato
+  de calidad verificado: solo 3 filas sin NIF y 0 sin fecha/descripción; 2 filas (de 1.085) superan claramente
+  el techo legal de un contrato menor pese a venir marcadas `contratoMenor: true` por la propia fuente
+  (probablemente error de etiquetado de origen, uno de ellos un contrato de obras por lotes de varios
+  millones de euros) -- se muestran tal cual con un aviso visible en la ficha (mismo mecanismo que Madrid
+  capital con `MADRID_CAPITAL_MENOR_IMPORTE_ALTO`), nunca se excluyen ni se corrigen.
+  - *Detalle histórico de por qué la vía OCDS "estándar" no sirve, dejado como referencia por si el
+    Ayuntamiento la arregla en el futuro*: el endpoint `/ocds/award.json` funciona sin filtro (`?rows=N`,
+    formato en la EXTENSIÓN, no en `?rf=...`) y devuelve awards reales desde 2016-04-14 en adelante, pero
+    `after`/`before` siempre devuelve `{"totalCount":0,...}`; `sort=-date` no cambia el orden; **`start` se
+    ignora por completo** (`start=0` y `start=100000` devuelven exactamente los mismos registros); `rows` tiene
+    un tope duro entre 1.300 y 1.400. El endpoint `/ocds/contracting-process.json` (el índice OCDS de
+    procesos completos) sí admite `rows` grandes sin tope (devuelve sus 5.755 registros de golpe con
+    `rows=100000`), pero solo da pares `{ocid, id}` -- no hay forma documentada ni probada de pedir el
+    detalle completo de un proceso por id (`/ocds/contracting-process/{id}.json` da 400 "no válido").
+- **Ciudad Real (~75.000 hab., Castilla-La Mancha) — CONECTADO (2026-09-30), "prueba otra vía" tras
+  Zaragoza**: sin buscar portal de transparencia separado ni dataset abierto -- la propia página del perfil
+  de contratante (`ciudadreal.es/ayuntamiento/perfil-contratante/contratos-menores.html`) trae un acordeón con
+  un año por sección, 2020-2026, todo en el mismo HTML. Dos eras conviven en la misma página:
+  - **2020-2024**: cada contrato es un bloque de texto libre embebido en el propio HTML (nada descargable) con
+    4 campos siempre en el mismo orden (objeto/duración/importe con IVA/adjudicatario) -- **sin fecha real de
+    adjudicación ni NIF**. 2020 y 2021 se excluyen enteros por ser ambiguos frente al corte de 2021-09
+    (mismo criterio que el fichero "2021" de Toledo).
+  - **2025 en adelante**: la fuente pasó a publicar XLSX descargables (trimestrales en 2025, acumulativo desde
+    2026) con NIF y fecha real de adjudicación, pero SIN objeto/descripción del contrato.
+  **1.520 registros desde 2022** (`actualizar_contratos_menores_ciudad_real.py`, fuente `ciudad_real`). Tres
+  bugs reales de parseo encontrados y corregidos verificando los importes más altos del resultado (patrón ya
+  habitual en este proyecto -- nunca se descubren mirando solo el recuento total):
+  1. En la era de texto libre, un punto o coma suelto de cierre de frase ("...IVA incluido.") se colaba pegado
+     al número y lo multiplicaba por 100 (5.340,00 → 534.000,00) -- se recortan los separadores sueltos del
+     final antes de parsear.
+  2. También en texto libre, un inciso entre paréntesis como "IVA (10%) y portes incluidos" metía el "10" del
+     porcentaje pegado al número real y lo multiplicaba por 10 (9.147,75 → 91.477.510,00) -- se corta el texto
+     en el primer "€"/"IVA" antes de extraer el número.
+  3. En la era XLSX, ~10 filas de miles tienen la celda de `importe_con_iva` corrupta con una FECHA (`datetime`)
+     en vez de un número -- error de tecleo/formato de la propia fuente al rellenar la hoja. Convertir ese
+     datetime a texto y parsearlo como número daba cifras de billones de euros. Se usa `importe_sin_iva` como
+     alternativa; en la única fila donde esa celda TAMBIÉN estaba corrupta, se deja el importe en 0 -- no se
+     inventa un valor.
+- **Burgos (~175.000 hab., Castilla y León) — CONECTADO (2026-09-30), "prueba otra vía"**: la página
+  `aytoburgos.es/contratos-menores` es una biblioteca de documentos (Liferay) con ~49 PDF subidos a mano
+  desde 2020, **con nombres de fichero totalmente engañosos** -- el mismo tipo de informe aparece como
+  "Contratos+Menores+1ºT.pdf", "AYTOBURGOSTOTALDEFINITIVO.pdf", "Documento+Final.pdf" o, el caso más
+  llamativo, "CONTRATOS_TRABAJO...pdf"/"Trabajo.pdf"/"trabajo+definitivo.pdf" (nombres que sugieren personal
+  laboral, pero que al abrirlos son "RELACIÓN CONTRATOS MENORES" -- contratación pública normal). Se
+  clasificaron los 49 por su TÍTULO REAL (primera línea de cada PDF), no por el nombre del fichero: 27 son
+  listados por contrato ("CONTRATOS MENORES..."), 22 son solo totales por departamento ("DATOS AGREGADOS"/
+  "AGRUPADOS", sin adjudicatario ni fecha, descartados sin ambigüedad). **6.061 registros desde 2021-09**
+  (`actualizar_contratos_menores_burgos.py`, fuente `burgos`), cobertura casi continua de 2021 a 2026.
+  Tres plantillas de columnas distintas conviven en esos 27 PDF (la cabecera cambia de formato con los años,
+  a veces hasta el orden de las columnas), así que se detectan por el TEXTO de cada cabecera, nunca una
+  posición fija -- igual que Palma/Fuenlabrada. Dos bugs reales de parseo encontrados y corregidos revisando
+  los importes más altos del resultado:
+  1. En la plantilla de 2025, la palabra de cabecera "FECHA" está desplazada más a la derecha que donde de
+     verdad se renderiza el VALOR de la fecha en cada fila -- el valor caía dentro de la columna IMPORTE y se
+     concatenaba con el importe real, multiplicándolo por billones (393,25 + 18/02/2025 → una cifra de
+     billones de euros). Se corrigió extrayendo FECHA e IMPORTE por PATRÓN (regex), no por posición X.
+  2. Un margen de menos de una milésima de punto entre el ancla de una columna (tomada de la cabecera) y la
+     posición real de una palabra de datos (variación de renderizado entre páginas) bastaba para que esa
+     palabra cayera en la columna vecina -- se añadió un margen de tolerancia de 1,5pt a cada frontera de
+     columna.
+  Sin NIF en ninguna de las tres plantillas. Quedan ~9/6.061 filas (0,15 %) con objeto vacío y ~14 (0,23 %)
+  sin adjudicatario reconocible -- registros cuyo nombre/objeto se envuelve en más de dos líneas seguidas y
+  el buffer de continuación no los recompuso del todo; aceptado como límite residual, mismo orden de magnitud
+  que Alcalá de Henares.
+- **Castelló de la Plana (~175.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-30), "prueba otra vía"**:
+  la investigación previa solo había encontrado decretos individuales en PDF/ODS/XLS, sin dataset único. La
+  vía real es la misma que ya usan Cartagena/Torre Pacheco/Ibi/Sax/Vilamarxant: una API de **Governalia**,
+  espejo de PLACE, en este caso en host propio (`governalia.castello.es`). La dificultad no era la API en sí
+  (funciona igual que las demás) sino encontrar su **idP** (identificador de entidad que la API exige) --
+  no aparece en ningún enlace visible de la web, solo dentro de una llamada JS
+  `gvnLoadTransEgobProcurements(53855, 'es', ...)` embebida en el contenido de la página
+  `transparencia.castello.es/es/contratos/`, encontrada consultando la API REST de WordPress de esa página
+  (`wp-json/wp/v2/pages/4541`) en vez de su HTML ya renderizado (el visor real vive en un iframe que carga
+  esa llamada por JS, invisible a un fetch simple). Añadido como una fuente más de `_governalia_menores()`
+  (la función genérica ya compartida con Cartagena/Ibi/Sax/Vilamarxant, en
+  `actualizar_contratos_menores_murcia_manual.py`), fuente `castello-governalia`. **4.407 registros desde
+  2021-09** (de 4.866 filas totales de la API). Igual que el resto de fuentes Governalia: importe adjudicado
+  SIN IVA, NIF del adjudicatario, fecha real -- 0 filas sin NIF/fecha/descripción, solo 1 con importe 0
+  (el propio ayuntamiento no lo rellenó, no inventado).
+- **Xirivella (Comunitat Valenciana) y Santa Brígida (Gran Canaria) — CONECTADOS (2026-09-30), encontrados a
+  partir de una cabecera HTTP**: al investigar Castellón se guardó la cabecera `Content-Security-Policy` que
+  devuelve su servidor Governalia en cada 503 -- esa cabecera lista, en `frame-ancestors`, TODOS los dominios
+  `transparencia.*.es` autorizados a embeber ese servidor, es decir, una lista real de clientes de Governalia:
+  `xirivella.es`, `tudela.es`, `santabrigida.es`, `alzira.es`, `castillalamancha.es` (este último, la Junta,
+  no un municipio). Se probaron los 4 municipios con el mismo patrón `governalia.<municipio>.es` +
+  la técnica del `wp-json/wp/v2/pages/4541` de Castellón: **Xirivella** (idP 63665, **815 registros desde
+  2021-09** de 816 filas de la API) y **Santa Brígida** (idP 70489, **301 registros desde 2021-09**, 301/301
+  filas) funcionan igual que Castellón (0 filas sin NIF/fecha en ninguno de los dos). **Tudela** (Navarra) dio
+  un idP real pero la API devuelve 0 filas -- no se activó como fuente. **Alzira** también se cerró un rato
+  después: su dominio de transparencia real es `contractes.alzira.es` (WordPress), NO
+  `transparencia.alzira.es` (un portal Liferay antiguo y distinto, que es por lo que no se había encontrado
+  antes al buscar); idP 65247, **3.825 registros desde 2021-09** (de 3.830 filas de la API), 0 sin NIF/fecha.
+  Fuentes `xirivella-governalia`, `santabrigida-governalia` y `alzira-governalia`, mismo patrón que el resto
+  de fuentes Governalia (importe sin IVA).
+- **Valencia capital (~800.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: el portal antiguo (CKAN)
+  se retiró en junio de 2026; el sustituto real es el buscador oficial `www.valencia.es/cas/ayuntamiento/
+  buscador-contratos-menores` (portlet Liferay, formulario POST). **10.693 registros desde 2021-09**
+  (`actualizar_contratos_menores_valencia_capital.py`, fuente `valencia_capital`). Detalles técnicos:
+  - Sin parámetro de página: el tope real es `maxResultados=500`. Paginado repitiendo la consulta con la fecha
+    más antigua vista + 7 días de margen como nuevo `fechaFin`, deduplicando por clave real.
+  - **Bug real detectado y corregido en la primera prueba**: el "N° de expediente" NO es una clave única por
+    contrato -- un mismo expediente agrupa varios contratos distintos (adjudicatario/objeto/importe/fecha
+    diferentes). La clave única real es el "N° de contrato" (oculto en la URL del título). Deduplicar por
+    expediente colapsaba contratos reales entre sí (327 filas reales → solo 149 tras el bug).
+  - "Estado" (ADJUDICADOS/MODIFICADOS/RESUELTOS) es el estado ACTUAL de cada contrato, no un histórico de fases
+    como PSCP -- se consultan los tres por separado (10.676 + 51 + 22).
+  - Importe SIN IVA (columna propia del buscador, distinta de la de IVA) — añadido a `_FUENTES_CM_SIN_IVA`.
+    Sí publica NIF y un enlace por contrato (a diferencia de RPC/Euskadi/Madrid), aunque ese enlace no se
+    aprovecha todavía (el esquema compartido de `contratos_menors_locales` no tiene columna de URL).
+  - Verificado: 0 filas sin fecha, 0 sin NIF, importes máximos coherentes con el tope legal de obras (~40.000 €,
+    sin anomalías tipo Euskadi). Carga y render probados sin errores.
+- **Valladolid (~298.000 hab., Castilla y León) — CONECTADO (2026-09-30)**: informes anuales de "Contratación"
+  en `valladolid.gob.es/es/perfil-contratante/contratos-menores-volumen-contratacion-tipo-procedimiento/
+  ano-<año>`. **11.392 registros desde 2021** (`actualizar_contratos_menores_valladolid.py`, fuente
+  `valladolid`). Son informes ACUMULATIVOS por año (1er trimestre → 1er semestre → 1º+2º+3º trimestre →
+  ejercicio completo) -- solo hace falta el fichero MÁS RECIENTE de cada año.
+  - **El obstáculo del JavaScript, resuelto sin navegador**: la página índice de 2025/2026 es una SPA en React
+    que no expone los enlaces de descarga en el HTML inicial, pero SÍ contiene un `<a href>` real y estático a
+    una SUBPÁGINA (`.../ano-<año>/ayuntamiento-valladolid`) -- encontrado inspeccionando el HTML crudo con
+    `curl` en vez de necesitar una herramienta con ejecución de JS. Esa subpágina sí tiene los `.ficheros/<id>-
+    <nombre>.xlsx` reales y estáticos. Los años 2021-2024 son completamente estáticos en la propia página
+    principal, sin necesitar el truco.
+  - **Estructura del Excel**: varias hojas; la relevante es "OPERACIONES SICALWIN" (programa de contabilidad
+    municipal), con TODAS las operaciones de contratación del año (no solo menores) -- se filtra por la
+    columna "PROCEDIMIENTO" = "Contratación menor" (los otros valores son "Procedimiento abierto", "Acuerdo
+    marco", "Procedimiento negociado sin publicidad", formales).
+  - Sin NIF (no publicado por esta fuente). Verificado: 0 sin fecha, 0 sin descripción, importes coherentes
+    con el tope legal salvo un caso aislado (prórroga de patrocinio publicitario plurianual, ~165.000 €,
+    aceptado tal cual lo clasifica la propia fuente como "Contratación menor").
+- **Palma (~416.000 hab., Illes Balears) — lead confirmado, formato incómodo**: `palma.es/es/contratos-menores`
+  publica Excel + PDF por trimestre. Mismo patrón que Valladolid.
+- **Alicante (~337.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-28)**: informes trimestrales oficiales
+  en ODS (Junta de Gobierno Local, portal de transparencia). **8.140 registros desde 2021-09**
+  (`actualizar_contratos_menores_alicante.py`, fuente `alicante`). A diferencia de Valencia capital, aquí el
+  Expediente SÍ es una clave única real por contrato (comprobado con un chequeo de colisiones: 1 de 8.141 filas,
+  benigno). Los enlaces a cada ODS trimestral no siguen un patrón de URL predecible -- recogidos a mano
+  navegando `alicante.es/es/contenidos/contratos-menores-del-ayuntamiento-<año>-trimestres`; para un trimestre
+  nuevo hay que localizar su URL igual y añadirla al diccionario `FICHEROS` del script.
+- **Elche (~235.000 hab., Comunitat Valenciana)**: su página de "Contratos menores" en el portal de
+  transparencia municipal REDIRIGE al perfil de contratante genérico de la Plataforma de Contratación del
+  Estado (no tiene fuente propia separada) -- sin lead viable más allá de lo que ya cubre PLACE (que no expone
+  menores de forma sistemática, ver más abajo).
+- **Torrent (~85.000 hab., Comunitat Valenciana) — CONECTADO (2026-09-30)**: "Perfil del contratante > Datos"
+  (torrent.es), sección "Contratos menores": informes trimestrales en XLSX desde 2019. Un fetch simple con
+  `curl` no encuentra los enlaces de descarga (la página es una SPA/Elementor) -- encontrados navegando con
+  Playwright. **893 registros desde 2021-09** (`actualizar_contratos_menores_torrent.py`, fuente `torrent`).
+  Los enlaces no siguen un patrón de URL predecible (mezcla `wp-content/uploads/...` con nombres de fichero
+  inconsistentes y una carpeta legacy `torrentPublic/docroot/...` para 2019-2022) -- recogidos a mano.
+  **Dos bugs de formato encontrados y corregidos**: (1) las columnas cambian de nombre entre eras (hasta 2022
+  trae NIF del adjudicatario, desde 2023 no; el importe pasa de llamarse "Importe Lic. sin imp." a "Importe
+  adj. Sin impuest") -- se leen siempre por nombre de columna normalizado, nunca por posición; (2) varios
+  ficheros llevan filas de título/fecha antes de la cabecera real (misma clase de problema que el ODS de
+  Alicante) -- se busca la fila cuya celda sea exactamente "Expediente", no se asume que es la primera fila.
+  8 filas con la celda de importe genuinamente en blanco en la propia fuente (no un 0 real) se omiten en vez
+  de guardarse como 0€. Importe SIN IVA.
+- **Albacete (~173.000 hab., Castilla-La Mancha) — confirmado sin fuente propia (2026-09-29)**: su página de
+  "Contratos menores" en el portal de transparencia (`transparencia-participacion.albacete.es`) redirige
+  directamente a la Plataforma de Contratación del Estado genérica (perfil de contratante nacional), exactamente
+  el mismo caso que Elche -- no publica un dataset ni un listado propio descargable. Sin lead viable.
+- **León (Castilla y León)**: perfil de contratante consultable en vivo (`sede.aytoleon.es`, contratos menores
+  individuales con adjudicatario e importe, SIN fecha de adjudicación visible), pero sin descarga masiva --
+  mismo patrón que el buscador legacy de Navarra (viable por scraping, no por dataset).
+  Sin dataset localizado esta ronda: **Toledo**: publica el listado de menores mensualmente en su web
+  de transparencia (sin confirmar el formato exacto esta ronda). **Guadalajara**: solo contratos MAYORES
+  localizados, no menores.
+### Resto de la Comunidad de Madrid, por población (2026-09-28)
+
+Madrid capital ya conectada (27.959 registros, ver arriba). Sin agregador regional (comprobado antes), así que
+ayuntamiento a ayuntamiento por población, reutilizando cuando existía el portal ya localizado en la
+investigación de sueldos de concejales:
+
+- **Móstoles (~209.000 hab.) — CONECTADO**: informes MENSUALES oficiales en PDF (portal de transparencia,
+  `mostoles.es/.../contratos-menores-mensuales-<año>`). **2.448 registros desde 2021-09**
+  (`actualizar_contratos_menores_mostoles.py`, fuente `mostoles`), extraídos con `pdfplumber`. Dos bugs reales
+  corregidos en la primera pasada: (1) la URL se des-escapaba antes de descargarla y los PDFs con espacios en
+  el nombre rompían la petición HTTP -- 0 registros en el primer intento; (2) el número de columnas de la tabla
+  cambia según el año (6 en 2022/2023, 8 en 2025) -- las columnas ahora se localizan por el TEXTO de la
+  cabecera, no por posición fija. Falta un mes (noviembre de 2024, formato de tabla no reconocible en ese PDF
+  concreto -- omitido con aviso, no se ha forzado un dato incorrecto).
+- **Getafe (~185.000 hab.) — CONECTADO**: portal de gobierno abierto construido sobre la plataforma **Gobierto**
+  (usada por varios ayuntamientos españoles) -- expone una API pública tipo "SQL sobre CSV"
+  (`gobiernoabierto.getafe.es/api/v1/data/data.csv?sql=...`), descubierta inspeccionando el atributo
+  `data-contracts-endpoint` del HTML del dashboard de transparencia. **1.664 registros desde 2021-09**
+  (`actualizar_contratos_menores_getafe.py`, fuente `getafe`), filtrados server-side por `minor_contract='t'`.
+  Es la fuente más rica conectada hasta ahora: incluye CPV y categoría del contrato (ninguna otra fuente local
+  de menores lo hacía, aparte de PSCP/Euskadi en formales). Limitación real: NO publica NIF del adjudicatario.
+  **Pistas para otros municipios**: si algún otro ayuntamiento de la lista usa también la plataforma Gobierto
+  (buscar un dominio `gobiernoabierto.<municipio>.es` o similar con un dashboard "Contratos y licitaciones"),
+  el mismo patrón de endpoint debería funcionar.
+- **Alcalá de Henares (~195.000 hab.) — CONECTADO (2026-09-29)**: informes TRIMESTRALES en PDF
+  (`hacienda.ayto-alcaladehenares.es/s-informacion-contratos-menores/`, certificado SSL inválido -- lectura sin
+  verificar, mismo caso que el conector de sueldos de esta misma ciudad). **15.070 registros desde 2021T3**
+  (`actualizar_contratos_menores_alcala_henares.py`, fuente `alcala_henares`). Sin tabla con bordes reconocible
+  por `pdfplumber` -- es un informe contable de líneas de texto libre parseado con expresiones regulares, con
+  DOS formatos estructurales distintos según la época: "Tercero" (hasta 2023, sin NIF en absoluto) y "ADO"
+  (2024+, con NIF -- enmascarado para personas físicas tal cual lo publica la fuente, p. ej. "***8694**", nunca
+  se intenta completar). En el formato "ADO" el orden de los campos varía de un trimestre a otro, así que se
+  extraen por PATRÓN (forma del NIF, año coincidente con la fecha, último de 4 números al final de línea) en
+  vez de por posición fija. Tres bugs reales corregidos en iteraciones sucesivas (documentados en el propio
+  script): detección de continuación de nombre poco fiable por la abreviatura de factura variable
+  ("FRA."/"FA."/sin prefijo) que volcaba la descripción entera dentro del nombre; NIF pegado sin espacio al
+  nombre por un artefacto de extracción del PDF; fragmento de código presupuestario con barras pegado al final
+  del nombre. Verificado: 0 sin fecha, 0 sin descripción, importes máximos coherentes con el tope legal de
+  obras, 16 nombres con artefactos residuales menores (0,1 %, aceptado).
+- **Fuenlabrada (~192.000 hab.) — CONECTADO (2026-09-29, retomado)**: el "visor de contratos" general del
+  portal de transparencia SÍ está protegido por contraseña (confirmado, sin cambios), pero navegando el menú
+  completo de "Contratos y Patrimonio" apareció una sección DISTINTA y pública:
+  `transparencia.ayto-fuenlabrada.es/contratos/menores/`, con informes trimestrales del Ayuntamiento y sus
+  Organismos Autónomos (CIFE/IMLS/OTAF/PMC/PMD) en xls/xlsx/ods, sin contraseña. **8.436 registros desde
+  2021T3** (`actualizar_contratos_menores_fuenlabrada.py`, fuente `fuenlabrada`). Dos bugs reales de formato
+  cambiante entre trimestres corregidos (posición de columna variable según la generación del fichero;
+  detección de celda-fecha de `xlrd` limitada a una columna fija). El subdominio `gobiernoabierto.ayto-
+  fuenlabrada.es` SÍ es operativo (usa la plataforma "ogov.tech", no Gobierto) pero solo expone un dashboard
+  de subvenciones (`/sub`), ningún equivalente de contratos localizado.
+- **Alcorcón (~170.000 hab.) — confirmado sin fuente viable tras 5 vías distintas (2026-09-29)**: (1) portal de
+  datos abiertos CKAN (`datosabiertos.ayto-alcorcon.es`) -- 8 datasets, 2 organizaciones, 0 resultados buscando
+  "contrat" vía API; (2) sección de transparencia "contratos, concesiones, convenios..." -- ninguna mención de
+  "menor" en el HTML completo, solo relación de convenios; (3) "Buen Gobierno" -- nada; (4) Perfil del
+  Contratante propio (`portalciudadano.ayto-alcorcon.es`) -- redirige a la Plataforma de Contratación del
+  Estado genérica para todo lo posterior a marzo de 2018 (mismo caso que Elche/Albacete), y no tiene nada
+  anterior; (5) sin un subdominio `gobiernoabierto`/`transparencia` separado con contenido propio de
+  contratación, a diferencia de Fuenlabrada. Sin lead viable con las herramientas disponibles.
+- **Leganés (~187.000 hab.) — CONECTADO**: mismo formato EXACTO que Alicante (NIF/Adjudicatario/Expediente/
+  Objeto/Fecha contrato "DD-MES_ES-AAAA" o fecha real de Excel/Precio sin impuestos/Precio con impuestos/
+  Duración), en XLSX -- probablemente una plantilla común. **254 registros desde 2021-09**
+  (`actualizar_contratos_menores_leganes.py`, fuente `leganes`). Los enlaces de la página índice usan IDs
+  opacos sin relación con el periodo -- el script localiza cada fichero por el TEXTO del enlace ("Menores julio
+  2026"...) y recorre la página en cada ejecución en vez de guardar URLs fijas. Dos bugs reales corregidos en
+  la primera pasada: (1) algunas celdas de fecha vienen como `datetime` real de Excel en vez de texto; (2)
+  algunas celdas de importe vienen como número real (no texto) -- aplicarles el reemplazo de punto/coma del
+  formato español las multiplicaba por 10 (2772.0 → 27720). Un solo fichero (agosto de 2026, el más reciente)
+  no se pudo descargar -- devuelve silenciosamente la portada del Ayuntamiento en vez del XLSX (posible archivo
+  aún no propagado del todo); se reintentará solo en la próxima ejecución del script, sin bloquear el resto.
+- **Lead adicional sin verificar en profundidad**: Torrejón de Ardoz (`transparencia.ayto-torrejon.es/t/contratos`)
+  y Pinto (`gobiernoabierto.ayto-pinto.es/contratos-menores`) aparecen con contratos menores en CSV/Excel en sus
+  propios portales -- señal de que, aunque no hay agregador regional, varios ayuntamientos medianos de Madrid sí
+  publican su propio dataset.
+- **Huesca, Teruel (Aragón) y Salamanca (Castilla y León)**: sin dataset de contratos menores localizado esta
+  ronda (Huesca y Teruel remiten a la Plataforma de Contratación del Estado sin dataset propio; Salamanca tiene
+  portal de datos abiertos propio -- `opendata.aytosalamanca.es` -- pero no es CKAN estándar y su búsqueda no
+  devolvió un dataset de menores esta noche, habría que navegar el catálogo a mano).
+- **Pendiente de revisar** (siguiente ronda, mismo criterio): resto de municipios de la Comunidad de Madrid
+  por población.
+
+## Fondos UE
+
+- Solo cubre **Murcia y Girona** — Lleida, Barcelona y Tarragona no están
+  conectadas a esta fuente.
+- **Cohesion Data** (94% de las filas): el nombre del beneficiario está vacío
+  en la fuente oficial para el 100% de los registros españoles (0/139.395,
+  verificado). El enriquecimiento vía Kohesio/linkedopendata.eu que intenta
+  rellenarlo solo acierta ~6,6% porque esa web bloquea por IP tras una ráfaga
+  de peticiones.
+- Cohesion Data solo da ubicación a nivel provincial, nunca por ciudad — esos
+  registros nunca se asignan a un municipio concreto (quedan agregados en
+  `/fondos-ue`). Existe una vía teórica (coordenadas lat/long) para
+  geolocalizar al municipio exacto — documentada como ampliación futura, no
+  implementada.
+- El detector de cargos públicos no aplica a fondos UE: CORDIS (6% de las
+  filas) sí trae beneficiario pero son organizaciones, no personas físicas.
+
+## Directivos / Registro Mercantil
+
+- Asociaciones (NIF letra G) y cooperativas (NIF letra F) no están en el
+  Registro Mercantil — su junta directiva no es localizable por ninguna
+  fuente pública automatizable (investigado y cerrado, incluyendo el
+  Registre de Cooperatives de Catalunya).
+
+## Sueldos y cargos públicos
+
+- **Concejales**: ISPA solo publica el importe TOTAL agregado por
+  ayuntamiento, sin nombre por fila — cuando hay varios concejales con
+  dedicación en el mismo consistorio (el caso mayoritario) es imposible
+  atribuir el importe a una persona. Se muestran resaltados pero nunca con
+  sueldo. **Desde 2026-09-27 hay una segunda vía, aparte, para los
+  municipios cuya web oficial publica una tabla nombre + importe: ver
+  "Sueldos de concejales publicados por el propio ayuntamiento" más abajo.**
+- **Presidentes de Diputación/CCAA**: 5 personas hardcodeadas a mano, sin
+  scraper — si hay elecciones o dimisión hay que actualizarlo manualmente.
+- **Alcaldes con 0€**: el motivo (renuncia al sueldo por cobrar ya de la
+  Diputación) solo se verificó caso a caso para 3 municipios concretos
+  (Sabadell, Sant Boi, Granollers); la nota que se muestra es genérica/
+  condicional, no garantiza que sea siempre ese el motivo en otros casos.
+
+## Sueldos de concejales publicados por el propio ayuntamiento (2026-09-26/27)
+
+Regla: solo webs OFICIALES del ayuntamiento (transparencia, sede, boletín oficial, web municipal), nunca agregadores ni prensa.
+Un registro exige nombre + cargo/concejalía + importe + URL de la fuente (+ la base del importe tal como la dice la fuente);
+si falta algo o es ambiguo se salta y se anota. Nada se estima ni se convierte (mensual → anual). Código:
+`backend/actualizar_sueldos_concejales.py`; datos: `backend/sueldos_concejales.json`; bitácora con todos los saltos y anomalías:
+`SUELDOS_CONCEJALES_LOG.md`. **Cada ficha con datos muestra un desplegable con las filas enlazadas a su fuente y una nota con las
+salvedades de esa fuente** (`_NOTAS_SUELDOS_CONCEJALES` en `app.py`); las fichas de los municipios aparcados muestran un aviso con
+el motivo (`_SUELDOS_CONCEJALES_SIN_TABLA`).
+
+- **Cobertura a 2026-09-27**: 697 registros en 36 municipios (Sevilla, Málaga, Cádiz, Huelva, Almería; L'Hospitalet, Terrassa, Sabadell,
+  Lleida, Girona, Mataró; Madrid, Majadahonda, Móstoles, Las Rozas; Elche, Castellón de la Plana, Alcoy, Sagunto, Alcalá de Henares, Pozuelo de Alarcón, Torrevieja; Vigo; Logroño; Murcia, Molina de Segura,
+  Cartagena; Huesca; Ciudad Real; Santa Cruz de Tenerife; Telde; Palencia, Salamanca; Eivissa, Calvià; Vitoria-Gasteiz). Es una fracción pequeña de España: la mayoría de ayuntamientos publica solo escalas por cargo o nóminas.
+- **Salvedades concretas por fuente**:
+  - **Sevilla**: cargo mostrado como "Concejal/a" genérico (el PDF fuente no especifica la concejalía); el importe es lo percibido en
+    2024 e incluye cantidades pequeñas de concejales sin dedicación.
+  - **Madrid**: importe = SUMA de las 12 mensualidades publicadas (una fila por persona y mes), no un importe anual publicado
+    directamente; algunas personas tienen menos de 12 meses y la base lo indica.
+  - **Eivissa**: algunos importes vienen escritos "63.407.63 €" (punto de millar y punto decimal). Solo se acepta ese patrón exacto
+    (3 grupos, 2 cifras finales) tal como se publica; **si la fuente cambia de formato hay que revisar el parser** (`actualizar_eivissa`).
+  - **Málaga**: importe = retribución anual del CARGO según la tabla del mismo libro Excel (no nómina individual); solo tenientes de
+    alcalde y concejales delegados al 100 %.
+  - **Huelva**: importes NETOS 2024. **Terrassa**: MENSUAL bruto (14 pagas), sin convertir. **Vigo** (julio 2023) y **Murcia**
+    (febrero 2024): documentos fechados, los importes pueden haberse actualizado. **Palencia**: incluye algún año parcial.
+  - **Vitoria-Gasteiz**: importe MENSUAL (sin anualizar) y la fuente rotula a todos los tenientes de alcalde como «teniente alcaldesa».
+    **Castellón**: total anual bruto de 2024 (fila «Salario»); una persona con meses a cero se omite. **Móstoles**: la tabla no indica el
+    periodo del importe. **Almería**: importes íntegros anuales de 2026; su servidor tiene la cadena de certificados incompleta y la
+    descarga va sin verificar certificado (lectura de un documento público).
+  - Cada conector excluye al alcalde (cubierto aparte), las asistencias a plenos y las filas con importe ilegible o incoherente.
+- **Aparcados por falta de fuente utilizable** (no reintentar salvo fuente nueva; el motivo se muestra en su ficha):
+  - **Córdoba**: escala por cargo (2025), sin importe por persona. **Granada**: BOP con nombres por categoría e importes en el
+    acuerdo de Pleno aparte. **Jerez**: acuerdos por cargo y dedicación de delegados en documentos separados.
+  - **Zaragoza**: tabla por concepto sin nombres. **València**: acuerdo plenario por cargos. **Valladolid**: retribuciones por cargo
+    con nº de puestos (dic. 2023), sin nombres.
+  - **Bilbao** (solo publica personal de libre designación) y **Alicante**: sin documento nominal localizado. **Palma**: el PDF
+    enlazado es de 2023, anterior al mandato.
+  - **Lote 5 (2026-09-27, aviso también en la ficha)**: **León** (solo iniciales), **Getafe** (por cargo, sin nombres), **Oviedo** (tabla nominal
+    de 2019-2023), **Burgos** (sin cargo; la alcaldesa figura como un corporativo más), **Leganés** (PDF por persona sin nombre dentro y con
+    enlaces cruzados), **A Coruña** y **Toledo** (por cargo, sin nombres), **Santander** (página sin contenido), **Las Palmas** (visor no
+    legible), **Fuenlabrada**, **Alcobendas**, **Rivas-Vaciamadrid**. Detalle en `SUELDOS_CONCEJALES_LOG.md`.
+  - **Lote 6 (2026-09-27, aviso también en la ficha)**: **Donostia** (cargo e importe en un documento, nombres en otro), **Lugo** (por dedicación y
+    grupo), **Pontevedra** (mandato 2019-2023), **Ourense** (PDF escaneados sin texto), **Pozuelo** (BOCM sueltos), **Benidorm** (totales mensuales
+    sin cargo), **Torrejón de Ardoz** (por cargo, sin nombres). **Las Rozas** sí entra, pero con importes del acuerdo de 2023 que la fuente dice
+    que se actualizan con las Leyes de Presupuestos. Santiago de Compostela: portal inaccesible desde aquí, pendiente de reintento.
+  - **Lote 7 (2026-09-27)**: **Huesca** y **Ciudad Real** entran (Ciudad Real: nombre con apellidos primero y sin coma, importes de 2024; Huesca: sin
+    concejalía). Con aviso en la ficha: **Segovia**, **Guadalajara** y **Pinto** (por cargo, sin nombres). **Ávila** solo publica percepciones NETAS
+    (pendiente de decidir si se admiten). Teruel y Mérida: pendientes de reintento (503 / 404).
+  - **Lote 8 (2026-09-27)**: **Salamanca** entra con cargo genérico «Miembro de la Corporación» (el PDF no da concejalía ni separa al alcalde, que figura
+    en la lista; nota pública). Con aviso: **Jaén** (PDF escaneado sin texto) y **Pamplona** (no localizado).
+  - **Lote 9 (2026-09-27)**: **Telde** entra (retribución anual bruta ×14 de 2025). **Torrent** (Valencia) publica recibos de nómina individuales: no se procesan
+    (datos personales innecesarios) y no lleva aviso porque su clave en la base pertenece a un municipio homónimo de Girona.
+  - **Lote 10 (2026-09-27)**: **Calvià** entra (acuerdo plenario de 2023 en el BOIB, retribución por cargo; sin las indemnizaciones por asistencia). **Torrelavega**
+    con aviso (solo nombre e importe, sin cargo ni periodo).
+  - **Lote 11 (2026-09-27)**: **Sagunto** (cargo genérico «alcalde o concejal»: el PDF no separa al alcalde; URL con hash) y **Alcoy** (salario anual 2023 del mandato actual)
+    entran. **Torremolinos** con aviso (solo recibos de nómina individuales, que no se procesan).
+  - **Lote 14 (2026-09-27)**: **Torrevieja** entra (ficha individual por representante, igual que Pozuelo).
+  - **Lote 13 (2026-09-27)**: **Pozuelo de Alarcón** entra (ficha individual por concejal con importe, no una tabla).
+  - **Lote 12 (2026-09-27, reintentos)**: **Alcalá de Henares** entra (importe por tramo de cargo/dedicación, no por persona; nota
+    pública). **Barcelona** (5.ª comprobación, su API sigue en timeout) y **Reus** (su página de retribuciones da 404 en las dos URL
+    probadas) siguen aparcados.
+  - Pendientes de reintento por otros motivos: **Barcelona** (su API de cargos devolvía "timeout" en dos comprobaciones),
+    **Reus** (por cargo, sin nombres), **Alcalá de Henares** (por categoría, sin importe por persona).
+- **Plataformas descartadas**: `*.sedelectronica.es/employees` exige Cl@ve (Marbella, Orihuela); seu-e.cat solo rellena el importe en
+  la ficha de Girona (43 municipios catalanes sondeados).
+
+## Alcance de 5 años en contratos formales de PSCP/Euskadi/Navarra (2026-09-27)
+
+- **Qué era**: PSCP (Cataluña), Euskadi y Navarra consultan en vivo el histórico COMPLETO de cada municipio (no ZIPs
+  mensuales como PLACE) y hasta ahora se guardaba tal cual, sin fecha ni corte de ningún tipo — la propia web lo
+  admitía ("todavía no registramos la fecha de adjudicación"). Medido en la copia de producción del 25/09: **65.761
+  contratos PSCP, 17.579 Euskadi y 7.643 Navarra ya guardados**, de fechas desconocidas (muchos, probablemente, de
+  antes de 2021).
+- **Qué cambia**: cada fuente SÍ trae una fecha real, no había que inventar nada:
+  - **PSCP**: campo `data_adjudicacio_contracte` (verificado contra varios ajuntaments reales de Girona: fechas
+    plausibles 2019-2023, no un valor relleno). Filtro aplicado en el propio `$where` de la consulta (menos filas
+    que traer) y también en el código.
+  - **Euskadi**: campo `awardDate` de la API (fecha real de adjudicación; 100 % de las filas de contrato menor
+    muestreadas lo traían). Filtro en el código, tras traer cada página.
+  - **Navarra**: el buscador legacy NO tiene un campo de fecha de adjudicación real en la ficha de detalle (comprobado
+    en varias fichas reales) — solo la fecha de PUBLICACIÓN del anuncio en el listado, que se usa como filtro (muy
+    cercana a la real, normalmente el mismo mes). El listado de Navarra llega hasta 2013 sin filtro (medido en
+    Tudela, 600 filas): sin este cambio se habría seguido guardando todo.
+  - Los tres conectores ahora aplican el mismo corte que los menores (`MENORES_DESDE_FECHA`, septiembre de 2021).
+- **Cómo se limpia lo ya guardado**: no hay forma de saber la fecha de un contrato PSCP/Euskadi/Navarra ya guardado
+  ANTES de este cambio (nunca se capturó) sin volver a consultar la fuente. Hay dos vías, ambas activas:
+  1. **Progresiva y automática**: cada vez que un municipio de estas tres fuentes se refresca con normalidad
+     (visita de un usuario a una ficha caducada, o un refresco por lotes), `_job_run` sustituye TODA la fuente de
+     ese municipio por el resultado fresco (ya filtrado a 5 años) — nunca solo se fusiona, como sí hace PLACE — y
+     **archiva** (no borra) las filas que quedan fuera de la ventana en `contratos_formales_archivo` (mismo patrón
+     que `contratos_menors_archivo`).
+  2. **Barrido forzado de una vez (2026-09-27, a petición de César)**: `depurar_formales_5anios.py` recorre en
+     local los ~1.500 municipios conectados de las tres fuentes (942 PSCP, 251 Euskadi, 270 Navarra) reutilizando
+     los mismos `buscar_en_pscp`/`buscar_en_euskadi`/`buscar_en_navarra` ya arreglados, y genera
+     `correcciones_formales_5anios.json.gz` (por cada municipio+fuente, la lista fresca ya filtrada; solo si la
+     búsqueda terminó sin errores y con al menos 1 contrato). Un nuevo loader de arranque,
+     `_aplicar_correccion_formales_5anios()`, aplica esa corrección contra lo que haya REALMENTE en producción en
+     ese momento — misma lógica de reemplazo+archivado de `_job_run`, calculada en el momento contra el dato real
+     (no una lista de "a archivar" congelada de antemano) — una sola vez por versión del fichero (hash en
+     `settings`, mismo patrón que `_aplicar_backfill_galicia_place`).
+  - **Barrido completado y verificado (2026-09-27)**: las tres fuentes terminaron sin ningún error (0/942 PSCP,
+    0/251 Euskadi, 0/270 Navarra). Resultado: 65.805 contratos PSCP en 881 municipios, 12.866 Euskadi en 225,
+    4.102 Navarra en 224 (1.330 municipio+fuente en total; el resto sin contratos en ventana o sin ese
+    municipio mapeado). **Verificado contra una copia real de la cache.db de producción**: al aplicar el loader,
+    1.053 municipio+fuente se corrigieron, **19.376 contratos se archivaron** (fuera de los últimos 5 años,
+    nunca borrados), 277 ya coincidían sin cambios. Los 3 casos de prueba de la noche dieron el mismo resultado
+    exacto que la prueba anterior contra `_job_run` (Albons 12→9, Amurrio 118→59, Tudela 447→289) — misma
+    lógica, incluso aplicada dos meses "después" en el tiempo simulado no cambia el resultado. Segunda ejecución
+    del loader confirmada como no-op (idempotente, por el hash). Render de ficha probado sin errores.
+- **Salvaguarda de seguridad añadida** (probada en producción real, ver abajo): el reemplazo de una fuente SOLO
+  ocurre si (a) la búsqueda terminó sin errores HTTP/de red y (b) la búsqueda fresca trajo al menos 1 contrato — así
+  un mapeo roto o un fallo silencioso de la fuente nunca puede vaciar todo el histórico de un municipio por error
+  (se detectó y corrigió este riesgo durante las pruebas de esta misma noche, con un caso real reproducido).
+- **Verificado esta noche** contra una copia real de la cache.db de producción (25/09): Albons (PSCP) 12→9, Amurrio
+  (Euskadi) 118→59, Tudela (Navarra) 447→289 contratos; en los tres casos, las filas restantes tienen fecha ≥
+  2021-09-01, las descartadas quedaron archivadas, y el resto de fuentes/menores del municipio quedaron intactos.
+  Render de ficha (Girona, Tudela) sin errores tras el refresco.
+
+## Viabilidad: cruzar concejales/alcaldes con el Registro Mercantil (2026-09-27)
+
+Informe de viabilidad (sin implementar nada) sobre detectar empresa propia de un cargo público y mostrar sus
+cuentas anuales, a petición de César. Ver documento completo:
+`INFORME_VIABILIDAD_REGISTRO_MERCANTIL.md`. Resumen: (i) el cruce por nombre sin DNI es viable como primer filtro
+si se exige nombre completo + una señal de corroboración (provincia del domicilio social, fecha), y SIEMPRE con
+revisión manual antes de publicar una atribución concreta — BORME nunca publica el DNI del administrador, es un
+límite estructural, no de implementación; (ii) existencia de empresa + administrador es gratis y reutiliza la
+infraestructura ya construida (`buscar_directivo`, BORME/BOE, empresia.es), pero las CIFRAS de cuentas anuales
+(balance/PyG) de los últimos 5 años no tienen ninguna vía gratuita a esta escala — BORME solo confirma que hubo
+depósito, sin cifras; el Registro Mercantil directo y einforma/axesor/infocif son de pago por informe. Recomendación:
+construir solo la Fase 1 (existencia + cargo, gratis) por ahora; las cuentas anuales, caso a caso y bajo demanda.
+
+## Contratos formales de Jerez de la Frontera en PLACE (bug "Ayuntamiento de Jerez" a secas, 2026-10-01)
+
+- **Qué era**: en el muestreo de verificación de Andalucía (comparar recuento PLACE contra población esperable),
+  Jerez de la Frontera (214.920 hab.) dio **0 contratos en 3 meses**, frente a ~50 de Huelva/Dos Hermanas
+  (poblaciones similares). El órgano real en PLACE es **"Ayuntamiento de Jerez" a secas** (sin "de la Frontera"
+  -- el municipio se identifica así en sus propios expedientes, probablemente por ser el nombre mundialmente
+  conocido); `_regex_anclado` exigía siempre el nombre completo y no reconocía nada.
+- **Fix** (`_regex_anclado`): caso especial que acepta "Ayuntamiento de Jerez" con o sin "de la Frontera", con
+  exclusión explícita de "de los Caballeros" (Jerez de los Caballeros, Badajoz, municipio real distinto que
+  también aparece en los mismos ZIP) más un cruce por código postal (`_CP_ESPERADO_ANCLAJE["jerez de la
+  frontera"] = "11"`, Cádiz) como segunda guarda. Verificado contra los 5 órganos reales distintos que contienen
+  "jerez" en 3 meses de PLACE: reconoce el ayuntamiento, sigue excluyendo Jerez de los Caballeros (2 variantes),
+  el aeropuerto (Aena) y la empresa municipal de vivienda.
+- **Alcance**: cambio aislado a un único municipio (rama `if muni_norm == "jerez de la frontera"`), no puede
+  afectar al patrón de ningún otro municipio. Backfill del histórico pendiente (mismo mecanismo que Galicia/
+  Ajuntament, o incluido si se generaliza el generador).
+
+## Contratos formales de Comunitat Valenciana/Illes Balears en PLACE (backfill del patrón "Ajuntament de X", 2026-10-01)
+
+- **Qué era**: verificando la cobertura de contratos formales por comunidad (pasada de muestreo pedida por César, misma idea que
+  destapó el bug de Galicia) se encontró la misma clase de bug: `_regex_anclado` solo reconocía "Ayuntamiento de X" y no la forma
+  catalana/valenciana "Ajuntament de X", que muchos municipios de Alicante/Castellón/Valencia/Baleares usan en el campo `organo` de
+  PLACE (algunos usan una forma u otra según el expediente, a veces ambas). El fix añade "ajuntament de" como alternativa SOLO para
+  los municipios de esas 4 provincias (`_es_municipio_ajuntament`), sin tocar el resto de España.
+- **Medido antes de desplegar**: con los 4 únicos meses de PLACE ya en caché local (jun-sep 2026), el patrón nuevo reconoce 357
+  contratos que el antiguo no veía, en 14 municipios -- destacan **València capital (+141)** y **Calp (+112)**; el resto (Llucmajor,
+  Tavernes de la Valldigna, Moncada, Sóller, Campos, Sumacàrcer, Real, Rocafort, Sencelles, Calvià, Santa Maria del Camí, Son
+  Servera) con menos de 25 cada uno.
+- **Backfill**: igual que Galicia, el fix (app.py) solo actúa sobre los ZIP que se procesen desde ahora; los meses anteriores se
+  recuperan con un fichero generado en LOCAL (`backend/backfill_ajuntament_place.json.gz`, generador
+  `backend/generar_backfill_ajuntament_place.py`) y aplicado al arrancar con fusión aditiva (`_aplicar_backfill_ajuntament_place`).
+  **Nunca se descargan ZIP en producción.** Estado del backfill hacia atrás: en curso (ver commits siguientes para el alcance real
+  desplegado).
+- **Límites**: los mismos tres que Galicia -- (1) cada mes cubre solo lo que PLACE publicó ese mes; (2) solo cubre lo que pasa por
+  PLACE; (3) ampliar el backfill requiere ejecutar el generador a mano.
+
+## Contratos formales de Galicia en PLACE (backfill del patrón "Concello de X", 2026-09-25/27)
+
+- **Qué era**: el patrón antiguo de `_regex_anclado` no reconocía órganos "Concello de X"/"Concello da/do X", así que los contratos
+  formales de esos municipios no se atribuían. El fix (a1633d4) solo actúa sobre los ZIP mensuales que se procesen desde entonces;
+  los meses anteriores se recuperan con un fichero generado en LOCAL (`backend/backfill_galicia_place.json.gz`, generador
+  `backend/generar_backfill_galicia_place.py`) y aplicado al arrancar con una fusión aditiva (`_aplicar_backfill_galicia_place`).
+  **Nunca se descargan ZIP en producción.**
+- **Desplegado**: 1.738 contratos (tandas 1-7) en 45 municipios, meses **202109 → 202609**: el tope de septiembre de 2021 (alcance de 5 años) está
+  cubierto. Cada tanda se probó antes contra una copia REAL de la cache.db de producción (sin pérdidas, sin cambios fuera del fichero, menores
+  intactos; la 7.ª: 30 fichas, +266 contratos).
+- **Límites**: (1) los meses posteriores a septiembre de 2021 están cubiertos, pero cada mes lo cubre solo lo que PLACE publicó ese mes; (2) solo cubre lo que PLACE publica (Galicia tiene
+  contratos que no pasan por PLACE); (3) el fichero lo genera un script en local, no un cron: para ampliarlo hay que ejecutarlo
+  (`python generar_backfill_galicia_place.py AAAAMM AAAAMM`). El generador se para solo ante desvíos de tiempo o memoria; las paradas
+  observadas fueron carga de otros procesos y una suspensión del equipo, no problemas de datos.
+- **Efecto visible**: las fichas gallegas ganan contratos formales (p. ej. Santiago de Compostela 12 → 116); el peso de un solo
+  contrato puede ser grande (Santiago: transporte público de 128,6 M€).
+
+## Población, deuda, cuentas anuales
+
+- 5 municipios catalanes sin código INE en el dataset de origen (Santa Fe del
+  Penedès, Sant Jaume de Frontanyà, Falset, Sant Jaume dels Domenys,
+  Vila-rodona) → excluidos de alcaldes/ISPA/cuentas/población/deuda, por
+  diseño.
+- Saldo no financiero (superávit/déficit): ~96% de cobertura (949/987) — el
+  resto son municipios que ese año aún no han remitido su liquidación a
+  Hacienda.
+- Enlace de cuentas anuales por año+idEntidad: 97% (957/987) — el 3% restante
+  cae al buscador genérico de rendiciondecuentas.es en vez del enlace
+  directo.
+
+## Perfil de contratante
+
+- Los municipios catalanes no tienen "Perfil PLACE" propio (su fuente es
+  PSCP/RPC) — ese enlace queda vacío para ellos a propósito, no es un fallo.
+
+## Clasificación de organismos estatales/autonómicos — Universidad de Murcia
+
+- **Estado: RESUELTO (commit `5b01a51`, 2026-07-29).** La Universidad de
+  Murcia se coló inicialmente en el pseudo-municipio "Administración General
+  del Estado" (AGE) por el mismo bug de subcadena que agrupó ahí a Guardia
+  Civil/AEAT/TGSS/INSS/etc. — pesaba el 64% de esa entrada pese a ser una
+  universidad pública **autónoma**, no AGE en sentido estricto. Se separó a
+  su propio pseudo-municipio ("Universidad de Murcia", `NOMBRE_PSEUDO_UMU` en
+  `app.py`), con el mismo patrón de detección/acumulación que ya usaba la
+  AGE (`_es_organo_umu`, `_guardar_pseudo_municipio_umu`).
+  - Confirmado en producción (2026-08-18): `/?muni=Universidad+de+Murcia` y
+    `/?muni=Administración+General+del+Estado` son dos fichas distintas.
+  - **Corrección de esta misma memoria**: una nota anterior había marcado
+    este punto como "pendiente de revisión" — quedó desactualizada, la
+    separación ya estaba hecha 3 semanas antes de esa nota.
+
+- **Comunitat Valenciana - contratos menores vía Governalia** (2026-09-24, sin desplegar al escribir esto):
+  fuentes `ibi-governalia` (963, idP 72584), `sax-governalia` (2.710, idP 54165) y
+  `vilamarxant-governalia` (784, idP 63100), todas en `app.governalia.es`, 2022-2026. Espejo de PLACE:
+  importe = adjudicado SIN IVA (6 cifras significativas), verificado contra PLACE en 18 contratos
+  (16 exactos, 2 con diferencia de redondeo en obras de cientos de miles de euros) y contra el
+  resumen anual del propio portal. Vilamarxant: 5 filas "Contrato menor" por encima de 40.000 €
+  (obras de emergencia, hasta 3.679.090 €) con nota visible (`_NOTAS_CONTRATO_MENOR`); se descartan
+  2 filas de procedimiento "Abierto simplificado".
+  - **Descartados tras verificar en vivo:** Elda, Silla, Picassent y Morella (su página de contratos
+    no incrusta ningún módulo y no tienen ninguna página de menores), Villar del Arzobispo y Calvià
+    ("Sección no habilitada"), Mutxamel y Orihuela (sin módulo de contratos en Governalia; Orihuela
+    usa `orihuela.sedelectronica.es`), Castelló de la Plana y La Pobla de Vallbona (el subdominio
+    no existe). **Tolosa**: `tolosa.governalia.es` incrusta por error el módulo de Vilamarxant y
+    devuelve datos de otro municipio; no hay fuente de Tolosa.
+  - **Mini-lote 2026-09-24 (también descartado):** Alboraya y San Miguel de Salinas tienen sitio Governalia
+    pero ninguna página de contratos (Alboraya solo enlaza su perfil del contratante en `alboraya.es`);
+    La Oliva tiene página `/transparencia/contratos/` pero vacía (sin módulo incrustado ni llamadas a la API,
+    igual que Elda/Silla/Picassent). Por eso `_governalia_menores()`
+    valida el municipio real de cada fila (`site`) y aborta si no coincide.
+
+- **Galicia - contratos menores** (2026-09-24, sin desplegar al escribir esto):
+  - **A Coruña** (`a-coruna`, 12.960 contratos 2021-2026-T1, ~47,1 M EUR): 24 ficheros ODS
+    (trimestrales + 3 "Anexo" anuales) en coruna.gal, descargables con `requests` solo si se envía un
+    Referer (sin él, 403). 2014-2019 quedan fuera (facturas sin NIF y otro esquema, anteriores a 2021).
+    Importe CON IVA (máximo exacto 48.400 EUR = 40.000 + 21 %). NIF de personas físicas enmascarado
+    (22 % de las filas) -> se guarda vacío. 2 filas con importe ilegible descartadas.
+  - **Vigo** (`vigo`, 6.643 contratos 2022-2026, ~38,1 M EUR): PDFs anuales sin tabla generados desde su
+    aplicación de expedientes; el índice solo enlaza hasta 2022 pero 2023-2026 existen con el mismo
+    patrón de nombre. El nombre del adjudicatario PRECEDE a sus contratos (validado: 92-100 % de
+    coherencia en proveedores inequívocos vs 13 % con la hipótesis contraria). Sin NIF. Importe CON IVA.
+    2021 y anteriores excluidos: sus descripciones van en mayúsculas y se confunden con nombres.
+  - **Ferrol** (`ferrol`, 1.550 contratos 2021-2026, ~19,2 M EUR): tabla HTML estática con TODOS los registros
+    (2.762 de 2015-2026); un GET con `requests` basta. Importe CON IVA (verificado en el detalle: licitación x 1,21).
+    Sin NIF en la lista (el detalle sí lo trae; rastrear 1.575 detalles queda como mejora opcional). "Tipo de
+    expediente" es "Contrato menor" + ÁREA municipal, no el tipo de contrato: solo "obras" rellena el tipo. 25
+    duplicados exactos colapsados. Máximo desde 2021: 48.387,90 EUR (<= 48.400).
+  - **Oleiros: descartado** tras verificar su web, su nota de prensa y su sede electrónica (`sede.oleiros.org`): todo
+    remite a PLACE, sin ningún listado de contratos menores.
+  - **Pontevedra** (`pontevedra`, 9.401 contratos 2023-2026, ~40,8 M EUR): la sede
+    (`sede.pontevedra.gal/public/contratos/contratos-index.xhtml`) tiene una "Consulta de contratos" JSF que pagina
+    por AJAX; el conector la reproduce SIN navegador (GET -> POST de búsqueda con tipo 6 "Contrato menor" -> POST de
+    paginación con `rows=20000`, ~5 s para todo). Verificado: idéntico al recorrido con navegador (9.411 filas) y las
+    estadísticas oficiales del portal coinciden AL CÉNTIMO con las sumas por trimestre (2024-T4, 2025-T1, 2025-T2,
+    2026-T2, 2026-T3). Importe CON IVA (max 48.398,79), NIF español incluido en el adjudicatario ("NOMBRE NIF Pyme"),
+    datos desde el 2T-2023. 10 filas (67.631,55 EUR) sin adjudicatario se descartan.
+  - **Ames** (`ames`, 3.387 contratos 2021-2025, ~13 M EUR): un ZIP anual en concellodeames.gal/es/transparencia/contratos
+    con 2 PDF semestrales (tabla de 7 columnas, ~700-770 contratos/año). extract_tables() da filas con 7, 8 o 9 columnas y
+    líneas sueltas: se interpreta por ANCLAS de contenido, no por posición. Importe CON IVA (max 48.350,23), escrito de
+    formas muy distintas ("449.09 EUR", "4.480 euros", "4.829.99"). SIN fecha por contrato (se usa el inicio del semestre,
+    avisado en la ficha) y sin NIF. Los saltos de numeración de la fuente NO son filas perdidas. Descartados: 3 con importe
+    ilegible y 9 sin adjudicatario (21.854,30 EUR). Un decreto sin la barra ("21612024") se leía como 21,6 M EUR (corregido).
+  - **Salvaguarda del script manual** (2026-09-24): `_fusionar_fuente()` conserva las filas anteriores de una fuente si su
+    ejecución falla o devuelve menos del 90 % de lo que ya había (avisa con `!!`; `--forzar` acepta el resultado nuevo).
+    Motivo: una ejecución de Ames devolvió 1.896 de 3.387 filas sin ningún error y `main()` habría sustituido la fuente por
+    el resultado parcial en silencio. Ames además aborta si falla cualquier ZIP o PDF (un semestre perdido pesa ~9 % y no
+    llegaría al umbral).
+  - **Ourense: descartado** tras verificar su página oficial de transparencia y su sede electrónica: solo enlaza "Contratos
+    (no incluidos los contratos menores)" y el perfil del contratante en PLACE; no hay ninguna sección de menores. El indicio
+    de prensa de que dejó de publicar en 2022 queda confirmado por la propia fuente oficial.
+  - **Santiago de Compostela** (`santiago`, 8.521 contratos 2021-2T 2026, ~42,3 M EUR): en PLACE sus órganos ("Xunta de
+    Goberno do Concello de Santiago de Compostela", 24-42 entradas/mes) publican procedimientos 1/3/8/9, NINGUNO menor, y
+    no existe ningún órgano "(CONTRATOS MENORES)" en todo PLACE (jun-2025 ni jul-sep 2026): ese dato de Cowork venía de un
+    agregador. La fuente real es `santiagodecompostela.gal/gl/transparencia/relacion-de-contratos-menores` (una página por
+    año, XLS trimestrales, actualización mensual; el dominio `transparencia.santiagodecompostela.gal` ya no existe).
+    Dos formatos: 2021-1T 2026 "detalle por adjudicatarios" del sistema contable (con NIF, filas de subtotal, fecha = FECHA
+    DE ENTRADA del documento) y desde el 2T-2026 tabla plana del Registro Central de Contratos (sin NIF). Importe CON IVA.
+    Se EXCLUYEN 30 filas > 48.400 EUR (convenios con el Consorcio de hasta 3,5 M EUR, "entregas a cuenta" a la UTE de
+    autobuses, liquidaciones): no son contratos. El 1T-2026 solo cubre del 1 al 8 de enero: del 9 de enero al 31 de marzo de
+    2026 no hay datos. Ficheros solapados deduplicados. La web a veces sirve la página del año sin enlaces (reintentos);
+    un selector solo por nombre dejaba fuera `RCR2E5.xls` (= 1T-2022).
+  - **Lugo** (`lugo`, 5.485 contratos 2021-3T 2025, ~25,1 M EUR): PDF trimestrales en la página de transparencia "Contratos
+    menores" de `datosabertos.lugo.gal` (el `node/969` es una plantilla con texto de relleno). DEJÓ DE PUBLICAR tras el
+    3T-2025 (4T-2025 y 2026 dan 404). Tabla de 6 columnas (importe con IVA, sin NIF); fechas `dd/mm/aaaa` y `dd-mm-aa`. El
+    PDF del 1T-2022 tiene ~31 % de filas ilegibles en origen (117 descartadas). 2 filas de 68.476,32 EUR (aglomerado) superan
+    el máximo legal y llevan nota visible.
+  - **BUG DE COBERTURA en el pipeline de PLACE para Galicia (arreglado en local, sin desplegar):** `_regex_anclado()` exigía
+    "ayuntamiento de X" en el órgano, pero muchos concellos figuran como "Concello de X" ("Xunta de Goberno do Concello de
+    Santiago de Compostela"), y los nombres con artículo llevan la contracción gallega ("Concello da Estrada" = "A Estrada"). Con
+    el ZIP real de septiembre de 2026: 168 -> 196 contratos asignados a municipios gallegos (+17 %), 59 -> 73 municipios con
+    contratos, Santiago 1 -> 6, ningún municipio pierde contratos, ningún órgano se asigna a dos municipios. Producción tenía
+    UN contrato de Santiago. Solo afecta a los 313 municipios gallegos de la app. El histórico anterior a los ZIP conservados
+    (3 meses) NO se recupera solo: habría que volver a descargar los ZIP mensuales antiguos.
+  - **Pendientes de la tanda** (aún sin verificar):
+    Santiago (¿ya entra el órgano "Xunta de Goberno
+    ... (CONTRATOS MENORES)" por PLACE?), Lugo (¿sigue publicando en 2024-25?), Vilagarcía, Narón,
+    Arteixo (rendiciondecuentas.es como posible fuente nacional).
+
+## Extensión a toda España (2026-09-30, noche autónoma)
+
+Continuación por CCAA sin agregador propio, mismo criterio de siempre. Leads investigados y su estado:
+
+- **Las Palmas de Gran Canaria (~382.000 hab.) — CONECTADO (2026-09-30), resuelto con Playwright**: el intento
+  previo con la técnica `/_next/data/<buildId>/...` (sin ejecutar JS) solo traía metadatos de sección, nunca
+  las filas reales (`datosSSR` vacío, `dehydratedState` de React Query sin datos) -- ver el párrafo anterior,
+  dejado como registro histórico del intento fallido. El backend público que sí se llegó a identificar
+  entonces (`adminlaspalmasgc.cloudtransparencia.es`) era el panel de ADMINISTRACIÓN (login), un callejón sin
+  salida por esa vía.
+  - **La solución fue abrir un navegador de verdad (Playwright, headless) y observar el tráfico de red**,
+    tanto en la carga normal de la página como, sobre todo, al PULSAR el botón "Descargar nuestros datos" que
+    la propia página ofrece (csv/ods/excel/json/xml) e interceptar la petición real que dispara esa descarga
+    con `page.expect_download()`. Eso reveló el endpoint público real, totalmente distinto del dominio de
+    administración:
+    `transparencia.laspalmasgc.es/api/proxy/obligaciones/datos-multiples-registros-por-ano/88/1/<año>/csv`
+    (88 = id interno de la obligación "Relación de contratos menores"). Es una URL pública normal: una vez
+    encontrada, ya no hace falta navegador para las descargas en sí, solo peticiones HTTP directas.
+  - **3.145 registros** desde 2021-09 (conector `actualizar_contratos_menores_laspalmasgc.py`, fuente
+    `laspalmasgc`), años 2022-2026 completos; 2021 excluido entero por ambiguo frente al corte del
+    2021-09-01 (la fuente no da fecha por contrato, solo ejercicio, igual que Toledo/Fuente Álamo).
+  - El conjunto de columnas varía por año (p.ej. 2023 no trae `cif_adjudicatario` en absoluto, 0/619 filas
+    con NIF ese año) -- se lee por nombre de columna con `csv.DictReader`, nunca por posición.
+  - Dato de calidad verificado y NO corregido: 326 de 3.145 filas (10,4 %) superan el techo legal habitual de
+    un contrato menor (hasta 427.975 €), una proporción mucho mayor que en Zaragoza (2/1.085, 0,1 %).
+    Revisados los importes en crudo, sin señales de error de columna ni de concatenación -- se documenta como
+    característica propia de la fuente (la propia obligación de transparencia municipal las publica así) y se
+    muestran todas tal cual, sin filtrar, con nota explicativa en `_NOTAS_FUENTE_CM`.
+  - **Técnica reutilizable**: la plataforma (Next.js + `/api/proxy/obligaciones/...`) es la misma familia que
+    la de retribuciones de concejales del mismo ayuntamiento (mismo dominio, solo cambia el id de obligación)
+    -- candidato inmediato para la siguiente ronda de sueldos de concejales.
+- **Ceuta — dos hallazgos, ninguno cerrado**:
+  - **Contratos menores**: los enlaces "Contratos menores 2020-2023" de `ceuta.es/ceuta/economica/contratos`
+    NO son un dataset propio de Ceuta -- son un volcado bruto y genérico de PLACE (Plataforma de
+    Contratación del Sector Público) de TODA ESPAÑA (45 MB, cientos de miles de filas de ayuntamientos de
+    toda España, verificado con filas de "Aras de los Olmos" y "Rivas-Vaciamadrid" mezcladas). Sin columna de
+    adjudicatario ni de tipo de procedimiento (menor/formal): inservible tal cual para extraer solo Ceuta ni
+    solo menores. Descartado.
+  - **Sueldos de altos cargos**: `ceuta.es/ceuta/institucional/retribuciones` sí publica un PDF anual
+    ("RETRIBUCIONES ALTOS CARGOS <año>") con CARGO + IMPORTE ANUAL (Presidente, 6 Consejerías, Directores
+    Generales, "Diputado"/"Diputado con portavocía"), pero **sin nombres** -- Ceuta es Ciudad Autónoma, no un
+    ayuntamiento normal, y la tabla es por cargo, no por persona (como Málaga). Hace falta cruzarla con un
+    censo de quién ocupa cada consejería/dirección general (`ceuta.es/gobiernodeceuta/.../el-equipo` da los
+    6 consejeros vigentes en prosa, no en tabla) -- no se completó esta noche por el riesgo de cruzar mal un
+    nombre con un cargo sin la verificación adecuada; se deja documentado para retomar con más tiempo.
+- **Melilla**: sin lead viable esta noche para contratos menores -- el enlace de "Contratación menor" del
+  portal (`melillaportal/...contratacion_menor.jsp`) devuelve una página vacía/rota, y el enlace paralelo de
+  la sede electrónica (`sede.melilla.es/sta/...PTS2_CONTMENOR`) da "recurso no encontrado". Sin retribuciones
+  de concejales tampoco localizadas.
+- **Región de Murcia — contratos menores, municipios grandes probados sin fuente propia**: Alcantarilla y
+  Cieza (ambas solo enlazan a PLACE genérico desde su portal de transparencia, sin dataset propio -- mismo
+  caso que Elche/Albacete).
+
+## Cierre de España, ronda 3 (2026-10-01, Extremadura)
+
+- **Badajoz (~150.000 hab.) — CONECTADO, primer cierre de Extremadura en cualquier frente**: Perfil del
+  Contratante (`aytobadajoz.es/es/ayto/perfil-del-contratante`), un selector de AÑO + CATEGORÍA sin URL propia
+  por combinación (navegado con Playwright: tres entidades con contratación propia -- Ayuntamiento, IMSS e
+  IFEBA). Cada expediente filtrado por categoría "... - Contrato Menor" enlaza un PDF de "Adjudicación
+  Definitiva" (identificado por su atributo `title`, no por el nombre de fichero, muy inconsistente: desde
+  "1632-23_adjudicacion_contrato_menor.pdf" hasta "tomodule_(97).pdf"). **28 registros desde 2022**
+  (`actualizar_contratos_menores_badajoz.py`, fuente `badajoz`).
+  - **Importante -- alcance probablemente parcial**: los propios PDF de adjudicación se titulan "ADJUDICACION
+    MENOR CON PUBLICIDAD": parece que este selector cubre solo los contratos menores publicados con
+    concurrencia pública (varias empresas invitadas a ofertar), no el universo completo de adjudicación
+    directa sin publicidad -- de ahí que el volumen anual sea bajo (4-14 por año y entidad) frente a otras
+    ciudades de tamaño similar. Se documenta así en la ficha en vez de presentarlo como cobertura completa.
+  - **Tres formatos de PDF distintos, cada uno con su propio patrón de texto** (encontrados probando varios
+    PDF de cada tipo): AYTO ("Adjudicar el expediente referenciado a X, por importe de Y €"), IMSS en tabla
+    ("Adjudicatario propuesto PRESUPUESTO" + fila "NIF NOMBRE IMPORTE€") e IMSS en prosa ("a favor de la
+    empresa X, con NIF/CIF: Y que llevará a cabo... por un precio total de Z €"). De 48 PDF de adjudicación
+    únicos encontrados, 28 se pudieron parsear con estos tres patrones; los 20 restantes son documentos
+    escaneados sin capa de texto (ilegibles sin OCR, no incluidos) o usan una redacción distinta no cubierta.
+  - **Bug encontrado y corregido, con impacto real en el importe**: un primer intento trataba un único punto
+    sin coma como separador decimal, convirtiendo "6.000€" (seis mil euros) en 6,00€ -- corregido para tratar
+    SIEMPRE el punto como separador de miles en notación española (nunca hay notación inglesa en esta fuente).
+    Verificado repasando los importes más altos y más bajos del resultado tras el arreglo: todos coherentes
+    con el tope legal de un contrato menor.
+  - Los saltos de línea de los PDF caen en puntos impredecibles (a veces en mitad de un nombre de empresa o
+    de una frase) -- todos los patrones de extracción se aplican sobre el texto con los espacios en blanco
+    normalizados a uno solo, no sobre el texto con saltos de línea originales.
+- **Mérida (~59.000 hab., capital de Extremadura) — descartado, fuente solo histórica**: su página de
+  "Contratos menores" (`merida.es/tu-ayuntamiento/transparencia/contratos/contratos-menores/`) tiene una
+  tabla real (DataTables), pero el propio texto de la página dice que solo cubre "desde el año 2016 hasta la
+  entrada en vigor de la nueva ley" (9 de marzo de 2018) -- todo lo posterior se publica solo en PLACE. Fuera
+  del todo de la ventana de 5 años (2021-09 en adelante): descartado, no por dificultad técnica sino porque no
+  hay dato dentro de la ventana.
+- **Ponferrada (~62.000 hab., Castilla y León) — descartado, mismo patrón que Elche/Albacete**: su "Perfil del
+  contratante" redirige directamente a la Plataforma de Contratación del Sector Público para todo lo posterior
+  al 8 de marzo de 2018, sin dataset propio.
+- **Talavera de la Reina (~83.000 hab., Castilla-La Mancha) — fuente real localizada, PARSEO DESCARTADO por
+  riesgo de inventar datos**: `transparencia.talavera.es/contratos-menores/` (portal WordPress con gestor de
+  descargas) publica PDF trimestrales reales desde 2022 con REFERENCIA, CIF entidad, NEGOCIADO, CIF y nombre
+  del ADJUDICATARIO, TIPO DE CONTRATO, OBJETO, EJERCICIO, FECHA, IMPORTE sin IVA, IVA y DURACIÓN -- una fuente
+  genuinamente buena. El problema es el PDF en sí: cada registro ocupa 2-3 líneas físicas cuyas columnas NO se
+  alinean entre sí (la maquetación intercala, en el orden de lectura de `pdfplumber`, fragmentos de la fila
+  actual con fragmentos de la siguiente), así que hasta el NOMBRE del adjudicatario puede quedar partido entre
+  dos líneas (verificado: un intento de extracción por patrones de texto normalizado devolvía "S.L." como
+  nombre completo del adjudicatario en varias filas, en vez de la razón social real). Arreglarlo bien
+  requeriría reconstruir la tabla por posición real de cada palabra (coordenadas x/y de `pdfplumber`), no por
+  el orden del texto -- una tarea bastante más grande que el resto de fuentes de esta noche. Se deja
+  documentado como pendiente real para una sesión futura con más tiempo dedicado solo a esto, en vez de forzar
+  un resultado con nombres truncados.
+- **San Cristóbal de La Laguna (~156.000 hab., Tenerife) — CONECTADO, cierre grande de Canarias**: portal de
+  transparencia (`aytolalaguna.es/ayuntamiento/presupuestos-y-finanzas/contratos-menores/`), con una página
+  por año que enlaza tres XLSX oficiales -- uno por entidad con contratación propia: Ayuntamiento, OAAM
+  (Organismo Autónomo de Actividades Municipales) y OAD (Organismo Autónomo de Desarrollo). Columnas limpias y
+  CONSISTENTES en los 5 años comprobados: N. Exp. | NIF | Nombre adjudicatario | Importe sin IGIC | IGIC |
+  Importe con IGIC | Tipo | Fecha adjudicación | CPV | Objeto. **10.596 registros desde 2021-09**
+  (`actualizar_contratos_menores_la_laguna.py`, fuente `la_laguna`) -- el mayor cierre individual de esta
+  ronda con diferencia. Dato de calidad verificado: 0 filas sin fecha/NIF/descripción/importe, ids únicos, los
+  importes más altos del resultado (39.999,30 €, 39.998,99 €...) justo por debajo del tope legal de 40.000 €
+  para obras, sin ninguna anomalía.
+  - **IGIC, no IVA**: Canarias tiene su propio impuesto indirecto (Impuesto General Indirecto Canario) en vez
+    del IVA peninsular -- se guarda el importe SIN IGIC en la misma columna que el resto de fuentes usa para
+    "sin IVA", con una nota aclaratoria en la ficha para no confundirlo.
+  - Los enlaces NO siguen un patrón de URL único entre años (2025 usa un nombre, 2023-2024 otro, 2021-2022
+    otro distinto): recogidos a mano navegando cada página anual con un navegador real (un `curl` normal no
+    encuentra los enlaces, es una SPA/CMS moderno).
+- **Arona (~85.000 hab., Tenerife) — CONECTADO, misma plataforma que Las Palmas GC, cierre rápido**: al
+  buscar más municipios de Canarias en la misma familia de plataforma (Next.js + `/api/proxy/obligaciones/
+  ...`, ver Las Palmas GC más abajo), `transparencia.arona.org` resultó ser la MISMA plataforma -- localizar
+  el endpoint fue mucho más rápido que la primera vez (visitando con Playwright la página "Relación de
+  contratos menores" del propio portal se ve directamente la petición real, sin necesidad de interceptar
+  ningún botón de descarga). **432 registros desde 2021-09** (2022-2026 completos, 2021 excluido entero por
+  ambiguo -- mismo criterio que Las Palmas GC, esta fuente tampoco da fecha por contrato, solo ejercicio).
+  Sin descripción del objeto del contrato (la fuente no la publica en este listado). Solo 2 de 432 filas
+  (0,5 %) superan el techo legal habitual -- tasa baja, coherente con Zaragoza, se muestran tal cual.
+  - **Confirma que vale la pena revisar si otros municipios comparten plataforma** una vez identificada una
+    con éxito: mismo dominio-patrón `transparencia.<municipio>.org/.es`, misma API `/api/proxy/obligaciones/
+    datos-multiples-registros-por-ano/<id>/1/<año>/csv`, solo cambia el id de obligación.
+- **Santander (concejales) — descartado, único acuerdo nominal encontrado está caducado**: `transparencia.
+  santander.es` (A.2.4, "Retribuciones percibidas anualmente") enlaza a un PDF real del BOC (21/08/2019) con
+  nombre, cargo e importe individual de la alcaldesa y 13 concejales -- justo el tipo de fuente que se busca.
+  El problema: es el acuerdo de la legislatura 2019-2023, y no hay ningún acuerdo posterior enlazado. Se
+  comprobó contra el listado actual de la Corporación (`santander.es/.../corporacion-municipal`): varios
+  nombres del PDF (Ceruti García de Lago, Díaz Herrera, Díaz Maza, González Huergo, Ruiz Lavín, Sanjuan
+  Iriarte, Nalda Condado) ya NO aparecen en la Corporación vigente, sustituidos por concejales distintos
+  (Gancedo González, García Ruiz, Gómez-Barreda García, Castillo Terán...) -- solo la alcaldesa (Gema Igual
+  Ortiz) coincide en ambos. Usar los importes de 2019 para la Corporación actual asignaría sueldos a personas
+  que ya no ocupan esos cargos: descartado, no por falta de dato sino por estar caducado sin sustituto
+  publicado.
+
+## Cierre de España, ronda 2 (2026-10-01, Playwright + búsqueda restaurada)
+
+- **Bilbao — descartado con evidencia técnica, no solo "no encontrado"**: TODOS los caminos hacia la
+  transparencia de Bilbao (`bilbao.eus/transparencia`, `/gardentasuna`, `/opendata`) son una redirección
+  meta-refresh a `www.bilbao.net/...` -- un dominio distinto (`.net`, no `.eus`) que devuelve **connection
+  refused** en el puerto 443 (confirmado con `curl -v`, no es un timeout ni un bloqueo de red nuestro: el
+  servidor rechaza la conexión activamente). Es un fallo de infraestructura del propio Ayuntamiento (un
+  dominio legacy decomisionado al que su web actual sigue redirigiendo), no un límite de la técnica de
+  scraping -- no hay nada que Playwright ni ninguna otra herramienta pueda hacer mientras ese dominio no
+  responda. Descartado para concejales; no se ha buscado su lead de menores esta ronda.
+- **Getafe (concejales) — descartado por ambigüedad real, no por falta de dato**: `gobiernoabierto.getafe.es`
+  publica los importes por 9 categorías de "Concejal/a Delegado/a" (dedicación exclusiva) y el roster de
+  `/personas` da nombre + cargo de las 27 personas de la Corporación, pero cruzando ambos no cuadra: hay 12-14
+  personas con un cargo que suena a "delegado" (contando tenientes de alcaldía con y sin la palabra literal
+  "Delegado/a" en su título) y la fuente dice que son exactamente 9. Sin otra fuente que liste esas 9 personas
+  por su nombre, cualquier asignación sería adivinar -- no se fuerza (mismo criterio que rechazó Alcalá de
+  Henares "sin dedicación ni asistencias" o el resto de casos "por categoría" documentados abajo).
+- **Zaragoza y Valladolid (concejales) — confirmado "por categoría sin nombres", límite estructural**:
+  ambas fuentes (`zaragoza.es/sede/portal/organizacion/retribuciones#corporacion`, `valladolid.es/transparencia
+  /.../retribuciones-miembros-corporacion`) dan tablas de importe por CARGO (8-9 categorías: Alcalde, Consejero
+  de Gobierno, Portavoz, Portavoz Adjunto, Concejal Delegado, Concejal, Asistencias...), sin ningún nombre en
+  la misma tabla ni un roster público que permita cruzar sin ambigüedad (demasiadas categorías para aplicar
+  con seguridad la técnica de Málaga/Manacor, que solo funciona con 2-4 categorías simples). Mismo patrón que
+  Guadalajara/La Laguna/Segovia -- **no se reintenta**, es un límite de lo que la fuente publica, no de la
+  técnica de descarga (confirmado por instrucción explícita de César, 2026-10-01).
+- **Valencia capital (concejales) — confirmado "por categoría sin nombres"**: el "Acuerdo Plenario de
+  28/07/2023" (`valencia.es/cas/ayuntamiento/retribucion-corporacion-2023-2027`, PDF descargado con
+  Playwright vía `page.context.request.get` porque un `curl` directo lo bloquea un WAF con "Request
+  Rejected") da 8 categorías (Alcaldesa, Tenencias de Alcaldía, Concejal Delegado, tres escalones más de
+  dedicación exclusiva, y parcial 75/50/25 %) sin ningún nombre en el documento. Mismo caso que
+  Zaragoza/Valladolid, mismo criterio: no se fuerza.
+- **León (concejales) — confirmado, nombres anonimizados por la propia fuente**: `aytoleon.es` publica PDFs
+  anuales "RETRIBUCIONES CONCEJALES" con cargo e importe... pero el nombre está reducido a solo INICIALES
+  ("M.A.C", "J.A.S"...), no un nombre completo verificable. Descartado, no es un problema de técnica de
+  descarga: la propia fuente no identifica a la persona.
+- **Elche (concejales) — portal de transparencia bloqueado (403)**: `transparencia.elche.es` devuelve 403
+  Forbidden incluso con un navegador real (Playwright); la web principal (`elche.es`) solo enlaza a ese
+  subdominio para transparencia, sin ruta alternativa encontrada esta ronda.
+- **Gandia (menores) — sin lead esta ronda**: `gandia.es` está detrás de Cloudflare (403 con `curl`, pasable
+  con Playwright) pero no tiene WordPress (`/wp-json/` da 404) ni un enlace de "transparencia"/"contractació"
+  visible en la portada renderizada; sin presupuesto de búsqueda web disponible para acelerar la localización,
+  no se insistió más esta ronda.
+
+## Cierre de España, ronda 7 (2026-10-01, León y Talavera de la Reina)
+
+- **León (menores) — lead real pero desproporcionadamente caro, no perseguido esta ronda**: el Perfil del
+  Contratante (`sede.aytoleon.es/eAdmin/PerfilContratante.do?action=verContratosMenores&tipo=menores`) es una
+  tabla EN VIVO real (identificador, referencia, descripción, estado, importe) sin exportación masiva ni API
+  -- solo 10 filas por página y sin columna de adjudicatario/fecha visible en la propia tabla (hay que abrir
+  cada fila individualmente para ese dato, como ya se documentó en rondas anteriores). Dado el volumen
+  aparente (identificadores en el orden de las decenas de miles), cerrarlo bien requeriría cientos de visitas
+  de página individuales con Playwright -- mucho más caro que cualquier otra fuente cerrada esta noche. Se
+  deja documentado como lead viable pero de coste desproporcionado, para una sesión dedicada solo a esto.
+- **Talavera de la Reina (concejales) — descartado, régimen de dedicación no está en el documento de
+  estructura**: `transparencia.talavera.es` publica un documento real de retribuciones por categoría (Alcalde,
+  Concejal Delegado con dedicación exclusiva, parcial 50 %, parcial 33 %) y otro documento real de estructura
+  de Gobierno con los nombres de cada Área y Concejalía delegada (patrón que en otras ciudades -- Oviedo,
+  Cuenca -- permite cruzar categoría↔persona). Aquí NO se puede cruzar con seguridad: el decreto de estructura
+  (Resolución 2023-3492) nombra a los titulares de cada Área y Concejalía delegada pero NUNCA menciona su
+  régimen de dedicación (ni la palabra "dedicación" aparece en el documento) -- no hay forma de saber, solo
+  con esta fuente, cuáles de esos delegados tienen dedicación exclusiva y cuáles parcial al 50 % o al 33 %.
+  Asumir que todos son "exclusiva" sería adivinar. Sin una tercera fuente que fije el régimen por persona, no
+  se cierra.
+
+## Cierre de España, ronda 7 (2026-10-01, sin presupuesto de WebSearch)
+
+- **Nota de sesión**: esta ronda se quedó sin presupuesto de `WebSearch` (200/200 usadas) a mitad de la
+  exploración -- la búsqueda de nuevas fuentes de menores/concejales quedó limitada a navegación directa por
+  URL (`WebFetch`), mucho menos eficaz para localizar portales que no siguen un patrón conocido. Se priorizó
+  el frente de contratos formales (fix "Ajuntament de X", no depende de búsqueda) y se documenta aquí el único
+  lead nuevo encontrado con navegación directa, sin cerrar.
+- **Zaragoza (concejales) — lead real, sin cierre esta ronda**: el portal de transparencia
+  (`zaragoza.es/sede/portal/organizacion/retribuciones`) da importes reales por categoría 2026 (Alcaldesa
+  92.973,30 €; Consejero de Gobierno 89.254,48 €; Concejal Delegado 74.378,64 €; Concejal 72.705,78 €) --
+  mismo patrón que Málaga/Oviedo/Pamplona, en principio cerrable. La página de composición del gobierno
+  (`.../gobiernozaragoza/composicion`) da los 9 nombres de la Alcaldesa + Tenientes de Alcalde (legislatura
+  2023-2027: Natalia Chueca, Ángel Carlos Lorén, Víctor Manuel Serrano, Sara Fernández, Blanca Solans, Tatiana
+  Gaudes, Carlos Gimeno, Mª Ángeles Orós, Alfonso Mendoza) pero SIN indicar el área de cada uno ni distinguir
+  quién es "Consejero de Gobierno" de quién es "Concejal Delegado" -- y no se localizó el decreto de
+  nombramiento/estructura que sí lo daría, ni el listado completo del Pleno (para la categoría "Concejal" raso).
+  Candidato claro para la próxima ronda con presupuesto de búsqueda disponible.
+
+## Cierre de España, ronda 6 (2026-10-01, Ceuta/Melilla reconfirmados, CLM sin cierre)
+
+- **Ceuta (retribuciones altos cargos) — reconfirmado, sigue por categoría sin nombres**: el PDF
+  "RETRIBUCIONES ALTOS CARGOS 2025" (`ceuta.es/ceuta/institucional/retribuciones`) sigue publicando por
+  CARGO (Presidente, Vicepresidentes, Consejeros...), nunca por nombre. Mismo hallazgo que en rondas
+  anteriores, sin cambios.
+- **Melilla (retribuciones cargos electos) — reconfirmado, sigue por categoría sin nombres**: encontrada esta
+  vez la ruta completa hasta el PDF real (`sede.melilla.es`, "Retribuciones Cargos Electos y Altos Cargos" →
+  ficha del año → documento PDF real, distinto del enlace roto documentado en rondas anteriores), pero el
+  contenido es el mismo problema de fondo: "CONSEJEROS Y DIPUTADOS DE LA ASAMBLEA... CATEGORIA... TOTAL
+  ANUAL", sin ninguna columna de nombre. Confirmado con evidencia nueva (PDF descargado y leído esta ronda),
+  no solo con el hallazgo antiguo.
+- **Guadalajara (menores) — confirmado, fuente propia solo hasta 2018**: sus PDF trimestrales propios de
+  contratos menores terminan en el 4º trimestre de 2018; el propio texto de la página dice que desde 2019 los
+  contratos menores se consultan en la Plataforma de Contratación del Estado (mismo patrón que Elche/
+  Albacete/Mérida/Ponferrada). Fuera por completo de la ventana de 5 años.
+- **Toledo y Albacete (concejales) — sin comprobar esta ronda, sitios inaccesibles**: `toledo.es` y
+  `transparencia-participacion.albacete.es` dieron errores de conexión a nivel de red (`ERR_SOCKET_NOT_
+  CONNECTED` / `ERR_CONNECTION_REFUSED`) incluso con Playwright, mientras que otros sitios (`google.com`,
+  `arona.org`) respondían con normalidad en el mismo momento -- parece una caída puntual de esos dos sitios,
+  no un problema de la técnica. Pendientes de reintentar en otra sesión.
+- **Cuenca (concejales) — lead real pero sin cierre, roster de áreas no publicado**: `gobiernoabierto.cuenca.
+  es` tiene un PDF real de retribuciones ("Certificado retribuciones corporación y grupos") con solo 2
+  categorías (Alcalde 55.734 €, Concejal/a con dedicación exclusiva 48.832 €/53.316,34 € según el acuerdo
+  vigente) -- en principio cruzable como Málaga/Manacor/Pamplona. El problema: el documento que debería listar
+  qué Concejal/a concreto ocupa cada Área de Gobierno ("Organización Municipal") está marcado "Pendiente
+  2023" en el propio portal, y el decreto de delegaciones de competencias delega por ÁREA sin repetir el
+  nombre de la persona en el mismo texto. No se pudo cerrar sin adivinar qué persona concreta hay detrás de
+  cada área -- queda documentado para retomar si se localiza esa lista en otra sesión.
+
+## Cierre de España, ronda 5 (2026-10-01, Castilla y León)
+
+- **Salamanca (~144.000 hab.) — CONECTADO**: `aytosalamanca.es/web/guest/contratos-menores`, un PDF anual
+  ("Relación de Contratos menores") con tabla real (bordes visibles, se extrae limpio con
+  `pdfplumber.extract_tables()`). Enlaces Liferay sin extensión de fichero en la URL, encontrados navegando
+  con un navegador real. **2.951 registros desde 2021-09** (`actualizar_contratos_menores_salamanca.py`,
+  fuente `salamanca`). Solo hay datos hasta el 1er trimestre de 2024 (el propio fichero se llama
+  "contratosmenores20241t"): no hay nada más reciente publicado, no se inventa ni se busca en otro sitio.
+  - Dos formatos de tabla según el año (detectados por número de columnas, no por año): 2022-2024 con 7
+    columnas y cabecera repetida por página; 2021 con 6 columnas y SIN cabecera en ninguna página.
+  - Dato de calidad verificado: 0 filas sin fecha/NIF/descripción, ids únicos. Un contrato de 2023 (35
+    chalecos de mando ignífugos, PROTEC SOLANA S.L., 506.337,00 €) supera con mucho el techo legal habitual --
+    verificado contra la tabla cruda del PDF (no es un error de extracción, el propio PDF trae ese importe en
+    esa celda): se muestra tal cual, documentado en la ficha.
+
+## Cierre de España, ronda 4 (2026-10-01, Asturias y Navarra)
+
+- **Oviedo (concejales) — CONECTADO, primer cierre de Asturias**: ver Lote 25 en `SUELDOS_CONCEJALES_LOG.md`
+  (20 concejales, reconstrucción a partir de 6 resoluciones de Alcaldía con dos modificaciones de 2024).
+- **Gijón (concejales) — CONECTADO**: ver Lote 26 (24 concejales, dataset abierto de `opendata.gijon.es`
+  encontrado interceptando con Playwright el tráfico de una ficha individual).
+- **Pamplona (concejales) — CONECTADO, primer cierre de Navarra**: ver Lote 27 (9 concejales delegados,
+  patrón Málaga sobre solo la categoría segura de la fuente).
+- **Donostia-San Sebastián (concejales) — sin lead esta ronda**: el propio portal de transparencia avisa que
+  está "en fase de renovación"; ni "Órganos de Gobierno" ni el resto de secciones navegadas mencionan
+  retribuciones de concejales, y varias URLs candidatas (`/personal-municipal`,
+  `/participacion-relacion-ciudadanos`) dan 404. Sin presupuesto de búsqueda web disponible para acelerar la
+  localización, no se insistió más esta ronda -- posible candidato para retomar con más tiempo o cuando el
+  sitio termine su renovación.
+
+
+## Ronda autónoma 2026-09-29: ciudades >100.000 hab. de la auditoría de DATOS_PETICION_MENORES.md §5
+
+Ronda de conexión de las fuentes que la auditoría del 28-09-2026 (29 ciudades >100.000 hab. sin fuente, ver
+`DATOS_PETICION_MENORES.md` §5) dejó como descargables. Cada una se verifica en crudo antes de subirla.
+
+- **Gijón (~270.000 hab., Asturias) — CONECTADO (2026-09-29)**: dataset abierto oficial
+  `opendata.gijon.es/descargar.php?id=725&tipo=TSV` (el mismo de `gijon.es/es/datos/contrataciones_menores_adjudicadas`
+  y del OpenDataSoft `observa.gijon.es`). Un solo TSV con todo el histórico desde 2018 (63.978 filas), actualizado
+  casi a diario (última adjudicación 25-09-2026). **37.226 contratos en ventana** (`actualizar_contratos_menores_gijon.py`,
+  fuente `gijon`), 72,0 M€. Primer municipio de Asturias con menores. Verificado en crudo: `PRECIO_DE_ADJUDICACIÓN`
+  lleva IVA (= base + `IMPORTE_DEL_IVA`, fila a fila); `CODIGO_CONTRATO`+`LOTE` es clave única (0 repetidas);
+  `FASE` siempre "ADJUDICADO" y procedimiento siempre "Contrato menor"; 1 fila sin fecha (descartada) y 11 sin CIF.
+  Incluye al Ayuntamiento (12.138) y 8 entes de su sector público (Fundación de Cultura 9.505, EMTUSA 4.366, Divertia
+  4.140…), con el ente real en `organisme`. Un solo contrato supera 48.400 € (101.199,70 €), mostrado tal cual.
+  Salvaguarda: si una descarga trae menos de 20.000 filas en ventana, el script no sobrescribe el fichero. La prensa
+  local (2025) dice que los gastos de menos de 5.000 € pasan a tramitarse como "gastos menores" y podrían dejar de
+  figurar aquí: no se aprecia todavía en los datos (2025: 8.157 filas, igual que 2024), a vigilar.
+- **Málaga (~600.000 hab., Andalucía) — CONECTADO (2026-09-29), con dos salvedades visibles en la ficha**: portal
+  CKAN `datosabiertos.malaga.eu`, un dataset por trimestre con XLSX, localizados en cada ejecución por la API
+  (`package_search`), sin URLs a mano. **4.948 contratos, 4T-2021 → 2T-2026 (19 trimestres)**, 37,85 M€
+  (`actualizar_contratos_menores_malaga.py`, fuente `malaga`). Primer municipio de Andalucía con menores.
+  Verificado fichero a fichero: el nº de contratos leídos coincide con las filas reales de cada XLSX (descontando
+  título, cabecera y pie). **Salvedad 1, sin fecha por contrato**: ningún XLSX desde 2021 la publica (la única
+  columna "Fecha" está en una hoja auxiliar casi vacía de 3T/4T-2023, no en la hoja "PUBLICAR"). Se usa el primer
+  día del trimestre, mismo criterio que Ames, y por eso 3T-2021 se excluye entero (cae en parte antes del
+  2021-09-01). **Salvedad 2, base de IVA no homogénea**: 17 expedientes aparecen en dos informes seguidos (2T y 3T
+  de 2025) y varios cambian de importe exactamente x1,21 (12.000 → 14.520; 4.840 → 4.000). Se guarda la primera
+  aparición; la fuente NO entra en `_FUENTES_CM_SIN_IVA` y la ficha avisa de que no se puede afirmar que todos
+  lleven IVA. Tres formatos de columnas (4T-2021/1T-2024, 2T-2024/4T-2025, 2026), leídos por nombre de cabecera.
+  Sin CIF hasta 1T-2024. 1 contrato con importe 0 y 1 por encima de 48.400 € (48.521 €), mostrados tal cual.
+- **Almería (~205.000 hab., Andalucía) — CONECTADO (2026-09-29), sin 2025**: `almeriaciudad.es/transparencia/contratos-menores/`,
+  un fichero anual "Contratos menores AAAA (Versión XLS)"; el script localiza cada enlace por su TEXTO en cada
+  ejecución (los nombres de fichero no siguen ningún patrón). **1.765 contratos** (2021: 79, 2022: 438, 2023: 678,
+  2024: 358, 2026: 212), 13,95 M€ (`actualizar_contratos_menores_almeria.py`, fuente `almeria`). Fecha real por
+  contrato (datetime, número de serie de Excel en el .xls de 2023 o texto dd/mm/aaaa), importe con IVA, sin NIF.
+  **Error de la fuente detectado y descartado solo**: el enlace "Contratos menores 2025 (Version XLS)" apunta a
+  `contratos-abiertos-2025_0.xlsx` (contratos ABIERTOS: 37 de 103 importes > 48.400 €). Salvaguarda: un fichero con
+  más del 10 % de importes > 48.400 € no se carga (la mediana no servía: ~30.700 € en el de abiertos). 2025 solo
+  existe en PDF, y **no se puede reconstruir con fiabilidad**: `pdfplumber` solo detecta la cabecera como tabla, y
+  reconstruirla por posición de caracteres mezcla dos contratos en la misma línea (celdas centradas en vertical).
+  `menores_1.xlsx` (mismo nombre que el PDF de 2025) resulta ser enero-abril de 2026, no 2025. Queda avisado en
+  la ficha. Filas casi duplicadas (mismo expediente, adjudicatario, importe y fecha) colapsadas; expedientes con
+  varios adjudicatarios, mantenidos. 6 contratos > 48.400 € mostrados tal cual (el mayor, 753.043 € por 39 escudos
+  de pecho, parece un error de origen).
+- **Granada — NO conectado, fuente parcial**: `transparencia.granada.org/transparente/textAnual.html` publica XLSX
+  anuales 2021-2025 con fecha real, pero solo **61 / 57 / 36 / 40 / 20** contratos al año (frente a ~1.000/año en
+  Málaga o ~7.500 en Gijón): parecen ser solo los menores tramitados por el Servicio de Contratación (todos con
+  anuncio en PLACE), no el total del Ayuntamiento. Conectarlo daría una imagen engañosamente baja de Granada; se
+  deja documentado. Cuatro formatos de columnas distintos en cinco años.
+- **Córdoba — NO conectado esta ronda, coste desproporcionado**: dataset CKAN `datosabiertos.cordoba.es`
+  (`contratacion-administrativa-contratos-menores`) con 22 PDF trimestrales 1T-2021 → 2T-2026 en al menos 4
+  maquetaciones distintas; `pdfplumber` no detecta tablas en ninguno, y desde 2025 las páginas están rotadas (el
+  texto extraído sale invertido: "ABODRÓC ED OTNEIMATNUYA"). Solo hay XLS/ODS para 2023 (anual), 1T y 3T de 2024 y
+  2T-2026 — no basta para una serie continua. Lead viable pero caro (parser de PDF por posición con rotación, por era).
+- **Sevilla (~690.000 hab., Andalucía) — CONECTADO (2026-09-29)**: `sevilla.org/servicios/contratacion/contratos/<AÑO>`,
+  un PDF MENSUAL con tabla real ("Contratos adjudicados mediante procedimiento menor"), 66 PDF sep-2021 → ago-2026.
+  **1.229 contratos** (2021: 122, 2022: 253, 2023: 286, 2024: 189, 2025: 240, 2026: 139), **6,05 M€ SIN IVA**
+  (`actualizar_contratos_menores_sevilla.py`, fuente `sevilla`, añadida a `_FUENTES_CM_SIN_IVA`: el importe
+  adjudicado va sin IVA y el IVA en columna aparte, p.ej. 3.955,00 + 831,00 = 21 %). Fecha real, CIF (100 % de las
+  filas) y unidad tramitadora. Ningún contrato supera 40.000 € (máximo 39.010,95 €). Volumen bajo para una ciudad de
+  ese tamaño (~250/año): es lo que publica la propia fuente. **Siete variantes reales de la fuente resueltas, cada
+  una encontrada porque un mes salía vacío o con cifras imposibles**: (1) cabecera de 14, 15 o 17 columnas, leída por
+  nombre; (2) en los PDF de 2025 la cabecera no es la 1.ª fila (antes va una fila de letras "A B C … Q"); (3) "EXP",
+  "EXP." o "Nº EXPEDIENTE"; (4) "ADJUDICATARIO" o "ADJUDICATORIO" (errata de la fuente, agosto 2024); (5) "IMPORTE
+  ADJUD." o "IMPORTE ADJ SIN IVA"; (6) cuatro formatos de fecha (14/06/2021, 12-12-2024, 03/07/24 y 2025-01-15);
+  (7) **importes con punto decimal ("3000.00") mezclados con formato español ("14.880,00") en el mismo PDF** --
+  quitar siempre los puntos convertía 3.000 € en 300.000 € (bug detectado porque salían menores de 1,5 M€). Julio y
+  agosto de 2026 se publican como "borrador-<mes>.pdf", sin la palabra "menores": se incluyen a propósito.
+- **Aviso "Importes sin IVA" de la ficha corregido**: decía "es el importe adjudicado que publica la fuente oficial
+  (PLACE)" para cualquier fuente sin IVA, y es falso para València, Alicante, Leganés, Torrent, La Laguna y Sevilla
+  (portales propios). Ahora dice "la fuente oficial" y la procedencia la da la nota de cada fuente.
+- **Roquetas de Mar — NO conectado, huecos irrecuperables**: 20 relaciones trimestrales 1T-2021 → 4T-2025 alojadas
+  como documentos en PLACE, en seis formatos distintos (HTML con extensión .xls, .htm, .xltx, .xlsx y PDF de dos
+  generaciones). 3T-2024, 3T-2025 y 4T-2025 son **PDF escaneados sin capa de texto** (0 caracteres extraíbles):
+  la serie tendría tres trimestres vacíos. Desde el 01-02-2026 publica en el feed de menores de PLACE (ver
+  `DATOS_PETICION_MENORES.md` §5.1), que este proyecto aún no usa.
+- **Torrejón de Ardoz (~143.000 hab., Comunidad de Madrid) — CONECTADO (2026-09-29)**:
+  `ayto-torrejon.es/concejalias/contratacion/contratos-formalizados`, "LISTADO CONTRATOS MENORES <TRIMESTRE> <AÑO>":
+  PDF con tabla real 2T-2022 → 4T-2024 y XLSX desde 1T-2025. **3.535 contratos** (2022: 917, 2023: 930, 2024: 778,
+  2025: 608, 2026: 302), **10,81 M€ SIN IVA** (`actualizar_contratos_menores_torrejon.py`, fuente `torrejon`,
+  añadida a `_FUENTES_CM_SIN_IVA`: se guarda la base imponible, que la fuente publica separada del IVA). Fecha real
+  y CIF. Máximo 39.998,34 €; 12 contratos con importe 0 (mostrados tal cual). Las MISMAS 10 columnas en PDF y
+  XLSX, con tres variantes reales resueltas: (1) 1T-2023 no está enlazado en la página actual pero sigue en su URL
+  original (añadido a mano); (2) 3T-2023 escribe "Importe IVA inluido" (errata, columna no usada); (3) **4T-2024
+  imprime la hoja partida en dos** (16 páginas con 9 columnas y 16 páginas solo con la fecha, que `pdfplumber` lee
+  como tablas separadas): se reconstruye emparejando tabla a tabla, solo si el nº de tablas y de filas cuadra
+  exactamente (215 contratos con fecha real oct-dic 2024). **1T-2022 excluido**: solo publica el importe con IVA,
+  sin base imponible, y mezclarlo rompería la base sin IVA del municipio (avisado en la ficha). No hay 2021.
+- **Santa Cruz de Tenerife (~212.000 hab., Canarias) — CONECTADO (2026-09-29), 2022-2025, con hueco declarado**:
+  PDF anual "Contratos menores <AÑO>" de `santacruzdetenerife.es/gobiernoabierto/transparencia/contratos`, agrupado
+  por concejalía/organismo. **3.785 contratos** (2022: 1.083, 2023: 804, 2024: 768, 2025: 1.130), 19,40 M€ con
+  impuestos incluidos (IGIC), fecha real, organismo contratante (57 distintos), sin NIF
+  (`actualizar_contratos_menores_santa_cruz.py`, fuente `santa_cruz`). Las filas de datos NO tienen líneas de
+  rejilla (pdfplumber solo reconoce la cabecera como tabla): se reconstruye por POSICIÓN con las x de las celdas
+  de cabecera y el código "MEN<año><nº>" como inicio de fila. **Verificado: filas leídas = códigos MEN distintos en
+  el texto de cada PDF (1.083 / 806 / 768 / 1.163)**; el script se para si difieren más de un 2 %. Líneas sin
+  código en la 1.ª columna = encabezado de bloque (organismo), no continuación del contrato anterior; la cabecera
+  de columnas repetida por bloque y la línea "viernes, … Página N de M" se filtran. La duración se cuela a veces
+  en la columna de importe: el importe se extrae por expresión regular. **Hueco real de la fuente**: el resumen
+  oficial del propio Ayuntamiento (`Resumen_menores_<año>_CSV.csv`) declara 1.204 menores en 2023 y 1.267 en 2024,
+  pero los PDF solo listan 806 y 768 (-33 % y -39 %); el de 2025 sí cuadra (1.163 frente a 1.162). Avisado en la
+  ficha. No se usa el CSV porque no trae adjudicatario (2023-2024) o es solo un resumen (2025). 2021 excluido: sin
+  fecha por contrato (solo totales por trimestre).
+- **Santander — NO conectado, coste desproporcionado para el volumen**: 65 relaciones 2021-2026 en el perfil del
+  contratante, en cuatro series (servicios, suministro, obras y TUS) con maquetaciones distintas; la de servicios
+  sale fragmentada (128 tablas en 6 páginas por celdas combinadas) y obras/suministro traen 8-12 filas por
+  trimestre. Viable con un parser por serie; no prioritario.
+- **Cádiz (~110.000 hab., Andalucía) — CONECTADO (2026-09-29), solo 2023**: único listado propio del Ayuntamiento
+  (`transparencia.cadiz.es/contratos-menores/`, PDF de 157 páginas con tabla real de 6 columnas; el resto de años
+  "toda la información en la Plataforma de Contratación del Estado"). **943 contratos** (928 adjudicados en 2023 y
+  15 en enero de 2024 con expediente de 2023), 1,83 M€ con IVA, fecha real, sin NIF
+  (`actualizar_contratos_menores_cadiz.py`, fuente `cadiz`). Verificado: las 952 claves "2023/NNN" de la tabla
+  cubren todos los expedientes; los 16 "códigos" del texto que no están en la tabla son trozos de fecha
+  ("2023/02") y referencias dentro del objeto, no contratos.
+- **Telde (~104.000 hab., Canarias) — CONECTADO (2026-09-29), solo 2025**: única relación propia publicada
+  (`telde.es/.../contratos-menores/`, ODS "RELACIÓN DE CONTRATOS MENORES AÑO: 2025"). **93 contratos**, 0,82 M€,
+  fecha real (cada contrato ocupa dos filas: datos + "Adjudicación:dd/mm/aaaa", emparejadas en orden, 0 huérfanas),
+  sin NIF; la fuente no dice si el importe lleva IGIC (`actualizar_contratos_menores_telde.py`, fuente `telde`).
+  Variantes resueltas: anotación de hoja de cálculo "No ordenado, pulse…" pegada a varias celdas (se recorta),
+  expedientes con guion ("18364-2025") o truncados ("11864/202"). Leída sin dependencias (ZIP + content.xml).
+- **Huelva — NO conectado**: los 4 XLSX trimestrales de 2022 (~180 contratos en todo el año) **no traen el nombre
+  del adjudicatario** (solo expediente, objeto, duración, importes y fecha), y de 2023 solo hay PDF del 1T y 2T
+  (el enlace del 3T lleva a un decreto suelto). El feed de menores de PLACE trae unos 60 contratos de Huelva al
+  mes, lo que sugiere que esos XLSX eran además parciales.
+- **Zaragoza (concejales) — CERRADO (2026-09-29), lote 28**: 8 consejeros de gobierno con 89.254,48 € (2026). El
+  decreto de nombramientos que faltaba en la ronda 7 está en `zaragoza.es/sede/servicio/normativa/8245` (y su
+  contenido, en la página de consejeros y concejales delegados). Los 6 concejales delegados siguen fuera por la
+  posible categoría de portavoz adjunto/comisión sin lista oficial. Ver `SUELDOS_CONCEJALES_LOG.md`.
+- **Balance de la ronda 2026-09-29 (menores)**: de las 29 ciudades >100.000 hab. sin fuente, quedan conectadas
+  **8** (Gijón 37.226, Torrejón 3.535, Santa Cruz 3.785, Málaga 4.948, Almería 1.765, Sevilla 1.229, Cádiz 943,
+  Telde 93 = **53.524 contratos nuevos**). No conectadas con motivo técnico documentado arriba: Córdoba, Granada,
+  Roquetas, Santander, Huelva. Siguen fuera por la fuente: Oviedo (servidor BI inaccesible), Pamplona (apuntes
+  contables, no contratos), Alcobendas (403), Logroño y Marbella (solo años antiguos), y los 7 que remiten a PLACE
+  + 3 no localizados. **El siguiente salto de cobertura no es otro conector municipal sino el feed de menores de
+  PLACE** (`DATOS_PETICION_MENORES.md` §5.1): decisión estructural pendiente de César (duplicados con las fuentes
+  propias ya conectadas, base de IVA, alcance).
+
+## Asignación de contratos formales por nombre del órgano — arreglo de nombres (2026-09-29)
+
+Auditoría de un mes completo de PLACE (ZIP de agosto de 2026, 20.360 contratos adjudicados/formalizados) contra la
+**jerarquía oficial** de cada órgano (`ParentLocatedParty`: "<Municipio> / Ayuntamientos / <Provincia>"):
+
+- **No asignados a su municipio: 251 de 6.555** contratos con órgano municipal (3,8 %). Causa principal: las listas
+  de la app usan el formato INE con el artículo al final ("Ejido, El", "Cabezas de San Juan, Las") y PLACE escribe
+  "Ayuntamiento de El Ejido". Consecuencia en producción: **El Ejido, Rivas-Vaciamadrid, Dénia, El Campello, La
+  Rinconada, La Línea de la Concepción y El Puerto de Santa María tenían 0 contratos formales**.
+- **Arreglo** (`_variantes_nombre_municipio`, `_regex_anclado`): orden natural del artículo, guion/espacio
+  indistintos ("Rivas Vaciamadrid"), "de" opcional ("Ayuntamiento Dénia", "Concello Soutomaior"), más fórmulas
+  honoríficas ("de Villa de Arico", "de la Leal Villa de El Escorial", "de la Villa y Puerto de Garachico") y un
+  alias verificado (Santa María de Guía). Resultado en el mismo mes: **+316 contratos en 86 municipios, 0 falsos
+  positivos** contra la jerarquía oficial.
+- **Colisiones de prefijo, ahora automáticas** (`_continuaciones_de_otros_municipios`): aceptar el orden natural
+  hacía que "El Burgo" (Málaga) casara con "El Burgo de Ebro", "El Viso" con "El Viso del Alcor", "Navàs" con
+  "Navas de Bureba"... En vez de ampliar a mano `_EXCLUSION_CONTINUACION_ANCLAJE`, cada municipio excluye como
+  continuación el nombre de cualquier otro municipio de la app que empiece igual. Efecto colateral bueno: quita
+  **228 asignaciones erróneas que ya existían** en ese mes (Sevilla se quedaba contratos de Sevilla la Nueva,
+  Fuenlabrada los de Fuenlabrada de los Montes, València los de Valencia de Alcántara, San Fernando los de San
+  Fernando de Henares, "Pozuelo" de Albacete los de Pozuelo de Alarcón...). Las 228 confirmadas contra la jerarquía.
+- **Homónimos** (`_cp_esperado_anclaje`): nombres idénticos en orden natural pero guardados distinto ("La Zarza"
+  de Badajoz y "Zarza, La" de Valladolid, "La Frontera" de Tenerife y "Frontera, La" de Cuenca) se desambiguan por
+  el código postal del órgano (prefijo INE de la provincia). Los homónimos con el MISMO nombre exacto siguen sin
+  resolver: comparten fila en la tabla `municipios` (clave sin provincia), problema aparte ya conocido (Cieza).
+- **Lo ya guardado**: `_depurar_asignacion_place_por_nombre` revalida una vez los contratos de PLACE guardados y
+  ARCHIVA (no borra) los que ya no corresponden — en la copia de producción del 25-09, **212 contratos en 63
+  municipios**; solo retira los que se explican por la colisión con otro municipio o por el CP de un homónimo.
+  Lo que faltaba se recupera hacia atrás con `generar_backfill_nombres_place.py` (fichero
+  `backfill_nombres_place.json.gz`, fusión aditiva al arrancar).
+- **Sigue sin resolver (para DIR3, cuando se conecte el feed nacional de PLACE)**: ~80 contratos/mes de organismos
+  municipales sin "ayuntamiento" en el nombre (patronatos, empresas y distritos: Fuenlabrada, Rivamadrid, Coruña
+  Espectáculos, "Gobierno de Zaragoza", distritos y áreas de Madrid, Gerencia de Urbanismo de Sevilla) y municipios
+  que PLACE nombra distinto que la app (Las Rozas, Borriana, Xixona, Moixent, Benicàssim, "San Vicente Raspeig"...).
+- **Contratos menores**: no usan esta lógica (RPC por código INE, Euskadi por id de municipio, el resto son fuentes
+  de un solo municipio).
+
+## Población (poblacion.json) — municipios que faltaban (2026-09-29)
+
+22 municipios de la app no tenían población (y por tanto no entraban en el Índice de Transparencia): **Castellón de
+la Plana** (183.711 hab.), Ceuta, Melilla, Erandio, Abadiño, Sa Pobla, Ses Salines, La Frontera y otros 14 de
+nombre bilingüe o fusionado. Arreglado con alias INE→app en `actualizar_poblacion.py` y la tabla de Ceuta/Melilla.
+Además `_filas_total` descartaba a ciegas la PRIMERA fila de cada tabla como total provincial: en Bizkaia la primera
+es Abadiño (el total va más abajo), así que Abadiño se perdía y el total "Bizkaia" quedaba como si fuera un
+municipio; ahora el total se reconoce por su valor (suma de los demás). Siguen sin población: Ezkio e Itsaso (el INE
+solo publica el municipio fusionado Ezkio-Itsaso) y **Torrent (Valencia, ~85.000 hab.) y Cabanes (Castellón)**, que
+comparten clave con Torrent y Cabanes de Girona — la ficha de Torrent (Valencia) muestra hoy la población de Torrent
+(Girona). Arreglarlo exige cambiar la clave de POBLACION (y DEUDA_VIVA, etc.) a municipio+provincia en todo app.py.
+
+## Homónimos exactos en el Índice de Transparencia (2026-09-29)
+
+Solo 2 nombres existen exactamente igual en dos provincias de la app: **Torrent** (Girona / Valencia) y **Cabanes**
+(Girona / Castellón) — detectado sobre las listas completas, no a mano. Como POBLACION, la tabla `municipios`
+(contratos formales), deuda, saldo, cuentas y sueldo del alcalde se guardan solo por nombre, cada dato puede ser del
+otro municipio (comprobado: la fila "Cabanes" de Girona llevaba el sueldo de alcaldía y el saldo de Cabanes de
+Castellón; "Torrent" de Girona, el formato del portal de Torrent de Valencia). Mientras la clave no pase a
+municipio+provincia, el índice v2 (`_indice_homonimos`):
+
+- deja **no disponibles** actividad, adjudicatario, directivo y formato (salen de la fila compartida o de un dict sin
+  provincia);
+- cuenta cuentas/deuda/saldo/retribuciones y menores solo si el registro dice ser de la misma provincia.
+
+Resultado: Torrent (Girona) queda con 5 componentes propios; Cabanes (Girona) con 2, así que sale del ranking como
+"cobertura insuficiente". **Torrent (Valencia, ~85.000 hab.) y Cabanes (Castellón) no aparecen en el índice** (no
+tienen fila propia de población). Efecto colateral en el resto: como mucho 0,1 puntos en el tramo de <1.000 hab.
+Cualquier homónimo nuevo que entre en las listas se trata igual automáticamente.
+
+### Añadido: regla de provincia por código postal y recuperación completa (2026-09-29, noche)
+
+- Al verificar la recuperación aparecieron órganos de OTRA provincia que casaban con el patrón: "Ayuntamiento Sant
+  Joan D Alacant" (sin apóstrofo ni "de") caía en Sant Joan (Baleares) y "Ayuntamiento de El Carpio" (CP 47, un
+  Carpio de Valladolid que la app no tiene con ese nombre) en El Carpio (Córdoba). Regla nueva
+  (`_cp_de_otra_provincia`): si el órgano trae un CP válido, tiene que ser de una provincia donde exista un municipio
+  de la app con ese nombre; sin CP (la mitad de los contratos) o con CP imposible no se descarta nada. En agosto de
+  2026 los 22 contratos que corta eran todos de otro municipio; en la copia de producción, los 177 guardados también.
+  Además: apóstrofo opcional en el patrón (Sant Joan d'Alacant recupera 133 contratos) y exclusiones que conservan el
+  guion ("de Rio-Tinto" excluye "de Riotinto").
+- Recuperación retroactiva terminada: **9.986 contratos en 247 municipios, sep 2021 - sep 2026** (Rivas-Vaciamadrid
+  688, El Ejido 516, El Campello 486, Dénia 421, La Línea 333...). Verificada sin contratos que casen con otro
+  municipio, sin duplicados y sin CP de otra provincia.
+- Los contratos recuperados entran sin directivo enriquecido: el enriquecimiento de producción los irá completando.
+
+## Feed oficial de contratos menores de PLACE (conectado el 2026-09-30)
+
+Conjunto de datos de Hacienda "Contratos menores publicados en los perfiles del contratante ubicados en la
+Plataforma de Contratación del Sector Público" (sindicación 1143, ZIP mensuales). Generador
+`backend/actualizar_contratos_menores_place.py` (fase `descargar` + fase `generar`, EN LOCAL), ficheros
+`backend/contratos_menores_place_AAAA-MM.json.gz` (uno por mes de adjudicación), cargador
+`_cargar_contratos_menores_place` en app.py (idempotente por huella; fuente `place-menores`). Se carga en un hilo
+al FINAL del arranque: la primera vez tarda unos 8 minutos (en local), durante los que la web ya responde y los
+contratos del feed van apareciendo; cargarlo dentro del arranque lo llevaba a 600 s, por encima del `--timeout 300` de
+gunicorn. **Cadencia manual**,
+como el resto de conectores de menores: el feed se actualiza a diario en origen, pero aquí solo cambia cuando se
+vuelve a lanzar el generador.
+
+**Decisiones aplicadas** (propuestas el 29-09, "conecta ahora el feed" el 30-09):
+- Alcance: toda España **salvo Cataluña y País Vasco** (ya tienen agregador regional: RPC, API Euskadi). Ayuntamientos
+  y sus entes (distritos, áreas de gobierno, organismos autónomos, empresas municipales).
+- Municipio asignado por la **jerarquía oficial** del órgano ("<Municipio> / Ayuntamientos / <Provincia>"), nunca por
+  el texto del nombre; respaldo por el código INE del DIR3 (`L01<INE>`) o del NIF municipal (`P<INE>00`) y, para entes
+  cuyo nombre ocupa el hueco del municipio (Organismo Autónomo Madrid Salud...), por la localidad de su dirección.
+- Importe **sin IVA** (TaxExclusiveAmount del adjudicado). 3.626 contratos sin importe en origen: se guardan con 0 €,
+  misma convención que el resto de fuentes.
+- **Manda la fuente propia**: donde el municipio ya tiene conector, del feed solo entra lo que no casa con él (mismo
+  adjudicatario por NIF o nombre, importe compatible con o sin IVA, fecha ±7 días). La regla también se aplica cuando
+  la fuente propia llega DESPUÉS del feed (`_retirar_duplicados_place`, en el punto único de escritura: archiva, no
+  borra).
+
+**Resultado** (61 meses, 202109 → 202609; carga verificada sobre la copia de producción del 25-09, versión
+definitiva del 30-09 con las reglas de la revisión de abajo y la clave compuesta): 917.441 contratos en 3.567
+municipios; **851.432 guardados** y 66.009 descartados porque ya los trae la fuente propia. Residuo conocido: el emparejamiento uno a uno es
+voraz y puede dejar algún duplicado cuando dos contratos del feed compiten por el mismo contrato propio (cota
+superior medida: 395, el 0,05 % del feed). El feed es pobre al principio (6.237
+contratos en sep-dic 2021, 81.592 en 2022) y se generaliza desde 2023 (~190.000-225.000 al año).
+
+**Hallazgos al emparejar con las fuentes propias** (sin estos ajustes quedaban miles de duplicados):
+- **Governalia no publica la fecha de adjudicación** sino la de su publicación semanal: en Cartagena, de 10.620
+  contratos que casan con el feed por NIF e importe exactos, la fecha de Governalia va 8-17 días DESPUÉS (mediana 11,
+  casi siempre sábado). Para las 8 fuentes `*-governalia` se acepta que la fecha propia vaya hasta 31 días por detrás.
+  Consecuencia aparte: la "fecha de adjudicación" que mostramos de esas 8 fuentes es en realidad fecha de publicación.
+- **Málaga** no publica fecha por contrato (su conector usa el primer día del trimestre): casa si la fecha del feed
+  cae en ese trimestre.
+- Nombres de adjudicatario comparados solo con letras y números ("Bang Branding, S.L." = "BANG BRANDING S.L"):
+  Murcia (fuente propia sin NIF) no casaba.
+- Torrejón y Madrid: las coincidencias restantes están a ~300 días (contratos recurrentes de un año a otro), no son
+  duplicados.
+
+**Importes imposibles en origen**: 287 contratos con importe sin IVA por encima de 40.000 € (máximo legal de un
+contrato menor de obras; 15.000 € el resto), hasta 71,5 M€ ("Reparación de la Vía Verde", El Viso del Alcor) o
+28,9 M€ (Cullera). Aviso automático en la fila (`PLACE_MENOR_IMPORTE_IMPOSIBLE`), nunca se ocultan ni se corrigen.
+Otros 1.456 no son de obras y superan los 15.000 €: pueden ser errores de tipo o de importe; sin aviso por ahora.
+
+**No asignados** (5.238 de 924.000, 0,6 %): Vizcaya (fuera de alcance, además no casa con la lista vasca);
+**Mieres (Asturias), Villanueva de los Infantes (Ciudad Real) y Cieza (Cantabria)**, excluidos de las listas de la app
+a propósito por homónimos exactos con Girona/Valladolid/Murcia (clave sin provincia, mismo problema que
+Torrent/Cabanes); municipios que **faltan en las listas de la app**: Alfarp, El Poble Nou de Benitatxell, Montitxelvo,
+Alcúdia (Baleares), El Molar, Moya, Pozuel de Ariza, Cortelazor la Real, Aýna, Higuera... Las **entidades locales
+menores, parroquias rurales, mancomunidades y consorcios** (7.478 contratos) no se asignan al municipio: son otra
+entidad.
+
+**En el Índice de Transparencia (opción A de César, 2026-09-30)**: el feed cuenta en "menores" y "directivo". NO con
+la regla de agregadores de RPC/Euskadi (con ella casi todo municipio presente sacaba ~99-100: presencia binaria), sino
+graduado como un portal: publicar 40 + años cubiertos 20 + frescura 20 + % adjudicatario 20, con los años esperados
+**desde 2023** para los municipios que solo tienen el feed (`_PLACE_MENORES_ANIO_REFERENCIA`: en 2021-2022 el propio
+feed apenas tiene datos). Efecto conocido y aceptado: "directivo" baja donde entran adjudicatarios del feed aún sin
+enriquecer en el Registro Mercantil; se corrige solo según avanza el enriquecimiento.
+
+### Revisión del 2026-09-30 (integración en el índice y datos sueltos)
+
+- **Emparejamiento con fuentes propias, más reglas** (sin ellas quedaban duplicados): (1) municipio comparado sin
+  diacríticos y con provincia canónica -- 3 fuentes propias guardan otra grafía: "Valencia" frente a "València",
+  provincia `ciudad-real` (Ciudad Real) e `illes_balears` (Palma), inconsistencias antiguas de esos conectores que
+  no se han renombrado; (2) fuentes propias SIN fecha (Las Palmas GC, Toledo, Arona): casan por el mismo año de
+  ejercicio -- había 1.087 duplicados en Las Palmas y 438 en Arona; (3) emparejamiento **uno a uno**: cada contrato
+  propio absorbe como mucho un contrato del feed (antes uno solo tapaba varios recurrentes).
+- **Grafías del feed** que no casaban con las listas de la app: diacríticos que `normalizar()` no quita ("L'Alcùdia",
+  "Aýna") y alias Alfarp→Alfarb, Montitxelvo→Montichelvo, El Poble Nou de Benitatxell→Benitachell, Cortelazor la
+  Real→Cortelazor. No faltaban en la app.
+- **Municipios que sí faltaban en las listas** (cruce con el padrón del INE), añadidos: Falset, Vila-rodona y Sant
+  Jaume dels Domenys (Tarragona), Santa Fe del Penedès y Sant Jaume de Frontanyà (Barcelona, este sin código PSCP: 0
+  contratos en la PSCP), Zalla y Elantxobe (País Vasco: no están en KontratazioA; sus formales se buscan por PLACE y
+  sus menores entran por el feed -- Zalla, 3.128). Población, deuda, saldo, sueldo ISPA y cuentas regenerados con los
+  scripts de siempre para que no salgan con 0 por no estar en esos ficheros. Ezkio e Itsaso (separados en 2025)
+  siguen sin población: el INE aún publica "Ezkio-Itsaso".
+- **Homónimos sin resolver**, visibles en /rankings (`HOMONIMOS_SIN_RESOLVER`): 16 municipios reales sin datos
+  propios por compartir nombre exacto con otro de otra provincia (la app guarda sus datos solo por nombre): Mieres
+  (Asturias), Villanueva de los Infantes (Ciudad Real), Cieza (Cantabria), El Molar (Madrid), Arroyomolinos (Cáceres),
+  Sobrado (León), Sancti-Spíritus (Salamanca), Rebollar (Soria), El Campillo (Valladolid), Fonfría y Villaescusa
+  (Zamora), Moya (Cuenca), Castejón y Sada (Navarra), más Torrent (Valencia) y Cabanes (Castellón). Arreglo de fondo
+  pendiente de decisión: clave compuesta municipio+provincia (~120 puntos de `app.py`, 6 generadores y migración de
+  la clave primaria de `municipios` en producción).
+
+## Clave compuesta municipio+provincia (2026-09-30) -- homónimos RESUELTOS
+
+Hasta ahora todo se indexaba solo por el nombre del municipio (clave primaria de la tabla `municipios`, caché,
+población, deuda, saldo, cuentas, sueldos...). Ahora pasa todo por `clave_municipio(nombre, provincia)`:
+- nombre que existe en **una sola provincia** (el 99,8 %): la clave de siempre, `normalizar(nombre)` -- sus filas y
+  ficheros no cambian, sin migración;
+- nombre que existe en **varias provincias**: `normalizar(nombre)|provincia` ("torrent|valencia").
+
+Qué cambia:
+- **16 pares de homónimos** con datos propios cada uno: vuelven a las listas los 14 que se habían excluido (Mieres de
+  Asturias, Villanueva de los Infantes de Ciudad Real, Cieza de Cantabria, El Molar de Madrid, Arroyomolinos de
+  Cáceres, Sobrado de León, Sancti-Spíritus de Salamanca, Rebollar de Soria, El Campillo de Valladolid, Fonfría y
+  Villaescusa de Zamora, Moya de Cuenca, Castejón y Sada de Navarra) y Torrent/Cabanes dejan de compartir fila.
+- **Migración única al arrancar** (`_migrar_claves_homonimos`): cada fila guardada con la clave corta de un homónimo
+  se reparte por provincia (PSCP -> la catalana, Euskadi/Navarra -> la suya, si no por el código postal del contrato)
+  y la original se ARCHIVA completa en `municipios_archivo_homonimos`.
+- **Contratos formales de PLACE**: para un homónimo exacto, el CP del órgano tiene que ser de su provincia; sin CP
+  solo se descarta si el otro homónimo también se busca en PLACE (si el otro va por PSCP/Euskadi/Navarra no hay duda).
+- **Datos oficiales**: los generadores (población, deuda/saldo, ISPA, cuentas, alcaldes) indexan por la clave
+  compuesta; la app además reindexa al cargar (`_reindexar_por_clave`) a partir de la provincia de cada registro.
+- **Ficha**: `/?muni=Torrent` sin provincia muestra a elegir entre los dos; los enlaces de Murcia (que no llevan
+  `&provincia=`) resuelven a Murcia (Cieza). Los comentarios de un homónimo no se mezclan con los del otro.
+- **Índice**: desaparece el tratamiento especial de homónimos (datos no disponibles, `_INDICE_HOMONIMOS`); cada uno
+  tiene sus componentes. Desaparece también la lista "no disponibles por homónimo sin resolver" de /rankings.
+- **Menores de la ficha**: se leen por nombre sin diacríticos y provincia canónica, así que también juntan las
+  grafías distintas de una misma ciudad ("Valencia" de su fuente propia y "València" del feed).
+
+Fondos UE (resuelto el mismo día): el cruce ya se hacía dentro de la provincia del fondo (solo hay de Murcia y Girona), pero la ficha los leía solo por nombre (`municipio_match`), así que un homónimo veía los del otro (Cieza de Cantabria, el fondo de Cieza de Murcia). Ahora se leen por nombre + provincia; comprobado que ningún fondo está cruzado con un municipio de otra provincia.
+

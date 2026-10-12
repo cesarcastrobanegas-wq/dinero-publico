@@ -1,0 +1,64 @@
+services:
+  - type: web
+    name: dinero-publico-murcia
+    runtime: python
+    # Confirmado por César en el dashboard de Render (2026-07-30): el
+    # servicio corre en plan de pago Standard, no en el free que decía
+    # antes este archivo -- los discos persistentes de Render requieren
+    # plan de pago (ver render.com/docs/disks), así que "free" nunca pudo
+    # haber sido el plan real mientras el disco de abajo estaba activo.
+    # Este archivo simplemente no se había actualizado para reflejarlo.
+    plan: standard
+    buildCommand: pip install -r requirements.txt
+    # --workers 1 es obligatorio, no opcional: el estado de los jobs de
+    # búsqueda (_jobs) y la caché en RAM (_datos_memoria, _result_cache)
+    # viven en memoria de un único proceso. Con más de un worker, una
+    # petición podría caer en un proceso que nunca vio el job creado por
+    # otro y el spinner de progreso se quedaría colgado en "not_found".
+    # --threads da concurrencia dentro de ese único proceso -- PERO solo si
+    # el worker es "gthread": el worker "sync" (el que se usaba aquí antes,
+    # porque --worker-class nunca se especificó) ignora --threads en
+    # silencio, sin error ni aviso. Se descubrió el 2026-09-03 restaurando
+    # el cache.db del incidente del día anterior: la subida del fichero
+    # (253MB) bloqueaba el único hilo real que había, y el watchdog del
+    # arbiter (gunicorn/workers/base.py:handle_abort) mataba el worker por
+    # "no responde" en mitad de la lectura -- exactamente el síntoma de un
+    # worker sync sin más hilos, aunque --threads 4 llevara ahí desde
+    # siempre. --worker-class gthread arranca un hilo notificador aparte
+    # que sigue avisando al arbiter mientras un hilo de trabajo está
+    # ocupado en una lectura/escritura larga, así que una petición grande
+    # ya no puede matar el worker entero. --timeout sube a 300s de margen
+    # adicional (antes 120s) para subidas/descargas grandes futuras.
+    startCommand: gunicorn backend.app:app --workers 1 --worker-class gthread --threads 4 --bind 0.0.0.0:$PORT --timeout 300
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      # Disco persistente en /var/data -- cache.db se lee/escribe ahí en
+      # vez de junto al código, para que los refrescos (cron diario,
+      # /actualizar-todos) sobrevivan a un reinicio del servicio. Sin esta
+      # variable, la app cae de vuelta a guardar cache.db en el propio
+      # directorio del código (comportamiento local de siempre).
+      - key: DATA_DIR
+        value: /var/data
+      # glibc reserva una zona de memoria por hilo y no devuelve lo que queda libre en ellas: con dos, el proceso
+      # retiene mucho menos tras los trabajos pesados (2026-10-11). Si el servicio no se gestiona con este fichero,
+      # hay que añadirla a mano en el panel de Render (Environment).
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+    healthCheckPath: /
+    # Tamaño real 10 GB: medido en producción el 2026-10-03 con shutil.disk_usage (10.043 MiB de sistema de
+    # ficheros, /api/diagnostico-arranque -> "disco"); antes ponía 2 GB, desactualizado.
+    # Confirmado por César en el dashboard de Render (2026-07-30): disco
+    # persistente de pago ya activo y montado en /var/data -- no se
+    # ha creado ni modificado nada aquí, esto solo documenta lo que ya
+    # existe. IMPORTANTE antes de un futuro "sync" del blueprint: Render
+    # empareja discos existentes con este bloque por el campo `name` de
+    # abajo -- "cache-data" es un nombre descriptivo puesto desde aquí sin
+    # ver el dashboard directamente. Si el disco real en Render → tu
+    # servicio → pestaña "Disks" tiene otro nombre, cámbialo aquí antes de
+    # sincronizar el blueprint, o Render podría intentar crear un disco
+    # nuevo en vez de reconocer el existente.
+    disks:
+      - name: cache-data
+        mountPath: /var/data
+        sizeGB: 10

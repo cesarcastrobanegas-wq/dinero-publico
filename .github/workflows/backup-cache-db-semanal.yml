@@ -1,0 +1,93 @@
+name: Copia semanal de cache.db (repositorio privado aparte)
+
+# Diseño (2026-10-11): la copia de la base de producción YA NO se guarda en este repositorio, que es público (hasta
+# esa fecha vivía en la rama `cache-db-backup` y cualquiera podía descargarla, con los DNI/NIE de los autónomos). Este
+# flujo se ejecuta aquí, donde los minutos de Actions son gratuitos, pero sube la copia, comprimida, como fichero
+# adjunto de una «release» del repositorio PRIVADO `dinero-publico-copias`, y conserva solo las dos últimas.
+#
+# Secretos: ADMIN_TOKEN (solo para leer GET /admin/cache-db) y COPIAS_TOKEN (token limitado de César con permiso
+# «Contents: Read and write» únicamente sobre el repositorio privado). Sin COPIAS_TOKEN el flujo no hace nada.
+# No se sube ningún artefacto ni se imprime contenido de la base: solo tamaños y recuentos.
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"  # lunes 04:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  copia-cache-db:
+    runs-on: ubuntu-latest
+    env:
+      DESTINO: ${{ github.repository_owner }}/dinero-publico-copias
+      ETIQUETA: copia-semanal
+    steps:
+      - name: ¿Está el token del repositorio privado?
+        id: token
+        env:
+          COPIAS_TOKEN: ${{ secrets.COPIAS_TOKEN }}
+        run: |
+          if [ -z "$COPIAS_TOKEN" ]; then
+            echo "::warning::Falta el secreto COPIAS_TOKEN: no se hace la copia."
+            echo "hay=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "hay=si" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Descargar cache.db actual de producción
+        if: steps.token.outputs.hay == 'si'
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          ok=0
+          for intento in 1 2 3 4 5; do
+            codigo=$(curl -sS --max-time 900 -o cache.db -w "%{http_code}" \
+              "https://dinero-publico.com/admin/cache-db?token=${ADMIN_TOKEN}" || echo 000)
+            tam=$(stat -c%s cache.db 2>/dev/null || echo 0)
+            echo "Intento ${intento}: HTTP ${codigo}, ${tam} bytes"
+            if [ "$codigo" = "200" ] && [ "$tam" -ge 1000000 ]; then
+              ok=1
+              break
+            fi
+            sleep 30
+          done
+          if [ "$ok" != "1" ]; then
+            echo "::error::No se consiguió un cache.db válido: no se toca la copia existente."
+            exit 1
+          fi
+
+      - name: Comprobación de integridad
+        if: steps.token.outputs.hay == 'si'
+        run: |
+          resultado=$(python3 -c "import sqlite3; print(sqlite3.connect('cache.db').execute('PRAGMA integrity_check').fetchone()[0])")
+          if [ "$resultado" != "ok" ]; then
+            echo "::error::cache.db no pasa PRAGMA integrity_check: no se toca la copia existente."
+            exit 1
+          fi
+          echo "integrity_check: ok -- $(python3 -c "import sqlite3; print(sqlite3.connect('cache.db').execute('SELECT COUNT(*) FROM municipios').fetchone()[0])") fichas"
+
+      - name: Subir al repositorio privado y dejar solo las dos últimas
+        if: steps.token.outputs.hay == 'si'
+        env:
+          GH_TOKEN: ${{ secrets.COPIAS_TOKEN }}
+        run: |
+          set -euo pipefail
+          nombre="cache_$(date -u +%Y-%m-%d).db.gz"
+          gzip -6 -c cache.db > "$nombre"
+          sha256sum "$nombre" > "${nombre}.sha256"
+          echo "Copia: ${nombre}, $(stat -c%s "$nombre") bytes (original $(stat -c%s cache.db))"
+          rm -f cache.db
+          if ! gh release view "$ETIQUETA" --repo "$DESTINO" > /dev/null 2>&1; then
+            gh release create "$ETIQUETA" --repo "$DESTINO" --title "Copia semanal de cache.db" \
+              --notes "Copias automáticas de la base de producción. Se conservan las dos últimas."
+          fi
+          gh release upload "$ETIQUETA" "$nombre" "${nombre}.sha256" --repo "$DESTINO" --clobber
+          # conservar las dos copias más recientes (cada una con su .sha256)
+          gh release view "$ETIQUETA" --repo "$DESTINO" --json assets --jq '.assets[].name' | grep '\.db\.gz$' | sort -r | tail -n +3 | while read -r viejo; do
+            gh release delete-asset "$ETIQUETA" "$viejo" --repo "$DESTINO" --yes
+            gh release delete-asset "$ETIQUETA" "${viejo}.sha256" --repo "$DESTINO" --yes || true
+            echo "Borrada la copia antigua ${viejo}"
+          done
+          rm -f "$nombre" "${nombre}.sha256"

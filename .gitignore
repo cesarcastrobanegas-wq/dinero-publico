@@ -1,0 +1,36 @@
+__pycache__/
+*.pyc
+*.log
+place_cache/
+backend/place_cache/
+.env
+backend/datos.json
+backend/director_cache.json
+backend/python
+
+# backend/cache.db se ignora desde 2026-09-02 (antes se commiteaba a
+# propósito -- ver historial de este fichero). Render sí tiene disco
+# persistente (plan Standard, confirmado en el dashboard), así que el
+# cache.db real vive solo ahí (DATA_DIR, ver backend/app.py) y sobrevive a
+# los despliegues por sí solo; el sembrado automático desde el cache.db
+# del repo lleva deshabilitado desde el incidente de 2026-08-08. Seguir
+# commiteándolo solo agotaba la cuota de Git LFS bandwidth/storage
+# (10GB/mes) y bloqueaba builds de Render. En local, sqlite3 crea un
+# cache.db nuevo y vacío automáticamente si no existe -- no hace falta
+# ningún seed para desarrollar.
+backend/cache.db
+backend/cache.db-wal
+backend/cache.db-shm
+
+# Backup de seguridad de un solo uso (ver app.py, _DB_BACKUP_PRE_REFRESCO_ADITIVO):
+# se regenera solo en local porque DATA_DIR==BASE_DIR fuera de Render, cada
+# vez que se importa app.py (p.ej. al lanzar uno de los scripts manuales de
+# este directorio). En producción vive en el disco persistente /var/data,
+# nunca en el repo -- no tocar ese mecanismo, esto solo evita el ruido en
+# `git status` de la copia local.
+backend/cache_db_backup_pre_refresco_aditivo_*.db
+backend/cache_db_backup_pre_refresco_aditivo_*.db-wal
+backend/cache_db_backup_pre_refresco_aditivo_*.db-shm
+backend/borme_actos.db*
+backend/administradores_borme.json
+backend/bdns.db
