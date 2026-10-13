@@ -19,8 +19,9 @@ en memoria). Este módulo hace dos cosas:
 Cohesion Data se equivoca a veces en la ubicación (operaciones del programa de Murcia situadas en Cantabria, etc.):
 cuando el programa es de una comunidad y la ubicación cae fuera de ella, manda el programa.
 
-Sin nombres de beneficiarios: Cohesion Data no los publica para España y de CORDIS no se guardan salvo que se pida
-(--nombres). Nunca un NIF con forma de DNI/NIE. El fichero no se guarda en el repositorio ni como artefacto.
+Nombres: Cohesion Data no publica el beneficiario para España. De CORDIS se guarda el nombre y el NIF de la
+organización solo con --nombres (decisión de César del 13-10: el flujo lo pasa), y nunca los de quien tiene un NIF con
+forma de DNI/NIE. El fichero no se guarda en el repositorio ni como artefacto.
 """
 import argparse
 import csv
@@ -324,7 +325,7 @@ def generar(salida, con_nombres=False):
     sesion = requests.Session()
     sesion.headers["User-Agent"] = "dinero-publico.com (fondos UE; datos abiertos de la Comisión Europea)"
     print("Cohesion Data (FEDER/FSE 2014-2020)…", flush=True)
-    filas = descargar_cohesion(sesion, con_nombres)
+    filas = descargar_cohesion(sesion)       # sin nombres: --nombres solo afecta a CORDIS
     print("CORDIS (Horizon Europe)…", flush=True)
     cordis = descargar_cordis(sesion, con_nombres)
     if len(filas) < 50000 or len(cordis) < 5000:
@@ -345,8 +346,8 @@ if __name__ == "__main__":
     g = sub.add_parser("generar")
     g.add_argument("--salida", required=True)
     g.add_argument("--nombres", action="store_true",
-                   help="incluir los beneficiarios que publican las fuentes: organizaciones de CORDIS con su NIF "
-                        "(nunca personas físicas) y los pocos de cooperación de Cohesion Data")
+                   help="incluir el nombre y el NIF de las organizaciones de CORDIS (nunca de quien tiene un NIF con "
+                        "forma de DNI/NIE)")
     a = ap.parse_args()
     if a.orden == "generar":
         generar(a.salida, a.nombres)

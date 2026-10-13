@@ -5,8 +5,10 @@ name: Fondos UE de toda España (semanal)
 #    Europe, organizaciones españolas), decide de qué provincia es cada una (o si es regional, estatal o de
 #    cooperación entre países) y sube el resultado a Render: POST /admin/fondos-ue, que sustituye la tabla de golpe.
 #  - Se hace aquí y no dentro de la web porque el volcado de CORDIS entero en memoria ya tumbó el contenedor en julio.
-#  - Sin nombres de beneficiarios (la web conserva los que ya tenía de Murcia y Girona). El fichero no se guarda en el
-#    repositorio ni como artefacto; los registros solo muestran recuentos.
+#  - Con el nombre y el NIF de las organizaciones de CORDIS (--nombres, decisión de César del 13-10), nunca los de
+#    quien tiene un NIF con forma de DNI/NIE. Cohesion Data no publica beneficiarios para España; la web conserva los
+#    que ya tenía de Murcia y Girona. El fichero no se guarda en el repositorio ni como artefacto; los registros solo
+#    muestran recuentos.
 #  - La subida está protegida: si llega más de un 20 % por debajo de lo que hay, la web responde 409 y no cambia nada.
 #  - Tarda unos 5 minutos. Miércoles por la tarde: fuera del refresco nocturno (06:35-13:00 UTC reales) y de los flujos
 #    de menores (jueves y domingo), que al guardar en main reinician la web.
@@ -38,7 +40,7 @@ jobs:
         run: pip install requests
 
       - name: Generar (Cohesion Data + CORDIS)
-        run: python backend/fondos_ue_espana.py generar --salida fondos_ue.ndjson.gz
+        run: python backend/fondos_ue_espana.py generar --salida fondos_ue.ndjson.gz --nombres
 
       - name: Subir a Render
         env:

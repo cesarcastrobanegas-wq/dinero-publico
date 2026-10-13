@@ -429,9 +429,9 @@ investigación de sueldos de concejales:
   programa: la operación se queda en su comunidad y no se enseña la ubicación publicada.
 - La fuente repite algunas operaciones (2.303 filas, casi todas de cooperación: una por socio, mismo
   identificador e importe); se guarda una.
-- **Sin nombres de beneficiarios en lo cargado para toda España** (decisión de César). CORDIS sí publica la
-  organización (15.872 participaciones; 16 con un NIF con forma de DNI/NIE, que nunca se guardan): la fila
-  enlaza a la ficha del proyecto. Se conservan los nombres que ya había de Murcia y Girona.
+- **Nombres**: de CORDIS se guarda el nombre y el NIF de la organización (decisión de César del 13-10), salvo
+  las 16 participaciones con un NIF con forma de DNI/NIE, que van sin nombre y enlazan a la ficha del proyecto.
+  Cohesion Data no publica el beneficiario para España; se conservan los que ya había de Murcia y Girona.
 - En la página se pueden recorrer las 10.000 operaciones de mayor importe de cada selección (200 páginas de 50);
   el resto, afinando con los filtros.
 - **Cohesion Data** (94% de las filas): el nombre del beneficiario está vacío
