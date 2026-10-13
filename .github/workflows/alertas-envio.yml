@@ -1,0 +1,57 @@
+name: Alertas por correo (envío diario)
+
+# Dispara la pasada de envío de las alertas por correo (2026-10-13). Todo el trabajo lo hace la web: aquí solo se
+# llama a POST /admin/alertas-enviar por tandas hasta que no queda nadie o se llega al tope de correos del día.
+#
+# Mientras ALERTAS_ACTIVAS no valga 1 en Render, la web contesta {"activas": false} y esto no hace nada.
+#
+# PRIVACIDAD: el repositorio y sus registros son públicos. La respuesta de la web trae solo recuentos: ni correos ni
+# contenido de las alertas. La clave va en el cuerpo de la petición, no en la dirección.
+
+on:
+  schedule:
+    - cron: "30 5 * * *"      # 05:30 UTC (07:30 peninsular en verano): antes del refresco nocturno real (~07:00 UTC)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alertas-envio
+  cancel-in-progress: false
+
+jobs:
+  alertas-envio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Enviar por tandas
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          for tanda in $(seq 1 20); do
+            fin=$(( $(date +%s) + 300 ))
+            while true; do
+              codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST \
+                --data-urlencode "token=${ADMIN_TOKEN}" --data-urlencode "max=25" \
+                "https://dinero-publico.com/admin/alertas-enviar" || echo 000)
+              case "$codigo" in
+                000|502|503|504|520|521|522|523|524)
+                  [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                  echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
+                200) break ;;
+                *) echo "::error::La web respondió ${codigo}"; exit 1 ;;
+              esac
+            done
+            echo "Tanda ${tanda}: $(cat respuesta.json)"
+            quedan=$(python3 -c "import json; d = json.load(open('respuesta.json')); print(0 if not d.get('activas') or d.get('tope_alcanzado') else d.get('pendientes', 0))")
+            [ "$quedan" = "0" ] && break
+          done
+          python3 -c "
+          import json
+          d = json.load(open('respuesta.json'))
+          if d.get('tope_alcanzado'):
+              print('::warning::Tope de correos alcanzado: quedan %s personas para mañana. Si se repite, toca pasar Resend a un plan de pago.' % d.get('pendientes'))
+          if d.get('fallidos'):
+              print('::warning::%s envíos fallidos en la última tanda: ver /admin/revision/alertas.' % d.get('fallidos'))
+          "

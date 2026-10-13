@@ -33,6 +33,10 @@ try:
 except ImportError:
     import fondos_ue_espana as FUE
 try:
+    from . import alertas as ALR
+except ImportError:
+    import alertas as ALR
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -14428,7 +14432,7 @@ def _revision_cola_html(qs, cookie):
         comentarios_pendientes = _db.execute("SELECT count(*) FROM comentarios WHERE estado='pendiente'").fetchone()[0]
     cuerpo = (f'<h1>Revisión interna: indicadores para revisar</h1>'
               f'<p class="sub"><a href="/admin/revision/comentarios"><b>Comentarios pendientes de aprobar: '
-              f'{comentarios_pendientes}</b></a></p>'
+              f'{comentarios_pendientes}</b></a> · <a href="/admin/revision/alertas">Alertas por correo</a></p>'
               f'<p class="sub">Uso interno. Un indicador NO es una irregularidad: solo señala dónde mirar. Nada de esta '
               f'lista se publica; antes de publicar un caso hay que comprobarlo en la fuente oficial y pedir la versión '
               f'del ayuntamiento. Desde el RDL 3/2020, sumar menores al mismo contratista no es ilegal por sí mismo: lo '
@@ -14556,6 +14560,13 @@ def _revision_wsgi(method, path, qs, environ):
             return _comentario_enlace_html(None, "", hecho if hecho != "nada" else "")
         if not cookie or p("csrf") != _revision_csrf(cookie):
             return 403, {"Content-Type": "text/plain; charset=utf-8", "Content-Length": "13"}, b"No autorizado"
+        if path == "/admin/revision/alertas/accion":
+            hecho = ""
+            if p("s").isdigit() and p("accion") in ("pago", "gratis"):
+                hecho = p("accion") if _alertas_almacen().cambiar_nivel(int(p("s")), p("accion")) else ""
+            elif p("s").isdigit() and p("accion") == "baja":
+                hecho = "baja" if _alertas_almacen().baja(int(p("s")), motivo="panel") else ""
+            return 303, {"Location": f"/admin/revision/alertas?hecho={hecho}", "Content-Length": "0"}, b""
         if path == "/admin/revision/salir":
             return 303, {"Location": "/admin/revision", "Content-Length": "0",
                          "Set-Cookie": "dp_rev=; Path=/admin/revision; Max-Age=0; HttpOnly; SameSite=Strict"}, b""
@@ -14596,6 +14607,8 @@ def _revision_wsgi(method, path, qs, environ):
         return _revision_login_html()
     if path == "/admin/revision/comentarios":
         return _comentarios_moderacion_html(cookie, qs.get("hecho", [""])[0])
+    if path == "/admin/revision/alertas":
+        return _alertas_panel_html(cookie, qs.get("hecho", [""])[0])
     if path == "/admin/revision/ficha":
         md = _revision_ficha_md(qs.get("huella", [""])[0])
         if md is None:
@@ -16014,6 +16027,16 @@ a.pscp-link{color:var(--green);}
 .conv-filtros .conv-quitar{font-size:12px;color:var(--dim);}
 .conv-muni{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:14px;font-size:13px;}
 .conv-muni .lid{color:var(--dim);font-size:12px;}
+.alerta-card{background:var(--surface);border:2px solid var(--accent);border-radius:8px;padding:14px 16px;margin-top:14px;}
+.alerta-titulo{font-weight:600;font-size:15px;}
+.alerta-sub{font-size:13px;color:var(--dim);margin:4px 0 10px;}
+.alerta-form{display:flex;flex-wrap:wrap;gap:8px;}
+.alerta-form input[type=email],.alerta-form input[type=text]{flex:1 1 220px;min-width:0;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:9px 10px;border-radius:6px;}
+.alerta-nota{font-size:12px;color:var(--dim);margin-top:8px;}
+.alerta-conv{margin:0 0 14px;font-size:14px;}
+.alerta-planes{display:flex;flex-wrap:wrap;gap:14px;margin-top:18px;}
+.alerta-plan{flex:1 1 240px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:14px;}
+.alerta-plan h3{margin:0 0 6px;font-size:15px;}
 .fue-card td a.conv-tit{color:var(--accent);font-weight:600;text-decoration:none;}
 .fue-card td a.conv-tit:hover{text-decoration:underline;}
 .fue-header{padding:12px 18px;background:var(--tint);border-bottom:1px solid var(--border);}
@@ -20367,7 +20390,8 @@ def _conv_where_texto(q, where, args):
         args.append(f"%{palabra}%")
 
 
-def _conv_consulta_licitaciones(f):
+def _conv_filtro_licitaciones(f):
+    """(where, args) de las licitaciones abiertas que cumplen los filtros (página y alertas por correo)."""
     ahora = _ahora_madrid()
     where, args = ["estado = 'PUB'", "fin_plazo >= ?"], [ahora.strftime("%Y-%m-%d %H:%M")]
     if f.get("plazo"):
@@ -20394,6 +20418,11 @@ def _conv_consulta_licitaciones(f):
             where.append("presupuesto < ?"); args.append(hi)
     if f.get("q"):
         _conv_where_texto(f["q"], where, args)
+    return where, args
+
+
+def _conv_consulta_licitaciones(f):
+    where, args = _conv_filtro_licitaciones(f)
     w = " AND ".join(where)
     with _db_lock:
         total = _db.execute(f"SELECT count(*) FROM licitaciones WHERE {w}", args).fetchone()[0]
@@ -20403,7 +20432,8 @@ def _conv_consulta_licitaciones(f):
     return total, filas
 
 
-def _conv_consulta_subvenciones(f):
+def _conv_filtro_subvenciones(f):
+    """(where, args, orden) de las subvenciones de la vista pedida que cumplen los filtros."""
     hoy = _ahora_madrid().strftime("%Y-%m-%d")
     vista = f.get("vista", "abiertas")
     if vista == "sin_fecha":
@@ -20427,6 +20457,11 @@ def _conv_consulta_subvenciones(f):
         where.append("beneficiarios LIKE ?"); args.append(f"%{_CONV_BENEFICIARIOS[f['benef']]}%")
     if f.get("q"):
         _conv_where_texto(f["q"], where, args)
+    return where, args, orden
+
+
+def _conv_consulta_subvenciones(f):
+    where, args, orden = _conv_filtro_subvenciones(f)
     w = " AND ".join(where)
     with _db_lock:
         total = _db.execute(f"SELECT count(*) FROM subvenciones WHERE {w}", args).fetchone()[0]
@@ -20685,6 +20720,7 @@ def render_convocatorias_html(qs):
   {vistas_html}
   {aviso_muni}
   {formulario}
+  {_alertas_boton_convocatorias_html(f)}
   <div class="fue-card">
     <div class="gs-hint" style="margin:10px 14px">{_t("{n} convocatorias").format(n=f"{total:,}".replace(",", "."))}</div>
     <table>
@@ -21088,6 +21124,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           </div>
           {pag_html}
           {_convocatorias_muni_html(muni_name_d, d.get("provincia", provincia)) if is_paged and not es_pseudo_municipio(muni_name_d) else ""}
+          {_alertas_ficha_html(muni_name_d, d.get("provincia", provincia)) if is_paged and not es_pseudo_municipio(muni_name_d) else ""}
           {it_widget_html}
           {fondos_ue_html}
           {contratos_menors_html}
@@ -24413,6 +24450,14 @@ def render_aviso_legal_html():
         nota = "<p><em>" + aviso.format(url=esc(SITE_URL) + "/aviso-legal") + "</em></p>\n"
     else:
         nota = ""
+    # Alertas por correo (2026-10-13): el apartado solo existe mientras las alertas están encendidas.
+    alertas_legal = f"""
+  <h2 id="alertas">{_t("Alertas por correo")}</h2>
+  <p>{_t("Si te apuntas a una alerta por correo, guardamos tu dirección de correo electrónico, el idioma en que te apuntaste y los filtros de tus alertas. No pedimos nombre, teléfono ni ningún otro dato, y no guardamos tu dirección IP.")}</p>
+  <p>{_t("Usamos tu correo únicamente para enviarte los avisos que has pedido: no lo cedemos a nadie ni lo usamos para publicidad. La base legal es tu consentimiento (art. 6.1.a del RGPD), que confirmas desde un enlace que te enviamos; sin esa confirmación no se envía nada más y la solicitud se borra a los 7 días.")}</p>
+  <p>{_t("Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento y recibe tu dirección solo para entregar los mensajes.")}</p>
+  <p>{_t('Puedes darte de baja en cualquier momento con el enlace que va en cada correo: al hacerlo borramos de inmediato tu dirección y tus alertas. También puedes pedirlo en <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
+""" if ALERTAS_ACTIVAS else ""
     body = f"""<div class="static-page">
   <h1>{_t("Aviso Legal y Privacidad")}</h1>
   {nota}
@@ -24441,6 +24486,7 @@ def render_aviso_legal_html():
   <h2>{_t("Ejercicio de derechos RGPD")}</h2>
   <p>{_t('Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
 
+  {alertas_legal}
   <h2>{_t("Cookies y publicidad")}</h2>
   <p>{_t("Este sitio usa cookies propias, necesarias para su funcionamiento básico, y cookies de terceros que solo se activan si das tu consentimiento explícito en el banner que aparece al entrar:")}</p>
   <ul>
@@ -24494,6 +24540,568 @@ def _error_resp(msg, code=500):
     body = (f"<html><body style='font-family:sans-serif;padding:40px;background:#fbf0c4;color:#22201a'>"
             f"<h2>{esc(msg)}</h2><a href='/' style='color:#0969da'>← Volver</a></body></html>")
     return _resp(body, code=code)
+
+
+# ─── ALERTAS POR CORREO (2026-10-13) ──────────────────────────────────────────────────────────────────────────────
+# Preparadas pero APAGADAS: sin ALERTAS_ACTIVAS=1 en Render no hay enlaces, las páginas /alertas* no existen y la
+# pasada de envío no hace nada. El almacén (suscriptores, alertas, envíos) y sus reglas están en alertas.py, en un
+# fichero aparte de cache.db; aquí van las páginas, la búsqueda de novedades y los correos.
+#   ALERTAS_ACTIVAS=1        enciende todo
+#   ALERTAS_TOPE_DIARIO      correos al día como mucho (por defecto 80: el plan gratuito de Resend da 100 al día y
+#                            hay que dejar sitio a los avisos propios)
+#   ALERTAS_TOPE_MES         correos en 30 días como mucho (por defecto 2.800 de los 3.000 del plan gratuito)
+# El envío lo dispara el flujo alertas-envio.yml (POST /admin/alertas-enviar), por tandas.
+ALERTAS_ACTIVAS = os.environ.get("ALERTAS_ACTIVAS", "") == "1"
+_ALERTAS_ALMACEN = None
+_alertas_almacen_lock = threading.Lock()
+_ALERTAS_ITEMS_POR_CORREO = 15
+
+
+def _alertas_tope(variable, defecto):
+    try:
+        return max(0, int(os.environ.get(variable, "") or defecto))
+    except ValueError:
+        return defecto
+
+
+def _alertas_almacen():
+    global _ALERTAS_ALMACEN
+    with _alertas_almacen_lock:
+        if _ALERTAS_ALMACEN is None:
+            _ALERTAS_ALMACEN = ALR.Almacen(os.path.join(DATA_DIR, "alertas.db"))
+        return _ALERTAS_ALMACEN
+
+
+def _alertas_definicion(g):
+    """(tipo, filtros) de una alerta a partir de los parámetros de la petición (g(nombre) -> texto), ya validados, o
+    None. Los filtros de licitaciones y subvenciones son los mismos de /convocatorias (sin plazo, vista ni página)."""
+    tipo = g("tipo")
+    if tipo == "contratos":
+        d = _db_get_municipio(g("muni"), g("provincia") or None) if g("muni") else None
+        if not d or es_pseudo_municipio(d.get("municipio", "")):
+            return None
+        return tipo, {"muni": d["municipio"], "provincia": d.get("provincia", "")}
+    if tipo not in ("licitaciones", "subvenciones") or (tipo == "subvenciones" and not SUBVENCIONES_PUBLICAS):
+        return None
+    f = _conv_parametros({k: [g(k)] for k in ("provincia", "comunidad", "muni", "q", "tipo_contrato", "sector",
+                                              "ambito", "importe", "benef")}
+                         | {"tab": [tipo], "tipo": [g("tipo_contrato")]})
+    return tipo, {k: v for k, v in f.items() if k in ("provincia", "comunidad", "muni", "q", "tipo", "sector",
+                                                      "ambito", "importe", "benef")}
+
+
+def _alertas_parametros_url(tipo, fl):
+    """Parámetros de /alertas (o del formulario) que reconstruyen esa alerta."""
+    d = dict(fl, tipo=tipo)
+    if tipo != "contratos" and "tipo" in fl:
+        d["tipo_contrato"] = fl["tipo"]
+        d["tipo"] = tipo
+    return d
+
+
+def _alertas_descripcion(tipo, fl):
+    """La alerta en una línea, en el idioma de la petición o del correo."""
+    if tipo == "contratos":
+        return _t("Contratos nuevos del Ayuntamiento de {m}").format(m=fl.get("muni", ""))
+    et = _conv_etiquetas()
+    partes = [_t("Licitaciones abiertas") if tipo == "licitaciones" else _t("Subvenciones abiertas")]
+    if fl.get("muni"):
+        partes.append(_conv_nombre_muni(fl["muni"])[0].title())
+    elif fl.get("provincia"):
+        partes.append(PROVINCIA_LABEL.get(fl["provincia"], fl["provincia"]).replace("Provincia de ", ""))
+    elif fl.get("comunidad"):
+        partes.append(COMUNIDAD_AUTONOMA_LABEL.get(fl["comunidad"], fl["comunidad"]))
+    else:
+        partes.append(_t("Toda España"))
+    if tipo == "licitaciones":
+        partes += [et["tipo"].get(fl.get("tipo"), ""), _t(LIC.CPV_DIVISIONES[fl["sector"]]) if fl.get("sector") else "",
+                   et["ambito_lic"].get(fl.get("ambito"), ""), et["importe"].get(fl.get("importe"), "")]
+    else:
+        partes += [et["ambito_sub"].get(fl.get("ambito"), ""), et["benef"].get(fl.get("benef"), "")]
+    if fl.get("q"):
+        partes.append(f"«{fl['q']}»")
+    return " · ".join(p for p in partes if p)
+
+
+def _alertas_lista(tipo, fl):
+    """Nombre de la lista de "ya vistos" que le corresponde a una alerta."""
+    return "contratos:" + clave_municipio(fl["muni"], fl.get("provincia")) if tipo == "contratos" else tipo
+
+
+def _alertas_items(tipo, fl):
+    """Lo que hay AHORA para esos filtros: [{"id", "titulo", "detalle", "importe", "fecha", "url"}]. En los contratos
+    no va el adjudicatario: el correo enlaza a la ficha, donde ya se enseña con sus cautelas (personas físicas)."""
+    items = []
+    if tipo == "contratos":
+        d = _db_get_municipio(fl["muni"], fl.get("provincia") or None) or {}
+        for c in d.get("contratos", []):
+            huella = hashlib.sha1("|".join(str(c.get(k, "")) for k in ("licitacion_id", "titulo", "fecha", "importe_num"))
+                                  .encode("utf-8")).hexdigest()[:16]
+            items.append({"id": "f:" + huella, "titulo": c.get("titulo", ""), "detalle": c.get("organo", ""),
+                          "importe": c.get("importe_num"), "fecha": c.get("fecha", ""), "url": c.get("url", "")})
+        for r in _db_contratos_menors_por_municipio(fl["muni"], fl.get("provincia") or None):
+            items.append({"id": f"m:{r['id']}", "titulo": (r.get("descripcio") or "")[:200],
+                          "detalle": _t("Contrato menor") + (f" · {r['organisme']}" if r.get("organisme") else ""),
+                          "importe": r.get("import_num"), "fecha": r.get("data_adjudicacio") or "", "url": ""})
+        return items
+    if tipo == "licitaciones":
+        where, args = _conv_filtro_licitaciones(fl)
+        with _db_lock:
+            filas = _db.execute(f"SELECT id, titulo, url, organo, presupuesto, fin_plazo FROM licitaciones "
+                                f"WHERE {' AND '.join(where)} ORDER BY fin_plazo, id", args).fetchall()
+        return [{"id": str(i), "titulo": t or "", "detalle": o or "", "importe": p,
+                 "fecha": _t("Plazo hasta el {f}").format(f=_conv_fecha(fin)), "url": _conv_enlace_oficial(u)}
+                for i, t, u, o, p, fin in filas]
+    where, args, _ = _conv_filtro_subvenciones(fl)
+    with _db_lock:
+        filas = _db.execute(f"SELECT bdns, titulo, organo, nivel2, presupuesto, fin FROM subvenciones "
+                            f"WHERE {' AND '.join(where)} ORDER BY fin, registrada DESC", args).fetchall()
+    return [{"id": str(b), "titulo": t or "", "detalle": o or n2 or "", "importe": p,
+             "fecha": _t("Plazo hasta el {f}").format(f=_conv_fecha(fin)),
+             "url": f"https://www.infosubvenciones.es/bdnstrans/GE/es/convocatorias/{quote_plus(str(b))}"}
+            for b, t, o, n2, p, fin in filas]
+
+
+def _alertas_ver_todo_url(tipo, fl):
+    if tipo == "contratos":
+        return f"/?muni={quote_plus(fl['muni'])}&provincia={quote_plus(fl.get('provincia', ''))}"
+    return _conv_url(dict(fl, tab=tipo))
+
+
+def _alertas_registrar_listas(alm, ahora):
+    """Apunta en "ya vistos" todo lo que hay ahora en las listas que alguna alerta activa necesita."""
+    tipos = alm.tipos_activos()
+    madrid = _ahora_madrid()
+    with _db_lock:
+        lic = ([f[0] for f in _db.execute("SELECT id FROM licitaciones WHERE estado='PUB' AND fin_plazo >= ?",
+                                          (madrid.strftime("%Y-%m-%d %H:%M"),))] if "licitaciones" in tipos else None)
+        sub = ([f[0] for f in _db.execute("SELECT bdns FROM subvenciones WHERE fin >= ? AND (inicio = '' OR inicio <= ?)",
+                                          (madrid.strftime("%Y-%m-%d"),) * 2)] if "subvenciones" in tipos else None)
+    if lic is not None:
+        alm.registrar_vistos("licitaciones", lic, ahora)
+    if sub is not None:
+        alm.registrar_vistos("subvenciones", sub, ahora)
+    for fl in alm.municipios_con_alerta():
+        alm.registrar_vistos(_alertas_lista("contratos", fl), [i["id"] for i in _alertas_items("contratos", fl)], ahora)
+
+
+# ── correos ─────────────────────────────────────────────────────────────────────────────────────────────────────
+def _alertas_base(idioma):
+    return SITE_URL + ("" if idioma == "es" else f"/{idioma}")
+
+
+def _alertas_enlace(alm, s, accion, ruta=None):
+    return f"{_alertas_base(s['idioma'])}/alertas/{ruta or accion}?s={s['id']}&k={alm.firma(accion, s['id'])}"
+
+
+def _alertas_payload(alm, s, asunto, lineas, html_cuerpo, con_baja=True):
+    """Correo completo. Todos los que van a una persona ya apuntada llevan la baja de un clic: enlace en el pie y
+    cabeceras List-Unsubscribe (el botón "Cancelar suscripción" de Gmail y Outlook)."""
+    pie_txt, pie_html, cabeceras = [], "", {}
+    if con_baja:
+        baja, gestionar = _alertas_enlace(alm, s, "baja"), _alertas_enlace(alm, s, "gestionar")
+        pie_txt = ["", "--", _t("Recibes este correo porque te apuntaste a las alertas de Dinero Público."),
+                   _t("Darte de baja con un clic: {url}").format(url=baja),
+                   _t("Ver o cambiar tus alertas: {url}").format(url=gestionar)]
+        pie_html = (f'<p style="font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:12px;margin-top:24px">'
+                    f'{_t("Recibes este correo porque te apuntaste a las alertas de Dinero Público.")}<br>'
+                    f'<a href="{esc(baja)}" style="color:#6b7280">{_t("Darme de baja")}</a> · '
+                    f'<a href="{esc(gestionar)}" style="color:#6b7280">{_t("Ver o cambiar mis alertas")}</a></p>')
+        cabeceras = {"List-Unsubscribe": f"<{SITE_URL}/alertas/baja-correo?s={s['id']}&k={alm.firma('baja', s['id'])}>",
+                     "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"}
+    html_ = (f'<div style="font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:15px;line-height:1.5;'
+             f'color:#1c2333;max-width:600px;margin:0 auto;padding:16px">'
+             f'<div style="font-weight:700;color:#1b2f5c;font-size:17px;margin-bottom:14px">Dinero Público</div>'
+             f'{html_cuerpo}{pie_html}</div>')
+    payload = {"from": _avisos_remitente(), "to": [s["correo"]], "subject": asunto[:150],
+               "text": "\n".join(lineas + pie_txt) + "\n", "html": html_}
+    if cabeceras:
+        payload["headers"] = cabeceras
+    return payload
+
+
+def _alertas_boton(url, texto):
+    return (f'<p style="margin:18px 0"><a href="{esc(url)}" style="background:#1b2f5c;color:#ffffff;text-decoration:none;'
+            f'padding:10px 18px;border-radius:6px;font-weight:600;display:inline-block">{esc(texto)}</a></p>')
+
+
+def _alertas_correo_confirmacion(alm, s, alerta_id):
+    a = alm.alerta(alerta_id)
+    desc = _alertas_descripcion(a["tipo"], a["filtros"])
+    url = f"{_alertas_base(s['idioma'])}/alertas/confirmar?a={alerta_id}&k={alm.firma('confirmar', alerta_id)}"
+    frecuencia = (_t("un resumen semanal, los lunes") if ALR.NIVELES[s["nivel"]]["frecuencia"] == "semanal"
+                  else _t("un aviso diario"))
+    intro = _t("Has pedido recibir por correo esta alerta de Dinero Público:")
+    cuando = _t("Te escribiremos solo cuando haya novedades: {frecuencia}.").format(frecuencia=frecuencia)
+    no_tu = _t("Si no has sido tú, no hagas nada: sin confirmar no se envía nada y la solicitud se borra sola en 7 días.")
+    lineas = [intro, "", f"  {desc}", "", _t("Para activarla, confirma tu correo aquí: {url}").format(url=url), "",
+              cuando, "", no_tu]
+    cuerpo = (f"<p>{esc(intro)}</p><p style=\"font-weight:600\">{esc(desc)}</p>"
+              + _alertas_boton(url, _t("Confirmar mi correo y activar la alerta"))
+              + f"<p>{esc(cuando)}</p><p style=\"font-size:13px;color:#6b7280\">{esc(no_tu)}</p>")
+    return _alertas_payload(alm, s, _t("Confirma tu alerta de Dinero Público"), lineas, cuerpo, con_baja=False)
+
+
+def _alertas_correo_limite(alm, s):
+    n = ALR.NIVELES[s["nivel"]]["alertas"]
+    gestionar = _alertas_enlace(alm, s, "gestionar")
+    intro = (_t("Has pedido una alerta nueva, pero ya tienes activa la que incluye el plan gratuito.") if n == 1 else
+             _t("Has pedido una alerta nueva, pero ya tienes activas las {n} de tu plan.").format(n=n))
+    cambia = _t("Puedes borrar la que tienes y crear otra desde aquí: {url}").format(url=gestionar)
+    pronto = _t("El plan con varias alertas y aviso diario estará disponible próximamente.")
+    cuerpo = (f"<p>{esc(intro)}</p>" + _alertas_boton(gestionar, _t("Ver o cambiar mis alertas")) + f"<p>{esc(pronto)}</p>")
+    return _alertas_payload(alm, s, _t("Ya tienes una alerta activa en Dinero Público"), [intro, "", cambia, "", pronto], cuerpo)
+
+
+def _alertas_correo_novedades(alm, s, secciones):
+    """secciones: [(alerta, [items nuevos])]."""
+    total = sum(len(items) for _, items in secciones)
+    base = _alertas_base(s["idioma"])
+    lineas, cuerpo = [], ""
+    for a, items in secciones:
+        desc = _alertas_descripcion(a["tipo"], a["filtros"])
+        todo = base + _alertas_ver_todo_url(a["tipo"], a["filtros"])
+        lineas += [desc, "=" * min(len(desc), 60), ""]
+        cuerpo += f'<h2 style="font-size:16px;color:#1b2f5c;margin:22px 0 8px">{esc(desc)}</h2>'
+        for it in items[:_ALERTAS_ITEMS_POR_CORREO]:
+            datos = " · ".join(x for x in (fmt_eur(str(it["importe"])) if it.get("importe") else "",
+                                           _conv_fecha(it["fecha"]) if re.fullmatch(r"\d{4}-\d\d-\d\d.*", it["fecha"] or "")
+                                           else it["fecha"], it["detalle"]) if x)
+            enlace = it["url"] or todo
+            lineas += [f"- {it['titulo']}", f"  {datos}", f"  {enlace}", ""]
+            cuerpo += (f'<div style="border-left:3px solid #f5b700;padding:2px 0 2px 10px;margin:10px 0">'
+                       f'<a href="{esc(enlace)}" style="color:#1b2f5c;font-weight:600;text-decoration:none">{esc(it["titulo"])}</a>'
+                       f'<div style="font-size:13px;color:#4b5563">{esc(datos)}</div></div>')
+        resto = len(items) - _ALERTAS_ITEMS_POR_CORREO
+        mas = (_t("…y {n} más.").format(n=resto) + " " if resto > 0 else "") + _t("Verlo todo en la web: {url}").format(url=todo)
+        lineas += [mas, ""]
+        cuerpo += (f'<p style="font-size:13px">{esc(_t("…y {n} más.").format(n=resto)) + " " if resto > 0 else ""}'
+                   f'<a href="{esc(todo)}" style="color:#1b2f5c">{esc(_t("Verlo todo en la web"))}</a></p>')
+    nota = _t("Los datos vienen de fuentes oficiales. Antes de presentar nada, comprueba plazos y requisitos en la publicación oficial.")
+    lineas.append(nota)
+    cuerpo += f'<p style="font-size:13px;color:#6b7280">{esc(nota)}</p>'
+    primera = _alertas_descripcion(secciones[0][0]["tipo"], secciones[0][0]["filtros"])
+    asunto = (_t("1 novedad · {alerta}").format(alerta=primera) if total == 1 else
+              _t("{n} novedades · {alerta}").format(n=total, alerta=primera))
+    return _alertas_payload(alm, s, asunto, lineas, cuerpo), total
+
+
+def _alertas_enviar(alm, payload, clase, sid, alertas=0, novedades=0):
+    """Un correo por Resend. Queda siempre anotado en alertas.db (sin la dirección). Devuelve True si salió."""
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if not api_key:
+        alm.registrar_envio(clase, sid, None, "falta RESEND_API_KEY", alertas, novedades)
+        return False
+    try:
+        r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
+                          headers={"Authorization": f"Bearer {api_key}"})
+        codigo, detalle = r.status_code, _RE_CORREO_EN_TEXTO.sub("***@***", r.text[:300])
+    except Exception as e:
+        codigo, detalle = None, type(e).__name__
+    alm.registrar_envio(clase, sid, codigo, detalle, alertas, novedades)
+    if codigo is None or codigo >= 300:
+        print(f"[alertas] {clase}: NO ENVIADO (código {codigo}): {detalle}", flush=True)
+    return codigo is not None and codigo < 300
+
+
+def _alertas_en_idioma(idioma, funcion, *args):
+    """Monta un correo en el idioma de la persona, sea cual sea el de la petición en curso."""
+    marca = _I18N_IDIOMA.set(idioma if idioma in I18N_IDIOMAS else "es")
+    try:
+        return funcion(*args)
+    finally:
+        _I18N_IDIOMA.reset(marca)
+
+
+def _alertas_alta(correo, idioma, tipo, filtros):
+    """Alta desde el formulario: guarda la petición y manda, en un hilo, el correo que toque."""
+    alm = _alertas_almacen()
+    marca = _I18N_IDIOMA.set("es")
+    try:
+        etiqueta = _alertas_descripcion(tipo, filtros)       # para el panel, siempre en castellano
+    finally:
+        _I18N_IDIOMA.reset(marca)
+    r = alm.alta(correo, idioma, tipo, filtros, etiqueta)
+    if r["resultado"] == "confirmar":
+        payload = _alertas_en_idioma(idioma, _alertas_correo_confirmacion, alm, r["suscriptor"], r["alerta_id"])
+        threading.Thread(target=_alertas_enviar, args=(alm, payload, "confirmacion", r["suscriptor"]["id"]),
+                         name="alerta-confirmacion", daemon=True).start()
+    elif r["resultado"] == "limite":
+        payload = _alertas_en_idioma(r["suscriptor"]["idioma"], _alertas_correo_limite, alm, r["suscriptor"])
+        threading.Thread(target=_alertas_enviar, args=(alm, payload, "limite", r["suscriptor"]["id"]),
+                         name="alerta-limite", daemon=True).start()
+    return r["resultado"]
+
+
+def _alertas_pasada(max_correos=25):
+    """Una tanda de envío: mira las alertas que tocan, manda como mucho `max_correos` y dice cuántas personas quedan.
+    Solo números en la respuesta (la llama un flujo de Actions, cuyos registros son públicos)."""
+    if not ALERTAS_ACTIVAS:
+        return {"activas": False}
+    alm = _alertas_almacen()
+    ahora = time.time()
+    alm.limpiar(ahora)
+    madrid = _ahora_madrid()
+    inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    inicio_semana = inicio_dia - madrid.weekday() * 86400
+    tope_dia, tope_mes = _alertas_tope("ALERTAS_TOPE_DIARIO", 80), _alertas_tope("ALERTAS_TOPE_MES", 2800)
+    hoy, mes = alm.envios_desde(inicio_dia), alm.envios_desde(ahora - 30 * 86400)
+    cupo = min(max_correos, tope_dia - hoy, tope_mes - mes)
+    res = {"activas": True, "enviados": 0, "sin_novedades": 0, "fallidos": 0, "enviados_hoy": hoy,
+           "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
+    pendientes = alm.pendientes(inicio_semana, inicio_dia)
+    _alertas_registrar_listas(alm, ahora)
+    hechos = 0
+    for s, alertas in pendientes:
+        secciones = []
+        for a in alertas:
+            nuevos = alm.nuevos_desde(_alertas_lista(a["tipo"], a["filtros"]), a["revisado"])
+            items = ([i for i in _alertas_en_idioma(s["idioma"], _alertas_items, a["tipo"], a["filtros"]) if i["id"] in nuevos]
+                     if nuevos else [])
+            if items:
+                secciones.append((a, items))
+        ids = [a["id"] for a in alertas]
+        if not secciones:
+            alm.marcar(ids, ahora, enviado=False)
+            res["sin_novedades"] += 1
+            hechos += 1
+            continue
+        if cupo <= 0:
+            break
+        payload, total = _alertas_en_idioma(s["idioma"], _alertas_correo_novedades, alm, s, secciones)
+        if _alertas_enviar(alm, payload, "novedades", s["id"], len(secciones), total):
+            alm.marcar(ids, ahora, enviado=True)
+            res["enviados"] += 1
+        else:
+            alm.marcar(ids, ahora, enviado=False, revisada=False)       # mañana se vuelve a intentar
+            res["fallidos"] += 1
+        hechos += 1
+        cupo -= 1
+        time.sleep(0.6)                                                  # Resend: 2 peticiones por segundo
+    res["pendientes"] = len(pendientes) - hechos
+    res["tope_alcanzado"] = bool(res["pendientes"]) and cupo <= 0 and (
+        hoy + res["enviados"] >= tope_dia or mes + res["enviados"] >= tope_mes)
+    return res
+
+
+# ── páginas ─────────────────────────────────────────────────────────────────────────────────────────────────────
+_ALERTAS_CSS = """body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#f5f6f8;color:#1c2333;margin:0}
+.al{max-width:560px;margin:0 auto;padding:28px 18px}.al h1{font-size:20px;margin:0 0 10px;color:#1b2f5c}
+.al .caja{background:#fff;border:1px solid #dde1e7;border-radius:8px;padding:16px 18px;margin:12px 0}
+.al button{font:inherit;padding:9px 16px;border-radius:6px;border:1px solid #1b2f5c;background:#1b2f5c;color:#fff;cursor:pointer}
+.al button.sec{background:#fff;color:#1b2f5c}.al .sub{color:#5b6475;font-size:13px}.al a{color:#1b2f5c}
+.al form{display:inline}"""
+
+
+def _alertas_pagina_simple(titulo, cuerpo, autoenviar=False):
+    """Página sin publicidad, analítica ni recursos de terceros: las de confirmar, baja y gestionar llevan en la
+    dirección la clave personal del enlace, y no debe llegar a nadie más. `autoenviar`: el formulario de la página se
+    envía solo, para que confirmar o darse de baja sea un clic; un programa de correo que solo abre el enlace para
+    revisarlo no ejecuta nada y no confirma ni da de baja a nadie."""
+    script = ('<script>var f=document.getElementById("auto");if(f){f.submit();}</script>' if autoenviar else "")
+    html_ = (f'<!doctype html><html lang="{_i18n_idioma()}"><head><meta charset="utf-8"><meta name="viewport" '
+             f'content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
+             f'<meta name="referrer" content="no-referrer"><title>{esc(titulo)} | Dinero Público</title>'
+             f'<style>{_ALERTAS_CSS}</style></head><body><div class="al"><div style="font-weight:700;color:#1b2f5c;'
+             f'margin-bottom:16px"><a href="/" style="text-decoration:none">Dinero Público</a></div>'
+             f'<h1>{esc(titulo)}</h1>{cuerpo}</div>{script}</body></html>')
+    return _resp(html_, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer"})
+
+
+def _alertas_form_campos(tipo, fl):
+    return "".join(f'<input type="hidden" name="{esc(k)}" value="{esc(str(v))}">'
+                   for k, v in _alertas_parametros_url(tipo, fl).items()) + (
+        f'<input type="hidden" name="idioma" value="{_i18n_idioma()}">'
+        '<input type="text" name="web" value="" tabindex="-1" autocomplete="off" aria-hidden="true" '
+        'style="position:absolute;left:-9999px">')
+
+
+def _alertas_form_html(tipo, fl, boton=None):
+    """Formulario de alta de UNA alerta ya definida: solo pide el correo."""
+    return (f'<form method="POST" action="/alertas/alta" class="alerta-form">{_alertas_form_campos(tipo, fl)}'
+            f'<input type="email" name="correo" required maxlength="120" autocomplete="email" '
+            f'placeholder="{esc(_t("Tu correo electrónico"))}">'
+            f'<button type="submit" class="btn btn-primary">{esc(boton or _t("Avísame por correo"))}</button></form>'
+            f'<div class="alerta-nota">{_t("Gratis. Te pediremos confirmar el correo; baja con un clic en cada mensaje.")} '
+            f'<a href="/aviso-legal#alertas">{_t("Privacidad")}</a></div>')
+
+
+def _alertas_ficha_html(municipio, provincia):
+    """Tarjeta de la ficha del municipio: la alerta estrella del plan gratuito."""
+    if not ALERTAS_ACTIVAS:
+        return ""
+    return (f'<div class="alerta-card" id="alerta"><div class="alerta-titulo">🔔 '
+            f'{_t("Recibe un correo cuando el Ayuntamiento de {m} adjudique contratos nuevos").format(m=esc(municipio))}</div>'
+            f'<div class="alerta-sub">{_t("Un resumen semanal, solo si hay novedades.")}</div>'
+            + _alertas_form_html("contratos", {"muni": municipio, "provincia": provincia}) + '</div>')
+
+
+def _alertas_boton_convocatorias_html(f):
+    if not ALERTAS_ACTIVAS:
+        return ""
+    fl = {k: v for k, v in f.items() if k in ("provincia", "comunidad", "muni", "q", "tipo", "sector", "ambito",
+                                               "importe", "benef")}
+    url = "/alertas?" + urlencode(_alertas_parametros_url(f["tab"], fl))
+    return (f'<div class="alerta-conv">🔔 <a href="{esc(url)}">'
+            f'{_t("Avísame por correo de las nuevas convocatorias con estos filtros")}</a></div>')
+
+
+def render_alertas_html(qs):
+    g = lambda k: (qs.get(k, [""])[0] or "").strip()
+    definicion = _alertas_definicion(g)
+    planes = f"""<div class="alerta-planes">
+      <div class="alerta-plan"><h3>{_t("Gratis")}</h3><p>{_t("1 alerta. Un resumen semanal, los lunes, solo si hay novedades.")}</p></div>
+      <div class="alerta-plan"><h3>{_t("Varias alertas y aviso diario")}</h3><p>{_t("Hasta 10 alertas, con un aviso cada día que haya novedades.")} <b>{_t("Próximamente.")}</b></p></div>
+    </div>"""
+    if definicion:
+        tipo, fl = definicion
+        centro = (f'<div class="alerta-card"><div class="alerta-titulo">🔔 {esc(_alertas_descripcion(tipo, fl))}</div>'
+                  f'<div class="alerta-sub">{_t("Te escribiremos cuando aparezca algo nuevo que cumpla estos filtros.")}</div>'
+                  + _alertas_form_html(tipo, fl) + '</div>')
+    else:
+        aviso = (f'<div class="gs-hint" style="margin:0 0 10px">{_t("No hemos encontrado ese municipio. Búscalo en la portada y usa el aviso de su ficha.")}</div>'
+                 if g("tipo") == "contratos" and g("muni") else "")
+        centro = f"""{aviso}<div class="alerta-card"><div class="alerta-titulo">🔔 {_t("Contratos nuevos de tu ayuntamiento")}</div>
+        <div class="alerta-sub">{_t("Escribe el nombre de tu municipio y te avisamos cuando adjudique contratos nuevos.")}</div>
+        <form method="GET" action="/alertas" class="alerta-form"><input type="hidden" name="tipo" value="contratos">
+          <input type="text" name="muni" required maxlength="80" placeholder="{esc(_t("Nombre de tu municipio"))}">
+          <button type="submit" class="btn btn-primary">{_t("Continuar")}</button></form></div>
+        <div class="alerta-card"><div class="alerta-titulo">📣 {_t("Licitaciones y subvenciones abiertas")}</div>
+        <div class="alerta-sub">{_t("Elige zona, sector, palabras clave o tipo de administración en la página de convocatorias y pulsa «Avísame por correo».")}</div>
+        <p><a href="/convocatorias">{_t("Licitaciones abiertas")} →</a>{f' · <a href="/convocatorias?tab=subvenciones">{_t("Subvenciones abiertas")} →</a>' if SUBVENCIONES_PUBLICAS else ""}</p></div>"""
+    body = f"""<span class="back-link"><a href="/">← {_t("Volver al inicio")}</a></span>
+  <div class="hero" style="padding-bottom:4px">
+    <div class="hero-tagline">🔔 {_t("Alertas por correo")}</div>
+    <p class="hero-sub">{_t("Te avisamos por correo cuando haya contratos nuevos de tu ayuntamiento, o licitaciones y subvenciones abiertas que te interesen. Solo pedimos tu correo, y puedes darte de baja con un clic.")}</p>
+  </div>
+  {centro}
+  {planes}"""
+    return _page_shell(_t("Alertas por correo"), body,
+                       description=_t("Avisos por correo de contratos nuevos de tu ayuntamiento y de licitaciones y subvenciones abiertas."),
+                       provincia="todas", og_path="/alertas")
+
+
+def _alertas_get(path, qs):
+    """Páginas públicas de /alertas* (GET). None si no es ninguna."""
+    g = lambda k: (qs.get(k, [""])[0] or "").strip()
+    if path == "/alertas":
+        return _resp(render_alertas_html(qs))
+    alm = _alertas_almacen()
+    if path == "/alertas/revisa":
+        return _alertas_pagina_simple(_t("Revisa tu correo"), f'<div class="caja"><p>{_t("Si la dirección es correcta, te acabamos de enviar un mensaje con un enlace. Púlsalo para activar la alerta.")}</p><p class="sub">{_t("Si no lo ves en unos minutos, mira en la carpeta de correo no deseado. Sin confirmar no se envía nada más y la solicitud se borra sola en 7 días.")}</p></div>')
+    if path == "/alertas/confirmar":
+        if not (g("a").isdigit() and alm.firma_valida("confirmar", g("a"), g("k"))):
+            return _alertas_pagina_simple(_t("Enlace no válido"), f'<div class="caja">{_t("Este enlace no es válido o ha caducado.")}</div>')
+        return _alertas_pagina_simple(_t("Confirmar la alerta"), f'<div class="caja"><form method="POST" action="/alertas/confirmar" id="auto"><input type="hidden" name="a" value="{esc(g("a"))}"><input type="hidden" name="k" value="{esc(g("k"))}"><button type="submit">{_t("Confirmar mi correo y activar la alerta")}</button></form></div>', autoenviar=True)
+    if path in ("/alertas/baja", "/alertas/gestionar"):
+        accion = path.rsplit("/", 1)[1]
+        s = alm.suscriptor(int(g("s"))) if g("s").isdigit() and alm.firma_valida(accion, g("s"), g("k")) else None
+        if not s:
+            return _alertas_pagina_simple(_t("Enlace no válido"), f'<div class="caja">{_t("Este enlace ya no es válido: puede que ya te hayas dado de baja.")}</div>')
+        claves = f'<input type="hidden" name="s" value="{s["id"]}"><input type="hidden" name="k" value="{esc(g("k"))}">'
+        if accion == "baja":
+            return _alertas_pagina_simple(_t("Darte de baja"), f'<div class="caja"><form method="POST" action="/alertas/baja" id="auto">{claves}<button type="submit">{_t("Darme de baja y borrar mi correo")}</button></form></div>', autoenviar=True)
+        filas = "".join(
+            f'<div class="caja"><b>{esc(_alertas_descripcion(a["tipo"], a["filtros"]))}</b>'
+            f'<div class="sub">{_t("Activa") if a["estado"] == "activa" else _t("Pendiente de confirmar")}</div>'
+            f'<form method="POST" action="/alertas/gestionar">{claves}<input type="hidden" name="a" value="{a["id"]}">'
+            f'<button type="submit" class="sec" style="margin-top:8px">{_t("Borrar esta alerta")}</button></form></div>'
+            for a in alm.alertas_de(s["id"])) or f'<div class="caja">{_t("No tienes ninguna alerta.")}</div>'
+        plan = (_t("Plan gratuito: 1 alerta, resumen semanal.") if s["nivel"] == "gratis"
+                else _t("Plan de varias alertas: hasta 10, con aviso diario."))
+        return _alertas_pagina_simple(_t("Tus alertas"), f'<p class="sub">{esc(ALR.correo_tapado(s["correo"]))} · {plan}</p>{filas}'
+                                      f'<p><a href="/alertas">{_t("Crear otra alerta")}</a></p>'
+                                      f'<div class="caja"><form method="POST" action="/alertas/baja">{claves}<input type="hidden" name="k_baja" value="{alm.firma("baja", s["id"])}">'
+                                      f'<button type="submit" class="sec">{_t("Darme de baja y borrar mi correo")}</button></form></div>')
+    return None
+
+
+def _alertas_post(path, params):
+    """Formularios públicos de /alertas* (POST). None si no es ninguno."""
+    p = lambda k: (params.get(k, [""])[0] or "").strip()
+    alm = _alertas_almacen()
+    if path == "/alertas/alta":
+        definicion = _alertas_definicion(p)
+        if definicion and not p("web"):                      # "web" es un campo trampa: las personas no lo ven
+            idioma = p("idioma") if p("idioma") in I18N_IDIOMAS else "es"
+            if _alertas_alta(p("correo"), idioma, *definicion) == "invalido":
+                return _alertas_pagina_simple(_t("Correo no válido"), f'<div class="caja">{_t("Esa dirección de correo no parece válida. Vuelve atrás y revísala.")}</div>')
+        return _redirect_resp("/alertas/revisa")
+    if path == "/alertas/confirmar":
+        a = alm.confirmar(int(p("a"))) if p("a").isdigit() and alm.firma_valida("confirmar", p("a"), p("k")) else None
+        if not a:
+            return _alertas_pagina_simple(_t("No se ha podido activar"), f'<div class="caja">{_t("Este enlace ya no es válido: la solicitud ha caducado o ya tienes todas las alertas de tu plan.")}</div>')
+        # Lo que hay en este momento queda como "ya estaba": la alerta solo avisa de lo que aparezca desde ahora.
+        if not a.get("ya_estaba"):
+            _alertas_registrar_listas(alm, time.time())
+            alm.poner_revisado(a["id"], time.time())
+        s = alm.suscriptor(a["suscriptor_id"])
+        return _alertas_pagina_simple(_t("Alerta activada"), f'<div class="caja"><p><b>{esc(_alertas_descripcion(a["tipo"], a["filtros"]))}</b></p><p>{_t("Listo. Te escribiremos cuando haya novedades.")}</p><p class="sub">{_t("En cada correo tendrás un enlace para darte de baja con un clic.")}</p></div><p><a href="{esc(_alertas_enlace(alm, s, "gestionar")[len(_alertas_base(s["idioma"])):])}">{_t("Ver o cambiar mis alertas")}</a></p>')
+    if path == "/alertas/baja":
+        firma = p("k_baja") or p("k")
+        if p("s").isdigit() and alm.firma_valida("baja", p("s"), firma):
+            alm.baja(int(p("s")))
+        return _alertas_pagina_simple(_t("Te has dado de baja"), f'<div class="caja"><p>{_t("Hemos borrado tu correo y tus alertas. No recibirás más mensajes.")}</p></div><p><a href="/">{_t("Volver al inicio")}</a></p>')
+    if path == "/alertas/gestionar":
+        if p("s").isdigit() and p("a").isdigit() and alm.firma_valida("gestionar", p("s"), p("k")):
+            alm.borrar_alerta(int(p("s")), int(p("a")))
+            return _redirect_resp(f"/alertas/gestionar?s={p('s')}&k={p('k')}")
+        return _alertas_pagina_simple(_t("Enlace no válido"), f'<div class="caja">{_t("Este enlace no es válido o ha caducado.")}</div>')
+    return None
+
+
+# ── panel de administración (/admin/revision/alertas, con la sesión del panel) ─────────────────────────────────────
+def _alertas_panel_html(cookie, hecho=""):
+    f_ts = lambda ts: time.strftime("%d/%m/%Y %H:%M", time.gmtime(ts)) if ts else "—"
+    if not ALERTAS_ACTIVAS:
+        estado = '<div class="aviso"><b>APAGADAS.</b> Falta ALERTAS_ACTIVAS=1 en Render: la web no enseña nada de esto y no se envía ningún correo.</div>'
+    else:
+        estado = '<div class="aviso"><b>Encendidas</b> (ALERTAS_ACTIVAS=1).</div>'
+    alm = _alertas_almacen()
+    r = alm.resumen()
+    ahora = time.time()
+    madrid = _ahora_madrid()
+    inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    hoy, mes = alm.envios_desde(inicio_dia), alm.envios_desde(ahora - 30 * 86400)
+    csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
+    por_tipo = ", ".join(f"{k}: {v}" for k, v in sorted(r["por_tipo"].items())) or "ninguna"
+    resumen = (f'<table class="t"><tr><th>Suscriptores confirmados</th><td>{r["suscriptores_activos"]} '
+               f'(de pago: {r["de_pago"]})</td></tr><tr><th>Sin confirmar</th><td>{r["suscriptores_pendientes"]}</td></tr>'
+               f'<tr><th>Alertas activas</th><td>{r["alertas_activas"]} ({esc(por_tipo)})</td></tr>'
+               f'<tr><th>Bajas</th><td>{r["bajas"]} por su cuenta · {r["bajas_desde_el_panel"]} desde este panel · '
+               f'{r["altas_caducadas"]} altas caducadas sin confirmar</td></tr>'
+               f'<tr><th>Correos aceptados por Resend</th><td>hoy {hoy} de {_alertas_tope("ALERTAS_TOPE_DIARIO", 80)} · '
+               f'últimos 30 días {mes} de {_alertas_tope("ALERTAS_TOPE_MES", 2800)}</td></tr></table>')
+    sus = "".join(
+        f'<tr><td>{esc(s["correo"])}</td><td>{esc(s["estado"])}</td><td>{esc(s["nivel"])}</td><td>{s["alertas"]}</td>'
+        f'<td>{esc(s["idioma"])}</td><td>{f_ts(s["creado"])}</td><td>{f_ts(s["ultimo_envio"])}</td>'
+        f'<td><form method="post" action="/admin/revision/alertas/accion" class="acc">{csrf}'
+        f'<input type="hidden" name="s" value="{s["id"]}">'
+        f'<button type="submit" name="accion" value="{"gratis" if s["nivel"] == "pago" else "pago"}" class="sec">'
+        f'{"Pasar a gratis" if s["nivel"] == "pago" else "Pasar a pago"}</button> '
+        f'<button type="submit" name="accion" value="baja" class="sec">Dar de baja y borrar</button></form></td></tr>'
+        for s in alm.lista_suscriptores())
+    ale = "".join(
+        f'<tr><td>{esc(a["etiqueta"])}</td><td>{esc(a["tipo"])}</td><td>{esc(a["estado"])}</td><td>{esc(a["correo"])}</td>'
+        f'<td>{f_ts(a["creado"])}</td><td>{f_ts(a["revisado"])}</td><td>{f_ts(a["ultimo_envio"])}</td></tr>'
+        for a in alm.lista_alertas())
+    env = "".join(
+        f'<tr><td>{f_ts(e["ts"])}</td><td>{esc(e["clase"])}</td><td>{e["alertas"]}</td><td>{e["novedades"]}</td>'
+        f'<td>{"sí" if e["codigo"] and e["codigo"] < 300 else "NO"} ({e["codigo"]})</td><td>{esc(e["detalle"] or "")}</td></tr>'
+        for e in alm.lista_envios())
+    vacio = lambda n: f'<tr><td colspan="{n}" class="sub">Nada todavía.</td></tr>'
+    aviso = {"pago": "Nivel cambiado a pago.", "gratis": "Nivel cambiado a gratis.", "baja": "Suscriptor borrado."}.get(hecho, "")
+    return _revision_pagina("Alertas por correo", f"""<style>.t{{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin:8px 0 22px}}
+.t th,.t td{{border:1px solid #dde1e7;padding:6px 8px;text-align:left;vertical-align:top}}.t th{{background:#eef1f6}}</style>
+<h1>Alertas por correo</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a> · horas en UTC</p>
+{estado}{f'<div class="aviso">{esc(aviso)}</div>' if aviso else ''}
+{resumen}
+<h2 style="font-size:16px">Suscriptores</h2>
+<table class="t"><tr><th>Correo</th><th>Estado</th><th>Nivel</th><th>Alertas activas</th><th>Idioma</th><th>Alta</th><th>Último envío</th><th></th></tr>{sus or vacio(8)}</table>
+<h2 style="font-size:16px">Alertas</h2>
+<table class="t"><tr><th>Alerta</th><th>Tipo</th><th>Estado</th><th>Correo</th><th>Creada</th><th>Última revisión</th><th>Último envío</th></tr>{ale or vacio(7)}</table>
+<h2 style="font-size:16px">Envíos (los 100 últimos)</h2>
+<table class="t"><tr><th>Cuándo</th><th>Clase</th><th>Alertas</th><th>Novedades</th><th>Aceptado por Resend</th><th>Respuesta</th></tr>{env or vacio(6)}</table>""")
 
 
 # ─── CACHÉ DE PÁGINAS MONTADAS: portada nacional y /rankings (2026-10-06) ─────────────────────────────────────────
@@ -24637,6 +25245,10 @@ def _pag_entero(txt):
 
 
 def _route_get(path, qs, gzip_ok=False):
+    if ALERTAS_ACTIVAS and (path == "/alertas" or path.startswith("/alertas/")):
+        respuesta = _alertas_get(path, qs)
+        if respuesta:
+            return respuesta
     if path == "/":
         # Cualquier ?provincia= que no sea una provincia real (ausente,
         # vacio, "todas" o un valor invalido) se trata como "sin filtro":
@@ -25066,6 +25678,28 @@ def _route_get(path, qs, gzip_ok=False):
 
 def _route_post(path, params):
     try:
+        if ALERTAS_ACTIVAS and path.startswith("/alertas/"):
+            respuesta = _alertas_post(path, params)
+            if respuesta:
+                return respuesta
+
+        if path in ("/admin/alertas-enviar", "/admin/alertas-db"):
+            # Alertas por correo (2026-10-13). enviar: una tanda de la pasada de envío (flujo alertas-envio.yml);
+            # devuelve solo recuentos. db: el fichero alertas.db tal cual, para la copia cifrada
+            # (copia-alertas-cifrada.yml lo cifra antes de guardarlo en ningún sitio).
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            if path == "/admin/alertas-db":
+                return _resp(_alertas_almacen().copia(), content_type="application/octet-stream",
+                             headers={"Cache-Control": "no-store"})
+            try:
+                tanda = min(100, max(1, int(params.get("max", ["25"])[0])))
+            except ValueError:
+                tanda = 25
+            return _resp(json.dumps(_alertas_pasada(tanda), ensure_ascii=False),
+                         content_type="application/json; charset=utf-8")
+
         if path == "/buscar":
             municipio = params.get("municipio", [""])[0].strip()
             force     = params.get("force", [""])[0] == "1"
@@ -25870,6 +26504,13 @@ def _app_wsgi(environ, start_response):
 
     if path == "/admin/revision" or path.startswith("/admin/revision/"):
         code, headers, body = _revision_wsgi(method, path, qs, environ)
+    elif ALERTAS_ACTIVAS and method == "POST" and path == "/alertas/baja-correo":
+        # Baja de un clic desde el programa de correo (RFC 8058): la clave viaja en la dirección de la cabecera
+        # List-Unsubscribe, no en el cuerpo.
+        sid, firma = qs.get("s", [""])[0], qs.get("k", [""])[0]
+        if sid.isdigit() and _alertas_almacen().firma_valida("baja", sid, firma):
+            _alertas_almacen().baja(int(sid))
+        code, headers, body = _resp("ok", content_type="text/plain; charset=utf-8")
     elif method == "POST" and path == "/admin/revision-candidatos":
         try:
             length = int(environ.get("CONTENT_LENGTH") or 0)

@@ -1,0 +1,105 @@
+name: Copia cifrada de alertas.db (repositorio privado aparte)
+
+# alertas.db guarda los correos de quienes se apuntan a las alertas (2026-10-13). Vive solo en el disco de Render;
+# esta copia semanal evita perderlo si el disco se estropea. Va CIFRADA al repositorio privado dinero-publico-copias
+# (release "copia-alertas"): sin la clave no se puede leer, tampoco quien tenga acceso a ese repositorio.
+#
+# Secretos (los crea César; sin los dos no se hace nada):
+#   COPIAS_TOKEN          el mismo de la copia semanal de cache.db (escribe en dinero-publico-copias)
+#   ALERTAS_COPIA_CLAVE   la clave de cifrado. Larga y guardada también FUERA de GitHub: si se pierde, las copias
+#                         no se pueden abrir.
+#
+# El fichero sin cifrar solo existe unos segundos en la máquina de esta ejecución, que se destruye al acabar. No se
+# sube como artefacto ni se imprime nada de su contenido (el repositorio y sus registros son públicos).
+#
+# Para restaurar una copia (en un ordenador de confianza, con gpg):
+#   gpg --decrypt --output alertas.db alertas_AAAA-MM-DD.db.gpg      (pide la clave)
+
+on:
+  schedule:
+    - cron: "30 4 * * 1"      # lunes 04:30 UTC, después de la copia de cache.db
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  copia-alertas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DESTINO: ${{ github.repository_owner }}/dinero-publico-copias
+      ETIQUETA: copia-alertas
+    steps:
+      - name: ¿Están los dos secretos?
+        id: secretos
+        env:
+          COPIAS_TOKEN: ${{ secrets.COPIAS_TOKEN }}
+          ALERTAS_COPIA_CLAVE: ${{ secrets.ALERTAS_COPIA_CLAVE }}
+        run: |
+          if [ -z "$COPIAS_TOKEN" ] || [ -z "$ALERTAS_COPIA_CLAVE" ]; then
+            echo "::warning::Falta COPIAS_TOKEN o ALERTAS_COPIA_CLAVE: no se hace la copia."
+            echo "hay=no" >> "$GITHUB_OUTPUT"
+          elif [ "${#ALERTAS_COPIA_CLAVE}" -lt 20 ]; then
+            echo "::error::ALERTAS_COPIA_CLAVE tiene menos de 20 caracteres: demasiado corta para cifrar con ella."
+            exit 1
+          else
+            echo "hay=si" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Descargar, comprobar y cifrar
+        if: steps.secretos.outputs.hay == 'si'
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          ALERTAS_COPIA_CLAVE: ${{ secrets.ALERTAS_COPIA_CLAVE }}
+        run: |
+          set -euo pipefail
+          umask 077
+          codigo=$(curl -sS --max-time 120 -o alertas.db -w '%{http_code}' -X POST \
+            --data-urlencode "token=${ADMIN_TOKEN}" "https://dinero-publico.com/admin/alertas-db" || echo 000)
+          if [ "$codigo" != "200" ]; then
+            rm -f alertas.db
+            echo "::error::La web respondió ${codigo}: no se toca la copia existente."
+            exit 1
+          fi
+          resultado=$(python3 -c "import sqlite3; print(sqlite3.connect('alertas.db').execute('PRAGMA integrity_check').fetchone()[0])")
+          if [ "$resultado" != "ok" ]; then
+            rm -f alertas.db
+            echo "::error::alertas.db no pasa PRAGMA integrity_check: no se toca la copia existente."
+            exit 1
+          fi
+          echo "integrity_check: ok -- $(python3 -c "import sqlite3; print(sqlite3.connect('alertas.db').execute('SELECT count(*) FROM suscriptores').fetchone()[0])") suscriptores"
+          nombre="alertas_$(date -u +%Y-%m-%d).db.gpg"
+          printf '%s' "$ALERTAS_COPIA_CLAVE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 --s2k-digest-algo SHA512 --s2k-count 65011712 --output "$nombre" alertas.db
+          shred -u alertas.db
+          # Comprobación: la copia se abre con la clave y no se abre sin ella.
+          printf '%s' "$ALERTAS_COPIA_CLAVE" | gpg --batch --quiet --pinentry-mode loopback --passphrase-fd 0 \
+            --decrypt "$nombre" | python3 -c "import sys; sys.exit(0 if sys.stdin.buffer.read().startswith(b'SQLite format 3') else 1)"
+          if printf 'clave-equivocada' | gpg --batch --quiet --pinentry-mode loopback --passphrase-fd 0 --decrypt "$nombre" > /dev/null 2>&1; then
+            echo "::error::La copia se abre con una clave equivocada."; exit 1
+          fi
+          if head -c 4096 "$nombre" | grep -q "SQLite format 3"; then
+            echo "::error::La copia no está cifrada."; exit 1
+          fi
+          sha256sum "$nombre" > "${nombre}.sha256"
+          echo "nombre=${nombre}" >> "$GITHUB_ENV"
+          echo "Copia cifrada: ${nombre}, $(stat -c%s "$nombre") bytes"
+
+      - name: Subir al repositorio privado y dejar las cuatro últimas
+        if: steps.secretos.outputs.hay == 'si'
+        env:
+          GH_TOKEN: ${{ secrets.COPIAS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$ETIQUETA" --repo "$DESTINO" > /dev/null 2>&1; then
+            gh release create "$ETIQUETA" --repo "$DESTINO" --title "Copia cifrada de alertas.db" \
+              --notes "Copias automáticas, cifradas con gpg (AES-256). Se conservan las cuatro últimas. Sin la clave no se pueden abrir."
+          fi
+          gh release upload "$ETIQUETA" "$nombre" "${nombre}.sha256" --repo "$DESTINO" --clobber
+          gh release view "$ETIQUETA" --repo "$DESTINO" --json assets --jq '.assets[].name' | grep '\.db\.gpg$' | sort -r | tail -n +5 | while read -r viejo; do
+            gh release delete-asset "$ETIQUETA" "$viejo" --repo "$DESTINO" --yes
+            gh release delete-asset "$ETIQUETA" "${viejo}.sha256" --repo "$DESTINO" --yes || true
+            echo "Borrada la copia antigua ${viejo}"
+          done
+          rm -f "$nombre" "${nombre}.sha256"
