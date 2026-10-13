@@ -13780,9 +13780,26 @@ REVISION_REGLAS = {"fraccionamiento-v2": "Posible fraccionamiento", "menor-sobre
 #    que suelen acabar en descarte (probable error, posible duplicado entre fuentes o dentro de una). Al decidir uno
 #    (descartar, seguir, convertir en caso) sale de pendientes y entra el siguiente.
 _REVISION_EXCESO = "(suma / max(1.0, coalesce(json_extract(datos, '$.umbral'), 1.0)))"
-_REVISION_ERROR = "(datos LIKE '%probable error de la fuente%')"
-_REVISION_DUDOSO = ("(datos LIKE '%probable error de la fuente%' OR datos LIKE '%fuentes distintas%' "
+# 2026-10-12 (encargo de César: la cola ordenada por exceso la encabezaban errores de datos). También cuentan como
+# error, y por tanto van al final y no entran en "los más claros", los dos avisos nuevos del bot: "probable error de
+# clasificación" (un menor de más de 3 veces el umbral) y "dato mal leído" (el adjudicatario es el objeto del contrato).
+_REVISION_ERROR = ("(datos LIKE '%probable error de la fuente%' OR datos LIKE '%probable error de clasificación%' "
+                   "OR datos LIKE '%dato mal leído%')")
+_REVISION_DUDOSO = (f"({_REVISION_ERROR} OR datos LIKE '%fuentes distintas%' "
                     "OR datos LIKE '%publicación duplicada%')")
+# Persona física por el NIF que enseña la cola: DNI/NIE ya enmascarado ("***4567**", "****4567*") o enmascarado por la
+# fuente ("XXXXX364F"; Euskadi enmascara también CIF, que terminan en cifra). Vale también para los candidatos
+# guardados antes de que el bot trajera el aviso.
+_RE_REVISION_NIF_PERSONA = re.compile(r"^(?=.*[*]|.*X{4,})[0-9A-Z*]{6,12}$")
+
+
+def _revision_persona_fisica(c):
+    """"si", "posible" o "" para el aviso de no publicar el nombre del adjudicatario de un candidato."""
+    nif = re.sub(r"[\s.\-]", "", (c.get("nif") or "").upper())
+    if c.get("persona_fisica") or (nif and _RE_REVISION_NIF_PERSONA.match(nif)
+                                   and not (nif.startswith("XXXX") and nif[-1].isdigit())):
+        return "si"
+    return "posible" if any("podría ser una persona física" in a for a in c.get("avisos", [])) else ""
 REVISION_ORDENES = {"exceso": ("Más veces por encima del umbral", f"{_REVISION_ERROR} ASC, {_REVISION_EXCESO} DESC, puntuacion DESC"),
                     "importe": ("Mayor importe", f"{_REVISION_ERROR} ASC, suma DESC"),
                     "puntuacion": ("Mayor puntuación del bot", "puntuacion DESC, suma DESC")}
@@ -13953,7 +13970,11 @@ button.sec{background:#fff;color:#1b2f5c}.c{background:#fff;border:1px solid #dd
 padding:4px 6px;text-align:left;vertical-align:top}th{color:#5b6475;font-weight:600}.num{text-align:right;white-space:nowrap}
 .av{color:#8a5a00;font-size:12px;margin:4px 0}.acc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
 .est{font-size:12px;color:#5b6475}.pag a{margin-right:10px}.pag{font-size:13px;margin:8px 0}
-.atajos{font-size:14px;margin:14px 0 4px;padding:8px 12px;background:#fff;border:1px solid #dde1e7;border-radius:8px}"""
+.atajos{font-size:14px;margin:14px 0 4px;padding:8px 12px;background:#fff;border:1px solid #dde1e7;border-radius:8px}
+.pf{font-size:12px;font-weight:700;color:#fff;background:#b3261e;border-radius:4px;padding:2px 7px;white-space:nowrap}
+.pf.q{color:#8a5a00;background:#fff7e0;border:1px solid #e8d48a;font-weight:600}
+.pfb{font-size:13px;font-weight:700;color:#b3261e;background:#fdecea;border:1px solid #f1b5b0;border-radius:6px;
+padding:6px 10px;margin:0 0 8px}.cat.err{color:#8a5a00;border-color:#e8d48a;background:#fff7e0}"""
 
 
 def _revision_pagina(titulo, cuerpo):
@@ -14060,6 +14081,16 @@ def _revision_cola_html(qs, cookie):
             f'<tr><td>{esc(k["fecha"])}</td><td class="num">{fmt_eur(str(k["importe"]))}</td>'
             f'<td>{esc(k["descripcion"])}</td><td>{esc(k["fuente"])}</td></tr>' for k in c.get("contratos", []))
         avisos = "".join(f'<div class="av">⚠ {esc(a)}</div>' for a in c.get("avisos", []))
+        # Aviso visible de no publicar el nombre (encargo de César, 12-10): en la línea del candidato y dentro.
+        pf = _revision_persona_fisica(c)
+        pf_chip = (' <span class="pf">🔒 Persona física: no publicar el nombre</span>' if pf == "si" else
+                   ' <span class="pf q">¿Persona física? No publicar el nombre sin comprobar</span>' if pf else "")
+        pf_caja = ('<div class="pfb">🔒 El adjudicatario es una persona física: NO publicar su nombre.</div>'
+                   if pf == "si" else "")
+        marcas = "".join(f' <span class="cat err">{txt}</span>' for clave, txt in (
+            ("probable error de clasificación", "probable error de clasificación"),
+            ("probable error de la fuente", "probable error de la fuente"),
+            ("dato mal leído", "dato mal leído")) if any(clave in a for a in c.get("avisos", [])))
         if not vigente:
             avisos += '<div class="av">⚠ En la última pasada semanal ya no se detecta (los datos han cambiado).</div>'
         muni_q = quote_plus(c.get("municipio", ""))
@@ -14081,12 +14112,13 @@ def _revision_cola_html(qs, cookie):
         bloques.append(
             f'<details class="c"><summary><span class="p{" a" if c["puntuacion"] >= 80 else ""}">{int(c["puntuacion"])}</span>'
             f'<b>{esc(c.get("municipio", ""))}</b> · {esc(c.get("organismo", ""))} → {esc(c.get("adjudicatario", ""))} '
-            f'{esc(c.get("nif", ""))} · {esc(c.get("tipo", ""))} · {c.get("n_contratos", 1)} contrato(s), '
+            f'{esc(c.get("nif", ""))}{pf_chip} · {esc(c.get("tipo", ""))} · {c.get("n_contratos", 1)} contrato(s), '
             f'{fmt_eur(str(c.get("suma", 0)))} en {c.get("dias", 0)} día(s) (umbral {fmt_eur(str(c.get("umbral", 0)))}'
             + (f' · <b>×{c.get("suma", 0) / c["umbral"]:.1f}</b>'.replace(".", ",") if c.get("umbral") else "") + ")"
             f' <span class="cat">{esc(REVISION_REGLAS.get(c.get("regla"), c.get("regla", "")))}</span>'
             + (f' <span class="cat">{esc(c["categoria"])}</span>' if c.get("categoria") else "")
-            + f'</summary><div class="det"><table><tr><th>Fecha</th><th>Importe</th><th>Descripción</th><th>Fuente</th></tr>'
+            + marcas
+            + f'</summary><div class="det">{pf_caja}<table><tr><th>Fecha</th><th>Importe</th><th>Descripción</th><th>Fuente</th></tr>'
             f'{contratos}</table>{avisos}<div class="est">Puntos: {esc(json.dumps(c.get("puntos", {}), ensure_ascii=False))}</div>'
             f'{estado_txt}{acciones}</div></details>')
     paginas = max(1, (total + REVISION_POR_PAGINA - 1) // REVISION_POR_PAGINA)
@@ -14096,7 +14128,7 @@ def _revision_cola_html(qs, cookie):
         paginas = 1
     pag_html = ('<div class="pag">Los ' + str(len(filas)) + ' más claros ahora mismo (hasta '
                 + str(_REVISION_SEMANA_POR_REGLA) + ' por regla): pendientes, vigentes, categoría general y sin avisos de '
-                'probable error ni de posible duplicado; por puntuación y, a igualdad, por veces sobre el umbral. Al '
+                'probable error (de la fuente, de clasificación o dato mal leído) ni de posible duplicado; por puntuación y, a igualdad, por veces sobre el umbral. Al '
                 'decidir uno entra el siguiente.</div>') if semana else '<div class="pag">' + (f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag - 1))}">← Anterior</a>'
                                       if pag > 1 else "") + f'Página {pag} de {paginas} · {total} candidatos ' + (
         f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag + 1))}">Siguiente →</a>' if pag < paginas else "") + "</div>"
@@ -14123,7 +14155,10 @@ def _revision_ficha_md(huella):
     lineas = [f"# Ficha de trabajo (uso interno, no publicar tal cual)", "",
               f"- Regla: {REVISION_REGLAS.get(c.get('regla'), c.get('regla'))} ({c.get('regla')})",
               f"- Municipio: {c.get('municipio')} ({c.get('provincia')})", f"- Organismo: {c.get('organismo')}",
-              f"- Adjudicatario: {c.get('adjudicatario')} {c.get('nif', '')}", f"- Tipo: {c.get('tipo')} · umbral "
+              f"- Adjudicatario: {c.get('adjudicatario')} {c.get('nif', '')}"
+              + {"si": "  **PERSONA FÍSICA: NO PUBLICAR EL NOMBRE**",
+                 "posible": "  (¿persona física? no publicar el nombre sin comprobarlo)"}.get(_revision_persona_fisica(c), ""),
+              f"- Tipo: {c.get('tipo')} · umbral "
               f"{c.get('umbral'):,.0f} € sin IVA", f"- {c.get('n_contratos')} contrato(s), {c.get('suma'):,.2f} € entre "
               f"{c.get('desde')} y {c.get('hasta')}", f"- Puntuación: {c.get('puntuacion')} · estado: {fila[1]}",
               f"- Nota: {fila[2] or ''}", "", "## Contratos", "", "| Fecha | Importe | Descripción | Fuente | Id |",

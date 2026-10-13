@@ -24,6 +24,17 @@ Regla 2, "menor por encima del umbral": un contrato de la lista de menores cuyo 
 INCLUSO descontando un 21 % de IVA (importe >= 1,21 x umbral), para no confundir la base del IVA con una irregularidad
 (aprobado por César el 05-10). También puede ser un error de la fuente o un contrato mal clasificado como menor.
 
+Limpieza de la cola (encargo de César del 12-10, tras ver que la encabezaban errores de datos):
+  - Regla 2: un "menor" de más de 3 veces el umbral se marca como probable error de clasificación (casi siempre es
+    un contrato de otro procedimiento publicado en la lista de menores) y pierde puntos; sigue en la cola, al final.
+  - Regla 2: los contratos de emergencia ya no cuentan. La tramitación de emergencia (art. 120 LCSP) no tiene el
+    límite de importe del contrato menor. La regla 1 no cambia: ahí siguen con su aviso.
+  - Las dos reglas: si el "adjudicatario" parece el objeto del contrato y no una empresa (o es el propio organismo),
+    se marca como dato mal leído.
+  - Las dos reglas: los adjudicatarios que son personas físicas llevan el aviso de no publicar el nombre. Se
+    reconocen por el NIF (DNI/NIE, entero o enmascarado); sin NIF y sin forma jurídica solo se avisa de que podría
+    serlo, porque por la forma del nombre no se puede saber.
+
 Uso:
     python backend/indicios_contratos.py --cache cache.db --salida candidatos.ndjson.gz [--muestra 25]
 Sin --muestra solo imprime recuentos (se ejecuta en GitHub Actions, cuyo registro es público).
@@ -65,6 +76,34 @@ FACTURA FACTURAS SEGUN PRESUPUESTO EJERCICIO MANTENIMIENTO REPARACION REPARACION
 NECESARIAS DESTINADO DESTINADOS DESTINADA ADJUDICACION LICITACION ZERBITZUA HORNIDURA KONTRATUA""".split())
 _RE_DNI = re.compile(r"^\d{8}[A-Z]$")
 _RE_NIE = re.compile(r"^[XYZ]\d{7}[A-Z]$")
+# NIF enmascarado, por la fuente o por enmascarar_nif.py ("***4567**", "****4567*", "XXXXX750E", "05*****8F"): las
+# administraciones solo enmascaran el de las personas físicas. Mismo criterio que _persona_fisica_cm de app.py.
+_RE_NIF_ENMASCARADO = re.compile(r"^(?=.*[*]|.*X{4,})[0-9A-Z*]{6,12}$")
+FACTOR_ERROR_CLASIFICACION = 3.0   # regla 2: por encima de 3 veces el umbral, probable error de clasificación
+AVISO_ERROR_CLASIFICACION = ("probable error de clasificación: más de 3 veces el umbral del contrato menor (suele ser "
+                             "un contrato de otro procedimiento publicado en la lista de menores)")
+AVISO_DATO_MAL_LEIDO = "dato mal leído: el adjudicatario parece el objeto del contrato y no una empresa"
+AVISO_ES_EL_ORGANISMO = "dato mal leído: el adjudicatario es el propio organismo"
+AVISO_PERSONA_FISICA = "PERSONA FÍSICA: no publicar el nombre"
+AVISO_POSIBLE_PERSONA_FISICA = ("sin NIF y sin forma jurídica: podría ser una persona física; no publicar el nombre "
+                                "sin comprobarlo")
+# Formas jurídicas y palabras de entidad en cualquier parte del nombre (ya normalizado, sin puntuación)
+_RE_ENTIDAD = re.compile(
+    r"\b(S L L|S A L|S L U|S A U|S L P|S L N E|S R L|S L|S A|S C|S COOP\w*|COOP\w*|C B|S C P|S C C L|SCCL|SCP|SLL|SAL|SLU|"
+    r"SAU|SLP|SLNE|SRL|SL|SA|SC|CB|UTE|U T E|AIE|LTD|GMBH|INC|SOCIEDAD|SOCIETAT|COOPERATIVA|FUNDACION|FUNDACIO|ASOC\w*|"
+    r"ASSOC\w*|ELKARTE\w*|KOOP\w*|HERMANOS|HNOS|COMUNIDAD|UNIVERSI\w+|AYUNTAMIENTO|AJUNTAMENT|CONCELLO|UDALA|CONSORCI\w*|"
+    r"CONSELL|MANCOMUNI\w+|DIPUTACI\w+|COLEGIO|COL LEGI|CAMARA|CAMBRA|INSTITUT\w*|CLUB|FEDERACI\w+|CRUZ ROJA|CREU ROJA|"
+    r"CARITAS|GREMI\w*|ORQUEST\w+|PARROQUIA|OBISPADO|SECRETARIA|MUTUA\w*|EMPRESA|GRUPO?|CENTRO?|ESTUDIO|TALLERES)\b")
+# Comienzos propios de la descripción de un contrato, no del nombre de una empresa
+_RE_OBJETO = re.compile(
+    r"^(ASESORAMIENTO|SERVICIOS? (DE|DEL|PARA|EN)|SUMINISTROS? (DE|DEL|PARA|E)|OBRAS? (DE|DEL|PARA|EN)|"
+    r"MANTENIMIENTO (DE|DEL|PREVENTIVO)|REPARACION|ADQUISICION|CONTRATACION|REDACCION|TRABAJOS (DE|PARA|EN)|"
+    r"ALQUILER (DE|DEL)|ARRENDAMIENTO|EJECUCION|INSTALACION (DE|DEL)|LIMPIEZA (DE|DEL)|ASISTENCIA TECNICA|ELABORACION|"
+    r"ORGANIZACION (DE|DEL)|ACTUALIZACION|RENOVACION|SUSTITUCION|PROYECTO (DE|DEL|PARA)|PLAN (DE|MUNICIPAL)|CURSO|"
+    r"RECAUDACION|REALIZACION|PRESTACION|COMPRA (DE|DEL)|CONTRATO|ACONDICIONAMIENTO|MEJORA (DE|DEL)|REFORMA (DE|DEL)|"
+    r"REHABILITACION|PAVIMENTACION|URBANIZACION (DE|DEL)|DIRECCION (DE|FACULTATIVA)|COORDINACION|INFORME|IMPARTICION|"
+    r"ACTUACION|CAMPANA|RETIRADA|DEMOLICION|DESBROCE|SERVEI (DE|D)|SUBMINISTRAMENT|OBRES (DE|D)|REDACCIO|ADQUISICIO|"
+    r"CONTRACTACIO|SERVIZO (DE|DO)|SUBMINISTRACION|LOTE)\b")
 
 
 def normalizar(s):
@@ -96,14 +135,47 @@ def palabras(d):
 
 
 def es_persona_fisica(nif):
-    n = (nif or "").upper().strip()
-    return bool(_RE_DNI.match(n) or _RE_NIE.match(n))
+    """Por el NIF: DNI o NIE, entero o enmascarado. Euskadi enmascara también algunos CIF ("XXXXX0807"): esos
+    terminan en cifra, y un DNI/NIE termina siempre en letra."""
+    n = re.sub(r"[\s.\-]", "", (nif or "").upper())
+    if _RE_DNI.match(n) or _RE_NIE.match(n):
+        return True
+    return bool(n and _RE_NIF_ENMASCARADO.match(n) and not (n.startswith("XXXX") and n[-1].isdigit()))
+
+
+def adjudicatario_mal_leido(adjudicatario, organismo, nif):
+    """Aviso si el campo del adjudicatario no trae una empresa: el objeto del contrato (Iurreta, "ASESORAMIENTO EN
+    PROCEDIMIENTO SANCIONADOR") o el propio organismo. '' si parece un adjudicatario normal."""
+    a = normalizar(adjudicatario)
+    if not a:
+        return ""
+    if a == normalizar(organismo):
+        return AVISO_ES_EL_ORGANISMO
+    if _RE_OBJETO.search(a) and not _RE_ENTIDAD.search(a) and not es_persona_fisica(nif):
+        return AVISO_DATO_MAL_LEIDO
+    return ""
+
+
+def avisos_adjudicatario(adjudicatario, organismo, nif):
+    """(avisos, persona_fisica, puntos_a_restar) comunes a las dos reglas."""
+    mal = adjudicatario_mal_leido(adjudicatario, organismo, nif)
+    if mal:
+        return [mal], False, 40
+    if es_persona_fisica(nif):
+        return [AVISO_PERSONA_FISICA], True, 0
+    if not (nif or "").strip() and adjudicatario and not _RE_ENTIDAD.search(normalizar(adjudicatario)):
+        return [AVISO_POSIBLE_PERSONA_FISICA], False, 0
+    return [], False, 0
 
 
 def nif_mostrar(nif):
     """Como _nif_mostrar de app.py: el DNI/NIE de un autónomo nunca sale entero."""
     n = (nif or "").upper().strip()
-    return "***" + n[3:7] + "**" if es_persona_fisica(n) else n
+    if _RE_DNI.match(n):
+        return "***" + n[3:7] + "**"
+    if _RE_NIE.match(n):
+        return "****" + n[4:8] + "*"
+    return n
 
 
 def fecha_valida(f, hoy):
@@ -201,15 +273,21 @@ def candidato_regla2(r, muni, t, fecha, imp):
     if ratio > 25:
         avisos.append("importe desproporcionado para un menor: probable error de la fuente (importe o tipo)")
         puntos["posible_error_de_origen"] = -40
+    elif ratio > FACTOR_ERROR_CLASIFICACION:
+        avisos.append(AVISO_ERROR_CLASIFICACION)
+        puntos["probable_error_de_clasificacion"] = -30
     categoria = "espectaculos" if _RE_ESPECTACULO.search(normalizar(r["descripcio"])) else (
         "emergencia" if _RE_EMERGENCIA.search(normalizar(r["descripcio"])) else "")
     if categoria == "emergencia":
-        avisos.append("posible tramitación de emergencia (art. 120 LCSP)")
-        puntos["categoria"] = -PENALIZACION["emergencia"]
+        return None          # la emergencia (art. 120 LCSP) no tiene el límite del contrato menor: no es un indicio
+    avisos_adj, persona_fisica, resta = avisos_adjudicatario(r["adjudicatari"], r["organisme"], nif)
+    avisos += avisos_adj
+    if resta:
+        puntos["dato_mal_leido"] = -resta
     huella = hashlib.sha256(f'{VERSION_REGLA_2}|{r["id"]}'.encode()).hexdigest()[:20]
     return {"huella": huella, "regla": VERSION_REGLA_2, "categoria": categoria, "municipio": muni["municipio"],
             "provincia": muni["provincia"] or "", "organismo": r["organisme"] or "",
-            "adjudicatario": r["adjudicatari"] or "", "nif": nif_mostrar(nif), "persona_fisica": es_persona_fisica(nif),
+            "adjudicatario": r["adjudicatari"] or "", "nif": nif_mostrar(nif), "persona_fisica": persona_fisica,
             "tipo": t, "umbral": umbral, "n_contratos": 1, "suma": round(imp, 2), "dias": 0, "pegados_al_umbral": 0,
             "desde": fecha.isoformat(), "hasta": fecha.isoformat(), "puntuacion": max(0, sum(puntos.values())),
             "puntos": puntos, "avisos": avisos,
@@ -218,7 +296,7 @@ def candidato_regla2(r, muni, t, fecha, imp):
 
 
 def analizar(cache, hoy):
-    db = sqlite3.connect(cache)
+    db = sqlite3.connect(cache)       # solo lee
     db.row_factory = sqlite3.Row
     candidatos = []
     stats = collections.Counter()
@@ -252,7 +330,11 @@ def analizar(cache, hoy):
                 continue
             if imp >= UMBRAL[t]:
                 if imp >= FACTOR_IVA * UMBRAL[t]:
-                    r2_muni.append(candidato_regla2(r, muni, t, f, float(imp)))
+                    c2 = candidato_regla2(r, muni, t, f, float(imp))
+                    if c2:
+                        r2_muni.append(c2)
+                    else:
+                        stats["regla2_emergencias_excluidas"] += 1
                 continue                     # la regla 1 solo mira contratos por debajo del umbral
             nif = (r["nif"] or "").upper().strip()
             emp = nif or "N:" + nombre_empresa(r["adjudicatari"])
@@ -309,13 +391,19 @@ def analizar(cache, hoy):
                 desglose["categoria"] = -PENALIZACION[categoria]
                 puntos = max(0, puntos - PENALIZACION[categoria])
             nif_ej = next((c["nif"] for c in grupo if c["nif"]), "")
+            avisos_adj, persona_fisica, resta = avisos_adjudicatario(grupo[0]["adjudicatario"], grupo[0]["organismo"],
+                                                                     nif_ej)
+            avisos += avisos_adj
+            if resta:
+                desglose["dato_mal_leido"] = -resta
+                puntos = max(0, puntos - resta)
             huella = hashlib.sha256(f'{VERSION_REGLA_1}|{muni["municipio"]}|{muni["provincia"]}|{org}|{emp}|{t}|'
                                     f'{min(c["fecha"] for c in grupo)}'.encode()).hexdigest()[:20]
             candidatos.append({
                 "huella": huella, "regla": VERSION_REGLA_1, "categoria": categoria, "municipio": muni["municipio"],
                 "provincia": muni["provincia"] or "", "organismo": grupo[0]["organismo"],
                 "adjudicatario": grupo[0]["adjudicatario"], "nif": nif_mostrar(nif_ej),
-                "persona_fisica": es_persona_fisica(nif_ej), "tipo": t, "umbral": UMBRAL[t],
+                "persona_fisica": persona_fisica, "tipo": t, "umbral": UMBRAL[t],
                 "n_contratos": len(grupo), "suma": round(suma, 2), "dias": dias, "pegados_al_umbral": pegados,
                 "desde": min(c["fecha"] for c in grupo).isoformat(), "hasta": max(c["fecha"] for c in grupo).isoformat(),
                 "puntuacion": puntos, "puntos": desglose, "avisos": avisos,
@@ -338,7 +426,15 @@ def main():
     print(f"contratos leídos: {stats['contratos']} ({stats['no_evaluables']} sin tipo/fecha/importe válidos) | "
           f"grupos empresa+organismo+tipo con 2 o más: {stats['grupos']} | duplicados entre fuentes quitados: "
           f"{stats['duplicados_quitados']} | registros idénticos unidos: {stats['registros_identicos_unidos']} | "
-          f"regla 2, duplicados entre fuentes quitados: {stats['regla2_duplicados_quitados']}")
+          f"regla 2, duplicados entre fuentes quitados: {stats['regla2_duplicados_quitados']} | regla 2, emergencias "
+          f"que ya no cuentan: {stats['regla2_emergencias_excluidas']}")
+    marcas = (("probable error de clasificación (más de 3 veces el umbral)", AVISO_ERROR_CLASIFICACION),
+              ("dato mal leído (el adjudicatario parece el objeto)", AVISO_DATO_MAL_LEIDO),
+              ("dato mal leído (el adjudicatario es el organismo)", AVISO_ES_EL_ORGANISMO),
+              ("persona física: no publicar el nombre", AVISO_PERSONA_FISICA),
+              ("posible persona física (sin NIF ni forma jurídica)", AVISO_POSIBLE_PERSONA_FISICA))
+    print("avisos de limpieza: " + " | ".join(f"{nombre}: {sum(1 for c in candidatos if aviso in c['avisos'])}"
+                                              for nombre, aviso in marcas))
     for regla in (VERSION_REGLA_1, VERSION_REGLA_2):
         cs = [c for c in candidatos if c["regla"] == regla]
         tr = collections.Counter("80-100" if c["puntuacion"] >= 80 else "60-79" if c["puntuacion"] >= 60 else
