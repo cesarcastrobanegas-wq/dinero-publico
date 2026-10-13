@@ -21153,7 +21153,10 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     # Botones de compartir (2026-09-20, petición de César -- ya existían en
     # los casos, faltaban en la ficha de municipio) -- solo cuando hay un
     # municipio concreto que compartir, no en la página de búsqueda vacía.
-    compartir_html = _share_buttons_html(og_path, titulo) if muni_display else ""
+    # El texto que se comparte lleva la nota y el puesto del municipio en el Índice de Transparencia (encargo de
+    # César, 2026-10-13); el título de la página no cambia.
+    compartir_html = (_share_buttons_html(og_path, titulo + _indice_texto_compartir(muni_display, datos[0].get("provincia", provincia) if datos else provincia))
+                      if muni_display else "")
 
     ejemplo_muni = _EJEMPLO_MUNI_POR_PROVINCIA.get(provincia, _EJEMPLO_MUNI_POR_PROVINCIA["murcia"])
     body = f"""{back_html}
@@ -21357,6 +21360,27 @@ _PERSONALIZACION_JS = r"""(function(){
     if (sugs && !sugs.contains(evt.target) && evt.target !== input) sugs.classList.remove('show');
   });
 })();"""
+
+
+def _indice_texto_compartir(municipio, provincia=None):
+    """Coletilla para el texto de compartir de la ficha: " · Índice de Transparencia: 67,8/100, puesto 1.761 de
+    2.214". Mismos datos y mismo criterio de empates que el widget de la ficha. Con muestra pequeña va la nota sin
+    puesto; sin índice, nada."""
+    if not municipio or es_pseudo_municipio(municipio):
+        return ""
+    todas = _indice_transparencia_cacheado()
+    filas = _indice_filas_ranking(todas)
+    filas.sort(key=lambda f: f["indice"], reverse=True)
+    clave_muni = clave_municipio(municipio, provincia)
+    for posicion, f in _ranking_con_empates(filas):
+        if clave_municipio(f["municipio"], f.get("provincia")) == clave_muni:
+            return " · " + _t("Índice de Transparencia: {nota}/100, puesto {p} de {n}").format(
+                nota=_nota_coma(f["indice"]), p=fmt_num(posicion), n=fmt_num(len(filas)))
+    pequena = next((f for f in todas if _indice_muestra_pequena(f)
+                    and clave_municipio(f["municipio"], f.get("provincia")) == clave_muni), None)
+    if pequena:
+        return " · " + _t("Índice de Transparencia: {nota}/100 (muestra pequeña)").format(nota=_nota_coma(pequena["indice"]))
+    return ""
 
 
 def _widget_indice_transparencia_muni_html(municipio, top_n=8, provincia=None):
@@ -21578,7 +21602,7 @@ def _mayor_contrato_html(datos):
     titulo_html = (f'<a class="dd-titulo-contrato" href="{esc(url)}" target="_blank" rel="noopener">{esc(titulo_corto)} ↗</a>'
                    if url.startswith("http") else f'<span class="dd-titulo-contrato">{esc(titulo_corto)}</span>')
     return f"""<div class="dd-tarjeta">
-        <div class="dd-etiqueta">{_t("El mayor contrato adjudicado")}</div>
+        <div class="dd-etiqueta">{_t("El mayor contrato adjudicado en los últimos 5 años")}</div>
         <div class="dd-cifra">{fmt_eur(mayor["importe_num"])}</div>
         {titulo_html}
         <div class="dd-lugar"><a href="{url_ficha}">{esc(municipio)}</a> · {empresa_html}</div>
