@@ -29,6 +29,10 @@ try:                                   # bajo gunicorn la app es "backend.app" (
 except ImportError:
     import licitaciones_place as LIC
 try:
+    from . import fondos_ue_espana as FUE
+except ImportError:
+    import fondos_ue_espana as FUE
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -2453,6 +2457,15 @@ def _db_init():
             _db.execute("ALTER TABLE fondos_ue ADD COLUMN municipio_match TEXT DEFAULT ''")
         except sqlite3.OperationalError:
             pass  # ya existe
+        # Fondos UE de toda España (2026-10-12): ámbito de cada fila (provincia / regional / estatal / cooperacion,
+        # ver fondos_ue_espana.py) y su comunidad. Lo que ya había (Murcia y Girona) era todo de provincia.
+        for _col in ("ambito TEXT DEFAULT 'provincia'", "comunidad TEXT DEFAULT ''"):
+            try:
+                _db.execute(f"ALTER TABLE fondos_ue ADD COLUMN {_col}")
+            except sqlite3.OperationalError:
+                pass  # ya existe
+        for _sql in _SQL_INDICES_FONDOS_UE:
+            _db.execute(_sql.format(tabla="fondos_ue"))
         # Comentarios de usuarios en la ficha de municipio o de empresa
         # (búsqueda global) -- formulario simple, sin gestión activa ni
         # aviso por email: se guardan y se muestran públicos al instante,
@@ -2504,8 +2517,11 @@ def _db_init():
         # 2026-07-23 que añadió el cruce contra los pseudo-municipios) se
         # aplica de inmediato a los datos ya cargados, sin esperar al próximo
         # /actualizar-fondos-ue.
+        # 2026-10-12: solo las provincias que cruzan con municipios (_INDICE_MUNICIPIOS_FONDOS_UE); con toda España
+        # cargada la tabla pasa de unos miles de filas a más de 150.000 y el resto no cruza con nada.
         filas_existentes = _db.execute(
-            "SELECT id, provincia, municipio, municipio_match FROM fondos_ue").fetchall()
+            "SELECT id, provincia, municipio, municipio_match FROM fondos_ue "
+            "WHERE provincia IN ('murcia', 'girona') AND ambito = 'provincia'").fetchall()
         cambios = 0
         for fid, prov, muni, match_actual in filas_existentes:
             match = _cruzar_municipio_fondo_ue(prov, muni)
@@ -11662,8 +11678,64 @@ def _cruzar_municipio_fondo_ue(provincia, texto_ubicacion):
     return ""
 
 
-CORDIS_HORIZON_CSV_URL = "https://cordis.europa.eu/data/cordis-HORIZONprojects-csv.zip"
-COHESION_DATA_URL = "https://cohesiondata.ec.europa.eu/resource/557j-pmg8.json"
+CORDIS_HORIZON_CSV_URL = FUE.CORDIS_HORIZON_CSV_URL
+COHESION_DATA_URL = FUE.COHESION_DATA_URL
+
+# Toda España (2026-10-12): la tabla pasa de ~6.000 filas a más de 150.000. La genera un flujo de GitHub Actions
+# (fondos-ue-espana.yml, backend/fondos_ue_espana.py) y la sube a POST /admin/fondos-ue (_subir_fondos_ue), que la
+# sustituye de golpe. /fondos-ue ya no lee la tabla a memoria: suma y pagina en la base, con estos índices.
+_SQL_TABLA_FONDOS_UE = """CREATE TABLE IF NOT EXISTS {tabla} (
+    id TEXT PRIMARY KEY, fuente TEXT NOT NULL, provincia TEXT NOT NULL, municipio TEXT, nuts_code TEXT, titulo TEXT,
+    beneficiario TEXT, nif TEXT, rol TEXT, importe_num REAL, fecha_inicio TEXT, fecha_fin TEXT, programa TEXT,
+    fondo TEXT, url TEXT, ts REAL NOT NULL, municipio_match TEXT DEFAULT '', ambito TEXT DEFAULT 'provincia',
+    comunidad TEXT DEFAULT '')"""
+_SQL_INDICES_FONDOS_UE = (
+    "CREATE INDEX IF NOT EXISTS idx_fue_importe ON {tabla}(importe_num DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_fue_provincia ON {tabla}(provincia, ambito, importe_num DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_fue_comunidad ON {tabla}(comunidad, importe_num DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_fue_ambito ON {tabla}(ambito, importe_num DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_fue_match ON {tabla}(municipio_match)",
+    # solo con este índice (sin leer las filas, que son anchas) salen los recuentos, las sumas y la lista de provincias
+    "CREATE INDEX IF NOT EXISTS idx_fue_sumas ON {tabla}(ambito, provincia, comunidad, fuente, importe_num)",
+    "CREATE INDEX IF NOT EXISTS idx_fue_sumas_com ON {tabla}(comunidad, ambito, fuente, importe_num)",
+)
+_FUE_COLUMNAS = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario", "nif", "rol",
+                 "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts", "municipio_match",
+                 "ambito", "comunidad")
+_FUE_POR_PAGINA = 50
+# Tope de páginas por selección: llegar a la fila 150.000 obliga a la base a recorrer las 150.000 anteriores (5 s en
+# local). Se enseñan las 10.000 de mayor importe de cada selección; para ver el resto se afina con los filtros.
+_FUE_PAGINAS_MAX = 200
+# Recuentos, sumas y lista de provincias de /fondos-ue: solo cambian cuando se carga la tabla (se vacía entonces).
+_FUE_CACHE = {}
+_FUE_CACHE_S = 600
+
+
+def _fue_cacheado(clave, calcular):
+    ahora = time.time()
+    v = _FUE_CACHE.get(clave)
+    if v and ahora - v[0] < _FUE_CACHE_S:
+        return v[1]
+    valor = calcular()
+    if len(_FUE_CACHE) > 500:
+        _FUE_CACHE.clear()
+    _FUE_CACHE[clave] = (ahora, valor)
+    return valor
+FONDOS_UE_MINIMO_SUBIDA = 50000     # una subida con menos filas se rechaza (descarga a medias)
+
+
+def _fue_valores(f, ahora):
+    """Tupla de una fila de fondos_ue en el orden de _FUE_COLUMNAS. El cruce con municipio solo existe para las
+    provincias de _INDICE_MUNICIPIOS_FONDOS_UE y nunca para lo regional, estatal o de cooperación."""
+    ambito = f.get("ambito") or "provincia"
+    provincia = f.get("provincia") or ""
+    municipio_match = f.get("municipio_match") or (
+        _cruzar_municipio_fondo_ue(provincia, f.get("municipio", "")) if ambito == "provincia" else "")
+    return (f["id"], f["fuente"], provincia, f.get("municipio", ""), f.get("nuts_code", ""), f.get("titulo", ""),
+            f.get("beneficiario", ""), f.get("nif", ""), f.get("rol", ""), float(f.get("importe_num") or 0.0),
+            f.get("fecha_inicio", ""), f.get("fecha_fin", ""), f.get("programa", ""), f.get("fondo", ""),
+            f.get("url", ""), ahora, municipio_match, ambito,
+            f.get("comunidad") or COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(provincia, ""))
 
 # NUTS3 (Girona) / prefijo de programa (Murcia, que no trae NUTS3 relleno
 # en Cohesion Data) por provincia -- ver diagnóstico para el porqué de la
@@ -11687,14 +11759,9 @@ def _guardar_fondos_ue(filas):
     ahora = time.time()
     with _db_lock:
         for f in filas:
-            municipio_match = f.get("municipio_match") or _cruzar_municipio_fondo_ue(
-                f["provincia"], f.get("municipio", ""))
             _db.execute(
-                """INSERT INTO fondos_ue
-                   (id, fuente, provincia, municipio, nuts_code, titulo, beneficiario,
-                    nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts,
-                    municipio_match)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                f"""INSERT INTO fondos_ue ({", ".join(_FUE_COLUMNAS)})
+                   VALUES ({", ".join("?" * len(_FUE_COLUMNAS))})
                    ON CONFLICT(id) DO UPDATE SET
                      fuente=excluded.fuente, provincia=excluded.provincia,
                      municipio=excluded.municipio, nuts_code=excluded.nuts_code,
@@ -11704,41 +11771,92 @@ def _guardar_fondos_ue(filas):
                      nif=excluded.nif, rol=excluded.rol, importe_num=excluded.importe_num,
                      fecha_inicio=excluded.fecha_inicio, fecha_fin=excluded.fecha_fin,
                      programa=excluded.programa, fondo=excluded.fondo, url=excluded.url,
-                     ts=excluded.ts, municipio_match=excluded.municipio_match""",
-                (f["id"], f["fuente"], f["provincia"], f.get("municipio", ""),
-                 f.get("nuts_code", ""), f.get("titulo", ""), f.get("beneficiario", ""),
-                 f.get("nif", ""), f.get("rol", ""), f.get("importe_num", 0.0),
-                 f.get("fecha_inicio", ""), f.get("fecha_fin", ""), f.get("programa", ""),
-                 f.get("fondo", ""), f.get("url", ""), ahora, municipio_match),
+                     ts=excluded.ts, municipio_match=excluded.municipio_match,
+                     ambito=excluded.ambito, comunidad=excluded.comunidad""",
+                _fue_valores(f, ahora),
             )
         _db.commit()
+    _FUE_CACHE.clear()
 
 
-def _db_fondos_ue(provincia=None):
-    """Lee de vuelta la tabla fondos_ue, opcionalmente filtrada por provincia."""
+def _fue_filtro(f):
+    """WHERE de /fondos-ue a partir de los filtros ya validados (_fue_parametros).
+    - provincia: solo lo que es de esa provincia.
+    - comunidad: lo de sus provincias más lo regional de la comunidad sin provincia concreta.
+    - sin zona: toda España. La cooperación territorial (Interreg...) queda aparte salvo que se pida: su importe es
+      el de la operación completa, con socios de otros países, y sumarlo inflaría el total."""
+    where, args = [], []
+    if f.get("provincia"):
+        where.append("provincia = ? AND ambito = 'provincia'")
+        args.append(f["provincia"])
+    elif f.get("comunidad"):
+        where.append("comunidad = ? AND ambito IN ('provincia', 'regional')")
+        args.append(f["comunidad"])
+    if f.get("ambito"):
+        where.append("ambito = ?")
+        args.append(f["ambito"])
+    elif not f.get("provincia") and not f.get("comunidad"):
+        where.append("ambito <> 'cooperacion'")
+    if f.get("fuente"):
+        where.append("fuente = ?")
+        args.append(f["fuente"])
+    return (" WHERE " + " AND ".join(where)) if where else "", args
+
+
+def _db_fondos_ue_resumen(f):
+    """Recuento e importe del filtro, sumados en la base: {"n", "importe", "cordis", "cohesion"}."""
+    where, args = _fue_filtro(f)
+
+    def _calcular():
+        res = {"n": 0, "importe": 0.0, "cordis": 0, "cohesion": 0}
+        with _db_lock:
+            filas = _db.execute(f"SELECT fuente, count(*), coalesce(sum(importe_num), 0) FROM fondos_ue{where} "
+                                f"GROUP BY fuente", args).fetchall()
+        for fuente, n, importe in filas:
+            res["n"] += n
+            res["importe"] += importe
+            if fuente in res:
+                res[fuente] = n
+        return res
+    return _fue_cacheado(("resumen", where, tuple(args)), _calcular)
+
+
+def _db_fondos_ue_pagina(f, pagina):
+    """Una página de filas (ordenadas por importe) del filtro."""
+    where, args = _fue_filtro(f)
     with _db_lock:
-        if provincia:
-            rows = _db.execute(
-                "SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
-                "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
-                "FROM fondos_ue WHERE provincia=? ORDER BY importe_num DESC", (provincia,),
-            ).fetchall()
+        rows = _db.execute(f"SELECT {', '.join(_FUE_COLUMNAS)} FROM fondos_ue{where} "
+                           f"ORDER BY importe_num DESC, id LIMIT ? OFFSET ?",
+                           args + [_FUE_POR_PAGINA, (pagina - 1) * _FUE_POR_PAGINA]).fetchall()
+    return [dict(zip(_FUE_COLUMNAS, r)) for r in rows]
+
+
+def _db_fondos_ue_aparte(f):
+    """Lo que el filtro deja fuera a propósito, para decirlo en la página: [(ambito, comunidad, n, importe)].
+    - toda España: la cooperación territorial;
+    - una provincia: lo regional de su comunidad sin provincia concreta."""
+    if f.get("ambito") or f.get("fuente"):
+        return []
+    with _db_lock:
+        if f.get("provincia"):
+            comunidad = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(f["provincia"], "")
+            filas = _db.execute("SELECT 'regional', comunidad, count(*), coalesce(sum(importe_num), 0) FROM fondos_ue "
+                                "WHERE comunidad = ? AND ambito = 'regional'", (comunidad,)).fetchall()
+        elif f.get("comunidad"):
+            return []
         else:
-            rows = _db.execute(
-                "SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
-                "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
-                "FROM fondos_ue ORDER BY importe_num DESC",
-            ).fetchall()
-    cols = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario",
-            "nif", "rol", "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts")
-    return [dict(zip(cols, r)) for r in rows]
+            filas = _db.execute("SELECT 'cooperacion', '', count(*), coalesce(sum(importe_num), 0) FROM fondos_ue "
+                                "WHERE ambito = 'cooperacion'").fetchall()
+    return [r for r in filas if r[2]]
 
 
 def _db_fondos_ue_provincias():
-    """Provincias con algún proyecto en fondos_ue, en el orden de MUNICIPIOS_POR_PROVINCIA."""
-    with _db_lock:
-        hay = {p for (p,) in _db.execute("SELECT DISTINCT provincia FROM fondos_ue")}
-    return [p for p in MUNICIPIOS_POR_PROVINCIA if p in hay]
+    """Provincias con algún proyecto propio en fondos_ue, en el orden de MUNICIPIOS_POR_PROVINCIA."""
+    def _calcular():
+        with _db_lock:
+            hay = {p for (p,) in _db.execute("SELECT DISTINCT provincia FROM fondos_ue WHERE ambito = 'provincia'")}
+        return [p for p in MUNICIPIOS_POR_PROVINCIA if p in hay]
+    return _fue_cacheado(("provincias",), _calcular)
 
 
 def _lista_y(nombres):
@@ -11916,57 +12034,13 @@ def actualizar_fondos_cordis(job_id=None):
         _log(job_id, f"  CORDIS no disponible ({type(e).__name__})")
         return 0
 
-    proyectos = {}
-    filas = []
-    with _zf.ZipFile(io.BytesIO(r.content)) as z:
-        with z.open("project.csv") as f:
-            reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8"), delimiter=";")
-            for row in reader:
-                proyectos[row["id"]] = {
-                    "title": row.get("title", ""),
-                    "startDate": row.get("startDate", ""),
-                    "endDate": row.get("endDate", ""),
-                    "frameworkProgramme": row.get("frameworkProgramme", ""),
-                }
+    # 2026-10-12: la lectura y la clasificación son las del módulo compartido con el generador de toda España
+    # (fondos_ue_espana.py). Aquí siguen entrando solo Murcia y Girona, con el nombre de la organización.
+    def _murcia_o_girona(row):
+        nuts = (row.get("nutsCode") or "").strip()
+        return nuts.startswith(FONDOS_UE_NUTS3_GIRONA) or nuts.startswith("ES62")
 
-        with z.open("organization.csv") as f:
-            reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8"), delimiter=";")
-            for row in reader:
-                nuts = (row.get("nutsCode") or "").strip()
-                if nuts.startswith(FONDOS_UE_NUTS3_GIRONA):
-                    provincia = "girona"
-                elif nuts.startswith("ES62"):
-                    provincia = "murcia"
-                else:
-                    continue
-
-                proy = proyectos.get(row.get("projectID", ""), {})
-                nif = (row.get("vatNumber") or "").strip()
-                if nif.upper().startswith("ES"):
-                    nif = nif[2:]
-                try:
-                    importe = float((row.get("ecContribution") or "0").replace(",", "."))
-                except ValueError:
-                    importe = 0.0
-
-                filas.append({
-                    "id": f"cordis-{row.get('projectID','')}-{row.get('organisationID','')}",
-                    "fuente": "cordis",
-                    "provincia": provincia,
-                    "municipio": row.get("city", ""),
-                    "nuts_code": nuts,
-                    "titulo": proy.get("title", ""),
-                    "beneficiario": row.get("name", ""),
-                    "nif": nif,
-                    "rol": row.get("role", ""),
-                    "importe_num": importe,
-                    "fecha_inicio": proy.get("startDate", ""),
-                    "fecha_fin": proy.get("endDate", ""),
-                    "programa": proy.get("frameworkProgramme", ""),
-                    "fondo": "Horizon Europe",
-                    "url": f"https://cordis.europa.eu/project/id/{row.get('projectID','')}",
-                })
-
+    filas = FUE.leer_cordis(r.content, _murcia_o_girona, con_nombres=True)
     _guardar_fondos_ue(filas)
     _log(job_id, f"  CORDIS: {len(filas)} organizaciones de Murcia/Girona guardadas")
     return len(filas)
@@ -11995,31 +12069,14 @@ def actualizar_fondos_cohesion(job_id=None):
             _log(job_id, f"  Cohesion Data ({provincia}) no disponible ({type(e).__name__})")
             continue
 
+        # 2026-10-12: la provincia y el ámbito los decide el clasificador compartido con el generador de toda España
+        # (fondos_ue_espana.py), no la consulta: una operación del programa de Murcia situada por la fuente en otra
+        # comunidad, o una de Girona repartida con otras provincias, ya no se queda donde no toca.
         for row in filas_prov:
-            op_id = (row.get("operation_unique_identifier") or {}).get("url", "")
-            if not op_id:
-                continue
-            try:
-                importe = float(row.get("total_eligible_expenditure_amount") or 0)
-            except ValueError:
-                importe = 0.0
-            filas.append({
-                "id": f"cohesion-{op_id}",
-                "fuente": "cohesion",
-                "provincia": provincia,
-                "municipio": row.get("region", ""),
-                "nuts_code": row.get("nuts3_code", ""),
-                "titulo": row.get("operation_name_english") or row.get("operation_name_programme_language", ""),
-                "beneficiario": row.get("beneficiary_name", ""),
-                "nif": "",
-                "rol": "",
-                "importe_num": importe,
-                "fecha_inicio": row.get("operation_start_date", ""),
-                "fecha_fin": row.get("operation_end_date", ""),
-                "programa": row.get("programme_name", ""),
-                "fondo": row.get("fund_name", ""),
-                "url": "",
-            })
+            fila = FUE.fila_cohesion(row)
+            if fila:
+                fila.pop("discordante", None)
+                filas.append(fila)
 
     _guardar_fondos_ue(filas)
     _log(job_id, f"  Cohesion Data: {len(filas)} operaciones de Murcia/Girona guardadas")
@@ -12105,7 +12162,10 @@ def enriquecer_beneficiarios_cohesion(job_id=None, presupuesto_minutos=60):
     with _db_lock:
         filas = _db.execute(
             "SELECT id FROM fondos_ue WHERE fuente='cohesion' "
-            "AND (beneficiario IS NULL OR beneficiario='')"
+            "AND (beneficiario IS NULL OR beneficiario='') "
+            # 2026-10-12: solo Murcia y Girona, como hasta ahora. Lo cargado para el resto de España va sin
+            # nombres (decisión de César); sin este filtro se pedirían a Kohesio más de 140.000 operaciones.
+            "AND provincia IN ('murcia', 'girona') AND ambito = 'provincia'"
         ).fetchall()
     total = len(filas)
     _log(job_id, f"Enriqueciendo beneficiarios de Cohesion Data (Kohesio): "
@@ -13754,6 +13814,91 @@ def _subir_subvenciones(crudo, forzar=False):
     return 200, {"convocatorias": n, "antes": antes, "con_municipio": con_muni, "lineas_con_error": malas}
 
 
+def _subir_fondos_ue(crudo, forzar=False):
+    """Sustituye la tabla `fondos_ue` por el NDJSON (gzip) de fondos_ue_espana.py. Devuelve (código, cuerpo), solo
+    con recuentos. Mismo esquema que _subir_subvenciones: se carga línea a línea en una tabla nueva y se cambia de
+    golpe; si llega bastante menos de lo que hay, se rechaza (protección de subidas) y no se toca nada.
+    El fichero llega sin nombres: los beneficiarios que ya estaban guardados (Murcia y Girona) se conservan."""
+    nueva = "fondos_ue_nueva"
+    with _db_lock:
+        _db.execute(f"DROP TABLE IF EXISTS {nueva}")
+        _db.execute(_SQL_TABLA_FONDOS_UE.format(tabla=nueva))
+        _db.commit()
+
+    def _descartar():
+        with _db_lock:
+            _db.execute(f"DROP TABLE IF EXISTS {nueva}")
+            _db.commit()
+        _liberar_memoria()
+
+    n, malas, lote, ahora = 0, 0, [], time.time()
+    sql = f"INSERT OR REPLACE INTO {nueva} ({', '.join(_FUE_COLUMNAS)}) VALUES ({', '.join('?' * len(_FUE_COLUMNAS))})"
+    try:
+        flujo = _gzip.GzipFile(fileobj=io.BytesIO(crudo)) if crudo[:2] == bytes([0x1F, 0x8B]) else io.BytesIO(crudo)
+        for linea in flujo:
+            if not linea.strip():
+                continue
+            try:
+                d = json.loads(linea)
+                if d["fuente"] not in _FUENTE_UE_LABEL or (d.get("ambito") or "provincia") not in FUE.AMBITOS:
+                    raise ValueError
+                if (d.get("ambito") or "provincia") == "provincia" and d.get("provincia") not in MUNICIPIOS_POR_PROVINCIA:
+                    raise ValueError
+                lote.append(_fue_valores(d, ahora))
+            except (ValueError, KeyError, TypeError):
+                malas += 1
+                continue
+            if len(lote) >= 500:
+                with _db_lock:
+                    _db.executemany(sql, lote)
+                    _db.commit()
+                n += len(lote)
+                lote = []
+                time.sleep(0.02)
+        if lote:
+            with _db_lock:
+                _db.executemany(sql, lote)
+                _db.commit()
+            n += len(lote)
+    except (OSError, EOFError) as e:
+        _descartar()
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    with _db_lock:
+        antes = _db.execute("SELECT count(*) FROM fondos_ue").fetchone()[0]
+        recibidas = _db.execute(f"SELECT count(*) FROM {nueva}").fetchone()[0]
+        fuentes = dict(_db.execute(f"SELECT fuente, count(*) FROM {nueva} GROUP BY fuente").fetchall())
+    if recibidas < FONDOS_UE_MINIMO_SUBIDA or len(fuentes) < len(_FUENTE_UE_LABEL):
+        _descartar()
+        return 400, {"error": f"Fichero no válido: {recibidas} filas legibles ({malas} con error); por fuente: "
+                              f"{fuentes}. Hacen falta al menos {FONDOS_UE_MINIMO_SUBIDA} y las dos fuentes."}
+    if not forzar and _subida_demasiado_pequena(antes, recibidas):
+        _descartar()
+        return _rechazar_subida("/admin/fondos-ue", "operaciones", antes, recibidas)
+    with _db_lock:
+        # Beneficiarios ya guardados (CORDIS de Murcia/Girona y los completados con Kohesio): el fichero no los trae.
+        conservados = _db.execute(
+            f"UPDATE {nueva} SET "
+            f"beneficiario = (SELECT v.beneficiario FROM fondos_ue v WHERE v.id = {nueva}.id), "
+            f"nif = coalesce((SELECT v.nif FROM fondos_ue v WHERE v.id = {nueva}.id), '') "
+            f"WHERE beneficiario = '' AND id IN (SELECT id FROM fondos_ue WHERE beneficiario <> '')").rowcount
+        _db.execute("DROP TABLE fondos_ue")
+        _db.execute(f"ALTER TABLE {nueva} RENAME TO fondos_ue")
+        for _sql in _SQL_INDICES_FONDOS_UE:
+            _db.execute(_sql.format(tabla="fondos_ue"))
+        _db.execute("INSERT INTO settings (clave, valor) VALUES ('fondos_ue_actualizado', ?) "
+                    "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (_ahora_madrid().strftime("%Y-%m-%d %H:%M"),))
+        _db.commit()
+        _FUE_CACHE.clear()
+        por_ambito = dict(_db.execute("SELECT ambito, count(*) FROM fondos_ue GROUP BY ambito").fetchall())
+        provincias = _db.execute("SELECT count(DISTINCT provincia) FROM fondos_ue WHERE ambito='provincia'").fetchone()[0]
+    _liberar_memoria()
+    print(f"[fondos-ue] {recibidas} operaciones cargadas (antes {antes}; {provincias} provincias; por ámbito "
+          f"{por_ambito}; {conservados} beneficiarios conservados; {malas} líneas con error)", flush=True)
+    return 200, {"operaciones": recibidas, "antes": antes, "por_fuente": fuentes, "por_ambito": por_ambito,
+                 "provincias_con_datos": provincias, "beneficiarios_conservados": conservados,
+                 "lineas_con_error": malas}
+
+
 # ─── COLA DE REVISIÓN INTERNA ("bot de casos", 2026-10-05) ──────────────────────────────────────────────────────────
 # Decisiones de César (INFORME_BOT_CASOS.md §7): regla 1 estricta y regla 2 con IVA descontado, calculadas cada semana
 # en GitHub Actions (revision-indicios-semanal.yml) y subidas aquí; cola en /admin/revision con acceso por cookie
@@ -13780,9 +13925,26 @@ REVISION_REGLAS = {"fraccionamiento-v2": "Posible fraccionamiento", "menor-sobre
 #    que suelen acabar en descarte (probable error, posible duplicado entre fuentes o dentro de una). Al decidir uno
 #    (descartar, seguir, convertir en caso) sale de pendientes y entra el siguiente.
 _REVISION_EXCESO = "(suma / max(1.0, coalesce(json_extract(datos, '$.umbral'), 1.0)))"
-_REVISION_ERROR = "(datos LIKE '%probable error de la fuente%')"
-_REVISION_DUDOSO = ("(datos LIKE '%probable error de la fuente%' OR datos LIKE '%fuentes distintas%' "
+# 2026-10-12 (encargo de César: la cola ordenada por exceso la encabezaban errores de datos). También cuentan como
+# error, y por tanto van al final y no entran en "los más claros", los dos avisos nuevos del bot: "probable error de
+# clasificación" (un menor de más de 3 veces el umbral) y "dato mal leído" (el adjudicatario es el objeto del contrato).
+_REVISION_ERROR = ("(datos LIKE '%probable error de la fuente%' OR datos LIKE '%probable error de clasificación%' "
+                   "OR datos LIKE '%dato mal leído%')")
+_REVISION_DUDOSO = (f"({_REVISION_ERROR} OR datos LIKE '%fuentes distintas%' "
                     "OR datos LIKE '%publicación duplicada%')")
+# Persona física por el NIF que enseña la cola: DNI/NIE ya enmascarado ("***4567**", "****4567*") o enmascarado por la
+# fuente ("XXXXX364F"; Euskadi enmascara también CIF, que terminan en cifra). Vale también para los candidatos
+# guardados antes de que el bot trajera el aviso.
+_RE_REVISION_NIF_PERSONA = re.compile(r"^(?=.*[*]|.*X{4,})[0-9A-Z*]{6,12}$")
+
+
+def _revision_persona_fisica(c):
+    """"si", "posible" o "" para el aviso de no publicar el nombre del adjudicatario de un candidato."""
+    nif = re.sub(r"[\s.\-]", "", (c.get("nif") or "").upper())
+    if c.get("persona_fisica") or (nif and _RE_REVISION_NIF_PERSONA.match(nif)
+                                   and not (nif.startswith("XXXX") and nif[-1].isdigit())):
+        return "si"
+    return "posible" if any("podría ser una persona física" in a for a in c.get("avisos", [])) else ""
 REVISION_ORDENES = {"exceso": ("Más veces por encima del umbral", f"{_REVISION_ERROR} ASC, {_REVISION_EXCESO} DESC, puntuacion DESC"),
                     "importe": ("Mayor importe", f"{_REVISION_ERROR} ASC, suma DESC"),
                     "puntuacion": ("Mayor puntuación del bot", "puntuacion DESC, suma DESC")}
@@ -13825,6 +13987,14 @@ def _revision_registrar(huella, accion, detalle=""):
         _db.commit()
 
 
+def _revision_clave_candidato(c):
+    """Lo que identifica a un candidato aunque cambie su huella: regla, municipio, organismo, tipo, adjudicatario (las
+    palabras del nombre en cualquier orden) y fecha del primer contrato."""
+    return (c.get("regla", ""), c.get("municipio", ""), c.get("provincia", ""), c.get("tipo", ""),
+            normalizar(c.get("organismo", "")), " ".join(sorted(normalizar(c.get("adjudicatario", "")).split())),
+            c.get("desde", ""))
+
+
 def _subir_revision_candidatos(crudo, forzar=False):
     """Carga los candidatos de la semana (NDJSON en gzip de indicios_contratos.py). Nuevos -> pendientes; los que ya
     estaban se actualizan sin tocar la decisión tomada; los pendientes que ya no se detectan se retiran; los descartados
@@ -13833,20 +14003,47 @@ def _subir_revision_candidatos(crudo, forzar=False):
     with _db_lock:
         descartes = {r[0] for r in _db.execute("SELECT huella FROM revision_descartes")}
         existentes = dict(_db.execute("SELECT huella, estado FROM revision_candidatos").fetchall())
+        decididos_datos = _db.execute("SELECT huella, datos FROM revision_candidatos WHERE estado != 'pendiente'").fetchall()
     nuevos = actualizados = saltados = malas = 0
     vistos = set()
     lote_ins, lote_upd = [], []
     try:
         flujo = _gzip.GzipFile(fileobj=io.BytesIO(crudo)) if crudo[:2] == bytes([0x1F, 0x8B]) else io.BytesIO(crudo)
+        leidos = []
         for linea in flujo:
             if not linea.strip():
                 continue
             try:
                 c = json.loads(linea)
-                h = c["huella"]
+                leidos.append((c["huella"], c))
             except (ValueError, KeyError, TypeError):
                 malas += 1
-                continue
+        # Decisiones que cambian de huella (2026-10-13): la huella de un posible fraccionamiento lleva el NIF, y al
+        # enmascararse los DNI/NIE (o al separarse dos personas que compartían NIF enmascarado) el mismo candidato
+        # llega con otra. Si un candidato ya decidido (seguimiento, caso, descartado) no viene con su huella pero sí
+        # viene uno igual (_revision_clave_candidato), la decisión se traslada a la huella nueva en vez de perderse.
+        en_fichero = {h for h, _ in leidos}
+        por_clave = {}
+        for h_vieja, datos in decididos_datos:
+            if h_vieja not in en_fichero:
+                try:
+                    por_clave[_revision_clave_candidato(json.loads(datos))] = h_vieja
+                except (ValueError, TypeError):
+                    pass
+        trasladadas = []
+        for h, c in leidos:
+            h_vieja = por_clave.pop(_revision_clave_candidato(c), None) if h not in existentes else None
+            if h_vieja:
+                trasladadas.append((h, h_vieja))
+                existentes[h] = existentes.pop(h_vieja)
+                if h_vieja in descartes:
+                    descartes.add(h)
+        if trasladadas:
+            with _db_lock:
+                _db.executemany("UPDATE revision_candidatos SET huella=? WHERE huella=?", trasladadas)
+                _db.executemany("UPDATE revision_descartes SET huella=? WHERE huella=?", trasladadas)
+                _db.commit()
+        for h, c in leidos:
             vistos.add(h)
             if h in descartes:
                 saltados += 1
@@ -13894,7 +14091,8 @@ def _subir_revision_candidatos(crudo, forzar=False):
                                (corte,)).rowcount
         _db.commit()
     _revision_registrar("", "subida", f"{nuevos} nuevos, {actualizados} actualizados, {len(retirados)} retirados, "
-                                      f"{saltados} ya descartados, {borrados} descartes borrados")
+                                      f"{saltados} ya descartados, {borrados} descartes borrados"
+                                      + (f", {len(trasladadas)} decisiones trasladadas de huella" if trasladadas else ""))
     _liberar_memoria()
     print(f"[revision] subida: {nuevos} nuevos, {actualizados} actualizados, {len(retirados)} retirados, "
           f"{saltados} ya descartados antes, {borrados} descartados de más de 6 meses borrados", flush=True)
@@ -13903,6 +14101,7 @@ def _subir_revision_candidatos(crudo, forzar=False):
     aviso = _aviso_revision_por_correo(por_regla, nuevos_90) if nuevos else "sin novedades: no se envía"
     return 200, {"nuevos": nuevos, "actualizados": actualizados, "retirados": len(retirados),
                  "ya_descartados": saltados, "descartes_borrados": borrados, "lineas_con_error": malas,
+                 "decisiones_trasladadas": len(trasladadas),
                  "aviso_correo": aviso}
 
 
@@ -13953,7 +14152,11 @@ button.sec{background:#fff;color:#1b2f5c}.c{background:#fff;border:1px solid #dd
 padding:4px 6px;text-align:left;vertical-align:top}th{color:#5b6475;font-weight:600}.num{text-align:right;white-space:nowrap}
 .av{color:#8a5a00;font-size:12px;margin:4px 0}.acc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
 .est{font-size:12px;color:#5b6475}.pag a{margin-right:10px}.pag{font-size:13px;margin:8px 0}
-.atajos{font-size:14px;margin:14px 0 4px;padding:8px 12px;background:#fff;border:1px solid #dde1e7;border-radius:8px}"""
+.atajos{font-size:14px;margin:14px 0 4px;padding:8px 12px;background:#fff;border:1px solid #dde1e7;border-radius:8px}
+.pf{font-size:12px;font-weight:700;color:#fff;background:#b3261e;border-radius:4px;padding:2px 7px;white-space:nowrap}
+.pf.q{color:#8a5a00;background:#fff7e0;border:1px solid #e8d48a;font-weight:600}
+.pfb{font-size:13px;font-weight:700;color:#b3261e;background:#fdecea;border:1px solid #f1b5b0;border-radius:6px;
+padding:6px 10px;margin:0 0 8px}.cat.err{color:#8a5a00;border-color:#e8d48a;background:#fff7e0}"""
 
 
 def _revision_pagina(titulo, cuerpo):
@@ -14060,6 +14263,16 @@ def _revision_cola_html(qs, cookie):
             f'<tr><td>{esc(k["fecha"])}</td><td class="num">{fmt_eur(str(k["importe"]))}</td>'
             f'<td>{esc(k["descripcion"])}</td><td>{esc(k["fuente"])}</td></tr>' for k in c.get("contratos", []))
         avisos = "".join(f'<div class="av">⚠ {esc(a)}</div>' for a in c.get("avisos", []))
+        # Aviso visible de no publicar el nombre (encargo de César, 12-10): en la línea del candidato y dentro.
+        pf = _revision_persona_fisica(c)
+        pf_chip = (' <span class="pf">🔒 Persona física: no publicar el nombre</span>' if pf == "si" else
+                   ' <span class="pf q">¿Persona física? No publicar el nombre sin comprobar</span>' if pf else "")
+        pf_caja = ('<div class="pfb">🔒 El adjudicatario es una persona física: NO publicar su nombre.</div>'
+                   if pf == "si" else "")
+        marcas = "".join(f' <span class="cat err">{txt}</span>' for clave, txt in (
+            ("probable error de clasificación", "probable error de clasificación"),
+            ("probable error de la fuente", "probable error de la fuente"),
+            ("dato mal leído", "dato mal leído")) if any(clave in a for a in c.get("avisos", [])))
         if not vigente:
             avisos += '<div class="av">⚠ En la última pasada semanal ya no se detecta (los datos han cambiado).</div>'
         muni_q = quote_plus(c.get("municipio", ""))
@@ -14081,12 +14294,13 @@ def _revision_cola_html(qs, cookie):
         bloques.append(
             f'<details class="c"><summary><span class="p{" a" if c["puntuacion"] >= 80 else ""}">{int(c["puntuacion"])}</span>'
             f'<b>{esc(c.get("municipio", ""))}</b> · {esc(c.get("organismo", ""))} → {esc(c.get("adjudicatario", ""))} '
-            f'{esc(c.get("nif", ""))} · {esc(c.get("tipo", ""))} · {c.get("n_contratos", 1)} contrato(s), '
+            f'{esc(c.get("nif", ""))}{pf_chip} · {esc(c.get("tipo", ""))} · {c.get("n_contratos", 1)} contrato(s), '
             f'{fmt_eur(str(c.get("suma", 0)))} en {c.get("dias", 0)} día(s) (umbral {fmt_eur(str(c.get("umbral", 0)))}'
             + (f' · <b>×{c.get("suma", 0) / c["umbral"]:.1f}</b>'.replace(".", ",") if c.get("umbral") else "") + ")"
             f' <span class="cat">{esc(REVISION_REGLAS.get(c.get("regla"), c.get("regla", "")))}</span>'
             + (f' <span class="cat">{esc(c["categoria"])}</span>' if c.get("categoria") else "")
-            + f'</summary><div class="det"><table><tr><th>Fecha</th><th>Importe</th><th>Descripción</th><th>Fuente</th></tr>'
+            + marcas
+            + f'</summary><div class="det">{pf_caja}<table><tr><th>Fecha</th><th>Importe</th><th>Descripción</th><th>Fuente</th></tr>'
             f'{contratos}</table>{avisos}<div class="est">Puntos: {esc(json.dumps(c.get("puntos", {}), ensure_ascii=False))}</div>'
             f'{estado_txt}{acciones}</div></details>')
     paginas = max(1, (total + REVISION_POR_PAGINA - 1) // REVISION_POR_PAGINA)
@@ -14096,7 +14310,7 @@ def _revision_cola_html(qs, cookie):
         paginas = 1
     pag_html = ('<div class="pag">Los ' + str(len(filas)) + ' más claros ahora mismo (hasta '
                 + str(_REVISION_SEMANA_POR_REGLA) + ' por regla): pendientes, vigentes, categoría general y sin avisos de '
-                'probable error ni de posible duplicado; por puntuación y, a igualdad, por veces sobre el umbral. Al '
+                'probable error (de la fuente, de clasificación o dato mal leído) ni de posible duplicado; por puntuación y, a igualdad, por veces sobre el umbral. Al '
                 'decidir uno entra el siguiente.</div>') if semana else '<div class="pag">' + (f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag - 1))}">← Anterior</a>'
                                       if pag > 1 else "") + f'Página {pag} de {paginas} · {total} candidatos ' + (
         f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag + 1))}">Siguiente →</a>' if pag < paginas else "") + "</div>"
@@ -14123,7 +14337,10 @@ def _revision_ficha_md(huella):
     lineas = [f"# Ficha de trabajo (uso interno, no publicar tal cual)", "",
               f"- Regla: {REVISION_REGLAS.get(c.get('regla'), c.get('regla'))} ({c.get('regla')})",
               f"- Municipio: {c.get('municipio')} ({c.get('provincia')})", f"- Organismo: {c.get('organismo')}",
-              f"- Adjudicatario: {c.get('adjudicatario')} {c.get('nif', '')}", f"- Tipo: {c.get('tipo')} · umbral "
+              f"- Adjudicatario: {c.get('adjudicatario')} {c.get('nif', '')}"
+              + {"si": "  **PERSONA FÍSICA: NO PUBLICAR EL NOMBRE**",
+                 "posible": "  (¿persona física? no publicar el nombre sin comprobarlo)"}.get(_revision_persona_fisica(c), ""),
+              f"- Tipo: {c.get('tipo')} · umbral "
               f"{c.get('umbral'):,.0f} € sin IVA", f"- {c.get('n_contratos')} contrato(s), {c.get('suma'):,.2f} € entre "
               f"{c.get('desde')} y {c.get('hasta')}", f"- Puntuación: {c.get('puntuacion')} · estado: {fila[1]}",
               f"- Nota: {fila[2] or ''}", "", "## Contratos", "", "| Fecha | Importe | Descripción | Fuente | Id |",
@@ -18975,7 +19192,9 @@ _FUENTE_UE_LABEL = {
 }
 
 
-def _render_fila_fondo_ue(f):
+def _render_fila_fondo_ue(f, con_ambito=False):
+    """con_ambito: en /fondos-ue se dice de dónde es cada fila (provincia, o si es regional, estatal o de cooperación);
+    en la ficha de un municipio no hace falta."""
     fuente_label, fuente_cls, _ = _FUENTE_UE_LABEL.get(f["fuente"], (f["fuente"], "fuente-cordis", ""))
     fuente_badge = f'<span class="fuente-badge {fuente_cls}">{esc(fuente_label)}</span>'
 
@@ -19024,11 +19243,30 @@ def _render_fila_fondo_ue(f):
             match_html = ""
 
         benef_html = f'<div class="empresa">{esc(f["beneficiario"])}{rol_html}</div>{nif_html}{gerente_html}{match_html}'
+    elif f["fuente"] == "cordis":
+        # CORDIS sí publica la organización; en la carga de toda España no se guarda su nombre (2026-10-12).
+        rol_html = f' ({esc(f["rol"])})' if f.get("rol") else ""
+        benef_html = f'<span class="lid">{_t("Organización participante: en la ficha del proyecto")}{rol_html}</span>'
     else:
-        benef_html = '<span class="noloc-warn">Beneficiario no publicado por la fuente</span>'
+        benef_html = f'<span class="noloc-warn">{_t("Beneficiario no publicado por la fuente")}</span>'
 
     municipio_html = (f'<div class="lid" style="margin-top:2px">📍 {esc(f["municipio"])}</div>'
                        if f.get("municipio") else "")
+    if con_ambito:
+        ambito = f.get("ambito") or "provincia"
+        if ambito == "provincia":
+            donde = PROVINCIA_LABEL.get(f.get("provincia"), "").replace("Provincia de ", "")
+            # la fuente ya trae la provincia como texto de ubicación en Cohesion Data: no repetirla
+            municipio_html = (f'<div class="lid" style="margin-top:2px">📍 '
+                              f'{esc(f["municipio"]) + " · " if f.get("municipio") and f["fuente"] == "cordis" else ""}'
+                              f'{esc(donde)}</div>') if donde else municipio_html
+        else:
+            comunidad = COMUNIDAD_AUTONOMA_LABEL.get(f.get("comunidad"), "")
+            etiqueta = {"regional": _t("Ámbito regional, sin provincia concreta"),
+                        "estatal": _t("Ámbito estatal o de varias comunidades"),
+                        "cooperacion": _t("Cooperación entre países: importe de la operación completa")}.get(ambito, "")
+            municipio_html = (f'<div class="lid" style="margin-top:2px">🗺️ '
+                              f'{esc(comunidad) + " · " if comunidad else ""}{etiqueta}</div>')
 
     fechas = ""
     if f.get("fecha_inicio"):
@@ -19699,43 +19937,119 @@ def _render_fila_contrato_menor(r):
     </tr>"""
 
 
-def render_fondos_ue_html(fondos, provincia="todas"):
-    """Página de fondos y proyectos financiados por la UE (CORDIS + Cohesion
-    Data), con estilo amarillo sobre azul distintivo respecto a los contratos públicos
-    normales. Ver INFORME_NOCHE.md 2026-07-21/22 para el diagnóstico de
-    fuentes."""
-    total_importe = sum(f["importe_num"] for f in fondos)
-    n_cordis = sum(1 for f in fondos if f["fuente"] == "cordis")
-    n_cohesion = sum(1 for f in fondos if f["fuente"] == "cohesion")
+def _fue_parametros(qs):
+    """Filtros de /fondos-ue ya validados. `zona` (del desplegable) vale "p:<provincia>" o "c:<comunidad>"; los
+    enlaces antiguos ?provincia=murcia siguen funcionando."""
+    def g(k):
+        return (qs.get(k, [""])[0] or "").strip()
+    zona = g("zona")
+    provincia = zona[2:] if zona.startswith("p:") else g("provincia")
+    comunidad = zona[2:] if zona.startswith("c:") else g("comunidad")
+    f = {"pag": g("pag")}
+    if g("ambito") in FUE.AMBITOS:
+        f["ambito"] = g("ambito")
+    if g("fuente") in _FUENTE_UE_LABEL:
+        f["fuente"] = g("fuente")
+    if f.get("ambito") in ("estatal", "cooperacion"):
+        return f                                    # no son de ninguna zona
+    if provincia in MUNICIPIOS_POR_PROVINCIA and f.get("ambito") == "regional":
+        comunidad, provincia = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(provincia, ""), ""
+    if provincia in MUNICIPIOS_POR_PROVINCIA:
+        f["provincia"] = provincia
+    elif comunidad in COMUNIDAD_AUTONOMA_LABEL:
+        f["comunidad"] = comunidad
+    return f
+
+
+def _fue_url(f, **cambios):
+    d = dict(f, **cambios)
+    partes = [(k, d[k]) for k in ("provincia", "comunidad", "ambito", "fuente") if d.get(k)]
+    if str(d.get("pag") or "1") != "1":
+        partes.append(("pag", d["pag"]))
+    return "/fondos-ue" + ("?" + urlencode(partes) if partes else "")
+
+
+def render_fondos_ue_html(qs):
+    """Página de fondos y proyectos financiados por la UE (CORDIS + Cohesion Data), con estilo amarillo sobre azul
+    distintivo respecto a los contratos públicos normales.
+    2026-10-12 (toda España): los totales se suman en la base y la tabla va por páginas; antes se leían todas las
+    filas a memoria y se pintaban las 300 primeras."""
+    f = _fue_parametros(qs)
+    res = _db_fondos_ue_resumen(f)
+    tope = _FUE_PAGINAS_MAX * _FUE_POR_PAGINA
+    pagina, paginas = _rk_pagina(f["pag"], min(res["n"], tope), _FUE_POR_PAGINA)
+    fondos = _db_fondos_ue_pagina(f, pagina)
 
     stats = f"""<div class="stats-bar">
-      <div class="stat" style="border-color:var(--border)"><span>{len(fondos)}</span>{_t("Proyectos/operaciones")}</div>
-      <div class="stat" style="border-color:var(--border)"><span>{fmt_eur(str(total_importe))}</span>{_t("Importe total")}</div>
-      <div class="stat" style="border-color:var(--border)"><span>{n_cordis}</span>{_t("CORDIS (Horizon Europe)")}</div>
-      <div class="stat" style="border-color:var(--border)"><span>{n_cohesion}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
+      <div class="stat" style="border-color:var(--border)"><span>{fmt_num(res["n"])}</span>{_t("Proyectos/operaciones")}</div>
+      <div class="stat" style="border-color:var(--border)"><span>{fmt_eur(str(res["importe"]))}</span>{_t("Importe total")}</div>
+      <div class="stat" style="border-color:var(--border)"><span>{fmt_num(res["cordis"])}</span>{_t("CORDIS (Horizon Europe)")}</div>
+      <div class="stat" style="border-color:var(--border)"><span>{fmt_num(res["cohesion"])}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
     </div>"""
 
-    # Cobertura REAL (2026-10-01, aviso de César): solo las provincias con datos llevan pestaña y salen en el texto;
-    # antes se listaban las 50 provincias (48 vacías) y el texto decía "Murcia y Girona" fijo.
+    # Cobertura REAL (2026-10-01, aviso de César): el texto se calcula con las provincias que tienen datos.
     provs_datos = _db_fondos_ue_provincias()
-    selector_prov = "".join(
-        f'<a href="/fondos-ue{"" if prov == "todas" else "?provincia=" + prov}" '
-        f'class="prov-tab{" active" if prov == provincia else ""}">'
-        f'{esc(_t("Todas") if prov == "todas" else PROVINCIA_LABEL.get(prov, prov))}</a>'
-        for prov in ["todas"] + provs_datos
-    ) if len(provs_datos) > 1 else ""
     nombres_cob = [PROVINCIA_LABEL.get(p, p).replace("Provincia de ", "provincia de ") for p in provs_datos]
-    cobertura_txt = (_t("Por ahora tenemos datos de {n} de las {total} provincias: {lista}. El resto, pendiente de "
-                        "conectar.").format(n=len(provs_datos), total=len(MUNICIPIOS_POR_PROVINCIA),
-                                            lista=esc(_lista_y(nombres_cob)))
-                     if provs_datos else _t("Todavía no hay datos de fondos UE cargados."))
+    toda_espana = len(provs_datos) == len(MUNICIPIOS_POR_PROVINCIA)
+    if toda_espana:
+        cobertura_txt = _t("Hay datos de todas las provincias. Las operaciones sin provincia concreta (regionales, "
+                           "estatales o de cooperación entre países) se muestran aparte y no se suman a ninguna "
+                           "provincia.")
+    elif provs_datos:
+        cobertura_txt = _t("Por ahora tenemos datos de {n} de las {total} provincias: {lista}. El resto, pendiente de "
+                           "conectar.").format(n=len(provs_datos), total=len(MUNICIPIOS_POR_PROVINCIA),
+                                               lista=esc(_lista_y(nombres_cob)))
+    else:
+        cobertura_txt = _t("Todavía no hay datos de fondos UE cargados.")
+    with _db_lock:
+        fila = _db.execute("SELECT valor FROM settings WHERE clave='fondos_ue_actualizado'").fetchone()
+    if fila:
+        cobertura_txt += " " + _t("Última actualización: {f}.").format(f=esc(_conv_fecha(fila[0])))
 
-    filas = "".join(_render_fila_fondo_ue(f) for f in fondos[:300])
+    # Filtros: zona (comunidad o provincia, solo las que tienen datos), ámbito y fuente.
+    zona_val = f"p:{f['provincia']}" if f.get("provincia") else (f"c:{f['comunidad']}" if f.get("comunidad") else "")
+    comunidades = {COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(p) for p in provs_datos} - {None}
+    zonas = ([(f"c:{c}", lbl) for c, lbl in sorted(COMUNIDAD_AUTONOMA_LABEL.items(), key=lambda x: normalizar(x[1]))
+              if c in comunidades]
+             + [(f"p:{p}", "· " + PROVINCIA_LABEL.get(p, p).replace("Provincia de ", ""))
+                for p in sorted(provs_datos, key=lambda p: normalizar(PROVINCIA_LABEL.get(p, p).replace("Provincia de ", "")))])
+    ambitos = [("provincia", _t("De una provincia")), ("regional", _t("Regionales, sin provincia concreta")),
+               ("estatal", _t("Estatales o de varias comunidades")),
+               ("cooperacion", _t("Cooperación entre países (Interreg)"))]
+    fuentes = [("cohesion", _t("Fondos estructurales (Cohesion Data)")), ("cordis", _t("Investigación (CORDIS)"))]
+    formulario = (f'<form method="get" action="/fondos-ue" class="conv-filtros">'
+                  + _conv_select("zona", zona_val, zonas, _t("Toda España"))
+                  + _conv_select("ambito", f.get("ambito", ""), ambitos, _t("Cualquier ámbito"))
+                  + _conv_select("fuente", f.get("fuente", ""), fuentes, _t("Cualquier fuente"))
+                  + f'<button type="submit" class="conv-btn">{_t("Filtrar")}</button>'
+                  + f'<a href="/fondos-ue" class="conv-quitar">{_t("Quitar filtros")}</a></form>') if provs_datos else ""
+
+    # Lo que el filtro deja fuera a propósito, dicho en la página.
+    aparte_html = ""
+    for ambito, comunidad, n, importe in _db_fondos_ue_aparte(f):
+        if ambito == "cooperacion":
+            texto = _t("Aparte hay {n} operaciones de cooperación entre países (Interreg y similares) por {importe}: "
+                       "es el importe de cada operación completa, con socios de otros países, y por eso no se suma "
+                       "aquí.").format(n=fmt_num(n), importe=fmt_eur(str(importe)))
+            enlace = _fue_url({"ambito": "cooperacion"})
+        else:
+            texto = _t("Además hay {n} operaciones de ámbito regional ({comunidad}) sin provincia concreta, por "
+                       "{importe}: no se suman a ninguna provincia.").format(
+                           n=fmt_num(n), importe=fmt_eur(str(importe)),
+                           comunidad=esc(COMUNIDAD_AUTONOMA_LABEL.get(comunidad, comunidad)))
+            enlace = _fue_url({"comunidad": comunidad, "ambito": "regional"})
+        aparte_html += (f'<div class="gs-hint" style="margin:0 0 10px;font-size:13px">{texto} '
+                        f'<a href="{esc(enlace)}">{_t("Ver")}</a></div>')
+
+    filas = "".join(_render_fila_fondo_ue(x, con_ambito=True) for x in fondos)
     if not filas:
-        filas = f'<tr><td colspan="4" class="empty">{_t("Sin datos de fondos UE todavía para esta provincia.")}</td></tr>'
-    aviso_limite = ('<div class="gs-hint" style="margin-bottom:10px">'
-                    + _t("Mostrando los primeros {n} de {total}, ordenados por importe.").format(n=300, total=len(fondos))
-                    + '</div>') if len(fondos) > 300 else ""
+        filas = f'<tr><td colspan="4" class="empty">{_t("Sin datos de fondos UE con estos filtros.")}</td></tr>'
+    pag_html = _rk_paginacion_html(pagina, paginas, fmt_num(res["n"]), lambda n: _fue_url(f, pag=n),
+                                   etiqueta=_t("operaciones"))
+    if res["n"] > tope:
+        pag_html += (f'<div class="gs-hint" style="margin:6px 0 0;font-size:13px">'
+                     + _t("Se pueden recorrer las {n} de mayor importe de esta selección; para ver el resto, afina con "
+                          "los filtros.").format(n=fmt_num(tope)) + '</div>')
 
     body = f"""<span class="back-link"><a href="/">← {_t("Volver al inicio")}</a></span>
   <div class="hero" style="padding-bottom:4px">
@@ -19745,10 +20059,11 @@ def render_fondos_ue_html(fondos, provincia="todas"):
       {cobertura_txt}
     </p>
   </div>
-  <div class="prov-switch" style="margin-bottom:14px">{selector_prov}</div>
+  {formulario}
   {stats}
+  {aparte_html}
   <div class="fue-card">
-    {aviso_limite}
+    <div class="gs-hint" style="margin:10px 14px">{_t("Ordenadas por importe. En los fondos estructurales el importe es el gasto subvencionable total de la operación; en CORDIS, la aportación de la UE a cada organización.")}</div>
     <table>
       <tr>
         <th>{_t("Proyecto / Beneficiario")}</th>
@@ -19758,13 +20073,15 @@ def render_fondos_ue_html(fondos, provincia="todas"):
       </tr>
       {filas}
     </table>
-  </div>"""
+  </div>
+  {pag_html}"""
 
+    donde = (PROVINCIA_LABEL.get(f.get("provincia")) or COMUNIDAD_AUTONOMA_LABEL.get(f.get("comunidad"))
+             or (_t("toda España") if toda_espana else _lista_y(nombres_cob) or "España"))
     return _page_shell(_t("Fondos UE — Proyectos financiados por la Unión Europea"), body,
                         description=_t("Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon "
-                                       "Europe, Cohesion Data FEDER/FSE) en {lista}.").format(
-                                           lista=_lista_y(nombres_cob) or "España"),
-                        provincia="todas", og_path="/fondos-ue" + (f"?provincia={provincia}" if provincia != "todas" else ""))
+                                       "Europe, Cohesion Data FEDER/FSE) en {lista}.").format(lista=donde),
+                        provincia="todas", og_path=_fue_url(f, pag=1))
 
 
 # ─── CONVOCATORIAS ABIERTAS (página) ──────────────────────────────────────────────────────────────────────────────
@@ -23877,7 +24194,8 @@ def render_aviso_legal_html():
   <h2>{_t("Origen de los datos")}</h2>
   <p>{_t("Los datos de contratos mostrados provienen de fuentes oficiales públicas: la Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda, que cubre todo el territorio nacional, además de fuentes autonómicas complementarias como el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Se seguirán incorporando otras fuentes de contratos menores y organismos públicos a medida que estén disponibles.")}</p>
   <p>{_t("Los nombres de directivos y administradores provienen del Boletín Oficial del Registro Mercantil (BORME), que publica el Boletín Oficial del Estado. No se consultan directorios de empresas privados.")}</p>
-  <p>{_t("Próximamente se incorporarán también datos de subvenciones y fondos europeos.")}</p>
+  <p>{_t("Los datos de fondos europeos provienen de los portales de datos abiertos de la Comisión Europea: Cohesion Data (fondos estructurales FEDER y FSE 2014-2020) y CORDIS (programa Horizon Europe).")}</p>
+  <p>{_t("Próximamente se incorporarán también datos de subvenciones.")}</p>
 
   <h2>{_t("Base legal para el tratamiento de datos")}</h2>
   <p>{_t("El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD).")}</p>
@@ -24192,10 +24510,7 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(render_convocatorias_html(qs), gzip_ok=gzip_ok)
 
     if path == "/fondos-ue":
-        provincia_qs = qs.get("provincia", ["todas"])[0]
-        provincia_fue = provincia_qs if provincia_qs in MUNICIPIOS_POR_PROVINCIA else "todas"
-        fondos = _db_fondos_ue(provincia_fue if provincia_fue != "todas" else None)
-        return _resp(render_fondos_ue_html(fondos, provincia_fue), gzip_ok=gzip_ok)
+        return _resp(render_fondos_ue_html(qs), gzip_ok=gzip_ok)
 
     if path == "/quienes-somos":
         return 301, {"Location": "/quien-soy", "Content-Length": "0"}, b""
@@ -25347,6 +25662,23 @@ def _app_wsgi(environ, start_response):
         else:
             code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"",
                                                   forzar=qs.get("forzar", [""])[0] == "si")
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
+    elif method == "POST" and path == "/admin/fondos-ue":
+        # Fondos UE de toda España (NDJSON en gzip) generados en GitHub Actions: ver _subir_fondos_ue
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = qs.get("token", [""])[0]
+        admin_token = os.environ.get("ADMIN_TOKEN", "")
+        if not admin_token or token != admin_token:
+            code, cuerpo = 403, {"error": "No autorizado."}
+        elif length > 100 * 1024 * 1024:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            code, cuerpo = _subir_fondos_ue(environ["wsgi.input"].read(length) if length else b"",
+                                            forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/administradores-borme":

@@ -417,8 +417,23 @@ investigación de sueldos de concejales:
 
 ## Fondos UE
 
-- Solo cubre **Murcia y Girona** — Lleida, Barcelona y Tarragona no están
-  conectadas a esta fuente.
+- **Desde el 12-10-2026 (rama `wip/fondos-ue-espana`, pendiente de desplegar) cubre toda España**: 156.121
+  operaciones (140.249 de Cohesion Data y 15.872 de CORDIS) generadas en GitHub Actions
+  (`fondos-ue-espana.yml`, `backend/fondos_ue_espana.py`) y subidas a `POST /admin/fondos-ue`. Antes solo
+  Murcia y Girona.
+- Cada operación lleva un **ámbito**: de una provincia (137.482), regional sin provincia concreta (3.604,
+  12.708 M€), estatal o de varias comunidades (13.950, 15.802 M€) o cooperación entre países (1.085, 1.857 M€).
+  Solo lo primero se suma a una provincia. La cooperación (Interreg, Urbact, ESPON...) publica el importe de la
+  operación completa, con socios de otros países: nunca se suma al total de España.
+- Cuando el programa es de una comunidad y Cohesion Data sitúa la operación fuera de ella (724 casos), manda el
+  programa: la operación se queda en su comunidad y no se enseña la ubicación publicada.
+- La fuente repite algunas operaciones (2.303 filas, casi todas de cooperación: una por socio, mismo
+  identificador e importe); se guarda una.
+- **Nombres**: de CORDIS se guarda el nombre y el NIF de la organización (decisión de César del 13-10), salvo
+  las 16 participaciones con un NIF con forma de DNI/NIE, que van sin nombre y enlazan a la ficha del proyecto.
+  Cohesion Data no publica el beneficiario para España; se conservan los que ya había de Murcia y Girona.
+- En la página se pueden recorrer las 10.000 operaciones de mayor importe de cada selección (200 páginas de 50);
+  el resto, afinando con los filtros.
 - **Cohesion Data** (94% de las filas): el nombre del beneficiario está vacío
   en la fuente oficial para el 100% de los registros españoles (0/139.395,
   verificado). El enriquecimiento vía Kohesio/linkedopendata.eu que intenta
