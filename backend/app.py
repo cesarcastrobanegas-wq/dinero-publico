@@ -2483,6 +2483,14 @@ def _db_init():
             texto   TEXT NOT NULL,
             ts      REAL NOT NULL
         )""")
+        # Registro de cada intento de aviso por correo (2026-10-13): ver _aviso_registrar.
+        _db.execute("""CREATE TABLE IF NOT EXISTS avisos_correo (
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts      REAL NOT NULL,
+            tipo    TEXT NOT NULL,
+            codigo  INTEGER,
+            detalle TEXT
+        )""")
         _db.commit()
         # Convocatorias abiertas (2026-10-04). licitaciones: una fila por entrada de PLACE (su <id>); las que ya no
         # están en plazo de presentación (EV/ADJ/RES/ANUL/borradas) se quedan solo con id, fecha y estado, para que
@@ -3344,9 +3352,9 @@ def _aviso_subida_rechazada_por_correo(ruta, motivo):
     mismas variables de Render que el aviso de la cola de revisión. Se envía en un hilo aparte para no retener la
     respuesta. Devuelve un texto corto con lo que se ha hecho."""
     api_key = os.environ.get("RESEND_API_KEY", "").strip()
-    destino = (os.environ.get("AVISO_REVISION_EMAIL", "") or os.environ.get("AVISO_COMENTARIOS_EMAIL", "")).strip()
+    destino, _ = _avisos_destino("AVISO_REVISION_EMAIL")
     if not api_key or not destino:
-        print("[proteccion] aviso por correo: falta RESEND_API_KEY o la dirección de destino en Render", flush=True)
+        _aviso_registrar("subida-rechazada", None, "falta RESEND_API_KEY o la dirección de destino en Render")
         return "no enviado: falta configurar RESEND_API_KEY y AVISO_REVISION_EMAIL (o AVISO_COMENTARIOS_EMAIL) en Render"
     cuerpo = (f"Dinero Público ha RECHAZADO una subida de datos el {_ahora_madrid().strftime('%d/%m/%Y a las %H:%M')}.\n\n"
               f"Ruta: POST {ruta}\nMotivo: {motivo}\n\n"
@@ -3357,16 +3365,8 @@ def _aviso_subida_rechazada_por_correo(ruta, motivo):
     payload = {"from": _avisos_remitente(),
                "to": [destino], "subject": f"Subida rechazada: {ruta}"[:150], "text": cuerpo}
 
-    def _enviar():
-        try:
-            r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
-                              headers={"Authorization": f"Bearer {api_key}"})
-            if r.status_code >= 300:
-                print(f"[proteccion] aviso por correo: Resend respondió {r.status_code}: {r.text[:300]}", flush=True)
-        except Exception as e:
-            print(f"[proteccion] aviso por correo: {type(e).__name__}: {e}", flush=True)
-
-    threading.Thread(target=_enviar, name="aviso-subida-rechazada", daemon=True).start()
+    threading.Thread(target=_aviso_comentarios_enviar, args=(payload, api_key, "subida-rechazada"),
+                     name="aviso-subida-rechazada", daemon=True).start()
     return "enviándose"
 
 
@@ -11917,6 +11917,62 @@ AVISOS_REMITENTE = "Dinero Público <avisos@dinero-publico.com>"
 
 def _avisos_remitente():
     return os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or AVISOS_REMITENTE
+
+
+def _avisos_destino(primero="AVISO_COMENTARIOS_EMAIL"):
+    """(dirección de destino, variable de la que sale). Los avisos van todos a César, así que si falta la variable
+    propia se usa la otra: el 2026-10-13 faltaba AVISO_COMENTARIOS_EMAIL en Render y los avisos de comentarios
+    dejaron de salir sin que nadie lo viera, mientras el resumen de la cola seguía llegando."""
+    for var in dict.fromkeys((primero, "AVISO_COMENTARIOS_EMAIL", "AVISO_REVISION_EMAIL")):
+        valor = os.environ.get(var, "").strip()
+        if valor:
+            return valor, var
+    return "", None
+
+
+# Direcciones de correo dentro de un texto que se va a guardar o a enseñar (Resend repite a veces la de destino en sus
+# mensajes de error). La del remitente es pública y se deja.
+_RE_CORREO_EN_TEXTO = re.compile(r"[\w.+-]+@(?!dinero-publico\.com)[\w-]+(?:\.[\w-]+)+")
+
+
+def _aviso_registrar(tipo, codigo, detalle):
+    """Deja constancia de un intento de aviso por correo, haya salido o no: en el log del proceso y en la tabla
+    avisos_correo, que se consulta en /admin/aviso-comentarios-prueba sin entrar en Render. `codigo` es el HTTP de
+    Resend, o None si no se llegó a hablar con Resend (falta una variable, tope por hora, error de red)."""
+    detalle = _RE_CORREO_EN_TEXTO.sub("***@***", str(detalle or ""))[:300]
+    estado = "enviado" if codigo is not None and codigo < 300 else "NO ENVIADO"
+    print(f"[avisos-correo] {tipo}: {estado} (código {codigo}): {detalle}", flush=True)
+    try:
+        with _db_lock:
+            _db.execute("INSERT INTO avisos_correo (ts, tipo, codigo, detalle) VALUES (?,?,?,?)",
+                        (time.time(), tipo, codigo, detalle))
+            _db.execute("DELETE FROM avisos_correo WHERE id <= (SELECT max(id) FROM avisos_correo) - 500")
+            _db.commit()
+    except Exception as e:
+        print(f"[avisos-correo] no se pudo guardar el registro: {type(e).__name__}: {e}", flush=True)
+
+
+def _avisos_ultimos(n=15):
+    with _db_lock:
+        filas = _db.execute("SELECT ts, tipo, codigo, detalle FROM avisos_correo ORDER BY id DESC LIMIT ?",
+                            (n,)).fetchall()
+    return [{"cuando": time.strftime("%d/%m/%Y %H:%M:%S UTC", time.gmtime(ts)), "tipo": tipo,
+             "enviado": codigo is not None and codigo < 300, "codigo": codigo, "detalle": detalle}
+            for ts, tipo, codigo, detalle in filas]
+
+
+def _aviso_resend_consultar(id_envio, api_key):
+    """Lo que Resend tiene guardado de un envío (remitente real y último estado), sin la dirección de destino."""
+    try:
+        r = requests.get(f"https://api.resend.com/emails/{id_envio}", timeout=15,
+                         headers={"Authorization": f"Bearer {api_key}"})
+        if r.status_code != 200:
+            return {"http": r.status_code, "respuesta": _RE_CORREO_EN_TEXTO.sub("***@***", r.text[:200])}
+        d = r.json()
+        return {"http": 200, "from": d.get("from"), "subject": d.get("subject"), "last_event": d.get("last_event"),
+                "created_at": d.get("created_at")}
+    except Exception as e:
+        return {"http": None, "respuesta": f"{type(e).__name__}"}
 _aviso_comentarios_envios = collections.deque()
 _aviso_comentarios_lock = threading.Lock()
 
@@ -11924,7 +11980,7 @@ _aviso_comentarios_lock = threading.Lock()
 def _aviso_comentarios_config():
     """Estado de la configuración del aviso SIN datos sensibles: nunca la clave ni la dirección completa."""
     api_key = os.environ.get("RESEND_API_KEY", "").strip()
-    destino = os.environ.get("AVISO_COMENTARIOS_EMAIL", "").strip()
+    destino, variable = _avisos_destino()
     usuario, _, dominio = destino.partition("@")
     return {
         "resend_api_key_cargada": bool(api_key),
@@ -11932,38 +11988,50 @@ def _aviso_comentarios_config():
                                  if api_key else None),
         "destino_cargado": bool(destino),
         "destino": (f"{usuario[:2]}***@{dominio}" if dominio else ("(sin @)" if destino else None)),
+        "destino_variable": variable,
+        "variables_de_destino_cargadas": [v for v in ("AVISO_COMENTARIOS_EMAIL", "AVISO_REVISION_EMAIL")
+                                          if os.environ.get(v, "").strip()],
         "remitente": _avisos_remitente(),
         "remitente_de_pruebas": "resend.dev" in _avisos_remitente(),
     }
 
 
-def _aviso_comentarios_enviar(payload, api_key):
-    """Una petición a Resend. Devuelve (código HTTP o None, texto de la respuesta o del error) y lo deja SIEMPRE en
-    el registro, también cuando sale bien: antes solo se anotaban los fallos y un envío aceptado no dejaba rastro."""
-    try:
-        r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
-                          headers={"Authorization": f"Bearer {api_key}"})
-        print(f"[aviso-comentarios] Resend respondió {r.status_code}: {r.text[:300]}", flush=True)
-        return r.status_code, r.text[:600]
-    except Exception as e:
-        print(f"[aviso-comentarios] error al enviar: {type(e).__name__}: {e}", flush=True)
-        return None, f"{type(e).__name__}: {e}"
+def _aviso_comentarios_enviar(payload, api_key, tipo="comentario"):
+    """Un envío por Resend, para cualquier aviso (`tipo`: comentario, revision, subida-rechazada, prueba). Devuelve
+    (código HTTP o None, texto de la respuesta o del error) y lo deja SIEMPRE registrado (_aviso_registrar), salga
+    bien o mal. Si Resend no contesta o da un error suyo (5xx, 429), se reintenta una vez."""
+    codigo, texto = None, ""
+    for intento in (1, 2):
+        try:
+            r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
+                              headers={"Authorization": f"Bearer {api_key}"})
+            codigo, texto = r.status_code, r.text[:600]
+        except Exception as e:
+            codigo, texto = None, f"{type(e).__name__}: {e}"
+        if codigo is not None and codigo < 500 and codigo != 429:
+            break
+        if intento == 1:
+            time.sleep(5)
+    _aviso_registrar(tipo, codigo, texto)
+    return codigo, texto
 
 
 def _avisar_comentario_por_correo(tipo, etiqueta, texto, nombre, url_relativa):
     api_key = os.environ.get("RESEND_API_KEY", "").strip()
-    destino = os.environ.get("AVISO_COMENTARIOS_EMAIL", "").strip()
+    destino, _ = _avisos_destino()
     if not api_key or not destino:
-        print("[aviso-comentarios] no se envía: falta "
-              + " y ".join(n for n, v in (("RESEND_API_KEY", api_key), ("AVISO_COMENTARIOS_EMAIL", destino)) if not v)
-              + " en el entorno de este proceso", flush=True)
+        _aviso_registrar("comentario", None, "falta "
+                         + " y ".join(n for n, v in (("RESEND_API_KEY", api_key),
+                                                      ("AVISO_COMENTARIOS_EMAIL (o AVISO_REVISION_EMAIL)", destino))
+                                      if not v)
+                         + " en el entorno de este proceso")
         return
     ahora = time.time()
     with _aviso_comentarios_lock:
         while _aviso_comentarios_envios and ahora - _aviso_comentarios_envios[0] > 3600:
             _aviso_comentarios_envios.popleft()
         if len(_aviso_comentarios_envios) >= _AVISO_COMENTARIOS_MAX_HORA:
-            print(f"[aviso-comentarios] tope de {_AVISO_COMENTARIOS_MAX_HORA}/hora alcanzado; no se envía", flush=True)
+            _aviso_registrar("comentario", None, f"tope de {_AVISO_COMENTARIOS_MAX_HORA} avisos por hora alcanzado")
             return
         _aviso_comentarios_envios.append(ahora)
     try:
@@ -14112,9 +14180,9 @@ def _aviso_revision_por_correo(por_regla, nuevos_90):
     AVISO_COMENTARIOS_EMAIL -- la dirección no va en el código porque el repositorio es público. Devuelve un texto
     corto con el resultado, que la subida devuelve al flujo de Actions (sin datos personales)."""
     api_key = os.environ.get("RESEND_API_KEY", "").strip()
-    destino = (os.environ.get("AVISO_REVISION_EMAIL", "") or os.environ.get("AVISO_COMENTARIOS_EMAIL", "")).strip()
+    destino, _ = _avisos_destino("AVISO_REVISION_EMAIL")
     if not api_key or not destino:
-        print("[revision] aviso por correo: falta RESEND_API_KEY o la dirección de destino en Render", flush=True)
+        _aviso_registrar("revision", None, "falta RESEND_API_KEY o la dirección de destino en Render")
         return "no enviado: falta configurar RESEND_API_KEY y AVISO_REVISION_EMAIL (o AVISO_COMENTARIOS_EMAIL) en Render"
     total = sum(por_regla.values())
     cuerpo = (f"Cola de revisión interna de Dinero Público: pasada semanal del {time.strftime('%d/%m/%Y')}.\n\n"
@@ -14126,16 +14194,10 @@ def _aviso_revision_por_correo(por_regla, nuevos_90):
               f"Revisar: {SITE_URL}/admin/revision\n")
     payload = {"from": _avisos_remitente(),
                "to": [destino], "subject": f"Cola de revisión: {total} candidatos nuevos", "text": cuerpo}
-    try:
-        r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
-                          headers={"Authorization": f"Bearer {api_key}"})
-        if r.status_code < 300:
-            return "enviado"
-        print(f"[revision] aviso por correo: Resend respondió {r.status_code}: {r.text[:300]}", flush=True)
-        return f"no enviado: Resend respondió {r.status_code}"
-    except Exception as e:
-        print(f"[revision] aviso por correo: {type(e).__name__}: {e}", flush=True)
-        return f"no enviado: {type(e).__name__}"
+    codigo, _ = _aviso_comentarios_enviar(payload, api_key, "revision")
+    if codigo is not None and codigo < 300:
+        return "enviado"
+    return f"no enviado: Resend respondió {codigo}" if codigo else "no enviado: sin respuesta de Resend"
 
 
 _REVISION_CSS = """body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#f5f6f8;color:#1c2333;margin:0}
@@ -24926,16 +24988,32 @@ def _route_post(path, params):
                 return _error_resp("No autorizado.", 403)
             estado = _aviso_comentarios_config()
             api_key = os.environ.get("RESEND_API_KEY", "").strip()
-            destino = os.environ.get("AVISO_COMENTARIOS_EMAIL", "").strip()
-            if api_key and destino:
+            destino, _ = _avisos_destino()
+            solo_ver = params.get("solo_ver", [""])[0] == "si"      # sin envío de prueba: solo el registro
+            if solo_ver:
+                pass
+            elif api_key and destino:
                 codigo, respuesta = _aviso_comentarios_enviar({
                     "from": estado["remitente"], "to": [destino],
                     "subject": "Prueba del aviso de comentarios · Dinero Público",
                     "text": "Prueba del aviso de comentarios de Dinero Público. Si lees esto, el envío funciona.\n",
-                }, api_key)
+                }, api_key, "prueba")
                 estado["resend_codigo"], estado["resend_respuesta"] = codigo, respuesta
             else:
                 estado["resend_codigo"], estado["resend_respuesta"] = None, "no se intenta: falta alguna variable"
+            # Registro de los últimos avisos (2026-10-13) y, del último comentario que Resend aceptó, lo que Resend
+            # tiene guardado: remitente real y estado de la entrega.
+            estado["ultimos_avisos"] = _avisos_ultimos()
+            for aviso in estado["ultimos_avisos"]:
+                if aviso["tipo"] == "comentario" and aviso["enviado"] and api_key:
+                    try:
+                        id_envio = json.loads(aviso["detalle"]).get("id")
+                    except Exception:
+                        id_envio = None
+                    if id_envio:
+                        estado["ultimo_comentario_en_resend"] = dict(_aviso_resend_consultar(id_envio, api_key),
+                                                                     cuando=aviso["cuando"])
+                    break
             return _resp(json.dumps(estado, ensure_ascii=False), content_type="application/json; charset=utf-8")
 
         if path == "/admin/comentario-borrar":

@@ -13,9 +13,9 @@ on:
   workflow_dispatch:
     inputs:
       accion:
-        description: "probar (envío de prueba) o borrar (un comentario)"
+        description: "probar (envío de prueba), ver (solo el registro de avisos) o borrar (un comentario)"
         type: choice
-        options: [probar, borrar]
+        options: [probar, ver, borrar]
         default: probar
       tipo:
         description: "borrar: municipio o busqueda"
@@ -36,12 +36,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Prueba del aviso
-        if: inputs.accion == 'probar'
+        if: inputs.accion != 'borrar'
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          SOLO_VER: ${{ inputs.accion == 'ver' && 'si' || 'no' }}
         run: |
           codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 60 -X POST \
-            --data-urlencode "token=${ADMIN_TOKEN}" "https://dinero-publico.com/admin/aviso-comentarios-prueba" || echo 000)
+            --data-urlencode "token=${ADMIN_TOKEN}" --data-urlencode "solo_ver=${SOLO_VER}" "https://dinero-publico.com/admin/aviso-comentarios-prueba" || echo 000)
           echo "HTTP ${codigo}"
           [ "$codigo" = "200" ] || { echo "::error::La web respondió ${codigo}"; exit 1; }
           python3 -m json.tool --no-ensure-ascii respuesta.json
