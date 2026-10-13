@@ -2416,6 +2416,12 @@ def _db_init():
                 _db.execute(f"ALTER TABLE contratos_menors_locales ADD COLUMN {_col} TEXT DEFAULT {_default}")
             except sqlite3.OperationalError:
                 pass  # ya existe
+        # (2026-10-13) importe de la fuente que no se da por bueno: ver _menor_importe_fiable.
+        for _col, _tipo in (("import_fuente", "REAL"), ("import_aviso", "TEXT")):
+            try:
+                _db.execute(f"ALTER TABLE contratos_menors_locales ADD COLUMN {_col} {_tipo}")
+            except sqlite3.OperationalError:
+                pass  # ya existe
         # (2026-09-30) para emparejar duplicados entre el feed de menores de PLACE y las fuentes propias municipio a
         # municipio (_cargar_contratos_menores_place / _retirar_duplicados_place) sin recorrer ~1M filas por consulta.
         _db.execute("CREATE INDEX IF NOT EXISTS idx_cml_muni_prov ON contratos_menors_locales(municipio, provincia)")
@@ -8547,7 +8553,7 @@ def _euskadi_item_a_contrato(item, municipio):
     # de la real con IVA) antes que inventar un IVA que no consta.
     if sin_iva > 0 and importe_num > sin_iva * 1.25:
         importe_num = sin_iva
-    return {
+    contrato = {
         "titulo":        (item.get("object") or "")[:200],
         "organo":        f"Ayuntamiento de {municipio}",
         "empresa":       item.get("socialReason") or "No localizada",
@@ -8563,6 +8569,8 @@ def _euskadi_item_a_contrato(item, municipio):
         "directivo":     "",
         "cargo":         "",
     }
+    _formal_importe_aparte(contrato)
+    return contrato
 
 
 def buscar_en_euskadi(municipio, job_id=None):
@@ -10645,6 +10653,89 @@ def buscar_en_rpc_menors(municipio, provincia, job_id=None):
 MENORES_DESDE_FECHA = alcance_desde()
 
 
+# ─── Importes de la fuente que no se dan por buenos (2026-10-13, decisión de César) ─────────────────────────────────
+# Auditoría del 13-10: la plataforma de contratación de Euskadi publica algunos contratos MENORES con el importe sin
+# la coma decimal (4.839.353 en vez de 48.393,53: cien veces más), tanto en la API como en la página del perfil de
+# contratante, y sin ningún documento adjunto con que comprobar la cifra real. No se corrigen por patrón: se enseñan
+# con el importe de la fuente y un aviso, y NO cuentan en ninguna suma, ranking ni índice (import_num se guarda a 0 y
+# el importe de la fuente va en import_fuente; import_aviso dice por qué).
+#   - Regla: fuente "euskadi", importe entero por encima de 100.000 EUR que, dividido entre 100, cabe en el máximo
+#     legal de un contrato menor con IVA (48.400 obras, 18.150 el resto).
+#   - _MENORES_AVISO_MANUAL: casos sueltos que no siguen la regla (id -> (aviso, importe probable)).
+#   - _MENORES_IMPORTE_VERIFICADO: los ÚNICOS que se corrigen de verdad, uno a uno, con el importe comprobado en un
+#     documento original (id -> (importe real, cómo se verificó, en una frase que se enseña en la ficha)). Vacío
+#     hoy: de los 39 contratos revisados el 13-10, ninguno tiene publicado un documento con la cifra real.
+MENOR_AVISO_SIN_DECIMALES, MENOR_AVISO_TRES_CEROS, MENOR_AVISO_VERIFICADO = "sin-decimales", "tres-ceros", "verificado"
+_MENORES_AVISO_MANUAL = {
+    "Loiu::EUSKADI::419-02052023623_00001": (MENOR_AVISO_TRES_CEROS, 8447.00),   # 8.447.000 EUR por retirar columnas de alumbrado
+}
+_MENORES_IMPORTE_VERIFICADO = {}
+
+
+def _menor_importe_fiable(r):
+    """(import_num, import_fuente, import_aviso) con que se guarda un contrato menor. Lo normal: (importe, None, None)."""
+    try:
+        importe = float(r.get("import_num") or 0.0)
+    except (TypeError, ValueError):
+        importe = 0.0
+    if r["id"] in _MENORES_IMPORTE_VERIFICADO:
+        return float(_MENORES_IMPORTE_VERIFICADO[r["id"]][0]), importe, MENOR_AVISO_VERIFICADO
+    if r["id"] in _MENORES_AVISO_MANUAL:
+        return 0.0, importe, _MENORES_AVISO_MANUAL[r["id"]][0]
+    if r.get("fuente") == "euskadi" and importe > 100000 and abs(importe - round(importe)) < 0.005:
+        tope = 48400 if normalizar(r.get("tipus_contracte") or "").startswith("obra") else 18150
+        if importe / 100 <= tope:
+            return 0.0, importe, MENOR_AVISO_SIN_DECIMALES
+    return r.get("import_num"), None, None
+
+
+def _menor_aviso_importe_txt(r):
+    """Aviso de la ficha para un contrato menor con import_aviso, o ""."""
+    aviso, fuente = r.get("import_aviso"), r.get("import_fuente") or 0.0
+    no_cuenta = " " + _t("No se cuenta en las sumas.")
+    if aviso == MENOR_AVISO_SIN_DECIMALES:
+        return _t("Probable error de la fuente: el importe parece publicado sin decimales; el real sería {importe}.").format(
+            importe=fmt_eur(str(fuente / 100))) + no_cuenta
+    if aviso == MENOR_AVISO_TRES_CEROS:
+        probable = _MENORES_AVISO_MANUAL.get(r.get("id"), (None, fuente / 1000))[1]
+        return _t("Probable error de la fuente: el importe parece publicado con tres ceros de más; el real sería {importe}.").format(
+            importe=fmt_eur(str(probable))) + no_cuenta
+    if aviso == MENOR_AVISO_VERIFICADO:
+        return _t("Importe corregido: la fuente publica {importe}.").format(importe=fmt_eur(str(fuente))) + " " + (
+            _MENORES_IMPORTE_VERIFICADO.get(r.get("id"), (None, ""))[1])
+    return ""
+
+
+# Contratos FORMALES cuyo importe publicado no es gasto de ese ayuntamiento (decisión de César, 2026-10-13): se enseña
+# con su nota y no cuenta en las sumas (importe_num a 0; el de la fuente queda en importe_fuente_num y en "importe").
+#   licitacion_id -> aviso, y la ficha en la que está (para aplicarlo en el arranque sin esperar a su refresco)
+FORMAL_AVISO_ACUERDO_MARCO = "acuerdo-marco"
+_FORMALES_IMPORTE_APARTE = {
+    # Azkoitia, suministro eléctrico por la Central de Contratación Foral (lotes 1 y 2): 34.469.248,23 EUR
+    "2025FORU0001620_00001": {"aviso": FORMAL_AVISO_ACUERDO_MARCO, "municipio": "Azkoitia", "provincia": "pais_vasco"},
+}
+
+
+def _formal_importe_aparte(c):
+    """Aplica _FORMALES_IMPORTE_APARTE a un contrato formal (modifica el dict). Devuelve True si lo ha cambiado."""
+    regla = _FORMALES_IMPORTE_APARTE.get(c.get("licitacion_id"))
+    if not regla or c.get("importe_aviso"):
+        return False
+    c["importe_fuente_num"] = c.get("importe_num") or 0.0
+    c["importe_num"] = 0.0
+    c["importe_aviso"] = regla["aviso"]
+    return True
+
+
+def _aplicar_importes_aparte():
+    """En el arranque: deja ya aplicado _FORMALES_IMPORTE_APARTE en las fichas guardadas."""
+    for regla in {(r["municipio"], r["provincia"]) for r in _FORMALES_IMPORTE_APARTE.values()}:
+        d = _db_get_municipio(*regla)
+        if d and sum(_formal_importe_aparte(c) for c in d.get("contratos", [])):
+            _db_set_municipio(d.get("municipio", regla[0]), d, d.get("provincia", regla[1]))
+            print(f"  [startup] importe aparte aplicado en la ficha de {regla[0]}", flush=True)
+
+
 def _guardar_contratos_menors_locales(registros):
     """Inserta/actualiza filas en contratos_menors_locales (mismo patrón que
     _guardar_fondos_ue: misma clave = mismo registro, se sobrescribe con el
@@ -10676,20 +10767,21 @@ def _guardar_contratos_menors_locales(registros):
                 """INSERT INTO contratos_menors_locales
                    (id, municipio, provincia, fuente, organisme, adjudicatari, nif,
                     import_num, data_adjudicacio, tipus_contracte, descripcio, codi_cpv,
-                    exercici, ts)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    exercici, ts, import_fuente, import_aviso)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                    ON CONFLICT(id) DO UPDATE SET
                      municipio=excluded.municipio, provincia=excluded.provincia,
                      fuente=excluded.fuente, organisme=excluded.organisme,
                      adjudicatari=excluded.adjudicatari, nif=excluded.nif,
                      import_num=excluded.import_num,
+                     import_fuente=excluded.import_fuente, import_aviso=excluded.import_aviso,
                      data_adjudicacio=excluded.data_adjudicacio,
                      tipus_contracte=excluded.tipus_contracte, descripcio=excluded.descripcio,
                      codi_cpv=excluded.codi_cpv, exercici=excluded.exercici, ts=excluded.ts""",
                 (r["id"], r["municipio"], r.get("provincia", ""), r.get("fuente", ""),
-                 r["organisme"], r["adjudicatari"], r.get("nif", ""), r["import_num"],
+                 r["organisme"], r["adjudicatari"], r.get("nif", ""), _menor_importe_fiable(r)[0],
                  r["data_adjudicacio"], r["tipus_contracte"], r["descripcio"], r["codi_cpv"],
-                 r["exercici"], ahora),
+                 r["exercici"], ahora, *_menor_importe_fiable(r)[1:]),
             )
         _db.commit()
     propios = [r for r in registros if r.get("fuente") != FUENTE_CM_PLACE]
@@ -11100,7 +11192,8 @@ def _db_contratos_menors_por_municipio(municipio, provincia=None):
             _EQUIV_MENORES_FICHA.update(ts=ahora, mapa=mapa)
         pares = _EQUIV_MENORES_FICHA["mapa"].get(_clave_municipio_cm(municipio, provincia)) or pares
     cols_sql = ("SELECT id, municipio, provincia, fuente, organisme, adjudicatari, nif, "
-                "import_num, data_adjudicacio, tipus_contracte, descripcio, codi_cpv, exercici, ts "
+                "import_num, data_adjudicacio, tipus_contracte, descripcio, codi_cpv, exercici, ts, "
+                "import_fuente, import_aviso "
                 "FROM contratos_menors_locales ")
     with _db_lock:
         if pares:
@@ -11112,7 +11205,7 @@ def _db_contratos_menors_por_municipio(municipio, provincia=None):
             rows = _db.execute(cols_sql + "WHERE municipio=? ORDER BY data_adjudicacio DESC", (municipio,)).fetchall()
     cols = ("id", "municipio", "provincia", "fuente", "organisme", "adjudicatari", "nif",
             "import_num", "data_adjudicacio", "tipus_contracte", "descripcio", "codi_cpv",
-            "exercici", "ts")
+            "exercici", "ts", "import_fuente", "import_aviso")
     return [dict(zip(cols, r)) for r in rows]
 
 
@@ -15440,6 +15533,7 @@ def _inicializar_datos():
     _result_cache."""
     _db_init()
     _migrar_claves_homonimos()
+    _aplicar_importes_aparte()
     _cargar_contratos_menores_murcia_manual()
     _cargar_contratos_menores_euskadi()
     _cargar_contratos_menores_madrid_capital()
@@ -17797,6 +17891,9 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
         imp_nota = f'<span class="noloc-nota">{_t("presupuesto de licitación")}</span>'
     elif c.get("importe_tipo") == "adjudicado" and c.get("lotes"):
         imp_nota = f'<span class="noloc-nota">{_tl_lotes(c["lotes"])}</span>'
+    elif c.get("importe_aviso") == FORMAL_AVISO_ACUERDO_MARCO:
+        imp_nota = (f'<span class="noloc-nota">⚠️ {_t("Importe del acuerdo marco de la central de contratación, no gasto solo de este municipio.")} '
+                    f'{_t("No se cuenta en las sumas.")}</span>')
     else:
         imp_nota = ""
 
@@ -20131,7 +20228,7 @@ def _render_fila_contrato_menor(r):
                    f'{esc(registro_label)} ↗</a>') if empresa_q else ""
         dir_html = _sin_administrador_html(adjudicatari, r.get("nif", ""), rm_link, _dir_cache_agotado(adjudicatari, ""))
 
-    nota_txt = _NOTAS_CONTRATO_MENOR.get(r.get("id", ""))
+    nota_txt = _menor_aviso_importe_txt(r) or _NOTAS_CONTRATO_MENOR.get(r.get("id", ""))
     if not nota_txt and fuente == "euskadi" and (r.get("import_num") or 0) > EUSKADI_MENOR_IMPORTE_SOSPECHOSO:
         nota_txt = _t("Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato "
                       "menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica "
@@ -20157,7 +20254,7 @@ def _render_fila_contrato_menor(r):
         {nif_html}
         <div class="cargo">{esc(r.get("descripcio","")[:110])}</div>{nota_fila}
       </td>
-      <td class="cm-importe">{fmt_eur(str(r["import_num"])) if r["import_num"] else "—"}</td>
+      <td class="cm-importe">{fmt_eur(str(r["import_fuente"])) if r.get("import_aviso") in (MENOR_AVISO_SIN_DECIMALES, MENOR_AVISO_TRES_CEROS) and r.get("import_fuente") else (fmt_eur(str(r["import_num"])) if r["import_num"] else "—")}</td>
       <td>{dir_html}</td>
       <td><div class="lid">{esc(_tipo_menor_txt(r.get("tipus_contracte","")))}</div></td>
       <td><div class="lid">{esc(r.get("data_adjudicacio",""))}</div></td>
