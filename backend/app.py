@@ -15912,6 +15912,8 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .stats-bar{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
 .stat span{color:var(--accent);font-size:20px;display:block;font-weight:600;}
+a.stat-enlace{color:inherit;text-decoration:none;}
+a.stat-enlace:hover,a.stat-enlace:focus{border-color:var(--accent);}
 /* alertas anticorrupcion */
 .alertas{margin-bottom:18px;display:flex;flex-direction:column;gap:8px;}
 .alerta{border-radius:6px;padding:10px 16px;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:flex-start;}
@@ -21834,6 +21836,38 @@ _MAPA_CCAA_JS = r"""(function(){
 })();"""
 
 
+def _portada_cifras_secciones_html():
+    """Segunda fila de cifras de la portada (2026-10-13): fondos UE y convocatorias abiertas, cada una con enlace a
+    su sección. Los fondos UE son los de la vista de España de /fondos-ue (sin la cooperación entre países, que allí
+    tampoco se suma); las convocatorias, las que /convocatorias enseña sin filtros. Una cifra sin datos no se pinta."""
+    cifras = []
+    try:
+        fue = _db_fondos_ue_resumen({})
+        if fue["n"]:
+            cifras += [("/fondos-ue", fmt_num(fue["n"]), _t("Operaciones con fondos UE")),
+                       ("/fondos-ue", fmt_eur(str(fue["importe"])), _t("Importe de fondos UE"))]
+    except Exception as e:
+        print(f"[portada] cifras de fondos UE: {type(e).__name__}: {e}", flush=True)
+    ahora = _ahora_madrid()
+    try:
+        with _db_lock:
+            n_lic = _db.execute("SELECT count(*) FROM licitaciones WHERE estado = 'PUB' AND fin_plazo >= ?",
+                                (ahora.strftime("%Y-%m-%d %H:%M"),)).fetchone()[0]
+            n_sub = (_db.execute("SELECT count(*) FROM subvenciones WHERE fin >= ? AND (inicio = '' OR inicio <= ?)",
+                                 (ahora.strftime("%Y-%m-%d"),) * 2).fetchone()[0] if SUBVENCIONES_PUBLICAS else 0)
+        if n_lic:
+            cifras.append(("/convocatorias", fmt_num(n_lic), _t("Licitaciones abiertas")))
+        if n_sub:
+            cifras.append(("/convocatorias?tab=subvenciones", fmt_num(n_sub), _t("Subvenciones abiertas")))
+    except Exception as e:
+        print(f"[portada] cifras de convocatorias: {type(e).__name__}: {e}", flush=True)
+    if not cifras:
+        return ""
+    return ('<div class="stats-bar">'
+            + "".join(f'<a class="stat stat-enlace" href="{esc(url)}"><span>{valor}</span>{etiqueta} →</a>'
+                      for url, valor, etiqueta in cifras) + "</div>")
+
+
 def render_landing_nacional_html(datos, rk_comunidad="todas"):
     """Home agregada: cifras combinadas de todas las provincias cargadas,
     desglose secundario por región, y el top 1 del ranking nacional. Es la
@@ -21859,7 +21893,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       <div class="stat"><span>{fmt_num(total_menores)}</span>{_t("Contratos menores")}</div>
       <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
       <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
-    </div>"""
+    </div>""" + _portada_cifras_secciones_html()
 
     # Cobertura por región -- una sola tarjeta por provincia con TODO junto
     # (municipios, habitantes, contratos, importe, deuda/hab.). Hasta

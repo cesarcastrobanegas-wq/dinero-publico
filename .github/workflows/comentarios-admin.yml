@@ -1,21 +1,24 @@
-name: Comentarios (prueba del aviso y borrado, a mano)
+name: Comentarios (prueba del aviso, moderación y borrado, a mano)
 
 # Solo a mano (2026-10-13). Dos usos, los dos contra rutas de administración que ya existen en la web:
 #  - probar: POST /admin/aviso-comentarios-prueba. Dice si las variables del aviso están cargadas en el proceso que
 #    atiende, hace un envío de prueba y devuelve la respuesta de Resend. La respuesta no trae la clave ni la dirección
 #    de destino entera.
 #  - borrar: POST /admin/comentario-borrar (ficha + texto exacto).
+#  - panel-ver / panel-aprobar / panel-borrar: entra en /admin/revision/comentarios como lo haría César (clave,
+#    sesión y csrf) y cuenta los comentarios, o aprueba o borra el que tiene exactamente ese texto. Sirve para
+#    comprobar la moderación después de un despliegue.
 #
 # PRIVACIDAD: el repositorio y sus registros son públicos. Del borrado solo se imprime cuántos comentarios se han
-# quitado, nunca el nombre de quien los escribió. La clave va en el cuerpo de la petición, no en la dirección.
+# quitado, nunca el nombre de quien los escribió; del panel, recuentos y los municipios con comentarios. La clave va en el cuerpo de la petición, no en la dirección.
 
 on:
   workflow_dispatch:
     inputs:
       accion:
-        description: "probar (envío de prueba), ver (solo el registro de avisos) o borrar (un comentario)"
+        description: "probar / ver: aviso por correo. borrar: por ficha y texto. panel-*: moderación"
         type: choice
-        options: [probar, ver, borrar]
+        options: [probar, ver, borrar, panel-ver, panel-aprobar, panel-borrar]
         default: probar
       tipo:
         description: "borrar: municipio o busqueda"
@@ -24,7 +27,7 @@ on:
         description: "borrar: nombre del municipio o texto de la búsqueda, como sale en la ficha"
         default: ""
       texto:
-        description: "borrar: texto exacto del comentario"
+        description: "borrar, panel-aprobar, panel-borrar: texto exacto del comentario"
         default: ""
 
 permissions:
@@ -36,7 +39,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Prueba del aviso
-        if: inputs.accion != 'borrar'
+        if: inputs.accion == 'probar' || inputs.accion == 'ver'
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           SOLO_VER: ${{ inputs.accion == 'ver' && 'si' || 'no' }}
@@ -62,3 +65,40 @@ jobs:
           echo "HTTP ${codigo}"
           [ "$codigo" = "200" ] || { echo "::error::La web respondió ${codigo}"; exit 1; }
           python3 -c "import json; print('Comentarios borrados:', len(json.load(open('respuesta.json'))['borrados']))"
+
+      - name: Panel de moderación
+        if: startsWith(inputs.accion, 'panel-')
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          ACCION: ${{ inputs.accion }}
+          TEXTO: ${{ inputs.texto }}
+        run: |
+          python3 - <<'EOF'
+          import html, http.cookiejar, os, re, sys, urllib.parse, urllib.request
+          base = "https://dinero-publico.com"
+          op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+          post = lambda ruta, d: op.open(base + ruta, urllib.parse.urlencode(d).encode(), timeout=120)
+          post("/admin/revision/entrar", {"clave": os.environ["ADMIN_TOKEN"]})
+          pag = op.open(base + "/admin/revision/comentarios", timeout=120).read().decode("utf-8")
+          if "Pendientes de aprobar" not in pag:
+              sys.exit("::error::No se ha podido entrar en el panel de comentarios")
+          print(re.findall(r"<h2[^>]*>([^<]*)</h2>", pag))
+          csrf = re.search(r'name="csrf" value="(\w+)"', pag).group(1)
+          tarjetas = []
+          for t in pag.split('<div class="c" style="padding:10px 12px">')[1:]:
+              donde = html.unescape(re.search(r'<div class="sub">([^<]*)', t).group(1)).split(" · ")[0]
+              texto = html.unescape(re.search(r'<div style="white-space:pre-wrap;margin:8px 0">(.*?)</div>', t, re.S).group(1))
+              tarjetas.append({"id": re.search(r'name="id" value="(\d+)"', t).group(1), "donde": donde, "texto": texto,
+                               "pendiente": "PENDIENTE" in t.split("</div>")[0]})
+          print("Municipios con comentarios publicados:",
+                sorted({t["donde"][11:] for t in tarjetas if not t["pendiente"] and t["donde"].startswith("Municipio: ")}))
+          accion = os.environ["ACCION"].split("-")[1]
+          if accion in ("aprobar", "borrar"):
+              mias = [t for t in tarjetas if t["texto"].strip() == os.environ["TEXTO"].strip()]
+              print("Comentarios con ese texto:", len(mias), "| pendientes:", sum(t["pendiente"] for t in mias))
+              if len(mias) != 1:
+                  sys.exit("::error::Tiene que haber exactamente un comentario con ese texto")
+              r = post("/admin/revision/comentario", {"csrf": csrf, "id": mias[0]["id"], "accion": accion})
+              print("Respuesta del panel:", r.status, r.geturl().split("?")[-1])
+              print(re.findall(r"<h2[^>]*>([^<]*)</h2>", r.read().decode("utf-8")))
+          EOF
