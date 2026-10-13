@@ -1,0 +1,63 @@
+name: Comentarios (prueba del aviso y borrado, a mano)
+
+# Solo a mano (2026-10-13). Dos usos, los dos contra rutas de administración que ya existen en la web:
+#  - probar: POST /admin/aviso-comentarios-prueba. Dice si las variables del aviso están cargadas en el proceso que
+#    atiende, hace un envío de prueba y devuelve la respuesta de Resend. La respuesta no trae la clave ni la dirección
+#    de destino entera.
+#  - borrar: POST /admin/comentario-borrar (ficha + texto exacto).
+#
+# PRIVACIDAD: el repositorio y sus registros son públicos. Del borrado solo se imprime cuántos comentarios se han
+# quitado, nunca el nombre de quien los escribió. La clave va en el cuerpo de la petición, no en la dirección.
+
+on:
+  workflow_dispatch:
+    inputs:
+      accion:
+        description: "probar (envío de prueba) o borrar (un comentario)"
+        type: choice
+        options: [probar, borrar]
+        default: probar
+      tipo:
+        description: "borrar: municipio o busqueda"
+        default: municipio
+      clave:
+        description: "borrar: nombre del municipio o texto de la búsqueda, como sale en la ficha"
+        default: ""
+      texto:
+        description: "borrar: texto exacto del comentario"
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  comentarios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Prueba del aviso
+        if: inputs.accion == 'probar'
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 60 -X POST \
+            --data-urlencode "token=${ADMIN_TOKEN}" "https://dinero-publico.com/admin/aviso-comentarios-prueba" || echo 000)
+          echo "HTTP ${codigo}"
+          [ "$codigo" = "200" ] || { echo "::error::La web respondió ${codigo}"; exit 1; }
+          python3 -m json.tool --no-ensure-ascii respuesta.json
+
+      - name: Borrar un comentario
+        if: inputs.accion == 'borrar'
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          TIPO: ${{ inputs.tipo }}
+          CLAVE: ${{ inputs.clave }}
+          TEXTO: ${{ inputs.texto }}
+        run: |
+          codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 60 -X POST \
+            --data-urlencode "token=${ADMIN_TOKEN}" --data-urlencode "tipo=${TIPO}" \
+            --data-urlencode "clave=${CLAVE}" --data-urlencode "texto=${TEXTO}" \
+            "https://dinero-publico.com/admin/comentario-borrar" || echo 000)
+          echo "HTTP ${codigo}"
+          [ "$codigo" = "200" ] || { echo "::error::La web respondió ${codigo}"; exit 1; }
+          python3 -c "import json; print('Comentarios borrados:', len(json.load(open('respuesta.json'))['borrados']))"
