@@ -16027,8 +16027,8 @@ a.pscp-link{color:var(--green);}
 .conv-filtros .conv-quitar{font-size:12px;color:var(--dim);}
 .conv-muni{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:14px;font-size:13px;}
 .conv-muni .lid{color:var(--dim);font-size:12px;}
-.alerta-card{background:var(--surface);border:2px solid var(--accent);border-radius:8px;padding:14px 16px;margin-top:14px;}
-.alerta-titulo{font-weight:600;font-size:15px;}
+.alerta-card{background:var(--surface);border:2px solid var(--accent);border-radius:8px;padding:14px 16px;margin:14px 0 18px;}
+.alerta-titulo{font-weight:600;font-size:15px;font-family:'IBM Plex Sans',sans-serif;text-transform:none;letter-spacing:normal;color:var(--text);}
 .alerta-sub{font-size:13px;color:var(--dim);margin:4px 0 10px;}
 .alerta-form{display:flex;flex-wrap:wrap;gap:8px;}
 .alerta-form input[type=email],.alerta-form input[type=text]{flex:1 1 220px;min-width:0;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:9px 10px;border-radius:6px;}
@@ -20810,6 +20810,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     )
 
     stats = ""
+    alerta_ficha_html = ""
     if datos:
         stats = f"""<div class="stats-bar">
           <div class="stat"><span>{fmt_num(total_m)}</span>{_t("Municipios")}</div>
@@ -20830,6 +20831,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         contratos_all = d.get("contratos", [])
         total_muni = len(contratos_all)
         is_paged = bool(muni_filter) and normalizar(muni_name_d) == normalizar(muni_filter)
+        if is_paged and not es_pseudo_municipio(muni_name_d):
+            # Alerta estrella del plan gratuito, arriba de la ficha (encargo de César, 2026-10-13).
+            alerta_ficha_html = _alertas_ficha_html(muni_name_d, d.get("provincia", provincia))
         if is_paged:
             start = (page - 1) * PAGE_SIZE
             contratos_shown = contratos_all[start:start + PAGE_SIZE]
@@ -21124,7 +21128,6 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           </div>
           {pag_html}
           {_convocatorias_muni_html(muni_name_d, d.get("provincia", provincia)) if is_paged and not es_pseudo_municipio(muni_name_d) else ""}
-          {_alertas_ficha_html(muni_name_d, d.get("provincia", provincia)) if is_paged and not es_pseudo_municipio(muni_name_d) else ""}
           {it_widget_html}
           {fondos_ue_html}
           {contratos_menors_html}
@@ -21163,6 +21166,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     </form>
   </div>
   {stats}
+  {alerta_ficha_html}
   {cards}
   {compartir_html}"""
 
