@@ -1,0 +1,57 @@
+name: Revisión diaria de privacidad de la web
+
+# Cada día lee, como un visitante, las páginas fijas de la web y una muestra de fichas que rota, y busca
+# (backend/revision_privacidad.py): DNI o NIE sin enmascarar, personas físicas en Fondos UE, búsquedas en el sitemap,
+# administradores sin enlace al BORME y rutas de administración abiertas.
+#
+# Si no encuentra nada, no escribe a nadie. Si encuentra algo, se lo pasa a la web (POST /admin/aviso-privacidad),
+# que manda el correo a César con el tipo de hallazgo y la dirección de la página.
+#
+# PRIVACIDAD: el repositorio y sus registros son públicos. El script nunca imprime ni guarda el dato encontrado: solo
+# dónde está y cuántos hay. La clave va en el cuerpo de la petición.
+
+on:
+  schedule:
+    - cron: "40 15 * * *"     # 15:40 UTC: después del refresco nocturno real y de la mayoría de flujos
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: privacidad-diaria
+  cancel-in-progress: false
+
+jobs:
+  privacidad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Revisar la web
+        run: python backend/revision_privacidad.py --salida hallazgos.json --fichas 15
+
+      - name: Avisar si hay hallazgos
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          n=$(python -c "import json; print(len(json.load(open('hallazgos.json'))['hallazgos']))")
+          if [ "$n" = "0" ]; then
+            echo "Sin hallazgos: no se envía ningún correo."
+            exit 0
+          fi
+          python -c "import json; print(json.dumps(json.load(open('hallazgos.json'))['hallazgos']))" > lista.json
+          codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 120 -X POST \
+            --data-urlencode "token=${ADMIN_TOKEN}" --data-urlencode "hallazgos@lista.json" \
+            "https://dinero-publico.com/admin/aviso-privacidad" || echo 000)
+          echo "HTTP ${codigo}: $(cat respuesta.json 2>/dev/null)"
+          if [ "$codigo" != "200" ] || ! grep -q '"aviso_correo": "enviado"' respuesta.json; then
+            echo "::error::Hay ${n} hallazgos de privacidad y el correo NO ha salido: revisar a mano la lista de arriba."
+            exit 1
+          fi
+          echo "::warning::${n} hallazgos de privacidad: correo enviado."

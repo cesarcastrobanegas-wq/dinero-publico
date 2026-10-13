@@ -12060,6 +12060,18 @@ def _avisos_remitente():
     return os.environ.get("AVISO_COMENTARIOS_FROM", "").strip() or AVISOS_REMITENTE
 
 
+# Tipos de hallazgo de la revisión diaria de privacidad (los mismos de backend/revision_privacidad.py). La ruta
+# /admin/aviso-privacidad solo acepta estos.
+_PRIVACIDAD_TIPOS = {
+    "dni-nie-sin-enmascarar": "DNI o NIE completo a la vista",
+    "persona-fisica-en-fondos-ue": "Persona física (NIF con forma de DNI/NIE) en Fondos UE",
+    "sitemap-con-busquedas": "El sitemap incluye direcciones de búsqueda (?q=)",
+    "administrador-sin-borme": "Administrador mostrado sin enlace al BORME",
+    "admin-abierto": "Ruta de administración accesible sin clave",
+    "pagina-con-error": "Página que no se ha podido revisar",
+}
+
+
 def _avisos_destino(primero="AVISO_COMENTARIOS_EMAIL"):
     """(dirección de destino, variable de la que sale). Los avisos van todos a César, así que si falta la variable
     propia se usa la otra: el 2026-10-13 faltaba AVISO_COMENTARIOS_EMAIL en Render y los avisos de comentarios
@@ -25892,6 +25904,44 @@ def _route_post(path, params):
                              daemon=True).start()
             return _resp(json.dumps({"lanzado": True, "meses": meses}, ensure_ascii=False),
                          content_type="application/json; charset=utf-8")
+
+        if path == "/admin/aviso-privacidad":
+            # Revisión diaria de privacidad (2026-10-13, flujo privacidad-diaria.yml + revision_privacidad.py): el
+            # flujo manda aquí lo que ha encontrado y la web escribe a César. Solo viaja y solo se reenvía el tipo de
+            # hallazgo, la dirección de la página y cuántos hay: nunca el dato personal encontrado.
+            admin_token = os.environ.get("ADMIN_TOKEN", "")
+            if not admin_token or params.get("token", [""])[0] != admin_token:
+                return _error_resp("No autorizado.", 403)
+            try:
+                recibidos = json.loads(params.get("hallazgos", ["[]"])[0])
+            except ValueError:
+                recibidos = None
+            if not isinstance(recibidos, list):
+                return _error_resp("Falta la lista de hallazgos.", 400)
+            hallazgos = [(_PRIVACIDAD_TIPOS[h["tipo"]], h["url"][:300], int(h.get("n") or 1)) for h in recibidos[:200]
+                         if isinstance(h, dict) and h.get("tipo") in _PRIVACIDAD_TIPOS
+                         and str(h.get("url", "")).startswith(SITE_URL) and str(h.get("n", "1")).isdigit()]
+            if not hallazgos:
+                return _resp(json.dumps({"hallazgos": 0, "aviso_correo": "no hace falta"}, ensure_ascii=False),
+                             content_type="application/json; charset=utf-8")
+            api_key = os.environ.get("RESEND_API_KEY", "").strip()
+            destino, _ = _avisos_destino("AVISO_REVISION_EMAIL")
+            if not api_key or not destino:
+                _aviso_registrar("privacidad", None, "falta RESEND_API_KEY o la dirección de destino en Render")
+                return _resp(json.dumps({"hallazgos": len(hallazgos), "aviso_correo": "no enviado: falta configuración"},
+                                        ensure_ascii=False), content_type="application/json; charset=utf-8")
+            lineas = [f"- {tipo}: {url} ({n})" for tipo, url, n in hallazgos[:60]]
+            cuerpo = (f"Revisión diaria de privacidad de Dinero Público, {_ahora_madrid().strftime('%d/%m/%Y')}.\n\n"
+                      f"Ha encontrado {len(hallazgos)} cosas que mirar:\n\n" + "\n".join(lineas)
+                      + ("\n(y más: la lista completa está en el registro del flujo)" if len(hallazgos) > 60 else "")
+                      + "\n\nEl número entre paréntesis es cuántas veces aparece en esa página. Este correo no incluye "
+                        "el dato encontrado: hay que abrir la página para verlo.\n")
+            codigo, _ = _aviso_comentarios_enviar({"from": _avisos_remitente(), "to": [destino],
+                                                   "subject": f"Privacidad: {len(hallazgos)} hallazgos en la web"[:150],
+                                                   "text": cuerpo}, api_key, "privacidad")
+            return _resp(json.dumps({"hallazgos": len(hallazgos),
+                                     "aviso_correo": "enviado" if codigo is not None and codigo < 300 else "no enviado"},
+                                    ensure_ascii=False), content_type="application/json; charset=utf-8")
 
         if path == "/admin/aviso-comentarios-prueba":
             # Diagnóstico del aviso por correo de comentarios (2026-10-09): dice si las variables están cargadas en
