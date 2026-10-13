@@ -6734,7 +6734,10 @@ NOMBRE_PSEUDO_AGE = "Administración General del Estado"
 # pseudo-municipio, con el mismo patrón de detección/reclasificación que la
 # AGE (ver _es_organo_umu / _guardar_pseudo_municipio_umu).
 NOMBRE_PSEUDO_UMU = "Universidad de Murcia"
-MUNICIPIOS_PSEUDO_EXTRA = {"murcia": [NOMBRE_PSEUDO_AGE, NOMBRE_PSEUDO_UMU]}
+# La Universidad Politécnica de Cartagena estaba dentro de la ficha de Cartagena (75 contratos, medido el 13-10-2026):
+# mismo trato que la de Murcia, entrada propia.
+NOMBRE_PSEUDO_UPCT = "Universidad Politécnica de Cartagena"
+MUNICIPIOS_PSEUDO_EXTRA = {"murcia": [NOMBRE_PSEUDO_AGE, NOMBRE_PSEUDO_UMU, NOMBRE_PSEUDO_UPCT]}
 
 
 def _pseudos_de_provincia(provincia):
@@ -6850,6 +6853,15 @@ _AGE_KEYWORDS = (
     "ministerio del ",
     "subdelegacion de defensa",
     "delegacion de defensa",
+    # 13-10-2026: lo que seguía dentro de fichas municipales de la provincia. Cartagena: la Armada ("Intendente de
+    # Cartagena", 648 contratos) y la Autoridad Portuaria (186); San Javier: la Base Aérea (238) y el Centro
+    # Universitario de la Defensa (6).
+    "intendente de ",
+    "autoridad portuaria",
+    "base aerea",
+    "seccion economico-administrativa",
+    "centro universitario de la defensa",
+    "arsenal de cartagena",
 )
 # Siglas como token aislado (\b) + las Delegaciones (Especiales) de Economía y
 # Hacienda del Estado (periféricas del Ministerio de Hacienda; distintas de una
@@ -6970,6 +6982,94 @@ def _guardar_pseudo_municipio_umu(municipio_origen, contratos_umu, job_id=None):
     municipio murciano bajo su propia entrada pseudo-municipio. Ver
     _guardar_pseudo_municipio_acumulado."""
     _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UMU, municipio_origen, contratos_umu, job_id)
+
+
+def _es_organo_upct(organo):
+    return "universidad politecnica de cartagena" in normalizar(organo)
+
+
+def _guardar_pseudo_municipio_upct(municipio_origen, contratos_upct, job_id=None):
+    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UPCT, municipio_origen, contratos_upct, job_id)
+
+
+# Órganos que NO son de este municipio y se colaban por llevar su nombre dentro (medido el 13-10-2026): en Murcia
+# capital, los ayuntamientos de Cieza "(Murcia)", Alhama "de Murcia" y Fuente Álamo "de Murcia" (293 contratos, que ya
+# están en sus propias fichas) y la Junta Vecinal de Castrillo de Murcia, de Burgos (5); en Blanca, entes de la "Costa
+# Blanca" de Alicante (44); en Ceutí, el "Instituto Ceutí de Deportes", de Ceuta (14); en Ojós, Villarrubia de los
+# Ojos (3); en La Unión, un órgano de "...la Unión Europea" (3). Estos contratos se quitan de la ficha: no son suyos.
+_RE_AYUNTAMIENTO_DE = re.compile(r"\b(?:ayuntamiento|junta vecinal) (?:de la |de las |de los |del |de )(.+?)(?: \(| -|,|$)")
+_ORGANOS_AJENOS_POR_NOMBRE = {"blanca": ("costa blanca",), "ceuti": ("instituto ceuti",), "la union": ("union europea",)}
+_NOMBRES_DE_MUNICIPIO = None
+
+
+def _nombres_de_municipio():
+    global _NOMBRES_DE_MUNICIPIO
+    if _NOMBRES_DE_MUNICIPIO is None:
+        _NOMBRES_DE_MUNICIPIO = {normalizar(m) for lista in MUNICIPIOS_POR_PROVINCIA.values() for m in lista}
+    return _NOMBRES_DE_MUNICIPIO
+
+
+def _es_organo_ajeno(organo, municipio):
+    """True si el órgano contratante es de OTRO sitio: el ayuntamiento o la junta vecinal de otro municipio, o un
+    ente cuyo nombre contiene el de este por casualidad. Prudente: un "Ayuntamiento de X" solo se da por ajeno si X
+    es el nombre de otro municipio conocido (o una junta vecinal de otro lugar)."""
+    n, propio = normalizar(organo), normalizar(municipio)
+    if any(falso in n for falso in _ORGANOS_AJENOS_POR_NOMBRE.get(propio, ())):
+        return True
+    m = _RE_AYUNTAMIENTO_DE.search(n)
+    if not m:
+        return False
+    quien = m.group(1).strip()
+    sin_articulo = lambda x: re.sub(r"^(el|la|los|las|l') ?", "", x)
+    if quien == propio or sin_articulo(quien) == sin_articulo(propio):
+        return False
+    return "junta vecinal" in n or quien in _nombres_de_municipio()
+
+
+def _separar_organos_no_municipales(municipio, contratos):
+    """Reparte los contratos de un municipio de la provincia de Murcia: {"propios", "umu", "upct", "age", "ajenos"}.
+    Las universidades van antes que la AGE para que queden en su entrada."""
+    partes = {"propios": [], "umu": [], "upct": [], "age": [], "ajenos": []}
+    for c in contratos:
+        organo = c.get("organo", "")
+        if _es_organo_umu(organo):
+            partes["umu"].append(c)
+        elif _es_organo_upct(organo):
+            partes["upct"].append(c)
+        elif _es_organo_age(organo):
+            partes["age"].append(c)
+        elif _es_organo_ajeno(organo, municipio):
+            partes["ajenos"].append(c)
+        else:
+            partes["propios"].append(c)
+    return partes
+
+
+def _reclasificar_organos_murcia():
+    """En el arranque: aplica _separar_organos_no_municipales a las fichas ya guardadas de la provincia de Murcia, para
+    que una regla nueva no tenga que esperar al refresco de cada municipio. Si no hay nada que mover, no escribe."""
+    movidos = collections.Counter()
+    for municipio in MUNICIPIOS_POR_PROVINCIA.get("murcia", []):
+        if es_pseudo_municipio(municipio):
+            continue
+        d = _db_get_municipio(municipio, "murcia")
+        if not d or not d.get("contratos"):
+            continue
+        partes = _separar_organos_no_municipales(municipio, d["contratos"])
+        if len(partes["propios"]) == len(d["contratos"]):
+            continue
+        d["contratos"] = partes["propios"]
+        d["total_contratos"] = len(partes["propios"])
+        d["alertas"] = analizar_riesgo(partes["propios"])
+        _db_set_municipio(municipio, d, provincia="murcia")
+        for clave, guardar in (("age", _guardar_pseudo_municipio_age), ("umu", _guardar_pseudo_municipio_umu),
+                               ("upct", _guardar_pseudo_municipio_upct)):
+            if partes[clave]:
+                guardar(municipio, partes[clave])
+        for clave in ("age", "umu", "upct", "ajenos"):
+            movidos[clave] += len(partes[clave])
+    if movidos:
+        print(f"  [startup] órganos no municipales en fichas de Murcia: {dict(movidos)}", flush=True)
 
 
 def _asegurar_pseudo_municipio_fondos(provincia):
@@ -14381,9 +14481,14 @@ def _job_run(job_id, municipio, provincia="murcia"):
         es_age_target = provincia == "murcia" and not es_pseudo_municipio(municipio)
         contratos_umu = []
         contratos_age = []
+        contratos_upct = []
         if es_age_target:
-            contratos, contratos_umu = _separar_contratos_umu(contratos)
-            contratos, contratos_age = _separar_contratos_age(contratos)
+            # 13-10-2026: una sola función reparte universidades, AGE y órganos de otros sitios (estos se descartan).
+            partes = _separar_organos_no_municipales(municipio, contratos)
+            contratos, contratos_umu, contratos_age, contratos_upct = (partes["propios"], partes["umu"], partes["age"],
+                                                                       partes["upct"])
+            if partes["ajenos"]:
+                _log(job_id, f"  {len(partes['ajenos'])} contratos de órganos de otros municipios, descartados de '{municipio}'")
 
         # Análisis de riesgo
         alertas = analizar_riesgo(contratos)
@@ -14416,6 +14521,7 @@ def _job_run(job_id, municipio, provincia="murcia"):
         if es_age_target:
             _guardar_pseudo_municipio_age(municipio, contratos_age, job_id)
             _guardar_pseudo_municipio_umu(municipio, contratos_umu, job_id)
+            _guardar_pseudo_municipio_upct(municipio, contratos_upct, job_id)
         _tf = _fase_tiempo("alertas_y_guardar", _tf)
 
         with _jobs_lock:
@@ -16388,6 +16494,7 @@ def _inicializar_datos():
     _db_init()
     _migrar_claves_homonimos()
     _aplicar_importes_aparte()
+    _reclasificar_organos_murcia()
     _cargar_contratos_menores_murcia_manual()
     _cargar_contratos_menores_euskadi()
     _cargar_contratos_menores_madrid_capital()
