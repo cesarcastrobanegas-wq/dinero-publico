@@ -2483,6 +2483,10 @@ def _db_init():
             texto   TEXT NOT NULL,
             ts      REAL NOT NULL
         )""")
+        # Moderación previa (2026-10-13, encargo de César): un comentario nuevo entra como 'pendiente' y no se
+        # enseña hasta que él lo aprueba. Los que ya había siguen publicados.
+        if "estado" not in [c[1] for c in _db.execute("PRAGMA table_info(comentarios)")]:
+            _db.execute("ALTER TABLE comentarios ADD COLUMN estado TEXT NOT NULL DEFAULT 'publicado'")
         # Registro de cada intento de aviso por correo (2026-10-13): ver _aviso_registrar.
         _db.execute("""CREATE TABLE IF NOT EXISTS avisos_correo (
             id      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -11888,15 +11892,55 @@ def _db_fondos_ue_por_municipio(municipio, provincia=None):
 
 
 def _db_comentarios_insertar(tipo, clave_raw, texto, nombre=""):
-    """Guarda un comentario de usuario en la ficha de municipio o de empresa.
-    Sin gestión activa ni email: se guarda directamente y se muestra público
-    de inmediato (ver render_comentarios_html), no hay cola de moderación."""
+    """Guarda un comentario de usuario en la ficha de municipio o de empresa. Entra como 'pendiente': no se enseña
+    hasta que César lo aprueba (moderación previa, 2026-10-13). Devuelve su id."""
     with _db_lock:
-        _db.execute(
-            "INSERT INTO comentarios (tipo, clave, etiqueta, nombre, texto, ts) VALUES (?,?,?,?,?,?)",
+        cur = _db.execute(
+            "INSERT INTO comentarios (tipo, clave, etiqueta, nombre, texto, ts, estado) VALUES (?,?,?,?,?,?,'pendiente')",
             (tipo, normalizar(clave_raw), clave_raw.strip(), nombre.strip(), texto.strip(), time.time()),
         )
         _db.commit()
+        return cur.lastrowid
+
+
+def _comentario_firma(id_comentario):
+    """Clave del enlace del correo de aviso: vale solo para ESE comentario y no se guarda en ningún sitio (sale de
+    ADMIN_TOKEN). Sin ADMIN_TOKEN no hay enlaces."""
+    if not os.environ.get("ADMIN_TOKEN"):
+        return ""
+    return hmac.new(_revision_clave(), f"comentario|{int(id_comentario)}".encode(), hashlib.sha256).hexdigest()[:40]
+
+
+def _db_comentario(id_comentario):
+    with _db_lock:
+        f = _db.execute("SELECT id, tipo, clave, etiqueta, nombre, texto, ts, estado FROM comentarios WHERE id=?",
+                        (id_comentario,)).fetchone()
+    return dict(zip(("id", "tipo", "clave", "etiqueta", "nombre", "texto", "ts", "estado"), f)) if f else None
+
+
+def _db_comentarios_moderacion(estado, limite=200):
+    with _db_lock:
+        filas = _db.execute("SELECT id, tipo, clave, etiqueta, nombre, texto, ts, estado FROM comentarios "
+                            "WHERE estado=? ORDER BY ts DESC LIMIT ?", (estado, limite)).fetchall()
+    return [dict(zip(("id", "tipo", "clave", "etiqueta", "nombre", "texto", "ts", "estado"), f)) for f in filas]
+
+
+def _comentario_moderar(id_comentario, accion):
+    """aprobar -> publicado; borrar -> se elimina la fila. Devuelve el comentario tal como estaba, o None si no
+    existe. Deja constancia en el registro del panel (sin el texto ni el nombre)."""
+    c = _db_comentario(id_comentario)
+    if not c or accion not in ("aprobar", "borrar"):
+        return None
+    with _db_lock:
+        if accion == "aprobar":
+            _db.execute("UPDATE comentarios SET estado='publicado' WHERE id=?", (c["id"],))
+        else:
+            _db.execute("DELETE FROM comentarios WHERE id=?", (c["id"],))
+        _db.commit()
+    if c["tipo"] == "busqueda":
+        _paginas_invalidar("busqueda")          # la página de resultados enseña sus comentarios
+    _revision_registrar(f"comentario-{c['id']}", "comentario-" + accion, c["tipo"])
+    return c
 
 
 # ─── Aviso por correo de cada comentario nuevo (2026-09-30, encargo de César) ────────────────────────────────────
@@ -12016,7 +12060,7 @@ def _aviso_comentarios_enviar(payload, api_key, tipo="comentario"):
     return codigo, texto
 
 
-def _avisar_comentario_por_correo(tipo, etiqueta, texto, nombre, url_relativa):
+def _avisar_comentario_por_correo(tipo, etiqueta, texto, nombre, url_relativa, id_comentario=None):
     api_key = os.environ.get("RESEND_API_KEY", "").strip()
     destino, _ = _avisos_destino()
     if not api_key or not destino:
@@ -12042,12 +12086,16 @@ def _avisar_comentario_por_correo(tipo, etiqueta, texto, nombre, url_relativa):
     donde = f"Municipio: {etiqueta}" if tipo == "municipio" else f"Búsqueda: {etiqueta}"
     enlace = f"{SITE_URL}{url_relativa}#comentarios"
     autor = nombre or "(sin nombre)"
-    cuerpo = (f"Nuevo comentario en Dinero Público\n\n{donde}\nCuándo: {cuando}\n"
-              f"Autor: {autor}\nEnlace: {enlace}\n\n--- Comentario ---\n{texto}\n")
+    firma = _comentario_firma(id_comentario) if id_comentario else ""
+    moderar = (f"NO está publicado: espera tu decisión.\n"
+               f"Aprobar o borrar este comentario: {SITE_URL}/admin/revision/comentario?id={id_comentario}&k={firma}\n"
+               f"Todos los pendientes: {SITE_URL}/admin/revision/comentarios\n\n") if firma else ""
+    cuerpo = (f"Nuevo comentario en Dinero Público\n\n{moderar}{donde}\nCuándo: {cuando}\n"
+              f"Autor: {autor}\nFicha: {enlace}\n\n--- Comentario ---\n{texto}\n")
     payload = {
         "from": _avisos_remitente(),
         "to": [destino],
-        "subject": f"Nuevo comentario · {etiqueta}"[:150],
+        "subject": f"Comentario pendiente de aprobar · {etiqueta}"[:150],
         "text": cuerpo,
     }
 
@@ -12071,7 +12119,7 @@ def _db_comentarios_por(tipo, clave_raw):
     """Comentarios guardados para este municipio/empresa, más reciente primero."""
     with _db_lock:
         rows = _db.execute(
-            "SELECT nombre, texto, ts FROM comentarios WHERE tipo=? AND clave=? ORDER BY ts DESC",
+            "SELECT nombre, texto, ts FROM comentarios WHERE tipo=? AND clave=? AND estado='publicado' ORDER BY ts DESC",
             (tipo, normalizar(clave_raw)),
         ).fetchall()
     return [{"nombre": r[0], "texto": r[1], "ts": r[2]} for r in rows]
@@ -14376,7 +14424,11 @@ def _revision_cola_html(qs, cookie):
                 'decidir uno entra el siguiente.</div>') if semana else '<div class="pag">' + (f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag - 1))}">← Anterior</a>'
                                       if pag > 1 else "") + f'Página {pag} de {paginas} · {total} candidatos ' + (
         f'<a href="/admin/revision?{urlencode(dict(base_q, pag=pag + 1))}">Siguiente →</a>' if pag < paginas else "") + "</div>"
+    with _db_lock:
+        comentarios_pendientes = _db.execute("SELECT count(*) FROM comentarios WHERE estado='pendiente'").fetchone()[0]
     cuerpo = (f'<h1>Revisión interna: indicadores para revisar</h1>'
+              f'<p class="sub"><a href="/admin/revision/comentarios"><b>Comentarios pendientes de aprobar: '
+              f'{comentarios_pendientes}</b></a></p>'
               f'<p class="sub">Uso interno. Un indicador NO es una irregularidad: solo señala dónde mirar. Nada de esta '
               f'lista se publica; antes de publicar un caso hay que comprobarlo en la fuente oficial y pedir la versión '
               f'del ayuntamiento. Desde el RDL 3/2020, sumar menores al mismo contratista no es ilegal por sí mismo: lo '
@@ -14417,6 +14469,48 @@ def _revision_ficha_md(huella):
     return "\n".join(lineas) + "\n"
 
 
+def _comentario_tarjeta_html(c, campos_ocultos, borrar_publicado=False):
+    cuando = time.strftime("%d/%m/%Y %H:%M UTC", time.gmtime(c["ts"]))
+    donde = ("Municipio: " if c["tipo"] == "municipio" else "Búsqueda: ") + c["etiqueta"]
+    botones = ("" if c["estado"] == "publicado" else
+               '<button type="submit" name="accion" value="aprobar">Aprobar y publicar</button> ')
+    botones += f'<button type="submit" name="accion" value="borrar" class="sec">Borrar</button>'
+    return (f'<div class="c" style="padding:10px 12px"><div class="sub">{esc(donde)} · {esc(cuando)} · '
+            f'<b>{esc(c["nombre"] or "(sin nombre)")}</b> · {"publicado" if c["estado"] == "publicado" else "PENDIENTE"}</div>'
+            f'<div style="white-space:pre-wrap;margin:8px 0">{esc(c["texto"])}</div>'
+            f'<form method="post" action="/admin/revision/comentario" class="acc">{campos_ocultos}'
+            f'<input type="hidden" name="id" value="{c["id"]}">{botones}</form></div>')
+
+
+def _comentarios_moderacion_html(cookie, hecho=""):
+    csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
+    pendientes = _db_comentarios_moderacion("pendiente")
+    publicados = _db_comentarios_moderacion("publicado", 50)
+    aviso = {"aprobar": "Comentario aprobado: ya está publicado.", "borrar": "Comentario borrado.",
+             "nada": "Ese comentario ya no existe."}.get(hecho, "")
+    return _revision_pagina("Comentarios", f"""<h1>Comentarios</h1>
+<p class="sub">Ningún comentario se publica hasta que lo apruebes. <a href="/admin/revision">← Cola de revisión</a></p>
+{f'<div class="aviso">{esc(aviso)}</div>' if aviso else ''}
+<h2 style="font-size:16px">Pendientes de aprobar ({len(pendientes)})</h2>
+{"".join(_comentario_tarjeta_html(c, csrf) for c in pendientes) or '<p class="sub">No hay ninguno.</p>'}
+<h2 style="font-size:16px;margin-top:22px">Publicados (los {len(publicados)} más recientes)</h2>
+{"".join(_comentario_tarjeta_html(c, csrf) for c in publicados) or '<p class="sub">No hay ninguno.</p>'}""")
+
+
+def _comentario_enlace_html(c, firma, hecho=""):
+    """Página a la que lleva el enlace del correo de aviso. Abrirla no hace nada (los programas de correo abren los
+    enlaces por su cuenta para revisarlos): aprobar o borrar es siempre un botón."""
+    if hecho or not c:
+        texto = {"aprobar": "Comentario aprobado: ya está publicado.", "borrar": "Comentario borrado."}.get(
+            hecho, "Este comentario ya no existe (se borró).")
+        return _revision_pagina("Comentario", f'<h1>Comentario</h1><div class="aviso">{esc(texto)}</div>'
+                                              f'<p class="sub"><a href="/admin/revision/comentarios">Ver todos los comentarios</a></p>')
+    oculto = f'<input type="hidden" name="k" value="{esc(firma)}">'
+    return _revision_pagina("Comentario", f'<h1>Comentario {"publicado" if c["estado"] == "publicado" else "pendiente de aprobar"}</h1>'
+                            + _comentario_tarjeta_html(c, oculto)
+                            + '<p class="sub"><a href="/admin/revision/comentarios">Ver todos los comentarios</a></p>')
+
+
 def _revision_wsgi(method, path, qs, environ):
     """Todas las rutas /admin/revision*. Devuelve (code, headers, body)."""
     cookie = _revision_cookie_valida(environ)
@@ -14447,6 +14541,19 @@ def _revision_wsgi(method, path, qs, environ):
                 _revision_fallos.append(ahora)
             time.sleep(1)
             return _revision_login_html("Clave incorrecta.")
+        if path == "/admin/revision/comentario":
+            # Aprobar o borrar un comentario: con la sesión del panel (y su csrf) o con la clave del enlace del correo,
+            # que solo vale para ese comentario.
+            id_c = int(p("id")) if p("id").isdigit() else 0
+            firma = _comentario_firma(id_c) if id_c else ""
+            por_enlace = bool(firma) and hmac.compare_digest(p("k").encode(), firma.encode())
+            por_sesion = bool(cookie) and p("csrf") == _revision_csrf(cookie)
+            if not (por_enlace or por_sesion) or p("accion") not in ("aprobar", "borrar"):
+                return 403, {"Content-Type": "text/plain; charset=utf-8", "Content-Length": "13"}, b"No autorizado"
+            hecho = p("accion") if _comentario_moderar(id_c, p("accion")) else "nada"
+            if por_sesion:
+                return 303, {"Location": f"/admin/revision/comentarios?hecho={hecho}", "Content-Length": "0"}, b""
+            return _comentario_enlace_html(None, "", hecho if hecho != "nada" else "")
         if not cookie or p("csrf") != _revision_csrf(cookie):
             return 403, {"Content-Type": "text/plain; charset=utf-8", "Content-Length": "13"}, b"No autorizado"
         if path == "/admin/revision/salir":
@@ -14478,8 +14585,17 @@ def _revision_wsgi(method, path, qs, environ):
             return 303, {"Location": volver, "Content-Length": "0"}, b""
         return 404, {"Content-Length": "0"}, b""
     # GET
+    if path == "/admin/revision/comentario":
+        id_c = qs.get("id", [""])[0]
+        id_c = int(id_c) if id_c.isdigit() else 0
+        firma = _comentario_firma(id_c) if id_c else ""
+        if not firma or not hmac.compare_digest(qs.get("k", [""])[0].encode(), firma.encode()):
+            return 403, {"Content-Type": "text/plain; charset=utf-8", "Content-Length": "13"}, b"No autorizado"
+        return _comentario_enlace_html(_db_comentario(id_c), firma)
     if not cookie:
         return _revision_login_html()
+    if path == "/admin/revision/comentarios":
+        return _comentarios_moderacion_html(cookie, qs.get("hecho", [""])[0])
     if path == "/admin/revision/ficha":
         md = _revision_ficha_md(qs.get("huella", [""])[0])
         if md is None:
@@ -15939,6 +16055,9 @@ a.fue-link{color:var(--yellow);font-size:11px;}
 .comentario-form textarea{min-height:70px;}
 .comentario-form input:focus,.comentario-form textarea:focus{border-color:var(--blue);}
 .comentario-form .btn{align-self:flex-start;}
+.comentario-nota{font-size:12px;color:var(--dim);}
+.comentario-recibido{display:none;margin:12px 18px 0;padding:10px 12px;border:1px solid var(--blue);border-radius:6px;font-size:14px;}
+.comentario-recibido:target{display:block;}
 .rk-pos{font-size:16px;text-align:center;width:44px;}
 .rk-empresa{color:var(--text);font-weight:600;text-decoration:none;}
 .rk-empresa:hover{color:var(--accent);text-decoration:underline;}
@@ -20620,6 +20739,7 @@ def render_comentarios_html(tipo, clave_raw, redirect_url, titulo="esta ficha"):
 
     return f"""<details class="comentarios-card" id="comentarios" open>
       <summary>💬 {_t("Comentarios")} <span class="badge">{len(comentarios)}</span></summary>
+      <div class="comentario-recibido" id="comentario-recibido">✅ {_t("Gracias. Hemos recibido tu comentario y se publicará cuando lo revisemos.")}</div>
       <div class="comentarios-list">{filas}</div>
       <form method="POST" action="/comentario" class="comentario-form">
         <input type="hidden" name="tipo" value="{esc(tipo)}">
@@ -20628,6 +20748,7 @@ def render_comentarios_html(tipo, clave_raw, redirect_url, titulo="esta ficha"):
         <input name="nombre" maxlength="60" placeholder="{_t("Tu nombre (opcional)")}">
         <textarea name="texto" maxlength="1000" required placeholder="Deja tu comentario sobre {esc(titulo)}…"></textarea>
         <button type="submit" class="btn btn-primary">{_t("Enviar comentario")}</button>
+        <div class="comentario-nota">{_t("Los comentarios se revisan antes de publicarse.")}</div>
       </form>
     </details>"""
 
@@ -24955,10 +25076,10 @@ def _route_post(path, params):
             if not redirect_url.startswith("/"):
                 redirect_url = "/"
             if tipo in ("municipio", "busqueda") and clave_raw and texto:
-                _db_comentarios_insertar(tipo, clave_raw, texto, nombre)
-                if tipo == "busqueda":
-                    _paginas_invalidar("busqueda")      # la página de resultados enseña sus comentarios
-                _avisar_comentario_por_correo(tipo, clave_raw, texto, nombre, redirect_url.split("#")[0])
+                # Moderación previa (2026-10-13): se guarda pendiente y no cambia ninguna página hasta aprobarlo.
+                id_comentario = _db_comentarios_insertar(tipo, clave_raw, texto, nombre)
+                _avisar_comentario_por_correo(tipo, clave_raw, texto, nombre, redirect_url.split("#")[0], id_comentario)
+                return _redirect_resp(redirect_url.split("#")[0] + "#comentario-recibido")
             return _redirect_resp(redirect_url + "#comentarios" if "#" not in redirect_url else redirect_url)
 
         if path == "/admin/reprocesar-place":
