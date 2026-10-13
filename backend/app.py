@@ -19824,6 +19824,27 @@ def _nif_mostrar(nif):
     return (nif or "").strip()
 
 
+# Tipo de contrato menor tal como lo escribe cada fuente -> texto del catálogo de traducciones (2026-10-13). Solo las
+# formas en castellano más repetidas; lo demás (p. ej. "5. SERVEIS" o los plazos que algunas fuentes meten en este
+# campo) se enseña como llega.
+_TIPO_MENOR_CANON = {
+    "servicios": "Servicios", "servicio": "Servicios",
+    "suministros": "Suministros", "suministro": "Suministros",
+    "obras": "Obras", "obra": "Obras",
+    "privado": "Privado", "privados": "Privado",
+    "otros": "Otros",
+}
+
+
+def _tipo_menor_txt(tipo):
+    """El tipo de contrato menor en el idioma de la página. En castellano no se toca."""
+    tipo = tipo or ""
+    if _i18n_idioma() == "es":
+        return tipo
+    canon = _TIPO_MENOR_CANON.get(tipo.strip().lower())
+    return _t(canon) if canon else tipo
+
+
 def _render_fila_contrato_menor(r):
     """Fila de la tabla de contratos menores locales -- compartida por todas
     las fuentes (Girona/RPC, Fuente Álamo, Mula, Molina de Segura...). No
@@ -19932,7 +19953,7 @@ def _render_fila_contrato_menor(r):
       </td>
       <td class="cm-importe">{fmt_eur(str(r["import_num"])) if r["import_num"] else "—"}</td>
       <td>{dir_html}</td>
-      <td><div class="lid">{esc(r.get("tipus_contracte",""))}</div></td>
+      <td><div class="lid">{esc(_tipo_menor_txt(r.get("tipus_contracte","")))}</div></td>
       <td><div class="lid">{esc(r.get("data_adjudicacio",""))}</div></td>
     </tr>"""
 
