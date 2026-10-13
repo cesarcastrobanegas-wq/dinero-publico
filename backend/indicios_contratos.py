@@ -143,6 +143,11 @@ def es_persona_fisica(nif):
     return bool(n and _RE_NIF_ENMASCARADO.match(n) and not (n.startswith("XXXX") and n[-1].isdigit()))
 
 
+def nif_enmascarado(nif):
+    n = re.sub(r"[\s.\-]", "", (nif or "").upper())
+    return bool(n and _RE_NIF_ENMASCARADO.match(n))
+
+
 def adjudicatario_mal_leido(adjudicatario, organismo, nif):
     """Aviso si el campo del adjudicatario no trae una empresa: el objeto del contrato (Iurreta, "ASESORAMIENTO EN
     PROCEDIMIENTO SANCIONADOR") o el propio organismo. '' si parece un adjudicatario normal."""
@@ -319,6 +324,7 @@ def analizar(cache, hoy):
     for (m_nombre, m_prov), filas_muni in por_municipio():
         muni = {"municipio": m_nombre, "provincia": m_prov}
         grupos = collections.defaultdict(list)
+        nombres_por_nif = collections.defaultdict(set)
         r2_muni = []
         for r in filas_muni:
             stats["contratos"] += 1
@@ -340,6 +346,12 @@ def analizar(cache, hoy):
             emp = nif or "N:" + nombre_empresa(r["adjudicatari"])
             if emp in ("N:", ""):
                 continue
+            if nif_enmascarado(nif):
+                # Un NIF enmascarado ("***4567**") solo enseña 4 cifras: dos personas distintas pueden compartirlo.
+                # Se agrupa por NIF y nombre juntos (las palabras del nombre en cualquier orden) para no mezclarlas.
+                nombre = " ".join(sorted(nombre_empresa(r["adjudicatari"]).split()))
+                nombres_por_nif[(normalizar(r["organisme"]), nif, t)].add(nombre)
+                emp = nif + "|" + nombre
             grupos[(normalizar(r["organisme"]), emp, t)].append({
                 "id": r["id"], "fecha": f, "importe": float(imp), "descripcion": (r["descripcio"] or "")[:300],
                 "fuente": r["fuente"] or "", "palabras": palabras(r["descripcio"]),
@@ -397,7 +409,15 @@ def analizar(cache, hoy):
             if resta:
                 desglose["dato_mal_leido"] = -resta
                 puntos = max(0, puntos - resta)
-            huella = hashlib.sha256(f'{VERSION_REGLA_1}|{muni["municipio"]}|{muni["provincia"]}|{org}|{emp}|{t}|'
+            # La huella identifica al candidato de una semana a otra (y conserva lo ya decidido). Con NIF enmascarado
+            # sigue siendo la de siempre (solo el NIF) mientras bajo ese NIF haya un único nombre en el organismo;
+            # si hay varios, eran personas mezcladas y cada una estrena huella.
+            emp_huella = emp
+            if "|" in emp and len(nombres_por_nif[(org, emp.split("|")[0], t)]) == 1:
+                emp_huella = emp.split("|")[0]
+            else:
+                stats["grupos_separados_por_nombre"] += 1 if "|" in emp else 0
+            huella = hashlib.sha256(f'{VERSION_REGLA_1}|{muni["municipio"]}|{muni["provincia"]}|{org}|{emp_huella}|{t}|'
                                     f'{min(c["fecha"] for c in grupo)}'.encode()).hexdigest()[:20]
             candidatos.append({
                 "huella": huella, "regla": VERSION_REGLA_1, "categoria": categoria, "municipio": muni["municipio"],
@@ -427,7 +447,8 @@ def main():
           f"grupos empresa+organismo+tipo con 2 o más: {stats['grupos']} | duplicados entre fuentes quitados: "
           f"{stats['duplicados_quitados']} | registros idénticos unidos: {stats['registros_identicos_unidos']} | "
           f"regla 2, duplicados entre fuentes quitados: {stats['regla2_duplicados_quitados']} | regla 2, emergencias "
-          f"que ya no cuentan: {stats['regla2_emergencias_excluidas']}")
+          f"que ya no cuentan: {stats['regla2_emergencias_excluidas']} | regla 1, candidatos de un NIF enmascarado "
+          f"compartido por varios nombres (separados): {stats['grupos_separados_por_nombre']}")
     marcas = (("probable error de clasificación (más de 3 veces el umbral)", AVISO_ERROR_CLASIFICACION),
               ("dato mal leído (el adjudicatario parece el objeto)", AVISO_DATO_MAL_LEIDO),
               ("dato mal leído (el adjudicatario es el organismo)", AVISO_ES_EL_ORGANISMO),

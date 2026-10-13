@@ -13842,6 +13842,14 @@ def _revision_registrar(huella, accion, detalle=""):
         _db.commit()
 
 
+def _revision_clave_candidato(c):
+    """Lo que identifica a un candidato aunque cambie su huella: regla, municipio, organismo, tipo, adjudicatario (las
+    palabras del nombre en cualquier orden) y fecha del primer contrato."""
+    return (c.get("regla", ""), c.get("municipio", ""), c.get("provincia", ""), c.get("tipo", ""),
+            normalizar(c.get("organismo", "")), " ".join(sorted(normalizar(c.get("adjudicatario", "")).split())),
+            c.get("desde", ""))
+
+
 def _subir_revision_candidatos(crudo, forzar=False):
     """Carga los candidatos de la semana (NDJSON en gzip de indicios_contratos.py). Nuevos -> pendientes; los que ya
     estaban se actualizan sin tocar la decisión tomada; los pendientes que ya no se detectan se retiran; los descartados
@@ -13850,20 +13858,47 @@ def _subir_revision_candidatos(crudo, forzar=False):
     with _db_lock:
         descartes = {r[0] for r in _db.execute("SELECT huella FROM revision_descartes")}
         existentes = dict(_db.execute("SELECT huella, estado FROM revision_candidatos").fetchall())
+        decididos_datos = _db.execute("SELECT huella, datos FROM revision_candidatos WHERE estado != 'pendiente'").fetchall()
     nuevos = actualizados = saltados = malas = 0
     vistos = set()
     lote_ins, lote_upd = [], []
     try:
         flujo = _gzip.GzipFile(fileobj=io.BytesIO(crudo)) if crudo[:2] == bytes([0x1F, 0x8B]) else io.BytesIO(crudo)
+        leidos = []
         for linea in flujo:
             if not linea.strip():
                 continue
             try:
                 c = json.loads(linea)
-                h = c["huella"]
+                leidos.append((c["huella"], c))
             except (ValueError, KeyError, TypeError):
                 malas += 1
-                continue
+        # Decisiones que cambian de huella (2026-10-13): la huella de un posible fraccionamiento lleva el NIF, y al
+        # enmascararse los DNI/NIE (o al separarse dos personas que compartían NIF enmascarado) el mismo candidato
+        # llega con otra. Si un candidato ya decidido (seguimiento, caso, descartado) no viene con su huella pero sí
+        # viene uno igual (_revision_clave_candidato), la decisión se traslada a la huella nueva en vez de perderse.
+        en_fichero = {h for h, _ in leidos}
+        por_clave = {}
+        for h_vieja, datos in decididos_datos:
+            if h_vieja not in en_fichero:
+                try:
+                    por_clave[_revision_clave_candidato(json.loads(datos))] = h_vieja
+                except (ValueError, TypeError):
+                    pass
+        trasladadas = []
+        for h, c in leidos:
+            h_vieja = por_clave.pop(_revision_clave_candidato(c), None) if h not in existentes else None
+            if h_vieja:
+                trasladadas.append((h, h_vieja))
+                existentes[h] = existentes.pop(h_vieja)
+                if h_vieja in descartes:
+                    descartes.add(h)
+        if trasladadas:
+            with _db_lock:
+                _db.executemany("UPDATE revision_candidatos SET huella=? WHERE huella=?", trasladadas)
+                _db.executemany("UPDATE revision_descartes SET huella=? WHERE huella=?", trasladadas)
+                _db.commit()
+        for h, c in leidos:
             vistos.add(h)
             if h in descartes:
                 saltados += 1
@@ -13911,7 +13946,8 @@ def _subir_revision_candidatos(crudo, forzar=False):
                                (corte,)).rowcount
         _db.commit()
     _revision_registrar("", "subida", f"{nuevos} nuevos, {actualizados} actualizados, {len(retirados)} retirados, "
-                                      f"{saltados} ya descartados, {borrados} descartes borrados")
+                                      f"{saltados} ya descartados, {borrados} descartes borrados"
+                                      + (f", {len(trasladadas)} decisiones trasladadas de huella" if trasladadas else ""))
     _liberar_memoria()
     print(f"[revision] subida: {nuevos} nuevos, {actualizados} actualizados, {len(retirados)} retirados, "
           f"{saltados} ya descartados antes, {borrados} descartados de más de 6 meses borrados", flush=True)
@@ -13920,6 +13956,7 @@ def _subir_revision_candidatos(crudo, forzar=False):
     aviso = _aviso_revision_por_correo(por_regla, nuevos_90) if nuevos else "sin novedades: no se envía"
     return 200, {"nuevos": nuevos, "actualizados": actualizados, "retirados": len(retirados),
                  "ya_descartados": saltados, "descartes_borrados": borrados, "lineas_con_error": malas,
+                 "decisiones_trasladadas": len(trasladadas),
                  "aviso_correo": aviso}
 
 
