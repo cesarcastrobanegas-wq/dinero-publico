@@ -6996,9 +6996,18 @@ def _guardar_pseudo_municipio_upct(municipio_origen, contratos_upct, job_id=None
 # capital, los ayuntamientos de Cieza "(Murcia)", Alhama "de Murcia" y Fuente Álamo "de Murcia" (293 contratos, que ya
 # están en sus propias fichas) y la Junta Vecinal de Castrillo de Murcia, de Burgos (5); en Blanca, entes de la "Costa
 # Blanca" de Alicante (44); en Ceutí, el "Instituto Ceutí de Deportes", de Ceuta (14); en Ojós, Villarrubia de los
-# Ojos (3); en La Unión, un órgano de "...la Unión Europea" (3). Estos contratos se quitan de la ficha: no son suyos.
+# Ojos (3); en La Unión, un órgano de "...la Unión Europea" (3). Estos contratos salen de la ficha, que no es la suya,
+# pero NO se pierden (decisión de César, 13-10): van a la ficha del municipio que les corresponde si no estaban ya en
+# ella (comprobado sobre la copia del 10-10: los de Cieza, Alhama, Fuente Álamo y Villarrubia ya estaban; los de
+# Castrillo de Murcia y el Instituto Ceutí, no) y, si no hay ninguna ficha municipal que les toque (entes de la
+# Diputación de Alicante, una secretaría autonómica), se guardan en la tabla contratos_sin_ficha.
 _RE_AYUNTAMIENTO_DE = re.compile(r"\b(?:ayuntamiento|junta vecinal) (?:de la |de las |de los |del |de )(.+?)(?: \(| -|,|$)")
 _ORGANOS_AJENOS_POR_NOMBRE = {"blanca": ("costa blanca",), "ceuti": ("instituto ceuti",), "la union": ("union europea",)}
+# Destino de los órganos ajenos que no son "Ayuntamiento de X": trozo del nombre del órgano -> (municipio, provincia).
+#   - Castrillo de Murcia es una entidad local menor del municipio de Sasamón (Burgos).
+#   - El Instituto Ceutí de Deportes es un organismo de la Ciudad Autónoma de Ceuta.
+_DESTINO_ORGANO_AJENO = {"castrillo de murcia": ("Sasamón", "burgos"), "instituto ceuti": ("Ceuta", "ceuta")}
+_PROVINCIAS_POR_NOMBRE_MUNICIPIO = None
 _NOMBRES_DE_MUNICIPIO = None
 
 
@@ -7024,6 +7033,78 @@ def _es_organo_ajeno(organo, municipio):
     if quien == propio or sin_articulo(quien) == sin_articulo(propio):
         return False
     return "junta vecinal" in n or quien in _nombres_de_municipio()
+
+
+def _destino_de_organo_ajeno(organo, provincia_origen):
+    """(municipio, provincia) de la ficha a la que pertenece un órgano ajeno, o None si no hay ninguna."""
+    global _PROVINCIAS_POR_NOMBRE_MUNICIPIO
+    n = normalizar(organo)
+    for trozo, destino in _DESTINO_ORGANO_AJENO.items():
+        if trozo in n:
+            return destino
+    m = _RE_AYUNTAMIENTO_DE.search(n)
+    if not m or "junta vecinal" in n:
+        return None
+    if _PROVINCIAS_POR_NOMBRE_MUNICIPIO is None:
+        indice = {}
+        for prov, lista in MUNICIPIOS_POR_PROVINCIA.items():
+            for nombre in lista:
+                indice.setdefault(normalizar(nombre), []).append((nombre, prov))
+        _PROVINCIAS_POR_NOMBRE_MUNICIPIO = indice
+    candidatos = _PROVINCIAS_POR_NOMBRE_MUNICIPIO.get(m.group(1).strip(), [])
+    if len(candidatos) > 1:                      # homónimos: la provincia entre paréntesis o, si no, la de origen
+        entre_parentesis = re.search(r"\(([^)]+)\)", n)
+        preferida = normalizar(entre_parentesis.group(1)).replace(" ", "_") if entre_parentesis else provincia_origen
+        candidatos = [c for c in candidatos if c[1] == preferida] or [c for c in candidatos if c[1] == provincia_origen]
+    return candidatos[0] if len(candidatos) == 1 else None
+
+
+def _huella_contrato(c):
+    return (c.get("url") or "").replace("&amp;", "&") or f'{c.get("licitacion_id")}|{normalizar(c.get("titulo") or "")[:80]}'
+
+
+def _entregar_contratos_ajenos(municipio_origen, provincia_origen, contratos, job_id=None):
+    """Lleva cada contrato de un órgano ajeno a la ficha que le corresponde (si no estaba ya) o, si no hay ninguna, a
+    la tabla contratos_sin_ficha. Devuelve {"ya_estaban", "movidos", "sin_ficha"}."""
+    res = {"ya_estaban": 0, "movidos": 0, "sin_ficha": 0}
+    por_destino, sin_ficha = {}, []
+    for c in contratos:
+        destino = _destino_de_organo_ajeno(c.get("organo", ""), provincia_origen)
+        d = _db_get_municipio(*destino) if destino else None
+        if d is None:
+            sin_ficha.append(c)
+        else:
+            por_destino.setdefault(destino, []).append(c)
+    for destino, lista in por_destino.items():
+        d = _db_get_municipio(*destino)
+        presentes = {_huella_contrato(c) for c in d.get("contratos", [])}
+        nuevos = []
+        for c in lista:
+            if _huella_contrato(c) in presentes:
+                res["ya_estaban"] += 1
+            else:
+                presentes.add(_huella_contrato(c))
+                nuevos.append(dict(c, _origen_muni=normalizar(municipio_origen)))
+        if nuevos:
+            d["contratos"] = d.get("contratos", []) + nuevos
+            d["total_contratos"] = len(d["contratos"])
+            d["alertas"] = analizar_riesgo(d["contratos"])
+            _db_set_municipio(d.get("municipio", destino[0]), d, provincia=d.get("provincia", destino[1]))
+            res["movidos"] += len(nuevos)
+            if job_id:
+                _log(job_id, f"  {len(nuevos)} contratos de '{municipio_origen}' pasan a la ficha de '{destino[0]}'")
+    if sin_ficha:
+        ahora = time.time()
+        with _db_lock:
+            _db.execute("CREATE TABLE IF NOT EXISTS contratos_sin_ficha (huella TEXT PRIMARY KEY, origen TEXT, "
+                        "organo TEXT, data TEXT, ts REAL)")
+            for c in sin_ficha:
+                _db.execute("INSERT OR REPLACE INTO contratos_sin_ficha VALUES (?,?,?,?,?)",
+                            (_huella_contrato(c), normalizar(municipio_origen), c.get("organo", ""),
+                             json.dumps(c, ensure_ascii=False), ahora))
+            _db.commit()
+        res["sin_ficha"] = len(sin_ficha)
+    return res
 
 
 def _separar_organos_no_municipales(municipio, contratos):
@@ -7068,6 +7149,8 @@ def _reclasificar_organos_murcia():
                 guardar(municipio, partes[clave])
         for clave in ("age", "umu", "upct", "ajenos"):
             movidos[clave] += len(partes[clave])
+        for clave, n in _entregar_contratos_ajenos(municipio, "murcia", partes["ajenos"]).items():
+            movidos["ajenos_" + clave] += n
     if movidos:
         print(f"  [startup] órganos no municipales en fichas de Murcia: {dict(movidos)}", flush=True)
 
@@ -14482,13 +14565,13 @@ def _job_run(job_id, municipio, provincia="murcia"):
         contratos_umu = []
         contratos_age = []
         contratos_upct = []
+        contratos_ajenos = []
         if es_age_target:
             # 13-10-2026: una sola función reparte universidades, AGE y órganos de otros sitios (estos se descartan).
             partes = _separar_organos_no_municipales(municipio, contratos)
             contratos, contratos_umu, contratos_age, contratos_upct = (partes["propios"], partes["umu"], partes["age"],
                                                                        partes["upct"])
-            if partes["ajenos"]:
-                _log(job_id, f"  {len(partes['ajenos'])} contratos de órganos de otros municipios, descartados de '{municipio}'")
+            contratos_ajenos = partes["ajenos"]
 
         # Análisis de riesgo
         alertas = analizar_riesgo(contratos)
@@ -14522,6 +14605,9 @@ def _job_run(job_id, municipio, provincia="murcia"):
             _guardar_pseudo_municipio_age(municipio, contratos_age, job_id)
             _guardar_pseudo_municipio_umu(municipio, contratos_umu, job_id)
             _guardar_pseudo_municipio_upct(municipio, contratos_upct, job_id)
+            if contratos_ajenos:
+                entrega = _entregar_contratos_ajenos(municipio, provincia, contratos_ajenos, job_id)
+                _log(job_id, f"  {len(contratos_ajenos)} contratos de órganos de otros sitios salen de '{municipio}': {entrega}")
         _tf = _fase_tiempo("alertas_y_guardar", _tf)
 
         with _jobs_lock:
