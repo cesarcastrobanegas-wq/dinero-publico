@@ -24083,6 +24083,259 @@ _CASOS[1:1] = [{k: v for k, v in c.items() if k != "render"} for c in _CASOS_NUE
 _CASOS_RENDER_POR_SLUG = {c["slug"]: c["render"] for c in _CASOS_NUEVOS_20260930}
 
 
+# ─── BORRADORES de /casos sobre posibles fraccionamientos (2026-10-14, encargo de César; SIN PUBLICAR) ───────────────
+# Cuatro piezas a partir de la cola de revisión (regla fraccionamiento-v2). Cada contrato está comprobado uno a uno
+# contra su fuente oficial el 14-10-2026: el registro de contratos menores de PLACE (ficheros mensuales de
+# sindicación, mismo expediente, fecha, importe sin IVA, adjudicatario y objeto; el enlace es la ficha del contrato
+# en la Plataforma) y, para La Laguna, los listados anuales de contratos menores que publica el propio Ayuntamiento.
+#   - Sin publicar: no están en _CASOS (ni en /casos ni en el mapa del sitio). Se ven con /casos/<slug>?borrador=1,
+#     con aviso de borrador y noindex. Publicar = mover la entrada a _CASOS y su render a _CASOS_RENDER_POR_SLUG.
+#   - Lenguaje: «posible fraccionamiento», «indicio»; nunca fraude ni ilegalidad. En Utrera el adjudicatario de 2022
+#     es una persona física: no se nombra (la pieza va sobre el Ayuntamiento).
+_PLACE_DETALLE = "https://contrataciondelestado.es/wps/poc?uri=deeplink:detalle_licitacion&idEvl="
+
+
+def _eur_caso(x):
+    return f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €"
+
+
+def _tabla_contratos_caso(filas, total=True):
+    """filas: (fecha dd/mm/aaaa, expediente, objeto, importe sin IVA, enlace oficial o "")."""
+    cuerpo = "".join(
+        f"<tr><td>{esc(f)}</td><td>{esc(e)}</td><td>{esc(o)}</td>"
+        f'<td style="text-align:right;white-space:nowrap">{_eur_caso(i)}</td>'
+        f'<td>{(chr(60) + "a href=" + chr(34) + esc(u) + chr(34) + " target=" + chr(34) + "_blank" + chr(34) + " rel=" + chr(34) + "noopener" + chr(34) + ">ficha oficial ↗</a>") if u else ""}</td></tr>'
+        for f, e, o, i, u in filas)
+    pie = (f'<tr><td colspan="3"><strong>Total</strong></td><td style="text-align:right;white-space:nowrap">'
+           f'<strong>{_eur_caso(sum(x[3] for x in filas))}</strong></td><td></td></tr>') if total else ""
+    return (f'<div class="tbl-scroll"><table class="tabla-simple" style="width:100%;border-collapse:collapse;font-size:13px">'
+            f'<thead><tr><th style="text-align:left">Fecha</th><th style="text-align:left">Expediente</th>'
+            f'<th style="text-align:left">Objeto</th><th style="text-align:right">Importe sin IVA</th><th></th></tr></thead>'
+            f'<tbody>{cuerpo}{pie}</tbody></table></div>')
+
+
+_CASO_LEY_FRACCIONAMIENTO = """
+  <h2>Qué dice la ley</h2>
+  <p>Un contrato menor se puede adjudicar directamente, sin concurso, si no pasa de 40.000 € sin IVA en obras o de
+  15.000 € en servicios y suministros (artículo 118 de la Ley 9/2017 de Contratos del Sector Público). La misma ley
+  prohíbe dividir un contrato para quedarse por debajo de esos umbrales y evitar así la publicidad o el procedimiento
+  que le correspondería (artículo 99.2). Dividirlo sí está permitido cuando cada parte es una prestación distinta, o
+  cuando se licita por lotes.</p>"""
+
+_CASO_AVISO_INDICIO = """
+  <p><strong>Un indicio no es una irregularidad probada.</strong> Desde fuera solo vemos lo que se publica: fechas,
+  importes, objeto y adjudicatario. No vemos los informes que justifican cada contrato, que pueden explicar por qué se
+  tramitaron por separado. Lo contamos porque el patrón es exactamente el que la ley pide vigilar, no porque sepamos
+  que haya algo mal hecho. Si el Ayuntamiento quiere aportar contexto, lo añadiremos a esta pieza.</p>"""
+
+
+def _caso_borrador_pagina(og_path, titulo, cuerpo_html, description):
+    body = f"""<div class="static-page">
+  <p style="border:1px dashed var(--yellow);border-radius:8px;padding:8px 12px;font-size:13px">⚠️ Borrador sin
+  publicar: no aparece en /casos ni en buscadores.</p>
+  <h1>{esc(titulo)}</h1>
+{cuerpo_html}
+  <p style="font-size:13px;color:var(--dim)">Datos comprobados el 14 de octubre de 2026 en las fuentes oficiales
+  enlazadas.</p>
+  <p><a href="/casos">← Volver a Casos</a></p>
+</div>"""
+    return _page_shell(f"Caso: {titulo}", body, description=description, og_path=og_path,
+                       extra_head='<meta name="robots" content="noindex">')
+
+
+def render_caso_sarrion_html():
+    ficha = _enlace_ficha("Sarrión", "teruel", "Sarrión (Teruel)")
+    filas = [("06/05/2026", "193/2026", "Rehabilitación vivienda municipal, Avda. Goya nº 3", 38095.81,
+              _PLACE_DETALLE + "REapIzohRVYeC9GJQOEBkQ%3D%3D"),
+             ("06/05/2026", "195/2026", "Rehabilitación vivienda municipal, Avda. Goya nº 122", 35038.36,
+              _PLACE_DETALLE + "4cDsWXpkWDHkY6rls5tG9A%3D%3D"),
+             ("06/05/2026", "198/2026", "Rehabilitación vivienda municipal, Avda. Goya nº 126", 38080.00,
+              _PLACE_DETALLE + "zosXNdBl%2BPM7u6%2B%2FR7DUoA%3D%3D")]
+    cuerpo = f"""
+  <p>El 6 de mayo de 2026 la Alcaldía del Ayuntamiento de {ficha} adjudicó a la misma empresa, Construcciones
+  Gutiérrez Lizandra, S.L., tres contratos menores de obras para rehabilitar tres viviendas municipales de la
+  Avenida Goya. Los tres el mismo día y los tres por debajo del límite de 40.000 € de un contrato menor de obras.
+  Sumados, son <strong>111.214,17 € sin IVA</strong> (134.569,15 € con IVA).</p>
+{_tabla_contratos_caso(filas)}
+  <p>Dos de los tres se quedan a menos de 2.000 € del límite: 38.095,81 € y 38.080,00 €. Los expedientes van casi
+  seguidos (193, 195 y 198 de 2026).</p>
+{_CASO_LEY_FRACCIONAMIENTO}
+
+  <h2>Por qué es un indicio y no más</h2>
+  <p>Son tres viviendas distintas, en tres números de la misma avenida, y cada rehabilitación puede ser una obra
+  independiente con su propio proyecto. Si es así, tramitarlas por separado es correcto. Lo que hace que el caso
+  merezca atención es la coincidencia de todo lo demás: mismo día, mismo adjudicatario, mismo tipo de obra e importes
+  pegados al umbral. Con un solo contrato de 111.214 € habría hecho falta un procedimiento con publicidad y la
+  posibilidad de que otras empresas presentaran oferta.</p>
+
+  <h2>En contexto</h2>
+  <p>Construcciones Gutiérrez Lizandra ha recibido 11 contratos menores del Ayuntamiento de Sarrión desde 2024, por
+  202.600,49 € sin IVA en total: muros, pavimentos, aceras, cunetas y estas tres viviendas. De los 183 contratos
+  menores de Sarrión que recogemos, por 902.061 € sin IVA, esa empresa suma algo más de la quinta parte del importe.</p>
+{_CASO_AVISO_INDICIO}"""
+    return _caso_borrador_pagina("/casos/sarrion-viviendas-municipales-contratos-menores",
+                                 "Sarrión: tres viviendas municipales, tres contratos menores y un mismo día",
+                                 cuerpo,
+                                 "El Ayuntamiento de Sarrión adjudicó el mismo día a la misma empresa tres obras menores de "
+                                 "rehabilitación de viviendas municipales por 111.214 € sin IVA. Un posible fraccionamiento.")
+
+
+def render_caso_ourense_consernor_html():
+    ficha = _enlace_ficha("Ourense", "ourense")
+    filas = [("20/12/2024", "2023005924", "Accesibilidade na rúa da Canle (Roi Páez, praza de Sandiás, Ricardo "
+                                          "Courtier e Fonte do Monte)", 39976.25,
+              _PLACE_DETALLE + "AWi%2Bx9fcplhrSd8H4b2soA%3D%3D"),
+             ("20/12/2024", "2022041808", "Accesibilidade na rúa Poeta Manuel Antonio", 39991.47,
+              _PLACE_DETALLE + "6MTB%2FV8sQxaopEMYCmrbmw%3D%3D"),
+             ("20/12/2024", "2022034905", "Accesibilidade na intersección das rúas Zurbarán e Francisco de Moure",
+              33488.96, _PLACE_DETALLE + "p052ugZcOGoS7pcxhTeWOg%3D%3D"),
+             ("20/12/2024", "2022034904", "Accesibilidade na intersección das rúas Zurbarán e Picasso", 25459.94,
+              _PLACE_DETALLE + "Cqvj8hZ4EvlxseVhcqrkhw%3D%3D"),
+             ("20/12/2024", "2022034903", "Accesibilidade na intersección da rúa Ervedelo", 37072.19,
+              _PLACE_DETALLE + "5YQZ4cOQlU%2F%2B3JAijKO%2Bkg%3D%3D")]
+    cuerpo = f"""
+  <p>El 20 de diciembre de 2024 la Junta de Gobierno del Ayuntamiento de {ficha} adjudicó a Consernor, S.L. cinco
+  contratos menores de obras para mejorar la accesibilidad de varias calles. Los cinco el mismo día, todos por debajo
+  del límite de 40.000 € y sumados <strong>175.988,81 € sin IVA</strong> (212.946,46 € con IVA). Los objetos están
+  tal cual los publica el Ayuntamiento, en gallego.</p>
+{_tabla_contratos_caso(filas)}
+  <p>Dos de ellos se quedan a menos de 25 € del límite: 39.991,47 € (8,53 € por debajo) y 39.976,25 € (23,75 € por
+  debajo).</p>
+{_CASO_LEY_FRACCIONAMIENTO}
+
+  <h2>Por qué es un indicio y no más</h2>
+  <p>Son cinco calles distintas, y cada actuación puede ser una obra independiente. Hay además un detalle que juega a
+  favor de que se planearan por separado: los cinco expedientes se abrieron en momentos distintos, cuatro en 2022 y
+  uno en 2023, aunque todos se adjudicaron el mismo día de diciembre de 2024. Lo que llama la atención es el resto:
+  mismo adjudicatario, mismo tipo de obra, misma fecha e importes pegados al umbral. Juntas habrían necesitado una
+  licitación con publicidad, por lotes si se quería.</p>
+
+  <h2>No es la única vez</h2>
+  <p>El 21 de noviembre de 2022 el Ayuntamiento adjudicó a la misma empresa otras tres obras menores el mismo día, en
+  tres sitios distintos: 6.199,90 €, 34.831,60 € y 39.686,59 € sin IVA. En total, Consernor ha recibido 16 contratos
+  menores del Ayuntamiento de Ourense entre 2022 y 2025, por 400.261,71 € sin IVA. Es una parte pequeña del total:
+  Ourense suma 1.664 contratos menores y 16,7 millones de euros sin IVA en nuestros datos.</p>
+{_CASO_AVISO_INDICIO}"""
+    return _caso_borrador_pagina("/casos/ourense-obras-accesibilidad-mismo-dia",
+                                 "Ourense: cinco obras de accesibilidad, una empresa y un mismo día",
+                                 cuerpo,
+                                 "La Junta de Gobierno de Ourense adjudicó el mismo día a Consernor cinco obras menores de "
+                                 "accesibilidad por 175.989 € sin IVA, dos de ellas a menos de 25 € del límite legal.")
+
+
+def render_caso_la_laguna_campamentos_html():
+    ficha = _enlace_ficha("San Cristóbal de La Laguna", "santa_cruz_tenerife", "San Cristóbal de La Laguna")
+    x22 = ("https://www.aytolalaguna.es/CDN/files/ayuntamiento/presupuestos-y-finanzas/contratos-menores/"
+           "contratos-menores-2022/Contratos-menores-Ayuntamiento-2022.xlsx")
+    x25 = ("https://www.aytolalaguna.es/CDN/files/ayuntamiento/.galleries/DOCUMENTOS-Presupuestos-y-Finanzas/"
+           "Contratos-Menores/2025/Contratos_Menores_Transparencia_Ayto.xlsx")
+    filas22 = [("18/07/2022", "2022034478", "Talleres sobre reducción de las desigualdades, zona de La Cuesta", 14990.0, x22),
+               ("18/07/2022", "2022034459", "Campamento sobre salud y bienestar, zona costa del municipio", 14990.0, x22),
+               ("18/07/2022", "2022034501", "Producción y consumo responsable, zona casco del municipio", 14990.0, x22),
+               ("18/07/2022", "2022034502", "Campamento urbano Acción por el clima, zona de La Verdellada", 14990.0, x22)]
+    filas25 = [("02/06/2025", "2025024086", "Campamento urbano «Salud y bienestar»", 14750.0, x25),
+               ("03/06/2025", "2025024085", "Campamento urbano «Acción por el clima»", 14750.0, x25),
+               ("03/06/2025", "2025024090", "Campamento urbano «Reducción desigualdad social»", 14750.0, x25),
+               ("12/06/2025", "2025024087", "Campamento urbano «Producción y consumo responsable»", 14750.0, x25)]
+    cuerpo = f"""
+  <p>El 18 de julio de 2022 el Ayuntamiento de {ficha} adjudicó a la Asociación Campamento Garabato cuatro contratos
+  menores de servicios para organizar actividades de verano, en julio y agosto, para grupos de 30 menores de 5 a 12
+  años en cuatro zonas del municipio. Los cuatro, el mismo día y por el mismo importe: <strong>14.990 €</strong>, 10 €
+  por debajo del límite de 15.000 € de un contrato menor de servicios. Sumados, 59.960 €. El listado oficial del
+  Ayuntamiento los registra con 0 € de IGIC y el código CPV 55243000 (servicios de campamentos de vacaciones para
+  niños).</p>
+{_tabla_contratos_caso(filas22)}
+
+  <h2>Tres años después, lo mismo</h2>
+  <p>En junio de 2025 la asociación volvió a recibir cuatro contratos menores con los mismos cuatro temas («Salud y
+  bienestar», «Acción por el clima», reducción de la desigualdad y producción y consumo responsable), esta vez a
+  14.750 € cada uno, 250 € por debajo del límite, y con expedientes casi consecutivos. Sumados, 59.000 €.</p>
+{_tabla_contratos_caso(filas25)}
+  <p>Desde 2021, la asociación suma 10 contratos menores con el Ayuntamiento, por 139.885 €.</p>
+{_CASO_LEY_FRACCIONAMIENTO}
+
+  <h2>Por qué es un indicio y no más</h2>
+  <p>Cada contrato tiene su tema y, en 2022, su barrio y su grupo de menores. Puede defenderse que son cuatro servicios
+  distintos. Pero el adjudicatario, la fecha, el código del servicio y el importe son los mismos, cada importe se queda
+  a un paso del umbral y el conjunto se repite de un año a otro. Un servicio que se presta todos los veranos y que en
+  total ronda los 60.000 € es lo que la ley prevé licitar, aunque sea por lotes. Con contratos menores, otras entidades
+  no tienen ocasión de presentar oferta.</p>
+{_CASO_AVISO_INDICIO}"""
+    return _caso_borrador_pagina("/casos/la-laguna-campamentos-verano-14990",
+                                 "Cuatro campamentos a 14.990 €: los veranos de La Laguna",
+                                 cuerpo,
+                                 "La Laguna adjudicó el mismo día a la misma asociación cuatro campamentos de verano a "
+                                 "14.990 €, 10 € por debajo del límite legal, y repitió el esquema en 2025.")
+
+
+def render_caso_utrera_piscinas_html():
+    ficha = _enlace_ficha("Utrera", "sevilla")
+    pd = _PLACE_DETALLE
+    filas = [
+        ("23/06/2022", "3569/2022", "Piscina municipal de Trajano", 13900.00, pd + "sYXa6RtoZlBvYnTkQN0%2FZA%3D%3D"),
+        ("23/06/2022", "3580/2022", "Piscina municipal de Pinzón", 13900.00, pd + "ml7lC4RpBPqrz3GQd5r6SQ%3D%3D"),
+        ("23/06/2022", "3579/2022", "Piscina municipal de Guadalema de los Quintero", 14250.00, pd + "z4HR3XFdDJamq21uxhbaVQ%3D%3D"),
+        ("13/06/2023", "3252/2023", "Piscina municipal de Pinzón", 14899.28, pd + "uyiAV8YjxczpxJFXpLZ%2B2A%3D%3D"),
+        ("13/06/2023", "3253/2023", "Piscina municipal de Trajano", 14899.28, pd + "t2Twf0E%2FQ8ucCF8sV%2BqtYA%3D%3D"),
+        ("13/06/2023", "3254/2023", "Piscina municipal de Guadalema de los Quintero", 14899.28, pd + "7hWLn3%2BGpLHmnwcj%2BxbdTg%3D%3D"),
+        ("17/06/2024", "4039/2024", "Piscina municipal de Guadalema de los Quintero", 14933.88, pd + "6f2HCB6YZ0KKeVWTb9Scog%3D%3D"),
+        ("17/06/2024", "4038/2024", "Piscina municipal de Pinzón", 14950.00, pd + "%2BBVOBotVUw6Izo3LHNPGcQ%3D%3D"),
+        ("03/07/2024", "4416/2024", "Piscina municipal de Trajano", 14870.01, pd + "EwAEoJtQyrXIGlsa0Wad%2Bw%3D%3D"),
+        ("17/06/2025", "4410/2025", "Piscina municipal «de Utrera» (así figura)", 14970.01, pd + "JpGoc3655MrE6P%2FuLemXRw%3D%3D"),
+        ("18/06/2025", "4443/2025", "Piscina municipal de Pinzón", 14132.23, pd + "%2BbMLyyueZtGP%2Bo96UAV7cQ%3D%3D"),
+        ("18/06/2025", "4444/2025", "Piscina municipal de Guadalema de los Quintero", 14132.23, pd + "OstScpAeSojN3k3tjedSGw%3D%3D")]
+    cuerpo = f"""
+  <p>Cada verano, el Ayuntamiento de {ficha} abre las piscinas municipales de sus pedanías: Trajano, Pinzón y
+  Guadalema de los Quintero. Y cada verano contrata su funcionamiento (mantenimiento, salvamento y socorrismo,
+  taquilla y control de acceso, y en algunos años también la limpieza) con contratos menores, uno por piscina,
+  adjudicados el mismo día o con pocos días de diferencia y todos justo por debajo del límite de 15.000 € sin IVA de
+  un contrato menor de servicios.</p>
+{_tabla_contratos_caso(filas, total=False)}
+  <p>Sumados por temporada: <strong>42.050 €</strong> en 2022, <strong>44.697,84 €</strong> en 2023,
+  <strong>44.753,89 €</strong> en 2024 y <strong>43.234,47 €</strong> en 2025, siempre sin IVA. Los expedientes de
+  cada año van casi seguidos. En 2022 los tres contratos fueron a la misma persona; en 2023, a la misma empresa; en
+  2024 y 2025 se repartieron entre varias empresas. Aparte, en 2024 y 2025 hubo otro contrato menor para la limpieza
+  de vestuarios y zonas de pradera de las tres piscinas (11.500 € y 14.968,26 €), y cada temporada otro para los
+  productos químicos de las tres.</p>
+{_CASO_LEY_FRACCIONAMIENTO}
+
+  <h2>Por qué es un indicio y no más</h2>
+  <p>Son tres piscinas en tres núcleos de población distintos, y cada una puede gestionarse por separado. Pero el
+  servicio es el mismo, se repite todos los veranos, se adjudica en bloque y cada contrato queda a muy poco del
+  umbral. Un servicio recurrente que cada temporada ronda los 45.000 € es lo que la ley prevé licitar con publicidad,
+  aunque sea dividido en lotes por piscina. En 2026 el esquema siguió con contratos menores más pequeños: tres de
+  7.024,79 € para el socorrismo de cada piscina y otro para la limpieza.</p>
+  <p>Esta pieza trata de cómo contrata el Ayuntamiento, no de quién presta el servicio: los adjudicatarios cumplen el
+  contrato que se les encarga.</p>
+{_CASO_AVISO_INDICIO}"""
+    return _caso_borrador_pagina("/casos/utrera-piscinas-pedanias-contratos-menores",
+                                 "Las piscinas de las pedanías de Utrera: cada verano, contratos justo por debajo de 15.000 €",
+                                 cuerpo,
+                                 "Cada verano desde 2022, Utrera contrata el funcionamiento de las piscinas de sus pedanías "
+                                 "con un contrato menor por piscina, todos justo por debajo del límite de 15.000 € sin IVA.")
+
+
+_CASOS_BORRADOR_20261014 = [
+    {"slug": "sarrion-viviendas-municipales-contratos-menores", "render": render_caso_sarrion_html,
+     "titulo": "Sarrión: tres viviendas municipales, tres contratos menores y un mismo día",
+     "resumen": "Tres obras de rehabilitación a la misma empresa, el mismo día, por 111.214 € sin IVA, cada una por "
+                "debajo del límite de 40.000 €."},
+    {"slug": "ourense-obras-accesibilidad-mismo-dia", "render": render_caso_ourense_consernor_html,
+     "titulo": "Ourense: cinco obras de accesibilidad, una empresa y un mismo día",
+     "resumen": "Cinco obras menores a Consernor el 20 de diciembre de 2024, por 175.989 € sin IVA; dos se quedan a "
+                "menos de 25 € del límite legal."},
+    {"slug": "la-laguna-campamentos-verano-14990", "render": render_caso_la_laguna_campamentos_html,
+     "titulo": "Cuatro campamentos a 14.990 €: los veranos de La Laguna",
+     "resumen": "Cuatro campamentos de verano a la misma asociación, el mismo día, a 10 € del límite; en 2025, el "
+                "mismo esquema a 14.750 €."},
+    {"slug": "utrera-piscinas-pedanias-contratos-menores", "render": render_caso_utrera_piscinas_html,
+     "titulo": "Las piscinas de las pedanías de Utrera: cada verano, contratos justo por debajo de 15.000 €",
+     "resumen": "Cada verano, un contrato menor por piscina, todos justo por debajo del límite, por unos 45.000 € "
+                "por temporada."},
+]
+_CASOS_BORRADOR_POR_SLUG = {c["slug"]: c["render"] for c in _CASOS_BORRADOR_20261014}
+
+
 # ─── TRADUCCIONES DE /casos (2026-10-01, encargo de César: BORRADOR gl/ca/eu, sin publicar) ─────────────────────────
 # backend/casos_i18n/<idioma>/<slug>.html: primera línea "<!-- description: ... -->" y después el cuerpo de la pieza
 # desde el <h1> (sin botones de compartir ni "volver"), con los mismos enlaces que el original.
@@ -26387,6 +26640,9 @@ def _route_get(path, qs, gzip_ok=False):
         _tr = _caso_traducido_html(path[len("/casos/"):], qs)      # borrador/traducción publicada (gl/ca/eu)
         if _tr:
             return _resp(_tr, gzip_ok=gzip_ok)
+    if (path.startswith("/casos/") and path[len("/casos/"):] in _CASOS_BORRADOR_POR_SLUG
+            and qs.get("borrador", [""])[0] == "1"):
+        return _resp(_CASOS_BORRADOR_POR_SLUG[path[len("/casos/"):]](), gzip_ok=gzip_ok)    # borrador sin publicar
     if path.startswith("/casos/") and path[len("/casos/"):] in _CASOS_RENDER_POR_SLUG:
         return _resp(_CASOS_RENDER_POR_SLUG[path[len("/casos/"):]](), gzip_ok=gzip_ok)
 
