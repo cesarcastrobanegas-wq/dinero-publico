@@ -5130,10 +5130,21 @@ INDICE_CARGOS_PUBLICOS = _construir_indice_cargos_publicos()
 SUELDOS_CONCEJALES = _cargar_sueldos_concejales()
 
 
+_PARTICULAS_NOMBRE = {"de", "del", "la", "las", "los", "y", "i", "e", "da", "das", "do", "dos"}
+
+
 def _capitalizar_nombre(s):
     """Los nombres del Ministerio vienen en mayúsculas (NOMBRE APELLIDO1
-    APELLIDO2); formato legible tipo 'Nombre Apellido'."""
-    return " ".join(p.capitalize() for p in (s or "").split())
+    APELLIDO2); formato legible tipo 'Nombre Apellido'. Mayúscula también tras guion o apóstrofo
+    ("Martínez-Almeida", "D'Ors") y partículas en minúscula dentro del nombre ("Juan de la Cierva"); repaso para la
+    Cámara de Comercio, 2026-10-14: la ficha de Madrid decía "Martínez-almeida"."""
+    palabras = (s or "").split()
+
+    def una(i, p):
+        if i and p.lower() in _PARTICULAS_NOMBRE:
+            return p.lower()
+        return re.sub(r"[^\W\d_]+", lambda m: m.group(0).capitalize(), p)
+    return " ".join(una(i, p) for i, p in enumerate(palabras))
 
 
 # Relevos en la alcaldía que el registro oficial de cargos (concejales.redsara.es) todavía no recoge. Mientras el
