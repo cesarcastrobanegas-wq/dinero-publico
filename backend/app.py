@@ -18275,11 +18275,13 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
 
     est = c.get("estado", "")
     est_label = _estado_txt({"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(est, est))
-    url = c.get("url", "")
+    # Las direcciones de PLACE llegan del feed con "&amp;" y se guardan así: sin descodificarlas, esc() las dejaba en
+    # "&amp;amp;" y el enlace abría una ficha vacía de PLACE (repaso para la Cámara de Comercio, 2026-10-14).
+    url = html.unescape(c.get("url", "") or "")
     fuente = c.get("fuente", "PLACE")
 
     if fuente == "BORM":
-        borm_html_url = c.get("borm_html_url", "")
+        borm_html_url = html.unescape(c.get("borm_html_url", "") or "")
         html_link = (f' <a class="link borm-link" href="{esc(borm_html_url)}" target="_blank" '
                      f'title="{_t("Ver HTML en BORM")}">{_t("HTML ↗")}</a>') if borm_html_url else ""
         link_html = (f'<a class="link borm-link" href="{esc(url)}" target="_blank" '
