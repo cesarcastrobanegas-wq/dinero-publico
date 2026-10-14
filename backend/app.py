@@ -11849,6 +11849,45 @@ def _retirar_duplicados_place(propios):
         _retirar_nombre_cortado(fuentes_nombre)
 
 
+# Repetidos DENTRO del feed de PLACE (decisión de César, 14-10-2026): mismo municipio, NIF, importe, fecha y objeto, y
+# el mismo expediente (o el mismo con un sufijo tipo «bis»). Es el mismo contrato publicado dos veces; al volver a
+# publicarse cambia a menudo el órgano dentro del mismo ayuntamiento ("Junta de Gobierno" / "Alcaldía"), así que el
+# órgano no se exige igual. La base no guarda el expediente de los menores: la lista sale de los ZIP oficiales
+# (backend/place_menores_duplicados.json, solo identificadores de PLACE) y el generador ya no los vuelve a traer.
+# Se ARCHIVAN (contratos_menors_archivo), no se borran, y solo si la fila que se queda sigue existiendo.
+PLACE_MENORES_DUPLICADOS_FILE = os.path.join(BASE_DIR, "place_menores_duplicados.json")
+
+
+def _archivar_duplicados_feed_place():
+    """Idempotente: archiva las filas sobrantes de la lista que sigan visibles. Devuelve cuántas."""
+    if not _DISCO_CONFIABLE or not os.path.exists(PLACE_MENORES_DUPLICADOS_FILE):
+        return 0
+    with open(PLACE_MENORES_DUPLICADOS_FILE, encoding="utf-8") as f:
+        sobrantes = json.load(f).get("sobrantes", {})
+    if not sobrantes:
+        return 0
+    with _db_lock:
+        def existentes(tabla, ids):
+            out = set()
+            ids = list(ids)
+            for i in range(0, len(ids), 500):
+                lote = ids[i:i + 500]
+                try:
+                    out.update(r[0] for r in _db.execute(
+                        f"SELECT id FROM {tabla} WHERE id IN ({','.join('?' * len(lote))})", lote))
+                except sqlite3.OperationalError:          # sin tabla de archivo todavía
+                    pass
+            return out
+        visibles = existentes("contratos_menors_locales", set(sobrantes) | {v["se_queda"] for v in sobrantes.values()})
+        archivadas = existentes("contratos_menors_archivo", {v["se_queda"] for v in sobrantes.values()})
+        retirar = [i for i, v in sobrantes.items() if i in visibles and v["se_queda"] != i
+                   and (v["se_queda"] in visibles or v["se_queda"] in archivadas)]
+        _archivar_filas_cm(retirar)
+    if retirar:
+        print(f"[menores] repetidos del feed de PLACE: {len(retirar)} filas archivadas (mismo expediente)", flush=True)
+    return len(retirar)
+
+
 _PLACE_MENORES_CLAVE = "contratos_menores_place_hash"
 _place_menores_lock = threading.Lock()     # una sola carga a la vez (se lanza en hilo desde _inicializar_datos)
 
@@ -16410,6 +16449,10 @@ def _carga_place_menores():
     arranque pasa de --timeout (300 s); lanzado antes, además, frenaba el resto del arranque (GIL). En los arranques
     siguientes la huella no cambia y termina en menos de un segundo."""
     _cargar_contratos_menores_place()
+    try:
+        _archivar_duplicados_feed_place()    # idempotente; ver PLACE_MENORES_DUPLICADOS_FILE
+    except Exception as e:
+        print(f"[menores] repetidos del feed: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
     _recasar_governalia_ventana_larga()      # una sola vez (marca en settings); ver _GOVERNALIA_DIAS_EXTRA
     if _DISCO_CONFIABLE:
         try:

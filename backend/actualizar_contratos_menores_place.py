@@ -173,6 +173,7 @@ def parsear(e):
         "nif_adj": _g(r"<cac:PartyIdentification>\s*<cbc:ID[^>]*>([^<]+)</cbc:ID>", wp),
         "tipo": TIPOS.get(_g(r"<cbc:TypeCode[^>]*>([^<]+)</cbc:TypeCode>", pp), ""),
         "cpv": _g(r"<cbc:ItemClassificationCode[^>]*>([^<]+)</cbc:ItemClassificationCode>", pp),
+        "exp": _g(r"<cbc:ContractFolderID>([^<]+)</cbc:ContractFolderID>", e).strip(),
     }
 
 
@@ -372,6 +373,35 @@ def fase_generar(meses, zips, A):
             sin[etiqueta] += 1
     log(f"asignación: {dict(est)}")
     log(f"sin asignar (top 40): {sin.most_common(40)}")
+
+    # Repetidos dentro del propio feed (decisión de César, 14-10-2026): mismo municipio, NIF, importe, fecha y objeto,
+    # y el mismo expediente o el mismo con un sufijo («bis»): es el mismo contrato publicado dos veces. Se queda la
+    # versión actualizada más tarde. El órgano no se exige igual (al republicarse cambia dentro del mismo ayuntamiento).
+    def _nexp(x):
+        return re.sub(r"[^A-Z0-9]", "", (x or "").upper())
+
+    def _mismo_exp(a, b):
+        a, b = _nexp(a), _nexp(b)
+        if not a or not b:
+            return False
+        c, l = sorted((a, b), key=len)
+        return a == b or (len(c) >= 4 and l.startswith(c))
+    racimos = collections.defaultdict(list)
+    for k, (m, prov) in asignado.items():
+        r = ultimo[k]
+        racimos[(m, prov, re.sub(r"[^A-Z0-9]", "", (r["nif_adj"] or "").upper()), r["sin_iva"], r["fecha"], r["titulo"])].append(k)
+    repetidos = 0
+    for clave, ks in racimos.items():
+        if len(ks) < 2 or not clave[2]:
+            continue
+        quedan = []
+        for k in sorted(ks, key=lambda k: ultimo[k]["updated"], reverse=True):
+            if any(_mismo_exp(ultimo[k].get("exp"), ultimo[q].get("exp")) for q in quedan):
+                asignado.pop(k, None)
+                repetidos += 1
+            else:
+                quedan.append(k)
+    log(f"repetidos dentro del feed (mismo expediente o con sufijo): {repetidos} descartados")
 
     por_anio = collections.defaultdict(list)
     fuera = collections.Counter()
