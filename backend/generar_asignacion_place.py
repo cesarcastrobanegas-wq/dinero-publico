@@ -15,6 +15,11 @@ Deja en --salida:
   prov/<provincia>.json.gz  paso 4: {"municipios": {municipio: [contratos]}} con los contratos de las licitaciones que
                             GANAN municipio, en el formato de backfill_formales_place_prov (lo aplica la web con
                             _aplicar_backfill_formales_place). Llevan adjudicatarios: NO van en el artefacto en claro.
+  ent/<provincia>.json.gz   paso 5: {"entidades": {clave: {"tipo", "nombre", "provincia", "contratos": [...]}}} con los
+                            contratos de las ENTIDADES PROPIAS (diputaciones, cabildos, mancomunidades, consorcios...),
+                            agrupados por la provincia de la entidad (la de su jerarquía o, si no la trae, la de los
+                            códigos postales de sus contratos; "sin_provincia" si no hay ninguna). Los aplica la web
+                            con _aplicar_entidades_locales. Llevan adjudicatarios: tampoco van en el artefacto.
 
 Se procesa del mes más reciente al más antiguo: de cada licitación vale su estado más reciente.
 
@@ -25,6 +30,7 @@ import collections
 import gzip
 import json
 import os
+import re
 import sys
 import tempfile
 import time
@@ -41,6 +47,12 @@ def escribir(ruta, datos):
     with gzip.open(tmp, "wt", encoding="utf-8", compresslevel=6) as f:
         json.dump(datos, f, ensure_ascii=False, separators=(",", ":"))
     os.replace(tmp, ruta)
+
+
+def clave_entidad(A, provincia, nombre):
+    """Clave estable de una entidad propia: provincia + nombre normalizado (la misma que calcula la web)."""
+    import re
+    return f"{provincia or 'sin_provincia'}:" + re.sub(r"[^a-z0-9]+", "-", A.normalizar(nombre)).strip("-")[:120]
 
 
 def meses_atras(desde, hasta):
@@ -185,6 +197,7 @@ def main():
     det = collections.defaultdict(lambda: collections.defaultdict(collections.Counter))   # para revisar a mano
     cambian, pierden, sin_destino = collections.Counter(), collections.Counter(), collections.Counter()
     entes = collections.defaultdict(lambda: [0, 0.0])     # entes asignados a un municipio (para revisar a mano)
+    prov_jer = collections.defaultdict(collections.Counter)  # (tipo, entidad) -> provincias que da su jerarquía
     for r in regs:
         x, act = res[r["id"]], {tuple(a) for a in r["act"]}
         nuevo = (x["prov"], x["muni"]) if x["destino"] == "municipio" else None
@@ -211,6 +224,11 @@ def main():
                 imp_gana[nuevo] += r["imp"]
                 municipios[r["id"]] = [nuevo[0], nuevo[1], x["via"]]
         elif x["destino"] == "entidad":
+            for nodo in r["padres"]:
+                pv = asg.asg.provincia(nodo) or asg.asg.provincia(re.sub(r"^diputacion( provincial| foral)? de ", "", asg.norm(nodo)))
+                if pv:
+                    prov_jer[(x["tipo"], x["entidad"])][pv] += 1
+                    break
             tipos[x["tipo"]] += 1
             ents[(x["tipo"], x["entidad"])][0] += 1
             ents[(x["tipo"], x["entidad"])][1] += r["imp"]
@@ -245,6 +263,41 @@ def main():
         escribir(os.path.join(dir_prov, f"{prov}.json.gz"), {"municipios": munis})
     log(f"paso 4: {n_con:,} contratos de {len(municipios):,} licitaciones en {len(por_prov)} provincias")
     del por_prov
+    # paso 5: contratos de las entidades propias, un fichero por provincia de la entidad
+    prefijo_cp = {}
+    for pv, pref in A._CP_PREFIJO_PROVINCIA.items():
+        for x in (pref if isinstance(pref, tuple) else (pref,)):
+            prefijo_cp[x] = pv
+    cs_ent, prov_cp = collections.defaultdict(list), collections.defaultdict(collections.Counter)
+    for m in hechos:
+        for id_lic, cs in leer(ruta_con(m)).items():
+            if id_lic in entidades:
+                k = tuple(entidades[id_lic][:2])
+                cs_ent[k].extend(cs)
+                for c in cs:
+                    cp = (c.get("cp") or "").strip()
+                    if len(cp) == 5 and cp[:2] in prefijo_cp:
+                        prov_cp[k][prefijo_cp[cp[:2]]] += 1
+    por_prov_ent = collections.defaultdict(dict)
+    sin_contratos = 0
+    for k in ents:
+        if not cs_ent.get(k):
+            sin_contratos += 1
+            continue
+        votos = prov_jer.get(k) or prov_cp.get(k)
+        prov = votos.most_common(1)[0][0] if votos else ""
+        por_prov_ent[prov or "sin_provincia"][clave_entidad(A, prov, k[1])] = {
+            "tipo": k[0], "nombre": k[1], "provincia": prov, "contratos": cs_ent[k]}
+    dir_ent = os.path.join(salida, "ent")
+    os.makedirs(dir_ent, exist_ok=True)
+    for viejo in os.listdir(dir_ent):
+        os.remove(os.path.join(dir_ent, viejo))
+    for prov, ents_prov in por_prov_ent.items():
+        escribir(os.path.join(dir_ent, f"{prov}.json.gz"), {"entidades": ents_prov})
+    log(f"paso 5: {sum(len(v['contratos']) for e in por_prov_ent.values() for v in e.values()):,} contratos de "
+        f"{sum(len(e) for e in por_prov_ent.values()):,} entidades propias en {len(por_prov_ent)} ficheros "
+        f"({len(por_prov_ent.get('sin_provincia', {})):,} sin provincia; {sin_contratos:,} entidades sin contratos guardados)")
+    del cs_ent, por_prov_ent
     with open(os.path.join(salida, "asignacion_place_entidades.json"), "w", encoding="utf-8") as f:
         json.dump([{"tipo": k[0], "entidad": k[1], "licitaciones": v[0], "importe": round(v[1], 2),
                     **{campo: [a for a, _ in det[k][campo].most_common(3)] for campo in ("organos", "jerarquia", "ciudad", "dir3", "nif")}}
