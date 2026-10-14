@@ -10300,6 +10300,9 @@ def _entidad_de_organo(organo, provincia):
         if not m or not m.end():
             break
         nombre = nombre[m.end():].strip()
+    if nombre.isupper():                     # "CONCEJO DE BIGÜEZAL" -> "Concejo de Bigüezal"
+        nombre = " ".join(w.lower() if w.lower() in ("de", "del", "la", "las", "los", "el", "y", "e", "i") else w.capitalize()
+                          for w in nombre.split())
     return (tipo, nombre[:1].upper() + nombre[1:])
 
 

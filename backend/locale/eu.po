@@ -3017,6 +3017,94 @@ msgstr "Esteka baliogabea"
 msgid "Este enlace no es válido o ha caducado."
 msgstr "Esteka hau ez da baliozkoa edo iraungi da."
 
+#: app.py (fase 2, entidades locales)
+msgid "Entidad no encontrada"
+msgstr "Ez da entitatea aurkitu"
+
+#: app.py (fase 2, entidades locales)
+msgid "Ver las entidades locales"
+msgstr "Ikusi toki-erakundeak"
+
+#: app.py (fase 2, entidades locales)
+msgid "Sin contratos adjudicados encontrados"
+msgstr "Ez da esleitutako kontraturik aurkitu"
+
+#: app.py (fase 2, entidades locales)
+msgid "Empresas adjudicatarias"
+msgstr "Enpresa esleipendunak"
+
+#: app.py (fase 2, entidades locales)
+msgid "Esta entidad no es un ayuntamiento: sus contratos no se suman a ningún municipio ni cuentan en el Índice de Transparencia."
+msgstr "Erakunde hau ez da udal bat: bere kontratuak ez zaizkio inongo udalerriri gehitzen, eta ez dira kontuan hartzen Gardentasun Indizean."
+
+#: app.py (fase 2, entidades locales)
+msgid "Contratos formales de la Plataforma de Contratación del Sector Público, asignados a la entidad por la jerarquía oficial de su órgano y su código DIR3."
+msgstr "Sektore Publikoko Kontratazio Plataformako kontratu formalak, erakundeari esleituak bere organoaren hierarkia ofizialaren eta DIR3 kodearen arabera."
+
+#: app.py (fase 2, entidades locales)
+msgid "Contratos públicos de {nombre}."
+msgstr "Kontratu publikoak: {nombre}."
+
+#: app.py (fase 2, entidades locales)
+msgid "Elige una provincia."
+msgstr "Aukeratu probintzia bat."
+
+#: app.py (fase 2, entidades locales)
+msgid "Todavía no hay entidades locales cargadas."
+msgstr "Oraindik ez dago toki-erakunderik kargatuta."
+
+#: app.py (fase 2, entidades locales)
+msgid "Entidades locales que no son un municipio"
+msgstr "Udalerri ez diren toki-erakundeak"
+
+#: app.py (fase 2, entidades locales)
+msgid "Diputaciones, cabildos y consells, mancomunidades, consorcios, comarcas, entidades locales menores y empresas de varios municipios. Cada una tiene su ficha con sus contratos; no se comparan entre sí ni entran en el Índice de Transparencia."
+msgstr "Foru aldundiak eta diputazioak, kabildoak eta kontseiluak, mankomunitateak, partzuergoak, eskualdeak, toki-erakunde txikiak eta hainbat udalerritako enpresak. Bakoitzak bere fitxa du, bere kontratuekin; ez dira elkarren artean alderatzen, eta ez dira Gardentasun Indizean sartzen."
+
+#: app.py (fase 2, entidades locales)
+msgid "Sin provincia"
+msgstr "Probintziarik gabe"
+
+#: app.py (fase 2, entidades locales)
+msgid "Diputación"
+msgstr "Diputazioa"
+
+#: app.py (fase 2, entidades locales)
+msgid "Cabildo o consell insular"
+msgstr "Kabildoa edo uharte-kontseilua"
+
+#: app.py (fase 2, entidades locales)
+msgid "Mancomunidad"
+msgstr "Mankomunitatea"
+
+#: app.py (fase 2, entidades locales)
+msgid "Consorcio"
+msgstr "Partzuergoa"
+
+#: app.py (fase 2, entidades locales)
+msgid "Comarca"
+msgstr "Eskualdea"
+
+#: app.py (fase 2, entidades locales)
+msgid "Área metropolitana"
+msgstr "Metropoli-eremua"
+
+#: app.py (fase 2, entidades locales)
+msgid "Entidad local menor"
+msgstr "Toki-erakunde txikia"
+
+#: app.py (fase 2, entidades locales)
+msgid "Agrupación local"
+msgstr "Toki-elkartea"
+
+#: app.py (fase 2, entidades locales)
+msgid "Federación de municipios"
+msgstr "Udalerrien federazioa"
+
+#: app.py (fase 2, entidades locales)
+msgid "Empresa o fundación de varios municipios"
+msgstr "Hainbat udalerritako enpresa edo fundazioa"
+
 #~ msgid "El mayor contrato adjudicado"
 #~ msgstr "Esleitutako kontraturik handiena"
 

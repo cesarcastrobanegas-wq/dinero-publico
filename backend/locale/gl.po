@@ -3017,6 +3017,94 @@ msgstr "Ligazón non válida"
 msgid "Este enlace no es válido o ha caducado."
 msgstr "Esta ligazón non é válida ou caducou."
 
+#: app.py (fase 2, entidades locales)
+msgid "Entidad no encontrada"
+msgstr "Entidade non atopada"
+
+#: app.py (fase 2, entidades locales)
+msgid "Ver las entidades locales"
+msgstr "Ver as entidades locais"
+
+#: app.py (fase 2, entidades locales)
+msgid "Sin contratos adjudicados encontrados"
+msgstr "Non se atoparon contratos adxudicados"
+
+#: app.py (fase 2, entidades locales)
+msgid "Empresas adjudicatarias"
+msgstr "Empresas adxudicatarias"
+
+#: app.py (fase 2, entidades locales)
+msgid "Esta entidad no es un ayuntamiento: sus contratos no se suman a ningún municipio ni cuentan en el Índice de Transparencia."
+msgstr "Esta entidade non é un concello: os seus contratos non se suman a ningún municipio nin contan no Índice de Transparencia."
+
+#: app.py (fase 2, entidades locales)
+msgid "Contratos formales de la Plataforma de Contratación del Sector Público, asignados a la entidad por la jerarquía oficial de su órgano y su código DIR3."
+msgstr "Contratos formais da Plataforma de Contratación do Sector Público, asignados á entidade pola xerarquía oficial do seu órgano e o seu código DIR3."
+
+#: app.py (fase 2, entidades locales)
+msgid "Contratos públicos de {nombre}."
+msgstr "Contratos públicos de {nombre}."
+
+#: app.py (fase 2, entidades locales)
+msgid "Elige una provincia."
+msgstr "Escolle unha provincia."
+
+#: app.py (fase 2, entidades locales)
+msgid "Todavía no hay entidades locales cargadas."
+msgstr "Aínda non hai entidades locais cargadas."
+
+#: app.py (fase 2, entidades locales)
+msgid "Entidades locales que no son un municipio"
+msgstr "Entidades locais que non son un municipio"
+
+#: app.py (fase 2, entidades locales)
+msgid "Diputaciones, cabildos y consells, mancomunidades, consorcios, comarcas, entidades locales menores y empresas de varios municipios. Cada una tiene su ficha con sus contratos; no se comparan entre sí ni entran en el Índice de Transparencia."
+msgstr "Deputacións, cabidos e consells, mancomunidades, consorcios, comarcas, entidades locais menores e empresas de varios municipios. Cada unha ten a súa ficha cos seus contratos; non se comparan entre si nin entran no Índice de Transparencia."
+
+#: app.py (fase 2, entidades locales)
+msgid "Sin provincia"
+msgstr "Sen provincia"
+
+#: app.py (fase 2, entidades locales)
+msgid "Diputación"
+msgstr "Deputación"
+
+#: app.py (fase 2, entidades locales)
+msgid "Cabildo o consell insular"
+msgstr "Cabido ou consell insular"
+
+#: app.py (fase 2, entidades locales)
+msgid "Mancomunidad"
+msgstr "Mancomunidade"
+
+#: app.py (fase 2, entidades locales)
+msgid "Consorcio"
+msgstr "Consorcio"
+
+#: app.py (fase 2, entidades locales)
+msgid "Comarca"
+msgstr "Comarca"
+
+#: app.py (fase 2, entidades locales)
+msgid "Área metropolitana"
+msgstr "Área metropolitana"
+
+#: app.py (fase 2, entidades locales)
+msgid "Entidad local menor"
+msgstr "Entidade local menor"
+
+#: app.py (fase 2, entidades locales)
+msgid "Agrupación local"
+msgstr "Agrupación local"
+
+#: app.py (fase 2, entidades locales)
+msgid "Federación de municipios"
+msgstr "Federación de municipios"
+
+#: app.py (fase 2, entidades locales)
+msgid "Empresa o fundación de varios municipios"
+msgstr "Empresa ou fundación de varios municipios"
+
 #~ msgid "El mayor contrato adjudicado"
 #~ msgstr "O maior contrato adxudicado"
 
