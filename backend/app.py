@@ -10208,8 +10208,29 @@ def _guardar_contratos_entidad(clave, tipo, nombre, provincia, contratos):
     return len(nuevos)
 
 
+def _vaciar_entidades_de_provincia(provincia):
+    """Antes de aplicar el fichero de una provincia: quita de sus entidades los contratos que vinieron de un fichero
+    anterior (el nuevo manda: si el generador cambia el nombre de una entidad, la ficha vieja no se queda huérfana) y
+    conserva los que salieron de fichas municipales (origen_ficha). Las que se quedan vacías se borran."""
+    with _db_lock:
+        filas = _db.execute("SELECT clave, data FROM entidades_locales WHERE provincia=?", (provincia,)).fetchall()
+    for clave, data in filas:
+        d = json.loads(data)
+        quedan = [c for c in d.get("contratos", []) if c.get("origen_ficha")]
+        with _db_lock:
+            if quedan:
+                d["contratos"] = quedan
+                _db.execute("UPDATE entidades_locales SET data=?, n=?, importe=?, ts=? WHERE clave=?",
+                            (json.dumps(d, ensure_ascii=False), len(quedan),
+                             round(sum(_importe_contable(c) for c in quedan), 2), time.time(), clave))
+            else:
+                _db.execute("DELETE FROM entidades_locales WHERE clave=?", (clave,))
+            _db.commit()
+
+
 def _aplicar_entidades_locales():
-    """Arranque: aplica ENTIDADES_LOCALES_DIR/<provincia>.json.gz (idempotente por hash en `settings`)."""
+    """Arranque: aplica ENTIDADES_LOCALES_DIR/<provincia>.json.gz (idempotente por hash en `settings`). Cada fichero
+    sustituye lo que dejó el anterior de esa provincia (ver _vaciar_entidades_de_provincia)."""
     if not _DISCO_CONFIABLE or not os.path.isdir(ENTIDADES_LOCALES_DIR):
         return 0, 0
     _entidades_tablas()
@@ -10228,6 +10249,7 @@ def _aplicar_entidades_locales():
                 continue
             datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
             del crudo
+            _vaciar_entidades_de_provincia("" if provincia == "sin_provincia" else provincia)
             for clave, e in datos.get("entidades", {}).items():
                 if e.get("tipo") not in TIPOS_ENTIDAD_LOCAL or not e.get("nombre"):
                     continue
