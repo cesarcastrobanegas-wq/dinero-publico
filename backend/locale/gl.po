@@ -107,6 +107,9 @@ msgid "Probable error de la fuente: el importe parece publicado con tres ceros d
 msgstr "Probable erro da fonte: o importe parece publicado con tres ceros de máis; o real sería {importe}."
 
 #: app.py:10704
+msgid "Importe sin IVA de la Plataforma de Contratación del Sector Público; el Ayuntamiento lo publica con IVA: {importe}."
+msgstr "Importe sen IVE da Plataforma de Contratación do Sector Público; o Concello publícao con IVE: {importe}."
+
 msgid "Importe corregido: la fuente publica {importe}."
 msgstr "Importe corrixido: a fonte publica {importe}."
 

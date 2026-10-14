@@ -107,6 +107,9 @@ msgid "Probable error de la fuente: el importe parece publicado con tres ceros d
 msgstr "Iturriaren akatsa izan daiteke: zenbatekoa hiru zero gehiagorekin argitaratu dela dirudi. Benetako zenbatekoa hau litzateke: {importe}."
 
 #: app.py:10704
+msgid "Importe sin IVA de la Plataforma de Contratación del Sector Público; el Ayuntamiento lo publica con IVA: {importe}."
+msgstr "BEZik gabeko zenbatekoa, Sektore Publikoko Kontratazio Plataformakoa; Udalak BEZarekin argitaratzen du: {importe}."
+
 msgid "Importe corregido: la fuente publica {importe}."
 msgstr "Zenbatekoa zuzenduta dago. Iturriak argitaratzen duen zenbatekoa: {importe}."
 

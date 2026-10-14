@@ -10666,6 +10666,9 @@ MENORES_DESDE_FECHA = alcance_desde()
 #     documento original (id -> (importe real, cómo se verificó, en una frase que se enseña en la ficha)). Vacío
 #     hoy: de los 39 contratos revisados el 13-10, ninguno tiene publicado un documento con la cifra real.
 MENOR_AVISO_SIN_DECIMALES, MENOR_AVISO_TRES_CEROS, MENOR_AVISO_VERIFICADO = "sin-decimales", "tres-ceros", "verificado"
+# Fila de una fuente propia cuyo importe con IVA se sustituye por el SIN IVA del feed de PLACE, al emparejarla con él
+# (ver _retirar_nombre_cortado): import_fuente guarda el importe con IVA que publica el ayuntamiento.
+MENOR_AVISO_IVA_FEED = "iva-feed"
 _MENORES_AVISO_MANUAL = {
     "Loiu::EUSKADI::419-02052023623_00001": (MENOR_AVISO_TRES_CEROS, 8447.00),   # 8.447.000 EUR por retirar columnas de alumbrado
 }
@@ -10700,6 +10703,8 @@ def _menor_aviso_importe_txt(r):
         probable = _MENORES_AVISO_MANUAL.get(r.get("id"), (None, fuente / 1000))[1]
         return _t("Probable error de la fuente: el importe parece publicado con tres ceros de más; el real sería {importe}.").format(
             importe=fmt_eur(str(probable))) + no_cuenta
+    if aviso == MENOR_AVISO_IVA_FEED:
+        return _t("Importe sin IVA de la Plataforma de Contratación del Sector Público; el Ayuntamiento lo publica con IVA: {importe}.").format(importe=fmt_eur(str(fuente)))
     if aviso == MENOR_AVISO_VERIFICADO:
         return _t("Importe corregido: la fuente publica {importe}.").format(importe=fmt_eur(str(fuente))) + " " + (
             _MENORES_IMPORTE_VERIFICADO.get(r.get("id"), (None, ""))[1])
@@ -11173,9 +11178,12 @@ def _retirar_feed_antes_de_propia(fuentes=None):
 # si, con las entidades descodificadas, los nombres son iguales o uno es el principio del otro con 30 letras o más; y
 # además mismo importe (ver _NOMBRE_CORTADO_ACEPTA_IVA), objeto parecido y fecha a ±7 días. Nada de UTE ni nombres
 # genéricos. Ambiguos (un contrato con más de una pareja posible) no se retiran: se apuntan en place_nombre_ambiguos.
-# Medido sobre la copia del 10-10: 35 parejas con el mismo importe y 54 más con el importe propio = feed con IVA.
+# Medido sobre la copia del 10-10: 35 parejas con el mismo importe y 53 con el importe propio = feed por 1,21, 1,10 o
+# 1,04 exactos (1 EUR de margen como mucho; decisión de César del 14-10, nada de proporciones raras). En estas últimas
+# se queda la fila propia pero con el importe SIN IVA del feed (aviso MENOR_AVISO_IVA_FEED; el original en
+# import_fuente), y se vuelve a poner tras cada refresco de la fuente, que lo sobrescribe.
 _FUENTES_NOMBRE_CORTADO = {"murcia-capital"}
-_NOMBRE_CORTADO_ACEPTA_IVA = False        # César pidió "mismo importe": las 54 con IVA, pendientes de su decisión
+_IVA_EXACTOS_CM = (1.21, 1.10, 1.04)
 _RE_NOMBRE_GENERICO_CM = re.compile(r"\b(ute|u t e|union temporal|varios|diversos|no consta|sin datos|particular|"
                                     r"desconocido|adjudicatario)\b")
 
@@ -11205,7 +11213,7 @@ def _retirar_nombre_cortado(fuentes=None):
         return {}
     with _db_lock:
         _db.execute("CREATE TABLE IF NOT EXISTS place_nombre_parejas (feed_id TEXT PRIMARY KEY, propio_id TEXT, "
-                    "municipio TEXT, ts REAL)")
+                    "municipio TEXT, ts REAL, importe_feed REAL)")
         _db.execute("CREATE TABLE IF NOT EXISTS place_nombre_ambiguos (feed_id TEXT PRIMARY KEY, municipio TEXT, "
                     "candidatos TEXT, ts REAL)")
         _db.commit()
@@ -11261,29 +11269,44 @@ def _retirar_nombre_cortado(fuentes=None):
                 for e in por_prefijo.get(_nombre_sin_entidades_cm(adj)[:30], ()):
                     if not _nombres_casan_cortados_cm(adj, e["adj"]) or _dias_entre(e["fecha"] or "", fecha or "") > 7:
                         continue
-                    importe_ok = (_importes_compatibles_cm(e["imp"], imp) if _NOMBRE_CORTADO_ACEPTA_IVA
-                                  else _mismo_importe_cm(e["imp"], imp))
-                    if importe_ok and _objeto_parecido_cm(desc, e["desc"]):
-                        lista.append(e)
+                    if _mismo_importe_cm(e["imp"], imp):
+                        corregir = None
+                    elif imp and e["imp"] and any(abs(imp * k - e["imp"]) <= 1.0 for k in _IVA_EXACTOS_CM):
+                        corregir = imp                  # la fila propia se queda, con el importe sin IVA del feed
+                    else:
+                        continue
+                    if _objeto_parecido_cm(desc, e["desc"]):
+                        lista.append(dict(e, corregir=corregir))
                 if lista:
                     candidatos[fid] = lista
             feeds_por_propio = collections.Counter(e["id"] for lista in candidatos.values() for e in lista)
             parejas, ambiguos = [], []
             for fid, lista in candidatos.items():
                 if len(lista) == 1 and feeds_por_propio[lista[0]["id"]] == 1:
-                    parejas.append((fid, lista[0]["id"]))
+                    parejas.append((fid, lista[0]["id"], lista[0]["corregir"]))
                 else:
                     ambiguos.append((fid, json.dumps([e["id"] for e in lista])))
             ahora = time.time()
             with _db_lock:
-                _db.executemany("INSERT OR REPLACE INTO place_nombre_parejas VALUES (?,?,?,?)",
-                                [(f, pid, muni, ahora) for f, pid in parejas])
+                _db.executemany("INSERT OR REPLACE INTO place_nombre_parejas VALUES (?,?,?,?,?)",
+                                [(f, pid, muni, ahora, imp) for f, pid, imp in parejas])
                 _db.executemany("INSERT OR REPLACE INTO place_nombre_ambiguos VALUES (?,?,?,?)",
                                 [(f, muni, c, ahora) for f, c in ambiguos])
                 _db.commit()
-                _archivar_filas_cm([f for f, _ in parejas])
+                _archivar_filas_cm([f for f, *_ in parejas])
             if parejas or ambiguos:
-                resumen[muni] = {"archivados": len(parejas), "ambiguos": len(ambiguos)}
+                resumen[muni] = {"archivados": len(parejas), "ambiguos": len(ambiguos),
+                                 "importe_sin_iva": sum(1 for *_, imp in parejas if imp)}
+    # Importe sin IVA del feed en las filas propias emparejadas con IVA: también las de pasadas anteriores, porque cada
+    # refresco de la fuente vuelve a escribir su importe con IVA (y borra el aviso).
+    with _db_lock:
+        n = _db.execute("UPDATE contratos_menors_locales SET import_fuente=import_num, "
+                        "import_num=(SELECT importe_feed FROM place_nombre_parejas WHERE propio_id=contratos_menors_locales.id), "
+                        "import_aviso=? WHERE coalesce(import_aviso, '')<>? AND id IN (SELECT propio_id FROM "
+                        "place_nombre_parejas WHERE importe_feed IS NOT NULL)", (MENOR_AVISO_IVA_FEED, MENOR_AVISO_IVA_FEED)).rowcount
+        _db.commit()
+    if n:
+        resumen["importes_sin_iva_puestos"] = n
     if resumen:
         print(f"  [menores] nombre cortado en el feed: {resumen}", flush=True)
     return resumen

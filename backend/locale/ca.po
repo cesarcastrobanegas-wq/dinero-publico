@@ -107,6 +107,9 @@ msgid "Probable error de la fuente: el importe parece publicado con tres ceros d
 msgstr "Probable error de la font: l'import sembla publicat amb tres zeros de més; el real seria {importe}."
 
 #: app.py:10704
+msgid "Importe sin IVA de la Plataforma de Contratación del Sector Público; el Ayuntamiento lo publica con IVA: {importe}."
+msgstr "Import sense IVA de la Plataforma de Contractació del Sector Públic; l'Ajuntament el publica amb IVA: {importe}."
+
 msgid "Importe corregido: la fuente publica {importe}."
 msgstr "Import corregit: la font publica {importe}."
 
