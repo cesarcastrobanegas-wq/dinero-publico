@@ -21723,9 +21723,6 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
           <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
         </div>"""
-        if not muni_filter and _hay_entidades_locales(provincia):
-            stats += (f'<p class="entidades-prov-link"><a href="/entidades?provincia={esc(provincia)}">'
-                      f'{_t("Diputación, mancomunidades, consorcios y otras entidades locales de esta provincia →")}</a></p>')
 
     back_html = f'<span class="back-link"><a href="/{q_prov_first}">← {_t("Ver todos los municipios")}</a></span>'
 
@@ -23068,6 +23065,9 @@ def render_landing_html(datos, provincia="murcia"):
       <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
       <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
     </div>"""
+    if _hay_entidades_locales(provincia):        # fase 2: fichas de entidades locales de la provincia
+        stats += (f'<p class="entidades-prov-link"><a href="/entidades?provincia={esc(provincia)}">'
+                  f'{_t("Diputación, mancomunidades, consorcios y otras entidades locales de esta provincia →")}</a></p>')
 
     def _muni_tile(muni, d):
         """Tile de un municipio o pseudo-municipio (ver MUNICIPIOS_PSEUDO):
