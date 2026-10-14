@@ -21251,8 +21251,10 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     stats = ""
     alerta_ficha_html = ""
     if datos:
+        # En la ficha de un solo municipio, "1 Municipios" no dice nada (repaso para la Cámara, 2026-10-14)
+        stat_munis = "" if muni_filter else f'<div class="stat"><span>{fmt_num(total_m)}</span>{_t("Municipios")}</div>'
         stats = f"""<div class="stats-bar">
-          <div class="stat"><span>{fmt_num(total_m)}</span>{_t("Municipios")}</div>
+          {stat_munis}
           <div class="stat"><span>{fmt_num(total_c)}</span>{_t("Contratos")}</div>
           <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
           <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
