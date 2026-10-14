@@ -24301,7 +24301,7 @@ def render_caso_utrera_piscinas_html():
 
   <h2>Por qué es un indicio y no más</h2>
   <p>Son tres piscinas en tres núcleos de población distintos, y cada una puede gestionarse por separado. Pero el
-  servicio es el mismo, se repite todos los veranos, se adjudica en bloque y cada contrato queda a muy poco del
+  servicio es el mismo, se repite todos los veranos, se adjudica en las mismas fechas y cada contrato queda a muy poco del
   umbral. Un servicio recurrente que cada temporada ronda los 45.000 € es lo que la ley prevé licitar con publicidad,
   aunque sea dividido en lotes por piscina. En 2026 el esquema siguió con contratos menores más pequeños: tres de
   7.024,79 € para el socorrismo de cada piscina y otro para la limpieza.</p>
