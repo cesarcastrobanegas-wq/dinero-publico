@@ -16786,10 +16786,10 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
   50%{box-shadow:0 0 0 8px rgba(27,47,92,0);}
 }
 @media (max-width:700px){
-  .pwa-banner-mobile{display:flex;align-items:center;gap:10px;position:fixed;top:0;left:0;right:0;z-index:200;padding:10px 14px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600;animation:pwaBannerPulse 1.8s ease-in-out infinite;}
+  .pwa-banner-mobile{display:flex;align-items:center;gap:8px;position:fixed;top:0;left:0;right:0;z-index:200;padding:4px 10px;background:var(--accent);color:#fff;font-size:11.5px;font-weight:600;}
   .pwa-banner-mobile[hidden]{display:none;}
-  .pwa-banner-text{flex:1;line-height:1.3;}
-  .pwa-banner-btn{background:#000;color:#f0883e;border:none;border-radius:5px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .pwa-banner-text{flex:1;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pwa-banner-btn{background:#fff;color:var(--accent);border:none;border-radius:4px;padding:3px 9px;font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;}
   .pwa-banner-close{background:transparent;border:none;color:#fff;font-size:17px;cursor:pointer;padding:0 2px;line-height:1;opacity:.65;}
   .pwa-banner-close:hover{opacity:1;}
 }
@@ -17386,6 +17386,8 @@ button.share-btn{font-family:inherit;}
   table{font-size:12px;display:block;overflow-x:auto;white-space:nowrap;}
   th,td{padding:7px 8px;}
   .contrato-title{white-space:normal;}
+  /* portada en el móvil: un solo buscador, el de «¿Cuál es tu municipio?» (decisión de César, 14-10) */
+  .hero-panel #adv-search{display:none;}
   /* convocatorias y fondos UE: el título salta de línea en vez de cortarse (repaso para la Cámara, 2026-10-14) */
   .fue-card td:first-child{white-space:normal;min-width:190px;}
   .site-footer{flex-direction:column;align-items:flex-start;max-width:100%;}
@@ -20252,7 +20254,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     </p>
   </div>
 
-  {_rk_metodologia_aviso_html()}
+
 
   <div class="rk-section-header" id="buscador-municipio">
     <h2>{_t("Busca tu municipio")}</h2>
@@ -27142,6 +27144,46 @@ def _ruta_cara_para_bots(path, query):
     return bool(_RE_RUTA_CARA_INICIO.match(path)) and bool(parse_qs(query).get("q", [""])[0].strip())
 
 
+_RE_UA_BUSCADOR = re.compile(r"Googlebot|bingbot", re.I)
+_DOMINIOS_BUSCADOR = (".googlebot.com", ".google.com", ".search.msn.com")
+_buscadores_verificados = {}     # ip -> (verificado, cuándo)
+_buscadores_lock = threading.Lock()
+
+
+def _buscador_verificado(ip, ua):
+    """True si la petición dice ser Googlebot o Bingbot y la IP lo confirma: su nombre inverso es de Google o
+    Microsoft y ese nombre resuelve a la misma IP (el método que publican los dos). Se guarda un día por IP; la
+    consulta tiene un plazo de 2 s y, si falla, cuenta como no verificado (se le aplica el cupo de robots normal)."""
+    if not ip or not _RE_UA_BUSCADOR.search(ua or ""):
+        return False
+    ahora = time.time()
+    with _buscadores_lock:
+        r = _buscadores_verificados.get(ip)
+        if r and ahora - r[1] < 86400:
+            return r[0]
+    import socket
+    from concurrent.futures import ThreadPoolExecutor, TimeoutError as _Plazo
+
+    def _comprobar():
+        nombre = socket.gethostbyaddr(ip)[0].lower()
+        if not nombre.endswith(_DOMINIOS_BUSCADOR):
+            return False
+        return ip in socket.gethostbyname_ex(nombre)[2]
+    ok = False
+    ex = ThreadPoolExecutor(max_workers=1)
+    try:
+        ok = bool(ex.submit(_comprobar).result(timeout=2))
+    except (_Plazo, OSError, Exception):
+        ok = False
+    finally:
+        ex.shutdown(wait=False)          # sin esperar a una consulta DNS colgada
+    with _buscadores_lock:
+        if len(_buscadores_verificados) > 5000:
+            _buscadores_verificados.clear()
+        _buscadores_verificados[ip] = (ok, ahora)
+    return ok
+
+
 def _bot_sin_cupo(familia):
     """True si esta familia de rastreador ha agotado su cupo de páginas caras (y hay que contestar 429)."""
     ahora = time.time()
@@ -27164,9 +27206,13 @@ def _bot_sin_cupo(familia):
 # robots (que va por el user-agent). Con un solo proceso de 4 hilos, eso hacía que cualquier página (hasta «Quién soy»)
 # tardase 10-16 s en empezar a responder. Una persona no pide 40 páginas caras seguidas; si lo hace, después puede
 # seguir a una cada _IP_REPONE_S segundos. La IP solo vive en memoria (no se guarda en ningún sitio).
-_IP_CUPO = 40
-_IP_REPONE_S = 6
-_ip_cupos = {}                   # ip -> [fichas disponibles, última reposición]
+# 14-10 (decisión de César): el cupo es por CONEXIÓN Y NAVEGADOR (IP + user-agent), no por IP sola, para que una sala
+# con varias personas en la misma wifi (la misma IP pública) no se reparta un único cupo; y más holgado: 60 páginas
+# caras seguidas y luego una cada 3 s por dispositivo. El rastreador disfrazado usaba siempre la misma IP y el mismo
+# user-agent: sigue frenado (de 74 a 20 por minuto).
+_IP_CUPO = 60
+_IP_REPONE_S = 3
+_ip_cupos = {}                   # (ip, user-agent) -> [fichas disponibles, última reposición]
 _ip_frenadas = [0]
 
 
@@ -27178,9 +27224,10 @@ def _ruta_cara_por_ip(path, query):
     return bool(query) and ("pag=" in query or "pag_" in query)
 
 
-def _ip_sin_cupo(ip):
+def _ip_sin_cupo(ip, ua=""):
     if not ip:
         return False
+    ip = (ip, (ua or "")[:200])
     ahora = time.time()
     with _bots_lock:
         if len(_ip_cupos) > 5000:
@@ -27560,6 +27607,8 @@ def app(environ, start_response):
         return [b"Forbidden"]
     if (info["bot"] and info["metodo"] == "GET"
             and _ruta_cara_para_bots(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
+            and not _buscador_verificado((environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip(),
+                                         environ.get("HTTP_USER_AGENT", ""))
             and _bot_sin_cupo(info["agente"])):
         with _peticiones_lock:
             _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + " (429)"))
@@ -27570,7 +27619,8 @@ def app(environ, start_response):
         return [cuerpo]
     if (not info["bot"] and info["metodo"] == "GET"
             and _ruta_cara_por_ip(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
-            and _ip_sin_cupo((environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip())):
+            and _ip_sin_cupo((environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip(),
+                             environ.get("HTTP_USER_AGENT", ""))):
         with _peticiones_lock:
             _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, False, info["agente"] + " (429 por IP)"))
         cuerpo = "Demasiadas páginas seguidas desde tu conexión. Espera un minuto y vuelve a intentarlo.\n".encode("utf-8")
