@@ -23,7 +23,7 @@ on:
         description: "Mes más antiguo (AAAAMM)"
         default: "202109"
       subir:
-        description: "Subir los contratos al disco de la web al terminar (si/no)"
+        description: "Subir al disco de la web: si (municipios y entidades), entidades (solo entidades) o no"
         default: "no"
 
 permissions:
@@ -105,7 +105,7 @@ jobs:
       # Paso 5: los contratos de las entidades propias (diputaciones, mancomunidades, consorcios...), igual: de la caché
       # al disco de la web, una provincia cada vez, solo si se pide. Van a fichas aparte, no a ningún municipio.
       - name: Subir las entidades propias a la web (solo si se pide)
-        if: steps.generar.outputs.codigo == '0' && inputs.subir == 'si'
+        if: steps.generar.outputs.codigo == '0' && (inputs.subir == 'si' || inputs.subir == 'entidades')
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
