@@ -16789,6 +16789,7 @@ summary .it-aclara-mini{white-space:normal;}
 .it-tramo-nombre:hover{text-decoration:underline;}
 .it-tramo-nota{font-size:18px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;}
 .it-tramo-empate{font-size:11px;font-weight:600;color:var(--dim);}
+.it-tramo-nota-empate{font-size:12px;color:var(--dim);margin:6px 0 0;}
 .it-muestra{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:var(--text);background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.45);white-space:nowrap;}
 .it-muestra-nota{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--dim);}
 .it-muestra-desglose{margin-bottom:10px;}
@@ -17659,14 +17660,17 @@ def _site_tagline():
     return _t("EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?")
 
 
-def _header_html(provincia="todas"):
+def _header_html(provincia="todas", con_lema=True):
+    """con_lema=False en las páginas que ya lo llevan como titular grande (.hero-tagline): portada y provincias
+    (repaso para la Cámara de Comercio, 2026-10-14: salía dos veces seguidas)."""
     rankings_href = "/rankings" + _q_prov_first(provincia)
+    lema_html = f"<p>{esc(_site_tagline())}</p>" if con_lema else ""
     return f"""<header>
   <a href="/" class="header-brand" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
     <div class="logo-svg">{LOGO_HTML}</div>
     <div>
       <h1 style="color:var(--text)">{_t("Contratación pública en España")}</h1>
-      <p>{esc(_site_tagline())}</p>
+      {lema_html}
     </div>
   </a>
   <nav class="header-nav">
@@ -17818,7 +17822,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     </div>
   </div>
 </div>
-{_header_html(provincia)}
+{_header_html(provincia, con_lema='class="hero-tagline"' not in body_html)}
 <div class="main">
 {_ad_banner_html() if show_ad_banner else ""}
 {body_html}
@@ -22104,12 +22108,14 @@ def _lider_indice_portada_html():
                  + [(None, _t("Más de {n} hab.").format(n=fmt_num(limites[-1])))])
 
     tramos_html = ""
+    hay_empate = False
     for tramo, etiqueta in etiquetas:
         grupo = por_tramo.get(tramo)
         if not grupo:
             continue
         lider = min(grupo, key=lambda f: (-f["indice"], -f["n_contratos"], normalizar(f["municipio"])))
         empatados = sum(1 for f in grupo if f["indice"] == lider["indice"]) - 1
+        hay_empate = hay_empate or empatados > 0
         empate = (f' <span class="it-tramo-empate" title="{_t("Otros municipios del tramo con la misma nota")}">+{empatados}</span>'
                   if empatados else "")
         tramos_html += (
@@ -22124,6 +22130,7 @@ def _lider_indice_portada_html():
     </div>
     {_it_aclaracion_html()}
     <ul class="it-tramos">{tramos_html}</ul>
+    {('<p class="it-tramo-nota-empate">' + _t("«+N»: otros municipios del mismo tramo con la misma nota; sale primero el que tiene más contratos.") + '</p>') if hay_empate else ""}
     <div class="it-lider-pie">
       <a class="btn-ver" href="/rankings#indice-transparencia">{_t("Ver ranking por tu región →")}</a>
       <a class="it-lider-metodo" href="/metodologia">{_t("Cómo se calcula")}</a>
@@ -22197,8 +22204,7 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     return f"""<div class="rk-sidebar-ranking-wrap">
     <details class="rk-sidebar" open>
       <summary class="rk-sidebar-title">{_t("Índice de Transparencia")}
-        <span class="rk-sidebar-v1-badge">{_t("Índice v2.1")}</span>{info_html}
-        {_it_aclaracion_html(mini=True)}</summary>
+        <span class="rk-sidebar-v1-badge">{_t("Índice v2.1")}</span>{info_html}</summary>
       <div class="rk-sidebar-aviso">⚠️ {_t("No comparable entre regiones; los datos de origen varían.")}</div>
       <label class="rk-sidebar-selector-label" for="rk-sidebar-comunidad">{_t("Región")}</label>
       <select id="rk-sidebar-comunidad" class="rk-sidebar-selector"
