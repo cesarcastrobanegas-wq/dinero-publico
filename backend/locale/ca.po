@@ -3017,6 +3017,10 @@ msgstr "Enllaç no vàlid"
 msgid "Este enlace no es válido o ha caducado."
 msgstr "Aquest enllaç no és vàlid o ha caducat."
 
+#: app.py (repaso Cámara)
+msgid "«+N»: otros municipios del mismo tramo con la misma nota; sale primero el que tiene más contratos."
+msgstr "«+N»: altres municipis del mateix tram amb la mateixa nota; surt primer el que té més contractes."
+
 #~ msgid "El mayor contrato adjudicado"
 #~ msgstr "El contracte adjudicat més gran"
 
