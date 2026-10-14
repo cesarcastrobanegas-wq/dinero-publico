@@ -2944,6 +2944,15 @@ def _db_set_municipio(municipio, resultado, provincia="murcia"):
     # después de llamar aquí, y necesita ver la provincia ya puesta.
     # Confirmado con un test dirigido durante la Fase 4.
     resultado["provincia"] = provincia
+    # Fase 2 (2026-10-14): los contratos de diputaciones, mancomunidades, consorcios... salen de la ficha municipal a la
+    # de su entidad. Con globals(): durante la carga del módulo la función aún no existe.
+    _desviar = globals().get("_desviar_contratos_de_entidades")
+    if _desviar:
+        try:
+            _desviar(municipio, provincia, resultado)
+        except Exception as e:
+            print(f"[entidades_locales] desvío de '{municipio}': ERROR, la ficha se guarda tal cual ({type(e).__name__}: {e})",
+                  flush=True)
     with _db_lock:
         _db.execute(
             "INSERT INTO municipios (municipio, data, ts, provincia) VALUES (?,?,?,?) "
@@ -10103,6 +10112,379 @@ def _subir_asignacion_formales(token, provincia, crudo):
     return 200, {"provincia": provincia, "municipios": len(munis), "contratos": n_contratos, "anadidos": anadidos,
                  "fichas": fichas}
 
+# ─── Entidades locales que no son un municipio (fase 2, paso 5; 2026-10-14) ─────────────────────────────────────────
+# Diputaciones, cabildos y consells, mancomunidades, consorcios, comarcas, áreas metropolitanas, entidades locales
+# menores y las empresas o fundaciones de varios municipios. Criterios de César (2026-10-10): tienen FICHA PROPIA, sin
+# listado comparativo, y sus contratos no cuentan en ningún municipio ni en el Índice de Transparencia.
+#   - Contratos de PLACE: los genera generar_asignacion_place.py (ent/<provincia>.json.gz, asignados por la jerarquía
+#     oficial del órgano y su DIR3) y llegan por POST con el token, como los de la fase 2 (llevan adjudicatarios: no
+#     van en el repositorio). Se guardan en el disco persistente y se aplican en el arranque, idempotente por hash.
+#   - Contratos que ya estaban dentro de una ficha municipal y son de una de estas entidades (medido sobre la copia del
+#     10-10: 53, casi todos en Murcia y Navarra, que no pasan por el asignador): salen de la ficha y van a la de la
+#     entidad (_desviar_contratos_de_entidades, en el punto único de escritura de las fichas). Si el órgano es del
+#     ayuntamiento y solo menciona a la entidad, se quedan y se apuntan en entidades_locales_ambiguos.
+# Tabla aparte (no `municipios`): no entra en rankings, Índice ni en la precarga de fichas, y se lee bajo demanda.
+ENTIDADES_LOCALES_DIR = os.path.join(DATA_DIR, "entidades_locales_prov")
+_ENTIDADES_LOCALES_CLAVE = "entidades_locales_sha::"          # + provincia
+_ENTIDADES_DESVIO_CLAVE = "entidades_locales_desvio_v1"
+TIPOS_ENTIDAD_LOCAL = ("diputación", "cabildo o consell insular", "mancomunidad", "consorcio", "comarca",
+                       "área metropolitana", "entidad local menor", "agrupación local", "federación de municipios",
+                       "empresa o fundación local sin municipio único")
+# Órgano de una entidad que no es el municipio, por su nombre. Solo para los contratos que ya están en fichas
+# municipales (los de PLACE vienen clasificados por el asignador). "Concejo de" solo en Navarra: en Asturias un
+# concejo es el municipio.
+_RE_ENTIDAD_ORGANO = [
+    ("diputación", re.compile(r"\b(diputacion|diputacio|deputacion|foru aldundia)\b")),
+    ("cabildo o consell insular", re.compile(r"\b(cabildo|consell insular|consejo insular)\b")),
+    ("mancomunidad", re.compile(r"\b(mancomunidad|mancomunitat|mancomunidade|mankomunitatea)\b")),
+    ("consorcio", re.compile(r"\b(consorcio|consorci|partzuergoa?)\b")),
+    ("comarca", re.compile(r"\b(consejo comarcal|consell comarcal|comarca de)\b")),
+    ("área metropolitana", re.compile(r"\b(area metropolitana|entitat metropolitana|entidad metropolitana)\b")),
+    ("entidad local menor", re.compile(r"\b(entidad local menor|entidad local autonoma|junta vecinal)\b")),
+]
+_RE_CONCEJO_NAVARRA = re.compile(r"^concejo de\b")
+_RE_ORGANO_DEL_AYUNTAMIENTO = re.compile(r"\b(ayuntamiento|ajuntament|concello|udala|udaletxea)\b")
+_RE_CARGO_ENTIDAD = re.compile(
+    r"^(a\) organismo: |presidencia|vicepresidencia|presidente|gerencia|gerente|direccion( general| gerente)?|"
+    r"consejo rector|consejo de administracion|comision ejecutiva|junta de gobierno|junta general|asamblea|pleno)"
+    r"\s*(de la |del |de las |de los |de |d')?", re.I)
+# Pendientes de decisión de César en otra rama (wip/estado-fuera-de-capitales): no se tocan aquí.
+_ENTIDADES_ORGANO_PENDIENTES = ("castrillo de murcia",)
+
+
+def _clave_entidad_local(provincia, nombre):
+    """La misma que calcula generar_asignacion_place.clave_entidad."""
+    return f"{provincia or 'sin_provincia'}:" + re.sub(r"[^a-z0-9]+", "-", normalizar(nombre)).strip("-")[:120]
+
+
+def _huella_contrato_entidad(c):
+    return (c.get("url") or "").replace("&amp;", "&") or f'{c.get("licitacion_id")}|{normalizar(c.get("titulo") or "")[:80]}'
+
+
+def _importe_contable(c):
+    if c.get("importe_aviso"):
+        return 0.0
+    try:
+        return float(c.get("importe_num") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _entidades_tablas():
+    with _db_lock:
+        _db.execute("CREATE TABLE IF NOT EXISTS entidades_locales (clave TEXT PRIMARY KEY, tipo TEXT, nombre TEXT, "
+                    "provincia TEXT, data TEXT NOT NULL, n INTEGER, importe REAL, ts REAL)")
+        _db.execute("CREATE INDEX IF NOT EXISTS idx_entidades_locales_prov ON entidades_locales(provincia)")
+        _db.execute("CREATE TABLE IF NOT EXISTS entidades_locales_desvios (huella TEXT PRIMARY KEY, municipio TEXT, "
+                    "provincia TEXT, clave TEXT, ts REAL)")
+        _db.execute("CREATE TABLE IF NOT EXISTS entidades_locales_ambiguos (huella TEXT PRIMARY KEY, municipio TEXT, "
+                    "provincia TEXT, organo TEXT, ts REAL)")
+        _db.commit()
+
+
+def _guardar_contratos_entidad(clave, tipo, nombre, provincia, contratos):
+    """Fusión aditiva por huella (gana lo ya guardado), como el resto de cargas de formales. Devuelve cuántos entran."""
+    with _db_lock:
+        fila = _db.execute("SELECT data FROM entidades_locales WHERE clave=?", (clave,)).fetchone()
+    actuales = json.loads(fila[0]).get("contratos", []) if fila else []
+    vistos = {_huella_contrato_entidad(c) for c in actuales}
+    nuevos = []
+    for c in contratos:
+        h = _huella_contrato_entidad(c)
+        if h not in vistos:
+            vistos.add(h)
+            nuevos.append(c)
+    if fila and not nuevos:
+        return 0
+    todos = sorted(actuales + nuevos, key=lambda c: c.get("fecha") or "", reverse=True)
+    data = json.dumps({"tipo": tipo, "nombre": nombre, "provincia": provincia, "contratos": todos}, ensure_ascii=False)
+    with _db_lock:
+        _db.execute("INSERT INTO entidades_locales (clave, tipo, nombre, provincia, data, n, importe, ts) VALUES "
+                    "(?,?,?,?,?,?,?,?) ON CONFLICT(clave) DO UPDATE SET data=excluded.data, n=excluded.n, "
+                    "importe=excluded.importe, ts=excluded.ts",
+                    (clave, tipo, nombre, provincia, data, len(todos), round(sum(_importe_contable(c) for c in todos), 2),
+                     time.time()))
+        _db.commit()
+    return len(nuevos)
+
+
+def _aplicar_entidades_locales():
+    """Arranque: aplica ENTIDADES_LOCALES_DIR/<provincia>.json.gz (idempotente por hash en `settings`)."""
+    if not _DISCO_CONFIABLE or not os.path.isdir(ENTIDADES_LOCALES_DIR):
+        return 0, 0
+    _entidades_tablas()
+    total = entidades = 0
+    for fichero in sorted(os.listdir(ENTIDADES_LOCALES_DIR)):
+        if not fichero.endswith(".json.gz"):
+            continue
+        provincia = fichero[:-len(".json.gz")]
+        try:
+            with open(os.path.join(ENTIDADES_LOCALES_DIR, fichero), "rb") as f:
+                crudo = f.read()
+            huella = hashlib.sha256(crudo).hexdigest()[:16]
+            with _db_lock:
+                fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_ENTIDADES_LOCALES_CLAVE + provincia,)).fetchone()
+            if fila and fila[0] == huella:
+                continue
+            datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+            del crudo
+            for clave, e in datos.get("entidades", {}).items():
+                if e.get("tipo") not in TIPOS_ENTIDAD_LOCAL or not e.get("nombre"):
+                    continue
+                total += _guardar_contratos_entidad(clave, e["tipo"], e["nombre"], e.get("provincia") or "",
+                                                    e.get("contratos") or [])
+                entidades += 1
+            with _db_lock:
+                _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET "
+                            "valor=excluded.valor", (_ENTIDADES_LOCALES_CLAVE + provincia, huella))
+                _db.commit()
+            del datos
+        except Exception as e:
+            print(f"[startup] entidades_locales: ERROR en {provincia}, no se aplico ({type(e).__name__}: {e})", flush=True)
+    if entidades:
+        print(f"[startup] entidades_locales: {total} contratos anadidos en {entidades} entidades", flush=True)
+    return total, entidades
+
+
+def _subir_entidades_locales(token, provincia, crudo):
+    """POST /admin/entidades-locales?token=...&provincia=... con ent/<provincia>.json.gz del generador. Lo valida, lo
+    guarda en el disco persistente y lo aplica. Responde solo recuentos."""
+    admin_token = os.environ.get("ADMIN_TOKEN", "")
+    if not admin_token or token != admin_token:
+        return 403, {"error": "No autorizado."}
+    if provincia not in MUNICIPIOS_POR_PROVINCIA and provincia != "sin_provincia":
+        return 400, {"error": "Provincia no válida."}
+    try:
+        datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+        ents = datos.get("entidades")
+        if not isinstance(ents, dict) or not ents:
+            return 400, {"error": "Fichero no válido: falta 'entidades'."}
+        if not all(isinstance(e, dict) and e.get("tipo") in TIPOS_ENTIDAD_LOCAL and e.get("nombre")
+                   and isinstance(e.get("contratos"), list) and all(isinstance(c, dict) and c.get("titulo") for c in e["contratos"])
+                   for e in ents.values()):
+            return 400, {"error": "Fichero no válido: entidades o contratos mal formados."}
+        otras = [k for k, e in ents.items() if (e.get("provincia") or "sin_provincia") != provincia]
+        if otras:
+            return 400, {"error": f"Fichero no válido: {len(otras)} entidades no son de {provincia}."}
+        n_contratos = sum(len(e["contratos"]) for e in ents.values())
+    except (ValueError, OSError, AttributeError, EOFError) as e:
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    n_ents = len(ents)
+    del datos, ents
+    os.makedirs(ENTIDADES_LOCALES_DIR, exist_ok=True)
+    destino = os.path.join(ENTIDADES_LOCALES_DIR, f"{provincia}.json.gz")
+    with open(destino + ".nuevo", "wb") as f:
+        f.write(crudo)
+    os.replace(destino + ".nuevo", destino)
+    anadidos, _ = _aplicar_entidades_locales()
+    print(f"[admin] entidades_locales: {provincia}, {n_ents} entidades, {n_contratos} contratos, {anadidos} anadidos", flush=True)
+    return 200, {"provincia": provincia, "entidades": n_ents, "contratos": n_contratos, "anadidos": anadidos}
+
+
+def _entidad_de_organo(organo, provincia):
+    """(tipo, nombre) si el órgano es de una entidad que no es el municipio; ("ambiguo", "") si es del ayuntamiento pero
+    nombra a una entidad; None si no tiene que ver."""
+    o = normalizar(organo or "")
+    o_plano = "".join(ch for ch in unicodedata.normalize("NFD", o) if unicodedata.category(ch) != "Mn")
+    tipo = next((t for t, rx in _RE_ENTIDAD_ORGANO if rx.search(o_plano)), None)
+    if not tipo and provincia == "navarra" and _RE_CONCEJO_NAVARRA.search(o_plano):
+        tipo = "entidad local menor"
+    if not tipo:
+        return None
+    if _RE_ORGANO_DEL_AYUNTAMIENTO.search(o_plano) or any(x in o_plano for x in _ENTIDADES_ORGANO_PENDIENTES):
+        return ("ambiguo", "")
+    nombre = (organo or "").strip()
+    for _ in range(2):                       # "Presidencia de la Mancomunidad de X" -> "Mancomunidad de X"
+        m = _RE_CARGO_ENTIDAD.match("".join(ch for ch in unicodedata.normalize("NFD", nombre.lower())
+                                            if unicodedata.category(ch) != "Mn"))
+        if not m or not m.end():
+            break
+        nombre = nombre[m.end():].strip()
+    return (tipo, nombre[:1].upper() + nombre[1:])
+
+
+def _desviar_contratos_de_entidades(municipio, provincia, resultado):
+    """Saca de `resultado["contratos"]` (en el sitio) los de entidades que no son el municipio y los guarda en la ficha
+    de la entidad; los dudosos se quedan y se apuntan. Devuelve cuántos ha sacado. Lo llama _db_set_municipio."""
+    contratos = resultado.get("contratos") or []
+    if not contratos or es_pseudo_municipio(municipio):
+        return 0
+    quedan, por_entidad, ambiguos = [], {}, []
+    for c in contratos:
+        r = _entidad_de_organo(c.get("organo"), provincia)
+        if r is None:
+            quedan.append(c)
+        elif r[0] == "ambiguo":
+            quedan.append(c)
+            ambiguos.append(c)
+        else:
+            por_entidad.setdefault((r[0], r[1]), []).append(c)
+    if not por_entidad and not ambiguos:
+        return 0
+    _entidades_tablas()
+    ahora = time.time()
+    if ambiguos:
+        with _db_lock:
+            _db.executemany("INSERT OR IGNORE INTO entidades_locales_ambiguos VALUES (?,?,?,?,?)",
+                            [(_huella_contrato_entidad(c), municipio, provincia, (c.get("organo") or "")[:200], ahora)
+                             for c in ambiguos])
+            _db.commit()
+    if not por_entidad:
+        return 0
+    for (tipo, nombre), cs in por_entidad.items():
+        clave = _clave_entidad_local(provincia, nombre)
+        _guardar_contratos_entidad(clave, tipo, nombre, provincia, [dict(c, origen_ficha=municipio) for c in cs])
+        with _db_lock:
+            _db.executemany("INSERT OR REPLACE INTO entidades_locales_desvios VALUES (?,?,?,?,?)",
+                            [(_huella_contrato_entidad(c), municipio, provincia, clave, ahora) for c in cs])
+            _db.commit()
+    resultado["contratos"] = quedan
+    resultado["total_contratos"] = len(quedan)
+    return len(contratos) - len(quedan)
+
+
+def _desviar_entidades_fichas_existentes():
+    """Una sola vez (marca en `settings`): pasa _desviar_contratos_de_entidades por las fichas ya guardadas que
+    mencionan alguna de estas entidades. El filtro LIKE solo preselecciona; decide _entidad_de_organo."""
+    if not _DISCO_CONFIABLE:
+        return
+    with _db_lock:
+        if _db.execute("SELECT 1 FROM settings WHERE clave=?", (_ENTIDADES_DESVIO_CLAVE,)).fetchone():
+            return
+        filas = _db.execute(
+            "SELECT municipio, provincia FROM municipios WHERE data LIKE '%ancomun%' OR data LIKE '%onsorci%' OR "
+            "data LIKE '%iputaci%' OR data LIKE '%abildo%' OR data LIKE '%onsell%' OR data LIKE '%omarca%' OR "
+            "data LIKE '%etropolitan%' OR data LIKE '%unta Vecinal%' OR data LIKE '%ntidad Local%' OR "
+            "data LIKE '%ONCEJO DE%' OR data LIKE '%oncejo de%' OR data LIKE '%artzuergo%' OR data LIKE '%ankomunitate%'"
+        ).fetchall()
+    movidos, fichas = 0, 0
+    for clave_db, provincia in filas:
+        with _db_lock:
+            fila = _db.execute("SELECT data FROM municipios WHERE municipio=?", (clave_db,)).fetchone()
+        if not fila:
+            continue
+        d = json.loads(fila[0])
+        n_antes = len(d.get("contratos") or [])
+        _db_set_municipio(d.get("municipio", clave_db), d, provincia=provincia or d.get("provincia", "murcia"))
+        n = n_antes - len(d.get("contratos") or [])
+        if n:
+            movidos += n
+            fichas += 1
+        del d
+    with _db_lock:
+        _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor",
+                    (_ENTIDADES_DESVIO_CLAVE, json.dumps({"fichas": fichas, "contratos": movidos, "revisadas": len(filas)})))
+        _db.commit()
+    print(f"[startup] entidades_locales: {movidos} contratos salen de {fichas} fichas municipales a su entidad "
+          f"({len(filas)} fichas revisadas)", flush=True)
+
+
+def _db_get_entidad_local(clave):
+    try:
+        with _db_lock:
+            fila = _db.execute("SELECT tipo, nombre, provincia, data FROM entidades_locales WHERE clave=?", (clave,)).fetchone()
+    except sqlite3.OperationalError:
+        return None
+    if not fila:
+        return None
+    d = json.loads(fila[3])
+    d.update(tipo=fila[0], nombre=fila[1], provincia=fila[2], clave=clave)
+    return d
+
+
+_TIPO_ENTIDAD_TXT = {"diputación": _td("Diputación"), "cabildo o consell insular": _td("Cabildo o consell insular"),
+                     "mancomunidad": _td("Mancomunidad"), "consorcio": _td("Consorcio"), "comarca": _td("Comarca"),
+                     "área metropolitana": _td("Área metropolitana"), "entidad local menor": _td("Entidad local menor"),
+                     "agrupación local": _td("Agrupación local"), "federación de municipios": _td("Federación de municipios"),
+                     "empresa o fundación local sin municipio único": _td("Empresa o fundación de varios municipios")}
+
+
+def _tipo_entidad_txt(tipo):
+    return _t_diferido(_TIPO_ENTIDAD_TXT[tipo]) if tipo in _TIPO_ENTIDAD_TXT else tipo
+
+
+def render_entidad_html(qs):
+    """Ficha de una entidad local que no es un municipio: solo sus contratos, sin Índice ni comparación."""
+    clave = qs.get("id", [""])[0][:200]
+    d = _db_get_entidad_local(clave)
+    if not d:
+        body = (f'<div class="static-page"><h1>{_t("Entidad no encontrada")}</h1>'
+                f'<p><a href="/entidades">{_t("Ver las entidades locales")}</a></p></div>')
+        return _page_shell(_t("Entidad no encontrada"), body), 404
+    try:
+        page = max(1, int(qs.get("pag", ["1"])[0]))
+    except ValueError:
+        page = 1
+    contratos = d.get("contratos") or []
+    total_pages = max(1, (len(contratos) + PAGE_SIZE - 1) // PAGE_SIZE)
+    page = min(page, total_pages)
+    filas = "".join(_render_fila_contrato(c) for c in contratos[(page - 1) * PAGE_SIZE:page * PAGE_SIZE]) or \
+        f'<tr><td colspan="4" class="empty">{_t("Sin contratos adjudicados encontrados")}</td></tr>'
+    importe = sum(_importe_contable(c) for c in contratos)
+    empresas = len({(c.get("nif") or normalizar(c.get("empresa") or "")) for c in contratos if c.get("empresa")})
+    prov_txt = PROVINCIA_LABEL.get(d.get("provincia"), "") if d.get("provincia") else ""
+    q_id = quote_plus(clave)
+    pag_html = ""
+    if total_pages > 1:
+        ant = (f'<a href="/entidad?id={q_id}&amp;pag={page - 1}" class="pag-btn">← {_t("Anterior")}</a>' if page > 1 else "")
+        sig = (f'<a href="/entidad?id={q_id}&amp;pag={page + 1}" class="pag-btn">{_t("Siguiente →")}</a>' if page < total_pages else "")
+        pag_html = f'<div class="pagination">{ant}<span class="pag-info">{page} / {total_pages}</span>{sig}</div>'
+    body = f"""<div class="static-page">
+  <p><a href="/entidades{('?provincia=' + esc(d['provincia'])) if d.get('provincia') else ''}">← {_t("Entidades locales")}</a></p>
+  <h1>{esc(d["nombre"])}</h1>
+  <p class="lid">{esc(_tipo_entidad_txt(d["tipo"]))}{(' · ' + esc(prov_txt)) if prov_txt else ''}</p>
+  <div class="stats-row">
+    <div class="stat"><span>{fmt_num(len(contratos))}</span>{_t("Contratos formales")}</div>
+    <div class="stat"><span>{fmt_eur(str(importe))}</span>{_t("Importe total")}</div>
+    <div class="stat"><span>{fmt_num(empresas)}</span>{_t("Empresas adjudicatarias")}</div>
+  </div>
+  <div class="cm-base-nota">{_t("Esta entidad no es un ayuntamiento: sus contratos no se suman a ningún municipio ni cuentan en el Índice de Transparencia.")}
+  {_t("Contratos formales de la Plataforma de Contratación del Sector Público, asignados a la entidad por la jerarquía oficial de su órgano y su código DIR3.")}</div>
+  <div class="tbl-scroll"><table>
+    <tr><th>{_t("Empresa adjudicataria / Contrato")}</th><th>{_t("Importe")}</th><th>{_t("Directivo / Cargo")}</th><th>{_t("Estado / Fuente")}</th></tr>
+    {filas}
+  </table></div>
+  {pag_html}
+</div>"""
+    return _page_shell(f'{d["nombre"]} — {_tipo_entidad_txt(d["tipo"])}', body,
+                       description=_t("Contratos públicos de {nombre}.").format(nombre=d["nombre"]),
+                       og_path=f"/entidad?id={q_id}"), 200
+
+
+def render_entidades_html(qs):
+    """Índice de entidades locales por provincia: solo nombres y tipo, en orden alfabético (sin cifras comparadas,
+    criterio de César del 2026-10-10)."""
+    provincia = qs.get("provincia", [""])[0]
+    try:
+        with _db_lock:
+            provs = [r[0] for r in _db.execute("SELECT DISTINCT provincia FROM entidades_locales ORDER BY provincia")]
+            filas = _db.execute("SELECT clave, tipo, nombre FROM entidades_locales WHERE provincia=?",
+                                (provincia,)).fetchall() if provincia in provs else []
+    except sqlite3.OperationalError:
+        provs, filas = [], []
+    activa = ' class="active"'
+    pestanas = " · ".join(f'<a href="/entidades?provincia={esc(p)}"{activa if p == provincia else ""}>'
+                          f'{esc(PROVINCIA_LABEL.get(p, _t("Sin provincia")))}</a>' for p in provs if p)
+    lista = ""
+    if filas:
+        por_tipo = {}
+        for clave, tipo, nombre in sorted(filas, key=lambda f: normalizar(f[2])):
+            por_tipo.setdefault(tipo, []).append(f'<li><a href="/entidad?id={quote_plus(clave)}">{esc(nombre)}</a></li>')
+        lista = "".join(f'<h2>{esc(_tipo_entidad_txt(t))}</h2><ul>{"".join(v)}</ul>'
+                        for t in TIPOS_ENTIDAD_LOCAL for v in [por_tipo.get(t)] if v)
+    elif provs:
+        lista = f'<p>{_t("Elige una provincia.")}</p>'
+    else:
+        lista = f'<p>{_t("Todavía no hay entidades locales cargadas.")}</p>'
+    body = f"""<div class="static-page">
+  <h1>{_t("Entidades locales que no son un municipio")}</h1>
+  <p>{_t("Diputaciones, cabildos y consells, mancomunidades, consorcios, comarcas, entidades locales menores y empresas de varios municipios. Cada una tiene su ficha con sus contratos; no se comparan entre sí ni entran en el Índice de Transparencia.")}</p>
+  <p>{pestanas}</p>
+  {lista}
+</div>"""
+    return _page_shell(_t("Entidades locales"), body, og_path="/entidades")
+
+
 
 IMPORTE_ADJUDICADO_PLACE_FILE = os.path.join(BASE_DIR, "importe_adjudicado_place.json.gz")
 _IMPORTE_ADJUDICADO_PLACE_CLAVE = "importe_adjudicado_place_sha"
@@ -15975,6 +16357,11 @@ def _carga_place_menores():
         except Exception as e:
             print(f"[menores] nombre cortado en el feed: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
     _nombre_pf_conocido("", "")              # construye ya el índice de nombres de personas físicas (ver ahí)
+    try:                                     # fase 2: fichas de entidades locales (ver ENTIDADES_LOCALES_DIR)
+        _aplicar_entidades_locales()
+        _desviar_entidades_fichas_existentes()
+    except Exception as e:
+        print(f"[startup] entidades_locales: ERROR ({type(e).__name__}: {e})", flush=True)
 
 
 def _arrancar_hilos_de_fondo():
@@ -25865,6 +26252,13 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/fondos-ue":
         return _resp(render_fondos_ue_html(qs), gzip_ok=gzip_ok)
 
+    if path == "/entidad":
+        html_ent, code_ent = render_entidad_html(qs)
+        return _resp(html_ent, code=code_ent, gzip_ok=gzip_ok)
+
+    if path == "/entidades":
+        return _resp(render_entidades_html(qs), gzip_ok=gzip_ok)
+
     if path == "/quienes-somos":
         return 301, {"Location": "/quien-soy", "Content-Length": "0"}, b""
     if path == "/quien-soy":
@@ -27132,6 +27526,23 @@ def _app_wsgi(environ, start_response):
         else:
             crudo = environ["wsgi.input"].read(length) if length else b""
             code, cuerpo = _subir_asignacion_formales(token, qs.get("provincia", [""])[0], crudo)
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
+    elif method == "POST" and path == "/admin/entidades-locales":
+        # cuerpo binario (JSON en gzip) de UNA provincia: ver _subir_entidades_locales
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = qs.get("token", [""])[0]
+        admin_token = os.environ.get("ADMIN_TOKEN", "")
+        if not admin_token or token != admin_token:
+            code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
+        elif length > 20 * 1024 * 1024:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            crudo = environ["wsgi.input"].read(length) if length else b""
+            code, cuerpo = _subir_entidades_locales(token, qs.get("provincia", [""])[0], crudo)
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/administradores-borme":
