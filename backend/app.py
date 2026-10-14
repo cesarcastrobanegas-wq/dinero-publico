@@ -17880,7 +17880,7 @@ self.addEventListener("fetch", (event) => {
 });
 """)
 
-REGISTRO_MERCANTIL_URL = "https://www.registradores.org/actualidad/portal-notarial/registro-mercantil-en-linea"
+REGISTRO_MERCANTIL_URL = "https://www.registradores.org/el-colegio/registro-mercantil"   # la anterior daba 404 (14-10-2026)
 REGISTRO_ASOCIACIONES_URL = "https://www.interior.gob.es/opencms/es/servicios-al-ciudadano/tramites-y-gestiones/asociaciones/consulta-del-fichero-de-denominaciones/"
 REGISTRO_COOPERATIVAS_URL = "https://www.mites.gob.es/es/sec_trabajo/autonomos/economia-social/Regsociedades/index.htm"
 
