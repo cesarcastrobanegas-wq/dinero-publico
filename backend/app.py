@@ -3328,6 +3328,7 @@ def _vaciar_caches_de_nombres():
                 _paginas_cache.clear()
                 _paginas_cerrojos.clear()
             print(f"[admin] índice recalculado tras cargar administradores ({len(filas)} municipios)", flush=True)
+            _calentar_portada()
         except Exception as e:
             print(f"[admin] índice tras cargar administradores: ERROR ({type(e).__name__}: {e})", flush=True)
 
@@ -19012,6 +19013,7 @@ def _precalcular_indice_bg(esperar=None):
                     _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
             print(f"[indice] precalculado en {time.time() - t0:.0f} s ({len(filas)} municipios)", flush=True)
             del filas
+            _calentar_portada()
             _liberar_memoria()
         except Exception as e:
             print(f"[indice] precálculo: ERROR ({type(e).__name__}: {e})", flush=True)
@@ -25588,7 +25590,11 @@ def _alertas_panel_html(cookie, hecho=""):
 _PAGINAS_TTL = 600
 _PAGINAS_MAX_VIEJA = 3 * 3600
 _PAGINAS_MAX = 48
-_PAGINAS_CUPO = {"busqueda": 24}               # máximo de entradas de un grupo dentro de las _PAGINAS_MAX
+_PAGINAS_CUPO = {"busqueda": 24, "rankings_param": 12}   # máximo de entradas de un grupo dentro de las _PAGINAS_MAX
+# Repaso para la Cámara de Comercio (2026-10-14): la portada tardaba ~10 s cuando se montaba en frío, y eso pasaba a
+# menudo porque los cientos de /rankings con parámetros que pedía un rastreador la echaban de la caché (48 entradas,
+# sale primero la menos usada). Ahora esos rankings tienen su cupo, la portada sin parámetros no sale nunca por falta
+# de sitio (_pagina_fija) y se monta en segundo plano en cada idioma tras calcular el Índice (_calentar_portada).
 _paginas_cache = collections.OrderedDict()     # clave -> {"gz": bytes, "ts": float, "refrescando": bool}
 _paginas_cerrojos = {}                         # clave -> Lock (montajes iguales a la vez)
 _paginas_lock = threading.Lock()
@@ -25607,9 +25613,29 @@ def _pagina_guardar(clave, html_txt, grupo=None):
                 del _paginas_cache[vieja]
                 _paginas_cerrojos.pop(vieja, None)
         while len(_paginas_cache) > _PAGINAS_MAX:
-            vieja, _ = _paginas_cache.popitem(last=False)
+            vieja = next((k for k in _paginas_cache if not _pagina_fija(k)), None)
+            if vieja is None:
+                break
+            del _paginas_cache[vieja]
             _paginas_cerrojos.pop(vieja, None)
     return gz
+
+
+def _pagina_fija(clave):
+    """La portada sin parámetros, en cualquier idioma: no sale de la caché por falta de sitio."""
+    return len(clave) == 2 and clave[1] == "/"
+
+
+def _calentar_portada():
+    """Monta la portada en cada idioma si no está fresca en la caché, para que ningún visitante espere a montarla."""
+    for lang in ["es"] + [l for l in _i18n_publicados() if l != "es"]:
+        def _una(lang=lang):
+            _I18N_IDIOMA.set(lang)
+            _pagina_cacheada("/", [], lambda: render_landing_nacional_html(_db_municipios_ligeros(), rk_comunidad="todas"))
+        try:
+            contextvars.copy_context().run(_una)
+        except Exception as e:
+            print(f"  [paginas] no se pudo calentar la portada ({lang}): {type(e).__name__}: {e}", flush=True)
 
 
 def _paginas_invalidar(grupo):
@@ -25816,7 +25842,8 @@ def _route_get(path, qs, gzip_ok=False):
             ("comunidad_alc", comunidades_qs["alc"], "todas"), ("comunidad_deuda", comunidades_qs["deuda"], "todas"),
             ("pag_alc", paginas_qs["alc"], "1"), ("pag_deuda", paginas_qs["deuda"], "1"),
             ("pag_idx", paginas_qs["idx"], "1")) if v != defecto]
-        return _pagina_cacheada("/rankings", params_rk, _montar_rankings, gzip_ok=gzip_ok)
+        return _pagina_cacheada("/rankings", params_rk, _montar_rankings, gzip_ok=gzip_ok,
+                                grupo="rankings_param" if params_rk else None)
 
     if path == "/convocatorias":
         zona = qs.get("zona", [""])[0]
