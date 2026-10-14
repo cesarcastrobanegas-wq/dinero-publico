@@ -26597,9 +26597,48 @@ def _bot_sin_cupo(familia):
         return True
 
 
+# Cupo por IP para clientes que se presentan como NAVEGADOR (repaso para la Cámara de Comercio, 2026-10-14). Medido
+# en producción esa tarde: en 10 minutos, 738 peticiones de "navegador" con 618 s de servidor, 480 de ellas a /rankings
+# con parámetros y muchas a fichas paginadas en ca/eu/gl: un rastreador disfrazado que se salta robots.txt y el cupo de
+# robots (que va por el user-agent). Con un solo proceso de 4 hilos, eso hacía que cualquier página (hasta «Quién soy»)
+# tardase 10-16 s en empezar a responder. Una persona no pide 40 páginas caras seguidas; si lo hace, después puede
+# seguir a una cada _IP_REPONE_S segundos. La IP solo vive en memoria (no se guarda en ningún sitio).
+_IP_CUPO = 40
+_IP_REPONE_S = 6
+_ip_cupos = {}                   # ip -> [fichas disponibles, última reposición]
+_ip_frenadas = [0]
+
+
+def _ruta_cara_por_ip(path, query):
+    """Páginas caras para el cupo por IP: las de los robots (rankings con parámetros, búsquedas) y las fichas
+    paginadas (pag=, pag_cm=...), que es lo que recorría el rastreador disfrazado."""
+    if _ruta_cara_para_bots(path, query):
+        return True
+    return bool(query) and ("pag=" in query or "pag_" in query)
+
+
+def _ip_sin_cupo(ip):
+    if not ip:
+        return False
+    ahora = time.time()
+    with _bots_lock:
+        if len(_ip_cupos) > 5000:
+            _ip_cupos.clear()
+        c = _ip_cupos.setdefault(ip, [float(_IP_CUPO), ahora])
+        c[0] = min(float(_IP_CUPO), c[0] + (ahora - c[1]) / _IP_REPONE_S)
+        c[1] = ahora
+        if c[0] >= 1:
+            c[0] -= 1
+            return False
+        _ip_frenadas[0] += 1
+        return True
+
+
 def _bots_diagnostico():
     with _bots_lock:
-        return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12))}
+        return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12)),
+                "cupo_por_ip": {"cupo": _IP_CUPO, "repone_cada_s": _IP_REPONE_S, "frenadas": _ip_frenadas[0],
+                                "ips_en_memoria": len(_ip_cupos)}}
 
 
 # ─── CONTADOR DE VISITAS PROPIO (2026-10-12) ───────────────────────────────────────────────────────
@@ -26965,6 +27004,16 @@ def app(environ, start_response):
             _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + " (429)"))
         cuerpo = b"Demasiadas peticiones. Vuelve a intentarlo mas tarde.\n"
         start_response("429 Too Many Requests", [("Content-Type", "text/plain; charset=utf-8"), ("Retry-After", "600"),
+                                                 ("Content-Length", str(len(cuerpo)))])
+        _visitas_anotar(environ, "429", [("Content-Length", str(len(cuerpo)))], None, 0.0)
+        return [cuerpo]
+    if (not info["bot"] and info["metodo"] == "GET"
+            and _ruta_cara_por_ip(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
+            and _ip_sin_cupo((environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip())):
+        with _peticiones_lock:
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, False, info["agente"] + " (429 por IP)"))
+        cuerpo = "Demasiadas páginas seguidas desde tu conexión. Espera un minuto y vuelve a intentarlo.\n".encode("utf-8")
+        start_response("429 Too Many Requests", [("Content-Type", "text/plain; charset=utf-8"), ("Retry-After", "60"),
                                                  ("Content-Length", str(len(cuerpo)))])
         _visitas_anotar(environ, "429", [("Content-Length", str(len(cuerpo)))], None, 0.0)
         return [cuerpo]
