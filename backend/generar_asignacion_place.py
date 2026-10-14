@@ -268,11 +268,28 @@ def main():
     for pv, pref in A._CP_PREFIJO_PROVINCIA.items():
         for x in (pref if isinstance(pref, tuple) else (pref,)):
             prefijo_cp[x] = pv
+    # Una diputación o un cabildo publican con muchos nombres de órgano ("Diputación de Badajoz", "Diputación
+    # Provincial de Badajoz", "Área de Fomento de la Diputación...") pero un solo DIR3: una ficha por código, con el
+    # nombre más usado de los que empiezan por "Diputación"/"Cabildo"/"Consell".
+    grupo, nombres_dir3 = {}, collections.defaultdict(collections.Counter)
+    for (tipo, nombre), v in ents.items():
+        dir3s = det[(tipo, nombre)]["dir3"]
+        d3 = dir3s.most_common(1)[0][0] if dir3s else ""
+        if tipo in ("diputación", "cabildo o consell insular") and re.match(r"^L0[23]\d{6}$", d3):
+            grupo[(tipo, nombre)] = (tipo, "dir3:" + d3)
+            canonico = re.match(r"^(diputaci|cabildo|consell|consejo insular)", A.normalizar(nombre))
+            nombres_dir3[(tipo, "dir3:" + d3)][nombre] += v[0] * (1000 if canonico else 1)
+        else:
+            grupo[(tipo, nombre)] = (tipo, nombre)
+    nombre_de = lambda g: nombres_dir3[g].most_common(1)[0][0] if g in nombres_dir3 else g[1]
+    for k, pvs in list(prov_jer.items()):
+        if grupo.get(k, k) != k:
+            prov_jer[grupo[k]].update(pvs)
     cs_ent, prov_cp = collections.defaultdict(list), collections.defaultdict(collections.Counter)
     for m in hechos:
         for id_lic, cs in leer(ruta_con(m)).items():
             if id_lic in entidades:
-                k = tuple(entidades[id_lic][:2])
+                k = grupo[tuple(entidades[id_lic][:2])]
                 cs_ent[k].extend(cs)
                 for c in cs:
                     cp = (c.get("cp") or "").strip()
@@ -280,14 +297,20 @@ def main():
                         prov_cp[k][prefijo_cp[cp[:2]]] += 1
     por_prov_ent = collections.defaultdict(dict)
     sin_contratos = 0
-    for k in ents:
+    for k in sorted(set(grupo.values())):
         if not cs_ent.get(k):
             sin_contratos += 1
             continue
         votos = prov_jer.get(k) or prov_cp.get(k)
         prov = votos.most_common(1)[0][0] if votos else ""
-        por_prov_ent[prov or "sin_provincia"][clave_entidad(A, prov, k[1])] = {
-            "tipo": k[0], "nombre": k[1], "provincia": prov, "contratos": cs_ent[k]}
+        nombre = nombre_de(k)
+        clave = clave_entidad(A, prov, nombre)
+        previo = por_prov_ent[prov or "sin_provincia"].get(clave)
+        if previo:                                  # mismo nombre por dos caminos: una sola ficha
+            previo["contratos"].extend(cs_ent[k])
+            continue
+        por_prov_ent[prov or "sin_provincia"][clave] = {
+            "tipo": k[0], "nombre": nombre, "provincia": prov, "contratos": cs_ent[k]}
     dir_ent = os.path.join(salida, "ent")
     os.makedirs(dir_ent, exist_ok=True)
     for viejo in os.listdir(dir_ent):

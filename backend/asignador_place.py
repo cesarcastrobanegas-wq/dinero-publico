@@ -65,7 +65,7 @@ VALIDADAS = {
 # Asociaciones y grupos de desarrollo rural: son de varios municipios aunque PLACE los cuelgue del de su sede.
 _RE_VARIOS = re.compile(r"\b(asociacion|associacio|grupo de (accion|desarrollo)|grup d'accio)\b")
 _RE_CARGO = re.compile(
-    r"^(presidencia|vicepresidencia|presidente|vicepresidente|gerencia|gerente|direccion( general| gerente| gerencia)?|"
+    r"^(presidencia|vicepresidencia|presidente|vicepresidente|gerencia|gerente|direccion( general| gerente| gerencia)?|alcaldia|"
     r"consejeria delegada|consejer[oa] delegad[oa]|consejo de administracion|consejo rector|comision ejecutiva|"
     r"junta de gobierno( local)?|junta rectora|junta general|pleno|delegad[oa]|secretaria general|alcaldia)\s+"
     r"(de la |del |de las |de los |de l'|de |d')", re.I)
@@ -268,6 +268,15 @@ class AsignadorPlace:
             for trozo, pm in VALIDADAS.items():
                 if trozo in ente_v:
                     return muni(pm, "entidad validada a mano")
+        org_n = self.norm(r["organo"])
+        # Consorcio o mancomunidad que publica con el DIR3 de su diputación o cabildo (el Consorcio de Bomberos de la
+        # Provincia de Cádiz con L02000011; 14-10-2026): es entidad propia, pero no la diputación. Un órgano de la
+        # propia diputación que solo los nombra ("Diputación Delegada de Asistencia Económica a Mancomunidades") sí lo es.
+        if re.match(r"^L0[23]\d{6}$", d) and not _RE_DIPUTACION.search(org_n):
+            for clave, tipo in (("mancomunidad", "mancomunidad"), ("mancomunitat", "mancomunidad"), ("consorcio", "consorcio"),
+                                ("consorci ", "consorcio")):
+                if re.match(r"^(\w+ )*?(del |de la )?" + clave, org_n) and not re.search(r"\bmunicipal\b", org_n):
+                    return entidad(tipo, self._nombre_entidad({"padres": [], "organo": r["organo"]}), "nombre del órgano")
         if re.match(r"^L0[2-8]\d{6}$", d):
             # Un antiguo código de entidad local menor en un ayuntamiento que PLACE ya cuelga de "Ayuntamientos" con
             # su nombre (Torrenueva Costa, municipio desde 2018) no lo convierte en entidad menor.
@@ -276,10 +285,13 @@ class AsignadorPlace:
                 pat = {"L02": _RE_DIPUTACION, "L03": _RE_DIPUTACION}.get(d[:3])
                 return entidad(TIPOS_DIR3[d[:3]], self._nombre_entidad(r, pat), "DIR3 " + d[:3])
         if any(self.norm(x) == "juntas vecinales" for x in p) or re.search(r"\bentidad local (menor|autonoma)\b|\bjunta vecinal\b", texto):
-            return entidad("entidad local menor", self._nombre_entidad(r), "jerarquía o nombre")
+            # Bajo "Ayuntamientos" el primer nodo es el municipio que la aloja, no la entidad (Valdivia, en Villanueva
+            # de la Serena): entonces el nombre sale del órgano.
+            nombre = self._nombre_entidad({"padres": [], "organo": r["organo"]} if bajo_ayto else r)
+            nombre = re.sub(r"(?i)^junta vecinal de (la )?(?=entidad local)", "", nombre)   # "Junta Vecinal de la Entidad Local Menor de X"
+            return entidad("entidad local menor", nombre[:1].upper() + nombre[1:], "jerarquía o nombre")
         # (c) mancomunidades y consorcios que publican con el perfil (y el DIR3) del ayuntamiento que los aloja:
         # "Mancomunidad Integral Sierra Suroeste" bajo "Jerez de los Caballeros / Ayuntamientos" no es Jerez.
-        org_n = self.norm(r["organo"])
         if not es_ayto:
             for clave, tipo in (("mancomunidad", "mancomunidad"), ("mancomunitat", "mancomunidad"), ("mancomunidade", "mancomunidad"),
                                 ("consorcio", "consorcio"), ("consorci ", "consorcio")):
@@ -310,7 +322,9 @@ class AsignadorPlace:
             if no_muni:
                 tipo = ("mancomunidad" if "mancomunidad" in texto else "consorcio" if "consorci" in texto else
                         "comarca" if "comarca" in texto else "entidad local menor")
-                return entidad(tipo, self._nombre_entidad(r), "jerarquía o nombre")
+                # El hueco del municipio en la jerarquía es el municipio que la aloja, no la entidad ("Alcaldía de la
+                # Entidad Local Menor de Valdivia" bajo "Villanueva de la Serena / Ayuntamientos"; 14-10-2026).
+                return entidad(tipo, self._nombre_entidad({"padres": [], "organo": r["organo"]}), "jerarquía o nombre")
             # 4) localidad del órgano
             m, prov = self.asg.por_ciudad(r)
             if m:
