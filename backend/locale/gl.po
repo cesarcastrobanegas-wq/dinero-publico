@@ -3105,6 +3105,10 @@ msgstr "Federación de municipios"
 msgid "Empresa o fundación de varios municipios"
 msgstr "Empresa ou fundación de varios municipios"
 
+#: app.py (fase 2, entidades locales)
+msgid "Diputación, mancomunidades, consorcios y otras entidades locales de esta provincia →"
+msgstr "Deputación, mancomunidades, consorcios e outras entidades locais desta provincia →"
+
 #~ msgid "El mayor contrato adjudicado"
 #~ msgstr "O maior contrato adxudicado"
 

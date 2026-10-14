@@ -3105,6 +3105,10 @@ msgstr "Udalerrien federazioa"
 msgid "Empresa o fundación de varios municipios"
 msgstr "Hainbat udalerritako enpresa edo fundazioa"
 
+#: app.py (fase 2, entidades locales)
+msgid "Diputación, mancomunidades, consorcios y otras entidades locales de esta provincia →"
+msgstr "Probintzia honetako diputazioa, mankomunitateak, partzuergoak eta beste toki-erakunde batzuk →"
+
 #~ msgid "El mayor contrato adjudicado"
 #~ msgstr "Esleitutako kontraturik handiena"
 

@@ -10150,6 +10150,12 @@ _RE_CARGO_ENTIDAD = re.compile(
     r"\s*(de la |del |de las |de los |de |d')?", re.I)
 # Pendientes de decisión de César en otra rama (wip/estado-fuera-de-capitales): no se tocan aquí.
 _ENTIDADES_ORGANO_PENDIENTES = ("castrillo de murcia",)
+# Dudosos ya decididos por César: trozo del órgano normalizado -> (tipo, nombre de la entidad).
+#   - 14-10-2026: "Dirección General del Consorcio de la Institución Ferial de Castilla y León del Ayuntamiento de
+#     Valladolid" (14 contratos en la ficha de Valladolid) va a la ficha del consorcio.
+_ENTIDADES_ORGANO_DECIDIDAS = {
+    "consorcio de la institucion ferial de castilla y leon": ("consorcio", "Consorcio de la Institución Ferial de Castilla y León"),
+}
 
 
 def _clave_entidad_local(provincia, nombre):
@@ -10313,6 +10319,9 @@ def _entidad_de_organo(organo, provincia):
         tipo = "entidad local menor"
     if not tipo:
         return None
+    for trozo, decidida in _ENTIDADES_ORGANO_DECIDIDAS.items():
+        if trozo in o_plano:
+            return decidida
     if _RE_ORGANO_DEL_AYUNTAMIENTO.search(o_plano) or any(x in o_plano for x in _ENTIDADES_ORGANO_PENDIENTES):
         return ("ambiguo", "")
     nombre = (organo or "").strip()
@@ -10402,6 +10411,14 @@ def _desviar_entidades_fichas_existentes():
         _db.commit()
     print(f"[startup] entidades_locales: {movidos} contratos salen de {fichas} fichas municipales a su entidad "
           f"({len(filas)} fichas revisadas)", flush=True)
+
+
+def _hay_entidades_locales(provincia):
+    try:
+        with _db_lock:
+            return _db.execute("SELECT 1 FROM entidades_locales WHERE provincia=? LIMIT 1", (provincia,)).fetchone() is not None
+    except sqlite3.OperationalError:            # la tabla aún no existe
+        return False
 
 
 def _db_get_entidad_local(clave):
@@ -18193,6 +18210,7 @@ def _footer_html(provincia="todas"):
     <a href="#" id="cookie-preferencias">{_t("Preferencias de cookies")}</a>
     <a href="/quien-soy">{_t("Quién soy")}</a>
     <a href="/casos">{_t("Casos")}</a>
+    <a href="/entidades">{_t("Entidades locales")}</a>
     <a href="/mapa-cobertura">{_t("Mapa de cobertura")}</a>
     <a href="/metodologia">{_t("Metodología")}</a>
     <span class="ft-sep">|</span>
@@ -21705,6 +21723,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
           <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
         </div>"""
+        if not muni_filter and _hay_entidades_locales(provincia):
+            stats += (f'<p class="entidades-prov-link"><a href="/entidades?provincia={esc(provincia)}">'
+                      f'{_t("Diputación, mancomunidades, consorcios y otras entidades locales de esta provincia →")}</a></p>')
 
     back_html = f'<span class="back-link"><a href="/{q_prov_first}">← {_t("Ver todos los municipios")}</a></span>'
 
@@ -26368,6 +26389,18 @@ def _route_get(path, qs, gzip_ok=False):
             if prov == "murcia":
                 continue  # sin parámetro, ya cubierto por las URLs de arriba
             urls.append(f"  <url><loc>{esc(SITE_URL)}/{_q_prov_first(prov)}</loc><changefreq>daily</changefreq></url>")
+        # Entidades locales (fase 2, 2026-10-14): el índice, cada provincia con entidades y cada ficha.
+        try:
+            with _db_lock:
+                filas_ent = _db.execute("SELECT clave, provincia FROM entidades_locales ORDER BY clave").fetchall()
+        except sqlite3.OperationalError:
+            filas_ent = []
+        if filas_ent:
+            urls.append(f"  <url><loc>{esc(SITE_URL)}/entidades</loc><changefreq>weekly</changefreq></url>")
+            for pv in sorted({pv for _, pv in filas_ent if pv}):
+                urls.append(f"  <url><loc>{esc(SITE_URL)}/entidades?provincia={esc(pv)}</loc><changefreq>weekly</changefreq></url>")
+            for clave_ent, _ in filas_ent:
+                urls.append(f"  <url><loc>{esc(SITE_URL)}/entidad?id={esc(quote_plus(clave_ent))}</loc><changefreq>weekly</changefreq></url>")
         # /rankings con parámetros (provincia, comunidad...) ya no va en el sitemap: robots.txt lo bloquea desde el
         # 2026-10-03 (ver /robots.txt); solo /rankings a secas, arriba.
         for m, prov in entradas:
