@@ -11178,12 +11178,14 @@ def _retirar_feed_antes_de_propia(fuentes=None):
 # si, con las entidades descodificadas, los nombres son iguales o uno es el principio del otro con 30 letras o más; y
 # además mismo importe (ver _NOMBRE_CORTADO_ACEPTA_IVA), objeto parecido y fecha a ±7 días. Nada de UTE ni nombres
 # genéricos. Ambiguos (un contrato con más de una pareja posible) no se retiran: se apuntan en place_nombre_ambiguos.
-# Medido sobre la copia del 10-10: 35 parejas con el mismo importe y 53 con el importe propio = feed por 1,21, 1,10 o
+# Medido sobre la copia del 10-10: 35 parejas con el mismo importe y 53 (52 sin la excluida) con el importe propio = feed por 1,21, 1,10 o
 # 1,04 exactos (1 EUR de margen como mucho; decisión de César del 14-10, nada de proporciones raras). En estas últimas
 # se queda la fila propia pero con el importe SIN IVA del feed (aviso MENOR_AVISO_IVA_FEED; el original en
 # import_fuente), y se vuelve a poner tras cada refresco de la fuente, que lo sobrescribe.
 _FUENTES_NOMBRE_CORTADO = {"murcia-capital"}
 _IVA_EXACTOS_CM = (1.21, 1.10, 1.04)
+# Parejas que César dejó fuera al revisar la lista (14-10): el objeto no basta para darlas por el mismo contrato.
+_NOMBRE_CORTADO_EXCLUIDOS = {"place-menores::18503544"}     # patrocinio de concierto, Feria de Murcia 2025
 _RE_NOMBRE_GENERICO_CM = re.compile(r"\b(ute|u t e|union temporal|varios|diversos|no consta|sin datos|particular|"
                                     r"desconocido|adjudicatario)\b")
 
@@ -11263,7 +11265,7 @@ def _retirar_nombre_cortado(fuentes=None):
                     por_prefijo[_nombre_sin_entidades_cm(e["adj"])[:30]].append(e)
             candidatos = {}
             for fid, nif, adj, imp, fecha, desc in libres:
-                if _nombre_generico_cm(adj):
+                if _nombre_generico_cm(adj) or fid in _NOMBRE_CORTADO_EXCLUIDOS:
                     continue
                 lista = []
                 for e in por_prefijo.get(_nombre_sin_entidades_cm(adj)[:30], ()):
