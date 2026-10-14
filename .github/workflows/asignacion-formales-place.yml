@@ -102,6 +102,29 @@ jobs:
             sleep 5
           done
 
+      # Paso 5: los contratos de las entidades propias (diputaciones, mancomunidades, consorcios...), igual: de la caché
+      # al disco de la web, una provincia cada vez, solo si se pide. Van a fichas aparte, no a ningún municipio.
+      - name: Subir las entidades propias a la web (solo si se pide)
+        if: steps.generar.outputs.codigo == '0' && inputs.subir == 'si'
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          for f in asignacion_place/ent/*.json.gz; do
+            prov=$(basename "$f" .json.gz)
+            fin=$(( $(date +%s) + 300 ))
+            while true; do
+              codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST -H "Content-Type: application/gzip"                 --data-binary @"$f" "https://dinero-publico.com/admin/entidades-locales?token=${ADMIN_TOKEN}&provincia=${prov}" || echo 000)
+              case "$codigo" in
+                000|502|503|504|520|521|522|523|524)
+                  [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                  echo "HTTP ${codigo}: reintento en 30 s"; sleep 30 ;;
+                200) cat respuesta.json; echo; break ;;
+                *) echo "::error::Subida de entidades de ${prov} rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
+              esac
+            done
+            sleep 5
+          done
+
       - name: Resultado (artefacto, sin adjudicatarios)
         if: steps.generar.outputs.codigo == '0'
         uses: actions/upload-artifact@v4
