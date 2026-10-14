@@ -17008,8 +17008,10 @@ button.share-btn{font-family:inherit;}
 .personaliza-resultado .pr-stat-valor{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--accent);margin-top:3px;}
 .personaliza-resultado .pr-cerrar{float:right;background:none;border:none;color:var(--dim);cursor:pointer;font-size:13px;}
 @media (max-width:600px){
-  .personaliza-banner{flex-direction:column;align-items:stretch;}
+  .personaliza-banner{flex-direction:column;align-items:stretch;position:relative;padding-right:36px;}
   .personaliza-input-row{width:100%;}
+  /* la X arriba a la derecha, no sola en una línea (repaso para la Cámara, 2026-10-14) */
+  .personaliza-cerrar{position:absolute;top:8px;right:8px;}
 }
 /* ── Rediseño minimalista (2026-10-03): tarjetas blancas, borde gris fino, sombra suave; la jerarquía la marcan el
    tamaño y el peso de la letra, no el relleno de color. ── */
