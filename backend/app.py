@@ -4974,7 +4974,17 @@ PSCP_URL = "https://analisi.transparenciacatalunya.cat/resource/ybgg-dgi6.json"
 PSCP_FASES = "'Adjudicació','Formalització','Execució'"
 
 
+# Repaso para la Cámara de Comercio (2026-10-14): las dos formas de enlace de abajo (perfil por identificador y búsqueda
+# en contrataciondelsectorpublico.gob.es) dan 404 desde que la plataforma cambió sus direcciones. Mientras no haya
+# un enlace directo que funcione, se lleva al buscador oficial de perfiles de contratante (hay que escribir el
+# municipio). Para volver al enlace directo, poner _PLACE_PERFIL_DIRECTO = True.
+_PLACE_PERFIL_DIRECTO = False
+_PLACE_BUSCADOR_PERFILES = "https://contrataciondelestado.es/wps/portal/plataforma/buscadores/perfiles"
+
+
 def place_profile_url(municipio):
+    if not _PLACE_PERFIL_DIRECTO:
+        return _PLACE_BUSCADOR_PERFILES
     pid = MUNICIPIOS_PLACE_IDS.get(municipio)
     if pid:
         return f"https://contrataciondelsectorpublico.gob.es/web/guest/perfil-del-contratante/-/entity/id/{pid}"
