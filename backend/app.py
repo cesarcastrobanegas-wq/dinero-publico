@@ -11016,6 +11016,141 @@ def _recasar_governalia_ventana_larga():
         print(f"[menores] ventana larga de Governalia: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
+# ─── Feed ANTES que la fuente propia, hasta 120 días (decisión de César, 14-10-2026) ──────────────────────────────────
+# En estas fuentes la fecha propia es la de publicación y el contrato del feed aparece casi siempre ANTES, a menudo más
+# de un mes: la ventana vigente (31 días en Governalia, 7 en las demás) dejaba ~2.300 contratos repetidos. Medido sobre
+# la copia del 10-10: Cartagena 1.317, Sax 436, Torre Pacheco 286, Xirivella 126, Vilamarxant 93, Leganés 21; prueba
+# placebo (misma distancia con la propia ANTES, imposible si es el mismo contrato): 32, 1, 1, 3, 2, 0.
+# Solo para estas fuentes y solo con la fecha del feed ANTES (8-120 días). Exige mismo NIF, mismo importe y objeto
+# parecido. Si un contrato propio puede casar con más de uno del feed (o al revés) no se retira ninguno: se apunta en
+# place_feed_antes_ambiguos. Retirar = archivar en contratos_menors_archivo (no se borra nada); cada pareja queda en
+# place_feed_antes_parejas, que es también lo que hace la regla idempotente (un contrato propio ya emparejado no
+# vuelve a casar con otro).
+_FUENTES_FEED_ANTES = {"cartagena-governalia", "sax-governalia", "xirivella-governalia", "vilamarxant-governalia",
+                       "torre-pacheco", "leganes"}
+_FEED_ANTES_DIAS = (8, 120)
+
+
+def _nif_cm(nif):
+    n = re.sub(r"[^A-Z0-9]", "", (nif or "").upper())
+    return n if len(n) >= 8 else ""
+
+
+def _objeto_parecido_cm(a, b):
+    """Mismo objeto con otra redacción: comparten al menos el 30 % de las palabras de 4 letras o más, o los textos se
+    parecen en un 60 % (difflib). En las parejas medidas el 14-10 el objeto era idéntico en casi todas."""
+    import difflib
+    na, nb = normalizar(a or ""), normalizar(b or "")
+    pa = {w for w in re.findall(r"[a-z0-9]+", na) if len(w) >= 4}
+    pb = {w for w in re.findall(r"[a-z0-9]+", nb) if len(w) >= 4}
+    if pa and pb and len(pa & pb) / len(pa | pb) >= 0.3:
+        return True
+    return bool(na and nb) and difflib.SequenceMatcher(None, na[:200], nb[:200]).ratio() >= 0.6
+
+
+def _mismo_importe_cm(a, b):
+    return a is not None and b is not None and a > 0 and abs(a - b) <= max(1.0, 0.002 * b)
+
+
+def _retirar_feed_antes_de_propia(fuentes=None):
+    """Aplica la regla de _FUENTES_FEED_ANTES a lo que hay en la base. Idempotente: se puede llamar en cada arranque y
+    tras cada escritura de una de estas fuentes. Devuelve {municipio: archivados}."""
+    from datetime import date
+    fuentes = set(fuentes or _FUENTES_FEED_ANTES) & _FUENTES_FEED_ANTES
+    if not fuentes:
+        return {}
+
+    def dia(f):
+        try:
+            return date.fromisoformat((f or "")[:10]).toordinal()
+        except ValueError:
+            return None
+
+    with _db_lock:
+        _db.execute("CREATE TABLE IF NOT EXISTS place_feed_antes_parejas (feed_id TEXT PRIMARY KEY, propio_id TEXT, "
+                    "municipio TEXT, ts REAL)")
+        _db.execute("CREATE TABLE IF NOT EXISTS place_feed_antes_ambiguos (feed_id TEXT PRIMARY KEY, municipio TEXT, "
+                    "candidatos TEXT, ts REAL)")
+        _db.commit()
+    equivalentes = _nombres_equivalentes_cm(solo_place=True)
+    resumen = {}
+    for fuente in sorted(fuentes):
+        with _db_lock:
+            filas = _db.execute("SELECT id, municipio, provincia, nif, adjudicatari, import_num, data_adjudicacio, "
+                                "exercici, descripcio FROM contratos_menors_locales WHERE fuente=?", (fuente,)).fetchall()
+        grupos = collections.defaultdict(list)
+        for f in filas:
+            grupos[(f[1], f[2])].append(f)
+        for (muni, prov), propias in grupos.items():
+            # índice de la regla vigente, con el id del contrato propio en cada entrada
+            idx, entradas = collections.defaultdict(list), []
+            for pid, _m, _p, nif, adj, imp, fecha, ej, desc in propias:
+                e = {"imp": imp, "fecha": fecha, "fuente": fuente, "ejercicio": ej, "usado": False, "id": pid,
+                     "nif": _nif_cm(nif), "desc": desc}
+                entradas.append(e)
+                k1 = _clave_adjudicatario_cm(nif, adj)
+                idx[k1].append(e)
+                k2 = ("nom", _nombre_comparable_cm(adj))
+                if k2 != k1:
+                    idx[k2].append(e)
+            por_id = {e["id"]: e for e in entradas}
+            with _db_lock:
+                ya_emparejados = dict(_db.execute("SELECT feed_id, propio_id FROM place_feed_antes_parejas"))
+                visibles, archivados = [], []
+                for m2, p2 in equivalentes.get(_clave_municipio_cm(muni, prov), []):
+                    q = ("SELECT id, nif, adjudicatari, import_num, data_adjudicacio, descripcio FROM {t} WHERE "
+                         "municipio=? AND provincia=? AND fuente=? ORDER BY data_adjudicacio, id")
+                    archivados += _db.execute(q.format(t="contratos_menors_archivo"), (m2, p2, FUENTE_CM_PLACE)).fetchall()
+                    visibles += _db.execute(q.format(t="contratos_menors_locales"), (m2, p2, FUENTE_CM_PLACE)).fetchall()
+            if not visibles:
+                continue
+            # 1) lo ya retirado consume su contrato propio: primero las parejas de esta regla, luego la regla vigente
+            for fid, *_ in archivados:
+                e = por_id.get(ya_emparejados.get(fid))
+                if e:
+                    e["usado"] = True
+            for fid, nif, adj, imp, fecha, _d in archivados:
+                if fid not in ya_emparejados:
+                    _casa_con_propios({"nif": nif, "adjudicatari": adj, "import_num": imp, "data_adjudicacio": fecha}, idx)
+            # 2) los visibles que case la regla vigente (normalmente ninguno: ya se aplicó al cargar) se dejan a ella
+            libres = [r for r in visibles if not _casa_con_propios(
+                {"nif": r[1], "adjudicatari": r[2], "import_num": r[3], "data_adjudicacio": r[4]}, idx)]
+            # 3) regla nueva
+            por_nif = collections.defaultdict(list)
+            for e in entradas:
+                if not e["usado"] and e["nif"]:
+                    por_nif[e["nif"]].append(e)
+            candidatos = {}
+            for fid, nif, adj, imp, fecha, desc in libres:
+                df = dia(fecha)
+                lista = [e for e in por_nif.get(_nif_cm(nif), ())
+                         if df is not None and dia(e["fecha"]) is not None
+                         and _FEED_ANTES_DIAS[0] <= dia(e["fecha"]) - df <= _FEED_ANTES_DIAS[1]
+                         and _mismo_importe_cm(e["imp"], imp) and _objeto_parecido_cm(desc, e["desc"])]
+                if lista:
+                    candidatos[fid] = lista
+            feeds_por_propio = collections.Counter(e["id"] for lista in candidatos.values() for e in lista)
+            parejas, ambiguos = [], []
+            for fid, lista in candidatos.items():
+                if len(lista) == 1 and feeds_por_propio[lista[0]["id"]] == 1:
+                    parejas.append((fid, lista[0]["id"]))
+                else:
+                    ambiguos.append((fid, json.dumps([e["id"] for e in lista])))
+            ahora = time.time()
+            with _db_lock:
+                _db.executemany("INSERT OR REPLACE INTO place_feed_antes_parejas VALUES (?,?,?,?)",
+                                [(f, pid, muni, ahora) for f, pid in parejas])
+                _db.executemany("INSERT OR REPLACE INTO place_feed_antes_ambiguos VALUES (?,?,?,?)",
+                                [(f, muni, c, ahora) for f, c in ambiguos])
+                _db.commit()
+                _archivar_filas_cm([f for f, _ in parejas])
+            if parejas or ambiguos:
+                resumen[muni] = {"archivados": len(parejas), "ambiguos": len(ambiguos)}
+    if resumen:
+        print(f"  [menores] feed antes que la fuente propia (hasta {_FEED_ANTES_DIAS[1]} días): {resumen}", flush=True)
+    return resumen
+
+
 def _retirar_duplicados_place(propios):
     """Cuando una fuente propia escribe contratos de un municipio, retira (ARCHIVA en contratos_menors_archivo, no
     borra) las filas del feed de PLACE de ese municipio que son el mismo contrato. Así la regla "manda la fuente
@@ -11044,6 +11179,9 @@ def _retirar_duplicados_place(propios):
     if retirar:
         print(f"  [menores] {len(retirar)} contratos del feed de PLACE archivados: ya los trae la fuente propia "
               f"({len(grupos)} municipios revisados).", flush=True)
+    fuentes_antes = {r.get("fuente") for r in propios} & _FUENTES_FEED_ANTES
+    if fuentes_antes:
+        _retirar_feed_antes_de_propia(fuentes_antes)
 
 
 _PLACE_MENORES_CLAVE = "contratos_menores_place_hash"
@@ -15608,6 +15746,11 @@ def _carga_place_menores():
     siguientes la huella no cambia y termina en menos de un segundo."""
     _cargar_contratos_menores_place()
     _recasar_governalia_ventana_larga()      # una sola vez (marca en settings); ver _GOVERNALIA_DIAS_EXTRA
+    if _DISCO_CONFIABLE:
+        try:
+            _retirar_feed_antes_de_propia()  # idempotente; ver _FUENTES_FEED_ANTES
+        except Exception as e:
+            print(f"[menores] feed antes que la fuente propia: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
     _nombre_pf_conocido("", "")              # construye ya el índice de nombres de personas físicas (ver ahí)
 
 
