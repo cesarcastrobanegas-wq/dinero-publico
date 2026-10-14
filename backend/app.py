@@ -3337,6 +3337,7 @@ def _vaciar_caches_de_nombres():
                 _paginas_cache.clear()
                 _paginas_cerrojos.clear()
             print(f"[admin] índice recalculado tras cargar administradores ({len(filas)} municipios)", flush=True)
+            _calentar_portada()
         except Exception as e:
             print(f"[admin] índice tras cargar administradores: ERROR ({type(e).__name__}: {e})", flush=True)
 
@@ -5139,10 +5140,21 @@ INDICE_CARGOS_PUBLICOS = _construir_indice_cargos_publicos()
 SUELDOS_CONCEJALES = _cargar_sueldos_concejales()
 
 
+_PARTICULAS_NOMBRE = {"de", "del", "la", "las", "los", "y", "i", "e", "da", "das", "do", "dos"}
+
+
 def _capitalizar_nombre(s):
     """Los nombres del Ministerio vienen en mayúsculas (NOMBRE APELLIDO1
-    APELLIDO2); formato legible tipo 'Nombre Apellido'."""
-    return " ".join(p.capitalize() for p in (s or "").split())
+    APELLIDO2); formato legible tipo 'Nombre Apellido'. Mayúscula también tras guion o apóstrofo
+    ("Martínez-Almeida", "D'Ors") y partículas en minúscula dentro del nombre ("Juan de la Cierva"); repaso para la
+    Cámara de Comercio, 2026-10-14: la ficha de Madrid decía "Martínez-almeida"."""
+    palabras = (s or "").split()
+
+    def una(i, p):
+        if i and p.lower() in _PARTICULAS_NOMBRE:
+            return p.lower()
+        return re.sub(r"[^\W\d_]+", lambda m: m.group(0).capitalize(), p)
+    return " ".join(una(i, p) for i, p in enumerate(palabras))
 
 
 # Relevos en la alcaldía que el registro oficial de cargos (concejales.redsara.es) todavía no recoge. Mientras el
@@ -17271,6 +17283,7 @@ summary .it-aclara-mini{white-space:normal;}
 .it-tramo-nombre:hover{text-decoration:underline;}
 .it-tramo-nota{font-size:18px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;}
 .it-tramo-empate{font-size:11px;font-weight:600;color:var(--dim);}
+.it-tramo-nota-empate{font-size:12px;color:var(--dim);margin:6px 0 0;}
 .it-muestra{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;color:var(--text);background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.45);white-space:nowrap;}
 .it-muestra-nota{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--dim);}
 .it-muestra-desglose{margin-bottom:10px;}
@@ -17363,6 +17376,8 @@ button.share-btn{font-family:inherit;}
   table{font-size:12px;display:block;overflow-x:auto;white-space:nowrap;}
   th,td{padding:7px 8px;}
   .contrato-title{white-space:normal;}
+  /* convocatorias y fondos UE: el título salta de línea en vez de cortarse (repaso para la Cámara, 2026-10-14) */
+  .fue-card td:first-child{white-space:normal;min-width:190px;}
   .site-footer{flex-direction:column;align-items:flex-start;max-width:100%;}
   .site-footer .ft-links{gap:10px 14px;}
   .instalar-bar{max-width:100%;margin:32px auto 0;}
@@ -17477,8 +17492,10 @@ button.share-btn{font-family:inherit;}
 .personaliza-resultado .pr-stat-valor{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--accent);margin-top:3px;}
 .personaliza-resultado .pr-cerrar{float:right;background:none;border:none;color:var(--dim);cursor:pointer;font-size:13px;}
 @media (max-width:600px){
-  .personaliza-banner{flex-direction:column;align-items:stretch;}
+  .personaliza-banner{flex-direction:column;align-items:stretch;position:relative;padding-right:36px;}
   .personaliza-input-row{width:100%;}
+  /* la X arriba a la derecha, no sola en una línea (repaso para la Cámara, 2026-10-14) */
+  .personaliza-cerrar{position:absolute;top:8px;right:8px;}
 }
 /* ── Rediseño minimalista (2026-10-03): tarjetas blancas, borde gris fino, sombra suave; la jerarquía la marcan el
    tamaño y el peso de la letra, no el relleno de color. ── */
@@ -18141,14 +18158,17 @@ def _site_tagline():
     return _t("EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?")
 
 
-def _header_html(provincia="todas"):
+def _header_html(provincia="todas", con_lema=True):
+    """con_lema=False en las páginas que ya lo llevan como titular grande (.hero-tagline): portada y provincias
+    (repaso para la Cámara de Comercio, 2026-10-14: salía dos veces seguidas)."""
     rankings_href = "/rankings" + _q_prov_first(provincia)
+    lema_html = f"<p>{esc(_site_tagline())}</p>" if con_lema else ""
     return f"""<header>
   <a href="/" class="header-brand" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
     <div class="logo-svg">{LOGO_HTML}</div>
     <div>
       <h1 style="color:var(--text)">{_t("Contratación pública en España")}</h1>
-      <p>{esc(_site_tagline())}</p>
+      {lema_html}
     </div>
   </a>
   <nav class="header-nav">
@@ -18301,7 +18321,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     </div>
   </div>
 </div>
-{_header_html(provincia)}
+{_header_html(provincia, con_lema='class="hero-tagline"' not in body_html)}
 <div class="main">
 {_ad_banner_html() if show_ad_banner else ""}
 {body_html}
@@ -18740,11 +18760,13 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
 
     est = c.get("estado", "")
     est_label = _estado_txt({"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado", "EXE": "En ejecución"}.get(est, est))
-    url = c.get("url", "")
+    # Las direcciones de PLACE llegan del feed con "&amp;" y se guardan así: sin descodificarlas, esc() las dejaba en
+    # "&amp;amp;" y el enlace abría una ficha vacía de PLACE (repaso para la Cámara de Comercio, 2026-10-14).
+    url = html.unescape(c.get("url", "") or "")
     fuente = c.get("fuente", "PLACE")
 
     if fuente == "BORM":
-        borm_html_url = c.get("borm_html_url", "")
+        borm_html_url = html.unescape(c.get("borm_html_url", "") or "")
         html_link = (f' <a class="link borm-link" href="{esc(borm_html_url)}" target="_blank" '
                      f'title="{_t("Ver HTML en BORM")}">{_t("HTML ↗")}</a>') if borm_html_url else ""
         link_html = (f'<a class="link borm-link" href="{esc(url)}" target="_blank" '
@@ -19480,6 +19502,7 @@ def _precalcular_indice_bg(esperar=None):
                     _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
             print(f"[indice] precalculado en {time.time() - t0:.0f} s ({len(filas)} municipios)", flush=True)
             del filas
+            _calentar_portada()
             _liberar_memoria()
         except Exception as e:
             print(f"[indice] precálculo: ERROR ({type(e).__name__}: {e})", flush=True)
@@ -21717,8 +21740,10 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     stats = ""
     alerta_ficha_html = ""
     if datos:
+        # En la ficha de un solo municipio, "1 Municipios" no dice nada (repaso para la Cámara, 2026-10-14)
+        stat_munis = "" if muni_filter else f'<div class="stat"><span>{fmt_num(total_m)}</span>{_t("Municipios")}</div>'
         stats = f"""<div class="stats-bar">
-          <div class="stat"><span>{fmt_num(total_m)}</span>{_t("Municipios")}</div>
+          {stat_munis}
           <div class="stat"><span>{fmt_num(total_c)}</span>{_t("Contratos")}</div>
           <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
           <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
@@ -22587,12 +22612,14 @@ def _lider_indice_portada_html():
                  + [(None, _t("Más de {n} hab.").format(n=fmt_num(limites[-1])))])
 
     tramos_html = ""
+    hay_empate = False
     for tramo, etiqueta in etiquetas:
         grupo = por_tramo.get(tramo)
         if not grupo:
             continue
         lider = min(grupo, key=lambda f: (-f["indice"], -f["n_contratos"], normalizar(f["municipio"])))
         empatados = sum(1 for f in grupo if f["indice"] == lider["indice"]) - 1
+        hay_empate = hay_empate or empatados > 0
         empate = (f' <span class="it-tramo-empate" title="{_t("Otros municipios del tramo con la misma nota")}">+{empatados}</span>'
                   if empatados else "")
         tramos_html += (
@@ -22607,6 +22634,7 @@ def _lider_indice_portada_html():
     </div>
     {_it_aclaracion_html()}
     <ul class="it-tramos">{tramos_html}</ul>
+    {('<p class="it-tramo-nota-empate">' + _t("«+N»: otros municipios del mismo tramo con la misma nota; sale primero el que tiene más contratos.") + '</p>') if hay_empate else ""}
     <div class="it-lider-pie">
       <a class="btn-ver" href="/rankings#indice-transparencia">{_t("Ver ranking por tu región →")}</a>
       <a class="it-lider-metodo" href="/metodologia">{_t("Cómo se calcula")}</a>
@@ -22680,8 +22708,7 @@ def _sidebar_ranking_transparencia_html(comunidad_actual="todas", top_n=10):
     return f"""<div class="rk-sidebar-ranking-wrap">
     <details class="rk-sidebar" open>
       <summary class="rk-sidebar-title">{_t("Índice de Transparencia")}
-        <span class="rk-sidebar-v1-badge">{_t("Índice v2.1")}</span>{info_html}
-        {_it_aclaracion_html(mini=True)}</summary>
+        <span class="rk-sidebar-v1-badge">{_t("Índice v2.1")}</span>{info_html}</summary>
       <div class="rk-sidebar-aviso">⚠️ {_t("No comparable entre regiones; los datos de origen varían.")}</div>
       <label class="rk-sidebar-selector-label" for="rk-sidebar-comunidad">{_t("Región")}</label>
       <select id="rk-sidebar-comunidad" class="rk-sidebar-selector"
@@ -26057,7 +26084,11 @@ def _alertas_panel_html(cookie, hecho=""):
 _PAGINAS_TTL = 600
 _PAGINAS_MAX_VIEJA = 3 * 3600
 _PAGINAS_MAX = 48
-_PAGINAS_CUPO = {"busqueda": 24}               # máximo de entradas de un grupo dentro de las _PAGINAS_MAX
+_PAGINAS_CUPO = {"busqueda": 24, "rankings_param": 12}   # máximo de entradas de un grupo dentro de las _PAGINAS_MAX
+# Repaso para la Cámara de Comercio (2026-10-14): la portada tardaba ~10 s cuando se montaba en frío, y eso pasaba a
+# menudo porque los cientos de /rankings con parámetros que pedía un rastreador la echaban de la caché (48 entradas,
+# sale primero la menos usada). Ahora esos rankings tienen su cupo, la portada sin parámetros no sale nunca por falta
+# de sitio (_pagina_fija) y se monta en segundo plano en cada idioma tras calcular el Índice (_calentar_portada).
 _paginas_cache = collections.OrderedDict()     # clave -> {"gz": bytes, "ts": float, "refrescando": bool}
 _paginas_cerrojos = {}                         # clave -> Lock (montajes iguales a la vez)
 _paginas_lock = threading.Lock()
@@ -26076,9 +26107,29 @@ def _pagina_guardar(clave, html_txt, grupo=None):
                 del _paginas_cache[vieja]
                 _paginas_cerrojos.pop(vieja, None)
         while len(_paginas_cache) > _PAGINAS_MAX:
-            vieja, _ = _paginas_cache.popitem(last=False)
+            vieja = next((k for k in _paginas_cache if not _pagina_fija(k)), None)
+            if vieja is None:
+                break
+            del _paginas_cache[vieja]
             _paginas_cerrojos.pop(vieja, None)
     return gz
+
+
+def _pagina_fija(clave):
+    """La portada sin parámetros, en cualquier idioma: no sale de la caché por falta de sitio."""
+    return len(clave) == 2 and clave[1] == "/"
+
+
+def _calentar_portada():
+    """Monta la portada en cada idioma si no está fresca en la caché, para que ningún visitante espere a montarla."""
+    for lang in ["es"] + [l for l in _i18n_publicados() if l != "es"]:
+        def _una(lang=lang):
+            _I18N_IDIOMA.set(lang)
+            _pagina_cacheada("/", [], lambda: render_landing_nacional_html(_db_municipios_ligeros(), rk_comunidad="todas"))
+        try:
+            contextvars.copy_context().run(_una)
+        except Exception as e:
+            print(f"  [paginas] no se pudo calentar la portada ({lang}): {type(e).__name__}: {e}", flush=True)
 
 
 def _paginas_invalidar(grupo):
@@ -26285,7 +26336,8 @@ def _route_get(path, qs, gzip_ok=False):
             ("comunidad_alc", comunidades_qs["alc"], "todas"), ("comunidad_deuda", comunidades_qs["deuda"], "todas"),
             ("pag_alc", paginas_qs["alc"], "1"), ("pag_deuda", paginas_qs["deuda"], "1"),
             ("pag_idx", paginas_qs["idx"], "1")) if v != defecto]
-        return _pagina_cacheada("/rankings", params_rk, _montar_rankings, gzip_ok=gzip_ok)
+        return _pagina_cacheada("/rankings", params_rk, _montar_rankings, gzip_ok=gzip_ok,
+                                grupo="rankings_param" if params_rk else None)
 
     if path == "/convocatorias":
         zona = qs.get("zona", [""])[0]
@@ -27096,9 +27148,48 @@ def _bot_sin_cupo(familia):
         return True
 
 
+# Cupo por IP para clientes que se presentan como NAVEGADOR (repaso para la Cámara de Comercio, 2026-10-14). Medido
+# en producción esa tarde: en 10 minutos, 738 peticiones de "navegador" con 618 s de servidor, 480 de ellas a /rankings
+# con parámetros y muchas a fichas paginadas en ca/eu/gl: un rastreador disfrazado que se salta robots.txt y el cupo de
+# robots (que va por el user-agent). Con un solo proceso de 4 hilos, eso hacía que cualquier página (hasta «Quién soy»)
+# tardase 10-16 s en empezar a responder. Una persona no pide 40 páginas caras seguidas; si lo hace, después puede
+# seguir a una cada _IP_REPONE_S segundos. La IP solo vive en memoria (no se guarda en ningún sitio).
+_IP_CUPO = 40
+_IP_REPONE_S = 6
+_ip_cupos = {}                   # ip -> [fichas disponibles, última reposición]
+_ip_frenadas = [0]
+
+
+def _ruta_cara_por_ip(path, query):
+    """Páginas caras para el cupo por IP: las de los robots (rankings con parámetros, búsquedas) y las fichas
+    paginadas (pag=, pag_cm=...), que es lo que recorría el rastreador disfrazado."""
+    if _ruta_cara_para_bots(path, query):
+        return True
+    return bool(query) and ("pag=" in query or "pag_" in query)
+
+
+def _ip_sin_cupo(ip):
+    if not ip:
+        return False
+    ahora = time.time()
+    with _bots_lock:
+        if len(_ip_cupos) > 5000:
+            _ip_cupos.clear()
+        c = _ip_cupos.setdefault(ip, [float(_IP_CUPO), ahora])
+        c[0] = min(float(_IP_CUPO), c[0] + (ahora - c[1]) / _IP_REPONE_S)
+        c[1] = ahora
+        if c[0] >= 1:
+            c[0] -= 1
+            return False
+        _ip_frenadas[0] += 1
+        return True
+
+
 def _bots_diagnostico():
     with _bots_lock:
-        return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12))}
+        return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12)),
+                "cupo_por_ip": {"cupo": _IP_CUPO, "repone_cada_s": _IP_REPONE_S, "frenadas": _ip_frenadas[0],
+                                "ips_en_memoria": len(_ip_cupos)}}
 
 
 # ─── CONTADOR DE VISITAS PROPIO (2026-10-12) ───────────────────────────────────────────────────────
@@ -27464,6 +27555,16 @@ def app(environ, start_response):
             _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + " (429)"))
         cuerpo = b"Demasiadas peticiones. Vuelve a intentarlo mas tarde.\n"
         start_response("429 Too Many Requests", [("Content-Type", "text/plain; charset=utf-8"), ("Retry-After", "600"),
+                                                 ("Content-Length", str(len(cuerpo)))])
+        _visitas_anotar(environ, "429", [("Content-Length", str(len(cuerpo)))], None, 0.0)
+        return [cuerpo]
+    if (not info["bot"] and info["metodo"] == "GET"
+            and _ruta_cara_por_ip(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
+            and _ip_sin_cupo((environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip())):
+        with _peticiones_lock:
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, False, info["agente"] + " (429 por IP)"))
+        cuerpo = "Demasiadas páginas seguidas desde tu conexión. Espera un minuto y vuelve a intentarlo.\n".encode("utf-8")
+        start_response("429 Too Many Requests", [("Content-Type", "text/plain; charset=utf-8"), ("Retry-After", "60"),
                                                  ("Content-Length", str(len(cuerpo)))])
         _visitas_anotar(environ, "429", [("Content-Length", str(len(cuerpo)))], None, 0.0)
         return [cuerpo]

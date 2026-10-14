@@ -3108,6 +3108,9 @@ msgstr "Empresa o fundació de diversos municipis"
 #: app.py (fase 2, entidades locales)
 msgid "Diputación, mancomunidades, consorcios y otras entidades locales de esta provincia →"
 msgstr "Diputació, mancomunitats, consorcis i altres entitats locals d'aquesta província →"
+#: app.py (repaso Cámara)
+msgid "«+N»: otros municipios del mismo tramo con la misma nota; sale primero el que tiene más contratos."
+msgstr "«+N»: altres municipis del mateix tram amb la mateixa nota; surt primer el que té més contractes."
 
 #~ msgid "El mayor contrato adjudicado"
 #~ msgstr "El contracte adjudicat més gran"
