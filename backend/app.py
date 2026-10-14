@@ -11167,6 +11167,128 @@ def _retirar_feed_antes_de_propia(fuentes=None):
     return resumen
 
 
+# ─── Nombre cortado o con entidades HTML en el feed (Murcia capital, decisión de César, 14-10-2026) ──────────────────
+# La fuente de Murcia capital no trae NIF: solo se empareja por el nombre del adjudicatario, y el feed de PLACE corta los
+# nombres largos (~50 letras) o trae entidades HTML (&quot;, &amp;), así que la regla vigente no los casaba. Aquí casan
+# si, con las entidades descodificadas, los nombres son iguales o uno es el principio del otro con 30 letras o más; y
+# además mismo importe (ver _NOMBRE_CORTADO_ACEPTA_IVA), objeto parecido y fecha a ±7 días. Nada de UTE ni nombres
+# genéricos. Ambiguos (un contrato con más de una pareja posible) no se retiran: se apuntan en place_nombre_ambiguos.
+# Medido sobre la copia del 10-10: 35 parejas con el mismo importe y 54 más con el importe propio = feed con IVA.
+_FUENTES_NOMBRE_CORTADO = {"murcia-capital"}
+_NOMBRE_CORTADO_ACEPTA_IVA = False        # César pidió "mismo importe": las 54 con IVA, pendientes de su decisión
+_RE_NOMBRE_GENERICO_CM = re.compile(r"\b(ute|u t e|union temporal|varios|diversos|no consta|sin datos|particular|"
+                                    r"desconocido|adjudicatario)\b")
+
+
+def _nombre_sin_entidades_cm(nombre):
+    import html as _html
+    return _nombre_comparable_cm(_html.unescape(_html.unescape(nombre or "")))
+
+
+def _nombre_generico_cm(nombre):
+    import html as _html
+    t = re.sub(r"[^a-z0-9 ]", " ", normalizar(_html.unescape(nombre or "")))
+    return bool(_RE_NOMBRE_GENERICO_CM.search(t)) or len(_nombre_sin_entidades_cm(nombre)) < 30
+
+
+def _nombres_casan_cortados_cm(a, b):
+    a, b = _nombre_sin_entidades_cm(a), _nombre_sin_entidades_cm(b)
+    corto, largo = sorted((a, b), key=len)
+    return len(corto) >= 30 and largo.startswith(corto)
+
+
+def _retirar_nombre_cortado(fuentes=None):
+    """Aplica la regla de _FUENTES_NOMBRE_CORTADO a lo que hay en la base. Idempotente (las parejas quedan en
+    place_nombre_parejas y su contrato propio no vuelve a casar). Devuelve {municipio: {...}}."""
+    fuentes = set(fuentes or _FUENTES_NOMBRE_CORTADO) & _FUENTES_NOMBRE_CORTADO
+    if not fuentes:
+        return {}
+    with _db_lock:
+        _db.execute("CREATE TABLE IF NOT EXISTS place_nombre_parejas (feed_id TEXT PRIMARY KEY, propio_id TEXT, "
+                    "municipio TEXT, ts REAL)")
+        _db.execute("CREATE TABLE IF NOT EXISTS place_nombre_ambiguos (feed_id TEXT PRIMARY KEY, municipio TEXT, "
+                    "candidatos TEXT, ts REAL)")
+        _db.commit()
+    equivalentes = _nombres_equivalentes_cm(solo_place=True)
+    resumen = {}
+    for fuente in sorted(fuentes):
+        with _db_lock:
+            filas = _db.execute("SELECT id, municipio, provincia, nif, adjudicatari, import_num, data_adjudicacio, "
+                                "exercici, descripcio FROM contratos_menors_locales WHERE fuente=?", (fuente,)).fetchall()
+        grupos = collections.defaultdict(list)
+        for f in filas:
+            grupos[(f[1], f[2])].append(f)
+        for (muni, prov), propias in grupos.items():
+            idx, entradas = collections.defaultdict(list), []
+            for pid, _m, _p, nif, adj, imp, fecha, ej, desc in propias:
+                e = {"imp": imp, "fecha": fecha, "fuente": fuente, "ejercicio": ej, "usado": False, "id": pid,
+                     "adj": adj, "desc": desc}
+                entradas.append(e)
+                k1 = _clave_adjudicatario_cm(nif, adj)
+                idx[k1].append(e)
+                k2 = ("nom", _nombre_comparable_cm(adj))
+                if k2 != k1:
+                    idx[k2].append(e)
+            por_id = {e["id"]: e for e in entradas}
+            with _db_lock:
+                ya_emparejados = dict(_db.execute("SELECT feed_id, propio_id FROM place_nombre_parejas"))
+                visibles, archivados = [], []
+                for m2, p2 in equivalentes.get(_clave_municipio_cm(muni, prov), []):
+                    q = ("SELECT id, nif, adjudicatari, import_num, data_adjudicacio, descripcio FROM {t} WHERE "
+                         "municipio=? AND provincia=? AND fuente=? ORDER BY data_adjudicacio, id")
+                    archivados += _db.execute(q.format(t="contratos_menors_archivo"), (m2, p2, FUENTE_CM_PLACE)).fetchall()
+                    visibles += _db.execute(q.format(t="contratos_menors_locales"), (m2, p2, FUENTE_CM_PLACE)).fetchall()
+            if not visibles:
+                continue
+            for fid, *_ in archivados:
+                e = por_id.get(ya_emparejados.get(fid))
+                if e:
+                    e["usado"] = True
+            for fid, nif, adj, imp, fecha, _d in archivados:
+                if fid not in ya_emparejados:
+                    _casa_con_propios({"nif": nif, "adjudicatari": adj, "import_num": imp, "data_adjudicacio": fecha}, idx)
+            libres = [r for r in visibles if not _casa_con_propios(
+                {"nif": r[1], "adjudicatari": r[2], "import_num": r[3], "data_adjudicacio": r[4]}, idx)]
+            por_prefijo = collections.defaultdict(list)
+            for e in entradas:
+                if not e["usado"] and not _nombre_generico_cm(e["adj"]):
+                    por_prefijo[_nombre_sin_entidades_cm(e["adj"])[:30]].append(e)
+            candidatos = {}
+            for fid, nif, adj, imp, fecha, desc in libres:
+                if _nombre_generico_cm(adj):
+                    continue
+                lista = []
+                for e in por_prefijo.get(_nombre_sin_entidades_cm(adj)[:30], ()):
+                    if not _nombres_casan_cortados_cm(adj, e["adj"]) or _dias_entre(e["fecha"] or "", fecha or "") > 7:
+                        continue
+                    importe_ok = (_importes_compatibles_cm(e["imp"], imp) if _NOMBRE_CORTADO_ACEPTA_IVA
+                                  else _mismo_importe_cm(e["imp"], imp))
+                    if importe_ok and _objeto_parecido_cm(desc, e["desc"]):
+                        lista.append(e)
+                if lista:
+                    candidatos[fid] = lista
+            feeds_por_propio = collections.Counter(e["id"] for lista in candidatos.values() for e in lista)
+            parejas, ambiguos = [], []
+            for fid, lista in candidatos.items():
+                if len(lista) == 1 and feeds_por_propio[lista[0]["id"]] == 1:
+                    parejas.append((fid, lista[0]["id"]))
+                else:
+                    ambiguos.append((fid, json.dumps([e["id"] for e in lista])))
+            ahora = time.time()
+            with _db_lock:
+                _db.executemany("INSERT OR REPLACE INTO place_nombre_parejas VALUES (?,?,?,?)",
+                                [(f, pid, muni, ahora) for f, pid in parejas])
+                _db.executemany("INSERT OR REPLACE INTO place_nombre_ambiguos VALUES (?,?,?,?)",
+                                [(f, muni, c, ahora) for f, c in ambiguos])
+                _db.commit()
+                _archivar_filas_cm([f for f, _ in parejas])
+            if parejas or ambiguos:
+                resumen[muni] = {"archivados": len(parejas), "ambiguos": len(ambiguos)}
+    if resumen:
+        print(f"  [menores] nombre cortado en el feed: {resumen}", flush=True)
+    return resumen
+
+
 def _retirar_duplicados_place(propios):
     """Cuando una fuente propia escribe contratos de un municipio, retira (ARCHIVA en contratos_menors_archivo, no
     borra) las filas del feed de PLACE de ese municipio que son el mismo contrato. Así la regla "manda la fuente
@@ -11198,6 +11320,9 @@ def _retirar_duplicados_place(propios):
     fuentes_antes = {r.get("fuente") for r in propios} & _FUENTES_FEED_ANTES
     if fuentes_antes:
         _retirar_feed_antes_de_propia(fuentes_antes)
+    fuentes_nombre = {r.get("fuente") for r in propios} & _FUENTES_NOMBRE_CORTADO
+    if fuentes_nombre:
+        _retirar_nombre_cortado(fuentes_nombre)
 
 
 _PLACE_MENORES_CLAVE = "contratos_menores_place_hash"
@@ -15767,6 +15892,10 @@ def _carga_place_menores():
             _retirar_feed_antes_de_propia()  # idempotente; ver _FUENTES_FEED_ANTES
         except Exception as e:
             print(f"[menores] feed antes que la fuente propia: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
+        try:
+            _retirar_nombre_cortado()        # idempotente; ver _FUENTES_NOMBRE_CORTADO
+        except Exception as e:
+            print(f"[menores] nombre cortado en el feed: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
     _nombre_pf_conocido("", "")              # construye ya el índice de nombres de personas físicas (ver ahí)
 
 
