@@ -24099,12 +24099,12 @@ def _eur_caso(x):
     return f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €"
 
 
-def _tabla_contratos_caso(filas, total=True):
+def _tabla_contratos_caso(filas, total=True, etiqueta="ficha oficial"):
     """filas: (fecha dd/mm/aaaa, expediente, objeto, importe sin IVA, enlace oficial o "")."""
     cuerpo = "".join(
         f"<tr><td>{esc(f)}</td><td>{esc(e)}</td><td>{esc(o)}</td>"
         f'<td style="text-align:right;white-space:nowrap">{_eur_caso(i)}</td>'
-        f'<td>{(chr(60) + "a href=" + chr(34) + esc(u) + chr(34) + " target=" + chr(34) + "_blank" + chr(34) + " rel=" + chr(34) + "noopener" + chr(34) + ">ficha oficial ↗</a>") if u else ""}</td></tr>'
+        f'<td>{(chr(60) + "a href=" + chr(34) + esc(u) + chr(34) + " target=" + chr(34) + "_blank" + chr(34) + " rel=" + chr(34) + "noopener" + chr(34) + ">" + etiqueta + " ↗</a>") if u else ""}</td></tr>'
         for f, e, o, i, u in filas)
     pie = (f'<tr><td colspan="3"><strong>Total</strong></td><td style="text-align:right;white-space:nowrap">'
            f'<strong>{_eur_caso(sum(x[3] for x in filas))}</strong></td><td></td></tr>') if total else ""
@@ -24244,13 +24244,13 @@ def render_caso_la_laguna_campamentos_html():
   por debajo del límite de 15.000 € de un contrato menor de servicios. Sumados, 59.960 €. El listado oficial del
   Ayuntamiento los registra con 0 € de IGIC y el código CPV 55243000 (servicios de campamentos de vacaciones para
   niños).</p>
-{_tabla_contratos_caso(filas22)}
+{_tabla_contratos_caso(filas22, etiqueta="listado oficial")}
 
   <h2>Tres años después, lo mismo</h2>
   <p>En junio de 2025 la asociación volvió a recibir cuatro contratos menores con los mismos cuatro temas («Salud y
   bienestar», «Acción por el clima», reducción de la desigualdad y producción y consumo responsable), esta vez a
   14.750 € cada uno, 250 € por debajo del límite, y con expedientes casi consecutivos. Sumados, 59.000 €.</p>
-{_tabla_contratos_caso(filas25)}
+{_tabla_contratos_caso(filas25, etiqueta="listado oficial")}
   <p>Desde 2021, la asociación suma 10 contratos menores con el Ayuntamiento, por 139.885 €.</p>
 {_CASO_LEY_FRACCIONAMIENTO}
 
