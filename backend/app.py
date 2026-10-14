@@ -11021,7 +11021,8 @@ def _recasar_governalia_ventana_larga():
 # de un mes: la ventana vigente (31 días en Governalia, 7 en las demás) dejaba ~2.300 contratos repetidos. Medido sobre
 # la copia del 10-10: Cartagena 1.317, Sax 436, Torre Pacheco 286, Xirivella 126, Vilamarxant 93, Leganés 21; prueba
 # placebo (misma distancia con la propia ANTES, imposible si es el mismo contrato): 32, 1, 1, 3, 2, 0.
-# Solo para estas fuentes y solo con la fecha del feed ANTES (8-120 días). Exige mismo NIF, mismo importe y objeto
+# Solo para estas fuentes y solo con la fecha del feed ANTES (8-120 días). Exige mismo NIF (si es el de una persona
+# física, enmascarado: mismo NIF enmascarado y mismo nombre, ver _clave_nif_feed_antes), mismo importe y objeto
 # parecido. Si un contrato propio puede casar con más de uno del feed (o al revés) no se retira ninguno: se apunta en
 # place_feed_antes_ambiguos. Retirar = archivar en contratos_menors_archivo (no se borra nada); cada pareja queda en
 # place_feed_antes_parejas, que es también lo que hace la regla idempotente (un contrato propio ya emparejado no
@@ -11034,6 +11035,21 @@ _FEED_ANTES_DIAS = (8, 120)
 def _nif_cm(nif):
     n = re.sub(r"[^A-Z0-9]", "", (nif or "").upper())
     return n if len(n) >= 8 else ""
+
+
+def _clave_nif_feed_antes(nif, nombre):
+    """Clave del adjudicatario para _retirar_feed_antes_de_propia: el NIF completo o, si es el de una persona física
+    enmascarado (***4567** / ****4567*, como están en los ficheros desde el 12-10), el NIF enmascarado MÁS el nombre
+    normalizado: cuatro cifras solas no bastan. Sin esto, el despliegue del 14-10 dejó sin retirar las ~700 parejas
+    de autónomos (medido: las 720 de la copia tienen en los dos lados el mismo NIF enmascarado y el mismo nombre)."""
+    n = _nif_cm(nif)
+    if n:
+        return n
+    crudo = re.sub(r"\s", "", (nif or "").upper())
+    nombre = _nombre_comparable_cm(nombre)
+    if "*" in crudo and re.search(r"\d{4}", crudo) and nombre:
+        return f"enm:{crudo}|{nombre}"
+    return ""
 
 
 def _objeto_parecido_cm(a, b):
@@ -11086,7 +11102,7 @@ def _retirar_feed_antes_de_propia(fuentes=None):
             idx, entradas = collections.defaultdict(list), []
             for pid, _m, _p, nif, adj, imp, fecha, ej, desc in propias:
                 e = {"imp": imp, "fecha": fecha, "fuente": fuente, "ejercicio": ej, "usado": False, "id": pid,
-                     "nif": _nif_cm(nif), "desc": desc}
+                     "nif": _clave_nif_feed_antes(nif, adj), "desc": desc}
                 entradas.append(e)
                 k1 = _clave_adjudicatario_cm(nif, adj)
                 idx[k1].append(e)
@@ -11123,7 +11139,7 @@ def _retirar_feed_antes_de_propia(fuentes=None):
             candidatos = {}
             for fid, nif, adj, imp, fecha, desc in libres:
                 df = dia(fecha)
-                lista = [e for e in por_nif.get(_nif_cm(nif), ())
+                lista = [e for e in por_nif.get(_clave_nif_feed_antes(nif, adj), ())
                          if df is not None and dia(e["fecha"]) is not None
                          and _FEED_ANTES_DIAS[0] <= dia(e["fecha"]) - df <= _FEED_ANTES_DIAS[1]
                          and _mismo_importe_cm(e["imp"], imp) and _objeto_parecido_cm(desc, e["desc"])]
