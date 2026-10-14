@@ -16894,6 +16894,8 @@ button.share-btn{font-family:inherit;}
   table{font-size:12px;display:block;overflow-x:auto;white-space:nowrap;}
   th,td{padding:7px 8px;}
   .contrato-title{white-space:normal;}
+  /* convocatorias y fondos UE: el título salta de línea en vez de cortarse (repaso para la Cámara, 2026-10-14) */
+  .fue-card td:first-child{white-space:normal;min-width:190px;}
   .site-footer{flex-direction:column;align-items:flex-start;max-width:100%;}
   .site-footer .ft-links{gap:10px 14px;}
   .instalar-bar{max-width:100%;margin:32px auto 0;}
