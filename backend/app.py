@@ -21187,7 +21187,7 @@ def render_fondos_ue_html(qs):
   <div class="hero" style="padding-bottom:4px">
     <div class="hero-tagline" style="color:var(--yellow)">🇪🇺 {_t("Fondos y proyectos financiados por la UE")}</div>
     <p class="hero-sub">
-      {_t("Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea. Fuentes oficiales de la Comisión Europea, sin scraping -- descarga/consulta directa de sus datasets abiertos.")}
+      {_t("Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea. Fuentes oficiales de la Comisión Europea, sin scraping: descarga/consulta directa de sus datasets abiertos.")}
       {cobertura_txt}
     </p>
   </div>

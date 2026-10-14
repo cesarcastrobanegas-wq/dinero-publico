@@ -1298,8 +1298,8 @@ msgid "Fondos y proyectos financiados por la UE"
 msgstr "EBk finantzatutako funtsak eta proiektuak"
 
 #: app.py:20382
-msgid "Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea. Fuentes oficiales de la Comisión Europea, sin scraping -- descarga/consulta directa de sus datasets abiertos."
-msgstr "Europako finantzaketa jaso duten ikerketa-proiektuak (CORDIS / Horizon Europe) eta egiturazko funtsak (Cohesion Data, FEDER/FSE 2014-2020). Europako Batzordearen iturri ofizialak, scrapingik gabe -- haien datu-multzo irekien deskarga/kontsulta zuzena."
+msgid "Proyectos de investigación (CORDIS / Horizon Europe) y fondos estructurales (Cohesion Data, FEDER/FSE 2014-2020) que han recibido financiación europea. Fuentes oficiales de la Comisión Europea, sin scraping: descarga/consulta directa de sus datasets abiertos."
+msgstr "Europako finantzaketa jaso duten ikerketa-proiektuak (CORDIS / Horizon Europe) eta egiturazko funtsak (Cohesion Data, FEDER/FSE 2014-2020). Europako Batzordearen iturri ofizialak, scrapingik gabe: haien datu-multzo irekien deskarga/kontsulta zuzena."
 
 #: app.py:20390
 msgid "Ordenadas por importe. En los fondos estructurales el importe es el gasto subvencionable total de la operación; en CORDIS, la aportación de la UE a cada organización."
