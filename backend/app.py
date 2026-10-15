@@ -24099,8 +24099,9 @@ def _eur_caso(x):
     return f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €"
 
 
-def _tabla_contratos_caso(filas, total=True, etiqueta="ficha oficial"):
-    """filas: (fecha dd/mm/aaaa, expediente, objeto, importe sin IVA, enlace oficial o "")."""
+def _tabla_contratos_caso(filas, total=True, etiqueta="ficha oficial", impuesto="IVA"):
+    """filas: (fecha dd/mm/aaaa, expediente, objeto, importe sin impuesto, enlace oficial o ""). impuesto: "IGIC" en
+    Canarias."""
     cuerpo = "".join(
         f"<tr><td>{esc(f)}</td><td>{esc(e)}</td><td>{esc(o)}</td>"
         f'<td style="text-align:right;white-space:nowrap">{_eur_caso(i)}</td>'
@@ -24110,7 +24111,7 @@ def _tabla_contratos_caso(filas, total=True, etiqueta="ficha oficial"):
            f'<strong>{_eur_caso(sum(x[3] for x in filas))}</strong></td><td></td></tr>') if total else ""
     return (f'<div class="tbl-scroll"><table class="tabla-simple" style="width:100%;border-collapse:collapse;font-size:13px">'
             f'<thead><tr><th style="text-align:left">Fecha</th><th style="text-align:left">Expediente</th>'
-            f'<th style="text-align:left">Objeto</th><th style="text-align:right">Importe sin IVA</th><th></th></tr></thead>'
+            f'<th style="text-align:left">Objeto</th><th style="text-align:right">Importe sin {impuesto}</th><th></th></tr></thead>'
             f'<tbody>{cuerpo}{pie}</tbody></table></div>')
 
 
@@ -24122,11 +24123,15 @@ _CASO_LEY_FRACCIONAMIENTO = """
   que le correspondería (artículo 99.2). Dividirlo sí está permitido cuando cada parte es una prestación distinta, o
   cuando se licita por lotes.</p>"""
 
+# En Canarias el impuesto es el IGIC: los umbrales se cuentan sin él.
+_CASO_LEY_FRACCIONAMIENTO_CANARIAS = _CASO_LEY_FRACCIONAMIENTO.replace("sin IVA", "sin IGIC")
+
 _CASO_AVISO_INDICIO = """
   <p><strong>Un indicio no es una irregularidad probada.</strong> Desde fuera solo vemos lo que se publica: fechas,
   importes, objeto y adjudicatario. No vemos los informes que justifican cada contrato, que pueden explicar por qué se
   tramitaron por separado. Lo contamos porque el patrón es exactamente el que la ley pide vigilar, no porque sepamos
-  que haya algo mal hecho. Si el Ayuntamiento quiere aportar contexto, lo añadiremos a esta pieza.</p>"""
+  que haya algo mal hecho. Si el Ayuntamiento quiere aportar contexto, lo añadiremos a esta pieza. Puede escribirnos a
+  <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.</p>"""
 
 
 def _caso_borrador_pagina(og_path, titulo, cuerpo_html, description):
@@ -24172,6 +24177,7 @@ def render_caso_sarrion_html():
   <p>Construcciones Gutiérrez Lizandra ha recibido 11 contratos menores del Ayuntamiento de Sarrión desde 2024, por
   202.600,49 € sin IVA en total: muros, pavimentos, aceras, cunetas y estas tres viviendas. De los 183 contratos
   menores de Sarrión que recogemos, por 902.061 € sin IVA, esa empresa suma algo más de la quinta parte del importe.</p>
+  <p>Esta pieza trata de cómo contrata el Ayuntamiento; no cuestiona el trabajo de quien presta el servicio.</p>
 {_CASO_AVISO_INDICIO}"""
     return _caso_borrador_pagina("/casos/sarrion-viviendas-municipales-contratos-menores",
                                  "Sarrión: tres viviendas municipales, tres contratos menores y un mismo día",
@@ -24215,6 +24221,7 @@ def render_caso_ourense_consernor_html():
   tres sitios distintos: 6.199,90 €, 34.831,60 € y 39.686,59 € sin IVA. En total, Consernor ha recibido 16 contratos
   menores del Ayuntamiento de Ourense entre 2022 y 2025, por 400.261,71 € sin IVA. Es una parte pequeña del total:
   Ourense suma 1.664 contratos menores y 16,7 millones de euros sin IVA en nuestros datos.</p>
+  <p>Esta pieza trata de cómo contrata el Ayuntamiento; no cuestiona el trabajo de quien presta el servicio.</p>
 {_CASO_AVISO_INDICIO}"""
     return _caso_borrador_pagina("/casos/ourense-obras-accesibilidad-mismo-dia",
                                  "Ourense: cinco obras de accesibilidad, una empresa y un mismo día",
@@ -24244,22 +24251,23 @@ def render_caso_la_laguna_campamentos_html():
   por debajo del límite de 15.000 € de un contrato menor de servicios. Sumados, 59.960 €. El listado oficial del
   Ayuntamiento los registra con 0 € de IGIC y el código CPV 55243000 (servicios de campamentos de vacaciones para
   niños).</p>
-{_tabla_contratos_caso(filas22, etiqueta="listado oficial")}
+{_tabla_contratos_caso(filas22, etiqueta="listado oficial", impuesto="IGIC")}
 
   <h2>Tres años después, lo mismo</h2>
   <p>En junio de 2025 la asociación volvió a recibir cuatro contratos menores con los mismos cuatro temas («Salud y
   bienestar», «Acción por el clima», reducción de la desigualdad y producción y consumo responsable), esta vez a
   14.750 € cada uno, 250 € por debajo del límite, y con expedientes casi consecutivos. Sumados, 59.000 €.</p>
-{_tabla_contratos_caso(filas25, etiqueta="listado oficial")}
+{_tabla_contratos_caso(filas25, etiqueta="listado oficial", impuesto="IGIC")}
   <p>Desde 2021, la asociación suma 10 contratos menores con el Ayuntamiento, por 139.885 €.</p>
-{_CASO_LEY_FRACCIONAMIENTO}
+{_CASO_LEY_FRACCIONAMIENTO_CANARIAS}
 
   <h2>Por qué es un indicio y no más</h2>
   <p>Cada contrato tiene su tema y, en 2022, su barrio y su grupo de menores. Puede defenderse que son cuatro servicios
   distintos. Pero el adjudicatario, la fecha, el código del servicio y el importe son los mismos, cada importe se queda
-  a un paso del umbral y el conjunto se repite de un año a otro. Un servicio que se presta todos los veranos y que en
+  a un paso del umbral y el esquema se repite en 2025. Un servicio que se presta todos los veranos y que en
   total ronda los 60.000 € es lo que la ley prevé licitar, aunque sea por lotes. Con contratos menores, otras entidades
   no tienen ocasión de presentar oferta.</p>
+  <p>Esta pieza trata de cómo contrata el Ayuntamiento; no cuestiona el trabajo de quien presta el servicio.</p>
 {_CASO_AVISO_INDICIO}"""
     return _caso_borrador_pagina("/casos/la-laguna-campamentos-verano-14990",
                                  "Cuatro campamentos a 14.990 €: los veranos de La Laguna",
@@ -24281,15 +24289,17 @@ def render_caso_utrera_piscinas_html():
         ("17/06/2024", "4039/2024", "Piscina municipal de Guadalema de los Quintero", 14933.88, pd + "6f2HCB6YZ0KKeVWTb9Scog%3D%3D"),
         ("17/06/2024", "4038/2024", "Piscina municipal de Pinzón", 14950.00, pd + "%2BBVOBotVUw6Izo3LHNPGcQ%3D%3D"),
         ("03/07/2024", "4416/2024", "Piscina municipal de Trajano", 14870.01, pd + "EwAEoJtQyrXIGlsa0Wad%2Bw%3D%3D"),
-        ("17/06/2025", "4410/2025", "Piscina municipal «de Utrera» (así figura)", 14970.01, pd + "JpGoc3655MrE6P%2FuLemXRw%3D%3D"),
+        ("17/06/2025", "4410/2025", "Piscina municipal de Utrera (así figura)", 14970.01, pd + "JpGoc3655MrE6P%2FuLemXRw%3D%3D"),
         ("18/06/2025", "4443/2025", "Piscina municipal de Pinzón", 14132.23, pd + "%2BbMLyyueZtGP%2Bo96UAV7cQ%3D%3D"),
         ("18/06/2025", "4444/2025", "Piscina municipal de Guadalema de los Quintero", 14132.23, pd + "OstScpAeSojN3k3tjedSGw%3D%3D")]
     cuerpo = f"""
   <p>Cada verano, el Ayuntamiento de {ficha} abre las piscinas municipales de sus pedanías: Trajano, Pinzón y
   Guadalema de los Quintero. Y cada verano contrata su funcionamiento (mantenimiento, salvamento y socorrismo,
-  taquilla y control de acceso, y en algunos años también la limpieza) con contratos menores, uno por piscina,
-  adjudicados el mismo día o con pocos días de diferencia y todos justo por debajo del límite de 15.000 € sin IVA de
-  un contrato menor de servicios.</p>
+  taquilla y control de acceso, y en algunos años también la limpieza) con contratos menores adjudicados el mismo día
+  o con pocos días de diferencia y todos justo por debajo del límite de 15.000 € sin IVA de un contrato menor de
+  servicios. De 2022 a 2024, uno por piscina. En 2025 hay dos contratos de pedanías (Pinzón y Guadalema de los
+  Quintero) y un tercero que figura como «piscina municipal de Utrera», sin que PLACE indique a qué piscina
+  corresponde.</p>
 {_tabla_contratos_caso(filas, total=False)}
   <p>Sumados por temporada: <strong>42.050 €</strong> en 2022, <strong>44.697,84 €</strong> en 2023,
   <strong>44.753,89 €</strong> en 2024 y <strong>43.234,47 €</strong> en 2025, siempre sin IVA. Los expedientes de
@@ -24305,14 +24315,13 @@ def render_caso_utrera_piscinas_html():
   umbral. Un servicio recurrente que cada temporada ronda los 45.000 € es lo que la ley prevé licitar con publicidad,
   aunque sea dividido en lotes por piscina. En 2026 el esquema siguió con contratos menores más pequeños: tres de
   7.024,79 € para el socorrismo de cada piscina y otro para la limpieza.</p>
-  <p>Esta pieza trata de cómo contrata el Ayuntamiento, no de quién presta el servicio: los adjudicatarios cumplen el
-  contrato que se les encarga.</p>
+  <p>Esta pieza trata de cómo contrata el Ayuntamiento; no cuestiona el trabajo de quien presta el servicio.</p>
 {_CASO_AVISO_INDICIO}"""
     return _caso_borrador_pagina("/casos/utrera-piscinas-pedanias-contratos-menores",
                                  "Las piscinas de las pedanías de Utrera: cada verano, contratos justo por debajo de 15.000 €",
                                  cuerpo,
                                  "Cada verano desde 2022, Utrera contrata el funcionamiento de las piscinas de sus pedanías "
-                                 "con un contrato menor por piscina, todos justo por debajo del límite de 15.000 € sin IVA.")
+                                 "con contratos menores separados, todos justo por debajo del límite de 15.000 € sin IVA.")
 
 
 _CASOS_BORRADOR_20261014 = [
@@ -24330,7 +24339,7 @@ _CASOS_BORRADOR_20261014 = [
                 "mismo esquema a 14.750 €."},
     {"slug": "utrera-piscinas-pedanias-contratos-menores", "render": render_caso_utrera_piscinas_html,
      "titulo": "Las piscinas de las pedanías de Utrera: cada verano, contratos justo por debajo de 15.000 €",
-     "resumen": "Cada verano, un contrato menor por piscina, todos justo por debajo del límite, por unos 45.000 € "
+     "resumen": "Cada verano, contratos menores separados, todos justo por debajo del límite, por unos 45.000 € "
                 "por temporada."},
 ]
 _CASOS_BORRADOR_POR_SLUG = {c["slug"]: c["render"] for c in _CASOS_BORRADOR_20261014}
