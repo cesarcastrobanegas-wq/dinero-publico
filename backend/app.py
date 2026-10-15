@@ -24126,13 +24126,14 @@ _CASOS[1:1] = [{k: v for k, v in c.items() if k != "render"} for c in _CASOS_NUE
 _CASOS_RENDER_POR_SLUG = {c["slug"]: c["render"] for c in _CASOS_NUEVOS_20260930}
 
 
-# ─── BORRADORES de /casos sobre posibles fraccionamientos (2026-10-14, encargo de César; SIN PUBLICAR) ───────────────
+# ─── /casos sobre posibles fraccionamientos (borradores del 2026-10-14, encargo de César; PUBLICADOS el 16-10) ───────
 # Cuatro piezas a partir de la cola de revisión (regla fraccionamiento-v2). Cada contrato está comprobado uno a uno
 # contra su fuente oficial el 14-10-2026: el registro de contratos menores de PLACE (ficheros mensuales de
 # sindicación, mismo expediente, fecha, importe sin IVA, adjudicatario y objeto; el enlace es la ficha del contrato
 # en la Plataforma) y, para La Laguna, los listados anuales de contratos menores que publica el propio Ayuntamiento.
-#   - Sin publicar: no están en _CASOS (ni en /casos ni en el mapa del sitio). Se ven con /casos/<slug>?borrador=1,
-#     con aviso de borrador y noindex. Publicar = mover la entrada a _CASOS y su render a _CASOS_RENDER_POR_SLUG.
+#   - Publicadas: en _CASOS (índice, portada y mapa del sitio) y en _CASOS_RENDER_POR_SLUG. Un borrador futuro va en
+#     _CASOS_BORRADOR_POR_SLUG: se ve con /casos/<slug>?borrador=1, con aviso de borrador y noindex
+#     (_caso_borrador_pagina).
 #   - Lenguaje: «posible fraccionamiento», «indicio»; nunca fraude ni ilegalidad. En Utrera el adjudicatario de 2022
 #     es una persona física: no se nombra (la pieza va sobre el Ayuntamiento).
 _PLACE_DETALLE = "https://contrataciondelestado.es/wps/poc?uri=deeplink:detalle_licitacion&idEvl="
@@ -24175,6 +24176,13 @@ _CASO_AVISO_INDICIO = """
   tramitaron por separado. Lo contamos porque el patrón es exactamente el que la ley pide vigilar, no porque sepamos
   que haya algo mal hecho. Si el Ayuntamiento quiere aportar contexto, lo añadiremos a esta pieza. Puede escribirnos a
   <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.</p>"""
+
+
+def _caso_fraccionamiento_pagina(og_path, titulo, cuerpo_html, description):
+    """Pieza publicada, con la fecha de comprobación de los datos."""
+    return _caso_pagina(og_path, titulo, cuerpo_html + """
+  <p style="font-size:13px;color:var(--dim)">Datos comprobados el 14 de octubre de 2026 en las fuentes oficiales
+  enlazadas.</p>""", description)
 
 
 def _caso_borrador_pagina(og_path, titulo, cuerpo_html, description):
@@ -24222,7 +24230,7 @@ def render_caso_sarrion_html():
   menores de Sarrión que recogemos, por 902.061 € sin IVA, esa empresa suma algo más de la quinta parte del importe.</p>
   <p>Esta pieza trata de cómo contrata el Ayuntamiento; no cuestiona el trabajo de quien presta el servicio.</p>
 {_CASO_AVISO_INDICIO}"""
-    return _caso_borrador_pagina("/casos/sarrion-viviendas-municipales-contratos-menores",
+    return _caso_fraccionamiento_pagina("/casos/sarrion-viviendas-municipales-contratos-menores",
                                  "Sarrión: tres viviendas municipales, tres contratos menores y un mismo día",
                                  cuerpo,
                                  "El Ayuntamiento de Sarrión adjudicó el mismo día a la misma empresa tres obras menores de "
@@ -24266,7 +24274,7 @@ def render_caso_ourense_consernor_html():
   Ourense suma 1.664 contratos menores y 16,7 millones de euros sin IVA en nuestros datos.</p>
   <p>Esta pieza trata de cómo contrata el Ayuntamiento; no cuestiona el trabajo de quien presta el servicio.</p>
 {_CASO_AVISO_INDICIO}"""
-    return _caso_borrador_pagina("/casos/ourense-obras-accesibilidad-mismo-dia",
+    return _caso_fraccionamiento_pagina("/casos/ourense-obras-accesibilidad-mismo-dia",
                                  "Ourense: cinco obras de accesibilidad, una empresa y un mismo día",
                                  cuerpo,
                                  "La Junta de Gobierno de Ourense adjudicó el mismo día a Consernor cinco obras menores de "
@@ -24312,7 +24320,7 @@ def render_caso_la_laguna_campamentos_html():
   no tienen ocasión de presentar oferta.</p>
   <p>Esta pieza trata de cómo contrata el Ayuntamiento; no cuestiona el trabajo de quien presta el servicio.</p>
 {_CASO_AVISO_INDICIO}"""
-    return _caso_borrador_pagina("/casos/la-laguna-campamentos-verano-14990",
+    return _caso_fraccionamiento_pagina("/casos/la-laguna-campamentos-verano-14990",
                                  "Cuatro campamentos a 14.990 €: los veranos de La Laguna",
                                  cuerpo,
                                  "La Laguna adjudicó el mismo día a la misma asociación cuatro campamentos de verano a "
@@ -24360,7 +24368,7 @@ def render_caso_utrera_piscinas_html():
   7.024,79 € para el socorrismo de cada piscina y otro para la limpieza.</p>
   <p>Esta pieza trata de cómo contrata el Ayuntamiento; no cuestiona el trabajo de quien presta el servicio.</p>
 {_CASO_AVISO_INDICIO}"""
-    return _caso_borrador_pagina("/casos/utrera-piscinas-pedanias-contratos-menores",
+    return _caso_fraccionamiento_pagina("/casos/utrera-piscinas-pedanias-contratos-menores",
                                  "Las piscinas de las pedanías de Utrera: cada verano, contratos justo por debajo de 15.000 €",
                                  cuerpo,
                                  "Cada verano desde 2022, Utrera contrata el funcionamiento de las piscinas de sus pedanías "
@@ -24385,7 +24393,9 @@ _CASOS_BORRADOR_20261014 = [
      "resumen": "Cada verano, contratos menores separados, todos justo por debajo del límite, por unos 45.000 € "
                 "por temporada."},
 ]
-_CASOS_BORRADOR_POR_SLUG = {c["slug"]: c["render"] for c in _CASOS_BORRADOR_20261014}
+_CASOS[1:1] = [{k: v for k, v in c.items() if k != "render"} for c in _CASOS_BORRADOR_20261014]
+_CASOS_RENDER_POR_SLUG.update({c["slug"]: c["render"] for c in _CASOS_BORRADOR_20261014})
+_CASOS_BORRADOR_POR_SLUG = {}          # ningún borrador pendiente
 
 
 # ─── TRADUCCIONES DE /casos (2026-10-01, encargo de César: BORRADOR gl/ca/eu, sin publicar) ─────────────────────────
