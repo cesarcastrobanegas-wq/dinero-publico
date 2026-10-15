@@ -17104,6 +17104,8 @@ _ALL_CSS_CONTENT = re.sub(r'</?style[^>]*>', '', CSS + SPINNER_CSS).strip() + ""
 .as-row input:focus{border-color:var(--blue);}
 .as-row .btn{padding:12px 22px;}
 .gs-hint{font-size:11px;color:var(--dim);margin-top:8px;}
+.as-gancho{display:none;font-size:13px;margin:0 0 10px;}
+.header-nav>a.nav-buscar{display:none;}
 #as-results{margin-top:16px;display:flex;flex-direction:column;gap:10px;}
 .as-loading{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);padding:10px 0;}
 .as-total{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);padding:4px 0 8px;border-bottom:1px solid var(--border);}
@@ -17429,8 +17431,22 @@ button.share-btn{font-family:inherit;}
   table{font-size:12px;display:block;overflow-x:auto;white-space:nowrap;}
   th,td{padding:7px 8px;}
   .contrato-title{white-space:normal;}
-  /* portada en el móvil: un solo buscador, el de «¿Cuál es tu municipio?» (decisión de César, 14-10) */
-  .hero-panel #adv-search{display:none;}
+  /* Buscador en el móvil (2026-10-15, encargo de César para el 22-10): SIEMPRE visible y sin forma de cerrarlo. El del
+     14-10 escondía #adv-search y dejaba solo el gancho «¿Cuál es tu municipio?», que tiene una X: quien lo cerraba se
+     quedaba sin buscador (ni municipios, ni empresas, ni directivos, ni licitaciones). Ahora en el móvil el gancho se
+     quita y su frase sale encima del buscador (.as-gancho); el buscador, compacto: pestañas en una fila que se
+     desliza de lado y el campo a todo el ancho con el botón al lado. */
+  .as-gancho{display:block;}
+  .adv-search{margin:14px 0;}
+  .as-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:10px;}
+  .as-tabs::-webkit-scrollbar{display:none;}
+  .as-tab{flex:0 0 auto;padding:8px 12px;font-size:11.5px;}
+  .as-row{flex-wrap:nowrap;gap:8px;}
+  .as-row .btn{width:auto;flex:0 0 auto;padding:12px 14px;}
+  .gs-hint{font-size:10.5px;}
+  #adv-search{scroll-margin-top:130px;}
+  /* lupa de la cabecera: lleva al buscador (solo en el móvil) */
+  .header-nav>a.nav-buscar{display:inline-flex;}
   /* convocatorias y fondos UE: el título salta de línea en vez de cortarse (repaso para la Cámara, 2026-10-14) */
   .fue-card td:first-child{white-space:normal;min-width:190px;}
   .site-footer{flex-direction:column;align-items:flex-start;max-width:100%;}
@@ -17552,6 +17568,7 @@ button.share-btn{font-family:inherit;}
   /* la X arriba a la derecha, no sola en una línea (repaso para la Cámara, 2026-10-14) */
   .personaliza-cerrar{position:absolute;top:8px;right:8px;}
 }
+@media (max-width:700px){.personaliza-banner{display:none;}}   /* en el móvil va como frase dentro del buscador */
 /* ── Rediseño minimalista (2026-10-03): tarjetas blancas, borde gris fino, sombra suave; la jerarquía la marcan el
    tamaño y el peso de la letra, no el relleno de color. ── */
 header{border-bottom:1px solid var(--border);box-shadow:0 1px 2px rgba(16,24,40,.04);}
@@ -17987,6 +18004,11 @@ _ADV_SEARCH_JS = r"""
     input.focus();
   }
   tabs.forEach(function(tb){ tb.addEventListener('click', function(){ setTipo(tb.dataset.tipo); }); });
+  function alBuscador(){ if (location.hash === '#adv-search') { try { input.focus({preventScroll: true}); } catch(e) { input.focus(); } } }
+  // al terminar de cargar (antes, otros avisos de la página se quedaban el foco)
+  if (document.readyState === 'complete') setTimeout(alBuscador, 60);
+  else window.addEventListener('load', function(){ setTimeout(alBuscador, 60); });
+  window.addEventListener('hashchange', alBuscador);
 
   function filaContrato(c) {
     var row = el('div', 'as-row-result');
@@ -18213,11 +18235,12 @@ def _site_tagline():
     return _t("EL DINERO DE TODOS ∞ ¿EN MANOS DE QUIÉN?")
 
 
-def _header_html(provincia="todas", con_lema=True):
+def _header_html(provincia="todas", con_lema=True, buscador_aqui=False):
     """con_lema=False en las páginas que ya lo llevan como titular grande (.hero-tagline): portada y provincias
     (repaso para la Cámara de Comercio, 2026-10-14: salía dos veces seguidas)."""
     rankings_href = "/rankings" + _q_prov_first(provincia)
     lema_html = f"<p>{esc(_site_tagline())}</p>" if con_lema else ""
+    buscar_href = "#adv-search" if buscador_aqui else "/#adv-search"   # lupa del móvil: a este buscador o al de la portada
     return f"""<header>
   <a href="/" class="header-brand" style="text-decoration:none;display:flex;align-items:center;gap:14px;">
     <div class="logo-svg">{LOGO_HTML}</div>
@@ -18227,6 +18250,7 @@ def _header_html(provincia="todas", con_lema=True):
     </div>
   </a>
   <nav class="header-nav">
+    <a href="{buscar_href}" class="nav-buscar" aria-label="{_t("Buscar")}">🔍 {_t("Buscar")}</a>
     <a href="{rankings_href}">{_t("Rankings")}</a>
     <a href="{rankings_href}#alcaldes">{_t("Sueldos Alcaldes")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
@@ -18376,7 +18400,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     </div>
   </div>
 </div>
-{_header_html(provincia, con_lema='class="hero-tagline"' not in body_html)}
+{_header_html(provincia, con_lema='class="hero-tagline"' not in body_html, buscador_aqui='id="adv-search"' in body_html)}
 <div class="main">
 {_ad_banner_html() if show_ad_banner else ""}
 {body_html}
@@ -23069,6 +23093,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       </p>
     </div>
     <div class="adv-search" id="adv-search">
+      <div class="as-gancho">{_t("<b>¿Cuál es tu municipio?</b> Te enseñamos lo que ha gastado tu ayuntamiento y su puesto en los rankings.")}</div>
       <div class="as-tabs">
         <button type="button" class="as-tab active" data-tipo="ayuntamiento">{_t("Ayuntamiento")}</button>
         <button type="button" class="as-tab" data-tipo="empresa">{_t("Empresa")}</button>
