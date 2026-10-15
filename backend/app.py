@@ -17620,7 +17620,16 @@ h2,.rk-section-header h2{font-weight:600;}
 # ?v=<hash> de la URL, cualquier cambio de CSS pasa a ser una URL nueva --
 # cache-miss garantizado en las dos capas (HTTP y SW), sin depender de
 # acordarse de subir un numero a mano cada vez.
-PWA_STATIC_VERSION = hashlib.md5(_ALL_CSS_CONTENT.encode("utf-8")).hexdigest()[:10]
+# 2026-10-15: también entran los iconos de backend/static/: si cambia el favicon, cambia la ?v= y el navegador lo pide de nuevo.
+_PWA_HASH = hashlib.md5(_ALL_CSS_CONTENT.encode("utf-8"))
+for _ic in ("favicon.ico", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png",
+            "og-image.png"):
+    try:
+        with open(os.path.join(BASE_DIR, "static", _ic), "rb") as _f:
+            _PWA_HASH.update(_f.read())
+    except OSError:
+        pass
+PWA_STATIC_VERSION = _PWA_HASH.hexdigest()[:10]
 
 
 def _pwa_asset(path):
