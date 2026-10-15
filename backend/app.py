@@ -24264,8 +24264,8 @@ def render_caso_la_laguna_campamentos_html():
   <h2>Por qué es un indicio y no más</h2>
   <p>Cada contrato tiene su tema y, en 2022, su barrio y su grupo de menores. Puede defenderse que son cuatro servicios
   distintos. Pero el adjudicatario, la fecha, el código del servicio y el importe son los mismos, cada importe se queda
-  a un paso del umbral y el esquema se repite en 2025. Un servicio que se presta todos los veranos y que en
-  total ronda los 60.000 € es lo que la ley prevé licitar, aunque sea por lotes. Con contratos menores, otras entidades
+  a un paso del umbral y el esquema se repite en 2025. Un servicio de verano que en total
+  ronda los 60.000 € es lo que la ley prevé licitar, aunque sea por lotes. Con contratos menores, otras entidades
   no tienen ocasión de presentar oferta.</p>
   <p>Esta pieza trata de cómo contrata el Ayuntamiento; no cuestiona el trabajo de quien presta el servicio.</p>
 {_CASO_AVISO_INDICIO}"""
