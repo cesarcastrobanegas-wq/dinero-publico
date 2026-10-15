@@ -7005,8 +7005,11 @@ _RE_AYUNTAMIENTO_DE = re.compile(r"\b(?:ayuntamiento|junta vecinal) (?:de la |de
 _ORGANOS_AJENOS_POR_NOMBRE = {"blanca": ("costa blanca",), "ceuti": ("instituto ceuti",), "la union": ("union europea",)}
 # Destino de los órganos ajenos que no son "Ayuntamiento de X": trozo del nombre del órgano -> (municipio, provincia).
 #   - Castrillo de Murcia es una entidad local menor del municipio de Sasamón (Burgos).
-#   - El Instituto Ceutí de Deportes es un organismo de la Ciudad Autónoma de Ceuta.
-_DESTINO_ORGANO_AJENO = {"castrillo de murcia": ("Sasamón", "burgos"), "instituto ceuti": ("Ceuta", "ceuta")}
+#   - El Instituto Ceutí de Deportes es un organismo de la Ciudad Autónoma de Ceuta, pero la ficha de Ceuta no se toca
+#     (decisión de César, 15-10): sale de Ceutí y va a contratos_sin_ficha (destino None).
+_DESTINO_ORGANO_AJENO = {"castrillo de murcia": ("Sasamón", "burgos"), "instituto ceuti": None}
+# Fichas que este reparto nunca modifica: lo que les tocaría se guarda en contratos_sin_ficha.
+_FICHAS_QUE_NO_SE_TOCAN = {"ceuta"}
 _PROVINCIAS_POR_NOMBRE_MUNICIPIO = None
 _NOMBRES_DE_MUNICIPIO = None
 
@@ -7070,6 +7073,8 @@ def _entregar_contratos_ajenos(municipio_origen, provincia_origen, contratos, jo
     por_destino, sin_ficha = {}, []
     for c in contratos:
         destino = _destino_de_organo_ajeno(c.get("organo", ""), provincia_origen)
+        if destino and destino[1] in _FICHAS_QUE_NO_SE_TOCAN:
+            destino = None
         d = _db_get_municipio(*destino) if destino else None
         if d is None:
             sin_ficha.append(c)
