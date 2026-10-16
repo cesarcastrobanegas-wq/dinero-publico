@@ -7005,10 +7005,11 @@ _RE_AYUNTAMIENTO_DE = re.compile(r"\b(?:ayuntamiento|junta vecinal) (?:de la |de
 _ORGANOS_AJENOS_POR_NOMBRE = {"blanca": ("costa blanca",), "ceuti": ("instituto ceuti",), "la union": ("union europea",)}
 # Destino de los órganos ajenos que no son "Ayuntamiento de X": trozo del nombre del órgano -> (municipio, provincia).
 #   - Castrillo de Murcia es una entidad local menor del municipio de Sasamón (Burgos).
-#   - El Instituto Ceutí de Deportes es un organismo de la Ciudad Autónoma de Ceuta, pero la ficha de Ceuta no se toca
-#     (decisión de César, 15-10): sale de Ceutí y va a contratos_sin_ficha (destino None).
-_DESTINO_ORGANO_AJENO = {"castrillo de murcia": ("Sasamón", "burgos"), "instituto ceuti": None}
-# Fichas que este reparto nunca modifica: lo que les tocaría se guarda en contratos_sin_ficha.
+#   - El Instituto Ceutí de Deportes es un organismo de la Ciudad Autónoma de Ceuta. El 15-10 se dejó en
+#     contratos_sin_ficha porque la ficha de Ceuta no se tocaba; el 16-10 César decide que vaya a la ficha de Ceuta.
+_DESTINO_ORGANO_AJENO = {"castrillo de murcia": ("Sasamón", "burgos"), "instituto ceuti": ("Ceuta", "ceuta")}
+# Fichas a las que este reparto nunca lleva nada por deducción ("Ayuntamiento de X"): lo que les tocaría se guarda en
+# contratos_sin_ficha. Solo reciben lo que _DESTINO_ORGANO_AJENO les manda por nombre, decidido uno a uno.
 _FICHAS_QUE_NO_SE_TOCAN = {"ceuta"}
 _PROVINCIAS_POR_NOMBRE_MUNICIPIO = None
 _NOMBRES_DE_MUNICIPIO = None
@@ -7059,7 +7060,9 @@ def _destino_de_organo_ajeno(organo, provincia_origen):
         entre_parentesis = re.search(r"\(([^)]+)\)", n)
         preferida = normalizar(entre_parentesis.group(1)).replace(" ", "_") if entre_parentesis else provincia_origen
         candidatos = [c for c in candidatos if c[1] == preferida] or [c for c in candidatos if c[1] == provincia_origen]
-    return candidatos[0] if len(candidatos) == 1 else None
+    if len(candidatos) != 1 or candidatos[0][1] in _FICHAS_QUE_NO_SE_TOCAN:
+        return None
+    return candidatos[0]
 
 
 def _huella_contrato(c):
@@ -7073,8 +7076,6 @@ def _entregar_contratos_ajenos(municipio_origen, provincia_origen, contratos, jo
     por_destino, sin_ficha = {}, []
     for c in contratos:
         destino = _destino_de_organo_ajeno(c.get("organo", ""), provincia_origen)
-        if destino and destino[1] in _FICHAS_QUE_NO_SE_TOCAN:
-            destino = None
         d = _db_get_municipio(*destino) if destino else None
         if d is None:
             sin_ficha.append(c)
@@ -7110,6 +7111,31 @@ def _entregar_contratos_ajenos(municipio_origen, provincia_origen, contratos, jo
             _db.commit()
         res["sin_ficha"] = len(sin_ficha)
     return res
+
+
+def _recolocar_contratos_sin_ficha():
+    """En el arranque: los contratos de contratos_sin_ficha que ahora tienen ficha de destino (una regla nueva en
+    _DESTINO_ORGANO_AJENO, p. ej. el Instituto Ceutí de Deportes -> Ceuta, 16-10) pasan a esa ficha y salen de la
+    tabla. Los demás se quedan. Si no hay nada que mover, no escribe."""
+    with _db_lock:
+        try:
+            filas = _db.execute("SELECT huella, origen, organo, data FROM contratos_sin_ficha").fetchall()
+        except sqlite3.OperationalError:
+            return
+    por_origen = {}
+    for huella, origen, organo, data in filas:
+        destino = _destino_de_organo_ajeno(organo or "", "murcia")
+        if destino and _db_get_municipio(*destino) is not None:
+            por_origen.setdefault(origen, []).append((huella, json.loads(data)))
+    movidos = collections.Counter()
+    for origen, lista in por_origen.items():
+        _entregar_contratos_ajenos(origen, "murcia", [c for _h, c in lista])
+        with _db_lock:
+            _db.executemany("DELETE FROM contratos_sin_ficha WHERE huella=?", [(h,) for h, _c in lista])
+            _db.commit()
+        movidos[origen] += len(lista)
+    if movidos:
+        print(f"  [startup] contratos_sin_ficha recolocados en su ficha: {dict(movidos)}", flush=True)
 
 
 def _separar_organos_no_municipales(municipio, contratos):
@@ -16744,6 +16770,7 @@ def _inicializar_datos():
     _migrar_claves_homonimos()
     _aplicar_importes_aparte()
     _reclasificar_organos_murcia()
+    _recolocar_contratos_sin_ficha()
     _cargar_contratos_menores_murcia_manual()
     _cargar_contratos_menores_euskadi()
     _cargar_contratos_menores_madrid_capital()
