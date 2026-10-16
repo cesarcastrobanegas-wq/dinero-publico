@@ -17232,6 +17232,10 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
   .pwa-banner-btn{background:#fff;color:var(--accent);border:none;border-radius:4px;padding:3px 9px;font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;}
   .pwa-banner-close{background:transparent;border:none;color:#fff;font-size:17px;cursor:pointer;padding:0 2px;line-height:1;opacity:.65;}
   .pwa-banner-close:hover{opacity:1;}
+  /* 16-10 (repaso para la Cámara): «Instalar» (57x18) y la X (18x17) eran difíciles de pulsar con el dedo. Zona de
+     pulsación invisible de ~30 px alrededor, sin cambiar el alto de la barra. */
+  .pwa-banner-btn,.pwa-banner-close{position:relative;}
+  .pwa-banner-btn::after,.pwa-banner-close::after{content:"";position:absolute;inset:-6px;}
 }
 .instalar-bar-highlight{animation:pwaBannerPulse 1s ease-in-out 2;border-color:var(--accent) !important;}
 /* ── banner de consentimiento de cookies (2026-09-05) ────────────────────
@@ -17769,7 +17773,7 @@ button.share-btn{font-family:inherit;}
 .risk-prominent{border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;gap:12px;align-items:center;background:rgba(248,81,73,.12);border:2px solid rgba(248,81,73,.5);}
 .risk-prominent .rp-ico{font-size:26px;line-height:1;}
 .risk-prominent .rp-text{font-size:13px;color:var(--red);line-height:1.5;}
-.risk-prominent .rp-text b{color:#fff;}
+.risk-prominent .rp-text b{color:var(--red);font-weight:700;}   /* era #fff, del tema oscuro: no se leía (16-10) */
 
 /* ── Índice de Transparencia (rankings) ──────────────────────────────── */
 .it-buscador{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:9px 14px;border-radius:6px;margin:14px 0;outline:none;}
@@ -17814,8 +17818,8 @@ button.share-btn{font-family:inherit;}
   .hero-tagline{font-size:16px;}
   .hero-sub{font-size:12px;}
   .stats-bar{gap:8px;}
-  .stat{padding:8px 12px;flex:1 1 40%;}
-  .stat span{font-size:16px;}
+  .stat{padding:8px 12px;flex:1 1 40%;min-width:min-content;}
+  .stat span{font-size:16px;white-space:nowrap;}   /* 16-10: una cifra larga ocupa su fila en vez de partirse */
   .muni-grid{grid-template-columns:1fr 1fr;gap:10px;}
   .muni-tile{padding:12px 14px;}
   .region-grid,.top1-grid{grid-template-columns:1fr;gap:10px;}
@@ -17835,9 +17839,9 @@ button.share-btn{font-family:inherit;}
      desliza de lado y el campo a todo el ancho con el botón al lado. */
   .as-gancho{display:block;}
   .adv-search{margin:14px 0;}
-  .as-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:10px;}
-  .as-tabs::-webkit-scrollbar{display:none;}
-  .as-tab{flex:0 0 auto;padding:8px 12px;font-size:11.5px;}
+  /* 16-10 (repaso para la Cámara): 2x2 en vez de fila con desplazamiento: la cuarta pestaña salía cortada y escondida */
+  .as-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+  .as-tab{padding:8px 6px;font-size:11.5px;text-align:center;}
   .as-row{flex-wrap:nowrap;gap:8px;}
   .as-row .btn{width:auto;flex:0 0 auto;padding:12px 14px;}
   .gs-hint{font-size:10.5px;}
