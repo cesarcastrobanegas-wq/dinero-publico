@@ -10233,6 +10233,7 @@ def _aplicar_backfill_formales_place():
     Después, y con la misma regla, las licitaciones de la fase 2 (ASIGNACION_FORMALES_PLACE_DIR)."""
     _aplicar_formales_por_provincia(BACKFILL_FORMALES_PLACE_DIR, _BACKFILL_FORMALES_PLACE_CLAVE, "backfill_formales_place")
     _aplicar_formales_por_provincia(ASIGNACION_FORMALES_PLACE_DIR, _ASIGNACION_FORMALES_PLACE_CLAVE, "asignacion_formales_place")
+    _aplicar_formales_por_provincia(BACKFILL_MURCIA_DIR, _BACKFILL_MURCIA_CLAVE, "backfill_formales_murcia")
 
 
 def _aplicar_formales_por_provincia(directorio, prefijo_clave, etiqueta):
@@ -10242,12 +10243,13 @@ def _aplicar_formales_por_provincia(directorio, prefijo_clave, etiqueta):
     for fichero in sorted(os.listdir(directorio)):
         if not fichero.endswith(".json.gz"):
             continue
-        provincia = fichero[:-len(".json.gz")]
+        nombre_fichero = fichero[:-len(".json.gz")]
+        provincia = nombre_fichero.split("__")[0]        # "<provincia>" o "<provincia>__<lote>" (backfill de Murcia)
         try:
             with open(os.path.join(directorio, fichero), "rb") as f:
                 crudo = f.read()
             huella = hashlib.sha256(crudo).hexdigest()[:16]
-            clave_hash = prefijo_clave + provincia
+            clave_hash = prefijo_clave + nombre_fichero
             with _db_lock:
                 fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave_hash,)).fetchone()
             if fila and fila[0] == huella:
@@ -10347,6 +10349,55 @@ def _subir_asignacion_formales(token, provincia, crudo):
           f"en {fichas} fichas", flush=True)
     return 200, {"provincia": provincia, "municipios": len(munis), "contratos": n_contratos, "anadidos": anadidos,
                  "fichas": fichas}
+
+# ─── Backfill de formales de la provincia de Murcia 2021-2024 (2026-10-17, rama wip/backfill-murcia) ─────────────────
+# El backfill nacional del 02-10 dejó fuera Murcia por error. Los contratos que faltan se calcularon EN LOCAL pasando
+# los ZIP oficiales de PLACE de 202109-202411 por el refresco normal de cada municipio de Murcia (_job_run, con el
+# reparto de AGE/UMU/UPCT/órganos ajenos) sobre la copia de producción, y solo viaja lo NUEVO de cada ficha. Llevan
+# adjudicatarios: no van en el repositorio; llegan por POST con el token, por lotes ("<provincia>__<lote>.json.gz"),
+# se guardan en el disco persistente y se aplican al momento y en cada arranque con la fusión aditiva de siempre
+# (_aplicar_formales_por_provincia: gana lo ya guardado, idempotente por huella de cada lote).
+BACKFILL_MURCIA_DIR = os.path.join(DATA_DIR, "backfill_formales_murcia")
+_BACKFILL_MURCIA_CLAVE = "backfill_formales_murcia_sha::"     # + "<provincia>__<lote>"
+
+
+def _subir_backfill_murcia(token, provincia, lote, crudo):
+    """POST /admin/backfill-murcia?token=...&provincia=...&lote=N. Devuelve (código, cuerpo) solo con recuentos."""
+    admin_token = os.environ.get("ADMIN_TOKEN", "")
+    if not admin_token or token != admin_token:
+        return 403, {"error": "No autorizado."}
+    if provincia not in MUNICIPIOS_POR_PROVINCIA:
+        return 400, {"error": "Provincia no válida."}
+    if not (lote or "").isdigit() or not 1 <= int(lote) <= 99:
+        return 400, {"error": "Lote no válido (1-99)."}
+    try:
+        datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+        munis = datos.get("municipios")
+        if not isinstance(munis, dict) or not munis:
+            return 400, {"error": "Fichero no válido: falta 'municipios'."}
+        pseudos = {normalizar(p) for p in _pseudos_de_provincia(provincia)}
+        ajenos = [m for m in munis if not municipio_valido_provincia(m, provincia) and normalizar(m) not in pseudos]
+        if ajenos:
+            return 400, {"error": f"Fichero no válido: {len(ajenos)} fichas no son de {provincia}."}
+        if not all(isinstance(cs, list) and all(isinstance(c, dict) and c.get("titulo") for c in cs) for cs in munis.values()):
+            return 400, {"error": "Fichero no válido: contratos sin título."}
+        n_contratos = sum(len(cs) for cs in munis.values())
+    except (ValueError, OSError, AttributeError, EOFError) as e:
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    del datos
+    os.makedirs(BACKFILL_MURCIA_DIR, exist_ok=True)
+    destino = os.path.join(BACKFILL_MURCIA_DIR, f"{provincia}__{int(lote):02d}.json.gz")
+    with open(destino + ".nuevo", "wb") as f:
+        f.write(crudo)
+    os.replace(destino + ".nuevo", destino)
+    anadidos, fichas = _aplicar_formales_por_provincia(BACKFILL_MURCIA_DIR, _BACKFILL_MURCIA_CLAVE,
+                                                       "backfill_formales_murcia") or (0, 0)
+    for m in munis:
+        _cache_invalidate(m, provincia)
+    print(f"[admin] backfill_formales_murcia: {provincia} lote {lote}, {n_contratos} contratos en el fichero, "
+          f"{anadidos} anadidos en {fichas} fichas", flush=True)
+    return 200, {"provincia": provincia, "lote": int(lote), "fichas_en_fichero": len(munis), "contratos": n_contratos,
+                 "anadidos": anadidos, "fichas_cambiadas": fichas}
 
 # ─── Entidades locales que no son un municipio (fase 2, paso 5; 2026-10-14) ─────────────────────────────────────────
 # Diputaciones, cabildos y consells, mancomunidades, consorcios, comarcas, áreas metropolitanas, entidades locales
@@ -28524,6 +28575,23 @@ def _app_wsgi(environ, start_response):
         else:
             crudo = environ["wsgi.input"].read(length) if length else b""
             code, cuerpo = _subir_asignacion_formales(token, qs.get("provincia", [""])[0], crudo)
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
+    elif method == "POST" and path == "/admin/backfill-murcia":
+        # cuerpo binario (JSON en gzip) de un lote: ver _subir_backfill_murcia
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = qs.get("token", [""])[0]
+        admin_token = os.environ.get("ADMIN_TOKEN", "")
+        if not admin_token or token != admin_token:
+            code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
+        elif length > 20 * 1024 * 1024:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            crudo = environ["wsgi.input"].read(length) if length else b""
+            code, cuerpo = _subir_backfill_murcia(token, qs.get("provincia", [""])[0], qs.get("lote", [""])[0], crudo)
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/entidades-locales":
