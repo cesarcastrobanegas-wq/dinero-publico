@@ -2528,6 +2528,10 @@ def _db_init():
         _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_plazo ON licitaciones(estado, fin_plazo)")
         _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_muni ON licitaciones(municipio)")
         _db.execute(_SQL_TABLA_SUBVENCIONES.format(tabla="subvenciones"))
+        try:                       # tablas anteriores a la columna de códigos CNAE (2026-10-17)
+            _db.execute("ALTER TABLE subvenciones ADD COLUMN cnae TEXT DEFAULT ''")
+        except sqlite3.OperationalError:
+            pass
         for _sql in _SQL_INDICES_SUBVENCIONES:
             _db.execute(_sql.format(tabla="subvenciones"))
         _db.commit()
@@ -2996,7 +3000,7 @@ _SQL_TABLA_SUBVENCIONES = """CREATE TABLE IF NOT EXISTS {tabla} (
     bdns TEXT PRIMARY KEY, registrada TEXT, titulo TEXT, titulo_cooficial TEXT, nivel1 TEXT, nivel2 TEXT, organo TEXT,
     nuts TEXT, provincia TEXT, comunidad TEXT, municipio TEXT, presupuesto REAL, beneficiarios TEXT, sector TEXT,
     finalidad TEXT, instrumento TEXT, inicio TEXT, fin TEXT, texto_fin TEXT, url_bases TEXT, mrr INTEGER,
-    busqueda TEXT)"""
+    busqueda TEXT, cnae TEXT DEFAULT '')"""
 _SQL_INDICES_SUBVENCIONES = ("CREATE INDEX IF NOT EXISTS idx_{tabla}_fin ON {tabla}(fin)",
                              "CREATE INDEX IF NOT EXISTS idx_{tabla}_muni ON {tabla}(municipio)",
                              "CREATE INDEX IF NOT EXISTS idx_{tabla}_prov ON {tabla}(provincia)")
@@ -15153,7 +15157,7 @@ SUBVENCIONES_PUBLICAS = os.environ.get("CONVOCATORIAS_SUBVENCIONES", "") == "1"
 SUBV_MINIMO_SUBIDA = 1000           # una subida con menos convocatorias se rechaza (fichero roto o carga a medias)
 _SUBV_COLUMNAS = ("bdns", "registrada", "titulo", "titulo_cooficial", "nivel1", "nivel2", "organo", "nuts", "provincia",
                   "comunidad", "municipio", "presupuesto", "beneficiarios", "sector", "finalidad", "instrumento",
-                  "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda")
+                  "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda", "cnae")
 _SUBV_MUNI_POR_NOMBRE = {}
 
 
@@ -15192,7 +15196,42 @@ def _subvencion_fila(d):
             d.get("sector", ""), d.get("finalidad", ""), d.get("instrumento", ""), d.get("inicio") or "",
             d.get("fin") or "", (d.get("texto_fin") or "")[:500], d.get("url_bases", ""), 1 if d.get("mrr") else 0,
             normalizar(f'{d.get("titulo", "")} {d.get("titulo_cooficial", "")} {d.get("organo", "")} '
-                       f'{d.get("nivel2", "")}')[:1500])
+                       f'{d.get("nivel2", "")}')[:1500], d.get("cnae", ""))
+
+
+# Clasificador de subvenciones por sector (2026-10-17, rama wip/subvenciones-sector; aún no se usa en ninguna página).
+# Método E de la prueba del 17-10 (INFORME noche 17-10): una convocatoria «puede ser» de un sector si sus códigos CNAE
+# de la BDNS lo incluyen y no es nominativa ni un convenio, o si el título habla de empresas/pymes/comercio/empleo y la
+# finalidad es económica. Es una pista para filtrar, nunca una garantía: siempre hay que leer las bases.
+_SUBV_EXCLUYE = re.compile(r"nominativ|conveni|adenda|prorroga|concesion directa a |subvencio nominativa|nom\.")
+_SUBV_TITULO_EMPRESA = re.compile(r"pyme|empresa|autonom|autoempleo|comerci|emprend|negocio|contrataci|competitiv|"
+                                  r"innovaci|actividades economicas|productiv")
+_SUBV_FINALIDAD_ECONOMICA = {"Comercio, Turismo y Pymes", "Fomento del Empleo", "Investigación, desarrollo e innovación",
+                             "Industria y Energía", "Otras actuaciones de carácter económico"}
+
+
+def _cnae_compatible(codigo, objetivo):
+    """codigo: un CNAE de la BDNS (sección "G", división "47", grupo "47.6"...). objetivo: CNAE de la empresa
+    ("47.61") y su sección ("G"). Compatible si uno contiene al otro."""
+    codigo = (codigo or "").strip()
+    if not codigo:
+        return False
+    for o in objetivo:
+        if codigo.isalpha() or o.isalpha():
+            if codigo == o:
+                return True
+        elif codigo.startswith(o) or o.startswith(codigo):
+            return True
+    return False
+
+
+def _subvencion_posible_sector(titulo, finalidad, cnae, objetivo):
+    """True si la convocatoria puede ser del sector `objetivo` (lista de CNAE y secciones, p. ej. ["G", "47.61"])."""
+    t = normalizar(titulo or "")
+    excluida = bool(_SUBV_EXCLUYE.search(t))
+    por_cnae = not excluida and any(_cnae_compatible(c, objetivo) for c in (cnae or "").split())
+    por_titulo = (not excluida and bool(_SUBV_TITULO_EMPRESA.search(t)) and finalidad in _SUBV_FINALIDAD_ECONOMICA)
+    return por_cnae or por_titulo
 
 
 def _subir_subvenciones(crudo, forzar=False):
