@@ -7138,6 +7138,47 @@ def _recolocar_contratos_sin_ficha():
         print(f"  [startup] contratos_sin_ficha recolocados en su ficha: {dict(movidos)}", flush=True)
 
 
+# CPV de los formales ya guardados (2026-10-17, rama wip/cpv-formales): desde ese día _entry_to_contratos guarda el CPV
+# de todo contrato nuevo; para los anteriores, backend/mapa_cpv_place.json.gz ({enlace del contrato: CPV}, sacado de
+# los ZIP oficiales con generar_mapa_cpv_place.py, sin adjudicatarios). Se aplica una vez por versión del fichero, ficha
+# a ficha, sin tocar nada más que el campo "cpv" de los contratos que no lo tienen.
+MAPA_CPV_PLACE_FILE = os.path.join(BASE_DIR, "mapa_cpv_place.json.gz")
+
+
+def _aplicar_mapa_cpv_place():
+    if not os.path.exists(MAPA_CPV_PLACE_FILE):
+        return
+    with open(MAPA_CPV_PLACE_FILE, "rb") as f:
+        huella = hashlib.md5(f.read()).hexdigest()
+    if _settings_get("mapa_cpv_place_aplicado") == huella:
+        return
+    with _gzip.open(MAPA_CPV_PLACE_FILE, "rt", encoding="utf-8") as f:
+        mapa = json.load(f)
+    fichas = contratos = 0
+    claves = [(d.get("municipio"), d.get("provincia", "murcia")) for d in _db_iter_municipios()]
+    for municipio, provincia in claves:
+        d = _db_get_municipio(municipio, provincia)
+        if not d:
+            continue
+        n = 0
+        for c in d.get("contratos", []):
+            if c.get("cpv") or c.get("fuente") != "PLACE":
+                continue
+            cpv = mapa.get((c.get("url") or "").split("#adj-")[0])
+            if cpv:
+                c["cpv"] = cpv
+                n += 1
+        if n:
+            _db_set_municipio(municipio, d, provincia=provincia)
+            fichas += 1
+            contratos += n
+        del d
+    del mapa
+    _settings_set("mapa_cpv_place_aplicado", huella)
+    _liberar_memoria()
+    print(f"  [startup] CPV de PLACE: {contratos} contratos en {fichas} fichas", flush=True)
+
+
 def _separar_organos_no_municipales(municipio, contratos):
     """Reparte los contratos de un municipio de la provincia de Murcia: {"propios", "umu", "upct", "age", "ajenos"}.
     Las universidades van antes que la AGE para que queden en su entrada."""
@@ -7557,6 +7598,11 @@ def _entry_to_contratos(entry_xml):
     m_fecha = re.search(r"<cbc:AwardDate>\s*(\d{4}-\d{2}-\d{2})", entry_xml)
     if m_fecha and m_fecha.group(1)[:4] >= "1990":       # la fuente trae alguna fecha absurda ("0026-..."): no se guarda
         base["fecha"] = m_fecha.group(1)
+    # CPV principal del contrato (2026-10-17, preparado para los informes por sector): el del ProcurementProject de la
+    # licitación (los lotes traen el suyo en ProcurementProjectLot; aquí no se usan). Solo si la fuente lo trae.
+    m_cpv = re.search(r"<cbc:ItemClassificationCode[^>]*>\s*(\d{8})", _re_tag_block("ProcurementProject", entry_xml) or "")
+    if m_cpv:
+        base["cpv"] = m_cpv.group(1)
     if adjs:
         base["resultado_code"] = adjs[0]["resultado_code"] or resultado_code
     if not url or not _adjudicado_fiable(adjs, presupuesto_num):
@@ -16771,6 +16817,7 @@ def _inicializar_datos():
     _aplicar_importes_aparte()
     _reclasificar_organos_murcia()
     _recolocar_contratos_sin_ficha()
+    _aplicar_mapa_cpv_place()
     _cargar_contratos_menores_murcia_manual()
     _cargar_contratos_menores_euskadi()
     _cargar_contratos_menores_madrid_capital()

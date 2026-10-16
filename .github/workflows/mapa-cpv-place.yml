@@ -1,0 +1,63 @@
+name: Mapa enlace -> CPV de los formales de PLACE (una vez, repositorio privado)
+
+# Preparado el 17-10-2026 en la rama wip/cpv-formales (no está en main; nada se despliega). Baja los 62 ZIP mensuales
+# oficiales de PLACE (202109-202610) y saca {enlace del contrato: CPV principal} con generar_mapa_cpv_place.py. El mapa
+# no lleva adjudicatarios, NIF ni importes; aun así va al repositorio privado, sin artefactos. Se lanza solo cuando
+# cambia este fichero en la rama.
+
+on:
+  push:
+    branches: [wip/cpv-formales]
+    paths: [.github/workflows/mapa-cpv-place.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mapa-cpv-place
+  cancel-in-progress: false
+
+jobs:
+  mapa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      DESTINO: ${{ github.repository_owner }}/dinero-publico-copias
+      ETIQUETA: mapa-cpv-place
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Bajar cada ZIP y sacar los CPV
+        run: |
+          meses=$(python -c "
+          a, m, out = 2026, 10, []
+          while (a, m) >= (2021, 9):
+              out.append(f'{a}{m:02d}'); a, m = (a, m - 1) if m > 1 else (a - 1, 12)
+          print(' '.join(out))")
+          for mes in $meses; do
+            url="https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_643/licitacionesPerfilesContratanteCompleto3_${mes}.zip"
+            ok=0
+            for intento in 1 2 3 4 5; do
+              if curl -sS --max-time 2400 -o z.zip "$url" && python -c "import zipfile,sys; sys.exit(0 if zipfile.ZipFile('z.zip').namelist() else 1)"; then
+                ok=1; break
+              fi
+              echo "${mes}: intento ${intento} fallido"; sleep 60
+            done
+            if [ "$ok" != "1" ]; then echo "::warning::${mes}: sin ZIP válido"; continue; fi
+            python backend/generar_mapa_cpv_place.py z.zip --salida mapa_cpv_place.json.gz
+            rm -f z.zip
+          done
+          ls -la mapa_cpv_place.json.gz
+      - name: Subir al repositorio privado
+        env:
+          GH_TOKEN: ${{ secrets.COPIAS_TOKEN }}
+        run: |
+          set -euo pipefail
+          sha256sum mapa_cpv_place.json.gz > mapa_cpv_place.json.gz.sha256
+          if ! gh release view "$ETIQUETA" --repo "$DESTINO" > /dev/null 2>&1; then
+            gh release create "$ETIQUETA" --repo "$DESTINO" --title "Mapa enlace -> CPV de los formales de PLACE" \
+              --notes "Enlace de cada contrato formal de PLACE (202109-202610) y su CPV principal. Sin adjudicatarios."
+          fi
+          gh release upload "$ETIQUETA" mapa_cpv_place.json.gz mapa_cpv_place.json.gz.sha256 --repo "$DESTINO" --clobber
