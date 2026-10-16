@@ -6807,6 +6807,13 @@ def _guardar_pseudo_municipio_ccaa(provincia, contratos_ccaa, job_id=None):
     nombre = MUNICIPIOS_PSEUDO.get(provincia)
     if not nombre:
         return
+    # 2026-10-17 (arreglo): antes se sustituía entera con lo de este refresco, pero esos contratos ya no están en la
+    # ficha de Murcia capital (se separaron antes), así que cada refresco solo volvía a ver los de los ZIP en caché y
+    # borraba el resto (en julio eran 736; el 16-10, 105). Ahora es aditiva: se conserva lo anterior que siga siendo
+    # de la CCAA y lo nuevo sustituye al mismo enlace.
+    prev = _db_get_municipio(nombre, provincia)
+    conservados = [c for c in (prev.get("contratos", []) if prev else []) if _es_organo_ccaa_murcia(c.get("organo", ""))]
+    contratos_ccaa = _dedup_contratos_por_url(list(contratos_ccaa) + conservados)    # lo nuevo, delante, gana
     resultado = {
         "municipio":       nombre,
         "organismo":       "Comunidad Autónoma de la Región de Murcia" if provincia == "murcia" else nombre,
@@ -6905,7 +6912,7 @@ def _separar_contratos_age(contratos):
     return resto, age
 
 
-def _guardar_pseudo_municipio_acumulado(nombre_pseudo, municipio_origen, contratos_extra, job_id=None):
+def _guardar_pseudo_municipio_acumulado(nombre_pseudo, municipio_origen, contratos_extra, job_id=None, sigue=None):
     """Acumula contratos separados de un municipio murciano bajo una entrada
     pseudo-municipio (AGE, Universidad de Murcia...), tratada en el resto de
     la app igual que un ayuntamiento más.
@@ -6928,11 +6935,18 @@ def _guardar_pseudo_municipio_acumulado(nombre_pseudo, municipio_origen, contrat
     for c in contratos_extra:
         c["_origen_muni"] = origen
 
+    # 2026-10-17 (arreglo): ANTES se quitaba toda la aportación previa de este municipio y se ponía solo la de este
+    # refresco. Pero esos contratos ya no están en la ficha municipal (se separaron en refrescos anteriores), así que
+    # el refresco solo vuelve a ver los de los ZIP en caché y cada refresco borraba el resto: medido sobre la copia
+    # del 16-10, tres meses de refrescos dejaban la AGE de 1.117 contratos en 89 y la UPCT de 75 en 10. Ahora es
+    # ADITIVO, como _fusionar_historico_contratos: se conserva lo anterior y lo nuevo sustituye al mismo enlace. Un
+    # contrato anterior de este municipio solo sale si ya no encaja en esta entrada (`sigue`, el mismo criterio que
+    # lo separó), para que no queden restos si cambia la regla.
     prev = _db_get_municipio(nombre_pseudo)
     conservados = [c for c in (prev.get("contratos", []) if prev else [])
-                   if c.get("_origen_muni") != origen]
+                   if c.get("_origen_muni") != origen or sigue is None or sigue(c.get("organo", ""))]
 
-    fusionados = _dedup_contratos_por_url(conservados + list(contratos_extra))
+    fusionados = _dedup_contratos_por_url(list(contratos_extra) + conservados)    # lo nuevo, delante, gana
 
     if not fusionados and prev is None:
         return
@@ -6956,7 +6970,9 @@ def _guardar_pseudo_municipio_age(municipio_origen, contratos_age, job_id=None):
     """Acumula los contratos de la AGE separados de un municipio murciano bajo
     la entrada pseudo-municipio "Administración General del Estado". Ver
     _guardar_pseudo_municipio_acumulado."""
-    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_AGE, municipio_origen, contratos_age, job_id)
+    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_AGE, municipio_origen, contratos_age, job_id,
+                                        sigue=lambda o: _es_organo_age(o) and not _es_organo_umu(o)
+                                        and not _es_organo_upct(o))
 
 
 def _es_organo_umu(organo):
@@ -6981,7 +6997,8 @@ def _guardar_pseudo_municipio_umu(municipio_origen, contratos_umu, job_id=None):
     """Acumula los contratos de la Universidad de Murcia separados de un
     municipio murciano bajo su propia entrada pseudo-municipio. Ver
     _guardar_pseudo_municipio_acumulado."""
-    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UMU, municipio_origen, contratos_umu, job_id)
+    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UMU, municipio_origen, contratos_umu, job_id,
+                                        sigue=_es_organo_umu)
 
 
 def _es_organo_upct(organo):
@@ -6989,7 +7006,8 @@ def _es_organo_upct(organo):
 
 
 def _guardar_pseudo_municipio_upct(municipio_origen, contratos_upct, job_id=None):
-    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UPCT, municipio_origen, contratos_upct, job_id)
+    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UPCT, municipio_origen, contratos_upct, job_id,
+                                        sigue=_es_organo_upct)
 
 
 # Órganos que NO son de este municipio y se colaban por llevar su nombre dentro (medido el 13-10-2026): en Murcia
