@@ -18035,7 +18035,9 @@ h2,.rk-section-header h2{font-weight:600;}
 # cache-miss garantizado en las dos capas (HTTP y SW), sin depender de
 # acordarse de subir un numero a mano cada vez.
 # 2026-10-15: también entran los iconos de backend/static/: si cambia el favicon, cambia la ?v= y el navegador lo pide de nuevo.
-_PWA_HASH = hashlib.md5(_ALL_CSS_CONTENT.encode("utf-8"))
+# 2026-10-16 (repaso para la Cámara): sufijo para estrenar ?v= y la caché del service worker aunque los ficheros no
+# cambien. Navegadores y apps instaladas antes del 05-10 seguían enseñando el logotipo del ojo guardado en caché.
+_PWA_HASH = hashlib.md5(_ALL_CSS_CONTENT.encode("utf-8") + b"logo-dp-2026-10-16")
 for _ic in ("favicon.ico", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png",
             "og-image.png"):
     try:
@@ -18073,10 +18075,14 @@ def spinner_page(job_id, municipio, provincia="murcia"):
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>{_ANALYTICS_LOADER_JS}</script>
 <title>{_t("Buscando — {municipio}").format(municipio=esc(municipio))}</title>
+<link rel="icon" href="{_pwa_asset('/static/favicon.ico')}" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="{_pwa_asset('/static/favicon-32.png')}">
+<link rel="apple-touch-icon" href="{_pwa_asset('/static/apple-touch-icon.png')}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap">
 <link rel="stylesheet" href="{_pwa_asset('/static/style.css')}"></head>
 <body>
 <header>
-  <div class="logo">DINERO&nbsp;PÚBLICO</div>
+  <div class="logo-svg">{LOGO_HTML}</div>
   <div><h1>{_t("Contratos Públicos")} · {esc(label)}</h1>
   <p>{esc(fuente_txt)}</p></div>
 </header>
@@ -21628,17 +21634,26 @@ def render_fondos_ue_html(qs):
     </div>"""
 
     # Cobertura REAL (2026-10-01, aviso de César): el texto se calcula con las provincias que tienen datos.
+    # 2026-10-16 (repaso para la Cámara): dice también qué fondos NO están. Medido en la copia del 16-10: las 50
+    # provincias tienen operaciones, pero solo de Cohesion Data 2014-2020 (FEDER y FSE: 140.249 operaciones, el 96 %
+    # sin beneficiario publicado) y CORDIS Horizon Europe (15.875 participaciones); ni FEDER/FSE+ 2021-2027, ni el
+    # Plan de Recuperación, ni la PAC (fondos_ue_espana.py solo baja esos dos conjuntos de datos).
     provs_datos = _db_fondos_ue_provincias()
     nombres_cob = [PROVINCIA_LABEL.get(p, p).replace("Provincia de ", "provincia de ") for p in provs_datos]
     toda_espana = len(provs_datos) == len(MUNICIPIOS_POR_PROVINCIA)
+    limites_txt = _t("De los fondos estructurales solo está el periodo 2014-2020 (FEDER y FSE), y de los de "
+                     "investigación, solo Horizon Europe (desde 2021). No están los programas FEDER y FSE+ de "
+                     "2021-2027, el Plan de Recuperación (Next Generation EU) ni las ayudas agrarias (PAC). En la "
+                     "mayoría de las operaciones de los fondos estructurales la fuente no publica el beneficiario.")
     if toda_espana:
-        cobertura_txt = _t("Hay datos de todas las provincias. Las operaciones sin provincia concreta (regionales, "
-                           "estatales o de cooperación entre países) se muestran aparte y no se suman a ninguna "
-                           "provincia.")
+        cobertura_txt = " ".join((
+            _t("Hay operaciones de todas las provincias, pero no de todos los fondos europeos."), limites_txt,
+            _t("Las operaciones sin provincia concreta (regionales, estatales o de cooperación entre países) se "
+               "muestran aparte y no se suman a ninguna provincia.")))
     elif provs_datos:
         cobertura_txt = _t("Por ahora tenemos datos de {n} de las {total} provincias: {lista}. El resto, pendiente de "
                            "conectar.").format(n=len(provs_datos), total=len(MUNICIPIOS_POR_PROVINCIA),
-                                               lista=esc(_lista_y(nombres_cob)))
+                                               lista=esc(_lista_y(nombres_cob))) + " " + limites_txt
     else:
         cobertura_txt = _t("Todavía no hay datos de fondos UE cargados.")
     with _db_lock:
