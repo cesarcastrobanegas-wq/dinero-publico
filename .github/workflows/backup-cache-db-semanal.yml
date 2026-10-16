@@ -12,7 +12,12 @@ name: Copia semanal de cache.db (repositorio privado aparte)
 on:
   schedule:
     - cron: "0 4 * * 1"  # lunes 04:00 UTC
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      conservar_todas:
+        description: "Prueba: no borrar ninguna copia antigua (por defecto se dejan solo las dos últimas)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -74,7 +79,10 @@ jobs:
           GH_TOKEN: ${{ secrets.COPIAS_TOKEN }}
         run: |
           set -euo pipefail
-          nombre="cache_$(date -u +%Y-%m-%d).db.gz"
+          # 2026-10-17: con la hora (de Madrid) en el nombre, para que dos copias del mismo día no se pisen (antes
+          # cache_AAAA-MM-DD.db.gz y --clobber: la segunda copia del 16-10 sustituyó a la de la tarde). Ordena bien
+          # junto a los nombres antiguos: "_" va detrás de "." en sort.
+          nombre="cache_$(TZ=Europe/Madrid date +%Y-%m-%d_%H%M).db.gz"
           gzip -6 -c cache.db > "$nombre"
           sha256sum "$nombre" > "${nombre}.sha256"
           echo "Copia: ${nombre}, $(stat -c%s "$nombre") bytes (original $(stat -c%s cache.db))"
@@ -84,8 +92,14 @@ jobs:
               --notes "Copias automáticas de la base de producción. Se conservan las dos últimas."
           fi
           gh release upload "$ETIQUETA" "$nombre" "${nombre}.sha256" --repo "$DESTINO" --clobber
+          if [ "${{ inputs.conservar_todas }}" = "true" ]; then
+            echo "conservar_todas: no se borra ninguna copia antigua"
+            gh release view "$ETIQUETA" --repo "$DESTINO" --json assets --jq '.assets[].name' | grep '\.db\.gz$' | LC_ALL=C sort -r
+            rm -f "$nombre" "${nombre}.sha256"
+            exit 0
+          fi
           # conservar las dos copias más recientes (cada una con su .sha256)
-          gh release view "$ETIQUETA" --repo "$DESTINO" --json assets --jq '.assets[].name' | grep '\.db\.gz$' | sort -r | tail -n +3 | while read -r viejo; do
+          gh release view "$ETIQUETA" --repo "$DESTINO" --json assets --jq '.assets[].name' | grep '\.db\.gz$' | LC_ALL=C sort -r | tail -n +3 | while read -r viejo; do
             gh release delete-asset "$ETIQUETA" "$viejo" --repo "$DESTINO" --yes
             gh release delete-asset "$ETIQUETA" "${viejo}.sha256" --repo "$DESTINO" --yes || true
             echo "Borrada la copia antigua ${viejo}"
