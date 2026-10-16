@@ -26219,7 +26219,7 @@ def render_aviso_legal_html():
   <p>{_t("Los datos de contratos mostrados provienen de fuentes oficiales públicas: la Plataforma de Contratación del Sector Público (PLACE) del Ministerio de Hacienda, que cubre todo el territorio nacional, además de fuentes autonómicas complementarias como el Boletín Oficial de la Región de Murcia (BORM) y la Plataforma de Serveis de Contractació Pública de Catalunya (PSCP). Se seguirán incorporando otras fuentes de contratos menores y organismos públicos a medida que estén disponibles.")}</p>
   <p>{_t("Los nombres de directivos y administradores provienen del Boletín Oficial del Registro Mercantil (BORME), que publica el Boletín Oficial del Estado. No se consultan directorios de empresas privados.")}</p>
   <p>{_t("Los datos de fondos europeos provienen de los portales de datos abiertos de la Comisión Europea: Cohesion Data (fondos estructurales FEDER y FSE 2014-2020) y CORDIS (programa Horizon Europe).")}</p>
-  <p>{_t("Próximamente se incorporarán también datos de subvenciones.")}</p>
+  <p>{_t("Los datos de subvenciones ya están publicados, en la pestaña «Subvenciones» de Convocatorias abiertas: provienen de la Base de Datos Nacional de Subvenciones (BDNS) y se actualizan dos veces al día.")}</p>
 
   <h2>{_t("Base legal para el tratamiento de datos")}</h2>
   <p>{_t("El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD).")}</p>
