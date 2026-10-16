@@ -1,0 +1,81 @@
+name: Extraer de PLACE los formales de Murcia 2021-2024 (una vez, repositorio privado)
+
+# Backfill de formales de la provincia de Murcia (OK de César, 17-10-2026; ver INFORME formales y producto). El
+# backfill nacional del 02-10 dejó fuera Murcia por error y en el PC la descarga de PLACE va a 30-70 KB/s. Este flujo
+# baja cada ZIP mensual oficial de PLACE, se queda solo con las entradas de órganos cuyo nombre contiene un municipio
+# de Murcia (backend/extraer_place_murcia.py, mismo criterio que la web) y las sube al repositorio PRIVADO
+# dinero-publico-copias. Llevan adjudicatarios: no hay artefactos y por pantalla solo salen recuentos.
+# Se lanza al subir la rama wip/extraer-place-murcia (no está en main a propósito: nada de esto se despliega).
+
+on:
+  push:
+    branches: [wip/extraer-place-murcia]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extraer-place-murcia
+  cancel-in-progress: false
+
+jobs:
+  extraer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      DESTINO: ${{ github.repository_owner }}/dinero-publico-copias
+      ETIQUETA: place-murcia-2021-2024
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Dependencias
+        run: pip install -r requirements.txt
+
+      - name: Bajar cada ZIP mensual y quedarse con Murcia
+        run: |
+          mkdir -p salida
+          meses=$(python -c "
+          a, m, out = 2024, 11, []
+          while (a, m) >= (2021, 9):
+              out.append(f'{a}{m:02d}'); a, m = (a, m - 1) if m > 1 else (a - 1, 12)
+          print(' '.join(out))")
+          primero=1
+          for mes in $meses; do
+            url="https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_643/licitacionesPerfilesContratanteCompleto3_${mes}.zip"
+            ok=0
+            for intento in 1 2 3 4 5; do
+              if curl -sS --max-time 2400 -o z.zip "$url" && python -c "import zipfile,sys; sys.exit(0 if zipfile.ZipFile('z.zip').namelist() else 1)"; then
+                ok=1; break
+              fi
+              echo "${mes}: intento ${intento} fallido"; sleep 60
+            done
+            if [ "$ok" != "1" ]; then echo "::warning::${mes}: sin ZIP válido"; continue; fi
+            echo "${mes}: ZIP de $(( $(stat -c%s z.zip) / 1048576 )) MB"
+            if ! python backend/extraer_place_murcia.py z.zip "salida/murcia_${mes}.atom.gz"; then
+              echo "::error::${mes}: falló el extractor"
+              [ "$primero" = "1" ] && exit 1
+            fi
+            primero=0
+            rm -f z.zip
+          done
+          ls salida | wc -l
+          du -sh salida
+
+      - name: Subir al repositorio privado
+        env:
+          GH_TOKEN: ${{ secrets.COPIAS_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd salida
+          sha256sum *.atom.gz > SHA256SUMS
+          if ! gh release view "$ETIQUETA" --repo "$DESTINO" > /dev/null 2>&1; then
+            gh release create "$ETIQUETA" --repo "$DESTINO" --title "PLACE: formales de Murcia 2021-2024" \
+              --notes "Entradas de los ZIP mensuales oficiales de PLACE (202109-202411) de órganos de municipios de Murcia, para el backfill local de formales. Llevan adjudicatarios: solo en este repositorio privado."
+          fi
+          gh release upload "$ETIQUETA" *.atom.gz SHA256SUMS --repo "$DESTINO" --clobber
+          echo "subidos $(ls *.atom.gz | wc -l) ficheros"
