@@ -12126,9 +12126,37 @@ def _duplicados_feed_de_propios(cms=None):
                 d.add(fid)
         # 2.ª pasada: el resto, con las reglas de siempre y lo que quede libre
         d |= {r["id"] for r in regs if r["id"] not in d and _casa_con_propios(r, idx)}
+        # gemelas: el mismo contrato publicado dos veces en PLACE con el mismo expediente; si una copia es duplicado
+        # de la fuente propia, la otra también (lista fija, _gemelas_feed_place)
+        if d:
+            en_regs = {r["id"] for r in regs}
+            d |= {i for i, g in _gemelas_feed_place().items() if g in d and i in en_regs}
         if d:
             dup[cm] = d
     return dup
+
+
+# Gemelas del feed (decisión de César, 16-10-2026, tras revisar la «opción B»): PLACE publica a veces el mismo contrato
+# dos veces; si una copia ya se oculta como duplicado de la fuente propia, la otra se queda visible y cuenta doble. Solo
+# se ocultan las que PLACE da con el MISMO expediente (igual, con sufijo «bis» o el mismo número largo con otro
+# prefijo): con expediente distinto pueden ser contratos distintos (p. ej. el mismo servicio en varias pedanías), y
+# «mejor un duplicado visible que un fraccionamiento escondido». Tampoco las que tocan un candidato de
+# fraccionamiento de /admin/revision o un caso publicado. La lista sale de los ZIP oficiales (solo identificadores de
+# PLACE, sin nombres ni NIF): backend/place_menores_gemelas.json.
+PLACE_MENORES_GEMELAS_FILE = os.path.join(BASE_DIR, "place_menores_gemelas.json")
+_GEMELAS_FEED_CACHE = None
+
+
+def _gemelas_feed_place():
+    """{id de la fila que se oculta: id de su gemela}."""
+    global _GEMELAS_FEED_CACHE
+    if _GEMELAS_FEED_CACHE is None:
+        try:
+            with open(PLACE_MENORES_GEMELAS_FILE, encoding="utf-8") as f:
+                _GEMELAS_FEED_CACHE = {i: v["gemela"] for i, v in json.load(f).get("se_ocultan", {}).items()}
+        except (OSError, ValueError):
+            _GEMELAS_FEED_CACHE = {}
+    return _GEMELAS_FEED_CACHE
 
 
 # Duplicados feed/fuente propia archivados en cada arranque (2026-10-15, encargo de César tras los −350 de la portada):

@@ -1,0 +1,106 @@
+{
+"generado": "2026-10-16",
+"regla": "fila del feed visible cuya gemela (mismo adjudicatario, importe, ±7 días, objeto parecido) ya se oculta como duplicado de la fuente propia, y con el mismo expediente en PLACE (igual, con sufijo «bis» o el mismo número largo con otro prefijo); fuera las que tocan candidatos de fraccionamiento o casos publicados",
+"se_ocultan": {
+"place-menores::11860199": {
+"gemela": "place-menores::12866808",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::12149005": {
+"gemela": "place-menores::12138797",
+"motivo": "mismo expediente"
+},
+"place-menores::12567603": {
+"gemela": "place-menores::12557169",
+"motivo": "mismo expediente"
+},
+"place-menores::12707446": {
+"gemela": "place-menores::14469583",
+"motivo": "mismo expediente"
+},
+"place-menores::12880959": {
+"gemela": "place-menores::12391859",
+"motivo": "expediente con sufijo «bis»"
+},
+"place-menores::12880962": {
+"gemela": "place-menores::12391858",
+"motivo": "expediente con sufijo «bis»"
+},
+"place-menores::12880967": {
+"gemela": "place-menores::12391872",
+"motivo": "expediente con sufijo «bis»"
+},
+"place-menores::12880968": {
+"gemela": "place-menores::12391873",
+"motivo": "expediente con sufijo «bis»"
+},
+"place-menores::12880969": {
+"gemela": "place-menores::12391880",
+"motivo": "expediente con sufijo «bis»"
+},
+"place-menores::12953679": {
+"gemela": "place-menores::12999369",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::13649101": {
+"gemela": "place-menores::13802304",
+"motivo": "mismo expediente"
+},
+"place-menores::13649538": {
+"gemela": "place-menores::13801876",
+"motivo": "mismo expediente"
+},
+"place-menores::13684921": {
+"gemela": "place-menores::14355618",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::13801831": {
+"gemela": "place-menores::13625284",
+"motivo": "mismo expediente"
+},
+"place-menores::14461033": {
+"gemela": "place-menores::14390535",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::14482317": {
+"gemela": "place-menores::13083455",
+"motivo": "mismo expediente"
+},
+"place-menores::14688584": {
+"gemela": "place-menores::16582097",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::15004295": {
+"gemela": "place-menores::14986206",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::16590637": {
+"gemela": "place-menores::15677930",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::16706944": {
+"gemela": "place-menores::16672231",
+"motivo": "mismo expediente"
+},
+"place-menores::16842942": {
+"gemela": "place-menores::16940770",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::17432926": {
+"gemela": "place-menores::17425655",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::17491471": {
+"gemela": "place-menores::17471009",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::17491548": {
+"gemela": "place-menores::17471284",
+"motivo": "mismo número de expediente con otro prefijo"
+},
+"place-menores::19277531": {
+"gemela": "place-menores::19232308",
+"motivo": "mismo expediente"
+}
+}
+}
