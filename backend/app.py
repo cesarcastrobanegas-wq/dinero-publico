@@ -6734,7 +6734,10 @@ NOMBRE_PSEUDO_AGE = "Administración General del Estado"
 # pseudo-municipio, con el mismo patrón de detección/reclasificación que la
 # AGE (ver _es_organo_umu / _guardar_pseudo_municipio_umu).
 NOMBRE_PSEUDO_UMU = "Universidad de Murcia"
-MUNICIPIOS_PSEUDO_EXTRA = {"murcia": [NOMBRE_PSEUDO_AGE, NOMBRE_PSEUDO_UMU]}
+# La Universidad Politécnica de Cartagena estaba dentro de la ficha de Cartagena (75 contratos, medido el 13-10-2026):
+# mismo trato que la de Murcia, entrada propia.
+NOMBRE_PSEUDO_UPCT = "Universidad Politécnica de Cartagena"
+MUNICIPIOS_PSEUDO_EXTRA = {"murcia": [NOMBRE_PSEUDO_AGE, NOMBRE_PSEUDO_UMU, NOMBRE_PSEUDO_UPCT]}
 
 
 def _pseudos_de_provincia(provincia):
@@ -6850,6 +6853,15 @@ _AGE_KEYWORDS = (
     "ministerio del ",
     "subdelegacion de defensa",
     "delegacion de defensa",
+    # 13-10-2026: lo que seguía dentro de fichas municipales de la provincia. Cartagena: la Armada ("Intendente de
+    # Cartagena", 648 contratos) y la Autoridad Portuaria (186); San Javier: la Base Aérea (238) y el Centro
+    # Universitario de la Defensa (6).
+    "intendente de ",
+    "autoridad portuaria",
+    "base aerea",
+    "seccion economico-administrativa",
+    "centro universitario de la defensa",
+    "arsenal de cartagena",
 )
 # Siglas como token aislado (\b) + las Delegaciones (Especiales) de Economía y
 # Hacienda del Estado (periféricas del Ministerio de Hacienda; distintas de una
@@ -6970,6 +6982,182 @@ def _guardar_pseudo_municipio_umu(municipio_origen, contratos_umu, job_id=None):
     municipio murciano bajo su propia entrada pseudo-municipio. Ver
     _guardar_pseudo_municipio_acumulado."""
     _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UMU, municipio_origen, contratos_umu, job_id)
+
+
+def _es_organo_upct(organo):
+    return "universidad politecnica de cartagena" in normalizar(organo)
+
+
+def _guardar_pseudo_municipio_upct(municipio_origen, contratos_upct, job_id=None):
+    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UPCT, municipio_origen, contratos_upct, job_id)
+
+
+# Órganos que NO son de este municipio y se colaban por llevar su nombre dentro (medido el 13-10-2026): en Murcia
+# capital, los ayuntamientos de Cieza "(Murcia)", Alhama "de Murcia" y Fuente Álamo "de Murcia" (293 contratos, que ya
+# están en sus propias fichas) y la Junta Vecinal de Castrillo de Murcia, de Burgos (5); en Blanca, entes de la "Costa
+# Blanca" de Alicante (44); en Ceutí, el "Instituto Ceutí de Deportes", de Ceuta (14); en Ojós, Villarrubia de los
+# Ojos (3); en La Unión, un órgano de "...la Unión Europea" (3). Estos contratos salen de la ficha, que no es la suya,
+# pero NO se pierden (decisión de César, 13-10): van a la ficha del municipio que les corresponde si no estaban ya en
+# ella (comprobado sobre la copia del 10-10: los de Cieza, Alhama, Fuente Álamo y Villarrubia ya estaban; los de
+# Castrillo de Murcia y el Instituto Ceutí, no) y, si no hay ninguna ficha municipal que les toque (entes de la
+# Diputación de Alicante, una secretaría autonómica), se guardan en la tabla contratos_sin_ficha.
+_RE_AYUNTAMIENTO_DE = re.compile(r"\b(?:ayuntamiento|junta vecinal) (?:de la |de las |de los |del |de )(.+?)(?: \(| -|,|$)")
+_ORGANOS_AJENOS_POR_NOMBRE = {"blanca": ("costa blanca",), "ceuti": ("instituto ceuti",), "la union": ("union europea",)}
+# Destino de los órganos ajenos que no son "Ayuntamiento de X": trozo del nombre del órgano -> (municipio, provincia).
+#   - Castrillo de Murcia es una entidad local menor del municipio de Sasamón (Burgos).
+#   - El Instituto Ceutí de Deportes es un organismo de la Ciudad Autónoma de Ceuta, pero la ficha de Ceuta no se toca
+#     (decisión de César, 15-10): sale de Ceutí y va a contratos_sin_ficha (destino None).
+_DESTINO_ORGANO_AJENO = {"castrillo de murcia": ("Sasamón", "burgos"), "instituto ceuti": None}
+# Fichas que este reparto nunca modifica: lo que les tocaría se guarda en contratos_sin_ficha.
+_FICHAS_QUE_NO_SE_TOCAN = {"ceuta"}
+_PROVINCIAS_POR_NOMBRE_MUNICIPIO = None
+_NOMBRES_DE_MUNICIPIO = None
+
+
+def _nombres_de_municipio():
+    global _NOMBRES_DE_MUNICIPIO
+    if _NOMBRES_DE_MUNICIPIO is None:
+        _NOMBRES_DE_MUNICIPIO = {normalizar(m) for lista in MUNICIPIOS_POR_PROVINCIA.values() for m in lista}
+    return _NOMBRES_DE_MUNICIPIO
+
+
+def _es_organo_ajeno(organo, municipio):
+    """True si el órgano contratante es de OTRO sitio: el ayuntamiento o la junta vecinal de otro municipio, o un
+    ente cuyo nombre contiene el de este por casualidad. Prudente: un "Ayuntamiento de X" solo se da por ajeno si X
+    es el nombre de otro municipio conocido (o una junta vecinal de otro lugar)."""
+    n, propio = normalizar(organo), normalizar(municipio)
+    if any(falso in n for falso in _ORGANOS_AJENOS_POR_NOMBRE.get(propio, ())):
+        return True
+    m = _RE_AYUNTAMIENTO_DE.search(n)
+    if not m:
+        return False
+    quien = m.group(1).strip()
+    sin_articulo = lambda x: re.sub(r"^(el|la|los|las|l') ?", "", x)
+    if quien == propio or sin_articulo(quien) == sin_articulo(propio):
+        return False
+    return "junta vecinal" in n or quien in _nombres_de_municipio()
+
+
+def _destino_de_organo_ajeno(organo, provincia_origen):
+    """(municipio, provincia) de la ficha a la que pertenece un órgano ajeno, o None si no hay ninguna."""
+    global _PROVINCIAS_POR_NOMBRE_MUNICIPIO
+    n = normalizar(organo)
+    for trozo, destino in _DESTINO_ORGANO_AJENO.items():
+        if trozo in n:
+            return destino
+    m = _RE_AYUNTAMIENTO_DE.search(n)
+    if not m or "junta vecinal" in n:
+        return None
+    if _PROVINCIAS_POR_NOMBRE_MUNICIPIO is None:
+        indice = {}
+        for prov, lista in MUNICIPIOS_POR_PROVINCIA.items():
+            for nombre in lista:
+                indice.setdefault(normalizar(nombre), []).append((nombre, prov))
+        _PROVINCIAS_POR_NOMBRE_MUNICIPIO = indice
+    candidatos = _PROVINCIAS_POR_NOMBRE_MUNICIPIO.get(m.group(1).strip(), [])
+    if len(candidatos) > 1:                      # homónimos: la provincia entre paréntesis o, si no, la de origen
+        entre_parentesis = re.search(r"\(([^)]+)\)", n)
+        preferida = normalizar(entre_parentesis.group(1)).replace(" ", "_") if entre_parentesis else provincia_origen
+        candidatos = [c for c in candidatos if c[1] == preferida] or [c for c in candidatos if c[1] == provincia_origen]
+    return candidatos[0] if len(candidatos) == 1 else None
+
+
+def _huella_contrato(c):
+    return (c.get("url") or "").replace("&amp;", "&") or f'{c.get("licitacion_id")}|{normalizar(c.get("titulo") or "")[:80]}'
+
+
+def _entregar_contratos_ajenos(municipio_origen, provincia_origen, contratos, job_id=None):
+    """Lleva cada contrato de un órgano ajeno a la ficha que le corresponde (si no estaba ya) o, si no hay ninguna, a
+    la tabla contratos_sin_ficha. Devuelve {"ya_estaban", "movidos", "sin_ficha"}."""
+    res = {"ya_estaban": 0, "movidos": 0, "sin_ficha": 0}
+    por_destino, sin_ficha = {}, []
+    for c in contratos:
+        destino = _destino_de_organo_ajeno(c.get("organo", ""), provincia_origen)
+        if destino and destino[1] in _FICHAS_QUE_NO_SE_TOCAN:
+            destino = None
+        d = _db_get_municipio(*destino) if destino else None
+        if d is None:
+            sin_ficha.append(c)
+        else:
+            por_destino.setdefault(destino, []).append(c)
+    for destino, lista in por_destino.items():
+        d = _db_get_municipio(*destino)
+        presentes = {_huella_contrato(c) for c in d.get("contratos", [])}
+        nuevos = []
+        for c in lista:
+            if _huella_contrato(c) in presentes:
+                res["ya_estaban"] += 1
+            else:
+                presentes.add(_huella_contrato(c))
+                nuevos.append(dict(c, _origen_muni=normalizar(municipio_origen)))
+        if nuevos:
+            d["contratos"] = d.get("contratos", []) + nuevos
+            d["total_contratos"] = len(d["contratos"])
+            d["alertas"] = analizar_riesgo(d["contratos"])
+            _db_set_municipio(d.get("municipio", destino[0]), d, provincia=d.get("provincia", destino[1]))
+            res["movidos"] += len(nuevos)
+            if job_id:
+                _log(job_id, f"  {len(nuevos)} contratos de '{municipio_origen}' pasan a la ficha de '{destino[0]}'")
+    if sin_ficha:
+        ahora = time.time()
+        with _db_lock:
+            _db.execute("CREATE TABLE IF NOT EXISTS contratos_sin_ficha (huella TEXT PRIMARY KEY, origen TEXT, "
+                        "organo TEXT, data TEXT, ts REAL)")
+            for c in sin_ficha:
+                _db.execute("INSERT OR REPLACE INTO contratos_sin_ficha VALUES (?,?,?,?,?)",
+                            (_huella_contrato(c), normalizar(municipio_origen), c.get("organo", ""),
+                             json.dumps(c, ensure_ascii=False), ahora))
+            _db.commit()
+        res["sin_ficha"] = len(sin_ficha)
+    return res
+
+
+def _separar_organos_no_municipales(municipio, contratos):
+    """Reparte los contratos de un municipio de la provincia de Murcia: {"propios", "umu", "upct", "age", "ajenos"}.
+    Las universidades van antes que la AGE para que queden en su entrada."""
+    partes = {"propios": [], "umu": [], "upct": [], "age": [], "ajenos": []}
+    for c in contratos:
+        organo = c.get("organo", "")
+        if _es_organo_umu(organo):
+            partes["umu"].append(c)
+        elif _es_organo_upct(organo):
+            partes["upct"].append(c)
+        elif _es_organo_age(organo):
+            partes["age"].append(c)
+        elif _es_organo_ajeno(organo, municipio):
+            partes["ajenos"].append(c)
+        else:
+            partes["propios"].append(c)
+    return partes
+
+
+def _reclasificar_organos_murcia():
+    """En el arranque: aplica _separar_organos_no_municipales a las fichas ya guardadas de la provincia de Murcia, para
+    que una regla nueva no tenga que esperar al refresco de cada municipio. Si no hay nada que mover, no escribe."""
+    movidos = collections.Counter()
+    for municipio in MUNICIPIOS_POR_PROVINCIA.get("murcia", []):
+        if es_pseudo_municipio(municipio):
+            continue
+        d = _db_get_municipio(municipio, "murcia")
+        if not d or not d.get("contratos"):
+            continue
+        partes = _separar_organos_no_municipales(municipio, d["contratos"])
+        if len(partes["propios"]) == len(d["contratos"]):
+            continue
+        d["contratos"] = partes["propios"]
+        d["total_contratos"] = len(partes["propios"])
+        d["alertas"] = analizar_riesgo(partes["propios"])
+        _db_set_municipio(municipio, d, provincia="murcia")
+        for clave, guardar in (("age", _guardar_pseudo_municipio_age), ("umu", _guardar_pseudo_municipio_umu),
+                               ("upct", _guardar_pseudo_municipio_upct)):
+            if partes[clave]:
+                guardar(municipio, partes[clave])
+        for clave in ("age", "umu", "upct", "ajenos"):
+            movidos[clave] += len(partes[clave])
+        for clave, n in _entregar_contratos_ajenos(municipio, "murcia", partes["ajenos"]).items():
+            movidos["ajenos_" + clave] += n
+    if movidos:
+        print(f"  [startup] órganos no municipales en fichas de Murcia: {dict(movidos)}", flush=True)
 
 
 def _asegurar_pseudo_municipio_fondos(provincia):
@@ -11399,11 +11587,47 @@ def _fechas_compatibles_cm(fecha_propia, fecha_feed, fuente_propia):
     return False
 
 
-def _casa_con_propios(reg, idx):
+def _compatibles_propios(reg, idx):
+    """Entradas del índice LIBRES con las que podría casar el registro del feed (mismas reglas de adjudicatario,
+    importe y fecha que _casa_con_propios), sin gastar ninguna."""
+    claves = [_clave_adjudicatario_cm(reg.get("nif"), reg.get("adjudicatari")),
+              ("nom", _nombre_comparable_cm(reg.get("adjudicatari")))]
+    fecha_feed = reg.get("data_adjudicacio") or ""
+    out, vistos = [], set()
+    for k in dict.fromkeys(claves):
+        for e in idx.get(k, ()):
+            if id(e) in vistos or e["usado"]:
+                continue
+            vistos.add(id(e))
+            if not _importes_compatibles_cm(e["imp"], reg.get("import_num"), reg.get("import_con_iva")):
+                continue
+            if e["fecha"]:
+                ok = _fechas_compatibles_cm(e["fecha"], fecha_feed, e["fuente"])
+            else:
+                ok = bool(e["ejercicio"]) and str(e["ejercicio"])[:4] == fecha_feed[:4]
+            if ok:
+                out.append(e)
+    return out
+
+
+def _parecido_objeto_cm(a, b):
+    """0-1: cuánto se parecen dos objetos (el mayor de las dos medidas de _objeto_parecido_cm)."""
+    import difflib
+    na, nb = normalizar(a or ""), normalizar(b or "")
+    pa = {w for w in re.findall(r"[a-z0-9]+", na) if len(w) >= 4}
+    pb = {w for w in re.findall(r"[a-z0-9]+", nb) if len(w) >= 4}
+    j = len(pa & pb) / len(pa | pb) if pa and pb else 0.0
+    r = difflib.SequenceMatcher(None, na[:200], nb[:200]).ratio() if na and nb else 0.0
+    return max(j, r)
+
+
+def _casa_con_propios(reg, idx, solo_mismo_objeto=False):
     """reg: registro del feed; idx: {clave adjudicatario: [entrada, ...]} de las fuentes propias (ver _indice_propios_cm).
     Emparejamiento UNO A UNO: cada contrato propio absorbe como mucho un contrato del feed (sin esto, un único contrato
     propio "tapaba" varios del feed recurrentes del mismo adjudicatario e importe -- Arona: 438 del feed para 432
-    propios). Fuente propia SIN fecha (Las Palmas GC, Toledo, Arona): casa por el mismo año de ejercicio."""
+    propios). Fuente propia SIN fecha (Las Palmas GC, Toledo, Arona): casa por el mismo año de ejercicio.
+    solo_mismo_objeto: solo entradas cuyo objeto se parece al del feed (_objeto_parecido_cm); lo usa la primera pasada
+    de _duplicados_feed_de_propios."""
     claves = [_clave_adjudicatario_cm(reg.get("nif"), reg.get("adjudicatari")),
               ("nom", _nombre_comparable_cm(reg.get("adjudicatari")))]
     fecha_feed = reg.get("data_adjudicacio") or ""
@@ -11417,6 +11641,8 @@ def _casa_con_propios(reg, idx):
             else:
                 ok = bool(e["ejercicio"]) and str(e["ejercicio"])[:4] == fecha_feed[:4]
             if not ok:
+                continue
+            if solo_mismo_objeto and not _objeto_parecido_cm(reg.get("descripcio"), e.get("desc")):
                 continue
             if e["fuente"] not in _GOVERNALIA_DIAS_EXTRA:
                 e["usado"] = True
@@ -11436,7 +11662,8 @@ def _indice_propios_cm(filas):
     idx = collections.defaultdict(list)
     for fila in filas:
         nif, nombre, imp, fecha, fuente = fila[:5]
-        e = {"imp": imp, "fecha": fecha, "fuente": fuente, "ejercicio": fila[5] if len(fila) > 5 else "", "usado": False}
+        e = {"imp": imp, "fecha": fecha, "fuente": fuente, "ejercicio": fila[5] if len(fila) > 5 else "", "usado": False,
+             "desc": fila[6] if len(fila) > 6 else ""}
         idx[_clave_adjudicatario_cm(nif, nombre)].append(e)
         k2 = ("nom", _nombre_comparable_cm(nombre))
         if k2 != _clave_adjudicatario_cm(nif, nombre):
@@ -11813,34 +12040,167 @@ def _retirar_nombre_cortado(fuentes=None):
     return resumen
 
 
-def _retirar_duplicados_place(propios):
-    """Cuando una fuente propia escribe contratos de un municipio, retira (ARCHIVA en contratos_menors_archivo, no
-    borra) las filas del feed de PLACE de ese municipio que son el mismo contrato. Así la regla "manda la fuente
-    propia" se cumple aunque la fuente propia llegue después que el feed (un conector nuevo, un refresco)."""
+def _grupos_feed_place(ruta):
+    """[((municipio, provincia), [registros])] de un fichero mensual del feed, en el orden en que los recorre la carga.
+    Lo usan la carga (_cargar_contratos_menores_place) y el repaso de duplicados (_duplicados_feed_de_propios): el
+    emparejamiento es uno a uno y depende del orden, así que los dos tienen que recorrer el feed exactamente igual."""
+    with _gzip.open(ruta, "rt", encoding="utf-8") as f:
+        registros = json.load(f).get("registros", [])
     grupos = collections.defaultdict(list)
-    for r in propios:
-        grupos[(r["municipio"], r.get("provincia", ""))].append((r.get("nif"), r.get("adjudicatari"),
-                                                                  r.get("import_num"), r.get("data_adjudicacio"),
-                                                                  r.get("fuente"), r.get("exercici")))
-    retirar = []
-    equivalentes = _nombres_equivalentes_cm(solo_place=True)
+    for r in registros:
+        if r.get("import_num") is None:
+            r["import_num"] = 0.0       # 3.626 del feed sin importe: misma convención que el resto de fuentes
+        grupos[(r["municipio"], r["provincia"])].append(r)
+    return list(grupos.items())
+
+
+def _rutas_feed_place():
+    import glob
+    return sorted(glob.glob(os.path.join(BASE_DIR, "contratos_menores_place_*.json.gz")))
+
+
+def _filas_propias_cm(cm, propios_equiv):
+    """Contratos de TODAS las fuentes propias de un municipio (clave canónica), para _indice_propios_cm."""
+    filas = []
     with _db_lock:
-        for (muni, prov), filas in grupos.items():
-            place = []
-            for m2, p2 in equivalentes.get(_clave_municipio_cm(muni, prov), []):
-                place += _db.execute("SELECT id, nif, adjudicatari, import_num, data_adjudicacio FROM contratos_menors_locales "
-                                     "WHERE municipio=? AND provincia=? AND fuente=?", (m2, p2, FUENTE_CM_PLACE)).fetchall()
-            if not place:
-                continue
-            idx = _indice_propios_cm(filas)
-            for pid, nif, adj, imp, fecha in place:
-                if _casa_con_propios({"nif": nif, "adjudicatari": adj, "import_num": imp, "data_adjudicacio": fecha},
-                                     idx):
-                    retirar.append(pid)
+        for m2, p2 in propios_equiv.get(cm, []):
+            filas += _db.execute("SELECT nif, adjudicatari, import_num, data_adjudicacio, fuente, exercici, descripcio "
+                                 "FROM contratos_menors_locales WHERE municipio=? AND provincia=? AND "
+                                 "fuente<>?", (m2, p2, FUENTE_CM_PLACE)).fetchall()
+    return filas
+
+
+def _duplicados_feed_de_propios(cms=None):
+    """{clave canónica: set(id del feed)} de los contratos del feed de PLACE que son el mismo contrato que uno de la
+    fuente propia del municipio. ÚNICO criterio, que usan la carga del feed y el archivado (2026-10-15):
+      - índice con TODAS las fuentes propias del municipio y emparejamiento uno a uno (_casa_con_propios): cada
+        contrato propio tapa como mucho un contrato del feed;
+      - dos pasadas sobre el feed del municipio: primero solo las parejas que además tienen el mismo objeto
+        (_objeto_parecido_cm), de la más parecida a la menos; después el resto, en el orden de los ficheros mensuales,
+        con lo que quede libre. Con una sola pasada, un contrato propio se lo llevaba la primera fila del feed
+        compatible por importe y fecha aunque fuera otro contrato (Torrent: «reparación del control de la climatización» casaba con «renovación del tapizado de
+        butacas», mismo día e importe), y el contrato bueno quedaba como si no estuviera en la fuente propia;
+      - al final, las filas del feed que siguen en la base pero ya no vienen en los ficheros.
+    cms=None: todos los municipios con fuente propia."""
+    propios_equiv = _nombres_equivalentes_cm(solo_place=False)
+    objetivo = set(propios_equiv) if cms is None else set(cms) & set(propios_equiv)
+    if not objetivo:
+        return {}
+    por_cm = collections.defaultdict(list)
+    for ruta in _rutas_feed_place():
+        for (muni, prov), regs in _grupos_feed_place(ruta):
+            cm = _clave_municipio_cm(muni, prov)
+            if cm in objetivo:
+                por_cm[cm].extend({k: r.get(k) for k in ("id", "nif", "adjudicatari", "import_num", "import_con_iva",
+                                                          "data_adjudicacio", "descripcio")} for r in regs)
+    equivalentes = _nombres_equivalentes_cm(solo_place=True)
+    dup = {}
+    for cm in objetivo:
+        filas = _filas_propias_cm(cm, propios_equiv)
+        if not filas:
+            continue
+        idx = _indice_propios_cm(filas)
+        regs = por_cm.pop(cm, [])
+        vistos = {r["id"] for r in regs}
+        with _db_lock:
+            for m2, p2 in equivalentes.get(cm, []):
+                regs += [{"id": fid, "nif": nif, "adjudicatari": adj, "import_num": imp, "data_adjudicacio": fecha,
+                          "descripcio": desc} for fid, nif, adj, imp, fecha, desc in _db.execute(
+                    "SELECT id, nif, adjudicatari, import_num, data_adjudicacio, descripcio FROM contratos_menors_locales "
+                    "WHERE municipio=? AND provincia=? AND fuente=? ORDER BY data_adjudicacio, id",
+                    (m2, p2, FUENTE_CM_PLACE)) if fid not in vistos]
+        # 1.ª pasada: parejas con el mismo objeto, de la más parecida a la menos (cada contrato propio se queda con la
+        # fila del feed que más se le parece, no con la primera que encuentra); empate: la de fecha más cercana.
+        parejas = []
+        for n, r in enumerate(regs):
+            for e in _compatibles_propios(r, idx):
+                if _objeto_parecido_cm(r.get("descripcio"), e.get("desc")):
+                    parejas.append((-_parecido_objeto_cm(r.get("descripcio"), e.get("desc")),
+                                    _dias_entre(e["fecha"] or "", r.get("data_adjudicacio") or ""), n,
+                                    (e["fecha"] or "", e["imp"] or 0.0, e["desc"] or "", e["fuente"] or ""), e, r["id"]))
+        parejas.sort(key=lambda t: t[:4])     # orden fijo (nada de id()): el resultado no puede cambiar entre arranques
+        d = set()
+        for *_, e, fid in parejas:
+            if not e["usado"] and fid not in d:
+                e["usado"] = True
+                d.add(fid)
+        # 2.ª pasada: el resto, con las reglas de siempre y lo que quede libre
+        d |= {r["id"] for r in regs if r["id"] not in d and _casa_con_propios(r, idx)}
+        # gemelas: el mismo contrato publicado dos veces en PLACE con el mismo expediente; si una copia es duplicado
+        # de la fuente propia, la otra también (lista fija, _gemelas_feed_place)
+        if d:
+            en_regs = {r["id"] for r in regs}
+            d |= {i for i, g in _gemelas_feed_place().items() if g in d and i in en_regs}
+        if d:
+            dup[cm] = d
+    return dup
+
+
+# Gemelas del feed (decisión de César, 16-10-2026, tras revisar la «opción B»): PLACE publica a veces el mismo contrato
+# dos veces; si una copia ya se oculta como duplicado de la fuente propia, la otra se queda visible y cuenta doble. Solo
+# se ocultan las que PLACE da con el MISMO expediente (igual, con sufijo «bis» o el mismo número largo con otro
+# prefijo): con expediente distinto pueden ser contratos distintos (p. ej. el mismo servicio en varias pedanías), y
+# «mejor un duplicado visible que un fraccionamiento escondido». Tampoco las que tocan un candidato de
+# fraccionamiento de /admin/revision o un caso publicado. La lista sale de los ZIP oficiales (solo identificadores de
+# PLACE, sin nombres ni NIF): backend/place_menores_gemelas.json.
+PLACE_MENORES_GEMELAS_FILE = os.path.join(BASE_DIR, "place_menores_gemelas.json")
+_GEMELAS_FEED_CACHE = None
+
+
+def _gemelas_feed_place():
+    """{id de la fila que se oculta: id de su gemela}."""
+    global _GEMELAS_FEED_CACHE
+    if _GEMELAS_FEED_CACHE is None:
+        try:
+            with open(PLACE_MENORES_GEMELAS_FILE, encoding="utf-8") as f:
+                _GEMELAS_FEED_CACHE = {i: v["gemela"] for i, v in json.load(f).get("se_ocultan", {}).items()}
+        except (OSError, ValueError):
+            _GEMELAS_FEED_CACHE = {}
+    return _GEMELAS_FEED_CACHE
+
+
+# Duplicados feed/fuente propia archivados en cada arranque (2026-10-15, encargo de César tras los −350 de la portada):
+# sale en /api/diagnostico-arranque. Tras un refresco del feed, en el arranque siguiente debe salir 0 o casi 0.
+_MENORES_DUPLICADOS_ARRANQUE = {}
+
+
+def _archivar_duplicados_de_propios(cms=None):
+    """Archiva las filas del feed VISIBLES que _duplicados_feed_de_propios da como duplicadas. Devuelve cuántas."""
+    dup = _duplicados_feed_de_propios(cms)
+    if not dup:
+        return 0
+    equivalentes = _nombres_equivalentes_cm(solo_place=True)
+    retirar = []
+    with _db_lock:
+        for cm, ids in dup.items():
+            for m2, p2 in equivalentes.get(cm, []):
+                retirar += [fid for (fid,) in _db.execute(
+                    "SELECT id FROM contratos_menors_locales WHERE municipio=? AND provincia=? AND fuente=?",
+                    (m2, p2, FUENTE_CM_PLACE)) if fid in ids]
         _archivar_filas_cm(retirar)
     if retirar:
         print(f"  [menores] {len(retirar)} contratos del feed de PLACE archivados: ya los trae la fuente propia "
-              f"({len(grupos)} municipios revisados).", flush=True)
+              f"({len(dup)} municipios con duplicados).", flush=True)
+    return len(retirar)
+
+
+_FEED_PLACE_REPASADO = False        # True cuando el hilo del feed ha hecho su repaso de duplicados en este arranque
+
+
+def _retirar_duplicados_place(propios):
+    """Cuando una fuente propia escribe contratos de un municipio, retira (ARCHIVA en contratos_menors_archivo, no
+    borra) las filas del feed de PLACE de ese municipio que son el mismo contrato. Así la regla "manda la fuente
+    propia" se cumple aunque la fuente propia llegue después que el feed (un conector nuevo, un refresco).
+
+    2026-10-15: con el MISMO criterio que la carga del feed (_duplicados_feed_de_propios). Antes se emparejaba solo
+    con lo que acababa de escribir la fuente y solo contra las filas del feed visibles: un contrato propio que la carga
+    ya había gastado con otra fila del feed (uno a uno) volvía a quedar libre y se llevaba una segunda fila; la carga
+    siguiente del feed la volvía a meter y el arranque siguiente la volvía a archivar (los −350 de la portada del
+    15-10). Durante el arranque no se hace aquí: lo hace una sola vez el hilo del feed, después de cargarlo
+    (_carga_place_menores), para no leer los ficheros del feed una vez por fuente ni alargar el arranque."""
+    if _FEED_PLACE_REPASADO:
+        cms = {_clave_municipio_cm(r["municipio"], r.get("provincia", "")) for r in propios}
+        _archivar_duplicados_de_propios(cms)
     fuentes_antes = {r.get("fuente") for r in propios} & _FUENTES_FEED_ANTES
     if fuentes_antes:
         _retirar_feed_antes_de_propia(fuentes_antes)
@@ -11899,8 +12259,7 @@ def _cargar_contratos_menores_place():
     tiene sentido revolcarlas en cada arranque). Por municipio: descarta lo que ya trae una fuente propia
     (_casa_con_propios) y guarda el resto por el punto único de escritura. Se ejecuta DESPUÉS de todas las fuentes
     propias de _inicializar_datos."""
-    import glob
-    rutas = sorted(glob.glob(os.path.join(BASE_DIR, "contratos_menores_place_*.json.gz")))
+    rutas = _rutas_feed_place()
     if not _DISCO_CONFIABLE or not rutas:
         return
     if not _place_menores_lock.acquire(blocking=False):
@@ -11917,38 +12276,23 @@ def _cargar_contratos_menores_place():
             return
         total = guardados = duplicados = 0
         munis = set()
-        propios_equiv = _nombres_equivalentes_cm(solo_place=False)
-        idx_por_muni = {}      # un índice por municipio para TODA la carga: el uno a uno vale entre ficheros mensuales
+        # Los que ya trae la fuente propia, con el MISMO cálculo que el archivado (_duplicados_feed_de_propios): así un
+        # contrato archivado como duplicado no vuelve a entrar en la carga siguiente (los −350 del 15-10).
+        dup = set().union(*_duplicados_feed_de_propios().values())
         for ruta in rutas:
-            with _gzip.open(ruta, "rt", encoding="utf-8") as f:
-                registros = json.load(f).get("registros", [])
-            grupos = collections.defaultdict(list)
-            for r in registros:
-                if r.get("import_num") is None:
-                    r["import_num"] = 0.0       # 3.626 del feed sin importe: misma convención que el resto de fuentes
-                grupos[(r["municipio"], r["provincia"])].append(r)
+            grupos = _grupos_feed_place(ruta)
             nuevos = []
-            for (muni, prov), regs in grupos.items():
-                cm = _clave_municipio_cm(muni, prov)
-                if cm not in idx_por_muni:
-                    filas = []
-                    with _db_lock:
-                        for m2, p2 in propios_equiv.get(cm, []):
-                            filas += _db.execute("SELECT nif, adjudicatari, import_num, data_adjudicacio, fuente, exercici "
-                                                 "FROM contratos_menors_locales WHERE municipio=? AND provincia=? AND "
-                                                 "fuente<>?", (m2, p2, FUENTE_CM_PLACE)).fetchall()
-                    idx_por_muni[cm] = _indice_propios_cm(filas) if filas else None
-                idx = idx_por_muni[cm]
+            for (muni, prov), regs in grupos:
                 for r in regs:
-                    if idx and _casa_con_propios(r, idx):
+                    total += 1
+                    if r["id"] in dup:
                         duplicados += 1
                     else:
                         nuevos.append(r)
                 munis.add((muni, prov))
-            total += len(registros)
             guardados += len(nuevos)
             _guardar_contratos_menors_locales(nuevos)
-            del registros, grupos, nuevos
+            del grupos, nuevos
         with _db_lock:
             _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
                         "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (_PLACE_MENORES_CLAVE, huella))
@@ -11958,6 +12302,8 @@ def _cargar_contratos_menores_place():
         print(f"  [startup] contratos_menores_place: {total} contratos del feed de PLACE en {len(munis)} municipios; "
               f"{guardados} guardados, {duplicados} descartados porque ya los trae la fuente propia del municipio.",
               flush=True)
+        _MENORES_DUPLICADOS_ARRANQUE["feed_cargado"] = {"contratos": total, "guardados": guardados,
+                                                        "descartados_por_fuente_propia": duplicados}
     except Exception as e:
         print(f"  [startup] contratos_menores_place: ERROR {type(e).__name__}: {e} (no se marca como cargado; se "
               f"reintenta en el próximo arranque)", flush=True)
@@ -14381,9 +14727,14 @@ def _job_run(job_id, municipio, provincia="murcia"):
         es_age_target = provincia == "murcia" and not es_pseudo_municipio(municipio)
         contratos_umu = []
         contratos_age = []
+        contratos_upct = []
+        contratos_ajenos = []
         if es_age_target:
-            contratos, contratos_umu = _separar_contratos_umu(contratos)
-            contratos, contratos_age = _separar_contratos_age(contratos)
+            # 13-10-2026: una sola función reparte universidades, AGE y órganos de otros sitios (estos se descartan).
+            partes = _separar_organos_no_municipales(municipio, contratos)
+            contratos, contratos_umu, contratos_age, contratos_upct = (partes["propios"], partes["umu"], partes["age"],
+                                                                       partes["upct"])
+            contratos_ajenos = partes["ajenos"]
 
         # Análisis de riesgo
         alertas = analizar_riesgo(contratos)
@@ -14416,6 +14767,10 @@ def _job_run(job_id, municipio, provincia="murcia"):
         if es_age_target:
             _guardar_pseudo_municipio_age(municipio, contratos_age, job_id)
             _guardar_pseudo_municipio_umu(municipio, contratos_umu, job_id)
+            _guardar_pseudo_municipio_upct(municipio, contratos_upct, job_id)
+            if contratos_ajenos:
+                entrega = _entregar_contratos_ajenos(municipio, provincia, contratos_ajenos, job_id)
+                _log(job_id, f"  {len(contratos_ajenos)} contratos de órganos de otros sitios salen de '{municipio}': {entrega}")
         _tf = _fase_tiempo("alertas_y_guardar", _tf)
 
         with _jobs_lock:
@@ -16388,6 +16743,7 @@ def _inicializar_datos():
     _db_init()
     _migrar_claves_homonimos()
     _aplicar_importes_aparte()
+    _reclasificar_organos_murcia()
     _cargar_contratos_menores_murcia_manual()
     _cargar_contratos_menores_euskadi()
     _cargar_contratos_menores_madrid_capital()
@@ -16448,21 +16804,35 @@ def _carga_place_menores():
     en un hilo aparte -- la primera carga (~850.000 filas) tarda varios minutos y gunicorn mata el worker si el
     arranque pasa de --timeout (300 s); lanzado antes, además, frenaba el resto del arranque (GIL). En los arranques
     siguientes la huella no cambia y termina en menos de un segundo."""
+    global _FEED_PLACE_REPASADO
+    diag = _MENORES_DUPLICADOS_ARRANQUE
+    diag["inicio"] = datetime.now().isoformat(timespec="seconds")
     _cargar_contratos_menores_place()
+    if _DISCO_CONFIABLE:
+        try:                                 # repaso único de duplicados con las fuentes propias (mismo criterio que la carga)
+            diag["archivados_duplicados_fuente_propia"] = _archivar_duplicados_de_propios()
+        except Exception as e:
+            diag["archivados_duplicados_fuente_propia"] = f"ERROR {type(e).__name__}"
+            print(f"[menores] duplicados con la fuente propia: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
+    _FEED_PLACE_REPASADO = True              # desde aquí, cada escritura de una fuente propia repasa su municipio
     try:
-        _archivar_duplicados_feed_place()    # idempotente; ver PLACE_MENORES_DUPLICADOS_FILE
+        diag["archivados_repetidos_del_feed"] = _archivar_duplicados_feed_place()   # ver PLACE_MENORES_DUPLICADOS_FILE
     except Exception as e:
         print(f"[menores] repetidos del feed: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
     _recasar_governalia_ventana_larga()      # una sola vez (marca en settings); ver _GOVERNALIA_DIAS_EXTRA
     if _DISCO_CONFIABLE:
         try:
-            _retirar_feed_antes_de_propia()  # idempotente; ver _FUENTES_FEED_ANTES
+            r = _retirar_feed_antes_de_propia()  # idempotente; ver _FUENTES_FEED_ANTES
+            diag["archivados_feed_antes_de_propia"] = sum(v.get("archivados", 0) for v in r.values() if isinstance(v, dict))
         except Exception as e:
             print(f"[menores] feed antes que la fuente propia: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
         try:
-            _retirar_nombre_cortado()        # idempotente; ver _FUENTES_NOMBRE_CORTADO
+            r = _retirar_nombre_cortado()        # idempotente; ver _FUENTES_NOMBRE_CORTADO
+            diag["archivados_nombre_cortado"] = sum(v.get("archivados", 0) for v in r.values() if isinstance(v, dict))
         except Exception as e:
             print(f"[menores] nombre cortado en el feed: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
+    diag["fin"] = datetime.now().isoformat(timespec="seconds")
+    print(f"  [menores] duplicados archivados en este arranque: {diag}", flush=True)
     _nombre_pf_conocido("", "")              # construye ya el índice de nombres de personas físicas (ver ahí)
     try:                                     # fase 2: fichas de entidades locales (ver ENTIDADES_LOCALES_DIR)
         _aplicar_entidades_locales()
@@ -23573,6 +23943,7 @@ def _estado_carga():
         "refresco_fases": _refresco_fases_leer()[-12:],
         "cache_zips_place": _zip_cache_diagnostico(),
         "feed_vivo_place": {k: v for k, v in _feed_vivo.items() if k != "contenido"},
+        "menores_duplicados_arranque": dict(_MENORES_DUPLICADOS_ARRANQUE),
         "rastreadores_frenados": _bots_diagnostico(),
     }
 
