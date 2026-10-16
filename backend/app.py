@@ -27233,19 +27233,29 @@ def _route_get(path, qs, gzip_ok=False):
         # /rankings con parámetros (provincia, comunidad...) ya no va en el sitemap: robots.txt lo bloquea desde el
         # 2026-10-03 (ver /robots.txt); solo /rankings a secas, arriba.
         for m, prov in entradas:
-            urls.append(f"  <url><loc>{esc(SITE_URL)}/?muni={quote_plus(m)}{_q_prov(prov)}</loc><changefreq>daily</changefreq></url>")
+            # 2026-10-16: con esc(): el "&provincia=" sin escapar dejaba el sitemap entero como XML no válido
+            urls.append(f"  <url><loc>{esc(SITE_URL)}/{esc('?muni=' + quote_plus(m) + _q_prov(prov))}</loc><changefreq>daily</changefreq></url>")
         # Idiomas publicados (I18N_PUBLICADOS): la misma URL con su prefijo, salvo las páginas editoriales, que no
         # tienen versión traducida (ver _I18N_RUTAS_EDITORIALES).
+        # 2026-10-16 (repaso para la Cámara): cada URL traducible lleva sus alternativas de idioma (xhtml:link
+        # hreflang es/gl/ca/eu + x-default), las mismas que el <link rel="alternate"> de la página
+        # (_i18n_hreflang_html). Medido: ~38.400 URL y ~26 MB, dentro del límite de 50.000 URL y 50 MB por fichero.
         base_loc = f"<loc>{esc(SITE_URL)}/"
+        publicados = _i18n_publicados()
         por_idioma = []
-        for lang in _i18n_publicados():
-            for u in urls:
-                ruta = "/" + u.split(base_loc, 1)[1].split("</loc>", 1)[0]
-                if not _i18n_ruta_editorial(ruta.split("?", 1)[0]):
-                    por_idioma.append(u.replace(base_loc, f"<loc>{esc(SITE_URL)}/{lang}/", 1))
+        for i, u in enumerate(urls):
+            resto = u.split(base_loc, 1)[1].split("</loc>", 1)[0]
+            if not publicados or _i18n_ruta_editorial(("/" + resto).split("?", 1)[0]):
+                continue
+            alternos = [("es", "")] + [(lang, f"{lang}/") for lang in publicados] + [("x-default", "")]
+            enlaces = "".join(f'<xhtml:link rel="alternate" hreflang="{lang}" href="{esc(SITE_URL)}/{pref}{resto}"/>'
+                              for lang, pref in alternos)
+            urls[i] = u.replace("</url>", enlaces + "</url>")
+            por_idioma += [urls[i].replace(base_loc, f"<loc>{esc(SITE_URL)}/{lang}/", 1) for lang in publicados]
         urls += por_idioma
         body = ('<?xml version="1.0" encoding="UTF-8"?>\n'
-                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+                'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
                 + "\n".join(urls) + "\n</urlset>\n")
         return _resp(body, content_type="application/xml; charset=utf-8", gzip_ok=gzip_ok)
 
