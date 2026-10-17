@@ -3126,6 +3126,150 @@ msgstr "Aquest enllaç no és vàlid o ha caducat."
 msgid "La clasificación por sector es automática (códigos de actividad CNAE que publica la BDNS y palabras del título) y puede fallar: puede incluir convocatorias que no son de este sector y dejar fuera alguna que sí lo es. Las ayudas generales para empresas aparecen en todos los sectores. Comprueba siempre en las bases quién puede pedirla."
 msgstr "La classificació per sector és automàtica (codis d'activitat CNAE que publica la BDNS i paraules del títol) i pot fallar: pot incloure convocatòries que no són d'aquest sector i deixar-ne fora alguna que sí que ho és. Els ajuts generals per a empreses apareixen en tots els sectors. Comprova sempre a les bases qui la pot demanar."
 
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Adjudicataria"
+msgstr "Adjudicatària"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Beneficiario sin nombre: posible persona física o sin forma jurídica en el nombre"
+msgstr "Beneficiari sense nom: possible persona física o sense forma jurídica al nom"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Calculado el {f}."
+msgstr "Calculat el {f}."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Contrato"
+msgstr "Contracte"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Contratos del Plan"
+msgstr "Contractes del Pla"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Contratos formales de la Plataforma de Contratación del Sector Público (PLACE) en {donde} en los que el órgano de contratación declara financiación europea: {n} contratos por {importe}. De ellos, {n_prtr} del Plan de Recuperación por {importe_prtr}."
+msgstr "Contractes formals de la Plataforma de Contractació del Sector Públic (PLACE) a {donde} en què l'òrgan de contractació declara finançament europeu: {n} contractes per {importe}. D'aquests, {n_prtr} del Pla de Recuperació per {importe_prtr}."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "De los fondos estructurales está el periodo 2014-2020 (FEDER y FSE), y de los de investigación, Horizon Europe (desde 2021)."
+msgstr "Dels fons estructurals hi ha el període 2014-2020 (FEDER i FSE), i dels de recerca, Horizon Europe (des del 2021)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "De los fondos estructurales están los periodos 2014-2020 (FEDER y FSE) y 2021-2027 (FEDER, FSE+ y Fondo de Transición Justa, lo que ya publica Kohesio), y de los de investigación, Horizon Europe (desde 2021)."
+msgstr "Dels fons estructurals hi ha els períodes 2014-2020 (FEDER i FSE) i 2021-2027 (FEDER, FSE+ i Fons de Transició Justa, el que ja publica Kohesio), i dels de recerca, Horizon Europe (des del 2021)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Del Plan de Recuperación (Next Generation EU) está la lista oficial de sus 100 mayores perceptores finales (abril de 2024)."
+msgstr "Del Pla de Recuperació (Next Generation EU) hi ha la llista oficial dels seus 100 perceptors finals més grans (abril del 2024)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Del Plan de Recuperación (Next Generation EU) están los contratos que el órgano de contratación marca en la Plataforma de Contratación del Sector Público como financiados por el Plan y la lista oficial de sus 100 mayores perceptores finales (abril de 2024)."
+msgstr "Del Pla de Recuperació (Next Generation EU) hi ha els contractes que l'òrgan de contractació marca a la Plataforma de Contractació del Sector Públic com a finançats pel Pla i la llista oficial dels seus 100 perceptors finals més grans (abril del 2024)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Del Plan de Recuperación (Next Generation EU) están los contratos que el órgano de contratación marca en la Plataforma de Contratación del Sector Público como financiados por el Plan."
+msgstr "Del Pla de Recuperació (Next Generation EU) hi ha els contractes que l'òrgan de contractació marca a la Plataforma de Contractació del Sector Públic com a finançats pel Pla."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En Kohesio (2021-2027), el coste total de la operación."
+msgstr "A Kohesio (2021-2027), el cost total de l'operació."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En cada ficha de municipio esos contratos llevan la insignia del fondo."
+msgstr "A cada fitxa de municipi aquests contractes porten la insígnia del fons."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En incorporación: FEDER y FSE+ 2021-2027, previsto para finales de octubre de 2026."
+msgstr "En incorporació: FEDER i FSE+ 2021-2027, previst per a finals d'octubre del 2026."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En incorporación: Plan de Recuperación (Next Generation EU), previsto para finales de octubre de 2026."
+msgstr "En incorporació: Pla de Recuperació (Next Generation EU), previst per a finals d'octubre del 2026."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En incorporación: ayudas agrarias (PAC), prevista para noviembre de 2026."
+msgstr "En incorporació: ajuts agraris (PAC), prevista per al novembre del 2026."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En la mayoría de las operaciones de los fondos estructurales 2014-2020 la fuente no publica el beneficiario."
+msgstr "En la majoria de les operacions dels fons estructurals 2014-2020 la font no publica el beneficiari."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En las de 2021-2027 no hay NIF, y el nombre del beneficiario solo se muestra cuando es claramente una entidad."
+msgstr "En les del 2021-2027 no hi ha NIF, i el nom del beneficiari només es mostra quan és clarament una entitat."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Financiación europea declarada en PLACE por el órgano de contratación"
+msgstr "Finançament europeu declarat a PLACE per l'òrgan de contractació"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Fondo"
+msgstr "Fons"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Fondos estructurales 2021-2027 (Kohesio)"
+msgstr "Fons estructurals 2021-2027 (Kohesio)"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Fuente"
+msgstr "Font"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Kohesio (2021-2027)"
+msgstr "Kohesio (2021-2027)"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Lista que publica el Gobierno de España por obligación del Reglamento (UE) 2021/241; la última disponible es de abril de 2024. Muchos perceptores son organismos públicos que después reparten o contratan los fondos (ADIF, ministerios, ayuntamientos)."
+msgstr "Llista que publica el Govern d'Espanya per obligació del Reglament (UE) 2021/241; l'última disponible és d'abril del 2024. Molts perceptors són organismes públics que després reparteixen o contracten els fons (ADIF, ministeris, ajuntaments)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Los 10 mayores contratos del Plan de Recuperación"
+msgstr "Els 10 contractes més grans del Pla de Recuperació"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Los 100 mayores perceptores finales del Plan de Recuperación (lista oficial a 30-04-2024)"
+msgstr "Els 100 perceptors finals més grans del Pla de Recuperació (llista oficial a 30-04-2024)"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Más sobre fondos UE"
+msgstr "Més sobre fons UE"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la pesca ni los fondos de interior."
+msgstr "No hi ha les subvencions del Pla de Recuperació, els programes europeus de gestió directa diferents d'Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desenvolupament rural, la pesca ni els fons d'interior."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Otros fondos europeos"
+msgstr "Altres fons europeus"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Perceptor / Componentes del Plan"
+msgstr "Perceptor / Components del Pla"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Plan de Recuperación"
+msgstr "Pla de Recuperació"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Plan de Recuperación y contratos con fondos europeos"
+msgstr "Pla de Recuperació i contractes amb fons europeus"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Solo PLACE trae esta marca: los contratos de las plataformas autonómicas (Cataluña, Euskadi, Navarra), del BORM y los contratos menores no la tienen, así que la cobertura es desigual entre comunidades. La pone el órgano de contratación y puede faltar. Importe adjudicado sin IVA o, si no consta, el presupuesto de licitación; los acuerdos marco de centrales de contratación no se suman."
+msgstr "Només PLACE porta aquesta marca: els contractes de les plataformes autonòmiques (Catalunya, Euskadi, Navarra), del BORM i els contractes menors no la tenen, de manera que la cobertura és desigual entre comunitats. La posa l'òrgan de contractació i pot faltar. Import adjudicat sense IVA o, si no consta, el pressupost de licitació; els acords marc de centrals de contractació no se sumen."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Ver la lista"
+msgstr "Veure la llista"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "{nombre} está entre los 100 mayores perceptores finales del Plan de Recuperación: {importe} (lista oficial a 30-04-2024)."
+msgstr "{nombre} és entre els 100 perceptors finals més grans del Pla de Recuperació: {importe} (llista oficial a 30-04-2024)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "{n} contratos de PLACE de este municipio declaran financiación europea ({importe}); {n_prtr} son del Plan de Recuperación. Llevan la insignia del fondo en la lista."
+msgstr "{n} contractes de PLACE d'aquest municipi declaren finançament europeu ({importe}); {n_prtr} són del Pla de Recuperació. Porten la insígnia del fons a la llista."
+
 #~ msgid "Próximamente se incorporarán también datos de subvenciones."
 #~ msgstr "Properament s'hi incorporaran també dades de subvencions."
 

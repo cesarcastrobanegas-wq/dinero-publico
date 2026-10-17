@@ -10,7 +10,10 @@ name: Fondos UE de toda España (semanal)
 #    que ya tenía de Murcia y Girona. El fichero no se guarda en el repositorio ni como artefacto; los registros solo
 #    muestran recuentos.
 #  - La subida está protegida: si llega más de un 20 % por debajo de lo que hay, la web responde 409 y no cambia nada.
-#  - Tarda unos 5 minutos. Miércoles por la tarde: fuera del refresco nocturno (06:35-13:00 UTC reales) y de los flujos
+#  - 2026-10-17: también FEDER, FSE+ y Transición Justa 2021-2027 de Kohesio (28.000 operaciones; el nombre del
+#    beneficiario solo si es claramente una entidad, nunca NIF) y los 100 mayores perceptores del Plan de Recuperación
+#    (lista oficial del Gobierno, todos personas jurídicas). Kohesio alarga el flujo hasta una hora.
+#  - Antes tardaba unos 5 minutos. Miércoles por la tarde: fuera del refresco nocturno (06:35-13:00 UTC reales) y de los flujos
 #    de menores (jueves y domingo), que al guardar en main reinician la web.
 
 on:
@@ -28,7 +31,7 @@ concurrency:
 jobs:
   fondos-ue:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -37,9 +40,9 @@ jobs:
           python-version: "3.11"
 
       - name: Dependencias
-        run: pip install requests
+        run: pip install requests openpyxl
 
-      - name: Generar (Cohesion Data + CORDIS)
+      - name: Generar (Cohesion Data + CORDIS + Kohesio 2021-2027 + 100 perceptores del Plan)
         run: python backend/fondos_ue_espana.py generar --salida fondos_ue.ndjson.gz --nombres
 
       - name: Subir a Render
