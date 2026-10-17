@@ -3235,8 +3235,8 @@ msgid "Más sobre fondos UE"
 msgstr "Máis sobre fondos UE"
 
 #: app.py (fondos europeos, 17-10-2026)
-msgid "No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la pesca ni los fondos de interior."
-msgstr "Non están as subvencións do Plan de Recuperación, os programas europeos de xestión directa distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), o desenvolvemento rural, a pesca nin os fondos de interior."
+msgid "No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la pesca, los fondos de interior ni la cooperación entre regiones (Interreg) completa."
+msgstr "Non están as subvencións do Plan de Recuperación, os programas europeos de xestión directa distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), o desenvolvemento rural, a pesca, os fondos de interior nin a cooperación entre rexións (Interreg) completa."
 
 #: app.py (fondos europeos, 17-10-2026)
 msgid "Otros fondos europeos"

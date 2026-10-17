@@ -3235,8 +3235,8 @@ msgid "Más sobre fondos UE"
 msgstr "UEko funtsei buruz gehiago"
 
 #: app.py (fondos europeos, 17-10-2026)
-msgid "No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la pesca ni los fondos de interior."
-msgstr "Ez daude Suspertze Planaren diru-laguntzak, Horizon Europe ez beste zuzeneko kudeaketako Europako programak (Erasmus+, LIFE, Europa Sortzailea...), landa-garapena, arrantza eta barne-arloko funtsak."
+msgid "No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la pesca, los fondos de interior ni la cooperación entre regiones (Interreg) completa."
+msgstr "Ez daude Suspertze Planaren diru-laguntzak, Horizon Europe ez beste zuzeneko kudeaketako Europako programak (Erasmus+, LIFE, Europa Sortzailea...), landa-garapena, arrantza, barne-arloko funtsak eta eskualdeen arteko lankidetza (Interreg) osoa."
 
 #: app.py (fondos europeos, 17-10-2026)
 msgid "Otros fondos europeos"

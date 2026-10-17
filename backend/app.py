@@ -22098,7 +22098,7 @@ def render_fondos_ue_html(qs):
         trozos.append(_t("En incorporación: ayudas agrarias (PAC), prevista para noviembre de 2026."))
         trozos.append(_t("No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa "
                          "distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la "
-                         "pesca ni los fondos de interior."))
+                         "pesca, los fondos de interior ni la cooperación entre regiones (Interreg) completa."))
         trozos.append(_t("En la mayoría de las operaciones de los fondos estructurales 2014-2020 la fuente no publica el "
                          "beneficiario."))
         if hay_koh:
