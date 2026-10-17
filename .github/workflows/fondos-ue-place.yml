@@ -60,3 +60,14 @@ jobs:
           if git diff --cached --quiet; then echo "Sin cambios."; exit 0; fi
           git commit -m "Fondos europeos de los contratos de PLACE (${{ inputs.hasta }}-${{ inputs.desde }}) [skip render]"
           git push origin "HEAD:${{ inputs.rama }}"
+
+      # Por si la configuración del repositorio no deja escribir al flujo: el mismo fichero (sin datos personales) como
+      # artefacto de 7 días, para bajarlo y subirlo a mano.
+      - name: Fichero como artefacto (respaldo)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fondos-ue-place
+          path: backend/fondos_ue_place.json.gz
+          if-no-files-found: warn
+          retention-days: 7
