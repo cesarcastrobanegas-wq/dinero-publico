@@ -1339,8 +1339,8 @@ msgid "Cohesion Data (FEDER/FSE)"
 msgstr "Cohesion Data (FEDER/FSE)"
 
 #: app.py:21648
-msgid "De los fondos estructurales solo está el periodo 2014-2020 (FEDER y FSE), y de los de investigación, solo Horizon Europe (desde 2021). No están los programas FEDER y FSE+ de 2021-2027, el Plan de Recuperación (Next Generation EU) ni las ayudas agrarias (PAC). En la mayoría de las operaciones de los fondos estructurales la fuente no publica el beneficiario."
-msgstr "Dos fondos estruturais só está o período 2014-2020 (FEDER e FSE), e dos de investigación, só Horizon Europe (desde 2021). Non están os programas FEDER e FSE+ de 2021-2027, o Plan de Recuperación (Next Generation EU) nin as axudas agrarias (PAC). Na maioría das operacións dos fondos estruturais a fonte non publica o beneficiario."
+msgid "De los fondos estructurales está el periodo 2014-2020 (FEDER y FSE), y de los de investigación, Horizon Europe (desde 2021). En incorporación: FEDER y FSE+ 2021-2027 y Plan de Recuperación (Next Generation EU), previstos para finales de octubre de 2026, y ayudas agrarias (PAC), prevista para noviembre de 2026. En la mayoría de las operaciones de los fondos estructurales 2014-2020 la fuente no publica el beneficiario."
+msgstr "Dos fondos estruturais está o período 2014-2020 (FEDER e FSE), e dos de investigación, Horizon Europe (desde 2021). En incorporación: FEDER e FSE+ 2021-2027 e Plan de Recuperación (Next Generation EU), previstos para finais de outubro de 2026, e axudas agrarias (PAC), prevista para novembro de 2026. Na maioría das operacións dos fondos estruturais 2014-2020 a fonte non publica o beneficiario."
 
 #: app.py:21654
 msgid "Hay operaciones de todas las provincias, pero no de todos los fondos europeos."

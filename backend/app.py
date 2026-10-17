@@ -21715,10 +21715,12 @@ def render_fondos_ue_html(qs):
     provs_datos = _db_fondos_ue_provincias()
     nombres_cob = [PROVINCIA_LABEL.get(p, p).replace("Provincia de ", "provincia de ") for p in provs_datos]
     toda_espana = len(provs_datos) == len(MUNICIPIOS_POR_PROVINCIA)
-    limites_txt = _t("De los fondos estructurales solo está el periodo 2014-2020 (FEDER y FSE), y de los de "
-                     "investigación, solo Horizon Europe (desde 2021). No están los programas FEDER y FSE+ de "
-                     "2021-2027, el Plan de Recuperación (Next Generation EU) ni las ayudas agrarias (PAC). En la "
-                     "mayoría de las operaciones de los fondos estructurales la fuente no publica el beneficiario.")
+    # 2026-10-18 (encargo de César): "en incorporación" con fecha prevista, en vez de "no están".
+    limites_txt = _t("De los fondos estructurales está el periodo 2014-2020 (FEDER y FSE), y de los de investigación, "
+                     "Horizon Europe (desde 2021). En incorporación: FEDER y FSE+ 2021-2027 y Plan de Recuperación "
+                     "(Next Generation EU), previstos para finales de octubre de 2026, y ayudas agrarias (PAC), "
+                     "prevista para noviembre de 2026. En la mayoría de las operaciones de los fondos estructurales "
+                     "2014-2020 la fuente no publica el beneficiario.")
     if toda_espana:
         cobertura_txt = " ".join((
             _t("Hay operaciones de todas las provincias, pero no de todos los fondos europeos."), limites_txt,
