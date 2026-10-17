@@ -10380,9 +10380,10 @@ _BACKFILL_MURCIA_CLAVE = "backfill_formales_murcia_sha::"     # + "<provincia>__
 
 
 def _subir_backfill_murcia(token, provincia, lote, crudo):
-    """POST /admin/backfill-murcia?token=...&provincia=...&lote=N. Devuelve (código, cuerpo) solo con recuentos."""
+    """POST /admin/backfill-murcia?provincia=...&lote=N con el token en la cabecera X-Admin-Token (nunca en la URL, para
+    que no quede en los registros). Devuelve (código, cuerpo) solo con recuentos."""
     admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or token != admin_token:
+    if not admin_token or not token or not hmac.compare_digest(token, admin_token):
         return 403, {"error": "No autorizado."}
     if provincia not in MUNICIPIOS_POR_PROVINCIA:
         return 400, {"error": "Provincia no válida."}
@@ -28601,9 +28602,10 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
+        # el token solo en la cabecera X-Admin-Token: un ?token= en la URL se ignora (y da 403)
+        token = environ.get("HTTP_X_ADMIN_TOKEN", "")
         admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        if not admin_token or not token or not hmac.compare_digest(token, admin_token):
             code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
         elif length > 20 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
