@@ -2171,6 +2171,21 @@ CACHE_DB_COPIA = os.path.join(DATA_DIR, ".cache_db_export_copia.db")
 CACHE_DB_COPIA_VIGENCIA_S = 2 * 3600
 _cache_db_copia_lock = threading.Lock()
 _RANGO_PETICION = contextvars.ContextVar("rango_peticion", default="")   # cabecera Range de la petición en curso
+_TOKEN_CABECERA = contextvars.ContextVar("token_cabecera", default="")   # cabecera X-Admin-Token de la petición en curso
+
+
+def _token_admin_valido(token):
+    """True solo si `token` es el ADMIN_TOKEN (comparación en tiempo constante). Sin ADMIN_TOKEN configurado, nunca."""
+    admin = os.environ.get("ADMIN_TOKEN", "")
+    return bool(admin and token) and hmac.compare_digest(token.encode("utf-8"), admin.encode("utf-8"))
+
+
+def _token_admin_peticion(params=None):
+    """Token de administración de la petición en curso: la cabecera X-Admin-Token o, en un POST de formulario, el campo
+    `token` del CUERPO (params). Nunca de la URL (17-10): un ?token= queda en los registros de Render y de Cloudflare,
+    así que se ignora y la petición recibe 403."""
+    token = _TOKEN_CABECERA.get() or (params.get("token", [""])[0] if params is not None else "")
+    return _token_admin_valido(token)
 DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo para migración inicial
 
 # Primer arranque con disco nuevo/vacío (DATA_DIR distinto de BASE_DIR y sin
@@ -3399,8 +3414,7 @@ def _subir_administradores_borme(token, crudo, forzar=False):
     gzip o no). Lo valida, lo guarda en el disco persistente (escritura atómica) y lo recarga en memoria sin reiniciar.
     Devuelve (código, cuerpo JSON). Nunca devuelve ni registra nombres: solo recuentos."""
     global ADMINISTRADORES_BORME
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or token != admin_token:
+    if not _token_admin_valido(token):
         return 403, {"error": "No autorizado."}
     try:
         if crudo[:2] == bytes([0x1F, 0x8B]):          # gzip
@@ -10337,8 +10351,7 @@ def _subir_asignacion_formales(token, provincia, crudo):
     generar_asignacion_place.py ({"municipios": {municipio: [contratos]}}, en gzip). Lo valida, lo guarda en el disco
     persistente (escritura atómica) y lo aplica en el momento con la misma fusión aditiva del arranque. Devuelve
     (código, cuerpo JSON) solo con recuentos: nunca nombres ni NIF."""
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or token != admin_token:
+    if not _token_admin_valido(token):
         return 403, {"error": "No autorizado."}
     if provincia not in MUNICIPIOS_POR_PROVINCIA:
         return 400, {"error": "Provincia no válida."}
@@ -10382,8 +10395,7 @@ _BACKFILL_MURCIA_CLAVE = "backfill_formales_murcia_sha::"     # + "<provincia>__
 def _subir_backfill_murcia(token, provincia, lote, crudo):
     """POST /admin/backfill-murcia?provincia=...&lote=N con el token en la cabecera X-Admin-Token (nunca en la URL, para
     que no quede en los registros). Devuelve (código, cuerpo) solo con recuentos."""
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or not token or not hmac.compare_digest(token, admin_token):
+    if not _token_admin_valido(token):
         return 403, {"error": "No autorizado."}
     if provincia not in MUNICIPIOS_POR_PROVINCIA:
         return 400, {"error": "Provincia no válida."}
@@ -10583,8 +10595,7 @@ def _aplicar_entidades_locales():
 def _subir_entidades_locales(token, provincia, crudo):
     """POST /admin/entidades-locales?token=...&provincia=... con ent/<provincia>.json.gz del generador. Lo valida, lo
     guarda en el disco persistente y lo aplica. Responde solo recuentos."""
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or token != admin_token:
+    if not _token_admin_valido(token):
         return 403, {"error": "No autorizado."}
     if provincia not in MUNICIPIOS_POR_PROVINCIA and provincia != "sin_provincia":
         return 400, {"error": "Provincia no válida."}
@@ -15830,7 +15841,8 @@ def _revision_cola_html(qs, cookie):
         comentarios_pendientes = _db.execute("SELECT count(*) FROM comentarios WHERE estado='pendiente'").fetchone()[0]
     cuerpo = (f'<h1>Revisión interna: indicadores para revisar</h1>'
               f'<p class="sub"><a href="/admin/revision/comentarios"><b>Comentarios pendientes de aprobar: '
-              f'{comentarios_pendientes}</b></a> · <a href="/admin/revision/alertas">Alertas por correo</a></p>'
+              f'{comentarios_pendientes}</b></a> · <a href="/admin/revision/alertas">Alertas por correo</a> · '
+              f'<a href="/admin/revision/visitas">Visitas</a></p>'
               f'<p class="sub">Uso interno. Un indicador NO es una irregularidad: solo señala dónde mirar. Nada de esta '
               f'lista se publica; antes de publicar un caso hay que comprobarlo en la fuente oficial y pedir la versión '
               f'del ayuntamiento. Desde el RDL 3/2020, sumar menores al mismo contratista no es ilegal por sí mismo: lo '
@@ -16007,6 +16019,8 @@ def _revision_wsgi(method, path, qs, environ):
         return _comentarios_moderacion_html(cookie, qs.get("hecho", [""])[0])
     if path == "/admin/revision/alertas":
         return _alertas_panel_html(cookie, qs.get("hecho", [""])[0])
+    if path == "/admin/revision/visitas":
+        return _visitas_pagina(qs, autorizado=True)
     if path == "/admin/revision/ficha":
         md = _revision_ficha_md(qs.get("huella", [""])[0])
         if md is None:
@@ -27415,8 +27429,7 @@ def _route_get(path, qs, gzip_ok=False):
         #    nueva si la guardada tiene más de CACHE_DB_COPIA_VIGENCIA_S, y una petición CON Range nunca la rehace (si
         #    no hay copia, 416). La huella (sha256) de cada copia se publica en ?info=1 para comprobar al final que el
         #    fichero descargado es exactamente esa copia (una reanudación sobre otra copia no pasaría la comprobación).
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or qs.get("token", [""])[0] != admin_token:
+        if not _token_admin_peticion():
             return _error_resp("No autorizado.", 403)
         with _cache_db_copia_lock:
             # restos de la versión anterior (temporales con nombre aleatorio) que no se llegaron a borrar
@@ -27555,8 +27568,7 @@ def _route_post(path, params):
             # Alertas por correo (2026-10-13). enviar: una tanda de la pasada de envío (flujo alertas-envio.yml);
             # devuelve solo recuentos. db: el fichero alertas.db tal cual, para la copia cifrada
             # (copia-alertas-cifrada.yml lo cifra antes de guardarlo en ningún sitio).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             if path == "/admin/alertas-db":
                 return _resp(_alertas_almacen().copia(), content_type="application/octet-stream",
@@ -27621,8 +27633,7 @@ def _route_post(path, params):
         if path == "/admin/reprocesar-place":
             # Reprocesado puntual de meses de PLACE (ver _reprocesar_meses_place). Un solo reprocesado a la vez; el
             # progreso se ve en /api/diagnostico-arranque ("place").
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             meses = [m for m in params.get("meses", [""])[0].split(",") if re.fullmatch(r"20\d{4}", m)]
             if not meses:
@@ -27640,8 +27651,7 @@ def _route_post(path, params):
             # Revisión diaria de privacidad (2026-10-13, flujo privacidad-diaria.yml + revision_privacidad.py): el
             # flujo manda aquí lo que ha encontrado y la web escribe a César. Solo viaja y solo se reenvía el tipo de
             # hallazgo, la dirección de la página y cuántos hay: nunca el dato personal encontrado.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             try:
                 recibidos = json.loads(params.get("hallazgos", ["[]"])[0])
@@ -27678,8 +27688,7 @@ def _route_post(path, params):
             # Diagnóstico del aviso por correo de comentarios (2026-10-09): dice si las variables están cargadas en
             # ESTE proceso (sin enseñar la clave ni la dirección entera) y hace un envío de prueba esperando la
             # respuesta de Resend, que devuelve tal cual. No guarda ningún comentario.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             estado = _aviso_comentarios_config()
             api_key = os.environ.get("RESEND_API_KEY", "").strip()
@@ -27713,8 +27722,7 @@ def _route_post(path, params):
 
         if path == "/admin/comentario-borrar":
             # Borrado de comentarios (2026-10-09): no había ninguna forma de quitar uno. Por ficha y texto exacto.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             tipo = params.get("tipo", ["municipio"])[0]
             clave_raw = params.get("clave", [""])[0].strip()
@@ -27734,8 +27742,7 @@ def _route_post(path, params):
             # poder liberar espacio YA en producción sin esperar al próximo
             # mes (ver informe de viabilidad + purga 2026-08-06). Mismo
             # patrón ADMIN_TOKEN que /vaciar y /actualizar-todos.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             borrados = _purgar_place_cache_antiguos()
             try:
@@ -27758,8 +27765,7 @@ def _route_post(path, params):
             # lo dispare directamente contra el sitio en producción. Con
             # provincia=girona|murcia borra solo esa provincia; sin el parámetro,
             # borra todo (comportamiento de siempre).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             provincia_param = params.get("provincia", [""])[0]
             provincia_filtro = provincia_param if provincia_param in MUNICIPIOS_POR_PROVINCIA else None
@@ -27799,8 +27805,7 @@ def _route_post(path, params):
             # clave reconocida, se rechaza con 400 en vez de asumir "murcia"
             # en silencio (ese fallback silencioso lanzó refrescos contra
             # Murcia por error durante horas — ver incidente 2026-09-14).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             provincia_raw = params.get("provincia", [""])[0]
             if provincia_raw not in ("todas", *PROVINCIA_AGREGADOS, *MUNICIPIOS_POR_PROVINCIA):
@@ -27823,8 +27828,7 @@ def _route_post(path, params):
             # Refresca la tabla fondos_ue (CORDIS + Cohesion Data). Mismo
             # patrón de disparo externo + ADMIN_TOKEN que /actualizar-todos;
             # el cron diario llama a los dos endpoints uno detrás de otro.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_fondos_ue_bg, args=(job_id,), daemon=True).start()
@@ -27835,8 +27839,7 @@ def _route_post(path, params):
             # Refresca la tabla noticias_ue (RSS Press Corner de la Comisión
             # Europea). Mismo patrón de disparo externo + ADMIN_TOKEN que
             # /actualizar-fondos-ue; el cron diario lo llama justo después.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_noticias_ue_bg, args=(job_id,), daemon=True).start()
@@ -27848,8 +27851,7 @@ def _route_post(path, params):
             # dataset hb6v-jcbf). Mismo patrón de disparo externo + ADMIN_TOKEN
             # que /actualizar-fondos-ue; el cron diario lo llama al final,
             # igual que noticias UE.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_girona_bg, args=(job_id,), daemon=True).start()
@@ -27863,8 +27865,7 @@ def _route_post(path, params):
             # de contratos que faltaban -- 1.107 contractes 'Menor' reales
             # verificados solo para Lleida capital, cero en la app antes de
             # esto): ver actualizar-diario.yml, franja de Lleida.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_lleida_bg, args=(job_id,), daemon=True).start()
@@ -27875,8 +27876,7 @@ def _route_post(path, params):
             # Gemelo del de Girona/Lleida -- ver
             # _actualizar_contratos_menors_barcelona_bg para el porqué
             # (2026-08-15, investigación de contratos que faltaban).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_barcelona_bg, args=(job_id,), daemon=True).start()
@@ -27887,8 +27887,7 @@ def _route_post(path, params):
             # Gemelo del de Girona/Lleida/Barcelona -- ver
             # _actualizar_contratos_menors_tarragona_bg para el porqué
             # (2026-08-15, investigación de contratos que faltaban).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_tarragona_bg, args=(job_id,), daemon=True).start()
@@ -27900,8 +27899,7 @@ def _route_post(path, params):
             # Murcia, portal propio vía CSV -- ver buscar_en_fuentealamo_menores).
             # Mismo patrón de disparo externo + ADMIN_TOKEN que las demás
             # fuentes de contratos menores; el cron diario lo llama al final.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menores_fuentealamo_bg, args=(job_id,), daemon=True).start()
@@ -27913,8 +27911,7 @@ def _route_post(path, params):
             # propio vía HTML -- ver buscar_en_cartagena_menores). Mismo patrón
             # de disparo externo + ADMIN_TOKEN que las demás fuentes de
             # contratos menores; el cron diario lo llama al final.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menores_cartagena_bg, args=(job_id,), daemon=True).start()
@@ -27928,8 +27925,7 @@ def _route_post(path, params):
             # su fuente -- por eso va aparte de cada refresco individual, igual
             # que Fuente Álamo. Mismo patrón de disparo externo + ADMIN_TOKEN;
             # el cron diario lo llama al final, después de todas las fuentes.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_directivos_contratos_menores_bg, args=(job_id,), daemon=True).start()
@@ -28112,7 +28108,7 @@ def _bots_diagnostico():
 #    avisa la propia página con un POST a /api/evento, sin identificador alguno;
 #  - descargas de datos: cualquier respuesta pública que se sirva como fichero adjunto.
 # Se acumula en memoria y se vuelca a la base como mucho una vez por minuto, desde la propia petición (sin hilo).
-# Se ve en /admin/visitas?token=... Las peticiones a /admin/ y al diagnóstico se cuentan aparte ("interno").
+# Se ve en /admin/revision/visitas (sesión del panel). Las peticiones a /admin/ y al diagnóstico se cuentan aparte ("interno").
 _VISITAS_VOLCAR_CADA_S = 60
 _VISITAS_REDES_POR_DIA = 100        # de los días pasados se conservan solo las redes con más bytes
 _VISITAS_REDES_DIAS = 30
@@ -28322,10 +28318,10 @@ def _visitas_tamano(n):
         n /= 1024
 
 
-def _visitas_pagina(qs):
-    """/admin/visitas?token=...&dias=14 -- solo lectura, solo sumas."""
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or qs.get("token", [""])[0] != admin_token:
+def _visitas_pagina(qs, autorizado=False):
+    """/admin/revision/visitas?dias=14 (sesión del panel) o /admin/visitas con la cabecera X-Admin-Token -- solo lectura,
+    solo sumas."""
+    if not autorizado and not _token_admin_peticion():
         return _resp(json.dumps({"error": "No autorizado."}), content_type="application/json; charset=utf-8", code=403)
     try:
         dias = max(1, min(120, int(qs.get("dias", ["14"])[0])))
@@ -28402,8 +28398,8 @@ def _visitas_pagina(qs):
                       for k, v in datos], nota)
 
     cuerpo = (
-        f'<p class="n">Últimos {dias} días (<a href="?token={esc(admin_token)}&dias=7">7</a> · '
-        f'<a href="?token={esc(admin_token)}&dias=30">30</a> · <a href="?token={esc(admin_token)}&dias=90">90</a>). '
+        f'<p class="n">Últimos {dias} días (<a href="?dias=7">7</a> · '
+        f'<a href="?dias=30">30</a> · <a href="?dias=90">90</a>). '
         f'Bytes servidos: {_visitas_tamano(tot_p)} a personas y {_visitas_tamano(tot_b)} a bots '
         f'(<b>{pct(tot_b, tot_b + tot_p)}</b> del total).</p>' + dias_html + semanas_html
         + ranking("bot", "Bots por nombre", "Rastreador", 40)
@@ -28488,7 +28484,11 @@ def app(environ, start_response):
 
     respuesta = None
     try:
-        respuesta = _app_wsgi(environ, _anotando)
+        t_token = _TOKEN_CABECERA.set(environ.get("HTTP_X_ADMIN_TOKEN", "") or "")
+        try:
+            respuesta = _app_wsgi(environ, _anotando)
+        finally:
+            _TOKEN_CABECERA.reset(t_token)
         return respuesta
     finally:
         fin = time.time()
@@ -28519,9 +28519,8 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}
         elif length > 100 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28551,9 +28550,8 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}
         elif length > 200 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28568,9 +28566,8 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}
         elif length > 100 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28585,9 +28582,8 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
         elif length > 20 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28602,10 +28598,8 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        # el token solo en la cabecera X-Admin-Token: un ?token= en la URL se ignora (y da 403)
-        token = environ.get("HTTP_X_ADMIN_TOKEN", "")
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or not token or not hmac.compare_digest(token, admin_token):
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
         elif length > 20 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28620,9 +28614,8 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
         elif length > 20 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28637,9 +28630,8 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
         elif length > 100 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28696,10 +28688,12 @@ class Handler(BaseHTTPRequestHandler):
             qs = parse_qs(parsed.query)
             gzip_ok = "gzip" in self.headers.get("Accept-Encoding", "")
             t_rango = _RANGO_PETICION.set(self.headers.get("Range", "") or "")
+            t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
             try:
                 self._write(*_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok, query_string=parsed.query))
             finally:
                 _RANGO_PETICION.reset(t_rango)
+                _TOKEN_CABECERA.reset(t_token)
         finally:
             with _peticiones_lock:
                 _peticiones_en_curso -= 1
@@ -28719,7 +28713,11 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", 0) or 0)
             raw = self.rfile.read(length).decode("utf-8") if length else ""
             params = parse_qs(raw, keep_blank_values=True)
-            self._write(*_route_post_i18n(urlparse(self.path).path, params))
+            t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
+            try:
+                self._write(*_route_post_i18n(urlparse(self.path).path, params))
+            finally:
+                _TOKEN_CABECERA.reset(t_token)
         except Exception as e:
             self._write(*_error_resp(f"Error: {e}", 500))
 

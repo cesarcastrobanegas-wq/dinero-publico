@@ -542,7 +542,7 @@ jobs:
             echo "== [$(date -u +%H:%M:%S)Z] Disparando /actualizar-todos (provincia=${prov}) =="
             local resp_todos job_todos
             resp_todos=$(post_web \
-              -d "token=${ADMIN_TOKEN}" -d "provincia=${prov}" \
+              -H "X-Admin-Token: ${ADMIN_TOKEN}" -d "provincia=${prov}" \
               "${BASE_URL}/actualizar-todos" || true)
             echo "respuesta: ${resp_todos:0:300}"
             job_todos=$(get_jobid "$resp_todos")
@@ -580,7 +580,7 @@ jobs:
                 echo "== Disparando /actualizar-contratos-menors-${prov} (RPC) =="
                 local resp_menors job_menors
                 resp_menors=$(post_web \
-                  -d "token=${ADMIN_TOKEN}" \
+                  -H "X-Admin-Token: ${ADMIN_TOKEN}" -d "" \
                   "${BASE_URL}/actualizar-contratos-menors-${prov}" || true)
                 echo "respuesta: ${resp_menors:0:300}"
                 job_menors=$(get_jobid "$resp_menors")
@@ -601,7 +601,7 @@ jobs:
                 echo "== Disparando /actualizar-directivos-contratos-menores (turno ${prov}) =="
                 local resp_dcm_p job_dcm_p
                 resp_dcm_p=$(post_web \
-                  -d "token=${ADMIN_TOKEN}" \
+                  -H "X-Admin-Token: ${ADMIN_TOKEN}" -d "" \
                   "${BASE_URL}/actualizar-directivos-contratos-menores" || true)
                 echo "respuesta: ${resp_dcm_p:0:300}"
                 job_dcm_p=$(get_jobid "$resp_dcm_p")
@@ -712,7 +712,7 @@ jobs:
           #     fuerza también si el recorrido de provincias se saltó.
           echo "== Extras de fin de ciclo: fondos UE / noticias / Fuente Álamo / Cartagena =="
           resp_fue=$(post_web \
-            -d "token=${ADMIN_TOKEN}" \
+            -H "X-Admin-Token: ${ADMIN_TOKEN}" -d "" \
             "${BASE_URL}/actualizar-fondos-ue" || true)
           echo "respuesta: ${resp_fue:0:300}"
           job_fue=$(get_jobid "$resp_fue")
@@ -731,7 +731,7 @@ jobs:
 
           echo "== Disparando /actualizar-noticias-ue (RSS Press Corner) =="
           resp_noticias=$(post_web \
-            -d "token=${ADMIN_TOKEN}" \
+            -H "X-Admin-Token: ${ADMIN_TOKEN}" -d "" \
             "${BASE_URL}/actualizar-noticias-ue" || true)
           echo "respuesta: ${resp_noticias:0:300}"
           job_noticias=$(get_jobid "$resp_noticias")
@@ -744,7 +744,7 @@ jobs:
 
           echo "== Disparando /actualizar-contratos-menores-fuentealamo =="
           resp_fa=$(post_web \
-            -d "token=${ADMIN_TOKEN}" \
+            -H "X-Admin-Token: ${ADMIN_TOKEN}" -d "" \
             "${BASE_URL}/actualizar-contratos-menores-fuentealamo" || true)
           echo "respuesta: ${resp_fa:0:300}"
           job_fa=$(get_jobid "$resp_fa")
@@ -757,7 +757,7 @@ jobs:
 
           echo "== Disparando /actualizar-contratos-menores-cartagena =="
           resp_ctg=$(post_web \
-            -d "token=${ADMIN_TOKEN}" \
+            -H "X-Admin-Token: ${ADMIN_TOKEN}" -d "" \
             "${BASE_URL}/actualizar-contratos-menores-cartagena" || true)
           echo "respuesta: ${resp_ctg:0:300}"
           job_ctg=$(get_jobid "$resp_ctg")
@@ -770,7 +770,7 @@ jobs:
 
           echo "== Disparando /actualizar-directivos-contratos-menores (residual, Murcia + lo que quede) =="
           resp_dcm=$(post_web \
-            -d "token=${ADMIN_TOKEN}" \
+            -H "X-Admin-Token: ${ADMIN_TOKEN}" -d "" \
             "${BASE_URL}/actualizar-directivos-contratos-menores" || true)
           echo "respuesta: ${resp_dcm:0:300}"
           job_dcm=$(get_jobid "$resp_dcm")

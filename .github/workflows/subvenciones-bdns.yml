@@ -71,7 +71,7 @@ jobs:
           while true; do
             codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 600 -X POST -H "Content-Type: application/gzip" \
               --data-binary @subvenciones.ndjson.gz \
-              "https://dinero-publico.com/admin/subvenciones?token=${ADMIN_TOKEN}" || echo 000)
+              -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/subvenciones" || echo 000)
             case "$codigo" in
               000|502|503|504|520|521|522|523|524)
                 [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }

@@ -47,7 +47,7 @@ jobs:
           fi
           python -c "import json; print(json.dumps(json.load(open('hallazgos.json'))['hallazgos']))" > lista.json
           codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 120 -X POST \
-            --data-urlencode "token=${ADMIN_TOKEN}" --data-urlencode "hallazgos@lista.json" \
+            -H "X-Admin-Token: ${ADMIN_TOKEN}" --data-urlencode "hallazgos@lista.json" \
             "https://dinero-publico.com/admin/aviso-privacidad" || echo 000)
           echo "HTTP ${codigo}: $(cat respuesta.json 2>/dev/null)"
           if [ "$codigo" != "200" ] || ! grep -q '"aviso_correo": "enviado"' respuesta.json; then

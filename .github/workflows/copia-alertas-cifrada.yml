@@ -56,7 +56,7 @@ jobs:
           set -euo pipefail
           umask 077
           codigo=$(curl -sS --max-time 120 -o alertas.db -w '%{http_code}' -X POST \
-            --data-urlencode "token=${ADMIN_TOKEN}" "https://dinero-publico.com/admin/alertas-db" || echo 000)
+            -H "X-Admin-Token: ${ADMIN_TOKEN}" -d "" "https://dinero-publico.com/admin/alertas-db" || echo 000)
           if [ "$codigo" != "200" ]; then
             rm -f alertas.db
             echo "::error::La web respondió ${codigo}: no se toca la copia existente."

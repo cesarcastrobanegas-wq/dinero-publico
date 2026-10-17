@@ -163,7 +163,7 @@ del 01-01-2021 al 30-09-2026 (1.499 días laborables).
 
 - §7.1 RGPD: aprobado tal como está (órgano de administración, fecha, enlace al anuncio, canal de rectificación).
 - §7.2 El fichero vive en el disco de Render (`DATA_DIR/administradores_borme.json`), nunca en el repositorio; sigue en
-  `.gitignore` y no está en el historial de ninguna rama. Se sube con `POST /admin/administradores-borme?token=...`
+  `.gitignore` y no está en el historial de ninguna rama. Se sube con `POST /admin/administradores-borme` y la cabecera `X-Admin-Token` (desde el 17-10, nunca `?token=`)
   (JSON o JSON en gzip): comprueba el token ANTES de leer el cuerpo (tope 100 MB), valida (>= 1.000 sociedades, con
   nombre y cargo), escribe de forma atómica y recarga sin reiniciar. Solo devuelve y registra recuentos.
 - Los nombres del BORME solo se aplican al mostrar: el enriquecimiento ya no los lee para guardar
