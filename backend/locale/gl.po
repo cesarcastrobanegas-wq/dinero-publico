@@ -3122,6 +3122,10 @@ msgstr "Ligazón non válida"
 msgid "Este enlace no es válido o ha caducado."
 msgstr "Esta ligazón non é válida ou caducou."
 
+#: app.py (subvenciones por sector)
+msgid "La clasificación por sector es automática (códigos de actividad CNAE que publica la BDNS y palabras del título) y puede fallar: puede incluir convocatorias que no son de este sector y dejar fuera alguna que sí lo es. Las ayudas generales para empresas aparecen en todos los sectores. Comprueba siempre en las bases quién puede pedirla."
+msgstr "A clasificación por sector é automática (códigos de actividade CNAE que publica a BDNS e palabras do título) e pode fallar: pode incluír convocatorias que non son deste sector e deixar fóra algunha que si o é. As axudas xerais para empresas aparecen en todos os sectores. Comproba sempre nas bases quen pode pedila."
+
 #~ msgid "Próximamente se incorporarán también datos de subvenciones."
 #~ msgstr "Proximamente incorporaranse tamén datos de subvencións."
 

@@ -2543,6 +2543,11 @@ def _db_init():
         _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_plazo ON licitaciones(estado, fin_plazo)")
         _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_muni ON licitaciones(municipio)")
         _db.execute(_SQL_TABLA_SUBVENCIONES.format(tabla="subvenciones"))
+        for _col in ("cnae TEXT DEFAULT ''", "sectores TEXT"):   # tablas anteriores a estas columnas (2026-10-17)
+            try:
+                _db.execute(f"ALTER TABLE subvenciones ADD COLUMN {_col}")
+            except sqlite3.OperationalError:
+                pass
         for _sql in _SQL_INDICES_SUBVENCIONES:
             _db.execute(_sql.format(tabla="subvenciones"))
         _db.commit()
@@ -3011,7 +3016,7 @@ _SQL_TABLA_SUBVENCIONES = """CREATE TABLE IF NOT EXISTS {tabla} (
     bdns TEXT PRIMARY KEY, registrada TEXT, titulo TEXT, titulo_cooficial TEXT, nivel1 TEXT, nivel2 TEXT, organo TEXT,
     nuts TEXT, provincia TEXT, comunidad TEXT, municipio TEXT, presupuesto REAL, beneficiarios TEXT, sector TEXT,
     finalidad TEXT, instrumento TEXT, inicio TEXT, fin TEXT, texto_fin TEXT, url_bases TEXT, mrr INTEGER,
-    busqueda TEXT)"""
+    busqueda TEXT, cnae TEXT DEFAULT '', sectores TEXT)"""
 _SQL_INDICES_SUBVENCIONES = ("CREATE INDEX IF NOT EXISTS idx_{tabla}_fin ON {tabla}(fin)",
                              "CREATE INDEX IF NOT EXISTS idx_{tabla}_muni ON {tabla}(municipio)",
                              "CREATE INDEX IF NOT EXISTS idx_{tabla}_prov ON {tabla}(provincia)")
@@ -15234,7 +15239,7 @@ SUBVENCIONES_PUBLICAS = os.environ.get("CONVOCATORIAS_SUBVENCIONES", "") == "1"
 SUBV_MINIMO_SUBIDA = 1000           # una subida con menos convocatorias se rechaza (fichero roto o carga a medias)
 _SUBV_COLUMNAS = ("bdns", "registrada", "titulo", "titulo_cooficial", "nivel1", "nivel2", "organo", "nuts", "provincia",
                   "comunidad", "municipio", "presupuesto", "beneficiarios", "sector", "finalidad", "instrumento",
-                  "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda")
+                  "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda", "cnae", "sectores")
 _SUBV_MUNI_POR_NOMBRE = {}
 
 
@@ -15273,7 +15278,99 @@ def _subvencion_fila(d):
             d.get("sector", ""), d.get("finalidad", ""), d.get("instrumento", ""), d.get("inicio") or "",
             d.get("fin") or "", (d.get("texto_fin") or "")[:500], d.get("url_bases", ""), 1 if d.get("mrr") else 0,
             normalizar(f'{d.get("titulo", "")} {d.get("titulo_cooficial", "")} {d.get("organo", "")} '
-                       f'{d.get("nivel2", "")}')[:1500])
+                       f'{d.get("nivel2", "")}')[:1500], d.get("cnae", ""),
+            _subvencion_sectores(d.get("titulo", ""), d.get("finalidad", ""), d.get("cnae", "")))
+
+
+# Clasificador de subvenciones por sector (2026-10-17, rama wip/subvenciones-sector; aún no se usa en ninguna página).
+# Método E de la prueba del 17-10 (INFORME noche 17-10): una convocatoria «puede ser» de un sector si sus códigos CNAE
+# de la BDNS lo incluyen y no es nominativa ni un convenio, o si el título habla de empresas/pymes/comercio/empleo y la
+# finalidad es económica. Es una pista para filtrar, nunca una garantía: siempre hay que leer las bases.
+_SUBV_EXCLUYE = re.compile(r"nominativ|conveni|adenda|prorroga|concesion directa a |subvencio nominativa|nom\.")
+_SUBV_TITULO_EMPRESA = re.compile(r"pyme|empresa|autonom|autoempleo|comerci|emprend|negocio|contrataci|competitiv|"
+                                  r"innovaci|actividades economicas|productiv")
+_SUBV_FINALIDAD_ECONOMICA = {"Comercio, Turismo y Pymes", "Fomento del Empleo", "Investigación, desarrollo e innovación",
+                             "Industria y Energía", "Otras actuaciones de carácter económico"}
+
+
+def _cnae_compatible(codigo, objetivo):
+    """codigo: un CNAE de la BDNS (sección "G", división "47", grupo "47.6"...). objetivo: CNAE de la empresa
+    ("47.61") y su sección ("G"). Compatible si uno contiene al otro."""
+    codigo = (codigo or "").strip()
+    if not codigo:
+        return False
+    for o in objetivo:
+        if codigo.isalpha() or o.isalpha():
+            if codigo == o:
+                return True
+        elif codigo.startswith(o) or o.startswith(codigo):
+            return True
+    return False
+
+
+def _subvencion_posible_sector(titulo, finalidad, cnae, objetivo, por_titulo_vale=True):
+    """True si la convocatoria puede ser del sector `objetivo` (lista de CNAE y secciones, p. ej. ["G", "47.61"])."""
+    t = normalizar(titulo or "")
+    excluida = bool(_SUBV_EXCLUYE.search(t))
+    por_cnae = not excluida and any(_cnae_compatible(c, objetivo) for c in (cnae or "").split())
+    por_titulo = (por_titulo_vale and not excluida and bool(_SUBV_TITULO_EMPRESA.search(t))
+                  and finalidad in _SUBV_FINALIDAD_ECONOMICA)
+    return por_cnae or por_titulo
+
+
+# Sectores del desplegable de /convocatorias (las divisiones CPV de las licitaciones, LIC.CPV_DIVISIONES) traducidos a
+# códigos CNAE-2025, que son los que usa la BDNS (secciones con letra y divisiones/grupos con número; ojo: en la
+# CNAE-2025 J es edición y audiovisual, K telecomunicaciones e informática, L finanzas, M inmobiliarias, N actividades
+# profesionales, O administrativas, P Administración pública, Q educación, R sanidad, S cultura y deporte, T otros
+# servicios). La letra de la sección entra para que una convocatoria «para toda la industria manufacturera» (C)
+# aparezca en alimentación, textil, maquinaria... Las ayudas genéricas a empresas (pymes, comercio, empleo con
+# finalidad económica) aparecen en todos los sectores salvo «Administración pública».
+SUBV_SECTOR_CNAE = {
+    "03": ["A", "01", "02", "03"], "09": ["B", "D", "05", "06", "19", "35"], "14": ["B", "05", "06", "07", "08", "09"],
+    "15": ["C", "10", "11"], "16": ["C", "28"], "18": ["C", "14", "15"], "19": ["C", "13", "15"],
+    "22": ["C", "J", "18", "58"], "24": ["C", "20", "21"], "30": ["C", "26"], "31": ["C", "27"],
+    "32": ["C", "J", "K", "26", "60", "61"], "33": ["C", "21", "32.5"], "34": ["C", "29", "30"],
+    "35": ["C", "O", "25.4", "30.4", "80"], "37": ["C", "32"], "38": ["C", "26.5", "26.7"], "39": ["C", "31", "20.4"],
+    "41": ["E", "36"], "42": ["C", "28"], "43": ["C", "28.9"], "44": ["C", "16", "22", "23", "24", "25"],
+    "45": ["F", "41", "42", "43"], "48": ["J", "K", "58.2", "62"], "50": ["C", "33", "95"],
+    "51": ["C", "F", "33.2", "43.2"], "55": ["I", "55", "56"], "60": ["H", "49", "50", "51"], "63": ["H", "52", "79"],
+    "64": ["H", "K", "53", "61"], "65": ["D", "E", "35", "36"], "66": ["L", "64", "65", "66"], "70": ["M", "68"],
+    "71": ["N", "71"], "72": ["K", "62", "63"], "73": ["N", "72"], "75": ["P", "84"], "76": ["B", "09"],
+    "77": ["A", "01.6", "02.4", "81.3"], "79": ["N", "O", "69", "70", "73", "74", "78", "80", "82"],
+    "80": ["Q", "85"], "85": ["R", "86", "87", "88"], "90": ["E", "37", "38", "39", "81.2"],
+    "92": ["S", "90", "91", "92", "93"], "98": ["T", "94", "95", "96"],
+}
+
+
+def _subvencion_sectores(titulo, finalidad, cnae):
+    """Columna `sectores`: las divisiones CPV del desplegable en las que la convocatoria PUEDE encajar, entre espacios
+    (" 45 71 ") para filtrar con LIKE '% 45 %'. Clasificación automática: puede fallar (ver el aviso de la página)."""
+    return " " + " ".join(k for k, objetivo in SUBV_SECTOR_CNAE.items()
+                          if _subvencion_posible_sector(titulo, finalidad, cnae, objetivo, por_titulo_vale=k != "75")) + " "
+
+
+def _subvenciones_reclasificar():
+    """Hilo de fondo al arrancar: calcula `sectores` de las filas que no lo tienen (tabla subida antes de esta columna)
+    por tandas de 500 y sin retener el candado entre tandas, para no frenar las páginas. Las subidas nuevas ya lo traen
+    calculado; si una subida sustituye la tabla a mitad, las filas nuevas ya vienen con él y el bucle termina solo."""
+    hechas = 0
+    try:
+        while True:
+            with _db_lock:
+                filas = _db.execute("SELECT bdns, titulo, finalidad, cnae FROM subvenciones WHERE sectores IS NULL "
+                                    "LIMIT 500").fetchall()
+            if not filas:
+                break
+            lote = [(_subvencion_sectores(t, fi, c), b) for b, t, fi, c in filas]
+            with _db_lock:
+                _db.executemany("UPDATE subvenciones SET sectores=? WHERE bdns=?", lote)
+                _db.commit()
+            hechas += len(lote)
+            time.sleep(0.05)
+    except sqlite3.Error as e:
+        print(f"[subvenciones] reclasificación por sector interrumpida: {e}", flush=True)
+    if hechas:
+        print(f"[subvenciones] {hechas} convocatorias clasificadas por sector", flush=True)
 
 
 def _subir_subvenciones(crudo, forzar=False):
@@ -17016,6 +17113,7 @@ def _arrancar_hilos_de_fondo():
     hilo_feed.start()
     threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
     threading.Thread(target=_licitaciones_bg, args=(hilo_feed,), name="licitaciones", daemon=True).start()
+    threading.Thread(target=_subvenciones_reclasificar, name="subvenciones-sector", daemon=True).start()
     threading.Thread(target=_zip_cache_vigilar, name="memoria-zips", daemon=True).start()
     # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
     # al RSS (búsqueda text=España) en vez de esperar al cron diario.
@@ -21930,6 +22028,8 @@ def _conv_parametros(qs):
         if g("importe") in _CONV_IMPORTES:
             f["importe"] = g("importe")
     else:
+        if g("sector") in SUBV_SECTOR_CNAE:
+            f["sector"] = g("sector")
         if g("ambito") in _CONV_AMBITOS_SUB:
             f["ambito"] = g("ambito")
         if g("benef") in _CONV_BENEFICIARIOS:
@@ -22022,6 +22122,8 @@ def _conv_filtro_subvenciones(f):
         where.append("nivel1 = ?"); args.append(f["ambito"])
     if f.get("benef"):
         where.append("beneficiarios LIKE ?"); args.append(f"%{_CONV_BENEFICIARIOS[f['benef']]}%")
+    if f.get("sector"):
+        where.append("sectores LIKE ?"); args.append(f"% {f['sector']} %")
     if f.get("q"):
         _conv_where_texto(f["q"], where, args)
     return where, args, orden
@@ -22218,16 +22320,18 @@ def render_convocatorias_html(qs):
         ocultos += f'<input type="hidden" name="muni" value="{esc(f["muni"])}">'
     campos = [f'<input type="search" name="q" value="{esc(f.get("q", ""))}" placeholder="{esc(_t("Buscar en el título o el organismo"))}" class="conv-q">',
               zona_html]
+    sel_sector = _conv_select("sector", f.get("sector", ""),
+                              sorted(((k, _t(v)) for k, v in LIC.CPV_DIVISIONES.items()), key=lambda x: normalizar(x[1])),
+                              _t("Cualquier sector"))
     if tab == "licitaciones":
         campos += [_conv_select("tipo", f.get("tipo", ""), et["tipo"].items(), _t("Cualquier tipo")),
-                   _conv_select("sector", f.get("sector", ""),
-                                sorted(((k, _t(v)) for k, v in LIC.CPV_DIVISIONES.items()), key=lambda x: normalizar(x[1])),
-                                _t("Cualquier sector")),
+                   sel_sector,
                    _conv_select("ambito", f.get("ambito", ""), et["ambito_lic"].items(), _t("Cualquier organismo")),
                    _conv_select("importe", f.get("importe", ""), et["importe"].items(), _t("Cualquier importe")),
                    _conv_select("plazo", f.get("plazo", ""), et["plazo"].items(), _t("Cualquier plazo"))]
     else:
-        campos += [_conv_select("ambito", f.get("ambito", ""), et["ambito_sub"].items(), _t("Cualquier administración")),
+        campos += [sel_sector,
+                   _conv_select("ambito", f.get("ambito", ""), et["ambito_sub"].items(), _t("Cualquier administración")),
                    _conv_select("benef", f.get("benef", ""), et["benef"].items(), _t("Cualquier beneficiario")),
                    _conv_select("plazo", f.get("plazo", ""), et["plazo"].items(), _t("Cualquier plazo"))]
     formulario = (f'<form method="get" action="/convocatorias" class="conv-filtros">{ocultos}{"".join(campos)}'
@@ -22270,6 +22374,9 @@ def render_convocatorias_html(qs):
         vistas_html = ('<div class="prov-switch" style="margin-bottom:10px">' + "".join(
             f'<a href="{esc(_conv_url(dict(f, vista=None if v == "abiertas" else v, pag=1)))}" '
             f'class="prov-tab{" active" if v == vista else ""}">{esc(lbl)}</a>' for v, lbl in vistas) + "</div>")
+        if f.get("sector"):
+            vistas_html += (f'<div class="gs-hint conv-aviso-sector" style="margin:0 0 10px;font-size:13px">⚠️ '
+                            f'{_t("La clasificación por sector es automática (códigos de actividad CNAE que publica la BDNS y palabras del título) y puede fallar: puede incluir convocatorias que no son de este sector y dejar fuera alguna que sí lo es. Las ayudas generales para empresas aparecen en todos los sectores. Comprueba siempre en las bases quién puede pedirla.")}</div>')
         if vista == "sin_fecha":
             vistas_html += (f'<div class="gs-hint" style="margin:0 0 10px;font-size:13px">'
                             f'{_t("Estas convocatorias no publican la fecha de fin en la BDNS (suele contarse desde la publicación del extracto en el boletín). No sabemos si siguen abiertas: consulta las bases antes de presentar nada.")}</div>')
@@ -26493,7 +26600,8 @@ def _alertas_descripcion(tipo, fl):
         partes += [et["tipo"].get(fl.get("tipo"), ""), _t(LIC.CPV_DIVISIONES[fl["sector"]]) if fl.get("sector") else "",
                    et["ambito_lic"].get(fl.get("ambito"), ""), et["importe"].get(fl.get("importe"), "")]
     else:
-        partes += [et["ambito_sub"].get(fl.get("ambito"), ""), et["benef"].get(fl.get("benef"), "")]
+        partes += [_t(LIC.CPV_DIVISIONES[fl["sector"]]) if fl.get("sector") else "",
+                   et["ambito_sub"].get(fl.get("ambito"), ""), et["benef"].get(fl.get("benef"), "")]
     if fl.get("q"):
         partes.append(f"«{fl['q']}»")
     return " · ".join(p for p in partes if p)
