@@ -15441,7 +15441,9 @@ REVISION_MOTIVOS = {"legitimo": "Justificado / legítimo", "error_datos": "Error
                     "emergencia": "Emergencia justificada", "otro": "Otro motivo"}
 REVISION_ESTADOS = {"pendiente": "Pendientes", "seguimiento": "En seguimiento", "caso": "Convertidos en caso",
                     "descartado": "Descartados"}
-REVISION_REGLAS = {"fraccionamiento-v2": "Posible fraccionamiento", "menor-sobre-umbral-v1": "Menor por encima del umbral"}
+REVISION_REGLAS = {"fraccionamiento-v2": "Posible fraccionamiento", "menor-sobre-umbral-v1": "Menor por encima del umbral",
+                   "manual-v1": "Borrador puesto a mano (comprobado en la fuente)"}
+REVISION_MAX_BORRADORES = 50          # por subida de ?anadir=si
 # Presentación de la cola (2026-10-07, encargo de César: 8.183 candidatos son inabarcables de golpe). Nada de esto
 # cambia qué detecta el bot (backend/indicios_contratos.py), solo en qué orden se enseña y un atajo para revisar un
 # puñado cada semana.
@@ -15533,6 +15535,7 @@ def _subir_revision_candidatos(crudo, forzar=False):
         descartes = {r[0] for r in _db.execute("SELECT huella FROM revision_descartes")}
         existentes = dict(_db.execute("SELECT huella, estado FROM revision_candidatos").fetchall())
         decididos_datos = _db.execute("SELECT huella, datos FROM revision_candidatos WHERE estado != 'pendiente'").fetchall()
+        manuales = {r[0] for r in _db.execute("SELECT huella FROM revision_candidatos WHERE regla LIKE 'manual-%'")}
     nuevos = actualizados = saltados = malas = 0
     vistos = set()
     lote_ins, lote_upd = [], []
@@ -15610,10 +15613,10 @@ def _subir_revision_candidatos(crudo, forzar=False):
             _db.executemany("UPDATE revision_candidatos SET regla=?, categoria=?, puntuacion=?, municipio=?, provincia=?, "
                             "comunidad=?, organismo=?, adjudicatario=?, tipo=?, suma=?, datos=?, actualizado=?, "
                             "vigente=1 WHERE huella=?", lote_upd[i:i + 500])
-        retirados = [h for h, est in existentes.items() if est == "pendiente" and h not in vistos]
+        retirados = [h for h, est in existentes.items() if est == "pendiente" and h not in vistos and h not in manuales]
         for i in range(0, len(retirados), 500):
             _db.executemany("DELETE FROM revision_candidatos WHERE huella=?", [(h,) for h in retirados[i:i + 500]])
-        decididos = [h for h, est in existentes.items() if est != "pendiente" and h not in vistos]
+        decididos = [h for h, est in existentes.items() if est != "pendiente" and h not in vistos and h not in manuales]
         _db.executemany("UPDATE revision_candidatos SET vigente=0 WHERE huella=?", [(h,) for h in decididos])
         corte = time.strftime("%Y-%m-%d", time.localtime(time.time() - REVISION_BORRAR_DESCARTES_DIAS * 86400))
         borrados = _db.execute("DELETE FROM revision_candidatos WHERE estado='descartado' AND revisado < ?",
@@ -15632,6 +15635,48 @@ def _subir_revision_candidatos(crudo, forzar=False):
                  "ya_descartados": saltados, "descartes_borrados": borrados, "lineas_con_error": malas,
                  "decisiones_trasladadas": len(trasladadas),
                  "aviso_correo": aviso}
+
+
+def _subir_revision_borradores(crudo):
+    """POST /admin/revision-candidatos?anadir=si (17-10): AÑADE a la cola candidatos puestos a mano (regla manual-*,
+    NDJSON con o sin gzip) sin retirar ni tocar nada más. Uno que ya estaba se actualiza sin cambiar la decisión tomada.
+    La pasada semanal no los retira (no salen del bot). Solo devuelve recuentos."""
+    ahora = time.strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        flujo = _gzip.GzipFile(fileobj=io.BytesIO(crudo)) if crudo[:2] == bytes([0x1F, 0x8B]) else io.BytesIO(crudo)
+        leidos = [json.loads(l) for l in flujo if l.strip()]
+    except (OSError, EOFError, ValueError) as e:
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    if not leidos:
+        return 400, {"error": "Fichero vacío."}
+    if len(leidos) > REVISION_MAX_BORRADORES:
+        return 400, {"error": f"Como mucho {REVISION_MAX_BORRADORES} borradores por subida."}
+    if any(not isinstance(c, dict) or not c.get("huella") or not str(c.get("regla", "")).startswith("manual-")
+           or c.get("regla") not in REVISION_REGLAS for c in leidos):
+        return 400, {"error": "Solo se pueden añadir así candidatos con huella y una regla manual conocida."}
+    with _db_lock:
+        existentes = {r[0] for r in _db.execute("SELECT huella FROM revision_candidatos")}
+    nuevos = actualizados = 0
+    with _db_lock:
+        for c in leidos:
+            com = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(c.get("provincia", ""), "")
+            fila = (c["regla"], c.get("categoria", ""), float(c.get("puntuacion", 0)), c.get("municipio", ""),
+                    c.get("provincia", ""), com, c.get("organismo", "")[:300], c.get("adjudicatario", "")[:300],
+                    c.get("tipo", ""), float(c.get("suma", 0)), json.dumps(c, ensure_ascii=False))
+            if c["huella"] in existentes:
+                _db.execute("UPDATE revision_candidatos SET regla=?, categoria=?, puntuacion=?, municipio=?, provincia=?, "
+                            "comunidad=?, organismo=?, adjudicatario=?, tipo=?, suma=?, datos=?, actualizado=?, "
+                            "vigente=1 WHERE huella=?", fila + (ahora, c["huella"]))
+                actualizados += 1
+            else:
+                _db.execute("INSERT INTO revision_candidatos (huella, regla, categoria, puntuacion, municipio, provincia, "
+                            "comunidad, organismo, adjudicatario, tipo, suma, datos, detectado, actualizado, vigente) "
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)", (c["huella"],) + fila + (ahora, ahora))
+                nuevos += 1
+        _db.commit()
+    _revision_registrar("", "borradores", f"{nuevos} nuevos, {actualizados} actualizados (puestos a mano)")
+    print(f"[revision] borradores puestos a mano: {nuevos} nuevos, {actualizados} actualizados", flush=True)
+    return 200, {"nuevos": nuevos, "actualizados": actualizados}
 
 
 def _aviso_revision_por_correo(por_regla, nuevos_90):
@@ -15784,7 +15829,10 @@ def _revision_cola_html(qs, cookie):
         c = json.loads(datos)
         contratos = "".join(
             f'<tr><td>{esc(k["fecha"])}</td><td class="num">{fmt_eur(str(k["importe"]))}</td>'
-            f'<td>{esc(k["descripcion"])}</td><td>{esc(k["fuente"])}</td></tr>' for k in c.get("contratos", []))
+            f'<td>{esc(k["descripcion"])}</td><td>'
+            + (f'<a href="{esc(k["url"])}" target="_blank" rel="noopener noreferrer">{esc(k["fuente"])}</a>'
+               if str(k.get("url", "")).startswith("https://") else esc(k["fuente"])) + '</td></tr>'
+            for k in c.get("contratos", []))
         avisos = "".join(f'<div class="av">⚠ {esc(a)}</div>' for a in c.get("avisos", []))
         # Aviso visible de no publicar el nombre (encargo de César, 12-10): en la línea del candidato y dentro.
         pf = _revision_persona_fisica(c)
@@ -15873,8 +15921,11 @@ def _revision_ficha_md(huella):
               f"{c.get('desde')} y {c.get('hasta')}", f"- Puntuación: {c.get('puntuacion')} · estado: {fila[1]}",
               f"- Nota: {fila[2] or ''}", "", "## Contratos", "", "| Fecha | Importe | Descripción | Fuente | Id |",
               "|---|---|---|---|---|"]
-    lineas += [f"| {k['fecha']} | {k['importe']:,.2f} € | {k['descripcion']} | {k['fuente']} | {k['id']} |"
+    lineas += [f"| {k['fecha']} | {k['importe']:,.2f} € | {k['descripcion']} | "
+               + (f"[{k['fuente']}]({k['url']})" if k.get("url") else k["fuente"]) + f" | {k['id']} |"
                for k in c.get("contratos", [])]
+    if c.get("nota_verificacion"):
+        lineas += ["", "## Comprobación en la fuente (borrador puesto a mano)", "", c["nota_verificacion"]]
     lineas += ["", "## Avisos de calidad del dato", ""] + [f"- {a}" for a in c.get("avisos", [])] + [
         "", "## Antes de publicar", "", "- Comprobar cada contrato en la fuente oficial (enlace y documento).",
         "- Pedir la versión del ayuntamiento (informe del art. 118.2 LCSP).",
@@ -28525,8 +28576,11 @@ def _app_wsgi(environ, start_response):
         elif length > 100 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
         else:
-            code, cuerpo = _subir_revision_candidatos(environ["wsgi.input"].read(length) if length else b"",
-                                                        forzar=qs.get("forzar", [""])[0] == "si")
+            crudo = environ["wsgi.input"].read(length) if length else b""
+            if qs.get("anadir", [""])[0] == "si":           # borradores puestos a mano: se añaden sin tocar el resto
+                code, cuerpo = _subir_revision_borradores(crudo)
+            else:
+                code, cuerpo = _subir_revision_candidatos(crudo, forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "GET" and path == "/admin/visitas":
