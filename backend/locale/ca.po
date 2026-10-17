@@ -3122,6 +3122,10 @@ msgstr "Enllaç no vàlid"
 msgid "Este enlace no es válido o ha caducado."
 msgstr "Aquest enllaç no és vàlid o ha caducat."
 
+#: app.py (subvenciones por sector)
+msgid "La clasificación por sector es automática (códigos de actividad CNAE que publica la BDNS y palabras del título) y puede fallar: puede incluir convocatorias que no son de este sector y dejar fuera alguna que sí lo es. Las ayudas generales para empresas aparecen en todos los sectores. Comprueba siempre en las bases quién puede pedirla."
+msgstr "La classificació per sector és automàtica (codis d'activitat CNAE que publica la BDNS i paraules del títol) i pot fallar: pot incloure convocatòries que no són d'aquest sector i deixar-ne fora alguna que sí que ho és. Els ajuts generals per a empreses apareixen en tots els sectors. Comprova sempre a les bases qui la pot demanar."
+
 #~ msgid "Próximamente se incorporarán también datos de subvenciones."
 #~ msgstr "Properament s'hi incorporaran també dades de subvencions."
 

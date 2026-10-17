@@ -3122,6 +3122,10 @@ msgstr "Esteka baliogabea"
 msgid "Este enlace no es válido o ha caducado."
 msgstr "Esteka hau ez da baliozkoa edo iraungi da."
 
+#: app.py (subvenciones por sector)
+msgid "La clasificación por sector es automática (códigos de actividad CNAE que publica la BDNS y palabras del título) y puede fallar: puede incluir convocatorias que no son de este sector y dejar fuera alguna que sí lo es. Las ayudas generales para empresas aparecen en todos los sectores. Comprueba siempre en las bases quién puede pedirla."
+msgstr "Sektorekako sailkapena automatikoa da (BDNSk argitaratzen dituen CNAE jarduera-kodeak eta izenburuko hitzak) eta huts egin dezake: sektore honetakoak ez diren deialdiak sar ditzake eta sektore honetakoren bat kanpoan utzi. Enpresentzako laguntza orokorrak sektore guztietan agertzen dira. Egiaztatu beti oinarrietan nork eska dezakeen."
+
 #~ msgid "Próximamente se incorporarán también datos de subvenciones."
 #~ msgstr "Laster diru-laguntzen datuak ere gehituko dira."
 
