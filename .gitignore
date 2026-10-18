@@ -34,3 +34,10 @@ backend/cache_db_backup_pre_refresco_aditivo_*.db-shm
 backend/borme_actos.db*
 backend/administradores_borme.json
 backend/bdns.db
+
+# FTS de la Comisión (backend/fts_comision.py, 2026-10-18): el fichero generado lleva nombres y NIF de personas
+# jurídicas y los CSV anuales pesan ~1 GB; nunca van al repositorio.
+*fts*.ndjson*
+fts_descargas/
+backend/fts_descargas/
+*_FTS_dataset_en.csv*

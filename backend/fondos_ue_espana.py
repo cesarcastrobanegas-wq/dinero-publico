@@ -585,7 +585,7 @@ def descargar_mrr100(sesion):
     } for nif, p in perceptores.items()]
 
 
-def generar(salida, con_nombres=False, kohesio=True, mrr100=True):
+def generar(salida, con_nombres=False, kohesio=True, mrr100=True, fts=False, fts_descargas="fts_descargas"):
     sesion = requests.Session()
     sesion.headers["User-Agent"] = "dinero-publico.com (fondos UE; datos abiertos de la Comisión Europea)"
     print("Cohesion Data (FEDER/FSE 2014-2020)…", flush=True)
@@ -605,6 +605,16 @@ def generar(salida, con_nombres=False, kohesio=True, mrr100=True):
     if mrr100:
         print("Plan de Recuperación: los 100 mayores perceptores…", flush=True)
         filas += descargar_mrr100(sesion)
+    if fts:
+        # 2026-10-18: FTS de la Comisión (gestión directa), desactivado por defecto: ver fts_comision.py. Ojo: la web
+        # solo acepta la fuente "fts" cuando esté en _FUENTE_UE_LABEL (backend/app.py); hasta entonces esas líneas
+        # cuentan como "lineas_con_error" en POST /admin/fondos-ue y no se cargan.
+        try:
+            from . import fts_comision as FTS
+        except ImportError:
+            import fts_comision as FTS
+        print("FTS de la Comisión (gestión directa, sin Horizon ni MRR al Estado)…", flush=True)
+        filas += list(FTS.recorrer(FTS.ANIOS_POR_DEFECTO, fts_descargas, sesion))
     with gzip.open(salida, "wt", encoding="utf-8") as f:
         for fila in filas:
             f.write(json.dumps({k: v for k, v in fila.items() if k != "discordante"}, ensure_ascii=False) + "\n")
@@ -623,12 +633,16 @@ if __name__ == "__main__":
                         "forma de DNI/NIE)")
     g.add_argument("--sin-kohesio", action="store_true", help="no bajar FEDER/FSE+ 2021-2027 de Kohesio")
     g.add_argument("--sin-mrr100", action="store_true", help="no bajar los 100 mayores perceptores del Plan de Recuperación")
+    g.add_argument("--con-fts", action="store_true",
+                   help="añadir el FTS de la Comisión 2014-2025 (fts_comision.py); desactivado por defecto")
+    g.add_argument("--fts-descargas", default="fts_descargas", help="carpeta para los CSV anuales del FTS")
     k = sub.add_parser("kohesio", help="solo Kohesio 2021-2027 (pruebas)")
     k.add_argument("--salida", required=True)
     k.add_argument("--sin-beneficiarios", action="store_true")
     a = ap.parse_args()
     if a.orden == "generar":
-        generar(a.salida, a.nombres, kohesio=not a.sin_kohesio, mrr100=not a.sin_mrr100)
+        generar(a.salida, a.nombres, kohesio=not a.sin_kohesio, mrr100=not a.sin_mrr100, fts=a.con_fts,
+                fts_descargas=a.fts_descargas)
     elif a.orden == "kohesio":
         s = requests.Session()
         s.headers["User-Agent"] = "dinero-publico.com (fondos UE; datos abiertos de la Comisión Europea)"
