@@ -6,8 +6,14 @@ name: Fondos europeos en los contratos de PLACE (a mano)
 # con un commit propio; la web lo aplica al arrancar (_aplicar_fondos_ue_place). No toca producción ni descarga su base.
 # El fichero solo lleva identificadores de licitación (idEvl) y códigos de fondo: ningún nombre ni NIF.
 # Nunca escribe en main: si se pide main, el flujo se para.
+# GitHub solo ofrece «Run workflow» para flujos que ya están en main; mientras este viva solo en la rama, se lanza al
+# subir a la rama un cambio de este mismo fichero (con los valores por defecto). Los commits del propio flujo no lo
+# relanzan (GITHUB_TOKEN no dispara flujos).
 
 on:
+  push:
+    branches: [wip/fondos-ue-2021-2027]
+    paths: [.github/workflows/fondos-ue-place.yml]
   workflow_dispatch:
     inputs:
       rama:
@@ -34,11 +40,11 @@ jobs:
     steps:
       - name: Nunca en main
         run: |
-          if [ "${{ inputs.rama }}" = "main" ]; then echo "::error::Este flujo no escribe en main."; exit 1; fi
+          if [ "${{ inputs.rama || 'wip/fondos-ue-2021-2027' }}" = "main" ]; then echo "::error::Este flujo no escribe en main."; exit 1; fi
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.rama }}
+          ref: ${{ inputs.rama || 'wip/fondos-ue-2021-2027' }}
 
       - uses: actions/setup-python@v5
         with:
@@ -50,7 +56,7 @@ jobs:
       - name: Leer los ZIP mensuales de PLACE
         run: |
           cd backend
-          python generar_fondos_ue_place.py "${{ inputs.desde }}" "${{ inputs.hasta }}" --salida fondos_ue_place.json.gz
+          python generar_fondos_ue_place.py "${{ inputs.desde || '202610' }}" "${{ inputs.hasta || '202109' }}" --salida fondos_ue_place.json.gz
 
       - name: Guardar el fichero en la rama
         run: |
@@ -58,8 +64,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add backend/fondos_ue_place.json.gz
           if git diff --cached --quiet; then echo "Sin cambios."; exit 0; fi
-          git commit -m "Fondos europeos de los contratos de PLACE (${{ inputs.hasta }}-${{ inputs.desde }}) [skip render]"
-          git push origin "HEAD:${{ inputs.rama }}"
+          git commit -m "Fondos europeos de los contratos de PLACE (${{ inputs.hasta || '202109' }}-${{ inputs.desde || '202610' }}) [skip render]"
+          git push origin "HEAD:${{ inputs.rama || 'wip/fondos-ue-2021-2027' }}"
 
       # Por si la configuración del repositorio no deja escribir al flujo: el mismo fichero (sin datos personales) como
       # artefacto de 7 días, para bajarlo y subirlo a mano.
