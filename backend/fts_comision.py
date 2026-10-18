@@ -6,7 +6,7 @@ Conectar Europa, Europa Creativa, CERV, Europa Digital, EU4Health, Fondo de Defe
 cubre la gestión compartida (FEDER, FSE+, PAC…), que ya entra por Cohesion Data y Kohesio.
 
 Fuente: un CSV por ejercicio, https://ec.europa.eu/budget/financial-transparency-system/download/AAAA_FTS_dataset_en.csv
-(Windows-1252, comas, importes con coma de millares). Se baja a disco con flujo (sin cargarlo en memoria), se lee fila
+(comas, importes con coma de millares; 2014-2024 en UTF-8 con BOM y 2025 en Windows-1252: se detecta sola). Se baja a disco con flujo (sin cargarlo en memoria), se lee fila
 a fila y solo se guardan las de "Beneficiary country" = Spain. Ver "INFORME viabilidad fondos europeos 2" §1.
 
 Qué se descarta por defecto (configurable):
