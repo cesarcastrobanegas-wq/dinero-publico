@@ -3308,3 +3308,9 @@ msgstr "{n} contractes de PLACE d'aquest municipi declaren finançament europeu 
 
 #~ msgid "Esta página es una traducción. En caso de discrepancia, prevalece la <a href=\"{url}\">versión en castellano</a>."
 #~ msgstr "Aquesta pàgina és una traducció. En cas de discrepància, preval la <a href=\"{url}\">versió en castellà</a>."
+
+msgid "Operación sin título en la fuente"
+msgstr "Operació sense títol a la font"
+
+msgid "Código de la operación"
+msgstr "Codi de l'operació"

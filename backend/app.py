@@ -7597,7 +7597,7 @@ def _entry_to_contratos(entry_xml):
     # Fondos europeos que declara el órgano (2026-10-17): PRTR = Plan de Recuperación, FEDER, FSE+... (ver
     # _fondos_ue_de_entry). Solo se guarda el campo cuando hay alguno.
     fondos_ue = _fondos_ue_de_entry(entry_xml)
-    if fondos_ue:
+    if fondos_ue and not _es_invitacion_sda(titulo):
         base["fondos_ue"] = fondos_ue
     if adjs:
         base["resultado_code"] = adjs[0]["resultado_code"] or resultado_code
@@ -11047,6 +11047,14 @@ _FONDOS_UE_PLACE_DIAS = 7       # al arrancar, el resumen se rehace si tiene má
 FONDOS_UE_CODIGOS = ("PRTR", "FEDER", "FSE+", "FEADER", "FEMP", "REU", "OFE", "EU")
 _RE_FUNDING_CODE = re.compile(r"<(?:[\w-]+:)?FundingProgramCode\b[^>]*>\s*([^<\s]+)\s*<")
 _RE_NIF_SOCIEDAD = re.compile(r"^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$")
+# Invitaciones de un sistema dinámico de adquisición (SDA): en PLACE heredan los fondos declarados en el sistema, aunque la
+# compra concreta no tenga que ver (Almassora: bebidas y actuaciones de fiestas con FEDER). Decisión de César del 19-10:
+# no se marcan.
+_RE_INVITACION_SDA = re.compile(r"^\s*SDA\b|sistema\s+din[aá]mico\s+de\s+adquisici", re.IGNORECASE)
+
+
+def _es_invitacion_sda(titulo):
+    return bool(_RE_INVITACION_SDA.search(titulo or ""))
 
 
 def _fondos_ue_etiquetas():
@@ -11114,7 +11122,7 @@ def _aplicar_fondos_ue_place(forzar=False):
                 provincia = d.get("provincia") or ""
                 lugar = d.get("municipio") or d.get("nombre") or ""
                 for c in d.get("contratos", []):
-                    if c.get("fuente") != "PLACE":
+                    if c.get("fuente") != "PLACE" or _es_invitacion_sda(c.get("titulo")):
                         continue
                     cods = c.get("fondos_ue")
                     if not cods:
@@ -21322,9 +21330,16 @@ def _render_fila_fondo_ue(f, con_ambito=False):
     link_html = (f'<a class="fue-link" href="{esc(f["url"])}" target="_blank" rel="noopener">{_t("Ver proyecto ↗")}</a>'
                  if f.get("url") else "")
 
+    titulo = (f.get("titulo") or "").strip()
+    if f["fuente"] == "kohesio" and _kohesio_titulo_es_codigo(titulo):
+        titulo_html = (f'<div class="empresa">{_t("Operación sin título en la fuente")}</div>'
+                       + (f'<div class="lid">{_t("Código de la operación")}: {esc(titulo[:60])}</div>' if titulo else ""))
+    else:
+        titulo_html = f'<div class="empresa">{esc(titulo[:110])}</div>'
+
     return f"""<tr>
       <td>
-        <div class="empresa">{esc(f["titulo"][:110])}</div>
+        {titulo_html}
         {benef_html}
         {municipio_html}
       </td>
@@ -21332,6 +21347,14 @@ def _render_fila_fondo_ue(f, con_ambito=False):
       <td>{fuente_badge}<div class="cargo">{esc(f.get("programa","") or f.get("fondo",""))}</div></td>
       <td><div class="lid">{fechas}</div>{link_html}</td>
     </tr>"""
+
+
+def _kohesio_titulo_es_codigo(titulo):
+    """Kohesio publica algunas operaciones sin título: en su lugar va el código interno («2024-7-ES-SP-CHUAC»,
+    «PC25CLZAXCP0001»). Se reconoce porque no tiene espacios y lleva al menos cuatro cifras (los acrónimos de proyecto,
+    como «NatUR-W», no)."""
+    t = (titulo or "").strip()
+    return not t or (" " not in t and sum(ch.isdigit() for ch in t) >= 4)
 
 
 _FUENTE_CM_LABEL = {

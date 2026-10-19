@@ -3305,3 +3305,9 @@ msgstr "Udalerri honetako PLACEko kontratuetatik {n}k Europako finantzaketa adie
 
 #~ msgid "Los nombres de directivos y administradores provienen de registros públicos (Registro Mercantil y fuentes empresariales públicas equivalentes)."
 #~ msgstr "Zuzendarien eta administratzaileen izenak erregistro publikoetatik datoz (Merkataritza Erregistroa eta enpresa-iturri publiko baliokideak)."
+
+msgid "Operación sin título en la fuente"
+msgstr "Iturrian izenbururik gabeko eragiketa"
+
+msgid "Código de la operación"
+msgstr "Eragiketaren kodea"

@@ -3308,3 +3308,9 @@ msgstr "{n} contratos de PLACE deste municipio declaran financiamento europeo ({
 
 #~ msgid "Esta página es una traducción. En caso de discrepancia, prevalece la <a href=\"{url}\">versión en castellano</a>."
 #~ msgstr "Esta páxina é unha tradución. En caso de discrepancia, prevalece a <a href=\"{url}\">versión en castelán</a>."
+
+msgid "Operación sin título en la fuente"
+msgstr "Operación sen título na fonte"
+
+msgid "Código de la operación"
+msgstr "Código da operación"
