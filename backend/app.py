@@ -17215,6 +17215,11 @@ def _inicializar_datos():
     _aplicar_importe_adjudicado_place()
     _aplicar_fechas_formales()            # después de los backfills: rellena la fecha de lo que haya guardado
     _aplicar_fondos_ue_place()            # marca de fondos europeos (PLACE) y resumen de /fondos-ue
+    try:                                  # PAC: tablas y borrado de lo que ha cumplido dos años (art. 98.4)
+        _pac_tablas()
+        _pac_purgar()
+    except Exception as e:
+        print(f"[pac] arranque: ERROR ({type(e).__name__}: {e})", flush=True)
     _depurar_asignacion_place_por_nombre()
     corte = time.time() - RESULT_CACHE_TTL
     with _db_lock:
@@ -22096,7 +22101,8 @@ def render_fondos_ue_html(qs):
     res_place = _fondos_ue_place_resumen()
     with _db_lock:
         hay_mrr100 = bool(_db.execute("SELECT 1 FROM fondos_ue WHERE fuente='mrr100' LIMIT 1").fetchone())
-    if hay_koh or res_place or hay_mrr100:
+    pac_ej = [e for e, _m in _pac_ejercicios()]
+    if hay_koh or res_place or hay_mrr100 or pac_ej:
         trozos = [_t("De los fondos estructurales están los periodos 2014-2020 (FEDER y FSE) y 2021-2027 (FEDER, FSE+ y "
                      "Fondo de Transición Justa, lo que ya publica Kohesio), y de los de investigación, Horizon Europe "
                      "(desde 2021).") if hay_koh else
@@ -22118,7 +22124,11 @@ def render_fondos_ue_html(qs):
         if not (res_place or hay_mrr100):
             trozos.append(_t("En incorporación: Plan de Recuperación (Next Generation EU), previsto para finales de "
                              "octubre de 2026."))
-        trozos.append(_t("En incorporación: ayudas agrarias (PAC), prevista para noviembre de 2026."))
+        if pac_ej:
+            trozos.append(_t("De las ayudas agrarias (PAC) están los ejercicios {lista} del FEGA, sin nombres de personas "
+                             "físicas (abajo).").format(lista=esc(_lista_y([str(e) for e in sorted(pac_ej)]))))
+        else:
+            trozos.append(_t("En incorporación: ayudas agrarias (PAC), prevista para noviembre de 2026."))
         trozos.append(_t("No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa "
                          "distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la "
                          "pesca, los fondos de interior ni la cooperación entre regiones (Interreg) completa."))
@@ -22215,7 +22225,8 @@ def render_fondos_ue_html(qs):
     </table>
   </div>
   {pag_html}
-  {_html_plan_recuperacion(f, res_place)}"""
+  {_html_plan_recuperacion(f, res_place)}
+  {_html_pac(f, qs)}"""
 
     donde = (PROVINCIA_LABEL.get(f.get("provincia")) or COMUNIDAD_AUTONOMA_LABEL.get(f.get("comunidad"))
              or (_t("toda España") if toda_espana else _lista_y(nombres_cob) or "España"))
@@ -22307,6 +22318,341 @@ def _html_plan_recuperacion(f, res):
     return (f'<div class="fue-card fue-mrr" style="margin-top:18px"><div class="section-title" '
             f'style="color:var(--yellow);margin:12px 14px 0">🇪🇺 {_t("Plan de Recuperación y contratos con fondos europeos")}</div>'
             + "".join(partes) + "</div>")
+
+
+# ─── PAC (FEGA), OPCIÓN B (19-10-2026) ────────────────────────────────────────────────────────────────────────────
+# Decisiones de César del 18-10 (PLAN PAC opcion B.md, §7): las personas físicas, las comunidades de bienes, sociedades
+# civiles y herencias, y los nombres dudosos, nunca salen con nombre ni en una fila propia: solo en sumas por municipio
+# y nada si en el municipio son menos de 10. Solo salen con nombre las personas jurídicas claras. Ejercicios 2024 y
+# 2025, y cada uno se BORRA a los dos años de su publicación por el FEGA (art. 98.4 del Reglamento (UE) 2021/2116).
+# Lo genera backend/pac_fega.py en GitHub Actions (pac-fega.yml) y llega ya agregado a POST /admin/pac (_subir_pac).
+# Sin cruce con adjudicatarios todavía (decisión 5).
+try:
+    from . import pac_fega as PAC
+except ImportError:
+    import pac_fega as PAC
+
+_PAC_TABLAS = (
+    "CREATE TABLE IF NOT EXISTS pac_meta (ejercicio INTEGER PRIMARY KEY, data TEXT NOT NULL, caduca TEXT NOT NULL, "
+    "ts REAL NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS pac_provincia (ejercicio INTEGER NOT NULL, provincia TEXT NOT NULL, data TEXT NOT NULL, "
+    "caduca TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS pac_municipio (ejercicio INTEGER NOT NULL, provincia TEXT NOT NULL, municipio TEXT, "
+    "municipio_match TEXT DEFAULT '', feaga REAL, feader REAL, importe_visibles REAL, n_visibles INTEGER, "
+    "importe_anonimos REAL, n_anonimos INTEGER, anonimos_en_provincia INTEGER, caduca TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS pac_pj (ejercicio INTEGER NOT NULL, nombre TEXT NOT NULL, tipo TEXT NOT NULL, "
+    "provincia TEXT NOT NULL, municipio TEXT, municipio_match TEXT DEFAULT '', feaga REAL, feader REAL, importe REAL, "
+    "medidas TEXT, caduca TEXT NOT NULL)",
+    "CREATE INDEX IF NOT EXISTS idx_pac_muni ON pac_municipio(municipio_match, provincia, ejercicio)",
+    "CREATE INDEX IF NOT EXISTS idx_pac_pj_imp ON pac_pj(ejercicio, importe DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_pac_pj_prov ON pac_pj(provincia, ejercicio, importe DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_pac_pj_muni ON pac_pj(municipio_match, provincia, ejercicio)",
+)
+_PAC_TABLAS_DATOS = ("pac_meta", "pac_provincia", "pac_municipio", "pac_pj")
+_PAC_CACHE = {}
+_PAC_PURGADO = {"dia": ""}
+_PAC_TIPOS = {"mercantil": "Sociedad mercantil", "cooperativa_sat": "Cooperativa o SAT", "publica": "Entidad pública",
+              "asociativa": "Asociación, fundación o comunidad de regantes", "verificada": "Entidad (comprobada)"}
+_PAC_TRAMOS = ("1.250 € o menos", "De 1.250 a 5.000 €", "De 5.000 a 20.000 €", "De 20.000 a 100.000 €",
+               "De 100.000 a 300.000 €", "Más de 300.000 €")
+
+
+def _pac_hoy():
+    return _ahora_madrid().strftime("%Y-%m-%d")
+
+
+def _pac_tablas():
+    with _db_lock:
+        for sql in _PAC_TABLAS:
+            _db.execute(sql)
+        _db.commit()
+
+
+def _pac_purgar(hoy=None):
+    """Borra todo lo caducado (publicación del FEGA + 2 años). Al arrancar, al subir y una vez al día al consultar."""
+    hoy = hoy or _pac_hoy()
+    borradas = {}
+    with _db_lock:
+        for t in _PAC_TABLAS_DATOS:
+            n = _db.execute(f"DELETE FROM {t} WHERE caduca <= ?", (hoy,)).rowcount
+            if n:
+                borradas[t] = n
+        _db.commit()
+    _PAC_PURGADO["dia"] = hoy
+    if borradas:
+        _PAC_CACHE.clear()
+        print(f"[pac] borrado lo caducado a {hoy} (art. 98.4): {borradas}", flush=True)
+    return borradas
+
+
+def _pac_indice_municipios(provincia):
+    """Nombre comparable -> municipio de la web, por provincia (los nombres del INE y los de la web no siempre se
+    escriben igual: «Rosal, O» / «O Rosal», «Bisbal d'Empordà, la»)."""
+    clave = "idx:" + provincia
+    if clave not in _PAC_CACHE:
+        idx = {}
+        for m in MUNICIPIOS_POR_PROVINCIA.get(provincia, []):
+            for variante in (m, _clave_municipio_match(m)):
+                idx.setdefault(PAC._norm_muni(variante), m)
+        _PAC_CACHE[clave] = (time.time(), idx)
+    return _PAC_CACHE[clave][1]
+
+
+def _pac_municipio_match(provincia, nombre):
+    if not nombre:
+        return ""
+    idx = _pac_indice_municipios(provincia)
+    for variante in (nombre, _clave_municipio_match(nombre), nombre.split("/")[0]):
+        m = idx.get(PAC._norm_muni(variante))
+        if m:
+            return normalizar(m)
+    return ""
+
+
+def _subir_pac(crudo, forzar=False):
+    """Carga un ejercicio de la PAC (NDJSON en gzip de pac_fega.py). Sustituye ese ejercicio de golpe. Se rechaza
+    entero si: está caducado, la fecha de caducidad no es la publicación + 2 años, alguna fila con nombre no tiene una
+    forma jurídica clara (comprobación de anonimato, la misma regla del generador), algún municipio da la suma de menos
+    de 10 anónimos, o llega bastante menos de lo que había (protección de subidas)."""
+    _pac_tablas()
+    hoy = _pac_hoy()
+    try:
+        flujo = _gzip.GzipFile(fileobj=io.BytesIO(crudo)) if crudo[:2] == bytes([0x1F, 0x8B]) else io.BytesIO(crudo)
+        lineas = [json.loads(l) for l in flujo if l.strip()]
+    except (OSError, EOFError, ValueError) as e:
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    if not lineas or lineas[0].get("t") != "meta" or lineas[0].get("version") != PAC.VERSION:
+        return 400, {"error": "Falta la cabecera (meta) o la versión no es la esperada."}
+    meta = lineas[0]
+    try:
+        ej = int(meta["ejercicio"])
+        caduca = meta["caduca"]
+        if PAC._caduca(meta["fecha_publicacion"]) != caduca:
+            raise ValueError("caducidad")
+    except (KeyError, ValueError, TypeError) as e:
+        return 400, {"error": f"Cabecera no válida ({e})."}
+    if caduca <= hoy:
+        return 400, {"error": f"El ejercicio {ej} caducó el {caduca}: no se carga (art. 98.4 del Reglamento 2021/2116)."}
+    pj, muni, prov, malas = [], [], [], 0
+    for r in lineas[1:]:
+        try:
+            p = r["provincia"]
+            if p not in MUNICIPIOS_POR_PROVINCIA:
+                raise ValueError
+            if r["t"] == "pj":
+                if r["tipo"] not in PAC.VISIBLES or PAC.clasificar(PAC.norm(r["nombre"])) not in PAC.VISIBLES:
+                    return 400, {"error": "Comprobación de anonimato: hay una fila con nombre sin forma jurídica clara. "
+                                          "No se carga nada."}
+                pj.append((ej, r["nombre"][:300], r["tipo"], p, r.get("municipio") or "",
+                           _pac_municipio_match(p, r.get("municipio")), float(r["feaga"]), float(r["feader"]),
+                           float(r["importe"]), json.dumps(r.get("medidas") or {}, ensure_ascii=False), caduca))
+            elif r["t"] == "muni":
+                n_a = int(r["n_anonimos"])
+                if 0 < n_a < PAC.UMBRAL_ANONIMOS or (r.get("anonimos_en_provincia") and float(r["importe_anonimos"])):
+                    return 400, {"error": "Un municipio da la suma de menos de 10 anónimos. No se carga nada."}
+                muni.append((ej, p, r.get("municipio") or "", _pac_municipio_match(p, r.get("municipio")),
+                             float(r["feaga"]), float(r["feader"]), float(r["importe_visibles"]), int(r["n_visibles"]),
+                             float(r["importe_anonimos"]), n_a, int(bool(r.get("anonimos_en_provincia"))), caduca))
+            elif r["t"] == "prov":
+                prov.append((ej, p, json.dumps(r, ensure_ascii=False), caduca))
+            else:
+                raise ValueError
+        except (KeyError, ValueError, TypeError):
+            malas += 1
+    if len(pj) < 1000 or len(muni) < 1000 or len(prov) < 40:
+        return 400, {"error": f"Fichero incompleto: {len(pj)} personas jurídicas, {len(muni)} municipios, {len(prov)} "
+                              f"provincias ({malas} líneas con error)."}
+    with _db_lock:
+        antes = _db.execute("SELECT count(*) FROM pac_pj WHERE ejercicio=?", (ej,)).fetchone()[0]
+    if not forzar and _subida_demasiado_pequena(antes, len(pj)):
+        return _rechazar_subida("/admin/pac", "personas jurídicas", antes, len(pj))
+    meta_guardada = {k: v for k, v in meta.items() if k != "t"}
+    with _db_lock:
+        for t in _PAC_TABLAS_DATOS:
+            _db.execute(f"DELETE FROM {t} WHERE ejercicio=?", (ej,))
+        _db.execute("INSERT INTO pac_meta (ejercicio, data, caduca, ts) VALUES (?,?,?,?)",
+                    (ej, json.dumps(meta_guardada, ensure_ascii=False), caduca, time.time()))
+        _db.executemany("INSERT INTO pac_provincia VALUES (?,?,?,?)", prov)
+        _db.executemany("INSERT INTO pac_municipio VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", muni)
+        _db.executemany("INSERT INTO pac_pj VALUES (?,?,?,?,?,?,?,?,?,?,?)", pj)
+        _db.commit()
+    _PAC_CACHE.clear()
+    _pac_purgar(hoy)
+    casados = sum(1 for m in muni if m[3])
+    print(f"[pac] ejercicio {ej} cargado: {len(pj)} personas jurídicas, {len(muni)} municipios ({casados} casan con "
+          f"la web), {len(prov)} provincias; caduca el {caduca}; {malas} líneas con error", flush=True)
+    return 200, {"ejercicio": ej, "caduca": caduca, "personas_juridicas": len(pj), "antes": antes,
+                 "municipios": len(muni), "municipios_casados": casados, "provincias": len(prov),
+                 "lineas_con_error": malas}
+
+
+def _pac_ejercicios():
+    """[(ejercicio, meta)] vigentes, el más reciente primero. Purga lo caducado una vez al día."""
+    hoy = _pac_hoy()
+    if _PAC_PURGADO["dia"] != hoy:
+        try:
+            _pac_purgar(hoy)
+        except Exception as e:
+            print(f"[pac] purga: ERROR ({type(e).__name__}: {e})", flush=True)
+    try:
+        with _db_lock:
+            filas = _db.execute("SELECT ejercicio, data FROM pac_meta WHERE caduca > ? ORDER BY ejercicio DESC",
+                                (hoy,)).fetchall()
+    except Exception:
+        return []
+    return [(e, json.loads(d)) for e, d in filas]
+
+
+def _pac_diagnostico():
+    try:
+        return {str(e): {"fecha_publicacion": m.get("fecha_publicacion"), "caduca": m.get("caduca"),
+                         "personas_juridicas": m.get("visibles"), "municipios": m.get("municipios")}
+                for e, m in _pac_ejercicios()}
+    except Exception as e:
+        return {"error": type(e).__name__}
+
+
+def _pac_zona(f):
+    if f.get("provincia"):
+        return [f["provincia"]], PROVINCIA_LABEL.get(f["provincia"], f["provincia"])
+    if f.get("comunidad"):
+        return ([p for p in MUNICIPIOS_POR_PROVINCIA if COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(p) == f["comunidad"]],
+                COMUNIDAD_AUTONOMA_LABEL.get(f["comunidad"], ""))
+    return None, _t("toda España")
+
+
+def _html_pac(f, qs):
+    """Bloque de /fondos-ue con la PAC del FEGA (opción B). Solo sale si hay algún ejercicio vigente."""
+    ejercicios = _pac_ejercicios()
+    if not ejercicios:
+        return ""
+    try:
+        pedido = int((qs.get("pac", [""])[0] or 0))
+    except ValueError:
+        pedido = 0
+    ej, meta = next(((e, m) for e, m in ejercicios if e == pedido), ejercicios[0])
+    provs, donde = _pac_zona(f)
+    hoy = _pac_hoy()
+    clave = ("pac", ej, tuple(provs or ()), hoy)
+    if clave not in _PAC_CACHE:
+        with _db_lock:
+            sql = "SELECT data FROM pac_provincia WHERE ejercicio=? AND caduca > ?"
+            args = [ej, hoy]
+            if provs is not None:
+                sql += f" AND provincia IN ({','.join('?' * len(provs))})"
+                args += provs
+            datos = [json.loads(d) for (d,) in _db.execute(sql, args).fetchall()]
+            sql = "SELECT nombre, tipo, provincia, municipio, importe FROM pac_pj WHERE ejercicio=? AND caduca > ?"
+            if provs is not None:
+                sql += f" AND provincia IN ({','.join('?' * len(provs))})"
+            top = _db.execute(sql + " ORDER BY importe DESC LIMIT 25", args).fetchall()
+        if len(_PAC_CACHE) > 200:
+            _PAC_CACHE.clear()
+        _PAC_CACHE[clave] = (time.time(), (datos, top))
+    datos, top = _PAC_CACHE[clave][1]
+    if not datos:
+        return ""
+    suma = lambda k: sum((d.get(k) or 0) for d in datos)
+    importe, n_v, imp_v = suma("importe"), suma("n_visibles"), suma("importe_visibles")
+    n_a, imp_a = suma("n_anonimos"), suma("importe_anonimos")
+    separables = all(d.get("feaga") is not None for d in datos)
+    base = _fue_url(f, pag=1)
+    sel = " · ".join((f"<b>{e}</b>" if e == ej else
+                      f'<a href="{esc(base + ("&" if "?" in base else "?") + f"pac={e}")}#pac">{e}</a>')
+                     for e, _m in ejercicios)
+    partes = ['<p style="margin:10px 14px">'
+              + _t("Ejercicio financiero {e} (del 16-10-{a} al 15-10-{e}), {donde}: {importe} pagados.").format(
+                  e=ej, a=ej - 1, donde=esc(donde), importe=fmt_eur(str(importe)))
+              + (" " + _t("FEAGA (ayudas directas y mercados): {feaga}; FEADER (desarrollo rural, UE + nacional): "
+                         "{feader}.").format(feaga=fmt_eur(str(suma("feaga"))), feader=fmt_eur(str(suma("feader"))))
+                 if separables else "")
+              + f' <span class="lid">{_t("Ejercicio")}: {sel}</span></p>',
+              f'<div style="display:flex;flex-wrap:wrap;gap:0 18px;margin:0 14px">'
+              f'<div class="stat" style="border-color:var(--border)"><span>{fmt_num(n_v)}</span>'
+              f'{_t("Personas jurídicas, con nombre")} · {fmt_eur(str(imp_v))}</div>'
+              f'<div class="stat" style="border-color:var(--border)"><span>{fmt_num(n_a)}</span>'
+              f'{_t("Personas físicas y otros, sin nombre")} · {fmt_eur(str(imp_a))}</div></div>']
+    filas_t = "".join(
+        f'<tr><td class="n">{i}</td><td><div class="empresa">{esc(n)}</div><div class="lid">{_t(_PAC_TIPOS.get(t, t))}'
+        f'{" · " + esc(mu) if mu else ""}{" · " + esc(PROVINCIA_LABEL.get(p, p).replace("Provincia de ", "")) if provs is None or len(provs) > 1 else ""}'
+        f'</div></td><td class="importe">{fmt_eur(str(imp))}</td></tr>' for i, (n, t, p, mu, imp) in enumerate(top, 1))
+    if filas_t:
+        partes.append(f'<details open><summary>{_t("Las 25 personas jurídicas que más reciben")}</summary>'
+                      f'<table><tr><th>#</th><th>{_t("Beneficiario")}</th><th>{_t("Importe")}</th></tr>{filas_t}</table></details>')
+    tn = [sum(d["tramos_n"][i] for d in datos) for i in range(6)]
+    ti = [None if any(d["tramos_importe"][i] is None for d in datos) else sum(d["tramos_importe"][i] for d in datos)
+          for i in range(6)]
+    filas_tr = "".join(f'<tr><td>{_t(_PAC_TRAMOS[i])}</td><td class="n">{fmt_num(tn[i])}</td>'
+                       f'<td class="importe">{fmt_eur(str(ti[i])) if ti[i] is not None else "—"}</td></tr>' for i in range(6))
+    partes.append(f'<details><summary>{_t("Perceptores sin nombre por tramo de importe")}</summary>'
+                  f'<table><tr><th>{_t("Tramo (lo cobrado en el ejercicio)")}</th><th>{_t("Perceptores")}</th>'
+                  f'<th>{_t("Importe")}</th></tr>{filas_tr}</table>'
+                  f'<div class="gs-hint" style="margin:4px 14px;font-size:12px">'
+                  + _t("Un tramo con menos de 10 perceptores en alguna provincia no da su importe (sería lo de una o dos "
+                       "personas).") + '</div></details>')
+    partes.append(
+        '<div class="gs-hint" style="margin:6px 14px 10px;font-size:12px">'
+        + _t("Datos del Fondo Español de Garantía Agraria (FEGA). Por ley solo se publican dos años (art. 98.4 del "
+             "Reglamento (UE) 2021/2116): cada ejercicio se borra de esta web al cumplir dos años desde que el FEGA lo "
+             "publicó; el de {e}, el {caduca}.").format(e=ej, caduca=esc(_conv_fecha(meta.get("caduca", ""))))
+        + " " + _t("No mostramos el nombre de las personas físicas, ni de las comunidades de bienes, sociedades civiles "
+                   "o herencias: solo sumas por municipio, y ninguna si en el municipio son menos de 10. Los de 1.250 € "
+                   "o menos ya llegan del FEGA sin nombre.")
+        + " " + _t("Solo sale con nombre lo que tiene una forma jurídica clara (sociedad, cooperativa, entidad pública, "
+                   "asociación...), así que aquí hay menos nombres que en la web del FEGA. El FEGA no publica el NIF. Si "
+                   "una entidad quiere que se retire su nombre, puede pedirlo en contacto@dinero-publico.com.")
+        + f' <a href="{esc(meta.get("pagina") or PAC.PAGINA_FEGA)}" target="_blank" rel="noopener">{_t("Fuente")} ↗</a></div>')
+    return (f'<div class="fue-card" id="pac" style="margin-top:18px"><div class="section-title" '
+            f'style="color:var(--yellow);margin:12px 14px 0">🌾 {_t("Ayudas agrarias de la PAC (FEAGA y FEADER)")}</div>'
+            + "".join(partes) + "</div>")
+
+
+def _html_pac_municipio(muni_name, provincia):
+    """Bloque de la ficha de municipio: la PAC del último ejercicio vigente cobrada por beneficiarios de este municipio
+    (el FEGA da el municipio donde reside o está registrado el beneficiario, art. 98.3.c)."""
+    ejercicios = _pac_ejercicios()
+    if not ejercicios or not provincia:
+        return ""
+    ej, meta = ejercicios[0]
+    hoy = _pac_hoy()
+    clave_m = normalizar(muni_name)
+    with _db_lock:
+        m = _db.execute("SELECT feaga, feader, importe_visibles, n_visibles, importe_anonimos, n_anonimos, "
+                        "anonimos_en_provincia FROM pac_municipio WHERE municipio_match=? AND provincia=? AND "
+                        "ejercicio=? AND caduca > ?", (clave_m, provincia, ej, hoy)).fetchone()
+        if not m:
+            return ""
+        top = _db.execute("SELECT nombre, tipo, importe FROM pac_pj WHERE municipio_match=? AND provincia=? AND "
+                          "ejercicio=? AND caduca > ? ORDER BY importe DESC LIMIT 20", (clave_m, provincia, ej, hoy)).fetchall()
+    feaga, feader, imp_v, n_v, imp_a, n_a, en_prov = m
+    if not n_v and not n_a:
+        if not en_prov:
+            return ""
+        return (f'<div class="fue-card" style="margin-top:14px;padding:10px 14px">🌾 '
+                + _t("Ayudas de la PAC (ejercicio {e}, FEGA): en este municipio las cobran menos de 10 personas físicas u "
+                     "otros beneficiarios sin nombre, así que su importe no se da aquí: va en el total de la provincia.").format(e=ej)
+                + f' <a href="/fondos-ue#pac">{_t("Más sobre la PAC")}</a></div>')
+    texto = _t("Ayudas de la PAC cobradas por beneficiarios de este municipio (ejercicio {e}, FEGA): {importe}; FEAGA "
+               "{feaga} y FEADER {feader}.").format(e=ej, importe=fmt_eur(str(imp_v + imp_a)), feaga=fmt_eur(str(feaga)),
+                                                    feader=fmt_eur(str(feader)))
+    texto += " " + _t("Personas jurídicas, con nombre: {n} por {importe}.").format(n=fmt_num(n_v), importe=fmt_eur(str(imp_v)))
+    if en_prov:
+        texto += " " + _t("Las personas físicas y otros beneficiarios sin nombre de este municipio son menos de 10: su "
+                          "importe no se da aquí y va en el total de la provincia.")
+    elif n_a:
+        texto += " " + _t("Personas físicas y otros, sin nombre: {n} perceptores por {importe}.").format(
+            n=fmt_num(n_a), importe=fmt_eur(str(imp_a)))
+    filas = "".join(f'<tr><td><div class="empresa">{esc(n)}</div><div class="lid">{_t(_PAC_TIPOS.get(t, t))}</div></td>'
+                    f'<td class="importe">{fmt_eur(str(imp))}</td></tr>' for n, t, imp in top)
+    return (f'<div class="fue-card" style="margin-top:14px"><div class="section-title" style="color:var(--yellow);'
+            f'margin:0 0 8px">🌾 {_t("Ayudas agrarias de la PAC")}</div>'
+            f'<p style="margin:0 0 8px">{texto}</p>'
+            + (f'<details><summary>{_t("Personas jurídicas que más reciben")}</summary><table><tr><th>{_t("Beneficiario")}'
+               f'</th><th>{_t("Importe")}</th></tr>{filas}</table></details>' if filas else "")
+            + '<div class="gs-hint" style="margin:6px 0 0;font-size:12px">'
+            + _t("Sin nombres de personas físicas. Cada ejercicio se borra a los dos años de publicarse (el de {e}, el "
+                 "{caduca}).").format(e=ej, caduca=esc(_conv_fecha(meta.get("caduca", ""))))
+            + f' <a href="/fondos-ue#pac">{_t("Más sobre la PAC")}</a></div></div>')
 
 
 def _html_mrr100_busqueda(q):
@@ -22985,6 +23331,11 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # contratos públicos normales.
         fondos_ue_muni = _db_fondos_ue_por_municipio(muni_name_d, d.get("provincia", provincia))
         fondos_ue_html = ""
+        try:
+            pac_html = _html_pac_municipio(muni_name_d, d.get("provincia", provincia)) if is_paged else ""
+        except Exception as e:
+            pac_html = ""
+            print(f"[pac] ficha: ERROR ({type(e).__name__}: {e})", flush=True)
         # 2026-10-17: contratos de PLACE de este municipio en los que el órgano declara financiación europea
         con_ue = [c for c in d.get("contratos", []) if c.get("fondos_ue")]
         if con_ue:
@@ -23015,6 +23366,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
               {filas_fue}
             </table>
           </div>"""
+        fondos_ue_html += pac_html
 
         # Índice de Transparencia de este municipio -- solo en la ficha de
         # UN municipio concreto (is_paged), no en listados de "todos los
@@ -24450,6 +24802,7 @@ def _diagnostico_arranque():
         "memoria_desglose": _memoria_desglose(),
         "carga": _estado_carga(),
         "disco": _uso_disco(),
+        "pac": _pac_diagnostico(),
     }
 
 
@@ -29096,6 +29449,22 @@ def _app_wsgi(environ, start_response):
         else:
             code, cuerpo = _subir_fondos_ue(environ["wsgi.input"].read(length) if length else b"",
                                             forzar=qs.get("forzar", [""])[0] == "si")
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
+    elif method == "POST" and path == "/admin/pac":
+        # PAC del FEGA (NDJSON en gzip de pac_fega.py, ya sin nombres de personas físicas): ver _subir_pac
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
+            code, cuerpo = 403, {"error": "No autorizado."}
+        elif length > 30 * 1024 * 1024:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            code, cuerpo = _subir_pac(environ["wsgi.input"].read(length) if length else b"",
+                                      forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/asignacion-formales":

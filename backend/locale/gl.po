@@ -3314,3 +3314,111 @@ msgstr "Operación sen título na fonte"
 
 msgid "Código de la operación"
 msgstr "Código da operación"
+
+msgid "Sociedad mercantil"
+msgstr "Sociedade mercantil"
+
+msgid "Cooperativa o SAT"
+msgstr "Cooperativa ou SAT"
+
+msgid "Entidad pública"
+msgstr "Entidade pública"
+
+msgid "Asociación, fundación o comunidad de regantes"
+msgstr "Asociación, fundación ou comunidade de regantes"
+
+msgid "Entidad (comprobada)"
+msgstr "Entidade (comprobada)"
+
+msgid "1.250 € o menos"
+msgstr "1.250 € ou menos"
+
+msgid "De 1.250 a 5.000 €"
+msgstr "De 1.250 a 5.000 €"
+
+msgid "De 5.000 a 20.000 €"
+msgstr "De 5.000 a 20.000 €"
+
+msgid "De 20.000 a 100.000 €"
+msgstr "De 20.000 a 100.000 €"
+
+msgid "De 100.000 a 300.000 €"
+msgstr "De 100.000 a 300.000 €"
+
+msgid "Más de 300.000 €"
+msgstr "Máis de 300.000 €"
+
+msgid "Ayudas de la PAC cobradas por beneficiarios de este municipio (ejercicio {e}, FEGA): {importe}; FEAGA {feaga} y FEADER {feader}."
+msgstr "Axudas da PAC cobradas por beneficiarios deste concello (exercicio {e}, FEGA): {importe}; FEAGA {feaga} e FEADER {feader}."
+
+msgid "Las personas físicas y otros beneficiarios sin nombre de este municipio son menos de 10: su importe no se da aquí y va en el total de la provincia."
+msgstr "As persoas físicas e outros beneficiarios sen nome deste concello son menos de 10: o seu importe non se dá aquí e vai no total da provincia."
+
+msgid "Personas jurídicas, con nombre"
+msgstr "Persoas xurídicas, con nome"
+
+msgid "Personas físicas y otros, sin nombre"
+msgstr "Persoas físicas e outros, sen nome"
+
+msgid "Un tramo con menos de 10 perceptores en alguna provincia no da su importe (sería lo de una o dos personas)."
+msgstr "Un tramo con menos de 10 perceptores nalgunha provincia non dá o seu importe (sería o dunha ou dúas persoas)."
+
+msgid "Solo sale con nombre lo que tiene una forma jurídica clara (sociedad, cooperativa, entidad pública, asociación...), así que aquí hay menos nombres que en la web del FEGA. El FEGA no publica el NIF. Si una entidad quiere que se retire su nombre, puede pedirlo en contacto@dinero-publico.com."
+msgstr "Só sae co nome o que ten unha forma xurídica clara (sociedade, cooperativa, entidade pública, asociación...), así que aquí hai menos nomes que na web do FEGA. O FEGA non publica o NIF. Se unha entidade quere que se retire o seu nome, pode pedilo en contacto@dinero-publico.com."
+
+msgid "Personas jurídicas, con nombre: {n} por {importe}."
+msgstr "Persoas xurídicas, con nome: {n} por {importe}."
+
+msgid "Más sobre la PAC"
+msgstr "Máis sobre a PAC"
+
+msgid "Ejercicio"
+msgstr "Exercicio"
+
+msgid "Las 25 personas jurídicas que más reciben"
+msgstr "As 25 persoas xurídicas que máis reciben"
+
+msgid "Beneficiario"
+msgstr "Beneficiario"
+
+msgid "Ayudas agrarias de la PAC (FEAGA y FEADER)"
+msgstr "Axudas agrarias da PAC (FEAGA e FEADER)"
+
+msgid "Sin nombres de personas físicas. Cada ejercicio se borra a los dos años de publicarse (el de {e}, el {caduca})."
+msgstr "Sen nomes de persoas físicas. Cada exercicio bórrase aos dous anos de publicarse (o de {e}, o {caduca})."
+
+msgid "De las ayudas agrarias (PAC) están los ejercicios {lista} del FEGA, sin nombres de personas físicas (abajo)."
+msgstr "Das axudas agrarias (PAC) están os exercicios {lista} do FEGA, sen nomes de persoas físicas (abaixo)."
+
+msgid "Perceptores sin nombre por tramo de importe"
+msgstr "Perceptores sen nome por tramo de importe"
+
+msgid "Tramo (lo cobrado en el ejercicio)"
+msgstr "Tramo (o cobrado no exercicio)"
+
+msgid "Perceptores"
+msgstr "Perceptores"
+
+msgid "No mostramos el nombre de las personas físicas, ni de las comunidades de bienes, sociedades civiles o herencias: solo sumas por municipio, y ninguna si en el municipio son menos de 10. Los de 1.250 € o menos ya llegan del FEGA sin nombre."
+msgstr "Non mostramos o nome das persoas físicas, nin das comunidades de bens, sociedades civís ou herdanzas: só sumas por concello, e ningunha se no concello son menos de 10. Os de 1.250 € ou menos xa chegan do FEGA sen nome."
+
+msgid "Ayudas de la PAC (ejercicio {e}, FEGA): en este municipio las cobran menos de 10 personas físicas u otros beneficiarios sin nombre, así que su importe no se da aquí: va en el total de la provincia."
+msgstr "Axudas da PAC (exercicio {e}, FEGA): neste concello cóbranas menos de 10 persoas físicas ou outros beneficiarios sen nome, así que o seu importe non se dá aquí: vai no total da provincia."
+
+msgid "Personas físicas y otros, sin nombre: {n} perceptores por {importe}."
+msgstr "Persoas físicas e outros, sen nome: {n} perceptores por {importe}."
+
+msgid "Ejercicio financiero {e} (del 16-10-{a} al 15-10-{e}), {donde}: {importe} pagados."
+msgstr "Exercicio financeiro {e} (do 16-10-{a} ao 15-10-{e}), {donde}: {importe} pagados."
+
+msgid "Ayudas agrarias de la PAC"
+msgstr "Axudas agrarias da PAC"
+
+msgid "FEAGA (ayudas directas y mercados): {feaga}; FEADER (desarrollo rural, UE + nacional): {feader}."
+msgstr "FEAGA (axudas directas e mercados): {feaga}; FEADER (desenvolvemento rural, UE + nacional): {feader}."
+
+msgid "Personas jurídicas que más reciben"
+msgstr "Persoas xurídicas que máis reciben"
+
+msgid "Datos del Fondo Español de Garantía Agraria (FEGA). Por ley solo se publican dos años (art. 98.4 del Reglamento (UE) 2021/2116): cada ejercicio se borra de esta web al cumplir dos años desde que el FEGA lo publicó; el de {e}, el {caduca}."
+msgstr "Datos do Fondo Español de Garantía Agraria (FEGA). Por lei só se publican dous anos (art. 98.4 do Regulamento (UE) 2021/2116): cada exercicio bórrase desta web ao cumprir dous anos desde que o FEGA o publicou; o de {e}, o {caduca}."

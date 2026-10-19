@@ -1,0 +1,71 @@
+name: PAC del FEGA (a mano y en verano)
+
+# Ayudas de la PAC (FEAGA y FEADER) del FEGA con la OPCIÓN B (decisiones de César del 18-10-2026; ver
+# backend/pac_fega.py y el «PLAN PAC opcion B.md»):
+#  - Las personas físicas, las comunidades de bienes, sociedades civiles y herencias, y los nombres dudosos NUNCA salen con
+#    nombre ni en una fila propia: el generador los suma por municipio (nada si en el municipio son menos de 10) y el
+#    fichero que sube ya no lleva sus nombres. Solo salen con nombre las personas jurídicas claras.
+#  - Cada ejercicio lleva su fecha de caducidad (publicación del FEGA + 2 años, art. 98.4 del Reglamento (UE) 2021/2116):
+#    la web lo borra sola ese día y no acepta subidas caducadas.
+#  - El ZIP del FEGA se descarga a un temporal que se borra; ni el ZIP ni el fichero generado se guardan en el
+#    repositorio ni como artefacto. NUNCA se genera aquí la lista de revisión (--revision), que lleva nombres.
+#  - La subida está protegida: si llega más de un 20 % por debajo de lo que hay, la web responde 409 y no cambia nada.
+#  - El FEGA publica a finales de mayo y corrige en junio: además de a mano, el día 2 de junio a septiembre por la tarde
+#    (fuera del refresco nocturno).
+
+on:
+  schedule:
+    - cron: "15 16 2 6-9 *"
+  workflow_dispatch:
+    inputs:
+      ejercicios:
+        description: "Ejercicios financieros separados por espacios (vacío: los dos últimos; el FEGA solo publica dos)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pac-fega
+  cancel-in-progress: false
+
+jobs:
+  pac:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generar y subir
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          EJERCICIOS: ${{ inputs.ejercicios }}
+        run: |
+          # Por defecto, los dos ejercicios anteriores al año en curso. Uno aún no publicado o ya caducado (más de dos
+          # años desde su publicación) se salta: el generador sale con código 3.
+          anio=$(date +%Y)
+          for e in ${EJERCICIOS:-$((anio - 1)) $((anio - 2))}; do
+            rc=0
+            python backend/pac_fega.py --ejercicio "$e" --salida "pac_$e.ndjson.gz" || rc=$?
+            if [ "$rc" -eq 3 ]; then echo "::warning::Ejercicio $e: no publicado o caducado; se salta."; continue; fi
+            [ "$rc" -eq 0 ] || exit "$rc"
+            fin=$(( $(date +%s) + 300 ))
+            while true; do
+              codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST -H "Content-Type: application/gzip" \
+                --data-binary @"pac_$e.ndjson.gz" \
+                -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/pac" || echo 000)
+              case "$codigo" in
+                000|502|503|504|520|521|522|523|524)
+                  [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                  echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
+                200) cat respuesta.json; echo; break ;;
+                *) echo "::error::Subida del ejercicio $e rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
+              esac
+            done
+            rm -f "pac_$e.ndjson.gz"
+          done

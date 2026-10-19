@@ -3311,3 +3311,111 @@ msgstr "Iturrian izenbururik gabeko eragiketa"
 
 msgid "Código de la operación"
 msgstr "Eragiketaren kodea"
+
+msgid "Sociedad mercantil"
+msgstr "Merkataritza-sozietatea"
+
+msgid "Cooperativa o SAT"
+msgstr "Kooperatiba edo NES"
+
+msgid "Entidad pública"
+msgstr "Erakunde publikoa"
+
+msgid "Asociación, fundación o comunidad de regantes"
+msgstr "Elkartea, fundazioa edo ureztatzaileen erkidegoa"
+
+msgid "Entidad (comprobada)"
+msgstr "Erakundea (egiaztatua)"
+
+msgid "1.250 € o menos"
+msgstr "1.250 € edo gutxiago"
+
+msgid "De 1.250 a 5.000 €"
+msgstr "1.250etik 5.000 €-ra"
+
+msgid "De 5.000 a 20.000 €"
+msgstr "5.000tik 20.000 €-ra"
+
+msgid "De 20.000 a 100.000 €"
+msgstr "20.000tik 100.000 €-ra"
+
+msgid "De 100.000 a 300.000 €"
+msgstr "100.000tik 300.000 €-ra"
+
+msgid "Más de 300.000 €"
+msgstr "300.000 € baino gehiago"
+
+msgid "Ayudas de la PAC cobradas por beneficiarios de este municipio (ejercicio {e}, FEGA): {importe}; FEAGA {feaga} y FEADER {feader}."
+msgstr "Udalerri honetako onuradunek jasotako NPBko laguntzak ({e} ekitaldia, FEGA): {importe}; FEAGA: {feaga}, eta FEADER: {feader}."
+
+msgid "Las personas físicas y otros beneficiarios sin nombre de este municipio son menos de 10: su importe no se da aquí y va en el total de la provincia."
+msgstr "Udalerri honetako pertsona fisikoak eta izenik gabeko beste onuradun batzuk 10 baino gutxiago dira: haien zenbatekoa ez da hemen ematen, probintziako guztizkoan baizik."
+
+msgid "Personas jurídicas, con nombre"
+msgstr "Pertsona juridikoak, izenarekin"
+
+msgid "Personas físicas y otros, sin nombre"
+msgstr "Pertsona fisikoak eta beste batzuk, izenik gabe"
+
+msgid "Un tramo con menos de 10 perceptores en alguna provincia no da su importe (sería lo de una o dos personas)."
+msgstr "Probintziaren batean 10 hartzaile baino gutxiago dituen tarte batek ez du bere zenbatekoa ematen (pertsona baten edo biren zenbatekoa litzateke)."
+
+msgid "Solo sale con nombre lo que tiene una forma jurídica clara (sociedad, cooperativa, entidad pública, asociación...), así que aquí hay menos nombres que en la web del FEGA. El FEGA no publica el NIF. Si una entidad quiere que se retire su nombre, puede pedirlo en contacto@dinero-publico.com."
+msgstr "Forma juridiko argia duena bakarrik agertzen da izenarekin (sozietatea, kooperatiba, erakunde publikoa, elkartea...); beraz, hemen FEGAren webean baino izen gutxiago daude. FEGAk ez du IFZ argitaratzen. Erakunde batek bere izena kentzea nahi badu, contacto@dinero-publico.com helbidean eska dezake."
+
+msgid "Personas jurídicas, con nombre: {n} por {importe}."
+msgstr "Pertsona juridikoak, izenarekin: {n}, guztira {importe}."
+
+msgid "Más sobre la PAC"
+msgstr "NPBri buruz gehiago"
+
+msgid "Ejercicio"
+msgstr "Ekitaldia"
+
+msgid "Las 25 personas jurídicas que más reciben"
+msgstr "Gehien jasotzen duten 25 pertsona juridikoak"
+
+msgid "Beneficiario"
+msgstr "Onuraduna"
+
+msgid "Ayudas agrarias de la PAC (FEAGA y FEADER)"
+msgstr "NPBko nekazaritza-laguntzak (FEAGA eta FEADER)"
+
+msgid "Sin nombres de personas físicas. Cada ejercicio se borra a los dos años de publicarse (el de {e}, el {caduca})."
+msgstr "Pertsona fisikoen izenik gabe. Ekitaldi bakoitza argitaratu eta bi urtera ezabatzen da ({e} ekitaldia: {caduca})."
+
+msgid "De las ayudas agrarias (PAC) están los ejercicios {lista} del FEGA, sin nombres de personas físicas (abajo)."
+msgstr "Nekazaritza-laguntzetatik (NPB), FEGAren ekitaldi hauek daude: {lista}, pertsona fisikoen izenik gabe (behean)."
+
+msgid "Perceptores sin nombre por tramo de importe"
+msgstr "Izenik gabeko hartzaileak, zenbateko-tarteka"
+
+msgid "Tramo (lo cobrado en el ejercicio)"
+msgstr "Tartea (ekitaldian jasotakoa)"
+
+msgid "Perceptores"
+msgstr "Hartzaileak"
+
+msgid "No mostramos el nombre de las personas físicas, ni de las comunidades de bienes, sociedades civiles o herencias: solo sumas por municipio, y ninguna si en el municipio son menos de 10. Los de 1.250 € o menos ya llegan del FEGA sin nombre."
+msgstr "Ez dugu pertsona fisikoen izenik erakusten, ezta ondasun-erkidegoena, sozietate zibilena edo jaraunspenena ere: udalerriko baturak bakarrik, eta bat ere ez udalerrian 10 baino gutxiago badira. 1.250 € edo gutxiagokoak izenik gabe iristen dira FEGAtik."
+
+msgid "Ayudas de la PAC (ejercicio {e}, FEGA): en este municipio las cobran menos de 10 personas físicas u otros beneficiarios sin nombre, así que su importe no se da aquí: va en el total de la provincia."
+msgstr "NPBko laguntzak ({e} ekitaldia, FEGA): udalerri honetan 10 pertsona fisiko edo izenik gabeko onuradun baino gutxiagok jasotzen dituzte; beraz, haien zenbatekoa ez da hemen ematen: probintziako guztizkoan dago."
+
+msgid "Personas físicas y otros, sin nombre: {n} perceptores por {importe}."
+msgstr "Pertsona fisikoak eta beste batzuk, izenik gabe: {n} hartzaile, guztira {importe}."
+
+msgid "Ejercicio financiero {e} (del 16-10-{a} al 15-10-{e}), {donde}: {importe} pagados."
+msgstr "{e} finantza-ekitaldia (16-10-{a} - 15-10-{e}), {donde}: {importe} ordainduta."
+
+msgid "Ayudas agrarias de la PAC"
+msgstr "NPBko nekazaritza-laguntzak"
+
+msgid "FEAGA (ayudas directas y mercados): {feaga}; FEADER (desarrollo rural, UE + nacional): {feader}."
+msgstr "FEAGA (laguntza zuzenak eta merkatuak): {feaga}; FEADER (landa-garapena, EB + estatukoa): {feader}."
+
+msgid "Personas jurídicas que más reciben"
+msgstr "Gehien jasotzen duten pertsona juridikoak"
+
+msgid "Datos del Fondo Español de Garantía Agraria (FEGA). Por ley solo se publican dos años (art. 98.4 del Reglamento (UE) 2021/2116): cada ejercicio se borra de esta web al cumplir dos años desde que el FEGA lo publicó; el de {e}, el {caduca}."
+msgstr "Nekazaritza Bermerako Espainiako Funtsaren (FEGA) datuak. Legez bi urte bakarrik argitaratzen dira ((EB) 2021/2116 Erregelamenduaren 98.4 art.): ekitaldi bakoitza web honetatik ezabatzen da FEGAk argitaratu eta bi urte betetzean; {e} ekitaldia: {caduca}."

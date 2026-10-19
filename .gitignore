@@ -34,3 +34,9 @@ backend/cache_db_backup_pre_refresco_aditivo_*.db-shm
 backend/borme_actos.db*
 backend/administradores_borme.json
 backend/bdns.db
+
+# PAC del FEGA (19-10-2026): ni el ZIP (lleva nombres de personas), ni la lista local de revisión (nombres de anónimos),
+# ni el fichero generado van al repositorio. Solo se sube a la web desde el flujo pac-fega.yml.
+*fega*.zip
+pac_revision*.csv
+pac_*.ndjson.gz
