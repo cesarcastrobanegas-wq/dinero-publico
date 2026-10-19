@@ -46,3 +46,9 @@ backend/socios.db-*
 *.db
 *.db-shm
 *.db-wal
+
+# PAC del FEGA (19-10-2026): ni el ZIP (lleva nombres de personas), ni la lista local de revisión (nombres de anónimos),
+# ni el fichero generado van al repositorio. Solo se sube a la web desde el flujo pac-fega.yml.
+*fega*.zip
+pac_revision*.csv
+pac_*.ndjson.gz
