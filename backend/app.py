@@ -22204,6 +22204,7 @@ def render_fondos_ue_html(qs):
   {aparte_html}
   <div class="fue-card">
     <div class="gs-hint" style="margin:10px 14px">{_t("Ordenadas por importe. En los fondos estructurales el importe es el gasto subvencionable total de la operación; en CORDIS, la aportación de la UE a cada organización.")}{(" " + _t("En Kohesio (2021-2027), el coste total de la operación.")) if hay_koh else ""}</div>
+    <div class="tbl-scroll">
     <table>
       <tr>
         <th>{_t("Proyecto / Beneficiario")}</th>
@@ -22213,6 +22214,8 @@ def render_fondos_ue_html(qs):
       </tr>
       {filas}
     </table>
+    <span class="scroll-hint" aria-hidden="true">{_t("sigue")} <span class="scroll-hint-arrow">›</span></span>
+    </div>
   </div>
   {pag_html}
   {_html_plan_recuperacion(f, res_place)}"""
@@ -22746,10 +22749,13 @@ def render_convocatorias_html(qs):
   {_alertas_boton_convocatorias_html(f)}
   <div class="fue-card">
     <div class="gs-hint" style="margin:10px 14px">{_t("{n} convocatorias").format(n=f"{total:,}".replace(",", "."))}</div>
+    <div class="tbl-scroll">
     <table>
       <tr>{cab}</tr>
       {cuerpo}
     </table>
+    <span class="scroll-hint" aria-hidden="true">{_t("sigue")} <span class="scroll-hint-arrow">›</span></span>
+    </div>
   </div>
   {pag_html}"""
     return _page_shell(_t("Convocatorias abiertas: licitaciones y subvenciones"), body,
