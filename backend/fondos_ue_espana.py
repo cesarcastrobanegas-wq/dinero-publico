@@ -494,7 +494,19 @@ def descargar_kohesio(sesion, con_nombres=True):
           f"con provincia {len(provincias)}", flush=True)
     benef = _kohesio_beneficiarios(sesion) if con_nombres else {}
     filas = []
+    # Sin ninguno de los fondos 2021-2027 de la lista (FEDER, FSE+, FTJ, Interreg...) no es de esta fuente. Caso real
+    # (20-10-2026): «2024-7-ES-SP-CHUAC», del Instrumento de Préstamo al Sector Público (PSLF, gestión directa con
+    # préstamo del BEI), con un presupuesto de 1.109,3 M€ que suma dos veces el proyecto (59,3 de subvención UE + 450
+    # del préstamo + 600 de total, según su propia descripción): habría sido la primera fila de toda España.
+    sin_fondo = [q for q in base if not fondo.get(q)]
+    fuera = set(sin_fondo)
+    if sin_fondo:
+        print(f"  Kohesio: {len(sin_fondo)} sin fondo FEDER/FSE+/FTJ/Interreg, fuera: "
+              + ", ".join(f"{q} ({_k_importe(base[q].get('totalBudgets')) / 1e6:,.1f} M€)" for q in sin_fondo[:10]),
+              flush=True)
     for q, x in base.items():
+        if q in fuera:
+            continue
         etiqueta = programa.get(q, "")
         codigo = etiqueta.split(" - ")[0].strip()
         provs, coms = provincias.get(q, set()), set(comunidades.get(q, set()))
