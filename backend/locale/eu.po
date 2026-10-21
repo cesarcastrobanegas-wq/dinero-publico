@@ -3126,6 +3126,150 @@ msgstr "Esteka hau ez da baliozkoa edo iraungi da."
 msgid "La clasificación por sector es automática (códigos de actividad CNAE que publica la BDNS y palabras del título) y puede fallar: puede incluir convocatorias que no son de este sector y dejar fuera alguna que sí lo es. Las ayudas generales para empresas aparecen en todos los sectores. Comprueba siempre en las bases quién puede pedirla."
 msgstr "Sektorekako sailkapena automatikoa da (BDNSk argitaratzen dituen CNAE jarduera-kodeak eta izenburuko hitzak) eta huts egin dezake: sektore honetakoak ez diren deialdiak sar ditzake eta sektore honetakoren bat kanpoan utzi. Enpresentzako laguntza orokorrak sektore guztietan agertzen dira. Egiaztatu beti oinarrietan nork eska dezakeen."
 
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Adjudicataria"
+msgstr "Esleipenduna"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Beneficiario sin nombre: posible persona física o sin forma jurídica en el nombre"
+msgstr "Onuraduna izenik gabe: pertsona fisikoa izan daiteke, edo izenean ez du forma juridikorik"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Calculado el {f}."
+msgstr "Kalkulatze-data: {f}."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Contrato"
+msgstr "Kontratua"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Contratos del Plan"
+msgstr "Planaren kontratuak"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Contratos formales de la Plataforma de Contratación del Sector Público (PLACE) en {donde} en los que el órgano de contratación declara financiación europea: {n} contratos por {importe}. De ellos, {n_prtr} del Plan de Recuperación por {importe_prtr}."
+msgstr "Sektore Publikoko Kontratazio Plataformako (PLACE) kontratu formalak, eremua: {donde}; kontratazio-organoak Europako finantzaketa adierazten du: {n} kontratu, guztira {importe}. Horietatik {n_prtr} Suspertze Planekoak dira, guztira {importe_prtr}."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "De los fondos estructurales está el periodo 2014-2020 (FEDER y FSE), y de los de investigación, Horizon Europe (desde 2021)."
+msgstr "Egitura-funtsetatik 2014-2020 aldia dago (EGEF eta EGF), eta ikerketakoetatik, Horizon Europe (2021etik)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "De los fondos estructurales están los periodos 2014-2020 (FEDER y FSE) y 2021-2027 (FEDER, FSE+ y Fondo de Transición Justa, lo que ya publica Kohesio), y de los de investigación, Horizon Europe (desde 2021)."
+msgstr "Egitura-funtsetatik 2014-2020 aldia (EGEF eta EGF) eta 2021-2027 aldia daude (EGEF, EGF+ eta Trantsizio Justurako Funtsa, Kohesio-k dagoeneko argitaratzen duena), eta ikerketakoetatik, Horizon Europe (2021etik)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Del Plan de Recuperación (Next Generation EU) está la lista oficial de sus 100 mayores perceptores finales (abril de 2024)."
+msgstr "Suspertze Planetik (Next Generation EU) azken jasotzaile handienen 100eko zerrenda ofiziala dago (2024ko apirila)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Del Plan de Recuperación (Next Generation EU) están los contratos que el órgano de contratación marca en la Plataforma de Contratación del Sector Público como financiados por el Plan y la lista oficial de sus 100 mayores perceptores finales (abril de 2024)."
+msgstr "Suspertze Planetik (Next Generation EU) daude kontratazio-organoak Sektore Publikoko Kontratazio Plataforman Planak finantzatutzat markatzen dituen kontratuak eta azken jasotzaile handienen 100eko zerrenda ofiziala (2024ko apirila)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Del Plan de Recuperación (Next Generation EU) están los contratos que el órgano de contratación marca en la Plataforma de Contratación del Sector Público como financiados por el Plan."
+msgstr "Suspertze Planetik (Next Generation EU) daude kontratazio-organoak Sektore Publikoko Kontratazio Plataforman Planak finantzatutzat markatzen dituen kontratuak."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En Kohesio (2021-2027), el coste total de la operación."
+msgstr "Kohesio-n (2021-2027), eragiketaren kostu osoa."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En cada ficha de municipio esos contratos llevan la insignia del fondo."
+msgstr "Udalerri bakoitzaren fitxan, kontratu horiek funtsaren ikurra daramate."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En incorporación: FEDER y FSE+ 2021-2027, previsto para finales de octubre de 2026."
+msgstr "Sartzen ari gara: EGEF eta EGF+ 2021-2027, 2026ko urriaren amaierarako aurreikusita."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En incorporación: Plan de Recuperación (Next Generation EU), previsto para finales de octubre de 2026."
+msgstr "Sartzen ari gara: Suspertze Plana (Next Generation EU), 2026ko urriaren amaierarako aurreikusita."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En incorporación: ayudas agrarias (PAC), prevista para noviembre de 2026."
+msgstr "Sartzen ari gara: nekazaritza-laguntzak (NPB), 2026ko azarorako aurreikusita."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En la mayoría de las operaciones de los fondos estructurales 2014-2020 la fuente no publica el beneficiario."
+msgstr "Egitura-funtsen 2014-2020ko eragiketa gehienetan iturriak ez du onuraduna argitaratzen."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "En las de 2021-2027 no hay NIF, y el nombre del beneficiario solo se muestra cuando es claramente una entidad."
+msgstr "2021-2027koetan ez dago IFZrik, eta onuradunaren izena argi eta garbi erakunde bat denean bakarrik erakusten da."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Financiación europea declarada en PLACE por el órgano de contratación"
+msgstr "Kontratazio-organoak PLACEn adierazitako Europako finantzaketa"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Fondo"
+msgstr "Funtsa"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Fondos estructurales 2021-2027 (Kohesio)"
+msgstr "Egitura-funtsak 2021-2027 (Kohesio)"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Fuente"
+msgstr "Iturria"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Kohesio (2021-2027)"
+msgstr "Kohesio (2021-2027)"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Lista que publica el Gobierno de España por obligación del Reglamento (UE) 2021/241; la última disponible es de abril de 2024. Muchos perceptores son organismos públicos que después reparten o contratan los fondos (ADIF, ministerios, ayuntamientos)."
+msgstr "Espainiako Gobernuak (UE) 2021/241 Erregelamenduak hala aginduta argitaratzen duen zerrenda; eskuragarri dagoen azkena 2024ko apirilekoa da. Jasotzaile asko erakunde publikoak dira, eta gero funtsak banatu edo kontratatzen dituzte (ADIF, ministerioak, udalak)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Los 10 mayores contratos del Plan de Recuperación"
+msgstr "Suspertze Planeko 10 kontratu handienak"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Los 100 mayores perceptores finales del Plan de Recuperación (lista oficial a 30-04-2024)"
+msgstr "Suspertze Planeko 100 azken jasotzaile handienak (zerrenda ofiziala, 2024-04-30)"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Más sobre fondos UE"
+msgstr "UEko funtsei buruz gehiago"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la pesca, los fondos de interior ni la cooperación entre regiones (Interreg) completa."
+msgstr "Ez daude Suspertze Planaren diru-laguntzak, Horizon Europe ez beste zuzeneko kudeaketako Europako programak (Erasmus+, LIFE, Europa Sortzailea...), landa-garapena, arrantza, barne-arloko funtsak eta eskualdeen arteko lankidetza (Interreg) osoa."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Otros fondos europeos"
+msgstr "Europako beste funts batzuk"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Perceptor / Componentes del Plan"
+msgstr "Jasotzailea / Planaren osagaiak"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Plan de Recuperación"
+msgstr "Suspertze Plana"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Plan de Recuperación y contratos con fondos europeos"
+msgstr "Suspertze Plana eta Europako funtsak dituzten kontratuak"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Solo PLACE trae esta marca: los contratos de las plataformas autonómicas (Cataluña, Euskadi, Navarra), del BORM y los contratos menores no la tienen, así que la cobertura es desigual entre comunidades. La pone el órgano de contratación y puede faltar. Importe adjudicado sin IVA o, si no consta, el presupuesto de licitación; los acuerdos marco de centrales de contratación no se suman."
+msgstr "PLACEk bakarrik dakar marka hau: plataforma autonomikoetako (Katalunia, Euskadi, Nafarroa) eta BORMeko kontratuek eta kontratu txikiek ez dute, beraz estaldura ez da berdina erkidego guztietan. Kontratazio-organoak jartzen du, eta falta daiteke. Esleitutako zenbatekoa BEZik gabe edo, ageri ez bada, lizitazio-aurrekontua; kontratazio-zentralen esparru-akordioak ez dira batzen."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "Ver la lista"
+msgstr "Ikusi zerrenda"
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "{nombre} está entre los 100 mayores perceptores finales del Plan de Recuperación: {importe} (lista oficial a 30-04-2024)."
+msgstr "Suspertze Planeko 100 azken jasotzaile handienen artean dago: {nombre}, {importe} (zerrenda ofiziala, 2024-04-30)."
+
+#: app.py (fondos europeos, 17-10-2026)
+msgid "{n} contratos de PLACE de este municipio declaran financiación europea ({importe}); {n_prtr} son del Plan de Recuperación. Llevan la insignia del fondo en la lista."
+msgstr "Udalerri honetako PLACEko kontratuetatik {n}k Europako finantzaketa adierazten dute ({importe}); {n_prtr} Suspertze Planekoak dira. Zerrendan funtsaren ikurra daramate."
+
 #~ msgid "Próximamente se incorporarán también datos de subvenciones."
 #~ msgstr "Laster diru-laguntzen datuak ere gehituko dira."
 
@@ -3161,3 +3305,9 @@ msgstr "Sektorekako sailkapena automatikoa da (BDNSk argitaratzen dituen CNAE ja
 
 #~ msgid "Los nombres de directivos y administradores provienen de registros públicos (Registro Mercantil y fuentes empresariales públicas equivalentes)."
 #~ msgstr "Zuzendarien eta administratzaileen izenak erregistro publikoetatik datoz (Merkataritza Erregistroa eta enpresa-iturri publiko baliokideak)."
+
+msgid "Operación sin título en la fuente"
+msgstr "Iturrian izenbururik gabeko eragiketa"
+
+msgid "Código de la operación"
+msgstr "Eragiketaren kodea"

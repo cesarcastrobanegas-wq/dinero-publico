@@ -7594,6 +7594,11 @@ def _entry_to_contratos(entry_xml):
     m_fecha = re.search(r"<cbc:AwardDate>\s*(\d{4}-\d{2}-\d{2})", entry_xml)
     if m_fecha and m_fecha.group(1)[:4] >= "1990":       # la fuente trae alguna fecha absurda ("0026-..."): no se guarda
         base["fecha"] = m_fecha.group(1)
+    # Fondos europeos que declara el órgano (2026-10-17): PRTR = Plan de Recuperación, FEDER, FSE+... (ver
+    # _fondos_ue_de_entry). Solo se guarda el campo cuando hay alguno.
+    fondos_ue = _fondos_ue_de_entry(entry_xml)
+    if fondos_ue and not _es_invitacion_sda(titulo):
+        base["fondos_ue"] = fondos_ue
     if adjs:
         base["resultado_code"] = adjs[0]["resultado_code"] or resultado_code
     if not url or not _adjudicado_fiable(adjs, presupuesto_num):
@@ -11030,6 +11035,169 @@ def _aplicar_fechas_formales():
         print(f"[startup] fechas_formales: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
+# ─── Contratos de PLACE con fondos europeos (2026-10-17, encargo de César) ──────────────────────────────────────────
+# PLACE publica en cada licitación los programas que la financian (cbc:FundingProgramCode, lista FundingProgramCode-2.08).
+# El analizador lo guarda desde hoy en lo nuevo (campo `fondos_ue`); lo ya guardado se marca con el fichero de
+# generar_fondos_ue_place.py ({idEvl: "EU,PRTR"}, sin datos personales). Las plataformas autonómicas (PSCP, Euskadi,
+# Navarra), el BORM y los contratos menores no traen este dato: la marca solo existe en los formales de PLACE.
+FONDOS_UE_PLACE_FILE = os.path.join(BASE_DIR, "fondos_ue_place.json.gz")
+_FONDOS_UE_PLACE_CLAVE = "fondos_ue_place_sha"
+_FONDOS_UE_PLACE_RESUMEN = "fondos_ue_place_resumen"
+_FONDOS_UE_PLACE_DIAS = 7       # al arrancar, el resumen se rehace si tiene más de una semana (entran los contratos nuevos)
+FONDOS_UE_CODIGOS = ("PRTR", "FEDER", "FSE+", "FEADER", "FEMP", "REU", "OFE", "EU")
+_RE_FUNDING_CODE = re.compile(r"<(?:[\w-]+:)?FundingProgramCode\b[^>]*>\s*([^<\s]+)\s*<")
+_RE_NIF_SOCIEDAD = re.compile(r"^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$")
+# Invitaciones de un sistema dinámico de adquisición (SDA): en PLACE heredan los fondos declarados en el sistema, aunque la
+# compra concreta no tenga que ver (Almassora: bebidas y actuaciones de fiestas con FEDER). Decisión de César del 19-10:
+# no se marcan.
+_RE_INVITACION_SDA = re.compile(r"^\s*SDA\b|sistema\s+din[aá]mico\s+de\s+adquisici", re.IGNORECASE)
+
+
+def _es_invitacion_sda(titulo):
+    return bool(_RE_INVITACION_SDA.search(titulo or ""))
+
+
+def _fondos_ue_etiquetas():
+    return {"PRTR": _t("Plan de Recuperación"), "FEDER": "FEDER", "FSE+": "FSE+", "FEADER": "FEADER", "FEMP": "FEMP",
+            "REU": "REACT-UE", "OFE": _t("Otros fondos europeos"), "EU": _t("Fondos UE")}
+
+
+def _fondos_ue_de_entry(entry_xml):
+    """Códigos europeos de financiación de una licitación de PLACE, en el orden de FONDOS_UE_CODIGOS."""
+    vistos = {c.strip().upper() for c in _RE_FUNDING_CODE.findall(entry_xml)}
+    return [c for c in FONDOS_UE_CODIGOS if c in vistos]
+
+
+def _fondos_ue_visibles(codigos):
+    """Lo que se enseña: el código genérico "EU" solo cuando no hay otro más concreto."""
+    concretos = [c for c in codigos or [] if c != "EU"]
+    return concretos or (["EU"] if "EU" in (codigos or []) else [])
+
+
+def _aplicar_fondos_ue_place(forzar=False):
+    """Marca los contratos de PLACE ya guardados con sus fondos europeos y calcula el resumen de /fondos-ue (en
+    `settings`). Al arrancar, solo si cambia el fichero o si el resumen tiene más de una semana. Solo AÑADE el campo
+    `fondos_ue` a contratos de PLACE que no lo tienen: no añade, quita ni cambia nada más. Una ficha cada vez."""
+    if not _DISCO_CONFIABLE:
+        return
+    try:
+        fondos, huella = {}, "sin-fichero"
+        if os.path.exists(FONDOS_UE_PLACE_FILE):
+            with open(FONDOS_UE_PLACE_FILE, "rb") as f:
+                crudo = f.read()
+            huella = hashlib.sha256(crudo).hexdigest()[:16]
+            fondos = json.loads(_gzip.decompress(crudo).decode("utf-8")).get("fondos", {})
+            del crudo
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_FONDOS_UE_PLACE_CLAVE,)).fetchone()
+            previo = _db.execute("SELECT valor FROM settings WHERE clave=?", (_FONDOS_UE_PLACE_RESUMEN,)).fetchone()
+        try:
+            edad = time.time() - float(json.loads(previo[0]).get("ts", 0)) if previo else None
+        except (ValueError, TypeError):
+            edad = None
+        if not forzar and fila and fila[0] == huella and edad is not None and edad < _FONDOS_UE_PLACE_DIAS * 86400:
+            return
+        t0 = time.time()
+        por_fondo, por_prov, top, vistos = {}, {}, [], set()
+        cuenta = {"marcados": 0, "fichas": 0}
+
+        def _sumar(destino, clave, importe):
+            v = destino.setdefault(clave, [0, 0.0])
+            v[0] += 1
+            v[1] = round(v[1] + importe, 2)
+
+        def _recorrer(tabla, col):
+            with _db_lock:
+                claves = [k for (k,) in _db.execute(f"SELECT {col} FROM {tabla}")]
+            for key in claves:
+                with _db_lock:
+                    row = _db.execute(f"SELECT data FROM {tabla} WHERE {col}=?", (key,)).fetchone()
+                if not row or "PLACE" not in row[0]:
+                    continue
+                try:
+                    d = json.loads(row[0])
+                except ValueError:
+                    continue
+                tocados = 0
+                provincia = d.get("provincia") or ""
+                lugar = d.get("municipio") or d.get("nombre") or ""
+                for c in d.get("contratos", []):
+                    if c.get("fuente") != "PLACE" or _es_invitacion_sda(c.get("titulo")):
+                        continue
+                    cods = c.get("fondos_ue")
+                    if not cods:
+                        m = _RE_IDEVL.search(c.get("url") or "")
+                        v = fondos.get(m.group(1)) if m else None
+                        if not v:
+                            continue
+                        cods = c["fondos_ue"] = v.split(",")
+                        tocados += 1
+                    url = c.get("url") or f"{tabla}:{key}:{len(vistos)}"
+                    if url in vistos:
+                        continue
+                    vistos.add(url)
+                    # mismas reglas que las sumas del resto del sitio: los acuerdos marco de centrales no se suman
+                    importe = 0.0 if c.get("importe_aviso") else float(c.get("importe_num") or 0)
+                    for cod in _fondos_ue_visibles(cods):
+                        _sumar(por_fondo, cod, importe)
+                    prov = por_prov.setdefault(provincia, {})
+                    _sumar(prov, "UE", importe)
+                    if "PRTR" in cods:
+                        _sumar(prov, "PRTR", importe)
+                        if importe > 0:
+                            nif = _nif_limpio(c.get("nif"))
+                            top.append({"importe": importe, "titulo": (c.get("titulo") or "")[:160],
+                                        "organo": (c.get("organo") or "")[:120],
+                                        # nunca el nombre de una persona física (DNI/NIE o NIF dudoso)
+                                        "empresa": (c.get("empresa") or "") if _RE_NIF_SOCIEDAD.match(nif) else "",
+                                        "url": c.get("url") or "", "lugar": lugar, "provincia": provincia,
+                                        "fecha": c.get("fecha") or ""})
+                            if len(top) > 400:
+                                top.sort(key=lambda x: -x["importe"])
+                                del top[50:]
+                if tocados:
+                    with _db_lock:
+                        _db.execute(f"UPDATE {tabla} SET data=? WHERE {col}=?", (json.dumps(d, ensure_ascii=False), key))
+                        _db.commit()
+                    cuenta["marcados"] += tocados
+                    cuenta["fichas"] += 1
+                del d
+
+        _recorrer("municipios", "municipio")
+        _recorrer("entidades_locales", "clave")
+        fondos.clear()
+        top.sort(key=lambda x: -x["importe"])
+        espana = {"UE": [0, 0.0], "PRTR": [0, 0.0]}
+        for p in por_prov.values():
+            for g, (n, eur) in p.items():
+                espana[g][0] += n
+                espana[g][1] = round(espana[g][1] + eur, 2)
+        resumen = {"ts": time.time(), "fecha": _ahora_madrid().strftime("%Y-%m-%d"), "n": espana["UE"][0],
+                   "espana": espana, "por_fondo": por_fondo, "provincias": por_prov, "top": top[:30]}
+        with _db_lock:
+            for clave, valor in ((_FONDOS_UE_PLACE_CLAVE, huella),
+                                 (_FONDOS_UE_PLACE_RESUMEN, json.dumps(resumen, ensure_ascii=False))):
+                _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                            "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (clave, valor))
+            _db.commit()
+        _FUE_CACHE.clear()
+        print(f"[startup] fondos_ue_place: {cuenta['marcados']} contratos marcados en {cuenta['fichas']} fichas; "
+              f"{espana['UE'][0]} con fondos UE ({espana['PRTR'][0]} del Plan de Recuperación) en "
+              f"{time.time() - t0:.0f} s", flush=True)
+    except Exception as e:
+        print(f"[startup] fondos_ue_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
+def _fondos_ue_place_resumen():
+    with _db_lock:
+        fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_FONDOS_UE_PLACE_RESUMEN,)).fetchone()
+    try:
+        r = json.loads(fila[0]) if fila else None
+    except ValueError:
+        return None
+    return r if r and r.get("n") else None
+
+
 CORRECCION_FORMALES_5ANIOS_FILE = os.path.join(BASE_DIR, "correcciones_formales_5anios.json.gz")
 _CORRECCION_FORMALES_5ANIOS_CLAVE = "correccion_formales_5anios_sha"
 
@@ -13099,6 +13267,8 @@ _SQL_INDICES_FONDOS_UE = (
     # solo con este índice (sin leer las filas, que son anchas) salen los recuentos, las sumas y la lista de provincias
     "CREATE INDEX IF NOT EXISTS idx_fue_sumas ON {tabla}(ambito, provincia, comunidad, fuente, importe_num)",
     "CREATE INDEX IF NOT EXISTS idx_fue_sumas_com ON {tabla}(comunidad, ambito, fuente, importe_num)",
+    # 2026-10-17: los 100 perceptores del Plan de Recuperación se leen por fuente (sin esto, recorrido entero)
+    "CREATE INDEX IF NOT EXISTS idx_fue_fuente ON {tabla}(fuente, importe_num DESC)",
 )
 _FUE_COLUMNAS = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario", "nif", "rol",
                  "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts", "municipio_match",
@@ -13201,6 +13371,8 @@ def _fue_filtro(f):
     if f.get("fuente"):
         where.append("fuente = ?")
         args.append(f["fuente"])
+    else:
+        where.append("fuente <> 'mrr100'")      # los 100 mayores perceptores del Plan van en su propio bloque
     return (" WHERE " + " AND ".join(where)) if where else "", args
 
 
@@ -13209,7 +13381,7 @@ def _db_fondos_ue_resumen(f):
     where, args = _fue_filtro(f)
 
     def _calcular():
-        res = {"n": 0, "importe": 0.0, "cordis": 0, "cohesion": 0}
+        res = {"n": 0, "importe": 0.0, "cordis": 0, "cohesion": 0, "kohesio": 0}
         with _db_lock:
             filas = _db.execute(f"SELECT fuente, count(*), coalesce(sum(importe_num), 0) FROM fondos_ue{where} "
                                 f"GROUP BY fuente", args).fetchall()
@@ -15493,10 +15665,11 @@ def _subir_fondos_ue(crudo, forzar=False):
         antes = _db.execute("SELECT count(*) FROM fondos_ue").fetchone()[0]
         recibidas = _db.execute(f"SELECT count(*) FROM {nueva}").fetchone()[0]
         fuentes = dict(_db.execute(f"SELECT fuente, count(*) FROM {nueva} GROUP BY fuente").fetchall())
-    if recibidas < FONDOS_UE_MINIMO_SUBIDA or len(fuentes) < len(_FUENTE_UE_LABEL):
+    # Kohesio y los 100 perceptores son opcionales (el generador puede saltárselos); Cohesion Data y CORDIS, no.
+    if recibidas < FONDOS_UE_MINIMO_SUBIDA or {"cohesion", "cordis"} - set(fuentes):
         _descartar()
         return 400, {"error": f"Fichero no válido: {recibidas} filas legibles ({malas} con error); por fuente: "
-                              f"{fuentes}. Hacen falta al menos {FONDOS_UE_MINIMO_SUBIDA} y las dos fuentes."}
+                              f"{fuentes}. Hacen falta al menos {FONDOS_UE_MINIMO_SUBIDA} y las fuentes cohesion y cordis."}
     if not forzar and _subida_demasiado_pequena(antes, recibidas):
         _descartar()
         return _rechazar_subida("/admin/fondos-ue", "operaciones", antes, recibidas)
@@ -17041,6 +17214,7 @@ def _inicializar_datos():
     _aplicar_backfill_formales_place()   # con el arreglo de memoria (_db_iter_municipios), 2026-10-03
     _aplicar_importe_adjudicado_place()
     _aplicar_fechas_formales()            # después de los backfills: rellena la fecha de lo que haya guardado
+    _aplicar_fondos_ue_place()            # marca de fondos europeos (PLACE) y resumen de /fondos-ue
     _depurar_asignacion_place_por_nombre()
     corte = time.time() - RESULT_CACHE_TTL
     with _db_lock:
@@ -17619,6 +17793,10 @@ a.pscp-link{color:var(--green);}
    (naranja/azul). Antes del 2026-07-23 era violeta -- ver INFORME_NOCHE.md. */
 .fuente-cordis{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
 .fuente-cohesion{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
+.fuente-kohesio{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
+.fondo-ue-badge{background:#003399;color:#ffcc00;border:1px solid #003399;white-space:nowrap;}
+.fue-mrr td,.fue-mrr th{font-size:13px;}
+.fue-mrr summary{cursor:pointer;font-weight:600;padding:10px 14px;}
 .fue-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
 .conv-filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px;}
 .conv-filtros .conv-q{flex:1 1 220px;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);}
@@ -19528,6 +19706,12 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
         "BORM": '<span class="fuente-badge fuente-borm">BORM</span>',
         "PSCP": '<span class="fuente-badge fuente-pscp">PSCP</span>',
     }.get(fuente, '<span class="fuente-badge fuente-place">PLACE</span>')
+    # Fondos europeos que declara el órgano en PLACE (2026-10-17): una insignia por fondo
+    if c.get("fondos_ue"):
+        etiquetas = _fondos_ue_etiquetas()
+        tit_ue = esc(_t("Financiación europea declarada en PLACE por el órgano de contratación"))
+        fuente_badge += "".join(f' <span class="fuente-badge fondo-ue-badge" title="{tit_ue}">🇪🇺 '
+                                f'{esc(etiquetas.get(k, k))}</span>' for k in _fondos_ue_visibles(c["fondos_ue"]))
 
     muni_html = (f'<div class="lid" style="margin-top:2px">📍 {esc(municipio_label)}</div>'
                  if municipio_label else "")
@@ -21051,7 +21235,12 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 _FUENTE_UE_LABEL = {
     "cordis": ("CORDIS", "fuente-cordis", "Horizon Europe -- proyectos de investigación e innovación"),
     "cohesion": ("Cohesion Data", "fuente-cohesion", "Fondos estructurales FEDER/FSE 2014-2020"),
+    # 2026-10-17: FEDER, FSE+ y Transición Justa 2021-2027 (Kohesio) y los 100 mayores perceptores del Plan de
+    # Recuperación. Estos últimos no van en la lista general (son totales por perceptor): tienen su bloque aparte.
+    "kohesio": ("Kohesio", "fuente-kohesio", "Fondos estructurales FEDER/FSE+/FTJ 2021-2027"),
+    "mrr100": ("Plan de Recuperación", "fondo-ue-badge", "Los 100 mayores perceptores finales del Plan de Recuperación"),
 }
+_FUENTES_UE_LISTA = ("cohesion", "kohesio", "cordis")      # las que van en la lista general de /fondos-ue
 
 
 def _render_fila_fondo_ue(f, con_ambito=False):
@@ -21109,6 +21298,8 @@ def _render_fila_fondo_ue(f, con_ambito=False):
         # CORDIS sí publica la organización; en la carga de toda España no se guarda su nombre (2026-10-12).
         rol_html = f' ({esc(f["rol"])})' if f.get("rol") else ""
         benef_html = f'<span class="lid">{_t("Organización participante: en la ficha del proyecto")}{rol_html}</span>'
+    elif f["fuente"] == "kohesio":
+        benef_html = f'<span class="lid">{_t("Beneficiario sin nombre: posible persona física o sin forma jurídica en el nombre")}</span>'
     else:
         benef_html = f'<span class="noloc-warn">{_t("Beneficiario no publicado por la fuente")}</span>'
 
@@ -21139,9 +21330,16 @@ def _render_fila_fondo_ue(f, con_ambito=False):
     link_html = (f'<a class="fue-link" href="{esc(f["url"])}" target="_blank" rel="noopener">{_t("Ver proyecto ↗")}</a>'
                  if f.get("url") else "")
 
+    titulo = (f.get("titulo") or "").strip()
+    if f["fuente"] == "kohesio" and _kohesio_titulo_es_codigo(titulo):
+        titulo_html = (f'<div class="empresa">{_t("Operación sin título en la fuente")}</div>'
+                       + (f'<div class="lid">{_t("Código de la operación")}: {esc(titulo[:60])}</div>' if titulo else ""))
+    else:
+        titulo_html = f'<div class="empresa">{esc(titulo[:110])}</div>'
+
     return f"""<tr>
       <td>
-        <div class="empresa">{esc(f["titulo"][:110])}</div>
+        {titulo_html}
         {benef_html}
         {municipio_html}
       </td>
@@ -21149,6 +21347,14 @@ def _render_fila_fondo_ue(f, con_ambito=False):
       <td>{fuente_badge}<div class="cargo">{esc(f.get("programa","") or f.get("fondo",""))}</div></td>
       <td><div class="lid">{fechas}</div>{link_html}</td>
     </tr>"""
+
+
+def _kohesio_titulo_es_codigo(titulo):
+    """Kohesio publica algunas operaciones sin título: en su lugar va el código interno («2024-7-ES-SP-CHUAC»,
+    «PC25CLZAXCP0001»). Se reconoce porque no tiene espacios y lleva al menos cuatro cifras (los acrónimos de proyecto,
+    como «NatUR-W», no)."""
+    t = (titulo or "").strip()
+    return not t or (" " not in t and sum(ch.isdigit() for ch in t) >= 4)
 
 
 _FUENTE_CM_LABEL = {
@@ -21831,7 +22037,7 @@ def _fue_parametros(qs):
     f = {"pag": g("pag")}
     if g("ambito") in FUE.AMBITOS:
         f["ambito"] = g("ambito")
-    if g("fuente") in _FUENTE_UE_LABEL:
+    if g("fuente") in _FUENTES_UE_LISTA:
         f["fuente"] = g("fuente")
     if f.get("ambito") in ("estatal", "cooperacion"):
         return f                                    # no son de ninguna zona
@@ -21868,6 +22074,7 @@ def render_fondos_ue_html(qs):
       <div class="stat" style="border-color:var(--border)"><span>{fmt_eur(str(res["importe"]))}</span>{_t("Importe total")}</div>
       <div class="stat" style="border-color:var(--border)"><span>{fmt_num(res["cordis"])}</span>{_t("CORDIS (Horizon Europe)")}</div>
       <div class="stat" style="border-color:var(--border)"><span>{fmt_num(res["cohesion"])}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
+      {f'<div class="stat" style="border-color:var(--border)"><span>{fmt_num(res["kohesio"])}</span>{_t("Kohesio (2021-2027)")}</div>' if res.get("kohesio") else ""}
     </div>"""
 
     # Cobertura REAL (2026-10-01, aviso de César): el texto se calcula con las provincias que tienen datos.
@@ -21884,6 +22091,43 @@ def render_fondos_ue_html(qs):
                      "(Next Generation EU), previstos para finales de octubre de 2026, y ayudas agrarias (PAC), "
                      "prevista para noviembre de 2026. En la mayoría de las operaciones de los fondos estructurales "
                      "2014-2020 la fuente no publica el beneficiario.")
+    # 2026-10-17: el texto dice lo que hay de verdad en la base (si una carga no ha llegado, sigue "en incorporación").
+    hay_koh = bool(_db_fondos_ue_resumen({}).get("kohesio"))
+    res_place = _fondos_ue_place_resumen()
+    with _db_lock:
+        hay_mrr100 = bool(_db.execute("SELECT 1 FROM fondos_ue WHERE fuente='mrr100' LIMIT 1").fetchone())
+    if hay_koh or res_place or hay_mrr100:
+        trozos = [_t("De los fondos estructurales están los periodos 2014-2020 (FEDER y FSE) y 2021-2027 (FEDER, FSE+ y "
+                     "Fondo de Transición Justa, lo que ya publica Kohesio), y de los de investigación, Horizon Europe "
+                     "(desde 2021).") if hay_koh else
+                  _t("De los fondos estructurales está el periodo 2014-2020 (FEDER y FSE), y de los de investigación, "
+                     "Horizon Europe (desde 2021).")]
+        if res_place and hay_mrr100:
+            trozos.append(_t("Del Plan de Recuperación (Next Generation EU) están los contratos que el órgano de "
+                             "contratación marca en la Plataforma de Contratación del Sector Público como financiados "
+                             "por el Plan y la lista oficial de sus 100 mayores perceptores finales (abril de 2024)."))
+        elif res_place:
+            trozos.append(_t("Del Plan de Recuperación (Next Generation EU) están los contratos que el órgano de "
+                             "contratación marca en la Plataforma de Contratación del Sector Público como financiados "
+                             "por el Plan."))
+        elif hay_mrr100:
+            trozos.append(_t("Del Plan de Recuperación (Next Generation EU) está la lista oficial de sus 100 mayores "
+                             "perceptores finales (abril de 2024)."))
+        if not hay_koh:
+            trozos.append(_t("En incorporación: FEDER y FSE+ 2021-2027, previsto para finales de octubre de 2026."))
+        if not (res_place or hay_mrr100):
+            trozos.append(_t("En incorporación: Plan de Recuperación (Next Generation EU), previsto para finales de "
+                             "octubre de 2026."))
+        trozos.append(_t("En incorporación: ayudas agrarias (PAC), prevista para noviembre de 2026."))
+        trozos.append(_t("No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa "
+                         "distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la "
+                         "pesca, los fondos de interior ni la cooperación entre regiones (Interreg) completa."))
+        trozos.append(_t("En la mayoría de las operaciones de los fondos estructurales 2014-2020 la fuente no publica el "
+                         "beneficiario."))
+        if hay_koh:
+            trozos.append(_t("En las de 2021-2027 no hay NIF, y el nombre del beneficiario solo se muestra cuando es "
+                             "claramente una entidad."))
+        limites_txt = " ".join(trozos)
     if toda_espana:
         cobertura_txt = " ".join((
             _t("Hay operaciones de todas las provincias, pero no de todos los fondos europeos."), limites_txt,
@@ -21911,6 +22155,8 @@ def render_fondos_ue_html(qs):
                ("estatal", _t("Estatales o de varias comunidades")),
                ("cooperacion", _t("Cooperación entre países (Interreg)"))]
     fuentes = [("cohesion", _t("Fondos estructurales (Cohesion Data)")), ("cordis", _t("Investigación (CORDIS)"))]
+    if hay_koh:
+        fuentes.insert(1, ("kohesio", _t("Fondos estructurales 2021-2027 (Kohesio)")))
     formulario = (f'<form method="get" action="/fondos-ue" class="conv-filtros">'
                   + _conv_select("zona", zona_val, zonas, _t("Toda España"))
                   + _conv_select("ambito", f.get("ambito", ""), ambitos, _t("Cualquier ámbito"))
@@ -21957,7 +22203,8 @@ def render_fondos_ue_html(qs):
   {stats}
   {aparte_html}
   <div class="fue-card">
-    <div class="gs-hint" style="margin:10px 14px">{_t("Ordenadas por importe. En los fondos estructurales el importe es el gasto subvencionable total de la operación; en CORDIS, la aportación de la UE a cada organización.")}</div>
+    <div class="gs-hint" style="margin:10px 14px">{_t("Ordenadas por importe. En los fondos estructurales el importe es el gasto subvencionable total de la operación; en CORDIS, la aportación de la UE a cada organización.")}{(" " + _t("En Kohesio (2021-2027), el coste total de la operación.")) if hay_koh else ""}</div>
+    <div class="tbl-scroll">
     <table>
       <tr>
         <th>{_t("Proyecto / Beneficiario")}</th>
@@ -21967,8 +22214,11 @@ def render_fondos_ue_html(qs):
       </tr>
       {filas}
     </table>
+    <span class="scroll-hint" aria-hidden="true">{_t("sigue")} <span class="scroll-hint-arrow">›</span></span>
+    </div>
   </div>
-  {pag_html}"""
+  {pag_html}
+  {_html_plan_recuperacion(f, res_place)}"""
 
     donde = (PROVINCIA_LABEL.get(f.get("provincia")) or COMUNIDAD_AUTONOMA_LABEL.get(f.get("comunidad"))
              or (_t("toda España") if toda_espana else _lista_y(nombres_cob) or "España"))
@@ -21976,6 +22226,106 @@ def render_fondos_ue_html(qs):
                         description=_t("Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon "
                                        "Europe, Cohesion Data FEDER/FSE) en {lista}.").format(lista=donde),
                         provincia="todas", og_path=_fue_url(f, pag=1))
+
+
+def _html_plan_recuperacion(f, res):
+    """Bloque de /fondos-ue (2026-10-17): contratos de PLACE con fondos europeos (marca del órgano de contratación) y
+    los 100 mayores perceptores finales del Plan de Recuperación. Solo sale lo que está cargado."""
+    zona = bool(f.get("provincia") or f.get("comunidad"))
+    with _db_lock:
+        top100 = [] if zona else _db.execute(
+            "SELECT beneficiario, nif, importe_num, titulo, fecha_fin, url FROM fondos_ue WHERE fuente='mrr100' "
+            "ORDER BY importe_num DESC").fetchall()
+    if not res and not top100:
+        return ""
+    partes = []
+    if res:
+        if f.get("provincia"):
+            datos, donde = res["provincias"].get(f["provincia"], {}), PROVINCIA_LABEL.get(f["provincia"], "")
+        elif f.get("comunidad"):
+            datos, donde = {}, COMUNIDAD_AUTONOMA_LABEL.get(f["comunidad"], "")
+            for p, v in res["provincias"].items():
+                if COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(p) == f["comunidad"]:
+                    for g, (n, eur) in v.items():
+                        datos.setdefault(g, [0, 0.0])
+                        datos[g] = [datos[g][0] + n, datos[g][1] + eur]
+        else:
+            datos, donde = res["espana"], _t("toda España")
+        ue, prtr = datos.get("UE", [0, 0.0]), datos.get("PRTR", [0, 0.0])
+        partes.append(
+            f'<p style="margin:10px 14px">'
+            + _t("Contratos formales de la Plataforma de Contratación del Sector Público (PLACE) en {donde} en los que "
+                 "el órgano de contratación declara financiación europea: {n} contratos por {importe}. De ellos, {n_prtr} "
+                 "del Plan de Recuperación por {importe_prtr}.").format(
+                     donde=esc(donde), n=fmt_num(ue[0]), importe=fmt_eur(str(ue[1])), n_prtr=fmt_num(prtr[0]),
+                     importe_prtr=fmt_eur(str(prtr[1])))
+            + " " + _t("En cada ficha de municipio esos contratos llevan la insignia del fondo.") + "</p>")
+        if not zona:
+            etiquetas = _fondos_ue_etiquetas()
+            filas_f = "".join(f'<tr><td>🇪🇺 {esc(etiquetas.get(k, k))}</td><td class="n">{fmt_num(v[0])}</td>'
+                              f'<td class="importe">{fmt_eur(str(v[1]))}</td></tr>'
+                              for k, v in sorted(res["por_fondo"].items(), key=lambda kv: -kv[1][1]))
+            provs = sorted(((p, v.get("PRTR", [0, 0.0])) for p, v in res["provincias"].items() if p),
+                           key=lambda kv: -kv[1][1])[:10]
+            filas_p = "".join(f'<tr><td><a href="{esc(_fue_url({"provincia": p}))}">'
+                              f'{esc(PROVINCIA_LABEL.get(p, p).replace("Provincia de ", ""))}</a></td>'
+                              f'<td class="n">{fmt_num(v[0])}</td><td class="importe">{fmt_eur(str(v[1]))}</td></tr>'
+                              for p, v in provs if v[0])
+            filas_t = "".join(
+                f'<tr><td><div class="empresa">{esc(x["titulo"])}</div>'
+                f'<div class="lid">{esc(x["organo"])}{" · " + esc(x["lugar"]) if x.get("lugar") else ""}</div>'
+                + (f'<div class="lid">{_t("Adjudicataria")}: {esc(x["empresa"])}</div>' if x.get("empresa") else "")
+                + f'</td><td class="importe">{fmt_eur(str(x["importe"]))}</td>'
+                f'<td>{esc(x.get("fecha") or "")}<br><a class="link" href="{esc(html.unescape(x["url"]))}" '
+                f'target="_blank" rel="noopener">{_t("PLACE ↗")}</a></td></tr>' for x in res.get("top", [])[:10])
+            partes.append(
+                f'<div style="display:flex;flex-wrap:wrap;gap:0 18px">'
+                f'<table style="flex:1 1 280px"><tr><th>{_t("Fondo")}</th><th>{_t("Contratos")}</th><th>{_t("Importe")}</th></tr>{filas_f}</table>'
+                f'<table style="flex:1 1 280px"><tr><th>{_t("Provincia")}</th><th>{_t("Contratos del Plan")}</th><th>{_t("Importe")}</th></tr>{filas_p}</table></div>')
+            if filas_t:
+                partes.append(f'<details><summary>{_t("Los 10 mayores contratos del Plan de Recuperación")}</summary>'
+                              f'<table><tr><th>{_t("Contrato")}</th><th>{_t("Importe")}</th><th>{_t("Fecha")}</th></tr>'
+                              f'{filas_t}</table></details>')
+        partes.append(
+            f'<div class="gs-hint" style="margin:6px 14px 10px;font-size:12px">'
+            + _t("Solo PLACE trae esta marca: los contratos de las plataformas autonómicas (Cataluña, Euskadi, Navarra), "
+                 "del BORM y los contratos menores no la tienen, así que la cobertura es desigual entre comunidades. La "
+                 "pone el órgano de contratación y puede faltar. Importe adjudicado sin IVA o, si no consta, el "
+                 "presupuesto de licitación; los acuerdos marco de centrales de contratación no se suman.")
+            + " " + _t("Calculado el {f}.").format(f=esc(_conv_fecha(res.get("fecha", "")))) + "</div>")
+    if top100:
+        filas_m = "".join(
+            f'<tr><td class="n">{i}</td><td><div class="empresa"><a href="/?q={quote_plus(b or "")}">{esc(b)}</a></div>'
+            f'<div class="lid">{esc(t)}</div></td><td class="importe">{fmt_eur(str(imp))}</td></tr>'
+            for i, (b, nif, imp, t, fecha, url) in enumerate(top100, 1))
+        partes.append(
+            f'<details><summary>{_t("Los 100 mayores perceptores finales del Plan de Recuperación (lista oficial a 30-04-2024)")}</summary>'
+            f'<div class="gs-hint" style="margin:0 14px 8px;font-size:12px">'
+            + _t("Lista que publica el Gobierno de España por obligación del Reglamento (UE) 2021/241; la última "
+                 "disponible es de abril de 2024. Muchos perceptores son organismos públicos que después reparten o "
+                 "contratan los fondos (ADIF, ministerios, ayuntamientos).")
+            + f' <a href="{esc(top100[0][5])}" target="_blank" rel="noopener">{_t("Fuente")} ↗</a></div>'
+            f'<table><tr><th>#</th><th>{_t("Perceptor / Componentes del Plan")}</th><th>{_t("Importe")}</th></tr>'
+            f'{filas_m}</table></details>')
+    return (f'<div class="fue-card fue-mrr" style="margin-top:18px"><div class="section-title" '
+            f'style="color:var(--yellow);margin:12px 14px 0">🇪🇺 {_t("Plan de Recuperación y contratos con fondos europeos")}</div>'
+            + "".join(partes) + "</div>")
+
+
+def _html_mrr100_busqueda(q):
+    """En la búsqueda: si lo buscado es uno de los 100 mayores perceptores del Plan de Recuperación, se dice."""
+    qn = normalizar(q or "")
+    if len(qn) < 4:
+        return ""
+    with _db_lock:
+        filas = _db.execute("SELECT beneficiario, nif, importe_num, titulo, url FROM fondos_ue WHERE fuente='mrr100'").fetchall()
+    hallados = [r for r in filas if qn in normalizar(r[0] or "") or qn.upper() == (r[1] or "").upper()][:5]
+    return "".join(
+        f'<div class="fue-card" style="padding:10px 14px">🇪🇺 '
+        + _t("{nombre} está entre los 100 mayores perceptores finales del Plan de Recuperación: {importe} (lista oficial a "
+             "30-04-2024).").format(nombre=f"<b>{esc(b)}</b>", importe=fmt_eur(str(imp)))
+        + f' <span class="lid">{esc(t)}</span> <a href="/fondos-ue">{_t("Ver la lista")}</a></div>'
+        for b, nif, imp, t, url in hallados)
 
 
 # ─── CONVOCATORIAS ABIERTAS (página) ──────────────────────────────────────────────────────────────────────────────
@@ -22399,10 +22749,13 @@ def render_convocatorias_html(qs):
   {_alertas_boton_convocatorias_html(f)}
   <div class="fue-card">
     <div class="gs-hint" style="margin:10px 14px">{_t("{n} convocatorias").format(n=f"{total:,}".replace(",", "."))}</div>
+    <div class="tbl-scroll">
     <table>
       <tr>{cab}</tr>
       {cuerpo}
     </table>
+    <span class="scroll-hint" aria-hidden="true">{_t("sigue")} <span class="scroll-hint-arrow">›</span></span>
+    </div>
   </div>
   {pag_html}"""
     return _page_shell(_t("Convocatorias abiertas: licitaciones y subvenciones"), body,
@@ -22638,10 +22991,20 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # contratos públicos normales.
         fondos_ue_muni = _db_fondos_ue_por_municipio(muni_name_d, d.get("provincia", provincia))
         fondos_ue_html = ""
+        # 2026-10-17: contratos de PLACE de este municipio en los que el órgano declara financiación europea
+        con_ue = [c for c in d.get("contratos", []) if c.get("fondos_ue")]
+        if con_ue:
+            n_prtr = sum(1 for c in con_ue if "PRTR" in c["fondos_ue"])
+            eur_ue = sum(float(c.get("importe_num") or 0) for c in con_ue if not c.get("importe_aviso"))
+            fondos_ue_html = (f'<div class="gs-hint" style="margin:14px 0 0;font-size:13px">🇪🇺 '
+                              + _t("{n} contratos de PLACE de este municipio declaran financiación europea ({importe}); "
+                                   "{n_prtr} son del Plan de Recuperación. Llevan la insignia del fondo en la lista.").format(
+                                       n=fmt_num(len(con_ue)), importe=fmt_eur(str(eur_ue)), n_prtr=fmt_num(n_prtr))
+                              + f' <a href="/fondos-ue">{_t("Más sobre fondos UE")}</a></div>')
         if fondos_ue_muni:
             total_fue = sum(f["importe_num"] for f in fondos_ue_muni)
             filas_fue = "".join(_render_fila_fondo_ue(f) for f in fondos_ue_muni)
-            fondos_ue_html = f"""<div class="fue-card" style="margin-top:14px">
+            fondos_ue_html += f"""<div class="fue-card" style="margin-top:14px">
             <div class="section-title" style="color:var(--yellow);margin:0 0 8px">
               🇪🇺 {_t("Fondos y proyectos financiados por la UE")}
               <span class="badge" style="background:var(--tint);color:var(--yellow);border-color:var(--border)">
@@ -24383,6 +24746,7 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
     </form>
     <div class="gs-hint">{(_t('{n} resultado para "{q}"') if len(resultados) == 1 else _t('{n} resultados para "{q}"')).format(n=len(resultados), q=esc(q))}</div>
   </div>
+  {_html_mrr100_busqueda(q)}
   <div class="muni-card">{tabla}</div>
   {comentarios_html}"""
 
