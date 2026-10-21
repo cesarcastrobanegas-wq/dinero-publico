@@ -341,7 +341,12 @@ _KOHESIO_LOTE = 1000
 _RE_FORMA_JURIDICA = re.compile(
     r"(?<![\w])(S\.?\s?L\.?\s?(U|L|NE|P)?\.?|S\.?\s?A\.?\s?(U|L|T|D)?\.?|S\.?\s?COOP\.?|S\.?A\.?T\.?|C\.?\s?B\.?|"
     r"A\.?\s?I\.?\s?E\.?|U\.?T\.?E\.?|LTDA?|GMBH|SRL|SAS|INC|LLC|BV|SAU|SLU|SLL|SL|SA|ONCE|CSIC|CDTI|ICEX|SEPE|SGPAE|"
-    r"ADIF|RENFE|AENA)(?![\w])", re.I)
+    r"ADIF|RENFE|AENA|DG|DGGM|DGJ|DGAHSAPI|LANBIDE|SOIB|SCE)(?![\w])", re.I)
+# 2026-10-21 (decisión de César): abreviaturas de organismos públicos que Kohesio publica como beneficiario y que salían
+# como «posible persona física» (de 1 M€ en adelante, 202,5 M€ la mayor): «DG …» y las siglas DGGM, DGJ y DGAHSAPI
+# (con nombre propio: «DG» pegado a otra palabra puede ser una inicial), «D.G.», «D. G», «Dir.», «Subdirección»,
+# «Gerencia», «Área …», los servicios de empleo vasco, balear y canario (LANBIDE, SOIB, SCE) y «Municipality» y
+# «Comune di» (socios de Interreg).
 _RE_ORGANISMO = re.compile(
     r"\b(SOCIEDAD|SOCIETAT|COOPERATIV|LIMITADA|AN[OÓ]NIMA|AYUNTAMIENTO|AJUNTAMENT|CONCELLO|UDAL|DIPUTACI|DEPUTACI|"
     r"CABILDO|CONSELL|MANCOMUNI|COMARCA|CONSORCI|ENTIDAD|ENTITAT|ORGANISMO|AGENCIA|AG[EÈ]NCIA|INSTITU|SERVICIO|"
@@ -351,7 +356,8 @@ _RE_ORGANISMO = re.compile(
     r"CONFEDERACI|C[AÁ]MARA|COFRAD|SINDICA|UNI[OÓ]N|PATRONAT|AUTORIDAD|PUERTO|AEROPUERTO|GRUPO|GROUP|HOLDING|"
     r"INDUSTRI|EMPRESA|COMPA[NÑ][IÍ]A|PARQUE|TECNOL[OÓ]GIC|LABORATORI|CL[UÚ]STER|PLATAFORMA|C[AÁ]RITAS|CRUZ ROJA|"
     r"REGANTES|OBISPADO|PARROQUIA|ARZOBISPADO|ENTE |EMPRESA P[UÚ]BLICA|INGENIER|CONSTRUCC|TRANSPORT|"
-    r"COMERCIAL|DISTRIBUCI|SERVICIOS|SOLUCIONES|SISTEMAS|TECHNOLOG|SOLUTIONS|ENERG|INVERSION|PROMOCI|GESTI[OÓ]N)", re.I)
+    r"COMERCIAL|DISTRIBUCI|SERVICIOS|SOLUCIONES|SISTEMAS|TECHNOLOG|SOLUTIONS|ENERG|INVERSION|PROMOCI|GESTI[OÓ]N|"
+    r"D\.\s?G\b|DIR\.|SUBDIRECCI|GERENCIA|[AÁ]REA\b|MUNICIP|COMUNE DI\b)", re.I)
 
 
 def es_entidad(nombre):
