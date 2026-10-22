@@ -17636,13 +17636,11 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
   .pwa-banner-mobile{display:flex;align-items:center;gap:8px;position:fixed;top:0;left:0;right:0;z-index:200;padding:4px 10px;background:var(--accent);color:#fff;font-size:11.5px;font-weight:600;}
   .pwa-banner-mobile[hidden]{display:none;}
   .pwa-banner-text{flex:1;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .pwa-banner-btn{background:#fff;color:var(--accent);border:none;border-radius:4px;padding:3px 9px;font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;}
-  .pwa-banner-close{background:transparent;border:none;color:#fff;font-size:17px;cursor:pointer;padding:0 2px;line-height:1;opacity:.65;}
+  /* 22-10 (repaso para la Cámara): «Instalar» y la X medían 18 px de alto; ahora 44x44 como mínimo, el tamaño de
+     dedo recomendado. La barra crece con ellos y pwaAjustarOffset() baja la cabecera lo que mida. */
+  .pwa-banner-btn{background:#fff;color:var(--accent);border:none;border-radius:4px;padding:0 14px;min-height:44px;min-width:44px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+  .pwa-banner-close{background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0;min-height:44px;min-width:44px;line-height:1;opacity:.65;}
   .pwa-banner-close:hover{opacity:1;}
-  /* 16-10 (repaso para la Cámara): «Instalar» (57x18) y la X (18x17) eran difíciles de pulsar con el dedo. Zona de
-     pulsación invisible de ~30 px alrededor, sin cambiar el alto de la barra. */
-  .pwa-banner-btn,.pwa-banner-close{position:relative;}
-  .pwa-banner-btn::after,.pwa-banner-close::after{content:"";position:absolute;inset:-6px;}
 }
 .instalar-bar-highlight{animation:pwaBannerPulse 1s ease-in-out 2;border-color:var(--accent) !important;}
 /* ── banner de consentimiento de cookies (2026-09-05) ────────────────────
@@ -21070,8 +21068,12 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
         partido_html = (esc(f["partido"]) if f["partido"]
                          else f'<span class="noloc-warn">{_t("Sin partido registrado")}</span>')
         habitantes_html = fmt_num(f["habitantes"]) if f["habitantes"] else "—"
-        deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + _t("/hab.")
-                           if f["deuda_por_habitante"] is not None else "—")
+        # deuda viva 0 de Hacienda = "sin deuda", no "0,00 €/hab." (el dato que falta sigue saliendo "—"). Una deuda
+        # de unos euros (Getxo 236 €, Leioa 23 €) redondea a 0,00 y no es cero: "< 0,01 €/hab."
+        dph = f["deuda_por_habitante"]
+        deuda_hab_html = ("—" if dph is None else _t("sin deuda") if dph == 0
+                          else "&lt; " + fmt_eur(0.01) + _t("/hab.") if dph < 0.005
+                          else fmt_eur(dph) + _t("/hab."))
         # el año de ISPA va en cada fila: es el último dato oficial del cargo, no un sueldo en tiempo real
         anio_fila_html = f' <span class="pol-retrib-nota">ISPA {esc(f["anio"])}</span>' if f.get("anio") else ""
         relevo_html = ""
@@ -27502,21 +27504,32 @@ def _pagina_guardar(clave, html_txt, grupo=None):
     return gz
 
 
+_PAGINAS_FIJAS = {
+    "/": lambda: render_landing_nacional_html(_db_municipios_ligeros(), rk_comunidad="todas"),
+    # 22-10 (repaso para la Cámara): en frío tardaban 17-24 s la primera vez; ahora se montan con la portada.
+    "/convocatorias": lambda: render_convocatorias_html({}),
+    "/mapa-cobertura": lambda: render_mapa_cobertura_html(),
+}
+
+
 def _pagina_fija(clave):
-    """La portada sin parámetros, en cualquier idioma: no sale de la caché por falta de sitio."""
-    return len(clave) == 2 and clave[1] == "/"
+    """La portada, /convocatorias y /mapa-cobertura sin parámetros, en cualquier idioma: no salen de la caché por
+    falta de sitio."""
+    return len(clave) == 2 and clave[1] in _PAGINAS_FIJAS
 
 
 def _calentar_portada():
-    """Monta la portada en cada idioma si no está fresca en la caché, para que ningún visitante espere a montarla."""
+    """Monta la portada, /convocatorias y /mapa-cobertura en cada idioma si no están frescas en la caché, para que
+    ningún visitante espere a montarlas."""
     for lang in ["es"] + [l for l in _i18n_publicados() if l != "es"]:
-        def _una(lang=lang):
-            _I18N_IDIOMA.set(lang)
-            _pagina_cacheada("/", [], lambda: render_landing_nacional_html(_db_municipios_ligeros(), rk_comunidad="todas"))
-        try:
-            contextvars.copy_context().run(_una)
-        except Exception as e:
-            print(f"  [paginas] no se pudo calentar la portada ({lang}): {type(e).__name__}: {e}", flush=True)
+        for ruta, montar in _PAGINAS_FIJAS.items():
+            def _una(lang=lang, ruta=ruta, montar=montar):
+                _I18N_IDIOMA.set(lang)
+                _pagina_cacheada(ruta, [], montar)
+            try:
+                contextvars.copy_context().run(_una)
+            except Exception as e:
+                print(f"  [paginas] no se pudo calentar {ruta} ({lang}): {type(e).__name__}: {e}", flush=True)
 
 
 def _paginas_invalidar(grupo):
@@ -27732,6 +27745,8 @@ def _route_get(path, qs, gzip_ok=False):
             qs = dict(qs, provincia=[zona[2:]])
         elif zona.startswith("c:"):
             qs = dict(qs, comunidad=[zona[2:]])
+        if not qs:
+            return _pagina_cacheada("/convocatorias", [], _PAGINAS_FIJAS["/convocatorias"], gzip_ok=gzip_ok)
         return _resp(render_convocatorias_html(qs), gzip_ok=gzip_ok)
 
     if path == "/fondos-ue":
@@ -27750,7 +27765,7 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
 
     if path == "/mapa-cobertura":
-        return _resp(render_mapa_cobertura_html(), gzip_ok=gzip_ok)
+        return _pagina_cacheada("/mapa-cobertura", [], _PAGINAS_FIJAS["/mapa-cobertura"], gzip_ok=gzip_ok)
 
     if path == "/casos":
         return _resp(render_casos_index_html(), gzip_ok=gzip_ok)

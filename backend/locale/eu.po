@@ -3311,3 +3311,6 @@ msgstr "Iturrian izenbururik gabeko eragiketa"
 
 msgid "Código de la operación"
 msgstr "Eragiketaren kodea"
+
+msgid "sin deuda"
+msgstr "zorrik gabe"

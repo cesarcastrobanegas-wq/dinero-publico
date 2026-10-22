@@ -3314,3 +3314,6 @@ msgstr "Operación sen título na fonte"
 
 msgid "Código de la operación"
 msgstr "Código da operación"
+
+msgid "sin deuda"
+msgstr "sen débeda"
