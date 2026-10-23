@@ -15214,10 +15214,10 @@ _LIC_MUNI_MEMO = {}
 _LIC_REGEX_MUNI = {}
 
 
-def _ahora_madrid():
+def _ahora_madrid(ts=None):
     """Fecha y hora peninsular sin depender de tzdata (no está en todos los Windows): horario de verano europeo, del
-    último domingo de marzo al último domingo de octubre, a la 01:00 UTC."""
-    ahora = datetime.now(timezone.utc)
+    último domingo de marzo al último domingo de octubre, a la 01:00 UTC. Con `ts` (segundos), la de ese momento."""
+    ahora = datetime.now(timezone.utc) if ts is None else datetime.fromtimestamp(ts, timezone.utc)
 
     def _ultimo_domingo(mes):
         d = datetime(ahora.year, mes, 31, 1, tzinfo=timezone.utc)
@@ -15612,11 +15612,13 @@ def _subir_subvenciones(crudo, forzar=False):
     return 200, {"convocatorias": n, "antes": antes, "con_municipio": con_muni, "lineas_con_error": malas}
 
 
-def _subir_fondos_ue(crudo, forzar=False):
+def _subir_fondos_ue(crudo, forzar=False, conservar_kohesio=False):
     """Sustituye la tabla `fondos_ue` por el NDJSON (gzip) de fondos_ue_espana.py. Devuelve (código, cuerpo), solo
     con recuentos. Mismo esquema que _subir_subvenciones: se carga línea a línea en una tabla nueva y se cambia de
     golpe; si llega bastante menos de lo que hay, se rechaza (protección de subidas) y no se toca nada.
-    El fichero llega sin nombres: los beneficiarios que ya estaban guardados (Murcia y Girona) se conservan."""
+    El fichero llega sin nombres: los beneficiarios que ya estaban guardados (Murcia y Girona) se conservan.
+    conservar_kohesio (?conservar=kohesio, opción 2 de César del 23-10): si el fichero no trae Kohesio (el generador
+    no pudo descargarlo), se copian las operaciones de Kohesio que ya había, con su hora de carga, y se dice cuál es."""
     nueva = "fondos_ue_nueva"
     with _db_lock:
         _db.execute(f"DROP TABLE IF EXISTS {nueva}")
@@ -15661,6 +15663,17 @@ def _subir_fondos_ue(crudo, forzar=False):
     except (OSError, EOFError) as e:
         _descartar()
         return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    kohesio = None
+    if conservar_kohesio:
+        with _db_lock:
+            if not _db.execute(f"SELECT 1 FROM {nueva} WHERE fuente='kohesio' LIMIT 1").fetchone():
+                cols = ", ".join(_FUE_COLUMNAS)
+                n_koh = _db.execute(f"INSERT OR IGNORE INTO {nueva} ({cols}) SELECT {cols} FROM fondos_ue "
+                                    "WHERE fuente='kohesio'").rowcount
+                ts_koh = _db.execute(f"SELECT max(ts) FROM {nueva} WHERE fuente='kohesio'").fetchone()[0]
+                _db.commit()
+                kohesio = {"conservadas": n_koh,
+                           "de_la_carga_del": _ahora_madrid(ts_koh).strftime("%Y-%m-%d %H:%M") if ts_koh else None}
     with _db_lock:
         antes = _db.execute("SELECT count(*) FROM fondos_ue").fetchone()[0]
         recibidas = _db.execute(f"SELECT count(*) FROM {nueva}").fetchone()[0]
@@ -15692,8 +15705,9 @@ def _subir_fondos_ue(crudo, forzar=False):
         provincias = _db.execute("SELECT count(DISTINCT provincia) FROM fondos_ue WHERE ambito='provincia'").fetchone()[0]
     _liberar_memoria()
     print(f"[fondos-ue] {recibidas} operaciones cargadas (antes {antes}; {provincias} provincias; por ámbito "
-          f"{por_ambito}; {conservados} beneficiarios conservados; {malas} líneas con error)", flush=True)
-    return 200, {"operaciones": recibidas, "antes": antes, "por_fuente": fuentes, "por_ambito": por_ambito,
+          f"{por_ambito}; {conservados} beneficiarios conservados; {malas} líneas con error"
+          + (f"; Kohesio conservado: {kohesio}" if kohesio else "") + ")", flush=True)
+    return 200, {**({"kohesio_conservado": kohesio} if kohesio else {}), "operaciones": recibidas, "antes": antes, "por_fuente": fuentes, "por_ambito": por_ambito,
                  "provincias_con_datos": provincias, "beneficiarios_conservados": conservados,
                  "lineas_con_error": malas}
 
@@ -29101,7 +29115,8 @@ def _app_wsgi(environ, start_response):
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
         else:
             code, cuerpo = _subir_fondos_ue(environ["wsgi.input"].read(length) if length else b"",
-                                            forzar=qs.get("forzar", [""])[0] == "si")
+                                            forzar=qs.get("forzar", [""])[0] == "si",
+                                            conservar_kohesio=qs.get("conservar", [""])[0] == "kohesio")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/asignacion-formales":

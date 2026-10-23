@@ -28,6 +28,7 @@ import csv
 import gzip
 import io
 import json
+import os
 import re
 import sys
 import time
@@ -603,7 +604,10 @@ def descargar_mrr100(sesion):
     } for nif, p in perceptores.items()]
 
 
-def generar(salida, con_nombres=False, kohesio=True, mrr100=True):
+def generar(salida, con_nombres=False, kohesio=True, mrr100=True, kohesio_opcional=False):
+    """Con kohesio_opcional (opción 2 de César, 23-10): si Kohesio no deja descargar (403 a GitHub Actions desde el
+    21-10) o trae de menos, se genera el fichero SIN Kohesio y se deja la marca «<salida>.sin-kohesio»; el flujo sube
+    entonces con ?conservar=kohesio y la web se queda con las operaciones de Kohesio de la última carga buena."""
     sesion = requests.Session()
     sesion.headers["User-Agent"] = "dinero-publico.com (fondos UE; datos abiertos de la Comisión Europea)"
     print("Cohesion Data (FEDER/FSE 2014-2020)…", flush=True)
@@ -614,11 +618,23 @@ def generar(salida, con_nombres=False, kohesio=True, mrr100=True):
         raise SystemExit(f"ERROR: descarga incompleta ({len(filas)} de Cohesion Data, {len(cordis)} de CORDIS); "
                          "no se genera el fichero")
     filas += cordis
+    marca = salida + ".sin-kohesio"
+    if os.path.exists(marca):
+        os.remove(marca)
     if kohesio:
         print("Kohesio (FEDER, FSE+ y Transición Justa 2021-2027)…", flush=True)
-        koh = descargar_kohesio(sesion, con_nombres)
-        if len(koh) < 20000:
-            raise SystemExit(f"ERROR: Kohesio trae solo {len(koh)} operaciones 2021-2027; no se genera el fichero")
+        try:
+            koh = descargar_kohesio(sesion, con_nombres)
+            if len(koh) < 20000:
+                raise SystemExit(f"ERROR: Kohesio trae solo {len(koh)} operaciones 2021-2027; no se genera el fichero")
+        except SystemExit as e:
+            if not kohesio_opcional:
+                raise
+            print(f"::warning::Kohesio no se ha podido descargar ({e}). El fichero va SIN Kohesio: la web conservará "
+                  "las operaciones 2021-2027 de la última carga buena.", flush=True)
+            with open(marca, "w", encoding="utf-8") as f:
+                f.write(str(e) + "\n")
+            koh = []
         filas += koh
     if mrr100:
         print("Plan de Recuperación: los 100 mayores perceptores…", flush=True)
@@ -641,12 +657,16 @@ if __name__ == "__main__":
                         "forma de DNI/NIE)")
     g.add_argument("--sin-kohesio", action="store_true", help="no bajar FEDER/FSE+ 2021-2027 de Kohesio")
     g.add_argument("--sin-mrr100", action="store_true", help="no bajar los 100 mayores perceptores del Plan de Recuperación")
+    g.add_argument("--kohesio-opcional", action="store_true",
+                   help="si Kohesio falla, generar sin Kohesio y dejar la marca <salida>.sin-kohesio (la web conserva "
+                        "lo último que tenía)")
     k = sub.add_parser("kohesio", help="solo Kohesio 2021-2027 (pruebas)")
     k.add_argument("--salida", required=True)
     k.add_argument("--sin-beneficiarios", action="store_true")
     a = ap.parse_args()
     if a.orden == "generar":
-        generar(a.salida, a.nombres, kohesio=not a.sin_kohesio, mrr100=not a.sin_mrr100)
+        generar(a.salida, a.nombres, kohesio=not a.sin_kohesio, mrr100=not a.sin_mrr100,
+                kohesio_opcional=a.kohesio_opcional)
     elif a.orden == "kohesio":
         s = requests.Session()
         s.headers["User-Agent"] = "dinero-publico.com (fondos UE; datos abiertos de la Comisión Europea)"
