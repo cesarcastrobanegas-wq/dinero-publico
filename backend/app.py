@@ -26901,8 +26901,18 @@ def _error_resp(msg, code=500):
 #   ALERTAS_TOPE_DIARIO      correos al día como mucho (por defecto 80: el plan gratuito de Resend da 100 al día y
 #                            hay que dejar sitio a los avisos propios)
 #   ALERTAS_TOPE_MES         correos en 30 días como mucho (por defecto 2.800 de los 3.000 del plan gratuito)
+#   ALERTAS_SOLO_CORREOS     (22-10, prueba de César) direcciones separadas por comas. Mientras esté puesta, las alertas
+#                            funcionan solo para ellas: sin enlaces ni formularios en la web (/alertas solo se abre
+#                            con la dirección escrita a mano), las altas de cualquier otro correo no guardan ni envían
+#                            nada (la página responde lo mismo de siempre) y la pasada solo escribe a esas direcciones.
 # El envío lo dispara el flujo alertas-envio.yml (POST /admin/alertas-enviar), por tandas.
 ALERTAS_ACTIVAS = os.environ.get("ALERTAS_ACTIVAS", "") == "1"
+ALERTAS_SOLO_CORREOS = frozenset(c for c in (ALR.correo_valido(x) for x in os.environ.get("ALERTAS_SOLO_CORREOS", "").split(",")) if c)
+ALERTAS_PUBLICAS = ALERTAS_ACTIVAS and not ALERTAS_SOLO_CORREOS     # enlaces y formularios a la vista de todos
+
+
+def _alertas_correo_permitido(correo):
+    return not ALERTAS_SOLO_CORREOS or ALR.correo_valido(correo) in ALERTAS_SOLO_CORREOS
 _ALERTAS_ALMACEN = None
 _alertas_almacen_lock = threading.Lock()
 _ALERTAS_ITEMS_POR_CORREO = 15
@@ -27167,6 +27177,8 @@ def _alertas_en_idioma(idioma, funcion, *args):
 
 def _alertas_alta(correo, idioma, tipo, filtros):
     """Alta desde el formulario: guarda la petición y manda, en un hilo, el correo que toque."""
+    if ALR.correo_valido(correo) and not _alertas_correo_permitido(correo):
+        return "fuera_de_prueba"                            # ALERTAS_SOLO_CORREOS: ni se guarda ni se envía nada
     alm = _alertas_almacen()
     marca = _I18N_IDIOMA.set("es")
     try:
@@ -27201,7 +27213,8 @@ def _alertas_pasada(max_correos=25):
     cupo = min(max_correos, tope_dia - hoy, tope_mes - mes)
     res = {"activas": True, "enviados": 0, "sin_novedades": 0, "fallidos": 0, "enviados_hoy": hoy,
            "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
-    pendientes = alm.pendientes(inicio_semana, inicio_dia)
+    pendientes = [(s, alertas) for s, alertas in alm.pendientes(inicio_semana, inicio_dia)
+                  if _alertas_correo_permitido(s["correo"])]
     _alertas_registrar_listas(alm, ahora)
     hechos = 0
     for s, alertas in pendientes:
@@ -27280,7 +27293,7 @@ def _alertas_form_html(tipo, fl, boton=None):
 
 def _alertas_ficha_html(municipio, provincia):
     """Tarjeta de la ficha del municipio: la alerta estrella del plan gratuito."""
-    if not ALERTAS_ACTIVAS:
+    if not ALERTAS_PUBLICAS:
         return ""
     return (f'<div class="alerta-card" id="alerta"><div class="alerta-titulo">🔔 '
             f'{_t("Recibe un correo cuando el Ayuntamiento de {m} adjudique contratos nuevos").format(m=esc(municipio))}</div>'
@@ -27289,7 +27302,7 @@ def _alertas_ficha_html(municipio, provincia):
 
 
 def _alertas_boton_convocatorias_html(f):
-    if not ALERTAS_ACTIVAS:
+    if not ALERTAS_PUBLICAS:
         return ""
     fl = {k: v for k, v in f.items() if k in ("provincia", "comunidad", "muni", "q", "tipo", "sector", "ambito",
                                                "importe", "benef")}
@@ -27407,6 +27420,10 @@ def _alertas_panel_html(cookie, hecho=""):
     f_ts = lambda ts: time.strftime("%d/%m/%Y %H:%M", time.gmtime(ts)) if ts else "—"
     if not ALERTAS_ACTIVAS:
         estado = '<div class="aviso"><b>APAGADAS.</b> Falta ALERTAS_ACTIVAS=1 en Render: la web no enseña nada de esto y no se envía ningún correo.</div>'
+    elif ALERTAS_SOLO_CORREOS:
+        estado = (f'<div class="aviso"><b>Encendidas EN PRUEBA</b> (ALERTAS_SOLO_CORREOS): solo para '
+                  f'{esc(", ".join(sorted(ALR.correo_tapado(c) for c in ALERTAS_SOLO_CORREOS)))}. La web no enseña '
+                  f'enlaces ni formularios; quita la variable para abrirlas a todos.</div>')
     else:
         estado = '<div class="aviso"><b>Encendidas</b> (ALERTAS_ACTIVAS=1).</div>'
     alm = _alertas_almacen()
