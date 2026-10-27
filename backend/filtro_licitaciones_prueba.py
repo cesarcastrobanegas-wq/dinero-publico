@@ -22,15 +22,17 @@ PERFILES = {
     "Limpieza, 5 personas, Murcia": {
         "cpvs": ["909"], "provincias": ["murcia"], "trabajadores": 5, "facturacion": "150k-300k",
         "clasificacion": [], "ute": True, "experiencia_publica": False, "certificados": [],
+        "tipos": ["servicios"],
     },
     "Constructora, 40 personas, clasificada": {
         "cpvs": ["45"], "provincias": ["murcia", "alicante", "albacete", "almeria"], "trabajadores": 40,
         "facturacion": "3M-10M", "clasificacion": ["C2-4", "C4-3", "C6-3", "G4-3", "G6-4", "E1-3", "I9-2"],
-        "ute": True, "experiencia_publica": True, "certificados": ["ISO9001", "ISO14001"],
+        "ute": True, "experiencia_publica": True, "certificados": ["ISO9001", "ISO14001"], "tipos": ["obras"],
     },
     "Consultora informática, 2 personas": {
         "cpvs": ["72", "48"], "provincias": ["murcia", "madrid", "alicante", "valencia"], "trabajadores": 2,
         "facturacion": "60k-150k", "clasificacion": [], "ute": False, "experiencia_publica": True, "certificados": [],
+        "tipos": ["servicios"],
     },
 }
 

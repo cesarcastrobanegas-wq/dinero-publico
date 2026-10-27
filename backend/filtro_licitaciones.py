@@ -13,7 +13,7 @@ Cada licitación abierta, y CADA LOTE por separado, cae en uno de estos grupos:
                                los lotes se evalúan uno a uno, así que el lote pequeño de un contrato grande sale en
                                PUEDE OPTAR o REVISA EL PLIEGO con la marca `lote_de_grande`.
   (DESCARTADA               -- no llega ni en UTE; no se enseña al socio, solo se cuenta.)
-Las que no son de su sector o provincia, o cierran en menos de MARGEN_DIAS, ni se evalúan.
+Las que no son de su sector, provincia o tipo de contrato, o cierran en menos de MARGEN_DIAS, ni se evalúan.
 
 Reglas (LCSP y RGLCAP; orientativas, a revisar por un jurista antes de un informe de pago):
 - Valor anual medio (VAM) = presupuesto sin IVA (del lote, si lo hay) / duración inicial en años, con un mínimo de un
@@ -154,10 +154,15 @@ def evaluar(lic, perfil, ahora=None):
 
     perfil: cpvs (prefijos de 2 a 8 cifras), provincias (claves de la app), trabajadores, facturacion (clave de
     TRAMOS_FACTURACION), clasificacion (lista de códigos "C2-4", opcional), ute (bool) y, opcionales,
-    incluir_sin_provincia (por defecto True), experiencia_publica (bool) y certificados (["ISO9001", ...])."""
+    incluir_sin_provincia (por defecto True), experiencia_publica (bool), certificados (["ISO9001", ...]) y tipos
+    (["obras", "servicios", "suministros"]; vacío = todos). El tipo evita, por ejemplo, que a una consultora le salgan
+    lotes de suministro que heredan el CPV de software del contrato (decisión de César, 2026-10-27)."""
     ahora = ahora or datetime.now()
     fin = lic.get("fin_plazo") or ""
     if not fin or fin < (ahora + timedelta(days=MARGEN_DIAS)).strftime("%Y-%m-%d %H:%M"):
+        return []
+    tipos = perfil.get("tipos")
+    if tipos and not any((lic.get("tipo") or "") in LIC.TIPOS_FILTRO[t] for t in tipos):
         return []
     lo_f, hi_f = TRAMOS_FACTURACION[perfil["facturacion"]]
     perfil_clas = [c for c in map(_clas, perfil.get("clasificacion") or []) if c]
