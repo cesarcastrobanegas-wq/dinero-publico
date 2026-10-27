@@ -2529,7 +2529,11 @@ def _db_init():
             id TEXT PRIMARY KEY, actualizado TEXT, estado TEXT, fin_plazo TEXT, titulo TEXT, url TEXT,
             expediente TEXT, organo TEXT, nif_organo TEXT, dir3 TEXT, ambito TEXT, provincia TEXT, comunidad TEXT,
             municipio TEXT, cpv TEXT, cpv2 TEXT, tipo TEXT, procedimiento TEXT, presupuesto REAL, valor_estimado REAL,
-            lotes INTEGER, busqueda TEXT, visto REAL)""")
+            lotes INTEGER, busqueda TEXT, visto REAL, requisitos TEXT)""")
+        try:        # tablas anteriores a la columna (2026-10-27): requisitos del filtro por empresa, JSON
+            _db.execute("ALTER TABLE licitaciones ADD COLUMN requisitos TEXT")
+        except sqlite3.OperationalError:
+            pass
         # Cola de revisión interna (2026-10-05, ver INFORME_BOT_CASOS.md): candidatos de backend/indicios_contratos.py
         # que solo ve César en /admin/revision. Nada de aquí se publica.
         _db.execute("""CREATE TABLE IF NOT EXISTS revision_candidatos (
@@ -15201,10 +15205,15 @@ def _reprocesar_meses_place(meses):
 # "Vigente" = última versión en PUB y fecha fin de presentación no vencida (ver licitaciones_place.py).
 LIC_CICLO_S = 3 * 3600
 LIC_MAX_PAGINAS_ATOM = 40
+# Versión del lector: al subirla, los ZIP de los últimos LIC_MESES_RELEER meses se vuelven a leer una vez para rellenar
+# lo nuevo (":req" = columna requisitos del filtro por empresa, 2026-10-27). Los más antiguos ya no tienen abiertas.
+LIC_VERSION_LECTOR = ":req"
+LIC_MESES_RELEER = 4
 _LIC_ESTADO = {"estado": "sin_arrancar"}
+# "visto" va siempre la última: las filas de las cerradas se rellenan con None hasta ella
 _LIC_COLUMNAS = ("id", "actualizado", "estado", "fin_plazo", "titulo", "url", "expediente", "organo", "nif_organo",
                  "dir3", "ambito", "provincia", "comunidad", "municipio", "cpv", "cpv2", "tipo", "procedimiento",
-                 "presupuesto", "valor_estimado", "lotes", "busqueda", "visto")
+                 "presupuesto", "valor_estimado", "lotes", "busqueda", "requisitos", "visto")
 _SQL_LIC_UPSERT = (f"INSERT INTO licitaciones ({', '.join(_LIC_COLUMNAS)}) VALUES ({', '.join('?' * len(_LIC_COLUMNAS))}) "
                    f"ON CONFLICT(id) DO UPDATE SET "
                    + ", ".join(f"{c}=excluded.{c}" for c in _LIC_COLUMNAS[1:])
@@ -15276,7 +15285,7 @@ def _licitacion_fila(r, visto):
     return (r["id"], r["actualizado"], r["estado"], r["fin_plazo"], r["titulo"][:500], r["url"], r["expediente"][:120],
             r["organo"][:300], r["nif_organo"], r["dir3"], r["ambito"], provincia, comunidad, municipio, r["cpv"],
             r["cpv"][:2], r["tipo"], r["procedimiento"], r["presupuesto"], r["valor_estimado"], r["lotes"],
-            normalizar(f'{r["titulo"]} {r["organo"]} {r["expediente"]}')[:800], visto)
+            normalizar(f'{r["titulo"]} {r["organo"]} {r["expediente"]}')[:800], LIC.requisitos_json(r), visto)
 
 
 def _licitaciones_ingerir_atom(raw):
@@ -15302,6 +15311,13 @@ def _licitaciones_ingerir_atom(raw):
     return n, abiertas, (min(fechas) if fechas else ""), (max(fechas) if fechas else "")
 
 
+def _lic_mes_corte_relectura():
+    """"AAAAMM" del mes más antiguo cuyo ZIP se relee al cambiar LIC_VERSION_LECTOR."""
+    hoy = _ahora_madrid()
+    m = hoy.year * 12 + hoy.month - 1 - (LIC_MESES_RELEER - 1)
+    return f"{m // 12}{m % 12 + 1:02d}"
+
+
 def _licitaciones_desde_zips():
     """Recorre los ZIP de place_cache/ que tengan una versión nueva (fecha+tamaño) desde la última lectura."""
     for f in sorted(os.listdir(CACHE_DIR)):
@@ -15314,8 +15330,10 @@ def _licitaciones_desde_zips():
         clave = "licitaciones_zip::" + f
         with _db_lock:
             fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
-        if fila and fila[0] == version:
+        if fila and fila[0].startswith(version) and (fila[0] == version + LIC_VERSION_LECTOR
+                                                     or f[6:12] < _lic_mes_corte_relectura()):
             continue
+        version += LIC_VERSION_LECTOR
         _LIC_ESTADO.update(estado="leyendo_zip", zip=f)
         n = abiertas = 0
         with zipfile.ZipFile(ruta) as z:
