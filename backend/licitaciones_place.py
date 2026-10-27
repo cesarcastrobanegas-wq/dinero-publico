@@ -188,7 +188,7 @@ def _lote(lo):
     nuts = _tag("CountrySubentityCode", _bloque("RealizedLocation", pp))
     d = {"id": _tag("ID", lo), "titulo": _tag("Name", pp)[:300],
          "presupuesto": _importe(_tag("TaxExclusiveAmount", _bloque("BudgetAmount", pp))),
-         "cpvs": _cpvs(pp), "provincia": provincia_de_nuts(nuts)}
+         "cpvs": _cpvs(pp), "nuts": nuts}
     req = _requisitos(_bloque("TenderingTerms", lo))
     if req:
         d["req"] = req
@@ -252,7 +252,8 @@ def analizar_entrada(e):
 
 def requisitos_json(r):
     """Lo que el filtro por empresa necesita y la tabla no tiene en columnas propias, en JSON compacto."""
-    d = {k: r[k] for k in ("cpvs", "duracion_meses", "prorrogas", "req", "lotes_detalle") if r.get(k)}
+    d = {k: r[k] for k in ("nuts", "cp_organo", "cpvs", "duracion_meses", "prorrogas", "req", "lotes_detalle")
+         if r.get(k)}
     return json.dumps(d, ensure_ascii=False, separators=(",", ":")) if d else ""
 
 

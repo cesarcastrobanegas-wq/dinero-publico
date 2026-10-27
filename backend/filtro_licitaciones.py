@@ -30,8 +30,16 @@ Reglas (LCSP y RGLCAP; orientativas, a revisar por un jurista antes de un inform
   que la empresa factura.
 """
 import json
+import os
 import re
+import sys
 from datetime import datetime, timedelta
+
+try:
+    from . import licitaciones_place as LIC
+except ImportError:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import licitaciones_place as LIC
 
 PUEDE = "PUEDE OPTAR"
 REVISA = "REVISA EL PLIEGO"
@@ -41,7 +49,9 @@ GRUPOS = (PUEDE, REVISA, UTE)
 
 # Tramos de facturación del formulario (euros/año), alineados con los cortes de la ley
 TRAMOS_FACTURACION = {
-    "<150k": (0, 150_000), "150k-300k": (150_000, 300_000), "300k-600k": (300_000, 600_000),
+    # el primero va partido en 60.000 (el corte del sumario): con un tramo "<150k" que empieza en 0, cualquier
+    # solvencia, por pequeña que fuera, salía como dudosa
+    "<60k": (0, 60_000), "60k-150k": (60_000, 150_000), "150k-300k": (150_000, 300_000), "300k-600k": (300_000, 600_000),
     "600k-1,5M": (600_000, 1_500_000), "1,5M-3M": (1_500_000, 3_000_000), "3M-10M": (3_000_000, 10_000_000),
     ">10M": (10_000_000, float("inf")),
 }
@@ -52,12 +62,25 @@ TIPOS_OBRAS = {"3"}                      # contrato de obras (las concesiones no
 PROCEDIMIENTO_SIMPLIFICADO = "9"
 UTE_FACTOR_MAX = 5                       # en UTE, como mucho 5 veces su facturación máxima
 VAM_POR_TRABAJADOR = 100_000             # por encima de esto por persona, se avisa (puede haber subrogación)
+SIN_LUGAR = "sin lugar en el anuncio"
 MARGEN_DIAS = 2                          # días mínimos hasta el fin de plazo para preparar la oferta
 # Categorías de clasificación por VAM (RGLCAP, arts. 26 y 38 tras el RD 773/2015): tope superior de cada una
 CATEGORIAS_OBRAS = ((1, 150_000), (2, 360_000), (3, 840_000), (4, 2_400_000), (5, 5_000_000), (6, float("inf")))
 # Certificados que cubren cada tipo genérico de solvencia técnica del feed
 CERT_POR_TIPO = {"XSX-CERTCALIDAD": {"ISO9001"}, "XSR-CALIDAD": {"ISO9001"}, "OXR-GESTMEDIOAMB": {"ISO14001", "EMAS"}}
 _RE_CLAS = re.compile(r"^([A-Z])(\d{1,2}|\*)?-?(\d)?$")
+# Código INE de provincia (las dos primeras cifras del código postal) -> provincia de la app, para las entidades locales
+# cuyo anuncio no trae la provincia en el NUTS (p. ej. solo "ES")
+PROVINCIA_POR_CP = dict(zip(
+    [f"{i:02d}" for i in range(1, 53)],
+    ["pais_vasco", "albacete", "alicante", "almeria", "avila", "badajoz", "baleares", "barcelona", "burgos", "caceres",
+     "cadiz", "castellon", "ciudad_real", "cordoba", "a_coruna", "cuenca", "girona", "granada", "guadalajara",
+     "pais_vasco", "huelva", "huesca", "jaen", "leon", "lleida", "la_rioja", "lugo", "madrid", "malaga", "murcia",
+     "navarra", "ourense", "asturias", "palencia", "las_palmas", "pontevedra", "salamanca", "santa_cruz_tenerife",
+     "cantabria", "segovia", "sevilla", "soria", "tarragona", "teruel", "toledo", "valencia", "valladolid",
+     "pais_vasco", "zamora", "zaragoza", "ceuta", "melilla"]))
+# provincia de la app -> NUTS2 de su comunidad (para lo que el feed solo sitúa a nivel de comunidad)
+_NUTS2_PROVINCIA = {p: n[:4] for n, p in LIC.NUTS_PROVINCIA.items() if len(n) == 5}
 
 
 def desde_fila(fila):
@@ -95,14 +118,34 @@ def _encaja_cpv(cpvs, prefijos):
 
 
 def _unidades(lic):
-    """[(lote o None, presupuesto, cpvs, provincia, requisitos propios)] -- un lote por unidad, o el contrato entero."""
+    """[(lote o None, presupuesto, cpvs, nuts, requisitos propios)] -- un lote por unidad, o el contrato entero."""
     lotes = lic.get("lotes_detalle") or []
     cpvs_c = lic.get("cpvs") or ([lic["cpv"]] if lic.get("cpv") else [])
+    nuts_c = lic.get("nuts") or ""
     if not lotes:
-        return [(None, lic.get("presupuesto") or lic.get("valor_estimado"), cpvs_c, lic.get("provincia") or "",
-                 lic.get("req") or {})]
-    return [(lo, lo.get("presupuesto"), lo.get("cpvs") or cpvs_c, lo.get("provincia") or lic.get("provincia") or "",
-             lo.get("req") or {}) for lo in lotes]
+        return [(None, lic.get("presupuesto") or lic.get("valor_estimado"), cpvs_c, nuts_c, lic.get("req") or {})]
+    return [(lo, lo.get("presupuesto"), lo.get("cpvs") or cpvs_c, lo.get("nuts") or nuts_c, lo.get("req") or {})
+            for lo in lotes]
+
+
+def _lugar(nuts, lic, perfil):
+    """(texto del lugar, ¿entra?) según el NUTS del lugar de ejecución. Con provincia: tiene que ser una de las del
+    perfil. Si el NUTS no la da, se usa la provincia de la fila (la web la deduce del municipio del órgano) y, en las
+    entidades locales, el código postal del órgano. Solo con la comunidad (NUTS2, pasa en Canarias, Castilla y León, la Comunitat Valenciana...): entra si el
+    perfil tiene alguna provincia de esa comunidad. "ES" (toda España): ámbito nacional, según incluir_sin_provincia.
+    Sin ningún lugar: entra igual que las nacionales, pero el resultado avisa (ver SIN_LUGAR)."""
+    nuts = (nuts or "").strip().upper()
+    provincia = LIC.provincia_de_nuts(nuts) if len(nuts) >= 5 else ""
+    if not provincia and len(nuts) < 5:
+        cp = (lic.get("cp_organo") or "").strip()
+        provincia = lic.get("provincia") or (PROVINCIA_POR_CP.get(cp[:2], "") if lic.get("ambito") == "local"
+                                             and len(cp) == 5 else "")
+    if provincia:
+        return provincia, provincia in perfil["provincias"]
+    if len(nuts) >= 4 and nuts[:4] in LIC.NUTS_COMUNIDAD:
+        entra = nuts[:4] in {_NUTS2_PROVINCIA.get(p) for p in perfil["provincias"]}
+        return "comunidad: " + LIC.NUTS_COMUNIDAD[nuts[:4]], entra
+    return ("ámbito nacional" if nuts.startswith("ES") else SIN_LUGAR), perfil.get("incluir_sin_provincia", True)
 
 
 def evaluar(lic, perfil, ahora=None):
@@ -128,13 +171,11 @@ def evaluar(lic, perfil, ahora=None):
     req_c = lic.get("req") or {}
     con_lotes = bool(lic.get("lotes_detalle"))
     res = []
-    for lote, importe, cpvs, provincia, req_l in _unidades(lic):
+    for lote, importe, cpvs, nuts, req_l in _unidades(lic):
         if not _encaja_cpv(cpvs, perfil["cpvs"]):
             continue
-        if provincia:
-            if provincia not in perfil["provincias"]:
-                continue
-        elif not perfil.get("incluir_sin_provincia", True):
+        provincia, entra = _lugar(nuts, lic, perfil)
+        if not entra:
             continue
         importe = importe or ve
         if not importe:
@@ -143,6 +184,8 @@ def evaluar(lic, perfil, ahora=None):
         vam = importe / anios
         if not dur:
             duda.append("sin duración en el anuncio: se toma un año")
+        if provincia == SIN_LUGAR:
+            duda.append("el anuncio no dice dónde se ejecuta")
         # requisitos: los del lote; si no trae, los del contrato (salvo el importe de solvencia, que en un contrato con
         # lotes puede ser el del total)
         req = dict(req_c, **req_l) if req_l else dict(req_c)

@@ -30,7 +30,7 @@ PERFILES = {
     },
     "Consultora informática, 2 personas": {
         "cpvs": ["72", "48"], "provincias": ["murcia", "madrid", "alicante", "valencia"], "trabajadores": 2,
-        "facturacion": "<150k", "clasificacion": [], "ute": False, "experiencia_publica": True, "certificados": [],
+        "facturacion": "60k-150k", "clasificacion": [], "ute": False, "experiencia_publica": True, "certificados": [],
     },
 }
 
