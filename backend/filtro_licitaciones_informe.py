@@ -34,6 +34,9 @@ except ImportError:
     import filtro_licitaciones as F
     import licitaciones_place as LIC
 
+# los nombres viven en el motor (el formulario de la web los usa y producción no tiene reportlab)
+NOMBRE_PROVINCIA, NOMBRE_COMUNIDAD, TIPO_TXT = F.NOMBRE_PROVINCIA, F.NOMBRE_COMUNIDAD, F.TIPO_TXT
+lugar_txt = F.lugar_txt
 MAX_PAGINAS = 10
 MAX_FICHAS = 40                      # punto de partida; se baja de 5 en 5 hasta caber en MAX_PAGINAS
 CUOTAS = ((F.PUEDE, 20), (F.REVISA, 12), (F.UTE, 8))
@@ -47,30 +50,6 @@ GRUPO_TXT = {
 MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
          "noviembre", "diciembre")
 DIAS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
-NOMBRE_PROVINCIA = {
-    "a_coruna": "A Coruña", "alicante": "Alicante", "albacete": "Albacete", "almeria": "Almería", "asturias": "Asturias",
-    "avila": "Ávila", "badajoz": "Badajoz", "baleares": "Illes Balears", "barcelona": "Barcelona", "burgos": "Burgos",
-    "caceres": "Cáceres", "cadiz": "Cádiz", "cantabria": "Cantabria", "castellon": "Castellón", "ceuta": "Ceuta",
-    "ciudad_real": "Ciudad Real", "cordoba": "Córdoba", "cuenca": "Cuenca", "girona": "Girona", "granada": "Granada",
-    "guadalajara": "Guadalajara", "huelva": "Huelva", "huesca": "Huesca", "jaen": "Jaén", "la_rioja": "La Rioja",
-    "las_palmas": "Las Palmas", "leon": "León", "lleida": "Lleida", "lugo": "Lugo", "madrid": "Madrid",
-    "malaga": "Málaga", "melilla": "Melilla", "murcia": "Región de Murcia", "navarra": "Navarra", "ourense": "Ourense",
-    "palencia": "Palencia", "pais_vasco": "País Vasco", "pontevedra": "Pontevedra", "salamanca": "Salamanca",
-    "santa_cruz_tenerife": "Santa Cruz de Tenerife", "segovia": "Segovia", "sevilla": "Sevilla", "soria": "Soria",
-    "tarragona": "Tarragona", "teruel": "Teruel", "toledo": "Toledo", "valencia": "Valencia",
-    "valladolid": "Valladolid", "zamora": "Zamora", "zaragoza": "Zaragoza",
-}
-NOMBRE_COMUNIDAD = {
-    "galicia": "Galicia", "asturias": "Asturias", "cantabria": "Cantabria", "pais_vasco": "País Vasco",
-    "navarra": "Navarra", "la_rioja": "La Rioja", "aragon": "Aragón", "madrid": "Comunidad de Madrid",
-    "castilla_y_leon": "Castilla y León", "castilla_la_mancha": "Castilla-La Mancha", "extremadura": "Extremadura",
-    "cataluna": "Cataluña", "valenciana": "Comunitat Valenciana", "baleares": "Illes Balears",
-    "andalucia": "Andalucía", "murcia": "Región de Murcia", "ceuta": "Ceuta", "melilla": "Melilla",
-    "canarias": "Canarias",
-}
-TIPO_TXT = {"1": "suministro", "2": "servicios", "3": "obras", "21": "gestión de servicios públicos",
-            "22": "concesión de servicios", "31": "concesión de obras públicas", "32": "concesión de obras"}
-
 _FUENTE, _FUENTE_B, _FUENTE_I = "Helvetica", "Helvetica-Bold", "Helvetica-Oblique"
 _SIMBOLOS = False
 
@@ -112,15 +91,6 @@ def perfil_texto(perfil, ahora=None):
     filas.append(("Ha trabajado para la Administración", "Sí" if exp else "No" if exp is False else "No lo ha dicho"))
     filas.append(("Iría en UTE (junto a otra empresa)", "Sí" if perfil.get("ute") else "No"))
     return filas
-
-
-def lugar_txt(clave):
-    if clave.startswith("comunidad: "):
-        c = clave[len("comunidad: "):]
-        return NOMBRE_COMUNIDAD.get(c, c)
-    if clave in (F.SIN_LUGAR, "ámbito nacional"):
-        return "Toda España" if clave == "ámbito nacional" else "No consta en el anuncio"
-    return NOMBRE_PROVINCIA.get(clave, clave.replace("_", " ").title())
 
 
 def fecha_larga(d):

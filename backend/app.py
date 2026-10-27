@@ -37,6 +37,12 @@ try:
 except ImportError:
     import alertas as ALR
 try:
+    from . import filtro_formulario as FFORM
+    from . import filtro_licitaciones as FLIC
+except ImportError:
+    import filtro_formulario as FFORM
+    import filtro_licitaciones as FLIC
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -26927,6 +26933,25 @@ def _error_resp(msg, code=500):
 ALERTAS_ACTIVAS = os.environ.get("ALERTAS_ACTIVAS", "") == "1"
 ALERTAS_SOLO_CORREOS = frozenset(c for c in (ALR.correo_valido(x) for x in os.environ.get("ALERTAS_SOLO_CORREOS", "").split(",")) if c)
 ALERTAS_PUBLICAS = ALERTAS_ACTIVAS and not ALERTAS_SOLO_CORREOS     # enlaces y formularios a la vista de todos
+# Formulario del filtro de licitaciones por empresa (BORRADOR, 2026-10-27; ver filtro_formulario.py). Apagado salvo
+# FILTRO_FORMULARIO=1: sin ella, /filtro-licitaciones no existe (404). No guarda nada y no lo enlaza ninguna página.
+FILTRO_FORMULARIO = os.environ.get("FILTRO_FORMULARIO", "") == "1"
+
+
+def _filtro_licitaciones_abiertas():
+    """Licitaciones con plazo abierto (hora peninsular) y requisitos ya leídos, como dicts para el filtro."""
+    columnas = ("id", "fin_plazo", "titulo", "url", "organo", "ambito", "provincia", "cpv", "tipo", "procedimiento",
+                "presupuesto", "valor_estimado", "requisitos")
+    ahora = _ahora_madrid().strftime("%Y-%m-%d %H:%M")
+    with _db_lock:
+        filas = _db.execute(f"SELECT {', '.join(columnas)} FROM licitaciones WHERE estado = 'PUB' AND fin_plazo >= ? "
+                            "AND requisitos IS NOT NULL", (ahora,)).fetchall()
+    return [FLIC.desde_fila(dict(zip(columnas, f))) for f in filas]
+
+
+def _filtro_formulario_resp(metodo, params):
+    html_ = FFORM.responder(metodo, params, _filtro_licitaciones_abiertas, _ahora_madrid())
+    return _resp(html_, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer"})
 
 
 def _alertas_correo_permitido(correo):
@@ -27667,6 +27692,8 @@ def _pag_entero(txt):
 
 
 def _route_get(path, qs, gzip_ok=False):
+    if FILTRO_FORMULARIO and path == FFORM.RUTA:
+        return _filtro_formulario_resp("GET", qs)
     if ALERTAS_ACTIVAS and (path == "/alertas" or path.startswith("/alertas/")):
         respuesta = _alertas_get(path, qs)
         if respuesta:
@@ -28138,6 +28165,9 @@ def _route_post(path, params):
             respuesta = _alertas_post(path, params)
             if respuesta:
                 return respuesta
+
+        if FILTRO_FORMULARIO and path == FFORM.RUTA:
+            return _filtro_formulario_resp("POST", params)
 
         if path in ("/admin/alertas-enviar", "/admin/alertas-db"):
             # Alertas por correo (2026-10-13). enviar: una tanda de la pasada de envío (flujo alertas-envio.yml);

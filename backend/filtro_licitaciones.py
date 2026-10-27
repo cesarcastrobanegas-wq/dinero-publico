@@ -102,6 +102,41 @@ PROVINCIA_POR_CP = dict(zip(
 _NUTS2_PROVINCIA = {p: n[:4] for n, p in LIC.NUTS_PROVINCIA.items() if len(n) == 5}
 
 
+# Nombres para mostrar (portada del PDF, formulario y fichas)
+NOMBRE_PROVINCIA = {
+    "a_coruna": "A Coruña", "alicante": "Alicante", "albacete": "Albacete", "almeria": "Almería", "asturias": "Asturias",
+    "avila": "Ávila", "badajoz": "Badajoz", "baleares": "Illes Balears", "barcelona": "Barcelona", "burgos": "Burgos",
+    "caceres": "Cáceres", "cadiz": "Cádiz", "cantabria": "Cantabria", "castellon": "Castellón", "ceuta": "Ceuta",
+    "ciudad_real": "Ciudad Real", "cordoba": "Córdoba", "cuenca": "Cuenca", "girona": "Girona", "granada": "Granada",
+    "guadalajara": "Guadalajara", "huelva": "Huelva", "huesca": "Huesca", "jaen": "Jaén", "la_rioja": "La Rioja",
+    "las_palmas": "Las Palmas", "leon": "León", "lleida": "Lleida", "lugo": "Lugo", "madrid": "Madrid",
+    "malaga": "Málaga", "melilla": "Melilla", "murcia": "Región de Murcia", "navarra": "Navarra", "ourense": "Ourense",
+    "palencia": "Palencia", "pais_vasco": "País Vasco", "pontevedra": "Pontevedra", "salamanca": "Salamanca",
+    "santa_cruz_tenerife": "Santa Cruz de Tenerife", "segovia": "Segovia", "sevilla": "Sevilla", "soria": "Soria",
+    "tarragona": "Tarragona", "teruel": "Teruel", "toledo": "Toledo", "valencia": "Valencia",
+    "valladolid": "Valladolid", "zamora": "Zamora", "zaragoza": "Zaragoza",
+}
+NOMBRE_COMUNIDAD = {
+    "galicia": "Galicia", "asturias": "Asturias", "cantabria": "Cantabria", "pais_vasco": "País Vasco",
+    "navarra": "Navarra", "la_rioja": "La Rioja", "aragon": "Aragón", "madrid": "Comunidad de Madrid",
+    "castilla_y_leon": "Castilla y León", "castilla_la_mancha": "Castilla-La Mancha", "extremadura": "Extremadura",
+    "cataluna": "Cataluña", "valenciana": "Comunitat Valenciana", "baleares": "Illes Balears",
+    "andalucia": "Andalucía", "murcia": "Región de Murcia", "ceuta": "Ceuta", "melilla": "Melilla",
+    "canarias": "Canarias",
+}
+TIPO_TXT = {"1": "suministro", "2": "servicios", "3": "obras", "21": "gestión de servicios públicos",
+            "22": "concesión de servicios", "31": "concesión de obras públicas", "32": "concesión de obras"}
+
+
+def lugar_txt(clave):
+    if clave.startswith("comunidad: "):
+        c = clave[len("comunidad: "):]
+        return NOMBRE_COMUNIDAD.get(c, c)
+    if clave in (SIN_LUGAR, "ámbito nacional"):
+        return "Toda España" if clave == "ámbito nacional" else "No consta en el anuncio"
+    return NOMBRE_PROVINCIA.get(clave, clave.replace("_", " ").title())
+
+
 def desde_fila(fila):
     """dict de una fila de la tabla `licitaciones` (sqlite3.Row o dict) con el JSON de `requisitos` ya abierto."""
     d = dict(fila)
@@ -349,11 +384,13 @@ def validar_perfil(perfil, ahora=None):
     ahora = ahora or datetime.now()
     err = []
     if not perfil.get("cpvs") or not all(re.fullmatch(r"\d{2,8}", c) for c in perfil["cpvs"]):
-        err.append("sector: hacen falta códigos CPV de 2 a 8 cifras")
-    if not perfil.get("provincias") or not set(perfil["provincias"]) <= set(LIC.NUTS_PROVINCIA.values()):
+        err.append("sector: marca al menos un sector (o escribe códigos CPV de 2 a 8 cifras)")
+    if not perfil.get("provincias"):
+        err.append("provincias: marca al menos una")
+    elif not set(perfil["provincias"]) <= set(LIC.NUTS_PROVINCIA.values()):
         err.append("provincias: alguna no existe")
     if perfil.get("facturacion") not in TRAMOS_FACTURACION:
-        err.append("facturación: tramo desconocido")
+        err.append("facturación: elige un tramo")
     if any(_clas(c) is None or not _clas(c)[2] for c in perfil.get("clasificacion") or []):
         err.append('clasificación: formato "C2-4" (grupo, subgrupo y categoría)')
     if any(t not in LIC.TIPOS_FILTRO for t in perfil.get("tipos") or []):
