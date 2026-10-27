@@ -5,7 +5,7 @@ PDF y hojas de cálculo que producción no tiene, y hasta el 2026-10-06 estos ge
 
 Salvaguarda (misma idea que _fusionar_fuente en actualizar_contratos_menores_murcia_manual.py): el fichero nuevo solo
 se queda si el generador terminó bien, el fichero se puede leer y no trae menos del 90 % de los contratos que ya
-había. Si no, se restaura el anterior con git y la fuente sale en el resumen como problema. Un fichero que solo
+había dentro de la ventana de 5 años (los que salen de la ventana no cuentan como pérdida). Si no, se restaura el anterior con git y la fuente sale en el resumen como problema. Un fichero que solo
 cambia de fecha de generación (mismos contratos) también se restaura, para no guardar ni reiniciar la web por nada.
 
 Uso:  python backend/flujo_menores_semanal.py [--solo gijon,zaragoza]
@@ -20,6 +20,8 @@ import subprocess
 import sys
 import time
 
+from alcance import alcance_desde
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PREFIJO = "actualizar_contratos_menores_"
 
@@ -32,6 +34,9 @@ EXCLUIDOS = {
     # devuelve 403). Los generadores funcionan desde un PC; hasta darles otra vía, siguen siendo manuales.
     "sevilla": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (sigue manual)",
     "valencia_capital": "el servidor del ayuntamiento rechaza las conexiones desde GitHub, error 403 (sigue manual)",
+    # Fallos del 2026-10-18 y 2026-10-25 (decisión de César del 2026-10-27: a manual).
+    "burgos": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (sigue manual)",
+    "almeria": "el servidor del ayuntamiento corta la conexión al agente del proyecto (sigue manual)",
 }
 MINUTOS = {"murcia_manual": 150, "euskadi": 210}      # el resto, MINUTOS_POR_DEFECTO
 MINUTOS_POR_DEFECTO = 40
@@ -61,6 +66,15 @@ def restaurar(ruta_rel, habia):
         subprocess.run(["git", "checkout", "HEAD", "--", ruta_rel], cwd=raiz, check=True)
     elif os.path.exists(os.path.join(raiz, ruta_rel)):
         os.remove(os.path.join(raiz, ruta_rel))
+
+
+def dentro_de_ventana(registros):
+    """Cuántos contratos siguen dentro de la ventana de 5 años (alcance.py). Los generadores ya no traen los anteriores
+    al corte, así que el fichero viejo se compara solo por estos: si no, cada mes que avanza la ventana parecería que
+    la fuente pierde contratos (Leganés, 2026-10-18 y 25: 254 -> 215, que eran 39 de antes de 2021-10-01). Los que no
+    traen fecha cuentan como dentro."""
+    desde = alcance_desde()
+    return sum(1 for r in registros if not r.get("data_adjudicacio") or str(r["data_adjudicacio"])[:10] >= desde)
 
 
 def huella(registros):
@@ -97,7 +111,7 @@ def ejecutar(nombre):
     if crudo_antes:
         try:
             registros_antes = registros_de(crudo_antes)
-            n_antes = len(registros_antes)
+            n_antes = dentro_de_ventana(registros_antes)
         except Exception:
             pass
     minutos = MINUTOS.get(nombre, MINUTOS_POR_DEFECTO)
