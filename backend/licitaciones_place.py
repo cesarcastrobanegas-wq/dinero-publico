@@ -128,7 +128,19 @@ _RE_LOTE = re.compile(r"<cac:ProcurementProjectLot>.*?</cac:ProcurementProjectLo
 _MESES_UNIDAD = {"MON": 1, "ANN": 12, "DAY": 1 / 30.4}
 # Tipos de solvencia técnica (TechnicalCapabilityTypeCode) que piden un certificado de calidad o de gestión ambiental
 TIPOS_CERTIFICADO = {"XSX-CERTCALIDAD", "OXR-GESTMEDIOAMB", "XSR-CALIDAD"}
-_RE_CERT = re.compile(r"\b(?:ISO|UNE[- ]EN|EMAS|ENS)\b[ -]?(?:\d{4,5})?", re.I)
+# Con número (ISO 9001, UNE-EN ISO 14001, UNE-EN 13606) o siglas sueltas (ENS, EMAS). Sin número no vale: el 27-10
+# salía un "UNE-EN" suelto en el motivo.
+_RE_CERT = re.compile(r"\b(ISO|UNE[- ]?EN(?:[- ]ISO)?)[ -]?(\d{4,5})\b|\b(ENS|EMAS)\b", re.I)
+
+
+def _certs_de(texto):
+    res = set()
+    for m in _RE_CERT.finditer(texto or ""):
+        if m.group(2):
+            res.add(("ISO" if "ISO" in m.group(1).upper() else "UNE-EN") + m.group(2))
+        else:
+            res.add(m.group(3).upper())
+    return res
 
 
 def _cpvs(pp):
@@ -177,7 +189,7 @@ def _requisitos(tt):
         for x in tec:
             if _tag("EvaluationCriteriaTypeCode", x) in TIPOS_CERTIFICADO:
                 certs.add(_tag("EvaluationCriteriaTypeCode", x))
-            certs.update(c.upper().replace(" ", "") for c in _RE_CERT.findall(_tag("Description", x)))
+            certs.update(_certs_de(_tag("Description", x)))
         if certs:
             r["cert"] = sorted(certs)
     return r
