@@ -21,18 +21,19 @@ import licitaciones_place as LIC           # noqa: E402
 PERFILES = {
     "Limpieza, 5 personas, Murcia": {
         "cpvs": ["909"], "provincias": ["murcia"], "trabajadores": 5, "facturacion": "150k-300k",
-        "clasificacion": [], "ute": True, "experiencia_publica": False, "certificados": [],
-        "tipos": ["servicios"],
+        "clasificacion": [], "ute": True, "experiencia_publica": False, "certificados": ["ISO9001"],
+        "tipos": ["servicios"], "anio_constitucion": 2012,
     },
     "Constructora, 40 personas, clasificada": {
         "cpvs": ["45"], "provincias": ["murcia", "alicante", "albacete", "almeria"], "trabajadores": 40,
         "facturacion": "3M-10M", "clasificacion": ["C2-4", "C4-3", "C6-3", "G4-3", "G6-4", "E1-3", "I9-2"],
-        "ute": True, "experiencia_publica": True, "certificados": ["ISO9001", "ISO14001"], "tipos": ["obras"],
+        "ute": True, "experiencia_publica": True, "certificados": ["ISO9001", "ISO14001", "ISO45001"],
+        "tipos": ["obras"], "anio_constitucion": 1998,
     },
     "Consultora informática, 2 personas": {
         "cpvs": ["72", "48"], "provincias": ["murcia", "madrid", "alicante", "valencia"], "trabajadores": 2,
-        "facturacion": "60k-150k", "clasificacion": [], "ute": False, "experiencia_publica": True, "certificados": [],
-        "tipos": ["servicios"],
+        "facturacion": "60k-150k", "clasificacion": [], "ute": False, "experiencia_publica": False,
+        "certificados": ["ENS"], "tipos": ["servicios"], "anio_constitucion": 2023,
     },
 }
 
@@ -73,8 +74,18 @@ def main():
           f"con clasificación: {sum(1 for f in abiertas if (f.get('req') or {}).get('clas'))}; "
           f"con importe de solvencia: {sum(1 for f in abiertas if (f.get('req') or {}).get('umbral_eco'))}")
     for nombre, perfil in PERFILES.items():
+        errores = F.validar_perfil(perfil, ahora)
+        if errores:
+            sys.exit(f"Perfil «{nombre}» no válido: {errores}")
         res = F.filtrar(abiertas, perfil, ahora)
         print(f"\n=== {nombre} ===")
+        nuevas = [r for g in F.GRUPOS for r in res[g] if any("nueva creación" in m for m in r["motivos"])]
+        if nuevas:
+            print(f"  con motivo de nueva creación: {len(nuevas)} "
+                  f"({sum(1 for r in nuevas if r['grupo'] == F.PUEDE)} en PUEDE OPTAR)")
+            for r in nuevas[:2]:
+                print(f"   - [{r['grupo']}] {r['titulo'][:80]} | {r['importe']:,.0f} EUR | "
+                      f"{'; '.join(r['motivos'])}")
         for g in F.GRUPOS + (F.DESCARTADA,):
             lic = len({r["id"] for r in res[g]})
             lotes = sum(1 for r in res[g] if r["lote"])

@@ -246,6 +246,8 @@ def analizar_entrada(e):
         "prorrogas": "ContractExtension" in pp_contrato,
         "req": _requisitos(_bloque("TenderingTerms", sin_lotes)),
         "lotes_detalle": [_lote(lo) for lo in _RE_LOTE.findall(e)],
+        # sujeto a regulación armonizada (SARA): True/False, None si no lo dice (medido el 27-10: lo dice el 100 %)
+        "sara": {"true": True, "false": False}.get(_tag("OverThresholdIndicator", tp).lower()),
     })
     return r
 
@@ -254,6 +256,8 @@ def requisitos_json(r):
     """Lo que el filtro por empresa necesita y la tabla no tiene en columnas propias, en JSON compacto."""
     d = {k: r[k] for k in ("nuts", "cp_organo", "cpvs", "duracion_meses", "prorrogas", "req", "lotes_detalle")
          if r.get(k)}
+    if r.get("sara") is not None:       # False también cuenta: es el caso de la exención de nueva creación
+        d["sara"] = r["sara"]
     return json.dumps(d, ensure_ascii=False, separators=(",", ":")) if d else ""
 
 

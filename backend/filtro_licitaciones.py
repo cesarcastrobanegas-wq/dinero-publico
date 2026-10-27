@@ -26,6 +26,9 @@ Reglas (LCSP y RGLCAP; orientativas, a revisar por un jurista antes de un inform
 - Clasificación obligatoria en obras de valor estimado >= 500.000 EUR (art. 77.1.a LCSP): con el código del feed se
   compara grupo, subgrupo y categoría; sin código, depende del pliego si el perfil tiene alguna de categoría
   suficiente. En servicios y obras menores, tenerla en el grupo pedido sustituye a la solvencia económica.
+- Empresas de nueva creación (menos de 5 años desde el año de constitución): en contratos NO armonizados (el feed lo
+  dice: OverThresholdIndicator) no se les exige la relación de trabajos ejecutados (arts. 88.2 obras, 89.1.h
+  suministros y 90.4 servicios LCSP); sale como motivo. En los armonizados la exención no aplica y se avisa.
 - UTE: las solvencias se suman (art. 69 LCSP), pero no se ofrece una UTE para algo más de UTE_FACTOR_MAX veces lo
   que la empresa factura.
 """
@@ -68,6 +71,12 @@ MARGEN_DIAS = 2                          # días mínimos hasta el fin de plazo 
 CATEGORIAS_OBRAS = ((1, 150_000), (2, 360_000), (3, 840_000), (4, 2_400_000), (5, 5_000_000), (6, float("inf")))
 # Certificados que cubren cada tipo genérico de solvencia técnica del feed
 CERT_POR_TIPO = {"XSX-CERTCALIDAD": {"ISO9001"}, "XSR-CALIDAD": {"ISO9001"}, "OXR-GESTMEDIOAMB": {"ISO14001", "EMAS"}}
+# Casillas de certificados del formulario (lo que no esté aquí va en "otros", como texto: "ISO27001", "UNE-EN...")
+CERTIFICADOS = ("ISO9001", "ISO14001", "ISO45001", "ENS", "EMAS")
+# Empresas de nueva creación (antigüedad inferior a 5 años): en contratos NO armonizados no se les puede exigir la
+# relación de trabajos ejecutados. Mismo criterio en obras, suministros y servicios, cada uno en su artículo.
+ANIOS_NUEVA_CREACION = 5
+ARTICULO_NUEVA_CREACION = {"3": "art. 88.2 LCSP", "1": "art. 89.1.h LCSP", "2": "art. 90.4 LCSP"}
 _RE_CLAS = re.compile(r"^([A-Z])(\d{1,2}|\*)?-?(\d)?$")
 # Código INE de provincia (las dos primeras cifras del código postal) -> provincia de la app, para las entidades locales
 # cuyo anuncio no trae la provincia en el NUTS (p. ej. solo "ES")
@@ -154,9 +163,10 @@ def evaluar(lic, perfil, ahora=None):
 
     perfil: cpvs (prefijos de 2 a 8 cifras), provincias (claves de la app), trabajadores, facturacion (clave de
     TRAMOS_FACTURACION), clasificacion (lista de códigos "C2-4", opcional), ute (bool) y, opcionales,
-    incluir_sin_provincia (por defecto True), experiencia_publica (bool), certificados (["ISO9001", ...]) y tipos
-    (["obras", "servicios", "suministros"]; vacío = todos). El tipo evita, por ejemplo, que a una consultora le salgan
-    lotes de suministro que heredan el CPV de software del contrato (decisión de César, 2026-10-27)."""
+    incluir_sin_provincia (por defecto True), experiencia_publica (bool), certificados (de CERTIFICADOS, más los que
+    escriba en "otros"), anio_constitucion (int) y tipos (["obras", "servicios", "suministros"]; vacío = todos). El
+    tipo evita, por ejemplo, que a una consultora le salgan lotes de suministro que heredan el CPV de software del
+    contrato (decisión de César, 2026-10-27). Ver validar_perfil()."""
     ahora = ahora or datetime.now()
     fin = lic.get("fin_plazo") or ""
     if not fin or fin < (ahora + timedelta(days=MARGEN_DIAS)).strftime("%Y-%m-%d %H:%M"):
@@ -166,6 +176,8 @@ def evaluar(lic, perfil, ahora=None):
         return []
     lo_f, hi_f = TRAMOS_FACTURACION[perfil["facturacion"]]
     perfil_clas = [c for c in map(_clas, perfil.get("clasificacion") or []) if c]
+    antiguedad = ahora.year - perfil["anio_constitucion"] if perfil.get("anio_constitucion") else None
+    nueva = antiguedad is not None and antiguedad < ANIOS_NUEVA_CREACION
     ve = lic.get("valor_estimado") or lic.get("presupuesto") or 0
     tipo = lic.get("tipo") or ""
     obras = tipo in TIPOS_OBRAS
@@ -241,8 +253,18 @@ def evaluar(lic, perfil, ahora=None):
 
         # --- avisos que no excluyen
         if not sumario:
-            if "OSR-COMPTASK" in (req.get("tec") or []) and perfil.get("experiencia_publica") is False:
-                duda.append("pide trabajos similares de los últimos años (valen también los privados)")
+            if "OSR-COMPTASK" in (req.get("tec") or []):
+                articulo = ARTICULO_NUEVA_CREACION.get(tipo)
+                if nueva and articulo and lic.get("sara") is False:
+                    motivos.append(f"empresa de nueva creación ({antiguedad} años) y contrato no armonizado: no se le "
+                                   f"exige experiencia ({articulo})")
+                elif nueva and articulo and lic.get("sara") is None:
+                    duda.append("empresa de nueva creación: si el contrato no es armonizado no se le exige "
+                                f"experiencia ({articulo}), pero el anuncio no lo dice")
+                elif perfil.get("experiencia_publica") is False or nueva:
+                    duda.append("pide trabajos similares de los últimos años (valen también los privados)"
+                                + ("; al ser contrato armonizado no aplica la exención de nueva creación"
+                                   if nueva and articulo and lic.get("sara") else ""))
             certs = set(req.get("cert") or [])
             if certs:
                 necesarios = set()
@@ -272,6 +294,28 @@ def evaluar(lic, perfil, ahora=None):
             "motivos": no_llega + duda + motivos,
         })
     return res
+
+
+def validar_perfil(perfil, ahora=None):
+    """Lista de errores de un perfil (vacía si está bien), para cuando haya formulario."""
+    ahora = ahora or datetime.now()
+    err = []
+    if not perfil.get("cpvs") or not all(re.fullmatch(r"\d{2,8}", c) for c in perfil["cpvs"]):
+        err.append("sector: hacen falta códigos CPV de 2 a 8 cifras")
+    if not perfil.get("provincias") or not set(perfil["provincias"]) <= set(LIC.NUTS_PROVINCIA.values()):
+        err.append("provincias: alguna no existe")
+    if perfil.get("facturacion") not in TRAMOS_FACTURACION:
+        err.append("facturación: tramo desconocido")
+    if any(_clas(c) is None or not _clas(c)[2] for c in perfil.get("clasificacion") or []):
+        err.append('clasificación: formato "C2-4" (grupo, subgrupo y categoría)')
+    if any(t not in LIC.TIPOS_FILTRO for t in perfil.get("tipos") or []):
+        err.append("tipo de contrato: obras, servicios o suministros")
+    a = perfil.get("anio_constitucion")
+    if a is not None and not (isinstance(a, int) and 1850 <= a <= ahora.year):
+        err.append("año de constitución: no válido")
+    if any(not re.fullmatch(r"[A-Z0-9 .-]{2,20}", c) for c in perfil.get("certificados") or []):
+        err.append('certificados: casillas de CERTIFICADOS o texto corto en "otros" ("ISO27001")')
+    return err
 
 
 def filtrar(licitaciones, perfil, ahora=None):
