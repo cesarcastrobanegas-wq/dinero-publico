@@ -34,3 +34,10 @@ backend/cache_db_backup_pre_refresco_aditivo_*.db-shm
 backend/borme_actos.db*
 backend/administradores_borme.json
 backend/bdns.db
+
+# Perfiles del filtro de licitaciones (2026-10-28): correos y datos de empresas. Viven SOLO en el disco de Render
+# (DATA_DIR=/var/data) y en la copia cifrada; nunca en el repositorio. En local, socios.db de pruebas.
+socios.db
+socios.db-*
+backend/socios.db
+backend/socios.db-*

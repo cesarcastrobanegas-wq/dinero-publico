@@ -8,8 +8,11 @@ pasa las licitaciones abiertas de la tabla.
   certificados (casillas + "otros"), año de constitución, tipo de contrato, si ha trabajado para la Administración, UTE
   y el correo para enviarle las licitaciones.
 - Comprobación con filtro_licitaciones.validar_perfil() más la del correo.
-- BORRADOR: no se guarda nada (ni en base de datos ni en registros). Al enviar, se valida y se enseña una vista previa
-  con las licitaciones abiertas de ese momento. Guardar los perfiles (fichero propio, como alertas.db) es otro paso.
+- BORRADOR, apagado salvo FILTRO_FORMULARIO=1. Al enviar, se valida, se enseña una vista previa con las licitaciones
+  abiertas de ese momento y app.py guarda el perfil SIN CONFIRMAR en socios.db (ver socios.py) y manda el correo de
+  confirmación (doble confirmación, como las alertas). Sin confirmar, a los 7 días se borra.
+- Aquí están también las páginas de confirmar, baja y "mis licitaciones" y los textos de los correos (funciones puras:
+  los enlaces firmados los pone app.py). Todos los correos llevan el enlace de baja, que BORRA el perfil.
 - Página sin publicidad, analítica ni recursos de terceros, y noindex (como las de las alertas): lleva datos de empresa.
 - Responsable de los datos: Dinero Público (decisión de César, 2026-10-27).
 """
@@ -28,7 +31,10 @@ MAX_FICHAS_VISTA = 10                    # por grupo, en la vista previa
 _RE_CORREO = re.compile(r"[A-Za-z0-9._%+\-]{1,64}@[A-Za-z0-9\-]{1,63}(?:\.[A-Za-z0-9\-]{1,63})+")
 TIPOS_FORM = (("obras", "Obras"), ("servicios", "Servicios"), ("suministros", "Suministros"))
 PRIVACIDAD = ("Responsable: Dinero Público. Usamos estos datos solo para enviarte las licitaciones que encajan con tu "
-              "empresa. Puedes darte de baja en cualquier momento.")
+              "empresa. Guardamos el correo y los datos de la empresa de este formulario; nada más. Te pediremos "
+              "confirmar el correo: sin confirmar, lo borramos a los 7 días, y si no usas el servicio en 12 meses, "
+              "también. Puedes darte de baja en cualquier momento con el enlace de cada correo.")
+ANCLA_AVISO_LEGAL = "/aviso-legal#filtro-licitaciones"
 
 CSS = """
 *{box-sizing:border-box}
@@ -66,6 +72,11 @@ color:#fff;cursor:pointer}
 .ficha .dato{font-size:.92rem;color:#3a4356}
 .sumario{display:inline-block;border:1px solid #1c2333;border-radius:4px;padding:0 6px;font-size:.8rem;font-weight:700}
 .trampa{position:absolute;left:-9999px}
+.caja{background:#fff;border:1px solid #d9dde5;border-radius:10px;padding:12px 14px;margin:0 0 14px}
+.caja.ok{border:2px solid #1c2333}
+.perfil{width:100%;border-collapse:collapse;font-size:.92rem}.perfil th,.perfil td{text-align:left;vertical-align:top;
+padding:5px 6px;border-top:1px solid #eef0f4}.perfil th{width:42%;color:#33405a}
+button.sec{background:#fff;color:#1b2f5c;border:2px solid #1b2f5c}
 a{color:#1b4fb3}
 """
 
@@ -215,7 +226,7 @@ def formulario_html(v=None, errores=()):
 <input type="text" name="web" value="" tabindex="-1" autocomplete="off" aria-hidden="true" class="trampa">
 </fieldset>
 <button type="submit">Ver mis licitaciones</button>
-<p class="priv">{_e(PRIVACIDAD)} <a href="/aviso-legal">Aviso legal y privacidad</a></p>
+<p class="priv">{_e(PRIVACIDAD)} <a href="{ANCLA_AVISO_LEGAL}">Protección de datos</a></p>
 </form>"""
 
 
@@ -262,28 +273,153 @@ def resultado_html(res):
     return "".join(partes)
 
 
-def pagina(cuerpo, titulo="Licitaciones para tu empresa"):
+SUB_FORMULARIO = ("Cuéntanos cómo es tu empresa y te enviaremos las licitaciones públicas abiertas a las que puede "
+                  "presentarse.")
+
+
+def pagina(cuerpo, titulo="Licitaciones para tu empresa", sub=SUB_FORMULARIO, autoenviar=False):
+    """Página sin publicidad, analítica ni recursos de terceros. `autoenviar`: el formulario id="auto" se envía solo,
+    para que confirmar o darse de baja sea un clic; un programa de correo que solo abre el enlace para revisarlo no
+    ejecuta nada y no confirma ni borra nada (como en las alertas)."""
+    script = '<script>var f=document.getElementById("auto");if(f){f.submit();}</script>' if autoenviar else ""
     return (f'<!doctype html><html lang="es"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">'
             f'<title>{_e(titulo)} | Dinero Público</title><style>{CSS}</style></head><body><div class="fl">'
             f'<div class="marca"><a href="/">Dinero Público</a></div><h1>{_e(titulo)}</h1>'
-            f'<p class="sub">Cuéntanos cómo es tu empresa y te enviaremos las licitaciones públicas abiertas a las '
-            f'que puede presentarse.</p>'
-            f'<div class="borrador"><b>BORRADOR.</b> Esta página es una prueba: no guardamos ningún dato. Al enviar, '
-            f'solo te enseñamos el resultado de hoy.</div>{cuerpo}</div></body></html>')
+            + (f'<p class="sub">{_e(sub)}</p>' if sub else "")
+            + f'<div class="borrador"><b>BORRADOR.</b> Esta página está en pruebas.</div>{cuerpo}</div>{script}'
+            f'</body></html>')
 
 
-def responder(metodo, params, licitaciones_abiertas, ahora=None):
+REVISA_CORREO = ('<div class="caja ok"><b>Revisa tu correo.</b> Si la dirección es correcta, te acabamos de enviar un '
+                 'mensaje con un enlace: púlsalo para confirmar y empezar a recibir las licitaciones. Si ya estabas '
+                 'dado de alta, el enlace sirve para confirmar los datos nuevos.<br><span class="ayuda">Si no lo ves en '
+                 'unos minutos, mira en la carpeta de correo no deseado. Sin confirmar no te enviaremos nada más y lo '
+                 'borramos a los 7 días.</span></div>')
+
+
+def responder(metodo, params, licitaciones_abiertas, ahora=None, guardar=None):
     """HTML de la página. metodo: "GET" o "POST"; params: dict de listas; licitaciones_abiertas: función sin argumentos
     que devuelve las licitaciones (dicts de filtro_licitaciones.desde_fila) solo cuando hacen falta; ahora: hora
-    peninsular (los plazos de PLACE van en hora de España y el servidor, en UTC)."""
+    peninsular (los plazos de PLACE van en hora de España y el servidor, en UTC); guardar(correo, perfil): guarda el
+    perfil sin confirmar y manda el correo de confirmación. La página dice lo mismo pase lo que pase al guardar (ya
+    dado de alta, correo reciente...): así no se puede averiguar desde fuera si una dirección está dada de alta."""
     if metodo != "POST":
         return pagina(formulario_html())
     if _uno(params, "web"):                                   # campo trampa: las personas no lo ven
         return pagina(formulario_html())
-    perfil, _correo, errores = leer_envio(params)
+    perfil, correo, errores = leer_envio(params)
     if errores:
         return pagina(formulario_html(params, errores))
+    if guardar:
+        guardar(correo, perfil)
     res = F.filtrar(licitaciones_abiertas(), perfil, ahora)
-    return pagina(resultado_html(res) + '<h2>Tus datos</h2>' + formulario_html(params))
+    return pagina((REVISA_CORREO if guardar else "") + resultado_html(res) + '<h2>Tus datos</h2>' + formulario_html(params))
+
+
+# ── páginas de los enlaces del correo (confirmar, baja, mis licitaciones) ──────────────────────────────────────────
+def perfil_html(perfil, ahora=None):
+    filas = "".join(f"<tr><th>{_e(k)}</th><td>{_e(v)}</td></tr>" for k, v in F.perfil_texto(perfil, ahora))
+    return f'<table class="perfil">{filas}</table>'
+
+
+def _campos_ocultos(campos):
+    return "".join(f'<input type="hidden" name="{_e(k)}" value="{_e(v)}">' for k, v in campos.items())
+
+
+def enlace_no_valido_html():
+    return pagina('<div class="caja">Este enlace no es válido o ha caducado: puede que ya te hayas dado de baja o que '
+                  'la solicitud se haya borrado (las que no se confirman se borran a los 7 días). Puedes volver a '
+                  f'<a href="{RUTA}">rellenar el formulario</a>.</div>', titulo="Enlace no válido", sub="")
+
+
+def confirmar_pedir_html(campos):
+    """Página del enlace de confirmación: un formulario que se envía solo (POST)."""
+    return pagina(f'<div class="caja"><form method="POST" action="{RUTA}/confirmar" id="auto">{_campos_ocultos(campos)}'
+                  '<button type="submit">Confirmar mi correo</button></form></div>',
+                  titulo="Confirmar", sub="", autoenviar=True)
+
+
+def confirmado_html(perfil, enlace_ver, enlace_baja, era_cambio=False, ya_estaba=False, ahora=None):
+    if ya_estaba:
+        cab = "Ya estaba confirmado. No hace falta hacer nada más."
+    elif era_cambio:
+        cab = "Listo: hemos guardado los datos nuevos de tu empresa."
+    else:
+        cab = ("Listo: ya estás dado de alta. Te enviaremos por correo las licitaciones abiertas que encajan con tu "
+               "empresa.")
+    return pagina(f'<div class="caja ok"><b>{_e(cab)}</b></div>'
+                  f'<div class="caja"><b>Estos son los datos que tenemos de tu empresa</b>{perfil_html(perfil, ahora)}</div>'
+                  f'<p><a href="{_e(enlace_ver)}">Ver ahora mis licitaciones</a></p>'
+                  f'<p class="ayuda">En cada correo tendrás un enlace para darte de baja; al pulsarlo borramos tus datos. '
+                  f'También puedes hacerlo ahora: <a href="{_e(enlace_baja)}">darme de baja y borrar mis datos</a>.</p>',
+                  titulo="Correo confirmado", sub="")
+
+
+def baja_pedir_html(campos):
+    """Página del enlace de baja: un formulario que se envía solo (POST) y borra el perfil."""
+    return pagina(f'<div class="caja"><form method="POST" action="{RUTA}/baja" id="auto">{_campos_ocultos(campos)}'
+                  '<button type="submit">Darme de baja y borrar mis datos</button></form></div>',
+                  titulo="Darte de baja", sub="", autoenviar=True)
+
+
+def baja_hecha_html():
+    return pagina('<div class="caja ok"><b>Te has dado de baja.</b> Hemos borrado tu correo y los datos de tu empresa. '
+                  'No recibirás más mensajes.</div><p><a href="/">Volver al inicio</a></p>', titulo="Baja hecha", sub="")
+
+
+def mis_licitaciones_html(perfil, res, campos_baja, ahora=None):
+    return pagina(resultado_html(res)
+                  + f'<div class="caja"><b>Los datos de tu empresa</b>{perfil_html(perfil, ahora)}'
+                  f'<p class="ayuda">¿Ha cambiado algo? Vuelve a <a href="{RUTA}">rellenar el formulario</a> con el mismo '
+                  f'correo: te pediremos confirmar el cambio.</p></div>'
+                  f'<form method="POST" action="{RUTA}/baja">{_campos_ocultos(campos_baja)}'
+                  '<button type="submit" class="sec">Darme de baja y borrar mis datos</button></form>',
+                  titulo="Tus licitaciones", sub="Las licitaciones abiertas hoy que encajan con tu empresa.")
+
+
+# ── correos (texto y HTML; app.py pone remitente, destinatario y cabeceras de baja) ─────────────────────────────────
+def _pie_baja(enlace_baja):
+    txt = ["", "--", "Recibes este correo porque se pidió en dinero-publico.com el envío de licitaciones para esta "
+           "dirección.", f"Darte de baja y borrar tus datos con un clic: {enlace_baja}"]
+    html_ = (f'<p style="font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:12px;margin-top:24px">'
+             f'Recibes este correo porque se pidió en dinero-publico.com el envío de licitaciones para esta dirección.<br>'
+             f'<a href="{_e(enlace_baja)}" style="color:#6b7280">Darme de baja y borrar mis datos</a></p>')
+    return txt, html_
+
+
+def correo_html(cuerpo, pie):
+    return (f'<div style="font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:15px;line-height:1.5;'
+            f'color:#1c2333;max-width:600px;margin:0 auto;padding:16px">'
+            f'<div style="font-weight:700;color:#1b2f5c;font-size:17px;margin-bottom:14px">Dinero Público</div>'
+            f'{cuerpo}{pie}</div>')
+
+
+def correo_confirmacion(perfil, enlace_confirmar, enlace_baja, es_cambio=False, ahora=None):
+    """(asunto, texto, html) del correo de confirmación. Lleva el enlace de baja como todos: si no lo pidió quien
+    recibe el correo, puede borrar sus datos en el acto sin esperar a los 7 días."""
+    datos = F.perfil_texto(perfil, ahora)
+    if es_cambio:
+        asunto = "Confirma los datos nuevos de tu empresa en Dinero Público"
+        intro = "Has pedido cambiar los datos de tu empresa para recibir licitaciones de Dinero Público. Los datos nuevos son:"
+        boton = "Confirmar los datos nuevos"
+        no_tu = "Si no has sido tú, no hagas nada: sin confirmar no cambia nada y la petición se descarta en 7 días."
+    else:
+        asunto = "Confirma tu correo para recibir licitaciones de Dinero Público"
+        intro = ("Has pedido recibir por correo las licitaciones públicas abiertas que encajan con tu empresa. "
+                 "Estos son los datos que nos has dado:")
+        boton = "Confirmar mi correo"
+        no_tu = ("Si no has sido tú, no hagas nada: sin confirmar no te enviaremos nada más y lo borramos en 7 días. "
+                 "Si prefieres borrarlo ya, usa el enlace de baja de abajo.")
+    pie_txt, pie_html = _pie_baja(enlace_baja)
+    lineas = [intro, ""] + [f"  {k}: {v}" for k, v in datos] + [
+        "", f"Para confirmarlo, pulsa este enlace: {enlace_confirmar}", "", no_tu] + pie_txt
+    tabla = "".join(f'<tr><td style="padding:3px 10px 3px 0;color:#4b5563;vertical-align:top">{_e(k)}</td>'
+                    f'<td style="padding:3px 0;vertical-align:top">{_e(v)}</td></tr>' for k, v in datos)
+    cuerpo = (f'<p>{_e(intro)}</p><table style="font-size:14px;border-collapse:collapse">{tabla}</table>'
+              f'<p style="margin:18px 0"><a href="{_e(enlace_confirmar)}" style="background:#1b2f5c;color:#ffffff;'
+              f'text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600;display:inline-block">'
+              f'{_e(boton)}</a></p><p style="font-size:13px;color:#6b7280">{_e(no_tu)}</p>')
+    return asunto, "\n".join(lineas) + "\n", correo_html(cuerpo, pie_html)
+

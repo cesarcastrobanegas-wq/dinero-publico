@@ -137,6 +137,36 @@ def lugar_txt(clave):
     return NOMBRE_PROVINCIA.get(clave, clave.replace("_", " ").title())
 
 
+def perfil_texto(perfil, ahora=None):
+    """[(etiqueta, valor)] con los datos del perfil en lenguaje llano (portada del PDF, correo de
+    confirmación y página del socio)."""
+    ahora = ahora or datetime.now()
+    sector = perfil.get("sector_texto") or ", ".join(
+        dict.fromkeys(LIC.CPV_DIVISIONES.get(c[:2], c) for c in perfil["cpvs"]))
+    tipos = perfil.get("tipos") or []
+    filas = []
+    if perfil.get("descripcion"):
+        filas.append(("Empresa", perfil["descripcion"]))
+    filas += [
+        ("Sector", sector),
+        ("Provincias", ", ".join(NOMBRE_PROVINCIA.get(p, p) for p in perfil["provincias"])),
+        ("Tipo de contrato", ", ".join(tipos).capitalize() if tipos else "Todos (obras, servicios y suministros)"),
+        ("Personas en plantilla", str(perfil.get("trabajadores") or "No lo ha dicho")),
+        ("Facturación anual", TRAMOS_TEXTO.get(perfil["facturacion"], perfil["facturacion"]).capitalize()),
+        ("Clasificación de contratista", "; ".join(map(clas_llano, perfil.get("clasificacion") or []))
+         or "No tiene"),
+        ("Certificados", ", ".join(map(cert_llano, perfil.get("certificados") or [])) or "Ninguno"),
+    ]
+    a = perfil.get("anio_constitucion")
+    if a:
+        nueva = ahora.year - a < ANIOS_NUEVA_CREACION
+        filas.append(("Año de constitución", f"{a}" + (" (menos de 5 años: empresa de nueva creación)" if nueva else "")))
+    exp = perfil.get("experiencia_publica")
+    filas.append(("Ha trabajado para la Administración", "Sí" if exp else "No" if exp is False else "No lo ha dicho"))
+    filas.append(("Iría en UTE (junto a otra empresa)", "Sí" if perfil.get("ute") else "No"))
+    return filas
+
+
 def desde_fila(fila):
     """dict de una fila de la tabla `licitaciones` (sqlite3.Row o dict) con el JSON de `requisitos` ya abierto."""
     d = dict(fila)
