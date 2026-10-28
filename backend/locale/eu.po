@@ -1179,8 +1179,8 @@ msgid "En Vigo el adjudicatario no es un campo explícito de la fuente: el infor
 msgstr "Vigon esleipenduna ez da iturriaren eremu esplizitu bat: PDF txostenak talde-goiburu gisa adierazten du bere kontratuen gainean, eta horrela esleitu dugu (kasu argietan baliozkotua, % 92-100eko koherentziarekin). Estaldura 2022tik; zenbatekoak BEZarekin; txostenak ez du IFZrik argitaratzen."
 
 #: app.py:21080
-msgid "Datos de la API pública de contratación de Euskadi (Gobierno Vasco), la misma fuente que los contratos formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección cuando el propio dato de origen es matemáticamente imposible, ver memoria del proyecto). No siempre publica NIF."
-msgstr "Euskadiko kontratazioaren API publikoko datuak (Eusko Jaurlaritza), euskal udalerrien kontratu formalen iturri bera: esleipenaren benetako data eta zenbatekoa BEZarekin (zuzenketa batekin jatorrizko datua bera matematikoki ezinezkoa denean, ikus proiektuaren memoria). Ez du beti IFZ argitaratzen."
+msgid "Datos de la API pública de contratación de Euskadi (Gobierno Vasco), la misma fuente que los contratos formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección cuando el propio dato de origen es matemáticamente imposible). No siempre publica NIF."
+msgstr "Euskadiko kontratazioaren API publikoko datuak (Eusko Jaurlaritza), euskal udalerrien kontratu formalen iturri bera: esleipenaren benetako data eta zenbatekoa BEZarekin (zuzenketa batekin jatorrizko datua bera matematikoki ezinezkoa denean). Ez du beti IFZ argitaratzen."
 
 #: app.py:21086
 msgid "Dataset oficial \"Contratos menores\" del Ayuntamiento de Madrid (datos.madrid.es, Dirección General de Contratación y Servicios), actualización mensual. Fecha real de adjudicación e importe con IVA; sí publica NIF del adjudicatario (a diferencia de RPC/Euskadi). Sin CPV y sin enlace por expediente. Solo Madrid capital, no el resto de municipios de la Comunidad de Madrid (que no tiene agregador propio, ver LIMITACIONES_COBERTURA.md)."
@@ -2583,8 +2583,8 @@ msgid "{n} municipios"
 msgstr "{n} udalerri"
 
 #: app.py:26082
-msgid "Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva."
-msgstr "Lurralde bakoitza bere banderarekin koloreztatuta — pasatu sagua probintzia baten gainetik haren zifra ofizialak ikusteko: udalerriak, biztanleak, kontratuak, esleitutako zenbatekoa eta zor bizia."
+msgid "Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia, o tócala, para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva."
+msgstr "Lurralde bakoitza bere banderarekin koloreztatuta — pasatu sagua probintzia baten gainetik, edo ukitu, haren zifra ofizialak ikusteko: udalerriak, biztanleak, kontratuak, esleitutako zenbatekoa eta zor bizia."
 
 #: app.py:26087
 msgid "Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y patrón principal; se omiten escudos y detalles heráldicos finos). Las cifras de cada provincia se calculan en cada carga a partir de los municipios ya procesados en nuestra base de datos."
@@ -3314,3 +3314,21 @@ msgstr "Eragiketaren kodea"
 
 msgid "sin deuda"
 msgstr "zorrik gabe"
+
+msgid "Página no encontrada"
+msgstr "Ez da orria aurkitu"
+
+msgid "No encontramos esta página. Puede que la dirección esté mal escrita o que la página haya cambiado de sitio."
+msgstr "Ez dugu orri hau aurkitu. Baliteke helbidea gaizki idatzita egotea edo orria lekuz aldatu izana."
+
+msgid "Municipio, empresa o directivo…"
+msgstr "Udalerria, enpresa edo zuzendaria…"
+
+msgid "O ve directamente a:"
+msgstr "Edo joan zuzenean:"
+
+msgid "Portada"
+msgstr "Hasiera"
+
+msgid "Ver la deuda viva de las otras {n} provincias y comunidades"
+msgstr "Ikusi beste {n} probintzia eta erkidegoen zor bizia"
