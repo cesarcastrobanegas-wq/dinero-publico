@@ -427,6 +427,8 @@ def correo_confirmacion(perfil, enlace_confirmar, enlace_baja, es_cambio=False, 
 
 # ── correo semanal y aviso de inactividad (2026-10-28) ──────────────────────────────────────────────────────────────
 MAX_FICHAS_CORREO = 20
+# Hueco reservado a cada grupo (decisión de César del 28-10, como en el PDF); el que sobra de uno pasa a los demás.
+CUOTAS_CORREO = ((F.PUEDE, 12), (F.REVISA, 5), (F.UTE, 3))
 _MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
           "noviembre", "diciembre")
 _ORDEN_CORREO = (F.PUEDE, F.REVISA, F.UTE)
@@ -448,6 +450,19 @@ def fichas_correo(res):
     juntos y por fin de plazo dentro de cada grupo; y el total de fichas."""
     grupos = [(g, F.agrupar_lotes(res.get(g, []))) for g in _ORDEN_CORREO]
     return [(g, f) for g, f in grupos if f], sum(len(f) for _, f in grupos)
+
+
+def reparto_correo(grupos):
+    """{grupo: fichas que van en el correo}: el hueco de CUOTAS_CORREO de cada grupo y, si un grupo tiene menos, lo que
+    sobra pasa a los demás (en el orden del correo), hasta MAX_FICHAS_CORREO."""
+    hay = dict((g, len(f)) for g, f in grupos)
+    n = {g: min(hay.get(g, 0), c) for g, c in CUOTAS_CORREO}
+    sobra = MAX_FICHAS_CORREO - sum(n.values())
+    for g, _ in CUOTAS_CORREO:
+        extra = min(sobra, hay.get(g, 0) - n[g])
+        n[g] += extra
+        sobra -= extra
+    return n
 
 
 def _ficha_correo(r):
@@ -492,8 +507,8 @@ def _ficha_correo(r):
 def correo_semanal(res, enlace_ver, enlace_baja, ahora):
     """(asunto, texto, html, fichas_en_el_correo, fichas_total) del correo semanal con las licitaciones NUEVAS (res:
     salida de filtrar() solo con las nuevas). Primero «Puede optar», después «Revisa el pliego» y al final «Solo en UTE
-    o en un lote»; como mucho MAX_FICHAS_CORREO fichas, en ese orden, y el resto en «mis licitaciones». None si no hay
-    ninguna: entonces no se envía nada."""
+    o en un lote»; como mucho MAX_FICHAS_CORREO fichas repartidas con reparto_correo() (las que cierran antes de cada
+    grupo) y el resto en «mis licitaciones». None si no hay ninguna: entonces no se envía nada."""
     grupos, total = fichas_correo(res)
     if not total:
         return None
@@ -502,20 +517,16 @@ def correo_semanal(res, enlace_ver, enlace_baja, ahora):
     intro = ("Esta semana hay 1 licitación nueva que encaja con tu empresa." if total == 1 else
              f"Esta semana hay {total} licitaciones nuevas que encajan con tu empresa.")
     cabe = MAX_FICHAS_CORREO
-    mas = (f"En este correo van las {MAX_FICHAS_CORREO} primeras, por este orden: primero las que puedes optar, "
-           f"después las de revisar el pliego y al final las de UTE o lote. Las {total - cabe} restantes están en "
+    reparto = reparto_correo(grupos)
+    mas = (f"En este correo van {cabe}, las que cierran antes de cada grupo. Las {total - cabe} restantes están en "
            f"«Mis licitaciones»." if total > cabe else "")
     lineas = [intro, resumen, ""] + ([mas, ""] if mas else [])
     cuerpo = (f'<p style="margin:0 0 8px">{_e(intro)}</p>'
               f'<p style="margin:0 0 12px;font-weight:700">{_e(resumen)}</p>'
               + (f'<p style="margin:0 0 12px;font-size:14px">{_e(mas)}</p>' if mas else ""))
-    puestas = 0
     for g, fichas in grupos:
-        if puestas >= cabe:
-            break
         s, nombre, ayuda = _GRUPO[g]
-        van = fichas[:cabe - puestas]
-        puestas += len(van)
+        van = fichas[:reparto[g]]
         cab = f"{s} {nombre}: {len(fichas)}" + (f" (en este correo, {len(van)})" if len(van) < len(fichas) else "")
         lineas += ["=" * 60, cab, ayuda, "=" * 60, ""]
         cuerpo += (f'<div style="{_CAB_CORREO[g]};border-radius:6px;padding:8px 10px;margin:18px 0 6px;font-weight:700;'
