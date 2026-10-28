@@ -58,6 +58,7 @@ except ImportError:
 #   - I18N_PUBLICADOS (variable de entorno, p. ej. "gl,ca,eu"): idiomas visibles. Solo esos llevan pestañas en la
 #     cabecera, hreflang y se indexan; los demás funcionan (para probarlos) pero con noindex.
 import contextvars
+import functools
 
 I18N_IDIOMAS = {"gl": ("Galego", "gl_ES"), "ca": ("Català", "ca_ES"), "eu": ("Euskara", "eu_ES")}
 I18N_LOCALE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locale")
@@ -5148,12 +5149,27 @@ def rendicion_cuentas_url(municipio, provincia):
             f"buscarEntidades/index.html?{urlencode(params)}")
 
 
-def normalizar(s):
+def _normalizar_sin_cache(s):
     s = (s or "").lower().strip()
     for a, b in {"á":"a","é":"e","í":"i","ó":"o","ú":"u","ü":"u","ñ":"n",
                  "à":"a","è":"e","ò":"o","ï":"i","ç":"c"}.items():  # también vocales/ç catalanas (Girona)
         s = s.replace(a, b)
     return re.sub(r"\s+", " ", s)
+
+
+# Rendimiento (2026-10-28, diagnóstico G1): normalizar() se llamaba millones de veces con los mismos textos (1,8
+# millones en cada cálculo del Índice, 1,3 en cada búsqueda). Con caché, medido en local: Índice 79,5 -> ~61 s,
+# búsqueda 21,8 -> ~9 s, top de empresas 21,4 -> ~12 s. El resultado es el mismo (función pura); unas 200.000
+# entradas son del orden de 60 MB. Lo que no se puede guardar en la caché (un valor no "hashable") se calcula como antes.
+NORMALIZAR_CACHE_MAX = 200_000
+_normalizar_cache = functools.lru_cache(maxsize=NORMALIZAR_CACHE_MAX)(_normalizar_sin_cache)
+
+
+def normalizar(s):
+    try:
+        return _normalizar_cache(s)
+    except TypeError:
+        return _normalizar_sin_cache(s)
 
 # Registrada como función SQL para poder cruzar contratos_menors_locales
 # contra directores (clave = NIF o normalizar(nombre), ver _dir_cache_key)
@@ -19899,6 +19915,25 @@ def _indice_tramo_poblacion(habitantes):
     return None  # ">100.000", último tramo
 
 
+def _cml_tramos_municipio(n_tramos=40):
+    """Condiciones SQL que reparten contratos_menors_locales en ~n_tramos trozos por municipio (con el índice
+    idx_cml_muni_prov), para no tener el cerrojo de la base cogido durante toda una consulta de millones de filas
+    (rendimiento, 2026-10-28: medido, el Índice lo retenía ~50 s seguidos y todas las visitas esperaban). El primer
+    tramo no tiene límite inferior y el último no tiene superior, más uno para municipio NULL: no se escapa ninguna
+    fila aunque entren municipios nuevos a mitad del cálculo."""
+    with _db_lock:
+        munis = [r[0] for r in _db.execute("SELECT DISTINCT municipio FROM contratos_menors_locales "
+                                           "WHERE municipio IS NOT NULL ORDER BY municipio")]
+    paso = max(1, len(munis) // n_tramos + 1)
+    cortes = munis[paso::paso]
+    if not cortes:
+        return [("municipio IS NULL", ()), ("municipio IS NOT NULL", ())]
+    tramos = [("municipio IS NULL", ()), ("municipio < ?", (cortes[0],))]
+    tramos += [("municipio >= ? AND municipio < ?", (a, b)) for a, b in zip(cortes, cortes[1:])]
+    tramos.append(("municipio >= ?", (cortes[-1],)))
+    return tramos
+
+
 def _indice_menores_stats_por_municipio():
     """Para cada municipio, nº total de contratos menores y cuántos tienen un administrador QUE SE ENSEÑA (componente
     "directivo"). 2026-10-09: antes contaba cualquier nombre guardado en `directores` (también apoderados y socios, que
@@ -19909,11 +19944,15 @@ def _indice_menores_stats_por_municipio():
         guardados = {k: (n or "", c or "") for k, n, c in _db.execute(
             "SELECT clave, nombre, cargo FROM directores WHERE nombre IS NOT NULL AND nombre <> ''")}
     out, visible = {}, {}
-    with _db_lock:
-        cur = _db.execute("SELECT municipio, provincia, adjudicatari, nif, COUNT(*) FROM contratos_menors_locales "
-                          "WHERE data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ? "
-                          "GROUP BY municipio, provincia, adjudicatari, nif", (alcance_desde(),))   # solo la ventana de 5 años
-        for municipio, prov, adjudicatari, nif, n in cur:
+    desde = alcance_desde()                                                  # solo la ventana de 5 años
+    for donde, args in _cml_tramos_municipio():
+        # Rendimiento (2026-10-28): por tramos, y el trabajo de Python (directivos) ya sin el cerrojo cogido.
+        with _db_lock:
+            filas = _db.execute(f"SELECT municipio, provincia, adjudicatari, nif, COUNT(*) FROM contratos_menors_locales "
+                                f"WHERE ({donde}) AND (data_adjudicacio IS NULL OR data_adjudicacio = '' "
+                                f"OR data_adjudicacio >= ?) GROUP BY municipio, provincia, adjudicatari, nif",
+                                args + (desde,)).fetchall()
+        for municipio, prov, adjudicatari, nif, n in filas:
             k = clave_municipio(municipio, _PROVINCIA_CANONICA_CM.get(prov or "", prov))
             o = out.setdefault(k, {"total": 0, "con_directivo": 0})
             o["total"] += n
@@ -19943,16 +19982,19 @@ def _indice_menores_detalle_por_municipio():
     """Componente "menores" (v2): una consulta agregada por municipio, provincia y año -- nº de contratos, cuántos con
     adjudicatario identificado y la última fecha. Reutiliza la idea de la rama wip/indice-transparencia-v2 (cobertura
     de años y frescura), sin traer las ~1M filas a Python."""
-    with _db_lock:
-        rows = _db.execute("""
-            SELECT municipio, provincia, substr(data_adjudicacio, 1, 4) AS anio, COUNT(*),
-                   SUM(CASE WHEN adjudicatari IS NOT NULL AND adjudicatari <> '' AND adjudicatari <> 'No localizada'
-                            THEN 1 ELSE 0 END),
-                   MAX(data_adjudicacio), group_concat(DISTINCT fuente)
-            FROM contratos_menors_locales
-            WHERE data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ?
-            GROUP BY municipio, provincia, anio
-        """, (alcance_desde(),)).fetchall()                # solo la ventana de 5 años (los sin fecha cuentan)
+    rows = []
+    desde = alcance_desde()                                # solo la ventana de 5 años (los sin fecha cuentan)
+    for donde, args in _cml_tramos_municipio():            # por tramos (rendimiento, 2026-10-28)
+        with _db_lock:
+            rows += _db.execute(f"""
+                SELECT municipio, provincia, substr(data_adjudicacio, 1, 4) AS anio, COUNT(*),
+                       SUM(CASE WHEN adjudicatari IS NOT NULL AND adjudicatari <> '' AND adjudicatari <> 'No localizada'
+                                THEN 1 ELSE 0 END),
+                       MAX(data_adjudicacio), group_concat(DISTINCT fuente)
+                FROM contratos_menors_locales
+                WHERE ({donde}) AND (data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ?)
+                GROUP BY municipio, provincia, anio
+            """, args + (desde,)).fetchall()
     out = {}
     for muni, prov, anio, n, n_adj, ultima, fuentes in rows:
         d = out.setdefault((normalizar(muni), _PROVINCIA_CANONICA_CM.get(prov or "", prov or "")),
@@ -20380,6 +20422,13 @@ def _indice_transparencia_cacheado():
     filas = _vigente()
     if filas is not None:
         return filas
+    # Rendimiento (2026-10-28): si hay uno anterior (caducado), se sirve ese y el nuevo se calcula en segundo plano:
+    # ninguna visita espera el cálculo (~60-80 s). Solo sin ninguno (justo al arrancar) se espera, como antes.
+    with _indice_transparencia_cache_lock:
+        anteriores = _INDICE_TRANSPARENCIA_CACHE["filas"]
+    if anteriores is not None:
+        _indice_refrescar_en_fondo()
+        return anteriores
     # Un solo cálculo a la vez: si ya lo está haciendo otra petición o el precálculo de arranque
     # (_precalcular_indice_bg), se espera a ese resultado en vez de lanzar otro igual en paralelo.
     with _indice_calculo_lock:
@@ -20394,6 +20443,35 @@ def _indice_transparencia_cacheado():
 
 
 _indice_calculo_lock = threading.Lock()
+_indice_fondo = {"activo": False}
+_indice_fondo_lock = threading.Lock()
+
+
+def _indice_refrescar_en_fondo():
+    """Recalcula el Índice en un hilo aparte, uno como mucho a la vez (rendimiento, 2026-10-28)."""
+    with _indice_fondo_lock:
+        if _indice_fondo["activo"]:
+            return
+        _indice_fondo["activo"] = True
+
+    def _hilo():
+        try:
+            with _indice_calculo_lock:
+                with _indice_transparencia_cache_lock:
+                    vigente = (_INDICE_TRANSPARENCIA_CACHE["filas"] is not None and
+                               time.time() - _INDICE_TRANSPARENCIA_CACHE["ts"] < INDICE_TRANSPARENCIA_CACHE_TTL)
+                if not vigente:                 # el precálculo pudo terminar entretanto
+                    filas = _calcular_indice_transparencia()
+                    with _indice_transparencia_cache_lock:
+                        _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
+                        _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
+        except Exception as e:
+            print(f"[indice] recálculo en segundo plano: ERROR ({type(e).__name__}: {e})", flush=True)
+        finally:
+            with _indice_fondo_lock:
+                _indice_fondo["activo"] = False
+
+    threading.Thread(target=_hilo, name="indice-refresco", daemon=True).start()
 
 
 def _precalcular_indice_bg(esperar=None):
@@ -20412,6 +20490,8 @@ def _precalcular_indice_bg(esperar=None):
                     _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
             print(f"[indice] precalculado en {time.time() - t0:.0f} s ({len(filas)} municipios)", flush=True)
             del filas
+            with _rk_empresas_lock:              # rendimiento (2026-10-28): que ninguna visita lo calcule
+                _rk_empresas_calcular()
             _calentar_portada()
             _liberar_memoria()
         except Exception as e:
@@ -20572,42 +20652,75 @@ _rk_empresas_lock = threading.Lock()
 
 
 def _rankings_empresas_cacheado(provincia=None):
-    """(top 10 por nº de contratos, top 10 por importe) del conjunto nacional (provincia=None) o de una provincia."""
-    with _rk_empresas_lock:              # si llegan varias a la vez, calcula una y las demás esperan su resultado
-        if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
-            nac, por_prov = {}, {}
-            for d in _db_iter_municipios():
-                grupos_prov = por_prov.setdefault(d.get("provincia", "murcia"), {})
-                for c in d.get("contratos", []):
-                    if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
-                        continue
-                    emp = c.get("empresa", "")
-                    if not emp or emp in ("No localizada", "Desierto"):
-                        continue
-                    key = normalizar(emp)
-                    imp = c.get("importe_num", 0.0) or 0.0
-                    for grupos in (nac, grupos_prov):
-                        g = grupos.get(key)
-                        if g is None:
-                            g = grupos[key] = {"empresa": emp, "n": 0, "importe": 0.0, "directivo": "", "cargo": ""}
-                        g["n"] += 1
-                        g["importe"] += imp
-                        if not g["directivo"]:
-                            g["directivo"], g["cargo"] = _directivo_contrato(c)
-                            g["nif"] = c.get("nif", "")
-                del d
+    """(top 10 por nº de contratos, top 10 por importe) del conjunto nacional (provincia=None) o de una provincia.
+    Rendimiento (2026-10-28): si está caducado, se sirve el anterior y se recalcula en segundo plano (antes, la visita
+    que lo encontraba caducado esperaba ~21 s). Solo sin ninguno (justo al arrancar) se calcula aquí, como antes."""
+    if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
+        if _rk_empresas["ts"]:
+            _rk_empresas_refrescar_en_fondo()
+        else:
+            with _rk_empresas_lock:      # si llegan varias a la vez, calcula una y las demás esperan su resultado
+                if not _rk_empresas["ts"]:
+                    _rk_empresas_calcular()
+    if provincia is None:
+        return _rk_empresas["nacional"]
+    return _rk_empresas["provincias"].get(provincia, ([], []))
 
-            def _tops(grupos):
-                lista = list(grupos.values())
-                return (sorted(lista, key=lambda g: g["n"], reverse=True)[:10],
-                        sorted(lista, key=lambda g: g["importe"], reverse=True)[:10])
 
-            _rk_empresas.update(nacional=_tops(nac), provincias={pv: _tops(g) for pv, g in por_prov.items()},
-                                ts=time.time())
-            del nac, por_prov
-        if provincia is None:
-            return _rk_empresas["nacional"]
-        return _rk_empresas["provincias"].get(provincia, ([], []))
+_rk_empresas_fondo = {"activo": False}
+
+
+def _rk_empresas_refrescar_en_fondo():
+    with _rk_empresas_lock:
+        if _rk_empresas_fondo["activo"]:
+            return
+        _rk_empresas_fondo["activo"] = True
+
+    def _hilo():
+        try:
+            with _rk_empresas_lock:
+                if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
+                    _rk_empresas_calcular()
+        except Exception as e:
+            print(f"[rankings] top de empresas en segundo plano: ERROR ({type(e).__name__}: {e})", flush=True)
+        finally:
+            _rk_empresas_fondo["activo"] = False
+
+    threading.Thread(target=_hilo, name="rk-empresas-refresco", daemon=True).start()
+
+
+def _rk_empresas_calcular():
+    """El cálculo del top 10 (nacional y por provincia), igual que antes. Quien llama tiene _rk_empresas_lock."""
+    nac, por_prov = {}, {}
+    for d in _db_iter_municipios():
+        grupos_prov = por_prov.setdefault(d.get("provincia", "murcia"), {})
+        for c in d.get("contratos", []):
+            if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
+            emp = c.get("empresa", "")
+            if not emp or emp in ("No localizada", "Desierto"):
+                continue
+            key = normalizar(emp)
+            imp = c.get("importe_num", 0.0) or 0.0
+            for grupos in (nac, grupos_prov):
+                g = grupos.get(key)
+                if g is None:
+                    g = grupos[key] = {"empresa": emp, "n": 0, "importe": 0.0, "directivo": "", "cargo": ""}
+                g["n"] += 1
+                g["importe"] += imp
+                if not g["directivo"]:
+                    g["directivo"], g["cargo"] = _directivo_contrato(c)
+                    g["nif"] = c.get("nif", "")
+        del d
+
+    def _tops(grupos):
+        lista = list(grupos.values())
+        return (sorted(lista, key=lambda g: g["n"], reverse=True)[:10],
+                sorted(lista, key=lambda g: g["importe"], reverse=True)[:10])
+
+    _rk_empresas.update(nacional=_tops(nac), provincias={pv: _tops(g) for pv, g in por_prov.items()},
+                        ts=time.time())
+    del nac, por_prov
 
 
 _INDICE_COMPONENTE_LABEL = {
