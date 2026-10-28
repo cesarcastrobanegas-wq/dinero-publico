@@ -137,6 +137,22 @@ def lugar_txt(clave):
     return NOMBRE_PROVINCIA.get(clave, clave.replace("_", " ").title())
 
 
+def agrupar_lotes(lista):
+    """Los lotes de una misma licitación con el mismo grupo y los mismos motivos van en una sola ficha (27-10: tres
+    lotes iguales de Alcantarilla ocupaban tres fichas idénticas). Lo usan el PDF y el correo semanal."""
+    fichas, por_clave = [], {}
+    for r in sorted(lista, key=lambda r: r["fin_plazo"]):
+        clave = (r["id"], tuple(r["motivos"])) if r["lote"] else None
+        if clave and clave in por_clave:
+            por_clave[clave]["lotes_juntos"].append((r["lote"], r["titulo_lote"], r["importe"]))
+            continue
+        f = dict(r, lotes_juntos=[(r["lote"], r["titulo_lote"], r["importe"])] if r["lote"] else [])
+        if clave:
+            por_clave[clave] = f
+        fichas.append(f)
+    return fichas
+
+
 def perfil_texto(perfil, ahora=None):
     """[(etiqueta, valor)] con los datos del perfil en lenguaje llano (portada del PDF, correo de
     confirmación y página del socio)."""

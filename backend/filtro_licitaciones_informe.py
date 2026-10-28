@@ -36,7 +36,7 @@ except ImportError:
 
 # los nombres viven en el motor (el formulario de la web los usa y producción no tiene reportlab)
 NOMBRE_PROVINCIA, NOMBRE_COMUNIDAD, TIPO_TXT = F.NOMBRE_PROVINCIA, F.NOMBRE_COMUNIDAD, F.TIPO_TXT
-lugar_txt, perfil_texto = F.lugar_txt, F.perfil_texto
+lugar_txt, perfil_texto, _agrupar_lotes = F.lugar_txt, F.perfil_texto, F.agrupar_lotes
 MAX_PAGINAS = 10
 MAX_FICHAS = 40                      # punto de partida; se baja de 5 en 5 hasta caber en MAX_PAGINAS
 CUOTAS = ((F.PUEDE, 20), (F.REVISA, 12), (F.UTE, 8))
@@ -175,22 +175,6 @@ def _ficha(r, est):
         estilo += [("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.85, 0.85, 0.85))]
     t.setStyle(TableStyle(estilo))
     return [t, Spacer(1, 6)]      # quien llama lo envuelve en KeepTogether (anidarlos deja páginas a medias)
-
-
-def _agrupar_lotes(lista):
-    """Los lotes de una misma licitación con el mismo grupo y los mismos motivos van en una sola ficha (27-10: tres
-    lotes iguales de Alcantarilla ocupaban tres fichas idénticas)."""
-    fichas, por_clave = [], {}
-    for r in sorted(lista, key=lambda r: r["fin_plazo"]):
-        clave = (r["id"], tuple(r["motivos"])) if r["lote"] else None
-        if clave and clave in por_clave:
-            por_clave[clave]["lotes_juntos"].append((r["lote"], r["titulo_lote"], r["importe"]))
-            continue
-        f = dict(r, lotes_juntos=[(r["lote"], r["titulo_lote"], r["importe"])] if r["lote"] else [])
-        if clave:
-            por_clave[clave] = f
-        fichas.append(f)
-    return fichas
 
 
 def _seleccion(resultados, total):

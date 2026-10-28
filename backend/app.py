@@ -16374,6 +16374,8 @@ def _revision_wsgi(method, path, qs, environ):
         return _alertas_panel_html(cookie, qs.get("hecho", [""])[0])
     if path == "/admin/revision/socios":
         return _socios_panel_html(cookie, qs.get("hecho", [""])[0])
+    if path == "/admin/revision/socios/vista" and FILTRO_FORMULARIO:
+        return _socios_vista_html(qs.get("p", [""])[0])
     if path == "/admin/revision/visitas":
         return _visitas_pagina(qs, autorizado=True)
     if path == "/admin/revision/ficha":
@@ -26949,6 +26951,10 @@ ALERTAS_PUBLICAS = ALERTAS_ACTIVAS and not ALERTAS_SOLO_CORREOS     # enlaces y 
 # FILTRO_FORMULARIO=1: sin ella, /filtro-licitaciones y sus páginas no existen (404), no se abre ni se crea socios.db
 # y no se guarda nada. No lo enlaza ninguna página. Con ella, los perfiles se guardan en socios.db (ver socios.py).
 FILTRO_FORMULARIO = os.environ.get("FILTRO_FORMULARIO", "") == "1"
+# SOCIOS_SOLO_CORREOS (28-10, como ALERTAS_SOLO_CORREOS): direcciones separadas por comas. Mientras esté puesta, el
+# filtro funciona solo para ellas: el formulario no guarda ni envía nada a ninguna otra (la página responde lo mismo de
+# siempre) y el envío semanal y los avisos solo salen hacia esas direcciones. Para las pruebas de César.
+SOCIOS_SOLO_CORREOS = frozenset(c for c in (SOC.correo_valido(x) for x in os.environ.get("SOCIOS_SOLO_CORREOS", "").split(",")) if c)
 
 
 def _filtro_licitaciones_abiertas():
@@ -26980,6 +26986,18 @@ _socios_almacen_lock = threading.Lock()
 _SOCIOS_LIMPIEZA_CADA_S = 6 * 3600
 
 
+def _socios_correo_permitido(correo):
+    return not SOCIOS_SOLO_CORREOS or SOC.correo_valido(correo) in SOCIOS_SOLO_CORREOS
+
+
+def _resend_enviados_desde(desde):
+    """Correos aceptados por Resend desde `desde`, sumando alertas y filtro: el cupo del plan es uno solo (28-10)."""
+    n = _alertas_almacen().envios_desde(desde)
+    if FILTRO_FORMULARIO:
+        n += _socios_almacen().envios_desde(desde)
+    return n
+
+
 def _socios_almacen():
     global _SOCIOS_ALMACEN
     with _socios_almacen_lock:
@@ -27001,7 +27019,7 @@ def _socios_limpieza_bg():
 
 
 def _socios_enlace(alm, accion, pid, extra=""):
-    ruta = {"confirmar": "confirmar", "baja": "baja", "ver": "mis-licitaciones"}[accion]
+    ruta = {"confirmar": "confirmar", "baja": "baja", "ver": "mis-licitaciones", "mantener": "mantener"}[accion]
     return f"{SITE_URL}{FFORM.RUTA}/{ruta}?p={pid}&k={alm.firma(accion, pid, extra)}"
 
 
@@ -27029,6 +27047,8 @@ def _socios_enviar(alm, pid, correo, clase, asunto, texto, html_):
 
 def _socios_alta(correo, perfil):
     """Lo llama el formulario al enviar: guarda el perfil SIN confirmar y manda, en un hilo, el correo de confirmación."""
+    if SOC.correo_valido(correo) and not _socios_correo_permitido(correo):
+        return "fuera_de_prueba"                            # SOCIOS_SOLO_CORREOS: ni se guarda ni se envía nada
     alm = _socios_almacen()
     r = alm.alta(correo, perfil)
     if r["resultado"] != "confirmar":
@@ -27048,7 +27068,7 @@ def _socios_get(path, qs):
     un programa de correo que abre el enlace para revisarlo no confirma ni borra nada. None si no es ninguna."""
     g = lambda k: (qs.get(k, [""])[0] or "").strip()                     # noqa: E731
     sub = path[len(FFORM.RUTA):]
-    if sub not in ("/confirmar", "/baja", "/mis-licitaciones"):
+    if sub not in ("/confirmar", "/baja", "/mis-licitaciones", "/mantener"):
         return None
     alm = _socios_almacen()
     p = alm.perfil(int(g("p"))) if g("p").isdigit() else None
@@ -27065,6 +27085,10 @@ def _socios_get(path, qs):
         if not alm.firma_valida("baja", p["id"], g("k")):
             return _filtro_html(FFORM.enlace_no_valido_html())
         return _filtro_html(FFORM.baja_pedir_html(campos))
+    if sub == "/mantener":
+        if p["estado"] != "activo" or not alm.firma_valida("mantener", p["id"], g("k")):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.mantener_pedir_html(campos))
     if p["estado"] != "activo" or not alm.firma_valida("ver", p["id"], g("k")):
         return _filtro_html(FFORM.enlace_no_valido_html())
     alm.usar(p["id"])
@@ -27078,7 +27102,7 @@ def _socios_post(path, params):
     """Formularios de confirmar y baja (POST). None si no es ninguno."""
     pr = lambda k: (params.get(k, [""])[0] or "").strip()                # noqa: E731
     sub = path[len(FFORM.RUTA):]
-    if sub not in ("/confirmar", "/baja"):
+    if sub not in ("/confirmar", "/baja", "/mantener"):
         return None
     alm = _socios_almacen()
     pid = int(pr("p")) if pr("p").isdigit() else 0
@@ -27086,13 +27110,116 @@ def _socios_post(path, params):
         if pid and alm.firma_valida("baja", pid, pr("k")):
             alm.baja(pid)
         return _filtro_html(FFORM.baja_hecha_html())
+    if sub == "/mantener":
+        if not (pid and alm.firma_valida("mantener", pid, pr("k")) and alm.usar(pid)):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.mantenido_html(_socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid)))
     antes = alm.perfil(pid) if pid else None
+    if antes and antes["estado"] == "pendiente":
+        # Lo que está abierto ahora queda como "ya estaba": el primer correo semanal solo trae lo que salga después.
+        alm.registrar_vistos([l["id"] for l in _filtro_licitaciones_abiertas()], time.time())
     p = alm.confirmar(pid, pr("k")) if antes else None
     if not p:
         return _filtro_html(FFORM.enlace_no_valido_html())
     return _filtro_html(FFORM.confirmado_html(p["perfil"], _socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid),
                                               era_cambio=antes["estado"] == "activo", ya_estaba=bool(p.get("ya_estaba")),
                                               ahora=_ahora_madrid()))
+
+
+def _socios_inicio_dia_semana(ahora):
+    madrid = _ahora_madrid()
+    inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    return madrid, inicio_dia, inicio_dia - madrid.weekday() * 86400
+
+
+def _socios_semanal_de(alm, p, abiertas, madrid):
+    """Correo semanal de un perfil con las licitaciones NUEVAS desde su última revisión: (asunto, texto, html, en el
+    correo, total) o None si no hay ninguna."""
+    nuevos = alm.nuevos_desde(p["revisado"] or p["confirmado"])
+    if not nuevos:
+        return None
+    res = FLIC.filtrar([l for l in abiertas if str(l["id"]) in nuevos], p["perfil"], madrid)
+    return FFORM.correo_semanal(res, _socios_enlace(alm, "ver", p["id"]), _socios_enlace(alm, "baja", p["id"]), madrid)
+
+
+def _socios_pasada(max_correos=25):
+    """Una tanda del envío del filtro (flujo socios-envio.yml, todos los días a las 08:30 UTC): primero los avisos
+    «¿Sigues interesado?» y después los correos semanales (los de esta semana que falten: el lunes salen casi todos y,
+    si el cupo no llega, el resto los días siguientes). Respeta el cupo de Resend, que comparte con las alertas
+    (ALERTAS_TOPE_DIARIO / ALERTAS_TOPE_MES, sumando los dos ficheros). Solo números en la respuesta (la llama un
+    flujo de Actions, cuyos registros son públicos)."""
+    if not FILTRO_FORMULARIO:
+        return {"activas": False}
+    alm = _socios_almacen()
+    ahora = time.time()
+    alm.limpiar(ahora)
+    madrid, inicio_dia, inicio_semana = _socios_inicio_dia_semana(ahora)
+    tope_dia, tope_mes = _alertas_tope("ALERTAS_TOPE_DIARIO", 80), _alertas_tope("ALERTAS_TOPE_MES", 2800)
+    hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)
+    cupo = min(max_correos, tope_dia - hoy, tope_mes - mes)
+    res = {"activas": True, "en_prueba": bool(SOCIOS_SOLO_CORREOS), "avisos": 0, "semanales": 0, "sin_novedades": 0,
+           "fallidos": 0, "enviados_hoy": hoy, "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
+    abiertas = _filtro_licitaciones_abiertas()
+    alm.registrar_vistos([l["id"] for l in abiertas], ahora)
+    avisos = [p for p in alm.pendientes_aviso(ahora, inicio_dia) if _socios_correo_permitido(p["correo"])]
+    semanales = [p for p in alm.pendientes_semanal(inicio_semana, inicio_dia) if _socios_correo_permitido(p["correo"])]
+    hechos = 0
+    for p in avisos:
+        if cupo <= 0:
+            break
+        asunto, texto, html_ = FFORM.correo_sigues(_socios_enlace(alm, "mantener", p["id"]), _socios_enlace(alm, "baja", p["id"]),
+                                                   madrid + timedelta(seconds=SOC.AVISO_PLAZO_S))
+        if _socios_enviar(alm, p["id"], p["correo"], "aviso_inactividad", asunto, texto, html_):
+            alm.marcar_aviso(p["id"], ahora)
+            res["avisos"] += 1
+        else:
+            alm.marcar_intentado(p["id"], ahora)                         # mañana se vuelve a intentar
+            res["fallidos"] += 1
+        hechos += 1
+        cupo -= 1
+        time.sleep(0.6)                                                  # Resend: 2 peticiones por segundo
+    for p in semanales:
+        correo = _socios_semanal_de(alm, p, abiertas, madrid)
+        if correo is None:
+            alm.marcar_revisado(p["id"], ahora, enviado=False)           # sin novedades: no se envía nada
+            res["sin_novedades"] += 1
+            hechos += 1
+            continue
+        if cupo <= 0:
+            break
+        asunto, texto, html_, _, _ = correo
+        if _socios_enviar(alm, p["id"], p["correo"], "semanal", asunto, texto, html_):
+            alm.marcar_revisado(p["id"], ahora, enviado=True)
+            res["semanales"] += 1
+        else:
+            alm.marcar_intentado(p["id"], ahora)                         # mañana, con lo nuevo que haya entonces
+            res["fallidos"] += 1
+        hechos += 1
+        cupo -= 1
+        time.sleep(0.6)
+    res["pendientes"] = len(avisos) + len(semanales) - hechos
+    res["tope_alcanzado"] = bool(res["pendientes"]) and cupo <= 0 and (
+        hoy + res["avisos"] + res["semanales"] >= tope_dia or mes + res["avisos"] + res["semanales"] >= tope_mes)
+    return res
+
+
+def _socios_vista_html(pid):
+    """Panel: el correo semanal que le saldría AHORA a ese perfil (sin enviarlo ni marcar nada), para revisarlo."""
+    alm = _socios_almacen()
+    p = alm.perfil(int(pid)) if pid.isdigit() else None
+    if not p or p["estado"] != "activo":
+        return _revision_pagina("Próximo correo", '<p>Ese perfil no existe o no está confirmado.</p>')
+    madrid, _, _ = _socios_inicio_dia_semana(time.time())
+    correo = _socios_semanal_de(alm, p, _filtro_licitaciones_abiertas(), madrid)
+    if correo is None:
+        cuerpo = ('<p>Ahora mismo no le saldría ningún correo: no hay licitaciones nuevas que encajen desde su última '
+                  'revisión.</p>')
+    else:
+        asunto, _, html_, en_correo, total = correo
+        cuerpo = (f'<p><b>Asunto:</b> {esc(asunto)} · {en_correo} fichas en el correo de {total}. Vista previa: no se '
+                  f'envía nada ni cambia nada.</p><div style="background:#fff;border:1px solid #dde1e7">{html_}</div>')
+    return _revision_pagina("Próximo correo", f'<h1>Próximo correo semanal</h1><p class="sub">'
+                            f'<a href="/admin/revision/socios">← Perfiles del filtro</a></p>{cuerpo}')
 
 
 def _socios_panel_html(cookie, hecho=""):
@@ -27107,16 +27234,32 @@ def _socios_panel_html(cookie, hecho=""):
     alm = _socios_almacen()
     r = alm.resumen()
     csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
+    if SOCIOS_SOLO_CORREOS:
+        estado = (f'<div class="aviso"><b>Encendido EN PRUEBA</b> (SOCIOS_SOLO_CORREOS): solo para '
+                  f'{esc(", ".join(sorted(SOC.correo_tapado(c) for c in SOCIOS_SOLO_CORREOS)))}. El formulario no guarda '
+                  f'ninguna otra dirección y los correos solo salen hacia esas.</div>')
+    else:
+        estado = '<div class="aviso"><b>Encendido</b> (FILTRO_FORMULARIO=1), abierto a todos.</div>'
+    vista = lambda p: (f'<a href="/admin/revision/socios/vista?p={p["id"]}">Ver el próximo correo</a>'      # noqa: E731
+                       if p["estado"] == "activo" else "")
+    ahora = time.time()
+    _, inicio_dia, _ = _socios_inicio_dia_semana(ahora)
+    cupo = (f'<tr><th>Correos aceptados por Resend (alertas + filtro)</th><td>hoy {_resend_enviados_desde(inicio_dia)} de '
+            f'{_alertas_tope("ALERTAS_TOPE_DIARIO", 80)} · últimos 30 días {_resend_enviados_desde(ahora - 30 * 86400)} de '
+            f'{_alertas_tope("ALERTAS_TOPE_MES", 2800)}</td></tr>')
     resumen = (f'<table class="t"><tr><th>Perfiles confirmados</th><td>{r["activos"]}</td></tr>'
                f'<tr><th>Sin confirmar (se borran a los 7 días)</th><td>{r["sin_confirmar"]}</td></tr>'
                f'<tr><th>Cambios esperando confirmación</th><td>{r["cambios_pendientes"]}</td></tr>'
                f'<tr><th>Borrados</th><td>{r["bajas"]} por su cuenta · {r["bajas_desde_el_panel"]} desde este panel · '
-               f'{r["caducados_sin_confirmar"]} sin confirmar · {r["caducados_inactivos"]} por 12 meses sin uso</td></tr></table>')
+               f'{r["caducados_sin_confirmar"]} sin confirmar · {r["caducados_inactivos"]} por falta de uso</td></tr>'
+               f'<tr><th>Avisados de borrado por falta de uso</th><td>{r["avisados_inactividad"]}</td></tr>{cupo}</table>')
     filas = "".join(
         f'<tr><td>{esc(p["correo"])}</td><td>{esc(p["estado"])}{" (cambio pendiente)" if p["perfil_pendiente"] else ""}</td>'
         f'<td>{esc(", ".join(FLIC.NOMBRE_PROVINCIA.get(x, x) for x in p["perfil"].get("provincias", [])))}</td>'
         f'<td>{f_ts(p["alta"])}</td><td>{f_ts(p["confirmado"])}</td><td>{f_ts(p["ultimo_uso"])}</td>'
-        f'<td><form method="post" action="/admin/revision/socios/accion" class="acc">{csrf}'
+        f'<td>{f_ts(p["ultimo_envio"])}</td><td>{f_ts(p["aviso_inactividad"])}</td>'
+        f'<td>{vista(p)}'
+        f'<form method="post" action="/admin/revision/socios/accion" class="acc">{csrf}'
         f'<input type="hidden" name="p" value="{p["id"]}"><button type="submit" name="accion" value="baja" class="sec">'
         f'Borrar perfil</button></form></td></tr>' for p in alm.lista())
     env = "".join(
@@ -27128,9 +27271,9 @@ def _socios_panel_html(cookie, hecho=""):
     return _revision_pagina("Filtro de licitaciones: perfiles", f"""<style>.t{{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin:8px 0 22px}}
 .t th,.t td{{border:1px solid #dde1e7;padding:6px 8px;text-align:left;vertical-align:top}}.t th{{background:#eef1f6}}</style>
 <h1>Filtro de licitaciones: perfiles</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a> · horas en UTC</p>
-{aviso}{resumen}
+{estado}{aviso}{resumen}
 <h2 style="font-size:16px">Perfiles</h2>
-<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th></th></tr>{filas or vacio(7)}</table>
+<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th></th></tr>{filas or vacio(9)}</table>
 <h2 style="font-size:16px">Envíos (los 100 últimos)</h2>
 <table class="t"><tr><th>Cuándo</th><th>Clase</th><th>Aceptado por Resend</th><th>Respuesta</th></tr>{env or vacio(4)}</table>""")
 
@@ -27433,7 +27576,7 @@ def _alertas_pasada(max_correos=25):
     inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
     inicio_semana = inicio_dia - madrid.weekday() * 86400
     tope_dia, tope_mes = _alertas_tope("ALERTAS_TOPE_DIARIO", 80), _alertas_tope("ALERTAS_TOPE_MES", 2800)
-    hoy, mes = alm.envios_desde(inicio_dia), alm.envios_desde(ahora - 30 * 86400)
+    hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)   # con los del filtro
     cupo = min(max_correos, tope_dia - hoy, tope_mes - mes)
     res = {"activas": True, "enviados": 0, "sin_novedades": 0, "fallidos": 0, "enviados_hoy": hoy,
            "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
@@ -27655,7 +27798,7 @@ def _alertas_panel_html(cookie, hecho=""):
     ahora = time.time()
     madrid = _ahora_madrid()
     inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
-    hoy, mes = alm.envios_desde(inicio_dia), alm.envios_desde(ahora - 30 * 86400)
+    hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)   # con los del filtro
     csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
     por_tipo = ", ".join(f"{k}: {v}" for k, v in sorted(r["por_tipo"].items())) or "ninguna"
     resumen = (f'<table class="t"><tr><th>Suscriptores confirmados</th><td>{r["suscriptores_activos"]} '
@@ -28357,6 +28500,17 @@ def _route_post(path, params):
             respuesta = _socios_post(path, params)
             if respuesta:
                 return respuesta
+
+        if path == "/admin/socios-enviar":
+            # Una tanda del envío del filtro (flujo socios-envio.yml); devuelve solo recuentos.
+            if not _token_admin_peticion(params):
+                return _error_resp("No autorizado.", 403)
+            try:
+                tanda = min(100, max(1, int(params.get("max", ["25"])[0])))
+            except ValueError:
+                tanda = 25
+            return _resp(json.dumps(_socios_pasada(tanda), ensure_ascii=False),
+                         content_type="application/json; charset=utf-8")
 
         if path == "/admin/socios-db":
             # Perfiles del filtro (2026-10-28): el fichero socios.db tal cual, para la copia cifrada

@@ -32,8 +32,9 @@ _RE_CORREO = re.compile(r"[A-Za-z0-9._%+\-]{1,64}@[A-Za-z0-9\-]{1,63}(?:\.[A-Za-
 TIPOS_FORM = (("obras", "Obras"), ("servicios", "Servicios"), ("suministros", "Suministros"))
 PRIVACIDAD = ("Responsable: Dinero Público. Usamos estos datos solo para enviarte las licitaciones que encajan con tu "
               "empresa. Guardamos el correo y los datos de la empresa de este formulario; nada más. Te pediremos "
-              "confirmar el correo: sin confirmar, lo borramos a los 7 días, y si no usas el servicio en 12 meses, "
-              "también. Puedes darte de baja en cualquier momento con el enlace de cada correo.")
+              "confirmar el correo: sin confirmar, lo borramos a los 7 días. Si no usas el servicio en un año, te "
+              "avisaremos un mes antes y, si no nos dices que lo mantengamos, lo borraremos. Puedes darte de baja en "
+              "cualquier momento con el enlace de cada correo.")
 ANCLA_AVISO_LEGAL = "/aviso-legal#filtro-licitaciones"
 
 CSS = """
@@ -347,8 +348,8 @@ def confirmado_html(perfil, enlace_ver, enlace_baja, era_cambio=False, ya_estaba
     elif era_cambio:
         cab = "Listo: hemos guardado los datos nuevos de tu empresa."
     else:
-        cab = ("Listo: ya estás dado de alta. Te enviaremos por correo las licitaciones abiertas que encajan con tu "
-               "empresa.")
+        cab = ("Listo: ya estás dado de alta. Cada lunes te enviaremos por correo las licitaciones nuevas que encajan "
+               "con tu empresa (si esa semana no hay ninguna, no te escribiremos).")
     return pagina(f'<div class="caja ok"><b>{_e(cab)}</b></div>'
                   f'<div class="caja"><b>Estos son los datos que tenemos de tu empresa</b>{perfil_html(perfil, ahora)}</div>'
                   f'<p><a href="{_e(enlace_ver)}">Ver ahora mis licitaciones</a></p>'
@@ -423,3 +424,148 @@ def correo_confirmacion(perfil, enlace_confirmar, enlace_baja, es_cambio=False, 
               f'{_e(boton)}</a></p><p style="font-size:13px;color:#6b7280">{_e(no_tu)}</p>')
     return asunto, "\n".join(lineas) + "\n", correo_html(cuerpo, pie_html)
 
+
+# ── correo semanal y aviso de inactividad (2026-10-28) ──────────────────────────────────────────────────────────────
+MAX_FICHAS_CORREO = 20
+_MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+          "noviembre", "diciembre")
+_ORDEN_CORREO = (F.PUEDE, F.REVISA, F.UTE)
+_NOMBRE_LLANO = {F.PUEDE: "Puede optar", F.REVISA: "Revisa el pliego", F.UTE: "Solo en UTE o en un lote"}
+# Sin depender del color: símbolo + MAYÚSCULAS + negrita; además, cabecera en negativo / gris / con borde.
+_CAB_CORREO = {
+    F.PUEDE: "background:#1c2333;color:#ffffff;border:2px solid #1c2333",
+    F.REVISA: "background:#e5e7eb;color:#1c2333;border:2px solid #1c2333",
+    F.UTE: "background:#ffffff;color:#1c2333;border:2px dashed #1c2333",
+}
+
+
+def _fecha_larga(d):
+    return f"{d.day} de {_MESES[d.month - 1]} de {d.year}"
+
+
+def fichas_correo(res):
+    """[(grupo, fichas)] en el orden del correo (Puede optar, Revisa el pliego, Solo en UTE), con los lotes iguales
+    juntos y por fin de plazo dentro de cada grupo; y el total de fichas."""
+    grupos = [(g, F.agrupar_lotes(res.get(g, []))) for g in _ORDEN_CORREO]
+    return [(g, f) for g, f in grupos if f], sum(len(f) for _, f in grupos)
+
+
+def _ficha_correo(r):
+    s, nombre, _ = _GRUPO[r["grupo"]]
+    juntos = r.get("lotes_juntos") or []
+    lineas_lote = []
+    if len(juntos) > 1:
+        lineas_lote = [f"{len(juntos)} lotes con el mismo resultado:"] + [
+            f"  Lote {lid}: {tit} ({F.eur(imp)} sin IVA)" for lid, tit, imp in juntos]
+    elif r["lote"]:
+        lineas_lote = [f"Lote {r['lote']}: {r['titulo_lote']}"]
+    importe = (f"Importe{' del lote' if r['lote'] and len(juntos) <= 1 else ''}: {F.eur(r['importe'])} sin IVA"
+               if len(juntos) <= 1 else "")
+    datos = " · ".join(x for x in (importe, f"contrato de {F.TIPO_TXT[r['tipo']]}" if F.TIPO_TXT.get(r["tipo"]) else "",
+                                    f"lugar: {F.lugar_txt(r['provincia'])}") if x)
+    txt = [f"{s} {nombre} · CIERRA: {_fecha(r['fin_plazo'])}",
+           ("PROCEDIMIENTO SUMARIO · " if r["sumario"] else "") + r["titulo"]] + lineas_lote + [
+        f"Organismo: {r['organo']}", datos] + [f"  - {m}" for m in r["motivos"]] + (
+        [f"Anuncio oficial: {r['url']}"] if r.get("url") else [])
+    titulo = (f'<a href="{_e(r["url"])}" style="color:#1c2333;text-decoration:underline">{_e(r["titulo"])}</a>'
+              if r.get("url") else _e(r["titulo"]))
+    sumario = ('<div style="font-weight:700;font-size:13px;margin:0 0 4px">&gt;&gt; PROCEDIMIENTO SUMARIO</div>'
+               if r["sumario"] else "")
+    lote_html = ""
+    if len(juntos) > 1:
+        lote_html = (f'<div style="font-size:14px;margin:4px 0"><b>{len(juntos)} lotes con el mismo resultado:</b><ul '
+                     f'style="margin:2px 0 0 18px;padding:0">' + "".join(
+                         f"<li>Lote {_e(lid)}: {_e(tit)} ({_e(F.eur(imp))} sin IVA)</li>" for lid, tit, imp in juntos)
+                     + "</ul></div>")
+    elif r["lote"]:
+        lote_html = f'<div style="font-size:14px;margin:4px 0"><b>Lote {_e(r["lote"])}:</b> {_e(r["titulo_lote"])}</div>'
+    html_ = (f'<div style="border:1px solid #9aa3b2;border-radius:8px;padding:10px 12px;margin:0 0 12px">'
+             f'<div style="font-size:13px;font-weight:700;margin:0 0 6px">{s} {nombre} · CIERRA: {_e(_fecha(r["fin_plazo"]))}</div>'
+             f'{sumario}<div style="font-size:16px;font-weight:700;line-height:1.35;margin:0 0 4px">{titulo}</div>{lote_html}'
+             f'<div style="font-size:14px;color:#374151"><b>Organismo:</b> {_e(r["organo"])}</div>'
+             f'<div style="font-size:14px;color:#374151">{_e(datos)}</div>'
+             f'<ul style="margin:6px 0 0 18px;padding:0;font-size:14px">'
+             + "".join(f'<li style="margin:2px 0">{_e(m)}</li>' for m in r["motivos"]) + "</ul></div>")
+    return txt, html_
+
+
+def correo_semanal(res, enlace_ver, enlace_baja, ahora):
+    """(asunto, texto, html, fichas_en_el_correo, fichas_total) del correo semanal con las licitaciones NUEVAS (res:
+    salida de filtrar() solo con las nuevas). Primero «Puede optar», después «Revisa el pliego» y al final «Solo en UTE
+    o en un lote»; como mucho MAX_FICHAS_CORREO fichas, en ese orden, y el resto en «mis licitaciones». None si no hay
+    ninguna: entonces no se envía nada."""
+    grupos, total = fichas_correo(res)
+    if not total:
+        return None
+    cifras = [(g, len(f)) for g, f in grupos]
+    resumen = " · ".join(f"{_GRUPO[g][0]} {_NOMBRE_LLANO[g]}: {n}" for g, n in cifras)
+    intro = ("Esta semana hay 1 licitación nueva que encaja con tu empresa." if total == 1 else
+             f"Esta semana hay {total} licitaciones nuevas que encajan con tu empresa.")
+    cabe = MAX_FICHAS_CORREO
+    mas = (f"En este correo van las {MAX_FICHAS_CORREO} primeras, por este orden: primero las que puedes optar, "
+           f"después las de revisar el pliego y al final las de UTE o lote. Las {total - cabe} restantes están en "
+           f"«Mis licitaciones»." if total > cabe else "")
+    lineas = [intro, resumen, ""] + ([mas, ""] if mas else [])
+    cuerpo = (f'<p style="margin:0 0 8px">{_e(intro)}</p>'
+              f'<p style="margin:0 0 12px;font-weight:700">{_e(resumen)}</p>'
+              + (f'<p style="margin:0 0 12px;font-size:14px">{_e(mas)}</p>' if mas else ""))
+    puestas = 0
+    for g, fichas in grupos:
+        if puestas >= cabe:
+            break
+        s, nombre, ayuda = _GRUPO[g]
+        van = fichas[:cabe - puestas]
+        puestas += len(van)
+        cab = f"{s} {nombre}: {len(fichas)}" + (f" (en este correo, {len(van)})" if len(van) < len(fichas) else "")
+        lineas += ["=" * 60, cab, ayuda, "=" * 60, ""]
+        cuerpo += (f'<div style="{_CAB_CORREO[g]};border-radius:6px;padding:8px 10px;margin:18px 0 6px;font-weight:700;'
+                   f'font-size:15px">{_e(cab)}</div><p style="margin:0 0 10px;font-size:13px">{_e(ayuda)}</p>')
+        for r in van:
+            t, h = _ficha_correo(r)
+            lineas += t + [""]
+            cuerpo += h
+    boton = "Ver todas mis licitaciones"
+    lineas += [f"{boton}: {enlace_ver}", "",
+               "Orientativo: comprueba siempre el pliego oficial antes de presentarte. Los datos vienen de la "
+               "Plataforma de Contratación del Sector Público."]
+    cuerpo += (f'<p style="margin:18px 0"><a href="{_e(enlace_ver)}" style="background:#1b2f5c;color:#ffffff;'
+               f'text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:700;display:inline-block">'
+               f'{_e(boton)}</a></p><p style="font-size:13px;color:#4b5563">Orientativo: comprueba siempre el pliego '
+               f'oficial antes de presentarte. Los datos vienen de la Plataforma de Contratación del Sector Público.</p>')
+    pie_txt, pie_html = _pie_baja(enlace_baja)
+    asunto = (f"{total} licitación nueva para tu empresa" if total == 1 else f"{total} licitaciones nuevas para tu empresa") \
+        + f" · semana del {_fecha_larga(ahora)}"
+    return asunto, "\n".join(lineas + pie_txt) + "\n", correo_html(cuerpo, pie_html), min(total, cabe), total
+
+
+def correo_sigues(enlace_mantener, enlace_baja, fecha_borrado):
+    """(asunto, texto, html) del aviso «¿Sigues interesado?», un mes antes de borrar un perfil sin uso."""
+    asunto = "¿Sigues interesado en recibir licitaciones? Pulsa para mantener tu perfil"
+    intro = ("Hace casi un año que no usas tu perfil de licitaciones de Dinero Público (no has abierto tus licitaciones "
+             "desde los correos). Para no guardar datos que ya no hacen falta, borramos los perfiles que no se usan.")
+    pide = "Si quieres seguir recibiendo las licitaciones que encajan con tu empresa, pulsa aquí para mantener tu perfil:"
+    plazo = (f"Si no lo pulsas antes del {_fecha_larga(fecha_borrado)}, borraremos tu correo y los datos de tu empresa, "
+             f"y no te escribiremos más. No tienes que hacer nada más.")
+    boton = "Sí, mantener mi perfil"
+    pie_txt, pie_html = _pie_baja(enlace_baja)
+    lineas = [intro, "", pide, enlace_mantener, "", plazo] + pie_txt
+    cuerpo = (f"<p>{_e(intro)}</p><p>{_e(pide)}</p>"
+              f'<p style="margin:18px 0"><a href="{_e(enlace_mantener)}" style="background:#1b2f5c;color:#ffffff;'
+              f'text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:700;display:inline-block">'
+              f'{_e(boton)}</a></p><p>{_e(plazo)}</p>')
+    return asunto, "\n".join(lineas) + "\n", correo_html(cuerpo, pie_html)
+
+
+def mantener_pedir_html(campos):
+    """Página del enlace «mantener mi perfil»: un formulario que se envía solo (POST)."""
+    return pagina(f'<div class="caja"><form method="POST" action="{RUTA}/mantener" id="auto">{_campos_ocultos(campos)}'
+                  '<button type="submit">Sí, mantener mi perfil</button></form></div>',
+                  titulo="Mantener mi perfil", sub="", autoenviar=True)
+
+
+def mantenido_html(enlace_ver, enlace_baja):
+    return pagina('<div class="caja ok"><b>Listo: mantenemos tu perfil.</b> Seguirás recibiendo cada lunes las '
+                  'licitaciones nuevas que encajan con tu empresa.</div>'
+                  f'<p><a href="{_e(enlace_ver)}">Ver ahora mis licitaciones</a></p>'
+                  f'<p class="ayuda">Si prefieres no recibir nada más: <a href="{_e(enlace_baja)}">darme de baja y '
+                  f'borrar mis datos</a>.</p>', titulo="Perfil mantenido", sub="")
