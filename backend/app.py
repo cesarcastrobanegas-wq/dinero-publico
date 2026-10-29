@@ -11469,6 +11469,8 @@ def buscar_en_pscp(municipio, provincia="girona", job_id=None):
 # importe (se guarda todo), sección propia colapsable en la ficha de municipio.
 RPC_MENORS_URL = "https://analisi.transparenciacatalunya.cat/resource/hb6v-jcbf.json"
 RPC_MENORS_DESDE_ANY = 2021
+RPC_MENORS_INTENTOS = 3            # 1 petición + 2 reintentos por página ante timeout/5xx (2026-10-25)
+RPC_MENORS_PAUSA_REINTENTO = 5     # segundos entre reintentos
 
 
 def _variantes_nombre_para_detector(nombre):
@@ -11576,25 +11578,40 @@ def buscar_en_rpc_menors(municipio, provincia, job_id=None):
         _log(job_id, f"  RPC: municipio sin codi_ine10 mapeado ({municipio})")
         return []
 
-    _log(job_id, "Consultando RPC (Registre Públic de Contractes, contractes menors)…")
+    _log(job_id, f"Consultando RPC (Registre Públic de Contractes, contractes menors): {municipio}…")
     filas = []
     limit, offset = 1000, 0
     while True:
-        try:
-            r = session.get(RPC_MENORS_URL, params={
-                "$where": (f"id_organisme_contractant='{ine10}' AND "
-                           f"procediment_adjudicacio='Menor' AND "
-                           f"exercici >= '{RPC_MENORS_DESDE_ANY}'"),
-                "$order": "codi_expedient",
-                "$limit": limit,
-                "$offset": offset,
-            }, timeout=HTTP_TIMEOUT * 4)  # SODA puede tardar más que PLACE/BORM
-            if r.status_code != 200:
-                _log(job_id, f"  RPC: HTTP {r.status_code}")
+        # Orden por :id (identificador interno de Socrata), no por codi_expedient: medido el 2026-10-25 en Girona
+        # capital (31.814 filas), ordenar por codi_expedient tardaba >120 s por página y cortaba los municipios grandes
+        # por timeout; con :id, 2,8 s (offset 0) y 9 s (offset 30.000). El orden da igual al resultado
+        # (_dedup_rpc_menors no depende de él), solo hace falta que sea estable para paginar con $offset.
+        pagina = None
+        for intento in range(1, RPC_MENORS_INTENTOS + 1):
+            try:
+                r = session.get(RPC_MENORS_URL, params={
+                    "$where": (f"id_organisme_contractant='{ine10}' AND "
+                               f"procediment_adjudicacio='Menor' AND "
+                               f"exercici >= '{RPC_MENORS_DESDE_ANY}'"),
+                    "$order": ":id",
+                    "$limit": limit,
+                    "$offset": offset,
+                }, timeout=HTTP_TIMEOUT * 4)  # SODA puede tardar más que PLACE/BORM
+                if r.status_code == 200:
+                    pagina = r.json()
+                    break
+                motivo = f"HTTP {r.status_code}"
+                # 4xx (salvo 429) = error de la petición: reintentar no sirve
+                reintentable = r.status_code >= 500 or r.status_code == 429
+            except Exception as e:
+                motivo, reintentable = type(e).__name__, True
+            if reintentable and intento < RPC_MENORS_INTENTOS:
+                _log(job_id, f"  RPC: {motivo} en {municipio} (offset {offset}), reintento {intento}/{RPC_MENORS_INTENTOS - 1}")
+                time.sleep(RPC_MENORS_PAUSA_REINTENTO)
+            else:
+                _log(job_id, f"  RPC no disponible en {municipio} ({motivo}, offset {offset}): se guarda lo leído hasta aquí")
                 break
-            pagina = r.json()
-        except Exception as e:
-            _log(job_id, f"  RPC no disponible ({type(e).__name__})")
+        if pagina is None:
             break
 
         if not pagina:
@@ -11606,7 +11623,7 @@ def buscar_en_rpc_menors(municipio, provincia, job_id=None):
 
     filas = _dedup_rpc_menors(filas)
     registros = [_fila_rpc_menor_a_registro(f, municipio, provincia) for f in filas]
-    _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados")
+    _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados ({municipio})")
     return registros
 
 

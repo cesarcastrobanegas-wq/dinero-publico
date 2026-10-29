@@ -584,11 +584,30 @@ jobs:
                   "${BASE_URL}/actualizar-contratos-menors-${prov}" || true)
                 echo "respuesta: ${resp_menors:0:300}"
                 job_menors=$(get_jobid "$resp_menors")
+                local menors_en_marcha=0 rc_menors=0
                 if [ -z "$job_menors" ]; then
                   echo "::warning::No se obtuvo job_id de /actualizar-contratos-menors-${prov}. Se continúa sin refrescar hoy."
                 else
                   echo "job_menors=$job_menors"
-                  poll_hasta_done "$job_menors" "menors-${prov}" 30 || echo "::warning::Contractes menors de ${prov} no completados; se continúa igualmente."
+                  poll_hasta_done "$job_menors" "menors-${prov}" 30 || rc_menors=$?
+                  if [ "$rc_menors" = "2" ]; then
+                    # Pasados los 30 min el trabajo sigue vivo (el 25-10 Girona tardó 58,6 min): los directivos
+                    # no se lanzan con la tabla a medias, se espera a que termine (tope: presupuesto de la noche).
+                    local rc_fin_menors=0
+                    esperar_fin_trabajo "$job_menors" "menors-${prov}" || rc_fin_menors=$?
+                    if [ "$rc_fin_menors" = "1" ]; then
+                      menors_en_marcha=1
+                    elif [ "$rc_fin_menors" = "0" ]; then
+                      echo "--- log de menors-${prov} ---"
+                      mostrar_log "$job_menors"
+                    fi
+                  elif [ "$rc_menors" != "0" ]; then
+                    echo "::warning::Contractes menors de ${prov} no completados; se continúa igualmente."
+                  fi
+                fi
+                if [ "$menors_en_marcha" = "1" ]; then
+                  echo "::warning::Contractes menors de ${prov} siguen en marcha al agotarse la noche: no se lanzan sus directivos."
+                  return 0
                 fi
 
                 # Gerentes/administradores de los contractes menors RPC de
