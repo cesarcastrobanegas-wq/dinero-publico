@@ -15426,6 +15426,12 @@ def _licitaciones_bg(esperar=None):
 # Pestaña oculta hasta que César revise el aviso legal de reutilización de la BDNS: SUBVENCIONES_PUBLICAS.
 SUBVENCIONES_PUBLICAS = os.environ.get("CONVOCATORIAS_SUBVENCIONES", "") == "1"
 SUBV_MINIMO_SUBIDA = 1000           # una subida con menos convocatorias se rechaza (fichero roto o carga a medias)
+# Una sola subida a la vez (2026-10-25): el 22-10 el proxy cortó una subida a los ~100 s con un 500 mientras la web
+# seguía guardándola. Si el flujo reintenta, las dos escribirían a la vez en subvenciones_nueva y se pisarían; con
+# esto la segunda recibe un 423 (no 409: ese es el rechazo de la protección de subidas, que no se reintenta) y el
+# flujo espera a que acabe la primera. Basta un candado en memoria: la web corre
+# en un solo trabajador (--workers 1 en render.yaml).
+_subvenciones_subida_lock = threading.Lock()
 _SUBV_COLUMNAS = ("bdns", "registrada", "titulo", "titulo_cooficial", "nivel1", "nivel2", "organo", "nuts", "provincia",
                   "comunidad", "municipio", "presupuesto", "beneficiarios", "sector", "finalidad", "instrumento",
                   "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda", "cnae", "sectores")
@@ -26883,7 +26889,7 @@ def render_aviso_legal_html():
 
 _HTTP_STATUS_TEXT = {
     200: "OK", 204: "No Content", 206: "Partial Content", 301: "Moved Permanently", 303: "See Other", 400: "Bad Request",
-    409: "Conflict", 413: "Payload Too Large", 429: "Too Many Requests",
+    409: "Conflict", 413: "Payload Too Large", 423: "Locked", 429: "Too Many Requests",
     403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed", 416: "Range Not Satisfiable",
     500: "Internal Server Error",
 }
@@ -29132,9 +29138,14 @@ def _app_wsgi(environ, start_response):
             code, cuerpo = 403, {"error": "No autorizado."}
         elif length > 200 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        elif not _subvenciones_subida_lock.acquire(blocking=False):
+            code, cuerpo = 423, {"error": "Ya hay una subida de subvenciones en curso."}
         else:
-            code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"",
-                                                  forzar=qs.get("forzar", [""])[0] == "si")
+            try:
+                code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"",
+                                                      forzar=qs.get("forzar", [""])[0] == "si")
+            finally:
+                _subvenciones_subida_lock.release()
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/fondos-ue":

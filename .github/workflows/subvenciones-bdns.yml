@@ -67,15 +67,30 @@ jobs:
           python backend/subvenciones_bdns.py exportar --salida subvenciones.ndjson.gz
           # Reintento con límite (2026-10-05): si la web se está reiniciando (cada guardado en main la redespliega),
           # se reintenta ante 502/503/504/sin respuesta durante como mucho 5 minutos; después, fallo de verdad.
-          fin=$(( $(date +%s) + 300 ))
+          # 2026-10-25: también ante 500, como mucho 2 veces. El 22-10 el proxy cortó la subida a los ~100 s con un
+          # 500 mientras la web seguía guardándola (los datos sí entraron). Repetirla no duplica nada (la web sustituye
+          # la tabla entera); si la primera aún se está guardando, la web responde 423 y se espera a que acabe. Con eso
+          # el tope total sube a 15 min. El 409 (rechazo de la protección de subidas) sigue siendo fallo sin reintento.
+          fin=$(( $(date +%s) + 900 ))
+          reintentos_500=0
           while true; do
             codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 600 -X POST -H "Content-Type: application/gzip" \
               --data-binary @subvenciones.ndjson.gz \
               -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/subvenciones" || echo 000)
             case "$codigo" in
               000|502|503|504|520|521|522|523|524)
-                [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 15 min."; exit 1; }
                 echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
+              500)
+                if [ "$reintentos_500" -ge 2 ] || [ "$(date +%s)" -ge "$fin" ]; then
+                  echo "::error::Subida con HTTP 500 tras ${reintentos_500} reintentos."; cat respuesta.json; echo; exit 1
+                fi
+                reintentos_500=$(( reintentos_500 + 1 ))
+                echo "::warning::HTTP 500 en la subida (¿corte del proxy con la web aún guardando?). Reintento ${reintentos_500}/2 en 60 s"
+                sleep 60 ;;
+              423)
+                [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La subida anterior sigue guardándose tras 15 min."; exit 1; }
+                echo "HTTP 423: la web aún está guardando la subida anterior. Reintento en 30 s"; sleep 30 ;;
               200) cat respuesta.json; echo; break ;;
               *) echo "::error::Subida rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
             esac
