@@ -5,7 +5,8 @@ PDF y hojas de cálculo que producción no tiene, y hasta el 2026-10-06 estos ge
 
 Salvaguarda (misma idea que _fusionar_fuente en actualizar_contratos_menores_murcia_manual.py): el fichero nuevo solo
 se queda si el generador terminó bien, el fichero se puede leer y no trae menos del 90 % de los contratos que ya
-había. Si no, se restaura el anterior con git y la fuente sale en el resumen como problema. Un fichero que solo
+había dentro de la ventana de 5 años (los que salen de la ventana no cuentan como pérdida, y se vuelven a meter en el
+fichero nuevo: lo ya guardado no se borra). Si no, se restaura el anterior con git y la fuente sale en el resumen como problema. Un fichero que solo
 cambia de fecha de generación (mismos contratos) también se restaura, para no guardar ni reiniciar la web por nada.
 
 Uso:  python backend/flujo_menores_semanal.py [--solo gijon,zaragoza]
@@ -20,6 +21,8 @@ import subprocess
 import sys
 import time
 
+from alcance import alcance_desde
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PREFIJO = "actualizar_contratos_menores_"
 
@@ -32,6 +35,9 @@ EXCLUIDOS = {
     # devuelve 403). Los generadores funcionan desde un PC; hasta darles otra vía, siguen siendo manuales.
     "sevilla": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (sigue manual)",
     "valencia_capital": "el servidor del ayuntamiento rechaza las conexiones desde GitHub, error 403 (sigue manual)",
+    # Fallos del 2026-10-18 y 2026-10-25 (decisión de César del 2026-10-27: a manual).
+    "burgos": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (sigue manual)",
+    "almeria": "el servidor del ayuntamiento corta la conexión al agente del proyecto (sigue manual)",
 }
 MINUTOS = {"murcia_manual": 150, "euskadi": 210}      # el resto, MINUTOS_POR_DEFECTO
 MINUTOS_POR_DEFECTO = 40
@@ -63,6 +69,39 @@ def restaurar(ruta_rel, habia):
         os.remove(os.path.join(raiz, ruta_rel))
 
 
+def fuera_de_ventana(r):
+    """True si el contrato es anterior al corte de 5 años (alcance.py). Los que no traen fecha cuentan como dentro."""
+    return bool(r.get("data_adjudicacio")) and str(r["data_adjudicacio"])[:10] < alcance_desde()
+
+
+def dentro_de_ventana(registros):
+    """Cuántos contratos siguen dentro de la ventana de 5 años. Los generadores ya no traen los anteriores al corte,
+    así que el 90 % se mide solo con estos: si no, cada mes que avanza la ventana parecería que la fuente pierde
+    contratos (Leganés, 2026-10-18 y 25: 254 -> 215, que eran 39 de antes de 2021-10-01)."""
+    return sum(1 for r in registros if not fuera_de_ventana(r))
+
+
+def con_antiguos(ruta, crudo_nuevo, registros_antes):
+    """Vuelve a meter en el fichero nuevo los contratos del anterior que ya están fuera de la ventana y el generador
+    ya no trae: lo ya guardado no se borra por salir de la ventana (alcance.py; decisión de César del 2026-10-27).
+    Reescribe `ruta` y devuelve los bytes nuevos; si no hay nada que añadir o no se puede leer, no toca nada."""
+    try:
+        d = json.loads(gzip.decompress(crudo_nuevo).decode("utf-8"))
+        nuevos = registros_de(crudo_nuevo)
+    except Exception:
+        return crudo_nuevo                  # decidir() lo marcará como ilegible
+    ids = {r.get("id") for r in nuevos}
+    antiguos = [r for r in registros_antes if fuera_de_ventana(r) and r.get("id") not in ids]
+    if not antiguos or not isinstance(d, dict):
+        return crudo_nuevo
+    d["registros" if "registros" in d else "contratos"] = nuevos + antiguos
+    with gzip.open(ruta, "wt", encoding="utf-8") as f:
+        json.dump(d, f, ensure_ascii=False)
+    print(f"(se conservan {len(antiguos)} contratos anteriores a {alcance_desde()} que ya no trae la fuente)",
+          flush=True)
+    return open(ruta, "rb").read()
+
+
 def huella(registros):
     return sorted(json.dumps(r, sort_keys=True, ensure_ascii=False) for r in registros)
 
@@ -77,15 +116,17 @@ def decidir(n_antes, registros_antes, codigo, crudo_nuevo):
         nuevos = registros_de(crudo_nuevo)
     except Exception as e:
         return "fallo", f"fichero ilegible ({type(e).__name__})", False
-    if n_antes is not None and n_antes >= MINIMO_PARA_COMPARAR and len(nuevos) < MINIMO_RELATIVO * n_antes:
-        return "menos contratos", f"{len(nuevos)} frente a {n_antes} que había", False
+    n_nuevos = dentro_de_ventana(nuevos)    # sin los antiguos que con_antiguos() haya vuelto a meter
+    if n_antes is not None and n_antes >= MINIMO_PARA_COMPARAR and n_nuevos < MINIMO_RELATIVO * n_antes:
+        return "menos contratos", f"{n_nuevos} frente a {n_antes} que había (dentro de la ventana)", False
     if not nuevos and not n_antes:
         return "fallo", "0 contratos", False
     if registros_antes is not None and huella(nuevos) == huella(registros_antes):
         return "sin cambios", f"{len(nuevos)} contratos", False
     if n_antes is None:
         return "actualizada", f"fichero nuevo, {len(nuevos)} contratos", True
-    return "actualizada", f"{n_antes} -> {len(nuevos)} contratos ({len(nuevos) - n_antes:+d})", True
+    antes = len(registros_antes)
+    return "actualizada", f"{antes} -> {len(nuevos)} contratos ({len(nuevos) - antes:+d})", True
 
 
 def ejecutar(nombre):
@@ -97,7 +138,7 @@ def ejecutar(nombre):
     if crudo_antes:
         try:
             registros_antes = registros_de(crudo_antes)
-            n_antes = len(registros_antes)
+            n_antes = dentro_de_ventana(registros_antes)
         except Exception:
             pass
     minutos = MINUTOS.get(nombre, MINUTOS_POR_DEFECTO)
@@ -111,6 +152,8 @@ def ejecutar(nombre):
         codigo, salida = -9, (e.stdout or b"").decode("utf-8", "replace") + f"\n(cortado a los {minutos} min)"
     print("\n".join(salida.splitlines()[-25:]), flush=True)       # el final del registro del generador
     crudo_nuevo = open(ruta, "rb").read() if os.path.exists(ruta) else None
+    if codigo == 0 and crudo_nuevo is not None and registros_antes:
+        crudo_nuevo = con_antiguos(ruta, crudo_nuevo, registros_antes)
     estado, detalle, conservar = decidir(n_antes, registros_antes, codigo, crudo_nuevo)
     if codigo == -9:
         detalle = f"cortado a los {minutos} min"
