@@ -37,6 +37,14 @@ try:
 except ImportError:
     import alertas as ALR
 try:
+    from . import filtro_formulario as FFORM
+    from . import filtro_licitaciones as FLIC
+    from . import socios as SOC
+except ImportError:
+    import filtro_formulario as FFORM
+    import filtro_licitaciones as FLIC
+    import socios as SOC
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -2530,7 +2538,11 @@ def _db_init():
             id TEXT PRIMARY KEY, actualizado TEXT, estado TEXT, fin_plazo TEXT, titulo TEXT, url TEXT,
             expediente TEXT, organo TEXT, nif_organo TEXT, dir3 TEXT, ambito TEXT, provincia TEXT, comunidad TEXT,
             municipio TEXT, cpv TEXT, cpv2 TEXT, tipo TEXT, procedimiento TEXT, presupuesto REAL, valor_estimado REAL,
-            lotes INTEGER, busqueda TEXT, visto REAL)""")
+            lotes INTEGER, busqueda TEXT, visto REAL, requisitos TEXT)""")
+        try:        # tablas anteriores a la columna (2026-10-27): requisitos del filtro por empresa, JSON
+            _db.execute("ALTER TABLE licitaciones ADD COLUMN requisitos TEXT")
+        except sqlite3.OperationalError:
+            pass
         # Cola de revisión interna (2026-10-05, ver INFORME_BOT_CASOS.md): candidatos de backend/indicios_contratos.py
         # que solo ve César en /admin/revision. Nada de aquí se publica.
         _db.execute("""CREATE TABLE IF NOT EXISTS revision_candidatos (
@@ -15241,10 +15253,15 @@ def _reprocesar_meses_place(meses):
 # "Vigente" = última versión en PUB y fecha fin de presentación no vencida (ver licitaciones_place.py).
 LIC_CICLO_S = 3 * 3600
 LIC_MAX_PAGINAS_ATOM = 40
+# Versión del lector: al subirla, los ZIP de los últimos LIC_MESES_RELEER meses se vuelven a leer una vez para rellenar
+# lo nuevo (":req" = columna requisitos del filtro por empresa, 2026-10-27). Los más antiguos ya no tienen abiertas.
+LIC_VERSION_LECTOR = ":req"
+LIC_MESES_RELEER = 4
 _LIC_ESTADO = {"estado": "sin_arrancar"}
+# "visto" va siempre la última: las filas de las cerradas se rellenan con None hasta ella
 _LIC_COLUMNAS = ("id", "actualizado", "estado", "fin_plazo", "titulo", "url", "expediente", "organo", "nif_organo",
                  "dir3", "ambito", "provincia", "comunidad", "municipio", "cpv", "cpv2", "tipo", "procedimiento",
-                 "presupuesto", "valor_estimado", "lotes", "busqueda", "visto")
+                 "presupuesto", "valor_estimado", "lotes", "busqueda", "requisitos", "visto")
 _SQL_LIC_UPSERT = (f"INSERT INTO licitaciones ({', '.join(_LIC_COLUMNAS)}) VALUES ({', '.join('?' * len(_LIC_COLUMNAS))}) "
                    f"ON CONFLICT(id) DO UPDATE SET "
                    + ", ".join(f"{c}=excluded.{c}" for c in _LIC_COLUMNAS[1:])
@@ -15316,7 +15333,7 @@ def _licitacion_fila(r, visto):
     return (r["id"], r["actualizado"], r["estado"], r["fin_plazo"], r["titulo"][:500], r["url"], r["expediente"][:120],
             r["organo"][:300], r["nif_organo"], r["dir3"], r["ambito"], provincia, comunidad, municipio, r["cpv"],
             r["cpv"][:2], r["tipo"], r["procedimiento"], r["presupuesto"], r["valor_estimado"], r["lotes"],
-            normalizar(f'{r["titulo"]} {r["organo"]} {r["expediente"]}')[:800], visto)
+            normalizar(f'{r["titulo"]} {r["organo"]} {r["expediente"]}')[:800], LIC.requisitos_json(r), visto)
 
 
 def _licitaciones_ingerir_atom(raw):
@@ -15342,6 +15359,13 @@ def _licitaciones_ingerir_atom(raw):
     return n, abiertas, (min(fechas) if fechas else ""), (max(fechas) if fechas else "")
 
 
+def _lic_mes_corte_relectura():
+    """"AAAAMM" del mes más antiguo cuyo ZIP se relee al cambiar LIC_VERSION_LECTOR."""
+    hoy = _ahora_madrid()
+    m = hoy.year * 12 + hoy.month - 1 - (LIC_MESES_RELEER - 1)
+    return f"{m // 12}{m % 12 + 1:02d}"
+
+
 def _licitaciones_desde_zips():
     """Recorre los ZIP de place_cache/ que tengan una versión nueva (fecha+tamaño) desde la última lectura."""
     for f in sorted(os.listdir(CACHE_DIR)):
@@ -15354,8 +15378,10 @@ def _licitaciones_desde_zips():
         clave = "licitaciones_zip::" + f
         with _db_lock:
             fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
-        if fila and fila[0] == version:
+        if fila and fila[0].startswith(version) and (fila[0] == version + LIC_VERSION_LECTOR
+                                                     or f[6:12] < _lic_mes_corte_relectura()):
             continue
+        version += LIC_VERSION_LECTOR
         _LIC_ESTADO.update(estado="leyendo_zip", zip=f)
         n = abiertas = 0
         with zipfile.ZipFile(ruta) as z:
@@ -16224,6 +16250,7 @@ def _revision_cola_html(qs, cookie):
     cuerpo = (f'<h1>Revisión interna: indicadores para revisar</h1>'
               f'<p class="sub"><a href="/admin/revision/comentarios"><b>Comentarios pendientes de aprobar: '
               f'{comentarios_pendientes}</b></a> · <a href="/admin/revision/alertas">Alertas por correo</a> · '
+              + (f'<a href="/admin/revision/socios">Perfiles del filtro</a> · ' if FILTRO_FORMULARIO else '') +
               f'<a href="/admin/revision/visitas">Visitas</a></p>'
               f'<p class="sub">Uso interno. Un indicador NO es una irregularidad: solo señala dónde mirar. Nada de esta '
               f'lista se publica; antes de publicar un caso hay que comprobarlo en la fuente oficial y pedir la versión '
@@ -16362,6 +16389,11 @@ def _revision_wsgi(method, path, qs, environ):
             elif p("s").isdigit() and p("accion") == "baja":
                 hecho = "baja" if _alertas_almacen().baja(int(p("s")), motivo="panel") else ""
             return 303, {"Location": f"/admin/revision/alertas?hecho={hecho}", "Content-Length": "0"}, b""
+        if path == "/admin/revision/socios/accion":
+            hecho = ""
+            if FILTRO_FORMULARIO and p("p").isdigit() and p("accion") == "baja":
+                hecho = "baja" if _socios_almacen().baja(int(p("p")), motivo="panel") else ""
+            return 303, {"Location": f"/admin/revision/socios?hecho={hecho}", "Content-Length": "0"}, b""
         if path == "/admin/revision/salir":
             return 303, {"Location": "/admin/revision", "Content-Length": "0",
                          "Set-Cookie": "dp_rev=; Path=/admin/revision; Max-Age=0; HttpOnly; SameSite=Strict"}, b""
@@ -16404,6 +16436,10 @@ def _revision_wsgi(method, path, qs, environ):
         return _comentarios_moderacion_html(cookie, qs.get("hecho", [""])[0])
     if path == "/admin/revision/alertas":
         return _alertas_panel_html(cookie, qs.get("hecho", [""])[0])
+    if path == "/admin/revision/socios":
+        return _socios_panel_html(cookie, qs.get("hecho", [""])[0])
+    if path == "/admin/revision/socios/vista" and FILTRO_FORMULARIO:
+        return _socios_vista_html(qs.get("p", [""])[0])
     if path == "/admin/revision/visitas":
         return _visitas_pagina(qs, autorizado=True)
     if path == "/admin/revision/ficha":
@@ -17353,6 +17389,8 @@ def _arrancar_hilos_de_fondo():
     threading.Thread(target=_licitaciones_bg, args=(hilo_feed,), name="licitaciones", daemon=True).start()
     threading.Thread(target=_subvenciones_reclasificar, name="subvenciones-sector", daemon=True).start()
     threading.Thread(target=_zip_cache_vigilar, name="memoria-zips", daemon=True).start()
+    if FILTRO_FORMULARIO:                    # borrado automático de perfiles del filtro (ver _socios_limpieza_bg)
+        threading.Thread(target=_socios_limpieza_bg, name="socios-limpieza", daemon=True).start()
     # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
     # al RSS (búsqueda text=España) en vez de esperar al cron diario.
     if len(_db_noticias_ue(limit=3)) < 3:
@@ -27143,6 +27181,335 @@ def _error_resp(msg, code=500):
 ALERTAS_ACTIVAS = os.environ.get("ALERTAS_ACTIVAS", "") == "1"
 ALERTAS_SOLO_CORREOS = frozenset(c for c in (ALR.correo_valido(x) for x in os.environ.get("ALERTAS_SOLO_CORREOS", "").split(",")) if c)
 ALERTAS_PUBLICAS = ALERTAS_ACTIVAS and not ALERTAS_SOLO_CORREOS     # enlaces y formularios a la vista de todos
+# Formulario del filtro de licitaciones por empresa (BORRADOR, 2026-10-27; ver filtro_formulario.py). Apagado salvo
+# FILTRO_FORMULARIO=1: sin ella, /filtro-licitaciones y sus páginas no existen (404), no se abre ni se crea socios.db
+# y no se guarda nada. No lo enlaza ninguna página. Con ella, los perfiles se guardan en socios.db (ver socios.py).
+FILTRO_FORMULARIO = os.environ.get("FILTRO_FORMULARIO", "") == "1"
+# SOCIOS_SOLO_CORREOS (28-10, como ALERTAS_SOLO_CORREOS): direcciones separadas por comas. Mientras esté puesta, el
+# filtro funciona solo para ellas: el formulario no guarda ni envía nada a ninguna otra (la página responde lo mismo de
+# siempre) y el envío semanal y los avisos solo salen hacia esas direcciones. Para las pruebas de César.
+SOCIOS_SOLO_CORREOS = frozenset(c for c in (SOC.correo_valido(x) for x in os.environ.get("SOCIOS_SOLO_CORREOS", "").split(",")) if c)
+
+
+def _filtro_licitaciones_abiertas():
+    """Licitaciones con plazo abierto (hora peninsular) y requisitos ya leídos, como dicts para el filtro."""
+    columnas = ("id", "fin_plazo", "titulo", "url", "organo", "ambito", "provincia", "cpv", "tipo", "procedimiento",
+                "presupuesto", "valor_estimado", "requisitos")
+    ahora = _ahora_madrid().strftime("%Y-%m-%d %H:%M")
+    with _db_lock:
+        filas = _db.execute(f"SELECT {', '.join(columnas)} FROM licitaciones WHERE estado = 'PUB' AND fin_plazo >= ? "
+                            "AND requisitos IS NOT NULL", (ahora,)).fetchall()
+    return [FLIC.desde_fila(dict(zip(columnas, f))) for f in filas]
+
+
+def _filtro_formulario_resp(metodo, params):
+    html_ = FFORM.responder(metodo, params, _filtro_licitaciones_abiertas, _ahora_madrid(), guardar=_socios_alta)
+    return _filtro_html(html_)
+
+
+def _filtro_html(html_):
+    return _resp(html_, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer"})
+
+
+# ── perfiles del filtro (socios.db, 2026-10-28) ──────────────────────────────────────────────────────────────────
+# Mismo esquema que las alertas: almacén y reglas en socios.py, fichero propio en DATA_DIR (en Render, /var/data;
+# nunca en el repositorio), doble confirmación, baja que BORRA, enlaces firmados y copia cifrada semanal
+# (copia-socios-cifrada.yml, POST /admin/socios-db). Solo se abre con FILTRO_FORMULARIO=1.
+_SOCIOS_ALMACEN = None
+_socios_almacen_lock = threading.Lock()
+_SOCIOS_LIMPIEZA_CADA_S = 6 * 3600
+
+
+def _socios_correo_permitido(correo):
+    return not SOCIOS_SOLO_CORREOS or SOC.correo_valido(correo) in SOCIOS_SOLO_CORREOS
+
+
+def _resend_enviados_desde(desde):
+    """Correos aceptados por Resend desde `desde`, sumando alertas y filtro: el cupo del plan es uno solo (28-10)."""
+    n = _alertas_almacen().envios_desde(desde)
+    if FILTRO_FORMULARIO:
+        n += _socios_almacen().envios_desde(desde)
+    return n
+
+
+def _socios_almacen():
+    global _SOCIOS_ALMACEN
+    with _socios_almacen_lock:
+        if _SOCIOS_ALMACEN is None:
+            _SOCIOS_ALMACEN = SOC.Almacen(os.path.join(DATA_DIR, "socios.db"))
+        return _SOCIOS_ALMACEN
+
+
+def _socios_limpieza_bg():
+    """Borrado automático (sin confirmar a los 7 días, sin uso a los 12 meses): al arrancar y cada 6 horas."""
+    while True:
+        try:
+            r = _socios_almacen().limpiar()
+            if any(r.values()):
+                print(f"[socios] limpieza: {r}", flush=True)
+        except Exception as e:
+            print(f"[socios] limpieza: ERROR ({type(e).__name__}: {e})", flush=True)
+        time.sleep(_SOCIOS_LIMPIEZA_CADA_S)
+
+
+def _socios_enlace(alm, accion, pid, extra=""):
+    ruta = {"confirmar": "confirmar", "baja": "baja", "ver": "mis-licitaciones", "mantener": "mantener"}[accion]
+    return f"{SITE_URL}{FFORM.RUTA}/{ruta}?p={pid}&k={alm.firma(accion, pid, extra)}"
+
+
+def _socios_enviar(alm, pid, correo, clase, asunto, texto, html_):
+    """Un correo por Resend, siempre con la baja de un clic (enlace en el pie, que pone filtro_formulario, y cabeceras
+    List-Unsubscribe). Queda anotado en socios.db sin la dirección. Devuelve True si salió."""
+    payload = {"from": _avisos_remitente(), "to": [correo], "subject": asunto[:150], "text": texto, "html": html_,
+               "headers": {"List-Unsubscribe": f"<{SITE_URL}{FFORM.RUTA}/baja-correo?p={pid}&k={alm.firma('baja', pid)}>",
+                           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"}}
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if not api_key:
+        alm.registrar_envio(clase, pid, None, "falta RESEND_API_KEY")
+        return False
+    try:
+        r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
+                          headers={"Authorization": f"Bearer {api_key}"})
+        codigo, detalle = r.status_code, _RE_CORREO_EN_TEXTO.sub("***@***", r.text[:300])
+    except Exception as e:
+        codigo, detalle = None, type(e).__name__
+    alm.registrar_envio(clase, pid, codigo, detalle)
+    if codigo is None or codigo >= 300:
+        print(f"[socios] {clase}: NO ENVIADO (código {codigo}): {detalle}", flush=True)
+    return codigo is not None and codigo < 300
+
+
+def _socios_alta(correo, perfil):
+    """Lo llama el formulario al enviar: guarda el perfil SIN confirmar y manda, en un hilo, el correo de confirmación."""
+    if SOC.correo_valido(correo) and not _socios_correo_permitido(correo):
+        return "fuera_de_prueba"                            # SOCIOS_SOLO_CORREOS: ni se guarda ni se envía nada
+    alm = _socios_almacen()
+    r = alm.alta(correo, perfil)
+    if r["resultado"] != "confirmar":
+        return r["resultado"]
+    p = r["perfil"]
+    objetivo = alm.a_confirmar(p)
+    asunto, texto, html_ = FFORM.correo_confirmacion(
+        json.loads(objetivo), _socios_enlace(alm, "confirmar", p["id"], SOC.huella(objetivo)),
+        _socios_enlace(alm, "baja", p["id"]), es_cambio=p["estado"] == "activo", ahora=_ahora_madrid())
+    threading.Thread(target=_socios_enviar, args=(alm, p["id"], p["correo"], "confirmacion", asunto, texto, html_),
+                     name="socios-confirmacion", daemon=True).start()
+    return "confirmar"
+
+
+def _socios_get(path, qs):
+    """Páginas de los enlaces del correo (GET). Confirmar y baja solo enseñan un formulario que se envía solo (POST):
+    un programa de correo que abre el enlace para revisarlo no confirma ni borra nada. None si no es ninguna."""
+    g = lambda k: (qs.get(k, [""])[0] or "").strip()                     # noqa: E731
+    sub = path[len(FFORM.RUTA):]
+    if sub not in ("/confirmar", "/baja", "/mis-licitaciones", "/mantener"):
+        return None
+    alm = _socios_almacen()
+    p = alm.perfil(int(g("p"))) if g("p").isdigit() else None
+    if not p:
+        return _filtro_html(FFORM.enlace_no_valido_html())
+    campos = {"p": p["id"], "k": g("k")}
+    if sub == "/confirmar":
+        objetivo = alm.a_confirmar(p)
+        validos = [h for h in (objetivo, p["perfil_json"] if p["estado"] == "activo" else "") if h]
+        if not any(alm.firma_valida("confirmar", p["id"], g("k"), SOC.huella(h)) for h in validos):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.confirmar_pedir_html(campos))
+    if sub == "/baja":
+        if not alm.firma_valida("baja", p["id"], g("k")):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.baja_pedir_html(campos))
+    if sub == "/mantener":
+        if p["estado"] != "activo" or not alm.firma_valida("mantener", p["id"], g("k")):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.mantener_pedir_html(campos))
+    if p["estado"] != "activo" or not alm.firma_valida("ver", p["id"], g("k")):
+        return _filtro_html(FFORM.enlace_no_valido_html())
+    alm.usar(p["id"])
+    ahora = _ahora_madrid()
+    res = FLIC.filtrar(_filtro_licitaciones_abiertas(), p["perfil"], ahora)
+    return _filtro_html(FFORM.mis_licitaciones_html(p["perfil"], res, {"p": p["id"], "k": alm.firma("baja", p["id"])},
+                                                    ahora))
+
+
+def _socios_post(path, params):
+    """Formularios de confirmar y baja (POST). None si no es ninguno."""
+    pr = lambda k: (params.get(k, [""])[0] or "").strip()                # noqa: E731
+    sub = path[len(FFORM.RUTA):]
+    if sub not in ("/confirmar", "/baja", "/mantener"):
+        return None
+    alm = _socios_almacen()
+    pid = int(pr("p")) if pr("p").isdigit() else 0
+    if sub == "/baja":
+        if pid and alm.firma_valida("baja", pid, pr("k")):
+            alm.baja(pid)
+        return _filtro_html(FFORM.baja_hecha_html())
+    if sub == "/mantener":
+        if not (pid and alm.firma_valida("mantener", pid, pr("k")) and alm.usar(pid)):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.mantenido_html(_socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid)))
+    antes = alm.perfil(pid) if pid else None
+    if antes and antes["estado"] == "pendiente":
+        # Lo que está abierto ahora queda como "ya estaba": el primer correo semanal solo trae lo que salga después.
+        alm.registrar_vistos([l["id"] for l in _filtro_licitaciones_abiertas()], time.time())
+    p = alm.confirmar(pid, pr("k")) if antes else None
+    if not p:
+        return _filtro_html(FFORM.enlace_no_valido_html())
+    return _filtro_html(FFORM.confirmado_html(p["perfil"], _socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid),
+                                              era_cambio=antes["estado"] == "activo", ya_estaba=bool(p.get("ya_estaba")),
+                                              ahora=_ahora_madrid()))
+
+
+def _socios_inicio_dia_semana(ahora):
+    madrid = _ahora_madrid()
+    inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    return madrid, inicio_dia, inicio_dia - madrid.weekday() * 86400
+
+
+def _socios_semanal_de(alm, p, abiertas, madrid):
+    """Correo semanal de un perfil con las licitaciones NUEVAS desde su última revisión: (asunto, texto, html, en el
+    correo, total) o None si no hay ninguna."""
+    nuevos = alm.nuevos_desde(p["revisado"] or p["confirmado"])
+    if not nuevos:
+        return None
+    res = FLIC.filtrar([l for l in abiertas if str(l["id"]) in nuevos], p["perfil"], madrid)
+    return FFORM.correo_semanal(res, _socios_enlace(alm, "ver", p["id"]), _socios_enlace(alm, "baja", p["id"]), madrid)
+
+
+def _socios_pasada(max_correos=25):
+    """Una tanda del envío del filtro (flujo socios-envio.yml, todos los días a las 08:30 UTC): primero los avisos
+    «¿Sigues interesado?» y después los correos semanales (los de esta semana que falten: el lunes salen casi todos y,
+    si el cupo no llega, el resto los días siguientes). Respeta el cupo de Resend, que comparte con las alertas
+    (ALERTAS_TOPE_DIARIO / ALERTAS_TOPE_MES, sumando los dos ficheros). Solo números en la respuesta (la llama un
+    flujo de Actions, cuyos registros son públicos)."""
+    if not FILTRO_FORMULARIO:
+        return {"activas": False}
+    alm = _socios_almacen()
+    ahora = time.time()
+    alm.limpiar(ahora)
+    madrid, inicio_dia, inicio_semana = _socios_inicio_dia_semana(ahora)
+    tope_dia, tope_mes = _alertas_tope("ALERTAS_TOPE_DIARIO", 80), _alertas_tope("ALERTAS_TOPE_MES", 2800)
+    hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)
+    cupo = min(max_correos, tope_dia - hoy, tope_mes - mes)
+    res = {"activas": True, "en_prueba": bool(SOCIOS_SOLO_CORREOS), "avisos": 0, "semanales": 0, "sin_novedades": 0,
+           "fallidos": 0, "enviados_hoy": hoy, "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
+    abiertas = _filtro_licitaciones_abiertas()
+    alm.registrar_vistos([l["id"] for l in abiertas], ahora)
+    avisos = [p for p in alm.pendientes_aviso(ahora, inicio_dia) if _socios_correo_permitido(p["correo"])]
+    semanales = [p for p in alm.pendientes_semanal(inicio_semana, inicio_dia) if _socios_correo_permitido(p["correo"])]
+    hechos = 0
+    for p in avisos:
+        if cupo <= 0:
+            break
+        asunto, texto, html_ = FFORM.correo_sigues(_socios_enlace(alm, "mantener", p["id"]), _socios_enlace(alm, "baja", p["id"]),
+                                                   madrid + timedelta(seconds=SOC.AVISO_PLAZO_S))
+        if _socios_enviar(alm, p["id"], p["correo"], "aviso_inactividad", asunto, texto, html_):
+            alm.marcar_aviso(p["id"], ahora)
+            res["avisos"] += 1
+        else:
+            alm.marcar_intentado(p["id"], ahora)                         # mañana se vuelve a intentar
+            res["fallidos"] += 1
+        hechos += 1
+        cupo -= 1
+        time.sleep(0.6)                                                  # Resend: 2 peticiones por segundo
+    for p in semanales:
+        correo = _socios_semanal_de(alm, p, abiertas, madrid)
+        if correo is None:
+            alm.marcar_revisado(p["id"], ahora, enviado=False)           # sin novedades: no se envía nada
+            res["sin_novedades"] += 1
+            hechos += 1
+            continue
+        if cupo <= 0:
+            break
+        asunto, texto, html_, _, _ = correo
+        if _socios_enviar(alm, p["id"], p["correo"], "semanal", asunto, texto, html_):
+            alm.marcar_revisado(p["id"], ahora, enviado=True)
+            res["semanales"] += 1
+        else:
+            alm.marcar_intentado(p["id"], ahora)                         # mañana, con lo nuevo que haya entonces
+            res["fallidos"] += 1
+        hechos += 1
+        cupo -= 1
+        time.sleep(0.6)
+    res["pendientes"] = len(avisos) + len(semanales) - hechos
+    res["tope_alcanzado"] = bool(res["pendientes"]) and cupo <= 0 and (
+        hoy + res["avisos"] + res["semanales"] >= tope_dia or mes + res["avisos"] + res["semanales"] >= tope_mes)
+    return res
+
+
+def _socios_vista_html(pid):
+    """Panel: el correo semanal que le saldría AHORA a ese perfil (sin enviarlo ni marcar nada), para revisarlo."""
+    alm = _socios_almacen()
+    p = alm.perfil(int(pid)) if pid.isdigit() else None
+    if not p or p["estado"] != "activo":
+        return _revision_pagina("Próximo correo", '<p>Ese perfil no existe o no está confirmado.</p>')
+    madrid, _, _ = _socios_inicio_dia_semana(time.time())
+    correo = _socios_semanal_de(alm, p, _filtro_licitaciones_abiertas(), madrid)
+    if correo is None:
+        cuerpo = ('<p>Ahora mismo no le saldría ningún correo: no hay licitaciones nuevas que encajen desde su última '
+                  'revisión.</p>')
+    else:
+        asunto, _, html_, en_correo, total = correo
+        cuerpo = (f'<p><b>Asunto:</b> {esc(asunto)} · {en_correo} fichas en el correo de {total}. Vista previa: no se '
+                  f'envía nada ni cambia nada.</p><div style="background:#fff;border:1px solid #dde1e7">{html_}</div>')
+    return _revision_pagina("Próximo correo", f'<h1>Próximo correo semanal</h1><p class="sub">'
+                            f'<a href="/admin/revision/socios">← Perfiles del filtro</a></p>{cuerpo}')
+
+
+def _socios_panel_html(cookie, hecho=""):
+    """Panel (/admin/revision/socios, con la sesión del panel): recuentos, perfiles y envíos; borrar un perfil a
+    petición de la empresa (derecho de supresión pedido por correo)."""
+    f_ts = lambda ts: time.strftime("%d/%m/%Y %H:%M", time.gmtime(ts)) if ts else "—"       # noqa: E731
+    if not FILTRO_FORMULARIO:
+        return _revision_pagina("Filtro de licitaciones: perfiles", '<h1>Filtro de licitaciones: perfiles</h1>'
+                                '<p class="sub"><a href="/admin/revision">← Cola de revisión</a></p><div class="aviso">'
+                                '<b>APAGADO.</b> Falta FILTRO_FORMULARIO=1 en Render: no hay formulario ni se guarda '
+                                'nada, y socios.db no se abre.</div>')
+    alm = _socios_almacen()
+    r = alm.resumen()
+    csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
+    if SOCIOS_SOLO_CORREOS:
+        estado = (f'<div class="aviso"><b>Encendido EN PRUEBA</b> (SOCIOS_SOLO_CORREOS): solo para '
+                  f'{esc(", ".join(sorted(SOC.correo_tapado(c) for c in SOCIOS_SOLO_CORREOS)))}. El formulario no guarda '
+                  f'ninguna otra dirección y los correos solo salen hacia esas.</div>')
+    else:
+        estado = '<div class="aviso"><b>Encendido</b> (FILTRO_FORMULARIO=1), abierto a todos.</div>'
+    vista = lambda p: (f'<a href="/admin/revision/socios/vista?p={p["id"]}">Ver el próximo correo</a>'      # noqa: E731
+                       if p["estado"] == "activo" else "")
+    ahora = time.time()
+    _, inicio_dia, _ = _socios_inicio_dia_semana(ahora)
+    cupo = (f'<tr><th>Correos aceptados por Resend (alertas + filtro)</th><td>hoy {_resend_enviados_desde(inicio_dia)} de '
+            f'{_alertas_tope("ALERTAS_TOPE_DIARIO", 80)} · últimos 30 días {_resend_enviados_desde(ahora - 30 * 86400)} de '
+            f'{_alertas_tope("ALERTAS_TOPE_MES", 2800)}</td></tr>')
+    resumen = (f'<table class="t"><tr><th>Perfiles confirmados</th><td>{r["activos"]}</td></tr>'
+               f'<tr><th>Sin confirmar (se borran a los 7 días)</th><td>{r["sin_confirmar"]}</td></tr>'
+               f'<tr><th>Cambios esperando confirmación</th><td>{r["cambios_pendientes"]}</td></tr>'
+               f'<tr><th>Borrados</th><td>{r["bajas"]} por su cuenta · {r["bajas_desde_el_panel"]} desde este panel · '
+               f'{r["caducados_sin_confirmar"]} sin confirmar · {r["caducados_inactivos"]} por falta de uso</td></tr>'
+               f'<tr><th>Avisados de borrado por falta de uso</th><td>{r["avisados_inactividad"]}</td></tr>{cupo}</table>')
+    filas = "".join(
+        f'<tr><td>{esc(p["correo"])}</td><td>{esc(p["estado"])}{" (cambio pendiente)" if p["perfil_pendiente"] else ""}</td>'
+        f'<td>{esc(", ".join(FLIC.NOMBRE_PROVINCIA.get(x, x) for x in p["perfil"].get("provincias", [])))}</td>'
+        f'<td>{f_ts(p["alta"])}</td><td>{f_ts(p["confirmado"])}</td><td>{f_ts(p["ultimo_uso"])}</td>'
+        f'<td>{f_ts(p["ultimo_envio"])}</td><td>{f_ts(p["aviso_inactividad"])}</td>'
+        f'<td>{vista(p)}'
+        f'<form method="post" action="/admin/revision/socios/accion" class="acc">{csrf}'
+        f'<input type="hidden" name="p" value="{p["id"]}"><button type="submit" name="accion" value="baja" class="sec">'
+        f'Borrar perfil</button></form></td></tr>' for p in alm.lista())
+    env = "".join(
+        f'<tr><td>{f_ts(e["ts"])}</td><td>{esc(e["clase"])}</td>'
+        f'<td>{"sí" if e["codigo"] and e["codigo"] < 300 else "NO"} ({e["codigo"]})</td><td>{esc(e["detalle"] or "")}</td></tr>'
+        for e in alm.lista_envios())
+    vacio = lambda n: f'<tr><td colspan="{n}" class="sub">Nada todavía.</td></tr>'                # noqa: E731
+    aviso = '<div class="aviso">Perfil borrado.</div>' if hecho == "baja" else ""
+    return _revision_pagina("Filtro de licitaciones: perfiles", f"""<style>.t{{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin:8px 0 22px}}
+.t th,.t td{{border:1px solid #dde1e7;padding:6px 8px;text-align:left;vertical-align:top}}.t th{{background:#eef1f6}}</style>
+<h1>Filtro de licitaciones: perfiles</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a> · horas en UTC</p>
+{estado}{aviso}{resumen}
+<h2 style="font-size:16px">Perfiles</h2>
+<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th></th></tr>{filas or vacio(9)}</table>
+<h2 style="font-size:16px">Envíos (los 100 últimos)</h2>
+<table class="t"><tr><th>Cuándo</th><th>Clase</th><th>Aceptado por Resend</th><th>Respuesta</th></tr>{env or vacio(4)}</table>""")
 
 
 def _alertas_correo_permitido(correo):
@@ -27443,7 +27810,7 @@ def _alertas_pasada(max_correos=25):
     inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
     inicio_semana = inicio_dia - madrid.weekday() * 86400
     tope_dia, tope_mes = _alertas_tope("ALERTAS_TOPE_DIARIO", 80), _alertas_tope("ALERTAS_TOPE_MES", 2800)
-    hoy, mes = alm.envios_desde(inicio_dia), alm.envios_desde(ahora - 30 * 86400)
+    hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)   # con los del filtro
     cupo = min(max_correos, tope_dia - hoy, tope_mes - mes)
     res = {"activas": True, "enviados": 0, "sin_novedades": 0, "fallidos": 0, "enviados_hoy": hoy,
            "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
@@ -27665,7 +28032,7 @@ def _alertas_panel_html(cookie, hecho=""):
     ahora = time.time()
     madrid = _ahora_madrid()
     inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
-    hoy, mes = alm.envios_desde(inicio_dia), alm.envios_desde(ahora - 30 * 86400)
+    hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)   # con los del filtro
     csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
     por_tipo = ", ".join(f"{k}: {v}" for k, v in sorted(r["por_tipo"].items())) or "ninguna"
     resumen = (f'<table class="t"><tr><th>Suscriptores confirmados</th><td>{r["suscriptores_activos"]} '
@@ -27906,6 +28273,12 @@ def render_404_html():
 
 
 def _route_get(path, qs, gzip_ok=False):
+    if FILTRO_FORMULARIO and path == FFORM.RUTA:
+        return _filtro_formulario_resp("GET", qs)
+    if FILTRO_FORMULARIO and path.startswith(FFORM.RUTA + "/"):
+        respuesta = _socios_get(path, qs)
+        if respuesta:
+            return respuesta
     # Pulido 28-10: direcciones que la gente escribe a mano y que no existían (daban un 404 en blanco)
     if path.rstrip("/") in ("/licitaciones", "/subvenciones"):
         destino = dict((k, v) for k, v in qs.items() if k != "tab")
@@ -28384,6 +28757,34 @@ def _route_post(path, params):
             respuesta = _alertas_post(path, params)
             if respuesta:
                 return respuesta
+
+        if FILTRO_FORMULARIO and path == FFORM.RUTA:
+            return _filtro_formulario_resp("POST", params)
+        if FILTRO_FORMULARIO and path.startswith(FFORM.RUTA + "/"):
+            respuesta = _socios_post(path, params)
+            if respuesta:
+                return respuesta
+
+        if path == "/admin/socios-enviar":
+            # Una tanda del envío del filtro (flujo socios-envio.yml); devuelve solo recuentos.
+            if not _token_admin_peticion(params):
+                return _error_resp("No autorizado.", 403)
+            try:
+                tanda = min(100, max(1, int(params.get("max", ["25"])[0])))
+            except ValueError:
+                tanda = 25
+            return _resp(json.dumps(_socios_pasada(tanda), ensure_ascii=False),
+                         content_type="application/json; charset=utf-8")
+
+        if path == "/admin/socios-db":
+            # Perfiles del filtro (2026-10-28): el fichero socios.db tal cual, para la copia cifrada
+            # (copia-socios-cifrada.yml lo cifra antes de guardarlo en ningún sitio). Apagado: 404, y no se crea.
+            if not _token_admin_peticion(params):
+                return _error_resp("No autorizado.", 403)
+            if not FILTRO_FORMULARIO:
+                return 404, {"Content-Length": "0"}, b""
+            return _resp(_socios_almacen().copia(), content_type="application/octet-stream",
+                         headers={"Cache-Control": "no-store"})
 
         if path in ("/admin/alertas-enviar", "/admin/alertas-db"):
             # Alertas por correo (2026-10-13). enviar: una tanda de la pasada de envío (flujo alertas-envio.yml);
@@ -29334,6 +29735,12 @@ def _app_wsgi(environ, start_response):
         sid, firma = qs.get("s", [""])[0], qs.get("k", [""])[0]
         if sid.isdigit() and _alertas_almacen().firma_valida("baja", sid, firma):
             _alertas_almacen().baja(int(sid))
+        code, headers, body = _resp("ok", content_type="text/plain; charset=utf-8")
+    elif FILTRO_FORMULARIO and method == "POST" and path == FFORM.RUTA + "/baja-correo":
+        # Lo mismo para los perfiles del filtro de licitaciones: borra el perfil.
+        pid, firma = qs.get("p", [""])[0], qs.get("k", [""])[0]
+        if pid.isdigit() and _socios_almacen().firma_valida("baja", pid, firma):
+            _socios_almacen().baja(int(pid))
         code, headers, body = _resp("ok", content_type="text/plain; charset=utf-8")
     elif method == "POST" and path == "/admin/revision-candidatos":
         try:

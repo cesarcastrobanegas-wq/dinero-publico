@@ -14,6 +14,7 @@ Reglas (decididas por César):
 - Sin anuncios previos (PRE) en esta primera versión.
 """
 import html
+import json
 import re
 
 _RE_ENTRY = re.compile(rb"<entry\b.*?</entry>", re.S)
@@ -120,6 +121,92 @@ def _ambito(lcp):
     return "otros"
 
 
+# Requisitos para el filtro de licitaciones por empresa (fase 1, 2026-10-27; ver "Informe - Filtro de licitaciones por
+# empresa.txt"). Medido en el ZIP de septiembre (1.635 PUB): duración 92,5 %, lotes 14,3 % (todos con importe propio),
+# tipo de solvencia económica 38,7 %, su importe mínimo solo 1,9 %, clasificación 4,6 %. Lo que no viene está en el PCAP.
+_RE_LOTE = re.compile(r"<cac:ProcurementProjectLot>.*?</cac:ProcurementProjectLot>", re.S)
+_MESES_UNIDAD = {"MON": 1, "ANN": 12, "DAY": 1 / 30.4}
+# Tipos de solvencia técnica (TechnicalCapabilityTypeCode) que piden un certificado de calidad o de gestión ambiental
+TIPOS_CERTIFICADO = {"XSX-CERTCALIDAD", "OXR-GESTMEDIOAMB", "XSR-CALIDAD"}
+# Con número (ISO 9001, UNE-EN ISO 14001, UNE-EN 13606) o siglas sueltas (ENS, EMAS). Sin número no vale: el 27-10
+# salía un "UNE-EN" suelto en el motivo.
+_RE_CERT = re.compile(r"\b(ISO|UNE[- ]?EN(?:[- ]ISO)?)[ -]?(\d{4,5})\b|\b(ENS|EMAS)\b", re.I)
+
+
+def _certs_de(texto):
+    res = set()
+    for m in _RE_CERT.finditer(texto or ""):
+        if m.group(2):
+            res.add(("ISO" if "ISO" in m.group(1).upper() else "UNE-EN") + m.group(2))
+        else:
+            res.add(m.group(3).upper())
+    return res
+
+
+def _cpvs(pp):
+    """Todos los CPV de un ProcurementProject, sin repetir y en orden."""
+    return list(dict.fromkeys(re.findall(r"<cbc:ItemClassificationCode[^>]*>(\d{8})", pp)))
+
+
+def _duracion_meses(pp):
+    """Duración inicial en meses (PlannedPeriod: DurationMeasure o fechas de inicio y fin), o None."""
+    pl = _bloque("PlannedPeriod", pp)
+    m = re.search(r'<cbc:DurationMeasure unitCode="(\w+)"[^>]*>([\d.,]+)<', pl)
+    if m and m.group(1) in _MESES_UNIDAD:
+        try:
+            v = float(m.group(2).replace(",", ".")) * _MESES_UNIDAD[m.group(1)]
+            return round(v, 1) if v > 0 else None
+        except ValueError:
+            return None
+    ini, fin = _tag("StartDate", pl), _tag("EndDate", pl)
+    if re.fullmatch(r"\d{4}-\d\d-\d\d", ini) and re.fullmatch(r"\d{4}-\d\d-\d\d", fin):
+        dias = (int(fin[:4]) - int(ini[:4])) * 365 + (int(fin[5:7]) - int(ini[5:7])) * 30.4 + int(fin[8:]) - int(ini[8:])
+        return round(dias / 30.4, 1) if dias > 0 else None
+    return None
+
+
+def _requisitos(tt):
+    """De un bloque TenderingTerms: clasificación exigida, tipos de solvencia, importe mínimo de solvencia económica
+    (ThresholdQuantity, si viene) y certificados. Claves cortas: van en JSON en la tabla."""
+    tqr = _bloque("TendererQualificationRequest", tt)
+    if not tqr:
+        return {}
+    r = {}
+    clas = list(dict.fromkeys(c.strip().upper() for c in re.findall(r"<cbc:CodeValue>([^<]+)</cbc:CodeValue>", tqr)))
+    if clas:
+        r["clas"] = clas
+    eco = re.findall(r"<cac:FinancialEvaluationCriteria>(.*?)</cac:FinancialEvaluationCriteria>", tqr, re.S)
+    tec = re.findall(r"<cac:TechnicalEvaluationCriteria>(.*?)</cac:TechnicalEvaluationCriteria>", tqr, re.S)
+    if eco:
+        r["eco"] = list(dict.fromkeys(_tag("EvaluationCriteriaTypeCode", x) for x in eco))
+        umbrales = [_importe(_tag("ThresholdQuantity", x)) for x in eco]
+        umbrales = [u for u in umbrales if u]
+        if umbrales:
+            r["umbral_eco"] = max(umbrales)
+    if tec:
+        r["tec"] = list(dict.fromkeys(_tag("EvaluationCriteriaTypeCode", x) for x in tec))
+        certs = set()
+        for x in tec:
+            if _tag("EvaluationCriteriaTypeCode", x) in TIPOS_CERTIFICADO:
+                certs.add(_tag("EvaluationCriteriaTypeCode", x))
+            certs.update(_certs_de(_tag("Description", x)))
+        if certs:
+            r["cert"] = sorted(certs)
+    return r
+
+
+def _lote(lo):
+    pp = _bloque("ProcurementProject", lo)
+    nuts = _tag("CountrySubentityCode", _bloque("RealizedLocation", pp))
+    d = {"id": _tag("ID", lo), "titulo": _tag("Name", pp)[:300],
+         "presupuesto": _importe(_tag("TaxExclusiveAmount", _bloque("BudgetAmount", pp))),
+         "cpvs": _cpvs(pp), "nuts": nuts}
+    req = _requisitos(_bloque("TenderingTerms", lo))
+    if req:
+        d["req"] = req
+    return d
+
+
 def analizar_entrada(e):
     """dict con lo necesario para la ficha de una licitación, o None si no es una entrada válida. Para las que no
     están en PUB solo importan id, actualizado y estado (sirven para retirar la versión abierta anterior)."""
@@ -162,7 +249,28 @@ def analizar_entrada(e):
         # hora local de España, como la publica PLACE; sin hora -> fin del día
         "fin_plazo": f"{fin_d} {fin_h[:5] if fin_h else '23:59'}" if re.fullmatch(r"\d{4}-\d\d-\d\d", fin_d) else "",
     })
+    # Requisitos del contrato (fuera de los lotes) y de cada lote, para el filtro por empresa
+    sin_lotes = _RE_LOTE.sub("", e)
+    pp_contrato = _bloque("ProcurementProject", sin_lotes)
+    r.update({
+        "cpvs": _cpvs(pp_contrato),
+        "duracion_meses": _duracion_meses(pp_contrato),
+        "prorrogas": "ContractExtension" in pp_contrato,
+        "req": _requisitos(_bloque("TenderingTerms", sin_lotes)),
+        "lotes_detalle": [_lote(lo) for lo in _RE_LOTE.findall(e)],
+        # sujeto a regulación armonizada (SARA): True/False, None si no lo dice (medido el 27-10: lo dice el 100 %)
+        "sara": {"true": True, "false": False}.get(_tag("OverThresholdIndicator", tp).lower()),
+    })
     return r
+
+
+def requisitos_json(r):
+    """Lo que el filtro por empresa necesita y la tabla no tiene en columnas propias, en JSON compacto."""
+    d = {k: r[k] for k in ("nuts", "cp_organo", "cpvs", "duracion_meses", "prorrogas", "req", "lotes_detalle")
+         if r.get(k)}
+    if r.get("sara") is not None:       # False también cuenta: es el caso de la exención de nueva creación
+        d["sara"] = r["sara"]
+    return json.dumps(d, ensure_ascii=False, separators=(",", ":")) if d else ""
 
 
 def entradas(raw):
