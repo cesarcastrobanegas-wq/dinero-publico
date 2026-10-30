@@ -15658,13 +15658,14 @@ def _subir_subvenciones(crudo, forzar=False):
     return 200, {"convocatorias": n, "antes": antes, "con_municipio": con_muni, "lineas_con_error": malas}
 
 
-def _subir_fondos_ue(crudo, forzar=False, conservar_kohesio=False):
+def _subir_fondos_ue(crudo, forzar=False, conservar=""):
     """Sustituye la tabla `fondos_ue` por el NDJSON (gzip) de fondos_ue_espana.py. Devuelve (código, cuerpo), solo
     con recuentos. Mismo esquema que _subir_subvenciones: se carga línea a línea en una tabla nueva y se cambia de
     golpe; si llega bastante menos de lo que hay, se rechaza (protección de subidas) y no se toca nada.
     El fichero llega sin nombres: los beneficiarios que ya estaban guardados (Murcia y Girona) se conservan.
-    conservar_kohesio (?conservar=kohesio, opción 2 de César del 23-10): si el fichero no trae Kohesio (el generador
-    no pudo descargarlo), se copian las operaciones de Kohesio que ya había, con su hora de carga, y se dice cuál es."""
+    conservar (?conservar=<fuente>; opción 2 de César del 23-10, ampliada a cualquier fuente el 30-10): si el fichero
+    no trae esa fuente (el generador no pudo descargarla), se copian las operaciones de esa fuente que ya había, con su
+    hora de carga, y se dice de cuándo son."""
     nueva = "fondos_ue_nueva"
     with _db_lock:
         _db.execute(f"DROP TABLE IF EXISTS {nueva}")
@@ -15709,17 +15710,20 @@ def _subir_fondos_ue(crudo, forzar=False, conservar_kohesio=False):
     except (OSError, EOFError) as e:
         _descartar()
         return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
-    kohesio = None
-    if conservar_kohesio:
+    conservado = None
+    if conservar:
+        if conservar not in _FUENTE_UE_LABEL:
+            _descartar()
+            return 400, {"error": f"conservar={conservar}: fuente desconocida."}
         with _db_lock:
-            if not _db.execute(f"SELECT 1 FROM {nueva} WHERE fuente='kohesio' LIMIT 1").fetchone():
+            if not _db.execute(f"SELECT 1 FROM {nueva} WHERE fuente=? LIMIT 1", (conservar,)).fetchone():
                 cols = ", ".join(_FUE_COLUMNAS)
-                n_koh = _db.execute(f"INSERT OR IGNORE INTO {nueva} ({cols}) SELECT {cols} FROM fondos_ue "
-                                    "WHERE fuente='kohesio'").rowcount
-                ts_koh = _db.execute(f"SELECT max(ts) FROM {nueva} WHERE fuente='kohesio'").fetchone()[0]
+                n_cons = _db.execute(f"INSERT OR IGNORE INTO {nueva} ({cols}) SELECT {cols} FROM fondos_ue "
+                                     "WHERE fuente=?", (conservar,)).rowcount
+                ts_cons = _db.execute(f"SELECT max(ts) FROM {nueva} WHERE fuente=?", (conservar,)).fetchone()[0]
                 _db.commit()
-                kohesio = {"conservadas": n_koh,
-                           "de_la_carga_del": _ahora_madrid(ts_koh).strftime("%Y-%m-%d %H:%M") if ts_koh else None}
+                conservado = {"fuente": conservar, "conservadas": n_cons,
+                              "de_la_carga_del": _ahora_madrid(ts_cons).strftime("%Y-%m-%d %H:%M") if ts_cons else None}
     with _db_lock:
         antes = _db.execute("SELECT count(*) FROM fondos_ue").fetchone()[0]
         recibidas = _db.execute(f"SELECT count(*) FROM {nueva}").fetchone()[0]
@@ -15752,8 +15756,8 @@ def _subir_fondos_ue(crudo, forzar=False, conservar_kohesio=False):
     _liberar_memoria()
     print(f"[fondos-ue] {recibidas} operaciones cargadas (antes {antes}; {provincias} provincias; por ámbito "
           f"{por_ambito}; {conservados} beneficiarios conservados; {malas} líneas con error"
-          + (f"; Kohesio conservado: {kohesio}" if kohesio else "") + ")", flush=True)
-    return 200, {**({"kohesio_conservado": kohesio} if kohesio else {}), "operaciones": recibidas, "antes": antes, "por_fuente": fuentes, "por_ambito": por_ambito,
+          + (f"; conservado de la carga anterior: {conservado}" if conservado else "") + ")", flush=True)
+    return 200, {**({"conservado": conservado} if conservado else {}), "operaciones": recibidas, "antes": antes, "por_fuente": fuentes, "por_ambito": por_ambito,
                  "provincias_con_datos": provincias, "beneficiarios_conservados": conservados,
                  "lineas_con_error": malas}
 
@@ -29399,7 +29403,7 @@ def _app_wsgi(environ, start_response):
         else:
             code, cuerpo = _subir_fondos_ue(environ["wsgi.input"].read(length) if length else b"",
                                             forzar=qs.get("forzar", [""])[0] == "si",
-                                            conservar_kohesio=qs.get("conservar", [""])[0] == "kohesio")
+                                            conservar=qs.get("conservar", [""])[0].strip())
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/asignacion-formales":

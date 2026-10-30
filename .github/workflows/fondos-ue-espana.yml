@@ -13,9 +13,11 @@ name: Fondos UE de toda España (semanal)
 #  - 2026-10-17: también FEDER, FSE+ y Transición Justa 2021-2027 de Kohesio (28.000 operaciones; el nombre del
 #    beneficiario solo si es claramente una entidad, nunca NIF) y los 100 mayores perceptores del Plan de Recuperación
 #    (lista oficial del Gobierno, todos personas jurídicas). Kohesio alarga el flujo hasta una hora.
-#  - 2026-10-23 (opción 2 de César): desde el 21-10 Kohesio da 403 a GitHub Actions. Con --kohesio-opcional, si Kohesio
-#    falla se genera el fichero sin Kohesio y se sube con ?conservar=kohesio: la web se queda con las operaciones de
-#    Kohesio de la última carga buena (p. ej. la subida desde el PC del 21-10) y responde de qué día son.
+#  - 2026-10-23 (opción 2 de César): desde el 21-10 Kohesio da 403 a GitHub Actions (al PC de César, no).
+#    2026-10-30 (encargo de César): con --una-fuente-opcional, si falla UNA fuente cualquiera (Cohesion Data, CORDIS,
+#    Kohesio o los 100 perceptores) el fichero se genera con las demás y se sube con ?conservar=<fuente>: la web se queda
+#    con las operaciones de esa fuente de la última carga buena y responde de qué día son. El flujo sale en verde con un
+#    aviso (y una línea en el resumen de la ejecución). Si fallan dos o más, falla entero y no se sube nada.
 #  - Antes tardaba unos 5 minutos. Miércoles por la tarde: fuera del refresco nocturno (06:35-13:00 UTC reales) y de los flujos
 #    de menores (jueves y domingo), que al guardar en main reinician la web.
 
@@ -46,7 +48,7 @@ jobs:
         run: pip install requests openpyxl
 
       - name: Generar (Cohesion Data + CORDIS + Kohesio 2021-2027 + 100 perceptores del Plan)
-        run: python backend/fondos_ue_espana.py generar --salida fondos_ue.ndjson.gz --nombres --kohesio-opcional
+        run: python backend/fondos_ue_espana.py generar --salida fondos_ue.ndjson.gz --nombres --una-fuente-opcional
 
       - name: Subir a Render
         env:
@@ -54,8 +56,10 @@ jobs:
         run: |
           # Mismo reintento con límite que subvenciones: si la web se está reiniciando, se espera como mucho 5 minutos.
           url="https://dinero-publico.com/admin/fondos-ue"
-          if [ -f fondos_ue.ndjson.gz.sin-kohesio ]; then
-            url="${url}?conservar=kohesio"          # Kohesio no se pudo descargar: la web conserva lo que tenía
+          falta=""
+          if [ -f fondos_ue.ndjson.gz.falta ]; then
+            falta=$(head -n 1 fondos_ue.ndjson.gz.falta)   # fuente que no se pudo descargar: la web conserva lo que tenía
+            url="${url}?conservar=${falta}"
           fi
           fin=$(( $(date +%s) + 300 ))
           while true; do
@@ -67,11 +71,14 @@ jobs:
                 [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
                 echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
               200) cat respuesta.json; echo
-                   if [ -f fondos_ue.ndjson.gz.sin-kohesio ]; then
-                     python3 -c "import json; k = json.load(open('respuesta.json')).get('kohesio_conservado') or {}; print('::warning::Kohesio no se pudo descargar: la web conserva %s operaciones de Kohesio de la carga del %s.' % (k.get('conservadas', 0), k.get('de_la_carga_del') or '(no había ninguna)'))"
+                   if [ -n "$falta" ]; then
+                     aviso=$(python3 -c "import json; k = json.load(open('respuesta.json')).get('conservado') or {}; e = open('fondos_ue.ndjson.gz.falta', encoding='utf-8').read().splitlines()[1:2]; print('%s no se pudo descargar (%s). Subido lo demás; la web conserva %s operaciones de %s de la carga del %s.' % ('$falta', (e or ['?'])[0], k.get('conservadas', 0), '$falta', k.get('de_la_carga_del') or '(no había ninguna)'))")
+                     echo "::warning::${aviso}"
+                     echo "### Fondos UE: falta una fuente" >> "$GITHUB_STEP_SUMMARY"
+                     echo "$aviso" >> "$GITHUB_STEP_SUMMARY"
                    fi
                    break ;;
               *) echo "::error::Subida rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
             esac
           done
-          rm -f fondos_ue.ndjson.gz fondos_ue.ndjson.gz.sin-kohesio
+          rm -f fondos_ue.ndjson.gz fondos_ue.ndjson.gz.falta
