@@ -16,8 +16,9 @@ name: Fondos UE de toda España (semanal)
 #  - 2026-10-23 (opción 2 de César): desde el 21-10 Kohesio da 403 a GitHub Actions (al PC de César, no).
 #    2026-10-30 (encargo de César): con --una-fuente-opcional, si falla UNA fuente cualquiera (Cohesion Data, CORDIS,
 #    Kohesio o los 100 perceptores) el fichero se genera con las demás y se sube con ?conservar=<fuente>: la web se queda
-#    con las operaciones de esa fuente de la última carga buena y responde de qué día son. El flujo sale en verde con un
-#    aviso (y una línea en el resumen de la ejecución). Si fallan dos o más, falla entero y no se sube nada.
+#    con las operaciones de esa fuente de la última carga buena y responde de qué día son. Después de subir lo demás, el
+#    flujo sale EN ROJO a propósito (para que llegue el correo de GitHub) con el aviso en el resumen de la ejecución.
+#    Si fallan dos o más, falla entero y no se sube nada.
 #  - Antes tardaba unos 5 minutos. Miércoles por la tarde: fuera del refresco nocturno (06:35-13:00 UTC reales) y de los flujos
 #    de menores (jueves y domingo), que al guardar en main reinician la web.
 
@@ -73,7 +74,7 @@ jobs:
               200) cat respuesta.json; echo
                    if [ -n "$falta" ]; then
                      aviso=$(python3 -c "import json; k = json.load(open('respuesta.json')).get('conservado') or {}; e = open('fondos_ue.ndjson.gz.falta', encoding='utf-8').read().splitlines()[1:2]; print('%s no se pudo descargar (%s). Subido lo demás; la web conserva %s operaciones de %s de la carga del %s.' % ('$falta', (e or ['?'])[0], k.get('conservadas', 0), '$falta', k.get('de_la_carga_del') or '(no había ninguna)'))")
-                     echo "::warning::${aviso}"
+                     echo "::error::${aviso}"
                      echo "### Fondos UE: falta una fuente" >> "$GITHUB_STEP_SUMMARY"
                      echo "$aviso" >> "$GITHUB_STEP_SUMMARY"
                    fi
@@ -82,3 +83,5 @@ jobs:
             esac
           done
           rm -f fondos_ue.ndjson.gz fondos_ue.ndjson.gz.falta
+          # Lo demás ya está subido; el rojo es solo para avisar (decisión de César del 30-10).
+          if [ -n "$falta" ]; then exit 1; fi
