@@ -66,6 +66,7 @@ except ImportError:
 #   - I18N_PUBLICADOS (variable de entorno, p. ej. "gl,ca,eu"): idiomas visibles. Solo esos llevan pestañas en la
 #     cabecera, hreflang y se indexan; los demás funcionan (para probarlos) pero con noindex.
 import contextvars
+import functools
 
 I18N_IDIOMAS = {"gl": ("Galego", "gl_ES"), "ca": ("Català", "ca_ES"), "eu": ("Euskara", "eu_ES")}
 I18N_LOCALE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locale")
@@ -5160,12 +5161,27 @@ def rendicion_cuentas_url(municipio, provincia):
             f"buscarEntidades/index.html?{urlencode(params)}")
 
 
-def normalizar(s):
+def _normalizar_sin_cache(s):
     s = (s or "").lower().strip()
     for a, b in {"á":"a","é":"e","í":"i","ó":"o","ú":"u","ü":"u","ñ":"n",
                  "à":"a","è":"e","ò":"o","ï":"i","ç":"c"}.items():  # también vocales/ç catalanas (Girona)
         s = s.replace(a, b)
     return re.sub(r"\s+", " ", s)
+
+
+# Rendimiento (2026-10-28, diagnóstico G1): normalizar() se llamaba millones de veces con los mismos textos (1,8
+# millones en cada cálculo del Índice, 1,3 en cada búsqueda). Con caché, medido en local: Índice 79,5 -> ~61 s,
+# búsqueda 21,8 -> ~9 s, top de empresas 21,4 -> ~12 s. El resultado es el mismo (función pura); unas 200.000
+# entradas son del orden de 60 MB. Lo que no se puede guardar en la caché (un valor no "hashable") se calcula como antes.
+NORMALIZAR_CACHE_MAX = 200_000
+_normalizar_cache = functools.lru_cache(maxsize=NORMALIZAR_CACHE_MAX)(_normalizar_sin_cache)
+
+
+def normalizar(s):
+    try:
+        return _normalizar_cache(s)
+    except TypeError:
+        return _normalizar_sin_cache(s)
 
 # Registrada como función SQL para poder cruzar contratos_menors_locales
 # contra directores (clave = NIF o normalizar(nombre), ver _dir_cache_key)
@@ -6793,6 +6809,13 @@ def _todos_los_pseudo_nombres():
 def es_pseudo_municipio(municipio):
     buscado = normalizar(municipio)
     return any(normalizar(m) == buscado for m in _todos_los_pseudo_nombres())
+
+
+def _n_municipios_reales(datos):
+    """Cuántos municipios de verdad hay en `datos`: sin las fichas especiales (Región de Murcia, Provincia de Girona,
+    AGE, universidades...). Pulido 28-10: la portada decía 8.141 y rankings 8.131; ahora es el mismo recuento."""
+    pseudo = {normalizar(m) for m in _todos_los_pseudo_nombres()}
+    return sum(1 for d in datos if normalizar(d.get("municipio", "")) not in pseudo)
 
 
 _RE_ORGANO_CCAA_MURCIA = re.compile(r"region(al)? de murcia")
@@ -10821,7 +10844,7 @@ def render_entidad_html(qs):
   </div>
   <div class="cm-base-nota">{_t("Esta entidad no es un ayuntamiento: sus contratos no se suman a ningún municipio ni cuentan en el Índice de Transparencia.")}
   {_t("Contratos formales de la Plataforma de Contratación del Sector Público, asignados a la entidad por la jerarquía oficial de su órgano y su código DIR3.")}</div>
-  <div class="tbl-scroll"><table>
+  <div class="tbl-scroll"><table class="t-tarjeta">
     <tr><th>{_t("Empresa adjudicataria / Contrato")}</th><th>{_t("Importe")}</th><th>{_t("Directivo / Cargo")}</th><th>{_t("Estado / Fuente")}</th></tr>
     {filas}
   </table></div>
@@ -11481,6 +11504,8 @@ def buscar_en_pscp(municipio, provincia="girona", job_id=None):
 # importe (se guarda todo), sección propia colapsable en la ficha de municipio.
 RPC_MENORS_URL = "https://analisi.transparenciacatalunya.cat/resource/hb6v-jcbf.json"
 RPC_MENORS_DESDE_ANY = 2021
+RPC_MENORS_INTENTOS = 3            # 1 petición + 2 reintentos por página ante timeout/5xx (2026-10-25)
+RPC_MENORS_PAUSA_REINTENTO = 5     # segundos entre reintentos
 
 
 def _variantes_nombre_para_detector(nombre):
@@ -11588,25 +11613,40 @@ def buscar_en_rpc_menors(municipio, provincia, job_id=None):
         _log(job_id, f"  RPC: municipio sin codi_ine10 mapeado ({municipio})")
         return []
 
-    _log(job_id, "Consultando RPC (Registre Públic de Contractes, contractes menors)…")
+    _log(job_id, f"Consultando RPC (Registre Públic de Contractes, contractes menors): {municipio}…")
     filas = []
     limit, offset = 1000, 0
     while True:
-        try:
-            r = session.get(RPC_MENORS_URL, params={
-                "$where": (f"id_organisme_contractant='{ine10}' AND "
-                           f"procediment_adjudicacio='Menor' AND "
-                           f"exercici >= '{RPC_MENORS_DESDE_ANY}'"),
-                "$order": "codi_expedient",
-                "$limit": limit,
-                "$offset": offset,
-            }, timeout=HTTP_TIMEOUT * 4)  # SODA puede tardar más que PLACE/BORM
-            if r.status_code != 200:
-                _log(job_id, f"  RPC: HTTP {r.status_code}")
+        # Orden por :id (identificador interno de Socrata), no por codi_expedient: medido el 2026-10-25 en Girona
+        # capital (31.814 filas), ordenar por codi_expedient tardaba >120 s por página y cortaba los municipios grandes
+        # por timeout; con :id, 2,8 s (offset 0) y 9 s (offset 30.000). El orden da igual al resultado
+        # (_dedup_rpc_menors no depende de él), solo hace falta que sea estable para paginar con $offset.
+        pagina = None
+        for intento in range(1, RPC_MENORS_INTENTOS + 1):
+            try:
+                r = session.get(RPC_MENORS_URL, params={
+                    "$where": (f"id_organisme_contractant='{ine10}' AND "
+                               f"procediment_adjudicacio='Menor' AND "
+                               f"exercici >= '{RPC_MENORS_DESDE_ANY}'"),
+                    "$order": ":id",
+                    "$limit": limit,
+                    "$offset": offset,
+                }, timeout=HTTP_TIMEOUT * 4)  # SODA puede tardar más que PLACE/BORM
+                if r.status_code == 200:
+                    pagina = r.json()
+                    break
+                motivo = f"HTTP {r.status_code}"
+                # 4xx (salvo 429) = error de la petición: reintentar no sirve
+                reintentable = r.status_code >= 500 or r.status_code == 429
+            except Exception as e:
+                motivo, reintentable = type(e).__name__, True
+            if reintentable and intento < RPC_MENORS_INTENTOS:
+                _log(job_id, f"  RPC: {motivo} en {municipio} (offset {offset}), reintento {intento}/{RPC_MENORS_INTENTOS - 1}")
+                time.sleep(RPC_MENORS_PAUSA_REINTENTO)
+            else:
+                _log(job_id, f"  RPC no disponible en {municipio} ({motivo}, offset {offset}): se guarda lo leído hasta aquí")
                 break
-            pagina = r.json()
-        except Exception as e:
-            _log(job_id, f"  RPC no disponible ({type(e).__name__})")
+        if pagina is None:
             break
 
         if not pagina:
@@ -11618,7 +11658,7 @@ def buscar_en_rpc_menors(municipio, provincia, job_id=None):
 
     filas = _dedup_rpc_menors(filas)
     registros = [_fila_rpc_menor_a_registro(f, municipio, provincia) for f in filas]
-    _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados")
+    _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados ({municipio})")
     return registros
 
 
@@ -15231,10 +15271,10 @@ _LIC_MUNI_MEMO = {}
 _LIC_REGEX_MUNI = {}
 
 
-def _ahora_madrid():
+def _ahora_madrid(ts=None):
     """Fecha y hora peninsular sin depender de tzdata (no está en todos los Windows): horario de verano europeo, del
-    último domingo de marzo al último domingo de octubre, a la 01:00 UTC."""
-    ahora = datetime.now(timezone.utc)
+    último domingo de marzo al último domingo de octubre, a la 01:00 UTC. Con `ts` (segundos), la de ese momento."""
+    ahora = datetime.now(timezone.utc) if ts is None else datetime.fromtimestamp(ts, timezone.utc)
 
     def _ultimo_domingo(mes):
         d = datetime(ahora.year, mes, 31, 1, tzinfo=timezone.utc)
@@ -15435,6 +15475,12 @@ def _licitaciones_bg(esperar=None):
 # Pestaña oculta hasta que César revise el aviso legal de reutilización de la BDNS: SUBVENCIONES_PUBLICAS.
 SUBVENCIONES_PUBLICAS = os.environ.get("CONVOCATORIAS_SUBVENCIONES", "") == "1"
 SUBV_MINIMO_SUBIDA = 1000           # una subida con menos convocatorias se rechaza (fichero roto o carga a medias)
+# Una sola subida a la vez (2026-10-25): el 22-10 el proxy cortó una subida a los ~100 s con un 500 mientras la web
+# seguía guardándola. Si el flujo reintenta, las dos escribirían a la vez en subvenciones_nueva y se pisarían; con
+# esto la segunda recibe un 423 (no 409: ese es el rechazo de la protección de subidas, que no se reintenta) y el
+# flujo espera a que acabe la primera. Basta un candado en memoria: la web corre
+# en un solo trabajador (--workers 1 en render.yaml).
+_subvenciones_subida_lock = threading.Lock()
 _SUBV_COLUMNAS = ("bdns", "registrada", "titulo", "titulo_cooficial", "nivel1", "nivel2", "organo", "nuts", "provincia",
                   "comunidad", "municipio", "presupuesto", "beneficiarios", "sector", "finalidad", "instrumento",
                   "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda", "cnae", "sectores")
@@ -15638,11 +15684,14 @@ def _subir_subvenciones(crudo, forzar=False):
     return 200, {"convocatorias": n, "antes": antes, "con_municipio": con_muni, "lineas_con_error": malas}
 
 
-def _subir_fondos_ue(crudo, forzar=False):
+def _subir_fondos_ue(crudo, forzar=False, conservar=""):
     """Sustituye la tabla `fondos_ue` por el NDJSON (gzip) de fondos_ue_espana.py. Devuelve (código, cuerpo), solo
     con recuentos. Mismo esquema que _subir_subvenciones: se carga línea a línea en una tabla nueva y se cambia de
     golpe; si llega bastante menos de lo que hay, se rechaza (protección de subidas) y no se toca nada.
-    El fichero llega sin nombres: los beneficiarios que ya estaban guardados (Murcia y Girona) se conservan."""
+    El fichero llega sin nombres: los beneficiarios que ya estaban guardados (Murcia y Girona) se conservan.
+    conservar (?conservar=<fuente>; opción 2 de César del 23-10, ampliada a cualquier fuente el 30-10): si el fichero
+    no trae esa fuente (el generador no pudo descargarla), se copian las operaciones de esa fuente que ya había, con su
+    hora de carga, y se dice de cuándo son."""
     nueva = "fondos_ue_nueva"
     with _db_lock:
         _db.execute(f"DROP TABLE IF EXISTS {nueva}")
@@ -15687,6 +15736,20 @@ def _subir_fondos_ue(crudo, forzar=False):
     except (OSError, EOFError) as e:
         _descartar()
         return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    conservado = None
+    if conservar:
+        if conservar not in _FUENTE_UE_LABEL:
+            _descartar()
+            return 400, {"error": f"conservar={conservar}: fuente desconocida."}
+        with _db_lock:
+            if not _db.execute(f"SELECT 1 FROM {nueva} WHERE fuente=? LIMIT 1", (conservar,)).fetchone():
+                cols = ", ".join(_FUE_COLUMNAS)
+                n_cons = _db.execute(f"INSERT OR IGNORE INTO {nueva} ({cols}) SELECT {cols} FROM fondos_ue "
+                                     "WHERE fuente=?", (conservar,)).rowcount
+                ts_cons = _db.execute(f"SELECT max(ts) FROM {nueva} WHERE fuente=?", (conservar,)).fetchone()[0]
+                _db.commit()
+                conservado = {"fuente": conservar, "conservadas": n_cons,
+                              "de_la_carga_del": _ahora_madrid(ts_cons).strftime("%Y-%m-%d %H:%M") if ts_cons else None}
     with _db_lock:
         antes = _db.execute("SELECT count(*) FROM fondos_ue").fetchone()[0]
         recibidas = _db.execute(f"SELECT count(*) FROM {nueva}").fetchone()[0]
@@ -15718,8 +15781,9 @@ def _subir_fondos_ue(crudo, forzar=False):
         provincias = _db.execute("SELECT count(DISTINCT provincia) FROM fondos_ue WHERE ambito='provincia'").fetchone()[0]
     _liberar_memoria()
     print(f"[fondos-ue] {recibidas} operaciones cargadas (antes {antes}; {provincias} provincias; por ámbito "
-          f"{por_ambito}; {conservados} beneficiarios conservados; {malas} líneas con error)", flush=True)
-    return 200, {"operaciones": recibidas, "antes": antes, "por_fuente": fuentes, "por_ambito": por_ambito,
+          f"{por_ambito}; {conservados} beneficiarios conservados; {malas} líneas con error"
+          + (f"; conservado de la carga anterior: {conservado}" if conservado else "") + ")", flush=True)
+    return 200, {**({"conservado": conservado} if conservado else {}), "operaciones": recibidas, "antes": antes, "por_fuente": fuentes, "por_ambito": por_ambito,
                  "provincias_con_datos": provincias, "beneficiarios_conservados": conservados,
                  "lineas_con_error": malas}
 
@@ -17618,7 +17682,7 @@ CSS = """
      ~15:1, secundario ~6:1, azul marino ~13:1 y dorado ~4,9:1 sobre blanco. */
   --bg:#f5f6f8;--surface:#ffffff;--border:#dde1e7;
   --accent:#1b2f5c;--blue:#22477e;--text:#1b2230;--dim:#5a6372;
-  --red:#cf222e;--green:#1a7f37;--yellow:#8a6510;--purple:#8250df;
+  --red:#cf222e;--green:#146c2e;--yellow:#8a6510;--purple:#8250df;
   --gold:#8a6510;--tint:#f1f3f7;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -17699,9 +17763,13 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .cookie-btn-rechazar{background:var(--surface);color:var(--text);border:1px solid var(--border);}
 .cookie-btn-rechazar:hover{border-color:var(--dim);}
 @media (max-width:700px){
-  .cookie-content{flex-direction:column;align-items:stretch;}
-  .cookie-botones{justify-content:stretch;}
-  .cookie-btn{flex:1;}
+  /* Pulido 28-10: compacto (unos 120 px) para no tapar el buscador de la portada: texto de 12 px y los dos botones en
+     una sola fila de 44 px. */
+  .cookie-banner{padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));}
+  .cookie-content{flex-direction:column;align-items:stretch;gap:8px;}
+  .cookie-texto{min-width:0;font-size:12px;line-height:1.4;}
+  .cookie-botones{justify-content:stretch;flex-wrap:nowrap;gap:8px;}
+  .cookie-btn{flex:1;min-width:0;min-height:44px;padding:8px 10px;}
 }
 /* flex-wrap (2026-09-30): con 20 comunidades o 52 provincias las pestañas no caben en una fila, y con overflow:hidden
    las sobrantes quedaban cortadas e inalcanzables (en móvil ni se veía la pestaña activa). Ahora bajan de línea. */
@@ -17764,7 +17832,7 @@ a.stat-enlace:hover,a.stat-enlace:focus{border-color:var(--accent);}
    (#it-info-pop, position:fixed, colocado por JS junto al botón) -- dentro de la tabla con scroll de /rankings o del
    widget con overflow:hidden de la ficha, un popover absoluto quedaría recortado. */
 .it-info-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;margin-left:4px;border-radius:50%;border:1px solid var(--dim);background:transparent;color:var(--dim);font:italic 700 11px/1 Georgia,'Times New Roman',serif;cursor:pointer;vertical-align:middle;flex-shrink:0;}
-.it-info-btn::after{content:'';position:absolute;inset:-9px;}
+.it-info-btn::after{content:'';position:absolute;inset:-13px;}
 .it-info-btn:hover,.it-info-btn[aria-expanded="true"]{color:var(--text);border-color:var(--text);}
 .it-info-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 .it-info-pop{position:fixed;z-index:400;width:380px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.5;color:var(--text);font-weight:400;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.4);}
@@ -17796,13 +17864,13 @@ a.stat-enlace:hover,a.stat-enlace:focus{border-color:var(--accent);}
 .concejales-dd a:hover{text-decoration:underline;}
 .conc-cargo{color:var(--dim);}
 .badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px;background:var(--tint);color:var(--blue);border:1px solid var(--border);}
-.source-bar{padding:5px 18px;font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);}
+.source-bar{padding:5px 18px;font-size:11.5px;color:var(--text);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border);background:rgba(0,0,0,.07);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);padding:9px 14px;text-align:left;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);}
+th{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text);padding:9px 14px;text-align:left;background:rgba(0,0,0,.07);border-bottom:1px solid var(--border);}
 td{padding:9px 14px;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:top;line-height:1.5;}
 tr:last-child td{border-bottom:none;}
 .empresa{font-weight:600;}
-.contrato-title{font-size:11px;color:var(--dim);margin-top:3px;}
+.contrato-title{font-size:12px;color:var(--dim);margin-top:3px;}
 .ute-nota{font-size:10px;color:var(--dim);font-weight:normal;}
 .importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
 .importe.noloc{color:var(--dim);font-style:italic;font-weight:normal;}
@@ -17815,8 +17883,8 @@ tr:last-child td{border-bottom:none;}
 a.link{color:var(--blue);font-size:11px;}
 a.borm-link{color:var(--purple);font-size:11px;}
 .empty{text-align:center;padding:50px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
-.estado-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;}
-.est-ADJ,.est-RES{background:rgba(63,185,80,.15);color:var(--green);}
+.estado-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 7px;border-radius:3px;}
+.est-ADJ,.est-RES{background:rgba(63,185,80,.15);color:#146c2e;}
 .est-FOR{background:var(--tint);color:var(--blue);}
 .lid{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .fuente-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 5px;border-radius:3px;vertical-align:middle;margin-left:4px;}
@@ -18116,6 +18184,7 @@ a.colabora-bizum{text-decoration:none;cursor:pointer;}a.colabora-bizum:hover{bor
 .site-footer .ft-label{color:var(--dim);font-size:12px;}
 
 /* ── páginas estáticas (quiénes somos / aviso legal) ─────────────────── */
+.lista-404{margin:6px 0 0 18px;padding:0;line-height:2;}
 .static-page{max-width:820px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:34px 38px;line-height:1.8;font-size:14px;}
 .static-page h1{font-size:22px;color:var(--accent);margin-bottom:18px;}
 .static-page h2{font-size:15px;color:var(--text);margin:26px 0 10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px;}
@@ -18276,7 +18345,7 @@ button.share-btn{font-family:inherit;}
   .global-search input,.search-bar input,.as-row input{min-width:0;width:100%;}
   .as-row .btn{width:100%;}
   .as-tab{flex:1 1 auto;text-align:center;padding:8px 6px;}
-  table{font-size:12px;display:block;overflow-x:auto;white-space:nowrap;}
+  table{font-size:13px;display:block;overflow-x:auto;white-space:nowrap;}
   th,td{padding:7px 8px;}
   .contrato-title{white-space:normal;}
   /* Buscador en el móvil (2026-10-15, encargo de César para el 22-10): SIEMPRE visible y sin forma de cerrarlo. El del
@@ -18316,6 +18385,43 @@ button.share-btn{font-family:inherit;}
 }
 @media (max-width:420px){
   .muni-grid{grid-template-columns:1fr;}
+}
+/* Pulido 28-10 (auditoría, G2): en el móvil las tablas de contratos, contratos menores, fondos UE y el top 10 de
+   empresas pasan a TARJETAS: el importe se ve sin deslizar, a la derecha del nombre, y el resto debajo. Solo CSS
+   (clase t-tarjeta en la tabla; t-rank si la primera columna es el puesto). Las demás tablas siguen deslizándose. */
+@media (max-width:700px){
+  table.t-tarjeta{display:block;overflow:visible;white-space:normal;font-size:13px;}
+  table.t-tarjeta thead,table.t-tarjeta tbody{display:block;}
+  table.t-tarjeta thead tr,table.t-tarjeta tr:first-child:has(th){display:none;}
+  table.t-tarjeta tr{display:flex;flex-wrap:wrap;align-items:flex-start;column-gap:12px;padding:10px 2px;
+    border-bottom:1px solid var(--border);}
+  table.t-tarjeta td{display:block;border:0;padding:2px 0;white-space:normal;flex:1 1 100%;min-width:0;}
+  table.t-tarjeta td:nth-child(1){flex:1 1 0;}
+  table.t-tarjeta td:nth-child(2){flex:0 0 auto;max-width:48%;text-align:right;font-size:14px;font-weight:700;
+    white-space:nowrap;}
+  table.t-rank td:nth-child(1){flex:0 0 auto;max-width:none;text-align:left;font-size:14px;}
+  table.t-rank td:nth-child(2){flex:1 1 0;max-width:none;text-align:left;font-size:13px;font-weight:600;
+    white-space:normal;}
+  table.t-rank td:nth-child(3){flex:0 0 auto;max-width:45%;text-align:right;font-size:14px;font-weight:700;
+    white-space:nowrap;}
+  .tbl-scroll:has(> table.t-tarjeta) .scroll-hint{display:none;}
+  /* tarjetas de deuda de rankings: en el móvil solo las que tienen dato del presidente; el resto, plegadas */
+  .rk-prov-pc{display:none;}
+  .rk-prov-movil{display:block;}
+}
+@media (min-width:701px){.rk-prov-movil{display:none;}}
+/* Pulido 28-10: zonas táctiles de al menos 44 px en el móvil (botones y enlaces que hacen de botón; los enlaces dentro
+   de un párrafo no, como permiten las pautas WCAG) */
+@media (max-width:700px){
+  .header-nav>a,.pwa-install-btn,.idiomas a,.prov-tab,.as-tab,.btn,.cookie-btn,.cuentas-link,.back-link a,
+  .site-footer a{min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;}
+  .back-link{display:block;}
+  .btn-ver,.it-tramo-nombre{min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;}
+  details>summary{padding-top:13px;padding-bottom:13px;min-height:44px;box-sizing:border-box;}
+  .as-row input,.global-search input,.search-bar input,.it-buscador,select{min-height:44px;box-sizing:border-box;}
+  .idiomas{gap:6px;}
+  .idiomas a{padding:0 12px;}
+  .site-footer a{padding:0 4px;}
 }
 @media (max-width:860px){
   .home-grid{grid-template-columns:1fr;grid-template-rows:auto;}
@@ -19118,6 +19224,7 @@ def _header_html(provincia="todas", con_lema=True, buscador_aqui=False):
     <a href="{rankings_href}#alcaldes">{_t("Sueldos Alcaldes")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
     <a href="/convocatorias">{_t("Convocatorias abiertas")}</a>
+    <a href="/casos">{_t("Casos")}</a>
     <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>{_t("Instalar app")}</button>
   </nav>
   {_i18n_selector_html()}
@@ -19331,12 +19438,21 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     // (localStorage). Su botón dispara el prompt nativo si está disponible,
     // o si no (iOS Safari, o Chrome que aún no lo ha ofrecido) desplaza
     // hasta las instrucciones manuales del footer (.instalar-bar).
-    try {{
-      if (pwaBanner && !localStorage.getItem(PWA_DISMISS_KEY)) {{
+    // Pulido 28-10: no se enseña a la vez que NUESTRO aviso de cookies (los dos juntos tapaban el buscador en el
+    // móvil). Con la decisión ya tomada, sale como siempre; si no, se mira cuando ya se sabe si sale el aviso
+    // (lo enseña a los 2 s si no llega la CMP de Google) y solo aparece si el aviso no está a la vista.
+    function pwaQuizaMostrar() {{
+      try {{
+        if (!pwaBanner || localStorage.getItem(PWA_DISMISS_KEY)) return;
+        var avisoCookies = document.getElementById('cookie-banner');
+        if (avisoCookies && !avisoCookies.hidden) return;
         pwaBanner.hidden = false;
         pwaAjustarOffset();
-      }}
-    }} catch (e) {{}}
+      }} catch (e) {{}}
+    }}
+    try {{
+      if (localStorage.getItem('{COOKIE_CONSENT_KEY}')) {{ pwaQuizaMostrar(); }} else {{ setTimeout(pwaQuizaMostrar, 2600); }}
+    }} catch (e) {{ setTimeout(pwaQuizaMostrar, 2600); }}
     window.addEventListener('resize', pwaAjustarOffset);
 
     if (pwaBannerClose) {{
@@ -19937,6 +20053,25 @@ def _indice_tramo_poblacion(habitantes):
     return None  # ">100.000", último tramo
 
 
+def _cml_tramos_municipio(n_tramos=40):
+    """Condiciones SQL que reparten contratos_menors_locales en ~n_tramos trozos por municipio (con el índice
+    idx_cml_muni_prov), para no tener el cerrojo de la base cogido durante toda una consulta de millones de filas
+    (rendimiento, 2026-10-28: medido, el Índice lo retenía ~50 s seguidos y todas las visitas esperaban). El primer
+    tramo no tiene límite inferior y el último no tiene superior, más uno para municipio NULL: no se escapa ninguna
+    fila aunque entren municipios nuevos a mitad del cálculo."""
+    with _db_lock:
+        munis = [r[0] for r in _db.execute("SELECT DISTINCT municipio FROM contratos_menors_locales "
+                                           "WHERE municipio IS NOT NULL ORDER BY municipio")]
+    paso = max(1, len(munis) // n_tramos + 1)
+    cortes = munis[paso::paso]
+    if not cortes:
+        return [("municipio IS NULL", ()), ("municipio IS NOT NULL", ())]
+    tramos = [("municipio IS NULL", ()), ("municipio < ?", (cortes[0],))]
+    tramos += [("municipio >= ? AND municipio < ?", (a, b)) for a, b in zip(cortes, cortes[1:])]
+    tramos.append(("municipio >= ?", (cortes[-1],)))
+    return tramos
+
+
 def _indice_menores_stats_por_municipio():
     """Para cada municipio, nº total de contratos menores y cuántos tienen un administrador QUE SE ENSEÑA (componente
     "directivo"). 2026-10-09: antes contaba cualquier nombre guardado en `directores` (también apoderados y socios, que
@@ -19947,11 +20082,15 @@ def _indice_menores_stats_por_municipio():
         guardados = {k: (n or "", c or "") for k, n, c in _db.execute(
             "SELECT clave, nombre, cargo FROM directores WHERE nombre IS NOT NULL AND nombre <> ''")}
     out, visible = {}, {}
-    with _db_lock:
-        cur = _db.execute("SELECT municipio, provincia, adjudicatari, nif, COUNT(*) FROM contratos_menors_locales "
-                          "WHERE data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ? "
-                          "GROUP BY municipio, provincia, adjudicatari, nif", (alcance_desde(),))   # solo la ventana de 5 años
-        for municipio, prov, adjudicatari, nif, n in cur:
+    desde = alcance_desde()                                                  # solo la ventana de 5 años
+    for donde, args in _cml_tramos_municipio():
+        # Rendimiento (2026-10-28): por tramos, y el trabajo de Python (directivos) ya sin el cerrojo cogido.
+        with _db_lock:
+            filas = _db.execute(f"SELECT municipio, provincia, adjudicatari, nif, COUNT(*) FROM contratos_menors_locales "
+                                f"WHERE ({donde}) AND (data_adjudicacio IS NULL OR data_adjudicacio = '' "
+                                f"OR data_adjudicacio >= ?) GROUP BY municipio, provincia, adjudicatari, nif",
+                                args + (desde,)).fetchall()
+        for municipio, prov, adjudicatari, nif, n in filas:
             k = clave_municipio(municipio, _PROVINCIA_CANONICA_CM.get(prov or "", prov))
             o = out.setdefault(k, {"total": 0, "con_directivo": 0})
             o["total"] += n
@@ -19981,16 +20120,19 @@ def _indice_menores_detalle_por_municipio():
     """Componente "menores" (v2): una consulta agregada por municipio, provincia y año -- nº de contratos, cuántos con
     adjudicatario identificado y la última fecha. Reutiliza la idea de la rama wip/indice-transparencia-v2 (cobertura
     de años y frescura), sin traer las ~1M filas a Python."""
-    with _db_lock:
-        rows = _db.execute("""
-            SELECT municipio, provincia, substr(data_adjudicacio, 1, 4) AS anio, COUNT(*),
-                   SUM(CASE WHEN adjudicatari IS NOT NULL AND adjudicatari <> '' AND adjudicatari <> 'No localizada'
-                            THEN 1 ELSE 0 END),
-                   MAX(data_adjudicacio), group_concat(DISTINCT fuente)
-            FROM contratos_menors_locales
-            WHERE data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ?
-            GROUP BY municipio, provincia, anio
-        """, (alcance_desde(),)).fetchall()                # solo la ventana de 5 años (los sin fecha cuentan)
+    rows = []
+    desde = alcance_desde()                                # solo la ventana de 5 años (los sin fecha cuentan)
+    for donde, args in _cml_tramos_municipio():            # por tramos (rendimiento, 2026-10-28)
+        with _db_lock:
+            rows += _db.execute(f"""
+                SELECT municipio, provincia, substr(data_adjudicacio, 1, 4) AS anio, COUNT(*),
+                       SUM(CASE WHEN adjudicatari IS NOT NULL AND adjudicatari <> '' AND adjudicatari <> 'No localizada'
+                                THEN 1 ELSE 0 END),
+                       MAX(data_adjudicacio), group_concat(DISTINCT fuente)
+                FROM contratos_menors_locales
+                WHERE ({donde}) AND (data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ?)
+                GROUP BY municipio, provincia, anio
+            """, args + (desde,)).fetchall()
     out = {}
     for muni, prov, anio, n, n_adj, ultima, fuentes in rows:
         d = out.setdefault((normalizar(muni), _PROVINCIA_CANONICA_CM.get(prov or "", prov or "")),
@@ -20418,6 +20560,13 @@ def _indice_transparencia_cacheado():
     filas = _vigente()
     if filas is not None:
         return filas
+    # Rendimiento (2026-10-28): si hay uno anterior (caducado), se sirve ese y el nuevo se calcula en segundo plano:
+    # ninguna visita espera el cálculo (~60-80 s). Solo sin ninguno (justo al arrancar) se espera, como antes.
+    with _indice_transparencia_cache_lock:
+        anteriores = _INDICE_TRANSPARENCIA_CACHE["filas"]
+    if anteriores is not None:
+        _indice_refrescar_en_fondo()
+        return anteriores
     # Un solo cálculo a la vez: si ya lo está haciendo otra petición o el precálculo de arranque
     # (_precalcular_indice_bg), se espera a ese resultado en vez de lanzar otro igual en paralelo.
     with _indice_calculo_lock:
@@ -20432,6 +20581,35 @@ def _indice_transparencia_cacheado():
 
 
 _indice_calculo_lock = threading.Lock()
+_indice_fondo = {"activo": False}
+_indice_fondo_lock = threading.Lock()
+
+
+def _indice_refrescar_en_fondo():
+    """Recalcula el Índice en un hilo aparte, uno como mucho a la vez (rendimiento, 2026-10-28)."""
+    with _indice_fondo_lock:
+        if _indice_fondo["activo"]:
+            return
+        _indice_fondo["activo"] = True
+
+    def _hilo():
+        try:
+            with _indice_calculo_lock:
+                with _indice_transparencia_cache_lock:
+                    vigente = (_INDICE_TRANSPARENCIA_CACHE["filas"] is not None and
+                               time.time() - _INDICE_TRANSPARENCIA_CACHE["ts"] < INDICE_TRANSPARENCIA_CACHE_TTL)
+                if not vigente:                 # el precálculo pudo terminar entretanto
+                    filas = _calcular_indice_transparencia()
+                    with _indice_transparencia_cache_lock:
+                        _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
+                        _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
+        except Exception as e:
+            print(f"[indice] recálculo en segundo plano: ERROR ({type(e).__name__}: {e})", flush=True)
+        finally:
+            with _indice_fondo_lock:
+                _indice_fondo["activo"] = False
+
+    threading.Thread(target=_hilo, name="indice-refresco", daemon=True).start()
 
 
 def _precalcular_indice_bg(esperar=None):
@@ -20450,6 +20628,8 @@ def _precalcular_indice_bg(esperar=None):
                     _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
             print(f"[indice] precalculado en {time.time() - t0:.0f} s ({len(filas)} municipios)", flush=True)
             del filas
+            with _rk_empresas_lock:              # rendimiento (2026-10-28): que ninguna visita lo calcule
+                _rk_empresas_calcular()
             _calentar_portada()
             _liberar_memoria()
         except Exception as e:
@@ -20610,42 +20790,75 @@ _rk_empresas_lock = threading.Lock()
 
 
 def _rankings_empresas_cacheado(provincia=None):
-    """(top 10 por nº de contratos, top 10 por importe) del conjunto nacional (provincia=None) o de una provincia."""
-    with _rk_empresas_lock:              # si llegan varias a la vez, calcula una y las demás esperan su resultado
-        if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
-            nac, por_prov = {}, {}
-            for d in _db_iter_municipios():
-                grupos_prov = por_prov.setdefault(d.get("provincia", "murcia"), {})
-                for c in d.get("contratos", []):
-                    if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
-                        continue
-                    emp = c.get("empresa", "")
-                    if not emp or emp in ("No localizada", "Desierto"):
-                        continue
-                    key = normalizar(emp)
-                    imp = c.get("importe_num", 0.0) or 0.0
-                    for grupos in (nac, grupos_prov):
-                        g = grupos.get(key)
-                        if g is None:
-                            g = grupos[key] = {"empresa": emp, "n": 0, "importe": 0.0, "directivo": "", "cargo": ""}
-                        g["n"] += 1
-                        g["importe"] += imp
-                        if not g["directivo"]:
-                            g["directivo"], g["cargo"] = _directivo_contrato(c)
-                            g["nif"] = c.get("nif", "")
-                del d
+    """(top 10 por nº de contratos, top 10 por importe) del conjunto nacional (provincia=None) o de una provincia.
+    Rendimiento (2026-10-28): si está caducado, se sirve el anterior y se recalcula en segundo plano (antes, la visita
+    que lo encontraba caducado esperaba ~21 s). Solo sin ninguno (justo al arrancar) se calcula aquí, como antes."""
+    if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
+        if _rk_empresas["ts"]:
+            _rk_empresas_refrescar_en_fondo()
+        else:
+            with _rk_empresas_lock:      # si llegan varias a la vez, calcula una y las demás esperan su resultado
+                if not _rk_empresas["ts"]:
+                    _rk_empresas_calcular()
+    if provincia is None:
+        return _rk_empresas["nacional"]
+    return _rk_empresas["provincias"].get(provincia, ([], []))
 
-            def _tops(grupos):
-                lista = list(grupos.values())
-                return (sorted(lista, key=lambda g: g["n"], reverse=True)[:10],
-                        sorted(lista, key=lambda g: g["importe"], reverse=True)[:10])
 
-            _rk_empresas.update(nacional=_tops(nac), provincias={pv: _tops(g) for pv, g in por_prov.items()},
-                                ts=time.time())
-            del nac, por_prov
-        if provincia is None:
-            return _rk_empresas["nacional"]
-        return _rk_empresas["provincias"].get(provincia, ([], []))
+_rk_empresas_fondo = {"activo": False}
+
+
+def _rk_empresas_refrescar_en_fondo():
+    with _rk_empresas_lock:
+        if _rk_empresas_fondo["activo"]:
+            return
+        _rk_empresas_fondo["activo"] = True
+
+    def _hilo():
+        try:
+            with _rk_empresas_lock:
+                if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
+                    _rk_empresas_calcular()
+        except Exception as e:
+            print(f"[rankings] top de empresas en segundo plano: ERROR ({type(e).__name__}: {e})", flush=True)
+        finally:
+            _rk_empresas_fondo["activo"] = False
+
+    threading.Thread(target=_hilo, name="rk-empresas-refresco", daemon=True).start()
+
+
+def _rk_empresas_calcular():
+    """El cálculo del top 10 (nacional y por provincia), igual que antes. Quien llama tiene _rk_empresas_lock."""
+    nac, por_prov = {}, {}
+    for d in _db_iter_municipios():
+        grupos_prov = por_prov.setdefault(d.get("provincia", "murcia"), {})
+        for c in d.get("contratos", []):
+            if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
+            emp = c.get("empresa", "")
+            if not emp or emp in ("No localizada", "Desierto"):
+                continue
+            key = normalizar(emp)
+            imp = c.get("importe_num", 0.0) or 0.0
+            for grupos in (nac, grupos_prov):
+                g = grupos.get(key)
+                if g is None:
+                    g = grupos[key] = {"empresa": emp, "n": 0, "importe": 0.0, "directivo": "", "cargo": ""}
+                g["n"] += 1
+                g["importe"] += imp
+                if not g["directivo"]:
+                    g["directivo"], g["cargo"] = _directivo_contrato(c)
+                    g["nif"] = c.get("nif", "")
+        del d
+
+    def _tops(grupos):
+        lista = list(grupos.values())
+        return (sorted(lista, key=lambda g: g["n"], reverse=True)[:10],
+                sorted(lista, key=lambda g: g["importe"], reverse=True)[:10])
+
+    _rk_empresas.update(nacional=_tops(nac), provincias={pv: _tops(g) for pv, g in por_prov.items()},
+                        ts=time.time())
+    del nac, por_prov
 
 
 _INDICE_COMPONENTE_LABEL = {
@@ -21167,6 +21380,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     )
 
     resumen_prov_html = ""
+    resumen_movil_con, resumen_movil_sin = "", []
     for f in _resumen_por_provincia():
         deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + _t("/hab.") if f["deuda_por_habitante"] is not None else "—")
         pres_html = (f'👤 {esc(f["presidente_nombre"])} — {esc(f["presidente_cargo"])}'
@@ -21179,6 +21393,25 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
           <div class="top1-directivo">{pres_html}</div>
           <div class="top1-directivo">{sueldo_html}</div>
         </div>"""
+        # Pulido 28-10: en el móvil eran 50 tarjetas (casi todas «Sin datos») antes del ranking de empresas.
+        if f["presidente_nombre"]:
+            resumen_movil_con += f"""<div class="top1-card">
+          <div class="top1-label">📍 {esc(f['label'])}</div>
+          <div class="top1-valor">🏦 {_t("{importe} de deuda viva").format(importe=deuda_hab_html)}</div>
+          <div class="top1-directivo">{pres_html}</div>
+          <div class="top1-directivo">{sueldo_html}</div>
+        </div>"""
+        else:
+            resumen_movil_sin.append((normalizar(f["label"]).replace("provincia de ", ""), f"""<div class="top1-card">
+          <div class="top1-label">📍 {esc(f['label'])}</div>
+          <div class="top1-valor">🏦 {_t("{importe} de deuda viva").format(importe=deuda_hab_html)}</div>
+        </div>"""))
+    resumen_movil_html = resumen_movil_con and f'<div class="top1-grid">{resumen_movil_con}</div>'
+    if resumen_movil_sin:
+        resumen_movil_html += (
+            f'<details class="rk-prov-resto"><summary>'
+            f'{_t("Ver la deuda viva de las otras {n} provincias y comunidades").format(n=len(resumen_movil_sin))}'
+            f'</summary><div class="top1-grid">{"".join(h for _, h in sorted(resumen_movil_sin))}</div></details>')
 
     # Mismas URLs que la sitemap (sin ?provincia=murcia, la provincia por defecto) -- 2026-10-01: antes el canonical
     # decía /rankings?provincia=murcia y la sitemap /rankings.
@@ -21208,19 +21441,20 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>{_t("Resumen por Provincia")}</h2>
     <span class="rk-badge">{_t("Deuda viva agregada · Presidente/a de Diputación (Comunidad Autónoma en Murcia)")}</span>
   </div>
-  <div class="top1-grid">{resumen_prov_html}</div>
+  <div class="top1-grid rk-prov-pc">{resumen_prov_html}</div>
+  <div class="rk-prov-movil">{resumen_movil_html}</div>
 
   <div class="rk-section-header">
     <h2>{_t("Ranking Nacional")}</h2>
     <span class="rk-badge">{_t("Todas las provincias cargadas")}</span>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos adjudicados")}</div>
-  <div class="muni-card"><table>
+  <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_nac}
   </table></div>
   <div class="section-title">{_t("Top 10 por importe total adjudicado")}</div>
-  <div class="muni-card"><table>
+  <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Importe total")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_imp_nac}
   </table></div>
@@ -21230,12 +21464,12 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <div class="prov-switch">{selector_prov}</div>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos")} — {esc(label_prov)}</div>
-  <div class="muni-card"><table>
+  <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_prov}
   </table></div>
   <div class="section-title">{_t("Top 10 por importe total")} — {esc(label_prov)}</div>
-  <div class="muni-card"><table>
+  <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Importe total")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_imp_prov}
   </table></div>
@@ -21559,7 +21793,7 @@ _NOTAS_FUENTE_CM = {
     "euskadi": _td(
         "Datos de la API pública de contratación de Euskadi (Gobierno Vasco), la misma fuente que los contratos "
         "formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección "
-        "cuando el propio dato de origen es matemáticamente imposible, ver memoria del proyecto). No siempre "
+        "cuando el propio dato de origen es matemáticamente imposible). No siempre "
         "publica NIF."
     ),
     "madrid_capital": _td(
@@ -22245,7 +22479,7 @@ def render_fondos_ue_html(qs):
   <div class="fue-card">
     <div class="gs-hint" style="margin:10px 14px">{_t("Ordenadas por importe. En los fondos estructurales el importe es el gasto subvencionable total de la operación; en CORDIS, la aportación de la UE a cada organización.")}{(" " + _t("En Kohesio (2021-2027), el coste total de la operación.")) if hay_koh else ""}</div>
     <div class="tbl-scroll">
-    <table>
+    <table class="t-tarjeta">
       <tr>
         <th>{_t("Proyecto / Beneficiario")}</th>
         <th>{_t("Importe")}</th>
@@ -22320,11 +22554,11 @@ def _html_plan_recuperacion(f, res):
                 f'target="_blank" rel="noopener">{_t("PLACE ↗")}</a></td></tr>' for x in res.get("top", [])[:10])
             partes.append(
                 f'<div style="display:flex;flex-wrap:wrap;gap:0 18px">'
-                f'<table style="flex:1 1 280px"><tr><th>{_t("Fondo")}</th><th>{_t("Contratos")}</th><th>{_t("Importe")}</th></tr>{filas_f}</table>'
-                f'<table style="flex:1 1 280px"><tr><th>{_t("Provincia")}</th><th>{_t("Contratos del Plan")}</th><th>{_t("Importe")}</th></tr>{filas_p}</table></div>')
+                f'<table class="t-tarjeta t-rank" style="flex:1 1 280px"><tr><th>{_t("Fondo")}</th><th>{_t("Contratos")}</th><th>{_t("Importe")}</th></tr>{filas_f}</table>'
+                f'<table class="t-tarjeta t-rank" style="flex:1 1 280px"><tr><th>{_t("Provincia")}</th><th>{_t("Contratos del Plan")}</th><th>{_t("Importe")}</th></tr>{filas_p}</table></div>')
             if filas_t:
                 partes.append(f'<details><summary>{_t("Los 10 mayores contratos del Plan de Recuperación")}</summary>'
-                              f'<table><tr><th>{_t("Contrato")}</th><th>{_t("Importe")}</th><th>{_t("Fecha")}</th></tr>'
+                              f'<table class="t-tarjeta"><tr><th>{_t("Contrato")}</th><th>{_t("Importe")}</th><th>{_t("Fecha")}</th></tr>'
                               f'{filas_t}</table></details>')
         partes.append(
             f'<div class="gs-hint" style="margin:6px 14px 10px;font-size:12px">'
@@ -22866,7 +23100,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     if muni_filter:
         datos = [d for d in datos if normalizar(d.get("municipio", "")) == normalizar(muni_filter)]
 
-    total_m = len(datos)
+    total_m = _n_municipios_reales(datos)
     total_c = sum(d.get("total_contratos", 0) for d in datos)
     total_e = len(set(
         normalizar(c.get("empresa", ""))
@@ -23051,7 +23285,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                 {len(fondos_ue_muni)} · {fmt_eur(str(total_fue))}
               </span>
             </div>
-            <table>
+            <table class="t-tarjeta">
               <tr>
                 <th>{_t("Proyecto / Beneficiario")}</th>
                 <th>{_t("Importe")}</th>
@@ -23126,7 +23360,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                 </summary>
                 {nota_base_cm}
                 <div class="tbl-scroll">
-                  <table>
+                  <table class="t-tarjeta">
                     <tr>
                       <th>{_t("Adjudicatario / Objeto")}</th>
                       <th>{_t("Importe")}</th>
@@ -23196,7 +23430,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           {concentracion_html}
           {alertas_html}
           <div class="tbl-scroll">
-            <table>
+            <table class="t-tarjeta">
               <tr>
                 <th>{_t("Empresa adjudicataria / Contrato")}</th>
                 <th>{_t("Importe")}</th>
@@ -24023,7 +24257,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     municipios por región es vía los botones de "Cobertura" y las tarjetas
     de "Cobertura por región" de más abajo (el toggle Murcia/Girona del
     header se quitó por redundante -- ver instrucción del 2026-08-02)."""
-    total_m = len(datos)
+    total_m = _n_municipios_reales(datos)
     total_c = sum(d.get("total_contratos", 0) for d in datos)
     # 2026-10-10: el contador enseñaba solo los contratos formales; los menores (seis veces más) no figuraban.
     with _db_lock:
@@ -24229,7 +24463,7 @@ def render_landing_html(datos, provincia="murcia"):
     q_prov = _q_prov(provincia)
     por_muni = {clave_municipio(d.get("municipio", ""), d.get("provincia")): d for d in datos}
 
-    total_m = len(datos)
+    total_m = _n_municipios_reales(datos)
     total_c = sum(d.get("total_contratos", 0) for d in datos)
     total_e = len(set(
         normalizar(c.get("empresa", ""))
@@ -24761,7 +24995,7 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
         aviso = (f'<div class="gs-hint" style="margin-bottom:10px">'
                  f'{_t("Mostrando los primeros 300 de {n} resultados.").format(n=len(resultados))}</div>'
                  ) if len(resultados) > 300 else ""
-        tabla = f"""{aviso}<table>
+        tabla = f"""{aviso}<table class="t-tarjeta">
           <tr>
             <th>{_t("Empresa adjudicataria / Contrato")}</th>
             <th>{_t("Importe")}</th>
@@ -26727,7 +26961,7 @@ def render_mapa_cobertura_html():
 
     body = f'''<div class="static-page">
   <h1>{_t("Mapa de cobertura")}</h1>
-  <p class="sub">{_t("Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva.")}</p>
+  <p class="sub">{_t("Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia, o tócala, para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva.")}</p>
 
   {mapa_html}
 
@@ -26904,7 +27138,7 @@ def render_aviso_legal_html():
 
 _HTTP_STATUS_TEXT = {
     200: "OK", 204: "No Content", 206: "Partial Content", 301: "Moved Permanently", 303: "See Other", 400: "Bad Request",
-    409: "Conflict", 413: "Payload Too Large", 429: "Too Many Requests",
+    409: "Conflict", 413: "Payload Too Large", 423: "Locked", 429: "Too Many Requests",
     403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed", 416: "Range Not Satisfiable",
     500: "Internal Server Error",
 }
@@ -28015,6 +28249,29 @@ def _pag_entero(txt):
         return 1
 
 
+def render_404_html():
+    """Página de «no encontrada» (pulido 28-10): antes era un 404 en blanco, sin título ni enlaces."""
+    sub = (f'<li><a href="/convocatorias?tab=subvenciones">{_t("Subvenciones abiertas")}</a></li>'
+           if SUBVENCIONES_PUBLICAS else "")
+    body = f"""<div class="static-page pagina-404">
+  <h1>{_t("Página no encontrada")}</h1>
+  <p>{_t("No encontramos esta página. Puede que la dirección esté mal escrita o que la página haya cambiado de sitio.")}</p>
+  <form method="GET" action="/" class="as-row" role="search" style="margin:18px 0">
+    <input type="text" name="q" minlength="2" maxlength="120" required aria-label="{_t("Buscar")}"
+      placeholder="{_t("Municipio, empresa o directivo…")}">
+    <button type="submit" class="btn btn-primary">{_t("Buscar")}</button>
+  </form>
+  <p>{_t("O ve directamente a:")}</p>
+  <ul class="lista-404">
+    <li><a href="/">{_t("Portada")}</a></li>
+    <li><a href="/convocatorias">{_t("Licitaciones abiertas")}</a></li>
+    {sub}
+    <li><a href="/casos">{_t("Casos")}</a></li>
+  </ul>
+</div>"""
+    return _page_shell(_t("Página no encontrada"), body, show_ad_banner=False)
+
+
 def _route_get(path, qs, gzip_ok=False):
     if FILTRO_FORMULARIO and path == FFORM.RUTA:
         return _filtro_formulario_resp("GET", qs)
@@ -28022,6 +28279,13 @@ def _route_get(path, qs, gzip_ok=False):
         respuesta = _socios_get(path, qs)
         if respuesta:
             return respuesta
+    # Pulido 28-10: direcciones que la gente escribe a mano y que no existían (daban un 404 en blanco)
+    if path.rstrip("/") in ("/licitaciones", "/subvenciones"):
+        destino = dict((k, v) for k, v in qs.items() if k != "tab")
+        if path.rstrip("/") == "/subvenciones" and SUBVENCIONES_PUBLICAS:
+            destino["tab"] = ["subvenciones"]
+        query = urlencode(destino, doseq=True)
+        return 301, {"Location": "/convocatorias" + (f"?{query}" if query else ""), "Content-Length": "0"}, b""
     if ALERTAS_ACTIVAS and (path == "/alertas" or path.startswith("/alertas/")):
         respuesta = _alertas_get(path, qs)
         if respuesta:
@@ -28484,7 +28748,7 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(json.dumps(_diagnostico_arranque(), ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
-    return 404, {"Content-Length": "0"}, b""
+    return _resp(render_404_html(), code=404, headers={"X-Robots-Tag": "noindex"}, gzip_ok=gzip_ok)
 
 
 def _route_post(path, params):
@@ -29522,9 +29786,14 @@ def _app_wsgi(environ, start_response):
             code, cuerpo = 403, {"error": "No autorizado."}
         elif length > 200 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        elif not _subvenciones_subida_lock.acquire(blocking=False):
+            code, cuerpo = 423, {"error": "Ya hay una subida de subvenciones en curso."}
         else:
-            code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"",
-                                                  forzar=qs.get("forzar", [""])[0] == "si")
+            try:
+                code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"",
+                                                      forzar=qs.get("forzar", [""])[0] == "si")
+            finally:
+                _subvenciones_subida_lock.release()
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/fondos-ue":
@@ -29540,7 +29809,8 @@ def _app_wsgi(environ, start_response):
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
         else:
             code, cuerpo = _subir_fondos_ue(environ["wsgi.input"].read(length) if length else b"",
-                                            forzar=qs.get("forzar", [""])[0] == "si")
+                                            forzar=qs.get("forzar", [""])[0] == "si",
+                                            conservar=qs.get("conservar", [""])[0].strip())
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/asignacion-formales":

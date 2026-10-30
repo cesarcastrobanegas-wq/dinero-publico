@@ -1179,8 +1179,8 @@ msgid "En Vigo el adjudicatario no es un campo explícito de la fuente: el infor
 msgstr "A Vigo l'adjudicatari no és un camp explícit de la font: l'informe en PDF l'indica com a capçalera de grup damunt dels seus contractes i així l'hem assignat (validat en casos inequívocs amb un 92-100 % de coherència). Cobertura des de 2022; imports amb IVA; l'informe no publica NIF."
 
 #: app.py:21080
-msgid "Datos de la API pública de contratación de Euskadi (Gobierno Vasco), la misma fuente que los contratos formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección cuando el propio dato de origen es matemáticamente imposible, ver memoria del proyecto). No siempre publica NIF."
-msgstr "Dades de l'API pública de contractació d'Euskadi (Govern Basc), la mateixa font que els contractes formals dels municipis bascos: data real d'adjudicació i import amb IVA (amb una correcció quan la mateixa dada d'origen és matemàticament impossible, vegeu la memòria del projecte). No sempre publica NIF."
+msgid "Datos de la API pública de contratación de Euskadi (Gobierno Vasco), la misma fuente que los contratos formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección cuando el propio dato de origen es matemáticamente imposible). No siempre publica NIF."
+msgstr "Dades de l'API pública de contractació d'Euskadi (Govern Basc), la mateixa font que els contractes formals dels municipis bascos: data real d'adjudicació i import amb IVA (amb una correcció quan la mateixa dada d'origen és matemàticament impossible). No sempre publica NIF."
 
 #: app.py:21086
 msgid "Dataset oficial \"Contratos menores\" del Ayuntamiento de Madrid (datos.madrid.es, Dirección General de Contratación y Servicios), actualización mensual. Fecha real de adjudicación e importe con IVA; sí publica NIF del adjudicatario (a diferencia de RPC/Euskadi). Sin CPV y sin enlace por expediente. Solo Madrid capital, no el resto de municipios de la Comunidad de Madrid (que no tiene agregador propio, ver LIMITACIONES_COBERTURA.md)."
@@ -2583,8 +2583,8 @@ msgid "{n} municipios"
 msgstr "{n} municipis"
 
 #: app.py:26082
-msgid "Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva."
-msgstr "Cada territori, pintat amb la seva pròpia bandera — passa el ratolí per una província per veure'n les xifres oficials: municipis, habitants, contractes, import adjudicat i deute viu."
+msgid "Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia, o tócala, para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva."
+msgstr "Cada territori, pintat amb la seva pròpia bandera — passa el ratolí per una província, o toca-la, per veure'n les xifres oficials: municipis, habitants, contractes, import adjudicat i deute viu."
 
 #: app.py:26087
 msgid "Geometría de provincias y comunidades tomada de la cartografía oficial del Instituto Geográfico Nacional (vía es-atlas). Las banderas son una versión simplificada dibujada a mano (colores y patrón principal; se omiten escudos y detalles heráldicos finos). Las cifras de cada provincia se calculan en cada carga a partir de los municipios ya procesados en nuestra base de datos."
@@ -3317,3 +3317,21 @@ msgstr "Codi de l'operació"
 
 msgid "sin deuda"
 msgstr "sense deute"
+
+msgid "Página no encontrada"
+msgstr "Pàgina no trobada"
+
+msgid "No encontramos esta página. Puede que la dirección esté mal escrita o que la página haya cambiado de sitio."
+msgstr "No trobem aquesta pàgina. Potser l'adreça està mal escrita o la pàgina ha canviat de lloc."
+
+msgid "Municipio, empresa o directivo…"
+msgstr "Municipi, empresa o directiu…"
+
+msgid "O ve directamente a:"
+msgstr "O ves directament a:"
+
+msgid "Portada"
+msgstr "Portada"
+
+msgid "Ver la deuda viva de las otras {n} provincias y comunidades"
+msgstr "Veure el deute viu de les altres {n} províncies i comunitats"

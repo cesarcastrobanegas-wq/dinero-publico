@@ -28,6 +28,7 @@ import csv
 import gzip
 import io
 import json
+import os
 import re
 import sys
 import time
@@ -603,26 +604,53 @@ def descargar_mrr100(sesion):
     } for nif, p in perceptores.items()]
 
 
-def generar(salida, con_nombres=False, kohesio=True, mrr100=True):
+FUENTES_NOMBRE = {"cohesion": "Cohesion Data", "cordis": "CORDIS", "kohesio": "Kohesio", "mrr100": "100 perceptores"}
+
+
+def generar(salida, con_nombres=False, kohesio=True, mrr100=True, una_fuente_opcional=False):
+    """Con una_fuente_opcional (encargo de César del 30-10, a partir de la opción 2 del 23-10): si UNA fuente no se
+    puede descargar (p. ej. el 403 de Kohesio a GitHub Actions desde el 21-10) o trae de menos, el fichero se genera
+    con las demás y se deja la marca «<salida>.falta» (1.ª línea: la fuente; 2.ª: el error). El flujo sube entonces con
+    ?conservar=<fuente> y la web se queda con las operaciones de esa fuente de la última carga buena. Si fallan dos o
+    más, no se genera nada (como antes)."""
     sesion = requests.Session()
     sesion.headers["User-Agent"] = "dinero-publico.com (fondos UE; datos abiertos de la Comisión Europea)"
-    print("Cohesion Data (FEDER/FSE 2014-2020)…", flush=True)
-    filas = descargar_cohesion(sesion)       # sin nombres: --nombres solo afecta a CORDIS
-    print("CORDIS (Horizon Europe)…", flush=True)
-    cordis = descargar_cordis(sesion, con_nombres)
-    if len(filas) < 50000 or len(cordis) < 5000:
-        raise SystemExit(f"ERROR: descarga incompleta ({len(filas)} de Cohesion Data, {len(cordis)} de CORDIS); "
-                         "no se genera el fichero")
-    filas += cordis
+    marca = salida + ".falta"
+    if os.path.exists(marca):
+        os.remove(marca)
+    fallos = {}
+
+    def _fuente(clave, titulo, bajar, minimo):
+        print(f"{titulo}…", flush=True)
+        try:
+            filas_f = bajar()
+            if len(filas_f) < minimo:
+                raise SystemExit(f"ERROR: {FUENTES_NOMBRE[clave]} trae solo {len(filas_f)} operaciones (mínimo {minimo})")
+            return filas_f
+        except (SystemExit, requests.RequestException, ValueError, KeyError) as e:
+            if not una_fuente_opcional:
+                raise
+            fallos[clave] = str(e) or type(e).__name__
+            print(f"::warning::{FUENTES_NOMBRE[clave]} no se ha podido descargar: {fallos[clave]}", flush=True)
+            return []
+
+    filas = _fuente("cohesion", "Cohesion Data (FEDER/FSE 2014-2020)",
+                    lambda: descargar_cohesion(sesion), 50000)       # sin nombres: --nombres solo afecta a CORDIS
+    filas += _fuente("cordis", "CORDIS (Horizon Europe)", lambda: descargar_cordis(sesion, con_nombres), 5000)
     if kohesio:
-        print("Kohesio (FEDER, FSE+ y Transición Justa 2021-2027)…", flush=True)
-        koh = descargar_kohesio(sesion, con_nombres)
-        if len(koh) < 20000:
-            raise SystemExit(f"ERROR: Kohesio trae solo {len(koh)} operaciones 2021-2027; no se genera el fichero")
-        filas += koh
+        filas += _fuente("kohesio", "Kohesio (FEDER, FSE+ y Transición Justa 2021-2027)",
+                         lambda: descargar_kohesio(sesion, con_nombres), 20000)
     if mrr100:
-        print("Plan de Recuperación: los 100 mayores perceptores…", flush=True)
-        filas += descargar_mrr100(sesion)
+        filas += _fuente("mrr100", "Plan de Recuperación: los 100 mayores perceptores", lambda: descargar_mrr100(sesion), 1)
+    if len(fallos) > 1:
+        raise SystemExit(f"ERROR: han fallado {len(fallos)} fuentes ({', '.join(FUENTES_NOMBRE[f] for f in fallos)}); "
+                         "no se genera el fichero")
+    if fallos:
+        clave, error = next(iter(fallos.items()))
+        print(f"::warning::El fichero va SIN {FUENTES_NOMBRE[clave]}: la web conservará sus operaciones de la última "
+              "carga buena.", flush=True)
+        with open(marca, "w", encoding="utf-8") as f:
+            f.write(clave + "\n" + error.replace("\n", " ") + "\n")
     with gzip.open(salida, "wt", encoding="utf-8") as f:
         for fila in filas:
             f.write(json.dumps({k: v for k, v in fila.items() if k != "discordante"}, ensure_ascii=False) + "\n")
@@ -641,12 +669,16 @@ if __name__ == "__main__":
                         "forma de DNI/NIE)")
     g.add_argument("--sin-kohesio", action="store_true", help="no bajar FEDER/FSE+ 2021-2027 de Kohesio")
     g.add_argument("--sin-mrr100", action="store_true", help="no bajar los 100 mayores perceptores del Plan de Recuperación")
+    g.add_argument("--una-fuente-opcional", action="store_true",
+                   help="si UNA fuente falla, generar con las demás y dejar la marca <salida>.falta con su nombre (la "
+                        "web conserva lo último que tenía de esa fuente)")
     k = sub.add_parser("kohesio", help="solo Kohesio 2021-2027 (pruebas)")
     k.add_argument("--salida", required=True)
     k.add_argument("--sin-beneficiarios", action="store_true")
     a = ap.parse_args()
     if a.orden == "generar":
-        generar(a.salida, a.nombres, kohesio=not a.sin_kohesio, mrr100=not a.sin_mrr100)
+        generar(a.salida, a.nombres, kohesio=not a.sin_kohesio, mrr100=not a.sin_mrr100,
+                una_fuente_opcional=a.una_fuente_opcional)
     elif a.orden == "kohesio":
         s = requests.Session()
         s.headers["User-Agent"] = "dinero-publico.com (fondos UE; datos abiertos de la Comisión Europea)"
