@@ -27691,6 +27691,59 @@ def _socios_pasada(max_correos=25):
     return res
 
 
+def _socios_fin_de_dia(texto):
+    """"AAAA-MM-DD" -> segundos del final de ese día en hora peninsular (23:59:59), o None si no es una fecha."""
+    try:
+        d = datetime.strptime((texto or "").strip(), "%Y-%m-%d")
+    except ValueError:
+        return None
+    ts0 = d.replace(hour=23, minute=59, second=59, tzinfo=timezone.utc).timestamp()
+    desfase = (_ahora_madrid(ts0) - datetime.fromtimestamp(ts0, timezone.utc).replace(tzinfo=None)).total_seconds()
+    return ts0 - desfase
+
+
+def _socios_fecha_pago(ts):
+    return _ahora_madrid(ts).strftime("%d-%m-%Y") if ts else ""
+
+
+def _socios_pagado(params):
+    """POST /admin/socios-pagado (31-10): poner, quitar o ver la fecha «pagado_hasta» de un perfil. El token va en la
+    cabecera X-Admin-Token y el correo en el CUERPO (nunca en la dirección, que queda en los registros):
+        curl -sS -X POST -H "X-Admin-Token: ..." -d "correo=x@y.es" -d "accion=poner" -d "hasta=2027-10-31" .../admin/socios-pagado
+    accion: poner (con hasta=AAAA-MM-DD: pagado hasta el final de ese día, hora peninsular), quitar (el pago termina
+    ahora) o ver. También vale p=<id del panel> en lugar del correo. Devuelve (código, dict) y el correo tapado."""
+    g = lambda k: (params.get(k, [""])[0] or "").strip()                     # noqa: E731
+    accion = g("accion") or "ver"
+    if accion not in ("poner", "quitar", "ver"):
+        return 400, {"error": "accion tiene que ser poner, quitar o ver."}
+    alm = _socios_almacen()
+    p = alm.perfil(int(g("p"))) if g("p").isdigit() else (alm.por_correo(g("correo")) if g("correo") else None)
+    if not p:
+        return 404, {"error": "No hay ningún perfil con ese correo (o ese número)."}
+    ahora, motivo = time.time(), ""
+    if accion == "poner":
+        hasta = _socios_fin_de_dia(g("hasta"))
+        if hasta is None:
+            return 400, {"error": "Falta hasta=AAAA-MM-DD (el último día pagado)."}
+        fila, motivo = alm.poner_pagado(p["id"], hasta, ahora)
+    elif accion == "quitar":
+        fila, motivo = alm.quitar_pagado(p["id"], ahora)
+    else:
+        fila = p
+    if fila is None:
+        return {"no_existe": 404, "sin_confirmar": 409, "fecha": 400}.get(motivo, 400), {"error": {
+            "no_existe": "Ese perfil ya no existe.",
+            "sin_confirmar": "Ese perfil todavía no ha confirmado su correo: el pago solo se pone a perfiles confirmados.",
+            "fecha": "La fecha tiene que ser futura y a menos de 5 años vista.",
+        }.get(motivo, motivo)}
+    vigente = alm.pago_vigente(fila, ahora)
+    return 200, {"ok": True, "accion": accion, "perfil": fila["id"], "correo": SOC.correo_tapado(fila["correo"]),
+                 "estado": fila["estado"], "pagado_hasta": _socios_fecha_pago(fila["pagado_hasta"]),
+                 "pago_vigente": vigente,
+                 "explicacion": ("Pago vigente: no se le manda el aviso de inactividad ni se borra por falta de uso."
+                                 if vigente else "Sin pago vigente: se le aplican las reglas de siempre.")}
+
+
 def _socios_vista_html(pid):
     """Panel: el correo semanal que le saldría AHORA a ese perfil (sin enviarlo ni marcar nada), para revisarlo."""
     alm = _socios_almacen()
@@ -27740,12 +27793,16 @@ def _socios_panel_html(cookie, hecho=""):
                f'<tr><th>Cambios esperando confirmación</th><td>{r["cambios_pendientes"]}</td></tr>'
                f'<tr><th>Borrados</th><td>{r["bajas"]} por su cuenta · {r["bajas_desde_el_panel"]} desde este panel · '
                f'{r["caducados_sin_confirmar"]} sin confirmar · {r["caducados_inactivos"]} por falta de uso</td></tr>'
-               f'<tr><th>Avisados de borrado por falta de uso</th><td>{r["avisados_inactividad"]}</td></tr>{cupo}</table>')
+               f'<tr><th>Avisados de borrado por falta de uso</th><td>{r["avisados_inactividad"]}</td></tr>'
+               f'<tr><th>Con pago vigente (ni aviso ni borrado por falta de uso)</th><td>{r["con_pago_vigente"]}</td></tr>'
+               f'{cupo}</table>')
+    pagado = lambda p: (f'{_socios_fecha_pago(p["pagado_hasta"])}'                                      # noqa: E731
+                        f'{"" if alm.pago_vigente(p, ahora) else " (terminado)"}' if p["pagado_hasta"] else "—")
     filas = "".join(
         f'<tr><td>{esc(p["correo"])}</td><td>{esc(p["estado"])}{" (cambio pendiente)" if p["perfil_pendiente"] else ""}</td>'
         f'<td>{esc(", ".join(FLIC.NOMBRE_PROVINCIA.get(x, x) for x in p["perfil"].get("provincias", [])))}</td>'
         f'<td>{f_ts(p["alta"])}</td><td>{f_ts(p["confirmado"])}</td><td>{f_ts(p["ultimo_uso"])}</td>'
-        f'<td>{f_ts(p["ultimo_envio"])}</td><td>{f_ts(p["aviso_inactividad"])}</td>'
+        f'<td>{f_ts(p["ultimo_envio"])}</td><td>{f_ts(p["aviso_inactividad"])}</td><td>{esc(pagado(p))}</td>'
         f'<td>{vista(p)}'
         f'<form method="post" action="/admin/revision/socios/accion" class="acc">{csrf}'
         f'<input type="hidden" name="p" value="{p["id"]}"><button type="submit" name="accion" value="baja" class="sec">'
@@ -27761,7 +27818,8 @@ def _socios_panel_html(cookie, hecho=""):
 <h1>Filtro de licitaciones: perfiles</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a> · horas en UTC</p>
 {estado}{aviso}{resumen}
 <h2 style="font-size:16px">Perfiles</h2>
-<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th></th></tr>{filas or vacio(9)}</table>
+<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th>Pagado hasta</th><th></th></tr>{filas or vacio(10)}</table>
+<p class="sub">«Pagado hasta» se pone y se quita con el token en la cabecera: POST /admin/socios-pagado con correo=..., y accion=poner&amp;hasta=AAAA-MM-DD, accion=quitar o accion=ver.</p>
 <h2 style="font-size:16px">Envíos (los 100 últimos)</h2>
 <table class="t"><tr><th>Cuándo</th><th>Clase</th><th>Aceptado por Resend</th><th>Respuesta</th></tr>{env or vacio(4)}</table>""")
 
@@ -29045,6 +29103,17 @@ def _route_post(path, params):
                 return 404, {"Content-Length": "0"}, b""
             return _resp(_socios_almacen().copia(), content_type="application/octet-stream",
                          headers={"Cache-Control": "no-store"})
+
+        if path == "/admin/socios-pagado":
+            # Fecha «pagado_hasta» de un perfil del filtro (31-10). Token solo en la cabecera o en el cuerpo, nunca en
+            # la dirección (de un POST solo se lee el cuerpo). Apagado: 404.
+            if not _token_admin_peticion(params):
+                return _error_resp("No autorizado.", 403)
+            if not FILTRO_FORMULARIO:
+                return 404, {"Content-Length": "0"}, b""
+            codigo, cuerpo = _socios_pagado(params)
+            return _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                         code=codigo, headers={"Cache-Control": "no-store"})
 
         if path in ("/admin/alertas-enviar", "/admin/alertas-db"):
             # Alertas por correo (2026-10-13). enviar: una tanda de la pasada de envío (flujo alertas-envio.yml);
