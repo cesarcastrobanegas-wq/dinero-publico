@@ -220,9 +220,9 @@ def evaluar(lic, perfil, ahora):
         # --- solvencia económica (art. 87.3.a LCSP)
         umbral = req.get("umbral_eco")
         exigida = umbral or F.FACTOR_SOLVENCIA * vam
-        de_donde = ("según el anuncio" if umbral else
-                    "como mucho 1,5 veces lo que vale el contrato al año; cálculo nuestro, el anuncio no da la cifra")
-        pide = f"Facturación anual exigida: {F.eur(exigida)} ({de_donde})"
+        pide = (f"Piden facturar al año {F.eur(exigida)} (según el anuncio)" if umbral else
+                f"Pueden pedir facturar al año hasta {F.eur(exigida)} (1,5 veces lo que vale el contrato al año; "
+                "cálculo nuestro, el anuncio no da la cifra)")
         if sumario:
             bien.append("Procedimiento abierto simplificado sumario: no piden demostrar solvencia económica.")
         elif clas_sustituye:
