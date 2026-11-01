@@ -23,7 +23,7 @@ Commits (pequeños, cada uno probado):
 |---|---|
 | 6233676 | Motor y páginas del embudo (`backend/filtro_embudo.py`) |
 | 2bf3aad | Ruta en la web, apagada salvo `FILTRO_EMBUDO=1`, y pruebas (`backend/filtro_embudo_prueba.py`) |
-| (este) | Este informe y las capturas (`docs/filtro_embudo/`) |
+| 0b25393 | Este informe y las capturas (`docs/filtro_embudo/`) |
 
 ---
 
