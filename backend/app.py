@@ -5195,8 +5195,27 @@ def normalizar(s):
 # ver _indice_menores_stats_por_municipio (Índice de Transparencia).
 _db.create_function("normalizar", 1, normalizar)
 
+def _tabla_controles():
+    """Caracteres de control que algunas fuentes dejan en los textos (revisión del 02-11-2026, ficha de Barcelona:
+    un 0x7F delante de «FUNDACIÓ PRIVADA CASSIA JUST», de la PSCP; 14 textos en toda la base). Los C1 (0x80-0x9F)
+    suelen ser comillas de Windows (cp1252) guardadas tal cual -- 0x92 en «L'AJUNTAMENT», 0x93/0x94 alrededor de
+    «QUI TÉ A QUI» -- y se convierten a su carácter; el resto de controles se quitan. Tabulador y saltos de línea se
+    respetan."""
+    tabla = {i: None for i in range(32) if i not in (9, 10, 13)}
+    tabla[0x7F] = None
+    for i in range(0x80, 0xA0):
+        try:
+            tabla[i] = bytes([i]).decode("cp1252")
+        except UnicodeDecodeError:
+            tabla[i] = None
+    return tabla
+
+
+_TABLA_CONTROLES = _tabla_controles()
+
+
 def esc(s):
-    return html.escape(str(s or ""), quote=True)
+    return html.escape(str(s or "").translate(_TABLA_CONTROLES), quote=True)
 
 
 INDICE_CARGOS_PUBLICOS = _construir_indice_cargos_publicos()
