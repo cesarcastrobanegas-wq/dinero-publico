@@ -19750,6 +19750,17 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     municipio y por los resultados de búsqueda global."""
     imp = c.get("importe", "") or "No localizado"
     imp_cls = "importe" if imp != "No localizado" else "importe noloc"
+    # Revisión del 02-11-2026 (ficha de Willis Iberia): la fuente PUBLICA 0 € (comprobado en PLACE: «Importe de
+    # Adjudicación 0.0 Euros»). No es un fallo de carga: son contratos que no paga el ayuntamiento (mediación de
+    # seguros, que cobra comisión de las aseguradoras; concesiones de bares o quioscos; arrendamientos; préstamos...).
+    # Se dice así en vez de enseñar «0,00 €». Distinto de «No localizado» (la fuente no trae importe).
+    sin_importe = False
+    try:
+        sin_importe = imp != "No localizado" and float(c.get("importe_num") or 0) == 0
+    except (TypeError, ValueError):
+        pass
+    if sin_importe:
+        imp, imp_cls = _t("sin importe publicado"), "importe noloc"
     if imp == "No localizado":
         imp = _t("No localizado")
     try:
@@ -19758,7 +19769,9 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     except (TypeError, ValueError):
         pass
     # PLACE (2026-10-01): lo adjudicado por lote; si no es fiable, el presupuesto -- y se dice (ver _adjudicaciones_place)
-    if c.get("importe_tipo") == "presupuesto" and c.get("importe_num"):
+    if sin_importe:
+        imp_nota = (f'<span class="noloc-nota">{_t("La fuente publica 0 €: suele ser un contrato que no paga el ayuntamiento (mediación de seguros, concesiones, arrendamientos, préstamos).")}</span>')
+    elif c.get("importe_tipo") == "presupuesto" and c.get("importe_num"):
         imp_nota = f'<span class="noloc-nota">{_t("presupuesto de licitación")}</span>'
     elif c.get("importe_tipo") == "adjudicado" and c.get("lotes"):
         imp_nota = f'<span class="noloc-nota">{_tl_lotes(c["lotes"])}</span>'
