@@ -19,8 +19,9 @@ Criterios (la página los explica en lenguaje llano, ver CRITERIOS_HTML):
    anual medio (VAM) del contrato. VAM = presupuesto sin IVA del lote o del contrato / duración en años (mínimo 1).
    Si el anuncio trae la cifra exigida (ThresholdQuantity), manda esa. Facturación por tramos: si el límite bajo del
    tramo ya llega -> encaja; en medio -> CON CONDICIONES. Si ni el límite alto llega: FUERA DE ALCANCE solo cuando la
-   cifra viene del anuncio; si es el tope legal calculado por nosotros, CON CONDICIONES (el pliego puede pedir menos;
-   decisión de César, 02-11-2026). Abierto
+   cifra viene del anuncio ("El anuncio exige X €"); si es el tope legal calculado por nosotros, CON CONDICIONES (el
+   pliego puede pedir menos), salvo que no llegue ni a la mitad del tope (0,75 x VAM): FUERA DE ALCANCE con la
+   etiqueta "Desproporcionado (estimación nuestra)" (decisiones de César, 02-11-2026). Abierto
    simplificado sumario (art. 159.6 LCSP) no pide solvencia. Clasificación que cubre la exigida sustituye a la
    solvencia.
 3. Obras de valor estimado >= 500.000 EUR (art. 77.1.a LCSP): sin clasificación -> CON CONDICIONES "requiere
@@ -48,6 +49,9 @@ FUERA = "FUERA DE ALCANCE"
 GRUPOS = (ENCAJA, CONDICIONES, FUERA)
 MAX_FICHAS = 60                          # por grupo en la página (las demás se cuentan)
 DIAS_AVISO_CIERRE = 2                    # "cierra pronto" si quedan menos de estos días
+# Sin cifra en el anuncio: fuera de alcance si la facturación no llega ni a la mitad del máximo legal (0,75 x VAM)
+FACTOR_DESPROPORCION = F.FACTOR_SOLVENCIA / 2
+DESPROPORCIONADO = "Desproporcionado (estimación nuestra)"
 
 # Tramos de facturación: los mismos cortes que el motor (60.000 es el del sumario)
 TRAMOS_FACTURACION = F.TRAMOS_FACTURACION
@@ -194,6 +198,7 @@ def evaluar(lic, perfil, ahora):
         if perfil["importe_max"] is not None and importe > perfil["importe_max"]:
             continue
         fuera, cond, avisos, bien = [], [], [], []
+        etiqueta = ""
         vam = importe / anios
         req = dict(req_c, **req_l) if req_l else dict(req_c)
         if con_lotes and "umbral_eco" not in req_l:
@@ -232,7 +237,13 @@ def evaluar(lic, perfil, ahora):
         elif lo_f >= exigida:
             bien.append(pide + ": su empresa la cubre.")
         elif hi_f < exigida and umbral:
-            fuera.append(pide + ": su empresa no llega.")
+            fuera.append(f"El anuncio exige {F.eur(umbral)} de facturación anual: su empresa no llega.")
+        elif not umbral and hi_f < FACTOR_DESPROPORCION * vam:
+            # sin cifra en el anuncio, ni con la mitad del máximo legal llegaría (decisión de César, 02-11-2026)
+            etiqueta = DESPROPORCIONADO
+            fuera.append(f"Aunque el pliego pidiera la mitad del máximo legal ({F.eur(FACTOR_DESPROPORCION * vam)} "
+                         "al año), su empresa no llegaría; solo sería viable en UTE o apoyándose en la solvencia de "
+                         "otra empresa (art. 75 LCSP).")
         elif hi_f < exigida:
             # sin la cifra del anuncio solo sabemos el tope legal: el pliego puede pedir menos
             cond.append(pide + ": su empresa no llega a ese tope, pero puede que el pliego pida menos: revise la "
@@ -264,7 +275,7 @@ def evaluar(lic, perfil, ahora):
             "lote": (lote or {}).get("id"), "titulo_lote": (lote or {}).get("titulo"),
             "importe": importe, "vam": round(vam), "solvencia_exigida": round(exigida),
             "solvencia_del_anuncio": bool(umbral), "sumario": sumario,
-            "fuera": fuera, "condiciones": cond, "avisos": avisos, "bien": bien,
+            "etiqueta": etiqueta, "fuera": fuera, "condiciones": cond, "avisos": avisos, "bien": bien,
             # para F.agrupar_lotes (lotes iguales de una misma licitación en una sola ficha)
             "motivos": fuera + cond + avisos + bien,
         })
@@ -328,6 +339,7 @@ color:#fff;cursor:pointer}
 .ficha h3 a{color:#1b2f5c}
 .ficha ul{margin:4px 0 4px 18px;padding:0}.ficha li{margin:2px 0}
 .ficha .dato{font-size:.92rem;color:#3a4356}
+.etiqueta{display:inline-block;margin:6px 0 0;padding:1px 8px;border:1px solid #9b2c2c;border-radius:4px;color:#9b2c2c;font-size:.82rem;font-weight:700}
 li.no{color:#9b2c2c}li.cond{color:#8a5a12;font-weight:600}li.aviso{color:#3a4356}li.ok{color:#1e5a3a}
 details{margin:0 0 12px}summary{cursor:pointer;font-weight:700;padding:8px 0}
 .criterios{background:#fff;border:1px solid #d9dde5;border-radius:10px;padding:4px 14px;font-size:.93rem}
@@ -350,7 +362,9 @@ contrato entero no.</li>
 contrato al año (art. 87.3.a de la Ley de Contratos del Sector Público). Si el anuncio dice la cifra exacta, usamos
 esa. Si su facturación no llega ni en lo más alto de su tramo a la cifra que dice el anuncio, la licitación queda
 <b>fuera de alcance</b>. Si el anuncio no da la cifra, solo sabemos el máximo que permite la ley y el pliego puede
-pedir menos: entonces <b>encaja con condiciones</b> («revise la solvencia»). También si la cifra está dentro de su
+pedir menos: entonces <b>encaja con condiciones</b> («revise la solvencia»), salvo que su empresa no llegue ni a la
+mitad de ese máximo: entonces queda <b>fuera de alcance</b> con la etiqueta «Desproporcionado (estimación nuestra)»,
+porque solo sería viable en UTE o apoyándose en la solvencia de otra empresa (art. 75 de la misma ley). También si la cifra está dentro de su
 tramo. En el procedimiento simplificado sumario no se pide solvencia.</li>
 <li><b>Clasificación de contratista</b>: en obras de 500.000 € o más es obligatoria (art. 77 de la misma ley). Si no la
 tiene, se la enseñamos igual como <b>«encaja con condiciones: requiere clasificación»</b>, porque puede pedirla o ir
@@ -507,7 +521,8 @@ def _ficha_html(r):
               if r.get("url", "").startswith("https://") else _e(r["titulo"]))
     return (f'<div class="ficha"><div class="cab"><span>Cierra el <b>{_fecha(r["fin_plazo"])}</b></span>'
             f'<span>{_e(lugar)}{" · " + _e(tipo) if tipo else ""}</span></div>'
-            f'<h3>{enlace}</h3>'
+            + (f'<div class="etiqueta">{_e(r["etiqueta"])}</div>' if r.get("etiqueta") else "")
+            + f'<h3>{enlace}</h3>'
             f'<div class="dato">{_e(r["organo"])}</div>'
             + (f'<div class="dato">{lote}</div>' if lote else "")
             + f'<div class="dato">Importe sin IVA: <b>{F.eur(r["importe"])}</b>'

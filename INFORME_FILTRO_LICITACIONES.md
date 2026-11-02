@@ -24,7 +24,8 @@ Commits (pequeños, cada uno probado):
 | 6233676 | Motor y páginas del embudo (`backend/filtro_embudo.py`) |
 | 2bf3aad | Ruta en la web, apagada salvo `FILTRO_EMBUDO=1`, y pruebas (`backend/filtro_embudo_prueba.py`) |
 | 0b25393 | Este informe y las capturas (`docs/filtro_embudo/`) |
-| (02-11) | **Cambio pedido por César:** «fuera de alcance» por solvencia solo con la cifra del anuncio (§2 bis) |
+| 2c8ba87 (02-11) | **Cambio pedido por César:** «fuera de alcance» por solvencia solo con la cifra del anuncio (§2 bis) |
+| (02-11, 2.º) | **Cambio pedido por César:** «Desproporcionado (estimación nuestra)» a 0,75 × VAM y texto «El anuncio exige X €» (§2 ter) |
 
 ---
 
@@ -75,7 +76,7 @@ misma licitación van juntos en una ficha.
 | Sector | Algún CPV del contrato o del lote empieza por una división marcada | Si no, no sale |
 | Zona | Provincia del lugar de ejecución (NUTS; si falta, la de la fila o el CP del órgano); con solo la comunidad, entra si marcó alguna provincia de ella; «toda España» admite todo | Si no, no sale |
 | Importe | Importe sin IVA del lote o del contrato dentro del rango | Si no, no sale |
-| **Solvencia económica** (art. 87.3.a LCSP) | Pueden pedir hasta **1,5 × valor anual medio** (VAM = presupuesto sin IVA / duración en años, mínimo 1). **Si el anuncio da la cifra, manda esa.** | Tramo bajo ya llega → encaja. En medio → **con condiciones**. Ni el tope del tramo llega → **fuera de alcance solo si la cifra viene del anuncio**; si es nuestro cálculo (tope legal), **con condiciones: «puede que el pliego pida menos: revise la solvencia»** |
+| **Solvencia económica** (art. 87.3.a LCSP) | Pueden pedir hasta **1,5 × valor anual medio** (VAM = presupuesto sin IVA / duración en años, mínimo 1). **Si el anuncio da la cifra, manda esa.** | Tramo bajo ya llega → encaja. En medio → **con condiciones**. Ni el tope del tramo llega: con cifra del anuncio → **fuera de alcance** («El anuncio exige X € de facturación anual: su empresa no llega»); sin cifra → **con condiciones** («puede que el pliego pida menos: revise la solvencia»), salvo que no llegue ni a **0,75 × VAM** (la mitad del máximo legal) → **fuera de alcance**, etiqueta **«Desproporcionado (estimación nuestra)»** |
 | Procedimiento sumario (art. 159.6) | Abierto simplificado con VE < 80.000 € (obras) o < 60.000 € (resto) | No se pide solvencia |
 | **Clasificación** (art. 77 LCSP) | Obras con valor estimado ≥ 500.000 € (no sumario) | Sin clasificación → **con condiciones: «requiere clasificación»**. Nunca se oculta por esto solo. Si la suya cubre la pedida, encaja y además le sirve como solvencia |
 | **Trabajadores** | Si el VAM pasa de 100.000 € por persona del tope de su tramo | Solo un aviso «su plantilla puede quedarse corta». **No cambia el grupo** |
@@ -106,13 +107,44 @@ cifra del contrato entero no se aplica a sus lotes).
 
 **Ojo:** con esta regla, «fuera de alcance» queda casi vacío y una **obra de 30 millones para una empresa de 5
 personas y 300.000 € de facturación sale como «encaja con condiciones»** si el anuncio no trae la cifra (que es lo
-normal). Es lo contrario del ejemplo del encargo. Ver la decisión 8 en §6.
+normal). Es lo contrario del ejemplo del encargo. **Resuelto con el cambio siguiente (§2 ter).**
+
+## 2 ter. Cambio del 02-11 (2.º): «Desproporcionado (estimación nuestra)»
+
+Decisión de César. Solvencia, de arriba abajo:
+
+1. **Con cifra en el anuncio** y la empresa no llega ni con el tope de su tramo → **fuera de alcance**, texto «El
+   anuncio exige X € de facturación anual: su empresa no llega.» Sin etiqueta. La cifra del anuncio siempre manda:
+   si el anuncio pide poco, no se aplica la regla de desproporción aunque el contrato sea grande.
+2. **Sin cifra en el anuncio** y la empresa no llega ni a **0,75 × VAM** (la mitad del máximo legal) → **fuera de
+   alcance**, con la etiqueta **«Desproporcionado (estimación nuestra)»** encima del título y el texto: «Aunque el
+   pliego pidiera la mitad del máximo legal (X € al año), su empresa no llegaría; solo sería viable en UTE o
+   apoyándose en la solvencia de otra empresa (art. 75 LCSP).»
+3. **Sin cifra**, entre 0,75 y 1,5 × VAM → **con condiciones** («revise la solvencia»), como en §2 bis.
+
+Se compara con el **tope** del tramo de facturación (lo más favorable para la empresa). Ejemplo, tramo 150-300k:
+un contrato de 400.000 € al año queda con condiciones (0,75 × 400.000 = 300.000, llega justo); uno de 401.000 €,
+desproporcionado. La obra de 30 millones para 5 personas vuelve a salir **fuera de alcance (desproporcionado)**.
+
+**Efecto medido** (misma copia del 30-10):
+
+| Perfil inventado | Original | §2 bis | Ahora |
+|---|---|---|---|
+| Limpieza, 1-5 personas, Murcia, 150-300k | 10 / 6 / 5 | 10 / 11 / 0 | 10 / 9 / **2** |
+| Constructora 11-25, Murcia + C. Valenciana, 1,5-3M, sin clasificación | 181 / 32 / 16 | 181 / 47 / 1 | 181 / 42 / **6** |
+| Constructora clasificada, toda España, 3-10M | 1.277 / 285 / 26 | 1.277 / 309 / 2 | 1.277 / 299 / **12** |
+| Informática 1-5, toda España, <60k, 10k-200k | 62 / 69 / 61 | 62 / 124 / 6 | 62 / 104 / **26** |
+| Perfil de las capturas (limpieza, Murcia + C. Valenciana) | 33 / 14 / 13 | 33 / 27 / 0 | 33 / 22 / **5** (las 5 desproporcionadas) |
+
+Al escribir las pruebas apareció un fallo, ya corregido antes del commit: con la cifra del anuncio dentro del tramo
+(por ejemplo 200.000 € para una empresa de 150-300k), la regla de desproporción se aplicaba igualmente y la sacaba
+de alcance. Ahora solo se aplica cuando el anuncio no trae la cifra.
 
 ## 3. Capturas
 
 Con la copia de datos del 30-10 y un perfil inventado (limpieza, Murcia + Comunitat Valenciana, 150-300k, 1-5
-personas, sin clasificación): **33 encajan, 27 con condiciones, 0 fuera de alcance** (antes del cambio del 02-11:
-33 / 14 / 13).
+personas, sin clasificación), captura hecha el 02-11: **31 encajan, 22 con condiciones, 5 fuera de alcance** (las 5
+«desproporcionadas»; en la tabla de §2 ter salen 33 porque se midió la noche del 01-11, antes de que cerraran 2).
 
 | | |
 |---|---|
@@ -120,6 +152,8 @@ personas, sin clasificación): **33 encajan, 27 con condiciones, 0 fuera de alca
 | Formulario (móvil, 375 px) | `docs/filtro_embudo/1_formulario_movil.png` |
 | Resultado (escritorio) | `docs/filtro_embudo/3_resultado_escritorio.png` |
 | Resultado (móvil) | `docs/filtro_embudo/3_resultado_movil.png` |
+| Ficha «Desproporcionado» (escritorio) | `docs/filtro_embudo/5_fuera_desproporcionado_escritorio.png` |
+| Ficha «Desproporcionado» (móvil) | `docs/filtro_embudo/5_fuera_desproporcionado_movil.png` |
 
 Las capturas de página entera (16.000 px de alto) están fuera del repositorio, en el scratchpad de esta sesión
 (`…/1cee7279-…/scratchpad/capturas/`).
@@ -128,8 +162,9 @@ Las capturas de página entera (16.000 px de alto) están fuera del repositorio,
 
 ## 4. Cómo probarlo en local
 
-**Pruebas del motor** (rápidas, sin web ni base de datos; 42 casos inventados, entre ellos «obra de 30 millones para
-una empresa de 5 personas»: con condiciones sin cifra en el anuncio, fuera de alcance con ella):
+**Pruebas del motor** (rápidas, sin web ni base de datos; 46 casos inventados, entre ellos «obra de 30 millones para
+una empresa de 5 personas»: desproporcionado sin cifra en el anuncio, «El anuncio exige…» con ella; y el límite exacto
+de 0,75 × VAM):
 
 ```
 cd Desktop/wt_filtro_embudo
@@ -196,11 +231,8 @@ incluidas cookies, no-store, socios.db y barra horizontal) es `prueba_embudo_web
 6. **Traducciones gl/ca/eu**: la página responde con prefijo pero en castellano.
 7. **Texto legal**: la página dice «Es una ayuda, no un informe jurídico». Que lo mire el abogado junto con lo del
    PR #6.
-8. **¿Un tope para lo desproporcionado?** Con la regla del 02-11, sin cifra en el anuncio nada sale de alcance por
-   solvencia (la obra de 30 millones para 5 personas queda «con condiciones»). Si quieres recuperar el «no podemos
-   ofrecer una licitación de 30 millones a una empresa con 5 trabajadores», una opción sería: fuera de alcance también
-   cuando la empresa no llegaría ni aunque el pliego pidiera la mitad del tope (0,75 × VAM). No lo he hecho: es tu
-   decisión.
+8. ~~¿Un tope para lo desproporcionado?~~ **Decidido el 02-11**: 0,75 × VAM con la etiqueta «Desproporcionado
+   (estimación nuestra)» (§2 ter).
 
 ---
 
@@ -210,7 +242,7 @@ Medido en la copia del 30-10 (4.711 licitaciones abiertas con requisitos leídos
 
 - **Cifra de solvencia del pliego**: solo **382** (8 %) la traen en el anuncio. En el resto se usa el tope legal
   (1,5 × VAM), la ficha lo dice («cálculo nuestro, el anuncio no da la cifra») y, desde el 02-11, si no llega se
-  queda en «con condiciones», no fuera. El pliego (PCAP) no lo leemos; esa
+  queda en «con condiciones», salvo que no llegue ni a la mitad (desproporcionado, §2 ter). El pliego (PCAP) no lo leemos; esa
   sería la «fase 2» ya apuntada en el PR #6.
 - **Clasificación pedida**: 181 de las 270 obras ≥ 500.000 € dicen el grupo; en las otras 89 solo puedo calcular la
   categoría a partir del VAM y la ficha dice «el anuncio no dice el grupo».
