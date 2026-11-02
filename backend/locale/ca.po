@@ -3335,3 +3335,7 @@ msgstr "Portada"
 
 msgid "Ver la deuda viva de las otras {n} provincias y comunidades"
 msgstr "Veure el deute viu de les altres {n} províncies i comunitats"
+
+#: app.py:5265
+msgid "Nombre no mostrado"
+msgstr "Nom no mostrat"

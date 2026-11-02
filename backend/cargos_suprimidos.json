@@ -1,0 +1,4 @@
+{
+ "descripcion": "Lista de exclusion de cargos publicos: solo huellas HMAC-SHA256 (clave en EXCLUSION_CLAVE), sin nombres. Ver cargos_suprimidos.py.",
+ "entradas": []
+}

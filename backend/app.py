@@ -2644,17 +2644,28 @@ def _cargar_datos_json():
     return []
 
 
+# Lista de exclusión: personas que no se muestran en alcaldes/concejales ni en sueldos de concejales. Solo huellas
+# HMAC (clave en EXCLUSION_CLAVE), sin nombres -- ver backend/cargos_suprimidos.py.
+try:
+    from backend import cargos_suprimidos as _cargos_suprimidos   # gunicorn backend.app:app
+except ImportError:
+    import cargos_suprimidos as _cargos_suprimidos                # python backend/app.py y scripts con "import app"
+CARGOS_SUPRIMIDOS = _cargos_suprimidos.cargar()
+
+
 def _cargar_alcaldes_concejales():
     """Carga alcaldes_concejales.json (generado por actualizar_alcaldes.py a
     partir del Ministerio de Política Territorial y Memoria Democrática).
     Dato estático: no se recalcula en caliente, solo se refresca re-lanzando
-    ese script periódicamente."""
+    ese script periódicamente. Ya sin las personas de CARGOS_SUPRIMIDOS."""
     if os.path.exists(ALCALDES_FILE):
         try:
             with open(ALCALDES_FILE, encoding="utf-8") as f:
                 d = json.load(f)
                 if isinstance(d, dict):
-                    return d.get("municipios", {})
+                    municipios = d.get("municipios", {})
+                    _cargos_suprimidos.aplicar_alcaldes(municipios, CARGOS_SUPRIMIDOS)
+                    return municipios
         except Exception:
             pass
     return {}
@@ -2685,6 +2696,7 @@ def _cargar_sueldos_concejales():
         registros = d.get("registros", []) if isinstance(d, dict) else []
     except Exception:
         return out
+    registros, _ = _cargos_suprimidos.aplicar_sueldos(registros, CARGOS_SUPRIMIDOS)
     for r in registros:
         try:
             reg = {"municipio": str(r["municipio"]).strip(), "provincia": str(r.get("provincia", "")).strip(),
@@ -5250,7 +5262,8 @@ def alcalde_concejales_html(municipio, provincia=None):
         return ""
 
     alcalde = info.get("alcalde") or {}
-    nombre_alcalde = _capitalizar_nombre(alcalde.get("nombre", ""))
+    nombre_alcalde = _capitalizar_nombre(alcalde.get("nombre", "")) or (
+        _t("Nombre no mostrado") if alcalde.get("suprimido") else "")   # ver CARGOS_SUPRIMIDOS
     alcalde_html = ""
     relevo = None
     if nombre_alcalde:
@@ -5304,10 +5317,9 @@ def alcalde_concejales_html(municipio, provincia=None):
         cargo_c = esc(c.get("cargo", ""))
         partido_c = c.get("partido", "")
         sufijo_c = f" ({esc(partido_c)})" if partido_c else ""
-        items.append(
-            f'<li><a href="{esc(transp_url)}" target="_blank" rel="noopener">{nombre_c}</a> '
-            f'<span class="conc-cargo">— {cargo_c}{sufijo_c}</span></li>'
-        )
+        enlace_c = (f'<span class="conc-oculto">{_t("Nombre no mostrado")}</span>' if c.get("suprimido") else
+                    f'<a href="{esc(transp_url)}" target="_blank" rel="noopener">{nombre_c}</a>')
+        items.append(f'<li>{enlace_c} <span class="conc-cargo">— {cargo_c}{sufijo_c}</span></li>')
 
     dd_html = ""
     if concejales:
