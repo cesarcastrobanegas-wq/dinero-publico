@@ -242,8 +242,8 @@ def evaluar(lic, perfil, ahora):
             # sin cifra en el anuncio, ni con la mitad del máximo legal llegaría (decisión de César, 02-11-2026)
             etiqueta = DESPROPORCIONADO
             fuera.append(f"Aunque el pliego pidiera la mitad del máximo legal ({F.eur(FACTOR_DESPROPORCION * vam)} "
-                         "al año), su empresa no llegaría; solo sería viable en UTE o apoyándose en la solvencia de "
-                         "otra empresa (art. 75 LCSP).")
+                         "al año), su empresa no llegaría; solo sería viable en UTE (art. 69 LCSP) o apoyándose en la "
+                         "solvencia de otra empresa (art. 75 LCSP).")
         elif hi_f < exigida:
             # sin la cifra del anuncio solo sabemos el tope legal: el pliego puede pedir menos
             cond.append(pide + ": su empresa no llega a ese tope, pero puede que el pliego pida menos: revise la "
@@ -364,7 +364,7 @@ esa. Si su facturación no llega ni en lo más alto de su tramo a la cifra que d
 <b>fuera de alcance</b>. Si el anuncio no da la cifra, solo sabemos el máximo que permite la ley y el pliego puede
 pedir menos: entonces <b>encaja con condiciones</b> («revise la solvencia»), salvo que su empresa no llegue ni a la
 mitad de ese máximo: entonces queda <b>fuera de alcance</b> con la etiqueta «Desproporcionado (estimación nuestra)»,
-porque solo sería viable en UTE o apoyándose en la solvencia de otra empresa (art. 75 de la misma ley). También si la cifra está dentro de su
+porque solo sería viable en UTE (art. 69 de la misma ley) o apoyándose en la solvencia de otra empresa (art. 75). También si la cifra está dentro de su
 tramo. En el procedimiento simplificado sumario no se pide solvencia.</li>
 <li><b>Clasificación de contratista</b>: en obras de 500.000 € o más es obligatoria (art. 77 de la misma ley). Si no la
 tiene, se la enseñamos igual como <b>«encaja con condiciones: requiere clasificación»</b>, porque puede pedirla o ir

@@ -87,8 +87,8 @@ ok(r["grupo"] == E.CONDICIONES and not r["etiqueta"], "VAM 400k: 0,75 x VAM = 30
 r = E.evaluar(lic(presupuesto=401_000), perfil(), AHORA)[0]
 ok(r["grupo"] == E.FUERA and r["etiqueta"] == "Desproporcionado (estimación nuestra)",
    "VAM 401k: 0,75 x VAM > 300k: fuera, etiqueta «Desproporcionado (estimación nuestra)»")
-ok(r["fuera"][0].startswith("Aunque el pliego pidiera la mitad del máximo legal") and "UTE" in r["fuera"][0]
-   and "art. 75 LCSP" in r["fuera"][0], "texto: mitad del máximo legal, UTE, solvencia de otra empresa (art. 75)")
+ok(r["fuera"][0].startswith("Aunque el pliego pidiera la mitad del máximo legal") and "en UTE (art. 69 LCSP) o apoyándose en la solvencia de otra empresa (art. 75 LCSP)." in r["fuera"][0],
+   "texto: mitad del máximo legal, UTE (art. 69), solvencia de otra empresa (art. 75)")
 r = E.evaluar(lic(presupuesto=401_000, req={"umbral_eco": 200_000}), perfil(), AHORA)[0]
 ok(r["grupo"] != E.FUERA, "con la cifra del anuncio (200k) manda el anuncio aunque sea desproporcionado: no fuera")
 ok(grupo(lic(presupuesto=500_000, duracion_meses=60)) == E.ENCAJA, "500k en 5 años: VAM 100k, exige 150k: encaja")

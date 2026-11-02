@@ -118,8 +118,8 @@ Decisión de César. Solvencia, de arriba abajo:
    si el anuncio pide poco, no se aplica la regla de desproporción aunque el contrato sea grande.
 2. **Sin cifra en el anuncio** y la empresa no llega ni a **0,75 × VAM** (la mitad del máximo legal) → **fuera de
    alcance**, con la etiqueta **«Desproporcionado (estimación nuestra)»** encima del título y el texto: «Aunque el
-   pliego pidiera la mitad del máximo legal (X € al año), su empresa no llegaría; solo sería viable en UTE o
-   apoyándose en la solvencia de otra empresa (art. 75 LCSP).»
+   pliego pidiera la mitad del máximo legal (X € al año), su empresa no llegaría; solo sería viable en UTE
+   (art. 69 LCSP) o apoyándose en la solvencia de otra empresa (art. 75 LCSP).»
 3. **Sin cifra**, entre 0,75 y 1,5 × VAM → **con condiciones** («revise la solvencia»), como en §2 bis.
 
 Se compara con el **tope** del tramo de facturación (lo más favorable para la empresa). Ejemplo, tramo 150-300k:
