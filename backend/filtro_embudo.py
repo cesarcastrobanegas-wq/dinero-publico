@@ -18,7 +18,9 @@ Criterios (la página los explica en lenguaje llano, ver CRITERIOS_HTML):
 2. Solvencia económica (art. 87.3.a LCSP): el órgano puede pedir como mucho una facturación anual de 1,5 veces el valor
    anual medio (VAM) del contrato. VAM = presupuesto sin IVA del lote o del contrato / duración en años (mínimo 1).
    Si el anuncio trae la cifra exigida (ThresholdQuantity), manda esa. Facturación por tramos: si el límite bajo del
-   tramo ya llega -> encaja; si ni el límite alto llega -> FUERA DE ALCANCE; en medio -> CON CONDICIONES. Abierto
+   tramo ya llega -> encaja; en medio -> CON CONDICIONES. Si ni el límite alto llega: FUERA DE ALCANCE solo cuando la
+   cifra viene del anuncio; si es el tope legal calculado por nosotros, CON CONDICIONES (el pliego puede pedir menos;
+   decisión de César, 02-11-2026). Abierto
    simplificado sumario (art. 159.6 LCSP) no pide solvencia. Clasificación que cubre la exigida sustituye a la
    solvencia.
 3. Obras de valor estimado >= 500.000 EUR (art. 77.1.a LCSP): sin clasificación -> CON CONDICIONES "requiere
@@ -229,8 +231,12 @@ def evaluar(lic, perfil, ahora):
             bien.append("Su clasificación de contratista le sirve para demostrar la solvencia económica.")
         elif lo_f >= exigida:
             bien.append(pide + ": su empresa la cubre.")
-        elif hi_f < exigida:
+        elif hi_f < exigida and umbral:
             fuera.append(pide + ": su empresa no llega.")
+        elif hi_f < exigida:
+            # sin la cifra del anuncio solo sabemos el tope legal: el pliego puede pedir menos
+            cond.append(pide + ": su empresa no llega a ese tope, pero puede que el pliego pida menos: revise la "
+                        "solvencia en el pliego.")
         else:
             cond.append(pide + ": depende de su cifra exacta de facturación, que está en ese tramo.")
 
@@ -342,8 +348,10 @@ Lo que no es de su sector, de su zona o de su rango de importe no aparece en nin
 contrato entero no.</li>
 <li><b>Solvencia económica</b>: la ley permite pedir como mucho una facturación anual de 1,5 veces lo que vale el
 contrato al año (art. 87.3.a de la Ley de Contratos del Sector Público). Si el anuncio dice la cifra exacta, usamos
-esa. Si su facturación no llega ni en lo más alto de su tramo, la licitación queda <b>fuera de alcance</b>; si está
-en su tramo, <b>encaja con condiciones</b>. En el procedimiento simplificado sumario no se pide solvencia.</li>
+esa. Si su facturación no llega ni en lo más alto de su tramo a la cifra que dice el anuncio, la licitación queda
+<b>fuera de alcance</b>. Si el anuncio no da la cifra, solo sabemos el máximo que permite la ley y el pliego puede
+pedir menos: entonces <b>encaja con condiciones</b> («revise la solvencia»). También si la cifra está dentro de su
+tramo. En el procedimiento simplificado sumario no se pide solvencia.</li>
 <li><b>Clasificación de contratista</b>: en obras de 500.000 € o más es obligatoria (art. 77 de la misma ley). Si no la
 tiene, se la enseñamos igual como <b>«encaja con condiciones: requiere clasificación»</b>, porque puede pedirla o ir
 en unión temporal (UTE) con otra empresa.</li>

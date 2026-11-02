@@ -24,6 +24,7 @@ Commits (pequeños, cada uno probado):
 | 6233676 | Motor y páginas del embudo (`backend/filtro_embudo.py`) |
 | 2bf3aad | Ruta en la web, apagada salvo `FILTRO_EMBUDO=1`, y pruebas (`backend/filtro_embudo_prueba.py`) |
 | 0b25393 | Este informe y las capturas (`docs/filtro_embudo/`) |
+| (02-11) | **Cambio pedido por César:** «fuera de alcance» por solvencia solo con la cifra del anuncio (§2 bis) |
 
 ---
 
@@ -74,7 +75,7 @@ misma licitación van juntos en una ficha.
 | Sector | Algún CPV del contrato o del lote empieza por una división marcada | Si no, no sale |
 | Zona | Provincia del lugar de ejecución (NUTS; si falta, la de la fila o el CP del órgano); con solo la comunidad, entra si marcó alguna provincia de ella; «toda España» admite todo | Si no, no sale |
 | Importe | Importe sin IVA del lote o del contrato dentro del rango | Si no, no sale |
-| **Solvencia económica** (art. 87.3.a LCSP) | Pueden pedir hasta **1,5 × valor anual medio** (VAM = presupuesto sin IVA / duración en años, mínimo 1). **Si el anuncio da la cifra, manda esa.** | Tramo bajo ya llega → encaja. Ni el tope del tramo llega → **fuera de alcance**. En medio → **con condiciones** |
+| **Solvencia económica** (art. 87.3.a LCSP) | Pueden pedir hasta **1,5 × valor anual medio** (VAM = presupuesto sin IVA / duración en años, mínimo 1). **Si el anuncio da la cifra, manda esa.** | Tramo bajo ya llega → encaja. En medio → **con condiciones**. Ni el tope del tramo llega → **fuera de alcance solo si la cifra viene del anuncio**; si es nuestro cálculo (tope legal), **con condiciones: «puede que el pliego pida menos: revise la solvencia»** |
 | Procedimiento sumario (art. 159.6) | Abierto simplificado con VE < 80.000 € (obras) o < 60.000 € (resto) | No se pide solvencia |
 | **Clasificación** (art. 77 LCSP) | Obras con valor estimado ≥ 500.000 € (no sumario) | Sin clasificación → **con condiciones: «requiere clasificación»**. Nunca se oculta por esto solo. Si la suya cubre la pedida, encaja y además le sirve como solvencia |
 | **Trabajadores** | Si el VAM pasa de 100.000 € por persona del tope de su tramo | Solo un aviso «su plantilla puede quedarse corta». **No cambia el grupo** |
@@ -85,10 +86,33 @@ pantalla (lo que pase se cuenta y se sugiere afinar).
 
 ---
 
+## 2 bis. Cambio del 02-11: «fuera de alcance» solo con la cifra del anuncio
+
+Decisión de César: el 1,5 × VAM es el **máximo** que permite la ley, no lo que pide cada pliego. Si el anuncio no
+trae la cifra (`umbral_eco`) y la facturación no llega a ese máximo, la licitación ya **no** va a «fuera de alcance»
+sino a **«encaja con condiciones»**, con el texto «su empresa no llega a ese tope, pero puede que el pliego pida menos:
+revise la solvencia en el pliego». Solo queda fuera cuando la cifra viene del anuncio (del lote, si es un lote; la
+cifra del contrato entero no se aplica a sus lotes).
+
+**Efecto medido** con la copia del 30-10 (4.711 abiertas; solo el 8 % trae la cifra):
+
+| Perfil inventado | Antes (encaja / cond. / fuera) | Ahora |
+|---|---|---|
+| Limpieza, 1-5 personas, Murcia, 150-300k | 10 / 6 / 5 | 10 / 11 / **0** |
+| Constructora 11-25, Murcia + C. Valenciana, 1,5-3M, sin clasificación | 181 / 32 / 16 | 181 / 47 / **1** |
+| Constructora clasificada, toda España, 3-10M | 1.277 / 285 / 26 | 1.277 / 309 / **2** |
+| Informática 1-5, toda España, <60k, 10k-200k | 62 / 69 / 61 | 62 / 124 / **6** |
+| Perfil de las capturas (limpieza, Murcia + C. Valenciana) | 33 / 14 / 13 | 33 / 27 / **0** |
+
+**Ojo:** con esta regla, «fuera de alcance» queda casi vacío y una **obra de 30 millones para una empresa de 5
+personas y 300.000 € de facturación sale como «encaja con condiciones»** si el anuncio no trae la cifra (que es lo
+normal). Es lo contrario del ejemplo del encargo. Ver la decisión 8 en §6.
+
 ## 3. Capturas
 
 Con la copia de datos del 30-10 y un perfil inventado (limpieza, Murcia + Comunitat Valenciana, 150-300k, 1-5
-personas, sin clasificación): **33 encajan, 14 con condiciones, 13 fuera de alcance.**
+personas, sin clasificación): **33 encajan, 27 con condiciones, 0 fuera de alcance** (antes del cambio del 02-11:
+33 / 14 / 13).
 
 | | |
 |---|---|
@@ -104,8 +128,8 @@ Las capturas de página entera (16.000 px de alto) están fuera del repositorio,
 
 ## 4. Cómo probarlo en local
 
-**Pruebas del motor** (rápidas, sin web ni base de datos; 38 casos inventados, entre ellos «obra de 30 millones para
-una empresa de 5 personas → fuera de alcance»):
+**Pruebas del motor** (rápidas, sin web ni base de datos; 42 casos inventados, entre ellos «obra de 30 millones para
+una empresa de 5 personas»: con condiciones sin cifra en el anuncio, fuera de alcance con ella):
 
 ```
 cd Desktop/wt_filtro_embudo
@@ -149,7 +173,8 @@ incluidas cookies, no-store, socios.db y barra horizontal) es `prueba_embudo_web
    encargo («solo con plazo abierto»), salen todas las abiertas, con el aviso «cierra en menos de 2 días».
 6. **Trabajadores = tope del tramo** para el aviso (el más favorable): así el aviso solo sale cuando ni en lo más
    alto del tramo encaja bien. 100.000 € de VAM por persona es la misma cifra orientativa que usa el PR #6.
-7. **El tramo de facturación decide tres casos** (llega, no llega, depende). En el tramo «menos de 60.000 €»
+7. **El tramo de facturación decide tres casos** (llega, no llega, depende; «no llega» solo saca de alcance con la
+   cifra del anuncio, ver §2 bis). En el tramo «menos de 60.000 €»
    cualquier contrato con solvencia sale como «depende de su cifra exacta», porque el tramo empieza en 0.
 8. **Clasificación con «Sí» sin códigos**: «con condiciones: compruebe que la suya la cubre» (no puedo saberlo).
 9. **«Toda España»** también admite obras cuyo anuncio no dice el lugar (el PR #6 las quita para no ofrecer obras de
@@ -171,6 +196,11 @@ incluidas cookies, no-store, socios.db y barra horizontal) es `prueba_embudo_web
 6. **Traducciones gl/ca/eu**: la página responde con prefijo pero en castellano.
 7. **Texto legal**: la página dice «Es una ayuda, no un informe jurídico». Que lo mire el abogado junto con lo del
    PR #6.
+8. **¿Un tope para lo desproporcionado?** Con la regla del 02-11, sin cifra en el anuncio nada sale de alcance por
+   solvencia (la obra de 30 millones para 5 personas queda «con condiciones»). Si quieres recuperar el «no podemos
+   ofrecer una licitación de 30 millones a una empresa con 5 trabajadores», una opción sería: fuera de alcance también
+   cuando la empresa no llegaría ni aunque el pliego pidiera la mitad del tope (0,75 × VAM). No lo he hecho: es tu
+   decisión.
 
 ---
 
@@ -179,7 +209,8 @@ incluidas cookies, no-store, socios.db y barra horizontal) es `prueba_embudo_web
 Medido en la copia del 30-10 (4.711 licitaciones abiertas con requisitos leídos):
 
 - **Cifra de solvencia del pliego**: solo **382** (8 %) la traen en el anuncio. En el resto se usa el tope legal
-  (1,5 × VAM) y la ficha lo dice («cálculo nuestro, el anuncio no da la cifra»). El pliego (PCAP) no lo leemos; esa
+  (1,5 × VAM), la ficha lo dice («cálculo nuestro, el anuncio no da la cifra») y, desde el 02-11, si no llega se
+  queda en «con condiciones», no fuera. El pliego (PCAP) no lo leemos; esa
   sería la «fase 2» ya apuntada en el PR #6.
 - **Clasificación pedida**: 181 de las 270 obras ≥ 500.000 € dicen el grupo; en las otras 89 solo puedo calcular la
   categoría a partir del VAM y la ficha dice «el anuncio no dice el grupo».

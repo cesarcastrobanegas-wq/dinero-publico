@@ -75,7 +75,11 @@ ok(grupo(lic(), perfil(importe_min=["50000"], importe_max=["100000"])) is not No
 # --- solvencia económica (art. 87.3.a): exigida = 1,5 x VAM
 ok(grupo(lic(presupuesto=90_000)) == E.ENCAJA, "VAM 90k -> exige 135k, tramo 150-300k: encaja")
 ok(grupo(lic(presupuesto=150_000)) == E.CONDICIONES, "VAM 150k -> exige 225k, dentro del tramo: con condiciones")
-ok(grupo(lic(presupuesto=250_000)) == E.FUERA, "VAM 250k -> exige 375k > 300k: fuera de alcance")
+r = E.evaluar(lic(presupuesto=250_000), perfil(), AHORA)[0]
+ok(r["grupo"] == E.CONDICIONES and not r["fuera"] and "revise la solvencia" in r["condiciones"][0],
+   "VAM 250k, tope legal 375k > 300k pero el anuncio no da la cifra: con condiciones, «revise la solvencia»")
+ok(grupo(lic(presupuesto=250_000, req={"umbral_eco": 375_000})) == E.FUERA,
+   "la misma con 375k en el anuncio: fuera de alcance")
 ok(grupo(lic(presupuesto=500_000, duracion_meses=60)) == E.ENCAJA, "500k en 5 años: VAM 100k, exige 150k: encaja")
 ok(grupo(lic(presupuesto=250_000, req={"umbral_eco": 100_000})) == E.ENCAJA, "umbral del anuncio 100k < 150k: encaja")
 ok(grupo(lic(presupuesto=50_000, req={"umbral_eco": 400_000})) == E.FUERA, "umbral del anuncio 400k > 300k: fuera")
@@ -98,8 +102,11 @@ ok(r["grupo"] == E.CONDICIONES and "compruebe" in r["condiciones"][0], "dice que
 ok(grupo(lic(**dict(obra, presupuesto=400_000, valor_estimado=400_000)), perfil(**pc)) == E.ENCAJA,
    "obra de 400k: no hace falta clasificación")
 ok(grupo(lic(**dict(obra, presupuesto=30_000_000, valor_estimado=30_000_000)),
+         perfil(cpv=["45"], facturacion=["150k-300k"], trabajadores=["1-5"])) == E.CONDICIONES,
+   "obra de 30 millones, 5 personas y 300k, sin cifra en el anuncio: con condiciones (revise la solvencia)")
+ok(grupo(lic(**dict(obra, presupuesto=30_000_000, valor_estimado=30_000_000, req={"umbral_eco": 45_000_000})),
          perfil(cpv=["45"], facturacion=["150k-300k"], trabajadores=["1-5"])) == E.FUERA,
-   "obra de 30 millones para una empresa de 5 personas y 300k: fuera de alcance")
+   "la misma obra con la cifra en el anuncio: fuera de alcance")
 
 # --- trabajadores: solo aviso
 r = E.evaluar(lic(presupuesto=90_000), perfil(facturacion=[">10M"], trabajadores=["1-5"]), AHORA)[0]
@@ -113,7 +120,15 @@ lotes = [{"id": "1", "titulo": "Lote pequeño", "presupuesto": 50_000, "cpvs": [
          {"id": "2", "titulo": "Lote grande", "presupuesto": 2_000_000, "cpvs": ["90910000"], "nuts": "ES620"}]
 res = E.filtrar([lic(presupuesto=2_050_000, valor_estimado=2_050_000, lotes_detalle=lotes)], perfil(), AHORA)
 ok(len(res[E.ENCAJA]) == 1 and res[E.ENCAJA][0]["lote"] == "1", "lote pequeño encaja")
-ok(len(res[E.FUERA]) == 1 and res[E.FUERA][0]["lote"] == "2", "lote grande fuera de alcance")
+ok(len(res[E.CONDICIONES]) == 1 and res[E.CONDICIONES][0]["lote"] == "2" and not res[E.FUERA],
+   "lote grande sin cifra en el anuncio: con condiciones")
+lotes[1]["req"] = {"umbral_eco": 3_000_000}
+res = E.filtrar([lic(presupuesto=2_050_000, valor_estimado=2_050_000, lotes_detalle=lotes)], perfil(), AHORA)
+ok(len(res[E.FUERA]) == 1 and res[E.FUERA][0]["lote"] == "2", "lote grande con la cifra en su lote: fuera de alcance")
+res = E.filtrar([lic(presupuesto=2_050_000, valor_estimado=2_050_000, lotes_detalle=[dict(l) for l in lotes[:1]]
+                     + [{k: v for k, v in lotes[1].items() if k != "req"}], req={"umbral_eco": 3_000_000})],
+                perfil(), AHORA)
+ok(not res[E.FUERA], "cifra solo del contrato entero (no del lote): no cuenta para el lote, no queda fuera")
 
 # --- orden por fecha límite dentro del grupo
 res = E.filtrar([lic(id="B", fin_plazo="2026-11-25 10:00", presupuesto=10_000),
