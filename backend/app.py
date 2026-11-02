@@ -2649,17 +2649,28 @@ def _cargar_alcaldes_concejales():
     partir del Ministerio de Política Territorial y Memoria Democrática).
     Dato estático: no se recalcula en caliente, solo se refresca re-lanzando
     ese script periódicamente."""
+    global ALCALDES_CONCEJALES_FECHA
     if os.path.exists(ALCALDES_FILE):
         try:
             with open(ALCALDES_FILE, encoding="utf-8") as f:
                 d = json.load(f)
                 if isinstance(d, dict):
+                    ALCALDES_CONCEJALES_FECHA = _fecha_dma(d.get("generado", ""))
                     return d.get("municipios", {})
         except Exception:
             pass
     return {}
 
 
+def _fecha_dma(texto):
+    """"2026-09-30 19:52:48" o "2026-09-30" -> "30-09-2026"; "" si no tiene esa forma."""
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", texto or "")
+    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else ""
+
+
+# Fuente oficial de alcaldes y concejales (la que descarga actualizar_alcaldes.py) y fecha de esa descarga.
+ALCALDES_FUENTE_URL = "https://concejales.redsara.es/consulta/"
+ALCALDES_CONCEJALES_FECHA = ""
 ALCALDES_CONCEJALES = _cargar_alcaldes_concejales()
 
 # ─── Sueldos de concejales publicados por el propio ayuntamiento (2026-09-26) ───────────────────────────────
@@ -5233,9 +5244,11 @@ def alcalde_concejales_html(municipio, provincia=None):
     """Bloque HTML de alcalde/alcaldesa + desplegable de concejales para la
     ficha de un ayuntamiento, a partir de ALCALDES_CONCEJALES (Ministerio de
     Política Territorial y Memoria Democrática, ver actualizar_alcaldes.py).
-    Cada concejal enlaza a una búsqueda de la transparencia de su
-    ayuntamiento (no hay una fuente pública con la URL directa de cada uno
-    de los 266 municipios). Devuelve "" si no hay datos para el municipio.
+    Los nombres no llevan enlace: la fuente no tiene una página por persona
+    (solo descargas XLSX de toda España). Al pie de la lista va una sola línea
+    «Fuente: ..., datos a dd-mm-aaaa» con la fecha de la descarga (revisión
+    del 02-11-2026: antes cada nombre enlazaba a una búsqueda de Google).
+    Devuelve "" si no hay datos para el municipio.
 
     El sueldo del alcalde/sa (si existe en RETRIBUCIONES_ISPA, ver
     actualizar_retribuciones.py) se muestra junto a su nombre -- es la única
@@ -5293,8 +5306,6 @@ def alcalde_concejales_html(municipio, provincia=None):
                          f'<b class="pol-nombre">{esc(nombre_alcalde)}</b>{sufijo}{retrib_html}</span>')
 
     concejales = info.get("concejales") or []
-    organismo = _nombre_organismo_municipal(municipio, info.get("provincia"))
-    transp_url = f"https://www.google.com/search?q={quote_plus(organismo + ' transparencia')}"
 
     items = []
     for c in concejales:
@@ -5305,14 +5316,18 @@ def alcalde_concejales_html(municipio, provincia=None):
         partido_c = c.get("partido", "")
         sufijo_c = f" ({esc(partido_c)})" if partido_c else ""
         items.append(
-            f'<li><a href="{esc(transp_url)}" target="_blank" rel="noopener">{nombre_c}</a> '
+            f'<li><b class="pol-nombre">{nombre_c}</b> '
             f'<span class="conc-cargo">— {cargo_c}{sufijo_c}</span></li>'
         )
 
     dd_html = ""
     if concejales:
+        fuente = (f'<a href="{esc(ALCALDES_FUENTE_URL)}" target="_blank" rel="noopener nofollow">'
+                  f'{esc(_t("Ministerio de Política Territorial y Memoria Democrática"))}</a>')
+        pie = (_t("Fuente: {fuente}, datos a {fecha}").format(fuente=fuente, fecha=esc(ALCALDES_CONCEJALES_FECHA))
+               if ALCALDES_CONCEJALES_FECHA else _t("Fuente: {fuente}").format(fuente=fuente))
         dd_html = (f'<details class="concejales-dd"><summary>{_t("Concejales ({n})").format(n=len(concejales))}</summary>'
-                   f'<ul>{"".join(items)}</ul></details>')
+                   f'<ul>{"".join(items)}</ul><div class="pol-retrib-nota">{pie}.</div></details>')
 
     if not alcalde_html and not dd_html:
         return ""
