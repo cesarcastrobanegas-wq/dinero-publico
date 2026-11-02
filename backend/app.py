@@ -18061,6 +18061,7 @@ a.btn-ver:hover{background:var(--tint);}
 .top1-directivo{font-size:12px;color:var(--blue);}
 .rk-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:32px 0 4px;padding-bottom:10px;border-bottom:2px solid var(--accent);scroll-margin-top:96px;}
 .rk-section-header h2{font-size:18px;color:var(--text);}
+.portada-actualizado{font-size:12px;color:var(--dim);text-align:right;margin:-6px 0 10px;}
 .rk-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 10px;}
 .muni-tile a.btn-ver:hover{background:var(--tint);}
 
@@ -24253,6 +24254,17 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     # 2026-10-10: el contador enseñaba solo los contratos formales; los menores (seis veces más) no figuraban.
     with _db_lock:
         total_menores = _db.execute("SELECT COUNT(*) FROM contratos_menors_locales").fetchone()[0]
+        # Revisión del 02-11-2026: fecha real de la última carga = el guardado más reciente de una ficha municipal
+        # (columna ts, la escribe cada refresco; el nocturno las recorre todas). Nada si no hay ninguna fecha válida.
+        ts_ultima = _db.execute("SELECT MAX(ts) FROM municipios WHERE ts > 0").fetchone()[0]
+    actualizado_html = ""
+    if ts_ultima:
+        try:
+            from zoneinfo import ZoneInfo
+            f_ult = datetime.fromtimestamp(ts_ultima, ZoneInfo("Europe/Madrid")).strftime("%d-%m-%Y")
+        except Exception:                  # sin base de zonas horarias (Windows sin tzdata): hora local del equipo
+            f_ult = datetime.fromtimestamp(ts_ultima).strftime("%d-%m-%Y")
+        actualizado_html = f'<div class="portada-actualizado">{_t("Datos actualizados el {fecha}").format(fecha=f_ult)}</div>'
     total_e = len(set(
         normalizar(c.get("empresa", ""))
         for d in datos for c in d.get("contratos", [])
@@ -24266,7 +24278,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       <div class="stat"><span>{fmt_num(total_menores)}</span>{_t("Contratos menores")}</div>
       <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
       <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
-    </div>""" + _portada_cifras_secciones_html()
+    </div>""" + actualizado_html + _portada_cifras_secciones_html()
 
     # Cobertura por región -- una sola tarjeta por provincia con TODO junto
     # (municipios, habitantes, contratos, importe, deuda/hab.). Hasta
