@@ -31,6 +31,8 @@ import unicodedata
 import requests
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
+import cargos_suprimidos
 OUT_FILE = os.path.join(BASE_DIR, "sueldos_concejales.json")
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
@@ -2555,7 +2557,9 @@ def _leer():
 
 
 def _escribir(registros):
-    """Escritura atómica (fichero temporal + os.replace): nadie lee nunca un JSON a medias."""
+    """Escritura atómica (fichero temporal + os.replace): nadie lee nunca un JSON a medias. Sin las personas de
+    cargos_suprimidos.json (lista de exclusión)."""
+    registros, _ = cargos_suprimidos.aplicar_sueldos(registros, cargos_suprimidos.cargar())
     registros = sorted(registros, key=lambda r: (r["provincia"], r["municipio"], -r["importe"], r["nombre"]))
     tmp = f"{OUT_FILE}.{os.getpid()}.tmp"
     with open(tmp, "w", encoding="utf-8") as f:
