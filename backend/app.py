@@ -2735,6 +2735,13 @@ def _cargar_retribuciones_ispa():
 
 RETRIBUCIONES_ISPA = _cargar_retribuciones_ispa()
 
+
+def ispa_fuente_url(anio):
+    """Página oficial del Espacio ISPA con los ficheros de retribuciones del ejercicio `anio` (la edición «ISPA anio+1»,
+    p. ej. ejercicio 2024 -> ISPA 2025). Comprobada el 02-11-2026: enlaza retribuciones_alcaldes.xlsx, el fichero que
+    descarga actualizar_retribuciones.py."""
+    return f"https://digital.gob.es/funcion-publica/dgfp/espacio-ispa/estadisticas/informac_estad_{int(anio)}"
+
 # Presidente/a de cada provincia + su retribución anual (ISPA 2025,
 # percepciones del ejercicio 2024). Dato institucional (5 personas, cambia
 # como mucho una vez por mandato de 4 años) -- no hay script de
@@ -21285,6 +21292,13 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
     ranking_alcaldes = [f for f in _calcular_ranking_alcaldes() if _de_comunidad(f, "alc")]
     anio_ispa = next((f["anio"] for f in ranking_alcaldes if f.get("anio")), "")
+    # Revisión del 02-11-2026: antes solo decía «ISPA 2024», sin enlace y confundiendo edición y año de los datos.
+    if str(anio_ispa).isdigit():
+        ispa_badge = (f'{_t("Fuente:")} <a href="{esc(ispa_fuente_url(anio_ispa))}" target="_blank" rel="noopener nofollow">'
+                      f'ISPA {int(anio_ispa) + 1}, {esc(_t("Ministerio para la Transformación Digital y de la Función Pública"))} ↗</a>'
+                      f' · {_t("retribuciones de {anio}").format(anio=esc(anio_ispa))} · ')
+    else:
+        ispa_badge = ""
     filas_alcaldes_html = ""
     pag_alc, npag_alc = _rk_pagina(paginas.get("alc"), len(ranking_alcaldes))
     pags_actuales["alc"] = pag_alc
@@ -21453,7 +21467,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
   <div class="rk-section-header" id="alcaldes">
     <h2>{_t("Ranking de Sueldos: Alcaldes y Alcaldesas")}</h2>
-    <span class="rk-badge">ISPA {esc(anio_ispa)} · {_t("{n} municipios con dato").format(n=fmt_num(len(ranking_alcaldes)))}</span>
+    <span class="rk-badge">{ispa_badge}{_t("{n} municipios con dato").format(n=fmt_num(len(ranking_alcaldes)))}</span>
     {selector_alc_html}
   </div>
   <div class="section-title">{_t("De mayor a menor retribución anual ({ambito})").format(ambito=esc(_ambito("alc")))}</div>
