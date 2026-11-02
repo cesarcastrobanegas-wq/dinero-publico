@@ -17877,6 +17877,7 @@ tr:last-child td{border-bottom:none;}
 .ute-nota{font-size:10px;color:var(--dim);font-weight:normal;}
 .importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
 .importe.noloc{color:var(--dim);font-style:italic;font-weight:normal;}
+.importe.sinimp,table.t-tarjeta td.importe.sinimp{white-space:normal;min-width:7.5em;max-width:16em;}
 .directivo{color:var(--blue);}
 .cargo{color:var(--dim);font-size:11px;}
 .cargo-match{font-size:10.5px;line-height:1.5;margin-top:5px;padding:5px 8px;border-radius:4px;max-width:260px;}
@@ -19779,7 +19780,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     except (TypeError, ValueError):
         pass
     if sin_importe:
-        imp, imp_cls = _t("sin importe publicado"), "importe noloc"
+        imp, imp_cls = _t("sin importe publicado"), "importe noloc sinimp"
     if imp == "No localizado":
         imp = _t("No localizado")
     try:
