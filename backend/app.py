@@ -22550,13 +22550,24 @@ def _html_plan_recuperacion(f, res):
                               f'{esc(PROVINCIA_LABEL.get(p, p).replace("Provincia de ", ""))}</a></td>'
                               f'<td class="n">{fmt_num(v[0])}</td><td class="importe">{fmt_eur(str(v[1]))}</td></tr>'
                               for p, v in provs if v[0])
+            # Revisión del 02-11-2026: una fila por licitación. PLACE puede dar varias adjudicatarias con el mismo
+            # importe (la 2.ª lleva "#adj-..." en la dirección): a veces la misma UTE con su nombre antiguo y el nuevo
+            # (residuos de Madrid: CESPA -> PreZero), a veces adjudicaciones distintas (préstamos de varios bancos).
+            # Aquí solo se deja de repetir la fila; las sumas no se tocan (decisión pendiente de César).
+            top_lic = {}
+            for x in res.get("top", []):
+                g = top_lic.setdefault((html.unescape(x.get("url") or "").split("#adj-")[0], x["importe"]),
+                                       dict(x, n_adj=0))
+                g["n_adj"] += 1
             filas_t = "".join(
                 f'<tr><td><div class="empresa">{esc(x["titulo"])}</div>'
                 f'<div class="lid">{esc(x["organo"])}{" · " + esc(x["lugar"]) if x.get("lugar") else ""}</div>'
                 + (f'<div class="lid">{_t("Adjudicataria")}: {esc(x["empresa"])}</div>' if x.get("empresa") else "")
+                + (f'<div class="lid">{_t("PLACE da {n} adjudicatarias con este mismo importe.").format(n=x["n_adj"])}</div>'
+                   if x["n_adj"] > 1 else "")
                 + f'</td><td class="importe">{fmt_eur(str(x["importe"]))}</td>'
                 f'<td>{esc(x.get("fecha") or "")}<br><a class="link" href="{esc(html.unescape(x["url"]))}" '
-                f'target="_blank" rel="noopener">{_t("PLACE ↗")}</a></td></tr>' for x in res.get("top", [])[:10])
+                f'target="_blank" rel="noopener">{_t("PLACE ↗")}</a></td></tr>' for x in list(top_lic.values())[:10])
             partes.append(
                 f'<div style="display:flex;flex-wrap:wrap;gap:0 18px">'
                 f'<table class="t-tarjeta t-rank" style="flex:1 1 280px"><tr><th>{_t("Fondo")}</th><th>{_t("Contratos")}</th><th>{_t("Importe")}</th></tr>{filas_f}</table>'
