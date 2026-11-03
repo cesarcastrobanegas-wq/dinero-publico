@@ -10851,7 +10851,9 @@ def render_entidad_html(qs):
     contratos = d.get("contratos") or []
     total_pages = max(1, (len(contratos) + PAGE_SIZE - 1) // PAGE_SIZE)
     page = min(page, total_pages)
-    filas = "".join(_render_fila_contrato(c) for c in contratos[(page - 1) * PAGE_SIZE:page * PAGE_SIZE]) or \
+    repetidas = _adjudicatarias_repetidas(contratos)
+    filas = "".join(_render_fila_contrato(c, repetida=repetidas.get(id(c), 0))
+                    for c in contratos[(page - 1) * PAGE_SIZE:page * PAGE_SIZE]) or \
         f'<tr><td colspan="4" class="empty">{_t("Sin contratos adjudicados encontrados")}</td></tr>'
     importe = sum(_importe_contable(c) for c in contratos)
     empresas = len({(c.get("nif") or normalizar(c.get("empresa") or "")) for c in contratos if c.get("empresa")})
@@ -19765,9 +19767,30 @@ def _tl_lotes(lotes):
     return esc(_t("lotes {lotes}").format(lotes=", ".join(lotes)))
 
 
-def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=None):
+def _adjudicatarias_repetidas(contratos):
+    """{id(contrato): n} de las filas de una ficha que pertenecen a una licitación de PLACE con varias adjudicatarias
+    (las demás llevan "#adj-" en la dirección, ver _adjudicaciones_place) y el MISMO importe, sin lotes (con lotes es
+    normal que coincidan). Revisión del 02-11-2026: 361 licitaciones así en la copia del 30-10; a veces es real
+    (préstamos de varios bancos) y a veces no (CESPA -> PreZero en Madrid), así que se avisa en todas sus filas.
+    Las sumas no se tocan (decisión pendiente de César)."""
+    grupos = {}
+    for c in contratos:
+        url = html.unescape(c.get("url", "") or "")
+        try:
+            imp = float(c.get("importe_num") or 0)
+        except (TypeError, ValueError):
+            continue
+        if url and imp > 0:
+            grupos.setdefault((url.split("#adj-")[0], imp), []).append(c)
+    return {id(c): len(cs) for cs in grupos.values()
+            if len(cs) > 1 and any("#adj-" in (c.get("url") or "") for c in cs) and not any(c.get("lotes") for c in cs)
+            for c in cs}
+
+
+def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=None, repetida=False):
     """Genera la fila <tr> de un contrato. Reutilizada por la vista de
-    municipio y por los resultados de búsqueda global."""
+    municipio y por los resultados de búsqueda global. `repetida`: nº de adjudicatarias con el mismo importe en su
+    licitación (0 si no), ver _adjudicatarias_repetidas."""
     imp = c.get("importe", "") or "No localizado"
     imp_cls = "importe" if imp != "No localizado" else "importe noloc"
     # Revisión del 02-11-2026 (ficha de Willis Iberia): la fuente PUBLICA 0 € (comprobado en PLACE: «Importe de
@@ -19796,6 +19819,9 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
                     f'{_t("No se cuenta en las sumas.")}</span>')
     else:
         imp_nota = ""
+    if repetida:
+        imp_nota += (f'<span class="noloc-nota">⚠️ {_t("posible adjudicataria repetida")}: '
+                     f'{_t("PLACE da {n} adjudicatarias con este mismo importe.").format(n=repetida)}</span>')
 
     directivo, cargo_dir = _directivo_contrato(c)
     if directivo:
@@ -23202,7 +23228,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             contratos_shown = contratos_all[:PAGE_SIZE]
         total_pages = max(1, (total_muni + PAGE_SIZE - 1) // PAGE_SIZE)
 
-        filas = "".join(_render_fila_contrato(c, municipio=muni_name_d, provincia=d.get("provincia", provincia))
+        repetidas = _adjudicatarias_repetidas(contratos_all)
+        filas = "".join(_render_fila_contrato(c, municipio=muni_name_d, provincia=d.get("provincia", provincia),
+                                              repetida=repetidas.get(id(c), 0))
                          for c in contratos_shown)
 
         if not filas:
@@ -25048,19 +25076,24 @@ def render_busqueda_global_html(datos, q, provincia="murcia", pagina=1):
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
     q_norm = normalizar(q)
     resultados = []
+    repetidas = {}
     for d in datos:
         muni = d.get("municipio", "")
         prov_d = d.get("provincia", "murcia")
+        repetidas_d = _adjudicatarias_repetidas(d.get("contratos", []))
         for c in d.get("contratos", []):
             if (q_norm in normalizar(c.get("empresa", ""))
                     or q_norm in normalizar(_directivo_contrato(c)[0])
                     or q_norm in normalizar(muni)):
                 resultados.append((muni, prov_d, c))
+                if id(c) in repetidas_d:
+                    repetidas[id(c)] = repetidas_d[id(c)]
 
     if resultados:
         pagina, paginas = _rk_pagina(pagina, len(resultados), _BUSQUEDA_POR_PAGINA)
         ini = (pagina - 1) * _BUSQUEDA_POR_PAGINA
-        filas = "".join(_render_fila_contrato(c, municipio_label=m, municipio=m, provincia=p)
+        filas = "".join(_render_fila_contrato(c, municipio_label=m, municipio=m, provincia=p,
+                                              repetida=repetidas.get(id(c), 0))
                          for m, p, c in resultados[ini:ini + _BUSQUEDA_POR_PAGINA])
         q_prov_pag = _q_prov(provincia)
         paginacion = _rk_paginacion_html(
