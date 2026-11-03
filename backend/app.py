@@ -45,6 +45,10 @@ except ImportError:
     import filtro_licitaciones as FLIC
     import socios as SOC
 try:
+    from . import filtro_embudo as FEMB
+except ImportError:
+    import filtro_embudo as FEMB
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -27447,6 +27451,16 @@ def _filtro_formulario_resp(metodo, params):
     return _filtro_html(html_)
 
 
+# Embudo de licitaciones (/licitaciones/filtro, encargo del 2026-11-01; ver filtro_embudo.py). A diferencia del
+# formulario de arriba NO guarda nada: ni socios.db, ni cookies, ni correo; el resultado se calcula con lo que llega en
+# el POST y se olvida. Apagado salvo FILTRO_EMBUDO=1 (sin ella, 404) y sin enlaces desde ninguna página.
+FILTRO_EMBUDO = os.environ.get("FILTRO_EMBUDO", "") == "1"
+
+
+def _filtro_embudo_resp(metodo, params):
+    return _filtro_html(FEMB.responder(metodo, params, _filtro_licitaciones_abiertas, _ahora_madrid()))
+
+
 def _filtro_html(html_):
     return _resp(html_, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer"})
 
@@ -28513,6 +28527,8 @@ def render_404_html():
 
 
 def _route_get(path, qs, gzip_ok=False):
+    if FILTRO_EMBUDO and path.rstrip("/") == FEMB.RUTA:
+        return _filtro_embudo_resp("GET", {})          # lo que venga en la dirección se ignora: nada en los registros
     if FILTRO_FORMULARIO and path == FFORM.RUTA:
         return _filtro_formulario_resp("GET", qs)
     if FILTRO_FORMULARIO and path.startswith(FFORM.RUTA + "/"):
@@ -29000,6 +29016,8 @@ def _route_post(path, params):
             if respuesta:
                 return respuesta
 
+        if FILTRO_EMBUDO and path.rstrip("/") == FEMB.RUTA:
+            return _filtro_embudo_resp("POST", params)
         if FILTRO_FORMULARIO and path == FFORM.RUTA:
             return _filtro_formulario_resp("POST", params)
         if FILTRO_FORMULARIO and path.startswith(FFORM.RUTA + "/"):
