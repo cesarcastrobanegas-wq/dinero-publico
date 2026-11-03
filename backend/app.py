@@ -25022,8 +25022,12 @@ def _stats_localizacion():
     }
 
 
-def render_busqueda_global_html(datos, q, provincia="murcia"):
-    """Resultados de la búsqueda global por empresa, directivo o municipio."""
+_BUSQUEDA_POR_PAGINA = 100
+
+
+def render_busqueda_global_html(datos, q, provincia="murcia", pagina=1):
+    """Resultados de la búsqueda global por empresa, directivo o municipio.
+    Paginada de 100 en 100 (2026-11-03): antes se cortaba en 300 sin forma de ver el resto (Willis Iberia, 373)."""
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
     q_norm = normalizar(q)
     resultados = []
@@ -25037,12 +25041,15 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
                 resultados.append((muni, prov_d, c))
 
     if resultados:
+        pagina, paginas = _rk_pagina(pagina, len(resultados), _BUSQUEDA_POR_PAGINA)
+        ini = (pagina - 1) * _BUSQUEDA_POR_PAGINA
         filas = "".join(_render_fila_contrato(c, municipio_label=m, municipio=m, provincia=p)
-                         for m, p, c in resultados[:300])
-        aviso = (f'<div class="gs-hint" style="margin-bottom:10px">'
-                 f'{_t("Mostrando los primeros 300 de {n} resultados.").format(n=len(resultados))}</div>'
-                 ) if len(resultados) > 300 else ""
-        tabla = f"""{aviso}<table class="t-tarjeta">
+                         for m, p, c in resultados[ini:ini + _BUSQUEDA_POR_PAGINA])
+        q_prov_pag = _q_prov(provincia)
+        paginacion = _rk_paginacion_html(
+            pagina, paginas, len(resultados),
+            lambda n: f"/?q={quote_plus(q)}{q_prov_pag}" + (f"&pag={n}" if n > 1 else ""), _t("resultados"))
+        tabla = f"""{paginacion}<table class="t-tarjeta">
           <tr>
             <th>{_t("Empresa adjudicataria / Contrato")}</th>
             <th>{_t("Importe")}</th>
@@ -25050,7 +25057,7 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
             <th>{_t("Estado / Fuente")}</th>
           </tr>
           {filas}
-        </table>"""
+        </table>{paginacion}"""
     else:
         tabla = f'<div class="empty">{_t("Sin resultados para tu búsqueda.")}</div>'
 
@@ -28048,11 +28055,13 @@ def _route_get(path, qs, gzip_ok=False):
         if q:
             def _montar_busqueda():
                 datos_snap = _db_iter_municipios(provincia_filtro if provincia_filtro != "todas" else None)
-                return render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro)
+                return render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro, pagina=pag_q)
 
+            pag_q, _ = _rk_pagina(qs.get("pag", ["1"])[0], 10 ** 6, _BUSQUEDA_POR_PAGINA)
             if len(q) > 100:                    # textos larguísimos: sin caché (no se van a repetir)
                 return _resp(_montar_busqueda(), gzip_ok=gzip_ok)
-            params_q = [("q", q)] + ([("provincia", provincia_filtro)] if provincia_filtro != "todas" else [])
+            params_q = ([("q", q)] + ([("provincia", provincia_filtro)] if provincia_filtro != "todas" else [])
+                        + ([("pag", str(pag_q))] if pag_q > 1 else []))
             return _pagina_cacheada("/", params_q, _montar_busqueda, gzip_ok=gzip_ok, grupo="busqueda")
 
         if provincia_filtro == "todas":
