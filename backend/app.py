@@ -22586,7 +22586,7 @@ def render_fondos_ue_html(qs):
     res_place = _fondos_ue_place_resumen()
     with _db_lock:
         hay_mrr100 = bool(_db.execute("SELECT 1 FROM fondos_ue WHERE fuente='mrr100' LIMIT 1").fetchone())
-    pac_ej = [e for e, _m in _pac_ejercicios()]
+    pac_ej = [e for e, _m in _pac_publicados()]
     if hay_koh or res_place or hay_mrr100 or pac_ej:
         trozos = [_t("De los fondos estructurales están los periodos 2014-2020 (FEDER y FSE) y 2021-2027 (FEDER, FSE+ y "
                      "Fondo de Transición Justa, lo que ya publica Kohesio), y de los de investigación, Horizon Europe "
@@ -22850,7 +22850,11 @@ _PAC_TABLAS = (
 _PAC_TABLAS_DATOS = ("pac_meta", "pac_provincia", "pac_municipio", "pac_pj")
 _PAC_CACHE = {}
 _PAC_PURGADO = {"dia": ""}
-_PAC_TIPOS = {"mercantil": "Sociedad mercantil", "cooperativa_sat": "Cooperativa o SAT", "publica": "Entidad pública",
+# Interruptor (03-11-2026): apagado salvo PAC_ACTIVO=1. Apagado, la web no enseña nada de la PAC (ni /fondos-ue, ni la
+# ficha de municipio, ni el texto de cobertura), POST /admin/pac responde 409 sin guardar nada y el flujo pac-fega.yml,
+# que lee "pac.activo" de /api/diagnostico-arranque, no genera ni sube. La purga a los dos años sigue corriendo igual.
+PAC_ACTIVO = os.environ.get("PAC_ACTIVO", "") == "1"
+_PAC_TIPOS ={"mercantil": "Sociedad mercantil", "cooperativa_sat": "Cooperativa o SAT", "publica": "Entidad pública",
               "asociativa": "Asociación, fundación o comunidad de regantes", "verificada": "Entidad (comprobada)"}
 _PAC_TRAMOS = ("1.250 € o menos", "De 1.250 a 5.000 €", "De 5.000 a 20.000 €", "De 20.000 a 100.000 €",
                "De 100.000 a 300.000 €", "Más de 300.000 €")
@@ -22872,11 +22876,17 @@ def _pac_purgar(hoy=None):
     hoy = hoy or _pac_hoy()
     borradas = {}
     with _db_lock:
-        for t in _PAC_TABLAS_DATOS:
-            n = _db.execute(f"DELETE FROM {t} WHERE caduca <= ?", (hoy,)).rowcount
-            if n:
-                borradas[t] = n
-        _db.commit()
+        # secure_delete solo para este borrado: SQLite sobrescribe con ceros lo borrado, para que no queden restos de
+        # lo caducado en las páginas libres del fichero (y, con ellas, en las copias de la base).
+        _db.execute("PRAGMA secure_delete=ON")
+        try:
+            for t in _PAC_TABLAS_DATOS:
+                n = _db.execute(f"DELETE FROM {t} WHERE caduca <= ?", (hoy,)).rowcount
+                if n:
+                    borradas[t] = n
+            _db.commit()
+        finally:
+            _db.execute("PRAGMA secure_delete=OFF")
     _PAC_PURGADO["dia"] = hoy
     if borradas:
         _PAC_CACHE.clear()
@@ -22939,7 +22949,7 @@ def _subir_pac(crudo, forzar=False):
             if p not in MUNICIPIOS_POR_PROVINCIA:
                 raise ValueError
             if r["t"] == "pj":
-                if r["tipo"] not in PAC.VISIBLES or PAC.clasificar(PAC.norm(r["nombre"])) not in PAC.VISIBLES:
+                if r["tipo"] not in PAC.VISIBLES or PAC.clasificar(PAC.norm(r["nombre"]), r["nombre"]) not in PAC.VISIBLES:
                     return 400, {"error": "Comprobación de anonimato: hay una fila con nombre sin forma jurídica clara. "
                                           "No se carga nada."}
                 pj.append((ej, r["nombre"][:300], r["tipo"], p, r.get("municipio") or "",
@@ -22967,14 +22977,18 @@ def _subir_pac(crudo, forzar=False):
         return _rechazar_subida("/admin/pac", "personas jurídicas", antes, len(pj))
     meta_guardada = {k: v for k, v in meta.items() if k != "t"}
     with _db_lock:
-        for t in _PAC_TABLAS_DATOS:
-            _db.execute(f"DELETE FROM {t} WHERE ejercicio=?", (ej,))
-        _db.execute("INSERT INTO pac_meta (ejercicio, data, caduca, ts) VALUES (?,?,?,?)",
-                    (ej, json.dumps(meta_guardada, ensure_ascii=False), caduca, time.time()))
-        _db.executemany("INSERT INTO pac_provincia VALUES (?,?,?,?)", prov)
-        _db.executemany("INSERT INTO pac_municipio VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", muni)
-        _db.executemany("INSERT INTO pac_pj VALUES (?,?,?,?,?,?,?,?,?,?,?)", pj)
-        _db.commit()
+        _db.execute("PRAGMA secure_delete=ON")      # lo que se sustituye tampoco deja restos (ver _pac_purgar)
+        try:
+            for t in _PAC_TABLAS_DATOS:
+                _db.execute(f"DELETE FROM {t} WHERE ejercicio=?", (ej,))
+            _db.execute("INSERT INTO pac_meta (ejercicio, data, caduca, ts) VALUES (?,?,?,?)",
+                        (ej, json.dumps(meta_guardada, ensure_ascii=False), caduca, time.time()))
+            _db.executemany("INSERT INTO pac_provincia VALUES (?,?,?,?)", prov)
+            _db.executemany("INSERT INTO pac_municipio VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", muni)
+            _db.executemany("INSERT INTO pac_pj VALUES (?,?,?,?,?,?,?,?,?,?,?)", pj)
+            _db.commit()
+        finally:
+            _db.execute("PRAGMA secure_delete=OFF")
     _PAC_CACHE.clear()
     _pac_purgar(hoy)
     casados = sum(1 for m in muni if m[3])
@@ -23002,13 +23016,21 @@ def _pac_ejercicios():
     return [(e, json.loads(d)) for e, d in filas]
 
 
+def _pac_publicados():
+    """Ejercicios que la web enseña: los vigentes si PAC_ACTIVO; si no, ninguno. Llama siempre a _pac_ejercicios()
+    para que la purga diaria de lo caducado corra aunque la PAC esté apagada."""
+    ejercicios = _pac_ejercicios()
+    return ejercicios if PAC_ACTIVO else []
+
+
 def _pac_diagnostico():
     try:
-        return {str(e): {"fecha_publicacion": m.get("fecha_publicacion"), "caduca": m.get("caduca"),
-                         "personas_juridicas": m.get("visibles"), "municipios": m.get("municipios")}
-                for e, m in _pac_ejercicios()}
+        return {"activo": PAC_ACTIVO,
+                "ejercicios": {str(e): {"fecha_publicacion": m.get("fecha_publicacion"), "caduca": m.get("caduca"),
+                                        "personas_juridicas": m.get("visibles"), "municipios": m.get("municipios")}
+                               for e, m in _pac_ejercicios()}}
     except Exception as e:
-        return {"error": type(e).__name__}
+        return {"activo": PAC_ACTIVO, "error": type(e).__name__}
 
 
 def _pac_zona(f):
@@ -23021,8 +23043,8 @@ def _pac_zona(f):
 
 
 def _html_pac(f, qs):
-    """Bloque de /fondos-ue con la PAC del FEGA (opción B). Solo sale si hay algún ejercicio vigente."""
-    ejercicios = _pac_ejercicios()
+    """Bloque de /fondos-ue con la PAC del FEGA (opción B). Solo sale con PAC_ACTIVO y algún ejercicio vigente."""
+    ejercicios = _pac_publicados()
     if not ejercicios:
         return ""
     try:
@@ -23108,8 +23130,8 @@ def _html_pac(f, qs):
 
 def _html_pac_municipio(muni_name, provincia):
     """Bloque de la ficha de municipio: la PAC del último ejercicio vigente cobrada por beneficiarios de este municipio
-    (el FEGA da el municipio donde reside o está registrado el beneficiario, art. 98.3.c)."""
-    ejercicios = _pac_ejercicios()
+    (el FEGA da el municipio donde reside o está registrado el beneficiario, art. 98.3.c). Solo con PAC_ACTIVO."""
+    ejercicios = _pac_publicados()
     if not ejercicios or not provincia:
         return ""
     ej, meta = ejercicios[0]
@@ -30435,6 +30457,8 @@ def _app_wsgi(environ, start_response):
         token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
         if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}
+        elif not PAC_ACTIVO:
+            code, cuerpo = 409, {"error": "La PAC está apagada (PAC_ACTIVO): no se carga nada."}
         elif length > 30 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
         else:

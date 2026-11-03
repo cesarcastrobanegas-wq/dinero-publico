@@ -8,6 +8,10 @@ name: Copia semanal de cache.db (repositorio privado aparte)
 # Secretos: ADMIN_TOKEN (solo para leer GET /admin/cache-db) y COPIAS_TOKEN (token limitado de César con permiso
 # «Contents: Read and write» únicamente sobre el repositorio privado). Sin COPIAS_TOKEN el flujo no hace nada.
 # No se sube ningún artefacto ni se imprime contenido de la base: solo tamaños y recuentos.
+#
+# PAC (03-11-2026): antes de comprimir, backend/pac_purgar_copia.py borra de la copia lo caducado de la PAC (publicación
+# del FEGA + 2 años, art. 98.4 del Reglamento (UE) 2021/2116) con secure_delete y VACUUM, como hace la web con su base.
+# Como solo se conservan las dos últimas copias, lo caducado no dura en el repositorio privado más de ~2 semanas.
 
 on:
   schedule:
@@ -29,6 +33,11 @@ jobs:
       DESTINO: ${{ github.repository_owner }}/dinero-publico-copias
       ETIQUETA: copia-semanal
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: backend/pac_purgar_copia.py
+          sparse-checkout-cone-mode: false
+
       - name: ¿Está el token del repositorio privado?
         id: token
         env:
@@ -72,6 +81,10 @@ jobs:
             exit 1
           fi
           echo "integrity_check: ok -- $(python3 -c "import sqlite3; print(sqlite3.connect('cache.db').execute('SELECT COUNT(*) FROM municipios').fetchone()[0])") fichas"
+
+      - name: Purgar de la copia lo caducado de la PAC
+        if: steps.token.outputs.hay == 'si'
+        run: python3 backend/pac_purgar_copia.py cache.db
 
       - name: Subir al repositorio privado y dejar solo las dos últimas
         if: steps.token.outputs.hay == 'si'

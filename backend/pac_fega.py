@@ -90,7 +90,7 @@ RE_CP = re.compile(r"^(\d{5})\s*-\s*(.+)$")
 RE_PROV_SOLO = re.compile(r"^(\d{2})(?:X{3})?\s*-\s*(.+)$")       # «08XXX - XXXXX» (medido el 19-10)
 # Reglas medidas el 17-10 con los ficheros completos (PLAN PAC opcion B.md, §2.2). Orden: la primera que casa.
 REGLAS = [
-    ("mercantil", r"\b(S L U?|S L L|S L P|S L N E|S A U?|S A L|S R L|SLU?|SLL|SLP|SLNE|SAU?|SAL|SRL|SOCIEDAD (LIMITADA|ANONIMA)|"
+    ("mercantil", r"\b(S L(?: U)?|S L L|S L P|S L N E|S A(?: U)?|S A L|S R L|SLU?|SLL|SLP|SLNE|SAU?|SAL|SRL|SOCIEDAD (LIMITADA|ANONIMA)|"
                   r"LTD|LIMITED|GMBH|LDA|SARL|B ?V|N ?V)$|\bSOCIEDAD (LIMITADA|ANONIMA)\b|\bS ?L ?U?\b(?= [A-Z]+$)"),
     ("cooperativa_sat", r"\b(S ?COOP\w*|COOP|COOPS|COOPERATIV\w*|COOPERATIBA\w*|KOOP|KOOPERATIBA\w*|S ?C ?A|S ?C ?L|S ?C ?C ?L|SCCL|S ?A ?T|SAT|"
                         r"SOCIEDAD AGRARIA DE TRANSFORMACION|SOCIETAT AGRARIA)\b"),
@@ -146,8 +146,32 @@ VERIFICADAS = {norm(n) for n in _cargar_json("pac_entidades_verificadas.json", {
 SUPRIMIDAS = set(_cargar_json("pac_supresiones.json", {"huellas": []})["huellas"])
 
 
-def clasificar(nombre_n):
-    """Grupo del beneficiario por su nombre normalizado. Solo los de VISIBLES salen con nombre."""
+# Abreviaturas de sociedad que también son apellidos o iniciales de persona («Sá», «Sal», «S L», «B V»...). Medido el 03-11
+# con el fichero de 2025: el FEGA escribe la forma casi siempre separada por un espacio («... SL»), así que exigir coma
+# o puntos dejaría anónimas a la mayoría de las sociedades; solo estas necesitan una marca más. El FEGA no
+# publica el NIF, así que la letra del NIF (A, B... frente a DNI/NIE) no se puede usar.
+RE_FINAL_AMBIGUO = re.compile(r"(?:^| )(S ?A ?L?|S L|B ?V|N ?V)$")
+# La misma abreviatura en el nombre tal cual, con puntos («S.A.», «S.A.L.», «B.V.») o detrás de una coma («, SA»).
+RE_FINAL_MARCADO = re.compile(r"(?:,\s*(?:S\.?\s?A\.?(?:\s?L\.?)?|S\.?\s?L\.?|B\.?\s?V\.?|N\.?\s?V\.?)"
+                              r"|(?:S\.\s?A\.?(?:\s?L\.?)?|S\s?A\.(?:\s?L\.?)?|S\.\s?L\.?|S\s?L\.|B\.\s?V\.?|N\.\s?V\.?))\s*\)?\s*$",
+                              re.I)
+
+
+def _mercantil_dudosa(nombre_n, crudo):
+    """True si la única señal de sociedad es una abreviatura ambigua al final, sin puntos ni coma, y el resto del nombre
+    no tiene ninguna palabra de empresa: ante la duda, anónimo (va a «dudoso» y, si es grande, a la lista de revisión).
+    Sin el nombre tal cual (crudo), también es dudosa."""
+    m = RE_FINAL_AMBIGUO.search(nombre_n)
+    if not m:
+        return False
+    if crudo and RE_FINAL_MARCADO.search(crudo.strip()):
+        return False
+    return not RE_DUDOSO.search(nombre_n[:m.start()])
+
+
+def clasificar(nombre_n, crudo=None):
+    """Grupo del beneficiario por su nombre normalizado (y el nombre tal cual, para ver puntos y comas de la forma
+    jurídica). Solo los de VISIBLES salen con nombre."""
     if RE_CODIGO.match(nombre_n.replace(" ", "")):
         return "codigo"
     if huella(nombre_n) in SUPRIMIDAS:
@@ -156,6 +180,8 @@ def clasificar(nombre_n):
         return "verificada"
     for g, r in REGLAS:
         if r.search(nombre_n):
+            if g == "mercantil" and _mercantil_dudosa(nombre_n, crudo):
+                return "dudoso"
             return g
     if RE_DUDOSO.search(nombre_n) or len(nombre_n.split()) > 6 or len(nombre_n.split()) == 1:
         return "dudoso"
@@ -297,7 +323,7 @@ def generar(ejercicio, zip_path, salida, fecha_pub, url, revision=None):
         k = (nn, clave)
         b = benef.get(k)
         if b is None:
-            b = benef[k] = {"g": clasificar(nn), "n": nombre.strip(), "feaga": 0.0, "feader": 0.0, "imp": 0.0,
+            b = benef[k] = {"g": clasificar(nn, nombre), "n": nombre.strip(), "feaga": 0.0, "feader": 0.0, "imp": 0.0,
                             "med": collections.defaultdict(float)}
         b["feaga"] += feaga
         b["feader"] += feader_cofin
@@ -395,7 +421,7 @@ def generar(ejercicio, zip_path, salida, fecha_pub, url, revision=None):
     # ─── comprobación final: en lo que sale no hay ninguna persona física con nombre ───────────────────────────────
     for r in pj:
         nn = norm(r["nombre"])
-        if r["tipo"] not in VISIBLES or clasificar(nn) != r["tipo"]:
+        if r["tipo"] not in VISIBLES or clasificar(nn, r["nombre"]) != r["tipo"]:
             raise SystemExit("Comprobación de anonimato fallida: no se genera nada.")
     suma = sum(pv["importe"] for pv in prov.values())
     if abs(suma - (tot["importe"] - tot["importe_sin_provincia"])) > 1.0:
