@@ -23426,19 +23426,16 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             # aquí el motivo es que los contratos menores NO tienen
             # obligación legal de publicación centralizada en ningún
             # registro único, a diferencia de las licitaciones formales.
-            organismo_d = _nombre_organismo_municipal(muni_name_d, provincia)
-            transp_url_cm = f"https://www.google.com/search?q={quote_plus(organismo_d + ' transparencia contratos menores')}"
+            # 2026-11-03: sin el enlace a una búsqueda de Google del portal de transparencia (no tenemos la dirección
+            # oficial de cada ayuntamiento; queda solo el enlace oficial a la ley en el BOE).
             enlace_ley = (f'<a href="https://www.boe.es/buscar/act.php?id=BOE-A-2013-12887" target="_blank" '
                           f'class="link">{_t("Ley 19/2013, de transparencia")}</a>')
-            enlace_portal = (f'<a href="{esc(transp_url_cm)}" target="_blank" class="link">'
-                             f'{_t("buscar el portal de transparencia de {organismo} ↗").format(organismo=esc(organismo_d))}</a>')
             texto_cm = _t("<b>Contratos menores:</b> no hay registros de este tipo para {municipio} en las fuentes que "
                           "consultamos. Los contratos menores no siempre tienen obligación legal de publicación "
                           "centralizada -- muchos ayuntamientos los tramitan sin subirlos a ningún registro abierto que "
                           "esta web pueda consultar, así que esto no significa necesariamente que no existan. Cualquier "
                           "vecino o concejal puede solicitarlos formalmente al ayuntamiento por la vía de acceso a la "
-                          "información pública ({ley}) -- {portal}").format(
-                municipio=esc(muni_name_d), ley=enlace_ley, portal=enlace_portal)
+                          "información pública ({ley}).").format(municipio=esc(muni_name_d), ley=enlace_ley)
             contratos_menors_html = f"""<div class="cm-aviso">
                 📋 {texto_cm}
               </div>"""
