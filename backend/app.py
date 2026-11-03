@@ -2658,11 +2658,13 @@ def _cargar_alcaldes_concejales():
     partir del Ministerio de Política Territorial y Memoria Democrática).
     Dato estático: no se recalcula en caliente, solo se refresca re-lanzando
     ese script periódicamente. Ya sin las personas de CARGOS_SUPRIMIDOS."""
+    global ALCALDES_CONCEJALES_FECHA
     if os.path.exists(ALCALDES_FILE):
         try:
             with open(ALCALDES_FILE, encoding="utf-8") as f:
                 d = json.load(f)
                 if isinstance(d, dict):
+                    ALCALDES_CONCEJALES_FECHA = _fecha_dma(d.get("generado", ""))
                     municipios = d.get("municipios", {})
                     _cargos_suprimidos.aplicar_alcaldes(municipios, CARGOS_SUPRIMIDOS)
                     return municipios
@@ -2671,6 +2673,15 @@ def _cargar_alcaldes_concejales():
     return {}
 
 
+def _fecha_dma(texto):
+    """"2026-09-30 19:52:48" o "2026-09-30" -> "30-09-2026"; "" si no tiene esa forma."""
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", texto or "")
+    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else ""
+
+
+# Fuente oficial de alcaldes y concejales (la que descarga actualizar_alcaldes.py) y fecha de esa descarga.
+ALCALDES_FUENTE_URL = "https://concejales.redsara.es/consulta/"
+ALCALDES_CONCEJALES_FECHA = ""
 ALCALDES_CONCEJALES = _cargar_alcaldes_concejales()
 
 # ─── Sueldos de concejales publicados por el propio ayuntamiento (2026-09-26) ───────────────────────────────
@@ -2686,7 +2697,9 @@ SUELDOS_CONCEJALES_FILE = os.path.join(BASE_DIR, "sueldos_concejales.json")
 
 def _cargar_sueldos_concejales():
     """{normalizar(municipio): [registro, ...]} desde sueldos_concejales.json. Defensivo: descarta cualquier
-    registro al que le falte nombre, cargo, importe (> 0), base del importe o URL https de la fuente."""
+    registro al que le falte nombre, cargo, importe (> 0), base del importe o URL https de la fuente.
+    Guarda en SUELDOS_CONCEJALES_FECHA la fecha en que se recogieron ("generado" del JSON)."""
+    global SUELDOS_CONCEJALES_FECHA
     out = {}
     if not os.path.exists(SUELDOS_CONCEJALES_FILE):
         return out
@@ -2694,6 +2707,8 @@ def _cargar_sueldos_concejales():
         with open(SUELDOS_CONCEJALES_FILE, encoding="utf-8") as f:
             d = json.load(f)
         registros = d.get("registros", []) if isinstance(d, dict) else []
+        if isinstance(d, dict):
+            SUELDOS_CONCEJALES_FECHA = _fecha_dma(str(d.get("generado", "")))
     except Exception:
         return out
     registros, _ = _cargos_suprimidos.aplicar_sueldos(registros, CARGOS_SUPRIMIDOS)
@@ -2715,6 +2730,7 @@ def _cargar_sueldos_concejales():
 
 # (SUELDOS_CONCEJALES se carga más abajo, tras definir normalizar(): el cargador la usa.)
 SUELDOS_CONCEJALES = {}
+SUELDOS_CONCEJALES_FECHA = ""
 
 
 def _cargar_retribuciones_ispa():
@@ -2735,6 +2751,13 @@ def _cargar_retribuciones_ispa():
 
 
 RETRIBUCIONES_ISPA = _cargar_retribuciones_ispa()
+
+
+def ispa_fuente_url(anio):
+    """Página oficial del Espacio ISPA con los ficheros de retribuciones del ejercicio `anio` (la edición «ISPA anio+1»,
+    p. ej. ejercicio 2024 -> ISPA 2025). Comprobada el 02-11-2026: enlaza retribuciones_alcaldes.xlsx, el fichero que
+    descarga actualizar_retribuciones.py."""
+    return f"https://digital.gob.es/funcion-publica/dgfp/espacio-ispa/estadisticas/informac_estad_{int(anio)}"
 
 # Presidente/a de cada provincia + su retribución anual (ISPA 2025,
 # percepciones del ejercicio 2024). Dato institucional (5 personas, cambia
@@ -5189,8 +5212,92 @@ def normalizar(s):
 # ver _indice_menores_stats_por_municipio (Índice de Transparencia).
 _db.create_function("normalizar", 1, normalizar)
 
+def _tabla_controles():
+    """Caracteres de control que algunas fuentes dejan en los textos (revisión del 02-11-2026, ficha de Barcelona:
+    un 0x7F delante de «FUNDACIÓ PRIVADA CASSIA JUST», de la PSCP; 14 textos en toda la base). Los C1 (0x80-0x9F)
+    suelen ser comillas de Windows (cp1252) guardadas tal cual -- 0x92 en «L'AJUNTAMENT», 0x93/0x94 alrededor de
+    «QUI TÉ A QUI» -- y se convierten a su carácter; el resto de controles se quitan. Tabulador y saltos de línea se
+    respetan."""
+    tabla = {i: None for i in range(32) if i not in (9, 10, 13)}
+    tabla[0x7F] = None
+    for i in range(0x80, 0xA0):
+        try:
+            tabla[i] = bytes([i]).decode("cp1252")
+        except UnicodeDecodeError:
+            tabla[i] = None
+    return tabla
+
+
+_TABLA_CONTROLES = _tabla_controles()
+
+
+# Tildes estropeadas (revisión del 03-11-2026): algunas fuentes entregan texto UTF-8 que en algún paso se leyó como
+# Latin-1/Windows-1252, y llega «ESPAÃ‘A», «MUÃ±OZ», «campaÃ±a», «â€œ...â€». Se arregla SOLO al mostrar (en esc(),
+# antes de quitar los controles, porque Á, Í, Ï, Ð y Ý dejan un byte de control: «Ã\x81»); la base no se toca.
+# Tabla de sustituciones: cada carácter de _MOJIBAKE_CARACTERES, codificado en UTF-8 y leído como Windows-1252 y como
+# Latin-1, vuelve a ser él mismo. Se buscan solo secuencias de 2-3 caracteres que no se dan en texto normal.
+_MOJIBAKE_CARACTERES = ("áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇãõÃÕýÝÐ"
+                        "ºª¿¡«»·¨´°€“”‘’–—…")
+
+
+def _tabla_mojibake():
+    tabla = {}
+    for ch in _MOJIBAKE_CARACTERES:
+        b = ch.encode("utf-8")
+        for cod in ("cp1252", "latin-1"):
+            try:
+                roto = b.decode(cod)
+            except UnicodeDecodeError:
+                continue
+            if roto != ch:
+                tabla.setdefault(roto, ch)
+    # Comillas cuyo último byte (0x9D, sin carácter en Windows-1252) se perdió por el camino: «â€» suelto = cierre;
+    # y el euro con su byte central cambiado por «?».
+    tabla.setdefault("â€", "”")
+    tabla.setdefault("â?¬", "€")
+    # Doble lectura («MUÃƒÂ‘OZ»): «Â» + control C1 vuelve a ser el control, y una 2.ª pasada lo junta.
+    for i in range(0x80, 0xA0):
+        tabla.setdefault("Â" + chr(i), chr(i))
+    return tabla
+
+
+_TABLA_MOJIBAKE = _tabla_mojibake()
+_RE_MOJIBAKE = re.compile("|".join(re.escape(k) for k in sorted(_TABLA_MOJIBAKE, key=len, reverse=True)))
+
+# Excepciones puntuales (revisión del 03-11-2026): textos que la tabla general no puede arreglar bien, porque la letra
+# se perdió («Ã» suelta: puede ser Á, Í, Ï, Ð o Ý) o porque la fuente trae una letra equivocada («Ã“» = Ó donde va Í).
+# Solo entra un caso cuando la letra correcta está confirmada en otro registro con el mismo NIF; nunca se adivina.
+# Se aplican sobre el texto tal como viene, antes de la tabla general. Cada entrada: (texto roto, texto bueno, fuente).
+# Solo personas jurídicas: los nombres de personas físicas no se escriben en el código (el repositorio es público).
+_EXCEPCIONES_TILDES = (
+    # Contratos formales (PSCP) de Almenar. NIF B44802759: el mismo NIF sale como «ODISEA INGENIERÍA S.L.» en Pals y
+    # en Sant Pol de Mar (contratos formales) y como «Odisea ingeniería S.L» en Bellpuig. La «Ó» de la fuente es un
+    # error suyo: no se cambia la regla general («Ã“» = «Ó» es correcta en PRODUCIÓNS, PROMOCIÓN...).
+    ("ODISEA INGENIERÃ“A", "ODISEA INGENIERÍA",
+     "mismo NIF B44802759 en contratos formales de Pals, Sant Pol de Mar y Bellpuig"),
+    # Menores PLACE de Castalla (2025-07 y 2025-12). NIF B54885868: «ASESORIA DRONES ESPAÃ‘A MI PRIMER DRONE, SL» en
+    # Onil (PLACE, 2025-06) confirma la I; la «Ã» indica que llevaba tilde (Í). La Ñ ya la arregla la tabla general.
+    ("ASESORÃA DRONES", "ASESORÍA DRONES",
+     "mismo NIF B54885868 en menores PLACE de Onil, 2025-06"),
+)
+
+
+def _arreglar_tildes(t):
+    """Texto con las tildes estropeadas arregladas: primero _EXCEPCIONES_TILDES y luego _TABLA_MOJIBAKE (solo si hay
+    alguna pista: Ã, Â o â)."""
+    if "Ã" in t:
+        for roto, bueno, _fuente in _EXCEPCIONES_TILDES:
+            if roto in t:
+                t = t.replace(roto, bueno)
+    for _ in range(2):          # 2.ª pasada solo para las dobles lecturas
+        if not ("Ã" in t or "Â" in t or "â" in t):
+            break
+        t = _RE_MOJIBAKE.sub(lambda m: _TABLA_MOJIBAKE[m.group(0)], t)
+    return t
+
+
 def esc(s):
-    return html.escape(str(s or ""), quote=True)
+    return html.escape(_arreglar_tildes(str(s or "")).translate(_TABLA_CONTROLES), quote=True)
 
 
 INDICE_CARGOS_PUBLICOS = _construir_indice_cargos_publicos()
@@ -5245,9 +5352,11 @@ def alcalde_concejales_html(municipio, provincia=None):
     """Bloque HTML de alcalde/alcaldesa + desplegable de concejales para la
     ficha de un ayuntamiento, a partir de ALCALDES_CONCEJALES (Ministerio de
     Política Territorial y Memoria Democrática, ver actualizar_alcaldes.py).
-    Cada concejal enlaza a una búsqueda de la transparencia de su
-    ayuntamiento (no hay una fuente pública con la URL directa de cada uno
-    de los 266 municipios). Devuelve "" si no hay datos para el municipio.
+    Los nombres no llevan enlace: la fuente no tiene una página por persona
+    (solo descargas XLSX de toda España). Al pie de la lista va una sola línea
+    «Fuente: ..., datos a dd-mm-aaaa» con la fecha de la descarga (revisión
+    del 02-11-2026: antes cada nombre enlazaba a una búsqueda de Google).
+    Devuelve "" si no hay datos para el municipio.
 
     El sueldo del alcalde/sa (si existe en RETRIBUCIONES_ISPA, ver
     actualizar_retribuciones.py) se muestra junto a su nombre -- es la única
@@ -5306,8 +5415,6 @@ def alcalde_concejales_html(municipio, provincia=None):
                          f'<b class="pol-nombre">{esc(nombre_alcalde)}</b>{sufijo}{retrib_html}</span>')
 
     concejales = info.get("concejales") or []
-    organismo = _nombre_organismo_municipal(municipio, info.get("provincia"))
-    transp_url = f"https://www.google.com/search?q={quote_plus(organismo + ' transparencia')}"
 
     items = []
     for c in concejales:
@@ -5317,14 +5424,18 @@ def alcalde_concejales_html(municipio, provincia=None):
         cargo_c = esc(c.get("cargo", ""))
         partido_c = c.get("partido", "")
         sufijo_c = f" ({esc(partido_c)})" if partido_c else ""
-        enlace_c = (f'<span class="conc-oculto">{_t("Nombre no mostrado")}</span>' if c.get("suprimido") else
-                    f'<a href="{esc(transp_url)}" target="_blank" rel="noopener">{nombre_c}</a>')
-        items.append(f'<li>{enlace_c} <span class="conc-cargo">— {cargo_c}{sufijo_c}</span></li>')
+        nombre_html = (f'<span class="conc-oculto">{_t("Nombre no mostrado")}</span>' if c.get("suprimido") else
+                       f'<b class="pol-nombre">{nombre_c}</b>')
+        items.append(f'<li>{nombre_html} <span class="conc-cargo">— {cargo_c}{sufijo_c}</span></li>')
 
     dd_html = ""
     if concejales:
+        fuente = (f'<a href="{esc(ALCALDES_FUENTE_URL)}" target="_blank" rel="noopener nofollow">'
+                  f'{esc(_t("Ministerio de Política Territorial y Memoria Democrática"))}</a>')
+        pie = (_t("Fuente: {fuente}, datos a {fecha}").format(fuente=fuente, fecha=esc(ALCALDES_CONCEJALES_FECHA))
+               if ALCALDES_CONCEJALES_FECHA else _t("Fuente: {fuente}").format(fuente=fuente))
         dd_html = (f'<details class="concejales-dd"><summary>{_t("Concejales ({n})").format(n=len(concejales))}</summary>'
-                   f'<ul>{"".join(items)}</ul></details>')
+                   f'<ul>{"".join(items)}</ul><div class="pol-retrib-nota">{pie}.</div></details>')
 
     if not alcalde_html and not dd_html:
         return ""
@@ -5483,9 +5594,25 @@ def sueldos_concejales_html(municipio, provincia=None):
             f'<li><b class="pol-nombre">{esc(r["nombre"])}</b> <span class="conc-cargo">— {esc(r["cargo"])}</span> '
             f'<span class="pol-retrib">💰 {fmt_eur(r["importe"])} {esc(r["base"])}{periodo}</span> '
             f'<a href="{esc(r["fuente_url"])}" target="_blank" rel="noopener nofollow">{fuente} ↗</a></li>')
+    # Revisión del 02-11-2026: la lista de concejales (Ministerio, toda la corporación vigente) y esta (solo quien
+    # cobra, de documentos del ayuntamiento de otras fechas) no tienen por qué coincidir; 38 de 930 personas ya no
+    # estaban en la del Ministerio. Se avisa en la ficha con la fecha de cada una.
+    aviso_fuentes = ""
+    if ALCALDES_CONCEJALES.get(clave):
+        periodos = sorted({r["periodo"] for r in regs if r["periodo"]})
+        fecha_min = ALCALDES_CONCEJALES_FECHA or _t("fecha no indicada")
+        fecha_sue = "; ".join(periodos) if periodos else _t("fecha no indicada")
+        aviso_fuentes = (
+            f'<div class="pol-retrib-nota">ℹ️ '
+            + _t("Esta lista y la de concejales vienen de fuentes y fechas distintas: la de concejales, del Ministerio "
+                 "(datos a {fecha_ministerio}); la de retribuciones, de documentos del ayuntamiento ({fecha_sueldos}), "
+                 "recogidos el {fecha_recogida}. Puede haber personas que estén en una y no en la otra.").format(
+                fecha_ministerio=esc(fecha_min), fecha_sueldos=esc(fecha_sue),
+                fecha_recogida=esc(SUELDOS_CONCEJALES_FECHA or _t("fecha no indicada")))
+            + '</div>')
     return (f'<details class="concejales-dd sueldos-conc"><summary>'
             f'{_t("Retribuciones de concejales publicadas por el ayuntamiento ({n})").format(n=len(regs))}'
-            f'</summary><ul>{"".join(items)}</ul>'
+            f'</summary>{aviso_fuentes}<ul>{"".join(items)}</ul>'
             f'<div class="pol-retrib-nota">'
             f'{_t("Importes tal como figuran en la fuente oficial enlazada en cada fila, con la base y el periodo que ella indica; no se han convertido ni estimado.")}'
             + (f' <b>{_t("Nota:")}</b> {esc(_NOTAS_SUELDOS_CONCEJALES[clave])}' if clave in _NOTAS_SUELDOS_CONCEJALES else "")
@@ -10822,7 +10949,9 @@ def render_entidad_html(qs):
     contratos = d.get("contratos") or []
     total_pages = max(1, (len(contratos) + PAGE_SIZE - 1) // PAGE_SIZE)
     page = min(page, total_pages)
-    filas = "".join(_render_fila_contrato(c) for c in contratos[(page - 1) * PAGE_SIZE:page * PAGE_SIZE]) or \
+    repetidas = _adjudicatarias_repetidas(contratos)
+    filas = "".join(_render_fila_contrato(c, repetida=repetidas.get(id(c), 0))
+                    for c in contratos[(page - 1) * PAGE_SIZE:page * PAGE_SIZE]) or \
         f'<tr><td colspan="4" class="empty">{_t("Sin contratos adjudicados encontrados")}</td></tr>'
     importe = sum(_importe_contable(c) for c in contratos)
     empresas = len({(c.get("nif") or normalizar(c.get("empresa") or "")) for c in contratos if c.get("empresa")})
@@ -17848,6 +17977,7 @@ tr:last-child td{border-bottom:none;}
 .ute-nota{font-size:10px;color:var(--dim);font-weight:normal;}
 .importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
 .importe.noloc{color:var(--dim);font-style:italic;font-weight:normal;}
+.importe.sinimp,table.t-tarjeta td.importe.sinimp{white-space:normal;min-width:7.5em;max-width:16em;}
 .directivo{color:var(--blue);}
 .cargo{color:var(--dim);font-size:11px;}
 .cargo-match{font-size:10.5px;line-height:1.5;margin-top:5px;padding:5px 8px;border-radius:4px;max-width:260px;}
@@ -18051,6 +18181,7 @@ a.btn-ver:hover{background:var(--tint);}
 .top1-directivo{font-size:12px;color:var(--blue);}
 .rk-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:32px 0 4px;padding-bottom:10px;border-bottom:2px solid var(--accent);scroll-margin-top:96px;}
 .rk-section-header h2{font-size:18px;color:var(--text);}
+.portada-actualizado{font-size:12px;color:var(--dim);text-align:right;margin:-6px 0 10px;}
 .rk-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 10px;}
 .muni-tile a.btn-ver:hover{background:var(--tint);}
 
@@ -19734,11 +19865,39 @@ def _tl_lotes(lotes):
     return esc(_t("lotes {lotes}").format(lotes=", ".join(lotes)))
 
 
-def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=None):
+def _adjudicatarias_repetidas(contratos):
+    """{id(contrato): n} de las filas de una ficha que pertenecen a una licitación de PLACE con varias adjudicatarias
+    (las demás llevan "#adj-" en la dirección, ver _adjudicaciones_place) y el MISMO importe, sin lotes (con lotes es
+    normal que coincidan). Revisión del 02-11-2026: 361 licitaciones así en la copia del 30-10; a veces es real
+    (préstamos de varios bancos) y a veces no (CESPA -> PreZero en Madrid), así que se avisa en todas sus filas.
+    Las sumas no se tocan (decisión pendiente de César)."""
+    grupos = {}
+    for c in contratos:
+        url = html.unescape(c.get("url", "") or "")
+        try:
+            imp = float(c.get("importe_num") or 0)
+        except (TypeError, ValueError):
+            continue
+        if url and imp > 0:
+            grupos.setdefault((url.split("#adj-")[0], imp), []).append(c)
+    return {id(c): len(cs) for cs in grupos.values()
+            if len(cs) > 1 and any("#adj-" in (c.get("url") or "") for c in cs) and not any(c.get("lotes") for c in cs)
+            for c in cs}
+
+
+def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=None, repetida=False):
     """Genera la fila <tr> de un contrato. Reutilizada por la vista de
-    municipio y por los resultados de búsqueda global."""
+    municipio y por los resultados de búsqueda global. `repetida`: nº de adjudicatarias con el mismo importe en su
+    licitación (0 si no), ver _adjudicatarias_repetidas."""
     imp = c.get("importe", "") or "No localizado"
     imp_cls = "importe" if imp != "No localizado" else "importe noloc"
+    # Revisión del 02-11-2026 (ficha de Willis Iberia): la fuente PUBLICA 0 € (comprobado en PLACE: «Importe de
+    # Adjudicación 0.0 Euros»). No es un fallo de carga: son contratos que no paga el ayuntamiento (mediación de
+    # seguros, que cobra comisión de las aseguradoras; concesiones de bares o quioscos; arrendamientos; préstamos...).
+    # Se dice así en vez de enseñar «0,00 €». Distinto de «No localizado» (la fuente no trae importe).
+    sin_importe = _contrato_sin_importe_publicado(c)
+    if sin_importe:
+        imp, imp_cls = _t("sin importe publicado"), "importe noloc sinimp"
     if imp == "No localizado":
         imp = _t("No localizado")
     try:
@@ -19747,7 +19906,9 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     except (TypeError, ValueError):
         pass
     # PLACE (2026-10-01): lo adjudicado por lote; si no es fiable, el presupuesto -- y se dice (ver _adjudicaciones_place)
-    if c.get("importe_tipo") == "presupuesto" and c.get("importe_num"):
+    if sin_importe:
+        imp_nota = (f'<span class="noloc-nota">{_t("La fuente publica 0 €: suele ser un contrato que no paga el ayuntamiento (mediación de seguros, concesiones, arrendamientos, préstamos).")}</span>')
+    elif c.get("importe_tipo") == "presupuesto" and c.get("importe_num"):
         imp_nota = f'<span class="noloc-nota">{_t("presupuesto de licitación")}</span>'
     elif c.get("importe_tipo") == "adjudicado" and c.get("lotes"):
         imp_nota = f'<span class="noloc-nota">{_tl_lotes(c["lotes"])}</span>'
@@ -19756,6 +19917,9 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
                     f'{_t("No se cuenta en las sumas.")}</span>')
     else:
         imp_nota = ""
+    if repetida:
+        imp_nota += (f'<span class="noloc-nota">⚠️ {_t("posible adjudicataria repetida")}: '
+                     f'{_t("PLACE da {n} adjudicatarias con este mismo importe.").format(n=repetida)}</span>')
 
     directivo, cargo_dir = _directivo_contrato(c)
     if directivo:
@@ -20713,6 +20877,17 @@ _CONTRATOS_IMPORTE_EN_REVISION = {
 }
 
 
+def _contrato_sin_importe_publicado(c):
+    """La fuente trae importe pero es 0 € (ver _render_fila_contrato): «sin importe publicado». Distinto de
+    «No localizado» (la fuente no trae importe)."""
+    if not (c.get("importe", "") or ""):
+        return False
+    try:
+        return float(c.get("importe_num") or 0) == 0
+    except (TypeError, ValueError):
+        return False
+
+
 def _calcular_rankings(datos):
     """Agrupa todos los contratos cargados por empresa y devuelve dos listas
     Top 10: por número de contratos y por importe total adjudicado. Cada
@@ -20722,6 +20897,10 @@ def _calcular_rankings(datos):
     for d in datos:
         for c in d.get("contratos", []):
             if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
+            # 2026-11-03: los «sin importe publicado» (0 € en la fuente) no cuentan en «Más contratos» ni en las
+            # sumas (Willis Iberia era nº 1 por ~370 mediaciones de seguros a 0 €). Lo explica _RK_NOTA_SIN_IMPORTE.
+            if _contrato_sin_importe_publicado(c):
                 continue
             emp = c.get("empresa", "")
             # "Desierto" es un artefacto del parser PLACE anterior al fix de
@@ -20808,6 +20987,10 @@ def _rk_empresas_calcular():
         grupos_prov = por_prov.setdefault(d.get("provincia", "murcia"), {})
         for c in d.get("contratos", []):
             if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
+            # 2026-11-03: los «sin importe publicado» (0 € en la fuente) no cuentan en «Más contratos» ni en las
+            # sumas (Willis Iberia era nº 1 por ~370 mediaciones de seguros a 0 €). Lo explica _RK_NOTA_SIN_IMPORTE.
+            if _contrato_sin_importe_publicado(c):
                 continue
             emp = c.get("empresa", "")
             if not emp or emp in ("No localizada", "Desierto"):
@@ -21205,6 +21388,9 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     # datos_nacional/datos_provincia ya no se usan: los top salen de _rankings_empresas_cacheado (ver ahí).
     top_n_nac, top_imp_nac = _rankings_empresas_cacheado(None)
     top_n_prov, top_imp_prov = _rankings_empresas_cacheado(provincia_prov)
+    texto_sin_importe = _t("No cuentan los contratos «sin importe publicado»: la fuente publica 0 € (mediación de "
+                           "seguros, concesiones, arrendamientos, préstamos...) y no son pagos del ayuntamiento.")
+    nota_sin_importe = f'<div class="gs-hint" style="margin:-4px 0 8px">{texto_sin_importe}</div>'
     label_prov = PROVINCIA_LABEL.get(provincia_prov, PROVINCIA_LABEL["murcia"])
     paginas = paginas or {}
     pags_actuales = {}      # página efectiva de cada tabla larga, para construir los enlaces
@@ -21282,6 +21468,13 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
     ranking_alcaldes = [f for f in _calcular_ranking_alcaldes() if _de_comunidad(f, "alc")]
     anio_ispa = next((f["anio"] for f in ranking_alcaldes if f.get("anio")), "")
+    # Revisión del 02-11-2026: antes solo decía «ISPA 2024», sin enlace y confundiendo edición y año de los datos.
+    if str(anio_ispa).isdigit():
+        ispa_badge = (f'{_t("Fuente:")} <a href="{esc(ispa_fuente_url(anio_ispa))}" target="_blank" rel="noopener nofollow">'
+                      f'ISPA {int(anio_ispa) + 1}, {esc(_t("Ministerio para la Transformación Digital y de la Función Pública"))} ↗</a>'
+                      f' · {_t("retribuciones de {anio}").format(anio=esc(anio_ispa))} · ')
+    else:
+        ispa_badge = ""
     filas_alcaldes_html = ""
     pag_alc, npag_alc = _rk_pagina(paginas.get("alc"), len(ranking_alcaldes))
     pags_actuales["alc"] = pag_alc
@@ -21423,6 +21616,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <span class="rk-badge">{_t("Todas las provincias cargadas")}</span>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos adjudicados")}</div>
+  {nota_sin_importe}
   <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_nac}
@@ -21438,6 +21632,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <div class="prov-switch">{selector_prov}</div>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos")} — {esc(label_prov)}</div>
+  {nota_sin_importe}
   <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_prov}
@@ -21450,7 +21645,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
   <div class="rk-section-header" id="alcaldes">
     <h2>{_t("Ranking de Sueldos: Alcaldes y Alcaldesas")}</h2>
-    <span class="rk-badge">ISPA {esc(anio_ispa)} · {_t("{n} municipios con dato").format(n=fmt_num(len(ranking_alcaldes)))}</span>
+    <span class="rk-badge">{ispa_badge}{_t("{n} municipios con dato").format(n=fmt_num(len(ranking_alcaldes)))}</span>
     {selector_alc_html}
   </div>
   <div class="section-title">{_t("De mayor a menor retribución anual ({ambito})").format(ambito=esc(_ambito("alc")))}</div>
@@ -22519,13 +22714,24 @@ def _html_plan_recuperacion(f, res):
                               f'{esc(PROVINCIA_LABEL.get(p, p).replace("Provincia de ", ""))}</a></td>'
                               f'<td class="n">{fmt_num(v[0])}</td><td class="importe">{fmt_eur(str(v[1]))}</td></tr>'
                               for p, v in provs if v[0])
+            # Revisión del 02-11-2026: una fila por licitación. PLACE puede dar varias adjudicatarias con el mismo
+            # importe (la 2.ª lleva "#adj-..." en la dirección): a veces la misma UTE con su nombre antiguo y el nuevo
+            # (residuos de Madrid: CESPA -> PreZero), a veces adjudicaciones distintas (préstamos de varios bancos).
+            # Aquí solo se deja de repetir la fila; las sumas no se tocan (decisión pendiente de César).
+            top_lic = {}
+            for x in res.get("top", []):
+                g = top_lic.setdefault((html.unescape(x.get("url") or "").split("#adj-")[0], x["importe"]),
+                                       dict(x, n_adj=0))
+                g["n_adj"] += 1
             filas_t = "".join(
                 f'<tr><td><div class="empresa">{esc(x["titulo"])}</div>'
                 f'<div class="lid">{esc(x["organo"])}{" · " + esc(x["lugar"]) if x.get("lugar") else ""}</div>'
                 + (f'<div class="lid">{_t("Adjudicataria")}: {esc(x["empresa"])}</div>' if x.get("empresa") else "")
+                + (f'<div class="lid">{_t("PLACE da {n} adjudicatarias con este mismo importe.").format(n=x["n_adj"])}</div>'
+                   if x["n_adj"] > 1 else "")
                 + f'</td><td class="importe">{fmt_eur(str(x["importe"]))}</td>'
                 f'<td>{esc(x.get("fecha") or "")}<br><a class="link" href="{esc(html.unescape(x["url"]))}" '
-                f'target="_blank" rel="noopener">{_t("PLACE ↗")}</a></td></tr>' for x in res.get("top", [])[:10])
+                f'target="_blank" rel="noopener">{_t("PLACE ↗")}</a></td></tr>' for x in list(top_lic.values())[:10])
             partes.append(
                 f'<div style="display:flex;flex-wrap:wrap;gap:0 18px">'
                 f'<table class="t-tarjeta t-rank" style="flex:1 1 280px"><tr><th>{_t("Fondo")}</th><th>{_t("Contratos")}</th><th>{_t("Importe")}</th></tr>{filas_f}</table>'
@@ -23120,7 +23326,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             contratos_shown = contratos_all[:PAGE_SIZE]
         total_pages = max(1, (total_muni + PAGE_SIZE - 1) // PAGE_SIZE)
 
-        filas = "".join(_render_fila_contrato(c, municipio=muni_name_d, provincia=d.get("provincia", provincia))
+        repetidas = _adjudicatarias_repetidas(contratos_all)
+        filas = "".join(_render_fila_contrato(c, municipio=muni_name_d, provincia=d.get("provincia", provincia),
+                                              repetida=repetidas.get(id(c), 0))
                          for c in contratos_shown)
 
         if not filas:
@@ -23364,19 +23572,16 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             # aquí el motivo es que los contratos menores NO tienen
             # obligación legal de publicación centralizada en ningún
             # registro único, a diferencia de las licitaciones formales.
-            organismo_d = _nombre_organismo_municipal(muni_name_d, provincia)
-            transp_url_cm = f"https://www.google.com/search?q={quote_plus(organismo_d + ' transparencia contratos menores')}"
+            # 2026-11-03: sin el enlace a una búsqueda de Google del portal de transparencia (no tenemos la dirección
+            # oficial de cada ayuntamiento; queda solo el enlace oficial a la ley en el BOE).
             enlace_ley = (f'<a href="https://www.boe.es/buscar/act.php?id=BOE-A-2013-12887" target="_blank" '
                           f'class="link">{_t("Ley 19/2013, de transparencia")}</a>')
-            enlace_portal = (f'<a href="{esc(transp_url_cm)}" target="_blank" class="link">'
-                             f'{_t("buscar el portal de transparencia de {organismo} ↗").format(organismo=esc(organismo_d))}</a>')
             texto_cm = _t("<b>Contratos menores:</b> no hay registros de este tipo para {municipio} en las fuentes que "
                           "consultamos. Los contratos menores no siempre tienen obligación legal de publicación "
                           "centralizada -- muchos ayuntamientos los tramitan sin subirlos a ningún registro abierto que "
                           "esta web pueda consultar, así que esto no significa necesariamente que no existan. Cualquier "
                           "vecino o concejal puede solicitarlos formalmente al ayuntamiento por la vía de acceso a la "
-                          "información pública ({ley}) -- {portal}").format(
-                municipio=esc(muni_name_d), ley=enlace_ley, portal=enlace_portal)
+                          "información pública ({ley}).").format(municipio=esc(muni_name_d), ley=enlace_ley)
             contratos_menors_html = f"""<div class="cm-aviso">
                 📋 {texto_cm}
               </div>"""
@@ -24236,6 +24441,17 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     # 2026-10-10: el contador enseñaba solo los contratos formales; los menores (seis veces más) no figuraban.
     with _db_lock:
         total_menores = _db.execute("SELECT COUNT(*) FROM contratos_menors_locales").fetchone()[0]
+        # Revisión del 02-11-2026: fecha real de la última carga = el guardado más reciente de una ficha municipal
+        # (columna ts, la escribe cada refresco; el nocturno las recorre todas). Nada si no hay ninguna fecha válida.
+        ts_ultima = _db.execute("SELECT MAX(ts) FROM municipios WHERE ts > 0").fetchone()[0]
+    actualizado_html = ""
+    if ts_ultima:
+        try:
+            from zoneinfo import ZoneInfo
+            f_ult = datetime.fromtimestamp(ts_ultima, ZoneInfo("Europe/Madrid")).strftime("%d-%m-%Y")
+        except Exception:                  # sin base de zonas horarias (Windows sin tzdata): hora local del equipo
+            f_ult = datetime.fromtimestamp(ts_ultima).strftime("%d-%m-%Y")
+        actualizado_html = f'<div class="portada-actualizado">{_t("Datos actualizados el {fecha}").format(fecha=f_ult)}</div>'
     total_e = len(set(
         normalizar(c.get("empresa", ""))
         for d in datos for c in d.get("contratos", [])
@@ -24249,7 +24465,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       <div class="stat"><span>{fmt_num(total_menores)}</span>{_t("Contratos menores")}</div>
       <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
       <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
-    </div>""" + _portada_cifras_secciones_html()
+    </div>""" + actualizado_html + _portada_cifras_secciones_html()
 
     # Cobertura por región -- una sola tarjeta por provincia con TODO junto
     # (municipios, habitantes, contratos, importe, deuda/hab.). Hasta
@@ -24949,27 +25165,39 @@ def _stats_localizacion():
     }
 
 
-def render_busqueda_global_html(datos, q, provincia="murcia"):
-    """Resultados de la búsqueda global por empresa, directivo o municipio."""
+_BUSQUEDA_POR_PAGINA = 100
+
+
+def render_busqueda_global_html(datos, q, provincia="murcia", pagina=1):
+    """Resultados de la búsqueda global por empresa, directivo o municipio.
+    Paginada de 100 en 100 (2026-11-03): antes se cortaba en 300 sin forma de ver el resto (Willis Iberia, 373)."""
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
     q_norm = normalizar(q)
     resultados = []
+    repetidas = {}
     for d in datos:
         muni = d.get("municipio", "")
         prov_d = d.get("provincia", "murcia")
+        repetidas_d = _adjudicatarias_repetidas(d.get("contratos", []))
         for c in d.get("contratos", []):
             if (q_norm in normalizar(c.get("empresa", ""))
                     or q_norm in normalizar(_directivo_contrato(c)[0])
                     or q_norm in normalizar(muni)):
                 resultados.append((muni, prov_d, c))
+                if id(c) in repetidas_d:
+                    repetidas[id(c)] = repetidas_d[id(c)]
 
     if resultados:
-        filas = "".join(_render_fila_contrato(c, municipio_label=m, municipio=m, provincia=p)
-                         for m, p, c in resultados[:300])
-        aviso = (f'<div class="gs-hint" style="margin-bottom:10px">'
-                 f'{_t("Mostrando los primeros 300 de {n} resultados.").format(n=len(resultados))}</div>'
-                 ) if len(resultados) > 300 else ""
-        tabla = f"""{aviso}<table class="t-tarjeta">
+        pagina, paginas = _rk_pagina(pagina, len(resultados), _BUSQUEDA_POR_PAGINA)
+        ini = (pagina - 1) * _BUSQUEDA_POR_PAGINA
+        filas = "".join(_render_fila_contrato(c, municipio_label=m, municipio=m, provincia=p,
+                                              repetida=repetidas.get(id(c), 0))
+                         for m, p, c in resultados[ini:ini + _BUSQUEDA_POR_PAGINA])
+        q_prov_pag = _q_prov(provincia)
+        paginacion = _rk_paginacion_html(
+            pagina, paginas, len(resultados),
+            lambda n: f"/?q={quote_plus(q)}{q_prov_pag}" + (f"&pag={n}" if n > 1 else ""), _t("resultados"))
+        tabla = f"""{paginacion}<table class="t-tarjeta">
           <tr>
             <th>{_t("Empresa adjudicataria / Contrato")}</th>
             <th>{_t("Importe")}</th>
@@ -24977,7 +25205,7 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
             <th>{_t("Estado / Fuente")}</th>
           </tr>
           {filas}
-        </table>"""
+        </table>{paginacion}"""
     else:
         tabla = f'<div class="empty">{_t("Sin resultados para tu búsqueda.")}</div>'
 
@@ -27975,11 +28203,13 @@ def _route_get(path, qs, gzip_ok=False):
         if q:
             def _montar_busqueda():
                 datos_snap = _db_iter_municipios(provincia_filtro if provincia_filtro != "todas" else None)
-                return render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro)
+                return render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro, pagina=pag_q)
 
+            pag_q, _ = _rk_pagina(qs.get("pag", ["1"])[0], 10 ** 6, _BUSQUEDA_POR_PAGINA)
             if len(q) > 100:                    # textos larguísimos: sin caché (no se van a repetir)
                 return _resp(_montar_busqueda(), gzip_ok=gzip_ok)
-            params_q = [("q", q)] + ([("provincia", provincia_filtro)] if provincia_filtro != "todas" else [])
+            params_q = ([("q", q)] + ([("provincia", provincia_filtro)] if provincia_filtro != "todas" else [])
+                        + ([("pag", str(pag_q))] if pag_q > 1 else []))
             return _pagina_cacheada("/", params_q, _montar_busqueda, gzip_ok=gzip_ok, grupo="busqueda")
 
         if provincia_filtro == "todas":
