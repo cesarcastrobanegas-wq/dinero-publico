@@ -19774,11 +19774,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     # Adjudicación 0.0 Euros»). No es un fallo de carga: son contratos que no paga el ayuntamiento (mediación de
     # seguros, que cobra comisión de las aseguradoras; concesiones de bares o quioscos; arrendamientos; préstamos...).
     # Se dice así en vez de enseñar «0,00 €». Distinto de «No localizado» (la fuente no trae importe).
-    sin_importe = False
-    try:
-        sin_importe = imp != "No localizado" and float(c.get("importe_num") or 0) == 0
-    except (TypeError, ValueError):
-        pass
+    sin_importe = _contrato_sin_importe_publicado(c)
     if sin_importe:
         imp, imp_cls = _t("sin importe publicado"), "importe noloc sinimp"
     if imp == "No localizado":
@@ -20757,6 +20753,17 @@ _CONTRATOS_IMPORTE_EN_REVISION = {
 }
 
 
+def _contrato_sin_importe_publicado(c):
+    """La fuente trae importe pero es 0 € (ver _render_fila_contrato): «sin importe publicado». Distinto de
+    «No localizado» (la fuente no trae importe)."""
+    if not (c.get("importe", "") or ""):
+        return False
+    try:
+        return float(c.get("importe_num") or 0) == 0
+    except (TypeError, ValueError):
+        return False
+
+
 def _calcular_rankings(datos):
     """Agrupa todos los contratos cargados por empresa y devuelve dos listas
     Top 10: por número de contratos y por importe total adjudicado. Cada
@@ -20766,6 +20773,10 @@ def _calcular_rankings(datos):
     for d in datos:
         for c in d.get("contratos", []):
             if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
+            # 2026-11-03: los «sin importe publicado» (0 € en la fuente) no cuentan en «Más contratos» ni en las
+            # sumas (Willis Iberia era nº 1 por ~370 mediaciones de seguros a 0 €). Lo explica _RK_NOTA_SIN_IMPORTE.
+            if _contrato_sin_importe_publicado(c):
                 continue
             emp = c.get("empresa", "")
             # "Desierto" es un artefacto del parser PLACE anterior al fix de
@@ -20852,6 +20863,10 @@ def _rk_empresas_calcular():
         grupos_prov = por_prov.setdefault(d.get("provincia", "murcia"), {})
         for c in d.get("contratos", []):
             if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
+            # 2026-11-03: los «sin importe publicado» (0 € en la fuente) no cuentan en «Más contratos» ni en las
+            # sumas (Willis Iberia era nº 1 por ~370 mediaciones de seguros a 0 €). Lo explica _RK_NOTA_SIN_IMPORTE.
+            if _contrato_sin_importe_publicado(c):
                 continue
             emp = c.get("empresa", "")
             if not emp or emp in ("No localizada", "Desierto"):
@@ -21249,6 +21264,9 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     # datos_nacional/datos_provincia ya no se usan: los top salen de _rankings_empresas_cacheado (ver ahí).
     top_n_nac, top_imp_nac = _rankings_empresas_cacheado(None)
     top_n_prov, top_imp_prov = _rankings_empresas_cacheado(provincia_prov)
+    texto_sin_importe = _t("No cuentan los contratos «sin importe publicado»: la fuente publica 0 € (mediación de "
+                           "seguros, concesiones, arrendamientos, préstamos...) y no son pagos del ayuntamiento.")
+    nota_sin_importe = f'<div class="gs-hint" style="margin:-4px 0 8px">{texto_sin_importe}</div>'
     label_prov = PROVINCIA_LABEL.get(provincia_prov, PROVINCIA_LABEL["murcia"])
     paginas = paginas or {}
     pags_actuales = {}      # página efectiva de cada tabla larga, para construir los enlaces
@@ -21474,6 +21492,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <span class="rk-badge">{_t("Todas las provincias cargadas")}</span>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos adjudicados")}</div>
+  {nota_sin_importe}
   <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_nac}
@@ -21489,6 +21508,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <div class="prov-switch">{selector_prov}</div>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos")} — {esc(label_prov)}</div>
+  {nota_sin_importe}
   <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_prov}
