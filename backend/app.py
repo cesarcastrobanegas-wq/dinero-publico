@@ -5252,9 +5252,31 @@ def _tabla_mojibake():
 _TABLA_MOJIBAKE = _tabla_mojibake()
 _RE_MOJIBAKE = re.compile("|".join(re.escape(k) for k in sorted(_TABLA_MOJIBAKE, key=len, reverse=True)))
 
+# Excepciones puntuales (revisión del 03-11-2026): textos que la tabla general no puede arreglar bien, porque la letra
+# se perdió («Ã» suelta: puede ser Á, Í, Ï, Ð o Ý) o porque la fuente trae una letra equivocada («Ã“» = Ó donde va Í).
+# Solo entra un caso cuando la letra correcta está confirmada en otro registro con el mismo NIF; nunca se adivina.
+# Se aplican sobre el texto tal como viene, antes de la tabla general. Cada entrada: (texto roto, texto bueno, fuente).
+# Solo personas jurídicas: los nombres de personas físicas no se escriben en el código (el repositorio es público).
+_EXCEPCIONES_TILDES = (
+    # Contratos formales (PSCP) de Almenar. NIF B44802759: el mismo NIF sale como «ODISEA INGENIERÍA S.L.» en Pals y
+    # en Sant Pol de Mar (contratos formales) y como «Odisea ingeniería S.L» en Bellpuig. La «Ó» de la fuente es un
+    # error suyo: no se cambia la regla general («Ã“» = «Ó» es correcta en PRODUCIÓNS, PROMOCIÓN...).
+    ("ODISEA INGENIERÃ“A", "ODISEA INGENIERÍA",
+     "mismo NIF B44802759 en contratos formales de Pals, Sant Pol de Mar y Bellpuig"),
+    # Menores PLACE de Castalla (2025-07 y 2025-12). NIF B54885868: «ASESORIA DRONES ESPAÃ‘A MI PRIMER DRONE, SL» en
+    # Onil (PLACE, 2025-06) confirma la I; la «Ã» indica que llevaba tilde (Í). La Ñ ya la arregla la tabla general.
+    ("ASESORÃA DRONES", "ASESORÍA DRONES",
+     "mismo NIF B54885868 en menores PLACE de Onil, 2025-06"),
+)
+
 
 def _arreglar_tildes(t):
-    """Texto con las tildes estropeadas arregladas según _TABLA_MOJIBAKE (solo si hay alguna pista: Ã, Â o â)."""
+    """Texto con las tildes estropeadas arregladas: primero _EXCEPCIONES_TILDES y luego _TABLA_MOJIBAKE (solo si hay
+    alguna pista: Ã, Â o â)."""
+    if "Ã" in t:
+        for roto, bueno, _fuente in _EXCEPCIONES_TILDES:
+            if roto in t:
+                t = t.replace(roto, bueno)
     for _ in range(2):          # 2.ª pasada solo para las dobles lecturas
         if not ("Ã" in t or "Â" in t or "â" in t):
             break
