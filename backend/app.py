@@ -2686,7 +2686,9 @@ SUELDOS_CONCEJALES_FILE = os.path.join(BASE_DIR, "sueldos_concejales.json")
 
 def _cargar_sueldos_concejales():
     """{normalizar(municipio): [registro, ...]} desde sueldos_concejales.json. Defensivo: descarta cualquier
-    registro al que le falte nombre, cargo, importe (> 0), base del importe o URL https de la fuente."""
+    registro al que le falte nombre, cargo, importe (> 0), base del importe o URL https de la fuente.
+    Guarda en SUELDOS_CONCEJALES_FECHA la fecha en que se recogieron ("generado" del JSON)."""
+    global SUELDOS_CONCEJALES_FECHA
     out = {}
     if not os.path.exists(SUELDOS_CONCEJALES_FILE):
         return out
@@ -2694,6 +2696,8 @@ def _cargar_sueldos_concejales():
         with open(SUELDOS_CONCEJALES_FILE, encoding="utf-8") as f:
             d = json.load(f)
         registros = d.get("registros", []) if isinstance(d, dict) else []
+        if isinstance(d, dict):
+            SUELDOS_CONCEJALES_FECHA = _fecha_dma(str(d.get("generado", "")))
     except Exception:
         return out
     for r in registros:
@@ -2714,6 +2718,7 @@ def _cargar_sueldos_concejales():
 
 # (SUELDOS_CONCEJALES se carga más abajo, tras definir normalizar(): el cargador la usa.)
 SUELDOS_CONCEJALES = {}
+SUELDOS_CONCEJALES_FECHA = ""
 
 
 def _cargar_retribuciones_ispa():
@@ -5512,9 +5517,25 @@ def sueldos_concejales_html(municipio, provincia=None):
             f'<li><b class="pol-nombre">{esc(r["nombre"])}</b> <span class="conc-cargo">— {esc(r["cargo"])}</span> '
             f'<span class="pol-retrib">💰 {fmt_eur(r["importe"])} {esc(r["base"])}{periodo}</span> '
             f'<a href="{esc(r["fuente_url"])}" target="_blank" rel="noopener nofollow">{fuente} ↗</a></li>')
+    # Revisión del 02-11-2026: la lista de concejales (Ministerio, toda la corporación vigente) y esta (solo quien
+    # cobra, de documentos del ayuntamiento de otras fechas) no tienen por qué coincidir; 38 de 930 personas ya no
+    # estaban en la del Ministerio. Se avisa en la ficha con la fecha de cada una.
+    aviso_fuentes = ""
+    if ALCALDES_CONCEJALES.get(clave):
+        periodos = sorted({r["periodo"] for r in regs if r["periodo"]})
+        fecha_min = ALCALDES_CONCEJALES_FECHA or _t("fecha no indicada")
+        fecha_sue = "; ".join(periodos) if periodos else _t("fecha no indicada")
+        aviso_fuentes = (
+            f'<div class="pol-retrib-nota">ℹ️ '
+            + _t("Esta lista y la de concejales vienen de fuentes y fechas distintas: la de concejales, del Ministerio "
+                 "(datos a {fecha_ministerio}); la de retribuciones, de documentos del ayuntamiento ({fecha_sueldos}), "
+                 "recogidos el {fecha_recogida}. Puede haber personas que estén en una y no en la otra.").format(
+                fecha_ministerio=esc(fecha_min), fecha_sueldos=esc(fecha_sue),
+                fecha_recogida=esc(SUELDOS_CONCEJALES_FECHA or _t("fecha no indicada")))
+            + '</div>')
     return (f'<details class="concejales-dd sueldos-conc"><summary>'
             f'{_t("Retribuciones de concejales publicadas por el ayuntamiento ({n})").format(n=len(regs))}'
-            f'</summary><ul>{"".join(items)}</ul>'
+            f'</summary>{aviso_fuentes}<ul>{"".join(items)}</ul>'
             f'<div class="pol-retrib-nota">'
             f'{_t("Importes tal como figuran en la fuente oficial enlazada en cada fila, con la base y el periodo que ella indica; no se han convertido ni estimado.")}'
             + (f' <b>{_t("Nota:")}</b> {esc(_NOTAS_SUELDOS_CONCEJALES[clave])}' if clave in _NOTAS_SUELDOS_CONCEJALES else "")
