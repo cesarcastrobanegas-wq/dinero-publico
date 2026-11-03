@@ -1,6 +1,6 @@
 name: PAC del FEGA (a mano y en verano)
 
-# Ayudas de la PAC (FEAGA y FEADER) del FEGA con la OPCIÓN B (decisiones de César del 18-10-2026; ver
+# Ayudas de la PAC (FEAGA y FEADER) del FEGA con la OPCIÓN B (decisiones del responsable del 18-10-2026; ver
 # backend/pac_fega.py y el «PLAN PAC opcion B.md»):
 #  - Las personas físicas, las comunidades de bienes, sociedades civiles y herencias, y los nombres dudosos NUNCA salen con
 #    nombre ni en una fila propia: el generador los suma por municipio (nada si en el municipio son menos de 10) y el

@@ -1,4 +1,4 @@
-"""Ayudas de la PAC (FEAGA y FEADER) del FEGA, con la OPCIÓN B decidida por César (18-10-2026): las personas físicas no
+"""Ayudas de la PAC (FEAGA y FEADER) del FEGA, con la OPCIÓN B decidida por el responsable (18-10-2026): las personas físicas no
 se publican nunca, ni con nombre ni en una fila propia.
 
 Fuente: https://www.fega.gob.es/es/datos-abiertos/consulta-de-beneficiarios-pac/descarga-de-ficheros (un ZIP por
@@ -19,7 +19,7 @@ Qué hace (en GitHub Actions o en local; NADA de esto corre en Render):
      sola ese día.
 
 Salida: NDJSON en gzip SIN nombres de personas físicas, que se sube a POST /admin/pac (cabecera X-Admin-Token).
-Con --revision se escribe además, SOLO EN LOCAL, la lista de anónimos de 300.000 € o más para que César revise si hay
+Con --revision se escribe además, SOLO EN LOCAL, la lista de anónimos de 300.000 € o más para que el responsable revise si hay
 alguna entidad (lleva nombres de personas: nunca al repositorio, a un artefacto ni a Render; .gitignore la excluye).
 
 Uso:
@@ -51,7 +51,7 @@ PUBLICACION_CONOCIDA = {
     2025: ("2026-05-25", "https://www.fega.gob.es/sites/default/files/files/document/"
                          "Beneficiarios_municipio_ejercicio_financiero-2025.zip"),
 }
-UMBRAL_ANONIMOS = 10            # perceptores anónimos mínimos para dar la suma de un municipio (decisión 3 de César)
+UMBRAL_ANONIMOS = 10            # perceptores anónimos mínimos para dar la suma de un municipio (decisión 3 del responsable)
 UMBRAL_REVISION = 300000.0      # anónimos desde este importe van a la lista de revisión local (decisión 4)
 ANIOS_PUBLICACION = 2           # art. 98.4 del Reglamento (UE) 2021/2116 (decisión 6)
 TRAMOS = (1250, 5000, 20000, 100000, 300000)    # 6 tramos: <=1.250, ..., >300.000
@@ -116,7 +116,7 @@ REGLAS = [
                    r"OPFH|JUNTA DE REGANTES|JUNTA CENTRAL|ENTIDAD DE|PATRONATO|MUTUA|MUTUALIDAD|ASOC|ASOCIAC\w*|REGANTES|REGANTS|"
                    r"GDR|GRUPO DE DESARROLLO|DESARROLLO RURAL|DESENVOLUPAMENT RURAL|CRDOP|CR DOP|CONSEJO REG\w*|ASAJA|COAG|"
                    r"ORGANIZACION DE PRODUCTORES|ORG PRODUCTORES)\b"),
-    # sin personalidad jurídica propia y formadas por personas físicas: anónimas (decisión 1 de César)
+    # sin personalidad jurídica propia y formadas por personas físicas: anónimas (decisión 1 del responsable)
     ("sin_personalidad", r"\b(C ?B|COMUNIDAD DE BIENES|COMUNITAT DE BENS|S ?C ?P|SCP|S ?C|SOCIEDAD CIVIL|SOCIETAT CIVIL|"
                          r"HERENCIA YACENTE|HERENCIA|HEREDEROS|HEREUS|HERMANOS|HNOS|GERMANS|IRMANS|Y OTROS|Y OTRA|"
                          r"Y OTRAS|I ALTRES|ESPOSOS|COMUNIDAD HEREDITARIA|COMUNIDAD|CDAD|COM BIENES|TITULARIDAD COMPARTIDA|"
@@ -140,7 +140,7 @@ def _cargar_json(nombre, defecto):
         return json.load(f)
 
 
-# Lista blanca: entidades sin forma jurídica en el nombre que César ha comprobado una a una (nombres de ENTIDADES,
+# Lista blanca: entidades sin forma jurídica en el nombre que el responsable ha comprobado una a una (nombres de ENTIDADES,
 # nunca de personas). Supresiones: huellas sha256 del nombre normalizado de quien ha pedido no salir (decisión 2).
 VERIFICADAS = {norm(n) for n in _cargar_json("pac_entidades_verificadas.json", {"entidades": []})["entidades"]}
 SUPRIMIDAS = set(_cargar_json("pac_supresiones.json", {"huellas": []})["huellas"])
