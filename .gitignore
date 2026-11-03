@@ -41,3 +41,8 @@ socios.db
 socios.db-*
 backend/socios.db
 backend/socios.db-*
+
+# Cualquier base de datos local (copias de produccion, pruebas): nunca en el repositorio.
+*.db
+*.db-shm
+*.db-wal
