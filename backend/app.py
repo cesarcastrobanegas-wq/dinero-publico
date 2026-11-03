@@ -22820,7 +22820,7 @@ def _html_plan_recuperacion(f, res):
 
 
 # ─── PAC (FEGA), OPCIÓN B (19-10-2026) ────────────────────────────────────────────────────────────────────────────
-# Decisiones de César del 18-10 (PLAN PAC opcion B.md, §7): las personas físicas, las comunidades de bienes, sociedades
+# Decisiones del responsable del 18-10 (PLAN PAC opcion B.md, §7): las personas físicas, las comunidades de bienes, sociedades
 # civiles y herencias, y los nombres dudosos, nunca salen con nombre ni en una fila propia: solo en sumas por municipio
 # y nada si en el municipio son menos de 10. Solo salen con nombre las personas jurídicas claras. Ejercicios 2024 y
 # 2025, y cada uno se BORRA a los dos años de su publicación por el FEGA (art. 98.4 del Reglamento (UE) 2021/2116).
