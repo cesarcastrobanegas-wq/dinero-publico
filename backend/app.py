@@ -5219,8 +5219,51 @@ def _tabla_controles():
 _TABLA_CONTROLES = _tabla_controles()
 
 
+# Tildes estropeadas (revisión del 03-11-2026): algunas fuentes entregan texto UTF-8 que en algún paso se leyó como
+# Latin-1/Windows-1252, y llega «ESPAÃ‘A», «MUÃ±OZ», «campaÃ±a», «â€œ...â€». Se arregla SOLO al mostrar (en esc(),
+# antes de quitar los controles, porque Á, Í, Ï, Ð y Ý dejan un byte de control: «Ã\x81»); la base no se toca.
+# Tabla de sustituciones: cada carácter de _MOJIBAKE_CARACTERES, codificado en UTF-8 y leído como Windows-1252 y como
+# Latin-1, vuelve a ser él mismo. Se buscan solo secuencias de 2-3 caracteres que no se dan en texto normal.
+_MOJIBAKE_CARACTERES = ("áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇãõÃÕýÝÐ"
+                        "ºª¿¡«»·¨´°€“”‘’–—…")
+
+
+def _tabla_mojibake():
+    tabla = {}
+    for ch in _MOJIBAKE_CARACTERES:
+        b = ch.encode("utf-8")
+        for cod in ("cp1252", "latin-1"):
+            try:
+                roto = b.decode(cod)
+            except UnicodeDecodeError:
+                continue
+            if roto != ch:
+                tabla.setdefault(roto, ch)
+    # Comillas cuyo último byte (0x9D, sin carácter en Windows-1252) se perdió por el camino: «â€» suelto = cierre;
+    # y el euro con su byte central cambiado por «?».
+    tabla.setdefault("â€", "”")
+    tabla.setdefault("â?¬", "€")
+    # Doble lectura («MUÃƒÂ‘OZ»): «Â» + control C1 vuelve a ser el control, y una 2.ª pasada lo junta.
+    for i in range(0x80, 0xA0):
+        tabla.setdefault("Â" + chr(i), chr(i))
+    return tabla
+
+
+_TABLA_MOJIBAKE = _tabla_mojibake()
+_RE_MOJIBAKE = re.compile("|".join(re.escape(k) for k in sorted(_TABLA_MOJIBAKE, key=len, reverse=True)))
+
+
+def _arreglar_tildes(t):
+    """Texto con las tildes estropeadas arregladas según _TABLA_MOJIBAKE (solo si hay alguna pista: Ã, Â o â)."""
+    for _ in range(2):          # 2.ª pasada solo para las dobles lecturas
+        if not ("Ã" in t or "Â" in t or "â" in t):
+            break
+        t = _RE_MOJIBAKE.sub(lambda m: _TABLA_MOJIBAKE[m.group(0)], t)
+    return t
+
+
 def esc(s):
-    return html.escape(str(s or "").translate(_TABLA_CONTROLES), quote=True)
+    return html.escape(_arreglar_tildes(str(s or "")).translate(_TABLA_CONTROLES), quote=True)
 
 
 INDICE_CARGOS_PUBLICOS = _construir_indice_cargos_publicos()
