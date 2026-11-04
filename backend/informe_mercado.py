@@ -51,7 +51,7 @@ SECTORES = [
     ("Eventos, cultura y espectáculos", "92", ("7995", "92"),
      r"ACTUACION|ESPECTACULO|CONCIERTO|ORQUESTA|FIESTA|FERIA|FESTIVAL|CARNAVAL|SEMANA SANTA|NAVIDAD|ESCENARIO|SONIDO|"
      r"ILUMINACION ORNAMENTAL|TEATRO|CABALGATA|PIROTECN|FUEGOS|EVENTO|GALA|DISCO MOVIL|CARPA"),
-    ("Informática y telecomunicaciones", "72", ("72", "48", "30", "32", "64"),
+    ("Informática y telecomunicaciones", "72", ("72", "48", "302", "32", "64"),
      r"INFORMATIC|SOFTWARE|LICENCIA|ORDENADOR|SERVIDOR|PLATAFORMA|APLICACION|WEB|TELEFON|FIBRA|INTERNET|CIBERSEG|"
      r"IMPRESORA|TOTEM|DIGITAL|PORTATIL|VIDEOVIGILANCIA|HOSTING|CERTIFICADO ELECTRONICO"),
     ("Publicidad, comunicación e imprenta", "79", ("7934", "7982", "22"),
@@ -586,7 +586,7 @@ def informe_pdf(ruta, A, provincia, desde, hasta, ahora, titulo=None, muestra=Tr
                           f"en el sector.")
         if A["organismos"]:
             o = A["organismos"][0]
-            claves.append(f"El organismo que más importe adjudica es {E(bonito(o['nombre'], 80))}: "
+            claves.append(f"El organismo que más importe adjudica es {E(bonito(o['nombre'], 120))}: "
                           f"{plural(o['n'], 'contrato', 'contratos')} por {eur(o['importe'])}.")
             o2 = max(A["organismos"], key=lambda o: o["n"])
             if o2 is not o:
