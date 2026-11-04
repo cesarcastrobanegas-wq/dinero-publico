@@ -5,7 +5,7 @@ Prueba de la página de precios (/precios, 2026-11-04), SIN RED.
   2) La web (si se pasa CARPETA_DATOS): llama a app.app (la entrada WSGI de gunicorn) dentro de un proceso hijo, con
      una COPIA temporal de esa carpeta como DATA_DIR, sin RESEND_API_KEY y sin arrancar hilos. Apagada (sin
      PRECIOS_VISIBLE): 404 en /precios y en /gl/, /ca/, /eu/. Encendida (la prueba cambia app.PRECIOS_VISIBLE en ese
-     proceso, nada más): 200, noindex, los 3 planes, fuera del sitemap y sin enlaces en el código.
+     proceso, nada más): 200, noindex, los 3 planes, fuera del sitemap y sin enlaces (el del pie solo con la variable al arrancar).
 Uso: python backend/precios_prueba.py [CARPETA_DATOS]
   CARPETA_DATOS: una carpeta de datos de PRUEBA (con su cache.db, o vacía: la app crea una); nunca la de producción.
 """
@@ -107,8 +107,11 @@ def caso_web(datos):
        "web")
     c, _, b = get("/sitemap.xml")
     ok(c == 200 and "precios" not in b, f"fuera del sitemap ({c})", "web")
-    fuente = io.open(os.path.join(AQUI, "app.py"), encoding="utf-8").read()
-    ok('href="/precios' not in fuente and "href='/precios" not in fuente, "ninguna página enlaza /precios", "web")
+    # el único enlace a /precios es el del pie (PR «listo para vender»), que solo sale con PRECIOS_VISIBLE=1 al
+    # arrancar; este proceso arrancó sin ella, así que ninguna página fija lo enseña
+    for r in ("/", "/aviso-legal", "/quien-soy", "/convocatorias"):
+        c, _, b = get(r)
+        ok('href="/precios' not in b, f"arrancada sin PRECIOS_VISIBLE: {r} no enlaza /precios ({c})", "web")
 
 
 def main():
