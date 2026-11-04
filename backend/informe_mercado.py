@@ -306,6 +306,10 @@ def _f(x):
 
 def encaja(lic, sectores, prefijos_propios=()):
     cpvs = [re.sub(r"\D", "", c) for c in (lic.get("cpvs") or [lic.get("cpv") or ""]) if c]
+    principal = re.sub(r"\D", "", lic.get("cpv") or "") or (cpvs[0] if cpvs else "")
+    s_principal = sector_por_cpv(principal)
+    if s_principal:      # manda el CPV principal: un suministro de electricidad no es «mantenimiento»
+        return s_principal in sectores or bool(prefijos_propios) and principal.startswith(prefijos_propios)
     if any(sector_por_cpv(c) in sectores for c in cpvs):
         return True
     if prefijos_propios and any(c.startswith(p) for c in cpvs for p in prefijos_propios):
@@ -614,7 +618,7 @@ def informe_pdf(ruta, A, provincia, desde, hasta, ahora, titulo=None, muestra=Tr
                 if url:
                     obj += f' · <link href="{E(url)}"><u>ver anuncio</u></link>'
                 filas.append([P(fecha_corta(x["fin_plazo"]) + "<br/>" + x["fin_plazo"][11:16]), P(obj),
-                              P(eur(_f(x.get("presupuesto"))), "tdr"), P(E(requisitos_txt(x)))])
+                              P(eur(_f(x.get("presupuesto"))) if _f(x.get("presupuesto")) else "Sin importe", "tdr"), P(E(requisitos_txt(x)))])
             h.append(tabla(filas, [1.7 * cm, ancho - 7.4 * cm, 2.4 * cm, 3.3 * cm]))
             if len(ab) > n_lic:
                 h.append(P(f"Y {len(ab) - n_lic} más. El servicio completo las envía todas por correo, con aviso de las "
@@ -693,7 +697,9 @@ def informe_pdf(ruta, A, provincia, desde, hasta, ahora, titulo=None, muestra=Tr
 
         # 5. cuándo y cuánto
         bloque = [P(f"{n_sec + 2}. Cuándo y de qué tamaño se contrata", "h1"),
-                  P("Contratos adjudicados por trimestre (solo trimestres completos)", "tdb"), Spacer(1, 2), barras(A["trimestres"])]
+                  P("Contratos adjudicados por trimestre (solo trimestres completos)", "tdb"), Spacer(1, 2), barras(A["trimestres"]),
+                  P("El último trimestre puede salir bajo: algunas fuentes publican los contratos con semanas de "
+                    "retraso.", "pc")]
         filas = [[P("Tamaño del contrato", "th"), P("Contratos", "thr"), P("% contratos", "thr"), P("Importe", "thr"),
                   P("% importe", "thr")]]
         n_ci = sum(n for _, n, _ in A["tamanos"]) or 1
