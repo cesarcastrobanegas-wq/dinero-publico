@@ -574,14 +574,54 @@ def enlace_version(clave, version=VERSION_ID):
 _RE_HUECO = re.compile(r"\[[^\[\]]+\]")
 
 
-def _texto_html(texto):
-    t = html.escape(texto, quote=False)
-    t = t.replace(CONTACTO, f'<a href="mailto:{CONTACTO}">{CONTACTO}</a>')
+# ─── DATOS DEL TITULAR (2026-11-04) ─────────────────────────────────────────────────────────────────────────────────
+# NINGÚN dato personal en el código (el repositorio es público): los textos llevan los huecos entre corchetes y la
+# página los rellena AL MOSTRARLA con estas variables de entorno (Render). Si falta alguna, su hueco sigue entre
+# corchetes y la página avisa de que es un borrador. Las fotos de las versiones y los .docx guardan los huecos, no los
+# datos. TITULAR_REGISTRO=no quita la línea de la inscripción registral (autónomo sin inscripción). TITULAR_CORREO es
+# opcional: sin ella, el correo de contacto de siempre.
+TITULAR_VARIABLES = (
+    ("TITULAR_NOMBRE", TITULAR, "nombre o razón social"),
+    ("TITULAR_NIF", "[NIF DEL TITULAR]", "NIF"),
+    ("TITULAR_DOMICILIO", "[DOMICILIO]", "domicilio"),
+    ("TITULAR_REGISTRO", "[DATOS DE INSCRIPCIÓN EN UN REGISTRO PÚBLICO, SI PROCEDEN]", "inscripción registral"),
+)
+
+
+def datos_titular(entorno=None):
+    """{"huecos": {hueco: valor}, "correo": correo de contacto, "faltan": [lo que falta, en palabras]}."""
+    entorno = os.environ if entorno is None else entorno
+    huecos, faltan = {}, []
+    for var, hueco, nombre in TITULAR_VARIABLES:
+        valor = " ".join((entorno.get(var) or "").split())[:300]
+        if not valor:
+            faltan.append(nombre)
+        elif var == "TITULAR_REGISTRO" and valor.lower() in ("no", "no procede", "-"):
+            huecos[hueco] = ""
+        else:
+            huecos[hueco] = valor
+    correo = (entorno.get("TITULAR_CORREO") or "").strip()
+    if not re.fullmatch(r"[^@\s<>\"']+@[^@\s<>\"']+\.[a-z]{2,}", correo, re.I):
+        correo = CONTACTO
+    return {"huecos": huecos, "correo": correo, "faltan": faltan}
+
+
+def _rellenar(texto, datos):
+    for hueco, valor in datos["huecos"].items():
+        texto = texto.replace(hueco, valor)
+    return texto.replace(CONTACTO, datos["correo"])
+
+
+def _texto_html(texto, datos=None):
+    datos = datos or {"huecos": {}, "correo": CONTACTO, "faltan": []}
+    t = html.escape(_rellenar(texto, datos), quote=False)
+    c = html.escape(datos["correo"])
+    t = t.replace(c, f'<a href="mailto:{c}">{c}</a>')
     t = t.replace("www.aepd.es", '<a href="https://www.aepd.es" target="_blank" rel="noopener">www.aepd.es</a>')
     return _RE_HUECO.sub(lambda m: f'<mark class="hueco">{m.group(0)}</mark>', t)
 
 
-def cuerpo_html(clave, version=None):
+def cuerpo_html(clave, version=None, entorno=None):
     """El cuerpo (dentro de .static-page) del documento `clave`, sin cabecera ni pie de la web. Con `version` (el ?v=
     de la página) da esa versión guardada; None si no existe (la página responde 404)."""
     doc = DOCUMENTOS[clave]
@@ -596,10 +636,14 @@ def cuerpo_html(clave, version=None):
     elif version and clave not in VERSIONADOS:
         return None
     partes = []
+    datos = datos_titular(entorno)
     if borrador:
         partes.append(f'<p class="borrador-legal"><b>{html.escape(MARCA_BORRADOR)}</b><br>Texto en preparación, '
                       'pendiente de revisión jurídica. Los huecos entre corchetes están por completar. Mientras tanto '
                       'vale el <a href="/aviso-legal">Aviso legal</a> publicado.</p>')
+    if datos["faltan"]:
+        partes.append('<p class="borrador-legal"><b>BORRADOR: faltan datos del titular</b> ('
+                      f'{html.escape(", ".join(datos["faltan"]))}). Sus huecos siguen entre corchetes.</p>')
     if antigua:
         partes.append(f'<p class="version-antigua">Estás viendo la versión «{html.escape(antigua)}» de este texto, que '
                       'ya no es la vigente. Sigue publicada para quien la aceptó. '
@@ -612,11 +656,12 @@ def cuerpo_html(clave, version=None):
     for b in bloques:
         if b[0] == "h2":
             ancla = f' id="{html.escape(b[2])}"' if b[2] else ""
-            partes.append(f"<h2{ancla}>{_texto_html(b[1])}</h2>")
+            partes.append(f"<h2{ancla}>{_texto_html(b[1], datos)}</h2>")
         elif b[0] == "p":
-            partes.append(f"<p>{_texto_html(b[1])}</p>")
+            partes.append(f"<p>{_texto_html(b[1], datos)}</p>")
         elif b[0] == "ul":
-            partes.append("<ul>" + "".join(f"<li>{_texto_html(x)}</li>" for x in b[1]) + "</ul>")
+            partes.append("<ul>" + "".join(f"<li>{_texto_html(x, datos)}</li>" for x in b[1]
+                                           if _rellenar(x, datos).strip(" .")) + "</ul>")
     anteriores = [v for v in versiones_guardadas() if v != VERSION_ID] if clave in VERSIONADOS else []
     if anteriores:
         enlaces = ", ".join(f'<a href="{html.escape(enlace_version(clave, v))}">{html.escape(v)}</a>'

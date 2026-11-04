@@ -27,6 +27,11 @@ RUTAS = ("/legal/aviso-legal", "/legal/privacidad", "/legal/condiciones")
 FIJAS = ("/", "/convocatorias", "/mapa-cobertura", "/aviso-legal", "/quien-soy", "/metodologia", "/casos",
          "/rankings", "/fondos-ue", "/entidades", "/sitemap.xml", "/robots.txt", "/no-existe-esta-pagina")
 OBLIGATORIAS = ("/", "/aviso-legal", "/quien-soy", "/sitemap.xml", "/robots.txt")
+TITULAR_PRUEBA = {"TITULAR_NOMBRE": "EMPRESA DE PRUEBA SL", "TITULAR_NIF": "B00000000",
+                  "TITULAR_DOMICILIO": "Calle de la Prueba 1, 30001 Murcia", "TITULAR_REGISTRO": "no"}
+HUECOS_TITULAR = ("[NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR]", "[NIF DEL TITULAR]", "[DOMICILIO]",
+                  "[DATOS DE INSCRIPCIÓN EN UN REGISTRO PÚBLICO, SI PROCEDEN]")
+_RE_HREF_LEGAL = re.compile(r"""(?:href|action)\s*=\s*["'](?:https?://[^/"']+)?(?:/(?:gl|ca|eu))?(/legal/[^"'?#]*)""")
 _RE_ENLACE_LEGAL = re.compile(r"""(?:href|action|src)\s*=\s*["'][^"']*/legal/|<loc>[^<]*/legal/|llow:\s*/legal/""")
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -61,6 +66,40 @@ def prueba_modulo():
         lineas = [l for l in f if "/legal/" in l and not l.lstrip().startswith("#")]
     ok(fallos, "modulo", not lineas, f"app.py no escribe /legal/ fuera de comentarios ({lineas[:2]})")
     fallos += prueba_versiones(T)
+    fallos += prueba_titular(T)
+    return fallos
+
+
+def prueba_titular(T):
+    """Datos del titular: de las variables de entorno; si falta alguna, hueco entre corchetes y aviso de borrador."""
+    fallos = []
+    src = open(os.path.join(AQUI, "textos_legales.py"), encoding="utf-8").read()
+    ok(fallos, "modulo", "B00000000" not in src and "Calle de la Prueba" not in src, "ningún dato del titular en el código")
+    for clave in T.DOCUMENTOS:
+        vacio = T.cuerpo_html(clave, entorno={})
+        lleno = T.cuerpo_html(clave, entorno=TITULAR_PRUEBA)
+        hay = [h for h in HUECOS_TITULAR if h in "".join(str(b) for b in T.DOCUMENTOS[clave]["bloques"])]
+        ok(fallos, "modulo", all(h in vacio for h in hay) and "faltan datos del titular" in vacio,
+           f"{clave}: sin variables, huecos del titular entre corchetes y aviso ({len(hay)} huecos)")
+        ok(fallos, "modulo", not any(h in lleno for h in HUECOS_TITULAR) and "faltan datos del titular" not in lleno,
+           f"{clave}: con todas las variables, ningún hueco del titular ni aviso de que faltan")
+        if "[NIF DEL TITULAR]" in "".join(str(b) for b in T.DOCUMENTOS[clave]["bloques"]):
+            ok(fallos, "modulo", "B00000000" in lleno and "EMPRESA DE PRUEBA SL" in lleno, f"{clave}: datos puestos")
+    av = T.cuerpo_html("aviso-legal", entorno=dict(TITULAR_PRUEBA, TITULAR_REGISTRO="Registro Mercantil de Murcia, "
+                                                    "hoja MU-0"))
+    ok(fallos, "modulo", "Registro Mercantil de Murcia, hoja MU-0" in av, "TITULAR_REGISTRO con datos: sale la línea")
+    ok(fallos, "modulo", "INSCRIPCIÓN" not in T.cuerpo_html("aviso-legal", entorno=TITULAR_PRUEBA)
+       and "<li>.</li>" not in T.cuerpo_html("aviso-legal", entorno=TITULAR_PRUEBA), "TITULAR_REGISTRO=no: sin línea")
+    parcial = T.cuerpo_html("aviso-legal", entorno={k: v for k, v in TITULAR_PRUEBA.items() if k != "TITULAR_NIF"})
+    ok(fallos, "modulo", "[NIF DEL TITULAR]" in parcial and "faltan datos del titular</b> (NIF)" in parcial
+       and "EMPRESA DE PRUEBA SL" in parcial, "falta solo el NIF: su hueco y el aviso, el resto puesto")
+    raro = T.cuerpo_html("aviso-legal", entorno=dict(TITULAR_PRUEBA, TITULAR_NOMBRE="<script>x</script>"))
+    ok(fallos, "modulo", "<script>x" not in raro and "&lt;script&gt;" in raro, "dato con HTML: escapado")
+    c1 = T.cuerpo_html("aviso-legal", entorno=dict(TITULAR_PRUEBA, TITULAR_CORREO="hola@ejemplo.test"))
+    ok(fallos, "modulo", 'mailto:hola@ejemplo.test' in c1 and T.CONTACTO not in c1, "TITULAR_CORREO cambia el correo")
+    c2 = T.cuerpo_html("aviso-legal", entorno=dict(TITULAR_PRUEBA, TITULAR_CORREO="no es un correo"))
+    ok(fallos, "modulo", f"mailto:{T.CONTACTO}" in c2, "TITULAR_CORREO inválido: el de siempre")
+    ok(fallos, "modulo", T.version_al_dia(), "las fotos de las versiones siguen con los huecos (sin datos)")
     return fallos
 
 
@@ -156,6 +195,9 @@ def caso(modo):
         ok(fallos, modo, "noindex" in h.get("X-Robots-Tag", ""), f"{ruta}: cabecera X-Robots-Tag noindex")
         ok(fallos, modo, "BORRADOR PARA REVISIÓN JURÍDICA" in b, f"{ruta}: marca de borrador visible")
         ok(fallos, modo, "Notas para el abogado" not in b, f"{ruta}: sin notas para el abogado")
+        if ruta.endswith(("/aviso-legal", "/privacidad", "/condiciones")) and "?" not in ruta:
+            ok(fallos, modo, not any(x in b for x in HUECOS_TITULAR) and "B00000000" in b
+               and "faltan datos del titular" not in b, f"{ruta}: datos del titular de las variables, sin corchetes")
     import textos_legales as T
     v = T.VERSION_ID
     for ruta, esperado in ((f"/legal/condiciones?v={v}", 200), (f"/legal/privacidad?v={v}", 200),
@@ -175,7 +217,12 @@ def caso(modo):
             ok(fallos, modo, c == 200, f"{ruta}: responde 200 ({c})")
         elif c != 200:
             print(f"[{modo}] aviso {ruta}: {c} con la base vacía (no cuenta como fallo)", flush=True)
-        ok(fallos, modo, not _RE_ENLACE_LEGAL.search(b), f"{ruta}: ningún enlace a /legal/")
+        if encendido:      # encendido, el pie puede enlazar a los textos nuevos (PR «listo para vender»), solo a ellos
+            malos = [u for u in _RE_HREF_LEGAL.findall(b) if u not in T.RUTAS]
+            ok(fallos, modo, not malos and "/legal/" not in "".join(re.findall(r"<loc>[^<]*</loc>", b)),
+               f"{ruta}: enlaces a /legal/ solo a las rutas que existen y nunca en el sitemap ({malos[:2]})")
+        else:
+            ok(fallos, modo, not _RE_ENLACE_LEGAL.search(b), f"{ruta}: ningún enlace a /legal/")
     return fallos
 
 
@@ -185,13 +232,13 @@ def main():
         print(f"[{sys.argv[2]}] FALLOS: {len(fallos)}", flush=True)
         sys.exit(1 if fallos else 0)
     total = len(prueba_modulo())
-    for modo, extra in (("apagado", {}), ("encendido", {"TEXTOS_LEGALES_NUEVOS": "1"})):
+    for modo, extra in (("apagado", {}), ("encendido", dict(TITULAR_PRUEBA, TEXTOS_LEGALES_NUEVOS="1"))):
         datos = tempfile.mkdtemp(prefix=f"textos_legales_{modo}_")
         sqlite3.connect(os.path.join(datos, "cache.db")).close()          # cache.db VACÍO, nunca el real
         open(os.path.join(datos, ".disco_inicializado"), "w").close()
         env = {k: v for k, v in os.environ.items() if k not in (
             "RESEND_API_KEY", "TEXTOS_LEGALES_NUEVOS", "FILTRO_FORMULARIO", "ALERTAS_ACTIVAS", "FILTRO_EMBUDO",
-            "ADMIN_TOKEN", "I18N_PUBLICADOS")}
+            "ADMIN_TOKEN", "I18N_PUBLICADOS") and not k.startswith("TITULAR_")}
         env.update(extra, DATA_DIR=datos, DINERO_HILOS_EN_POST_FORK="1", PYTHONIOENCODING="utf-8")
         r = subprocess.run([sys.executable, os.path.abspath(__file__), "--caso", modo], env=env,
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
