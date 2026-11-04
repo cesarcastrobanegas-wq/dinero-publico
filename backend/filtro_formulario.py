@@ -15,8 +15,12 @@ pasa las licitaciones abiertas de la tabla.
   los enlaces firmados los pone app.py). Todos los correos llevan el enlace de baja, que BORRA el perfil.
 - Página sin publicidad, analítica ni recursos de terceros, y noindex (como las de las alertas): lleva datos de empresa.
 - Responsable de los datos: Dinero Público (decisión de César, 2026-10-27).
+- Para vender (2026-11-04): casilla obligatoria de aceptación de las condiciones y la privacidad (CONDICIONES_VERSION),
+  aviso de que el servicio es de pago con el precio de PRECIO_FILTRO («precio por confirmar» sin ella) y enlaces a
+  /legal/condiciones y /legal/privacidad (PR #20) en el formulario y en el correo de confirmación.
 """
 import html
+import os
 import re
 
 try:
@@ -31,11 +35,52 @@ MAX_FICHAS_VISTA = 10                    # por grupo, en la vista previa
 _RE_CORREO = re.compile(r"[A-Za-z0-9._%+\-]{1,64}@[A-Za-z0-9\-]{1,63}(?:\.[A-Za-z0-9\-]{1,63})+")
 TIPOS_FORM = (("obras", "Obras"), ("servicios", "Servicios"), ("suministros", "Suministros"))
 PRIVACIDAD = ("Responsable: Dinero Público. Usamos estos datos solo para enviarte las licitaciones que encajan con tu "
-              "empresa. Guardamos el correo y los datos de la empresa de este formulario; nada más. Te pediremos "
+              "empresa. Guardamos el correo y los datos de la empresa de este formulario, y la fecha y la versión de "
+              "las condiciones que aceptas; nada más. Te pediremos "
               "confirmar el correo: sin confirmar, lo borramos a los 7 días. Si no usas el servicio en un año, te "
               "avisaremos un mes antes y, si no nos dices que lo mantengamos, lo borraremos. Puedes darte de baja en "
               "cualquier momento con el enlace de cada correo.")
-ANCLA_AVISO_LEGAL = "/aviso-legal#filtro-licitaciones"
+
+# ── condiciones y pago (2026-11-04) ─────────────────────────────────────────────────────────────────────────────────
+# Para darse de alta hay que marcar la casilla «He leído y acepto...» (se comprueba también en el servidor: sin ella,
+# error y no se guarda nada). socios.db guarda la fecha de aceptación y esta versión. Cambiar la versión cada vez que
+# cambien las condiciones o la privacidad publicadas (el abogado aún no ha dado los textos por buenos).
+CONDICIONES_VERSION = "borrador-2026-11-04"
+# Páginas de los textos legales nuevos (PR #20, wip/textos-legales). Hasta que se fusione y se ponga
+# TEXTOS_LEGALES_NUEVOS=1 dan 404; el filtro también está apagado (FILTRO_FORMULARIO). Rutas de la web o direcciones
+# completas (https://...).
+URL_CONDICIONES = "/legal/condiciones"
+URL_PRIVACIDAD = "/legal/privacidad"
+PRECIO_POR_CONFIRMAR = "precio por confirmar"
+_RE_PRECIO_NUMERO = re.compile(r"\d{1,6}(?:[.,]\d{1,2})?")
+_PERIODOS = {"/mes": "/mes", "mes": "/mes", "/año": "/año", "año": "/año", "anio": "/año", "/anio": "/año"}
+
+
+def precio_texto(entorno=None):
+    """Precio del servicio en texto llano (SIN escapar), de PRECIO_FILTRO y PRECIO_FILTRO_PERIODO, los mismos nombres y
+    la misma lectura que precios.py del PR #19 (un número suelto lleva « €»; periodo «/mes» por defecto), pero sin
+    depender de él. Sin PRECIO_FILTRO (o vacía): «precio por confirmar». Nunca se inventa un precio."""
+    entorno = os.environ if entorno is None else entorno
+    crudo = (entorno.get("PRECIO_FILTRO") or "").strip()[:40]
+    if not crudo:
+        return PRECIO_POR_CONFIRMAR
+    if _RE_PRECIO_NUMERO.fullmatch(crudo):
+        crudo += " €"
+    periodo = _PERIODOS.get((entorno.get("PRECIO_FILTRO_PERIODO") or "").strip().lower(), "/mes")
+    return f"{crudo}{periodo}"
+
+
+def aviso_pago_texto(entorno=None):
+    return f"El servicio es de pago: {precio_texto(entorno)}. Te escribiremos para el pago antes de empezar."
+
+
+def privacidad_texto(entorno=None):
+    return f"{aviso_pago_texto(entorno)} {PRIVACIDAD}"
+
+
+def url_completa(ruta, base=""):
+    """Dirección para un correo: las rutas de la web llevan delante `base` (SITE_URL)."""
+    return ruta if ruta.startswith(("http://", "https://")) else f"{base}{ruta}"
 
 CSS = """
 *{box-sizing:border-box}
@@ -123,6 +168,9 @@ def leer_envio(params):
     ute = _uno(params, "ute")
     if ute not in ("si", "no"):
         errores.append("UTE: indica si irías junto a otra empresa")
+    if _uno(params, "condiciones") != "1":
+        errores.append("condiciones: para darte de alta tienes que leer y aceptar las condiciones de contratación y la "
+                       "política de privacidad (marca la casilla)")
     perfil = {
         "cpvs": list(dict.fromkeys(cpvs + cpvs_extra)),
         "provincias": [p for p in _lista(params, "provincia") if p in F.NOMBRE_PROVINCIA],
@@ -177,6 +225,7 @@ def formulario_html(v=None, errores=()):
     tramos = "".join(f'<option value="{_e(k)}"{" selected" if u("facturacion") == k else ""}>{_e(t)}</option>'
                      for k, t in F.TRAMOS_TEXTO.items())
     nacional = u("nacional") == "1" or not v
+    acepto = " checked" if u("condiciones") == "1" else ""
     return f"""{err}<form method="POST" action="{RUTA}" novalidate>
 <fieldset><legend>1. Sector</legend>
 <p class="ayuda">Marca los sectores de tu empresa (puedes marcar varios).</p>
@@ -226,8 +275,12 @@ def formulario_html(v=None, errores=()):
 <input type="email" id="correo" name="correo" maxlength="120" autocomplete="email" value="{_e(u("correo"))}"></div>
 <input type="text" name="web" value="" tabindex="-1" autocomplete="off" aria-hidden="true" class="trampa">
 </fieldset>
+<div class="caja"><b>{_e(aviso_pago_texto())}</b>
+<div class="opc" style="margin-top:8px"><label><input type="checkbox" name="condiciones" value="1" required{acepto}>
+<span>He leído y acepto las <a href="{_e(URL_CONDICIONES)}" target="_blank" rel="noopener">condiciones de contratación</a>
+y la <a href="{_e(URL_PRIVACIDAD)}" target="_blank" rel="noopener">política de privacidad</a>.</span></label></div></div>
 <button type="submit">Ver mis licitaciones</button>
-<p class="priv">{_e(PRIVACIDAD)} <a href="{ANCLA_AVISO_LEGAL}">Protección de datos</a></p>
+<p class="priv">{_e(privacidad_texto())} <a href="{_e(URL_PRIVACIDAD)}">Política de privacidad</a></p>
 </form>"""
 
 
@@ -397,10 +450,16 @@ def correo_html(cuerpo, pie):
             f'{cuerpo}{pie}</div>')
 
 
-def correo_confirmacion(perfil, enlace_confirmar, enlace_baja, es_cambio=False, ahora=None):
+def correo_confirmacion(perfil, enlace_confirmar, enlace_baja, es_cambio=False, ahora=None, enlace_condiciones="",
+                        enlace_privacidad="", version=CONDICIONES_VERSION):
     """(asunto, texto, html) del correo de confirmación. Lleva el enlace de baja como todos: si no lo pidió quien
-    recibe el correo, puede borrar sus datos en el acto sin esperar a los 7 días."""
+    recibe el correo, puede borrar sus datos en el acto sin esperar a los 7 días. Desde el 04-11 también lleva el aviso
+    de que el servicio es de pago, la versión de las condiciones aceptadas y los enlaces a las condiciones y a la
+    privacidad (direcciones completas, las pone app.py)."""
     datos = F.perfil_texto(perfil, ahora)
+    enlace_condiciones = enlace_condiciones or URL_CONDICIONES
+    enlace_privacidad = enlace_privacidad or URL_PRIVACIDAD
+    acepto = f"Al enviar el formulario aceptaste las condiciones de contratación y la política de privacidad (versión {version})."
     if es_cambio:
         asunto = "Confirma los datos nuevos de tu empresa en Dinero Público"
         intro = "Has pedido cambiar los datos de tu empresa para recibir licitaciones de Dinero Público. Los datos nuevos son:"
@@ -414,14 +473,20 @@ def correo_confirmacion(perfil, enlace_confirmar, enlace_baja, es_cambio=False, 
         no_tu = ("Si no has sido tú, no hagas nada: sin confirmar no te enviaremos nada más y lo borramos en 7 días. "
                  "Si prefieres borrarlo ya, usa el enlace de baja de abajo.")
     pie_txt, pie_html = _pie_baja(enlace_baja)
+    pago = aviso_pago_texto()
     lineas = [intro, ""] + [f"  {k}: {v}" for k, v in datos] + [
-        "", f"Para confirmarlo, pulsa este enlace: {enlace_confirmar}", "", no_tu] + pie_txt
+        "", f"Para confirmarlo, pulsa este enlace: {enlace_confirmar}", "", pago, acepto,
+        f"  Condiciones de contratación: {enlace_condiciones}", f"  Política de privacidad: {enlace_privacidad}",
+        "", no_tu] + pie_txt
     tabla = "".join(f'<tr><td style="padding:3px 10px 3px 0;color:#4b5563;vertical-align:top">{_e(k)}</td>'
                     f'<td style="padding:3px 0;vertical-align:top">{_e(v)}</td></tr>' for k, v in datos)
     cuerpo = (f'<p>{_e(intro)}</p><table style="font-size:14px;border-collapse:collapse">{tabla}</table>'
               f'<p style="margin:18px 0"><a href="{_e(enlace_confirmar)}" style="background:#1b2f5c;color:#ffffff;'
               f'text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600;display:inline-block">'
-              f'{_e(boton)}</a></p><p style="font-size:13px;color:#6b7280">{_e(no_tu)}</p>')
+              f'{_e(boton)}</a></p><p style="font-size:14px"><b>{_e(pago)}</b></p>'
+              f'<p style="font-size:14px">{_e(acepto)} <a href="{_e(enlace_condiciones)}">Condiciones de contratación</a>'
+              f' · <a href="{_e(enlace_privacidad)}">Política de privacidad</a></p>'
+              f'<p style="font-size:13px;color:#6b7280">{_e(no_tu)}</p>')
     return asunto, "\n".join(lineas) + "\n", correo_html(cuerpo, pie_html)
 
 

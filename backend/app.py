@@ -27538,14 +27538,18 @@ def _socios_alta(correo, perfil):
     if SOC.correo_valido(correo) and not _socios_correo_permitido(correo):
         return "fuera_de_prueba"                            # SOCIOS_SOLO_CORREOS: ni se guarda ni se envía nada
     alm = _socios_almacen()
-    r = alm.alta(correo, perfil)
+    # La casilla de las condiciones ya la ha comprobado el formulario (leer_envio); socios.alta tampoco guarda nada sin
+    # la versión aceptada.
+    r = alm.alta(correo, perfil, condiciones=FFORM.CONDICIONES_VERSION)
     if r["resultado"] != "confirmar":
         return r["resultado"]
     p = r["perfil"]
     objetivo = alm.a_confirmar(p)
     asunto, texto, html_ = FFORM.correo_confirmacion(
         json.loads(objetivo), _socios_enlace(alm, "confirmar", p["id"], SOC.huella(objetivo)),
-        _socios_enlace(alm, "baja", p["id"]), es_cambio=p["estado"] == "activo", ahora=_ahora_madrid())
+        _socios_enlace(alm, "baja", p["id"]), es_cambio=p["estado"] == "activo", ahora=_ahora_madrid(),
+        enlace_condiciones=FFORM.url_completa(FFORM.URL_CONDICIONES, SITE_URL),
+        enlace_privacidad=FFORM.url_completa(FFORM.URL_PRIVACIDAD, SITE_URL), version=FFORM.CONDICIONES_VERSION)
     threading.Thread(target=_socios_enviar, args=(alm, p["id"], p["correo"], "confirmacion", asunto, texto, html_),
                      name="socios-confirmacion", daemon=True).start()
     return "confirmar"
@@ -27606,7 +27610,7 @@ def _socios_post(path, params):
     if antes and antes["estado"] == "pendiente":
         # Lo que está abierto ahora queda como "ya estaba": el primer correo semanal solo trae lo que salga después.
         alm.registrar_vistos([l["id"] for l in _filtro_licitaciones_abiertas()], time.time())
-    p = alm.confirmar(pid, pr("k")) if antes else None
+    p = alm.confirmar(pid, pr("k"), condiciones=FFORM.CONDICIONES_VERSION) if antes else None
     if not p:
         return _filtro_html(FFORM.enlace_no_valido_html())
     return _filtro_html(FFORM.confirmado_html(p["perfil"], _socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid),
