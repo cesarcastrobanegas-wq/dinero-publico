@@ -1,7 +1,8 @@
 # encoding: utf-8
 """
 Prueba de la web para «pagado_hasta» (31-10): la orden POST /admin/socios-pagado, el panel y que SOCIOS_SOLO_CORREOS
-siga igual. Llama a app.app (la misma entrada WSGI que usa gunicorn) dentro del propio proceso, sin servidor ni red,
+siga igual; desde el 04-11, también la capa FORMA_PAGO (forma_pago.py) y el formulario del panel para marcar
+pagos a mano, que solo existe con FORMA_PAGO=manual y pide la sesión del panel y su csrf. Llama a app.app (la misma entrada WSGI que usa gunicorn) dentro del propio proceso, sin servidor ni red,
 con un DATA_DIR temporal, sin RESEND_API_KEY (no puede salir ningún correo) y perfiles INVENTADOS (ejemplo.test).
 Cada caso arranca la app en un proceso aparte, uno detrás de otro, porque FILTRO_FORMULARIO y SOCIOS_SOLO_CORREOS se
 leen al importar.
@@ -55,7 +56,36 @@ def caso(modo, datos):
         except ValueError:
             return codigo, cuerpo_r.decode("utf-8", "replace")
 
+    def forma_pago(modo_pago="", instrucciones=""):
+        """La capa forma_pago.py lee el entorno en cada llamada: se cambia aquí, solo en este proceso de prueba."""
+        for k in ("FORMA_PAGO", "FORMA_PAGO_INSTRUCCIONES"):
+            os.environ.pop(k, None)
+        if modo_pago:
+            os.environ["FORMA_PAGO"] = modo_pago
+        if instrucciones:
+            os.environ["FORMA_PAGO_INSTRUCCIONES"] = instrucciones
+
+    def post_panel(ruta, cuerpo, cookie=None, cabecera_token=None):
+        """POST al panel /admin/revision/... con la cookie de sesión: (código, Location)."""
+        b = cuerpo.encode("utf-8")
+        env = {"REQUEST_METHOD": "POST", "PATH_INFO": ruta, "QUERY_STRING": "", "CONTENT_LENGTH": str(len(b)),
+               "CONTENT_TYPE": "application/x-www-form-urlencoded", "wsgi.input": io.BytesIO(b)}
+        if cookie:
+            env["HTTP_COOKIE"] = f"dp_rev={cookie}"
+        if cabecera_token is not None:
+            env["HTTP_X_ADMIN_TOKEN"] = cabecera_token
+        setup_testing_defaults(env)
+        estado = {}
+        b"".join(app.app(env, lambda s, h, e=None: estado.update(s=s, h=dict(h))))
+        return int(estado["s"].split()[0]), estado["h"].get("Location", "")
+
     if modo == "apagado":
+        sesion = app._revision_cookie_nueva()
+        forma_pago("manual", "escríbenos a pagos@ejemplo.test")
+        c, _ = post_panel("/admin/revision/socios/pagado", f"csrf={app._revision_csrf(sesion)}&correo=x@ejemplo.test"
+                          "&accion=poner&hasta=2027-10-31", sesion)
+        ok(c == 404, f"formulario del panel con el filtro apagado (aunque FORMA_PAGO=manual): 404 ({c})")
+        forma_pago()
         c, _ = post("/admin/socios-pagado", "correo=x@ejemplo.test&accion=ver", TOKEN)
         ok(c == 404, f"formulario apagado: 404 ({c})")
         ok(not os.path.exists(os.path.join(datos, "socios.db")), "formulario apagado: no se crea socios.db")
@@ -135,7 +165,7 @@ def caso(modo, datos):
         # ocurre: en cada pasada los avisos de pago van ANTES que el semanal. Aquí se simula «al día siguiente».
         alm.db.execute("UPDATE perfiles SET intentado=NULL")
         alm.db.commit()
-        app.FFORM.FORMA_PAGO = "escríbenos a pagos@ejemplo.test"
+        forma_pago("manual", "escríbenos a pagos@ejemplo.test")
         r2 = app._socios_pasada(25)
         env = alm.db.execute("SELECT clase, perfil_id FROM envios WHERE clase LIKE 'aviso_pago%'").fetchall()
         ok(not r2["forma_pago_sin_poner"] and [tuple(e) for e in env] == [("aviso_pago_vence", vh)],
@@ -152,7 +182,7 @@ def caso(modo, datos):
         a3, t3, _ = app.FFORM.correo_vence("antes", fin, fin + _dt.timedelta(days=7), fin - _dt.timedelta(days=15), "v", "b")
         ok("vence el 30 de junio de 2027" in a3 and "Para renovarlo: escríbenos" in t3, "correo «antes»")
         ok("pagos@ejemplo.test" in app.FFORM.correo_sigues("m", "b", fin)[1], "«¿Sigues interesado?» lleva la forma de pago")
-        app.FFORM.FORMA_PAGO = "[FORMA DE PAGO]"
+        forma_pago()
         ok("[" not in app.FFORM.correo_sigues("m", "b", fin)[1], "con corchetes, «¿Sigues interesado?» no la enseña")
         pag = app.FFORM.confirmado_html(PERFIL_COMPLETO, "v", "b", recibe=False)
         ok("no tienes el servicio contratado" in pag and "Cada lunes" not in pag, "confirmar sin pago: no promete el lunes")
@@ -168,6 +198,57 @@ def caso(modo, datos):
         r3 = app._socios_pasada(25)
         env = [e[0] for e in alm.db.execute("SELECT perfil_id FROM envios WHERE clase='aviso_inactividad'")]
         ok(env == [b] and alm.perfil(b) and alm.perfil(b2), f"aviso de inactividad al que nunca pagó; al otro, no ({env} {r3})")
+        # formulario del panel para marcar pagos a mano (04-11, FORMA_PAGO=manual)
+        sesion = app._revision_cookie_nueva()
+        csrf = app._revision_csrf(sesion)
+        fm = nuevo("formulario@ejemplo.test", ahora - 10 * DIA)
+        poner_f = f"csrf={csrf}&correo=formulario@ejemplo.test&accion=poner&hasta=2027-12-31"
+        panel = lambda q="": app._socios_panel_html(sesion, q)[2].decode("utf-8")      # noqa: E731
+        fecha = lambda: app._socios_fecha_pago(alm.perfil(fm)["pagado_hasta"])          # noqa: E731
+        forma_pago()
+        ok("socios/pagado" not in panel() and "FORMA_PAGO apagada" in panel(), "apagada: sin formulario y el panel lo avisa")
+        c, _ = post_panel("/admin/revision/socios/pagado", poner_f, sesion)
+        ok(c == 404 and alm.perfil(fm)["pagado_hasta"] is None, f"apagada: el formulario no existe (404) ({c})")
+        forma_pago("pasarela", "escríbenos a pagos@ejemplo.test")
+        c, _ = post_panel("/admin/revision/socios/pagado", poner_f, sesion)
+        ok(c == 404 and "socios/pagado" not in panel() and "pasarela" in panel(), f"pasarela: sin formulario (404) ({c})")
+        ok(app._socios_pasada(25)["forma_pago_sin_poner"], "pasarela: cuenta como forma de pago no puesta")
+        forma_pago("manual")
+        ok("socios/pagado" in panel() and "FORMA_PAGO_INSTRUCCIONES" in panel(),
+           "manual sin instrucciones: formulario, pero el panel avisa de que falta el texto")
+        ok(app._socios_pasada(25)["forma_pago_sin_poner"], "manual sin instrucciones: no salen avisos de vencimiento")
+        forma_pago("manual", "escríbenos a pagos@ejemplo.test")
+        ok("socios/pagado" in panel() and f'name="csrf" value="{csrf}"' in panel() and "Falta la forma de pago" not in panel(),
+           "manual con instrucciones: formulario con csrf y sin aviso")
+        c, _ = post_panel("/admin/revision/socios/pagado", poner_f)
+        ok(c == 403, f"formulario sin sesión: 403 ({c})")
+        c, _ = post_panel("/admin/revision/socios/pagado", poner_f, cabecera_token=TOKEN)
+        ok(c == 403, f"formulario con el token pero sin sesión: 403 ({c})")
+        c, _ = post_panel("/admin/revision/socios/pagado", poner_f.replace(csrf, "0" * 32), sesion)
+        ok(c == 403, f"formulario con csrf equivocado: 403 ({c})")
+        c, _ = post_panel("/admin/revision/socios/pagado", poner_f, "9999999999." + "0" * 64)
+        ok(c == 403 and alm.perfil(fm)["pagado_hasta"] is None, f"cookie falsa: 403 y no cambia nada ({c})")
+        c, loc = post_panel("/admin/revision/socios/pagado", poner_f, sesion)
+        ok(c == 303 and loc.endswith("hecho=pago_poner") and fecha() == "31-12-2027", f"poner desde el panel: {c} {loc}")
+        ok("Pago puesto." in panel("pago_poner"), "el panel dice «Pago puesto.»")
+        for cuerpo, esperado in ((f"csrf={csrf}&correo=formulario@ejemplo.test&accion=poner", "pago_mal"),
+                                 (f"csrf={csrf}&correo=formulario@ejemplo.test&accion=poner&hasta=2020-01-01", "pago_mal"),
+                                 (f"csrf={csrf}&correo=nadie@ejemplo.test&accion=poner&hasta=2027-12-31", "pago_no_existe")):
+            c, loc = post_panel("/admin/revision/socios/pagado", cuerpo, sesion)
+            ok(c == 303 and loc.endswith("hecho=" + esperado), f"{cuerpo.split('&', 1)[1]}: {esperado} ({c} {loc})")
+        sc = alm.alta("sinconfirmar2@ejemplo.test", {"cpvs": ["90"]})["perfil"]["id"]
+        c, loc = post_panel("/admin/revision/socios/pagado", f"csrf={csrf}&p={sc}&accion=poner&hasta=2027-12-31", sesion)
+        ok(c == 303 and loc.endswith("hecho=pago_sin_confirmar"), f"sin confirmar: pago_sin_confirmar ({loc})")
+        c, _ = post_panel("/admin/revision/socios/pagado", f"csrf={csrf}&correo=formulario@ejemplo.test&accion=ver", sesion)
+        ok(c == 404, f"desde el panel solo poner o quitar ({c})")
+        ok(fecha() == "31-12-2027", "los errores no han cambiado la fecha")
+        c, loc = post_panel("/admin/revision/socios/pagado", f"csrf={csrf}&correo=formulario@ejemplo.test&accion=quitar",
+                            sesion)
+        ok(c == 303 and loc.endswith("hecho=pago_quitar") and alm.estado_pago(alm.perfil(fm)) == "vencido",
+           f"quitar desde el panel: el servicio termina ahora ({loc})")
+        ok("<script>" not in panel("<script>") and "Pago puesto." not in panel("pago_poner2"),
+           "el mensaje del panel solo sale de una lista fija")
+        forma_pago()
         return fallos
 
     if modo == "prueba":                                   # SOCIOS_SOLO_CORREOS=permitido@ejemplo.test
@@ -191,7 +272,7 @@ def caso(modo, datos):
             post("/admin/socios-pagado", f"correo={correo}&accion=poner&hasta={hoy}", TOKEN)
         alm.db.execute("UPDATE perfiles SET intentado=NULL")
         alm.db.commit()
-        app.FFORM.FORMA_PAGO = "escríbenos a pagos@ejemplo.test"
+        forma_pago("manual", "escríbenos a pagos@ejemplo.test")
         app._socios_pasada(25)
         env = [tuple(e) for e in alm.db.execute("SELECT clase, perfil_id FROM envios WHERE clase LIKE 'aviso_pago%'")]
         ok(env == [("aviso_pago_vence", si)], f"aviso de vencimiento solo al de la lista ({env})")
@@ -218,7 +299,8 @@ def main():
             if os.path.isfile(origen) and not nombre.endswith(("-shm", "-wal")):
                 shutil.copy2(origen, datos)
         env = {k: v for k, v in os.environ.items() if k not in ("RESEND_API_KEY", "SOCIOS_SOLO_CORREOS",
-                                                                  "FILTRO_FORMULARIO", "ALERTAS_ACTIVAS")}
+                                                                  "FILTRO_FORMULARIO", "ALERTAS_ACTIVAS",
+                                                                  "FORMA_PAGO", "FORMA_PAGO_INSTRUCCIONES")}
         env.update(extra, DATA_DIR=datos, ADMIN_TOKEN=TOKEN, DINERO_HILOS_EN_POST_FORK="1", PYTHONIOENCODING="utf-8")
         r = subprocess.run([sys.executable, os.path.abspath(__file__), "--caso", modo, datos], env=env,
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
