@@ -27548,8 +27548,10 @@ def _socios_alta(correo, perfil):
     asunto, texto, html_ = FFORM.correo_confirmacion(
         json.loads(objetivo), _socios_enlace(alm, "confirmar", p["id"], SOC.huella(objetivo)),
         _socios_enlace(alm, "baja", p["id"]), es_cambio=p["estado"] == "activo", ahora=_ahora_madrid(),
-        enlace_condiciones=FFORM.url_completa(FFORM.URL_CONDICIONES, SITE_URL),
-        enlace_privacidad=FFORM.url_completa(FFORM.URL_PRIVACIDAD, SITE_URL), version=FFORM.CONDICIONES_VERSION)
+        # enlaces a la versión EXACTA que se acepta (/legal/condiciones?v=<versión>), que sigue publicada aunque haya otra
+        enlace_condiciones=FFORM.url_completa(FFORM.url_version(FFORM.URL_CONDICIONES), SITE_URL),
+        enlace_privacidad=FFORM.url_completa(FFORM.url_version(FFORM.URL_PRIVACIDAD), SITE_URL),
+        version=FFORM.CONDICIONES_VERSION)
     threading.Thread(target=_socios_enviar, args=(alm, p["id"], p["correo"], "confirmacion", asunto, texto, html_),
                      name="socios-confirmacion", daemon=True).start()
     return "confirmar"
@@ -27738,7 +27740,9 @@ def _socios_panel_html(cookie, hecho=""):
         """Fecha y versión de las condiciones aceptadas; aviso si no hay aceptación o es de una versión anterior."""
         if not p.get("condiciones_aceptadas") or not p.get("condiciones_version"):
             return '<b>NO</b> (perfil anterior al 04-11: sin aceptación)'
-        txt = f'{f_ts(p["condiciones_aceptadas"])} · {esc(p["condiciones_version"])}'
+        enlace = FFORM.url_version(FFORM.URL_CONDICIONES, p["condiciones_version"])   # la versión que aceptó
+        txt = (f'{f_ts(p["condiciones_aceptadas"])} · '
+               f'<a href="{esc(enlace)}">{esc(p["condiciones_version"])}</a>')
         if p["condiciones_version"] != FFORM.CONDICIONES_VERSION:
             txt += f' <b>(versión anterior; la vigente es {esc(FFORM.CONDICIONES_VERSION)})</b>'
         return txt

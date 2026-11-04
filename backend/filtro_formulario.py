@@ -22,6 +22,7 @@ pasa las licitaciones abiertas de la tabla.
 import html
 import os
 import re
+from urllib.parse import quote
 
 try:
     from . import filtro_licitaciones as F
@@ -45,7 +46,15 @@ PRIVACIDAD = ("Responsable: Dinero Público. Usamos estos datos solo para enviar
 # Para darse de alta hay que marcar la casilla «He leído y acepto...» (se comprueba también en el servidor: sin ella,
 # error y no se guarda nada). socios.db guarda la fecha de aceptación y esta versión. Cambiar la versión cada vez que
 # cambien las condiciones o la privacidad publicadas (el abogado aún no ha dado los textos por buenos).
-CONDICIONES_VERSION = "borrador-2026-11-04"
+# La versión manda textos_legales.VERSION_ID (PR #20), que guarda cada versión y la sigue publicando en
+# /legal/condiciones?v=<versión> aunque haya otra; mientras el #20 no esté fusionado vale el valor de reserva (el mismo).
+try:
+    from textos_legales import VERSION_ID as CONDICIONES_VERSION          # python backend/app.py, pruebas
+except ImportError:
+    try:
+        from backend.textos_legales import VERSION_ID as CONDICIONES_VERSION   # gunicorn backend.app:app
+    except ImportError:
+        CONDICIONES_VERSION = "borrador-2026-11-04"
 # Páginas de los textos legales nuevos (PR #20, wip/textos-legales). Hasta que se fusione y se ponga
 # TEXTOS_LEGALES_NUEVOS=1 dan 404; el filtro también está apagado (FILTRO_FORMULARIO). Rutas de la web o direcciones
 # completas (https://...).
@@ -76,6 +85,11 @@ def aviso_pago_texto(entorno=None):
 
 def privacidad_texto(entorno=None):
     return f"{aviso_pago_texto(entorno)} {PRIVACIDAD}"
+
+
+def url_version(ruta, version=None):
+    """Enlace a la versión EXACTA de un texto legal: /legal/condiciones?v=<versión> (la que se acepta o se aceptó)."""
+    return f"{ruta}?v={quote(version or CONDICIONES_VERSION, safe='')}"
 
 
 def url_completa(ruta, base=""):
@@ -277,8 +291,8 @@ def formulario_html(v=None, errores=()):
 </fieldset>
 <div class="caja"><b>{_e(aviso_pago_texto())}</b>
 <div class="opc" style="margin-top:8px"><label><input type="checkbox" name="condiciones" value="1" required{acepto}>
-<span>He leído y acepto las <a href="{_e(URL_CONDICIONES)}" target="_blank" rel="noopener">condiciones de contratación</a>
-y la <a href="{_e(URL_PRIVACIDAD)}" target="_blank" rel="noopener">política de privacidad</a>.</span></label></div></div>
+<span>He leído y acepto las <a href="{_e(url_version(URL_CONDICIONES))}" target="_blank" rel="noopener">condiciones de contratación</a>
+y la <a href="{_e(url_version(URL_PRIVACIDAD))}" target="_blank" rel="noopener">política de privacidad</a>.</span></label></div></div>
 <button type="submit">Ver mis licitaciones</button>
 <p class="priv">{_e(privacidad_texto())} <a href="{_e(URL_PRIVACIDAD)}">Política de privacidad</a></p>
 </form>"""
@@ -457,8 +471,8 @@ def correo_confirmacion(perfil, enlace_confirmar, enlace_baja, es_cambio=False, 
     de que el servicio es de pago, la versión de las condiciones aceptadas y los enlaces a las condiciones y a la
     privacidad (direcciones completas, las pone app.py)."""
     datos = F.perfil_texto(perfil, ahora)
-    enlace_condiciones = enlace_condiciones or URL_CONDICIONES
-    enlace_privacidad = enlace_privacidad or URL_PRIVACIDAD
+    enlace_condiciones = enlace_condiciones or url_version(URL_CONDICIONES, version)   # la versión exacta aceptada
+    enlace_privacidad = enlace_privacidad or url_version(URL_PRIVACIDAD, version)
     acepto = f"Al enviar el formulario aceptaste las condiciones de contratación y la política de privacidad (versión {version})."
     if es_cambio:
         asunto = "Confirma los datos nuevos de tu empresa en Dinero Público"

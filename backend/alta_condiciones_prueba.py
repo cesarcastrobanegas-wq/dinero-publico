@@ -167,7 +167,8 @@ INSERT INTO perfiles (correo, perfil, estado, alta, confirmado) VALUES ('antigua
     ok("El servicio es de pago: precio por confirmar. Te escribiremos para el pago antes de empezar." in f0,
        "formulario sin precio: aviso de pago con «precio por confirmar»")
     ok(f0.count("El servicio es de pago") == 2, "el aviso de pago sale en la caja y en el texto de protección de datos")
-    ok('href="/legal/condiciones"' in f0 and 'href="/legal/privacidad"' in f0, "enlaces a /legal/condiciones y /legal/privacidad")
+    ok(f'href="/legal/condiciones?v={V}"' in f0 and f'href="/legal/privacidad?v={V}"' in f0,
+       "el formulario enlaza a la versión exacta que se acepta (?v=)")
     ok('type="checkbox" name="condiciones" value="1"' in f0 and "He leído y acepto" in f0 and
        'name="condiciones" value="1" required>' in f0, "casilla sin marcar por defecto")
     ok('name="condiciones" value="1" required checked' in FF.formulario_html(envio_valido(True)),
@@ -194,6 +195,12 @@ INSERT INTO perfiles (correo, perfil, estado, alta, confirmado) VALUES ('antigua
            f"correo de confirmación ({'cambio' if es_cambio else 'alta'}), HTML: enlaces y versión")
         ok("El servicio es de pago: precio por confirmar" in t and "El servicio es de pago" in h,
            "el correo de confirmación avisa de que es de pago")
+    # sin enlaces explícitos, el correo lleva los de la versión exacta aceptada
+    a, t, h = FF.correo_confirmacion(perfil_ok, "https://dp.test/c", "https://dp.test/b", version="v-2027.1")
+    ok("/legal/condiciones?v=v-2027.1" in t and 'href="/legal/privacidad?v=v-2027.1"' in h,
+       "correo: por defecto enlaza a la versión exacta aceptada")
+    ok(FF.url_version("/legal/condiciones") == f"/legal/condiciones?v={V}"
+       and FF.url_version("/legal/privacidad", "a b&c") == "/legal/privacidad?v=a%20b%26c", "url_version (y escapa)")
     ok(FF.url_completa("/legal/condiciones", "https://dp.test") == "https://dp.test/legal/condiciones"
        and FF.url_completa("https://otra.test/c", "https://dp.test") == "https://otra.test/c", "url_completa")
 
@@ -248,7 +255,8 @@ def web_hijo(datos):
 
     ok(os.path.abspath(app.DATA_DIR) == os.path.abspath(datos), f"DATA_DIR temporal ({app.DATA_DIR})", parte)
     c, pag = peticion("GET", "/filtro-licitaciones")
-    ok(c == 200 and 'name="condiciones"' in pag and 'href="/legal/condiciones"' in pag
+    ok(c == 200 and 'name="condiciones"' in pag
+       and f'href="/legal/condiciones?v={app.FFORM.CONDICIONES_VERSION}"' in pag
        and "precio por confirmar" in pag, f"GET: casilla, enlaces y «precio por confirmar» ({c})", parte)
     alm = app._socios_almacen()
     filas = lambda: alm.db.execute("SELECT count(*) FROM perfiles").fetchone()[0]   # noqa: E731
@@ -265,11 +273,13 @@ def web_hijo(datos):
     if enviados:
         carga = enviados[0][1]
         base = app.SITE_URL
-        ok(carga["to"] == ["empresa@ejemplo.test"] and f"{base}/legal/condiciones" in carga["text"]
-           and f"{base}/legal/privacidad" in carga["text"] and app.FFORM.CONDICIONES_VERSION in carga["text"],
-           "correo: enlaces completos a condiciones y privacidad y la versión (texto)", parte)
-        ok(f'href="{base}/legal/condiciones"' in carga["html"] and app.FFORM.CONDICIONES_VERSION in carga["html"],
-           "correo: enlaces y versión (HTML)", parte)
+        v = app.FFORM.CONDICIONES_VERSION
+        ok(carga["to"] == ["empresa@ejemplo.test"] and f"{base}/legal/condiciones?v={v}" in carga["text"]
+           and f"{base}/legal/privacidad?v={v}" in carga["text"],
+           "correo: enlaces completos a la versión exacta de condiciones y privacidad (texto)", parte)
+        ok(f'href="{base}/legal/condiciones?v={v}"' in carga["html"]
+           and f'href="{base}/legal/privacidad?v={v}"' in carga["html"],
+           "correo: enlaces a la versión exacta (HTML)", parte)
     # confirmar desde el enlace firmado
     pid = p["id"] if p else 0
     k = alm.firma("confirmar", pid, app.SOC.huella(alm.a_confirmar(alm.perfil(pid)))) if p else ""
@@ -291,9 +301,10 @@ def web_hijo(datos):
     panel = cuerpo.decode("utf-8")
     vigente = app.FFORM.CONDICIONES_VERSION
     ok("<th>Condiciones aceptadas</th>" in panel, "panel: columna «Condiciones aceptadas»", parte)
-    ok(f" · {vigente}</td>" in panel, "panel: fecha y versión vigente del perfil confirmado", parte)
+    ok(f' · <a href="/legal/condiciones?v={vigente}">{vigente}</a></td>' in panel,
+       "panel: fecha y versión vigente del perfil confirmado, con enlace a esa versión", parte)
     ok("<b>NO</b> (perfil anterior al 04-11: sin aceptación)" in panel, "panel: perfil sin aceptación marcado", parte)
-    ok("version-vieja <b>(versión anterior" in panel and "14/11/2023" in panel, "panel: versión anterior avisada", parte)
+    ok('<a href="/legal/condiciones?v=version-vieja">version-vieja</a> <b>(versión anterior' in panel and "14/11/2023" in panel, "panel: versión anterior avisada", parte)
     ok(f"{vigente} · 1 perfil(es) sin aceptación" in panel, "panel: recuento de perfiles sin aceptación", parte)
     alm.db.close()
     print(f"[{parte}] FALLOS: {len(FALLOS)}", flush=True)
