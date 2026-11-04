@@ -78,7 +78,7 @@ SECTORES = [
      r"COMIDA|CATERING|ALIMENT|COMEDOR|MENU|ALMUERZO|CENA|BEBIDA|AGUA EMBOTELLADA|RESTAURA|DESAYUNO|VINO DE HONOR"),
     ("Energía y combustibles", "09", ("09", "65"),
      r"COMBUSTIBLE|GASOLEO|GASOIL|CARBURANTE|SUMINISTRO ELECTRICO|ENERGIA ELECTRICA|GAS NATURAL"),
-    ("Sanidad y material sanitario", "33", ("33",),
+    ("Sanidad y material sanitario", "33", ("33", "851"),     # 851: servicios sanitarios (ambulancias...)
      r"SANITARI|MEDIC|FARMAC|DESFIBRIL|AMBULANCIA|PREVENCION DE RIESGOS|VIGILANCIA DE LA SALUD"),
     ("Deporte y ocio", "37", ("37",), r"DEPORT|PISCINA|GIMNAS|SOCORRIST|CAMPO DE FUTBOL|CESPED ARTIFICIAL|COMPETICION"),
     ("Mobiliario y equipamiento", "39", ("39",), r"MOBILIARIO|MUEBLE|SILLA|MESA|JUEGOS INFANTILES|PAPELERA|BANCO"),
@@ -232,7 +232,8 @@ def cargar_contratos(db, provincia, desde, hasta):
                              importe=float(x.get("importe_num") or 0), fecha=f,
                              organismo=organismo_corto(x.get("organo")) or muni.split("|")[0].title(),
                              cpv="", sector=sector_por_texto(x.get("titulo")) or "Otros", tipo="formal",
-                             texto=(x.get("titulo") or "").strip(), exp=x.get("licitacion_id") or ""))
+                             texto=(x.get("titulo") or "").strip(), exp=x.get("licitacion_id") or "",
+                             municipio=muni.split("|")[0]))
     for nombre, nif, imp, fch, org, muni, cpv, desc in c.execute(
             "SELECT adjudicatari, nif, import_num, data_adjudicacio, organisme, municipio, codi_cpv, descripcio "
             "FROM contratos_menors_locales WHERE provincia=? AND data_adjudicacio >= ? AND data_adjudicacio <= ?",
@@ -242,7 +243,7 @@ def cargar_contratos(db, provincia, desde, hasta):
                          importe=float(imp or 0), fecha=(fch or "")[:10],
                          organismo=organismo_corto(org) or (muni or "").title(), cpv=cpv,
                          sector=sector_por_cpv(cpv) or sector_por_texto(desc) or "Otros", tipo="menor",
-                         texto=(desc or "").strip(), exp=""))
+                         texto=(desc or "").strip(), exp="", municipio=(muni or "").split("|")[0]))
     c.close()
     # Un mismo expediente adjudicado a varias empresas con el MISMO importe (acuerdos marco, lotes sin desglose): la
     # fuente repite el total en cada una; se reparte a partes iguales para no contarlo varias veces.
