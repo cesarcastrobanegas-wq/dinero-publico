@@ -27372,6 +27372,33 @@ def render_aviso_legal_html():
                                        "públicos en Dinero Público."), og_path="/aviso-legal")
 
 
+# ─── TEXTOS LEGALES NUEVOS (BORRADOR, 2026-11-04) ───────────────────────────────────────────────────────────────────
+# Aviso legal, política de privacidad y condiciones de contratación nuevos, para revisión del abogado. Los textos
+# están en textos_legales.py; aquí solo el enrutado. APAGADOS salvo TEXTOS_LEGALES_NUEVOS=1: sin ella,
+# /legal/aviso-legal, /legal/privacidad y /legal/condiciones dan 404. Aun encendidos: noindex (meta y cabecera), fuera
+# del sitemap y sin ningún enlace desde otras páginas. Mientras tanto, el aviso legal vigente es /aviso-legal (arriba).
+# PENDIENTE: solo castellano; falta traducirlos al gallego, catalán y euskera cuando el abogado dé el texto por bueno
+# (bajo /gl/, /ca/ y /eu/ se sirve el castellano, también con noindex).
+try:
+    from backend import textos_legales as _textos_legales   # gunicorn backend.app:app
+except ImportError:
+    import textos_legales as _textos_legales                 # python backend/app.py y scripts con "import app"
+TEXTOS_LEGALES_NUEVOS = os.environ.get("TEXTOS_LEGALES_NUEVOS", "") == "1"
+
+
+def render_textos_legales_html(clave):
+    doc = _textos_legales.DOCUMENTOS[clave]
+    html_ = _page_shell(doc["titulo"], _textos_legales.cuerpo_html(clave), extra_head=_textos_legales.CSS,
+                        show_ad_banner=False, description=doc["descripcion"], og_path=doc["ruta"])
+    return html_.replace('<meta name="robots" content="index, follow">',
+                         '<meta name="robots" content="noindex">', 1)
+
+
+def _textos_legales_resp(path, gzip_ok=False):
+    return _resp(render_textos_legales_html(_textos_legales.RUTAS[path]), gzip_ok=gzip_ok,
+                 headers={"X-Robots-Tag": "noindex", "Cache-Control": "no-store"})
+
+
 # ─── ENRUTADO HTTP (compartido: servidor de desarrollo + WSGI/gunicorn) ──────
 #
 # Toda la lógica de rutas vive aquí como funciones puras que devuelven
@@ -28712,6 +28739,9 @@ def _route_get(path, qs, gzip_ok=False):
 
     if path == "/aviso-legal":
         return _resp(render_aviso_legal_html(), gzip_ok=gzip_ok)
+
+    if TEXTOS_LEGALES_NUEVOS and path in _textos_legales.RUTAS:
+        return _textos_legales_resp(path, gzip_ok=gzip_ok)
 
     if path == "/ads.txt":
         # Autorización de vendedores de AdSense (estándar IAB ads.txt): texto plano en la raíz del dominio.
