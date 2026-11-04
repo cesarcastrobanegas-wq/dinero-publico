@@ -28,16 +28,16 @@ def visible(crudo):
 
 
 # ─── apellidos que coinciden con abreviaturas de sociedad: anónimos ────────────────────────────────────────────────
-for nombre in ("PEREZ GOMEZ JOSE SA", "LOPEZ MARIA DEL CARMEN SÁ", "GARCIA RUIZ ANTONIO SAL", "MARTIN SAL",
-               "RUIZ DIAZ ANA B V", "SANCHEZ N V", "Fernández Sá", "PEREZ GOMEZ JOSE S L"):
+for nombre in ("APELLIDOA APELLIDOB NOMBREA SA", "APELLIDOC NOMBREB DEL NOMBREC SÁ", "APELLIDOD APELLIDOE NOMBRED SAL", "APELLIDOH SAL",
+               "APELLIDOE APELLIDOF NOMBREE B V", "APELLIDOI N V", "Apellidoj Sá", "APELLIDOA APELLIDOB NOMBREA S L"):
     ok(not visible(nombre), f"persona con apellido o iniciales al final, anónima: {nombre!r} -> {grupo(nombre)}")
-ok(grupo("PEREZ GOMEZ JOSE SA") == "dudoso", "la abreviatura ambigua sin marca va a «dudoso» (lista de revisión)")
-ok(not visible("JOSE SA COSTA"), "«SA» en medio del nombre no hace sociedad")
+ok(grupo("APELLIDOA APELLIDOB NOMBREA SA") == "dudoso", "la abreviatura ambigua sin marca va a «dudoso» (lista de revisión)")
+ok(not visible("NOMBREA SA APELLIDOG"), "«SA» en medio del nombre no hace sociedad")
 
 # ─── la misma abreviatura con puntos o detrás de una coma: sociedad ────────────────────────────────────────────────
-for nombre in ("TRANSPORTES INVENTADOS S.A.", "PEREZ GOMEZ, SA", "PEREZ GOMEZ, S.A.L.", "INVENTADA S. A.",
-               "INVENTADA SA.", "PEREZ GOMEZ S.A.L", "INVENTADA B.V.", "INVENTADA, NV", "PEREZ GOMEZ S.L.",
-               "PEREZ GOMEZ, S L", "INVENTADA S. L."):
+for nombre in ("TRANSPORTES INVENTADOS S.A.", "APELLIDOA APELLIDOB, SA", "APELLIDOA APELLIDOB, S.A.L.", "INVENTADA S. A.",
+               "INVENTADA SA.", "APELLIDOA APELLIDOB S.A.L", "INVENTADA B.V.", "INVENTADA, NV", "APELLIDOA APELLIDOB S.L.",
+               "APELLIDOA APELLIDOB, S L", "INVENTADA S. L."):
     ok(grupo(nombre) == "mercantil", f"abreviatura marcada, sociedad: {nombre!r} -> {grupo(nombre)}")
 
 # ─── sin marca pero con palabra de empresa en el nombre: sociedad ─────────────────────────────────────────────────
@@ -45,7 +45,7 @@ for nombre in ("AGRICOLA INVENTADA SA", "GANADOS DEL VALLE INVENTADO SAL", "INVE
     ok(grupo(nombre) == "mercantil", f"palabra de empresa + abreviatura, sociedad: {nombre!r} -> {grupo(nombre)}")
 
 # ─── formas que no se confunden con apellidos: sociedad aunque solo haya un espacio ────────────────────────────────
-for nombre in ("PEREZ GOMEZ SL", "INVENTADA SLU", "INVENTADA S.L.U.", "INVENTADA, SOCIEDAD LIMITADA",
+for nombre in ("APELLIDOA APELLIDOB SL", "INVENTADA SLU", "INVENTADA S.L.U.", "INVENTADA, SOCIEDAD LIMITADA",
                "INVENTADA SOCIEDAD ANONIMA", "INVENTADA SAU", "INVENTADA S.R.L.", "INVENTADA LTD", "INVENTADA GMBH"):
     ok(grupo(nombre) == "mercantil", f"forma inequívoca, sociedad: {nombre!r} -> {grupo(nombre)}")
 
@@ -54,13 +54,13 @@ ok(grupo("SOCIEDAD COOPERATIVA AGRARIA INVENTADA") == "cooperativa_sat", "cooper
 ok(grupo("SAT INVENTADA") == "cooperativa_sat", "SAT")
 ok(grupo("AYUNTAMIENTO DE VILLAINVENTADA") == "publica", "ayuntamiento")
 ok(grupo("COMUNIDAD DE REGANTES INVENTADA") == "asociativa", "comunidad de regantes")
-for nombre in ("PEREZ GOMEZ JOSE Y OTROS CB", "HEREDEROS DE PEREZ GOMEZ", "PEREZ GOMEZ HERMANOS SC"):
+for nombre in ("APELLIDOA APELLIDOB NOMBREA Y OTROS CB", "HEREDEROS DE APELLIDOA APELLIDOB", "APELLIDOA APELLIDOB HERMANOS SC"):
     ok(grupo(nombre) == "sin_personalidad", f"sin personalidad jurídica, anónima: {nombre!r}")
-ok(grupo("PEREZ GOMEZ JOSE") == "persona_fisica_probable", "persona física")
-ok(not visible("PEREZ GOMEZ JOSE"), "la persona física no sale con nombre")
+ok(grupo("APELLIDOA APELLIDOB NOMBREA") == "persona_fisica_probable", "persona física")
+ok(not visible("APELLIDOA APELLIDOB NOMBREA"), "la persona física no sale con nombre")
 
 # ─── la comprobación de la web (sin el nombre tal cual) nunca es más permisiva ─────────────────────────────────────
-for nombre in ("PEREZ GOMEZ JOSE SA", "TRANSPORTES INVENTADOS S.A.", "PEREZ GOMEZ SL"):
+for nombre in ("APELLIDOA APELLIDOB NOMBREA SA", "TRANSPORTES INVENTADOS S.A.", "APELLIDOA APELLIDOB SL"):
     sin_crudo = P.clasificar(P.norm(nombre))
     ok(not (sin_crudo in P.VISIBLES and not visible(nombre)), f"sin el nombre tal cual no se abre nada: {nombre!r}")
 
