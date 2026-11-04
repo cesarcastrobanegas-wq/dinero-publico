@@ -27636,7 +27636,10 @@ def _socios_pasada(max_correos=25):
     «¿Sigues interesado?», después los avisos de vencimiento del pago (15 días antes y el día que vence; solo con
     FFORM.FORMA_PAGO puesta) y al final los correos semanales, solo a quien tiene el pago vigente o está en los 7 días
     de cortesía (los de esta semana que falten: el lunes salen casi todos y, si el cupo no llega, el resto los días
-    siguientes). Respeta el cupo de Resend, que comparte con las alertas
+    siguientes). Un solo correo por persona y día (arreglo del 04-11): enviar o intentar un aviso (de inactividad o de
+    pago) marca «intentado hoy», y la lista del semanal se saca DESPUÉS de los avisos, así que quien ha recibido (o a
+    quien se le ha intentado) un aviso no recibe el semanal ese día, en ninguna tanda; le llega al día siguiente con
+    todo lo nuevo desde su última revisión. Respeta el cupo de Resend, que comparte con las alertas
     (ALERTAS_TOPE_DIARIO / ALERTAS_TOPE_MES, sumando los dos ficheros). Solo números en la respuesta (la llama un
     flujo de Actions, cuyos registros son públicos)."""
     if not FILTRO_FORMULARIO:
@@ -27655,8 +27658,6 @@ def _socios_pasada(max_correos=25):
     avisos = [p for p in alm.pendientes_aviso(ahora, inicio_dia) if _socios_correo_permitido(p["correo"])]
     avisos_pago = ([(p, c) for p, c in alm.pendientes_aviso_pago(ahora, inicio_dia) if _socios_correo_permitido(p["correo"])]
                    if FFORM.forma_pago_puesta() else [])
-    semanales = [p for p in alm.pendientes_semanal(inicio_semana, inicio_dia, ahora)
-                 if _socios_correo_permitido(p["correo"])]
     hechos = 0
     for p in avisos:
         if cupo <= 0:
@@ -27687,6 +27688,10 @@ def _socios_pasada(max_correos=25):
         hechos += 1
         cupo -= 1
         time.sleep(0.6)
+    # La lista del semanal, DESPUÉS de los avisos: los que acaban de recibir o de intentar uno tienen «intentado hoy» y
+    # pendientes_semanal ya no los devuelve (antes se sacaba al principio y les llegaban los dos correos el mismo día).
+    semanales = [p for p in alm.pendientes_semanal(inicio_semana, inicio_dia, ahora)
+                 if _socios_correo_permitido(p["correo"])]
     for p in semanales:
         correo = _socios_semanal_de(alm, p, abiertas, madrid)
         if correo is None:

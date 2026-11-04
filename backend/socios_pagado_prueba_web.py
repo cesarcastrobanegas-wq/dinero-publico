@@ -131,8 +131,8 @@ def caso(modo, datos):
            "con [FORMA DE PAGO] entre corchetes no sale ningún aviso de vencimiento")
         ok("Falta la forma de pago" in app._socios_panel_html("c")[2].decode("utf-8"), "el panel avisa de que falta")
         # pasada 2: con la forma de pago puesta sale el aviso «vence» (sin Resend: cuenta como fallido)
-        # La pasada 1 ya le revisó el semanal hoy (eso marca «intentado hoy» y aplaza a mañana). En la web real no
-        # ocurre: en cada pasada los avisos de pago van ANTES que el semanal. Aquí se simula «al día siguiente».
+        # La pasada 1 ya le revisó el semanal hoy (eso marca «intentado hoy» y aplaza a mañana): con la forma de pago sin
+        # poner no había aviso que aplazara el semanal. Aquí se simula «al día siguiente».
         alm.db.execute("UPDATE perfiles SET intentado=NULL")
         alm.db.commit()
         app.FFORM.FORMA_PAGO = "escríbenos a pagos@ejemplo.test"
@@ -168,6 +168,7 @@ def caso(modo, datos):
         r3 = app._socios_pasada(25)
         env = [e[0] for e in alm.db.execute("SELECT perfil_id FROM envios WHERE clase='aviso_inactividad'")]
         ok(env == [b] and alm.perfil(b) and alm.perfil(b2), f"aviso de inactividad al que nunca pagó; al otro, no ({env} {r3})")
+        orden(alm, ok, post, ahora)
         return fallos
 
     if modo == "prueba":                                   # SOCIOS_SOLO_CORREOS=permitido@ejemplo.test
@@ -197,6 +198,71 @@ def caso(modo, datos):
         ok(env == [("aviso_pago_vence", si)], f"aviso de vencimiento solo al de la lista ({env})")
         return fallos
     return ["modo desconocido"]
+
+
+def orden(alm, ok, post, ahora):
+    """Arreglo del 04-11 (wip/pago-semanal-orden): quien recibe (o a quien se le intenta) un aviso de pago o de
+    inactividad en una pasada NO recibe también el semanal en esa misma pasada; le llega en la siguiente. Resend y el
+    contenido del semanal, simulados: _socios_enviar apunta (perfil, clase) y falla para los perfiles de `falla`, y
+    _socios_semanal_de da siempre un correo (la copia de datos no tiene licitaciones). Nada sale del proceso."""
+    import app  # noqa: E402
+    enviados, falla = [], set()
+
+    def enviar_falso(alm_, pid, correo, clase, asunto, texto, html_):
+        enviados.append((pid, clase))
+        alm_.registrar_envio(clase, pid, 500 if pid in falla else 200, "simulado")
+        return pid not in falla
+
+    original_enviar, original_semanal = app._socios_enviar, app._socios_semanal_de
+    app._socios_enviar = enviar_falso
+    app._socios_semanal_de = lambda alm_, p, abiertas, madrid: ("asunto", "texto", "<p>html</p>", 1, 1)
+    try:
+        app.FFORM.FORMA_PAGO = "escríbenos a pagos@ejemplo.test"
+        hoy = app._ahora_madrid().strftime("%Y-%m-%d")
+        dentro = app._ahora_madrid(ahora + 30 * DIA).strftime("%Y-%m-%d")
+        # todos los anteriores quedan fuera de esta parte (dados de baja): solo cuentan los de aquí
+        for (pid,) in alm.db.execute("SELECT id FROM perfiles").fetchall():
+            alm.baja(pid)
+        rv = {}
+        for nombre, hasta in (("vence_ok", hoy), ("vence_falla", hoy), ("normal", dentro)):
+            correo = f"orden_{nombre}@ejemplo.test"
+            pid = alm.alta(correo, {"cpvs": ["90"], "provincias": ["murcia"]}, ahora=ahora - 10 * DIA)["perfil"]["id"]
+            alm.confirmar(pid, alm.firma("confirmar", pid, __import__("socios").huella(alm.a_confirmar(alm.perfil(pid)))),
+                          ahora=ahora - 10 * DIA)
+            post("/admin/socios-pagado", f"correo={correo}&accion=poner&hasta={hasta}", TOKEN)
+            alm.db.execute("UPDATE perfiles SET revisado=?, intentado=NULL WHERE id=?", (ahora - 8 * DIA, pid))
+            rv[nombre] = pid
+        alm.db.commit()
+        # 1) aviso de pago que sale bien y aviso de pago que falla: ese día, ninguno de los dos recibe el semanal
+        falla.add(rv["vence_falla"])
+        r1 = app._socios_pasada(25)
+        de = lambda pid: [c for p, c in enviados if p == pid]                    # noqa: E731
+        ok(de(rv["vence_ok"]) == ["aviso_pago_vence"], f"aviso de pago enviado: ese día NO recibe el semanal ({de(rv['vence_ok'])})")
+        ok(de(rv["vence_falla"]) == ["aviso_pago_vence"], f"aviso de pago fallido: tampoco recibe el semanal ({de(rv['vence_falla'])})")
+        ok(de(rv["normal"]) == ["semanal"], f"sin aviso: recibe el semanal como siempre ({de(rv['normal'])})")
+        ok(r1["semanales"] == 1 and r1["avisos_pago"] == 1 and r1["fallidos"] == 1,
+           f"recuentos de la pasada ({r1})")
+        ok(alm.perfil(rv["vence_ok"])["revisado"] == ahora - 8 * DIA
+           and alm.perfil(rv["vence_falla"])["revisado"] == ahora - 8 * DIA,
+           "a los aplazados no se les marca revisado: lo nuevo no se pierde")
+        ok(alm.perfil(rv["vence_ok"])["intentado"] >= ahora, "el aviso enviado marca «intentado hoy»")
+        # 2) otra tanda el mismo día (el flujo llama hasta 20): nada para nadie (el aviso ya salió; el fallido espera a
+        #    mañana; el semanal del que recibió el aviso, también)
+        enviados.clear()
+        r2 = app._socios_pasada(25)
+        ok(not enviados, f"repetir la pasada el mismo día: ningún correo ({enviados} {r2})")
+        # 3) al día siguiente (simulado): el del aviso enviado recibe ya el semanal; el fallido, el aviso otra vez y
+        #    sigue sin semanal ese día
+        alm.db.execute("UPDATE perfiles SET intentado=NULL")
+        alm.db.commit()
+        enviados.clear()
+        r3 = app._socios_pasada(25)
+        ok(de(rv["vence_ok"]) == ["semanal"], f"pasada siguiente: le llega el semanal ({de(rv['vence_ok'])})")
+        ok(de(rv["vence_falla"]) == ["aviso_pago_vence"], f"pasada siguiente: el fallido reintenta el aviso, sin semanal ({de(rv['vence_falla'])} {r3})")
+        ok(de(rv["normal"]) == [], "el que ya recibió el semanal esta semana no lo repite")
+    finally:
+        app._socios_enviar, app._socios_semanal_de = original_enviar, original_semanal
+        app.FFORM.FORMA_PAGO = "[FORMA DE PAGO]"
 
 
 def main():
