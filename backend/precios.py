@@ -2,7 +2,7 @@
 """
 Página de precios (/precios, 2026-11-04, BORRADOR OCULTO). La web (app.py) solo la sirve con PRECIOS_VISIBLE=1;
 sin ella, /precios y /gl/precios, /ca/precios, /eu/precios dan 404. Encendida tampoco la enlaza ninguna página, no va
-al sitemap y lleva <meta name="robots" content="noindex">: César decide cuándo enlazarla.
+al sitemap y lleva <meta name="robots" content="noindex">: el titular decide cuándo enlazarla.
 
 Nada de precios en el código: cada uno sale de una variable de entorno y, si no está, el plan dice «Consultar».
   PRECIO_ALERTAS, PRECIO_FILTRO, PRECIO_INFORME          el importe tal cual se enseña («9», «9,90 €», «desde 49 €»).
