@@ -415,14 +415,16 @@ CONDICIONES = [
     _p("Forma de pago: [FORMA DE PAGO]. Factura: [QUIÉN LA EMITE, CON QUÉ DATOS Y CÓMO SE ENVÍA]."),
     _h("7. Cómo se contrata", "contratacion"),
     _ul("Rellenas el formulario del servicio y aceptas estas condiciones marcando la casilla correspondiente. "
-        "[Hoy el formulario no tiene esa casilla: hay que añadirla antes de vender.]",
+        "[La casilla está preparada en el PR #25, sin fusionar: hay que fusionarlo antes de vender.]",
         "Te enviamos un correo para confirmar tu dirección. Sin esa confirmación el servicio no empieza y tus datos se "
         "borran a los 7 días.",
         "Al confirmar el correo se guarda tu perfil; el envío de pago empieza cuando se registra el pago [o cuando "
         "empieza tu periodo de prueba]. Sin pago o prueba vigente, «Licitaciones para tu empresa» no envía el correo "
         "semanal.",
-        "Te enviamos estas condiciones por correo para que puedas guardarlas. [DECIDIR: si se archiva una copia del "
-        "contrato y cómo se accede a ella.]",
+        "En el correo para confirmar tu dirección te enviamos el enlace a estas condiciones y a la Política de "
+        "privacidad, y la versión que aceptaste. Guardamos la fecha y la versión aceptadas. Puedes consultar, guardar "
+        "o imprimir esta página cuando quieras. [DECIDIR: si las versiones anteriores siguen publicadas para quien "
+        "aceptó una de ellas.]",
         "Si te equivocas al rellenar el formulario, puedes corregirlo antes de enviarlo y, después, en cualquier "
         "momento, rellenándolo otra vez con el mismo correo."),
     _p("El proceso de contratación es solo en castellano."),
