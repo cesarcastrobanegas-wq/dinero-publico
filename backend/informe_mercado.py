@@ -433,7 +433,15 @@ def analizar(contratos, licitaciones, sector=None, nif=None):
 
 # ───────────────────────────── PDF ─────────────────────────────
 
-def informe_pdf(ruta, A, provincia, desde, hasta, ahora, titulo=None, muestra=True, max_paginas=5):
+# Recuadro final de contacto. El teléfono NO se escribe aquí (el repositorio es público): se pasa con --contacto-tel o
+# la variable INFORME_CONTACTO_TEL al generar el PDF. Correo y web son los públicos de la web.
+CONTACTO_EMAIL = os.environ.get("INFORME_CONTACTO_EMAIL", "contacto@dinero-publico.com")
+CONTACTO_WEB = os.environ.get("INFORME_CONTACTO_WEB", "dinero-publico.com")
+CONTACTO_TEL = os.environ.get("INFORME_CONTACTO_TEL", "")
+
+
+def informe_pdf(ruta, A, provincia, desde, hasta, ahora, titulo=None, muestra=True, max_paginas=5, contacto=None):
+    """contacto: dict con tel, email y web (por defecto, CONTACTO_*). Sin ninguno de los tres, no hay recuadro."""
     from reportlab.graphics.shapes import Drawing, Line, Rect, String
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_RIGHT
@@ -470,10 +478,15 @@ def informe_pdf(ruta, A, provincia, desde, hasta, ahora, titulo=None, muestra=Tr
         "thr": ParagraphStyle("thr", fontName=negrita, fontSize=7.5, leading=9, alignment=TA_RIGHT),
         "kn": ParagraphStyle("kn", fontName=negrita, fontSize=16, leading=19),
         "kt": ParagraphStyle("kt", fontName=fuente, fontSize=8, leading=10, textColor=GRIS),
+        "h1c": ParagraphStyle("h1c", fontName=negrita, fontSize=13, leading=16, spaceAfter=3),
+        "pcont": ParagraphStyle("pcont", fontName=fuente, fontSize=10, leading=14),
         "li": ParagraphStyle("li", fontName=fuente, fontSize=9.5, leading=13, leftIndent=12, bulletIndent=2,
                              spaceAfter=3),
     }
     P = lambda t, s="td": Paragraph(t, st[s])        # noqa: E731
+    datos_contacto = {k: v for k, v in (contacto if contacto is not None else
+                                        {"tel": CONTACTO_TEL, "email": CONTACTO_EMAIL, "web": CONTACTO_WEB}).items()
+                      if (v or "").strip()}
     E = escape
     ancho = A4[0] - 3.6 * cm
     lugar = nombre_provincia(provincia)
@@ -734,7 +747,31 @@ def informe_pdf(ruta, A, provincia, desde, hasta, ahora, titulo=None, muestra=Tr
             "personas físicas se cuentan sin nombre. Compruebe siempre los pliegos en el anuncio oficial antes de "
             "presentarse.", "pc"))
         h.append(P(f"Elaborado por Dinero Público el {fecha_larga(ahora)}.", "pc"))
+        if datos_contacto:
+            h.append(Spacer(1, 10))
+            h.append(recuadro_contacto())
         return h
+
+    def recuadro_contacto():
+        """«¿Quiere este informe para su empresa?»: borde negro, sin color, sin precios. No se parte entre páginas."""
+        lineas = []
+        if datos_contacto.get("tel"):
+            lineas.append(f"Teléfono: <b>{E(datos_contacto['tel'])}</b>")
+        if datos_contacto.get("email"):
+            mail = E(datos_contacto["email"])
+            lineas.append(f'Correo: <b><link href="mailto:{mail}">{mail}</link></b>')
+        if datos_contacto.get("web"):
+            web = E(datos_contacto["web"])
+            url = web if web.startswith("http") else "https://" + web
+            lineas.append(f'Web: <b><link href="{url}">{web}</link></b>')
+        celda = [P("¿Quiere este informe para su empresa?", "h1c"),
+                 P("Lo preparamos con sus datos, sus competidores y los organismos que le interesan.", "p"),
+                 P(" · ".join(lineas), "pcont")]
+        t = Table([[celda]], colWidths=[ancho])
+        t.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 1.2, NEGRO), ("BACKGROUND", (0, 0), (-1, -1), GRIS_F),
+                               ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+                               ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10)]))
+        return KeepTogether([t])
 
     import io
 
@@ -770,6 +807,9 @@ def main(argv=None):
     ap.add_argument("--hasta", help="último día de contratos (por defecto, el día de la copia o hoy)")
     ap.add_argument("--salida")
     ap.add_argument("--titulo")
+    ap.add_argument("--contacto-tel", default=CONTACTO_TEL, help="teléfono del recuadro final (no se guarda en el repo)")
+    ap.add_argument("--contacto-email", default=CONTACTO_EMAIL)
+    ap.add_argument("--contacto-web", default=CONTACTO_WEB)
     ap.add_argument("--sectores", action="store_true")
     a = ap.parse_args(argv)
     if a.sectores:
@@ -783,7 +823,9 @@ def main(argv=None):
     contratos = cargar_contratos(a.db, a.provincia, desde, hasta)
     lic = cargar_licitaciones(a.zip, a.provincia, ahora) if a.zip else []
     A = analizar(contratos, lic, sector=a.sector, nif=a.nif)   # con --nif, --sector fija el sector
-    paginas, mostradas = informe_pdf(a.salida, A, a.provincia, desde, hasta, ahora, titulo=a.titulo)
+    paginas, mostradas = informe_pdf(a.salida, A, a.provincia, desde, hasta, ahora, titulo=a.titulo,
+                                     contacto={"tel": a.contacto_tel, "email": a.contacto_email,
+                                               "web": a.contacto_web})
     print(f"{a.salida}: {paginas} páginas; {len(A['abiertas'])} licitaciones abiertas ({mostradas} en el PDF); "
           f"{len(A['contratos'])} contratos; {len(A['ranking'])} sociedades; sectores {A['sectores']}")
 

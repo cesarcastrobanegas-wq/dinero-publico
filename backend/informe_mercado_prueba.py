@@ -129,6 +129,20 @@ def main():
     t2 = texto_pdf(pdf2)
     ok("Contratos ganados por LIMPIEZAS PRUEBA SL" in t2, "modo empresa: apartado de sus contratos")
     ok(1 <= paginas(pdf2) <= 5, f"PDF de empresa con {paginas(pdf2)} páginas (máx. 5)")
+    # recuadro final de contacto: por defecto correo y web, sin teléfono (no está en el repo); sin precios
+    ok("¿Quiere este informe para su empresa?" in t and "contacto@dinero-publico.com" in t
+       and "dinero-publico.com" in t, "recuadro de contacto con correo y web por defecto")
+    ok("Teléfono" not in t, "sin teléfono si no se pasa --contacto-tel")
+    ok("€/mes" not in t and "precio" not in t.lower(), "el recuadro no lleva precios")
+    pdf3 = os.path.join(d, "contacto.pdf")
+    I.informe_pdf(pdf3, A, "murcia", "2024-10-10", "2026-10-10", ahora,
+                  contacto={"tel": "600 000 000", "email": "x@ejemplo.test", "web": "ejemplo.test"})
+    t3 = texto_pdf(pdf3)
+    ok("600 000 000" in t3 and "x@ejemplo.test" in t3, "con --contacto-tel sale el teléfono")
+    pdf4 = os.path.join(d, "sin_contacto.pdf")
+    I.informe_pdf(pdf4, A, "murcia", "2024-10-10", "2026-10-10", ahora, contacto={})
+    ok("¿Quiere este informe" not in texto_pdf(pdf4), "sin datos de contacto no hay recuadro")
+    ok("620" not in open(I.__file__, encoding="utf-8").read(), "ningún teléfono escrito en el código")
     print(f"\n{'TODO BIEN' if not FALLOS else str(len(FALLOS)) + ' FALLOS'} (ficheros en {d})")
     sys.exit(1 if FALLOS else 0)
 
