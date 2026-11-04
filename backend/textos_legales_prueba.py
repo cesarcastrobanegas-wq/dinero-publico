@@ -61,10 +61,10 @@ def prueba_modulo():
     todo = " ".join(str(b) for d in T.DOCUMENTOS.values() for b in d["bloques"])
     ok(fallos, "modulo", "[NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR]" in todo, "el titular va como hueco")
     ok(fallos, "modulo", "Castro" not in todo and "Banegas" not in todo, "sin el nombre del titular escrito")
-    # app.py: el literal /legal/ solo aparece en comentarios (el enrutado va por textos_legales.RUTAS)
+    # app.py: ninguna ruta /legal/ escrita a mano (el enrutado va por textos_legales.RUTAS)
     with open(os.path.join(AQUI, "app.py"), encoding="utf-8") as f:
-        lineas = [l for l in f if "/legal/" in l and not l.lstrip().startswith("#")]
-    ok(fallos, "modulo", not lineas, f"app.py no escribe /legal/ fuera de comentarios ({lineas[:2]})")
+        lineas = [l for l in f if re.search(r"""path\s*(?:==|in|\.startswith\()\s*\(?["']/legal/""", l)]
+    ok(fallos, "modulo", not lineas, f"app.py no enruta /legal/ a mano: va por textos_legales.RUTAS ({lineas[:2]})")
     fallos += prueba_versiones(T)
     fallos += prueba_titular(T)
     return fallos
@@ -213,7 +213,9 @@ def caso(modo):
                f"{ruta}: enseña la versión y noindex")
     for ruta in FIJAS:
         c, h, b = get(ruta)
-        if ruta in OBLIGATORIAS:
+        if ruta == "/aviso-legal" and encendido and c == 302:      # PR «listo para vender»: redirige al nuevo
+            ok(fallos, modo, h.get("Location") == "/legal/aviso-legal", f"{ruta}: 302 -> {h.get('Location')}")
+        elif ruta in OBLIGATORIAS:
             ok(fallos, modo, c == 200, f"{ruta}: responde 200 ({c})")
         elif c != 200:
             print(f"[{modo}] aviso {ruta}: {c} con la base vacía (no cuenta como fallo)", flush=True)
