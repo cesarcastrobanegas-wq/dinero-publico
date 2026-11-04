@@ -9,7 +9,7 @@ Variable de entorno FORMA_PAGO (se lee en cada llamada; por defecto, apagada):
                                      vencimiento, ningún texto habla de cómo pagar y el panel lo avisa.
   "manual"                           Transferencia o Bizum a mano. El texto que ve el cliente sale de
                                      FORMA_PAGO_INSTRUCCIONES (IBAN, Bizum, a quién escribir...), NUNCA del repositorio
-                                     (es público). Sin instrucciones cuenta como no puesta. César comprueba el pago y lo
+                                     (es público). Sin instrucciones cuenta como no puesta. El titular comprueba el pago y lo
                                      marca a mano en /admin/revision/socios (formulario que solo sale con "manual") o con
                                      POST /admin/socios-pagado; las reglas son las del #13 (app._socios_pagado).
   "pasarela"                         Hueco para una pasarela futura (Pasarela, abajo): hoy NO está disponible y cuenta
@@ -102,7 +102,7 @@ class Pasarela:
          pasarela (variable de entorno, nunca en el repositorio) y rechazar lo que no venga firmado o se repita;
       3. con un cobro confirmado, marcar pagado_hasta con las mismas reglas que el admin (socios.Almacen.poner_pagado,
          a través de app._socios_pagado) y, con una devolución o una baja, quitarlo (quitar_pagado).
-    Los datos de facturación irían FUERA de socios.db (decisión de César del 31-10). Mientras tanto todo devuelve
+    Los datos de facturación irían FUERA de socios.db (decisión del titular del 31-10). Mientras tanto todo devuelve
     «no disponible» o lanza NotImplementedError, y FORMA_PAGO=pasarela cuenta como forma de pago no puesta."""
     disponible = False
 

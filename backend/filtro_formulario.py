@@ -38,7 +38,7 @@ PRIVACIDAD = ("Responsable: Dinero Público. Usamos estos datos solo para enviar
               "avisaremos un mes antes y, si no nos dices que lo mantengamos, lo borraremos. Puedes darte de baja en "
               "cualquier momento con el enlace de cada correo.")
 ANCLA_AVISO_LEGAL = "/aviso-legal#filtro-licitaciones"
-# Cómo se contrata o se renueva (31-10): lo decide César. Desde el 04-11 ya no es una constante con el hueco
+# Cómo se contrata o se renueva (31-10): lo decide el titular. Desde el 04-11 ya no es una constante con el hueco
 # «[FORMA DE PAGO]» sino la capa forma_pago.py (variable de entorno FORMA_PAGO, apagada por defecto). Mientras no esté
 # puesta, la web NO manda los avisos de vencimiento y no enseña esta frase en ningún sitio, igual que con el hueco.
 # Es el final de «Para renovarlo: ...» / «Para contratarlo: ...».
