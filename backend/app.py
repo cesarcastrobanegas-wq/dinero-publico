@@ -27386,17 +27386,25 @@ except ImportError:
 TEXTOS_LEGALES_NUEVOS = os.environ.get("TEXTOS_LEGALES_NUEVOS", "") == "1"
 
 
-def render_textos_legales_html(clave):
+def render_textos_legales_html(clave, version=None):
+    """Página del texto legal `clave`; con `version` (el ?v=), esa versión guardada. None si no existe."""
     doc = _textos_legales.DOCUMENTOS[clave]
-    html_ = _page_shell(doc["titulo"], _textos_legales.cuerpo_html(clave), extra_head=_textos_legales.CSS,
+    cuerpo = _textos_legales.cuerpo_html(clave, version)
+    if cuerpo is None:
+        return None
+    html_ = _page_shell(doc["titulo"], cuerpo, extra_head=_textos_legales.CSS,
                         show_ad_banner=False, description=doc["descripcion"], og_path=doc["ruta"])
     return html_.replace('<meta name="robots" content="index, follow">',
                          '<meta name="robots" content="noindex">', 1)
 
 
-def _textos_legales_resp(path, gzip_ok=False):
-    return _resp(render_textos_legales_html(_textos_legales.RUTAS[path]), gzip_ok=gzip_ok,
-                 headers={"X-Robots-Tag": "noindex", "Cache-Control": "no-store"})
+def _textos_legales_resp(path, qs=None, gzip_ok=False):
+    # ?v=<versión>: la versión exacta que alguien aceptó (sigue publicada aunque haya otra); si no existe, 404
+    version = ((qs or {}).get("v") or [""])[0].strip()[:80] or None
+    html_ = render_textos_legales_html(_textos_legales.RUTAS[path], version)
+    if html_ is None:
+        return _resp(render_404_html(), code=404, headers={"X-Robots-Tag": "noindex"}, gzip_ok=gzip_ok)
+    return _resp(html_, gzip_ok=gzip_ok, headers={"X-Robots-Tag": "noindex", "Cache-Control": "no-store"})
 
 
 # ─── ENRUTADO HTTP (compartido: servidor de desarrollo + WSGI/gunicorn) ──────
@@ -28741,7 +28749,7 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(render_aviso_legal_html(), gzip_ok=gzip_ok)
 
     if TEXTOS_LEGALES_NUEVOS and path in _textos_legales.RUTAS:
-        return _textos_legales_resp(path, gzip_ok=gzip_ok)
+        return _textos_legales_resp(path, qs, gzip_ok=gzip_ok)
 
     if path == "/ads.txt":
         # Autorización de vendedores de AdSense (estándar IAB ads.txt): texto plano en la raíz del dominio.

@@ -24,7 +24,10 @@ Formato: cada documento es una lista de bloques ("h2", texto, ancla), ("p", text
 la página lo escapa, enlaza el correo de contacto y resalta los huecos entre corchetes.
 """
 import html
+import json
+import os
 import re
+import sys
 
 BORRADOR = True     # mientras sea True, la página y los .docx llevan la marca de borrador
 MARCA_BORRADOR = "BORRADOR PARA REVISIÓN JURÍDICA — NO PUBLICAR"
@@ -421,10 +424,10 @@ CONDICIONES = [
         "Al confirmar el correo se guarda tu perfil; el envío de pago empieza cuando se registra el pago [o cuando "
         "empieza tu periodo de prueba]. Sin pago o prueba vigente, «Licitaciones para tu empresa» no envía el correo "
         "semanal.",
-        "En el correo para confirmar tu dirección te enviamos el enlace a estas condiciones y a la Política de "
-        "privacidad, y la versión que aceptaste. Guardamos la fecha y la versión aceptadas. Puedes consultar, guardar "
-        "o imprimir esta página cuando quieras. [DECIDIR: si las versiones anteriores siguen publicadas para quien "
-        "aceptó una de ellas.]",
+        "En el correo para confirmar tu dirección te enviamos el enlace a la versión exacta de estas condiciones y "
+        "de la Política de privacidad que aceptaste. Guardamos la fecha y la versión aceptadas. Puedes consultar, "
+        "guardar o imprimir esa versión cuando quieras: cada versión sigue publicada en su propio enlace aunque "
+        "publiquemos otra nueva.",
         "Si te equivocas al rellenar el formulario, puedes corregirlo antes de enviarlo y, después, en cualquier "
         "momento, rellenándolo otra vez con el mismo correo."),
     _p("El proceso de contratación es solo en castellano."),
@@ -499,6 +502,74 @@ DOCUMENTOS = {
 RUTAS = {d["ruta"]: clave for clave, d in DOCUMENTOS.items()}
 
 
+# ─── VERSIONES (2026-11-04, decisión del titular) ──────────────────────────────────────────────────────────────────
+# Lo que se acepta en el formulario son las condiciones y la privacidad de una versión concreta (VERSION_ID; socios.db
+# guarda la fecha y esa versión). Cada versión queda guardada TAL CUAL en textos_legales_versiones/<versión>.json y sigue
+# publicada en /legal/condiciones?v=<versión> y /legal/privacidad?v=<versión> aunque se publique otra. El correo de
+# confirmación enlaza a esa versión exacta (filtro_formulario.py, PR #25).
+# Al cambiar el texto de cualquiera de los dos documentos:
+#   - mientras BORRADOR sea True (nadie ha aceptado de verdad), basta con regenerar la foto de la versión actual;
+#   - después, hay que poner una VERSION_ID nueva (la antigua no se sobrescribe nunca: el script se niega).
+#   En los dos casos: python backend/textos_legales.py --guardar-version. La prueba falla si la foto no está al día.
+VERSION_ID = "borrador-2026-11-04"       # la misma que filtro_formulario.CONDICIONES_VERSION
+VERSIONADOS = ("condiciones", "privacidad")
+DIR_VERSIONES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "textos_legales_versiones")
+_RE_VERSION_ID = re.compile(r"^[a-z0-9][a-z0-9.-]{0,59}$")
+
+
+def _foto_actual():
+    docs = {c: {"titulo": DOCUMENTOS[c]["titulo"], "version_texto": VERSION, "bloques": DOCUMENTOS[c]["bloques"]}
+            for c in VERSIONADOS}
+    return {"version": VERSION_ID, "borrador": BORRADOR, "documentos": json.loads(json.dumps(docs))}
+
+
+def version_guardada(version):
+    """La foto guardada de `version` ({"version", "borrador", "documentos": {clave: {titulo, version_texto, bloques}}})
+    o None si no existe o el nombre no es válido."""
+    if not isinstance(version, str) or not _RE_VERSION_ID.match(version):
+        return None
+    try:
+        with open(os.path.join(DIR_VERSIONES, version + ".json"), encoding="utf-8") as f:
+            foto = json.load(f)
+    except (OSError, ValueError):
+        return None
+    return foto if isinstance(foto, dict) and isinstance(foto.get("documentos"), dict) else None
+
+
+def versiones_guardadas():
+    try:
+        nombres = os.listdir(DIR_VERSIONES)
+    except OSError:
+        return []
+    return sorted(n[:-5] for n in nombres if n.endswith(".json") and _RE_VERSION_ID.match(n[:-5]))
+
+
+def version_al_dia():
+    """True si la foto de VERSION_ID existe y tiene exactamente el texto actual de los documentos versionados."""
+    foto = version_guardada(VERSION_ID)
+    return foto is not None and foto["documentos"] == _foto_actual()["documentos"]
+
+
+def guardar_version():
+    """Guarda la foto de VERSION_ID. Nunca sobrescribe con otro texto una versión ya publicada (BORRADOR False)."""
+    foto, previa = _foto_actual(), version_guardada(VERSION_ID)
+    if previa is not None and previa["documentos"] == foto["documentos"]:
+        return "sin cambios"
+    if previa is not None and not (BORRADOR and previa.get("borrador")):
+        raise SystemExit(f"La versión {VERSION_ID} ya está guardada con otro texto y no se puede cambiar: "
+                         "pon una VERSION_ID nueva en textos_legales.py.")
+    os.makedirs(DIR_VERSIONES, exist_ok=True)
+    with open(os.path.join(DIR_VERSIONES, VERSION_ID + ".json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump(foto, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+    return "actualizada" if previa is not None else "guardada"
+
+
+def enlace_version(clave, version=VERSION_ID):
+    """Enlace relativo a una versión concreta, p. ej. /legal/condiciones?v=borrador-2026-11-04."""
+    return f"{DOCUMENTOS[clave]['ruta']}?v={version}"
+
+
 # ─── HTML ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 _RE_HUECO = re.compile(r"\[[^\[\]]+\]")
 
@@ -510,17 +581,35 @@ def _texto_html(texto):
     return _RE_HUECO.sub(lambda m: f'<mark class="hueco">{m.group(0)}</mark>', t)
 
 
-def cuerpo_html(clave):
-    """El cuerpo (dentro de .static-page) del documento `clave`, sin cabecera ni pie de la web."""
+def cuerpo_html(clave, version=None):
+    """El cuerpo (dentro de .static-page) del documento `clave`, sin cabecera ni pie de la web. Con `version` (el ?v=
+    de la página) da esa versión guardada; None si no existe (la página responde 404)."""
     doc = DOCUMENTOS[clave]
+    titulo, bloques, version_texto, borrador, antigua = doc["titulo"], doc["bloques"], VERSION, BORRADOR, None
+    if version and version != VERSION_ID:
+        foto = version_guardada(version) if clave in VERSIONADOS else None
+        d = (foto or {}).get("documentos", {}).get(clave)
+        if not d:
+            return None
+        titulo, bloques, version_texto, borrador, antigua = (d["titulo"], d["bloques"], d["version_texto"],
+                                                              bool(foto.get("borrador")), version)
+    elif version and clave not in VERSIONADOS:
+        return None
     partes = []
-    if BORRADOR:
+    if borrador:
         partes.append(f'<p class="borrador-legal"><b>{html.escape(MARCA_BORRADOR)}</b><br>Texto en preparación, '
                       'pendiente de revisión jurídica. Los huecos entre corchetes están por completar. Mientras tanto '
                       'vale el <a href="/aviso-legal">Aviso legal</a> publicado.</p>')
-    partes.append(f"<h1>{html.escape(doc['titulo'])}</h1>")
-    partes.append(f'<p class="sub">{_texto_html(VERSION)}</p>')
-    for b in doc["bloques"]:
+    if antigua:
+        partes.append(f'<p class="version-antigua">Estás viendo la versión «{html.escape(antigua)}» de este texto, que '
+                      'ya no es la vigente. Sigue publicada para quien la aceptó. '
+                      f'<a href="{html.escape(doc["ruta"])}">Ver la versión vigente</a>.</p>')
+    partes.append(f"<h1>{html.escape(titulo)}</h1>")
+    sub = _texto_html(version_texto)
+    if clave in VERSIONADOS:
+        sub += f" · versión «{html.escape(antigua or VERSION_ID)}»"
+    partes.append(f'<p class="sub">{sub}</p>')
+    for b in bloques:
         if b[0] == "h2":
             ancla = f' id="{html.escape(b[2])}"' if b[2] else ""
             partes.append(f"<h2{ancla}>{_texto_html(b[1])}</h2>")
@@ -528,9 +617,23 @@ def cuerpo_html(clave):
             partes.append(f"<p>{_texto_html(b[1])}</p>")
         elif b[0] == "ul":
             partes.append("<ul>" + "".join(f"<li>{_texto_html(x)}</li>" for x in b[1]) + "</ul>")
+    anteriores = [v for v in versiones_guardadas() if v != VERSION_ID] if clave in VERSIONADOS else []
+    if anteriores:
+        enlaces = ", ".join(f'<a href="{html.escape(enlace_version(clave, v))}">{html.escape(v)}</a>'
+                            for v in anteriores if v != antigua)
+        partes.append(f'<p class="versiones-legales">Versiones de este texto: <a href="{html.escape(doc["ruta"])}">'
+                      f'vigente ({html.escape(VERSION_ID)})</a>' + (f", {enlaces}" if enlaces else "") + ".</p>")
     return ('<div class="static-page textos-legales">\n  ' + "\n  ".join(partes) + "\n</div>")
 
 
 CSS = ("<style>.textos-legales mark.hueco{background:#fff3b0;color:#3a2f00;padding:0 2px;border-radius:3px}"
        ".textos-legales .borrador-legal{border:2px dashed #c0392b;color:#c0392b;border-radius:8px;padding:10px 14px;"
-       "font-size:14px}</style>")
+       "font-size:14px}.textos-legales .version-antigua{border:2px solid #555;border-radius:8px;padding:10px 14px;"
+       "font-size:14px}.textos-legales .versiones-legales{font-size:13px;color:#555}</style>")
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] == ["--guardar-version"]:
+        print(f"Versión {VERSION_ID}: {guardar_version()} en {DIR_VERSIONES}")
+    else:
+        print("Uso: python backend/textos_legales.py --guardar-version")
