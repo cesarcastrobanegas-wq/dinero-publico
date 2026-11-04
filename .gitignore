@@ -46,3 +46,6 @@ backend/socios.db-*
 *.db
 *.db-shm
 *.db-wal
+
+# Nombres que vigila la prueba de los textos legales (textos_legales_prueba.py): nunca en el repositorio.
+backend/prueba_nombres_prohibidos.txt

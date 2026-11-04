@@ -37,6 +37,21 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 
+# Nombres de persona que nunca deben aparecer escritos (p. ej. los del titular). NO van en el repositorio, que es
+# público: se leen de la variable PRUEBA_NOMBRES_PROHIBIDOS (separados por comas) o, si no está, del fichero local
+# backend/prueba_nombres_prohibidos.txt (uno por línea o separados por comas; está en .gitignore). Sin ninguno de los
+# dos, esa comprobación se salta con un aviso.
+FICHERO_NOMBRES = os.path.join(AQUI, "prueba_nombres_prohibidos.txt")
+
+
+def nombres_prohibidos():
+    crudo = os.environ.get("PRUEBA_NOMBRES_PROHIBIDOS", "")
+    if not crudo.strip() and os.path.exists(FICHERO_NOMBRES):
+        with open(FICHERO_NOMBRES, encoding="utf-8") as f:
+            crudo = f.read()
+    return [n.strip() for n in re.split(r"[,\n]", crudo) if len(n.strip()) >= 3]
+
+
 def ok(fallos, modo, cond, txt):
     print(f"[{modo}] " + ("OK   " if cond else "FALLO") + " " + txt, flush=True)
     if not cond:
@@ -60,7 +75,16 @@ def prueba_modulo():
     # ningún nombre propio de persona física: el titular va como hueco
     todo = " ".join(str(b) for d in T.DOCUMENTOS.values() for b in d["bloques"])
     ok(fallos, "modulo", "[NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR]" in todo, "el titular va como hueco")
-    ok(fallos, "modulo", "Castro" not in todo and "Banegas" not in todo, "sin el nombre del titular escrito")
+    nombres = nombres_prohibidos()
+    if not nombres:
+        print("[modulo] AVISO se salta «ningún nombre prohibido en los textos»: pon PRUEBA_NOMBRES_PROHIBIDOS o el "
+              f"fichero {FICHERO_NOMBRES}", flush=True)
+    else:
+        with open(os.path.join(AQUI, "textos_legales.py"), encoding="utf-8") as f:
+            fuente = f.read().lower()
+        hallados = sum(1 for n in nombres if n.lower() in todo.lower() or n.lower() in fuente)
+        ok(fallos, "modulo", not hallados, f"ningún nombre prohibido en los textos ni en textos_legales.py "
+           f"({len(nombres)} vigilados, {hallados} encontrados)")
     # app.py: ninguna ruta /legal/ escrita a mano (el enrutado va por textos_legales.RUTAS)
     with open(os.path.join(AQUI, "app.py"), encoding="utf-8") as f:
         lineas = [l for l in f if re.search(r"""path\s*(?:==|in|\.startswith\()\s*\(?["']/legal/""", l)]
