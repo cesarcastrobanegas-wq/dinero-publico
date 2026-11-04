@@ -27725,6 +27725,8 @@ def _socios_panel_html(cookie, hecho=""):
                                 'nada, y socios.db no se abre.</div>')
     alm = _socios_almacen()
     r = alm.resumen()
+    perfiles = alm.lista()
+    sin_aceptar = sum(1 for p in perfiles if not p.get("condiciones_aceptadas") or not p.get("condiciones_version"))
     csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
     if SOCIOS_SOLO_CORREOS:
         estado = (f'<div class="aviso"><b>Encendido EN PRUEBA</b> (SOCIOS_SOLO_CORREOS): solo para '
@@ -27732,6 +27734,14 @@ def _socios_panel_html(cookie, hecho=""):
                   f'ninguna otra dirección y los correos solo salen hacia esas.</div>')
     else:
         estado = '<div class="aviso"><b>Encendido</b> (FILTRO_FORMULARIO=1), abierto a todos.</div>'
+    def condiciones(p):
+        """Fecha y versión de las condiciones aceptadas; aviso si no hay aceptación o es de una versión anterior."""
+        if not p.get("condiciones_aceptadas") or not p.get("condiciones_version"):
+            return '<b>NO</b> (perfil anterior al 04-11: sin aceptación)'
+        txt = f'{f_ts(p["condiciones_aceptadas"])} · {esc(p["condiciones_version"])}'
+        if p["condiciones_version"] != FFORM.CONDICIONES_VERSION:
+            txt += f' <b>(versión anterior; la vigente es {esc(FFORM.CONDICIONES_VERSION)})</b>'
+        return txt
     vista = lambda p: (f'<a href="/admin/revision/socios/vista?p={p["id"]}">Ver el próximo correo</a>'      # noqa: E731
                        if p["estado"] == "activo" else "")
     ahora = time.time()
@@ -27744,16 +27754,18 @@ def _socios_panel_html(cookie, hecho=""):
                f'<tr><th>Cambios esperando confirmación</th><td>{r["cambios_pendientes"]}</td></tr>'
                f'<tr><th>Borrados</th><td>{r["bajas"]} por su cuenta · {r["bajas_desde_el_panel"]} desde este panel · '
                f'{r["caducados_sin_confirmar"]} sin confirmar · {r["caducados_inactivos"]} por falta de uso</td></tr>'
-               f'<tr><th>Avisados de borrado por falta de uso</th><td>{r["avisados_inactividad"]}</td></tr>{cupo}</table>')
+               f'<tr><th>Avisados de borrado por falta de uso</th><td>{r["avisados_inactividad"]}</td></tr>'
+               f'<tr><th>Condiciones vigentes</th><td>{esc(FFORM.CONDICIONES_VERSION)} · '
+               f'{sin_aceptar} perfil(es) sin aceptación</td></tr>{cupo}</table>')
     filas = "".join(
         f'<tr><td>{esc(p["correo"])}</td><td>{esc(p["estado"])}{" (cambio pendiente)" if p["perfil_pendiente"] else ""}</td>'
         f'<td>{esc(", ".join(FLIC.NOMBRE_PROVINCIA.get(x, x) for x in p["perfil"].get("provincias", [])))}</td>'
         f'<td>{f_ts(p["alta"])}</td><td>{f_ts(p["confirmado"])}</td><td>{f_ts(p["ultimo_uso"])}</td>'
-        f'<td>{f_ts(p["ultimo_envio"])}</td><td>{f_ts(p["aviso_inactividad"])}</td>'
+        f'<td>{f_ts(p["ultimo_envio"])}</td><td>{f_ts(p["aviso_inactividad"])}</td><td>{condiciones(p)}</td>'
         f'<td>{vista(p)}'
         f'<form method="post" action="/admin/revision/socios/accion" class="acc">{csrf}'
         f'<input type="hidden" name="p" value="{p["id"]}"><button type="submit" name="accion" value="baja" class="sec">'
-        f'Borrar perfil</button></form></td></tr>' for p in alm.lista())
+        f'Borrar perfil</button></form></td></tr>' for p in perfiles)
     env = "".join(
         f'<tr><td>{f_ts(e["ts"])}</td><td>{esc(e["clase"])}</td>'
         f'<td>{"sí" if e["codigo"] and e["codigo"] < 300 else "NO"} ({e["codigo"]})</td><td>{esc(e["detalle"] or "")}</td></tr>'
@@ -27765,7 +27777,7 @@ def _socios_panel_html(cookie, hecho=""):
 <h1>Filtro de licitaciones: perfiles</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a> · horas en UTC</p>
 {estado}{aviso}{resumen}
 <h2 style="font-size:16px">Perfiles</h2>
-<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th></th></tr>{filas or vacio(9)}</table>
+<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th>Condiciones aceptadas</th><th></th></tr>{filas or vacio(10)}</table>
 <h2 style="font-size:16px">Envíos (los 100 últimos)</h2>
 <table class="t"><tr><th>Cuándo</th><th>Clase</th><th>Aceptado por Resend</th><th>Respuesta</th></tr>{env or vacio(4)}</table>""")
 

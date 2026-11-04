@@ -280,6 +280,21 @@ def web_hijo(datos):
     c, pag = peticion("GET", "/filtro-licitaciones")
     ok("&lt;i&gt;15&lt;/i&gt; €/mes" not in pag and "&lt;i&gt;15&lt;/i&gt;/mes" in pag and "<i>15</i>" not in pag,
        "GET con PRECIO_FILTRO con HTML: escapado", parte)
+    # panel: fecha y versión aceptadas; aviso si falta o si es de una versión anterior
+    with alm.lock:
+        alm.db.execute("INSERT INTO perfiles (correo, perfil, estado, alta) VALUES (?, ?, 'activo', 1)",
+                       ("antigua@ejemplo.test", '{"provincias": []}'))
+        alm.db.execute("INSERT INTO perfiles (correo, perfil, estado, alta, condiciones_aceptadas, condiciones_version) "
+                       "VALUES (?, ?, 'activo', 1, 1700000000, 'version-vieja')", ("vieja@ejemplo.test", '{"provincias": []}'))
+        alm.db.commit()
+    _c, _h, cuerpo = app._socios_panel_html("cookie-de-prueba")       # (código, cabeceras, bytes)
+    panel = cuerpo.decode("utf-8")
+    vigente = app.FFORM.CONDICIONES_VERSION
+    ok("<th>Condiciones aceptadas</th>" in panel, "panel: columna «Condiciones aceptadas»", parte)
+    ok(f" · {vigente}</td>" in panel, "panel: fecha y versión vigente del perfil confirmado", parte)
+    ok("<b>NO</b> (perfil anterior al 04-11: sin aceptación)" in panel, "panel: perfil sin aceptación marcado", parte)
+    ok("version-vieja <b>(versión anterior" in panel and "14/11/2023" in panel, "panel: versión anterior avisada", parte)
+    ok(f"{vigente} · 1 perfil(es) sin aceptación" in panel, "panel: recuento de perfiles sin aceptación", parte)
     alm.db.close()
     print(f"[{parte}] FALLOS: {len(FALLOS)}", flush=True)
     return FALLOS
