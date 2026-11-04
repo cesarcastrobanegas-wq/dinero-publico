@@ -10,7 +10,7 @@ Prueba de la copia semanal CIFRADA de cache.db, con una base INVENTADA (no toca 
   2. Descifra el resultado con backend/descifrar_copia_cache.py y pasa integrity_check; compara las filas.
   3. Casos que deben fallar: clave equivocada, copia dañada, sobrescribir un fichero, flujo sin clave.
 
-Usa un GNUPGHOME temporal para no tocar el llavero del usuario. Necesita PyYAML (ya está en el PC de César).
+Usa un GNUPGHOME temporal para no tocar el llavero del usuario. Necesita PyYAML (ya está en el PC del titular).
 """
 import os
 import shutil
@@ -239,7 +239,7 @@ def main():
         # --- paso «Subir...» con un gh FALSO: qué copias se conservan y cuáles se borran ----------------------------
         probar_subida(bash, subir["run"], tmp)
 
-        # el script de verdad, como lo lanzaría César: no sobrescribe y con la clave buena funciona
+        # el script de verdad, como lo lanzaría el titular: no sobrescribe y con la clave buena funciona
         cli = [sys.executable, os.path.join(BASE_DIR, "descifrar_copia_cache.py"), copia, "--salida", destino]
         env = dict(os.environ, COPIA_CLAVE=CLAVE)
         r = subprocess.run(cli, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")

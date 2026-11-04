@@ -5,7 +5,7 @@ name: Copia semanal de cache.db (repositorio privado aparte)
 # flujo se ejecuta aquí, donde los minutos de Actions son gratuitos, pero sube la copia, comprimida, como fichero
 # adjunto de una «release» del repositorio PRIVADO `dinero-publico-copias`, y conserva solo las dos últimas.
 #
-# Secretos: ADMIN_TOKEN (solo para leer GET /admin/cache-db), COPIAS_TOKEN (token limitado de César con permiso
+# Secretos: ADMIN_TOKEN (solo para leer GET /admin/cache-db), COPIAS_TOKEN (token limitado del titular con permiso
 # «Contents: Read and write» únicamente sobre el repositorio privado) y ALERTAS_COPIA_CLAVE (la MISMA clave de cifrado
 # que las copias de alertas.db y socios.db). Sin COPIAS_TOKEN o sin la clave el flujo no hace nada.
 # No se sube ningún artefacto ni se imprime contenido de la base: solo tamaños y recuentos.
