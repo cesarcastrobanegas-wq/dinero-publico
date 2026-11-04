@@ -1,5 +1,5 @@
-"""Sistema de Transparencia Financiera de la Comisión Europea (FTS), beneficiarios de España (2026-10-18, encargo de
-César; para después del viernes 23-10: de momento solo se genera y se prueba en local, la web no lo lee todavía).
+"""Sistema de Transparencia Financiera de la Comisión Europea (FTS), beneficiarios de España (2026-10-18, encargo del
+titular; para después del viernes 23-10: de momento solo se genera y se prueba en local, la web no lo lee todavía).
 
 El FTS publica cada año los compromisos que la Comisión gestiona directamente (Erasmus+ centralizado, LIFE, Mecanismo
 Conectar Europa, Europa Creativa, CERV, Europa Digital, EU4Health, Fondo de Defensa, agencias y empresas comunes…). No
@@ -13,7 +13,7 @@ Qué se descarta por defecto (configurable):
   - Horizon Europe y Horizon 2020 (--incluir-horizon para meterlos): la web ya tiene Horizon Europe por CORDIS, y las
     filas del FTS de ese programa coinciden en un 98 % con proyectos de CORDIS. Horizon 2020 no está en la web hoy (el
     CORDIS que se carga es solo Horizon Europe), pero se excluye igual para que, si se añade el CORDIS de H2020, no salga
-    dos veces; si César prefiere tenerlo ya desde el FTS, basta --incluir-horizon (o cargar el CORDIS de H2020).
+    dos veces; si el titular prefiere tenerlo ya desde el FTS, basta --incluir-horizon (o cargar el CORDIS de H2020).
   - Con --cordis-zip RUTA (el ZIP de CORDIS que usa fondos_ue_espana.py) se quitan además las filas de otros programas
     (sobre todo empresas comunes, "DA/JU") cuyo Project ID ya está en CORDIS.
   - El Mecanismo de Recuperación (MRR) pagado al "Reino de España" (--incluir-mrr para meterlo): es una transferencia
@@ -547,7 +547,7 @@ if __name__ == "__main__":
     ap.add_argument("--entidad-por-cif-o-tipo", action="store_true",
                     help="publicar también el nombre si el NIF es de persona jurídica o el FTS lo clasifica como "
                          "organismo público, Estado, región u organización internacional (NO es la regla de Kohesio; "
-                         "solo si César lo decide)")
+                         "solo si el titular lo decide)")
     ap.add_argument("--informe", help="guardar también el resumen (sin nombres) en este JSON")
     a = ap.parse_args()
     res = generar(a.salida, _anios(a.anios), a.descargas, a.reusar, not a.incluir_horizon, not a.incluir_mrr,
