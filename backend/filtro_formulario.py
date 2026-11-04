@@ -36,7 +36,7 @@ PRIVACIDAD = ("Responsable: Dinero Público. Usamos estos datos solo para enviar
               "avisaremos un mes antes y, si no nos dices que lo mantengamos, lo borraremos. Puedes darte de baja en "
               "cualquier momento con el enlace de cada correo.")
 ANCLA_AVISO_LEGAL = "/aviso-legal#filtro-licitaciones"
-# Cómo se contrata o se renueva (31-10): lo decide César. Mientras siga entre corchetes, la web NO manda los avisos de
+# Cómo se contrata o se renueva (31-10): lo decide el titular. Mientras siga entre corchetes, la web NO manda los avisos de
 # vencimiento y no enseña esta frase en ningún sitio (se vería el corchete). Es el final de «Para renovarlo: ...».
 FORMA_PAGO = "[FORMA DE PAGO]"
 

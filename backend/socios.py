@@ -17,8 +17,8 @@ Qué se guarda de cada empresa (decisión de César del 28-10: solo lo necesario
   - las fechas que necesita el envío: hasta cuándo se le ha revisado (revisado), el último correo semanal, el último
     intento fallido y cuándo se le avisó de que su perfil iba a borrarse.
   Mientras se espera a que confirme un cambio, el perfil nuevo va aparte (perfil_pendiente) y se descarta a los 7 días.
-  - pagado_hasta (31-10, decisión de César): hasta cuándo ha pagado el servicio, y nada más del pago. Los datos de
-    facturación van FUERA de socios.db. La pone o la quita César desde el admin (POST /admin/socios-pagado, con el
+  - pagado_hasta (31-10, decisión del titular): hasta cuándo ha pagado el servicio, y nada más del pago. Los datos de
+    facturación van FUERA de socios.db. La pone o la quita el titular desde el admin (POST /admin/socios-pagado, con el
     token en la cabecera).
   Ni IP, ni nombre, ni teléfono. De los correos enviados queda solo la fila de envios (cuándo, qué clase, código de
   Resend), que sirve para no reenviar en bucle y para el cupo; al borrar el perfil se queda sin saber de quién era.
@@ -37,7 +37,7 @@ Reglas:
   - Correo semanal: solo las licitaciones NUEVAS desde el correo anterior. "Nueva" = vista por primera vez después de
     la última revisión de ese perfil (tabla vistos, una sola lista para todos, sin datos de nadie). La primera vez que
     se registra la lista todo queda como "ya estaba"; al confirmar un perfil, lo que hay en ese momento también.
-  - Pago (31-10, decisiones de César):
+  - Pago (31-10, decisiones del titular):
     * El correo semanal solo sale a quien tiene el pago vigente o está en los 7 días de cortesía después de que venza
       (CORTESIA_S). Sin pagado_hasta (nunca ha pagado ni tiene prueba) no recibe el semanal. La prueba gratis es poner
       pagado_hasta a mano.
