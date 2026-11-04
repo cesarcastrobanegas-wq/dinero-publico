@@ -1,6 +1,6 @@
 # encoding: utf-8
 """
-Informe de mercado público en PDF (3-5 páginas, blanco y negro) para enseñar y vender: encargo de César del 04-11-2026.
+Informe de mercado público en PDF (3-5 páginas, blanco y negro) para enseñar y vender: encargo del titular del 04-11-2026.
 
 Dos modos:
   - EMPRESA: por NIF de una persona jurídica (nunca personas físicas ni autónomos). Sector(es) = los de sus contratos.
