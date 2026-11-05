@@ -113,6 +113,11 @@ def main():
     ok("ganó" in tf and "Servicio de limpieza del polideportivo" in tf and "quedan 16 días" in tf,
        "ficha con gancho y licitación abierta con plazo")
     ok("PERSONA FISICA" not in tf.upper() and "NOMBRE DE ADMINISTRADOR" not in tf.upper(), "ficha sin personas")
+    with open(os.path.join(salida, L.EXCLUIR_TXT), "w", encoding="utf-8") as f:
+        f.write("# descartadas a mano\na00000002   # comentario\n")
+    el2 = L.generar(contratos, lic, csv_ruta, salida, "2026-10-10", ahora, xlsx, n=30)
+    ok([e["nif"] for e in el2] == ["B00000001"], "la del fichero «excluir de la lista» ya no sale")
+    os.remove(os.path.join(salida, L.EXCLUIR_TXT))
 
     # prueba gratis
     carpeta = os.path.join(d, "clientes en prueba")

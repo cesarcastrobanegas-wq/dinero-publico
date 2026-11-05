@@ -366,12 +366,24 @@ def escribir_pdf_fichas(ruta, elegidas, contactos, desde, hasta, ahora, contacto
     doc.build(historia)
 
 
+EXCLUIR_TXT = "excluir de la lista.txt"     # en la carpeta de salida, fuera de git: un NIF por línea, # comenta
+
+
+def leer_excluidas(ruta):
+    """NIF que no deben salir en la lista (los que ya se descartaron a mano). Sin fichero, ninguno."""
+    if not ruta or not os.path.exists(ruta):
+        return set()
+    with open(ruta, encoding="utf-8-sig") as f:
+        return {l.split("#")[0].strip().upper() for l in f if l.split("#")[0].strip()}
+
+
 def generar(contratos, licitaciones, clientes_csv, salida, hasta, ahora, contactos_xlsx=None, n=30, desde=None,
             contacto_tel=""):
     """Escribe las tres salidas en `salida`. Devuelve la lista de empresas elegidas."""
     desde = desde or DESDE_POR_DEFECTO
     contratos = [r for r in contratos if desde <= r["fecha"] <= hasta]
-    clientes = leer_clientes(clientes_csv)
+    fuera = leer_excluidas(os.path.join(salida, EXCLUIR_TXT))
+    clientes = {k: v for k, v in leer_clientes(clientes_csv).items() if k.upper() not in fuera}
     contactos = leer_contactos(contactos_xlsx)
     elegidas = elegir(candidatos(contratos, licitaciones, clientes, hasta), n)
     os.makedirs(salida, exist_ok=True)
