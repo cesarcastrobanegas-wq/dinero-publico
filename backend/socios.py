@@ -17,6 +17,11 @@ Qué se guarda de cada empresa (decisión de César del 28-10: solo lo necesario
   - las fechas que necesita el envío: hasta cuándo se le ha revisado (revisado), el último correo semanal, el último
     intento fallido y cuándo se le avisó de que su perfil iba a borrarse.
   Mientras se espera a que confirme un cambio, el perfil nuevo va aparte (perfil_pendiente) y se descarta a los 7 días.
+  - condiciones_aceptadas y condiciones_version (04-11): cuándo marcó la casilla «He leído y acepto las condiciones de
+    contratación y la política de privacidad» y qué versión de esos textos aceptó (filtro_formulario.CONDICIONES_VERSION).
+    Sin aceptación no se guarda nada. En un alta (o un alta aún sin confirmar) se apuntan al enviar el formulario; en
+    un cambio de un perfil ya confirmado, al confirmar el cambio desde el correo (así nadie cambia la aceptación de otra
+    empresa escribiendo su correo). Nada más: ni IP ni otros datos.
   Ni IP, ni nombre, ni teléfono. De los correos enviados queda solo la fila de envios (cuándo, qué clase, código de
   Resend), que sirve para no reenviar en bucle y para el cupo; al borrar el perfil se queda sin saber de quién era.
 
@@ -55,7 +60,7 @@ ALTAS_MAX_HORA = 30                  # tope de correos de confirmación por hora
 ENVIOS_CADUCAN_S = 90 * 86400
 _RE_CORREO = re.compile(r"[A-Za-z0-9._%+\-]{1,64}@[A-Za-z0-9\-]{1,63}(?:\.[A-Za-z0-9\-]{1,63})+")
 _CAMPOS = ("id", "correo", "perfil", "estado", "alta", "confirmado", "ultimo_uso", "perfil_pendiente", "pendiente_desde",
-           "revisado", "ultimo_envio", "intentado", "aviso_inactividad")
+           "revisado", "ultimo_envio", "intentado", "aviso_inactividad", "condiciones_aceptadas", "condiciones_version")
 _USO = "coalesce(ultimo_uso, confirmado, alta)"
 
 _ESQUEMA = """
@@ -64,7 +69,7 @@ CREATE TABLE IF NOT EXISTS perfiles (
     id INTEGER PRIMARY KEY AUTOINCREMENT, correo TEXT NOT NULL UNIQUE, perfil TEXT NOT NULL,
     estado TEXT NOT NULL DEFAULT 'pendiente', alta REAL NOT NULL, confirmado REAL, ultimo_uso REAL,
     perfil_pendiente TEXT, pendiente_desde REAL, revisado REAL, ultimo_envio REAL, intentado REAL,
-    aviso_inactividad REAL);
+    aviso_inactividad REAL, condiciones_aceptadas REAL, condiciones_version TEXT);
 CREATE TABLE IF NOT EXISTS vistos (item TEXT PRIMARY KEY, primera_vez REAL NOT NULL) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS envios (
     id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL NOT NULL, clase TEXT NOT NULL, perfil_id INTEGER,
@@ -99,6 +104,10 @@ class Almacen:
         self.db = sqlite3.connect(ruta, check_same_thread=False, timeout=30)
         with self.lock:
             self.db.executescript(_ESQUEMA)
+            columnas = {f[1] for f in self.db.execute("PRAGMA table_info(perfiles)")}
+            for col, tipo in (("condiciones_aceptadas", "REAL"), ("condiciones_version", "TEXT")):   # socios.db de antes del 04-11
+                if col not in columnas:
+                    self.db.execute(f"ALTER TABLE perfiles ADD COLUMN {col} {tipo}")
             if not self._ajuste("clave_firma"):
                 self.db.execute("INSERT INTO ajustes VALUES ('clave_firma', ?)", (secrets.token_hex(32),))
             self.db.commit()
@@ -148,17 +157,21 @@ class Almacen:
         return p["pendiente_json"] or ""
 
     # ── alta, confirmación y baja ───────────────────────────────────────────────────────────────────────────────
-    def alta(self, correo, perfil, ahora=None):
+    def alta(self, correo, perfil, ahora=None, condiciones=""):
         """Guarda lo enviado por el formulario, SIN dar de alta todavía. Devuelve {"resultado", "perfil"}; resultado:
              confirmar  -> hay que mandar el correo de confirmación (alta nueva o cambio de un perfil ya confirmado)
              espera     -> se le acaba de escribir (o hay demasiadas altas en esta hora): no se manda nada
              invalido   -> el correo no vale
+             sin_condiciones -> no se han aceptado las condiciones (`condiciones`: la versión aceptada): no se guarda nada
            La página responde siempre lo mismo ("revisa tu correo"): así no se puede averiguar desde fuera si una
            dirección está dada de alta."""
         ahora = ahora or time.time()
         correo = correo_valido(correo)
         if not correo:
             return {"resultado": "invalido"}
+        condiciones = (condiciones or "").strip()[:60]
+        if not condiciones:
+            return {"resultado": "sin_condiciones"}
         pj = _json(perfil)
         with self.lock:
             p = self._fila("correo", correo)
@@ -172,10 +185,12 @@ class Almacen:
             if recientes >= ALTAS_MAX_HORA:
                 return {"resultado": "espera", "perfil": p}
             if not p:
-                self.db.execute("INSERT INTO perfiles (correo, perfil, alta) VALUES (?,?,?)", (correo, pj, ahora))
+                self.db.execute("INSERT INTO perfiles (correo, perfil, alta, condiciones_aceptadas, condiciones_version) "
+                                "VALUES (?,?,?,?,?)", (correo, pj, ahora, ahora, condiciones))
             elif p["estado"] == "pendiente":
                 # Sin confirmar: lo último que envía sustituye a lo anterior y el plazo de 7 días vuelve a empezar.
-                self.db.execute("UPDATE perfiles SET perfil=?, alta=? WHERE id=?", (pj, ahora, p["id"]))
+                self.db.execute("UPDATE perfiles SET perfil=?, alta=?, condiciones_aceptadas=?, condiciones_version=? "
+                                "WHERE id=?", (pj, ahora, ahora, condiciones, p["id"]))
             else:
                 # Ya confirmado: el cambio espera aparte hasta que se confirme; el perfil de ahora no se toca.
                 self.db.execute("UPDATE perfiles SET perfil_pendiente=?, pendiente_desde=? WHERE id=?",
@@ -183,9 +198,10 @@ class Almacen:
             self.db.commit()
             return {"resultado": "confirmar", "perfil": self._fila("correo", correo)}
 
-    def confirmar(self, pid, firma, ahora=None):
+    def confirmar(self, pid, firma, ahora=None, condiciones=""):
         """Da de alta el perfil, o aplica el cambio pendiente, si la firma corresponde a ESE perfil. Devuelve la fila
-        (con "ya_estaba" si ese enlace ya se había usado) o None si el enlace no vale o ha caducado."""
+        (con "ya_estaba" si ese enlace ya se había usado) o None si el enlace no vale o ha caducado. Al aplicar un
+        cambio, `condiciones` (la versión aceptada en el formulario del cambio) pasa a ser la aceptación del perfil."""
         ahora = ahora or time.time()
         with self.lock:
             p = self._fila("id", pid)
@@ -204,6 +220,9 @@ class Almacen:
             else:
                 self.db.execute("UPDATE perfiles SET perfil=perfil_pendiente, perfil_pendiente=NULL, pendiente_desde=NULL, "
                                 "confirmado=?, ultimo_uso=?, aviso_inactividad=NULL WHERE id=?", (ahora, ahora, pid))
+                if condiciones:
+                    self.db.execute("UPDATE perfiles SET condiciones_aceptadas=?, condiciones_version=? WHERE id=?",
+                                    (ahora, condiciones.strip()[:60], pid))
                 self._sumar("cambios")
             self.db.commit()
             return self._fila("id", pid)
