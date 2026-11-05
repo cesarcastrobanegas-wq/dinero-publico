@@ -6,6 +6,7 @@ día que vence) y plazos de borrado contados desde el fin del pago. Sin red ni w
 INVENTADOS (dominio ejemplo.test) y fechas simuladas.
 Uso: python backend/socios_prueba.py      (sale con código 1 si falla algo)
 """
+import inspect
 import os
 import sqlite3
 import sys
@@ -27,8 +28,16 @@ def ok(cond, txt):
         fallos.append(txt)
 
 
+def alta(alm, correo, perfil, **kw):
+    """alta(alm, ...) de las pruebas. Con el PR #25 el alta exige la versión de las condiciones aceptadas (sin ella no
+    guarda nada); antes de fusionarlo ese parámetro no existe. Así la misma prueba vale con y sin el #25."""
+    if "condiciones" in inspect.signature(alm.alta).parameters:
+        kw.setdefault("condiciones", "version-de-prueba")
+    return alm.alta(correo, perfil, **kw)
+
+
 def nuevo(alm, correo, t):
-    pid = alm.alta(correo, {"cpvs": ["90"], "provincias": ["murcia"]}, ahora=t)["perfil"]["id"]
+    pid = alta(alm, correo, {"cpvs": ["90"], "provincias": ["murcia"]}, ahora=t)["perfil"]["id"]
     alm.confirmar(pid, alm.firma("confirmar", pid, SOC.huella(alm.a_confirmar(alm.perfil(pid)))), ahora=t)
     return pid
 
@@ -65,7 +74,7 @@ ok(alm.perfil(b) is not None, "sin pago y sin aviso: a los 394 días sigue")
 alm.limpiar(T0 + 396 * DIA)
 ok(alm.perfil(b) is None, "sin pago y sin aviso: borrado a los 13 meses")
 
-c = alm.alta("pendiente@ejemplo.test", {"cpvs": ["90"]}, ahora=T0)["perfil"]["id"]
+c = alta(alm, "pendiente@ejemplo.test", {"cpvs": ["90"]}, ahora=T0)["perfil"]["id"]
 alm.limpiar(T0 + 8 * DIA)
 ok(alm.perfil(c) is None, "sin confirmar: borrado a los 7 días")
 
@@ -84,7 +93,7 @@ ok(s1 in semanal(alm, T0 + 61 * DIA), "renueva: vuelve a recibirlo sin rellenar 
 alm.baja(s1)
 
 # ── poner el pago ───────────────────────────────────────────────────────────────────────────────────────────────────
-d = alm.alta("sinconfirmar@ejemplo.test", {"cpvs": ["90"]}, ahora=T0)["perfil"]["id"]
+d = alta(alm, "sinconfirmar@ejemplo.test", {"cpvs": ["90"]}, ahora=T0)["perfil"]["id"]
 fila, motivo = alm.poner_pagado(d, T0 + 100 * DIA, ahora=T0 + 1)
 ok(fila is None and motivo == "sin_confirmar", "no se pone el pago a un perfil sin confirmar")
 alm.limpiar(T0 + 8 * DIA)

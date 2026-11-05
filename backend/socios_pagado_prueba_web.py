@@ -9,6 +9,7 @@ leen al importar.
 Uso: python backend/socios_pagado_prueba_web.py CARPETA_DATOS [apagado|abierto|prueba]
   CARPETA_DATOS: una COPIA de datos_vacio (con su cache.db); nunca la de producción. Se crea ahí socios.db.
 """
+import inspect
 import io
 import json
 import os
@@ -25,6 +26,14 @@ PERFIL_COMPLETO = {"cpvs": ["909"], "provincias": ["murcia"], "trabajadores": 5,
                    "clasificacion": [], "certificados": [], "ute": False, "experiencia_publica": True}
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+
+
+def alta(alm, correo, perfil, **kw):
+    """alta(alm, ...) de las pruebas. Con el PR #25 el alta exige la versión de las condiciones aceptadas (sin ella no
+    guarda nada); antes de fusionarlo ese parámetro no existe. Así la misma prueba vale con y sin el #25."""
+    if "condiciones" in inspect.signature(alm.alta).parameters:
+        kw.setdefault("condiciones", "version-de-prueba")
+    return alm.alta(correo, perfil, **kw)
 
 
 def caso(modo, datos):
@@ -97,7 +106,7 @@ def caso(modo, datos):
     ahora = time.time()
 
     def nuevo(correo, t):
-        pid = alm.alta(correo, {"cpvs": ["90"], "provincias": ["murcia"]}, ahora=t)["perfil"]["id"]
+        pid = alta(alm, correo, {"cpvs": ["90"], "provincias": ["murcia"]}, ahora=t)["perfil"]["id"]
         alm.confirmar(pid, alm.firma("confirmar", pid, SOC.huella(alm.a_confirmar(alm.perfil(pid)))), ahora=t)
         return pid
 
@@ -129,7 +138,7 @@ def caso(modo, datos):
         ok(c == 400, f"acción desconocida: 400 ({c})")
         c, r = post("/admin/socios-pagado", "correo=nadie@ejemplo.test&accion=ver", TOKEN)
         ok(c == 404, f"correo sin perfil: 404 ({c})")
-        p = alm.alta("sinconfirmar@ejemplo.test", {"cpvs": ["90"]})["perfil"]["id"]
+        p = alta(alm, "sinconfirmar@ejemplo.test", {"cpvs": ["90"]})["perfil"]["id"]
         c, r = post("/admin/socios-pagado", f"p={p}&accion=poner&hasta=2027-01-01", TOKEN)
         ok(c == 409, f"perfil sin confirmar: 409 ({c})")
         c, r = post("/admin/socios-pagado", f"p={a}&accion=ver&token={TOKEN}")
