@@ -113,11 +113,77 @@ def main():
     ok("ganó" in tf and "Servicio de limpieza del polideportivo" in tf and "quedan 16 días" in tf,
        "ficha con gancho y licitación abierta con plazo")
     ok("PERSONA FISICA" not in tf.upper() and "NOMBRE DE ADMINISTRADOR" not in tf.upper(), "ficha sin personas")
-    with open(os.path.join(salida, L.EXCLUIR_TXT), "w", encoding="utf-8") as f:
-        f.write("# descartadas a mano\na00000002   # comentario\n")
-    el2 = L.generar(contratos, lic, csv_ruta, salida, "2026-10-10", ahora, xlsx, n=30)
-    ok([e["nif"] for e in el2] == ["B00000001"], "la del fichero «excluir de la lista» ya no sale")
-    os.remove(os.path.join(salida, L.EXCLUIR_TXT))
+
+    # seguimiento: lo apuntado no se pierde al regenerar
+    ruta_seg = os.path.join(salida, L.SEGUIMIENTO_XLSX)
+    ruta_lista = os.path.join(salida, "Lista de llamadas.xlsx")
+
+    def filas_xlsx(ruta):
+        w = openpyxl.load_workbook(ruta)
+        r = list(w.worksheets[0].iter_rows(values_only=True))
+        w.close()
+        return [dict(zip(r[0], f)) for f in r[1:]]
+
+    seg = filas_xlsx(ruta_seg)
+    ok(sorted(f["NIF"] for f in seg) == ["A00000002", "B00000001"] and all(c in seg[0] for c in L.COLUMNAS_APUNTAR),
+       "el seguimiento se crea con una fila por empresa y sus columnas")
+    regen = lambda: L.generar(contratos, lic, csv_ruta, salida, "2026-10-10", ahora, xlsx, n=30)  # noqa: E731
+    antes = open(ruta_seg, "rb").read()
+    regen()
+    ok(open(ruta_seg, "rb").read() == antes, "sin empresas nuevas ni notas, el seguimiento no se toca")
+    # 1) lo apuntado en la propia lista pasa al seguimiento
+    w = openpyxl.load_workbook(ruta_lista)
+    ws = w["Llamadas"]
+    cab = [c.value for c in ws[1]]
+    r1 = next(r for r in range(2, ws.max_row + 1) if ws.cell(r, cab.index("NIF") + 1).value == "B00000001")
+    ws.cell(r1, cab.index("Fecha de llamada") + 1, datetime(2026, 11, 5))
+    ws.cell(r1, cab.index("Notas") + 1, "llamar por la tarde")
+    w.save(ruta_lista)
+    # 2) lo apuntado en el seguimiento, con una columna y una empresa añadidas a mano
+    w = openpyxl.load_workbook(ruta_seg)
+    ws = w.worksheets[0]
+    cab = [c.value for c in ws[1]]
+    ws.cell(1, len(cab) + 1, "Mi columna")
+    ra = next(r for r in range(2, ws.max_row + 1) if ws.cell(r, cab.index("NIF") + 1).value == "A00000002")
+    ws.cell(ra, cab.index("Interesado (sí/no)") + 1, "no")
+    ws.cell(ra, cab.index("Notas") + 1, "no le interesa ahora")
+    ws.cell(ra, len(cab) + 1, "algo mío")
+    ws.cell(ws.max_row + 1, cab.index("Razón social") + 1, "EMPRESA APUNTADA A MANO SL")
+    w.save(ruta_seg)
+    regen()
+    seg = {f["NIF"] or f["Razón social"]: f for f in filas_xlsx(ruta_seg)}
+    ok(seg["B00000001"]["Notas"] == "llamar por la tarde" and seg["B00000001"]["Fecha de llamada"].day == 5,
+       "lo apuntado en la lista pasa al seguimiento")
+    ok(seg["A00000002"]["Notas"] == "no le interesa ahora" and seg["A00000002"]["Mi columna"] == "algo mío"
+       and "EMPRESA APUNTADA A MANO SL" in seg, "el seguimiento conserva lo suyo: notas, columnas y filas a mano")
+    lista = {f["NIF"]: f for f in filas_xlsx(ruta_lista)}
+    ok(lista["A00000002"]["Interesado (sí/no)"] == "no" and lista["B00000001"]["Notas"] == "llamar por la tarde",
+       "la lista nueva trae rellenado lo del seguimiento")
+    ok("no le interesa ahora" not in texto_pdf(pdf_l) and "05/11/2026" in texto_pdf(pdf_l),
+       "la lista en PDF trae las columnas de seguimiento que caben (sin notas)")
+    ok(os.path.exists(os.path.join(salida, L.SEGUIMIENTO_COPIA)), "antes de cambiar el seguimiento, deja una copia")
+    # 3) un cambio en el seguimiento manda sobre la lista; lo de la lista solo rellena huecos
+    w = openpyxl.load_workbook(ruta_lista)
+    ws = w["Llamadas"]
+    cab = [c.value for c in ws[1]]
+    r1 = next(r for r in range(2, ws.max_row + 1) if ws.cell(r, cab.index("NIF") + 1).value == "B00000001")
+    ws.cell(r1, cab.index("Notas") + 1, "otra cosa")
+    w.save(ruta_lista)
+    regen()
+    seg = {f["NIF"] or f["Razón social"]: f for f in filas_xlsx(ruta_seg)}
+    ok(seg["B00000001"]["Notas"] == "llamar por la tarde", "nunca se pisa lo que ya hay en el seguimiento")
+
+    # exclusiones permanentes: por razón social (sin forma social ni tildes) o por CIF
+    with open(os.path.join(salida, L.EXCLUIDAS_TXT), "w", encoding="utf-8") as f:
+        f.write("# descartadas a mano\nBrillo Competidor   # sin «S.A.»\n")
+    ok([e["nif"] for e in regen()] == ["B00000001"], "excluida por razón social: ya no sale")
+    with open(os.path.join(salida, L.EXCLUIDAS_TXT), "w", encoding="utf-8") as f:
+        f.write("a0000000-2\n")
+    ok([e["nif"] for e in regen()] == ["B00000001"], "excluida por CIF: ya no sale")
+    ok("A00000002" in {f["NIF"] for f in filas_xlsx(ruta_seg)}, "excluir no borra nada del seguimiento")
+    ok(L.norm_razon("LA OPINION DE MURCIA, S.A.U.") == L.norm_razon("La Opinión de Murcia")
+       and L.norm_razon("Graficas Alamo, S.l.") == "GRAFICAS ALAMO", "razón social: tildes y forma social no cuentan")
+    os.remove(os.path.join(salida, L.EXCLUIDAS_TXT))
 
     # prueba gratis
     carpeta = os.path.join(d, "clientes en prueba")

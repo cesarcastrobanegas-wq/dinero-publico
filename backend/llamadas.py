@@ -8,6 +8,11 @@ prometedoras y genera, en la carpeta de salida:
   «Lista de llamadas.pdf»    lo mismo para imprimir (A4 apaisado, blanco y negro);
   «Fichas de llamada.pdf»    media página por empresa: el gancho («el último año ganó X contratos por X €») y 2 o 3
                              licitaciones ABIERTAS ahora en su sector y en la provincia, con su plazo.
+y mantiene, también en la carpeta de salida (ficheros locales, nunca en git):
+  «excluidas.txt»            CIF o razón social de las que no deben salir nunca (se respeta siempre);
+  «Seguimiento de llamadas.xlsx»  lo apuntado, una fila por empresa. Solo se le AÑADEN empresas nuevas y lo apuntado
+                             en la lista anterior (en celdas vacías); nunca se borra nada. La lista nueva sale con
+                             esas columnas rellenas.
 
 Criterio (lo pidió el titular el 04-11): contratos ganados con ayuntamientos y organismos de la provincia desde el 1 de
 enero de 2024 (número e importe, menores incluidos), peso del sector en los contratos menores municipales y, para que
@@ -25,6 +30,7 @@ import csv
 import os
 import re
 import sys
+import unicodedata
 from datetime import date, datetime, timedelta
 from xml.sax.saxutils import escape
 
@@ -187,7 +193,13 @@ def municipios_txt(e, k=4):
 
 # ───────────────────────────── salidas ─────────────────────────────
 
-def escribir_xlsx(ruta, elegidas, contactos, desde, hasta, ahora):
+def _txt(v):
+    if isinstance(v, (datetime, date)):
+        return v.strftime("%d/%m/%Y")
+    return "" if v is None else str(v)
+
+
+def escribir_xlsx(ruta, elegidas, contactos, desde, hasta, ahora, seg=None):
     import openpyxl
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
@@ -204,7 +216,7 @@ def escribir_xlsx(ruta, elegidas, contactos, desde, hasta, ahora):
         ws.append([i, I.nombre_empresa(e["nombre"]), e["nif"], e["sector"], municipios_txt(e, 6), e["n"],
                    e["n_menores"], round(e["importe"], 2), e["n_anio"], round(e["importe_anio"], 2),
                    len(e["abiertas"]), c.get("tel", ""), c.get("web", ""), c.get("fuente", "") if c else ""]
-                  + [""] * len(COLUMNAS_APUNTAR))
+                  + [apuntado(seg or {}, e).get(col) for col in COLUMNAS_APUNTAR])
     fino = Side(style="thin", color="999999")
     for celda in ws[1]:
         celda.font = Font(bold=True)
@@ -218,6 +230,9 @@ def escribir_xlsx(ruta, elegidas, contactos, desde, hasta, ahora):
             celda.alignment = Alignment(wrap_text=True, vertical="top")
             celda.border = Border(bottom=fino)
         fila[7].number_format = fila[9].number_format = "#,##0"
+        for celda in fila[14:]:
+            if isinstance(celda.value, (datetime, date)):
+                celda.number_format = "DD/MM/YYYY"
     ws.freeze_panes = "C2"
     ws.auto_filter.ref = ws.dimensions
     nota = wb.create_sheet("Cómo se ha hecho")
@@ -275,7 +290,7 @@ def _estilos():
     }, colors
 
 
-def escribir_pdf_lista(ruta, elegidas, contactos, desde, hasta, ahora):
+def escribir_pdf_lista(ruta, elegidas, contactos, desde, hasta, ahora, seg=None):
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.units import cm
     from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
@@ -289,13 +304,16 @@ def escribir_pdf_lista(ruta, elegidas, contactos, desde, hasta, ahora):
     filas = [[P(c, "th") for c in cab]]
     for i, e in enumerate(elegidas, 1):
         c = contactos.get(e["nif"], {})
+        a = {k: E(_txt(v)) for k, v in apuntado(seg or {}, e).items()}
         filas.append([P(str(i)), P(f"<b>{E(I.nombre_empresa(e['nombre'], 60))}</b><br/>{E(e['nif'])} · "
                                    f"{E(e['sector'])}"),
                       P(E(municipios_txt(e))),
                       P(f"{e['n']} ({e['n_menores']} menores)<br/>{E(I.eur(e['importe']))}<br/>"
                         f"último año: {e['n_anio']} · {E(I.eur(e['importe_anio']))}"),
                       P(E(c.get("tel", "")) + ("<br/>" + E(c.get("web", "")) if c.get("web") else "")),
-                      "", "", "", P("sí / no"), ""])
+                      P(a.get("Fecha de llamada", "")), P(a.get("Con quién hablé", "")),
+                      P(a.get("Correo (si me lo da)", "")), P(a.get("Interesado (sí/no)") or "sí / no"),
+                      P(a.get("Volver a llamar el", ""))])
     anchos = [0.8, 6.0, 4.6, 3.5, 3.6, 1.7, 3.3, 3.2, 1.4, 1.6]
     t = Table(filas, colWidths=[a * cm for a in anchos], repeatRows=1)
     t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("GRID", (0, 0), (-1, -1), 0.4, colors.black),
@@ -366,29 +384,181 @@ def escribir_pdf_fichas(ruta, elegidas, contactos, desde, hasta, ahora, contacto
     doc.build(historia)
 
 
-EXCLUIR_TXT = "excluir de la lista.txt"     # en la carpeta de salida, fuera de git: un NIF por línea, # comenta
+# ─────────────────── exclusiones y seguimiento (ficheros LOCALES de la carpeta de salida, fuera de git) ───────────────────
+
+EXCLUIDAS_TXT = "excluidas.txt"                 # una razón social o un CIF por línea; lo que va tras «#» es comentario
+SEGUIMIENTO_XLSX = "Seguimiento de llamadas.xlsx"   # lo apuntado; se le AÑADEN filas, nunca se borra ni se rehace
+SEGUIMIENTO_COPIA = "Seguimiento de llamadas - copia anterior.xlsx"
+COLUMNAS_SEGUIMIENTO = ("Razón social", "NIF", "Sector", "Teléfono", "Web", "En la lista desde") + COLUMNAS_APUNTAR
+_FORMAS = {"S", "A", "L", "U", "SA", "SL", "SLU", "SAU", "SLL", "SLP", "SC", "SCOOP", "COOP", "CB", "SOCIEDAD",
+           "LIMITADA", "ANONIMA", "UNIPERSONAL", "LABORAL", "COOPERATIVA"}
+
+
+def norm_razon(nombre):
+    """Razón social comparable: sin tildes, mayúsculas, sin puntuación y sin la forma social del final
+    («La Opinión de Murcia» == «LA OPINION DE MURCIA, S.A.U.»)."""
+    t = unicodedata.normalize("NFKD", str(nombre or "").upper())
+    t = "".join(ch for ch in t if not unicodedata.combining(ch)).replace(".", "")
+    pal = re.sub(r"[^A-Z0-9]+", " ", t).split()
+    while len(pal) > 1 and pal[-1] in _FORMAS:
+        pal.pop()
+    return " ".join(pal)
+
+
+def _es_cif(t):
+    n = I.nif_ok(t)
+    return n if n and sum(ch.isdigit() for ch in n) >= 7 else ""
+
+
+def claves(nif, nombre):
+    """Claves con las que se reconoce a una empresa: su CIF y su razón social normalizada."""
+    k = set()
+    if _es_cif(nif):
+        k.add("N:" + _es_cif(nif))
+    if norm_razon(nombre):
+        k.add("R:" + norm_razon(nombre))
+    return k
 
 
 def leer_excluidas(ruta):
-    """NIF que no deben salir en la lista (los que ya se descartaron a mano). Sin fichero, ninguno."""
+    """Claves de las empresas que no deben salir nunca en la lista. Sin fichero, ninguna."""
+    fuera = set()
     if not ruta or not os.path.exists(ruta):
-        return set()
+        return fuera
     with open(ruta, encoding="utf-8-sig") as f:
-        return {l.split("#")[0].strip().upper() for l in f if l.split("#")[0].strip()}
+        for linea in f:
+            t = linea.split("#")[0].strip()
+            if t:
+                fuera |= {"N:" + _es_cif(t)} if _es_cif(t) else {"R:" + norm_razon(t)}
+    return fuera
+
+
+def _cabecera(ws):
+    """{nombre de columna en minúsculas: índice (1..)} de la primera fila; «CIF» vale como «NIF»."""
+    cab = {}
+    for j, c in enumerate(next(ws.iter_rows(min_row=1, max_row=1, values_only=True), ()), 1):
+        t = str(c or "").strip().lower()
+        if t:
+            cab.setdefault("nif" if t == "cif" else t, j)
+    return cab
+
+
+def _vacio(v):
+    return v is None or (isinstance(v, str) and not v.strip())
+
+
+def notas_de_lista(ruta):
+    """Lo apuntado a mano en una «Lista de llamadas.xlsx» anterior (para no perderlo al regenerarla):
+    [(claves, {columna: valor})]."""
+    if not os.path.exists(ruta):
+        return []
+    import openpyxl
+    wb = openpyxl.load_workbook(ruta)
+    ws = wb["Llamadas"] if "Llamadas" in wb.sheetnames else wb.worksheets[0]
+    cab = _cabecera(ws)
+    out = []
+    for fila in ws.iter_rows(min_row=2, values_only=True):
+        val = lambda col: fila[cab[col.lower()] - 1] if col.lower() in cab and cab[col.lower()] <= len(fila) else None  # noqa: E731,E501
+        apunt = {c: val(c) for c in COLUMNAS_APUNTAR if not _vacio(val(c))}
+        if apunt:
+            out.append((claves(val("NIF"), val("Razón social")), apunt))
+    wb.close()
+    return out
+
+
+def actualizar_seguimiento(ruta, elegidas, contactos, notas, ahora):
+    """Añade al seguimiento las empresas que aún no están y pasa a él lo apuntado en la lista anterior, SOLO en celdas
+    vacías. Nunca borra filas, columnas ni valores. Devuelve {clave: {columna: valor}} con lo apuntado de cada empresa.
+    Si no hay nada que añadir, no toca el fichero; si lo toca, antes deja una copia («... - copia anterior.xlsx")."""
+    import openpyxl
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+    existe = os.path.exists(ruta)
+    if existe:
+        wb = openpyxl.load_workbook(ruta)
+        ws = wb.worksheets[0]
+    else:
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Seguimiento"
+    cab = _cabecera(ws)
+    cambiado = not existe
+    for col in COLUMNAS_SEGUIMIENTO:              # columnas que falten, al final (las que haya puesto él, se quedan)
+        if col.lower() not in cab:
+            j = max(cab.values(), default=0) + 1
+            celda = ws.cell(row=1, column=j, value=col)
+            celda.font, celda.fill = Font(bold=True), PatternFill("solid", fgColor="DDDDDD")
+            celda.alignment = Alignment(wrap_text=True, vertical="top")
+            ws.column_dimensions[get_column_letter(j)].width = 34 if col in ("Razón social", "Notas") else 16
+            cab[col.lower()] = j
+            cambiado = True
+    filas = {}                                    # clave -> nº de fila
+    for r in range(2, ws.max_row + 1):
+        for k in claves(ws.cell(r, cab["nif"]).value, ws.cell(r, cab["razón social"]).value):
+            filas.setdefault(k, r)
+    hoy = ahora.strftime("%d/%m/%Y")
+    for e in elegidas:
+        if not any(k in filas for k in claves(e["nif"], e["nombre"])):
+            r = ws.max_row + 1 if ws.max_row > 1 or not _vacio(ws.cell(1, 1).value) else 2
+            c = contactos.get(e["nif"], {})
+            for col, v in (("Razón social", I.nombre_empresa(e["nombre"])), ("NIF", e["nif"]),
+                           ("Sector", e["sector"]), ("Teléfono", c.get("tel", "")), ("Web", c.get("web", "")),
+                           ("En la lista desde", hoy)):
+                ws.cell(r, cab[col.lower()], v)
+            for k in claves(e["nif"], e["nombre"]):
+                filas.setdefault(k, r)
+            cambiado = True
+    for ks, apunt in notas:
+        r = next((filas[k] for k in sorted(ks) if k in filas), None)
+        if r is None:
+            continue
+        for col, v in apunt.items():
+            celda = ws.cell(r, cab[col.lower()])
+            if _vacio(celda.value):
+                celda.value = v
+                if isinstance(v, (datetime, date)):
+                    celda.number_format = "DD/MM/YYYY"
+                cambiado = True
+    seg = {}
+    for r in sorted(set(filas.values())):
+        apunt = {c: ws.cell(r, cab[c.lower()]).value for c in COLUMNAS_APUNTAR}
+        for k in claves(ws.cell(r, cab["nif"]).value, ws.cell(r, cab["razón social"]).value):
+            seg.setdefault(k, apunt)
+    if cambiado:
+        ws.freeze_panes = "C2"
+        try:
+            if existe:
+                import shutil
+                shutil.copy2(ruta, os.path.join(os.path.dirname(ruta), SEGUIMIENTO_COPIA))
+            wb.save(ruta)
+        except PermissionError:
+            raise SystemExit(f"No puedo guardar «{os.path.basename(ruta)}»: ciérralo en Excel y vuelve a regenerar. "
+                             "No he cambiado nada de la lista.")
+    wb.close()
+    return seg
+
+
+def apuntado(seg, e):
+    """Lo apuntado de una empresa en el seguimiento ({} si no hay nada)."""
+    return next((seg[k] for k in sorted(claves(e["nif"], e["nombre"])) if k in seg), {})
 
 
 def generar(contratos, licitaciones, clientes_csv, salida, hasta, ahora, contactos_xlsx=None, n=30, desde=None,
             contacto_tel=""):
-    """Escribe las tres salidas en `salida`. Devuelve la lista de empresas elegidas."""
+    """Escribe las tres salidas en `salida` (y añade al seguimiento las empresas nuevas). Devuelve las elegidas."""
     desde = desde or DESDE_POR_DEFECTO
     contratos = [r for r in contratos if desde <= r["fecha"] <= hasta]
-    fuera = leer_excluidas(os.path.join(salida, EXCLUIR_TXT))
-    clientes = {k: v for k, v in leer_clientes(clientes_csv).items() if k.upper() not in fuera}
+    fuera = leer_excluidas(os.path.join(salida, EXCLUIDAS_TXT))
+    clientes = {k: v for k, v in leer_clientes(clientes_csv).items() if not claves(k, v.get("nombre")) & fuera}
     contactos = leer_contactos(contactos_xlsx)
-    elegidas = elegir(candidatos(contratos, licitaciones, clientes, hasta), n)
+    cands = [c for c in candidatos(contratos, licitaciones, clientes, hasta) if not claves(c["nif"], c["nombre"]) & fuera]
+    elegidas = elegir(cands, n)
     os.makedirs(salida, exist_ok=True)
-    escribir_xlsx(os.path.join(salida, "Lista de llamadas.xlsx"), elegidas, contactos, desde, hasta, ahora)
-    escribir_pdf_lista(os.path.join(salida, "Lista de llamadas.pdf"), elegidas, contactos, desde, hasta, ahora)
+    lista_xlsx = os.path.join(salida, "Lista de llamadas.xlsx")
+    seg = actualizar_seguimiento(os.path.join(salida, SEGUIMIENTO_XLSX), elegidas, contactos,
+                                 notas_de_lista(lista_xlsx), ahora)
+    escribir_xlsx(lista_xlsx, elegidas, contactos, desde, hasta, ahora, seg)
+    escribir_pdf_lista(os.path.join(salida, "Lista de llamadas.pdf"), elegidas, contactos, desde, hasta, ahora, seg)
     escribir_pdf_fichas(os.path.join(salida, "Fichas de llamada.pdf"), elegidas, contactos, desde, hasta, ahora,
                         contacto_tel)
     return elegidas
