@@ -3358,6 +3358,18 @@ msgstr "Hasiera"
 msgid "Página no encontrada"
 msgstr "Ez da orria aurkitu"
 
+#: pie de la web (enlaces de venta, 2026-11-04)
+msgid "Condiciones de contratación"
+msgstr "Kontratazio-baldintzak"
+
+#: pie de la web (enlaces de venta, 2026-11-04)
+msgid "Cookies"
+msgstr "Cookieak"
+
+#: pie de la web (enlaces de venta, 2026-11-04)
+msgid "Precios"
+msgstr "Prezioak"
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
 
