@@ -311,6 +311,31 @@ def main():
     ok(H.PRECIOS == (("Semanal", H.PRECIOS[0][1], 15, 150), ("Diario", H.PRECIOS[1][1], 25, 250)),
        "precios: 15/150 semanal y 25/250 diario")
 
+    # correo para después de la llamada: uno por empresa, con 2 licitaciones de su ficha y el informe a adjuntar
+    import correo_llamada as C
+    carpeta_c = os.path.join(salida, C.CARPETA_CORREOS)
+    os.makedirs(carpeta_c, exist_ok=True)
+    for nombre in ("99 - DE UNA LISTA VIEJA.txt", "mis notas.txt"):
+        with open(os.path.join(carpeta_c, nombre), "w", encoding="utf-8") as f:
+            f.write("x")
+    rutas_c = C.escribir(salida, el, ahora, "Firma De Prueba", "600 000 000", os.path.join(d, "por sector"))
+    ok(len(rutas_c) == len(el) and sorted(os.listdir(carpeta_c)) == sorted(
+        [os.path.basename(r) for r in rutas_c] + ["mis notas.txt"]),
+       "un .txt por empresa; se quita el de una lista vieja y no se toca otro fichero de la carpeta")
+    tc = open(rutas_c[0], encoding="utf-8-sig").read()
+    lics_c = L.licitaciones_ficha(el[0], k=2, ahora=ahora)
+    asunto_c = next(x for x in tc.splitlines() if x.startswith("Asunto: "))
+    ok("LIMPIEZAS PRUEBA" in asunto_c.upper() and "Licitaciones para tu empresa" in asunto_c, "asunto con su nombre")
+    ok("me pidió por teléfono" in tc and "SOLO PARA DESPUÉS DE LA LLAMADA" in tc and "No lo mandes" in tc,
+       "dice que lo pidió por teléfono y avisa de no mandarlo a quien no lo pidió")
+    ok(len(lics_c) == 2 and all(I.bonito(x["titulo"], 200) in tc and x["url"] in tc for x in lics_c),
+       "menciona 2 licitaciones abiertas de su ficha, con enlace")
+    ok("ADJUNTAR: " + os.path.join(d, "por sector", L.nombre_informe_sector(el[0]["sector"])) in tc,
+       "indica qué PDF del sector adjuntar")
+    ok("mes gratis" in tc and "qué municipios y qué actividad" in tc, "ofrece el mes gratis y pregunta qué vigilar")
+    ok(tc.rstrip().endswith("Firma De Prueba\nDinero Público\n600 000 000\ncontacto@dinero-publico.com"), "firma")
+    ok("quedan" not in tc, "sin «quedan N días» (el correo se manda más tarde): la fecha del plazo")
+
     # copia de la base: descarga reanudable, huella, sin tocar nada si algo va mal (servidor simulado, sin red)
     import bajar_copia_base as B
     import hashlib
@@ -383,8 +408,9 @@ def main():
             ok(True, "TU_TOKEN_AQUI sin cambiar: se para sin conectarse")
     finally:
         B.urllib.request.urlopen, B.time.sleep = real_urlopen, real_sleep
-    src2 = "".join(open(m.__file__, encoding="utf-8").read() for m in (H, B))
-    ok("620" not in src2 and "buen-token" not in src2, "ni teléfono ni token escritos en el código nuevo")
+    src2 = "".join(open(m.__file__, encoding="utf-8").read() for m in (H, B, C))
+    ok("620" not in src2 and "buen-token" not in src2 and "Firma De Prueba" not in src2,
+       "ni teléfono, ni token, ni la firma escritos en el código nuevo (llegan como parámetros)")
     print(f"\n{'TODO BIEN' if not FALLOS else str(len(FALLOS)) + ' FALLOS'} (ficheros en {d})")
     sys.exit(1 if FALLOS else 0)
 
