@@ -326,6 +326,8 @@ def main():
     lics_c = L.licitaciones_ficha(el[0], k=2, ahora=ahora)
     asunto_c = next(x for x in tc.splitlines() if x.startswith("Asunto: "))
     ok("LIMPIEZAS PRUEBA" in asunto_c.upper() and "Licitaciones para tu empresa" in asunto_c, "asunto con su nombre")
+    ok(asunto_c + "\n\nBuenos días:" in tc and not any(".." in os.path.basename(r) for r in rutas_c),
+       "línea en blanco tras el asunto; nombre de fichero sin «..»")
     ok("me pidió por teléfono" in tc and "SOLO PARA DESPUÉS DE LA LLAMADA" in tc and "No lo mandes" in tc,
        "dice que lo pidió por teléfono y avisa de no mandarlo a quien no lo pidió")
     ok(len(lics_c) == 2 and all(I.bonito(x["titulo"], 200) in tc and x["url"] in tc for x in lics_c),

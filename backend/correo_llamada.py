@@ -25,7 +25,7 @@ _RE_NUESTRO = re.compile(r"^\d{2} - .+\.txt$")      # solo se borran los .txt co
 
 
 def nombre_fichero(i, nombre):
-    return f"{i:02d} - {L._para_fichero(I.nombre_empresa(nombre, 60))}.txt"
+    return f"{i:02d} - {L._para_fichero(I.nombre_empresa(nombre, 60)).rstrip('. ')}.txt"
 
 
 def fecha_plazo(lic):
@@ -84,7 +84,7 @@ def escribir(salida, elegidas, ahora, firma="", contacto_tel="", carpeta_informe
         ]
         ruta = os.path.join(carpeta, nombre_fichero(i, e["nombre"]))
         with open(ruta, "w", encoding="utf-8-sig") as f:
-            f.write("\n".join(cabecera) + cuerpo + "\n")
+            f.write("\n".join(cabecera) + "\n" + cuerpo + "\n")
         rutas.append(ruta)
     hechos = {os.path.basename(r) for r in rutas}
     for viejo in os.listdir(carpeta):
