@@ -1,0 +1,485 @@
+{
+ "version": "borrador-2026-11-04",
+ "borrador": true,
+ "documentos": {
+  "condiciones": {
+   "titulo": "Condiciones de contratación de los servicios por correo",
+   "version_texto": "Versión de [FECHA DE PUBLICACIÓN]",
+   "bloques": [
+    [
+     "h2",
+     "1. Objeto",
+     "objeto"
+    ],
+    [
+     "p",
+     "Estas condiciones regulan la contratación de los servicios de pago por correo electrónico de Dinero Público:"
+    ],
+    [
+     "ul",
+     [
+      "«Licitaciones para tu empresa»: un correo semanal con las licitaciones públicas abiertas que encajan con el perfil de tu empresa (apartado 4);",
+      "Alertas por correo, nivel de pago: avisos diarios de novedades en contratos, licitaciones o subvenciones (apartado 5)."
+     ]
+    ],
+    [
+     "p",
+     "El nivel gratuito de las alertas no se paga y se rige por la Política de privacidad y, en lo que le sea aplicable, por estas condiciones. [DECIDIR: si «Licitaciones para tu empresa» tendrá también un nivel o una prueba gratuitos.]"
+    ],
+    [
+     "h2",
+     "2. Quién presta el servicio",
+     "prestador"
+    ],
+    [
+     "p",
+     "Los servicios los presta [NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR], con NIF [NIF DEL TITULAR] y domicilio en [DOMICILIO], titular de Dinero Público (https://dinero-publico.com). Contacto: contacto@dinero-publico.com. [DECIDIR: papel de la Cámara de Comercio u otras entidades que den a conocer el servicio.]"
+    ],
+    [
+     "h2",
+     "3. A quién van dirigidos",
+     "destinatarios"
+    ],
+    [
+     "p",
+     "«Licitaciones para tu empresa» es un servicio para empresas y profesionales autónomos que quieren presentarse a licitaciones públicas, y se contrata para esa actividad. [DECIDIR: si las alertas de pago se ofrecen también a particulares (consumidores).]"
+    ],
+    [
+     "h2",
+     "4. «Licitaciones para tu empresa»: qué incluye",
+     "filtro"
+    ],
+    [
+     "ul",
+     [
+      "Un perfil de tu empresa, que rellenas en el formulario: sectores (divisiones CPV y, si quieres, códigos más concretos), provincias en las que trabajas y si quieres también las de ámbito nacional, tipo de contrato (obras, servicios, suministros), personas en plantilla, tramo de facturación, año de constitución, clasificación de contratista si la tienes, certificados, si has trabajado ya para alguna Administración y si irías en UTE.",
+      "Al enviar el formulario, una vista previa con las licitaciones abiertas en ese momento que encajan con tu perfil.",
+      "Mientras tengas el servicio pagado [o en periodo de prueba], un correo semanal con las licitaciones NUEVAS desde el correo anterior que encajan con tu empresa. Sale normalmente el lunes; si ese día hay muchos envíos, puede llegar en los días siguientes de la misma semana. Si una semana no hay ninguna licitación nueva para ti, no se envía nada.",
+      "Cada licitación va en uno de estos grupos, con los motivos explicados: «Puede optar» (por lo que nos has dicho y lo que publica el anuncio, tu empresa cumple lo que se pide); «Revisa el pliego» (con los datos del anuncio no se puede saber si cumples); «Solo en UTE o en un lote» (tu empresa sola no llegaría, pero sí junto a otra o a una parte del contrato).",
+      "Cada correo lleva como mucho 20 licitaciones, las que cierran antes dentro de cada grupo. Las demás están en la página «Mis licitaciones», a la que se llega con el enlace del correo y que muestra las licitaciones abiertas de cada momento.",
+      "Solo se incluyen licitaciones a las que les quedan al menos 2 días de plazo para presentar ofertas.",
+      "Puedes cambiar los datos de tu empresa cuando quieras, rellenando de nuevo el formulario con el mismo correo; el cambio se aplica cuando lo confirmas desde el correo que te enviamos."
+     ]
+    ],
+    [
+     "p",
+     "Qué no incluye: no se leen los pliegos (la clasificación se hace con los datos del anuncio); no se preparan ni presentan ofertas ni se asesora sobre ellas; no se garantiza que se te adjudique ningún contrato. El servicio está solo en castellano. [DECIDIR: si incluye un informe en PDF y atención por teléfono; plazo de respuesta a las consultas.]"
+    ],
+    [
+     "p",
+     "De dónde salen las licitaciones: del canal de licitaciones de la Plataforma de Contratación del Sector Público (PLACSP), del Ministerio de Hacienda. Algunas comunidades autónomas y entidades publican sus licitaciones en plataformas propias y no siempre en la PLACSP: esas pueden no aparecer."
+    ],
+    [
+     "h2",
+     "5. Alertas por correo: qué incluyen",
+     "alertas"
+    ],
+    [
+     "ul",
+     [
+      "Nivel gratuito: una alerta, con un resumen semanal de novedades.",
+      "Nivel de pago: hasta diez alertas, con un aviso diario de novedades.",
+      "Cada alerta sigue un tipo de información (los contratos de un municipio, las licitaciones abiertas o las subvenciones) con los filtros que elijas. «Novedad» es lo que aparece por primera vez después de crear la alerta: una alerta nueva no envía lo que ya estaba publicado.",
+      "Si un día o una semana no hay novedades, no se envía nada.",
+      "Las alertas pueden recibirse en castellano, gallego, catalán o euskera, según el idioma en que te apuntes."
+     ]
+    ],
+    [
+     "p",
+     "El paso al nivel de pago lo activa el titular cuando recibe el pago; no hay pasarela de pago automática. [DECIDIR: duración del nivel de pago y qué pasa al terminar.]"
+    ],
+    [
+     "h2",
+     "6. Precio y forma de pago",
+     "precio"
+    ],
+    [
+     "p",
+     "Precio de «Licitaciones para tu empresa»: [PRECIO]. Precio del nivel de pago de las alertas: [PRECIO]. [DECIDIR: IVA incluido o «+ IVA»; periodo (mes o año); precios especiales.] El precio incluye todo lo descrito en estas condiciones; no hay costes adicionales."
+    ],
+    [
+     "p",
+     "Forma de pago: [FORMA DE PAGO]. Factura: [QUIÉN LA EMITE, CON QUÉ DATOS Y CÓMO SE ENVÍA]."
+    ],
+    [
+     "h2",
+     "7. Cómo se contrata",
+     "contratacion"
+    ],
+    [
+     "ul",
+     [
+      "Rellenas el formulario del servicio y aceptas estas condiciones marcando la casilla correspondiente. [La casilla está preparada en el PR #25, sin fusionar: hay que fusionarlo antes de vender.]",
+      "Te enviamos un correo para confirmar tu dirección. Sin esa confirmación el servicio no empieza y tus datos se borran a los 7 días.",
+      "Al confirmar el correo se guarda tu perfil; el envío de pago empieza cuando se registra el pago [o cuando empieza tu periodo de prueba]. Sin pago o prueba vigente, «Licitaciones para tu empresa» no envía el correo semanal.",
+      "En el correo para confirmar tu dirección te enviamos el enlace a la versión exacta de estas condiciones y de la Política de privacidad que aceptaste. Guardamos la fecha y la versión aceptadas. Puedes consultar, guardar o imprimir esa versión cuando quieras: cada versión sigue publicada en su propio enlace aunque publiquemos otra nueva.",
+      "Si te equivocas al rellenar el formulario, puedes corregirlo antes de enviarlo y, después, en cualquier momento, rellenándolo otra vez con el mismo correo."
+     ]
+    ],
+    [
+     "p",
+     "El proceso de contratación es solo en castellano."
+    ],
+    [
+     "h2",
+     "8. Duración y renovación",
+     "duracion"
+    ],
+    [
+     "p",
+     "«Licitaciones para tu empresa» se contrata por [DURACIÓN] desde [EL PAGO / LA CONFIRMACIÓN]. No se renueva solo. Te escribiremos 15 días antes de que termine y otra vez el último día, con la forma de renovarlo. Si no renuevas, tienes 7 días de cortesía en los que sigues recibiendo el correo semanal; después se deja de enviar, pero se guarda el perfil de tu empresa para que no tengas que rellenarlo otra vez si renuevas (cuánto tiempo, en la Política de privacidad). Con un periodo de menos de 12 días no llega el aviso de 15 días antes, solo el del último día."
+    ],
+    [
+     "p",
+     "Si cambiamos el precio o estas condiciones, te lo diremos por correo al menos [30] días antes de que se apliquen a tu siguiente periodo; si no estás de acuerdo, puedes darte de baja antes, sin coste."
+    ],
+    [
+     "h2",
+     "9. Baja",
+     "baja"
+    ],
+    [
+     "p",
+     "Puedes darte de baja cuando quieras con el enlace que va en todos los correos, desde la página «Mis licitaciones» o escribiendo a contacto@dinero-publico.com. Al darte de baja con el enlace se borran en ese momento tu correo y tus datos, y no recibirás más correos. Si la baja llega antes de que termine el periodo pagado, el servicio termina en ese momento, sin los 7 días de cortesía. [DECIDIR: si se devuelve la parte no disfrutada del periodo pagado.]"
+    ],
+    [
+     "p",
+     "El titular puede dar de baja el servicio si se usa para algo distinto de lo previsto (por ejemplo, revender la información como propia) [ABOGADO: otros supuestos y preaviso], y también si deja de prestarlo; en ese caso avisará con [30] días de antelación y devolverá la parte proporcional de lo pagado."
+    ],
+    [
+     "h2",
+     "10. Derecho de desistimiento",
+     "desistimiento"
+    ],
+    [
+     "p",
+     "[ABOGADO: elegir una opción.] [OPCIÓN A, solo empresas y profesionales] Estos servicios se contratan para la actividad empresarial o profesional de quien los contrata, por lo que no se aplica el derecho de desistimiento de los consumidores (artículos 102 y siguientes del texto refundido de la Ley General para la Defensa de los Consumidores y Usuarios). Aun así, puedes darte de baja en cualquier momento como explica el apartado 9."
+    ],
+    [
+     "p",
+     "[OPCIÓN B, con consumidores o desistimiento voluntario] Tienes 14 días naturales desde que contratas para desistir sin dar ningún motivo, escribiendo a contacto@dinero-publico.com o con cualquier otra declaración clara. Te devolveremos lo pagado en un máximo de 14 días por el mismo medio de pago. Si pides que el servicio empiece dentro de esos 14 días y después desistes, te descontaremos la parte proporcional al tiempo en que lo has tenido. [FORMULARIO DE DESISTIMIENTO, SI PROCEDE.]"
+    ],
+    [
+     "h2",
+     "11. Exactitud de los datos y responsabilidad",
+     "responsabilidad"
+    ],
+    [
+     "ul",
+     [
+      "Las licitaciones, contratos, subvenciones, importes, plazos y requisitos son los que publican las fuentes oficiales. Se reproducen tal como se publican; pueden contener errores, cambiar después (correcciones, ampliaciones de plazo, anulaciones) o publicarse con retraso.",
+      "La clasificación de las licitaciones la hace un programa con los datos del anuncio y los que nos das de tu empresa. Es ORIENTATIVA: los anuncios casi nunca traen todos los requisitos (por ejemplo, cuando el anuncio no da la solvencia económica que se pide, se estima a partir del importe del contrato) y el programa no lee los pliegos. Lo que manda siempre es el pliego oficial y el anuncio en la PLACSP: antes de preparar o presentar una oferta tienes que comprobarlos.",
+      "Si los datos de tu empresa no son correctos o están desactualizados, la clasificación tampoco lo será.",
+      "No se garantiza que el servicio recoja todas las licitaciones o novedades que podrían interesarte ni que esté siempre disponible: depende de las fuentes, del servidor y del servicio de envío de correos, y hay un cupo diario de envíos. Si un correo no sale, las licitaciones siguen en «Mis licitaciones» y van en el correo siguiente si siguen abiertas.",
+      "El titular no responde de las decisiones que tomes con la información del servicio, de que no se te adjudique un contrato ni de las ofertas que dejes de presentar o presentes fuera de plazo, salvo dolo o culpa grave. [ABOGADO: límite de responsabilidad.]",
+      "La información no es asesoramiento jurídico ni técnico."
+     ]
+    ],
+    [
+     "h2",
+     "12. Uso de la información",
+     "uso"
+    ],
+    [
+     "p",
+     "La información es para uso de quien contrata. [DECIDIR: si se permite reenviarla dentro de la empresa o a los socios de una UTE, y si se prohíbe revenderla.]"
+    ],
+    [
+     "h2",
+     "13. Protección de datos",
+     "datos"
+    ],
+    [
+     "p",
+     "Los datos que nos das se tratan como explica la Política de privacidad, en sus apartados «Alertas por correo» y «Licitaciones para tu empresa»."
+    ],
+    [
+     "h2",
+     "14. Ley aplicable y tribunales",
+     "ley"
+    ],
+    [
+     "p",
+     "Estas condiciones se rigen por la ley española. [ABOGADO: tribunales competentes.]"
+    ]
+   ]
+  },
+  "privacidad": {
+   "titulo": "Política de privacidad",
+   "version_texto": "Versión de [FECHA DE PUBLICACIÓN]",
+   "bloques": [
+    [
+     "h2",
+     "1. Responsable del tratamiento",
+     "responsable"
+    ],
+    [
+     "p",
+     "El responsable es [NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR], con NIF [NIF DEL TITULAR] y domicilio en [DOMICILIO], titular de Dinero Público (https://dinero-publico.com). Para cualquier asunto de protección de datos: contacto@dinero-publico.com. [DELEGADO DE PROTECCIÓN DE DATOS, SI SE NOMBRA.]"
+    ],
+    [
+     "p",
+     "Esta política explica qué datos personales se tratan en cada parte de Dinero Público: al visitar la web, en los datos públicos que se publican, en los comentarios, al escribirnos, en las alertas por correo y en el servicio «Licitaciones para tu empresa»."
+    ],
+    [
+     "h2",
+     "2. Si visitas la web",
+     "visitas"
+    ],
+    [
+     "p",
+     "Para consultar la web no hace falta registrarse ni dar ningún dato."
+    ],
+    [
+     "ul",
+     [
+      "Registros del servidor. El proveedor de alojamiento (Render) registra, como cualquier servidor, la dirección IP, la fecha, la página pedida y el navegador de cada petición. Se conservan [PLAZO DE CONSERVACIÓN DE LOS REGISTROS DEL SERVIDOR] y solo se usan para el funcionamiento y la seguridad del servicio.",
+      "Control de abusos. Para frenar las ráfagas de peticiones, la web lleva la cuenta de las peticiones de cada conexión y navegador (dirección IP y navegador) solo en memoria, mientras está en marcha; no la guarda.",
+      "Recuento propio de visitas, sin cookies. Se guardan solo sumas por día (peticiones, páginas, volumen) por tipo de visitante, por página sin parámetros y por red. La dirección IP nunca se guarda entera: la red se recorta a su bloque (los tres primeros números en IPv4, los tres primeros grupos en IPv6), y de los días pasados solo se conservan, durante 30 días, las 100 redes con más tráfico de cada día. Para no contar dos veces al mismo visitante se usa una huella de la dirección IP y el navegador mezclada con una clave aleatoria que se destruye cada semana junto con las huellas.",
+      "Almacenamiento en tu navegador. La web guarda en tu propio navegador (almacenamiento local, no cookies) tu decisión sobre las cookies y algunas preferencias, como el municipio elegido o haber cerrado un aviso. No salen de tu dispositivo."
+     ]
+    ],
+    [
+     "h2",
+     "2.1. Cookies de terceros",
+     "cookies"
+    ],
+    [
+     "p",
+     "Solo se activan si las aceptas en el aviso que aparece al entrar, y puedes cambiar tu decisión en cualquier momento desde «Preferencias de cookies», al pie de cada página. Rechazarlas no impide usar la web."
+    ],
+    [
+     "ul",
+     [
+      "Google Analytics (Google Ireland Limited / Google LLC): estadísticas de uso agregadas.",
+      "Google AdSense, cuando esté activo: mostrar publicidad, que puede ser personalizada según tus intereses."
+     ]
+    ],
+    [
+     "p",
+     "Base legal: tu consentimiento (artículo 6.1.a del Reglamento General de Protección de Datos, RGPD, y artículo 22.2 de la LSSI). Más información sobre cómo usa Google los datos: policies.google.com/technologies/partner-sites. [LISTA DE COOKIES CON NOMBRE, FINALIDAD Y DURACIÓN.]"
+    ],
+    [
+     "h2",
+     "3. Personas que aparecen en los datos publicados",
+     "datos-publicados"
+    ],
+    [
+     "p",
+     "Dinero Público publica información de fuentes oficiales y accesibles al público. Algunos de esos datos son de personas físicas:"
+    ],
+    [
+     "ul",
+     [
+      "profesionales autónomos adjudicatarios de contratos públicos: nombre y NIF enmascarado (solo cuatro cifras), con los datos del contrato;",
+      "administradores y apoderados de sociedades adjudicatarias: nombre, cargo y fecha del nombramiento según el BORME, con el enlace al anuncio oficial;",
+      "alcaldes y concejales: nombre, cargo, partido y, cuando se publican, sus retribuciones."
+     ]
+    ],
+    [
+     "p",
+     "Finalidad: la transparencia sobre el uso del dinero público y la rendición de cuentas. Se publican los datos tal como figuran en la fuente y solo los necesarios para esa finalidad. Origen: las fuentes oficiales citadas en el Aviso legal (PLACSP, fuentes autonómicas y municipales, BORME, registro oficial de cargos electos y publicaciones oficiales de retribuciones)."
+    ],
+    [
+     "p",
+     "Base legal: [ABOGADO: BASE JURÍDICA — interés legítimo del artículo 6.1.f del RGPD en la transparencia y la información sobre asuntos de interés público, u otra que proceda]."
+    ],
+    [
+     "p",
+     "Conservación: [DECIDIR: mientras la información siga publicada en la fuente oficial y tenga interés para la transparencia, o un plazo concreto]."
+    ],
+    [
+     "p",
+     "Tus derechos: puedes pedir el acceso, la rectificación o la supresión de tus datos, u oponerte a su publicación, escribiendo a contacto@dinero-publico.com. Junto a cada administrador del BORME hay además un enlace para pedir la rectificación. Cada petición se estudia caso por caso, teniendo en cuenta el interés público de la información."
+    ],
+    [
+     "p",
+     "Cuando procede suprimir a una persona de los listados de alcaldes, concejales o sueldos, no se guarda su nombre: se guarda solo una huella irreversible (un código calculado con una clave secreta a partir del municipio, la provincia y el nombre), que sirve para que esa persona no vuelva a aparecer cuando se actualizan los datos desde la fuente oficial. Sin la clave no se puede saber a quién corresponde cada huella."
+    ],
+    [
+     "h2",
+     "4. Comentarios",
+     "comentarios"
+    ],
+    [
+     "p",
+     "Si dejas un comentario en una ficha, se guarda el texto, el nombre que escribas (es opcional), la ficha en la que lo dejas y la fecha. No se guarda tu dirección IP junto al comentario. El comentario no se publica hasta que lo aprueba el titular; para avisarle, se le envía por correo el texto y el nombre a través de Resend."
+    ],
+    [
+     "p",
+     "Finalidad: publicar tu aportación en la ficha. Base legal: [ABOGADO: consentimiento al enviar el comentario u otra]. Conservación: mientras esté publicado [DECIDIR: plazo para los comentarios no aprobados]. Puedes pedir que se borre en cualquier momento en contacto@dinero-publico.com."
+    ],
+    [
+     "p",
+     "Lo que escribas, si se publica, lo puede leer cualquiera: no incluyas datos personales tuyos ni de otras personas."
+    ],
+    [
+     "h2",
+     "5. Si nos escribes",
+     "contacto"
+    ],
+    [
+     "p",
+     "Si escribes a contacto@dinero-publico.com, usamos tu dirección y lo que nos cuentes solo para contestarte y, si es una petición de derechos, para atenderla y poder demostrar que se atendió. Base legal: [ABOGADO]. Conservación: [PLAZO]. El correo lo gestiona [PROVEEDOR DEL CORREO DE CONTACTO]."
+    ],
+    [
+     "h2",
+     "6. Alertas por correo",
+     "alertas"
+    ],
+    [
+     "p",
+     "Este servicio está preparado pero todavía no está abierto al público."
+    ],
+    [
+     "p",
+     "Qué datos guardamos: tu dirección de correo electrónico, el idioma en que te apuntaste, tu nivel (gratuito o de pago) y tus alertas (qué tipo de novedades pides: contratos, licitaciones o subvenciones, y con qué filtros), con las fechas de alta, de confirmación y de los últimos envíos. No pedimos nombre, teléfono ni ningún otro dato, y no guardamos tu dirección IP en la base de datos del servicio."
+    ],
+    [
+     "p",
+     "De cada correo que enviamos queda un registro (cuándo, de qué tipo, cuántas alertas y novedades llevaba y la respuesta del servicio de envío, con cualquier dirección de correo tapada) que no incluye tu dirección. Sirve para no repetir envíos y para no pasar del cupo diario. Se borra a los 400 días; si te das de baja antes, ya no se puede asociar a ti."
+    ],
+    [
+     "p",
+     "Para qué: enviarte las novedades que has pedido (nivel gratuito: una alerta, con un resumen semanal; nivel de pago: hasta diez alertas, con un aviso diario) y los correos necesarios del servicio (confirmación). No cedemos tu correo a nadie ni lo usamos para publicidad."
+    ],
+    [
+     "p",
+     "Base legal: en el nivel gratuito, tu consentimiento (artículo 6.1.a del RGPD), que confirmas desde el enlace que te enviamos; en el nivel de pago, [ABOGADO: el contrato (artículo 6.1.b) para el servicio y las obligaciones legales (artículo 6.1.c) para la facturación]."
+    ],
+    [
+     "p",
+     "Cuánto tiempo: si no confirmas tu correo, la solicitud se borra a los 7 días. Si te das de baja, borramos en ese momento tu dirección y todas tus alertas. Mientras sigas apuntado, guardamos los datos para seguir enviándote las alertas. [DECIDIR: plazo de borrado por falta de uso, como en «Licitaciones para tu empresa».]"
+    ],
+    [
+     "h2",
+     "7. «Licitaciones para tu empresa»",
+     "filtro-licitaciones"
+    ],
+    [
+     "p",
+     "Este servicio está preparado pero todavía no está abierto al público."
+    ],
+    [
+     "p",
+     "Qué datos guardamos:"
+    ],
+    [
+     "ul",
+     [
+      "tu dirección de correo electrónico;",
+      "los datos de tu empresa que indicas en el formulario: sectores (códigos CPV), provincias en las que trabaja y si quiere también las de ámbito nacional, tipo de contrato que le interesa, número de personas en plantilla, tramo de facturación, año de constitución, clasificación de contratista, certificados, si ha trabajado ya para alguna Administración y si iría en unión temporal de empresas (UTE);",
+      "las fechas de alta, de confirmación de tu correo y de la última vez que usaste el servicio, y las que necesita el envío (último correo, último intento fallido, aviso de borrado);",
+      "cuando el servicio sea de pago: la fecha hasta la que lo tienes pagado. Junto a tu perfil no se guarda ningún otro dato del pago."
+     ]
+    ],
+    [
+     "p",
+     "No pedimos nombre, apellidos ni teléfono, y no guardamos tu dirección IP en la base de datos del servicio. De cada correo enviado queda un registro sin tu dirección (cuándo, de qué tipo y la respuesta del servicio de envío, con cualquier dirección tapada), que se borra a los 90 días."
+    ],
+    [
+     "p",
+     "Cuando el servicio sea de pago, para cobrarlo y facturarlo se tratarán además [DATOS DE FACTURACIÓN: nombre o razón social, NIF, domicilio fiscal y datos del pago, según la FORMA DE PAGO]. Esos datos no se guardarán junto al perfil de tu empresa, sino en [DÓNDE SE GUARDAN LOS DATOS DE FACTURACIÓN]."
+    ],
+    [
+     "p",
+     "Para qué los usamos:"
+    ],
+    [
+     "ul",
+     [
+      "buscar las licitaciones abiertas que encajan con tu empresa, enseñártelas al rellenar el formulario y en la página «Mis licitaciones», y enviártelas por correo una vez por semana (normalmente los lunes), solo si hay alguna nueva;",
+      "enviarte los correos necesarios del servicio: la confirmación de tu correo o de un cambio de datos, el aviso de que tu perfil se va a borrar por falta de uso y, cuando el servicio sea de pago, los avisos de que tu periodo pagado va a terminar (15 días antes y el último día);",
+      "cuando el servicio sea de pago, guardar el perfil de tu empresa al terminar el periodo pagado, para que no tengas que rellenarlo otra vez si renuevas, y gestionar el cobro y las facturas."
+     ]
+    ],
+    [
+     "p",
+     "No cedemos tus datos a nadie, no los usamos para publicidad y no los combinamos con otros datos. La selección de licitaciones la hace un programa con lo que publica la Plataforma de Contratación del Sector Público y con los datos que nos das. Es orientativa: no toma ninguna decisión sobre ti ni sobre tu empresa."
+    ],
+    [
+     "p",
+     "Base legal: [ABOGADO: si el servicio es gratuito, tu consentimiento (artículo 6.1.a), que das al confirmar el correo; si es de pago, el contrato (artículo 6.1.b) para el perfil y los envíos, las obligaciones legales (artículo 6.1.c) para las facturas y la base que proceda para guardar el perfil cuando no hay servicio contratado]."
+    ],
+    [
+     "p",
+     "Cuánto tiempo los guardamos:"
+    ],
+    [
+     "ul",
+     [
+      "si no confirmas tu correo, borramos los datos a los 7 días;",
+      "si cambias los datos de tu empresa, el cambio no vale hasta que lo confirmas desde el correo; si no lo confirmas, se descarta a los 7 días;",
+      "si no usas el servicio en 11 meses, te escribimos para preguntarte si quieres mantener tu perfil; si no pulsas el enlace en 30 días, lo borramos. Si ese aviso no hubiera podido llegarte, lo borramos igualmente a los 13 meses sin uso. «Usar» el servicio es confirmar tu correo o un cambio, abrir tus licitaciones desde el enlace del correo o pulsar «mantener mi perfil»; recibir los correos no cuenta;",
+      "cuando el servicio sea de pago: mientras tengas el periodo pagado en vigor no te enviamos ese aviso ni borramos tus datos por falta de uso; al terminar, guardamos tu perfil y esos plazos se cuentan desde el fin del periodo pagado o desde la última vez que usaste el servicio, lo que sea más tarde;",
+      "si te das de baja, borramos tu correo y tu perfil en ese momento;",
+      "cuando el servicio sea de pago, las facturas y los datos para emitirlas se conservan el tiempo que exige la ley [ABOGADO: PLAZO], aunque te hayas dado de baja."
+     ]
+    ],
+    [
+     "p",
+     "Consulta rápida sin registro: si la web ofrece una consulta de licitaciones sin darse de alta, lo que escribas en ella se usa solo para calcular el resultado en ese momento; no se guarda ni se pide el correo."
+    ],
+    [
+     "h2",
+     "8. Quién trata los datos por cuenta nuestra",
+     "encargados"
+    ],
+    [
+     "ul",
+     [
+      "Render (Render Services, Inc., Estados Unidos): el servidor en el que funciona la web y en el que se guardan las bases de datos. [REGIÓN DEL SERVIDOR.]",
+      "Resend (Resend, Inc., Estados Unidos): envía los correos (alertas, «Licitaciones para tu empresa» y el aviso interno de cada comentario nuevo). Recibe la dirección de destino y el contenido de cada correo solo para entregarlo.",
+      "GitHub (GitHub, Inc., Estados Unidos): ejecuta las tareas programadas que hacen las copias de seguridad y las guarda en un repositorio privado.",
+      "Google (Google Ireland Limited / Google LLC): Analytics y AdSense, solo si aceptas sus cookies.",
+      "[OTROS: gestoría, banco o pasarela de pago, programa de facturación, cuando el servicio sea de pago.]"
+     ]
+    ],
+    [
+     "p",
+     "Transferencias internacionales: algunos de estos proveedores están en Estados Unidos. [ABOGADO: garantía aplicable a cada uno — Marco de Privacidad de Datos UE-EE. UU. o cláusulas contractuales tipo de la Comisión Europea.]"
+    ],
+    [
+     "h2",
+     "9. Copias de seguridad",
+     "copias"
+    ],
+    [
+     "p",
+     "Una vez por semana se hace una copia de seguridad de las bases de datos de las alertas y de «Licitaciones para tu empresa». Cada copia se cifra (AES-256) en el momento de hacerla y se guarda solo cifrada en un repositorio privado; se conservan las cuatro últimas. Por eso, unos datos borrados pueden seguir dentro de una copia cifrada hasta cuatro semanas, hasta que esa copia se sustituye. Las copias solo se abren para recuperar el servicio si se pierden los datos."
+    ],
+    [
+     "p",
+     "La base de datos general de la web (los datos públicos y los comentarios) también se copia una vez por semana en un repositorio privado, donde se conservan las dos últimas copias. [Hoy esta copia va comprimida pero no cifrada: ajustar este párrafo cuando se cifre.]"
+    ],
+    [
+     "h2",
+     "10. Tus derechos",
+     "derechos"
+    ],
+    [
+     "p",
+     "Puedes pedir el acceso a tus datos, su rectificación o su supresión, oponerte al tratamiento, pedir que lo limitemos y pedir la portabilidad de tus datos escribiendo a contacto@dinero-publico.com. Si te diste de alta en un servicio por correo, escríbenos desde esa dirección. Para darte de baja de las alertas o de «Licitaciones para tu empresa» basta además con el enlace que va en todos los correos: al pulsarlo se borran tus datos. Si diste tu consentimiento, puedes retirarlo en cualquier momento, sin que afecte a lo hecho antes."
+    ],
+    [
+     "p",
+     "Si crees que no hemos tratado bien tus datos, puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es)."
+    ],
+    [
+     "h2",
+     "11. Otras cuestiones",
+     "otras"
+    ],
+    [
+     "ul",
+     [
+      "Menores: los servicios por correo no están pensados para menores de 14 años. [ABOGADO: redacción.]",
+      "Decisiones automatizadas: no se toman decisiones con efectos jurídicos sobre nadie de forma automatizada. Los indicadores de la web y la selección de licitaciones son cálculos orientativos.",
+      "Seguridad: las altas se confirman desde el correo (doble confirmación), los enlaces de los correos van firmados, las bases de datos de los servicios por correo están separadas de la de la web, el panel de administración pide clave y las copias de los servicios por correo van cifradas.",
+      "Cambios: si cambia esta política, la versión nueva se publica aquí con su fecha y, si afecta a los servicios por correo, se avisa por correo a quien esté dado de alta."
+     ]
+    ]
+   ]
+  }
+ }
+}
