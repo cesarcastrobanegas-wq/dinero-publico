@@ -245,7 +245,7 @@ def caso(modo, datos):
                                  (f"csrf={csrf}&correo=nadie@ejemplo.test&accion=poner&hasta=2027-12-31", "pago_no_existe")):
             c, loc = post_panel("/admin/revision/socios/pagado", cuerpo, sesion)
             ok(c == 303 and loc.endswith("hecho=" + esperado), f"{cuerpo.split('&', 1)[1]}: {esperado} ({c} {loc})")
-        sc = alm.alta("sinconfirmar2@ejemplo.test", {"cpvs": ["90"]})["perfil"]["id"]
+        sc = alta(alm, "sinconfirmar2@ejemplo.test", {"cpvs": ["90"]})["perfil"]["id"]
         c, loc = post_panel("/admin/revision/socios/pagado", f"csrf={csrf}&p={sc}&accion=poner&hasta=2027-12-31", sesion)
         ok(c == 303 and loc.endswith("hecho=pago_sin_confirmar"), f"sin confirmar: pago_sin_confirmar ({loc})")
         c, _ = post_panel("/admin/revision/socios/pagado", f"csrf={csrf}&correo=formulario@ejemplo.test&accion=ver", sesion)
