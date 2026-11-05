@@ -49,6 +49,10 @@ try:
 except ImportError:
     import filtro_embudo as FEMB
 try:
+    from . import precios as PRECIOS
+except ImportError:
+    import precios as PRECIOS
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -27461,6 +27465,21 @@ def _filtro_embudo_resp(metodo, params):
     return _filtro_html(FEMB.responder(metodo, params, _filtro_licitaciones_abiertas, _ahora_madrid()))
 
 
+# Página de precios (/precios, 2026-11-04; ver precios.py). OCULTA: sin PRECIOS_VISIBLE=1 no existe (404, también bajo
+# /gl/, /ca/ y /eu/). Encendida no la enlaza ninguna página, no va al sitemap y lleva noindex. Los importes, el periodo,
+# la nota del IVA y el correo de contacto salen de variables de entorno (PRECIO_*, PRECIOS_*), que se leen en cada
+# petición; si falta un precio, el plan dice «Consultar».
+PRECIOS_VISIBLE = os.environ.get("PRECIOS_VISIBLE", "") == "1"
+
+
+def render_precios_html():
+    body = f'<div class="static-page">{PRECIOS.cuerpo_html(os.environ)}</div>'
+    pagina = _page_shell("Precios", body, description="Servicios de pago de Dinero Público para empresas: alertas, "
+                         "filtro de licitaciones e informes a medida.", og_path="/precios", extra_head=PRECIOS.CSS)
+    # una sola etiqueta robots, y noindex (el «index, follow» de _page_shell se cambia, no se duplica)
+    return pagina.replace('<meta name="robots" content="index, follow">', '<meta name="robots" content="noindex">', 1)
+
+
 def _filtro_html(html_):
     return _resp(html_, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer"})
 
@@ -28712,6 +28731,11 @@ def _route_get(path, qs, gzip_ok=False):
 
     if path == "/aviso-legal":
         return _resp(render_aviso_legal_html(), gzip_ok=gzip_ok)
+
+    if PRECIOS_VISIBLE and path.rstrip("/") == "/precios":
+        # Oculta (2026-11-04): sin PRECIOS_VISIBLE=1 cae en el 404 de siempre. noindex en la página y en la cabecera.
+        return _resp(render_precios_html(), headers={"X-Robots-Tag": "noindex", "Cache-Control": "no-store"},
+                     gzip_ok=gzip_ok)
 
     if path == "/ads.txt":
         # Autorización de vendedores de AdSense (estándar IAB ads.txt): texto plano en la raíz del dominio.
