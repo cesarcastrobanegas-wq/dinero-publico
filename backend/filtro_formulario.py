@@ -21,9 +21,11 @@ import re
 
 try:
     from . import filtro_licitaciones as F
+    from . import forma_pago as FP
     from . import licitaciones_place as LIC
 except ImportError:
     import filtro_licitaciones as F
+    import forma_pago as FP
     import licitaciones_place as LIC
 
 RUTA = "/filtro-licitaciones"
@@ -36,13 +38,16 @@ PRIVACIDAD = ("Responsable: Dinero Público. Usamos estos datos solo para enviar
               "avisaremos un mes antes y, si no nos dices que lo mantengamos, lo borraremos. Puedes darte de baja en "
               "cualquier momento con el enlace de cada correo.")
 ANCLA_AVISO_LEGAL = "/aviso-legal#filtro-licitaciones"
-# Cómo se contrata o se renueva (31-10): lo decide el titular. Mientras siga entre corchetes, la web NO manda los avisos de
-# vencimiento y no enseña esta frase en ningún sitio (se vería el corchete). Es el final de «Para renovarlo: ...».
-FORMA_PAGO = "[FORMA DE PAGO]"
+# Cómo se contrata o se renueva (31-10): lo decide el titular. Desde el 04-11 ya no es una constante con el hueco
+# «[FORMA DE PAGO]» sino la capa forma_pago.py (variable de entorno FORMA_PAGO, apagada por defecto). Mientras no esté
+# puesta, la web NO manda los avisos de vencimiento y no enseña esta frase en ningún sitio, igual que con el hueco.
+# Es el final de «Para renovarlo: ...» / «Para contratarlo: ...».
+def forma_pago_texto():
+    return FP.texto()
 
 
 def forma_pago_puesta():
-    return bool(FORMA_PAGO.strip()) and "[" not in FORMA_PAGO
+    return FP.puesta()
 
 CSS = """
 *{box-sizing:border-box}
@@ -351,7 +356,7 @@ def confirmar_pedir_html(campos):
 
 def _sin_servicio_html():
     """Caja para quien no tiene el servicio contratado (ni pago vigente ni cortesía): no recibe el correo semanal."""
-    como = f" Para contratarlo: {FORMA_PAGO}" if forma_pago_puesta() else ""
+    como = f" Para contratarlo: {forma_pago_texto()}" if forma_pago_puesta() else ""
     return ('<div class="caja"><b>Ahora no tienes el servicio contratado</b>, así que no te enviamos el correo semanal. '
             f'Guardamos el perfil de tu empresa para que no tengas que rellenarlo otra vez.{_e(como)}</div>')
 
@@ -572,7 +577,7 @@ def correo_sigues(enlace_mantener, enlace_baja, fecha_borrado):
     intro = ("Hace casi un año que no usas tu perfil de licitaciones de Dinero Público y no tienes el servicio "
              "contratado. Para no guardar datos que ya no hacen falta, borramos los perfiles que no se usan.")
     pide = ("Si quieres que lo guardemos, para no tener que rellenarlo otra vez si contratas el servicio, pulsa aquí "
-            "para mantener tu perfil:" + (f" (para contratarlo: {FORMA_PAGO})" if forma_pago_puesta() else ""))
+            "para mantener tu perfil:" + (f" (para contratarlo: {forma_pago_texto()})" if forma_pago_puesta() else ""))
     plazo = (f"Si no lo pulsas antes del {_fecha_larga(fecha_borrado)}, borraremos tu correo y los datos de tu empresa, "
              f"y no te escribiremos más. No tienes que hacer nada más.")
     boton = "Sí, mantener mi perfil"
@@ -606,7 +611,7 @@ def correo_vence(clase, fin, fin_cortesia, hoy, enlace_ver, enlace_baja):
     """(asunto, texto, html) del aviso de vencimiento. clase: "antes" (15 días antes) o "vence" (el día que vence; si
     la pasada no pudo ese día, sale en los de cortesía y dice «venció»). fin, fin_cortesia, hoy: fechas peninsulares
     (date o datetime). Solo se manda con FORMA_PAGO puesta."""
-    renovar = f"Para renovarlo: {FORMA_PAGO}"
+    renovar = f"Para renovarlo: {forma_pago_texto()}"
     guardamos = ("Después dejaremos de enviártelo, pero guardaremos el perfil de tu empresa para que, si renuevas más "
                  "adelante, no tengas que rellenarlo otra vez.")
     if clase == "antes":

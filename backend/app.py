@@ -49,6 +49,10 @@ try:
 except ImportError:
     import filtro_embudo as FEMB
 try:
+    from . import forma_pago as FP
+except ImportError:
+    import forma_pago as FP
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -16539,6 +16543,15 @@ def _revision_wsgi(method, path, qs, environ):
             if FILTRO_FORMULARIO and p("p").isdigit() and p("accion") == "baja":
                 hecho = "baja" if _socios_almacen().baja(int(p("p")), motivo="panel") else ""
             return 303, {"Location": f"/admin/revision/socios?hecho={hecho}", "Content-Length": "0"}, b""
+        if path == "/admin/revision/socios/pagado":
+            # Formulario del panel para marcar un pago a mano (04-11): solo con FORMA_PAGO=manual, con la sesión del
+            # panel y su csrf (comprobados arriba). Las reglas son las de POST /admin/socios-pagado (_socios_pagado).
+            if not (FILTRO_FORMULARIO and FP.admin_manual()) or p("accion") not in ("poner", "quitar"):
+                return 404, {"Content-Length": "0"}, b""
+            codigo, cuerpo = _socios_pagado(params)
+            hecho = ("pago_" + cuerpo["accion"] if codigo == 200
+                     else {404: "pago_no_existe", 409: "pago_sin_confirmar"}.get(codigo, "pago_mal"))
+            return 303, {"Location": f"/admin/revision/socios?hecho={hecho}", "Content-Length": "0"}, b""
         if path == "/admin/revision/salir":
             return 303, {"Location": "/admin/revision", "Content-Length": "0",
                          "Set-Cookie": "dp_rev=; Path=/admin/revision; Max-Age=0; HttpOnly; SameSite=Strict"}, b""
@@ -27634,7 +27647,7 @@ def _socios_semanal_de(alm, p, abiertas, madrid):
 def _socios_pasada(max_correos=25):
     """Una tanda del envío del filtro (flujo socios-envio.yml, todos los días a las 08:30 UTC): primero los avisos
     «¿Sigues interesado?», después los avisos de vencimiento del pago (15 días antes y el día que vence; solo con
-    FFORM.FORMA_PAGO puesta) y al final los correos semanales, solo a quien tiene el pago vigente o está en los 7 días
+    la forma de pago puesta, ver forma_pago.py) y al final los correos semanales, solo a quien tiene el pago vigente o está en los 7 días
     de cortesía (los de esta semana que falten: el lunes salen casi todos y, si el cupo no llega, el resto los días
     siguientes). Respeta el cupo de Resend, que comparte con las alertas
     (ALERTAS_TOPE_DIARIO / ALERTAS_TOPE_MES, sumando los dos ficheros). Solo números en la respuesta (la llama un
@@ -27848,9 +27861,12 @@ def _socios_panel_html(cookie, hecho=""):
         f'<td>{"sí" if e["codigo"] and e["codigo"] < 300 else "NO"} ({e["codigo"]})</td><td>{esc(e["detalle"] or "")}</td></tr>'
         for e in alm.lista_envios())
     vacio = lambda n: f'<tr><td colspan="{n}" class="sub">Nada todavía.</td></tr>'                # noqa: E731
-    aviso = '<div class="aviso">Perfil borrado.</div>' if hecho == "baja" else ""
-    forma_pago = ('' if FFORM.forma_pago_puesta() else '<div class="aviso"><b>Falta la forma de pago</b> (FORMA_PAGO en '
-                  'filtro_formulario.py sigue entre corchetes): no salen los avisos de vencimiento.</div>')
+    hechos = {"baja": "Perfil borrado.", "pago_poner": "Pago puesto.", "pago_quitar": "Pago quitado: el servicio termina ahora.",
+              "pago_no_existe": "No hay ningún perfil con ese correo.",
+              "pago_sin_confirmar": "Ese perfil todavía no ha confirmado su correo: el pago solo se pone a perfiles confirmados.",
+              "pago_mal": "No se ha cambiado nada: falta la fecha o no es válida (futura y a menos de 5 años vista)."}
+    aviso = f'<div class="aviso">{esc(hechos[hecho])}</div>' if hecho in hechos else ""
+    forma_pago = FP.estado_panel()          # "" con la forma de pago puesta (ver forma_pago.py)
     return _revision_pagina("Filtro de licitaciones: perfiles", f"""<style>.t{{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin:8px 0 22px}}
 .t th,.t td{{border:1px solid #dde1e7;padding:6px 8px;text-align:left;vertical-align:top}}.t th{{background:#eef1f6}}</style>
 <h1>Filtro de licitaciones: perfiles</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a> · horas en UTC</p>
@@ -27858,6 +27874,7 @@ def _socios_panel_html(cookie, hecho=""):
 <h2 style="font-size:16px">Perfiles</h2>
 <table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th>Pagado hasta</th><th></th></tr>{filas or vacio(10)}</table>
 <p class="sub">«Pagado hasta» se pone y se quita con el token en la cabecera: POST /admin/socios-pagado con correo=..., y accion=poner&amp;hasta=AAAA-MM-DD, accion=quitar o accion=ver.</p>
+{FP.formulario_admin_html(csrf)}
 <h2 style="font-size:16px">Envíos (los 100 últimos)</h2>
 <table class="t"><tr><th>Cuándo</th><th>Clase</th><th>Aceptado por Resend</th><th>Respuesta</th></tr>{env or vacio(4)}</table>""")
 
