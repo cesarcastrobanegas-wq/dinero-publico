@@ -1,0 +1,29 @@
+# TEMPORAL (05-11-2026): diagnóstico de por qué Kohesio da 403 desde Actions. Solo lecturas públicas; no sube nada.
+# Se ejecuta al hacer push a esta rama y se borra antes de proponer la fusión.
+name: Kohesio diagnóstico (temporal)
+on:
+  push:
+    branches: [wip/kohesio-actions]
+    paths: [.github/workflows/kohesio-diagnostico.yml]
+permissions:
+  contents: read
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Peticiones
+        run: |
+          echo "IP de salida: $(curl -s --max-time 20 https://api.ipify.org)"
+          L='https://kohesio.ec.europa.eu/api/projects?country=https://linkedopendata.eu/entity/Q7&programmingPeriod=https://linkedopendata.eu/entity/Q7333082&language=es&limit=2&offset=0'
+          for ua in "dinero-publico.com (fondos UE; datos abiertos de la Comision Europea)" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"; do
+            echo "=== API lista, UA: $ua"
+            curl -s -D - -o cuerpo.txt -A "$ua" -H "Accept: application/json" --max-time 60 "$L" | head -20 || true
+            echo "--- cuerpo:"; head -c 600 cuerpo.txt; echo
+          done
+          for u in "https://kohesio.ec.europa.eu/" "https://kohesio.ec.europa.eu/api/queries/funds?language=es" \
+                   "https://query.linkedopendata.eu/" \
+                   "https://query.linkedopendata.eu/sparql?query=SELECT%20(1%20AS%20%3Fx)%20WHERE%20%7B%7D&format=json" \
+                   "https://linkedopendata.eu/entity/Q7"; do
+            echo "=== $u -> $(curl -s -o /dev/null -w '%{http_code} %{size_download}B' -A 'dinero-publico.com (diagnostico)' --max-time 60 "$u")"
+          done
