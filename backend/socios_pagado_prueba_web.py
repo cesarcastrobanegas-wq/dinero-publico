@@ -227,6 +227,8 @@ def orden(alm, ok, post, ahora):
     app._socios_semanal_de = lambda alm_, p, abiertas, madrid: ("asunto", "texto", "<p>html</p>", 1, 1)
     try:
         app.FFORM.FORMA_PAGO = "escríbenos a pagos@ejemplo.test"
+        # con el #22 (forma_pago.py) la forma de pago sale del entorno: se ponen las dos cosas para que valga con y sin él
+        os.environ.update(FORMA_PAGO="manual", FORMA_PAGO_INSTRUCCIONES="escríbenos a pagos@ejemplo.test")
         hoy = app._ahora_madrid().strftime("%Y-%m-%d")
         dentro = app._ahora_madrid(ahora + 30 * DIA).strftime("%Y-%m-%d")
         # todos los anteriores quedan fuera de esta parte (dados de baja): solo cuentan los de aquí
@@ -235,7 +237,7 @@ def orden(alm, ok, post, ahora):
         rv = {}
         for nombre, hasta in (("vence_ok", hoy), ("vence_falla", hoy), ("normal", dentro)):
             correo = f"orden_{nombre}@ejemplo.test"
-            pid = alm.alta(correo, {"cpvs": ["90"], "provincias": ["murcia"]}, ahora=ahora - 10 * DIA)["perfil"]["id"]
+            pid = alta(alm, correo, {"cpvs": ["90"], "provincias": ["murcia"]}, ahora=ahora - 10 * DIA)["perfil"]["id"]
             alm.confirmar(pid, alm.firma("confirmar", pid, __import__("socios").huella(alm.a_confirmar(alm.perfil(pid)))),
                           ahora=ahora - 10 * DIA)
             post("/admin/socios-pagado", f"correo={correo}&accion=poner&hasta={hasta}", TOKEN)
@@ -272,6 +274,8 @@ def orden(alm, ok, post, ahora):
     finally:
         app._socios_enviar, app._socios_semanal_de = original_enviar, original_semanal
         app.FFORM.FORMA_PAGO = "[FORMA DE PAGO]"
+        for k in ("FORMA_PAGO", "FORMA_PAGO_INSTRUCCIONES"):
+            os.environ.pop(k, None)
 
 
 def main():
