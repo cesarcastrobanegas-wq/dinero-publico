@@ -261,6 +261,22 @@ _CAMPOS_COHESION = ("operation_unique_identifier,operation_name_english,operatio
 _LOTE_COHESION = 20000
 
 
+# 2026-11-05: desde el 21-10 la Comisión Europea bloquea por IP a GitHub Actions: su balanceador (cabecera
+# «Server: awselb/2.0») responde 403 a TODO kohesio.ec.europa.eu y linkedopendata.eu desde los servidores de Actions
+# (Azure), también a la portada y con cualquier User-Agent; desde el PC del titular responde 200 con las mismas
+# direcciones. No ha cambiado ni la dirección, ni el formato, ni la paginación, ni pide cabeceras. Un 403 así no se
+# arregla reintentando: se para a la primera y se explica (antes: 4 intentos y ~3 minutos de espera).
+COMANDO_PC = "python backend/subir_fondos_ue_pc.py"
+BLOQUEO_KOHESIO = ("Kohesio (Comisión Europea) bloquea a este servidor por su IP: HTTP 403 de su balanceador de AWS, "
+                   "también en la portada (pasa con GitHub Actions desde el 21-10). Desde el PC del titular sí "
+                   f"responde: {COMANDO_PC}")
+
+
+def bloqueo_por_ip(r):
+    """Cierto si la respuesta es el 403 del balanceador de la Comisión (bloqueo por IP, no un fallo pasajero)."""
+    return r.status_code == 403 and "awselb" in (r.headers.get("Server") or r.headers.get("server") or "").lower()
+
+
 def _pedir(sesion, url, intentos=4, **kw):
     for intento in range(1, intentos + 1):
         try:
@@ -268,6 +284,8 @@ def _pedir(sesion, url, intentos=4, **kw):
             if r.status_code == 200:
                 return r
             print(f"  HTTP {r.status_code} (intento {intento} de {intentos})", flush=True)
+            if bloqueo_por_ip(r):
+                raise SystemExit(f"ERROR: {BLOQUEO_KOHESIO if 'kohesio' in url else 'HTTP 403 del balanceador (bloqueo por IP)'}")
         except requests.RequestException as e:
             print(f"  {type(e).__name__} (intento {intento} de {intentos})", flush=True)
         time.sleep(20 * intento)
