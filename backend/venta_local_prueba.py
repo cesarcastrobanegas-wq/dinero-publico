@@ -12,6 +12,7 @@ import os
 import socket
 import sys
 import tempfile
+import time
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -56,6 +57,23 @@ def main():
     d = tempfile.mkdtemp(prefix="venta_local_")
     ruta_db = os.path.join(d, "copia.db")
     IP.base(ruta_db)
+    # contratos variados de otras empresas (para que «limpieza» sea una palabra que distingue una actividad)
+    import sqlite3
+    db = sqlite3.connect(ruta_db)
+    objetos = [("Suministro de ordenadores portátiles", "30213000"), ("Reparación de alumbrado público", "50232100"),
+               ("Actuación musical en las fiestas", "92312000"), ("Pavimentación de aceras", "45233222"),
+               ("Curso de formación de monitores", "80500000"), ("Transporte en autobús de escolares", "60130000"),
+               ("Seguro de responsabilidad civil", "66516000"), ("Impresión de carteles de las fiestas", "22462000"),
+               ("Poda de arbolado", "77211400"), ("Vigilancia de instalaciones deportivas", "79713000")]
+    for k in range(700):
+        obj, cpv = objetos[k % len(objetos)]
+        db.execute("INSERT INTO contratos_menors_locales (id, municipio, organisme, adjudicatari, import_num, "
+                   "data_adjudicacio, descripcio, codi_cpv, provincia, fuente, nif) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                   (f"v{k}", "villaprueba", "Ayuntamiento de Villaprueba", f"VARIADA {k % len(objetos)} SL",
+                    1000 + k, f"2025-{1 + k % 12:02d}-0{1 + k % 9}", obj, cpv, "murcia", "propia",
+                    f"B9{k % len(objetos):07d}"))
+    db.commit()
+    db.close()
     contratos = I.cargar_contratos(ruta_db, "murcia", "2024-01-01", "2026-10-10")
     ok(all("municipio" in r for r in contratos), "los contratos llevan su municipio")
     ahora = datetime(2026, 11, 4, 10, 0)
@@ -70,7 +88,11 @@ def main():
                 url="https://ejemplo.test/3", req={}, provincia="murcia", expediente="E-3"),
            dict(id="L4", titulo="Suministro de ordenadores", organo="Ayuntamiento de Villaprueba",
                 fin_plazo="2026-11-21 14:00", presupuesto="30000", cpvs=["30213000"], cpv="30213000", req={},
-                provincia="murcia", expediente="E-4")]
+                provincia="murcia", expediente="E-4"),
+           # de su sector por CPV (9092) pero sin nada que ver con lo que gana: no debe salir en su ficha
+           dict(id="L6", titulo="Desinsectación de buques y submarinos de la Armada", organo="Intendencia de Cartagena",
+                fin_plazo="2026-11-22 14:00", presupuesto="80000", cpvs=["90922000"], cpv="90922000", req={},
+                provincia="murcia", expediente="E-6")]
     # lista de clientes potenciales inventada: dos sociedades y una persona física (que no debe salir nunca)
     csv_ruta = os.path.join(d, "clientes.csv")
     with open(csv_ruta, "w", encoding="utf-8-sig", newline="") as f:
@@ -95,6 +117,15 @@ def main():
     e1 = el[0]
     ok([x["id"] for x in L.licitaciones_ficha(e1)][:1] == ["L1"], "en la ficha, primero la de un municipio donde gana")
     ok("L4" not in [x["id"] for x in e1["abiertas"]], "la de otro sector no entra en su ficha")
+    ok("L6" not in [x["id"] for x in e1["abiertas"]] and I.encaja(lic[4], {"Limpieza"}),
+       "la de su sector por CPV pero ajena a lo que gana (los «submarinos») no entra en su ficha")
+    ok(all(2 <= len(L.licitaciones_ficha(e, ahora=ahora)) <= 3 for e in el), "cada ficha lleva 2 o 3 licitaciones")
+    sin_bastantes = dict(el[0], abiertas=el[0]["abiertas"][:1])
+    ok(L.elegir([sin_bastantes], ahora=ahora) == [], "una empresa con menos de 2 licitaciones que le encajen no entra")
+    ok(L.raices("Iluminación de Navidad en la pedanía de Espinardo", frozenset()) >= {"NAVIDA"}
+       and "AUDITO" not in L.raices("Obras en el auditorio"), "raíces: «Navidad» cuenta, «auditorio» no es auditoría")
+    ok(L.nombre_informe_sector("Eventos, cultura y espectáculos") == "Sector - Eventos cultura y espectaculos.pdf",
+       "nombre del informe por sector, sin tildes ni comas")
     wb = openpyxl.load_workbook(os.path.join(salida, "Lista de llamadas.xlsx"))
     filas = list(wb["Llamadas"].iter_rows(values_only=True))
     cab = list(filas[0])
@@ -196,7 +227,7 @@ def main():
             ok(False, f"correo no válido rechazado ({malo!r})")
         except SystemExit:
             ok(True, f"correo no válido rechazado ({malo!r})")
-    rp, rt, nuevas, siguen = PG.resumen(carpeta, p, lic, ahora, contacto={"tel": "", "email": "x@ejemplo.test"})
+    rp, rt, nuevas, siguen = PG.resumen(carpeta, p, lic[:4], ahora, contacto={"tel": "", "email": "x@ejemplo.test"})
     ids = sorted(x["id"] for x in nuevas)
     ok(ids == ["L1", "L3"], f"su municipio + organismo regional, ni otro ayuntamiento ni otro sector ({ids})")
     txt = open(rt, encoding="utf-8").read()
@@ -204,12 +235,12 @@ def main():
        "texto para pegar en el correo")
     ok(os.path.exists(rp) and "Licitaciones de la semana" in texto_pdf(rp), "resumen en PDF")
     p = PG.leer_perfil(carpeta, "cliente@ejemplo.test")
-    rp2, rt2, nuevas2, siguen2 = PG.resumen(carpeta, p, lic + [dict(lic[0], id="L5", titulo="Limpieza de la piscina")],
+    rp2, rt2, nuevas2, siguen2 = PG.resumen(carpeta, p, lic[:4] + [dict(lic[0], id="L5", titulo="Limpieza de la piscina")],
                                             datetime(2026, 11, 11, 10, 0), contacto={})
     ok([x["id"] for x in nuevas2] == ["L5"] and sorted(x["id"] for x in siguen2) == ["L1", "L3"],
        "la semana siguiente: solo la nueva arriba, las demás en «siguen abiertas»")
     solo = PG.alta(carpeta, "otro@ejemplo.test", cpvs=["9091"], municipios=["Villaprueba"], solo_municipios=True)
-    _, _, n3, _ = PG.resumen(carpeta, solo, lic, ahora, contacto={}, marcar=False)
+    _, _, n3, _ = PG.resumen(carpeta, solo, lic[:4], ahora, contacto={}, marcar=False)
     ok([x["id"] for x in n3] == ["L1"], "por CPV y solo municipios: fuera el organismo regional")
     todos = [os.path.join(r, f) for r, _, fs in os.walk(d) for f in fs]
     fuera = [f for f in todos if "cliente@ejemplo.test".replace("@", "_").replace(".", "_") in f
@@ -222,6 +253,138 @@ def main():
     ok(not os.path.exists(PG.carpeta_cliente(carpeta, "cliente@ejemplo.test")), "baja: su carpeta, borrada")
     ok([c["correo"] for c in PG.clientes(carpeta)] == ["otro@ejemplo.test"], "el otro cliente sigue")
     ok("620" not in src, "ningún teléfono escrito en el código")
+
+    # caché de los ZIP: solo se relee un ZIP si cambia (o si cambia el lector)
+    lecturas = []
+    reales = I._leer_zip, I._huella_lector
+
+    def leer_falso(ruta):
+        lecturas.append(ruta)
+        return {"A": dict(id="A", actualizado="2026-11-01", estado="PUB", provincia="murcia", fin_plazo="2026-12-01 14:00",
+                          titulo="Limpieza", cpvs=["90911200"], cpv="90911200", req={"clas": ["U-1"]}),
+                "B": dict(id="B", actualizado="2026-11-01", estado="PUB", provincia="madrid", fin_plazo="2026-12-01 14:00"),
+                "C": dict(id="C", actualizado="2026-11-02", estado="BORRADA")}
+    I._leer_zip = leer_falso
+    try:
+        zp = os.path.join(d, "place", "place_202611.zip")
+        os.makedirs(os.path.dirname(zp))
+        with open(zp, "wb") as f:
+            f.write(b"zip de prueba")
+        sin = I.cargar_licitaciones([zp], "murcia", ahora, cache=False)
+        a1 = I.cargar_licitaciones([zp], "murcia", ahora)
+        a2 = I.cargar_licitaciones([zp], "murcia", ahora)
+        ok(len(lecturas) == 2 and a1 == a2 == sin and [x["id"] for x in a1] == ["A"],
+           "caché: la segunda vez no relee el ZIP y da lo mismo que sin caché")
+        ok(os.path.exists(os.path.join(d, "place", I.CACHE_LICITACIONES)), "la caché queda junto a los ZIP")
+        os.utime(zp, (time.time() + 60, time.time() + 60))
+        I.cargar_licitaciones([zp], "murcia", ahora)
+        ok(len(lecturas) == 3, "si el ZIP cambia (fecha o tamaño), se vuelve a leer")
+        I._huella_lector = lambda: "otro-lector"
+        I.cargar_licitaciones([zp], "murcia", ahora)
+        ok(len(lecturas) == 4, "si cambia el código que lee los ZIP, se vuelve a leer")
+        # un ZIP posterior con la misma licitación en otra provincia manda, igual que sin caché
+        zp2 = os.path.join(d, "place", "place_202612.zip")
+        with open(zp2, "wb") as f:
+            f.write(b"otro zip")
+        I._leer_zip = lambda r: ({"A": dict(id="A", actualizado="2026-11-05", estado="PUB", provincia="madrid")}
+                                 if r == zp2 else leer_falso(r))
+        ok(I.cargar_licitaciones([zp, zp2], "murcia", ahora) == I.cargar_licitaciones([zp, zp2], "murcia", ahora,
+                                                                                   cache=False) == [],
+           "caché: la versión más nueva manda aunque sea de otra provincia")
+    finally:
+        I._leer_zip, I._huella_lector = reales
+
+    # hoja para dejar en las visitas: una página, precios y contacto
+    import hoja_visita as H
+    hojas = H.generar_hojas(contratos, lic, d, "2024-10-10", "2026-10-10", ahora,
+                            {"tel": "600 000 000", "email": "contacto@ejemplo.test", "web": "ejemplo.test"},
+                            ["Limpieza", "Transporte"])
+    ruta_h = hojas[0][1]
+    th = texto_pdf(ruta_h)
+    ok(paginas(ruta_h) == 1 and hojas[0][2], "hoja de visita: una página y con ejemplo real")
+    ok(all(t in th for t in ("Licitaciones para tu empresa", "15 €", "150 €", "25 €", "250 €", "sin IVA",
+                             "primer mes, gratis", "600 000 000", "contacto@ejemplo.test")),
+       "hoja de visita: qué es, precios, IVA, mes gratis y contacto")
+    ok(("Limpieza de colegios" in th or "limpieza del polideportivo" in th) and "Armada" not in th
+       and "Servicio Murciano" not in th, "hoja de visita: el ejemplo es de un ayuntamiento y habla del sector")
+    ok(not hojas[1][2] and paginas(hojas[1][1]) == 1, "sector sin licitaciones abiertas: hoja sin ejemplo")
+    ok(H.PRECIOS == (("Semanal", H.PRECIOS[0][1], 15, 150), ("Diario", H.PRECIOS[1][1], 25, 250)),
+       "precios: 15/150 semanal y 25/250 diario")
+
+    # copia de la base: descarga reanudable, huella, sin tocar nada si algo va mal (servidor simulado, sin red)
+    import bajar_copia_base as B
+    import hashlib
+    import io
+    import urllib.error
+    bdir = os.path.join(d, "base")
+    os.makedirs(bdir)
+    with open(os.path.join(bdir, "cache_produccion.db"), "wb") as f:
+        f.write(b"vieja")
+    nueva_db = os.path.join(d, "servidor.db")
+    db = sqlite3.connect(nueva_db)
+    db.execute("CREATE TABLE municipios (municipio TEXT, provincia TEXT, data TEXT)")
+    db.execute("CREATE TABLE contratos_menors_locales (provincia TEXT)")
+    db.execute("INSERT INTO municipios VALUES ('x', 'murcia', '{}')")
+    db.execute("INSERT INTO contratos_menors_locales VALUES ('murcia')")
+    db.commit()
+    db.close()
+    datos = open(nueva_db, "rb").read()
+    sha = hashlib.sha256(datos).hexdigest()
+    pedidas = []
+
+    class Resp(io.BytesIO):
+        def __init__(self, cuerpo, status, cortar=False):
+            super().__init__(cuerpo)
+            self.status, self.cortar = status, cortar
+            self.headers = {"X-Cache-Db-Sha256": sha, "Content-Length": str(len(cuerpo))}
+
+        def read(self, n=-1):
+            if self.cortar and self.tell() >= len(self.getvalue()) // 2:
+                raise ConnectionResetError("corte simulado")
+            return super().read(min(n, 512) if n and n > 0 else n)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def urlopen_falso(req, timeout=None):
+        cab = {k.lower(): v for k, v in req.header_items()}
+        pedidas.append(cab)
+        if cab.get("x-admin-token") != "buen-token":
+            raise urllib.error.HTTPError(req.full_url, 403, "No autorizado", {}, None)
+        if "range" in cab:
+            ini = int(cab["range"][6:-1])
+            return Resp(datos[ini:], 206)
+        return Resp(datos, 200, cortar=len(pedidas) == 1)      # la primera descarga se corta a medias
+    real_urlopen, real_sleep = B.urllib.request.urlopen, B.time.sleep
+    B.urllib.request.urlopen, B.time.sleep = urlopen_falso, lambda s: None
+    try:
+        try:
+            B.main(["--base", bdir, "--token", "token-malo"])
+            ok(False, "token malo: se para")
+        except SystemExit as ex:
+            ok("403" in str(ex) and open(os.path.join(bdir, "cache_produccion.db"), "rb").read() == b"vieja",
+               "token malo: se para sin tocar la copia que había")
+        pedidas.clear()
+        B.main(["--base", bdir, "--token", "buen-token"])
+        ok(any("range" in p for p in pedidas), "corte a medias: reanuda donde se quedó (Range)")
+        ok(open(os.path.join(bdir, "cache_produccion.db"), "rb").read() == datos,
+           "copia nueva en su sitio y con la huella del servidor")
+        viejas = [x for x in os.listdir(bdir) if x.startswith("cache_produccion_") and x.endswith(".db")]
+        ok(len(viejas) == 1 and open(os.path.join(bdir, viejas[0]), "rb").read() == b"vieja",
+           "la copia anterior se guarda con su fecha, no se borra")
+        ok(not [x for x in os.listdir(bdir) if x.endswith((".part", ".sha256"))], "no quedan restos de la descarga")
+        try:
+            B.main(["--base", bdir, "--token", "TU_TOKEN_AQUI"])
+            ok(False, "TU_TOKEN_AQUI sin cambiar: se para")
+        except SystemExit:
+            ok(True, "TU_TOKEN_AQUI sin cambiar: se para sin conectarse")
+    finally:
+        B.urllib.request.urlopen, B.time.sleep = real_urlopen, real_sleep
+    src2 = "".join(open(m.__file__, encoding="utf-8").read() for m in (H, B))
+    ok("620" not in src2 and "buen-token" not in src2, "ni teléfono ni token escritos en el código nuevo")
     print(f"\n{'TODO BIEN' if not FALLOS else str(len(FALLOS)) + ' FALLOS'} (ficheros en {d})")
     sys.exit(1 if FALLOS else 0)
 

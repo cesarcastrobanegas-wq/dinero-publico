@@ -278,21 +278,83 @@ def cargar_contratos(db, provincia, desde, hasta):
     return unicos
 
 
-def cargar_licitaciones(zips, provincia, ahora):
-    """Licitaciones de PLACE en plazo (estado PUB, fin de plazo posterior a `ahora`) de la provincia."""
+CACHE_LICITACIONES = "cache_licitaciones.sqlite"     # junto a los ZIP; se puede borrar sin perder nada
+
+
+def _leer_zip(ruta):
+    """{id: última versión} de un ZIP de PLACE (todas las provincias; las borradas como BORRADA)."""
+    ultimas = {}
+    with zipfile.ZipFile(ruta) as z:
+        for nombre in sorted(x for x in z.namelist() if x.endswith(".atom")):
+            raw = z.read(nombre)
+            for e in LIC.entradas(raw):
+                r = LIC.analizar_entrada(e)
+                if r and (r["id"] not in ultimas or r["actualizado"] >= ultimas[r["id"]]["actualizado"]):
+                    ultimas[r["id"]] = r
+            for ref, cuando in LIC.borradas(raw):
+                if ref not in ultimas or cuando >= ultimas[ref]["actualizado"]:
+                    ultimas[ref] = {"id": ref, "actualizado": cuando, "estado": "BORRADA"}
+            del raw
+    return ultimas
+
+
+def _huella_lector():
+    """Cambia si cambia el código que interpreta los ZIP: entonces la caché se rehace sola."""
+    import hashlib
+    with open(LIC.__file__, "rb") as f:
+        return hashlib.sha1(f.read()).hexdigest()[:12]
+
+
+def _zip_con_cache(ruta, provincia, cache):
+    """Lo mismo que _leer_zip, pero guardado en `cache` (SQLite local). Solo se vuelve a leer el ZIP si ha cambiado
+    (nombre, tamaño o fecha de modificación) o si ha cambiado el lector. De las demás provincias guarda solo id y
+    fecha (para que una versión posterior en otra provincia siga mandando, igual que sin caché)."""
+    st = os.stat(ruta)
+    firma = (st.st_size, st.st_mtime_ns, _huella_lector())
+    con = sqlite3.connect(cache, timeout=60)
+    try:
+        con.execute("CREATE TABLE IF NOT EXISTS zips (zip TEXT, provincia TEXT, tam INTEGER, mtime INTEGER, "
+                    "lector TEXT, creada TEXT, PRIMARY KEY (zip, provincia))")
+        con.execute("CREATE TABLE IF NOT EXISTS regs (zip TEXT, provincia TEXT, id TEXT, actualizado TEXT, datos TEXT)")
+        con.execute("CREATE INDEX IF NOT EXISTS regs_zip ON regs (zip, provincia)")
+        clave = (os.path.basename(ruta), provincia)
+        fila = con.execute("SELECT tam, mtime, lector FROM zips WHERE zip=? AND provincia=?", clave).fetchone()
+        if fila and tuple(fila) == firma:
+            ultimas = {}
+            for i, act, datos in con.execute("SELECT id, actualizado, datos FROM regs WHERE zip=? AND provincia=?",
+                                             clave):
+                ultimas[i] = json.loads(datos) if datos else {"id": i, "actualizado": act, "estado": "OTRA_PROVINCIA"}
+            return ultimas
+        ultimas = _leer_zip(ruta)
+        with con:
+            con.execute("DELETE FROM regs WHERE zip=? AND provincia=?", clave)
+            con.execute("DELETE FROM zips WHERE zip=? AND provincia=?", clave)
+            con.executemany("INSERT INTO regs VALUES (?,?,?,?,?)", (
+                clave + (r["id"], r.get("actualizado") or "",
+                         json.dumps(r, ensure_ascii=False) if r.get("provincia") == provincia
+                         or r.get("estado") == "BORRADA" else None) for r in ultimas.values()))
+            con.execute("INSERT INTO zips VALUES (?,?,?,?,?,?)",
+                        clave + firma + (datetime.now().isoformat(timespec="seconds"),))
+        return ultimas
+    finally:
+        con.close()
+
+
+def cargar_licitaciones(zips, provincia, ahora, cache=True):
+    """Licitaciones de PLACE en plazo (estado PUB, fin de plazo posterior a `ahora`) de la provincia.
+    cache=True: lo leído de cada ZIP se guarda en «cache_licitaciones.sqlite» junto al ZIP y solo se relee el ZIP si
+    cambia (de ~2-4 min a segundos). cache=False: sin caché. También vale la ruta de un .sqlite."""
     ultimas = {}
     for ruta in zips:
-        with zipfile.ZipFile(ruta) as z:
-            for nombre in sorted(x for x in z.namelist() if x.endswith(".atom")):
-                raw = z.read(nombre)
-                for e in LIC.entradas(raw):
-                    r = LIC.analizar_entrada(e)
-                    if r and (r["id"] not in ultimas or r["actualizado"] >= ultimas[r["id"]]["actualizado"]):
-                        ultimas[r["id"]] = r
-                for ref, cuando in LIC.borradas(raw):
-                    if ref not in ultimas or cuando >= ultimas[ref]["actualizado"]:
-                        ultimas[ref] = {"id": ref, "actualizado": cuando, "estado": "BORRADA"}
-                del raw
+        if cache:
+            c = cache if isinstance(cache, str) else os.path.join(os.path.dirname(os.path.abspath(ruta)),
+                                                                   CACHE_LICITACIONES)
+            del_zip = _zip_con_cache(ruta, provincia, c)
+        else:
+            del_zip = _leer_zip(ruta)
+        for i, r in del_zip.items():
+            if i not in ultimas or r["actualizado"] >= ultimas[i]["actualizado"]:
+                ultimas[i] = r
     corte = ahora.strftime("%Y-%m-%d %H:%M")
     return [r for r in ultimas.values() if r.get("estado") in LIC.ESTADOS_ABIERTOS and r.get("provincia") == provincia
             and (r.get("fin_plazo") or "") >= corte]

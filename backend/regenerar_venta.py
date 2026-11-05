@@ -4,8 +4,11 @@ Regenera de una vez el material para salir a llamar o a visitar (HERRAMIENTA LOC
 
   1. baja de PLACE el ZIP del mes en curso (y el del mes anterior si no está ya), en <base>/llamadas/place;
   2. los 3 informes de muestra en <base>/informes_muestra (mismos nombres de siempre: se sobrescriben);
-  3. la lista de llamadas (.xlsx y .pdf) y las fichas de llamada en <base>/llamadas;
-  4. con --resumenes, además, el resumen semanal de cada cliente en prueba de <base>/clientes en prueba.
+  3. la lista de llamadas (.xlsx y .pdf), las fichas de llamada y el seguimiento en <base>/llamadas;
+  4. un informe de muestra por cada sector de la lista en <base>/informes_muestra/por sector;
+  5. la hoja para dejar en las visitas de cada sector en <base>/hojas para visitas;
+  6. con --resumenes, además, el resumen semanal de cada cliente en prueba de <base>/clientes en prueba.
+Lo leído de los ZIP se guarda en <base>/llamadas/place/cache_licitaciones.sqlite: solo se relee un ZIP si cambia.
 
 <base> es la carpeta de trabajo del titular (fuera del repositorio): ahí están la copia de la base
 (cache_produccion.db), la lista de clientes potenciales y el Excel de contactos. Todo se lee una vez y se reutiliza.
@@ -43,6 +46,15 @@ def _mes(d, menos=0):
     return f"{a}{m:02d}"
 
 
+def _huella(ruta):
+    import hashlib
+    h = hashlib.sha256()
+    with open(ruta, "rb") as f:
+        for trozo in iter(lambda: f.read(1 << 20), b""):
+            h.update(trozo)
+    return os.path.getsize(ruta), h.hexdigest()
+
+
 def bajar(url, destino, intentos=3):
     tmp = destino + ".part"
     for i in range(1, intentos + 1):
@@ -54,7 +66,11 @@ def bajar(url, destino, intentos=3):
                     if not trozo:
                         break
                     f.write(trozo)
-            os.replace(tmp, destino)
+            if os.path.exists(destino) and _huella(destino) == _huella(tmp):
+                os.remove(tmp)      # igual que el que ya había: se deja el viejo (y su caché sigue valiendo)
+                print("  (sin cambios desde la última descarga)", flush=True)
+            else:
+                os.replace(tmp, destino)
             return
         except OSError as ex:
             print(f"  intento {i} fallido: {ex}", flush=True)
@@ -114,11 +130,40 @@ def main(argv=None):
         pags, _ = I.informe_pdf(os.path.join(carpeta_muestras, nombre), A, "murcia", desde_muestras, hasta, ahora,
                                 contacto=contacto)
         print(f"Muestra: {nombre} ({pags} páginas, {len(A['abiertas'])} licitaciones abiertas)", flush=True)
+    t2 = time.time()
     salida = os.path.join(base, "llamadas")
     el = L.generar(contratos, lic, os.path.join(base, CLIENTES_CSV), salida, hasta, ahora,
                    os.path.join(base, CONTACTOS_XLSX), a.n, L.DESDE_POR_DEFECTO, a.contacto_tel)
     print(f"Lista y fichas: {len(el)} empresas ({sum(1 for e in el if e['abiertas'])} con licitaciones abiertas) "
-          f"en {salida}", flush=True)
+          f"en {salida} ({(time.time() - t2) / 60:.1f} min)", flush=True)
+    # un informe de muestra por cada sector de la lista (para llevar a cada llamada el suyo)
+    t3 = time.time()
+    por_sector = os.path.join(carpeta_muestras, "por sector")
+    os.makedirs(por_sector, exist_ok=True)
+    sectores_lista = list(dict.fromkeys(e["sector"] for e in el))
+    hechos = set()
+    for s in sectores_lista:
+        nombre = L.nombre_informe_sector(s)
+        A = I.analizar(dos_anios, lic, sector=s)
+        pags, _ = I.informe_pdf(os.path.join(por_sector, nombre), A, "murcia", desde_muestras, hasta, ahora,
+                                contacto=contacto)
+        hechos.add(nombre)
+        print(f"Sector: {nombre} ({pags} páginas, {len(A['abiertas'])} licitaciones abiertas)", flush=True)
+    for viejo in os.listdir(por_sector):      # los de sectores que ya no están en la lista
+        if viejo.startswith("Sector - ") and viejo.endswith(".pdf") and viejo not in hechos:
+            try:
+                os.remove(os.path.join(por_sector, viejo))
+            except OSError:
+                print(f"  (no he podido quitar {viejo}: ¿está abierto?)", flush=True)
+    print(f"  {len(hechos)} informes por sector en {(time.time() - t3) / 60:.1f} min", flush=True)
+    # hoja para dejar en las visitas: una por sector (todos los sectores)
+    t4 = time.time()
+    import hoja_visita as H
+    hojas = H.generar_hojas(dos_anios, lic, base, desde_muestras, hasta, ahora, contacto, I.NOMBRES_SECTOR)
+    sin = [s for s, _, ej in hojas if not ej]
+    print(f"Hojas para visitas: {len(hojas)} en {os.path.join(base, H.CARPETA_HOJAS)}"
+          + (f" ({len(sin)} sin ejemplo hoy: {', '.join(sin)})" if sin else "")
+          + f" ({(time.time() - t4) / 60:.1f} min)", flush=True)
     if a.resumenes:
         import prueba_gratis as PG
         carpeta = os.path.join(base, "clientes en prueba")

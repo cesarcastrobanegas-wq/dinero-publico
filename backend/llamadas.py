@@ -27,6 +27,7 @@ Uso: python backend/llamadas.py --db COPIA.db --zip place_AAAAMM.zip [--zip ...]
 import argparse
 import collections
 import csv
+import math
 import os
 import re
 import sys
@@ -98,8 +99,101 @@ def _municipio(r):
     return " ".join(w.lower() if i and w in menores else w for i, w in enumerate(palabras))
 
 
+# ───────────── qué licitaciones le encajan DE VERDAD a una empresa (por las palabras de lo que ya gana) ─────────────
+# El sector (por CPV) es demasiado amplio: «Mantenimiento e instalaciones» incluye el mantenimiento de alternadores de
+# submarinos. Una licitación entra en la ficha si (a) es de su sector o lleva un CPV que la empresa ya gana y (b)
+# comparte con lo que la empresa ya ha ganado alguna palabra DISTINTIVA (no genérica, poco frecuente en el conjunto de
+# contratos, y en al menos el 4 % de los suyos). Fuera de su sector hacen falta dos palabras así.
+MIN_ABIERTAS_FICHA = 2          # en la lista solo entran empresas con al menos 2 licitaciones que le encajen
+_GENERICAS = set("""
+MANTEN REPARA INSTAL CONSER ACTIVI PROGRA DESARR ADQUIS SISTEM MEJORA ADECUA EJECUC OBRAS OBRA PROYEC GESTIO ASISTE
+TECNIC CONTRO CENTRO ZONA PLAN MATERI EQUIPO EQUIPA MUNICI PUESTA MARCHA ORGANI PROMOC COORDI SERVIC DESTIN LOCAL
+PUBLIC ESPECI COMPRA AREA ACTUAC ALQUIL ARREND REGIME MONTAJ DESMON AUTORI INTERN EXTERN PERSON CONSIS DEPEND ATENCI
+POLICI CONCEJ DIVERS VARIAS VARIOS NUEVO NUEVA NUEVOS NUEVAS INTEGR ESPACI EDIFIC REALIZ APOYO TRABAJ ELABOR SUMINI
+CONTRA UNIDAD DEFINI ACONDI COLOCA CREACI RENOVA REPOSI SUSTIT AMPLIA PRIVAD GENERA PROCED IMPLAN DOTACI MODIFI
+EXPLOT CONCES UTILIZ PRESTA DIRECC DOMINI SEGUIM SUPERV ANALIS ESTUDI ADMINI MEDIOS RECURS PROTEC ESPANA ACUERD MARCO
+TIPO TIPOS DIFERE DISTIN NECESI COMPLE FINAL INICIO PRIMER SEGUND TERCER CUATRO MESES ANUAL PERIOD TEMPOR CAMPAN
+JORNAD VISITA DENTRO INCLUI INCLUY NUMERO BASE LOCALI DEPOSI CALLES PLAZAS AVDA CARRET TRAMO MOTIVO OBJETO REFERE
+SERVIC SERVIR LUGAR LUGARES PRUEBA INCORP CONDIC
+JUAN JOSE MARIA SANTA SANTIA MAYOR ANTONI FRANCI PEDRO MANUEL CRUZ VIRGEN NUESTR SENORA RAMONE CARMEN DOLORE ISABEL
+ALFONS FERNAN GARCIA MARTIN LOPEZ SANCHE PEREZ GOMEZ JESUS MIGUEL CARLOS LUIS ANGEL RAFAEL TOMAS VICENT JOAQUI
+""".split())
+_STOP = set("""
+SERVICIO SERVICIOS SUMINISTRO SUMINISTROS CONTRATO CONTRATOS CONTRATACION MENOR MUNICIPAL MUNICIPALES AYUNTAMIENTO
+REGION MURCIA PARA DESDE HASTA ENTRE SOBRE CADA ESTE ESTA ESTOS ESTAS OTROS OTRAS DICHO MEDIANTE CONTRA SEGUN DURANTE
+EXPEDIENTE EXPTE LOTE LOTES PRESTACION OBJETO TRAVES ANUALIDAD EJERCICIO CALLE AVENIDA PLAZA BARRIO PEDANIA TERMINO
+NECESARIO NECESARIOS NECESARIA GENERAL ENERO FEBRERO MARZO ABRIL MAYO JUNIO JULIO AGOSTO SEPTIEMBRE OCTUBRE NOVIEMBRE
+DICIEMBRE
+""".split())
+_SIN_LUGAR = {"MAR", "MENOR", "CAMPO", "TORRE", "FUENTE", "PUERTO", "SANTA", "SAN"}
+# Palabras que casi siempre van con mayúscula en medio de la frase son nombres propios (pedanías como «Espinardo» o
+# «Paso Blanco», personas, marcas): no dicen nada de la actividad. Salvo estas fiestas, que sí la dicen.
+_PROPIAS_QUE_CUENTAN = {"NAVIDA", "CARNAV", "REYES", "FERIA", "FERIAS", "SEMANA", "FESTIV", "CABALG"}
+MIN_PARTE, MIN_PARTE_SOLA, MIN_IDF, MIN_PUNTOS = 0.04, 0.08, 2.5, 0.3
+
+
+def raices(texto, lugares=frozenset()):
+    """Raíces (6 letras) de las palabras con contenido de un texto: sin palabras vacías, nombres de lugar ni códigos."""
+    t = re.sub(r"\bAUDITORIOS?\b", "XAUDITORIO", I.norm(texto))       # «auditorio» no es «auditoría»
+    t = re.sub(r"\b(ELECTRONIC|INFORMACION)", r"X\1", t)              # ni «electrónica» es «eléctrica»...
+    return {w[:6] for w in t.split() if len(w) >= 4 and w not in _STOP and w not in lugares
+            and not re.fullmatch(r"[A-Z]*\d+[A-Z\d]*", w)} - _GENERICAS
+
+
+class Vocabulario:
+    """Frecuencia de cada raíz en el conjunto de contratos (para saber qué palabras distinguen una actividad)."""
+
+    def __init__(self, contratos):
+        self.lugares = frozenset(t for r in contratos for t in I.norm(r.get("municipio") or "").split()) - _SIN_LUGAR
+        df = collections.Counter()
+        veces, mayus = collections.Counter(), collections.Counter()
+        for r in contratos:
+            df.update(raices(r["texto"], self.lugares))
+            t = r["texto"] or ""
+            if t.upper() != t:                     # en textos todo en mayúsculas no se puede saber
+                for w in re.findall(r"[^\W\d_]+", t)[1:]:
+                    if len(w) >= 4:
+                        s = I.norm(w)[:6]
+                        veces[s] += 1
+                        mayus[s] += w[0].isupper()
+        n = max(len(contratos), 1)
+        self.idf = {k: math.log(n / v) for k, v in df.items()}
+        self.propias = {s for s, v in veces.items() if v >= 3 and mayus[s] / v >= 0.6} - _PROPIAS_QUE_CUENTAN
+
+    def perfil(self, propios):
+        """(raíces de lo que gana, nº de contratos, divisiones CPV que gana, grupos CPV de 3 cifras que gana o None
+        si casi no hay CPV) de una empresa."""
+        cuenta = collections.Counter()
+        for r in propios:
+            cuenta.update(raices(r["texto"], self.lugares))
+        con_cpv = [r["cpv"] for r in propios if len(r.get("cpv") or "") >= 3]
+        cpv2 = collections.Counter(c[:2] for c in con_cpv)
+        total = sum(cpv2.values())
+        return (cuenta, max(len(propios), 1), {k for k, v in cpv2.items() if v >= 2 and v >= 0.1 * total},
+                {c[:3] for c in con_cpv} if len(con_cpv) >= 3 else None)
+
+    def puntos(self, lic, perfil, de_su_sector):
+        """0 si no le encaja; si no, cuánto (suma de las palabras distintivas que comparte, ponderadas).
+        De su sector principal basta una palabra si el grupo CPV de la licitación es uno que ya gana (o si de la
+        empresa casi no hay CPV); si no, hacen falta dos. Fuera de su sector, dos y una división CPV que ya gane."""
+        cuenta, n, cpv_ok, cpv3 = perfil
+        principal = re.sub(r"\D", "", lic.get("cpv") or "")
+        if not de_su_sector and principal[:2] not in cpv_ok:
+            return 0.0
+        comunes = [s for s in raices(lic.get("titulo") or "", self.lugares)
+                   if cuenta[s] >= 2 and self.idf.get(s, 0) >= MIN_IDF and s not in self.propias]
+        basta_una = de_su_sector and (cpv3 is None or principal[:3] in cpv3)
+        if not any(cuenta[s] / n >= MIN_PARTE for s in comunes) or len(comunes) < (1 if basta_una else 2):
+            return 0.0
+        if len(comunes) == 1 and cuenta[comunes[0]] / n < MIN_PARTE_SOLA:
+            return 0.0                             # con una sola palabra, tiene que ser muy suya
+        p = sum(cuenta[s] / n * self.idf[s] for s in comunes)
+        return round(p, 3) if p >= MIN_PUNTOS else 0.0
+
+
 def candidatos(contratos, licitaciones, clientes, hasta):
     """Una entrada por sociedad de la lista de clientes con contratos en el periodo, con su puntuación."""
+    voc = Vocabulario(contratos)
     # peso de cada sector en los contratos menores de los ayuntamientos
     menores_muni = collections.Counter(r["sector"] for r in contratos if r["tipo"] == "menor"
                                        and r["organismo"].lower().startswith("ayuntamiento") and r["sector"] != "Otros")
@@ -122,11 +216,19 @@ def candidatos(contratos, licitaciones, clientes, hasta):
         sector = A["sectores"][0]
         anio = [r for r in propios if r["fecha"] >= hace_un_anio]
         munis = collections.Counter(_municipio(r) for r in propios)
+        perfil = voc.perfil(propios)
+        de_sector = {x["id"] for x in licitaciones if I.encaja(x, {sector}, A["prefijos_propios"])}   # el principal
+        puntos = {}
+        for x in licitaciones:
+            p = voc.puntos(x, perfil, x["id"] in de_sector)
+            if p:
+                puntos[x["id"]] = p
+        abiertas = sorted((x for x in licitaciones if x["id"] in puntos), key=lambda x: -puntos[x["id"]])
         e = dict(nif=nif, nombre=nombre, sector=sector, sectores=A["sectores"], fila=fila,
                  n=len(propios), importe=sum(r["importe"] for r in propios),
                  n_menores=sum(1 for r in propios if r["tipo"] == "menor"),
                  n_anio=len(anio), importe_anio=sum(r["importe"] for r in anio),
-                 municipios=munis, abiertas=A["abiertas"], ultimo=max(r["fecha"] for r in propios),
+                 municipios=munis, abiertas=abiertas, puntos_lic=puntos, ultimo=max(r["fecha"] for r in propios),
                  peso_sector=menores_muni.get(sector, 0) / tope_sector)
         res.append(e)
     if not res:
@@ -146,10 +248,13 @@ def candidatos(contratos, licitaciones, clientes, hasta):
     return sorted(res, key=lambda e: (-e["puntos"], -e["importe"]))
 
 
-def elegir(cands, n=30, max_por_sector=MAX_POR_SECTOR):
+def elegir(cands, n=30, max_por_sector=MAX_POR_SECTOR, min_abiertas=MIN_ABIERTAS_FICHA, ahora=None):
+    """Las n primeras, con como mucho max_por_sector por sector y solo las que tengan al menos min_abiertas
+    licitaciones abiertas que les encajen y con margen de plazo (para que la ficha tenga 2 o 3)."""
     elegidas, por_sector = [], collections.Counter()
     for e in cands:
-        if por_sector[e["sector"]] >= max_por_sector:
+        if por_sector[e["sector"]] >= max_por_sector or len(licitaciones_ficha(e, ahora=ahora,
+                                                                                solo_con_margen=True)) < min_abiertas:
             continue
         elegidas.append(e)
         por_sector[e["sector"]] += 1
@@ -161,17 +266,20 @@ def elegir(cands, n=30, max_por_sector=MAX_POR_SECTOR):
 MARGEN_DIAS = 3      # en la ficha, solo licitaciones a las que aún le da tiempo a presentarse
 
 
-def licitaciones_ficha(e, k=3, ahora=None, margen_dias=MARGEN_DIAS):
-    """Las 2-3 licitaciones abiertas que mejor le van: con al menos `margen_dias` de plazo, primero las de los
-    municipios donde ya gana y luego por plazo. Si ninguna tiene margen, las que haya."""
+def licitaciones_ficha(e, k=3, ahora=None, margen_dias=MARGEN_DIAS, solo_con_margen=False):
+    """Las 2-3 licitaciones abiertas que mejor le van (de las que le encajan por su actividad): con al menos
+    `margen_dias` de plazo, primero las de los municipios donde ya gana y luego por cuánto le encajan. Si ninguna
+    tiene margen, las que haya."""
     munis = {I.norm(m) for m in e["municipios"]}
     corte = ((ahora or datetime.now()) + timedelta(days=margen_dias)).strftime("%Y-%m-%d %H:%M")
     con_margen = [x for x in e["abiertas"] if (x.get("fin_plazo") or "") >= corte]
+    puntos = e.get("puntos_lic") or {}
 
     def suya(lic):
         o = I.norm(lic.get("organo") or "")
         return any(m and m in o for m in munis)
-    return sorted(con_margen or e["abiertas"], key=lambda x: (not suya(x), x.get("fin_plazo") or ""))[:k]
+    return sorted(con_margen if con_margen or solo_con_margen else e["abiertas"],
+                  key=lambda x: (not suya(x), -puntos.get(x["id"], 1), x.get("fin_plazo") or ""))[:k]
 
 
 def plazo_txt(lic, ahora):
@@ -273,6 +381,11 @@ def _estilos():
     if os.path.exists(os.path.join(d, "arial.ttf")) and os.path.exists(os.path.join(d, "arialbd.ttf")):
         pdfmetrics.registerFont(TTFont("Arial", os.path.join(d, "arial.ttf")))
         pdfmetrics.registerFont(TTFont("Arial-Bold", os.path.join(d, "arialbd.ttf")))
+        from reportlab.lib.fonts import addMapping       # para que <b> salga en negrita también con Arial
+        addMapping("Arial", 0, 0, "Arial")
+        addMapping("Arial", 1, 0, "Arial-Bold")
+        addMapping("Arial", 0, 1, "Arial")
+        addMapping("Arial", 1, 1, "Arial-Bold")
         fuente, negrita = "Arial", "Arial-Bold"
     gris = colors.Color(.35, .35, .35)
     return {
@@ -328,6 +441,21 @@ def escribir_pdf_lista(ruta, elegidas, contactos, desde, hasta, ahora, seg=None)
     doc.build(historia)
 
 
+def _para_fichero(t):
+    t = unicodedata.normalize("NFKD", t)
+    return re.sub(r"[^\w .-]+", "", "".join(ch for ch in t if not unicodedata.combining(ch))).strip()
+
+
+def nombre_informe_sector(sector):
+    """Nombre del informe de muestra de un sector (en informes_muestra\\por sector)."""
+    return f"Sector - {_para_fichero(sector)}.pdf"
+
+
+def nombre_hoja_visita(sector):
+    """Nombre de la hoja para dejar en las visitas de un sector (en DINERO PUBLICO\\hojas para visitas)."""
+    return f"Hoja - {_para_fichero(sector)}.pdf"
+
+
 def escribir_pdf_fichas(ruta, elegidas, contactos, desde, hasta, ahora, contacto_tel=""):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import cm
@@ -361,7 +489,8 @@ def escribir_pdf_fichas(ruta, elegidas, contactos, desde, hasta, ahora, contacto
         lics = licitaciones_ficha(e, ahora=ahora)
         if lics:
             partes.append(P(f"<b>{'Licitaciones abiertas ahora' if len(lics) > 1 else 'Licitación abierta ahora'} "
-                            f"que podría pedir</b> ({len(e['abiertas'])} en total en su sector en la Región):"))
+                            f"que podría pedir</b> ({len(e['abiertas'])} en la Región que le encajan por lo que ya "
+                            f"gana):"))
             for x in lics:
                 imp = I._f(x.get("presupuesto"))
                 partes.append(Paragraph(
@@ -375,6 +504,8 @@ def escribir_pdf_fichas(ruta, elegidas, contactos, desde, hasta, ahora, contacto
         partes.append(P(E("Qué ofrecer: un mes gratis, cada lunes, las licitaciones abiertas de su sector en sus "
                           "municipios. Apuntar su correo y el sector."
                           + (f" Mi teléfono: {contacto_tel}." if contacto_tel else "")), "pc"))
+        partes.append(P(E(f"Para llevar: informe «{nombre_informe_sector(e['sector'])}» y hoja «"
+                          f"{nombre_hoja_visita(e['sector'])}»."), "pc"))
         caja = Table([[KeepInFrame(ancho - 0.6 * cm, alto_ficha - 0.6 * cm, partes, mode="shrink")]],
                      colWidths=[ancho], rowHeights=[alto_ficha])
         caja.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 0.75, colors.black), ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -552,7 +683,7 @@ def generar(contratos, licitaciones, clientes_csv, salida, hasta, ahora, contact
     clientes = {k: v for k, v in leer_clientes(clientes_csv).items() if not claves(k, v.get("nombre")) & fuera}
     contactos = leer_contactos(contactos_xlsx)
     cands = [c for c in candidatos(contratos, licitaciones, clientes, hasta) if not claves(c["nif"], c["nombre"]) & fuera]
-    elegidas = elegir(cands, n)
+    elegidas = elegir(cands, n, ahora=ahora)
     os.makedirs(salida, exist_ok=True)
     lista_xlsx = os.path.join(salida, "Lista de llamadas.xlsx")
     seg = actualizar_seguimiento(os.path.join(salida, SEGUIMIENTO_XLSX), elegidas, contactos,

@@ -10,7 +10,8 @@ resúmenes de cada semana. Para borrar a un cliente basta con «baja» (borra su
 
   alta     --correo X (--sector S | --cpv 9091 ...) [--municipio M ...] [--nombre EMPRESA] [--solo-municipios]
            [--dias 30]
-  resumen  (--correo X | --todos) --zip place_AAAAMM.zip [--zip ...]
+  resumen  (--correo X | --todos) [--zip place_AAAAMM.zip ...]   (sin --zip: los dos últimos de ../llamadas/place;
+           lo leído de cada ZIP se guarda en cache_licitaciones.sqlite junto a ellos: segundos en vez de minutos)
   lista
   baja     --correo X
 
@@ -262,8 +263,12 @@ def main(argv=None):
             print(f"{p['correo']} · {que} · {zona} · alta {p['alta']} · fin {p['fin_prueba']} · "
                   f"último resumen {p.get('ultimo_resumen', '-')}")
     else:
+        if not a.zip:    # por defecto, los dos últimos ZIP que haya en <carpeta>/../llamadas/place
+            import glob
+            place = os.path.join(os.path.dirname(os.path.abspath(a.carpeta)), "llamadas", "place")
+            a.zip = sorted(glob.glob(os.path.join(place, "place_*.zip")))[-2:]
         if not a.zip:
-            ap.error("resumen necesita al menos un --zip de PLACE")
+            ap.error("resumen necesita al menos un --zip de PLACE (o los ZIP en ...\\llamadas\\place)")
         objetivo = clientes(a.carpeta) if a.todos else [leer_perfil(a.carpeta, a.correo or "")]
         ahora = datetime.now()
         lic = I.cargar_licitaciones(a.zip, "murcia", ahora)
