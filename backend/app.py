@@ -1544,7 +1544,7 @@ MUNICIPIOS_MADRID = [
 # CERO riesgo de colisión de nombre, no hace falta ningún patrón anclado.
 # Lista completa verificada en vivo: 252 entradas cuyo nombre empieza por
 # "Ayuntamiento de" -- consistente con el número oficial de 251 municipios
-# vascos MENOS una: "ANOETA" (id 311, NIF 44158757E -- formato de DNI/NIE
+# vascos MENOS una: "ANOETA" (id 311, con un NIF en formato de DNI/NIE
 # de persona física, no de entidad) resultó ser un registro duplicado
 # defectuoso en el propio directorio de Euskadi de la "Ayuntamiento de
 # Anoeta" real (id 612, NIF P2001100C -- formato oficial "P"+código INE+
@@ -11660,10 +11660,10 @@ def _variantes_nombre_para_detector(nombre):
 
     Dos patrones de inversión medidos en producción (2026-08-03), cada uno en
     una fuente de contratos menores distinta:
-    - Girona (RPC): 'Apellidos, Nombre' CON coma (p.ej. 'VIAL TAULERA, MIREIA').
+    - Girona (RPC): 'Apellidos, Nombre' CON coma (p.ej. 'APELLIDO1 APELLIDO2, NOMBRE').
     - Molina de Segura (Murcia): 'Apellidos Nombre' SIN coma (p.ej.
-      'GALERA FERNANDEZ NOE', confirmado cruzando contra el objeto del
-      contrato que sí menciona 'D. Noé Galera Fernández' en orden correcto).
+      'APELLIDO1 APELLIDO2 NOMBRE', confirmado cruzando contra el objeto del
+      contrato que sí menciona 'D. Nombre Apellido1 Apellido2' en orden correcto).
 
     El índice de cargos públicos (ALCALDES_CONCEJALES) espera 'Nombre
     Apellido1 Apellido2', con coincidencia EXACTA de cadena -- ver
@@ -14459,9 +14459,9 @@ _CARGO_RE = re.compile(
     # caía al fallback genérico _extraer_directivo en vez de acertar con
     # _BORME_NOM_RE), "solidario"/"mancomunado" se colara como primera
     # palabra del nombre capturado en vez de quedarse en el cargo -- visto en
-    # producción 2026-08-26: "MUÑOZ MIQUEL, MIREIA" resolvió a directivo
-    # "Solidario Lobato Fernandez Marc" (cargo "Apoderado") en vez de
-    # directivo "Lobato Fernandez Marc" (cargo "Apoderado Solidario").
+    # producción 2026-08-26: "APELLIDO1 APELLIDO2, NOMBRE" resolvió a directivo
+    # "Solidario Apellido1 Apellido2 Nombre" (cargo "Apoderado") en vez de
+    # directivo "Apellido1 Apellido2 Nombre" (cargo "Apoderado Solidario").
     r"(administrador(?:\s+[úu]nico|\s+solidario|\s+mancomunado)?|"
     r"apoderado(?:\s+(?:general|solidario|mancomunado))?|consejero\s+delegado|presidente|"
     r"gerente|director\s+general|socio(?:\s+director)?)"
@@ -22275,7 +22275,7 @@ def _nif_limpio(nif):
 
 
 def _nombre_clave_pf(nombre):
-    """Palabras del nombre sin acentos y ordenadas: "GARCIA LOPEZ, ANGEL" == "Ángel García López"."""
+    """Palabras del nombre sin acentos y ordenadas: "APELLIDO UNO, NÓMBRE" == "Nombre Apellido Uno"."""
     return " ".join(sorted(re.findall(r"[a-z0-9]+", normalizar(nombre or ""))))
 
 
