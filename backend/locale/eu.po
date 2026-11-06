@@ -2919,8 +2919,8 @@ msgid "Usamos tu correo únicamente para enviarte los avisos que has pedido: no 
 msgstr "Zure helbidea eskatu dituzun abisuak bidaltzeko bakarrik erabiltzen dugu: ez diogu inori lagatzen, eta ez dugu publizitaterako erabiltzen. Oinarri legala zure adostasuna da (DBEOren 6.1.a art.), bidaltzen dizugun esteka baten bidez berresten duzuna; berrespen hori gabe ez da besterik bidaltzen, eta eskaera 7 egunen buruan ezabatzen da."
 
 #: app.py:27283
-msgid "Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento y recibe tu dirección solo para entregar los mensajes."
-msgstr "Mezuak Resend bidez bidaltzen dira (Resend, Inc., Estatu Batuak). Resend tratamenduaren arduraduna da, eta zure helbidea mezuak entregatzeko bakarrik jasotzen du."
+msgid "Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento: recibe tu dirección y el contenido de cada mensaje, y los usa solo para entregarlo."
+msgstr "Mezuak Resend bidez bidaltzen dira (Resend, Inc., Estatu Batuak). Resend tratamenduaren arduraduna da: zure helbidea eta mezu bakoitzaren edukia jasotzen ditu, eta mezua entregatzeko bakarrik erabiltzen ditu."
 
 #: app.py:27284
 msgid "Puedes darte de baja en cualquier momento con el enlace que va en cada correo: al hacerlo borramos de inmediato tu dirección y tus alertas. También puedes pedirlo en <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
@@ -2979,8 +2979,8 @@ msgid "Base legal para el tratamiento de datos"
 msgstr "Datuak tratatzeko lege-oinarria"
 
 #: app.py:27309
-msgid "El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD)."
-msgstr "Enpresa esleipendunen administratzaile edo ahaldun gisa agertzen diren pertsona fisikoen izenen tratamendua informazioaren interes publikoan oinarritzen da, bai eta izen horiek jendearentzat eskuragarri dauden iturrietatik etortzean ere (Datuak Babesteko Erregelamendu Orokorraren 9.2.e artikulua eta 3/2018 Lege Organikoa, Datu Pertsonalak Babesteari eta eskubide digitalak bermatzeari buruzkoa — LOPDGDD)."
+msgid "El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se basa en el interés legítimo en informar sobre la contratación pública (art. 6.1.f del Reglamento General de Protección de Datos). Esos nombres proceden de una fuente de acceso público, el Boletín Oficial del Registro Mercantil. Se aplica también la Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD)."
+msgstr "Enpresa esleipendunen administratzaile edo ahaldun gisa agertzen diren pertsona fisikoen izenen tratamendua kontratazio publikoari buruz informatzeko interes legitimoan oinarritzen da (Datuak Babesteko Erregelamendu Orokorraren 6.1.f artikulua). Izen horiek jendearentzat eskuragarri dagoen iturri batetik datoz: Merkataritza Erregistroko Aldizkari Ofiziala. 3/2018 Lege Organikoa ere aplikatzen da, Datu Pertsonalak Babesteari eta eskubide digitalak bermatzeari buruzkoa (LOPDGDD)."
 
 #: app.py:27311
 msgid "Ejercicio de derechos RGPD"
@@ -3015,8 +3015,8 @@ msgid "Más información sobre cómo Google usa los datos en sitios que utilizan
 msgstr "Informazio gehiago Googlek bere publizitate-zerbitzuak erabiltzen dituzten guneetako datuak nola erabiltzen dituen jakiteko: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Nola erabiltzen dituen Googlek bere zerbitzuak erabiltzen dituzten guneetako edo aplikazioetako datuak</a>."
 
 #: app.py:27323
-msgid "Aparte de lo anterior, el sitio lleva un recuento propio de visitas que no usa cookies ni guarda direcciones IP. Para no contar dos veces al mismo visitante se calcula una huella a partir de la dirección IP y del navegador, mezclada con una clave aleatoria que se destruye cada semana junto con las huellas. Solo se conservan sumas (visitas por día y por semana): no permite identificar a nadie ni seguirle de una semana a otra."
-msgstr "Aurrekoaz gain, webguneak bisiten zenbaketa propioa egiten du, cookierik erabili gabe eta IP helbiderik gorde gabe. Bisitari bera bi aldiz ez zenbatzeko, IP helbidetik eta nabigatzailetik abiatuta aztarna bat kalkulatzen da, astero aztarnekin batera suntsitzen den ausazko gako batekin nahastuta. Batuketak baino ez dira gordetzen (eguneko eta asteko bisitak): ez du inor identifikatzeko aukerarik ematen, ezta aste batetik bestera jarraitzeko ere."
+msgid "Aparte de lo anterior, el sitio lleva un recuento propio de visitas que no usa cookies ni guarda direcciones IP completas. Para detectar rastreadores abusivos se guarda, sumada por día, la red de cada visita: la dirección IP recortada a su bloque (por ejemplo, 192.0.2.0/24). De los días ya cerrados solo se conservan las 100 redes con más tráfico, durante 30 días. Para no contar dos veces al mismo visitante se calcula una huella a partir de la dirección IP y del navegador, mezclada con una clave aleatoria que se destruye cada semana junto con las huellas. Del resto solo se conservan sumas (visitas por día y por semana)."
+msgstr "Aurrekoaz gain, webguneak bisiten zenbaketa propioa egiten du, cookierik erabili gabe eta IP helbide osorik gorde gabe. Gehiegizko arakatzaileak detektatzeko, bisita bakoitzaren sarea gordetzen da, egunez egun batuta: IP helbidea bere blokera moztuta (adibidez, 192.0.2.0/24). Itxitako egunetatik trafiko handieneko 100 sareak baino ez dira gordetzen, 30 egunez. Bisitari bera bi aldiz ez zenbatzeko, IP helbidetik eta nabigatzailetik abiatuta aztarna bat kalkulatzen da, astero aztarnekin batera suntsitzen den ausazko gako batekin nahastuta. Gainerakoaz batuketak baino ez dira gordetzen (eguneko eta asteko bisitak)."
 
 #: app.py:27328 app.py:19383
 msgid "Aviso Legal"

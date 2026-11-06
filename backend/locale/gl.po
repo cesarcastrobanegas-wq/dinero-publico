@@ -2919,8 +2919,8 @@ msgid "Usamos tu correo únicamente para enviarte los avisos que has pedido: no 
 msgstr "Usamos o teu correo unicamente para enviarche os avisos que pediches: non llo cedemos a ninguén nin o usamos para publicidade. A base legal é o teu consentimento (art. 6.1.a do RXPD), que confirmas desde unha ligazón que che enviamos; sen esa confirmación non se envía nada máis e a solicitude bórrase aos 7 días."
 
 #: app.py:27283
-msgid "Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento y recibe tu dirección solo para entregar los mensajes."
-msgstr "Os correos envíanse a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado do tratamento e recibe o teu enderezo só para entregar as mensaxes."
+msgid "Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento: recibe tu dirección y el contenido de cada mensaje, y los usa solo para entregarlo."
+msgstr "Os correos envíanse a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado do tratamento: recibe o teu enderezo e o contido de cada mensaxe, e úsaos só para entregala."
 
 #: app.py:27284
 msgid "Puedes darte de baja en cualquier momento con el enlace que va en cada correo: al hacerlo borramos de inmediato tu dirección y tus alertas. También puedes pedirlo en <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
@@ -2979,8 +2979,8 @@ msgid "Base legal para el tratamiento de datos"
 msgstr "Base legal para o tratamento de datos"
 
 #: app.py:27309
-msgid "El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD)."
-msgstr "O tratamento dos nomes de persoas físicas que aparecen como administradores ou apoderados de empresas adxudicatarias ampárase no interese público da información e en que proceden de fontes accesibles ao público (art. 9.2.e do Regulamento Xeral de Protección de Datos e Lei Orgánica 3/2018, de Protección de Datos Persoais e garantía dos dereitos dixitais — LOPDGDD)."
+msgid "El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se basa en el interés legítimo en informar sobre la contratación pública (art. 6.1.f del Reglamento General de Protección de Datos). Esos nombres proceden de una fuente de acceso público, el Boletín Oficial del Registro Mercantil. Se aplica también la Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD)."
+msgstr "O tratamento dos nomes de persoas físicas que aparecen como administradores ou apoderados de empresas adxudicatarias baséase no interese lexítimo en informar sobre a contratación pública (art. 6.1.f do Regulamento Xeral de Protección de Datos). Eses nomes proceden dunha fonte de acceso público, o Boletín Oficial do Rexistro Mercantil. Aplícase tamén a Lei Orgánica 3/2018, de Protección de Datos Persoais e garantía dos dereitos dixitais (LOPDGDD)."
 
 #: app.py:27311
 msgid "Ejercicio de derechos RGPD"
@@ -3015,8 +3015,8 @@ msgid "Más información sobre cómo Google usa los datos en sitios que utilizan
 msgstr "Máis información sobre como Google usa os datos en sitios que utilizan os seus servizos de publicidade: <a href=\"https://policies.google.com/technologies/partner-sites\" target=\"_blank\" rel=\"noopener\">Como usa Google os datos dos sitios ou das aplicacións que utilizan os seus servizos</a>."
 
 #: app.py:27323
-msgid "Aparte de lo anterior, el sitio lleva un recuento propio de visitas que no usa cookies ni guarda direcciones IP. Para no contar dos veces al mismo visitante se calcula una huella a partir de la dirección IP y del navegador, mezclada con una clave aleatoria que se destruye cada semana junto con las huellas. Solo se conservan sumas (visitas por día y por semana): no permite identificar a nadie ni seguirle de una semana a otra."
-msgstr "Á parte do anterior, o sitio leva un reconto propio de visitas que non usa cookies nin garda enderezos IP. Para non contar dúas veces o mesmo visitante calcúlase unha pegada a partir do enderezo IP e do navegador, mesturada cunha clave aleatoria que se destrúe cada semana xunto coas pegadas. Só se conservan sumas (visitas por día e por semana): non permite identificar a ninguén nin seguilo dunha semana a outra."
+msgid "Aparte de lo anterior, el sitio lleva un recuento propio de visitas que no usa cookies ni guarda direcciones IP completas. Para detectar rastreadores abusivos se guarda, sumada por día, la red de cada visita: la dirección IP recortada a su bloque (por ejemplo, 192.0.2.0/24). De los días ya cerrados solo se conservan las 100 redes con más tráfico, durante 30 días. Para no contar dos veces al mismo visitante se calcula una huella a partir de la dirección IP y del navegador, mezclada con una clave aleatoria que se destruye cada semana junto con las huellas. Del resto solo se conservan sumas (visitas por día y por semana)."
+msgstr "Á parte do anterior, o sitio leva un reconto propio de visitas que non usa cookies nin garda enderezos IP completos. Para detectar rastrexadores abusivos gárdase, sumada por día, a rede de cada visita: o enderezo IP recortado ao seu bloque (por exemplo, 192.0.2.0/24). Dos días xa pechados só se conservan as 100 redes con máis tráfico, durante 30 días. Para non contar dúas veces o mesmo visitante calcúlase unha pegada a partir do enderezo IP e do navegador, mesturada cunha clave aleatoria que se destrúe cada semana xunto coas pegadas. Do resto só se conservan sumas (visitas por día e por semana)."
 
 #: app.py:27328 app.py:19383
 msgid "Aviso Legal"
