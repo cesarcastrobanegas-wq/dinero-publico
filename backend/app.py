@@ -27697,7 +27697,7 @@ def render_aviso_legal_html():
   <h2 id="alertas">{_t("Alertas por correo")}</h2>
   <p>{_t("Si te apuntas a una alerta por correo, guardamos tu dirección de correo electrónico, el idioma en que te apuntaste y los filtros de tus alertas. No pedimos nombre, teléfono ni ningún otro dato, y no guardamos tu dirección IP.")}</p>
   <p>{_t("Usamos tu correo únicamente para enviarte los avisos que has pedido: no lo cedemos a nadie ni lo usamos para publicidad. La base legal es tu consentimiento (art. 6.1.a del RGPD), que confirmas desde un enlace que te enviamos; sin esa confirmación no se envía nada más y la solicitud se borra a los 7 días.")}</p>
-  <p>{_t("Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento y recibe tu dirección solo para entregar los mensajes.")}</p>
+  <p>{_t("Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento: recibe tu dirección y el contenido de cada mensaje, y los usa solo para entregarlo.")}</p>
   <p>{_t('Puedes darte de baja en cualquier momento con el enlace que va en cada correo: al hacerlo borramos de inmediato tu dirección y tus alertas. También puedes pedirlo en <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
 """ if ALERTAS_ACTIVAS else ""
     body = f"""<div class="static-page">
@@ -27723,7 +27723,7 @@ def render_aviso_legal_html():
   <p>{_t("Los datos de subvenciones ya están publicados, en la pestaña «Subvenciones» de Convocatorias abiertas: provienen de la Base de Datos Nacional de Subvenciones (BDNS) y se actualizan dos veces al día.")}</p>
 
   <h2>{_t("Base legal para el tratamiento de datos")}</h2>
-  <p>{_t("El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD).")}</p>
+  <p>{_t("El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se basa en el interés legítimo en informar sobre la contratación pública (art. 6.1.f del Reglamento General de Protección de Datos). Esos nombres proceden de una fuente de acceso público, el Boletín Oficial del Registro Mercantil. Se aplica también la Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD).")}</p>
 
   <h2>{_t("Ejercicio de derechos RGPD")}</h2>
   <p>{_t('Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
@@ -27737,7 +27737,7 @@ def render_aviso_legal_html():
   </ul>
   <p>{_t("Puedes aceptar o rechazar estas cookies en cualquier momento desde el enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier página del sitio — rechazarlas no impide usar la web con normalidad, solo desactiva las estadísticas y la publicidad.")}</p>
   <p>{_t('Más información sobre cómo Google usa los datos en sitios que utilizan sus servicios de publicidad: <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Cómo usa Google los datos de los sitios o las apps que utilizan sus servicios</a>.')}</p>
-  <p>{_t("Aparte de lo anterior, el sitio lleva un recuento propio de visitas que no usa cookies ni guarda direcciones IP. Para no contar dos veces al mismo visitante se calcula una huella a partir de la dirección IP y del navegador, mezclada con una clave aleatoria que se destruye cada semana junto con las huellas. Solo se conservan sumas (visitas por día y por semana): no permite identificar a nadie ni seguirle de una semana a otra.")}</p>
+  <p>{_t("Aparte de lo anterior, el sitio lleva un recuento propio de visitas que no usa cookies ni guarda direcciones IP completas. Para detectar rastreadores abusivos se guarda, sumada por día, la red de cada visita: la dirección IP recortada a su bloque (por ejemplo, 192.0.2.0/24). De los días ya cerrados solo se conservan las 100 redes con más tráfico, durante 30 días. Para no contar dos veces al mismo visitante se calcula una huella a partir de la dirección IP y del navegador, mezclada con una clave aleatoria que se destruye cada semana junto con las huellas. Del resto solo se conservan sumas (visitas por día y por semana).")}</p>
 
   <h2>{_t("Contacto")}</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
