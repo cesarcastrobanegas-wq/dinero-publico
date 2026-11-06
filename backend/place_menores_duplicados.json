@@ -1,0 +1,914 @@
+{
+"generado": "2026-10-14",
+"regla": "mismo municipio, NIF, importe, fecha y objeto; mismo expediente o el otro con sufijo; se queda la versión actualizada más tarde",
+"sobrantes": {
+"place-menores::15186857": {
+"se_queda": "place-menores::15298146",
+"motivo": "mismo expediente"
+},
+"place-menores::17478562": {
+"se_queda": "place-menores::17850151",
+"motivo": "mismo expediente"
+},
+"place-menores::13649410": {
+"se_queda": "place-menores::16869171",
+"motivo": "expediente con sufijo"
+},
+"place-menores::18053053": {
+"se_queda": "place-menores::18132249",
+"motivo": "mismo expediente"
+},
+"place-menores::17692714": {
+"se_queda": "place-menores::17713726",
+"motivo": "expediente con sufijo"
+},
+"place-menores::19394180": {
+"se_queda": "place-menores::19720483",
+"motivo": "mismo expediente"
+},
+"place-menores::19394148": {
+"se_queda": "place-menores::19720437",
+"motivo": "mismo expediente"
+},
+"place-menores::20314662": {
+"se_queda": "place-menores::20511106",
+"motivo": "mismo expediente"
+},
+"place-menores::20314898": {
+"se_queda": "place-menores::20511018",
+"motivo": "mismo expediente"
+},
+"place-menores::17887742": {
+"se_queda": "place-menores::17893396",
+"motivo": "mismo expediente"
+},
+"place-menores::17887595": {
+"se_queda": "place-menores::17893256",
+"motivo": "mismo expediente"
+},
+"place-menores::17887723": {
+"se_queda": "place-menores::17893375",
+"motivo": "mismo expediente"
+},
+"place-menores::17887782": {
+"se_queda": "place-menores::17893449",
+"motivo": "mismo expediente"
+},
+"place-menores::17887624": {
+"se_queda": "place-menores::17893330",
+"motivo": "mismo expediente"
+},
+"place-menores::17887667": {
+"se_queda": "place-menores::17893310",
+"motivo": "mismo expediente"
+},
+"place-menores::17887696": {
+"se_queda": "place-menores::17893349",
+"motivo": "mismo expediente"
+},
+"place-menores::18824136": {
+"se_queda": "place-menores::18912831",
+"motivo": "mismo expediente"
+},
+"place-menores::11662675": {
+"se_queda": "place-menores::11662602",
+"motivo": "mismo expediente"
+},
+"place-menores::13495107": {
+"se_queda": "place-menores::14044127",
+"motivo": "expediente con sufijo"
+},
+"place-menores::12991891": {
+"se_queda": "place-menores::14105654",
+"motivo": "mismo expediente"
+},
+"place-menores::12991967": {
+"se_queda": "place-menores::14027200",
+"motivo": "mismo expediente"
+},
+"place-menores::15816691": {
+"se_queda": "place-menores::15945356",
+"motivo": "mismo expediente"
+},
+"place-menores::15816749": {
+"se_queda": "place-menores::15945413",
+"motivo": "mismo expediente"
+},
+"place-menores::15816615": {
+"se_queda": "place-menores::15944813",
+"motivo": "mismo expediente"
+},
+"place-menores::14961182": {
+"se_queda": "place-menores::15021022",
+"motivo": "expediente con sufijo"
+},
+"place-menores::14961329": {
+"se_queda": "place-menores::15029589",
+"motivo": "mismo expediente"
+},
+"place-menores::14949000": {
+"se_queda": "place-menores::15029461",
+"motivo": "mismo expediente"
+},
+"place-menores::14960543": {
+"se_queda": "place-menores::15003966",
+"motivo": "mismo expediente"
+},
+"place-menores::14961584": {
+"se_queda": "place-menores::15021593",
+"motivo": "mismo expediente"
+},
+"place-menores::14961222": {
+"se_queda": "place-menores::15029490",
+"motivo": "mismo expediente"
+},
+"place-menores::14970563": {
+"se_queda": "place-menores::14994884",
+"motivo": "mismo expediente"
+},
+"place-menores::12953811": {
+"se_queda": "place-menores::12999723",
+"motivo": "mismo expediente"
+},
+"place-menores::14961245": {
+"se_queda": "place-menores::15029506",
+"motivo": "mismo expediente"
+},
+"place-menores::14960993": {
+"se_queda": "place-menores::15021110",
+"motivo": "mismo expediente"
+},
+"place-menores::12991858": {
+"se_queda": "place-menores::12999805",
+"motivo": "mismo expediente"
+},
+"place-menores::14970222": {
+"se_queda": "place-menores::14994869",
+"motivo": "mismo expediente"
+},
+"place-menores::14949372": {
+"se_queda": "place-menores::15021444",
+"motivo": "mismo expediente"
+},
+"place-menores::14594225": {
+"se_queda": "place-menores::15530975",
+"motivo": "mismo expediente"
+},
+"place-menores::13649933": {
+"se_queda": "place-menores::15146272",
+"motivo": "mismo expediente"
+},
+"place-menores::12791469": {
+"se_queda": "place-menores::12791015",
+"motivo": "mismo expediente"
+},
+"place-menores::15107907": {
+"se_queda": "place-menores::15115497",
+"motivo": "mismo expediente"
+},
+"place-menores::17699573": {
+"se_queda": "place-menores::17806379",
+"motivo": "mismo expediente"
+},
+"place-menores::17699539": {
+"se_queda": "place-menores::17806346",
+"motivo": "mismo expediente"
+},
+"place-menores::17699492": {
+"se_queda": "place-menores::17815016",
+"motivo": "mismo expediente"
+},
+"place-menores::17699519": {
+"se_queda": "place-menores::17806299",
+"motivo": "mismo expediente"
+},
+"place-menores::12538536": {
+"se_queda": "place-menores::13361185",
+"motivo": "expediente con sufijo"
+},
+"place-menores::12538128": {
+"se_queda": "place-menores::13361242",
+"motivo": "expediente con sufijo"
+},
+"place-menores::12410922": {
+"se_queda": "place-menores::13361077",
+"motivo": "expediente con sufijo"
+},
+"place-menores::12538493": {
+"se_queda": "place-menores::13361220",
+"motivo": "expediente con sufijo"
+},
+"place-menores::12566540": {
+"se_queda": "place-menores::13361301",
+"motivo": "expediente con sufijo"
+},
+"place-menores::13306594": {
+"se_queda": "place-menores::13320399",
+"motivo": "mismo expediente"
+},
+"place-menores::15617403": {
+"se_queda": "place-menores::15807196",
+"motivo": "mismo expediente"
+},
+"place-menores::12209111": {
+"se_queda": "place-menores::13411087",
+"motivo": "expediente con sufijo"
+},
+"place-menores::15343477": {
+"se_queda": "place-menores::15443376",
+"motivo": "mismo expediente"
+},
+"place-menores::15343523": {
+"se_queda": "place-menores::15443405",
+"motivo": "mismo expediente"
+},
+"place-menores::14710212": {
+"se_queda": "place-menores::14718341",
+"motivo": "mismo expediente"
+},
+"place-menores::14309406": {
+"se_queda": "place-menores::14645416",
+"motivo": "mismo expediente"
+},
+"place-menores::14309655": {
+"se_queda": "place-menores::14645808",
+"motivo": "mismo expediente"
+},
+"place-menores::14309607": {
+"se_queda": "place-menores::14645779",
+"motivo": "mismo expediente"
+},
+"place-menores::14309576": {
+"se_queda": "place-menores::14645660",
+"motivo": "mismo expediente"
+},
+"place-menores::14309498": {
+"se_queda": "place-menores::14645509",
+"motivo": "mismo expediente"
+},
+"place-menores::14710232": {
+"se_queda": "place-menores::14718135",
+"motivo": "mismo expediente"
+},
+"place-menores::14710164": {
+"se_queda": "place-menores::14718175",
+"motivo": "mismo expediente"
+},
+"place-menores::14710195": {
+"se_queda": "place-menores::14718206",
+"motivo": "mismo expediente"
+},
+"place-menores::14309540": {
+"se_queda": "place-menores::14645596",
+"motivo": "mismo expediente"
+},
+"place-menores::14290691": {
+"se_queda": "place-menores::14645884",
+"motivo": "mismo expediente"
+},
+"place-menores::15145348": {
+"se_queda": "place-menores::16628116",
+"motivo": "mismo expediente"
+},
+"place-menores::17205558": {
+"se_queda": "place-menores::17287849",
+"motivo": "mismo expediente"
+},
+"place-menores::17236164": {
+"se_queda": "place-menores::17287764",
+"motivo": "mismo expediente"
+},
+"place-menores::12410916": {
+"se_queda": "place-menores::13136447",
+"motivo": "mismo expediente"
+},
+"place-menores::12044819": {
+"se_queda": "place-menores::12055093",
+"motivo": "mismo expediente"
+},
+"place-menores::18749588": {
+"se_queda": "place-menores::18838970",
+"motivo": "expediente con sufijo"
+},
+"place-menores::16242492": {
+"se_queda": "place-menores::16322952",
+"motivo": "expediente con sufijo"
+},
+"place-menores::18749679": {
+"se_queda": "place-menores::18839014",
+"motivo": "expediente con sufijo"
+},
+"place-menores::16242482": {
+"se_queda": "place-menores::16322914",
+"motivo": "expediente con sufijo"
+},
+"place-menores::11536704": {
+"se_queda": "place-menores::11557555",
+"motivo": "mismo expediente"
+},
+"place-menores::12639246": {
+"se_queda": "place-menores::12723067",
+"motivo": "mismo expediente"
+},
+"place-menores::15905639": {
+"se_queda": "place-menores::15905627",
+"motivo": "mismo expediente"
+},
+"place-menores::11566751": {
+"se_queda": "place-menores::11636718",
+"motivo": "mismo expediente"
+},
+"place-menores::13812460": {
+"se_queda": "place-menores::14229042",
+"motivo": "mismo expediente"
+},
+"place-menores::14127280": {
+"se_queda": "place-menores::14240070",
+"motivo": "mismo expediente"
+},
+"place-menores::14141488": {
+"se_queda": "place-menores::14239957",
+"motivo": "mismo expediente"
+},
+"place-menores::14045539": {
+"se_queda": "place-menores::14213035",
+"motivo": "mismo expediente"
+},
+"place-menores::14026248": {
+"se_queda": "place-menores::14193408",
+"motivo": "mismo expediente"
+},
+"place-menores::14045311": {
+"se_queda": "place-menores::14220491",
+"motivo": "mismo expediente"
+},
+"place-menores::13989599": {
+"se_queda": "place-menores::14212744",
+"motivo": "mismo expediente"
+},
+"place-menores::11948288": {
+"se_queda": "place-menores::12168123",
+"motivo": "mismo expediente"
+},
+"place-menores::11948165": {
+"se_queda": "place-menores::12168190",
+"motivo": "mismo expediente"
+},
+"place-menores::18193371": {
+"se_queda": "place-menores::18490329",
+"motivo": "expediente con sufijo"
+},
+"place-menores::12948451": {
+"se_queda": "place-menores::12954208",
+"motivo": "mismo expediente"
+},
+"place-menores::10002174": {
+"se_queda": "place-menores::10249832",
+"motivo": "mismo expediente"
+},
+"place-menores::18800900": {
+"se_queda": "place-menores::18902638",
+"motivo": "expediente con sufijo"
+},
+"place-menores::16611699": {
+"se_queda": "place-menores::16628835",
+"motivo": "mismo expediente"
+},
+"place-menores::13494909": {
+"se_queda": "place-menores::13534592",
+"motivo": "mismo expediente"
+},
+"place-menores::17454084": {
+"se_queda": "place-menores::17490707",
+"motivo": "mismo expediente"
+},
+"place-menores::12149215": {
+"se_queda": "place-menores::12149202",
+"motivo": "mismo expediente"
+},
+"place-menores::17272185": {
+"se_queda": "place-menores::17287598",
+"motivo": "mismo expediente"
+},
+"place-menores::17272497": {
+"se_queda": "place-menores::17287575",
+"motivo": "mismo expediente"
+},
+"place-menores::15960528": {
+"se_queda": "place-menores::16433717",
+"motivo": "mismo expediente"
+},
+"place-menores::15012787": {
+"se_queda": "place-menores::16102265",
+"motivo": "mismo expediente"
+},
+"place-menores::15609311": {
+"se_queda": "place-menores::16770514",
+"motivo": "mismo expediente"
+},
+"place-menores::19929060": {
+"se_queda": "place-menores::19929038",
+"motivo": "mismo expediente"
+},
+"place-menores::14213544": {
+"se_queda": "place-menores::14246404",
+"motivo": "mismo expediente"
+},
+"place-menores::14202056": {
+"se_queda": "place-menores::14246601",
+"motivo": "mismo expediente"
+},
+"place-menores::14213416": {
+"se_queda": "place-menores::14246324",
+"motivo": "mismo expediente"
+},
+"place-menores::14213340": {
+"se_queda": "place-menores::14246232",
+"motivo": "expediente con sufijo"
+},
+"place-menores::14213401": {
+"se_queda": "place-menores::14246268",
+"motivo": "mismo expediente"
+},
+"place-menores::14213062": {
+"se_queda": "place-menores::14245830",
+"motivo": "mismo expediente"
+},
+"place-menores::12553655": {
+"se_queda": "place-menores::14253718",
+"motivo": "mismo expediente"
+},
+"place-menores::14213160": {
+"se_queda": "place-menores::14245946",
+"motivo": "mismo expediente"
+},
+"place-menores::12231536": {
+"se_queda": "place-menores::14253690",
+"motivo": "mismo expediente"
+},
+"place-menores::14213266": {
+"se_queda": "place-menores::14246057",
+"motivo": "mismo expediente"
+},
+"place-menores::14213282": {
+"se_queda": "place-menores::14246115",
+"motivo": "mismo expediente"
+},
+"place-menores::12208629": {
+"se_queda": "place-menores::14253964",
+"motivo": "mismo expediente"
+},
+"place-menores::14213509": {
+"se_queda": "place-menores::14246374",
+"motivo": "mismo expediente"
+},
+"place-menores::14202321": {
+"se_queda": "place-menores::14246768",
+"motivo": "mismo expediente"
+},
+"place-menores::12140140": {
+"se_queda": "place-menores::14254144",
+"motivo": "mismo expediente"
+},
+"place-menores::14213216": {
+"se_queda": "place-menores::14246010",
+"motivo": "mismo expediente"
+},
+"place-menores::14213829": {
+"se_queda": "place-menores::14246536",
+"motivo": "mismo expediente"
+},
+"place-menores::14202149": {
+"se_queda": "place-menores::14246637",
+"motivo": "mismo expediente"
+},
+"place-menores::14213306": {
+"se_queda": "place-menores::14246175",
+"motivo": "mismo expediente"
+},
+"place-menores::14213142": {
+"se_queda": "place-menores::14245912",
+"motivo": "mismo expediente"
+},
+"place-menores::14213107": {
+"se_queda": "place-menores::14245867",
+"motivo": "mismo expediente"
+},
+"place-menores::14213667": {
+"se_queda": "place-menores::14246451",
+"motivo": "mismo expediente"
+},
+"place-menores::18969382": {
+"se_queda": "place-menores::18969270",
+"motivo": "mismo expediente"
+},
+"place-menores::13802858": {
+"se_queda": "place-menores::13802857",
+"motivo": "mismo expediente"
+},
+"place-menores::15998007": {
+"se_queda": "place-menores::16219886",
+"motivo": "mismo expediente"
+},
+"place-menores::12148626": {
+"se_queda": "place-menores::12148532",
+"motivo": "expediente con sufijo"
+},
+"place-menores::19014356": {
+"se_queda": "place-menores::19353774",
+"motivo": "expediente con sufijo"
+},
+"place-menores::20135636": {
+"se_queda": "place-menores::20135589",
+"motivo": "expediente con sufijo"
+},
+"place-menores::17552721": {
+"se_queda": "place-menores::17576721",
+"motivo": "mismo expediente"
+},
+"place-menores::16801489": {
+"se_queda": "place-menores::16851004",
+"motivo": "mismo expediente"
+},
+"place-menores::17031586": {
+"se_queda": "place-menores::17040216",
+"motivo": "mismo expediente"
+},
+"place-menores::16801318": {
+"se_queda": "place-menores::16851120",
+"motivo": "mismo expediente"
+},
+"place-menores::16801527": {
+"se_queda": "place-menores::16850993",
+"motivo": "mismo expediente"
+},
+"place-menores::16800806": {
+"se_queda": "place-menores::16851569",
+"motivo": "mismo expediente"
+},
+"place-menores::16800977": {
+"se_queda": "place-menores::16851538",
+"motivo": "mismo expediente"
+},
+"place-menores::16801244": {
+"se_queda": "place-menores::16851492",
+"motivo": "mismo expediente"
+},
+"place-menores::16801954": {
+"se_queda": "place-menores::16850948",
+"motivo": "mismo expediente"
+},
+"place-menores::16801936": {
+"se_queda": "place-menores::16850959",
+"motivo": "mismo expediente"
+},
+"place-menores::16801351": {
+"se_queda": "place-menores::16851104",
+"motivo": "mismo expediente"
+},
+"place-menores::16801267": {
+"se_queda": "place-menores::16851481",
+"motivo": "mismo expediente"
+},
+"place-menores::16801849": {
+"se_queda": "place-menores::16850989",
+"motivo": "mismo expediente"
+},
+"place-menores::17031570": {
+"se_queda": "place-menores::17040206",
+"motivo": "mismo expediente"
+},
+"place-menores::16800855": {
+"se_queda": "place-menores::16851565",
+"motivo": "mismo expediente"
+},
+"place-menores::17030353": {
+"se_queda": "place-menores::17040208",
+"motivo": "mismo expediente"
+},
+"place-menores::16800659": {
+"se_queda": "place-menores::16842354",
+"motivo": "mismo expediente"
+},
+"place-menores::16801468": {
+"se_queda": "place-menores::16851012",
+"motivo": "mismo expediente"
+},
+"place-menores::16801982": {
+"se_queda": "place-menores::16850931",
+"motivo": "mismo expediente"
+},
+"place-menores::17031506": {
+"se_queda": "place-menores::17040190",
+"motivo": "mismo expediente"
+},
+"place-menores::16800683": {
+"se_queda": "place-menores::16851576",
+"motivo": "mismo expediente"
+},
+"place-menores::16801072": {
+"se_queda": "place-menores::16851530",
+"motivo": "mismo expediente"
+},
+"place-menores::16801221": {
+"se_queda": "place-menores::16851500",
+"motivo": "mismo expediente"
+},
+"place-menores::17031538": {
+"se_queda": "place-menores::17040233",
+"motivo": "mismo expediente"
+},
+"place-menores::16801374": {
+"se_queda": "place-menores::16851022",
+"motivo": "mismo expediente"
+},
+"place-menores::16801971": {
+"se_queda": "place-menores::16850940",
+"motivo": "mismo expediente"
+},
+"place-menores::16800641": {
+"se_queda": "place-menores::16851533",
+"motivo": "mismo expediente"
+},
+"place-menores::17031555": {
+"se_queda": "place-menores::17040228",
+"motivo": "mismo expediente"
+},
+"place-menores::17031531": {
+"se_queda": "place-menores::17040194",
+"motivo": "mismo expediente"
+},
+"place-menores::17031566": {
+"se_queda": "place-menores::17040198",
+"motivo": "mismo expediente"
+},
+"place-menores::16800637": {
+"se_queda": "place-menores::16851519",
+"motivo": "mismo expediente"
+},
+"place-menores::16801908": {
+"se_queda": "place-menores::16850970",
+"motivo": "mismo expediente"
+},
+"place-menores::17031548": {
+"se_queda": "place-menores::17040240",
+"motivo": "mismo expediente"
+},
+"place-menores::17031517": {
+"se_queda": "place-menores::17040227",
+"motivo": "mismo expediente"
+},
+"place-menores::14097535": {
+"se_queda": "place-menores::16749818",
+"motivo": "expediente con sufijo"
+},
+"place-menores::17031560": {
+"se_queda": "place-menores::17040230",
+"motivo": "mismo expediente"
+},
+"place-menores::17031524": {
+"se_queda": "place-menores::17040221",
+"motivo": "mismo expediente"
+},
+"place-menores::17792439": {
+"se_queda": "place-menores::17791821",
+"motivo": "expediente con sufijo"
+},
+"place-menores::16146740": {
+"se_queda": "place-menores::16349535",
+"motivo": "mismo expediente"
+},
+"place-menores::15044197": {
+"se_queda": "place-menores::16619873",
+"motivo": "mismo expediente"
+},
+"place-menores::17031542": {
+"se_queda": "place-menores::19811949",
+"motivo": "mismo expediente"
+},
+"place-menores::18454183": {
+"se_queda": "place-menores::18454179",
+"motivo": "expediente con sufijo"
+},
+"place-menores::15830060": {
+"se_queda": "place-menores::15845057",
+"motivo": "mismo expediente"
+},
+"place-menores::13587937": {
+"se_queda": "place-menores::13602156",
+"motivo": "expediente con sufijo"
+},
+"place-menores::19082253": {
+"se_queda": "place-menores::19137780",
+"motivo": "mismo expediente"
+},
+"place-menores::17333037": {
+"se_queda": "place-menores::17360004",
+"motivo": "expediente con sufijo"
+},
+"place-menores::14245710": {
+"se_queda": "place-menores::14254341",
+"motivo": "mismo expediente"
+},
+"place-menores::14245713": {
+"se_queda": "place-menores::14254357",
+"motivo": "mismo expediente"
+},
+"place-menores::14245725": {
+"se_queda": "place-menores::14254415",
+"motivo": "mismo expediente"
+},
+"place-menores::14245746": {
+"se_queda": "place-menores::14254558",
+"motivo": "mismo expediente"
+},
+"place-menores::14245719": {
+"se_queda": "place-menores::14254377",
+"motivo": "mismo expediente"
+},
+"place-menores::14245755": {
+"se_queda": "place-menores::14254602",
+"motivo": "mismo expediente"
+},
+"place-menores::14245730": {
+"se_queda": "place-menores::14254431",
+"motivo": "mismo expediente"
+},
+"place-menores::17416116": {
+"se_queda": "place-menores::17462181",
+"motivo": "mismo expediente"
+},
+"place-menores::19153722": {
+"se_queda": "place-menores::19204143",
+"motivo": "expediente con sufijo"
+},
+"place-menores::16774389": {
+"se_queda": "place-menores::16842709",
+"motivo": "mismo expediente"
+},
+"place-menores::14433219": {
+"se_queda": "place-menores::14461711",
+"motivo": "mismo expediente"
+},
+"place-menores::14433281": {
+"se_queda": "place-menores::14461747",
+"motivo": "mismo expediente"
+},
+"place-menores::14399904": {
+"se_queda": "place-menores::14451571",
+"motivo": "mismo expediente"
+},
+"place-menores::14433001": {
+"se_queda": "place-menores::14461249",
+"motivo": "mismo expediente"
+},
+"place-menores::14415912": {
+"se_queda": "place-menores::14451475",
+"motivo": "mismo expediente"
+},
+"place-menores::14409235": {
+"se_queda": "place-menores::14451503",
+"motivo": "mismo expediente"
+},
+"place-menores::14415312": {
+"se_queda": "place-menores::14461826",
+"motivo": "mismo expediente"
+},
+"place-menores::15728361": {
+"se_queda": "place-menores::16716092",
+"motivo": "mismo expediente"
+},
+"place-menores::15998169": {
+"se_queda": "place-menores::15997761",
+"motivo": "mismo expediente"
+},
+"place-menores::18946863": {
+"se_queda": "place-menores::19013083",
+"motivo": "mismo expediente"
+},
+"place-menores::18969372": {
+"se_queda": "place-menores::19106601",
+"motivo": "mismo expediente"
+},
+"place-menores::18969623": {
+"se_queda": "place-menores::19107158",
+"motivo": "mismo expediente"
+},
+"place-menores::18946703": {
+"se_queda": "place-menores::19107287",
+"motivo": "mismo expediente"
+},
+"place-menores::18969634": {
+"se_queda": "place-menores::19107203",
+"motivo": "mismo expediente"
+},
+"place-menores::18969389": {
+"se_queda": "place-menores::19106624",
+"motivo": "mismo expediente"
+},
+"place-menores::18969436": {
+"se_queda": "place-menores::19107050",
+"motivo": "mismo expediente"
+},
+"place-menores::18969423": {
+"se_queda": "place-menores::19106936",
+"motivo": "mismo expediente"
+},
+"place-menores::18969419": {
+"se_queda": "place-menores::19106857",
+"motivo": "mismo expediente"
+},
+"place-menores::15004503": {
+"se_queda": "place-menores::15004334",
+"motivo": "expediente con sufijo"
+},
+"place-menores::13023663": {
+"se_queda": "place-menores::16433008",
+"motivo": "expediente con sufijo"
+},
+"place-menores::14253658": {
+"se_queda": "place-menores::14262779",
+"motivo": "mismo expediente"
+},
+"place-menores::17471541": {
+"se_queda": "place-menores::17544693",
+"motivo": "mismo expediente"
+},
+"place-menores::13165058": {
+"se_queda": "place-menores::13165057",
+"motivo": "mismo expediente"
+},
+"place-menores::15517635": {
+"se_queda": "place-menores::15517634",
+"motivo": "mismo expediente"
+},
+"place-menores::16371481": {
+"se_queda": "place-menores::16527859",
+"motivo": "mismo expediente"
+},
+"place-menores::17798823": {
+"se_queda": "place-menores::18193345",
+"motivo": "mismo expediente"
+},
+"place-menores::10382296": {
+"se_queda": "place-menores::10782526",
+"motivo": "mismo expediente"
+},
+"place-menores::16121551": {
+"se_queda": "place-menores::16497909",
+"motivo": "mismo expediente"
+},
+"place-menores::14687870": {
+"se_queda": "place-menores::14696393",
+"motivo": "mismo expediente"
+},
+"place-menores::14687815": {
+"se_queda": "place-menores::14696362",
+"motivo": "mismo expediente"
+},
+"place-menores::13580312": {
+"se_queda": "place-menores::13588478",
+"motivo": "mismo expediente"
+},
+"place-menores::13641655": {
+"se_queda": "place-menores::13802692",
+"motivo": "mismo expediente"
+},
+"place-menores::14832114": {
+"se_queda": "place-menores::19916175",
+"motivo": "expediente con sufijo"
+},
+"place-menores::18114360": {
+"se_queda": "place-menores::18464896",
+"motivo": "mismo expediente"
+},
+"place-menores::19408153": {
+"se_queda": "place-menores::19538875",
+"motivo": "mismo expediente"
+},
+"place-menores::16955785": {
+"se_queda": "place-menores::16955474",
+"motivo": "mismo expediente"
+},
+"place-menores::16888908": {
+"se_queda": "place-menores::16888295",
+"motivo": "mismo expediente"
+},
+"place-menores::11635309": {
+"se_queda": "place-menores::11634926",
+"motivo": "mismo expediente"
+},
+"place-menores::17333506": {
+"se_queda": "place-menores::17333471",
+"motivo": "mismo expediente"
+},
+"place-menores::19005861": {
+"se_queda": "place-menores::19014699",
+"motivo": "mismo expediente"
+},
+"place-menores::11983628": {
+"se_queda": "place-menores::11983581",
+"motivo": "mismo expediente"
+}
+}
+}

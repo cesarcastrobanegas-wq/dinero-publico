@@ -31,6 +31,7 @@ import requests
 
 sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
 from app import BASE_DIR, clave_municipio, MUNICIPIOS_POR_PROVINCIA, PROVINCIA_LABEL, normalizar
+import cargos_suprimidos
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
@@ -375,6 +376,14 @@ def main():
             "partido": (fila.get("Partido") or "").strip(),
         })
         n_conc_match += 1
+
+    # Lista de exclusión (ver cargos_suprimidos.py; necesita EXCLUSION_CLAVE): el nombre no vuelve al JSON
+    supresiones = cargos_suprimidos.cargar()
+    usadas = cargos_suprimidos.aplicar_alcaldes(resultado, supresiones)
+    print(f"Exclusiones aplicadas: {len(usadas)} de {len(supresiones)}")
+    if len(usadas) < len(supresiones):
+        print("  OJO: alguna exclusión no casa con nadie (¿dejó el cargo o la fuente cambió el nombre?): "
+              "revisar a mano las fichas afectadas antes de subir el JSON")
 
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "municipios": resultado},

@@ -1,0 +1,65 @@
+name: Filtro de licitaciones (envío a los perfiles)
+
+# Dispara la pasada de envío del filtro de licitaciones por empresa (2026-10-28). Todo el trabajo lo hace la web: aquí
+# solo se llama a POST /admin/socios-enviar por tandas hasta que no queda nadie o se llega al tope de correos del día.
+# Es una copia del flujo de las alertas (alertas-envio.yml, que no se toca).
+#
+# - Correo SEMANAL: los lunes salen casi todos. Corre todos los días para repartir: si el lunes no llega el cupo de
+#   Resend (compartido con las alertas), el resto sale los días siguientes; los que ya lo han recibido esa semana no
+#   vuelven a salir.
+# - Avisos «¿Sigues interesado?» a los perfiles con 11 meses sin uso: cualquier día.
+# - 08:30 UTC (09:30 peninsular en invierno, 10:30 en verano): después del refresco nocturno (01:00-07:00 UTC), de las
+#   alertas (05:30) y de la pasada de subvenciones de las 07:15.
+#
+# Mientras FILTRO_FORMULARIO no valga 1 en Render, la web contesta {"activas": false} y esto no hace nada.
+#
+# PRIVACIDAD: el repositorio y sus registros son públicos. La respuesta de la web trae solo recuentos: ni correos ni
+# contenido de los perfiles. La clave va en la cabecera, no en la dirección.
+
+on:
+  schedule:
+    - cron: "30 8 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: socios-envio
+  cancel-in-progress: false
+
+jobs:
+  socios-envio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Enviar por tandas
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          for tanda in $(seq 1 20); do
+            fin=$(( $(date +%s) + 300 ))
+            while true; do
+              codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST \
+                -H "X-Admin-Token: ${ADMIN_TOKEN}" --data-urlencode "max=25" \
+                "https://dinero-publico.com/admin/socios-enviar" || echo 000)
+              case "$codigo" in
+                000|502|503|504|520|521|522|523|524)
+                  [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                  echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
+                200) break ;;
+                *) echo "::error::La web respondió ${codigo}"; exit 1 ;;
+              esac
+            done
+            echo "Tanda ${tanda}: $(cat respuesta.json)"
+            quedan=$(python3 -c "import json; d = json.load(open('respuesta.json')); print(0 if not d.get('activas') or d.get('tope_alcanzado') else d.get('pendientes', 0))")
+            [ "$quedan" = "0" ] && break
+          done
+          python3 -c "
+          import json
+          d = json.load(open('respuesta.json'))
+          if d.get('tope_alcanzado'):
+              print('::warning::Tope de correos alcanzado (compartido con las alertas): quedan %s perfiles para mañana. Si se repite, toca pasar Resend a un plan de pago.' % d.get('pendientes'))
+          if d.get('fallidos'):
+              print('::warning::%s envíos fallidos en la última tanda: ver /admin/revision/socios.' % d.get('fallidos'))
+          "
