@@ -40,7 +40,7 @@ RE_TEL = [re.compile(r"(?<![\w.,])\+34[ .]?[6789]\d{2}[ .]?\d{3}[ .]?\d{3}(?![\d
           re.compile(r"(?<![\w.,])[6789]\d{2} \d{2} \d{2} \d{2}(?![\d.,])")]
 RE_CORREO = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 CORREO_PERMITIDO = re.compile(
-    r"(dinero-publico\.com|ejemplo\.(test|com|es|org)|example\.(com|org|net)|\.test$|@test\.|@prueba\.|"
+    r"(dinero-publico\.com|^x@y\.es$|ejemplo\.(test|com|es|org)|example\.(com|org|net)|\.test$|@test\.|@prueba\.|"
     r"noreply@anthropic\.com|users\.noreply\.github\.com|onboarding@resend\.dev|tudominio|localhost)", re.I)
 RE_SECRETO = re.compile(r"\b(?:ghp_[A-Za-z0-9]{20,}|github_pat_\w{20,}|gho_\w{20,}|re_[A-Za-z0-9]{8,}_[A-Za-z0-9_]{8,}|"
                         r"sk-[A-Za-z0-9]{20,}|AKIA[A-Z0-9]{16}|xox[bp]-[\w-]{10,})|-----BEGIN [A-Z ]*PRIVATE KEY")
@@ -61,13 +61,17 @@ def hallazgos(lineas):
     out = []
     for i, l in enumerate(lineas, 1):
         for m in RE_DNI.finditer(l):
-            if LETRAS[int(m.group(1)) % 23] == m.group(2) and m.group(1) + m.group(2) not in NO_SON_DNI:
+            if (LETRAS[int(m.group(1)) % 23] == m.group(2) and m.group(1) + m.group(2) not in NO_SON_DNI
+                    and int(m.group(1)) >= 100):          # 00000000T, 00000001R...: los de ejemplo de las pruebas
                 out.append((i, "DNI"))
         for m in RE_NIE.finditer(l):
             if LETRAS[("XYZ".index(m.group(1)) * 10 ** 7 + int(m.group(2))) % 23] == m.group(3):
                 out.append((i, "NIE"))
-        if any(r.search(l) for r in RE_TEL):
-            out.append((i, "teléfono"))
+        for r in RE_TEL:
+            for m in r.finditer(l):
+                cifras = re.sub(r"\D", "", m.group(0))[-9:]
+                if cifras[3:].strip("0"):           # 600 000 000, 968 000 000: de ejemplo
+                    out.append((i, "teléfono"))
         for m in RE_CORREO.finditer(l):
             v = m.group(0)
             if not CORREO_PERMITIDO.search(v) and not re.search(r"\.(png|svg|js|css|py|json)$", v):
@@ -79,14 +83,15 @@ def hallazgos(lineas):
 
 class Detector(unittest.TestCase):
     def test_detecta_lo_que_debe(self):
-        # datos INVENTADOS: el DNI 00000000T es el de ejemplo (letra correcta), el teléfono es de ficción
-        lineas = ["dni 00000000T", "nie X0000000T", "tel. 600 000 000", "+34 912345678", "escribe a alguien@correo.es",
+        # datos INVENTADOS: 12345678Z es el DNI de ejemplo de toda la vida (letra correcta), el teléfono es de ficción
+        lineas = ["dni 12345678Z","nie X0000000T", "tel. 600 123 456", "+34 912345678", "escribe a alguien@correo.es",
                   "token ghp_" + "a" * 30]
         tipos = [t for _, t in hallazgos(lineas)]
         self.assertEqual(tipos, ["DNI", "NIE", "teléfono", "teléfono", "correo", "clave o token"])
 
     def test_no_salta_con_lo_normal(self):
-        lineas = ["importe 751.410.000 €", "viewBox=\"0 0 700 642.727\"", "contacto@dinero-publico.com",
+        lineas = ["NIF 00000000T y 00000001R (de ejemplo)", "Bizum al 600 000 000", "Tel. 968 000 000", "correo=x@y.es",
+                  "importe 751.410.000 €", "viewBox=\"0 0 700 642.727\"", "contacto@dinero-publico.com",
                   "x@ejemplo.test", "B12345678", "CPV 45000000", "expediente 20226433A", "2026-11-06T00:00:00Z"]
         self.assertEqual(hallazgos(lineas), [])
 
