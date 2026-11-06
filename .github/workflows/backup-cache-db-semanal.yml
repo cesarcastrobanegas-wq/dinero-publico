@@ -10,6 +10,10 @@ name: Copia semanal de cache.db (repositorio privado aparte)
 # que las copias de alertas.db y socios.db). Sin COPIAS_TOKEN o sin la clave el flujo no hace nada.
 # No se sube ningún artefacto ni se imprime contenido de la base: solo tamaños y recuentos.
 #
+# PAC (03-11-2026): antes de comprimir, backend/pac_purgar_copia.py borra de la copia lo caducado de la PAC (publicación
+# del FEGA + 2 años, art. 98.4 del Reglamento (UE) 2021/2116) con secure_delete y VACUUM, como hace la web con su base.
+# Como solo se conservan las dos últimas copias, lo caducado no dura en el repositorio privado más de ~2 semanas.
+#
 # 2026-11-03: la copia va CIFRADA (gpg simétrico AES-256, mismos parámetros que copia-alertas-cifrada.yml): antes se
 # subía solo comprimida (cache_*.db.gz) y quien tuviera acceso al repositorio privado podía leer los DNI/NIE. Ahora
 # es cache_AAAA-MM-DD_HHMM.db.gz.gpg (gzip y después gpg, sin compresión de gpg encima). Las copias antiguas sin
@@ -61,6 +65,12 @@ jobs:
             sleep 300
           done
 
+      - name: Script de purga de la PAC (solo ese fichero del repositorio)
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: backend/pac_purgar_copia.py
+          sparse-checkout-cone-mode: false
+
       - name: ¿Están el token del repositorio privado y la clave de cifrado?
         id: token
         env:
@@ -108,6 +118,10 @@ jobs:
             exit 1
           fi
           echo "integrity_check: ok -- $(python3 -c "import sqlite3; print(sqlite3.connect('cache.db').execute('SELECT COUNT(*) FROM municipios').fetchone()[0])") fichas"
+
+      - name: Purgar de la copia lo caducado de la PAC
+        if: steps.token.outputs.hay == 'si'
+        run: python3 backend/pac_purgar_copia.py cache.db
 
       - name: Comprimir y cifrar
         if: steps.token.outputs.hay == 'si'
