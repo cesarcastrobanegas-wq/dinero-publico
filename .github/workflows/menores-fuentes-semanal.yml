@@ -5,7 +5,7 @@
 # librerías que producción no tiene (pdfplumber, openpyxl, xlrd, odfpy). Aquí sí se pueden instalar.
 #
 # backend/flujo_menores_semanal.py los ejecuta uno a uno y solo deja el fichero nuevo si el generador terminó bien y
-# no trae menos del 90 % de los contratos que había; si no, conserva el anterior y lo apunta como problema.
+# no trae menos del 90 % de los contratos que había dentro de la ventana de 5 años; si no, conserva el anterior y lo apunta como problema.
 #
 # El resultado se guarda en main (la web carga esos ficheros al arrancar). OJO: guardar en main hace que Render
 # reinicie la web unos minutos, y un reinicio en mitad del refresco nocturno le mata el trabajo en curso. Por eso
@@ -13,7 +13,8 @@
 # Si no hay ninguna fuente con contratos nuevos, no guarda nada y no hay reinicio.
 #
 # Fuera de este flujo (ver EXCLUIDOS en flujo_menores_semanal.py): el registro de menores de la Plataforma de
-# Contratación y las dos fuentes que el ayuntamiento dejó de publicar (Cádiz y Salamanca, que se quedan como histórico).
+# Contratación, las dos fuentes que el ayuntamiento dejó de publicar (Cádiz y Salamanca, que se quedan como histórico)
+# y las que no dejan entrar desde GitHub o al agente del proyecto (Sevilla, València, Burgos y Almería: siguen manuales).
 name: Contratos menores de ayuntamientos (semanal)
 
 on:

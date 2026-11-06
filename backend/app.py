@@ -37,6 +37,18 @@ try:
 except ImportError:
     import alertas as ALR
 try:
+    from . import filtro_formulario as FFORM
+    from . import filtro_licitaciones as FLIC
+    from . import socios as SOC
+except ImportError:
+    import filtro_formulario as FFORM
+    import filtro_licitaciones as FLIC
+    import socios as SOC
+try:
+    from . import filtro_embudo as FEMB
+except ImportError:
+    import filtro_embudo as FEMB
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -58,6 +70,7 @@ except ImportError:
 #   - I18N_PUBLICADOS (variable de entorno, p. ej. "gl,ca,eu"): idiomas visibles. Solo esos llevan pestañas en la
 #     cabecera, hreflang y se indexan; los demás funcionan (para probarlos) pero con noindex.
 import contextvars
+import functools
 
 I18N_IDIOMAS = {"gl": ("Galego", "gl_ES"), "ca": ("Català", "ca_ES"), "eu": ("Euskara", "eu_ES")}
 I18N_LOCALE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locale")
@@ -2171,6 +2184,21 @@ CACHE_DB_COPIA = os.path.join(DATA_DIR, ".cache_db_export_copia.db")
 CACHE_DB_COPIA_VIGENCIA_S = 2 * 3600
 _cache_db_copia_lock = threading.Lock()
 _RANGO_PETICION = contextvars.ContextVar("rango_peticion", default="")   # cabecera Range de la petición en curso
+_TOKEN_CABECERA = contextvars.ContextVar("token_cabecera", default="")   # cabecera X-Admin-Token de la petición en curso
+
+
+def _token_admin_valido(token):
+    """True solo si `token` es el ADMIN_TOKEN (comparación en tiempo constante). Sin ADMIN_TOKEN configurado, nunca."""
+    admin = os.environ.get("ADMIN_TOKEN", "")
+    return bool(admin and token) and hmac.compare_digest(token.encode("utf-8"), admin.encode("utf-8"))
+
+
+def _token_admin_peticion(params=None):
+    """Token de administración de la petición en curso: la cabecera X-Admin-Token o, en un POST de formulario, el campo
+    `token` del CUERPO (params). Nunca de la URL (17-10): un ?token= queda en los registros de Render y de Cloudflare,
+    así que se ignora y la petición recibe 403."""
+    token = _TOKEN_CABECERA.get() or (params.get("token", [""])[0] if params is not None else "")
+    return _token_admin_valido(token)
 DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo para migración inicial
 
 # Primer arranque con disco nuevo/vacío (DATA_DIR distinto de BASE_DIR y sin
@@ -2514,7 +2542,11 @@ def _db_init():
             id TEXT PRIMARY KEY, actualizado TEXT, estado TEXT, fin_plazo TEXT, titulo TEXT, url TEXT,
             expediente TEXT, organo TEXT, nif_organo TEXT, dir3 TEXT, ambito TEXT, provincia TEXT, comunidad TEXT,
             municipio TEXT, cpv TEXT, cpv2 TEXT, tipo TEXT, procedimiento TEXT, presupuesto REAL, valor_estimado REAL,
-            lotes INTEGER, busqueda TEXT, visto REAL)""")
+            lotes INTEGER, busqueda TEXT, visto REAL, requisitos TEXT)""")
+        try:        # tablas anteriores a la columna (2026-10-27): requisitos del filtro por empresa, JSON
+            _db.execute("ALTER TABLE licitaciones ADD COLUMN requisitos TEXT")
+        except sqlite3.OperationalError:
+            pass
         # Cola de revisión interna (2026-10-05, ver INFORME_BOT_CASOS.md): candidatos de backend/indicios_contratos.py
         # que solo ve César en /admin/revision. Nada de aquí se publica.
         _db.execute("""CREATE TABLE IF NOT EXISTS revision_candidatos (
@@ -2528,6 +2560,11 @@ def _db_init():
         _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_plazo ON licitaciones(estado, fin_plazo)")
         _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_muni ON licitaciones(municipio)")
         _db.execute(_SQL_TABLA_SUBVENCIONES.format(tabla="subvenciones"))
+        for _col in ("cnae TEXT DEFAULT ''", "sectores TEXT"):   # tablas anteriores a estas columnas (2026-10-17)
+            try:
+                _db.execute(f"ALTER TABLE subvenciones ADD COLUMN {_col}")
+            except sqlite3.OperationalError:
+                pass
         for _sql in _SQL_INDICES_SUBVENCIONES:
             _db.execute(_sql.format(tabla="subvenciones"))
         _db.commit()
@@ -2623,22 +2660,44 @@ def _cargar_datos_json():
     return []
 
 
+# Lista de exclusión: personas que no se muestran en alcaldes/concejales ni en sueldos de concejales. Solo huellas
+# HMAC (clave en EXCLUSION_CLAVE), sin nombres -- ver backend/cargos_suprimidos.py.
+try:
+    from backend import cargos_suprimidos as _cargos_suprimidos   # gunicorn backend.app:app
+except ImportError:
+    import cargos_suprimidos as _cargos_suprimidos                # python backend/app.py y scripts con "import app"
+CARGOS_SUPRIMIDOS = _cargos_suprimidos.cargar()
+
+
 def _cargar_alcaldes_concejales():
     """Carga alcaldes_concejales.json (generado por actualizar_alcaldes.py a
     partir del Ministerio de Política Territorial y Memoria Democrática).
     Dato estático: no se recalcula en caliente, solo se refresca re-lanzando
-    ese script periódicamente."""
+    ese script periódicamente. Ya sin las personas de CARGOS_SUPRIMIDOS."""
+    global ALCALDES_CONCEJALES_FECHA
     if os.path.exists(ALCALDES_FILE):
         try:
             with open(ALCALDES_FILE, encoding="utf-8") as f:
                 d = json.load(f)
                 if isinstance(d, dict):
-                    return d.get("municipios", {})
+                    ALCALDES_CONCEJALES_FECHA = _fecha_dma(d.get("generado", ""))
+                    municipios = d.get("municipios", {})
+                    _cargos_suprimidos.aplicar_alcaldes(municipios, CARGOS_SUPRIMIDOS)
+                    return municipios
         except Exception:
             pass
     return {}
 
 
+def _fecha_dma(texto):
+    """"2026-09-30 19:52:48" o "2026-09-30" -> "30-09-2026"; "" si no tiene esa forma."""
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", texto or "")
+    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else ""
+
+
+# Fuente oficial de alcaldes y concejales (la que descarga actualizar_alcaldes.py) y fecha de esa descarga.
+ALCALDES_FUENTE_URL = "https://concejales.redsara.es/consulta/"
+ALCALDES_CONCEJALES_FECHA = ""
 ALCALDES_CONCEJALES = _cargar_alcaldes_concejales()
 
 # ─── Sueldos de concejales publicados por el propio ayuntamiento (2026-09-26) ───────────────────────────────
@@ -2654,7 +2713,9 @@ SUELDOS_CONCEJALES_FILE = os.path.join(BASE_DIR, "sueldos_concejales.json")
 
 def _cargar_sueldos_concejales():
     """{normalizar(municipio): [registro, ...]} desde sueldos_concejales.json. Defensivo: descarta cualquier
-    registro al que le falte nombre, cargo, importe (> 0), base del importe o URL https de la fuente."""
+    registro al que le falte nombre, cargo, importe (> 0), base del importe o URL https de la fuente.
+    Guarda en SUELDOS_CONCEJALES_FECHA la fecha en que se recogieron ("generado" del JSON)."""
+    global SUELDOS_CONCEJALES_FECHA
     out = {}
     if not os.path.exists(SUELDOS_CONCEJALES_FILE):
         return out
@@ -2662,8 +2723,11 @@ def _cargar_sueldos_concejales():
         with open(SUELDOS_CONCEJALES_FILE, encoding="utf-8") as f:
             d = json.load(f)
         registros = d.get("registros", []) if isinstance(d, dict) else []
+        if isinstance(d, dict):
+            SUELDOS_CONCEJALES_FECHA = _fecha_dma(str(d.get("generado", "")))
     except Exception:
         return out
+    registros, _ = _cargos_suprimidos.aplicar_sueldos(registros, CARGOS_SUPRIMIDOS)
     for r in registros:
         try:
             reg = {"municipio": str(r["municipio"]).strip(), "provincia": str(r.get("provincia", "")).strip(),
@@ -2682,6 +2746,7 @@ def _cargar_sueldos_concejales():
 
 # (SUELDOS_CONCEJALES se carga más abajo, tras definir normalizar(): el cargador la usa.)
 SUELDOS_CONCEJALES = {}
+SUELDOS_CONCEJALES_FECHA = ""
 
 
 def _cargar_retribuciones_ispa():
@@ -2702,6 +2767,13 @@ def _cargar_retribuciones_ispa():
 
 
 RETRIBUCIONES_ISPA = _cargar_retribuciones_ispa()
+
+
+def ispa_fuente_url(anio):
+    """Página oficial del Espacio ISPA con los ficheros de retribuciones del ejercicio `anio` (la edición «ISPA anio+1»,
+    p. ej. ejercicio 2024 -> ISPA 2025). Comprobada el 02-11-2026: enlaza retribuciones_alcaldes.xlsx, el fichero que
+    descarga actualizar_retribuciones.py."""
+    return f"https://digital.gob.es/funcion-publica/dgfp/espacio-ispa/estadisticas/informac_estad_{int(anio)}"
 
 # Presidente/a de cada provincia + su retribución anual (ISPA 2025,
 # percepciones del ejercicio 2024). Dato institucional (5 personas, cambia
@@ -2996,7 +3068,7 @@ _SQL_TABLA_SUBVENCIONES = """CREATE TABLE IF NOT EXISTS {tabla} (
     bdns TEXT PRIMARY KEY, registrada TEXT, titulo TEXT, titulo_cooficial TEXT, nivel1 TEXT, nivel2 TEXT, organo TEXT,
     nuts TEXT, provincia TEXT, comunidad TEXT, municipio TEXT, presupuesto REAL, beneficiarios TEXT, sector TEXT,
     finalidad TEXT, instrumento TEXT, inicio TEXT, fin TEXT, texto_fin TEXT, url_bases TEXT, mrr INTEGER,
-    busqueda TEXT)"""
+    busqueda TEXT, cnae TEXT DEFAULT '', sectores TEXT)"""
 _SQL_INDICES_SUBVENCIONES = ("CREATE INDEX IF NOT EXISTS idx_{tabla}_fin ON {tabla}(fin)",
                              "CREATE INDEX IF NOT EXISTS idx_{tabla}_muni ON {tabla}(municipio)",
                              "CREATE INDEX IF NOT EXISTS idx_{tabla}_prov ON {tabla}(provincia)")
@@ -3399,8 +3471,7 @@ def _subir_administradores_borme(token, crudo, forzar=False):
     gzip o no). Lo valida, lo guarda en el disco persistente (escritura atómica) y lo recarga en memoria sin reiniciar.
     Devuelve (código, cuerpo JSON). Nunca devuelve ni registra nombres: solo recuentos."""
     global ADMINISTRADORES_BORME
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or token != admin_token:
+    if not _token_admin_valido(token):
         return 403, {"error": "No autorizado."}
     try:
         if crudo[:2] == bytes([0x1F, 0x8B]):          # gzip
@@ -5129,12 +5200,27 @@ def rendicion_cuentas_url(municipio, provincia):
             f"buscarEntidades/index.html?{urlencode(params)}")
 
 
-def normalizar(s):
+def _normalizar_sin_cache(s):
     s = (s or "").lower().strip()
     for a, b in {"á":"a","é":"e","í":"i","ó":"o","ú":"u","ü":"u","ñ":"n",
                  "à":"a","è":"e","ò":"o","ï":"i","ç":"c"}.items():  # también vocales/ç catalanas (Girona)
         s = s.replace(a, b)
     return re.sub(r"\s+", " ", s)
+
+
+# Rendimiento (2026-10-28, diagnóstico G1): normalizar() se llamaba millones de veces con los mismos textos (1,8
+# millones en cada cálculo del Índice, 1,3 en cada búsqueda). Con caché, medido en local: Índice 79,5 -> ~61 s,
+# búsqueda 21,8 -> ~9 s, top de empresas 21,4 -> ~12 s. El resultado es el mismo (función pura); unas 200.000
+# entradas son del orden de 60 MB. Lo que no se puede guardar en la caché (un valor no "hashable") se calcula como antes.
+NORMALIZAR_CACHE_MAX = 200_000
+_normalizar_cache = functools.lru_cache(maxsize=NORMALIZAR_CACHE_MAX)(_normalizar_sin_cache)
+
+
+def normalizar(s):
+    try:
+        return _normalizar_cache(s)
+    except TypeError:
+        return _normalizar_sin_cache(s)
 
 # Registrada como función SQL para poder cruzar contratos_menors_locales
 # contra directores (clave = NIF o normalizar(nombre), ver _dir_cache_key)
@@ -5142,8 +5228,92 @@ def normalizar(s):
 # ver _indice_menores_stats_por_municipio (Índice de Transparencia).
 _db.create_function("normalizar", 1, normalizar)
 
+def _tabla_controles():
+    """Caracteres de control que algunas fuentes dejan en los textos (revisión del 02-11-2026, ficha de Barcelona:
+    un 0x7F delante de «FUNDACIÓ PRIVADA CASSIA JUST», de la PSCP; 14 textos en toda la base). Los C1 (0x80-0x9F)
+    suelen ser comillas de Windows (cp1252) guardadas tal cual -- 0x92 en «L'AJUNTAMENT», 0x93/0x94 alrededor de
+    «QUI TÉ A QUI» -- y se convierten a su carácter; el resto de controles se quitan. Tabulador y saltos de línea se
+    respetan."""
+    tabla = {i: None for i in range(32) if i not in (9, 10, 13)}
+    tabla[0x7F] = None
+    for i in range(0x80, 0xA0):
+        try:
+            tabla[i] = bytes([i]).decode("cp1252")
+        except UnicodeDecodeError:
+            tabla[i] = None
+    return tabla
+
+
+_TABLA_CONTROLES = _tabla_controles()
+
+
+# Tildes estropeadas (revisión del 03-11-2026): algunas fuentes entregan texto UTF-8 que en algún paso se leyó como
+# Latin-1/Windows-1252, y llega «ESPAÃ‘A», «MUÃ±OZ», «campaÃ±a», «â€œ...â€». Se arregla SOLO al mostrar (en esc(),
+# antes de quitar los controles, porque Á, Í, Ï, Ð y Ý dejan un byte de control: «Ã\x81»); la base no se toca.
+# Tabla de sustituciones: cada carácter de _MOJIBAKE_CARACTERES, codificado en UTF-8 y leído como Windows-1252 y como
+# Latin-1, vuelve a ser él mismo. Se buscan solo secuencias de 2-3 caracteres que no se dan en texto normal.
+_MOJIBAKE_CARACTERES = ("áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇãõÃÕýÝÐ"
+                        "ºª¿¡«»·¨´°€“”‘’–—…")
+
+
+def _tabla_mojibake():
+    tabla = {}
+    for ch in _MOJIBAKE_CARACTERES:
+        b = ch.encode("utf-8")
+        for cod in ("cp1252", "latin-1"):
+            try:
+                roto = b.decode(cod)
+            except UnicodeDecodeError:
+                continue
+            if roto != ch:
+                tabla.setdefault(roto, ch)
+    # Comillas cuyo último byte (0x9D, sin carácter en Windows-1252) se perdió por el camino: «â€» suelto = cierre;
+    # y el euro con su byte central cambiado por «?».
+    tabla.setdefault("â€", "”")
+    tabla.setdefault("â?¬", "€")
+    # Doble lectura («MUÃƒÂ‘OZ»): «Â» + control C1 vuelve a ser el control, y una 2.ª pasada lo junta.
+    for i in range(0x80, 0xA0):
+        tabla.setdefault("Â" + chr(i), chr(i))
+    return tabla
+
+
+_TABLA_MOJIBAKE = _tabla_mojibake()
+_RE_MOJIBAKE = re.compile("|".join(re.escape(k) for k in sorted(_TABLA_MOJIBAKE, key=len, reverse=True)))
+
+# Excepciones puntuales (revisión del 03-11-2026): textos que la tabla general no puede arreglar bien, porque la letra
+# se perdió («Ã» suelta: puede ser Á, Í, Ï, Ð o Ý) o porque la fuente trae una letra equivocada («Ã“» = Ó donde va Í).
+# Solo entra un caso cuando la letra correcta está confirmada en otro registro con el mismo NIF; nunca se adivina.
+# Se aplican sobre el texto tal como viene, antes de la tabla general. Cada entrada: (texto roto, texto bueno, fuente).
+# Solo personas jurídicas: los nombres de personas físicas no se escriben en el código (el repositorio es público).
+_EXCEPCIONES_TILDES = (
+    # Contratos formales (PSCP) de Almenar. NIF B44802759: el mismo NIF sale como «ODISEA INGENIERÍA S.L.» en Pals y
+    # en Sant Pol de Mar (contratos formales) y como «Odisea ingeniería S.L» en Bellpuig. La «Ó» de la fuente es un
+    # error suyo: no se cambia la regla general («Ã“» = «Ó» es correcta en PRODUCIÓNS, PROMOCIÓN...).
+    ("ODISEA INGENIERÃ“A", "ODISEA INGENIERÍA",
+     "mismo NIF B44802759 en contratos formales de Pals, Sant Pol de Mar y Bellpuig"),
+    # Menores PLACE de Castalla (2025-07 y 2025-12). NIF B54885868: «ASESORIA DRONES ESPAÃ‘A MI PRIMER DRONE, SL» en
+    # Onil (PLACE, 2025-06) confirma la I; la «Ã» indica que llevaba tilde (Í). La Ñ ya la arregla la tabla general.
+    ("ASESORÃA DRONES", "ASESORÍA DRONES",
+     "mismo NIF B54885868 en menores PLACE de Onil, 2025-06"),
+)
+
+
+def _arreglar_tildes(t):
+    """Texto con las tildes estropeadas arregladas: primero _EXCEPCIONES_TILDES y luego _TABLA_MOJIBAKE (solo si hay
+    alguna pista: Ã, Â o â)."""
+    if "Ã" in t:
+        for roto, bueno, _fuente in _EXCEPCIONES_TILDES:
+            if roto in t:
+                t = t.replace(roto, bueno)
+    for _ in range(2):          # 2.ª pasada solo para las dobles lecturas
+        if not ("Ã" in t or "Â" in t or "â" in t):
+            break
+        t = _RE_MOJIBAKE.sub(lambda m: _TABLA_MOJIBAKE[m.group(0)], t)
+    return t
+
+
 def esc(s):
-    return html.escape(str(s or ""), quote=True)
+    return html.escape(_arreglar_tildes(str(s or "")).translate(_TABLA_CONTROLES), quote=True)
 
 
 INDICE_CARGOS_PUBLICOS = _construir_indice_cargos_publicos()
@@ -5198,9 +5368,11 @@ def alcalde_concejales_html(municipio, provincia=None):
     """Bloque HTML de alcalde/alcaldesa + desplegable de concejales para la
     ficha de un ayuntamiento, a partir de ALCALDES_CONCEJALES (Ministerio de
     Política Territorial y Memoria Democrática, ver actualizar_alcaldes.py).
-    Cada concejal enlaza a una búsqueda de la transparencia de su
-    ayuntamiento (no hay una fuente pública con la URL directa de cada uno
-    de los 266 municipios). Devuelve "" si no hay datos para el municipio.
+    Los nombres no llevan enlace: la fuente no tiene una página por persona
+    (solo descargas XLSX de toda España). Al pie de la lista va una sola línea
+    «Fuente: ..., datos a dd-mm-aaaa» con la fecha de la descarga (revisión
+    del 02-11-2026: antes cada nombre enlazaba a una búsqueda de Google).
+    Devuelve "" si no hay datos para el municipio.
 
     El sueldo del alcalde/sa (si existe en RETRIBUCIONES_ISPA, ver
     actualizar_retribuciones.py) se muestra junto a su nombre -- es la única
@@ -5215,7 +5387,8 @@ def alcalde_concejales_html(municipio, provincia=None):
         return ""
 
     alcalde = info.get("alcalde") or {}
-    nombre_alcalde = _capitalizar_nombre(alcalde.get("nombre", ""))
+    nombre_alcalde = _capitalizar_nombre(alcalde.get("nombre", "")) or (
+        _t("Nombre no mostrado") if alcalde.get("suprimido") else "")   # ver CARGOS_SUPRIMIDOS
     alcalde_html = ""
     relevo = None
     if nombre_alcalde:
@@ -5258,8 +5431,6 @@ def alcalde_concejales_html(municipio, provincia=None):
                          f'<b class="pol-nombre">{esc(nombre_alcalde)}</b>{sufijo}{retrib_html}</span>')
 
     concejales = info.get("concejales") or []
-    organismo = _nombre_organismo_municipal(municipio, info.get("provincia"))
-    transp_url = f"https://www.google.com/search?q={quote_plus(organismo + ' transparencia')}"
 
     items = []
     for c in concejales:
@@ -5269,15 +5440,18 @@ def alcalde_concejales_html(municipio, provincia=None):
         cargo_c = esc(c.get("cargo", ""))
         partido_c = c.get("partido", "")
         sufijo_c = f" ({esc(partido_c)})" if partido_c else ""
-        items.append(
-            f'<li><a href="{esc(transp_url)}" target="_blank" rel="noopener">{nombre_c}</a> '
-            f'<span class="conc-cargo">— {cargo_c}{sufijo_c}</span></li>'
-        )
+        nombre_html = (f'<span class="conc-oculto">{_t("Nombre no mostrado")}</span>' if c.get("suprimido") else
+                       f'<b class="pol-nombre">{nombre_c}</b>')
+        items.append(f'<li>{nombre_html} <span class="conc-cargo">— {cargo_c}{sufijo_c}</span></li>')
 
     dd_html = ""
     if concejales:
+        fuente = (f'<a href="{esc(ALCALDES_FUENTE_URL)}" target="_blank" rel="noopener nofollow">'
+                  f'{esc(_t("Ministerio de Política Territorial y Memoria Democrática"))}</a>')
+        pie = (_t("Fuente: {fuente}, datos a {fecha}").format(fuente=fuente, fecha=esc(ALCALDES_CONCEJALES_FECHA))
+               if ALCALDES_CONCEJALES_FECHA else _t("Fuente: {fuente}").format(fuente=fuente))
         dd_html = (f'<details class="concejales-dd"><summary>{_t("Concejales ({n})").format(n=len(concejales))}</summary>'
-                   f'<ul>{"".join(items)}</ul></details>')
+                   f'<ul>{"".join(items)}</ul><div class="pol-retrib-nota">{pie}.</div></details>')
 
     if not alcalde_html and not dd_html:
         return ""
@@ -5436,9 +5610,25 @@ def sueldos_concejales_html(municipio, provincia=None):
             f'<li><b class="pol-nombre">{esc(r["nombre"])}</b> <span class="conc-cargo">— {esc(r["cargo"])}</span> '
             f'<span class="pol-retrib">💰 {fmt_eur(r["importe"])} {esc(r["base"])}{periodo}</span> '
             f'<a href="{esc(r["fuente_url"])}" target="_blank" rel="noopener nofollow">{fuente} ↗</a></li>')
+    # Revisión del 02-11-2026: la lista de concejales (Ministerio, toda la corporación vigente) y esta (solo quien
+    # cobra, de documentos del ayuntamiento de otras fechas) no tienen por qué coincidir; 38 de 930 personas ya no
+    # estaban en la del Ministerio. Se avisa en la ficha con la fecha de cada una.
+    aviso_fuentes = ""
+    if ALCALDES_CONCEJALES.get(clave):
+        periodos = sorted({r["periodo"] for r in regs if r["periodo"]})
+        fecha_min = ALCALDES_CONCEJALES_FECHA or _t("fecha no indicada")
+        fecha_sue = "; ".join(periodos) if periodos else _t("fecha no indicada")
+        aviso_fuentes = (
+            f'<div class="pol-retrib-nota">ℹ️ '
+            + _t("Esta lista y la de concejales vienen de fuentes y fechas distintas: la de concejales, del Ministerio "
+                 "(datos a {fecha_ministerio}); la de retribuciones, de documentos del ayuntamiento ({fecha_sueldos}), "
+                 "recogidos el {fecha_recogida}. Puede haber personas que estén en una y no en la otra.").format(
+                fecha_ministerio=esc(fecha_min), fecha_sueldos=esc(fecha_sue),
+                fecha_recogida=esc(SUELDOS_CONCEJALES_FECHA or _t("fecha no indicada")))
+            + '</div>')
     return (f'<details class="concejales-dd sueldos-conc"><summary>'
             f'{_t("Retribuciones de concejales publicadas por el ayuntamiento ({n})").format(n=len(regs))}'
-            f'</summary><ul>{"".join(items)}</ul>'
+            f'</summary>{aviso_fuentes}<ul>{"".join(items)}</ul>'
             f'<div class="pol-retrib-nota">'
             f'{_t("Importes tal como figuran en la fuente oficial enlazada en cada fila, con la base y el periodo que ella indica; no se han convertido ni estimado.")}'
             + (f' <b>{_t("Nota:")}</b> {esc(_NOTAS_SUELDOS_CONCEJALES[clave])}' if clave in _NOTAS_SUELDOS_CONCEJALES else "")
@@ -6764,6 +6954,13 @@ def es_pseudo_municipio(municipio):
     return any(normalizar(m) == buscado for m in _todos_los_pseudo_nombres())
 
 
+def _n_municipios_reales(datos):
+    """Cuántos municipios de verdad hay en `datos`: sin las fichas especiales (Región de Murcia, Provincia de Girona,
+    AGE, universidades...). Pulido 28-10: la portada decía 8.141 y rankings 8.131; ahora es el mismo recuento."""
+    pseudo = {normalizar(m) for m in _todos_los_pseudo_nombres()}
+    return sum(1 for d in datos if normalizar(d.get("municipio", "")) not in pseudo)
+
+
 _RE_ORGANO_CCAA_MURCIA = re.compile(r"region(al)? de murcia")
 _EXCLUIR_ORGANO_CCAA_MURCIA = ("consorcio", "mancomunidad", "federacion de municipios")
 
@@ -6807,6 +7004,13 @@ def _guardar_pseudo_municipio_ccaa(provincia, contratos_ccaa, job_id=None):
     nombre = MUNICIPIOS_PSEUDO.get(provincia)
     if not nombre:
         return
+    # 2026-10-17 (arreglo): antes se sustituía entera con lo de este refresco, pero esos contratos ya no están en la
+    # ficha de Murcia capital (se separaron antes), así que cada refresco solo volvía a ver los de los ZIP en caché y
+    # borraba el resto (en julio eran 736; el 16-10, 105). Ahora es aditiva: se conserva lo anterior que siga siendo
+    # de la CCAA y lo nuevo sustituye al mismo enlace.
+    prev = _db_get_municipio(nombre, provincia)
+    conservados = [c for c in (prev.get("contratos", []) if prev else []) if _es_organo_ccaa_murcia(c.get("organo", ""))]
+    contratos_ccaa = _dedup_contratos_por_url(list(contratos_ccaa) + conservados)    # lo nuevo, delante, gana
     resultado = {
         "municipio":       nombre,
         "organismo":       "Comunidad Autónoma de la Región de Murcia" if provincia == "murcia" else nombre,
@@ -6905,7 +7109,7 @@ def _separar_contratos_age(contratos):
     return resto, age
 
 
-def _guardar_pseudo_municipio_acumulado(nombre_pseudo, municipio_origen, contratos_extra, job_id=None):
+def _guardar_pseudo_municipio_acumulado(nombre_pseudo, municipio_origen, contratos_extra, job_id=None, sigue=None):
     """Acumula contratos separados de un municipio murciano bajo una entrada
     pseudo-municipio (AGE, Universidad de Murcia...), tratada en el resto de
     la app igual que un ayuntamiento más.
@@ -6928,11 +7132,18 @@ def _guardar_pseudo_municipio_acumulado(nombre_pseudo, municipio_origen, contrat
     for c in contratos_extra:
         c["_origen_muni"] = origen
 
+    # 2026-10-17 (arreglo): ANTES se quitaba toda la aportación previa de este municipio y se ponía solo la de este
+    # refresco. Pero esos contratos ya no están en la ficha municipal (se separaron en refrescos anteriores), así que
+    # el refresco solo vuelve a ver los de los ZIP en caché y cada refresco borraba el resto: medido sobre la copia
+    # del 16-10, tres meses de refrescos dejaban la AGE de 1.117 contratos en 89 y la UPCT de 75 en 10. Ahora es
+    # ADITIVO, como _fusionar_historico_contratos: se conserva lo anterior y lo nuevo sustituye al mismo enlace. Un
+    # contrato anterior de este municipio solo sale si ya no encaja en esta entrada (`sigue`, el mismo criterio que
+    # lo separó), para que no queden restos si cambia la regla.
     prev = _db_get_municipio(nombre_pseudo)
     conservados = [c for c in (prev.get("contratos", []) if prev else [])
-                   if c.get("_origen_muni") != origen]
+                   if c.get("_origen_muni") != origen or sigue is None or sigue(c.get("organo", ""))]
 
-    fusionados = _dedup_contratos_por_url(conservados + list(contratos_extra))
+    fusionados = _dedup_contratos_por_url(list(contratos_extra) + conservados)    # lo nuevo, delante, gana
 
     if not fusionados and prev is None:
         return
@@ -6956,7 +7167,9 @@ def _guardar_pseudo_municipio_age(municipio_origen, contratos_age, job_id=None):
     """Acumula los contratos de la AGE separados de un municipio murciano bajo
     la entrada pseudo-municipio "Administración General del Estado". Ver
     _guardar_pseudo_municipio_acumulado."""
-    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_AGE, municipio_origen, contratos_age, job_id)
+    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_AGE, municipio_origen, contratos_age, job_id,
+                                        sigue=lambda o: _es_organo_age(o) and not _es_organo_umu(o)
+                                        and not _es_organo_upct(o))
 
 
 def _es_organo_umu(organo):
@@ -6981,7 +7194,8 @@ def _guardar_pseudo_municipio_umu(municipio_origen, contratos_umu, job_id=None):
     """Acumula los contratos de la Universidad de Murcia separados de un
     municipio murciano bajo su propia entrada pseudo-municipio. Ver
     _guardar_pseudo_municipio_acumulado."""
-    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UMU, municipio_origen, contratos_umu, job_id)
+    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UMU, municipio_origen, contratos_umu, job_id,
+                                        sigue=_es_organo_umu)
 
 
 def _es_organo_upct(organo):
@@ -6989,7 +7203,8 @@ def _es_organo_upct(organo):
 
 
 def _guardar_pseudo_municipio_upct(municipio_origen, contratos_upct, job_id=None):
-    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UPCT, municipio_origen, contratos_upct, job_id)
+    _guardar_pseudo_municipio_acumulado(NOMBRE_PSEUDO_UPCT, municipio_origen, contratos_upct, job_id,
+                                        sigue=_es_organo_upct)
 
 
 # Órganos que NO son de este municipio y se colaban por llevar su nombre dentro (medido el 13-10-2026): en Murcia
@@ -7557,6 +7772,11 @@ def _entry_to_contratos(entry_xml):
     m_fecha = re.search(r"<cbc:AwardDate>\s*(\d{4}-\d{2}-\d{2})", entry_xml)
     if m_fecha and m_fecha.group(1)[:4] >= "1990":       # la fuente trae alguna fecha absurda ("0026-..."): no se guarda
         base["fecha"] = m_fecha.group(1)
+    # Fondos europeos que declara el órgano (2026-10-17): PRTR = Plan de Recuperación, FEDER, FSE+... (ver
+    # _fondos_ue_de_entry). Solo se guarda el campo cuando hay alguno.
+    fondos_ue = _fondos_ue_de_entry(entry_xml)
+    if fondos_ue and not _es_invitacion_sda(titulo):
+        base["fondos_ue"] = fondos_ue
     if adjs:
         base["resultado_code"] = adjs[0]["resultado_code"] or resultado_code
     if not url or not _adjudicado_fiable(adjs, presupuesto_num):
@@ -10233,6 +10453,7 @@ def _aplicar_backfill_formales_place():
     Después, y con la misma regla, las licitaciones de la fase 2 (ASIGNACION_FORMALES_PLACE_DIR)."""
     _aplicar_formales_por_provincia(BACKFILL_FORMALES_PLACE_DIR, _BACKFILL_FORMALES_PLACE_CLAVE, "backfill_formales_place")
     _aplicar_formales_por_provincia(ASIGNACION_FORMALES_PLACE_DIR, _ASIGNACION_FORMALES_PLACE_CLAVE, "asignacion_formales_place")
+    _aplicar_formales_por_provincia(BACKFILL_MURCIA_DIR, _BACKFILL_MURCIA_CLAVE, "backfill_formales_murcia")
 
 
 def _aplicar_formales_por_provincia(directorio, prefijo_clave, etiqueta):
@@ -10242,12 +10463,13 @@ def _aplicar_formales_por_provincia(directorio, prefijo_clave, etiqueta):
     for fichero in sorted(os.listdir(directorio)):
         if not fichero.endswith(".json.gz"):
             continue
-        provincia = fichero[:-len(".json.gz")]
+        nombre_fichero = fichero[:-len(".json.gz")]
+        provincia = nombre_fichero.split("__")[0]        # "<provincia>" o "<provincia>__<lote>" (backfill de Murcia)
         try:
             with open(os.path.join(directorio, fichero), "rb") as f:
                 crudo = f.read()
             huella = hashlib.sha256(crudo).hexdigest()[:16]
-            clave_hash = prefijo_clave + provincia
+            clave_hash = prefijo_clave + nombre_fichero
             with _db_lock:
                 fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave_hash,)).fetchone()
             if fila and fila[0] == huella:
@@ -10317,8 +10539,7 @@ def _subir_asignacion_formales(token, provincia, crudo):
     generar_asignacion_place.py ({"municipios": {municipio: [contratos]}}, en gzip). Lo valida, lo guarda en el disco
     persistente (escritura atómica) y lo aplica en el momento con la misma fusión aditiva del arranque. Devuelve
     (código, cuerpo JSON) solo con recuentos: nunca nombres ni NIF."""
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or token != admin_token:
+    if not _token_admin_valido(token):
         return 403, {"error": "No autorizado."}
     if provincia not in MUNICIPIOS_POR_PROVINCIA:
         return 400, {"error": "Provincia no válida."}
@@ -10347,6 +10568,55 @@ def _subir_asignacion_formales(token, provincia, crudo):
           f"en {fichas} fichas", flush=True)
     return 200, {"provincia": provincia, "municipios": len(munis), "contratos": n_contratos, "anadidos": anadidos,
                  "fichas": fichas}
+
+# ─── Backfill de formales de la provincia de Murcia 2021-2024 (2026-10-17, rama wip/backfill-murcia) ─────────────────
+# El backfill nacional del 02-10 dejó fuera Murcia por error. Los contratos que faltan se calcularon EN LOCAL pasando
+# los ZIP oficiales de PLACE de 202109-202411 por el refresco normal de cada municipio de Murcia (_job_run, con el
+# reparto de AGE/UMU/UPCT/órganos ajenos) sobre la copia de producción, y solo viaja lo NUEVO de cada ficha. Llevan
+# adjudicatarios: no van en el repositorio; llegan por POST con el token, por lotes ("<provincia>__<lote>.json.gz"),
+# se guardan en el disco persistente y se aplican al momento y en cada arranque con la fusión aditiva de siempre
+# (_aplicar_formales_por_provincia: gana lo ya guardado, idempotente por huella de cada lote).
+BACKFILL_MURCIA_DIR = os.path.join(DATA_DIR, "backfill_formales_murcia")
+_BACKFILL_MURCIA_CLAVE = "backfill_formales_murcia_sha::"     # + "<provincia>__<lote>"
+
+
+def _subir_backfill_murcia(token, provincia, lote, crudo):
+    """POST /admin/backfill-murcia?provincia=...&lote=N con el token en la cabecera X-Admin-Token (nunca en la URL, para
+    que no quede en los registros). Devuelve (código, cuerpo) solo con recuentos."""
+    if not _token_admin_valido(token):
+        return 403, {"error": "No autorizado."}
+    if provincia not in MUNICIPIOS_POR_PROVINCIA:
+        return 400, {"error": "Provincia no válida."}
+    if not (lote or "").isdigit() or not 1 <= int(lote) <= 99:
+        return 400, {"error": "Lote no válido (1-99)."}
+    try:
+        datos = json.loads(_gzip.decompress(crudo).decode("utf-8"))
+        munis = datos.get("municipios")
+        if not isinstance(munis, dict) or not munis:
+            return 400, {"error": "Fichero no válido: falta 'municipios'."}
+        pseudos = {normalizar(p) for p in _pseudos_de_provincia(provincia)}
+        ajenos = [m for m in munis if not municipio_valido_provincia(m, provincia) and normalizar(m) not in pseudos]
+        if ajenos:
+            return 400, {"error": f"Fichero no válido: {len(ajenos)} fichas no son de {provincia}."}
+        if not all(isinstance(cs, list) and all(isinstance(c, dict) and c.get("titulo") for c in cs) for cs in munis.values()):
+            return 400, {"error": "Fichero no válido: contratos sin título."}
+        n_contratos = sum(len(cs) for cs in munis.values())
+    except (ValueError, OSError, AttributeError, EOFError) as e:
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    del datos
+    os.makedirs(BACKFILL_MURCIA_DIR, exist_ok=True)
+    destino = os.path.join(BACKFILL_MURCIA_DIR, f"{provincia}__{int(lote):02d}.json.gz")
+    with open(destino + ".nuevo", "wb") as f:
+        f.write(crudo)
+    os.replace(destino + ".nuevo", destino)
+    anadidos, fichas = _aplicar_formales_por_provincia(BACKFILL_MURCIA_DIR, _BACKFILL_MURCIA_CLAVE,
+                                                       "backfill_formales_murcia") or (0, 0)
+    for m in munis:
+        _cache_invalidate(m, provincia)
+    print(f"[admin] backfill_formales_murcia: {provincia} lote {lote}, {n_contratos} contratos en el fichero, "
+          f"{anadidos} anadidos en {fichas} fichas", flush=True)
+    return 200, {"provincia": provincia, "lote": int(lote), "fichas_en_fichero": len(munis), "contratos": n_contratos,
+                 "anadidos": anadidos, "fichas_cambiadas": fichas}
 
 # ─── Entidades locales que no son un municipio (fase 2, paso 5; 2026-10-14) ─────────────────────────────────────────
 # Diputaciones, cabildos y consells, mancomunidades, consorcios, comarcas, áreas metropolitanas, entidades locales
@@ -10513,8 +10783,7 @@ def _aplicar_entidades_locales():
 def _subir_entidades_locales(token, provincia, crudo):
     """POST /admin/entidades-locales?token=...&provincia=... con ent/<provincia>.json.gz del generador. Lo valida, lo
     guarda en el disco persistente y lo aplica. Responde solo recuentos."""
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or token != admin_token:
+    if not _token_admin_valido(token):
         return 403, {"error": "No autorizado."}
     if provincia not in MUNICIPIOS_POR_PROVINCIA and provincia != "sin_provincia":
         return 400, {"error": "Provincia no válida."}
@@ -10696,7 +10965,9 @@ def render_entidad_html(qs):
     contratos = d.get("contratos") or []
     total_pages = max(1, (len(contratos) + PAGE_SIZE - 1) // PAGE_SIZE)
     page = min(page, total_pages)
-    filas = "".join(_render_fila_contrato(c) for c in contratos[(page - 1) * PAGE_SIZE:page * PAGE_SIZE]) or \
+    repetidas = _adjudicatarias_repetidas(contratos)
+    filas = "".join(_render_fila_contrato(c, repetida=repetidas.get(id(c), 0))
+                    for c in contratos[(page - 1) * PAGE_SIZE:page * PAGE_SIZE]) or \
         f'<tr><td colspan="4" class="empty">{_t("Sin contratos adjudicados encontrados")}</td></tr>'
     importe = sum(_importe_contable(c) for c in contratos)
     empresas = len({(c.get("nif") or normalizar(c.get("empresa") or "")) for c in contratos if c.get("empresa")})
@@ -10718,7 +10989,7 @@ def render_entidad_html(qs):
   </div>
   <div class="cm-base-nota">{_t("Esta entidad no es un ayuntamiento: sus contratos no se suman a ningún municipio ni cuentan en el Índice de Transparencia.")}
   {_t("Contratos formales de la Plataforma de Contratación del Sector Público, asignados a la entidad por la jerarquía oficial de su órgano y su código DIR3.")}</div>
-  <div class="tbl-scroll"><table>
+  <div class="tbl-scroll"><table class="t-tarjeta">
     <tr><th>{_t("Empresa adjudicataria / Contrato")}</th><th>{_t("Importe")}</th><th>{_t("Directivo / Cargo")}</th><th>{_t("Estado / Fuente")}</th></tr>
     {filas}
   </table></div>
@@ -10942,6 +11213,169 @@ def _aplicar_fechas_formales():
               f"{n_munis} municipios ({len(fechas)} licitaciones en el fichero)", flush=True)
     except Exception as e:
         print(f"[startup] fechas_formales: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
+# ─── Contratos de PLACE con fondos europeos (2026-10-17, encargo de César) ──────────────────────────────────────────
+# PLACE publica en cada licitación los programas que la financian (cbc:FundingProgramCode, lista FundingProgramCode-2.08).
+# El analizador lo guarda desde hoy en lo nuevo (campo `fondos_ue`); lo ya guardado se marca con el fichero de
+# generar_fondos_ue_place.py ({idEvl: "EU,PRTR"}, sin datos personales). Las plataformas autonómicas (PSCP, Euskadi,
+# Navarra), el BORM y los contratos menores no traen este dato: la marca solo existe en los formales de PLACE.
+FONDOS_UE_PLACE_FILE = os.path.join(BASE_DIR, "fondos_ue_place.json.gz")
+_FONDOS_UE_PLACE_CLAVE = "fondos_ue_place_sha"
+_FONDOS_UE_PLACE_RESUMEN = "fondos_ue_place_resumen"
+_FONDOS_UE_PLACE_DIAS = 7       # al arrancar, el resumen se rehace si tiene más de una semana (entran los contratos nuevos)
+FONDOS_UE_CODIGOS = ("PRTR", "FEDER", "FSE+", "FEADER", "FEMP", "REU", "OFE", "EU")
+_RE_FUNDING_CODE = re.compile(r"<(?:[\w-]+:)?FundingProgramCode\b[^>]*>\s*([^<\s]+)\s*<")
+_RE_NIF_SOCIEDAD = re.compile(r"^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$")
+# Invitaciones de un sistema dinámico de adquisición (SDA): en PLACE heredan los fondos declarados en el sistema, aunque la
+# compra concreta no tenga que ver (Almassora: bebidas y actuaciones de fiestas con FEDER). Decisión de César del 19-10:
+# no se marcan.
+_RE_INVITACION_SDA = re.compile(r"^\s*SDA\b|sistema\s+din[aá]mico\s+de\s+adquisici", re.IGNORECASE)
+
+
+def _es_invitacion_sda(titulo):
+    return bool(_RE_INVITACION_SDA.search(titulo or ""))
+
+
+def _fondos_ue_etiquetas():
+    return {"PRTR": _t("Plan de Recuperación"), "FEDER": "FEDER", "FSE+": "FSE+", "FEADER": "FEADER", "FEMP": "FEMP",
+            "REU": "REACT-UE", "OFE": _t("Otros fondos europeos"), "EU": _t("Fondos UE")}
+
+
+def _fondos_ue_de_entry(entry_xml):
+    """Códigos europeos de financiación de una licitación de PLACE, en el orden de FONDOS_UE_CODIGOS."""
+    vistos = {c.strip().upper() for c in _RE_FUNDING_CODE.findall(entry_xml)}
+    return [c for c in FONDOS_UE_CODIGOS if c in vistos]
+
+
+def _fondos_ue_visibles(codigos):
+    """Lo que se enseña: el código genérico "EU" solo cuando no hay otro más concreto."""
+    concretos = [c for c in codigos or [] if c != "EU"]
+    return concretos or (["EU"] if "EU" in (codigos or []) else [])
+
+
+def _aplicar_fondos_ue_place(forzar=False):
+    """Marca los contratos de PLACE ya guardados con sus fondos europeos y calcula el resumen de /fondos-ue (en
+    `settings`). Al arrancar, solo si cambia el fichero o si el resumen tiene más de una semana. Solo AÑADE el campo
+    `fondos_ue` a contratos de PLACE que no lo tienen: no añade, quita ni cambia nada más. Una ficha cada vez."""
+    if not _DISCO_CONFIABLE:
+        return
+    try:
+        fondos, huella = {}, "sin-fichero"
+        if os.path.exists(FONDOS_UE_PLACE_FILE):
+            with open(FONDOS_UE_PLACE_FILE, "rb") as f:
+                crudo = f.read()
+            huella = hashlib.sha256(crudo).hexdigest()[:16]
+            fondos = json.loads(_gzip.decompress(crudo).decode("utf-8")).get("fondos", {})
+            del crudo
+        with _db_lock:
+            fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_FONDOS_UE_PLACE_CLAVE,)).fetchone()
+            previo = _db.execute("SELECT valor FROM settings WHERE clave=?", (_FONDOS_UE_PLACE_RESUMEN,)).fetchone()
+        try:
+            edad = time.time() - float(json.loads(previo[0]).get("ts", 0)) if previo else None
+        except (ValueError, TypeError):
+            edad = None
+        if not forzar and fila and fila[0] == huella and edad is not None and edad < _FONDOS_UE_PLACE_DIAS * 86400:
+            return
+        t0 = time.time()
+        por_fondo, por_prov, top, vistos = {}, {}, [], set()
+        cuenta = {"marcados": 0, "fichas": 0}
+
+        def _sumar(destino, clave, importe):
+            v = destino.setdefault(clave, [0, 0.0])
+            v[0] += 1
+            v[1] = round(v[1] + importe, 2)
+
+        def _recorrer(tabla, col):
+            with _db_lock:
+                claves = [k for (k,) in _db.execute(f"SELECT {col} FROM {tabla}")]
+            for key in claves:
+                with _db_lock:
+                    row = _db.execute(f"SELECT data FROM {tabla} WHERE {col}=?", (key,)).fetchone()
+                if not row or "PLACE" not in row[0]:
+                    continue
+                try:
+                    d = json.loads(row[0])
+                except ValueError:
+                    continue
+                tocados = 0
+                provincia = d.get("provincia") or ""
+                lugar = d.get("municipio") or d.get("nombre") or ""
+                for c in d.get("contratos", []):
+                    if c.get("fuente") != "PLACE" or _es_invitacion_sda(c.get("titulo")):
+                        continue
+                    cods = c.get("fondos_ue")
+                    if not cods:
+                        m = _RE_IDEVL.search(c.get("url") or "")
+                        v = fondos.get(m.group(1)) if m else None
+                        if not v:
+                            continue
+                        cods = c["fondos_ue"] = v.split(",")
+                        tocados += 1
+                    url = c.get("url") or f"{tabla}:{key}:{len(vistos)}"
+                    if url in vistos:
+                        continue
+                    vistos.add(url)
+                    # mismas reglas que las sumas del resto del sitio: los acuerdos marco de centrales no se suman
+                    importe = 0.0 if c.get("importe_aviso") else float(c.get("importe_num") or 0)
+                    for cod in _fondos_ue_visibles(cods):
+                        _sumar(por_fondo, cod, importe)
+                    prov = por_prov.setdefault(provincia, {})
+                    _sumar(prov, "UE", importe)
+                    if "PRTR" in cods:
+                        _sumar(prov, "PRTR", importe)
+                        if importe > 0:
+                            nif = _nif_limpio(c.get("nif"))
+                            top.append({"importe": importe, "titulo": (c.get("titulo") or "")[:160],
+                                        "organo": (c.get("organo") or "")[:120],
+                                        # nunca el nombre de una persona física (DNI/NIE o NIF dudoso)
+                                        "empresa": (c.get("empresa") or "") if _RE_NIF_SOCIEDAD.match(nif) else "",
+                                        "url": c.get("url") or "", "lugar": lugar, "provincia": provincia,
+                                        "fecha": c.get("fecha") or ""})
+                            if len(top) > 400:
+                                top.sort(key=lambda x: -x["importe"])
+                                del top[50:]
+                if tocados:
+                    with _db_lock:
+                        _db.execute(f"UPDATE {tabla} SET data=? WHERE {col}=?", (json.dumps(d, ensure_ascii=False), key))
+                        _db.commit()
+                    cuenta["marcados"] += tocados
+                    cuenta["fichas"] += 1
+                del d
+
+        _recorrer("municipios", "municipio")
+        _recorrer("entidades_locales", "clave")
+        fondos.clear()
+        top.sort(key=lambda x: -x["importe"])
+        espana = {"UE": [0, 0.0], "PRTR": [0, 0.0]}
+        for p in por_prov.values():
+            for g, (n, eur) in p.items():
+                espana[g][0] += n
+                espana[g][1] = round(espana[g][1] + eur, 2)
+        resumen = {"ts": time.time(), "fecha": _ahora_madrid().strftime("%Y-%m-%d"), "n": espana["UE"][0],
+                   "espana": espana, "por_fondo": por_fondo, "provincias": por_prov, "top": top[:30]}
+        with _db_lock:
+            for clave, valor in ((_FONDOS_UE_PLACE_CLAVE, huella),
+                                 (_FONDOS_UE_PLACE_RESUMEN, json.dumps(resumen, ensure_ascii=False))):
+                _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                            "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (clave, valor))
+            _db.commit()
+        _FUE_CACHE.clear()
+        print(f"[startup] fondos_ue_place: {cuenta['marcados']} contratos marcados en {cuenta['fichas']} fichas; "
+              f"{espana['UE'][0]} con fondos UE ({espana['PRTR'][0]} del Plan de Recuperación) en "
+              f"{time.time() - t0:.0f} s", flush=True)
+    except Exception as e:
+        print(f"[startup] fondos_ue_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
+
+
+def _fondos_ue_place_resumen():
+    with _db_lock:
+        fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (_FONDOS_UE_PLACE_RESUMEN,)).fetchone()
+    try:
+        r = json.loads(fila[0]) if fila else None
+    except ValueError:
+        return None
+    return r if r and r.get("n") else None
 
 
 CORRECCION_FORMALES_5ANIOS_FILE = os.path.join(BASE_DIR, "correcciones_formales_5anios.json.gz")
@@ -11215,6 +11649,8 @@ def buscar_en_pscp(municipio, provincia="girona", job_id=None):
 # importe (se guarda todo), sección propia colapsable en la ficha de municipio.
 RPC_MENORS_URL = "https://analisi.transparenciacatalunya.cat/resource/hb6v-jcbf.json"
 RPC_MENORS_DESDE_ANY = 2021
+RPC_MENORS_INTENTOS = 3            # 1 petición + 2 reintentos por página ante timeout/5xx (2026-10-25)
+RPC_MENORS_PAUSA_REINTENTO = 5     # segundos entre reintentos
 
 
 def _variantes_nombre_para_detector(nombre):
@@ -11322,25 +11758,40 @@ def buscar_en_rpc_menors(municipio, provincia, job_id=None):
         _log(job_id, f"  RPC: municipio sin codi_ine10 mapeado ({municipio})")
         return []
 
-    _log(job_id, "Consultando RPC (Registre Públic de Contractes, contractes menors)…")
+    _log(job_id, f"Consultando RPC (Registre Públic de Contractes, contractes menors): {municipio}…")
     filas = []
     limit, offset = 1000, 0
     while True:
-        try:
-            r = session.get(RPC_MENORS_URL, params={
-                "$where": (f"id_organisme_contractant='{ine10}' AND "
-                           f"procediment_adjudicacio='Menor' AND "
-                           f"exercici >= '{RPC_MENORS_DESDE_ANY}'"),
-                "$order": "codi_expedient",
-                "$limit": limit,
-                "$offset": offset,
-            }, timeout=HTTP_TIMEOUT * 4)  # SODA puede tardar más que PLACE/BORM
-            if r.status_code != 200:
-                _log(job_id, f"  RPC: HTTP {r.status_code}")
+        # Orden por :id (identificador interno de Socrata), no por codi_expedient: medido el 2026-10-25 en Girona
+        # capital (31.814 filas), ordenar por codi_expedient tardaba >120 s por página y cortaba los municipios grandes
+        # por timeout; con :id, 2,8 s (offset 0) y 9 s (offset 30.000). El orden da igual al resultado
+        # (_dedup_rpc_menors no depende de él), solo hace falta que sea estable para paginar con $offset.
+        pagina = None
+        for intento in range(1, RPC_MENORS_INTENTOS + 1):
+            try:
+                r = session.get(RPC_MENORS_URL, params={
+                    "$where": (f"id_organisme_contractant='{ine10}' AND "
+                               f"procediment_adjudicacio='Menor' AND "
+                               f"exercici >= '{RPC_MENORS_DESDE_ANY}'"),
+                    "$order": ":id",
+                    "$limit": limit,
+                    "$offset": offset,
+                }, timeout=HTTP_TIMEOUT * 4)  # SODA puede tardar más que PLACE/BORM
+                if r.status_code == 200:
+                    pagina = r.json()
+                    break
+                motivo = f"HTTP {r.status_code}"
+                # 4xx (salvo 429) = error de la petición: reintentar no sirve
+                reintentable = r.status_code >= 500 or r.status_code == 429
+            except Exception as e:
+                motivo, reintentable = type(e).__name__, True
+            if reintentable and intento < RPC_MENORS_INTENTOS:
+                _log(job_id, f"  RPC: {motivo} en {municipio} (offset {offset}), reintento {intento}/{RPC_MENORS_INTENTOS - 1}")
+                time.sleep(RPC_MENORS_PAUSA_REINTENTO)
+            else:
+                _log(job_id, f"  RPC no disponible en {municipio} ({motivo}, offset {offset}): se guarda lo leído hasta aquí")
                 break
-            pagina = r.json()
-        except Exception as e:
-            _log(job_id, f"  RPC no disponible ({type(e).__name__})")
+        if pagina is None:
             break
 
         if not pagina:
@@ -11352,7 +11803,7 @@ def buscar_en_rpc_menors(municipio, provincia, job_id=None):
 
     filas = _dedup_rpc_menors(filas)
     registros = [_fila_rpc_menor_a_registro(f, municipio, provincia) for f in filas]
-    _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados")
+    _log(job_id, f"  RPC: {len(registros)} contractes menors encontrados ({municipio})")
     return registros
 
 
@@ -13013,6 +13464,8 @@ _SQL_INDICES_FONDOS_UE = (
     # solo con este índice (sin leer las filas, que son anchas) salen los recuentos, las sumas y la lista de provincias
     "CREATE INDEX IF NOT EXISTS idx_fue_sumas ON {tabla}(ambito, provincia, comunidad, fuente, importe_num)",
     "CREATE INDEX IF NOT EXISTS idx_fue_sumas_com ON {tabla}(comunidad, ambito, fuente, importe_num)",
+    # 2026-10-17: los 100 perceptores del Plan de Recuperación se leen por fuente (sin esto, recorrido entero)
+    "CREATE INDEX IF NOT EXISTS idx_fue_fuente ON {tabla}(fuente, importe_num DESC)",
 )
 _FUE_COLUMNAS = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario", "nif", "rol",
                  "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts", "municipio_match",
@@ -13115,6 +13568,8 @@ def _fue_filtro(f):
     if f.get("fuente"):
         where.append("fuente = ?")
         args.append(f["fuente"])
+    else:
+        where.append("fuente <> 'mrr100'")      # los 100 mayores perceptores del Plan van en su propio bloque
     return (" WHERE " + " AND ".join(where)) if where else "", args
 
 
@@ -13123,7 +13578,7 @@ def _db_fondos_ue_resumen(f):
     where, args = _fue_filtro(f)
 
     def _calcular():
-        res = {"n": 0, "importe": 0.0, "cordis": 0, "cohesion": 0}
+        res = {"n": 0, "importe": 0.0, "cordis": 0, "cohesion": 0, "kohesio": 0}
         with _db_lock:
             filas = _db.execute(f"SELECT fuente, count(*), coalesce(sum(importe_num), 0) FROM fondos_ue{where} "
                                 f"GROUP BY fuente", args).fetchall()
@@ -14943,10 +15398,15 @@ def _reprocesar_meses_place(meses):
 # "Vigente" = última versión en PUB y fecha fin de presentación no vencida (ver licitaciones_place.py).
 LIC_CICLO_S = 3 * 3600
 LIC_MAX_PAGINAS_ATOM = 40
+# Versión del lector: al subirla, los ZIP de los últimos LIC_MESES_RELEER meses se vuelven a leer una vez para rellenar
+# lo nuevo (":req" = columna requisitos del filtro por empresa, 2026-10-27). Los más antiguos ya no tienen abiertas.
+LIC_VERSION_LECTOR = ":req"
+LIC_MESES_RELEER = 4
 _LIC_ESTADO = {"estado": "sin_arrancar"}
+# "visto" va siempre la última: las filas de las cerradas se rellenan con None hasta ella
 _LIC_COLUMNAS = ("id", "actualizado", "estado", "fin_plazo", "titulo", "url", "expediente", "organo", "nif_organo",
                  "dir3", "ambito", "provincia", "comunidad", "municipio", "cpv", "cpv2", "tipo", "procedimiento",
-                 "presupuesto", "valor_estimado", "lotes", "busqueda", "visto")
+                 "presupuesto", "valor_estimado", "lotes", "busqueda", "requisitos", "visto")
 _SQL_LIC_UPSERT = (f"INSERT INTO licitaciones ({', '.join(_LIC_COLUMNAS)}) VALUES ({', '.join('?' * len(_LIC_COLUMNAS))}) "
                    f"ON CONFLICT(id) DO UPDATE SET "
                    + ", ".join(f"{c}=excluded.{c}" for c in _LIC_COLUMNAS[1:])
@@ -14956,10 +15416,10 @@ _LIC_MUNI_MEMO = {}
 _LIC_REGEX_MUNI = {}
 
 
-def _ahora_madrid():
+def _ahora_madrid(ts=None):
     """Fecha y hora peninsular sin depender de tzdata (no está en todos los Windows): horario de verano europeo, del
-    último domingo de marzo al último domingo de octubre, a la 01:00 UTC."""
-    ahora = datetime.now(timezone.utc)
+    último domingo de marzo al último domingo de octubre, a la 01:00 UTC. Con `ts` (segundos), la de ese momento."""
+    ahora = datetime.now(timezone.utc) if ts is None else datetime.fromtimestamp(ts, timezone.utc)
 
     def _ultimo_domingo(mes):
         d = datetime(ahora.year, mes, 31, 1, tzinfo=timezone.utc)
@@ -15018,7 +15478,7 @@ def _licitacion_fila(r, visto):
     return (r["id"], r["actualizado"], r["estado"], r["fin_plazo"], r["titulo"][:500], r["url"], r["expediente"][:120],
             r["organo"][:300], r["nif_organo"], r["dir3"], r["ambito"], provincia, comunidad, municipio, r["cpv"],
             r["cpv"][:2], r["tipo"], r["procedimiento"], r["presupuesto"], r["valor_estimado"], r["lotes"],
-            normalizar(f'{r["titulo"]} {r["organo"]} {r["expediente"]}')[:800], visto)
+            normalizar(f'{r["titulo"]} {r["organo"]} {r["expediente"]}')[:800], LIC.requisitos_json(r), visto)
 
 
 def _licitaciones_ingerir_atom(raw):
@@ -15044,6 +15504,13 @@ def _licitaciones_ingerir_atom(raw):
     return n, abiertas, (min(fechas) if fechas else ""), (max(fechas) if fechas else "")
 
 
+def _lic_mes_corte_relectura():
+    """"AAAAMM" del mes más antiguo cuyo ZIP se relee al cambiar LIC_VERSION_LECTOR."""
+    hoy = _ahora_madrid()
+    m = hoy.year * 12 + hoy.month - 1 - (LIC_MESES_RELEER - 1)
+    return f"{m // 12}{m % 12 + 1:02d}"
+
+
 def _licitaciones_desde_zips():
     """Recorre los ZIP de place_cache/ que tengan una versión nueva (fecha+tamaño) desde la última lectura."""
     for f in sorted(os.listdir(CACHE_DIR)):
@@ -15056,8 +15523,10 @@ def _licitaciones_desde_zips():
         clave = "licitaciones_zip::" + f
         with _db_lock:
             fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
-        if fila and fila[0] == version:
+        if fila and fila[0].startswith(version) and (fila[0] == version + LIC_VERSION_LECTOR
+                                                     or f[6:12] < _lic_mes_corte_relectura()):
             continue
+        version += LIC_VERSION_LECTOR
         _LIC_ESTADO.update(estado="leyendo_zip", zip=f)
         n = abiertas = 0
         with zipfile.ZipFile(ruta) as z:
@@ -15151,9 +15620,15 @@ def _licitaciones_bg(esperar=None):
 # Pestaña oculta hasta que César revise el aviso legal de reutilización de la BDNS: SUBVENCIONES_PUBLICAS.
 SUBVENCIONES_PUBLICAS = os.environ.get("CONVOCATORIAS_SUBVENCIONES", "") == "1"
 SUBV_MINIMO_SUBIDA = 1000           # una subida con menos convocatorias se rechaza (fichero roto o carga a medias)
+# Una sola subida a la vez (2026-10-25): el 22-10 el proxy cortó una subida a los ~100 s con un 500 mientras la web
+# seguía guardándola. Si el flujo reintenta, las dos escribirían a la vez en subvenciones_nueva y se pisarían; con
+# esto la segunda recibe un 423 (no 409: ese es el rechazo de la protección de subidas, que no se reintenta) y el
+# flujo espera a que acabe la primera. Basta un candado en memoria: la web corre
+# en un solo trabajador (--workers 1 en render.yaml).
+_subvenciones_subida_lock = threading.Lock()
 _SUBV_COLUMNAS = ("bdns", "registrada", "titulo", "titulo_cooficial", "nivel1", "nivel2", "organo", "nuts", "provincia",
                   "comunidad", "municipio", "presupuesto", "beneficiarios", "sector", "finalidad", "instrumento",
-                  "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda")
+                  "inicio", "fin", "texto_fin", "url_bases", "mrr", "busqueda", "cnae", "sectores")
 _SUBV_MUNI_POR_NOMBRE = {}
 
 
@@ -15192,7 +15667,99 @@ def _subvencion_fila(d):
             d.get("sector", ""), d.get("finalidad", ""), d.get("instrumento", ""), d.get("inicio") or "",
             d.get("fin") or "", (d.get("texto_fin") or "")[:500], d.get("url_bases", ""), 1 if d.get("mrr") else 0,
             normalizar(f'{d.get("titulo", "")} {d.get("titulo_cooficial", "")} {d.get("organo", "")} '
-                       f'{d.get("nivel2", "")}')[:1500])
+                       f'{d.get("nivel2", "")}')[:1500], d.get("cnae", ""),
+            _subvencion_sectores(d.get("titulo", ""), d.get("finalidad", ""), d.get("cnae", "")))
+
+
+# Clasificador de subvenciones por sector (2026-10-17, rama wip/subvenciones-sector; aún no se usa en ninguna página).
+# Método E de la prueba del 17-10 (INFORME noche 17-10): una convocatoria «puede ser» de un sector si sus códigos CNAE
+# de la BDNS lo incluyen y no es nominativa ni un convenio, o si el título habla de empresas/pymes/comercio/empleo y la
+# finalidad es económica. Es una pista para filtrar, nunca una garantía: siempre hay que leer las bases.
+_SUBV_EXCLUYE = re.compile(r"nominativ|conveni|adenda|prorroga|concesion directa a |subvencio nominativa|nom\.")
+_SUBV_TITULO_EMPRESA = re.compile(r"pyme|empresa|autonom|autoempleo|comerci|emprend|negocio|contrataci|competitiv|"
+                                  r"innovaci|actividades economicas|productiv")
+_SUBV_FINALIDAD_ECONOMICA = {"Comercio, Turismo y Pymes", "Fomento del Empleo", "Investigación, desarrollo e innovación",
+                             "Industria y Energía", "Otras actuaciones de carácter económico"}
+
+
+def _cnae_compatible(codigo, objetivo):
+    """codigo: un CNAE de la BDNS (sección "G", división "47", grupo "47.6"...). objetivo: CNAE de la empresa
+    ("47.61") y su sección ("G"). Compatible si uno contiene al otro."""
+    codigo = (codigo or "").strip()
+    if not codigo:
+        return False
+    for o in objetivo:
+        if codigo.isalpha() or o.isalpha():
+            if codigo == o:
+                return True
+        elif codigo.startswith(o) or o.startswith(codigo):
+            return True
+    return False
+
+
+def _subvencion_posible_sector(titulo, finalidad, cnae, objetivo, por_titulo_vale=True):
+    """True si la convocatoria puede ser del sector `objetivo` (lista de CNAE y secciones, p. ej. ["G", "47.61"])."""
+    t = normalizar(titulo or "")
+    excluida = bool(_SUBV_EXCLUYE.search(t))
+    por_cnae = not excluida and any(_cnae_compatible(c, objetivo) for c in (cnae or "").split())
+    por_titulo = (por_titulo_vale and not excluida and bool(_SUBV_TITULO_EMPRESA.search(t))
+                  and finalidad in _SUBV_FINALIDAD_ECONOMICA)
+    return por_cnae or por_titulo
+
+
+# Sectores del desplegable de /convocatorias (las divisiones CPV de las licitaciones, LIC.CPV_DIVISIONES) traducidos a
+# códigos CNAE-2025, que son los que usa la BDNS (secciones con letra y divisiones/grupos con número; ojo: en la
+# CNAE-2025 J es edición y audiovisual, K telecomunicaciones e informática, L finanzas, M inmobiliarias, N actividades
+# profesionales, O administrativas, P Administración pública, Q educación, R sanidad, S cultura y deporte, T otros
+# servicios). La letra de la sección entra para que una convocatoria «para toda la industria manufacturera» (C)
+# aparezca en alimentación, textil, maquinaria... Las ayudas genéricas a empresas (pymes, comercio, empleo con
+# finalidad económica) aparecen en todos los sectores salvo «Administración pública».
+SUBV_SECTOR_CNAE = {
+    "03": ["A", "01", "02", "03"], "09": ["B", "D", "05", "06", "19", "35"], "14": ["B", "05", "06", "07", "08", "09"],
+    "15": ["C", "10", "11"], "16": ["C", "28"], "18": ["C", "14", "15"], "19": ["C", "13", "15"],
+    "22": ["C", "J", "18", "58"], "24": ["C", "20", "21"], "30": ["C", "26"], "31": ["C", "27"],
+    "32": ["C", "J", "K", "26", "60", "61"], "33": ["C", "21", "32.5"], "34": ["C", "29", "30"],
+    "35": ["C", "O", "25.4", "30.4", "80"], "37": ["C", "32"], "38": ["C", "26.5", "26.7"], "39": ["C", "31", "20.4"],
+    "41": ["E", "36"], "42": ["C", "28"], "43": ["C", "28.9"], "44": ["C", "16", "22", "23", "24", "25"],
+    "45": ["F", "41", "42", "43"], "48": ["J", "K", "58.2", "62"], "50": ["C", "33", "95"],
+    "51": ["C", "F", "33.2", "43.2"], "55": ["I", "55", "56"], "60": ["H", "49", "50", "51"], "63": ["H", "52", "79"],
+    "64": ["H", "K", "53", "61"], "65": ["D", "E", "35", "36"], "66": ["L", "64", "65", "66"], "70": ["M", "68"],
+    "71": ["N", "71"], "72": ["K", "62", "63"], "73": ["N", "72"], "75": ["P", "84"], "76": ["B", "09"],
+    "77": ["A", "01.6", "02.4", "81.3"], "79": ["N", "O", "69", "70", "73", "74", "78", "80", "82"],
+    "80": ["Q", "85"], "85": ["R", "86", "87", "88"], "90": ["E", "37", "38", "39", "81.2"],
+    "92": ["S", "90", "91", "92", "93"], "98": ["T", "94", "95", "96"],
+}
+
+
+def _subvencion_sectores(titulo, finalidad, cnae):
+    """Columna `sectores`: las divisiones CPV del desplegable en las que la convocatoria PUEDE encajar, entre espacios
+    (" 45 71 ") para filtrar con LIKE '% 45 %'. Clasificación automática: puede fallar (ver el aviso de la página)."""
+    return " " + " ".join(k for k, objetivo in SUBV_SECTOR_CNAE.items()
+                          if _subvencion_posible_sector(titulo, finalidad, cnae, objetivo, por_titulo_vale=k != "75")) + " "
+
+
+def _subvenciones_reclasificar():
+    """Hilo de fondo al arrancar: calcula `sectores` de las filas que no lo tienen (tabla subida antes de esta columna)
+    por tandas de 500 y sin retener el candado entre tandas, para no frenar las páginas. Las subidas nuevas ya lo traen
+    calculado; si una subida sustituye la tabla a mitad, las filas nuevas ya vienen con él y el bucle termina solo."""
+    hechas = 0
+    try:
+        while True:
+            with _db_lock:
+                filas = _db.execute("SELECT bdns, titulo, finalidad, cnae FROM subvenciones WHERE sectores IS NULL "
+                                    "LIMIT 500").fetchall()
+            if not filas:
+                break
+            lote = [(_subvencion_sectores(t, fi, c), b) for b, t, fi, c in filas]
+            with _db_lock:
+                _db.executemany("UPDATE subvenciones SET sectores=? WHERE bdns=?", lote)
+                _db.commit()
+            hechas += len(lote)
+            time.sleep(0.05)
+    except sqlite3.Error as e:
+        print(f"[subvenciones] reclasificación por sector interrumpida: {e}", flush=True)
+    if hechas:
+        print(f"[subvenciones] {hechas} convocatorias clasificadas por sector", flush=True)
 
 
 def _subir_subvenciones(crudo, forzar=False):
@@ -15262,11 +15829,14 @@ def _subir_subvenciones(crudo, forzar=False):
     return 200, {"convocatorias": n, "antes": antes, "con_municipio": con_muni, "lineas_con_error": malas}
 
 
-def _subir_fondos_ue(crudo, forzar=False):
+def _subir_fondos_ue(crudo, forzar=False, conservar=""):
     """Sustituye la tabla `fondos_ue` por el NDJSON (gzip) de fondos_ue_espana.py. Devuelve (código, cuerpo), solo
     con recuentos. Mismo esquema que _subir_subvenciones: se carga línea a línea en una tabla nueva y se cambia de
     golpe; si llega bastante menos de lo que hay, se rechaza (protección de subidas) y no se toca nada.
-    El fichero llega sin nombres: los beneficiarios que ya estaban guardados (Murcia y Girona) se conservan."""
+    El fichero llega sin nombres: los beneficiarios que ya estaban guardados (Murcia y Girona) se conservan.
+    conservar (?conservar=<fuente>; opción 2 de César del 23-10, ampliada a cualquier fuente el 30-10): si el fichero
+    no trae esa fuente (el generador no pudo descargarla), se copian las operaciones de esa fuente que ya había, con su
+    hora de carga, y se dice de cuándo son."""
     nueva = "fondos_ue_nueva"
     with _db_lock:
         _db.execute(f"DROP TABLE IF EXISTS {nueva}")
@@ -15311,14 +15881,29 @@ def _subir_fondos_ue(crudo, forzar=False):
     except (OSError, EOFError) as e:
         _descartar()
         return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    conservado = None
+    if conservar:
+        if conservar not in _FUENTE_UE_LABEL:
+            _descartar()
+            return 400, {"error": f"conservar={conservar}: fuente desconocida."}
+        with _db_lock:
+            if not _db.execute(f"SELECT 1 FROM {nueva} WHERE fuente=? LIMIT 1", (conservar,)).fetchone():
+                cols = ", ".join(_FUE_COLUMNAS)
+                n_cons = _db.execute(f"INSERT OR IGNORE INTO {nueva} ({cols}) SELECT {cols} FROM fondos_ue "
+                                     "WHERE fuente=?", (conservar,)).rowcount
+                ts_cons = _db.execute(f"SELECT max(ts) FROM {nueva} WHERE fuente=?", (conservar,)).fetchone()[0]
+                _db.commit()
+                conservado = {"fuente": conservar, "conservadas": n_cons,
+                              "de_la_carga_del": _ahora_madrid(ts_cons).strftime("%Y-%m-%d %H:%M") if ts_cons else None}
     with _db_lock:
         antes = _db.execute("SELECT count(*) FROM fondos_ue").fetchone()[0]
         recibidas = _db.execute(f"SELECT count(*) FROM {nueva}").fetchone()[0]
         fuentes = dict(_db.execute(f"SELECT fuente, count(*) FROM {nueva} GROUP BY fuente").fetchall())
-    if recibidas < FONDOS_UE_MINIMO_SUBIDA or len(fuentes) < len(_FUENTE_UE_LABEL):
+    # Kohesio y los 100 perceptores son opcionales (el generador puede saltárselos); Cohesion Data y CORDIS, no.
+    if recibidas < FONDOS_UE_MINIMO_SUBIDA or {"cohesion", "cordis"} - set(fuentes):
         _descartar()
         return 400, {"error": f"Fichero no válido: {recibidas} filas legibles ({malas} con error); por fuente: "
-                              f"{fuentes}. Hacen falta al menos {FONDOS_UE_MINIMO_SUBIDA} y las dos fuentes."}
+                              f"{fuentes}. Hacen falta al menos {FONDOS_UE_MINIMO_SUBIDA} y las fuentes cohesion y cordis."}
     if not forzar and _subida_demasiado_pequena(antes, recibidas):
         _descartar()
         return _rechazar_subida("/admin/fondos-ue", "operaciones", antes, recibidas)
@@ -15341,8 +15926,9 @@ def _subir_fondos_ue(crudo, forzar=False):
         provincias = _db.execute("SELECT count(DISTINCT provincia) FROM fondos_ue WHERE ambito='provincia'").fetchone()[0]
     _liberar_memoria()
     print(f"[fondos-ue] {recibidas} operaciones cargadas (antes {antes}; {provincias} provincias; por ámbito "
-          f"{por_ambito}; {conservados} beneficiarios conservados; {malas} líneas con error)", flush=True)
-    return 200, {"operaciones": recibidas, "antes": antes, "por_fuente": fuentes, "por_ambito": por_ambito,
+          f"{por_ambito}; {conservados} beneficiarios conservados; {malas} líneas con error"
+          + (f"; conservado de la carga anterior: {conservado}" if conservado else "") + ")", flush=True)
+    return 200, {**({"conservado": conservado} if conservado else {}), "operaciones": recibidas, "antes": antes, "por_fuente": fuentes, "por_ambito": por_ambito,
                  "provincias_con_datos": provincias, "beneficiarios_conservados": conservados,
                  "lineas_con_error": malas}
 
@@ -15360,7 +15946,9 @@ REVISION_MOTIVOS = {"legitimo": "Justificado / legítimo", "error_datos": "Error
                     "emergencia": "Emergencia justificada", "otro": "Otro motivo"}
 REVISION_ESTADOS = {"pendiente": "Pendientes", "seguimiento": "En seguimiento", "caso": "Convertidos en caso",
                     "descartado": "Descartados"}
-REVISION_REGLAS = {"fraccionamiento-v2": "Posible fraccionamiento", "menor-sobre-umbral-v1": "Menor por encima del umbral"}
+REVISION_REGLAS = {"fraccionamiento-v2": "Posible fraccionamiento", "menor-sobre-umbral-v1": "Menor por encima del umbral",
+                   "manual-v1": "Borrador puesto a mano (comprobado en la fuente)"}
+REVISION_MAX_BORRADORES = 50          # por subida de ?anadir=si
 # Presentación de la cola (2026-10-07, encargo de César: 8.183 candidatos son inabarcables de golpe). Nada de esto
 # cambia qué detecta el bot (backend/indicios_contratos.py), solo en qué orden se enseña y un atajo para revisar un
 # puñado cada semana.
@@ -15452,6 +16040,7 @@ def _subir_revision_candidatos(crudo, forzar=False):
         descartes = {r[0] for r in _db.execute("SELECT huella FROM revision_descartes")}
         existentes = dict(_db.execute("SELECT huella, estado FROM revision_candidatos").fetchall())
         decididos_datos = _db.execute("SELECT huella, datos FROM revision_candidatos WHERE estado != 'pendiente'").fetchall()
+        manuales = {r[0] for r in _db.execute("SELECT huella FROM revision_candidatos WHERE regla LIKE 'manual-%'")}
     nuevos = actualizados = saltados = malas = 0
     vistos = set()
     lote_ins, lote_upd = [], []
@@ -15529,10 +16118,10 @@ def _subir_revision_candidatos(crudo, forzar=False):
             _db.executemany("UPDATE revision_candidatos SET regla=?, categoria=?, puntuacion=?, municipio=?, provincia=?, "
                             "comunidad=?, organismo=?, adjudicatario=?, tipo=?, suma=?, datos=?, actualizado=?, "
                             "vigente=1 WHERE huella=?", lote_upd[i:i + 500])
-        retirados = [h for h, est in existentes.items() if est == "pendiente" and h not in vistos]
+        retirados = [h for h, est in existentes.items() if est == "pendiente" and h not in vistos and h not in manuales]
         for i in range(0, len(retirados), 500):
             _db.executemany("DELETE FROM revision_candidatos WHERE huella=?", [(h,) for h in retirados[i:i + 500]])
-        decididos = [h for h, est in existentes.items() if est != "pendiente" and h not in vistos]
+        decididos = [h for h, est in existentes.items() if est != "pendiente" and h not in vistos and h not in manuales]
         _db.executemany("UPDATE revision_candidatos SET vigente=0 WHERE huella=?", [(h,) for h in decididos])
         corte = time.strftime("%Y-%m-%d", time.localtime(time.time() - REVISION_BORRAR_DESCARTES_DIAS * 86400))
         borrados = _db.execute("DELETE FROM revision_candidatos WHERE estado='descartado' AND revisado < ?",
@@ -15551,6 +16140,48 @@ def _subir_revision_candidatos(crudo, forzar=False):
                  "ya_descartados": saltados, "descartes_borrados": borrados, "lineas_con_error": malas,
                  "decisiones_trasladadas": len(trasladadas),
                  "aviso_correo": aviso}
+
+
+def _subir_revision_borradores(crudo):
+    """POST /admin/revision-candidatos?anadir=si (17-10): AÑADE a la cola candidatos puestos a mano (regla manual-*,
+    NDJSON con o sin gzip) sin retirar ni tocar nada más. Uno que ya estaba se actualiza sin cambiar la decisión tomada.
+    La pasada semanal no los retira (no salen del bot). Solo devuelve recuentos."""
+    ahora = time.strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        flujo = _gzip.GzipFile(fileobj=io.BytesIO(crudo)) if crudo[:2] == bytes([0x1F, 0x8B]) else io.BytesIO(crudo)
+        leidos = [json.loads(l) for l in flujo if l.strip()]
+    except (OSError, EOFError, ValueError) as e:
+        return 400, {"error": f"Fichero no válido ({type(e).__name__})."}
+    if not leidos:
+        return 400, {"error": "Fichero vacío."}
+    if len(leidos) > REVISION_MAX_BORRADORES:
+        return 400, {"error": f"Como mucho {REVISION_MAX_BORRADORES} borradores por subida."}
+    if any(not isinstance(c, dict) or not c.get("huella") or not str(c.get("regla", "")).startswith("manual-")
+           or c.get("regla") not in REVISION_REGLAS for c in leidos):
+        return 400, {"error": "Solo se pueden añadir así candidatos con huella y una regla manual conocida."}
+    with _db_lock:
+        existentes = {r[0] for r in _db.execute("SELECT huella FROM revision_candidatos")}
+    nuevos = actualizados = 0
+    with _db_lock:
+        for c in leidos:
+            com = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(c.get("provincia", ""), "")
+            fila = (c["regla"], c.get("categoria", ""), float(c.get("puntuacion", 0)), c.get("municipio", ""),
+                    c.get("provincia", ""), com, c.get("organismo", "")[:300], c.get("adjudicatario", "")[:300],
+                    c.get("tipo", ""), float(c.get("suma", 0)), json.dumps(c, ensure_ascii=False))
+            if c["huella"] in existentes:
+                _db.execute("UPDATE revision_candidatos SET regla=?, categoria=?, puntuacion=?, municipio=?, provincia=?, "
+                            "comunidad=?, organismo=?, adjudicatario=?, tipo=?, suma=?, datos=?, actualizado=?, "
+                            "vigente=1 WHERE huella=?", fila + (ahora, c["huella"]))
+                actualizados += 1
+            else:
+                _db.execute("INSERT INTO revision_candidatos (huella, regla, categoria, puntuacion, municipio, provincia, "
+                            "comunidad, organismo, adjudicatario, tipo, suma, datos, detectado, actualizado, vigente) "
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)", (c["huella"],) + fila + (ahora, ahora))
+                nuevos += 1
+        _db.commit()
+    _revision_registrar("", "borradores", f"{nuevos} nuevos, {actualizados} actualizados (puestos a mano)")
+    print(f"[revision] borradores puestos a mano: {nuevos} nuevos, {actualizados} actualizados", flush=True)
+    return 200, {"nuevos": nuevos, "actualizados": actualizados}
 
 
 def _aviso_revision_por_correo(por_regla, nuevos_90):
@@ -15703,7 +16334,10 @@ def _revision_cola_html(qs, cookie):
         c = json.loads(datos)
         contratos = "".join(
             f'<tr><td>{esc(k["fecha"])}</td><td class="num">{fmt_eur(str(k["importe"]))}</td>'
-            f'<td>{esc(k["descripcion"])}</td><td>{esc(k["fuente"])}</td></tr>' for k in c.get("contratos", []))
+            f'<td>{esc(k["descripcion"])}</td><td>'
+            + (f'<a href="{esc(k["url"])}" target="_blank" rel="noopener noreferrer">{esc(k["fuente"])}</a>'
+               if str(k.get("url", "")).startswith("https://") else esc(k["fuente"])) + '</td></tr>'
+            for k in c.get("contratos", []))
         avisos = "".join(f'<div class="av">⚠ {esc(a)}</div>' for a in c.get("avisos", []))
         # Aviso visible de no publicar el nombre (encargo de César, 12-10): en la línea del candidato y dentro.
         pf = _revision_persona_fisica(c)
@@ -15760,7 +16394,9 @@ def _revision_cola_html(qs, cookie):
         comentarios_pendientes = _db.execute("SELECT count(*) FROM comentarios WHERE estado='pendiente'").fetchone()[0]
     cuerpo = (f'<h1>Revisión interna: indicadores para revisar</h1>'
               f'<p class="sub"><a href="/admin/revision/comentarios"><b>Comentarios pendientes de aprobar: '
-              f'{comentarios_pendientes}</b></a> · <a href="/admin/revision/alertas">Alertas por correo</a></p>'
+              f'{comentarios_pendientes}</b></a> · <a href="/admin/revision/alertas">Alertas por correo</a> · '
+              + (f'<a href="/admin/revision/socios">Perfiles del filtro</a> · ' if FILTRO_FORMULARIO else '') +
+              f'<a href="/admin/revision/visitas">Visitas</a></p>'
               f'<p class="sub">Uso interno. Un indicador NO es una irregularidad: solo señala dónde mirar. Nada de esta '
               f'lista se publica; antes de publicar un caso hay que comprobarlo en la fuente oficial y pedir la versión '
               f'del ayuntamiento. Desde el RDL 3/2020, sumar menores al mismo contratista no es ilegal por sí mismo: lo '
@@ -15791,8 +16427,11 @@ def _revision_ficha_md(huella):
               f"{c.get('desde')} y {c.get('hasta')}", f"- Puntuación: {c.get('puntuacion')} · estado: {fila[1]}",
               f"- Nota: {fila[2] or ''}", "", "## Contratos", "", "| Fecha | Importe | Descripción | Fuente | Id |",
               "|---|---|---|---|---|"]
-    lineas += [f"| {k['fecha']} | {k['importe']:,.2f} € | {k['descripcion']} | {k['fuente']} | {k['id']} |"
+    lineas += [f"| {k['fecha']} | {k['importe']:,.2f} € | {k['descripcion']} | "
+               + (f"[{k['fuente']}]({k['url']})" if k.get("url") else k["fuente"]) + f" | {k['id']} |"
                for k in c.get("contratos", [])]
+    if c.get("nota_verificacion"):
+        lineas += ["", "## Comprobación en la fuente (borrador puesto a mano)", "", c["nota_verificacion"]]
     lineas += ["", "## Avisos de calidad del dato", ""] + [f"- {a}" for a in c.get("avisos", [])] + [
         "", "## Antes de publicar", "", "- Comprobar cada contrato en la fuente oficial (enlace y documento).",
         "- Pedir la versión del ayuntamiento (informe del art. 118.2 LCSP).",
@@ -15895,6 +16534,11 @@ def _revision_wsgi(method, path, qs, environ):
             elif p("s").isdigit() and p("accion") == "baja":
                 hecho = "baja" if _alertas_almacen().baja(int(p("s")), motivo="panel") else ""
             return 303, {"Location": f"/admin/revision/alertas?hecho={hecho}", "Content-Length": "0"}, b""
+        if path == "/admin/revision/socios/accion":
+            hecho = ""
+            if FILTRO_FORMULARIO and p("p").isdigit() and p("accion") == "baja":
+                hecho = "baja" if _socios_almacen().baja(int(p("p")), motivo="panel") else ""
+            return 303, {"Location": f"/admin/revision/socios?hecho={hecho}", "Content-Length": "0"}, b""
         if path == "/admin/revision/salir":
             return 303, {"Location": "/admin/revision", "Content-Length": "0",
                          "Set-Cookie": "dp_rev=; Path=/admin/revision; Max-Age=0; HttpOnly; SameSite=Strict"}, b""
@@ -15937,6 +16581,12 @@ def _revision_wsgi(method, path, qs, environ):
         return _comentarios_moderacion_html(cookie, qs.get("hecho", [""])[0])
     if path == "/admin/revision/alertas":
         return _alertas_panel_html(cookie, qs.get("hecho", [""])[0])
+    if path == "/admin/revision/socios":
+        return _socios_panel_html(cookie, qs.get("hecho", [""])[0])
+    if path == "/admin/revision/socios/vista" and FILTRO_FORMULARIO:
+        return _socios_vista_html(qs.get("p", [""])[0])
+    if path == "/admin/revision/visitas":
+        return _visitas_pagina(qs, autorizado=True)
     if path == "/admin/revision/ficha":
         md = _revision_ficha_md(qs.get("huella", [""])[0])
         if md is None:
@@ -16809,6 +17459,7 @@ def _inicializar_datos():
     _aplicar_backfill_formales_place()   # con el arreglo de memoria (_db_iter_municipios), 2026-10-03
     _aplicar_importe_adjudicado_place()
     _aplicar_fechas_formales()            # después de los backfills: rellena la fecha de lo que haya guardado
+    _aplicar_fondos_ue_place()            # marca de fondos europeos (PLACE) y resumen de /fondos-ue
     _depurar_asignacion_place_por_nombre()
     corte = time.time() - RESULT_CACHE_TTL
     with _db_lock:
@@ -16881,7 +17532,10 @@ def _arrancar_hilos_de_fondo():
     hilo_feed.start()
     threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
     threading.Thread(target=_licitaciones_bg, args=(hilo_feed,), name="licitaciones", daemon=True).start()
+    threading.Thread(target=_subvenciones_reclasificar, name="subvenciones-sector", daemon=True).start()
     threading.Thread(target=_zip_cache_vigilar, name="memoria-zips", daemon=True).start()
+    if FILTRO_FORMULARIO:                    # borrado automático de perfiles del filtro (ver _socios_limpieza_bg)
+        threading.Thread(target=_socios_limpieza_bg, name="socios-limpieza", daemon=True).start()
     # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
     # al RSS (búsqueda text=España) en vez de esperar al cron diario.
     if len(_db_noticias_ue(limit=3)) < 3:
@@ -17173,7 +17827,7 @@ CSS = """
      ~15:1, secundario ~6:1, azul marino ~13:1 y dorado ~4,9:1 sobre blanco. */
   --bg:#f5f6f8;--surface:#ffffff;--border:#dde1e7;
   --accent:#1b2f5c;--blue:#22477e;--text:#1b2230;--dim:#5a6372;
-  --red:#cf222e;--green:#1a7f37;--yellow:#8a6510;--purple:#8250df;
+  --red:#cf222e;--green:#146c2e;--yellow:#8a6510;--purple:#8250df;
   --gold:#8a6510;--tint:#f1f3f7;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -17229,13 +17883,11 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
   .pwa-banner-mobile{display:flex;align-items:center;gap:8px;position:fixed;top:0;left:0;right:0;z-index:200;padding:4px 10px;background:var(--accent);color:#fff;font-size:11.5px;font-weight:600;}
   .pwa-banner-mobile[hidden]{display:none;}
   .pwa-banner-text{flex:1;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .pwa-banner-btn{background:#fff;color:var(--accent);border:none;border-radius:4px;padding:3px 9px;font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;}
-  .pwa-banner-close{background:transparent;border:none;color:#fff;font-size:17px;cursor:pointer;padding:0 2px;line-height:1;opacity:.65;}
+  /* 22-10 (repaso para la Cámara): «Instalar» y la X medían 18 px de alto; ahora 44x44 como mínimo, el tamaño de
+     dedo recomendado. La barra crece con ellos y pwaAjustarOffset() baja la cabecera lo que mida. */
+  .pwa-banner-btn{background:#fff;color:var(--accent);border:none;border-radius:4px;padding:0 14px;min-height:44px;min-width:44px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+  .pwa-banner-close{background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0;min-height:44px;min-width:44px;line-height:1;opacity:.65;}
   .pwa-banner-close:hover{opacity:1;}
-  /* 16-10 (repaso para la Cámara): «Instalar» (57x18) y la X (18x17) eran difíciles de pulsar con el dedo. Zona de
-     pulsación invisible de ~30 px alrededor, sin cambiar el alto de la barra. */
-  .pwa-banner-btn,.pwa-banner-close{position:relative;}
-  .pwa-banner-btn::after,.pwa-banner-close::after{content:"";position:absolute;inset:-6px;}
 }
 .instalar-bar-highlight{animation:pwaBannerPulse 1s ease-in-out 2;border-color:var(--accent) !important;}
 /* ── banner de consentimiento de cookies (2026-09-05) ────────────────────
@@ -17256,9 +17908,13 @@ header p{font-size:12px;color:var(--yellow);margin-top:2px;}
 .cookie-btn-rechazar{background:var(--surface);color:var(--text);border:1px solid var(--border);}
 .cookie-btn-rechazar:hover{border-color:var(--dim);}
 @media (max-width:700px){
-  .cookie-content{flex-direction:column;align-items:stretch;}
-  .cookie-botones{justify-content:stretch;}
-  .cookie-btn{flex:1;}
+  /* Pulido 28-10: compacto (unos 120 px) para no tapar el buscador de la portada: texto de 12 px y los dos botones en
+     una sola fila de 44 px. */
+  .cookie-banner{padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));}
+  .cookie-content{flex-direction:column;align-items:stretch;gap:8px;}
+  .cookie-texto{min-width:0;font-size:12px;line-height:1.4;}
+  .cookie-botones{justify-content:stretch;flex-wrap:nowrap;gap:8px;}
+  .cookie-btn{flex:1;min-width:0;min-height:44px;padding:8px 10px;}
 }
 /* flex-wrap (2026-09-30): con 20 comunidades o 52 provincias las pestañas no caben en una fila, y con overflow:hidden
    las sobrantes quedaban cortadas e inalcanzables (en móvil ni se veía la pestaña activa). Ahora bajan de línea. */
@@ -17321,7 +17977,7 @@ a.stat-enlace:hover,a.stat-enlace:focus{border-color:var(--accent);}
    (#it-info-pop, position:fixed, colocado por JS junto al botón) -- dentro de la tabla con scroll de /rankings o del
    widget con overflow:hidden de la ficha, un popover absoluto quedaría recortado. */
 .it-info-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;margin-left:4px;border-radius:50%;border:1px solid var(--dim);background:transparent;color:var(--dim);font:italic 700 11px/1 Georgia,'Times New Roman',serif;cursor:pointer;vertical-align:middle;flex-shrink:0;}
-.it-info-btn::after{content:'';position:absolute;inset:-9px;}
+.it-info-btn::after{content:'';position:absolute;inset:-13px;}
 .it-info-btn:hover,.it-info-btn[aria-expanded="true"]{color:var(--text);border-color:var(--text);}
 .it-info-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 .it-info-pop{position:fixed;z-index:400;width:380px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.5;color:var(--text);font-weight:400;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.4);}
@@ -17353,16 +18009,17 @@ a.stat-enlace:hover,a.stat-enlace:focus{border-color:var(--accent);}
 .concejales-dd a:hover{text-decoration:underline;}
 .conc-cargo{color:var(--dim);}
 .badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border-radius:4px;background:var(--tint);color:var(--blue);border:1px solid var(--border);}
-.source-bar{padding:5px 18px;font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);}
+.source-bar{padding:5px 18px;font-size:11.5px;color:var(--text);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border);background:rgba(0,0,0,.07);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);padding:9px 14px;text-align:left;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);}
+th{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text);padding:9px 14px;text-align:left;background:rgba(0,0,0,.07);border-bottom:1px solid var(--border);}
 td{padding:9px 14px;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:top;line-height:1.5;}
 tr:last-child td{border-bottom:none;}
 .empresa{font-weight:600;}
-.contrato-title{font-size:11px;color:var(--dim);margin-top:3px;}
+.contrato-title{font-size:12px;color:var(--dim);margin-top:3px;}
 .ute-nota{font-size:10px;color:var(--dim);font-weight:normal;}
 .importe{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
 .importe.noloc{color:var(--dim);font-style:italic;font-weight:normal;}
+.importe.sinimp,table.t-tarjeta td.importe.sinimp{white-space:normal;min-width:7.5em;max-width:16em;}
 .directivo{color:var(--blue);}
 .cargo{color:var(--dim);font-size:11px;}
 .cargo-match{font-size:10.5px;line-height:1.5;margin-top:5px;padding:5px 8px;border-radius:4px;max-width:260px;}
@@ -17372,8 +18029,8 @@ tr:last-child td{border-bottom:none;}
 a.link{color:var(--blue);font-size:11px;}
 a.borm-link{color:var(--purple);font-size:11px;}
 .empty{text-align:center;padding:50px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px;}
-.estado-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;}
-.est-ADJ,.est-RES{background:rgba(63,185,80,.15);color:var(--green);}
+.estado-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 7px;border-radius:3px;}
+.est-ADJ,.est-RES{background:rgba(63,185,80,.15);color:#146c2e;}
 .est-FOR{background:var(--tint);color:var(--blue);}
 .lid{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);}
 .fuente-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 5px;border-radius:3px;vertical-align:middle;margin-left:4px;}
@@ -17386,6 +18043,10 @@ a.pscp-link{color:var(--green);}
    (naranja/azul). Antes del 2026-07-23 era violeta -- ver INFORME_NOCHE.md. */
 .fuente-cordis{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
 .fuente-cohesion{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
+.fuente-kohesio{background:var(--tint);color:var(--yellow);border:1px solid var(--border);}
+.fondo-ue-badge{background:#003399;color:#ffcc00;border:1px solid #003399;white-space:nowrap;}
+.fue-mrr td,.fue-mrr th{font-size:13px;}
+.fue-mrr summary{cursor:pointer;font-weight:600;padding:10px 14px;}
 .fue-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:18px;overflow:hidden;}
 .conv-filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px;}
 .conv-filtros .conv-q{flex:1 1 220px;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);color:var(--text);}
@@ -17562,6 +18223,7 @@ a.btn-ver:hover{background:var(--tint);}
 .top1-directivo{font-size:12px;color:var(--blue);}
 .rk-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:32px 0 4px;padding-bottom:10px;border-bottom:2px solid var(--accent);scroll-margin-top:96px;}
 .rk-section-header h2{font-size:18px;color:var(--text);}
+.portada-actualizado{font-size:12px;color:var(--dim);text-align:right;margin:-6px 0 10px;}
 .rk-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 10px;}
 .muni-tile a.btn-ver:hover{background:var(--tint);}
 
@@ -17669,6 +18331,7 @@ a.colabora-bizum{text-decoration:none;cursor:pointer;}a.colabora-bizum:hover{bor
 .site-footer .ft-label{color:var(--dim);font-size:12px;}
 
 /* ── páginas estáticas (quiénes somos / aviso legal) ─────────────────── */
+.lista-404{margin:6px 0 0 18px;padding:0;line-height:2;}
 .static-page{max-width:820px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:34px 38px;line-height:1.8;font-size:14px;}
 .static-page h1{font-size:22px;color:var(--accent);margin-bottom:18px;}
 .static-page h2{font-size:15px;color:var(--text);margin:26px 0 10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px;}
@@ -17829,7 +18492,7 @@ button.share-btn{font-family:inherit;}
   .global-search input,.search-bar input,.as-row input{min-width:0;width:100%;}
   .as-row .btn{width:100%;}
   .as-tab{flex:1 1 auto;text-align:center;padding:8px 6px;}
-  table{font-size:12px;display:block;overflow-x:auto;white-space:nowrap;}
+  table{font-size:13px;display:block;overflow-x:auto;white-space:nowrap;}
   th,td{padding:7px 8px;}
   .contrato-title{white-space:normal;}
   /* Buscador en el móvil (2026-10-15, encargo de César para el 22-10): SIEMPRE visible y sin forma de cerrarlo. El del
@@ -17869,6 +18532,43 @@ button.share-btn{font-family:inherit;}
 }
 @media (max-width:420px){
   .muni-grid{grid-template-columns:1fr;}
+}
+/* Pulido 28-10 (auditoría, G2): en el móvil las tablas de contratos, contratos menores, fondos UE y el top 10 de
+   empresas pasan a TARJETAS: el importe se ve sin deslizar, a la derecha del nombre, y el resto debajo. Solo CSS
+   (clase t-tarjeta en la tabla; t-rank si la primera columna es el puesto). Las demás tablas siguen deslizándose. */
+@media (max-width:700px){
+  table.t-tarjeta{display:block;overflow:visible;white-space:normal;font-size:13px;}
+  table.t-tarjeta thead,table.t-tarjeta tbody{display:block;}
+  table.t-tarjeta thead tr,table.t-tarjeta tr:first-child:has(th){display:none;}
+  table.t-tarjeta tr{display:flex;flex-wrap:wrap;align-items:flex-start;column-gap:12px;padding:10px 2px;
+    border-bottom:1px solid var(--border);}
+  table.t-tarjeta td{display:block;border:0;padding:2px 0;white-space:normal;flex:1 1 100%;min-width:0;}
+  table.t-tarjeta td:nth-child(1){flex:1 1 0;}
+  table.t-tarjeta td:nth-child(2){flex:0 0 auto;max-width:48%;text-align:right;font-size:14px;font-weight:700;
+    white-space:nowrap;}
+  table.t-rank td:nth-child(1){flex:0 0 auto;max-width:none;text-align:left;font-size:14px;}
+  table.t-rank td:nth-child(2){flex:1 1 0;max-width:none;text-align:left;font-size:13px;font-weight:600;
+    white-space:normal;}
+  table.t-rank td:nth-child(3){flex:0 0 auto;max-width:45%;text-align:right;font-size:14px;font-weight:700;
+    white-space:nowrap;}
+  .tbl-scroll:has(> table.t-tarjeta) .scroll-hint{display:none;}
+  /* tarjetas de deuda de rankings: en el móvil solo las que tienen dato del presidente; el resto, plegadas */
+  .rk-prov-pc{display:none;}
+  .rk-prov-movil{display:block;}
+}
+@media (min-width:701px){.rk-prov-movil{display:none;}}
+/* Pulido 28-10: zonas táctiles de al menos 44 px en el móvil (botones y enlaces que hacen de botón; los enlaces dentro
+   de un párrafo no, como permiten las pautas WCAG) */
+@media (max-width:700px){
+  .header-nav>a,.pwa-install-btn,.idiomas a,.prov-tab,.as-tab,.btn,.cookie-btn,.cuentas-link,.back-link a,
+  .site-footer a{min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;}
+  .back-link{display:block;}
+  .btn-ver,.it-tramo-nombre{min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;}
+  details>summary{padding-top:13px;padding-bottom:13px;min-height:44px;box-sizing:border-box;}
+  .as-row input,.global-search input,.search-bar input,.it-buscador,select{min-height:44px;box-sizing:border-box;}
+  .idiomas{gap:6px;}
+  .idiomas a{padding:0 12px;}
+  .site-footer a{padding:0 4px;}
 }
 @media (max-width:860px){
   .home-grid{grid-template-columns:1fr;grid-template-rows:auto;}
@@ -18671,6 +19371,7 @@ def _header_html(provincia="todas", con_lema=True, buscador_aqui=False):
     <a href="{rankings_href}#alcaldes">{_t("Sueldos Alcaldes")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
     <a href="/convocatorias">{_t("Convocatorias abiertas")}</a>
+    <a href="/casos">{_t("Casos")}</a>
     <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>{_t("Instalar app")}</button>
   </nav>
   {_i18n_selector_html()}
@@ -18884,12 +19585,21 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     // (localStorage). Su botón dispara el prompt nativo si está disponible,
     // o si no (iOS Safari, o Chrome que aún no lo ha ofrecido) desplaza
     // hasta las instrucciones manuales del footer (.instalar-bar).
-    try {{
-      if (pwaBanner && !localStorage.getItem(PWA_DISMISS_KEY)) {{
+    // Pulido 28-10: no se enseña a la vez que NUESTRO aviso de cookies (los dos juntos tapaban el buscador en el
+    // móvil). Con la decisión ya tomada, sale como siempre; si no, se mira cuando ya se sabe si sale el aviso
+    // (lo enseña a los 2 s si no llega la CMP de Google) y solo aparece si el aviso no está a la vista.
+    function pwaQuizaMostrar() {{
+      try {{
+        if (!pwaBanner || localStorage.getItem(PWA_DISMISS_KEY)) return;
+        var avisoCookies = document.getElementById('cookie-banner');
+        if (avisoCookies && !avisoCookies.hidden) return;
         pwaBanner.hidden = false;
         pwaAjustarOffset();
-      }}
-    }} catch (e) {{}}
+      }} catch (e) {{}}
+    }}
+    try {{
+      if (localStorage.getItem('{COOKIE_CONSENT_KEY}')) {{ pwaQuizaMostrar(); }} else {{ setTimeout(pwaQuizaMostrar, 2600); }}
+    }} catch (e) {{ setTimeout(pwaQuizaMostrar, 2600); }}
     window.addEventListener('resize', pwaAjustarOffset);
 
     if (pwaBannerClose) {{
@@ -19197,11 +19907,39 @@ def _tl_lotes(lotes):
     return esc(_t("lotes {lotes}").format(lotes=", ".join(lotes)))
 
 
-def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=None):
+def _adjudicatarias_repetidas(contratos):
+    """{id(contrato): n} de las filas de una ficha que pertenecen a una licitación de PLACE con varias adjudicatarias
+    (las demás llevan "#adj-" en la dirección, ver _adjudicaciones_place) y el MISMO importe, sin lotes (con lotes es
+    normal que coincidan). Revisión del 02-11-2026: 361 licitaciones así en la copia del 30-10; a veces es real
+    (préstamos de varios bancos) y a veces no (CESPA -> PreZero en Madrid), así que se avisa en todas sus filas.
+    Las sumas no se tocan (decisión pendiente de César)."""
+    grupos = {}
+    for c in contratos:
+        url = html.unescape(c.get("url", "") or "")
+        try:
+            imp = float(c.get("importe_num") or 0)
+        except (TypeError, ValueError):
+            continue
+        if url and imp > 0:
+            grupos.setdefault((url.split("#adj-")[0], imp), []).append(c)
+    return {id(c): len(cs) for cs in grupos.values()
+            if len(cs) > 1 and any("#adj-" in (c.get("url") or "") for c in cs) and not any(c.get("lotes") for c in cs)
+            for c in cs}
+
+
+def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=None, repetida=False):
     """Genera la fila <tr> de un contrato. Reutilizada por la vista de
-    municipio y por los resultados de búsqueda global."""
+    municipio y por los resultados de búsqueda global. `repetida`: nº de adjudicatarias con el mismo importe en su
+    licitación (0 si no), ver _adjudicatarias_repetidas."""
     imp = c.get("importe", "") or "No localizado"
     imp_cls = "importe" if imp != "No localizado" else "importe noloc"
+    # Revisión del 02-11-2026 (ficha de Willis Iberia): la fuente PUBLICA 0 € (comprobado en PLACE: «Importe de
+    # Adjudicación 0.0 Euros»). No es un fallo de carga: son contratos que no paga el ayuntamiento (mediación de
+    # seguros, que cobra comisión de las aseguradoras; concesiones de bares o quioscos; arrendamientos; préstamos...).
+    # Se dice así en vez de enseñar «0,00 €». Distinto de «No localizado» (la fuente no trae importe).
+    sin_importe = _contrato_sin_importe_publicado(c)
+    if sin_importe:
+        imp, imp_cls = _t("sin importe publicado"), "importe noloc sinimp"
     if imp == "No localizado":
         imp = _t("No localizado")
     try:
@@ -19210,7 +19948,9 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     except (TypeError, ValueError):
         pass
     # PLACE (2026-10-01): lo adjudicado por lote; si no es fiable, el presupuesto -- y se dice (ver _adjudicaciones_place)
-    if c.get("importe_tipo") == "presupuesto" and c.get("importe_num"):
+    if sin_importe:
+        imp_nota = (f'<span class="noloc-nota">{_t("La fuente publica 0 €: suele ser un contrato que no paga el ayuntamiento (mediación de seguros, concesiones, arrendamientos, préstamos).")}</span>')
+    elif c.get("importe_tipo") == "presupuesto" and c.get("importe_num"):
         imp_nota = f'<span class="noloc-nota">{_t("presupuesto de licitación")}</span>'
     elif c.get("importe_tipo") == "adjudicado" and c.get("lotes"):
         imp_nota = f'<span class="noloc-nota">{_tl_lotes(c["lotes"])}</span>'
@@ -19219,6 +19959,9 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
                     f'{_t("No se cuenta en las sumas.")}</span>')
     else:
         imp_nota = ""
+    if repetida:
+        imp_nota += (f'<span class="noloc-nota">⚠️ {_t("posible adjudicataria repetida")}: '
+                     f'{_t("PLACE da {n} adjudicatarias con este mismo importe.").format(n=repetida)}</span>')
 
     directivo, cargo_dir = _directivo_contrato(c)
     if directivo:
@@ -19295,6 +20038,12 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
         "BORM": '<span class="fuente-badge fuente-borm">BORM</span>',
         "PSCP": '<span class="fuente-badge fuente-pscp">PSCP</span>',
     }.get(fuente, '<span class="fuente-badge fuente-place">PLACE</span>')
+    # Fondos europeos que declara el órgano en PLACE (2026-10-17): una insignia por fondo
+    if c.get("fondos_ue"):
+        etiquetas = _fondos_ue_etiquetas()
+        tit_ue = esc(_t("Financiación europea declarada en PLACE por el órgano de contratación"))
+        fuente_badge += "".join(f' <span class="fuente-badge fondo-ue-badge" title="{tit_ue}">🇪🇺 '
+                                f'{esc(etiquetas.get(k, k))}</span>' for k in _fondos_ue_visibles(c["fondos_ue"]))
 
     muni_html = (f'<div class="lid" style="margin-top:2px">📍 {esc(municipio_label)}</div>'
                  if municipio_label else "")
@@ -19484,6 +20233,25 @@ def _indice_tramo_poblacion(habitantes):
     return None  # ">100.000", último tramo
 
 
+def _cml_tramos_municipio(n_tramos=40):
+    """Condiciones SQL que reparten contratos_menors_locales en ~n_tramos trozos por municipio (con el índice
+    idx_cml_muni_prov), para no tener el cerrojo de la base cogido durante toda una consulta de millones de filas
+    (rendimiento, 2026-10-28: medido, el Índice lo retenía ~50 s seguidos y todas las visitas esperaban). El primer
+    tramo no tiene límite inferior y el último no tiene superior, más uno para municipio NULL: no se escapa ninguna
+    fila aunque entren municipios nuevos a mitad del cálculo."""
+    with _db_lock:
+        munis = [r[0] for r in _db.execute("SELECT DISTINCT municipio FROM contratos_menors_locales "
+                                           "WHERE municipio IS NOT NULL ORDER BY municipio")]
+    paso = max(1, len(munis) // n_tramos + 1)
+    cortes = munis[paso::paso]
+    if not cortes:
+        return [("municipio IS NULL", ()), ("municipio IS NOT NULL", ())]
+    tramos = [("municipio IS NULL", ()), ("municipio < ?", (cortes[0],))]
+    tramos += [("municipio >= ? AND municipio < ?", (a, b)) for a, b in zip(cortes, cortes[1:])]
+    tramos.append(("municipio >= ?", (cortes[-1],)))
+    return tramos
+
+
 def _indice_menores_stats_por_municipio():
     """Para cada municipio, nº total de contratos menores y cuántos tienen un administrador QUE SE ENSEÑA (componente
     "directivo"). 2026-10-09: antes contaba cualquier nombre guardado en `directores` (también apoderados y socios, que
@@ -19494,11 +20262,15 @@ def _indice_menores_stats_por_municipio():
         guardados = {k: (n or "", c or "") for k, n, c in _db.execute(
             "SELECT clave, nombre, cargo FROM directores WHERE nombre IS NOT NULL AND nombre <> ''")}
     out, visible = {}, {}
-    with _db_lock:
-        cur = _db.execute("SELECT municipio, provincia, adjudicatari, nif, COUNT(*) FROM contratos_menors_locales "
-                          "WHERE data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ? "
-                          "GROUP BY municipio, provincia, adjudicatari, nif", (alcance_desde(),))   # solo la ventana de 5 años
-        for municipio, prov, adjudicatari, nif, n in cur:
+    desde = alcance_desde()                                                  # solo la ventana de 5 años
+    for donde, args in _cml_tramos_municipio():
+        # Rendimiento (2026-10-28): por tramos, y el trabajo de Python (directivos) ya sin el cerrojo cogido.
+        with _db_lock:
+            filas = _db.execute(f"SELECT municipio, provincia, adjudicatari, nif, COUNT(*) FROM contratos_menors_locales "
+                                f"WHERE ({donde}) AND (data_adjudicacio IS NULL OR data_adjudicacio = '' "
+                                f"OR data_adjudicacio >= ?) GROUP BY municipio, provincia, adjudicatari, nif",
+                                args + (desde,)).fetchall()
+        for municipio, prov, adjudicatari, nif, n in filas:
             k = clave_municipio(municipio, _PROVINCIA_CANONICA_CM.get(prov or "", prov))
             o = out.setdefault(k, {"total": 0, "con_directivo": 0})
             o["total"] += n
@@ -19528,16 +20300,19 @@ def _indice_menores_detalle_por_municipio():
     """Componente "menores" (v2): una consulta agregada por municipio, provincia y año -- nº de contratos, cuántos con
     adjudicatario identificado y la última fecha. Reutiliza la idea de la rama wip/indice-transparencia-v2 (cobertura
     de años y frescura), sin traer las ~1M filas a Python."""
-    with _db_lock:
-        rows = _db.execute("""
-            SELECT municipio, provincia, substr(data_adjudicacio, 1, 4) AS anio, COUNT(*),
-                   SUM(CASE WHEN adjudicatari IS NOT NULL AND adjudicatari <> '' AND adjudicatari <> 'No localizada'
-                            THEN 1 ELSE 0 END),
-                   MAX(data_adjudicacio), group_concat(DISTINCT fuente)
-            FROM contratos_menors_locales
-            WHERE data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ?
-            GROUP BY municipio, provincia, anio
-        """, (alcance_desde(),)).fetchall()                # solo la ventana de 5 años (los sin fecha cuentan)
+    rows = []
+    desde = alcance_desde()                                # solo la ventana de 5 años (los sin fecha cuentan)
+    for donde, args in _cml_tramos_municipio():            # por tramos (rendimiento, 2026-10-28)
+        with _db_lock:
+            rows += _db.execute(f"""
+                SELECT municipio, provincia, substr(data_adjudicacio, 1, 4) AS anio, COUNT(*),
+                       SUM(CASE WHEN adjudicatari IS NOT NULL AND adjudicatari <> '' AND adjudicatari <> 'No localizada'
+                                THEN 1 ELSE 0 END),
+                       MAX(data_adjudicacio), group_concat(DISTINCT fuente)
+                FROM contratos_menors_locales
+                WHERE ({donde}) AND (data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ?)
+                GROUP BY municipio, provincia, anio
+            """, args + (desde,)).fetchall()
     out = {}
     for muni, prov, anio, n, n_adj, ultima, fuentes in rows:
         d = out.setdefault((normalizar(muni), _PROVINCIA_CANONICA_CM.get(prov or "", prov or "")),
@@ -19965,6 +20740,13 @@ def _indice_transparencia_cacheado():
     filas = _vigente()
     if filas is not None:
         return filas
+    # Rendimiento (2026-10-28): si hay uno anterior (caducado), se sirve ese y el nuevo se calcula en segundo plano:
+    # ninguna visita espera el cálculo (~60-80 s). Solo sin ninguno (justo al arrancar) se espera, como antes.
+    with _indice_transparencia_cache_lock:
+        anteriores = _INDICE_TRANSPARENCIA_CACHE["filas"]
+    if anteriores is not None:
+        _indice_refrescar_en_fondo()
+        return anteriores
     # Un solo cálculo a la vez: si ya lo está haciendo otra petición o el precálculo de arranque
     # (_precalcular_indice_bg), se espera a ese resultado en vez de lanzar otro igual en paralelo.
     with _indice_calculo_lock:
@@ -19979,6 +20761,35 @@ def _indice_transparencia_cacheado():
 
 
 _indice_calculo_lock = threading.Lock()
+_indice_fondo = {"activo": False}
+_indice_fondo_lock = threading.Lock()
+
+
+def _indice_refrescar_en_fondo():
+    """Recalcula el Índice en un hilo aparte, uno como mucho a la vez (rendimiento, 2026-10-28)."""
+    with _indice_fondo_lock:
+        if _indice_fondo["activo"]:
+            return
+        _indice_fondo["activo"] = True
+
+    def _hilo():
+        try:
+            with _indice_calculo_lock:
+                with _indice_transparencia_cache_lock:
+                    vigente = (_INDICE_TRANSPARENCIA_CACHE["filas"] is not None and
+                               time.time() - _INDICE_TRANSPARENCIA_CACHE["ts"] < INDICE_TRANSPARENCIA_CACHE_TTL)
+                if not vigente:                 # el precálculo pudo terminar entretanto
+                    filas = _calcular_indice_transparencia()
+                    with _indice_transparencia_cache_lock:
+                        _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
+                        _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
+        except Exception as e:
+            print(f"[indice] recálculo en segundo plano: ERROR ({type(e).__name__}: {e})", flush=True)
+        finally:
+            with _indice_fondo_lock:
+                _indice_fondo["activo"] = False
+
+    threading.Thread(target=_hilo, name="indice-refresco", daemon=True).start()
 
 
 def _precalcular_indice_bg(esperar=None):
@@ -19997,6 +20808,8 @@ def _precalcular_indice_bg(esperar=None):
                     _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
             print(f"[indice] precalculado en {time.time() - t0:.0f} s ({len(filas)} municipios)", flush=True)
             del filas
+            with _rk_empresas_lock:              # rendimiento (2026-10-28): que ninguna visita lo calcule
+                _rk_empresas_calcular()
             _calentar_portada()
             _liberar_memoria()
         except Exception as e:
@@ -20106,6 +20919,17 @@ _CONTRATOS_IMPORTE_EN_REVISION = {
 }
 
 
+def _contrato_sin_importe_publicado(c):
+    """La fuente trae importe pero es 0 € (ver _render_fila_contrato): «sin importe publicado». Distinto de
+    «No localizado» (la fuente no trae importe)."""
+    if not (c.get("importe", "") or ""):
+        return False
+    try:
+        return float(c.get("importe_num") or 0) == 0
+    except (TypeError, ValueError):
+        return False
+
+
 def _calcular_rankings(datos):
     """Agrupa todos los contratos cargados por empresa y devuelve dos listas
     Top 10: por número de contratos y por importe total adjudicado. Cada
@@ -20115,6 +20939,10 @@ def _calcular_rankings(datos):
     for d in datos:
         for c in d.get("contratos", []):
             if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
+            # 2026-11-03: los «sin importe publicado» (0 € en la fuente) no cuentan en «Más contratos» ni en las
+            # sumas (Willis Iberia era nº 1 por ~370 mediaciones de seguros a 0 €). Lo explica _RK_NOTA_SIN_IMPORTE.
+            if _contrato_sin_importe_publicado(c):
                 continue
             emp = c.get("empresa", "")
             # "Desierto" es un artefacto del parser PLACE anterior al fix de
@@ -20157,42 +20985,79 @@ _rk_empresas_lock = threading.Lock()
 
 
 def _rankings_empresas_cacheado(provincia=None):
-    """(top 10 por nº de contratos, top 10 por importe) del conjunto nacional (provincia=None) o de una provincia."""
-    with _rk_empresas_lock:              # si llegan varias a la vez, calcula una y las demás esperan su resultado
-        if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
-            nac, por_prov = {}, {}
-            for d in _db_iter_municipios():
-                grupos_prov = por_prov.setdefault(d.get("provincia", "murcia"), {})
-                for c in d.get("contratos", []):
-                    if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
-                        continue
-                    emp = c.get("empresa", "")
-                    if not emp or emp in ("No localizada", "Desierto"):
-                        continue
-                    key = normalizar(emp)
-                    imp = c.get("importe_num", 0.0) or 0.0
-                    for grupos in (nac, grupos_prov):
-                        g = grupos.get(key)
-                        if g is None:
-                            g = grupos[key] = {"empresa": emp, "n": 0, "importe": 0.0, "directivo": "", "cargo": ""}
-                        g["n"] += 1
-                        g["importe"] += imp
-                        if not g["directivo"]:
-                            g["directivo"], g["cargo"] = _directivo_contrato(c)
-                            g["nif"] = c.get("nif", "")
-                del d
+    """(top 10 por nº de contratos, top 10 por importe) del conjunto nacional (provincia=None) o de una provincia.
+    Rendimiento (2026-10-28): si está caducado, se sirve el anterior y se recalcula en segundo plano (antes, la visita
+    que lo encontraba caducado esperaba ~21 s). Solo sin ninguno (justo al arrancar) se calcula aquí, como antes."""
+    if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
+        if _rk_empresas["ts"]:
+            _rk_empresas_refrescar_en_fondo()
+        else:
+            with _rk_empresas_lock:      # si llegan varias a la vez, calcula una y las demás esperan su resultado
+                if not _rk_empresas["ts"]:
+                    _rk_empresas_calcular()
+    if provincia is None:
+        return _rk_empresas["nacional"]
+    return _rk_empresas["provincias"].get(provincia, ([], []))
 
-            def _tops(grupos):
-                lista = list(grupos.values())
-                return (sorted(lista, key=lambda g: g["n"], reverse=True)[:10],
-                        sorted(lista, key=lambda g: g["importe"], reverse=True)[:10])
 
-            _rk_empresas.update(nacional=_tops(nac), provincias={pv: _tops(g) for pv, g in por_prov.items()},
-                                ts=time.time())
-            del nac, por_prov
-        if provincia is None:
-            return _rk_empresas["nacional"]
-        return _rk_empresas["provincias"].get(provincia, ([], []))
+_rk_empresas_fondo = {"activo": False}
+
+
+def _rk_empresas_refrescar_en_fondo():
+    with _rk_empresas_lock:
+        if _rk_empresas_fondo["activo"]:
+            return
+        _rk_empresas_fondo["activo"] = True
+
+    def _hilo():
+        try:
+            with _rk_empresas_lock:
+                if time.time() - _rk_empresas["ts"] >= _RK_EMPRESAS_TTL:
+                    _rk_empresas_calcular()
+        except Exception as e:
+            print(f"[rankings] top de empresas en segundo plano: ERROR ({type(e).__name__}: {e})", flush=True)
+        finally:
+            _rk_empresas_fondo["activo"] = False
+
+    threading.Thread(target=_hilo, name="rk-empresas-refresco", daemon=True).start()
+
+
+def _rk_empresas_calcular():
+    """El cálculo del top 10 (nacional y por provincia), igual que antes. Quien llama tiene _rk_empresas_lock."""
+    nac, por_prov = {}, {}
+    for d in _db_iter_municipios():
+        grupos_prov = por_prov.setdefault(d.get("provincia", "murcia"), {})
+        for c in d.get("contratos", []):
+            if c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+                continue
+            # 2026-11-03: los «sin importe publicado» (0 € en la fuente) no cuentan en «Más contratos» ni en las
+            # sumas (Willis Iberia era nº 1 por ~370 mediaciones de seguros a 0 €). Lo explica _RK_NOTA_SIN_IMPORTE.
+            if _contrato_sin_importe_publicado(c):
+                continue
+            emp = c.get("empresa", "")
+            if not emp or emp in ("No localizada", "Desierto"):
+                continue
+            key = normalizar(emp)
+            imp = c.get("importe_num", 0.0) or 0.0
+            for grupos in (nac, grupos_prov):
+                g = grupos.get(key)
+                if g is None:
+                    g = grupos[key] = {"empresa": emp, "n": 0, "importe": 0.0, "directivo": "", "cargo": ""}
+                g["n"] += 1
+                g["importe"] += imp
+                if not g["directivo"]:
+                    g["directivo"], g["cargo"] = _directivo_contrato(c)
+                    g["nif"] = c.get("nif", "")
+        del d
+
+    def _tops(grupos):
+        lista = list(grupos.values())
+        return (sorted(lista, key=lambda g: g["n"], reverse=True)[:10],
+                sorted(lista, key=lambda g: g["importe"], reverse=True)[:10])
+
+    _rk_empresas.update(nacional=_tops(nac), provincias={pv: _tops(g) for pv, g in por_prov.items()},
+                        ts=time.time())
+    del nac, por_prov
 
 
 _INDICE_COMPONENTE_LABEL = {
@@ -20565,6 +21430,9 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     # datos_nacional/datos_provincia ya no se usan: los top salen de _rankings_empresas_cacheado (ver ahí).
     top_n_nac, top_imp_nac = _rankings_empresas_cacheado(None)
     top_n_prov, top_imp_prov = _rankings_empresas_cacheado(provincia_prov)
+    texto_sin_importe = _t("No cuentan los contratos «sin importe publicado»: la fuente publica 0 € (mediación de "
+                           "seguros, concesiones, arrendamientos, préstamos...) y no son pagos del ayuntamiento.")
+    nota_sin_importe = f'<div class="gs-hint" style="margin:-4px 0 8px">{texto_sin_importe}</div>'
     label_prov = PROVINCIA_LABEL.get(provincia_prov, PROVINCIA_LABEL["murcia"])
     paginas = paginas or {}
     pags_actuales = {}      # página efectiva de cada tabla larga, para construir los enlaces
@@ -20642,6 +21510,13 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 
     ranking_alcaldes = [f for f in _calcular_ranking_alcaldes() if _de_comunidad(f, "alc")]
     anio_ispa = next((f["anio"] for f in ranking_alcaldes if f.get("anio")), "")
+    # Revisión del 02-11-2026: antes solo decía «ISPA 2024», sin enlace y confundiendo edición y año de los datos.
+    if str(anio_ispa).isdigit():
+        ispa_badge = (f'{_t("Fuente:")} <a href="{esc(ispa_fuente_url(anio_ispa))}" target="_blank" rel="noopener nofollow">'
+                      f'ISPA {int(anio_ispa) + 1}, {esc(_t("Ministerio para la Transformación Digital y de la Función Pública"))} ↗</a>'
+                      f' · {_t("retribuciones de {anio}").format(anio=esc(anio_ispa))} · ')
+    else:
+        ispa_badge = ""
     filas_alcaldes_html = ""
     pag_alc, npag_alc = _rk_pagina(paginas.get("alc"), len(ranking_alcaldes))
     pags_actuales["alc"] = pag_alc
@@ -20653,8 +21528,12 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
         partido_html = (esc(f["partido"]) if f["partido"]
                          else f'<span class="noloc-warn">{_t("Sin partido registrado")}</span>')
         habitantes_html = fmt_num(f["habitantes"]) if f["habitantes"] else "—"
-        deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + _t("/hab.")
-                           if f["deuda_por_habitante"] is not None else "—")
+        # deuda viva 0 de Hacienda = "sin deuda", no "0,00 €/hab." (el dato que falta sigue saliendo "—"). Una deuda
+        # de unos euros (Getxo 236 €, Leioa 23 €) redondea a 0,00 y no es cero: "< 0,01 €/hab."
+        dph = f["deuda_por_habitante"]
+        deuda_hab_html = ("—" if dph is None else _t("sin deuda") if dph == 0
+                          else "&lt; " + fmt_eur(0.01) + _t("/hab.") if dph < 0.005
+                          else fmt_eur(dph) + _t("/hab."))
         # el año de ISPA va en cada fila: es el último dato oficial del cargo, no un sueldo en tiempo real
         anio_fila_html = f' <span class="pol-retrib-nota">ISPA {esc(f["anio"])}</span>' if f.get("anio") else ""
         relevo_html = ""
@@ -20710,6 +21589,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     )
 
     resumen_prov_html = ""
+    resumen_movil_con, resumen_movil_sin = "", []
     for f in _resumen_por_provincia():
         deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + _t("/hab.") if f["deuda_por_habitante"] is not None else "—")
         pres_html = (f'👤 {esc(f["presidente_nombre"])} — {esc(f["presidente_cargo"])}'
@@ -20722,6 +21602,25 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
           <div class="top1-directivo">{pres_html}</div>
           <div class="top1-directivo">{sueldo_html}</div>
         </div>"""
+        # Pulido 28-10: en el móvil eran 50 tarjetas (casi todas «Sin datos») antes del ranking de empresas.
+        if f["presidente_nombre"]:
+            resumen_movil_con += f"""<div class="top1-card">
+          <div class="top1-label">📍 {esc(f['label'])}</div>
+          <div class="top1-valor">🏦 {_t("{importe} de deuda viva").format(importe=deuda_hab_html)}</div>
+          <div class="top1-directivo">{pres_html}</div>
+          <div class="top1-directivo">{sueldo_html}</div>
+        </div>"""
+        else:
+            resumen_movil_sin.append((normalizar(f["label"]).replace("provincia de ", ""), f"""<div class="top1-card">
+          <div class="top1-label">📍 {esc(f['label'])}</div>
+          <div class="top1-valor">🏦 {_t("{importe} de deuda viva").format(importe=deuda_hab_html)}</div>
+        </div>"""))
+    resumen_movil_html = resumen_movil_con and f'<div class="top1-grid">{resumen_movil_con}</div>'
+    if resumen_movil_sin:
+        resumen_movil_html += (
+            f'<details class="rk-prov-resto"><summary>'
+            f'{_t("Ver la deuda viva de las otras {n} provincias y comunidades").format(n=len(resumen_movil_sin))}'
+            f'</summary><div class="top1-grid">{"".join(h for _, h in sorted(resumen_movil_sin))}</div></details>')
 
     # Mismas URLs que la sitemap (sin ?provincia=murcia, la provincia por defecto) -- 2026-10-01: antes el canonical
     # decía /rankings?provincia=murcia y la sitemap /rankings.
@@ -20751,19 +21650,21 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <h2>{_t("Resumen por Provincia")}</h2>
     <span class="rk-badge">{_t("Deuda viva agregada · Presidente/a de Diputación (Comunidad Autónoma en Murcia)")}</span>
   </div>
-  <div class="top1-grid">{resumen_prov_html}</div>
+  <div class="top1-grid rk-prov-pc">{resumen_prov_html}</div>
+  <div class="rk-prov-movil">{resumen_movil_html}</div>
 
   <div class="rk-section-header">
     <h2>{_t("Ranking Nacional")}</h2>
     <span class="rk-badge">{_t("Todas las provincias cargadas")}</span>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos adjudicados")}</div>
-  <div class="muni-card"><table>
+  {nota_sin_importe}
+  <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_nac}
   </table></div>
   <div class="section-title">{_t("Top 10 por importe total adjudicado")}</div>
-  <div class="muni-card"><table>
+  <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Importe total")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_imp_nac}
   </table></div>
@@ -20773,19 +21674,20 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     <div class="prov-switch">{selector_prov}</div>
   </div>
   <div class="section-title">{_t("Top 10 por número de contratos")} — {esc(label_prov)}</div>
-  <div class="muni-card"><table>
+  {nota_sin_importe}
+  <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Contratos")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_n_prov}
   </table></div>
   <div class="section-title">{_t("Top 10 por importe total")} — {esc(label_prov)}</div>
-  <div class="muni-card"><table>
+  <div class="muni-card"><table class="t-tarjeta t-rank">
     <tr><th>#</th><th>{_t("Empresa")}</th><th>{_t("Importe total")}</th><th>{_t("Directivo / Cargo")}</th></tr>
     {tabla_imp_prov}
   </table></div>
 
   <div class="rk-section-header" id="alcaldes">
     <h2>{_t("Ranking de Sueldos: Alcaldes y Alcaldesas")}</h2>
-    <span class="rk-badge">ISPA {esc(anio_ispa)} · {_t("{n} municipios con dato").format(n=fmt_num(len(ranking_alcaldes)))}</span>
+    <span class="rk-badge">{ispa_badge}{_t("{n} municipios con dato").format(n=fmt_num(len(ranking_alcaldes)))}</span>
     {selector_alc_html}
   </div>
   <div class="section-title">{_t("De mayor a menor retribución anual ({ambito})").format(ambito=esc(_ambito("alc")))}</div>
@@ -20818,7 +21720,12 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
 _FUENTE_UE_LABEL = {
     "cordis": ("CORDIS", "fuente-cordis", "Horizon Europe -- proyectos de investigación e innovación"),
     "cohesion": ("Cohesion Data", "fuente-cohesion", "Fondos estructurales FEDER/FSE 2014-2020"),
+    # 2026-10-17: FEDER, FSE+ y Transición Justa 2021-2027 (Kohesio) y los 100 mayores perceptores del Plan de
+    # Recuperación. Estos últimos no van en la lista general (son totales por perceptor): tienen su bloque aparte.
+    "kohesio": ("Kohesio", "fuente-kohesio", "Fondos estructurales FEDER/FSE+/FTJ 2021-2027"),
+    "mrr100": ("Plan de Recuperación", "fondo-ue-badge", "Los 100 mayores perceptores finales del Plan de Recuperación"),
 }
+_FUENTES_UE_LISTA = ("cohesion", "kohesio", "cordis")      # las que van en la lista general de /fondos-ue
 
 
 def _render_fila_fondo_ue(f, con_ambito=False):
@@ -20876,6 +21783,8 @@ def _render_fila_fondo_ue(f, con_ambito=False):
         # CORDIS sí publica la organización; en la carga de toda España no se guarda su nombre (2026-10-12).
         rol_html = f' ({esc(f["rol"])})' if f.get("rol") else ""
         benef_html = f'<span class="lid">{_t("Organización participante: en la ficha del proyecto")}{rol_html}</span>'
+    elif f["fuente"] == "kohesio":
+        benef_html = f'<span class="lid">{_t("Beneficiario sin nombre: posible persona física o sin forma jurídica en el nombre")}</span>'
     else:
         benef_html = f'<span class="noloc-warn">{_t("Beneficiario no publicado por la fuente")}</span>'
 
@@ -20906,9 +21815,16 @@ def _render_fila_fondo_ue(f, con_ambito=False):
     link_html = (f'<a class="fue-link" href="{esc(f["url"])}" target="_blank" rel="noopener">{_t("Ver proyecto ↗")}</a>'
                  if f.get("url") else "")
 
+    titulo = (f.get("titulo") or "").strip()
+    if f["fuente"] == "kohesio" and _kohesio_titulo_es_codigo(titulo):
+        titulo_html = (f'<div class="empresa">{_t("Operación sin título en la fuente")}</div>'
+                       + (f'<div class="lid">{_t("Código de la operación")}: {esc(titulo[:60])}</div>' if titulo else ""))
+    else:
+        titulo_html = f'<div class="empresa">{esc(titulo[:110])}</div>'
+
     return f"""<tr>
       <td>
-        <div class="empresa">{esc(f["titulo"][:110])}</div>
+        {titulo_html}
         {benef_html}
         {municipio_html}
       </td>
@@ -20916,6 +21832,14 @@ def _render_fila_fondo_ue(f, con_ambito=False):
       <td>{fuente_badge}<div class="cargo">{esc(f.get("programa","") or f.get("fondo",""))}</div></td>
       <td><div class="lid">{fechas}</div>{link_html}</td>
     </tr>"""
+
+
+def _kohesio_titulo_es_codigo(titulo):
+    """Kohesio publica algunas operaciones sin título: en su lugar va el código interno («2024-7-ES-SP-CHUAC»,
+    «PC25CLZAXCP0001»). Se reconoce porque no tiene espacios y lleva al menos cuatro cifras (los acrónimos de proyecto,
+    como «NatUR-W», no)."""
+    t = (titulo or "").strip()
+    return not t or (" " not in t and sum(ch.isdigit() for ch in t) >= 4)
 
 
 _FUENTE_CM_LABEL = {
@@ -21080,7 +22004,7 @@ _NOTAS_FUENTE_CM = {
     "euskadi": _td(
         "Datos de la API pública de contratación de Euskadi (Gobierno Vasco), la misma fuente que los contratos "
         "formales de los municipios vascos: fecha real de adjudicación e importe con IVA (con una corrección "
-        "cuando el propio dato de origen es matemáticamente imposible, ver memoria del proyecto). No siempre "
+        "cuando el propio dato de origen es matemáticamente imposible). No siempre "
         "publica NIF."
     ),
     "madrid_capital": _td(
@@ -21598,7 +22522,7 @@ def _fue_parametros(qs):
     f = {"pag": g("pag")}
     if g("ambito") in FUE.AMBITOS:
         f["ambito"] = g("ambito")
-    if g("fuente") in _FUENTE_UE_LABEL:
+    if g("fuente") in _FUENTES_UE_LISTA:
         f["fuente"] = g("fuente")
     if f.get("ambito") in ("estatal", "cooperacion"):
         return f                                    # no son de ninguna zona
@@ -21635,6 +22559,7 @@ def render_fondos_ue_html(qs):
       <div class="stat" style="border-color:var(--border)"><span>{fmt_eur(str(res["importe"]))}</span>{_t("Importe total")}</div>
       <div class="stat" style="border-color:var(--border)"><span>{fmt_num(res["cordis"])}</span>{_t("CORDIS (Horizon Europe)")}</div>
       <div class="stat" style="border-color:var(--border)"><span>{fmt_num(res["cohesion"])}</span>{_t("Cohesion Data (FEDER/FSE)")}</div>
+      {f'<div class="stat" style="border-color:var(--border)"><span>{fmt_num(res["kohesio"])}</span>{_t("Kohesio (2021-2027)")}</div>' if res.get("kohesio") else ""}
     </div>"""
 
     # Cobertura REAL (2026-10-01, aviso de César): el texto se calcula con las provincias que tienen datos.
@@ -21645,10 +22570,49 @@ def render_fondos_ue_html(qs):
     provs_datos = _db_fondos_ue_provincias()
     nombres_cob = [PROVINCIA_LABEL.get(p, p).replace("Provincia de ", "provincia de ") for p in provs_datos]
     toda_espana = len(provs_datos) == len(MUNICIPIOS_POR_PROVINCIA)
-    limites_txt = _t("De los fondos estructurales solo está el periodo 2014-2020 (FEDER y FSE), y de los de "
-                     "investigación, solo Horizon Europe (desde 2021). No están los programas FEDER y FSE+ de "
-                     "2021-2027, el Plan de Recuperación (Next Generation EU) ni las ayudas agrarias (PAC). En la "
-                     "mayoría de las operaciones de los fondos estructurales la fuente no publica el beneficiario.")
+    # 2026-10-18 (encargo de César): "en incorporación" con fecha prevista, en vez de "no están".
+    limites_txt = _t("De los fondos estructurales está el periodo 2014-2020 (FEDER y FSE), y de los de investigación, "
+                     "Horizon Europe (desde 2021). En incorporación: FEDER y FSE+ 2021-2027 y Plan de Recuperación "
+                     "(Next Generation EU), previstos para finales de octubre de 2026, y ayudas agrarias (PAC), "
+                     "prevista para noviembre de 2026. En la mayoría de las operaciones de los fondos estructurales "
+                     "2014-2020 la fuente no publica el beneficiario.")
+    # 2026-10-17: el texto dice lo que hay de verdad en la base (si una carga no ha llegado, sigue "en incorporación").
+    hay_koh = bool(_db_fondos_ue_resumen({}).get("kohesio"))
+    res_place = _fondos_ue_place_resumen()
+    with _db_lock:
+        hay_mrr100 = bool(_db.execute("SELECT 1 FROM fondos_ue WHERE fuente='mrr100' LIMIT 1").fetchone())
+    if hay_koh or res_place or hay_mrr100:
+        trozos = [_t("De los fondos estructurales están los periodos 2014-2020 (FEDER y FSE) y 2021-2027 (FEDER, FSE+ y "
+                     "Fondo de Transición Justa, lo que ya publica Kohesio), y de los de investigación, Horizon Europe "
+                     "(desde 2021).") if hay_koh else
+                  _t("De los fondos estructurales está el periodo 2014-2020 (FEDER y FSE), y de los de investigación, "
+                     "Horizon Europe (desde 2021).")]
+        if res_place and hay_mrr100:
+            trozos.append(_t("Del Plan de Recuperación (Next Generation EU) están los contratos que el órgano de "
+                             "contratación marca en la Plataforma de Contratación del Sector Público como financiados "
+                             "por el Plan y la lista oficial de sus 100 mayores perceptores finales (abril de 2024)."))
+        elif res_place:
+            trozos.append(_t("Del Plan de Recuperación (Next Generation EU) están los contratos que el órgano de "
+                             "contratación marca en la Plataforma de Contratación del Sector Público como financiados "
+                             "por el Plan."))
+        elif hay_mrr100:
+            trozos.append(_t("Del Plan de Recuperación (Next Generation EU) está la lista oficial de sus 100 mayores "
+                             "perceptores finales (abril de 2024)."))
+        if not hay_koh:
+            trozos.append(_t("En incorporación: FEDER y FSE+ 2021-2027, previsto para finales de octubre de 2026."))
+        if not (res_place or hay_mrr100):
+            trozos.append(_t("En incorporación: Plan de Recuperación (Next Generation EU), previsto para finales de "
+                             "octubre de 2026."))
+        trozos.append(_t("En incorporación: ayudas agrarias (PAC), prevista para noviembre de 2026."))
+        trozos.append(_t("No están las subvenciones del Plan de Recuperación, los programas europeos de gestión directa "
+                         "distintos de Horizon Europe (Erasmus+, LIFE, Europa Creativa...), el desarrollo rural, la "
+                         "pesca, los fondos de interior ni la cooperación entre regiones (Interreg) completa."))
+        trozos.append(_t("En la mayoría de las operaciones de los fondos estructurales 2014-2020 la fuente no publica el "
+                         "beneficiario."))
+        if hay_koh:
+            trozos.append(_t("En las de 2021-2027 no hay NIF, y el nombre del beneficiario solo se muestra cuando es "
+                             "claramente una entidad."))
+        limites_txt = " ".join(trozos)
     if toda_espana:
         cobertura_txt = " ".join((
             _t("Hay operaciones de todas las provincias, pero no de todos los fondos europeos."), limites_txt,
@@ -21676,6 +22640,8 @@ def render_fondos_ue_html(qs):
                ("estatal", _t("Estatales o de varias comunidades")),
                ("cooperacion", _t("Cooperación entre países (Interreg)"))]
     fuentes = [("cohesion", _t("Fondos estructurales (Cohesion Data)")), ("cordis", _t("Investigación (CORDIS)"))]
+    if hay_koh:
+        fuentes.insert(1, ("kohesio", _t("Fondos estructurales 2021-2027 (Kohesio)")))
     formulario = (f'<form method="get" action="/fondos-ue" class="conv-filtros">'
                   + _conv_select("zona", zona_val, zonas, _t("Toda España"))
                   + _conv_select("ambito", f.get("ambito", ""), ambitos, _t("Cualquier ámbito"))
@@ -21722,8 +22688,9 @@ def render_fondos_ue_html(qs):
   {stats}
   {aparte_html}
   <div class="fue-card">
-    <div class="gs-hint" style="margin:10px 14px">{_t("Ordenadas por importe. En los fondos estructurales el importe es el gasto subvencionable total de la operación; en CORDIS, la aportación de la UE a cada organización.")}</div>
-    <table>
+    <div class="gs-hint" style="margin:10px 14px">{_t("Ordenadas por importe. En los fondos estructurales el importe es el gasto subvencionable total de la operación; en CORDIS, la aportación de la UE a cada organización.")}{(" " + _t("En Kohesio (2021-2027), el coste total de la operación.")) if hay_koh else ""}</div>
+    <div class="tbl-scroll">
+    <table class="t-tarjeta">
       <tr>
         <th>{_t("Proyecto / Beneficiario")}</th>
         <th>{_t("Importe")}</th>
@@ -21732,8 +22699,11 @@ def render_fondos_ue_html(qs):
       </tr>
       {filas}
     </table>
+    <span class="scroll-hint" aria-hidden="true">{_t("sigue")} <span class="scroll-hint-arrow">›</span></span>
+    </div>
   </div>
-  {pag_html}"""
+  {pag_html}
+  {_html_plan_recuperacion(f, res_place)}"""
 
     donde = (PROVINCIA_LABEL.get(f.get("provincia")) or COMUNIDAD_AUTONOMA_LABEL.get(f.get("comunidad"))
              or (_t("toda España") if toda_espana else _lista_y(nombres_cob) or "España"))
@@ -21741,6 +22711,117 @@ def render_fondos_ue_html(qs):
                         description=_t("Proyectos y fondos financiados por la Unión Europea (CORDIS, Horizon "
                                        "Europe, Cohesion Data FEDER/FSE) en {lista}.").format(lista=donde),
                         provincia="todas", og_path=_fue_url(f, pag=1))
+
+
+def _html_plan_recuperacion(f, res):
+    """Bloque de /fondos-ue (2026-10-17): contratos de PLACE con fondos europeos (marca del órgano de contratación) y
+    los 100 mayores perceptores finales del Plan de Recuperación. Solo sale lo que está cargado."""
+    zona = bool(f.get("provincia") or f.get("comunidad"))
+    with _db_lock:
+        top100 = [] if zona else _db.execute(
+            "SELECT beneficiario, nif, importe_num, titulo, fecha_fin, url FROM fondos_ue WHERE fuente='mrr100' "
+            "ORDER BY importe_num DESC").fetchall()
+    if not res and not top100:
+        return ""
+    partes = []
+    if res:
+        if f.get("provincia"):
+            datos, donde = res["provincias"].get(f["provincia"], {}), PROVINCIA_LABEL.get(f["provincia"], "")
+        elif f.get("comunidad"):
+            datos, donde = {}, COMUNIDAD_AUTONOMA_LABEL.get(f["comunidad"], "")
+            for p, v in res["provincias"].items():
+                if COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(p) == f["comunidad"]:
+                    for g, (n, eur) in v.items():
+                        datos.setdefault(g, [0, 0.0])
+                        datos[g] = [datos[g][0] + n, datos[g][1] + eur]
+        else:
+            datos, donde = res["espana"], _t("toda España")
+        ue, prtr = datos.get("UE", [0, 0.0]), datos.get("PRTR", [0, 0.0])
+        partes.append(
+            f'<p style="margin:10px 14px">'
+            + _t("Contratos formales de la Plataforma de Contratación del Sector Público (PLACE) en {donde} en los que "
+                 "el órgano de contratación declara financiación europea: {n} contratos por {importe}. De ellos, {n_prtr} "
+                 "del Plan de Recuperación por {importe_prtr}.").format(
+                     donde=esc(donde), n=fmt_num(ue[0]), importe=fmt_eur(str(ue[1])), n_prtr=fmt_num(prtr[0]),
+                     importe_prtr=fmt_eur(str(prtr[1])))
+            + " " + _t("En cada ficha de municipio esos contratos llevan la insignia del fondo.") + "</p>")
+        if not zona:
+            etiquetas = _fondos_ue_etiquetas()
+            filas_f = "".join(f'<tr><td>🇪🇺 {esc(etiquetas.get(k, k))}</td><td class="n">{fmt_num(v[0])}</td>'
+                              f'<td class="importe">{fmt_eur(str(v[1]))}</td></tr>'
+                              for k, v in sorted(res["por_fondo"].items(), key=lambda kv: -kv[1][1]))
+            provs = sorted(((p, v.get("PRTR", [0, 0.0])) for p, v in res["provincias"].items() if p),
+                           key=lambda kv: -kv[1][1])[:10]
+            filas_p = "".join(f'<tr><td><a href="{esc(_fue_url({"provincia": p}))}">'
+                              f'{esc(PROVINCIA_LABEL.get(p, p).replace("Provincia de ", ""))}</a></td>'
+                              f'<td class="n">{fmt_num(v[0])}</td><td class="importe">{fmt_eur(str(v[1]))}</td></tr>'
+                              for p, v in provs if v[0])
+            # Revisión del 02-11-2026: una fila por licitación. PLACE puede dar varias adjudicatarias con el mismo
+            # importe (la 2.ª lleva "#adj-..." en la dirección): a veces la misma UTE con su nombre antiguo y el nuevo
+            # (residuos de Madrid: CESPA -> PreZero), a veces adjudicaciones distintas (préstamos de varios bancos).
+            # Aquí solo se deja de repetir la fila; las sumas no se tocan (decisión pendiente de César).
+            top_lic = {}
+            for x in res.get("top", []):
+                g = top_lic.setdefault((html.unescape(x.get("url") or "").split("#adj-")[0], x["importe"]),
+                                       dict(x, n_adj=0))
+                g["n_adj"] += 1
+            filas_t = "".join(
+                f'<tr><td><div class="empresa">{esc(x["titulo"])}</div>'
+                f'<div class="lid">{esc(x["organo"])}{" · " + esc(x["lugar"]) if x.get("lugar") else ""}</div>'
+                + (f'<div class="lid">{_t("Adjudicataria")}: {esc(x["empresa"])}</div>' if x.get("empresa") else "")
+                + (f'<div class="lid">{_t("PLACE da {n} adjudicatarias con este mismo importe.").format(n=x["n_adj"])}</div>'
+                   if x["n_adj"] > 1 else "")
+                + f'</td><td class="importe">{fmt_eur(str(x["importe"]))}</td>'
+                f'<td>{esc(x.get("fecha") or "")}<br><a class="link" href="{esc(html.unescape(x["url"]))}" '
+                f'target="_blank" rel="noopener">{_t("PLACE ↗")}</a></td></tr>' for x in list(top_lic.values())[:10])
+            partes.append(
+                f'<div style="display:flex;flex-wrap:wrap;gap:0 18px">'
+                f'<table class="t-tarjeta t-rank" style="flex:1 1 280px"><tr><th>{_t("Fondo")}</th><th>{_t("Contratos")}</th><th>{_t("Importe")}</th></tr>{filas_f}</table>'
+                f'<table class="t-tarjeta t-rank" style="flex:1 1 280px"><tr><th>{_t("Provincia")}</th><th>{_t("Contratos del Plan")}</th><th>{_t("Importe")}</th></tr>{filas_p}</table></div>')
+            if filas_t:
+                partes.append(f'<details><summary>{_t("Los 10 mayores contratos del Plan de Recuperación")}</summary>'
+                              f'<table class="t-tarjeta"><tr><th>{_t("Contrato")}</th><th>{_t("Importe")}</th><th>{_t("Fecha")}</th></tr>'
+                              f'{filas_t}</table></details>')
+        partes.append(
+            f'<div class="gs-hint" style="margin:6px 14px 10px;font-size:12px">'
+            + _t("Solo PLACE trae esta marca: los contratos de las plataformas autonómicas (Cataluña, Euskadi, Navarra), "
+                 "del BORM y los contratos menores no la tienen, así que la cobertura es desigual entre comunidades. La "
+                 "pone el órgano de contratación y puede faltar. Importe adjudicado sin IVA o, si no consta, el "
+                 "presupuesto de licitación; los acuerdos marco de centrales de contratación no se suman.")
+            + " " + _t("Calculado el {f}.").format(f=esc(_conv_fecha(res.get("fecha", "")))) + "</div>")
+    if top100:
+        filas_m = "".join(
+            f'<tr><td class="n">{i}</td><td><div class="empresa"><a href="/?q={quote_plus(b or "")}">{esc(b)}</a></div>'
+            f'<div class="lid">{esc(t)}</div></td><td class="importe">{fmt_eur(str(imp))}</td></tr>'
+            for i, (b, nif, imp, t, fecha, url) in enumerate(top100, 1))
+        partes.append(
+            f'<details><summary>{_t("Los 100 mayores perceptores finales del Plan de Recuperación (lista oficial a 30-04-2024)")}</summary>'
+            f'<div class="gs-hint" style="margin:0 14px 8px;font-size:12px">'
+            + _t("Lista que publica el Gobierno de España por obligación del Reglamento (UE) 2021/241; la última "
+                 "disponible es de abril de 2024. Muchos perceptores son organismos públicos que después reparten o "
+                 "contratan los fondos (ADIF, ministerios, ayuntamientos).")
+            + f' <a href="{esc(top100[0][5])}" target="_blank" rel="noopener">{_t("Fuente")} ↗</a></div>'
+            f'<table><tr><th>#</th><th>{_t("Perceptor / Componentes del Plan")}</th><th>{_t("Importe")}</th></tr>'
+            f'{filas_m}</table></details>')
+    return (f'<div class="fue-card fue-mrr" style="margin-top:18px"><div class="section-title" '
+            f'style="color:var(--yellow);margin:12px 14px 0">🇪🇺 {_t("Plan de Recuperación y contratos con fondos europeos")}</div>'
+            + "".join(partes) + "</div>")
+
+
+def _html_mrr100_busqueda(q):
+    """En la búsqueda: si lo buscado es uno de los 100 mayores perceptores del Plan de Recuperación, se dice."""
+    qn = normalizar(q or "")
+    if len(qn) < 4:
+        return ""
+    with _db_lock:
+        filas = _db.execute("SELECT beneficiario, nif, importe_num, titulo, url FROM fondos_ue WHERE fuente='mrr100'").fetchall()
+    hallados = [r for r in filas if qn in normalizar(r[0] or "") or qn.upper() == (r[1] or "").upper()][:5]
+    return "".join(
+        f'<div class="fue-card" style="padding:10px 14px">🇪🇺 '
+        + _t("{nombre} está entre los 100 mayores perceptores finales del Plan de Recuperación: {importe} (lista oficial a "
+             "30-04-2024).").format(nombre=f"<b>{esc(b)}</b>", importe=fmt_eur(str(imp)))
+        + f' <span class="lid">{esc(t)}</span> <a href="/fondos-ue">{_t("Ver la lista")}</a></div>'
+        for b, nif, imp, t, url in hallados)
 
 
 # ─── CONVOCATORIAS ABIERTAS (página) ──────────────────────────────────────────────────────────────────────────────
@@ -21795,6 +22876,8 @@ def _conv_parametros(qs):
         if g("importe") in _CONV_IMPORTES:
             f["importe"] = g("importe")
     else:
+        if g("sector") in SUBV_SECTOR_CNAE:
+            f["sector"] = g("sector")
         if g("ambito") in _CONV_AMBITOS_SUB:
             f["ambito"] = g("ambito")
         if g("benef") in _CONV_BENEFICIARIOS:
@@ -21887,6 +22970,8 @@ def _conv_filtro_subvenciones(f):
         where.append("nivel1 = ?"); args.append(f["ambito"])
     if f.get("benef"):
         where.append("beneficiarios LIKE ?"); args.append(f"%{_CONV_BENEFICIARIOS[f['benef']]}%")
+    if f.get("sector"):
+        where.append("sectores LIKE ?"); args.append(f"% {f['sector']} %")
     if f.get("q"):
         _conv_where_texto(f["q"], where, args)
     return where, args, orden
@@ -22083,16 +23168,18 @@ def render_convocatorias_html(qs):
         ocultos += f'<input type="hidden" name="muni" value="{esc(f["muni"])}">'
     campos = [f'<input type="search" name="q" value="{esc(f.get("q", ""))}" placeholder="{esc(_t("Buscar en el título o el organismo"))}" class="conv-q">',
               zona_html]
+    sel_sector = _conv_select("sector", f.get("sector", ""),
+                              sorted(((k, _t(v)) for k, v in LIC.CPV_DIVISIONES.items()), key=lambda x: normalizar(x[1])),
+                              _t("Cualquier sector"))
     if tab == "licitaciones":
         campos += [_conv_select("tipo", f.get("tipo", ""), et["tipo"].items(), _t("Cualquier tipo")),
-                   _conv_select("sector", f.get("sector", ""),
-                                sorted(((k, _t(v)) for k, v in LIC.CPV_DIVISIONES.items()), key=lambda x: normalizar(x[1])),
-                                _t("Cualquier sector")),
+                   sel_sector,
                    _conv_select("ambito", f.get("ambito", ""), et["ambito_lic"].items(), _t("Cualquier organismo")),
                    _conv_select("importe", f.get("importe", ""), et["importe"].items(), _t("Cualquier importe")),
                    _conv_select("plazo", f.get("plazo", ""), et["plazo"].items(), _t("Cualquier plazo"))]
     else:
-        campos += [_conv_select("ambito", f.get("ambito", ""), et["ambito_sub"].items(), _t("Cualquier administración")),
+        campos += [sel_sector,
+                   _conv_select("ambito", f.get("ambito", ""), et["ambito_sub"].items(), _t("Cualquier administración")),
                    _conv_select("benef", f.get("benef", ""), et["benef"].items(), _t("Cualquier beneficiario")),
                    _conv_select("plazo", f.get("plazo", ""), et["plazo"].items(), _t("Cualquier plazo"))]
     formulario = (f'<form method="get" action="/convocatorias" class="conv-filtros">{ocultos}{"".join(campos)}'
@@ -22135,6 +23222,9 @@ def render_convocatorias_html(qs):
         vistas_html = ('<div class="prov-switch" style="margin-bottom:10px">' + "".join(
             f'<a href="{esc(_conv_url(dict(f, vista=None if v == "abiertas" else v, pag=1)))}" '
             f'class="prov-tab{" active" if v == vista else ""}">{esc(lbl)}</a>' for v, lbl in vistas) + "</div>")
+        if f.get("sector"):
+            vistas_html += (f'<div class="gs-hint conv-aviso-sector" style="margin:0 0 10px;font-size:13px">⚠️ '
+                            f'{_t("La clasificación por sector es automática (códigos de actividad CNAE que publica la BDNS y palabras del título) y puede fallar: puede incluir convocatorias que no son de este sector y dejar fuera alguna que sí lo es. Las ayudas generales para empresas aparecen en todos los sectores. Comprueba siempre en las bases quién puede pedirla.")}</div>')
         if vista == "sin_fecha":
             vistas_html += (f'<div class="gs-hint" style="margin:0 0 10px;font-size:13px">'
                             f'{_t("Estas convocatorias no publican la fecha de fin en la BDNS (suele contarse desde la publicación del extracto en el boletín). No sabemos si siguen abiertas: consulta las bases antes de presentar nada.")}</div>')
@@ -22155,10 +23245,13 @@ def render_convocatorias_html(qs):
   {_alertas_boton_convocatorias_html(f)}
   <div class="fue-card">
     <div class="gs-hint" style="margin:10px 14px">{_t("{n} convocatorias").format(n=f"{total:,}".replace(",", "."))}</div>
+    <div class="tbl-scroll">
     <table>
       <tr>{cab}</tr>
       {cuerpo}
     </table>
+    <span class="scroll-hint" aria-hidden="true">{_t("sigue")} <span class="scroll-hint-arrow">›</span></span>
+    </div>
   </div>
   {pag_html}"""
     return _page_shell(_t("Convocatorias abiertas: licitaciones y subvenciones"), body,
@@ -22229,7 +23322,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
     if muni_filter:
         datos = [d for d in datos if normalizar(d.get("municipio", "")) == normalizar(muni_filter)]
 
-    total_m = len(datos)
+    total_m = _n_municipios_reales(datos)
     total_c = sum(d.get("total_contratos", 0) for d in datos)
     total_e = len(set(
         normalizar(c.get("empresa", ""))
@@ -22275,7 +23368,9 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             contratos_shown = contratos_all[:PAGE_SIZE]
         total_pages = max(1, (total_muni + PAGE_SIZE - 1) // PAGE_SIZE)
 
-        filas = "".join(_render_fila_contrato(c, municipio=muni_name_d, provincia=d.get("provincia", provincia))
+        repetidas = _adjudicatarias_repetidas(contratos_all)
+        filas = "".join(_render_fila_contrato(c, municipio=muni_name_d, provincia=d.get("provincia", provincia),
+                                              repetida=repetidas.get(id(c), 0))
                          for c in contratos_shown)
 
         if not filas:
@@ -22394,17 +23489,27 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # contratos públicos normales.
         fondos_ue_muni = _db_fondos_ue_por_municipio(muni_name_d, d.get("provincia", provincia))
         fondos_ue_html = ""
+        # 2026-10-17: contratos de PLACE de este municipio en los que el órgano declara financiación europea
+        con_ue = [c for c in d.get("contratos", []) if c.get("fondos_ue")]
+        if con_ue:
+            n_prtr = sum(1 for c in con_ue if "PRTR" in c["fondos_ue"])
+            eur_ue = sum(float(c.get("importe_num") or 0) for c in con_ue if not c.get("importe_aviso"))
+            fondos_ue_html = (f'<div class="gs-hint" style="margin:14px 0 0;font-size:13px">🇪🇺 '
+                              + _t("{n} contratos de PLACE de este municipio declaran financiación europea ({importe}); "
+                                   "{n_prtr} son del Plan de Recuperación. Llevan la insignia del fondo en la lista.").format(
+                                       n=fmt_num(len(con_ue)), importe=fmt_eur(str(eur_ue)), n_prtr=fmt_num(n_prtr))
+                              + f' <a href="/fondos-ue">{_t("Más sobre fondos UE")}</a></div>')
         if fondos_ue_muni:
             total_fue = sum(f["importe_num"] for f in fondos_ue_muni)
             filas_fue = "".join(_render_fila_fondo_ue(f) for f in fondos_ue_muni)
-            fondos_ue_html = f"""<div class="fue-card" style="margin-top:14px">
+            fondos_ue_html += f"""<div class="fue-card" style="margin-top:14px">
             <div class="section-title" style="color:var(--yellow);margin:0 0 8px">
               🇪🇺 {_t("Fondos y proyectos financiados por la UE")}
               <span class="badge" style="background:var(--tint);color:var(--yellow);border-color:var(--border)">
                 {len(fondos_ue_muni)} · {fmt_eur(str(total_fue))}
               </span>
             </div>
-            <table>
+            <table class="t-tarjeta">
               <tr>
                 <th>{_t("Proyecto / Beneficiario")}</th>
                 <th>{_t("Importe")}</th>
@@ -22479,7 +23584,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                 </summary>
                 {nota_base_cm}
                 <div class="tbl-scroll">
-                  <table>
+                  <table class="t-tarjeta">
                     <tr>
                       <th>{_t("Adjudicatario / Objeto")}</th>
                       <th>{_t("Importe")}</th>
@@ -22509,19 +23614,16 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
             # aquí el motivo es que los contratos menores NO tienen
             # obligación legal de publicación centralizada en ningún
             # registro único, a diferencia de las licitaciones formales.
-            organismo_d = _nombre_organismo_municipal(muni_name_d, provincia)
-            transp_url_cm = f"https://www.google.com/search?q={quote_plus(organismo_d + ' transparencia contratos menores')}"
+            # 2026-11-03: sin el enlace a una búsqueda de Google del portal de transparencia (no tenemos la dirección
+            # oficial de cada ayuntamiento; queda solo el enlace oficial a la ley en el BOE).
             enlace_ley = (f'<a href="https://www.boe.es/buscar/act.php?id=BOE-A-2013-12887" target="_blank" '
                           f'class="link">{_t("Ley 19/2013, de transparencia")}</a>')
-            enlace_portal = (f'<a href="{esc(transp_url_cm)}" target="_blank" class="link">'
-                             f'{_t("buscar el portal de transparencia de {organismo} ↗").format(organismo=esc(organismo_d))}</a>')
             texto_cm = _t("<b>Contratos menores:</b> no hay registros de este tipo para {municipio} en las fuentes que "
                           "consultamos. Los contratos menores no siempre tienen obligación legal de publicación "
                           "centralizada -- muchos ayuntamientos los tramitan sin subirlos a ningún registro abierto que "
                           "esta web pueda consultar, así que esto no significa necesariamente que no existan. Cualquier "
                           "vecino o concejal puede solicitarlos formalmente al ayuntamiento por la vía de acceso a la "
-                          "información pública ({ley}) -- {portal}").format(
-                municipio=esc(muni_name_d), ley=enlace_ley, portal=enlace_portal)
+                          "información pública ({ley}).").format(municipio=esc(muni_name_d), ley=enlace_ley)
             contratos_menors_html = f"""<div class="cm-aviso">
                 📋 {texto_cm}
               </div>"""
@@ -22549,7 +23651,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
           {concentracion_html}
           {alertas_html}
           <div class="tbl-scroll">
-            <table>
+            <table class="t-tarjeta">
               <tr>
                 <th>{_t("Empresa adjudicataria / Contrato")}</th>
                 <th>{_t("Importe")}</th>
@@ -23376,11 +24478,22 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     municipios por región es vía los botones de "Cobertura" y las tarjetas
     de "Cobertura por región" de más abajo (el toggle Murcia/Girona del
     header se quitó por redundante -- ver instrucción del 2026-08-02)."""
-    total_m = len(datos)
+    total_m = _n_municipios_reales(datos)
     total_c = sum(d.get("total_contratos", 0) for d in datos)
     # 2026-10-10: el contador enseñaba solo los contratos formales; los menores (seis veces más) no figuraban.
     with _db_lock:
         total_menores = _db.execute("SELECT COUNT(*) FROM contratos_menors_locales").fetchone()[0]
+        # Revisión del 02-11-2026: fecha real de la última carga = el guardado más reciente de una ficha municipal
+        # (columna ts, la escribe cada refresco; el nocturno las recorre todas). Nada si no hay ninguna fecha válida.
+        ts_ultima = _db.execute("SELECT MAX(ts) FROM municipios WHERE ts > 0").fetchone()[0]
+    actualizado_html = ""
+    if ts_ultima:
+        try:
+            from zoneinfo import ZoneInfo
+            f_ult = datetime.fromtimestamp(ts_ultima, ZoneInfo("Europe/Madrid")).strftime("%d-%m-%Y")
+        except Exception:                  # sin base de zonas horarias (Windows sin tzdata): hora local del equipo
+            f_ult = datetime.fromtimestamp(ts_ultima).strftime("%d-%m-%Y")
+        actualizado_html = f'<div class="portada-actualizado">{_t("Datos actualizados el {fecha}").format(fecha=f_ult)}</div>'
     total_e = len(set(
         normalizar(c.get("empresa", ""))
         for d in datos for c in d.get("contratos", [])
@@ -23394,7 +24507,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
       <div class="stat"><span>{fmt_num(total_menores)}</span>{_t("Contratos menores")}</div>
       <div class="stat"><span>{fmt_num(total_e)}</span>{_t("Empresas únicas")}</div>
       <div class="stat"><span>{fmt_eur(str(total_imp))}</span>{_t("Importe total")}</div>
-    </div>""" + _portada_cifras_secciones_html()
+    </div>""" + actualizado_html + _portada_cifras_secciones_html()
 
     # Cobertura por región -- una sola tarjeta por provincia con TODO junto
     # (municipios, habitantes, contratos, importe, deuda/hab.). Hasta
@@ -23582,7 +24695,7 @@ def render_landing_html(datos, provincia="murcia"):
     q_prov = _q_prov(provincia)
     por_muni = {clave_municipio(d.get("municipio", ""), d.get("provincia")): d for d in datos}
 
-    total_m = len(datos)
+    total_m = _n_municipios_reales(datos)
     total_c = sum(d.get("total_contratos", 0) for d in datos)
     total_e = len(set(
         normalizar(c.get("empresa", ""))
@@ -24094,27 +25207,39 @@ def _stats_localizacion():
     }
 
 
-def render_busqueda_global_html(datos, q, provincia="murcia"):
-    """Resultados de la búsqueda global por empresa, directivo o municipio."""
+_BUSQUEDA_POR_PAGINA = 100
+
+
+def render_busqueda_global_html(datos, q, provincia="murcia", pagina=1):
+    """Resultados de la búsqueda global por empresa, directivo o municipio.
+    Paginada de 100 en 100 (2026-11-03): antes se cortaba en 300 sin forma de ver el resto (Willis Iberia, 373)."""
     label = PROVINCIA_LABEL.get(provincia, PROVINCIA_LABEL["murcia"])
     q_norm = normalizar(q)
     resultados = []
+    repetidas = {}
     for d in datos:
         muni = d.get("municipio", "")
         prov_d = d.get("provincia", "murcia")
+        repetidas_d = _adjudicatarias_repetidas(d.get("contratos", []))
         for c in d.get("contratos", []):
             if (q_norm in normalizar(c.get("empresa", ""))
                     or q_norm in normalizar(_directivo_contrato(c)[0])
                     or q_norm in normalizar(muni)):
                 resultados.append((muni, prov_d, c))
+                if id(c) in repetidas_d:
+                    repetidas[id(c)] = repetidas_d[id(c)]
 
     if resultados:
-        filas = "".join(_render_fila_contrato(c, municipio_label=m, municipio=m, provincia=p)
-                         for m, p, c in resultados[:300])
-        aviso = (f'<div class="gs-hint" style="margin-bottom:10px">'
-                 f'{_t("Mostrando los primeros 300 de {n} resultados.").format(n=len(resultados))}</div>'
-                 ) if len(resultados) > 300 else ""
-        tabla = f"""{aviso}<table>
+        pagina, paginas = _rk_pagina(pagina, len(resultados), _BUSQUEDA_POR_PAGINA)
+        ini = (pagina - 1) * _BUSQUEDA_POR_PAGINA
+        filas = "".join(_render_fila_contrato(c, municipio_label=m, municipio=m, provincia=p,
+                                              repetida=repetidas.get(id(c), 0))
+                         for m, p, c in resultados[ini:ini + _BUSQUEDA_POR_PAGINA])
+        q_prov_pag = _q_prov(provincia)
+        paginacion = _rk_paginacion_html(
+            pagina, paginas, len(resultados),
+            lambda n: f"/?q={quote_plus(q)}{q_prov_pag}" + (f"&pag={n}" if n > 1 else ""), _t("resultados"))
+        tabla = f"""{paginacion}<table class="t-tarjeta">
           <tr>
             <th>{_t("Empresa adjudicataria / Contrato")}</th>
             <th>{_t("Importe")}</th>
@@ -24122,7 +25247,7 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
             <th>{_t("Estado / Fuente")}</th>
           </tr>
           {filas}
-        </table>"""
+        </table>{paginacion}"""
     else:
         tabla = f'<div class="empty">{_t("Sin resultados para tu búsqueda.")}</div>'
 
@@ -24139,6 +25264,7 @@ def render_busqueda_global_html(datos, q, provincia="murcia"):
     </form>
     <div class="gs-hint">{(_t('{n} resultado para "{q}"') if len(resultados) == 1 else _t('{n} resultados para "{q}"')).format(n=len(resultados), q=esc(q))}</div>
   </div>
+  {_html_mrr100_busqueda(q)}
   <div class="muni-card">{tabla}</div>
   {comentarios_html}"""
 
@@ -26079,7 +27205,7 @@ def render_mapa_cobertura_html():
 
     body = f'''<div class="static-page">
   <h1>{_t("Mapa de cobertura")}</h1>
-  <p class="sub">{_t("Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva.")}</p>
+  <p class="sub">{_t("Cada territorio, coloreado con su propia bandera — pasa el ratón por una provincia, o tócala, para ver sus cifras oficiales: municipios, habitantes, contratos, importe adjudicado y deuda viva.")}</p>
 
   {mapa_html}
 
@@ -26196,7 +27322,7 @@ def render_aviso_legal_html():
   <h2 id="alertas">{_t("Alertas por correo")}</h2>
   <p>{_t("Si te apuntas a una alerta por correo, guardamos tu dirección de correo electrónico, el idioma en que te apuntaste y los filtros de tus alertas. No pedimos nombre, teléfono ni ningún otro dato, y no guardamos tu dirección IP.")}</p>
   <p>{_t("Usamos tu correo únicamente para enviarte los avisos que has pedido: no lo cedemos a nadie ni lo usamos para publicidad. La base legal es tu consentimiento (art. 6.1.a del RGPD), que confirmas desde un enlace que te enviamos; sin esa confirmación no se envía nada más y la solicitud se borra a los 7 días.")}</p>
-  <p>{_t("Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento y recibe tu dirección solo para entregar los mensajes.")}</p>
+  <p>{_t("Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento: recibe tu dirección y el contenido de cada mensaje, y los usa solo para entregarlo.")}</p>
   <p>{_t('Puedes darte de baja en cualquier momento con el enlace que va en cada correo: al hacerlo borramos de inmediato tu dirección y tus alertas. También puedes pedirlo en <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
 """ if ALERTAS_ACTIVAS else ""
     body = f"""<div class="static-page">
@@ -26222,7 +27348,7 @@ def render_aviso_legal_html():
   <p>{_t("Los datos de subvenciones ya están publicados, en la pestaña «Subvenciones» de Convocatorias abiertas: provienen de la Base de Datos Nacional de Subvenciones (BDNS) y se actualizan dos veces al día.")}</p>
 
   <h2>{_t("Base legal para el tratamiento de datos")}</h2>
-  <p>{_t("El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se ampara en el interés público de la información y en que proceden de fuentes accesibles al público (art. 9.2.e del Reglamento General de Protección de Datos y Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales — LOPDGDD).")}</p>
+  <p>{_t("El tratamiento de los nombres de personas físicas que aparecen como administradores o apoderados de empresas adjudicatarias se basa en el interés legítimo en informar sobre la contratación pública (art. 6.1.f del Reglamento General de Protección de Datos). Esos nombres proceden de una fuente de acceso público, el Boletín Oficial del Registro Mercantil. Se aplica también la Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD).")}</p>
 
   <h2>{_t("Ejercicio de derechos RGPD")}</h2>
   <p>{_t('Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
@@ -26236,7 +27362,7 @@ def render_aviso_legal_html():
   </ul>
   <p>{_t("Puedes aceptar o rechazar estas cookies en cualquier momento desde el enlace <b>«Preferencias de cookies»</b> en el pie de página de cualquier página del sitio — rechazarlas no impide usar la web con normalidad, solo desactiva las estadísticas y la publicidad.")}</p>
   <p>{_t('Más información sobre cómo Google usa los datos en sitios que utilizan sus servicios de publicidad: <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Cómo usa Google los datos de los sitios o las apps que utilizan sus servicios</a>.')}</p>
-  <p>{_t("Aparte de lo anterior, el sitio lleva un recuento propio de visitas que no usa cookies ni guarda direcciones IP. Para no contar dos veces al mismo visitante se calcula una huella a partir de la dirección IP y del navegador, mezclada con una clave aleatoria que se destruye cada semana junto con las huellas. Solo se conservan sumas (visitas por día y por semana): no permite identificar a nadie ni seguirle de una semana a otra.")}</p>
+  <p>{_t("Aparte de lo anterior, el sitio lleva un recuento propio de visitas que no usa cookies ni guarda direcciones IP completas. Para detectar rastreadores abusivos se guarda, sumada por día, la red de cada visita: la dirección IP recortada a su bloque (por ejemplo, 192.0.2.0/24). De los días ya cerrados solo se conservan las 100 redes con más tráfico, durante 30 días. Para no contar dos veces al mismo visitante se calcula una huella a partir de la dirección IP y del navegador, mezclada con una clave aleatoria que se destruye cada semana junto con las huellas. Del resto solo se conservan sumas (visitas por día y por semana).")}</p>
 
   <h2>{_t("Contacto")}</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
@@ -26256,7 +27382,7 @@ def render_aviso_legal_html():
 
 _HTTP_STATUS_TEXT = {
     200: "OK", 204: "No Content", 206: "Partial Content", 301: "Moved Permanently", 303: "See Other", 400: "Bad Request",
-    409: "Conflict", 413: "Payload Too Large", 429: "Too Many Requests",
+    409: "Conflict", 413: "Payload Too Large", 423: "Locked", 429: "Too Many Requests",
     403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed", 416: "Range Not Satisfiable",
     500: "Internal Server Error",
 }
@@ -26291,8 +27417,357 @@ def _error_resp(msg, code=500):
 #   ALERTAS_TOPE_DIARIO      correos al día como mucho (por defecto 80: el plan gratuito de Resend da 100 al día y
 #                            hay que dejar sitio a los avisos propios)
 #   ALERTAS_TOPE_MES         correos en 30 días como mucho (por defecto 2.800 de los 3.000 del plan gratuito)
+#   ALERTAS_SOLO_CORREOS     (22-10, prueba de César) direcciones separadas por comas. Mientras esté puesta, las alertas
+#                            funcionan solo para ellas: sin enlaces ni formularios en la web (/alertas solo se abre
+#                            con la dirección escrita a mano), las altas de cualquier otro correo no guardan ni envían
+#                            nada (la página responde lo mismo de siempre) y la pasada solo escribe a esas direcciones.
 # El envío lo dispara el flujo alertas-envio.yml (POST /admin/alertas-enviar), por tandas.
 ALERTAS_ACTIVAS = os.environ.get("ALERTAS_ACTIVAS", "") == "1"
+ALERTAS_SOLO_CORREOS = frozenset(c for c in (ALR.correo_valido(x) for x in os.environ.get("ALERTAS_SOLO_CORREOS", "").split(",")) if c)
+ALERTAS_PUBLICAS = ALERTAS_ACTIVAS and not ALERTAS_SOLO_CORREOS     # enlaces y formularios a la vista de todos
+# Formulario del filtro de licitaciones por empresa (BORRADOR, 2026-10-27; ver filtro_formulario.py). Apagado salvo
+# FILTRO_FORMULARIO=1: sin ella, /filtro-licitaciones y sus páginas no existen (404), no se abre ni se crea socios.db
+# y no se guarda nada. No lo enlaza ninguna página. Con ella, los perfiles se guardan en socios.db (ver socios.py).
+FILTRO_FORMULARIO = os.environ.get("FILTRO_FORMULARIO", "") == "1"
+# SOCIOS_SOLO_CORREOS (28-10, como ALERTAS_SOLO_CORREOS): direcciones separadas por comas. Mientras esté puesta, el
+# filtro funciona solo para ellas: el formulario no guarda ni envía nada a ninguna otra (la página responde lo mismo de
+# siempre) y el envío semanal y los avisos solo salen hacia esas direcciones. Para las pruebas de César.
+SOCIOS_SOLO_CORREOS = frozenset(c for c in (SOC.correo_valido(x) for x in os.environ.get("SOCIOS_SOLO_CORREOS", "").split(",")) if c)
+
+
+def _filtro_licitaciones_abiertas():
+    """Licitaciones con plazo abierto (hora peninsular) y requisitos ya leídos, como dicts para el filtro."""
+    columnas = ("id", "fin_plazo", "titulo", "url", "organo", "ambito", "provincia", "cpv", "tipo", "procedimiento",
+                "presupuesto", "valor_estimado", "requisitos")
+    ahora = _ahora_madrid().strftime("%Y-%m-%d %H:%M")
+    with _db_lock:
+        filas = _db.execute(f"SELECT {', '.join(columnas)} FROM licitaciones WHERE estado = 'PUB' AND fin_plazo >= ? "
+                            "AND requisitos IS NOT NULL", (ahora,)).fetchall()
+    return [FLIC.desde_fila(dict(zip(columnas, f))) for f in filas]
+
+
+def _filtro_formulario_resp(metodo, params):
+    html_ = FFORM.responder(metodo, params, _filtro_licitaciones_abiertas, _ahora_madrid(), guardar=_socios_alta)
+    return _filtro_html(html_)
+
+
+# Embudo de licitaciones (/licitaciones/filtro, encargo del 2026-11-01; ver filtro_embudo.py). A diferencia del
+# formulario de arriba NO guarda nada: ni socios.db, ni cookies, ni correo; el resultado se calcula con lo que llega en
+# el POST y se olvida. Apagado salvo FILTRO_EMBUDO=1 (sin ella, 404) y sin enlaces desde ninguna página.
+FILTRO_EMBUDO = os.environ.get("FILTRO_EMBUDO", "") == "1"
+
+
+def _filtro_embudo_resp(metodo, params):
+    return _filtro_html(FEMB.responder(metodo, params, _filtro_licitaciones_abiertas, _ahora_madrid()))
+
+
+def _filtro_html(html_):
+    return _resp(html_, headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer"})
+
+
+# ── perfiles del filtro (socios.db, 2026-10-28) ──────────────────────────────────────────────────────────────────
+# Mismo esquema que las alertas: almacén y reglas en socios.py, fichero propio en DATA_DIR (en Render, /var/data;
+# nunca en el repositorio), doble confirmación, baja que BORRA, enlaces firmados y copia cifrada semanal
+# (copia-socios-cifrada.yml, POST /admin/socios-db). Solo se abre con FILTRO_FORMULARIO=1.
+_SOCIOS_ALMACEN = None
+_socios_almacen_lock = threading.Lock()
+_SOCIOS_LIMPIEZA_CADA_S = 6 * 3600
+
+
+def _socios_correo_permitido(correo):
+    return not SOCIOS_SOLO_CORREOS or SOC.correo_valido(correo) in SOCIOS_SOLO_CORREOS
+
+
+def _resend_enviados_desde(desde):
+    """Correos aceptados por Resend desde `desde`, sumando alertas y filtro: el cupo del plan es uno solo (28-10)."""
+    n = _alertas_almacen().envios_desde(desde)
+    if FILTRO_FORMULARIO:
+        n += _socios_almacen().envios_desde(desde)
+    return n
+
+
+def _socios_almacen():
+    global _SOCIOS_ALMACEN
+    with _socios_almacen_lock:
+        if _SOCIOS_ALMACEN is None:
+            _SOCIOS_ALMACEN = SOC.Almacen(os.path.join(DATA_DIR, "socios.db"))
+        return _SOCIOS_ALMACEN
+
+
+def _socios_limpieza_bg():
+    """Borrado automático (sin confirmar a los 7 días, sin uso a los 12 meses): al arrancar y cada 6 horas."""
+    while True:
+        try:
+            r = _socios_almacen().limpiar()
+            if any(r.values()):
+                print(f"[socios] limpieza: {r}", flush=True)
+        except Exception as e:
+            print(f"[socios] limpieza: ERROR ({type(e).__name__}: {e})", flush=True)
+        time.sleep(_SOCIOS_LIMPIEZA_CADA_S)
+
+
+def _socios_enlace(alm, accion, pid, extra=""):
+    ruta = {"confirmar": "confirmar", "baja": "baja", "ver": "mis-licitaciones", "mantener": "mantener"}[accion]
+    return f"{SITE_URL}{FFORM.RUTA}/{ruta}?p={pid}&k={alm.firma(accion, pid, extra)}"
+
+
+def _socios_enviar(alm, pid, correo, clase, asunto, texto, html_):
+    """Un correo por Resend, siempre con la baja de un clic (enlace en el pie, que pone filtro_formulario, y cabeceras
+    List-Unsubscribe). Queda anotado en socios.db sin la dirección. Devuelve True si salió."""
+    payload = {"from": _avisos_remitente(), "to": [correo], "subject": asunto[:150], "text": texto, "html": html_,
+               "headers": {"List-Unsubscribe": f"<{SITE_URL}{FFORM.RUTA}/baja-correo?p={pid}&k={alm.firma('baja', pid)}>",
+                           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"}}
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if not api_key:
+        alm.registrar_envio(clase, pid, None, "falta RESEND_API_KEY")
+        return False
+    try:
+        r = requests.post("https://api.resend.com/emails", json=payload, timeout=15,
+                          headers={"Authorization": f"Bearer {api_key}"})
+        codigo, detalle = r.status_code, _RE_CORREO_EN_TEXTO.sub("***@***", r.text[:300])
+    except Exception as e:
+        codigo, detalle = None, type(e).__name__
+    alm.registrar_envio(clase, pid, codigo, detalle)
+    if codigo is None or codigo >= 300:
+        print(f"[socios] {clase}: NO ENVIADO (código {codigo}): {detalle}", flush=True)
+    return codigo is not None and codigo < 300
+
+
+def _socios_alta(correo, perfil):
+    """Lo llama el formulario al enviar: guarda el perfil SIN confirmar y manda, en un hilo, el correo de confirmación."""
+    if SOC.correo_valido(correo) and not _socios_correo_permitido(correo):
+        return "fuera_de_prueba"                            # SOCIOS_SOLO_CORREOS: ni se guarda ni se envía nada
+    alm = _socios_almacen()
+    r = alm.alta(correo, perfil)
+    if r["resultado"] != "confirmar":
+        return r["resultado"]
+    p = r["perfil"]
+    objetivo = alm.a_confirmar(p)
+    asunto, texto, html_ = FFORM.correo_confirmacion(
+        json.loads(objetivo), _socios_enlace(alm, "confirmar", p["id"], SOC.huella(objetivo)),
+        _socios_enlace(alm, "baja", p["id"]), es_cambio=p["estado"] == "activo", ahora=_ahora_madrid())
+    threading.Thread(target=_socios_enviar, args=(alm, p["id"], p["correo"], "confirmacion", asunto, texto, html_),
+                     name="socios-confirmacion", daemon=True).start()
+    return "confirmar"
+
+
+def _socios_get(path, qs):
+    """Páginas de los enlaces del correo (GET). Confirmar y baja solo enseñan un formulario que se envía solo (POST):
+    un programa de correo que abre el enlace para revisarlo no confirma ni borra nada. None si no es ninguna."""
+    g = lambda k: (qs.get(k, [""])[0] or "").strip()                     # noqa: E731
+    sub = path[len(FFORM.RUTA):]
+    if sub not in ("/confirmar", "/baja", "/mis-licitaciones", "/mantener"):
+        return None
+    alm = _socios_almacen()
+    p = alm.perfil(int(g("p"))) if g("p").isdigit() else None
+    if not p:
+        return _filtro_html(FFORM.enlace_no_valido_html())
+    campos = {"p": p["id"], "k": g("k")}
+    if sub == "/confirmar":
+        objetivo = alm.a_confirmar(p)
+        validos = [h for h in (objetivo, p["perfil_json"] if p["estado"] == "activo" else "") if h]
+        if not any(alm.firma_valida("confirmar", p["id"], g("k"), SOC.huella(h)) for h in validos):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.confirmar_pedir_html(campos))
+    if sub == "/baja":
+        if not alm.firma_valida("baja", p["id"], g("k")):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.baja_pedir_html(campos))
+    if sub == "/mantener":
+        if p["estado"] != "activo" or not alm.firma_valida("mantener", p["id"], g("k")):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.mantener_pedir_html(campos))
+    if p["estado"] != "activo" or not alm.firma_valida("ver", p["id"], g("k")):
+        return _filtro_html(FFORM.enlace_no_valido_html())
+    alm.usar(p["id"])
+    ahora = _ahora_madrid()
+    res = FLIC.filtrar(_filtro_licitaciones_abiertas(), p["perfil"], ahora)
+    return _filtro_html(FFORM.mis_licitaciones_html(p["perfil"], res, {"p": p["id"], "k": alm.firma("baja", p["id"])},
+                                                    ahora))
+
+
+def _socios_post(path, params):
+    """Formularios de confirmar y baja (POST). None si no es ninguno."""
+    pr = lambda k: (params.get(k, [""])[0] or "").strip()                # noqa: E731
+    sub = path[len(FFORM.RUTA):]
+    if sub not in ("/confirmar", "/baja", "/mantener"):
+        return None
+    alm = _socios_almacen()
+    pid = int(pr("p")) if pr("p").isdigit() else 0
+    if sub == "/baja":
+        if pid and alm.firma_valida("baja", pid, pr("k")):
+            alm.baja(pid)
+        return _filtro_html(FFORM.baja_hecha_html())
+    if sub == "/mantener":
+        if not (pid and alm.firma_valida("mantener", pid, pr("k")) and alm.usar(pid)):
+            return _filtro_html(FFORM.enlace_no_valido_html())
+        return _filtro_html(FFORM.mantenido_html(_socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid)))
+    antes = alm.perfil(pid) if pid else None
+    if antes and antes["estado"] == "pendiente":
+        # Lo que está abierto ahora queda como "ya estaba": el primer correo semanal solo trae lo que salga después.
+        alm.registrar_vistos([l["id"] for l in _filtro_licitaciones_abiertas()], time.time())
+    p = alm.confirmar(pid, pr("k")) if antes else None
+    if not p:
+        return _filtro_html(FFORM.enlace_no_valido_html())
+    return _filtro_html(FFORM.confirmado_html(p["perfil"], _socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid),
+                                              era_cambio=antes["estado"] == "activo", ya_estaba=bool(p.get("ya_estaba")),
+                                              ahora=_ahora_madrid()))
+
+
+def _socios_inicio_dia_semana(ahora):
+    madrid = _ahora_madrid()
+    inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    return madrid, inicio_dia, inicio_dia - madrid.weekday() * 86400
+
+
+def _socios_semanal_de(alm, p, abiertas, madrid):
+    """Correo semanal de un perfil con las licitaciones NUEVAS desde su última revisión: (asunto, texto, html, en el
+    correo, total) o None si no hay ninguna."""
+    nuevos = alm.nuevos_desde(p["revisado"] or p["confirmado"])
+    if not nuevos:
+        return None
+    res = FLIC.filtrar([l for l in abiertas if str(l["id"]) in nuevos], p["perfil"], madrid)
+    return FFORM.correo_semanal(res, _socios_enlace(alm, "ver", p["id"]), _socios_enlace(alm, "baja", p["id"]), madrid)
+
+
+def _socios_pasada(max_correos=25):
+    """Una tanda del envío del filtro (flujo socios-envio.yml, todos los días a las 08:30 UTC): primero los avisos
+    «¿Sigues interesado?» y después los correos semanales (los de esta semana que falten: el lunes salen casi todos y,
+    si el cupo no llega, el resto los días siguientes). Respeta el cupo de Resend, que comparte con las alertas
+    (ALERTAS_TOPE_DIARIO / ALERTAS_TOPE_MES, sumando los dos ficheros). Solo números en la respuesta (la llama un
+    flujo de Actions, cuyos registros son públicos)."""
+    if not FILTRO_FORMULARIO:
+        return {"activas": False}
+    alm = _socios_almacen()
+    ahora = time.time()
+    alm.limpiar(ahora)
+    madrid, inicio_dia, inicio_semana = _socios_inicio_dia_semana(ahora)
+    tope_dia, tope_mes = _alertas_tope("ALERTAS_TOPE_DIARIO", 80), _alertas_tope("ALERTAS_TOPE_MES", 2800)
+    hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)
+    cupo = min(max_correos, tope_dia - hoy, tope_mes - mes)
+    res = {"activas": True, "en_prueba": bool(SOCIOS_SOLO_CORREOS), "avisos": 0, "semanales": 0, "sin_novedades": 0,
+           "fallidos": 0, "enviados_hoy": hoy, "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
+    abiertas = _filtro_licitaciones_abiertas()
+    alm.registrar_vistos([l["id"] for l in abiertas], ahora)
+    avisos = [p for p in alm.pendientes_aviso(ahora, inicio_dia) if _socios_correo_permitido(p["correo"])]
+    semanales = [p for p in alm.pendientes_semanal(inicio_semana, inicio_dia) if _socios_correo_permitido(p["correo"])]
+    hechos = 0
+    for p in avisos:
+        if cupo <= 0:
+            break
+        asunto, texto, html_ = FFORM.correo_sigues(_socios_enlace(alm, "mantener", p["id"]), _socios_enlace(alm, "baja", p["id"]),
+                                                   madrid + timedelta(seconds=SOC.AVISO_PLAZO_S))
+        if _socios_enviar(alm, p["id"], p["correo"], "aviso_inactividad", asunto, texto, html_):
+            alm.marcar_aviso(p["id"], ahora)
+            res["avisos"] += 1
+        else:
+            alm.marcar_intentado(p["id"], ahora)                         # mañana se vuelve a intentar
+            res["fallidos"] += 1
+        hechos += 1
+        cupo -= 1
+        time.sleep(0.6)                                                  # Resend: 2 peticiones por segundo
+    for p in semanales:
+        correo = _socios_semanal_de(alm, p, abiertas, madrid)
+        if correo is None:
+            alm.marcar_revisado(p["id"], ahora, enviado=False)           # sin novedades: no se envía nada
+            res["sin_novedades"] += 1
+            hechos += 1
+            continue
+        if cupo <= 0:
+            break
+        asunto, texto, html_, _, _ = correo
+        if _socios_enviar(alm, p["id"], p["correo"], "semanal", asunto, texto, html_):
+            alm.marcar_revisado(p["id"], ahora, enviado=True)
+            res["semanales"] += 1
+        else:
+            alm.marcar_intentado(p["id"], ahora)                         # mañana, con lo nuevo que haya entonces
+            res["fallidos"] += 1
+        hechos += 1
+        cupo -= 1
+        time.sleep(0.6)
+    res["pendientes"] = len(avisos) + len(semanales) - hechos
+    res["tope_alcanzado"] = bool(res["pendientes"]) and cupo <= 0 and (
+        hoy + res["avisos"] + res["semanales"] >= tope_dia or mes + res["avisos"] + res["semanales"] >= tope_mes)
+    return res
+
+
+def _socios_vista_html(pid):
+    """Panel: el correo semanal que le saldría AHORA a ese perfil (sin enviarlo ni marcar nada), para revisarlo."""
+    alm = _socios_almacen()
+    p = alm.perfil(int(pid)) if pid.isdigit() else None
+    if not p or p["estado"] != "activo":
+        return _revision_pagina("Próximo correo", '<p>Ese perfil no existe o no está confirmado.</p>')
+    madrid, _, _ = _socios_inicio_dia_semana(time.time())
+    correo = _socios_semanal_de(alm, p, _filtro_licitaciones_abiertas(), madrid)
+    if correo is None:
+        cuerpo = ('<p>Ahora mismo no le saldría ningún correo: no hay licitaciones nuevas que encajen desde su última '
+                  'revisión.</p>')
+    else:
+        asunto, _, html_, en_correo, total = correo
+        cuerpo = (f'<p><b>Asunto:</b> {esc(asunto)} · {en_correo} fichas en el correo de {total}. Vista previa: no se '
+                  f'envía nada ni cambia nada.</p><div style="background:#fff;border:1px solid #dde1e7">{html_}</div>')
+    return _revision_pagina("Próximo correo", f'<h1>Próximo correo semanal</h1><p class="sub">'
+                            f'<a href="/admin/revision/socios">← Perfiles del filtro</a></p>{cuerpo}')
+
+
+def _socios_panel_html(cookie, hecho=""):
+    """Panel (/admin/revision/socios, con la sesión del panel): recuentos, perfiles y envíos; borrar un perfil a
+    petición de la empresa (derecho de supresión pedido por correo)."""
+    f_ts = lambda ts: time.strftime("%d/%m/%Y %H:%M", time.gmtime(ts)) if ts else "—"       # noqa: E731
+    if not FILTRO_FORMULARIO:
+        return _revision_pagina("Filtro de licitaciones: perfiles", '<h1>Filtro de licitaciones: perfiles</h1>'
+                                '<p class="sub"><a href="/admin/revision">← Cola de revisión</a></p><div class="aviso">'
+                                '<b>APAGADO.</b> Falta FILTRO_FORMULARIO=1 en Render: no hay formulario ni se guarda '
+                                'nada, y socios.db no se abre.</div>')
+    alm = _socios_almacen()
+    r = alm.resumen()
+    csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
+    if SOCIOS_SOLO_CORREOS:
+        estado = (f'<div class="aviso"><b>Encendido EN PRUEBA</b> (SOCIOS_SOLO_CORREOS): solo para '
+                  f'{esc(", ".join(sorted(SOC.correo_tapado(c) for c in SOCIOS_SOLO_CORREOS)))}. El formulario no guarda '
+                  f'ninguna otra dirección y los correos solo salen hacia esas.</div>')
+    else:
+        estado = '<div class="aviso"><b>Encendido</b> (FILTRO_FORMULARIO=1), abierto a todos.</div>'
+    vista = lambda p: (f'<a href="/admin/revision/socios/vista?p={p["id"]}">Ver el próximo correo</a>'      # noqa: E731
+                       if p["estado"] == "activo" else "")
+    ahora = time.time()
+    _, inicio_dia, _ = _socios_inicio_dia_semana(ahora)
+    cupo = (f'<tr><th>Correos aceptados por Resend (alertas + filtro)</th><td>hoy {_resend_enviados_desde(inicio_dia)} de '
+            f'{_alertas_tope("ALERTAS_TOPE_DIARIO", 80)} · últimos 30 días {_resend_enviados_desde(ahora - 30 * 86400)} de '
+            f'{_alertas_tope("ALERTAS_TOPE_MES", 2800)}</td></tr>')
+    resumen = (f'<table class="t"><tr><th>Perfiles confirmados</th><td>{r["activos"]}</td></tr>'
+               f'<tr><th>Sin confirmar (se borran a los 7 días)</th><td>{r["sin_confirmar"]}</td></tr>'
+               f'<tr><th>Cambios esperando confirmación</th><td>{r["cambios_pendientes"]}</td></tr>'
+               f'<tr><th>Borrados</th><td>{r["bajas"]} por su cuenta · {r["bajas_desde_el_panel"]} desde este panel · '
+               f'{r["caducados_sin_confirmar"]} sin confirmar · {r["caducados_inactivos"]} por falta de uso</td></tr>'
+               f'<tr><th>Avisados de borrado por falta de uso</th><td>{r["avisados_inactividad"]}</td></tr>{cupo}</table>')
+    filas = "".join(
+        f'<tr><td>{esc(p["correo"])}</td><td>{esc(p["estado"])}{" (cambio pendiente)" if p["perfil_pendiente"] else ""}</td>'
+        f'<td>{esc(", ".join(FLIC.NOMBRE_PROVINCIA.get(x, x) for x in p["perfil"].get("provincias", [])))}</td>'
+        f'<td>{f_ts(p["alta"])}</td><td>{f_ts(p["confirmado"])}</td><td>{f_ts(p["ultimo_uso"])}</td>'
+        f'<td>{f_ts(p["ultimo_envio"])}</td><td>{f_ts(p["aviso_inactividad"])}</td>'
+        f'<td>{vista(p)}'
+        f'<form method="post" action="/admin/revision/socios/accion" class="acc">{csrf}'
+        f'<input type="hidden" name="p" value="{p["id"]}"><button type="submit" name="accion" value="baja" class="sec">'
+        f'Borrar perfil</button></form></td></tr>' for p in alm.lista())
+    env = "".join(
+        f'<tr><td>{f_ts(e["ts"])}</td><td>{esc(e["clase"])}</td>'
+        f'<td>{"sí" if e["codigo"] and e["codigo"] < 300 else "NO"} ({e["codigo"]})</td><td>{esc(e["detalle"] or "")}</td></tr>'
+        for e in alm.lista_envios())
+    vacio = lambda n: f'<tr><td colspan="{n}" class="sub">Nada todavía.</td></tr>'                # noqa: E731
+    aviso = '<div class="aviso">Perfil borrado.</div>' if hecho == "baja" else ""
+    return _revision_pagina("Filtro de licitaciones: perfiles", f"""<style>.t{{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin:8px 0 22px}}
+.t th,.t td{{border:1px solid #dde1e7;padding:6px 8px;text-align:left;vertical-align:top}}.t th{{background:#eef1f6}}</style>
+<h1>Filtro de licitaciones: perfiles</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a> · horas en UTC</p>
+{estado}{aviso}{resumen}
+<h2 style="font-size:16px">Perfiles</h2>
+<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th></th></tr>{filas or vacio(9)}</table>
+<h2 style="font-size:16px">Envíos (los 100 últimos)</h2>
+<table class="t"><tr><th>Cuándo</th><th>Clase</th><th>Aceptado por Resend</th><th>Respuesta</th></tr>{env or vacio(4)}</table>""")
+
+
+def _alertas_correo_permitido(correo):
+    return not ALERTAS_SOLO_CORREOS or ALR.correo_valido(correo) in ALERTAS_SOLO_CORREOS
 _ALERTAS_ALMACEN = None
 _alertas_almacen_lock = threading.Lock()
 _ALERTAS_ITEMS_POR_CORREO = 15
@@ -26358,7 +27833,8 @@ def _alertas_descripcion(tipo, fl):
         partes += [et["tipo"].get(fl.get("tipo"), ""), _t(LIC.CPV_DIVISIONES[fl["sector"]]) if fl.get("sector") else "",
                    et["ambito_lic"].get(fl.get("ambito"), ""), et["importe"].get(fl.get("importe"), "")]
     else:
-        partes += [et["ambito_sub"].get(fl.get("ambito"), ""), et["benef"].get(fl.get("benef"), "")]
+        partes += [_t(LIC.CPV_DIVISIONES[fl["sector"]]) if fl.get("sector") else "",
+                   et["ambito_sub"].get(fl.get("ambito"), ""), et["benef"].get(fl.get("benef"), "")]
     if fl.get("q"):
         partes.append(f"«{fl['q']}»")
     return " · ".join(p for p in partes if p)
@@ -26556,6 +28032,8 @@ def _alertas_en_idioma(idioma, funcion, *args):
 
 def _alertas_alta(correo, idioma, tipo, filtros):
     """Alta desde el formulario: guarda la petición y manda, en un hilo, el correo que toque."""
+    if ALR.correo_valido(correo) and not _alertas_correo_permitido(correo):
+        return "fuera_de_prueba"                            # ALERTAS_SOLO_CORREOS: ni se guarda ni se envía nada
     alm = _alertas_almacen()
     marca = _I18N_IDIOMA.set("es")
     try:
@@ -26586,11 +28064,12 @@ def _alertas_pasada(max_correos=25):
     inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
     inicio_semana = inicio_dia - madrid.weekday() * 86400
     tope_dia, tope_mes = _alertas_tope("ALERTAS_TOPE_DIARIO", 80), _alertas_tope("ALERTAS_TOPE_MES", 2800)
-    hoy, mes = alm.envios_desde(inicio_dia), alm.envios_desde(ahora - 30 * 86400)
+    hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)   # con los del filtro
     cupo = min(max_correos, tope_dia - hoy, tope_mes - mes)
     res = {"activas": True, "enviados": 0, "sin_novedades": 0, "fallidos": 0, "enviados_hoy": hoy,
            "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
-    pendientes = alm.pendientes(inicio_semana, inicio_dia)
+    pendientes = [(s, alertas) for s, alertas in alm.pendientes(inicio_semana, inicio_dia)
+                  if _alertas_correo_permitido(s["correo"])]
     _alertas_registrar_listas(alm, ahora)
     hechos = 0
     for s, alertas in pendientes:
@@ -26669,7 +28148,7 @@ def _alertas_form_html(tipo, fl, boton=None):
 
 def _alertas_ficha_html(municipio, provincia):
     """Tarjeta de la ficha del municipio: la alerta estrella del plan gratuito."""
-    if not ALERTAS_ACTIVAS:
+    if not ALERTAS_PUBLICAS:
         return ""
     return (f'<div class="alerta-card" id="alerta"><div class="alerta-titulo">🔔 '
             f'{_t("Recibe un correo cuando el Ayuntamiento de {m} adjudique contratos nuevos").format(m=esc(municipio))}</div>'
@@ -26678,7 +28157,7 @@ def _alertas_ficha_html(municipio, provincia):
 
 
 def _alertas_boton_convocatorias_html(f):
-    if not ALERTAS_ACTIVAS:
+    if not ALERTAS_PUBLICAS:
         return ""
     fl = {k: v for k, v in f.items() if k in ("provincia", "comunidad", "muni", "q", "tipo", "sector", "ambito",
                                                "importe", "benef")}
@@ -26796,6 +28275,10 @@ def _alertas_panel_html(cookie, hecho=""):
     f_ts = lambda ts: time.strftime("%d/%m/%Y %H:%M", time.gmtime(ts)) if ts else "—"
     if not ALERTAS_ACTIVAS:
         estado = '<div class="aviso"><b>APAGADAS.</b> Falta ALERTAS_ACTIVAS=1 en Render: la web no enseña nada de esto y no se envía ningún correo.</div>'
+    elif ALERTAS_SOLO_CORREOS:
+        estado = (f'<div class="aviso"><b>Encendidas EN PRUEBA</b> (ALERTAS_SOLO_CORREOS): solo para '
+                  f'{esc(", ".join(sorted(ALR.correo_tapado(c) for c in ALERTAS_SOLO_CORREOS)))}. La web no enseña '
+                  f'enlaces ni formularios; quita la variable para abrirlas a todos.</div>')
     else:
         estado = '<div class="aviso"><b>Encendidas</b> (ALERTAS_ACTIVAS=1).</div>'
     alm = _alertas_almacen()
@@ -26803,7 +28286,7 @@ def _alertas_panel_html(cookie, hecho=""):
     ahora = time.time()
     madrid = _ahora_madrid()
     inicio_dia = ahora - (madrid - madrid.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
-    hoy, mes = alm.envios_desde(inicio_dia), alm.envios_desde(ahora - 30 * 86400)
+    hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)   # con los del filtro
     csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
     por_tipo = ", ".join(f"{k}: {v}" for k, v in sorted(r["por_tipo"].items())) or "ninguna"
     resumen = (f'<table class="t"><tr><th>Suscriptores confirmados</th><td>{r["suscriptores_activos"]} '
@@ -26893,21 +28376,32 @@ def _pagina_guardar(clave, html_txt, grupo=None):
     return gz
 
 
+_PAGINAS_FIJAS = {
+    "/": lambda: render_landing_nacional_html(_db_municipios_ligeros(), rk_comunidad="todas"),
+    # 22-10 (repaso para la Cámara): en frío tardaban 17-24 s la primera vez; ahora se montan con la portada.
+    "/convocatorias": lambda: render_convocatorias_html({}),
+    "/mapa-cobertura": lambda: render_mapa_cobertura_html(),
+}
+
+
 def _pagina_fija(clave):
-    """La portada sin parámetros, en cualquier idioma: no sale de la caché por falta de sitio."""
-    return len(clave) == 2 and clave[1] == "/"
+    """La portada, /convocatorias y /mapa-cobertura sin parámetros, en cualquier idioma: no salen de la caché por
+    falta de sitio."""
+    return len(clave) == 2 and clave[1] in _PAGINAS_FIJAS
 
 
 def _calentar_portada():
-    """Monta la portada en cada idioma si no está fresca en la caché, para que ningún visitante espere a montarla."""
+    """Monta la portada, /convocatorias y /mapa-cobertura en cada idioma si no están frescas en la caché, para que
+    ningún visitante espere a montarlas."""
     for lang in ["es"] + [l for l in _i18n_publicados() if l != "es"]:
-        def _una(lang=lang):
-            _I18N_IDIOMA.set(lang)
-            _pagina_cacheada("/", [], lambda: render_landing_nacional_html(_db_municipios_ligeros(), rk_comunidad="todas"))
-        try:
-            contextvars.copy_context().run(_una)
-        except Exception as e:
-            print(f"  [paginas] no se pudo calentar la portada ({lang}): {type(e).__name__}: {e}", flush=True)
+        for ruta, montar in _PAGINAS_FIJAS.items():
+            def _una(lang=lang, ruta=ruta, montar=montar):
+                _I18N_IDIOMA.set(lang)
+                _pagina_cacheada(ruta, [], montar)
+            try:
+                contextvars.copy_context().run(_una)
+            except Exception as e:
+                print(f"  [paginas] no se pudo calentar {ruta} ({lang}): {type(e).__name__}: {e}", flush=True)
 
 
 def _paginas_invalidar(grupo):
@@ -27009,7 +28503,45 @@ def _pag_entero(txt):
         return 1
 
 
+def render_404_html():
+    """Página de «no encontrada» (pulido 28-10): antes era un 404 en blanco, sin título ni enlaces."""
+    sub = (f'<li><a href="/convocatorias?tab=subvenciones">{_t("Subvenciones abiertas")}</a></li>'
+           if SUBVENCIONES_PUBLICAS else "")
+    body = f"""<div class="static-page pagina-404">
+  <h1>{_t("Página no encontrada")}</h1>
+  <p>{_t("No encontramos esta página. Puede que la dirección esté mal escrita o que la página haya cambiado de sitio.")}</p>
+  <form method="GET" action="/" class="as-row" role="search" style="margin:18px 0">
+    <input type="text" name="q" minlength="2" maxlength="120" required aria-label="{_t("Buscar")}"
+      placeholder="{_t("Municipio, empresa o directivo…")}">
+    <button type="submit" class="btn btn-primary">{_t("Buscar")}</button>
+  </form>
+  <p>{_t("O ve directamente a:")}</p>
+  <ul class="lista-404">
+    <li><a href="/">{_t("Portada")}</a></li>
+    <li><a href="/convocatorias">{_t("Licitaciones abiertas")}</a></li>
+    {sub}
+    <li><a href="/casos">{_t("Casos")}</a></li>
+  </ul>
+</div>"""
+    return _page_shell(_t("Página no encontrada"), body, show_ad_banner=False)
+
+
 def _route_get(path, qs, gzip_ok=False):
+    if FILTRO_EMBUDO and path.rstrip("/") == FEMB.RUTA:
+        return _filtro_embudo_resp("GET", {})          # lo que venga en la dirección se ignora: nada en los registros
+    if FILTRO_FORMULARIO and path == FFORM.RUTA:
+        return _filtro_formulario_resp("GET", qs)
+    if FILTRO_FORMULARIO and path.startswith(FFORM.RUTA + "/"):
+        respuesta = _socios_get(path, qs)
+        if respuesta:
+            return respuesta
+    # Pulido 28-10: direcciones que la gente escribe a mano y que no existían (daban un 404 en blanco)
+    if path.rstrip("/") in ("/licitaciones", "/subvenciones"):
+        destino = dict((k, v) for k, v in qs.items() if k != "tab")
+        if path.rstrip("/") == "/subvenciones" and SUBVENCIONES_PUBLICAS:
+            destino["tab"] = ["subvenciones"]
+        query = urlencode(destino, doseq=True)
+        return 301, {"Location": "/convocatorias" + (f"?{query}" if query else ""), "Content-Length": "0"}, b""
     if ALERTAS_ACTIVAS and (path == "/alertas" or path.startswith("/alertas/")):
         respuesta = _alertas_get(path, qs)
         if respuesta:
@@ -27060,11 +28592,13 @@ def _route_get(path, qs, gzip_ok=False):
         if q:
             def _montar_busqueda():
                 datos_snap = _db_iter_municipios(provincia_filtro if provincia_filtro != "todas" else None)
-                return render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro)
+                return render_busqueda_global_html(datos_snap, q, provincia=provincia_filtro, pagina=pag_q)
 
+            pag_q, _ = _rk_pagina(qs.get("pag", ["1"])[0], 10 ** 6, _BUSQUEDA_POR_PAGINA)
             if len(q) > 100:                    # textos larguísimos: sin caché (no se van a repetir)
                 return _resp(_montar_busqueda(), gzip_ok=gzip_ok)
-            params_q = [("q", q)] + ([("provincia", provincia_filtro)] if provincia_filtro != "todas" else [])
+            params_q = ([("q", q)] + ([("provincia", provincia_filtro)] if provincia_filtro != "todas" else [])
+                        + ([("pag", str(pag_q))] if pag_q > 1 else []))
             return _pagina_cacheada("/", params_q, _montar_busqueda, gzip_ok=gzip_ok, grupo="busqueda")
 
         if provincia_filtro == "todas":
@@ -27123,6 +28657,8 @@ def _route_get(path, qs, gzip_ok=False):
             qs = dict(qs, provincia=[zona[2:]])
         elif zona.startswith("c:"):
             qs = dict(qs, comunidad=[zona[2:]])
+        if not qs:
+            return _pagina_cacheada("/convocatorias", [], _PAGINAS_FIJAS["/convocatorias"], gzip_ok=gzip_ok)
         return _resp(render_convocatorias_html(qs), gzip_ok=gzip_ok)
 
     if path == "/fondos-ue":
@@ -27141,7 +28677,7 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
 
     if path == "/mapa-cobertura":
-        return _resp(render_mapa_cobertura_html(), gzip_ok=gzip_ok)
+        return _pagina_cacheada("/mapa-cobertura", [], _PAGINAS_FIJAS["/mapa-cobertura"], gzip_ok=gzip_ok)
 
     if path == "/casos":
         return _resp(render_casos_index_html(), gzip_ok=gzip_ok)
@@ -27345,8 +28881,7 @@ def _route_get(path, qs, gzip_ok=False):
         #    nueva si la guardada tiene más de CACHE_DB_COPIA_VIGENCIA_S, y una petición CON Range nunca la rehace (si
         #    no hay copia, 416). La huella (sha256) de cada copia se publica en ?info=1 para comprobar al final que el
         #    fichero descargado es exactamente esa copia (una reanudación sobre otra copia no pasaría la comprobación).
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or qs.get("token", [""])[0] != admin_token:
+        if not _token_admin_peticion():
             return _error_resp("No autorizado.", 403)
         with _cache_db_copia_lock:
             # restos de la versión anterior (temporales con nombre aleatorio) que no se llegaron a borrar
@@ -27471,7 +29006,7 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(json.dumps(_diagnostico_arranque(), ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
-    return 404, {"Content-Length": "0"}, b""
+    return _resp(render_404_html(), code=404, headers={"X-Robots-Tag": "noindex"}, gzip_ok=gzip_ok)
 
 
 def _route_post(path, params):
@@ -27481,12 +29016,41 @@ def _route_post(path, params):
             if respuesta:
                 return respuesta
 
+        if FILTRO_EMBUDO and path.rstrip("/") == FEMB.RUTA:
+            return _filtro_embudo_resp("POST", params)
+        if FILTRO_FORMULARIO and path == FFORM.RUTA:
+            return _filtro_formulario_resp("POST", params)
+        if FILTRO_FORMULARIO and path.startswith(FFORM.RUTA + "/"):
+            respuesta = _socios_post(path, params)
+            if respuesta:
+                return respuesta
+
+        if path == "/admin/socios-enviar":
+            # Una tanda del envío del filtro (flujo socios-envio.yml); devuelve solo recuentos.
+            if not _token_admin_peticion(params):
+                return _error_resp("No autorizado.", 403)
+            try:
+                tanda = min(100, max(1, int(params.get("max", ["25"])[0])))
+            except ValueError:
+                tanda = 25
+            return _resp(json.dumps(_socios_pasada(tanda), ensure_ascii=False),
+                         content_type="application/json; charset=utf-8")
+
+        if path == "/admin/socios-db":
+            # Perfiles del filtro (2026-10-28): el fichero socios.db tal cual, para la copia cifrada
+            # (copia-socios-cifrada.yml lo cifra antes de guardarlo en ningún sitio). Apagado: 404, y no se crea.
+            if not _token_admin_peticion(params):
+                return _error_resp("No autorizado.", 403)
+            if not FILTRO_FORMULARIO:
+                return 404, {"Content-Length": "0"}, b""
+            return _resp(_socios_almacen().copia(), content_type="application/octet-stream",
+                         headers={"Cache-Control": "no-store"})
+
         if path in ("/admin/alertas-enviar", "/admin/alertas-db"):
             # Alertas por correo (2026-10-13). enviar: una tanda de la pasada de envío (flujo alertas-envio.yml);
             # devuelve solo recuentos. db: el fichero alertas.db tal cual, para la copia cifrada
             # (copia-alertas-cifrada.yml lo cifra antes de guardarlo en ningún sitio).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             if path == "/admin/alertas-db":
                 return _resp(_alertas_almacen().copia(), content_type="application/octet-stream",
@@ -27551,8 +29115,7 @@ def _route_post(path, params):
         if path == "/admin/reprocesar-place":
             # Reprocesado puntual de meses de PLACE (ver _reprocesar_meses_place). Un solo reprocesado a la vez; el
             # progreso se ve en /api/diagnostico-arranque ("place").
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             meses = [m for m in params.get("meses", [""])[0].split(",") if re.fullmatch(r"20\d{4}", m)]
             if not meses:
@@ -27570,8 +29133,7 @@ def _route_post(path, params):
             # Revisión diaria de privacidad (2026-10-13, flujo privacidad-diaria.yml + revision_privacidad.py): el
             # flujo manda aquí lo que ha encontrado y la web escribe a César. Solo viaja y solo se reenvía el tipo de
             # hallazgo, la dirección de la página y cuántos hay: nunca el dato personal encontrado.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             try:
                 recibidos = json.loads(params.get("hallazgos", ["[]"])[0])
@@ -27608,8 +29170,7 @@ def _route_post(path, params):
             # Diagnóstico del aviso por correo de comentarios (2026-10-09): dice si las variables están cargadas en
             # ESTE proceso (sin enseñar la clave ni la dirección entera) y hace un envío de prueba esperando la
             # respuesta de Resend, que devuelve tal cual. No guarda ningún comentario.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             estado = _aviso_comentarios_config()
             api_key = os.environ.get("RESEND_API_KEY", "").strip()
@@ -27643,8 +29204,7 @@ def _route_post(path, params):
 
         if path == "/admin/comentario-borrar":
             # Borrado de comentarios (2026-10-09): no había ninguna forma de quitar uno. Por ficha y texto exacto.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             tipo = params.get("tipo", ["municipio"])[0]
             clave_raw = params.get("clave", [""])[0].strip()
@@ -27664,8 +29224,7 @@ def _route_post(path, params):
             # poder liberar espacio YA en producción sin esperar al próximo
             # mes (ver informe de viabilidad + purga 2026-08-06). Mismo
             # patrón ADMIN_TOKEN que /vaciar y /actualizar-todos.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             borrados = _purgar_place_cache_antiguos()
             try:
@@ -27688,8 +29247,7 @@ def _route_post(path, params):
             # lo dispare directamente contra el sitio en producción. Con
             # provincia=girona|murcia borra solo esa provincia; sin el parámetro,
             # borra todo (comportamiento de siempre).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             provincia_param = params.get("provincia", [""])[0]
             provincia_filtro = provincia_param if provincia_param in MUNICIPIOS_POR_PROVINCIA else None
@@ -27729,8 +29287,7 @@ def _route_post(path, params):
             # clave reconocida, se rechaza con 400 en vez de asumir "murcia"
             # en silencio (ese fallback silencioso lanzó refrescos contra
             # Murcia por error durante horas — ver incidente 2026-09-14).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             provincia_raw = params.get("provincia", [""])[0]
             if provincia_raw not in ("todas", *PROVINCIA_AGREGADOS, *MUNICIPIOS_POR_PROVINCIA):
@@ -27753,8 +29310,7 @@ def _route_post(path, params):
             # Refresca la tabla fondos_ue (CORDIS + Cohesion Data). Mismo
             # patrón de disparo externo + ADMIN_TOKEN que /actualizar-todos;
             # el cron diario llama a los dos endpoints uno detrás de otro.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_fondos_ue_bg, args=(job_id,), daemon=True).start()
@@ -27765,8 +29321,7 @@ def _route_post(path, params):
             # Refresca la tabla noticias_ue (RSS Press Corner de la Comisión
             # Europea). Mismo patrón de disparo externo + ADMIN_TOKEN que
             # /actualizar-fondos-ue; el cron diario lo llama justo después.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_noticias_ue_bg, args=(job_id,), daemon=True).start()
@@ -27778,8 +29333,7 @@ def _route_post(path, params):
             # dataset hb6v-jcbf). Mismo patrón de disparo externo + ADMIN_TOKEN
             # que /actualizar-fondos-ue; el cron diario lo llama al final,
             # igual que noticias UE.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_girona_bg, args=(job_id,), daemon=True).start()
@@ -27793,8 +29347,7 @@ def _route_post(path, params):
             # de contratos que faltaban -- 1.107 contractes 'Menor' reales
             # verificados solo para Lleida capital, cero en la app antes de
             # esto): ver actualizar-diario.yml, franja de Lleida.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_lleida_bg, args=(job_id,), daemon=True).start()
@@ -27805,8 +29358,7 @@ def _route_post(path, params):
             # Gemelo del de Girona/Lleida -- ver
             # _actualizar_contratos_menors_barcelona_bg para el porqué
             # (2026-08-15, investigación de contratos que faltaban).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_barcelona_bg, args=(job_id,), daemon=True).start()
@@ -27817,8 +29369,7 @@ def _route_post(path, params):
             # Gemelo del de Girona/Lleida/Barcelona -- ver
             # _actualizar_contratos_menors_tarragona_bg para el porqué
             # (2026-08-15, investigación de contratos que faltaban).
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menors_tarragona_bg, args=(job_id,), daemon=True).start()
@@ -27830,8 +29381,7 @@ def _route_post(path, params):
             # Murcia, portal propio vía CSV -- ver buscar_en_fuentealamo_menores).
             # Mismo patrón de disparo externo + ADMIN_TOKEN que las demás
             # fuentes de contratos menores; el cron diario lo llama al final.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menores_fuentealamo_bg, args=(job_id,), daemon=True).start()
@@ -27843,8 +29393,7 @@ def _route_post(path, params):
             # propio vía HTML -- ver buscar_en_cartagena_menores). Mismo patrón
             # de disparo externo + ADMIN_TOKEN que las demás fuentes de
             # contratos menores; el cron diario lo llama al final.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_contratos_menores_cartagena_bg, args=(job_id,), daemon=True).start()
@@ -27858,8 +29407,7 @@ def _route_post(path, params):
             # su fuente -- por eso va aparte de cada refresco individual, igual
             # que Fuente Álamo. Mismo patrón de disparo externo + ADMIN_TOKEN;
             # el cron diario lo llama al final, después de todas las fuentes.
-            admin_token = os.environ.get("ADMIN_TOKEN", "")
-            if not admin_token or params.get("token", [""])[0] != admin_token:
+            if not _token_admin_peticion(params):
                 return _error_resp("No autorizado.", 403)
             job_id = str(uuid.uuid4())
             threading.Thread(target=_actualizar_directivos_contratos_menores_bg, args=(job_id,), daemon=True).start()
@@ -28042,7 +29590,7 @@ def _bots_diagnostico():
 #    avisa la propia página con un POST a /api/evento, sin identificador alguno;
 #  - descargas de datos: cualquier respuesta pública que se sirva como fichero adjunto.
 # Se acumula en memoria y se vuelca a la base como mucho una vez por minuto, desde la propia petición (sin hilo).
-# Se ve en /admin/visitas?token=... Las peticiones a /admin/ y al diagnóstico se cuentan aparte ("interno").
+# Se ve en /admin/revision/visitas (sesión del panel). Las peticiones a /admin/ y al diagnóstico se cuentan aparte ("interno").
 _VISITAS_VOLCAR_CADA_S = 60
 _VISITAS_REDES_POR_DIA = 100        # de los días pasados se conservan solo las redes con más bytes
 _VISITAS_REDES_DIAS = 30
@@ -28252,10 +29800,10 @@ def _visitas_tamano(n):
         n /= 1024
 
 
-def _visitas_pagina(qs):
-    """/admin/visitas?token=...&dias=14 -- solo lectura, solo sumas."""
-    admin_token = os.environ.get("ADMIN_TOKEN", "")
-    if not admin_token or qs.get("token", [""])[0] != admin_token:
+def _visitas_pagina(qs, autorizado=False):
+    """/admin/revision/visitas?dias=14 (sesión del panel) o /admin/visitas con la cabecera X-Admin-Token -- solo lectura,
+    solo sumas."""
+    if not autorizado and not _token_admin_peticion():
         return _resp(json.dumps({"error": "No autorizado."}), content_type="application/json; charset=utf-8", code=403)
     try:
         dias = max(1, min(120, int(qs.get("dias", ["14"])[0])))
@@ -28332,8 +29880,8 @@ def _visitas_pagina(qs):
                       for k, v in datos], nota)
 
     cuerpo = (
-        f'<p class="n">Últimos {dias} días (<a href="?token={esc(admin_token)}&dias=7">7</a> · '
-        f'<a href="?token={esc(admin_token)}&dias=30">30</a> · <a href="?token={esc(admin_token)}&dias=90">90</a>). '
+        f'<p class="n">Últimos {dias} días (<a href="?dias=7">7</a> · '
+        f'<a href="?dias=30">30</a> · <a href="?dias=90">90</a>). '
         f'Bytes servidos: {_visitas_tamano(tot_p)} a personas y {_visitas_tamano(tot_b)} a bots '
         f'(<b>{pct(tot_b, tot_b + tot_p)}</b> del total).</p>' + dias_html + semanas_html
         + ranking("bot", "Bots por nombre", "Rastreador", 40)
@@ -28418,7 +29966,11 @@ def app(environ, start_response):
 
     respuesta = None
     try:
-        respuesta = _app_wsgi(environ, _anotando)
+        t_token = _TOKEN_CABECERA.set(environ.get("HTTP_X_ADMIN_TOKEN", "") or "")
+        try:
+            respuesta = _app_wsgi(environ, _anotando)
+        finally:
+            _TOKEN_CABECERA.reset(t_token)
         return respuesta
     finally:
         fin = time.time()
@@ -28444,20 +29996,28 @@ def _app_wsgi(environ, start_response):
         if sid.isdigit() and _alertas_almacen().firma_valida("baja", sid, firma):
             _alertas_almacen().baja(int(sid))
         code, headers, body = _resp("ok", content_type="text/plain; charset=utf-8")
+    elif FILTRO_FORMULARIO and method == "POST" and path == FFORM.RUTA + "/baja-correo":
+        # Lo mismo para los perfiles del filtro de licitaciones: borra el perfil.
+        pid, firma = qs.get("p", [""])[0], qs.get("k", [""])[0]
+        if pid.isdigit() and _socios_almacen().firma_valida("baja", pid, firma):
+            _socios_almacen().baja(int(pid))
+        code, headers, body = _resp("ok", content_type="text/plain; charset=utf-8")
     elif method == "POST" and path == "/admin/revision-candidatos":
         try:
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}
         elif length > 100 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
         else:
-            code, cuerpo = _subir_revision_candidatos(environ["wsgi.input"].read(length) if length else b"",
-                                                        forzar=qs.get("forzar", [""])[0] == "si")
+            crudo = environ["wsgi.input"].read(length) if length else b""
+            if qs.get("anadir", [""])[0] == "si":           # borradores puestos a mano: se añaden sin tocar el resto
+                code, cuerpo = _subir_revision_borradores(crudo)
+            else:
+                code, cuerpo = _subir_revision_candidatos(crudo, forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "GET" and path == "/admin/visitas":
@@ -28481,15 +30041,19 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}
         elif length > 200 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        elif not _subvenciones_subida_lock.acquire(blocking=False):
+            code, cuerpo = 423, {"error": "Ya hay una subida de subvenciones en curso."}
         else:
-            code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"",
-                                                  forzar=qs.get("forzar", [""])[0] == "si")
+            try:
+                code, cuerpo = _subir_subvenciones(environ["wsgi.input"].read(length) if length else b"",
+                                                      forzar=qs.get("forzar", [""])[0] == "si")
+            finally:
+                _subvenciones_subida_lock.release()
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/fondos-ue":
@@ -28498,15 +30062,15 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}
         elif length > 100 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
         else:
             code, cuerpo = _subir_fondos_ue(environ["wsgi.input"].read(length) if length else b"",
-                                            forzar=qs.get("forzar", [""])[0] == "si")
+                                            forzar=qs.get("forzar", [""])[0] == "si",
+                                            conservar=qs.get("conservar", [""])[0].strip())
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/asignacion-formales":
@@ -28515,9 +30079,8 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
         elif length > 20 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28526,15 +30089,30 @@ def _app_wsgi(environ, start_response):
             code, cuerpo = _subir_asignacion_formales(token, qs.get("provincia", [""])[0], crudo)
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
+    elif method == "POST" and path == "/admin/backfill-murcia":
+        # cuerpo binario (JSON en gzip) de un lote: ver _subir_backfill_murcia
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
+            code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
+        elif length > 20 * 1024 * 1024:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            crudo = environ["wsgi.input"].read(length) if length else b""
+            code, cuerpo = _subir_backfill_murcia(token, qs.get("provincia", [""])[0], qs.get("lote", [""])[0], crudo)
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
     elif method == "POST" and path == "/admin/entidades-locales":
         # cuerpo binario (JSON en gzip) de UNA provincia: ver _subir_entidades_locales
         try:
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
         elif length > 20 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28549,9 +30127,8 @@ def _app_wsgi(environ, start_response):
             length = int(environ.get("CONTENT_LENGTH") or 0)
         except ValueError:
             length = 0
-        token = qs.get("token", [""])[0]
-        admin_token = os.environ.get("ADMIN_TOKEN", "")
-        if not admin_token or token != admin_token:
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
             code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
         elif length > 100 * 1024 * 1024:
             code, cuerpo = 413, {"error": "Fichero demasiado grande."}
@@ -28608,10 +30185,12 @@ class Handler(BaseHTTPRequestHandler):
             qs = parse_qs(parsed.query)
             gzip_ok = "gzip" in self.headers.get("Accept-Encoding", "")
             t_rango = _RANGO_PETICION.set(self.headers.get("Range", "") or "")
+            t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
             try:
                 self._write(*_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok, query_string=parsed.query))
             finally:
                 _RANGO_PETICION.reset(t_rango)
+                _TOKEN_CABECERA.reset(t_token)
         finally:
             with _peticiones_lock:
                 _peticiones_en_curso -= 1
@@ -28631,7 +30210,11 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", 0) or 0)
             raw = self.rfile.read(length).decode("utf-8") if length else ""
             params = parse_qs(raw, keep_blank_values=True)
-            self._write(*_route_post_i18n(urlparse(self.path).path, params))
+            t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
+            try:
+                self._write(*_route_post_i18n(urlparse(self.path).path, params))
+            finally:
+                _TOKEN_CABECERA.reset(t_token)
         except Exception as e:
             self._write(*_error_resp(f"Error: {e}", 500))
 

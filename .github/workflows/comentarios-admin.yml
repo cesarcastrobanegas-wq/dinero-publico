@@ -45,7 +45,7 @@ jobs:
           SOLO_VER: ${{ inputs.accion == 'ver' && 'si' || 'no' }}
         run: |
           codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 60 -X POST \
-            --data-urlencode "token=${ADMIN_TOKEN}" --data-urlencode "solo_ver=${SOLO_VER}" "https://dinero-publico.com/admin/aviso-comentarios-prueba" || echo 000)
+            -H "X-Admin-Token: ${ADMIN_TOKEN}" --data-urlencode "solo_ver=${SOLO_VER}" "https://dinero-publico.com/admin/aviso-comentarios-prueba" || echo 000)
           echo "HTTP ${codigo}"
           [ "$codigo" = "200" ] || { echo "::error::La web respondió ${codigo}"; exit 1; }
           python3 -m json.tool --no-ensure-ascii respuesta.json
@@ -59,7 +59,7 @@ jobs:
           TEXTO: ${{ inputs.texto }}
         run: |
           codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 60 -X POST \
-            --data-urlencode "token=${ADMIN_TOKEN}" --data-urlencode "tipo=${TIPO}" \
+            -H "X-Admin-Token: ${ADMIN_TOKEN}" --data-urlencode "tipo=${TIPO}" \
             --data-urlencode "clave=${CLAVE}" --data-urlencode "texto=${TEXTO}" \
             "https://dinero-publico.com/admin/comentario-borrar" || echo 000)
           echo "HTTP ${codigo}"

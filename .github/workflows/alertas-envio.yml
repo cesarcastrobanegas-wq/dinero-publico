@@ -33,7 +33,7 @@ jobs:
             fin=$(( $(date +%s) + 300 ))
             while true; do
               codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST \
-                --data-urlencode "token=${ADMIN_TOKEN}" --data-urlencode "max=25" \
+                -H "X-Admin-Token: ${ADMIN_TOKEN}" --data-urlencode "max=25" \
                 "https://dinero-publico.com/admin/alertas-enviar" || echo 000)
               case "$codigo" in
                 000|502|503|504|520|521|522|523|524)

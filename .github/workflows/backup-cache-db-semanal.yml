@@ -49,7 +49,7 @@ jobs:
           ok=0
           for intento in 1 2 3 4 5; do
             codigo=$(curl -sS --max-time 900 -o cache.db -w "%{http_code}" \
-              "https://dinero-publico.com/admin/cache-db?token=${ADMIN_TOKEN}" || echo 000)
+              -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/cache-db" || echo 000)
             tam=$(stat -c%s cache.db 2>/dev/null || echo 0)
             echo "Intento ${intento}: HTTP ${codigo}, ${tam} bytes"
             if [ "$codigo" = "200" ] && [ "$tam" -ge 1000000 ]; then

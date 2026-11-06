@@ -8,7 +8,10 @@ services:
     # plan de pago (ver render.com/docs/disks), así que "free" nunca pudo
     # haber sido el plan real mientras el disco de abajo estaba activo.
     # Este archivo simplemente no se había actualizado para reflejarlo.
-    plan: standard
+    # Corregido 2026-10-25 (César): el plan real es 2c-4g (2 CPU, 4 GB de
+    # RAM, 85 $/mes), no Standard; "standard" equivale a 1c-2g (1 CPU,
+    # 2 GB). Identificador comprobado en render.com/docs/blueprint-spec.
+    plan: 2c-4g
     buildCommand: pip install -r requirements.txt
     # --workers 1 es obligatorio, no opcional: el estado de los jobs de
     # búsqueda (_jobs) y la caché en RAM (_datos_memoria, _result_cache)
