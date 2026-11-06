@@ -33,35 +33,35 @@ def _texto(ruta):
 def _municipios():
     return {
         "villaprueba|valencia": {"municipio": "Villaprueba", "provincia": "valencia",
-                                 "alcalde": {"nombre": "ANA PÉREZ RUIZ", "partido": "AAA", "fecha_posesion": "17/06/2023"},
-                                 "concejales": [{"nombre": "ANA PÉREZ RUIZ", "cargo": "Alcalde", "partido": "AAA"},
-                                                {"nombre": "Luis Gómez Sanz", "cargo": "Teniente de Alcalde", "partido": "AAA"},
-                                                {"nombre": "MARÍA LÓPEZ DÍAZ", "cargo": "Concejal", "partido": "BBB"}]},
+                                 "alcalde": {"nombre": "PRUEBA ÁLFA UNO", "partido": "AAA", "fecha_posesion": "17/06/2023"},
+                                 "concejales": [{"nombre": "PRUEBA ÁLFA UNO", "cargo": "Alcalde", "partido": "AAA"},
+                                                {"nombre": "Ficticio Béta Dos", "cargo": "Teniente de Alcalde", "partido": "AAA"},
+                                                {"nombre": "INVENTADA GÁMMA TRES", "cargo": "Concejal", "partido": "BBB"}]},
         # mismo nombre en otro municipio y en un homónimo de otra provincia: no se tocan
         "otropueblo": {"municipio": "Otropueblo", "provincia": "valencia", "alcalde": None,
-                       "concejales": [{"nombre": "Luis Gómez Sanz", "cargo": "Concejal", "partido": "CCC"}]},
+                       "concejales": [{"nombre": "Ficticio Béta Dos", "cargo": "Concejal", "partido": "CCC"}]},
         "villaprueba|murcia": {"municipio": "Villaprueba", "provincia": "murcia", "alcalde": None,
-                               "concejales": [{"nombre": "Luis Gómez Sanz", "cargo": "Concejal", "partido": "CCC"}]},
+                               "concejales": [{"nombre": "Ficticio Béta Dos", "cargo": "Concejal", "partido": "CCC"}]},
     }
 
 
 class Huella(unittest.TestCase):
     def test_indiferente_a_tildes_mayusculas_y_espacios(self):
-        self.assertEqual(cs.huella("Villaprueba", "valencia", "Luis Gómez Sanz"),
-                         cs.huella(" VILLAPRUEBA ", "Valencia", "luis  gomez   SANZ"))
+        self.assertEqual(cs.huella("Villaprueba", "valencia", "Ficticio Béta Dos"),
+                         cs.huella(" VILLAPRUEBA ", "Valencia", "ficticio  beta   DOS"))
 
     def test_distingue_municipio_y_provincia(self):
-        h = cs.huella("Villaprueba", "valencia", "Luis Gómez Sanz")
-        self.assertNotEqual(h, cs.huella("Otropueblo", "valencia", "Luis Gómez Sanz"))
-        self.assertNotEqual(h, cs.huella("Villaprueba", "murcia", "Luis Gómez Sanz"))
+        h = cs.huella("Villaprueba", "valencia", "Ficticio Béta Dos")
+        self.assertNotEqual(h, cs.huella("Otropueblo", "valencia", "Ficticio Béta Dos"))
+        self.assertNotEqual(h, cs.huella("Villaprueba", "murcia", "Ficticio Béta Dos"))
 
     def test_depende_de_la_clave_y_no_es_un_sha256_sin_clave(self):
         import hashlib
-        h = cs.huella("Villaprueba", "valencia", "Luis Gómez Sanz")
+        h = cs.huella("Villaprueba", "valencia", "Ficticio Béta Dos")
         self.assertEqual(len(h), 64)
-        self.assertNotEqual(h, cs.huella("Villaprueba", "valencia", "Luis Gómez Sanz", b"otra-clave"))
+        self.assertNotEqual(h, cs.huella("Villaprueba", "valencia", "Ficticio Béta Dos", b"otra-clave"))
         for prefijo in ("dp-supresion-v1|", "dp-exclusion-v2|", ""):
-            sin_clave = hashlib.sha256((prefijo + "villaprueba|valencia|luis gomez sanz").encode()).hexdigest()
+            sin_clave = hashlib.sha256((prefijo + "villaprueba|valencia|ficticio beta dos").encode()).hexdigest()
             self.assertNotEqual(h, sin_clave)
 
 
@@ -80,7 +80,7 @@ class SinClave(unittest.TestCase):
         import io
         sup = {"0" * 64: "quitar"}
         m = _municipios()
-        regs = [{"municipio": "Villaprueba", "provincia": "valencia", "nombre": "Luis Gómez Sanz", "importe": 1.0}]
+        regs = [{"municipio": "Villaprueba", "provincia": "valencia", "nombre": "Ficticio Béta Dos", "importe": 1.0}]
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
             self.assertEqual(cs.aplicar_alcaldes(m, sup), set())
@@ -90,7 +90,7 @@ class SinClave(unittest.TestCase):
 
     def test_huella_y_ordenes_piden_la_clave(self):
         with self.assertRaises(cs.SinClave):
-            cs.huella("Villaprueba", "valencia", "Luis Gómez Sanz")
+            cs.huella("Villaprueba", "valencia", "Ficticio Béta Dos")
         import contextlib
         import io
         with contextlib.redirect_stderr(io.StringIO()):
@@ -108,27 +108,27 @@ class SinClave(unittest.TestCase):
 class AplicarAlcaldes(unittest.TestCase):
     def test_quitar_concejal_solo_afecta_a_esa_persona(self):
         m, original = _municipios(), _municipios()
-        sup = {cs.huella("Villaprueba", "valencia", "Luis Gómez Sanz"): "quitar"}
+        sup = {cs.huella("Villaprueba", "valencia", "Ficticio Béta Dos"): "quitar"}
         self.assertEqual(cs.aplicar_alcaldes(m, sup), set(sup))
         self.assertEqual([c["nombre"] for c in m["villaprueba|valencia"]["concejales"]],
-                         ["ANA PÉREZ RUIZ", "MARÍA LÓPEZ DÍAZ"])
+                         ["PRUEBA ÁLFA UNO", "INVENTADA GÁMMA TRES"])
         self.assertEqual(m["villaprueba|valencia"]["alcalde"], original["villaprueba|valencia"]["alcalde"])
         self.assertEqual(m["otropueblo"], original["otropueblo"])
         self.assertEqual(m["villaprueba|murcia"], original["villaprueba|murcia"])
 
     def test_ocultar_nombre_deja_cargo_y_partido(self):
         m = _municipios()
-        cs.aplicar_alcaldes(m, {cs.huella("Villaprueba", "valencia", "Luis Gómez Sanz"): "ocultar_nombre"})
+        cs.aplicar_alcaldes(m, {cs.huella("Villaprueba", "valencia", "Ficticio Béta Dos"): "ocultar_nombre"})
         fila = m["villaprueba|valencia"]["concejales"][1]
         self.assertEqual(fila, {"nombre": "", "cargo": "Teniente de Alcalde", "partido": "AAA", "suprimido": True})
         self.assertEqual(len(m["villaprueba|valencia"]["concejales"]), 3)
 
     def test_alcalde_quitar_y_ocultar(self):
-        h = cs.huella("Villaprueba", "valencia", "Ana Pérez Ruiz")
+        h = cs.huella("Villaprueba", "valencia", "Prueba Álfa Uno")
         m = _municipios()
         cs.aplicar_alcaldes(m, {h: "quitar"})
         self.assertIsNone(m["villaprueba|valencia"]["alcalde"])
-        self.assertNotIn("ANA PÉREZ RUIZ", [c["nombre"] for c in m["villaprueba|valencia"]["concejales"]])
+        self.assertNotIn("PRUEBA ÁLFA UNO", [c["nombre"] for c in m["villaprueba|valencia"]["concejales"]])
         m = _municipios()
         cs.aplicar_alcaldes(m, {h: "ocultar_nombre"})
         self.assertEqual(m["villaprueba|valencia"]["alcalde"], {"nombre": "", "partido": "AAA", "suprimido": True})
@@ -137,7 +137,7 @@ class AplicarAlcaldes(unittest.TestCase):
         m = _municipios()
         self.assertEqual(cs.aplicar_alcaldes(m, {}), set())
         self.assertEqual(m, _municipios())
-        sup = {cs.huella("Villaprueba", "valencia", "Luis Gómez Sanz"): "quitar"}
+        sup = {cs.huella("Villaprueba", "valencia", "Ficticio Béta Dos"): "quitar"}
         cs.aplicar_alcaldes(m, sup)
         una = copy.deepcopy(m)
         self.assertEqual(cs.aplicar_alcaldes(m, sup), set())
@@ -162,11 +162,11 @@ class AplicarAlcaldes(unittest.TestCase):
 
 class AplicarSueldos(unittest.TestCase):
     def test_los_dos_modos_quitan_el_registro(self):
-        regs = [{"municipio": "Villaprueba", "provincia": "valencia", "nombre": "Luis Gómez Sanz", "importe": 1.0},
-                {"municipio": "Villaprueba", "provincia": "valencia", "nombre": "María López Díaz", "importe": 2.0}]
+        regs = [{"municipio": "Villaprueba", "provincia": "valencia", "nombre": "Ficticio Béta Dos", "importe": 1.0},
+                {"municipio": "Villaprueba", "provincia": "valencia", "nombre": "Inventada Gámma Tres", "importe": 2.0}]
         for modo in cs.MODOS:
-            out, usadas = cs.aplicar_sueldos(regs, {cs.huella("Villaprueba", "valencia", "LUIS GOMEZ SANZ"): modo})
-            self.assertEqual([r["nombre"] for r in out], ["María López Díaz"])
+            out, usadas = cs.aplicar_sueldos(regs, {cs.huella("Villaprueba", "valencia", "FICTICIO BETA DOS"): modo})
+            self.assertEqual([r["nombre"] for r in out], ["Inventada Gámma Tres"])
             self.assertEqual(len(usadas), 1)
 
 
@@ -179,13 +179,13 @@ class FicheroYOrden(unittest.TestCase):
             json.dump({"generado": "x", "municipios": _municipios()}, f, ensure_ascii=False)
         with open(self.sue, "w", encoding="utf-8") as f:
             json.dump({"registros": [{"municipio": "Villaprueba", "provincia": "valencia",
-                                      "nombre": "Luis Gómez Sanz", "importe": 1.0}]}, f, ensure_ascii=False)
+                                      "nombre": "Ficticio Béta Dos", "importe": 1.0}]}, f, ensure_ascii=False)
 
     def tearDown(self):
         self.tmp.cleanup()
 
     def test_excluir_no_guarda_el_nombre_y_limpia_los_json(self):
-        h, usadas = cs.excluir("Villaprueba", "valencia", "Luis Gómez Sanz", "quitar",
+        h, usadas = cs.excluir("Villaprueba", "valencia", "Ficticio Béta Dos", "quitar",
                                ruta=self.sup, alcaldes_file=self.alc, sueldos_file=self.sue)
         self.assertEqual(usadas, {h})
         texto = _texto(self.sup)
@@ -199,7 +199,7 @@ class FicheroYOrden(unittest.TestCase):
         self.assertEqual(len(alc["otropueblo"]["concejales"]), 1)        # mismo nombre, otro municipio
         self.assertEqual(json.loads(_texto(self.sue))["registros"], [])
         # repetir con otro modo cambia la entrada, no la duplica
-        cs.excluir("Villaprueba", "valencia", "Luis Gómez Sanz", "ocultar_nombre",
+        cs.excluir("Villaprueba", "valencia", "Ficticio Béta Dos", "ocultar_nombre",
                    ruta=self.sup, alcaldes_file=self.alc, sueldos_file=self.sue)
         self.assertEqual(cs.cargar(self.sup), {h: "ocultar_nombre"})
 

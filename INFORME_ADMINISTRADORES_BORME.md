@@ -69,9 +69,9 @@ del 01-01-2021 al 30-09-2026 (1.499 días laborables).
   guardadas dejan de mostrarse y se vuelven a buscar.
 - El detector de coincidencias con alcaldes y concejales prueba ahora el orden "Apellidos Nombre" del BORME.
 - Probado en local sobre la copia de producción: ficha, rankings, búsqueda, API e Índice sin errores; Agbar y Cruz
-  Roja ya no salen como personas (sin dato hasta encontrar su administrador); ENDESA ENERGÍA pasa a "Armani Gianni
-  Vittorio — Presidente del Consejo" (BORME 14-05-2026), FCC Medio Ambiente a Iñigo Sanz Pérez y Urbaser a Mary Ann
-  Sigler; un caso real ("Orizon Underwriters S L" guardado como su propia persona física)
+  Roja ya no salen como personas (sin dato hasta encontrar su administrador); ENDESA ENERGÍA pasa a su presidente
+  del consejo (BORME 14-05-2026), y FCC Medio Ambiente y Urbaser a sus administradores del BORME (nombres quitados del
+  repositorio el 06-11-2026); un caso real ("Orizon Underwriters S L" guardado como su propia persona física)
   pasa a "Marsh Risk Consulting SL — Administrador Único" según el BORME.
 
 ## 6. Lo que queda sin resolver

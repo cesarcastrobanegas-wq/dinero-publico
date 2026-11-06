@@ -101,19 +101,19 @@ directamente en cache.db (32 contratos actualizados en total, en todos los
 municipios donde aparecen estas empresas):
 
   · SIRIUS IRONWORKS INNOVACIONES SLU (NIF B75705863)
-    → Noelia Fernández López — Administrador Único
+    → su administrador único (nombre quitado del repositorio el 06-11-2026)
     Confianza: ALTA. Verificado leyendo directamente el texto oficial del
     BORME (BORME-A-2025-27-02, constitución 31/12/2024, nombramiento
     inscrito 31/01/2025).
 
   · REHABILITACIONES Y CONSTRUCCIONES GALAN E HIJOS, S.L. (NIF B73121378)
-    → Juan García López — Administrador Único (desde 16/01/2015)
+    → su administrador único (desde 16/01/2015; nombre quitado del repositorio el 06-11-2026)
     Confianza: ALTA. Tres fuentes independientes (axesor, infonif.economia3,
     empresia.es) coinciden, con detalle corroborante: sustituyó como
-    administrador a Juan García Espín en esa misma fecha.
+    administrador al anterior en esa misma fecha.
 
   · PAPARAJOTE DISEÑO Y COMUNICACIÓN, S.L. (NIF B73731085)
-    → Pilar Larrotcha Martínez-Carrasco / Sonia de la Iglesia García
+    → dos socias (nombres quitados del repositorio el 06-11-2026)
     Cargo registrado como: "Socias (cargo mercantil exacto no confirmado)"
     Confianza: MEDIA. Confirmadas como socias/directoras creativas del
     estudio por su propia web (paparajote.com/estudio) y como órganos
