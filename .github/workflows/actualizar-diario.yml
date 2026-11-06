@@ -200,7 +200,7 @@ jobs:
     timeout-minutes: 350
     steps:
       - name: Checkout del repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Refrescar deuda viva y saldo no financiero (Ministerio de Hacienda)
         # HALLAZGO 2026-09-18 (primer disparo real del rediseño de job
@@ -337,7 +337,7 @@ jobs:
       # Por qué provincia toca empezar: lo deja apuntado la ejecución anterior (ver "Punto de partida" en el paso
       # siguiente). Clave nueva en cada ejecución y restore-keys por prefijo = se recupera la más reciente.
       - name: Punto de partida de la rotación (caché)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ~/rotacion-provincias
           key: rotacion-provincias-${{ github.run_id }}
@@ -816,7 +816,7 @@ jobs:
       # importa no perder por dónde iba. Solo el recorrido completo pone ROTACION_GUARDAR; los disparos manuales no.
       - name: Guardar el punto de partida de la próxima noche
         if: always() && env.ROTACION_GUARDAR == '1'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ~/rotacion-provincias
           key: rotacion-provincias-${{ github.run_id }}
