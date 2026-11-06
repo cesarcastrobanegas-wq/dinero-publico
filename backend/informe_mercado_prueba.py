@@ -143,6 +143,9 @@ def main():
     I.informe_pdf(pdf4, A, "murcia", "2024-10-10", "2026-10-10", ahora, contacto={})
     ok("¿Quiere este informe" not in texto_pdf(pdf4), "sin datos de contacto no hay recuadro")
     ok("620" not in open(I.__file__, encoding="utf-8").read(), "ningún teléfono escrito en el código")
+    tt = " ".join(t.split())
+    ok("Organismo que más importe adjudica:" in tt and "adjudica es " not in tt,
+       "«Organismo que más importe adjudica: …» (sin «es Ayuntamiento de…», que se comía el artículo)")
     print(f"\n{'TODO BIEN' if not FALLOS else str(len(FALLOS)) + ' FALLOS'} (ficheros en {d})")
     sys.exit(1 if FALLOS else 0)
 

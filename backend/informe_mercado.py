@@ -666,13 +666,13 @@ def informe_pdf(ruta, A, provincia, desde, hasta, ahora, titulo=None, muestra=Tr
                           f"en el sector.")
         if A["organismos"]:
             o = A["organismos"][0]
-            claves.append(f"El organismo que más importe adjudica es {E(bonito(o['nombre'], 120))}: "
-                          f"{plural(o['n'], 'contrato', 'contratos')} por {eur(o['importe'])}.")
+            claves.append(f"Organismo que más importe adjudica: {E(bonito(o['nombre'], 120))} "
+                          f"({plural(o['n'], 'contrato', 'contratos')} por {eur(o['importe'])}).")
             o2 = max(A["organismos"], key=lambda o: o["n"])
             if o2 is not o:
-                claves.append(f"El que más contratos firma es {E(bonito(o2['nombre'], 80))}: "
-                              f"{plural(o2['n'], 'contrato', 'contratos')} con "
-                              f"{plural(len(o2['empresas']), 'empresa distinta', 'empresas distintas')}.")
+                claves.append(f"Organismo que más contratos firma: {E(bonito(o2['nombre'], 80))} "
+                              f"({plural(o2['n'], 'contrato', 'contratos')} con "
+                              f"{plural(len(o2['empresas']), 'empresa distinta', 'empresas distintas')}).")
         tot = A["n_formales"] + A["n_menores"]
         if tot:
             claves.append(f"El {pct(A['n_menores'], tot)} de los contratos son menores (adjudicación directa, sin "
