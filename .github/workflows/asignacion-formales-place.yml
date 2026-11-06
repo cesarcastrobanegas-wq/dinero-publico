@@ -90,7 +90,7 @@ jobs:
             fin=$(( $(date +%s) + 300 ))
             while true; do
               codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST -H "Content-Type: application/gzip" \
-                --data-binary @"$f" "https://dinero-publico.com/admin/asignacion-formales?token=${ADMIN_TOKEN}&provincia=${prov}" || echo 000)
+                --data-binary @"$f" -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/asignacion-formales?provincia=${prov}" || echo 000)
               case "$codigo" in
                 000|502|503|504|520|521|522|523|524)
                   [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
@@ -113,7 +113,7 @@ jobs:
             prov=$(basename "$f" .json.gz)
             fin=$(( $(date +%s) + 300 ))
             while true; do
-              codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST -H "Content-Type: application/gzip"                 --data-binary @"$f" "https://dinero-publico.com/admin/entidades-locales?token=${ADMIN_TOKEN}&provincia=${prov}" || echo 000)
+              codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST -H "Content-Type: application/gzip"                 --data-binary @"$f" -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/entidades-locales?provincia=${prov}" || echo 000)
               case "$codigo" in
                 000|502|503|504|520|521|522|523|524)
                   [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }

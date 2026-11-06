@@ -124,7 +124,10 @@ def resumir(d):
         "nuts": nuts,
         "presupuesto": d.get("presupuestoTotal"),
         "beneficiarios": " | ".join(b.get("descripcion", "").strip() for b in (d.get("tiposBeneficiarios") or [])),
-        "sector": "; ".join(s.get("descripcion", "") for s in (d.get("sectores") or [])[:3]),
+        # 2026-10-17 (rama wip/subvenciones-sector): todos los sectores y sus códigos CNAE (antes solo los tres
+        # primeros y sin código, y así no servían para clasificar por sector).
+        "sector": "; ".join(s.get("descripcion", "") for s in (d.get("sectores") or [])),
+        "cnae": " ".join(str(s.get("codigo") or "").strip() for s in (d.get("sectores") or []) if s.get("codigo")),
         "finalidad": d.get("descripcionFinalidad") or "",
         "instrumento": "; ".join(i.get("descripcion", "").strip() for i in (d.get("instrumentos") or [])),
         "inicio": d.get("fechaInicioSolicitud") or "",
@@ -179,6 +182,9 @@ def actualizar(desde, minutos):
             print(f"listado {clave}: {total} convocatorias ({nuevos} nuevas)", flush=True)
         # 2. Detalles que faltan (las más recientes primero) y 3. revisión de las que no traen fecha fin.
         detalles(cli, db, "revisado IS NULL", (), "nuevas")
+        # 2b. Las abiertas guardadas antes de que se guardaran los CNAE: se vuelve a pedir su ficha una vez.
+        detalles(cli, db, "datos != '' AND datos NOT LIKE '%\"cnae\"%' AND (json_extract(datos, '$.fin') >= ? "
+                 "OR json_extract(datos, '$.fin') = '')", (hoy.isoformat(),), "abiertas sin CNAE")
         corte_rev = (hoy - dt.timedelta(days=REVISAR_SIN_FECHA_DIAS)).isoformat()
         corte_reg = (hoy - dt.timedelta(days=30 * REVISAR_SIN_FECHA_MESES)).isoformat()
         detalles(cli, db, "revisado < ? AND registrada >= ? AND datos LIKE '%\"fin\": \"\"%'", (corte_rev, corte_reg),
