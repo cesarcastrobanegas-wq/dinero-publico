@@ -193,7 +193,10 @@ def main():
             f.write(resumen + "\n")
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
-            f.write(f"cambios={len(cambios)}\nproblemas={len(problemas)}\n")
+            f.write(f"cambios={len(cambios)}\nproblemas={len(problemas)}\nejecutadas={len(filas)}\n")
+            # 06-11: el detalle de cada fuente con problemas, para el aviso y el histórico semanal del flujo
+            f.write("detalle_problemas=" + "; ".join(f"{p['fuente']} ({p['detalle']})".replace("\n", " ")
+                                                     for p in problemas) + "\n")
             f.write("fuentes_problema=" + ", ".join(p["fuente"] for p in problemas) + "\n")
             f.write("fuentes_cambio=" + ", ".join(c["fuente"] for c in cambios) + "\n")
 

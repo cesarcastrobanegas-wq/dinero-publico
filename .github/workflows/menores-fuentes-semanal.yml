@@ -113,10 +113,64 @@ jobs:
           echo "::error::git push falló tras 5 intentos."
           exit 1
 
-      - name: Aviso si alguna fuente dio problemas
-        if: always() && steps.generar.outputs.problemas != '' && steps.generar.outputs.problemas != '0'
+      # 06-11 (decisión de César): si fallan solo fuentes sueltas y lo demás se guarda bien, el flujo AVISA (amarillo y
+      # en el resumen, como Fondos UE) en vez de salir en rojo. Sale en rojo si falla el guardado (paso anterior) o si
+      # falla un tercio de las fuentes o más, que ya no es una fuente suelta sino algo general (red, dependencias...).
+      # Cada semana se apunta qué fuentes fallaron en un histórico que pasa de una ejecución a la siguiente.
+      - name: Histórico de fuentes con problemas (semana anterior)
+        if: always() && steps.generar.outputs.ejecutadas != ''
         env:
-          FUENTES: ${{ steps.generar.outputs.fuentes_problema }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "::error::Fuentes con problemas (se conserva su fichero anterior): ${FUENTES}. Detalle en el resumen de la ejecución."
-          exit 1
+          mkdir -p historico
+          for id in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow menores-fuentes-semanal.yml --status completed \
+                        --limit 10 --json databaseId --jq '.[].databaseId'); do
+            if gh run download "$id" --repo "$GITHUB_REPOSITORY" -n menores-fuentes-con-problemas -D historico 2>/dev/null; then
+              echo "Histórico traído de la ejecución ${id}."
+              break
+            fi
+          done
+          touch historico/fuentes_con_problemas.tsv
+
+      - name: Aviso si alguna fuente dio problemas
+        if: always() && steps.generar.outputs.ejecutadas != ''
+        env:
+          N_PROBLEMAS: ${{ steps.generar.outputs.problemas }}
+          N_FUENTES: ${{ steps.generar.outputs.ejecutadas }}
+          FUENTES: ${{ steps.generar.outputs.fuentes_problema }}
+          DETALLE: ${{ steps.generar.outputs.detalle_problemas }}
+          SOLO: ${{ github.event.inputs.solo || '' }}
+        run: |
+          h=historico/fuentes_con_problemas.tsv
+          if [ -z "${SOLO// /}" ]; then          # una prueba a mano con unas pocas fuentes no cuenta como semana
+            printf '%s\t%s\t%s\n' "$(date -u +%F)" "${N_PROBLEMAS:-0}/${N_FUENTES}" "${DETALLE:-ninguna}" >> "$h"
+          fi
+          tail -n 26 "$h" > "$h.nuevo" && mv "$h.nuevo" "$h"          # medio año
+          {
+            echo ""
+            echo "### Fuentes con problemas, semana a semana"
+            echo ""
+            echo "| Semana | Con problemas | Fuentes (motivo) |"
+            echo "|---|---|---|"
+            tail -n 8 "$h" | tac | awk -F'\t' '{gsub(/\|/, "/", $3); print "| " $1 " | " $2 " | " $3 " |"}'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "${N_PROBLEMAS:-0}" = "0" ]; then exit 0; fi
+          if [ $(( N_PROBLEMAS * 3 )) -ge "$N_FUENTES" ]; then
+            echo "::error::${N_PROBLEMAS} de ${N_FUENTES} fuentes con problemas: ${DETALLE}. Son demasiadas para ser fuentes sueltas; se conserva su fichero anterior."
+            exit 1
+          fi
+          echo "::warning::Fuentes sueltas con problemas (se conserva su fichero anterior; lo demás, guardado): ${DETALLE}."
+          {
+            echo ""
+            echo "### Aviso: ${N_PROBLEMAS} de ${N_FUENTES} fuentes con problemas"
+            echo ""
+            echo "${DETALLE}. En esas la web conserva el fichero anterior; el resto se ha guardado con normalidad."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar el histórico para la semana que viene
+        if: always() && steps.generar.outputs.ejecutadas != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: menores-fuentes-con-problemas
+          path: historico/fuentes_con_problemas.tsv
+          retention-days: 90

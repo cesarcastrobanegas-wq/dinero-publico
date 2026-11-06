@@ -194,6 +194,7 @@ concurrency:
 jobs:
   actualizar:
     runs-on: ubuntu-latest
+    # Recorrido de provincias. Los extras de fin de ciclo van en el trabajo «extras» (06-11, ver más abajo).
     # Por debajo del límite DURO de 6h (360 min) de los runners hosted de
     # GitHub -- ver nota de cabecera sobre por qué el ciclo completo de
     # las 17 provincias puede no caber en una sola ejecución.
@@ -343,7 +344,7 @@ jobs:
           key: rotacion-provincias-${{ github.run_id }}
           restore-keys: rotacion-provincias-
 
-      - name: Recorrer todas las provincias (contratos + RPC Cataluña)
+      - name: Recorrer las provincias (contratos + RPC Cataluña)
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           BASE_URL: https://dinero-publico.onrender.com
@@ -353,76 +354,9 @@ jobs:
         run: |
           set -uo pipefail
 
-          # --- helpers (python3 en una sola línea: si el cuerpo no es JSON
-          #     válido, json.load lanza, python sale != 0 y el `|| echo` da el
-          #     valor por defecto -- así nunca aborta el paso) -----------------
-          get_jobid() {   # job_id de una respuesta JSON, o '' si no hay
-            printf '%s' "$1" | python3 -c "import sys,json;print(json.load(sys.stdin).get('job_id',''))" 2>/dev/null || echo ''
-          }
-          get_status() {  # status de un job, o 'not_found' ante cualquier fallo
-            curl -s --max-time 30 "${BASE_URL}/api/job/$1" | python3 -c "import sys,json;print(json.load(sys.stdin).get('status','not_found'))" 2>/dev/null || echo not_found
-          }
-          get_error() {   # campo 'error' de un job (motivo corto, ej. lock de
-            # /actualizar-todos ya ocupado) -- distinto de 'log', que en un
-            # rechazo por lock viene vacío y no explica nada por sí solo
-            curl -s --max-time 30 "${BASE_URL}/api/job/$1" | python3 -c "import sys,json;print(json.load(sys.stdin).get('error') or '(sin detalle)')" 2>/dev/null || echo '(sin detalle)'
-          }
-          mostrar_log() {  # imprime el log del job (vive solo en memoria del
-            # contenedor -- se pierde en el próximo reinicio, así que hay que
-            # volcarlo aquí en cuanto el job termina, no se puede recuperar después)
-            curl -s --max-time 30 "${BASE_URL}/api/job/$1" | \
-              python3 -c "import sys,json; print('\n'.join(json.load(sys.stdin).get('log', [])))" 2>/dev/null || true
-          }
-
-          # --- Web reiniciándose (2026-10-05) ---------------------------------
-          # Los dos pasos anteriores guardan en main casi todas las noches y cada guardado hace que Render vuelva a
-          # desplegar y reinicie la web: durante 1-3 minutos responde 502. Antes se disparaba la primera provincia
-          # justo en ese hueco, todas las peticiones fallaban y el refresco nocturno se perdía entero (5 de 6 noches
-          # entre el 30-09 y el 05-10). Ahora:
-          #  - esperar_web: tras un guardado, espera como mínimo $1 segundos (lo que tarda Render en compilar y
-          #    reiniciar) y hasta ver 4 respuestas buenas seguidas; como mucho $2 minutos, y si no, fallo de verdad;
-          #  - post_web: cada disparo reintenta ante 502/503/504/sin respuesta durante como mucho 5 minutos; pasado
-          #    ese límite devuelve error y queda registrado como fallo (nunca reintenta indefinidamente).
-          web_responde() {
-            [ "$(curl -s --max-time 20 -o /dev/null -w '%{http_code}' "${BASE_URL}/api/diagnostico-arranque" || true)" = "200" ]
-          }
-          esperar_web() {
-            local min_s="$1" max_min="$2" inicio ok=0 caidas=0 t
-            inicio=$(date +%s)
-            while true; do
-              if web_responde; then ok=$((ok + 1)); else ok=0; caidas=$((caidas + 1)); fi
-              t=$(( $(date +%s) - inicio ))
-              if [ "$t" -ge "$min_s" ] && [ "$ok" -ge 4 ]; then
-                echo "Web estable tras ${t} s (${caidas} comprobaciones sin respuesta durante la espera)."
-                return 0
-              fi
-              if [ "$t" -ge $(( max_min * 60 )) ]; then
-                echo "::error::La web no responde de forma estable tras ${max_min} min (${caidas} comprobaciones fallidas)."
-                return 1
-              fi
-              sleep 15
-            done
-          }
-          post_web() {   # mismos argumentos que curl (el último, la URL); imprime el cuerpo de la respuesta
-            local url="${!#}" fin resp codigo
-            fin=$(( $(date +%s) + 300 ))
-            while true; do
-              resp=$(curl -s --max-time 60 -X POST -w $'\n%{http_code}' "$@" || true)
-              codigo="${resp##*$'\n'}"
-              case "$codigo" in
-                000|502|503|504|520|521|522|523|524)
-                  if [ "$(date +%s)" -ge "$fin" ]; then
-                    echo "::error::${url#${BASE_URL}}: la web sigue sin responder (HTTP ${codigo}) tras 5 min de reintentos." >&2
-                    return 1
-                  fi
-                  echo "  ${url#${BASE_URL}}: HTTP ${codigo} (¿la web está reiniciándose?), reintento en 30 s" >&2
-                  sleep 30 ;;
-                *)
-                  printf '%s' "${resp%$'\n'*}"
-                  return 0 ;;
-              esac
-            done
-          }
+          # Funciones comunes (get_jobid, get_status, mostrar_log, esperar_web, post_web, poll_hasta_done...):
+          # .github/scripts/refresco_comun.sh, compartidas con el trabajo «extras».
+          source .github/scripts/refresco_comun.sh
 
           # Presupuesto por PROVINCIA (una sola no puede comerse la noche
           # entera) y presupuesto TOTAL del bucle (deja margen para los
@@ -445,6 +379,12 @@ jobs:
           MAX_MIN_TOTAL=260
           INTERVAL=240          # 4 min < los ~15 min que Render tarda en dormirse
           deadline_total=$(( $(date +%s) + MAX_MIN_TOTAL * 60 ))
+          # 06-11: tope DURO del trabajo de provincias. Los extras van ya en su propio trabajo (con su propio límite de
+          # 6 h), así que este solo tiene que caber en sus 350 min: el bucle deja de lanzar provincias a los
+          # MAX_MIN_TOTAL y ninguna espera pasa de TOPE_MIN desde aquí (lo que siga en marcha termina por su cuenta en
+          # el servidor). Con 260 + 60 = 320 min de bucle quedan ~25 min para Hacienda, Población y la caché.
+          TOPE_MIN=320
+          TOPE_DURO=$(( $(date +%s) + TOPE_MIN * 60 ))
           fallo=0               # se pone a 1 si algún refresco crítico no llega
                                  # a 'done' -- no aborta el step, solo hace que
                                  # termine en exit 1 al final para el aviso por email.
@@ -458,49 +398,6 @@ jobs:
           lentas=0              # de ellas, las que necesitaron más que su presupuesto
           a_medias=""           # provincia que seguía en marcha al acabarse el presupuesto de la noche
 
-          # Espera a que un job_id llegue a 'done'. Aborta (return 1) si el job
-          # da 'error', si 'not_found' persiste 3 ciclos seguidos (el
-          # contenedor se reinició y perdió el estado en memoria), o si se
-          # agota el presupuesto de ESTA provincia/tarea (return 2: el trabajo
-          # sigue vivo en el servidor, ver esperar_fin_trabajo). Mientras tanto
-          # imprime cada ciclo, y ese propio tráfico de polling es el keep-alive.
-          poll_hasta_done() {
-            local job_id="$1" etiqueta="$2" max_min="${3:-$MAX_MIN_PROVINCIA}" notfound=0 st
-            local deadline_local=$(( $(date +%s) + max_min * 60 ))
-            while true; do
-              st=$(get_status "$job_id")
-              echo "$(date -u +%H:%M:%S)Z  ${etiqueta}=${st}"
-
-              if [ "$st" = "error" ]; then
-                echo "::error::${etiqueta} terminó en 'error'. No se commitea."
-                echo "  motivo: $(get_error "$job_id")"
-                echo "--- log de ${etiqueta} ---"
-                mostrar_log "$job_id"
-                return 1
-              fi
-              if [ "$st" = "done" ]; then
-                echo "--- log de ${etiqueta} ---"
-                mostrar_log "$job_id"
-                return 0
-              fi
-
-              if [ "$st" = "not_found" ]; then
-                notfound=$(( notfound + 1 ))
-              else
-                notfound=0
-              fi
-              if [ "$notfound" -ge 3 ]; then
-                echo "::error::${etiqueta}: job_id no encontrado 3 ciclos seguidos: el contenedor se reinició a mitad del lote y perdió el estado en memoria. Aborto sin commitear."
-                return 1
-              fi
-
-              if [ "$(date +%s)" -ge "$deadline_local" ]; then
-                echo "::warning::${etiqueta} lleva ${max_min} min sin terminar (status=$st)."
-                return 2
-              fi
-              sleep "$INTERVAL"
-            done
-          }
 
           # --- Trabajo que sigue vivo tras agotar su tiempo (2026-10-06) -------
           # Agotar el presupuesto de una provincia NO para su trabajo en el servidor, y el servidor solo admite un
@@ -723,6 +620,60 @@ jobs:
             done
           fi
 
+          if [ "$SOLO_FONDOS_UE" != "true" ]; then
+            echo "::notice::Provincias completadas: ${completadas} (${lentas} tardaron más que su presupuesto de ${MAX_MIN_PROVINCIA} min)${a_medias:+; ${a_medias} seguía en marcha al acabar el tiempo y termina por su cuenta}."
+            if [ "$completadas" -eq 0 ]; then
+              echo "::error::No se completó ninguna provincia en toda la ejecución."
+              fallo=1
+            fi
+          fi
+          if [ "$fallo" -ne 0 ]; then
+            echo "::error::Fallo real en el recorrido de provincias (un trabajo en error, la web reiniciada a mitad, una provincia que no se pudo lanzar o ninguna provincia completada). El job se marca como fallido para que llegue el aviso por email."
+          fi
+          exit "$fallo"
+
+      # always(): también si el paso anterior falla o GitHub lo cancela por tiempo, que es justo cuando más
+      # importa no perder por dónde iba. Solo el recorrido completo pone ROTACION_GUARDAR; los disparos manuales no.
+      - name: Guardar el punto de partida de la próxima noche
+        if: always() && env.ROTACION_GUARDAR == '1'
+        uses: actions/cache/save@v5
+        with:
+          path: ~/rotacion-provincias
+          key: rotacion-provincias-${{ github.run_id }}
+
+  # 06-11-2026 (decisión de César): los extras de fin de ciclo van en un TRABAJO APARTE, con su propio límite de
+  # 6 h de GitHub. Antes iban al final del mismo paso que las provincias y compartían sus 350 min: las noches
+  # largas (285-343 min) se quedaban a 7-65 min del corte, y el 09-10 GitHub lo canceló. Ahora:
+  #  - el trabajo de provincias tiene un tope duro de 320 min (ver TOPE_MIN) y nunca se acerca a sus 350;
+  #  - este empieza cuando aquel termina, pase lo que pase (always(): también si falla o lo corta GitHub), y
+  #    sus esperas suman como mucho ~2 h (fondos 50 + noticias 15 + Fuente Álamo 15 + Cartagena 15 +
+  #    directivos 30), lejos de su límite de 180 min.
+  extras:
+    needs: actualizar
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout del repo (solo para las funciones comunes)
+        uses: actions/checkout@v5
+
+      - name: Extras de fin de ciclo (fondos UE, noticias UE, Fuente Álamo, Cartagena, directivos)
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          BASE_URL: https://dinero-publico.onrender.com
+        run: |
+          set -uo pipefail
+
+          # Funciones comunes (get_jobid, get_status, mostrar_log, esperar_web, post_web, poll_hasta_done...):
+          # .github/scripts/refresco_comun.sh, compartidas con el trabajo «extras».
+          source .github/scripts/refresco_comun.sh
+
+          MAX_MIN_PROVINCIA=100
+          INTERVAL=240          # 4 min < los ~15 min que Render tarda en dormirse
+          fallo=0
+
+          esperar_web 0 10 || { echo "::error::Sin web estable: no se lanzan los extras."; exit 1; }
+
           # --- Extras de fin de ciclo: fondos UE, noticias UE, Fuente
           #     Álamo, Cartagena y directivos de contratos menores
           #     residuales -- una vez por noche, después de intentar
@@ -800,23 +751,8 @@ jobs:
             poll_hasta_done "$job_dcm" "directivos-menores" 30 || echo "::warning::Directivos de contratos menores no completado; se continúa igualmente."
           fi
 
-          if [ "$SOLO_FONDOS_UE" != "true" ]; then
-            echo "::notice::Provincias completadas: ${completadas} (${lentas} tardaron más que su presupuesto de ${MAX_MIN_PROVINCIA} min)${a_medias:+; ${a_medias} seguía en marcha al acabar el tiempo y termina por su cuenta}."
-            if [ "$completadas" -eq 0 ]; then
-              echo "::error::No se completó ninguna provincia en toda la ejecución."
-              fallo=1
-            fi
-          fi
+
           if [ "$fallo" -ne 0 ]; then
-            echo "::error::Fallo real en el refresco (un trabajo en error, la web reiniciada a mitad, una provincia que no se pudo lanzar, los fondos UE o ninguna provincia completada). El job se marca como fallido para que llegue el aviso por email."
+            echo "::error::Fallo real en los extras (fondos UE). El job se marca como fallido para que llegue el aviso por email."
           fi
           exit "$fallo"
-
-      # always(): también si el paso anterior falla o GitHub lo cancela por tiempo, que es justo cuando más
-      # importa no perder por dónde iba. Solo el recorrido completo pone ROTACION_GUARDAR; los disparos manuales no.
-      - name: Guardar el punto de partida de la próxima noche
-        if: always() && env.ROTACION_GUARDAR == '1'
-        uses: actions/cache/save@v5
-        with:
-          path: ~/rotacion-provincias
-          key: rotacion-provincias-${{ github.run_id }}
