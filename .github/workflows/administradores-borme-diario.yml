@@ -32,9 +32,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 300     # la primera vez (sin índice en caché) descarga 2021-hoy: varias horas
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -43,7 +43,7 @@ jobs:
 
       - name: Índice del BORME (caché)
         id: cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: backend/borme_actos.db
           key: borme-actos-${{ github.run_id }}
@@ -64,7 +64,7 @@ jobs:
 
       - name: Guardar el índice en la caché
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: backend/borme_actos.db
           key: borme-actos-${{ github.run_id }}
@@ -87,7 +87,7 @@ jobs:
       # Índice histórico 2009-2020: borme-historico.yml lo descarga una vez y lo deja en la caché; aquí solo se lee.
       # Si no está, el generador sigue con el índice diario, como antes.
       - name: Índice histórico del BORME (caché, solo lectura)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: backend/borme_actos_historico.db
           key: borme-historico-diario-no-existe

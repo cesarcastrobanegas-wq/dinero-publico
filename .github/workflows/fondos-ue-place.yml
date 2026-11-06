@@ -42,11 +42,11 @@ jobs:
         run: |
           if [ "${{ inputs.rama || 'wip/fondos-ue-2021-2027' }}" = "main" ]; then echo "::error::Este flujo no escribe en main."; exit 1; fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.rama || 'wip/fondos-ue-2021-2027' }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -71,7 +71,7 @@ jobs:
       # artefacto de 7 días, para bajarlo y subirlo a mano.
       - name: Fichero como artefacto (respaldo)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: fondos-ue-place
           path: backend/fondos_ue_place.json.gz

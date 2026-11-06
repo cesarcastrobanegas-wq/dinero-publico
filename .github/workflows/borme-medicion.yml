@@ -32,20 +32,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.rama }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Índice diario del BORME (caché, solo lectura)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: backend/borme_actos.db
           key: borme-actos-medicion-no-existe
           restore-keys: borme-actos-
       - name: Índice histórico (caché, solo lectura)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: backend/borme_actos_historico.db
           key: borme-historico-medicion-no-existe
@@ -60,11 +60,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.rama }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -72,14 +72,14 @@ jobs:
         run: pip install requests
 
       - name: Índice diario del BORME (caché, solo lectura)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: backend/borme_actos.db
           key: borme-actos-medicion-no-existe
           restore-keys: borme-actos-
 
       - name: Índice histórico (caché, solo lectura)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: backend/borme_actos_historico.db
           key: borme-historico-medicion-no-existe

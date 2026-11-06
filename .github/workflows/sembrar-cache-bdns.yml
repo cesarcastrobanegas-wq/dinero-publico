@@ -32,7 +32,7 @@ jobs:
           python3 -c "import sqlite3; c=sqlite3.connect('backend/bdns.db'); print(c.execute('PRAGMA integrity_check').fetchone()[0], c.execute('SELECT COUNT(*) FROM convocatorias').fetchone()[0], 'convocatorias')"
 
       - name: Guardar en la caché
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: backend/bdns.db
           key: bdns-${{ github.run_id }}
