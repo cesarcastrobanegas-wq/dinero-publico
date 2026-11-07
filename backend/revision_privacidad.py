@@ -23,6 +23,7 @@ Salida: un JSON con los hallazgos ({"tipo", "url", "n"}), sin datos personales: 
 dónde está y cuántos hay. Los registros del flujo son públicos; este script no imprime nunca el dato encontrado.
 
 Uso:  python backend/revision_privacidad.py --salida hallazgos.json [--base https://dinero-publico.com] [--fichas 15]
+      [--rutas "/?muni=Saucejo%2C+El&provincia=sevilla" ...]   (07-11-2026: páginas concretas, además de las de siempre)
 """
 import argparse
 import datetime
@@ -155,7 +156,7 @@ def muestra_de_fichas(sitemap, cuantas, fecha):
     return [urls[(inicio + i * paso) % len(urls)] for i in range(cuantas)]
 
 
-def revisar_web(base, n_fichas, fecha=None):
+def revisar_web(base, n_fichas, fecha=None, rutas=()):
     fecha = fecha or datetime.date.today()
     web, hallazgos = Web(base), []
 
@@ -171,6 +172,8 @@ def revisar_web(base, n_fichas, fecha=None):
     for ruta in ("/", "/rankings", "/fondos-ue", "/fondos-ue?fuente=cordis", "/fondos-ue?fuente=cordis&pag=40",
                  "/fondos-ue?ambito=provincia&pag=3", "/convocatorias", "/convocatorias?tab=subvenciones", "/casos",
                  "/quien-soy", "/aviso-legal", "/metodologia", "/mapa-cobertura", "/?q=garcia", "/?q=martinez+lopez"):
+        pagina(ruta)
+    for ruta in rutas:                                 # páginas concretas pedidas con --rutas
         pagina(ruta)
     for url in muestra_de_fichas(sitemap, n_fichas, fecha):
         ruta = url[len(base):] if url.startswith(base) else "/" + url.split("/", 3)[-1]
@@ -193,8 +196,9 @@ def main():
     ap.add_argument("--base", default="https://dinero-publico.com")
     ap.add_argument("--fichas", type=int, default=15)
     ap.add_argument("--salida", required=True)
+    ap.add_argument("--rutas", nargs="*", default=[], help="páginas concretas que revisar además (empiezan por /)")
     args = ap.parse_args()
-    hallazgos, peticiones = revisar_web(args.base, args.fichas)
+    hallazgos, peticiones = revisar_web(args.base, args.fichas, rutas=args.rutas)
     with open(args.salida, "w", encoding="utf-8") as f:
         json.dump({"fecha": datetime.date.today().isoformat(), "peticiones": peticiones, "hallazgos": hallazgos}, f, ensure_ascii=False)
     print(f"Páginas pedidas: {peticiones}. Hallazgos: {len(hallazgos)}.")

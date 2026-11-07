@@ -3358,6 +3358,10 @@ msgstr "Hasiera"
 msgid "Página no encontrada"
 msgstr "Ez da orria aurkitu"
 
+#: app.py (07-11-2026, adjudicatario sin nombre, solo con DNI)
+msgid "Persona física"
+msgstr "Pertsona fisikoa"
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
 
