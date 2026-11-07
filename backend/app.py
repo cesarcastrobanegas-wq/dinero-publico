@@ -30451,8 +30451,7 @@ class Handler(BaseHTTPRequestHandler):
             params = parse_qs(raw, keep_blank_values=True)
             t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
             try:
-                self._write(*_filtro_salida_dni(urlparse(self.path).path,
-                                                *_route_post_i18n(urlparse(self.path).path, params)))
+                self._write(*_route_post_i18n(urlparse(self.path).path, params))
             finally:
                 _TOKEN_CABECERA.reset(t_token)
         except Exception as e:
