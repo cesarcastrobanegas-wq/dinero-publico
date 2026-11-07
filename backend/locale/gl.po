@@ -1394,6 +1394,10 @@ msgstr "O seu nome figura con DNI/NIE noutra fonte oficial"
 msgid "Autónomo / persona física"
 msgstr "Autónomo / persoa física"
 
+#: app.py (07-11-2026, adjudicatario sin nombre, solo con DNI)
+msgid "Persona física"
+msgstr "Persoa física"
+
 #: app.py:22441
 msgid "Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica un enlace por contrato para comprobarlo directamente, así que se muestra tal cual."
 msgstr "Importe segundo a API de Euskadi, moi por riba do que permite legalmente un contrato menor. Pode ser un erro da fonte de orixe (díxitos de máis); esta fonte non publica unha ligazón por contrato para comprobalo directamente, así que se amosa tal cal."
@@ -3357,10 +3361,6 @@ msgstr "Portada"
 #: app.py:28145 app.py:28130
 msgid "Página no encontrada"
 msgstr "Páxina non atopada"
-
-#: app.py (07-11-2026, adjudicatario sin nombre, solo con DNI)
-msgid "Persona física"
-msgstr "Persoa física"
 
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Aínda sen datos de fondos UE para esta provincia."

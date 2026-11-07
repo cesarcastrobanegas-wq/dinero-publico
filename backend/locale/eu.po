@@ -1394,6 +1394,10 @@ msgstr "Haren izena NAN/AIZ batekin agertzen da beste iturri ofizial batean"
 msgid "Autónomo / persona física"
 msgstr "Autonomoa / pertsona fisikoa"
 
+#: app.py (07-11-2026, adjudicatario sin nombre, solo con DNI)
+msgid "Persona física"
+msgstr "Pertsona fisikoa"
+
 #: app.py:22441
 msgid "Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica un enlace por contrato para comprobarlo directamente, así que se muestra tal cual."
 msgstr "Euskadiko APIaren araberako zenbatekoa, kontratu txiki batek legez onartzen duenaren oso gainetik. Jatorrizko iturriaren akatsa izan daiteke (digitu gehiegi); iturri honek ez du kontratu bakoitzeko estekarik argitaratzen zuzenean egiaztatzeko, beraz dagoen bezala erakusten da."
@@ -3357,10 +3361,6 @@ msgstr "Hasiera"
 #: app.py:28145 app.py:28130
 msgid "Página no encontrada"
 msgstr "Ez da orria aurkitu"
-
-#: app.py (07-11-2026, adjudicatario sin nombre, solo con DNI)
-msgid "Persona física"
-msgstr "Pertsona fisikoa"
 
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
