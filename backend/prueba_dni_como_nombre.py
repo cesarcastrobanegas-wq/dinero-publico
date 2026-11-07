@@ -42,8 +42,14 @@ class ConApp(unittest.TestCase):
         cls.tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)   # app deja abierto cache.db
         os.environ.update(DATA_DIR=cls.tmp.name, HTTP_PROXY="http://127.0.0.1:9", HTTPS_PROXY="http://127.0.0.1:9",
                           I18N_PUBLICADOS="gl,ca,eu")
+        import threading
         import app
         cls.app = app
+        # Al importar, app.py arranca el hilo del feed de menores, que empieza con su propio _purgar_nombres_dni: se
+        # espera a que acabe para que su repaso no se cruce con el de las pruebas (si no, el recuento sale 0 a veces).
+        for hilo in threading.enumerate():
+            if hilo.name == "carga-place-menores":
+                hilo.join(timeout=900)
 
     def test_nombre_sin_dni(self):
         f = self.app.nombre_sin_dni
