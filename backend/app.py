@@ -25067,6 +25067,7 @@ def _diagnostico_arranque():
         memoria_rss_mb = None
 
     return {
+        "filtro_salida_dni": dict(_FILTRO_SALIDA_ESTADO, segundos=round(_FILTRO_SALIDA_ESTADO["segundos"], 3)),
         "disco_confiable": _DISCO_CONFIABLE,
         "data_dir": DATA_DIR,
         "cache_db": _info(DB_FILE),
@@ -27511,6 +27512,126 @@ def _resp(body, content_type="text/html; charset=utf-8", code=200, headers=None,
         hdrs["Content-Encoding"] = "gzip"
     hdrs["Content-Length"] = str(len(b))
     return code, hdrs, b
+
+
+# ─── FILTRO DE SALIDA: NINGÚN DNI/NIE COMPLETO EN UNA RESPUESTA (08-11-2026, RGPD) ───────────────────────────────────
+# Última barrera, después de todo lo demás (el enmascarado al guardar y al pintar, ver nombre_sin_dni): toda respuesta de
+# texto (HTML, JSON, XML, CSV, texto, Markdown...) se revisa justo antes de enviarla, en _app_wsgi y en el servidor local.
+# Un DNI (8 cifras + letra) o NIE (X/Y/Z + 7 cifras + letra), con o sin espacio, punto o guion, cuya letra de control sea
+# la CORRECTA, se cambia por ***4567** / ****4567*, como el NIF de los autónomos (disposición adicional 7.ª de la
+# LOPDGDD). Los CIF (P4109000B, B12345678...) no tienen esa forma y no se tocan; un número de expediente con forma de
+# DNI solo se tocaría si además acertara la letra (1 de cada 23), y entonces mejor tapado.
+# - Si enmascara algo, lo apunta en el registro: «[privacidad] filtro de salida: N DNI/NIE en RUTA» (sin el dato ni los
+#   valores de la consulta; como mucho una línea por ruta cada 10 minutos, con el acumulado).
+# - Las respuestas binarias, las parciales (206) y las que van por trozos (la copia de cache.db) no se miran.
+# - Coste: un cuerpo ya revisado y limpio no se vuelve a revisar (las páginas en caché se sirven con el mismo objeto
+#   bytes, cuyo hash Python guarda). Ver _FILTRO_SALIDA_ESTADO en /api/diagnostico-arranque.
+# - Interruptor de emergencia: FILTRO_SALIDA_DNI=0 lo apaga (no hace falta en condiciones normales).
+FILTRO_SALIDA_DNI = os.environ.get("FILTRO_SALIDA_DNI", "1").strip() != "0"
+_RE_DNI_SALIDA = re.compile(
+    rb"(?<![0-9A-Za-z])(?:[Ee][Ss][ .-]?)?(?:(\d{8})[ .-]?([A-Za-z])|([XYZxyz])[ .-]?(\d{7})[ .-]?([A-Za-z]))"
+    rb"(?![0-9A-Za-z])")
+_LETRAS_DNI = b"TRWAGMYFPDXBNJZSQVHLCKE"
+_TABLA_CIFRAS = bytes(48 if 48 <= i <= 57 else 46 for i in range(256))   # cifra -> «0», lo demás -> «.»
+_TIPOS_FILTRO_SALIDA = ("text/", "application/json", "application/xml", "application/javascript",
+                        "application/manifest+json", "application/ld+json")
+_FILTRO_SALIDA_LIMPIOS = {}                  # (hash, largo) de cuerpos ya revisados sin nada que tapar
+_FILTRO_SALIDA_LIMPIOS_MAX = 8192
+_FILTRO_SALIDA_AVISOS = {}                   # ruta -> [último aviso, casos desde entonces]
+_FILTRO_SALIDA_ESTADO = {"activo": FILTRO_SALIDA_DNI, "revisadas": 0, "ya_revisadas": 0, "con_dni": 0,
+                         "dni_tapados": 0, "segundos": 0.0}
+
+
+def _dni_tapado(m):
+    """El texto enmascarado de una coincidencia de _RE_DNI_SALIDA, o None si la letra de control no es la correcta."""
+    if m.group(1):
+        if _LETRAS_DNI[int(m.group(1)) % 23] != m.group(2).upper()[0]:
+            return None
+        return b"***" + m.group(1)[3:7] + b"**"
+    if _LETRAS_DNI[(b"XYZ".index(m.group(3).upper()) * 10000000 + int(m.group(4))) % 23] != m.group(5).upper()[0]:
+        return None
+    return b"****" + m.group(4)[3:7] + b"*"
+
+
+def enmascarar_dni_en_bytes(b):
+    """(cuerpo, cuántos): los DNI/NIE con letra de control correcta, enmascarados (***4567** / ****4567*).
+
+    Rápido: primero se buscan en C las tiras de 7 o más cifras seguidas (bytes.translate + find; una página sin
+    ninguna sale enseguida) y la expresión completa solo se prueba alrededor de cada una. Medido con páginas reales:
+    1,5 ms la de rankings (417 KB) y 2,5 ms la de Murcia (258 KB), frente a 32 y 19 ms con la expresión sola."""
+    t = b.translate(_TABLA_CIFRAS)
+    p = t.find(b"0000000")
+    if p < 0:
+        return b, 0
+    cambios, hasta = [], -1
+    while p >= 0:
+        fin = p
+        while fin < len(t) and t[fin] == 48:
+            fin += 1
+        for m in _RE_DNI_SALIDA.finditer(b, max(0, p - 5), min(len(b), fin + 4)):
+            if m.start() > hasta:
+                tapado = _dni_tapado(m)
+                if tapado is not None:
+                    cambios.append((m.start(), m.end(), tapado))
+                hasta = m.end() - 1
+        p = t.find(b"0000000", fin)
+    if not cambios:
+        return b, 0
+    partes, ult = [], 0
+    for a, z, tapado in cambios:
+        partes += [b[ult:a], tapado]
+        ult = z
+    partes.append(b[ult:])
+    return b"".join(partes), len(cambios)
+
+
+def _ruta_para_aviso(ruta, query):
+    """La ruta para el registro del filtro de salida: con el municipio y la provincia (no son datos personales) y, de
+    los demás parámetros, solo su nombre (una búsqueda ?q= podría llevar el nombre o el DNI de alguien)."""
+    qs = parse_qs(query or "")
+    partes = [f"{k}={qs[k][0][:60]}" for k in ("muni", "provincia") if qs.get(k)]
+    partes += sorted(k for k in qs if k not in ("muni", "provincia"))
+    return ruta + ("?" + "&".join(partes) if partes else "")
+
+
+def _filtro_salida_dni(ruta, code, headers, body):
+    """La última barrera antes de enviar una respuesta (ver arriba). Devuelve (code, headers, body)."""
+    if (not FILTRO_SALIDA_DNI or code == 206 or not isinstance(body, (bytes, bytearray)) or not body
+            or not str(headers.get("Content-Type", "")).lower().startswith(_TIPOS_FILTRO_SALIDA)):
+        return code, headers, body
+    t0 = time.perf_counter()
+    body = bytes(body)
+    clave = (hash(body), len(body))
+    if clave in _FILTRO_SALIDA_LIMPIOS:
+        _FILTRO_SALIDA_ESTADO["ya_revisadas"] += 1
+        return code, headers, body
+    comprimido = str(headers.get("Content-Encoding", "")).lower() == "gzip"
+    try:
+        crudo = _gzip.decompress(body) if comprimido else body
+    except (OSError, EOFError):
+        return code, headers, body           # no es un gzip válido: se deja como venía
+    nuevo, n = enmascarar_dni_en_bytes(crudo)
+    _FILTRO_SALIDA_ESTADO["revisadas"] += 1
+    if not n:
+        if len(_FILTRO_SALIDA_LIMPIOS) >= _FILTRO_SALIDA_LIMPIOS_MAX:
+            _FILTRO_SALIDA_LIMPIOS.clear()
+        _FILTRO_SALIDA_LIMPIOS[clave] = True
+        _FILTRO_SALIDA_ESTADO["segundos"] += time.perf_counter() - t0
+        return code, headers, body
+    body = _gzip.compress(nuevo, compresslevel=6) if comprimido else nuevo
+    headers = dict(headers)
+    headers["Content-Length"] = str(len(body))
+    headers.pop("ETag", None)                # el cuerpo ya no es el de esa etiqueta
+    _FILTRO_SALIDA_ESTADO["con_dni"] += 1
+    _FILTRO_SALIDA_ESTADO["dni_tapados"] += n
+    _FILTRO_SALIDA_ESTADO["segundos"] += time.perf_counter() - t0
+    ahora_ = time.time()
+    aviso = _FILTRO_SALIDA_AVISOS.setdefault(ruta, [0.0, 0])
+    aviso[1] += n
+    if ahora_ - aviso[0] >= 600:
+        print(f"[privacidad] filtro de salida: {aviso[1]} DNI/NIE tapados en {ruta}", flush=True)
+        aviso[0], aviso[1] = ahora_, 0
+    return code, headers, body
 
 
 def _redirect_resp(path):
@@ -30262,6 +30383,8 @@ def _app_wsgi(environ, start_response):
     else:
         code, headers, body = 405, {"Content-Length": "0"}, b""
 
+    code, headers, body = _filtro_salida_dni(_ruta_para_aviso(path, environ.get("QUERY_STRING", "")), code, headers,
+                                             body)    # 08-11-2026: ningún DNI/NIE completo
     status_line = f"{code} {_HTTP_STATUS_TEXT.get(code, 'OK')}"
     start_response(status_line, list(headers.items()))
     if not isinstance(body, (bytes, bytearray)):
@@ -30301,7 +30424,9 @@ class Handler(BaseHTTPRequestHandler):
             t_rango = _RANGO_PETICION.set(self.headers.get("Range", "") or "")
             t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
             try:
-                self._write(*_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok, query_string=parsed.query))
+                self._write(*_filtro_salida_dni(_ruta_para_aviso(parsed.path, parsed.query),
+                                                *_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok,
+                                                                 query_string=parsed.query)))
             finally:
                 _RANGO_PETICION.reset(t_rango)
                 _TOKEN_CABECERA.reset(t_token)
@@ -30326,7 +30451,8 @@ class Handler(BaseHTTPRequestHandler):
             params = parse_qs(raw, keep_blank_values=True)
             t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
             try:
-                self._write(*_route_post_i18n(urlparse(self.path).path, params))
+                self._write(*_filtro_salida_dni(urlparse(self.path).path,
+                                                *_route_post_i18n(urlparse(self.path).path, params)))
             finally:
                 _TOKEN_CABECERA.reset(t_token)
         except Exception as e:
