@@ -86,7 +86,10 @@ def main():
     bloque = h[i_emp:i_hero]
     # 2. N real: 6 abiertas (L1-L6); la cerrada y la adjudicada no cuentan.
     comprobar("Hoy hay <b>6</b> licitaciones públicas abiertas." in bloque, "N no es 6 o falta el título")
-    comprobar("Te decimos cuáles encajan con tu empresa." in bloque, "falta el texto")
+    # Con el filtro apagado no se promete «te decimos cuáles encajan»: se invita a ver la lista.
+    comprobar("mientras tú no te enteras. Míralas todas aquí, ordenadas y con su plazo." in bloque,
+              "apagado: falta el texto «Míralas todas aquí»")
+    comprobar("Te decimos" not in bloque, "apagado: sale «Te decimos cuáles encajan»")
     # 3. Las 3 últimas publicadas con enlace: L6 no tiene enlace -> L2, L3, L4 por fecha de publicación.
     enlaces = re.findall(r'class="emp-obj" href="([^"]+)"', bloque)
     comprobar(enlaces == ["https://ejemplo.test/l2", "https://ejemplo.test/l3", "https://ejemplo.test/l4"],
@@ -106,6 +109,10 @@ def main():
     app.FILTRO_FORMULARIO = True
     h_on = cuerpo(portada())
     comprobar(f'href="{app.FFORM.RUTA}" data-dp-evento="portada_aviso"' in h_on, "encendido no sale el botón del aviso")
+    comprobar("Te decimos cuáles encajan con tu empresa." in h_on and "Míralas todas" not in h_on,
+              "encendido: el texto no es «Te decimos cuáles encajan»")
+    h_on_gl = cuerpo(portada("gl"))
+    comprobar("Dicímosche cales encaixan" in h_on_gl, "encendido en gallego: falta el texto traducido")
     app.FILTRO_FORMULARIO = False
     # 5. Singular con una sola abierta y caché de 5 minutos.
     with app._db_lock:
@@ -131,15 +138,19 @@ def main():
     comprobar('<a href="/convocatorias" class="nav-conv">' in h, "el botón del menú no es verde")
     css = app._ALL_CSS_CONTENT
     comprobar(".header-nav>a.nav-conv{" in css and ".emp-bloque{" in css and "--conv:#0d7a3f" in css, "falta el CSS")
+    movil = css[css.index("@media (max-width:700px){\n  .emp-bloque{"):]
+    movil = movil[:movil.index("\n}")]
+    comprobar(".emp-ultimas li:nth-child(n+3){display:none;}" in movil, "en el móvil no se quedan 2 licitaciones")
     # 8. Idiomas: los textos nuevos traducidos (y nada en castellano dentro del bloque).
-    for idioma, esperado in (("gl", "Hoxe hai <b>6</b> licitacións públicas abertas."),
-                             ("ca", "Avui hi ha <b>6</b> licitacions públiques obertes."),
-                             ("eu", "Gaur <b>6</b> lizitazio publiko daude irekita.")):
+    for idioma, esperado, frase in (("gl", "Hoxe hai <b>6</b> licitacións públicas abertas.", "Aquí podes velas todas"),
+                                    ("ca", "Avui hi ha <b>6</b> licitacions públiques obertes.", "Mira-les totes aquí"),
+                                    ("eu", "Gaur <b>6</b> lizitazio publiko daude irekita.", "Ikusi hemen guztiak")):
         hb = cuerpo(portada(idioma))
         bl = hb[hb.find('class="emp-bloque"'):hb.find('class="hero-panel"')]
         comprobar(esperado in bl, f"{idioma}: falta el título traducido")
+        comprobar(frase in bl, f"{idioma}: falta el texto traducido (filtro apagado)")
         comprobar("Ver las licitaciones abiertas" not in bl and "Las últimas publicadas" not in bl
-                  and "Te decimos" not in bl and "plazo hasta" not in bl, f"{idioma}: queda castellano en el bloque")
+                  and "Míralas" not in bl and "plazo hasta" not in bl, f"{idioma}: queda castellano en el bloque")
 
     # 9. Contador: los dos botones cuentan; un nombre inventado no; y salen en el panel de visitas.
     def evento(tipo, ua=UA):

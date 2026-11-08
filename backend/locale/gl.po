@@ -522,6 +522,10 @@ msgstr "Tes unha empresa? Hoxe hai {n} licitacións públicas abertas."
 msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Te decimos cuáles encajan con tu empresa."
 msgstr "Cada día a Administración adxudica contratos que leva a túa competencia mentres ti non te decatas. Dicímosche cales encaixan coa túa empresa."
 
+#: portada, bloque para empresas, filtro apagado (2026-11-08)
+msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Míralas todas aquí, ordenadas y con su plazo."
+msgstr "Cada día a Administración adxudica contratos que leva a túa competencia mentres ti non te decatas. Aquí podes velas todas, ordenadas e co seu prazo."
+
 #: portada, bloque para empresas (2026-11-08)
 msgid "Ver las licitaciones abiertas"
 msgstr "Ver as licitacións abertas"

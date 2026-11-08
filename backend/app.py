@@ -18869,6 +18869,7 @@ h2,.rk-section-header h2{font-weight:600;}
   .emp-botones{flex-direction:column;gap:8px;}
   .emp-btn{width:100%;font-size:14px;}
   .emp-ultimas li{padding:9px 10px;}
+  .emp-ultimas li:nth-child(n+3){display:none;}   /* en el móvil, 2 licitaciones: que el titular quede más arriba */
 }
 """
 
@@ -24646,6 +24647,11 @@ def _portada_empresas_html():
             n=f"<b>{fmt_num(n)}</b>")
     botones = (f'<a class="emp-btn emp-btn-principal" href="/convocatorias" data-dp-evento="portada_licitaciones">'
                f'{_t("Ver las licitaciones abiertas")} →</a>')
+    # Apagado el filtro no se promete lo de «te decimos cuáles encajan»: se invita a ver la lista (decisión del titular, 08-11).
+    if FILTRO_FORMULARIO:
+        texto = _t("Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Te decimos cuáles encajan con tu empresa.")
+    else:
+        texto = _t("Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Míralas todas aquí, ordenadas y con su plazo.")
     if FILTRO_FORMULARIO:
         botones += (f'<a class="emp-btn emp-btn-secundario" href="{esc(FFORM.RUTA)}" data-dp-evento="portada_aviso">'
                     f'🔔 {_t("Avisarme de las de mi sector")}</a>')
@@ -24668,7 +24674,7 @@ def _portada_empresas_html():
                     if filas else "")
     return f"""<section class="emp-bloque" aria-labelledby="emp-titulo">
     <h2 id="emp-titulo">{titulo}</h2>
-    <p class="emp-texto">{_t("Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Te decimos cuáles encajan con tu empresa.")}</p>
+    <p class="emp-texto">{texto}</p>
     <div class="emp-botones">{botones}</div>
     {ultimas_html}
   </section>

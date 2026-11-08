@@ -522,6 +522,10 @@ msgstr "Enpresa bat duzu? Gaur {n} lizitazio publiko daude irekita."
 msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Te decimos cuáles encajan con tu empresa."
 msgstr "Egunero, Administrazioak kontratuak esleitzen ditu eta zure lehiakideek eramaten dituzte, zu konturatu gabe. Zure enpresarekin zein datozen bat esaten dizugu."
 
+#: portada, bloque para empresas, filtro apagado (2026-11-08)
+msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Míralas todas aquí, ordenadas y con su plazo."
+msgstr "Egunero, Administrazioak kontratuak esleitzen ditu eta zure lehiakideek eramaten dituzte, zu konturatu gabe. Ikusi hemen guztiak, ordenatuta eta beren epearekin."
+
 #: portada, bloque para empresas (2026-11-08)
 msgid "Ver las licitaciones abiertas"
 msgstr "Ikusi lizitazio irekiak"
