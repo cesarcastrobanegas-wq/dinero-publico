@@ -510,6 +510,34 @@ msgstr "Sous dels alcaldes"
 msgid "Convocatorias abiertas"
 msgstr "Convocatòries obertes"
 
+#: portada, bloque para empresas (2026-11-08)
+msgid "¿Tienes una empresa? Hoy hay 1 licitación pública abierta."
+msgstr "Tens una empresa? Avui hi ha 1 licitació pública oberta."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "¿Tienes una empresa? Hoy hay {n} licitaciones públicas abiertas."
+msgstr "Tens una empresa? Avui hi ha {n} licitacions públiques obertes."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Te decimos cuáles encajan con tu empresa."
+msgstr "Cada dia l'Administració adjudica contractes que s'emporta la teva competència mentre tu no te n'assabentes. Et diem quins encaixen amb la teva empresa."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Ver las licitaciones abiertas"
+msgstr "Veure les licitacions obertes"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Avisarme de las de mi sector"
+msgstr "Avisa'm de les del meu sector"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Las últimas publicadas"
+msgstr "Les darreres publicades"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "plazo hasta el {f}"
+msgstr "termini fins al {f}"
+
 #: app.py:19332 app.py:19386 app.py:28142
 msgid "Casos"
 msgstr "Casos"
