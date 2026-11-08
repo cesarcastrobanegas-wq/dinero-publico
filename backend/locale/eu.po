@@ -542,6 +542,10 @@ msgstr "Laster ixten dira"
 msgid "plazo hasta el {f}"
 msgstr "epemuga: {f}"
 
+#: portada, bloque para empresas, plazo con hora (2026-11-08)
+msgid "plazo hasta el {f} a las {h}"
+msgstr "epemuga: {f}, {h}"
+
 #: app.py:19332 app.py:19386 app.py:28142
 msgid "Casos"
 msgstr "Kasuak"

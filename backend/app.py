@@ -24593,13 +24593,14 @@ _MAPA_CCAA_JS = r"""(function(){
 # Bloque «¿Tienes una empresa?» de la portada (encargo del titular, 08-11-2026): lo primero que se ve, para vender el
 # servicio a empresas. Cuenta las licitaciones abiertas (las mismas que la cifra «Licitaciones abiertas») y enseña las
 # 3 que «Cierran pronto» (las de plazo más cercano, con al menos _PORTADA_EMPRESAS_MARGEN_H horas de margen para que dé
-# tiempo a presentarse; decisión del titular, 08-11) con enlace a su anuncio oficial. Los datos se guardan _PORTADA_EMPRESAS_TTL segundos en memoria
+# tiempo a preparar la oferta; decisión del titular, 08-11), con hora de cierre y enlace a su anuncio oficial. Los datos se guardan _PORTADA_EMPRESAS_TTL segundos en memoria
 # (la portada ya se guarda montada unos minutos, pero así tampoco se repite la consulta al montarla en cada idioma).
 # El botón «Avisarme de las de mi sector» solo sale con FILTRO_FORMULARIO=1: apagado, su ruta da 404.
 # Los clics en los dos botones se cuentan en el contador propio (/api/evento, sin datos personales).
 _PORTADA_EMPRESAS_TTL = 300
 _PORTADA_EMPRESAS_N_ULTIMAS = 3
-_PORTADA_EMPRESAS_MARGEN_H = 48          # «Cierran pronto»: solo las que cierran dentro de 2 días o más
+_PORTADA_EMPRESAS_MARGEN_H = 120         # «Cierran pronto»: solo las que cierran dentro de 5 días o más (tiempo real
+                                         # para preparar la oferta; decisión del titular, 08-11; antes 48)
 _portada_empresas_cache = {"ts": 0.0, "datos": None}
 _PORTADA_EMPRESAS_EVENTOS = (("portada_licitaciones", "Botón «Ver las licitaciones abiertas»"),
                              ("portada_aviso", "Botón «Avisarme de las de mi sector»"))
@@ -24669,8 +24670,12 @@ def _portada_empresas_html():
             meta.append(f'<span class="emp-imp">{fmt_eur(str(presupuesto))}</span> {_t("sin IVA")}')
         plazo = _conv_dias(fin)
         if fin:
-            meta.append(_t("plazo hasta el {f}").format(f=esc(_conv_fecha(fin)[:10]))
-                        + (f" ({esc(plazo)})" if plazo else ""))
+            fecha_hora = _conv_fecha(fin)                  # «10/11/2026 14:00», o solo la fecha si PLACE no da hora
+            if len(fecha_hora) > 10:
+                txt_plazo = _t("plazo hasta el {f} a las {h}").format(f=esc(fecha_hora[:10]), h=esc(fecha_hora[11:16]))
+            else:
+                txt_plazo = _t("plazo hasta el {f}").format(f=esc(fecha_hora[:10]))
+            meta.append(txt_plazo + (f" ({esc(plazo)})" if plazo else ""))
         filas += (f'<li><a class="emp-obj" href="{esc(enlace)}" target="_blank" rel="noopener">'
                   f'{esc(_portada_texto_corto(titulo_lic))}</a>'
                   f'<div class="emp-meta">{" · ".join(m for m in meta if m)}</div></li>')

@@ -4,7 +4,7 @@ temporal, licitaciones y subvenciones inventadas (organismos «Organismo de prue
 WSGI de verdad (app.app) para el contador de clics.
 
 Comprueba: el bloque va lo primero, antes del titular; N es el número real de abiertas (singular con 1); salen las 3
-que cierran antes (con 2 días de margen como mínimo), con organismo, objeto corto, importe sin IVA y plazo, y enlace a su anuncio; no salen las cerradas
+que cierran antes (con 5 días de margen como mínimo, con hora de cierre), con organismo, objeto corto, importe sin IVA y plazo, y enlace a su anuncio; no salen las cerradas
 ni las que no tienen enlace; sin licitaciones no hay bloque; el botón del aviso solo sale con FILTRO_FORMULARIO; la
 caché de 5 minutos; la banda «¿Cuál es tu municipio?» va debajo del titular; cuadros de convocatorias y botón del menú
 en verde; textos en gl/ca/eu; los clics se cuentan y salen en el panel de visitas.
@@ -61,12 +61,12 @@ def main():
     comprobar('class="emp-bloque"' not in portada(), "sin licitaciones sale el bloque")
     # Licitaciones inventadas: 5 abiertas con enlace, 1 abierta sin enlace, 1 cerrada (plazo pasado), 1 adjudicada.
     filas = [
-        ("L1", f(-5), "PUB", f(10), "Servicio de limpieza de prueba uno", "https://ejemplo.test/l1", "Organismo de prueba 1", 0),
-        ("L2", f(-1), "PUB", f(3), "Suministro de prueba dos " + "con un objeto larguísimo " * 10, "https://ejemplo.test/l2", "Organismo de prueba 2", 250000.5),
-        ("L3", f(-2), "PUB", f(1), "Obra de prueba tres", "https://ejemplo.test/l3", "Organismo de prueba 3", 0),
-        ("L4", f(-3), "PUB", f(2, 1), "Servicio de prueba cuatro", "https://ejemplo.test/l4", "Organismo de prueba 4", 9000.0),
-        ("L5", f(-9), "PUB", f(2, -1), "Servicio de prueba cinco", "https://ejemplo.test/l5", "Organismo de prueba 5", 100.0),
-        ("L6", f(0, -1), "PUB", f(5), "Sin enlace de prueba seis", "", "Organismo de prueba 6", 100.0),
+        ("L1", f(-5), "PUB", f(10)[:10], "Servicio de limpieza de prueba uno", "https://ejemplo.test/l1", "Organismo de prueba 1", 0),
+        ("L2", f(-1), "PUB", f(6), "Suministro de prueba dos " + "con un objeto larguísimo " * 10, "https://ejemplo.test/l2", "Organismo de prueba 2", 250000.5),
+        ("L3", f(-2), "PUB", f(3), "Obra de prueba tres", "https://ejemplo.test/l3", "Organismo de prueba 3", 0),
+        ("L4", f(-3), "PUB", f(5, 1), "Servicio de prueba cuatro", "https://ejemplo.test/l4", "Organismo de prueba 4", 9000.0),
+        ("L5", f(-9), "PUB", f(5, -1), "Servicio de prueba cinco", "https://ejemplo.test/l5", "Organismo de prueba 5", 100.0),
+        ("L6", f(0, -1), "PUB", f(7), "Sin enlace de prueba seis", "", "Organismo de prueba 6", 100.0),
         ("L7", f(0, -1), "PUB", f(-1), "Cerrada de prueba siete", "https://ejemplo.test/l7", "Organismo de prueba 7", 100.0),
         ("L8", f(0, -1), "ADJ", f(9), "Adjudicada de prueba ocho", "https://ejemplo.test/l8", "Organismo de prueba 8", 100.0),
     ]
@@ -90,22 +90,29 @@ def main():
     comprobar("mientras tú no te enteras. Míralas todas aquí, ordenadas y con su plazo." in bloque,
               "apagado: falta el texto «Míralas todas aquí»")
     comprobar("Te decimos" not in bloque, "apagado: sale «Te decimos cuáles encajan»")
-    # 3. «Cierran pronto»: las 3 de plazo más cercano con al menos 2 días de margen y con enlace. Fuera L3 (cierra en
-    #    1 día) y L5 (en 2 días menos 1 hora, el borde); L6 no tiene enlace. Quedan L4 (2 días y 1 hora), L2 y L1.
+    # 3. «Cierran pronto»: las 3 de plazo más cercano con al menos 5 días (120 h) de margen y con enlace. Fuera L3
+    #    (cierra en 3 días: entraba con el margen viejo de 48 h) y L5 (en 5 días menos 1 hora, el borde); L6 no tiene
+    #    enlace. Quedan L4 (5 días y 1 hora), L2 (6 días) y L1 (10 días, fecha sin hora).
+    comprobar(app._PORTADA_EMPRESAS_MARGEN_H == 120, f"margen {app._PORTADA_EMPRESAS_MARGEN_H} h, esperaba 120")
     comprobar('<div class="emp-ultimas-tit">Cierran pronto</div>' in bloque and "últimas publicadas" not in bloque,
               "falta el título «Cierran pronto»")
     enlaces = re.findall(r'class="emp-obj" href="([^"]+)"', bloque)
     comprobar(enlaces == ["https://ejemplo.test/l4", "https://ejemplo.test/l2", "https://ejemplo.test/l1"],
               f"cierran pronto: {enlaces}")
-    comprobar("l3" not in bloque and "l5" not in bloque, "sale una con menos de 2 días de margen")
+    comprobar("l3" not in bloque and "l5" not in bloque, "sale una con menos de 5 días de margen")
     comprobar("l7" not in bloque and "l8" not in bloque and "seis" not in bloque, "sale una cerrada o sin enlace")
     comprobar("Organismo de prueba 2" in bloque and "Organismo de prueba 4" in bloque, "falta el organismo")
     comprobar("larguísimo …" not in bloque and "…" in bloque and "larguísimo " * 10 not in bloque,
               "el objeto largo no se corta")
     comprobar(app.fmt_eur("250000.5") in bloque and "sin IVA" in bloque, "falta el importe sin IVA")
     comprobar(bloque.count('<span class="emp-imp">') == 2, "una licitación sin importe pinta importe")
-    comprobar(f"plazo hasta el {app._conv_fecha(f(2, 1))[:10]} ({app._conv_dias(f(2, 1))})" in bloque,
-              "falta el plazo de L4")
+    # Hora de cierre: «plazo hasta el 13/11/2026 a las 19:30 (en 5 días)»; sin hora en PLACE, solo la fecha.
+    f4 = app._conv_fecha(f(5, 1))
+    comprobar(f"plazo hasta el {f4[:10]} a las {f4[11:16]} ({app._conv_dias(f(5, 1))})" in bloque,
+              "falta el plazo con hora de L4")
+    f1 = app._conv_fecha(f(10)[:10])
+    comprobar(f"plazo hasta el {f1} ({app._conv_dias(f(10)[:10])})" in bloque and f"{f1} a las" not in bloque,
+              "fecha sin hora: no sale bien")
     comprobar('target="_blank" rel="noopener"' in bloque, "los enlaces externos no abren aparte")
     # 4. Botones: principal siempre; el del aviso, solo con FILTRO_FORMULARIO.
     comprobar('href="/convocatorias" data-dp-evento="portada_licitaciones"' in bloque, "falta el botón principal")
@@ -156,6 +163,8 @@ def main():
         comprobar(frase in bl, f"{idioma}: falta el texto traducido (filtro apagado)")
         cierran = {"gl": "Pechan pronto", "ca": "Tanquen aviat", "eu": "Laster ixten dira"}[idioma]
         comprobar(f'<div class="emp-ultimas-tit">{cierran}</div>' in bl, f"{idioma}: falta «Cierran pronto» traducido")
+        con_hora = {"gl": "prazo ata o {d} ás {h}", "ca": "termini fins al {d} a les {h}", "eu": "epemuga: {d}, {h}"}[idioma]
+        comprobar(con_hora.format(d=f4[:10], h=f4[11:16]) in bl, f"{idioma}: falta el plazo con hora traducido")
         comprobar("Ver las licitaciones abiertas" not in bl and "Cierran pronto" not in bl
                   and "Míralas" not in bl and "plazo hasta" not in bl, f"{idioma}: queda castellano en el bloque")
 
