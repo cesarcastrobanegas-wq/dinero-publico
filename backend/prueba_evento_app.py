@@ -40,6 +40,9 @@ def main():
             return sum(v[0] for (d, c, n), v in app._visitas_pend.items() if c == "evento" and n == nombre)
 
     cupo = app._EVENTO_CUPO_HORA
+    # 08-11: 120 por hora y conexión (con datos móviles mucha gente comparte IP; 30 se quedaba corto).
+    if cupo != 120:
+        mal.append(f"_EVENTO_CUPO_HORA es {cupo}, esperaba 120")
     # 1. Hasta el límite cuenta; a partir de ahí no, y la respuesta es siempre la misma (204).
     codigos = {evento("instalacion", IP_A) for _ in range(cupo + 5)}
     if codigos != {"204"}:

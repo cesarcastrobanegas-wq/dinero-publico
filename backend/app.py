@@ -29841,7 +29841,7 @@ _VISITAS_EVENTOS = {"instalacion": "instalacion", "app": "app_pagina"}
 # solo se suma, por día, cuántos eventos se han frenado («evento/frenado»), para ver si el límite se queda corto.
 # Si se llenara la tabla (_EVENTO_CUPO_MAX_CLAVES conexiones distintas en una hora), las conexiones nuevas no cuentan
 # hasta la hora siguiente: así un ataque con muchas IP tampoco infla los números.
-_EVENTO_CUPO_HORA = 30
+_EVENTO_CUPO_HORA = 120  # 08-11: subido de 30; con datos móviles mucha gente comparte IP
 _EVENTO_CUPO_MAX_CLAVES = 50000
 _evento_cupo = {"hora": -1, "sal": b"", "cuentas": {}, "frenados": 0}
 _RE_UA_CLIENTE = re.compile(r"^\s*([A-Za-z][\w.-]{1,30})")
