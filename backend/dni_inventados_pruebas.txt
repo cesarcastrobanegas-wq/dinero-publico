@@ -1,0 +1,11 @@
+# DNI y NIE que la prueba de privacidad (sin_datos_personales_prueba.py) NO debe contar como datos personales.
+#
+# Solo valores sueltos, uno por línea, cada uno con su «#» de dónde sale y por qué no es de nadie.
+# Nada de ficheros ni carpetas enteras: cualquier otro DNI o NIE con la letra correcta sigue haciendo fallar la prueba,
+# también dentro de las pruebas. Si añades uno, que sea inventado de verdad y di aquí en qué fichero está.
+# (Los que empiezan por 000000xx, como 00000000T, ya los deja pasar la propia prueba: son los de ejemplo.)
+
+12345678Z   # inventado, el DNI de ejemplo de toda la vida. prueba_dni_como_nombre.py (#36), prueba_salida_sin_dni.py (#37) y el detector de sin_datos_personales_prueba.py
+X1234567L   # inventado, NIE de ejemplo con la misma serie. prueba_dni_como_nombre.py (#36) y prueba_salida_sin_dni.py (#37)
+99999999R   # inventado, «PERSONA INVENTADA DOS» de la base de prueba. prueba_copia_cache_cifrada.py (#18, aún sin fusionar)
+20226433A   # no es un DNI: referencia de expediente de Murcia que cumple la letra por casualidad. actualizar_contratos_menores_murcia_manual.py
