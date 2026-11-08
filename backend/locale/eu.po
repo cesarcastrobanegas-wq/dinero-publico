@@ -535,8 +535,8 @@ msgid "Avisarme de las de mi sector"
 msgstr "Abisatu nire sektorekoez"
 
 #: portada, bloque para empresas (2026-11-08)
-msgid "Las últimas publicadas"
-msgstr "Azken argitaratuak"
+msgid "Cierran pronto"
+msgstr "Laster ixten dira"
 
 #: portada, bloque para empresas (2026-11-08)
 msgid "plazo hasta el {f}"

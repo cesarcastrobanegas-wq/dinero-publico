@@ -24592,12 +24592,14 @@ _MAPA_CCAA_JS = r"""(function(){
 
 # Bloque «¿Tienes una empresa?» de la portada (encargo del titular, 08-11-2026): lo primero que se ve, para vender el
 # servicio a empresas. Cuenta las licitaciones abiertas (las mismas que la cifra «Licitaciones abiertas») y enseña las
-# 3 últimas publicadas con enlace a su anuncio oficial. Los datos se guardan _PORTADA_EMPRESAS_TTL segundos en memoria
+# 3 que «Cierran pronto» (las de plazo más cercano, con al menos _PORTADA_EMPRESAS_MARGEN_H horas de margen para que dé
+# tiempo a presentarse; decisión del titular, 08-11) con enlace a su anuncio oficial. Los datos se guardan _PORTADA_EMPRESAS_TTL segundos en memoria
 # (la portada ya se guarda montada unos minutos, pero así tampoco se repite la consulta al montarla en cada idioma).
 # El botón «Avisarme de las de mi sector» solo sale con FILTRO_FORMULARIO=1: apagado, su ruta da 404.
 # Los clics en los dos botones se cuentan en el contador propio (/api/evento, sin datos personales).
 _PORTADA_EMPRESAS_TTL = 300
 _PORTADA_EMPRESAS_N_ULTIMAS = 3
+_PORTADA_EMPRESAS_MARGEN_H = 48          # «Cierran pronto»: solo las que cierran dentro de 2 días o más
 _portada_empresas_cache = {"ts": 0.0, "datos": None}
 _PORTADA_EMPRESAS_EVENTOS = (("portada_licitaciones", "Botón «Ver las licitaciones abiertas»"),
                              ("portada_aviso", "Botón «Avisarme de las de mi sector»"))
@@ -24611,14 +24613,16 @@ def _portada_empresas_datos():
         return c["datos"]
     datos = (0, [])
     try:
-        corte = _ahora_madrid().strftime("%Y-%m-%d %H:%M")
+        ahora = _ahora_madrid()
+        corte = ahora.strftime("%Y-%m-%d %H:%M")
+        corte_margen = (ahora + timedelta(hours=_PORTADA_EMPRESAS_MARGEN_H)).strftime("%Y-%m-%d %H:%M")
         with _db_lock:
             n = _db.execute("SELECT count(*) FROM licitaciones WHERE estado = 'PUB' AND fin_plazo >= ?",
                             (corte,)).fetchone()[0]
-            ultimas = _db.execute(
+            ultimas = _db.execute(          # usa el índice idx_lic_plazo (estado, fin_plazo)
                 "SELECT organo, titulo, url, presupuesto, fin_plazo FROM licitaciones "
                 "WHERE estado = 'PUB' AND fin_plazo >= ? AND titulo != '' AND url LIKE 'http%' "
-                "ORDER BY actualizado DESC, id DESC LIMIT ?", (corte, _PORTADA_EMPRESAS_N_ULTIMAS)).fetchall()
+                "ORDER BY fin_plazo, id LIMIT ?", (corte_margen, _PORTADA_EMPRESAS_N_ULTIMAS)).fetchall()
         datos = (n or 0, [tuple(f) for f in ultimas])
     except Exception as e:
         print(f"[portada] bloque de empresas: {type(e).__name__}: {e}", flush=True)
@@ -24670,7 +24674,7 @@ def _portada_empresas_html():
         filas += (f'<li><a class="emp-obj" href="{esc(enlace)}" target="_blank" rel="noopener">'
                   f'{esc(_portada_texto_corto(titulo_lic))}</a>'
                   f'<div class="emp-meta">{" · ".join(m for m in meta if m)}</div></li>')
-    ultimas_html = (f'<div class="emp-ultimas-tit">{_t("Las últimas publicadas")}</div><ul class="emp-ultimas">{filas}</ul>'
+    ultimas_html = (f'<div class="emp-ultimas-tit">{_t("Cierran pronto")}</div><ul class="emp-ultimas">{filas}</ul>'
                     if filas else "")
     return f"""<section class="emp-bloque" aria-labelledby="emp-titulo">
     <h2 id="emp-titulo">{titulo}</h2>

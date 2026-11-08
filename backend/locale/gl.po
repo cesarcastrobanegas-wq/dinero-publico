@@ -535,8 +535,8 @@ msgid "Avisarme de las de mi sector"
 msgstr "Avisarme das do meu sector"
 
 #: portada, bloque para empresas (2026-11-08)
-msgid "Las últimas publicadas"
-msgstr "As últimas publicadas"
+msgid "Cierran pronto"
+msgstr "Pechan pronto"
 
 #: portada, bloque para empresas (2026-11-08)
 msgid "plazo hasta el {f}"
