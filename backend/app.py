@@ -21534,6 +21534,38 @@ def _rk_metodologia_aviso_html():
 """ + _RK_METODOLOGIA_AVISO_JS
 
 
+# /rankings sin combinaciones (C, 08-11-2026): cada tabla larga tiene sus propios parámetros y sus enlaces solo llevan
+# los suyos. Antes cada enlace conservaba el estado de TODAS las tablas (y la provincia), y las combinaciones de
+# comunidad_alc × comunidad_deuda × comunidad × pag_alc × pag_deuda × pag_idx × provincia en cuatro idiomas daban miles
+# de direcciones para el mismo contenido: el extractor del 13-10 se llevó así 16 GB en una semana. Las direcciones viejas
+# con parámetros de más de una tabla responden 301 a la de una sola (nunca 404).
+_RK_GRUPOS = (("alc", "comunidad_alc", "pag_alc"), ("deuda", "comunidad_deuda", "pag_deuda"), ("idx", "comunidad", "pag_idx"))
+
+
+def _rk_url_tabla(tabla, com, pag, ancla=""):
+    """Dirección de /rankings con SOLO los parámetros de una tabla (su región si no es «todas» y su página si no es 1)."""
+    _t_, p_com, p_pag = next(g for g in _RK_GRUPOS if g[0] == tabla)
+    partes = ([f"{p_com}={com}"] if com and com != "todas" else []) + ([f"{p_pag}={pag}"] if int(pag or 1) > 1 else [])
+    return "/rankings" + ("?" + "&".join(partes) if partes else "") + (f"#{ancla}" if ancla else "")
+
+
+def _rk_direccion_canonica(qs):
+    """None si la dirección ya es de una sola tabla; si no, la dirección de una sola tabla a la que redirigir (301).
+    Se queda con la tabla que tenga página distinta de la 1 (en el orden de la página: alcaldes, deuda, Índice); si
+    ninguna, con la que tenga región elegida. La provincia (top de empresas) cuenta como una tabla más: suelta se
+    respeta; junto a otra se quita (los enlaces viejos la llevaban siempre)."""
+    valores = {}
+    for tabla, p_com, p_pag in _RK_GRUPOS:
+        com = _comunidad_valida(qs.get(p_com, ["todas"])[0])
+        pag = int(_pag_entero(qs.get(p_pag, ["1"])[0]))
+        valores[tabla] = (com, pag)
+    presentes = [t for t, (com, pag) in valores.items() if com != "todas" or pag > 1]
+    if len(presentes) + ("provincia" in qs) <= 1:
+        return None
+    elegida = next((t for t in presentes if valores[t][1] > 1), presentes[0])
+    return _rk_url_tabla(elegida, *valores[elegida])
+
+
 def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia", comunidad="todas", paginas=None,
                          comunidades=None):
     """Dos rankings claramente separados:
@@ -21554,32 +21586,17 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     # tabla (comunidad_alc / comunidad_deuda) para que elegir región en una no cambie las otras.
     comunidades = {"alc": "todas", "deuda": "todas", **(comunidades or {})}
 
-    def _url_rk(pags, coms, ancla):
-        partes = [f"provincia={provincia_prov}"]
-        if comunidad != "todas":
-            partes.append(f"comunidad={comunidad}")
-        for clave in ("alc", "deuda"):
-            if coms.get(clave, "todas") != "todas":
-                partes.append(f"comunidad_{clave}={coms[clave]}")
-        for clave, param in (("alc", "pag_alc"), ("deuda", "pag_deuda"), ("idx", "pag_idx")):
-            if pags.get(clave, 1) > 1:
-                partes.append(f"{param}={pags[clave]}")
-        return "/rankings?" + "&".join(partes) + "#" + ancla
-
     def _url_pag(tabla, n, ancla):
-        """Enlace a la página n de una tabla larga conservando provincia, comunidades y la
-        página en la que esté cada una de las otras tablas."""
-        pags = dict(pags_actuales)
-        pags[tabla] = n
-        return _url_rk(pags, comunidades, ancla)
+        """Enlace a la página n de una tabla larga. Desde el 08-11-2026 lleva SOLO los parámetros de esa tabla (su
+        región y su página): conservar el estado de las demás creaba miles de direcciones distintas para el mismo
+        contenido, que un extractor recorría entero (ver _rk_direccion_canonica). Las otras tablas vuelven a la 1."""
+        return _rk_url_tabla(tabla, comunidades.get(tabla, comunidad), n, ancla)
 
     def _selector_comunidad_tabla(tabla, ancla):
         """Pestañas España + comunidades para una tabla; al cambiar de región esa tabla vuelve a la página 1."""
         tabs = []
         for c, label in [("todas", _t("España"))] + list(COMUNIDAD_AUTONOMA_LABEL.items()):
-            pags = dict(pags_actuales)
-            pags[tabla] = 1
-            href = esc(_url_rk(pags, {**comunidades, tabla: c}, ancla))
+            href = esc(_rk_url_tabla(tabla, c, 1, ancla))
             activa = " active" if c == comunidades[tabla] else ""
             tabs.append(f'<a href="{href}" class="prov-tab{activa}">{esc(label)}</a>')
         return f'<div class="prov-switch">{"".join(tabs)}</div>'
@@ -28865,6 +28882,9 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(render_landing_html(datos_snap, provincia=provincia_filtro), gzip_ok=gzip_ok)
 
     if path == "/rankings":
+        canonica = _rk_direccion_canonica(qs)          # C: combinaciones de varias tablas -> 301 a una sola
+        if canonica:
+            return 301, {"Location": canonica, "Content-Length": "0", "Cache-Control": "public, max-age=86400"}, b""
         provincia_prov = _provincia_valida(qs.get("provincia", ["murcia"])[0])
         comunidad_qs = _comunidad_valida(qs.get("comunidad", ["todas"])[0])
         paginas_qs = {"alc": str(_pag_entero(qs.get("pag_alc", ["1"])[0])),
@@ -29712,11 +29732,14 @@ _buscadores_verificados = {}     # ip -> (verificado, cuándo)
 _buscadores_lock = threading.Lock()
 
 
-def _buscador_verificado(ip, ua):
+def _buscador_verificado(ip, ua, exigir_ua=True):
     """True si la petición dice ser Googlebot o Bingbot y la IP lo confirma: su nombre inverso es de Google o
     Microsoft y ese nombre resuelve a la misma IP (el método que publican los dos). Se guarda un día por IP; la
-    consulta tiene un plazo de 2 s y, si falla, cuenta como no verificado (se le aplica el cupo de robots normal)."""
-    if not ip or not _RE_UA_BUSCADOR.search(ua or ""):
+    consulta tiene un plazo de 2 s y, si falla, cuenta como no verificado (se le aplica el cupo de robots normal).
+    exigir_ua=False (freno por red, 08-11-2026): comprueba la IP aunque el navegador no diga ser un buscador. Google
+    también entra con un nombre de navegador normal desde sus redes (66.249.66.0/24 salía como «persona» con 1.114
+    páginas en un día); lo que cuenta es el DNS inverso, no el nombre."""
+    if not ip or (exigir_ua and not _RE_UA_BUSCADOR.search(ua or "")):
         return False
     ahora = time.time()
     with _buscadores_lock:
@@ -29808,7 +29831,153 @@ def _bots_diagnostico():
     with _bots_lock:
         return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12)),
                 "cupo_por_ip": {"cupo": _IP_CUPO, "repone_cada_s": _IP_REPONE_S, "frenadas": _ip_frenadas[0],
-                                "ips_en_memoria": len(_ip_cupos)}}
+                                "ips_en_memoria": len(_ip_cupos)},
+                "freno_extractores": _freno_diagnostico()}
+
+
+# ─── FRENO DE EXTRACTORES (A y B, 08-11-2026) ─────────────────────────────────────────────────────────────────────
+# Diagnóstico del 08-11 (INFORME ancho de banda 08-11): un extractor desde servidores de Alibaba Cloud (redes 47.79.x y
+# 47.82.x), con nombre de navegador y saltándose robots.txt, se llevaba ~3 GB al día recorriendo /rankings con todas
+# las combinaciones de páginas (el 93 % de los bytes de «personas»; 52 GB del 12 al 31 de octubre). El cupo por IP de
+# arriba no lo frena porque reparte las peticiones entre miles de IP.
+#  A) Redes de servidores en la nube que no usan personas (FRENO_REDES_BLOQUEADAS, por defecto todo Alibaba Cloud en
+#     ARIN: 47.74.0.0–47.87.255.255): 403 de 10 bytes, sin montar nada.
+#  B) Límite de páginas por red (/24 en IPv4, /48 en IPv6) y hora, para cualquier cliente: FRENO_PAGINAS_HORA_RED
+#     (600 por defecto; 0 lo apaga). Medido en la copia del 05-11: la red de personas reales con más páginas en un día
+#     tuvo 1.842 (móviles que comparten IP); el extractor, hasta 9.821 por red y día. Por encima: 429 con Retry-After
+#     hasta la hora siguiente.
+# NUNCA se frena (ni A ni B): /admin y el diagnóstico, cualquier petición con el token de administración (los flujos de
+# Actions, la revisión diaria de privacidad) y Googlebot/Bingbot VERIFICADOS por DNS inverso (_buscador_verificado:
+# en A si dicen serlo; en B se comprueba la IP aunque digan ser un navegador). Los estáticos no cuentan para B.
+# Sin datos personales: la red solo vive en memoria como un resumen con una sal aleatoria que cambia cada hora (al
+# cambiar de hora se borra todo); a la base solo van sumas por día (visitas_dia, clase «freno»), que se ven en el
+# panel → Visitas. Lo frenado no se cuenta como visita.
+import ipaddress  # noqa: E402  (aquí y no arriba, para no tocar la línea de imports que comparten otros PR)
+
+
+def _freno_redes(texto):
+    redes = []
+    for trozo in (texto or "").split(","):
+        try:
+            redes.append(ipaddress.ip_network(trozo.strip(), strict=False))
+        except ValueError:
+            if trozo.strip():
+                print(f"[freno] red no válida en FRENO_REDES_BLOQUEADAS: {trozo.strip()!r}", flush=True)
+    return tuple(redes)
+
+
+_FRENO_REDES = _freno_redes(os.environ.get("FRENO_REDES_BLOQUEADAS", "47.74.0.0/15,47.76.0.0/14,47.80.0.0/13"))
+try:
+    _FRENO_PAGINAS_HORA = max(0, int(os.environ.get("FRENO_PAGINAS_HORA_RED", "600")))
+except ValueError:
+    _FRENO_PAGINAS_HORA = 600
+_FRENO_MAX_REDES = 50000            # redes distintas por hora en memoria; con la tabla llena, las nuevas no se frenan
+_FRENO_RUTAS_EXENTAS = ("/admin", "/api/diagnostico")
+_FRENO_RUTAS_SIN_CONTAR = ("/static/", "/sw.js", "/manifest.json", "/robots.txt", "/favicon", "/apple-touch-icon",
+                           "/api/evento")
+_freno_estado = {"hora": -1, "sal": b"", "redes": {}}       # resumen de la red -> [páginas, frenada, buscador]
+_freno_lock = threading.Lock()
+_freno_desde_arranque = collections.Counter()
+
+
+def _freno_anotar(nombre):
+    """Suma 1 al contador del día (visitas_dia, clase «freno»). Nunca rompe la respuesta."""
+    _freno_desde_arranque[nombre] += 1
+    try:
+        dia = _ahora_madrid().strftime("%Y-%m-%d")
+        with _visitas_lock:
+            _visitas_pend.setdefault((dia, "freno", nombre), [0, 0, 0, 0.0])[0] += 1
+    except Exception:
+        pass
+
+
+def _freno_extractores(environ, ahora_s=None):
+    """None si la petición sigue; si no, (estado, cuerpo, cabeceras extra) de la respuesta corta de A o B."""
+    path = environ.get("PATH_INFO", "/") or "/"
+    if path.startswith(_FRENO_RUTAS_EXENTAS) or _token_admin_valido(environ.get("HTTP_X_ADMIN_TOKEN", "") or ""):
+        return None
+    red, ip = _visitas_red(environ)
+    try:
+        dir_ip = ipaddress.ip_address(ip)
+    except ValueError:
+        return None
+    ua = environ.get("HTTP_USER_AGENT", "") or ""
+    if any(dir_ip in r for r in _FRENO_REDES if r.version == dir_ip.version):
+        if _buscador_verificado(ip, ua):              # nunca pasa (Google y Bing no usan esas redes), pero por si acaso
+            _freno_anotar("A_buscador_verificado")
+            return None
+        _freno_anotar("A_bloqueada")
+        return "403 Forbidden", b"Forbidden\n", []
+    if (not _FRENO_PAGINAS_HORA or environ.get("REQUEST_METHOD", "GET") not in ("GET", "HEAD")
+            or path.startswith(_FRENO_RUTAS_SIN_CONTAR)):
+        return None
+    ahora_s = time.time() if ahora_s is None else ahora_s
+    hora = int(ahora_s // 3600)
+    with _freno_lock:
+        if _freno_estado["hora"] != hora:
+            _freno_estado.update(hora=hora, sal=os.urandom(16), redes={})
+        clave = hashlib.blake2b(red.encode(), key=_freno_estado["sal"], digest_size=8).digest()
+        redes = _freno_estado["redes"]
+        c = redes.get(clave)
+        if c is None:
+            if len(redes) >= _FRENO_MAX_REDES:
+                return None
+            c = redes[clave] = [0, False, None]
+        c[0] += 1
+        if c[0] <= _FRENO_PAGINAS_HORA:
+            return None
+        primera = not c[1]
+        c[1] = True
+        buscador_red = c[2]
+    if primera:
+        _freno_anotar("B_redes")
+    # Por encima del límite: antes de frenar, ¿es Google o Bing? (DNS inverso de ESTA IP, guardado un día). Si una IP
+    # de la red no lo es, la red queda marcada como «no buscador» esta hora: como mucho una consulta DNS fallida por red
+    # y hora, para que un extractor con muchas IP no llene los hilos de consultas. Si alguna IP de la red ya se ha
+    # verificado como Google o Bing, la red nunca se marca: cada IP se sigue comprobando (y guardando) por separado.
+    if buscador_red is not False and _buscador_verificado(ip, ua, exigir_ua=False):
+        with _freno_lock:
+            if _freno_estado["hora"] == hora and clave in _freno_estado["redes"]:
+                _freno_estado["redes"][clave][2] = True
+        _freno_anotar("B_buscador_verificado")
+        return None
+    with _freno_lock:
+        if _freno_estado["hora"] == hora and clave in _freno_estado["redes"] and _freno_estado["redes"][clave][2] is None:
+            _freno_estado["redes"][clave][2] = False
+    _freno_anotar("B_frenada")
+    espera = max(60, int((hora + 1) * 3600 - ahora_s))
+    cuerpo = "Demasiadas páginas desde tu red en la última hora. Vuelve a intentarlo más tarde.\n".encode("utf-8")
+    return "429 Too Many Requests", cuerpo, [("Retry-After", str(espera))]
+
+
+def _freno_diagnostico():
+    with _freno_lock:
+        n_redes, frenadas = len(_freno_estado["redes"]), sum(1 for c in _freno_estado["redes"].values() if c[1])
+    return {"redes_bloqueadas": [str(r) for r in _FRENO_REDES], "paginas_hora_por_red": _FRENO_PAGINAS_HORA,
+            "redes_esta_hora": n_redes, "redes_frenadas_esta_hora": frenadas,
+            "desde_el_arranque": dict(_freno_desde_arranque)}
+
+
+_FRENO_ETIQUETAS = (("A_bloqueada", "A: bloqueadas (redes de Alibaba Cloud)"),
+                    ("B_frenada", "B: frenadas por el límite por red"),
+                    ("B_redes", "B: redes que pasaron el límite (por hora)"),
+                    ("B_buscador_verificado", "Google/Bing verificados que pasaron el límite (no frenados)"),
+                    ("A_buscador_verificado", "Google/Bing verificados en redes de A (no frenados)"))
+
+
+def _freno_tabla_html(filas, tabla, num):
+    """Tabla del panel → Visitas: peticiones frenadas por A y por B cada día (filas = las de visitas_dia del periodo)."""
+    por_dia = {}
+    for dia, clase, nombre, pet, *_resto in filas:
+        if clase == "freno":
+            por_dia.setdefault(dia, {})[nombre] = por_dia.get(dia, {}).get(nombre, 0) + (pet or 0)
+    return tabla(
+        "Frenos contra extractores (A y B)", ["Día"] + [e for _k, e in _FRENO_ETIQUETAS],
+        [[d] + [num(v.get(k, 0)) for k, _e in _FRENO_ETIQUETAS] for d, v in sorted(por_dia.items(), reverse=True)],
+        f"A: redes de servidores sin personas ({', '.join(str(r) for r in _FRENO_REDES) or 'ninguna'}). "
+        f"B: más de {_FRENO_PAGINAS_HORA} páginas en una hora desde la misma red (/24). Nunca se frena /admin, el token "
+        "de administración ni Google/Bing verificados por DNS inverso. Lo frenado no cuenta como visita. Si «B: frenadas» "
+        "sube y no es por un extractor (mira «Redes de personas»), el límite se queda corto: sube FRENO_PAGINAS_HORA_RED.")
 
 
 # ─── CONTADOR DE VISITAS PROPIO (2026-10-12) ───────────────────────────────────────────────────────
@@ -30122,6 +30291,7 @@ def _visitas_pagina(qs, autorizado=False):
         + ranking("bot", "Bots por nombre", "Rastreador", 40)
         + ranking("ruta_bot", "Rutas que más piden los bots", "Ruta (sin valores)")
         + ranking("ruta_persona", "Rutas que más piden las personas", "Ruta (sin valores)")
+        + _freno_tabla_html(filas, tabla, num)
         + ranking("red_bot", "Redes de bots con más tráfico", "Red (IP recortada)", nota=f"De los días ya cerrados se guardan las {_VISITAS_REDES_POR_DIA} redes con más bytes, durante {_VISITAS_REDES_DIAS} días.")
         + ranking("red_persona", "Redes de «personas» con más tráfico", "Red (IP recortada)", nota="Una red con miles de peticiones y aspecto de navegador suele ser un extractor que se hace pasar por persona.")
         + ranking("estado", "Códigos de respuesta", "Código")
@@ -30161,6 +30331,15 @@ def app(environ, start_response):
     info = {"ruta": _ruta_diagnostico(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", "")),
             "inicio": time.time(), "bot": bool(_RE_UA_BOT.search(environ.get("HTTP_USER_AGENT", "") or "")),
             "metodo": environ.get("REQUEST_METHOD", "GET"), "agente": _familia_ua(environ.get("HTTP_USER_AGENT", ""))}
+    freno = _freno_extractores(environ)          # A y B (08-11-2026): antes de nada, sin montar la página
+    if freno:
+        estado_f, cuerpo_f, extra_f = freno
+        with _peticiones_lock:
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, info["bot"],
+                                          info["agente"] + f" ({estado_f[:3]} freno)"))
+        start_response(estado_f, [("Content-Type", "text/plain; charset=utf-8"), ("Content-Length", str(len(cuerpo_f))),
+                                  ("Cache-Control", "no-store")] + extra_f)
+        return [cuerpo_f if info["metodo"] != "HEAD" else b""]
     if _RE_UA_BLOQUEADO.search(environ.get("HTTP_USER_AGENT", "") or ""):
         with _peticiones_lock:
             _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + " (403)"))

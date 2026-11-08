@@ -29,6 +29,7 @@ import argparse
 import datetime
 import html
 import json
+import os
 import re
 import sys
 import time
@@ -127,8 +128,13 @@ class Web:
             time.sleep(espera)
         self.ultima = time.time()
         self.peticiones += 1
-        req = urllib.request.Request(self.base + ruta, data=datos,
-                                     headers={"User-Agent": "DineroPublico-RevisionPrivacidad/1.0 (+https://dinero-publico.com)"})
+        cabeceras = {"User-Agent": "DineroPublico-RevisionPrivacidad/1.0 (+https://dinero-publico.com)"}
+        # 08-11-2026: con el token, la web nunca frena esta revisión (freno de extractores A y B, ver app.py). Solo se
+        # manda a nuestra propia web: con --base apuntando a otro sitio no sale.
+        token = os.environ.get("ADMIN_TOKEN", "")
+        if token and self.base.startswith(("https://dinero-publico.com", "http://127.0.0.1", "http://localhost")):
+            cabeceras["X-Admin-Token"] = token
+        req = urllib.request.Request(self.base + ruta, data=datos, headers=cabeceras)
         for intento in (1, 2, 3):
             try:
                 with urllib.request.urlopen(req, timeout=120) as r:
