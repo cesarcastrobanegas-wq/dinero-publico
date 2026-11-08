@@ -29834,6 +29834,16 @@ _visitas_pend = {}                  # (dia, clase, nombre) -> [peticiones, pagin
 _visitas_huellas_pend = {}          # (semana, huella) -> [días vistos, vino desde la app instalada]
 _visitas_estado = {"ultimo_volcado": 0.0, "tabla": False, "sal": None, "sal_semana": "", "dia_cerrado": ""}
 _VISITAS_EVENTOS = {"instalacion": "instalacion", "app": "app_pagina"}
+# Límite de /api/evento (08-11-2026): como mucho _EVENTO_CUPO_HORA eventos por hora y por conexión, para que nadie pueda
+# inflar las instalaciones ni las páginas vistas desde la app mandando POST a mano. Solo en memoria y SIN guardar la IP:
+# la clave es un resumen de la IP con una sal aleatoria que solo vive en memoria y se cambia cada hora, junto con todos
+# los recuentos (al cambiar de hora se borra todo). Lo que pasa del límite no se cuenta (la respuesta es la misma, 204);
+# solo se suma, por día, cuántos eventos se han frenado («evento/frenado»), para ver si el límite se queda corto.
+# Si se llenara la tabla (_EVENTO_CUPO_MAX_CLAVES conexiones distintas en una hora), las conexiones nuevas no cuentan
+# hasta la hora siguiente: así un ataque con muchas IP tampoco infla los números.
+_EVENTO_CUPO_HORA = 30
+_EVENTO_CUPO_MAX_CLAVES = 50000
+_evento_cupo = {"hora": -1, "sal": b"", "cuentas": {}, "frenados": 0}
 _RE_UA_CLIENTE = re.compile(r"^\s*([A-Za-z][\w.-]{1,30})")
 
 
@@ -29898,9 +29908,26 @@ def _visitas_huella(environ, semana):
     return hashlib.sha256(f"{_visitas_sal(semana)}|{ip}|{environ.get('HTTP_USER_AGENT', '')}".encode()).hexdigest()[:16]
 
 
+def _evento_con_cupo(environ, ahora_s=None):
+    """True si a esta conexión le quedan eventos esta hora (y se le apunta uno). Ver _EVENTO_CUPO_HORA."""
+    _red, ip = _visitas_red(environ)
+    hora = int((time.time() if ahora_s is None else ahora_s) // 3600)
+    with _visitas_lock:
+        if _evento_cupo["hora"] != hora:
+            _evento_cupo.update(hora=hora, sal=os.urandom(16), cuentas={})
+        clave = hashlib.blake2b((ip or "").encode(), key=_evento_cupo["sal"], digest_size=8).digest()
+        cuentas = _evento_cupo["cuentas"]
+        n = cuentas.get(clave, 0)
+        if n >= _EVENTO_CUPO_HORA or (not n and len(cuentas) >= _EVENTO_CUPO_MAX_CLAVES):
+            _evento_cupo["frenados"] += 1
+            return False
+        cuentas[clave] = n + 1
+        return True
+
+
 def _visitas_evento(environ, tipo):
     """POST /api/evento: lo que solo sabe el navegador (se ha instalado la app; esta página se ve desde la app
-    instalada). Solo cuenta si viene de un navegador. Devuelve True si se ha contado."""
+    instalada). Solo cuenta si viene de un navegador y no pasa del límite por conexión. Devuelve True si se ha contado."""
     nombre = _VISITAS_EVENTOS.get(tipo)
     persona, _n = _visitas_cliente(environ.get("HTTP_USER_AGENT", ""))
     if not nombre or not persona:
@@ -29908,6 +29935,10 @@ def _visitas_evento(environ, tipo):
     try:
         ahora = _ahora_madrid()
         dia, semana = ahora.strftime("%Y-%m-%d"), _visitas_semana(ahora)
+        if not _evento_con_cupo(environ):
+            with _visitas_lock:
+                _visitas_pend.setdefault((dia, "evento", "frenado"), [0, 0, 0, 0.0])[0] += 1
+            return False
         huella = _visitas_huella(environ, semana) if tipo == "app" else None
         with _visitas_lock:
             _visitas_pend.setdefault((dia, "evento", nombre), [0, 0, 0, 0.0])[0] += 1
@@ -30054,6 +30085,9 @@ def _visitas_pagina(qs, autorizado=False):
         for sem, nombre, n in _db.execute("SELECT dia, nombre, peticiones FROM visitas_dia WHERE clase='semana'").fetchall():
             semanas.setdefault(sem, {})[nombre] = n
         vivas = _db.execute("SELECT dias, app FROM visitas_huellas WHERE semana=?", (_visitas_semana(),)).fetchall()
+        desde_30 = (_ahora_madrid() - timedelta(days=29)).strftime("%Y-%m-%d")
+        eventos_30 = _db.execute("SELECT dia, nombre, peticiones FROM visitas_dia WHERE clase='evento' AND dia >= ? "
+                                 "AND nombre IN ('instalacion', 'app_pagina', 'frenado')", (desde_30,)).fetchall()
     visitantes_hoy = sum(1 for d, _a in vivas if hoy in (d or "").split(","))
     semanas[_visitas_semana() + " (en curso)"] = {
         "unicos": len(vivas), "recurrentes": sum(1 for d, _a in vivas if len([x for x in (d or "").split(",") if x]) >= 2),
@@ -30100,6 +30134,19 @@ def _visitas_pagina(qs, autorizado=False):
           _visitas_tamano(v["persona"][2]), _visitas_tamano(v["bot"][2]), pct(v["bot"][2], v["bot"][2] + v["persona"][2])]
          for d, v in sorted(por_dia.items(), reverse=True)],
         "Visitantes: aproximación sin cookies (ver la nota del final). El día de hoy va en curso.")
+    desde_7 = (_ahora_madrid() - timedelta(days=6)).strftime("%Y-%m-%d")
+    app_tot = {(n, p): 0 for n in ("instalacion", "app_pagina", "frenado") for p in (7, 30)}
+    for dia_e, nombre_e, n_e in eventos_30:
+        app_tot[(nombre_e, 30)] += n_e or 0
+        if dia_e >= desde_7:
+            app_tot[(nombre_e, 7)] += n_e or 0
+    app_html = tabla(
+        "App instalada", ["", "Últimos 7 días", "Últimos 30 días"],
+        [["Instalaciones de la app", num(app_tot[("instalacion", 7)]), num(app_tot[("instalacion", 30)])],
+         ["Páginas vistas desde la app instalada", num(app_tot[("app_pagina", 7)]), num(app_tot[("app_pagina", 30)])],
+         ["Avisos no contados por pasar del límite", num(app_tot[("frenado", 7)]), num(app_tot[("frenado", 30)])]],
+        f"Contando hoy (en curso). Límite: {_EVENTO_CUPO_HORA} avisos por hora y por conexión; lo que pasa de ahí no "
+        "se cuenta. Las personas distintas que usan la app salen por semana, abajo («Únicos desde la app instalada»).")
     semanas_html = tabla(
         "Por semana (lunes a domingo)", ["Semana", "Visitantes únicos (aprox.)", "Recurrentes (vinieron dos días o más)",
                                          "% recurrentes", "Únicos desde la app instalada"],
@@ -30118,7 +30165,7 @@ def _visitas_pagina(qs, autorizado=False):
         f'<p class="n">Últimos {dias} días (<a href="?dias=7">7</a> · '
         f'<a href="?dias=30">30</a> · <a href="?dias=90">90</a>). '
         f'Bytes servidos: {_visitas_tamano(tot_p)} a personas y {_visitas_tamano(tot_b)} a bots '
-        f'(<b>{pct(tot_b, tot_b + tot_p)}</b> del total).</p>' + dias_html + semanas_html
+        f'(<b>{pct(tot_b, tot_b + tot_p)}</b> del total).</p>' + app_html + dias_html + semanas_html
         + ranking("bot", "Bots por nombre", "Rastreador", 40)
         + ranking("ruta_bot", "Rutas que más piden los bots", "Ruta (sin valores)")
         + ranking("ruta_persona", "Rutas que más piden las personas", "Ruta (sin valores)")
