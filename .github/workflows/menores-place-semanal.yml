@@ -103,8 +103,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # El repositorio es público: ningún DNI/NIE completo de persona física llega a git (2026-10-11).
-          python backend/enmascarar_nif.py --aplicar 'backend/contratos_menores_place_*.json.gz'
-          python backend/enmascarar_nif.py --comprobar 'backend/contratos_menores_place_*.json.gz'
+          python backend/enmascarar_nif.py --texto --aplicar 'backend/contratos_menores_place_*.json.gz'
+          python backend/enmascarar_nif.py --texto --comprobar 'backend/contratos_menores_place_*.json.gz'
           git add backend/contratos_menores_place_*.json.gz
           if git diff --cached --quiet; then
             echo "Nada que guardar."
