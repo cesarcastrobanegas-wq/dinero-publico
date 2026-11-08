@@ -5,9 +5,12 @@ name: Ningún DNI/NIE en la web (prueba que bloquea)
 # las provincias, contratos formales y menores, concejales, búsquedas, API) con la función WSGI de verdad, y FALLA si en
 # alguna respuesta aparece un DNI/NIE completo con su letra de control correcta (backend/prueba_salida_sin_dni.py).
 #
-# Para que BLOQUEE el despliegue (Render despliega solo al subir a main), hay que hacer dos cosas fuera del código:
-#   1. GitHub → Settings → Branches → regla para main → «Require status checks to pass» → marcar «salida-sin-dni».
-#   2. Render → el servicio → Settings → Auto-Deploy → «After CI Checks Pass».
+# Lo que FRENA de verdad el despliegue no es este flujo, sino backend/comprobar_despliegue.py dentro de la compilación
+# de Render (Build Command: «pip install -r requirements.txt && python backend/comprobar_despliegue.py»): si falla, Render
+# no despliega. Vale también para los auto-commits de los flujos, que con GITHUB_TOKEN no lanzan este flujo.
+# NO conviene hacer obligatorio este check en una regla de la rama main ni poner Render en «After CI Checks Pass»: la
+# regla rechazaría los «git push» de los flujos nocturnos (suben directos a main sin check), y sus commits no tienen
+# checks. Este flujo es el aviso temprano en los PR (la prueba entera, ~5 min), no el freno.
 #
 # PRIVACIDAD: el repositorio y sus registros son públicos. La prueba no usa ninguna clave, no lee la web publicada ni
 # la base de Render, y nunca imprime un DNI: solo la ruta y cuántos.
@@ -39,6 +42,11 @@ jobs:
 
       - name: Instalar las librerías de la web
         run: pip install --no-cache-dir -r requirements.txt
+
+      - name: El freno del despliegue (lo mismo que corre en la compilación de Render) y su prueba
+        run: |
+          python backend/comprobar_despliegue.py
+          python backend/prueba_comprobar_despliegue.py
 
       - name: Recorrer la web y buscar DNI/NIE a la vista
         run: python backend/prueba_salida_sin_dni.py
