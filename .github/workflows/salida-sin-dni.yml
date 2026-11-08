@@ -1,0 +1,44 @@
+name: Ningún DNI/NIE en la web (prueba que bloquea)
+
+# 08-11-2026 (RGPD). Antes de fusionar cualquier cambio en main (PR) y en cada subida a main: arranca la web SIN RED, con
+# los datos del repositorio y unas trampas con DNI/NIE inventados, recorre una muestra amplia de páginas y JSON (todas
+# las provincias, contratos formales y menores, concejales, búsquedas, API) con la función WSGI de verdad, y FALLA si en
+# alguna respuesta aparece un DNI/NIE completo con su letra de control correcta (backend/prueba_salida_sin_dni.py).
+#
+# Para que BLOQUEE el despliegue (Render despliega solo al subir a main), hay que hacer dos cosas fuera del código:
+#   1. GitHub → Settings → Branches → regla para main → «Require status checks to pass» → marcar «salida-sin-dni».
+#   2. Render → el servicio → Settings → Auto-Deploy → «After CI Checks Pass».
+#
+# PRIVACIDAD: el repositorio y sus registros son públicos. La prueba no usa ninguna clave, no lee la web publicada ni
+# la base de Render, y nunca imprime un DNI: solo la ruta y cuántos.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: salida-sin-dni-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  salida-sin-dni:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"      # la de Render
+
+      - name: Instalar las librerías de la web
+        run: pip install --no-cache-dir -r requirements.txt
+
+      - name: Recorrer la web y buscar DNI/NIE a la vista
+        run: python backend/prueba_salida_sin_dni.py

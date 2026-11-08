@@ -331,6 +331,67 @@ BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 # Render reiniciaba el servicio por inactividad, porque arrancaba de nuevo
 # desde cero (ver INFORME_NOCHE.md, 2026-07-20/21).
 DATA_DIR = os.environ.get("DATA_DIR", BASE_DIR)
+
+# 07-11-2026 (RGPD, ficha de El Saucejo): PLACE publica a veces al adjudicatario SIN nombre, con su DNI/NIE en el campo
+# del nombre. El enmascarado de los autónomos miraba el NIF, no el nombre, y ese DNI salía entero (en la ficha y en el
+# título del enlace al Registro Mercantil). Un «nombre» que es SOLO un DNI/NIE de persona física se guarda y se enseña
+# como «Persona física · ***4567**» (o ****4567*), igual que el NIF (disposición adicional 7.ª de la LOPDGDD). Se hace
+# al leer PLACE (_ganador_tender_result), al guardar (_db_set_municipio y los contratos menores), en cada arranque sobre
+# lo que ya hay en la base (_purgar_nombres_dni) y otra vez al pintar las filas, por si quedara alguno.
+PREFIJO_PERSONA_FISICA = "Persona física · "
+_RE_NOMBRE_DNI = re.compile(r"^(?:ES)?(?:(\d{8})[A-Z]|[XYZ](\d{7})[A-Z])$")
+_CLAVES_NOMBRE_ADJUDICATARIO = frozenset(("empresa", "adjudicatario", "adjudicatari", "adjudicataria", "beneficiario"))
+
+
+def nombre_sin_dni(nombre):
+    """El nombre tal cual; si es solo un DNI/NIE de persona física (con o sin espacios, puntos, guiones o «ES»
+    delante), «Persona física · ***4567**» / «Persona física · ****4567*». Nunca devuelve el DNI entero."""
+    if not isinstance(nombre, str) or not nombre or len(nombre) > 24:
+        return nombre
+    m = _RE_NOMBRE_DNI.match(re.sub(r"[^A-Z0-9]", "", nombre.upper()))
+    if not m:
+        return nombre
+    return PREFIJO_PERSONA_FISICA + ("***" + m.group(1)[3:7] + "**" if m.group(1) else "****" + m.group(2)[3:7] + "*")
+
+
+# Para no recorrer el JSON entero de cada ficha al leerla: solo si en el texto hay un nombre que empieza como un DNI/NIE
+_RE_NOMBRE_DNI_CRUDO = re.compile(r'"(?:empresa|adjudicatari[oa]?|beneficiario)": "(?:[Ee][Ss])?[0-9XYZxyz][0-9]{6}')
+
+
+def _enmascarar_al_leer(d, crudo):
+    """Al leer una ficha de la base: enmascara los nombres con forma de DNI/NIE (ver nombre_sin_dni) si el texto los
+    puede llevar. Así ni las páginas ni los JSON los enseñan aunque el repaso del arranque no haya terminado."""
+    if _RE_NOMBRE_DNI_CRUDO.search(crudo):
+        enmascarar_nombres_dni(d)
+    return d
+
+
+def _persona_fisica_txt(nombre):
+    """Para pintar: «Persona física · ***4567**» en el idioma de la página; cualquier otro nombre, tal cual."""
+    if isinstance(nombre, str) and nombre.startswith(PREFIJO_PERSONA_FISICA):
+        return _t("Persona física") + " · " + nombre[len(PREFIJO_PERSONA_FISICA):]
+    return nombre
+
+
+def enmascarar_nombres_dni(o):
+    """En el sitio, en un JSON ya leído (dict o list, a cualquier profundidad): los nombres de adjudicatario o
+    beneficiario que son solo un DNI/NIE (ver nombre_sin_dni). Devuelve cuántos ha cambiado."""
+    n, pila = 0, [o]
+    while pila:
+        x = pila.pop()
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if isinstance(v, str):
+                    if k in _CLAVES_NOMBRE_ADJUDICATARIO:
+                        nuevo = nombre_sin_dni(v)
+                        if nuevo != v:
+                            x[k] = nuevo
+                            n += 1
+                elif isinstance(v, (dict, list)):
+                    pila.append(v)
+        elif isinstance(x, list):
+            pila.extend(v for v in x if isinstance(v, (dict, list)))
+    return n
 os.makedirs(DATA_DIR, exist_ok=True)
 
 DATA_FILE  = os.path.join(BASE_DIR, "datos.json")
@@ -3025,6 +3086,7 @@ def _db_set_municipio(municipio, resultado, provincia="murcia"):
         except Exception as e:
             print(f"[entidades_locales] desvío de '{municipio}': ERROR, la ficha se guarda tal cual ({type(e).__name__}: {e})",
                   flush=True)
+    enmascarar_nombres_dni(resultado)      # 07-11-2026: ningún DNI/NIE como nombre del adjudicatario (ver nombre_sin_dni)
     with _db_lock:
         _db.execute(
             "INSERT INTO municipios (municipio, data, ts, provincia) VALUES (?,?,?,?) "
@@ -3043,7 +3105,7 @@ def _db_all_municipios(provincia=None):
     out = []
     for data, prov in rows:
         try:
-            d = json.loads(data)
+            d = _enmascarar_al_leer(json.loads(data), data)   # 07-11-2026: ningún DNI/NIE como nombre
             d.setdefault("provincia", prov or "murcia")  # filas antiguas sin el campo en el JSON
             out.append(d)
         except Exception:
@@ -3159,7 +3221,7 @@ def _db_get_municipio(municipio, provincia=None):
         return None
     data, prov = row
     try:
-        d = json.loads(data)
+        d = _enmascarar_al_leer(json.loads(data), data)   # 07-11-2026: ningún DNI/NIE como nombre
         d.setdefault("provincia", prov or "murcia")
         return d
     except Exception:
@@ -7562,7 +7624,7 @@ def _ganador_tender_result(tr_block):
             pn_m.group(1) if pn_m else wp_block, re.I
         )
         if name_m:
-            return html.unescape(name_m.group(1).strip()), nif
+            return nombre_sin_dni(html.unescape(name_m.group(1).strip())), nif   # 07-11-2026: sin nombre, solo el DNI
     return "", ""
 
 
@@ -11930,6 +11992,8 @@ def _guardar_contratos_menors_locales(registros):
     if not registros:
         return
     ahora = time.time()
+    for r in registros:                      # 07-11-2026: ningún DNI/NIE como nombre del adjudicatario
+        enmascarar_nombres_dni(r)
     with _db_lock:
         for r in registros:
             _db.execute(
@@ -17477,6 +17541,48 @@ def _inicializar_datos():
     # (post_fork en gunicorn.conf.py).
 
 
+_GLOB_NOMBRE_DNI_MUNI = " OR ".join(
+    "data GLOB '*\"" + k + "\": \"" + p + "*'"
+    for k in ("empresa", "adjudicatario", "adjudicataria", "beneficiario")
+    for p in ("[0-9][0-9][0-9]", "[XYZxyz][0-9][0-9]", "[Ee][Ss][0-9XYZxyz]"))
+
+
+def _purgar_nombres_dni():
+    """07-11-2026 (RGPD): en la base que ya hay, enmascara los nombres de adjudicatario que son solo un DNI/NIE (ver
+    nombre_sin_dni), en las fichas de los municipios y en los contratos menores. Idempotente y barato: SQLite filtra
+    primero las filas candidatas (un nombre que empieza por cifras o por X/Y/Z/ES) y solo esas se miran en Python. Solo
+    escribe recuentos en el registro, nunca un DNI ni un nombre."""
+    with _db_lock:
+        candidatos = [r[0] for r in _db.execute(f"SELECT municipio FROM municipios WHERE {_GLOB_NOMBRE_DNI_MUNI}")]
+    fichas = nombres = 0
+    for clave in candidatos:
+        with _db_lock:
+            fila = _db.execute("SELECT data FROM municipios WHERE municipio=?", (clave,)).fetchone()
+            if not fila:
+                continue
+            d = json.loads(fila[0])
+            n = enmascarar_nombres_dni(d)
+            if n:
+                _db.execute("UPDATE municipios SET data=? WHERE municipio=?", (json.dumps(d, ensure_ascii=False), clave))
+                _db.commit()
+                fichas, nombres = fichas + 1, nombres + n
+    menores = 0
+    with _db_lock:
+        filas = _db.execute("SELECT id, adjudicatari FROM contratos_menors_locales WHERE length(adjudicatari) BETWEEN 9 "
+                            "AND 24 AND (adjudicatari GLOB '[0-9]*' OR adjudicatari GLOB '[XYZxyzEe]*')").fetchall()
+        for id_, adj in filas:
+            nuevo = nombre_sin_dni(adj)
+            if nuevo != adj:
+                _db.execute("UPDATE contratos_menors_locales SET adjudicatari=? WHERE id=?", (nuevo, id_))
+                menores += 1
+        if menores:
+            _db.commit()
+    if nombres or menores:
+        print(f"[privacidad] nombres con forma de DNI/NIE enmascarados: {nombres} en {fichas} fichas de municipio y "
+              f"{menores} contratos menores", flush=True)
+    return {"fichas": fichas, "contratos_formales": nombres, "contratos_menores": menores}
+
+
 def _carga_place_menores():
     """Feed de menores de PLACE: al FINAL del arranque (después de todas las fuentes propias: manda la fuente propia) y
     en un hilo aparte -- la primera carga (~850.000 filas) tarda varios minutos y gunicorn mata el worker si el
@@ -17485,6 +17591,11 @@ def _carga_place_menores():
     global _FEED_PLACE_REPASADO
     diag = _MENORES_DUPLICADOS_ARRANQUE
     diag["inicio"] = datetime.now().isoformat(timespec="seconds")
+    # 07-11-2026 (RGPD): lo primero, antes de cargar nada más, lo que ya hay en la base (ver _purgar_nombres_dni)
+    try:
+        diag["nombres_dni_enmascarados"] = _purgar_nombres_dni()
+    except Exception as e:
+        print(f"[privacidad] nombres con forma de DNI: ERROR, no se aplicó ({type(e).__name__}: {e})", flush=True)
     _cargar_contratos_menores_place()
     if _DISCO_CONFIABLE:
         try:                                 # repaso único de duplicados con las fuentes propias (mismo criterio que la carga)
@@ -19931,6 +20042,8 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
     """Genera la fila <tr> de un contrato. Reutilizada por la vista de
     municipio y por los resultados de búsqueda global. `repetida`: nº de adjudicatarias con el mismo importe en su
     licitación (0 si no), ver _adjudicatarias_repetidas."""
+    if nombre_sin_dni(c.get("empresa")) != c.get("empresa"):   # 07-11-2026: por si quedara alguno en la base
+        c = dict(c, empresa=nombre_sin_dni(c.get("empresa")))
     imp = c.get("importe", "") or "No localizado"
     imp_cls = "importe" if imp != "No localizado" else "importe noloc"
     # Revisión del 02-11-2026 (ficha de Willis Iberia): la fuente PUBLICA 0 € (comprobado en PLACE: «Importe de
@@ -20054,7 +20167,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
 
     return f"""<tr>
       <td>
-        <div class="empresa">{esc(c.get('empresa', '—'))}{ute_html} {fuente_badge}</div>
+        <div class="empresa">{esc(_persona_fisica_txt(c.get('empresa', '—')))}{ute_html} {fuente_badge}</div>
         {contrato_html}{muni_html}
       </td>
       <td class="{imp_cls}">{esc(imp)}{imp_nota}</td>
@@ -22414,7 +22527,7 @@ def _render_fila_contrato_menor(r):
     (ver `table{display:block;overflow-x:auto}` en el media query de
     700px), el mismo mecanismo que ya absorbe la 4ª columna de la tabla
     formal."""
-    adjudicatari = r.get("adjudicatari", "")
+    adjudicatari = nombre_sin_dni(r.get("adjudicatari", ""))   # 07-11-2026: por si quedara alguno en la base
     fuente = r.get("fuente", "")
     fuente_badge = f'<span class="fuente-badge fuente-rpc">{esc(_FUENTE_CM_LABEL.get(fuente, fuente or "?"))}</span>'
     nif_html = f'<div class="cm-nif">{esc(_nif_mostrar(r["nif"]))}</div>' if r.get("nif") else ""
@@ -22458,7 +22571,8 @@ def _render_fila_contrato_menor(r):
         origen = {"nif": _t("Según su DNI/NIE en la fuente oficial"),
                   "nif_enmascarado": _t("La fuente oficial publica su DNI/NIE enmascarado, como el de toda persona física"),
                   }.get(pf) or _t("Su nombre figura con DNI/NIE en otra fuente oficial")
-        nombre_pf = "" if _NOMBRE_GENERICO_PF.match(adjudicatari or "") else adjudicatari
+        nombre_pf = ("" if _NOMBRE_GENERICO_PF.match(adjudicatari or "") or adjudicatari.startswith(PREFIJO_PERSONA_FISICA)
+                     else adjudicatari)
         dir_html = ((f'<div class="directivo">{esc(nombre_pf)}</div>' if nombre_pf else "")
                     + f'<div class="cargo">{_t("Autónomo / persona física")}</div>'
                     f'<span class="noloc-nota">{origen}</span>{match_html}')
@@ -22500,7 +22614,7 @@ def _render_fila_contrato_menor(r):
 
     return f"""<tr>
       <td>
-        <div class="empresa">{esc(adjudicatari)}{fuente_badge}</div>
+        <div class="empresa">{esc(_persona_fisica_txt(adjudicatari))}{fuente_badge}</div>
         {nif_html}
         <div class="cargo">{esc(r.get("descripcio","")[:110])}</div>{nota_fila}
       </td>
@@ -24953,6 +25067,7 @@ def _diagnostico_arranque():
         memoria_rss_mb = None
 
     return {
+        "filtro_salida_dni": dict(_FILTRO_SALIDA_ESTADO, segundos=round(_FILTRO_SALIDA_ESTADO["segundos"], 3)),
         "disco_confiable": _DISCO_CONFIABLE,
         "data_dir": DATA_DIR,
         "cache_db": _info(DB_FILE),
@@ -27397,6 +27512,126 @@ def _resp(body, content_type="text/html; charset=utf-8", code=200, headers=None,
         hdrs["Content-Encoding"] = "gzip"
     hdrs["Content-Length"] = str(len(b))
     return code, hdrs, b
+
+
+# ─── FILTRO DE SALIDA: NINGÚN DNI/NIE COMPLETO EN UNA RESPUESTA (08-11-2026, RGPD) ───────────────────────────────────
+# Última barrera, después de todo lo demás (el enmascarado al guardar y al pintar, ver nombre_sin_dni): toda respuesta de
+# texto (HTML, JSON, XML, CSV, texto, Markdown...) se revisa justo antes de enviarla, en _app_wsgi y en el servidor local.
+# Un DNI (8 cifras + letra) o NIE (X/Y/Z + 7 cifras + letra), con o sin espacio, punto o guion, cuya letra de control sea
+# la CORRECTA, se cambia por ***4567** / ****4567*, como el NIF de los autónomos (disposición adicional 7.ª de la
+# LOPDGDD). Los CIF (P4109000B, B12345678...) no tienen esa forma y no se tocan; un número de expediente con forma de
+# DNI solo se tocaría si además acertara la letra (1 de cada 23), y entonces mejor tapado.
+# - Si enmascara algo, lo apunta en el registro: «[privacidad] filtro de salida: N DNI/NIE en RUTA» (sin el dato ni los
+#   valores de la consulta; como mucho una línea por ruta cada 10 minutos, con el acumulado).
+# - Las respuestas binarias, las parciales (206) y las que van por trozos (la copia de cache.db) no se miran.
+# - Coste: un cuerpo ya revisado y limpio no se vuelve a revisar (las páginas en caché se sirven con el mismo objeto
+#   bytes, cuyo hash Python guarda). Ver _FILTRO_SALIDA_ESTADO en /api/diagnostico-arranque.
+# - Interruptor de emergencia: FILTRO_SALIDA_DNI=0 lo apaga (no hace falta en condiciones normales).
+FILTRO_SALIDA_DNI = os.environ.get("FILTRO_SALIDA_DNI", "1").strip() != "0"
+_RE_DNI_SALIDA = re.compile(
+    rb"(?<![0-9A-Za-z])(?:[Ee][Ss][ .-]?)?(?:(\d{8})[ .-]?([A-Za-z])|([XYZxyz])[ .-]?(\d{7})[ .-]?([A-Za-z]))"
+    rb"(?![0-9A-Za-z])")
+_LETRAS_DNI = b"TRWAGMYFPDXBNJZSQVHLCKE"
+_TABLA_CIFRAS = bytes(48 if 48 <= i <= 57 else 46 for i in range(256))   # cifra -> «0», lo demás -> «.»
+_TIPOS_FILTRO_SALIDA = ("text/", "application/json", "application/xml", "application/javascript",
+                        "application/manifest+json", "application/ld+json")
+_FILTRO_SALIDA_LIMPIOS = {}                  # (hash, largo) de cuerpos ya revisados sin nada que tapar
+_FILTRO_SALIDA_LIMPIOS_MAX = 8192
+_FILTRO_SALIDA_AVISOS = {}                   # ruta -> [último aviso, casos desde entonces]
+_FILTRO_SALIDA_ESTADO = {"activo": FILTRO_SALIDA_DNI, "revisadas": 0, "ya_revisadas": 0, "con_dni": 0,
+                         "dni_tapados": 0, "segundos": 0.0}
+
+
+def _dni_tapado(m):
+    """El texto enmascarado de una coincidencia de _RE_DNI_SALIDA, o None si la letra de control no es la correcta."""
+    if m.group(1):
+        if _LETRAS_DNI[int(m.group(1)) % 23] != m.group(2).upper()[0]:
+            return None
+        return b"***" + m.group(1)[3:7] + b"**"
+    if _LETRAS_DNI[(b"XYZ".index(m.group(3).upper()) * 10000000 + int(m.group(4))) % 23] != m.group(5).upper()[0]:
+        return None
+    return b"****" + m.group(4)[3:7] + b"*"
+
+
+def enmascarar_dni_en_bytes(b):
+    """(cuerpo, cuántos): los DNI/NIE con letra de control correcta, enmascarados (***4567** / ****4567*).
+
+    Rápido: primero se buscan en C las tiras de 7 o más cifras seguidas (bytes.translate + find; una página sin
+    ninguna sale enseguida) y la expresión completa solo se prueba alrededor de cada una. Medido con páginas reales:
+    1,5 ms la de rankings (417 KB) y 2,5 ms la de Murcia (258 KB), frente a 32 y 19 ms con la expresión sola."""
+    t = b.translate(_TABLA_CIFRAS)
+    p = t.find(b"0000000")
+    if p < 0:
+        return b, 0
+    cambios, hasta = [], -1
+    while p >= 0:
+        fin = p
+        while fin < len(t) and t[fin] == 48:
+            fin += 1
+        for m in _RE_DNI_SALIDA.finditer(b, max(0, p - 5), min(len(b), fin + 4)):
+            if m.start() > hasta:
+                tapado = _dni_tapado(m)
+                if tapado is not None:
+                    cambios.append((m.start(), m.end(), tapado))
+                hasta = m.end() - 1
+        p = t.find(b"0000000", fin)
+    if not cambios:
+        return b, 0
+    partes, ult = [], 0
+    for a, z, tapado in cambios:
+        partes += [b[ult:a], tapado]
+        ult = z
+    partes.append(b[ult:])
+    return b"".join(partes), len(cambios)
+
+
+def _ruta_para_aviso(ruta, query):
+    """La ruta para el registro del filtro de salida: con el municipio y la provincia (no son datos personales) y, de
+    los demás parámetros, solo su nombre (una búsqueda ?q= podría llevar el nombre o el DNI de alguien)."""
+    qs = parse_qs(query or "")
+    partes = [f"{k}={qs[k][0][:60]}" for k in ("muni", "provincia") if qs.get(k)]
+    partes += sorted(k for k in qs if k not in ("muni", "provincia"))
+    return ruta + ("?" + "&".join(partes) if partes else "")
+
+
+def _filtro_salida_dni(ruta, code, headers, body):
+    """La última barrera antes de enviar una respuesta (ver arriba). Devuelve (code, headers, body)."""
+    if (not FILTRO_SALIDA_DNI or code == 206 or not isinstance(body, (bytes, bytearray)) or not body
+            or not str(headers.get("Content-Type", "")).lower().startswith(_TIPOS_FILTRO_SALIDA)):
+        return code, headers, body
+    t0 = time.perf_counter()
+    body = bytes(body)
+    clave = (hash(body), len(body))
+    if clave in _FILTRO_SALIDA_LIMPIOS:
+        _FILTRO_SALIDA_ESTADO["ya_revisadas"] += 1
+        return code, headers, body
+    comprimido = str(headers.get("Content-Encoding", "")).lower() == "gzip"
+    try:
+        crudo = _gzip.decompress(body) if comprimido else body
+    except (OSError, EOFError):
+        return code, headers, body           # no es un gzip válido: se deja como venía
+    nuevo, n = enmascarar_dni_en_bytes(crudo)
+    _FILTRO_SALIDA_ESTADO["revisadas"] += 1
+    if not n:
+        if len(_FILTRO_SALIDA_LIMPIOS) >= _FILTRO_SALIDA_LIMPIOS_MAX:
+            _FILTRO_SALIDA_LIMPIOS.clear()
+        _FILTRO_SALIDA_LIMPIOS[clave] = True
+        _FILTRO_SALIDA_ESTADO["segundos"] += time.perf_counter() - t0
+        return code, headers, body
+    body = _gzip.compress(nuevo, compresslevel=6) if comprimido else nuevo
+    headers = dict(headers)
+    headers["Content-Length"] = str(len(body))
+    headers.pop("ETag", None)                # el cuerpo ya no es el de esa etiqueta
+    _FILTRO_SALIDA_ESTADO["con_dni"] += 1
+    _FILTRO_SALIDA_ESTADO["dni_tapados"] += n
+    _FILTRO_SALIDA_ESTADO["segundos"] += time.perf_counter() - t0
+    ahora_ = time.time()
+    aviso = _FILTRO_SALIDA_AVISOS.setdefault(ruta, [0.0, 0])
+    aviso[1] += n
+    if ahora_ - aviso[0] >= 600:
+        print(f"[privacidad] filtro de salida: {aviso[1]} DNI/NIE tapados en {ruta}", flush=True)
+        aviso[0], aviso[1] = ahora_, 0
+    return code, headers, body
 
 
 def _redirect_resp(path):
@@ -30148,6 +30383,8 @@ def _app_wsgi(environ, start_response):
     else:
         code, headers, body = 405, {"Content-Length": "0"}, b""
 
+    code, headers, body = _filtro_salida_dni(_ruta_para_aviso(path, environ.get("QUERY_STRING", "")), code, headers,
+                                             body)    # 08-11-2026: ningún DNI/NIE completo
     status_line = f"{code} {_HTTP_STATUS_TEXT.get(code, 'OK')}"
     start_response(status_line, list(headers.items()))
     if not isinstance(body, (bytes, bytearray)):
@@ -30187,7 +30424,9 @@ class Handler(BaseHTTPRequestHandler):
             t_rango = _RANGO_PETICION.set(self.headers.get("Range", "") or "")
             t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
             try:
-                self._write(*_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok, query_string=parsed.query))
+                self._write(*_filtro_salida_dni(_ruta_para_aviso(parsed.path, parsed.query),
+                                                *_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok,
+                                                                 query_string=parsed.query)))
             finally:
                 _RANGO_PETICION.reset(t_rango)
                 _TOKEN_CABECERA.reset(t_token)
