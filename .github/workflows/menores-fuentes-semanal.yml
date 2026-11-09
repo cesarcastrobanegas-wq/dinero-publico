@@ -14,7 +14,8 @@
 #
 # Fuera de este flujo (ver EXCLUIDOS en flujo_menores_semanal.py): el registro de menores de la Plataforma de
 # Contratación, las dos fuentes que el ayuntamiento dejó de publicar (Cádiz y Salamanca, que se quedan como histórico)
-# y las que no dejan entrar desde GitHub o al agente del proyecto (Sevilla, València, Burgos y Almería: siguen manuales).
+# y las que no dejan entrar desde GitHub o al agente del proyecto (Sevilla, València, Burgos y Almería: siguen manuales;
+# Alicante y Santa Cruz de Tenerife, desde el 09-11-2026, con backend/menores_desde_pc.py: ver MENORES_DESDE_PC.md).
 name: Contratos menores de ayuntamientos (semanal)
 
 on:
