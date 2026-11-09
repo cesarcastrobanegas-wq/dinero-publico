@@ -43,8 +43,14 @@ def main():
         else:
             mal.append(texto)
 
-    def portada(idioma=None):
+    def reiniciar_cuentas():
+        """Tira la caché del bloque y, si existe (PR #43), la cuenta común de la portada, sin dar nada por cambiado."""
         app._portada_empresas_cache.update(ts=0.0, datos=None)
+        if hasattr(app, "_portada_contadores_memo"):
+            app._portada_contadores_memo.update(ts=0.0, valor=None)
+
+    def portada(idioma=None):
+        reiniciar_cuentas()
         tok = app._I18N_IDIOMA.set(idioma) if idioma else None
         try:
             return app.render_landing_nacional_html(app._db_municipios_ligeros(), rk_comunidad="todas")
@@ -130,14 +136,38 @@ def main():
     with app._db_lock:
         app._db.execute("UPDATE licitaciones SET estado='ADJ' WHERE id IN ('L2','L3','L4','L5','L6')")
         app._db.commit()
-    app._portada_empresas_cache.update(ts=0.0, datos=None)
+    reiniciar_cuentas()
     comprobar("Hoy hay 1 licitación pública abierta." in app._portada_empresas_html(), "falta el singular")
     with app._db_lock:
         app._db.execute("UPDATE licitaciones SET estado='PUB' WHERE id IN ('L2','L3','L4','L5','L6')")
         app._db.commit()
     comprobar("Hoy hay 1 licitación" in app._portada_empresas_html(), "la caché no guarda los datos")
     app._portada_empresas_cache["ts"] -= app._PORTADA_EMPRESAS_TTL + 1
+    if hasattr(app, "_portada_contadores_memo"):
+        app._portada_contadores_memo.update(ts=0.0, valor=None)
     comprobar("<b>6</b>" in app._portada_empresas_html(), "pasado el tiempo de caché no se recalcula")
+    # 5 BIS (09-11). La misma cifra en el bloque verde y en el cuadro «Licitaciones abiertas», en todos los idiomas, y
+    # en cualquier orden de fusión con el #43: si existe _portada_contadores, el bloque la usa.
+    for lang in ("es", "gl", "ca", "eu"):
+        hl = cuerpo(portada(lang))
+        n_bloque = re.findall(r"<b>([\d.]+)</b>", hl[hl.find('class="emp-bloque"'):hl.find('class="hero-panel"')])[:1]
+        n_cuadro = re.findall(r'href="/convocatorias"><span>([\d.]+)</span>', hl)
+        comprobar(n_bloque == n_cuadro == ["6"], f"{lang}: bloque {n_bloque} y cuadro {n_cuadro} deben decir 6")
+    tiene_comun = hasattr(app, "_portada_contadores")
+    if not tiene_comun:
+        app._portada_contadores = lambda: (4321, 0)       # como si estuviera el #43
+    else:
+        comun, app._portada_contadores = app._portada_contadores, lambda: (4321, 0)
+    try:
+        reiniciar_cuentas()
+        comprobar("<b>4.321</b>" in app._portada_empresas_html(), "con la cuenta común, el bloque no la usa")
+    finally:
+        if tiene_comun:
+            app._portada_contadores = comun
+        else:
+            del app._portada_contadores
+    reiniciar_cuentas()
+    comprobar("<b>6</b>" in app._portada_empresas_html(), "sin la cuenta común, el bloque no vuelve a la suya")
     # 6. La banda «¿Cuál es tu municipio?» va debajo del titular y antes del buscador.
     i_tag, i_banda, i_busc = h.find('class="hero-tagline"'), h.find('id="personaliza-banner"'), h.find('id="adv-search"')
     comprobar(i_hero < i_tag < i_banda < i_busc, "la banda del municipio no va entre el titular y el buscador")

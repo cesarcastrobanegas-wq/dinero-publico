@@ -24607,11 +24607,25 @@ _PORTADA_EMPRESAS_EVENTOS = (("portada_licitaciones", "Botón «Ver las licitaci
 
 
 def _portada_empresas_datos():
-    """(n_abiertas, [(organo, titulo, url, presupuesto, fin_plazo), ...]) con caché en memoria. (0, []) si falla."""
+    """(n_abiertas, [(organo, titulo, url, presupuesto, fin_plazo), ...]) con caché en memoria. (0, []) si falla.
+    09-11-2026: si existe la cuenta común de la portada (_portada_contadores, PR #43), N sale de ahí, para que el
+    bloque verde y el cuadro «Licitaciones abiertas» digan lo mismo en todos los idiomas. Funciona en cualquier orden
+    de fusión: sin ella, se usa la cuenta propia de este bloque."""
     ahora_s = time.time()
     c = _portada_empresas_cache
-    if c["datos"] is not None and ahora_s - c["ts"] < _PORTADA_EMPRESAS_TTL:
-        return c["datos"]
+    if c["datos"] is None or ahora_s - c["ts"] >= _PORTADA_EMPRESAS_TTL:
+        c.update(ts=ahora_s, datos=_portada_empresas_consultar())
+    datos = c["datos"]
+    comun = globals().get("_portada_contadores")
+    if comun is not None:
+        try:
+            datos = (comun()[0], datos[1])
+        except Exception as e:
+            print(f"[portada] cuenta común de licitaciones: {type(e).__name__}: {e}", flush=True)
+    return datos
+
+
+def _portada_empresas_consultar():
     datos = (0, [])
     try:
         ahora = _ahora_madrid()
@@ -24627,7 +24641,6 @@ def _portada_empresas_datos():
         datos = (n or 0, [tuple(f) for f in ultimas])
     except Exception as e:
         print(f"[portada] bloque de empresas: {type(e).__name__}: {e}", flush=True)
-    c.update(ts=ahora_s, datos=datos)
     return datos
 
 
