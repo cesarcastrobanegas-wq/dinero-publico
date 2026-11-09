@@ -7,6 +7,7 @@ name: Redes sociales (publicación diaria)
 # - 17:00 UTC (18:00 peninsular en invierno, 19:00 en verano): fuera del refresco nocturno (~05:00-12:30 UTC, que
 #   reinicia la web con sus auto-commits) y en hora de mucho uso de redes.
 # - Mientras REDES_ACTIVAS no valga 1 en Render, la web contesta {"activas": false} y esto no hace nada.
+# - Si la web aún no tiene la ruta (404: fusionado pero sin desplegar), sale un aviso y termina en verde.
 #
 # PRIVACIDAD: el repositorio y sus registros son públicos. La respuesta de la web trae solo recuentos y los nombres
 # de las redes configuradas; ni textos ni claves. El token va en la cabecera, no en la dirección.
@@ -41,6 +42,11 @@ jobs:
                 [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
                 echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
               200) break ;;
+              404)
+                # La web aún no tiene la ruta: el flujo está en main pero el código del bot todavía no se ha
+                # desplegado (p. ej. fusionado con [skip render]). Aviso, no fallo.
+                echo "::warning::La web aún no tiene /admin/redes-diario (HTTP 404): el bot no está desplegado todavía. No se hace nada."
+                exit 0 ;;
               *) echo "::error::La web respondió ${codigo}"; exit 1 ;;
             esac
           done
