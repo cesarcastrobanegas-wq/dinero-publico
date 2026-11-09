@@ -16460,7 +16460,7 @@ def _revision_cola_html(qs, cookie):
               f'<p class="sub"><a href="/admin/revision/comentarios"><b>Comentarios pendientes de aprobar: '
               f'{comentarios_pendientes}</b></a> · <a href="/admin/revision/alertas">Alertas por correo</a> · '
               + (f'<a href="/admin/revision/socios">Perfiles del filtro</a> · ' if FILTRO_FORMULARIO else '') +
-              f'<a href="/admin/revision/visitas">Visitas</a></p>'
+              f'<a href="/admin/revision/visitas">Visitas</a> · <a href="/admin/revision/redes">Redes sociales</a></p>'
               f'<p class="sub">Uso interno. Un indicador NO es una irregularidad: solo señala dónde mirar. Nada de esta '
               f'lista se publica; antes de publicar un caso hay que comprobarlo en la fuente oficial y pedir la versión '
               f'del ayuntamiento. Desde el RDL 3/2020, sumar menores al mismo contratista no es ilegal por sí mismo: lo '
@@ -16606,6 +16606,9 @@ def _revision_wsgi(method, path, qs, environ):
         if path == "/admin/revision/salir":
             return 303, {"Location": "/admin/revision", "Content-Length": "0",
                          "Set-Cookie": "dp_rev=; Path=/admin/revision; Max-Age=0; HttpOnly; SameSite=Strict"}, b""
+        if path == "/admin/revision/redes/accion":
+            hecho = _redes_accion(p("accion"), p("id"))
+            return 303, {"Location": f"/admin/revision/redes?hecho={hecho}", "Content-Length": "0"}, b""
         if path == "/admin/revision/accion":
             huella, accion, motivo, nota = p("huella"), p("accion"), p("motivo"), p("nota")[:1000]
             nuevo = {"descartar": "descartado", "seguimiento": "seguimiento", "caso": "caso", "reabrir": "pendiente"}.get(accion)
@@ -16651,6 +16654,8 @@ def _revision_wsgi(method, path, qs, environ):
         return _socios_vista_html(qs.get("p", [""])[0])
     if path == "/admin/revision/visitas":
         return _visitas_pagina(qs, autorizado=True)
+    if path == "/admin/revision/redes":
+        return _redes_panel_html(cookie, qs.get("hecho", [""])[0])
     if path == "/admin/revision/ficha":
         md = _revision_ficha_md(qs.get("huella", [""])[0])
         if md is None:
@@ -17645,6 +17650,8 @@ def _arrancar_hilos_de_fondo():
     threading.Thread(target=_licitaciones_bg, args=(hilo_feed,), name="licitaciones", daemon=True).start()
     threading.Thread(target=_subvenciones_reclasificar, name="subvenciones-sector", daemon=True).start()
     threading.Thread(target=_zip_cache_vigilar, name="memoria-zips", daemon=True).start()
+    if REDES_MOD.activas():                  # bot de redes: casos nuevos tras un despliegue (ver _redes_al_arrancar)
+        threading.Thread(target=_redes_al_arrancar, name="redes-arranque", daemon=True).start()
     if FILTRO_FORMULARIO:                    # borrado automático de perfiles del filtro (ver _socios_limpieza_bg)
         threading.Thread(target=_socios_limpieza_bg, name="socios-limpieza", daemon=True).start()
     # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
@@ -26107,6 +26114,402 @@ _CASOS_RENDER_POR_SLUG.update({c["slug"]: c["render"] for c in _CASOS_BORRADOR_2
 _CASOS_BORRADOR_POR_SLUG = {}          # ningún borrador pendiente
 
 
+
+# ─── REDES SOCIALES (09-11-2026, encargo de César; rama wip/redes-sociales) ─────────────────────────────────────────
+# Bot que publica en X, en la Página de Facebook y en Instagram:
+#   - cada caso nuevo de /casos (los casos van en el código y entran al desplegar, ya aprobados por César): título, una
+#     o dos frases y el enlace;
+#   - un «ejemplo de uso» al día, rotando: licitaciones abiertas de un sector en una provincia, el líder de un tramo
+#     del Índice de Transparencia, un dato destacado (la mayor ciudad sin deuda de una provincia) y fondos UE de una
+#     provincia. Solo datos que ya están en la web, con el enlace a la página exacta; nunca nombres de personas
+#     físicas ni DNI/NIE (componer() rechaza cualquier texto con un DNI/NIE).
+# Seguridad:
+#   - REDES_ACTIVAS=1 en Render lo enciende; por defecto está APAGADO: no prepara nada solo y nunca publica.
+#   - Modo ensayo (por defecto, REDES_ENSAYO distinto de 0): todo espera en /admin/redes a que César lo apruebe.
+#   - Registro (tabla redes_publicaciones): un caso se publica una sola vez; un tema del ejemplo diario no se repite
+#     en REDES_DIAS_SIN_REPETIR días; cada red se publica una sola vez por entrada.
+#   - Cada red va por separado: si una falla, se apunta el error (sin claves) y las otras siguen; nada de esto puede
+#     tirar la web (todo va en try/except y en hilos aparte).
+# Programación: flujo redes-diario.yml a las 17:00 UTC (POST /admin/redes-diario con el token), y al arrancar la web
+# tras un despliegue con un caso nuevo.
+import secrets                           # noqa: E402
+try:                                     # noqa: E402
+    from . import redes_sociales as REDES_MOD
+except ImportError:
+    import redes_sociales as REDES_MOD
+
+REDES_DIAS_SIN_REPETIR = 60
+REDES_INTENTOS = 3
+_REDES_TIPOS_DIARIOS = ("licitaciones", "indice", "destacado", "fondos")
+_redes_lock = threading.Lock()
+
+
+def _redes_tabla():
+    with _db_lock:
+        _db.execute("CREATE TABLE IF NOT EXISTS redes_publicaciones ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, clave TEXT UNIQUE, tipo TEXT, tema TEXT, creada REAL, "
+                    "estado TEXT, titulo TEXT, url TEXT, textos TEXT, tarjeta BLOB, llave TEXT, redes TEXT, "
+                    "aprobada REAL, ocupada REAL)")
+        _db.execute("CREATE INDEX IF NOT EXISTS idx_redes_tema ON redes_publicaciones (tema, creada)")
+        _db.commit()
+
+
+def _redes_crear(entrada, clave=None, estado=None):
+    """Guarda una publicación nueva (pendiente en modo ensayo; aprobada si no). Devuelve el id o None si ya existía
+    o si el texto no pasa los controles."""
+    try:
+        e = REDES_MOD.componer(entrada, SITE_URL)
+        png = REDES_MOD.dibujar_tarjeta(e["tarjeta"])
+    except Exception as ex:
+        print(f"[redes] no se prepara «{entrada.get('tema')}»: {type(ex).__name__}: {ex}", flush=True)
+        return None
+    estado = estado or ("pendiente" if REDES_MOD.ensayo() else "aprobada")
+    _redes_tabla()
+    with _db_lock:
+        try:
+            cur = _db.execute(
+                "INSERT INTO redes_publicaciones (clave, tipo, tema, creada, estado, titulo, url, textos, tarjeta, "
+                "llave, redes, aprobada) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '{}', ?)",
+                (clave or f"{e['tema']}@{time.strftime('%Y-%m-%d')}", e["tipo"], e["tema"], time.time(), estado,
+                 e["titulo"], e["url"], json.dumps(e["textos"], ensure_ascii=False), png, secrets.token_hex(8),
+                 time.time() if estado == "aprobada" else None))
+            _db.commit()
+            return cur.lastrowid
+        except sqlite3.IntegrityError:
+            return None
+
+
+def _redes_tema_reciente(tema, dias=REDES_DIAS_SIN_REPETIR):
+    with _db_lock:
+        return _db.execute("SELECT 1 FROM redes_publicaciones WHERE tema=? AND creada>=? AND estado!='rechazada'",
+                           (tema, time.time() - dias * 86400)).fetchone() is not None
+
+
+# ── Ejemplos de uso: candidatos de cada tipo, del más interesante al menos ───────────────────────────────────────────
+
+def _redes_fecha_larga(t=None):
+    t = t or _ahora_madrid()
+    return f"{t.day} de {_MESES_ES_LARGO[t.month - 1]}"
+
+
+def _redes_cand_licitaciones():
+    ahora = _ahora_madrid()
+    with _db_lock:
+        grupos = _db.execute(
+            "SELECT provincia, cpv2, count(*) n FROM licitaciones WHERE estado='PUB' AND fin_plazo>=? AND provincia!='' "
+            "AND cpv2!='' GROUP BY provincia, cpv2 HAVING n>=5 ORDER BY n DESC LIMIT 200",
+            (ahora.strftime("%Y-%m-%d %H:%M"),)).fetchall()
+    for prov, sector, _ in grupos:
+        if prov not in PROVINCIA_LABEL or sector not in LIC.CPV_DIVISIONES:
+            continue
+        f = {"tab": "licitaciones", "provincia": prov, "sector": sector}
+        where, args = _conv_filtro_licitaciones(f)          # la misma cuenta que enseña la página enlazada
+        with _db_lock:
+            n = _db.execute(f"SELECT count(*) FROM licitaciones WHERE {' AND '.join(where)}", args).fetchone()[0]
+        if n < 5:
+            continue
+        sector_txt, donde = LIC.CPV_DIVISIONES[sector], PROVINCIA_LABEL[prov]
+        yield {"tipo": "licitaciones", "tema": f"licitaciones:{prov}:{sector}",
+               "titulo": f"{fmt_num(n)} licitaciones abiertas de {sector_txt.lower()} en {donde}",
+               "titulo_tarjeta": f"de {sector_txt.lower()} en {donde}",
+               "frase": f"Cada una con su plazo, su importe y el órgano que contrata. Datos a {_redes_fecha_larga(ahora)}.",
+               "ruta": _conv_url(f), "etiqueta": "Licitaciones abiertas", "cifra": fmt_num(n)}
+
+
+def _redes_cand_indice():
+    filas = [f for f in _indice_filas_ranking() if f["habitantes"]]
+    limites = _INDICE_TRANSPARENCIA_TRAMOS_POBLACION
+    etiquetas = ([(limites[0], f"menos de {fmt_num(limites[0])} habitantes")]
+                 + [(sup, f"{fmt_num(inf)} a {fmt_num(sup)} habitantes") for inf, sup in zip(limites, limites[1:])]
+                 + [(None, f"más de {fmt_num(limites[-1])} habitantes")])
+    por_tramo = {}
+    for f in filas:
+        por_tramo.setdefault(_indice_tramo_poblacion(f["habitantes"]), []).append(f)
+    for tramo, etq in etiquetas:
+        grupo = por_tramo.get(tramo)
+        if not grupo:
+            continue
+        lider = min(grupo, key=lambda f: (-f["indice"], -f["n_contratos"], normalizar(f["municipio"])))
+        nombre = _nombre_natural(lider["municipio"])
+        yield {"tipo": "indice", "tema": f"indice:{tramo}:{lider['municipio']}|{lider['provincia']}",
+               "titulo": f"{nombre} lidera el Índice de Transparencia entre los municipios de {etq}",
+               "titulo_tarjeta": f"{nombre}, líder del Índice de Transparencia entre los municipios de {etq}",
+               "frase": f"Nota de {_nota_coma(lider['indice'])} sobre 10, entre {fmt_num(len(grupo))} municipios de su "
+                        f"tamaño. Mide cuánto publica cada ayuntamiento de sus contratos.",
+               "ruta": f"/?muni={quote_plus(lider['municipio'])}{_q_prov(lider['provincia'])}",
+               "etiqueta": "Índice de Transparencia", "cifra": _nota_coma(lider["indice"])}
+
+
+def _redes_cand_destacado():
+    por_prov = {}
+    for clave, d in DEUDA_VIVA.items():
+        if d.get("deuda_eur") != 0 or es_pseudo_municipio(d.get("municipio", "")):
+            continue
+        pob = (POBLACION.get(clave) or {}).get("poblacion") or 0
+        prov = d.get("provincia", "")
+        if prov in PROVINCIA_LABEL and pob >= 2000 and pob > por_prov.get(prov, (0, None))[0]:
+            por_prov[prov] = (pob, d)
+    fecha = _fecha_corte_deuda_viva()
+    for prov, (pob, d) in sorted(por_prov.items(), key=lambda kv: -kv[1][0]):
+        nombre = _nombre_natural(d["municipio"])
+        donde = PROVINCIA_LABEL[prov]
+        yield {"tipo": "destacado", "tema": f"destacado:sin-deuda:{prov}",
+               "titulo": f"{nombre}, la ciudad más grande de {donde} sin deuda viva",
+               "frase": f"{fmt_num(pob)} habitantes y 0 € de deuda según el Ministerio de Hacienda"
+                        + (f" a {fecha}" if fecha else "") + ". En su ficha, sus contratos y sus cuentas.",
+               "ruta": f"/?muni={quote_plus(d['municipio'])}{_q_prov(prov)}", "etiqueta": "Dato destacado",
+               "cifra": "0 €"}
+
+
+def _redes_cand_fondos():
+    res = _fondos_ue_place_resumen() or {}
+    provs = sorted(((p, v) for p, v in (res.get("provincias") or {}).items() if p in PROVINCIA_LABEL),
+                   key=lambda kv: -(kv[1].get("UE") or [0, 0])[1])
+    for prov, v in provs:
+        n, eur = (v.get("UE") or [0, 0.0])
+        n_prtr = (v.get("PRTR") or [0, 0.0])[0]
+        if n < 10:
+            continue
+        donde = PROVINCIA_LABEL[prov]
+        yield {"tipo": "fondos", "tema": f"fondos:{prov}",
+               "titulo": f"{fmt_num(n)} contratos con fondos europeos en {donde}",
+               "titulo_tarjeta": f"contratos con fondos europeos en {donde}",
+               "frase": f"Suman {fmt_eur(str(eur))}; {fmt_num(n_prtr)} son del Plan de Recuperación. Lo declara el "
+                        f"órgano de contratación en la Plataforma de Contratación del Sector Público.",
+               "ruta": _fue_url({"provincia": prov}), "etiqueta": "Fondos europeos", "cifra": fmt_num(n)}
+
+
+_REDES_CANDIDATOS = {"licitaciones": _redes_cand_licitaciones, "indice": _redes_cand_indice,
+                     "destacado": _redes_cand_destacado, "fondos": _redes_cand_fondos}
+
+
+def _redes_ejemplo_del_dia(hoy=None):
+    """Prepara el «ejemplo de uso» de hoy (uno al día). El tipo rota cada día; dentro del tipo, el primer tema que no
+    se haya usado en REDES_DIAS_SIN_REPETIR días. Si ese tipo no tiene ninguno, se prueba el siguiente."""
+    hoy = hoy or _ahora_madrid().date()
+    _redes_tabla()
+    with _db_lock:
+        ya = _db.execute("SELECT id FROM redes_publicaciones WHERE clave LIKE ? AND tipo!='caso'",
+                         (f"%@{hoy.isoformat()}",)).fetchone()
+    if ya:
+        return None
+    inicio = hoy.toordinal() % len(_REDES_TIPOS_DIARIOS)
+    for i in range(len(_REDES_TIPOS_DIARIOS)):
+        tipo = _REDES_TIPOS_DIARIOS[(inicio + i) % len(_REDES_TIPOS_DIARIOS)]
+        try:
+            for cand in _REDES_CANDIDATOS[tipo]():
+                if not _redes_tema_reciente(cand["tema"]):
+                    return _redes_crear(cand, clave=f"{cand['tema']}@{hoy.isoformat()}")
+        except Exception as e:
+            print(f"[redes] ejemplo de tipo {tipo}: {type(e).__name__}: {e}", flush=True)
+    return None
+
+
+def _redes_casos_nuevos():
+    """Casos publicados en /casos que aún no están en el registro. La primera vez (al encender el bot) los que ya
+    había se apuntan como «anteriores» y no se publican: solo salen los que lleguen después."""
+    _redes_tabla()
+    publicados = [c for c in _CASOS if c.get("slug") not in _CASOS_BORRADOR_POR_SLUG]
+    with _db_lock:
+        sembrado = _db.execute("SELECT 1 FROM redes_publicaciones WHERE tipo='caso' LIMIT 1").fetchone() is not None
+        conocidos = {r[0] for r in _db.execute("SELECT clave FROM redes_publicaciones WHERE tipo='caso'")}
+    nuevos = []
+    for c in publicados:
+        clave = f"caso:{c['slug']}"
+        if clave in conocidos:
+            continue
+        entrada = {"tipo": "caso", "tema": clave, "titulo": c["titulo"], "frase": REDES_MOD.dos_frases(c["resumen"]),
+                   "ruta": f"/casos/{c['slug']}", "etiqueta": "Caso"}
+        id_ = _redes_crear(entrada, clave=clave, estado=None if sembrado else "anterior")
+        if id_ and sembrado:
+            nuevos.append(id_)
+    return nuevos
+
+
+# ── Publicar ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+def _redes_http():
+    import requests
+    return requests.Session()
+
+
+def _redes_publicar_una(id_, http=None, esperar=time.sleep):
+    """Publica una entrada aprobada en las redes configuradas que aún no la tengan. Cada red por separado."""
+    if not REDES_MOD.activas():
+        return {}
+    ahora = time.time()
+    with _db_lock:      # «coger» la entrada: dos trabajadores de gunicorn no la publican a la vez
+        cur = _db.execute("UPDATE redes_publicaciones SET ocupada=? WHERE id=? AND estado IN ('aprobada','parcial') "
+                          "AND (ocupada IS NULL OR ocupada<?)", (ahora, id_, ahora - 600))
+        _db.commit()
+        if cur.rowcount != 1:
+            return {}
+        fila = _db.execute("SELECT textos, tarjeta, llave, redes FROM redes_publicaciones WHERE id=?", (id_,)).fetchone()
+    textos, png, llave, redes = json.loads(fila[0]), fila[1], fila[2], json.loads(fila[3] or "{}")
+    url_img = f"{SITE_URL.rstrip('/')}/redes/tarjeta/{id_}-{llave}.png"
+    http = http or _redes_http()
+    for red in REDES_MOD.redes_configuradas():
+        r = redes.get(red) or {}
+        if r.get("estado") == "publicada" or r.get("intentos", 0) >= REDES_INTENTOS:
+            continue
+        try:
+            pid = REDES_MOD.publicar(red, http, os.environ, textos[red], url_img, png, esperar=esperar)
+            redes[red] = {"estado": "publicada", "id": pid, "ts": time.time(), "intentos": r.get("intentos", 0) + 1}
+        except Exception as e:                  # ErrorRed ya viene sin claves; cualquier otro, igual de controlado
+            redes[red] = {"estado": "error", "error": str(e)[:300], "ts": time.time(),
+                          "intentos": r.get("intentos", 0) + 1}
+            print(f"[redes] {id_} {red}: {str(e)[:200]}", flush=True)
+    conf = REDES_MOD.redes_configuradas()
+    hechas = [r for r in conf if (redes.get(r) or {}).get("estado") == "publicada"]
+    quedan = [r for r in conf if (redes.get(r) or {}).get("estado") != "publicada"
+              and (redes.get(r) or {}).get("intentos", 0) < REDES_INTENTOS]
+    if not conf:
+        estado = "aprobada"                  # sin claves todavía: espera
+    elif quedan:
+        estado = "parcial"                   # alguna red falló y le quedan intentos (la próxima pasada lo reintenta)
+    elif hechas:
+        estado = "publicada"                 # en todas, o en las que se pudo (los errores quedan a la vista)
+    else:
+        estado = "error"
+    with _db_lock:
+        _db.execute("UPDATE redes_publicaciones SET redes=?, estado=?, ocupada=NULL WHERE id=?",
+                    (json.dumps(redes, ensure_ascii=False), estado, id_))
+        _db.commit()
+    return redes
+
+
+def _redes_publicar_pendientes(http=None, esperar=time.sleep):
+    if not REDES_MOD.activas() or not REDES_MOD.redes_configuradas():
+        return 0
+    _redes_tabla()
+    with _db_lock:
+        ids = [r[0] for r in _db.execute("SELECT id FROM redes_publicaciones WHERE estado IN ('aprobada','parcial') "
+                                         "ORDER BY id LIMIT 10")]
+    for id_ in ids:
+        try:
+            _redes_publicar_una(id_, http=http, esperar=esperar)
+        except Exception as e:
+            print(f"[redes] publicar {id_}: {type(e).__name__}: {e}", flush=True)
+    return len(ids)
+
+
+def _redes_pasada_diaria(http=None, esperar=time.sleep):
+    """Lo que hace el flujo diario: el ejemplo de hoy, los casos nuevos y publicar lo aprobado. Solo recuentos."""
+    if not REDES_MOD.activas():
+        return {"activas": False}
+    with _redes_lock:
+        res = {"activas": True, "ensayo": REDES_MOD.ensayo(), "redes": REDES_MOD.redes_configuradas()}
+        try:
+            res["ejemplo"] = bool(_redes_ejemplo_del_dia())
+            res["casos_nuevos"] = len(_redes_casos_nuevos())
+            res["intentadas"] = _redes_publicar_pendientes(http=http, esperar=esperar)
+        except Exception as e:
+            res["error"] = f"{type(e).__name__}"
+            print(f"[redes] pasada diaria: {type(e).__name__}: {e}", flush=True)
+        with _db_lock:
+            res["pendientes_de_aprobar"] = _db.execute(
+                "SELECT count(*) FROM redes_publicaciones WHERE estado='pendiente'").fetchone()[0]
+        return res
+
+
+def _redes_al_arrancar():
+    """Hilo de arranque (tras un despliegue): casos nuevos y, sin modo ensayo, publicarlos ya."""
+    if not REDES_MOD.activas():
+        return
+    time.sleep(90)                          # que la web esté sirviendo: Instagram y Facebook piden la tarjeta
+    try:
+        with _redes_lock:
+            if _redes_casos_nuevos() and not REDES_MOD.ensayo():
+                _redes_publicar_pendientes()
+    except Exception as e:
+        print(f"[redes] al arrancar: {type(e).__name__}: {e}", flush=True)
+
+
+# ── Tarjeta pública y panel ──────────────────────────────────────────────────────────────────────────────────────────
+
+def _redes_tarjeta_resp(path):
+    m = re.fullmatch(r"/redes/tarjeta/(\d{1,9})-([0-9a-f]{16})\.png", path)
+    if not m:
+        return 404, {"Content-Length": "0"}, b""
+    try:
+        with _db_lock:
+            fila = _db.execute("SELECT tarjeta, llave FROM redes_publicaciones WHERE id=? AND estado!='rechazada'",
+                               (int(m.group(1)),)).fetchone()
+    except sqlite3.Error:
+        fila = None
+    if not fila or not hmac.compare_digest(fila[1], m.group(2)):
+        return 404, {"Content-Length": "0"}, b""
+    return 200, {"Content-Type": "image/png", "Content-Length": str(len(fila[0])),
+                 "Cache-Control": "public, max-age=86400", "X-Robots-Tag": "noindex"}, bytes(fila[0])
+
+
+def _redes_panel_html(cookie, hecho=""):
+    _redes_tabla()
+    csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
+    conf = REDES_MOD.redes_configuradas()
+    faltan = {r: [k for k in REDES_MOD.CLAVES[r] if not os.environ.get(k, "").strip()] for r in REDES_MOD.REDES}
+    estado = (('<div class="aviso"><b>APAGADO</b> (falta REDES_ACTIVAS=1 en Render): no se prepara nada solo y no se '
+               'publica nada. Puedes preparar un borrador para ver cómo queda.</div>') if not REDES_MOD.activas() else
+              f'<div class="aviso"><b>Encendido</b>{" en <b>modo ensayo</b>: nada sale sin tu aprobación" if REDES_MOD.ensayo() else ", SIN modo ensayo: lo aprobado sale solo"}.'
+              f' Redes con claves: {esc(", ".join(REDES_MOD.NOMBRE_RED[r] for r in conf)) or "ninguna"}.</div>')
+    claves = "".join(f'<tr><th>{REDES_MOD.NOMBRE_RED[r]}</th><td>'
+                     + ("todas las claves" if not faltan[r] else "faltan: " + esc(", ".join(faltan[r]))) + "</td></tr>"
+                     for r in REDES_MOD.REDES)
+    with _db_lock:
+        filas = _db.execute("SELECT id, tipo, tema, creada, estado, titulo, url, textos, llave, redes FROM "
+                            "redes_publicaciones WHERE estado!='anterior' ORDER BY id DESC LIMIT 40").fetchall()
+        anteriores = _db.execute("SELECT count(*) FROM redes_publicaciones WHERE estado='anterior'").fetchone()[0]
+    items = ""
+    for id_, tipo, tema, creada, est, titulo, url, textos, llave, redes in filas:
+        tx, rd = json.loads(textos), json.loads(redes or "{}")
+        res = " · ".join(f'{REDES_MOD.NOMBRE_RED[r]}: {esc(v.get("estado", ""))}'
+                         + (f' ({esc(v.get("error", ""))})' if v.get("error") else "") for r, v in rd.items())
+        botones = ""
+        if est == "pendiente":
+            botones = (f'<form method="post" action="/admin/revision/redes/accion" class="acc">{csrf}'
+                       f'<input type="hidden" name="id" value="{id_}">'
+                       f'<button type="submit" name="accion" value="aprobar">Aprobar y publicar</button> '
+                       f'<button type="submit" name="accion" value="rechazar" class="sec">Rechazar</button></form>')
+        textos_html = "".join(f'<details><summary>{REDES_MOD.NOMBRE_RED[r]} ({REDES_MOD.largo_x(t) if r == "x" else len(t)} '
+                              f'caracteres)</summary><pre style="white-space:pre-wrap">{esc(t)}</pre></details>'
+                              for r, t in tx.items())
+        items += (f'<div class="item" style="display:flex;gap:16px;flex-wrap:wrap;border-top:1px solid #ddd;padding:12px 0">'
+                  f'<img src="/redes/tarjeta/{id_}-{llave}.png" width="216" height="270" alt="" '
+                  f'style="border:1px solid #ccc">'
+                  f'<div style="flex:1 1 320px"><b>{esc(titulo)}</b><br><span class="sub">#{id_} · {esc(tipo)} · '
+                  f'{time.strftime("%d/%m/%Y %H:%M", time.gmtime(creada))} UTC · <b>{esc(est)}</b></span><br>'
+                  f'<a href="{esc(url)}" target="_blank" rel="noopener">{esc(url)}</a>{textos_html}'
+                  f'<p class="sub">{res}</p>{botones}</div></div>')
+    aviso = {"aprobar": "Aprobada.", "rechazar": "Rechazada.", "preparar": "Borrador preparado.",
+             "nada": "No había nada nuevo que preparar (hoy ya hay uno, o todos los temas se usaron hace poco)."}.get(hecho, "")
+    cuerpo = (f'<h1>Redes sociales</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a></p>{estado}'
+              + (f'<div class="aviso">{aviso}</div>' if aviso else "")
+              + f'<table class="t">{claves}<tr><th>Casos anteriores al encendido (no se publican)</th>'
+                f'<td>{anteriores}</td></tr></table>'
+              + f'<form method="post" action="/admin/revision/redes/accion" class="acc">{csrf}'
+                f'<button type="submit" name="accion" value="preparar" class="sec">Preparar el ejemplo de hoy ahora'
+                f'</button></form>'
+              + (items or '<p class="sub">Nada todavía.</p>'))
+    return _revision_pagina("Redes sociales", cuerpo)
+
+
+def _redes_accion(accion, id_txt):
+    if accion == "preparar":
+        with _redes_lock:
+            return "preparar" if _redes_ejemplo_del_dia() else "nada"
+    if not id_txt.isdigit() or accion not in ("aprobar", "rechazar"):
+        return ""
+    _redes_tabla()
+    nuevo = "aprobada" if accion == "aprobar" else "rechazada"
+    with _db_lock:
+        cur = _db.execute("UPDATE redes_publicaciones SET estado=?, aprobada=? WHERE id=? AND estado='pendiente'",
+                          (nuevo, time.time(), int(id_txt)))
+        _db.commit()
+    if cur.rowcount and nuevo == "aprobada" and REDES_MOD.activas():
+        threading.Thread(target=_redes_publicar_una, args=(int(id_txt),), name="redes-publicar", daemon=True).start()
+    return accion if cur.rowcount else ""
+
+
 # ─── TRADUCCIONES DE /casos (2026-10-01, encargo de César: BORRADOR gl/ca/eu, sin publicar) ─────────────────────────
 # backend/casos_i18n/<idioma>/<slug>.html: primera línea "<!-- description: ... -->" y después el cuerpo de la pieza
 # desde el <h1> (sin botones de compartir ni "volver"), con los mismos enlaces que el original.
@@ -29060,6 +29463,11 @@ def _route_get(path, qs, gzip_ok=False):
             headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
         )
 
+    if path.startswith("/redes/tarjeta/"):     # tarjeta de una publicación del bot de redes (la piden IG y FB)
+        return _redes_tarjeta_resp(path)
+    if path in ("/admin/redes", "/admin/redes/"):   # la sesión del panel vive en /admin/revision
+        return 303, {"Location": "/admin/revision/redes", "Content-Length": "0"}, b""
+
     if path == "/favicon.ico":            # los navegadores lo piden aquí aunque la página diga otra cosa
         path = "/static/favicon.ico"
     if path in ("/static/icon-192.png", "/static/icon-512.png", "/static/apple-touch-icon.png",
@@ -29279,6 +29687,13 @@ def _route_post(path, params):
             respuesta = _socios_post(path, params)
             if respuesta:
                 return respuesta
+
+        if path == "/admin/redes-diario":
+            # Pasada diaria del bot de redes (flujo redes-diario.yml); devuelve solo recuentos.
+            if not _token_admin_peticion(params):
+                return _error_resp("No autorizado.", 403)
+            return _resp(json.dumps(_redes_pasada_diaria(), ensure_ascii=False),
+                         content_type="application/json; charset=utf-8")
 
         if path == "/admin/socios-enviar":
             # Una tanda del envío del filtro (flujo socios-envio.yml); devuelve solo recuentos.

@@ -1,0 +1,55 @@
+name: Redes sociales (publicación diaria)
+
+# Bot de redes sociales (2026-11-09, ver «REDES SOCIALES» en backend/app.py). Todo el trabajo lo hace la web: aquí
+# solo se llama a POST /admin/redes-diario una vez al día. La web prepara el «ejemplo de uso» de hoy, mira si hay
+# casos nuevos y publica lo que César ya ha aprobado en /admin/redes.
+#
+# - 17:00 UTC (18:00 peninsular en invierno, 19:00 en verano): fuera del refresco nocturno (~05:00-12:30 UTC, que
+#   reinicia la web con sus auto-commits) y en hora de mucho uso de redes.
+# - Mientras REDES_ACTIVAS no valga 1 en Render, la web contesta {"activas": false} y esto no hace nada.
+#
+# PRIVACIDAD: el repositorio y sus registros son públicos. La respuesta de la web trae solo recuentos y los nombres
+# de las redes configuradas; ni textos ni claves. El token va en la cabecera, no en la dirección.
+
+on:
+  schedule:
+    - cron: "0 17 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: redes-diario
+  cancel-in-progress: false
+
+jobs:
+  redes-diario:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Pasada diaria
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          fin=$(( $(date +%s) + 300 ))
+          while true; do
+            codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 300 -X POST \
+              -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/redes-diario" || echo 000)
+            case "$codigo" in
+              000|502|503|504|520|521|522|523|524)
+                [ "$(date +%s)" -ge "$fin" ] && { echo "::error::La web sigue sin responder (HTTP ${codigo}) tras 5 min."; exit 1; }
+                echo "HTTP ${codigo}: ¿la web está reiniciándose? Reintento en 30 s"; sleep 30 ;;
+              200) break ;;
+              *) echo "::error::La web respondió ${codigo}"; exit 1 ;;
+            esac
+          done
+          cat respuesta.json; echo
+          python3 -c "
+          import json
+          d = json.load(open('respuesta.json'))
+          if d.get('activas') and d.get('error'):
+              print('::warning::La pasada diaria tuvo un error (%s): ver el registro de Render.' % d['error'])
+          if d.get('activas') and d.get('pendientes_de_aprobar'):
+              print('::notice::%s publicaciones esperan tu aprobación en /admin/redes.' % d['pendientes_de_aprobar'])
+          "
