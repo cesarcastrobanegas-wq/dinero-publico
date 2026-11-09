@@ -35,6 +35,8 @@ jobs:
 
       - name: Revisar la web
         run: python backend/revision_privacidad.py --salida hallazgos.json --fichas 15
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}   # la web nunca frena esta revisión (freno A y B, 08-11)
 
       - name: Avisar si hay hallazgos
         env:
