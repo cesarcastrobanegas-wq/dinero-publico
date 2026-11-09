@@ -11310,6 +11310,23 @@ def _fondos_ue_de_entry(entry_xml):
     return [c for c in FONDOS_UE_CODIGOS if c in vistos]
 
 
+# Plan de Recuperación (MRR): el Reglamento (UE) 2021/241, art. 17.2, solo admite medidas iniciadas desde el 1-2-2020.
+# PLACE marca a veces con «Asociado al Plan de Recuperación» contratos adjudicados mucho antes (concesiones de residuos
+# de 1999, 2007, 2009...) porque el órgano vuelve a publicarlos con una modificación o una formalización nueva, y se
+# sumaba el contrato entero. Esos no cuentan como del Plan (09-11-2026, encargo de César): se quedan como «Fondos UE».
+PRTR_DESDE = "2020-02-01"
+_FONDOS_UE_VERSION = "v2-prtr-desde-2020-02"   # cambia la huella: el resumen de /fondos-ue se rehace al arrancar
+
+
+def _fondos_ue_contrato(c):
+    """Códigos de fondos europeos que cuentan para un contrato: los declarados en PLACE, sin el Plan de Recuperación si
+    se adjudicó antes de PRTR_DESDE (entonces queda como «Fondos UE» genérico). Sin fecha, se deja como viene."""
+    cods = list(c.get("fondos_ue") or [])
+    if "PRTR" in cods and (c.get("fecha") or "9999")[:10] < PRTR_DESDE:
+        cods = [x for x in cods if x != "PRTR"] or ["EU"]
+    return cods
+
+
 def _fondos_ue_visibles(codigos):
     """Lo que se enseña: el código genérico "EU" solo cuando no hay otro más concreto."""
     concretos = [c for c in codigos or [] if c != "EU"]
@@ -11323,11 +11340,11 @@ def _aplicar_fondos_ue_place(forzar=False):
     if not _DISCO_CONFIABLE:
         return
     try:
-        fondos, huella = {}, "sin-fichero"
+        fondos, huella = {}, "sin-fichero:" + _FONDOS_UE_VERSION
         if os.path.exists(FONDOS_UE_PLACE_FILE):
             with open(FONDOS_UE_PLACE_FILE, "rb") as f:
                 crudo = f.read()
-            huella = hashlib.sha256(crudo).hexdigest()[:16]
+            huella = hashlib.sha256(crudo).hexdigest()[:16] + ":" + _FONDOS_UE_VERSION
             fondos = json.loads(_gzip.decompress(crudo).decode("utf-8")).get("fondos", {})
             del crudo
         with _db_lock:
@@ -11374,6 +11391,7 @@ def _aplicar_fondos_ue_place(forzar=False):
                             continue
                         cods = c["fondos_ue"] = v.split(",")
                         tocados += 1
+                    cods = _fondos_ue_contrato(dict(c, fondos_ue=cods))
                     url = c.get("url") or f"{tabla}:{key}:{len(vistos)}"
                     if url in vistos:
                         continue
@@ -20156,7 +20174,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
         etiquetas = _fondos_ue_etiquetas()
         tit_ue = esc(_t("Financiación europea declarada en PLACE por el órgano de contratación"))
         fuente_badge += "".join(f' <span class="fuente-badge fondo-ue-badge" title="{tit_ue}">🇪🇺 '
-                                f'{esc(etiquetas.get(k, k))}</span>' for k in _fondos_ue_visibles(c["fondos_ue"]))
+                                f'{esc(etiquetas.get(k, k))}</span>' for k in _fondos_ue_visibles(_fondos_ue_contrato(c)))
 
     muni_html = (f'<div class="lid" style="margin-top:2px">📍 {esc(municipio_label)}</div>'
                  if municipio_label else "")
@@ -22614,7 +22632,7 @@ def _render_fila_contrato_menor(r):
 
     return f"""<tr>
       <td>
-        <div class="empresa">{esc(_persona_fisica_txt(adjudicatari))}{fuente_badge}</div>
+        <div class="empresa">{esc(_persona_fisica_txt(adjudicatari))} {fuente_badge}</div>
         {nif_html}
         <div class="cargo">{esc(r.get("descripcio","")[:110])}</div>{nota_fila}
       </td>
@@ -23606,7 +23624,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         # 2026-10-17: contratos de PLACE de este municipio en los que el órgano declara financiación europea
         con_ue = [c for c in d.get("contratos", []) if c.get("fondos_ue")]
         if con_ue:
-            n_prtr = sum(1 for c in con_ue if "PRTR" in c["fondos_ue"])
+            n_prtr = sum(1 for c in con_ue if "PRTR" in _fondos_ue_contrato(c))
             eur_ue = sum(float(c.get("importe_num") or 0) for c in con_ue if not c.get("importe_aviso"))
             fondos_ue_html = (f'<div class="gs-hint" style="margin:14px 0 0;font-size:13px">🇪🇺 '
                               + _t("{n} contratos de PLACE de este municipio declaran financiación europea ({importe}); "
@@ -24565,13 +24583,8 @@ def _portada_cifras_secciones_html():
                        ("/fondos-ue", fmt_eur(str(fue["importe"])), _t("Importe de fondos UE"))]
     except Exception as e:
         print(f"[portada] cifras de fondos UE: {type(e).__name__}: {e}", flush=True)
-    ahora = _ahora_madrid()
     try:
-        with _db_lock:
-            n_lic = _db.execute("SELECT count(*) FROM licitaciones WHERE estado = 'PUB' AND fin_plazo >= ?",
-                                (ahora.strftime("%Y-%m-%d %H:%M"),)).fetchone()[0]
-            n_sub = (_db.execute("SELECT count(*) FROM subvenciones WHERE fin >= ? AND (inicio = '' OR inicio <= ?)",
-                                 (ahora.strftime("%Y-%m-%d"),) * 2).fetchone()[0] if SUBVENCIONES_PUBLICAS else 0)
+        n_lic, n_sub = _portada_contadores()
         if n_lic:
             cifras.append(("/convocatorias", fmt_num(n_lic), _t("Licitaciones abiertas")))
         if n_sub:
@@ -28637,6 +28650,51 @@ def _calentar_portada():
                 contextvars.copy_context().run(_una)
             except Exception as e:
                 print(f"  [paginas] no se pudo calentar {ruta} ({lang}): {type(e).__name__}: {e}", flush=True)
+
+
+def _paginas_envejecer(ruta):
+    """Da por viejas (no las tira) las páginas guardadas de `ruta` en todos los idiomas: se siguen sirviendo y se
+    vuelven a montar en segundo plano en la próxima visita. Devuelve cuántas había."""
+    limite = time.time() - _PAGINAS_TTL
+    n = 0
+    with _paginas_lock:
+        for k, e in _paginas_cache.items():
+            if len(k) >= 2 and k[1] == ruta:
+                e["ts"] = min(e["ts"], limite)
+                n += 1
+    return n
+
+
+# Revisión del 09-11-2026 (vigilante diario): «Licitaciones abiertas» decía 6.109 en / y 6.145 en /gl/ y /ca/. Cada
+# idioma guarda su portada en la caché de páginas y se monta en un momento distinto, y la cuenta se hacía al montar.
+# Ahora la cuenta es una sola para todos los idiomas (se rehace como mucho cada _PORTADA_CONTADORES_TTL) y, cuando
+# cambia, las portadas de los demás idiomas se dan por viejas y se vuelven a montar en segundo plano con la misma cifra.
+_PORTADA_CONTADORES_TTL = 600
+_portada_contadores_memo = {"ts": 0.0, "valor": None}
+_portada_contadores_lock = threading.Lock()
+
+
+def _portada_contadores(ahora_s=None):
+    """(licitaciones abiertas, subvenciones abiertas): la misma cifra para todos los idiomas de la portada."""
+    ahora_s = time.time() if ahora_s is None else ahora_s
+    with _portada_contadores_lock:
+        m = _portada_contadores_memo
+        if m["valor"] is not None and ahora_s - m["ts"] < _PORTADA_CONTADORES_TTL:
+            return m["valor"]
+    ahora = _ahora_madrid()
+    with _db_lock:
+        n_lic = _db.execute("SELECT count(*) FROM licitaciones WHERE estado = 'PUB' AND fin_plazo >= ?",
+                            (ahora.strftime("%Y-%m-%d %H:%M"),)).fetchone()[0]
+        n_sub = (_db.execute("SELECT count(*) FROM subvenciones WHERE fin >= ? AND (inicio = '' OR inicio <= ?)",
+                             (ahora.strftime("%Y-%m-%d"),) * 2).fetchone()[0] if SUBVENCIONES_PUBLICAS else 0)
+    nuevo = (n_lic, n_sub)
+    with _portada_contadores_lock:
+        m = _portada_contadores_memo
+        cambio = m["valor"] is not None and m["valor"] != nuevo
+        m["ts"], m["valor"] = ahora_s, nuevo
+    if cambio and _paginas_envejecer("/"):
+        threading.Thread(target=_calentar_portada, daemon=True, name="portada-contadores").start()
+    return nuevo
 
 
 def _paginas_invalidar(grupo):
