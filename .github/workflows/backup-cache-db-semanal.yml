@@ -71,9 +71,9 @@ jobs:
         run: |
           ok=0
           for intento in 1 2 3 4 5; do
-            codigo=$(curl -sS --max-time 900 -o cache.db -w "%{http_code}" \
-              -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/cache-db" || echo 000)
-            tam=$(stat -c%s cache.db 2>/dev/null || echo 0)
+            codigo=$(curl -sS --max-time 900 -o descarga.db.gz -w "%{http_code}" \
+              -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/cache-db?formato=gz" || echo 000)
+            tam=$(stat -c%s descarga.db.gz 2>/dev/null || echo 0)
             echo "Intento ${intento}: HTTP ${codigo}, ${tam} bytes"
             if [ "$codigo" = "200" ] && [ "$tam" -ge 1000000 ]; then
               ok=1
@@ -85,6 +85,9 @@ jobs:
             echo "::error::No se consiguió un cache.db válido: no se toca la copia existente."
             exit 1
           fi
+          # 2026-11-06 (ancho de banda de Render): la base llega comprimida (~333 MB en vez de 1.509 MB). Si la web
+          # todavía no sabe comprimirla, llega tal cual y se usa igual.
+          if [ "$(head -c 2 descarga.db.gz | od -An -tx1 | tr -d ' \n')" = "1f8b" ]; then gunzip -c descarga.db.gz > cache.db; rm -f descarga.db.gz; else mv -f descarga.db.gz cache.db; fi
 
       - name: Comprobación de integridad
         if: steps.token.outputs.hay == 'si'

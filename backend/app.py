@@ -287,7 +287,7 @@ def _i18n_ajustar_respuesta(resp, lang, gzip_ok):
         headers["X-Robots-Tag"] = "noindex"
     if (gzip_ok and body and headers.get("Content-Encoding") != "gzip"
             and ctype.startswith(("text/", "application/json", "application/xml", "application/javascript"))):
-        body = _gzip.compress(body, compresslevel=6)
+        body = _gzip.compress(body, compresslevel=6, mtime=0)
         headers["Content-Encoding"] = "gzip"
     if "Content-Length" in headers or body:
         headers["Content-Length"] = str(len(body))
@@ -2244,6 +2244,32 @@ DB_FILE = os.path.join(DATA_DIR, "cache.db")
 CACHE_DB_COPIA = os.path.join(DATA_DIR, ".cache_db_export_copia.db")
 CACHE_DB_COPIA_VIGENCIA_S = 2 * 3600
 _cache_db_copia_lock = threading.Lock()
+
+
+def _cache_db_comprimir(origen, destino):
+    """Comprime `origen` en `destino` (gzip nivel 6, por trozos de 1 MB, sin cargarlo en memoria) y deja su huella en
+    destino + ".sha256". Escritura atómica: quien esté descargando la versión anterior la sigue leyendo."""
+    tmp = destino + ".nueva"
+    try:
+        with open(origen, "rb") as src, open(tmp, "wb") as raw:
+            with _gzip.GzipFile(filename="", mode="wb", fileobj=raw, compresslevel=6, mtime=0) as gz:
+                for trozo in iter(lambda: src.read(1 << 20), b""):
+                    gz.write(trozo)
+        h = hashlib.sha256()
+        with open(tmp, "rb") as f:
+            for trozo in iter(lambda: f.read(1 << 20), b""):
+                h.update(trozo)
+        with open(tmp + ".sha256", "w") as f:
+            f.write(h.hexdigest())
+        os.replace(tmp + ".sha256", destino + ".sha256")
+        os.replace(tmp, destino)
+    except Exception:
+        for _t in (tmp, tmp + ".sha256"):
+            try:
+                os.remove(_t)
+            except OSError:
+                pass
+        raise
 _RANGO_PETICION = contextvars.ContextVar("rango_peticion", default="")   # cabecera Range de la petición en curso
 _TOKEN_CABECERA = contextvars.ContextVar("token_cabecera", default="")   # cabecera X-Admin-Token de la petición en curso
 
@@ -3016,7 +3042,21 @@ def _cargar_mapa_cobertura_geo():
                 ccaas = json.load(f)
     except Exception:
         pass
+    # 2026-11-06 (ancho de banda de Render): las coordenadas venían con 3 decimales en un lienzo de 980x760 y el mapa
+    # ocupaba 356 KB de los 490 KB de la portada (cada contorno sale varias veces: recorte, rayado, borde). Con un
+    # decimal el error es de 0,05 unidades, invisible, y la portada pasa de 181 KB a ~129 KB comprimida.
+    for geo in (*provs, *ccaas):
+        if isinstance(geo, dict) and isinstance(geo.get("d"), str):
+            geo["d"] = _redondear_trazado(geo["d"])
     return provs, ccaas
+
+
+def _redondear_trazado(d, decimales=1):
+    """Trazado SVG con cada número redondeado a `decimales` (sin ceros sobrantes: 12.0 -> 12, -0.0 -> 0)."""
+    def _num(m):
+        t = f"{float(m.group(0)):.{decimales}f}".rstrip("0").rstrip(".")
+        return "0" if t in ("-0", "") else t
+    return re.sub(r"-?\d+\.\d+", _num, d)
 
 
 MAPA_COBERTURA_PROVINCIAS_GEO, MAPA_COBERTURA_CCAA_GEO = _cargar_mapa_cobertura_geo()
@@ -27520,8 +27560,40 @@ _HTTP_STATUS_TEXT = {
     200: "OK", 204: "No Content", 206: "Partial Content", 301: "Moved Permanently", 303: "See Other", 400: "Bad Request",
     409: "Conflict", 413: "Payload Too Large", 423: "Locked", 429: "Too Many Requests",
     403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed", 416: "Range Not Satisfiable",
-    500: "Internal Server Error",
+    500: "Internal Server Error", 304: "Not Modified",
 }
+
+# Rastreadores de textos para entrenar modelos de IA: fuera en robots.txt (ver /robots.txt). Ni Google ni Bing.
+_ROBOTS_IA_ENTRENAMIENTO = ("GPTBot", "CCBot", "ClaudeBot", "anthropic-ai", "Google-Extended", "Applebot-Extended",
+                            "meta-externalagent", "Bytespider", "Amazonbot", "cohere-ai", "cohere-training-data-crawler",
+                            "Diffbot", "ImagesiftBot", "Timpibot", "omgili", "AI2Bot", "PanguBot")
+
+# «&amp;» copiado tal cual en la consulta (al principio o tras un «&»): ver la redirección de _app_wsgi
+_RE_QS_AMP = re.compile(r"(^|&)amp;")
+
+
+def _con_etag(path, si_no_coincide, code, headers, body):
+    """ETag y 304 (2026-11-06, ancho de banda de Render). A cada respuesta 200 de una página, del sitemap o de un JSON
+    público se le pone un ETag sacado del propio cuerpo (ya comprimido, con gzip determinista); si el cliente manda
+    If-None-Match con ese mismo valor, recibe un 304 sin cuerpo. Los buscadores repiten mucho las mismas páginas y
+    sitemap.xml (760 KB comprimido) cambia una vez al día. No toca /admin, las respuestas no-store, las que ponen
+    cookie ni las que van por trozos."""
+    if (code != 200 or not isinstance(body, (bytes, bytearray)) or not body or path.startswith("/admin")
+            or "no-store" in headers.get("Cache-Control", "") or "Set-Cookie" in headers or "ETag" in headers):
+        return code, headers, body
+    cod = headers.get("Content-Encoding", "")
+    etag = 'W/"' + hashlib.sha1(bytes(body)).hexdigest()[:20] + ("-gz" if cod == "gzip" else "") + '"'
+    headers = dict(headers)
+    headers["ETag"] = etag
+    vary = headers.get("Vary", "")
+    if "accept-encoding" not in vary.lower():
+        headers["Vary"] = (vary + ", " if vary else "") + "Accept-Encoding"
+    pedidos = [e.strip() for e in (si_no_coincide or "").split(",")]
+    if etag in pedidos or "*" in pedidos:
+        cab = {k: v for k, v in headers.items() if k in ("ETag", "Vary", "Cache-Control")}
+        cab["Content-Length"] = "0"
+        return 304, cab, b""
+    return code, headers, body
 
 
 def _resp(body, content_type="text/html; charset=utf-8", code=200, headers=None, gzip_ok=False):
@@ -27529,7 +27601,7 @@ def _resp(body, content_type="text/html; charset=utf-8", code=200, headers=None,
     hdrs = dict(headers or {})
     hdrs["Content-Type"] = content_type
     if gzip_ok:
-        b = _gzip.compress(b, compresslevel=6)
+        b = _gzip.compress(b, compresslevel=6, mtime=0)
         hdrs["Content-Encoding"] = "gzip"
     hdrs["Content-Length"] = str(len(b))
     return code, hdrs, b
@@ -28614,7 +28686,7 @@ _paginas_stats = {"servidas": 0, "servidas_viejas": 0, "montadas": 0, "montadas_
 
 
 def _pagina_guardar(clave, html_txt, grupo=None):
-    gz = _gzip.compress(html_txt.encode("utf-8"), compresslevel=6)
+    gz = _gzip.compress(html_txt.encode("utf-8"), compresslevel=6, mtime=0)
     with _paginas_lock:
         _paginas_cache[clave] = {"gz": gz, "ts": time.time(), "refrescando": False, "grupo": grupo}
         _paginas_cache.move_to_end(clave)
@@ -28990,7 +29062,15 @@ def _route_get(path, qs, gzip_ok=False):
         # paginar ya lleva el municipio. Cualquier dirección con pag= o pag_cm= (también pag_alc=, pag_idx=...).
         bloqueos += "Disallow: /*pag=\nDisallow: /*pag_\n"
         # bloqueos ANTES de "Allow: /": hay rastreadores que aplican la primera regla que casa, no la más larga
-        body = f"User-agent: *\nDisallow: /admin/\n{bloqueos}Allow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n"
+        # 2026-11-06 (ancho de banda de Render, propuesta pendiente de César): fuera los rastreadores que solo recogen
+        # textos para ENTRENAR modelos de IA (no traen visitas). Siguen permitidos Google y Bing, y también los que
+        # buscan para responder a una pregunta y citan la fuente (OAI-SearchBot, ChatGPT-User, Claude-SearchBot,
+        # Claude-User, PerplexityBot), que sí pueden traer visitas. Google-Extended y Applebot-Extended no son
+        # rastreadores aparte: solo dicen si Google o Apple pueden usar lo ya rastreado para entrenar; no tocan la
+        # búsqueda. Bytespider y Amazonbot ya reciben un 403 (_RE_UA_BLOQUEADO); aquí quedan dichos también.
+        ia = "".join(f"User-agent: {b}\n" for b in _ROBOTS_IA_ENTRENAMIENTO)
+        body = (f"{ia}Disallow: /\n\nUser-agent: *\nDisallow: /admin/\n{bloqueos}Allow: /\n\n"
+                f"Sitemap: {SITE_URL}/sitemap.xml\n")
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
 
     if path == "/sitemap.xml":
@@ -29188,6 +29268,21 @@ def _route_get(path, qs, gzip_ok=False):
             creada = os.path.getmtime(CACHE_DB_COPIA)
             with open(CACHE_DB_COPIA + ".sha256") as f:
                 sha = f.read().strip()
+            ruta_servir, nombre = CACHE_DB_COPIA, "cache.db"
+            if qs.get("formato", [""])[0] == "gz":
+                # 2026-11-06 (ancho de banda de Render): la MISMA copia, comprimida con gzip (1.509 MB -> ~333 MB). Se
+                # hace una vez por copia y se reutiliza entre intentos; con Range nunca se rehace (si no está, 416).
+                ruta_servir, nombre = CACHE_DB_COPIA + ".gz", "cache.db.gz"
+                al_dia = (os.path.exists(ruta_servir) and os.path.exists(ruta_servir + ".sha256")
+                          and os.path.getmtime(ruta_servir) >= creada)
+                if not al_dia:
+                    if m_rango:
+                        return 416, {"Content-Type": "text/plain; charset=utf-8", "Content-Length": "0"}, b""
+                    _cache_db_comprimir(CACHE_DB_COPIA, ruta_servir)
+                tamano = os.path.getsize(ruta_servir)
+                creada = os.path.getmtime(ruta_servir)
+                with open(ruta_servir + ".sha256") as f:
+                    sha = f.read().strip()
             if "info" in qs:
                 return _resp(json.dumps({"bytes": tamano, "sha256": sha,
                                          "creada": datetime.fromtimestamp(creada).isoformat(timespec="seconds")}),
@@ -29195,7 +29290,7 @@ def _route_get(path, qs, gzip_ok=False):
             inicio = int(m_rango.group(1)) if m_rango else 0
             if inicio >= tamano:
                 return 416, {"Content-Range": f"bytes */{tamano}", "Content-Length": "0"}, b""
-            f = open(CACHE_DB_COPIA, "rb")          # abierto ya: si luego se reemplaza la copia, esta sigue igual
+            f = open(ruta_servir, "rb")             # abierto ya: si luego se reemplaza la copia, esta sigue igual
         f.seek(inicio)
 
         def _trozos():
@@ -29208,7 +29303,7 @@ def _route_get(path, qs, gzip_ok=False):
             finally:
                 f.close()
         cabeceras = {"Content-Type": "application/octet-stream",
-                     "Content-Disposition": 'attachment; filename="cache.db"',
+                     "Content-Disposition": f'attachment; filename="{nombre}"',
                      "Accept-Ranges": "bytes", "ETag": f'"{sha[:32]}"',
                      "X-Cache-Db-Sha256": sha,
                      "Content-Length": str(tamano - inicio)}
@@ -30447,6 +30542,12 @@ def _app_wsgi(environ, start_response):
             length = 0
         _visitas_evento(environ, (environ["wsgi.input"].read(length) if length else b"").decode("ascii", "ignore").strip())
         code, headers, body = 204, {"Content-Length": "0", "Cache-Control": "no-store"}, b""
+    elif method == "GET" and _RE_QS_AMP.search(environ.get("QUERY_STRING", "")) and not path.startswith("/admin"):
+        # 2026-11-06: hay rastreadores que copian del sitemap «&amp;» sin traducirlo y piden /?muni=X&amp;provincia=Y
+        # (la provincia llega como «amp;provincia» y se pierde). Una redirección de pocos bytes a la dirección buena en
+        # vez de montar y enviar otra vez la ficha entera.
+        destino = path + "?" + _RE_QS_AMP.sub(r"\1", environ.get("QUERY_STRING", ""))
+        code, headers, body = 301, {"Location": destino, "Content-Length": "0", "Cache-Control": "public, max-age=86400"}, b""
     elif method == "GET":
         t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
         try:
@@ -30454,6 +30555,7 @@ def _app_wsgi(environ, start_response):
                                                   query_string=environ.get("QUERY_STRING", ""))
         finally:
             _RANGO_PETICION.reset(t_rango)
+        code, headers, body = _con_etag(path, environ.get("HTTP_IF_NONE_MATCH", ""), code, headers, body)
     elif method == "POST" and path == "/admin/subvenciones":
         try:
             length = int(environ.get("CONTENT_LENGTH") or 0)
