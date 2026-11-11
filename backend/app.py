@@ -19531,6 +19531,39 @@ def _header_html(provincia="todas", con_lema=True, buscador_aqui=False):
 </header>"""
 
 
+# ─── ENLACES DE VENTA (2026-11-04, «listo para vender») ─────────────────────────────────────────────────────────────
+# Con todo apagado la web queda EXACTAMENTE como antes. Se leen al arrancar, igual que en los PR #19 y #20:
+#   PRECIOS_VISIBLE=1        añade «Precios» (/precios, PR #19) al pie;
+#   TEXTOS_LEGALES_NUEVOS=1  el «Aviso Legal» del pie pasa a /legal/aviso-legal, se añaden Privacidad, Condiciones y
+#                            Cookies (PR #20), el aviso de cookies y el formulario de alertas enlazan a la privacidad
+#                            nueva, /aviso-legal redirige (302: si se apaga la variable, vuelve el viejo sin que los
+#                            navegadores recuerden la redirección) y /aviso-legal sale del sitemap.
+# Enciéndelas solo con los PR #19 y #20 fusionados (sin ellos esas rutas dan 404).
+_VENTA_PRECIOS = os.environ.get("PRECIOS_VISIBLE", "") == "1"
+_VENTA_TEXTOS_LEGALES = os.environ.get("TEXTOS_LEGALES_NUEVOS", "") == "1"
+
+
+def _venta_aviso_legal_href():
+    return "/legal/aviso-legal" if _VENTA_TEXTOS_LEGALES else "/aviso-legal"
+
+
+def _venta_privacidad_href(viejo, ancla):
+    """Con los textos nuevos, /legal/privacidad<ancla>; si no, el enlace de siempre (`viejo`)."""
+    return "/legal/privacidad" + ancla if _VENTA_TEXTOS_LEGALES else viejo
+
+
+def _venta_pie_extra():
+    """Enlaces que se añaden al pie detrás de «Aviso Legal»; cadena vacía con todo apagado."""
+    extra = ""
+    if _VENTA_TEXTOS_LEGALES:
+        extra += (f'\n    <a href="/legal/privacidad">{_t("Privacidad")}</a>'
+                  f'\n    <a href="/legal/condiciones">{_t("Condiciones de contratación")}</a>'
+                  f'\n    <a href="/legal/privacidad#cookies">{_t("Cookies")}</a>')
+    if _VENTA_PRECIOS:
+        extra += f'\n    <a href="/precios">{_t("Precios")}</a>'
+    return extra
+
+
 def _footer_html(provincia="todas"):
     es_murcia = provincia == "murcia"
     _link_place = '<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>'
@@ -19575,7 +19608,7 @@ def _footer_html(provincia="todas"):
     <a href="/rankings{_q_prov_first(provincia)}#alcaldes">{_t("Sueldos Alcaldes")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
     <a href="/convocatorias">{_t("Convocatorias abiertas")}</a>
-    <a href="/aviso-legal">{_t("Aviso Legal")}</a>
+    <a href="{_venta_aviso_legal_href()}">{_t("Aviso Legal")}</a>{_venta_pie_extra()}
     <a href="#" id="cookie-preferencias">{_t("Preferencias de cookies")}</a>
     <a href="/quien-soy">{_t("Quién soy")}</a>
     <a href="/casos">{_t("Casos")}</a>
@@ -19608,7 +19641,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     og_url = f"{SITE_URL}{og_path}"
     aviso_cookies = _t("Usamos cookies propias y de terceros (Google Analytics y, en el futuro, publicidad de Google "
                        "AdSense) para analizar el uso del sitio y, si las aceptas, mostrar anuncios — {enlace}.").format(
-        enlace=f'<a href="/aviso-legal">{_t("más información")}</a>')
+        enlace=f'<a href="{_venta_privacidad_href("/aviso-legal", "#cookies")}">{_t("más información")}</a>')
     return f"""<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -28471,7 +28504,7 @@ def _alertas_form_html(tipo, fl, boton=None):
             f'placeholder="{esc(_t("Tu correo electrónico"))}">'
             f'<button type="submit" class="btn btn-primary">{esc(boton or _t("Avísame por correo"))}</button></form>'
             f'<div class="alerta-nota">{_t("Gratis. Te pediremos confirmar el correo; baja con un clic en cada mensaje.")} '
-            f'<a href="/aviso-legal#alertas">{_t("Privacidad")}</a></div>')
+            f'<a href="{_venta_privacidad_href("/aviso-legal#alertas", "#alertas")}">{_t("Privacidad")}</a></div>')
 
 
 def _alertas_ficha_html(municipio, provincia):
@@ -29042,6 +29075,8 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(render_caso_quiebras_vitoria_html(), gzip_ok=gzip_ok)
 
     if path == "/aviso-legal":
+        if _VENTA_TEXTOS_LEGALES:      # aviso legal nuevo (PR #20); bajo /gl/, /ca/, /eu/ se prefija solo
+            return 302, {"Location": "/legal/aviso-legal", "Content-Length": "0", "Cache-Control": "no-store"}, b""
         return _resp(render_aviso_legal_html(), gzip_ok=gzip_ok)
 
     if path == "/ads.txt":
@@ -29093,6 +29128,8 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/casos</loc><changefreq>weekly</changefreq></url>"] + [
                 f"  <url><loc>{esc(SITE_URL)}/casos/{esc(c['slug'])}</loc><changefreq>monthly</changefreq></url>"
                 for c in _CASOS]
+        if _VENTA_TEXTOS_LEGALES:      # /aviso-legal redirige al nuevo (noindex): fuera del sitemap
+            urls = [u for u in urls if "/aviso-legal</loc>" not in u]
         for prov in MUNICIPIOS_POR_PROVINCIA:
             if prov == "murcia":
                 continue  # sin parámetro, ya cubierto por las URLs de arriba
