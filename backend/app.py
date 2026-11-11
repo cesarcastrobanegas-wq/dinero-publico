@@ -5466,7 +5466,9 @@ def alcalde_concejales_html(municipio, provincia=None):
         retrib_html = ""
         if retrib and retrib.get("importe") is not None:
             anio = retrib.get("anio", "")
-            anio_html = f" (ISPA {esc(anio)})" if anio else ""
+            # 07-11-2026: el año es el del ejercicio de los datos; «ISPA 2024» parecía el nombre de la edición (la que
+            # publica los de 2024 es ISPA 2025, como dice la cabecera de /rankings).
+            anio_html = " (" + _t("retribuciones de {anio}").format(anio=esc(anio)) + ")" if anio else ""
             if retrib["importe"] == 0:
                 # Verificado 2026-08-09 en 3 casos reales (Sabadell, Sant
                 # Boi de Llobregat, Granollers, los 3 alcaldesas que también
@@ -21665,7 +21667,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
                           else "&lt; " + fmt_eur(0.01) + _t("/hab.") if dph < 0.005
                           else fmt_eur(dph) + _t("/hab."))
         # el año de ISPA va en cada fila: es el último dato oficial del cargo, no un sueldo en tiempo real
-        anio_fila_html = f' <span class="pol-retrib-nota">ISPA {esc(f["anio"])}</span>' if f.get("anio") else ""
+        anio_fila_html = (' <span class="pol-retrib-nota">' + _t("retribuciones de {anio}").format(anio=esc(f["anio"]))
+                          + "</span>") if f.get("anio") else ""
         relevo_html = ""
         if f.get("relevo"):
             relevo_html = (f'<div class="pol-retrib-nota">'
@@ -21724,7 +21727,8 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
         deuda_hab_html = (fmt_eur(f["deuda_por_habitante"]) + _t("/hab.") if f["deuda_por_habitante"] is not None else "—")
         pres_html = (f'👤 {esc(f["presidente_nombre"])} — {esc(f["presidente_cargo"])}'
                      if f["presidente_nombre"] else f'<span class="noloc-warn">{_t("Sin datos")}</span>')
-        sueldo_html = (f'💰 {fmt_eur(f["presidente_sueldo"])}{_t("/año")} (ISPA {esc(f["presidente_anio"])})'
+        anio_pres_txt = _t("retribuciones de {anio}").format(anio=esc(f["presidente_anio"]))
+        sueldo_html = (f'💰 {fmt_eur(f["presidente_sueldo"])}{_t("/año")} ({anio_pres_txt})'
                        if f["presidente_sueldo"] is not None else "")
         resumen_prov_html += f"""<div class="top1-card">
           <div class="top1-label">📍 {esc(f['label'])}</div>
