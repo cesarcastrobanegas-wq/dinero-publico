@@ -5,9 +5,18 @@ name: Copia semanal de cache.db (repositorio privado aparte)
 # flujo se ejecuta aquí, donde los minutos de Actions son gratuitos, pero sube la copia, comprimida, como fichero
 # adjunto de una «release» del repositorio PRIVADO `dinero-publico-copias`, y conserva solo las dos últimas.
 #
-# Secretos: ADMIN_TOKEN (solo para leer GET /admin/cache-db) y COPIAS_TOKEN (token limitado de César con permiso
-# «Contents: Read and write» únicamente sobre el repositorio privado). Sin COPIAS_TOKEN el flujo no hace nada.
+# Secretos: ADMIN_TOKEN (solo para leer GET /admin/cache-db), COPIAS_TOKEN (token limitado del titular con permiso
+# «Contents: Read and write» únicamente sobre el repositorio privado) y ALERTAS_COPIA_CLAVE (la MISMA clave de cifrado
+# que las copias de alertas.db y socios.db). Sin COPIAS_TOKEN o sin la clave el flujo no hace nada.
 # No se sube ningún artefacto ni se imprime contenido de la base: solo tamaños y recuentos.
+#
+# 2026-11-03: la copia va CIFRADA (gpg simétrico AES-256, mismos parámetros que copia-alertas-cifrada.yml): antes se
+# subía solo comprimida (cache_*.db.gz) y quien tuviera acceso al repositorio privado podía leer los DNI/NIE. Ahora
+# es cache_AAAA-MM-DD_HHMM.db.gz.gpg (gzip y después gpg, sin compresión de gpg encima). Las copias antiguas sin
+# cifrar (*.db.gz) se borran solas cuando ya hay dos copias cifradas en la release.
+#
+# Para restaurar una copia (en un ordenador de confianza):
+#   python backend/descifrar_copia_cache.py cache_AAAA-MM-DD_HHMM.db.gz.gpg      (pide la clave y deja cache.db)
 
 on:
   schedule:
@@ -52,14 +61,18 @@ jobs:
             sleep 300
           done
 
-      - name: ¿Está el token del repositorio privado?
+      - name: ¿Están el token del repositorio privado y la clave de cifrado?
         id: token
         env:
           COPIAS_TOKEN: ${{ secrets.COPIAS_TOKEN }}
+          ALERTAS_COPIA_CLAVE: ${{ secrets.ALERTAS_COPIA_CLAVE }}
         run: |
-          if [ -z "$COPIAS_TOKEN" ]; then
-            echo "::warning::Falta el secreto COPIAS_TOKEN: no se hace la copia."
+          if [ -z "$COPIAS_TOKEN" ] || [ -z "$ALERTAS_COPIA_CLAVE" ]; then
+            echo "::warning::Falta COPIAS_TOKEN o ALERTAS_COPIA_CLAVE: no se hace la copia (nunca se sube sin cifrar)."
             echo "hay=no" >> "$GITHUB_OUTPUT"
+          elif [ "${#ALERTAS_COPIA_CLAVE}" -lt 20 ]; then
+            echo "::error::ALERTAS_COPIA_CLAVE tiene menos de 20 caracteres: demasiado corta para cifrar con ella."
+            exit 1
           else
             echo "hay=si" >> "$GITHUB_OUTPUT"
           fi
@@ -99,35 +112,75 @@ jobs:
           fi
           echo "integrity_check: ok -- $(python3 -c "import sqlite3; print(sqlite3.connect('cache.db').execute('SELECT COUNT(*) FROM municipios').fetchone()[0])") fichas"
 
+      - name: Comprimir y cifrar
+        if: steps.token.outputs.hay == 'si'
+        env:
+          ALERTAS_COPIA_CLAVE: ${{ secrets.ALERTAS_COPIA_CLAVE }}
+        run: |
+          set -euo pipefail
+          umask 077
+          # 2026-10-17: con la hora (de Madrid) en el nombre, para que dos copias del mismo día no se pisen. Ordena bien
+          # entre sí con LC_ALL=C sort.
+          nombre="cache_$(TZ=Europe/Madrid date +%Y-%m-%d_%H%M).db.gz.gpg"
+          # gzip por tubería: el .gz sin cifrar nunca llega al disco. --compress-algo none porque ya va comprimido.
+          gzip -6 -c cache.db | gpg --batch --yes --no-symkey-cache --pinentry-mode loopback \
+            --passphrase-fd 3 3< <(printf '%s' "$ALERTAS_COPIA_CLAVE") \
+            --symmetric --cipher-algo AES256 --s2k-digest-algo SHA512 --s2k-count 65011712 --compress-algo none \
+            --output "$nombre"
+          original=$(stat -c%s cache.db)
+          shred -u cache.db
+          # Comprobación: con la clave se descifra entero, el gzip está sano (gzip -dc falla si no) y dentro hay una base
+          # SQLite. Python lee hasta el final para no cortar la tubería (con pipefail, un head cortaría gpg y gzip).
+          printf '%s' "$ALERTAS_COPIA_CLAVE" | gpg --batch --quiet --no-symkey-cache --pinentry-mode loopback \
+            --passphrase-fd 0 --decrypt "$nombre" | gzip -dc | python3 -c "
+          import sys
+          f = sys.stdin.buffer
+          ok = f.read(16).startswith(b'SQLite format 3')
+          while f.read(1 << 20):
+              pass
+          sys.exit(0 if ok else 1)"
+          # ...con una clave equivocada no se abre, y el fichero no empieza como gzip ni como SQLite.
+          if printf 'clave-equivocada' | gpg --batch --quiet --no-symkey-cache --pinentry-mode loopback --passphrase-fd 0 --decrypt "$nombre" > /dev/null 2>&1; then
+            echo "::error::La copia se abre con una clave equivocada."; exit 1
+          fi
+          if ! python3 -c "import sys; c = open(sys.argv[1], 'rb').read(16); sys.exit(1 if c[:2] == b'\x1f\x8b' or c.startswith(b'SQLite') else 0)" "$nombre"; then
+            echo "::error::La copia no está cifrada."; exit 1
+          fi
+          sha256sum "$nombre" > "${nombre}.sha256"
+          echo "nombre=${nombre}" >> "$GITHUB_ENV"
+          echo "Copia cifrada: ${nombre}, $(stat -c%s "$nombre") bytes (original ${original})"
+
       - name: Subir al repositorio privado y dejar solo las dos últimas
         if: steps.token.outputs.hay == 'si'
         env:
           GH_TOKEN: ${{ secrets.COPIAS_TOKEN }}
         run: |
           set -euo pipefail
-          # 2026-10-17: con la hora (de Madrid) en el nombre, para que dos copias del mismo día no se pisen (antes
-          # cache_AAAA-MM-DD.db.gz y --clobber: la segunda copia del 16-10 sustituyó a la de la tarde). Ordena bien
-          # junto a los nombres antiguos: "_" va detrás de "." en sort.
-          nombre="cache_$(TZ=Europe/Madrid date +%Y-%m-%d_%H%M).db.gz"
-          gzip -6 -c cache.db > "$nombre"
-          sha256sum "$nombre" > "${nombre}.sha256"
-          echo "Copia: ${nombre}, $(stat -c%s "$nombre") bytes (original $(stat -c%s cache.db))"
-          rm -f cache.db
           if ! gh release view "$ETIQUETA" --repo "$DESTINO" > /dev/null 2>&1; then
             gh release create "$ETIQUETA" --repo "$DESTINO" --title "Copia semanal de cache.db" \
-              --notes "Copias automáticas de la base de producción. Se conservan las dos últimas."
+              --notes "Copias automáticas de la base de producción, cifradas con gpg (AES-256). Se conservan las dos últimas."
           fi
           gh release upload "$ETIQUETA" "$nombre" "${nombre}.sha256" --repo "$DESTINO" --clobber
+          activos=$(gh release view "$ETIQUETA" --repo "$DESTINO" --json assets --jq '.assets[].name')
           if [ "${{ inputs.conservar_todas }}" = "true" ]; then
             echo "conservar_todas: no se borra ninguna copia antigua"
-            gh release view "$ETIQUETA" --repo "$DESTINO" --json assets --jq '.assets[].name' | grep '\.db\.gz$' | LC_ALL=C sort -r
+            printf '%s\n' "$activos" | grep -E '\.db\.gz(\.gpg)?$' | LC_ALL=C sort -r || true
             rm -f "$nombre" "${nombre}.sha256"
             exit 0
           fi
-          # conservar las dos copias más recientes (cada una con su .sha256)
-          gh release view "$ETIQUETA" --repo "$DESTINO" --json assets --jq '.assets[].name' | grep '\.db\.gz$' | LC_ALL=C sort -r | tail -n +3 | while read -r viejo; do
-            gh release delete-asset "$ETIQUETA" "$viejo" --repo "$DESTINO" --yes
-            gh release delete-asset "$ETIQUETA" "${viejo}.sha256" --repo "$DESTINO" --yes || true
-            echo "Borrada la copia antigua ${viejo}"
-          done
+          borrar() {
+            gh release delete-asset "$ETIQUETA" "$1" --repo "$DESTINO" --yes
+            gh release delete-asset "$ETIQUETA" "${1}.sha256" --repo "$DESTINO" --yes || true
+            echo "Borrada la copia antigua $1"
+          }
+          # conservar las dos copias cifradas más recientes (cada una con su .sha256)
+          cifradas=$(printf '%s\n' "$activos" | grep '\.db\.gz\.gpg$' | LC_ALL=C sort -r || true)
+          printf '%s\n' "$cifradas" | tail -n +3 | while read -r viejo; do if [ -n "$viejo" ]; then borrar "$viejo"; fi; done
+          # las antiguas SIN cifrar (*.db.gz) se borran solo cuando ya hay dos cifradas: nunca se queda sin copia
+          if [ "$(printf '%s\n' "$cifradas" | grep -c . || true)" -ge 2 ]; then
+            sin_cifrar=$(printf '%s\n' "$activos" | grep '\.db\.gz$' || true)
+            printf '%s\n' "$sin_cifrar" | while read -r viejo; do if [ -n "$viejo" ]; then borrar "$viejo"; fi; done
+          else
+            echo "Aún no hay dos copias cifradas: se conservan las antiguas sin cifrar."
+          fi
           rm -f "$nombre" "${nombre}.sha256"
