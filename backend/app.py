@@ -12,6 +12,7 @@ import ctypes, gc, sys as _sys
 import hmac
 from email.utils import parsedate_to_datetime
 from urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urljoin
+from urllib.parse import unquote as _unquote_wsgi
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -30720,25 +30721,53 @@ class Handler(BaseHTTPRequestHandler):
                 _peticiones_en_curso -= 1
 
     def do_POST(self):
-        global _peticiones_en_curso
-        with _peticiones_lock:
-            _peticiones_en_curso += 1
-        try:
-            self._do_post()
-        finally:
-            with _peticiones_lock:
-                _peticiones_en_curso -= 1
+        self._do_post()          # app() ya cuenta la petición en _peticiones_en_curso
 
     def _do_post(self):
+        """2026-11-03: los POST pasan por el mismo app() WSGI que gunicorn usa en Render, con un environ hecho a partir
+        de la petición. Antes este servidor leía el cuerpo como texto UTF-8 y lo mandaba a _route_post_i18n, así que
+        las rutas que solo están en _app_wsgi y llevan un cuerpo binario (POST /admin/fondos-ue con un .ndjson.gz,
+        /admin/subvenciones, /admin/administradores-borme...) daban 500 en local. Solo cambia este servidor de
+        desarrollo (python app.py); con gunicorn no se usa esta clase."""
         try:
-            length = int(self.headers.get("Content-Length", 0) or 0)
-            raw = self.rfile.read(length).decode("utf-8") if length else ""
-            params = parse_qs(raw, keep_blank_values=True)
-            t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
             try:
-                self._write(*_route_post_i18n(urlparse(self.path).path, params))
-            finally:
-                _TOKEN_CABECERA.reset(t_token)
+                length = int(self.headers.get("Content-Length", 0) or 0)
+            except ValueError:
+                length = 0
+            crudo = self.rfile.read(length) if length > 0 else b""
+            parsed = urlparse(self.path)
+            environ = {
+                "REQUEST_METHOD": "POST",
+                "PATH_INFO": _unquote_wsgi(parsed.path, encoding="latin-1"),   # como gunicorn (PEP 3333)
+                "QUERY_STRING": parsed.query,
+                "CONTENT_LENGTH": str(len(crudo)),
+                "CONTENT_TYPE": self.headers.get("Content-Type", "") or "",
+                "SERVER_NAME": "127.0.0.1",
+                "SERVER_PORT": str(self.server.server_address[1]),
+                "SERVER_PROTOCOL": self.request_version,
+                "REMOTE_ADDR": self.client_address[0],
+                "wsgi.version": (1, 0),
+                "wsgi.url_scheme": "http",
+                "wsgi.input": io.BytesIO(crudo),
+                "wsgi.errors": _sys.stderr,
+                "wsgi.multithread": True,
+                "wsgi.multiprocess": False,
+                "wsgi.run_once": False,
+            }
+            for k, v in self.headers.items():
+                clave = "HTTP_" + k.upper().replace("-", "_")
+                if clave not in ("HTTP_CONTENT_TYPE", "HTTP_CONTENT_LENGTH"):
+                    environ[clave] = v if clave not in environ else environ[clave] + "," + v
+            estado = {}
+
+            def _start_response(linea, cabeceras, exc_info=None):
+                estado["code"] = int(linea.split(" ", 1)[0])
+                estado["headers"] = dict(cabeceras)
+
+            cuerpo = app(environ, _start_response)
+            if isinstance(cuerpo, list):
+                cuerpo = b"".join(cuerpo)
+            self._write(estado["code"], estado["headers"], cuerpo)
         except Exception as e:
             self._write(*_error_resp(f"Error: {e}", 500))
 
