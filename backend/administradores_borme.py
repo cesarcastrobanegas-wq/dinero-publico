@@ -12,7 +12,7 @@ Administradores vigentes de las sociedades adjudicatarias a partir del índice l
    recuentos (nunca nombres) de la cola: qué adjudicatarios no son del BORME ("no aplica") y cuántas sociedades
    quedan sin administrador.
 
-Uso:  python backend/administradores_borme.py [--cache ruta/cache.db] [--salida ruta.json]
+Uso:  python backend/administradores_borme.py [--cache ruta/cache.db | --resumen ruta/resumen.json.gz] [--salida ruta.json]
           [--historico ruta/borme_actos_historico.db] [--solo-primera-grafia] [--solo-recuentos]
 
 Memoria (2026-10-09): el cálculo es por streaming. Solo se siguen las sociedades que son adjudicatarias (y las que
@@ -369,6 +369,8 @@ def _imprimir_resumen(resumen):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", default=os.path.join(BASE, "cache.db"))
+    ap.add_argument("--resumen", default="", help="resumen de adjudicatarios (resumen_adjudicatarios.py) en lugar "
+                    "de --cache: unos pocos MB en vez de la base entera (06-11-2026)")
     ap.add_argument("--salida", default=SALIDA)
     ap.add_argument("--historico", default=BORME_DB_HISTORICO,
                     help="índice del BORME anterior al principal (2009-2020); se ignora si el fichero no existe")
@@ -381,7 +383,12 @@ def main():
     periodos = [_abrir(r).execute("SELECT min(fecha), max(fecha), count(*) FROM dias").fetchone() for r in rutas]
     periodo = [min(p[0] for p in periodos), max(p[1] for p in periodos)]
     print(f"índices del BORME: {len(rutas)}; periodo {periodo[0]}-{periodo[1]}; días: {sum(p[2] for p in periodos):,}")
-    adj, directores = adjudicatarios(a.cache)
+    if a.resumen:
+        from resumen_adjudicatarios import leer
+        adj, directores = leer(a.resumen)
+        print(f"adjudicatarios y directores sacados del resumen {os.path.basename(a.resumen)}")
+    else:
+        adj, directores = adjudicatarios(a.cache)
     print(f"adjudicatarios: {len(adj):,} ({time.time() - t0:.0f} s)")
     objetivo = {normalizar_denominacion(emp) for x in adj.values() for emp in x["nombres"]}
     den, estado = construir_estado(objetivo, rutas)

@@ -29206,6 +29206,19 @@ def _route_get(path, qs, gzip_ok=False):
             headers={"Cache-Control": "no-cache"}, gzip_ok=gzip_ok,
         )
 
+    if path == "/admin/resumen-administradores":
+        # 2026-11-06 (ancho de banda de Render): lo único que el flujo de administradores del BORME necesita de la
+        # base, en un JSON comprimido de pocos MB en vez de la base entera (1.509 MB). Toda la lógica está en
+        # resumen_adjudicatarios.servir_web: 200 con el fichero, 202 mientras se prepara (en un proceso aparte, sin
+        # _db_lock) o 500 si falló. ADMIN_TOKEN obligatorio. Sin esta ruta el flujo sigue bajando la base entera.
+        if not _token_admin_peticion():
+            return _error_resp("No autorizado.", 403)
+        try:
+            from . import resumen_adjudicatarios as _RA
+        except ImportError:
+            import resumen_adjudicatarios as _RA
+        return _RA.servir_web(DB_FILE, DATA_DIR)
+
     if path == "/admin/cache-db":
         # Sirve el SQLite en bruto (copia de seguridad: cron semanal de GitHub Actions y descargas a mano). ADMIN_TOKEN
         # obligatorio (403 si falta o no coincide). Nunca se lee cache.db directamente del disco (WAL activo): se sirve
