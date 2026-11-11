@@ -49,6 +49,10 @@ try:
 except ImportError:
     import filtro_embudo as FEMB
 try:
+    from . import forma_pago as FP
+except ImportError:
+    import forma_pago as FP
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -16645,6 +16649,15 @@ def _revision_wsgi(method, path, qs, environ):
             if FILTRO_FORMULARIO and p("p").isdigit() and p("accion") == "baja":
                 hecho = "baja" if _socios_almacen().baja(int(p("p")), motivo="panel") else ""
             return 303, {"Location": f"/admin/revision/socios?hecho={hecho}", "Content-Length": "0"}, b""
+        if path == "/admin/revision/socios/pagado":
+            # Formulario del panel para marcar un pago a mano (04-11): solo con FORMA_PAGO=manual, con la sesión del
+            # panel y su csrf (comprobados arriba). Las reglas son las de POST /admin/socios-pagado (_socios_pagado).
+            if not (FILTRO_FORMULARIO and FP.admin_manual()) or p("accion") not in ("poner", "quitar"):
+                return 404, {"Content-Length": "0"}, b""
+            codigo, cuerpo = _socios_pagado(params)
+            hecho = ("pago_" + cuerpo["accion"] if codigo == 200
+                     else {404: "pago_no_existe", 409: "pago_sin_confirmar"}.get(codigo, "pago_mal"))
+            return 303, {"Location": f"/admin/revision/socios?hecho={hecho}", "Content-Length": "0"}, b""
         if path == "/admin/revision/salir":
             return 303, {"Location": "/admin/revision", "Content-Length": "0",
                          "Set-Cookie": "dp_rev=; Path=/admin/revision; Max-Age=0; HttpOnly; SameSite=Strict"}, b""
@@ -27866,14 +27879,20 @@ def _socios_alta(correo, perfil):
     if SOC.correo_valido(correo) and not _socios_correo_permitido(correo):
         return "fuera_de_prueba"                            # SOCIOS_SOLO_CORREOS: ni se guarda ni se envía nada
     alm = _socios_almacen()
-    r = alm.alta(correo, perfil)
+    # La casilla de las condiciones ya la ha comprobado el formulario (leer_envio); socios.alta tampoco guarda nada sin
+    # la versión aceptada.
+    r = alm.alta(correo, perfil, condiciones=FFORM.CONDICIONES_VERSION)
     if r["resultado"] != "confirmar":
         return r["resultado"]
     p = r["perfil"]
     objetivo = alm.a_confirmar(p)
     asunto, texto, html_ = FFORM.correo_confirmacion(
         json.loads(objetivo), _socios_enlace(alm, "confirmar", p["id"], SOC.huella(objetivo)),
-        _socios_enlace(alm, "baja", p["id"]), es_cambio=p["estado"] == "activo", ahora=_ahora_madrid())
+        _socios_enlace(alm, "baja", p["id"]), es_cambio=p["estado"] == "activo", ahora=_ahora_madrid(),
+        # enlaces a la versión EXACTA que se acepta (/legal/condiciones?v=<versión>), que sigue publicada aunque haya otra
+        enlace_condiciones=FFORM.url_completa(FFORM.url_version(FFORM.URL_CONDICIONES), SITE_URL),
+        enlace_privacidad=FFORM.url_completa(FFORM.url_version(FFORM.URL_PRIVACIDAD), SITE_URL),
+        version=FFORM.CONDICIONES_VERSION)
     threading.Thread(target=_socios_enviar, args=(alm, p["id"], p["correo"], "confirmacion", asunto, texto, html_),
                      name="socios-confirmacion", daemon=True).start()
     return "confirmar"
@@ -27911,7 +27930,7 @@ def _socios_get(path, qs):
     ahora = _ahora_madrid()
     res = FLIC.filtrar(_filtro_licitaciones_abiertas(), p["perfil"], ahora)
     return _filtro_html(FFORM.mis_licitaciones_html(p["perfil"], res, {"p": p["id"], "k": alm.firma("baja", p["id"])},
-                                                    ahora))
+                                                    ahora, recibe=alm.recibe_semanal(p)))
 
 
 def _socios_post(path, params):
@@ -27929,17 +27948,18 @@ def _socios_post(path, params):
     if sub == "/mantener":
         if not (pid and alm.firma_valida("mantener", pid, pr("k")) and alm.usar(pid)):
             return _filtro_html(FFORM.enlace_no_valido_html())
-        return _filtro_html(FFORM.mantenido_html(_socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid)))
+        return _filtro_html(FFORM.mantenido_html(_socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid),
+                                                 recibe=alm.recibe_semanal(alm.perfil(pid))))
     antes = alm.perfil(pid) if pid else None
     if antes and antes["estado"] == "pendiente":
         # Lo que está abierto ahora queda como "ya estaba": el primer correo semanal solo trae lo que salga después.
         alm.registrar_vistos([l["id"] for l in _filtro_licitaciones_abiertas()], time.time())
-    p = alm.confirmar(pid, pr("k")) if antes else None
+    p = alm.confirmar(pid, pr("k"), condiciones=FFORM.CONDICIONES_VERSION) if antes else None
     if not p:
         return _filtro_html(FFORM.enlace_no_valido_html())
     return _filtro_html(FFORM.confirmado_html(p["perfil"], _socios_enlace(alm, "ver", pid), _socios_enlace(alm, "baja", pid),
                                               era_cambio=antes["estado"] == "activo", ya_estaba=bool(p.get("ya_estaba")),
-                                              ahora=_ahora_madrid()))
+                                              ahora=_ahora_madrid(), recibe=alm.recibe_semanal(p)))
 
 
 def _socios_inicio_dia_semana(ahora):
@@ -27960,8 +27980,13 @@ def _socios_semanal_de(alm, p, abiertas, madrid):
 
 def _socios_pasada(max_correos=25):
     """Una tanda del envío del filtro (flujo socios-envio.yml, todos los días a las 08:30 UTC): primero los avisos
-    «¿Sigues interesado?» y después los correos semanales (los de esta semana que falten: el lunes salen casi todos y,
-    si el cupo no llega, el resto los días siguientes). Respeta el cupo de Resend, que comparte con las alertas
+    «¿Sigues interesado?», después los avisos de vencimiento del pago (15 días antes y el día que vence; solo con
+    la forma de pago puesta, ver forma_pago.py) y al final los correos semanales, solo a quien tiene el pago vigente o está en los 7 días
+    de cortesía (los de esta semana que falten: el lunes salen casi todos y, si el cupo no llega, el resto los días
+    siguientes). Un solo correo por persona y día (arreglo del 04-11): enviar o intentar un aviso (de inactividad o de
+    pago) marca «intentado hoy», y la lista del semanal se saca DESPUÉS de los avisos, así que quien ha recibido (o a
+    quien se le ha intentado) un aviso no recibe el semanal ese día, en ninguna tanda; le llega al día siguiente con
+    todo lo nuevo desde su última revisión. Respeta el cupo de Resend, que comparte con las alertas
     (ALERTAS_TOPE_DIARIO / ALERTAS_TOPE_MES, sumando los dos ficheros). Solo números en la respuesta (la llama un
     flujo de Actions, cuyos registros son públicos)."""
     if not FILTRO_FORMULARIO:
@@ -27973,12 +27998,13 @@ def _socios_pasada(max_correos=25):
     tope_dia, tope_mes = _alertas_tope("ALERTAS_TOPE_DIARIO", 80), _alertas_tope("ALERTAS_TOPE_MES", 2800)
     hoy, mes = _resend_enviados_desde(inicio_dia), _resend_enviados_desde(ahora - 30 * 86400)
     cupo = min(max_correos, tope_dia - hoy, tope_mes - mes)
-    res = {"activas": True, "en_prueba": bool(SOCIOS_SOLO_CORREOS), "avisos": 0, "semanales": 0, "sin_novedades": 0,
-           "fallidos": 0, "enviados_hoy": hoy, "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
+    res = {"activas": True, "en_prueba": bool(SOCIOS_SOLO_CORREOS), "avisos": 0, "avisos_pago": 0,
+           "forma_pago_sin_poner": not FFORM.forma_pago_puesta(), "semanales": 0, "sin_novedades": 0, "fallidos": 0, "enviados_hoy": hoy, "enviados_30_dias": mes, "tope_diario": tope_dia, "tope_30_dias": tope_mes}
     abiertas = _filtro_licitaciones_abiertas()
     alm.registrar_vistos([l["id"] for l in abiertas], ahora)
     avisos = [p for p in alm.pendientes_aviso(ahora, inicio_dia) if _socios_correo_permitido(p["correo"])]
-    semanales = [p for p in alm.pendientes_semanal(inicio_semana, inicio_dia) if _socios_correo_permitido(p["correo"])]
+    avisos_pago = ([(p, c) for p, c in alm.pendientes_aviso_pago(ahora, inicio_dia) if _socios_correo_permitido(p["correo"])]
+                   if FFORM.forma_pago_puesta() else [])
     hechos = 0
     for p in avisos:
         if cupo <= 0:
@@ -27994,6 +28020,25 @@ def _socios_pasada(max_correos=25):
         hechos += 1
         cupo -= 1
         time.sleep(0.6)                                                  # Resend: 2 peticiones por segundo
+    for p, clase in avisos_pago:
+        if cupo <= 0:
+            break
+        fin = _ahora_madrid(p["pagado_hasta"])
+        asunto, texto, html_ = FFORM.correo_vence(clase, fin, _ahora_madrid(p["pagado_hasta"] + SOC.CORTESIA_S), madrid,
+                                                  _socios_enlace(alm, "ver", p["id"]), _socios_enlace(alm, "baja", p["id"]))
+        if _socios_enviar(alm, p["id"], p["correo"], "aviso_pago_" + clase, asunto, texto, html_):
+            alm.marcar_aviso_pago(p["id"], ahora)
+            res["avisos_pago"] += 1
+        else:
+            alm.marcar_intentado(p["id"], ahora)                         # mañana se vuelve a intentar
+            res["fallidos"] += 1
+        hechos += 1
+        cupo -= 1
+        time.sleep(0.6)
+    # La lista del semanal, DESPUÉS de los avisos: los que acaban de recibir o de intentar uno tienen «intentado hoy» y
+    # pendientes_semanal ya no los devuelve (antes se sacaba al principio y les llegaban los dos correos el mismo día).
+    semanales = [p for p in alm.pendientes_semanal(inicio_semana, inicio_dia, ahora)
+                 if _socios_correo_permitido(p["correo"])]
     for p in semanales:
         correo = _socios_semanal_de(alm, p, abiertas, madrid)
         if correo is None:
@@ -28013,10 +28058,73 @@ def _socios_pasada(max_correos=25):
         hechos += 1
         cupo -= 1
         time.sleep(0.6)
-    res["pendientes"] = len(avisos) + len(semanales) - hechos
-    res["tope_alcanzado"] = bool(res["pendientes"]) and cupo <= 0 and (
-        hoy + res["avisos"] + res["semanales"] >= tope_dia or mes + res["avisos"] + res["semanales"] >= tope_mes)
+    res["pendientes"] = len(avisos) + len(avisos_pago) + len(semanales) - hechos
+    salidos = res["avisos"] + res["avisos_pago"] + res["semanales"]
+    res["tope_alcanzado"] = bool(res["pendientes"]) and cupo <= 0 and (hoy + salidos >= tope_dia or mes + salidos >= tope_mes)
     return res
+
+
+def _socios_fin_de_dia(texto):
+    """"AAAA-MM-DD" -> segundos del final de ese día en hora peninsular (23:59:59), o None si no es una fecha."""
+    try:
+        d = datetime.strptime((texto or "").strip(), "%Y-%m-%d")
+    except ValueError:
+        return None
+    ts0 = d.replace(hour=23, minute=59, second=59, tzinfo=timezone.utc).timestamp()
+    desfase = (_ahora_madrid(ts0) - datetime.fromtimestamp(ts0, timezone.utc).replace(tzinfo=None)).total_seconds()
+    return ts0 - desfase
+
+
+def _socios_fecha_pago(ts):
+    return _ahora_madrid(ts).strftime("%d-%m-%Y") if ts else ""
+
+
+def _socios_pagado(params):
+    """POST /admin/socios-pagado (31-10): poner, quitar o ver la fecha «pagado_hasta» de un perfil. El token va en la
+    cabecera X-Admin-Token y el correo en el CUERPO (nunca en la dirección, que queda en los registros):
+        curl -sS -X POST -H "X-Admin-Token: ..." -d "correo=x@y.es" -d "accion=poner" -d "hasta=2027-10-31" .../admin/socios-pagado
+    accion: poner (con hasta=AAAA-MM-DD: pagado hasta el final de ese día, hora peninsular; también para una prueba
+    gratis), quitar (el servicio termina ahora, sin cortesía ni avisos) o ver. También vale p=<id del panel> en lugar del correo. Devuelve (código, dict) y el correo tapado."""
+    g = lambda k: (params.get(k, [""])[0] or "").strip()                     # noqa: E731
+    accion = g("accion") or "ver"
+    if accion not in ("poner", "quitar", "ver"):
+        return 400, {"error": "accion tiene que ser poner, quitar o ver."}
+    alm = _socios_almacen()
+    p = alm.perfil(int(g("p"))) if g("p").isdigit() else (alm.por_correo(g("correo")) if g("correo") else None)
+    if not p:
+        return 404, {"error": "No hay ningún perfil con ese correo (o ese número)."}
+    ahora, motivo = time.time(), ""
+    if accion == "poner":
+        hasta = _socios_fin_de_dia(g("hasta"))
+        if hasta is None:
+            return 400, {"error": "Falta hasta=AAAA-MM-DD (el último día pagado)."}
+        fila, motivo = alm.poner_pagado(p["id"], hasta, ahora)
+    elif accion == "quitar":
+        fila, motivo = alm.quitar_pagado(p["id"], ahora)
+    else:
+        fila = p
+    if fila is None:
+        return {"no_existe": 404, "sin_confirmar": 409, "fecha": 400}.get(motivo, 400), {"error": {
+            "no_existe": "Ese perfil ya no existe.",
+            "sin_confirmar": "Ese perfil todavía no ha confirmado su correo: el pago solo se pone a perfiles confirmados.",
+            "fecha": "La fecha tiene que ser futura y a menos de 5 años vista.",
+        }.get(motivo, motivo)}
+    estado_pago = alm.estado_pago(fila, ahora)
+    return 200, {"ok": True, "accion": accion, "perfil": fila["id"], "correo": SOC.correo_tapado(fila["correo"]),
+                 "estado": fila["estado"], "pagado_hasta": _socios_fecha_pago(fila["pagado_hasta"]),
+                 "pago_vigente": estado_pago == "vigente", "estado_pago": estado_pago,
+                 "recibe_semanal": estado_pago in ("vigente", "cortesia"),
+                 "explicacion": _SOCIOS_EXPLICA_PAGO[estado_pago].format(
+                     cortesia=_socios_fecha_pago((fila["pagado_hasta"] or 0) + SOC.CORTESIA_S))}
+
+
+_SOCIOS_EXPLICA_PAGO = {
+    "vigente": "Pago vigente: recibe el correo semanal; ni aviso de inactividad ni borrado por falta de uso.",
+    "cortesia": "Vencido, en los 7 días de cortesía: recibe el correo semanal hasta el {cortesia}.",
+    "vencido": "Vencido: no recibe el correo semanal; el perfil se guarda con las reglas de borrado contadas desde el "
+               "fin del pago.",
+    "sin_pago": "Sin pago ni prueba: no recibe el correo semanal; el perfil se guarda con las reglas de siempre.",
+}
 
 
 def _socios_vista_html(pid):
@@ -28027,6 +28135,8 @@ def _socios_vista_html(pid):
         return _revision_pagina("Próximo correo", '<p>Ese perfil no existe o no está confirmado.</p>')
     madrid, _, _ = _socios_inicio_dia_semana(time.time())
     correo = _socios_semanal_de(alm, p, _filtro_licitaciones_abiertas(), madrid)
+    nota = ("" if alm.recibe_semanal(p) else '<div class="aviso"><b>Sin pago vigente ni cortesía:</b> a este perfil '
+            'NO le sale el correo semanal. Lo de abajo es lo que le saldría si lo tuviera.</div>')
     if correo is None:
         cuerpo = ('<p>Ahora mismo no le saldría ningún correo: no hay licitaciones nuevas que encajen desde su última '
                   'revisión.</p>')
@@ -28035,7 +28145,7 @@ def _socios_vista_html(pid):
         cuerpo = (f'<p><b>Asunto:</b> {esc(asunto)} · {en_correo} fichas en el correo de {total}. Vista previa: no se '
                   f'envía nada ni cambia nada.</p><div style="background:#fff;border:1px solid #dde1e7">{html_}</div>')
     return _revision_pagina("Próximo correo", f'<h1>Próximo correo semanal</h1><p class="sub">'
-                            f'<a href="/admin/revision/socios">← Perfiles del filtro</a></p>{cuerpo}')
+                            f'<a href="/admin/revision/socios">← Perfiles del filtro</a></p>{nota}{cuerpo}')
 
 
 def _socios_panel_html(cookie, hecho=""):
@@ -28049,6 +28159,8 @@ def _socios_panel_html(cookie, hecho=""):
                                 'nada, y socios.db no se abre.</div>')
     alm = _socios_almacen()
     r = alm.resumen()
+    perfiles = alm.lista()
+    sin_aceptar = sum(1 for p in perfiles if not p.get("condiciones_aceptadas") or not p.get("condiciones_version"))
     csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
     if SOCIOS_SOLO_CORREOS:
         estado = (f'<div class="aviso"><b>Encendido EN PRUEBA</b> (SOCIOS_SOLO_CORREOS): solo para '
@@ -28056,6 +28168,16 @@ def _socios_panel_html(cookie, hecho=""):
                   f'ninguna otra dirección y los correos solo salen hacia esas.</div>')
     else:
         estado = '<div class="aviso"><b>Encendido</b> (FILTRO_FORMULARIO=1), abierto a todos.</div>'
+    def condiciones(p):
+        """Fecha y versión de las condiciones aceptadas; aviso si no hay aceptación o es de una versión anterior."""
+        if not p.get("condiciones_aceptadas") or not p.get("condiciones_version"):
+            return '<b>NO</b> (perfil anterior al 04-11: sin aceptación)'
+        enlace = FFORM.url_version(FFORM.URL_CONDICIONES, p["condiciones_version"])   # la versión que aceptó
+        txt = (f'{f_ts(p["condiciones_aceptadas"])} · '
+               f'<a href="{esc(enlace)}">{esc(p["condiciones_version"])}</a>')
+        if p["condiciones_version"] != FFORM.CONDICIONES_VERSION:
+            txt += f' <b>(versión anterior; la vigente es {esc(FFORM.CONDICIONES_VERSION)})</b>'
+        return txt
     vista = lambda p: (f'<a href="/admin/revision/socios/vista?p={p["id"]}">Ver el próximo correo</a>'      # noqa: E731
                        if p["estado"] == "activo" else "")
     ahora = time.time()
@@ -28068,28 +28190,43 @@ def _socios_panel_html(cookie, hecho=""):
                f'<tr><th>Cambios esperando confirmación</th><td>{r["cambios_pendientes"]}</td></tr>'
                f'<tr><th>Borrados</th><td>{r["bajas"]} por su cuenta · {r["bajas_desde_el_panel"]} desde este panel · '
                f'{r["caducados_sin_confirmar"]} sin confirmar · {r["caducados_inactivos"]} por falta de uso</td></tr>'
-               f'<tr><th>Avisados de borrado por falta de uso</th><td>{r["avisados_inactividad"]}</td></tr>{cupo}</table>')
+               f'<tr><th>Avisados de borrado por falta de uso</th><td>{r["avisados_inactividad"]}</td></tr>'
+               f'<tr><th>Con pago vigente (reciben el semanal; ni aviso ni borrado por falta de uso)</th>'
+               f'<td>{r["con_pago_vigente"]}</td></tr>'
+               f'<tr><th>En los 7 días de cortesía (aún reciben el semanal)</th><td>{r["en_cortesia"]}</td></tr>'
+               f'<tr><th>Condiciones vigentes</th><td>{esc(FFORM.CONDICIONES_VERSION)} · '
+               f'{sin_aceptar} perfil(es) sin aceptación</td></tr>{cupo}</table>')
+    _estado_txt = {"vigente": "", "cortesia": " (en cortesía: recibe el semanal)", "vencido": " (terminado)"}
+    pagado = lambda p: (f'{_socios_fecha_pago(p["pagado_hasta"])}{_estado_txt[alm.estado_pago(p, ahora)]}'  # noqa: E731
+                        if p["pagado_hasta"] else "— (no recibe el semanal)")
     filas = "".join(
         f'<tr><td>{esc(p["correo"])}</td><td>{esc(p["estado"])}{" (cambio pendiente)" if p["perfil_pendiente"] else ""}</td>'
         f'<td>{esc(", ".join(FLIC.NOMBRE_PROVINCIA.get(x, x) for x in p["perfil"].get("provincias", [])))}</td>'
         f'<td>{f_ts(p["alta"])}</td><td>{f_ts(p["confirmado"])}</td><td>{f_ts(p["ultimo_uso"])}</td>'
-        f'<td>{f_ts(p["ultimo_envio"])}</td><td>{f_ts(p["aviso_inactividad"])}</td>'
+        f'<td>{f_ts(p["ultimo_envio"])}</td><td>{f_ts(p["aviso_inactividad"])}</td><td>{esc(pagado(p))}</td><td>{condiciones(p)}</td>'
         f'<td>{vista(p)}'
         f'<form method="post" action="/admin/revision/socios/accion" class="acc">{csrf}'
         f'<input type="hidden" name="p" value="{p["id"]}"><button type="submit" name="accion" value="baja" class="sec">'
-        f'Borrar perfil</button></form></td></tr>' for p in alm.lista())
+        f'Borrar perfil</button></form></td></tr>' for p in perfiles)
     env = "".join(
         f'<tr><td>{f_ts(e["ts"])}</td><td>{esc(e["clase"])}</td>'
         f'<td>{"sí" if e["codigo"] and e["codigo"] < 300 else "NO"} ({e["codigo"]})</td><td>{esc(e["detalle"] or "")}</td></tr>'
         for e in alm.lista_envios())
     vacio = lambda n: f'<tr><td colspan="{n}" class="sub">Nada todavía.</td></tr>'                # noqa: E731
-    aviso = '<div class="aviso">Perfil borrado.</div>' if hecho == "baja" else ""
+    hechos = {"baja": "Perfil borrado.", "pago_poner": "Pago puesto.", "pago_quitar": "Pago quitado: el servicio termina ahora.",
+              "pago_no_existe": "No hay ningún perfil con ese correo.",
+              "pago_sin_confirmar": "Ese perfil todavía no ha confirmado su correo: el pago solo se pone a perfiles confirmados.",
+              "pago_mal": "No se ha cambiado nada: falta la fecha o no es válida (futura y a menos de 5 años vista)."}
+    aviso = f'<div class="aviso">{esc(hechos[hecho])}</div>' if hecho in hechos else ""
+    forma_pago = FP.estado_panel()          # "" con la forma de pago puesta (ver forma_pago.py)
     return _revision_pagina("Filtro de licitaciones: perfiles", f"""<style>.t{{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin:8px 0 22px}}
 .t th,.t td{{border:1px solid #dde1e7;padding:6px 8px;text-align:left;vertical-align:top}}.t th{{background:#eef1f6}}</style>
 <h1>Filtro de licitaciones: perfiles</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a> · horas en UTC</p>
-{estado}{aviso}{resumen}
+{estado}{aviso}{forma_pago}{resumen}
 <h2 style="font-size:16px">Perfiles</h2>
-<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th></th></tr>{filas or vacio(9)}</table>
+<table class="t"><tr><th>Correo</th><th>Estado</th><th>Provincias</th><th>Alta</th><th>Confirmado</th><th>Último uso</th><th>Último correo semanal</th><th>Aviso de borrado</th><th>Pagado hasta</th><th>Condiciones aceptadas</th><th></th></tr>{filas or vacio(11)}</table>
+<p class="sub">«Pagado hasta» se pone y se quita con el token en la cabecera: POST /admin/socios-pagado con correo=..., y accion=poner&amp;hasta=AAAA-MM-DD, accion=quitar o accion=ver.</p>
+{FP.formulario_admin_html(csrf)}
 <h2 style="font-size:16px">Envíos (los 100 últimos)</h2>
 <table class="t"><tr><th>Cuándo</th><th>Clase</th><th>Aceptado por Resend</th><th>Respuesta</th></tr>{env or vacio(4)}</table>""")
 
@@ -29399,6 +29536,17 @@ def _route_post(path, params):
                 return 404, {"Content-Length": "0"}, b""
             return _resp(_socios_almacen().copia(), content_type="application/octet-stream",
                          headers={"Cache-Control": "no-store"})
+
+        if path == "/admin/socios-pagado":
+            # Fecha «pagado_hasta» de un perfil del filtro (31-10). Token solo en la cabecera o en el cuerpo, nunca en
+            # la dirección (de un POST solo se lee el cuerpo). Apagado: 404.
+            if not _token_admin_peticion(params):
+                return _error_resp("No autorizado.", 403)
+            if not FILTRO_FORMULARIO:
+                return 404, {"Content-Length": "0"}, b""
+            codigo, cuerpo = _socios_pagado(params)
+            return _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                         code=codigo, headers={"Cache-Control": "no-store"})
 
         if path in ("/admin/alertas-enviar", "/admin/alertas-db"):
             # Alertas por correo (2026-10-13). enviar: una tanda de la pasada de envío (flujo alertas-envio.yml);
