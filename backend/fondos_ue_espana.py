@@ -604,15 +604,18 @@ def descargar_mrr100(sesion):
     } for nif, p in perceptores.items()]
 
 
-FUENTES_NOMBRE = {"cohesion": "Cohesion Data", "cordis": "CORDIS", "kohesio": "Kohesio", "mrr100": "100 perceptores"}
+FUENTES_NOMBRE = {"cohesion": "Cohesion Data", "cordis": "CORDIS", "kohesio": "Kohesio", "mrr100": "100 perceptores",
+                  "fts": "FTS de la Comisión"}
 
 
-def generar(salida, con_nombres=False, kohesio=True, mrr100=True, una_fuente_opcional=False):
+def generar(salida, con_nombres=False, kohesio=True, mrr100=True, una_fuente_opcional=False, fts=False,
+            fts_descargas="fts_descargas"):
     """Con una_fuente_opcional (encargo de César del 30-10, a partir de la opción 2 del 23-10): si UNA fuente no se
     puede descargar (p. ej. el 403 de Kohesio a GitHub Actions desde el 21-10) o trae de menos, el fichero se genera
     con las demás y se deja la marca «<salida>.falta» (1.ª línea: la fuente; 2.ª: el error). El flujo sube entonces con
     ?conservar=<fuente> y la web se queda con las operaciones de esa fuente de la última carga buena. Si fallan dos o
-    más, no se genera nada (como antes)."""
+    más, no se genera nada (como antes). El FTS (fts=True, apagado por defecto) va por el mismo control: sus mínimos
+    por año los comprueba fts_comision.recorrer(), que lanza SystemExit si un año falla."""
     sesion = requests.Session()
     sesion.headers["User-Agent"] = "dinero-publico.com (fondos UE; datos abiertos de la Comisión Europea)"
     marca = salida + ".falta"
@@ -642,6 +645,16 @@ def generar(salida, con_nombres=False, kohesio=True, mrr100=True, una_fuente_opc
                          lambda: descargar_kohesio(sesion, con_nombres), 20000)
     if mrr100:
         filas += _fuente("mrr100", "Plan de Recuperación: los 100 mayores perceptores", lambda: descargar_mrr100(sesion), 1)
+    if fts:
+        # 2026-10-18: FTS de la Comisión (gestión directa), desactivado por defecto: ver fts_comision.py. Ojo: la web
+        # solo acepta la fuente "fts" cuando esté en _FUENTE_UE_LABEL (backend/app.py); hasta entonces esas líneas
+        # cuentan como "lineas_con_error" en POST /admin/fondos-ue y no se cargan (y ?conservar=fts da 400).
+        try:
+            from . import fts_comision as FTS
+        except ImportError:
+            import fts_comision as FTS
+        filas += _fuente("fts", "FTS de la Comisión (gestión directa, sin Horizon ni MRR al Estado)",
+                         lambda: list(FTS.recorrer(FTS.ANIOS_POR_DEFECTO, fts_descargas, sesion)), 1)
     if len(fallos) > 1:
         raise SystemExit(f"ERROR: han fallado {len(fallos)} fuentes ({', '.join(FUENTES_NOMBRE[f] for f in fallos)}); "
                          "no se genera el fichero")
@@ -672,13 +685,16 @@ if __name__ == "__main__":
     g.add_argument("--una-fuente-opcional", action="store_true",
                    help="si UNA fuente falla, generar con las demás y dejar la marca <salida>.falta con su nombre (la "
                         "web conserva lo último que tenía de esa fuente)")
+    g.add_argument("--con-fts", action="store_true",
+                   help="añadir el FTS de la Comisión 2014-2025 (fts_comision.py); desactivado por defecto")
+    g.add_argument("--fts-descargas", default="fts_descargas", help="carpeta para los CSV anuales del FTS")
     k = sub.add_parser("kohesio", help="solo Kohesio 2021-2027 (pruebas)")
     k.add_argument("--salida", required=True)
     k.add_argument("--sin-beneficiarios", action="store_true")
     a = ap.parse_args()
     if a.orden == "generar":
         generar(a.salida, a.nombres, kohesio=not a.sin_kohesio, mrr100=not a.sin_mrr100,
-                una_fuente_opcional=a.una_fuente_opcional)
+                una_fuente_opcional=a.una_fuente_opcional, fts=a.con_fts, fts_descargas=a.fts_descargas)
     elif a.orden == "kohesio":
         s = requests.Session()
         s.headers["User-Agent"] = "dinero-publico.com (fondos UE; datos abiertos de la Comisión Europea)"
