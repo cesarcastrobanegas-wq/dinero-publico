@@ -46,9 +46,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -169,7 +169,7 @@ jobs:
 
       - name: Guardar el histórico para la semana que viene
         if: always() && steps.generar.outputs.ejecutadas != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: menores-fuentes-con-problemas
           path: historico/fuentes_con_problemas.tsv
