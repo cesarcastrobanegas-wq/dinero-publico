@@ -124,10 +124,10 @@ class Robots(unittest.TestCase):
         rp.parse(texto.splitlines())
         url = "https://dinero-publico.com/?muni=Murcia&provincia=murcia"
         for bot in ("GPTBot", "CCBot", "ClaudeBot", "Google-Extended", "Applebot-Extended", "meta-externalagent",
-                    "Bytespider", "Amazonbot"):
+                    "Bytespider", "Amazonbot", "ElevenlabsCrawler", "ShapBot"):
             self.assertFalse(rp.can_fetch(bot, url), bot)
         for bot in ("Googlebot", "bingbot", "OAI-SearchBot", "ChatGPT-User", "Claude-SearchBot", "PerplexityBot",
-                    "Applebot", "DuckDuckBot", "YandexBot"):
+                    "Applebot", "DuckDuckBot", "YandexBot", "ElevenlabsBot"):
             self.assertTrue(rp.can_fetch(bot, url), bot)
             self.assertFalse(rp.can_fetch(bot, "https://dinero-publico.com/admin/revision"), bot)
             self.assertFalse(rp.can_fetch(bot, "https://dinero-publico.com/rankings?pag_alc=2"), bot)
