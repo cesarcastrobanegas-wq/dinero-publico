@@ -3398,6 +3398,12 @@ msgstr "Portada"
 msgid "Página no encontrada"
 msgstr "Páxina non atopada"
 
+msgid "Cómo presentarse a una licitación, paso a paso"
+msgstr "Como presentarse a unha licitación, paso a paso"
+
+msgid "Cómo presentarse a una licitación, paso a paso: {url}"
+msgstr "Como presentarse a unha licitación, paso a paso: {url}"
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Aínda sen datos de fondos UE para esta provincia."
 

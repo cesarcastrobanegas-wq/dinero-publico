@@ -248,6 +248,8 @@ def analizar_entrada(e):
         "lotes": len(re.findall(r"<cac:ProcurementProjectLot>", e)),
         # hora local de España, como la publica PLACE; sin hora -> fin del día
         "fin_plazo": f"{fin_d} {fin_h[:5] if fin_h else '23:59'}" if re.fullmatch(r"\d{4}-\d\d-\d\d", fin_d) else "",
+        # 12-11-2026: si el anuncio no da hora, la lista de comprobación no debe presentar las 23:59 como suya
+        "plazo_sin_hora": bool(fin_d) and not fin_h,
     })
     # Requisitos del contrato (fuera de los lotes) y de cada lote, para el filtro por empresa
     sin_lotes = _RE_LOTE.sub("", e)
@@ -260,13 +262,31 @@ def analizar_entrada(e):
         "lotes_detalle": [_lote(lo) for lo in _RE_LOTE.findall(e)],
         # sujeto a regulación armonizada (SARA): True/False, None si no lo dice (medido el 27-10: lo dice el 100 %)
         "sara": {"true": True, "false": False}.get(_tag("OverThresholdIndicator", tp).lower()),
+        "pliegos": pliegos(e),
     })
     return r
 
 
+# Enlaces a los pliegos (12-11-2026, lista de comprobación de cada licitación): el pliego de cláusulas administrativas
+# (PCAP, LegalDocumentReference) y el de prescripciones técnicas (PPT, TechnicalDocumentReference), tal como los da el
+# anuncio. Medido el 12-11 en una página del Atom en vivo: 30 de 31 licitaciones abiertas traen los dos.
+_TIPOS_PLIEGO = (("pcap", "LegalDocumentReference"), ("ppt", "TechnicalDocumentReference"))
+
+
+def pliegos(e):
+    """{"pcap": url, "ppt": url} con los que vengan (solo https), o {}."""
+    res = {}
+    for clave, etiqueta in _TIPOS_PLIEGO:
+        uri = _tag("URI", _bloque(etiqueta, e))
+        if uri.startswith("https://"):
+            res[clave] = uri
+    return res
+
+
 def requisitos_json(r):
     """Lo que el filtro por empresa necesita y la tabla no tiene en columnas propias, en JSON compacto."""
-    d = {k: r[k] for k in ("nuts", "cp_organo", "cpvs", "duracion_meses", "prorrogas", "req", "lotes_detalle")
+    d = {k: r[k] for k in ("nuts", "cp_organo", "cpvs", "duracion_meses", "prorrogas", "req", "lotes_detalle",
+                           "pliegos", "plazo_sin_hora")
          if r.get(k)}
     if r.get("sara") is not None:       # False también cuenta: es el caso de la exención de nueva creación
         d["sara"] = r["sara"]

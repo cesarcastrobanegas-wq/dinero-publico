@@ -22,9 +22,11 @@ import re
 try:
     from . import filtro_licitaciones as F
     from . import licitaciones_place as LIC
+    from . import licitaciones_guia as G
 except ImportError:
     import filtro_licitaciones as F
     import licitaciones_place as LIC
+    import licitaciones_guia as G
 
 RUTA = "/filtro-licitaciones"
 MAX_FICHAS_VISTA = 10                    # por grupo, en la vista previa
@@ -71,6 +73,7 @@ color:#fff;cursor:pointer}
 .ficha h3{font-size:1rem;margin:6px 0 4px}
 .ficha ul{margin:4px 0 6px 18px;padding:0}.ficha li{margin:2px 0}
 .ficha .dato{font-size:.92rem;color:#3a4356}
+.comprobar{border-top:1px dashed #c6ccd6;margin:8px 0 0;padding:6px 0 0;font-size:.9rem;color:#2b3446}.comprobar ul{margin:2px 0 4px 18px}.comprobar-guia{margin:2px 0 0}
 .sumario{display:inline-block;border:1px solid #1c2333;border-radius:4px;padding:0 6px;font-size:.8rem;font-weight:700}
 .trampa{position:absolute;left:-9999px}
 .caja{background:#fff;border:1px solid #d9dde5;border-radius:10px;padding:12px 14px;margin:0 0 14px}
@@ -249,7 +252,7 @@ def _ficha_html(r):
     return (f'<div class="ficha"><div class="cab"><span>{s} {nombre}</span><span>Cierra: {_e(_fecha(r["fin_plazo"]))}</span></div>'
             f'<h3>{sumario}{_e(r["titulo"])}</h3>{lote}<div class="dato"><b>Organismo:</b> {_e(r["organo"])}</div>'
             f'<div class="dato">{" · ".join(datos)}</div><ul>{"".join(f"<li>{_e(m)}</li>" for m in r["motivos"])}</ul>'
-            f'{enlace}</div>')
+            f'{enlace}{G.lista_html(r.get("comprobar"))}</div>')
 
 
 _GRUPO = {
@@ -481,7 +484,7 @@ def _ficha_correo(r):
     txt = [f"{s} {nombre} · CIERRA: {_fecha(r['fin_plazo'])}",
            ("PROCEDIMIENTO SUMARIO · " if r["sumario"] else "") + r["titulo"]] + lineas_lote + [
         f"Organismo: {r['organo']}", datos] + [f"  - {m}" for m in r["motivos"]] + (
-        [f"Anuncio oficial: {r['url']}"] if r.get("url") else [])
+        [f"Anuncio oficial: {r['url']}"] if r.get("url") else []) + G.lista_texto(r.get("comprobar"), G.SITIO)
     titulo = (f'<a href="{_e(r["url"])}" style="color:#1c2333;text-decoration:underline">{_e(r["titulo"])}</a>'
               if r.get("url") else _e(r["titulo"]))
     sumario = ('<div style="font-weight:700;font-size:13px;margin:0 0 4px">&gt;&gt; PROCEDIMIENTO SUMARIO</div>'
@@ -500,7 +503,8 @@ def _ficha_correo(r):
              f'<div style="font-size:14px;color:#374151"><b>Organismo:</b> {_e(r["organo"])}</div>'
              f'<div style="font-size:14px;color:#374151">{_e(datos)}</div>'
              f'<ul style="margin:6px 0 0 18px;padding:0;font-size:14px">'
-             + "".join(f'<li style="margin:2px 0">{_e(m)}</li>' for m in r["motivos"]) + "</ul></div>")
+             + "".join(f'<li style="margin:2px 0">{_e(m)}</li>' for m in r["motivos"]) + "</ul>"
+             + G.lista_html(r.get("comprobar"), G.SITIO, "color:#1b2f5c") + "</div>")
     return txt, html_
 
 

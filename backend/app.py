@@ -49,6 +49,10 @@ try:
 except ImportError:
     import filtro_embudo as FEMB
 try:
+    from . import licitaciones_guia as _LIC_GUIA
+except ImportError:
+    import licitaciones_guia as _LIC_GUIA
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -15506,7 +15510,7 @@ LIC_CICLO_S = 3 * 3600
 LIC_MAX_PAGINAS_ATOM = 40
 # Versión del lector: al subirla, los ZIP de los últimos LIC_MESES_RELEER meses se vuelven a leer una vez para rellenar
 # lo nuevo (":req" = columna requisitos del filtro por empresa, 2026-10-27). Los más antiguos ya no tienen abiertas.
-LIC_VERSION_LECTOR = ":req"
+LIC_VERSION_LECTOR = ":req:pliegos"      # 12-11-2026: + enlaces al PCAP y al PPT (lista de comprobación)
 LIC_MESES_RELEER = 4
 _LIC_ESTADO = {"estado": "sin_arrancar"}
 # "visto" va siempre la última: las filas de las cerradas se rellenan con None hasta ella
@@ -27525,6 +27529,31 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura", datos_ofi
   <script>{_MAPA_COBERTURA_JS}</script>'''
 
 
+# Guía «Cómo presentarse a una licitación» (12-11-2026): backend/guia_licitaciones/<idioma>.html, con la primera línea
+# "<!-- description: ... -->" y el cuerpo desde el <h1> (mismo formato que casos_i18n). Cada paso enlaza a su fuente
+# oficial (LCSP en el BOE, guías de PLACSP). Sin traducción en un idioma, se sirve la de castellano.
+GUIA_LICITACIONES_DIR = os.path.join(BASE_DIR, "guia_licitaciones")
+_GUIA_LICITACIONES_CSS = ("<style>.guia-indice ol{margin:6px 0 14px 20px}.guia-fuente{font-size:.85rem;color:var(--muted,#5b6475);"
+                          "margin:-4px 0 16px}.guia-aviso{border-top:1px solid var(--border,#d9dde5);padding-top:10px;"
+                          "font-size:.9rem}.static-page h3{margin:16px 0 4px}</style>")
+
+
+def _guia_licitaciones_fichero(lang):
+    ruta = os.path.join(GUIA_LICITACIONES_DIR, f"{lang}.html")
+    return ruta if os.path.exists(ruta) else os.path.join(GUIA_LICITACIONES_DIR, "es.html")
+
+
+def render_guia_licitaciones_html():
+    with open(_guia_licitaciones_fichero(_i18n_idioma()), encoding="utf-8") as f:
+        desc, cuerpo = _caso_partes(f.read())
+    m = re.search(r"<h1>(.*?)</h1>", cuerpo, re.S)
+    titulo = html.unescape(re.sub(r"<[^>]+>", "", m.group(1))).strip() if m else _t("Licitaciones")
+    body = (f'<span class="back-link"><a href="/convocatorias">← {_t("Convocatorias abiertas")}</a></span>\n'
+            f'<div class="static-page">\n{cuerpo.strip()}\n</div>')
+    return _page_shell(titulo, body, description=desc, extra_head=_GUIA_LICITACIONES_CSS, show_ad_banner=False,
+                       og_path=_LIC_GUIA.GUIA_RUTA)
+
+
 def render_mapa_cobertura_html():
     style = f'<style>{_MAPA_COBERTURA_CSS}</style>'
     # Ya cubrimos las 52 provincias (petición de César 2026-09-21: "ya no
@@ -28486,6 +28515,12 @@ def _alertas_correo_novedades(alm, s, secciones):
         lineas += [mas, ""]
         cuerpo += (f'<p style="font-size:13px">{esc(_t("…y {n} más.").format(n=resto)) + " " if resto > 0 else ""}'
                    f'<a href="{esc(todo)}" style="color:#1b2f5c">{esc(_t("Verlo todo en la web"))}</a></p>')
+        if a["tipo"] == "licitaciones":
+            # 12-11-2026: en las alertas diarias, solo el enlace a la guía (la lista de comprobación va en el filtro)
+            guia = base + _LIC_GUIA.GUIA_RUTA
+            lineas += [_t("Cómo presentarse a una licitación, paso a paso: {url}").format(url=guia), ""]
+            cuerpo += (f'<p style="font-size:13px"><a href="{esc(guia)}" style="color:#1b2f5c">'
+                       f'{esc(_t("Cómo presentarse a una licitación, paso a paso"))} →</a></p>')
     nota = _t("Los datos vienen de fuentes oficiales. Antes de presentar nada, comprueba plazos y requisitos en la publicación oficial.")
     lineas.append(nota)
     cuerpo += f'<p style="font-size:13px;color:#6b7280">{esc(nota)}</p>'
@@ -29171,6 +29206,9 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/quien-soy":
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
 
+    if path.rstrip("/") == _LIC_GUIA.GUIA_RUTA:
+        return _resp(render_guia_licitaciones_html(), gzip_ok=gzip_ok)
+
     if path == "/mapa-cobertura":
         return _pagina_cacheada("/mapa-cobertura", [], _PAGINAS_FIJAS["/mapa-cobertura"], gzip_ok=gzip_ok)
 
@@ -29252,6 +29290,7 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/convocatorias</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quien-soy</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/mapa-cobertura</loc><changefreq>weekly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}{_LIC_GUIA.GUIA_RUTA}</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/metodologia</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/casos</loc><changefreq>weekly</changefreq></url>"] + [

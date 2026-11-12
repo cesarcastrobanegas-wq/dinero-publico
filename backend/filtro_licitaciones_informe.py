@@ -30,9 +30,11 @@ from reportlab.platypus import (KeepTogether, PageBreak, Paragraph, SimpleDocTem
 try:
     from . import filtro_licitaciones as F
     from . import licitaciones_place as LIC
+    from . import licitaciones_guia as G
 except ImportError:
     import filtro_licitaciones as F
     import licitaciones_place as LIC
+    import licitaciones_guia as G
 
 # los nombres viven en el motor (el formulario de la web los usa y producción no tiene reportlab)
 NOMBRE_PROVINCIA, NOMBRE_COMUNIDAD, TIPO_TXT = F.NOMBRE_PROVINCIA, F.NOMBRE_COMUNIDAD, F.TIPO_TXT
@@ -163,6 +165,7 @@ def _ficha(r, est):
         cuerpo.append(Paragraph(_e(m), est["motivo"], bulletText="–"))
     if r.get("url"):
         cuerpo.append(Paragraph(f'Anuncio oficial: <a href="{_e(r["url"])}">{_e(r["url"])}</a>', est["pequeno"]))
+    cuerpo += _lista_comprobacion(r.get("comprobar"), est)
     filas.append([cuerpo, ""])
     t = Table(filas, colWidths=[7 * cm, 10 * cm])
     estilo = [("BOX", (0, 0), (-1, -1), 0.8, NEGRO), ("LINEBELOW", (0, 0), (-1, 0), 0.5, NEGRO),
@@ -175,6 +178,20 @@ def _ficha(r, est):
         estilo += [("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.85, 0.85, 0.85))]
     t.setStyle(TableStyle(estilo))
     return [t, Spacer(1, 6)]      # quien llama lo envuelve en KeepTogether (anidarlos deja páginas a medias)
+
+
+def _lista_comprobacion(c, est):
+    """Lista de comprobación de la ficha (licitaciones_guia) y el enlace a la guía, en letra pequeña."""
+    if not c:
+        return []
+    res = [Paragraph(f'<font name="{_FUENTE_B}">Lista de comprobación:</font>', est["normal"])]
+    for etiqueta, txt, enlaces in G.lineas(c):
+        partes = ([_e(txt)] if txt else []) + [f'<a href="{_e(u)}">{_e(t)}</a>' for t, u in enlaces]
+        res.append(Paragraph(f'<font name="{_FUENTE_B}">{_e(etiqueta)}:</font> ' + " · ".join(partes),
+                             est["pequeno"], bulletText="-"))
+    url = G.guia_url(G.SITIO)
+    res.append(Paragraph(f'{_e(G.GUIA_TEXTO)}: <a href="{_e(url)}">{_e(url)}</a>', est["pequeno"]))
+    return res
 
 
 def _seleccion(resultados, total):
