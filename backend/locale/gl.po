@@ -510,6 +510,42 @@ msgstr "Soldos dos alcaldes"
 msgid "Convocatorias abiertas"
 msgstr "Convocatorias abertas"
 
+#: portada, bloque para empresas (2026-11-08)
+msgid "¿Tienes una empresa? Hoy hay 1 licitación pública abierta."
+msgstr "Tes unha empresa? Hoxe hai 1 licitación pública aberta."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "¿Tienes una empresa? Hoy hay {n} licitaciones públicas abiertas."
+msgstr "Tes unha empresa? Hoxe hai {n} licitacións públicas abertas."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Te decimos cuáles encajan con tu empresa."
+msgstr "Cada día a Administración adxudica contratos que leva a túa competencia mentres ti non te decatas. Dicímosche cales encaixan coa túa empresa."
+
+#: portada, bloque para empresas, filtro apagado (2026-11-08)
+msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Míralas todas aquí, ordenadas y con su plazo."
+msgstr "Cada día a Administración adxudica contratos que leva a túa competencia mentres ti non te decatas. Aquí podes velas todas, ordenadas e co seu prazo."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Ver las licitaciones abiertas"
+msgstr "Ver as licitacións abertas"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Avisarme de las de mi sector"
+msgstr "Avisarme das do meu sector"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Cierran pronto"
+msgstr "Pechan pronto"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "plazo hasta el {f}"
+msgstr "prazo ata o {f}"
+
+#: portada, bloque para empresas, plazo con hora (2026-11-08)
+msgid "plazo hasta el {f} a las {h}"
+msgstr "prazo ata o {f} ás {h}"
+
 #: app.py:19332 app.py:19386 app.py:28142
 msgid "Casos"
 msgstr "Casos"

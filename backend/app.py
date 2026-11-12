@@ -18876,6 +18876,43 @@ h2,.rk-section-header h2{font-weight:600;}
 .dd-cifra.dd-sin-deuda{color:var(--green);}   /* aquí el verde sí significa algo: sin deuda */
 .it-aclara{background:var(--tint);border:1px solid var(--border);color:var(--text);font-weight:500;}
 .pwa-banner-btn{background:#fff;color:var(--accent);}
+/* Convocatorias en verde (08-11-2026, encargo del titular: que la gente vaya ahí). Un verde propio (--conv, 5,4:1 sobre
+   blanco y 4,9:1 sobre su fondo --conv-tint; texto blanco sobre --conv 5,4:1), con fondo verde suave y borde
+   completo: «Datos destacados» lleva solo una franja verde oscura a la izquierda sobre blanco. */
+:root{--conv:#0d7a3f;--conv-osc:#0a5f31;--conv-tint:#e8f5ec;--conv-borde:#8fcca5;}
+.header-nav>a.nav-conv{background:var(--conv);border-color:var(--conv);color:#fff;}
+.header-nav>a.nav-conv:hover,.header-nav>a.nav-conv:focus{background:var(--conv-osc);border-color:var(--conv-osc);}
+.stats-bar a.stat.stat-conv,.hero-panel .stats-bar a.stat.stat-conv{background:var(--conv-tint);border:1px solid var(--conv-borde);color:var(--conv-osc);font-weight:600;}
+.stats-bar a.stat.stat-conv span,.hero-panel .stats-bar a.stat.stat-conv span{color:var(--conv);}
+.stats-bar a.stat.stat-conv:hover,.stats-bar a.stat.stat-conv:focus{border-color:var(--conv);box-shadow:0 0 0 1px var(--conv);}
+/* Bloque «¿Tienes una empresa?», arriba del todo de la portada */
+.emp-bloque{background:var(--conv-tint);border:2px solid var(--conv);border-radius:14px;padding:18px 22px 16px;margin:0 0 20px;color:var(--text);}
+.emp-bloque h2{font-size:21px;line-height:1.3;color:var(--conv-osc);margin:0 0 6px;font-weight:700;}
+.emp-bloque h2 b{color:var(--conv);font-weight:800;}
+.emp-texto{font-size:14.5px;line-height:1.5;margin:0 0 12px;max-width:820px;}
+.emp-botones{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 4px;}
+.emp-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 18px;border-radius:8px;font-weight:700;font-size:14.5px;text-decoration:none;}
+.emp-btn-principal{background:var(--conv);color:#fff;border:2px solid var(--conv);}
+.emp-btn-principal:hover,.emp-btn-principal:focus{background:var(--conv-osc);border-color:var(--conv-osc);}
+.emp-btn-secundario{background:#fff;color:var(--conv-osc);border:2px solid var(--conv);}
+.emp-btn-secundario:hover,.emp-btn-secundario:focus{background:var(--surface);text-decoration:underline;}
+.emp-ultimas-tit{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--conv-osc);margin:14px 0 6px;}
+.emp-ultimas{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.emp-ultimas li{background:#fff;border:1px solid var(--conv-borde);border-radius:10px;padding:10px 12px;min-width:0;}
+.emp-obj{display:block;color:var(--accent);font-weight:600;font-size:13.5px;line-height:1.35;text-decoration:none;overflow-wrap:anywhere;}
+.emp-obj:hover{text-decoration:underline;}
+.emp-meta{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.4;overflow-wrap:anywhere;}
+.emp-imp{font-family:'IBM Plex Mono',monospace;color:var(--accent);font-weight:600;white-space:nowrap;}
+@media (max-width:900px){.emp-ultimas{grid-template-columns:1fr;gap:8px;}}
+@media (max-width:700px){
+  .emp-bloque{padding:14px 14px 12px;margin:10px 0 14px;border-radius:12px;}
+  .emp-bloque h2{font-size:17.5px;}
+  .emp-texto{font-size:13.5px;margin-bottom:10px;}
+  .emp-botones{flex-direction:column;gap:8px;}
+  .emp-btn{width:100%;font-size:14px;}
+  .emp-ultimas li{padding:9px 10px;}
+  .emp-ultimas li:nth-child(n+3){display:none;}   /* en el móvil, 2 licitaciones: que el titular quede más arriba */
+}
 """
 
 # Version de cache-busting para los estaticos servidos con Cache-Control de
@@ -19523,7 +19560,7 @@ def _header_html(provincia="todas", con_lema=True, buscador_aqui=False):
     <a href="{rankings_href}">{_t("Rankings")}</a>
     <a href="{rankings_href}#alcaldes">{_t("Sueldos Alcaldes")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
-    <a href="/convocatorias">{_t("Convocatorias abiertas")}</a>
+    <a href="/convocatorias" class="nav-conv">{_t("Convocatorias abiertas")}</a>
     <a href="/casos">{_t("Casos")}</a>
     <button id="pwa-install-btn" class="pwa-install-btn" type="button" hidden>{_t("Instalar app")}</button>
   </nav>
@@ -24614,6 +24651,124 @@ _MAPA_CCAA_JS = r"""(function(){
 })();"""
 
 
+# Bloque «¿Tienes una empresa?» de la portada (encargo del titular, 08-11-2026): lo primero que se ve, para vender el
+# servicio a empresas. Cuenta las licitaciones abiertas (las mismas que la cifra «Licitaciones abiertas») y enseña las
+# 3 que «Cierran pronto» (las de plazo más cercano, con al menos _PORTADA_EMPRESAS_MARGEN_H horas de margen para que dé
+# tiempo a preparar la oferta; decisión del titular, 08-11), con hora de cierre y enlace a su anuncio oficial. Los datos se guardan _PORTADA_EMPRESAS_TTL segundos en memoria
+# (la portada ya se guarda montada unos minutos, pero así tampoco se repite la consulta al montarla en cada idioma).
+# El botón «Avisarme de las de mi sector» solo sale con FILTRO_FORMULARIO=1: apagado, su ruta da 404.
+# Los clics en los dos botones se cuentan en el contador propio (/api/evento, sin datos personales).
+_PORTADA_EMPRESAS_TTL = 300
+_PORTADA_EMPRESAS_N_ULTIMAS = 3
+_PORTADA_EMPRESAS_MARGEN_H = 120         # «Cierran pronto»: solo las que cierran dentro de 5 días o más (tiempo real
+                                         # para preparar la oferta; decisión del titular, 08-11; antes 48)
+_portada_empresas_cache = {"ts": 0.0, "datos": None}
+_PORTADA_EMPRESAS_EVENTOS = (("portada_licitaciones", "Botón «Ver las licitaciones abiertas»"),
+                             ("portada_aviso", "Botón «Avisarme de las de mi sector»"))
+
+
+def _portada_empresas_datos():
+    """(n_abiertas, [(organo, titulo, url, presupuesto, fin_plazo), ...]) con caché en memoria. (0, []) si falla.
+    09-11-2026: si existe la cuenta común de la portada (_portada_contadores, PR #43), N sale de ahí, para que el
+    bloque verde y el cuadro «Licitaciones abiertas» digan lo mismo en todos los idiomas. Funciona en cualquier orden
+    de fusión: sin ella, se usa la cuenta propia de este bloque."""
+    ahora_s = time.time()
+    c = _portada_empresas_cache
+    if c["datos"] is None or ahora_s - c["ts"] >= _PORTADA_EMPRESAS_TTL:
+        c.update(ts=ahora_s, datos=_portada_empresas_consultar())
+    datos = c["datos"]
+    comun = globals().get("_portada_contadores")
+    if comun is not None:
+        try:
+            datos = (comun()[0], datos[1])
+        except Exception as e:
+            print(f"[portada] cuenta común de licitaciones: {type(e).__name__}: {e}", flush=True)
+    return datos
+
+
+def _portada_empresas_consultar():
+    datos = (0, [])
+    try:
+        ahora = _ahora_madrid()
+        corte = ahora.strftime("%Y-%m-%d %H:%M")
+        corte_margen = (ahora + timedelta(hours=_PORTADA_EMPRESAS_MARGEN_H)).strftime("%Y-%m-%d %H:%M")
+        with _db_lock:
+            n = _db.execute("SELECT count(*) FROM licitaciones WHERE estado = 'PUB' AND fin_plazo >= ?",
+                            (corte,)).fetchone()[0]
+            ultimas = _db.execute(          # usa el índice idx_lic_plazo (estado, fin_plazo)
+                "SELECT organo, titulo, url, presupuesto, fin_plazo FROM licitaciones "
+                "WHERE estado = 'PUB' AND fin_plazo >= ? AND titulo != '' AND url LIKE 'http%' "
+                "ORDER BY fin_plazo, id LIMIT ?", (corte_margen, _PORTADA_EMPRESAS_N_ULTIMAS)).fetchall()
+        datos = (n or 0, [tuple(f) for f in ultimas])
+    except Exception as e:
+        print(f"[portada] bloque de empresas: {type(e).__name__}: {e}", flush=True)
+    return datos
+
+
+def _portada_texto_corto(txt, maximo=110):
+    """Corta un objeto largo por la última palabra entera antes de `maximo` caracteres."""
+    txt = " ".join((txt or "").split())
+    if len(txt) <= maximo:
+        return txt
+    corte = txt[:maximo].rsplit(" ", 1)[0].rstrip(" ,.;:-–—(")
+    return (corte or txt[:maximo]) + "…"
+
+
+def _portada_empresas_html():
+    """Bloque verde para empresas, arriba del todo de la portada nacional. Vacío si no hay licitaciones abiertas."""
+    n, ultimas = _portada_empresas_datos()
+    if not n:
+        return ""
+    if n == 1:
+        titulo = _t("¿Tienes una empresa? Hoy hay 1 licitación pública abierta.")
+    else:
+        titulo = _t("¿Tienes una empresa? Hoy hay {n} licitaciones públicas abiertas.").format(
+            n=f"<b>{fmt_num(n)}</b>")
+    botones = (f'<a class="emp-btn emp-btn-principal" href="/convocatorias" data-dp-evento="portada_licitaciones">'
+               f'{_t("Ver las licitaciones abiertas")} →</a>')
+    # Apagado el filtro no se promete lo de «te decimos cuáles encajan»: se invita a ver la lista (decisión del titular, 08-11).
+    if FILTRO_FORMULARIO:
+        texto = _t("Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Te decimos cuáles encajan con tu empresa.")
+    else:
+        texto = _t("Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Míralas todas aquí, ordenadas y con su plazo.")
+    if FILTRO_FORMULARIO:
+        botones += (f'<a class="emp-btn emp-btn-secundario" href="{esc(FFORM.RUTA)}" data-dp-evento="portada_aviso">'
+                    f'🔔 {_t("Avisarme de las de mi sector")}</a>')
+    filas = ""
+    for organo, titulo_lic, url, presupuesto, fin in ultimas:
+        enlace = _conv_enlace_oficial(url)
+        if not enlace:
+            continue
+        meta = [esc(organo or "")]
+        if presupuesto:
+            meta.append(f'<span class="emp-imp">{fmt_eur(str(presupuesto))}</span> {_t("sin IVA")}')
+        plazo = _conv_dias(fin)
+        if fin:
+            fecha_hora = _conv_fecha(fin)                  # «10/11/2026 14:00», o solo la fecha si PLACE no da hora
+            if len(fecha_hora) > 10:
+                txt_plazo = _t("plazo hasta el {f} a las {h}").format(f=esc(fecha_hora[:10]), h=esc(fecha_hora[11:16]))
+            else:
+                txt_plazo = _t("plazo hasta el {f}").format(f=esc(fecha_hora[:10]))
+            meta.append(txt_plazo + (f" ({esc(plazo)})" if plazo else ""))
+        filas += (f'<li><a class="emp-obj" href="{esc(enlace)}" target="_blank" rel="noopener">'
+                  f'{esc(_portada_texto_corto(titulo_lic))}</a>'
+                  f'<div class="emp-meta">{" · ".join(m for m in meta if m)}</div></li>')
+    ultimas_html = (f'<div class="emp-ultimas-tit">{_t("Cierran pronto")}</div><ul class="emp-ultimas">{filas}</ul>'
+                    if filas else "")
+    return f"""<section class="emp-bloque" aria-labelledby="emp-titulo">
+    <h2 id="emp-titulo">{titulo}</h2>
+    <p class="emp-texto">{texto}</p>
+    <div class="emp-botones">{botones}</div>
+    {ultimas_html}
+  </section>
+  <script>(function(){{
+    var b = document.querySelectorAll('[data-dp-evento]');
+    for (var i = 0; i < b.length; i++) b[i].addEventListener('click', function(){{
+      try {{ if (navigator.sendBeacon) navigator.sendBeacon('/api/evento', this.getAttribute('data-dp-evento')); }} catch (e) {{}}
+    }});
+  }})();</script>"""
+
+
 def _portada_cifras_secciones_html():
     """Segunda fila de cifras de la portada (2026-10-13): fondos UE y convocatorias abiertas, cada una con enlace a
     su sección. Los fondos UE son los de la vista de España de /fondos-ue (sin la cooperación entre países, que allí
@@ -24634,16 +24789,16 @@ def _portada_cifras_secciones_html():
             n_sub = (_db.execute("SELECT count(*) FROM subvenciones WHERE fin >= ? AND (inicio = '' OR inicio <= ?)",
                                  (ahora.strftime("%Y-%m-%d"),) * 2).fetchone()[0] if SUBVENCIONES_PUBLICAS else 0)
         if n_lic:
-            cifras.append(("/convocatorias", fmt_num(n_lic), _t("Licitaciones abiertas")))
+            cifras.append(("/convocatorias", fmt_num(n_lic), _t("Licitaciones abiertas"), " stat-conv"))
         if n_sub:
-            cifras.append(("/convocatorias?tab=subvenciones", fmt_num(n_sub), _t("Subvenciones abiertas")))
+            cifras.append(("/convocatorias?tab=subvenciones", fmt_num(n_sub), _t("Subvenciones abiertas"), " stat-conv"))
     except Exception as e:
         print(f"[portada] cifras de convocatorias: {type(e).__name__}: {e}", flush=True)
     if not cifras:
         return ""
     return ('<div class="stats-bar">'
-            + "".join(f'<a class="stat stat-enlace" href="{esc(url)}"><span>{valor}</span>{etiqueta} →</a>'
-                      for url, valor, etiqueta in cifras) + "</div>")
+            + "".join(f'<a class="stat stat-enlace{"".join(extra)}" href="{esc(url)}"><span>{valor}</span>{etiqueta} →</a>'
+                      for url, valor, etiqueta, *extra in cifras) + "</div>")
 
 
 def render_landing_nacional_html(datos, rk_comunidad="todas"):
@@ -24797,7 +24952,9 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
                  + _mapa_cobertura_svg_html(clickable=True, datos_oficiales=_datos_oficiales_mapa(datos)))
     sidebar_ranking_html = _sidebar_ranking_transparencia_html(rk_comunidad)
 
-    body = f"""{personalizacion_html}
+    # 08-11-2026 (encargo del titular): arriba del todo el bloque para empresas; la banda «¿Cuál es tu municipio?» pasa
+    # debajo del titular, dentro del panel del buscador.
+    body = f"""{_portada_empresas_html()}
   <div class="hero-panel">
     <div class="hero">
       <div class="hero-tagline">{esc(_site_tagline())}</div>
@@ -24805,6 +24962,7 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
         {_t("Contratos públicos de España cruzados con el Registro Mercantil para saber qué empresa — y qué persona — hay detrás de cada adjudicación.")}
       </p>
     </div>
+    {personalizacion_html}
     <div class="adv-search" id="adv-search">
       <div class="as-gancho">{_t("<b>¿Cuál es tu municipio?</b> Te enseñamos lo que ha gastado tu ayuntamiento y su puesto en los rankings.")}</div>
       <div class="as-tabs">
@@ -30147,6 +30305,10 @@ def _visitas_tabla():
     _visitas_estado["tabla"] = True
 
 
+# Clics en los botones del bloque para empresas de la portada (08-11-2026): solo una suma por día, como el resto.
+_VISITAS_EVENTOS.update({k: "clic_" + k for k, _etiqueta in _PORTADA_EMPRESAS_EVENTOS})
+
+
 def _visitas_semana(cuando=None):
     """Semana ISO ("2026-W42", de lunes a domingo) de un momento, por defecto ahora en hora peninsular."""
     iso = (cuando or _ahora_madrid()).isocalendar()
@@ -30401,6 +30563,11 @@ def _visitas_pagina(qs, autorizado=False):
         + ranking("red_persona", "Redes de «personas» con más tráfico", "Red (IP recortada)", nota="Una red con miles de peticiones y aspecto de navegador suele ser un extractor que se hace pasar por persona.")
         + ranking("estado", "Códigos de respuesta", "Código")
         + ranking("interno", "Tráfico interno (/admin y diagnóstico: flujos de Actions, copias)", "Cliente")
+        + tabla("Portada: clics en el bloque para empresas", ["Botón", f"Clics en los últimos {dias} días", "Hoy"],
+                [[esc(etiqueta), num(suma.get("evento", {}).get("clic_" + k, [0])[0]),
+                  num(por_dia.get(hoy, {}).get("evento", {}).get("clic_" + k, 0))]
+                 for k, etiqueta in _PORTADA_EMPRESAS_EVENTOS],
+                "Solo cuenta clics desde navegadores. «Avisarme de las de mi sector» solo sale con FILTRO_FORMULARIO=1.")
         + '<p class="n">Cómo se cuenta: «personas» es todo lo que se presenta como un navegador; un extractor que '
           'finja serlo cuenta como persona. «Visitantes» es el número de combinaciones distintas de IP y navegador que '
           'han visto alguna página, calculado con una huella que se borra al acabar la semana: no hay cookies, no '
