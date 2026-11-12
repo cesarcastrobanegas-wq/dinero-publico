@@ -235,25 +235,49 @@ class C_ConLaApp(unittest.TestCase):
         cls.app = app
 
     def ruta(self, path, lang="es"):
-        tk = self.app._I18N_IDIOMA.set(lang)
-        try:
-            code, _h, body = self.app._route_get(path, {}, gzip_ok=False)
-        finally:
-            self.app._I18N_IDIOMA.reset(tk)
-        return code, body.decode("utf-8")
+        """Petición completa por la entrada WSGI (app.app), con el prefijo de idioma real: así pasa por la capa que
+        reescribe canonical, noindex y hreflang."""
+        import io
+        estado = {}
+        entorno = {"REQUEST_METHOD": "GET", "PATH_INFO": ("" if lang == "es" else "/" + lang) + path,
+                   "QUERY_STRING": "", "REMOTE_ADDR": "", "HTTP_USER_AGENT": "Mozilla/5.0 (prueba guía)",
+                   "wsgi.input": io.BytesIO(b""), "HTTP_ACCEPT_ENCODING": ""}
+        cuerpo = b"".join(self.app.app(entorno, lambda s, h, e=None: estado.update(s=s)))
+        return int(estado["s"].split()[0]), cuerpo.decode("utf-8", "replace")
 
-    def test_pagina_en_los_cuatro_idiomas(self):
-        titulos = {"es": "Cómo presentarse a una licitación", "gl": "Como presentarse a unha licitación",
-                   "ca": "Com presentar-se a una licitació", "eu": "Nola aurkeztu lizitazio batera"}
-        for lang, tit in titulos.items():
+    TITULOS = {"es": "Cómo presentarse a una licitación", "gl": "Como presentarse a unha licitación",
+               "ca": "Com presentar-se a una licitació", "eu": "Nola aurkeztu lizitazio batera"}
+
+    def test_misma_ruta_en_app_y_modulo(self):
+        self.assertEqual(self.app._GUIA_LICITACIONES_RUTA, G.GUIA_RUTA)
+
+    def test_sin_publicar_las_traducciones_sirven_el_castellano(self):
+        os.environ.pop("GUIA_LICITACIONES_PUBLICADOS", None)
+        for lang in ("es", "gl", "ca", "eu"):
             code, h = self.ruta(G.GUIA_RUTA, lang)
             self.assertEqual(code, 200, lang)
-            self.assertIn(f"<h1>{tit}</h1>", h)
+            self.assertIn(f"<h1>{self.TITULOS['es']}</h1>", h)
             self.assertIn('href="https://www.boe.es/buscar/act.php?id=BOE-A-2017-12902#a1-71"', h)
+            self.assertNotIn('<link rel="alternate" hreflang="gl"', h)   # sin versión traducida no hay alternativas
             if lang != "es":
-                self.assertIn(f'lang="{lang}"', h)
+                self.assertIn('content="noindex, follow"', h, lang)
+                self.assertIn(f'<link rel="canonical" href="{self.app.SITE_URL}{G.GUIA_RUTA}"', h, lang)
         self.assertEqual(self.ruta(G.GUIA_RUTA + "/")[0], 200)
-        self.assertIn(G.GUIA_RUTA + "</loc>", self.ruta("/sitemap.xml")[1])
+        sm = self.ruta("/sitemap.xml")[1]
+        self.assertIn(G.GUIA_RUTA + "</loc>", sm)
+        self.assertNotIn("/gl" + G.GUIA_RUTA + "</loc>", sm)
+
+    def test_publicada_una_traduccion(self):
+        os.environ["GUIA_LICITACIONES_PUBLICADOS"] = "gl"
+        try:
+            code, h = self.ruta(G.GUIA_RUTA, "gl")
+            self.assertIn(f"<h1>{self.TITULOS['gl']}</h1>", h)
+            self.assertNotIn('content="noindex, follow"', h)
+            self.assertIn(f'<link rel="canonical" href="{self.app.SITE_URL}/gl{G.GUIA_RUTA}"', h)
+            code, h = self.ruta(G.GUIA_RUTA, "ca")                  # la catalana sigue sin publicar
+            self.assertIn(f"<h1>{self.TITULOS['es']}</h1>", h)
+        finally:
+            os.environ.pop("GUIA_LICITACIONES_PUBLICADOS", None)
 
     def test_alertas_diarias_solo_enlace(self):
         app = self.app

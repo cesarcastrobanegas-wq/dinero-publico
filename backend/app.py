@@ -89,7 +89,23 @@ _I18N_RUTA = contextvars.ContextVar("i18n_ruta", default=("/", ""))   # (ruta si
 _I18N_RUTAS_EDITORIALES = ("/casos", "/metodologia")
 
 
+# Guía «Cómo presentarse a una licitación» (12-11-2026): las traducciones (backend/guia_licitaciones/gl|ca|eu.html)
+# están en el repositorio pero sin publicar hasta que las revise un nativo. Se publican con la variable de entorno
+# GUIA_LICITACIONES_PUBLICADOS (p. ej. "gl,ca"). Mientras un idioma no esté publicado, su versión sirve el castellano y
+# se trata como página editorial (canonical al castellano, noindex, sin hreflang).
+_GUIA_LICITACIONES_RUTA = "/licitaciones/como-presentarse"
+
+
+def _guia_licitaciones_publicados():
+    return [x for x in (s.strip() for s in os.environ.get("GUIA_LICITACIONES_PUBLICADOS", "").split(","))
+            if x in I18N_IDIOMAS]
+
+
 def _i18n_ruta_editorial(ruta):
+    if ruta.rstrip("/") == _GUIA_LICITACIONES_RUTA:
+        publicados = _guia_licitaciones_publicados()
+        lang = _I18N_IDIOMA.get()
+        return lang not in publicados if lang != "es" else not set(I18N_IDIOMAS) <= set(publicados)
     return any(ruta == r or ruta.startswith(r + "/") for r in _I18N_RUTAS_EDITORIALES)
 
 
@@ -27539,8 +27555,11 @@ _GUIA_LICITACIONES_CSS = ("<style>.guia-indice ol{margin:6px 0 14px 20px}.guia-f
 
 
 def _guia_licitaciones_fichero(lang):
+    """La traducción solo si ese idioma está en GUIA_LICITACIONES_PUBLICADOS; si no, el castellano."""
     ruta = os.path.join(GUIA_LICITACIONES_DIR, f"{lang}.html")
-    return ruta if os.path.exists(ruta) else os.path.join(GUIA_LICITACIONES_DIR, "es.html")
+    if lang in _guia_licitaciones_publicados() and os.path.exists(ruta):
+        return ruta
+    return os.path.join(GUIA_LICITACIONES_DIR, "es.html")
 
 
 def render_guia_licitaciones_html():
