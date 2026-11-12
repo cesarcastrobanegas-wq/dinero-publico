@@ -133,7 +133,7 @@ contratos por encima de los umbrales europeos de toda la UE y el EEE.
    Decisión 2011/833/UE). No piden atribución expresa para los datos; la daría igualmente.
 
 **Recomendación**: esperar al feed 1044 (más valor para las empresas españolas y menos trabajo) y probar TED con
-unos pocos socios.
+unos pocos socios. Para las licitaciones **españolas**, TED no compensa como fuente directa: ver el apartado 4.
 
 ## 3. Informe mensual: propuesta
 
@@ -169,3 +169,92 @@ de datos acumulados.
 - comparar meses con datos que aún se están completando (los ZIP del mes en curso cambian a diario): el informe
   saldría del mes cerrado, a partir del día 3;
 - y el aviso de siempre: los datos son los de la fuente y pueden tener errores.
+
+## 4. Cobertura real, medida con TED (12-11-2026, noche)
+
+**Cómo se ha medido**
+- **TED**: con su API, los anuncios de licitación (`cn-standard`, `cn-social`, `cn-desg`) de compradores españoles
+  (`buyer-country=ESP`) publicados del 13-10 al 12-11-2026. Son **2.542**; **2.104** seguían abiertos desde el
+  13-11. Solo se comparan los abiertos, porque de lo nuestro solo vemos lo abierto.
+- **Lo nuestro**:
+  - **643**: las 5.808 abiertas que enseñaba /convocatorias el 12-11 a las 20:00;
+  - **1044**: 2.279 abiertas, medidas en su Atom en vivo esa misma noche.
+- **Cruce**, por este orden:
+  1. mismo anuncio de PLACE: TED trae el enlace `detalle_licitacion&idEvl=…`, el mismo que guardamos;
+  2. mismo expediente (el 643 no lo enseña en la web, el 1044 sí);
+  3. título parecido (≥ 60 % de palabras en común) y mismo día de cierre;
+  4. mismo órgano y mismo día de cierre. Hace falta porque TED da a menudo el título traducido al castellano y sin
+     expediente, mientras que la plataforma catalana lo da en catalán.
+
+**Resultado (2.104 abiertas en TED)**
+
+| | Anuncios | % |
+|---|---:|---:|
+| Los tenemos por el 643 (PLACE) | 1.281 | 60,9 % |
+| Los tenemos por el 1044 (plataformas autonómicas) | 657 | 31,2 % |
+| **Los tenemos con 643 + 1044** | **1.938** | **92,1 %** |
+| No los tendríamos | 166 | 7,9 % |
+
+**De los 166 que faltan**
+- **60 están en PLACE según TED, pero no en nuestra tabla.** Es un hueco de nuestra lectura del 643, no una fuente
+  que falte: 60 de las 1.329 de PLACE en TED (4,5 %). Casi todos cierran en diciembre.
+  - Ejemplo comprobado a mano: Confederación Hidrográfica del Duero, expediente 452-A.210.00.03/2026, abierta en
+    PLACE hasta el 24-11 a las 12:00 y que no sale en /convocatorias.
+  - Otros: Diputación Provincial (2026/D22200/006-302/00007, cierra el 26-11) y Gerencia de Viviendas Sociales
+    (35-SV-26-GC-CP, cierra el 02-12).
+  - **Hay que mirarlo en producción**: si estos `idEvl` están en la tabla y con qué `estado` y `fin_plazo`. Mi
+    sospecha, sin comprobar: anuncios cuyo plazo no viene en el campo `TenderSubmissionDeadlinePeriod` y que por
+    eso nunca cuentan como abiertos.
+- **12 son de instituciones de la UE con sede en España** (EUIPO en Alicante, Centro de Satélites en Torrejón,
+  F4E en Barcelona, Comisión…). No son sector público español y publican en su propia plataforma
+  (webgate.ec.europa.eu); solo están en TED.
+- **Unos 7 son de entidades que publican fuera de PLACE y de su agregación**, comprobado en su perfil:
+
+  | Entidad | Tipo | Anuncios | Dónde publica |
+  |---|---|---:|---|
+  | Aigües de Barcelona | empresa mixta con derechos especiales | 2 | portal propio |
+  | Cámara de Comercio de España | corporación de derecho público | 2 | camara.es |
+  | Marfina Bus / Moventis | privada con derechos especiales | 1 | moventis.es |
+  | TMESA (autobuses municipales de Terrassa) | empresa municipal | 1 | tmesa.com |
+  | Ente de Servicios Tributarios de Asturias | organismo público | 1 | presenta por licita.asturias.es |
+
+  **Ninguno tiene RSS, API ni datos abiertos de contratación**: son páginas HTML (TMESA solo tiene el RSS
+  genérico de su web). Añadirlos uno a uno sería un raspado de HTML por portal, para 1 o 2 anuncios al mes cada
+  uno. No compensa.
+- **Los otros ~87 son, casi seguro, de plataformas que ya están en el 1044**: catalana 36, Navarra 13, Andalucía 15,
+  Galicia 8, Euskadi 3… En la mayoría el órgano sí aparece en el 1044 con otras licitaciones, y en varios el
+  expediente del 1044 va dentro del título de TED (p. ej. Mercados de Abastecimientos de Barcelona,
+  «(2026OB0001)»). Lo más probable es la misma licitación con otra fecha de cierre (prórroga) u otro título. TERSA,
+  el Ajuntament de Barcelona y la Diputació tienen su perfil en contractaciopublica.cat, que está en el 1044. Es
+  una cota por arriba de lo que falta, no una fuente nueva.
+
+**Cobertura del sector público español con 643 + 1044** (sin las 12 de instituciones de la UE: 2.092 anuncios)
+
+| | Cobertura |
+|---|---:|
+| Medida tal cual (cruce estricto) | **92,6 %** (1.938) |
+| Arreglando el hueco de lectura de PLACE (+60) | **95,5 %** |
+| Si los ~87 de plataformas del 1044 son las mismas con otra fecha o título | **hasta 99,7 %** |
+| Fuera de PLACE y de su agregación, comprobado | **~0,3 %** (unos 7 al mes) |
+
+**Con TED como fuente añadida**
+- Cubriría también esos ~7 al mes y las 12 de instituciones de la UE: el 100 % de lo que publica TED.
+- Pero **TED solo tiene lo que supera los umbrales europeos**. De lo que queda por debajo y fuera de PLACE y del
+  1044 no hay forma de medir cuánto falta con esta fuente, aunque por lo visto arriba son entidades pequeñas y
+  pocas.
+
+**Propuesta**
+1. **Primero, el hueco de PLACE**: 60 abiertas al mes, el 4,5 % de lo armonizado de PLACE, sin fuente nueva.
+   Investigarlo en producción con los `idEvl` de arriba. Es lo que más cobertura da.
+2. **No añadir TED como fuente directa para las españolas.** Ganaría unas 7 licitaciones españolas al mes (el
+   0,3 %), a cambio de cruzar cada anuncio con PLACE y el 1044. Ese cruce, como se ve arriba, solo es exacto con
+   PLACE (por `idEvl`); con el 1044 depende de órgano y fecha, y se equivocaría a veces en los dos sentidos.
+3. **Las 12 de instituciones de la UE con sede en España**, si se quieren, en el apartado «Licitaciones en Europa»
+   del punto 2 (que ya sería TED), no mezcladas con las españolas.
+4. **Si se añadiera TED igualmente** para las españolas, solo las que no lleven enlace a contrataciondelestado.es
+   ni a las plataformas del 1044, y quitando repetidos por órgano + día de cierre. Coste: 1-2 días sobre lo del
+   punto 2.
+
+Los requisitos (solvencia, clasificación) del 1044 tampoco se pueden sacar de TED de forma fiable. TED los trae a
+veces en los armonizados (`selection-criterion-lot`), pero casi siempre como «ver el pliego» o solo el tipo
+(«volumen de negocios anual»).
