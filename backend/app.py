@@ -28830,6 +28830,14 @@ def _calentar_portada():
                 print(f"  [paginas] no se pudo calentar {ruta} ({lang}): {type(e).__name__}: {e}", flush=True)
 
 
+def _paginas_invalidar(grupo):
+    """Tira todas las entradas de un grupo (p. ej. al publicarse un comentario que esas páginas enseñan)."""
+    with _paginas_lock:
+        for k in [k for k, e in _paginas_cache.items() if e.get("grupo") == grupo]:
+            del _paginas_cache[k]
+            _paginas_cerrojos.pop(k, None)
+
+
 # Revisión del 12-11-2026: la fecha «Datos actualizados el ...» y las cinco cifras de arriba de la portada salían
 # distintas según el idioma (/gl/ y /ca/ el 10-11-2026, / el 11-11-2026, 3 contratos de diferencia): cada idioma guarda
 # su portada en la caché de páginas y la cuenta se hacía al montarla, en momentos distintos (una portada vieja se
@@ -28870,14 +28878,6 @@ def _portada_cabecera(calcular, ahora_s=None):
     if cambio and _portada_envejecer_otros_idiomas():
         threading.Thread(target=_calentar_portada, daemon=True, name="portada-cabecera").start()
     return nuevo
-
-
-def _paginas_invalidar(grupo):
-    """Tira todas las entradas de un grupo (p. ej. al publicarse un comentario que esas páginas enseñan)."""
-    with _paginas_lock:
-        for k in [k for k, e in _paginas_cache.items() if e.get("grupo") == grupo]:
-            del _paginas_cache[k]
-            _paginas_cerrojos.pop(k, None)
 
 
 def _pagina_remontar(clave, montar, grupo=None):
