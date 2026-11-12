@@ -34,14 +34,6 @@ msgstr "Nom no mostrat"
 msgid "desde {fecha}"
 msgstr "des de {fecha}"
 
-#: app.py:5401
-msgid "Un sueldo de 0 € en ISPA no significa que no cobre nada -- suele indicar que quien ocupa el cargo ha renunciado al sueldo de alcalde/sa por percibir ya retribución de otro cargo público (frecuente cuando también forma parte del gobierno de una Diputación). Verificado así en varios municipios de la provincia de Barcelona."
-msgstr "Un sou de 0 € a l'ISPA no vol dir que no cobri res -- sol indicar que qui ocupa el càrrec ha renunciat al sou d'alcalde/essa perquè ja percep retribució d'un altre càrrec públic (freqüent quan també forma part del govern d'una Diputació). Verificat així en diversos municipis de la província de Barcelona."
-
-#: app.py:5407
-msgid "(posible renuncia por doble cargo ℹ️)"
-msgstr "(possible renúncia per doble càrrec ℹ️)"
-
 #: app.py:5412
 msgid "Último dato oficial del cargo: lo percibió {anterior}, alcalde hasta {fecha}. No es el sueldo de quien lo ocupa ahora."
 msgstr "Darrera dada oficial del càrrec: la va percebre {anterior}, alcalde fins a {fecha}. No és el sou de qui l'ocupa ara."
@@ -3403,6 +3395,59 @@ msgstr "Com presentar-se a una licitació, pas a pas"
 
 msgid "Cómo presentarse a una licitación, paso a paso: {url}"
 msgstr "Com presentar-se a una licitació, pas a pas: {url}"
+msgid "sin datos de retribución"
+msgstr "sense dades de retribució"
+
+msgid "sueldo: sin fuente oficial"
+msgstr "sou: sense font oficial"
+
+msgid "Régimen de dedicación según ISPA: {regimen}"
+msgstr "Règim de dedicació segons l'ISPA: {regimen}"
+
+msgid "según {fuente}"
+msgstr "segons {fuente}"
+
+msgid "Fecha según la fuente, posible error: es posterior a hoy."
+msgstr "Data segons la font, possible error: és posterior a avui."
+
+msgid "y {n} más en la ficha"
+msgstr "i {n} més a la fitxa"
+
+msgid "Personas"
+msgstr "Persones"
+
+msgid "Periodo según la fuente"
+msgstr "Període segons la font"
+
+msgid "Fuente oficial"
+msgstr "Font oficial"
+
+msgid "Recogidos el {fecha}."
+msgstr "Recollits el {fecha}."
+
+msgid "Sueldos de concejales"
+msgstr "Sous de regidors"
+
+msgid "{n} personas en {m} municipios cuyo ayuntamiento publica la retribución de sus concejales con nombre."
+msgstr "{n} persones en {m} municipis l'ajuntament dels quals publica la retribució dels seus regidors amb nom."
+
+msgid "El Ministerio publica el sueldo de cada alcalde, pero el de los concejales solo como un total por ayuntamiento, sin nombres. Por eso solo mostramos sueldos individuales donde el propio ayuntamiento los publica con nombre, tal como figuran en su documento oficial: sin convertir ni estimar importes."
+msgstr "El Ministeri publica el sou de cada alcalde, però el dels regidors només com un total per ajuntament, sense noms. Per això només mostrem sous individuals on el mateix ajuntament els publica amb nom, tal com figuren al seu document oficial: sense convertir ni estimar imports."
+
+msgid "La lista de cada municipio, con el importe, la base y el enlace a la fuente de cada persona, está en su ficha."
+msgstr "La llista de cada municipi, amb l'import, la base i l'enllaç a la font de cada persona, és a la seva fitxa."
+
+msgid "Sueldos de alcaldes y alcaldesas"
+msgstr "Sous d'alcaldes i alcaldesses"
+
+msgid "Municipios cuyo ayuntamiento publica los sueldos de sus concejales con nombre, con enlace a la ficha y a la fuente oficial."
+msgstr "Municipis l'ajuntament dels quals publica els sous dels seus regidors amb nom, amb enllaç a la fitxa i a la font oficial."
+
+msgid "Sueldos de concejales publicados por cada ayuntamiento"
+msgstr "Sous de regidors publicats per cada ajuntament"
+
+msgid "Otros municipios con sueldos de concejales"
+msgstr "Altres municipis amb sous de regidors"
 
 msgid "Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP) y las plataformas autonómicas que agrega."
 msgstr "Licitacions amb el termini de presentació d'ofertes obert, segons la Plataforma de Contractació del Sector Públic (PLACSP) i les plataformes autonòmiques que agrega."

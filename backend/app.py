@@ -5494,6 +5494,46 @@ def relevo_alcaldia(municipio, provincia, nombre_registro, anio_ispa=None):
     return r
 
 
+def _ispa_url_registro(retrib):
+    """URL oficial de ISPA del ejercicio de este registro de RETRIBUCIONES_ISPA, o "" si no hay importe o no se
+    sabe el ejercicio (sin ejercicio no se puede enlazar la página de ISPA que lo publica)."""
+    if not retrib or retrib.get("importe") is None:
+        return ""
+    anio = str(retrib.get("anio", "")).strip()
+    return ispa_fuente_url(int(anio)) if anio.isdigit() else ""
+
+
+def _sueldo_alcalde_html(retrib):
+    """Sueldo del alcalde/sa en la ficha, SIEMPRE con enlace a su fuente oficial (revisión del 12-11-2026).
+
+    - Con importe y ejercicio: «💰 X €/año (retribuciones de AAAA) · Fuente: ISPA ↗», enlazado a la página de ISPA
+      de ese ejercicio. El régimen de dedicación, tal como lo da ISPA, va en el title.
+    - Con 0 €: lo mismo, «0 €/año según ISPA ↗». Antes llevaba la nota «(posible renuncia por doble cargo)», una
+      suposición sobre la persona que la fuente no dice: se quitó. ISPA solo da el importe y el régimen.
+    - Con importe pero sin ejercicio (no se puede enlazar la fuente): «sin fuente oficial», sin la cifra.
+    - Sin registro en ISPA: «sin datos de retribución».
+    """
+    if not retrib or retrib.get("importe") is None:
+        return f' <span class="pol-retrib pol-retrib-sin">{_t("sin datos de retribución")}</span>'
+    url = _ispa_url_registro(retrib)
+    if not url:
+        return f' <span class="pol-retrib pol-retrib-sin">{_t("sueldo: sin fuente oficial")}</span>'
+    anio = int(str(retrib["anio"]).strip())
+    # 07-11-2026: el año es el del ejercicio de los datos; «ISPA 2024» parecía el nombre de la edición (la que
+    # publica los de 2024 es ISPA 2025, como dice la cabecera de /rankings).
+    anio_html = " (" + _t("retribuciones de {anio}").format(anio=esc(anio)) + ")"
+    regimen = str(retrib.get("regimen_dedicacion") or "").strip()
+    title = (f' title="{esc(_t("Régimen de dedicación según ISPA: {regimen}").format(regimen=regimen))}"'
+             if regimen else "")
+    fuente = (f'<a class="pol-retrib-fuente" href="{esc(url)}" target="_blank" rel="noopener nofollow" '
+              f'title="{esc(_t("Ministerio para la Transformación Digital y de la Función Pública"))}">ISPA ↗</a>')
+    if retrib["importe"] == 0:
+        cifra = f'0 €{_t("/año")}{anio_html} ' + _t("según {fuente}").format(fuente=fuente)
+    else:
+        cifra = f'{fmt_eur(retrib["importe"])}{_t("/año")}{anio_html} · {_t("Fuente:")} {fuente}'
+    return f' <span class="pol-retrib"{title}>💰 {cifra}</span>'
+
+
 def alcalde_concejales_html(municipio, provincia=None):
     """Bloque HTML de alcalde/alcaldesa + desplegable de concejales para la
     ficha de un ayuntamiento, a partir de ALCALDES_CONCEJALES (Ministerio de
@@ -5531,30 +5571,8 @@ def alcalde_concejales_html(municipio, provincia=None):
         sufijo = f" ({esc(partido_alcalde)})" if partido_alcalde else ""
         if relevo:
             sufijo += " · " + _t("desde {fecha}").format(fecha=esc(relevo["desde"]))
-        retrib_html = ""
-        if retrib and retrib.get("importe") is not None:
-            anio = retrib.get("anio", "")
-            # 07-11-2026: el año es el del ejercicio de los datos; «ISPA 2024» parecía el nombre de la edición (la que
-            # publica los de 2024 es ISPA 2025, como dice la cabecera de /rankings).
-            anio_html = " (" + _t("retribuciones de {anio}").format(anio=esc(anio)) + ")" if anio else ""
-            if retrib["importe"] == 0:
-                # Verificado 2026-08-09 en 3 casos reales (Sabadell, Sant
-                # Boi de Llobregat, Granollers, los 3 alcaldesas que también
-                # forman parte del gobierno de la Diputació de Barcelona):
-                # el 0€ de ISPA no es un hueco de datos, es que la persona
-                # renunció al sueldo de alcalde/sa por cobrar ya de otro
-                # cargo público. No se puede afirmar el motivo exacto para
-                # CUALQUIER municipio con 0€ (no se ha verificado uno a
-                # uno), así que el texto queda en condicional.
-                nota = _t("Un sueldo de 0 € en ISPA no significa que no cobre nada -- suele "
-                          "indicar que quien ocupa el cargo ha renunciado al sueldo de alcalde/sa "
-                          "por percibir ya retribución de otro cargo público (frecuente cuando "
-                          "también forma parte del gobierno de una Diputación). Verificado así en "
-                          "varios municipios de la provincia de Barcelona.")
-                retrib_html = (f' <span class="pol-retrib" title="{esc(nota)}">💰 0 €{_t("/año")}{anio_html} '
-                                f'<span class="pol-retrib-nota">{_t("(posible renuncia por doble cargo ℹ️)")}</span></span>')
-            else:
-                retrib_html = f' <span class="pol-retrib">💰 {fmt_eur(retrib["importe"])}{_t("/año")}{anio_html}</span>'
+        retrib_html = _sueldo_alcalde_html(retrib)
+        if _ispa_url_registro(retrib):
             if relevo:
                 retrib_html += (f' <span class="pol-retrib-nota">'
                                 f'{_t("Último dato oficial del cargo: lo percibió {anterior}, alcalde hasta {fecha}. No es el sueldo de quien lo ocupa ahora.").format(anterior=esc(relevo["anterior"]), fecha=esc(relevo["desde"]))}'
@@ -5764,6 +5782,7 @@ def sueldos_concejales_html(municipio, provincia=None):
             f'<div class="pol-retrib-nota">'
             f'{_t("Importes tal como figuran en la fuente oficial enlazada en cada fila, con la base y el periodo que ella indica; no se han convertido ni estimado.")}'
             + (f' <b>{_t("Nota:")}</b> {esc(_NOTAS_SUELDOS_CONCEJALES[clave])}' if clave in _NOTAS_SUELDOS_CONCEJALES else "")
+            + f' <a href="/sueldos-concejales">{_t("Otros municipios con sueldos de concejales")} →</a>'
             + '</div></details>')
 
 
@@ -20727,17 +20746,20 @@ def _indice_menores_detalle_por_municipio():
     de años y frescura), sin traer las ~1M filas a Python."""
     rows = []
     desde = alcance_desde()                                # solo la ventana de 5 años (los sin fecha cuentan)
+    # 12-11-2026: la última fecha no sale de un contrato con fecha posterior a hoy (error de la fuente, ver
+    # _fecha_posterior_a_hoy). '9' después del día deja dentro cualquier hora de hoy ('2026-11-12T10:00...').
+    hoy_txt = _ahora_madrid().strftime("%Y-%m-%d") + "9"
     for donde, args in _cml_tramos_municipio():            # por tramos (rendimiento, 2026-10-28)
         with _db_lock:
             rows += _db.execute(f"""
                 SELECT municipio, provincia, substr(data_adjudicacio, 1, 4) AS anio, COUNT(*),
                        SUM(CASE WHEN adjudicatari IS NOT NULL AND adjudicatari <> '' AND adjudicatari <> 'No localizada'
                                 THEN 1 ELSE 0 END),
-                       MAX(data_adjudicacio), group_concat(DISTINCT fuente)
+                       MAX(CASE WHEN data_adjudicacio <= ? THEN data_adjudicacio END), group_concat(DISTINCT fuente)
                 FROM contratos_menors_locales
                 WHERE ({donde}) AND (data_adjudicacio IS NULL OR data_adjudicacio = '' OR data_adjudicacio >= ?)
                 GROUP BY municipio, provincia, anio
-            """, args + (desde,)).fetchall()
+            """, (hoy_txt,) + args + (desde,)).fetchall()
     out = {}
     for muni, prov, anio, n, n_adj, ultima, fuentes in rows:
         d = out.setdefault((normalizar(muni), _PROVINCIA_CANONICA_CM.get(prov or "", prov or "")),
@@ -22038,8 +22060,15 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
         pres_html = (f'👤 {esc(f["presidente_nombre"])} — {esc(f["presidente_cargo"])}'
                      if f["presidente_nombre"] else f'<span class="noloc-warn">{_t("Sin datos")}</span>')
         anio_pres_txt = _t("retribuciones de {anio}").format(anio=esc(f["presidente_anio"]))
-        sueldo_html = (f'💰 {fmt_eur(f["presidente_sueldo"])}{_t("/año")} ({anio_pres_txt})'
-                       if f["presidente_sueldo"] is not None else "")
+        # 12-11-2026: el sueldo lleva siempre el enlace a ISPA del ejercicio; sin ejercicio, «sin fuente oficial».
+        if f["presidente_sueldo"] is None:
+            sueldo_html = ""
+        elif str(f.get("presidente_anio") or "").isdigit():
+            sueldo_html = (f'💰 {fmt_eur(f["presidente_sueldo"])}{_t("/año")} ({anio_pres_txt}) · {_t("Fuente:")} '
+                           f'<a href="{esc(ispa_fuente_url(int(f["presidente_anio"])))}" target="_blank" '
+                           f'rel="noopener nofollow">ISPA ↗</a>')
+        else:
+            sueldo_html = f'💰 {_t("sueldo: sin fuente oficial")}'
         resumen_prov_html += f"""<div class="top1-card">
           <div class="top1-label">📍 {esc(f['label'])}</div>
           <div class="top1-valor">🏦 {_t("{importe} de deuda viva").format(importe=deuda_hab_html)}</div>
@@ -22140,6 +22169,7 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
     {filas_alcaldes_html}
   </table></div></div>
   {pag_alc_html}
+  <p class="rk-mas"><a href="/sueldos-concejales">{_t("Sueldos de concejales publicados por cada ayuntamiento")} →</a></p>
 
   <div class="rk-section-header" id="deuda-habitante">
     <h2>{_t("Ranking de Deuda por Habitante")}</h2>
@@ -22842,6 +22872,25 @@ def _tipo_menor_txt(tipo):
     return _t(canon) if canon else tipo
 
 
+def _fecha_posterior_a_hoy(fecha, hoy=None):
+    """True si `fecha` ('AAAA-MM-DD', se mira solo el principio) es posterior a hoy en hora peninsular.
+
+    Comprobación general de fechas futuras (revisión del 12-11-2026): un contrato menor de Vitoria-Gasteiz (API de
+    Euskadi, BROKER KIROL, S.L.) trae awardDate 2026-12-16 en la propia fuente, y en la base había decenas así (RPC
+    de Tarragona hasta 2029, una de Euskadi en 2926). La fecha NO se corrige ni se inventa: se muestra la de la
+    fuente con un aviso y no cuenta en las cuentas que dependen de la fecha (frescura del Índice). Una fecha que no
+    se puede leer no es futura (False)."""
+    from datetime import date                # app.py solo importa `datetime` a nivel de módulo
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", str(fecha or "").strip())
+    if not m:
+        return False
+    try:
+        f = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return False
+    return f > (hoy or _ahora_madrid().date())
+
+
 def _render_fila_contrato_menor(r):
     """Fila de la tabla de contratos menores locales -- compartida por todas
     las fuentes (Girona/RPC, Fuente Álamo, Mula, Molina de Segura...). No
@@ -22942,6 +22991,8 @@ def _render_fila_contrato_menor(r):
                       "origen (por ejemplo, un contrato de obras por lotes de varios millones de euros) -- se "
                       "muestra tal cual, sin corregirlo.")
     nota_fila = f'<span class="cm-nota">⚠️ {esc(nota_txt)}</span>' if nota_txt else ""
+    fecha_nota = (f'<span class="cm-nota cm-fecha-futura">⚠️ {_t("Fecha según la fuente, posible error: es posterior a hoy.")}</span>'
+                  if _fecha_posterior_a_hoy(r.get("data_adjudicacio")) else "")
 
     return f"""<tr>
       <td>
@@ -22952,7 +23003,7 @@ def _render_fila_contrato_menor(r):
       <td class="cm-importe">{fmt_eur(str(r["import_fuente"])) if r.get("import_aviso") in (MENOR_AVISO_SIN_DECIMALES, MENOR_AVISO_TRES_CEROS) and r.get("import_fuente") else (fmt_eur(str(r["import_num"])) if r["import_num"] else "—")}</td>
       <td>{dir_html}</td>
       <td><div class="lid">{esc(_tipo_menor_txt(r.get("tipus_contracte","")))}</div></td>
-      <td><div class="lid">{esc(r.get("data_adjudicacio",""))}</div></td>
+      <td><div class="lid">{esc(r.get("data_adjudicacio",""))}</div>{fecha_nota}</td>
     </tr>"""
 
 
@@ -25043,28 +25094,33 @@ def render_landing_nacional_html(datos, rk_comunidad="todas"):
     municipios por región es vía los botones de "Cobertura" y las tarjetas
     de "Cobertura por región" de más abajo (el toggle Murcia/Girona del
     header se quitó por redundante -- ver instrucción del 2026-08-02)."""
-    total_m = _n_municipios_reales(datos)
-    total_c = sum(d.get("total_contratos", 0) for d in datos)
-    # 2026-10-10: el contador enseñaba solo los contratos formales; los menores (seis veces más) no figuraban.
-    with _db_lock:
-        total_menores = _db.execute("SELECT COUNT(*) FROM contratos_menors_locales").fetchone()[0]
-        # Revisión del 02-11-2026: fecha real de la última carga = el guardado más reciente de una ficha municipal
-        # (columna ts, la escribe cada refresco; el nocturno las recorre todas). Nada si no hay ninguna fecha válida.
-        ts_ultima = _db.execute("SELECT MAX(ts) FROM municipios WHERE ts > 0").fetchone()[0]
-    actualizado_html = ""
-    if ts_ultima:
-        try:
-            from zoneinfo import ZoneInfo
-            f_ult = datetime.fromtimestamp(ts_ultima, ZoneInfo("Europe/Madrid")).strftime("%d-%m-%Y")
-        except Exception:                  # sin base de zonas horarias (Windows sin tzdata): hora local del equipo
-            f_ult = datetime.fromtimestamp(ts_ultima).strftime("%d-%m-%Y")
-        actualizado_html = f'<div class="portada-actualizado">{_t("Datos actualizados el {fecha}").format(fecha=f_ult)}</div>'
-    total_e = len(set(
-        normalizar(c.get("empresa", ""))
-        for d in datos for c in d.get("contratos", [])
-        if c.get("empresa") not in ("No localizada", "")
-    ))
-    total_imp = sum(c.get("importe_num", 0.0) for d in datos for c in d.get("contratos", []))
+    def _calcular():
+        total_m = _n_municipios_reales(datos)
+        total_c = sum(d.get("total_contratos", 0) for d in datos)
+        # 2026-10-10: el contador enseñaba solo los contratos formales; los menores (seis veces más) no figuraban.
+        with _db_lock:
+            total_menores = _db.execute("SELECT COUNT(*) FROM contratos_menors_locales").fetchone()[0]
+            # Revisión del 02-11-2026: fecha real de la última carga = el guardado más reciente de una ficha municipal
+            # (columna ts, la escribe cada refresco; el nocturno las recorre todas). Nada si no hay ninguna fecha válida.
+            ts_ultima = _db.execute("SELECT MAX(ts) FROM municipios WHERE ts > 0").fetchone()[0]
+        f_ult = ""
+        if ts_ultima:
+            # Hora peninsular sin depender de tzdata (antes: zoneinfo, con la hora local del equipo si faltaba).
+            f_ult = _ahora_madrid(ts_ultima).strftime("%d-%m-%Y")
+        total_e = len(set(
+            normalizar(c.get("empresa", ""))
+            for d in datos for c in d.get("contratos", [])
+            if c.get("empresa") not in ("No localizada", "")
+        ))
+        total_imp = sum(c.get("importe_num", 0.0) for d in datos for c in d.get("contratos", []))
+        return total_m, total_c, total_menores, total_e, total_imp, f_ult
+
+    # Revisión del 12-11-2026: /gl/ y /ca/ decían «actualizados el 10-11-2026» y / el 11-11-2026, con 3 contratos de
+    # diferencia. Son las mismas cuentas para todos los idiomas: se calculan una vez (_portada_cabecera) y, si
+    # cambian, las portadas de los demás idiomas se vuelven a montar con ellas.
+    total_m, total_c, total_menores, total_e, total_imp, f_ult = _portada_cabecera(_calcular)
+    actualizado_html = (f'<div class="portada-actualizado">{_t("Datos actualizados el {fecha}").format(fecha=f_ult)}</div>'
+                        if f_ult else "")
 
     stats = f"""<div class="stats-bar">
       <div class="stat"><span>{fmt_num(total_m)}</span>{_t("Municipios")}</div>
@@ -25948,7 +26004,7 @@ _CASOS = [
         "slug": "sueldo-cero-barcelona",
         "titulo": "Cuando el sueldo de una alcaldesa aparece en 0€ (y no es un error)",
         "resumen": "Tres alcaldesas de la provincia de Barcelona figuran sin sueldo municipal. "
-                   "La explicación real, verificada con fuentes oficiales.",
+                   "Qué dice la fuente oficial y qué no dice.",
     },
     {
         "slug": "quiebras-servicios-deportivos-vitoria",
@@ -27082,20 +27138,18 @@ def render_caso_sueldo_cero_html():
   cobra cada alcalde o alcaldesa, un 0€ en un municipio de ese tamaño parece, a primera
   vista, un hueco de datos.</p>
 
-  <h2>No lo es</h2>
-  <p>Las tres ocupan también un cargo remunerado en la Diputació de Barcelona. La
-  normativa sobre incompatibilidades retributivas en el sector público impide —salvo
-  excepciones tasadas— cobrar dos sueldos públicos a la vez por dos cargos electos, así
-  que renuncian al sueldo municipal para poder cobrar el de la Diputació. El resultado es
-  un 0€ real en la columna «sueldo municipal», no un fallo de nuestra fuente (ISPA,
-  Ministerio de Hacienda) ni un hueco en nuestro cruce de datos.</p>
+  <h2>Qué dice la fuente</h2>
+  <p>No es un hueco de nuestro cruce de datos: es lo que publica la fuente oficial,
+  <a href="__ISPA_URL__" target="_blank" rel="noopener nofollow">ISPA</a>. Allí las tres
+  figuran con 0€ de sueldo municipal y con el régimen «sin dedicación». ISPA no dice el
+  motivo, y nosotros tampoco lo damos: no tenemos una fuente oficial enlazable que lo
+  explique para cada una.</p>
 
   <h2>Por qué lo explicamos así</h2>
-  <p>Un dato correcto puede llevar a una lectura equivocada si no se explica. Por eso,
-  cuando un sueldo aparece en 0€ en un municipio con población suficiente para que eso
-  llame la atención, añadimos una nota visible junto a la cifra explicando el motivo
-  verificado — en vez de dejar que el lector saque su propia conclusión sobre un dato
-  que, sin contexto, parece decir algo que no es cierto.</p>
+  <p>Un dato correcto puede llevar a una lectura equivocada si no se explica, pero
+  tampoco queremos explicarlo con algo que la fuente no dice. Por eso, en la ficha de
+  cada municipio el 0€ aparece solo con su fuente enlazada («0 € según ISPA»), sin
+  ninguna suposición sobre la persona.</p>
 
   <h2>Un tercio de los alcaldes, a cero</h2>
   <p>Sabadell, Sant Boi y Granollers son los casos llamativos, pero el 0 € es mucho más común de lo que parece. En
@@ -27119,22 +27173,21 @@ def render_caso_sueldo_cero_html():
   <h2>Los once casos grandes</h2>
   <p>Por encima de 20.000 habitantes, el 0 € es raro y es donde más llama la atención. Además de Sabadell, Sant Boi
   y Granollers, figuran así Estepona, Ferrol, Igualada, El Masnou, Villanueva de la Cañada, Bormujos, Almoradí y Los
-  Llanos de Aridane. Los tres de la provincia de Barcelona con los que empezamos son los que hemos verificado uno a
-  uno. Del resto no conocemos el motivo y no lo suponemos: puede ser también una renuncia por otro cargo, un
-  cambio de alcalde durante el año o un dato mal comunicado. Por eso la nota de la web está en condicional («posible
-  renuncia por doble cargo») y no afirma nada que no hayamos comprobado.</p>
+  Llanos de Aridane. De ninguno conocemos el motivo por una fuente oficial y no lo suponemos. Por eso la ficha de
+  cada municipio muestra solo la cifra con el enlace a ISPA y no afirma nada que la fuente no diga.</p>
 
   <p>Si sabes por qué el alcalde o la alcaldesa de tu municipio figura con 0 €, puedes contarlo en los comentarios
   de su ficha.</p>
 
   <p><a href="/casos">← Volver a Casos</a></p>
 </div>"""
+    body = body.replace("__ISPA_URL__", esc(ispa_fuente_url(2024)))     # el ejercicio de las cifras de la pieza
     body = body.replace('<p><a href="/casos">← Volver a Casos</a></p>',
                          _share_buttons_html(_og_path, _titulo) + '\n  <p><a href="/casos">← Volver a Casos</a></p>')
     return _page_shell("Caso: el sueldo de alcaldesa en 0€ que no es un error",
                         body,
                         description="Por qué tres alcaldesas de la provincia de Barcelona figuran sin "
-                                     "sueldo municipal, y cómo lo verificamos antes de mostrarlo.",
+                                     "sueldo municipal: qué dice la fuente oficial y qué no dice.",
                         og_path=_og_path)
 
 
@@ -27786,6 +27839,51 @@ def render_guia_licitaciones_html():
             f'<div class="static-page">\n{cuerpo.strip()}\n</div>')
     return _page_shell(titulo, body, description=desc, extra_head=_GUIA_LICITACIONES_CSS, show_ad_banner=False,
                        og_path=_LIC_GUIA.GUIA_RUTA)
+
+
+def render_sueldos_concejales_html():
+    """/sueldos-concejales (12-11-2026): índice de los municipios cuyo ayuntamiento publica los sueldos de sus
+    concejales CON NOMBRE (SUELDOS_CONCEJALES). Antes solo se veían dentro de cada ficha y no había forma de llegar a
+    ellos desde la portada ni desde /rankings. Aquí no se repiten nombres ni importes: cada fila enlaza a la ficha
+    (donde está la lista, con su fuente por fila) y a los documentos oficiales de los que sale."""
+    grupos = {}
+    for regs in SUELDOS_CONCEJALES.values():
+        for r in regs:
+            g = grupos.setdefault((r["municipio"], r["provincia"]), {"n": 0, "fuentes": {}, "periodos": set()})
+            g["n"] += 1
+            g["fuentes"].setdefault(r["fuente_url"], r["fuente_nombre"])
+            if r["periodo"]:
+                g["periodos"].add(r["periodo"])
+    filas = []
+    for (muni, prov), g in sorted(grupos.items(), key=lambda x: (normalizar(x[0][0]), x[0][1])):
+        enlace_ficha = f'/?muni={quote_plus(muni)}{_q_prov(prov)}'
+        lista = list(g["fuentes"].items())       # Pozuelo publica una página por persona: 24 enlaces no caben aquí
+        fuentes = " · ".join(
+            f'<a href="{esc(url)}" target="_blank" rel="noopener nofollow">{esc(nombre or _t("fuente oficial"))} ↗</a>'
+            for url, nombre in lista[:3])
+        if len(lista) > 3:
+            fuentes += " · " + _t("y {n} más en la ficha").format(n=len(lista) - 3)
+        periodos = esc("; ".join(sorted(g["periodos"]))) or "—"
+        filas.append(f'<tr><td><a href="{esc(enlace_ficha)}">{esc(muni)}</a></td>'
+                     f'<td>{esc(PROVINCIA_LABEL.get(prov, prov) if prov else "—")}</td>'
+                     f'<td class="rk-valor">{fmt_num(g["n"])}</td><td>{periodos}</td><td>{fuentes}</td></tr>')
+    n_personas = sum(g["n"] for g in grupos.values())
+    tabla = (f'<div class="muni-card"><div class="tbl-scroll"><table>'
+             f'<tr><th>{_t("Municipio")}</th><th>{_t("Provincia")}</th><th>{_t("Personas")}</th>'
+             f'<th>{_t("Periodo según la fuente")}</th><th>{_t("Fuente oficial")}</th></tr>'
+             f'{"".join(filas)}</table></div></div>') if filas else f'<p>{_t("Aún no hay datos suficientes.")}</p>'
+    fecha = (" " + _t("Recogidos el {fecha}.").format(fecha=esc(SUELDOS_CONCEJALES_FECHA))) if SUELDOS_CONCEJALES_FECHA else ""
+    body = f'''<div class="static-page">
+  <h1>{_t("Sueldos de concejales")}</h1>
+  <p class="sub">{_t("{n} personas en {m} municipios cuyo ayuntamiento publica la retribución de sus concejales con nombre.").format(n=fmt_num(n_personas), m=fmt_num(len(grupos)))}{fecha}</p>
+  <p>{_t("El Ministerio publica el sueldo de cada alcalde, pero el de los concejales solo como un total por ayuntamiento, sin nombres. Por eso solo mostramos sueldos individuales donde el propio ayuntamiento los publica con nombre, tal como figuran en su documento oficial: sin convertir ni estimar importes.")}</p>
+  <p>{_t("La lista de cada municipio, con el importe, la base y el enlace a la fuente de cada persona, está en su ficha.")}
+     <a href="/rankings#alcaldes">{_t("Sueldos de alcaldes y alcaldesas")} →</a></p>
+  {tabla}
+</div>'''
+    return _page_shell(_t("Sueldos de concejales"), body, show_ad_banner=False,
+                       description=_t("Municipios cuyo ayuntamiento publica los sueldos de sus concejales con nombre, "
+                                      "con enlace a la ficha y a la fuente oficial."), og_path="/sueldos-concejales")
 
 
 def render_mapa_cobertura_html():
@@ -29173,6 +29271,48 @@ def _paginas_invalidar(grupo):
             _paginas_cerrojos.pop(k, None)
 
 
+# Revisión del 12-11-2026: la fecha «Datos actualizados el ...» y las cinco cifras de arriba de la portada salían
+# distintas según el idioma (/gl/ y /ca/ el 10-11-2026, / el 11-11-2026, 3 contratos de diferencia): cada idioma guarda
+# su portada en la caché de páginas y la cuenta se hacía al montarla, en momentos distintos (una portada vieja se
+# sirve hasta _PAGINAS_MAX_VIEJA mientras nadie la pide). Ahora la cuenta es una para todos los idiomas, se rehace como
+# mucho cada _PORTADA_CABECERA_TTL y, cuando cambia, las portadas de los otros idiomas se dan por viejas y se vuelven
+# a montar enseguida en segundo plano con la misma cuenta. Mismo patrón que _portada_contadores del PR #43.
+_PORTADA_CABECERA_TTL = 600
+_portada_cabecera_memo = {"ts": 0.0, "valor": None}
+_portada_cabecera_lock = threading.Lock()
+
+
+def _portada_envejecer_otros_idiomas():
+    """Da por viejas (no las tira) las portadas guardadas de los idiomas distintos del de esta petición: se siguen
+    sirviendo hasta que se vuelven a montar. Devuelve cuántas había."""
+    limite = time.time() - _PAGINAS_TTL
+    lang = _i18n_idioma()
+    n = 0
+    with _paginas_lock:
+        for k, e in _paginas_cache.items():
+            if len(k) >= 2 and k[1] == "/" and k[0] != lang:
+                e["ts"] = min(e["ts"], limite)
+                n += 1
+    return n
+
+
+def _portada_cabecera(calcular, ahora_s=None):
+    """La misma tupla de cifras y fecha para todas las portadas. `calcular()` la calcula cuando la guardada caduca."""
+    ahora_s = time.time() if ahora_s is None else ahora_s
+    with _portada_cabecera_lock:
+        m = _portada_cabecera_memo
+        if m["valor"] is not None and ahora_s - m["ts"] < _PORTADA_CABECERA_TTL:
+            return m["valor"]
+    nuevo = calcular()
+    with _portada_cabecera_lock:
+        m = _portada_cabecera_memo
+        cambio = m["valor"] is not None and m["valor"] != nuevo
+        m["ts"], m["valor"] = ahora_s, nuevo
+    if cambio and _portada_envejecer_otros_idiomas():
+        threading.Thread(target=_calentar_portada, daemon=True, name="portada-cabecera").start()
+    return nuevo
+
+
 def _pagina_remontar(clave, montar, grupo=None):
     with _paginas_fondo:
         try:
@@ -29443,6 +29583,9 @@ def _route_get(path, qs, gzip_ok=False):
     if path.rstrip("/") == _LIC_GUIA.GUIA_RUTA:
         return _resp(render_guia_licitaciones_html(), gzip_ok=gzip_ok)
 
+    if path == "/sueldos-concejales":
+        return _resp(render_sueldos_concejales_html(), gzip_ok=gzip_ok)
+
     if path == "/mapa-cobertura":
         return _pagina_cacheada("/mapa-cobertura", [], _PAGINAS_FIJAS["/mapa-cobertura"], gzip_ok=gzip_ok)
 
@@ -29525,6 +29668,7 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/quien-soy</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/mapa-cobertura</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}{_LIC_GUIA.GUIA_RUTA}</loc><changefreq>monthly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/sueldos-concejales</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/metodologia</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/casos</loc><changefreq>weekly</changefreq></url>"] + [
