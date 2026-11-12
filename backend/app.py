@@ -2649,11 +2649,19 @@ def _db_init():
             id TEXT PRIMARY KEY, actualizado TEXT, estado TEXT, fin_plazo TEXT, titulo TEXT, url TEXT,
             expediente TEXT, organo TEXT, nif_organo TEXT, dir3 TEXT, ambito TEXT, provincia TEXT, comunidad TEXT,
             municipio TEXT, cpv TEXT, cpv2 TEXT, tipo TEXT, procedimiento TEXT, presupuesto REAL, valor_estimado REAL,
-            lotes INTEGER, busqueda TEXT, visto REAL, requisitos TEXT)""")
+            lotes INTEGER, busqueda TEXT, visto REAL, requisitos TEXT, fuente TEXT DEFAULT '643', clave_dup TEXT)""")
         try:        # tablas anteriores a la columna (2026-10-27): requisitos del filtro por empresa, JSON
             _db.execute("ALTER TABLE licitaciones ADD COLUMN requisitos TEXT")
         except sqlite3.OperationalError:
             pass
+        # 12-11-2026: feed 1044 (plataformas autonómicas). fuente = '643' (PLACE) o '1044'; clave_dup = expediente +
+        # órgano normalizados, para quitar las que salen en los dos (ver _licitaciones_marcar_duplicadas).
+        for _col in ("fuente TEXT DEFAULT '643'", "clave_dup TEXT"):
+            try:
+                _db.execute(f"ALTER TABLE licitaciones ADD COLUMN {_col}")
+            except sqlite3.OperationalError:
+                pass
+        _db.execute("CREATE INDEX IF NOT EXISTS idx_lic_dup ON licitaciones(clave_dup, fuente)")
         # Cola de revisión interna (2026-10-05, ver INFORME_BOT_CASOS.md): candidatos de backend/indicios_contratos.py
         # que solo ve César en /admin/revision. Nada de aquí se publica.
         _db.execute("""CREATE TABLE IF NOT EXISTS revision_candidatos (
@@ -15529,11 +15537,23 @@ LIC_MAX_PAGINAS_ATOM = 40
 LIC_VERSION_LECTOR = ":req:pliegos"      # 12-11-2026: + enlaces al PCAP y al PPT (lista de comprobación)
 LIC_MESES_RELEER = 4
 LIC_ZIPS_POR_CICLO = 1          # 12-11-2026: ZIP leídos como mucho por ciclo (ver _licitaciones_desde_zips)
+# Feed 1044 de PLACSP (12-11-2026): «PlataformasAgregadasSinMenores», las licitaciones de los órganos con plataforma
+# propia (Generalitat de Catalunya, Euskadi, Comunidad de Madrid, Junta de Andalucía, Xunta, Navarra, La Rioja…). Mismo
+# formato CODICE que el 643. Medido el 12-11: 2.281 abiertas que no teníamos (~28 %). Se apaga con LIC_AGREGADAS=0.
+# Este hilo baja sus ZIP mensuales él mismo (~15 MB al mes; el refresco nocturno no los baja): solo los
+# LIC_AGREGADAS_MESES últimos al empezar, o si el Atom se queda atrás; el resto del tiempo basta el Atom en vivo.
+LIC_AGREGADAS = os.environ.get("LIC_AGREGADAS", "1") != "0"
+PLACE_AGREGADAS_FEED_LIVE = ("https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_1044/"
+                             "PlataformasAgregadasSinMenores.atom")
+PLACE_AGREGADAS_ZIP = ("https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_1044/"
+                       "PlataformasAgregadasSinMenores_{anomes}.zip")
+LIC_AGREGADAS_MESES = 2
+LIC_FUENTE_PLACE, LIC_FUENTE_AGREGADAS = "643", "1044"
 _LIC_ESTADO = {"estado": "sin_arrancar"}
 # "visto" va siempre la última: las filas de las cerradas se rellenan con None hasta ella
 _LIC_COLUMNAS = ("id", "actualizado", "estado", "fin_plazo", "titulo", "url", "expediente", "organo", "nif_organo",
                  "dir3", "ambito", "provincia", "comunidad", "municipio", "cpv", "cpv2", "tipo", "procedimiento",
-                 "presupuesto", "valor_estimado", "lotes", "busqueda", "requisitos", "visto")
+                 "presupuesto", "valor_estimado", "lotes", "busqueda", "requisitos", "fuente", "clave_dup", "visto")
 _SQL_LIC_UPSERT = (f"INSERT INTO licitaciones ({', '.join(_LIC_COLUMNAS)}) VALUES ({', '.join('?' * len(_LIC_COLUMNAS))}) "
                    f"ON CONFLICT(id) DO UPDATE SET "
                    + ", ".join(f"{c}=excluded.{c}" for c in _LIC_COLUMNAS[1:])
@@ -15556,16 +15576,41 @@ def _ahora_madrid(ts=None):
     return (ahora + timedelta(hours=2 if verano else 1)).replace(tzinfo=None)
 
 
-def _licitacion_municipio(organo, cp, provincia):
+# 12-11-2026 (feed 1044): _regex_anclado solo reconoce «ayuntamiento de X» (lo comparte con el Índice y no se toca).
+# Antes de compararlo, el nombre del órgano en catalán o gallego se pasa a esa forma: «ajuntament de/d'/del/dels X»,
+# «concello de/do/da/dos/das X». Medido el 12-11 en el 1044: los 393 «Ajuntament de…» abiertos (Barcelona incluida)
+# se quedaban sin ayuntamiento. El artículo se separa («del Vendrell» -> «de el vendrell»), como en la lista.
+_LIC_FORMAS_AYUNTAMIENTO = (
+    (re.compile(r"\bajuntament dels "), "ayuntamiento de els "),
+    (re.compile(r"\bajuntament del "), "ayuntamiento de el "),
+    (re.compile(r"\bajuntament de "), "ayuntamiento de "),
+    (re.compile(r"\bajuntament d "), "ayuntamiento de "),
+    (re.compile(r"\bconcello dos "), "ayuntamiento de os "),
+    (re.compile(r"\bconcello das "), "ayuntamiento de as "),
+    (re.compile(r"\bconcello do "), "ayuntamiento de o "),
+    (re.compile(r"\bconcello da "), "ayuntamiento de a "),
+    (re.compile(r"\bconcello de "), "ayuntamiento de "),
+)
+_RE_AJUNTAMENT_D = re.compile(r"\bajuntament\s+d['’]\s*", re.I)
+
+
+def _licitacion_municipio(organo, cp, provincia, comunidad=""):
     """Clave de la ficha del ayuntamiento que convoca (mismos patrones anclados que el Índice: _regex_anclado y las
-    comprobaciones de código postal), o "" si el órgano no es un ayuntamiento conocido."""
-    n = normalizar(organo or "")
+    comprobaciones de código postal), o "" si el órgano no es un ayuntamiento conocido. Si no hay provincia pero sí
+    comunidad (anuncios con NUTS de comunidad), se busca en sus provincias; los nombres repetidos en varias provincias
+    piden código postal (_cp_esperado_anclaje), así que sin él no se asignan."""
+    # «Ajuntament d'Alella»: normalizar() quita el apóstrofo y dejaría «dalella»; se separa antes (solo tras Ajuntament)
+    n = normalizar(_RE_AJUNTAMENT_D.sub("Ajuntament de ", organo or ""))
     if not _RE_ORGANO_MUNICIPAL.search(n):
         return ""
-    k = (n, cp, provincia)
+    for rx_forma, castellano in _LIC_FORMAS_AYUNTAMIENTO:
+        n = rx_forma.sub(castellano, n)
+    k = (n, cp, provincia, comunidad)
     if k in _LIC_MUNI_MEMO:
         return _LIC_MUNI_MEMO[k]
     candidatas = [provincia] if provincia in MUNICIPIOS_POR_PROVINCIA else []
+    if not candidatas and comunidad:
+        candidatas = [pv for pv in MUNICIPIOS_POR_PROVINCIA if COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(pv) == comunidad]
     if cp and len(cp) == 5:
         for pv, pref in _CP_PREFIJO_PROVINCIA.items():
             if cp.startswith(pref if isinstance(pref, tuple) else (pref,)) and pv not in candidatas:
@@ -15593,22 +15638,28 @@ def _licitacion_municipio(organo, cp, provincia):
     return res
 
 
-def _licitacion_fila(r, visto):
+def _licitacion_fila_cerrada(rid, actualizado, estado, fuente, visto):
+    return (rid, actualizado, estado) + (None,) * (len(_LIC_COLUMNAS) - 6) + (fuente, None, visto)
+
+
+def _licitacion_fila(r, visto, fuente=LIC_FUENTE_PLACE):
     """Fila de la tabla `licitaciones` a partir de LIC.analizar_entrada()."""
     if r["estado"] not in LIC.ESTADOS_ABIERTOS:
-        return (r["id"], r["actualizado"], r["estado"]) + (None,) * (len(_LIC_COLUMNAS) - 4) + (visto,)
+        return _licitacion_fila_cerrada(r["id"], r["actualizado"], r["estado"], fuente, visto)
     provincia = r["provincia"]
     comunidad = COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(provincia) or r["comunidad"]
-    municipio = _licitacion_municipio(r["organo"], r["cp_organo"], provincia) if r["ambito"] in ("local", "otros") else ""
+    municipio = (_licitacion_municipio(r["organo"], r["cp_organo"], provincia, comunidad)
+                 if r["ambito"] in ("local", "otros") else "")
     if municipio and not provincia:
         provincia = municipio.split("|")[1] if "|" in municipio else ""
     return (r["id"], r["actualizado"], r["estado"], r["fin_plazo"], r["titulo"][:500], r["url"], r["expediente"][:120],
             r["organo"][:300], r["nif_organo"], r["dir3"], r["ambito"], provincia, comunidad, municipio, r["cpv"],
             r["cpv"][:2], r["tipo"], r["procedimiento"], r["presupuesto"], r["valor_estimado"], r["lotes"],
-            normalizar(f'{r["titulo"]} {r["organo"]} {r["expediente"]}')[:800], LIC.requisitos_json(r), visto)
+            normalizar(f'{r["titulo"]} {r["organo"]} {r["expediente"]}')[:800], LIC.requisitos_json(r), fuente,
+            LIC.clave_duplicado(r["expediente"], r["organo"]), visto)
 
 
-def _licitaciones_ingerir_atom(raw):
+def _licitaciones_ingerir_atom(raw, fuente=LIC_FUENTE_PLACE):
     """Guarda las entradas de un .atom (bytes). Devuelve (entradas, abiertas, fecha más antigua, fecha más reciente)."""
     visto = time.time()
     filas, n, abiertas, fechas = [], 0, 0, []
@@ -15620,15 +15671,30 @@ def _licitaciones_ingerir_atom(raw):
         abiertas += r["estado"] in LIC.ESTADOS_ABIERTOS
         if r["actualizado"]:
             fechas.append(r["actualizado"])
-        filas.append(_licitacion_fila(r, visto))
+        filas.append(_licitacion_fila(r, visto, fuente))
     for ref, cuando in LIC.borradas(raw):
-        filas.append((ref, cuando, "BORRADA") + (None,) * (len(_LIC_COLUMNAS) - 4) + (visto,))
+        filas.append(_licitacion_fila_cerrada(ref, cuando, "BORRADA", fuente, visto))
     for i in range(0, len(filas), 200):
         with _db_lock:
             _db.executemany(_SQL_LIC_UPSERT, filas[i:i + 200])
             _db.commit()
         time.sleep(0.02)                 # cede el turno a las peticiones web
+    if fuente == LIC_FUENTE_AGREGADAS:
+        _licitaciones_marcar_duplicadas()   # que no se vea nunca una repetida, ni entre dos ciclos
     return n, abiertas, (min(fechas) if fechas else ""), (max(fechas) if fechas else "")
+
+
+def _licitaciones_marcar_duplicadas():
+    """Las del 1044 que también están en el 643 (mismo expediente y mismo órgano, normalizados: LIC.clave_duplicado)
+    pasan a estado 'DUP': no salen en ninguna parte (todo filtra por estado = 'PUB') y se queda la de PLACE. Al revés
+    no: si la del 643 llega después, la marca la pasada del final de cada ciclo. Devuelve cuántas marcó."""
+    with _db_lock:
+        cur = _db.execute(
+            "UPDATE licitaciones SET estado = 'DUP' WHERE fuente = ? AND estado = 'PUB' AND clave_dup != '' AND "
+            "EXISTS (SELECT 1 FROM licitaciones b WHERE b.clave_dup = licitaciones.clave_dup AND b.fuente = ?)",
+            (LIC_FUENTE_AGREGADAS, LIC_FUENTE_PLACE))
+        _db.commit()
+    return cur.rowcount
 
 
 def _lic_mes_corte_relectura():
@@ -15685,29 +15751,89 @@ def _licitaciones_desde_zips(max_zips=None):
     return leidos
 
 
-def _licitaciones_desde_atom():
-    """Páginas nuevas del Atom en vivo, de la más reciente hacia atrás hasta llegar a lo ya guardado."""
+def _licitaciones_desde_atom(feed=PLACE_FEED_LIVE, fuente=LIC_FUENTE_PLACE):
+    """Páginas nuevas del Atom en vivo, de la más reciente hacia atrás hasta llegar a lo ya guardado DE ESA FUENTE.
+    Devuelve True si llegó hasta lo ya guardado (o no había nada), False si se quedó a medias (más de
+    LIC_MAX_PAGINAS_ATOM páginas nuevas: hay un hueco que tiene que rellenar un ZIP)."""
     with _db_lock:
-        fila = _db.execute("SELECT max(actualizado) FROM licitaciones").fetchone()
+        fila = _db.execute("SELECT max(actualizado) FROM licitaciones WHERE coalesce(fuente, ?) = ?",
+                           (LIC_FUENTE_PLACE, fuente)).fetchone()
     marca = (fila[0] or "") if fila else ""
-    url, paginas, nuevas = PLACE_FEED_LIVE, 0, 0
+    url, paginas, nuevas, al_dia = feed, 0, 0, False
     while url and paginas < LIC_MAX_PAGINAS_ATOM:
-        _LIC_ESTADO.update(estado="leyendo_atom", pagina=paginas + 1)
+        _LIC_ESTADO.update(estado=f"leyendo_atom_{fuente}", pagina=paginas + 1)
         r = session.get(url, timeout=(20, 180))
         if r.status_code != 200:
             print(f"[licitaciones] Atom: HTTP {r.status_code} en la página {paginas + 1}", flush=True)
             break
         raw = r.content
         del r
-        n, _, mas_antigua, _ = _licitaciones_ingerir_atom(raw)
+        n, _, mas_antigua, _ = _licitaciones_ingerir_atom(raw, fuente)
         paginas, nuevas = paginas + 1, nuevas + n
         sig = LIC.pagina_siguiente(raw)
         del raw
         if not marca or not mas_antigua or mas_antigua <= marca:
+            al_dia = True
             break
-        url = sig if sig.startswith("http") else (PLACE_FEED_LIVE.rsplit("/", 1)[0] + "/" + sig if sig else "")
+        url = sig if sig.startswith("http") else (feed.rsplit("/", 1)[0] + "/" + sig if sig else "")
         time.sleep(1)
-    _LIC_ESTADO.update(atom_paginas=paginas, atom_entradas=nuevas)
+    _LIC_ESTADO.update({f"atom_{fuente}_paginas": paginas, f"atom_{fuente}_entradas": nuevas})
+    return al_dia or not url
+
+
+def _lic_meses_recientes(n):
+    """["AAAAMM", ...] de los n últimos meses, del más reciente al más antiguo (hora peninsular)."""
+    hoy = _ahora_madrid()
+    base = hoy.year * 12 + hoy.month - 1
+    return [f"{(base - i) // 12}{(base - i) % 12 + 1:02d}" for i in range(n)]
+
+
+def _licitaciones_agregadas_zips():
+    """ZIP mensuales del feed 1044: los LIC_AGREGADAS_MESES últimos la primera vez (o tras un hueco en el Atom,
+    ajuste 'licitaciones_1044_pendientes'). Como mucho uno por ciclo y nunca durante el refresco nocturno. Se bajan
+    a un fichero temporal en place_cache/, se leen .atom a .atom y se borran. Devuelve cuántos leyó."""
+    if _actualizando_todos_lock.locked():
+        return 0
+    with _db_lock:
+        fila = _db.execute("SELECT valor FROM settings WHERE clave = 'licitaciones_1044_pendientes'").fetchone()
+    pendientes = (fila[0].split(",") if fila and fila[0] else []) if fila else _lic_meses_recientes(LIC_AGREGADAS_MESES)
+    pendientes = [m for m in pendientes if m]
+    if not pendientes:
+        return 0
+    anomes = pendientes[0]
+    ruta = os.path.join(CACHE_DIR, f"place1044_{anomes}.zip.tmp")
+    _LIC_ESTADO.update(estado="bajando_zip_1044", zip=anomes)
+    try:
+        with session.get(PLACE_AGREGADAS_ZIP.format(anomes=anomes), stream=True, timeout=(20, 300)) as r:
+            if r.status_code != 200:
+                print(f"[licitaciones] 1044 {anomes}: HTTP {r.status_code}", flush=True)
+                return 0
+            with open(ruta, "wb") as f:
+                for trozo in r.iter_content(1 << 20):
+                    f.write(trozo)
+        valido, motivo = _zip_place_valido(ruta)
+        if not valido:
+            print(f"[licitaciones] 1044 {anomes}: ZIP no válido ({motivo})", flush=True)
+            return 0
+        n = abiertas = 0
+        with zipfile.ZipFile(ruta) as z:
+            for nombre in sorted(x for x in z.namelist() if x.endswith(".atom")):
+                raw = z.read(nombre)
+                a, b, _, _ = _licitaciones_ingerir_atom(raw, LIC_FUENTE_AGREGADAS)
+                n, abiertas = n + a, abiertas + b
+                del raw
+        print(f"[licitaciones] 1044 {anomes}: {n} entradas ({abiertas} en PUB)", flush=True)
+    finally:
+        try:
+            os.remove(ruta)
+        except OSError:
+            pass
+        _liberar_memoria()
+    with _db_lock:
+        _db.execute("INSERT INTO settings (clave, valor) VALUES ('licitaciones_1044_pendientes', ?) ON CONFLICT(clave) "
+                    "DO UPDATE SET valor = excluded.valor", (",".join(pendientes[1:]),))
+        _db.commit()
+    return 1
 
 
 def _licitaciones_purgar():
@@ -15715,8 +15841,9 @@ def _licitaciones_purgar():
     corte_cerradas = time.time() - 120 * 86400
     corte_plazo = (_ahora_madrid() - timedelta(days=60)).strftime("%Y-%m-%d %H:%M")
     with _db_lock:
-        cur = _db.execute("DELETE FROM licitaciones WHERE (estado != 'PUB' AND visto < ?) OR "
-                          "(estado = 'PUB' AND fin_plazo < ?)", (corte_cerradas, corte_plazo))
+        cur = _db.execute("DELETE FROM licitaciones WHERE (estado NOT IN ('PUB', 'DUP') AND visto < ?) OR "
+                          "(estado = 'DUP' AND fin_plazo < ?) OR "
+                          "(estado = 'PUB' AND fin_plazo < ?)", (corte_cerradas, corte_plazo, corte_plazo))
         _db.commit()
     return cur.rowcount
 
@@ -15728,12 +15855,31 @@ def _licitaciones_ciclo():
         _licitaciones_desde_atom()
     except Exception as e:                  # PLACE lento o caído: los ZIP del cron siguen trayendo lo de cada día
         print(f"[licitaciones] Atom: {type(e).__name__}: {e}", flush=True)
+    if LIC_AGREGADAS:
+        try:
+            _licitaciones_agregadas_zips()
+            if not _licitaciones_desde_atom(PLACE_AGREGADAS_FEED_LIVE, LIC_FUENTE_AGREGADAS):
+                # hueco: más páginas nuevas de las que se leen en un ciclo -> el ZIP del mes lo rellena
+                with _db_lock:
+                    _db.execute("INSERT INTO settings (clave, valor) VALUES ('licitaciones_1044_pendientes', ?) "
+                                "ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+                                (_lic_meses_recientes(1)[0],))
+                    _db.commit()
+        except Exception as e:
+            print(f"[licitaciones] 1044: {type(e).__name__}: {e}", flush=True)
+        duplicadas = _licitaciones_marcar_duplicadas()
+        with _db_lock:
+            _LIC_ESTADO.update(duplicadas_1044_marcadas=duplicadas, duplicadas_1044_total=_db.execute(
+                "SELECT count(*) FROM licitaciones WHERE estado = 'DUP'").fetchone()[0])
     borradas = _licitaciones_purgar()
     ahora = _ahora_madrid().strftime("%Y-%m-%d %H:%M")
     with _db_lock:
         vigentes = _db.execute("SELECT count(*) FROM licitaciones WHERE estado='PUB' AND fin_plazo >= ?",
                                (ahora,)).fetchone()[0]
+        por_fuente = dict(_db.execute("SELECT coalesce(fuente, '643'), count(*) FROM licitaciones WHERE estado='PUB' "
+                                      "AND fin_plazo >= ? GROUP BY 1", (ahora,)).fetchall())
         total = _db.execute("SELECT count(*) FROM licitaciones").fetchone()[0]
+    _LIC_ESTADO.update(vigentes_por_fuente=por_fuente)
     _LIC_ESTADO.update(estado="esperando", ultimo_ciclo=time.strftime("%Y-%m-%d %H:%M:%S"),
                        duracion_s=int(time.time() - t0), vigentes=vigentes, filas=total, purgadas=borradas)
     print(f"[licitaciones] ciclo en {time.time() - t0:.0f} s: {vigentes} vigentes, {total} filas", flush=True)
@@ -23448,7 +23594,9 @@ def render_convocatorias_html(qs):
         cab = f'<th>{_t("Licitación")}</th><th>{_t("Presupuesto")}</th><th>{_t("Fin de plazo")}</th>'
         cuerpo = "".join(_conv_fila_licitacion(r) for r in filas)
         ult = _LIC_ESTADO.get("ultimo_ciclo", "")
-        fuente = _t("Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP).")
+        fuente = (_t("Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP) y las plataformas autonómicas que agrega.")
+                  if LIC_AGREGADAS else
+                  _t("Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP)."))
         if ult:
             fuente += " " + _t("Última actualización: {f}.").format(f=esc(_conv_fecha(ult)))
         vistas_html = ""

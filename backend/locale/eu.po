@@ -3404,6 +3404,9 @@ msgstr "Nola aurkeztu lizitazio batera, urratsez urrats"
 msgid "Cómo presentarse a una licitación, paso a paso: {url}"
 msgstr "Nola aurkeztu lizitazio batera, urratsez urrats: {url}"
 
+msgid "Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP) y las plataformas autonómicas que agrega."
+msgstr "Eskaintzak aurkezteko epea irekita duten lizitazioak, Sektore Publikoko Kontratazio Plataformaren (PLACSP) eta hark biltzen dituen autonomia-erkidegoetako plataformen arabera."
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
 

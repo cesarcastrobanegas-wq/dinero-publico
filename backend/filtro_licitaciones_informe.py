@@ -243,7 +243,7 @@ def _construir(destino, perfil_texto, resultados, fecha, total_fichas, muestra):
     # --- resumen
     h += [Paragraph("RESUMEN", est["h1"]), Spacer(1, 0.3 * cm),
           Paragraph("Hemos revisado todas las licitaciones con el plazo abierto en la Plataforma de Contratación del "
-                    "Sector Público y nos hemos quedado con las de su sector, sus provincias y su tipo de contrato. "
+                    "Sector Público (y en las plataformas autonómicas que agrega) y nos hemos quedado con las de su sector, sus provincias y su tipo de contrato. "
                     "Cada una, y cada lote por separado, va en uno de estos tres grupos:", est["normal"]),
           Spacer(1, 0.4 * cm)]
     filas = []
@@ -307,7 +307,8 @@ def _construir(destino, perfil_texto, resultados, fecha, total_fichas, muestra):
     # --- aviso final
     aviso = [Paragraph("AVISO IMPORTANTE", est["h2"]),
              Paragraph("Este informe es <b>orientativo</b>. Lo hemos preparado a partir de los anuncios publicados en "
-                       "la Plataforma de Contratación del Sector Público, que no siempre traen todos los requisitos. "
+                       "la Plataforma de Contratación del Sector Público y en las plataformas autonómicas que "
+                       "agrega, que no siempre traen todos los requisitos. "
                        "<b>Antes de presentarse, compruebe siempre el pliego oficial</b> (pliego de cláusulas "
                        "administrativas y pliego técnico), que es el que manda: requisitos de solvencia, "
                        "clasificación, certificados, plazos y forma de presentar la oferta.", est["normal"]),
@@ -317,7 +318,8 @@ def _construir(destino, perfil_texto, resultados, fecha, total_fichas, muestra):
                        "justificados, otra cosa). Las fechas y horas de cierre son las del anuncio en el momento de "
                        "preparar el informe y pueden cambiar.", est["normal"]),
              Spacer(1, 4),
-             Paragraph(f"Fuente: Plataforma de Contratación del Sector Público (datos abiertos). Informe preparado "
+             Paragraph(f"Fuente: Plataforma de Contratación del Sector Público y plataformas autonómicas agregadas "
+                       f"en ella (datos abiertos). Informe preparado "
                        f"por Dinero Público el {fecha_larga(fecha)}.", est["pequeno"])]
     caja = Table([[aviso]], colWidths=[17 * cm])
     caja.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 2, NEGRO), ("LEFTPADDING", (0, 0), (-1, -1), 10),
