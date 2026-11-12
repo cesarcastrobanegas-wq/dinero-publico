@@ -68,6 +68,26 @@ class A_SinApp(unittest.TestCase):
         self.assertEqual(ambito("Universitat de Barcelona", padres=("Universitats",)), "otros")
         self.assertEqual(ambito("Consorci Sanitari de Terrassa", padres=("Altres ens",)), "otros")
 
+    def test_empresas_municipales_y_entes_forales(self):
+        self.assertEqual(ambito("Aguas Municipales de Vitoria-Gasteiz, S.A.U.", agente="Gobierno Vasco",
+                                padres=("Aguas Municipales de Vitoria-Gasteiz, S.A.U.",)), "local")
+        self.assertEqual(ambito("Empresa Municipal de la Vivienda", agente="Junta de Andalucía"), "local")
+        self.assertEqual(ambito("Instituto Foral de la Juventud de Alava", agente="Gobierno Vasco"), "local")
+        self.assertEqual(ambito("Juntas Generales de Álava", agente="Gobierno Vasco"), "local")
+        # sin palabra segura: siguen como autonómicas (error conocido en las municipales con solo el nombre del pueblo)
+        self.assertEqual(ambito("Metro Bilbao, S.A.", agente="Gobierno Vasco"), "autonomico")
+        self.assertEqual(ambito("Hacienda Foral de Navarra", agente="Gobierno de Navarra",
+                                padres=("Comunidad Foral de Navarra",)), "autonomico")
+
+    def test_requisitos_del_1044(self):
+        # Medido el 12-11: en el 1044, TenderingTerms solo trae FundingProgramCode y ProcurementNationalLegislationCode.
+        e = entrada("https://x/1044/r01", "Ajuntament de Girona").replace(
+            "</cac:TenderingProcess>", "</cac:TenderingProcess><cac:TenderingTerms><cbc:FundingProgramCode>NO-EU"
+            "</cbc:FundingProgramCode><cbc:ProcurementNationalLegislationCode>3</cbc:ProcurementNationalLegislationCode>"
+            "</cac:TenderingTerms>")
+        r = LP.analizar_entrada(e)
+        self.assertEqual(r["req"], {})                          # no hay de dónde sacarlos: se dice en la lista
+
     def test_el_643_no_cambia(self):
         # sin <cac:AgentParty> (643): las reglas nuevas no se aplican
         self.assertEqual(ambito("Ayuntamiento de Murcia", agente="", padres=("ENTIDADES LOCALES",)), "local")
@@ -243,8 +263,23 @@ class B_ConLaApp(unittest.TestCase):
         self.assertEqual(m("Concello do Porriño", "", "pontevedra"), self.app.clave_municipio("O Porriño", "pontevedra"))
         self.assertTrue(m("Ayuntamiento de Murcia", "30001", "murcia"))                  # el 643, igual que antes
         self.assertEqual(m("Departament de Salut", "", "barcelona"), "")
-        # «Udala»: la palabra se reconoce, pero un nombre en euskera declinado («Bilboko») no se adivina
-        self.assertEqual(m("Bilboko Udala", "", "pais_vasco"), "")
+    def test_nombres_en_euskera(self):
+        m, c = self.app._licitacion_municipio, self.app.clave_municipio
+        casos = {"Bilboko Udala": "Bilbao", "Getxoko Udala": "Getxo", "Irungo Udala": "Irun",
+                 "Azkoitiko Udala": "Azkoitia", "Zarauzko Udala": "Zarautz", "Eibarko Udala": "Eibar",
+                 "Hondarribiko Udala": "Hondarribia", "Lasarte-Oriako Udala": "Lasarte-Oria"}
+        for organo, municipio in casos.items():
+            self.assertEqual(m(organo, "", "pais_vasco"), c(municipio, "pais_vasco"), organo)
+        self.assertEqual(m("Donostiako Udala", "", "pais_vasco"), c("Donostia/San Sebastián", "pais_vasco"))
+        self.assertEqual(m("Gasteizko Udala", "", ""), c("Vitoria-Gasteiz", "pais_vasco"))    # sin provincia
+        self.assertEqual(m("Iruñeko Udala", "", "navarra"), c("Pamplona/Iruña", "navarra"))
+        self.assertEqual(m("Abadiñoko Udala", "", "pais_vasco"), c("La Anteiglesia de Abadiño", "pais_vasco"))
+        # lo que no es seguro no se asigna
+        self.assertEqual(m("Udala", "", "pais_vasco"), "")
+        self.assertEqual(m("Xyzko Udala", "", "pais_vasco"), "")
+        self.assertEqual(m("Bilboko Udala", "", "barcelona"), c("Bilbao", "pais_vasco"))   # solo busca en euskera
+        # Irun (exacta) no choca con Iruña (derivada: «irun» sin la -a)
+        self.assertEqual(m("Irungo Udala", "", ""), c("Irun", "pais_vasco"))
 
     def test_purga(self):
         app = self.app

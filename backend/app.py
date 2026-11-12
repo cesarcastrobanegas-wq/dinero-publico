@@ -15593,6 +15593,52 @@ _LIC_FORMAS_AYUNTAMIENTO = (
 )
 _RE_AJUNTAMENT_D = re.compile(r"\bajuntament\s+d['’]\s*", re.I)
 
+# Nombres en euskera (12-11-2026, noche): «Bilboko Udala», «Irungo Udala», «Azkoitiko Udala», «Zarauzko Udala». El
+# nombre del pueblo va declinado con -ko/-go. Reglas seguras: se quita el sufijo y se compara con variantes del nombre
+# de la lista (entero, cada parte de los nombres dobles «Vitoria-Gasteiz» o «Donostia/San Sebastián», sin la -a final
+# «Azkoitia» -> «azkoiti», «tz» -> «z» «Zarautz» -> «zarauz») y con los exónimos de _EXONIMOS_EUSKERA. Solo en País
+# Vasco y Navarra, y solo si sale UN municipio: si hay dos posibles, no se asigna.
+_RE_UDALA = re.compile(r"(?:^|\b)([a-z][a-z0-9 /-]*?)(?:ko|go) udala\b")
+_EXONIMOS_EUSKERA = {"bilbo": "bilbao", "irune": "pamplona"}       # Bilboko, Iruñeko
+_PROVINCIAS_EUSKERA = ("pais_vasco", "navarra")
+_UDALA_INDICE = {}
+
+
+def _udala_indice(prov):
+    """({forma exacta: {municipios}}, {forma derivada: {municipios}}) de una provincia. Exactas: el nombre entero y
+    cada parte de los dobles. Derivadas: sin la -a final y con «tz» -> «z» (solo se miran si no hay exacta)."""
+    if prov not in _UDALA_INDICE:
+        exactas, derivadas = {}, {}
+        for m in MUNICIPIOS_POR_PROVINCIA.get(prov, []):
+            nm = normalizar(m)
+            formas = {nm} | {p.strip() for p in re.split(r"[/-]", nm) if p.strip()}
+            for f in formas:
+                exactas.setdefault(f, set()).add(m)
+                variantes = {f.replace("tz", "z")} | ({f[:-1], f[:-1].replace("tz", "z")} if f.endswith("a") else set())
+                if " de " in f:                          # «La Anteiglesia de Abadiño» -> «abadino»
+                    variantes.add(f.rsplit(" de ", 1)[1])
+                for v in variantes - {f}:
+                    derivadas.setdefault(v, set()).add(m)
+        _UDALA_INDICE[prov] = (exactas, derivadas)
+    return _UDALA_INDICE[prov]
+
+
+def _municipio_desde_udala(n, provincia):
+    m = _RE_UDALA.search(n)
+    if not m:
+        return ""
+    raiz = m.group(1).strip().split(" ")[-1]            # «...-ren Bilboko Udala»: la última palabra antes del sufijo
+    raiz = _EXONIMOS_EUSKERA.get(raiz, raiz)
+    provincias = [provincia] if provincia in _PROVINCIAS_EUSKERA else list(_PROVINCIAS_EUSKERA)
+    for nivel in (0, 1):                                 # primero las formas exactas, después las derivadas
+        encontrados = {(mu, pv) for pv in provincias for mu in _udala_indice(pv)[nivel].get(raiz, ())}
+        if len(encontrados) == 1:
+            mu, pv = encontrados.pop()
+            return clave_municipio(mu, pv)
+        if encontrados:                                  # dos o más posibles: no se adivina
+            return ""
+    return ""
+
 
 def _licitacion_municipio(organo, cp, provincia, comunidad=""):
     """Clave de la ficha del ayuntamiento que convoca (mismos patrones anclados que el Índice: _regex_anclado y las
@@ -15608,6 +15654,11 @@ def _licitacion_municipio(organo, cp, provincia, comunidad=""):
     k = (n, cp, provincia, comunidad)
     if k in _LIC_MUNI_MEMO:
         return _LIC_MUNI_MEMO[k]
+    if "udala" in n and "ayuntamiento" not in n:
+        res = _municipio_desde_udala(n, provincia)
+        if len(_LIC_MUNI_MEMO) < 50000:
+            _LIC_MUNI_MEMO[k] = res
+        return res
     candidatas = [provincia] if provincia in MUNICIPIOS_POR_PROVINCIA else []
     if not candidatas and comunidad:
         candidatas = [pv for pv in MUNICIPIOS_POR_PROVINCIA if COMUNIDAD_AUTONOMA_POR_PROVINCIA.get(pv) == comunidad]

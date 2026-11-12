@@ -135,7 +135,12 @@ def _ambito(lcp):
 _RE_LOCAL_AGREGADAS = re.compile(
     r"\b(?:ENTITATS DE L.ADMINISTRACI. LOCAL|AYUNTAMIENTO|AJUNTAMENT|UDALA|CONCELLO|DIPUTACI[OÓ]N|DIPUTACI[OÓ]|"
     r"MANCOMUNIDAD|MANCOMUNITAT|CONSELL COMARCAL|COMARCA|CUADRILLA|ENTIDAD LOCAL|ENTITAT MUNICIPAL|"
-    r"CONCEJO|PARROQUIA RURAL|CABILDO|CONSELL INSULAR)\b")
+    r"CONCEJO|PARROQUIA RURAL|CABILDO|CONSELL INSULAR|"
+    # 12-11-2026 (noche): empresas y entes municipales o forales que salían como autonómicos. Solo palabras seguras:
+    # «municipal» y «udal» (municipal en euskera) y los entes forales de los territorios históricos. «Foral» a secas
+    # no, porque «Comunidad Foral de Navarra» es autonómica. Los que solo llevan el nombre del pueblo (Bilbao
+    # Zerbitzuak, San Sebastián Turismo) siguen como autonómicos: no se distinguen de «Metro Bilbao» sin una lista.
+    r"MUNICIPAL|MUNICIPALES|MUNICIPALS|UDAL|INSTITUTO FORAL|JUNTAS GENERALES)\b")
 _RE_OTROS_AGREGADAS = re.compile(r"\b(?:UNIVERSIDAD|UNIVERSITAT|UNIVERSITATS|UNIBERTSITATEA|UPV/EHU|CONSORCIO|CONSORCI|"
                                  r"PARTZUERGOA)\b")
 
