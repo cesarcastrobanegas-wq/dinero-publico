@@ -279,6 +279,35 @@ class C_ConLaApp(unittest.TestCase):
         finally:
             os.environ.pop("GUIA_LICITACIONES_PUBLICADOS", None)
 
+    def test_zips_de_uno_en_uno_y_nunca_con_el_refresco(self):
+        """Punto 5: al subir LIC_VERSION_LECTOR no se releen 4 meses de golpe; y nada mientras corre el nocturno."""
+        import zipfile
+        app = self.app
+        carpeta = tempfile.mkdtemp()
+        hoy = app._ahora_madrid()
+        meses = []
+        for i in range(3):
+            m = hoy.year * 12 + hoy.month - 1 - i
+            meses.append(f"{m // 12}{m % 12 + 1:02d}")
+        for anomes in meses:
+            with zipfile.ZipFile(os.path.join(carpeta, f"place_{anomes}.zip"), "w") as z:
+                z.writestr("a.atom", "<feed>" + " " * 4000 + "</feed>")
+        original = app.CACHE_DIR
+        app.CACHE_DIR = carpeta
+        try:
+            with app._actualizando_todos_lock:                         # refresco nocturno en marcha
+                self.assertEqual(app._licitaciones_desde_zips(), 0)
+            self.assertEqual(app._licitaciones_desde_zips(), 1)         # uno por ciclo...
+            with app._db_lock:
+                leido = [r[0] for r in app._db.execute(
+                    "SELECT clave FROM settings WHERE clave LIKE 'licitaciones_zip::place_%'")]
+            self.assertEqual(leido, [f"licitaciones_zip::place_{meses[0]}.zip"])   # ...empezando por el mes en curso
+            self.assertEqual(app._licitaciones_desde_zips(), 1)
+            self.assertEqual(app._licitaciones_desde_zips(), 1)
+            self.assertEqual(app._licitaciones_desde_zips(), 0)         # ya están todos
+        finally:
+            app.CACHE_DIR = original
+
     def test_alertas_diarias_solo_enlace(self):
         app = self.app
 

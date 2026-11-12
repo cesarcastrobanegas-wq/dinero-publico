@@ -15528,6 +15528,7 @@ LIC_MAX_PAGINAS_ATOM = 40
 # lo nuevo (":req" = columna requisitos del filtro por empresa, 2026-10-27). Los más antiguos ya no tienen abiertas.
 LIC_VERSION_LECTOR = ":req:pliegos"      # 12-11-2026: + enlaces al PCAP y al PPT (lista de comprobación)
 LIC_MESES_RELEER = 4
+LIC_ZIPS_POR_CICLO = 1          # 12-11-2026: ZIP leídos como mucho por ciclo (ver _licitaciones_desde_zips)
 _LIC_ESTADO = {"estado": "sin_arrancar"}
 # "visto" va siempre la última: las filas de las cerradas se rellenan con None hasta ella
 _LIC_COLUMNAS = ("id", "actualizado", "estado", "fin_plazo", "titulo", "url", "expediente", "organo", "nif_organo",
@@ -15637,11 +15638,24 @@ def _lic_mes_corte_relectura():
     return f"{m // 12}{m % 12 + 1:02d}"
 
 
-def _licitaciones_desde_zips():
-    """Recorre los ZIP de place_cache/ que tengan una versión nueva (fecha+tamaño) desde la última lectura."""
-    for f in sorted(os.listdir(CACHE_DIR)):
+def _licitaciones_desde_zips(max_zips=None):
+    """Recorre los ZIP de place_cache/ que tengan una versión nueva (fecha+tamaño) desde la última lectura.
+
+    12-11-2026 (lanzamiento B2B): como mucho LIC_ZIPS_POR_CICLO por ciclo, del mes más reciente al más antiguo. Así,
+    al subir LIC_VERSION_LECTOR no se releen de golpe 4 meses de ZIP (cientos de MB) justo después de desplegar: se
+    lee uno cada ciclo de 3 h, empezando por el mes en curso, que es el que tiene casi todas las abiertas. Y no se lee
+    ninguno mientras corre el refresco nocturno (_actualizando_todos_lock), que también baja y lee estos ZIP."""
+    if _actualizando_todos_lock.locked():
+        _LIC_ESTADO.update(zips="aplazados: refresco nocturno en curso")
+        return 0
+    max_zips = LIC_ZIPS_POR_CICLO if max_zips is None else max_zips
+    leidos = 0
+    for f in sorted(os.listdir(CACHE_DIR), reverse=True):
         if not (f.startswith("place_") and f.endswith(".zip")):
             continue
+        if leidos >= max_zips:
+            _LIC_ESTADO.update(zips=f"quedan ZIP por leer (como mucho {max_zips} por ciclo)")
+            break
         ruta = os.path.join(CACHE_DIR, f)
         if not _zip_place_valido(ruta)[0]:
             continue
@@ -15667,6 +15681,8 @@ def _licitaciones_desde_zips():
             _db.commit()
         print(f"[licitaciones] {f}: {n} entradas ({abiertas} en PUB)", flush=True)
         _liberar_memoria()
+        leidos += 1
+    return leidos
 
 
 def _licitaciones_desde_atom():
