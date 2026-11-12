@@ -215,8 +215,9 @@ class P4FechasFuturas(unittest.TestCase):
         con.commit()
         con.close()
         res = cff.comprobar(ruta_db, date(2026, 11, 12))
-        self.assertEqual(sorted(f[3] for f in res["menores"]), ["a", "c"])     # el de hoy no es futuro
-        self.assertEqual([f[2] for f in res["formales"]], ["2033-12-22"])
+        self.assertEqual(sorted(f["id"] for f in res["menores"]), ["a", "c"])     # el de hoy no es futuro
+        self.assertEqual([f["fecha"] for f in res["formales"]], ["2033-12-22"])
+        self.assertEqual(set(res["menores"][0]), set(cff.CAMPOS))
 
 
 class P5PortadaIgualEnTodosLosIdiomas(unittest.TestCase):

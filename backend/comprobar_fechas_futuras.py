@@ -42,16 +42,25 @@ def es_futura(fecha, hoy):
         return False
 
 
+CAMPOS = ("tipo", "fuente", "municipio", "organo", "empresa", "fecha", "importe", "enlace", "id")
+
+
 def comprobar(ruta_db, hoy=None):
-    """{"menores": [(fuente, municipio, fecha, id, adjudicatario)], "formales": [...]} con las fechas posteriores a hoy."""
+    """{"menores": [fila], "formales": [fila]} con las fechas posteriores a hoy; cada fila es un dict con CAMPOS.
+    Los contratos menores no guardan enlace en la base (enlace = "")."""
     hoy = hoy or hoy_peninsular()
     con = sqlite3.connect(f"file:{ruta_db}?mode=ro", uri=True)
     out = {"menores": [], "formales": []}
     try:
-        filas = con.execute("SELECT fuente, municipio, data_adjudicacio, id, adjudicatari FROM contratos_menors_locales "
-                            "WHERE data_adjudicacio > ? ORDER BY data_adjudicacio",
-                            (hoy.isoformat() + "9",)).fetchall()
-        out["menores"] = [f for f in filas if es_futura(f[2], hoy)]
+        cols = {r[1] for r in con.execute("PRAGMA table_info(contratos_menors_locales)")}
+        organo = "organisme" if "organisme" in cols else "''"
+        importe = "import_num" if "import_num" in cols else "NULL"
+        for f in con.execute(f"SELECT fuente, municipio, {organo}, adjudicatari, data_adjudicacio, {importe}, id "
+                             "FROM contratos_menors_locales WHERE data_adjudicacio > ? ORDER BY data_adjudicacio",
+                             (hoy.isoformat() + "9",)):
+            if es_futura(f[4], hoy):
+                out["menores"].append(dict(zip(CAMPOS, ("menor", f[0] or "", f[1] or "", f[2] or "", f[3] or "",
+                                                        f[4], f[5], "", f[6]))))
     except sqlite3.OperationalError:
         pass
     try:
@@ -62,8 +71,10 @@ def comprobar(ruta_db, hoy=None):
                 continue
             for c in d.get("contratos") or []:
                 if es_futura(c.get("fecha"), hoy):
-                    out["formales"].append((c.get("fuente", ""), d.get("municipio", ""), c.get("fecha", ""),
-                                            c.get("licitacion_id", ""), c.get("empresa", "")))
+                    out["formales"].append(dict(zip(CAMPOS, (
+                        "formal", c.get("fuente", ""), d.get("municipio", ""), c.get("organo", ""),
+                        c.get("empresa", ""), c.get("fecha", ""), c.get("importe_num"), c.get("url", ""),
+                        c.get("licitacion_id", "")))))
     except sqlite3.OperationalError:
         pass
     con.close()
@@ -80,14 +91,15 @@ def main():
     res = comprobar(ruta, hoy)
     print(f"Fechas posteriores a hoy ({hoy.isoformat()}) en {ruta}")
     for tipo, filas in res.items():
-        por_fuente = collections.Counter(f[0] for f in filas)
+        por_fuente = collections.Counter(f["fuente"] for f in filas)
         print(f"\n{tipo}: {len(filas)}")
         for fuente, n in por_fuente.most_common():
-            fechas = [f[2] for f in filas if f[0] == fuente]
+            fechas = [f["fecha"] for f in filas if f["fuente"] == fuente]
             print(f"  {fuente or '(sin fuente)'}: {n} (de {min(fechas)} a {max(fechas)})")
         if "--detalle" in sys.argv:
-            for f in filas:
-                print("   ", " | ".join(str(x) for x in f))
+            print("    " + " | ".join(CAMPOS))
+            for f in sorted(filas, key=lambda x: str(x["fecha"]), reverse=True):
+                print("    " + " | ".join("" if f[k] is None else str(f[k]) for k in CAMPOS))
     return 0
 
 
