@@ -27566,7 +27566,13 @@ _HTTP_STATUS_TEXT = {
 # Rastreadores de textos para entrenar modelos de IA: fuera en robots.txt (ver /robots.txt). Ni Google ni Bing.
 _ROBOTS_IA_ENTRENAMIENTO = ("GPTBot", "CCBot", "ClaudeBot", "anthropic-ai", "Google-Extended", "Applebot-Extended",
                             "meta-externalagent", "Bytespider", "Amazonbot", "cohere-ai", "cohere-training-data-crawler",
-                            "Diffbot", "ImagesiftBot", "Timpibot", "omgili", "AI2Bot", "PanguBot")
+                            "Diffbot", "ImagesiftBot", "Timpibot", "omgili", "AI2Bot", "PanguBot",
+                            # 2026-11-11 (César): ElevenlabsCrawler es el de entrenamiento de ElevenLabs (su
+                            # ElevenlabsBot, el que lee las páginas que un cliente añade a su agente, sigue dentro).
+                            # ShapBot (Parallel) indexa para su API de búsqueda para agentes; según su documentación
+                            # sigue el grupo «User-agent: ShapBot». Si siguiera pidiendo páginas pasados unos días,
+                            # iría a _RE_UA_BLOQUEADO (403), como Amazonbot.
+                            "ElevenlabsCrawler", "ShapBot")
 
 # «&amp;» copiado tal cual en la consulta (al principio o tras un «&»): ver la redirección de _app_wsgi
 _RE_QS_AMP = re.compile(r"(^|&)amp;")
