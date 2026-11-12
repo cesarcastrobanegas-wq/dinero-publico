@@ -9,6 +9,11 @@ había dentro de la ventana de 5 años (los que salen de la ventana no cuentan c
 fichero nuevo: lo ya guardado no se borra). Si no, se restaura el anterior con git y la fuente sale en el resumen como problema. Un fichero que solo
 cambia de fecha de generación (mismos contratos) también se restaura, para no guardar ni reiniciar la web por nada.
 
+Si el generador avisa de errores de descarga («!! ...: error de descarga») y no llega a escribir su fichero, es que
+fallaron TODAS las descargas: cuenta como problema («fallan las descargas»), no como «sin cambios» (Alicante y
+Fuenlabrada, 01-11 y 08-11-2026, salían «sin cambios» con los datos parados). En los problemas, el resumen dice desde
+qué fecha están sin actualizar (la «generado» del fichero que se conserva).
+
 Uso:  python backend/flujo_menores_semanal.py [--solo gijon,zaragoza]
 Nunca termina con error por una fuente: escribe `cambios` y `problemas` en GITHUB_OUTPUT y el resumen en
 GITHUB_STEP_SUMMARY, y el flujo decide.
@@ -17,6 +22,7 @@ import glob
 import gzip
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -38,10 +44,15 @@ EXCLUIDOS = {
     # Fallos del 2026-10-18 y 2026-10-25 (decisión de César del 2026-10-27: a manual).
     "burgos": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (sigue manual)",
     "almeria": "el servidor del ayuntamiento corta la conexión al agente del proyecto (sigue manual)",
+    # Fallos del 2026-11-01 y 2026-11-08: desde GitHub no conectan; desde el PC, sí (decisión de César del 09-11).
+    # Se lanzan desde el PC con: python backend/menores_desde_pc.py (ver MENORES_DESDE_PC.md).
+    "alicante": "desde GitHub todas las descargas tardan demasiado; desde un PC, bien (manual: menores_desde_pc.py)",
+    "santa_cruz": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (manual: menores_desde_pc.py)",
 }
 MINUTOS = {"murcia_manual": 150, "euskadi": 210}      # el resto, MINUTOS_POR_DEFECTO
 MINUTOS_POR_DEFECTO = 40
 MINIMO_RELATIVO = 0.9
+PROBLEMAS = ("fallo", "menos contratos", "fallan las descargas")   # se conserva el fichero anterior y se avisa
 MINIMO_PARA_COMPARAR = 20       # con menos contratos que esto no se aplica el 90 % (un contrato menos ya sería un 5 %)
 
 
@@ -102,14 +113,43 @@ def con_antiguos(ruta, crudo_nuevo, registros_antes):
     return open(ruta, "rb").read()
 
 
+RE_ERROR_DESCARGA = re.compile(r"!!.*error de descarga")
+
+
+def errores_de_descarga(salida):
+    """Cuántas descargas dice el generador que han fallado (líneas «!! ...: error de descarga»)."""
+    return sum(1 for l in salida.splitlines() if RE_ERROR_DESCARGA.search(l))
+
+
+def generado_de(crudo):
+    """Fecha «generado» de un fichero guardado (la última vez que se actualizó de verdad), o None."""
+    try:
+        d = json.loads(gzip.decompress(crudo).decode("utf-8"))
+        return str(d.get("generado") or "")[:10] or None if isinstance(d, dict) else None
+    except Exception:
+        return None
+
+
+def marca_fichero(ruta):
+    try:
+        st = os.stat(ruta)
+        return st.st_mtime_ns, st.st_size
+    except OSError:
+        return None
+
+
 def huella(registros):
     return sorted(json.dumps(r, sort_keys=True, ensure_ascii=False) for r in registros)
 
 
-def decidir(n_antes, registros_antes, codigo, crudo_nuevo):
-    """(estado, detalle, conservar_nuevo). estado: actualizada | sin cambios | fallo | menos contratos."""
+def decidir(n_antes, registros_antes, codigo, crudo_nuevo, errores_descarga=0, escribio=True):
+    """(estado, detalle, conservar_nuevo).
+    estado: actualizada | sin cambios | fallo | menos contratos | fallan las descargas."""
     if codigo != 0:
         return "fallo", f"el generador terminó con código {codigo}", False
+    if errores_descarga and not escribio:
+        return ("fallan las descargas", f"fallaron las {errores_descarga} descargas y no escribió nada"
+                if errores_descarga > 1 else "falló la descarga y no escribió nada", False)
     if crudo_nuevo is None:
         return "fallo", "el generador no dejó fichero", False
     try:
@@ -142,6 +182,7 @@ def ejecutar(nombre):
         except Exception:
             pass
     minutos = MINUTOS.get(nombre, MINUTOS_POR_DEFECTO)
+    marca_antes = marca_fichero(ruta)
     t0 = time.time()
     print(f"\n===== {nombre} (hasta {minutos} min; había {n_antes} contratos) =====", flush=True)
     try:
@@ -151,12 +192,17 @@ def ejecutar(nombre):
     except subprocess.TimeoutExpired as e:
         codigo, salida = -9, (e.stdout or b"").decode("utf-8", "replace") + f"\n(cortado a los {minutos} min)"
     print("\n".join(salida.splitlines()[-25:]), flush=True)       # el final del registro del generador
+    errores = errores_de_descarga(salida)
+    escribio = marca_fichero(ruta) != marca_antes
     crudo_nuevo = open(ruta, "rb").read() if os.path.exists(ruta) else None
-    if codigo == 0 and crudo_nuevo is not None and registros_antes:
+    if codigo == 0 and escribio and crudo_nuevo is not None and registros_antes:
         crudo_nuevo = con_antiguos(ruta, crudo_nuevo, registros_antes)
-    estado, detalle, conservar = decidir(n_antes, registros_antes, codigo, crudo_nuevo)
+    estado, detalle, conservar = decidir(n_antes, registros_antes, codigo, crudo_nuevo, errores, escribio)
     if codigo == -9:
         detalle = f"cortado a los {minutos} min"
+    if estado in PROBLEMAS:
+        desde = generado_de(crudo_antes) if crudo_antes else None
+        detalle += f"; sin actualizar desde el {desde}" if desde else "; no hay datos anteriores"
     if not conservar:
         restaurar(ruta_rel, crudo_antes is not None)
     print(f"-> {nombre}: {estado} ({detalle}), {time.time() - t0:.0f} s", flush=True)
@@ -175,13 +221,13 @@ def main():
     filas = [ejecutar(n) for n in pedidos]
 
     cambios = [f for f in filas if f["estado"] == "actualizada"]
-    problemas = [f for f in filas if f["estado"] in ("fallo", "menos contratos")]
+    problemas = [f for f in filas if f["estado"] in PROBLEMAS]
     lineas = ["## Contratos menores de ayuntamientos", "",
               f"{len(filas)} fuentes ejecutadas: {len(cambios)} actualizadas, "
               f"{len(filas) - len(cambios) - len(problemas)} sin cambios, {len(problemas)} con problemas "
               "(en esas se conserva el fichero anterior).", "",
               "| Fuente | Resultado | Detalle | Tiempo |", "|---|---|---|---|"]
-    orden = {"fallo": 0, "menos contratos": 0, "actualizada": 1, "sin cambios": 2}
+    orden = {**{e: 0 for e in PROBLEMAS}, "actualizada": 1, "sin cambios": 2}
     for f in sorted(filas, key=lambda f: (orden[f["estado"]], f["fuente"])):
         lineas.append(f"| {f['fuente']} | {f['estado']} | {f['detalle']} | {f['segundos']} s |")
     if not solo:
