@@ -34,14 +34,6 @@ msgstr "Izena ez da erakusten"
 msgid "desde {fecha}"
 msgstr "hasiera: {fecha}"
 
-#: app.py:5401
-msgid "Un sueldo de 0 € en ISPA no significa que no cobre nada -- suele indicar que quien ocupa el cargo ha renunciado al sueldo de alcalde/sa por percibir ya retribución de otro cargo público (frecuente cuando también forma parte del gobierno de una Diputación). Verificado así en varios municipios de la provincia de Barcelona."
-msgstr "ISPAn 0 €-ko soldata agertzeak ez du esan nahi ezer kobratzen ez duenik -- normalean karguan dagoenak alkate-soldatari uko egin diola adierazten du, beste kargu publiko batengatik ordainsaria jasotzen duelako (ohikoa Aldundi bateko gobernuan ere badagoenean). Horrela egiaztatu da Bartzelonako probintziako hainbat udalerritan."
-
-#: app.py:5407
-msgid "(posible renuncia por doble cargo ℹ️)"
-msgstr "(uko egin ahal izan dio kargu bikoitzagatik ℹ️)"
-
 #: app.py:5412
 msgid "Último dato oficial del cargo: lo percibió {anterior}, alcalde hasta {fecha}. No es el sueldo de quien lo ocupa ahora."
 msgstr "Karguaren azken datu ofiziala: {anterior} alkate ohiak jaso zuen (alkate izan zen data honetara arte: {fecha}). Ez da orain kargua betetzen duenaren soldata."
@@ -3403,6 +3395,59 @@ msgstr "Nola aurkeztu lizitazio batera, urratsez urrats"
 
 msgid "Cómo presentarse a una licitación, paso a paso: {url}"
 msgstr "Nola aurkeztu lizitazio batera, urratsez urrats: {url}"
+msgid "sin datos de retribución"
+msgstr "ordainsariaren daturik gabe"
+
+msgid "sueldo: sin fuente oficial"
+msgstr "soldata: iturri ofizialik gabe"
+
+msgid "Régimen de dedicación según ISPA: {regimen}"
+msgstr "Dedikazio-araubidea ISPAren arabera: {regimen}"
+
+msgid "según {fuente}"
+msgstr "{fuente} iturriaren arabera"
+
+msgid "Fecha según la fuente, posible error: es posterior a hoy."
+msgstr "Iturriaren araberako data, akatsa izan daiteke: gaur baino geroagokoa da."
+
+msgid "y {n} más en la ficha"
+msgstr "eta beste {n} fitxan"
+
+msgid "Personas"
+msgstr "Pertsonak"
+
+msgid "Periodo según la fuente"
+msgstr "Aldia iturriaren arabera"
+
+msgid "Fuente oficial"
+msgstr "Iturri ofiziala"
+
+msgid "Recogidos el {fecha}."
+msgstr "Bilketa-data: {fecha}."
+
+msgid "Sueldos de concejales"
+msgstr "Zinegotzien soldatak"
+
+msgid "{n} personas en {m} municipios cuyo ayuntamiento publica la retribución de sus concejales con nombre."
+msgstr "{n} pertsona {m} udalerritan; udal horiek zinegotzien ordainsaria izen eta guzti argitaratzen dute."
+
+msgid "El Ministerio publica el sueldo de cada alcalde, pero el de los concejales solo como un total por ayuntamiento, sin nombres. Por eso solo mostramos sueldos individuales donde el propio ayuntamiento los publica con nombre, tal como figuran en su documento oficial: sin convertir ni estimar importes."
+msgstr "Ministerioak alkate bakoitzaren soldata argitaratzen du, baina zinegotziena udal bakoitzeko guztizko gisa bakarrik, izenik gabe. Horregatik, udalak berak izenarekin argitaratzen dituen tokietan bakarrik erakusten ditugu banakako soldatak, bere dokumentu ofizialean agertzen diren bezala: zenbatekoak bihurtu edo kalkulatu gabe."
+
+msgid "La lista de cada municipio, con el importe, la base y el enlace a la fuente de cada persona, está en su ficha."
+msgstr "Udalerri bakoitzaren zerrenda, pertsona bakoitzaren zenbatekoa, oinarria eta iturrirako esteka barne, haren fitxan dago."
+
+msgid "Sueldos de alcaldes y alcaldesas"
+msgstr "Alkateen soldatak"
+
+msgid "Municipios cuyo ayuntamiento publica los sueldos de sus concejales con nombre, con enlace a la ficha y a la fuente oficial."
+msgstr "Zinegotzien soldatak izenarekin argitaratzen dituzten udalerriak, fitxarako eta iturri ofizialerako estekarekin."
+
+msgid "Sueldos de concejales publicados por cada ayuntamiento"
+msgstr "Udal bakoitzak argitaratutako zinegotzien soldatak"
+
+msgid "Otros municipios con sueldos de concejales"
+msgstr "Zinegotzien soldatak dituzten beste udalerri batzuk"
 
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
