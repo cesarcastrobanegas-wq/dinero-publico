@@ -118,7 +118,54 @@ def _ambito(lcp):
         return "autonomico"
     if "ADMINISTRACI" in nombres and "ESTADO" in nombres:
         return "estatal"
+    if "<cac:AgentParty>" in lcp:          # feed 1044: lo publica una plataforma autonómica (ver _ambito_agregadas)
+        return _ambito_agregadas(lcp)
     return "otros"
+
+
+# Feed 1044 (plataformas autonómicas agregadas, 12-11-2026). Su cadena de órganos no lleva el «ENTIDADES LOCALES» de
+# PLACE: cada plataforma la escribe a su manera («Entitats de l'administració local», «Junta de Andalucía», o
+# directamente «Ayuntamiento de Bilbao»). Todas traen en <cac:AgentParty> la plataforma que lo publica (Generalitat
+# de Catalunya, Gobierno Vasco…). Medido en 1.667 abiertas el 12-11. Reglas, por este orden:
+#   local      -> la cadena o el órgano es un ayuntamiento, diputación, mancomunidad, comarca… (en cualquier lengua)
+#   otros      -> universidades y consorcios (pueden ser de varias administraciones)
+#   autonomico -> el resto de lo que publica una plataforma autonómica (departamentos, consejerías, Osakidetza…)
+# Errores conocidos: sociedades municipales o de mancomunidad sin esa palabra en el nombre (p. ej. «Servicios de
+# Montejurra SA») salen como autonómicas; en Cataluña no pasa, porque van bajo «Entitats de l'administració local».
+_RE_LOCAL_AGREGADAS = re.compile(
+    r"\b(?:ENTITATS DE L.ADMINISTRACI. LOCAL|AYUNTAMIENTO|AJUNTAMENT|UDALA|CONCELLO|DIPUTACI[OÓ]N|DIPUTACI[OÓ]|"
+    r"MANCOMUNIDAD|MANCOMUNITAT|CONSELL COMARCAL|COMARCA|CUADRILLA|ENTIDAD LOCAL|ENTITAT MUNICIPAL|"
+    r"CONCEJO|PARROQUIA RURAL|CABILDO|CONSELL INSULAR|"
+    # 12-11-2026 (noche): empresas y entes municipales o forales que salían como autonómicos. Solo palabras seguras:
+    # «municipal» y «udal» (municipal en euskera) y los entes forales de los territorios históricos. «Foral» a secas
+    # no, porque «Comunidad Foral de Navarra» es autonómica. Los que solo llevan el nombre del pueblo (Bilbao
+    # Zerbitzuak, San Sebastián Turismo) siguen como autonómicos: no se distinguen de «Metro Bilbao» sin una lista.
+    r"MUNICIPAL|MUNICIPALES|MUNICIPALS|UDAL|INSTITUTO FORAL|JUNTAS GENERALES)\b")
+_RE_OTROS_AGREGADAS = re.compile(r"\b(?:UNIVERSIDAD|UNIVERSITAT|UNIVERSITATS|UNIBERTSITATEA|UPV/EHU|CONSORCIO|CONSORCI|"
+                                 r"PARTZUERGOA)\b")
+
+
+def _ambito_agregadas(lcp):
+    sin_agente = re.sub(r"<cac:AgentParty>.*?</cac:AgentParty>", "", lcp, flags=re.S)
+    nombres = " | ".join(html.unescape(x) for x in re.findall(r"<cbc:Name>([^<]*)</cbc:Name>", sin_agente)).upper()
+    if _RE_LOCAL_AGREGADAS.search(nombres):
+        return "local"
+    if _RE_OTROS_AGREGADAS.search(nombres):
+        return "otros"
+    return "autonomico"
+
+
+def clave_duplicado(expediente, organo):
+    """Clave para encontrar la misma licitación en el 643 y en el 1044: expediente y órgano normalizados (sin tildes,
+    mayúsculas, sin espacios ni signos). "" si falta el expediente (sin él no se compara)."""
+    exp = re.sub(r"[^0-9A-Z]", "", _sin_tildes(expediente or "").upper())
+    org = re.sub(r"[^0-9A-Z]", "", _sin_tildes(organo or "").upper())
+    return f"{exp}|{org}" if exp else ""
+
+
+def _sin_tildes(t):
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFKD", t) if not unicodedata.combining(c))
 
 
 # Requisitos para el filtro de licitaciones por empresa (fase 1, 2026-10-27; ver "Informe - Filtro de licitaciones por

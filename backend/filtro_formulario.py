@@ -542,11 +542,12 @@ def correo_semanal(res, enlace_ver, enlace_baja, ahora):
     boton = "Ver todas mis licitaciones"
     lineas += [f"{boton}: {enlace_ver}", "",
                "Orientativo: comprueba siempre el pliego oficial antes de presentarte. Los datos vienen de la "
-               "Plataforma de Contratación del Sector Público."]
+               "Plataforma de Contratación del Sector Público y de las plataformas autonómicas que agrega."]
     cuerpo += (f'<p style="margin:18px 0"><a href="{_e(enlace_ver)}" style="background:#1b2f5c;color:#ffffff;'
                f'text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:700;display:inline-block">'
                f'{_e(boton)}</a></p><p style="font-size:13px;color:#4b5563">Orientativo: comprueba siempre el pliego '
-               f'oficial antes de presentarte. Los datos vienen de la Plataforma de Contratación del Sector Público.</p>')
+               f'oficial antes de presentarte. Los datos vienen de la Plataforma de Contratación del Sector Público '
+               f'y de las plataformas autonómicas que agrega.</p>')
     pie_txt, pie_html = _pie_baja(enlace_baja)
     asunto = (f"{total} licitación nueva para tu empresa" if total == 1 else f"{total} licitaciones nuevas para tu empresa") \
         + f" · semana del {_fecha_larga(ahora)}"

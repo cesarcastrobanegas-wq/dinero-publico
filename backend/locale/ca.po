@@ -3449,6 +3449,9 @@ msgstr "Sous de regidors publicats per cada ajuntament"
 msgid "Otros municipios con sueldos de concejales"
 msgstr "Altres municipis amb sous de regidors"
 
+msgid "Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP) y las plataformas autonómicas que agrega."
+msgstr "Licitacions amb el termini de presentació d'ofertes obert, segons la Plataforma de Contractació del Sector Públic (PLACSP) i les plataformes autonòmiques que agrega."
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Encara sense dades de fons UE per a aquesta província."
 
