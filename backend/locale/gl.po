@@ -34,14 +34,6 @@ msgstr "Nome non amosado"
 msgid "desde {fecha}"
 msgstr "dende {fecha}"
 
-#: app.py:5401
-msgid "Un sueldo de 0 € en ISPA no significa que no cobre nada -- suele indicar que quien ocupa el cargo ha renunciado al sueldo de alcalde/sa por percibir ya retribución de otro cargo público (frecuente cuando también forma parte del gobierno de una Diputación). Verificado así en varios municipios de la provincia de Barcelona."
-msgstr "Un soldo de 0 € no ISPA non significa que non cobre nada -- adoita indicar que quen ocupa o cargo renunciou ao soldo de alcalde/sa por percibir xa retribución doutro cargo público (frecuente cando tamén forma parte do goberno dunha Deputación). Verificado así en varios municipios da provincia de Barcelona."
-
-#: app.py:5407
-msgid "(posible renuncia por doble cargo ℹ️)"
-msgstr "(posible renuncia por dobre cargo ℹ️)"
-
 #: app.py:5412
 msgid "Último dato oficial del cargo: lo percibió {anterior}, alcalde hasta {fecha}. No es el sueldo de quien lo ocupa ahora."
 msgstr "Último dato oficial do cargo: percibiuno {anterior}, alcalde ata {fecha}. Non é o soldo de quen o ocupa agora."
@@ -3397,6 +3389,60 @@ msgstr "Portada"
 #: app.py:28145 app.py:28130
 msgid "Página no encontrada"
 msgstr "Páxina non atopada"
+
+msgid "sin datos de retribución"
+msgstr "sen datos de retribución"
+
+msgid "sueldo: sin fuente oficial"
+msgstr "soldo: sen fonte oficial"
+
+msgid "Régimen de dedicación según ISPA: {regimen}"
+msgstr "Réxime de dedicación segundo ISPA: {regimen}"
+
+msgid "según {fuente}"
+msgstr "segundo {fuente}"
+
+msgid "Fecha según la fuente, posible error: es posterior a hoy."
+msgstr "Data segundo a fonte, posible erro: é posterior a hoxe."
+
+msgid "y {n} más en la ficha"
+msgstr "e {n} máis na ficha"
+
+msgid "Personas"
+msgstr "Persoas"
+
+msgid "Periodo según la fuente"
+msgstr "Período segundo a fonte"
+
+msgid "Fuente oficial"
+msgstr "Fonte oficial"
+
+msgid "Recogidos el {fecha}."
+msgstr "Recollidos o {fecha}."
+
+msgid "Sueldos de concejales"
+msgstr "Soldos de concelleiros"
+
+msgid "{n} personas en {m} municipios cuyo ayuntamiento publica la retribución de sus concejales con nombre."
+msgstr "{n} persoas en {m} municipios cuxo concello publica a retribución dos seus concelleiros con nome."
+
+msgid "El Ministerio publica el sueldo de cada alcalde, pero el de los concejales solo como un total por ayuntamiento, sin nombres. Por eso solo mostramos sueldos individuales donde el propio ayuntamiento los publica con nombre, tal como figuran en su documento oficial: sin convertir ni estimar importes."
+msgstr "O Ministerio publica o soldo de cada alcalde, pero o dos concelleiros só como un total por concello, sen nomes. Por iso só mostramos soldos individuais onde o propio concello os publica con nome, tal como figuran no seu documento oficial: sen converter nin estimar importes."
+
+msgid "La lista de cada municipio, con el importe, la base y el enlace a la fuente de cada persona, está en su ficha."
+msgstr "A lista de cada municipio, co importe, a base e o enlace á fonte de cada persoa, está na súa ficha."
+
+msgid "Sueldos de alcaldes y alcaldesas"
+msgstr "Soldos de alcaldes e alcaldesas"
+
+msgid "Municipios cuyo ayuntamiento publica los sueldos de sus concejales con nombre, con enlace a la ficha y a la fuente oficial."
+msgstr "Municipios cuxo concello publica os soldos dos seus concelleiros con nome, con enlace á ficha e á fonte oficial."
+
+msgid "Sueldos de concejales publicados por cada ayuntamiento"
+msgstr "Soldos de concelleiros publicados por cada concello"
+
+msgid "Otros municipios con sueldos de concejales"
+msgstr "Outros municipios con soldos de concelleiros"
 
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Aínda sen datos de fondos UE para esta provincia."
