@@ -49,6 +49,10 @@ try:
 except ImportError:
     import filtro_embudo as FEMB
 try:
+    from . import licitaciones_guia as _LIC_GUIA
+except ImportError:
+    import licitaciones_guia as _LIC_GUIA
+try:
     from .alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
 except ImportError:
     from alcance import ARCHIVO_HASTA, alcance_anio, alcance_desde, dentro_del_alcance
@@ -85,7 +89,23 @@ _I18N_RUTA = contextvars.ContextVar("i18n_ruta", default=("/", ""))   # (ruta si
 _I18N_RUTAS_EDITORIALES = ("/casos", "/metodologia")
 
 
+# Guía «Cómo presentarse a una licitación» (12-11-2026): las traducciones (backend/guia_licitaciones/gl|ca|eu.html)
+# están en el repositorio pero sin publicar hasta que las revise un nativo. Se publican con la variable de entorno
+# GUIA_LICITACIONES_PUBLICADOS (p. ej. "gl,ca"). Mientras un idioma no esté publicado, su versión sirve el castellano y
+# se trata como página editorial (canonical al castellano, noindex, sin hreflang).
+_GUIA_LICITACIONES_RUTA = "/licitaciones/como-presentarse"
+
+
+def _guia_licitaciones_publicados():
+    return [x for x in (s.strip() for s in os.environ.get("GUIA_LICITACIONES_PUBLICADOS", "").split(","))
+            if x in I18N_IDIOMAS]
+
+
 def _i18n_ruta_editorial(ruta):
+    if ruta.rstrip("/") == _GUIA_LICITACIONES_RUTA:
+        publicados = _guia_licitaciones_publicados()
+        lang = _I18N_IDIOMA.get()
+        return lang not in publicados if lang != "es" else not set(I18N_IDIOMAS) <= set(publicados)
     return any(ruta == r or ruta.startswith(r + "/") for r in _I18N_RUTAS_EDITORIALES)
 
 
@@ -15525,8 +15545,9 @@ LIC_CICLO_S = 3 * 3600
 LIC_MAX_PAGINAS_ATOM = 40
 # Versión del lector: al subirla, los ZIP de los últimos LIC_MESES_RELEER meses se vuelven a leer una vez para rellenar
 # lo nuevo (":req" = columna requisitos del filtro por empresa, 2026-10-27). Los más antiguos ya no tienen abiertas.
-LIC_VERSION_LECTOR = ":req"
+LIC_VERSION_LECTOR = ":req:pliegos"      # 12-11-2026: + enlaces al PCAP y al PPT (lista de comprobación)
 LIC_MESES_RELEER = 4
+LIC_ZIPS_POR_CICLO = 1          # 12-11-2026: ZIP leídos como mucho por ciclo (ver _licitaciones_desde_zips)
 _LIC_ESTADO = {"estado": "sin_arrancar"}
 # "visto" va siempre la última: las filas de las cerradas se rellenan con None hasta ella
 _LIC_COLUMNAS = ("id", "actualizado", "estado", "fin_plazo", "titulo", "url", "expediente", "organo", "nif_organo",
@@ -15636,11 +15657,24 @@ def _lic_mes_corte_relectura():
     return f"{m // 12}{m % 12 + 1:02d}"
 
 
-def _licitaciones_desde_zips():
-    """Recorre los ZIP de place_cache/ que tengan una versión nueva (fecha+tamaño) desde la última lectura."""
-    for f in sorted(os.listdir(CACHE_DIR)):
+def _licitaciones_desde_zips(max_zips=None):
+    """Recorre los ZIP de place_cache/ que tengan una versión nueva (fecha+tamaño) desde la última lectura.
+
+    12-11-2026 (lanzamiento B2B): como mucho LIC_ZIPS_POR_CICLO por ciclo, del mes más reciente al más antiguo. Así,
+    al subir LIC_VERSION_LECTOR no se releen de golpe 4 meses de ZIP (cientos de MB) justo después de desplegar: se
+    lee uno cada ciclo de 3 h, empezando por el mes en curso, que es el que tiene casi todas las abiertas. Y no se lee
+    ninguno mientras corre el refresco nocturno (_actualizando_todos_lock), que también baja y lee estos ZIP."""
+    if _actualizando_todos_lock.locked():
+        _LIC_ESTADO.update(zips="aplazados: refresco nocturno en curso")
+        return 0
+    max_zips = LIC_ZIPS_POR_CICLO if max_zips is None else max_zips
+    leidos = 0
+    for f in sorted(os.listdir(CACHE_DIR), reverse=True):
         if not (f.startswith("place_") and f.endswith(".zip")):
             continue
+        if leidos >= max_zips:
+            _LIC_ESTADO.update(zips=f"quedan ZIP por leer (como mucho {max_zips} por ciclo)")
+            break
         ruta = os.path.join(CACHE_DIR, f)
         if not _zip_place_valido(ruta)[0]:
             continue
@@ -15666,6 +15700,8 @@ def _licitaciones_desde_zips():
             _db.commit()
         print(f"[licitaciones] {f}: {n} entradas ({abiertas} en PUB)", flush=True)
         _liberar_memoria()
+        leidos += 1
+    return leidos
 
 
 def _licitaciones_desde_atom():
@@ -27578,6 +27614,34 @@ def _mapa_cobertura_svg_html(clickable=False, svg_id="mapa-cobertura", datos_ofi
   <script>{_MAPA_COBERTURA_JS}</script>'''
 
 
+# Guía «Cómo presentarse a una licitación» (12-11-2026): backend/guia_licitaciones/<idioma>.html, con la primera línea
+# "<!-- description: ... -->" y el cuerpo desde el <h1> (mismo formato que casos_i18n). Cada paso enlaza a su fuente
+# oficial (LCSP en el BOE, guías de PLACSP). Sin traducción en un idioma, se sirve la de castellano.
+GUIA_LICITACIONES_DIR = os.path.join(BASE_DIR, "guia_licitaciones")
+_GUIA_LICITACIONES_CSS = ("<style>.guia-indice ol{margin:6px 0 14px 20px}.guia-fuente{font-size:.85rem;color:var(--muted,#5b6475);"
+                          "margin:-4px 0 16px}.guia-aviso{border-top:1px solid var(--border,#d9dde5);padding-top:10px;"
+                          "font-size:.9rem}.static-page h3{margin:16px 0 4px}</style>")
+
+
+def _guia_licitaciones_fichero(lang):
+    """La traducción solo si ese idioma está en GUIA_LICITACIONES_PUBLICADOS; si no, el castellano."""
+    ruta = os.path.join(GUIA_LICITACIONES_DIR, f"{lang}.html")
+    if lang in _guia_licitaciones_publicados() and os.path.exists(ruta):
+        return ruta
+    return os.path.join(GUIA_LICITACIONES_DIR, "es.html")
+
+
+def render_guia_licitaciones_html():
+    with open(_guia_licitaciones_fichero(_i18n_idioma()), encoding="utf-8") as f:
+        desc, cuerpo = _caso_partes(f.read())
+    m = re.search(r"<h1>(.*?)</h1>", cuerpo, re.S)
+    titulo = html.unescape(re.sub(r"<[^>]+>", "", m.group(1))).strip() if m else _t("Licitaciones")
+    body = (f'<span class="back-link"><a href="/convocatorias">← {_t("Convocatorias abiertas")}</a></span>\n'
+            f'<div class="static-page">\n{cuerpo.strip()}\n</div>')
+    return _page_shell(titulo, body, description=desc, extra_head=_GUIA_LICITACIONES_CSS, show_ad_banner=False,
+                       og_path=_LIC_GUIA.GUIA_RUTA)
+
+
 def render_sueldos_concejales_html():
     """/sueldos-concejales (12-11-2026): índice de los municipios cuyo ayuntamiento publica los sueldos de sus
     concejales CON NOMBRE (SUELDOS_CONCEJALES). Antes solo se veían dentro de cada ficha y no había forma de llegar a
@@ -28584,6 +28648,12 @@ def _alertas_correo_novedades(alm, s, secciones):
         lineas += [mas, ""]
         cuerpo += (f'<p style="font-size:13px">{esc(_t("…y {n} más.").format(n=resto)) + " " if resto > 0 else ""}'
                    f'<a href="{esc(todo)}" style="color:#1b2f5c">{esc(_t("Verlo todo en la web"))}</a></p>')
+        if a["tipo"] == "licitaciones":
+            # 12-11-2026: en las alertas diarias, solo el enlace a la guía (la lista de comprobación va en el filtro)
+            guia = base + _LIC_GUIA.GUIA_RUTA
+            lineas += [_t("Cómo presentarse a una licitación, paso a paso: {url}").format(url=guia), ""]
+            cuerpo += (f'<p style="font-size:13px"><a href="{esc(guia)}" style="color:#1b2f5c">'
+                       f'{esc(_t("Cómo presentarse a una licitación, paso a paso"))} →</a></p>')
     nota = _t("Los datos vienen de fuentes oficiales. Antes de presentar nada, comprueba plazos y requisitos en la publicación oficial.")
     lineas.append(nota)
     cuerpo += f'<p style="font-size:13px;color:#6b7280">{esc(nota)}</p>'
@@ -29311,6 +29381,9 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/quien-soy":
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
 
+    if path.rstrip("/") == _LIC_GUIA.GUIA_RUTA:
+        return _resp(render_guia_licitaciones_html(), gzip_ok=gzip_ok)
+
     if path == "/sueldos-concejales":
         return _resp(render_sueldos_concejales_html(), gzip_ok=gzip_ok)
 
@@ -29395,6 +29468,7 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/convocatorias</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quien-soy</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/mapa-cobertura</loc><changefreq>weekly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}{_LIC_GUIA.GUIA_RUTA}</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/sueldos-concejales</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/metodologia</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/aviso-legal</loc><changefreq>monthly</changefreq></url>",

@@ -87,6 +87,37 @@ CERTIFICADOS = ("ISO9001", "ISO14001", "ISO45001", "ENS", "EMAS")
 # relación de trabajos ejecutados. Mismo criterio en obras, suministros y servicios, cada uno en su artículo.
 ANIOS_NUEVA_CREACION = 5
 ARTICULO_NUEVA_CREACION = {"3": "art. 88.2 LCSP", "1": "art. 89.1.h LCSP", "2": "art. 90.4 LCSP"}
+# 12-11-2026: la excepción no es igual en todos los tipos (comprobado en el BOE). En obras (art. 88.2) vale en contratos
+# de valor estimado inferior a 500.000 €; en suministros y servicios (arts. 89.1.h y 90.4), en los no armonizados. Antes
+# se usaba el «no armonizado» también en obras, que es otra regla.
+NUEVA_CREACION_OBRAS_MAX = 500_000
+_NUEVA_CREACION_PORQUE = {True: "la obra es de menos de 500.000 €",
+                          False: "el contrato no está sujeto a las normas europeas (no armonizado)"}
+_NUEVA_CREACION_NO_VALE = {True: "Al ser una obra de 500.000 € o más, no vale la excepción para empresas de menos de "
+                                 "5 años.",
+                           False: "Al ser un contrato sujeto a las normas europeas, no vale la excepción para "
+                                  "empresas de menos de 5 años."}
+
+
+def datos_comprobacion(lic, req, sumario):
+    """Lo que necesita la lista de comprobación de una licitación o lote (licitaciones_guia.py), sacado del anuncio:
+    procedimiento, si es SARA, clasificación y certificados que pide, si es obra de 500.000 € o más, plazo, anuncio y
+    pliegos. Sin interpretar nada: lo que el anuncio no dice va como None o vacío."""
+    ve = lic.get("valor_estimado") or lic.get("presupuesto") or 0
+    return {"procedimiento": lic.get("procedimiento") or "", "sumario": bool(sumario), "sara": lic.get("sara"),
+            "clas": list(req.get("clas") or []), "cert": list(req.get("cert") or []),
+            "obra_clasificacion": (lic.get("tipo") or "") in TIPOS_OBRAS and ve >= UMBRAL_CLASIFICACION_OBRAS,
+            "fin_plazo": lic.get("fin_plazo") or "", "plazo_sin_hora": bool(lic.get("plazo_sin_hora")),
+            "url": lic.get("url") or "", "pliegos": dict(lic.get("pliegos") or {})}
+
+
+def nueva_creacion_aplica(tipo, sara, valor_estimado):
+    """¿Vale aquí la excepción de las empresas de menos de 5 años? True/False, o None si el anuncio no da el dato."""
+    if tipo == "3":
+        return valor_estimado < NUEVA_CREACION_OBRAS_MAX if valor_estimado else None
+    if tipo in ("1", "2"):
+        return None if sara is None else not sara
+    return None
 _RE_CLAS = re.compile(r"^([A-Z])(\d{1,2}|\*)?-?(\d)?$")
 # Código INE de provincia (las dos primeras cifras del código postal) -> provincia de la app, para las entidades locales
 # cuyo anuncio no trae la provincia en el NUTS (p. ej. solo "ES")
@@ -378,19 +409,21 @@ def evaluar(lic, perfil, ahora=None):
         if not sumario:
             if "OSR-COMPTASK" in (req.get("tec") or []):
                 articulo = ARTICULO_NUEVA_CREACION.get(tipo)
-                if nueva and articulo and lic.get("sara") is False:
-                    motivos.append(f"Piden experiencia, pero su empresa tiene {antiguedad} años (menos de 5) y el "
-                                   "contrato no está sujeto a las normas europeas (no armonizado): no se la pueden "
-                                   f"exigir ({articulo}).")
-                elif nueva and articulo and lic.get("sara") is None:
-                    duda.append("Piden experiencia. A una empresa de menos de 5 años no se la pueden exigir si el "
-                                f"contrato no está sujeto a las normas europeas ({articulo}), pero el anuncio no lo "
-                                "dice.")
+                aplica = nueva_creacion_aplica(tipo, lic.get("sara"), ve)
+                if nueva and articulo and aplica:
+                    motivos.append(f"Piden experiencia, pero su empresa tiene {antiguedad} años (menos de 5) y "
+                                   + _NUEVA_CREACION_PORQUE[tipo == "3"] + ": no le pueden pedir la relación de "
+                                   f"trabajos hechos; acredita la solvencia técnica por otros medios ({articulo}).")
+                elif nueva and articulo and aplica is None:
+                    duda.append("Piden experiencia. A una empresa de menos de 5 años no se la pueden exigir "
+                                + ("en obras de menos de 500.000 €" if tipo == "3" else
+                                   "si el contrato no está sujeto a las normas europeas")
+                                + f" ({articulo}), pero el anuncio no lo dice.")
                 elif perfil.get("experiencia_publica") is False or nueva:
                     duda.append("Piden haber hecho trabajos parecidos en los últimos años (valen también los hechos "
                                 "para clientes privados)."
-                                + (" Al ser un contrato sujeto a las normas europeas, no vale la excepción para "
-                                   "empresas de menos de 5 años." if nueva and articulo and lic.get("sara") else ""))
+                                + (" " + _NUEVA_CREACION_NO_VALE[tipo == "3"] if nueva and articulo and aplica is False
+                                   else ""))
             certs = set(req.get("cert") or [])
             if certs:
                 necesarios = set()
@@ -421,6 +454,7 @@ def evaluar(lic, perfil, ahora=None):
             "solvencia_exigida": round(exigida), "solvencia_estimada": estimada, "sumario": sumario,
             "lote_de_grande": bool(lote) and ve > hi_f * UTE_FACTOR_MAX,
             "motivos": no_llega + duda + motivos,
+            "comprobar": datos_comprobacion(lic, req, sumario),
         })
     return res
 

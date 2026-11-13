@@ -3390,6 +3390,11 @@ msgstr "Portada"
 msgid "Página no encontrada"
 msgstr "Páxina non atopada"
 
+msgid "Cómo presentarse a una licitación, paso a paso"
+msgstr "Como presentarse a unha licitación, paso a paso"
+
+msgid "Cómo presentarse a una licitación, paso a paso: {url}"
+msgstr "Como presentarse a unha licitación, paso a paso: {url}"
 msgid "sin datos de retribución"
 msgstr "sen datos de retribución"
 

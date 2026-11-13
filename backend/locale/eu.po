@@ -3390,6 +3390,11 @@ msgstr "Hasiera"
 msgid "Página no encontrada"
 msgstr "Ez da orria aurkitu"
 
+msgid "Cómo presentarse a una licitación, paso a paso"
+msgstr "Nola aurkeztu lizitazio batera, urratsez urrats"
+
+msgid "Cómo presentarse a una licitación, paso a paso: {url}"
+msgstr "Nola aurkeztu lizitazio batera, urratsez urrats: {url}"
 msgid "sin datos de retribución"
 msgstr "ordainsariaren daturik gabe"
 

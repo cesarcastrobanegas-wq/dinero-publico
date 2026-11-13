@@ -16,3 +16,8 @@ https://dinero-publico.com. La aplicación está en `backend/app.py`.
   convocatorias y otra para las cifras de arriba y la fecha.
 - **Fechas futuras de las fuentes**: `python backend/comprobar_fechas_futuras.py [cache.db] --detalle` las lista.
   La web las muestra tal cual, con aviso; revisarlas una a una y, si procede, avisar a la fuente.
+- **Revisión nativa de la guía de licitaciones** (anotado el 12-11-2026, PR #48). Las traducciones de
+  `/licitaciones/como-presentarse` están en `backend/guia_licitaciones/gl.html`, `ca.html` y `eu.html`, pero sin
+  publicar: hasta que las revise una persona nativa, /gl/, /ca/ y /eu/ sirven la versión en castellano (con noindex y
+  canonical a ella). Para publicar un idioma revisado: variable de entorno `GUIA_LICITACIONES_PUBLICADOS` en Render
+  (p. ej. `gl,ca`). Las cifras y los enlaces de cada traducción ya los comprueba `prueba_licitaciones_guia.py`.
