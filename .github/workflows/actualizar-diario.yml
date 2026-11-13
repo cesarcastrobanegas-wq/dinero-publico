@@ -229,6 +229,15 @@ jobs:
           # el formato de su página índice, host caído, etc.) no debe
           # bloquear nada más -- mismo criterio que noticias UE / contractes
           # menors de más abajo.
+          # 13-11-2026: desde el 07-11 www.hacienda.gob.es no acepta conexiones desde las IP de GitHub Actions
+          # (comprobado con un flujo temporal de diagnóstico: ni IPv4 ni IPv6, mientras BOE, INE y PLACE responden
+          # en menos de 1 s; desde el PC, 200 en ~6 s). Antes el script esperaba 2 × 30 s, sacaba un traceback y un
+          # aviso amarillo cada noche. Ahora se comprueba la conexión en 20 s y, si no hay, se dice qué pasa y cómo
+          # refrescarlo desde el PC. Los datos cambian una vez al año (deuda a 31-12, liquidación anual): no corre prisa.
+          if ! curl -s -o /dev/null --connect-timeout 20 --max-time 40 https://www.hacienda.gob.es/; then
+            echo "::notice::www.hacienda.gob.es no acepta conexiones desde GitHub Actions (bloqueo por IP desde el 07-11-2026). Se mantiene backend/hacienda_eell.json. Para refrescarlo, en el PC: cd backend && python actualizar_deuda_y_liquidaciones.py, y subir el JSON en una rama."
+            exit 0
+          fi
           pip install --quiet -r requirements.txt openpyxl \
             || { echo "::warning::No se pudieron instalar dependencias para el refresco de Hacienda; se salta."; exit 0; }
           (cd backend && python actualizar_deuda_y_liquidaciones.py) \
