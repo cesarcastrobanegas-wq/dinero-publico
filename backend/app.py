@@ -15966,7 +15966,26 @@ def _licitaciones_bg(esperar=None):
             _LIC_ESTADO.update(estado="error", error=f"{type(e).__name__}: {e}")
             print(f"[licitaciones] ERROR {type(e).__name__}: {e}", flush=True)
         _liberar_memoria()
-        time.sleep(LIC_CICLO_S)
+        time.sleep(_lic_espera_s())
+
+
+# 13-11-2026 (hueco medido con TED): PLACE no publica el Atom del 643 a lo largo del día, sino en una tanda diaria hacia
+# las 20:05-20:45 hora peninsular (Last-Modified del Atom: 20:18 el 12-11; nombres de los .atom de octubre y
+# noviembre: _2003 a _2046), con todo lo del día. Con ciclos fijos de 3 h desde el arranque, la tanda podía tardar
+# hasta 3 h en salir en /convocatorias: el 12-11 por la noche faltaban 45 licitaciones publicadas esa mañana. Ahora
+# el ciclo, además de cada LIC_CICLO_S, se despierta a LIC_HORA_TANDA_PLACE, justo después de la tanda (fuera del
+# refresco nocturno, que va de ~05:00 a ~12:30 UTC).
+LIC_HORA_TANDA_PLACE = (21, 0)
+
+
+def _lic_espera_s(ahora=None):
+    """Segundos hasta el siguiente ciclo: LIC_CICLO_S, o menos si antes llega la hora de después de la tanda diaria de
+    PLACE (`ahora`: hora peninsular sin zona, como _ahora_madrid())."""
+    ahora = ahora or _ahora_madrid()
+    tanda = ahora.replace(hour=LIC_HORA_TANDA_PLACE[0], minute=LIC_HORA_TANDA_PLACE[1], second=0, microsecond=0)
+    if tanda <= ahora:
+        tanda += timedelta(days=1)
+    return max(60, min(LIC_CICLO_S, int((tanda - ahora).total_seconds())))
 
 
 # ─── CONVOCATORIAS ABIERTAS: SUBVENCIONES (BDNS) ──────────────────────────────────────────────────────────────────

@@ -196,15 +196,13 @@ de datos acumulados.
 | No los tendríamos | 166 | 7,9 % |
 
 **De los 166 que faltan**
-- **60 están en PLACE según TED, pero no en nuestra tabla.** Es un hueco de nuestra lectura del 643, no una fuente
-  que falte: 60 de las 1.329 de PLACE en TED (4,5 %). Casi todos cierran en diciembre.
-  - Ejemplo comprobado a mano: Confederación Hidrográfica del Duero, expediente 452-A.210.00.03/2026, abierta en
-    PLACE hasta el 24-11 a las 12:00 y que no sale en /convocatorias.
-  - Otros: Diputación Provincial (2026/D22200/006-302/00007, cierra el 26-11) y Gerencia de Viviendas Sociales
-    (35-SV-26-GC-CP, cierra el 02-12).
-  - **Hay que mirarlo en producción**: si estos `idEvl` están en la tabla y con qué `estado` y `fin_plazo`. Mi
-    sospecha, sin comprobar: anuncios cuyo plazo no viene en el campo `TenderSubmissionDeadlinePeriod` y que por
-    eso nunca cuentan como abiertos.
+- **60 están en PLACE según TED, pero no salían en /convocatorias.** Investigado el 13-11 (apartado 4 bis): **no
+  es un fallo de lectura**.
+  - 47 se publicaron en la tanda diaria de PLACE de la tarde del 12-11 y nuestro ciclo de 3 h aún no la había leído
+    cuando se bajó la web. El 13-11 ya salen.
+  - Las otras 13 están cerradas en PLACE, aunque TED las siga dando por abiertas.
+  - La del ejemplo de la Confederación Hidrográfica del Duero (452-A.210.00.03/2026) está **anulada** en PLACE
+    desde el 10-11: no era «abierta hasta el 24-11», como decía la primera versión de este informe.
 - **12 son de instituciones de la UE con sede en España** (EUIPO en Alicante, Centro de Satélites en Torrejón,
   F4E en Barcelona, Comisión…). No son sector público español y publican en su propia plataforma
   (webgate.ec.europa.eu); solo están en TED.
@@ -228,13 +226,14 @@ de datos acumulados.
   el Ajuntament de Barcelona y la Diputació tienen su perfil en contractaciopublica.cat, que está en el 1044. Es
   una cota por arriba de lo que falta, no una fuente nueva.
 
-**Cobertura del sector público español con 643 + 1044** (sin las 12 de instituciones de la UE: 2.092 anuncios)
+**Cobertura del sector público español con 643 + 1044**
+Se quitan las 12 de instituciones de la UE y las 13 que PLACE ya da por cerradas: quedan **2.079 anuncios**.
 
 | | Cobertura |
 |---|---:|
-| Medida tal cual (cruce estricto) | **92,6 %** (1.938) |
-| Arreglando el hueco de lectura de PLACE (+60) | **95,5 %** |
-| Si los ~87 de plataformas del 1044 son las mismas con otra fecha o título | **hasta 99,7 %** |
+| Medida la noche del 12-11 (cruce estricto) | 93,2 % (1.938) |
+| **Corregida el 13-11** (las 47 de la tanda del 12-11 ya salen) | **95,5 %** (1.985) |
+| Si los ~87 de plataformas del 1044 son las mismas con otra fecha o título | **hasta 99,7 %** (2.072) |
 | Fuera de PLACE y de su agregación, comprobado | **~0,3 %** (unos 7 al mes) |
 
 **Con TED como fuente añadida**
@@ -244,8 +243,8 @@ de datos acumulados.
   pocas.
 
 **Propuesta**
-1. **Primero, el hueco de PLACE**: 60 abiertas al mes, el 4,5 % de lo armonizado de PLACE, sin fuente nueva.
-   Investigarlo en producción con los `idEvl` de arriba. Es lo que más cobertura da.
+1. **El «hueco de PLACE» no era tal** (apartado 4 bis): era el retraso entre la tanda diaria de PLACE y nuestro
+   ciclo. Arreglado en una rama encima del #49: un ciclo más a las 21:00.
 2. **No añadir TED como fuente directa para las españolas.** Ganaría unas 7 licitaciones españolas al mes (el
    0,3 %), a cambio de cruzar cada anuncio con PLACE y el 1044. Ese cruce, como se ve arriba, solo es exacto con
    PLACE (por `idEvl`); con el 1044 depende de órgano y fecha, y se equivocaría a veces en los dos sentidos.
@@ -258,3 +257,53 @@ de datos acumulados.
 Los requisitos (solvencia, clasificación) del 1044 tampoco se pueden sacar de TED de forma fiable. TED los trae a
 veces en los armonizados (`selection-criterion-lot`), pero casi siempre como «ver el pliego» o solo el tipo
 («volumen de negocios anual»).
+
+## 4 bis. El «hueco de lectura de PLACE», investigado (13-11-2026)
+
+**Cómo**
+- Se han seguido las 60 en el feed 643 por su `idEvl` (el enlace que trae TED): ZIP de octubre y de noviembre y
+  Atom en vivo.
+- Después, a partir de las 12:30 UTC, se ha buscado cada una por su expediente en /convocatorias. Solo páginas
+  públicas, sin tocar la base.
+
+**Qué eran las 60**
+
+| | Anuncios TED | Qué pasa en PLACE | ¿Sale hoy en /convocatorias? |
+|---|---:|---|---|
+| Publicadas el 12-11 (09:21-13:19) | 46 | en la tanda diaria del 12-11 (20:18) | **sí, las 46** |
+| Ayuntamiento de Siero, póliza RC | 1 | abierta; TED sin `idEvl` y con otra fecha: el cruce no la casó | **sí** |
+| Resueltas (RES) | 6 | p. ej. transporte sanitario 19/20/21-26 AA, SU13017/2026 | no (bien) |
+| Anuladas (ANUL o borrada «ANULADA») | 6 | CH del Duero (3 anuncios TED), Hospital de Medina del Campo (2), un ayuntamiento (76/2026) | no (bien) |
+| En evaluación (EV) | 1 | Diputación, 2026/D22200/006-302/00007 (PLACE cerró el 03-11) | no (bien) |
+
+En total, 47 abiertas que ya salen y 13 cerradas. **Ninguna se perdía en la lectura.**
+
+**La causa: el horario de PLACE**
+- PLACE no va publicando el Atom del 643 a lo largo del día. Lo publica **una vez al día, hacia las 20:05-20:45
+  hora peninsular**, con todo lo del día:
+  - el `Last-Modified` del Atom era 12-11 19:18 GMT;
+  - los .atom de los ZIP se llaman `_AAAAMMDD_2003` a `_2046`;
+  - no hay tandas en fin de semana.
+- Nuestro hilo lee cada 3 h desde el arranque. La tanda podía tardar hasta 3 h en verse, y la web se bajó para el
+  cruce antes de ese ciclo.
+- TED, en cambio, publicó esos anuncios el mismo 12-11 durante el día.
+
+**Descartado**
+- **Corte del Atom**: el lector para en la primera página con algo ya visto, aunque las tandas traen al final
+  versiones con fecha de días anteriores. Simulado sobre todas las tandas de octubre y noviembre (86.808
+  entradas): **no se pierde ninguna**, porque la página donde para se guarda entera.
+- **Tope de páginas** (`LIC_MAX_PAGINAS_ATOM` = 40): las tandas tienen 3-7 páginas.
+- **Plazos, lotes y versiones posteriores**: el plazo, los lotes y las versiones posteriores se leen bien (el
+  analizador da PUB y la fecha correcta en las 47).
+
+**Arreglo** (rama `wip/licitaciones-hora-place`, encima del #49)
+- El hilo se despierta también a las 21:00 hora peninsular, justo después de la tanda, además de cada 3 h.
+- Lo del día sale en /convocatorias hacia las 21:00, no hasta 3 h después.
+- Fuera del refresco nocturno y sin descargas nuevas: es una lectura más del Atom (~6 páginas).
+- Pruebas: la espera hasta el siguiente ciclo, el caso del 12-11, y que una tanda con versiones antiguas al final
+  se lee entera sin pedir la página siguiente.
+
+**TED como medida**
+- Para medir cobertura hay que comparar con TED **a la mañana siguiente**, no la misma noche.
+- Además, hay que quitar lo que PLACE ya da por cerrado: TED no publica las anulaciones ni las resoluciones hasta
+  mucho después.
