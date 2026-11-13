@@ -294,6 +294,51 @@ class B_ConLaApp(unittest.TestCase):
         self.assertNotIn("https://x/1044/001", f)                # repetida y vencida hace más de 2 meses: fuera
         self.assertEqual(f["https://x/1044/002"][0], "DUP")       # repetida y abierta: se queda marcada
 
+    # 13-11-2026: hueco medido con TED. PLACE publica el Atom del 643 en una tanda diaria hacia las 20:18 (hora
+    # peninsular). El 12-11 se publicaron así, por ejemplo, ICO_2026_53 (Instituto de Crédito Oficial, <updated> 10:42,
+    # cierre 18-12) y otras 44; con ciclos fijos de 3 h no salieron en /convocatorias hasta el ciclo siguiente.
+    def test_ciclo_despierta_tras_la_tanda_de_place(self):
+        from datetime import datetime, timedelta
+        app = self.app
+        espera = app._lic_espera_s
+        self.assertEqual(espera(datetime(2026, 11, 12, 20, 0)), 3600)          # antes: 3 h (a las 23:00)
+        self.assertEqual(espera(datetime(2026, 11, 12, 18, 30)), 9000)
+        self.assertEqual(espera(datetime(2026, 11, 12, 20, 59, 50)), 60)       # nunca menos de un minuto
+        self.assertEqual(espera(datetime(2026, 11, 12, 21, 0)), app.LIC_CICLO_S)
+        self.assertEqual(espera(datetime(2026, 11, 13, 13, 0)), app.LIC_CICLO_S)
+        # El caso del 12-11: un ciclo a las 19:05 y la tanda de PLACE a las 20:18. Con los ciclos nuevos, la tanda se lee
+        # antes de las 21:01; con los de 3 h fijas, a las 22:05.
+        t, despertares = datetime(2026, 11, 12, 19, 5), []
+        while t < datetime(2026, 11, 13, 0, 0):
+            t = t + timedelta(seconds=espera(t))
+            despertares.append(t)
+        self.assertTrue(any(datetime(2026, 11, 12, 20, 46) <= d <= datetime(2026, 11, 12, 21, 1) for d in despertares))
+
+    def test_la_tanda_diaria_se_lee_entera(self):
+        # Medido en los ZIP de octubre y noviembre: cada tanda diaria (~6 páginas, ~3.000 entradas) va de la más nueva a
+        # la más antigua, pero al final trae versiones con <updated> de días anteriores (p. ej. las de las 09:00 de las
+        # publicaciones en el DOUE). La lectura para en la primera página con algo ya visto, pero esa página se guarda:
+        # no se pierde ninguna. La de después ya no se pide.
+        app = self.app
+        app._licitaciones_ingerir_atom(atom(entrada("https://x/643/vieja", "Ministerio X", "V-1", agente="", padres=(),
+                                                    actualizado="2026-11-11T19:50:00+01:00")))
+        base = "https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_643/"
+        p1 = atom(entrada("https://x/643/i53", "Comité de Contratación del ICO", "ICO_2026_53", agente="", padres=(),
+                          actualizado="2026-11-12T10:42:00+01:00", fin="2026-12-18"),
+                  siguiente=base + "tanda_1.atom")
+        p2 = atom(entrada("https://x/643/i64", "Comité de Contratación del ICO", "ICO_2026_64", agente="", padres=(),
+                          actualizado="2026-11-12T09:30:00+01:00", fin="2026-12-11"),
+                  entrada("https://x/643/doue", "Aena", "SVQ-30/2026", agente="", padres=(),
+                          actualizado="2026-11-10T09:00:00+01:00", fin="2026-12-09"),
+                  siguiente=base + "tanda_2.atom")
+        sesion = SesionFalsa({app.PLACE_FEED_LIVE: p1, base + "tanda_1.atom": p2, base + "tanda_2.atom": atom()})
+        app.session = sesion
+        self.assertTrue(app._licitaciones_desde_atom())
+        filas = self.filas()
+        for eid in ("https://x/643/i53", "https://x/643/i64", "https://x/643/doue"):
+            self.assertEqual(filas[eid][0], "PUB", eid)
+        self.assertNotIn(base + "tanda_2.atom", sesion.pedidas)
+
     def test_interruptor_y_texto(self):
         app = self.app
         llamadas = []
