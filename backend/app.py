@@ -2543,6 +2543,7 @@ def _db_init():
             exercici          TEXT,
             ts                REAL NOT NULL
         )""")
+        _crear_tabla_archivo_cm()         # 13-11-2026: siempre junto a la de menores (ver _crear_tabla_archivo_cm)
         # Añade las columnas nuevas si la tabla viene del rename de arriba (la
         # tabla vieja no las tenía) -- no-op si ya existen (base de datos
         # nueva creada directamente con el CREATE TABLE de arriba).
@@ -12301,14 +12302,22 @@ def _indice_propios_cm(filas):
     return idx
 
 
-def _archivar_filas_cm(ids):
-    """Mueve (no borra) filas de contratos_menors_locales a contratos_menors_archivo. Llamar con _db_lock tomado."""
-    if not ids:
-        return
+def _crear_tabla_archivo_cm():
+    """Tabla del archivo de contratos menores retirados. 13-11-2026: antes solo la creaba _archivar_filas_cm la primera
+    vez que archivaba algo, y _retirar_feed_antes_de_propia la consultaba sin crearla: con una cache.db con menores
+    pero sin nada archivado todavía, importar la app fallaba («no such table: contratos_menors_archivo») y el refresco
+    de población de «Actualizar contratos diariamente» se saltaba (06-11 a 12-11). Llamar con _db_lock tomado."""
     _db.execute("""CREATE TABLE IF NOT EXISTS contratos_menors_archivo (
         id TEXT PRIMARY KEY, municipio TEXT NOT NULL, provincia TEXT, fuente TEXT, organisme TEXT,
         adjudicatari TEXT, nif TEXT, import_num REAL, data_adjudicacio TEXT, tipus_contracte TEXT,
         descripcio TEXT, codi_cpv TEXT, exercici TEXT, ts REAL, archivado_ts REAL)""")
+
+
+def _archivar_filas_cm(ids):
+    """Mueve (no borra) filas de contratos_menors_locales a contratos_menors_archivo. Llamar con _db_lock tomado."""
+    if not ids:
+        return
+    _crear_tabla_archivo_cm()
     ahora = time.time()
     for i in range(0, len(ids), 500):
         lote = ids[i:i + 500]
@@ -12448,6 +12457,7 @@ def _retirar_feed_antes_de_propia(fuentes=None):
                     "municipio TEXT, ts REAL)")
         _db.execute("CREATE TABLE IF NOT EXISTS place_feed_antes_ambiguos (feed_id TEXT PRIMARY KEY, municipio TEXT, "
                     "candidatos TEXT, ts REAL)")
+        _crear_tabla_archivo_cm()
         _db.commit()
     equivalentes = _nombres_equivalentes_cm(solo_place=True)
     resumen = {}
@@ -12958,10 +12968,7 @@ def _archivar_menores_fuera_de_ventana():
                 return
             cols = ("id, municipio, provincia, fuente, organisme, adjudicatari, nif, import_num, data_adjudicacio, "
                     "tipus_contracte, descripcio, codi_cpv, exercici, ts")
-            _db.execute("""CREATE TABLE IF NOT EXISTS contratos_menors_archivo (
-                id TEXT PRIMARY KEY, municipio TEXT NOT NULL, provincia TEXT, fuente TEXT, organisme TEXT,
-                adjudicatari TEXT, nif TEXT, import_num REAL, data_adjudicacio TEXT, tipus_contracte TEXT,
-                descripcio TEXT, codi_cpv TEXT, exercici TEXT, ts REAL, archivado_ts REAL)""")
+            _crear_tabla_archivo_cm()
             por_fuente = dict(_db.execute(f"SELECT fuente, COUNT(*) FROM contratos_menors_locales WHERE {fuera[0]} "
                                           "GROUP BY fuente", fuera[1]).fetchall())
             _db.execute(f"INSERT OR IGNORE INTO contratos_menors_archivo ({cols}, archivado_ts) "
