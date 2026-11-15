@@ -3642,12 +3642,52 @@ def _subir_administradores_borme(token, crudo, forzar=False):
                  "generado": datos.get("generado")}
 
 
+# NIF ENMASCARADOS (15-11-2026, revisión de la ficha de empresa): algunas fuentes (sobre todo Navarra) publican el NIF
+# de las sociedades enmascarado, «****1567*». Solo quedan 4 cifras: lo comparten muchas empresas distintas, y el
+# fichero del BORME lo usaba como clave como si fuera un NIF. Medido con la base de producción del 05-11 y el fichero de
+# la primera carga: 980 contratos formales recibían administrador por un NIF enmascarado y en 114 era el de OTRA
+# sociedad (p. ej. «Construcciones Barbería Merino» con el de Montajes Eléctricos Beloki; comprobado en la web).
+# Ahora un NIF enmascarado solo vale si el nombre del contrato es uno de los que casaron con esa sociedad en el BORME
+# (o el mismo sin la forma jurídica); si no, se busca por el nombre, como un contrato sin NIF.
+_RE_BORME_FORMA_FINAL = re.compile(
+    r"(\s+(sociedad limitada|sociedad anonima|unipersonal|laboral|profesional|s l u|s a u|s l l|s l p|s l|s a|slu|"
+    r"sau|sll|slp|sl|sa|en liquidacion))+$")
+_BORME_NOMBRES_REG = {"base": None, "mapa": {}}
+
+
+def _borme_clave_nombre(s):
+    """Nombre de sociedad sin signos, sin la forma jurídica final y sin el «(R.M. ...)» que añade el BORME."""
+    s = re.sub(r"(?i)\s*\(\s*r\.?\s*m\.?[^)]*\)\s*$", "", s or "")
+    s = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]+", " ", normalizar(s))).strip()
+    return _RE_BORME_FORMA_FINAL.sub("", s).strip()
+
+
+def _borme_registro_id(b):
+    return (b.get("nombre"), b.get("cargo"), b.get("desde"), b.get("fuente"))
+
+
+def _borme_nombres_del_registro(b):
+    """Nombres (clave sin forma) con que ese registro del BORME está en el fichero, más su denominación. Se calcula una
+    vez por fichero cargado (se rehace solo cuando /admin/administradores-borme sube otro)."""
+    base = ADMINISTRADORES_BORME
+    if _BORME_NOMBRES_REG["base"] is not base:
+        mapa = collections.defaultdict(set)
+        for k, v in base.items():
+            if not _RE_NIF_SOCIEDAD.match(k) and "*" not in k:
+                mapa[_borme_registro_id(v)].add(_borme_clave_nombre(k))
+            mapa[_borme_registro_id(v)].add(_borme_clave_nombre(v.get("sociedad_borme")))
+        _BORME_NOMBRES_REG.update(base=base, mapa=mapa)
+    return _BORME_NOMBRES_REG["mapa"].get(_borme_registro_id(b), set())
+
+
 def _administrador_borme_info(empresa, nif=""):
     """El registro del BORME (nombre, cargo, desde, fuente...) de una sociedad no extinguida, o None."""
     b = None
     n = (nif or "").upper().strip()
     if n:
         b = ADMINISTRADORES_BORME.get(n)
+        if b and "*" in n and _borme_clave_nombre(empresa) not in _borme_nombres_del_registro(b):
+            b = None            # NIF enmascarado de otra sociedad: se busca por el nombre
     if not b and empresa:
         b = ADMINISTRADORES_BORME.get(normalizar(empresa))
     return b if b and not b.get("extinguida") else None
