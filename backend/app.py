@@ -22711,6 +22711,28 @@ _NOTAS_FUENTE_CM = {
 }
 
 
+# Fuentes que ya no se pueden actualizar (encargo de César del 16-11-2026): sus datos se quedan, el flujo semanal deja
+# de pedirlas (EXCLUIDOS en flujo_menores_semanal.py) y la ficha lo avisa dos veces: una etiqueta en la cabecera de la
+# sección de contratos menores, que se ve aunque esté cerrada (_aviso_historico_cm), y la nota completa dentro.
+_FUENTES_CM_HISTORICAS_DESDE = {"la_laguna": "25-10-2026"}
+_FUENTES_CM_HISTORICAS = {
+    "la_laguna": _td(
+        "Fuente sin actualizar desde el 25-10-2026: el portal del Ayuntamiento no responde desde entonces. Se muestran los contratos que había publicado hasta esa fecha (los más recientes, de diciembre de 2025)."
+    ),
+}
+
+
+def _aviso_historico_cm(menors):
+    """Etiqueta para la cabecera de la sección de contratos menores si alguna fuente del municipio es histórica."""
+    fechas = sorted({_FUENTES_CM_HISTORICAS_DESDE[f] for f in {r.get("fuente") for r in menors}
+                     if f in _FUENTES_CM_HISTORICAS_DESDE})
+    if not fechas:
+        return ""
+    texto = _t("Listados del Ayuntamiento sin actualizar desde el {fecha}").format(fecha=fechas[0])
+    return (f' <span class="badge" style="background:var(--tint);color:var(--text);border-color:var(--yellow)">'
+            f'⚠ {esc(texto)}</span>')
+
+
 def _nota_base_importe_cm(menors):
     """(sufijo_badge, html_nota) para la sección de contratos menores de un
     municipio: base de importe (sin IVA) de las fuentes Governalia más los
@@ -22718,6 +22740,8 @@ def _nota_base_importe_cm(menors):
     fuentes = {r.get("fuente") for r in menors}
     avisos = "".join(f'<div class="cm-base-nota">{esc(_t_diferido(_NOTAS_FUENTE_CM[f]))}</div>'
                      for f in sorted(fuentes) if f in _NOTAS_FUENTE_CM)
+    avisos += "".join(f'<div class="cm-base-nota"><strong>{esc(_t_diferido(_FUENTES_CM_HISTORICAS[f]))}</strong></div>'
+                      for f in sorted(fuentes) if f in _FUENTES_CM_HISTORICAS)
     sin_iva = fuentes & _FUENTES_CM_SIN_IVA
     if not sin_iva:
         return "", avisos
@@ -24169,7 +24193,7 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                   📋 {_t("Contratos menores (fuentes locales del ayuntamiento)")}
                   <span class="badge" style="background:var(--tint);color:var(--accent);border-color:var(--border)">
                     {total_cm_n} · {fmt_eur(str(total_cm))}{sufijo_iva}
-                  </span>
+                  </span>{_aviso_historico_cm(menors_muni)}
                 </summary>
                 {nota_base_cm}
                 <div class="tbl-scroll">

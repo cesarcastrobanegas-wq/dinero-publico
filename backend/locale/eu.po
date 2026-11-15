@@ -1366,6 +1366,12 @@ msgstr "Torrenteko Udalaren (Valentziako Erkidegoa) kontratatzailearen profileko
 msgid "XLSX oficiales del portal de transparencia del Ayuntamiento de San Cristóbal de La Laguna y sus organismos autónomos OAAM y OAD (uno por año y entidad, enlaces encontrados navegando con un navegador real). El importe es SIN IGIC, el impuesto indirecto propio de Canarias equivalente al IVA peninsular (no confundir con \"sin impuestos\" a secas)."
 msgstr "San Cristóbal de La Lagunako Udalaren eta bere OAAM eta OAD erakunde autonomoen gardentasun-atariko XLSX ofizialak (bat urte eta erakunde bakoitzeko, benetako nabigatzaile batekin arakatuz aurkitutako estekak). Zenbatekoa IGICik GABE dago, Kanarietako zeharkako zerga propioa, penintsulako BEZaren baliokidea (ez nahastu \"zergarik gabe\" soilarekin)."
 
+msgid "Fuente sin actualizar desde el 25-10-2026: el portal del Ayuntamiento no responde desde entonces. Se muestran los contratos que había publicado hasta esa fecha (los más recientes, de diciembre de 2025)."
+msgstr "Iturria 2026-10-25etik eguneratu gabe dago: Udalaren atariak ez du erantzuten ordutik. Data horretara arte argitaratutako kontratuak erakusten dira (berrienak, 2025eko abendukoak)."
+
+msgid "Listados del Ayuntamiento sin actualizar desde el {fecha}"
+msgstr "Udalaren zerrendak eguneratu gabe ({fecha} geroztik)"
+
 #: app.py:22071
 msgid "API real del portal de transparencia (Next.js, misma plataforma que Las Palmas de Gran Canaria) del Ayuntamiento de Arona, encontrada con un navegador real (Playwright). Sin fecha por contrato (ventana de 5 años aplicada por ejercicio completo; 2021 excluido por ambiguo). Sin descripción del objeto del contrato (la fuente no la publica en este listado)."
 msgstr "Aronako Udalaren gardentasun-atariko (Next.js, Las Palmas de Gran Canariaren plataforma bera) benetako APIa, benetako nabigatzaile batekin (Playwright) aurkitua. Kontratu bakoitzaren datarik gabe (5 urteko leihoa ekitaldi osoka aplikatua; 2021 baztertua, anbiguoa delako). Kontratuaren xedearen deskribapenik gabe (iturriak ez du zerrenda honetan argitaratzen)."

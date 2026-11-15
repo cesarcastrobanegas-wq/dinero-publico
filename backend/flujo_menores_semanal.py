@@ -48,6 +48,10 @@ EXCLUIDOS = {
     # Se lanzan desde el PC con: python backend/menores_desde_pc.py (ver MENORES_DESDE_PC.md).
     "alicante": "desde GitHub todas las descargas tardan demasiado; desde un PC, bien (manual: menores_desde_pc.py)",
     "santa_cruz": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (manual: menores_desde_pc.py)",
+    # Sin datos nuevos desde el 2026-10-25: su portal rechaza las conexiones desde GitHub, desde el PC y desde fuera
+    # (comprobado el 16-11). Queda como histórico (encargo de César del 16-11): se conservan sus datos y la ficha lo
+    # avisa (_FUENTES_CM_HISTORICAS en app.py). Si el portal vuelve, se quita de aquí y de esa lista.
+    "la_laguna": "el portal del ayuntamiento no responde desde el 25-10-2026: queda como histórico (datos conservados)",
 }
 MINUTOS = {"murcia_manual": 150, "euskadi": 210}      # el resto, MINUTOS_POR_DEFECTO
 MINUTOS_POR_DEFECTO = 40
