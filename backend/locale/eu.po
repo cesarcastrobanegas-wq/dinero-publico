@@ -498,6 +498,10 @@ msgstr "Sailkapenak"
 msgid "Sueldos Alcaldes"
 msgstr "Alkateen soldatak"
 
+#: app.py
+msgid "Sueldos Concejales"
+msgstr "Zinegotzien soldatak"
+
 #: app.py:19331 app.py:19382 app.py:23196
 msgid "Convocatorias abiertas"
 msgstr "Deialdi irekiak"

@@ -498,6 +498,10 @@ msgstr "Rànquings"
 msgid "Sueldos Alcaldes"
 msgstr "Sous dels alcaldes"
 
+#: app.py
+msgid "Sueldos Concejales"
+msgstr "Sous dels regidors"
+
 #: app.py:19331 app.py:19382 app.py:23196
 msgid "Convocatorias abiertas"
 msgstr "Convocatòries obertes"

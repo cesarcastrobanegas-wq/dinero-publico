@@ -498,6 +498,10 @@ msgstr "Clasificacións"
 msgid "Sueldos Alcaldes"
 msgstr "Soldos dos alcaldes"
 
+#: app.py
+msgid "Sueldos Concejales"
+msgstr "Soldos dos concelleiros"
+
 #: app.py:19331 app.py:19382 app.py:23196
 msgid "Convocatorias abiertas"
 msgstr "Convocatorias abertas"
