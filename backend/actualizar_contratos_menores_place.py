@@ -180,7 +180,7 @@ def parsear(e):
 # --- Repetidos dentro del feed ------------------------------------------------------------------------------------
 # Se llama solo con dos registros del mismo municipio, NIF del adjudicatario, importe sin IVA y fecha de adjudicación.
 # Regla del 14-10-2026: mismo objeto y mismo expediente (igual o con un sufijo, «bis»).
-# Regla del 15-11-2026 (casos de Majadahonda y Pinto): el ayuntamiento vuelve a publicar el contrato con otro objeto
+# Regla del 15-11-2026 (ejemplos de Majadahonda y Pinto): el ayuntamiento vuelve a publicar el contrato con otro objeto
 # («Reparación puertas colegio Santa Catalina de Majadahonda» / «Reparación puertas colegio Santa Catalina») y el
 # expediente escrito de otra forma («EN_41/2024» / «EN-41/2024»; «2023-14566» / «2023/14566»; «EN_37/2024» /
 # «EN-F/2024/4894 (37/2024)»). Cuenta como el mismo contrato si los dos expedientes son iguales sin signos, o si
