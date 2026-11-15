@@ -3485,10 +3485,6 @@ msgid "Hay varias empresas con este nombre"
 msgstr "Izen hau duten hainbat enpresa daude"
 
 #: app.py
-msgid "Denominación en el BORME"
-msgstr "BORMEko izena"
-
-#: app.py
 msgid "Variantes del nombre en las fuentes"
 msgstr "Izenaren aldaerak iturrietan"
 
@@ -3541,10 +3537,6 @@ msgid "Órgano contratante"
 msgstr "Kontratazio-organoa"
 
 #: app.py
-msgid "% del importe"
-msgstr "Zenbatekoaren %"
-
-#: app.py
 msgid "Concentración por año"
 msgstr "Kontzentrazioa urtearen arabera"
 
@@ -3583,6 +3575,26 @@ msgstr "Iturriak ez du kontratu honetan IFZ argitaratzen: izenaren arabera eslei
 #: app.py
 msgid "Procedimiento / estado"
 msgstr "Prozedura / egoera"
+
+#: app.py
+msgid "Importe sin IVA"
+msgstr "Zenbatekoa BEZik gabe"
+
+#: app.py
+msgid "Importe con IVA"
+msgstr "Zenbatekoa BEZarekin"
+
+#: app.py
+msgid "Importe sin base de IVA indicada"
+msgstr "Zenbatekoa, BEZ oinarria adierazi gabe"
+
+#: app.py
+msgid "% ({base})"
+msgstr "% ({base})"
+
+#: app.py
+msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
+msgstr "Oinarri desberdinak dituzten zenbatekoak ez dira elkarren artean batzen: zutabe bereizietan doaz, eta ehunekoak zutabe honen gainean bakarrik kalkulatzen dira: «{columna}»."
 
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."

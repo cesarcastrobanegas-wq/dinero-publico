@@ -18556,6 +18556,8 @@ a.fue-link{color:var(--yellow);font-size:11px;}
 .empresa-ficha td.cm-importe .noloc-nota{display:block;white-space:normal;overflow-wrap:anywhere;}
 .empresa-informe{margin-top:32px;padding:16px 18px;border:1px solid var(--border);border-radius:8px;background:var(--tint);}
 .empresa-informe h2{margin-top:0;}
+.empresa-ficha .emp-base{display:none;font-weight:400;font-size:11px;color:var(--dim);}
+@media (max-width:700px){.empresa-ficha .emp-base{display:inline;}}
 .rk-valor{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
 </style>
 """
@@ -29482,6 +29484,16 @@ def render_404_html():
 #     conexión propia de solo lectura (WAL: no bloquea a nadie). Cada página hace 5-6 consultas por índice.
 EMPRESAS_DB_PREFIJO = os.path.join(DATA_DIR, "empresas_indice_")
 EMPRESAS_REFRESCO = 12 * 3600
+# No se rehace mientras corre el refresco nocturno (decisión de César, 15-11): de 05:00 a 12:30 UTC, que es lo que dura de
+# verdad con el retraso de los cron. Si toca dentro de la ventana, espera a que acabe. Empieza a las 04:45 y no a las 05:00
+# porque construir el índice tarda ~6 min: uno que arrancara a las 04:58 se metería en el nocturno.
+EMPRESAS_VENTANA_NOCTURNA_UTC = ((4, 45), (12, 30))
+# Solo van al mapa del sitio (y se dejan indexar) las sociedades mercantiles con al menos este número de contratos; el
+# resto de fichas se ven igual, con «noindex».
+EMPRESAS_MIN_CONTRATOS_INDEXAR = 5
+# Bases de IVA: los importes de bases distintas nunca se suman entre sí (decisión de César, 15-11)
+_EMPRESAS_BASES = ("sin", "con", "nd")
+_EMPRESAS_SQL_BASE = {"sin": "c.iva='sin'", "con": "c.iva='con'", "nd": "c.iva IS NULL"}
 EMPRESAS_POR_PAGINA = 50
 _EMPRESAS = {"ruta": None, "ts": 0.0, "construyendo": False, "error": "", "filas": 0, "empresas": 0, "segundos": 0.0}
 _empresas_lock = threading.Lock()
@@ -29695,19 +29707,21 @@ def _empresas_construir():
             CREATE TABLE nombre_nif AS SELECT nkey, nif FROM p.nk;
             CREATE UNIQUE INDEX nombre_nif_nkey ON nombre_nif(nkey);
             CREATE TABLE empresas (clave TEXT PRIMARY KEY, nombre TEXT, n INTEGER, nf INTEGER, nm INTEGER,
-                                   importe REAL, sociedad INTEGER);
+                                   imp_sin REAL, imp_con REAL, imp_nd REAL, sociedad INTEGER);
             CREATE TABLE meta (clave TEXT PRIMARY KEY, valor TEXT);""")
         # nombre más frecuente de cada empresa y si es sociedad mercantil (solo esas van al mapa del sitio)
         mejor = {}
         for clave, nombre, n in con.execute("SELECT clave, nombre, n FROM variantes"):
             if clave not in mejor or n > mejor[clave][1]:
                 mejor[clave] = (nombre, n)
-        totales = con.execute("SELECT clave, COUNT(*), SUM(tipo='F'), SUM(tipo='M'), SUM(suma) FROM c "
-                              "GROUP BY clave").fetchall()
-        con.executemany("INSERT INTO empresas VALUES (?,?,?,?,?,?,?)", (
-            (c, mejor[c][0], n, nf, nm, imp or 0.0,
+        totales = con.execute(
+            "SELECT clave, COUNT(*), SUM(tipo='F'), SUM(tipo='M'), "
+            + ", ".join(f"SUM(CASE WHEN {_EMPRESAS_SQL_BASE[b]} THEN c.suma ELSE 0 END)" for b in _EMPRESAS_BASES)
+            + " FROM c GROUP BY clave").fetchall()
+        con.executemany("INSERT INTO empresas VALUES (?,?,?,?,?,?,?,?,?)", (
+            (c, mejor[c][0], n, nf, nm, i1 or 0.0, i2 or 0.0, i3 or 0.0,
              int(_es_sociedad_mercantil(mejor[c][0], "" if c.startswith("n:") else c)))
-            for c, n, nf, nm, imp in totales))
+            for c, n, nf, nm, i1, i2, i3 in totales))
         filas_total = con.execute("SELECT COUNT(*) FROM c").fetchone()[0]
         n_empresas = len(totales)
         con.executemany("INSERT INTO meta VALUES (?,?)", [("completo", "1"), ("ts", str(t0)),
@@ -29779,6 +29793,13 @@ def _empresas_ultimo_completo():
     return None, 0.0, 0, 0
 
 
+def _empresas_en_ventana_nocturna(ahora=None):
+    """¿Estamos dentro de la ventana del proceso nocturno (UTC)? Ahí el índice no se rehace."""
+    t = ahora or datetime.now(timezone.utc)
+    (h0, m0), (h1, m1) = EMPRESAS_VENTANA_NOCTURNA_UTC
+    return (h0, m0) <= (t.hour, t.minute) < (h1, m1)
+
+
 def _empresas_bg(hilo_feed=None):
     """Hilo de fondo: usa el último índice completo que haya en el disco y lo rehace cuando toca."""
     ruta, ts, filas, n = _empresas_ultimo_completo()
@@ -29788,7 +29809,7 @@ def _empresas_bg(hilo_feed=None):
     if hilo_feed is not None:
         hilo_feed.join()          # que el feed de menores haya cargado lo suyo antes de leer la tabla
     while True:
-        if time.time() - _EMPRESAS["ts"] >= EMPRESAS_REFRESCO:
+        if time.time() - _EMPRESAS["ts"] >= EMPRESAS_REFRESCO and not _empresas_en_ventana_nocturna():
             _EMPRESAS["construyendo"] = True
             try:
                 _empresas_construir()
@@ -29828,6 +29849,10 @@ def _empresa_nota_fila(nota, importe):
     return ""
 
 
+def _empresa_base_txt(base):
+    return {"sin": _t("Importe sin IVA"), "con": _t("Importe con IVA")}.get(base) or _t("Importe sin base de IVA indicada")
+
+
 def _empresa_iva_txt(iva):
     return {"sin": _t("sin IVA"), "con": _t("con IVA")}.get(iva) or _t("IVA según la fuente")
 
@@ -29858,19 +29883,24 @@ def render_empresa_html(ident, qs):
     if con is None:
         body = (f'<div class="static-page"><h1>{_t("Ficha de empresa")}</h1>'
                 f'<p>{_t("Las fichas de empresa se están preparando. Vuelve a intentarlo en unos minutos.")}</p></div>')
-        return _page_shell(_t("Ficha de empresa"), body, extra_head='<meta name="robots" content="noindex">'), 503, \
-            {"Retry-After": "600"}
+        return _empresa_noindex(_page_shell(_t("Ficha de empresa"), body)), 503, \
+            {"Retry-After": "600", "X-Robots-Tag": "noindex"}
     try:
         return _render_empresa(con, ident, qs)
     finally:
         con.close()
 
 
+def _empresa_noindex(html_):
+    """Como el resto del sitio: cambia la etiqueta robots del _page_shell (no añade una segunda)."""
+    return html_.replace('<meta name="robots" content="index, follow">', '<meta name="robots" content="noindex, follow">', 1)
+
+
 def _empresa_no_encontrada():
     body = (f'<div class="static-page"><h1>{_t("Empresa no encontrada")}</h1>'
             f'<p>{_t("No tenemos contratos de esta empresa en Dinero Público.")}</p>'
             f'<p><a href="/#adv-search">{_t("Buscar")}</a></p></div>')
-    return _page_shell(_t("Empresa no encontrada"), body, extra_head='<meta name="robots" content="noindex">'), 404, {}
+    return _empresa_noindex(_page_shell(_t("Empresa no encontrada"), body)), 404, {"X-Robots-Tag": "noindex"}
 
 
 def _render_empresa(con, ident, qs):
@@ -29894,7 +29924,8 @@ def _render_empresa(con, ident, qs):
             return _empresa_no_encontrada()
         if clave != ident:
             return "", 301, {"Location": f"/empresa/{clave}"}
-    emp = con.execute("SELECT nombre, n, nf, nm, importe, sociedad FROM empresas WHERE clave=?", (clave,)).fetchone()
+    emp = con.execute("SELECT nombre, n, nf, nm, imp_sin, imp_con, imp_nd, sociedad FROM empresas WHERE clave=?",
+                      (clave,)).fetchone()
     if not emp:
         if clave.startswith("n:"):
             # el nombre solo aparece con varios NIF distintos: se enseñan para elegir
@@ -29906,10 +29937,15 @@ def _render_empresa(con, ident, qs):
                               f'{fmt_num(n)} {_t("contratos")}</li>' for c, nm, n in otras)
                 body = (f'<div class="static-page"><h1>{_t("Hay varias empresas con este nombre")}</h1>'
                         f'<ul>{lis}</ul></div>')
-                return _page_shell(_t("Hay varias empresas con este nombre"), body,
-                                   extra_head='<meta name="robots" content="noindex">'), 200, {}
+                return (_empresa_noindex(_page_shell(_t("Hay varias empresas con este nombre"), body)), 200,
+                        {"X-Robots-Tag": "noindex"})
         return _empresa_no_encontrada()
-    nombre, n_total, n_f, n_m, importe_total, sociedad = emp
+    nombre, n_total, n_f, n_m, imp_sin, imp_con, imp_nd, sociedad = emp
+    totales_base = {"sin": imp_sin or 0.0, "con": imp_con or 0.0, "nd": imp_nd or 0.0}
+    # columnas de importe: solo las bases que tiene esta empresa (sin IVA siempre, aunque sea 0)
+    bases = [b for b in _EMPRESAS_BASES if b == "sin" or totales_base[b]]
+    base_pct = "sin" if totales_base["sin"] or len(bases) == 1 else bases[1]
+    sumas_sql = ", ".join(f"SUM(CASE WHEN {_EMPRESAS_SQL_BASE[b]} THEN c.suma ELSE 0 END)" for b in _EMPRESAS_BASES)
     nif = "" if clave.startswith("n:") else clave
     url_propia = f"/empresa/{clave}" if nif else f"/empresa/n-{clave[2:].replace(' ', '-')}"
 
@@ -29924,11 +29960,12 @@ def _render_empresa(con, ident, qs):
     pag_m, tp_m = _pag("pag_m", n_m)
 
     variantes = con.execute("SELECT nombre, n FROM variantes WHERE clave=? ORDER BY n DESC", (clave,)).fetchall()
+    orden = 6 + _EMPRESAS_BASES.index(base_pct)
     organos = con.execute(
-        "SELECT o.organo, o.municipio, o.provincia, o.entidad, COUNT(*), SUM(c.suma) FROM c JOIN organos o "
-        "ON o.id=c.org WHERE c.clave=? GROUP BY c.org ORDER BY 6 DESC, 5 DESC", (clave,)).fetchall()
-    anios = con.execute("SELECT substr(fecha, 1, 4), COUNT(*), SUM(tipo='F'), SUM(tipo='M'), SUM(suma) FROM c "
-                        "WHERE clave=? GROUP BY 1 ORDER BY 1 DESC", (clave,)).fetchall()
+        f"SELECT o.organo, o.municipio, o.provincia, o.entidad, COUNT(*), {sumas_sql} FROM c JOIN organos o "
+        f"ON o.id=c.org WHERE c.clave=? GROUP BY c.org ORDER BY {orden} DESC, 5 DESC", (clave,)).fetchall()
+    anios = con.execute(f"SELECT substr(c.fecha, 1, 4), COUNT(*), SUM(c.tipo='F'), SUM(c.tipo='M'), {sumas_sql} "
+                        f"FROM c WHERE c.clave=? GROUP BY 1 ORDER BY 1 DESC", (clave,)).fetchall()
     sql = ("SELECT c.fecha, o.organo, o.municipio, o.provincia, o.entidad, c.titulo, c.importe, c.nota, c.iva, "
            "c.url, c.fuente, c.estado, c.con_nif FROM c JOIN organos o ON o.id=c.org WHERE c.clave=? AND c.tipo=? "
            "ORDER BY c.fecha DESC, c.rowid LIMIT ? OFFSET ?")
@@ -29944,8 +29981,6 @@ def _render_empresa(con, ident, qs):
         if b:
             nombre_borme = cand
             break
-    denom_html = (f'<p class="lid">{_t("Denominación en el BORME")}: {esc(b["sociedad_borme"])}</p>'
-                  if b and b.get("sociedad_borme") else "")
     var_html = ""
     if len(variantes) > 1:
         lista = ", ".join(f"«{esc(v)}» ({fmt_num(n)})" for v, n in variantes[:12])
@@ -29967,18 +30002,32 @@ def _render_empresa(con, ident, qs):
         adm_html = f'<span class="noloc-nota">{_t("No es una sociedad mercantil: no publica su administración en el BORME.")}</span>'
 
     # ── Concentración ──
+    total_pct = totales_base[base_pct]
+
     def _pct(x):
-        return f"{(100 * (x or 0) / importe_total):.1f} %".replace(".", ",") if importe_total else "—"
+        return f"{(100 * (x or 0) / total_pct):.1f} %".replace(".", ",") if total_pct else "—"
+
+    def _celdas_importe(sumas):
+        """Una celda por base; en el móvil (tarjetas, sin cabecera) cada cifra lleva su etiqueta corta."""
+        por_base = dict(zip(_EMPRESAS_BASES, sumas))
+        celdas = "".join(
+            f'<td class="rk-valor"><span class="emp-base">{esc(_empresa_iva_txt(b if b != "nd" else ""))}: </span>'
+            f'{fmt_eur(str(por_base[b])) if por_base[b] else "—"}</td>' for b in bases)
+        return celdas + f'<td class="rk-valor"><span class="emp-base">% · </span>{_pct(por_base[base_pct])}</td>'
+    pct_txt = _t("% ({base})").format(base=_empresa_base_txt(base_pct).lower())
+    cab_importes = "".join(f"<th>{_empresa_base_txt(b)}</th>" for b in bases) + f"<th>{pct_txt}</th>"
     filas_org = "".join(
         f'<tr><td>{esc(o or "—")}<div class="lid">{_empresa_muni_html(m, pv, ent)}</div></td>'
-        f'<td class="rk-valor">{fmt_num(n)}</td><td class="rk-valor">{fmt_eur(str(s or 0))}</td>'
-        f'<td class="rk-valor">{_pct(s)}</td></tr>' for o, m, pv, ent, n, s in organos[:20])
+        f'<td class="rk-valor">{fmt_num(n)}</td>{_celdas_importe(sumas)}</tr>'
+        for o, m, pv, ent, n, *sumas in organos[:20])
     mas_org = (f'<p class="lid">{_t("Y {n} órganos más.").format(n=fmt_num(len(organos) - 20))}</p>'
                if len(organos) > 20 else "")
     filas_anio = "".join(
         f'<tr><td>{esc(a or "—")}</td><td class="rk-valor">{fmt_num(nf)}</td><td class="rk-valor">{fmt_num(nm)}</td>'
-        f'<td class="rk-valor">{fmt_eur(str(s or 0))}</td><td class="rk-valor">{_pct(s)}</td></tr>'
-        for a, n, nf, nm, s in anios)
+        f'{_celdas_importe(sumas)}</tr>'
+        for a, n, nf, nm, *sumas in anios)
+    stats_importe = "".join(f'<div class="stat"><span>{fmt_eur(str(totales_base[b]))}</span>{_empresa_base_txt(b)}</div>'
+                            for b in bases)
 
     def _filas_contratos(filas, menor):
         out = []
@@ -30027,25 +30076,26 @@ def _render_empresa(con, ident, qs):
     asunto = quote_plus(f"Informe completo: {nombre}")
     body = f"""<div class="static-page empresa-ficha">
   <h1>{esc(nombre)}</h1>
-  {nif_html}{denom_html}
+  {nif_html}
   <div class="stats-row">
     <div class="stat"><span>{fmt_num(n_f)}</span>{_t("Contratos formales")}</div>
     <div class="stat"><span>{fmt_num(n_m)}</span>{_t("Contratos menores")}</div>
-    <div class="stat"><span>{fmt_eur(str(importe_total or 0))}</span>{_t("Importe total")}</div>
+    {stats_importe}
     <div class="stat"><span>{fmt_num(len(organos))}</span>{_t("Órganos contratantes")}</div>
   </div>
   {var_html}{aviso_nombre}
-  <div class="cm-base-nota">{_t("Datos oficiales de los portales de contratación (PLACE, PSCP, BORM, KontratazioA y los de cada ayuntamiento). Los importes van con la base que publica cada fuente (con o sin IVA, se indica en cada fila) y no se convierten. Las sumas no incluyen los contratos sin importe publicado ni los importes que la fuente publica con un error evidente.")}</div>
+  <div class="cm-base-nota">{_t("Datos oficiales de los portales de contratación (PLACE, PSCP, BORM, KontratazioA y los de cada ayuntamiento). Los importes van con la base que publica cada fuente (con o sin IVA, se indica en cada fila) y no se convierten. Las sumas no incluyen los contratos sin importe publicado ni los importes que la fuente publica con un error evidente.")}
+  {_t("Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}».").format(columna=_empresa_base_txt(base_pct))}</div>
   <h2>{_t("Órgano de administración")}</h2>
   <div class="empresa-adm">{adm_html}</div>
   <h2>{_t("Concentración por órgano contratante")}</h2>
   <div class="tbl-scroll"><table class="t-tarjeta">
-    <tr><th>{_t("Órgano contratante")}</th><th>{_t("Contratos")}</th><th>{_t("Importe")}</th><th>{_t("% del importe")}</th></tr>
+    <tr><th>{_t("Órgano contratante")}</th><th>{_t("Contratos")}</th>{cab_importes}</tr>
     {filas_org}
   </table></div>{mas_org}
   <h2>{_t("Concentración por año")}</h2>
   <div class="tbl-scroll"><table class="t-tarjeta">
-    <tr><th>{_t("Año")}</th><th>{_t("Formales")}</th><th>{_t("Menores")}</th><th>{_t("Importe")}</th><th>{_t("% del importe")}</th></tr>
+    <tr><th>{_t("Año")}</th><th>{_t("Formales")}</th><th>{_t("Menores")}</th>{cab_importes}</tr>
     {filas_anio}
   </table></div>
   {tabla_f}
@@ -30055,21 +30105,26 @@ def _render_empresa(con, ident, qs):
     <p>{_t("Escríbenos y te contamos qué incluye:")} <a href="mailto:contacto@dinero-publico.com?subject={asunto}">contacto@dinero-publico.com</a></p>
   </div>
 </div>"""
-    extra = '<meta name="robots" content="noindex">' if (pag_f > 1 or pag_m > 1) else ""
+    indexable = bool(sociedad) and n_total >= EMPRESAS_MIN_CONTRATOS_INDEXAR and pag_f == 1 and pag_m == 1
     titulo = _t("{nombre}: contratos públicos").format(nombre=nombre)
     desc = _t("Contratos públicos adjudicados a {nombre} en España: {n} contratos, por órgano y por año, con enlace a la fuente oficial.").format(
         nombre=nombre, n=fmt_num(n_total))
-    return _page_shell(titulo, body, description=desc, extra_head=extra, og_path=url_propia), 200, {}
+    html_ = _page_shell(titulo, body, description=desc, og_path=url_propia)
+    if indexable:
+        return html_, 200, {}
+    return _empresa_noindex(html_), 200, {"X-Robots-Tag": "noindex"}
 
 
 def _sitemap_empresas(parte=None):
-    """/sitemap-empresas.xml (índice) y /sitemap-empresas-<n>.xml: solo sociedades mercantiles, solo en castellano
+    """/sitemap-empresas.xml (índice) y /sitemap-empresas-<n>.xml: solo sociedades mercantiles con al menos
+    EMPRESAS_MIN_CONTRATOS_INDEXAR contratos, solo en castellano
     (el mapa principal ya va por los 38.000 URL de los 50.000 que admite un fichero)."""
     con = _empresas_con()
     if con is None:
         return None
     try:
-        claves = [c for (c,) in con.execute("SELECT clave FROM empresas WHERE sociedad=1 ORDER BY clave")]
+        claves = [c for (c,) in con.execute("SELECT clave FROM empresas WHERE sociedad=1 AND n>=? ORDER BY clave",
+                                             (EMPRESAS_MIN_CONTRATOS_INDEXAR,))]
     finally:
         con.close()
     tam = 40000
