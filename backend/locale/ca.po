@@ -3452,6 +3452,138 @@ msgstr "Altres municipis amb sous de regidors"
 msgid "Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP) y las plataformas autonómicas que agrega."
 msgstr "Licitacions amb el termini de presentació d'ofertes obert, segons la Plataforma de Contractació del Sector Públic (PLACSP) i les plataformes autonòmiques que agrega."
 
+#: app.py
+msgid "Importe en revisión: no se cuenta en las sumas."
+msgstr "Import en revisió: no es compta en les sumes."
+
+#: app.py
+msgid "con IVA"
+msgstr "amb IVA"
+
+#: app.py
+msgid "IVA según la fuente"
+msgstr "IVA segons la font"
+
+#: app.py
+msgid "Ficha de empresa"
+msgstr "Fitxa d'empresa"
+
+#: app.py
+msgid "Las fichas de empresa se están preparando. Vuelve a intentarlo en unos minutos."
+msgstr "Les fitxes d'empresa s'estan preparant. Torna-ho a provar d'aquí a uns minuts."
+
+#: app.py
+msgid "Empresa no encontrada"
+msgstr "Empresa no trobada"
+
+#: app.py
+msgid "No tenemos contratos de esta empresa en Dinero Público."
+msgstr "No tenim contractes d'aquesta empresa a Dinero Público."
+
+#: app.py
+msgid "Hay varias empresas con este nombre"
+msgstr "Hi ha diverses empreses amb aquest nom"
+
+#: app.py
+msgid "Denominación en el BORME"
+msgstr "Denominació al BORME"
+
+#: app.py
+msgid "Variantes del nombre en las fuentes"
+msgstr "Variants del nom a les fonts"
+
+#: app.py
+msgid "{n} formas distintas en los anuncios de los órganos, contadas como una sola empresa."
+msgstr "{n} formes diferents als anuncis dels òrgans, comptades com una sola empresa."
+
+#: app.py
+msgid "Las fuentes no publican el NIF de estos contratos: se han juntado por el nombre. Si hay más de una empresa con el mismo nombre, aquí pueden aparecer juntas."
+msgstr "Les fonts no publiquen el NIF d'aquests contractes: s'han ajuntat pel nom. Si hi ha més d'una empresa amb el mateix nom, aquí poden aparèixer juntes."
+
+#: app.py
+msgid "No es una sociedad mercantil: no publica su administración en el BORME."
+msgstr "No és una societat mercantil: no publica la seva administració al BORME."
+
+#: app.py
+msgid "Y {n} órganos más."
+msgstr "I {n} òrgans més."
+
+#: app.py
+msgid "Órgano contratante / Objeto"
+msgstr "Òrgan de contractació / Objecte"
+
+#: app.py
+msgid "Ficha oficial"
+msgstr "Fitxa oficial"
+
+#: app.py
+msgid "Los contratos menores no tienen ficha propia en la mayoría de las fuentes: el enlace lleva a la ficha del municipio, donde se explica cada fuente."
+msgstr "Els contractes menors no tenen fitxa pròpia a la majoria de les fonts: l'enllaç porta a la fitxa del municipi, on s'explica cada font."
+
+#: app.py
+msgid "Órganos contratantes"
+msgstr "Òrgans de contractació"
+
+#: app.py
+msgid "Datos oficiales de los portales de contratación (PLACE, PSCP, BORM, KontratazioA y los de cada ayuntamiento). Los importes van con la base que publica cada fuente (con o sin IVA, se indica en cada fila) y no se convierten. Las sumas no incluyen los contratos sin importe publicado ni los importes que la fuente publica con un error evidente."
+msgstr "Dades oficials dels portals de contractació (PLACE, PSCP, BORM, KontratazioA i els de cada ajuntament). Els imports van amb la base que publica cada font (amb IVA o sense, s'indica a cada fila) i no es converteixen. Les sumes no inclouen els contractes sense import publicat ni els imports que la font publica amb un error evident."
+
+#: app.py
+msgid "Órgano de administración"
+msgstr "Òrgan d'administració"
+
+#: app.py
+msgid "Concentración por órgano contratante"
+msgstr "Concentració per òrgan de contractació"
+
+#: app.py
+msgid "Órgano contratante"
+msgstr "Òrgan de contractació"
+
+#: app.py
+msgid "% del importe"
+msgstr "% de l'import"
+
+#: app.py
+msgid "Concentración por año"
+msgstr "Concentració per any"
+
+#: app.py
+msgid "Año"
+msgstr "Any"
+
+#: app.py
+msgid "Formales"
+msgstr "Formals"
+
+#: app.py
+msgid "Menores"
+msgstr "Menors"
+
+#: app.py
+msgid "¿Necesitas el informe completo de esta empresa?"
+msgstr "Necessites l'informe complet d'aquesta empresa?"
+
+#: app.py
+msgid "Escríbenos y te contamos qué incluye:"
+msgstr "Escriu-nos i t'expliquem què inclou:"
+
+#: app.py
+msgid "{nombre}: contratos públicos"
+msgstr "{nombre}: contractes públics"
+
+#: app.py
+msgid "Contratos públicos adjudicados a {nombre} en España: {n} contratos, por órgano y por año, con enlace a la fuente oficial."
+msgstr "Contractes públics adjudicats a {nombre} a Espanya: {n} contractes, per òrgan i per any, amb enllaç a la font oficial."
+
+#: app.py
+msgid "La fuente no publica el NIF en este contrato: se asigna por el nombre."
+msgstr "La font no publica el NIF en aquest contracte: s'assigna pel nom."
+
+#: app.py
+msgid "Procedimiento / estado"
+msgstr "Procediment / estat"
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Encara sense dades de fons UE per a aquesta província."
 

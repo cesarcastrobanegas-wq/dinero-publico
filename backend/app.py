@@ -17963,6 +17963,7 @@ def _arrancar_hilos_de_fondo():
     hilo_feed.start()
     threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
     threading.Thread(target=_licitaciones_bg, args=(hilo_feed,), name="licitaciones", daemon=True).start()
+    threading.Thread(target=_empresas_bg, args=(hilo_feed,), name="indice-empresas", daemon=True).start()
     threading.Thread(target=_subvenciones_reclasificar, name="subvenciones-sector", daemon=True).start()
     threading.Thread(target=_zip_cache_vigilar, name="memoria-zips", daemon=True).start()
     if FILTRO_FORMULARIO:                    # borrado automático de perfiles del filtro (ver _socios_limpieza_bg)
@@ -18545,6 +18546,16 @@ a.fue-link{color:var(--yellow);font-size:11px;}
 .rk-pos{font-size:16px;text-align:center;width:44px;}
 .rk-empresa{color:var(--text);font-weight:600;text-decoration:none;}
 .rk-empresa:hover{color:var(--accent);text-decoration:underline;}
+.empresa a.empresa-link{color:inherit;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px;}
+.empresa a.empresa-link:hover{color:var(--accent);text-decoration-color:currentColor;}
+.empresa-ficha h2{margin-top:28px;}
+.empresa-ficha .empresa-adm{padding:10px 0;}
+.empresa-ficha td.rk-valor,.empresa-ficha .emp-imp{white-space:nowrap;text-align:right;}
+.empresa-ficha .cargo,.empresa-ficha .lid,.empresa-ficha td{white-space:normal;overflow-wrap:anywhere;}
+.empresa-ficha td.rk-valor,.empresa-ficha td.cm-importe{overflow-wrap:normal;}
+.empresa-ficha td.cm-importe .noloc-nota{display:block;white-space:normal;overflow-wrap:anywhere;}
+.empresa-informe{margin-top:32px;padding:16px 18px;border:1px solid var(--border);border-radius:8px;background:var(--tint);}
+.empresa-informe h2{margin-top:0;}
 .rk-valor{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
 </style>
 """
@@ -20524,7 +20535,7 @@ def _render_fila_contrato(c, municipio_label=None, municipio=None, provincia=Non
 
     return f"""<tr>
       <td>
-        <div class="empresa">{esc(_persona_fisica_txt(c.get('empresa', '—')))}{ute_html} {fuente_badge}</div>
+        <div class="empresa">{_empresa_nombre_html(c.get('empresa', '—'), c.get('nif', ''))}{ute_html} {fuente_badge}</div>
         {contrato_html}{muni_html}
       </td>
       <td class="{imp_cls}">{esc(imp)}{imp_nota}</td>
@@ -21979,10 +21990,10 @@ def render_rankings_html(datos_nacional, datos_provincia, provincia_prov="murcia
                             f'{_borme_fuente_html(g["empresa"], g.get("nif", ""))}')
             else:
                 dir_html = _sin_administrador_html(g["empresa"], g.get("nif", ""))
-            emp_q = quote_plus(g["empresa"])
+            emp_href = _empresa_url(g["empresa"], g.get("nif", "")) or f"/?q={quote_plus(g['empresa'])}{q_prov}"
             filas += f"""<tr>
               <td class="rk-pos">{pos}</td>
-              <td><a class="rk-empresa" href="/?q={emp_q}{q_prov}">{esc(g['empresa'])}</a></td>
+              <td><a class="rk-empresa" href="{esc(emp_href)}">{esc(g['empresa'])}</a></td>
               <td class="rk-valor">{valor_html(g)}</td>
               <td>{dir_html}</td>
             </tr>"""
@@ -23022,7 +23033,7 @@ def _render_fila_contrato_menor(r):
 
     return f"""<tr>
       <td>
-        <div class="empresa">{esc(_persona_fisica_txt(adjudicatari))}{fuente_badge}</div>
+        <div class="empresa">{_empresa_nombre_html(adjudicatari, r.get("nif", ""))}{fuente_badge}</div>
         {nif_html}
         <div class="cargo">{esc(r.get("descripcio","")[:110])}</div>{nota_fila}
       </td>
@@ -29453,6 +29464,632 @@ def render_404_html():
     return _page_shell(_t("Página no encontrada"), body, show_ad_banner=False)
 
 
+
+# ─── FICHA DE EMPRESA (/empresa/<id>, 15-11-2026, encargo de César) ───────────────────────────────────────────────
+# Una página por empresa adjudicataria con todo lo que tenemos de ella en España: contratos formales (fichas de
+# municipio y de entidades locales) y menores, concentración por órgano y por año, y el órgano de administración del
+# BORME tal como se enseña en el resto del sitio (fecha, anuncio y «Pedir rectificación"). Nada de valoraciones.
+#   - Identidad: el NIF de persona jurídica cuando la fuente lo da (/empresa/B01862309). Los contratos sin NIF se
+#     juntan por el nombre normalizado sin la forma jurídica («ELECFES ILUMINACION, S.L.» = «Elecfes Iluminación SL»);
+#     si ese nombre solo aparece con UN NIF, se suman a ese NIF; si no, van a /empresa/n-<nombre> con un aviso de que
+#     puede haber más de una empresa con el mismo nombre.
+#   - Los autónomos (personas físicas) NO tienen ficha: se descarta toda fila con NIF de persona física o enmascarado,
+#     con nombre «Persona física · ...» o sin NIF y sin forma jurídica ni palabra de entidad en el nombre
+#     (_parece_sociedad). En las fichas de municipio siguen como hasta ahora, sin enlace.
+#   - Índice en un SQLite APARTE en el disco (DATA_DIR/empresas_indice_<ts>.db), no en cache.db: no engorda la copia
+#     que bajan los flujos de Actions y no compite con las escrituras de los refrescos. Se rehace en segundo plano al
+#     arrancar (si el último tiene más de EMPRESAS_REFRESCO) y cada EMPRESAS_REFRESCO; leer cache.db se hace con una
+#     conexión propia de solo lectura (WAL: no bloquea a nadie). Cada página hace 5-6 consultas por índice.
+EMPRESAS_DB_PREFIJO = os.path.join(DATA_DIR, "empresas_indice_")
+EMPRESAS_REFRESCO = 12 * 3600
+EMPRESAS_POR_PAGINA = 50
+_EMPRESAS = {"ruta": None, "ts": 0.0, "construyendo": False, "error": "", "filas": 0, "empresas": 0, "segundos": 0.0}
+_empresas_lock = threading.Lock()
+# Forma jurídica al FINAL del nombre (ya normalizado y sin signos): se quita para juntar variantes.
+_RE_EMP_FORMA_FINAL = re.compile(
+    r"(\s+(sociedad limitada|sociedad anonima|sociedad limitada unipersonal|sociedad anonima unipersonal|"
+    r"unipersonal|laboral|profesional|s l u|s a u|s l l|s l p|s l|s a|slu|sau|sll|slp|sl|sa))+$")
+_RE_EMP_NIF_PF = re.compile(r"^(?:\d|[XYZKLM]\d)")
+
+
+def _empresa_nif(nif):
+    """NIF de persona jurídica limpio (sin espacios, puntos ni «ES» delante) o ""."""
+    n = re.sub(r"[\s.\-]", "", (nif or "").upper())
+    if n.startswith("ES") and len(n) == 11:
+        n = n[2:]
+    return n if _RE_NIF_SOCIEDAD.match(n) else ""
+
+
+def _empresa_nkey(nombre):
+    """Nombre para juntar variantes: minúsculas, sin tildes ni signos y sin la forma jurídica final."""
+    n = re.sub(r"[^a-z0-9 ]+", " ", normalizar(nombre or ""))
+    n = re.sub(r"\s+", " ", n).strip()
+    return _RE_EMP_FORMA_FINAL.sub("", n).strip()
+
+
+def _empresa_elegible(nombre, nif=""):
+    """¿Puede tener ficha propia? Nunca un autónomo: NIF de persona física o enmascarado, «Persona física · ...», o
+    sin NIF de sociedad y sin nada en el nombre que diga que es una entidad."""
+    if not nombre or nombre in ("No localizada", "Desierto", "—") or nombre.startswith(PREFIJO_PERSONA_FISICA):
+        return False
+    crudo = re.sub(r"[\s.\-]", "", (nif or "").upper())
+    if crudo and ("*" in crudo or _RE_EMP_NIF_PF.match(crudo) or crudo.startswith("XXXX")):
+        return False
+    if nombre_sin_dni(nombre) != nombre:
+        return False
+    return bool(_empresa_nif(nif)) or _parece_sociedad(nombre, "")
+
+
+def _empresa_url(empresa, nif=""):
+    """Dirección de la ficha de la empresa, o "" si no tiene (autónomos, sin nombre). Sin tocar la base: la ficha por
+    nombre redirige a la del NIF cuando el índice sabe cuál es."""
+    if not _empresa_elegible(empresa, nif):
+        return ""
+    n = _empresa_nif(nif)
+    if n:
+        return f"/empresa/{n}"
+    k = _empresa_nkey(empresa)
+    return f"/empresa/n-{k.replace(' ', '-')}" if k else ""
+
+
+def _empresa_nombre_html(empresa, nif="", cls="empresa-link"):
+    """El nombre ya escapado, enlazado a su ficha si la tiene."""
+    texto = esc(_persona_fisica_txt(empresa or "—"))
+    url = _empresa_url(empresa, nif)
+    return f'<a class="{cls}" href="{esc(url)}">{texto}</a>' if url else texto
+
+
+def _empresas_fila_formal(c, municipio, provincia, entidad=""):
+    """Tupla para la tabla `f` del índice, o None si el adjudicatario no puede tener ficha."""
+    nombre = nombre_sin_dni(c.get("empresa") or "")
+    nif = c.get("nif") or ""
+    if not _empresa_elegible(nombre, nif) or c.get("cargo") == _CARGO_PERSONA_FISICA and not _parece_sociedad(nombre, nif):
+        return None
+    nkey = _empresa_nkey(nombre)
+    if not nkey:
+        return None
+    url = html.unescape(c.get("url") or "")
+    ref = url or f'{c.get("licitacion_id", "")}|{(c.get("titulo") or "")[:60]}|{municipio}'
+    try:
+        mostrar = float(c.get("importe_fuente_num") if c.get("importe_aviso") else (c.get("importe_num") or 0)) or 0.0
+    except (TypeError, ValueError):
+        mostrar = 0.0
+    suma = 0.0 if (c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION or _contrato_sin_importe_publicado(c)) \
+        else _importe_contable(c)
+    if c.get("importe_aviso") == FORMAL_AVISO_ACUERDO_MARCO:
+        nota = "acuerdo-marco"
+    elif c.get("licitacion_id") in _CONTRATOS_IMPORTE_EN_REVISION:
+        nota = "revision"
+    elif _contrato_sin_importe_publicado(c):
+        nota = "sin-importe"
+    elif c.get("importe_tipo") == "presupuesto" and c.get("importe_num"):
+        nota = "presupuesto"
+    elif not (c.get("importe") or ""):
+        nota = "no-localizado"
+    else:
+        nota = ""
+    fuente = c.get("fuente") or "PLACE"
+    iva = "sin" if fuente in ("PLACE", "EUSKADI") else ("con" if fuente == "PSCP" else "")
+    return (nkey, _empresa_nif(nif), nombre[:200], "F", ref, (c.get("fecha") or "")[:10], mostrar, suma, nota, iva,
+            (c.get("organo") or "")[:200], municipio, provincia, entidad, (c.get("titulo") or "")[:220], url[:600],
+            fuente, c.get("estado") or "")
+
+
+def _empresas_fila_menor(r):
+    nombre = nombre_sin_dni(r.get("adjudicatari") or "")
+    nif = r.get("nif") or ""
+    if not _empresa_elegible(nombre, nif) or _persona_fisica_cm(r):
+        return None
+    nkey = _empresa_nkey(nombre)
+    if not nkey:
+        return None
+    aviso = r.get("import_aviso") or ""
+    if aviso in (MENOR_AVISO_SIN_DECIMALES, MENOR_AVISO_TRES_CEROS) and r.get("import_fuente"):
+        mostrar, suma, nota = float(r["import_fuente"]), 0.0, aviso
+    else:
+        mostrar = float(r.get("import_num") or 0.0)
+        suma, nota = mostrar, ("iva-feed" if aviso == MENOR_AVISO_IVA_FEED else "")
+    iva = "sin" if (r.get("fuente") in _FUENTES_CM_SIN_IVA or aviso == MENOR_AVISO_IVA_FEED) else ""
+    return (nkey, _empresa_nif(nif), nombre[:200], "M", r["id"], (r.get("data_adjudicacio") or "")[:10], mostrar,
+            suma, nota, iva, (r.get("organisme") or "")[:200], r.get("municipio") or "", r.get("provincia") or "", "",
+            (r.get("descripcio") or "")[:220], "", r.get("fuente") or "", r.get("tipus_contracte") or "")
+
+
+def _empresas_construir():
+    """Rehace el índice de empresas en un fichero nuevo y lo pone en uso al terminar. Devuelve la ruta.
+    Dos pasos: (1) todas las filas en un fichero provisional (con la restricción que quita duplicados); (2) la tabla
+    final compacta, ordenada por empresa, con los órganos aparte. El provisional se borra."""
+    t0 = time.time()
+    ruta = f"{EMPRESAS_DB_PREFIJO}{int(t0)}.db"
+    provisional = ruta[:-3] + ".provisional"
+    origen = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True, timeout=60)
+    con = sqlite3.connect(provisional)
+    try:
+        con.executescript("""
+            PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;
+            CREATE TABLE f (nkey TEXT, nif TEXT, nombre TEXT, tipo TEXT, ref TEXT, fecha TEXT, importe REAL,
+                            suma REAL, nota TEXT, iva TEXT, organo TEXT, municipio TEXT, provincia TEXT, entidad TEXT,
+                            titulo TEXT, url TEXT, fuente TEXT, estado TEXT, clave TEXT,
+                            UNIQUE (tipo, ref, nkey));""")
+        ins = "INSERT OR IGNORE INTO f VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL)"
+        # 1) contratos formales de las fichas de municipio (por lotes de rowid, como _db_iter_municipios)
+        ultimo = 0
+        while True:
+            filas = origen.execute("SELECT rowid, data, provincia FROM municipios WHERE rowid>? ORDER BY rowid LIMIT 40",
+                                   (ultimo,)).fetchall()
+            if not filas:
+                break
+            lote = []
+            for rid, data, prov in filas:
+                ultimo = rid
+                try:
+                    d = json.loads(data)
+                except ValueError:
+                    continue
+                muni, pv = d.get("municipio") or "", d.get("provincia") or prov or "murcia"
+                lote += [x for x in (_empresas_fila_formal(c, muni, pv) for c in d.get("contratos") or []) if x]
+            con.executemany(ins, lote)
+            del filas, lote
+        # 2) contratos formales de las entidades locales que no son municipio
+        try:
+            for clave_ent, nombre_ent, pv, data in origen.execute(
+                    "SELECT clave, nombre, provincia, data FROM entidades_locales"):
+                try:
+                    d = json.loads(data)
+                except ValueError:
+                    continue
+                con.executemany(ins, [x for x in (_empresas_fila_formal(c, nombre_ent or "", pv or "", clave_ent)
+                                                  for c in d.get("contratos") or []) if x])
+        except sqlite3.OperationalError:
+            pass
+        # 3) contratos menores (tabla ya sin los duplicados archivados)
+        cols = ("rowid", "id", "municipio", "provincia", "fuente", "organisme", "adjudicatari", "nif", "import_num",
+                "data_adjudicacio", "tipus_contracte", "descripcio", "import_fuente", "import_aviso")
+        ultimo = 0
+        while True:
+            filas = origen.execute(f"SELECT {', '.join(cols)} FROM contratos_menors_locales WHERE rowid>? "
+                                   f"ORDER BY rowid LIMIT 20000", (ultimo,)).fetchall()
+            if not filas:
+                break
+            ultimo = filas[-1][0]
+            con.executemany(ins, [x for x in (_empresas_fila_menor(dict(zip(cols, r))) for r in filas) if x])
+            del filas
+        con.commit()
+        origen.close()
+        # 4) identidad: el NIF propio de la fila; si no lo trae, el NIF con que aparece ese mismo nombre en al menos el
+        #    80 % de las filas que sí lo traen (así un NIF mal tecleado en unos pocos anuncios no lo impide); si no, el
+        #    nombre (/empresa/n-...).
+        con.executescript("""
+            CREATE INDEX f_nkey ON f(nkey);
+            CREATE TABLE nk AS SELECT nkey, nif FROM (
+                SELECT nkey, nif, c, SUM(c) OVER (PARTITION BY nkey) AS tot,
+                       ROW_NUMBER() OVER (PARTITION BY nkey ORDER BY c DESC, nif) AS rn
+                FROM (SELECT nkey, nif, COUNT(*) AS c FROM f WHERE nif<>'' GROUP BY nkey, nif))
+                WHERE rn=1 AND c >= 0.8 * tot;
+            CREATE UNIQUE INDEX nk_nkey ON nk(nkey);
+            UPDATE f SET clave = CASE WHEN nif<>'' THEN nif
+                                 ELSE COALESCE((SELECT nk.nif FROM nk WHERE nk.nkey=f.nkey), 'n:'||f.nkey) END;""")
+        con.close()
+        # 5) fichero final, compacto y ordenado por empresa
+        con = sqlite3.connect(ruta)
+        con.execute("ATTACH DATABASE ? AS p", (provisional,))
+        con.executescript("""
+            PRAGMA main.journal_mode=OFF; PRAGMA main.synchronous=OFF;
+            CREATE TABLE organos (id INTEGER PRIMARY KEY, organo TEXT, municipio TEXT, provincia TEXT, entidad TEXT);
+            INSERT INTO organos (organo, municipio, provincia, entidad)
+                SELECT DISTINCT organo, municipio, provincia, entidad FROM p.f;
+            CREATE UNIQUE INDEX organos_u ON organos(organo, municipio, provincia, entidad);
+            CREATE TABLE c (clave TEXT, tipo TEXT, fecha TEXT, importe REAL, suma REAL, nota TEXT, iva TEXT,
+                            org INTEGER, titulo TEXT, url TEXT, fuente TEXT, estado TEXT, con_nif INTEGER);
+            INSERT INTO c SELECT f.clave, f.tipo, f.fecha, f.importe, f.suma, NULLIF(f.nota, ''), NULLIF(f.iva, ''),
+                                 o.id, f.titulo, NULLIF(f.url, ''), f.fuente, NULLIF(f.estado, ''), f.nif<>''
+                          FROM p.f AS f JOIN organos AS o ON o.organo=f.organo AND o.municipio=f.municipio
+                               AND o.provincia=f.provincia AND o.entidad=f.entidad
+                          ORDER BY f.clave, f.tipo, f.fecha DESC;
+            DROP INDEX organos_u;
+            CREATE INDEX c_clave ON c(clave, tipo, fecha);
+            CREATE TABLE variantes AS SELECT clave, nombre, COUNT(*) AS n FROM p.f GROUP BY clave, nombre;
+            CREATE INDEX variantes_clave ON variantes(clave);
+            CREATE TABLE alias AS SELECT DISTINCT nkey, clave FROM p.f;
+            CREATE INDEX alias_nkey ON alias(nkey);
+            CREATE TABLE nombre_nif AS SELECT nkey, nif FROM p.nk;
+            CREATE UNIQUE INDEX nombre_nif_nkey ON nombre_nif(nkey);
+            CREATE TABLE empresas (clave TEXT PRIMARY KEY, nombre TEXT, n INTEGER, nf INTEGER, nm INTEGER,
+                                   importe REAL, sociedad INTEGER);
+            CREATE TABLE meta (clave TEXT PRIMARY KEY, valor TEXT);""")
+        # nombre más frecuente de cada empresa y si es sociedad mercantil (solo esas van al mapa del sitio)
+        mejor = {}
+        for clave, nombre, n in con.execute("SELECT clave, nombre, n FROM variantes"):
+            if clave not in mejor or n > mejor[clave][1]:
+                mejor[clave] = (nombre, n)
+        totales = con.execute("SELECT clave, COUNT(*), SUM(tipo='F'), SUM(tipo='M'), SUM(suma) FROM c "
+                              "GROUP BY clave").fetchall()
+        con.executemany("INSERT INTO empresas VALUES (?,?,?,?,?,?,?)", (
+            (c, mejor[c][0], n, nf, nm, imp or 0.0,
+             int(_es_sociedad_mercantil(mejor[c][0], "" if c.startswith("n:") else c)))
+            for c, n, nf, nm, imp in totales))
+        filas_total = con.execute("SELECT COUNT(*) FROM c").fetchone()[0]
+        n_empresas = len(totales)
+        con.executemany("INSERT INTO meta VALUES (?,?)", [("completo", "1"), ("ts", str(t0)),
+                                                         ("filas", str(filas_total)), ("empresas", str(n_empresas))])
+        con.commit()
+        con.execute("DETACH DATABASE p")
+        del mejor, totales
+    except BaseException:
+        con.close()
+        try:
+            origen.close()
+        except sqlite3.Error:
+            pass
+        for r in (ruta, provisional):
+            try:
+                os.remove(r)
+            except OSError:
+                pass
+        raise
+    con.close()
+    try:
+        os.remove(provisional)
+    except OSError:
+        pass
+    anterior = _EMPRESAS["ruta"]
+    with _empresas_lock:
+        _EMPRESAS.update(ruta=ruta, ts=t0, filas=filas_total, empresas=n_empresas,
+                         segundos=round(time.time() - t0, 1), error="")
+    _empresas_borrar_viejos(ruta)
+    print(f"[empresas] índice listo: {filas_total} contratos, {n_empresas} empresas, {_EMPRESAS['segundos']} s "
+          f"(antes {os.path.basename(anterior) if anterior else 'ninguno'})", flush=True)
+    return ruta
+
+
+def _empresas_ficheros(todos=False):
+    """Los índices del disco (todos=True: también los provisionales que quedaron a medias)."""
+    carpeta, base = os.path.split(EMPRESAS_DB_PREFIJO)
+    try:
+        return sorted(os.path.join(carpeta, f) for f in os.listdir(carpeta)
+                      if f.startswith(base) and (todos or f.endswith(".db")))
+    except OSError:
+        return []
+
+
+def _empresas_borrar_viejos(actual):
+    """Los índices anteriores (y los que quedaron a medias si se reinició a mitad). En Windows puede fallar si alguna
+    petición lo tiene abierto: se reintenta en la siguiente pasada."""
+    for ruta in _empresas_ficheros(todos=True):
+        if ruta != actual:
+            try:
+                os.remove(ruta)
+            except OSError:
+                pass
+
+
+def _empresas_ultimo_completo():
+    """El índice más reciente que se terminó de construir (sobrevive a un reinicio), o (None, 0)."""
+    for ruta in reversed(_empresas_ficheros()):
+        try:
+            con = sqlite3.connect(f"file:{ruta}?mode=ro", uri=True)
+            try:
+                meta = dict(con.execute("SELECT clave, valor FROM meta").fetchall())
+            finally:
+                con.close()
+        except sqlite3.Error:
+            continue
+        if meta.get("completo") == "1":
+            return ruta, float(meta.get("ts") or 0), int(meta.get("filas") or 0), int(meta.get("empresas") or 0)
+    return None, 0.0, 0, 0
+
+
+def _empresas_bg(hilo_feed=None):
+    """Hilo de fondo: usa el último índice completo que haya en el disco y lo rehace cuando toca."""
+    ruta, ts, filas, n = _empresas_ultimo_completo()
+    if ruta:
+        with _empresas_lock:
+            _EMPRESAS.update(ruta=ruta, ts=ts, filas=filas, empresas=n)
+    if hilo_feed is not None:
+        hilo_feed.join()          # que el feed de menores haya cargado lo suyo antes de leer la tabla
+    while True:
+        if time.time() - _EMPRESAS["ts"] >= EMPRESAS_REFRESCO:
+            _EMPRESAS["construyendo"] = True
+            try:
+                _empresas_construir()
+            except Exception as e:
+                _EMPRESAS["error"] = f"{type(e).__name__}: {e}"[:300]
+                print(f"[empresas] índice: ERROR ({_EMPRESAS['error']})", flush=True)
+            finally:
+                _EMPRESAS["construyendo"] = False
+        time.sleep(600)
+
+
+def _empresas_con():
+    ruta = _EMPRESAS["ruta"]
+    return sqlite3.connect(f"file:{ruta}?mode=ro", uri=True) if ruta else None
+
+
+def _empresa_fecha(f):
+    return f"{f[8:10]}/{f[5:7]}/{f[:4]}" if re.match(r"\d{4}-\d\d-\d\d", f or "") else (f or "—")
+
+
+def _empresa_nota_fila(nota, importe):
+    if nota == "acuerdo-marco":
+        return _t("Importe del acuerdo marco de la central de contratación, no gasto solo de este municipio.") + " " + \
+            _t("No se cuenta en las sumas.")
+    if nota == "revision":
+        return _t("Importe en revisión: no se cuenta en las sumas.")
+    if nota == "sin-importe":
+        return _t("sin importe publicado")
+    if nota == "presupuesto":
+        return _t("presupuesto de licitación")
+    if nota == MENOR_AVISO_SIN_DECIMALES:
+        return _t("Probable error de la fuente: el importe parece publicado sin decimales; el real sería {importe}.").format(
+            importe=fmt_eur(str(importe / 100))) + " " + _t("No se cuenta en las sumas.")
+    if nota == MENOR_AVISO_TRES_CEROS:
+        return _t("Probable error de la fuente: el importe parece publicado con tres ceros de más; el real sería {importe}.").format(
+            importe=fmt_eur(str(importe / 1000))) + " " + _t("No se cuenta en las sumas.")
+    return ""
+
+
+def _empresa_iva_txt(iva):
+    return {"sin": _t("sin IVA"), "con": _t("con IVA")}.get(iva) or _t("IVA según la fuente")
+
+
+def _empresa_paginacion(base, param, pagina, total_pags, ancla, otros):
+    if total_pags <= 1:
+        return ""
+    def url(n):
+        q = "&amp;".join(f"{k}={v}" for k, v in sorted({**otros, param: n}.items()) if v and v != 1)
+        return f"{base}{'?' + q if q else ''}#{ancla}"
+    ant = f'<a href="{url(pagina - 1)}" class="pag-btn">← {_t("Anterior")}</a>' if pagina > 1 else ""
+    sig = f'<a href="{url(pagina + 1)}" class="pag-btn">{_t("Siguiente →")}</a>' if pagina < total_pags else ""
+    return f'<div class="pagination">{ant}<span class="pag-info">{pagina} / {total_pags}</span>{sig}</div>'
+
+
+def _empresa_muni_html(municipio, provincia, entidad):
+    if entidad:
+        return f'<a href="/entidad?id={quote_plus(entidad)}">{esc(municipio)}</a>'
+    if not municipio:
+        return ""
+    return f'<a href="/?muni={quote_plus(municipio)}{esc(_q_prov(provincia))}">{esc(municipio)}</a>'
+
+
+def render_empresa_html(ident, qs):
+    """(html, código, cabeceras extra) de /empresa/<NIF> o /empresa/n-<nombre>."""
+    ident = (ident or "").strip().strip("/")[:160]
+    con = _empresas_con()
+    if con is None:
+        body = (f'<div class="static-page"><h1>{_t("Ficha de empresa")}</h1>'
+                f'<p>{_t("Las fichas de empresa se están preparando. Vuelve a intentarlo en unos minutos.")}</p></div>')
+        return _page_shell(_t("Ficha de empresa"), body, extra_head='<meta name="robots" content="noindex">'), 503, \
+            {"Retry-After": "600"}
+    try:
+        return _render_empresa(con, ident, qs)
+    finally:
+        con.close()
+
+
+def _empresa_no_encontrada():
+    body = (f'<div class="static-page"><h1>{_t("Empresa no encontrada")}</h1>'
+            f'<p>{_t("No tenemos contratos de esta empresa en Dinero Público.")}</p>'
+            f'<p><a href="/#adv-search">{_t("Buscar")}</a></p></div>')
+    return _page_shell(_t("Empresa no encontrada"), body, extra_head='<meta name="robots" content="noindex">'), 404, {}
+
+
+def _render_empresa(con, ident, qs):
+    if ident.startswith("n-"):
+        nkey = re.sub(r"[^a-z0-9 ]", "", ident[2:].replace("-", " ")).strip()
+        claves = [c for (c,) in con.execute("SELECT clave FROM alias WHERE nkey=?", (nkey,))]
+        if not claves:
+            return _empresa_no_encontrada()
+        dominante = con.execute("SELECT nif FROM nombre_nif WHERE nkey=?", (nkey,)).fetchone()
+        if dominante:                    # el NIF con que sale ese nombre en al menos el 80 % de los contratos
+            return "", 301, {"Location": f"/empresa/{dominante[0]}"}
+        if "n:" + nkey in claves:
+            clave = "n:" + nkey
+        elif len(claves) == 1:
+            return "", 301, {"Location": f"/empresa/{claves[0]}"}
+        else:
+            clave = "n:" + nkey          # varias empresas (NIF distintos) con ese nombre: se enseñan para elegir
+    else:
+        clave = _empresa_nif(ident)
+        if not clave:
+            return _empresa_no_encontrada()
+        if clave != ident:
+            return "", 301, {"Location": f"/empresa/{clave}"}
+    emp = con.execute("SELECT nombre, n, nf, nm, importe, sociedad FROM empresas WHERE clave=?", (clave,)).fetchone()
+    if not emp:
+        if clave.startswith("n:"):
+            # el nombre solo aparece con varios NIF distintos: se enseñan para elegir
+            otras = con.execute("SELECT e.clave, e.nombre, e.n FROM empresas e WHERE e.clave IN "
+                                "(SELECT clave FROM alias WHERE nkey=?) ORDER BY e.n DESC LIMIT 30",
+                                (clave[2:],)).fetchall()
+            if otras:
+                lis = "".join(f'<li><a href="/empresa/{esc(c)}">{esc(nm)}</a> · NIF {esc(c)} · '
+                              f'{fmt_num(n)} {_t("contratos")}</li>' for c, nm, n in otras)
+                body = (f'<div class="static-page"><h1>{_t("Hay varias empresas con este nombre")}</h1>'
+                        f'<ul>{lis}</ul></div>')
+                return _page_shell(_t("Hay varias empresas con este nombre"), body,
+                                   extra_head='<meta name="robots" content="noindex">'), 200, {}
+        return _empresa_no_encontrada()
+    nombre, n_total, n_f, n_m, importe_total, sociedad = emp
+    nif = "" if clave.startswith("n:") else clave
+    url_propia = f"/empresa/{clave}" if nif else f"/empresa/n-{clave[2:].replace(' ', '-')}"
+
+    def _pag(param, total):
+        try:
+            p = int(qs.get(param, ["1"])[0])
+        except ValueError:
+            p = 1
+        tp = max(1, (total + EMPRESAS_POR_PAGINA - 1) // EMPRESAS_POR_PAGINA)
+        return min(max(1, p), tp), tp
+    pag_f, tp_f = _pag("pag_f", n_f)
+    pag_m, tp_m = _pag("pag_m", n_m)
+
+    variantes = con.execute("SELECT nombre, n FROM variantes WHERE clave=? ORDER BY n DESC", (clave,)).fetchall()
+    organos = con.execute(
+        "SELECT o.organo, o.municipio, o.provincia, o.entidad, COUNT(*), SUM(c.suma) FROM c JOIN organos o "
+        "ON o.id=c.org WHERE c.clave=? GROUP BY c.org ORDER BY 6 DESC, 5 DESC", (clave,)).fetchall()
+    anios = con.execute("SELECT substr(fecha, 1, 4), COUNT(*), SUM(tipo='F'), SUM(tipo='M'), SUM(suma) FROM c "
+                        "WHERE clave=? GROUP BY 1 ORDER BY 1 DESC", (clave,)).fetchall()
+    sql = ("SELECT c.fecha, o.organo, o.municipio, o.provincia, o.entidad, c.titulo, c.importe, c.nota, c.iva, "
+           "c.url, c.fuente, c.estado, c.con_nif FROM c JOIN organos o ON o.id=c.org WHERE c.clave=? AND c.tipo=? "
+           "ORDER BY c.fecha DESC, c.rowid LIMIT ? OFFSET ?")
+    formales = con.execute(sql, (clave, "F", EMPRESAS_POR_PAGINA, (pag_f - 1) * EMPRESAS_POR_PAGINA)).fetchall()
+    menores = con.execute(sql, (clave, "M", EMPRESAS_POR_PAGINA, (pag_m - 1) * EMPRESAS_POR_PAGINA)).fetchall()
+
+    # ── Cabecera: nombre, NIF, variantes ──
+    nif_html = f'<p class="lid">NIF {esc(nif)}</p>' if nif else ""
+    b = None
+    nombre_borme = ""
+    for cand in [nombre] + [v for v, _ in variantes]:
+        b = _administrador_borme_info(cand, nif)
+        if b:
+            nombre_borme = cand
+            break
+    denom_html = (f'<p class="lid">{_t("Denominación en el BORME")}: {esc(b["sociedad_borme"])}</p>'
+                  if b and b.get("sociedad_borme") else "")
+    var_html = ""
+    if len(variantes) > 1:
+        lista = ", ".join(f"«{esc(v)}» ({fmt_num(n)})" for v, n in variantes[:12])
+        resto = f" … (+{len(variantes) - 12})" if len(variantes) > 12 else ""
+        var_html = (f'<div class="cm-base-nota"><b>{_t("Variantes del nombre en las fuentes")}</b>: '
+                    f'{_t("{n} formas distintas en los anuncios de los órganos, contadas como una sola empresa.").format(n=len(variantes))} '
+                    f'{lista}{resto}</div>')
+    aviso_nombre = "" if nif else (
+        f'<div class="cm-base-nota">{_t("Las fuentes no publican el NIF de estos contratos: se han juntado por el nombre. Si hay más de una empresa con el mismo nombre, aquí pueden aparecer juntas.")}</div>')
+
+    # ── Órgano de administración: solo el del BORME, como en el resto del sitio ──
+    if b:
+        adm_html = (f'<div class="directivo">{esc(b.get("nombre") or "")}</div>'
+                    f'<div class="cargo">{esc(_cargo_txt(b.get("cargo") or ""))}</div>'
+                    f'{_borme_fuente_html(nombre_borme, nif)}')
+    elif _es_sociedad_mercantil(nombre, nif):
+        adm_html = _sin_administrador_html(nombre, nif)
+    else:
+        adm_html = f'<span class="noloc-nota">{_t("No es una sociedad mercantil: no publica su administración en el BORME.")}</span>'
+
+    # ── Concentración ──
+    def _pct(x):
+        return f"{(100 * (x or 0) / importe_total):.1f} %".replace(".", ",") if importe_total else "—"
+    filas_org = "".join(
+        f'<tr><td>{esc(o or "—")}<div class="lid">{_empresa_muni_html(m, pv, ent)}</div></td>'
+        f'<td class="rk-valor">{fmt_num(n)}</td><td class="rk-valor">{fmt_eur(str(s or 0))}</td>'
+        f'<td class="rk-valor">{_pct(s)}</td></tr>' for o, m, pv, ent, n, s in organos[:20])
+    mas_org = (f'<p class="lid">{_t("Y {n} órganos más.").format(n=fmt_num(len(organos) - 20))}</p>'
+               if len(organos) > 20 else "")
+    filas_anio = "".join(
+        f'<tr><td>{esc(a or "—")}</td><td class="rk-valor">{fmt_num(nf)}</td><td class="rk-valor">{fmt_num(nm)}</td>'
+        f'<td class="rk-valor">{fmt_eur(str(s or 0))}</td><td class="rk-valor">{_pct(s)}</td></tr>'
+        for a, n, nf, nm, s in anios)
+
+    def _filas_contratos(filas, menor):
+        out = []
+        for fe, org, muni, pv, ent, tit, imp, nota, iva, url, fuente, estado, con_nif in filas:
+            nota, url, estado = nota or "", url or "", estado or ""
+            nota_txt = _empresa_nota_fila(nota, imp or 0)
+            if nota == "sin-importe" or nota == "no-localizado":
+                imp_txt = _t("sin importe publicado") if nota == "sin-importe" else _t("No localizado")
+                nota_txt = ""
+            else:
+                imp_txt = fmt_eur(str(imp or 0))
+            if menor:
+                proc = _t("Contrato menor")
+                tipo = _tipo_menor_txt(estado) if estado else ""
+                proc += f'<div class="lid">{esc(tipo)}</div>' if tipo else ""
+                enlace = (f'<div class="lid">{esc(_FUENTE_CM_LABEL.get(fuente, fuente))} · '
+                          f'{_empresa_muni_html(muni, pv, ent)}</div>')
+            else:
+                proc = esc(_estado_txt({"ADJ": "Adjudicado", "RES": "Resuelto", "FOR": "Formalizado",
+                                        "EXE": "En ejecución"}.get(estado, estado))) if estado else "—"
+                etiqueta = {"PSCP": _t("PSCP ↗"), "BORM": _t("BORM PDF ↗")}.get(fuente, _t("PLACE ↗"))
+                enlace = (f'<a class="link" href="{esc(url)}" target="_blank" rel="noopener">{etiqueta}</a>'
+                          if url.startswith("http") else "")
+            nota_html = f'<span class="noloc-nota">{esc(nota_txt)}</span>' if nota_txt else ""
+            if nif and not con_nif:
+                nota_html += f'<span class="noloc-nota">{_t("La fuente no publica el NIF en este contrato: se asigna por el nombre.")}</span>'
+            out.append(f"""<tr>
+      <td><div class="lid">{esc(_empresa_fecha(fe))}</div>{esc(org or "—")}<div class="lid">📍 {_empresa_muni_html(muni, pv, ent) or "—"}</div>
+          <div class="cargo">{esc((tit or "")[:160])}</div></td>
+      <td class="cm-importe"><span class="emp-imp">{esc(imp_txt)}</span><span class="noloc-nota">{esc(_empresa_iva_txt(iva))}</span>{nota_html}</td>
+      <td>{proc}</td>
+      <td>{enlace}</td>
+    </tr>""")
+        return "".join(out)
+
+    cab = (f'<tr><th>{_t("Fecha")} · {_t("Órgano contratante / Objeto")}</th><th>{_t("Importe")}</th>'
+           f'<th>{_t("Procedimiento / estado")}</th><th>{_t("Ficha oficial")}</th></tr>')
+    otros = {"pag_f": pag_f, "pag_m": pag_m}
+    tabla_f = (f'<h2 id="formales">{_t("Contratos formales")} ({fmt_num(n_f)})</h2>'
+               f'<div class="tbl-scroll"><table class="t-tarjeta">{cab}{_filas_contratos(formales, False)}</table></div>'
+               f'{_empresa_paginacion(url_propia, "pag_f", pag_f, tp_f, "formales", otros)}') if n_f else ""
+    tabla_m = (f'<h2 id="menores">{_t("Contratos menores")} ({fmt_num(n_m)})</h2>'
+               f'<div class="cm-base-nota">{_t("Los contratos menores no tienen ficha propia en la mayoría de las fuentes: el enlace lleva a la ficha del municipio, donde se explica cada fuente.")}</div>'
+               f'<div class="tbl-scroll"><table class="t-tarjeta">{cab}{_filas_contratos(menores, True)}</table></div>'
+               f'{_empresa_paginacion(url_propia, "pag_m", pag_m, tp_m, "menores", otros)}') if n_m else ""
+    asunto = quote_plus(f"Informe completo: {nombre}")
+    body = f"""<div class="static-page empresa-ficha">
+  <h1>{esc(nombre)}</h1>
+  {nif_html}{denom_html}
+  <div class="stats-row">
+    <div class="stat"><span>{fmt_num(n_f)}</span>{_t("Contratos formales")}</div>
+    <div class="stat"><span>{fmt_num(n_m)}</span>{_t("Contratos menores")}</div>
+    <div class="stat"><span>{fmt_eur(str(importe_total or 0))}</span>{_t("Importe total")}</div>
+    <div class="stat"><span>{fmt_num(len(organos))}</span>{_t("Órganos contratantes")}</div>
+  </div>
+  {var_html}{aviso_nombre}
+  <div class="cm-base-nota">{_t("Datos oficiales de los portales de contratación (PLACE, PSCP, BORM, KontratazioA y los de cada ayuntamiento). Los importes van con la base que publica cada fuente (con o sin IVA, se indica en cada fila) y no se convierten. Las sumas no incluyen los contratos sin importe publicado ni los importes que la fuente publica con un error evidente.")}</div>
+  <h2>{_t("Órgano de administración")}</h2>
+  <div class="empresa-adm">{adm_html}</div>
+  <h2>{_t("Concentración por órgano contratante")}</h2>
+  <div class="tbl-scroll"><table class="t-tarjeta">
+    <tr><th>{_t("Órgano contratante")}</th><th>{_t("Contratos")}</th><th>{_t("Importe")}</th><th>{_t("% del importe")}</th></tr>
+    {filas_org}
+  </table></div>{mas_org}
+  <h2>{_t("Concentración por año")}</h2>
+  <div class="tbl-scroll"><table class="t-tarjeta">
+    <tr><th>{_t("Año")}</th><th>{_t("Formales")}</th><th>{_t("Menores")}</th><th>{_t("Importe")}</th><th>{_t("% del importe")}</th></tr>
+    {filas_anio}
+  </table></div>
+  {tabla_f}
+  {tabla_m}
+  <div class="empresa-informe">
+    <h2>{_t("¿Necesitas el informe completo de esta empresa?")}</h2>
+    <p>{_t("Escríbenos y te contamos qué incluye:")} <a href="mailto:contacto@dinero-publico.com?subject={asunto}">contacto@dinero-publico.com</a></p>
+  </div>
+</div>"""
+    extra = '<meta name="robots" content="noindex">' if (pag_f > 1 or pag_m > 1) else ""
+    titulo = _t("{nombre}: contratos públicos").format(nombre=nombre)
+    desc = _t("Contratos públicos adjudicados a {nombre} en España: {n} contratos, por órgano y por año, con enlace a la fuente oficial.").format(
+        nombre=nombre, n=fmt_num(n_total))
+    return _page_shell(titulo, body, description=desc, extra_head=extra, og_path=url_propia), 200, {}
+
+
+def _sitemap_empresas(parte=None):
+    """/sitemap-empresas.xml (índice) y /sitemap-empresas-<n>.xml: solo sociedades mercantiles, solo en castellano
+    (el mapa principal ya va por los 38.000 URL de los 50.000 que admite un fichero)."""
+    con = _empresas_con()
+    if con is None:
+        return None
+    try:
+        claves = [c for (c,) in con.execute("SELECT clave FROM empresas WHERE sociedad=1 ORDER BY clave")]
+    finally:
+        con.close()
+    tam = 40000
+    partes = max(1, (len(claves) + tam - 1) // tam)
+    if parte is None:
+        locs = "".join(f"  <sitemap><loc>{esc(SITE_URL)}/sitemap-empresas-{i}.xml</loc></sitemap>\n"
+                       for i in range(1, partes + 1))
+        return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+                '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + locs + '</sitemapindex>\n')
+    if not 1 <= parte <= partes:
+        return ""
+    urls = []
+    for c in claves[(parte - 1) * tam:parte * tam]:
+        ruta = f"/empresa/{c}" if not c.startswith("n:") else f"/empresa/n-{c[2:].replace(' ', '-')}"
+        urls.append(f"  <url><loc>{esc(SITE_URL)}{esc(ruta)}</loc><changefreq>weekly</changefreq></url>")
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "\n".join(urls) + "\n</urlset>\n")
+
+
+
 def _route_get(path, qs, gzip_ok=False):
     if FILTRO_EMBUDO and path.rstrip("/") == FEMB.RUTA:
         return _filtro_embudo_resp("GET", {})          # lo que venga en la dirección se ignora: nada en los registros
@@ -29594,6 +30231,23 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/fondos-ue":
         return _resp(render_fondos_ue_html(qs), gzip_ok=gzip_ok)
 
+    if path.startswith("/empresa/"):
+        html_emp, code_emp, cab_emp = render_empresa_html(path[len("/empresa/"):], qs)
+        if code_emp == 301:
+            return 301, {"Location": cab_emp["Location"], "Content-Length": "0",
+                         "Cache-Control": "public, max-age=86400"}, b""
+        return _resp(html_emp, code=code_emp, headers=cab_emp or None, gzip_ok=gzip_ok)
+
+    if path == "/sitemap-empresas.xml" or (path.startswith("/sitemap-empresas-") and path.endswith(".xml")):
+        parte = None
+        if path != "/sitemap-empresas.xml":
+            num = path[len("/sitemap-empresas-"):-len(".xml")]
+            parte = int(num) if num.isdigit() else 0
+        cuerpo = _sitemap_empresas(parte)
+        if not cuerpo:
+            return 404 if cuerpo == "" else 503, {"Content-Length": "0"}, b""
+        return _resp(cuerpo, content_type="application/xml; charset=utf-8", gzip_ok=gzip_ok)
+
     if path == "/entidad":
         html_ent, code_ent = render_entidad_html(qs)
         return _resp(html_ent, code=code_ent, gzip_ok=gzip_ok)
@@ -29675,7 +30329,7 @@ def _route_get(path, qs, gzip_ok=False):
         # búsqueda. Bytespider y Amazonbot ya reciben un 403 (_RE_UA_BLOQUEADO); aquí quedan dichos también.
         ia = "".join(f"User-agent: {b}\n" for b in _ROBOTS_IA_ENTRENAMIENTO)
         body = (f"{ia}Disallow: /\n\nUser-agent: *\nDisallow: /admin/\n{bloqueos}Allow: /\n\n"
-                f"Sitemap: {SITE_URL}/sitemap.xml\n")
+                f"Sitemap: {SITE_URL}/sitemap.xml\nSitemap: {SITE_URL}/sitemap-empresas.xml\n")
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
 
     if path == "/sitemap.xml":
