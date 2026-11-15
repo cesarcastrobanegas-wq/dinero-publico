@@ -177,6 +177,93 @@ def parsear(e):
     }
 
 
+# --- Repetidos dentro del feed ------------------------------------------------------------------------------------
+# Se llama solo con dos registros del mismo municipio, NIF del adjudicatario, importe sin IVA y fecha de adjudicación.
+# Regla del 14-10-2026: mismo objeto y mismo expediente (igual o con un sufijo, «bis»).
+# Regla del 15-11-2026 (ejemplos de Majadahonda y Pinto): el ayuntamiento vuelve a publicar el contrato con otro objeto
+# («Reparación puertas colegio Santa Catalina de Majadahonda» / «Reparación puertas colegio Santa Catalina») y el
+# expediente escrito de otra forma («EN_41/2024» / «EN-41/2024»; «2023-14566» / «2023/14566»; «EN_37/2024» /
+# «EN-F/2024/4894 (37/2024)»). Cuenta como el mismo contrato si los dos expedientes son iguales sin signos, o si
+# uno de ellos es SOLO un número con su año (con letras delante como mucho: «EN_37/2024», «DECRETO 2025/73») y el otro
+# termina en ese mismo número y año («(37/2024)», «RESOLUCION 2025/73»). Con cualquier cosa detrás no vale: «729/2024-B»
+# y «729/2024-M» son dos talleres distintos, «CM-29/2026 bis» puede ser otro contrato y «39/2024R» / «39/2024redaccion»
+# son la obra y su proyecto. Con «lote» en el expediente solo vale la igualdad exacta: dos lotes del mismo expediente
+# pueden tener el mismo importe. Con expediente distinto no se toca nunca: «mejor un duplicado visible que un
+# fraccionamiento escondido» (decisión de César del 16-10).
+_ANIO_EXP = r"(?:19|20)\d\d"
+_EXP_SOLO_NUMERO = re.compile(rf"^[A-Za-zÁÉÍÓÚÑáéíóúñ\s_.\-/]*?(?:(\d+)\s*[/_\-]\s*({_ANIO_EXP})|({_ANIO_EXP})\s*[/_\-]\s*(\d+))\s*$")
+
+
+# Con otro objeto hace falta además que se parezca: el mismo expediente con otro objeto es a veces otro contrato
+# («2157»: hormigón para un aparcamiento / motosierras y cortacéspedes). Parecido = al menos la mitad de las palabras
+# con significado del objeto más corto están en el otro (por sus 5 primeras letras, sin tildes: «biorresiduos» y
+# «bioresiduos» no casan, «transporte» y «transportes» sí). No cuentan las palabras de cualquier contrato.
+_PALABRAS_GENERICAS = {      # ya cortadas a 5 letras: contrato/contratación, servicio, suministro/subministro...
+    "contr", "servi", "sumin", "submi", "menor", "adqui", "munic", "ayunt", "conce", "objet", "relat", "reali",
+    "prest", "fecha", "duran", "dicho", "dicha", "segun", "desde", "entre", "sobre", "todos", "todas", "para", "como",
+    "toda", "todo", "este", "esta"}
+
+
+def _palabras_objeto(x):
+    import html
+    import unicodedata
+    t = unicodedata.normalize("NFKD", html.unescape(x or "").lower())
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    return {w[:5] for w in re.findall(r"[a-zñç]{4,}", t)} - _PALABRAS_GENERICAS
+
+
+def objeto_parecido(a, b):
+    pa, pb = _palabras_objeto(a), _palabras_objeto(b)
+    corto, largo = sorted((pa, pb), key=len)
+    if not corto:
+        return False
+    return len(corto & largo) >= max(1, (len(corto) + 1) // 2) if len(corto) >= 2 else corto <= largo
+
+
+def _nexp(x):
+    return re.sub(r"[^A-Z0-9]", "", (x or "").upper())
+
+
+def _numero_anio(x):
+    """(número, año) si el expediente es solo eso, con letras delante como mucho: «EN_37/2024» -> (37, '2024')."""
+    m = _EXP_SOLO_NUMERO.match((x or "").strip())
+    if not m:
+        return None
+    return (int(m.group(1)), m.group(2)) if m.group(1) else (int(m.group(4)), m.group(3))
+
+
+def _termina_en(x, par):
+    """True si el expediente x acaba en ese número y año (37/2024 o 2024/37), como mucho seguido de «)»."""
+    num, anio = par
+    return bool(re.search(rf"(?<!\d)0*{num}\s*[/_\-]\s*{anio}\s*\)?\s*$|(?<!\d){anio}\s*[/_\-]\s*0*{num}\s*\)?\s*$",
+                          (x or "").strip()))
+
+
+def mismo_contrato_repetido(a, b):
+    """Motivo (texto) si a y b son el mismo contrato publicado dos veces; None si no. a y b llevan "exp" y "titulo"
+    (y "sin_iva" si se conoce)."""
+    ea, eb = _nexp(a.get("exp")), _nexp(b.get("exp"))
+    if not ea or not eb:
+        return None
+    if a.get("titulo") == b.get("titulo"):
+        c, l = sorted((ea, eb), key=len)
+        if ea == eb or (len(c) >= 4 and l.startswith(c)):
+            return "mismo objeto y expediente"
+    if "sin_iva" in a and not a.get("sin_iva"):
+        return None                     # importe 0 o sin importe: no basta para decir que es el mismo contrato
+    if a.get("titulo") != b.get("titulo") and not objeto_parecido(a.get("titulo"), b.get("titulo")):
+        return None                     # mismo expediente pero otro objeto: puede ser otro contrato
+    if ea == eb:
+        return "mismo expediente, objeto parecido"
+    if "LOT" in ea or "LOT" in eb:
+        return None
+    for x, y in ((a.get("exp"), b.get("exp")), (b.get("exp"), a.get("exp"))):
+        par = _numero_anio(x)
+        if par and _termina_en(y, par):
+            return "mismo número de expediente escrito de otra forma"
+    return None
+
+
 def ine_de(r):
     m = re.match(r"^L01(\d{5})\d$", r["dir3"] or "")
     if m:
@@ -374,34 +461,27 @@ def fase_generar(meses, zips, A):
     log(f"asignación: {dict(est)}")
     log(f"sin asignar (top 40): {sin.most_common(40)}")
 
-    # Repetidos dentro del propio feed (decisión de César, 14-10-2026): mismo municipio, NIF, importe, fecha y objeto,
-    # y el mismo expediente o el mismo con un sufijo («bis»): es el mismo contrato publicado dos veces. Se queda la
-    # versión actualizada más tarde. El órgano no se exige igual (al republicarse cambia dentro del mismo ayuntamiento).
-    def _nexp(x):
-        return re.sub(r"[^A-Z0-9]", "", (x or "").upper())
-
-    def _mismo_exp(a, b):
-        a, b = _nexp(a), _nexp(b)
-        if not a or not b:
-            return False
-        c, l = sorted((a, b), key=len)
-        return a == b or (len(c) >= 4 and l.startswith(c))
+    # Repetidos dentro del propio feed: mismo municipio, NIF, importe y fecha, y además (mismo_contrato_repetido) el
+    # mismo objeto con el mismo expediente o con sufijo (14-10-2026), o el mismo expediente aunque cambie el objeto
+    # (15-11-2026). Se queda la versión actualizada más tarde. El órgano no se exige igual (al republicarse cambia
+    # dentro del mismo ayuntamiento).
     racimos = collections.defaultdict(list)
     for k, (m, prov) in asignado.items():
         r = ultimo[k]
-        racimos[(m, prov, re.sub(r"[^A-Z0-9]", "", (r["nif_adj"] or "").upper()), r["sin_iva"], r["fecha"], r["titulo"])].append(k)
-    repetidos = 0
+        racimos[(m, prov, re.sub(r"[^A-Z0-9]", "", (r["nif_adj"] or "").upper()), r["sin_iva"], r["fecha"])].append(k)
+    repetidos = collections.Counter()
     for clave, ks in racimos.items():
         if len(ks) < 2 or not clave[2]:
             continue
         quedan = []
         for k in sorted(ks, key=lambda k: ultimo[k]["updated"], reverse=True):
-            if any(_mismo_exp(ultimo[k].get("exp"), ultimo[q].get("exp")) for q in quedan):
+            motivo = next((mm for mm in (mismo_contrato_repetido(ultimo[k], ultimo[q]) for q in quedan) if mm), None)
+            if motivo:
                 asignado.pop(k, None)
-                repetidos += 1
+                repetidos[motivo] += 1
             else:
                 quedan.append(k)
-    log(f"repetidos dentro del feed (mismo expediente o con sufijo): {repetidos} descartados")
+    log(f"repetidos dentro del feed: {sum(repetidos.values())} descartados {dict(repetidos)}")
 
     por_anio = collections.defaultdict(list)
     fuera = collections.Counter()
