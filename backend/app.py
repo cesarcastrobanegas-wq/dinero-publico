@@ -2292,6 +2292,7 @@ def _cache_db_comprimir(origen, destino):
         raise
 _RANGO_PETICION = contextvars.ContextVar("rango_peticion", default="")   # cabecera Range de la petición en curso
 _TOKEN_CABECERA = contextvars.ContextVar("token_cabecera", default="")   # cabecera X-Admin-Token de la petición en curso
+_COOKIE_PETICION = contextvars.ContextVar("cookie_peticion", default="")  # cabecera Cookie (sesión de /admin/revision)
 
 
 def _token_admin_valido(token):
@@ -2306,6 +2307,15 @@ def _token_admin_peticion(params=None):
     así que se ignora y la petición recibe 403."""
     token = _TOKEN_CABECERA.get() or (params.get("token", [""])[0] if params is not None else "")
     return _token_admin_valido(token)
+
+
+def _admin_en_peticion():
+    """True si la petición en curso viene de administración: cabecera X-Admin-Token con el ADMIN_TOKEN o la sesión de
+    /admin/revision (cookie firmada). Para vistas previas (borradores de /casos, 15-11-2026: el repositorio es público
+    y un borrador no puede verse sin la clave). Como en el resto de /admin, nunca un ?token= en la URL."""
+    if _token_admin_peticion():
+        return True
+    return bool(_revision_cookie_valida({"HTTP_COOKIE": _COOKIE_PETICION.get()}))
 DIRECTOR_CACHE_FILE = os.path.join(BASE_DIR, "director_cache.json")   # solo para migración inicial
 
 # Primer arranque con disco nuevo/vacío (DATA_DIR distinto de BASE_DIR y sin
@@ -26415,8 +26425,10 @@ _CASOS_RENDER_POR_SLUG = {c["slug"]: c["render"] for c in _CASOS_NUEVOS_20260930
 # sindicación, mismo expediente, fecha, importe sin IVA, adjudicatario y objeto; el enlace es la ficha del contrato
 # en la Plataforma) y, para La Laguna, los listados anuales de contratos menores que publica el propio Ayuntamiento.
 #   - Publicadas: en _CASOS (índice, portada y mapa del sitio) y en _CASOS_RENDER_POR_SLUG. Un borrador futuro va en
-#     _CASOS_BORRADOR_POR_SLUG: se ve con /casos/<slug>?borrador=1, con aviso de borrador y noindex
-#     (_caso_borrador_pagina).
+#     _CASOS_BORRADOR_POR_SLUG: se ve con /casos/<slug>?borrador=1 y SOLO con la clave de administración (cabecera
+#     X-Admin-Token o la sesión de /admin/revision; sin ella, 404), con aviso de borrador y noindex
+#     (_caso_borrador_pagina). Regla de César (15-11-2026): el repositorio es público, así que el texto de un caso
+#     sin publicar no entra en el código hasta el día de publicarlo; los borradores se guardan fuera del repositorio.
 #   - Lenguaje: «posible fraccionamiento», «indicio»; nunca fraude ni ilegalidad. En Utrera el adjudicatario de 2022
 #     es una persona física: no se nombra (la pieza va sobre el Ayuntamiento).
 _PLACE_DETALLE = "https://contrataciondelestado.es/wps/poc?uri=deeplink:detalle_licitacion&idEvl="
@@ -26454,7 +26466,7 @@ _CASO_LEY_FRACCIONAMIENTO = """
 _CASO_LEY_FRACCIONAMIENTO_CANARIAS = _CASO_LEY_FRACCIONAMIENTO.replace("sin IVA", "sin IGIC")
 
 _CASO_AVISO_INDICIO = """
-  <p><strong>Un indicio no es una irregularidad probada.</strong> Desde fuera solo vemos lo que se publica: fechas,
+  <p><strong>Un indicio no es una prueba.</strong> Desde fuera solo vemos lo que se publica: fechas,
   importes, objeto y adjudicatario. No vemos los informes que justifican cada contrato, que pueden explicar por qué se
   tramitaron por separado. Lo contamos porque el patrón es exactamente el que la ley pide vigilar, no porque sepamos
   que haya algo mal hecho. Si el Ayuntamiento quiere aportar contexto, lo añadiremos a esta pieza. Puede escribirnos a
@@ -30377,8 +30389,9 @@ def _route_get(path, qs, gzip_ok=False):
         if _tr:
             return _resp(_tr, gzip_ok=gzip_ok)
     if (path.startswith("/casos/") and path[len("/casos/"):] in _CASOS_BORRADOR_POR_SLUG
-            and qs.get("borrador", [""])[0] == "1"):
-        return _resp(_CASOS_BORRADOR_POR_SLUG[path[len("/casos/"):]](), gzip_ok=gzip_ok)    # borrador sin publicar
+            and qs.get("borrador", [""])[0] == "1" and _admin_en_peticion()):
+        return _resp(_CASOS_BORRADOR_POR_SLUG[path[len("/casos/"):]](), gzip_ok=gzip_ok,    # borrador sin publicar
+                     headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
     if path.startswith("/casos/") and path[len("/casos/"):] in _CASOS_RENDER_POR_SLUG:
         return _resp(_CASOS_RENDER_POR_SLUG[path[len("/casos/"):]](), gzip_ok=gzip_ok)
 
@@ -31847,9 +31860,11 @@ def app(environ, start_response):
     respuesta = None
     try:
         t_token = _TOKEN_CABECERA.set(environ.get("HTTP_X_ADMIN_TOKEN", "") or "")
+        t_cookie = _COOKIE_PETICION.set(environ.get("HTTP_COOKIE", "") or "")
         try:
             respuesta = _app_wsgi(environ, _anotando)
         finally:
+            _COOKIE_PETICION.reset(t_cookie)
             _TOKEN_CABECERA.reset(t_token)
         return respuesta
     finally:
@@ -32075,11 +32090,13 @@ class Handler(BaseHTTPRequestHandler):
             gzip_ok = "gzip" in self.headers.get("Accept-Encoding", "")
             t_rango = _RANGO_PETICION.set(self.headers.get("Range", "") or "")
             t_token = _TOKEN_CABECERA.set(self.headers.get("X-Admin-Token", "") or "")
+            t_cookie = _COOKIE_PETICION.set(self.headers.get("Cookie", "") or "")
             try:
                 self._write(*_filtro_salida_dni(_ruta_para_aviso(parsed.path, parsed.query),
                                                 *_route_get_i18n(parsed.path, qs, gzip_ok=gzip_ok,
                                                                  query_string=parsed.query)))
             finally:
+                _COOKIE_PETICION.reset(t_cookie)
                 _RANGO_PETICION.reset(t_rango)
                 _TOKEN_CABECERA.reset(t_token)
         finally:
