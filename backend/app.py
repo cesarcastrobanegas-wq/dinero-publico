@@ -19837,6 +19837,7 @@ def _header_html(provincia="todas", con_lema=True, buscador_aqui=False):
     <a href="{buscar_href}" class="nav-buscar" aria-label="{_t("Buscar")}">🔍 {_t("Buscar")}</a>
     <a href="{rankings_href}">{_t("Rankings")}</a>
     <a href="{rankings_href}#alcaldes">{_t("Sueldos Alcaldes")}</a>
+    <a href="/sueldos-concejales">{_t("Sueldos Concejales")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
     <a href="/convocatorias" class="nav-conv">{_t("Convocatorias abiertas")}</a>
     <a href="/casos">{_t("Casos")}</a>
@@ -19888,6 +19889,7 @@ def _footer_html(provincia="todas"):
     <a href="{esc(REGISTRO_MERCANTIL_URL)}" target="_blank" rel="noopener">Registro Mercantil</a>
     <a href="/rankings{_q_prov_first(provincia)}">{_t("Rankings")}</a>
     <a href="/rankings{_q_prov_first(provincia)}#alcaldes">{_t("Sueldos Alcaldes")}</a>
+    <a href="/sueldos-concejales">{_t("Sueldos Concejales")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
     <a href="/convocatorias">{_t("Convocatorias abiertas")}</a>
     <a href="/aviso-legal">{_t("Aviso Legal")}</a>
