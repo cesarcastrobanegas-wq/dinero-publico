@@ -3456,6 +3456,150 @@ msgstr "Zinegotzien soldatak dituzten beste udalerri batzuk"
 msgid "Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP) y las plataformas autonómicas que agrega."
 msgstr "Eskaintzak aurkezteko epea irekita duten lizitazioak, Sektore Publikoko Kontratazio Plataformaren (PLACSP) eta hark biltzen dituen autonomia-erkidegoetako plataformen arabera."
 
+#: app.py
+msgid "Importe en revisión: no se cuenta en las sumas."
+msgstr "Zenbatekoa berrikusten: ez da batuketetan sartzen."
+
+#: app.py
+msgid "con IVA"
+msgstr "BEZarekin"
+
+#: app.py
+msgid "IVA según la fuente"
+msgstr "BEZa, iturriaren arabera"
+
+#: app.py
+msgid "Ficha de empresa"
+msgstr "Enpresaren fitxa"
+
+#: app.py
+msgid "Las fichas de empresa se están preparando. Vuelve a intentarlo en unos minutos."
+msgstr "Enpresen fitxak prestatzen ari dira. Saiatu berriro minutu batzuk barru."
+
+#: app.py
+msgid "Empresa no encontrada"
+msgstr "Ez da enpresa aurkitu"
+
+#: app.py
+msgid "No tenemos contratos de esta empresa en Dinero Público."
+msgstr "Dinero Público-n ez dugu enpresa honen kontraturik."
+
+#: app.py
+msgid "Hay varias empresas con este nombre"
+msgstr "Izen hau duten hainbat enpresa daude"
+
+#: app.py
+msgid "Variantes del nombre en las fuentes"
+msgstr "Izenaren aldaerak iturrietan"
+
+#: app.py
+msgid "{n} formas distintas en los anuncios de los órganos, contadas como una sola empresa."
+msgstr "Organoen iragarkietako forma desberdinak: {n}; enpresa bakartzat hartu dira."
+
+#: app.py
+msgid "Las fuentes no publican el NIF de estos contratos: se han juntado por el nombre. Si hay más de una empresa con el mismo nombre, aquí pueden aparecer juntas."
+msgstr "Iturriek ez dute kontratu hauen IFZ argitaratzen: izenaren arabera elkartu dira. Izen bera duten enpresa bat baino gehiago badaude, hemen elkarrekin ager daitezke."
+
+#: app.py
+msgid "No es una sociedad mercantil: no publica su administración en el BORME."
+msgstr "Ez da merkataritza-sozietatea: ez du bere administrazioa BORMEn argitaratzen."
+
+#: app.py
+msgid "Y {n} órganos más."
+msgstr "Beste organo batzuk: {n}."
+
+#: app.py
+msgid "Órgano contratante / Objeto"
+msgstr "Kontratazio-organoa / Xedea"
+
+#: app.py
+msgid "Ficha oficial"
+msgstr "Fitxa ofiziala"
+
+#: app.py
+msgid "Los contratos menores no tienen ficha propia en la mayoría de las fuentes: el enlace lleva a la ficha del municipio, donde se explica cada fuente."
+msgstr "Kontratu txikiek ez dute fitxa propiorik iturri gehienetan: estekak udalerriaren fitxara darama, eta han azaltzen da iturri bakoitza."
+
+#: app.py
+msgid "Órganos contratantes"
+msgstr "Kontratazio-organoak"
+
+#: app.py
+msgid "Datos oficiales de los portales de contratación (PLACE, PSCP, BORM, KontratazioA y los de cada ayuntamiento). Los importes van con la base que publica cada fuente (con o sin IVA, se indica en cada fila) y no se convierten. Las sumas no incluyen los contratos sin importe publicado ni los importes que la fuente publica con un error evidente."
+msgstr "Kontratazio-atarietako datu ofizialak (PLACE, PSCP, BORM, KontratazioA eta udal bakoitzarenak). Zenbatekoak iturri bakoitzak argitaratzen duen oinarriarekin doaz (BEZarekin edo gabe, errenkada bakoitzean adierazten da) eta ez dira bihurtzen. Batuketetan ez dira sartzen zenbatekorik argitaratu gabeko kontratuak, ezta iturriak akats nabariarekin argitaratutako zenbatekoak ere."
+
+#: app.py
+msgid "Órgano de administración"
+msgstr "Administrazio-organoa"
+
+#: app.py
+msgid "Concentración por órgano contratante"
+msgstr "Kontzentrazioa kontratazio-organoaren arabera"
+
+#: app.py
+msgid "Órgano contratante"
+msgstr "Kontratazio-organoa"
+
+#: app.py
+msgid "Concentración por año"
+msgstr "Kontzentrazioa urtearen arabera"
+
+#: app.py
+msgid "Año"
+msgstr "Urtea"
+
+#: app.py
+msgid "Formales"
+msgstr "Formalak"
+
+#: app.py
+msgid "Menores"
+msgstr "Txikiak"
+
+#: app.py
+msgid "¿Necesitas el informe completo de esta empresa?"
+msgstr "Enpresa honen txosten osoa behar duzu?"
+
+#: app.py
+msgid "Escríbenos y te contamos qué incluye:"
+msgstr "Idatzi iezaguzu eta zer daukan azalduko dizugu:"
+
+#: app.py
+msgid "{nombre}: contratos públicos"
+msgstr "{nombre}: kontratu publikoak"
+
+#: app.py
+msgid "Contratos públicos adjudicados a {nombre} en España: {n} contratos, por órgano y por año, con enlace a la fuente oficial."
+msgstr "Espainian esleitutako kontratu publikoak. Enpresa: {nombre}. Kontratuak: {n}, organoaren eta urtearen arabera, iturri ofizialaren estekarekin."
+
+#: app.py
+msgid "La fuente no publica el NIF en este contrato: se asigna por el nombre."
+msgstr "Iturriak ez du kontratu honetan IFZ argitaratzen: izenaren arabera esleitzen da."
+
+#: app.py
+msgid "Procedimiento / estado"
+msgstr "Prozedura / egoera"
+
+#: app.py
+msgid "Importe sin IVA"
+msgstr "Zenbatekoa BEZik gabe"
+
+#: app.py
+msgid "Importe con IVA"
+msgstr "Zenbatekoa BEZarekin"
+
+#: app.py
+msgid "Importe sin base de IVA indicada"
+msgstr "Zenbatekoa, BEZ oinarria adierazi gabe"
+
+#: app.py
+msgid "% ({base})"
+msgstr "% ({base})"
+
+#: app.py
+msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
+msgstr "Oinarri desberdinak dituzten zenbatekoak ez dira elkarren artean batzen: zutabe bereizietan doaz, eta ehunekoak zutabe honen gainean bakarrik kalkulatzen dira: «{columna}»."
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
 

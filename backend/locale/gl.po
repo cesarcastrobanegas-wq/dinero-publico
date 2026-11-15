@@ -3456,6 +3456,150 @@ msgstr "Outros municipios con soldos de concelleiros"
 msgid "Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP) y las plataformas autonómicas que agrega."
 msgstr "Licitacións co prazo de presentación de ofertas aberto, segundo a Plataforma de Contratación do Sector Público (PLACSP) e as plataformas autonómicas que agrega."
 
+#: app.py
+msgid "Importe en revisión: no se cuenta en las sumas."
+msgstr "Importe en revisión: non se conta nas sumas."
+
+#: app.py
+msgid "con IVA"
+msgstr "con IVE"
+
+#: app.py
+msgid "IVA según la fuente"
+msgstr "IVE segundo a fonte"
+
+#: app.py
+msgid "Ficha de empresa"
+msgstr "Ficha de empresa"
+
+#: app.py
+msgid "Las fichas de empresa se están preparando. Vuelve a intentarlo en unos minutos."
+msgstr "As fichas de empresa estanse a preparar. Volve tentalo nuns minutos."
+
+#: app.py
+msgid "Empresa no encontrada"
+msgstr "Empresa non atopada"
+
+#: app.py
+msgid "No tenemos contratos de esta empresa en Dinero Público."
+msgstr "Non temos contratos desta empresa en Dinero Público."
+
+#: app.py
+msgid "Hay varias empresas con este nombre"
+msgstr "Hai varias empresas con este nome"
+
+#: app.py
+msgid "Variantes del nombre en las fuentes"
+msgstr "Variantes do nome nas fontes"
+
+#: app.py
+msgid "{n} formas distintas en los anuncios de los órganos, contadas como una sola empresa."
+msgstr "{n} formas distintas nos anuncios dos órganos, contadas como unha soa empresa."
+
+#: app.py
+msgid "Las fuentes no publican el NIF de estos contratos: se han juntado por el nombre. Si hay más de una empresa con el mismo nombre, aquí pueden aparecer juntas."
+msgstr "As fontes non publican o NIF destes contratos: xuntáronse polo nome. Se hai máis dunha empresa co mesmo nome, aquí poden aparecer xuntas."
+
+#: app.py
+msgid "No es una sociedad mercantil: no publica su administración en el BORME."
+msgstr "Non é unha sociedade mercantil: non publica a súa administración no BORME."
+
+#: app.py
+msgid "Y {n} órganos más."
+msgstr "E {n} órganos máis."
+
+#: app.py
+msgid "Órgano contratante / Objeto"
+msgstr "Órgano de contratación / Obxecto"
+
+#: app.py
+msgid "Ficha oficial"
+msgstr "Ficha oficial"
+
+#: app.py
+msgid "Los contratos menores no tienen ficha propia en la mayoría de las fuentes: el enlace lleva a la ficha del municipio, donde se explica cada fuente."
+msgstr "Os contratos menores non teñen ficha propia na maioría das fontes: a ligazón leva á ficha do concello, onde se explica cada fonte."
+
+#: app.py
+msgid "Órganos contratantes"
+msgstr "Órganos de contratación"
+
+#: app.py
+msgid "Datos oficiales de los portales de contratación (PLACE, PSCP, BORM, KontratazioA y los de cada ayuntamiento). Los importes van con la base que publica cada fuente (con o sin IVA, se indica en cada fila) y no se convierten. Las sumas no incluyen los contratos sin importe publicado ni los importes que la fuente publica con un error evidente."
+msgstr "Datos oficiais dos portais de contratación (PLACE, PSCP, BORM, KontratazioA e os de cada concello). Os importes van coa base que publica cada fonte (con ou sen IVE, indícase en cada fila) e non se converten. As sumas non inclúen os contratos sen importe publicado nin os importes que a fonte publica cun erro evidente."
+
+#: app.py
+msgid "Órgano de administración"
+msgstr "Órgano de administración"
+
+#: app.py
+msgid "Concentración por órgano contratante"
+msgstr "Concentración por órgano de contratación"
+
+#: app.py
+msgid "Órgano contratante"
+msgstr "Órgano de contratación"
+
+#: app.py
+msgid "Concentración por año"
+msgstr "Concentración por ano"
+
+#: app.py
+msgid "Año"
+msgstr "Ano"
+
+#: app.py
+msgid "Formales"
+msgstr "Formais"
+
+#: app.py
+msgid "Menores"
+msgstr "Menores"
+
+#: app.py
+msgid "¿Necesitas el informe completo de esta empresa?"
+msgstr "Necesitas o informe completo desta empresa?"
+
+#: app.py
+msgid "Escríbenos y te contamos qué incluye:"
+msgstr "Escríbenos e contámosche que inclúe:"
+
+#: app.py
+msgid "{nombre}: contratos públicos"
+msgstr "{nombre}: contratos públicos"
+
+#: app.py
+msgid "Contratos públicos adjudicados a {nombre} en España: {n} contratos, por órgano y por año, con enlace a la fuente oficial."
+msgstr "Contratos públicos adxudicados a {nombre} en España: {n} contratos, por órgano e por ano, con ligazón á fonte oficial."
+
+#: app.py
+msgid "La fuente no publica el NIF en este contrato: se asigna por el nombre."
+msgstr "A fonte non publica o NIF neste contrato: asígnase polo nome."
+
+#: app.py
+msgid "Procedimiento / estado"
+msgstr "Procedemento / estado"
+
+#: app.py
+msgid "Importe sin IVA"
+msgstr "Importe sen IVE"
+
+#: app.py
+msgid "Importe con IVA"
+msgstr "Importe con IVE"
+
+#: app.py
+msgid "Importe sin base de IVA indicada"
+msgstr "Importe sen base de IVE indicada"
+
+#: app.py
+msgid "% ({base})"
+msgstr "% ({base})"
+
+#: app.py
+msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
+msgstr "Os importes con bases distintas non se suman entre si: van en columnas separadas, e as porcentaxes calcúlanse só sobre a columna «{columna}»."
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Aínda sen datos de fondos UE para esta provincia."
 
