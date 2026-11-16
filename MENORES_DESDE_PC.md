@@ -9,7 +9,7 @@ Desde la carpeta del repositorio (`Desktop\app_dinero_publico`), en PowerShell o
 
     python backend/menores_desde_pc.py
 
-Por defecto lanza **Alicante y Santa Cruz de Tenerife**. Para otras, se ponen sus nombres:
+Por defecto lanza **Alicante, Santa Cruz de Tenerife y Palma**. Para otras, se ponen sus nombres:
 
     python backend/menores_desde_pc.py alicante santa_cruz burgos
 
@@ -28,6 +28,7 @@ Por defecto lanza **Alicante y Santa Cruz de Tenerife**. Para otras, se ponen su
 |---|---|---|
 | alicante | Desde GitHub todas las descargas tardan demasiado; desde el PC, bien | 09-11-2026 |
 | santa_cruz | El servidor no contesta a GitHub; desde el PC, sí | 09-11-2026 |
+| palma | Desde GitHub las descargas caducan (al menos desde el 18-10); desde el PC, bien | 16-11-2026 |
 | burgos, almeria, sevilla, valencia_capital | Manuales desde octubre (ver `EXCLUIDOS` en `backend/flujo_menores_semanal.py`) | 10-2026 |
 
 Hace falta tener instaladas las librerías de lectura de hojas de cálculo y PDF (en el PC ya están):

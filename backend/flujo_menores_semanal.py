@@ -48,6 +48,9 @@ EXCLUIDOS = {
     # Se lanzan desde el PC con: python backend/menores_desde_pc.py (ver MENORES_DESDE_PC.md).
     "alicante": "desde GitHub todas las descargas tardan demasiado; desde un PC, bien (manual: menores_desde_pc.py)",
     "santa_cruz": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (manual: menores_desde_pc.py)",
+    # Desde GitHub las 17 descargas caducan («timed out» a los 60 s; cada ejecución tarda ~1.026 s, al menos desde el
+    # 2026-10-18); desde el PC el portal contesta bien (comprobado el 2026-11-16).
+    "palma": "desde GitHub todas las descargas caducan; desde un PC, bien (manual: menores_desde_pc.py)",
 }
 MINUTOS = {"murcia_manual": 150, "euskadi": 210}      # el resto, MINUTOS_POR_DEFECTO
 MINUTOS_POR_DEFECTO = 40
