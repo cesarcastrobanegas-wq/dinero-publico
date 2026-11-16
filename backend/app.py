@@ -3538,6 +3538,7 @@ def _vaciar_caches_de_nombres():
     with _paginas_lock:
         _paginas_cache.clear()
         _paginas_cerrojos.clear()
+    _bots_cache_vaciar()                 # 16-11-2026: la caché de páginas de bots también enseña nombres
 
     def _recalcular():
         try:
@@ -28382,6 +28383,13 @@ _ROBOTS_IA_ENTRENAMIENTO = ("GPTBot", "CCBot", "ClaudeBot", "anthropic-ai", "Goo
                             # iría a _RE_UA_BLOQUEADO (403), como Amazonbot.
                             "ElevenlabsCrawler", "ShapBot")
 
+# 16-11-2026 (encargo de César; medido con /admin/visitas, 7 días): rastreadores que no traen visitas. AhrefsBot y
+# DotBot son de herramientas SEO (10.040 peticiones solo el 16-11), QlyzeBot no dice para qué es y es el que más
+# segundos de servidor gasta (2.206 s en 7 días, 16.868 peticiones) y ExaSearchBot indexa para la API de búsqueda de
+# Exa, como ShapBot. Los tres primeros reciben además un 403 (_RE_UA_BLOQUEADO); ExaSearchBot, como ShapBot, solo el
+# robots.txt, y si no lo respeta irá al 403.
+_ROBOTS_SIN_VISITAS = ("AhrefsBot", "DotBot", "QlyzeBot", "ExaSearchBot")
+
 # «&amp;» copiado tal cual en la consulta (al principio o tras un «&»): ver la redirección de _app_wsgi
 _RE_QS_AMP = re.compile(r"(^|&)amp;")
 
@@ -29637,10 +29645,14 @@ def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False, grupo=No
     ahora = time.time()
     lanzar = False
     cerrojo = None
+    bot = _BOT_PREFIERE_CACHE.get()
     with _paginas_lock:
         e = _paginas_cache.get(clave)
         edad = ahora - e["ts"] if e else None
-        if e and edad < _PAGINAS_MAX_VIEJA:
+        if bot and e and edad < _BOTS_PAGINA_MAX_VIEJA:
+            gz = e["gz"]                         # Googlebot, Bingbot, OAI-SearchBot, PerplexityBot: lo que haya
+            _paginas_stats["servidas_viejas" if edad >= _PAGINAS_TTL else "servidas"] += 1
+        elif e and edad < _PAGINAS_MAX_VIEJA:
             _paginas_cache.move_to_end(clave)
             gz = e["gz"]
             if edad >= _PAGINAS_TTL:
@@ -30633,7 +30645,7 @@ def _route_get(path, qs, gzip_ok=False):
         # Claude-User, PerplexityBot), que sí pueden traer visitas. Google-Extended y Applebot-Extended no son
         # rastreadores aparte: solo dicen si Google o Apple pueden usar lo ya rastreado para entrenar; no tocan la
         # búsqueda. Bytespider y Amazonbot ya reciben un 403 (_RE_UA_BLOQUEADO); aquí quedan dichos también.
-        ia = "".join(f"User-agent: {b}\n" for b in _ROBOTS_IA_ENTRENAMIENTO)
+        ia = "".join(f"User-agent: {b}\n" for b in _ROBOTS_IA_ENTRENAMIENTO + _ROBOTS_SIN_VISITAS)
         body = (f"{ia}Disallow: /\n\nUser-agent: *\nDisallow: /admin/\n{bloqueos}Allow: /\n\n"
                 f"Sitemap: {SITE_URL}/sitemap.xml\nSitemap: {SITE_URL}/sitemap-empresas.xml\n")
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
@@ -31365,7 +31377,9 @@ def _familia_ua(ua):
 # 2026-10-12 (decisión de César, medido con el diagnóstico en dos muestras de 10 minutos: el 93-98 % de las peticiones
 # eran de rastreadores): se añaden SERankingBacklinksBot y MJ12bot (rastreadores de herramientas SEO, no traen visitas)
 # y Amazonbot (150 peticiones cada 10 minutos, casi todas a fichas paginadas en los cuatro idiomas).
-_RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot|SERankingBacklinksBot|MJ12bot|Amazonbot", re.I)
+# 16-11-2026 (encargo de César): AhrefsBot, DotBot y QlyzeBot (ver _ROBOTS_SIN_VISITAS).
+_RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot|SERankingBacklinksBot|MJ12bot|Amazonbot|"
+                              r"AhrefsBot|DotBot|QlyzeBot", re.I)
 
 
 # Cupo de páginas CARAS para rastreadores (2026-10-07, decisión delegada por César). Las búsquedas (/?q=) y los
@@ -31436,6 +31450,159 @@ def _buscador_verificado(ip, ua, exigir_ua=True):
     return ok
 
 
+# Cupo POR HORA para rastreadores (16-11-2026, encargo de César). Medido con /admin/visitas: el 16-11, OAI-SearchBot
+# pidió 24.380 páginas (unas 1.200 por hora), PerplexityBot 8.036 y Amzn-SearchBot 7.024, casi todas fichas de
+# municipio en los cuatro idiomas; Googlebot, 131, y Bingbot, 50. Cada familia de rastreador puede pedir
+# _BOTS_PAGINAS_HORA páginas por hora (de golpe y luego repuestas poco a poco); por encima, 429 con Retry-After, sin
+# montar nada. Fuera del cupo:
+#   - Googlebot y Bingbot verificados por DNS (_buscador_verificado): para ellos está el reparto de abajo;
+#   - los que piden una página porque una persona la ha pedido o compartido (_RE_UA_SIN_CUPO_HORA: ChatGPT-User,
+#     Claude-User, Perplexity-User, vistas previas de redes y mensajería) y los navegadores;
+#   - robots.txt, los sitemaps, /static, /api y /admin.
+_BOTS_PAGINAS_HORA = 300
+# Buscadores de IA que citan la fuente y pueden traer visitas (decisión de César, 16-11-2026): cupo propio.
+_BOTS_PAGINAS_HORA_IA_CITAN = 1500
+_RE_BOTS_IA_CITAN = re.compile(r"^(?:OAI-SearchBot|PerplexityBot)$", re.I)
+_RE_UA_SIN_CUPO_HORA = re.compile(r"ChatGPT-User|Claude-User|Perplexity-User|facebookexternalhit|Twitterbot|LinkedInBot|"
+                                  r"WhatsApp|Slackbot|TelegramBot|Discordbot|DuckDuckBot|Applebot|Google-InspectionTool",
+                                  re.I)
+_bots_hora = {}                  # familia -> [páginas disponibles, última reposición]
+_bots_frenadas_hora = collections.Counter()
+
+# Reparto de la carga de Google y Bing en las fichas de empresa (16-11-2026, encargo de César). Hoy no hace falta
+# (Googlebot pide unas 130-320 páginas al día en total), pero las fichas de empresa son cientos de miles y están en
+# sitemap-empresas.xml: si un día Google las pide todas a la vez, cada buscador puede pedir _BUSCADOR_EMPRESA_CUPO
+# fichas de golpe y después _BUSCADOR_EMPRESA_POR_MIN por minuto; por encima recibe un 503 con Retry-After, que es lo
+# que Google y Bing piden para que bajen el ritmo sin quitar nada del índice. Siguen en el mapa del sitio.
+_BUSCADOR_EMPRESA_CUPO = 120
+_BUSCADOR_EMPRESA_POR_MIN = 30
+_RE_RUTA_EMPRESA = re.compile(r"^(?:/(?:gl|ca|eu))?/empresa/")
+_buscador_empresa = {}           # familia -> [fichas disponibles, última reposición]
+_buscador_empresa_frenadas = collections.Counter()
+
+
+def _cubo(cubos, clave, capacidad, por_segundo):
+    """Cubo de fichas: True si queda una (y la gasta). Llamar con _bots_lock."""
+    ahora = time.time()
+    c = cubos.setdefault(clave, [float(capacidad), ahora])
+    c[0] = min(float(capacidad), c[0] + (ahora - c[1]) * por_segundo)
+    c[1] = ahora
+    if c[0] >= 1:
+        c[0] -= 1
+        return True
+    return False
+
+
+def _ruta_con_cupo_hora(path):
+    return not (path.startswith(("/admin", "/api/", "/static/", "/sitemap")) or path in ("/robots.txt", "/favicon.ico", "/sw.js", "/manifest.json"))
+
+
+def _bot_frenado_por_hora(familia, path, ip, ua):
+    """None si pasa; si no, (estado, Retry-After) para el cupo por hora (429) o para el reparto de buscadores (503)."""
+    if familia in ("navegador", "otro_cliente") or not _ruta_con_cupo_hora(path) or _RE_UA_SIN_CUPO_HORA.search(ua or ""):
+        return None
+    if _RE_UA_BUSCADOR.search(ua or "") and _buscador_verificado(ip, ua):
+        if not _RE_RUTA_EMPRESA.match(path):
+            return None
+        with _bots_lock:
+            if _cubo(_buscador_empresa, familia, _BUSCADOR_EMPRESA_CUPO, _BUSCADOR_EMPRESA_POR_MIN / 60.0):
+                return None
+            _buscador_empresa_frenadas[familia] += 1
+        return "503 Service Unavailable", "120"
+    with _bots_lock:
+        if len(_bots_hora) > 300:
+            _bots_hora.clear()
+        cupo = _BOTS_PAGINAS_HORA_IA_CITAN if _RE_BOTS_IA_CITAN.match(familia) else _BOTS_PAGINAS_HORA
+        if _cubo(_bots_hora, familia, cupo, cupo / 3600.0):
+            return None
+        _bots_frenadas_hora[familia] += 1
+    return "429 Too Many Requests", "600"
+
+
+# Páginas ya guardadas para los rastreadores que nos interesan (16-11-2026, decisión de César): Googlebot, Bingbot,
+# OAI-SearchBot y PerplexityBot reciben, si la hay, una copia ya montada en vez de una página montada para ellos:
+#   - fichas de municipio (/?muni=...&provincia=..., en cada idioma), fichas de entidad (/entidad?id=...) y de empresa
+#     (/empresa/...): una caché propia, solo para ellos, de _BOTS_CACHE_MAX_MB como mucho y _BOTS_CACHE_TTL de vida.
+#     Las personas no la usan nunca (ven siempre la ficha al día). Se vacía entera con cualquier cambio en /admin o
+#     cualquier POST (comentarios aprobados o borrados, rectificaciones...) y al cargar administradores nuevos
+#     (_vaciar_caches_de_nombres), para que un bot no reciba nada que ya se haya quitado;
+#   - portada, rankings, convocatorias... (_pagina_cacheada): reciben la copia que haya aunque tenga horas
+#     (hasta _BOTS_PAGINA_MAX_VIEJA) y su visita no lanza que se vuelva a montar.
+# Solo la copia comprimida de respuestas 200 en HTML sin cookies.
+_RE_UA_PREFIERE_CACHE = re.compile(r"Googlebot|bingbot|OAI-SearchBot|PerplexityBot", re.I)
+_BOTS_CACHE_TTL = 6 * 3600
+_BOTS_CACHE_MAX_MB = 48
+_BOTS_PAGINA_MAX_VIEJA = 24 * 3600
+_RE_RUTA_FICHA = re.compile(r"^(?:/(?:gl|ca|eu))?/(?:entidad|empresa/[^/]+)?$")
+_bots_cache = collections.OrderedDict()   # (ruta, consulta) -> (ts, cabeceras, gz)
+_bots_cache_lock = threading.Lock()
+_bots_cache_stats = {"servidas": 0, "guardadas": 0, "vaciados": 0, "bytes": 0}
+_BOT_PREFIERE_CACHE = contextvars.ContextVar("bot_prefiere_cache", default=False)
+
+
+def _bots_cache_clave(path, query):
+    """Clave de la caché de bots, o None si esta ruta no va por ella."""
+    if not _RE_RUTA_FICHA.match(path or "/"):
+        return None
+    pares = sorted((k, v[0]) for k, v in parse_qs(query or "").items() if v)
+    nombres = {k for k, _v in pares}
+    es_entidad = path.endswith("/entidad")
+    es_empresa = "/empresa/" in path
+    if es_empresa and not nombres:
+        return (path, ())
+    if es_entidad and nombres == {"id"}:
+        return (path, tuple(pares))
+    if not es_entidad and not es_empresa and nombres in ({"muni"}, {"muni", "provincia"}):
+        return (path, tuple(pares))
+    return None
+
+
+def _bots_cache_leer(clave):
+    with _bots_cache_lock:
+        e = _bots_cache.get(clave)
+        if not e:
+            return None
+        if time.time() - e[0] >= _BOTS_CACHE_TTL:
+            _bots_cache.pop(clave, None)
+            _bots_cache_stats["bytes"] -= len(e[2])
+            return None
+        _bots_cache_stats["servidas"] += 1
+        return e[1], e[2]
+
+
+def _bots_cache_guardar(clave, code, headers, body):
+    if (code != 200 or not isinstance(body, (bytes, bytearray)) or headers.get("Content-Encoding") != "gzip"
+            or not headers.get("Content-Type", "").startswith("text/html") or "Set-Cookie" in headers
+            or "no-store" in headers.get("Cache-Control", "")):
+        return
+    cab = {k: v for k, v in headers.items() if k not in ("Content-Length", "ETag")}
+    with _bots_cache_lock:
+        vieja = _bots_cache.pop(clave, None)
+        if vieja:
+            _bots_cache_stats["bytes"] -= len(vieja[2])
+        _bots_cache[clave] = (time.time(), cab, bytes(body))
+        _bots_cache_stats["bytes"] += len(body)
+        _bots_cache_stats["guardadas"] += 1
+        while _bots_cache and _bots_cache_stats["bytes"] > _BOTS_CACHE_MAX_MB * 1024 * 1024:
+            _k, e = _bots_cache.popitem(last=False)
+            _bots_cache_stats["bytes"] -= len(e[2])
+
+
+def _bots_cache_vaciar():
+    with _bots_cache_lock:
+        if _bots_cache:
+            _bots_cache.clear()
+            _bots_cache_stats["vaciados"] += 1
+        _bots_cache_stats["bytes"] = 0
+
+
+def _bots_cache_estado():
+    with _bots_cache_lock:
+        return {"entradas": len(_bots_cache), "mb": round(_bots_cache_stats["bytes"] / 1024 / 1024, 1),
+                "servidas": _bots_cache_stats["servidas"], "guardadas": _bots_cache_stats["guardadas"],
+                "vaciados": _bots_cache_stats["vaciados"]}
+
+
 def _bot_sin_cupo(familia):
     """True si esta familia de rastreador ha agotado su cupo de páginas caras (y hay que contestar 429)."""
     ahora = time.time()
@@ -31497,6 +31664,12 @@ def _ip_sin_cupo(ip, ua=""):
 def _bots_diagnostico():
     with _bots_lock:
         return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12)),
+                "cupo_por_hora": {"paginas_hora": _BOTS_PAGINAS_HORA, "paginas_hora_ia_que_citan": _BOTS_PAGINAS_HORA_IA_CITAN,
+                                  "cache_bots": _bots_cache_estado(),
+                                  "frenadas_desde_el_arranque": dict(_bots_frenadas_hora.most_common(12)),
+                                  "buscadores_fichas_empresa": {"de_golpe": _BUSCADOR_EMPRESA_CUPO,
+                                                                "por_minuto": _BUSCADOR_EMPRESA_POR_MIN,
+                                                                "frenadas": dict(_buscador_empresa_frenadas)}},
                 "cupo_por_ip": {"cupo": _IP_CUPO, "repone_cada_s": _IP_REPONE_S, "frenadas": _ip_frenadas[0],
                                 "ips_en_memoria": len(_ip_cupos)},
                 "freno_extractores": _freno_diagnostico()}
@@ -31788,6 +31961,9 @@ def _visitas_anotar(environ, estado, cabeceras, respuesta, segundos):
         else:
             claves = [("persona" if persona else "bot", nombre), ("ruta_persona" if persona else "ruta_bot", ruta),
                       ("red_persona" if persona else "red_bot", red), ("estado", codigo or "?")]
+        if not interno and not persona:
+            # qué páginas pide cada bot (16-11-2026); los tramos con cifras (un NIF, un id) como «*» para agrupar
+            claves.append(("bot_ruta", (nombre + " " + re.sub(r"/[^/?]*\d[^/?]*", "/*", ruta))[:160]))
         if not interno and codigo == "200" and cab.get("content-disposition", "").startswith("attachment"):
             claves.append(("evento", "descarga_persona" if persona else "descarga_bot"))
         huella = _visitas_huella(environ, semana) if persona and pagina and ip else None
@@ -31857,13 +32033,14 @@ def _visitas_volcar():
             _db.execute("DELETE FROM settings WHERE clave LIKE 'visitas_sal_%' AND clave < ?", ("visitas_sal_" + semana_actual,))
             desde_redes = (ahora - timedelta(days=3)).strftime("%Y-%m-%d")
             for (dia,) in _db.execute("SELECT DISTINCT dia FROM visitas_dia WHERE dia < ? AND dia >= ? AND clase IN "
-                                      "('red_persona', 'red_bot')", (hoy, desde_redes)).fetchall():
-                for clase in ("red_persona", "red_bot"):
+                                      "('red_persona', 'red_bot', 'bot_ruta')", (hoy, desde_redes)).fetchall():
+                for clase in ("red_persona", "red_bot", "bot_ruta"):
                     _db.execute("DELETE FROM visitas_dia WHERE dia=? AND clase=? AND nombre NOT IN (SELECT nombre FROM "
                                 "visitas_dia WHERE dia=? AND clase=? ORDER BY bytes DESC LIMIT ?)",
                                 (dia, clase, dia, clase, _VISITAS_REDES_POR_DIA))
             limite = (ahora - timedelta(days=_VISITAS_REDES_DIAS)).strftime("%Y-%m-%d")
-            _db.execute("DELETE FROM visitas_dia WHERE dia < ? AND clase IN ('red_persona', 'red_bot')", (limite,))
+            _db.execute("DELETE FROM visitas_dia WHERE dia < ? AND clase IN ('red_persona', 'red_bot', 'bot_ruta')",
+                        (limite,))
             _visitas_estado["dia_cerrado"] = hoy
         _db.commit()
 
@@ -31961,6 +32138,8 @@ def _visitas_pagina(qs, autorizado=False):
         f'(<b>{pct(tot_b, tot_b + tot_p)}</b> del total).</p>' + dias_html + semanas_html
         + ranking("bot", "Bots por nombre", "Rastreador", 40)
         + ranking("ruta_bot", "Rutas que más piden los bots", "Ruta (sin valores)")
+        + ranking("bot_ruta", "Qué páginas pide cada bot", "Bot y ruta (sin valores)", 40,
+                  nota=f"De los días ya cerrados se guardan las {_VISITAS_REDES_POR_DIA} combinaciones con más bytes.")
         + ranking("ruta_persona", "Rutas que más piden las personas", "Ruta (sin valores)")
         + _freno_tabla_html(filas, tabla, num)
         + ranking("red_bot", "Redes de bots con más tráfico", "Red (IP recortada)", nota=f"De los días ya cerrados se guardan las {_VISITAS_REDES_POR_DIA} redes con más bytes, durante {_VISITAS_REDES_DIAS} días.")
@@ -32040,6 +32219,19 @@ def app(environ, start_response):
                                                  ("Content-Length", str(len(cuerpo)))])
         _visitas_anotar(environ, "429", [("Content-Length", str(len(cuerpo)))], None, 0.0)
         return [cuerpo]
+    frenado_h = (_bot_frenado_por_hora(info["agente"], environ.get("PATH_INFO", "/") or "/",
+                                       (environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip(),
+                                       environ.get("HTTP_USER_AGENT", ""))
+                 if info["bot"] and info["metodo"] in ("GET", "HEAD") else None)
+    if frenado_h:
+        estado_h, espera_h = frenado_h
+        with _peticiones_lock:
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + f" ({estado_h[:3]} hora)"))
+        cuerpo = b"Demasiadas peticiones. Vuelve a intentarlo mas tarde.\n"
+        start_response(estado_h, [("Content-Type", "text/plain; charset=utf-8"), ("Retry-After", espera_h),
+                                  ("Content-Length", str(len(cuerpo))), ("Cache-Control", "no-store")])
+        _visitas_anotar(environ, estado_h[:3], [("Content-Length", str(len(cuerpo)))], None, 0.0)
+        return [cuerpo if info["metodo"] != "HEAD" else b""]
     if (not info["bot"] and info["metodo"] == "GET"
             and _ruta_cara_por_ip(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
             and _ip_sin_cupo((environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip(),
@@ -32084,6 +32276,8 @@ def app(environ, start_response):
 def _app_wsgi(environ, start_response):
     method = environ.get("REQUEST_METHOD", "GET")
     path = environ.get("PATH_INFO", "/")
+    if method not in ("GET", "HEAD") or path.startswith("/admin"):
+        _bots_cache_vaciar()                 # caché de páginas de bots (ver _RE_UA_PREFIERE_CACHE)
     qs = parse_qs(environ.get("QUERY_STRING", ""))
     gzip_ok = "gzip" in environ.get("HTTP_ACCEPT_ENCODING", "")
 
@@ -32136,12 +32330,26 @@ def _app_wsgi(environ, start_response):
         destino = path + "?" + _RE_QS_AMP.sub(r"\1", environ.get("QUERY_STRING", ""))
         code, headers, body = 301, {"Location": destino, "Content-Length": "0", "Cache-Control": "public, max-age=86400"}, b""
     elif method == "GET":
-        t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
-        try:
-            code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
-                                                  query_string=environ.get("QUERY_STRING", ""))
-        finally:
-            _RANGO_PETICION.reset(t_rango)
+        prefiere = bool(_RE_UA_PREFIERE_CACHE.search(environ.get("HTTP_USER_AGENT", "") or ""))
+        clave_bot = _bots_cache_clave(path, environ.get("QUERY_STRING", "")) if prefiere else None
+        guardada = _bots_cache_leer(clave_bot) if clave_bot else None
+        if guardada:
+            code, headers, body = 200, dict(guardada[0]), guardada[1]
+            if not gzip_ok:
+                body = _gzip.decompress(body)
+                headers.pop("Content-Encoding", None)
+            headers["Content-Length"] = str(len(body))
+        else:
+            t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
+            t_bot = _BOT_PREFIERE_CACHE.set(prefiere)
+            try:
+                code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
+                                                      query_string=environ.get("QUERY_STRING", ""))
+            finally:
+                _BOT_PREFIERE_CACHE.reset(t_bot)
+                _RANGO_PETICION.reset(t_rango)
+            if clave_bot and gzip_ok:
+                _bots_cache_guardar(clave_bot, code, headers, body)
         code, headers, body = _con_etag(path, environ.get("HTTP_IF_NONE_MATCH", ""), code, headers, body)
     elif method == "POST" and path == "/admin/subvenciones":
         try:
