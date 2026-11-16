@@ -3538,6 +3538,7 @@ def _vaciar_caches_de_nombres():
     with _paginas_lock:
         _paginas_cache.clear()
         _paginas_cerrojos.clear()
+    _bots_cache_vaciar()                 # 16-11-2026: la caché de páginas de bots también enseña nombres
 
     def _recalcular():
         try:
@@ -29644,10 +29645,14 @@ def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False, grupo=No
     ahora = time.time()
     lanzar = False
     cerrojo = None
+    bot = _BOT_PREFIERE_CACHE.get()
     with _paginas_lock:
         e = _paginas_cache.get(clave)
         edad = ahora - e["ts"] if e else None
-        if e and edad < _PAGINAS_MAX_VIEJA:
+        if bot and e and edad < _BOTS_PAGINA_MAX_VIEJA:
+            gz = e["gz"]                         # Googlebot, Bingbot, OAI-SearchBot, PerplexityBot: lo que haya
+            _paginas_stats["servidas_viejas" if edad >= _PAGINAS_TTL else "servidas"] += 1
+        elif e and edad < _PAGINAS_MAX_VIEJA:
             _paginas_cache.move_to_end(clave)
             gz = e["gz"]
             if edad >= _PAGINAS_TTL:
@@ -31455,6 +31460,9 @@ def _buscador_verificado(ip, ua, exigir_ua=True):
 #     Claude-User, Perplexity-User, vistas previas de redes y mensajería) y los navegadores;
 #   - robots.txt, los sitemaps, /static, /api y /admin.
 _BOTS_PAGINAS_HORA = 300
+# Buscadores de IA que citan la fuente y pueden traer visitas (decisión de César, 16-11-2026): cupo propio.
+_BOTS_PAGINAS_HORA_IA_CITAN = 1500
+_RE_BOTS_IA_CITAN = re.compile(r"^(?:OAI-SearchBot|PerplexityBot)$", re.I)
 _RE_UA_SIN_CUPO_HORA = re.compile(r"ChatGPT-User|Claude-User|Perplexity-User|facebookexternalhit|Twitterbot|LinkedInBot|"
                                   r"WhatsApp|Slackbot|TelegramBot|Discordbot|DuckDuckBot|Applebot|Google-InspectionTool",
                                   re.I)
@@ -31504,10 +31512,95 @@ def _bot_frenado_por_hora(familia, path, ip, ua):
     with _bots_lock:
         if len(_bots_hora) > 300:
             _bots_hora.clear()
-        if _cubo(_bots_hora, familia, _BOTS_PAGINAS_HORA, _BOTS_PAGINAS_HORA / 3600.0):
+        cupo = _BOTS_PAGINAS_HORA_IA_CITAN if _RE_BOTS_IA_CITAN.match(familia) else _BOTS_PAGINAS_HORA
+        if _cubo(_bots_hora, familia, cupo, cupo / 3600.0):
             return None
         _bots_frenadas_hora[familia] += 1
     return "429 Too Many Requests", "600"
+
+
+# Páginas ya guardadas para los rastreadores que nos interesan (16-11-2026, decisión de César): Googlebot, Bingbot,
+# OAI-SearchBot y PerplexityBot reciben, si la hay, una copia ya montada en vez de una página montada para ellos:
+#   - fichas de municipio (/?muni=...&provincia=..., en cada idioma), fichas de entidad (/entidad?id=...) y de empresa
+#     (/empresa/...): una caché propia, solo para ellos, de _BOTS_CACHE_MAX_MB como mucho y _BOTS_CACHE_TTL de vida.
+#     Las personas no la usan nunca (ven siempre la ficha al día). Se vacía entera con cualquier cambio en /admin o
+#     cualquier POST (comentarios aprobados o borrados, rectificaciones...) y al cargar administradores nuevos
+#     (_vaciar_caches_de_nombres), para que un bot no reciba nada que ya se haya quitado;
+#   - portada, rankings, convocatorias... (_pagina_cacheada): reciben la copia que haya aunque tenga horas
+#     (hasta _BOTS_PAGINA_MAX_VIEJA) y su visita no lanza que se vuelva a montar.
+# Solo la copia comprimida de respuestas 200 en HTML sin cookies.
+_RE_UA_PREFIERE_CACHE = re.compile(r"Googlebot|bingbot|OAI-SearchBot|PerplexityBot", re.I)
+_BOTS_CACHE_TTL = 6 * 3600
+_BOTS_CACHE_MAX_MB = 48
+_BOTS_PAGINA_MAX_VIEJA = 24 * 3600
+_RE_RUTA_FICHA = re.compile(r"^(?:/(?:gl|ca|eu))?/(?:entidad|empresa/[^/]+)?$")
+_bots_cache = collections.OrderedDict()   # (ruta, consulta) -> (ts, cabeceras, gz)
+_bots_cache_lock = threading.Lock()
+_bots_cache_stats = {"servidas": 0, "guardadas": 0, "vaciados": 0, "bytes": 0}
+_BOT_PREFIERE_CACHE = contextvars.ContextVar("bot_prefiere_cache", default=False)
+
+
+def _bots_cache_clave(path, query):
+    """Clave de la caché de bots, o None si esta ruta no va por ella."""
+    if not _RE_RUTA_FICHA.match(path or "/"):
+        return None
+    pares = sorted((k, v[0]) for k, v in parse_qs(query or "").items() if v)
+    nombres = {k for k, _v in pares}
+    es_entidad = path.endswith("/entidad")
+    es_empresa = "/empresa/" in path
+    if es_empresa and not nombres:
+        return (path, ())
+    if es_entidad and nombres == {"id"}:
+        return (path, tuple(pares))
+    if not es_entidad and not es_empresa and nombres in ({"muni"}, {"muni", "provincia"}):
+        return (path, tuple(pares))
+    return None
+
+
+def _bots_cache_leer(clave):
+    with _bots_cache_lock:
+        e = _bots_cache.get(clave)
+        if not e:
+            return None
+        if time.time() - e[0] >= _BOTS_CACHE_TTL:
+            _bots_cache.pop(clave, None)
+            _bots_cache_stats["bytes"] -= len(e[2])
+            return None
+        _bots_cache_stats["servidas"] += 1
+        return e[1], e[2]
+
+
+def _bots_cache_guardar(clave, code, headers, body):
+    if (code != 200 or not isinstance(body, (bytes, bytearray)) or headers.get("Content-Encoding") != "gzip"
+            or not headers.get("Content-Type", "").startswith("text/html") or "Set-Cookie" in headers
+            or "no-store" in headers.get("Cache-Control", "")):
+        return
+    cab = {k: v for k, v in headers.items() if k not in ("Content-Length", "ETag")}
+    with _bots_cache_lock:
+        vieja = _bots_cache.pop(clave, None)
+        if vieja:
+            _bots_cache_stats["bytes"] -= len(vieja[2])
+        _bots_cache[clave] = (time.time(), cab, bytes(body))
+        _bots_cache_stats["bytes"] += len(body)
+        _bots_cache_stats["guardadas"] += 1
+        while _bots_cache and _bots_cache_stats["bytes"] > _BOTS_CACHE_MAX_MB * 1024 * 1024:
+            _k, e = _bots_cache.popitem(last=False)
+            _bots_cache_stats["bytes"] -= len(e[2])
+
+
+def _bots_cache_vaciar():
+    with _bots_cache_lock:
+        if _bots_cache:
+            _bots_cache.clear()
+            _bots_cache_stats["vaciados"] += 1
+        _bots_cache_stats["bytes"] = 0
+
+
+def _bots_cache_estado():
+    with _bots_cache_lock:
+        return {"entradas": len(_bots_cache), "mb": round(_bots_cache_stats["bytes"] / 1024 / 1024, 1),
+                "servidas": _bots_cache_stats["servidas"], "guardadas": _bots_cache_stats["guardadas"],
+                "vaciados": _bots_cache_stats["vaciados"]}
 
 
 def _bot_sin_cupo(familia):
@@ -31571,7 +31664,8 @@ def _ip_sin_cupo(ip, ua=""):
 def _bots_diagnostico():
     with _bots_lock:
         return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12)),
-                "cupo_por_hora": {"paginas_hora": _BOTS_PAGINAS_HORA,
+                "cupo_por_hora": {"paginas_hora": _BOTS_PAGINAS_HORA, "paginas_hora_ia_que_citan": _BOTS_PAGINAS_HORA_IA_CITAN,
+                                  "cache_bots": _bots_cache_estado(),
                                   "frenadas_desde_el_arranque": dict(_bots_frenadas_hora.most_common(12)),
                                   "buscadores_fichas_empresa": {"de_golpe": _BUSCADOR_EMPRESA_CUPO,
                                                                 "por_minuto": _BUSCADOR_EMPRESA_POR_MIN,
@@ -32182,6 +32276,8 @@ def app(environ, start_response):
 def _app_wsgi(environ, start_response):
     method = environ.get("REQUEST_METHOD", "GET")
     path = environ.get("PATH_INFO", "/")
+    if method not in ("GET", "HEAD") or path.startswith("/admin"):
+        _bots_cache_vaciar()                 # caché de páginas de bots (ver _RE_UA_PREFIERE_CACHE)
     qs = parse_qs(environ.get("QUERY_STRING", ""))
     gzip_ok = "gzip" in environ.get("HTTP_ACCEPT_ENCODING", "")
 
@@ -32234,12 +32330,26 @@ def _app_wsgi(environ, start_response):
         destino = path + "?" + _RE_QS_AMP.sub(r"\1", environ.get("QUERY_STRING", ""))
         code, headers, body = 301, {"Location": destino, "Content-Length": "0", "Cache-Control": "public, max-age=86400"}, b""
     elif method == "GET":
-        t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
-        try:
-            code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
-                                                  query_string=environ.get("QUERY_STRING", ""))
-        finally:
-            _RANGO_PETICION.reset(t_rango)
+        prefiere = bool(_RE_UA_PREFIERE_CACHE.search(environ.get("HTTP_USER_AGENT", "") or ""))
+        clave_bot = _bots_cache_clave(path, environ.get("QUERY_STRING", "")) if prefiere else None
+        guardada = _bots_cache_leer(clave_bot) if clave_bot else None
+        if guardada:
+            code, headers, body = 200, dict(guardada[0]), guardada[1]
+            if not gzip_ok:
+                body = _gzip.decompress(body)
+                headers.pop("Content-Encoding", None)
+            headers["Content-Length"] = str(len(body))
+        else:
+            t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
+            t_bot = _BOT_PREFIERE_CACHE.set(prefiere)
+            try:
+                code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
+                                                      query_string=environ.get("QUERY_STRING", ""))
+            finally:
+                _BOT_PREFIERE_CACHE.reset(t_bot)
+                _RANGO_PETICION.reset(t_rango)
+            if clave_bot and gzip_ok:
+                _bots_cache_guardar(clave_bot, code, headers, body)
         code, headers, body = _con_etag(path, environ.get("HTTP_IF_NONE_MATCH", ""), code, headers, body)
     elif method == "POST" and path == "/admin/subvenciones":
         try:
