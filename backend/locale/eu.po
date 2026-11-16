@@ -2352,6 +2352,14 @@ msgstr "Lehenengoak erakusten dira ({n} / {total})."
 msgid "Contratos menores (fuentes locales del ayuntamiento)"
 msgstr "Kontratu txikiak (udalaren tokiko iturriak)"
 
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (fuentes del ayuntamiento y PLACE)"
+msgstr "Kontratu txikiak (udalaren iturriak eta PLACE)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (PLACE)"
+msgstr "Kontratu txikiak (PLACE)"
+
 #: app.py:23547
 msgid "Adjudicatario / Objeto"
 msgstr "Esleipenduna / Xedea"
