@@ -3533,6 +3533,7 @@ def _vaciar_caches_de_nombres():
     mayores empresas de los rankings (15 min) y las páginas montadas (10 min) -- y recalcula el Índice en segundo
     plano (hasta 1 h de caché), para que un nombre retirado por una rectificación deje de verse en el acto y no
     cuando caduque cada caché. El Índice anterior se sigue sirviendo mientras se calcula el nuevo."""
+    _copia_arranque_borrar()             # 16-11-2026: que un reinicio no vuelva a enseñar lo de antes
     with _rk_empresas_lock:
         _rk_empresas["ts"] = 0.0
     with _paginas_lock:
@@ -18005,6 +18006,139 @@ def _carga_place_menores():
         print(f"[startup] entidades_locales: ERROR ({type(e).__name__}: {e})", flush=True)
 
 
+# ─── COPIA DE ARRANQUE (16-11-2026, encargo de César) ────────────────────────────────────────────────────────────────
+# Medido con el registro de peticiones lentas tras el despliegue del #64 (17:54 UTC): las únicas peticiones lentas
+# fueron las de los 2 primeros minutos (portadas de 42 y 33 s, una ficha en catalán de 26 s). Al arrancar no hay ni
+# Índice de Transparencia, ni top de empresas, ni portadas montadas, y la primera visita que los necesita los calcula
+# en su propia petición mientras la carga del feed de menores ocupa el procesador. (El índice de fichas de empresa no
+# era: ya se reutiliza del disco si tiene menos de 12 horas, ver _empresas_bg.)
+# Ahora, cada vez que el precálculo termina (_precalcular_indice_bg, cada ~45 min), se guarda en el disco una copia de
+# lo ya calculado: el Índice, el top de empresas y las portadas, /convocatorias y /mapa-cobertura de cada idioma
+# (ya comprimidas). Al arrancar se carga esa copia antes de atender a nadie y se sirve mientras el precálculo de
+# siempre calcula lo nuevo; cuando termina, lo sustituye todo y vuelve a montar las páginas en segundo plano.
+# No se usa la copia (y se calcula todo como antes) si:
+#   - tiene más de COPIA_ARRANQUE_MAX_EDAD;
+#   - ha cambiado algo de lo que decide qué nombres se enseñan (_copia_arranque_huella): las supresiones de cargos
+#     (RGPD), los ficheros de alcaldes y sueldos de concejales, el fichero de administradores del BORME o la clave
+#     de exclusión. Así, un despliegue que retira un nombre nunca lo vuelve a enseñar desde la copia;
+#   - se ha cargado un fichero de administradores nuevo (_vaciar_caches_de_nombres la borra);
+#   - _COPIA_ARRANQUE_VERSION es distinta (subirla obliga a no usar las copias anteriores).
+# Lo que se sirve de la copia lleva los mismos datos que se servían justo antes del reinicio; si el despliegue cambia
+# el HTML de la portada, la versión anterior se ve hasta que termina el precálculo (unos minutos).
+import base64  # noqa: E402  (aquí y no arriba, para no tocar la línea de imports que comparten otros PR)
+COPIA_ARRANQUE_FILE = os.path.join(DATA_DIR, "copia_arranque.json.gz")
+COPIA_ARRANQUE_MAX_EDAD = 24 * 3600
+COPIA_ARRANQUE_INDICE_MAX_S = 1800      # pasado esto sin precálculo, el Índice de la copia se recalcula como siempre
+_COPIA_ARRANQUE_VERSION = 1
+_copia_arranque_estado = {"cargada": False, "motivo": "", "carga_s": None, "guardada_utc": "", "guardado_s": None,
+                          "tamano_mb": None}
+
+
+def _copia_arranque_huella():
+    """Huella de todo lo que decide qué nombres se enseñan: si cambia, la copia no se usa."""
+    h = hashlib.sha256(f"v{_COPIA_ARRANQUE_VERSION}".encode())
+    for ruta in (_cargos_suprimidos.SUPRESIONES_FILE, _cargos_suprimidos.ALCALDES_FILE, _cargos_suprimidos.SUELDOS_FILE):
+        try:
+            with open(ruta, "rb") as f:
+                h.update(hashlib.sha256(f.read()).digest())
+        except OSError:
+            h.update(b"-")
+    try:
+        st = os.stat(ADMINISTRADORES_BORME_FILE)
+        h.update(f"{st.st_size}:{int(st.st_mtime)}".encode())
+    except OSError:
+        h.update(b"-")
+    h.update(hashlib.sha256((os.environ.get(_cargos_suprimidos.CLAVE_ENV) or "").encode()).digest())
+    return h.hexdigest()[:32]
+
+
+def _copia_arranque_borrar():
+    try:
+        os.remove(COPIA_ARRANQUE_FILE)
+    except OSError:
+        pass
+
+
+def _copia_arranque_guardar():
+    """Guarda el Índice, el top de empresas y las páginas fijas ya montadas (ver la cabecera). Nunca rompe nada."""
+    if not _DISCO_CONFIABLE:
+        return
+    t0 = time.time()
+    try:
+        with _indice_transparencia_cache_lock:
+            filas = _INDICE_TRANSPARENCIA_CACHE["filas"]
+            calculado = _INDICE_TRANSPARENCIA_CACHE["ts"]
+        if filas is None or not calculado:          # solo lo calculado de verdad, nunca otra copia
+            return
+        rk = {"nacional": _rk_empresas["nacional"], "provincias": _rk_empresas["provincias"]}
+        with _paginas_lock:
+            paginas = [[list(k), base64.b64encode(e["gz"]).decode("ascii"), e.get("ts_copia", e["ts"])]
+                       for k, e in _paginas_cache.items() if _pagina_fija(k)]
+        datos = {"version": _COPIA_ARRANQUE_VERSION, "huella": _copia_arranque_huella(), "guardada": time.time(),
+                 "indice": filas, "indice_ts": calculado, "rk_empresas": rk, "paginas": paginas}
+        tmp = COPIA_ARRANQUE_FILE + ".tmp"
+        with _gzip.open(tmp, "wt", encoding="utf-8", compresslevel=5) as f:
+            json.dump(datos, f, ensure_ascii=False, separators=(",", ":"))
+        os.replace(tmp, COPIA_ARRANQUE_FILE)
+        del datos
+        _copia_arranque_estado.update(
+            guardada_utc=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), guardado_s=round(time.time() - t0, 1),
+            tamano_mb=round(os.path.getsize(COPIA_ARRANQUE_FILE) / 1024 / 1024, 2))
+    except Exception as e:
+        print(f"[copia-arranque] no se pudo guardar: {type(e).__name__}: {e}", flush=True)
+
+
+def _copia_arranque_cargar():
+    """Al arrancar, antes de atender a nadie: carga la copia si vale (ver la cabecera). Nunca rompe el arranque."""
+    t0 = time.time()
+    est = _copia_arranque_estado
+    try:
+        if not os.path.exists(COPIA_ARRANQUE_FILE):
+            est["motivo"] = "no hay copia"
+            return
+        if time.time() - os.path.getmtime(COPIA_ARRANQUE_FILE) > COPIA_ARRANQUE_MAX_EDAD:
+            est["motivo"] = "copia demasiado vieja"
+            return
+        with _gzip.open(COPIA_ARRANQUE_FILE, "rt", encoding="utf-8") as f:
+            datos = json.load(f)
+        if datos.get("version") != _COPIA_ARRANQUE_VERSION:
+            est["motivo"] = "copia de otra versión"
+            return
+        if datos.get("huella") != _copia_arranque_huella():
+            est["motivo"] = "han cambiado las supresiones, los cargos o los administradores: no se usa"
+            return
+        with _indice_transparencia_cache_lock:
+            if _INDICE_TRANSPARENCIA_CACHE["filas"] is None:
+                _INDICE_TRANSPARENCIA_CACHE["filas"] = datos["indice"]
+                _INDICE_TRANSPARENCIA_CACHE["ts"] = 0.0      # 0 = de la copia (ver _indice_copia_de_arranque)
+        rk = datos.get("rk_empresas") or {}
+        with _rk_empresas_lock:
+            if not _rk_empresas["ts"] and rk.get("nacional"):
+                _rk_empresas.update(nacional=tuple(rk["nacional"]),
+                                    provincias={pv: tuple(v) for pv, v in (rk.get("provincias") or {}).items()},
+                                    ts=time.time())
+        ahora = time.time()
+        n = 0
+        with _paginas_lock:
+            for k, gz64, ts in datos.get("paginas") or []:
+                clave = tuple(k)
+                if clave in _paginas_cache or ahora - ts > COPIA_ARRANQUE_MAX_EDAD:
+                    continue
+                # vieja (se sirve, pero no se vuelve a montar sola: lo hace _calentar_portada tras el precálculo)
+                _paginas_cache[clave] = {"gz": base64.b64decode(gz64), "ts": ahora - _PAGINAS_TTL, "refrescando": True,
+                                         "grupo": None, "de_copia": True, "ts_copia": ts}
+                n += 1
+        est.update(cargada=True, motivo=f"Índice de {len(datos['indice'])} municipios y {n} páginas",
+                   guardada_utc=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(datos.get("guardada") or 0)))
+        del datos
+    except Exception as e:
+        est["motivo"] = f"error: {type(e).__name__}"
+        print(f"[copia-arranque] no se pudo cargar: {type(e).__name__}: {e}", flush=True)
+    finally:
+        est["carga_s"] = round(time.time() - t0, 2)
+        print(f"[copia-arranque] {est}", flush=True)
+
+
 def _arrancar_hilos_de_fondo():
     """Arranca los hilos que viven mientras dura el proceso: feed de menores de PLACE, precálculo del Índice, noticias
     UE (si faltan) y barrido de directivos.
@@ -18014,6 +18148,7 @@ def _arrancar_hilos_de_fondo():
     atiende no tenía ninguno, sus cachés en memoria (Índice, nombres de personas físicas) no le servían y, si un hilo
     del maestro tenía _db_lock cogido al hacer la copia, el trabajador lo heredaba bloqueado. Por eso, bajo gunicorn,
     se lanzan desde el hook post_fork (gunicorn.conf.py -> _tras_fork), una vez en cada trabajador."""
+    _copia_arranque_cargar()                 # 16-11-2026: lo calculado antes del reinicio, mientras se calcula lo nuevo
     hilo_feed = threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True)
     hilo_feed.start()
     threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
@@ -21312,7 +21447,8 @@ def _indice_transparencia_cacheado():
     with _indice_transparencia_cache_lock:
         anteriores = _INDICE_TRANSPARENCIA_CACHE["filas"]
     if anteriores is not None:
-        _indice_refrescar_en_fondo()
+        if not _indice_copia_de_arranque():    # el de la copia lo sustituye el precálculo, cuando ya está el feed
+            _indice_refrescar_en_fondo()
         return anteriores
     # Un solo cálculo a la vez: si ya lo está haciendo otra petición o el precálculo de arranque
     # (_precalcular_indice_bg), se espera a ese resultado en vez de lanzar otro igual en paralelo.
@@ -21325,6 +21461,13 @@ def _indice_transparencia_cacheado():
             _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
             _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
     return filas
+
+
+def _indice_copia_de_arranque():
+    """True mientras el Índice en memoria es el de la copia de arranque (ts 0) y aún no ha pasado
+    COPIA_ARRANQUE_INDICE_MAX_S desde el arranque."""
+    return (_INDICE_TRANSPARENCIA_CACHE["ts"] == 0.0 and _INDICE_TRANSPARENCIA_CACHE["filas"] is not None
+            and time.time() - _ARRANQUE_TS < COPIA_ARRANQUE_INDICE_MAX_S)
 
 
 _indice_calculo_lock = threading.Lock()
@@ -21378,6 +21521,7 @@ def _precalcular_indice_bg(esperar=None):
             with _rk_empresas_lock:              # rendimiento (2026-10-28): que ninguna visita lo calcule
                 _rk_empresas_calcular()
             _calentar_portada()
+            _copia_arranque_guardar()            # 16-11-2026: para el próximo arranque
             _liberar_memoria()
         except Exception as e:
             print(f"[indice] precálculo: ERROR ({type(e).__name__}: {e})", flush=True)
@@ -26011,6 +26155,7 @@ def _estado_carga():
         "menores_duplicados_arranque": dict(_MENORES_DUPLICADOS_ARRANQUE),
         "rastreadores_frenados": _bots_diagnostico(),
         "peticiones_lentas": _lentas_leer(),
+        "copia_arranque": dict(_copia_arranque_estado),
     }
 
 
@@ -29549,6 +29694,10 @@ def _pagina_fija(clave):
 def _calentar_portada():
     """Monta la portada, /convocatorias y /mapa-cobertura en cada idioma si no están frescas en la caché, para que
     ningún visitante espere a montarlas."""
+    with _paginas_lock:                 # las de la copia de arranque: que _pagina_cacheada las vuelva a montar
+        for e in _paginas_cache.values():
+            if e.get("de_copia"):
+                e["refrescando"] = False
     for lang in ["es"] + [l for l in _i18n_publicados() if l != "es"]:
         for ruta, montar in _PAGINAS_FIJAS.items():
             def _una(lang=lang, ruta=ruta, montar=montar):
