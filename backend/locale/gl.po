@@ -2352,6 +2352,14 @@ msgstr "Amósanse os primeiros {n} de {total}."
 msgid "Contratos menores (fuentes locales del ayuntamiento)"
 msgstr "Contratos menores (fontes locais do concello)"
 
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (fuentes del ayuntamiento y PLACE)"
+msgstr "Contratos menores (fontes do concello e PLACE)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (PLACE)"
+msgstr "Contratos menores (PLACE)"
+
 #: app.py:23547
 msgid "Adjudicatario / Objeto"
 msgstr "Adxudicatario / Obxecto"
@@ -3605,14 +3613,6 @@ msgstr "% ({base})"
 #: app.py
 msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
 msgstr "Os importes con bases distintas non se suman entre si: van en columnas separadas, e as porcentaxes calcúlanse só sobre a columna «{columna}»."
-
-#: app.py (ficha: contratos menores)
-msgid "Contratos menores (fuentes del ayuntamiento y PLACE)"
-msgstr "Contratos menores (fontes do concello e PLACE)"
-
-#: app.py (ficha: contratos menores)
-msgid "Contratos menores (PLACE)"
-msgstr "Contratos menores (PLACE)"
 
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Aínda sen datos de fondos UE para esta provincia."

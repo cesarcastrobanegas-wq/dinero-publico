@@ -2352,6 +2352,14 @@ msgstr "Lehenengoak erakusten dira ({n} / {total})."
 msgid "Contratos menores (fuentes locales del ayuntamiento)"
 msgstr "Kontratu txikiak (udalaren tokiko iturriak)"
 
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (fuentes del ayuntamiento y PLACE)"
+msgstr "Kontratu txikiak (udalaren iturriak eta PLACE)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (PLACE)"
+msgstr "Kontratu txikiak (PLACE)"
+
 #: app.py:23547
 msgid "Adjudicatario / Objeto"
 msgstr "Esleipenduna / Xedea"
@@ -3605,14 +3613,6 @@ msgstr "% ({base})"
 #: app.py
 msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
 msgstr "Oinarri desberdinak dituzten zenbatekoak ez dira elkarren artean batzen: zutabe bereizietan doaz, eta ehunekoak zutabe honen gainean bakarrik kalkulatzen dira: «{columna}»."
-
-#: app.py (ficha: contratos menores)
-msgid "Contratos menores (fuentes del ayuntamiento y PLACE)"
-msgstr "Kontratu txikiak (udalaren iturriak eta PLACE)"
-
-#: app.py (ficha: contratos menores)
-msgid "Contratos menores (PLACE)"
-msgstr "Kontratu txikiak (PLACE)"
 
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
