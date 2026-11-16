@@ -300,6 +300,7 @@ def _imprimir_visible(filas):
 # 2021-2026: de 688 NIF cuya denominación del BORME no coincide con ningún nombre del adjudicatario, 318 no se podían
 # comprobar con ese índice. Aquí cuenta también el histórico 2009-2020, que en Actions está.
 CONFIRMAR_NIF_MINIMO = 0.5
+_RE_NIF_SOCIEDAD_GEN = re.compile(r"^[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J]$")
 
 
 _RE_FORMA_FINAL_COMPACTA = re.compile(
@@ -368,6 +369,13 @@ def cruzar(adj, den, estado, solo_primera_grafia=False):
         else:
             situacion[clave] = "sin órgano vigente" if visto else "no consta"
     return salida, situacion
+
+
+def nif_sin_confirmar(adj, situacion):
+    """NIF de SOCIEDAD (nunca un DNI/NIE) en situación «NIF sin confirmar», ordenados (van al fichero, 16-11-2026)."""
+    return sorted({adj[c]["nif"].upper().strip() for c, s in situacion.items()
+                   if s == "NIF sin confirmar (solo por nombre)"
+                   and _RE_NIF_SOCIEDAD_GEN.match((adj[c]["nif"] or "").upper().strip())})
 
 
 def resumen_cola(adj, situacion, directores):
@@ -451,8 +459,13 @@ def main():
           f"{len(salida):,} claves ({time.time() - t0:.0f} s)")
     if a.solo_recuentos:
         return
+    # 16-11-2026: los NIF «sin confirmar», para que la ficha de empresa de ese NIF no busque administrador por sus
+    # variantes de nombre (ver _empresa_administrador en app.py). Solo NIF de sociedad: nunca un DNI/NIE.
+    sin_confirmar = nif_sin_confirmar(adj, situacion)
+    print(f"NIF de sociedad sin confirmar en el fichero: {len(sin_confirmar):,}")
     json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "periodo": periodo, "resumen": resumen,
-               "administradores": salida}, open(a.salida, "w", encoding="utf-8"), ensure_ascii=False, indent=0)
+               "nif_sin_confirmar": sin_confirmar, "administradores": salida},
+              open(a.salida, "w", encoding="utf-8"), ensure_ascii=False, indent=0)
     print(f"-> {a.salida}")
 
 

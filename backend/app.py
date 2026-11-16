@@ -3456,7 +3456,7 @@ def _parece_sociedad(empresa, nif=""):
 ADMINISTRADORES_BORME_FILE = os.path.join(DATA_DIR, "administradores_borme.json")
 
 
-ADMINISTRADORES_BORME_META = {"periodo": None, "generado": None, "resumen": None}
+ADMINISTRADORES_BORME_META = {"periodo": None, "generado": None, "resumen": None, "nif_sin_confirmar": frozenset()}
 
 
 def _cargar_administradores_borme():
@@ -3464,7 +3464,8 @@ def _cargar_administradores_borme():
         with open(ADMINISTRADORES_BORME_FILE, encoding="utf-8") as f:
             datos = json.load(f)
         ADMINISTRADORES_BORME_META.update(periodo=datos.get("periodo"), generado=datos.get("generado"),
-                                          resumen=datos.get("resumen"))
+                                          resumen=datos.get("resumen"),
+                                          nif_sin_confirmar=frozenset(datos.get("nif_sin_confirmar") or ()))
         return datos.get("administradores", {})
     except (OSError, ValueError):
         return {}
@@ -3646,7 +3647,8 @@ def _subir_administradores_borme(token, crudo, forzar=False):
     anteriores = len(ADMINISTRADORES_BORME)
     ADMINISTRADORES_BORME = nuevos
     ADMINISTRADORES_BORME_META.update(periodo=datos.get("periodo"), generado=datos.get("generado"),
-                                      resumen=datos.get("resumen"))
+                                      resumen=datos.get("resumen"),
+                                      nif_sin_confirmar=frozenset(datos.get("nif_sin_confirmar") or ()))
     _vaciar_caches_de_nombres()
     print(f"[admin] administradores_borme: {len(nuevos)} sociedades (antes {anteriores}), periodo "
           f"{datos.get('periodo')}", flush=True)
@@ -3705,14 +3707,86 @@ def _administrador_borme_info(empresa, nif=""):
     return b if b and not b.get("extinguida") else None
 
 
+# Administrador en la FICHA DE EMPRESA (16-11-2026, decisión de César). La ficha probaba el nombre y luego TODAS las
+# variantes de nombre de los contratos de ese NIF, y bastaba una variante con el nombre de otra sociedad (un contrato
+# con el NIF mal puesto) para enseñar el administrador de esa otra: Zurich con el de Willis Iberia (1 contrato de 703),
+# Cruz Roja con el de Asturiana de Automóviles, Toi Toi con el de Rentokil, Teknoservice con el de Vigilant. Reglas:
+#   1. NIF entre los «NIF sin confirmar» del fichero del BORME (nif_sin_confirmar): ningún administrador;
+#   2. NIF que no está en el fichero: solo el nombre principal o una variante con al menos la mitad de los contratos
+#      de ese NIF (las grafías que llevan al mismo registro del BORME cuentan juntas);
+#   3. se descarta cualquier registro que en el fichero esté asignado a OTRO NIF (con un NIF enmascarado, «otro» es
+#      uno que no encaja con la máscara) que tenga al menos tantos contratos como esta ficha. Medido en local: sin
+#      ese «al menos tantos», Endesa Energía (A81948077) e Iberdrola Clientes (A95758389) perdían su administrador
+#      porque el fichero también da su registro a NIF mal tecleados en unos pocos contratos (B81948077, A95758339...).
+# Sin NIF (ficha juntada por el nombre), como antes. Las fichas de municipio no usan esto: allí cada contrato va por
+# su propio nombre (_administrador_borme).
+_BORME_NIFS_REG = {"base": None, "mapa": {}}
+
+
+def _borme_nifs_del_registro(b):
+    """NIF de sociedad con que ese registro del BORME está en el fichero (se calcula una vez por fichero cargado)."""
+    base = ADMINISTRADORES_BORME
+    if _BORME_NIFS_REG["base"] is not base:
+        mapa = collections.defaultdict(set)
+        for k, v in base.items():
+            if _RE_NIF_SOCIEDAD.match(k):
+                mapa[_borme_registro_id(v)].add(k)
+        _BORME_NIFS_REG.update(base=base, mapa=mapa)
+    return _BORME_NIFS_REG["mapa"].get(_borme_registro_id(b), set())
+
+
+def _borme_nif_encaja(nif, otro):
+    if "*" not in nif:
+        return nif == otro
+    return len(nif) == len(otro) and all(a == "*" or a == c for a, c in zip(nif, otro))
+
+
+def _empresa_administrador(nombre, nif, variantes, total, contratos_de=None):
+    """(registro del BORME, nombre con que casa) para la ficha de empresa, o (None, ""). Ver las reglas arriba.
+    `variantes`: [(nombre, nº de contratos)]; `total`: contratos de la ficha; `contratos_de(nif)`: contratos de otra
+    ficha (regla 3; sin ella, cualquier otro NIF cuenta)."""
+    n = (nif or "").upper().strip()
+    if not n:
+        for cand in [nombre] + [v for v, _k in variantes]:
+            b = _administrador_borme_info(cand, "")
+            if b:
+                return b, cand
+        return None, ""
+    if n in ADMINISTRADORES_BORME_META.get("nif_sin_confirmar", ()):           # regla 1
+        return None, ""
+    if "*" not in n:
+        b = ADMINISTRADORES_BORME.get(n)
+        if b:
+            return (None, "") if b.get("extinguida") else (b, nombre)
+    # regla 2: las grafías que llevan al MISMO registro del BORME se suman («ENDESA ENERGIA SAU», «ENDESA ENERGÍA,
+    # S.A.U.»... son una sola variante de la misma sociedad: si no, ninguna llegaría sola a la mitad)
+    grupos = {}                              # registro -> [registro, contratos, nombre con que casa, es el principal]
+    for cand, k in [(nombre, 0)] + [(v, k) for v, k in variantes]:
+        b = _administrador_borme_info(cand, n)
+        if not b:
+            continue
+        otros = {x for x in _borme_nifs_del_registro(b)
+                 if contratos_de is None or _borme_nif_encaja(n, x) or contratos_de(x) >= (total or 0)}
+        if otros and not any(_borme_nif_encaja(n, x) for x in otros):           # regla 3
+            continue
+        g = grupos.setdefault(_borme_registro_id(b), [b, 0, cand, False])
+        g[1] += k or 0
+        g[3] = g[3] or cand == nombre
+    for b, k, cand, principal in sorted(grupos.values(), key=lambda g: (not g[3], -g[1])):
+        if principal or k * 2 >= (total or 0):
+            return b, cand
+    return None, ""
+
+
 def _administrador_borme(empresa, nif=""):
     b = _administrador_borme_info(empresa, nif)
     return (b["nombre"], b["cargo"]) if b else None
 
 
-def _borme_fuente_html(empresa, nif=""):
-    """Fecha del nombramiento, enlace al anuncio del BORME y enlace de rectificación, o "" si el dato no es del BORME."""
-    b = _administrador_borme_info(empresa, nif)
+def _borme_fuente_html(empresa, nif="", b=None):
+    """Fecha del nombramiento, enlace al anuncio del BORME y enlace de rectificación, o "" si el dato no es del BORME.
+    `b`: el registro ya elegido (ficha de empresa); si no, se busca."""
+    b = b or _administrador_borme_info(empresa, nif)
     if not b:
         return ""
     desde = b.get("desde") or ""
@@ -30385,13 +30459,9 @@ def _render_empresa(con, ident, qs):
 
     # ── Cabecera: nombre, NIF, variantes ──
     nif_html = f'<p class="lid">NIF {esc(nif)}</p>' if nif else ""
-    b = None
-    nombre_borme = ""
-    for cand in [nombre] + [v for v, _ in variantes]:
-        b = _administrador_borme_info(cand, nif)
-        if b:
-            nombre_borme = cand
-            break
+    b, nombre_borme = _empresa_administrador(
+        nombre, nif, variantes, sum((k or 0) for _v, k in variantes) or (n_f + n_m),
+        contratos_de=lambda x: (con.execute("SELECT n FROM empresas WHERE clave=?", (x,)).fetchone() or (0,))[0] or 0)
     var_html = ""
     if len(variantes) > 1:
         lista = ", ".join(f"«{esc(v)}» ({fmt_num(n)})" for v, n in variantes[:12])
@@ -30406,7 +30476,7 @@ def _render_empresa(con, ident, qs):
     if b:
         adm_html = (f'<div class="directivo">{esc(b.get("nombre") or "")}</div>'
                     f'<div class="cargo">{esc(_cargo_txt(b.get("cargo") or ""))}</div>'
-                    f'{_borme_fuente_html(nombre_borme, nif)}')
+                    f'{_borme_fuente_html(nombre_borme, nif, b)}')
     elif _es_sociedad_mercantil(nombre, nif):
         adm_html = _sin_administrador_html(nombre, nif)
     else:
