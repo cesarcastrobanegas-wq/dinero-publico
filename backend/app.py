@@ -26614,7 +26614,13 @@ def render_caso_la_laguna_campamentos_html():
                ("03/06/2025", "2025024085", "Campamento urbano «Acción por el clima»", 14750.0, x25),
                ("03/06/2025", "2025024090", "Campamento urbano «Reducción desigualdad social»", 14750.0, x25),
                ("12/06/2025", "2025024087", "Campamento urbano «Producción y consumo responsable»", 14750.0, x25)]
+    # Nota del 16-11-2026: el portal del Ayuntamiento no responde desde el 25-10 (ver _FUENTES_CM_HISTORICAS). Los
+    # enlaces «listado oficial» se dejan: son la fuente citada y volverán a abrir si el portal vuelve.
     cuerpo = f"""
+  <p class="caso-nota-fuente" style="border:1px solid var(--yellow);border-radius:8px;padding:8px 12px;font-size:14px">
+  ⚠️ <strong>Nota:</strong> los listados del portal municipal (www.aytolalaguna.es) que enlaza esta pieza no abren
+  desde el 25-10-2026: el servidor del Ayuntamiento no responde. Los datos se comprobaron antes de esa fecha, el 14 de
+  octubre de 2026, en esos mismos listados oficiales.</p>
   <p>El 18 de julio de 2022 el Ayuntamiento de {ficha} adjudicó a la Asociación Campamento Garabato cuatro contratos
   menores de servicios para organizar actividades de verano, en julio y agosto, para grupos de 30 menores de 5 a 12
   años en cuatro zonas del municipio. Los cuatro, el mismo día y por el mismo importe: <strong>14.990 €</strong>, 10 €
