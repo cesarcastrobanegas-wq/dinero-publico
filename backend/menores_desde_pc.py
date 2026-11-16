@@ -9,7 +9,7 @@ Hace lo mismo que el flujo semanal (menores-fuentes-semanal.yml) salvo guardar e
      reinicia la web; mejor fuera del refresco nocturno, ~05:00-12:30 UTC).
 
 Uso, desde la carpeta del repositorio (una línea, vale en PowerShell y en cmd):
-    python backend/menores_desde_pc.py                    # las de por defecto: alicante y santa_cruz
+    python backend/menores_desde_pc.py                    # las de por defecto: alicante, santa_cruz y palma
     python backend/menores_desde_pc.py alicante burgos    # las que se digan (nombre del generador)
 """
 import os
@@ -19,7 +19,7 @@ import tempfile
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(BASE_DIR)
-POR_DEFECTO = ["alicante", "santa_cruz"]
+POR_DEFECTO = ["alicante", "santa_cruz", "palma"]
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
