@@ -17021,6 +17021,10 @@ def _revision_wsgi(method, path, qs, environ):
         return _socios_vista_html(qs.get("p", [""])[0])
     if path == "/admin/revision/visitas":
         return _visitas_pagina(qs, autorizado=True)
+    if path == "/admin/revision/diagnostico":      # 16-11-2026: el diagnóstico completo con la sesión
+        return _resp(json.dumps(_diagnostico_arranque(), ensure_ascii=False),
+                     content_type="application/json; charset=utf-8",
+                     headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
     if path == "/admin/revision/ficha":
         md = _revision_ficha_md(qs.get("huella", [""])[0])
         if md is None:
@@ -18095,6 +18099,30 @@ _peticiones_en_curso = 0
 _peticiones_lock = threading.Lock()
 _PETICIONES_ACTIVAS = {}                                   # diagnóstico de carga (2026-10-03), ver app()
 _PETICIONES_RECIENTES = __import__("collections").deque(maxlen=2000)
+_ARRANQUE_TS = time.time()          # hora en que se importó el módulo (parte pública de /api/diagnostico-arranque)
+
+# ─── REGISTRO DE PETICIONES LENTAS (2026-11-16, encargo de César) ────────────────────────────────────────────────────
+# El diagnóstico de carga solo mira los últimos 10 minutos y se pierde al reiniciar: una página lenta de hace una hora
+# ya no se puede explicar. Aquí se guarda, en cache.db (tabla peticiones_lentas), cada petición que tarda
+# PETICIONES_LENTAS_SEG o más, con SOLO: hora, ruta, idioma, duración, tipo de visitante («navegador» o el nombre del
+# rastreador, _familia_ua) y qué hacían los otros hilos. Nada de IP, user-agent completo, cookies ni valores de la
+# consulta: la ruta lleva los nombres de los parámetros y solo los valores de _LENTAS_PARAMS_CON_VALOR (municipio,
+# provincia, página), y cualquier tramo de la dirección con cifras (un NIF, un id) se cambia por «*».
+# «Qué hacían los otros hilos»:
+#   - muestras: un vigilante (_lentas_vigilante) mira cada _LENTAS_MUESTRA_CADA_S segundos las peticiones que ya pasan
+#     del umbral y anota dónde está cada OTRO hilo (nombre y últimas funciones de su pila, como «hilos» del
+#     diagnóstico), como mucho _LENTAS_MAX_MUESTRAS veces por petición;
+#   - a la vez: las otras peticiones que coincidieron en el tiempo con esta (ruta, visitante y segundos).
+# Se borra solo: al guardar cada fila se tiran las de más de PETICIONES_LENTAS_DIAS días, y como mucho quedan
+# _LENTAS_MAX_FILAS. Se ve en el diagnóstico completo («carga» -> «peticiones_lentas»): /api/diagnostico-arranque con
+# la cabecera X-Admin-Token, o /admin/revision/diagnostico con la sesión; sin clave no sale.
+PETICIONES_LENTAS_SEG = 10.0
+PETICIONES_LENTAS_DIAS = 7
+_LENTAS_MUESTRA_CADA_S = 5.0
+_LENTAS_MAX_MUESTRAS = 6
+_LENTAS_MAX_FILAS = 1000
+_LENTAS_PARAMS_CON_VALOR = ("muni", "provincia", "pag", "pag_cm")
+_lentas_estado = {"vigilante": False}
 # Fase del hilo de directivos para el diagnóstico: "esperando", "fase1" (recorre las fichas), "fase2" (busca) o "fin".
 _ESTADO_DIRECTIVOS = {"fase": "sin_arrancar", "hecho": 0, "total": 0, "desde": 0.0}
 CEDER_TURNO_MAX_S = 2.0      # como mucho se espera esto seguido: con tráfico constante el barrido sigue avanzando
@@ -25701,6 +25729,7 @@ def _diagnostico_arranque():
         memoria_rss_mb = None
 
     return {
+        "arrancado_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(_ARRANQUE_TS)),
         "filtro_salida_dni": dict(_FILTRO_SALIDA_ESTADO, segundos=round(_FILTRO_SALIDA_ESTADO["segundos"], 3)),
         "disco_confiable": _DISCO_CONFIABLE,
         "data_dir": DATA_DIR,
@@ -25711,6 +25740,27 @@ def _diagnostico_arranque():
         "memoria_desglose": _memoria_desglose(),
         "carga": _estado_carga(),
         "disco": _uso_disco(),
+    }
+
+
+def _diagnostico_arranque_publico():
+    """Lo que /api/diagnostico-arranque da SIN clave (16-11-2026, decisión de César): solo lo básico del arranque, sin
+    nada interno (ni rutas pedidas, ni hilos, ni peticiones lentas, ni memoria, ni carpetas). Sirve para saber si la
+    web está en pie, desde cuándo (un despliegue o un reinicio cambian «arrancado_utc») y si el disco está bien.
+    Todo lo demás, con la cabecera X-Admin-Token o en /admin/revision/diagnostico (sesión de /admin/revision)."""
+    def _info(path):
+        try:
+            st = os.stat(path)
+            return {"existe": True, "tamano_mb": round(st.st_size / 1024 / 1024, 2),
+                    "modificado": datetime.fromtimestamp(st.st_mtime).isoformat()}
+        except OSError:
+            return {"existe": False}
+    return {
+        "arrancado_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(_ARRANQUE_TS)),
+        "disco_confiable": _DISCO_CONFIABLE,
+        "cache_db": _info(DB_FILE),
+        "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
+        "completo": "solo con la cabecera X-Admin-Token o en /admin/revision/diagnostico",
     }
 
 
@@ -25797,6 +25847,112 @@ def _hilos_ahora():
     return out
 
 
+def _ruta_lenta(path, query):
+    """Ruta para el registro de peticiones lentas, sin datos de nadie: tramos con cifras -> «*», y de la consulta solo
+    los nombres de los parámetros salvo los de _LENTAS_PARAMS_CON_VALOR (municipio, provincia, página)."""
+    tramos = ["*" if re.search(r"\d", s) else s for s in (path or "/").split("/")]
+    ruta = "/".join(tramos)[:120] or "/"
+    partes = []
+    for k, vs in sorted(parse_qs(query or "").items()):
+        if k in _LENTAS_PARAMS_CON_VALOR and vs:
+            partes.append(f"{k}={vs[0][:60]}")
+        else:
+            partes.append(k)
+    return (ruta + ("?" + "&".join(partes) if partes else ""))[:240]
+
+
+def _lentas_hilos(excluir):
+    """_hilos_ahora() sin el hilo de la propia petición ni el del vigilante, y sin los hilos de gunicorn parados
+    esperando trabajo (no hacen nada)."""
+    out = []
+    for h in _hilos_ahora():
+        if h["hilo"] in excluir:
+            continue
+        if h["pila"] and h["pila"][-1].split(":")[0] in ("_worker", "wait", "get", "select", "poll", "accept"):
+            continue
+        out.append(h)
+    return out
+
+
+def _lentas_vigilante():
+    """Hilo: cada _LENTAS_MUESTRA_CADA_S s, anota qué hacen los otros hilos en las peticiones que ya pasan del umbral."""
+    yo = threading.current_thread().name
+    while True:
+        time.sleep(_LENTAS_MUESTRA_CADA_S)
+        try:
+            ahora = time.time()
+            with _peticiones_lock:
+                lentas = [a for a in _PETICIONES_ACTIVAS.values()
+                          if ahora - a["inicio"] >= PETICIONES_LENTAS_SEG
+                          and len(a.setdefault("muestras", [])) < _LENTAS_MAX_MUESTRAS]
+            if not lentas:
+                continue
+            nombres = {t_.ident: t_.name for t_ in threading.enumerate()}
+            for a in lentas:
+                hilos = _lentas_hilos({yo, nombres.get(a.get("hilo"), "")})
+                with _peticiones_lock:
+                    a["muestras"].append({"a_los_s": round(ahora - a["inicio"]), "hilos": hilos})
+        except Exception as e:          # el diagnóstico nunca debe tirar nada
+            print(f"[lentas] vigilante: {type(e).__name__}: {e}", flush=True)
+
+
+def _lentas_arrancar_vigilante():
+    with _peticiones_lock:
+        if _lentas_estado["vigilante"]:
+            return
+        _lentas_estado["vigilante"] = True
+    threading.Thread(target=_lentas_vigilante, name="lentas-vigilante", daemon=True).start()
+
+
+def _lentas_tabla():
+    _db.execute("CREATE TABLE IF NOT EXISTS peticiones_lentas (id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL, "
+                "ruta TEXT, idioma TEXT, segundos REAL, visitante TEXT, otros_hilos TEXT)")
+
+
+def _lentas_guardar(info, fin):
+    """Guarda una petición lenta (ver la cabecera del registro) y tira las de más de PETICIONES_LENTAS_DIAS días."""
+    try:
+        with _peticiones_lock:
+            a_la_vez = [{"ruta": r[0], "visitante": r[4], "segundos": round(r[2], 1)}
+                        for r in _PETICIONES_RECIENTES
+                        if r[1] < fin and r[1] + r[2] > info["inicio"] and not (r[1] == info["inicio"] and r[0] == info["ruta"])]
+            a_la_vez += [{"ruta": a["ruta"], "visitante": a.get("agente"), "segundos": round(fin - a["inicio"], 1),
+                          "sigue": True} for a in _PETICIONES_ACTIVAS.values() if a is not info]
+            muestras = list(info.get("muestras") or [])
+        a_la_vez.sort(key=lambda x: -x["segundos"])
+        otros = json.dumps({"muestras": muestras, "a_la_vez": a_la_vez[:25], "n_a_la_vez": len(a_la_vez)},
+                           ensure_ascii=False)
+        with _db_lock:
+            _lentas_tabla()
+            _db.execute("INSERT INTO peticiones_lentas (ts, ruta, idioma, segundos, visitante, otros_hilos) "
+                        "VALUES (?,?,?,?,?,?)",
+                        (info["inicio"], info["ruta_lenta"], info["idioma"], round(fin - info["inicio"], 1),
+                         info.get("agente") or "", otros))
+            _db.execute("DELETE FROM peticiones_lentas WHERE ts < ?", (time.time() - PETICIONES_LENTAS_DIAS * 86400,))
+            _db.execute("DELETE FROM peticiones_lentas WHERE id <= (SELECT max(id) FROM peticiones_lentas) - ?",
+                        (_LENTAS_MAX_FILAS,))
+            _db.commit()
+    except Exception as e:
+        print(f"[lentas] no se pudo guardar: {type(e).__name__}: {e}", flush=True)
+
+
+def _lentas_leer(n=20):
+    """Las n últimas peticiones lentas (y cuántas hay en los últimos PETICIONES_LENTAS_DIAS días)."""
+    try:
+        with _db_lock:
+            _lentas_tabla()
+            limite = time.time() - PETICIONES_LENTAS_DIAS * 86400
+            total = _db.execute("SELECT count(*) FROM peticiones_lentas WHERE ts >= ?", (limite,)).fetchone()[0]
+            filas = _db.execute("SELECT ts, ruta, idioma, segundos, visitante, otros_hilos FROM peticiones_lentas "
+                                "WHERE ts >= ? ORDER BY id DESC LIMIT ?", (limite, n)).fetchall()
+    except Exception as e:
+        return {"error": type(e).__name__}
+    return {"umbral_s": PETICIONES_LENTAS_SEG, "dias": PETICIONES_LENTAS_DIAS, "total": total,
+            "ultimas": [{"hora_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(ts)), "ruta": ruta,
+                         "idioma": idioma, "segundos": seg, "visitante": vis, "otros_hilos": json.loads(otros or "{}")}
+                        for ts, ruta, idioma, seg, vis, otros in filas]}
+
+
 def _estado_carga():
     """Peticiones en curso y de los últimos 10 minutos, fase del hilo de directivos, CPU e hilos (2026-10-03: para
     ver si la lentitud de páginas ligeras coincide con los 4 hilos de gunicorn ocupados en páginas pesadas)."""
@@ -25853,6 +26009,7 @@ def _estado_carga():
         "feed_vivo_place": {k: v for k, v in _feed_vivo.items() if k != "contenido"},
         "menores_duplicados_arranque": dict(_MENORES_DUPLICADOS_ARRANQUE),
         "rastreadores_frenados": _bots_diagnostico(),
+        "peticiones_lentas": _lentas_leer(),
     }
 
 
@@ -30759,16 +30916,17 @@ def _route_get(path, qs, gzip_ok=False):
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
     if path == "/api/diagnostico-arranque":
-        # Diagnóstico público del estado del disco persistente al arrancar
-        # (incidente 2026-09-02/03). Sin ADMIN_TOKEN a propósito: solo
-        # tamaños/fechas/booleanos, cero datos de empresas/personas. Nace
-        # de no tener otra forma fiable de comprobar esto -- el Web Shell de
-        # Render corre en una instancia efímera sin el disco real montado,
-        # y la métrica "Disk Usage" del dashboard salió plana en 0 incluso
-        # con datos reales en disco (ver incidente). Esto lee directamente
-        # el disco que la propia app está usando, en el momento real.
+        # Estado del disco persistente al arrancar (incidente 2026-09-02/03: el Web Shell de Render no ve el disco real;
+        # esto lo lee desde la propia app). 16-11-2026 (decisión de César): SIN clave, solo _diagnostico_arranque_publico
+        # (arranque y disco). Lo interno -- rutas de los últimos 10 minutos, hilos, peticiones lentas, memoria, carpetas --
+        # solo con la cabecera X-Admin-Token o la sesión de /admin/revision (_admin_en_peticion); nunca con ?token=.
+        if not _admin_en_peticion():
+            return _resp(json.dumps(_diagnostico_arranque_publico(), ensure_ascii=False),
+                         content_type="application/json; charset=utf-8", gzip_ok=gzip_ok,
+                         headers={"Cache-Control": "no-store"})
         return _resp(json.dumps(_diagnostico_arranque(), ensure_ascii=False),
-                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
+                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok,
+                     headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
 
     return _resp(render_404_html(), code=404, headers={"X-Robots-Tag": "noindex"}, gzip_ok=gzip_ok)
 
@@ -31849,6 +32007,12 @@ def app(environ, start_response):
     info = {"ruta": _ruta_diagnostico(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", "")),
             "inicio": time.time(), "bot": bool(_RE_UA_BOT.search(environ.get("HTTP_USER_AGENT", "") or "")),
             "metodo": environ.get("REQUEST_METHOD", "GET"), "agente": _familia_ua(environ.get("HTTP_USER_AGENT", ""))}
+    # registro de peticiones lentas: ruta sin datos de nadie, idioma y el hilo que la atiende (_lentas_guardar)
+    info["ruta_lenta"] = _ruta_lenta(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
+    info["idioma"] = _i18n_separar_prefijo(environ.get("PATH_INFO", "/") or "/")[0]
+    info["hilo"] = threading.get_ident()
+    if not _lentas_estado["vigilante"]:
+        _lentas_arrancar_vigilante()
     freno = _freno_extractores(environ)          # A y B (08-11-2026): antes de nada, sin montar la página
     if freno:
         estado_f, cuerpo_f, extra_f = freno
@@ -31913,6 +32077,8 @@ def app(environ, start_response):
             _peticiones_en_curso -= 1
             _PETICIONES_ACTIVAS.pop(id(ident), None)
             _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], fin - info["inicio"], info["bot"], info["agente"]))
+        if fin - info["inicio"] >= PETICIONES_LENTAS_SEG:
+            _lentas_guardar(info, fin)
 
 
 def _app_wsgi(environ, start_response):
