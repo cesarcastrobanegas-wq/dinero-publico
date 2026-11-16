@@ -28382,6 +28382,13 @@ _ROBOTS_IA_ENTRENAMIENTO = ("GPTBot", "CCBot", "ClaudeBot", "anthropic-ai", "Goo
                             # iría a _RE_UA_BLOQUEADO (403), como Amazonbot.
                             "ElevenlabsCrawler", "ShapBot")
 
+# 16-11-2026 (encargo de César; medido con /admin/visitas, 7 días): rastreadores que no traen visitas. AhrefsBot y
+# DotBot son de herramientas SEO (10.040 peticiones solo el 16-11), QlyzeBot no dice para qué es y es el que más
+# segundos de servidor gasta (2.206 s en 7 días, 16.868 peticiones) y ExaSearchBot indexa para la API de búsqueda de
+# Exa, como ShapBot. Los tres primeros reciben además un 403 (_RE_UA_BLOQUEADO); ExaSearchBot, como ShapBot, solo el
+# robots.txt, y si no lo respeta irá al 403.
+_ROBOTS_SIN_VISITAS = ("AhrefsBot", "DotBot", "QlyzeBot", "ExaSearchBot")
+
 # «&amp;» copiado tal cual en la consulta (al principio o tras un «&»): ver la redirección de _app_wsgi
 _RE_QS_AMP = re.compile(r"(^|&)amp;")
 
@@ -30633,7 +30640,7 @@ def _route_get(path, qs, gzip_ok=False):
         # Claude-User, PerplexityBot), que sí pueden traer visitas. Google-Extended y Applebot-Extended no son
         # rastreadores aparte: solo dicen si Google o Apple pueden usar lo ya rastreado para entrenar; no tocan la
         # búsqueda. Bytespider y Amazonbot ya reciben un 403 (_RE_UA_BLOQUEADO); aquí quedan dichos también.
-        ia = "".join(f"User-agent: {b}\n" for b in _ROBOTS_IA_ENTRENAMIENTO)
+        ia = "".join(f"User-agent: {b}\n" for b in _ROBOTS_IA_ENTRENAMIENTO + _ROBOTS_SIN_VISITAS)
         body = (f"{ia}Disallow: /\n\nUser-agent: *\nDisallow: /admin/\n{bloqueos}Allow: /\n\n"
                 f"Sitemap: {SITE_URL}/sitemap.xml\nSitemap: {SITE_URL}/sitemap-empresas.xml\n")
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
@@ -31365,7 +31372,9 @@ def _familia_ua(ua):
 # 2026-10-12 (decisión de César, medido con el diagnóstico en dos muestras de 10 minutos: el 93-98 % de las peticiones
 # eran de rastreadores): se añaden SERankingBacklinksBot y MJ12bot (rastreadores de herramientas SEO, no traen visitas)
 # y Amazonbot (150 peticiones cada 10 minutos, casi todas a fichas paginadas en los cuatro idiomas).
-_RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot|SERankingBacklinksBot|MJ12bot|Amazonbot", re.I)
+# 16-11-2026 (encargo de César): AhrefsBot, DotBot y QlyzeBot (ver _ROBOTS_SIN_VISITAS).
+_RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot|SERankingBacklinksBot|MJ12bot|Amazonbot|"
+                              r"AhrefsBot|DotBot|QlyzeBot", re.I)
 
 
 # Cupo de páginas CARAS para rastreadores (2026-10-07, decisión delegada por César). Las búsquedas (/?q=) y los
@@ -31436,6 +31445,71 @@ def _buscador_verificado(ip, ua, exigir_ua=True):
     return ok
 
 
+# Cupo POR HORA para rastreadores (16-11-2026, encargo de César). Medido con /admin/visitas: el 16-11, OAI-SearchBot
+# pidió 24.380 páginas (unas 1.200 por hora), PerplexityBot 8.036 y Amzn-SearchBot 7.024, casi todas fichas de
+# municipio en los cuatro idiomas; Googlebot, 131, y Bingbot, 50. Cada familia de rastreador puede pedir
+# _BOTS_PAGINAS_HORA páginas por hora (de golpe y luego repuestas poco a poco); por encima, 429 con Retry-After, sin
+# montar nada. Fuera del cupo:
+#   - Googlebot y Bingbot verificados por DNS (_buscador_verificado): para ellos está el reparto de abajo;
+#   - los que piden una página porque una persona la ha pedido o compartido (_RE_UA_SIN_CUPO_HORA: ChatGPT-User,
+#     Claude-User, Perplexity-User, vistas previas de redes y mensajería) y los navegadores;
+#   - robots.txt, los sitemaps, /static, /api y /admin.
+_BOTS_PAGINAS_HORA = 300
+_RE_UA_SIN_CUPO_HORA = re.compile(r"ChatGPT-User|Claude-User|Perplexity-User|facebookexternalhit|Twitterbot|LinkedInBot|"
+                                  r"WhatsApp|Slackbot|TelegramBot|Discordbot|DuckDuckBot|Applebot|Google-InspectionTool",
+                                  re.I)
+_bots_hora = {}                  # familia -> [páginas disponibles, última reposición]
+_bots_frenadas_hora = collections.Counter()
+
+# Reparto de la carga de Google y Bing en las fichas de empresa (16-11-2026, encargo de César). Hoy no hace falta
+# (Googlebot pide unas 130-320 páginas al día en total), pero las fichas de empresa son cientos de miles y están en
+# sitemap-empresas.xml: si un día Google las pide todas a la vez, cada buscador puede pedir _BUSCADOR_EMPRESA_CUPO
+# fichas de golpe y después _BUSCADOR_EMPRESA_POR_MIN por minuto; por encima recibe un 503 con Retry-After, que es lo
+# que Google y Bing piden para que bajen el ritmo sin quitar nada del índice. Siguen en el mapa del sitio.
+_BUSCADOR_EMPRESA_CUPO = 120
+_BUSCADOR_EMPRESA_POR_MIN = 30
+_RE_RUTA_EMPRESA = re.compile(r"^(?:/(?:gl|ca|eu))?/empresa/")
+_buscador_empresa = {}           # familia -> [fichas disponibles, última reposición]
+_buscador_empresa_frenadas = collections.Counter()
+
+
+def _cubo(cubos, clave, capacidad, por_segundo):
+    """Cubo de fichas: True si queda una (y la gasta). Llamar con _bots_lock."""
+    ahora = time.time()
+    c = cubos.setdefault(clave, [float(capacidad), ahora])
+    c[0] = min(float(capacidad), c[0] + (ahora - c[1]) * por_segundo)
+    c[1] = ahora
+    if c[0] >= 1:
+        c[0] -= 1
+        return True
+    return False
+
+
+def _ruta_con_cupo_hora(path):
+    return not (path.startswith(("/admin", "/api/", "/static/", "/sitemap")) or path in ("/robots.txt", "/favicon.ico", "/sw.js", "/manifest.json"))
+
+
+def _bot_frenado_por_hora(familia, path, ip, ua):
+    """None si pasa; si no, (estado, Retry-After) para el cupo por hora (429) o para el reparto de buscadores (503)."""
+    if familia in ("navegador", "otro_cliente") or not _ruta_con_cupo_hora(path) or _RE_UA_SIN_CUPO_HORA.search(ua or ""):
+        return None
+    if _RE_UA_BUSCADOR.search(ua or "") and _buscador_verificado(ip, ua):
+        if not _RE_RUTA_EMPRESA.match(path):
+            return None
+        with _bots_lock:
+            if _cubo(_buscador_empresa, familia, _BUSCADOR_EMPRESA_CUPO, _BUSCADOR_EMPRESA_POR_MIN / 60.0):
+                return None
+            _buscador_empresa_frenadas[familia] += 1
+        return "503 Service Unavailable", "120"
+    with _bots_lock:
+        if len(_bots_hora) > 300:
+            _bots_hora.clear()
+        if _cubo(_bots_hora, familia, _BOTS_PAGINAS_HORA, _BOTS_PAGINAS_HORA / 3600.0):
+            return None
+        _bots_frenadas_hora[familia] += 1
+    return "429 Too Many Requests", "600"
+
+
 def _bot_sin_cupo(familia):
     """True si esta familia de rastreador ha agotado su cupo de páginas caras (y hay que contestar 429)."""
     ahora = time.time()
@@ -31497,6 +31571,11 @@ def _ip_sin_cupo(ip, ua=""):
 def _bots_diagnostico():
     with _bots_lock:
         return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12)),
+                "cupo_por_hora": {"paginas_hora": _BOTS_PAGINAS_HORA,
+                                  "frenadas_desde_el_arranque": dict(_bots_frenadas_hora.most_common(12)),
+                                  "buscadores_fichas_empresa": {"de_golpe": _BUSCADOR_EMPRESA_CUPO,
+                                                                "por_minuto": _BUSCADOR_EMPRESA_POR_MIN,
+                                                                "frenadas": dict(_buscador_empresa_frenadas)}},
                 "cupo_por_ip": {"cupo": _IP_CUPO, "repone_cada_s": _IP_REPONE_S, "frenadas": _ip_frenadas[0],
                                 "ips_en_memoria": len(_ip_cupos)},
                 "freno_extractores": _freno_diagnostico()}
@@ -31788,6 +31867,9 @@ def _visitas_anotar(environ, estado, cabeceras, respuesta, segundos):
         else:
             claves = [("persona" if persona else "bot", nombre), ("ruta_persona" if persona else "ruta_bot", ruta),
                       ("red_persona" if persona else "red_bot", red), ("estado", codigo or "?")]
+        if not interno and not persona:
+            # qué páginas pide cada bot (16-11-2026); los tramos con cifras (un NIF, un id) como «*» para agrupar
+            claves.append(("bot_ruta", (nombre + " " + re.sub(r"/[^/?]*\d[^/?]*", "/*", ruta))[:160]))
         if not interno and codigo == "200" and cab.get("content-disposition", "").startswith("attachment"):
             claves.append(("evento", "descarga_persona" if persona else "descarga_bot"))
         huella = _visitas_huella(environ, semana) if persona and pagina and ip else None
@@ -31857,13 +31939,14 @@ def _visitas_volcar():
             _db.execute("DELETE FROM settings WHERE clave LIKE 'visitas_sal_%' AND clave < ?", ("visitas_sal_" + semana_actual,))
             desde_redes = (ahora - timedelta(days=3)).strftime("%Y-%m-%d")
             for (dia,) in _db.execute("SELECT DISTINCT dia FROM visitas_dia WHERE dia < ? AND dia >= ? AND clase IN "
-                                      "('red_persona', 'red_bot')", (hoy, desde_redes)).fetchall():
-                for clase in ("red_persona", "red_bot"):
+                                      "('red_persona', 'red_bot', 'bot_ruta')", (hoy, desde_redes)).fetchall():
+                for clase in ("red_persona", "red_bot", "bot_ruta"):
                     _db.execute("DELETE FROM visitas_dia WHERE dia=? AND clase=? AND nombre NOT IN (SELECT nombre FROM "
                                 "visitas_dia WHERE dia=? AND clase=? ORDER BY bytes DESC LIMIT ?)",
                                 (dia, clase, dia, clase, _VISITAS_REDES_POR_DIA))
             limite = (ahora - timedelta(days=_VISITAS_REDES_DIAS)).strftime("%Y-%m-%d")
-            _db.execute("DELETE FROM visitas_dia WHERE dia < ? AND clase IN ('red_persona', 'red_bot')", (limite,))
+            _db.execute("DELETE FROM visitas_dia WHERE dia < ? AND clase IN ('red_persona', 'red_bot', 'bot_ruta')",
+                        (limite,))
             _visitas_estado["dia_cerrado"] = hoy
         _db.commit()
 
@@ -31961,6 +32044,8 @@ def _visitas_pagina(qs, autorizado=False):
         f'(<b>{pct(tot_b, tot_b + tot_p)}</b> del total).</p>' + dias_html + semanas_html
         + ranking("bot", "Bots por nombre", "Rastreador", 40)
         + ranking("ruta_bot", "Rutas que más piden los bots", "Ruta (sin valores)")
+        + ranking("bot_ruta", "Qué páginas pide cada bot", "Bot y ruta (sin valores)", 40,
+                  nota=f"De los días ya cerrados se guardan las {_VISITAS_REDES_POR_DIA} combinaciones con más bytes.")
         + ranking("ruta_persona", "Rutas que más piden las personas", "Ruta (sin valores)")
         + _freno_tabla_html(filas, tabla, num)
         + ranking("red_bot", "Redes de bots con más tráfico", "Red (IP recortada)", nota=f"De los días ya cerrados se guardan las {_VISITAS_REDES_POR_DIA} redes con más bytes, durante {_VISITAS_REDES_DIAS} días.")
@@ -32040,6 +32125,19 @@ def app(environ, start_response):
                                                  ("Content-Length", str(len(cuerpo)))])
         _visitas_anotar(environ, "429", [("Content-Length", str(len(cuerpo)))], None, 0.0)
         return [cuerpo]
+    frenado_h = (_bot_frenado_por_hora(info["agente"], environ.get("PATH_INFO", "/") or "/",
+                                       (environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip(),
+                                       environ.get("HTTP_USER_AGENT", ""))
+                 if info["bot"] and info["metodo"] in ("GET", "HEAD") else None)
+    if frenado_h:
+        estado_h, espera_h = frenado_h
+        with _peticiones_lock:
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + f" ({estado_h[:3]} hora)"))
+        cuerpo = b"Demasiadas peticiones. Vuelve a intentarlo mas tarde.\n"
+        start_response(estado_h, [("Content-Type", "text/plain; charset=utf-8"), ("Retry-After", espera_h),
+                                  ("Content-Length", str(len(cuerpo))), ("Cache-Control", "no-store")])
+        _visitas_anotar(environ, estado_h[:3], [("Content-Length", str(len(cuerpo)))], None, 0.0)
+        return [cuerpo if info["metodo"] != "HEAD" else b""]
     if (not info["bot"] and info["metodo"] == "GET"
             and _ruta_cara_por_ip(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
             and _ip_sin_cupo((environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip(),
