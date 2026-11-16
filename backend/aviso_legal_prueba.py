@@ -63,5 +63,22 @@ for lang in ("gl", "ca", "eu"):
         ok(bool(cat.get(t)) and cat[t] != t, f"{lang}: traducción cargada para «{n[:40]}…»")
     ok("6.1.f" in crudo and "9.2.e" not in crudo, f"{lang}: cita el 6.1.f y no el 9.2.e")
 
+# Formulario de /informes (16-11): el Aviso legal tiene su apartado, la casilla del formulario enlaza a él y el
+# plazo de conservación del texto es el de la constante
+ok('id="informes"' in ast.get_source_segment(fuente, render), "el aviso legal tiene el apartado #informes")
+INF = ["Formulario de petición de informes", "te pedimos tu dirección de correo electrónico",
+       "solo para contestar tu petición", "La web no guarda esos datos", "Conservamos ese correo en nuestro buzón",
+       "Puedes pedir que lo borremos antes"]
+for n in INF:
+    ok(sum(n in t for t in textos) == 1, f"el aviso legal dice «{n}»")
+ok('/aviso-legal#informes' in fuente, "la casilla del formulario de /informes enlaza al apartado")
+ok(re.search(r"^INFORMES_CONSERVACION_MESES = \d+", fuente, re.M) is not None, "plazo del buzón en una constante")
+for lang in ("gl", "ca", "eu"):
+    cat = _po_leer(os.path.join(BASE, "locale", f"{lang}.po"))
+    for n in INF:
+        t = next(t for t in textos if n in t)
+        ok(bool(cat.get(t)) and (cat[t] != t or len(t) < 40), f"{lang}: traducción cargada para «{n[:40]}…»")
+    ok(all(cat.get(t, "").count("{meses}") == 1 for t in textos if "{meses}" in t), f"{lang}: conserva {{meses}}")
+
 print(f"\n{'TODO BIEN' if not FALLOS else str(len(FALLOS)) + ' FALLOS'}")
 sys.exit(1 if FALLOS else 0)

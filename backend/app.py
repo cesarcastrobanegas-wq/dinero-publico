@@ -28082,6 +28082,14 @@ def _iban_html():
 #   - INFORMES_PEDIDOS=0 apaga el formulario (queda el enlace de correo). La página se ve siempre.
 INFORMES_PEDIDOS = os.environ.get("INFORMES_PEDIDOS", "1").strip() != "0"
 INFORMES_MAX_HORA = 20
+# Precios (16-11): mientras no estén decididos, cada tarjeta dice «Precio según el encargo: pídenos presupuesto».
+# Para enseñar los «desde» basta con poner INFORMES_PRECIOS_VISIBLES = True; los importes están en _INFORMES_PRECIOS
+# (sin IVA; cada texto tiene ya su traducción en los .po).
+INFORMES_PRECIOS_VISIBLES = False
+# Cuánto se guarda en el buzón de contacto@ el correo de una petición, desde la última respuesta (Aviso legal #informes).
+INFORMES_CONSERVACION_MESES = 12
+_INFORMES_PRECIOS = {"empresa": "desde 19 €", "ayuntamiento": "desde 29 €", "competencia": "desde 90 €",
+                     "seguimiento": "desde 5 € al mes por empresa", "suscripcion": "desde 25 € al mes"}
 _INFORMES_DIR = os.path.join(BASE_DIR, "static", "informes")
 _INFORMES_EJEMPLOS = {"empresa": "ejemplo-informe-empresa.pdf", "ayuntamiento": "ejemplo-informe-ayuntamiento.pdf",
                       "competencia": "ejemplo-informe-competencia.pdf"}
@@ -28093,22 +28101,29 @@ def _informes_destino():
     return os.environ.get("INFORMES_DESTINO", "").strip() or "contacto@dinero-publico.com"
 
 
+def _informes_precio(clave):
+    if INFORMES_PRECIOS_VISIBLES and clave in _INFORMES_PRECIOS:
+        return _t(_INFORMES_PRECIOS[clave])
+    return _t("Precio según el encargo: pídenos presupuesto")
+
+
 def _informes_catalogo():
-    """[(clave, título, precio «desde», qué lleva, para quién)] en el idioma de la petición."""
+    """[(clave, título, precio, qué lleva, para quién)] en el idioma de la petición. El precio sale de
+    _informes_precio (ver INFORMES_PRECIOS_VISIBLES)."""
     return [
-        ("empresa", _t("Informe de empresa"), _t("desde 19 €"),
+        ("empresa", _t("Informe de empresa"), _informes_precio("empresa"),
          _t("Los contratos públicos que ha ganado (órgano, importe, fecha, procedimiento y número de ofertas), la concentración por órgano contratante, las subvenciones de la BDNS, los fondos europeos declarados, sus administradores y actos en el BORME y las sociedades vinculadas."),
          _t("Pymes que van a subcontratar o a ir en UTE, periodistas y despachos.")),
-        ("ayuntamiento", _t("Informe de ayuntamiento"), _t("desde 29 €"),
+        ("ayuntamiento", _t("Informe de ayuntamiento"), _informes_precio("ayuntamiento"),
          _t("Contratos formales y menores, principales adjudicatarios, proveedores que se repiten, retribuciones, deuda, cuentas e Índice de Transparencia."),
          _t("Grupos municipales, asociaciones, periodistas y consultoras.")),
-        ("competencia", _t("Informe de competencia"), _t("desde 90 €"),
+        ("competencia", _t("Informe de competencia"), _informes_precio("competencia"),
          _t("Un sector (código CPV) en una provincia: quién gana, cuántas veces y por cuánto, la rebaja media, las ofertas por contrato y los órganos que más contratan."),
          _t("Empresas que licitan.")),
-        ("seguimiento", _t("Seguimiento de competidor"), _t("desde 5 € al mes por empresa"),
+        ("seguimiento", _t("Seguimiento de competidor"), _informes_precio("seguimiento"),
          _t("Un aviso por correo cada vez que la empresa que elijas gana un contrato público, formal o menor."),
          _t("Empresas que licitan.")),
-        ("suscripcion", _t("Suscripción para pymes"), _t("desde 25 € al mes"),
+        ("suscripcion", _t("Suscripción para pymes"), _informes_precio("suscripcion"),
          _t("Filtro de licitaciones, alertas por correo, 2 informes de empresa al mes y 3 competidores en seguimiento."),
          _t("Pymes que licitan.")),
     ]
@@ -28163,7 +28178,7 @@ def _informes_form_html(qs):
       <textarea name="mensaje" maxlength="1500" rows="4"></textarea></label>
     <label class="inf-trampa" aria-hidden="true">Web <input type="text" name="web" tabindex="-1" autocomplete="off"></label>
     <label class="inf-check"><input type="checkbox" name="acepto" value="1" required>
-      <span>{_t('Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href="/aviso-legal">Aviso legal</a>.')}</span></label>
+      <span>{_t('Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href="/aviso-legal#informes">Aviso legal</a>.')}</span></label>
     <button type="submit">{_t("Pedir información")}</button>
   </form>"""
 
@@ -28195,12 +28210,14 @@ def render_informes_html(qs=None):
   {_informes_aviso_html()}
   <h2>{_t("Qué informes hacemos")}</h2>
   <div class="inf-cat">{tarjetas}</div>
-  <p class="inf-sub">{_t("Precios orientativos, sin IVA. El precio exacto depende del tamaño del informe: te lo decimos antes de hacer nada.")}</p>
+  <p class="inf-sub">{_t("Precios orientativos, sin IVA. El precio exacto depende del tamaño del informe: te lo decimos antes de hacer nada.") if INFORMES_PRECIOS_VISIBLES else _t("Cada informe se presupuesta según su tamaño: te decimos el precio y el plazo antes de hacer nada, y pedirlo no te compromete.")}</p>
   {_informes_ejemplos_html()}
   {_informes_form_html(qs)}
 </div>"""
     html_ = _page_shell(_t("Informes con datos oficiales de contratación pública"), body,
-                        description=_t("Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y precios orientativos."),
+                        description=(_t("Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y precios orientativos.")
+                                     if INFORMES_PRECIOS_VISIBLES else
+                                     _t("Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y presupuesto sin compromiso.")),
                         og_path="/informes")
     return html_
 
@@ -28339,6 +28356,17 @@ def render_aviso_legal_html():
   <p>{_t("Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento: recibe tu dirección y el contenido de cada mensaje, y los usa solo para entregarlo.")}</p>
   <p>{_t('Puedes darte de baja en cualquier momento con el enlace que va en cada correo: al hacerlo borramos de inmediato tu dirección y tus alertas. También puedes pedirlo en <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
 """ if ALERTAS_ACTIVAS else ""
+    # Formulario de /informes (2026-11-16): solo mientras el formulario está encendido (INFORMES_PEDIDOS). Los datos
+    # no se escriben en la base de datos: viajan en un correo (_informes_post) y en avisos_correo solo queda el
+    # intento, con las direcciones tapadas. El plazo de conservación del buzón lo fija INFORMES_CONSERVACION_MESES.
+    informes_legal = f"""
+  <h2 id="informes">{_t("Formulario de petición de informes")}</h2>
+  <p>{_t('Si pides un informe desde el formulario de la página <a href="/informes">Informes</a>, te pedimos tu dirección de correo electrónico, qué informe quieres y sobre qué empresa, municipio o sector. Tu nombre o el de tu empresa y el mensaje son opcionales.')}</p>
+  <p>{_t("Usamos esos datos solo para contestar tu petición: decirte el precio y el plazo del informe que nos pides. No los cedemos a nadie ni los usamos para publicidad ni para apuntarte a ninguna lista. La base legal es tu propia petición (art. 6.1.b del RGPD: medidas precontractuales a petición del interesado).")}</p>
+  <p>{_t("La web no guarda esos datos: no se escriben en ninguna base de datos. Solo viajan en un correo que nos llega a contacto@dinero-publico.com, enviado a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento. En el registro técnico de envíos de la web solo queda la fecha y si el correo salió, con las direcciones tapadas.")}</p>
+  <p>{_t("Conservamos ese correo en nuestro buzón mientras dure la conversación sobre tu petición y, como máximo, {meses} meses desde nuestra última respuesta. Después lo borramos.").format(meses=INFORMES_CONSERVACION_MESES)}</p>
+  <p>{_t('Puedes pedir que lo borremos antes, o ejercer cualquier otro de tus derechos, escribiendo a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
+""" if INFORMES_PEDIDOS else ""
     body = f"""<div class="static-page">
   <h1>{_t("Aviso Legal y Privacidad")}</h1>
   {nota}
@@ -28368,6 +28396,7 @@ def render_aviso_legal_html():
   <p>{_t('Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
 
   {alertas_legal}
+  {informes_legal}
   <h2>{_t("Cookies y publicidad")}</h2>
   <p>{_t("Este sitio usa cookies propias, necesarias para su funcionamiento básico, y cookies de terceros que solo se activan si das tu consentimiento explícito en el banner que aparece al entrar:")}</p>
   <ul>

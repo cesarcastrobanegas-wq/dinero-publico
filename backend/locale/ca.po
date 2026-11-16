@@ -3737,8 +3737,8 @@ msgid "Algo más que debamos saber (opcional)"
 msgstr "Alguna cosa més que hàgim de saber (opcional)"
 
 #: app.py (/informes)
-msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href=\"/aviso-legal\">Aviso legal</a>."
-msgstr "Farem servir aquestes dades només per contestar-te. Ens arriben per correu i el web no les guarda. Més informació a l'<a href=\"/aviso-legal\">Avís legal</a>."
+msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href=\"/aviso-legal#informes\">Aviso legal</a>."
+msgstr "Farem servir aquestes dades només per contestar-te. Ens arriben per correu i el web no les guarda. Més informació a l'<a href=\"/aviso-legal#informes\">Avís legal</a>."
 
 #: app.py (/informes)
 msgid "Pedir información"
@@ -3807,6 +3807,42 @@ msgstr "Veure què inclou, un exemple i demanar-lo →"
 #: app.py (/informes)
 msgid "También puedes escribirnos:"
 msgstr "També ens pots escriure:"
+
+#: app.py (/informes y Aviso legal)
+msgid "Precio según el encargo: pídenos presupuesto"
+msgstr "Preu segons l'encàrrec: demana'ns pressupost"
+
+#: app.py (/informes y Aviso legal)
+msgid "Cada informe se presupuesta según su tamaño: te decimos el precio y el plazo antes de hacer nada, y pedirlo no te compromete."
+msgstr "Cada informe es pressuposta segons la seva mida: et diem el preu i el termini abans de fer res, i demanar-lo no et compromet."
+
+#: app.py (/informes y Aviso legal)
+msgid "Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y presupuesto sin compromiso."
+msgstr "Informes en PDF d'empreses, ajuntaments i competència en contractes públics, amb dades oficials i la font de cada dada. Exemples descarregables i pressupost sense compromís."
+
+#: app.py (/informes y Aviso legal)
+msgid "Formulario de petición de informes"
+msgstr "Formulari de sol·licitud d'informes"
+
+#: app.py (/informes y Aviso legal)
+msgid "Si pides un informe desde el formulario de la página <a href=\"/informes\">Informes</a>, te pedimos tu dirección de correo electrónico, qué informe quieres y sobre qué empresa, municipio o sector. Tu nombre o el de tu empresa y el mensaje son opcionales."
+msgstr "Si demanes un informe des del formulari de la pàgina <a href=\"/informes\">Informes</a>, et demanem la teva adreça de correu electrònic, quin informe vols i sobre quina empresa, municipi o sector. El teu nom o el de la teva empresa i el missatge són opcionals."
+
+#: app.py (/informes y Aviso legal)
+msgid "Usamos esos datos solo para contestar tu petición: decirte el precio y el plazo del informe que nos pides. No los cedemos a nadie ni los usamos para publicidad ni para apuntarte a ninguna lista. La base legal es tu propia petición (art. 6.1.b del RGPD: medidas precontractuales a petición del interesado)."
+msgstr "Fem servir aquestes dades només per respondre la teva sol·licitud: dir-te el preu i el termini de l'informe que ens demanes. No les cedim a ningú ni les fem servir per a publicitat ni per apuntar-te a cap llista. La base legal és la teva pròpia sol·licitud (art. 6.1.b del RGPD: mesures precontractuals a petició de l'interessat)."
+
+#: app.py (/informes y Aviso legal)
+msgid "La web no guarda esos datos: no se escriben en ninguna base de datos. Solo viajan en un correo que nos llega a contacto@dinero-publico.com, enviado a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento. En el registro técnico de envíos de la web solo queda la fecha y si el correo salió, con las direcciones tapadas."
+msgstr "El web no desa aquestes dades: no s'escriuen a cap base de dades. Només viatgen en un correu que ens arriba a contacto@dinero-publico.com, enviat a través de Resend (Resend, Inc., Estats Units), que actua com a encarregat del tractament. Al registre tècnic d'enviaments del web només hi queda la data i si el correu ha sortit, amb les adreces tapades."
+
+#: app.py (/informes y Aviso legal)
+msgid "Conservamos ese correo en nuestro buzón mientras dure la conversación sobre tu petición y, como máximo, {meses} meses desde nuestra última respuesta. Después lo borramos."
+msgstr "Conservem aquest correu a la nostra bústia mentre duri la conversa sobre la teva sol·licitud i, com a màxim, {meses} mesos des de la nostra última resposta. Després l'esborrem."
+
+#: app.py (/informes y Aviso legal)
+msgid "Puedes pedir que lo borremos antes, o ejercer cualquier otro de tus derechos, escribiendo a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
+msgstr "Pots demanar que l'esborrem abans, o exercir qualsevol altre dels teus drets, escrivint a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
 
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Encara sense dades de fons UE per a aquesta província."
