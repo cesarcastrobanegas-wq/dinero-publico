@@ -17021,6 +17021,10 @@ def _revision_wsgi(method, path, qs, environ):
         return _socios_vista_html(qs.get("p", [""])[0])
     if path == "/admin/revision/visitas":
         return _visitas_pagina(qs, autorizado=True)
+    if path == "/admin/revision/diagnostico":      # 16-11-2026: el diagnóstico completo con la sesión
+        return _resp(json.dumps(_diagnostico_arranque(), ensure_ascii=False),
+                     content_type="application/json; charset=utf-8",
+                     headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
     if path == "/admin/revision/ficha":
         md = _revision_ficha_md(qs.get("huella", [""])[0])
         if md is None:
@@ -18095,6 +18099,7 @@ _peticiones_en_curso = 0
 _peticiones_lock = threading.Lock()
 _PETICIONES_ACTIVAS = {}                                   # diagnóstico de carga (2026-10-03), ver app()
 _PETICIONES_RECIENTES = __import__("collections").deque(maxlen=2000)
+_ARRANQUE_TS = time.time()          # hora en que se importó el módulo (parte pública de /api/diagnostico-arranque)
 
 # ─── REGISTRO DE PETICIONES LENTAS (2026-11-16, encargo de César) ────────────────────────────────────────────────────
 # El diagnóstico de carga solo mira los últimos 10 minutos y se pierde al reiniciar: una página lenta de hace una hora
@@ -18109,7 +18114,8 @@ _PETICIONES_RECIENTES = __import__("collections").deque(maxlen=2000)
 #     diagnóstico), como mucho _LENTAS_MAX_MUESTRAS veces por petición;
 #   - a la vez: las otras peticiones que coincidieron en el tiempo con esta (ruta, visitante y segundos).
 # Se borra solo: al guardar cada fila se tiran las de más de PETICIONES_LENTAS_DIAS días, y como mucho quedan
-# _LENTAS_MAX_FILAS. Se ve en /api/diagnostico-arranque («peticiones_lentas»).
+# _LENTAS_MAX_FILAS. Se ve en el diagnóstico completo («carga» -> «peticiones_lentas»): /api/diagnostico-arranque con
+# la cabecera X-Admin-Token, o /admin/revision/diagnostico con la sesión; sin clave no sale.
 PETICIONES_LENTAS_SEG = 10.0
 PETICIONES_LENTAS_DIAS = 7
 _LENTAS_MUESTRA_CADA_S = 5.0
@@ -25723,6 +25729,7 @@ def _diagnostico_arranque():
         memoria_rss_mb = None
 
     return {
+        "arrancado_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(_ARRANQUE_TS)),
         "filtro_salida_dni": dict(_FILTRO_SALIDA_ESTADO, segundos=round(_FILTRO_SALIDA_ESTADO["segundos"], 3)),
         "disco_confiable": _DISCO_CONFIABLE,
         "data_dir": DATA_DIR,
@@ -25733,6 +25740,27 @@ def _diagnostico_arranque():
         "memoria_desglose": _memoria_desglose(),
         "carga": _estado_carga(),
         "disco": _uso_disco(),
+    }
+
+
+def _diagnostico_arranque_publico():
+    """Lo que /api/diagnostico-arranque da SIN clave (16-11-2026, decisión de César): solo lo básico del arranque, sin
+    nada interno (ni rutas pedidas, ni hilos, ni peticiones lentas, ni memoria, ni carpetas). Sirve para saber si la
+    web está en pie, desde cuándo (un despliegue o un reinicio cambian «arrancado_utc») y si el disco está bien.
+    Todo lo demás, con la cabecera X-Admin-Token o en /admin/revision/diagnostico (sesión de /admin/revision)."""
+    def _info(path):
+        try:
+            st = os.stat(path)
+            return {"existe": True, "tamano_mb": round(st.st_size / 1024 / 1024, 2),
+                    "modificado": datetime.fromtimestamp(st.st_mtime).isoformat()}
+        except OSError:
+            return {"existe": False}
+    return {
+        "arrancado_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(_ARRANQUE_TS)),
+        "disco_confiable": _DISCO_CONFIABLE,
+        "cache_db": _info(DB_FILE),
+        "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
+        "completo": "solo con la cabecera X-Admin-Token o en /admin/revision/diagnostico",
     }
 
 
@@ -30888,16 +30916,17 @@ def _route_get(path, qs, gzip_ok=False):
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
     if path == "/api/diagnostico-arranque":
-        # Diagnóstico público del estado del disco persistente al arrancar
-        # (incidente 2026-09-02/03). Sin ADMIN_TOKEN a propósito: solo
-        # tamaños/fechas/booleanos, cero datos de empresas/personas. Nace
-        # de no tener otra forma fiable de comprobar esto -- el Web Shell de
-        # Render corre en una instancia efímera sin el disco real montado,
-        # y la métrica "Disk Usage" del dashboard salió plana en 0 incluso
-        # con datos reales en disco (ver incidente). Esto lee directamente
-        # el disco que la propia app está usando, en el momento real.
+        # Estado del disco persistente al arrancar (incidente 2026-09-02/03: el Web Shell de Render no ve el disco real;
+        # esto lo lee desde la propia app). 16-11-2026 (decisión de César): SIN clave, solo _diagnostico_arranque_publico
+        # (arranque y disco). Lo interno -- rutas de los últimos 10 minutos, hilos, peticiones lentas, memoria, carpetas --
+        # solo con la cabecera X-Admin-Token o la sesión de /admin/revision (_admin_en_peticion); nunca con ?token=.
+        if not _admin_en_peticion():
+            return _resp(json.dumps(_diagnostico_arranque_publico(), ensure_ascii=False),
+                         content_type="application/json; charset=utf-8", gzip_ok=gzip_ok,
+                         headers={"Cache-Control": "no-store"})
         return _resp(json.dumps(_diagnostico_arranque(), ensure_ascii=False),
-                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
+                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok,
+                     headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
 
     return _resp(render_404_html(), code=404, headers={"X-Robots-Tag": "noindex"}, gzip_ok=gzip_ok)
 

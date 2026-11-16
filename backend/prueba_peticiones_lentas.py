@@ -126,5 +126,42 @@ with app._db_lock:                         # deja la copia como estaba
     app._db.execute("DELETE FROM peticiones_lentas WHERE id > ?", (antes,))
     app._db.commit()
 app._app_wsgi = original
+
+# Acceso (16-11-2026): sin clave, solo lo básico; lo interno con X-Admin-Token o con la sesión de /admin/revision
+os.environ["ADMIN_TOKEN"] = "clave-de-prueba-local"
+
+
+def diag(path, query="", cabeceras=None):
+    env = {"REQUEST_METHOD": "GET", "PATH_INFO": path, "QUERY_STRING": query, "HTTP_USER_AGENT": "curl/8",
+           "REMOTE_ADDR": "127.0.0.1", "wsgi.input": None, **(cabeceras or {})}
+    estado = {}
+    cuerpo = b"".join(app.app(env, lambda s, h, e=None: estado.update(s=s, h=dict(h))))
+    if estado["h"].get("Content-Encoding") == "gzip":
+        import gzip
+        cuerpo = gzip.decompress(cuerpo)
+    return estado["s"][:3], cuerpo.decode("utf-8", "replace")
+
+
+INTERNO = ("carga", "peticiones_lentas", "hilos", "ultimos_10_min", "data_dir", "memoria_desglose", "memoria_rss_mb")
+cod, cuerpo = diag("/api/diagnostico-arranque")
+d = json.loads(cuerpo)
+ok(cod == "200" and "arrancado_utc" in d and "disco_confiable" in d, "sin clave: 200 con lo básico de arranque")
+ok(not any(k in cuerpo for k in INTERNO), "sin clave: nada interno (carga, hilos, rutas, lentas, memoria, carpetas)")
+cod, cuerpo = diag("/api/diagnostico-arranque", "token=clave-de-prueba-local")
+ok(not any(k in cuerpo for k in INTERNO), "con ?token= en la URL: igual que sin clave")
+cod, cuerpo = diag("/api/diagnostico-arranque", "", {"HTTP_X_ADMIN_TOKEN": "otra"})
+ok(not any(k in cuerpo for k in INTERNO), "con una cabecera equivocada: igual que sin clave")
+cod, cuerpo = diag("/api/diagnostico-arranque", "", {"HTTP_X_ADMIN_TOKEN": "clave-de-prueba-local"})
+d = json.loads(cuerpo)
+ok(cod == "200" and "peticiones_lentas" in d.get("carga", {}) and "hilos" in d["carga"]
+   and "ultimos_10_min" in d["carga"], "con X-Admin-Token: completo (lentas, hilos, rutas)")
+sesion = "dp_rev=" + app._revision_cookie_nueva()
+cod, cuerpo = diag("/admin/revision/diagnostico", "", {"HTTP_COOKIE": sesion})
+ok(cod == "200" and "peticiones_lentas" in json.loads(cuerpo).get("carga", {}),
+   "con la sesión de /admin/revision: completo en /admin/revision/diagnostico")
+cod, cuerpo = diag("/admin/revision/diagnostico")
+ok("peticiones_lentas" not in cuerpo and "carga" not in cuerpo, "/admin/revision/diagnostico sin sesión: no da nada")
+cod, cuerpo = diag("/api/diagnostico-arranque", "", {"HTTP_COOKIE": sesion})
+ok("peticiones_lentas" in cuerpo, "la sesión también vale en /api/diagnostico-arranque si el navegador la manda")
 print(f"\n{'TODO BIEN' if not FALLOS else str(len(FALLOS)) + ' FALLOS'}")
 sys.exit(1 if FALLOS else 0)
