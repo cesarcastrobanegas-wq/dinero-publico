@@ -24188,9 +24188,18 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
 
             abierto = " open" if page_cm > 1 else ""
             sufijo_iva, nota_base_cm = _nota_base_importe_cm(menors_muni)
+            # Cabecera (16-11): la cuenta junta la fuente propia y las filas del feed de PLACE que esa fuente no trae
+            # (_retirar_duplicados_place); el título dice qué hay de verdad en ESTE municipio.
+            n_place_cm = sum(1 for r in menors_muni if r.get("fuente") == FUENTE_CM_PLACE)
+            if not n_place_cm:
+                titulo_cm = _t("Contratos menores (fuentes locales del ayuntamiento)")
+            elif n_place_cm == total_cm_n:
+                titulo_cm = _t("Contratos menores (PLACE)")
+            else:
+                titulo_cm = _t("Contratos menores (fuentes del ayuntamiento y PLACE)")
             contratos_menors_html = f"""<details class="cm-card"{abierto}>
                 <summary>
-                  📋 {_t("Contratos menores (fuentes locales del ayuntamiento)")}
+                  📋 {titulo_cm}
                   <span class="badge" style="background:var(--tint);color:var(--accent);border-color:var(--border)">
                     {total_cm_n} · {fmt_eur(str(total_cm))}{sufijo_iva}
                   </span>{_aviso_historico_cm(menors_muni)}

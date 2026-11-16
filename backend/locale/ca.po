@@ -3606,6 +3606,14 @@ msgstr "% ({base})"
 msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
 msgstr "Els imports amb bases diferents no se sumen entre si: van en columnes separades, i els percentatges es calculen només sobre la columna «{columna}»."
 
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (fuentes del ayuntamiento y PLACE)"
+msgstr "Contractes menors (fonts de l'ajuntament i PLACE)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (PLACE)"
+msgstr "Contractes menors (PLACE)"
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Encara sense dades de fons UE per a aquesta província."
 
