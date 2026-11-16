@@ -3713,7 +3713,10 @@ def _administrador_borme_info(empresa, nif=""):
 # Cruz Roja con el de Asturiana de Automóviles, Toi Toi con el de Rentokil, Teknoservice con el de Vigilant. Reglas:
 #   1. NIF entre los «NIF sin confirmar» del fichero del BORME (nif_sin_confirmar): ningún administrador;
 #   2. NIF que no está en el fichero: solo el nombre principal o una variante con al menos la mitad de los contratos
-#      de ese NIF (las grafías que llevan al mismo registro del BORME cuentan juntas);
+#      de ese NIF. Las grafías de una misma sociedad cuentan juntas: las que llevan al mismo registro del BORME y,
+#      además, las que comparadas sin signos, espacios ni forma social (_empresa_clave_compacta) son iguales a una de
+#      ellas o a un nombre del registro, o se diferencian en UNA letra si tienen 15 caracteres o más (decisión de
+#      César, 16-11: «TELEFONICA DE ESPEÑA» con «TELEFONICA DE ESPAÑA»);
 #   3. se descarta cualquier registro que en el fichero esté asignado a OTRO NIF (con un NIF enmascarado, «otro» es
 #      uno que no encaja con la máscara) que tenga al menos tantos contratos como esta ficha. Medido en local: sin
 #      ese «al menos tantos», Endesa Energía (A81948077) e Iberdrola Clientes (A95758389) perdían su administrador
@@ -3733,6 +3736,32 @@ def _borme_nifs_del_registro(b):
                 mapa[_borme_registro_id(v)].add(k)
         _BORME_NIFS_REG.update(base=base, mapa=mapa)
     return _BORME_NIFS_REG["mapa"].get(_borme_registro_id(b), set())
+
+
+_RE_FORMA_COMPACTA_FICHA = re.compile(
+    r"(\s+(sociedad limitada|sociedad anonima|sociedad unipersonal|sociedad cooperativa|unipersonal|laboral|"
+    r"profesional|en liquidacion|s m e|sme|s l u|s a u|s l l|s l p|s l|s a|slu|sau|sll|slp|sl|sa))+$")
+_EMPRESA_ERRATA_MIN = 15
+
+
+def _empresa_clave_compacta(s):
+    """Nombre sin tildes, signos, espacios ni forma social final: «TELEFONICA DE ESPAÑA, S.A. SOCIEDAD UNIPERSONAL»
+    y «Telefónica de España SAU» dan lo mismo."""
+    s = re.sub(r"(?i)\s*\(\s*r\.?\s*m\.?[^)]*\)\s*$", "", s or "")
+    s = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]+", " ", normalizar(s))).strip()
+    return _RE_FORMA_COMPACTA_FICHA.sub("", s).replace(" ", "")
+
+
+def _una_errata(a, b):
+    """True si a y b se diferencian en exactamente una letra (cambiada, sobrante o que falta)."""
+    if a == b or abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) > len(b):
+        a, b = b, a
+    i = 0
+    while i < len(a) and a[i] == b[i]:
+        i += 1
+    return a[i + 1:] == b[i + 1:] if len(a) == len(b) else a[i:] == b[i + 1:]
 
 
 def _borme_nif_encaja(nif, otro):
@@ -3772,6 +3801,26 @@ def _empresa_administrador(nombre, nif, variantes, total, contratos_de=None):
         g = grupos.setdefault(_borme_registro_id(b), [b, 0, cand, False])
         g[1] += k or 0
         g[3] = g[3] or cand == nombre
+    if grupos:                               # las grafías que no casan por nombre, a su grupo si son la misma sociedad
+        registro_de = {}
+        for v, _k in variantes:
+            b = _administrador_borme_info(v, n)
+            registro_de[v] = _borme_registro_id(b) if b else None
+        claves = {rid: ({_empresa_clave_compacta(v) for v, r in registro_de.items() if r == rid}
+                        | {_empresa_clave_compacta(x) for x in _borme_nombres_del_registro(g[0])}) - {""}
+                  for rid, g in grupos.items()}
+        for v, k in variantes:
+            if registro_de.get(v):
+                continue
+            c = _empresa_clave_compacta(v)
+            if not c:
+                continue
+            dest = [rid for rid, cs in claves.items() if c in cs]
+            if not dest and len(c) >= _EMPRESA_ERRATA_MIN:
+                dest = [rid for rid, cs in claves.items()
+                        if any(len(x) >= _EMPRESA_ERRATA_MIN and _una_errata(c, x) for x in cs)]
+            if len(dest) == 1:               # a uno solo: si encaja con dos sociedades, no cuenta para ninguna
+                grupos[dest[0]][1] += k or 0
     for b, k, cand, principal in sorted(grupos.values(), key=lambda g: (not g[3], -g[1])):
         if principal or k * 2 >= (total or 0):
             return b, cand

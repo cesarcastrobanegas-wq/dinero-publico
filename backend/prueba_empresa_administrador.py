@@ -91,6 +91,31 @@ def main():
     r = ea("ASEGURADORA INVENTADA SA", "W0000002H", v, 703, cd)
     comprobar(r[0] is None or r[0]["fuente"] != "BORME-A-2024-2-28", "una variante ajena da su administrador")
 
+    # Grafías sin forma social y erratas de UNA letra (solo nombres de 15 caracteres o más)
+    tel = reg("PERSONA INVENTADA CINCO", "BORME-A-2024-5-28", "TELECOMUNICACIONES INVENTADAS DE ESPAÑA SA")
+    app.ADMINISTRADORES_BORME["telecomunicaciones inventadas de espana, s.a."] = tel
+    app._BORME_NOMBRES_REG["base"] = app._BORME_NIFS_REG["base"] = None
+    v = [("TELECOMUNICACIONES INVENTADAS DE ESPAÑA, S.A.", 30),
+         ("TELECOMUNICACIONES INVENTADAS DE ESPAÑA, S.A. SOCIEDAD UNIPERSONAL", 15),     # forma social distinta
+         ("TELECOMUNICACIONES INVENTADAS DE ESPEÑA, S.A.U.", 10),                       # una letra
+         ("OTROS", 45)]
+    r = ea("OTROS", "A00000006", v, 100, cd)
+    comprobar(fuente(r) == "BORME-A-2024-5-28", f"grafías y errata no sumadas: {r}")
+    v = [("TELECOMUNICACIONES INVENTADAS DE ESPAÑA, S.A.", 30), ("TELECOMUNICACIONES INVENTADAS DE ESPXXA SA", 25),
+         ("OTROS", 45)]
+    comprobar(ea("OTROS", "A00000006", v, 100, cd) == (None, ""), "errata de dos letras sumada")
+    comprobar(app._una_errata("abcdefghijklmnop", "abcdefghijklmnoq") and app._una_errata("abcdef", "abcxdef")
+              and app._una_errata("abcdef", "abcdf") and not app._una_errata("abcdef", "abcdef")
+              and not app._una_errata("abcdef", "abxdey"), "_una_errata")
+    # nombre corto (menos de 15 sin la forma): la errata no cuenta
+    corto = reg("PERSONA INVENTADA SEIS", "BORME-A-2024-6-28", "CORTA SA")
+    app.ADMINISTRADORES_BORME["corta sa"] = corto
+    app._BORME_NOMBRES_REG["base"] = app._BORME_NIFS_REG["base"] = None
+    comprobar(ea("OTROS", "A00000008", [("CORTA SA", 40), ("CORTE SA", 20), ("OTROS", 40)], 100, cd) == (None, ""),
+              "errata en un nombre corto sumada")
+    comprobar(fuente(ea("OTROS", "A00000008", [("CORTA SA", 40), ("Corta, S.L.U.", 20), ("OTROS", 40)], 100, cd))
+              == "BORME-A-2024-6-28", "misma clave sin forma social no sumada")
+
     # NIF enmascarado: el registro de un NIF que encaja con la máscara vale
     comprobar(app._borme_nif_encaja("****0000*", "A00000001") and not app._borme_nif_encaja("****0002*", "A00000001"),
               "máscara")
