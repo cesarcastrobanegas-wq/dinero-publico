@@ -2722,8 +2722,8 @@ def _db_init():
 
 def _settings_get(clave, default=None):
     """Lee un valor de la tabla settings (persistente en disco)."""
-    with _db_lock:
-        row = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
+    with _db_leer() as con:
+        row = con.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
     return row[0] if row else default
 
 
@@ -3274,6 +3274,58 @@ def _db_count_municipios(provincia):
     return row[0] if row else 0
 
 
+# ─── LECTURAS DE LAS PETICIONES WEB SIN EL CERROJO (17-11-2026) ─────────────────────────────────────────────────────
+# Medido en local con la copia de producción: una ficha de municipio cuesta 0,2-1 s, pero en los primeros minutos tras
+# un arranque tardaba 13-19 s (en producción 28,6, 15,1 y 10,7 s). No era el montaje: la ficha hacía cola en _db_lock,
+# el cerrojo de la conexión compartida, mientras los hilos del arranque lo tenían cogido con consultas grandes (repaso de
+# DNI, tramos de menores del Índice, subvenciones...). Una ficha lo pide ~100 veces (sobre todo el directivo de cada
+# contrato). SQLite en modo WAL deja leer mientras otro escribe: el cerrojo solo hace falta para compartir la conexión.
+# Ahora, dentro de una petición web, las lecturas de la ficha usan una conexión de SOLO LECTURA propia de cada hilo, sin
+# el cerrojo. Los hilos de fondo siguen exactamente igual (conexión compartida y cerrojo). Se ve lo ya guardado
+# (confirmado), que es lo mismo que veía la ficha salvo lo que otro hilo estuviera escribiendo en ese instante.
+# Interruptor: LECTURA_SIN_CERROJO=0 en el entorno vuelve al comportamiento anterior.
+_LECTURA_SIN_CERROJO = os.environ.get("LECTURA_SIN_CERROJO", "1") != "0"
+_EN_PETICION_WEB = contextvars.ContextVar("en_peticion_web", default=False)
+_db_lectura_hilo = threading.local()
+
+
+def _db_conexion_lectura():
+    """La conexión de solo lectura de este hilo (se abre la primera vez; otra si el proceso es otro tras un fork).
+    None si no se puede abrir: entonces se lee como siempre."""
+    con = getattr(_db_lectura_hilo, "con", None)
+    if con is not None and getattr(_db_lectura_hilo, "pid", None) == os.getpid():
+        return con
+    try:
+        con = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True, check_same_thread=False, timeout=30)
+        con.create_function("normalizar", 1, normalizar)
+    except sqlite3.Error as e:
+        print(f"[lectura] no se pudo abrir la conexión de solo lectura: {type(e).__name__}: {e}", flush=True)
+        return None
+    _db_lectura_hilo.con, _db_lectura_hilo.pid = con, os.getpid()
+    return con
+
+
+class _db_leer:
+    """`with _db_leer() as con:` para LEER. En una petición web: la conexión de solo lectura del hilo, sin cerrojo.
+    Fuera de ellas (hilos de fondo, arranque): la conexión compartida con _db_lock, como siempre."""
+    __slots__ = ("_cerrojo",)
+
+    def __enter__(self):
+        self._cerrojo = None
+        if _LECTURA_SIN_CERROJO and _EN_PETICION_WEB.get():
+            con = _db_conexion_lectura()
+            if con is not None:
+                return con
+        self._cerrojo = _db_lock
+        self._cerrojo.acquire()
+        return _db
+
+    def __exit__(self, *exc):
+        if self._cerrojo is not None:
+            self._cerrojo.release()
+        return False
+
+
 def _db_get_municipio(municipio, provincia=None):
     """Lee UN municipio directamente de SQLite (SELECT por clave primaria),
     bajo demanda -- sin pasar por ningún caché permanente en RAM. Contraparte
@@ -3294,8 +3346,8 @@ def _db_get_municipio(municipio, provincia=None):
     Clave compuesta (2026-09-30): para un homónimo hace falta la provincia (ver clave_municipio); `municipio` puede
     ser también directamente una clave ya calculada ("torrent|valencia")."""
     key = municipio if "|" in (municipio or "") else clave_municipio(municipio, provincia)
-    with _db_lock:
-        row = _db.execute("SELECT data, provincia FROM municipios WHERE municipio=?", (key,)).fetchone()
+    with _db_leer() as con:
+        row = con.execute("SELECT data, provincia FROM municipios WHERE municipio=?", (key,)).fetchone()
     if not row:
         return None
     data, prov = row
@@ -3893,8 +3945,8 @@ def _dir_cache_get(empresa, nif=""):
 def _dir_cache_get_registro(empresa, nif=""):
     """Solo lo guardado en la tabla `directores` (sin el BORME). (None, None) si hay que buscar."""
     key = _dir_cache_key(empresa, nif)
-    with _db_lock:
-        row = _db.execute("SELECT nombre, cargo, ts FROM directores WHERE clave=?", (key,)).fetchone()
+    with _db_leer() as con:
+        row = con.execute("SELECT nombre, cargo, ts FROM directores WHERE clave=?", (key,)).fetchone()
     if not row:
         return None, None
     nombre, cargo, ts = row
@@ -3909,8 +3961,8 @@ def _dir_cache_agotado(empresa, nif=""):
     """True si ya se agotaron los reintentos automáticos para esta empresa
     (DIR_INTENTOS_MAX intentos fallidos): se considera sin datos registrales públicos."""
     key = _dir_cache_key(empresa, nif)
-    with _db_lock:
-        row = _db.execute(
+    with _db_leer() as con:
+        row = con.execute(
             "SELECT intentos FROM directores WHERE clave=? AND (nombre IS NULL OR nombre='')", (key,)
         ).fetchone()
     return bool(row) and (row[0] or 0) >= DIR_INTENTOS_MAX
@@ -13184,8 +13236,8 @@ def _db_contratos_menors_por_municipio(municipio, provincia=None):
     if provincia:
         ahora = time.time()
         if _EQUIV_MENORES_FICHA["mapa"] is None or ahora - _EQUIV_MENORES_FICHA["ts"] > 600:
-            with _db_lock:
-                filas = _db.execute("SELECT DISTINCT municipio, provincia FROM contratos_menors_locales").fetchall()
+            with _db_leer() as con:
+                filas = con.execute("SELECT DISTINCT municipio, provincia FROM contratos_menors_locales").fetchall()
             mapa = collections.defaultdict(list)
             for m, pv in filas:
                 mapa[_clave_municipio_cm(m, pv)].append((m, pv))
@@ -13195,14 +13247,14 @@ def _db_contratos_menors_por_municipio(municipio, provincia=None):
                 "import_num, data_adjudicacio, tipus_contracte, descripcio, codi_cpv, exercici, ts, "
                 "import_fuente, import_aviso "
                 "FROM contratos_menors_locales ")
-    with _db_lock:
+    with _db_leer() as con:
         if pares:
             rows = []
             for m, pv in pares:
-                rows += _db.execute(cols_sql + "WHERE municipio=? AND provincia=?", (m, pv)).fetchall()
+                rows += con.execute(cols_sql + "WHERE municipio=? AND provincia=?", (m, pv)).fetchall()
             rows.sort(key=lambda r: r[8] or "", reverse=True)
         else:
-            rows = _db.execute(cols_sql + "WHERE municipio=? ORDER BY data_adjudicacio DESC", (municipio,)).fetchall()
+            rows = con.execute(cols_sql + "WHERE municipio=? ORDER BY data_adjudicacio DESC", (municipio,)).fetchall()
     cols = ("id", "municipio", "provincia", "fuente", "organisme", "adjudicatari", "nif",
             "import_num", "data_adjudicacio", "tipus_contracte", "descripcio", "codi_cpv",
             "exercici", "ts", "import_fuente", "import_aviso")
@@ -13982,11 +14034,11 @@ def _db_fondos_ue_por_municipio(municipio, provincia=None):
     sql = ("SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
            "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
            "FROM fondos_ue WHERE municipio_match=?")
-    with _db_lock:
+    with _db_leer() as con:
         if provincia:
-            rows = _db.execute(sql + " AND provincia=? ORDER BY importe_num DESC", (municipio, provincia)).fetchall()
+            rows = con.execute(sql + " AND provincia=? ORDER BY importe_num DESC", (municipio, provincia)).fetchall()
         else:
-            rows = _db.execute(sql + " ORDER BY importe_num DESC", (municipio,)).fetchall()
+            rows = con.execute(sql + " ORDER BY importe_num DESC", (municipio,)).fetchall()
     cols = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario",
             "nif", "rol", "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts")
     return [dict(zip(cols, r)) for r in rows]
@@ -14230,8 +14282,8 @@ def _db_comentarios_borrar(tipo, clave_raw, texto):
 
 def _db_comentarios_por(tipo, clave_raw):
     """Comentarios guardados para este municipio/empresa, más reciente primero."""
-    with _db_lock:
-        rows = _db.execute(
+    with _db_leer() as con:
+        rows = con.execute(
             "SELECT nombre, texto, ts FROM comentarios WHERE tipo=? AND clave=? AND estado='publicado' ORDER BY ts DESC",
             (tipo, normalizar(clave_raw)),
         ).fetchall()
@@ -18272,6 +18324,11 @@ def _arrancar_hilos_de_fondo():
     del maestro tenía _db_lock cogido al hacer la copia, el trabajador lo heredaba bloqueado. Por eso, bajo gunicorn,
     se lanzan desde el hook post_fork (gunicorn.conf.py -> _tras_fork), una vez en cada trabajador."""
     _copia_arranque_cargar()                 # 16-11-2026: lo calculado antes del reinicio, mientras se calcula lo nuevo
+    try:                                     # 17-11-2026: lo que el contador de visitas hacía en la primera petición
+        _visitas_tabla()                     # (con la conexión compartida), ahora antes de lanzar los hilos y con ella
+        _visitas_sal(_visitas_semana())      # libre: la primera visita tras un arranque esperaba aquí hasta ~15 s
+    except Exception as e:
+        print(f"[visitas] preparación al arrancar: {type(e).__name__}: {e}", flush=True)
     hilo_feed = threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True)
     hilo_feed.start()
     threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
@@ -24172,10 +24229,10 @@ def _convocatorias_muni_html(municipio, provincia):
     """Enlace desde la ficha del municipio a sus convocatorias abiertas, con el recuento."""
     clave = clave_municipio(municipio, provincia)
     ahora = _ahora_madrid()
-    with _db_lock:
-        n_lic = _db.execute("SELECT count(*) FROM licitaciones WHERE municipio=? AND estado='PUB' AND fin_plazo>=?",
+    with _db_leer() as con:
+        n_lic = con.execute("SELECT count(*) FROM licitaciones WHERE municipio=? AND estado='PUB' AND fin_plazo>=?",
                             (clave, ahora.strftime("%Y-%m-%d %H:%M"))).fetchone()[0]
-        n_sub = (_db.execute("SELECT count(*) FROM subvenciones WHERE municipio=? AND fin>=? AND (inicio='' OR inicio<=?)",
+        n_sub = (con.execute("SELECT count(*) FROM subvenciones WHERE municipio=? AND fin>=? AND (inicio='' OR inicio<=?)",
                              (clave, ahora.strftime("%Y-%m-%d"), ahora.strftime("%Y-%m-%d"))).fetchone()[0]
                  if SUBVENCIONES_PUBLICAS else 0)
     enlace_lic = f'/convocatorias?muni={quote_plus(clave)}'
@@ -32244,11 +32301,26 @@ def _visitas_anotar(environ, estado, cabeceras, respuesta, segundos):
                 v[3] += segundos
             if huella:
                 _visitas_huellas_pend.setdefault((semana, huella), [set(), 0])[0].add(dia)
-            toca = time.time() - _visitas_estado["ultimo_volcado"] >= _VISITAS_VOLCAR_CADA_S
+            toca = (time.time() - _visitas_estado["ultimo_volcado"] >= _VISITAS_VOLCAR_CADA_S
+                    and not _visitas_estado.get("volcando"))
+            if toca:
+                _visitas_estado["volcando"] = True
         if toca:
-            _visitas_volcar()
+            # 17-11-2026: en un hilo aparte (uno como mucho a la vez). Dentro de la petición, el visitante esperaba a que
+            # la conexión compartida quedara libre (en el arranque, hasta ~15 s) y, la primera vez tras arrancar, el
+            # repaso de los días cerrados (~3 s). Lo que se cuenta es lo mismo.
+            threading.Thread(target=_visitas_volcar_en_fondo, name="visitas-volcado", daemon=True).start()
     except Exception as e:
         print(f"[visitas] no se pudo anotar: {type(e).__name__}: {e}", flush=True)
+
+
+def _visitas_volcar_en_fondo():
+    try:
+        _visitas_volcar()
+    except Exception as e:
+        print(f"[visitas] no se pudo volcar: {type(e).__name__}: {e}", flush=True)
+    finally:
+        _visitas_estado["volcando"] = False
 
 
 def _visitas_volcar():
@@ -32524,9 +32596,11 @@ def app(environ, start_response):
     try:
         t_token = _TOKEN_CABECERA.set(environ.get("HTTP_X_ADMIN_TOKEN", "") or "")
         t_cookie = _COOKIE_PETICION.set(environ.get("HTTP_COOKIE", "") or "")
+        t_web = _EN_PETICION_WEB.set(True)          # lecturas sin el cerrojo compartido (ver _db_leer)
         try:
             respuesta = _app_wsgi(environ, _anotando)
         finally:
+            _EN_PETICION_WEB.reset(t_web)
             _COOKIE_PETICION.reset(t_cookie)
             _TOKEN_CABECERA.reset(t_token)
         return respuesta
