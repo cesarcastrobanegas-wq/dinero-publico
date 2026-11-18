@@ -38,9 +38,11 @@ from datetime import datetime
 try:
     from . import filtro_licitaciones as F
     from . import licitaciones_place as LIC
+    from . import licitaciones_guia as G
 except ImportError:
     import filtro_licitaciones as F
     import licitaciones_place as LIC
+    import licitaciones_guia as G
 
 RUTA = "/licitaciones/filtro"
 ENCAJA = "ENCAJA"
@@ -278,6 +280,7 @@ def evaluar(lic, perfil, ahora):
             "etiqueta": etiqueta, "fuera": fuera, "condiciones": cond, "avisos": avisos, "bien": bien,
             # para F.agrupar_lotes (lotes iguales de una misma licitación en una sola ficha)
             "motivos": fuera + cond + avisos + bien,
+            "comprobar": F.datos_comprobacion(lic, req, sumario),     # lista de comprobación (licitaciones_guia)
         })
     return res
 
@@ -339,6 +342,7 @@ color:#fff;cursor:pointer}
 .ficha h3 a{color:#1b2f5c}
 .ficha ul{margin:4px 0 4px 18px;padding:0}.ficha li{margin:2px 0}
 .ficha .dato{font-size:.92rem;color:#3a4356}
+.comprobar{border-top:1px dashed #c6ccd6;margin:8px 0 0;padding:6px 0 0;font-size:.9rem;color:#2b3446}.comprobar ul{margin:2px 0 4px 18px}.comprobar-guia{margin:2px 0 0}
 .etiqueta{display:inline-block;margin:6px 0 0;padding:1px 8px;border:1px solid #9b2c2c;border-radius:4px;color:#9b2c2c;font-size:.82rem;font-weight:700}
 li.no{color:#9b2c2c}li.cond{color:#8a5a12;font-weight:600}li.aviso{color:#3a4356}li.ok{color:#1e5a3a}
 details{margin:0 0 12px}summary{cursor:pointer;font-weight:700;padding:8px 0}
@@ -527,7 +531,7 @@ def _ficha_html(r):
             + (f'<div class="dato">{lote}</div>' if lote else "")
             + f'<div class="dato">Importe sin IVA: <b>{F.eur(r["importe"])}</b>'
             + (" (cada lote)" if r.get("lotes_juntos") and len(r["lotes_juntos"]) > 1 else "")
-            + f'</div><ul>{lis}</ul></div>')
+            + f'</div><ul>{lis}</ul>{G.lista_html(r.get("comprobar"))}</div>')
 
 
 def resultado_html(res, perfil):
