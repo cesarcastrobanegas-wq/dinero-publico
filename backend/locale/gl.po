@@ -3661,3 +3661,15 @@ msgstr "Os importes con bases distintas non se suman entre si: van en columnas s
 
 #~ msgid "Índice v2"
 #~ msgstr "Índice v2"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Síguenos:"
+msgstr "Síguenos:"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Síguenos"
+msgstr "Síguenos"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Dinero Público también está en redes sociales:"
+msgstr "Dinero Público tamén está nas redes sociais:"

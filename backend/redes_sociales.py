@@ -1,6 +1,6 @@
 # encoding: utf-8
-"""Bot de redes sociales de Dinero Público (09-11-2026, encargo de César): publica en X, en la Página de Facebook y
-en Instagram los casos nuevos de /casos y un «ejemplo de uso» al día.
+"""Bot de redes sociales de Dinero Público (09-11-2026, encargo de César): publica en X, en la Página de Facebook,
+en Instagram y (desde el 18-11-2026) en Bluesky los casos nuevos de /casos y un «ejemplo de uso» al día.
 
 Este módulo no sabe nada de la web ni de la base: recibe los datos ya elegidos y devuelve textos, la tarjeta en PNG
 y el resultado de cada publicación. La conexión (`http`, una sesión de requests o un sustituto en las pruebas) se le
@@ -21,20 +21,28 @@ import secrets
 import time
 import urllib.parse
 
-REDES = ("x", "facebook", "instagram")
-NOMBRE_RED = {"x": "X", "facebook": "Facebook", "instagram": "Instagram"}
+REDES = ("x", "facebook", "instagram", "bluesky")
+NOMBRE_RED = {"x": "X", "facebook": "Facebook", "instagram": "Instagram", "bluesky": "Bluesky"}
 # Variables de entorno que necesita cada red (todas). Instagram publica con el mismo token de la Página de Facebook
 # a la que está vinculada la cuenta profesional; IG_PAGE_TOKEN lo sustituye si se quiere uno aparte.
 CLAVES = {
     "x": ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_SECRET"),
     "facebook": ("FB_PAGE_ID", "FB_PAGE_TOKEN"),
     "instagram": ("IG_USER_ID", "FB_PAGE_TOKEN"),
+    # Bluesky (18-11-2026): API abierta y gratuita (AT Protocol). BSKY_HANDLE es la cuenta (p. ej.
+    # «dineropublico.bsky.social») y BSKY_APP_PASSWORD una «contraseña de aplicación» creada en Ajustes → Privacidad y
+    # seguridad → Contraseñas de aplicación, NUNCA la contraseña de la cuenta. BSKY_SERVICE (opcional) cambia el
+    # servidor (por defecto https://bsky.social).
+    "bluesky": ("BSKY_HANDLE", "BSKY_APP_PASSWORD"),
 }
 GRAPH_VERSION_DEFECTO = "v23.0"
 X_TWEETS = "https://api.x.com/2/tweets"
 X_MEDIA = "https://api.x.com/2/media/upload"
 X_MAX = 280
 X_LARGO_ENLACE = 23            # X cuenta cualquier enlace como 23 caracteres
+BSKY_MAX = 300                 # Bluesky: 300 caracteres (grafemas), el enlace cuenta entero
+BSKY_SERVICIO_DEFECTO = "https://bsky.social"
+BSKY_MAX_IMAGEN = 950_000      # el servidor admite ~1 MB por imagen: por encima, la tarjeta va en JPEG
 ETIQUETAS_IG = "#DineroPúblico #transparencia #contratación"
 
 ANCHO, ALTO = 1080, 1350
@@ -77,10 +85,13 @@ def _sin_secretos(texto, env):
     texto = str(texto)[:400]
     for r in CLAVES.values():
         for k in r + ("IG_PAGE_TOKEN",):
+            if k == "BSKY_HANDLE":
+                continue                                  # la cuenta es pública: no es un secreto
             v = env.get(k, "")
             if v and len(v) >= 6:
                 texto = texto.replace(v, "***")
-    return re.sub(r"(access_token=)[^&\s\"']+", r"\1***", texto)
+    texto = re.sub(r"(access_token=)[^&\s\"']+", r"\1***", texto)
+    return re.sub(r"(Bearer\s+)[A-Za-z0-9._\-]+", r"\1***", texto)
 
 
 # ─── Seguridad del texto ────────────────────────────────────────────────────────────────────────────────────────────
@@ -121,7 +132,36 @@ def textos(titulo, frase, url):
     x = f"{titulo}\n\n{frase_x}\n\n{url}" if frase_x and hueco > 20 else f"{titulo[:X_MAX - X_LARGO_ENLACE - 2]}\n\n{url}"
     sin_esquema = re.sub(r"^https?://", "", url)
     return {"x": x, "facebook": f"{titulo}\n\n{frase}\n\n{url}",
-            "instagram": f"{titulo}\n\n{frase}\n\nEnlace: {sin_esquema}\n\n{ETIQUETAS_IG}"}
+            "instagram": f"{titulo}\n\n{frase}\n\nEnlace: {sin_esquema}\n\n{ETIQUETAS_IG}",
+            "bluesky": texto_bluesky(titulo, frase, url)}
+
+
+def texto_bluesky(titulo, frase, url):
+    """Texto de Bluesky: título, frase y enlace en 300 caracteres como mucho (el enlace cuenta entero: se recorta la
+    frase y, si no cabe ni así, el título)."""
+    titulo, frase = titulo.strip(), frase.strip()
+    hueco = BSKY_MAX - len(url) - len(titulo) - 4
+    if frase and hueco > 20:
+        if len(frase) > hueco:
+            frase = frase[:hueco - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+        return f"{titulo}\n\n{frase}\n\n{url}"
+    cabe = BSKY_MAX - len(url) - 2
+    if len(titulo) > cabe:
+        titulo = titulo[:cabe - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+    return f"{titulo}\n\n{url}"
+
+
+def texto_de(red, tx):
+    """El texto guardado para `red`; una entrada preparada antes de añadir Bluesky no lo trae: se saca del de
+    Facebook (título, frase y enlace)."""
+    if tx.get(red):
+        return tx[red]
+    if red == "bluesky" and tx.get("facebook"):
+        partes = tx["facebook"].split("\n\n")
+        if len(partes) >= 3:
+            return texto_bluesky(partes[0], " ".join(partes[1:-1]), partes[-1])
+        return texto_bluesky(partes[0], "", partes[-1])
+    raise KeyError(red)
 
 
 def largo_x(texto):
@@ -272,7 +312,8 @@ def _json(resp, red, env, que):
         datos = {}
     if resp.status_code >= 300:
         detalle = datos.get("error", {}).get("message") if isinstance(datos.get("error"), dict) else None
-        detalle = detalle or datos.get("detail") or datos.get("title") or getattr(resp, "text", "")[:200]
+        detalle = (detalle or datos.get("detail") or datos.get("title") or datos.get("message")   # Bluesky: message
+                   or getattr(resp, "text", "")[:200])
         raise ErrorRed(_sin_secretos(f"{NOMBRE_RED[red]}: {que} → HTTP {resp.status_code}: {detalle}", env))
     return datos
 
@@ -332,6 +373,68 @@ def publicar_instagram(http, env, texto, url_imagen, esperar=time.sleep, intento
     return str(pid)
 
 
+def _bsky(env):
+    return (env.get("BSKY_SERVICE", "").strip() or BSKY_SERVICIO_DEFECTO).rstrip("/")
+
+
+def facetas_enlaces(texto):
+    """Bluesky no convierte las direcciones en enlaces: hay que marcarlas con su posición en BYTES (UTF-8)."""
+    out = []
+    for m in re.finditer(r"https?://[^\s]+", texto):
+        ini = len(texto[:m.start()].encode("utf-8"))
+        out.append({"index": {"byteStart": ini, "byteEnd": ini + len(m.group(0).encode("utf-8"))},
+                    "features": [{"$type": "app.bsky.richtext.facet#link", "uri": m.group(0)}]})
+    return out
+
+
+def _imagen_bluesky(png):
+    """(bytes, tipo) que caben en el límite de Bluesky: la tarjeta PNG si cabe; si no, la misma en JPEG."""
+    if len(png) <= BSKY_MAX_IMAGEN:
+        return png, "image/png"
+    from PIL import Image
+    img = Image.open(io.BytesIO(png)).convert("RGB")
+    for calidad in (88, 80, 70, 60):
+        out = io.BytesIO()
+        img.save(out, format="JPEG", quality=calidad, optimize=True)
+        if out.tell() <= BSKY_MAX_IMAGEN:
+            return out.getvalue(), "image/jpeg"
+    raise ErrorRed("Bluesky: la tarjeta no cabe en el límite de tamaño de imagen")
+
+
+def publicar_bluesky(http, env, texto, png, alt=""):
+    """Bluesky (AT Protocol): abre sesión con la contraseña de aplicación, sube la tarjeta y publica el texto con la
+    imagen y el enlace marcado. Devuelve la dirección at:// del post."""
+    base = _bsky(env)
+    r = http.post(f"{base}/xrpc/com.atproto.server.createSession",
+                  json={"identifier": env["BSKY_HANDLE"].strip().lstrip("@"), "password": env["BSKY_APP_PASSWORD"]},
+                  timeout=30)
+    sesion = _json(r, "bluesky", env, "abrir sesión")
+    token, did = sesion.get("accessJwt"), sesion.get("did")
+    if not token or not did:
+        raise ErrorRed("Bluesky: abrir sesión → la respuesta no trae el token o la cuenta")
+    auth = {"Authorization": f"Bearer {token}"}
+    datos, tipo = _imagen_bluesky(png)
+    r = http.post(f"{base}/xrpc/com.atproto.repo.uploadBlob", headers=dict(auth, **{"Content-Type": tipo}),
+                  data=datos, timeout=60)
+    blob = _json(r, "bluesky", env, "subir la imagen").get("blob")
+    if not blob:
+        raise ErrorRed("Bluesky: subir la imagen → la respuesta no trae el blob")
+    registro = {"$type": "app.bsky.feed.post", "text": texto, "langs": ["es"],
+                "createdAt": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
+                "embed": {"$type": "app.bsky.embed.images",
+                          "images": [{"alt": (alt or texto.split("\n")[0])[:300], "image": blob,
+                                      "aspectRatio": {"width": ANCHO, "height": ALTO}}]}}
+    facetas = facetas_enlaces(texto)
+    if facetas:
+        registro["facets"] = facetas
+    r = http.post(f"{base}/xrpc/com.atproto.repo.createRecord", headers=auth,
+                  json={"repo": did, "collection": "app.bsky.feed.post", "record": registro}, timeout=30)
+    uri = _json(r, "bluesky", env, "publicar").get("uri")
+    if not uri:
+        raise ErrorRed("Bluesky: publicar → la respuesta no trae la dirección")
+    return str(uri)
+
+
 def publicar(red, http, env, texto, url_imagen, png, esperar=time.sleep):
     """Publica en una red. Devuelve el id; lanza ErrorRed (sin claves en el mensaje) si falla."""
     try:
@@ -341,6 +444,8 @@ def publicar(red, http, env, texto, url_imagen, png, esperar=time.sleep):
             return publicar_facebook(http, env, texto, url_imagen)
         if red == "instagram":
             return publicar_instagram(http, env, texto, url_imagen, esperar=esperar)
+        if red == "bluesky":
+            return publicar_bluesky(http, env, texto, png)
     except ErrorRed:
         raise
     except Exception as e:                                     # red caída, tiempo agotado...

@@ -20261,6 +20261,48 @@ def _header_html(provincia="todas", con_lema=True, buscador_aqui=False):
 </header>"""
 
 
+# ─── PERFILES EN REDES (18-11-2026, encargo de César) ───────────────────────────────────────────────────────────────
+# «Síguenos» en el pie de todas las páginas y en «Quién soy», y los mismos perfiles en el «sameAs» del JSON-LD de la
+# organización (lo que usan Google y otros buscadores para enlazar la web con sus cuentas). Un perfil sin dirección no
+# se enseña: PERFIL_FACEBOOK_URL falta hasta que César dé la dirección exacta de la Página.
+PERFIL_FACEBOOK_URL = ""
+PERFILES_REDES = (
+    ("Facebook", "", PERFIL_FACEBOOK_URL),
+    ("X", "@Diner0Public0", "https://x.com/Diner0Public0"),
+    ("Instagram", "dineropublic0", "https://www.instagram.com/dineropublic0/"),
+    ("TikTok", "@dineropublico.com", "https://www.tiktok.com/@dineropublico.com"),
+    ("YouTube", "@dineropublicoes", "https://www.youtube.com/@dineropublicoes"),
+)
+
+
+def _perfiles_redes():
+    """[(red, usuario, dirección)] de los perfiles que tienen dirección."""
+    return [p for p in PERFILES_REDES if p[2]]
+
+
+def _siguenos_pie_html():
+    enlaces = "\n    ".join(f'<a href="{esc(url)}" target="_blank" rel="noopener me" '
+                              f'title="{esc(red)}{(" · " + esc(usuario)) if usuario else ""}">{esc(red)}</a>'
+                              for red, usuario, url in _perfiles_redes())
+    return f'<span class="ft-label">{_t("Síguenos:")}</span>\n    {enlaces}' if enlaces else ""
+
+
+def _siguenos_lista_html():
+    """Lista para «Quién soy»: red y usuario de cada perfil."""
+    items = "".join(f'<li><a href="{esc(url)}" target="_blank" rel="noopener me">{esc(red)}</a>'
+                    f'{(" · " + esc(usuario)) if usuario else ""}</li>' for red, usuario, url in _perfiles_redes())
+    return f"<ul>{items}</ul>" if items else ""
+
+
+def _jsonld_organizacion():
+    """<script type="application/ld+json"> con la organización y sus perfiles (sameAs)."""
+    datos = {"@context": "https://schema.org", "@type": "Organization", "name": "Dinero Público",
+             "url": SITE_URL.rstrip("/") + "/", "logo": SITE_URL.rstrip("/") + "/static/icon-512.png",
+             "email": "contacto@dinero-publico.com", "sameAs": [p[2] for p in _perfiles_redes()]}
+    texto = json.dumps(datos, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    return f'<script type="application/ld+json">{texto}</script>'
+
+
 def _footer_html(provincia="todas"):
     es_murcia = provincia == "murcia"
     _link_place = '<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>'
@@ -20314,6 +20356,8 @@ def _footer_html(provincia="todas"):
     <a href="/mapa-cobertura">{_t("Mapa de cobertura")}</a>
     <a href="/metodologia">{_t("Metodología")}</a>
     <span class="ft-sep">|</span>
+    {_siguenos_pie_html()}
+    <span class="ft-sep">|</span>
     <span class="ft-label">{_t("Enlaces de interés:")}</span>
     <a href="https://civio.es" target="_blank" rel="noopener">CIVIO</a>
     <a href="https://transparencia.org.es" target="_blank" rel="noopener">Transparency International España</a>
@@ -20337,6 +20381,10 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     # ruta -- ver render_caso_*_html para el caso que motivó el fix
     # (2026-09-20).
     og_url = f"{SITE_URL}{og_path}"
+    # 18-11-2026: una pieza publicada de /casos comparte su propia tarjeta (la del bot de redes), no la genérica.
+    og_img = _caso_tarjeta_ruta(og_path)
+    og_img_url = f"{esc(SITE_URL)}{og_img}" if og_img else f"{esc(SITE_URL)}{_pwa_asset('/static/og-image.png')}"
+    og_img_w, og_img_h = ("1080", "1350") if og_img else ("1200", "630")
     aviso_cookies = _t("Usamos cookies propias y de terceros (Google Analytics y, en el futuro, publicidad de Google "
                        "AdSense) para analizar el uso del sitio y, si las aceptas, mostrar anuncios — {enlace}.").format(
         enlace=f'<a href="/aviso-legal">{_t("más información")}</a>')
@@ -20373,15 +20421,16 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <meta property="og:url" content="{esc(og_url)}">
 <meta property="og:site_name" content="Dinero Público">
 <meta property="og:locale" content="es_ES">
-<meta property="og:image" content="{esc(SITE_URL)}{_pwa_asset('/static/og-image.png')}">
+<meta property="og:image" content="{og_img_url}">
 <meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Dinero Público">
+<meta property="og:image:width" content="{og_img_w}">
+<meta property="og:image:height" content="{og_img_h}">
+<meta property="og:image:alt" content="{esc(full_title) if og_img else "Dinero Público"}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{esc(full_title)}">
 <meta name="twitter:description" content="{desc}">
-<meta name="twitter:image" content="{esc(SITE_URL)}{_pwa_asset('/static/og-image.png')}">
+<meta name="twitter:image" content="{og_img_url}">
+{_jsonld_organizacion()}
 <link rel="stylesheet" href="{_pwa_asset('/static/style.css')}">
 {extra_head}</head>
 <body>
@@ -27224,7 +27273,7 @@ _CASOS_BORRADOR_POR_SLUG = {}          # ningún borrador pendiente
 
 
 # ─── REDES SOCIALES (09-11-2026, encargo de César; rama wip/redes-sociales) ─────────────────────────────────────────
-# Bot que publica en X, en la Página de Facebook y en Instagram:
+# Bot que publica en X, en la Página de Facebook, en Instagram y (desde el 18-11-2026) en Bluesky:
 #   - cada caso nuevo de /casos (los casos van en el código y entran al desplegar, ya aprobados por César): título, una
 #     o dos frases y el enlace;
 #   - un «ejemplo de uso» al día, rotando: licitaciones abiertas de un sector en una provincia, el líder de un tramo
@@ -27461,7 +27510,8 @@ def _redes_publicar_una(id_, http=None, esperar=time.sleep):
         if r.get("estado") == "publicada" or r.get("intentos", 0) >= REDES_INTENTOS:
             continue
         try:
-            pid = REDES_MOD.publicar(red, http, os.environ, textos[red], url_img, png, esperar=esperar)
+            pid = REDES_MOD.publicar(red, http, os.environ, REDES_MOD.texto_de(red, textos), url_img, png,
+                                    esperar=esperar)
             redes[red] = {"estado": "publicada", "id": pid, "ts": time.time(), "intentos": r.get("intentos", 0) + 1}
         except Exception as e:                  # ErrorRed ya viene sin claves; cualquier otro, igual de controlado
             redes[red] = {"estado": "error", "error": str(e)[:300], "ts": time.time(),
@@ -27534,6 +27584,49 @@ def _redes_al_arrancar():
 
 
 # ── Tarjeta pública y panel ──────────────────────────────────────────────────────────────────────────────────────────
+
+_CASO_TARJETAS = {}         # slug -> PNG (unas decenas de casos, ~100-200 KB cada uno)
+_caso_tarjetas_lock = threading.Lock()
+
+
+def _caso_publicado(slug):
+    """El caso de /casos con ese slug si está publicado (no borrador), o None."""
+    if not slug or slug in _CASOS_BORRADOR_POR_SLUG:
+        return None
+    return next((c for c in _CASOS if c.get("slug") == slug), None)
+
+
+def _caso_tarjeta_ruta(og_path):
+    """'/casos/<slug>/tarjeta.png' si og_path es una pieza publicada de /casos; si no, None."""
+    if not (og_path or "").startswith("/casos/"):
+        return None
+    slug = og_path[len("/casos/"):].strip("/")
+    return f"/casos/{slug}/tarjeta.png" if _caso_publicado(slug) else None
+
+
+def _caso_tarjeta_resp(path):
+    """La tarjeta de un caso (la misma que prepara el bot de redes: título y dos frases del resumen), para og:image.
+    Se dibuja la primera vez y queda en memoria. Funciona aunque el bot esté apagado: no usa la base."""
+    m = re.fullmatch(r"/casos/([a-z0-9-]{1,120})/tarjeta\.png", path)
+    caso = _caso_publicado(m.group(1)) if m else None
+    if not caso:
+        return 404, {"Content-Length": "0"}, b""
+    slug = caso["slug"]
+    png = _CASO_TARJETAS.get(slug)
+    if png is None:
+        try:
+            entrada = {"tipo": "caso", "tema": f"caso:{slug}", "titulo": caso["titulo"],
+                       "frase": REDES_MOD.dos_frases(caso.get("resumen", "")), "ruta": f"/casos/{slug}",
+                       "etiqueta": "Caso"}
+            png = REDES_MOD.dibujar_tarjeta(REDES_MOD.componer(entrada, SITE_URL)["tarjeta"])
+        except Exception as e:                       # sin Pillow, un DNI en el texto...: la genérica
+            print(f"[casos] tarjeta de {slug}: {type(e).__name__}: {e}", flush=True)
+            return 302, {"Location": _pwa_asset("/static/og-image.png"), "Content-Length": "0"}, b""
+        with _caso_tarjetas_lock:
+            _CASO_TARJETAS[slug] = png
+    return 200, {"Content-Type": "image/png", "Content-Length": str(len(png)),
+                 "Cache-Control": "public, max-age=604800"}, png
+
 
 def _redes_tarjeta_resp(path):
     m = re.fullmatch(r"/redes/tarjeta/(\d{1,9})-([0-9a-f]{16})\.png", path)
@@ -29006,6 +29099,10 @@ def render_quienes_somos_html():
   {_iban_html()}
 
   <p><em>{_t('¿Hablas gallego, catalán o euskera y ves algo mejorable en esta página? Escríbenos a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</em></p>
+
+  <h2 id="siguenos">{_t("Síguenos")}</h2>
+  <p>{_t("Dinero Público también está en redes sociales:")}</p>
+  {_siguenos_lista_html()}
 
   <h2>{_t("Contacto")}</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
@@ -31320,6 +31417,8 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/metodologia":
         return _resp(render_metodologia_html(), gzip_ok=gzip_ok)
 
+    if path.startswith("/casos/") and path.endswith("/tarjeta.png"):     # og:image de cada caso (18-11-2026)
+        return _caso_tarjeta_resp(path)
     if path.startswith("/casos/"):
         _tr = _caso_traducido_html(path[len("/casos/"):], qs)      # borrador/traducción publicada (gl/ca/eu)
         if _tr:

@@ -1,6 +1,6 @@
 # encoding: utf-8
 """Prueba SIN RED del módulo del bot de redes (redes_sociales.py): textos, controles, tarjeta, firma de X y los tres
-publicadores con las APIs simuladas.
+publicadores con las APIs simuladas (cuatro desde el 18-11-2026, con Bluesky).
 
     python backend/redes_sociales_prueba.py
 """
@@ -22,6 +22,7 @@ DNI_INVENTADO = "87654321" + LETRAS[87654321 % 23]          # se construye aquí
 ENV = {"X_API_KEY": "clave-x-0001", "X_API_SECRET": "secreto-x-0002", "X_ACCESS_TOKEN": "token-x-0003",
        "X_ACCESS_SECRET": "secreto-token-x-0004", "FB_PAGE_ID": "1234567890", "FB_PAGE_TOKEN": "TOKENPAGINA-fb-0005",
        "IG_USER_ID": "17840000000000000", "REDES_ACTIVAS": "1"}
+ENV_BSKY = dict(ENV, BSKY_HANDLE="dineropublico.bsky.social", BSKY_APP_PASSWORD="abcd-efgh-ijkl-0006")
 ENTRADA = {"tipo": "licitaciones", "tema": "licitaciones:murcia:45",
            "titulo": "128 licitaciones abiertas de obras de construcción en la Región de Murcia",
            "titulo_tarjeta": "de obras de construcción en la Región de Murcia",
@@ -79,6 +80,26 @@ class Textos(unittest.TestCase):
         self.assertIn("Enlace: dinero-publico.com/convocatorias?provincia=murcia&sector=45", ig)
         self.assertIn("#DineroPúblico", ig)
         self.assertEqual(e["tarjeta"]["titulo"], ENTRADA["titulo_tarjeta"])
+        self.assertTrue(e["textos"]["bluesky"].endswith(url))
+
+    def test_bluesky_cabe_siempre(self):
+        for frase, titulo in (("Una frase muy larga " * 30, ENTRADA["titulo"]), ("x", "Título larguísimo " * 30)):
+            e = R.componer(dict(ENTRADA, frase=frase, titulo=titulo), "https://dinero-publico.com")
+            self.assertLessEqual(len(e["textos"]["bluesky"]), R.BSKY_MAX)
+            self.assertTrue(e["textos"]["bluesky"].endswith(e["url"]))
+
+    def test_bluesky_de_una_entrada_antigua(self):
+        tx = R.componer(ENTRADA, "https://dinero-publico.com")["textos"]
+        viejo = {k: v for k, v in tx.items() if k != "bluesky"}
+        self.assertEqual(R.texto_de("bluesky", viejo), tx["bluesky"])
+        self.assertEqual(R.texto_de("x", viejo), tx["x"])
+
+    def test_facetas_en_bytes(self):
+        t = "Línea con tilde" + chr(10) * 2 + "https://dinero-publico.com/casos/año"
+        f = R.facetas_enlaces(t)[0]
+        b = t.encode("utf-8")
+        self.assertEqual(b[f["index"]["byteStart"]:f["index"]["byteEnd"]].decode("utf-8"),
+                         "https://dinero-publico.com/casos/año")
 
     def test_nunca_un_dni(self):
         for campo in ("titulo", "frase", "cifra"):
@@ -109,6 +130,9 @@ class Configuracion(unittest.TestCase):
         self.assertEqual(R.redes_configuradas(ENV), ["x", "facebook", "instagram"])
         self.assertEqual(R.redes_configuradas(dict(ENV, X_ACCESS_SECRET="")), ["facebook", "instagram"])
         self.assertEqual(R.redes_configuradas(dict(ENV, REDES_SOLO="facebook")), ["facebook"])
+        self.assertEqual(R.redes_configuradas(ENV_BSKY), ["x", "facebook", "instagram", "bluesky"])
+        self.assertEqual(R.redes_configuradas(dict(ENV_BSKY, BSKY_APP_PASSWORD="")), ["x", "facebook", "instagram"])
+        self.assertEqual(R.redes_configuradas({"BSKY_HANDLE": "a", "BSKY_APP_PASSWORD": "b"}), ["bluesky"])
 
 
 class Tarjeta(unittest.TestCase):
@@ -166,6 +190,51 @@ class Publicadores(unittest.TestCase):
                           "/C2": [Resp(200, {"status_code": "ERROR"})]})
         with self.assertRaises(R.ErrorRed):
             R.publicar("instagram", http, ENV, "t", "https://x/t.png", b"", esperar=lambda s: None)
+
+    def test_bluesky(self):
+        png = R.dibujar_tarjeta(R.componer(ENTRADA, "https://dinero-publico.com")["tarjeta"])
+        http = HttpFalso({"createSession": [Resp(200, {"accessJwt": "JWT-secreto-0007", "did": "did:plc:abc"})],
+                          "uploadBlob": [Resp(200, {"blob": {"$type": "blob", "ref": {"$link": "baf"}, "size": 1}})],
+                          "createRecord": [Resp(200, {"uri": "at://did:plc:abc/app.bsky.feed.post/3k",
+                                                      "cid": "baf2"})]})
+        texto = chr(10).join(["Título", "", "Frase.", "", "https://dinero-publico.com/casos/x"])
+        self.assertEqual(R.publicar("bluesky", http, ENV_BSKY, texto, "https://x/t.png", png),
+                         "at://did:plc:abc/app.bsky.feed.post/3k")
+        (_, u1, k1), (_, u2, k2), (_, u3, k3) = http.llamadas
+        self.assertEqual(k1["json"], {"identifier": "dineropublico.bsky.social", "password": "abcd-efgh-ijkl-0006"})
+        self.assertEqual(k2["headers"]["Authorization"], "Bearer JWT-secreto-0007")
+        self.assertIn(k2["headers"]["Content-Type"], ("image/png", "image/jpeg"))
+        self.assertLessEqual(len(k2["data"]), R.BSKY_MAX_IMAGEN)
+        reg = k3["json"]["record"]
+        self.assertEqual((k3["json"]["repo"], k3["json"]["collection"]), ("did:plc:abc", "app.bsky.feed.post"))
+        self.assertEqual(reg["text"], texto)
+        self.assertEqual(reg["embed"]["images"][0]["image"]["ref"]["$link"], "baf")
+        self.assertEqual(reg["facets"][0]["features"][0]["uri"], "https://dinero-publico.com/casos/x")
+
+    def test_bluesky_imagen_grande_va_en_jpeg(self):
+        import random
+        from PIL import Image
+        rnd = random.Random(1)
+        img = Image.frombytes("RGB", (1080, 1350), bytes(rnd.getrandbits(8) for _ in range(1080 * 1350 * 3)))
+        out = io.BytesIO()
+        img.save(out, format="PNG")
+        self.assertGreater(out.tell(), R.BSKY_MAX_IMAGEN)
+        datos, tipo = R._imagen_bluesky(out.getvalue())
+        self.assertEqual(tipo, "image/jpeg")
+        self.assertLessEqual(len(datos), R.BSKY_MAX_IMAGEN)
+
+    def test_bluesky_errores_sin_claves(self):
+        http = HttpFalso({"createSession": [Resp(401, {"error": "AuthenticationRequired",
+                                                       "message": "Invalid password abcd-efgh-ijkl-0006"})]})
+        with self.assertRaises(R.ErrorRed) as ctx:
+            R.publicar("bluesky", http, ENV_BSKY, "t", "", b"png")
+        self.assertNotIn("abcd-efgh-ijkl-0006", str(ctx.exception))
+        self.assertIn("HTTP 401", str(ctx.exception))
+        http = HttpFalso({"createSession": [Resp(200, {"accessJwt": "JWT-secreto-0007", "did": "did:plc:abc"})],
+                          "uploadBlob": [ConnectionError("caída Bearer JWT-secreto-0007")]})
+        with self.assertRaises(R.ErrorRed) as ctx:
+            R.publicar("bluesky", http, ENV_BSKY, "t", "", b"png")
+        self.assertNotIn("JWT-secreto-0007", str(ctx.exception))
 
     def test_errores_sin_claves(self):
         http = HttpFalso({"/photos": [Resp(400, {"error": {"message": "Invalid token TOKENPAGINA-fb-0005"}})]})
