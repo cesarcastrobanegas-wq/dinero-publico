@@ -114,6 +114,7 @@ def montar(cambios_main, cambios_rama):
     git(d, "init", "-q", "-b", "main")
     escribir(d, "backend/app.py", BASE_APP)
     escribir(d, "backend/locale/gl.po", BASE_PO)
+    escribir(d, ".gitignore", "*.pyc\n")
     git(d, "add", "-A")
     git(d, "commit", "-qm", "base")
     git(d, "checkout", "-qb", "rama")
@@ -215,6 +216,23 @@ def main():
     d = montar({"backend/app.py": tras(ANCLA_IMPORT, IMPORT_GUIA)}, {"backend/app.py": tras(ANCLA_IMPORT, IMPORT_FP)})
     codigo, salida = resolver(d, "59")
     comprobar(codigo != 0 and "NO CONOZCO el conflicto de backend/app.py" in salida, f"59 con app.py: {salida}")
+    shutil.rmtree(d, ignore_errors=True)
+
+    # ── reglas 15 y 69: el bloque del PR en .gitignore detrás del del #20 (ya en main) ──
+    BLOQUE_20 = "# Nombres que vigila la prueba de los textos legales\nbackend/prueba_nombres_prohibidos.txt\n"
+    for n, bloque in (("15", "# FTS (ficticio)\n*fts*.ndjson*\nfts_descargas/\n"),
+                      ("69", "# datos personales (ficticio)\nbackend/datos_personales/\n")):
+        d = montar({".gitignore": lambda t: t + BLOQUE_20}, {".gitignore": lambda t, b=bloque: t + b})
+        codigo, salida = resolver(d, n)
+        g = leer(d, ".gitignore")
+        comprobar(codigo == 0 and "<<<<<<<" not in g and g.find("prueba_nombres_prohibidos") < g.find(bloque.split("\n")[1]),
+                  f"{n}: .gitignore con los dos bloques en orden: {salida} {g!r}")
+        shutil.rmtree(d, ignore_errors=True)
+    d = montar({".gitignore": lambda t: t + "otra_cosa/\n"}, {".gitignore": lambda t: t + "backend/datos_personales/\n"})
+    antes = leer(d, ".gitignore")
+    codigo, salida = resolver(d, "69")
+    comprobar(codigo != 0 and "NO CONOZCO" in salida and leer(d, ".gitignore") == antes,
+              f"69 con otro .gitignore: debería decir NO CONOZCO sin tocar: {salida}")
     shutil.rmtree(d, ignore_errors=True)
 
     # ── un .po con algo que no es una traducción dentro del choque: NO CONOZCO ──

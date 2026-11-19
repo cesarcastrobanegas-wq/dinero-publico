@@ -4,7 +4,7 @@ Resuelve los conflictos de las fusiones del DÍA DEL ALTA (ensayados el 05-11-20
 
 Se usa DENTRO de la carpeta de la rama del PR, después de «git merge origin/main» cuando git dice CONFLICT:
     python herramientas/dia_del_alta/resolver_conflictos.py 22
-(el número es el del PR: 22, 25, 20, 19, 26 o 59; el 20 solo si el #16, la PAC, ya está en main; 22, 26 y 59 son los
+(el número es el del PR: 22, 25, 20, 19, 26, 59, 15 o 69; 15 y 69: su .gitignore detrás del del #20; el 20 solo si el #16, la PAC, ya está en main; 22, 26 y 59 son los
 choques del 19-11 con el main que trae el #44, el #48 y el #70). Da igual qué lado sea «el tuyo» y cuál «el de main»: cada bloque se reconoce
 por lo que lleva. Si encuentra un bloque que no conoce, NO toca ese fichero y lo dice: entonces hay que resolverlo a
 mano (lo de cada bloque está explicado en «DIA DEL ALTA - pasos.txt»).
@@ -181,6 +181,19 @@ def r_po(lados):
     return a + [""] + resto
 
 
+def r_gitignore_tras_20(lados):
+    # 20-11: el #15 (FTS) y el #69 (datos personales) añaden su bloque al final de .gitignore, donde el #20 ya puso el
+    # suyo (prueba_nombres_prohibidos). Se dejan los dos: primero el del #20 y detrás el del PR. Solo si los dos lados
+    # son líneas de .gitignore (comentarios o patrones, sin marcas raras).
+    t, o = con(lados, "backend/prueba_nombres_prohibidos.txt")
+    if any(x.startswith(("<<<<<<<", "=======", ">>>>>>>", "|||||||")) for x in t + o) or not any(
+            x.strip() and not x.startswith("#") for x in o):
+        raise LookupError(".gitignore")
+    while t and not t[-1].strip():
+        t = t[:-1]
+    return t + [""] + o
+
+
 _PO = {f"backend/locale/{i}.po": r_po for i in ("gl", "ca", "eu")}
 
 REGLAS = {
@@ -190,6 +203,8 @@ REGLAS = {
     "19": {"backend/app.py": r19_app},
     "26": dict(_PO, **{"backend/app.py": r26_app}),
     "59": dict(_PO),
+    "15": {".gitignore": r_gitignore_tras_20},
+    "69": {".gitignore": r_gitignore_tras_20},
 }
 
 
