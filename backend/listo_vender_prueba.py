@@ -27,8 +27,10 @@ import tempfile
 AQUI = os.path.dirname(os.path.abspath(__file__))
 FIJAS = ("/", "/convocatorias", "/aviso-legal", "/quien-soy", "/metodologia", "/casos", "/rankings", "/fondos-ue",
          "/mapa-cobertura", "/sitemap.xml", "/robots.txt", "/gl/", "/gl/aviso-legal", "/ca/quien-soy")
-TITULAR_PRUEBA = {"TITULAR_NOMBRE": "EMPRESA DE PRUEBA SL", "TITULAR_NIF": "B00000000",
-                  "TITULAR_DOMICILIO": "Calle de la Prueba 1, 30001 Murcia", "TITULAR_REGISTRO": "no"}
+# 20-11-2026 (SLU): titular INVENTADO y claramente ficticio, con las cuatro variables que pide ya el #20
+TITULAR_PRUEBA = {"TITULAR_NOMBRE": "Ejemplo Datos S.L.U.", "TITULAR_NIF": "B00000000",
+                  "TITULAR_DOMICILIO": "Calle Inventada 1, 30001 Murcia",
+                  "TITULAR_REGISTRO": "Registro Mercantil de Murcia, tomo 0000, folio 0, hoja MU-00000, inscripción 1.ª"}
 VARIABLES = ("PRECIOS_VISIBLE", "TEXTOS_LEGALES_NUEVOS", "RESEND_API_KEY", "FILTRO_FORMULARIO", "FILTRO_EMBUDO",
              "ALERTAS_ACTIVAS", "ADMIN_TOKEN", "I18N_PUBLICADOS", "FORMA_PAGO", "PRECIOS_CONTACTO")
 PIE_HOY = ('<a href="/aviso-legal">Aviso Legal</a>\n    <a href="#" id="cookie-preferencias">')
@@ -89,6 +91,23 @@ def caso(modo):
     app, get = _cliente(AQUI)
     fallos = []
     encendido = modo == "encendido"
+    if modo == "incompleto":      # 20-11 (SLU): TEXTOS_LEGALES_NUEVOS=1 pero sin el NIF del titular
+        con_20 = os.path.exists(os.path.join(AQUI, "textos_legales.py"))
+        print(f"[{modo}] {'con el PR #20: no se encienden' if con_20 else 'sin el PR #20: manda la variable'}",
+              flush=True)
+        if not con_20:
+            return fallos
+        ok(fallos, modo, app._VENTA_TEXTOS_LEGALES and not app._venta_textos_legales(),
+           "la variable está, pero sin el titular completo los textos nuevos no cuentan como encendidos")
+        c, h, portada = get("/")
+        ok(fallos, modo, not re.search(r'href="(?:/(?:gl|ca|eu))?/legal/', portada)
+           and '<a href="/aviso-legal">' in portada, "el pie no enlaza a /legal/ (darían 404)")
+        for r in ("/aviso-legal", "/gl/aviso-legal"):
+            c, h, b = get(r)
+            ok(fallos, modo, c == 200, f"{r}: el aviso de siempre, sin redirigir ({c})")
+        c, h, b = get("/legal/aviso-legal")
+        ok(fallos, modo, c == 404, f"/legal/aviso-legal: 404 ({c})")
+        return fallos
     ok(fallos, modo, app._VENTA_PRECIOS == encendido and app._VENTA_TEXTOS_LEGALES == encendido,
        f"variables leídas al arrancar ({app._VENTA_PRECIOS}, {app._VENTA_TEXTOS_LEGALES})")
     c, h, portada = get("/")
@@ -128,15 +147,18 @@ def caso(modo):
     print(f"[{modo}] {'integración: con los PR #19 y #20' if integracion else 'sin los PR #19 y #20 (solo el pie)'}",
           flush=True)
     if integracion:
-        huecos = ("[NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR]", "[NIF DEL TITULAR]", "[DOMICILIO]",
+        huecos = ("[DENOMINACIÓN SOCIAL DEL TITULAR]", "[NIF DEL TITULAR]", "[DOMICILIO SOCIAL]",
+                  "[INSCRIPCIÓN EN EL REGISTRO MERCANTIL DE MURCIA: TOMO, FOLIO, HOJA E INSCRIPCIÓN]",
+                  # los del #20 de antes del 20-11, por si la copia es más vieja
+                  "[NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR]", "[DOMICILIO]",
                   "[DATOS DE INSCRIPCIÓN EN UN REGISTRO PÚBLICO, SI PROCEDEN]")
         for r in ("/legal/aviso-legal", "/legal/privacidad", "/legal/condiciones", "/gl/legal/aviso-legal"):
             c, h, b = get(r)
             ok(fallos, modo, c == 200 and not any(x in b for x in huecos) and "faltan datos del titular" not in b,
                f"{r}: 200 y datos del titular sin corchetes ({c})")
         c, h, b = get("/legal/aviso-legal")
-        ok(fallos, modo, "EMPRESA DE PRUEBA SL" in b and "B00000000" in b and "Calle de la Prueba 1" in b,
-           "aviso legal nuevo: nombre, NIF y domicilio de las variables")
+        ok(fallos, modo, "Ejemplo Datos S.L.U." in b and "B00000000" in b and "Calle Inventada 1" in b
+           and "hoja MU-00000" in b, "aviso legal nuevo: denominación, NIF, domicilio social y registro de las variables")
         c, h, b = get("/precios")
         ok(fallos, modo, c == 200 and 'class="precio-plan"' in b, f"/precios: 200 ({c})")
         for r in FIJAS:
@@ -169,8 +191,10 @@ def main():
         volcar(sys.argv[2], sys.argv[3])
         sys.exit(0)
     total = 0
+    incompleto = {k: v for k, v in TITULAR_PRUEBA.items() if k != "TITULAR_NIF"}
     for modo, extra in (("apagado", {}), ("encendido", dict(TITULAR_PRUEBA, PRECIOS_VISIBLE="1",
-                                                             TEXTOS_LEGALES_NUEVOS="1"))):
+                                                             TEXTOS_LEGALES_NUEVOS="1")),
+                        ("incompleto", dict(incompleto, TEXTOS_LEGALES_NUEVOS="1"))):
         r = _hijo(["--caso", modo], extra)
         lineas = [l for l in r.stdout.splitlines() if l.startswith(f"[{modo}]")]
         print("\n".join(lineas), flush=True)

@@ -20316,19 +20316,26 @@ _VENTA_PRECIOS = os.environ.get("PRECIOS_VISIBLE", "") == "1"
 _VENTA_TEXTOS_LEGALES = os.environ.get("TEXTOS_LEGALES_NUEVOS", "") == "1"
 
 
+def _venta_textos_legales():
+    """Textos legales nuevos encendidos DE VERDAD. 20-11-2026 (SLU): con el PR #20 dentro, TEXTOS_LEGALES_NUEVOS=1 no
+    basta: si faltan datos del titular (TITULAR_*), el #20 los deja apagados (404) y aquí tampoco se enlazan ni se
+    redirige /aviso-legal. Sin el #20 (globals sin TEXTOS_LEGALES_NUEVOS), manda solo la variable, como antes."""
+    return _VENTA_TEXTOS_LEGALES and globals().get("TEXTOS_LEGALES_NUEVOS", True) is not False
+
+
 def _venta_aviso_legal_href():
-    return "/legal/aviso-legal" if _VENTA_TEXTOS_LEGALES else "/aviso-legal"
+    return "/legal/aviso-legal" if _venta_textos_legales() else "/aviso-legal"
 
 
 def _venta_privacidad_href(viejo, ancla):
     """Con los textos nuevos, /legal/privacidad<ancla>; si no, el enlace de siempre (`viejo`)."""
-    return "/legal/privacidad" + ancla if _VENTA_TEXTOS_LEGALES else viejo
+    return "/legal/privacidad" + ancla if _venta_textos_legales() else viejo
 
 
 def _venta_pie_extra():
     """Enlaces que se añaden al pie detrás de «Aviso Legal»; cadena vacía con todo apagado."""
     extra = ""
-    if _VENTA_TEXTOS_LEGALES:
+    if _venta_textos_legales():
         extra += (f'\n    <a href="/legal/privacidad">{_t("Privacidad")}</a>'
                   f'\n    <a href="/legal/condiciones">{_t("Condiciones de contratación")}</a>'
                   f'\n    <a href="/legal/privacidad#cookies">{_t("Cookies")}</a>')
@@ -31904,7 +31911,7 @@ def _route_get(path, qs, gzip_ok=False):
         return _resp(render_caso_quiebras_vitoria_html(), gzip_ok=gzip_ok)
 
     if path == "/aviso-legal":
-        if _VENTA_TEXTOS_LEGALES:      # aviso legal nuevo (PR #20); bajo /gl/, /ca/, /eu/ se prefija solo
+        if _venta_textos_legales():    # aviso legal nuevo (PR #20); bajo /gl/, /ca/, /eu/ se prefija solo
             return 302, {"Location": "/legal/aviso-legal", "Content-Length": "0", "Cache-Control": "no-store"}, b""
         return _resp(render_aviso_legal_html(), gzip_ok=gzip_ok)
 
@@ -31959,7 +31966,7 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/casos</loc><changefreq>weekly</changefreq></url>"] + [
                 f"  <url><loc>{esc(SITE_URL)}/casos/{esc(c['slug'])}</loc><changefreq>monthly</changefreq></url>"
                 for c in _CASOS]
-        if _VENTA_TEXTOS_LEGALES:      # /aviso-legal redirige al nuevo (noindex): fuera del sitemap
+        if _venta_textos_legales():    # /aviso-legal redirige al nuevo (noindex): fuera del sitemap
             urls = [u for u in urls if "/aviso-legal</loc>" not in u]
         for prov in MUNICIPIOS_POR_PROVINCIA:
             if prov == "murcia":
