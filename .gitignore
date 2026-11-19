@@ -46,3 +46,7 @@ backend/socios.db-*
 *.db
 *.db-shm
 *.db-wal
+
+# 18-11-2026: ficheros con nombres de personas subidos por POST /admin/datos-personales (en local, con DATA_DIR sin
+# definir, caen junto al código): nunca al repositorio. Ver backend/datos_personales.py.
+backend/datos_personales/

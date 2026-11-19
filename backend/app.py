@@ -413,15 +413,21 @@ def enmascarar_nombres_dni(o):
             pila.extend(v for v in x if isinstance(v, (dict, list)))
     return n
 os.makedirs(DATA_DIR, exist_ok=True)
+# 18-11-2026 (FASE 1): los ficheros con nombres de personas se leen primero del disco persistente y, si no están, de
+# backend/ como siempre (ver backend/datos_personales.py y POST /admin/datos-personales).
+try:
+    from backend import datos_personales as _datos_personales      # gunicorn backend.app:app
+except ImportError:
+    import datos_personales as _datos_personales                   # python backend/app.py y scripts con "import app"
 
 DATA_FILE  = os.path.join(BASE_DIR, "datos.json")
-ALCALDES_FILE = os.path.join(BASE_DIR, "alcaldes_concejales.json")
+ALCALDES_FILE = _datos_personales.ruta("alcaldes_concejales.json")      # disco o backend/ (datos_personales.py)
 RETRIBUCIONES_FILE = os.path.join(BASE_DIR, "retribuciones_ispa.json")
 # Desde 2026-09-24 el fichero va comprimido (.json.gz): pesaba 52,8 MB con 109.000 filas y GitHub avisa a
 # partir de 50 MB y rechaza a 100 MB; comprimido son ~7 MB. La lectura es transparente: si por lo que sea
 # solo existe el .json antiguo, se usa ese (ver _abrir_json_menores_manual).
-CONTRATOS_MENORES_MURCIA_MANUAL_FILE = os.path.join(BASE_DIR, "contratos_menores_murcia_manual.json.gz")
-CONTRATOS_MENORES_EUSKADI_FILE = os.path.join(BASE_DIR, "contratos_menores_euskadi.json.gz")
+CONTRATOS_MENORES_MURCIA_MANUAL_FILE = _datos_personales.ruta("contratos_menores_murcia_manual.json.gz")
+CONTRATOS_MENORES_EUSKADI_FILE = _datos_personales.ruta("contratos_menores_euskadi.json.gz")
 CUENTAS_ANUALES_FILE = os.path.join(BASE_DIR, "cuentas_anuales.json")
 HACIENDA_EELL_FILE = os.path.join(BASE_DIR, "hacienda_eell.json")
 POBLACION_FILE = os.path.join(BASE_DIR, "poblacion.json")
@@ -2834,7 +2840,7 @@ ALCALDES_CONCEJALES = _cargar_alcaldes_concejales()
 # de la fuente oficial; si falta cualquiera de los cuatro, o la base del importe (bruto anual, mensual...) no
 # está clara en la fuente, NO se guarda -- ni se completa con estimaciones. Generado por
 # actualizar_sueldos_concejales.py; el bitácora de cada lote está en SUELDOS_CONCEJALES_LOG.md.
-SUELDOS_CONCEJALES_FILE = os.path.join(BASE_DIR, "sueldos_concejales.json")
+SUELDOS_CONCEJALES_FILE = _datos_personales.ruta("sueldos_concejales.json")
 
 
 def _cargar_sueldos_concejales():
@@ -3706,6 +3712,42 @@ def _subir_administradores_borme(token, crudo, forzar=False):
           f"{datos.get('periodo')}", flush=True)
     return 200, {"sociedades": len(nuevos), "antes": anteriores, "periodo": datos.get("periodo"),
                  "generado": datos.get("generado")}
+
+
+def _subir_datos_personales(token, rel, crudo, forzar=False):
+    """POST /admin/datos-personales?fichero=<ruta> (cabecera X-Admin-Token), cuerpo = el fichero (JSON, en gzip o no).
+    FASE 1 del informe del 18-11-2026: los ficheros con nombres de personas físicas pasan a vivir en el disco
+    persistente (DATA_DIR/datos_personales/), como administradores_borme.json. Solo acepta las rutas de
+    datos_personales.py; valida la forma, no deja bajar más de lo que admite la protección de subidas frente al
+    fichero que se usa ahora (disco o repositorio) salvo &forzar=si, y guarda con escritura atómica. Se usa desde el
+    SIGUIENTE ARRANQUE. Devuelve (código, cuerpo JSON); nunca nombres, solo recuentos y la huella."""
+    if not _token_admin_valido(token):
+        return 403, {"error": "No autorizado."}
+    rel = (rel or "").replace("\\", "/").strip()
+    if not _datos_personales.tipo_de(rel):
+        return 400, {"error": "Fichero no permitido: solo los ficheros con nombres de personas de datos_personales.py."}
+    try:
+        contenido, n, sha = _datos_personales.preparar(rel, crudo)
+    except ValueError as e:
+        return 400, {"error": f"Fichero no válido: {e}."}
+    actual = _datos_personales.ruta(rel)
+    antes = _datos_personales.registros_de_fichero(actual, rel) if os.path.isfile(actual) else 0
+    origen_antes = ("disco" if actual.startswith(_datos_personales.DIR_DISCO + os.sep) else "repositorio") \
+        if os.path.isfile(actual) else "ninguno"
+    if not forzar and _subida_demasiado_pequena(antes, n):
+        return _rechazar_subida("/admin/datos-personales", f"registros en {rel}", antes, n)
+    igual_que_antes = False                     # antes de guardar: si `actual` es el del disco, se sustituye
+    if os.path.isfile(actual):
+        with open(actual, "rb") as f:
+            igual_que_antes = hashlib.sha256(f.read()).hexdigest() == sha
+    try:
+        _datos_personales.guardar(rel, contenido)
+    except OSError as e:
+        return 500, {"error": f"No se pudo guardar en el disco ({type(e).__name__})."}
+    print(f"[admin] datos_personales: {rel} guardado en el disco, {n} registros (antes {antes}, de {origen_antes}), "
+          f"sha256 {sha[:16]}{', mismos bytes' if igual_que_antes else ''}", flush=True)
+    return 200, {"fichero": rel, "registros": n, "antes": antes, "origen_antes": origen_antes, "sha256": sha[:16],
+                 "mismos_bytes_que_antes": igual_que_antes, "efecto": "desde el siguiente arranque"}
 
 
 # NIF ENMASCARADOS (15-11-2026, revisión de la ficha de empresa): algunas fuentes (sobre todo Navarra) publican el NIF
@@ -6014,7 +6056,7 @@ def sueldos_concejales_html(municipio, provincia=None):
             + '</div></details>')
 
 
-FACTURAS_NAVARRA_FILE = os.path.join(BASE_DIR, "facturas_trimestrales_navarra.json.gz")
+FACTURAS_NAVARRA_FILE = _datos_personales.ruta("facturas_trimestrales_navarra.json.gz")
 FACTURAS_NAVARRA_MAX_FILAS = 100
 _FACTURAS_NAVARRA = None
 
@@ -10486,7 +10528,7 @@ def _recuperar_historico_perdido():
               "recuperación (todos igual o más completos que el seed del repo).", flush=True)
 
 
-BACKFILL_GALICIA_PLACE_FILE = os.path.join(BASE_DIR, "backfill_galicia_place.json.gz")
+BACKFILL_GALICIA_PLACE_FILE = _datos_personales.ruta("backfill_galicia_place.json.gz")
 _BACKFILL_GALICIA_PLACE_CLAVE = "backfill_galicia_place_sha"
 
 
@@ -10593,7 +10635,7 @@ def _aplicar_backfill_galicia_place():
         print(f"[startup] backfill_galicia_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
-BACKFILL_AJUNTAMENT_PLACE_FILE = os.path.join(BASE_DIR, "backfill_ajuntament_place.json.gz")
+BACKFILL_AJUNTAMENT_PLACE_FILE = _datos_personales.ruta("backfill_ajuntament_place.json.gz")
 _BACKFILL_AJUNTAMENT_PLACE_CLAVE = "backfill_ajuntament_place_sha"
 _BACKFILL_AJUNTAMENT_MES_CACHE = []
 
@@ -10693,7 +10735,7 @@ def _aplicar_backfill_ajuntament_place():
         print(f"[startup] backfill_ajuntament_place: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
-BACKFILL_NOMBRES_PLACE_FILE = os.path.join(BASE_DIR, "backfill_nombres_place.json.gz")
+BACKFILL_NOMBRES_PLACE_FILE = _datos_personales.ruta("backfill_nombres_place.json.gz")
 _BACKFILL_NOMBRES_PLACE_CLAVE = "backfill_nombres_place_sha"
 
 
@@ -10836,16 +10878,23 @@ def _aplicar_backfill_formales_place():
 
 
 def _aplicar_formales_por_provincia(directorio, prefijo_clave, etiqueta):
-    if not _DISCO_CONFIABLE or not os.path.isdir(directorio):
+    if directorio == BACKFILL_FORMALES_PLACE_DIR:      # 18-11-2026: disco + repositorio (ver datos_personales.py)
+        rutas = {os.path.basename(r): r for r in
+                 _datos_personales.rutas_patron("backfill_formales_place_prov", "", ".json.gz")}
+    elif os.path.isdir(directorio):
+        rutas = {f: os.path.join(directorio, f) for f in os.listdir(directorio)}
+    else:
+        rutas = {}
+    if not _DISCO_CONFIABLE or not rutas:
         return
     total, municipios, provincias, sin_fila_total = 0, 0, 0, []
-    for fichero in sorted(os.listdir(directorio)):
+    for fichero in sorted(rutas):
         if not fichero.endswith(".json.gz"):
             continue
         nombre_fichero = fichero[:-len(".json.gz")]
         provincia = nombre_fichero.split("__")[0]        # "<provincia>" o "<provincia>__<lote>" (backfill de Murcia)
         try:
-            with open(os.path.join(directorio, fichero), "rb") as f:
+            with open(rutas[fichero], "rb") as f:
                 crudo = f.read()
             huella = hashlib.sha256(crudo).hexdigest()[:16]
             clave_hash = prefijo_clave + nombre_fichero
@@ -11757,7 +11806,7 @@ def _fondos_ue_place_resumen():
     return r if r and r.get("n") else None
 
 
-CORRECCION_FORMALES_5ANIOS_FILE = os.path.join(BASE_DIR, "correcciones_formales_5anios.json.gz")
+CORRECCION_FORMALES_5ANIOS_FILE = _datos_personales.ruta("correcciones_formales_5anios.json.gz")
 _CORRECCION_FORMALES_5ANIOS_CLAVE = "correccion_formales_5anios_sha"
 
 
@@ -12923,7 +12972,8 @@ def _grupos_feed_place(ruta):
 
 def _rutas_feed_place():
     import glob
-    return sorted(glob.glob(os.path.join(BASE_DIR, "contratos_menores_place_*.json.gz")))
+    # 18-11-2026: disco + repositorio (gana el disco), en orden de nombre de fichero (ver datos_personales.py)
+    return _datos_personales.rutas_patron("", "contratos_menores_place_", ".json.gz")
 
 
 def _filas_propias_cm(cm, propios_equiv):
@@ -17398,7 +17448,7 @@ def _cargar_contratos_menores_euskadi():
               f"(País Vasco, API Euskadi) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_MADRID_CAPITAL_FILE = os.path.join(BASE_DIR, "contratos_menores_madrid_capital.json.gz")
+CONTRATOS_MENORES_MADRID_CAPITAL_FILE = _datos_personales.ruta("contratos_menores_madrid_capital.json.gz")
 
 
 def _cargar_contratos_menores_madrid_capital():
@@ -17422,7 +17472,7 @@ def _cargar_contratos_menores_madrid_capital():
               f"(Madrid capital, datos.madrid.es) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_VALENCIA_CAPITAL_FILE = os.path.join(BASE_DIR, "contratos_menores_valencia_capital.json.gz")
+CONTRATOS_MENORES_VALENCIA_CAPITAL_FILE = _datos_personales.ruta("contratos_menores_valencia_capital.json.gz")
 
 
 def _cargar_contratos_menores_valencia_capital():
@@ -17444,7 +17494,7 @@ def _cargar_contratos_menores_valencia_capital():
               f"(Valencia capital) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_ALICANTE_FILE = os.path.join(BASE_DIR, "contratos_menores_alicante.json.gz")
+CONTRATOS_MENORES_ALICANTE_FILE = _datos_personales.ruta("contratos_menores_alicante.json.gz")
 
 
 def _cargar_contratos_menores_alicante():
@@ -17466,7 +17516,7 @@ def _cargar_contratos_menores_alicante():
               f"(Alicante) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_GETAFE_FILE = os.path.join(BASE_DIR, "contratos_menores_getafe.json.gz")
+CONTRATOS_MENORES_GETAFE_FILE = _datos_personales.ruta("contratos_menores_getafe.json.gz")
 
 
 def _cargar_contratos_menores_getafe():
@@ -17488,7 +17538,7 @@ def _cargar_contratos_menores_getafe():
               f"(Getafe) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_MOSTOLES_FILE = os.path.join(BASE_DIR, "contratos_menores_mostoles.json.gz")
+CONTRATOS_MENORES_MOSTOLES_FILE = _datos_personales.ruta("contratos_menores_mostoles.json.gz")
 
 
 def _cargar_contratos_menores_mostoles():
@@ -17510,7 +17560,7 @@ def _cargar_contratos_menores_mostoles():
               f"(Móstoles) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_LEGANES_FILE = os.path.join(BASE_DIR, "contratos_menores_leganes.json.gz")
+CONTRATOS_MENORES_LEGANES_FILE = _datos_personales.ruta("contratos_menores_leganes.json.gz")
 
 
 def _cargar_contratos_menores_leganes():
@@ -17532,7 +17582,7 @@ def _cargar_contratos_menores_leganes():
               f"(Leganés) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_TOLEDO_FILE = os.path.join(BASE_DIR, "contratos_menores_toledo.json.gz")
+CONTRATOS_MENORES_TOLEDO_FILE = _datos_personales.ruta("contratos_menores_toledo.json.gz")
 
 
 def _cargar_contratos_menores_toledo():
@@ -17555,7 +17605,7 @@ def _cargar_contratos_menores_toledo():
               f"(Toledo) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_PALMA_FILE = os.path.join(BASE_DIR, "contratos_menores_palma.json.gz")
+CONTRATOS_MENORES_PALMA_FILE = _datos_personales.ruta("contratos_menores_palma.json.gz")
 
 
 def _cargar_contratos_menores_palma():
@@ -17577,7 +17627,7 @@ def _cargar_contratos_menores_palma():
               f"(Palma) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_FUENLABRADA_FILE = os.path.join(BASE_DIR, "contratos_menores_fuenlabrada.json.gz")
+CONTRATOS_MENORES_FUENLABRADA_FILE = _datos_personales.ruta("contratos_menores_fuenlabrada.json.gz")
 
 
 def _cargar_contratos_menores_fuenlabrada():
@@ -17599,7 +17649,7 @@ def _cargar_contratos_menores_fuenlabrada():
               f"(Fuenlabrada) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_ALCALA_HENARES_FILE = os.path.join(BASE_DIR, "contratos_menores_alcala_henares.json.gz")
+CONTRATOS_MENORES_ALCALA_HENARES_FILE = _datos_personales.ruta("contratos_menores_alcala_henares.json.gz")
 
 
 def _cargar_contratos_menores_alcala_henares():
@@ -17622,7 +17672,7 @@ def _cargar_contratos_menores_alcala_henares():
               f"(Alcalá de Henares) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_VALLADOLID_FILE = os.path.join(BASE_DIR, "contratos_menores_valladolid.json.gz")
+CONTRATOS_MENORES_VALLADOLID_FILE = _datos_personales.ruta("contratos_menores_valladolid.json.gz")
 
 
 def _cargar_contratos_menores_valladolid():
@@ -17645,7 +17695,7 @@ def _cargar_contratos_menores_valladolid():
               f"(Valladolid) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_ZARAGOZA_FILE = os.path.join(BASE_DIR, "contratos_menores_zaragoza.json.gz")
+CONTRATOS_MENORES_ZARAGOZA_FILE = _datos_personales.ruta("contratos_menores_zaragoza.json.gz")
 
 
 def _cargar_contratos_menores_zaragoza():
@@ -17668,7 +17718,7 @@ def _cargar_contratos_menores_zaragoza():
               f"(Zaragoza) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_CIUDAD_REAL_FILE = os.path.join(BASE_DIR, "contratos_menores_ciudad_real.json.gz")
+CONTRATOS_MENORES_CIUDAD_REAL_FILE = _datos_personales.ruta("contratos_menores_ciudad_real.json.gz")
 
 
 def _cargar_contratos_menores_ciudad_real():
@@ -17690,7 +17740,7 @@ def _cargar_contratos_menores_ciudad_real():
               f"(Ciudad Real) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_BURGOS_FILE = os.path.join(BASE_DIR, "contratos_menores_burgos.json.gz")
+CONTRATOS_MENORES_BURGOS_FILE = _datos_personales.ruta("contratos_menores_burgos.json.gz")
 
 
 def _cargar_contratos_menores_burgos():
@@ -17712,7 +17762,7 @@ def _cargar_contratos_menores_burgos():
               f"(Burgos) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_LASPALMASGC_FILE = os.path.join(BASE_DIR, "contratos_menores_laspalmasgc.json.gz")
+CONTRATOS_MENORES_LASPALMASGC_FILE = _datos_personales.ruta("contratos_menores_laspalmasgc.json.gz")
 
 
 def _cargar_contratos_menores_laspalmasgc():
@@ -17735,7 +17785,7 @@ def _cargar_contratos_menores_laspalmasgc():
               f"(Las Palmas de Gran Canaria) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_TORRENT_FILE = os.path.join(BASE_DIR, "contratos_menores_torrent.json.gz")
+CONTRATOS_MENORES_TORRENT_FILE = _datos_personales.ruta("contratos_menores_torrent.json.gz")
 
 
 def _cargar_contratos_menores_torrent():
@@ -17801,7 +17851,7 @@ def _retirar_fuentes_menores():
         print(f"  [startup] fuentes de menores retiradas: ERROR, no se aplico ({type(e).__name__}: {e})", flush=True)
 
 
-CONTRATOS_MENORES_LA_LAGUNA_FILE = os.path.join(BASE_DIR, "contratos_menores_la_laguna.json.gz")
+CONTRATOS_MENORES_LA_LAGUNA_FILE = _datos_personales.ruta("contratos_menores_la_laguna.json.gz")
 
 
 def _cargar_contratos_menores_la_laguna():
@@ -17823,7 +17873,7 @@ def _cargar_contratos_menores_la_laguna():
               f"(San Cristóbal de La Laguna) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_ARONA_FILE = os.path.join(BASE_DIR, "contratos_menores_arona.json.gz")
+CONTRATOS_MENORES_ARONA_FILE = _datos_personales.ruta("contratos_menores_arona.json.gz")
 
 
 def _cargar_contratos_menores_arona():
@@ -17845,7 +17895,7 @@ def _cargar_contratos_menores_arona():
               f"(Arona) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_SALAMANCA_FILE = os.path.join(BASE_DIR, "contratos_menores_salamanca.json.gz")
+CONTRATOS_MENORES_SALAMANCA_FILE = _datos_personales.ruta("contratos_menores_salamanca.json.gz")
 
 
 def _cargar_contratos_menores_salamanca():
@@ -17867,7 +17917,7 @@ def _cargar_contratos_menores_salamanca():
               f"(Salamanca) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_GIJON_FILE = os.path.join(BASE_DIR, "contratos_menores_gijon.json.gz")
+CONTRATOS_MENORES_GIJON_FILE = _datos_personales.ruta("contratos_menores_gijon.json.gz")
 
 
 def _cargar_contratos_menores_gijon():
@@ -17889,7 +17939,7 @@ def _cargar_contratos_menores_gijon():
               f"(Gijón) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_MALAGA_FILE = os.path.join(BASE_DIR, "contratos_menores_malaga.json.gz")
+CONTRATOS_MENORES_MALAGA_FILE = _datos_personales.ruta("contratos_menores_malaga.json.gz")
 
 
 def _cargar_contratos_menores_malaga():
@@ -17911,7 +17961,7 @@ def _cargar_contratos_menores_malaga():
               f"(Málaga) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_ALMERIA_FILE = os.path.join(BASE_DIR, "contratos_menores_almeria.json.gz")
+CONTRATOS_MENORES_ALMERIA_FILE = _datos_personales.ruta("contratos_menores_almeria.json.gz")
 
 
 def _cargar_contratos_menores_almeria():
@@ -17933,7 +17983,7 @@ def _cargar_contratos_menores_almeria():
               f"(Almería) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_SEVILLA_FILE = os.path.join(BASE_DIR, "contratos_menores_sevilla.json.gz")
+CONTRATOS_MENORES_SEVILLA_FILE = _datos_personales.ruta("contratos_menores_sevilla.json.gz")
 
 
 def _cargar_contratos_menores_sevilla():
@@ -17955,7 +18005,7 @@ def _cargar_contratos_menores_sevilla():
               f"(Sevilla) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_TORREJON_FILE = os.path.join(BASE_DIR, "contratos_menores_torrejon.json.gz")
+CONTRATOS_MENORES_TORREJON_FILE = _datos_personales.ruta("contratos_menores_torrejon.json.gz")
 
 
 def _cargar_contratos_menores_torrejon():
@@ -17977,7 +18027,7 @@ def _cargar_contratos_menores_torrejon():
               f"(Torrejón de Ardoz) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_SANTA_CRUZ_FILE = os.path.join(BASE_DIR, "contratos_menores_santa_cruz.json.gz")
+CONTRATOS_MENORES_SANTA_CRUZ_FILE = _datos_personales.ruta("contratos_menores_santa_cruz.json.gz")
 
 
 def _cargar_contratos_menores_santa_cruz():
@@ -17999,7 +18049,7 @@ def _cargar_contratos_menores_santa_cruz():
               f"(Santa Cruz de Tenerife) cargados en contratos_menors_locales.", flush=True)
 
 
-CONTRATOS_MENORES_CADIZ_FILE = os.path.join(BASE_DIR, "contratos_menores_cadiz.json.gz")
+CONTRATOS_MENORES_CADIZ_FILE = _datos_personales.ruta("contratos_menores_cadiz.json.gz")
 
 
 def _cargar_contratos_menores_cadiz():
@@ -18217,7 +18267,7 @@ _copia_arranque_estado = {"cargada": False, "motivo": "", "carga_s": None, "guar
 def _copia_arranque_huella():
     """Huella de todo lo que decide qué nombres se enseñan: si cambia, la copia no se usa."""
     h = hashlib.sha256(f"v{_COPIA_ARRANQUE_VERSION}".encode())
-    for ruta in (_cargos_suprimidos.SUPRESIONES_FILE, _cargos_suprimidos.ALCALDES_FILE, _cargos_suprimidos.SUELDOS_FILE):
+    for ruta in (_cargos_suprimidos.SUPRESIONES_FILE, ALCALDES_FILE, SUELDOS_CONCEJALES_FILE):
         try:
             with open(ruta, "rb") as f:
                 h.update(hashlib.sha256(f.read()).digest())
@@ -33596,6 +33646,15 @@ def _app_wsgi(environ, start_response):
                 code, cuerpo = _subir_revision_candidatos(crudo, forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
+    elif method == "GET" and path == "/admin/datos-personales":
+        # de dónde se lee cada fichero con nombres de personas (disco o repositorio) y su huella; sin nombres
+        if not _token_admin_valido(_TOKEN_CABECERA.get()):
+            code, cuerpo = 403, {"error": "No autorizado."}
+        else:
+            code, cuerpo = 200, {"ficheros": _datos_personales.estado(),
+                                 "nota": "origen = de dónde se leerá en el siguiente arranque"}
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
     elif method == "GET" and path == "/admin/visitas":
         code, headers, body = _visitas_pagina(qs)
     elif method == "POST" and path == "/api/evento":
@@ -33716,6 +33775,23 @@ def _app_wsgi(environ, start_response):
         else:
             crudo = environ["wsgi.input"].read(length) if length else b""
             code, cuerpo = _subir_entidades_locales(token, qs.get("provincia", [""])[0], crudo)
+        code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
+                                    code=code)
+    elif method == "POST" and path == "/admin/datos-personales":
+        # 18-11-2026, FASE 1: cuerpo binario (el fichero tal cual), ver _subir_datos_personales
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        token = _TOKEN_CABECERA.get()          # solo la cabecera X-Admin-Token; un ?token= da 403
+        if not _token_admin_valido(token):
+            code, cuerpo = 403, {"error": "No autorizado."}       # antes de leer el cuerpo: nada en memoria
+        elif length > _datos_personales.TAMANO_MAXIMO:
+            code, cuerpo = 413, {"error": "Fichero demasiado grande."}
+        else:
+            crudo = environ["wsgi.input"].read(length) if length else b""
+            code, cuerpo = _subir_datos_personales(token, qs.get("fichero", [""])[0], crudo,
+                                                   forzar=qs.get("forzar", [""])[0] == "si")
         code, headers, body = _resp(json.dumps(cuerpo, ensure_ascii=False), content_type="application/json; charset=utf-8",
                                     code=code)
     elif method == "POST" and path == "/admin/administradores-borme":
