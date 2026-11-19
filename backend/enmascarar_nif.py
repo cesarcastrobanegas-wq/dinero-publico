@@ -17,7 +17,11 @@ se enmascara lo que tiene forma de DNI/NIE Y su letra de control es la correcta,
 expediente. No se miran identificadores, códigos ni direcciones web.
 
 Recorre el JSON entero y solo toca los valores de las claves cuyo nombre lleva "nif", "cif", "dni" o "nie". Nunca
-imprime un NIF ni un nombre: solo recuentos."""
+imprime un NIF ni un nombre: solo recuentos.
+
+07-11-2026: también el NOMBRE del adjudicatario (claves "adj", "adjudicatari", "adjudicatario", "adjudicataria",
+"empresa", "beneficiario") cuando es SOLO un DNI/NIE: PLACE publica a veces al adjudicatario sin nombre, con el DNI en
+ese campo. Se cambia por «Persona física · ***4567**», como hace la web (app.nombre_sin_dni). Siempre, sin --texto."""
 import glob
 import gzip
 import json
@@ -30,6 +34,23 @@ _RE_CLAVE = re.compile(r"nif|cif|dni|\bnie\b", re.I)
 _RE_CLAVE_NO_TEXTO = re.compile(r"^(id|url|enlace|link)$|_id$|^id_|codi|codigo|cpv|expediente|referencia|hash|sha", re.I)
 _RE_EN_TEXTO = re.compile(r"(?<![0-9A-Za-z])(?:(\d{8})[- .]?([A-Za-z])|([XYZxyz])[- .]?(\d{7})[- .]?([A-Za-z]))(?![0-9A-Za-z])")
 _LETRAS = "TRWAGMYFPDXBNJZSQVHLCKE"
+_CLAVES_NOMBRE = frozenset(("adj", "adjudicatari", "adjudicatario", "adjudicataria", "empresa", "beneficiario"))
+PREFIJO_PERSONA_FISICA = "Persona física · "     # el mismo que app.py
+
+
+def enmascarar_nombre_dni(v):
+    """Un nombre que es solo un DNI/NIE -> «Persona física · ***4567**»; cualquier otro, tal cual (igual que
+    app.nombre_sin_dni)."""
+    if not isinstance(v, str) or not v or len(v) > 24:
+        return v
+    n = re.sub(r"[^A-Z0-9]", "", v.upper())
+    if n.startswith("ES") and len(n) == 11:
+        n = n[2:]
+    if _RE_DNI.match(n):
+        return PREFIJO_PERSONA_FISICA + "***" + n[3:7] + "**"
+    if _RE_NIE.match(n):
+        return PREFIJO_PERSONA_FISICA + "****" + n[4:8] + "*"
+    return v
 
 
 def enmascarar_en_texto(v):
@@ -75,7 +96,12 @@ def enmascarar_estructura(o, texto=False):
         if isinstance(x, dict):
             for k, v in x.items():
                 if isinstance(v, str):
-                    if _RE_CLAVE.search(k):
+                    if k.lower() in _CLAVES_NOMBRE:
+                        nuevo = enmascarar_nombre_dni(v)
+                        if nuevo != v:
+                            x[k] = nuevo
+                            cambiados += 1
+                    elif _RE_CLAVE.search(k):
                         nuevo = enmascarar_nif(v)
                         if nuevo != v:
                             x[k] = nuevo

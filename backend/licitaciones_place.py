@@ -118,7 +118,54 @@ def _ambito(lcp):
         return "autonomico"
     if "ADMINISTRACI" in nombres and "ESTADO" in nombres:
         return "estatal"
+    if "<cac:AgentParty>" in lcp:          # feed 1044: lo publica una plataforma autonómica (ver _ambito_agregadas)
+        return _ambito_agregadas(lcp)
     return "otros"
+
+
+# Feed 1044 (plataformas autonómicas agregadas, 12-11-2026). Su cadena de órganos no lleva el «ENTIDADES LOCALES» de
+# PLACE: cada plataforma la escribe a su manera («Entitats de l'administració local», «Junta de Andalucía», o
+# directamente «Ayuntamiento de Bilbao»). Todas traen en <cac:AgentParty> la plataforma que lo publica (Generalitat
+# de Catalunya, Gobierno Vasco…). Medido en 1.667 abiertas el 12-11. Reglas, por este orden:
+#   local      -> la cadena o el órgano es un ayuntamiento, diputación, mancomunidad, comarca… (en cualquier lengua)
+#   otros      -> universidades y consorcios (pueden ser de varias administraciones)
+#   autonomico -> el resto de lo que publica una plataforma autonómica (departamentos, consejerías, Osakidetza…)
+# Errores conocidos: sociedades municipales o de mancomunidad sin esa palabra en el nombre (p. ej. «Servicios de
+# Montejurra SA») salen como autonómicas; en Cataluña no pasa, porque van bajo «Entitats de l'administració local».
+_RE_LOCAL_AGREGADAS = re.compile(
+    r"\b(?:ENTITATS DE L.ADMINISTRACI. LOCAL|AYUNTAMIENTO|AJUNTAMENT|UDALA|CONCELLO|DIPUTACI[OÓ]N|DIPUTACI[OÓ]|"
+    r"MANCOMUNIDAD|MANCOMUNITAT|CONSELL COMARCAL|COMARCA|CUADRILLA|ENTIDAD LOCAL|ENTITAT MUNICIPAL|"
+    r"CONCEJO|PARROQUIA RURAL|CABILDO|CONSELL INSULAR|"
+    # 12-11-2026 (noche): empresas y entes municipales o forales que salían como autonómicos. Solo palabras seguras:
+    # «municipal» y «udal» (municipal en euskera) y los entes forales de los territorios históricos. «Foral» a secas
+    # no, porque «Comunidad Foral de Navarra» es autonómica. Los que solo llevan el nombre del pueblo (Bilbao
+    # Zerbitzuak, San Sebastián Turismo) siguen como autonómicos: no se distinguen de «Metro Bilbao» sin una lista.
+    r"MUNICIPAL|MUNICIPALES|MUNICIPALS|UDAL|INSTITUTO FORAL|JUNTAS GENERALES)\b")
+_RE_OTROS_AGREGADAS = re.compile(r"\b(?:UNIVERSIDAD|UNIVERSITAT|UNIVERSITATS|UNIBERTSITATEA|UPV/EHU|CONSORCIO|CONSORCI|"
+                                 r"PARTZUERGOA)\b")
+
+
+def _ambito_agregadas(lcp):
+    sin_agente = re.sub(r"<cac:AgentParty>.*?</cac:AgentParty>", "", lcp, flags=re.S)
+    nombres = " | ".join(html.unescape(x) for x in re.findall(r"<cbc:Name>([^<]*)</cbc:Name>", sin_agente)).upper()
+    if _RE_LOCAL_AGREGADAS.search(nombres):
+        return "local"
+    if _RE_OTROS_AGREGADAS.search(nombres):
+        return "otros"
+    return "autonomico"
+
+
+def clave_duplicado(expediente, organo):
+    """Clave para encontrar la misma licitación en el 643 y en el 1044: expediente y órgano normalizados (sin tildes,
+    mayúsculas, sin espacios ni signos). "" si falta el expediente (sin él no se compara)."""
+    exp = re.sub(r"[^0-9A-Z]", "", _sin_tildes(expediente or "").upper())
+    org = re.sub(r"[^0-9A-Z]", "", _sin_tildes(organo or "").upper())
+    return f"{exp}|{org}" if exp else ""
+
+
+def _sin_tildes(t):
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFKD", t) if not unicodedata.combining(c))
 
 
 # Requisitos para el filtro de licitaciones por empresa (fase 1, 2026-10-27; ver "Informe - Filtro de licitaciones por
@@ -248,6 +295,8 @@ def analizar_entrada(e):
         "lotes": len(re.findall(r"<cac:ProcurementProjectLot>", e)),
         # hora local de España, como la publica PLACE; sin hora -> fin del día
         "fin_plazo": f"{fin_d} {fin_h[:5] if fin_h else '23:59'}" if re.fullmatch(r"\d{4}-\d\d-\d\d", fin_d) else "",
+        # 12-11-2026: si el anuncio no da hora, la lista de comprobación no debe presentar las 23:59 como suya
+        "plazo_sin_hora": bool(fin_d) and not fin_h,
     })
     # Requisitos del contrato (fuera de los lotes) y de cada lote, para el filtro por empresa
     sin_lotes = _RE_LOTE.sub("", e)
@@ -260,13 +309,31 @@ def analizar_entrada(e):
         "lotes_detalle": [_lote(lo) for lo in _RE_LOTE.findall(e)],
         # sujeto a regulación armonizada (SARA): True/False, None si no lo dice (medido el 27-10: lo dice el 100 %)
         "sara": {"true": True, "false": False}.get(_tag("OverThresholdIndicator", tp).lower()),
+        "pliegos": pliegos(e),
     })
     return r
 
 
+# Enlaces a los pliegos (12-11-2026, lista de comprobación de cada licitación): el pliego de cláusulas administrativas
+# (PCAP, LegalDocumentReference) y el de prescripciones técnicas (PPT, TechnicalDocumentReference), tal como los da el
+# anuncio. Medido el 12-11 en una página del Atom en vivo: 30 de 31 licitaciones abiertas traen los dos.
+_TIPOS_PLIEGO = (("pcap", "LegalDocumentReference"), ("ppt", "TechnicalDocumentReference"))
+
+
+def pliegos(e):
+    """{"pcap": url, "ppt": url} con los que vengan (solo https), o {}."""
+    res = {}
+    for clave, etiqueta in _TIPOS_PLIEGO:
+        uri = _tag("URI", _bloque(etiqueta, e))
+        if uri.startswith("https://"):
+            res[clave] = uri
+    return res
+
+
 def requisitos_json(r):
     """Lo que el filtro por empresa necesita y la tabla no tiene en columnas propias, en JSON compacto."""
-    d = {k: r[k] for k in ("nuts", "cp_organo", "cpvs", "duracion_meses", "prorrogas", "req", "lotes_detalle")
+    d = {k: r[k] for k in ("nuts", "cp_organo", "cpvs", "duracion_meses", "prorrogas", "req", "lotes_detalle",
+                           "pliegos", "plazo_sin_hora")
          if r.get(k)}
     if r.get("sara") is not None:       # False también cuenta: es el caso de la exención de nueva creación
         d["sara"] = r["sara"]
