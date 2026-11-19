@@ -189,7 +189,7 @@ def componer(entrada, site_url):
             "textos": tx, "tarjeta": tarjeta}
 
 
-# ─── Tarjeta 1080x1350 ──────────────────────────────────────────────────────────────────────────────────────────────
+# ─── Tarjetas (1080x1350 y 1200x630) ──────────────────────────────────────────────────────────────────────────────────────────────
 
 def _fuente(peso, tam):
     from PIL import ImageFont
@@ -218,67 +218,87 @@ def _partir(draw, texto, fuente, ancho, max_lineas):
     return lineas
 
 
-def dibujar_tarjeta(t):
-    """PNG de 1080x1350 (4:5, el formato vertical de Instagram) con el logotipo (Space Grotesk, #1B2A4A)."""
+APAISADA = (1200, 630)          # og:image al compartir enlaces (~1,91:1, lo que enseñan Facebook, X y WhatsApp)
+
+# Medidas de cada formato: vertical 1080x1350 (Instagram y el bot) y apaisada 1200x630 (vista previa de enlaces).
+_FORMATOS = {
+    "vertical": {"tam": (ANCHO, ALTO), "m": 84, "franja": 16, "logo": 64, "logo_y": 80, "logo_paso": 74, "logo_barra": (12, 5, 10, 140), "logo_texto": 30, "cifra_min": 80,
+                 "y": 330, "etiqueta": 40, "etiqueta_paso": 76, "cifra": 190, "titulo": 74, "titulo_cifra": 60,
+                 "titulo_lineas": 5, "frase": 40, "frase_hueco": 30, "pie_alto": 150, "pie": 36, "pie_y": 98,
+                 "pie2": 32, "pie2_y": (122, 78), "hasta_pie": 200},
+    "apaisada": {"tam": APAISADA, "m": 64, "franja": 12, "logo": 40, "logo_y": 44, "logo_paso": 46, "logo_barra": (8, 3, 6, 88), "logo_texto": 19, "cifra_min": 50,
+                 "y": 168, "etiqueta": 28, "etiqueta_paso": 46, "cifra": 110, "titulo": 50, "titulo_cifra": 40,
+                 "titulo_lineas": 3, "frase": 28, "frase_hueco": 14, "pie_alto": 86, "pie": 30, "pie_y": 60,
+                 "pie2": 24, "pie2_y": (74, 44), "hasta_pie": 112},
+}
+
+
+def dibujar_tarjeta(t, formato="vertical"):
+    """PNG con el logotipo (Space Grotesk, #1B2A4A): «vertical» es 1080x1350 (4:5, el formato de Instagram, el que
+    usa el bot); «apaisada» es 1200x630, la imagen de la vista previa al compartir un enlace (og:image)."""
     from PIL import Image, ImageDraw
-    img = Image.new("RGB", (ANCHO, ALTO), FONDO)
+    f = _FORMATOS[formato]
+    W, H = f["tam"]
+    img = Image.new("RGB", (W, H), FONDO)
     d = ImageDraw.Draw(img)
     acento = ACENTO.get(t.get("tipo"), NAVY)
-    m = 84
+    m = f["m"]
     # logotipo: «D|inero / P|úblico», D y P en 700, el resto en 500, con la barra en medio
-    fi, fr = _fuente("bold", 64), _fuente("medium", 64)
-    x0, y0 = m, 80
+    fi, fr = _fuente("bold", f["logo"]), _fuente("medium", f["logo"])
+    x0, y0, paso = m, f["logo_y"], f["logo_paso"]
     ancho_ini = max(d.textlength("D", font=fi), d.textlength("P", font=fi))
+    bx, bw, by0, by1 = f["logo_barra"]
     d.text((x0, y0), "D", font=fi, fill=NAVY)
-    d.text((x0, y0 + 74), "P", font=fi, fill=NAVY)
-    d.rectangle((x0 + ancho_ini + 12, y0 + 10, x0 + ancho_ini + 17, y0 + 140), fill=NAVY)
-    d.text((x0 + ancho_ini + 30, y0), "inero", font=fr, fill=NAVY)
-    d.text((x0 + ancho_ini + 30, y0 + 74), "úblico", font=fr, fill=NAVY)
+    d.text((x0, y0 + paso), "P", font=fi, fill=NAVY)
+    d.rectangle((x0 + ancho_ini + bx, y0 + by0, x0 + ancho_ini + bx + bw, y0 + by1), fill=NAVY)
+    d.text((x0 + ancho_ini + f["logo_texto"], y0), "inero", font=fr, fill=NAVY)
+    d.text((x0 + ancho_ini + f["logo_texto"], y0 + paso), "úblico", font=fr, fill=NAVY)
     # franja de color del tipo
-    d.rectangle((0, 0, ANCHO, 16), fill=acento)
-    y = 330
+    d.rectangle((0, 0, W, f["franja"]), fill=acento)
+    y = f["y"]
     if t.get("etiqueta"):
-        d.text((m, y), t["etiqueta"].upper(), font=_fuente("bold", 40), fill=acento)
-        y += 76
+        d.text((m, y), t["etiqueta"].upper(), font=_fuente("bold", f["etiqueta"]), fill=acento)
+        y += f["etiqueta_paso"]
     if t.get("cifra"):
-        tam = 190
+        tam = f["cifra"]
         fc = _fuente("bold", tam)
-        while d.textlength(str(t["cifra"]), font=fc) > ANCHO - 2 * m and tam > 80:
+        while d.textlength(str(t["cifra"]), font=fc) > W - 2 * m and tam > f["cifra_min"]:
             tam -= 10
             fc = _fuente("bold", tam)
         d.text((m, y), str(t["cifra"]), font=fc, fill=NAVY)
         y += int(tam * 1.15)
-    limite = ALTO - 200                       # hasta el pie
-    ft = _fuente("medium", 60 if t.get("cifra") else 74)
+    limite = H - f["hasta_pie"]               # hasta el pie
+    ft = _fuente("medium", f["titulo_cifra"] if t.get("cifra") else f["titulo"])
     alto_linea = int(ft.size * 1.22)
-    for linea in _partir(d, t.get("titulo", ""), ft, ANCHO - 2 * m, max(2, min(5, (limite - y) // alto_linea))):
+    lineas_t = max(1 if formato == "apaisada" else 2, min(f["titulo_lineas"], (limite - y) // alto_linea))
+    for linea in _partir(d, t.get("titulo", ""), ft, W - 2 * m, lineas_t):
         d.text((m, y), linea, font=ft, fill=NAVY)
         y += alto_linea
     # la frase, más pequeña, si cabe
-    ff = _fuente("medium", 40)
+    ff = _fuente("medium", f["frase"])
     alto_f = int(ff.size * 1.35)
-    y += 30
-    if t.get("frase") and limite - y >= 2 * alto_f:
-        for linea in _partir(d, t["frase"], ff, ANCHO - 2 * m, (limite - y) // alto_f):
+    y += f["frase_hueco"]
+    if t.get("frase") and limite - y >= (1 if formato == "apaisada" else 2) * alto_f:
+        for linea in _partir(d, t["frase"], ff, W - 2 * m, (limite - y) // alto_f):
             d.text((m, y), linea, font=ff, fill=(0x4A, 0x55, 0x6E))
             y += alto_f
     # pie: la dirección exacta de la página, en una o dos líneas, cortando por «/», «?» o «&»
-    d.rectangle((0, ALTO - 150, ANCHO, ALTO), fill=NAVY)
+    d.rectangle((0, H - f["pie_alto"], W, H), fill=NAVY)
     pie = t.get("pie", "dinero-publico.com")
-    fp = _fuente("medium", 36)
-    if d.textlength(pie, font=fp) <= ANCHO - 2 * m:
-        d.text((m, ALTO - 98), pie, font=fp, fill=(255, 255, 255))
+    fp = _fuente("medium", f["pie"])
+    if d.textlength(pie, font=fp) <= W - 2 * m:
+        d.text((m, H - f["pie_y"]), pie, font=fp, fill=(255, 255, 255))
     else:
-        fp = _fuente("medium", 32)
+        fp = _fuente("medium", f["pie2"])
         trozos = re.split(r"(?=[/?&])", pie)
         l1 = ""
-        while trozos and d.textlength(l1 + trozos[0], font=fp) <= ANCHO - 2 * m:
+        while trozos and d.textlength(l1 + trozos[0], font=fp) <= W - 2 * m:
             l1 += trozos.pop(0)
         l2 = "".join(trozos)
-        while d.textlength(l2, font=fp) > ANCHO - 2 * m:
+        while d.textlength(l2, font=fp) > W - 2 * m:
             l2 = l2[:-2].rstrip() + "…" if not l2.endswith("…") else l2[:-2] + "…"
-        d.text((m, ALTO - 122), l1, font=fp, fill=(255, 255, 255))
-        d.text((m, ALTO - 78), l2, font=fp, fill=(255, 255, 255))
+        d.text((m, H - f["pie2_y"][0]), l1, font=fp, fill=(255, 255, 255))
+        d.text((m, H - f["pie2_y"][1]), l2, font=fp, fill=(255, 255, 255))
     out = io.BytesIO()
     img.save(out, format="PNG", optimize=True)
     return out.getvalue()

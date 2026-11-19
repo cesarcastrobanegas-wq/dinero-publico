@@ -20264,8 +20264,8 @@ def _header_html(provincia="todas", con_lema=True, buscador_aqui=False):
 # ─── PERFILES EN REDES (18-11-2026, encargo de César) ───────────────────────────────────────────────────────────────
 # «Síguenos» en el pie de todas las páginas y en «Quién soy», y los mismos perfiles en el «sameAs» del JSON-LD de la
 # organización (lo que usan Google y otros buscadores para enlazar la web con sus cuentas). Un perfil sin dirección no
-# se enseña: PERFIL_FACEBOOK_URL falta hasta que César dé la dirección exacta de la Página.
-PERFIL_FACEBOOK_URL = ""
+# se enseña. La Página de Facebook, con la dirección exacta que dio César el 19-11-2026.
+PERFIL_FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61591580504305"
 PERFILES_REDES = (
     ("Facebook", "", PERFIL_FACEBOOK_URL),
     ("X", "@Diner0Public0", "https://x.com/Diner0Public0"),
@@ -20384,7 +20384,7 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     # 18-11-2026: una pieza publicada de /casos comparte su propia tarjeta (la del bot de redes), no la genérica.
     og_img = _caso_tarjeta_ruta(og_path)
     og_img_url = f"{esc(SITE_URL)}{og_img}" if og_img else f"{esc(SITE_URL)}{_pwa_asset('/static/og-image.png')}"
-    og_img_w, og_img_h = ("1080", "1350") if og_img else ("1200", "630")
+    og_img_w, og_img_h = "1200", "630"          # la tarjeta apaisada del caso y la genérica miden lo mismo
     aviso_cookies = _t("Usamos cookies propias y de terceros (Google Analytics y, en el futuro, publicidad de Google "
                        "AdSense) para analizar el uso del sitio y, si las aceptas, mostrar anuncios — {enlace}.").format(
         enlace=f'<a href="/aviso-legal">{_t("más información")}</a>')
@@ -27585,7 +27585,7 @@ def _redes_al_arrancar():
 
 # ── Tarjeta pública y panel ──────────────────────────────────────────────────────────────────────────────────────────
 
-_CASO_TARJETAS = {}         # slug -> PNG (unas decenas de casos, ~100-200 KB cada uno)
+_CASO_TARJETAS = {}         # (slug, formato) -> PNG (unas decenas de casos, ~50-200 KB cada una)
 _caso_tarjetas_lock = threading.Lock()
 
 
@@ -27597,33 +27597,37 @@ def _caso_publicado(slug):
 
 
 def _caso_tarjeta_ruta(og_path):
-    """'/casos/<slug>/tarjeta.png' si og_path es una pieza publicada de /casos; si no, None."""
+    """'/casos/<slug>/tarjeta-apaisada.png' (1200x630, la que enseñan Facebook, X y WhatsApp en la vista previa del
+    enlace) si og_path es una pieza publicada de /casos; si no, None. La vertical (/tarjeta.png, 1080x1350) se queda
+    para Instagram."""
     if not (og_path or "").startswith("/casos/"):
         return None
     slug = og_path[len("/casos/"):].strip("/")
-    return f"/casos/{slug}/tarjeta.png" if _caso_publicado(slug) else None
+    return f"/casos/{slug}/tarjeta-apaisada.png" if _caso_publicado(slug) else None
 
 
 def _caso_tarjeta_resp(path):
-    """La tarjeta de un caso (la misma que prepara el bot de redes: título y dos frases del resumen), para og:image.
-    Se dibuja la primera vez y queda en memoria. Funciona aunque el bot esté apagado: no usa la base."""
-    m = re.fullmatch(r"/casos/([a-z0-9-]{1,120})/tarjeta\.png", path)
+    """La tarjeta de un caso (título y dos frases del resumen, como las del bot de redes): /tarjeta.png es la
+    vertical 1080x1350 y /tarjeta-apaisada.png la de 1200x630 del og:image. Se dibuja la primera vez y queda en
+    memoria. Funciona aunque el bot esté apagado: no usa la base."""
+    m = re.fullmatch(r"/casos/([a-z0-9-]{1,120})/tarjeta(-apaisada)?\.png", path)
     caso = _caso_publicado(m.group(1)) if m else None
     if not caso:
         return 404, {"Content-Length": "0"}, b""
     slug = caso["slug"]
-    png = _CASO_TARJETAS.get(slug)
+    formato = "apaisada" if m.group(2) else "vertical"
+    png = _CASO_TARJETAS.get((slug, formato))
     if png is None:
         try:
             entrada = {"tipo": "caso", "tema": f"caso:{slug}", "titulo": caso["titulo"],
                        "frase": REDES_MOD.dos_frases(caso.get("resumen", "")), "ruta": f"/casos/{slug}",
                        "etiqueta": "Caso"}
-            png = REDES_MOD.dibujar_tarjeta(REDES_MOD.componer(entrada, SITE_URL)["tarjeta"])
+            png = REDES_MOD.dibujar_tarjeta(REDES_MOD.componer(entrada, SITE_URL)["tarjeta"], formato)
         except Exception as e:                       # sin Pillow, un DNI en el texto...: la genérica
-            print(f"[casos] tarjeta de {slug}: {type(e).__name__}: {e}", flush=True)
+            print(f"[casos] tarjeta {formato} de {slug}: {type(e).__name__}: {e}", flush=True)
             return 302, {"Location": _pwa_asset("/static/og-image.png"), "Content-Length": "0"}, b""
         with _caso_tarjetas_lock:
-            _CASO_TARJETAS[slug] = png
+            _CASO_TARJETAS[(slug, formato)] = png
     return 200, {"Content-Type": "image/png", "Content-Length": str(len(png)),
                  "Cache-Control": "public, max-age=604800"}, png
 
@@ -31417,7 +31421,7 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/metodologia":
         return _resp(render_metodologia_html(), gzip_ok=gzip_ok)
 
-    if path.startswith("/casos/") and path.endswith("/tarjeta.png"):     # og:image de cada caso (18-11-2026)
+    if path.startswith("/casos/") and path.endswith(".png") and "/tarjeta" in path:   # tarjetas de cada caso
         return _caso_tarjeta_resp(path)
     if path.startswith("/casos/"):
         _tr = _caso_traducido_html(path[len("/casos/"):], qs)      # borrador/traducción publicada (gl/ca/eu)
