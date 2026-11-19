@@ -4,7 +4,8 @@ Resuelve los conflictos de las fusiones del DÍA DEL ALTA (ensayados el 05-11-20
 
 Se usa DENTRO de la carpeta de la rama del PR, después de «git merge origin/main» cuando git dice CONFLICT:
     python herramientas/dia_del_alta/resolver_conflictos.py 22
-(el número es el del PR: 22, 25, 20 o 19; el 20 solo si el #16, la PAC, ya está en main). Da igual qué lado sea «el tuyo» y cuál «el de main»: cada bloque se reconoce
+(el número es el del PR: 22, 25, 20, 19, 26 o 59; el 20 solo si el #16, la PAC, ya está en main; 22, 26 y 59 son los
+choques del 19-11 con el main que trae el #44, el #48 y el #70). Da igual qué lado sea «el tuyo» y cuál «el de main»: cada bloque se reconoce
 por lo que lleva. Si encuentra un bloque que no conoce, NO toca ese fichero y lo dice: entonces hay que resolverlo a
 mano (lo de cada bloque está explicado en «DIA DEL ALTA - pasos.txt»).
 Al acabar: comprueba la sintaxis, y tú solo tienes que pasar las pruebas, «git add -A» y «git commit».
@@ -120,11 +121,75 @@ def r20_gitignore(lados):
     return p + [""] + t
 
 
+def r22_app(lados):
+    # 19-11: main trae el import de licitaciones_guia (#48) en el mismo hueco donde el #22 pone el de forma_pago. Se
+    # dejan los dos, cada uno con su try/except: primero el de main y detrás el del #22.
+    f, o = con(lados, "import forma_pago as FP")
+    if not any("import licitaciones_guia as _LIC_GUIA" in x for x in o):
+        raise LookupError("app.py")
+    if any(x.strip() and not x.startswith(("    from .", "    import ", "except ImportError:", "try:")) for x in f + o):
+        raise LookupError("app.py")
+    return o + ["try:"] + f
+
+
+def r26_app(lados):
+    # 19-11: main trae el bloque «PERFILES EN REDES» (#44) justo donde el #26 pone «ENLACES DE VENTA». Los dos:
+    # primero el de redes, una línea en blanco y el de venta.
+    v, r = con(lados, "_VENTA_PRECIOS = ")
+    if not any("PERFILES_REDES = (" in x for x in r) or any("_VENTA_" in x for x in r):
+        raise LookupError("app.py")
+    while r and not r[-1].strip():
+        r = r[:-1]
+    return r + ["", ""] + v
+
+
+_PO_LINEA = re.compile(r'^(msgid |msgstr |msgctxt |#|"|$)')
+
+
+def _po_entradas(lineas):
+    """[[clave, [líneas de la entrada]]]: la clave es el msgctxt + msgid entero (con sus líneas de continuación), y las
+    líneas en blanco van pegadas a la entrada anterior."""
+    out, en_id = [], False
+    for x in lineas:
+        if x.startswith(("msgid ", "#", "msgctxt ")) and (not out or any(y.startswith("msgstr ") for y in out[-1][1])):
+            out.append([None, []])
+        if not out:
+            out.append([None, []])
+        if x.startswith(("msgctxt ", "msgid ")):
+            out[-1][0] = (out[-1][0] or "") + x + "\n"
+            en_id = True
+        elif x.startswith('"') and en_id:
+            out[-1][0] += x + "\n"
+        else:
+            en_id = False
+        out[-1][1].append(x)
+    return out
+
+
+def r_po(lados):
+    # 19-11: los dos lados añaden traducciones al final del .po (#26 y #59 contra lo que entró en main). Se dejan las
+    # dos tandas; si una entrada del segundo lado ya está (mismo msgid) en el primero, no se repite. Solo se acepta un
+    # bloque hecho de entradas de .po: cualquier otra cosa es «NO CONOZCO».
+    a, b = lados
+    if any(not _PO_LINEA.match(x) for x in a + b) or not any(x.startswith("msgid ") for x in a) \
+            or not any(x.startswith("msgid ") for x in b):
+        raise LookupError(".po")
+    ya = {e[0] for e in _po_entradas(a)}
+    resto = [x for e in _po_entradas(b) if e[0] is None or e[0] not in ya for x in e[1]]
+    while a and not a[-1].strip():
+        a = a[:-1]
+    return a + [""] + resto
+
+
+_PO = {f"backend/locale/{i}.po": r_po for i in ("gl", "ca", "eu")}
+
 REGLAS = {
     "20": {".gitignore": r20_gitignore},
-    "22": {"backend/socios_pagado_prueba_web.py": r22_prueba_web},
+    "22": {"backend/socios_pagado_prueba_web.py": r22_prueba_web, "backend/app.py": r22_app},
     "25": {"backend/socios.py": r25_socios, "backend/filtro_formulario.py": r25_filtro, "backend/app.py": r25_app},
     "19": {"backend/app.py": r19_app},
+    "26": dict(_PO, **{"backend/app.py": r26_app}),
+    "59": dict(_PO),
 }
 
 

@@ -18,8 +18,9 @@ env["PYTHONIOENCODING"] = "utf-8"
 if modo == "encendido":     # todo encendido, con valores de PRUEBA inventados
     env.update(FILTRO_FORMULARIO="1", TEXTOS_LEGALES_NUEVOS="1", PRECIOS_VISIBLE="1", FORMA_PAGO="manual",
                FORMA_PAGO_INSTRUCCIONES="Transferencia a ES00 0000 0000 0000 0000 0000 (prueba)",
-               TITULAR_NOMBRE="Titular De Prueba", TITULAR_NIF="00000000T", TITULAR_DOMICILIO="Calle Inventada 1, 30001 Murcia",
-               TITULAR_REGISTRO="no", PRECIO_FILTRO="15", PRECIO_FILTRO_PERIODO="mes", PRECIO_ALERTAS="5",
+               # 20-11: el titular es una S.L.U. INVENTADA (desde el #20 de la SLU, las cuatro TITULAR_* son obligatorias)
+               TITULAR_NOMBRE="Ejemplo Datos S.L.U.", TITULAR_NIF="B00000000", TITULAR_DOMICILIO="Calle Inventada 1, 30001 Murcia",
+               TITULAR_REGISTRO="Registro Mercantil de Murcia, tomo 0000, folio 0, hoja MU-00000, inscripción 1.ª", PRECIO_FILTRO="15", PRECIO_FILTRO_PERIODO="mes", PRECIO_ALERTAS="5",
                PRECIO_ALERTAS_PERIODO="mes", PRECIO_INFORME="50", PRECIO_INFORME_PERIODO="por informe",
                PRECIOS_NOTA_IVA="IVA no incluido", PRECIOS_CONTACTO="contacto@ejemplo.test",
                SOCIOS_SOLO_CORREOS="permitido@ejemplo.test")

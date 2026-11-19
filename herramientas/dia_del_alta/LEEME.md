@@ -8,7 +8,11 @@ Para fusionar los PR de venta (#13, #24, #22, #25, #20, #19, #26) cuando llegue 
   - Ensayado el 05-11-2026.
   - Vuelto a ensayar el 07-11-2026 con main + #30, #32, #29, #31, #33, #18 y #16. Sale un conflicto nuevo en
     `.gitignore` del #20 contra el #16 (los dos añaden su bloque al final). Para él está la regla «20».
+  - 19-11-2026, sobre el main con el #70: reglas nuevas «22» (`app.py`: el import de `licitaciones_guia` del #48 y el
+    de `forma_pago`, los dos con su try), «26» (`app.py`: bloque de redes del #44 + enlaces de venta; y los `.po`: las
+    dos tandas de traducciones sin repetidas) y «59» (solo los `.po`). Cualquier otro bloque sigue siendo «NO CONOZCO».
+    Su prueba: `python herramientas/dia_del_alta/prueba_resolver_conflictos.py` (repositorio de juguete, sin red).
 - `pruebas_dia_del_alta.py CARPETA apagado|encendido [CARPETA_MAIN/backend]`: pasa las 8 pruebas, una detrás de otra.
   - No usa la red y trabaja con un `cache.db` vacío en una carpeta temporal.
-  - En modo «encendido» usa valores inventados.
+  - En modo «encendido» usa valores inventados (desde el 20-11, una S.L.U. inventada: «Ejemplo Datos S.L.U.»).
   - El 07-11-2026 pasaron todas en los dos modos.
