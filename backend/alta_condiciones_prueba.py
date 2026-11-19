@@ -62,7 +62,11 @@ def funciones():
     import socios as SOC
     sin_entorno_precio()
     V = FF.CONDICIONES_VERSION
-    ok(V == "borrador-2026-11-04", f"versión de las condiciones: {V}")
+    try:
+        from textos_legales import VERSION_ID as esperada        # con el #20 manda su VERSION_ID (20-11: la de la SLU)
+    except ImportError:
+        esperada = "borrador-2026-11-04"
+    ok(V == esperada, f"versión de las condiciones: {V}")
     tmp = tempfile.mkdtemp(prefix="alta_condiciones_")
     try:
         alm = SOC.Almacen(os.path.join(tmp, "socios.db"))

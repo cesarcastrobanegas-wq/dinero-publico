@@ -27,10 +27,13 @@ RUTAS = ("/legal/aviso-legal", "/legal/privacidad", "/legal/condiciones")
 FIJAS = ("/", "/convocatorias", "/mapa-cobertura", "/aviso-legal", "/quien-soy", "/metodologia", "/casos",
          "/rankings", "/fondos-ue", "/entidades", "/sitemap.xml", "/robots.txt", "/no-existe-esta-pagina")
 OBLIGATORIAS = ("/", "/aviso-legal", "/quien-soy", "/sitemap.xml", "/robots.txt")
-TITULAR_PRUEBA = {"TITULAR_NOMBRE": "EMPRESA DE PRUEBA SL", "TITULAR_NIF": "B00000000",
-                  "TITULAR_DOMICILIO": "Calle de la Prueba 1, 30001 Murcia", "TITULAR_REGISTRO": "no"}
-HUECOS_TITULAR = ("[NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR]", "[NIF DEL TITULAR]", "[DOMICILIO]",
-                  "[DATOS DE INSCRIPCIÓN EN UN REGISTRO PÚBLICO, SI PROCEDEN]")
+# 20-11-2026 (SLU): datos INVENTADOS y claramente ficticios. B00000000 es un NIF de sociedad con el control bien
+# calculado (todo ceros) que no corresponde a nadie.
+TITULAR_PRUEBA = {"TITULAR_NOMBRE": "Ejemplo Datos S.L.U.", "TITULAR_NIF": "B00000000",
+                  "TITULAR_DOMICILIO": "Calle Inventada 1, 30001 Murcia",
+                  "TITULAR_REGISTRO": "Registro Mercantil de Murcia, tomo 0000, folio 0, hoja MU-00000, inscripción 1.ª"}
+HUECOS_TITULAR = ("[DENOMINACIÓN SOCIAL DEL TITULAR]", "[NIF DEL TITULAR]", "[DOMICILIO SOCIAL]",
+                  "[INSCRIPCIÓN EN EL REGISTRO MERCANTIL DE MURCIA: TOMO, FOLIO, HOJA E INSCRIPCIÓN]")
 _RE_HREF_LEGAL = re.compile(r"""(?:href|action)\s*=\s*["'](?:https?://[^/"']+)?(?:/(?:gl|ca|eu))?(/legal/[^"'?#]*)""")
 _RE_ENLACE_LEGAL = re.compile(r"""(?:href|action|src)\s*=\s*["'][^"']*/legal/|<loc>[^<]*/legal/|llow:\s*/legal/""")
 if hasattr(sys.stdout, "reconfigure"):
@@ -74,7 +77,7 @@ def prueba_modulo():
         ok(fallos, "modulo", cuerpo.count("<mark") == cuerpo.count("</mark>") > 0, f"{clave}: huecos resaltados")
     # ningún nombre propio de persona física: el titular va como hueco
     todo = " ".join(str(b) for d in T.DOCUMENTOS.values() for b in d["bloques"])
-    ok(fallos, "modulo", "[NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR]" in todo, "el titular va como hueco")
+    ok(fallos, "modulo", "[DENOMINACIÓN SOCIAL DEL TITULAR]" in todo, "el titular va como hueco")
     nombres = nombres_prohibidos()
     if not nombres:
         print("[modulo] AVISO se salta «ningún nombre prohibido en los textos»: pon PRUEBA_NOMBRES_PROHIBIDOS o el "
@@ -98,7 +101,10 @@ def prueba_titular(T):
     """Datos del titular: de las variables de entorno; si falta alguna, hueco entre corchetes y aviso de borrador."""
     fallos = []
     src = open(os.path.join(AQUI, "textos_legales.py"), encoding="utf-8").read()
-    ok(fallos, "modulo", "B00000000" not in src and "Calle de la Prueba" not in src, "ningún dato del titular en el código")
+    ok(fallos, "modulo", "B00000000" not in src and "Calle Inventada" not in src and "Ejemplo Datos" not in src,
+       "ningún dato del titular en el código")
+    ok(fallos, "modulo", "autónomo sin inscripción" not in src and "NOMBRE Y APELLIDOS" not in src,
+       "los textos ya no piensan en un autónomo como titular")
     for clave in T.DOCUMENTOS:
         vacio = T.cuerpo_html(clave, entorno={})
         lleno = T.cuerpo_html(clave, entorno=TITULAR_PRUEBA)
@@ -108,15 +114,34 @@ def prueba_titular(T):
         ok(fallos, "modulo", not any(h in lleno for h in HUECOS_TITULAR) and "faltan datos del titular" not in lleno,
            f"{clave}: con todas las variables, ningún hueco del titular ni aviso de que faltan")
         if "[NIF DEL TITULAR]" in "".join(str(b) for b in T.DOCUMENTOS[clave]["bloques"]):
-            ok(fallos, "modulo", "B00000000" in lleno and "EMPRESA DE PRUEBA SL" in lleno, f"{clave}: datos puestos")
-    av = T.cuerpo_html("aviso-legal", entorno=dict(TITULAR_PRUEBA, TITULAR_REGISTRO="Registro Mercantil de Murcia, "
-                                                    "hoja MU-0"))
-    ok(fallos, "modulo", "Registro Mercantil de Murcia, hoja MU-0" in av, "TITULAR_REGISTRO con datos: sale la línea")
-    ok(fallos, "modulo", "INSCRIPCIÓN" not in T.cuerpo_html("aviso-legal", entorno=TITULAR_PRUEBA)
-       and "<li>.</li>" not in T.cuerpo_html("aviso-legal", entorno=TITULAR_PRUEBA), "TITULAR_REGISTRO=no: sin línea")
+            ok(fallos, "modulo", "B00000000" in lleno and "Ejemplo Datos S.L.U." in lleno
+               and "hoja MU-00000" in lleno, f"{clave}: datos puestos, también los registrales")
+    av = T.cuerpo_html("aviso-legal", entorno=TITULAR_PRUEBA)
+    ok(fallos, "modulo", "Datos registrales: Registro Mercantil de Murcia, tomo 0000" in av
+       and "Domicilio social: Calle Inventada 1" in av and "sociedad limitada unipersonal" in av,
+       "aviso legal: denominación, domicilio social y datos registrales")
+    ok(fallos, "modulo", T.titular_incompleto(TITULAR_PRUEBA) == [], "con los cuatro datos, el titular está completo")
+    for var, valor, que in (("TITULAR_REGISTRO", "no", "TITULAR_REGISTRO=no (de autónomo)"),
+                            ("TITULAR_REGISTRO", "Registro Mercantil de Murcia, hoja MU-0", "registro sin tomo ni folio"),
+                            ("TITULAR_NIF", "B00000001", "NIF con el control mal"),
+                            ("TITULAR_NIF", "00000000T", "NIF de persona física"),
+                            ("TITULAR_NOMBRE", "", "sin denominación")):
+        e = dict(TITULAR_PRUEBA, **{var: valor})
+        c = T.cuerpo_html("aviso-legal", entorno=e)
+        ok(fallos, "modulo", T.titular_incompleto(e) != [] and "faltan datos del titular" in c,
+           f"{que}: cuenta como dato que falta")
+    ok(fallos, "modulo", T.nif_sociedad_valido("b-00000000") and not T.nif_sociedad_valido("X0000000T"),
+       "NIF: guiones y minúsculas valen; un NIE no")
     parcial = T.cuerpo_html("aviso-legal", entorno={k: v for k, v in TITULAR_PRUEBA.items() if k != "TITULAR_NIF"})
     ok(fallos, "modulo", "[NIF DEL TITULAR]" in parcial and "faltan datos del titular</b> (NIF)" in parcial
-       and "EMPRESA DE PRUEBA SL" in parcial, "falta solo el NIF: su hueco y el aviso, el resto puesto")
+       and "Ejemplo Datos S.L.U." in parcial, "falta solo el NIF: su hueco y el aviso, el resto puesto")
+    cond = T.cuerpo_html("condiciones", entorno=TITULAR_PRUEBA)
+    ok(fallos, "modulo", "Factura: la emite Ejemplo Datos S.L.U." in cond and "IVA" in cond
+       and "profesional autónomo que contrata" in cond, "condiciones: la factura la emite la sociedad, con IVA")
+    ok(fallos, "modulo", '<h2 id="informes">14. Informes a medida</h2>' in cond and "6.1.b" in cond,
+       "condiciones: apartado «Informes a medida» (#informes) para el formulario de /informes (PR #59)")
+    ok(fallos, "modulo", "2607236515551" in av and "a nombre de la persona física, el fundador" in av,
+       "propiedad intelectual: nota para el abogado sobre la cesión a la SLU")
     raro = T.cuerpo_html("aviso-legal", entorno=dict(TITULAR_PRUEBA, TITULAR_NOMBRE="<script>x</script>"))
     ok(fallos, "modulo", "<script>x" not in raro and "&lt;script&gt;" in raro, "dato con HTML: escapado")
     c1 = T.cuerpo_html("aviso-legal", entorno=dict(TITULAR_PRUEBA, TITULAR_CORREO="hola@ejemplo.test"))
@@ -207,6 +232,9 @@ def caso(modo):
 
     encendido = modo == "encendido"
     ok(fallos, modo, app.TEXTOS_LEGALES_NUEVOS == encendido, f"TEXTOS_LEGALES_NUEVOS = {app.TEXTOS_LEGALES_NUEVOS}")
+    # 20-11 (SLU): con la variable puesta pero sin el NIF, los textos nuevos se quedan apagados y se dice por qué
+    ok(fallos, modo, bool(app.TEXTOS_LEGALES_FALTAN) == (modo == "incompleto"),
+       f"datos del titular que faltan: {app.TEXTOS_LEGALES_FALTAN}")
     for ruta in RUTAS + tuple("/gl" + r for r in RUTAS):
         c, h, b = get(ruta)
         if not encendido:
@@ -258,7 +286,9 @@ def main():
         print(f"[{sys.argv[2]}] FALLOS: {len(fallos)}", flush=True)
         sys.exit(1 if fallos else 0)
     total = len(prueba_modulo())
-    for modo, extra in (("apagado", {}), ("encendido", dict(TITULAR_PRUEBA, TEXTOS_LEGALES_NUEVOS="1"))):
+    incompleto = {k: v for k, v in TITULAR_PRUEBA.items() if k != "TITULAR_NIF"}
+    for modo, extra in (("apagado", {}), ("encendido", dict(TITULAR_PRUEBA, TEXTOS_LEGALES_NUEVOS="1")),
+                        ("incompleto", dict(incompleto, TEXTOS_LEGALES_NUEVOS="1"))):
         datos = tempfile.mkdtemp(prefix=f"textos_legales_{modo}_")
         sqlite3.connect(os.path.join(datos, "cache.db")).close()          # cache.db VACÍO, nunca el real
         open(os.path.join(datos, ".disco_inicializado"), "w").close()

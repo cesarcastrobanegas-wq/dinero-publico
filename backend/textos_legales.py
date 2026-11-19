@@ -34,7 +34,7 @@ MARCA_BORRADOR = "BORRADOR PARA REVISIÓN JURÍDICA — NO PUBLICAR"
 CONTACTO = "contacto@dinero-publico.com"
 DOMINIO = "https://dinero-publico.com"
 VERSION = "Versión de [FECHA DE PUBLICACIÓN]"
-TITULAR = "[NOMBRE Y APELLIDOS O RAZÓN SOCIAL DEL TITULAR]"
+TITULAR = "[DENOMINACIÓN SOCIAL DEL TITULAR]"
 
 
 def _h(texto, ancla=""):
@@ -54,12 +54,12 @@ AVISO_LEGAL = [
     _h("1. Titular del sitio web", "titular"),
     _p("En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de servicios de la sociedad de la "
        "información y de comercio electrónico (LSSI), estos son los datos del titular de este sitio web:"),
-    _ul(f"Titular: {TITULAR}.",
+    _ul(f"Titular: {TITULAR}, sociedad limitada unipersonal.",
         "NIF: [NIF DEL TITULAR].",
-        "Domicilio: [DOMICILIO].",
+        "Domicilio social: [DOMICILIO SOCIAL].",
+        "Datos registrales: [INSCRIPCIÓN EN EL REGISTRO MERCANTIL DE MURCIA: TOMO, FOLIO, HOJA E INSCRIPCIÓN].",
         f"Correo electrónico de contacto: {CONTACTO}.",
-        f"Sitio web: {DOMINIO} («Dinero Público»).",
-        "[DATOS DE INSCRIPCIÓN EN UN REGISTRO PÚBLICO, SI PROCEDEN]."),
+        f"Sitio web: {DOMINIO} («Dinero Público»)."),
     _h("2. Qué es Dinero Público", "actividad"),
     _p("Dinero Público es una plataforma de transparencia que reúne en un solo sitio datos públicos y oficiales sobre "
        "el gasto del sector público en España: contratos públicos y sus adjudicatarios, licitaciones y subvenciones "
@@ -134,7 +134,11 @@ AVISO_LEGAL = [
     _h("8. Propiedad intelectual e industrial", "propiedad"),
     _p("El código fuente de la plataforma está registrado como obra en Safe Creative, con todos los derechos "
        "reservados (número de registro 2607236515551, de 23 de julio de 2026). Que el código pueda consultarse en "
-       "un repositorio público no concede ninguna licencia para usarlo."),
+       "un repositorio público no concede ninguna licencia para usarlo. [ABOGADO: ese registro de Safe Creative "
+       "(nº 2607236515551) está a nombre de la persona física, el fundador, y no de la sociedad. Hará falta una cesión "
+       "o una licencia a la SLU de los derechos sobre el código, los textos y la marca «Dinero Público» (también la "
+       "solicitud de la marca en la OEPM), o bien decir aquí que siguen siendo del fundador y que la SLU los usa con "
+       "su licencia.]"),
     _p("Los datos de las fuentes oficiales se reutilizan conforme a la Ley 37/2007, de 16 de noviembre, sobre "
        "reutilización de la información del sector público, y a las condiciones de cada fuente; pertenecen a quien "
        "los publica."),
@@ -165,7 +169,9 @@ AVISO_LEGAL = [
 # ─── 2. POLÍTICA DE PRIVACIDAD ──────────────────────────────────────────────────────────────────────────────────────
 PRIVACIDAD = [
     _h("1. Responsable del tratamiento", "responsable"),
-    _p(f"El responsable es {TITULAR}, con NIF [NIF DEL TITULAR] y domicilio en [DOMICILIO], titular de Dinero "
+    _p(f"El responsable es {TITULAR}, con NIF [NIF DEL TITULAR], domicilio social en [DOMICILIO SOCIAL] e "
+       "inscrita en el Registro Mercantil (datos registrales: [INSCRIPCIÓN EN EL REGISTRO MERCANTIL DE MURCIA: TOMO, "
+       f"FOLIO, HOJA E INSCRIPCIÓN]), titular de Dinero "
        f"Público ({DOMINIO}). Para cualquier asunto de protección de datos: {CONTACTO}. "
        "[DELEGADO DE PROTECCIÓN DE DATOS, SI SE NOMBRA.]"),
     _p("Esta política explica qué datos personales se tratan en cada parte de Dinero Público: al visitar la web, en "
@@ -272,8 +278,9 @@ PRIVACIDAD = [
     _p("No pedimos nombre, apellidos ni teléfono, y no guardamos tu dirección IP en la base de datos del servicio. "
        "De cada correo enviado queda un registro sin tu dirección (cuándo, de qué tipo y la respuesta del servicio de "
        "envío, con cualquier dirección tapada), que se borra a los 90 días."),
-    _p("Cuando el servicio sea de pago, para cobrarlo y facturarlo se tratarán además [DATOS DE FACTURACIÓN: nombre o "
-       "razón social, NIF, domicilio fiscal y datos del pago, según la FORMA DE PAGO]. Esos datos no se guardarán "
+    _p("Cuando el servicio sea de pago, para cobrarlo y facturarlo se tratarán además los datos de facturación de la "
+       "empresa o del profesional autónomo que contrata (nombre o razón social, NIF y domicilio fiscal) y los del pago "
+       "[DATOS DEL PAGO, según la FORMA DE PAGO]. Las facturas las emite el titular, con IVA. Esos datos no se guardarán "
        "junto al perfil de tu empresa, sino en [DÓNDE SE GUARDAN LOS DATOS DE FACTURACIÓN]."),
     _p("Para qué los usamos:"),
     _ul("buscar las licitaciones abiertas que encajan con tu empresa, enseñártelas al rellenar el formulario y en la "
@@ -365,7 +372,9 @@ CONDICIONES = [
        "aplicable, por estas condiciones. [DECIDIR: si «Licitaciones para tu empresa» tendrá también un nivel o una "
        "prueba gratuitos.]"),
     _h("2. Quién presta el servicio", "prestador"),
-    _p(f"Los servicios los presta {TITULAR}, con NIF [NIF DEL TITULAR] y domicilio en [DOMICILIO], titular de Dinero "
+    _p(f"Los servicios los presta {TITULAR}, con NIF [NIF DEL TITULAR], domicilio social en [DOMICILIO SOCIAL] e "
+       "inscrita en el Registro Mercantil (datos registrales: [INSCRIPCIÓN EN EL REGISTRO MERCANTIL DE MURCIA: TOMO, "
+       f"FOLIO, HOJA E INSCRIPCIÓN]), titular de Dinero "
        f"Público ({DOMINIO}). Contacto: {CONTACTO}. [DECIDIR: papel de la Cámara de Comercio u otras entidades que "
        "den a conocer el servicio.]"),
     _h("3. A quién van dirigidos", "destinatarios"),
@@ -413,9 +422,14 @@ CONDICIONES = [
        "[DECIDIR: duración del nivel de pago y qué pasa al terminar.]"),
     _h("6. Precio y forma de pago", "precio"),
     _p("Precio de «Licitaciones para tu empresa»: [PRECIO]. Precio del nivel de pago de las alertas: [PRECIO]. "
-       "[DECIDIR: IVA incluido o «+ IVA»; periodo (mes o año); precios especiales.] El precio incluye todo lo descrito "
+       "Los precios se indican sin IVA: la factura añade el IVA que corresponda (hoy, el 21 %). [GESTOR: confirmar el "
+       "tipo de IVA.] [DECIDIR: periodo (mes o año); precios especiales. Si las alertas de pago se ofrecieran también "
+       "a particulares (consumidores), su precio tendría que mostrarse con el IVA incluido.] El precio incluye todo lo descrito "
        "en estas condiciones; no hay costes adicionales."),
-    _p("Forma de pago: [FORMA DE PAGO]. Factura: [QUIÉN LA EMITE, CON QUÉ DATOS Y CÓMO SE ENVÍA]."),
+    _p(f"Forma de pago: [FORMA DE PAGO]. Factura: la emite {TITULAR} por cada pago, con el IVA correspondiente, a "
+       "nombre de la empresa o del profesional autónomo que contrata y con los datos de facturación que nos des "
+       "(nombre o razón social, NIF y domicilio fiscal). [GESTOR: programa de facturación y cómo se envía la factura, "
+       "por ejemplo en PDF por correo electrónico.]"),
     _h("7. Cómo se contrata", "contratacion"),
     _ul("Rellenas el formulario del servicio y aceptas estas condiciones marcando la casilla correspondiente. "
         "[La casilla está preparada en el PR #25, sin fusionar: hay que fusionarlo antes de vender.]",
@@ -484,7 +498,26 @@ CONDICIONES = [
     _h("13. Protección de datos", "datos"),
     _p("Los datos que nos das se tratan como explica la Política de privacidad, en sus apartados «Alertas por correo» "
        "y «Licitaciones para tu empresa»."),
-    _h("14. Ley aplicable y tribunales", "ley"),
+    # 20-11-2026: el formulario de /informes (PR #59) enlaza aquí (#informes) cuando los textos nuevos están
+    # encendidos; con ellos apagados, al apartado «Formulario de petición de informes» del aviso legal de siempre.
+    _h("14. Informes a medida", "informes"),
+    _p("Desde la página «Informes» (/informes) puedes pedir un informe en PDF sobre una empresa, un municipio o un "
+       "sector, hecho solo con datos oficiales y con la fuente de cada dato. Pedirlo no te compromete a nada: te "
+       f"contestamos por correo con el precio y el plazo, y el encargo solo se cierra si lo aceptas. {TITULAR} emite la "
+       "factura con el IVA correspondiente. [DECIDIR: forma de pago de los informes y qué pasa si el informe no se "
+       "entrega en plazo.]"),
+    _p("Qué datos nos das y para qué: tu dirección de correo electrónico, qué informe quieres y sobre qué empresa, "
+       "municipio o sector; tu nombre o el de tu empresa y el mensaje son opcionales. Los usamos solo para contestar tu "
+       "petición (decirte el precio y el plazo) y, si lo encargas, para hacerlo y facturarlo. No los cedemos a nadie ni "
+       "los usamos para publicidad. La base legal es tu propia petición (artículo 6.1.b del RGPD: medidas "
+       "precontractuales a petición del interesado)."),
+    _p(f"La web no guarda esos datos en ninguna base de datos: viajan en un correo que nos llega a {CONTACTO}, enviado "
+       "a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento. En el registro "
+       "técnico de envíos solo queda la fecha y si el correo salió, con las direcciones tapadas. Conservamos el correo "
+       "mientras dure la conversación sobre tu petición y, como máximo, 12 meses desde nuestra última respuesta "
+       f"[el plazo de INFORMES_CONSERVACION_MESES, PR #59]; después lo borramos. Puedes pedir que lo borremos antes, o "
+       f"ejercer cualquier otro derecho, escribiendo a {CONTACTO}."),
+    _h("15. Ley aplicable y tribunales", "ley"),
     _p("Estas condiciones se rigen por la ley española. [ABOGADO: tribunales competentes.]"),
 ]
 
@@ -511,7 +544,7 @@ RUTAS = {d["ruta"]: clave for clave, d in DOCUMENTOS.items()}
 #   - mientras BORRADOR sea True (nadie ha aceptado de verdad), basta con regenerar la foto de la versión actual;
 #   - después, hay que poner una VERSION_ID nueva (la antigua no se sobrescribe nunca: el script se niega).
 #   En los dos casos: python backend/textos_legales.py --guardar-version. La prueba falla si la foto no está al día.
-VERSION_ID = "borrador-2026-11-04"       # la misma que filtro_formulario.CONDICIONES_VERSION
+VERSION_ID = "borrador-2026-11-20-slu"   # la misma que filtro_formulario.CONDICIONES_VERSION (20-11: textos de la SLU)
 VERSIONADOS = ("condiciones", "privacidad")
 DIR_VERSIONES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "textos_legales_versiones")
 _RE_VERSION_ID = re.compile(r"^[a-z0-9][a-z0-9.-]{0,59}$")
@@ -578,14 +611,54 @@ _RE_HUECO = re.compile(r"\[[^\[\]]+\]")
 # NINGÚN dato personal en el código (el repositorio es público): los textos llevan los huecos entre corchetes y la
 # página los rellena AL MOSTRARLA con estas variables de entorno (Render). Si falta alguna, su hueco sigue entre
 # corchetes y la página avisa de que es un borrador. Las fotos de las versiones y los .docx guardan los huecos, no los
-# datos. TITULAR_REGISTRO=no quita la línea de la inscripción registral (autónomo sin inscripción). TITULAR_CORREO es
-# opcional: sin ella, el correo de contacto de siempre.
+# datos. TITULAR_CORREO es opcional: sin ella, el correo de contacto de siempre.
+# 20-11-2026 (SLU): el titular es una sociedad limitada unipersonal. Las cuatro variables son OBLIGATORIAS:
+#   TITULAR_NOMBRE     denominación social, con «S.L.U.» o «Sociedad Limitada Unipersonal» (art. 13 de la Ley de
+#                      Sociedades de Capital: la unipersonalidad tiene que constar);
+#   TITULAR_NIF        NIF de la sociedad (letra, 7 cifras y control; se comprueba el dígito de control). No «CIF»: desde
+#                      2008 el nombre oficial es NIF;
+#   TITULAR_DOMICILIO  domicilio social;
+#   TITULAR_REGISTRO   inscripción en el Registro Mercantil de Murcia, con tomo, folio, hoja e inscripción.
+# Ya no vale TITULAR_REGISTRO=no (era para un autónomo). Si TEXTOS_LEGALES_NUEVOS=1 y falta alguna o no es válida, app.py
+# NO enciende los textos nuevos (404, como apagados) y lo escribe en el registro: mejor un 404 que un aviso legal a medias.
 TITULAR_VARIABLES = (
-    ("TITULAR_NOMBRE", TITULAR, "nombre o razón social"),
+    ("TITULAR_NOMBRE", TITULAR, "denominación social"),
     ("TITULAR_NIF", "[NIF DEL TITULAR]", "NIF"),
-    ("TITULAR_DOMICILIO", "[DOMICILIO]", "domicilio"),
-    ("TITULAR_REGISTRO", "[DATOS DE INSCRIPCIÓN EN UN REGISTRO PÚBLICO, SI PROCEDEN]", "inscripción registral"),
+    ("TITULAR_DOMICILIO", "[DOMICILIO SOCIAL]", "domicilio social"),
+    ("TITULAR_REGISTRO", "[INSCRIPCIÓN EN EL REGISTRO MERCANTIL DE MURCIA: TOMO, FOLIO, HOJA E INSCRIPCIÓN]",
+     "inscripción en el Registro Mercantil (tomo, folio, hoja e inscripción)"),
 )
+_RE_NIF_SOCIEDAD = re.compile(r"^([ABCDEFGHJNPQRSUVW])(\d{7})([0-9A-J])$")
+
+
+def nif_sociedad_valido(nif):
+    """NIF de persona jurídica con su carácter de control bien calculado (B12345674, por ejemplo)."""
+    m = _RE_NIF_SOCIEDAD.match((nif or "").replace("-", "").replace(" ", "").upper())
+    if not m:
+        return False
+    letra, cifras, control = m.groups()
+    suma = sum(int(c) for c in cifras[1::2])
+    suma += sum(sum(divmod(int(c) * 2, 10)) for c in cifras[0::2])
+    d = (10 - suma % 10) % 10
+    if letra in "PQRSNW":                     # siempre letra
+        return control == "JABCDEFGHI"[d]
+    if letra in "ABEH":                       # siempre cifra
+        return control == str(d)
+    return control in (str(d), "JABCDEFGHI"[d])
+
+
+def _valor_titular_valido(var, valor):
+    if var == "TITULAR_NIF":
+        return nif_sociedad_valido(valor)
+    if var == "TITULAR_REGISTRO":
+        v = valor.lower()
+        return all(p in v for p in ("tomo", "folio", "hoja", "inscripci"))
+    return True
+
+
+def titular_incompleto(entorno=None):
+    """Lo que falta o no es válido de los datos del titular, en palabras; lista vacía si está todo."""
+    return datos_titular(entorno)["faltan"]
 
 
 def datos_titular(entorno=None):
@@ -596,8 +669,8 @@ def datos_titular(entorno=None):
         valor = " ".join((entorno.get(var) or "").split())[:300]
         if not valor:
             faltan.append(nombre)
-        elif var == "TITULAR_REGISTRO" and valor.lower() in ("no", "no procede", "-"):
-            huecos[hueco] = ""
+        elif not _valor_titular_valido(var, valor):
+            faltan.append(nombre + " (no válido)")
         else:
             huecos[hueco] = valor
     correo = (entorno.get("TITULAR_CORREO") or "").strip()

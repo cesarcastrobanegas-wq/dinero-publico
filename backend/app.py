@@ -29636,6 +29636,14 @@ try:
 except ImportError:
     import textos_legales as _textos_legales                 # python backend/app.py y scripts con "import app"
 TEXTOS_LEGALES_NUEVOS = os.environ.get("TEXTOS_LEGALES_NUEVOS", "") == "1"
+# 20-11-2026 (SLU): con TEXTOS_LEGALES_NUEVOS=1 solo se encienden si están TODOS los datos del titular (TITULAR_NOMBRE,
+# TITULAR_NIF válido, TITULAR_DOMICILIO y TITULAR_REGISTRO con tomo, folio, hoja e inscripción). Si falta alguno,
+# siguen apagados (404, y /aviso-legal no redirige) y se dice en el registro: mejor un 404 que un aviso legal a medias.
+TEXTOS_LEGALES_FALTAN = _textos_legales.titular_incompleto() if TEXTOS_LEGALES_NUEVOS else []
+if TEXTOS_LEGALES_FALTAN:
+    TEXTOS_LEGALES_NUEVOS = False
+    print("[textos-legales] TEXTOS_LEGALES_NUEVOS=1, pero faltan datos del titular o no son válidos ("
+          + ", ".join(TEXTOS_LEGALES_FALTAN) + "): los textos nuevos se quedan APAGADOS (404).", flush=True)
 
 
 def render_textos_legales_html(clave, version=None):
