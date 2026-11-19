@@ -2896,6 +2896,26 @@ msgstr "Concepto suxerido: «{concepto}»"
 msgid "Dinero Público lo hago yo solo: César Castro Banegas. No hay una organización detrás, ni un equipo, ni presupuesto. No lo financia ningún partido, ninguna empresa ni ninguna administración. Detrás hay miles de horas de trabajo."
 msgstr "Dinero Público fágoo eu só: César Castro Banegas. Non hai unha organización detrás, nin un equipo, nin orzamento. Non o financia ningún partido, ningunha empresa nin ningunha administración. Detrás hai miles de horas de traballo."
 
+#: app.py (titular SLU, 20-11-2026)
+msgid "Dinero Público lo hago yo solo: {nombre}. La web es de {sociedad}, una sociedad limitada unipersonal de la que soy el único socio. No hay un equipo ni presupuesto, y no lo financia ningún partido, ninguna administración ni ninguna otra empresa. Detrás hay miles de horas de trabajo."
+msgstr "Dinero Público fágoo eu só: {nombre}. A web é de {sociedad}, unha sociedade limitada unipersoal da que son o único socio. Non hai un equipo nin orzamento, e non o financia ningún partido, ningunha administración nin ningunha outra empresa. Detrás hai miles de horas de traballo."
+
+#: app.py (titular SLU, 20-11-2026)
+msgid "{sociedad}, sociedad limitada unipersonal."
+msgstr "{sociedad}, sociedade limitada unipersoal."
+
+#: app.py (titular SLU, 20-11-2026)
+msgid "NIF: {nif}."
+msgstr "NIF: {nif}."
+
+#: app.py (titular SLU, 20-11-2026)
+msgid "Domicilio social: {domicilio}."
+msgstr "Domicilio social: {domicilio}."
+
+#: app.py (titular SLU, 20-11-2026)
+msgid "Datos registrales: {registro}."
+msgstr "Datos rexistrais: {registro}."
+
 #: app.py:27234
 msgid "PRÓXIMAMENTE, SE INCORPORARÁN UN ABOGADO, UN ECONOMISTA Y UN PERIODISTA."
 msgstr "PROXIMAMENTE, INCORPORARANSE UN AVOGADO, UN ECONOMISTA E UN XORNALISTA."
