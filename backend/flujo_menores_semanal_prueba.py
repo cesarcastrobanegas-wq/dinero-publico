@@ -146,7 +146,7 @@ class Decidir(unittest.TestCase):
         self.assertEqual(fm.errores_de_descarga("a\n  !! 2024: error de descarga (x)\n!! otro aviso\n"), 1)
 
     def test_manuales(self):
-        for f in ("alicante", "santa_cruz"):
+        for f in ("alicante", "santa_cruz", "palma"):
             self.assertIn(f, fm.EXCLUIDOS)
             self.assertIn("menores_desde_pc.py", fm.EXCLUIDOS[f])
         self.assertTrue(os.path.exists(os.path.join(BASE_DIR, "menores_desde_pc.py")))

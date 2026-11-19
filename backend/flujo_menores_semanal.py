@@ -44,10 +44,18 @@ EXCLUIDOS = {
     # Fallos del 2026-10-18 y 2026-10-25 (decisión de César del 2026-10-27: a manual).
     "burgos": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (sigue manual)",
     "almeria": "el servidor del ayuntamiento corta la conexión al agente del proyecto (sigue manual)",
+    # Desde GitHub las 17 descargas caducan («timed out» a los 60 s; cada ejecución tarda ~1.026 s, al menos desde el
+    # 2026-10-18); desde el PC el portal contesta bien (comprobado el 2026-11-16).
+    # Se lanza desde el PC con menores_desde_pc.py, como las dos de debajo.
+    "palma": "desde GitHub todas las descargas caducan; desde un PC, bien (manual: menores_desde_pc.py)",
     # Fallos del 2026-11-01 y 2026-11-08: desde GitHub no conectan; desde el PC, sí (decisión de César del 09-11).
     # Se lanzan desde el PC con: python backend/menores_desde_pc.py (ver MENORES_DESDE_PC.md).
     "alicante": "desde GitHub todas las descargas tardan demasiado; desde un PC, bien (manual: menores_desde_pc.py)",
     "santa_cruz": "el servidor del ayuntamiento no contesta a las conexiones desde GitHub (manual: menores_desde_pc.py)",
+    # Sin datos nuevos desde el 2026-10-25: su portal rechaza las conexiones desde GitHub, desde el PC y desde fuera
+    # (comprobado el 16-11). Queda como histórico (encargo de César del 16-11): se conservan sus datos y la ficha lo
+    # avisa (_FUENTES_CM_HISTORICAS en app.py). Si el portal vuelve, se quita de aquí y de esa lista.
+    "la_laguna": "el portal del ayuntamiento no responde desde el 25-10-2026: queda como histórico (datos conservados)",
 }
 MINUTOS = {"murcia_manual": 150, "euskadi": 210}      # el resto, MINUTOS_POR_DEFECTO
 MINUTOS_POR_DEFECTO = 40

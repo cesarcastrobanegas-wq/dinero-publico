@@ -2722,8 +2722,8 @@ def _db_init():
 
 def _settings_get(clave, default=None):
     """Lee un valor de la tabla settings (persistente en disco)."""
-    with _db_lock:
-        row = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
+    with _db_leer() as con:
+        row = con.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
     return row[0] if row else default
 
 
@@ -3274,6 +3274,58 @@ def _db_count_municipios(provincia):
     return row[0] if row else 0
 
 
+# ─── LECTURAS DE LAS PETICIONES WEB SIN EL CERROJO (17-11-2026) ─────────────────────────────────────────────────────
+# Medido en local con la copia de producción: una ficha de municipio cuesta 0,2-1 s, pero en los primeros minutos tras
+# un arranque tardaba 13-19 s (en producción 28,6, 15,1 y 10,7 s). No era el montaje: la ficha hacía cola en _db_lock,
+# el cerrojo de la conexión compartida, mientras los hilos del arranque lo tenían cogido con consultas grandes (repaso de
+# DNI, tramos de menores del Índice, subvenciones...). Una ficha lo pide ~100 veces (sobre todo el directivo de cada
+# contrato). SQLite en modo WAL deja leer mientras otro escribe: el cerrojo solo hace falta para compartir la conexión.
+# Ahora, dentro de una petición web, las lecturas de la ficha usan una conexión de SOLO LECTURA propia de cada hilo, sin
+# el cerrojo. Los hilos de fondo siguen exactamente igual (conexión compartida y cerrojo). Se ve lo ya guardado
+# (confirmado), que es lo mismo que veía la ficha salvo lo que otro hilo estuviera escribiendo en ese instante.
+# Interruptor: LECTURA_SIN_CERROJO=0 en el entorno vuelve al comportamiento anterior.
+_LECTURA_SIN_CERROJO = os.environ.get("LECTURA_SIN_CERROJO", "1") != "0"
+_EN_PETICION_WEB = contextvars.ContextVar("en_peticion_web", default=False)
+_db_lectura_hilo = threading.local()
+
+
+def _db_conexion_lectura():
+    """La conexión de solo lectura de este hilo (se abre la primera vez; otra si el proceso es otro tras un fork).
+    None si no se puede abrir: entonces se lee como siempre."""
+    con = getattr(_db_lectura_hilo, "con", None)
+    if con is not None and getattr(_db_lectura_hilo, "pid", None) == os.getpid():
+        return con
+    try:
+        con = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True, check_same_thread=False, timeout=30)
+        con.create_function("normalizar", 1, normalizar)
+    except sqlite3.Error as e:
+        print(f"[lectura] no se pudo abrir la conexión de solo lectura: {type(e).__name__}: {e}", flush=True)
+        return None
+    _db_lectura_hilo.con, _db_lectura_hilo.pid = con, os.getpid()
+    return con
+
+
+class _db_leer:
+    """`with _db_leer() as con:` para LEER. En una petición web: la conexión de solo lectura del hilo, sin cerrojo.
+    Fuera de ellas (hilos de fondo, arranque): la conexión compartida con _db_lock, como siempre."""
+    __slots__ = ("_cerrojo",)
+
+    def __enter__(self):
+        self._cerrojo = None
+        if _LECTURA_SIN_CERROJO and _EN_PETICION_WEB.get():
+            con = _db_conexion_lectura()
+            if con is not None:
+                return con
+        self._cerrojo = _db_lock
+        self._cerrojo.acquire()
+        return _db
+
+    def __exit__(self, *exc):
+        if self._cerrojo is not None:
+            self._cerrojo.release()
+        return False
+
+
 def _db_get_municipio(municipio, provincia=None):
     """Lee UN municipio directamente de SQLite (SELECT por clave primaria),
     bajo demanda -- sin pasar por ningún caché permanente en RAM. Contraparte
@@ -3294,8 +3346,8 @@ def _db_get_municipio(municipio, provincia=None):
     Clave compuesta (2026-09-30): para un homónimo hace falta la provincia (ver clave_municipio); `municipio` puede
     ser también directamente una clave ya calculada ("torrent|valencia")."""
     key = municipio if "|" in (municipio or "") else clave_municipio(municipio, provincia)
-    with _db_lock:
-        row = _db.execute("SELECT data, provincia FROM municipios WHERE municipio=?", (key,)).fetchone()
+    with _db_leer() as con:
+        row = con.execute("SELECT data, provincia FROM municipios WHERE municipio=?", (key,)).fetchone()
     if not row:
         return None
     data, prov = row
@@ -3456,7 +3508,7 @@ def _parece_sociedad(empresa, nif=""):
 ADMINISTRADORES_BORME_FILE = os.path.join(DATA_DIR, "administradores_borme.json")
 
 
-ADMINISTRADORES_BORME_META = {"periodo": None, "generado": None, "resumen": None}
+ADMINISTRADORES_BORME_META = {"periodo": None, "generado": None, "resumen": None, "nif_sin_confirmar": frozenset()}
 
 
 def _cargar_administradores_borme():
@@ -3464,7 +3516,8 @@ def _cargar_administradores_borme():
         with open(ADMINISTRADORES_BORME_FILE, encoding="utf-8") as f:
             datos = json.load(f)
         ADMINISTRADORES_BORME_META.update(periodo=datos.get("periodo"), generado=datos.get("generado"),
-                                          resumen=datos.get("resumen"))
+                                          resumen=datos.get("resumen"),
+                                          nif_sin_confirmar=frozenset(datos.get("nif_sin_confirmar") or ()))
         return datos.get("administradores", {})
     except (OSError, ValueError):
         return {}
@@ -3533,11 +3586,13 @@ def _vaciar_caches_de_nombres():
     mayores empresas de los rankings (15 min) y las páginas montadas (10 min) -- y recalcula el Índice en segundo
     plano (hasta 1 h de caché), para que un nombre retirado por una rectificación deje de verse en el acto y no
     cuando caduque cada caché. El Índice anterior se sigue sirviendo mientras se calcula el nuevo."""
+    _copia_arranque_borrar()             # 16-11-2026: que un reinicio no vuelva a enseñar lo de antes
     with _rk_empresas_lock:
         _rk_empresas["ts"] = 0.0
     with _paginas_lock:
         _paginas_cache.clear()
         _paginas_cerrojos.clear()
+    _bots_cache_vaciar()                 # 16-11-2026: la caché de páginas de bots también enseña nombres
 
     def _recalcular():
         try:
@@ -3644,7 +3699,8 @@ def _subir_administradores_borme(token, crudo, forzar=False):
     anteriores = len(ADMINISTRADORES_BORME)
     ADMINISTRADORES_BORME = nuevos
     ADMINISTRADORES_BORME_META.update(periodo=datos.get("periodo"), generado=datos.get("generado"),
-                                      resumen=datos.get("resumen"))
+                                      resumen=datos.get("resumen"),
+                                      nif_sin_confirmar=frozenset(datos.get("nif_sin_confirmar") or ()))
     _vaciar_caches_de_nombres()
     print(f"[admin] administradores_borme: {len(nuevos)} sociedades (antes {anteriores}), periodo "
           f"{datos.get('periodo')}", flush=True)
@@ -3703,14 +3759,135 @@ def _administrador_borme_info(empresa, nif=""):
     return b if b and not b.get("extinguida") else None
 
 
+# Administrador en la FICHA DE EMPRESA (16-11-2026, decisión de César). La ficha probaba el nombre y luego TODAS las
+# variantes de nombre de los contratos de ese NIF, y bastaba una variante con el nombre de otra sociedad (un contrato
+# con el NIF mal puesto) para enseñar el administrador de esa otra: Zurich con el de Willis Iberia (1 contrato de 703),
+# Cruz Roja con el de Asturiana de Automóviles, Toi Toi con el de Rentokil, Teknoservice con el de Vigilant. Reglas:
+#   1. NIF entre los «NIF sin confirmar» del fichero del BORME (nif_sin_confirmar): ningún administrador;
+#   2. NIF que no está en el fichero: solo el nombre principal o una variante con al menos la mitad de los contratos
+#      de ese NIF. Las grafías de una misma sociedad cuentan juntas: las que llevan al mismo registro del BORME y,
+#      además, las que comparadas sin signos, espacios ni forma social (_empresa_clave_compacta) son iguales a una de
+#      ellas o a un nombre del registro, o se diferencian en UNA letra si tienen 15 caracteres o más (decisión de
+#      César, 16-11: «TELEFONICA DE ESPEÑA» con «TELEFONICA DE ESPAÑA»);
+#   3. se descarta cualquier registro que en el fichero esté asignado a OTRO NIF (con un NIF enmascarado, «otro» es
+#      uno que no encaja con la máscara) que tenga al menos tantos contratos como esta ficha. Medido en local: sin
+#      ese «al menos tantos», Endesa Energía (A81948077) e Iberdrola Clientes (A95758389) perdían su administrador
+#      porque el fichero también da su registro a NIF mal tecleados en unos pocos contratos (B81948077, A95758339...).
+# Sin NIF (ficha juntada por el nombre), como antes. Las fichas de municipio no usan esto: allí cada contrato va por
+# su propio nombre (_administrador_borme).
+_BORME_NIFS_REG = {"base": None, "mapa": {}}
+
+
+def _borme_nifs_del_registro(b):
+    """NIF de sociedad con que ese registro del BORME está en el fichero (se calcula una vez por fichero cargado)."""
+    base = ADMINISTRADORES_BORME
+    if _BORME_NIFS_REG["base"] is not base:
+        mapa = collections.defaultdict(set)
+        for k, v in base.items():
+            if _RE_NIF_SOCIEDAD.match(k):
+                mapa[_borme_registro_id(v)].add(k)
+        _BORME_NIFS_REG.update(base=base, mapa=mapa)
+    return _BORME_NIFS_REG["mapa"].get(_borme_registro_id(b), set())
+
+
+_RE_FORMA_COMPACTA_FICHA = re.compile(
+    r"(\s+(sociedad limitada|sociedad anonima|sociedad unipersonal|sociedad cooperativa|unipersonal|laboral|"
+    r"profesional|en liquidacion|s m e|sme|s l u|s a u|s l l|s l p|s l|s a|slu|sau|sll|slp|sl|sa))+$")
+_EMPRESA_ERRATA_MIN = 15
+
+
+def _empresa_clave_compacta(s):
+    """Nombre sin tildes, signos, espacios ni forma social final: «TELEFONICA DE ESPAÑA, S.A. SOCIEDAD UNIPERSONAL»
+    y «Telefónica de España SAU» dan lo mismo."""
+    s = re.sub(r"(?i)\s*\(\s*r\.?\s*m\.?[^)]*\)\s*$", "", s or "")
+    s = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]+", " ", normalizar(s))).strip()
+    return _RE_FORMA_COMPACTA_FICHA.sub("", s).replace(" ", "")
+
+
+def _una_errata(a, b):
+    """True si a y b se diferencian en exactamente una letra (cambiada, sobrante o que falta)."""
+    if a == b or abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) > len(b):
+        a, b = b, a
+    i = 0
+    while i < len(a) and a[i] == b[i]:
+        i += 1
+    return a[i + 1:] == b[i + 1:] if len(a) == len(b) else a[i:] == b[i + 1:]
+
+
+def _borme_nif_encaja(nif, otro):
+    if "*" not in nif:
+        return nif == otro
+    return len(nif) == len(otro) and all(a == "*" or a == c for a, c in zip(nif, otro))
+
+
+def _empresa_administrador(nombre, nif, variantes, total, contratos_de=None):
+    """(registro del BORME, nombre con que casa) para la ficha de empresa, o (None, ""). Ver las reglas arriba.
+    `variantes`: [(nombre, nº de contratos)]; `total`: contratos de la ficha; `contratos_de(nif)`: contratos de otra
+    ficha (regla 3; sin ella, cualquier otro NIF cuenta)."""
+    n = (nif or "").upper().strip()
+    if not n:
+        for cand in [nombre] + [v for v, _k in variantes]:
+            b = _administrador_borme_info(cand, "")
+            if b:
+                return b, cand
+        return None, ""
+    if n in ADMINISTRADORES_BORME_META.get("nif_sin_confirmar", ()):           # regla 1
+        return None, ""
+    if "*" not in n:
+        b = ADMINISTRADORES_BORME.get(n)
+        if b:
+            return (None, "") if b.get("extinguida") else (b, nombre)
+    # regla 2: las grafías que llevan al MISMO registro del BORME se suman («ENDESA ENERGIA SAU», «ENDESA ENERGÍA,
+    # S.A.U.»... son una sola variante de la misma sociedad: si no, ninguna llegaría sola a la mitad)
+    grupos = {}                              # registro -> [registro, contratos, nombre con que casa, es el principal]
+    for cand, k in [(nombre, 0)] + [(v, k) for v, k in variantes]:
+        b = _administrador_borme_info(cand, n)
+        if not b:
+            continue
+        otros = {x for x in _borme_nifs_del_registro(b)
+                 if contratos_de is None or _borme_nif_encaja(n, x) or contratos_de(x) >= (total or 0)}
+        if otros and not any(_borme_nif_encaja(n, x) for x in otros):           # regla 3
+            continue
+        g = grupos.setdefault(_borme_registro_id(b), [b, 0, cand, False])
+        g[1] += k or 0
+        g[3] = g[3] or cand == nombre
+    if grupos:                               # las grafías que no casan por nombre, a su grupo si son la misma sociedad
+        registro_de = {}
+        for v, _k in variantes:
+            b = _administrador_borme_info(v, n)
+            registro_de[v] = _borme_registro_id(b) if b else None
+        claves = {rid: ({_empresa_clave_compacta(v) for v, r in registro_de.items() if r == rid}
+                        | {_empresa_clave_compacta(x) for x in _borme_nombres_del_registro(g[0])}) - {""}
+                  for rid, g in grupos.items()}
+        for v, k in variantes:
+            if registro_de.get(v):
+                continue
+            c = _empresa_clave_compacta(v)
+            if not c:
+                continue
+            dest = [rid for rid, cs in claves.items() if c in cs]
+            if not dest and len(c) >= _EMPRESA_ERRATA_MIN:
+                dest = [rid for rid, cs in claves.items()
+                        if any(len(x) >= _EMPRESA_ERRATA_MIN and _una_errata(c, x) for x in cs)]
+            if len(dest) == 1:               # a uno solo: si encaja con dos sociedades, no cuenta para ninguna
+                grupos[dest[0]][1] += k or 0
+    for b, k, cand, principal in sorted(grupos.values(), key=lambda g: (not g[3], -g[1])):
+        if principal or k * 2 >= (total or 0):
+            return b, cand
+    return None, ""
+
+
 def _administrador_borme(empresa, nif=""):
     b = _administrador_borme_info(empresa, nif)
     return (b["nombre"], b["cargo"]) if b else None
 
 
-def _borme_fuente_html(empresa, nif=""):
-    """Fecha del nombramiento, enlace al anuncio del BORME y enlace de rectificación, o "" si el dato no es del BORME."""
-    b = _administrador_borme_info(empresa, nif)
+def _borme_fuente_html(empresa, nif="", b=None):
+    """Fecha del nombramiento, enlace al anuncio del BORME y enlace de rectificación, o "" si el dato no es del BORME.
+    `b`: el registro ya elegido (ficha de empresa); si no, se busca."""
+    b = b or _administrador_borme_info(empresa, nif)
     if not b:
         return ""
     desde = b.get("desde") or ""
@@ -3768,8 +3945,8 @@ def _dir_cache_get(empresa, nif=""):
 def _dir_cache_get_registro(empresa, nif=""):
     """Solo lo guardado en la tabla `directores` (sin el BORME). (None, None) si hay que buscar."""
     key = _dir_cache_key(empresa, nif)
-    with _db_lock:
-        row = _db.execute("SELECT nombre, cargo, ts FROM directores WHERE clave=?", (key,)).fetchone()
+    with _db_leer() as con:
+        row = con.execute("SELECT nombre, cargo, ts FROM directores WHERE clave=?", (key,)).fetchone()
     if not row:
         return None, None
     nombre, cargo, ts = row
@@ -3784,8 +3961,8 @@ def _dir_cache_agotado(empresa, nif=""):
     """True si ya se agotaron los reintentos automáticos para esta empresa
     (DIR_INTENTOS_MAX intentos fallidos): se considera sin datos registrales públicos."""
     key = _dir_cache_key(empresa, nif)
-    with _db_lock:
-        row = _db.execute(
+    with _db_leer() as con:
+        row = con.execute(
             "SELECT intentos FROM directores WHERE clave=? AND (nombre IS NULL OR nombre='')", (key,)
         ).fetchone()
     return bool(row) and (row[0] or 0) >= DIR_INTENTOS_MAX
@@ -13059,8 +13236,8 @@ def _db_contratos_menors_por_municipio(municipio, provincia=None):
     if provincia:
         ahora = time.time()
         if _EQUIV_MENORES_FICHA["mapa"] is None or ahora - _EQUIV_MENORES_FICHA["ts"] > 600:
-            with _db_lock:
-                filas = _db.execute("SELECT DISTINCT municipio, provincia FROM contratos_menors_locales").fetchall()
+            with _db_leer() as con:
+                filas = con.execute("SELECT DISTINCT municipio, provincia FROM contratos_menors_locales").fetchall()
             mapa = collections.defaultdict(list)
             for m, pv in filas:
                 mapa[_clave_municipio_cm(m, pv)].append((m, pv))
@@ -13070,14 +13247,14 @@ def _db_contratos_menors_por_municipio(municipio, provincia=None):
                 "import_num, data_adjudicacio, tipus_contracte, descripcio, codi_cpv, exercici, ts, "
                 "import_fuente, import_aviso "
                 "FROM contratos_menors_locales ")
-    with _db_lock:
+    with _db_leer() as con:
         if pares:
             rows = []
             for m, pv in pares:
-                rows += _db.execute(cols_sql + "WHERE municipio=? AND provincia=?", (m, pv)).fetchall()
+                rows += con.execute(cols_sql + "WHERE municipio=? AND provincia=?", (m, pv)).fetchall()
             rows.sort(key=lambda r: r[8] or "", reverse=True)
         else:
-            rows = _db.execute(cols_sql + "WHERE municipio=? ORDER BY data_adjudicacio DESC", (municipio,)).fetchall()
+            rows = con.execute(cols_sql + "WHERE municipio=? ORDER BY data_adjudicacio DESC", (municipio,)).fetchall()
     cols = ("id", "municipio", "provincia", "fuente", "organisme", "adjudicatari", "nif",
             "import_num", "data_adjudicacio", "tipus_contracte", "descripcio", "codi_cpv",
             "exercici", "ts", "import_fuente", "import_aviso")
@@ -13857,11 +14034,11 @@ def _db_fondos_ue_por_municipio(municipio, provincia=None):
     sql = ("SELECT id, fuente, provincia, municipio, nuts_code, titulo, beneficiario, "
            "nif, rol, importe_num, fecha_inicio, fecha_fin, programa, fondo, url, ts "
            "FROM fondos_ue WHERE municipio_match=?")
-    with _db_lock:
+    with _db_leer() as con:
         if provincia:
-            rows = _db.execute(sql + " AND provincia=? ORDER BY importe_num DESC", (municipio, provincia)).fetchall()
+            rows = con.execute(sql + " AND provincia=? ORDER BY importe_num DESC", (municipio, provincia)).fetchall()
         else:
-            rows = _db.execute(sql + " ORDER BY importe_num DESC", (municipio,)).fetchall()
+            rows = con.execute(sql + " ORDER BY importe_num DESC", (municipio,)).fetchall()
     cols = ("id", "fuente", "provincia", "municipio", "nuts_code", "titulo", "beneficiario",
             "nif", "rol", "importe_num", "fecha_inicio", "fecha_fin", "programa", "fondo", "url", "ts")
     return [dict(zip(cols, r)) for r in rows]
@@ -14105,8 +14282,8 @@ def _db_comentarios_borrar(tipo, clave_raw, texto):
 
 def _db_comentarios_por(tipo, clave_raw):
     """Comentarios guardados para este municipio/empresa, más reciente primero."""
-    with _db_lock:
-        rows = _db.execute(
+    with _db_leer() as con:
+        rows = con.execute(
             "SELECT nombre, texto, ts FROM comentarios WHERE tipo=? AND clave=? AND estado='publicado' ORDER BY ts DESC",
             (tipo, normalizar(clave_raw)),
         ).fetchall()
@@ -16830,7 +17007,7 @@ def _revision_cola_html(qs, cookie):
               f'<p class="sub"><a href="/admin/revision/comentarios"><b>Comentarios pendientes de aprobar: '
               f'{comentarios_pendientes}</b></a> · <a href="/admin/revision/alertas">Alertas por correo</a> · '
               + (f'<a href="/admin/revision/socios">Perfiles del filtro</a> · ' if FILTRO_FORMULARIO else '') +
-              f'<a href="/admin/revision/visitas">Visitas</a></p>'
+              f'<a href="/admin/revision/visitas">Visitas</a> · <a href="/admin/revision/redes">Redes sociales</a></p>'
               f'<p class="sub">Uso interno. Un indicador NO es una irregularidad: solo señala dónde mirar. Nada de esta '
               f'lista se publica; antes de publicar un caso hay que comprobarlo en la fuente oficial y pedir la versión '
               f'del ayuntamiento. Desde el RDL 3/2020, sumar menores al mismo contratista no es ilegal por sí mismo: lo '
@@ -16976,6 +17153,9 @@ def _revision_wsgi(method, path, qs, environ):
         if path == "/admin/revision/salir":
             return 303, {"Location": "/admin/revision", "Content-Length": "0",
                          "Set-Cookie": "dp_rev=; Path=/admin/revision; Max-Age=0; HttpOnly; SameSite=Strict"}, b""
+        if path == "/admin/revision/redes/accion":
+            hecho = _redes_accion(p("accion"), p("id"))
+            return 303, {"Location": f"/admin/revision/redes?hecho={hecho}", "Content-Length": "0"}, b""
         if path == "/admin/revision/accion":
             huella, accion, motivo, nota = p("huella"), p("accion"), p("motivo"), p("nota")[:1000]
             nuevo = {"descartar": "descartado", "seguimiento": "seguimiento", "caso": "caso", "reabrir": "pendiente"}.get(accion)
@@ -17021,6 +17201,12 @@ def _revision_wsgi(method, path, qs, environ):
         return _socios_vista_html(qs.get("p", [""])[0])
     if path == "/admin/revision/visitas":
         return _visitas_pagina(qs, autorizado=True)
+    if path == "/admin/revision/redes":
+        return _redes_panel_html(cookie, qs.get("hecho", [""])[0])
+    if path == "/admin/revision/diagnostico":      # 16-11-2026: el diagnóstico completo con la sesión
+        return _resp(json.dumps(_diagnostico_arranque(), ensure_ascii=False),
+                     content_type="application/json; charset=utf-8",
+                     headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
     if path == "/admin/revision/ficha":
         md = _revision_ficha_md(qs.get("huella", [""])[0])
         if md is None:
@@ -18000,6 +18186,139 @@ def _carga_place_menores():
         print(f"[startup] entidades_locales: ERROR ({type(e).__name__}: {e})", flush=True)
 
 
+# ─── COPIA DE ARRANQUE (16-11-2026, encargo de César) ────────────────────────────────────────────────────────────────
+# Medido con el registro de peticiones lentas tras el despliegue del #64 (17:54 UTC): las únicas peticiones lentas
+# fueron las de los 2 primeros minutos (portadas de 42 y 33 s, una ficha en catalán de 26 s). Al arrancar no hay ni
+# Índice de Transparencia, ni top de empresas, ni portadas montadas, y la primera visita que los necesita los calcula
+# en su propia petición mientras la carga del feed de menores ocupa el procesador. (El índice de fichas de empresa no
+# era: ya se reutiliza del disco si tiene menos de 12 horas, ver _empresas_bg.)
+# Ahora, cada vez que el precálculo termina (_precalcular_indice_bg, cada ~45 min), se guarda en el disco una copia de
+# lo ya calculado: el Índice, el top de empresas y las portadas, /convocatorias y /mapa-cobertura de cada idioma
+# (ya comprimidas). Al arrancar se carga esa copia antes de atender a nadie y se sirve mientras el precálculo de
+# siempre calcula lo nuevo; cuando termina, lo sustituye todo y vuelve a montar las páginas en segundo plano.
+# No se usa la copia (y se calcula todo como antes) si:
+#   - tiene más de COPIA_ARRANQUE_MAX_EDAD;
+#   - ha cambiado algo de lo que decide qué nombres se enseñan (_copia_arranque_huella): las supresiones de cargos
+#     (RGPD), los ficheros de alcaldes y sueldos de concejales, el fichero de administradores del BORME o la clave
+#     de exclusión. Así, un despliegue que retira un nombre nunca lo vuelve a enseñar desde la copia;
+#   - se ha cargado un fichero de administradores nuevo (_vaciar_caches_de_nombres la borra);
+#   - _COPIA_ARRANQUE_VERSION es distinta (subirla obliga a no usar las copias anteriores).
+# Lo que se sirve de la copia lleva los mismos datos que se servían justo antes del reinicio; si el despliegue cambia
+# el HTML de la portada, la versión anterior se ve hasta que termina el precálculo (unos minutos).
+import base64  # noqa: E402  (aquí y no arriba, para no tocar la línea de imports que comparten otros PR)
+COPIA_ARRANQUE_FILE = os.path.join(DATA_DIR, "copia_arranque.json.gz")
+COPIA_ARRANQUE_MAX_EDAD = 24 * 3600
+COPIA_ARRANQUE_INDICE_MAX_S = 1800      # pasado esto sin precálculo, el Índice de la copia se recalcula como siempre
+_COPIA_ARRANQUE_VERSION = 1
+_copia_arranque_estado = {"cargada": False, "motivo": "", "carga_s": None, "guardada_utc": "", "guardado_s": None,
+                          "tamano_mb": None}
+
+
+def _copia_arranque_huella():
+    """Huella de todo lo que decide qué nombres se enseñan: si cambia, la copia no se usa."""
+    h = hashlib.sha256(f"v{_COPIA_ARRANQUE_VERSION}".encode())
+    for ruta in (_cargos_suprimidos.SUPRESIONES_FILE, _cargos_suprimidos.ALCALDES_FILE, _cargos_suprimidos.SUELDOS_FILE):
+        try:
+            with open(ruta, "rb") as f:
+                h.update(hashlib.sha256(f.read()).digest())
+        except OSError:
+            h.update(b"-")
+    try:
+        st = os.stat(ADMINISTRADORES_BORME_FILE)
+        h.update(f"{st.st_size}:{int(st.st_mtime)}".encode())
+    except OSError:
+        h.update(b"-")
+    h.update(hashlib.sha256((os.environ.get(_cargos_suprimidos.CLAVE_ENV) or "").encode()).digest())
+    return h.hexdigest()[:32]
+
+
+def _copia_arranque_borrar():
+    try:
+        os.remove(COPIA_ARRANQUE_FILE)
+    except OSError:
+        pass
+
+
+def _copia_arranque_guardar():
+    """Guarda el Índice, el top de empresas y las páginas fijas ya montadas (ver la cabecera). Nunca rompe nada."""
+    if not _DISCO_CONFIABLE:
+        return
+    t0 = time.time()
+    try:
+        with _indice_transparencia_cache_lock:
+            filas = _INDICE_TRANSPARENCIA_CACHE["filas"]
+            calculado = _INDICE_TRANSPARENCIA_CACHE["ts"]
+        if filas is None or not calculado:          # solo lo calculado de verdad, nunca otra copia
+            return
+        rk = {"nacional": _rk_empresas["nacional"], "provincias": _rk_empresas["provincias"]}
+        with _paginas_lock:
+            paginas = [[list(k), base64.b64encode(e["gz"]).decode("ascii"), e.get("ts_copia", e["ts"])]
+                       for k, e in _paginas_cache.items() if _pagina_fija(k)]
+        datos = {"version": _COPIA_ARRANQUE_VERSION, "huella": _copia_arranque_huella(), "guardada": time.time(),
+                 "indice": filas, "indice_ts": calculado, "rk_empresas": rk, "paginas": paginas}
+        tmp = COPIA_ARRANQUE_FILE + ".tmp"
+        with _gzip.open(tmp, "wt", encoding="utf-8", compresslevel=5) as f:
+            json.dump(datos, f, ensure_ascii=False, separators=(",", ":"))
+        os.replace(tmp, COPIA_ARRANQUE_FILE)
+        del datos
+        _copia_arranque_estado.update(
+            guardada_utc=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), guardado_s=round(time.time() - t0, 1),
+            tamano_mb=round(os.path.getsize(COPIA_ARRANQUE_FILE) / 1024 / 1024, 2))
+    except Exception as e:
+        print(f"[copia-arranque] no se pudo guardar: {type(e).__name__}: {e}", flush=True)
+
+
+def _copia_arranque_cargar():
+    """Al arrancar, antes de atender a nadie: carga la copia si vale (ver la cabecera). Nunca rompe el arranque."""
+    t0 = time.time()
+    est = _copia_arranque_estado
+    try:
+        if not os.path.exists(COPIA_ARRANQUE_FILE):
+            est["motivo"] = "no hay copia"
+            return
+        if time.time() - os.path.getmtime(COPIA_ARRANQUE_FILE) > COPIA_ARRANQUE_MAX_EDAD:
+            est["motivo"] = "copia demasiado vieja"
+            return
+        with _gzip.open(COPIA_ARRANQUE_FILE, "rt", encoding="utf-8") as f:
+            datos = json.load(f)
+        if datos.get("version") != _COPIA_ARRANQUE_VERSION:
+            est["motivo"] = "copia de otra versión"
+            return
+        if datos.get("huella") != _copia_arranque_huella():
+            est["motivo"] = "han cambiado las supresiones, los cargos o los administradores: no se usa"
+            return
+        with _indice_transparencia_cache_lock:
+            if _INDICE_TRANSPARENCIA_CACHE["filas"] is None:
+                _INDICE_TRANSPARENCIA_CACHE["filas"] = datos["indice"]
+                _INDICE_TRANSPARENCIA_CACHE["ts"] = 0.0      # 0 = de la copia (ver _indice_copia_de_arranque)
+        rk = datos.get("rk_empresas") or {}
+        with _rk_empresas_lock:
+            if not _rk_empresas["ts"] and rk.get("nacional"):
+                _rk_empresas.update(nacional=tuple(rk["nacional"]),
+                                    provincias={pv: tuple(v) for pv, v in (rk.get("provincias") or {}).items()},
+                                    ts=time.time())
+        ahora = time.time()
+        n = 0
+        with _paginas_lock:
+            for k, gz64, ts in datos.get("paginas") or []:
+                clave = tuple(k)
+                if clave in _paginas_cache or ahora - ts > COPIA_ARRANQUE_MAX_EDAD:
+                    continue
+                # vieja (se sirve, pero no se vuelve a montar sola: lo hace _calentar_portada tras el precálculo)
+                _paginas_cache[clave] = {"gz": base64.b64decode(gz64), "ts": ahora - _PAGINAS_TTL, "refrescando": True,
+                                         "grupo": None, "de_copia": True, "ts_copia": ts}
+                n += 1
+        est.update(cargada=True, motivo=f"Índice de {len(datos['indice'])} municipios y {n} páginas",
+                   guardada_utc=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(datos.get("guardada") or 0)))
+        del datos
+    except Exception as e:
+        est["motivo"] = f"error: {type(e).__name__}"
+        print(f"[copia-arranque] no se pudo cargar: {type(e).__name__}: {e}", flush=True)
+    finally:
+        est["carga_s"] = round(time.time() - t0, 2)
+        print(f"[copia-arranque] {est}", flush=True)
+
+
 def _arrancar_hilos_de_fondo():
     """Arranca los hilos que viven mientras dura el proceso: feed de menores de PLACE, precálculo del Índice, noticias
     UE (si faltan) y barrido de directivos.
@@ -18009,6 +18328,12 @@ def _arrancar_hilos_de_fondo():
     atiende no tenía ninguno, sus cachés en memoria (Índice, nombres de personas físicas) no le servían y, si un hilo
     del maestro tenía _db_lock cogido al hacer la copia, el trabajador lo heredaba bloqueado. Por eso, bajo gunicorn,
     se lanzan desde el hook post_fork (gunicorn.conf.py -> _tras_fork), una vez en cada trabajador."""
+    _copia_arranque_cargar()                 # 16-11-2026: lo calculado antes del reinicio, mientras se calcula lo nuevo
+    try:                                     # 17-11-2026: lo que el contador de visitas hacía en la primera petición
+        _visitas_tabla()                     # (con la conexión compartida), ahora antes de lanzar los hilos y con ella
+        _visitas_sal(_visitas_semana())      # libre: la primera visita tras un arranque esperaba aquí hasta ~15 s
+    except Exception as e:
+        print(f"[visitas] preparación al arrancar: {type(e).__name__}: {e}", flush=True)
     hilo_feed = threading.Thread(target=_carga_place_menores, name="carga-place-menores", daemon=True)
     hilo_feed.start()
     threading.Thread(target=_precalcular_indice_bg, args=(hilo_feed,), name="indice-precalculo", daemon=True).start()
@@ -18016,6 +18341,9 @@ def _arrancar_hilos_de_fondo():
     threading.Thread(target=_empresas_bg, args=(hilo_feed,), name="indice-empresas", daemon=True).start()
     threading.Thread(target=_subvenciones_reclasificar, name="subvenciones-sector", daemon=True).start()
     threading.Thread(target=_zip_cache_vigilar, name="memoria-zips", daemon=True).start()
+    threading.Thread(target=_buscar_indice_bg, name="buscar-indice", daemon=True).start()   # espera al precálculo
+    if REDES_MOD.activas():                  # bot de redes: casos nuevos tras un despliegue (ver _redes_al_arrancar)
+        threading.Thread(target=_redes_al_arrancar, name="redes-arranque", daemon=True).start()
     if FILTRO_FORMULARIO:                    # borrado automático de perfiles del filtro (ver _socios_limpieza_bg)
         threading.Thread(target=_socios_limpieza_bg, name="socios-limpieza", daemon=True).start()
     # Noticias UE (2026-10-01): desde que solo se muestran las de España, si no hay al menos 3 guardadas se piden ya
@@ -18095,6 +18423,30 @@ _peticiones_en_curso = 0
 _peticiones_lock = threading.Lock()
 _PETICIONES_ACTIVAS = {}                                   # diagnóstico de carga (2026-10-03), ver app()
 _PETICIONES_RECIENTES = __import__("collections").deque(maxlen=2000)
+_ARRANQUE_TS = time.time()          # hora en que se importó el módulo (parte pública de /api/diagnostico-arranque)
+
+# ─── REGISTRO DE PETICIONES LENTAS (2026-11-16, encargo de César) ────────────────────────────────────────────────────
+# El diagnóstico de carga solo mira los últimos 10 minutos y se pierde al reiniciar: una página lenta de hace una hora
+# ya no se puede explicar. Aquí se guarda, en cache.db (tabla peticiones_lentas), cada petición que tarda
+# PETICIONES_LENTAS_SEG o más, con SOLO: hora, ruta, idioma, duración, tipo de visitante («navegador» o el nombre del
+# rastreador, _familia_ua) y qué hacían los otros hilos. Nada de IP, user-agent completo, cookies ni valores de la
+# consulta: la ruta lleva los nombres de los parámetros y solo los valores de _LENTAS_PARAMS_CON_VALOR (municipio,
+# provincia, página), y cualquier tramo de la dirección con cifras (un NIF, un id) se cambia por «*».
+# «Qué hacían los otros hilos»:
+#   - muestras: un vigilante (_lentas_vigilante) mira cada _LENTAS_MUESTRA_CADA_S segundos las peticiones que ya pasan
+#     del umbral y anota dónde está cada OTRO hilo (nombre y últimas funciones de su pila, como «hilos» del
+#     diagnóstico), como mucho _LENTAS_MAX_MUESTRAS veces por petición;
+#   - a la vez: las otras peticiones que coincidieron en el tiempo con esta (ruta, visitante y segundos).
+# Se borra solo: al guardar cada fila se tiran las de más de PETICIONES_LENTAS_DIAS días, y como mucho quedan
+# _LENTAS_MAX_FILAS. Se ve en el diagnóstico completo («carga» -> «peticiones_lentas»): /api/diagnostico-arranque con
+# la cabecera X-Admin-Token, o /admin/revision/diagnostico con la sesión; sin clave no sale.
+PETICIONES_LENTAS_SEG = 10.0
+PETICIONES_LENTAS_DIAS = 7
+_LENTAS_MUESTRA_CADA_S = 5.0
+_LENTAS_MAX_MUESTRAS = 6
+_LENTAS_MAX_FILAS = 1000
+_LENTAS_PARAMS_CON_VALOR = ("muni", "provincia", "pag", "pag_cm")
+_lentas_estado = {"vigilante": False}
 # Fase del hilo de directivos para el diagnóstico: "esperando", "fase1" (recorre las fichas), "fase2" (busca) o "fin".
 _ESTADO_DIRECTIVOS = {"fase": "sin_arrancar", "hecho": 0, "total": 0, "desde": 0.0}
 CEDER_TURNO_MAX_S = 2.0      # como mucho se espera esto seguido: con tráfico constante el barrido sigue avanzando
@@ -19928,6 +20280,48 @@ def _header_html(provincia="todas", con_lema=True, buscador_aqui=False):
 </header>"""
 
 
+# ─── PERFILES EN REDES (18-11-2026, encargo de César) ───────────────────────────────────────────────────────────────
+# «Síguenos» en el pie de todas las páginas y en «Quién soy», y los mismos perfiles en el «sameAs» del JSON-LD de la
+# organización (lo que usan Google y otros buscadores para enlazar la web con sus cuentas). Un perfil sin dirección no
+# se enseña. La Página de Facebook, con la dirección exacta que dio César el 19-11-2026.
+PERFIL_FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61591580504305"
+PERFILES_REDES = (
+    ("Facebook", "", PERFIL_FACEBOOK_URL),
+    ("X", "@Diner0Public0", "https://x.com/Diner0Public0"),
+    ("Instagram", "dineropublic0", "https://www.instagram.com/dineropublic0/"),
+    ("TikTok", "@dineropublico.com", "https://www.tiktok.com/@dineropublico.com"),
+    ("YouTube", "@dineropublicoes", "https://www.youtube.com/@dineropublicoes"),
+)
+
+
+def _perfiles_redes():
+    """[(red, usuario, dirección)] de los perfiles que tienen dirección."""
+    return [p for p in PERFILES_REDES if p[2]]
+
+
+def _siguenos_pie_html():
+    enlaces = "\n    ".join(f'<a href="{esc(url)}" target="_blank" rel="noopener me" '
+                              f'title="{esc(red)}{(" · " + esc(usuario)) if usuario else ""}">{esc(red)}</a>'
+                              for red, usuario, url in _perfiles_redes())
+    return f'<span class="ft-label">{_t("Síguenos:")}</span>\n    {enlaces}' if enlaces else ""
+
+
+def _siguenos_lista_html():
+    """Lista para «Quién soy»: red y usuario de cada perfil."""
+    items = "".join(f'<li><a href="{esc(url)}" target="_blank" rel="noopener me">{esc(red)}</a>'
+                    f'{(" · " + esc(usuario)) if usuario else ""}</li>' for red, usuario, url in _perfiles_redes())
+    return f"<ul>{items}</ul>" if items else ""
+
+
+def _jsonld_organizacion():
+    """<script type="application/ld+json"> con la organización y sus perfiles (sameAs)."""
+    datos = {"@context": "https://schema.org", "@type": "Organization", "name": "Dinero Público",
+             "url": SITE_URL.rstrip("/") + "/", "logo": SITE_URL.rstrip("/") + "/static/icon-512.png",
+             "email": "contacto@dinero-publico.com", "sameAs": [p[2] for p in _perfiles_redes()]}
+    texto = json.dumps(datos, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    return f'<script type="application/ld+json">{texto}</script>'
+
+
 def _footer_html(provincia="todas"):
     es_murcia = provincia == "murcia"
     _link_place = '<a href="https://contrataciondelsectorpublico.gob.es/" target="_blank" rel="noopener">PLACE</a>'
@@ -19982,6 +20376,8 @@ def _footer_html(provincia="todas"):
     <a href="/mapa-cobertura">{_t("Mapa de cobertura")}</a>
     <a href="/metodologia">{_t("Metodología")}</a>
     <span class="ft-sep">|</span>
+    {_siguenos_pie_html()}
+    <span class="ft-sep">|</span>
     <span class="ft-label">{_t("Enlaces de interés:")}</span>
     <a href="https://civio.es" target="_blank" rel="noopener">CIVIO</a>
     <a href="https://transparencia.org.es" target="_blank" rel="noopener">Transparency International España</a>
@@ -20005,6 +20401,10 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
     # ruta -- ver render_caso_*_html para el caso que motivó el fix
     # (2026-09-20).
     og_url = f"{SITE_URL}{og_path}"
+    # 18-11-2026: una pieza publicada de /casos comparte su propia tarjeta (la del bot de redes), no la genérica.
+    og_img = _caso_tarjeta_ruta(og_path)
+    og_img_url = f"{esc(SITE_URL)}{og_img}" if og_img else f"{esc(SITE_URL)}{_pwa_asset('/static/og-image.png')}"
+    og_img_w, og_img_h = "1200", "630"          # la tarjeta apaisada del caso y la genérica miden lo mismo
     aviso_cookies = _t("Usamos cookies propias y de terceros (Google Analytics y, en el futuro, publicidad de Google "
                        "AdSense) para analizar el uso del sitio y, si las aceptas, mostrar anuncios — {enlace}.").format(
         enlace=f'<a href="/aviso-legal">{_t("más información")}</a>')
@@ -20041,15 +20441,16 @@ def _page_shell(title, body_html, description="", extra_head="", provincia="toda
 <meta property="og:url" content="{esc(og_url)}">
 <meta property="og:site_name" content="Dinero Público">
 <meta property="og:locale" content="es_ES">
-<meta property="og:image" content="{esc(SITE_URL)}{_pwa_asset('/static/og-image.png')}">
+<meta property="og:image" content="{og_img_url}">
 <meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Dinero Público">
+<meta property="og:image:width" content="{og_img_w}">
+<meta property="og:image:height" content="{og_img_h}">
+<meta property="og:image:alt" content="{esc(full_title) if og_img else "Dinero Público"}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{esc(full_title)}">
 <meta name="twitter:description" content="{desc}">
-<meta name="twitter:image" content="{esc(SITE_URL)}{_pwa_asset('/static/og-image.png')}">
+<meta name="twitter:image" content="{og_img_url}">
+{_jsonld_organizacion()}
 <link rel="stylesheet" href="{_pwa_asset('/static/style.css')}">
 {extra_head}</head>
 <body>
@@ -21302,7 +21703,8 @@ def _indice_transparencia_cacheado():
     with _indice_transparencia_cache_lock:
         anteriores = _INDICE_TRANSPARENCIA_CACHE["filas"]
     if anteriores is not None:
-        _indice_refrescar_en_fondo()
+        if not _indice_copia_de_arranque():    # el de la copia lo sustituye el precálculo, cuando ya está el feed
+            _indice_refrescar_en_fondo()
         return anteriores
     # Un solo cálculo a la vez: si ya lo está haciendo otra petición o el precálculo de arranque
     # (_precalcular_indice_bg), se espera a ese resultado en vez de lanzar otro igual en paralelo.
@@ -21315,6 +21717,13 @@ def _indice_transparencia_cacheado():
             _INDICE_TRANSPARENCIA_CACHE["filas"] = filas
             _INDICE_TRANSPARENCIA_CACHE["ts"] = time.time()
     return filas
+
+
+def _indice_copia_de_arranque():
+    """True mientras el Índice en memoria es el de la copia de arranque (ts 0) y aún no ha pasado
+    COPIA_ARRANQUE_INDICE_MAX_S desde el arranque."""
+    return (_INDICE_TRANSPARENCIA_CACHE["ts"] == 0.0 and _INDICE_TRANSPARENCIA_CACHE["filas"] is not None
+            and time.time() - _ARRANQUE_TS < COPIA_ARRANQUE_INDICE_MAX_S)
 
 
 _indice_calculo_lock = threading.Lock()
@@ -21368,6 +21777,9 @@ def _precalcular_indice_bg(esperar=None):
             with _rk_empresas_lock:              # rendimiento (2026-10-28): que ninguna visita lo calcule
                 _rk_empresas_calcular()
             _calentar_portada()
+            _copia_arranque_guardar()            # 16-11-2026: para el próximo arranque
+            _buscar_indice_estado["precalculos"] += 1      # 19-11-2026: el índice del buscador, después de todo esto
+            _buscar_indice_precalculo.set()
             _liberar_memoria()
         except Exception as e:
             print(f"[indice] precálculo: ERROR ({type(e).__name__}: {e})", flush=True)
@@ -22730,6 +23142,28 @@ _NOTAS_FUENTE_CM = {
 }
 
 
+# Fuentes que ya no se pueden actualizar (encargo de César del 16-11-2026): sus datos se quedan, el flujo semanal deja
+# de pedirlas (EXCLUIDOS en flujo_menores_semanal.py) y la ficha lo avisa dos veces: una etiqueta en la cabecera de la
+# sección de contratos menores, que se ve aunque esté cerrada (_aviso_historico_cm), y la nota completa dentro.
+_FUENTES_CM_HISTORICAS_DESDE = {"la_laguna": "25-10-2026"}
+_FUENTES_CM_HISTORICAS = {
+    "la_laguna": _td(
+        "Fuente sin actualizar desde el 25-10-2026: el portal del Ayuntamiento no responde desde entonces. Se muestran los contratos que había publicado hasta esa fecha (los más recientes, de diciembre de 2025)."
+    ),
+}
+
+
+def _aviso_historico_cm(menors):
+    """Etiqueta para la cabecera de la sección de contratos menores si alguna fuente del municipio es histórica."""
+    fechas = sorted({_FUENTES_CM_HISTORICAS_DESDE[f] for f in {r.get("fuente") for r in menors}
+                     if f in _FUENTES_CM_HISTORICAS_DESDE})
+    if not fechas:
+        return ""
+    texto = _t("Listados del Ayuntamiento sin actualizar desde el {fecha}").format(fecha=fechas[0])
+    return (f' <span class="badge" style="background:var(--tint);color:var(--text);border-color:var(--yellow)">'
+            f'⚠ {esc(texto)}</span>')
+
+
 def _nota_base_importe_cm(menors):
     """(sufijo_badge, html_nota) para la sección de contratos menores de un
     municipio: base de importe (sin IVA) de las fuentes Governalia más los
@@ -22737,6 +23171,8 @@ def _nota_base_importe_cm(menors):
     fuentes = {r.get("fuente") for r in menors}
     avisos = "".join(f'<div class="cm-base-nota">{esc(_t_diferido(_NOTAS_FUENTE_CM[f]))}</div>'
                      for f in sorted(fuentes) if f in _NOTAS_FUENTE_CM)
+    avisos += "".join(f'<div class="cm-base-nota"><strong>{esc(_t_diferido(_FUENTES_CM_HISTORICAS[f]))}</strong></div>'
+                      for f in sorted(fuentes) if f in _FUENTES_CM_HISTORICAS)
     sin_iva = fuentes & _FUENTES_CM_SIN_IVA
     if not sin_iva:
         return "", avisos
@@ -23871,10 +24307,10 @@ def _convocatorias_muni_html(municipio, provincia):
     """Enlace desde la ficha del municipio a sus convocatorias abiertas, con el recuento."""
     clave = clave_municipio(municipio, provincia)
     ahora = _ahora_madrid()
-    with _db_lock:
-        n_lic = _db.execute("SELECT count(*) FROM licitaciones WHERE municipio=? AND estado='PUB' AND fin_plazo>=?",
+    with _db_leer() as con:
+        n_lic = con.execute("SELECT count(*) FROM licitaciones WHERE municipio=? AND estado='PUB' AND fin_plazo>=?",
                             (clave, ahora.strftime("%Y-%m-%d %H:%M"))).fetchone()[0]
-        n_sub = (_db.execute("SELECT count(*) FROM subvenciones WHERE municipio=? AND fin>=? AND (inicio='' OR inicio<=?)",
+        n_sub = (con.execute("SELECT count(*) FROM subvenciones WHERE municipio=? AND fin>=? AND (inicio='' OR inicio<=?)",
                              (clave, ahora.strftime("%Y-%m-%d"), ahora.strftime("%Y-%m-%d"))).fetchone()[0]
                  if SUBVENCIONES_PUBLICAS else 0)
     enlace_lic = f'/convocatorias?muni={quote_plus(clave)}'
@@ -24183,12 +24619,21 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
 
             abierto = " open" if page_cm > 1 else ""
             sufijo_iva, nota_base_cm = _nota_base_importe_cm(menors_muni)
+            # Cabecera (16-11): la cuenta junta la fuente propia y las filas del feed de PLACE que esa fuente no trae
+            # (_retirar_duplicados_place); el título dice qué hay de verdad en ESTE municipio.
+            n_place_cm = sum(1 for r in menors_muni if r.get("fuente") == FUENTE_CM_PLACE)
+            if not n_place_cm:
+                titulo_cm = _t("Contratos menores (fuentes locales del ayuntamiento)")
+            elif n_place_cm == total_cm_n:
+                titulo_cm = _t("Contratos menores (PLACE)")
+            else:
+                titulo_cm = _t("Contratos menores (fuentes del ayuntamiento y PLACE)")
             contratos_menors_html = f"""<details class="cm-card"{abierto}>
                 <summary>
-                  📋 {_t("Contratos menores (fuentes locales del ayuntamiento)")}
+                  📋 {titulo_cm}
                   <span class="badge" style="background:var(--tint);color:var(--accent);border-color:var(--border)">
                     {total_cm_n} · {fmt_eur(str(total_cm))}{sufijo_iva}
-                  </span>
+                  </span>{_aviso_historico_cm(menors_muni)}
                 </summary>
                 {nota_base_cm}
                 <div class="tbl-scroll">
@@ -25558,43 +26003,443 @@ def _contrato_json(c, municipio):
     }
 
 
-def api_buscar(tipo, q, datos):
+# ─── ÍNDICE EN MEMORIA DEL BUSCADOR (pestañas Empresa y Directivo, 19-11-2026, encargo de César) ─────────────────────
+# Sin índice, cada búsqueda lee y deserializa las 8.000 fichas (239 MB de JSON): ~10 s en local, 4 s en Render, y en
+# cola si hay varias a la vez (el buscador lanza una por letra). El índice guarda, de cada contrato y en el MISMO orden
+# en que los recorre la búsqueda de siempre, solo: su ficha, su posición en la ficha, el importe y dos números que
+# apuntan a tablas sin repetidos (empresa tal cual y normalizada; directivo y cargo A MOSTRAR, ya pasados por
+# _directivo_contrato, y el directivo normalizado). Con eso se filtra, se ordena y se suma en memoria, y de la base
+# solo se leen los contratos que se enseñan (500 de empresa, los de los 200 primeros grupos de directivo), con el
+# mismo _contrato_json de siempre: el resultado es idéntico (prueba_buscar_indice.py).
+#   - Se construye en un hilo de fondo DESPUÉS del primer precálculo (y de la copia de arranque), con una conexión de
+#     solo lectura (sin _db_lock) y cediendo el turno a las peticiones. Mientras no está, la búsqueda va como siempre.
+#   - Vale solo para la «firma» con la que se construyó: un contador de cambios de la tabla municipios (triggers TEMP
+#     de esta conexión: no se toca el esquema de cache.db), el fichero del BORME cargado y su periodo. Si la firma ya
+#     no coincide, esa búsqueda va por el camino de siempre y el hilo lo rehace (como mucho cada
+#     BUSCAR_INDICE_MIN_ENTRE_S); también se rehace tras cada precálculo.
+#   - BUSCAR_INDICE_MEMORIA=0 en Render lo apaga (no se construye y todo va por el camino de siempre).
+BUSCAR_INDICE_COMPROBAR_S = 60          # cada cuánto mira el hilo si hay que rehacerlo
+BUSCAR_INDICE_MIN_ENTRE_S = 600         # como mucho, una reconstrucción cada 10 min (el nocturno cambia fichas sin parar)
+BUSCAR_INDICE_ESPERA_MAX_S = 1800       # si el precálculo no avisa en 30 min (falla), se construye igual
+_buscar_indice = None                   # el índice listo (se sustituye entero, nunca se modifica)
+_buscar_indice_precalculo = threading.Event()
+_buscar_indice_estado = {"estado": "sin construir", "construcciones": 0, "con_indice": 0, "sin_indice": 0,
+                         "precalculos": 0}
+_buscar_indice_version_db = {"con": None}
+
+
+def _buscar_indice_activo():
+    return os.environ.get("BUSCAR_INDICE_MEMORIA", "1").strip() != "0"
+
+
+def _buscar_indice_version(cerrojo_cogido=False):
+    """Contador de cambios de la tabla municipios en la conexión compartida (la única que la escribe: un solo proceso,
+    ver render.yaml). Lo llevan triggers TEMP, que se crean la primera vez en cada conexión (tras el fork hay otra).
+    None si no se puede saber (entonces no se usa el índice). `cerrojo_cogido`: quien llama ya tiene _db_lock."""
+    if not cerrojo_cogido:
+        with _db_lock:
+            return _buscar_indice_version(True)
+    try:
+        if _buscar_indice_version_db["con"] is not _db:
+            if _db.in_transaction:
+                return None                           # hay escrituras sin confirmar: se prueba en la próxima
+            _db.execute("CREATE TEMP TABLE IF NOT EXISTS buscar_indice_version (n INTEGER NOT NULL)")
+            if _db.execute("SELECT count(*) FROM temp.buscar_indice_version").fetchone()[0] == 0:
+                _db.execute("INSERT INTO temp.buscar_indice_version VALUES (0)")
+            for op in ("INSERT", "UPDATE", "DELETE"):
+                _db.execute(f"CREATE TEMP TRIGGER IF NOT EXISTS buscar_indice_{op.lower()} AFTER {op} ON "
+                            f"main.municipios BEGIN UPDATE buscar_indice_version SET n = n + 1; END")
+            _db.commit()
+            _buscar_indice_version_db["con"] = _db
+        if _db.in_transaction:
+            return None
+        # si alguien borrara y volviera a crear la tabla municipios, sus triggers desaparecerían con ella: se vuelven
+        # a crear y cuenta como un cambio
+        if _db.execute("SELECT count(*) FROM sqlite_temp_master WHERE type='trigger' AND name IN "
+                       "('buscar_indice_insert','buscar_indice_update','buscar_indice_delete')").fetchone()[0] != 3:
+            _buscar_indice_version_db["con"] = None
+            _db.execute("UPDATE temp.buscar_indice_version SET n = n + 1")
+            _db.commit()
+            return _buscar_indice_version(True)
+        return (id(_db), _db.execute("SELECT n FROM temp.buscar_indice_version").fetchone()[0])
+    except sqlite3.Error as e:
+        print(f"[buscar-indice] contador de cambios: {type(e).__name__}: {e}", flush=True)
+        return None
+
+
+def _buscar_indice_firma(cerrojo_cogido=False):
+    """Todo aquello de lo que depende el resultado de una búsqueda de empresa o directivo, o None si no se sabe."""
+    v = _buscar_indice_version(cerrojo_cogido)
+    if v is None:
+        return None
+    periodo = ADMINISTRADORES_BORME_META.get("periodo")
+    return (v, id(ADMINISTRADORES_BORME), len(ADMINISTRADORES_BORME), tuple(periodo) if periodo else None,
+            _borme_historico_cargado())
+
+
+class _BuscarIndice:
+    __slots__ = ("firma", "fic_rowid", "fic_muni", "fic_prov", "ent_fic", "ent_ci", "ent_imp", "ent_emp", "ent_dir",
+                 "ent_ini", "ent_fin", "emp_raw", "emp_norm", "dir_par", "dir_norm", "construido", "segundos")
+
+
+_JSON_DEC = json.JSONDecoder()
+_JSON_ESPACIOS = re.compile(r"[ \t\n\r]*").match     # los espacios que admite JSON
+
+
+def _ficha_y_posiciones(s):
+    """Lo mismo que json.loads(s) para una ficha y, además, dónde empieza y acaba en el texto cada contrato de
+    «contratos» ([(inicio, fin)], índices de carácter): así, para enseñar un contrato, basta con leer ese trozo y no
+    hay que deserializar la ficha entera. None si el texto no tiene la forma esperada (entonces json.loads y sin
+    posiciones)."""
+    from json.decoder import scanstring
+    ws = _JSON_ESPACIOS
+    try:
+        i = ws(s, 0).end()
+        if s[i] != "{":
+            return None
+        i = ws(s, i + 1).end()
+        d, pos = {}, None
+        if s[i] == "}":
+            return (d, None) if ws(s, i + 1).end() == len(s) else None
+        while True:
+            if s[i] != '"':
+                return None
+            k, i = scanstring(s, i + 1)
+            i = ws(s, i).end()
+            if s[i] != ":":
+                return None
+            i = ws(s, i + 1).end()
+            if k == "contratos" and s[i] == "[":
+                lista, p = [], []
+                i = ws(s, i + 1).end()
+                if s[i] == "]":
+                    i += 1
+                else:
+                    while True:
+                        v, fin = _JSON_DEC.raw_decode(s, i)
+                        lista.append(v)
+                        p.append((i, fin))
+                        i = ws(s, fin).end()
+                        if s[i] == ",":
+                            i = ws(s, i + 1).end()
+                            continue
+                        if s[i] != "]":
+                            return None
+                        i += 1
+                        break
+                d[k], pos = lista, p
+            else:
+                d[k], i = _JSON_DEC.raw_decode(s, i)
+                if k == "contratos":
+                    pos = None
+            i = ws(s, i).end()
+            if s[i] == ",":
+                i = ws(s, i + 1).end()
+                continue
+            if s[i] != "}":
+                return None
+            break
+        return (d, pos) if ws(s, i + 1).end() == len(s) else None
+    except (ValueError, IndexError):
+        return None
+
+
+def _buscar_indice_construir():
+    """Construye el índice entero y lo deja en _buscar_indice. Devuelve el índice, o None si no se pudo."""
+    from array import array
+    t0 = time.time()
+    _buscar_indice_estado["estado"] = "construyendo"
+    try:
+        con = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True, check_same_thread=False, timeout=30)
+    except sqlite3.Error as e:
+        _buscar_indice_estado.update(estado=f"error: {type(e).__name__}")
+        return None
+    try:
+        # la firma y el principio de la lectura, a la vez y con _db_lock: lo que se lee (una instantánea de WAL de la
+        # conexión de solo lectura) es exactamente lo que había con ese contador de cambios
+        with _db_lock:
+            firma = _buscar_indice_firma(cerrojo_cogido=True)
+            if firma is None:
+                _buscar_indice_estado["estado"] = "sin construir (escrituras pendientes; se reintenta)"
+                return None
+            con.execute("BEGIN")
+            cur = con.execute("SELECT rowid, data, provincia FROM municipios ORDER BY rowid")
+            primeras = cur.fetchmany(40)
+        ix = _BuscarIndice()
+        ix.fic_rowid, ix.fic_muni, ix.fic_prov = array("q"), [], []
+        ix.ent_fic, ix.ent_ci, ix.ent_imp = array("i"), array("i"), array("d")
+        ix.ent_emp, ix.ent_dir, ix.ent_ini, ix.ent_fin = array("i"), array("i"), array("i"), array("i")
+        ix.emp_raw, ix.emp_norm, ix.dir_par, ix.dir_norm = [], [], [], []
+        emp_id, dir_id, memo_dir, cadenas = {}, {}, {}, {}
+        filas, n_fic = primeras, 0
+        while filas:
+            for rowid, data, prov in filas:
+                dp = _ficha_y_posiciones(data) if isinstance(data, str) else None
+                if dp is not None:
+                    d, posiciones = dp
+                else:
+                    try:
+                        d = json.loads(data)
+                    except Exception:
+                        continue                      # como _db_iter_municipios: una ficha ilegible no entra
+                    posiciones = None
+                if not isinstance(d, dict):
+                    raise ValueError(f"ficha {rowid} que no es un objeto")
+                if posiciones is not None and len(posiciones) != len(d.get("contratos", [])):
+                    posiciones = None
+                f = len(ix.fic_rowid)
+                ix.fic_rowid.append(rowid)
+                ix.fic_muni.append(cadenas.setdefault(d.get("municipio", ""), d.get("municipio", "")))
+                ix.fic_prov.append(prov)
+                for ci, c in enumerate(d.get("contratos", [])):
+                    imp = c.get("importe_num", 0.0) or 0.0
+                    if not isinstance(imp, (int, float)) or isinstance(imp, bool):
+                        raise ValueError(f"importe_num no numérico en la ficha {rowid}")
+                    emp = c.get("empresa", "")
+                    e = emp_id.get(emp)
+                    if e is None:
+                        e = emp_id[emp] = len(ix.emp_raw)
+                        ix.emp_raw.append(emp)
+                        ix.emp_norm.append(normalizar(emp))
+                    llave = (emp, c.get("nif", ""), c.get("directivo", ""), c.get("cargo", ""))
+                    par = memo_dir.get(llave)
+                    if par is None:
+                        par = memo_dir[llave] = _directivo_contrato(c)
+                    k = -1
+                    if par[0]:
+                        k = dir_id.get(par)
+                        if k is None:
+                            k = dir_id[par] = len(ix.dir_par)
+                            ix.dir_par.append(par)
+                            ix.dir_norm.append(normalizar(par[0]))
+                    ix.ent_fic.append(f)
+                    ix.ent_ci.append(ci)
+                    ix.ent_imp.append(float(imp))
+                    ix.ent_emp.append(e)
+                    ix.ent_dir.append(k)
+                    ix.ent_ini.append(posiciones[ci][0] if posiciones else -1)
+                    ix.ent_fin.append(posiciones[ci][1] if posiciones else -1)
+                n_fic += 1
+                del d
+            if n_fic % 200 < 40:
+                _ceder_a_peticiones()             # que las páginas no esperen por esto
+            filas = cur.fetchmany(40)
+        con.execute("COMMIT")
+        del emp_id, dir_id, memo_dir, cadenas
+        ix.firma, ix.construido, ix.segundos = firma, time.time(), round(time.time() - t0, 1)
+        globals()["_buscar_indice"] = ix
+        _buscar_indice_estado.update(estado="listo", construcciones=_buscar_indice_estado["construcciones"] + 1,
+                                     construido_utc=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(ix.construido)),
+                                     segundos=ix.segundos, fichas=len(ix.fic_rowid), contratos=len(ix.ent_fic),
+                                     empresas=len(ix.emp_raw), directivos=len(ix.dir_par))
+        print(f"[buscar-indice] construido en {ix.segundos} s: {len(ix.fic_rowid)} fichas, {len(ix.ent_fic)} "
+              f"contratos, {len(ix.emp_raw)} empresas, {len(ix.dir_par)} directivos", flush=True)
+        return ix
+    except Exception as e:
+        _buscar_indice_estado["estado"] = f"error: {type(e).__name__}: {str(e)[:120]}"
+        print(f"[buscar-indice] no se pudo construir: {type(e).__name__}: {e}", flush=True)
+        return None
+    finally:
+        try:
+            con.close()
+        except Exception:
+            pass
+
+
+def _buscar_indice_bg():
+    """Hilo de fondo: espera al primer precálculo (que va después de la carga del arranque y de la copia de arranque)
+    y desde entonces mantiene el índice al día."""
+    if not _buscar_indice_activo():
+        _buscar_indice_estado["estado"] = "apagado (BUSCAR_INDICE_MEMORIA=0)"
+        return
+    _buscar_indice_precalculo.wait(timeout=BUSCAR_INDICE_ESPERA_MAX_S)
+    ultimo, precalculos_vistos = 0.0, -1
+    while True:
+        try:
+            ix = _buscar_indice
+            hecho_precalculo = _buscar_indice_estado["precalculos"] != precalculos_vistos
+            if ix is None or hecho_precalculo or _buscar_indice_firma() != ix.firma:
+                if ix is None or time.time() - ultimo >= BUSCAR_INDICE_MIN_ENTRE_S:
+                    precalculos = _buscar_indice_estado["precalculos"]
+                    ultimo = time.time()
+                    if _buscar_indice_construir() is not None:
+                        precalculos_vistos = precalculos
+                    _liberar_memoria()
+        except Exception as e:
+            print(f"[buscar-indice] hilo: {type(e).__name__}: {e}", flush=True)
+        time.sleep(BUSCAR_INDICE_COMPROBAR_S)
+
+
+def _buscar_indice_contratos(ix, posiciones):
+    """{posición: contrato (dict)} leídos de la base para esas posiciones del índice: de cada ficha, solo esos
+    contratos (json_each, dentro de SQLite). None si algo no cuadra (entonces se busca como siempre)."""
+    por_fic = {}
+    for p in posiciones:
+        por_fic.setdefault(ix.ent_fic[p], []).append(p)
+    out = {}
+    for f, ps in por_fic.items():
+        rowid = ix.fic_rowid[f]
+        if all(ix.ent_ini[p] >= 0 for p in ps):
+            # el texto de la ficha y, de él, solo el trozo de cada contrato (la ficha más grande son ~4 MB)
+            with _db_lock:
+                fila = _db.execute("SELECT data FROM municipios WHERE rowid=?", (rowid,)).fetchone()
+            if not fila or not isinstance(fila[0], str):
+                return None
+            texto = fila[0]
+            for p in ps:
+                trozo = texto[ix.ent_ini[p]:ix.ent_fin[p]]
+                if not (trozo.startswith("{") and trozo.endswith("}")):
+                    return None
+                out[p] = json.loads(trozo)
+            continue
+        pos_de_ci = {ix.ent_ci[p]: p for p in ps}
+        cis = sorted(pos_de_ci)
+        for i in range(0, len(cis), 500):
+            trozo = cis[i:i + 500]
+            with _db_lock:
+                filas = _db.execute(
+                    f"SELECT j.key, j.value FROM municipios m, json_each(m.data, '$.contratos') j "
+                    f"WHERE m.rowid=? AND j.key IN ({','.join('?' * len(trozo))})", (rowid, *trozo)).fetchall()
+            if len(filas) != len(trozo):
+                return None
+            for ci, valor in filas:
+                c = json.loads(valor)
+                if not isinstance(c, dict):
+                    return None
+                out[pos_de_ci[ci]] = c
+    return out
+
+
+def _buscar_con_indice(tipo, q, q_norm, provincia=None):
+    """Lo mismo que api_buscar para «empresa» y «directivo», con el índice. None si no se puede usar (apagado, sin
+    construir, desfasado o cualquier error): entonces se busca como siempre."""
+    ix = _buscar_indice
+    if ix is None or not _buscar_indice_activo():
+        return None
+    try:
+        firma = _buscar_indice_firma()
+        if firma is None or firma != ix.firma:
+            return None
+        prov_ok = (lambda f: True) if provincia is None else (lambda f: ix.fic_prov[f] == provincia)
+        fic_vale = None if provincia is None else bytearray(prov_ok(f) for f in range(len(ix.fic_rowid)))
+        if tipo == "empresa":
+            hay = bytearray(q_norm in n for n in ix.emp_norm)
+            ent_emp, ent_fic = ix.ent_emp, ix.ent_fic
+            pos = [p for p in range(len(ent_emp)) if hay[ent_emp[p]] and (fic_vale is None or fic_vale[ent_fic[p]])]
+            imp = ix.ent_imp
+            pos.sort(key=lambda p: imp[p], reverse=True)          # estable, como el sort de siempre
+            total = sum(imp[p] for p in pos)
+            contratos = _buscar_indice_contratos(ix, pos[:500])
+            if contratos is None or _buscar_indice_firma() != firma:
+                return None
+            resultados = [_contrato_json(contratos[p], ix.fic_muni[ix.ent_fic[p]]) for p in pos[:500]]
+            return {"tipo": "empresa", "query": q, "resultados": resultados, "total_contratos": len(pos),
+                    "total_importe": fmt_eur(str(total))}
+        if tipo == "directivo":
+            hay = bytearray(q_norm in n for n in ix.dir_norm)
+            ent_dir, ent_fic, imp = ix.ent_dir, ix.ent_fic, ix.ent_imp
+            grupos = {}
+            for p in range(len(ent_dir)):
+                k = ent_dir[p]
+                if k < 0 or not hay[k] or (fic_vale is not None and not fic_vale[ent_fic[p]]):
+                    continue
+                emp = ix.emp_raw[ix.ent_emp[p]]
+                g = grupos.get(emp)
+                if g is None:
+                    directivo, cargo_dir = ix.dir_par[k]
+                    g = grupos[emp] = {"empresa": emp, "directivo": directivo, "cargo": cargo_dir, "contratos": [],
+                                       "total": 0.0}
+                g["contratos"].append(p)
+                g["total"] += imp[p]
+            lista = sorted(grupos.values(), key=lambda g: g["total"], reverse=True)
+            for g in lista[:200]:
+                g["contratos"].sort(key=lambda p: imp[p], reverse=True)
+            contratos = _buscar_indice_contratos(ix, [p for g in lista[:200] for p in g["contratos"]])
+            if contratos is None or _buscar_indice_firma() != firma:
+                return None
+            for g in lista[:200]:
+                g["contratos"] = [_contrato_json(contratos[p], ix.fic_muni[ix.ent_fic[p]]) for p in g["contratos"]]
+                g["total_importe"] = fmt_eur(str(g["total"]))
+                g["n_contratos"] = len(g["contratos"])
+            total_global = sum(g["total"] for g in lista)
+            return {"tipo": "directivo", "query": q, "grupos": lista[:200], "n_empresas": len(lista),
+                    "total_importe": fmt_eur(str(total_global))}
+    except Exception as e:
+        print(f"[buscar-indice] búsqueda: {type(e).__name__}: {e}", flush=True)
+    return None
+
+
+def _totales_ficha(clave):
+    """(total_contratos, suma de importe_num) de una ficha, calculados dentro de SQLite (JSON1) sin pasar la ficha
+    entera a Python: una ciudad grande son varios MB de JSON. Si SQLite no tuviera JSON1, se lee la ficha."""
+    try:
+        with _db_lock:
+            fila = _db.execute(
+                "SELECT json_type(data, '$.total_contratos'), json_extract(data, '$.total_contratos'), "
+                "(SELECT sum(json_extract(value, '$.importe_num')) FROM json_each(data, '$.contratos')) "
+                "FROM municipios WHERE municipio=?", (clave,)).fetchone()
+        if not fila:
+            return 0, 0.0
+        return (fila[1] if fila[0] is not None else 0), (fila[2] or 0.0)
+    except sqlite3.OperationalError:
+        with _db_lock:
+            fila = _db.execute("SELECT data FROM municipios WHERE municipio=?", (clave,)).fetchone()
+        try:
+            d = json.loads(fila[0]) if fila else {}
+        except ValueError:
+            d = {}
+        return d.get("total_contratos", 0), sum(c.get("importe_num", 0.0) for c in d.get("contratos", []))
+
+
+def api_buscar(tipo, q, datos, provincia=None):
     """Backend del buscador avanzado (GET /api/buscar?tipo=...&q=...). Devuelve
-    un dict JSON-serializable; ninguna búsqueda distingue mayúsculas ni acentos."""
+    un dict JSON-serializable; ninguna búsqueda distingue mayúsculas ni acentos.
+    `provincia`: la misma con la que se filtraron `datos` (None = toda España); la usa el índice en memoria."""
     q = (q or "").strip()
     if len(q) < 2:
         return {"tipo": tipo, "query": q, "error": "Escribe al menos 2 caracteres."}
 
     q_norm = normalizar(q)
 
+    if tipo in ("empresa", "directivo"):              # 19-11-2026: con el índice en memoria si está listo y al día
+        r = _buscar_con_indice(tipo, q, q_norm, provincia)
+        _buscar_indice_estado["con_indice" if r is not None else "sin_indice"] += 1
+        if r is not None:
+            return r
+
     if tipo == "ayuntamiento":
-        # Búsqueda de municipio siempre nacional (Murcia + Girona), sin
-        # filtrar por la provincia de la página desde la que se lanza --
-        # reutiliza el mismo POST /buscar que el buscador clásico de la
-        # cabecera (ver formulario municipio/provincia en filaMunicipio()).
-        # solo (total de contratos, importe) de cada ficha, leídas de una en una (ver _db_iter_municipios)
-        por_muni = {clave_municipio(d.get("municipio", ""), d.get("provincia")):
-                    (d.get("total_contratos", 0), sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])))
-                    for d in _db_iter_municipios()}
+        # Búsqueda de municipio siempre nacional, sin filtrar por la provincia de la página desde la que se lanza --
+        # reutiliza el mismo POST /buscar que el buscador clásico de la cabecera (ver filaMunicipio()).
+        # 19-11-2026: antes leía y deserializaba las 8.000 fichas en cada letra tecleada (~4 s en Render; 3 a la vez,
+        # 10-12 s; en el registro de lentas, hasta 39 s). Ahora: los nombres se filtran en memoria, «tiene datos» sale
+        # de las claves de la tabla (sin leer las fichas) y el total de contratos y el importe se sacan, dentro de
+        # SQLite, solo de las 60 que se enseñan. El resultado es el mismo (ver prueba_buscar_ayuntamiento.py).
+        with _db_lock:
+            con_ficha = {k for (k,) in _db.execute("SELECT municipio FROM municipios")}
         resultados = []
         for prov, lista_muni in MUNICIPIOS_POR_PROVINCIA.items():
             nombres = list(_pseudos_de_provincia(prov)) + list(lista_muni)
             for muni in nombres:
                 if q_norm not in normalizar(muni):
                     continue
-                d = por_muni.get(clave_municipio(muni, prov))
-                cached = d is not None
-                total_imp = d[1] if cached else 0.0
+                clave = clave_municipio(muni, prov)
                 resultados.append({
                     "municipio": muni,
                     "provincia": prov,
                     "provincia_label": PROVINCIA_LABEL.get(prov, prov),
-                    "cached": cached,
-                    "total_contratos": d[0] if cached else 0,
-                    "total_importe": fmt_eur(str(total_imp)) if cached else "",
+                    "cached": clave in con_ficha,
+                    "total_contratos": 0,
+                    "total_importe": "",
+                    "_clave": clave,
                 })
         resultados.sort(key=lambda r: (not r["cached"], normalizar(r["municipio"])))
-        return {"tipo": "ayuntamiento", "query": q, "resultados": resultados[:60]}
+        resultados = resultados[:60]
+        for r in resultados:
+            clave = r.pop("_clave")
+            if r["cached"]:
+                r["total_contratos"], total_imp = _totales_ficha(clave)
+                r["total_importe"] = fmt_eur(str(total_imp))
+        return {"tipo": "ayuntamiento", "query": q, "resultados": resultados}
 
     if tipo == "empresa":
         resultados = []
@@ -25687,6 +26532,7 @@ def _diagnostico_arranque():
         memoria_rss_mb = None
 
     return {
+        "arrancado_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(_ARRANQUE_TS)),
         "filtro_salida_dni": dict(_FILTRO_SALIDA_ESTADO, segundos=round(_FILTRO_SALIDA_ESTADO["segundos"], 3)),
         "disco_confiable": _DISCO_CONFIABLE,
         "data_dir": DATA_DIR,
@@ -25696,7 +26542,29 @@ def _diagnostico_arranque():
         "memoria_rss_mb": memoria_rss_mb,
         "memoria_desglose": _memoria_desglose(),
         "carga": _estado_carga(),
+        "buscar_indice": dict(_buscar_indice_estado, activo=_buscar_indice_activo()),
         "disco": _uso_disco(),
+    }
+
+
+def _diagnostico_arranque_publico():
+    """Lo que /api/diagnostico-arranque da SIN clave (16-11-2026, decisión de César): solo lo básico del arranque, sin
+    nada interno (ni rutas pedidas, ni hilos, ni peticiones lentas, ni memoria, ni carpetas). Sirve para saber si la
+    web está en pie, desde cuándo (un despliegue o un reinicio cambian «arrancado_utc») y si el disco está bien.
+    Todo lo demás, con la cabecera X-Admin-Token o en /admin/revision/diagnostico (sesión de /admin/revision)."""
+    def _info(path):
+        try:
+            st = os.stat(path)
+            return {"existe": True, "tamano_mb": round(st.st_size / 1024 / 1024, 2),
+                    "modificado": datetime.fromtimestamp(st.st_mtime).isoformat()}
+        except OSError:
+            return {"existe": False}
+    return {
+        "arrancado_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(_ARRANQUE_TS)),
+        "disco_confiable": _DISCO_CONFIABLE,
+        "cache_db": _info(DB_FILE),
+        "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
+        "completo": "solo con la cabecera X-Admin-Token o en /admin/revision/diagnostico",
     }
 
 
@@ -25783,6 +26651,112 @@ def _hilos_ahora():
     return out
 
 
+def _ruta_lenta(path, query):
+    """Ruta para el registro de peticiones lentas, sin datos de nadie: tramos con cifras -> «*», y de la consulta solo
+    los nombres de los parámetros salvo los de _LENTAS_PARAMS_CON_VALOR (municipio, provincia, página)."""
+    tramos = ["*" if re.search(r"\d", s) else s for s in (path or "/").split("/")]
+    ruta = "/".join(tramos)[:120] or "/"
+    partes = []
+    for k, vs in sorted(parse_qs(query or "").items()):
+        if k in _LENTAS_PARAMS_CON_VALOR and vs:
+            partes.append(f"{k}={vs[0][:60]}")
+        else:
+            partes.append(k)
+    return (ruta + ("?" + "&".join(partes) if partes else ""))[:240]
+
+
+def _lentas_hilos(excluir):
+    """_hilos_ahora() sin el hilo de la propia petición ni el del vigilante, y sin los hilos de gunicorn parados
+    esperando trabajo (no hacen nada)."""
+    out = []
+    for h in _hilos_ahora():
+        if h["hilo"] in excluir:
+            continue
+        if h["pila"] and h["pila"][-1].split(":")[0] in ("_worker", "wait", "get", "select", "poll", "accept"):
+            continue
+        out.append(h)
+    return out
+
+
+def _lentas_vigilante():
+    """Hilo: cada _LENTAS_MUESTRA_CADA_S s, anota qué hacen los otros hilos en las peticiones que ya pasan del umbral."""
+    yo = threading.current_thread().name
+    while True:
+        time.sleep(_LENTAS_MUESTRA_CADA_S)
+        try:
+            ahora = time.time()
+            with _peticiones_lock:
+                lentas = [a for a in _PETICIONES_ACTIVAS.values()
+                          if ahora - a["inicio"] >= PETICIONES_LENTAS_SEG
+                          and len(a.setdefault("muestras", [])) < _LENTAS_MAX_MUESTRAS]
+            if not lentas:
+                continue
+            nombres = {t_.ident: t_.name for t_ in threading.enumerate()}
+            for a in lentas:
+                hilos = _lentas_hilos({yo, nombres.get(a.get("hilo"), "")})
+                with _peticiones_lock:
+                    a["muestras"].append({"a_los_s": round(ahora - a["inicio"]), "hilos": hilos})
+        except Exception as e:          # el diagnóstico nunca debe tirar nada
+            print(f"[lentas] vigilante: {type(e).__name__}: {e}", flush=True)
+
+
+def _lentas_arrancar_vigilante():
+    with _peticiones_lock:
+        if _lentas_estado["vigilante"]:
+            return
+        _lentas_estado["vigilante"] = True
+    threading.Thread(target=_lentas_vigilante, name="lentas-vigilante", daemon=True).start()
+
+
+def _lentas_tabla():
+    _db.execute("CREATE TABLE IF NOT EXISTS peticiones_lentas (id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL, "
+                "ruta TEXT, idioma TEXT, segundos REAL, visitante TEXT, otros_hilos TEXT)")
+
+
+def _lentas_guardar(info, fin):
+    """Guarda una petición lenta (ver la cabecera del registro) y tira las de más de PETICIONES_LENTAS_DIAS días."""
+    try:
+        with _peticiones_lock:
+            a_la_vez = [{"ruta": r[0], "visitante": r[4], "segundos": round(r[2], 1)}
+                        for r in _PETICIONES_RECIENTES
+                        if r[1] < fin and r[1] + r[2] > info["inicio"] and not (r[1] == info["inicio"] and r[0] == info["ruta"])]
+            a_la_vez += [{"ruta": a["ruta"], "visitante": a.get("agente"), "segundos": round(fin - a["inicio"], 1),
+                          "sigue": True} for a in _PETICIONES_ACTIVAS.values() if a is not info]
+            muestras = list(info.get("muestras") or [])
+        a_la_vez.sort(key=lambda x: -x["segundos"])
+        otros = json.dumps({"muestras": muestras, "a_la_vez": a_la_vez[:25], "n_a_la_vez": len(a_la_vez)},
+                           ensure_ascii=False)
+        with _db_lock:
+            _lentas_tabla()
+            _db.execute("INSERT INTO peticiones_lentas (ts, ruta, idioma, segundos, visitante, otros_hilos) "
+                        "VALUES (?,?,?,?,?,?)",
+                        (info["inicio"], info["ruta_lenta"], info["idioma"], round(fin - info["inicio"], 1),
+                         info.get("agente") or "", otros))
+            _db.execute("DELETE FROM peticiones_lentas WHERE ts < ?", (time.time() - PETICIONES_LENTAS_DIAS * 86400,))
+            _db.execute("DELETE FROM peticiones_lentas WHERE id <= (SELECT max(id) FROM peticiones_lentas) - ?",
+                        (_LENTAS_MAX_FILAS,))
+            _db.commit()
+    except Exception as e:
+        print(f"[lentas] no se pudo guardar: {type(e).__name__}: {e}", flush=True)
+
+
+def _lentas_leer(n=20):
+    """Las n últimas peticiones lentas (y cuántas hay en los últimos PETICIONES_LENTAS_DIAS días)."""
+    try:
+        with _db_lock:
+            _lentas_tabla()
+            limite = time.time() - PETICIONES_LENTAS_DIAS * 86400
+            total = _db.execute("SELECT count(*) FROM peticiones_lentas WHERE ts >= ?", (limite,)).fetchone()[0]
+            filas = _db.execute("SELECT ts, ruta, idioma, segundos, visitante, otros_hilos FROM peticiones_lentas "
+                                "WHERE ts >= ? ORDER BY id DESC LIMIT ?", (limite, n)).fetchall()
+    except Exception as e:
+        return {"error": type(e).__name__}
+    return {"umbral_s": PETICIONES_LENTAS_SEG, "dias": PETICIONES_LENTAS_DIAS, "total": total,
+            "ultimas": [{"hora_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(ts)), "ruta": ruta,
+                         "idioma": idioma, "segundos": seg, "visitante": vis, "otros_hilos": json.loads(otros or "{}")}
+                        for ts, ruta, idioma, seg, vis, otros in filas]}
+
+
 def _estado_carga():
     """Peticiones en curso y de los últimos 10 minutos, fase del hilo de directivos, CPU e hilos (2026-10-03: para
     ver si la lentitud de páginas ligeras coincide con los 4 hilos de gunicorn ocupados en páginas pesadas)."""
@@ -25839,6 +26813,8 @@ def _estado_carga():
         "feed_vivo_place": {k: v for k, v in _feed_vivo.items() if k != "contenido"},
         "menores_duplicados_arranque": dict(_MENORES_DUPLICADOS_ARRANQUE),
         "rastreadores_frenados": _bots_diagnostico(),
+        "peticiones_lentas": _lentas_leer(),
+        "copia_arranque": dict(_copia_arranque_estado),
     }
 
 
@@ -26609,7 +27585,13 @@ def render_caso_la_laguna_campamentos_html():
                ("03/06/2025", "2025024085", "Campamento urbano «Acción por el clima»", 14750.0, x25),
                ("03/06/2025", "2025024090", "Campamento urbano «Reducción desigualdad social»", 14750.0, x25),
                ("12/06/2025", "2025024087", "Campamento urbano «Producción y consumo responsable»", 14750.0, x25)]
+    # Nota del 16-11-2026: el portal del Ayuntamiento no responde desde el 25-10 (ver _FUENTES_CM_HISTORICAS). Los
+    # enlaces «listado oficial» se dejan: son la fuente citada y volverán a abrir si el portal vuelve.
     cuerpo = f"""
+  <p class="caso-nota-fuente" style="border:1px solid var(--yellow);border-radius:8px;padding:8px 12px;font-size:14px">
+  ⚠️ <strong>Nota:</strong> los listados del portal municipal (www.aytolalaguna.es) que enlaza esta pieza no abren
+  desde el 25-10-2026: el servidor del Ayuntamiento no responde. Los datos se comprobaron antes de esa fecha, el 14 de
+  octubre de 2026, en esos mismos listados oficiales.</p>
   <p>El 18 de julio de 2022 el Ayuntamiento de {ficha} adjudicó a la Asociación Campamento Garabato cuatro contratos
   menores de servicios para organizar actividades de verano, en julio y agosto, para grupos de 30 menores de 5 a 12
   años en cuatro zonas del municipio. Los cuatro, el mismo día y por el mismo importe: <strong>14.990 €</strong>, 10 €
@@ -26710,6 +27692,467 @@ _CASOS_BORRADOR_20261014 = [
 _CASOS[1:1] = [{k: v for k, v in c.items() if k != "render"} for c in _CASOS_BORRADOR_20261014]
 _CASOS_RENDER_POR_SLUG.update({c["slug"]: c["render"] for c in _CASOS_BORRADOR_20261014})
 _CASOS_BORRADOR_POR_SLUG = {}          # ningún borrador pendiente
+
+
+
+# ─── REDES SOCIALES (09-11-2026, encargo de César; rama wip/redes-sociales) ─────────────────────────────────────────
+# Bot que publica en X, en la Página de Facebook, en Instagram y (desde el 18-11-2026) en Bluesky:
+#   - cada caso nuevo de /casos (los casos van en el código y entran al desplegar, ya aprobados por César): título, una
+#     o dos frases y el enlace;
+#   - un «ejemplo de uso» al día, rotando: licitaciones abiertas de un sector en una provincia, el líder de un tramo
+#     del Índice de Transparencia, un dato destacado (la mayor ciudad sin deuda de una provincia) y fondos UE de una
+#     provincia. Solo datos que ya están en la web, con el enlace a la página exacta; nunca nombres de personas
+#     físicas ni DNI/NIE (componer() rechaza cualquier texto con un DNI/NIE).
+# Seguridad:
+#   - REDES_ACTIVAS=1 en Render lo enciende; por defecto está APAGADO: no prepara nada solo y nunca publica.
+#   - Modo ensayo (por defecto, REDES_ENSAYO distinto de 0): todo espera en /admin/redes a que César lo apruebe.
+#   - Registro (tabla redes_publicaciones): un caso se publica una sola vez; un tema del ejemplo diario no se repite
+#     en REDES_DIAS_SIN_REPETIR días; cada red se publica una sola vez por entrada.
+#   - Cada red va por separado: si una falla, se apunta el error (sin claves) y las otras siguen; nada de esto puede
+#     tirar la web (todo va en try/except y en hilos aparte).
+# Programación: flujo redes-diario.yml a las 17:00 UTC (POST /admin/redes-diario con el token), y al arrancar la web
+# tras un despliegue con un caso nuevo.
+import secrets                           # noqa: E402
+try:                                     # noqa: E402
+    from . import redes_sociales as REDES_MOD
+except ImportError:
+    import redes_sociales as REDES_MOD
+
+REDES_DIAS_SIN_REPETIR = 60
+REDES_INTENTOS = 3
+_REDES_TIPOS_DIARIOS = ("licitaciones", "indice", "destacado", "fondos")
+_redes_lock = threading.Lock()
+
+
+def _redes_tabla():
+    with _db_lock:
+        _db.execute("CREATE TABLE IF NOT EXISTS redes_publicaciones ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, clave TEXT UNIQUE, tipo TEXT, tema TEXT, creada REAL, "
+                    "estado TEXT, titulo TEXT, url TEXT, textos TEXT, tarjeta BLOB, llave TEXT, redes TEXT, "
+                    "aprobada REAL, ocupada REAL)")
+        _db.execute("CREATE INDEX IF NOT EXISTS idx_redes_tema ON redes_publicaciones (tema, creada)")
+        # 19-11-2026: la tarjeta apaisada (1200x630) para X y Facebook; `tarjeta` sigue siendo la vertical (Instagram)
+        if "tarjeta_apaisada" not in {f[1] for f in _db.execute("PRAGMA table_info(redes_publicaciones)")}:
+            _db.execute("ALTER TABLE redes_publicaciones ADD COLUMN tarjeta_apaisada BLOB")
+        _db.commit()
+
+
+def _redes_crear(entrada, clave=None, estado=None):
+    """Guarda una publicación nueva (pendiente en modo ensayo; aprobada si no). Devuelve el id o None si ya existía
+    o si el texto no pasa los controles."""
+    try:
+        e = REDES_MOD.componer(entrada, SITE_URL)
+        png = REDES_MOD.dibujar_tarjeta(e["tarjeta"])
+        png_ap = REDES_MOD.dibujar_tarjeta(e["tarjeta"], "apaisada")
+    except Exception as ex:
+        print(f"[redes] no se prepara «{entrada.get('tema')}»: {type(ex).__name__}: {ex}", flush=True)
+        return None
+    estado = estado or ("pendiente" if REDES_MOD.ensayo() else "aprobada")
+    _redes_tabla()
+    with _db_lock:
+        try:
+            cur = _db.execute(
+                "INSERT INTO redes_publicaciones (clave, tipo, tema, creada, estado, titulo, url, textos, tarjeta, "
+                "tarjeta_apaisada, llave, redes, aprobada) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '{}', ?)",
+                (clave or f"{e['tema']}@{time.strftime('%Y-%m-%d')}", e["tipo"], e["tema"], time.time(), estado,
+                 e["titulo"], e["url"], json.dumps(e["textos"], ensure_ascii=False), png, png_ap,
+                 secrets.token_hex(8), time.time() if estado == "aprobada" else None))
+            _db.commit()
+            return cur.lastrowid
+        except sqlite3.IntegrityError:
+            return None
+
+
+def _redes_tema_reciente(tema, dias=REDES_DIAS_SIN_REPETIR):
+    with _db_lock:
+        return _db.execute("SELECT 1 FROM redes_publicaciones WHERE tema=? AND creada>=? AND estado!='rechazada'",
+                           (tema, time.time() - dias * 86400)).fetchone() is not None
+
+
+# ── Ejemplos de uso: candidatos de cada tipo, del más interesante al menos ───────────────────────────────────────────
+
+def _redes_fecha_larga(t=None):
+    t = t or _ahora_madrid()
+    return f"{t.day} de {_MESES_ES_LARGO[t.month - 1]}"
+
+
+def _redes_cand_licitaciones():
+    ahora = _ahora_madrid()
+    with _db_lock:
+        grupos = _db.execute(
+            "SELECT provincia, cpv2, count(*) n FROM licitaciones WHERE estado='PUB' AND fin_plazo>=? AND provincia!='' "
+            "AND cpv2!='' GROUP BY provincia, cpv2 HAVING n>=5 ORDER BY n DESC LIMIT 200",
+            (ahora.strftime("%Y-%m-%d %H:%M"),)).fetchall()
+    for prov, sector, _ in grupos:
+        if prov not in PROVINCIA_LABEL or sector not in LIC.CPV_DIVISIONES:
+            continue
+        f = {"tab": "licitaciones", "provincia": prov, "sector": sector}
+        where, args = _conv_filtro_licitaciones(f)          # la misma cuenta que enseña la página enlazada
+        with _db_lock:
+            n = _db.execute(f"SELECT count(*) FROM licitaciones WHERE {' AND '.join(where)}", args).fetchone()[0]
+        if n < 5:
+            continue
+        sector_txt, donde = LIC.CPV_DIVISIONES[sector], PROVINCIA_LABEL[prov]
+        yield {"tipo": "licitaciones", "tema": f"licitaciones:{prov}:{sector}",
+               "titulo": f"{fmt_num(n)} licitaciones abiertas de {sector_txt.lower()} en {donde}",
+               "titulo_tarjeta": f"de {sector_txt.lower()} en {donde}",
+               "frase": f"Cada una con su plazo, su importe y el órgano que contrata. Datos a {_redes_fecha_larga(ahora)}.",
+               "ruta": _conv_url(f), "etiqueta": "Licitaciones abiertas", "cifra": fmt_num(n)}
+
+
+def _redes_cand_indice():
+    filas = [f for f in _indice_filas_ranking() if f["habitantes"]]
+    limites = _INDICE_TRANSPARENCIA_TRAMOS_POBLACION
+    etiquetas = ([(limites[0], f"menos de {fmt_num(limites[0])} habitantes")]
+                 + [(sup, f"{fmt_num(inf)} a {fmt_num(sup)} habitantes") for inf, sup in zip(limites, limites[1:])]
+                 + [(None, f"más de {fmt_num(limites[-1])} habitantes")])
+    por_tramo = {}
+    for f in filas:
+        por_tramo.setdefault(_indice_tramo_poblacion(f["habitantes"]), []).append(f)
+    for tramo, etq in etiquetas:
+        grupo = por_tramo.get(tramo)
+        if not grupo:
+            continue
+        lider = min(grupo, key=lambda f: (-f["indice"], -f["n_contratos"], normalizar(f["municipio"])))
+        nombre = _nombre_natural(lider["municipio"])
+        yield {"tipo": "indice", "tema": f"indice:{tramo}:{lider['municipio']}|{lider['provincia']}",
+               "titulo": f"{nombre} lidera el Índice de Transparencia entre los municipios de {etq}",
+               "titulo_tarjeta": f"{nombre}, líder del Índice de Transparencia entre los municipios de {etq}",
+               "frase": f"Nota de {_nota_coma(lider['indice'])} sobre 10, entre {fmt_num(len(grupo))} municipios de su "
+                        f"tamaño. Mide cuánto publica cada ayuntamiento de sus contratos.",
+               "ruta": f"/?muni={quote_plus(lider['municipio'])}{_q_prov(lider['provincia'])}",
+               "etiqueta": "Índice de Transparencia", "cifra": _nota_coma(lider["indice"])}
+
+
+def _redes_cand_destacado():
+    por_prov = {}
+    for clave, d in DEUDA_VIVA.items():
+        if d.get("deuda_eur") != 0 or es_pseudo_municipio(d.get("municipio", "")):
+            continue
+        pob = (POBLACION.get(clave) or {}).get("poblacion") or 0
+        prov = d.get("provincia", "")
+        if prov in PROVINCIA_LABEL and pob >= 2000 and pob > por_prov.get(prov, (0, None))[0]:
+            por_prov[prov] = (pob, d)
+    fecha = _fecha_corte_deuda_viva()
+    for prov, (pob, d) in sorted(por_prov.items(), key=lambda kv: -kv[1][0]):
+        nombre = _nombre_natural(d["municipio"])
+        donde = PROVINCIA_LABEL[prov]
+        yield {"tipo": "destacado", "tema": f"destacado:sin-deuda:{prov}",
+               "titulo": f"{nombre}, la ciudad más grande de {donde} sin deuda viva",
+               "frase": f"{fmt_num(pob)} habitantes y 0 € de deuda según el Ministerio de Hacienda"
+                        + (f" a {fecha}" if fecha else "") + ". En su ficha, sus contratos y sus cuentas.",
+               "ruta": f"/?muni={quote_plus(d['municipio'])}{_q_prov(prov)}", "etiqueta": "Dato destacado",
+               "cifra": "0 €"}
+
+
+def _redes_cand_fondos():
+    res = _fondos_ue_place_resumen() or {}
+    provs = sorted(((p, v) for p, v in (res.get("provincias") or {}).items() if p in PROVINCIA_LABEL),
+                   key=lambda kv: -(kv[1].get("UE") or [0, 0])[1])
+    for prov, v in provs:
+        n, eur = (v.get("UE") or [0, 0.0])
+        n_prtr = (v.get("PRTR") or [0, 0.0])[0]
+        if n < 10:
+            continue
+        donde = PROVINCIA_LABEL[prov]
+        yield {"tipo": "fondos", "tema": f"fondos:{prov}",
+               "titulo": f"{fmt_num(n)} contratos con fondos europeos en {donde}",
+               "titulo_tarjeta": f"contratos con fondos europeos en {donde}",
+               "frase": f"Suman {fmt_eur(str(eur))}; {fmt_num(n_prtr)} son del Plan de Recuperación. Lo declara el "
+                        f"órgano de contratación en la Plataforma de Contratación del Sector Público.",
+               "ruta": _fue_url({"provincia": prov}), "etiqueta": "Fondos europeos", "cifra": fmt_num(n)}
+
+
+_REDES_CANDIDATOS = {"licitaciones": _redes_cand_licitaciones, "indice": _redes_cand_indice,
+                     "destacado": _redes_cand_destacado, "fondos": _redes_cand_fondos}
+
+
+def _redes_ejemplo_del_dia(hoy=None):
+    """Prepara el «ejemplo de uso» de hoy (uno al día). El tipo rota cada día; dentro del tipo, el primer tema que no
+    se haya usado en REDES_DIAS_SIN_REPETIR días. Si ese tipo no tiene ninguno, se prueba el siguiente."""
+    hoy = hoy or _ahora_madrid().date()
+    _redes_tabla()
+    with _db_lock:
+        ya = _db.execute("SELECT id FROM redes_publicaciones WHERE clave LIKE ? AND tipo!='caso'",
+                         (f"%@{hoy.isoformat()}",)).fetchone()
+    if ya:
+        return None
+    inicio = hoy.toordinal() % len(_REDES_TIPOS_DIARIOS)
+    for i in range(len(_REDES_TIPOS_DIARIOS)):
+        tipo = _REDES_TIPOS_DIARIOS[(inicio + i) % len(_REDES_TIPOS_DIARIOS)]
+        try:
+            for cand in _REDES_CANDIDATOS[tipo]():
+                if not _redes_tema_reciente(cand["tema"]):
+                    return _redes_crear(cand, clave=f"{cand['tema']}@{hoy.isoformat()}")
+        except Exception as e:
+            print(f"[redes] ejemplo de tipo {tipo}: {type(e).__name__}: {e}", flush=True)
+    return None
+
+
+def _redes_casos_nuevos():
+    """Casos publicados en /casos que aún no están en el registro. La primera vez (al encender el bot) los que ya
+    había se apuntan como «anteriores» y no se publican: solo salen los que lleguen después."""
+    _redes_tabla()
+    publicados = [c for c in _CASOS if c.get("slug") not in _CASOS_BORRADOR_POR_SLUG]
+    with _db_lock:
+        sembrado = _db.execute("SELECT 1 FROM redes_publicaciones WHERE tipo='caso' LIMIT 1").fetchone() is not None
+        conocidos = {r[0] for r in _db.execute("SELECT clave FROM redes_publicaciones WHERE tipo='caso'")}
+    nuevos = []
+    for c in publicados:
+        clave = f"caso:{c['slug']}"
+        if clave in conocidos:
+            continue
+        entrada = {"tipo": "caso", "tema": clave, "titulo": c["titulo"], "frase": REDES_MOD.dos_frases(c["resumen"]),
+                   "ruta": f"/casos/{c['slug']}", "etiqueta": "Caso"}
+        id_ = _redes_crear(entrada, clave=clave, estado=None if sembrado else "anterior")
+        if id_ and sembrado:
+            nuevos.append(id_)
+    return nuevos
+
+
+# ── Publicar ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+def _redes_http():
+    import requests
+    return requests.Session()
+
+
+def _redes_publicar_una(id_, http=None, esperar=time.sleep):
+    """Publica una entrada aprobada en las redes configuradas que aún no la tengan. Cada red por separado."""
+    if not REDES_MOD.activas():
+        return {}
+    _redes_tabla()                          # por si la tabla es de antes de la columna apaisada
+    ahora = time.time()
+    with _db_lock:      # «coger» la entrada: dos trabajadores de gunicorn no la publican a la vez
+        cur = _db.execute("UPDATE redes_publicaciones SET ocupada=? WHERE id=? AND estado IN ('aprobada','parcial') "
+                          "AND (ocupada IS NULL OR ocupada<?)", (ahora, id_, ahora - 600))
+        _db.commit()
+        if cur.rowcount != 1:
+            return {}
+        fila = _db.execute("SELECT textos, tarjeta, llave, redes, tarjeta_apaisada FROM redes_publicaciones WHERE id=?",
+                           (id_,)).fetchone()
+    textos, png, llave, redes, png_ap = json.loads(fila[0]), fila[1], fila[2], json.loads(fila[3] or "{}"), fila[4]
+    base_img = f"{SITE_URL.rstrip('/')}/redes/tarjeta/{id_}-{llave}"
+    http = http or _redes_http()
+    for red in REDES_MOD.redes_configuradas():
+        r = redes.get(red) or {}
+        if r.get("estado") == "publicada" or r.get("intentos", 0) >= REDES_INTENTOS:
+            continue
+        # X y Facebook, la apaisada; Instagram (y Bluesky, por ahora), la vertical. Una entrada preparada antes del
+        # 19-11 no tiene apaisada: va con la vertical.
+        if REDES_MOD.FORMATO_RED.get(red) == "apaisada" and png_ap:
+            png_red, url_img = bytes(png_ap), f"{base_img}-apaisada.png"
+        else:
+            png_red, url_img = png, f"{base_img}.png"
+        try:
+            pid = REDES_MOD.publicar(red, http, os.environ, REDES_MOD.texto_de(red, textos), url_img, png_red,
+                                    esperar=esperar)
+            redes[red] = {"estado": "publicada", "id": pid, "ts": time.time(), "intentos": r.get("intentos", 0) + 1}
+        except Exception as e:                  # ErrorRed ya viene sin claves; cualquier otro, igual de controlado
+            redes[red] = {"estado": "error", "error": str(e)[:300], "ts": time.time(),
+                          "intentos": r.get("intentos", 0) + 1}
+            print(f"[redes] {id_} {red}: {str(e)[:200]}", flush=True)
+    conf = REDES_MOD.redes_configuradas()
+    hechas = [r for r in conf if (redes.get(r) or {}).get("estado") == "publicada"]
+    quedan = [r for r in conf if (redes.get(r) or {}).get("estado") != "publicada"
+              and (redes.get(r) or {}).get("intentos", 0) < REDES_INTENTOS]
+    if not conf:
+        estado = "aprobada"                  # sin claves todavía: espera
+    elif quedan:
+        estado = "parcial"                   # alguna red falló y le quedan intentos (la próxima pasada lo reintenta)
+    elif hechas:
+        estado = "publicada"                 # en todas, o en las que se pudo (los errores quedan a la vista)
+    else:
+        estado = "error"
+    with _db_lock:
+        _db.execute("UPDATE redes_publicaciones SET redes=?, estado=?, ocupada=NULL WHERE id=?",
+                    (json.dumps(redes, ensure_ascii=False), estado, id_))
+        _db.commit()
+    return redes
+
+
+def _redes_publicar_pendientes(http=None, esperar=time.sleep):
+    if not REDES_MOD.activas() or not REDES_MOD.redes_configuradas():
+        return 0
+    _redes_tabla()
+    with _db_lock:
+        ids = [r[0] for r in _db.execute("SELECT id FROM redes_publicaciones WHERE estado IN ('aprobada','parcial') "
+                                         "ORDER BY id LIMIT 10")]
+    for id_ in ids:
+        try:
+            _redes_publicar_una(id_, http=http, esperar=esperar)
+        except Exception as e:
+            print(f"[redes] publicar {id_}: {type(e).__name__}: {e}", flush=True)
+    return len(ids)
+
+
+def _redes_pasada_diaria(http=None, esperar=time.sleep):
+    """Lo que hace el flujo diario: el ejemplo de hoy, los casos nuevos y publicar lo aprobado. Solo recuentos."""
+    if not REDES_MOD.activas():
+        return {"activas": False}
+    with _redes_lock:
+        res = {"activas": True, "ensayo": REDES_MOD.ensayo(), "redes": REDES_MOD.redes_configuradas()}
+        try:
+            res["ejemplo"] = bool(_redes_ejemplo_del_dia())
+            res["casos_nuevos"] = len(_redes_casos_nuevos())
+            res["intentadas"] = _redes_publicar_pendientes(http=http, esperar=esperar)
+        except Exception as e:
+            res["error"] = f"{type(e).__name__}"
+            print(f"[redes] pasada diaria: {type(e).__name__}: {e}", flush=True)
+        with _db_lock:
+            res["pendientes_de_aprobar"] = _db.execute(
+                "SELECT count(*) FROM redes_publicaciones WHERE estado='pendiente'").fetchone()[0]
+        return res
+
+
+def _redes_al_arrancar():
+    """Hilo de arranque (tras un despliegue): casos nuevos y, sin modo ensayo, publicarlos ya."""
+    if not REDES_MOD.activas():
+        return
+    time.sleep(90)                          # que la web esté sirviendo: Instagram y Facebook piden la tarjeta
+    try:
+        with _redes_lock:
+            if _redes_casos_nuevos() and not REDES_MOD.ensayo():
+                _redes_publicar_pendientes()
+    except Exception as e:
+        print(f"[redes] al arrancar: {type(e).__name__}: {e}", flush=True)
+
+
+# ── Tarjeta pública y panel ──────────────────────────────────────────────────────────────────────────────────────────
+
+_CASO_TARJETAS = {}         # (slug, formato) -> PNG (unas decenas de casos, ~50-200 KB cada una)
+_caso_tarjetas_lock = threading.Lock()
+
+
+def _caso_publicado(slug):
+    """El caso de /casos con ese slug si está publicado (no borrador), o None."""
+    if not slug or slug in _CASOS_BORRADOR_POR_SLUG:
+        return None
+    return next((c for c in _CASOS if c.get("slug") == slug), None)
+
+
+def _caso_tarjeta_ruta(og_path):
+    """'/casos/<slug>/tarjeta-apaisada.png' (1200x630, la que enseñan Facebook, X y WhatsApp en la vista previa del
+    enlace) si og_path es una pieza publicada de /casos; si no, None. La vertical (/tarjeta.png, 1080x1350) se queda
+    para Instagram."""
+    if not (og_path or "").startswith("/casos/"):
+        return None
+    slug = og_path[len("/casos/"):].strip("/")
+    return f"/casos/{slug}/tarjeta-apaisada.png" if _caso_publicado(slug) else None
+
+
+def _caso_tarjeta_resp(path):
+    """La tarjeta de un caso (título y dos frases del resumen, como las del bot de redes): /tarjeta.png es la
+    vertical 1080x1350 y /tarjeta-apaisada.png la de 1200x630 del og:image. Se dibuja la primera vez y queda en
+    memoria. Funciona aunque el bot esté apagado: no usa la base."""
+    m = re.fullmatch(r"/casos/([a-z0-9-]{1,120})/tarjeta(-apaisada)?\.png", path)
+    caso = _caso_publicado(m.group(1)) if m else None
+    if not caso:
+        return 404, {"Content-Length": "0"}, b""
+    slug = caso["slug"]
+    formato = "apaisada" if m.group(2) else "vertical"
+    png = _CASO_TARJETAS.get((slug, formato))
+    if png is None:
+        try:
+            entrada = {"tipo": "caso", "tema": f"caso:{slug}", "titulo": caso["titulo"],
+                       "frase": REDES_MOD.dos_frases(caso.get("resumen", "")), "ruta": f"/casos/{slug}",
+                       "etiqueta": "Caso"}
+            png = REDES_MOD.dibujar_tarjeta(REDES_MOD.componer(entrada, SITE_URL)["tarjeta"], formato)
+        except Exception as e:                       # sin Pillow, un DNI en el texto...: la genérica
+            print(f"[casos] tarjeta {formato} de {slug}: {type(e).__name__}: {e}", flush=True)
+            return 302, {"Location": _pwa_asset("/static/og-image.png"), "Content-Length": "0"}, b""
+        with _caso_tarjetas_lock:
+            _CASO_TARJETAS[(slug, formato)] = png
+    return 200, {"Content-Type": "image/png", "Content-Length": str(len(png)),
+                 "Cache-Control": "public, max-age=604800"}, png
+
+
+def _redes_tarjeta_resp(path):
+    m = re.fullmatch(r"/redes/tarjeta/(\d{1,9})-([0-9a-f]{16})(-apaisada)?\.png", path)
+    if not m:
+        return 404, {"Content-Length": "0"}, b""
+    columna = "tarjeta_apaisada" if m.group(3) else "tarjeta"      # la apaisada, para Facebook (la recoge por URL)
+    try:
+        _redes_tabla()
+        with _db_lock:
+            fila = _db.execute(f"SELECT {columna}, llave FROM redes_publicaciones WHERE id=? AND estado!='rechazada'",
+                               (int(m.group(1)),)).fetchone()
+    except sqlite3.Error:
+        fila = None
+    if not fila or fila[0] is None or not hmac.compare_digest(fila[1], m.group(2)):
+        return 404, {"Content-Length": "0"}, b""
+    return 200, {"Content-Type": "image/png", "Content-Length": str(len(fila[0])),
+                 "Cache-Control": "public, max-age=86400", "X-Robots-Tag": "noindex"}, bytes(fila[0])
+
+
+def _redes_panel_html(cookie, hecho=""):
+    _redes_tabla()
+    csrf = f'<input type="hidden" name="csrf" value="{_revision_csrf(cookie)}">'
+    conf = REDES_MOD.redes_configuradas()
+    faltan = {r: [k for k in REDES_MOD.CLAVES[r] if not os.environ.get(k, "").strip()] for r in REDES_MOD.REDES}
+    estado = (('<div class="aviso"><b>APAGADO</b> (falta REDES_ACTIVAS=1 en Render): no se prepara nada solo y no se '
+               'publica nada. Puedes preparar un borrador para ver cómo queda.</div>') if not REDES_MOD.activas() else
+              f'<div class="aviso"><b>Encendido</b>{" en <b>modo ensayo</b>: nada sale sin tu aprobación" if REDES_MOD.ensayo() else ", SIN modo ensayo: lo aprobado sale solo"}.'
+              f' Redes con claves: {esc(", ".join(REDES_MOD.NOMBRE_RED[r] for r in conf)) or "ninguna"}.</div>')
+    claves = "".join(f'<tr><th>{REDES_MOD.NOMBRE_RED[r]}</th><td>'
+                     + ("todas las claves" if not faltan[r] else "faltan: " + esc(", ".join(faltan[r]))) + "</td></tr>"
+                     for r in REDES_MOD.REDES)
+    with _db_lock:
+        filas = _db.execute("SELECT id, tipo, tema, creada, estado, titulo, url, textos, llave, redes FROM "
+                            "redes_publicaciones WHERE estado!='anterior' ORDER BY id DESC LIMIT 40").fetchall()
+        anteriores = _db.execute("SELECT count(*) FROM redes_publicaciones WHERE estado='anterior'").fetchone()[0]
+    items = ""
+    for id_, tipo, tema, creada, est, titulo, url, textos, llave, redes in filas:
+        tx, rd = json.loads(textos), json.loads(redes or "{}")
+        res = " · ".join(f'{REDES_MOD.NOMBRE_RED[r]}: {esc(v.get("estado", ""))}'
+                         + (f' ({esc(v.get("error", ""))})' if v.get("error") else "") for r, v in rd.items())
+        botones = ""
+        if est == "pendiente":
+            botones = (f'<form method="post" action="/admin/revision/redes/accion" class="acc">{csrf}'
+                       f'<input type="hidden" name="id" value="{id_}">'
+                       f'<button type="submit" name="accion" value="aprobar">Aprobar y publicar</button> '
+                       f'<button type="submit" name="accion" value="rechazar" class="sec">Rechazar</button></form>')
+        textos_html = "".join(f'<details><summary>{REDES_MOD.NOMBRE_RED[r]} ({REDES_MOD.largo_x(t) if r == "x" else len(t)} '
+                              f'caracteres)</summary><pre style="white-space:pre-wrap">{esc(t)}</pre></details>'
+                              for r, t in tx.items())
+        items += (f'<div class="item" style="display:flex;gap:16px;flex-wrap:wrap;border-top:1px solid #ddd;padding:12px 0">'
+                  f'<span><img src="/redes/tarjeta/{id_}-{llave}.png" width="216" height="270" alt="" '
+                  f'style="border:1px solid #ccc" title="Instagram"><br>'
+                  f'<img src="/redes/tarjeta/{id_}-{llave}-apaisada.png" width="216" height="113" alt="" '
+                  f'style="border:1px solid #ccc;margin-top:6px" title="X y Facebook" '
+                  f'onerror="this.remove()"></span>'
+                  f'<div style="flex:1 1 320px"><b>{esc(titulo)}</b><br><span class="sub">#{id_} · {esc(tipo)} · '
+                  f'{time.strftime("%d/%m/%Y %H:%M", time.gmtime(creada))} UTC · <b>{esc(est)}</b></span><br>'
+                  f'<a href="{esc(url)}" target="_blank" rel="noopener">{esc(url)}</a>{textos_html}'
+                  f'<p class="sub">{res}</p>{botones}</div></div>')
+    aviso = {"aprobar": "Aprobada.", "rechazar": "Rechazada.", "preparar": "Borrador preparado.",
+             "nada": "No había nada nuevo que preparar (hoy ya hay uno, o todos los temas se usaron hace poco)."}.get(hecho, "")
+    cuerpo = (f'<h1>Redes sociales</h1><p class="sub"><a href="/admin/revision">← Cola de revisión</a></p>{estado}'
+              + (f'<div class="aviso">{aviso}</div>' if aviso else "")
+              + f'<table class="t">{claves}<tr><th>Casos anteriores al encendido (no se publican)</th>'
+                f'<td>{anteriores}</td></tr></table>'
+              + f'<form method="post" action="/admin/revision/redes/accion" class="acc">{csrf}'
+                f'<button type="submit" name="accion" value="preparar" class="sec">Preparar el ejemplo de hoy ahora'
+                f'</button></form>'
+              + (items or '<p class="sub">Nada todavía.</p>'))
+    return _revision_pagina("Redes sociales", cuerpo)
+
+
+def _redes_accion(accion, id_txt):
+    if accion == "preparar":
+        with _redes_lock:
+            return "preparar" if _redes_ejemplo_del_dia() else "nada"
+    if not id_txt.isdigit() or accion not in ("aprobar", "rechazar"):
+        return ""
+    _redes_tabla()
+    nuevo = "aprobada" if accion == "aprobar" else "rechazada"
+    with _db_lock:
+        cur = _db.execute("UPDATE redes_publicaciones SET estado=?, aprobada=? WHERE id=? AND estado='pendiente'",
+                          (nuevo, time.time(), int(id_txt)))
+        _db.commit()
+    if cur.rowcount and nuevo == "aprobada" and REDES_MOD.activas():
+        threading.Thread(target=_redes_publicar_una, args=(int(id_txt),), name="redes-publicar", daemon=True).start()
+    return accion if cur.rowcount else ""
 
 
 # ─── TRADUCCIONES DE /casos (2026-10-01, encargo de César: BORRADOR gl/ca/eu, sin publicar) ─────────────────────────
@@ -28325,6 +29768,10 @@ def render_quienes_somos_html():
 
   <p><em>{_t('¿Hablas gallego, catalán o euskera y ves algo mejorable en esta página? Escríbenos a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</em></p>
 
+  <h2 id="siguenos">{_t("Síguenos")}</h2>
+  <p>{_t("Dinero Público también está en redes sociales:")}</p>
+  {_siguenos_lista_html()}
+
   <h2>{_t("Contacto")}</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
 </div>"""
@@ -28440,6 +29887,13 @@ _ROBOTS_IA_ENTRENAMIENTO = ("GPTBot", "CCBot", "ClaudeBot", "anthropic-ai", "Goo
                             # sigue el grupo «User-agent: ShapBot». Si siguiera pidiendo páginas pasados unos días,
                             # iría a _RE_UA_BLOQUEADO (403), como Amazonbot.
                             "ElevenlabsCrawler", "ShapBot")
+
+# 16-11-2026 (encargo de César; medido con /admin/visitas, 7 días): rastreadores que no traen visitas. AhrefsBot y
+# DotBot son de herramientas SEO (10.040 peticiones solo el 16-11), QlyzeBot no dice para qué es y es el que más
+# segundos de servidor gasta (2.206 s en 7 días, 16.868 peticiones) y ExaSearchBot indexa para la API de búsqueda de
+# Exa, como ShapBot. Los tres primeros reciben además un 403 (_RE_UA_BLOQUEADO); ExaSearchBot, como ShapBot, solo el
+# robots.txt, y si no lo respeta irá al 403.
+_ROBOTS_SIN_VISITAS = ("AhrefsBot", "DotBot", "QlyzeBot", "ExaSearchBot")
 
 # «&amp;» copiado tal cual en la consulta (al principio o tras un «&»): ver la redirección de _app_wsgi
 _RE_QS_AMP = re.compile(r"(^|&)amp;")
@@ -29600,6 +31054,10 @@ def _pagina_fija(clave):
 def _calentar_portada():
     """Monta la portada, /convocatorias y /mapa-cobertura en cada idioma si no están frescas en la caché, para que
     ningún visitante espere a montarlas."""
+    with _paginas_lock:                 # las de la copia de arranque: que _pagina_cacheada las vuelva a montar
+        for e in _paginas_cache.values():
+            if e.get("de_copia"):
+                e["refrescando"] = False
     for lang in ["es"] + [l for l in _i18n_publicados() if l != "es"]:
         for ruta, montar in _PAGINAS_FIJAS.items():
             def _una(lang=lang, ruta=ruta, montar=montar):
@@ -29696,10 +31154,14 @@ def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False, grupo=No
     ahora = time.time()
     lanzar = False
     cerrojo = None
+    bot = _BOT_PREFIERE_CACHE.get()
     with _paginas_lock:
         e = _paginas_cache.get(clave)
         edad = ahora - e["ts"] if e else None
-        if e and edad < _PAGINAS_MAX_VIEJA:
+        if bot and e and edad < _BOTS_PAGINA_MAX_VIEJA:
+            gz = e["gz"]                         # Googlebot, Bingbot, OAI-SearchBot, PerplexityBot: lo que haya
+            _paginas_stats["servidas_viejas" if edad >= _PAGINAS_TTL else "servidas"] += 1
+        elif e and edad < _PAGINAS_MAX_VIEJA:
             _paginas_cache.move_to_end(clave)
             gz = e["gz"]
             if edad >= _PAGINAS_TTL:
@@ -30283,13 +31745,9 @@ def _render_empresa(con, ident, qs):
 
     # ── Cabecera: nombre, NIF, variantes ──
     nif_html = f'<p class="lid">NIF {esc(nif)}</p>' if nif else ""
-    b = None
-    nombre_borme = ""
-    for cand in [nombre] + [v for v, _ in variantes]:
-        b = _administrador_borme_info(cand, nif)
-        if b:
-            nombre_borme = cand
-            break
+    b, nombre_borme = _empresa_administrador(
+        nombre, nif, variantes, sum((k or 0) for _v, k in variantes) or (n_f + n_m),
+        contratos_de=lambda x: (con.execute("SELECT n FROM empresas WHERE clave=?", (x,)).fetchone() or (0,))[0] or 0)
     var_html = ""
     if len(variantes) > 1:
         lista = ", ".join(f"«{esc(v)}» ({fmt_num(n)})" for v, n in variantes[:12])
@@ -30304,7 +31762,7 @@ def _render_empresa(con, ident, qs):
     if b:
         adm_html = (f'<div class="directivo">{esc(b.get("nombre") or "")}</div>'
                     f'<div class="cargo">{esc(_cargo_txt(b.get("cargo") or ""))}</div>'
-                    f'{_borme_fuente_html(nombre_borme, nif)}')
+                    f'{_borme_fuente_html(nombre_borme, nif, b)}')
     elif _es_sociedad_mercantil(nombre, nif):
         adm_html = _sin_administrador_html(nombre, nif)
     else:
@@ -30649,6 +32107,8 @@ def _route_get(path, qs, gzip_ok=False):
     if path == "/metodologia":
         return _resp(render_metodologia_html(), gzip_ok=gzip_ok)
 
+    if path.startswith("/casos/") and path.endswith(".png") and "/tarjeta" in path:   # tarjetas de cada caso
+        return _caso_tarjeta_resp(path)
     if path.startswith("/casos/"):
         _tr = _caso_traducido_html(path[len("/casos/"):], qs)      # borrador/traducción publicada (gl/ca/eu)
         if _tr:
@@ -30702,7 +32162,7 @@ def _route_get(path, qs, gzip_ok=False):
         # Claude-User, PerplexityBot), que sí pueden traer visitas. Google-Extended y Applebot-Extended no son
         # rastreadores aparte: solo dicen si Google o Apple pueden usar lo ya rastreado para entrenar; no tocan la
         # búsqueda. Bytespider y Amazonbot ya reciben un 403 (_RE_UA_BLOQUEADO); aquí quedan dichos también.
-        ia = "".join(f"User-agent: {b}\n" for b in _ROBOTS_IA_ENTRENAMIENTO)
+        ia = "".join(f"User-agent: {b}\n" for b in _ROBOTS_IA_ENTRENAMIENTO + _ROBOTS_SIN_VISITAS)
         body = (f"{ia}Disallow: /\n\nUser-agent: *\nDisallow: /admin/\n{bloqueos}Allow: /\n\n"
                 f"Sitemap: {SITE_URL}/sitemap.xml\nSitemap: {SITE_URL}/sitemap-empresas.xml\n")
         return _resp(body, content_type="text/plain; charset=utf-8", gzip_ok=gzip_ok)
@@ -30780,6 +32240,11 @@ def _route_get(path, qs, gzip_ok=False):
             _ALL_CSS_CONTENT, content_type="text/css; charset=utf-8",
             headers={"Cache-Control": "public, max-age=86400"}, gzip_ok=gzip_ok,
         )
+
+    if path.startswith("/redes/tarjeta/"):     # tarjeta de una publicación del bot de redes (la piden IG y FB)
+        return _redes_tarjeta_resp(path)
+    if path in ("/admin/redes", "/admin/redes/"):   # la sesión del panel vive en /admin/revision
+        return 303, {"Location": "/admin/revision/redes", "Content-Length": "0"}, b""
 
     if path == "/favicon.ico":            # los navegadores lo piden aquí aunque la página diga otra cosa
         path = "/static/favicon.ico"
@@ -30965,7 +32430,8 @@ def _route_get(path, qs, gzip_ok=False):
             datos_snap = _db_iter_municipios(provincia=provincia_param)
         else:
             datos_snap = _db_iter_municipios()   # "" o "todas" -> sin filtro, busca en toda España
-        resultado = api_buscar(tipo, q, datos_snap)
+        resultado = api_buscar(tipo, q, datos_snap,
+                               provincia_param if provincia_param in MUNICIPIOS_POR_PROVINCIA else None)
         return _resp(json.dumps(resultado, ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
@@ -30986,16 +32452,17 @@ def _route_get(path, qs, gzip_ok=False):
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
     if path == "/api/diagnostico-arranque":
-        # Diagnóstico público del estado del disco persistente al arrancar
-        # (incidente 2026-09-02/03). Sin ADMIN_TOKEN a propósito: solo
-        # tamaños/fechas/booleanos, cero datos de empresas/personas. Nace
-        # de no tener otra forma fiable de comprobar esto -- el Web Shell de
-        # Render corre en una instancia efímera sin el disco real montado,
-        # y la métrica "Disk Usage" del dashboard salió plana en 0 incluso
-        # con datos reales en disco (ver incidente). Esto lee directamente
-        # el disco que la propia app está usando, en el momento real.
+        # Estado del disco persistente al arrancar (incidente 2026-09-02/03: el Web Shell de Render no ve el disco real;
+        # esto lo lee desde la propia app). 16-11-2026 (decisión de César): SIN clave, solo _diagnostico_arranque_publico
+        # (arranque y disco). Lo interno -- rutas de los últimos 10 minutos, hilos, peticiones lentas, memoria, carpetas --
+        # solo con la cabecera X-Admin-Token o la sesión de /admin/revision (_admin_en_peticion); nunca con ?token=.
+        if not _admin_en_peticion():
+            return _resp(json.dumps(_diagnostico_arranque_publico(), ensure_ascii=False),
+                         content_type="application/json; charset=utf-8", gzip_ok=gzip_ok,
+                         headers={"Cache-Control": "no-store"})
         return _resp(json.dumps(_diagnostico_arranque(), ensure_ascii=False),
-                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
+                     content_type="application/json; charset=utf-8", gzip_ok=gzip_ok,
+                     headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex"})
 
     return _resp(render_404_html(), code=404, headers={"X-Robots-Tag": "noindex"}, gzip_ok=gzip_ok)
 
@@ -31017,6 +32484,13 @@ def _route_post(path, params):
             respuesta = _socios_post(path, params)
             if respuesta:
                 return respuesta
+
+        if path == "/admin/redes-diario":
+            # Pasada diaria del bot de redes (flujo redes-diario.yml); devuelve solo recuentos.
+            if not _token_admin_peticion(params):
+                return _error_resp("No autorizado.", 403)
+            return _resp(json.dumps(_redes_pasada_diaria(), ensure_ascii=False),
+                         content_type="application/json; charset=utf-8")
 
         if path == "/admin/socios-enviar":
             # Una tanda del envío del filtro (flujo socios-envio.yml); devuelve solo recuentos.
@@ -31436,7 +32910,9 @@ def _familia_ua(ua):
 # 2026-10-12 (decisión de César, medido con el diagnóstico en dos muestras de 10 minutos: el 93-98 % de las peticiones
 # eran de rastreadores): se añaden SERankingBacklinksBot y MJ12bot (rastreadores de herramientas SEO, no traen visitas)
 # y Amazonbot (150 peticiones cada 10 minutos, casi todas a fichas paginadas en los cuatro idiomas).
-_RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot|SERankingBacklinksBot|MJ12bot|Amazonbot", re.I)
+# 16-11-2026 (encargo de César): AhrefsBot, DotBot y QlyzeBot (ver _ROBOTS_SIN_VISITAS).
+_RE_UA_BLOQUEADO = re.compile(r"KeenableBot|Bytespider|PetalBot|SERankingBacklinksBot|MJ12bot|Amazonbot|"
+                              r"AhrefsBot|DotBot|QlyzeBot", re.I)
 
 
 # Cupo de páginas CARAS para rastreadores (2026-10-07, decisión delegada por César). Las búsquedas (/?q=) y los
@@ -31507,6 +32983,159 @@ def _buscador_verificado(ip, ua, exigir_ua=True):
     return ok
 
 
+# Cupo POR HORA para rastreadores (16-11-2026, encargo de César). Medido con /admin/visitas: el 16-11, OAI-SearchBot
+# pidió 24.380 páginas (unas 1.200 por hora), PerplexityBot 8.036 y Amzn-SearchBot 7.024, casi todas fichas de
+# municipio en los cuatro idiomas; Googlebot, 131, y Bingbot, 50. Cada familia de rastreador puede pedir
+# _BOTS_PAGINAS_HORA páginas por hora (de golpe y luego repuestas poco a poco); por encima, 429 con Retry-After, sin
+# montar nada. Fuera del cupo:
+#   - Googlebot y Bingbot verificados por DNS (_buscador_verificado): para ellos está el reparto de abajo;
+#   - los que piden una página porque una persona la ha pedido o compartido (_RE_UA_SIN_CUPO_HORA: ChatGPT-User,
+#     Claude-User, Perplexity-User, vistas previas de redes y mensajería) y los navegadores;
+#   - robots.txt, los sitemaps, /static, /api y /admin.
+_BOTS_PAGINAS_HORA = 300
+# Buscadores de IA que citan la fuente y pueden traer visitas (decisión de César, 16-11-2026): cupo propio.
+_BOTS_PAGINAS_HORA_IA_CITAN = 1500
+_RE_BOTS_IA_CITAN = re.compile(r"^(?:OAI-SearchBot|PerplexityBot)$", re.I)
+_RE_UA_SIN_CUPO_HORA = re.compile(r"ChatGPT-User|Claude-User|Perplexity-User|facebookexternalhit|Twitterbot|LinkedInBot|"
+                                  r"WhatsApp|Slackbot|TelegramBot|Discordbot|DuckDuckBot|Applebot|Google-InspectionTool",
+                                  re.I)
+_bots_hora = {}                  # familia -> [páginas disponibles, última reposición]
+_bots_frenadas_hora = collections.Counter()
+
+# Reparto de la carga de Google y Bing en las fichas de empresa (16-11-2026, encargo de César). Hoy no hace falta
+# (Googlebot pide unas 130-320 páginas al día en total), pero las fichas de empresa son cientos de miles y están en
+# sitemap-empresas.xml: si un día Google las pide todas a la vez, cada buscador puede pedir _BUSCADOR_EMPRESA_CUPO
+# fichas de golpe y después _BUSCADOR_EMPRESA_POR_MIN por minuto; por encima recibe un 503 con Retry-After, que es lo
+# que Google y Bing piden para que bajen el ritmo sin quitar nada del índice. Siguen en el mapa del sitio.
+_BUSCADOR_EMPRESA_CUPO = 120
+_BUSCADOR_EMPRESA_POR_MIN = 30
+_RE_RUTA_EMPRESA = re.compile(r"^(?:/(?:gl|ca|eu))?/empresa/")
+_buscador_empresa = {}           # familia -> [fichas disponibles, última reposición]
+_buscador_empresa_frenadas = collections.Counter()
+
+
+def _cubo(cubos, clave, capacidad, por_segundo):
+    """Cubo de fichas: True si queda una (y la gasta). Llamar con _bots_lock."""
+    ahora = time.time()
+    c = cubos.setdefault(clave, [float(capacidad), ahora])
+    c[0] = min(float(capacidad), c[0] + (ahora - c[1]) * por_segundo)
+    c[1] = ahora
+    if c[0] >= 1:
+        c[0] -= 1
+        return True
+    return False
+
+
+def _ruta_con_cupo_hora(path):
+    return not (path.startswith(("/admin", "/api/", "/static/", "/sitemap")) or path in ("/robots.txt", "/favicon.ico", "/sw.js", "/manifest.json"))
+
+
+def _bot_frenado_por_hora(familia, path, ip, ua):
+    """None si pasa; si no, (estado, Retry-After) para el cupo por hora (429) o para el reparto de buscadores (503)."""
+    if familia in ("navegador", "otro_cliente") or not _ruta_con_cupo_hora(path) or _RE_UA_SIN_CUPO_HORA.search(ua or ""):
+        return None
+    if _RE_UA_BUSCADOR.search(ua or "") and _buscador_verificado(ip, ua):
+        if not _RE_RUTA_EMPRESA.match(path):
+            return None
+        with _bots_lock:
+            if _cubo(_buscador_empresa, familia, _BUSCADOR_EMPRESA_CUPO, _BUSCADOR_EMPRESA_POR_MIN / 60.0):
+                return None
+            _buscador_empresa_frenadas[familia] += 1
+        return "503 Service Unavailable", "120"
+    with _bots_lock:
+        if len(_bots_hora) > 300:
+            _bots_hora.clear()
+        cupo = _BOTS_PAGINAS_HORA_IA_CITAN if _RE_BOTS_IA_CITAN.match(familia) else _BOTS_PAGINAS_HORA
+        if _cubo(_bots_hora, familia, cupo, cupo / 3600.0):
+            return None
+        _bots_frenadas_hora[familia] += 1
+    return "429 Too Many Requests", "600"
+
+
+# Páginas ya guardadas para los rastreadores que nos interesan (16-11-2026, decisión de César): Googlebot, Bingbot,
+# OAI-SearchBot y PerplexityBot reciben, si la hay, una copia ya montada en vez de una página montada para ellos:
+#   - fichas de municipio (/?muni=...&provincia=..., en cada idioma), fichas de entidad (/entidad?id=...) y de empresa
+#     (/empresa/...): una caché propia, solo para ellos, de _BOTS_CACHE_MAX_MB como mucho y _BOTS_CACHE_TTL de vida.
+#     Las personas no la usan nunca (ven siempre la ficha al día). Se vacía entera con cualquier cambio en /admin o
+#     cualquier POST (comentarios aprobados o borrados, rectificaciones...) y al cargar administradores nuevos
+#     (_vaciar_caches_de_nombres), para que un bot no reciba nada que ya se haya quitado;
+#   - portada, rankings, convocatorias... (_pagina_cacheada): reciben la copia que haya aunque tenga horas
+#     (hasta _BOTS_PAGINA_MAX_VIEJA) y su visita no lanza que se vuelva a montar.
+# Solo la copia comprimida de respuestas 200 en HTML sin cookies.
+_RE_UA_PREFIERE_CACHE = re.compile(r"Googlebot|bingbot|OAI-SearchBot|PerplexityBot", re.I)
+_BOTS_CACHE_TTL = 6 * 3600
+_BOTS_CACHE_MAX_MB = 48
+_BOTS_PAGINA_MAX_VIEJA = 24 * 3600
+_RE_RUTA_FICHA = re.compile(r"^(?:/(?:gl|ca|eu))?/(?:entidad|empresa/[^/]+)?$")
+_bots_cache = collections.OrderedDict()   # (ruta, consulta) -> (ts, cabeceras, gz)
+_bots_cache_lock = threading.Lock()
+_bots_cache_stats = {"servidas": 0, "guardadas": 0, "vaciados": 0, "bytes": 0}
+_BOT_PREFIERE_CACHE = contextvars.ContextVar("bot_prefiere_cache", default=False)
+
+
+def _bots_cache_clave(path, query):
+    """Clave de la caché de bots, o None si esta ruta no va por ella."""
+    if not _RE_RUTA_FICHA.match(path or "/"):
+        return None
+    pares = sorted((k, v[0]) for k, v in parse_qs(query or "").items() if v)
+    nombres = {k for k, _v in pares}
+    es_entidad = path.endswith("/entidad")
+    es_empresa = "/empresa/" in path
+    if es_empresa and not nombres:
+        return (path, ())
+    if es_entidad and nombres == {"id"}:
+        return (path, tuple(pares))
+    if not es_entidad and not es_empresa and nombres in ({"muni"}, {"muni", "provincia"}):
+        return (path, tuple(pares))
+    return None
+
+
+def _bots_cache_leer(clave):
+    with _bots_cache_lock:
+        e = _bots_cache.get(clave)
+        if not e:
+            return None
+        if time.time() - e[0] >= _BOTS_CACHE_TTL:
+            _bots_cache.pop(clave, None)
+            _bots_cache_stats["bytes"] -= len(e[2])
+            return None
+        _bots_cache_stats["servidas"] += 1
+        return e[1], e[2]
+
+
+def _bots_cache_guardar(clave, code, headers, body):
+    if (code != 200 or not isinstance(body, (bytes, bytearray)) or headers.get("Content-Encoding") != "gzip"
+            or not headers.get("Content-Type", "").startswith("text/html") or "Set-Cookie" in headers
+            or "no-store" in headers.get("Cache-Control", "")):
+        return
+    cab = {k: v for k, v in headers.items() if k not in ("Content-Length", "ETag")}
+    with _bots_cache_lock:
+        vieja = _bots_cache.pop(clave, None)
+        if vieja:
+            _bots_cache_stats["bytes"] -= len(vieja[2])
+        _bots_cache[clave] = (time.time(), cab, bytes(body))
+        _bots_cache_stats["bytes"] += len(body)
+        _bots_cache_stats["guardadas"] += 1
+        while _bots_cache and _bots_cache_stats["bytes"] > _BOTS_CACHE_MAX_MB * 1024 * 1024:
+            _k, e = _bots_cache.popitem(last=False)
+            _bots_cache_stats["bytes"] -= len(e[2])
+
+
+def _bots_cache_vaciar():
+    with _bots_cache_lock:
+        if _bots_cache:
+            _bots_cache.clear()
+            _bots_cache_stats["vaciados"] += 1
+        _bots_cache_stats["bytes"] = 0
+
+
+def _bots_cache_estado():
+    with _bots_cache_lock:
+        return {"entradas": len(_bots_cache), "mb": round(_bots_cache_stats["bytes"] / 1024 / 1024, 1),
+                "servidas": _bots_cache_stats["servidas"], "guardadas": _bots_cache_stats["guardadas"],
+                "vaciados": _bots_cache_stats["vaciados"]}
+
+
 def _bot_sin_cupo(familia):
     """True si esta familia de rastreador ha agotado su cupo de páginas caras (y hay que contestar 429)."""
     ahora = time.time()
@@ -31568,6 +33197,12 @@ def _ip_sin_cupo(ip, ua=""):
 def _bots_diagnostico():
     with _bots_lock:
         return {"cupo": _BOTS_CUPO, "repone_cada_s": _BOTS_REPONE_S, "frenadas_desde_el_arranque": dict(_bots_frenadas.most_common(12)),
+                "cupo_por_hora": {"paginas_hora": _BOTS_PAGINAS_HORA, "paginas_hora_ia_que_citan": _BOTS_PAGINAS_HORA_IA_CITAN,
+                                  "cache_bots": _bots_cache_estado(),
+                                  "frenadas_desde_el_arranque": dict(_bots_frenadas_hora.most_common(12)),
+                                  "buscadores_fichas_empresa": {"de_golpe": _BUSCADOR_EMPRESA_CUPO,
+                                                                "por_minuto": _BUSCADOR_EMPRESA_POR_MIN,
+                                                                "frenadas": dict(_buscador_empresa_frenadas)}},
                 "cupo_por_ip": {"cupo": _IP_CUPO, "repone_cada_s": _IP_REPONE_S, "frenadas": _ip_frenadas[0],
                                 "ips_en_memoria": len(_ip_cupos)},
                 "freno_extractores": _freno_diagnostico()}
@@ -31859,6 +33494,9 @@ def _visitas_anotar(environ, estado, cabeceras, respuesta, segundos):
         else:
             claves = [("persona" if persona else "bot", nombre), ("ruta_persona" if persona else "ruta_bot", ruta),
                       ("red_persona" if persona else "red_bot", red), ("estado", codigo or "?")]
+        if not interno and not persona:
+            # qué páginas pide cada bot (16-11-2026); los tramos con cifras (un NIF, un id) como «*» para agrupar
+            claves.append(("bot_ruta", (nombre + " " + re.sub(r"/[^/?]*\d[^/?]*", "/*", ruta))[:160]))
         if not interno and codigo == "200" and cab.get("content-disposition", "").startswith("attachment"):
             claves.append(("evento", "descarga_persona" if persona else "descarga_bot"))
         huella = _visitas_huella(environ, semana) if persona and pagina and ip else None
@@ -31871,11 +33509,26 @@ def _visitas_anotar(environ, estado, cabeceras, respuesta, segundos):
                 v[3] += segundos
             if huella:
                 _visitas_huellas_pend.setdefault((semana, huella), [set(), 0])[0].add(dia)
-            toca = time.time() - _visitas_estado["ultimo_volcado"] >= _VISITAS_VOLCAR_CADA_S
+            toca = (time.time() - _visitas_estado["ultimo_volcado"] >= _VISITAS_VOLCAR_CADA_S
+                    and not _visitas_estado.get("volcando"))
+            if toca:
+                _visitas_estado["volcando"] = True
         if toca:
-            _visitas_volcar()
+            # 17-11-2026: en un hilo aparte (uno como mucho a la vez). Dentro de la petición, el visitante esperaba a que
+            # la conexión compartida quedara libre (en el arranque, hasta ~15 s) y, la primera vez tras arrancar, el
+            # repaso de los días cerrados (~3 s). Lo que se cuenta es lo mismo.
+            threading.Thread(target=_visitas_volcar_en_fondo, name="visitas-volcado", daemon=True).start()
     except Exception as e:
         print(f"[visitas] no se pudo anotar: {type(e).__name__}: {e}", flush=True)
+
+
+def _visitas_volcar_en_fondo():
+    try:
+        _visitas_volcar()
+    except Exception as e:
+        print(f"[visitas] no se pudo volcar: {type(e).__name__}: {e}", flush=True)
+    finally:
+        _visitas_estado["volcando"] = False
 
 
 def _visitas_volcar():
@@ -31928,13 +33581,14 @@ def _visitas_volcar():
             _db.execute("DELETE FROM settings WHERE clave LIKE 'visitas_sal_%' AND clave < ?", ("visitas_sal_" + semana_actual,))
             desde_redes = (ahora - timedelta(days=3)).strftime("%Y-%m-%d")
             for (dia,) in _db.execute("SELECT DISTINCT dia FROM visitas_dia WHERE dia < ? AND dia >= ? AND clase IN "
-                                      "('red_persona', 'red_bot')", (hoy, desde_redes)).fetchall():
-                for clase in ("red_persona", "red_bot"):
+                                      "('red_persona', 'red_bot', 'bot_ruta')", (hoy, desde_redes)).fetchall():
+                for clase in ("red_persona", "red_bot", "bot_ruta"):
                     _db.execute("DELETE FROM visitas_dia WHERE dia=? AND clase=? AND nombre NOT IN (SELECT nombre FROM "
                                 "visitas_dia WHERE dia=? AND clase=? ORDER BY bytes DESC LIMIT ?)",
                                 (dia, clase, dia, clase, _VISITAS_REDES_POR_DIA))
             limite = (ahora - timedelta(days=_VISITAS_REDES_DIAS)).strftime("%Y-%m-%d")
-            _db.execute("DELETE FROM visitas_dia WHERE dia < ? AND clase IN ('red_persona', 'red_bot')", (limite,))
+            _db.execute("DELETE FROM visitas_dia WHERE dia < ? AND clase IN ('red_persona', 'red_bot', 'bot_ruta')",
+                        (limite,))
             _visitas_estado["dia_cerrado"] = hoy
         _db.commit()
 
@@ -32032,6 +33686,8 @@ def _visitas_pagina(qs, autorizado=False):
         f'(<b>{pct(tot_b, tot_b + tot_p)}</b> del total).</p>' + dias_html + semanas_html
         + ranking("bot", "Bots por nombre", "Rastreador", 40)
         + ranking("ruta_bot", "Rutas que más piden los bots", "Ruta (sin valores)")
+        + ranking("bot_ruta", "Qué páginas pide cada bot", "Bot y ruta (sin valores)", 40,
+                  nota=f"De los días ya cerrados se guardan las {_VISITAS_REDES_POR_DIA} combinaciones con más bytes.")
         + ranking("ruta_persona", "Rutas que más piden las personas", "Ruta (sin valores)")
         + _freno_tabla_html(filas, tabla, num)
         + ranking("red_bot", "Redes de bots con más tráfico", "Red (IP recortada)", nota=f"De los días ya cerrados se guardan las {_VISITAS_REDES_POR_DIA} redes con más bytes, durante {_VISITAS_REDES_DIAS} días.")
@@ -32078,6 +33734,12 @@ def app(environ, start_response):
     info = {"ruta": _ruta_diagnostico(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", "")),
             "inicio": time.time(), "bot": bool(_RE_UA_BOT.search(environ.get("HTTP_USER_AGENT", "") or "")),
             "metodo": environ.get("REQUEST_METHOD", "GET"), "agente": _familia_ua(environ.get("HTTP_USER_AGENT", ""))}
+    # registro de peticiones lentas: ruta sin datos de nadie, idioma y el hilo que la atiende (_lentas_guardar)
+    info["ruta_lenta"] = _ruta_lenta(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
+    info["idioma"] = _i18n_separar_prefijo(environ.get("PATH_INFO", "/") or "/")[0]
+    info["hilo"] = threading.get_ident()
+    if not _lentas_estado["vigilante"]:
+        _lentas_arrancar_vigilante()
     freno = _freno_extractores(environ)          # A y B (08-11-2026): antes de nada, sin montar la página
     if freno:
         estado_f, cuerpo_f, extra_f = freno
@@ -32105,6 +33767,19 @@ def app(environ, start_response):
                                                  ("Content-Length", str(len(cuerpo)))])
         _visitas_anotar(environ, "429", [("Content-Length", str(len(cuerpo)))], None, 0.0)
         return [cuerpo]
+    frenado_h = (_bot_frenado_por_hora(info["agente"], environ.get("PATH_INFO", "/") or "/",
+                                       (environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip(),
+                                       environ.get("HTTP_USER_AGENT", ""))
+                 if info["bot"] and info["metodo"] in ("GET", "HEAD") else None)
+    if frenado_h:
+        estado_h, espera_h = frenado_h
+        with _peticiones_lock:
+            _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], 0.0, True, info["agente"] + f" ({estado_h[:3]} hora)"))
+        cuerpo = b"Demasiadas peticiones. Vuelve a intentarlo mas tarde.\n"
+        start_response(estado_h, [("Content-Type", "text/plain; charset=utf-8"), ("Retry-After", espera_h),
+                                  ("Content-Length", str(len(cuerpo))), ("Cache-Control", "no-store")])
+        _visitas_anotar(environ, estado_h[:3], [("Content-Length", str(len(cuerpo)))], None, 0.0)
+        return [cuerpo if info["metodo"] != "HEAD" else b""]
     if (not info["bot"] and info["metodo"] == "GET"
             and _ruta_cara_por_ip(environ.get("PATH_INFO", "/"), environ.get("QUERY_STRING", ""))
             and _ip_sin_cupo((environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip(),
@@ -32129,9 +33804,11 @@ def app(environ, start_response):
     try:
         t_token = _TOKEN_CABECERA.set(environ.get("HTTP_X_ADMIN_TOKEN", "") or "")
         t_cookie = _COOKIE_PETICION.set(environ.get("HTTP_COOKIE", "") or "")
+        t_web = _EN_PETICION_WEB.set(True)          # lecturas sin el cerrojo compartido (ver _db_leer)
         try:
             respuesta = _app_wsgi(environ, _anotando)
         finally:
+            _EN_PETICION_WEB.reset(t_web)
             _COOKIE_PETICION.reset(t_cookie)
             _TOKEN_CABECERA.reset(t_token)
         return respuesta
@@ -32142,11 +33819,15 @@ def app(environ, start_response):
             _peticiones_en_curso -= 1
             _PETICIONES_ACTIVAS.pop(id(ident), None)
             _PETICIONES_RECIENTES.append((info["ruta"], info["inicio"], fin - info["inicio"], info["bot"], info["agente"]))
+        if fin - info["inicio"] >= PETICIONES_LENTAS_SEG:
+            _lentas_guardar(info, fin)
 
 
 def _app_wsgi(environ, start_response):
     method = environ.get("REQUEST_METHOD", "GET")
     path = environ.get("PATH_INFO", "/")
+    if method not in ("GET", "HEAD") or path.startswith("/admin"):
+        _bots_cache_vaciar()                 # caché de páginas de bots (ver _RE_UA_PREFIERE_CACHE)
     qs = parse_qs(environ.get("QUERY_STRING", ""))
     gzip_ok = "gzip" in environ.get("HTTP_ACCEPT_ENCODING", "")
 
@@ -32199,12 +33880,26 @@ def _app_wsgi(environ, start_response):
         destino = path + "?" + _RE_QS_AMP.sub(r"\1", environ.get("QUERY_STRING", ""))
         code, headers, body = 301, {"Location": destino, "Content-Length": "0", "Cache-Control": "public, max-age=86400"}, b""
     elif method == "GET":
-        t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
-        try:
-            code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
-                                                  query_string=environ.get("QUERY_STRING", ""))
-        finally:
-            _RANGO_PETICION.reset(t_rango)
+        prefiere = bool(_RE_UA_PREFIERE_CACHE.search(environ.get("HTTP_USER_AGENT", "") or ""))
+        clave_bot = _bots_cache_clave(path, environ.get("QUERY_STRING", "")) if prefiere else None
+        guardada = _bots_cache_leer(clave_bot) if clave_bot else None
+        if guardada:
+            code, headers, body = 200, dict(guardada[0]), guardada[1]
+            if not gzip_ok:
+                body = _gzip.decompress(body)
+                headers.pop("Content-Encoding", None)
+            headers["Content-Length"] = str(len(body))
+        else:
+            t_rango = _RANGO_PETICION.set(environ.get("HTTP_RANGE", "") or "")
+            t_bot = _BOT_PREFIERE_CACHE.set(prefiere)
+            try:
+                code, headers, body = _route_get_i18n(path, qs, gzip_ok=gzip_ok,
+                                                      query_string=environ.get("QUERY_STRING", ""))
+            finally:
+                _BOT_PREFIERE_CACHE.reset(t_bot)
+                _RANGO_PETICION.reset(t_rango)
+            if clave_bot and gzip_ok:
+                _bots_cache_guardar(clave_bot, code, headers, body)
         code, headers, body = _con_etag(path, environ.get("HTTP_IF_NONE_MATCH", ""), code, headers, body)
     elif method == "POST" and path == "/admin/subvenciones":
         try:

@@ -1366,6 +1366,12 @@ msgstr "Informes trimestrais en XLSX do Perfil do contratante do Concello de Tor
 msgid "XLSX oficiales del portal de transparencia del Ayuntamiento de San Cristóbal de La Laguna y sus organismos autónomos OAAM y OAD (uno por año y entidad, enlaces encontrados navegando con un navegador real). El importe es SIN IGIC, el impuesto indirecto propio de Canarias equivalente al IVA peninsular (no confundir con \"sin impuestos\" a secas)."
 msgstr "XLSX oficiais do portal de transparencia do Concello de San Cristóbal de La Laguna e os seus organismos autónomos OAAM e OAD (un por ano e entidade, ligazóns atopadas navegando cun navegador real). O importe é SEN IGIC, o imposto indirecto propio de Canarias equivalente ao IVE peninsular (non confundir con \"sen impostos\" sen máis)."
 
+msgid "Fuente sin actualizar desde el 25-10-2026: el portal del Ayuntamiento no responde desde entonces. Se muestran los contratos que había publicado hasta esa fecha (los más recientes, de diciembre de 2025)."
+msgstr "Fonte sen actualizar desde o 25-10-2026: o portal do Concello non responde desde entón. Móstranse os contratos que publicara ata esa data (os máis recentes, de decembro de 2025)."
+
+msgid "Listados del Ayuntamiento sin actualizar desde el {fecha}"
+msgstr "Listaxes do Concello sen actualizar desde o {fecha}"
+
 #: app.py:22071
 msgid "API real del portal de transparencia (Next.js, misma plataforma que Las Palmas de Gran Canaria) del Ayuntamiento de Arona, encontrada con un navegador real (Playwright). Sin fecha por contrato (ventana de 5 años aplicada por ejercicio completo; 2021 excluido por ambiguo). Sin descripción del objeto del contrato (la fuente no la publica en este listado)."
 msgstr "API real do portal de transparencia (Next.js, mesma plataforma que As Palmas de Gran Canaria) do Concello de Arona, atopada cun navegador real (Playwright). Sen data por contrato (ventá de 5 anos aplicada por exercicio completo; 2021 excluído por ambiguo). Sen descrición do obxecto do contrato (a fonte non a publica nesta listaxe)."
@@ -2345,6 +2351,14 @@ msgstr "Amósanse os primeiros {n} de {total}."
 #: app.py:23538
 msgid "Contratos menores (fuentes locales del ayuntamiento)"
 msgstr "Contratos menores (fontes locais do concello)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (fuentes del ayuntamiento y PLACE)"
+msgstr "Contratos menores (fontes do concello e PLACE)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (PLACE)"
+msgstr "Contratos menores (PLACE)"
 
 #: app.py:23547
 msgid "Adjudicatario / Objeto"
@@ -3891,3 +3905,15 @@ msgstr "Podes pedir que o borremos antes, ou exercer calquera outro dos teus der
 
 #~ msgid "Índice v2"
 #~ msgstr "Índice v2"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Síguenos:"
+msgstr "Síguenos:"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Síguenos"
+msgstr "Síguenos"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Dinero Público también está en redes sociales:"
+msgstr "Dinero Público tamén está nas redes sociais:"
