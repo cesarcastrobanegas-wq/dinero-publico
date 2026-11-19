@@ -3754,6 +3754,10 @@ msgstr "Jakin behar dugun beste zerbait (aukerakoa)"
 msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href=\"/aviso-legal#informes\">Aviso legal</a>."
 msgstr "Datu hauek zuri erantzuteko soilik erabiliko ditugu. Posta bidez iristen zaizkigu eta webguneak ez ditu gordetzen. Informazio gehiago <a href=\"/aviso-legal#informes\">Lege-oharrean</a>."
 
+#: app.py (_informes_legal_aviso, 20-11-2026)
+msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en las <a href=\"/legal/condiciones#informes\">condiciones de los informes</a>."
+msgstr "Datu hauek zuri erantzuteko soilik erabiliko ditugu. Posta bidez iristen zaizkigu eta webguneak ez ditu gordetzen. Informazio gehiago <a href=\"/legal/condiciones#informes\">txostenen baldintzetan</a>."
+
 #: app.py (/informes)
 msgid "Pedir información"
 msgstr "Informazioa eskatu"

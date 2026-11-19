@@ -3754,6 +3754,10 @@ msgstr "Algo máis que debamos saber (opcional)"
 msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href=\"/aviso-legal#informes\">Aviso legal</a>."
 msgstr "Usaremos estes datos só para contestarche. Chéganos por correo e a web non os garda. Máis información no <a href=\"/aviso-legal#informes\">Aviso legal</a>."
 
+#: app.py (_informes_legal_aviso, 20-11-2026)
+msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en las <a href=\"/legal/condiciones#informes\">condiciones de los informes</a>."
+msgstr "Usaremos estes datos só para contestarche. Chéganos por correo e a web non os garda. Máis información nas <a href=\"/legal/condiciones#informes\">condicións dos informes</a>."
+
 #: app.py (/informes)
 msgid "Pedir información"
 msgstr "Pedir información"

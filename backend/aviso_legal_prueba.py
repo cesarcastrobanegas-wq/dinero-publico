@@ -72,6 +72,16 @@ INF = ["Formulario de petición de informes", "te pedimos tu dirección de corre
 for n in INF:
     ok(sum(n in t for t in textos) == 1, f"el aviso legal dice «{n}»")
 ok('/aviso-legal#informes' in fuente, "la casilla del formulario de /informes enlaza al apartado")
+# 20-11: con los textos legales nuevos encendidos (PR #20), /aviso-legal redirige al aviso nuevo, que no tiene el
+# apartado: la casilla enlaza entonces a «Informes a medida» de las condiciones nuevas (/legal/condiciones#informes)
+seg = ast.get_source_segment(fuente, next(n for n in ast.walk(ast.parse(fuente))
+                                          if isinstance(n, ast.FunctionDef) and n.name == "_informes_legal_aviso"))
+ok('/legal/condiciones#informes' in seg and '/aviso-legal#informes' in seg and 'TEXTOS_LEGALES_NUEVOS' in seg,
+   "la casilla enlaza al sitio correcto según estén encendidos o no los textos nuevos")
+for lang in ("gl", "ca", "eu"):
+    cat = _po_leer(os.path.join(BASE, "locale", f"{lang}.po"))
+    ok(any("/legal/condiciones#informes" in k and "/legal/condiciones#informes" in v and k != v for k, v in cat.items()),
+       f"{lang}: traducción de la casilla con el enlace a las condiciones")
 ok(re.search(r"^INFORMES_CONSERVACION_MESES = \d+", fuente, re.M) is not None, "plazo del buzón en una constante")
 for lang in ("gl", "ca", "eu"):
     cat = _po_leer(os.path.join(BASE, "locale", f"{lang}.po"))

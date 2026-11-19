@@ -29540,6 +29540,17 @@ _informes_envios = collections.deque()
 _informes_lock = threading.Lock()
 
 
+def _informes_legal_aviso():
+    """Frase de la casilla del formulario con el enlace a dónde se explica qué hacemos con los datos (20-11-2026).
+    Con los textos legales nuevos ENCENDIDOS (PR #20: TEXTOS_LEGALES_NUEVOS=1 y los datos del titular completos),
+    /aviso-legal redirige al aviso nuevo, que no tiene este apartado: entonces se enlaza a «Informes a medida» de las
+    condiciones nuevas (/legal/condiciones#informes). Apagados (hoy), al apartado del aviso legal de siempre."""
+    if globals().get("TEXTOS_LEGALES_NUEVOS") is True:
+        return _t('Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más '
+                  'información en las <a href="/legal/condiciones#informes">condiciones de los informes</a>.')
+    return _t('Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href="/aviso-legal#informes">Aviso legal</a>.')
+
+
 def _informes_destino():
     return os.environ.get("INFORMES_DESTINO", "").strip() or "contacto@dinero-publico.com"
 
@@ -29621,7 +29632,7 @@ def _informes_form_html(qs):
       <textarea name="mensaje" maxlength="1500" rows="4"></textarea></label>
     <label class="inf-trampa" aria-hidden="true">Web <input type="text" name="web" tabindex="-1" autocomplete="off"></label>
     <label class="inf-check"><input type="checkbox" name="acepto" value="1" required>
-      <span>{_t('Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href="/aviso-legal#informes">Aviso legal</a>.')}</span></label>
+      <span>{_informes_legal_aviso()}</span></label>
     <button type="submit">{_t("Pedir información")}</button>
   </form>"""
 
