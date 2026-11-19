@@ -25925,6 +25925,28 @@ def _contrato_json(c, municipio):
     }
 
 
+def _totales_ficha(clave):
+    """(total_contratos, suma de importe_num) de una ficha, calculados dentro de SQLite (JSON1) sin pasar la ficha
+    entera a Python: una ciudad grande son varios MB de JSON. Si SQLite no tuviera JSON1, se lee la ficha."""
+    try:
+        with _db_lock:
+            fila = _db.execute(
+                "SELECT json_type(data, '$.total_contratos'), json_extract(data, '$.total_contratos'), "
+                "(SELECT sum(json_extract(value, '$.importe_num')) FROM json_each(data, '$.contratos')) "
+                "FROM municipios WHERE municipio=?", (clave,)).fetchone()
+        if not fila:
+            return 0, 0.0
+        return (fila[1] if fila[0] is not None else 0), (fila[2] or 0.0)
+    except sqlite3.OperationalError:
+        with _db_lock:
+            fila = _db.execute("SELECT data FROM municipios WHERE municipio=?", (clave,)).fetchone()
+        try:
+            d = json.loads(fila[0]) if fila else {}
+        except ValueError:
+            d = {}
+        return d.get("total_contratos", 0), sum(c.get("importe_num", 0.0) for c in d.get("contratos", []))
+
+
 def api_buscar(tipo, q, datos):
     """Backend del buscador avanzado (GET /api/buscar?tipo=...&q=...). Devuelve
     un dict JSON-serializable; ninguna búsqueda distingue mayúsculas ni acentos."""
@@ -25935,33 +25957,38 @@ def api_buscar(tipo, q, datos):
     q_norm = normalizar(q)
 
     if tipo == "ayuntamiento":
-        # Búsqueda de municipio siempre nacional (Murcia + Girona), sin
-        # filtrar por la provincia de la página desde la que se lanza --
-        # reutiliza el mismo POST /buscar que el buscador clásico de la
-        # cabecera (ver formulario municipio/provincia en filaMunicipio()).
-        # solo (total de contratos, importe) de cada ficha, leídas de una en una (ver _db_iter_municipios)
-        por_muni = {clave_municipio(d.get("municipio", ""), d.get("provincia")):
-                    (d.get("total_contratos", 0), sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])))
-                    for d in _db_iter_municipios()}
+        # Búsqueda de municipio siempre nacional, sin filtrar por la provincia de la página desde la que se lanza --
+        # reutiliza el mismo POST /buscar que el buscador clásico de la cabecera (ver filaMunicipio()).
+        # 19-11-2026: antes leía y deserializaba las 8.000 fichas en cada letra tecleada (~4 s en Render; 3 a la vez,
+        # 10-12 s; en el registro de lentas, hasta 39 s). Ahora: los nombres se filtran en memoria, «tiene datos» sale
+        # de las claves de la tabla (sin leer las fichas) y el total de contratos y el importe se sacan, dentro de
+        # SQLite, solo de las 60 que se enseñan. El resultado es el mismo (ver prueba_buscar_ayuntamiento.py).
+        with _db_lock:
+            con_ficha = {k for (k,) in _db.execute("SELECT municipio FROM municipios")}
         resultados = []
         for prov, lista_muni in MUNICIPIOS_POR_PROVINCIA.items():
             nombres = list(_pseudos_de_provincia(prov)) + list(lista_muni)
             for muni in nombres:
                 if q_norm not in normalizar(muni):
                     continue
-                d = por_muni.get(clave_municipio(muni, prov))
-                cached = d is not None
-                total_imp = d[1] if cached else 0.0
+                clave = clave_municipio(muni, prov)
                 resultados.append({
                     "municipio": muni,
                     "provincia": prov,
                     "provincia_label": PROVINCIA_LABEL.get(prov, prov),
-                    "cached": cached,
-                    "total_contratos": d[0] if cached else 0,
-                    "total_importe": fmt_eur(str(total_imp)) if cached else "",
+                    "cached": clave in con_ficha,
+                    "total_contratos": 0,
+                    "total_importe": "",
+                    "_clave": clave,
                 })
         resultados.sort(key=lambda r: (not r["cached"], normalizar(r["municipio"])))
-        return {"tipo": "ayuntamiento", "query": q, "resultados": resultados[:60]}
+        resultados = resultados[:60]
+        for r in resultados:
+            clave = r.pop("_clave")
+            if r["cached"]:
+                r["total_contratos"], total_imp = _totales_ficha(clave)
+                r["total_importe"] = fmt_eur(str(total_imp))
+        return {"tipo": "ayuntamiento", "query": q, "resultados": resultados}
 
     if tipo == "empresa":
         resultados = []
