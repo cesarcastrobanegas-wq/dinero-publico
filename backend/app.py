@@ -27308,6 +27308,9 @@ def _redes_tabla():
                     "estado TEXT, titulo TEXT, url TEXT, textos TEXT, tarjeta BLOB, llave TEXT, redes TEXT, "
                     "aprobada REAL, ocupada REAL)")
         _db.execute("CREATE INDEX IF NOT EXISTS idx_redes_tema ON redes_publicaciones (tema, creada)")
+        # 19-11-2026: la tarjeta apaisada (1200x630) para X y Facebook; `tarjeta` sigue siendo la vertical (Instagram)
+        if "tarjeta_apaisada" not in {f[1] for f in _db.execute("PRAGMA table_info(redes_publicaciones)")}:
+            _db.execute("ALTER TABLE redes_publicaciones ADD COLUMN tarjeta_apaisada BLOB")
         _db.commit()
 
 
@@ -27317,6 +27320,7 @@ def _redes_crear(entrada, clave=None, estado=None):
     try:
         e = REDES_MOD.componer(entrada, SITE_URL)
         png = REDES_MOD.dibujar_tarjeta(e["tarjeta"])
+        png_ap = REDES_MOD.dibujar_tarjeta(e["tarjeta"], "apaisada")
     except Exception as ex:
         print(f"[redes] no se prepara «{entrada.get('tema')}»: {type(ex).__name__}: {ex}", flush=True)
         return None
@@ -27326,10 +27330,10 @@ def _redes_crear(entrada, clave=None, estado=None):
         try:
             cur = _db.execute(
                 "INSERT INTO redes_publicaciones (clave, tipo, tema, creada, estado, titulo, url, textos, tarjeta, "
-                "llave, redes, aprobada) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '{}', ?)",
+                "tarjeta_apaisada, llave, redes, aprobada) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '{}', ?)",
                 (clave or f"{e['tema']}@{time.strftime('%Y-%m-%d')}", e["tipo"], e["tema"], time.time(), estado,
-                 e["titulo"], e["url"], json.dumps(e["textos"], ensure_ascii=False), png, secrets.token_hex(8),
-                 time.time() if estado == "aprobada" else None))
+                 e["titulo"], e["url"], json.dumps(e["textos"], ensure_ascii=False), png, png_ap,
+                 secrets.token_hex(8), time.time() if estado == "aprobada" else None))
             _db.commit()
             return cur.lastrowid
         except sqlite3.IntegrityError:
@@ -27494,6 +27498,7 @@ def _redes_publicar_una(id_, http=None, esperar=time.sleep):
     """Publica una entrada aprobada en las redes configuradas que aún no la tengan. Cada red por separado."""
     if not REDES_MOD.activas():
         return {}
+    _redes_tabla()                          # por si la tabla es de antes de la columna apaisada
     ahora = time.time()
     with _db_lock:      # «coger» la entrada: dos trabajadores de gunicorn no la publican a la vez
         cur = _db.execute("UPDATE redes_publicaciones SET ocupada=? WHERE id=? AND estado IN ('aprobada','parcial') "
@@ -27501,16 +27506,23 @@ def _redes_publicar_una(id_, http=None, esperar=time.sleep):
         _db.commit()
         if cur.rowcount != 1:
             return {}
-        fila = _db.execute("SELECT textos, tarjeta, llave, redes FROM redes_publicaciones WHERE id=?", (id_,)).fetchone()
-    textos, png, llave, redes = json.loads(fila[0]), fila[1], fila[2], json.loads(fila[3] or "{}")
-    url_img = f"{SITE_URL.rstrip('/')}/redes/tarjeta/{id_}-{llave}.png"
+        fila = _db.execute("SELECT textos, tarjeta, llave, redes, tarjeta_apaisada FROM redes_publicaciones WHERE id=?",
+                           (id_,)).fetchone()
+    textos, png, llave, redes, png_ap = json.loads(fila[0]), fila[1], fila[2], json.loads(fila[3] or "{}"), fila[4]
+    base_img = f"{SITE_URL.rstrip('/')}/redes/tarjeta/{id_}-{llave}"
     http = http or _redes_http()
     for red in REDES_MOD.redes_configuradas():
         r = redes.get(red) or {}
         if r.get("estado") == "publicada" or r.get("intentos", 0) >= REDES_INTENTOS:
             continue
+        # X y Facebook, la apaisada; Instagram (y Bluesky, por ahora), la vertical. Una entrada preparada antes del
+        # 19-11 no tiene apaisada: va con la vertical.
+        if REDES_MOD.FORMATO_RED.get(red) == "apaisada" and png_ap:
+            png_red, url_img = bytes(png_ap), f"{base_img}-apaisada.png"
+        else:
+            png_red, url_img = png, f"{base_img}.png"
         try:
-            pid = REDES_MOD.publicar(red, http, os.environ, REDES_MOD.texto_de(red, textos), url_img, png,
+            pid = REDES_MOD.publicar(red, http, os.environ, REDES_MOD.texto_de(red, textos), url_img, png_red,
                                     esperar=esperar)
             redes[red] = {"estado": "publicada", "id": pid, "ts": time.time(), "intentos": r.get("intentos", 0) + 1}
         except Exception as e:                  # ErrorRed ya viene sin claves; cualquier otro, igual de controlado
@@ -27633,16 +27645,18 @@ def _caso_tarjeta_resp(path):
 
 
 def _redes_tarjeta_resp(path):
-    m = re.fullmatch(r"/redes/tarjeta/(\d{1,9})-([0-9a-f]{16})\.png", path)
+    m = re.fullmatch(r"/redes/tarjeta/(\d{1,9})-([0-9a-f]{16})(-apaisada)?\.png", path)
     if not m:
         return 404, {"Content-Length": "0"}, b""
+    columna = "tarjeta_apaisada" if m.group(3) else "tarjeta"      # la apaisada, para Facebook (la recoge por URL)
     try:
+        _redes_tabla()
         with _db_lock:
-            fila = _db.execute("SELECT tarjeta, llave FROM redes_publicaciones WHERE id=? AND estado!='rechazada'",
+            fila = _db.execute(f"SELECT {columna}, llave FROM redes_publicaciones WHERE id=? AND estado!='rechazada'",
                                (int(m.group(1)),)).fetchone()
     except sqlite3.Error:
         fila = None
-    if not fila or not hmac.compare_digest(fila[1], m.group(2)):
+    if not fila or fila[0] is None or not hmac.compare_digest(fila[1], m.group(2)):
         return 404, {"Content-Length": "0"}, b""
     return 200, {"Content-Type": "image/png", "Content-Length": str(len(fila[0])),
                  "Cache-Control": "public, max-age=86400", "X-Robots-Tag": "noindex"}, bytes(fila[0])
@@ -27679,8 +27693,11 @@ def _redes_panel_html(cookie, hecho=""):
                               f'caracteres)</summary><pre style="white-space:pre-wrap">{esc(t)}</pre></details>'
                               for r, t in tx.items())
         items += (f'<div class="item" style="display:flex;gap:16px;flex-wrap:wrap;border-top:1px solid #ddd;padding:12px 0">'
-                  f'<img src="/redes/tarjeta/{id_}-{llave}.png" width="216" height="270" alt="" '
-                  f'style="border:1px solid #ccc">'
+                  f'<span><img src="/redes/tarjeta/{id_}-{llave}.png" width="216" height="270" alt="" '
+                  f'style="border:1px solid #ccc" title="Instagram"><br>'
+                  f'<img src="/redes/tarjeta/{id_}-{llave}-apaisada.png" width="216" height="113" alt="" '
+                  f'style="border:1px solid #ccc;margin-top:6px" title="X y Facebook" '
+                  f'onerror="this.remove()"></span>'
                   f'<div style="flex:1 1 320px"><b>{esc(titulo)}</b><br><span class="sub">#{id_} · {esc(tipo)} · '
                   f'{time.strftime("%d/%m/%Y %H:%M", time.gmtime(creada))} UTC · <b>{esc(est)}</b></span><br>'
                   f'<a href="{esc(url)}" target="_blank" rel="noopener">{esc(url)}</a>{textos_html}'

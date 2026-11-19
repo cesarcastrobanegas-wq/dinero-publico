@@ -55,6 +55,7 @@ def main():
     comprobar(app.PERFIL_FACEBOOK_URL == perfiles[0], f"PERFIL_FACEBOOK_URL: {app.PERFIL_FACEBOOK_URL}")
     comprobar(len(re.findall(r'href="https?://(?:www\.)?facebook\.com/[^"]*"', t)) == t.count(f'href="{perfiles[0]}"'),
               "hay otro enlace a Facebook que no es el de la Página")
+    comprobar("bsky" not in t.lower() and "bluesky" not in t.lower(), "Bluesky no va en «Síguenos» (por ahora)")
     m = re.search(r'<script type="application/ld\+json">(.*?)</script>', t, re.S)
     try:
         ld = json.loads(m.group(1)) if m else {}
@@ -62,6 +63,7 @@ def main():
         ld = {}
     comprobar(ld.get("@type") == "Organization" and ld.get("sameAs") == [p[2] for p in app._perfiles_redes()]
               and set(perfiles) <= set(ld.get("sameAs", [])), f"JSON-LD: {ld}")
+    comprobar(not any("bsky" in u for u in ld.get("sameAs", [])), "Bluesky no va en el JSON-LD (por ahora)")
 
     cod, _, b = get("/ca/quien-soy")
     comprobar(cod == 200 and "Segueix-nos" in b.decode("utf-8"), f"/ca/quien-soy sin traducir: {cod}")

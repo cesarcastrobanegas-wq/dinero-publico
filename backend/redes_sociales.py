@@ -35,6 +35,9 @@ CLAVES = {
     # servidor (por defecto https://bsky.social).
     "bluesky": ("BSKY_HANDLE", "BSKY_APP_PASSWORD"),
 }
+# Tarjeta de cada red (19-11-2026, decisión de César): X y Facebook, la apaisada 1200x630; Instagram, la vertical
+# 1080x1350. Bluesky se queda como estaba (vertical) hasta que se decida.
+FORMATO_RED = {"x": "apaisada", "facebook": "apaisada", "instagram": "vertical", "bluesky": "vertical"}
 GRAPH_VERSION_DEFECTO = "v23.0"
 X_TWEETS = "https://api.x.com/2/tweets"
 X_MEDIA = "https://api.x.com/2/media/upload"

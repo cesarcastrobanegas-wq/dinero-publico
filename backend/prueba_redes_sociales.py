@@ -8,6 +8,7 @@
   - Publicar: cada red una sola vez; si una red falla, las otras salen y la que falla se reintenta como mucho 3 veces;
     una red caída no tira nada.
   - La tarjeta se sirve en una dirección pública con llave; mal la llave o rechazada: 404.
+  - Tarjeta de cada red (19-11-2026): X y Facebook, la apaisada 1200x630; Instagram, la vertical 1080x1350.
   - Ningún DNI/NIE pasa: un caso con uno no se prepara.
 
     python backend/prueba_redes_sociales.py      (proceso pesado: importa la web; de uno en uno, ~2-3 min)
@@ -190,6 +191,19 @@ def main():
               f"tarjeta: {est} {cab.get('Content-Type')}")
     est, _, _ = peticion(f"/redes/tarjeta/{c['id']}-{'0' * 16}.png")
     comprobar(est == "404", f"llave mala debe dar 404: {est}")
+    from PIL import Image
+
+    def medida(datos):
+        try:
+            return Image.open(io.BytesIO(datos)).size
+        except Exception:
+            return None
+    comprobar(medida(png) == (1080, 1350), f"la vertical mide {medida(png)}")
+    est, cab, png_ap = peticion(f"/redes/tarjeta/{c['id']}-{c['llave']}-apaisada.png")
+    comprobar(est == "200" and cab.get("Content-Type") == "image/png" and medida(png_ap) == (1200, 630),
+              f"tarjeta apaisada: {est} {medida(png_ap)}")
+    est, _, _ = peticion(f"/redes/tarjeta/{c['id']}-{'0' * 16}-apaisada.png")
+    comprobar(est == "404", f"apaisada con llave mala debe dar 404: {est}")
 
     # ── 5. Ensayo: nada sale sin aprobar ───────────────────────────────────────────────────────────────────────────
     comprobar(app._redes_publicar_pendientes(http=redes) == 0 and not redes.llamadas, "sin aprobar no sale nada")
@@ -213,7 +227,33 @@ def main():
     comprobar(redes.cuenta("x", "/2/tweets") == 1 and redes.cuenta("facebook", "/photos") == 1
               and redes.cuenta("instagram", "/media_publish") == 1, "una vez en cada red")
     url_img = [k["data"]["image_url"] for r, m, u, k in redes.llamadas if u.endswith("/media")][0]
-    comprobar(url_img == f"{app.SITE_URL}/redes/tarjeta/{c['id']}-{c['llave']}.png", f"imagen pública: {url_img}")
+    comprobar(url_img == f"{app.SITE_URL}/redes/tarjeta/{c['id']}-{c['llave']}.png", f"Instagram, la vertical: {url_img}")
+    url_fb = [k["data"]["url"] for r, m, u, k in redes.llamadas if u.endswith("/photos")][0]
+    comprobar(url_fb == f"{app.SITE_URL}/redes/tarjeta/{c['id']}-{c['llave']}-apaisada.png",
+              f"Facebook, la apaisada: {url_fb}")
+    subida_x = [k["files"]["media"][1] for r, m, u, k in redes.llamadas if "/2/media/upload" in u][0]
+    comprobar(medida(subida_x) == (1200, 630) and subida_x == png_ap, f"X sube la apaisada: {medida(subida_x)}")
+    comprobar(app.REDES_MOD.FORMATO_RED == {"x": "apaisada", "facebook": "apaisada", "instagram": "vertical",
+                                            "bluesky": "vertical"}, f"formato por red: {app.REDES_MOD.FORMATO_RED}")
+    # una entrada de antes de la apaisada (sin ella) sale en X y Facebook con la vertical, sin fallar
+    vieja = app._redes_crear({"tipo": "caso", "tema": "caso:sin-apaisada", "titulo": "Entrada sin apaisada",
+                              "frase": "Una frase.", "ruta": "/casos/sin-apaisada", "etiqueta": "Caso"},
+                             estado="aprobada")
+    with app._db_lock:
+        app._db.execute("UPDATE redes_publicaciones SET tarjeta_apaisada=NULL WHERE id=?", (vieja,))
+        app._db.commit()
+    viejas = RedesFalsas()
+    rd_v = app._redes_publicar_una(vieja, http=viejas)
+    url_fb_v = [k["data"]["url"] for r, m, u, k in viejas.llamadas if u.endswith("/photos")]
+    subida_v = [k["files"]["media"][1] for r, m, u, k in viejas.llamadas if "/2/media/upload" in u]
+    comprobar(all(v.get("estado") == "publicada" for v in rd_v.values()) and url_fb_v and url_fb_v[0].endswith(
+        f"-{filas('id=?', (vieja,))[0]['llave']}.png") and subida_v and medida(subida_v[0]) == (1080, 1350),
+        f"entrada sin apaisada: {rd_v} {url_fb_v}")
+    est, _, _ = peticion(f"/redes/tarjeta/{vieja}-{filas('id=?', (vieja,))[0]['llave']}-apaisada.png")
+    comprobar(est == "404", f"apaisada que no existe: {est}")
+    with app._db_lock:
+        app._db.execute("DELETE FROM redes_publicaciones WHERE id=?", (vieja,))
+        app._db.commit()
     app._redes_publicar_pendientes(http=redes)
     app._redes_publicar_una(c["id"], http=redes)
     comprobar(redes.cuenta("x", "/2/tweets") == 1, "lo publicado no se vuelve a publicar")
