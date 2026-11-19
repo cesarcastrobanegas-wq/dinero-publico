@@ -1209,7 +1209,7 @@ def actualizar_a_coruna():
 #   proveedores distintos frente a ~750 en el resto de años).
 # - Importe CON IVA (3.025,00 = 2.500 x 1,21); ninguno supera 48.400 EUR (= 40.000 + 21 %).
 # - Sin NIF (el informe no lo publica). Desde 2024 los nombres de persona vienen con "*" en
-#   lugar de espacio entre apellidos ("GARCIA*DIAZ,ESTHER"): se normaliza a "GARCIA DIAZ, ESTHER".
+#   lugar de espacio entre apellidos ("APELLIDO1*APELLIDO2,NOMBRE"): se normaliza a "APELLIDO1 APELLIDO2, NOMBRE".
 # - Un mismo registro puede repetirse entre ficheros de años contiguos (fechas del año anterior
 #   registradas tarde): se colapsa por hash de expediente+nombre+importe+fecha+descripción.
 # - Tipo de contrato: no hay columna; solo se rellena si la descripción lo dice

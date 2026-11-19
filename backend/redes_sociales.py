@@ -1,0 +1,476 @@
+# encoding: utf-8
+"""Bot de redes sociales de Dinero Público (09-11-2026, encargo de César): publica en X, en la Página de Facebook,
+en Instagram y (desde el 18-11-2026) en Bluesky los casos nuevos de /casos y un «ejemplo de uso» al día.
+
+Este módulo no sabe nada de la web ni de la base: recibe los datos ya elegidos y devuelve textos, la tarjeta en PNG
+y el resultado de cada publicación. La conexión (`http`, una sesión de requests o un sustituto en las pruebas) se le
+pasa desde fuera, así que todo se prueba sin red. La web (app.py, bloque «REDES SOCIALES») decide qué se publica,
+lo guarda en la tabla redes_publicaciones y lo enseña en /admin/redes.
+
+Claves: solo en variables de entorno de Render (ver CLAVES). Nunca se escriben en un registro ni en un mensaje de
+error (_sin_secretos).
+"""
+import base64
+import hashlib
+import hmac
+import io
+import json
+import os
+import re
+import secrets
+import time
+import urllib.parse
+
+REDES = ("x", "facebook", "instagram", "bluesky")
+NOMBRE_RED = {"x": "X", "facebook": "Facebook", "instagram": "Instagram", "bluesky": "Bluesky"}
+# Variables de entorno que necesita cada red (todas). Instagram publica con el mismo token de la Página de Facebook
+# a la que está vinculada la cuenta profesional; IG_PAGE_TOKEN lo sustituye si se quiere uno aparte.
+CLAVES = {
+    "x": ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_SECRET"),
+    "facebook": ("FB_PAGE_ID", "FB_PAGE_TOKEN"),
+    "instagram": ("IG_USER_ID", "FB_PAGE_TOKEN"),
+    # Bluesky (18-11-2026): API abierta y gratuita (AT Protocol). BSKY_HANDLE es la cuenta (p. ej.
+    # «dineropublico.bsky.social») y BSKY_APP_PASSWORD una «contraseña de aplicación» creada en Ajustes → Privacidad y
+    # seguridad → Contraseñas de aplicación, NUNCA la contraseña de la cuenta. BSKY_SERVICE (opcional) cambia el
+    # servidor (por defecto https://bsky.social).
+    "bluesky": ("BSKY_HANDLE", "BSKY_APP_PASSWORD"),
+}
+# Tarjeta de cada red (19-11-2026, decisión de César): X y Facebook, la apaisada 1200x630; Instagram, la vertical
+# 1080x1350. Bluesky se queda como estaba (vertical) hasta que se decida.
+FORMATO_RED = {"x": "apaisada", "facebook": "apaisada", "instagram": "vertical", "bluesky": "vertical"}
+GRAPH_VERSION_DEFECTO = "v23.0"
+X_TWEETS = "https://api.x.com/2/tweets"
+X_MEDIA = "https://api.x.com/2/media/upload"
+X_MAX = 280
+X_LARGO_ENLACE = 23            # X cuenta cualquier enlace como 23 caracteres
+BSKY_MAX = 300                 # Bluesky: 300 caracteres (grafemas), el enlace cuenta entero
+BSKY_SERVICIO_DEFECTO = "https://bsky.social"
+BSKY_MAX_IMAGEN = 950_000      # el servidor admite ~1 MB por imagen: por encima, la tarjeta va en JPEG
+ETIQUETAS_IG = "#DineroPúblico #transparencia #contratación"
+
+ANCHO, ALTO = 1080, 1350
+NAVY = (0x1B, 0x2A, 0x4A)
+FONDO = (0xF5, 0xF6, 0xF8)
+ACENTO = {"caso": (0xB4, 0x23, 0x18), "licitaciones": (0x0D, 0x7A, 0x3F), "indice": (0x1D, 0x4E, 0xD8),
+          "destacado": (0x92, 0x40, 0x0E), "fondos": (0x00, 0x33, 0x99)}
+DIR_FUENTES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "fuentes")
+
+
+class ErrorRed(Exception):
+    """Fallo de una red al publicar (el mensaje ya va sin claves)."""
+
+
+# ─── Configuración ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+def activas(env=None):
+    return (env if env is not None else os.environ).get("REDES_ACTIVAS", "0").strip() == "1"
+
+
+def ensayo(env=None):
+    """Modo ensayo (por defecto): todo espera a que César lo apruebe en /admin/redes. REDES_ENSAYO=0 lo quita."""
+    return (env if env is not None else os.environ).get("REDES_ENSAYO", "1").strip() != "0"
+
+
+def redes_configuradas(env=None):
+    """Las redes que tienen todas sus claves (y no están apagadas con REDES_SOLO)."""
+    env = env if env is not None else os.environ
+    solo = {r.strip() for r in env.get("REDES_SOLO", "").split(",") if r.strip()}
+    return [r for r in REDES if all(env.get(k, "").strip() for k in CLAVES[r]) and (not solo or r in solo)]
+
+
+def _graph(env):
+    v = env.get("REDES_GRAPH_VERSION", "").strip() or GRAPH_VERSION_DEFECTO
+    return f"https://graph.facebook.com/{v}"
+
+
+def _sin_secretos(texto, env):
+    """El texto sin ninguna de las claves de las redes (por si una API las repite en un error)."""
+    texto = str(texto)[:400]
+    for r in CLAVES.values():
+        for k in r + ("IG_PAGE_TOKEN",):
+            if k == "BSKY_HANDLE":
+                continue                                  # la cuenta es pública: no es un secreto
+            v = env.get(k, "")
+            if v and len(v) >= 6:
+                texto = texto.replace(v, "***")
+    texto = re.sub(r"(access_token=)[^&\s\"']+", r"\1***", texto)
+    return re.sub(r"(Bearer\s+)[A-Za-z0-9._\-]+", r"\1***", texto)
+
+
+# ─── Seguridad del texto ────────────────────────────────────────────────────────────────────────────────────────────
+
+_LETRAS = "TRWAGMYFPDXBNJZSQVHLCKE"
+_RE_DNI = re.compile(r"(?<![0-9A-Za-z])(?:(\d{8})[ .-]?([A-Za-z])|([XYZxyz])[ .-]?(\d{7})[ .-]?([A-Za-z]))(?![0-9A-Za-z])")
+
+
+def tiene_dni(texto):
+    """True si el texto lleva un DNI o NIE con la letra de control correcta."""
+    for m in _RE_DNI.finditer(texto or ""):
+        if m.group(1):
+            if _LETRAS[int(m.group(1)) % 23] == m.group(2).upper():
+                return True
+        elif _LETRAS[("XYZ".index(m.group(3).upper()) * 10 ** 7 + int(m.group(4))) % 23] == m.group(5).upper():
+            return True
+    return False
+
+
+def dos_frases(texto, maximo=260):
+    """Las dos primeras frases del texto, cortadas por palabra entera si pasan de `maximo`."""
+    texto = re.sub(r"\s+", " ", texto or "").strip()
+    frases = re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡0-9«])", texto)
+    corto = " ".join(frases[:2])
+    if len(corto) > maximo:
+        corto = corto[:maximo].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+    return corto
+
+
+# ─── Textos de cada red ─────────────────────────────────────────────────────────────────────────────────────────────
+
+def textos(titulo, frase, url):
+    """{red: texto}. X: 280 caracteres contando el enlace como 23 (se recorta la frase). Instagram no deja pinchar
+    enlaces en el texto: va la dirección escrita y las etiquetas."""
+    titulo, frase = titulo.strip(), frase.strip()
+    hueco = X_MAX - X_LARGO_ENLACE - len(titulo) - 4
+    frase_x = frase if len(frase) <= hueco else (frase[:max(0, hueco - 1)].rsplit(" ", 1)[0].rstrip(",;:") + "…")
+    x = f"{titulo}\n\n{frase_x}\n\n{url}" if frase_x and hueco > 20 else f"{titulo[:X_MAX - X_LARGO_ENLACE - 2]}\n\n{url}"
+    sin_esquema = re.sub(r"^https?://", "", url)
+    return {"x": x, "facebook": f"{titulo}\n\n{frase}\n\n{url}",
+            "instagram": f"{titulo}\n\n{frase}\n\nEnlace: {sin_esquema}\n\n{ETIQUETAS_IG}",
+            "bluesky": texto_bluesky(titulo, frase, url)}
+
+
+def texto_bluesky(titulo, frase, url):
+    """Texto de Bluesky: título, frase y enlace en 300 caracteres como mucho (el enlace cuenta entero: se recorta la
+    frase y, si no cabe ni así, el título)."""
+    titulo, frase = titulo.strip(), frase.strip()
+    hueco = BSKY_MAX - len(url) - len(titulo) - 4
+    if frase and hueco > 20:
+        if len(frase) > hueco:
+            frase = frase[:hueco - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+        return f"{titulo}\n\n{frase}\n\n{url}"
+    cabe = BSKY_MAX - len(url) - 2
+    if len(titulo) > cabe:
+        titulo = titulo[:cabe - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+    return f"{titulo}\n\n{url}"
+
+
+def texto_de(red, tx):
+    """El texto guardado para `red`; una entrada preparada antes de añadir Bluesky no lo trae: se saca del de
+    Facebook (título, frase y enlace)."""
+    if tx.get(red):
+        return tx[red]
+    if red == "bluesky" and tx.get("facebook"):
+        partes = tx["facebook"].split("\n\n")
+        if len(partes) >= 3:
+            return texto_bluesky(partes[0], " ".join(partes[1:-1]), partes[-1])
+        return texto_bluesky(partes[0], "", partes[-1])
+    raise KeyError(red)
+
+
+def largo_x(texto):
+    """Largo del texto como lo cuenta X (enlaces = 23)."""
+    return len(re.sub(r"https?://\S+", "x" * X_LARGO_ENLACE, texto))
+
+
+def componer(entrada, site_url):
+    """De una entrada {tipo, tema, titulo, frase, ruta, etiqueta, cifra} a lo que se guarda: textos de cada red y
+    datos de la tarjeta. Lanza ValueError si algún texto lleva un DNI/NIE o falta algo."""
+    for k in ("tipo", "tema", "titulo", "frase", "ruta"):
+        if not entrada.get(k):
+            raise ValueError(f"falta «{k}»")
+    if not entrada["ruta"].startswith("/"):
+        raise ValueError("la ruta tiene que ser de la web")
+    url = site_url.rstrip("/") + entrada["ruta"]
+    tx = textos(entrada["titulo"], entrada["frase"], url)
+    tarjeta = {"tipo": entrada["tipo"], "etiqueta": entrada.get("etiqueta", ""), "cifra": entrada.get("cifra", ""),
+               "titulo": entrada.get("titulo_tarjeta") or entrada["titulo"], "frase": entrada["frase"],
+               "pie": re.sub(r"^https?://", "", url)}
+    todo = " ".join(list(tx.values()) + [str(v) for v in tarjeta.values()])
+    if tiene_dni(todo):
+        raise ValueError("lleva un DNI/NIE: no se publica")
+    return {"tipo": entrada["tipo"], "tema": entrada["tema"], "titulo": entrada["titulo"], "url": url,
+            "textos": tx, "tarjeta": tarjeta}
+
+
+# ─── Tarjetas (1080x1350 y 1200x630) ──────────────────────────────────────────────────────────────────────────────────────────────
+
+def _fuente(peso, tam):
+    from PIL import ImageFont
+    nombre = "SpaceGrotesk-Bold.ttf" if peso == "bold" else "SpaceGrotesk-Medium.ttf"
+    return ImageFont.truetype(os.path.join(DIR_FUENTES, nombre), tam)
+
+
+def _partir(draw, texto, fuente, ancho, max_lineas):
+    palabras, lineas, actual = texto.split(), [], ""
+    for p in palabras:
+        prueba = (actual + " " + p).strip()
+        if draw.textlength(prueba, font=fuente) <= ancho:
+            actual = prueba
+        else:
+            if actual:
+                lineas.append(actual)
+            actual = p
+    if actual:
+        lineas.append(actual)
+    if len(lineas) > max_lineas:
+        lineas = lineas[:max_lineas]
+        ultima = lineas[-1]
+        while ultima and draw.textlength(ultima + "…", font=fuente) > ancho:
+            ultima = ultima.rsplit(" ", 1)[0] if " " in ultima else ultima[:-1]
+        lineas[-1] = ultima + "…"
+    return lineas
+
+
+APAISADA = (1200, 630)          # og:image al compartir enlaces (~1,91:1, lo que enseñan Facebook, X y WhatsApp)
+
+# Medidas de cada formato: vertical 1080x1350 (Instagram y el bot) y apaisada 1200x630 (vista previa de enlaces).
+_FORMATOS = {
+    "vertical": {"tam": (ANCHO, ALTO), "m": 84, "franja": 16, "logo": 64, "logo_y": 80, "logo_paso": 74, "logo_barra": (12, 5, 10, 140), "logo_texto": 30, "cifra_min": 80,
+                 "y": 330, "etiqueta": 40, "etiqueta_paso": 76, "cifra": 190, "titulo": 74, "titulo_cifra": 60,
+                 "titulo_lineas": 5, "frase": 40, "frase_hueco": 30, "pie_alto": 150, "pie": 36, "pie_y": 98,
+                 "pie2": 32, "pie2_y": (122, 78), "hasta_pie": 200},
+    "apaisada": {"tam": APAISADA, "m": 64, "franja": 12, "logo": 40, "logo_y": 44, "logo_paso": 46, "logo_barra": (8, 3, 6, 88), "logo_texto": 19, "cifra_min": 50,
+                 "y": 168, "etiqueta": 28, "etiqueta_paso": 46, "cifra": 110, "titulo": 50, "titulo_cifra": 40,
+                 "titulo_lineas": 3, "frase": 28, "frase_hueco": 14, "pie_alto": 86, "pie": 30, "pie_y": 60,
+                 "pie2": 24, "pie2_y": (74, 44), "hasta_pie": 112},
+}
+
+
+def dibujar_tarjeta(t, formato="vertical"):
+    """PNG con el logotipo (Space Grotesk, #1B2A4A): «vertical» es 1080x1350 (4:5, el formato de Instagram, el que
+    usa el bot); «apaisada» es 1200x630, la imagen de la vista previa al compartir un enlace (og:image)."""
+    from PIL import Image, ImageDraw
+    f = _FORMATOS[formato]
+    W, H = f["tam"]
+    img = Image.new("RGB", (W, H), FONDO)
+    d = ImageDraw.Draw(img)
+    acento = ACENTO.get(t.get("tipo"), NAVY)
+    m = f["m"]
+    # logotipo: «D|inero / P|úblico», D y P en 700, el resto en 500, con la barra en medio
+    fi, fr = _fuente("bold", f["logo"]), _fuente("medium", f["logo"])
+    x0, y0, paso = m, f["logo_y"], f["logo_paso"]
+    ancho_ini = max(d.textlength("D", font=fi), d.textlength("P", font=fi))
+    bx, bw, by0, by1 = f["logo_barra"]
+    d.text((x0, y0), "D", font=fi, fill=NAVY)
+    d.text((x0, y0 + paso), "P", font=fi, fill=NAVY)
+    d.rectangle((x0 + ancho_ini + bx, y0 + by0, x0 + ancho_ini + bx + bw, y0 + by1), fill=NAVY)
+    d.text((x0 + ancho_ini + f["logo_texto"], y0), "inero", font=fr, fill=NAVY)
+    d.text((x0 + ancho_ini + f["logo_texto"], y0 + paso), "úblico", font=fr, fill=NAVY)
+    # franja de color del tipo
+    d.rectangle((0, 0, W, f["franja"]), fill=acento)
+    y = f["y"]
+    if t.get("etiqueta"):
+        d.text((m, y), t["etiqueta"].upper(), font=_fuente("bold", f["etiqueta"]), fill=acento)
+        y += f["etiqueta_paso"]
+    if t.get("cifra"):
+        tam = f["cifra"]
+        fc = _fuente("bold", tam)
+        while d.textlength(str(t["cifra"]), font=fc) > W - 2 * m and tam > f["cifra_min"]:
+            tam -= 10
+            fc = _fuente("bold", tam)
+        d.text((m, y), str(t["cifra"]), font=fc, fill=NAVY)
+        y += int(tam * 1.15)
+    limite = H - f["hasta_pie"]               # hasta el pie
+    ft = _fuente("medium", f["titulo_cifra"] if t.get("cifra") else f["titulo"])
+    alto_linea = int(ft.size * 1.22)
+    lineas_t = max(1 if formato == "apaisada" else 2, min(f["titulo_lineas"], (limite - y) // alto_linea))
+    for linea in _partir(d, t.get("titulo", ""), ft, W - 2 * m, lineas_t):
+        d.text((m, y), linea, font=ft, fill=NAVY)
+        y += alto_linea
+    # la frase, más pequeña, si cabe
+    ff = _fuente("medium", f["frase"])
+    alto_f = int(ff.size * 1.35)
+    y += f["frase_hueco"]
+    if t.get("frase") and limite - y >= (1 if formato == "apaisada" else 2) * alto_f:
+        for linea in _partir(d, t["frase"], ff, W - 2 * m, (limite - y) // alto_f):
+            d.text((m, y), linea, font=ff, fill=(0x4A, 0x55, 0x6E))
+            y += alto_f
+    # pie: la dirección exacta de la página, en una o dos líneas, cortando por «/», «?» o «&»
+    d.rectangle((0, H - f["pie_alto"], W, H), fill=NAVY)
+    pie = t.get("pie", "dinero-publico.com")
+    fp = _fuente("medium", f["pie"])
+    if d.textlength(pie, font=fp) <= W - 2 * m:
+        d.text((m, H - f["pie_y"]), pie, font=fp, fill=(255, 255, 255))
+    else:
+        fp = _fuente("medium", f["pie2"])
+        trozos = re.split(r"(?=[/?&])", pie)
+        l1 = ""
+        while trozos and d.textlength(l1 + trozos[0], font=fp) <= W - 2 * m:
+            l1 += trozos.pop(0)
+        l2 = "".join(trozos)
+        while d.textlength(l2, font=fp) > W - 2 * m:
+            l2 = l2[:-2].rstrip() + "…" if not l2.endswith("…") else l2[:-2] + "…"
+        d.text((m, H - f["pie2_y"][0]), l1, font=fp, fill=(255, 255, 255))
+        d.text((m, H - f["pie2_y"][1]), l2, font=fp, fill=(255, 255, 255))
+    out = io.BytesIO()
+    img.save(out, format="PNG", optimize=True)
+    return out.getvalue()
+
+
+# ─── Publicadores ───────────────────────────────────────────────────────────────────────────────────────────────────
+
+def _pct(s):
+    return urllib.parse.quote(str(s), safe="~-._")
+
+
+def oauth1_cabecera(metodo, url, env, nonce=None, ts=None):
+    """Cabecera Authorization OAuth 1.0a (HMAC-SHA1) de X. El cuerpo JSON o multipart no entra en la firma."""
+    oauth = {"oauth_consumer_key": env["X_API_KEY"], "oauth_nonce": nonce or secrets.token_hex(16),
+             "oauth_signature_method": "HMAC-SHA1", "oauth_timestamp": str(ts or int(time.time())),
+             "oauth_token": env["X_ACCESS_TOKEN"], "oauth_version": "1.0"}
+    partes = urllib.parse.urlsplit(url)
+    params = dict(urllib.parse.parse_qsl(partes.query), **oauth)
+    base_url = f"{partes.scheme}://{partes.netloc}{partes.path}"
+    cadena = "&".join(f"{_pct(k)}={_pct(v)}" for k, v in sorted(params.items()))
+    base = "&".join((metodo.upper(), _pct(base_url), _pct(cadena)))
+    llave = f"{_pct(env['X_API_SECRET'])}&{_pct(env['X_ACCESS_SECRET'])}"
+    oauth["oauth_signature"] = base64.b64encode(hmac.new(llave.encode(), base.encode(), hashlib.sha1).digest()).decode()
+    return "OAuth " + ", ".join(f'{_pct(k)}="{_pct(v)}"' for k, v in sorted(oauth.items()))
+
+
+def _json(resp, red, env, que):
+    try:
+        datos = resp.json()
+    except ValueError:
+        datos = {}
+    if resp.status_code >= 300:
+        detalle = datos.get("error", {}).get("message") if isinstance(datos.get("error"), dict) else None
+        detalle = (detalle or datos.get("detail") or datos.get("title") or datos.get("message")   # Bluesky: message
+                   or getattr(resp, "text", "")[:200])
+        raise ErrorRed(_sin_secretos(f"{NOMBRE_RED[red]}: {que} → HTTP {resp.status_code}: {detalle}", env))
+    return datos
+
+
+def publicar_x(http, env, texto, png):
+    """Sube la tarjeta (API v2 de medios) y publica el texto con ella (API v2). Devuelve el id del post."""
+    r = http.post(X_MEDIA, headers={"Authorization": oauth1_cabecera("POST", X_MEDIA, env)},
+                  files={"media": ("tarjeta.png", png, "image/png")}, data={"media_category": "tweet_image"},
+                  timeout=60)
+    datos = _json(r, "x", env, "subir la imagen")
+    media_id = (datos.get("data") or {}).get("id") or datos.get("media_id_string")
+    if not media_id:
+        raise ErrorRed("X: subir la imagen → la respuesta no trae el id")
+    r = http.post(X_TWEETS, headers={"Authorization": oauth1_cabecera("POST", X_TWEETS, env),
+                                     "Content-Type": "application/json"},
+                  data=json.dumps({"text": texto, "media": {"media_ids": [str(media_id)]}}), timeout=30)
+    pid = (_json(r, "x", env, "publicar").get("data") or {}).get("id")
+    if not pid:
+        raise ErrorRed("X: publicar → la respuesta no trae el id")
+    return str(pid)
+
+
+def publicar_facebook(http, env, texto, url_imagen):
+    """Foto con texto en la Página (Graph API, /{page-id}/photos con la dirección pública de la tarjeta)."""
+    r = http.post(f"{_graph(env)}/{env['FB_PAGE_ID']}/photos",
+                  data={"url": url_imagen, "caption": texto, "access_token": env["FB_PAGE_TOKEN"]}, timeout=60)
+    datos = _json(r, "facebook", env, "publicar la foto")
+    pid = datos.get("post_id") or datos.get("id")
+    if not pid:
+        raise ErrorRed("Facebook: publicar la foto → la respuesta no trae el id")
+    return str(pid)
+
+
+def publicar_instagram(http, env, texto, url_imagen, esperar=time.sleep, intentos=10):
+    """Instagram (Graph API): crea el contenedor con la imagen pública, espera a que esté listo y lo publica."""
+    token = env.get("IG_PAGE_TOKEN") or env["FB_PAGE_TOKEN"]
+    base = f"{_graph(env)}/{env['IG_USER_ID']}"
+    r = http.post(f"{base}/media", data={"image_url": url_imagen, "caption": texto, "access_token": token}, timeout=60)
+    contenedor = _json(r, "instagram", env, "crear el contenedor").get("id")
+    if not contenedor:
+        raise ErrorRed("Instagram: crear el contenedor → la respuesta no trae el id")
+    for _ in range(intentos):
+        r = http.get(f"{_graph(env)}/{contenedor}", params={"fields": "status_code", "access_token": token},
+                     timeout=30)
+        estado = _json(r, "instagram", env, "estado del contenedor").get("status_code")
+        if estado == "FINISHED":
+            break
+        if estado in ("ERROR", "EXPIRED"):
+            raise ErrorRed(f"Instagram: el contenedor quedó en {estado}")
+        esperar(3)
+    else:
+        raise ErrorRed("Instagram: el contenedor no estuvo listo a tiempo")
+    r = http.post(f"{base}/media_publish", data={"creation_id": contenedor, "access_token": token}, timeout=60)
+    pid = _json(r, "instagram", env, "publicar").get("id")
+    if not pid:
+        raise ErrorRed("Instagram: publicar → la respuesta no trae el id")
+    return str(pid)
+
+
+def _bsky(env):
+    return (env.get("BSKY_SERVICE", "").strip() or BSKY_SERVICIO_DEFECTO).rstrip("/")
+
+
+def facetas_enlaces(texto):
+    """Bluesky no convierte las direcciones en enlaces: hay que marcarlas con su posición en BYTES (UTF-8)."""
+    out = []
+    for m in re.finditer(r"https?://[^\s]+", texto):
+        ini = len(texto[:m.start()].encode("utf-8"))
+        out.append({"index": {"byteStart": ini, "byteEnd": ini + len(m.group(0).encode("utf-8"))},
+                    "features": [{"$type": "app.bsky.richtext.facet#link", "uri": m.group(0)}]})
+    return out
+
+
+def _imagen_bluesky(png):
+    """(bytes, tipo) que caben en el límite de Bluesky: la tarjeta PNG si cabe; si no, la misma en JPEG."""
+    if len(png) <= BSKY_MAX_IMAGEN:
+        return png, "image/png"
+    from PIL import Image
+    img = Image.open(io.BytesIO(png)).convert("RGB")
+    for calidad in (88, 80, 70, 60):
+        out = io.BytesIO()
+        img.save(out, format="JPEG", quality=calidad, optimize=True)
+        if out.tell() <= BSKY_MAX_IMAGEN:
+            return out.getvalue(), "image/jpeg"
+    raise ErrorRed("Bluesky: la tarjeta no cabe en el límite de tamaño de imagen")
+
+
+def publicar_bluesky(http, env, texto, png, alt=""):
+    """Bluesky (AT Protocol): abre sesión con la contraseña de aplicación, sube la tarjeta y publica el texto con la
+    imagen y el enlace marcado. Devuelve la dirección at:// del post."""
+    base = _bsky(env)
+    r = http.post(f"{base}/xrpc/com.atproto.server.createSession",
+                  json={"identifier": env["BSKY_HANDLE"].strip().lstrip("@"), "password": env["BSKY_APP_PASSWORD"]},
+                  timeout=30)
+    sesion = _json(r, "bluesky", env, "abrir sesión")
+    token, did = sesion.get("accessJwt"), sesion.get("did")
+    if not token or not did:
+        raise ErrorRed("Bluesky: abrir sesión → la respuesta no trae el token o la cuenta")
+    auth = {"Authorization": f"Bearer {token}"}
+    datos, tipo = _imagen_bluesky(png)
+    r = http.post(f"{base}/xrpc/com.atproto.repo.uploadBlob", headers=dict(auth, **{"Content-Type": tipo}),
+                  data=datos, timeout=60)
+    blob = _json(r, "bluesky", env, "subir la imagen").get("blob")
+    if not blob:
+        raise ErrorRed("Bluesky: subir la imagen → la respuesta no trae el blob")
+    registro = {"$type": "app.bsky.feed.post", "text": texto, "langs": ["es"],
+                "createdAt": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
+                "embed": {"$type": "app.bsky.embed.images",
+                          "images": [{"alt": (alt or texto.split("\n")[0])[:300], "image": blob,
+                                      "aspectRatio": {"width": ANCHO, "height": ALTO}}]}}
+    facetas = facetas_enlaces(texto)
+    if facetas:
+        registro["facets"] = facetas
+    r = http.post(f"{base}/xrpc/com.atproto.repo.createRecord", headers=auth,
+                  json={"repo": did, "collection": "app.bsky.feed.post", "record": registro}, timeout=30)
+    uri = _json(r, "bluesky", env, "publicar").get("uri")
+    if not uri:
+        raise ErrorRed("Bluesky: publicar → la respuesta no trae la dirección")
+    return str(uri)
+
+
+def publicar(red, http, env, texto, url_imagen, png, esperar=time.sleep):
+    """Publica en una red. Devuelve el id; lanza ErrorRed (sin claves en el mensaje) si falla."""
+    try:
+        if red == "x":
+            return publicar_x(http, env, texto, png)
+        if red == "facebook":
+            return publicar_facebook(http, env, texto, url_imagen)
+        if red == "instagram":
+            return publicar_instagram(http, env, texto, url_imagen, esperar=esperar)
+        if red == "bluesky":
+            return publicar_bluesky(http, env, texto, png)
+    except ErrorRed:
+        raise
+    except Exception as e:                                     # red caída, tiempo agotado...
+        raise ErrorRed(_sin_secretos(f"{NOMBRE_RED.get(red, red)}: {type(e).__name__}: {e}", env))
+    raise ErrorRed(f"red desconocida: {red}")
