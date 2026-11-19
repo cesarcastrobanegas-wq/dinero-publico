@@ -162,7 +162,8 @@ def main():
     texto = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", fila))
     comprobar("CANTERAS BLOCONA SL " in texto and "SLPLACE" not in texto.replace(" ", "x"),
               f"nombre e insignia separados: {texto[:120]!r}")
-    comprobar(re.search(r"CANTERAS BLOCONA SL\s+<span class=\"fuente-badge", fila) is not None,
+    # 20-11: desde el #67 el nombre puede ir enlazado a la ficha de la empresa (<a ...>NOMBRE</a>)
+    comprobar(re.search(r"CANTERAS BLOCONA SL(?:</a>)?\s+<span class=\"fuente-badge", fila) is not None,
               "hay espacio antes de la insignia en el HTML")
 
     print(f"{bien[0]} bien, {len(mal)} mal")

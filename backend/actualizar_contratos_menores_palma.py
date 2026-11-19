@@ -59,6 +59,9 @@ FICHEROS = {
     (2025, 3): _BASE + "/documents/39048/18116062/Contractes+menors+3er+TRIM+2025.xlsx+%28115+KB%29.xlsx/9c003fd2-1c0e-8955-e949-2efbf84415ea",
     (2025, 4): _BASE + "/documents/39028/19784129/Contractes+menors++4rt+TRIM+2025.xlsx+%28121+KB%29.xlsx/eefb1dfe-d3c9-68f2-658e-c37e12b3a93c",
     (2026, 1): _BASE + "/documents/39028/19784129/Contractes+menors+1er+trim+2026.xlsx+%28112+KB%29.xlsx/e7ffcd2d-5589-20e0-9b5b-70ccd049e869",
+    # 2º y 3º de 2026, recogidos de palma.es/es/contratos-menores el 2026-11-16 (sin el ?t= de la página)
+    (2026, 2): _BASE + "/documents/39028/19784129/Contractes+menors+2n+trim+2026.xlsx+%28112+KB%29.xlsx/7febd2d9-78cc-c59b-8e92-4bef9b316faa",
+    (2026, 3): _BASE + "/documents/39028/19784129/Contractes+menors+3r+trim+2026.xlsx+%28108+KB%29.xlsx/c753d5b3-48c8-e07a-3fe1-02e38429c7bd",
 }
 
 _UA = "Mozilla/5.0 (compatible; dinero-publico-bot/1.0)"
