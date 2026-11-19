@@ -18341,6 +18341,7 @@ def _arrancar_hilos_de_fondo():
     threading.Thread(target=_empresas_bg, args=(hilo_feed,), name="indice-empresas", daemon=True).start()
     threading.Thread(target=_subvenciones_reclasificar, name="subvenciones-sector", daemon=True).start()
     threading.Thread(target=_zip_cache_vigilar, name="memoria-zips", daemon=True).start()
+    threading.Thread(target=_buscar_indice_bg, name="buscar-indice", daemon=True).start()   # espera al precálculo
     if REDES_MOD.activas():                  # bot de redes: casos nuevos tras un despliegue (ver _redes_al_arrancar)
         threading.Thread(target=_redes_al_arrancar, name="redes-arranque", daemon=True).start()
     if FILTRO_FORMULARIO:                    # borrado automático de perfiles del filtro (ver _socios_limpieza_bg)
@@ -21758,6 +21759,8 @@ def _precalcular_indice_bg(esperar=None):
                 _rk_empresas_calcular()
             _calentar_portada()
             _copia_arranque_guardar()            # 16-11-2026: para el próximo arranque
+            _buscar_indice_estado["precalculos"] += 1      # 19-11-2026: el índice del buscador, después de todo esto
+            _buscar_indice_precalculo.set()
             _liberar_memoria()
         except Exception as e:
             print(f"[indice] precálculo: ERROR ({type(e).__name__}: {e})", flush=True)
@@ -25981,43 +25984,443 @@ def _contrato_json(c, municipio):
     }
 
 
-def api_buscar(tipo, q, datos):
+# ─── ÍNDICE EN MEMORIA DEL BUSCADOR (pestañas Empresa y Directivo, 19-11-2026, encargo de César) ─────────────────────
+# Sin índice, cada búsqueda lee y deserializa las 8.000 fichas (239 MB de JSON): ~10 s en local, 4 s en Render, y en
+# cola si hay varias a la vez (el buscador lanza una por letra). El índice guarda, de cada contrato y en el MISMO orden
+# en que los recorre la búsqueda de siempre, solo: su ficha, su posición en la ficha, el importe y dos números que
+# apuntan a tablas sin repetidos (empresa tal cual y normalizada; directivo y cargo A MOSTRAR, ya pasados por
+# _directivo_contrato, y el directivo normalizado). Con eso se filtra, se ordena y se suma en memoria, y de la base
+# solo se leen los contratos que se enseñan (500 de empresa, los de los 200 primeros grupos de directivo), con el
+# mismo _contrato_json de siempre: el resultado es idéntico (prueba_buscar_indice.py).
+#   - Se construye en un hilo de fondo DESPUÉS del primer precálculo (y de la copia de arranque), con una conexión de
+#     solo lectura (sin _db_lock) y cediendo el turno a las peticiones. Mientras no está, la búsqueda va como siempre.
+#   - Vale solo para la «firma» con la que se construyó: un contador de cambios de la tabla municipios (triggers TEMP
+#     de esta conexión: no se toca el esquema de cache.db), el fichero del BORME cargado y su periodo. Si la firma ya
+#     no coincide, esa búsqueda va por el camino de siempre y el hilo lo rehace (como mucho cada
+#     BUSCAR_INDICE_MIN_ENTRE_S); también se rehace tras cada precálculo.
+#   - BUSCAR_INDICE_MEMORIA=0 en Render lo apaga (no se construye y todo va por el camino de siempre).
+BUSCAR_INDICE_COMPROBAR_S = 60          # cada cuánto mira el hilo si hay que rehacerlo
+BUSCAR_INDICE_MIN_ENTRE_S = 600         # como mucho, una reconstrucción cada 10 min (el nocturno cambia fichas sin parar)
+BUSCAR_INDICE_ESPERA_MAX_S = 1800       # si el precálculo no avisa en 30 min (falla), se construye igual
+_buscar_indice = None                   # el índice listo (se sustituye entero, nunca se modifica)
+_buscar_indice_precalculo = threading.Event()
+_buscar_indice_estado = {"estado": "sin construir", "construcciones": 0, "con_indice": 0, "sin_indice": 0,
+                         "precalculos": 0}
+_buscar_indice_version_db = {"con": None}
+
+
+def _buscar_indice_activo():
+    return os.environ.get("BUSCAR_INDICE_MEMORIA", "1").strip() != "0"
+
+
+def _buscar_indice_version(cerrojo_cogido=False):
+    """Contador de cambios de la tabla municipios en la conexión compartida (la única que la escribe: un solo proceso,
+    ver render.yaml). Lo llevan triggers TEMP, que se crean la primera vez en cada conexión (tras el fork hay otra).
+    None si no se puede saber (entonces no se usa el índice). `cerrojo_cogido`: quien llama ya tiene _db_lock."""
+    if not cerrojo_cogido:
+        with _db_lock:
+            return _buscar_indice_version(True)
+    try:
+        if _buscar_indice_version_db["con"] is not _db:
+            if _db.in_transaction:
+                return None                           # hay escrituras sin confirmar: se prueba en la próxima
+            _db.execute("CREATE TEMP TABLE IF NOT EXISTS buscar_indice_version (n INTEGER NOT NULL)")
+            if _db.execute("SELECT count(*) FROM temp.buscar_indice_version").fetchone()[0] == 0:
+                _db.execute("INSERT INTO temp.buscar_indice_version VALUES (0)")
+            for op in ("INSERT", "UPDATE", "DELETE"):
+                _db.execute(f"CREATE TEMP TRIGGER IF NOT EXISTS buscar_indice_{op.lower()} AFTER {op} ON "
+                            f"main.municipios BEGIN UPDATE buscar_indice_version SET n = n + 1; END")
+            _db.commit()
+            _buscar_indice_version_db["con"] = _db
+        if _db.in_transaction:
+            return None
+        # si alguien borrara y volviera a crear la tabla municipios, sus triggers desaparecerían con ella: se vuelven
+        # a crear y cuenta como un cambio
+        if _db.execute("SELECT count(*) FROM sqlite_temp_master WHERE type='trigger' AND name IN "
+                       "('buscar_indice_insert','buscar_indice_update','buscar_indice_delete')").fetchone()[0] != 3:
+            _buscar_indice_version_db["con"] = None
+            _db.execute("UPDATE temp.buscar_indice_version SET n = n + 1")
+            _db.commit()
+            return _buscar_indice_version(True)
+        return (id(_db), _db.execute("SELECT n FROM temp.buscar_indice_version").fetchone()[0])
+    except sqlite3.Error as e:
+        print(f"[buscar-indice] contador de cambios: {type(e).__name__}: {e}", flush=True)
+        return None
+
+
+def _buscar_indice_firma(cerrojo_cogido=False):
+    """Todo aquello de lo que depende el resultado de una búsqueda de empresa o directivo, o None si no se sabe."""
+    v = _buscar_indice_version(cerrojo_cogido)
+    if v is None:
+        return None
+    periodo = ADMINISTRADORES_BORME_META.get("periodo")
+    return (v, id(ADMINISTRADORES_BORME), len(ADMINISTRADORES_BORME), tuple(periodo) if periodo else None,
+            _borme_historico_cargado())
+
+
+class _BuscarIndice:
+    __slots__ = ("firma", "fic_rowid", "fic_muni", "fic_prov", "ent_fic", "ent_ci", "ent_imp", "ent_emp", "ent_dir",
+                 "ent_ini", "ent_fin", "emp_raw", "emp_norm", "dir_par", "dir_norm", "construido", "segundos")
+
+
+_JSON_DEC = json.JSONDecoder()
+_JSON_ESPACIOS = re.compile(r"[ \t\n\r]*").match     # los espacios que admite JSON
+
+
+def _ficha_y_posiciones(s):
+    """Lo mismo que json.loads(s) para una ficha y, además, dónde empieza y acaba en el texto cada contrato de
+    «contratos» ([(inicio, fin)], índices de carácter): así, para enseñar un contrato, basta con leer ese trozo y no
+    hay que deserializar la ficha entera. None si el texto no tiene la forma esperada (entonces json.loads y sin
+    posiciones)."""
+    from json.decoder import scanstring
+    ws = _JSON_ESPACIOS
+    try:
+        i = ws(s, 0).end()
+        if s[i] != "{":
+            return None
+        i = ws(s, i + 1).end()
+        d, pos = {}, None
+        if s[i] == "}":
+            return (d, None) if ws(s, i + 1).end() == len(s) else None
+        while True:
+            if s[i] != '"':
+                return None
+            k, i = scanstring(s, i + 1)
+            i = ws(s, i).end()
+            if s[i] != ":":
+                return None
+            i = ws(s, i + 1).end()
+            if k == "contratos" and s[i] == "[":
+                lista, p = [], []
+                i = ws(s, i + 1).end()
+                if s[i] == "]":
+                    i += 1
+                else:
+                    while True:
+                        v, fin = _JSON_DEC.raw_decode(s, i)
+                        lista.append(v)
+                        p.append((i, fin))
+                        i = ws(s, fin).end()
+                        if s[i] == ",":
+                            i = ws(s, i + 1).end()
+                            continue
+                        if s[i] != "]":
+                            return None
+                        i += 1
+                        break
+                d[k], pos = lista, p
+            else:
+                d[k], i = _JSON_DEC.raw_decode(s, i)
+                if k == "contratos":
+                    pos = None
+            i = ws(s, i).end()
+            if s[i] == ",":
+                i = ws(s, i + 1).end()
+                continue
+            if s[i] != "}":
+                return None
+            break
+        return (d, pos) if ws(s, i + 1).end() == len(s) else None
+    except (ValueError, IndexError):
+        return None
+
+
+def _buscar_indice_construir():
+    """Construye el índice entero y lo deja en _buscar_indice. Devuelve el índice, o None si no se pudo."""
+    from array import array
+    t0 = time.time()
+    _buscar_indice_estado["estado"] = "construyendo"
+    try:
+        con = sqlite3.connect(f"file:{DB_FILE}?mode=ro", uri=True, check_same_thread=False, timeout=30)
+    except sqlite3.Error as e:
+        _buscar_indice_estado.update(estado=f"error: {type(e).__name__}")
+        return None
+    try:
+        # la firma y el principio de la lectura, a la vez y con _db_lock: lo que se lee (una instantánea de WAL de la
+        # conexión de solo lectura) es exactamente lo que había con ese contador de cambios
+        with _db_lock:
+            firma = _buscar_indice_firma(cerrojo_cogido=True)
+            if firma is None:
+                _buscar_indice_estado["estado"] = "sin construir (escrituras pendientes; se reintenta)"
+                return None
+            con.execute("BEGIN")
+            cur = con.execute("SELECT rowid, data, provincia FROM municipios ORDER BY rowid")
+            primeras = cur.fetchmany(40)
+        ix = _BuscarIndice()
+        ix.fic_rowid, ix.fic_muni, ix.fic_prov = array("q"), [], []
+        ix.ent_fic, ix.ent_ci, ix.ent_imp = array("i"), array("i"), array("d")
+        ix.ent_emp, ix.ent_dir, ix.ent_ini, ix.ent_fin = array("i"), array("i"), array("i"), array("i")
+        ix.emp_raw, ix.emp_norm, ix.dir_par, ix.dir_norm = [], [], [], []
+        emp_id, dir_id, memo_dir, cadenas = {}, {}, {}, {}
+        filas, n_fic = primeras, 0
+        while filas:
+            for rowid, data, prov in filas:
+                dp = _ficha_y_posiciones(data) if isinstance(data, str) else None
+                if dp is not None:
+                    d, posiciones = dp
+                else:
+                    try:
+                        d = json.loads(data)
+                    except Exception:
+                        continue                      # como _db_iter_municipios: una ficha ilegible no entra
+                    posiciones = None
+                if not isinstance(d, dict):
+                    raise ValueError(f"ficha {rowid} que no es un objeto")
+                if posiciones is not None and len(posiciones) != len(d.get("contratos", [])):
+                    posiciones = None
+                f = len(ix.fic_rowid)
+                ix.fic_rowid.append(rowid)
+                ix.fic_muni.append(cadenas.setdefault(d.get("municipio", ""), d.get("municipio", "")))
+                ix.fic_prov.append(prov)
+                for ci, c in enumerate(d.get("contratos", [])):
+                    imp = c.get("importe_num", 0.0) or 0.0
+                    if not isinstance(imp, (int, float)) or isinstance(imp, bool):
+                        raise ValueError(f"importe_num no numérico en la ficha {rowid}")
+                    emp = c.get("empresa", "")
+                    e = emp_id.get(emp)
+                    if e is None:
+                        e = emp_id[emp] = len(ix.emp_raw)
+                        ix.emp_raw.append(emp)
+                        ix.emp_norm.append(normalizar(emp))
+                    llave = (emp, c.get("nif", ""), c.get("directivo", ""), c.get("cargo", ""))
+                    par = memo_dir.get(llave)
+                    if par is None:
+                        par = memo_dir[llave] = _directivo_contrato(c)
+                    k = -1
+                    if par[0]:
+                        k = dir_id.get(par)
+                        if k is None:
+                            k = dir_id[par] = len(ix.dir_par)
+                            ix.dir_par.append(par)
+                            ix.dir_norm.append(normalizar(par[0]))
+                    ix.ent_fic.append(f)
+                    ix.ent_ci.append(ci)
+                    ix.ent_imp.append(float(imp))
+                    ix.ent_emp.append(e)
+                    ix.ent_dir.append(k)
+                    ix.ent_ini.append(posiciones[ci][0] if posiciones else -1)
+                    ix.ent_fin.append(posiciones[ci][1] if posiciones else -1)
+                n_fic += 1
+                del d
+            if n_fic % 200 < 40:
+                _ceder_a_peticiones()             # que las páginas no esperen por esto
+            filas = cur.fetchmany(40)
+        con.execute("COMMIT")
+        del emp_id, dir_id, memo_dir, cadenas
+        ix.firma, ix.construido, ix.segundos = firma, time.time(), round(time.time() - t0, 1)
+        globals()["_buscar_indice"] = ix
+        _buscar_indice_estado.update(estado="listo", construcciones=_buscar_indice_estado["construcciones"] + 1,
+                                     construido_utc=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(ix.construido)),
+                                     segundos=ix.segundos, fichas=len(ix.fic_rowid), contratos=len(ix.ent_fic),
+                                     empresas=len(ix.emp_raw), directivos=len(ix.dir_par))
+        print(f"[buscar-indice] construido en {ix.segundos} s: {len(ix.fic_rowid)} fichas, {len(ix.ent_fic)} "
+              f"contratos, {len(ix.emp_raw)} empresas, {len(ix.dir_par)} directivos", flush=True)
+        return ix
+    except Exception as e:
+        _buscar_indice_estado["estado"] = f"error: {type(e).__name__}: {str(e)[:120]}"
+        print(f"[buscar-indice] no se pudo construir: {type(e).__name__}: {e}", flush=True)
+        return None
+    finally:
+        try:
+            con.close()
+        except Exception:
+            pass
+
+
+def _buscar_indice_bg():
+    """Hilo de fondo: espera al primer precálculo (que va después de la carga del arranque y de la copia de arranque)
+    y desde entonces mantiene el índice al día."""
+    if not _buscar_indice_activo():
+        _buscar_indice_estado["estado"] = "apagado (BUSCAR_INDICE_MEMORIA=0)"
+        return
+    _buscar_indice_precalculo.wait(timeout=BUSCAR_INDICE_ESPERA_MAX_S)
+    ultimo, precalculos_vistos = 0.0, -1
+    while True:
+        try:
+            ix = _buscar_indice
+            hecho_precalculo = _buscar_indice_estado["precalculos"] != precalculos_vistos
+            if ix is None or hecho_precalculo or _buscar_indice_firma() != ix.firma:
+                if ix is None or time.time() - ultimo >= BUSCAR_INDICE_MIN_ENTRE_S:
+                    precalculos = _buscar_indice_estado["precalculos"]
+                    ultimo = time.time()
+                    if _buscar_indice_construir() is not None:
+                        precalculos_vistos = precalculos
+                    _liberar_memoria()
+        except Exception as e:
+            print(f"[buscar-indice] hilo: {type(e).__name__}: {e}", flush=True)
+        time.sleep(BUSCAR_INDICE_COMPROBAR_S)
+
+
+def _buscar_indice_contratos(ix, posiciones):
+    """{posición: contrato (dict)} leídos de la base para esas posiciones del índice: de cada ficha, solo esos
+    contratos (json_each, dentro de SQLite). None si algo no cuadra (entonces se busca como siempre)."""
+    por_fic = {}
+    for p in posiciones:
+        por_fic.setdefault(ix.ent_fic[p], []).append(p)
+    out = {}
+    for f, ps in por_fic.items():
+        rowid = ix.fic_rowid[f]
+        if all(ix.ent_ini[p] >= 0 for p in ps):
+            # el texto de la ficha y, de él, solo el trozo de cada contrato (la ficha más grande son ~4 MB)
+            with _db_lock:
+                fila = _db.execute("SELECT data FROM municipios WHERE rowid=?", (rowid,)).fetchone()
+            if not fila or not isinstance(fila[0], str):
+                return None
+            texto = fila[0]
+            for p in ps:
+                trozo = texto[ix.ent_ini[p]:ix.ent_fin[p]]
+                if not (trozo.startswith("{") and trozo.endswith("}")):
+                    return None
+                out[p] = json.loads(trozo)
+            continue
+        pos_de_ci = {ix.ent_ci[p]: p for p in ps}
+        cis = sorted(pos_de_ci)
+        for i in range(0, len(cis), 500):
+            trozo = cis[i:i + 500]
+            with _db_lock:
+                filas = _db.execute(
+                    f"SELECT j.key, j.value FROM municipios m, json_each(m.data, '$.contratos') j "
+                    f"WHERE m.rowid=? AND j.key IN ({','.join('?' * len(trozo))})", (rowid, *trozo)).fetchall()
+            if len(filas) != len(trozo):
+                return None
+            for ci, valor in filas:
+                c = json.loads(valor)
+                if not isinstance(c, dict):
+                    return None
+                out[pos_de_ci[ci]] = c
+    return out
+
+
+def _buscar_con_indice(tipo, q, q_norm, provincia=None):
+    """Lo mismo que api_buscar para «empresa» y «directivo», con el índice. None si no se puede usar (apagado, sin
+    construir, desfasado o cualquier error): entonces se busca como siempre."""
+    ix = _buscar_indice
+    if ix is None or not _buscar_indice_activo():
+        return None
+    try:
+        firma = _buscar_indice_firma()
+        if firma is None or firma != ix.firma:
+            return None
+        prov_ok = (lambda f: True) if provincia is None else (lambda f: ix.fic_prov[f] == provincia)
+        fic_vale = None if provincia is None else bytearray(prov_ok(f) for f in range(len(ix.fic_rowid)))
+        if tipo == "empresa":
+            hay = bytearray(q_norm in n for n in ix.emp_norm)
+            ent_emp, ent_fic = ix.ent_emp, ix.ent_fic
+            pos = [p for p in range(len(ent_emp)) if hay[ent_emp[p]] and (fic_vale is None or fic_vale[ent_fic[p]])]
+            imp = ix.ent_imp
+            pos.sort(key=lambda p: imp[p], reverse=True)          # estable, como el sort de siempre
+            total = sum(imp[p] for p in pos)
+            contratos = _buscar_indice_contratos(ix, pos[:500])
+            if contratos is None or _buscar_indice_firma() != firma:
+                return None
+            resultados = [_contrato_json(contratos[p], ix.fic_muni[ix.ent_fic[p]]) for p in pos[:500]]
+            return {"tipo": "empresa", "query": q, "resultados": resultados, "total_contratos": len(pos),
+                    "total_importe": fmt_eur(str(total))}
+        if tipo == "directivo":
+            hay = bytearray(q_norm in n for n in ix.dir_norm)
+            ent_dir, ent_fic, imp = ix.ent_dir, ix.ent_fic, ix.ent_imp
+            grupos = {}
+            for p in range(len(ent_dir)):
+                k = ent_dir[p]
+                if k < 0 or not hay[k] or (fic_vale is not None and not fic_vale[ent_fic[p]]):
+                    continue
+                emp = ix.emp_raw[ix.ent_emp[p]]
+                g = grupos.get(emp)
+                if g is None:
+                    directivo, cargo_dir = ix.dir_par[k]
+                    g = grupos[emp] = {"empresa": emp, "directivo": directivo, "cargo": cargo_dir, "contratos": [],
+                                       "total": 0.0}
+                g["contratos"].append(p)
+                g["total"] += imp[p]
+            lista = sorted(grupos.values(), key=lambda g: g["total"], reverse=True)
+            for g in lista[:200]:
+                g["contratos"].sort(key=lambda p: imp[p], reverse=True)
+            contratos = _buscar_indice_contratos(ix, [p for g in lista[:200] for p in g["contratos"]])
+            if contratos is None or _buscar_indice_firma() != firma:
+                return None
+            for g in lista[:200]:
+                g["contratos"] = [_contrato_json(contratos[p], ix.fic_muni[ix.ent_fic[p]]) for p in g["contratos"]]
+                g["total_importe"] = fmt_eur(str(g["total"]))
+                g["n_contratos"] = len(g["contratos"])
+            total_global = sum(g["total"] for g in lista)
+            return {"tipo": "directivo", "query": q, "grupos": lista[:200], "n_empresas": len(lista),
+                    "total_importe": fmt_eur(str(total_global))}
+    except Exception as e:
+        print(f"[buscar-indice] búsqueda: {type(e).__name__}: {e}", flush=True)
+    return None
+
+
+def _totales_ficha(clave):
+    """(total_contratos, suma de importe_num) de una ficha, calculados dentro de SQLite (JSON1) sin pasar la ficha
+    entera a Python: una ciudad grande son varios MB de JSON. Si SQLite no tuviera JSON1, se lee la ficha."""
+    try:
+        with _db_lock:
+            fila = _db.execute(
+                "SELECT json_type(data, '$.total_contratos'), json_extract(data, '$.total_contratos'), "
+                "(SELECT sum(json_extract(value, '$.importe_num')) FROM json_each(data, '$.contratos')) "
+                "FROM municipios WHERE municipio=?", (clave,)).fetchone()
+        if not fila:
+            return 0, 0.0
+        return (fila[1] if fila[0] is not None else 0), (fila[2] or 0.0)
+    except sqlite3.OperationalError:
+        with _db_lock:
+            fila = _db.execute("SELECT data FROM municipios WHERE municipio=?", (clave,)).fetchone()
+        try:
+            d = json.loads(fila[0]) if fila else {}
+        except ValueError:
+            d = {}
+        return d.get("total_contratos", 0), sum(c.get("importe_num", 0.0) for c in d.get("contratos", []))
+
+
+def api_buscar(tipo, q, datos, provincia=None):
     """Backend del buscador avanzado (GET /api/buscar?tipo=...&q=...). Devuelve
-    un dict JSON-serializable; ninguna búsqueda distingue mayúsculas ni acentos."""
+    un dict JSON-serializable; ninguna búsqueda distingue mayúsculas ni acentos.
+    `provincia`: la misma con la que se filtraron `datos` (None = toda España); la usa el índice en memoria."""
     q = (q or "").strip()
     if len(q) < 2:
         return {"tipo": tipo, "query": q, "error": "Escribe al menos 2 caracteres."}
 
     q_norm = normalizar(q)
 
+    if tipo in ("empresa", "directivo"):              # 19-11-2026: con el índice en memoria si está listo y al día
+        r = _buscar_con_indice(tipo, q, q_norm, provincia)
+        _buscar_indice_estado["con_indice" if r is not None else "sin_indice"] += 1
+        if r is not None:
+            return r
+
     if tipo == "ayuntamiento":
-        # Búsqueda de municipio siempre nacional (Murcia + Girona), sin
-        # filtrar por la provincia de la página desde la que se lanza --
-        # reutiliza el mismo POST /buscar que el buscador clásico de la
-        # cabecera (ver formulario municipio/provincia en filaMunicipio()).
-        # solo (total de contratos, importe) de cada ficha, leídas de una en una (ver _db_iter_municipios)
-        por_muni = {clave_municipio(d.get("municipio", ""), d.get("provincia")):
-                    (d.get("total_contratos", 0), sum(c.get("importe_num", 0.0) for c in d.get("contratos", [])))
-                    for d in _db_iter_municipios()}
+        # Búsqueda de municipio siempre nacional, sin filtrar por la provincia de la página desde la que se lanza --
+        # reutiliza el mismo POST /buscar que el buscador clásico de la cabecera (ver filaMunicipio()).
+        # 19-11-2026: antes leía y deserializaba las 8.000 fichas en cada letra tecleada (~4 s en Render; 3 a la vez,
+        # 10-12 s; en el registro de lentas, hasta 39 s). Ahora: los nombres se filtran en memoria, «tiene datos» sale
+        # de las claves de la tabla (sin leer las fichas) y el total de contratos y el importe se sacan, dentro de
+        # SQLite, solo de las 60 que se enseñan. El resultado es el mismo (ver prueba_buscar_ayuntamiento.py).
+        with _db_lock:
+            con_ficha = {k for (k,) in _db.execute("SELECT municipio FROM municipios")}
         resultados = []
         for prov, lista_muni in MUNICIPIOS_POR_PROVINCIA.items():
             nombres = list(_pseudos_de_provincia(prov)) + list(lista_muni)
             for muni in nombres:
                 if q_norm not in normalizar(muni):
                     continue
-                d = por_muni.get(clave_municipio(muni, prov))
-                cached = d is not None
-                total_imp = d[1] if cached else 0.0
+                clave = clave_municipio(muni, prov)
                 resultados.append({
                     "municipio": muni,
                     "provincia": prov,
                     "provincia_label": PROVINCIA_LABEL.get(prov, prov),
-                    "cached": cached,
-                    "total_contratos": d[0] if cached else 0,
-                    "total_importe": fmt_eur(str(total_imp)) if cached else "",
+                    "cached": clave in con_ficha,
+                    "total_contratos": 0,
+                    "total_importe": "",
+                    "_clave": clave,
                 })
         resultados.sort(key=lambda r: (not r["cached"], normalizar(r["municipio"])))
-        return {"tipo": "ayuntamiento", "query": q, "resultados": resultados[:60]}
+        resultados = resultados[:60]
+        for r in resultados:
+            clave = r.pop("_clave")
+            if r["cached"]:
+                r["total_contratos"], total_imp = _totales_ficha(clave)
+                r["total_importe"] = fmt_eur(str(total_imp))
+        return {"tipo": "ayuntamiento", "query": q, "resultados": resultados}
 
     if tipo == "empresa":
         resultados = []
@@ -26120,6 +26523,7 @@ def _diagnostico_arranque():
         "memoria_rss_mb": memoria_rss_mb,
         "memoria_desglose": _memoria_desglose(),
         "carga": _estado_carga(),
+        "buscar_indice": dict(_buscar_indice_estado, activo=_buscar_indice_activo()),
         "disco": _uso_disco(),
     }
 
@@ -31760,7 +32164,8 @@ def _route_get(path, qs, gzip_ok=False):
             datos_snap = _db_iter_municipios(provincia=provincia_param)
         else:
             datos_snap = _db_iter_municipios()   # "" o "todas" -> sin filtro, busca en toda España
-        resultado = api_buscar(tipo, q, datos_snap)
+        resultado = api_buscar(tipo, q, datos_snap,
+                               provincia_param if provincia_param in MUNICIPIOS_POR_PROVINCIA else None)
         return _resp(json.dumps(resultado, ensure_ascii=False),
                      content_type="application/json; charset=utf-8", gzip_ok=gzip_ok)
 
