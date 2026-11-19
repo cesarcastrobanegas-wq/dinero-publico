@@ -21,10 +21,14 @@ import re
 
 try:
     from . import filtro_licitaciones as F
+    from . import forma_pago as FP
     from . import licitaciones_place as LIC
+    from . import licitaciones_guia as G
 except ImportError:
     import filtro_licitaciones as F
+    import forma_pago as FP
     import licitaciones_place as LIC
+    import licitaciones_guia as G
 
 RUTA = "/filtro-licitaciones"
 MAX_FICHAS_VISTA = 10                    # por grupo, en la vista previa
@@ -36,13 +40,16 @@ PRIVACIDAD = ("Responsable: Dinero Público. Usamos estos datos solo para enviar
               "avisaremos un mes antes y, si no nos dices que lo mantengamos, lo borraremos. Puedes darte de baja en "
               "cualquier momento con el enlace de cada correo.")
 ANCLA_AVISO_LEGAL = "/aviso-legal#filtro-licitaciones"
-# Cómo se contrata o se renueva (31-10): lo decide el titular. Mientras siga entre corchetes, la web NO manda los avisos de
-# vencimiento y no enseña esta frase en ningún sitio (se vería el corchete). Es el final de «Para renovarlo: ...».
-FORMA_PAGO = "[FORMA DE PAGO]"
+# Cómo se contrata o se renueva (31-10): lo decide el titular. Desde el 04-11 ya no es una constante con el hueco
+# «[FORMA DE PAGO]» sino la capa forma_pago.py (variable de entorno FORMA_PAGO, apagada por defecto). Mientras no esté
+# puesta, la web NO manda los avisos de vencimiento y no enseña esta frase en ningún sitio, igual que con el hueco.
+# Es el final de «Para renovarlo: ...» / «Para contratarlo: ...».
+def forma_pago_texto():
+    return FP.texto()
 
 
 def forma_pago_puesta():
-    return bool(FORMA_PAGO.strip()) and "[" not in FORMA_PAGO
+    return FP.puesta()
 
 CSS = """
 *{box-sizing:border-box}
@@ -78,6 +85,7 @@ color:#fff;cursor:pointer}
 .ficha h3{font-size:1rem;margin:6px 0 4px}
 .ficha ul{margin:4px 0 6px 18px;padding:0}.ficha li{margin:2px 0}
 .ficha .dato{font-size:.92rem;color:#3a4356}
+.comprobar{border-top:1px dashed #c6ccd6;margin:8px 0 0;padding:6px 0 0;font-size:.9rem;color:#2b3446}.comprobar ul{margin:2px 0 4px 18px}.comprobar-guia{margin:2px 0 0}
 .sumario{display:inline-block;border:1px solid #1c2333;border-radius:4px;padding:0 6px;font-size:.8rem;font-weight:700}
 .trampa{position:absolute;left:-9999px}
 .caja{background:#fff;border:1px solid #d9dde5;border-radius:10px;padding:12px 14px;margin:0 0 14px}
@@ -256,7 +264,7 @@ def _ficha_html(r):
     return (f'<div class="ficha"><div class="cab"><span>{s} {nombre}</span><span>Cierra: {_e(_fecha(r["fin_plazo"]))}</span></div>'
             f'<h3>{sumario}{_e(r["titulo"])}</h3>{lote}<div class="dato"><b>Organismo:</b> {_e(r["organo"])}</div>'
             f'<div class="dato">{" · ".join(datos)}</div><ul>{"".join(f"<li>{_e(m)}</li>" for m in r["motivos"])}</ul>'
-            f'{enlace}</div>')
+            f'{enlace}{G.lista_html(r.get("comprobar"))}</div>')
 
 
 _GRUPO = {
@@ -351,7 +359,7 @@ def confirmar_pedir_html(campos):
 
 def _sin_servicio_html():
     """Caja para quien no tiene el servicio contratado (ni pago vigente ni cortesía): no recibe el correo semanal."""
-    como = f" Para contratarlo: {FORMA_PAGO}" if forma_pago_puesta() else ""
+    como = f" Para contratarlo: {forma_pago_texto()}" if forma_pago_puesta() else ""
     return ('<div class="caja"><b>Ahora no tienes el servicio contratado</b>, así que no te enviamos el correo semanal. '
             f'Guardamos el perfil de tu empresa para que no tengas que rellenarlo otra vez.{_e(como)}</div>')
 
@@ -497,7 +505,7 @@ def _ficha_correo(r):
     txt = [f"{s} {nombre} · CIERRA: {_fecha(r['fin_plazo'])}",
            ("PROCEDIMIENTO SUMARIO · " if r["sumario"] else "") + r["titulo"]] + lineas_lote + [
         f"Organismo: {r['organo']}", datos] + [f"  - {m}" for m in r["motivos"]] + (
-        [f"Anuncio oficial: {r['url']}"] if r.get("url") else [])
+        [f"Anuncio oficial: {r['url']}"] if r.get("url") else []) + G.lista_texto(r.get("comprobar"), G.SITIO)
     titulo = (f'<a href="{_e(r["url"])}" style="color:#1c2333;text-decoration:underline">{_e(r["titulo"])}</a>'
               if r.get("url") else _e(r["titulo"]))
     sumario = ('<div style="font-weight:700;font-size:13px;margin:0 0 4px">&gt;&gt; PROCEDIMIENTO SUMARIO</div>'
@@ -516,7 +524,8 @@ def _ficha_correo(r):
              f'<div style="font-size:14px;color:#374151"><b>Organismo:</b> {_e(r["organo"])}</div>'
              f'<div style="font-size:14px;color:#374151">{_e(datos)}</div>'
              f'<ul style="margin:6px 0 0 18px;padding:0;font-size:14px">'
-             + "".join(f'<li style="margin:2px 0">{_e(m)}</li>' for m in r["motivos"]) + "</ul></div>")
+             + "".join(f'<li style="margin:2px 0">{_e(m)}</li>' for m in r["motivos"]) + "</ul>"
+             + G.lista_html(r.get("comprobar"), G.SITIO, "color:#1b2f5c") + "</div>")
     return txt, html_
 
 
@@ -554,11 +563,12 @@ def correo_semanal(res, enlace_ver, enlace_baja, ahora):
     boton = "Ver todas mis licitaciones"
     lineas += [f"{boton}: {enlace_ver}", "",
                "Orientativo: comprueba siempre el pliego oficial antes de presentarte. Los datos vienen de la "
-               "Plataforma de Contratación del Sector Público."]
+               "Plataforma de Contratación del Sector Público y de las plataformas autonómicas que agrega."]
     cuerpo += (f'<p style="margin:18px 0"><a href="{_e(enlace_ver)}" style="background:#1b2f5c;color:#ffffff;'
                f'text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:700;display:inline-block">'
                f'{_e(boton)}</a></p><p style="font-size:13px;color:#4b5563">Orientativo: comprueba siempre el pliego '
-               f'oficial antes de presentarte. Los datos vienen de la Plataforma de Contratación del Sector Público.</p>')
+               f'oficial antes de presentarte. Los datos vienen de la Plataforma de Contratación del Sector Público '
+               f'y de las plataformas autonómicas que agrega.</p>')
     pie_txt, pie_html = _pie_baja(enlace_baja)
     asunto = (f"{total} licitación nueva para tu empresa" if total == 1 else f"{total} licitaciones nuevas para tu empresa") \
         + f" · semana del {_fecha_larga(ahora)}"
@@ -572,7 +582,7 @@ def correo_sigues(enlace_mantener, enlace_baja, fecha_borrado):
     intro = ("Hace casi un año que no usas tu perfil de licitaciones de Dinero Público y no tienes el servicio "
              "contratado. Para no guardar datos que ya no hacen falta, borramos los perfiles que no se usan.")
     pide = ("Si quieres que lo guardemos, para no tener que rellenarlo otra vez si contratas el servicio, pulsa aquí "
-            "para mantener tu perfil:" + (f" (para contratarlo: {FORMA_PAGO})" if forma_pago_puesta() else ""))
+            "para mantener tu perfil:" + (f" (para contratarlo: {forma_pago_texto()})" if forma_pago_puesta() else ""))
     plazo = (f"Si no lo pulsas antes del {_fecha_larga(fecha_borrado)}, borraremos tu correo y los datos de tu empresa, "
              f"y no te escribiremos más. No tienes que hacer nada más.")
     boton = "Sí, mantener mi perfil"
@@ -606,7 +616,7 @@ def correo_vence(clase, fin, fin_cortesia, hoy, enlace_ver, enlace_baja):
     """(asunto, texto, html) del aviso de vencimiento. clase: "antes" (15 días antes) o "vence" (el día que vence; si
     la pasada no pudo ese día, sale en los de cortesía y dice «venció»). fin, fin_cortesia, hoy: fechas peninsulares
     (date o datetime). Solo se manda con FORMA_PAGO puesta."""
-    renovar = f"Para renovarlo: {FORMA_PAGO}"
+    renovar = f"Para renovarlo: {forma_pago_texto()}"
     guardamos = ("Después dejaremos de enviártelo, pero guardaremos el perfil de tu empresa para que, si renuevas más "
                  "adelante, no tengas que rellenarlo otra vez.")
     if clase == "antes":

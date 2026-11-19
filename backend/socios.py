@@ -415,8 +415,10 @@ class Almacen:
         return ""
 
     def marcar_aviso_pago(self, pid, ahora):
+        """Aviso de vencimiento enviado. También marca «intentado hoy» (como marcar_aviso): ese día ya no recibe el
+        correo semanal en ninguna tanda; le llega en la pasada del día siguiente (arreglo del 04-11)."""
         with self.lock:
-            self.db.execute("UPDATE perfiles SET aviso_pago=? WHERE id=?", (ahora, pid))
+            self.db.execute("UPDATE perfiles SET aviso_pago=?, intentado=? WHERE id=?", (ahora, ahora, pid))
             self.db.commit()
 
     def marcar_aviso(self, pid, ahora):

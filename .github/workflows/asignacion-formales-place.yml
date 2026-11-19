@@ -38,11 +38,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.rama }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -50,7 +50,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Meses ya procesados (caché)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: asignacion_place
           key: asignacion-place-${{ github.run_id }}
@@ -72,7 +72,7 @@ jobs:
       # always(): si algo falla, los meses ya hechos no se pierden.
       - name: Guardar el avance en la caché
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: asignacion_place
           key: asignacion-place-${{ github.run_id }}
@@ -127,7 +127,7 @@ jobs:
 
       - name: Resultado (artefacto, sin adjudicatarios)
         if: steps.generar.outputs.codigo == '0'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: asignacion-place
           path: |
