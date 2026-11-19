@@ -3,7 +3,8 @@
 Contratos MENORES del Ayuntamiento de Fuenlabrada (~192.000 hab., Comunidad de Madrid).
 
 Fuente OFICIAL: informes TRIMESTRALES del Ayuntamiento y sus Organismos Autónomos (OO.AA: CIFE, IMLS, OTAF,
-PMC, PMD) en `transparencia.ayto-fuenlabrada.es/contratos/menores/` -- página PÚBLICA y SIN contraseña (a
+PMC, PMD) en `transparencia.ayto-fuenlabrada.es/contratos-menores` (portal nuevo desde
+noviembre de 2026; antes, `/contratos/menores/` en WordPress) -- página PÚBLICA y SIN contraseña (a
 diferencia del "visor de contratos" general de ese mismo portal, que sí está protegido; esta es una sección
 distinta con ficheros descargables directos, encontrada navegando el menú completo de "Contratos y
 Patrimonio").
@@ -35,31 +36,50 @@ FICHERO = os.path.join(BASE_DIR, "contratos_menores_fuenlabrada.json.gz")
 from alcance import alcance_desde
 MENORES_DESDE_FECHA = alcance_desde()   # ventana móvil de 5 años (alcance.py), la misma que usa app.py
 
-_UPLOADS = "https://transparencia.ayto-fuenlabrada.es/wp-content/uploads"
-# (año, trimestre) -> URL exacta (recogidas a mano de transparencia.ayto-fuenlabrada.es/contratos/menores/,
-# 2026-09-29). Empieza en 2021T3 (el trimestre que contiene el inicio de la ventana de 5 años, 2021-09-01).
-FICHEROS = {
-    (2021, 3): f"{_UPLOADS}/2021/11/3o-TRIMESTRE-AYTO-Y-OOAA-contratos-menores-2021.xls",
-    (2021, 4): f"{_UPLOADS}/2022/01/4o-TRIMESTRE-AYTO-Y-OOAA.-MENORES.xls",
-    (2022, 1): f"{_UPLOADS}/2022/04/1T-2022-Contratos-menores-AYTO-Y-OO.AA_.xls",
-    (2022, 2): f"{_UPLOADS}/2022/07/Contratos-menores-2T-2022-AYTO-Y-OO.AA_.xls",
-    (2022, 3): f"{_UPLOADS}/2022/10/Contratos-menores-3T-2022-AYTO-Y-OO.AA_..xls",
-    (2022, 4): f"{_UPLOADS}/2023/01/4-TR-2022-AYTO-Y-OO.AA_..xls",
-    (2023, 1): f"{_UPLOADS}/2023/01/Contratos-Menores-1T-2023-AYTO-Y-OO.AA-1.xls",
-    (2023, 2): f"{_UPLOADS}/2025/03/2T-2023-AYTO-Y-OOAA.ods",
-    (2023, 3): f"{_UPLOADS}/2023/10/3T-2023-AYTO-Y-OOAA.ods",
-    (2023, 4): f"{_UPLOADS}/2024/01/4T-2023-AYTO-Y-OO.AA_..xls",
-    (2024, 1): f"{_UPLOADS}/2024/04/1-TR-2024-AYTO-Y-OO.AA_..ods",
-    (2024, 2): f"{_UPLOADS}/2024/07/2-TR-2024-AYTO-Y-OO.AA_..ods",
-    (2024, 3): f"{_UPLOADS}/2024/10/3T-2024-AYTO-Y-OO.AA_..ods",
-    (2024, 4): f"{_UPLOADS}/2025/01/4T-2024-AYTO-Y-OO.AA_..ods",
-    (2025, 1): f"{_UPLOADS}/2025/04/1T-2025-AYTO-Y-OO.AA_..xlsx",
-    (2025, 2): f"{_UPLOADS}/2025/07/2T-2025-AYTO-Y-OO.AA_..xls",
-    (2025, 3): f"{_UPLOADS}/2025/10/3T-2025-AYTO-Y-AA.OO_.xlsx",
-    (2025, 4): f"{_UPLOADS}/2026/01/4T-2025-AYTO-Y-OO.AA_..xls",
-    (2026, 1): f"{_UPLOADS}/2026/04/Contratos-menores-AYTO-Y-OO.AA-1T-2026.xls",
-    (2026, 2): f"{_UPLOADS}/2026/08/Contratos-menores-AYTO-Y-OO.AA_.-2T-2026.xls",
-}
+_PORTAL = "https://transparencia.ayto-fuenlabrada.es"
+# 09-11-2026: el ayuntamiento cambió de portal (los ficheros de wp-content/uploads dan 404 desde el 01-11). El nuevo
+# carga la lista de ficheros de su API pública: la vista /contratos-menores es la entidad de abajo, y cada registro
+# trae año, título («1er Trimestre 2026»), categoría y el fichero en «/download/...». Se cogen solo los informes
+# trimestrales del Ayuntamiento y sus OO.AA (los mismos de antes); las sociedades mercantiles van aparte en el portal
+# y no estaban en este generador.
+_API_LISTA = (_PORTAL + "/api/v1/entity-record/index-all?dynamic_entity_uuid=d1f22c9c-eafc-4cc0-8064-c0309aae6484"
+              "&active=1")
+_CATEGORIA = "Ayuntamiento y Organismos Autónomos"
+_RE_TRIMESTRE = re.compile(r"^([1-4])\s*(?:er|º|°|o|ª)?\s*Trimestre\s+(?:del?\s+)?(\d{4})$", re.I)
+
+
+def _texto_es(v):
+    return (v.get("es") if isinstance(v, dict) else v) or ""
+
+
+def ficheros_del_portal(registros):
+    """{(año, trimestre): URL} de los informes trimestrales del Ayuntamiento y OO.AA dentro de la ventana, a partir de
+    la lista de la API. Si un trimestre sale dos veces, se queda el actualizado más tarde."""
+    desde = (int(MENORES_DESDE_FECHA[:4]), (int(MENORES_DESDE_FECHA[5:7]) - 1) // 3 + 1)
+    out, cuando = {}, {}
+    for r in registros:
+        d = r.get("data") or {}
+        if _texto_es(d.get("builderInputComponent2")).strip() != _CATEGORIA:
+            continue
+        m = _RE_TRIMESTRE.match(_texto_es(d.get("builderInputComponent1")).strip())
+        doc = d.get("documentUploadComponent1") or {}
+        if not m or not str(doc.get("image") or "").startswith("/download/"):
+            continue
+        clave = (int(m.group(2)), int(m.group(1)))
+        if clave < desde:
+            continue
+        actualizado = "/".join(reversed(str(r.get("updated_at") or "").split("/")))   # dd/mm/aaaa -> aaaa/mm/dd
+        if clave not in out or actualizado >= cuando[clave]:
+            out[clave], cuando[clave] = _PORTAL + doc["image"], actualizado
+    return out
+
+
+def _lista_del_portal():
+    datos = json.loads(_get(_API_LISTA).decode("utf-8"))
+    registros = datos.get("data") if isinstance(datos, dict) else None
+    if not isinstance(registros, list):
+        raise ValueError("la API del portal no trae la lista de ficheros")
+    return registros
 
 _UA = "Mozilla/5.0 (compatible; dinero-publico-bot/1.0)"
 _RE_FECHA = re.compile(r"^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$")
@@ -241,7 +261,14 @@ def _guardar(existentes):
 
 def main():
     existentes = {}
-    for (anio, trimestre), url in sorted(FICHEROS.items()):
+    try:
+        ficheros = ficheros_del_portal(_lista_del_portal())
+    except Exception as e:
+        # sin la lista no se descarga nada: el flujo semanal lo cuenta como «fallan las descargas» y conserva el anterior
+        print(f"  !! lista de ficheros del portal: error de descarga ({type(e).__name__}: {e})", flush=True)
+        ficheros = {}
+    print(f"{len(ficheros)} informes trimestrales en el portal desde {MENORES_DESDE_FECHA[:7]}", flush=True)
+    for (anio, trimestre), url in sorted(ficheros.items()):
         etiqueta = f"{anio}T{trimestre}"
         print(f"Descargando {etiqueta}...", flush=True)
         try:
