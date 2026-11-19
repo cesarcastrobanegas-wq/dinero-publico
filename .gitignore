@@ -46,3 +46,10 @@ backend/socios.db-*
 *.db
 *.db-shm
 *.db-wal
+
+# FTS de la Comisión (backend/fts_comision.py, 2026-10-18): el fichero generado lleva nombres y NIF de personas
+# jurídicas y los CSV anuales pesan ~1 GB; nunca van al repositorio.
+*fts*.ndjson*
+fts_descargas/
+backend/fts_descargas/
+*_FTS_dataset_en.csv*
