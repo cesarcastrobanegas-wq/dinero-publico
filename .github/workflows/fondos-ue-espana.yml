@@ -19,6 +19,10 @@ name: Fondos UE de toda España (semanal)
 #    con las operaciones de esa fuente de la última carga buena y responde de qué día son. Después de subir lo demás, el
 #    flujo sale EN ROJO a propósito (para que llegue el correo de GitHub) con el aviso en el resumen de la ejecución.
 #    Si fallan dos o más, falla entero y no se sube nada.
+#  - 2026-11-05: diagnosticado: el balanceador de la Comisión (Server: awselb/2.0) responde 403 a TODO
+#    kohesio.ec.europa.eu y linkedopendata.eu desde la IP de Actions (portada incluida, con cualquier User-Agent); al PC,
+#    200 con las mismas direcciones. No ha cambiado la API. El 403 ya no se reintenta (antes, ~3 min) y el resumen dice
+#    cómo cargarlo desde el PC: python backend/subir_fondos_ue_pc.py. Sigue saliendo EN ROJO (decisión de César).
 #  - Antes tardaba unos 5 minutos. Miércoles por la tarde: fuera del refresco nocturno (06:35-13:00 UTC reales) y de los flujos
 #    de menores (jueves y domingo), que al guardar en main reinician la web.
 
@@ -77,6 +81,11 @@ jobs:
                      echo "::error::${aviso}"
                      echo "### Fondos UE: falta una fuente" >> "$GITHUB_STEP_SUMMARY"
                      echo "$aviso" >> "$GITHUB_STEP_SUMMARY"
+                     if [ "$falta" = "kohesio" ]; then
+                       # 05-11: Kohesio bloquea por IP a GitHub Actions (403 de su balanceador); al PC del titular, no
+                       echo "" >> "$GITHUB_STEP_SUMMARY"
+                       echo "Para cargar Kohesio, desde el PC: \`python backend/subir_fondos_ue_pc.py\` (pide el token; tarda ~1 h)." >> "$GITHUB_STEP_SUMMARY"
+                     fi
                    fi
                    break ;;
               *) echo "::error::Subida rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
