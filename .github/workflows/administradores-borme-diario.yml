@@ -69,7 +69,36 @@ jobs:
           path: backend/borme_actos.db
           key: borme-actos-${{ github.run_id }}
 
+      # 06-11-2026 (ancho de banda de Render): el generador solo necesita los adjudicatarios agregados y la tabla
+      # `directores`. La web los da en un resumen de pocos MB (/admin/resumen-administradores, ver
+      # resumen_adjudicatarios.py) y la base entera (1.509 MB) solo se baja si la web aún no tiene esa ruta o el
+      # resumen no es válido. Así el flujo funciona igual antes y después de desplegar el cambio.
+      - name: Resumen de adjudicatarios (pocos MB en vez de la base entera)
+        id: resumen
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          # 202 = la web lo está preparando (tarda unos minutos): se vuelve a preguntar cada 30 s, como mucho 30 min.
+          fin=$(( $(date +%s) + 1800 ))
+          while true; do
+            codigo=$(curl -sS --max-time 120 -o resumen.json.gz -w '%{http_code}' \
+              -H "X-Admin-Token: ${ADMIN_TOKEN}" "https://dinero-publico.com/admin/resumen-administradores" || echo 000)
+            [ "$codigo" = "202" ] || break
+            if [ "$(date +%s)" -ge "$fin" ]; then echo "::warning::El resumen sigue preparándose tras 30 min."; break; fi
+            echo "La web está preparando el resumen ($(head -c 200 resumen.json.gz)); se pregunta otra vez en 30 s"
+            sleep 30
+          done
+          if [ "$codigo" = "200" ] && python backend/resumen_adjudicatarios.py --comprobar resumen.json.gz; then
+            echo "Resumen válido: $(stat -c%s resumen.json.gz) bytes. No se baja la base entera."
+            echo "hay=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "Sin resumen (HTTP ${codigo}): se baja la base entera, como antes."
+            rm -f resumen.json.gz
+            echo "hay=no" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Base de producción (descarga reanudable)
+        if: steps.resumen.outputs.hay != 'si'
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
@@ -97,7 +126,14 @@ jobs:
           restore-keys: borme-historico-
 
       - name: Regenerar el fichero de administradores
-        run: python backend/administradores_borme.py --cache cache.db --salida administradores_borme.json
+        env:
+          HAY_RESUMEN: ${{ steps.resumen.outputs.hay }}
+        run: |
+          if [ "$HAY_RESUMEN" = "si" ]; then
+            python backend/administradores_borme.py --resumen resumen.json.gz --salida administradores_borme.json
+          else
+            python backend/administradores_borme.py --cache cache.db --salida administradores_borme.json
+          fi
 
       - name: Subir a Render (disco persistente)
         env:
@@ -119,4 +155,4 @@ jobs:
               *) echo "::error::Subida rechazada (HTTP ${codigo})"; cat respuesta.json; echo; exit 1 ;;
             esac
           done
-          rm -f administradores_borme.json administradores_borme.json.gz cache.db
+          rm -f administradores_borme.json administradores_borme.json.gz cache.db resumen.json.gz
