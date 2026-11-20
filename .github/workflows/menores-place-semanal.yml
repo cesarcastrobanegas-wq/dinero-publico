@@ -36,9 +36,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -46,7 +46,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: ZIP mensuales ya descargados (caché)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ~/place_menores_zips
           key: place-menores-zips-${{ github.run_id }}
@@ -63,7 +63,7 @@ jobs:
       # always(): si la generación falla, las descargas ya hechas no se pierden.
       - name: Guardar los ZIP en la caché
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ~/place_menores_zips
           key: place-menores-zips-${{ github.run_id }}
@@ -103,8 +103,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # El repositorio es público: ningún DNI/NIE completo de persona física llega a git (2026-10-11).
-          python backend/enmascarar_nif.py --aplicar 'backend/contratos_menores_place_*.json.gz'
-          python backend/enmascarar_nif.py --comprobar 'backend/contratos_menores_place_*.json.gz'
+          python backend/enmascarar_nif.py --texto --aplicar 'backend/contratos_menores_place_*.json.gz'
+          python backend/enmascarar_nif.py --texto --comprobar 'backend/contratos_menores_place_*.json.gz'
           git add backend/contratos_menores_place_*.json.gz
           if git diff --cached --quiet; then
             echo "Nada que guardar."

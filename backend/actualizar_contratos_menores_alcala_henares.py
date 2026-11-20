@@ -171,7 +171,7 @@ def _procesar_formato_ado(lineas, contador):
             continue
         nif, nombre, importe_txt = parsed
         # Posible continuación del nombre en la línea siguiente -- el nombre se corta a veces a mitad de
-        # palabra por el ancho de columna del PDF ("AGUIRRE*AVELLANO,FRA" + "NCISCO JAVIER" en la línea de
+        # palabra por el ancho de columna del PDF ("APELLIDO1*APELLIDO2,NOM" + "BRE COMPUESTO" en la línea de
         # abajo, partiendo literalmente "FRANCISCO" en dos). NO se puede detectar buscando "FRA." como marca
         # de inicio de descripción (bug real: esa abreviatura de factura varía, "FRA.", "FA.", o directamente
         # el número sin prefijo alguno según el trimestre) -- se usa en su lugar que una continuación de

@@ -23,11 +23,13 @@ Salida: un JSON con los hallazgos ({"tipo", "url", "n"}), sin datos personales: 
 dónde está y cuántos hay. Los registros del flujo son públicos; este script no imprime nunca el dato encontrado.
 
 Uso:  python backend/revision_privacidad.py --salida hallazgos.json [--base https://dinero-publico.com] [--fichas 15]
+      [--rutas "/?muni=Saucejo%2C+El&provincia=sevilla" ...]   (07-11-2026: páginas concretas, además de las de siempre)
 """
 import argparse
 import datetime
 import html
 import json
+import os
 import re
 import sys
 import time
@@ -119,19 +121,31 @@ class Web:
     def __init__(self, base, pausa=2.5):
         self.base, self.pausa, self.ultima, self.peticiones = base.rstrip("/"), pausa, 0.0, 0
 
-    def pedir(self, ruta, datos=None):
-        """(código, texto). Nunca lanza: un fallo de red devuelve (None, "")."""
+    def pedir(self, ruta, datos=None, con_token=True, max_bytes=None):
+        """(código, texto). Nunca lanza: un fallo de red devuelve (None, "").
+
+        `con_token=False`: sin la clave de administración, como un visitante cualquiera. Es OBLIGATORIO al comprobar
+        que /admin/* sigue cerrado (12-11-2026: desde el 08-11 la clave iba también ahí, las rutas respondían 200 a
+        la propia revisión y salía cada noche «Ruta de administración accesible sin clave»; además se bajaba la base
+        entera de /admin/cache-db y /admin/aviso-comentarios-prueba mandaba un correo de prueba).
+        `max_bytes`: lee como mucho eso del cuerpo (una ruta abierta por error no se descarga entera)."""
         espera = self.pausa - (time.time() - self.ultima)
         if espera > 0:
             time.sleep(espera)
         self.ultima = time.time()
         self.peticiones += 1
-        req = urllib.request.Request(self.base + ruta, data=datos,
-                                     headers={"User-Agent": "DineroPublico-RevisionPrivacidad/1.0 (+https://dinero-publico.com)"})
+        cabeceras = {"User-Agent": "DineroPublico-RevisionPrivacidad/1.0 (+https://dinero-publico.com)"}
+        # 08-11-2026: con el token, la web nunca frena esta revisión (freno de extractores A y B, ver app.py). Solo se
+        # manda a nuestra propia web: con --base apuntando a otro sitio no sale.
+        token = os.environ.get("ADMIN_TOKEN", "") if con_token else ""
+        if token and self.base.startswith(("https://dinero-publico.com", "http://127.0.0.1", "http://localhost")):
+            cabeceras["X-Admin-Token"] = token
+        req = urllib.request.Request(self.base + ruta, data=datos, headers=cabeceras)
         for intento in (1, 2, 3):
             try:
                 with urllib.request.urlopen(req, timeout=120) as r:
-                    return r.status, r.read().decode("utf-8", "replace")
+                    cuerpo = r.read(max_bytes) if max_bytes else r.read()
+                    return r.status, cuerpo.decode("utf-8", "replace")
             except urllib.error.HTTPError as e:
                 if e.code in (429, 502, 503, 504) and intento < 3:
                     time.sleep(30 * intento)
@@ -155,7 +169,7 @@ def muestra_de_fichas(sitemap, cuantas, fecha):
     return [urls[(inicio + i * paso) % len(urls)] for i in range(cuantas)]
 
 
-def revisar_web(base, n_fichas, fecha=None):
+def revisar_web(base, n_fichas, fecha=None, rutas=()):
     fecha = fecha or datetime.date.today()
     web, hallazgos = Web(base), []
 
@@ -172,6 +186,8 @@ def revisar_web(base, n_fichas, fecha=None):
                  "/fondos-ue?ambito=provincia&pag=3", "/convocatorias", "/convocatorias?tab=subvenciones", "/casos",
                  "/quien-soy", "/aviso-legal", "/metodologia", "/mapa-cobertura", "/?q=garcia", "/?q=martinez+lopez"):
         pagina(ruta)
+    for ruta in rutas:                                 # páginas concretas pedidas con --rutas
+        pagina(ruta)
     for url in muestra_de_fichas(sitemap, n_fichas, fecha):
         ruta = url[len(base):] if url.startswith(base) else "/" + url.split("/", 3)[-1]
         cuerpo = pagina(ruta)
@@ -181,7 +197,7 @@ def revisar_web(base, n_fichas, fecha=None):
     # Las rutas de administración siguen cerradas.
     for ruta, datos in (("/admin/revision", None), ("/admin/revision/comentarios", None), ("/admin/revision/alertas", None),
                         ("/admin/cache-db", None), ("/admin/alertas-db", b"token="), ("/admin/aviso-comentarios-prueba", b"token=")):
-        codigo, cuerpo = web.pedir(ruta, datos)
+        codigo, cuerpo = web.pedir(ruta, datos, con_token=False, max_bytes=65536)   # como un visitante, sin la clave
         cerrado = codigo in (401, 403, 404, 405) or (codigo == 200 and "Acceso restringido" in cuerpo and "<table" not in cuerpo)
         if not cerrado:
             hallazgos.append({"tipo": "admin-abierto" if codigo == 200 else "pagina-con-error", "url": base + ruta, "n": 1})
@@ -193,8 +209,9 @@ def main():
     ap.add_argument("--base", default="https://dinero-publico.com")
     ap.add_argument("--fichas", type=int, default=15)
     ap.add_argument("--salida", required=True)
+    ap.add_argument("--rutas", nargs="*", default=[], help="páginas concretas que revisar además (empiezan por /)")
     args = ap.parse_args()
-    hallazgos, peticiones = revisar_web(args.base, args.fichas)
+    hallazgos, peticiones = revisar_web(args.base, args.fichas, rutas=args.rutas)
     with open(args.salida, "w", encoding="utf-8") as f:
         json.dump({"fecha": datetime.date.today().isoformat(), "peticiones": peticiones, "hallazgos": hallazgos}, f, ensure_ascii=False)
     print(f"Páginas pedidas: {peticiones}. Hallazgos: {len(hallazgos)}.")
