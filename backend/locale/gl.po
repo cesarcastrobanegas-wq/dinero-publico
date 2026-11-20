@@ -34,14 +34,6 @@ msgstr "Nome non amosado"
 msgid "desde {fecha}"
 msgstr "dende {fecha}"
 
-#: app.py:5401
-msgid "Un sueldo de 0 € en ISPA no significa que no cobre nada -- suele indicar que quien ocupa el cargo ha renunciado al sueldo de alcalde/sa por percibir ya retribución de otro cargo público (frecuente cuando también forma parte del gobierno de una Diputación). Verificado así en varios municipios de la provincia de Barcelona."
-msgstr "Un soldo de 0 € no ISPA non significa que non cobre nada -- adoita indicar que quen ocupa o cargo renunciou ao soldo de alcalde/sa por percibir xa retribución doutro cargo público (frecuente cando tamén forma parte do goberno dunha Deputación). Verificado así en varios municipios da provincia de Barcelona."
-
-#: app.py:5407
-msgid "(posible renuncia por doble cargo ℹ️)"
-msgstr "(posible renuncia por dobre cargo ℹ️)"
-
 #: app.py:5412
 msgid "Último dato oficial del cargo: lo percibió {anterior}, alcalde hasta {fecha}. No es el sueldo de quien lo ocupa ahora."
 msgstr "Último dato oficial do cargo: percibiuno {anterior}, alcalde ata {fecha}. Non é o soldo de quen o ocupa agora."
@@ -506,9 +498,49 @@ msgstr "Clasificacións"
 msgid "Sueldos Alcaldes"
 msgstr "Soldos dos alcaldes"
 
+#: app.py
+msgid "Sueldos Concejales"
+msgstr "Soldos dos concelleiros"
+
 #: app.py:19331 app.py:19382 app.py:23196
 msgid "Convocatorias abiertas"
 msgstr "Convocatorias abertas"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "¿Tienes una empresa? Hoy hay 1 licitación pública abierta."
+msgstr "Tes unha empresa? Hoxe hai 1 licitación pública aberta."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "¿Tienes una empresa? Hoy hay {n} licitaciones públicas abiertas."
+msgstr "Tes unha empresa? Hoxe hai {n} licitacións públicas abertas."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Te decimos cuáles encajan con tu empresa."
+msgstr "Cada día a Administración adxudica contratos que leva a túa competencia mentres ti non te decatas. Dicímosche cales encaixan coa túa empresa."
+
+#: portada, bloque para empresas, filtro apagado (2026-11-08)
+msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Míralas todas aquí, ordenadas y con su plazo."
+msgstr "Cada día a Administración adxudica contratos que leva a túa competencia mentres ti non te decatas. Aquí podes velas todas, ordenadas e co seu prazo."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Ver las licitaciones abiertas"
+msgstr "Ver as licitacións abertas"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Avisarme de las de mi sector"
+msgstr "Avisarme das do meu sector"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Cierran pronto"
+msgstr "Pechan pronto"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "plazo hasta el {f}"
+msgstr "prazo ata o {f}"
+
+#: portada, bloque para empresas, plazo con hora (2026-11-08)
+msgid "plazo hasta el {f} a las {h}"
+msgstr "prazo ata o {f} ás {h}"
 
 #: app.py:19332 app.py:19386 app.py:28142
 msgid "Casos"
@@ -1334,6 +1366,12 @@ msgstr "Informes trimestrais en XLSX do Perfil do contratante do Concello de Tor
 msgid "XLSX oficiales del portal de transparencia del Ayuntamiento de San Cristóbal de La Laguna y sus organismos autónomos OAAM y OAD (uno por año y entidad, enlaces encontrados navegando con un navegador real). El importe es SIN IGIC, el impuesto indirecto propio de Canarias equivalente al IVA peninsular (no confundir con \"sin impuestos\" a secas)."
 msgstr "XLSX oficiais do portal de transparencia do Concello de San Cristóbal de La Laguna e os seus organismos autónomos OAAM e OAD (un por ano e entidade, ligazóns atopadas navegando cun navegador real). O importe é SEN IGIC, o imposto indirecto propio de Canarias equivalente ao IVE peninsular (non confundir con \"sen impostos\" sen máis)."
 
+msgid "Fuente sin actualizar desde el 25-10-2026: el portal del Ayuntamiento no responde desde entonces. Se muestran los contratos que había publicado hasta esa fecha (los más recientes, de diciembre de 2025)."
+msgstr "Fonte sen actualizar desde o 25-10-2026: o portal do Concello non responde desde entón. Móstranse os contratos que publicara ata esa data (os máis recentes, de decembro de 2025)."
+
+msgid "Listados del Ayuntamiento sin actualizar desde el {fecha}"
+msgstr "Listaxes do Concello sen actualizar desde o {fecha}"
+
 #: app.py:22071
 msgid "API real del portal de transparencia (Next.js, misma plataforma que Las Palmas de Gran Canaria) del Ayuntamiento de Arona, encontrada con un navegador real (Playwright). Sin fecha por contrato (ventana de 5 años aplicada por ejercicio completo; 2021 excluido por ambiguo). Sin descripción del objeto del contrato (la fuente no la publica en este listado)."
 msgstr "API real do portal de transparencia (Next.js, mesma plataforma que As Palmas de Gran Canaria) do Concello de Arona, atopada cun navegador real (Playwright). Sen data por contrato (ventá de 5 anos aplicada por exercicio completo; 2021 excluído por ambiguo). Sen descrición do obxecto do contrato (a fonte non a publica nesta listaxe)."
@@ -1393,6 +1431,10 @@ msgstr "O seu nome figura con DNI/NIE noutra fonte oficial"
 #: app.py:22421
 msgid "Autónomo / persona física"
 msgstr "Autónomo / persoa física"
+
+#: app.py (07-11-2026, adjudicatario sin nombre, solo con DNI)
+msgid "Persona física"
+msgstr "Persoa física"
 
 #: app.py:22441
 msgid "Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica un enlace por contrato para comprobarlo directamente, así que se muestra tal cual."
@@ -2309,6 +2351,14 @@ msgstr "Amósanse os primeiros {n} de {total}."
 #: app.py:23538
 msgid "Contratos menores (fuentes locales del ayuntamiento)"
 msgstr "Contratos menores (fontes locais do concello)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (fuentes del ayuntamiento y PLACE)"
+msgstr "Contratos menores (fontes do concello e PLACE)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (PLACE)"
+msgstr "Contratos menores (PLACE)"
 
 #: app.py:23547
 msgid "Adjudicatario / Objeto"
@@ -3358,6 +3408,212 @@ msgstr "Portada"
 msgid "Página no encontrada"
 msgstr "Páxina non atopada"
 
+msgid "Cómo presentarse a una licitación, paso a paso"
+msgstr "Como presentarse a unha licitación, paso a paso"
+
+msgid "Cómo presentarse a una licitación, paso a paso: {url}"
+msgstr "Como presentarse a unha licitación, paso a paso: {url}"
+msgid "sin datos de retribución"
+msgstr "sen datos de retribución"
+
+msgid "sueldo: sin fuente oficial"
+msgstr "soldo: sen fonte oficial"
+
+msgid "Régimen de dedicación según ISPA: {regimen}"
+msgstr "Réxime de dedicación segundo ISPA: {regimen}"
+
+msgid "según {fuente}"
+msgstr "segundo {fuente}"
+
+msgid "Fecha según la fuente, posible error: es posterior a hoy."
+msgstr "Data segundo a fonte, posible erro: é posterior a hoxe."
+
+msgid "y {n} más en la ficha"
+msgstr "e {n} máis na ficha"
+
+msgid "Personas"
+msgstr "Persoas"
+
+msgid "Periodo según la fuente"
+msgstr "Período segundo a fonte"
+
+msgid "Fuente oficial"
+msgstr "Fonte oficial"
+
+msgid "Recogidos el {fecha}."
+msgstr "Recollidos o {fecha}."
+
+msgid "Sueldos de concejales"
+msgstr "Soldos de concelleiros"
+
+msgid "{n} personas en {m} municipios cuyo ayuntamiento publica la retribución de sus concejales con nombre."
+msgstr "{n} persoas en {m} municipios cuxo concello publica a retribución dos seus concelleiros con nome."
+
+msgid "El Ministerio publica el sueldo de cada alcalde, pero el de los concejales solo como un total por ayuntamiento, sin nombres. Por eso solo mostramos sueldos individuales donde el propio ayuntamiento los publica con nombre, tal como figuran en su documento oficial: sin convertir ni estimar importes."
+msgstr "O Ministerio publica o soldo de cada alcalde, pero o dos concelleiros só como un total por concello, sen nomes. Por iso só mostramos soldos individuais onde o propio concello os publica con nome, tal como figuran no seu documento oficial: sen converter nin estimar importes."
+
+msgid "La lista de cada municipio, con el importe, la base y el enlace a la fuente de cada persona, está en su ficha."
+msgstr "A lista de cada municipio, co importe, a base e o enlace á fonte de cada persoa, está na súa ficha."
+
+msgid "Sueldos de alcaldes y alcaldesas"
+msgstr "Soldos de alcaldes e alcaldesas"
+
+msgid "Municipios cuyo ayuntamiento publica los sueldos de sus concejales con nombre, con enlace a la ficha y a la fuente oficial."
+msgstr "Municipios cuxo concello publica os soldos dos seus concelleiros con nome, con enlace á ficha e á fonte oficial."
+
+msgid "Sueldos de concejales publicados por cada ayuntamiento"
+msgstr "Soldos de concelleiros publicados por cada concello"
+
+msgid "Otros municipios con sueldos de concejales"
+msgstr "Outros municipios con soldos de concelleiros"
+
+msgid "Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP) y las plataformas autonómicas que agrega."
+msgstr "Licitacións co prazo de presentación de ofertas aberto, segundo a Plataforma de Contratación do Sector Público (PLACSP) e as plataformas autonómicas que agrega."
+
+#: app.py
+msgid "Importe en revisión: no se cuenta en las sumas."
+msgstr "Importe en revisión: non se conta nas sumas."
+
+#: app.py
+msgid "con IVA"
+msgstr "con IVE"
+
+#: app.py
+msgid "IVA según la fuente"
+msgstr "IVE segundo a fonte"
+
+#: app.py
+msgid "Ficha de empresa"
+msgstr "Ficha de empresa"
+
+#: app.py
+msgid "Las fichas de empresa se están preparando. Vuelve a intentarlo en unos minutos."
+msgstr "As fichas de empresa estanse a preparar. Volve tentalo nuns minutos."
+
+#: app.py
+msgid "Empresa no encontrada"
+msgstr "Empresa non atopada"
+
+#: app.py
+msgid "No tenemos contratos de esta empresa en Dinero Público."
+msgstr "Non temos contratos desta empresa en Dinero Público."
+
+#: app.py
+msgid "Hay varias empresas con este nombre"
+msgstr "Hai varias empresas con este nome"
+
+#: app.py
+msgid "Variantes del nombre en las fuentes"
+msgstr "Variantes do nome nas fontes"
+
+#: app.py
+msgid "{n} formas distintas en los anuncios de los órganos, contadas como una sola empresa."
+msgstr "{n} formas distintas nos anuncios dos órganos, contadas como unha soa empresa."
+
+#: app.py
+msgid "Las fuentes no publican el NIF de estos contratos: se han juntado por el nombre. Si hay más de una empresa con el mismo nombre, aquí pueden aparecer juntas."
+msgstr "As fontes non publican o NIF destes contratos: xuntáronse polo nome. Se hai máis dunha empresa co mesmo nome, aquí poden aparecer xuntas."
+
+#: app.py
+msgid "No es una sociedad mercantil: no publica su administración en el BORME."
+msgstr "Non é unha sociedade mercantil: non publica a súa administración no BORME."
+
+#: app.py
+msgid "Y {n} órganos más."
+msgstr "E {n} órganos máis."
+
+#: app.py
+msgid "Órgano contratante / Objeto"
+msgstr "Órgano de contratación / Obxecto"
+
+#: app.py
+msgid "Ficha oficial"
+msgstr "Ficha oficial"
+
+#: app.py
+msgid "Los contratos menores no tienen ficha propia en la mayoría de las fuentes: el enlace lleva a la ficha del municipio, donde se explica cada fuente."
+msgstr "Os contratos menores non teñen ficha propia na maioría das fontes: a ligazón leva á ficha do concello, onde se explica cada fonte."
+
+#: app.py
+msgid "Órganos contratantes"
+msgstr "Órganos de contratación"
+
+#: app.py
+msgid "Datos oficiales de los portales de contratación (PLACE, PSCP, BORM, KontratazioA y los de cada ayuntamiento). Los importes van con la base que publica cada fuente (con o sin IVA, se indica en cada fila) y no se convierten. Las sumas no incluyen los contratos sin importe publicado ni los importes que la fuente publica con un error evidente."
+msgstr "Datos oficiais dos portais de contratación (PLACE, PSCP, BORM, KontratazioA e os de cada concello). Os importes van coa base que publica cada fonte (con ou sen IVE, indícase en cada fila) e non se converten. As sumas non inclúen os contratos sen importe publicado nin os importes que a fonte publica cun erro evidente."
+
+#: app.py
+msgid "Órgano de administración"
+msgstr "Órgano de administración"
+
+#: app.py
+msgid "Concentración por órgano contratante"
+msgstr "Concentración por órgano de contratación"
+
+#: app.py
+msgid "Órgano contratante"
+msgstr "Órgano de contratación"
+
+#: app.py
+msgid "Concentración por año"
+msgstr "Concentración por ano"
+
+#: app.py
+msgid "Año"
+msgstr "Ano"
+
+#: app.py
+msgid "Formales"
+msgstr "Formais"
+
+#: app.py
+msgid "Menores"
+msgstr "Menores"
+
+#: app.py
+msgid "¿Necesitas el informe completo de esta empresa?"
+msgstr "Necesitas o informe completo desta empresa?"
+
+#: app.py
+msgid "Escríbenos y te contamos qué incluye:"
+msgstr "Escríbenos e contámosche que inclúe:"
+
+#: app.py
+msgid "{nombre}: contratos públicos"
+msgstr "{nombre}: contratos públicos"
+
+#: app.py
+msgid "Contratos públicos adjudicados a {nombre} en España: {n} contratos, por órgano y por año, con enlace a la fuente oficial."
+msgstr "Contratos públicos adxudicados a {nombre} en España: {n} contratos, por órgano e por ano, con ligazón á fonte oficial."
+
+#: app.py
+msgid "La fuente no publica el NIF en este contrato: se asigna por el nombre."
+msgstr "A fonte non publica o NIF neste contrato: asígnase polo nome."
+
+#: app.py
+msgid "Procedimiento / estado"
+msgstr "Procedemento / estado"
+
+#: app.py
+msgid "Importe sin IVA"
+msgstr "Importe sen IVE"
+
+#: app.py
+msgid "Importe con IVA"
+msgstr "Importe con IVE"
+
+#: app.py
+msgid "Importe sin base de IVA indicada"
+msgstr "Importe sen base de IVE indicada"
+
+#: app.py
+msgid "% ({base})"
+msgstr "% ({base})"
+
+#: app.py
+msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
+msgstr "Os importes con bases distintas non se suman entre si: van en columnas separadas, e as porcentaxes calcúlanse só sobre a columna «{columna}»."
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Aínda sen datos de fondos UE para esta provincia."
 
@@ -3513,3 +3769,15 @@ msgstr "Persoas xurídicas que máis reciben"
 
 msgid "Datos del Fondo Español de Garantía Agraria (FEGA). Por ley solo se publican dos años (art. 98.4 del Reglamento (UE) 2021/2116): cada ejercicio se borra de esta web al cumplir dos años desde que el FEGA lo publicó; el de {e}, el {caduca}."
 msgstr "Datos do Fondo Español de Garantía Agraria (FEGA). Por lei só se publican dous anos (art. 98.4 do Regulamento (UE) 2021/2116): cada exercicio bórrase desta web ao cumprir dous anos desde que o FEGA o publicou; o de {e}, o {caduca}."
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Síguenos:"
+msgstr "Síguenos:"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Síguenos"
+msgstr "Síguenos"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Dinero Público también está en redes sociales:"
+msgstr "Dinero Público tamén está nas redes sociais:"

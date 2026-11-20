@@ -34,14 +34,6 @@ msgstr "Izena ez da erakusten"
 msgid "desde {fecha}"
 msgstr "hasiera: {fecha}"
 
-#: app.py:5401
-msgid "Un sueldo de 0 € en ISPA no significa que no cobre nada -- suele indicar que quien ocupa el cargo ha renunciado al sueldo de alcalde/sa por percibir ya retribución de otro cargo público (frecuente cuando también forma parte del gobierno de una Diputación). Verificado así en varios municipios de la provincia de Barcelona."
-msgstr "ISPAn 0 €-ko soldata agertzeak ez du esan nahi ezer kobratzen ez duenik -- normalean karguan dagoenak alkate-soldatari uko egin diola adierazten du, beste kargu publiko batengatik ordainsaria jasotzen duelako (ohikoa Aldundi bateko gobernuan ere badagoenean). Horrela egiaztatu da Bartzelonako probintziako hainbat udalerritan."
-
-#: app.py:5407
-msgid "(posible renuncia por doble cargo ℹ️)"
-msgstr "(uko egin ahal izan dio kargu bikoitzagatik ℹ️)"
-
 #: app.py:5412
 msgid "Último dato oficial del cargo: lo percibió {anterior}, alcalde hasta {fecha}. No es el sueldo de quien lo ocupa ahora."
 msgstr "Karguaren azken datu ofiziala: {anterior} alkate ohiak jaso zuen (alkate izan zen data honetara arte: {fecha}). Ez da orain kargua betetzen duenaren soldata."
@@ -506,9 +498,49 @@ msgstr "Sailkapenak"
 msgid "Sueldos Alcaldes"
 msgstr "Alkateen soldatak"
 
+#: app.py
+msgid "Sueldos Concejales"
+msgstr "Zinegotzien soldatak"
+
 #: app.py:19331 app.py:19382 app.py:23196
 msgid "Convocatorias abiertas"
 msgstr "Deialdi irekiak"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "¿Tienes una empresa? Hoy hay 1 licitación pública abierta."
+msgstr "Enpresa bat duzu? Gaur lizitazio publiko 1 dago irekita."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "¿Tienes una empresa? Hoy hay {n} licitaciones públicas abiertas."
+msgstr "Enpresa bat duzu? Gaur {n} lizitazio publiko daude irekita."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Te decimos cuáles encajan con tu empresa."
+msgstr "Egunero, Administrazioak kontratuak esleitzen ditu eta zure lehiakideek eramaten dituzte, zu konturatu gabe. Zure enpresarekin zein datozen bat esaten dizugu."
+
+#: portada, bloque para empresas, filtro apagado (2026-11-08)
+msgid "Cada día la Administración adjudica contratos que se lleva tu competencia mientras tú no te enteras. Míralas todas aquí, ordenadas y con su plazo."
+msgstr "Egunero, Administrazioak kontratuak esleitzen ditu eta zure lehiakideek eramaten dituzte, zu konturatu gabe. Ikusi hemen guztiak, ordenatuta eta beren epearekin."
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Ver las licitaciones abiertas"
+msgstr "Ikusi lizitazio irekiak"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Avisarme de las de mi sector"
+msgstr "Abisatu nire sektorekoez"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "Cierran pronto"
+msgstr "Laster ixten dira"
+
+#: portada, bloque para empresas (2026-11-08)
+msgid "plazo hasta el {f}"
+msgstr "epemuga: {f}"
+
+#: portada, bloque para empresas, plazo con hora (2026-11-08)
+msgid "plazo hasta el {f} a las {h}"
+msgstr "epemuga: {f}, {h}"
 
 #: app.py:19332 app.py:19386 app.py:28142
 msgid "Casos"
@@ -1334,6 +1366,12 @@ msgstr "Torrenteko Udalaren (Valentziako Erkidegoa) kontratatzailearen profileko
 msgid "XLSX oficiales del portal de transparencia del Ayuntamiento de San Cristóbal de La Laguna y sus organismos autónomos OAAM y OAD (uno por año y entidad, enlaces encontrados navegando con un navegador real). El importe es SIN IGIC, el impuesto indirecto propio de Canarias equivalente al IVA peninsular (no confundir con \"sin impuestos\" a secas)."
 msgstr "San Cristóbal de La Lagunako Udalaren eta bere OAAM eta OAD erakunde autonomoen gardentasun-atariko XLSX ofizialak (bat urte eta erakunde bakoitzeko, benetako nabigatzaile batekin arakatuz aurkitutako estekak). Zenbatekoa IGICik GABE dago, Kanarietako zeharkako zerga propioa, penintsulako BEZaren baliokidea (ez nahastu \"zergarik gabe\" soilarekin)."
 
+msgid "Fuente sin actualizar desde el 25-10-2026: el portal del Ayuntamiento no responde desde entonces. Se muestran los contratos que había publicado hasta esa fecha (los más recientes, de diciembre de 2025)."
+msgstr "Iturria 2026-10-25etik eguneratu gabe dago: Udalaren atariak ez du erantzuten ordutik. Data horretara arte argitaratutako kontratuak erakusten dira (berrienak, 2025eko abendukoak)."
+
+msgid "Listados del Ayuntamiento sin actualizar desde el {fecha}"
+msgstr "Udalaren zerrendak eguneratu gabe ({fecha} geroztik)"
+
 #: app.py:22071
 msgid "API real del portal de transparencia (Next.js, misma plataforma que Las Palmas de Gran Canaria) del Ayuntamiento de Arona, encontrada con un navegador real (Playwright). Sin fecha por contrato (ventana de 5 años aplicada por ejercicio completo; 2021 excluido por ambiguo). Sin descripción del objeto del contrato (la fuente no la publica en este listado)."
 msgstr "Aronako Udalaren gardentasun-atariko (Next.js, Las Palmas de Gran Canariaren plataforma bera) benetako APIa, benetako nabigatzaile batekin (Playwright) aurkitua. Kontratu bakoitzaren datarik gabe (5 urteko leihoa ekitaldi osoka aplikatua; 2021 baztertua, anbiguoa delako). Kontratuaren xedearen deskribapenik gabe (iturriak ez du zerrenda honetan argitaratzen)."
@@ -1393,6 +1431,10 @@ msgstr "Haren izena NAN/AIZ batekin agertzen da beste iturri ofizial batean"
 #: app.py:22421
 msgid "Autónomo / persona física"
 msgstr "Autonomoa / pertsona fisikoa"
+
+#: app.py (07-11-2026, adjudicatario sin nombre, solo con DNI)
+msgid "Persona física"
+msgstr "Pertsona fisikoa"
 
 #: app.py:22441
 msgid "Importe según la API de Euskadi, muy por encima de lo que permite legalmente un contrato menor. Puede ser un error de la fuente de origen (dígitos de más); esta fuente no publica un enlace por contrato para comprobarlo directamente, así que se muestra tal cual."
@@ -2309,6 +2351,14 @@ msgstr "Lehenengoak erakusten dira ({n} / {total})."
 #: app.py:23538
 msgid "Contratos menores (fuentes locales del ayuntamiento)"
 msgstr "Kontratu txikiak (udalaren tokiko iturriak)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (fuentes del ayuntamiento y PLACE)"
+msgstr "Kontratu txikiak (udalaren iturriak eta PLACE)"
+
+#: app.py (ficha: contratos menores)
+msgid "Contratos menores (PLACE)"
+msgstr "Kontratu txikiak (PLACE)"
 
 #: app.py:23547
 msgid "Adjudicatario / Objeto"
@@ -3358,6 +3408,212 @@ msgstr "Hasiera"
 msgid "Página no encontrada"
 msgstr "Ez da orria aurkitu"
 
+msgid "Cómo presentarse a una licitación, paso a paso"
+msgstr "Nola aurkeztu lizitazio batera, urratsez urrats"
+
+msgid "Cómo presentarse a una licitación, paso a paso: {url}"
+msgstr "Nola aurkeztu lizitazio batera, urratsez urrats: {url}"
+msgid "sin datos de retribución"
+msgstr "ordainsariaren daturik gabe"
+
+msgid "sueldo: sin fuente oficial"
+msgstr "soldata: iturri ofizialik gabe"
+
+msgid "Régimen de dedicación según ISPA: {regimen}"
+msgstr "Dedikazio-araubidea ISPAren arabera: {regimen}"
+
+msgid "según {fuente}"
+msgstr "{fuente} iturriaren arabera"
+
+msgid "Fecha según la fuente, posible error: es posterior a hoy."
+msgstr "Iturriaren araberako data, akatsa izan daiteke: gaur baino geroagokoa da."
+
+msgid "y {n} más en la ficha"
+msgstr "eta beste {n} fitxan"
+
+msgid "Personas"
+msgstr "Pertsonak"
+
+msgid "Periodo según la fuente"
+msgstr "Aldia iturriaren arabera"
+
+msgid "Fuente oficial"
+msgstr "Iturri ofiziala"
+
+msgid "Recogidos el {fecha}."
+msgstr "Bilketa-data: {fecha}."
+
+msgid "Sueldos de concejales"
+msgstr "Zinegotzien soldatak"
+
+msgid "{n} personas en {m} municipios cuyo ayuntamiento publica la retribución de sus concejales con nombre."
+msgstr "{n} pertsona {m} udalerritan; udal horiek zinegotzien ordainsaria izen eta guzti argitaratzen dute."
+
+msgid "El Ministerio publica el sueldo de cada alcalde, pero el de los concejales solo como un total por ayuntamiento, sin nombres. Por eso solo mostramos sueldos individuales donde el propio ayuntamiento los publica con nombre, tal como figuran en su documento oficial: sin convertir ni estimar importes."
+msgstr "Ministerioak alkate bakoitzaren soldata argitaratzen du, baina zinegotziena udal bakoitzeko guztizko gisa bakarrik, izenik gabe. Horregatik, udalak berak izenarekin argitaratzen dituen tokietan bakarrik erakusten ditugu banakako soldatak, bere dokumentu ofizialean agertzen diren bezala: zenbatekoak bihurtu edo kalkulatu gabe."
+
+msgid "La lista de cada municipio, con el importe, la base y el enlace a la fuente de cada persona, está en su ficha."
+msgstr "Udalerri bakoitzaren zerrenda, pertsona bakoitzaren zenbatekoa, oinarria eta iturrirako esteka barne, haren fitxan dago."
+
+msgid "Sueldos de alcaldes y alcaldesas"
+msgstr "Alkateen soldatak"
+
+msgid "Municipios cuyo ayuntamiento publica los sueldos de sus concejales con nombre, con enlace a la ficha y a la fuente oficial."
+msgstr "Zinegotzien soldatak izenarekin argitaratzen dituzten udalerriak, fitxarako eta iturri ofizialerako estekarekin."
+
+msgid "Sueldos de concejales publicados por cada ayuntamiento"
+msgstr "Udal bakoitzak argitaratutako zinegotzien soldatak"
+
+msgid "Otros municipios con sueldos de concejales"
+msgstr "Zinegotzien soldatak dituzten beste udalerri batzuk"
+
+msgid "Licitaciones con el plazo de presentación de ofertas abierto, según la Plataforma de Contratación del Sector Público (PLACSP) y las plataformas autonómicas que agrega."
+msgstr "Eskaintzak aurkezteko epea irekita duten lizitazioak, Sektore Publikoko Kontratazio Plataformaren (PLACSP) eta hark biltzen dituen autonomia-erkidegoetako plataformen arabera."
+
+#: app.py
+msgid "Importe en revisión: no se cuenta en las sumas."
+msgstr "Zenbatekoa berrikusten: ez da batuketetan sartzen."
+
+#: app.py
+msgid "con IVA"
+msgstr "BEZarekin"
+
+#: app.py
+msgid "IVA según la fuente"
+msgstr "BEZa, iturriaren arabera"
+
+#: app.py
+msgid "Ficha de empresa"
+msgstr "Enpresaren fitxa"
+
+#: app.py
+msgid "Las fichas de empresa se están preparando. Vuelve a intentarlo en unos minutos."
+msgstr "Enpresen fitxak prestatzen ari dira. Saiatu berriro minutu batzuk barru."
+
+#: app.py
+msgid "Empresa no encontrada"
+msgstr "Ez da enpresa aurkitu"
+
+#: app.py
+msgid "No tenemos contratos de esta empresa en Dinero Público."
+msgstr "Dinero Público-n ez dugu enpresa honen kontraturik."
+
+#: app.py
+msgid "Hay varias empresas con este nombre"
+msgstr "Izen hau duten hainbat enpresa daude"
+
+#: app.py
+msgid "Variantes del nombre en las fuentes"
+msgstr "Izenaren aldaerak iturrietan"
+
+#: app.py
+msgid "{n} formas distintas en los anuncios de los órganos, contadas como una sola empresa."
+msgstr "Organoen iragarkietako forma desberdinak: {n}; enpresa bakartzat hartu dira."
+
+#: app.py
+msgid "Las fuentes no publican el NIF de estos contratos: se han juntado por el nombre. Si hay más de una empresa con el mismo nombre, aquí pueden aparecer juntas."
+msgstr "Iturriek ez dute kontratu hauen IFZ argitaratzen: izenaren arabera elkartu dira. Izen bera duten enpresa bat baino gehiago badaude, hemen elkarrekin ager daitezke."
+
+#: app.py
+msgid "No es una sociedad mercantil: no publica su administración en el BORME."
+msgstr "Ez da merkataritza-sozietatea: ez du bere administrazioa BORMEn argitaratzen."
+
+#: app.py
+msgid "Y {n} órganos más."
+msgstr "Beste organo batzuk: {n}."
+
+#: app.py
+msgid "Órgano contratante / Objeto"
+msgstr "Kontratazio-organoa / Xedea"
+
+#: app.py
+msgid "Ficha oficial"
+msgstr "Fitxa ofiziala"
+
+#: app.py
+msgid "Los contratos menores no tienen ficha propia en la mayoría de las fuentes: el enlace lleva a la ficha del municipio, donde se explica cada fuente."
+msgstr "Kontratu txikiek ez dute fitxa propiorik iturri gehienetan: estekak udalerriaren fitxara darama, eta han azaltzen da iturri bakoitza."
+
+#: app.py
+msgid "Órganos contratantes"
+msgstr "Kontratazio-organoak"
+
+#: app.py
+msgid "Datos oficiales de los portales de contratación (PLACE, PSCP, BORM, KontratazioA y los de cada ayuntamiento). Los importes van con la base que publica cada fuente (con o sin IVA, se indica en cada fila) y no se convierten. Las sumas no incluyen los contratos sin importe publicado ni los importes que la fuente publica con un error evidente."
+msgstr "Kontratazio-atarietako datu ofizialak (PLACE, PSCP, BORM, KontratazioA eta udal bakoitzarenak). Zenbatekoak iturri bakoitzak argitaratzen duen oinarriarekin doaz (BEZarekin edo gabe, errenkada bakoitzean adierazten da) eta ez dira bihurtzen. Batuketetan ez dira sartzen zenbatekorik argitaratu gabeko kontratuak, ezta iturriak akats nabariarekin argitaratutako zenbatekoak ere."
+
+#: app.py
+msgid "Órgano de administración"
+msgstr "Administrazio-organoa"
+
+#: app.py
+msgid "Concentración por órgano contratante"
+msgstr "Kontzentrazioa kontratazio-organoaren arabera"
+
+#: app.py
+msgid "Órgano contratante"
+msgstr "Kontratazio-organoa"
+
+#: app.py
+msgid "Concentración por año"
+msgstr "Kontzentrazioa urtearen arabera"
+
+#: app.py
+msgid "Año"
+msgstr "Urtea"
+
+#: app.py
+msgid "Formales"
+msgstr "Formalak"
+
+#: app.py
+msgid "Menores"
+msgstr "Txikiak"
+
+#: app.py
+msgid "¿Necesitas el informe completo de esta empresa?"
+msgstr "Enpresa honen txosten osoa behar duzu?"
+
+#: app.py
+msgid "Escríbenos y te contamos qué incluye:"
+msgstr "Idatzi iezaguzu eta zer daukan azalduko dizugu:"
+
+#: app.py
+msgid "{nombre}: contratos públicos"
+msgstr "{nombre}: kontratu publikoak"
+
+#: app.py
+msgid "Contratos públicos adjudicados a {nombre} en España: {n} contratos, por órgano y por año, con enlace a la fuente oficial."
+msgstr "Espainian esleitutako kontratu publikoak. Enpresa: {nombre}. Kontratuak: {n}, organoaren eta urtearen arabera, iturri ofizialaren estekarekin."
+
+#: app.py
+msgid "La fuente no publica el NIF en este contrato: se asigna por el nombre."
+msgstr "Iturriak ez du kontratu honetan IFZ argitaratzen: izenaren arabera esleitzen da."
+
+#: app.py
+msgid "Procedimiento / estado"
+msgstr "Prozedura / egoera"
+
+#: app.py
+msgid "Importe sin IVA"
+msgstr "Zenbatekoa BEZik gabe"
+
+#: app.py
+msgid "Importe con IVA"
+msgstr "Zenbatekoa BEZarekin"
+
+#: app.py
+msgid "Importe sin base de IVA indicada"
+msgstr "Zenbatekoa, BEZ oinarria adierazi gabe"
+
+#: app.py
+msgid "% ({base})"
+msgstr "% ({base})"
+
+#: app.py
+msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
+msgstr "Oinarri desberdinak dituzten zenbatekoak ez dira elkarren artean batzen: zutabe bereizietan doaz, eta ehunekoak zutabe honen gainean bakarrik kalkulatzen dira: «{columna}»."
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
 
@@ -3510,3 +3766,15 @@ msgstr "Gehien jasotzen duten pertsona juridikoak"
 
 msgid "Datos del Fondo Español de Garantía Agraria (FEGA). Por ley solo se publican dos años (art. 98.4 del Reglamento (UE) 2021/2116): cada ejercicio se borra de esta web al cumplir dos años desde que el FEGA lo publicó; el de {e}, el {caduca}."
 msgstr "Nekazaritza Bermerako Espainiako Funtsaren (FEGA) datuak. Legez bi urte bakarrik argitaratzen dira ((EB) 2021/2116 Erregelamenduaren 98.4 art.): ekitaldi bakoitza web honetatik ezabatzen da FEGAk argitaratu eta bi urte betetzean; {e} ekitaldia: {caduca}."
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Síguenos:"
+msgstr "Jarrai gaitzazu:"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Síguenos"
+msgstr "Jarrai gaitzazu"
+
+#: app.py (18-11-2026, Síguenos)
+msgid "Dinero Público también está en redes sociales:"
+msgstr "Dinero Público sare sozialetan ere badago:"
