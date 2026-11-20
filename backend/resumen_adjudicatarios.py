@@ -26,7 +26,9 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-VERSION = 1
+# 2 (20-11-2026): cada grafía con su número de contratos, que desde el #67 usa administradores_borme para confirmar
+# el NIF (_parte_que_casa). La versión 1 solo llevaba los nombres: se rechaza y el flujo baja la base entera.
+VERSION = 2
 
 
 def construir(cache_path):
@@ -34,7 +36,7 @@ def construir(cache_path):
     from administradores_borme import adjudicatarios
     adj, directores = adjudicatarios(cache_path)
     return {"version": VERSION, "generado": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "adjudicatarios": {k: dict(v, nombres=list(v["nombres"])) for k, v in adj.items()},
+            "adjudicatarios": {k: dict(v, nombres=[[n, c] for n, c in v["nombres"].items()]) for k, v in adj.items()},
             "directores": {k: [n, cg] for k, (n, cg) in directores.items()}}
 
 
@@ -60,7 +62,7 @@ def leer(ruta):
         raise ValueError(f"resumen ilegible: {type(e).__name__}") from None
     if not isinstance(datos, dict) or datos.get("version") != VERSION or not datos.get("adjudicatarios"):
         raise ValueError("no es un resumen de adjudicatarios válido (versión o contenido)")
-    adj = {k: dict(v, nombres=dict.fromkeys(v["nombres"])) for k, v in datos["adjudicatarios"].items()}
+    adj = {k: dict(v, nombres={n: c for n, c in v["nombres"]}) for k, v in datos["adjudicatarios"].items()}
     directores = {k: (v[0], v[1]) for k, v in datos["directores"].items()}
     return adj, directores
 

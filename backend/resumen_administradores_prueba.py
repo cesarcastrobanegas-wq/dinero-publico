@@ -79,6 +79,19 @@ class Resumen(unittest.TestCase):
         self.assertEqual(d1, d2)
         self.assertIsInstance(next(iter(d2.values())), tuple)
         self.assertEqual(list(a2["B12345678"]["nombres"])[:2], ["OBRAS DE PRUEBA ALFA, S.L.", "Obras de Prueba Alfa SL"])
+        # 20-11: con el #67, cada grafía lleva su número de contratos (confirmar el NIF depende de eso)
+        self.assertTrue(all(isinstance(n, int) and n > 0 for n in a2["B12345678"]["nombres"].values()),
+                        "las grafías del resumen llevan su número de contratos")
+        self.assertEqual(AB._parte_que_casa(a1["B12345678"], ["Obras de Prueba Alfa SL"]),
+                         AB._parte_que_casa(a2["B12345678"], ["Obras de Prueba Alfa SL"]))
+        # un resumen de la versión 1 (sin recuentos) no vale: el flujo bajaría la base entera
+        with gzip.open(self.sal, "rt", encoding="utf-8") as f:
+            viejo = json.load(f)
+        viejo["version"] = 1
+        v1 = os.path.join(self.dir, "v1.json.gz")
+        with open(v1, "wb") as f:
+            f.write(gzip.compress(json.dumps(viejo).encode("utf-8")))
+        self.assertFalse(RA.comprobar(v1))
         # gzip sin fecha: dos resúmenes de la misma base son idénticos salvo la hora de "generado"
         with open(self.sal, "rb") as f:
             self.assertEqual(f.read(2), b"\x1f\x8b")
