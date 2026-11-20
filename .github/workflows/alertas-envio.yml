@@ -10,11 +10,14 @@ name: Alertas por correo (envío diario)
 
 on:
   schedule:
-    - cron: "30 5 * * *"      # 05:30 UTC (07:30 peninsular en verano): antes del refresco nocturno real (~07:00 UTC)
+    # 06-11: a las 05:30 UTC caía en mitad del refresco real (empezaba entre las 11:00 y las 13:45 por los retrasos
+    # de GitHub). A las 14:00 UTC (15:00 peninsular en invierno) va después, con las novedades de la noche.
+    - cron: "0 14 * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: read
+  actions: read            # para ver si el refresco nocturno está en marcha
 
 concurrency:
   group: alertas-envio
@@ -23,8 +26,28 @@ concurrency:
 jobs:
   alertas-envio:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 220      # 30 min de envío + hasta 3 h de espera al refresco
     steps:
+      # 06-11 (decisión de César): nunca a la vez que el refresco nocturno. El cron ya va después de su franja real
+      # (~05:00-12:30 UTC, por los retrasos de GitHub), pero si el refresco se alarga se espera a que acabe (como
+      # mucho 3 h; después se sigue igual y queda un aviso).
+      - name: Esperar a que acabe el refresco nocturno (si está en marcha)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          fin=$(( $(date +%s) + 3 * 3600 ))
+          while true; do
+            n=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow actualizar-diario.yml --limit 20 \
+                  --json status --jq '[.[] | select(.status != "completed")] | length' || echo "?")
+            if [ "$n" = "0" ]; then break; fi
+            if [ "$(date +%s)" -ge "$fin" ]; then
+              echo "::warning::El refresco nocturno sigue en marcha tras 3 h (o no se pudo consultar: '$n'): se sigue igual."
+              break
+            fi
+            echo "Refresco nocturno en marcha ($n): se espera 5 min..."
+            sleep 300
+          done
+
       - name: Enviar por tandas
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}

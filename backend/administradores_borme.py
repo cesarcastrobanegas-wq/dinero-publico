@@ -184,7 +184,7 @@ def adjudicatarios(cache_path):
     def _suma(emp, nif, formales, imp_f, menores, imp_m, guardado=None):
         a = adj.setdefault(clave_directores(emp, nif), {"nif": nif, "nombres": {}, "nf": 0, "impf": 0.0, "nm": 0, "impm": 0.0,
                                                         "guardado": {}})
-        a["nombres"].setdefault(emp, None)
+        a["nombres"][emp] = (a["nombres"].get(emp) or 0) + formales + menores     # contratos con esa grafía
         a["nf"] += formales; a["impf"] += imp_f; a["nm"] += menores; a["impm"] += imp_m
         if guardado:            # qué lleva guardado el propio contrato formal (lo que se enseñaría sin el BORME)
             g = a["guardado"].setdefault(guardado, [0, 0.0])
@@ -292,6 +292,41 @@ def _imprimir_visible(filas):
               f"{100 * f['importe_formales'] / ti:5.1f}% {f['contratos_menores']:10,d} {100 * f['contratos_menores'] / tm:5.1f}%")
 
 
+# NIF CONFIRMADO (15-11-2026, decisión de César): el administrador se pone en la clave del NIF solo si los nombres con
+# que ese NIF casa con la sociedad del BORME (siguiendo los cambios de denominación 2009-hoy) son al menos la mitad de
+# sus contratos. Si casa solo una grafía minoritaria (un contrato con el NIF mal puesto, el nombre de otra empresa del
+# grupo...), no se puede comprobar que el NIF sea de esa sociedad: el NIF se queda sin administrador y solo lo llevan
+# los contratos que tienen exactamente una de las grafías que casan (claves por nombre). Medido el 15-11 con el índice
+# 2021-2026: de 688 NIF cuya denominación del BORME no coincide con ningún nombre del adjudicatario, 318 no se podían
+# comprobar con ese índice. Aquí cuenta también el histórico 2009-2020, que en Actions está.
+CONFIRMAR_NIF_MINIMO = 0.5
+_RE_NIF_SOCIEDAD_GEN = re.compile(r"^[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J]$")
+
+
+_RE_FORMA_FINAL_COMPACTA = re.compile(
+    r"(\s+(sociedad limitada|sociedad anonima|sociedad cooperativa|unipersonal|laboral|profesional|en liquidacion|"
+    r"s m e|sme|m p|mp|s l u|s a u|s l l|s l p|s l|s a|slu|sau|sll|slp|sl|sa))+$")
+
+
+def _clave_compacta(nombre):
+    """Nombre sin tildes, signos, espacios, forma jurídica final ni el «(R.M. ...)» del BORME: «SOCIEDAD ESTATAL
+    CORREOS Y TELEGRAFOS SA SME» y «... S.A. S.M.E.» dan lo mismo."""
+    s = re.sub(r"(?i)\s*\(\s*r\.?\s*m\.?[^)]*\)\s*$", "", nombre or "")
+    s = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]+", " ", _norm_app(s).replace("ç", "c"))).strip()
+    return _RE_FORMA_FINAL_COMPACTA.sub("", s).replace(" ", "")
+
+
+def _parte_que_casa(a, casan, nombres_borme=()):
+    """Fracción de los contratos de un adjudicatario cuyo nombre es el de la sociedad del BORME: una grafía que casa,
+    o cualquier denominación que la sociedad ha tenido en el BORME (sus cambios de nombre incluidos), comparando sin
+    signos ni forma jurídica."""
+    total = sum(n or 0 for n in a["nombres"].values())
+    if not total:
+        return 1.0
+    validas = {_clave_compacta(x) for x in list(casan) + list(nombres_borme)} - {""}
+    return sum(n or 0 for emp, n in a["nombres"].items() if emp in casan or _clave_compacta(emp) in validas) / total
+
+
 def cruzar(adj, den, estado, solo_primera_grafia=False):
     """(salida {clave: registro}, situacion {clave: texto}) -- la situación de cada adjudicatario frente al BORME."""
     salida, situacion = {}, {}
@@ -312,7 +347,13 @@ def cruzar(adj, den, estado, solo_primera_grafia=False):
                 hallados.setdefault(r, ({"nombre": pr[0], "cargo": pr[1], "desde": pr[2], "fuente": pr[3],
                                          "sociedad_borme": sorted(e["nombres"])[-1], "extinguida": e["extinguida"]}, []))[1].append(emp)
         if len(hallados) == 1:
-            registro, casan = next(iter(hallados.values()))
+            raiz, (registro, casan) = next(iter(hallados.items()))
+            if a["nif"] and _parte_que_casa(a, casan, estado[raiz]["nombres"]) < CONFIRMAR_NIF_MINIMO:
+                # NIF sin confirmar: nada en la clave del NIF; los contratos con una grafía que casa, por su nombre
+                for emp in casan:
+                    salida.setdefault(_norm_app(emp), registro)
+                situacion[clave] = "NIF sin confirmar (solo por nombre)"
+                continue
             salida[clave] = registro
             if a["nif"]:   # también por nombre: muchos contratos de la misma sociedad llegan sin NIF
                 for emp in casan:
@@ -330,6 +371,13 @@ def cruzar(adj, den, estado, solo_primera_grafia=False):
     return salida, situacion
 
 
+def nif_sin_confirmar(adj, situacion):
+    """NIF de SOCIEDAD (nunca un DNI/NIE) en situación «NIF sin confirmar», ordenados (van al fichero, 16-11-2026)."""
+    return sorted({adj[c]["nif"].upper().strip() for c, s in situacion.items()
+                   if s == "NIF sin confirmar (solo por nombre)"
+                   and _RE_NIF_SOCIEDAD_GEN.match((adj[c]["nif"] or "").upper().strip())})
+
+
 def resumen_cola(adj, situacion, directores):
     """Recuentos (nunca nombres) por tipo de adjudicatario y situación frente al BORME."""
     filas = defaultdict(lambda: {"adjudicatarios": 0, "contratos_formales": 0, "importe_formales": 0.0,
@@ -337,7 +385,8 @@ def resumen_cola(adj, situacion, directores):
     for clave, a in adj.items():
         tipo = tipo_adjudicatario(next(iter(a["nombres"])), a["nif"])
         sit = situacion[clave]
-        if sit in ("con administrador", "extinguida", "por nombre (NIF con varias sociedades)"):
+        if sit in ("con administrador", "extinguida", "por nombre (NIF con varias sociedades)",
+                   "NIF sin confirmar (solo por nombre)"):
             grupo = f"en el BORME: {sit}"          # lo que el BORME da manda, sea cual sea el tipo deducido
         elif tipo == TIPO_SOCIEDAD:
             grupo = f"sociedad mercantil: {sit}"
@@ -410,8 +459,13 @@ def main():
           f"{len(salida):,} claves ({time.time() - t0:.0f} s)")
     if a.solo_recuentos:
         return
+    # 16-11-2026: los NIF «sin confirmar», para que la ficha de empresa de ese NIF no busque administrador por sus
+    # variantes de nombre (ver _empresa_administrador en app.py). Solo NIF de sociedad: nunca un DNI/NIE.
+    sin_confirmar = nif_sin_confirmar(adj, situacion)
+    print(f"NIF de sociedad sin confirmar en el fichero: {len(sin_confirmar):,}")
     json.dump({"generado": time.strftime("%Y-%m-%d %H:%M:%S"), "periodo": periodo, "resumen": resumen,
-               "administradores": salida}, open(a.salida, "w", encoding="utf-8"), ensure_ascii=False, indent=0)
+               "nif_sin_confirmar": sin_confirmar, "administradores": salida},
+              open(a.salida, "w", encoding="utf-8"), ensure_ascii=False, indent=0)
     print(f"-> {a.salida}")
 
 
