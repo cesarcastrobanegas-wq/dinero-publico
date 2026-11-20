@@ -3408,6 +3408,18 @@ msgstr "Portada"
 msgid "Página no encontrada"
 msgstr "Pàgina no trobada"
 
+#: pie de la web (enlaces de venta, 2026-11-04)
+msgid "Condiciones de contratación"
+msgstr "Condicions de contractació"
+
+#: pie de la web (enlaces de venta, 2026-11-04)
+msgid "Cookies"
+msgstr "Galetes"
+
+#: pie de la web (enlaces de venta, 2026-11-04)
+msgid "Precios"
+msgstr "Preus"
+
 msgid "Cómo presentarse a una licitación, paso a paso"
 msgstr "Com presentar-se a una licitació, pas a pas"
 
