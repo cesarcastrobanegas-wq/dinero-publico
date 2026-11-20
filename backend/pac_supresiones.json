@@ -1,0 +1,4 @@
+{
+ "nota": "Supresión a petición (decisión 2 del 18-10-2026): quien pide no salir en la PAC con nombre. Solo la HUELLA sha256 del nombre normalizado (pac_fega.huella(pac_fega.norm(nombre))), para que el repositorio público no lleve el nombre. El beneficiario pasa a contar como anónimo.",
+ "huellas": []
+}
