@@ -3614,6 +3614,254 @@ msgstr "% ({base})"
 msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
 msgstr "Oinarri desberdinak dituzten zenbatekoak ez dira elkarren artean batzen: zutabe bereizietan doaz, eta ehunekoak zutabe honen gainean bakarrik kalkulatzen dira: «{columna}»."
 
+#: app.py (/informes)
+msgid "Informe de empresa"
+msgstr "Enpresaren txostena"
+
+#: app.py (/informes)
+msgid "desde 19 €"
+msgstr "19 €-tik aurrera"
+
+#: app.py (/informes)
+msgid "Los contratos públicos que ha ganado (órgano, importe, fecha, procedimiento y número de ofertas), la concentración por órgano contratante, las subvenciones de la BDNS, los fondos europeos declarados, sus administradores y actos en el BORME y las sociedades vinculadas."
+msgstr "Irabazi dituen kontratu publikoak (organoa, zenbatekoa, data, prozedura eta eskaintza kopurua), kontratazio-organoen araberako kontzentrazioa, BDNSko diru-laguntzak, adierazitako Europako funtsak, BORMEko administratzaileak eta egintzak eta lotutako sozietateak."
+
+#: app.py (/informes)
+msgid "Pymes que van a subcontratar o a ir en UTE, periodistas y despachos."
+msgstr "Azpikontratatu edo ABEn joan behar duten ETEak, kazetariak eta bulegoak."
+
+#: app.py (/informes)
+msgid "Informe de ayuntamiento"
+msgstr "Udalaren txostena"
+
+#: app.py (/informes)
+msgid "desde 29 €"
+msgstr "29 €-tik aurrera"
+
+#: app.py (/informes)
+msgid "Contratos formales y menores, principales adjudicatarios, proveedores que se repiten, retribuciones, deuda, cuentas e Índice de Transparencia."
+msgstr "Kontratu formalak eta txikiak, esleipendun nagusiak, errepikatzen diren hornitzaileak, ordainsariak, zorra, kontuak eta Gardentasun Indizea."
+
+#: app.py (/informes)
+msgid "Grupos municipales, asociaciones, periodistas y consultoras."
+msgstr "Udal taldeak, elkarteak, kazetariak eta aholkularitzak."
+
+#: app.py (/informes)
+msgid "Informe de competencia"
+msgstr "Lehiaren txostena"
+
+#: app.py (/informes)
+msgid "desde 90 €"
+msgstr "90 €-tik aurrera"
+
+#: app.py (/informes)
+msgid "Un sector (código CPV) en una provincia: quién gana, cuántas veces y por cuánto, la rebaja media, las ofertas por contrato y los órganos que más contratan."
+msgstr "Sektore bat (CPV kodea) probintzia batean: nork irabazten duen, zenbat aldiz eta zenbatean, batez besteko beherapena, kontratu bakoitzeko eskaintzak eta gehien kontratatzen duten organoak."
+
+#: app.py (/informes)
+msgid "Empresas que licitan."
+msgstr "Lizitatzen duten enpresak."
+
+#: app.py (/informes)
+msgid "Seguimiento de competidor"
+msgstr "Lehiakidearen jarraipena"
+
+#: app.py (/informes)
+msgid "desde 5 € al mes por empresa"
+msgstr "hilean 5 €-tik aurrera enpresa bakoitzeko"
+
+#: app.py (/informes)
+msgid "Un aviso por correo cada vez que la empresa que elijas gana un contrato público, formal o menor."
+msgstr "Abisu bat posta elektronikoz, aukeratzen duzun enpresak kontratu publiko bat, formala edo txikia, irabazten duen bakoitzean."
+
+#: app.py (/informes)
+msgid "Suscripción para pymes"
+msgstr "ETEentzako harpidetza"
+
+#: app.py (/informes)
+msgid "desde 25 € al mes"
+msgstr "hilean 25 €-tik aurrera"
+
+#: app.py (/informes)
+msgid "Filtro de licitaciones, alertas por correo, 2 informes de empresa al mes y 3 competidores en seguimiento."
+msgstr "Lizitazioen iragazkia, posta bidezko alertak, hilean enpresaren 2 txosten eta jarraipenean 3 lehiakide."
+
+#: app.py (/informes)
+msgid "Pymes que licitan."
+msgstr "Lizitatzen duten ETEak."
+
+#: app.py (/informes)
+msgid "No es asesoramiento ni una valoración de solvencia: solo datos oficiales."
+msgstr "Ez da aholkularitza, ezta kaudimenaren balorazioa ere: datu ofizialak soilik."
+
+#: app.py (/informes)
+msgid "Los informes no son asesoramiento jurídico, financiero ni de inversión, ni una valoración de solvencia o de crédito. Recogen solo datos oficiales publicados, cada uno con su fuente y la fecha en que se consultó. No incluyen deudas, morosidad ni impagados. Las vinculaciones entre personas y sociedades se hacen por el nombre, que puede ser de un homónimo: el BORME no publica el DNI."
+msgstr "Txostenak ez dira aholkularitza juridikoa, finantzarioa edo inbertsiokoa, ezta kaudimenaren edo kredituaren balorazioa ere. Argitaratutako datu ofizialak soilik jasotzen dituzte, bakoitza bere iturriarekin eta kontsultatu zen datarekin. Ez dute zorrik, berankortasunik edo ordainketa-faltarik jasotzen. Pertsonen eta sozietateen arteko loturak izenaren bidez egiten dira, eta izen bereko beste norbaitenak izan daitezke: BORMEk ez du NANa argitaratzen."
+
+#: app.py (/informes)
+msgid "Informe de ayuntamiento (Archena)"
+msgstr "Udalaren txostena (Archena)"
+
+#: app.py (/informes)
+msgid "Informe de competencia (obras en la Región de Murcia)"
+msgstr "Lehiaren txostena (obrak Murtziako Eskualdean)"
+
+#: app.py (/informes)
+msgid "Informes de ejemplo"
+msgstr "Adibide-txostenak"
+
+#: app.py (/informes)
+msgid "Tres ejemplos con datos reales de fuentes oficiales. Los nombres de empresas y personas están sustituidos («Empresa A», «Administrador 1»); los ayuntamientos y los órganos públicos se mantienen."
+msgstr "Hiru adibide, iturri ofizialetako benetako datuekin. Enpresen eta pertsonen izenak ordezkatuta daude («Empresa A», «Administrador 1»); udalak eta organo publikoak bere horretan daude."
+
+#: app.py (/informes)
+msgid "Pedir un informe"
+msgstr "Txosten bat eskatu"
+
+#: app.py (/informes)
+msgid "Escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> y te contestamos con el precio exacto y el plazo."
+msgstr "Idatzi iezaguzu <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> helbidera, eta prezio zehatza eta epea erantzungo dizkizugu."
+
+#: app.py (/informes)
+msgid "Otro / no lo sé"
+msgstr "Beste bat / ez dakit"
+
+#: app.py (/informes)
+msgid "Todavía no vendemos en línea. Cuéntanos qué necesitas y te contestamos por correo con el precio exacto y el plazo. Pedir información no te compromete a nada."
+msgstr "Oraindik ez dugu sarean saltzen. Kontaiguzu zer behar duzun, eta posta bidez erantzungo dizugu prezio zehatzarekin eta epearekin. Informazioa eskatzeak ez zaitu ezertara behartzen."
+
+#: app.py (/informes)
+msgid "¿Qué informe?"
+msgstr "Zein txosten?"
+
+#: app.py (/informes)
+msgid "¿Sobre qué? (la empresa, el municipio, o el sector y la provincia)"
+msgstr "Zeri buruz? (enpresa, udalerria, edo sektorea eta probintzia)"
+
+#: app.py (/informes)
+msgid "Tu correo"
+msgstr "Zure posta elektronikoa"
+
+#: app.py (/informes)
+msgid "Tu nombre o el de tu empresa (opcional)"
+msgstr "Zure izena edo zure enpresarena (aukerakoa)"
+
+#: app.py (/informes)
+msgid "Algo más que debamos saber (opcional)"
+msgstr "Jakin behar dugun beste zerbait (aukerakoa)"
+
+#: app.py (/informes)
+msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href=\"/aviso-legal#informes\">Aviso legal</a>."
+msgstr "Datu hauek zuri erantzuteko soilik erabiliko ditugu. Posta bidez iristen zaizkigu eta webguneak ez ditu gordetzen. Informazio gehiago <a href=\"/aviso-legal#informes\">Lege-oharrean</a>."
+
+#: app.py (_informes_legal_aviso, 20-11-2026)
+msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en las <a href=\"/legal/condiciones#informes\">condiciones de los informes</a>."
+msgstr "Datu hauek zuri erantzuteko soilik erabiliko ditugu. Posta bidez iristen zaizkigu eta webguneak ez ditu gordetzen. Informazio gehiago <a href=\"/legal/condiciones#informes\">txostenen baldintzetan</a>."
+
+#: app.py (/informes)
+msgid "Pedir información"
+msgstr "Informazioa eskatu"
+
+#: app.py (/informes)
+msgid "Gracias: hemos recibido tu petición. Te contestaremos a tu correo con el precio exacto y el plazo."
+msgstr "Eskerrik asko: zure eskaera jaso dugu. Zure posta helbidera erantzungo dizugu prezio zehatzarekin eta epearekin."
+
+#: app.py (/informes)
+msgid "Falta algo: di qué informe quieres, sobre qué, tu correo, y marca la casilla de protección de datos."
+msgstr "Zerbait falta da: esan zein txosten nahi duzun, zeri buruz, zure posta helbidea, eta markatu datuen babesaren laukia."
+
+#: app.py (/informes)
+msgid "Esa dirección de correo no parece válida. Revísala, por favor."
+msgstr "Posta helbide horrek ez du baliozkoa ematen. Berrikusi, mesedez."
+
+#: app.py (/informes)
+msgid "No hemos podido enviar tu petición. Escríbenos directamente a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
+msgstr "Ezin izan dugu zure eskaera bidali. Idatzi iezaguzu zuzenean <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> helbidera."
+
+#: app.py (/informes)
+msgid "Para quién:"
+msgstr "Norentzat:"
+
+#: app.py (/informes)
+msgid "Ver un ejemplo (PDF)"
+msgstr "Adibide bat ikusi (PDF)"
+
+#: app.py (/informes)
+msgid "Pedirlo →"
+msgstr "Eskatu →"
+
+#: app.py (/informes)
+msgid "Informes"
+msgstr "Txostenak"
+
+#: app.py (/informes)
+msgid "Preparamos informes en PDF con los datos públicos que ya reúne esta web, ordenados y con cada dato enlazado a su fuente oficial: contratos, subvenciones, fondos europeos, BORME y cuentas municipales."
+msgstr "PDF txostenak prestatzen ditugu webgune honek dagoeneko biltzen dituen datu publikoekin, ordenatuta eta datu bakoitza bere iturri ofizialari lotuta: kontratuak, diru-laguntzak, Europako funtsak, BORME eta udal kontuak."
+
+#: app.py (/informes)
+msgid "Qué informes hacemos"
+msgstr "Zer txosten egiten ditugun"
+
+#: app.py (/informes)
+msgid "Precios orientativos, sin IVA. El precio exacto depende del tamaño del informe: te lo decimos antes de hacer nada."
+msgstr "Prezio orientagarriak, BEZik gabe. Prezio zehatza txostenaren tamainaren araberakoa da: ezer egin aurretik esango dizugu."
+
+#: app.py (/informes)
+msgid "Informes con datos oficiales de contratación pública"
+msgstr "Kontratazio publikoaren datu ofizialak dituzten txostenak"
+
+#: app.py (/informes)
+msgid "Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y precios orientativos."
+msgstr "Enpresen, udalen eta kontratu publikoetako lehiaren PDF txostenak, datu ofizialekin eta datu bakoitzaren iturriarekin. Adibide deskargagarriak eta prezio orientagarriak."
+
+#: app.py (/informes)
+msgid "Te lo preparamos en PDF, solo con datos oficiales y la fuente de cada dato: contratos, concentración por órgano, subvenciones y BORME."
+msgstr "PDFan prestatzen dizugu, datu ofizialekin soilik eta datu bakoitzaren iturriarekin: kontratuak, organoen araberako kontzentrazioa, diru-laguntzak eta BORME."
+
+#: app.py (/informes)
+msgid "Ver qué incluye, un ejemplo y pedirlo →"
+msgstr "Ikusi zer duen, adibide bat eta eskatu →"
+
+#: app.py (/informes)
+msgid "También puedes escribirnos:"
+msgstr "Guri idatzi ere egin diezagukezu:"
+
+#: app.py (/informes y Aviso legal)
+msgid "Precio según el encargo: pídenos presupuesto"
+msgstr "Prezioa enkarguaren arabera: eskatu aurrekontua"
+
+#: app.py (/informes y Aviso legal)
+msgid "Cada informe se presupuesta según su tamaño: te decimos el precio y el plazo antes de hacer nada, y pedirlo no te compromete."
+msgstr "Txosten bakoitzaren aurrekontua bere tamainaren araberakoa da: prezioa eta epea esango dizugu ezer egin aurretik, eta eskatzeak ez zaitu ezertara behartzen."
+
+#: app.py (/informes y Aviso legal)
+msgid "Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y presupuesto sin compromiso."
+msgstr "Enpresen, udalen eta lehiaren PDF txostenak kontratu publikoetan, datu ofizialekin eta datu bakoitzaren iturriarekin. Adibide deskargagarriak eta aurrekontua konpromisorik gabe."
+
+#: app.py (/informes y Aviso legal)
+msgid "Formulario de petición de informes"
+msgstr "Txostenak eskatzeko inprimakia"
+
+#: app.py (/informes y Aviso legal)
+msgid "Si pides un informe desde el formulario de la página <a href=\"/informes\">Informes</a>, te pedimos tu dirección de correo electrónico, qué informe quieres y sobre qué empresa, municipio o sector. Tu nombre o el de tu empresa y el mensaje son opcionales."
+msgstr "<a href=\"/informes\">Txostenak</a> orriko inprimakitik txosten bat eskatzen baduzu, zure helbide elektronikoa, zein txosten nahi duzun eta zein enpresa, udalerri edo sektoreri buruzkoa den eskatzen dizugu. Zure izena edo zure enpresarena eta mezua aukerakoak dira."
+
+#: app.py (/informes y Aviso legal)
+msgid "Usamos esos datos solo para contestar tu petición: decirte el precio y el plazo del informe que nos pides. No los cedemos a nadie ni los usamos para publicidad ni para apuntarte a ninguna lista. La base legal es tu propia petición (art. 6.1.b del RGPD: medidas precontractuales a petición del interesado)."
+msgstr "Datu horiek zure eskaerari erantzuteko baino ez ditugu erabiltzen: eskatzen diguzun txostenaren prezioa eta epea esateko. Ez dizkiogu inori lagatzen, eta ez ditugu publizitaterako edo inolako zerrendatan sartzeko erabiltzen. Oinarri juridikoa zure eskaera bera da (DBEOren 6.1.b art.: interesdunak eskatutako kontratu aurreko neurriak)."
+
+#: app.py (/informes y Aviso legal)
+msgid "La web no guarda esos datos: no se escriben en ninguna base de datos. Solo viajan en un correo que nos llega a contacto@dinero-publico.com, enviado a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento. En el registro técnico de envíos de la web solo queda la fecha y si el correo salió, con las direcciones tapadas."
+msgstr "Webguneak ez ditu datu horiek gordetzen: ez dira inolako datu-basetan idazten. contacto@dinero-publico.com helbidera iristen zaigun mezu batean bakarrik bidaiatzen dute, Resend bidez bidalita (Resend, Inc., Ameriketako Estatu Batuak); Resend tratamenduaren eragile gisa aritzen da. Webguneko bidalketen erregistro teknikoan data eta mezua bidali den ala ez baino ez da geratzen, helbideak ezkutatuta."
+
+#: app.py (/informes y Aviso legal)
+msgid "Conservamos ese correo en nuestro buzón mientras dure la conversación sobre tu petición y, como máximo, {meses} meses desde nuestra última respuesta. Después lo borramos."
+msgstr "Mezu hori gure postontzian gordetzen dugu zure eskaerari buruzko elkarrizketak irauten duen bitartean eta, gehienez ere, {meses} hilabetez gure azken erantzunetik aurrera. Ondoren ezabatu egiten dugu."
+
+#: app.py (/informes y Aviso legal)
+msgid "Puedes pedir que lo borremos antes, o ejercer cualquier otro de tus derechos, escribiendo a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
+msgstr "Lehenago ezabatzeko eska diezagukezu, edo zure beste edozein eskubide erabili, <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> helbidera idatzita."
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Oraindik ez dago EBko funtsen daturik probintzia honetarako."
 

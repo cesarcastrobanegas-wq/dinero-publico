@@ -3614,6 +3614,254 @@ msgstr "% ({base})"
 msgid "Los importes con bases distintas no se suman entre sí: van en columnas separadas, y los porcentajes se calculan solo sobre la columna «{columna}»."
 msgstr "Els imports amb bases diferents no se sumen entre si: van en columnes separades, i els percentatges es calculen només sobre la columna «{columna}»."
 
+#: app.py (/informes)
+msgid "Informe de empresa"
+msgstr "Informe d'empresa"
+
+#: app.py (/informes)
+msgid "desde 19 €"
+msgstr "des de 19 €"
+
+#: app.py (/informes)
+msgid "Los contratos públicos que ha ganado (órgano, importe, fecha, procedimiento y número de ofertas), la concentración por órgano contratante, las subvenciones de la BDNS, los fondos europeos declarados, sus administradores y actos en el BORME y las sociedades vinculadas."
+msgstr "Els contractes públics que ha guanyat (òrgan, import, data, procediment i nombre d'ofertes), la concentració per òrgan de contractació, les subvencions de la BDNS, els fons europeus declarats, els seus administradors i actes al BORME i les societats vinculades."
+
+#: app.py (/informes)
+msgid "Pymes que van a subcontratar o a ir en UTE, periodistas y despachos."
+msgstr "Pimes que han de subcontractar o anar en UTE, periodistes i despatxos."
+
+#: app.py (/informes)
+msgid "Informe de ayuntamiento"
+msgstr "Informe d'ajuntament"
+
+#: app.py (/informes)
+msgid "desde 29 €"
+msgstr "des de 29 €"
+
+#: app.py (/informes)
+msgid "Contratos formales y menores, principales adjudicatarios, proveedores que se repiten, retribuciones, deuda, cuentas e Índice de Transparencia."
+msgstr "Contractes formals i menors, principals adjudicataris, proveïdors que es repeteixen, retribucions, deute, comptes i Índex de Transparència."
+
+#: app.py (/informes)
+msgid "Grupos municipales, asociaciones, periodistas y consultoras."
+msgstr "Grups municipals, associacions, periodistes i consultores."
+
+#: app.py (/informes)
+msgid "Informe de competencia"
+msgstr "Informe de competència"
+
+#: app.py (/informes)
+msgid "desde 90 €"
+msgstr "des de 90 €"
+
+#: app.py (/informes)
+msgid "Un sector (código CPV) en una provincia: quién gana, cuántas veces y por cuánto, la rebaja media, las ofertas por contrato y los órganos que más contratan."
+msgstr "Un sector (codi CPV) en una província: qui guanya, quantes vegades i per quant, la rebaixa mitjana, les ofertes per contracte i els òrgans que més contracten."
+
+#: app.py (/informes)
+msgid "Empresas que licitan."
+msgstr "Empreses que liciten."
+
+#: app.py (/informes)
+msgid "Seguimiento de competidor"
+msgstr "Seguiment de competidor"
+
+#: app.py (/informes)
+msgid "desde 5 € al mes por empresa"
+msgstr "des de 5 € al mes per empresa"
+
+#: app.py (/informes)
+msgid "Un aviso por correo cada vez que la empresa que elijas gana un contrato público, formal o menor."
+msgstr "Un avís per correu cada vegada que l'empresa que triïs guanyi un contracte públic, formal o menor."
+
+#: app.py (/informes)
+msgid "Suscripción para pymes"
+msgstr "Subscripció per a pimes"
+
+#: app.py (/informes)
+msgid "desde 25 € al mes"
+msgstr "des de 25 € al mes"
+
+#: app.py (/informes)
+msgid "Filtro de licitaciones, alertas por correo, 2 informes de empresa al mes y 3 competidores en seguimiento."
+msgstr "Filtre de licitacions, alertes per correu, 2 informes d'empresa al mes i 3 competidors en seguiment."
+
+#: app.py (/informes)
+msgid "Pymes que licitan."
+msgstr "Pimes que liciten."
+
+#: app.py (/informes)
+msgid "No es asesoramiento ni una valoración de solvencia: solo datos oficiales."
+msgstr "No és assessorament ni una valoració de solvència: només dades oficials."
+
+#: app.py (/informes)
+msgid "Los informes no son asesoramiento jurídico, financiero ni de inversión, ni una valoración de solvencia o de crédito. Recogen solo datos oficiales publicados, cada uno con su fuente y la fecha en que se consultó. No incluyen deudas, morosidad ni impagados. Las vinculaciones entre personas y sociedades se hacen por el nombre, que puede ser de un homónimo: el BORME no publica el DNI."
+msgstr "Els informes no són assessorament jurídic, financer ni d'inversió, ni una valoració de solvència o de crèdit. Recullen només dades oficials publicades, cadascuna amb la seva font i la data en què es va consultar. No inclouen deutes, morositat ni impagaments. Les vinculacions entre persones i societats es fan pel nom, que pot ser d'un homònim: el BORME no publica el DNI."
+
+#: app.py (/informes)
+msgid "Informe de ayuntamiento (Archena)"
+msgstr "Informe d'ajuntament (Archena)"
+
+#: app.py (/informes)
+msgid "Informe de competencia (obras en la Región de Murcia)"
+msgstr "Informe de competència (obres a la Regió de Múrcia)"
+
+#: app.py (/informes)
+msgid "Informes de ejemplo"
+msgstr "Informes d'exemple"
+
+#: app.py (/informes)
+msgid "Tres ejemplos con datos reales de fuentes oficiales. Los nombres de empresas y personas están sustituidos («Empresa A», «Administrador 1»); los ayuntamientos y los órganos públicos se mantienen."
+msgstr "Tres exemples amb dades reals de fonts oficials. Els noms d'empreses i persones estan substituïts («Empresa A», «Administrador 1»); els ajuntaments i els òrgans públics es mantenen."
+
+#: app.py (/informes)
+msgid "Pedir un informe"
+msgstr "Demanar un informe"
+
+#: app.py (/informes)
+msgid "Escríbenos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> y te contestamos con el precio exacto y el plazo."
+msgstr "Escriu-nos a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a> i et contestem amb el preu exacte i el termini."
+
+#: app.py (/informes)
+msgid "Otro / no lo sé"
+msgstr "Un altre / no ho sé"
+
+#: app.py (/informes)
+msgid "Todavía no vendemos en línea. Cuéntanos qué necesitas y te contestamos por correo con el precio exacto y el plazo. Pedir información no te compromete a nada."
+msgstr "Encara no venem en línia. Explica'ns què necessites i et contestem per correu amb el preu exacte i el termini. Demanar informació no et compromet a res."
+
+#: app.py (/informes)
+msgid "¿Qué informe?"
+msgstr "Quin informe?"
+
+#: app.py (/informes)
+msgid "¿Sobre qué? (la empresa, el municipio, o el sector y la provincia)"
+msgstr "Sobre què? (l'empresa, el municipi, o el sector i la província)"
+
+#: app.py (/informes)
+msgid "Tu correo"
+msgstr "El teu correu"
+
+#: app.py (/informes)
+msgid "Tu nombre o el de tu empresa (opcional)"
+msgstr "El teu nom o el de la teva empresa (opcional)"
+
+#: app.py (/informes)
+msgid "Algo más que debamos saber (opcional)"
+msgstr "Alguna cosa més que hàgim de saber (opcional)"
+
+#: app.py (/informes)
+msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href=\"/aviso-legal#informes\">Aviso legal</a>."
+msgstr "Farem servir aquestes dades només per contestar-te. Ens arriben per correu i el web no les guarda. Més informació a l'<a href=\"/aviso-legal#informes\">Avís legal</a>."
+
+#: app.py (_informes_legal_aviso, 20-11-2026)
+msgid "Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en las <a href=\"/legal/condiciones#informes\">condiciones de los informes</a>."
+msgstr "Farem servir aquestes dades només per contestar-te. Ens arriben per correu i el web no les guarda. Més informació a les <a href=\"/legal/condiciones#informes\">condicions dels informes</a>."
+
+#: app.py (/informes)
+msgid "Pedir información"
+msgstr "Demanar informació"
+
+#: app.py (/informes)
+msgid "Gracias: hemos recibido tu petición. Te contestaremos a tu correo con el precio exacto y el plazo."
+msgstr "Gràcies: hem rebut la teva petició. Et contestarem al teu correu amb el preu exacte i el termini."
+
+#: app.py (/informes)
+msgid "Falta algo: di qué informe quieres, sobre qué, tu correo, y marca la casilla de protección de datos."
+msgstr "Falta alguna cosa: digues quin informe vols, sobre què, el teu correu, i marca la casella de protecció de dades."
+
+#: app.py (/informes)
+msgid "Esa dirección de correo no parece válida. Revísala, por favor."
+msgstr "Aquesta adreça de correu no sembla vàlida. Revisa-la, si us plau."
+
+#: app.py (/informes)
+msgid "No hemos podido enviar tu petición. Escríbenos directamente a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
+msgstr "No hem pogut enviar la teva petició. Escriu-nos directament a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
+
+#: app.py (/informes)
+msgid "Para quién:"
+msgstr "Per a qui:"
+
+#: app.py (/informes)
+msgid "Ver un ejemplo (PDF)"
+msgstr "Veure un exemple (PDF)"
+
+#: app.py (/informes)
+msgid "Pedirlo →"
+msgstr "Demanar-lo →"
+
+#: app.py (/informes)
+msgid "Informes"
+msgstr "Informes"
+
+#: app.py (/informes)
+msgid "Preparamos informes en PDF con los datos públicos que ya reúne esta web, ordenados y con cada dato enlazado a su fuente oficial: contratos, subvenciones, fondos europeos, BORME y cuentas municipales."
+msgstr "Preparem informes en PDF amb les dades públiques que ja reuneix aquest web, ordenades i amb cada dada enllaçada a la seva font oficial: contractes, subvencions, fons europeus, BORME i comptes municipals."
+
+#: app.py (/informes)
+msgid "Qué informes hacemos"
+msgstr "Quins informes fem"
+
+#: app.py (/informes)
+msgid "Precios orientativos, sin IVA. El precio exacto depende del tamaño del informe: te lo decimos antes de hacer nada."
+msgstr "Preus orientatius, sense IVA. El preu exacte depèn de la mida de l'informe: te'l diem abans de fer res."
+
+#: app.py (/informes)
+msgid "Informes con datos oficiales de contratación pública"
+msgstr "Informes amb dades oficials de contractació pública"
+
+#: app.py (/informes)
+msgid "Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y precios orientativos."
+msgstr "Informes en PDF d'empreses, ajuntaments i competència en contractes públics, amb dades oficials i la font de cada dada. Exemples descarregables i preus orientatius."
+
+#: app.py (/informes)
+msgid "Te lo preparamos en PDF, solo con datos oficiales y la fuente de cada dato: contratos, concentración por órgano, subvenciones y BORME."
+msgstr "Te'l preparem en PDF, només amb dades oficials i la font de cada dada: contractes, concentració per òrgan, subvencions i BORME."
+
+#: app.py (/informes)
+msgid "Ver qué incluye, un ejemplo y pedirlo →"
+msgstr "Veure què inclou, un exemple i demanar-lo →"
+
+#: app.py (/informes)
+msgid "También puedes escribirnos:"
+msgstr "També ens pots escriure:"
+
+#: app.py (/informes y Aviso legal)
+msgid "Precio según el encargo: pídenos presupuesto"
+msgstr "Preu segons l'encàrrec: demana'ns pressupost"
+
+#: app.py (/informes y Aviso legal)
+msgid "Cada informe se presupuesta según su tamaño: te decimos el precio y el plazo antes de hacer nada, y pedirlo no te compromete."
+msgstr "Cada informe es pressuposta segons la seva mida: et diem el preu i el termini abans de fer res, i demanar-lo no et compromet."
+
+#: app.py (/informes y Aviso legal)
+msgid "Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y presupuesto sin compromiso."
+msgstr "Informes en PDF d'empreses, ajuntaments i competència en contractes públics, amb dades oficials i la font de cada dada. Exemples descarregables i pressupost sense compromís."
+
+#: app.py (/informes y Aviso legal)
+msgid "Formulario de petición de informes"
+msgstr "Formulari de sol·licitud d'informes"
+
+#: app.py (/informes y Aviso legal)
+msgid "Si pides un informe desde el formulario de la página <a href=\"/informes\">Informes</a>, te pedimos tu dirección de correo electrónico, qué informe quieres y sobre qué empresa, municipio o sector. Tu nombre o el de tu empresa y el mensaje son opcionales."
+msgstr "Si demanes un informe des del formulari de la pàgina <a href=\"/informes\">Informes</a>, et demanem la teva adreça de correu electrònic, quin informe vols i sobre quina empresa, municipi o sector. El teu nom o el de la teva empresa i el missatge són opcionals."
+
+#: app.py (/informes y Aviso legal)
+msgid "Usamos esos datos solo para contestar tu petición: decirte el precio y el plazo del informe que nos pides. No los cedemos a nadie ni los usamos para publicidad ni para apuntarte a ninguna lista. La base legal es tu propia petición (art. 6.1.b del RGPD: medidas precontractuales a petición del interesado)."
+msgstr "Fem servir aquestes dades només per respondre la teva sol·licitud: dir-te el preu i el termini de l'informe que ens demanes. No les cedim a ningú ni les fem servir per a publicitat ni per apuntar-te a cap llista. La base legal és la teva pròpia sol·licitud (art. 6.1.b del RGPD: mesures precontractuals a petició de l'interessat)."
+
+#: app.py (/informes y Aviso legal)
+msgid "La web no guarda esos datos: no se escriben en ninguna base de datos. Solo viajan en un correo que nos llega a contacto@dinero-publico.com, enviado a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento. En el registro técnico de envíos de la web solo queda la fecha y si el correo salió, con las direcciones tapadas."
+msgstr "El web no desa aquestes dades: no s'escriuen a cap base de dades. Només viatgen en un correu que ens arriba a contacto@dinero-publico.com, enviat a través de Resend (Resend, Inc., Estats Units), que actua com a encarregat del tractament. Al registre tècnic d'enviaments del web només hi queda la data i si el correu ha sortit, amb les adreces tapades."
+
+#: app.py (/informes y Aviso legal)
+msgid "Conservamos ese correo en nuestro buzón mientras dure la conversación sobre tu petición y, como máximo, {meses} meses desde nuestra última respuesta. Después lo borramos."
+msgstr "Conservem aquest correu a la nostra bústia mentre duri la conversa sobre la teva sol·licitud i, com a màxim, {meses} mesos des de la nostra última resposta. Després l'esborrem."
+
+#: app.py (/informes y Aviso legal)
+msgid "Puedes pedir que lo borremos antes, o ejercer cualquier otro de tus derechos, escribiendo a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
+msgstr "Pots demanar que l'esborrem abans, o exercir qualsevol altre dels teus drets, escrivint a <a href=\"mailto:contacto@dinero-publico.com\">contacto@dinero-publico.com</a>."
+
 #~ msgid "Sin datos de fondos UE todavía para esta provincia."
 #~ msgstr "Encara sense dades de fons UE per a aquesta província."
 

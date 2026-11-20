@@ -18958,6 +18958,24 @@ a.fue-link{color:var(--yellow);font-size:11px;}
 .empresa-ficha td.cm-importe .noloc-nota{display:block;white-space:normal;overflow-wrap:anywhere;}
 .empresa-informe{margin-top:32px;padding:16px 18px;border:1px solid var(--border);border-radius:8px;background:var(--tint);}
 .empresa-informe h2{margin-top:0;}
+.informes .inf-cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin:8px 0 14px;}
+.informes .inf-card{border:1px solid var(--border);border-radius:8px;padding:14px 16px;background:var(--tint);line-height:1.55;}
+.informes .inf-card h3{font-size:15px;margin:0 0 4px;color:var(--text);}
+.informes .inf-card p{margin-bottom:8px;font-size:13.5px;}
+.informes .inf-precio{font-weight:700;color:var(--accent);margin-bottom:8px;}
+.informes .inf-sub{font-size:12.5px;color:var(--dim);}
+.informes .inf-aviso{border-left:4px solid var(--yellow);background:var(--tint);padding:10px 14px;margin:14px 0;font-size:13.5px;line-height:1.6;}
+.informes .inf-ok,.informes .inf-error{border-radius:8px;padding:10px 14px;margin:0 0 14px;font-size:14px;}
+.informes .inf-ok{border:1px solid #2e7d32;background:rgba(46,125,50,.08);}
+.informes .inf-error{border:1px solid #c62828;background:rgba(198,40,40,.08);}
+.informes .inf-form{display:grid;gap:12px;max-width:560px;}
+.informes .inf-form label{display:grid;gap:4px;font-size:13.5px;font-weight:600;}
+.informes .inf-form input[type=text],.informes .inf-form input[type=email],.informes .inf-form select,.informes .inf-form textarea{font:inherit;font-weight:400;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:100%;box-sizing:border-box;}
+.informes .inf-form .inf-check{display:flex;gap:8px;align-items:flex-start;font-weight:400;font-size:13px;}
+.informes .inf-form .inf-check input{margin-top:4px;}
+.informes .inf-form button{justify-self:start;padding:9px 18px;border:0;border-radius:6px;background:var(--accent);color:#fff;font:inherit;font-weight:700;cursor:pointer;}
+.informes .inf-trampa{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
+.informes .inf-ejemplos li{margin-bottom:6px;}
 .empresa-ficha .emp-base{display:none;font-weight:400;font-size:11px;color:var(--dim);}
 @media (max-width:700px){.empresa-ficha .emp-base{display:inline;}}
 .rk-valor{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);white-space:nowrap;font-weight:600;}
@@ -20353,6 +20371,7 @@ def _footer_html(provincia="todas"):
     <a href="#" id="cookie-preferencias">{_t("Preferencias de cookies")}</a>
     <a href="/quien-soy">{_t("Quién soy")}</a>
     <a href="/casos">{_t("Casos")}</a>
+    <a href="/informes">{_t("Informes")}</a>
     <a href="/entidades">{_t("Entidades locales")}</a>
     <a href="/mapa-cobertura">{_t("Mapa de cobertura")}</a>
     <a href="/metodologia">{_t("Metodología")}</a>
@@ -29495,6 +29514,241 @@ def _iban_html():
 # _t(), como el resto de la interfaz: se traduce en backend/locale/<idioma>.po y, si falta una traducción, ese
 # párrafo sale en castellano (nunca rompe). Un párrafo = un _t() con su HTML dentro (enlaces, negritas), para que
 # quien traduzca pueda mover las palabras; los enlaces internos los prefija _i18n_reescribir_html a la salida.
+# ─── /informes: página de venta de informes, sin cobro (16-11-2026, encargo de César) ─────────────────────────────────
+# Catálogo de INFORME_PRODUCTOS_DP.md con precio orientativo «desde» (sin IVA), los 3 PDF de ejemplo ANONIMIZADOS
+# (backend/static/informes/: «Empresa A», «Administrador 1»...; los que llevan nombres no salen nunca del Escritorio) y
+# un formulario que manda la petición por correo (Resend, como los avisos de comentarios) a INFORMES_DESTINO
+# (contacto@dinero-publico.com si no se pone otra). Sin pago: se contesta a mano con el precio y el plazo.
+#   - Los datos de quien pide NO se guardan en la web: solo viajan en el correo. En avisos_correo queda el intento
+#     (enviado o no, con las direcciones tapadas), como el resto de avisos.
+#   - Freno: campo trampa «web», INFORMES_MAX_HORA peticiones por hora en total y textos con longitud máxima.
+#   - INFORMES_PEDIDOS=0 apaga el formulario (queda el enlace de correo). La página se ve siempre.
+INFORMES_PEDIDOS = os.environ.get("INFORMES_PEDIDOS", "1").strip() != "0"
+INFORMES_MAX_HORA = 20
+# Precios (16-11): mientras no estén decididos, cada tarjeta dice «Precio según el encargo: pídenos presupuesto».
+# Para enseñar los «desde» basta con poner INFORMES_PRECIOS_VISIBLES = True; los importes están en _INFORMES_PRECIOS
+# (sin IVA; cada texto tiene ya su traducción en los .po).
+INFORMES_PRECIOS_VISIBLES = False
+# Cuánto se guarda en el buzón de contacto@ el correo de una petición, desde la última respuesta (Aviso legal #informes).
+INFORMES_CONSERVACION_MESES = 12
+_INFORMES_PRECIOS = {"empresa": "desde 19 €", "ayuntamiento": "desde 29 €", "competencia": "desde 90 €",
+                     "seguimiento": "desde 5 € al mes por empresa", "suscripcion": "desde 25 € al mes"}
+_INFORMES_DIR = os.path.join(BASE_DIR, "static", "informes")
+_INFORMES_EJEMPLOS = {"empresa": "ejemplo-informe-empresa.pdf", "ayuntamiento": "ejemplo-informe-ayuntamiento.pdf",
+                      "competencia": "ejemplo-informe-competencia.pdf"}
+_informes_envios = collections.deque()
+_informes_lock = threading.Lock()
+
+
+def _informes_legal_aviso():
+    """Frase de la casilla del formulario con el enlace a dónde se explica qué hacemos con los datos (20-11-2026).
+    Con los textos legales nuevos ENCENDIDOS (PR #20: TEXTOS_LEGALES_NUEVOS=1 y los datos del titular completos),
+    /aviso-legal redirige al aviso nuevo, que no tiene este apartado: entonces se enlaza a «Informes a medida» de las
+    condiciones nuevas (/legal/condiciones#informes). Apagados (hoy), al apartado del aviso legal de siempre."""
+    if globals().get("TEXTOS_LEGALES_NUEVOS") is True:
+        return _t('Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más '
+                  'información en las <a href="/legal/condiciones#informes">condiciones de los informes</a>.')
+    return _t('Usaremos estos datos solo para contestarte. Nos llegan por correo y la web no los guarda. Más información en el <a href="/aviso-legal#informes">Aviso legal</a>.')
+
+
+def _informes_destino():
+    return os.environ.get("INFORMES_DESTINO", "").strip() or "contacto@dinero-publico.com"
+
+
+def _informes_precio(clave):
+    if INFORMES_PRECIOS_VISIBLES and clave in _INFORMES_PRECIOS:
+        return _t(_INFORMES_PRECIOS[clave])
+    return _t("Precio según el encargo: pídenos presupuesto")
+
+
+def _informes_catalogo():
+    """[(clave, título, precio, qué lleva, para quién)] en el idioma de la petición. El precio sale de
+    _informes_precio (ver INFORMES_PRECIOS_VISIBLES)."""
+    return [
+        ("empresa", _t("Informe de empresa"), _informes_precio("empresa"),
+         _t("Los contratos públicos que ha ganado (órgano, importe, fecha, procedimiento y número de ofertas), la concentración por órgano contratante, las subvenciones de la BDNS, los fondos europeos declarados, sus administradores y actos en el BORME y las sociedades vinculadas."),
+         _t("Pymes que van a subcontratar o a ir en UTE, periodistas y despachos.")),
+        ("ayuntamiento", _t("Informe de ayuntamiento"), _informes_precio("ayuntamiento"),
+         _t("Contratos formales y menores, principales adjudicatarios, proveedores que se repiten, retribuciones, deuda, cuentas e Índice de Transparencia."),
+         _t("Grupos municipales, asociaciones, periodistas y consultoras.")),
+        ("competencia", _t("Informe de competencia"), _informes_precio("competencia"),
+         _t("Un sector (código CPV) en una provincia: quién gana, cuántas veces y por cuánto, la rebaja media, las ofertas por contrato y los órganos que más contratan."),
+         _t("Empresas que licitan.")),
+        ("seguimiento", _t("Seguimiento de competidor"), _informes_precio("seguimiento"),
+         _t("Un aviso por correo cada vez que la empresa que elijas gana un contrato público, formal o menor."),
+         _t("Empresas que licitan.")),
+        ("suscripcion", _t("Suscripción para pymes"), _informes_precio("suscripcion"),
+         _t("Filtro de licitaciones, alertas por correo, 2 informes de empresa al mes y 3 competidores en seguimiento."),
+         _t("Pymes que licitan.")),
+    ]
+
+
+def _informes_aviso_html():
+    return (f'<div class="inf-aviso"><strong>{_t("No es asesoramiento ni una valoración de solvencia: solo datos oficiales.")}</strong> '
+            + _t("Los informes no son asesoramiento jurídico, financiero ni de inversión, ni una valoración de solvencia o de crédito. Recogen solo datos oficiales publicados, cada uno con su fuente y la fecha en que se consultó. No incluyen deudas, morosidad ni impagados. Las vinculaciones entre personas y sociedades se hacen por el nombre, que puede ser de un homónimo: el BORME no publica el DNI.")
+            + "</div>")
+
+
+def _informes_ejemplos_html():
+    nombres = {"empresa": _t("Informe de empresa"), "ayuntamiento": _t("Informe de ayuntamiento (Archena)"),
+               "competencia": _t("Informe de competencia (obras en la Región de Murcia)")}
+    items = []
+    for clave, fichero in _INFORMES_EJEMPLOS.items():
+        ruta = os.path.join(_INFORMES_DIR, fichero)
+        if not os.path.exists(ruta):
+            continue
+        kb = max(1, os.path.getsize(ruta) // 1024)
+        items.append(f'<li><a href="/informes/ejemplos/{fichero}" target="_blank" rel="noopener">{esc(nombres[clave])}</a>'
+                     f' <span class="inf-sub">PDF, {kb} KB</span></li>')
+    if not items:
+        return ""
+    return (f'<h2 id="ejemplos">{_t("Informes de ejemplo")}</h2>'
+            f'<p>{_t("Tres ejemplos con datos reales de fuentes oficiales. Los nombres de empresas y personas están sustituidos («Empresa A», «Administrador 1»); los ayuntamientos y los órganos públicos se mantienen.")}</p>'
+            f'<ul class="inf-ejemplos">{"".join(items)}</ul>')
+
+
+def _informes_form_html(qs):
+    if not INFORMES_PEDIDOS:
+        return (f'<h2 id="pedir">{_t("Pedir un informe")}</h2><p>'
+                + _t('Escríbenos a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a> y te contestamos con el precio exacto y el plazo.')
+                + '</p>')
+    g = lambda k, n=200: (qs.get(k, [""])[0] or "")[:n]
+    elegido = g("producto", 20)
+    opciones = "".join(f'<option value="{c}"{" selected" if c == elegido else ""}>{esc(titulo)}</option>'
+                       for c, titulo, *_ in _informes_catalogo())
+    opciones += f'<option value="otro"{" selected" if elegido == "otro" else ""}>{esc(_t("Otro / no lo sé"))}</option>'
+    return f"""<h2 id="pedir">{_t("Pedir un informe")}</h2>
+  <p>{_t("Todavía no vendemos en línea. Cuéntanos qué necesitas y te contestamos por correo con el precio exacto y el plazo. Pedir información no te compromete a nada.")}</p>
+  <form method="POST" action="/informes/pedir" class="inf-form">
+    <label>{_t("¿Qué informe?")}
+      <select name="producto">{opciones}</select></label>
+    <label>{_t("¿Sobre qué? (la empresa, el municipio, o el sector y la provincia)")}
+      <input type="text" name="sobre" maxlength="200" required value="{esc(g("sobre"))}"></label>
+    <label>{_t("Tu correo")}
+      <input type="email" name="correo" maxlength="120" required autocomplete="email"></label>
+    <label>{_t("Tu nombre o el de tu empresa (opcional)")}
+      <input type="text" name="nombre" maxlength="120" autocomplete="name"></label>
+    <label>{_t("Algo más que debamos saber (opcional)")}
+      <textarea name="mensaje" maxlength="1500" rows="4"></textarea></label>
+    <label class="inf-trampa" aria-hidden="true">Web <input type="text" name="web" tabindex="-1" autocomplete="off"></label>
+    <label class="inf-check"><input type="checkbox" name="acepto" value="1" required>
+      <span>{_informes_legal_aviso()}</span></label>
+    <button type="submit">{_t("Pedir información")}</button>
+  </form>"""
+
+
+def render_informes_html(qs=None):
+    qs = qs or {}
+    estado = (qs.get("enviado", [""])[0] and "enviado") or (qs.get("error", [""])[0] or "")[:10]
+    mensajes = {
+        "enviado": ("inf-ok", _t("Gracias: hemos recibido tu petición. Te contestaremos a tu correo con el precio exacto y el plazo.")),
+        "datos": ("inf-error", _t("Falta algo: di qué informe quieres, sobre qué, tu correo, y marca la casilla de protección de datos.")),
+        "correo": ("inf-error", _t("Esa dirección de correo no parece válida. Revísala, por favor.")),
+        "envio": ("inf-error", _t('No hemos podido enviar tu petición. Escríbenos directamente a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')),
+    }
+    caja = ""
+    if estado in mensajes:
+        clase, texto = mensajes[estado]
+        caja = f'<div class="{clase}" role="status">{texto}</div>'
+    tarjetas = "".join(
+        f'<div class="inf-card"><h3>{esc(titulo)}</h3><div class="inf-precio">{esc(precio)}</div>'
+        f'<p>{esc(que)}</p><p class="inf-sub"><strong>{_t("Para quién:")}</strong> {esc(para)}</p>'
+        + (f'<p class="inf-sub"><a href="/informes/ejemplos/{_INFORMES_EJEMPLOS[c]}" target="_blank" rel="noopener">{_t("Ver un ejemplo (PDF)")}</a></p>'
+           if c in _INFORMES_EJEMPLOS and os.path.exists(os.path.join(_INFORMES_DIR, _INFORMES_EJEMPLOS[c])) else "")
+        + f'<p><a href="/informes?producto={c}#pedir">{_t("Pedirlo →")}</a></p></div>'
+        for c, titulo, precio, que, para in _informes_catalogo())
+    body = f"""<div class="static-page informes">
+  <h1>{_t("Informes")}</h1>
+  {caja}
+  <p>{_t("Preparamos informes en PDF con los datos públicos que ya reúne esta web, ordenados y con cada dato enlazado a su fuente oficial: contratos, subvenciones, fondos europeos, BORME y cuentas municipales.")}</p>
+  {_informes_aviso_html()}
+  <h2>{_t("Qué informes hacemos")}</h2>
+  <div class="inf-cat">{tarjetas}</div>
+  <p class="inf-sub">{_t("Precios orientativos, sin IVA. El precio exacto depende del tamaño del informe: te lo decimos antes de hacer nada.") if INFORMES_PRECIOS_VISIBLES else _t("Cada informe se presupuesta según su tamaño: te decimos el precio y el plazo antes de hacer nada, y pedirlo no te compromete.")}</p>
+  {_informes_ejemplos_html()}
+  {_informes_form_html(qs)}
+</div>"""
+    html_ = _page_shell(_t("Informes con datos oficiales de contratación pública"), body,
+                        description=(_t("Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y precios orientativos.")
+                                     if INFORMES_PRECIOS_VISIBLES else
+                                     _t("Informes en PDF de empresas, ayuntamientos y competencia en contratos públicos, con datos oficiales y la fuente de cada dato. Ejemplos descargables y presupuesto sin compromiso.")),
+                        og_path="/informes")
+    return html_
+
+
+def _informes_get(qs, gzip_ok=False):
+    cabeceras = {"X-Robots-Tag": "noindex"} if qs else {}        # con parámetros (p. ej. ?sobre=...) no se indexa
+    if qs:
+        cabeceras["Cache-Control"] = "no-store"
+    return _resp(render_informes_html(qs), gzip_ok=gzip_ok, headers=cabeceras)
+
+
+def _informes_pdf(fichero):
+    if fichero not in _INFORMES_EJEMPLOS.values():
+        return None
+    try:
+        with open(os.path.join(_INFORMES_DIR, fichero), "rb") as f:
+            datos = f.read()
+    except OSError:
+        return None
+    return 200, {"Content-Type": "application/pdf", "Content-Length": str(len(datos)),
+                 "Content-Disposition": f'inline; filename="{fichero}"',
+                 "Cache-Control": "public, max-age=86400"}, datos
+
+
+def _informes_texto(v, n):
+    """Una línea de texto de formulario, sin saltos ni caracteres de control, cortada a n caracteres."""
+    return re.sub(r"[\x00-\x1f\x7f]+", " ", v or "").strip()[:n]
+
+
+def _informes_post(params):
+    p = lambda k: (params.get(k, [""])[0] or "")
+    if not INFORMES_PEDIDOS:
+        return _redirect_resp("/informes")
+    if p("web").strip():                                   # campo trampa: las personas no lo ven
+        return _redirect_resp("/informes?enviado=1")
+    catalogo = {c: titulo for c, titulo, *_ in _informes_catalogo()}
+    producto = p("producto") if p("producto") in catalogo or p("producto") == "otro" else ""
+    sobre = _informes_texto(p("sobre"), 200)
+    nombre = _informes_texto(p("nombre"), 120)
+    mensaje = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]+", " ", p("mensaje")).strip()[:1500]
+    if not producto or not sobre or p("acepto") != "1" or not p("correo").strip():
+        return _redirect_resp("/informes?error=datos")
+    correo = ALR.correo_valido(p("correo"))
+    if not correo:
+        return _redirect_resp("/informes?error=correo")
+    ahora = time.time()
+    with _informes_lock:
+        while _informes_envios and ahora - _informes_envios[0] > 3600:
+            _informes_envios.popleft()
+        if len(_informes_envios) >= INFORMES_MAX_HORA:
+            _aviso_registrar("informe", None, f"tope de {INFORMES_MAX_HORA} peticiones por hora alcanzado")
+            return _redirect_resp("/informes?error=envio")
+        _informes_envios.append(ahora)
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if not api_key:
+        _aviso_registrar("informe", None, "falta RESEND_API_KEY en el entorno de este proceso")
+        return _redirect_resp("/informes?error=envio")
+    idioma = _I18N_IDIOMA.get()
+    marca = _I18N_IDIOMA.set("es")
+    try:
+        titulo = "Otro / no lo sé" if producto == "otro" else dict((c, t_) for c, t_, *_ in _informes_catalogo())[producto]
+    finally:
+        _I18N_IDIOMA.reset(marca)
+    lineas = [f"Informe: {titulo}", f"Sobre: {sobre}", f"Correo: {correo}", f"Nombre o empresa: {nombre or '—'}",
+              f"Idioma de la página: {idioma}", "", "Mensaje:", mensaje or "—", "",
+              "Enviado desde el formulario de dinero-publico.com/informes. Responde a este correo para contestar."]
+    cuerpo = "".join(f"<p>{esc(l)}</p>" if l else "" for l in lineas[:5])
+    cuerpo += f"<p><b>Mensaje:</b></p><p style=\"white-space:pre-wrap\">{esc(mensaje or '—')}</p>"
+    cuerpo += f"<p style=\"color:#6b7280;font-size:13px\">{esc(lineas[-1])}</p>"
+    payload = {"from": _avisos_remitente(), "to": [_informes_destino()], "reply_to": correo,
+               "subject": f"Petición de informe: {titulo} — {sobre[:80]}", "text": "\n".join(lineas), "html": cuerpo}
+    codigo, _ = _aviso_comentarios_enviar(payload, api_key, tipo="informe")
+    if codigo is None or codigo >= 300:
+        return _redirect_resp("/informes?error=envio")
+    return _redirect_resp("/informes?enviado=1")
+
+
 def render_quienes_somos_html():
     """"Quién soy" (2026-10-01, encargo de César): contar la verdad -- una sola persona, sin presupuesto ni equipo --
     en primera persona del singular, y una llamada clara a colaborar o apoyar por Bizum. URL /quien-soy (la antigua
@@ -29560,6 +29814,17 @@ def render_aviso_legal_html():
   <p>{_t("Los correos se envían a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento: recibe tu dirección y el contenido de cada mensaje, y los usa solo para entregarlo.")}</p>
   <p>{_t('Puedes darte de baja en cualquier momento con el enlace que va en cada correo: al hacerlo borramos de inmediato tu dirección y tus alertas. También puedes pedirlo en <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
 """ if ALERTAS_ACTIVAS else ""
+    # Formulario de /informes (2026-11-16): solo mientras el formulario está encendido (INFORMES_PEDIDOS). Los datos
+    # no se escriben en la base de datos: viajan en un correo (_informes_post) y en avisos_correo solo queda el
+    # intento, con las direcciones tapadas. El plazo de conservación del buzón lo fija INFORMES_CONSERVACION_MESES.
+    informes_legal = f"""
+  <h2 id="informes">{_t("Formulario de petición de informes")}</h2>
+  <p>{_t('Si pides un informe desde el formulario de la página <a href="/informes">Informes</a>, te pedimos tu dirección de correo electrónico, qué informe quieres y sobre qué empresa, municipio o sector. Tu nombre o el de tu empresa y el mensaje son opcionales.')}</p>
+  <p>{_t("Usamos esos datos solo para contestar tu petición: decirte el precio y el plazo del informe que nos pides. No los cedemos a nadie ni los usamos para publicidad ni para apuntarte a ninguna lista. La base legal es tu propia petición (art. 6.1.b del RGPD: medidas precontractuales a petición del interesado).")}</p>
+  <p>{_t("La web no guarda esos datos: no se escriben en ninguna base de datos. Solo viajan en un correo que nos llega a contacto@dinero-publico.com, enviado a través de Resend (Resend, Inc., Estados Unidos), que actúa como encargado del tratamiento. En el registro técnico de envíos de la web solo queda la fecha y si el correo salió, con las direcciones tapadas.")}</p>
+  <p>{_t("Conservamos ese correo en nuestro buzón mientras dure la conversación sobre tu petición y, como máximo, {meses} meses desde nuestra última respuesta. Después lo borramos.").format(meses=INFORMES_CONSERVACION_MESES)}</p>
+  <p>{_t('Puedes pedir que lo borremos antes, o ejercer cualquier otro de tus derechos, escribiendo a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
+""" if INFORMES_PEDIDOS else ""
     body = f"""<div class="static-page">
   <h1>{_t("Aviso Legal y Privacidad")}</h1>
   {nota}
@@ -29589,6 +29854,7 @@ def render_aviso_legal_html():
   <p>{_t('Para ejercer tus derechos de acceso, rectificación, supresión, oposición o limitación del tratamiento, escribe a <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.')}</p>
 
   {alertas_legal}
+  {informes_legal}
   <h2>{_t("Cookies y publicidad")}</h2>
   <p>{_t("Este sitio usa cookies propias, necesarias para su funcionamiento básico, y cookies de terceros que solo se activan si das tu consentimiento explícito en el banner que aparece al entrar:")}</p>
   <ul>
@@ -31586,6 +31852,8 @@ def _render_empresa(con, ident, qs):
                f'<div class="tbl-scroll"><table class="t-tarjeta">{cab}{_filas_contratos(menores, True)}</table></div>'
                f'{_empresa_paginacion(url_propia, "pag_m", pag_m, tp_m, "menores", otros)}') if n_m else ""
     asunto = quote_plus(f"Informe completo: {nombre}")
+    # Con una sociedad se rellena el formulario de /informes; con una persona física no (su nombre no va en la URL).
+    url_informe = "/informes?producto=empresa" + (f"&sobre={quote_plus(nombre)}" if sociedad else "") + "#pedir"
     body = f"""<div class="static-page empresa-ficha">
   <h1>{esc(nombre)}</h1>
   {nif_html}
@@ -31614,7 +31882,9 @@ def _render_empresa(con, ident, qs):
   {tabla_m}
   <div class="empresa-informe">
     <h2>{_t("¿Necesitas el informe completo de esta empresa?")}</h2>
-    <p>{_t("Escríbenos y te contamos qué incluye:")} <a href="mailto:contacto@dinero-publico.com?subject={asunto}">contacto@dinero-publico.com</a></p>
+    <p>{_t("Te lo preparamos en PDF, solo con datos oficiales y la fuente de cada dato: contratos, concentración por órgano, subvenciones y BORME.")}
+    <a href="{esc(url_informe)}">{_t("Ver qué incluye, un ejemplo y pedirlo →")}</a></p>
+    <p class="cm-base-nota">{_t("También puedes escribirnos:")} <a href="mailto:contacto@dinero-publico.com?subject={asunto}">contacto@dinero-publico.com</a></p>
   </div>
 </div>"""
     indexable = bool(sociedad) and n_total >= EMPRESAS_MIN_CONTRATOS_INDEXAR and pag_f == 1 and pag_m == 1
@@ -31826,6 +32096,12 @@ def _route_get(path, qs, gzip_ok=False):
         return 301, {"Location": "/quien-soy", "Content-Length": "0"}, b""
     if path == "/quien-soy":
         return _resp(render_quienes_somos_html(), gzip_ok=gzip_ok)
+    if path == "/informes":
+        return _informes_get(qs, gzip_ok=gzip_ok)
+    if path.startswith("/informes/ejemplos/"):
+        _pdf = _informes_pdf(path[len("/informes/ejemplos/"):])
+        if _pdf:
+            return _pdf
 
     if path.rstrip("/") == _LIC_GUIA.GUIA_RUTA:
         return _resp(render_guia_licitaciones_html(), gzip_ok=gzip_ok)
@@ -31916,6 +32192,7 @@ def _route_get(path, qs, gzip_ok=False):
                 f"  <url><loc>{esc(SITE_URL)}/fondos-ue</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/convocatorias</loc><changefreq>daily</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/quien-soy</loc><changefreq>monthly</changefreq></url>",
+                f"  <url><loc>{esc(SITE_URL)}/informes</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/mapa-cobertura</loc><changefreq>weekly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}{_LIC_GUIA.GUIA_RUTA}</loc><changefreq>monthly</changefreq></url>",
                 f"  <url><loc>{esc(SITE_URL)}/sueldos-concejales</loc><changefreq>monthly</changefreq></url>",
@@ -32203,6 +32480,8 @@ def _route_get(path, qs, gzip_ok=False):
 
 def _route_post(path, params):
     try:
+        if path == "/informes/pedir":
+            return _informes_post(params)
         if ALERTAS_ACTIVAS and path.startswith("/alertas/"):
             respuesta = _alertas_post(path, params)
             if respuesta:
