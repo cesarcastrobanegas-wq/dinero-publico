@@ -34,7 +34,7 @@ estructural del dato público gratuito, y condiciona la respuesta a (i).
   accesible sin pago. Cualquier cruce por nombre choca con este límite lo mires como lo mires — no hay forma
   gratuita de verificar por DNI con las fuentes abiertas.
 - El riesgo real de falso positivo depende de cuántos "administrador con ese nombre completo" existan en toda
-  España (~3,4 millones de sociedades activas, más autónomos). Un nombre + un apellido (p. ej. "Juan García") es
+  España (~3,4 millones de sociedades activas, más autónomos). Un nombre + un apellido (p. ej. "Nombre Apellido") es
   altísimo riesgo. Nombre + dos apellidos (el formato habitual español, que es también el que usa
   `ALCALDES_CONCEJALES`/`SUELDOS_CONCEJALES` en este proyecto) baja mucho el riesgo, pero con apellidos frecuentes
   (García, González, López, Fernández, Martínez, Rodríguez...) sigue habiendo colisiones reales — y a la escala de
@@ -42,7 +42,7 @@ estructural del dato público gratuito, y condiciona la respuesta a (i).
   publicaran sin filtrar.
 - Señales gratuitas que SÍ reducen el riesgo, sin necesitar DNI:
   1. **Domicilio social de la empresa vs. municipio/provincia del cargo público**: BORME incluye la provincia (a
-     veces la dirección completa) del Registro Mercantil donde se inscribe la sociedad. Un "Juan García López"
+     veces la dirección completa) del Registro Mercantil donde se inscribe la sociedad. Un "Nombre Apellido1 Apellido2"
      administrador de una empresa inscrita en el Registro Mercantil de Lugo coincidiendo con un concejal de un
      ayuntamiento de Lugo es mucho más probable que sea la misma persona que si la empresa está en Cádiz.
   2. **Ventana temporal**: exigir que el nombramiento/alta como administrador sea coherente con la vida pública de
