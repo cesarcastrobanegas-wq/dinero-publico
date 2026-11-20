@@ -4,7 +4,7 @@ Resuelve los conflictos de las fusiones del DÍA DEL ALTA (ensayados el 05-11-20
 
 Se usa DENTRO de la carpeta de la rama del PR, después de «git merge origin/main» cuando git dice CONFLICT:
     python herramientas/dia_del_alta/resolver_conflictos.py 22
-(el número es el del PR: 22, 25, 20, 19, 26, 59, 15 o 69; 15 y 69: su .gitignore detrás del del #20; el 20 solo si el #16, la PAC, ya está en main; 22, 26 y 59 son los
+(el número es el del PR: 22, 25, 20, 19, 26, 59, 15, 69 o 16; 15, 69 y 16: su .gitignore detrás del del #20 (el 16 también los .po); el 20 solo si el #16, la PAC, ya está en main; 22, 26 y 59 son los
 choques del 19-11 con el main que trae el #44, el #48 y el #70). Da igual qué lado sea «el tuyo» y cuál «el de main»: cada bloque se reconoce
 por lo que lleva. Si encuentra un bloque que no conoce, NO toca ese fichero y lo dice: entonces hay que resolverlo a
 mano (lo de cada bloque está explicado en «DIA DEL ALTA - pasos.txt»).
@@ -205,6 +205,8 @@ REGLAS = {
     "59": dict(_PO),
     "15": {".gitignore": r_gitignore_tras_20},
     "69": {".gitignore": r_gitignore_tras_20},
+    # 20-11: el #16 (PAC) DESPUÉS de la cadena de venta: su bloque de .gitignore detrás del del #20, y los .po
+    "16": dict(_PO, **{".gitignore": r_gitignore_tras_20}),
 }
 
 

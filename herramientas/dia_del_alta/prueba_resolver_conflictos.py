@@ -218,10 +218,11 @@ def main():
     comprobar(codigo != 0 and "NO CONOZCO el conflicto de backend/app.py" in salida, f"59 con app.py: {salida}")
     shutil.rmtree(d, ignore_errors=True)
 
-    # ── reglas 15 y 69: el bloque del PR en .gitignore detrás del del #20 (ya en main) ──
+    # ── reglas 15, 69 y 16: el bloque del PR en .gitignore detrás del del #20 (ya en main) ──
     BLOQUE_20 = "# Nombres que vigila la prueba de los textos legales\nbackend/prueba_nombres_prohibidos.txt\n"
     for n, bloque in (("15", "# FTS (ficticio)\n*fts*.ndjson*\nfts_descargas/\n"),
-                      ("69", "# datos personales (ficticio)\nbackend/datos_personales/\n")):
+                      ("69", "# datos personales (ficticio)\nbackend/datos_personales/\n"),
+                      ("16", "# PAC (ficticio)\n*fega*.zip\npac_revision*.csv\n")):
         d = montar({".gitignore": lambda t: t + BLOQUE_20}, {".gitignore": lambda t, b=bloque: t + b})
         codigo, salida = resolver(d, n)
         g = leer(d, ".gitignore")
@@ -233,6 +234,12 @@ def main():
     codigo, salida = resolver(d, "69")
     comprobar(codigo != 0 and "NO CONOZCO" in salida and leer(d, ".gitignore") == antes,
               f"69 con otro .gitignore: debería decir NO CONOZCO sin tocar: {salida}")
+    shutil.rmtree(d, ignore_errors=True)
+
+    # regla 16: también los .po (el #16 trae traducciones)
+    d = montar({"backend/locale/gl.po": lambda t: t + PO_MAIN}, {"backend/locale/gl.po": lambda t: t + PO_RAMA})
+    codigo, salida = resolver(d, "16")
+    comprobar(codigo == 0 and "<<<<<<<" not in leer(d, "backend/locale/gl.po"), f"16 con .po: {salida}")
     shutil.rmtree(d, ignore_errors=True)
 
     # ── un .po con algo que no es una traducción dentro del choque: NO CONOZCO ──
