@@ -2896,6 +2896,26 @@ msgstr "Proposatutako kontzeptua: «{concepto}»"
 msgid "Dinero Público lo hago yo solo: César Castro Banegas. No hay una organización detrás, ni un equipo, ni presupuesto. No lo financia ningún partido, ninguna empresa ni ninguna administración. Detrás hay miles de horas de trabajo."
 msgstr "Dinero Público nik bakarrik egiten dut: César Castro Banegas. Ez dago erakunderik atzean, ez talderik, ez aurrekonturik. Ez du alderdi batek, enpresa batek edo administrazio batek finantzatzen. Atzean milaka lan-ordu daude."
 
+#: app.py (titular SLU, 20-11-2026)
+msgid "Dinero Público lo hago yo solo: {nombre}. La web es de {sociedad}, una sociedad limitada unipersonal de la que soy el único socio. No hay un equipo ni presupuesto, y no lo financia ningún partido, ninguna administración ni ninguna otra empresa. Detrás hay miles de horas de trabajo."
+msgstr "Dinero Público nik bakarrik egiten dut: {nombre}. Webgunea {sociedad} sozietatearena da, ni bazkide bakarra naizen sozietate mugatu unipertsonala. Ez dago talderik ez aurrekonturik, eta ez du alderdi batek, administrazio batek edo beste enpresa batek finantzatzen. Atzean milaka lan-ordu daude."
+
+#: app.py (titular SLU, 20-11-2026)
+msgid "{sociedad}, sociedad limitada unipersonal."
+msgstr "{sociedad}, sozietate mugatu unipertsonala."
+
+#: app.py (titular SLU, 20-11-2026)
+msgid "NIF: {nif}."
+msgstr "IFZ: {nif}."
+
+#: app.py (titular SLU, 20-11-2026)
+msgid "Domicilio social: {domicilio}."
+msgstr "Egoitza soziala: {domicilio}."
+
+#: app.py (titular SLU, 20-11-2026)
+msgid "Datos registrales: {registro}."
+msgstr "Erregistroko datuak: {registro}."
+
 #: app.py:27234
 msgid "PRÓXIMAMENTE, SE INCORPORARÁN UN ABOGADO, UN ECONOMISTA Y UN PERIODISTA."
 msgstr "LASTER, ABOKATU BAT, EKONOMISTA BAT ETA KAZETARI BAT SARTUKO DIRA."

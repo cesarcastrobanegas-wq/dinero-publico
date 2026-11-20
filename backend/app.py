@@ -20300,6 +20300,8 @@ def _jsonld_organizacion():
     datos = {"@context": "https://schema.org", "@type": "Organization", "name": "Dinero Público",
              "url": SITE_URL.rstrip("/") + "/", "logo": SITE_URL.rstrip("/") + "/static/icon-512.png",
              "email": "contacto@dinero-publico.com", "sameAs": [p[2] for p in _perfiles_redes()]}
+    if TITULAR_SOCIEDAD:                     # 20-11-2026: con la SLU, su denominación y su NIF (ver TITULAR_SOCIEDAD)
+        datos.update(legalName=TITULAR_SOCIEDAD["nombre"], taxID=TITULAR_SOCIEDAD["nif"])
     texto = json.dumps(datos, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     return f'<script type="application/ld+json">{texto}</script>'
 
@@ -29471,6 +29473,76 @@ DONACIONES_TITULAR = "César Castro Banegas"
 DONACIONES_CONCEPTO = "Donación Dinero Público"
 
 
+# ─── TITULAR DE LA WEB: HOY LA PERSONA, MAÑANA LA SLU (20-11-2026, encargo de César) ──────────────────────────────────
+# Con las cuatro variables de entorno TITULAR_NOMBRE (denominación social, «… S.L.U.»), TITULAR_NIF (NIF de la
+# sociedad), TITULAR_DOMICILIO (domicilio social) y TITULAR_REGISTRO (Registro Mercantil de Murcia: tomo, folio, hoja e
+# inscripción) -- las MISMAS que los textos legales nuevos del PR #20, en el mismo guardado -- la web dice que la
+# titular es la sociedad: en el aviso legal de siempre (/aviso-legal), en una frase de «Quién soy» (que sigue siendo la
+# página personal del fundador) y en el JSON-LD de la organización (legalName, taxID).
+# Las DONACIONES (Bizum y cuenta de «Apoya el proyecto») NO cambian con la sociedad: siguen a nombre de la persona,
+# como hoy, tenga o no la web las TITULAR_* (decisión del 20-11-2026). No uses TITULAR_SOCIEDAD en _bizum_html ni en
+# _iban_html.
+# Sin ellas (hoy), o si falta alguna o no es válida, la web queda EXACTAMENTE como antes (prueba_titular_slu.py compara
+# las páginas byte a byte con main). Ningún dato de la sociedad va en el código: el repositorio es público.
+_TITULAR_VARIABLES = (("nombre", "TITULAR_NOMBRE"), ("nif", "TITULAR_NIF"), ("domicilio", "TITULAR_DOMICILIO"),
+                      ("registro", "TITULAR_REGISTRO"))
+_RE_NIF_SOCIEDAD_FORMA = re.compile(r"^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$")
+
+
+def _titular_sociedad(entorno=None):
+    """{"nombre", "nif", "domicilio", "registro"} de la sociedad titular, o None si falta algo o no es válido. Con el
+    PR #20 dentro manda su comprobación (textos_legales.titular_incompleto, con el dígito de control del NIF); sin él,
+    una comprobación de forma: NIF de sociedad y registro con tomo, folio, hoja e inscripción."""
+    entorno = os.environ if entorno is None else entorno
+    datos = {k: " ".join((entorno.get(v) or "").split())[:300] for k, v in _TITULAR_VARIABLES}
+    if not all(datos.values()):
+        return None
+    try:
+        try:
+            from backend.textos_legales import titular_incompleto      # gunicorn backend.app:app
+        except ImportError:
+            from textos_legales import titular_incompleto              # python backend/app.py y pruebas
+    except ImportError:                                                # sin el PR #20
+        titular_incompleto = None
+    if titular_incompleto is not None:
+        return None if titular_incompleto(entorno) else datos
+    reg = datos["registro"].lower()
+    if not _RE_NIF_SOCIEDAD_FORMA.match(datos["nif"].replace("-", "").replace(" ", "").upper()) or not all(
+            p in reg for p in ("tomo", "folio", "hoja", "inscripci")):
+        return None
+    return datos
+
+
+TITULAR_SOCIEDAD = _titular_sociedad()
+if TITULAR_SOCIEDAD is None and any(os.environ.get(v, "").strip() for _, v in _TITULAR_VARIABLES):
+    print("[titular] hay variables TITULAR_* puestas, pero faltan datos de la sociedad o no son válidos: la web sigue "
+          "diciendo que el titular es la persona, como hasta ahora.", flush=True)
+
+
+def _titular_aviso_html():
+    """Apartado «Titular» del aviso legal de siempre (/aviso-legal)."""
+    if not TITULAR_SOCIEDAD:
+        return f"<p>{esc(DONACIONES_TITULAR)}.</p>"
+    t = TITULAR_SOCIEDAD
+    return ("<p>" + "<br>".join((
+        _t("{sociedad}, sociedad limitada unipersonal.").format(sociedad=esc(t["nombre"])),
+        _t("NIF: {nif}.").format(nif=esc(t["nif"])),
+        _t("Domicilio social: {domicilio}.").format(domicilio=esc(t["domicilio"])),
+        _t("Datos registrales: {registro}.").format(registro=esc(t["registro"])))) + "</p>")
+
+
+def _quien_soy_intro_html():
+    """Primer párrafo de «Quién soy» con la sociedad (dice que la web es de ella y ya no que no hay organización).
+    Sin la sociedad devuelve None y se queda el párrafo de siempre."""
+    if not TITULAR_SOCIEDAD:
+        return None
+    return "<p>" + _t("Dinero Público lo hago yo solo: {nombre}. La web es de {sociedad}, una sociedad limitada "
+                      "unipersonal de la que soy el único socio. No hay un equipo ni presupuesto, y no lo financia "
+                      "ningún partido, ninguna administración ni ninguna otra empresa. Detrás hay miles de horas de "
+                      "trabajo.").format(nombre=esc(DONACIONES_TITULAR),
+                                         sociedad=esc(TITULAR_SOCIEDAD["nombre"])) + "</p>"
+
+
 def _iban_html():
     """Bloque de transferencia bancaria, debajo del Bizum (2026-10-09, encargo de César): el IBAN sale de la variable
     de entorno DONACIONES_IBAN (nunca escrito en el código: el repositorio es público); sin ella no se muestra nada.
@@ -29502,7 +29574,9 @@ def render_quienes_somos_html():
     body = f"""<div class="static-page">
   <h1>{_t("Quién soy")}</h1>
 
+<!--quien-soy-intro-->
   <p>{_t("Dinero Público lo hago yo solo: César Castro Banegas. No hay una organización detrás, ni un equipo, ni presupuesto. No lo financia ningún partido, ninguna empresa ni ninguna administración. Detrás hay miles de horas de trabajo.")}</p>
+<!--/quien-soy-intro-->
 
   <p><strong>{_t("PRÓXIMAMENTE, SE INCORPORARÁN UN ABOGADO, UN ECONOMISTA Y UN PERIODISTA.")}</strong></p>
 
@@ -29532,6 +29606,10 @@ def render_quienes_somos_html():
   <h2>{_t("Contacto")}</h2>
   <a class="contact-btn" href="mailto:contacto@dinero-publico.com">✉ contacto@dinero-publico.com</a>
 </div>"""
+    # 20-11-2026 (SLU): el párrafo de siempre va entre marcas; con la sociedad se cambia, sin ella solo se quitan
+    _intro = _quien_soy_intro_html()
+    body = re.sub(r"<!--quien-soy-intro-->\n(.*?)\n<!--/quien-soy-intro-->\n",
+                  lambda mm: (_intro if _intro is not None else mm.group(1)) + "\n", body, count=1, flags=re.S)
     return _page_shell(_t("Quién soy"), body,
                         description=_t("Dinero Público lo hace una sola persona, sin equipo ni presupuesto: quién soy, "
                                        "qué hago con los datos públicos y cómo puedes colaborar."), og_path="/quien-soy")
@@ -29565,7 +29643,7 @@ def render_aviso_legal_html():
   {nota}
 
   <h2>{_t("Titular")}</h2>
-  <p>César Castro Banegas.</p>
+  {_titular_aviso_html()}
 
   <h2>{_t("Dominio")}</h2>
   <p>{esc(SITE_URL)}</p>
