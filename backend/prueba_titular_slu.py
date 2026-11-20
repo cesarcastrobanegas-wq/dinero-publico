@@ -7,9 +7,10 @@ sociedad (S.L.U.), la sociedad. Datos INVENTADOS y claramente ficticios («Ejemp
               además, byte a byte, las páginas con las de esa copia: «exactamente como hoy».
   incompleto  TITULAR_* sin el registro mercantil (o con un NIF que no vale): igual que apagado, y lo dice el registro.
   encendido   las cuatro TITULAR_* de la sociedad: el aviso legal de siempre dice que la titular es la sociedad (NIF,
-              domicilio social y datos registrales) y ya no la persona; la cuenta de las donaciones va a nombre de la
-              sociedad; «Quién soy» sigue siendo la página del fundador pero dice que la web es de la sociedad y ya no
+              domicilio social y datos registrales) y ya no la persona; «Quién soy» sigue siendo la página del fundador pero dice que la web es de la sociedad y ya no
               que «no hay una organización detrás»; el JSON-LD lleva legalName y taxID. En los cuatro idiomas.
+  donaciones  (20-11) el Bizum y la cuenta de «Apoya el proyecto» NO cambian: en los tres modos el bloque es el mismo,
+              a nombre de la persona, y con --comparar-con es byte a byte el de main, con y sin las TITULAR_*.
 Cada modo arranca en un proceso aparte (las variables se leen al importar) con un DATA_DIR TEMPORAL que solo tiene un
 cache.db VACÍO. Uso: python backend/prueba_titular_slu.py [--comparar-con RUTA\\backend]
 """
@@ -28,10 +29,12 @@ PAGINAS = ("/", "/aviso-legal", "/quien-soy", "/gl/aviso-legal", "/gl/quien-soy"
            "/eu/aviso-legal", "/eu/quien-soy", "/convocatorias", "/casos", "/metodologia", "/sitemap.xml")
 SOCIEDAD = {"TITULAR_NOMBRE": "Ejemplo Datos S.L.U.", "TITULAR_NIF": "B00000000",
             "TITULAR_DOMICILIO": "Calle Inventada 1, 30001 Murcia",
-            "TITULAR_REGISTRO": "Registro Mercantil de Murcia, tomo 0000, folio 0, hoja MU-00000, inscripción 1.ª",
-            "DONACIONES_IBAN": "ES00 0000 0000 0000 0000 0000"}
+            "TITULAR_REGISTRO": "Registro Mercantil de Murcia, tomo 0000, folio 0, hoja MU-00000, inscripción 1.ª"}
+# Bizum y cuenta de las donaciones INVENTADOS (puestos en todos los modos, para que salga el bloque)
+DONACIONES = {"DONACIONES_IBAN": "ES00 0000 0000 0000 0000 0000", "BIZUM_NUMERO": "000 000 000"}
+_RE_DONACIONES = re.compile(r'<div class="bizum-caja">.*?</div>', re.S)
 VARIABLES = ("RESEND_API_KEY", "FILTRO_FORMULARIO", "FILTRO_EMBUDO", "ALERTAS_ACTIVAS", "ADMIN_TOKEN", "I18N_PUBLICADOS",
-             "TEXTOS_LEGALES_NUEVOS", "PRECIOS_VISIBLE", "DONACIONES_IBAN", "DONACIONES_BIZUM")
+             "TEXTOS_LEGALES_NUEVOS", "PRECIOS_VISIBLE", "DONACIONES_IBAN", "DONACIONES_BIZUM", "BIZUM_NUMERO")
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -77,12 +80,19 @@ def _normalizar(cuerpo):
     return _RE_T_JS.sub(ordenar, cuerpo)
 
 
+def donaciones(html):
+    """Los bloques de «Apoya el proyecto» (Bizum y transferencia) de una página, tal cual."""
+    return _RE_DONACIONES.findall(html)
+
+
 def volcar(carpeta, salida):
     _, get, _ = _cliente(carpeta)
     datos = {}
     for r in PAGINAS:
         c, h, b = get(r)
         datos[r] = [c, h.get("Location", ""), _normalizar(b)]
+    for pre in ("", "/gl", "/ca", "/eu"):
+        datos["donaciones " + (pre or "/")] = donaciones(get(pre + "/quien-soy")[2])
     with open(salida, "w", encoding="utf-8") as f:
         json.dump(datos, f, ensure_ascii=False)
 
@@ -113,12 +123,15 @@ def caso(modo):
             ok(fallos, modo, persona not in av, f"{pre}/aviso-legal: la persona ya no figura como titular")
             ok(fallos, modo, persona in qs and "Ejemplo Datos S.L.U." in qs,
                f"{pre}/quien-soy: sigue siendo la página del fundador y dice de quién es la web")
-            cuenta = qs.split('id="iban-numero"')[0].rsplit('class="bizum-caja"', 1)[-1] if 'id="iban-numero"' in qs else ""
-            ok(fallos, modo, "Ejemplo Datos S.L.U." in cuenta and persona not in cuenta,
-               f"{pre}/quien-soy: la cuenta de las donaciones, a nombre de la sociedad y no de la persona")
         else:
             ok(fallos, modo, persona in av and "S.L.U." not in av, f"{pre}/aviso-legal: el titular es la persona (hoy)")
             ok(fallos, modo, persona in qs and "S.L.U." not in qs, f"{pre}/quien-soy: como hoy")
+        bloques = donaciones(qs)
+        ok(fallos, modo, len(bloques) == 2 and 'id="bizum-numero"' in bloques[0] and 'id="iban-numero"' in bloques[1]
+           and persona in bloques[1] and "Ejemplo Datos" not in "".join(bloques),
+           f"{pre}/quien-soy: Bizum y cuenta de las donaciones como hoy, a nombre de la persona")
+        import hashlib
+        print(f"[{modo}] DONACIONES {pre or '/'} {hashlib.sha256(''.join(bloques).encode()).hexdigest()}", flush=True)
     c, h, qs = get("/quien-soy")
     ok(fallos, modo, ("No hay una organización detrás" in qs) != encendido,
        "«No hay una organización detrás» solo sin la sociedad")
@@ -162,24 +175,46 @@ def main():
         sys.exit(0)
     total = 0
     incompleto = {k: v for k, v in SOCIEDAD.items() if k != "TITULAR_REGISTRO"}
+    huellas = {}
     for modo, extra in (("apagado", {}), ("incompleto", incompleto), ("encendido", SOCIEDAD)):
-        r = _hijo(["--caso", modo], extra)
+        r = _hijo(["--caso", modo], dict(extra, **DONACIONES))
         lineas = [l for l in r.stdout.splitlines() if l.startswith(f"[{modo}]")]
-        print("\n".join(lineas), flush=True)
+        for l in lineas:
+            if " DONACIONES " in l:
+                huellas.setdefault(l.split()[2], set()).add(l.split()[3])
+        print("\n".join(l for l in lineas if " DONACIONES " not in l), flush=True)
         if r.returncode and not any("FALLOS:" in l for l in lineas):
             print(r.stdout[-1500:] + r.stderr[-3000:], flush=True)
         total += 0 if r.returncode == 0 else 1
+    iguales = len(huellas) == 4 and all(len(v) == 1 for v in huellas.values())
+    print(("[donaciones] OK   " if iguales else "[donaciones] FALLO") +
+          " el bloque de donaciones es idéntico en apagado, incompleto y encendido (es, gl, ca, eu)", flush=True)
+    total += 0 if iguales else 1
     if len(sys.argv) == 3 and sys.argv[1] == "--comparar-con":
         otra = os.path.abspath(sys.argv[2])
         tmp = tempfile.mkdtemp(prefix="titular_slu_cmp_")
-        volcados = []
-        for carpeta in (AQUI, otra):
-            salida = os.path.join(tmp, f"{len(volcados)}.json")
-            r = _hijo(["--volcar", carpeta, salida], {})
-            if r.returncode:
-                print(r.stdout[-1500:] + r.stderr[-3000:], flush=True)
-            volcados.append(json.load(open(salida, encoding="utf-8")) if os.path.exists(salida) else {})
         fallos = []
+
+        def volcados_de(extra):
+            vol = []
+            for carpeta in (AQUI, otra):
+                salida = os.path.join(tmp, f"{len(vol)}.json")
+                r = _hijo(["--volcar", carpeta, salida], extra)
+                if r.returncode:
+                    print(r.stdout[-1500:] + r.stderr[-3000:], flush=True)
+                vol.append(json.load(open(salida, encoding="utf-8")) if os.path.exists(salida) else {})
+            return vol
+        # con las TITULAR_* de la sociedad (main no las lee: es la web de hoy), solo el bloque de donaciones
+        con = volcados_de(dict(SOCIEDAD, **DONACIONES))
+        for pre in ("/", "/gl", "/ca", "/eu"):
+            a, b = con[0].get("donaciones " + pre), con[1].get("donaciones " + pre)
+            ok(fallos, "comparar", bool(a) and a == b,
+               f"donaciones en {pre} con las TITULAR_*: idénticas a main ({len(a or [])} bloques)")
+        # sin las TITULAR_* (hoy), con Bizum y cuenta: TODAS las páginas idénticas
+        volcados = volcados_de(dict(DONACIONES))
+        for pre in ("/", "/gl", "/ca", "/eu"):
+            a, b = volcados[0].get("donaciones " + pre), volcados[1].get("donaciones " + pre)
+            ok(fallos, "comparar", bool(a) and a == b, f"donaciones en {pre} sin las TITULAR_*: idénticas a main")
         for ruta in PAGINAS:
             a, b = volcados[0].get(ruta), volcados[1].get(ruta)
             ok(fallos, "comparar", a is not None and a == b,

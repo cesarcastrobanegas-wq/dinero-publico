@@ -29477,8 +29477,11 @@ DONACIONES_CONCEPTO = "Donación Dinero Público"
 # Con las cuatro variables de entorno TITULAR_NOMBRE (denominación social, «… S.L.U.»), TITULAR_NIF (NIF de la
 # sociedad), TITULAR_DOMICILIO (domicilio social) y TITULAR_REGISTRO (Registro Mercantil de Murcia: tomo, folio, hoja e
 # inscripción) -- las MISMAS que los textos legales nuevos del PR #20, en el mismo guardado -- la web dice que la
-# titular es la sociedad: en el aviso legal de siempre (/aviso-legal), en la cuenta de las donaciones, en una frase de
-# «Quién soy» (que sigue siendo la página personal del fundador) y en el JSON-LD de la organización (legalName, taxID).
+# titular es la sociedad: en el aviso legal de siempre (/aviso-legal), en una frase de «Quién soy» (que sigue siendo la
+# página personal del fundador) y en el JSON-LD de la organización (legalName, taxID).
+# Las DONACIONES (Bizum y cuenta de «Apoya el proyecto») NO cambian con la sociedad: siguen a nombre de la persona,
+# como hoy, tenga o no la web las TITULAR_* (decisión del 20-11-2026). No uses TITULAR_SOCIEDAD en _bizum_html ni en
+# _iban_html.
 # Sin ellas (hoy), o si falta alguna o no es válida, la web queda EXACTAMENTE como antes (prueba_titular_slu.py compara
 # las páginas byte a byte con main). Ningún dato de la sociedad va en el código: el repositorio es público.
 _TITULAR_VARIABLES = (("nombre", "TITULAR_NOMBRE"), ("nif", "TITULAR_NIF"), ("domicilio", "TITULAR_DOMICILIO"),
@@ -29516,11 +29519,6 @@ if TITULAR_SOCIEDAD is None and any(os.environ.get(v, "").strip() for _, v in _T
           "diciendo que el titular es la persona, como hasta ahora.", flush=True)
 
 
-def _titular_cuenta():
-    """A nombre de quién está la cuenta de las donaciones: la sociedad si existe; si no, la persona (como hoy)."""
-    return TITULAR_SOCIEDAD["nombre"] if TITULAR_SOCIEDAD else DONACIONES_TITULAR
-
-
 def _titular_aviso_html():
     """Apartado «Titular» del aviso legal de siempre (/aviso-legal)."""
     if not TITULAR_SOCIEDAD:
@@ -29556,7 +29554,7 @@ def _iban_html():
     copiado = esc(_t("Copiado")).replace("'", "")
     return f"""<div class="bizum-caja">
     <p class="bizum-tit">{_t("Apoya el proyecto por transferencia bancaria")}</p>
-    <p>{_t("Titular: {nombre}").format(nombre=esc(_titular_cuenta()))}</p>
+    <p>{_t("Titular: {nombre}").format(nombre=esc(DONACIONES_TITULAR))}</p>
     <p class="bizum-num iban-num"><span id="iban-numero">{esc(agrupado)}</span>
       <button type="button" class="btn" onclick="(function(b){{var t=document.getElementById('iban-numero').textContent.split(' ').join('');
         if(navigator.clipboard){{navigator.clipboard.writeText(t).then(function(){{b.textContent='{copiado}';}},function(){{}});}}}})(this)">{_t("Copiar")}</button></p>
