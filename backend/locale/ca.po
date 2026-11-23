@@ -3428,6 +3428,9 @@ msgstr "segons {fuente}"
 msgid "Fecha según la fuente, posible error: es posterior a hoy."
 msgstr "Data segons la font, possible error: és posterior a avui."
 
+msgid "Fecha de adjudicación según la fuente, posible error: es posterior a hoy."
+msgstr "Data d'adjudicació segons la font, possible error: és posterior a avui."
+
 msgid "y {n} más en la ficha"
 msgstr "i {n} més a la fitxa"
 

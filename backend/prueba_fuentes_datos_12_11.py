@@ -173,11 +173,11 @@ class P4FechasFuturas(unittest.TestCase):
             self.skipTest("el 16-12-2026 ya no es futuro")
         h = app._render_fila_contrato_menor(dict(self.FILA))
         self.assertIn('<div class="lid">2026-12-16</div>', h)          # la fecha no se cambia
-        self.assertIn("Fecha según la fuente, posible error", h)
+        self.assertIn("Fecha de adjudicación según la fuente, posible error", h)   # Euskadi: awardDate (23-11-2026)
         h = app._render_fila_contrato_menor(dict(self.FILA, data_adjudicacio="2025-12-16"))
         self.assertNotIn("posible error", h)
         h = en_idioma("gl", app._render_fila_contrato_menor, dict(self.FILA))
-        self.assertIn("Data segundo a fonte, posible erro", h)
+        self.assertIn("Data de adxudicación segundo a fonte, posible erro", h)
 
     def test_indice_no_usa_la_fecha_futura(self):
         hoy = app._ahora_madrid().date()
