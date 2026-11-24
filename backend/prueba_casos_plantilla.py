@@ -6,8 +6,9 @@ Comprueba, sacando las funciones de app.py con ast (no importa la web):
     cambian), y admite columnas de texto de más (calle y adjudicataria) con el total en su sitio;
   - _caso_fraccionamiento_pagina sigue poniendo «14 de octubre de 2026» por defecto y acepta otra fecha;
   - _caso_version_ayuntamiento: frase de espera sin respuesta, la respuesta tal cual si la hay;
-  - la lista _CASOS_PUBLICAR_20261130 está VACÍA (ningún texto de caso sin publicar en el repositorio) y se engancha
-    a _CASOS y _CASOS_RENDER_POR_SLUG.
+  - la lista _CASOS_PUBLICAR_20261130 se engancha a _CASOS y _CASOS_RENDER_POR_SLUG. Antes de publicar está VACÍA
+    (ningún texto de caso sin publicar en el repositorio); el día de publicar, cada pieza tiene slug, titulo, resumen
+    y su función render definida.
 Uso: python backend/prueba_casos_plantilla.py
 """
 import ast
@@ -85,8 +86,17 @@ ok("<h2>La versión del Ayuntamiento</h2>" in r and "explica que" in r and "La a
 # la lista de la tanda está vacía en el repositorio y enganchada
 lista = [n for n in arbol.body if isinstance(n, ast.Assign) and any(getattr(x, "id", "") == "_CASOS_PUBLICAR_20261130"
                                                                      for x in n.targets)]
-ok(len(lista) == 1 and isinstance(lista[0].value, ast.List) and not lista[0].value.elts,
-   "_CASOS_PUBLICAR_20261130 = [] (ningún caso sin publicar en el repositorio)")
+ok(len(lista) == 1 and isinstance(lista[0].value, ast.List), "_CASOS_PUBLICAR_20261130 es una lista, una sola vez")
+elementos = lista[0].value.elts if lista and isinstance(lista[0].value, ast.List) else []
+if not elementos:
+    ok(True, "_CASOS_PUBLICAR_20261130 = [] (antes de publicar: ningún caso sin publicar en el repositorio)")
+else:                                  # el día de publicar: cada pieza completa y con su función definida
+    funciones = {n.name for n in arbol.body if isinstance(n, ast.FunctionDef)}
+    for e in elementos:
+        claves = {k.value: v for k, v in zip(e.keys, e.values)} if isinstance(e, ast.Dict) else {}
+        ok(set(claves) == {"slug", "render", "titulo", "resumen"}
+           and getattr(claves.get("render"), "id", "") in funciones,
+           f"pieza {getattr(claves.get('slug'), 'value', '?')}: slug, render (definida), titulo y resumen")
 ok("_CASOS[1:1] = [{k: v for k, v in c.items() if k != \"render\"} for c in _CASOS_PUBLICAR_20261130]" in fuente
    and "_CASOS_RENDER_POR_SLUG.update({c[\"slug\"]: c[\"render\"] for c in _CASOS_PUBLICAR_20261130})" in fuente,
    "la lista se engancha a _CASOS y _CASOS_RENDER_POR_SLUG")
