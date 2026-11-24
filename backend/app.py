@@ -23436,6 +23436,24 @@ def _fecha_posterior_a_hoy(fecha, hoy=None):
     return f > (hoy or _ahora_madrid().date())
 
 
+def _fuente_da_fecha_adjudicacion(fuente):
+    """True si en esta fuente la fecha guardada es, comprobado en su conector, la de ADJUDICACIÓN: API de Euskadi
+    (awardDate), Registro de Contratos de Cataluña (data_adjudicacio) y PSCP (data_adjudicacio_contracte). En el resto
+    de fuentes con fechas futuras (p. ej. Fuente Álamo, fecha libre) no se afirma qué fecha es."""
+    fuente = str(fuente or "")
+    return fuente in ("euskadi", "EUSKADI", "PSCP") or fuente.startswith("rpc-")
+
+
+def _nota_fecha_futura_txt(fecha, fuente, hoy=None):
+    """Aviso de una fecha posterior a hoy, diciendo qué fecha es solo si consta (revisión del 23-11-2026). "" si no
+    es futura."""
+    if not _fecha_posterior_a_hoy(fecha, hoy):
+        return ""
+    if _fuente_da_fecha_adjudicacion(fuente):
+        return _t("Fecha de adjudicación según la fuente, posible error: es posterior a hoy.")
+    return _t("Fecha según la fuente, posible error: es posterior a hoy.")
+
+
 def _render_fila_contrato_menor(r):
     """Fila de la tabla de contratos menores locales -- compartida por todas
     las fuentes (Girona/RPC, Fuente Álamo, Mula, Molina de Segura...). No
@@ -23536,8 +23554,8 @@ def _render_fila_contrato_menor(r):
                       "origen (por ejemplo, un contrato de obras por lotes de varios millones de euros) -- se "
                       "muestra tal cual, sin corregirlo.")
     nota_fila = f'<span class="cm-nota">⚠️ {esc(nota_txt)}</span>' if nota_txt else ""
-    fecha_nota = (f'<span class="cm-nota cm-fecha-futura">⚠️ {_t("Fecha según la fuente, posible error: es posterior a hoy.")}</span>'
-                  if _fecha_posterior_a_hoy(r.get("data_adjudicacio")) else "")
+    fecha_aviso = _nota_fecha_futura_txt(r.get("data_adjudicacio"), fuente)
+    fecha_nota = f'<span class="cm-nota cm-fecha-futura">⚠️ {fecha_aviso}</span>' if fecha_aviso else ""
 
     return f"""<tr>
       <td>
@@ -31624,8 +31642,10 @@ def _render_empresa(con, ident, qs):
             nota_html = f'<span class="noloc-nota">{esc(nota_txt)}</span>' if nota_txt else ""
             if nif and not con_nif:
                 nota_html += f'<span class="noloc-nota">{_t("La fuente no publica el NIF en este contrato: se asigna por el nombre.")}</span>'
+            fecha_aviso = _nota_fecha_futura_txt(fe, fuente)
+            fecha_nota = f'<span class="noloc-nota cm-fecha-futura">⚠️ {fecha_aviso}</span>' if fecha_aviso else ""
             out.append(f"""<tr>
-      <td><div class="lid">{esc(_empresa_fecha(fe))}</div>{esc(org or "—")}<div class="lid">📍 {_empresa_muni_html(muni, pv, ent) or "—"}</div>
+      <td><div class="lid">{esc(_empresa_fecha(fe))}</div>{fecha_nota}{esc(org or "—")}<div class="lid">📍 {_empresa_muni_html(muni, pv, ent) or "—"}</div>
           <div class="cargo">{esc((tit or "")[:160])}</div></td>
       <td class="cm-importe"><span class="emp-imp">{esc(imp_txt)}</span><span class="noloc-nota">{esc(_empresa_iva_txt(iva))}</span>{nota_html}</td>
       <td>{proc}</td>

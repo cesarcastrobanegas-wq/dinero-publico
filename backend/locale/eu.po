@@ -3428,6 +3428,9 @@ msgstr "{fuente} iturriaren arabera"
 msgid "Fecha según la fuente, posible error: es posterior a hoy."
 msgstr "Iturriaren araberako data, akatsa izan daiteke: gaur baino geroagokoa da."
 
+msgid "Fecha de adjudicación según la fuente, posible error: es posterior a hoy."
+msgstr "Esleipen-data iturriaren arabera, akatsa izan daiteke: gaur baino geroagokoa da."
+
 msgid "y {n} más en la ficha"
 msgstr "eta beste {n} fitxan"
 
