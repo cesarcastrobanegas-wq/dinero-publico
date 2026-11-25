@@ -19415,6 +19415,14 @@ button.share-btn{font-family:inherit;}
     white-space:normal;}
   table.t-rank td:nth-child(3){flex:0 0 auto;max-width:45%;text-align:right;font-size:14px;font-weight:700;
     white-space:nowrap;}
+  /* 25-11-2026: contratos menores del municipio con la fecha la primera: arriba de la tarjeta, en su propia línea; el
+     nombre y el importe, debajo, como en las demás tarjetas */
+  table.t-menores td:nth-child(1){flex:1 1 100%;max-width:none;text-align:left;font-size:12px;font-weight:400;
+    white-space:normal;}
+  table.t-menores td:nth-child(2){flex:1 1 0;max-width:none;text-align:left;font-size:13px;font-weight:400;
+    white-space:normal;}
+  table.t-menores td:nth-child(3){flex:0 0 auto;max-width:48%;text-align:right;font-size:14px;font-weight:700;
+    white-space:nowrap;}
   .tbl-scroll:has(> table.t-tarjeta) .scroll-hint{display:none;}
   /* tarjetas de deuda de rankings: en el móvil solo las que tienen dato del presidente; el resto, plegadas */
   .rk-prov-pc{display:none;}
@@ -23557,7 +23565,11 @@ def _render_fila_contrato_menor(r):
     fecha_aviso = _nota_fecha_futura_txt(r.get("data_adjudicacio"), fuente)
     fecha_nota = f'<span class="cm-nota cm-fecha-futura">⚠️ {fecha_aviso}</span>' if fecha_aviso else ""
 
+    # 25-11-2026: la fecha va la PRIMERA (antes, la última): en la ficha de Vitoria-Gasteiz la fecha de una fila quedaba
+    # justo encima del nombre de la siguiente, sobre todo en el móvil, y parecía suya. En el móvil sale arriba de cada
+    # tarjeta, en una línea propia (CSS de table.t-menores).
     return f"""<tr>
+      <td class="cm-fecha"><div class="lid">{esc(r.get("data_adjudicacio",""))}</div>{fecha_nota}</td>
       <td>
         <div class="empresa">{_empresa_nombre_html(adjudicatari, r.get("nif", ""))} {fuente_badge}</div>
         {nif_html}
@@ -23566,7 +23578,6 @@ def _render_fila_contrato_menor(r):
       <td class="cm-importe">{fmt_eur(str(r["import_fuente"])) if r.get("import_aviso") in (MENOR_AVISO_SIN_DECIMALES, MENOR_AVISO_TRES_CEROS) and r.get("import_fuente") else (fmt_eur(str(r["import_num"])) if r["import_num"] else "—")}</td>
       <td>{dir_html}</td>
       <td><div class="lid">{esc(_tipo_menor_txt(r.get("tipus_contracte","")))}</div></td>
-      <td><div class="lid">{esc(r.get("data_adjudicacio",""))}</div>{fecha_nota}</td>
     </tr>"""
 
 
@@ -24654,13 +24665,13 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
                 </summary>
                 {nota_base_cm}
                 <div class="tbl-scroll">
-                  <table class="t-tarjeta">
+                  <table class="t-tarjeta t-menores">
                     <tr>
+                      <th>{_t("Fecha")}</th>
                       <th>{_t("Adjudicatario / Objeto")}</th>
                       <th>{_t("Importe")}</th>
                       <th>{_t("Directivo")}</th>
                       <th>{_t("Tipo")}</th>
-                      <th>{_t("Fecha")}</th>
                     </tr>
                     {filas_cm}
                   </table>
