@@ -27445,19 +27445,22 @@ def _eur_caso(x):
     return f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + " €"
 
 
-def _tabla_contratos_caso(filas, total=True, etiqueta="ficha oficial", impuesto="IVA"):
+def _tabla_contratos_caso(filas, total=True, etiqueta="ficha oficial", impuesto="IVA", columnas=("Objeto",)):
     """filas: (fecha dd/mm/aaaa, expediente, objeto, importe sin impuesto, enlace oficial o ""). impuesto: "IGIC" en
-    Canarias."""
+    Canarias. columnas (25-11-2026): las columnas de texto entre el expediente y el importe; por defecto solo «Objeto».
+    Con columnas=("Calle", "Adjudicataria") cada fila es (fecha, expediente, calle, adjudicataria, importe, enlace)."""
+    n = len(columnas)
+    enlace = lambda u: (f'<a href="{esc(u)}" target="_blank" rel="noopener">{etiqueta} ↗</a>') if u else ""
     cuerpo = "".join(
-        f"<tr><td>{esc(f)}</td><td>{esc(e)}</td><td>{esc(o)}</td>"
-        f'<td style="text-align:right;white-space:nowrap">{_eur_caso(i)}</td>'
-        f'<td>{(chr(60) + "a href=" + chr(34) + esc(u) + chr(34) + " target=" + chr(34) + "_blank" + chr(34) + " rel=" + chr(34) + "noopener" + chr(34) + ">" + etiqueta + " ↗</a>") if u else ""}</td></tr>'
-        for f, e, o, i, u in filas)
-    pie = (f'<tr><td colspan="3"><strong>Total</strong></td><td style="text-align:right;white-space:nowrap">'
-           f'<strong>{_eur_caso(sum(x[3] for x in filas))}</strong></td><td></td></tr>') if total else ""
+        f"<tr><td>{esc(x[0])}</td><td>{esc(x[1])}</td>" + "".join(f"<td>{esc(t)}</td>" for t in x[2:2 + n])
+        + f'<td style="text-align:right;white-space:nowrap">{_eur_caso(x[2 + n])}</td><td>{enlace(x[3 + n])}</td></tr>'
+        for x in filas)
+    pie = (f'<tr><td colspan="{2 + n}"><strong>Total</strong></td><td style="text-align:right;white-space:nowrap">'
+           f'<strong>{_eur_caso(sum(x[2 + n] for x in filas))}</strong></td><td></td></tr>') if total else ""
+    cab = "".join(f'<th style="text-align:left">{esc(c)}</th>' for c in columnas)
     return (f'<div class="tbl-scroll"><table class="tabla-simple" style="width:100%;border-collapse:collapse;font-size:13px">'
             f'<thead><tr><th style="text-align:left">Fecha</th><th style="text-align:left">Expediente</th>'
-            f'<th style="text-align:left">Objeto</th><th style="text-align:right">Importe sin {impuesto}</th><th></th></tr></thead>'
+            f'{cab}<th style="text-align:right">Importe sin {impuesto}</th><th></th></tr></thead>'
             f'<tbody>{cuerpo}{pie}</tbody></table></div>')
 
 
@@ -27480,11 +27483,22 @@ _CASO_AVISO_INDICIO = """
   <a href="mailto:contacto@dinero-publico.com">contacto@dinero-publico.com</a>.</p>"""
 
 
-def _caso_fraccionamiento_pagina(og_path, titulo, cuerpo_html, description):
-    """Pieza publicada, con la fecha de comprobación de los datos."""
-    return _caso_pagina(og_path, titulo, cuerpo_html + """
-  <p style="font-size:13px;color:var(--dim)">Datos comprobados el 14 de octubre de 2026 en las fuentes oficiales
+def _caso_fraccionamiento_pagina(og_path, titulo, cuerpo_html, description, comprobado="14 de octubre de 2026"):
+    """Pieza publicada, con la fecha de comprobación de los datos (las de octubre, el 14; cada tanda nueva pasa la
+    suya)."""
+    return _caso_pagina(og_path, titulo, cuerpo_html + f"""
+  <p style="font-size:13px;color:var(--dim)">Datos comprobados el {esc(comprobado)} en las fuentes oficiales
   enlazadas.</p>""", description)
+
+
+def _caso_version_ayuntamiento(pedida, respuesta_html=""):
+    """«La versión del Ayuntamiento» (25-11-2026): la fecha en que se pidió y, si ha contestado, su respuesta (HTML
+    ya escrito, con sus <p>). Sin respuesta, la frase de espera."""
+    cuerpo = respuesta_html.strip() or (
+        f"<p>Pedimos su versión al Ayuntamiento el {esc(pedida)}. La añadiremos en cuanto la recibamos.</p>")
+    return f"""
+  <h2>La versión del Ayuntamiento</h2>
+  {cuerpo}"""
 
 
 def _caso_borrador_pagina(og_path, titulo, cuerpo_html, description):
@@ -27704,6 +27718,15 @@ _CASOS_BORRADOR_20261014 = [
 _CASOS[1:1] = [{k: v for k, v in c.items() if k != "render"} for c in _CASOS_BORRADOR_20261014]
 _CASOS_RENDER_POR_SLUG.update({c["slug"]: c["render"] for c in _CASOS_BORRADOR_20261014})
 _CASOS_BORRADOR_POR_SLUG = {}          # ningún borrador pendiente
+
+# ─── Tanda del 30-11-2026 (encargo de César, 25-11) ──────────────────────────────────────────────────────────────────
+# VACÍA A PROPÓSITO: los textos no entran en el repositorio (es público) hasta el día de publicarlos. Ese día se añaden
+# aquí sus funciones render_caso_..._html (con _tabla_contratos_caso, _CASO_LEY_FRACCIONAMIENTO o su versión de
+# Canarias, _caso_version_ayuntamiento y _CASO_AVISO_INDICIO) y una entrada {"slug", "render", "titulo", "resumen"}
+# por pieza, en el orden en que deben salir en /casos. Con la lista vacía no cambia nada en la web.
+_CASOS_PUBLICAR_20261130 = []
+_CASOS[1:1] = [{k: v for k, v in c.items() if k != "render"} for c in _CASOS_PUBLICAR_20261130]
+_CASOS_RENDER_POR_SLUG.update({c["slug"]: c["render"] for c in _CASOS_PUBLICAR_20261130})
 
 
 
