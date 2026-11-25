@@ -18039,6 +18039,117 @@ def _cargar_contratos_menores_cadiz():
               f"(Cádiz) cargados en contratos_menors_locales.", flush=True)
 
 
+# ─── Cargas de menores de fuentes propias: solo si el fichero ha cambiado (25-11-2026) ──────────────────────────────
+# Medido en local con la base del 16-11: las 28 cargas de abajo se llevaban ~65 de los ~86 s que tarda en importarse
+# app.py (Murcia manual 32 s, Euskadi 14,5 s), y con el disco de Render ese es el tiempo que la web da 502 en cada
+# despliegue. Volvían a escribir TODAS sus filas en cada arranque aunque el fichero fuera el mismo. Ahora, como ya hace
+# el feed de PLACE (_PLACE_MENORES_CLAVE), cada fuente guarda en `settings` la huella de lo que cargó y, si al arrancar
+# coincide, no se lee ni se escribe nada. La huella junta:
+#   - los bytes del fichero (o de su respaldo sin comprimir, en Murcia);
+#   - el código que decide QUÉ se guarda: la función de carga de esa fuente, _guardar_contratos_menors_locales,
+#     _menor_importe_fiable, nombre_sin_dni y enmascarar_nombres_dni, más las listas de importes con aviso o
+#     verificados y el corte del archivo. Si cambia cualquiera, esa fuente se vuelve a cargar entera, como antes;
+#   - _MENORES_PROPIOS_VERSION, para forzar una recarga de todas a mano (cambiar el texto y desplegar).
+# Lo que se hace DESPUÉS de cargar (duplicados con el feed, «feed antes que la fuente propia», nombre cortado e importe
+# sin IVA de Murcia capital, purga de nombres con DNI, archivo fuera de ventana) no depende de esto: se repite en cada
+# arranque, en el hilo del feed (_carga_place_menores) o justo después de estas cargas, sobre lo que haya en la base.
+# Sin disco fiable (_DISCO_CONFIABLE False: base nueva en cada arranque) se carga todo siempre.
+_MENORES_PROPIOS_VERSION = "v1"
+_MENORES_PROPIOS_CLAVE = "menores_propios_huella:"          # + nombre de la fuente
+_MENORES_PROPIOS_ARRANQUE = {}                               # recuento del último arranque (diagnóstico completo)
+
+_MENORES_PROPIOS = (     # (nombre, función de carga, ficheros que lee); en el mismo orden que antes
+    ("murcia_manual", _cargar_contratos_menores_murcia_manual,
+     (CONTRATOS_MENORES_MURCIA_MANUAL_FILE, CONTRATOS_MENORES_MURCIA_MANUAL_FILE[:-3])),
+    ("euskadi", _cargar_contratos_menores_euskadi, (CONTRATOS_MENORES_EUSKADI_FILE,)),
+    ("madrid_capital", _cargar_contratos_menores_madrid_capital, (CONTRATOS_MENORES_MADRID_CAPITAL_FILE,)),
+    ("valencia_capital", _cargar_contratos_menores_valencia_capital, (CONTRATOS_MENORES_VALENCIA_CAPITAL_FILE,)),
+    ("alicante", _cargar_contratos_menores_alicante, (CONTRATOS_MENORES_ALICANTE_FILE,)),
+    ("getafe", _cargar_contratos_menores_getafe, (CONTRATOS_MENORES_GETAFE_FILE,)),
+    ("mostoles", _cargar_contratos_menores_mostoles, (CONTRATOS_MENORES_MOSTOLES_FILE,)),
+    ("leganes", _cargar_contratos_menores_leganes, (CONTRATOS_MENORES_LEGANES_FILE,)),
+    ("toledo", _cargar_contratos_menores_toledo, (CONTRATOS_MENORES_TOLEDO_FILE,)),
+    ("palma", _cargar_contratos_menores_palma, (CONTRATOS_MENORES_PALMA_FILE,)),
+    ("fuenlabrada", _cargar_contratos_menores_fuenlabrada, (CONTRATOS_MENORES_FUENLABRADA_FILE,)),
+    ("alcala_henares", _cargar_contratos_menores_alcala_henares, (CONTRATOS_MENORES_ALCALA_HENARES_FILE,)),
+    ("valladolid", _cargar_contratos_menores_valladolid, (CONTRATOS_MENORES_VALLADOLID_FILE,)),
+    ("zaragoza", _cargar_contratos_menores_zaragoza, (CONTRATOS_MENORES_ZARAGOZA_FILE,)),
+    ("ciudad_real", _cargar_contratos_menores_ciudad_real, (CONTRATOS_MENORES_CIUDAD_REAL_FILE,)),
+    ("burgos", _cargar_contratos_menores_burgos, (CONTRATOS_MENORES_BURGOS_FILE,)),
+    ("laspalmasgc", _cargar_contratos_menores_laspalmasgc, (CONTRATOS_MENORES_LASPALMASGC_FILE,)),
+    ("torrent", _cargar_contratos_menores_torrent, (CONTRATOS_MENORES_TORRENT_FILE,)),
+    ("la_laguna", _cargar_contratos_menores_la_laguna, (CONTRATOS_MENORES_LA_LAGUNA_FILE,)),
+    ("arona", _cargar_contratos_menores_arona, (CONTRATOS_MENORES_ARONA_FILE,)),
+    ("salamanca", _cargar_contratos_menores_salamanca, (CONTRATOS_MENORES_SALAMANCA_FILE,)),
+    ("gijon", _cargar_contratos_menores_gijon, (CONTRATOS_MENORES_GIJON_FILE,)),
+    ("malaga", _cargar_contratos_menores_malaga, (CONTRATOS_MENORES_MALAGA_FILE,)),
+    ("almeria", _cargar_contratos_menores_almeria, (CONTRATOS_MENORES_ALMERIA_FILE,)),
+    ("sevilla", _cargar_contratos_menores_sevilla, (CONTRATOS_MENORES_SEVILLA_FILE,)),
+    ("torrejon", _cargar_contratos_menores_torrejon, (CONTRATOS_MENORES_TORREJON_FILE,)),
+    ("santa_cruz", _cargar_contratos_menores_santa_cruz, (CONTRATOS_MENORES_SANTA_CRUZ_FILE,)),
+    ("cadiz", _cargar_contratos_menores_cadiz, (CONTRATOS_MENORES_CADIZ_FILE,)),
+)
+
+
+def _menores_propios_codigo():
+    """Parte común de la huella: el código y las listas que deciden qué se guarda de cualquier fuente propia."""
+    import inspect
+    h = hashlib.sha256(_MENORES_PROPIOS_VERSION.encode())
+    for fn in (_guardar_contratos_menors_locales, _menor_importe_fiable, nombre_sin_dni, enmascarar_nombres_dni):
+        try:
+            h.update(inspect.getsource(fn).encode("utf-8"))
+        except (OSError, TypeError):            # sin el fuente a mano: que la huella no coincida nunca (se carga)
+            h.update(os.urandom(16))
+    h.update(repr((sorted(_MENORES_AVISO_MANUAL.items()), sorted(_MENORES_IMPORTE_VERIFICADO.items()),
+                   ARCHIVO_HASTA, _RE_NOMBRE_DNI.pattern)).encode("utf-8"))
+    return h.digest()
+
+
+def _menores_propios_huella(funcion, rutas, comun):
+    import inspect
+    h = hashlib.sha256(comun)
+    try:
+        h.update(inspect.getsource(funcion).encode("utf-8"))
+    except (OSError, TypeError):
+        h.update(os.urandom(16))
+    for ruta in rutas:
+        h.update(b"\0" + ruta.encode("utf-8") + b"\0")
+        try:
+            with open(ruta, "rb") as f:
+                for trozo in iter(lambda: f.read(1 << 20), b""):
+                    h.update(trozo)
+        except OSError:
+            h.update(b"(no existe)")
+    return h.hexdigest()[:16]
+
+
+def _cargar_menores_propios():
+    """Las 28 cargas de fuentes propias, saltando las que no han cambiado desde el último arranque (ver arriba)."""
+    t0 = time.time()
+    comun = _menores_propios_codigo()
+    cargadas, saltadas = [], []
+    for nombre, funcion, rutas in _MENORES_PROPIOS:
+        huella = _menores_propios_huella(funcion, rutas, comun)
+        clave = _MENORES_PROPIOS_CLAVE + nombre
+        if _DISCO_CONFIABLE:
+            with _db_lock:
+                fila = _db.execute("SELECT valor FROM settings WHERE clave=?", (clave,)).fetchone()
+            if fila and fila[0] == huella:
+                saltadas.append(nombre)
+                continue
+        funcion()
+        cargadas.append(nombre)
+        if _DISCO_CONFIABLE:                    # solo si la carga ha terminado (si lanza, el arranque falla como antes)
+            with _db_lock:
+                _db.execute("INSERT INTO settings (clave, valor) VALUES (?, ?) "
+                            "ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor", (clave, huella))
+                _db.commit()
+    segundos = round(time.time() - t0, 1)
+    _MENORES_PROPIOS_ARRANQUE.update(cargadas=cargadas, saltadas=len(saltadas), segundos=segundos)
+    print(f"  [startup] menores de fuentes propias: {len(cargadas)} cargadas ({', '.join(cargadas) or 'ninguna'}), "
+          f"{len(saltadas)} sin cambios desde el último arranque; {segundos} s", flush=True)
+
+
 def _inicializar_datos():
     """Inicializa SQLite y precalienta _result_cache con lo actualizado
     recientemente -- YA NO carga todos los municipios de golpe a una lista
@@ -18059,34 +18170,7 @@ def _inicializar_datos():
     _aplicar_importes_aparte()
     _reclasificar_organos_murcia()
     _recolocar_contratos_sin_ficha()
-    _cargar_contratos_menores_murcia_manual()
-    _cargar_contratos_menores_euskadi()
-    _cargar_contratos_menores_madrid_capital()
-    _cargar_contratos_menores_valencia_capital()
-    _cargar_contratos_menores_alicante()
-    _cargar_contratos_menores_getafe()
-    _cargar_contratos_menores_mostoles()
-    _cargar_contratos_menores_leganes()
-    _cargar_contratos_menores_toledo()
-    _cargar_contratos_menores_palma()
-    _cargar_contratos_menores_fuenlabrada()
-    _cargar_contratos_menores_alcala_henares()
-    _cargar_contratos_menores_valladolid()
-    _cargar_contratos_menores_zaragoza()
-    _cargar_contratos_menores_ciudad_real()
-    _cargar_contratos_menores_burgos()
-    _cargar_contratos_menores_laspalmasgc()
-    _cargar_contratos_menores_torrent()
-    _cargar_contratos_menores_la_laguna()
-    _cargar_contratos_menores_arona()
-    _cargar_contratos_menores_salamanca()
-    _cargar_contratos_menores_gijon()
-    _cargar_contratos_menores_malaga()
-    _cargar_contratos_menores_almeria()
-    _cargar_contratos_menores_sevilla()
-    _cargar_contratos_menores_torrejon()
-    _cargar_contratos_menores_santa_cruz()
-    _cargar_contratos_menores_cadiz()
+    _cargar_menores_propios()            # las 28 fuentes propias, solo las que han cambiado (25-11-2026)
     _retirar_fuentes_menores()          # Badajoz y Telde, una sola vez
     _archivar_menores_fuera_de_ventana()
     _recuperar_historico_perdido()
@@ -26835,6 +26919,7 @@ def _estado_carga():
         "cache_zips_place": _zip_cache_diagnostico(),
         "feed_vivo_place": {k: v for k, v in _feed_vivo.items() if k != "contenido"},
         "menores_duplicados_arranque": dict(_MENORES_DUPLICADOS_ARRANQUE),
+        "menores_propios_arranque": dict(_MENORES_PROPIOS_ARRANQUE),
         "rastreadores_frenados": _bots_diagnostico(),
         "peticiones_lentas": _lentas_leer(),
         "copia_arranque": dict(_copia_arranque_estado),
