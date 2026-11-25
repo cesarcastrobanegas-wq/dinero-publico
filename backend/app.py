@@ -48,6 +48,16 @@ try:
     from . import filtro_embudo as FEMB
 except ImportError:
     import filtro_embudo as FEMB
+try:                                     # planes, cuentas y pago (2026-11-26; apagados sin PLANES_ACTIVOS=1)
+    from . import planes as PL
+    from . import cuentas as CTA
+    from . import pagos_stripe as STP
+    from . import informe_pdf as IPDF
+except ImportError:
+    import planes as PL
+    import cuentas as CTA
+    import pagos_stripe as STP
+    import informe_pdf as IPDF
 try:
     from . import licitaciones_guia as _LIC_GUIA
 except ImportError:
@@ -20458,7 +20468,7 @@ def _footer_html(provincia="todas"):
     <a href="/rankings{_q_prov_first(provincia)}#alcaldes">{_t("Sueldos Alcaldes")}</a>
     <a href="/sueldos-concejales">{_t("Sueldos Concejales")}</a>
     <a href="/fondos-ue">{_t("Fondos UE")}</a>
-    <a href="/convocatorias">{_t("Convocatorias abiertas")}</a>
+    <a href="/convocatorias">{_t("Convocatorias abiertas")}</a>{_planes_pie_html()}
     <a href="/aviso-legal">{_t("Aviso Legal")}</a>
     <a href="#" id="cookie-preferencias">{_t("Preferencias de cookies")}</a>
     <a href="/quien-soy">{_t("Quién soy")}</a>
@@ -24516,7 +24526,8 @@ def render_html(datos, muni_filter="", page=1, page_cm=1, provincia="murcia"):
         is_paged = bool(muni_filter) and normalizar(muni_name_d) == normalizar(muni_filter)
         if is_paged and not es_pseudo_municipio(muni_name_d):
             # Alerta estrella del plan gratuito, arriba de la ficha (encargo de César, 2026-10-13).
-            alerta_ficha_html = _alertas_ficha_html(muni_name_d, d.get("provincia", provincia))
+            alerta_ficha_html = _alertas_ficha_html(muni_name_d, d.get("provincia", provincia)) + _planes_ficha_html(
+                "municipio", f'{muni_name_d}|{d.get("provincia", provincia)}', muni_name_d, d.get("provincia", provincia))
         if is_paged:
             start = (page - 1) * PAGE_SIZE
             contratos_shown = contratos_all[start:start + PAGE_SIZE]
@@ -31809,7 +31820,7 @@ def _render_empresa(con, ident, qs):
   </table></div>
   {tabla_f}
   {tabla_m}
-  <div class="empresa-informe">
+  <div class="empresa-informe">{_planes_ficha_html("empresa", nif, nombre) if nif else ""}
     <h2>{_t("¿Necesitas el informe completo de esta empresa?")}</h2>
     <p>{_t("Escríbenos y te contamos qué incluye:")} <a href="mailto:contacto@dinero-publico.com?subject={asunto}">contacto@dinero-publico.com</a></p>
   </div>
@@ -31854,6 +31865,845 @@ def _sitemap_empresas(parte=None):
 
 
 
+# ─── PLANES, REGISTRO DE USUARIOS, PAGO E INFORMES PDF (2026-11-26, encargo de César) ────────────────────────────────
+# TODO APAGADO: sin PLANES_ACTIVOS=1 en Render ninguna página de aquí existe (404), no hay enlaces, no se abre ni se
+# crea usuarios.db y la web se ve exactamente igual que antes. Piezas: planes.py (los planes y precios, en UN sitio),
+# cuentas.py (usuarios.db: cuentas, sesiones, informes, favoritos, pagos), pagos_stripe.py (Checkout, Portal y aviso
+# firmado de Stripe) e informe_pdf.py (los PDF, sin dependencias). Los correos salen por Resend con las mismas piezas
+# de las alertas (_alertas_payload / _alertas_enviar: un solo sistema de correo y un solo cupo).
+#   PLANES_ACTIVOS=1          enciende /planes, /cuenta, /informe/* y el aviso de Stripe
+#   PLANES_SOLO_CORREOS       (como ALERTAS_SOLO_CORREOS) direcciones separadas por comas. Mientras esté puesta, solo
+#                             esas direcciones pueden entrar en su cuenta y ver /planes; a cualquier otra no se le manda
+#                             nada ni se le guarda nada (la página responde lo mismo de siempre), y la web no enseña
+#                             ningún enlace (ni el del pie ni los de las fichas).
+#   PLANES_IVA_PCT            (cuando haya empresa) p. ej. 21: se enseña y se cobra el IVA. Sin ella, «IVA no incluido».
+#   PLANES_VERSION_CONDICIONES, PLANES_VERSION_PRIVACIDAD   versión de los textos que se aceptan (se guarda con la
+#                             fecha). Cambiarla obliga a aceptarlos otra vez al entrar.
+#   PLANES_URL_CONDICIONES, PLANES_URL_PRIVACIDAD           dónde están esos textos (por defecto, /aviso-legal).
+#   STRIPE_*                  ver pagos_stripe.py. Sin las tres claves (o con claves reales sin STRIPE_MODO_REAL=1)
+#                             no sale ningún botón de pago.
+# Lo que hoy es gratis SIGUE GRATIS Y SIN REGISTRO: aquí no se cierra ninguna página de consulta; solo la DESCARGA del
+# informe en PDF pide cuenta.
+PLANES_ACTIVOS = os.environ.get("PLANES_ACTIVOS", "") == "1"
+PLANES_SOLO_CORREOS = frozenset(c for c in (ALR.correo_valido(x) for x in os.environ.get("PLANES_SOLO_CORREOS", "").split(",")) if c)
+PLANES_PUBLICOS = PLANES_ACTIVOS and not PLANES_SOLO_CORREOS          # enlaces a la vista de todos
+PLANES_VERSION_CONDICIONES = (os.environ.get("PLANES_VERSION_CONDICIONES", "") or "borrador-2026-11-26").strip()[:40]
+PLANES_VERSION_PRIVACIDAD = (os.environ.get("PLANES_VERSION_PRIVACIDAD", "") or "borrador-2026-11-26").strip()[:40]
+PLANES_URL_CONDICIONES = (os.environ.get("PLANES_URL_CONDICIONES", "") or "/aviso-legal").strip()
+PLANES_URL_PRIVACIDAD = (os.environ.get("PLANES_URL_PRIVACIDAD", "") or "/aviso-legal").strip()
+_PLANES_COOKIE = "dp_cuenta"
+_PLANES_IP = contextvars.ContextVar("planes_ip", default="")      # la pone _app_wsgi en los POST (límite de intentos)
+_CUENTAS_ALMACEN = None
+_cuentas_almacen_lock = threading.Lock()
+_PLANES_HEADERS = {"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer"}
+
+
+def _cuentas_almacen():
+    global _CUENTAS_ALMACEN
+    with _cuentas_almacen_lock:
+        if _CUENTAS_ALMACEN is None:
+            _CUENTAS_ALMACEN = CTA.Almacen(os.path.join(DATA_DIR, "usuarios.db"),
+                                           facturacion=os.environ.get("PLANES_FACTURACION", "") == "1")
+        return _CUENTAS_ALMACEN
+
+
+def _planes_correo_permitido(correo):
+    return not PLANES_SOLO_CORREOS or ALR.correo_valido(correo) in PLANES_SOLO_CORREOS
+
+
+def _planes_cookie_codigo():
+    for trozo in (_COOKIE_PETICION.get() or "").split(";"):
+        k, _, v = trozo.strip().partition("=")
+        if k == _PLANES_COOKIE and re.fullmatch(r"[A-Za-z0-9_\-]{20,80}", v or ""):
+            return v
+    return ""
+
+
+def _planes_usuario():
+    """La cuenta de la petición en curso (cookie de sesión), o None."""
+    if not PLANES_ACTIVOS:
+        return None
+    codigo = _planes_cookie_codigo()
+    if not codigo:
+        return None
+    u = _cuentas_almacen().usuario_de_sesion(codigo)
+    return u if u and _planes_correo_permitido(u["correo"]) else None
+
+
+def _planes_visibles(u):
+    return PLANES_PUBLICOS or bool(PLANES_ACTIVOS and u)
+
+
+def _planes_csrf():
+    codigo = _planes_cookie_codigo()
+    return _cuentas_almacen().firma("csrf:" + codigo) if codigo else ""
+
+
+def _planes_csrf_campo():
+    return f'<input type="hidden" name="t" value="{esc(_planes_csrf())}">'
+
+
+def _planes_csrf_ok(p):
+    codigo = _planes_cookie_codigo()
+    return bool(codigo) and _cuentas_almacen().firma_valida("csrf:" + codigo, p("t"))
+
+
+def _planes_cookie(codigo, segundos):
+    return (f"{_PLANES_COOKIE}={codigo}; Path=/; Max-Age={int(segundos)}; HttpOnly; Secure; SameSite=Lax")
+
+
+def _planes_redirigir(destino, cookie=None):
+    h = {"Location": destino, "Content-Length": "0", "Cache-Control": "no-store"}
+    if cookie is not None:
+        h["Set-Cookie"] = cookie
+    return 303, h, b""
+
+
+def _fecha_corta(ts):
+    return time.strftime("%d/%m/%Y", time.localtime(ts)) if ts else "—"
+
+
+def _planes_sin_dni(texto):
+    """Ningún DNI/NIE completo en un PDF (el filtro de salida solo mira las respuestas de texto)."""
+    return enmascarar_dni_en_bytes(str(texto or "").encode("utf-8"))[0].decode("utf-8")
+
+
+# ── páginas de la cuenta (sin publicidad ni analítica: llevan datos de la persona) ─────────────────────────────────
+_CUENTA_CSS = """.al table{border-collapse:collapse;width:100%;font-size:14px}.al td,.al th{padding:6px 4px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
+.al .fila{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.al .fila input{flex:1 1 140px;min-width:0;box-sizing:border-box}.al input[type=text],.al input[type=email],.al textarea{padding:9px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;max-width:100%}
+.al label.chk{display:block;font-size:14px;margin:8px 0}.al .cifra{font-size:22px;font-weight:700;color:#1b2f5c}.al .aviso{background:#fff7e0;border:1px solid #f5d27a;padding:10px;border-radius:6px;font-size:14px}"""
+
+
+def _cuenta_pagina(titulo, cuerpo, autoenviar=False, cookie=None, code=200):
+    _c, headers, body = _alertas_pagina_simple(titulo, cuerpo, autoenviar=autoenviar)
+    body = body.replace(b"</style>", ("\n" + _CUENTA_CSS + "</style>").encode("utf-8"), 1)
+    headers = dict(headers, **{"Content-Length": str(len(body))})
+    if cookie is not None:
+        headers["Set-Cookie"] = cookie
+    return code, headers, body
+
+
+def _planes_enlace_condiciones():
+    return '<a href="' + esc(PLANES_URL_CONDICIONES) + '" target="_blank">' + _t("condiciones de uso") + "</a>"
+
+
+def _planes_enlace_privacidad():
+    return '<a href="' + esc(PLANES_URL_PRIVACIDAD) + '" target="_blank">' + _t("política de privacidad") + "</a>"
+
+
+def _cuenta_formulario_acceso(volver="", aviso=""):
+    volver_campo = f'<input type="hidden" name="volver" value="{esc(volver)}">' if volver else ""
+    acepto = _t("Acepto las {enlace}.").format(enlace=_planes_enlace_condiciones())
+    leido = _t("He leído la {enlace}.").format(enlace=_planes_enlace_privacidad())
+    return (f'{aviso}<div class="caja"><p>{_t("Escribe tu correo y te mandamos un enlace para entrar. No hay contraseña: el enlace vale una sola vez y caduca en 15 minutos.")}</p>'
+            f'<form method="POST" action="/cuenta/acceso">{volver_campo}'
+            f'<input type="hidden" name="idioma" value="{_i18n_idioma()}">'
+            '<input type="text" name="web" value="" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">'
+            f'<input type="email" name="correo" required maxlength="120" autocomplete="email" placeholder="{esc(_t("Tu correo electrónico"))}" style="width:100%">'
+            f'<label class="chk"><input type="checkbox" name="condiciones" value="1" required> {acepto}</label>'
+            f'<label class="chk"><input type="checkbox" name="privacidad" value="1" required> {leido}</label>'
+            f'<button type="submit">{_t("Mandarme el enlace")}</button></form>'
+            f'<p class="sub">{_t("Solo guardamos tu correo, la fecha de alta y lo que aceptas. Ni contraseña, ni teléfono, ni DNI, ni dirección. Puedes borrar tu cuenta cuando quieras.")}</p></div>')
+
+
+def _planes_correo_acceso(correo, codigo, idioma, nueva):
+    url = f"{_alertas_base(idioma)}/cuenta/entrar?c={codigo}"
+    intro = (_t("Para crear tu cuenta en Dinero Público, pulsa este enlace:") if nueva
+             else _t("Para entrar en tu cuenta de Dinero Público, pulsa este enlace:"))
+    caduca = _t("El enlace vale una sola vez y caduca en 15 minutos.")
+    no_tu = _t("Si no has sido tú, no hagas nada: sin pulsar el enlace no se crea ni se cambia nada.")
+    lineas = [intro, "", url, "", caduca, "", no_tu]
+    cuerpo = (f"<p>{esc(intro)}</p>" + _alertas_boton(url, _t("Entrar en mi cuenta"))
+              + f"<p>{esc(caduca)}</p><p style=\"font-size:13px;color:#6b7280\">{esc(no_tu)}</p>")
+    return _alertas_payload(None, {"correo": correo}, _t("Tu enlace para entrar en Dinero Público"), lineas, cuerpo,
+                            con_baja=False)
+
+
+def _planes_correo_borrar(correo, codigo, idioma):
+    url = f"{_alertas_base(idioma)}/cuenta/borrar?c={codigo}"
+    intro = _t("Has pedido borrar tu cuenta de Dinero Público. Para confirmarlo, pulsa este enlace:")
+    efecto = _t("Se borrarán tu correo, tus favoritos, tus descargas y tus informes pendientes, y se cancelará tu suscripción si la tienes. No se puede deshacer.")
+    no_tu = _t("Si no has sido tú, no hagas nada: tu cuenta sigue igual. El enlace caduca en 15 minutos.")
+    lineas = [intro, "", url, "", efecto, "", no_tu]
+    cuerpo = (f"<p>{esc(intro)}</p>" + _alertas_boton(url, _t("Confirmar el borrado de mi cuenta"))
+              + f"<p>{esc(efecto)}</p><p style=\"font-size:13px;color:#6b7280\">{esc(no_tu)}</p>")
+    return _alertas_payload(None, {"correo": correo}, _t("Confirma el borrado de tu cuenta de Dinero Público"), lineas,
+                            cuerpo, con_baja=False)
+
+
+def _planes_mandar(payload, clase):
+    """Por Resend, en un hilo, con el registro de envíos de las alertas (un solo sistema y un solo cupo)."""
+    threading.Thread(target=_alertas_enviar, args=(_alertas_almacen(), payload, clase, None),
+                     name=f"planes-{clase}", daemon=True).start()
+
+
+def _planes_sincronizar_alertas(uid):
+    """Profesional y Premium llevan las alertas de pago (10, aviso diario): el nivel de las alertas del mismo correo
+    sigue al plan. Sin ALERTAS_ACTIVAS no se toca nada."""
+    if not ALERTAS_ACTIVAS or uid is None:
+        return
+    alm = _cuentas_almacen()
+    u = alm.usuario(uid)
+    if not u:
+        return
+    nivel = "pago" if PL.tiene(alm.plan_vigente(u), "alertas_pago") else "gratis"
+    a = _alertas_almacen()
+    with a.lock:
+        s = a._suscriptor("correo", u["correo"])
+    if s and s["nivel"] != nivel:
+        a.cambiar_nivel(s["id"], nivel)
+
+
+def _planes_al_dia():
+    """Suscripciones vencidas sin aviso de Stripe -> «registrado» (y sus alertas, a gratis). Barato: se llama al abrir
+    la cuenta y en cada aviso de Stripe, sin hilo propio."""
+    for uid in _cuentas_almacen().vencidas():
+        _planes_sincronizar_alertas(uid)
+
+
+# ── /planes ─────────────────────────────────────────────────────────────────────────────────────────────────────
+def _planes_precio_html(centimos):
+    iva = PL.iva_pct()
+    if not iva:
+        return esc(PL.euros(centimos))
+    return f'{esc(PL.euros(PL.con_iva(centimos)))} <small>({esc(PL.euros(centimos))} + {_t("IVA")})</small>'
+
+
+def _planes_nota_iva():
+    iva = PL.iva_pct()
+    return (_t("Precios con IVA ({pct} %) incluido.").format(pct=f"{iva:g}".replace(".", ",")) if iva
+            else _t("Precios sin IVA (IVA no incluido)."))
+
+
+def _planes_boton_pago(u, plan, periodo, texto):
+    if not STP.configurado():
+        return f'<span class="plan-prox">{_t("Próximamente")}</span>'
+    if not u:
+        return f'<a class="btn btn-primary" href="/cuenta?volver=/planes">{_t("Crea tu cuenta para contratarlo")}</a>'
+    return (f'<form method="POST" action="/planes/pagar" class="plan-form">{_planes_csrf_campo()}'
+            f'<input type="hidden" name="plan" value="{plan}"><input type="hidden" name="periodo" value="{periodo}">'
+            f'<button type="submit" class="btn btn-primary">{esc(texto)}</button></form>')
+
+
+_PLANES_CSS = """<style>
+.planes-tabla{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:18px 0}
+.plan{border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--surface);display:flex;flex-direction:column}
+.plan h2{margin:0 0 4px!important;font-size:19px}.plan .precio{font-size:22px;font-weight:700;color:var(--accent);margin:4px 0}
+.plan .precio small{font-size:12px;font-weight:500;color:var(--dim)}.plan ul{font-size:13px;line-height:1.5;flex:1;padding-left:18px}
+.plan .plan-form{margin:4px 0}.plan .btn{display:inline-block;margin:4px 0}.plan-prox{display:inline-block;padding:8px 14px;border:1px dashed var(--border);border-radius:6px;color:var(--dim);font-size:13px}
+.plan-actual{font-size:12px;font-weight:700;color:#0a7a3e;text-transform:uppercase;letter-spacing:.04em}
+.planes-nota{font-size:13px;color:var(--dim)}.plan-datos textarea,.plan-datos input[type=email],.plan-datos input[type=text]{width:100%;box-sizing:border-box;margin:4px 0;padding:8px;border:1px solid var(--border);border-radius:6px;font:inherit}
+</style>"""
+
+
+def render_planes_html(u):
+    vigente = _cuentas_almacen().plan_vigente(u) if u else "ciudadano"
+
+    def _actual(plan):
+        return f'<div class="plan-actual">✓ {_t("Tu plan")}</div>' if vigente == plan else ""
+
+    def _tarjeta(plan, precio, puntos, botones):
+        lis = "".join(f"<li>{p}</li>" for p in puntos)
+        return (f'<div class="plan" id="plan-{plan}">{_actual(plan)}<h2>{esc(_t(PL.NOMBRES[plan]))}</h2>'
+                f'<div class="precio">{precio}</div><ul>{lis}</ul><div>{botones}</div></div>')
+    p_pro, p_pre = PL.PRECIOS["profesional"], PL.PRECIOS["premium"]
+    tarjetas = [
+        _tarjeta("ciudadano", _t("Gratis, sin registro"), [
+            _t("Toda la web de consulta, como hasta ahora: municipios, empresas, contratos, rankings, sueldos, fondos UE y convocatorias."),
+            _t("Sin cuenta y sin límite de consultas en pantalla.")],
+            f'<a class="btn" href="/">{_t("Seguir consultando")}</a>'),
+        _tarjeta("registrado", _t("Gratis"), [
+            _t("Todo lo del plan Ciudadano."),
+            _t("1 informe de municipio en PDF al mes."),
+            _t("Guardar favoritos (municipios y empresas).")],
+            "" if u else f'<a class="btn btn-primary" href="/cuenta?volver=/planes">{_t("Crear mi cuenta")}</a>'),
+        _tarjeta("bono", f'{_planes_precio_html(PL.PRECIOS["bono"]["unico"])} <small>{_t("pago único")}</small>', [
+            _t("{n} informes descargables en PDF, de municipio o de empresa.").format(n=PL.BONO_INFORMES),
+            _t("No caducan en 12 meses."),
+            _t("Sin suscripción: pagas una vez.")],
+            _planes_boton_pago(u, "bono", "unico", _t("Comprar el bono"))),
+        _tarjeta("profesional", f'{_planes_precio_html(p_pro["mes"])} <small>{_t("/mes")}</small><br>'
+                                f'<small>{_t("o {precio} al año").format(precio=_planes_precio_html(p_pro["anio"]))}</small>', [
+            _t("Alertas de licitaciones y subvenciones de tu sector (hasta 10, aviso diario)."),
+            _t("El filtro de licitaciones para tu empresa."),
+            _t("{n} informes al mes, de municipio o de empresa.").format(n=PL.cupo_mes("profesional"))],
+            _planes_boton_pago(u, "profesional", "mes", _t("Contratar mensual")) + " "
+            + _planes_boton_pago(u, "profesional", "anio", _t("Contratar anual")) if STP.configurado() else _planes_boton_pago(u, "profesional", "mes", "")),
+        _tarjeta("premium", f'{_planes_precio_html(p_pre["mes"])} <small>{_t("/mes")}</small><br>'
+                            f'<small>{_t("o {precio} al año").format(precio=_planes_precio_html(p_pre["anio"]))}</small>', [
+            _t("Todo lo del plan Profesional."),
+            _t("Informes de riesgo de empresas y ayuntamientos sin límite (uso razonable)."),
+            _t("Cuentas anuales de empresas a precio de coste."),
+            _t("Soporte por correo.")],
+            _planes_boton_pago(u, "premium", "mes", _t("Contratar mensual")) + " "
+            + _planes_boton_pago(u, "premium", "anio", _t("Contratar anual")) if STP.configurado() else _planes_boton_pago(u, "premium", "mes", "")),
+        _tarjeta("datos", _t("Desde {precio}, con presupuesto").format(precio=esc(PL.euros(PL.DATOS_DESDE))), [
+            _t("Descarga masiva de contratos, licitaciones y subvenciones para tu organización."),
+            _t("Sin datos personales: no incluye administradores de empresas ni concejales."),
+            _t("Sin pago en la web: cuéntanos qué necesitas y te mandamos un presupuesto.")],
+            f'<a class="btn" href="#datos">{_t("Pedir presupuesto")}</a>'),
+    ]
+    prueba = (f'<div class="gs-hint">{_t("Modo de prueba de Stripe: no se cobra nada de verdad.")}</div>'
+              if STP.configurado() and STP.en_modo_prueba() else "")
+    cuenta = (f'<p>{_t("Has entrado como {correo}.").format(correo=esc(ALR.correo_tapado(u["correo"])))} '
+              f'<a href="/cuenta">{_t("Mi cuenta")}</a></p>' if u else
+              f'<p><a href="/cuenta">{_t("Entrar en mi cuenta")}</a></p>')
+    leido = _t("He leído la {enlace}.").format(enlace=_planes_enlace_privacidad())
+    datos_form = f"""<div class="plan plan-datos" id="datos"><h2>{_t("Pedir presupuesto de datos")}</h2>
+      <form method="POST" action="/planes/datos">
+        <input type="text" name="web" value="" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+        <label>{_t("Tu correo")}<input type="email" name="correo" required maxlength="120" autocomplete="email"></label>
+        <label>{_t("Organización (opcional)")}<input type="text" name="organizacion" maxlength="120"></label>
+        <label>{_t("Qué datos necesitas, de qué zona y de qué años")}<textarea name="mensaje" required maxlength="2000" rows="4"></textarea></label>
+        <label class="chk"><input type="checkbox" name="privacidad" value="1" required> {leido}</label>
+        <button type="submit" class="btn btn-primary">{_t("Enviar")}</button>
+      </form>
+      <p class="planes-nota">{_t("Tu mensaje llega por correo a {correo}. No lo guardamos en la web.").format(correo=esc(PL.CONTACTO_DATOS))}</p></div>"""
+    body = f"""<div class="static-page">
+  <h1>{_t("Planes")}</h1>
+  <p>{_t("Consultar Dinero Público es y seguirá siendo gratis y sin registro. Los planes son para quien necesita descargar informes, recibir avisos de su sector o trabajar con los datos.")}</p>
+  {cuenta}{prueba}
+  <div class="planes-tabla">{"".join(tarjetas)}</div>
+  <p class="planes-nota">{_planes_nota_iva()} {_t("Las suscripciones se pueden cancelar cuando quieras desde tu cuenta; siguen activas hasta el final del periodo pagado.")}</p>
+  {datos_form}
+</div>"""
+    return _page_shell(_t("Planes"), body, description=_t("Planes de Dinero Público: la consulta sigue gratis; informes en PDF, alertas para empresas y descarga de datos."),
+                       extra_head=_PLANES_CSS, og_path="/planes")
+
+
+# ── «Mi cuenta» ──────────────────────────────────────────────────────────────────────────────────────────────────
+def _cuenta_html(u, hecho=""):
+    alm = _cuentas_almacen()
+    c = alm.cuenta_informes(u)
+    plan = c["plan"]
+    if PL.es_suscripcion(plan):
+        periodo = _t("mensual") if u["periodo"] == "mes" else _t("anual")
+        plan_txt = f'{esc(_t(PL.NOMBRES[plan]))} ({periodo}) · {_t("pagado hasta el {f}").format(f=_fecha_corta(u["plan_hasta"]))}'
+    else:
+        plan_txt = esc(_t(PL.NOMBRES[plan]))
+    if c["cupo_mes"] is None:
+        informes = _t("Informes sin límite (uso razonable).")
+    else:
+        informes = _t("Te quedan {n} de {total} informes este mes; se renuevan el {f}.").format(
+            n=c["quedan_mes"], total=c["cupo_mes"], f=_fecha_corta(c["renueva"]))
+    if c["bono"]:
+        informes += " " + _t("Y {n} del bono (valen hasta el {f}).").format(n=c["bono"], f=_fecha_corta(u["bono_caduca"]))
+    csrf = _planes_csrf_campo()
+    gestionar = ""
+    if u["stripe_cliente"] and STP.configurado():
+        gestionar = (f'<form method="POST" action="/cuenta/portal">{csrf}<button type="submit" class="sec">'
+                     f'{_t("Cambiar o cancelar mi suscripción, ver facturas")}</button></form>')
+    mejorar = f'<p><a href="/planes">{_t("Ver los planes")}</a></p>' if _planes_visibles(u) else ""
+    formularios = f"""<div class="caja"><b>{_t("Descargar un informe en PDF")}</b>
+      <form method="GET" action="/informe/municipio" class="fila" style="margin-top:8px">
+        <input type="text" name="muni" required maxlength="80" placeholder="{esc(_t("Municipio"))}">
+        <input type="text" name="provincia" maxlength="40" placeholder="{esc(_t("Provincia (si hay dos con el mismo nombre)"))}">
+        <button type="submit" class="sec">{_t("Informe de municipio")}</button></form>
+      <form method="GET" action="/informe/empresa" class="fila" style="margin-top:8px">
+        <input type="text" name="nif" required maxlength="12" placeholder="{esc(_t("NIF de la empresa"))}">
+        <button type="submit" class="sec">{_t("Informe de empresa")}</button></form>
+      <p class="sub">{_t("También desde la ficha de cada municipio o empresa. Volver a bajar el mismo informe el mismo día no gasta otro.")}</p></div>"""
+    favs = alm.favoritos_de(u["id"])
+    filas_fav = "".join(
+        f'<tr><td><a href="{esc(_planes_url_favorito(f))}">{esc(f["nombre"])}</a></td><td>{esc(_t("Municipio") if f["tipo"] == "municipio" else _t("Empresa"))}</td>'
+        f'<td><form method="POST" action="/cuenta/favorito">{csrf}<input type="hidden" name="accion" value="quitar">'
+        f'<input type="hidden" name="tipo" value="{esc(f["tipo"])}"><input type="hidden" name="clave" value="{esc(f["clave"])}">'
+        f'<button type="submit" class="sec">{_t("Quitar")}</button></form></td></tr>' for f in favs)
+    fav_html = (f'<table>{filas_fav}</table>' if favs else f'<p class="sub">{_t("Aún no tienes favoritos. Guárdalos con la estrella de cada ficha.")}</p>')
+    descargas = alm.descargas_de(u["id"], 30)
+    filas_d = "".join(
+        f'<tr><td>{_fecha_corta(d["ts"])}</td><td>{esc(d["nombre"])}</td>'
+        f'<td>{esc({"mes": _t("del mes"), "bono": _t("del bono")}.get(d["origen"], ""))}</td></tr>' for d in descargas)
+    desc_html = f'<table>{filas_d}</table>' if descargas else f'<p class="sub">{_t("Aún no has descargado ningún informe.")}</p>'
+    aviso = f'<div class="aviso">{esc(hecho)}</div>' if hecho else ""
+    prueba = (f'<div class="aviso">{_t("Modo de prueba de Stripe: no se cobra nada de verdad.")}</div>'
+              if STP.configurado() and STP.en_modo_prueba() else "")
+    return f"""{aviso}{prueba}<p class="sub">{esc(ALR.correo_tapado(u["correo"]))}</p>
+<div class="caja"><b>{_t("Tu plan")}:</b> {plan_txt}<p>{informes}</p>{gestionar}{mejorar}</div>
+{formularios}
+<div class="caja"><b>{_t("Favoritos")}</b>{fav_html}</div>
+<div class="caja"><b>{_t("Tus descargas")}</b>{desc_html}</div>
+<div class="caja"><b>{_t("Tus datos")}</b>
+  <p class="sub">{_t("Alta: {f}.").format(f=_fecha_corta(u["alta"]))}
+  {_t("Aceptaste las condiciones (versión {v}) el {f}.").format(v=esc(u["condiciones_version"]), f=_fecha_corta(u["condiciones_fecha"]))}
+  {_t("Leíste la privacidad (versión {v}) el {f}.").format(v=esc(u["privacidad_version"]), f=_fecha_corta(u["privacidad_fecha"]))}</p>
+  <form method="POST" action="/cuenta/salir" style="display:inline">{csrf}<button type="submit" class="sec">{_t("Cerrar sesión")}</button></form>
+  <form method="POST" action="/cuenta/borrar-pedir" style="display:inline">{csrf}<button type="submit" class="sec">{_t("Borrar mi cuenta")}</button></form>
+  <p class="sub">{_t("Borrar la cuenta elimina tu correo, tus favoritos y tus descargas y cancela tu suscripción. Te pediremos confirmarlo desde tu correo.")}</p></div>"""
+
+
+def _planes_url_favorito(f):
+    if f["tipo"] == "empresa":
+        return f"/empresa/{f['clave']}" if not f["clave"].startswith("n:") else f"/empresa/n-{f['clave'][2:].replace(' ', '-')}"
+    muni, _, prov = f["clave"].partition("|")
+    return f"/?muni={quote_plus(f['nombre'])}&provincia={quote_plus(prov)}"
+
+
+# ── fichas: botones (solo con PLANES_PUBLICOS: las fichas se guardan en caché y son iguales para todos) ───────────
+def _planes_ficha_html(tipo, clave, nombre, provincia=""):
+    if not PLANES_PUBLICOS:
+        return ""
+    if tipo == "municipio":
+        url = f"/informe/municipio?muni={quote_plus(nombre)}&provincia={quote_plus(provincia)}"
+    else:
+        url = f"/informe/empresa?nif={quote_plus(clave)}"
+    return (f'<div class="alerta-conv planes-ficha">📄 <a href="{esc(url)}" rel="nofollow">{_t("Descargar el informe en PDF")}</a> · '
+            f'<form method="POST" action="/cuenta/favorito" style="display:inline"><input type="hidden" name="accion" value="poner">'
+            f'<input type="hidden" name="tipo" value="{tipo}"><input type="hidden" name="clave" value="{esc(clave)}">'
+            f'<input type="hidden" name="nombre" value="{esc(nombre)}">'
+            f'<button type="submit" class="link-btn" style="background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;padding:0;font:inherit">☆ {_t("Guardar en favoritos")}</button></form>'
+            f' · <a href="/planes">{_t("Planes")}</a></div>')
+
+
+def _planes_pie_html():
+    return f'\n    <a href="/planes">{_t("Planes")}</a>' if PLANES_PUBLICOS else ""
+
+
+# ── informes PDF ──────────────────────────────────────────────────────────────────────────────────────────────────
+def _informe_importe(x):
+    try:
+        return fmt_eur(str(float(x))) if x else "—"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _informe_municipio_pdf(d):
+    """El informe de un municipio: lo que ya enseña la ficha, en PDF, con la fecha de los datos y las fuentes."""
+    nombre = d.get("municipio", "")
+    prov = d.get("provincia", "")
+    prov_txt = PROVINCIA_LABEL.get(prov, prov).replace("Provincia de ", "")
+    hoy = time.strftime("%d/%m/%Y")
+    datos_a = _fecha_corta(d.get("timestamp")) if d.get("timestamp") else hoy
+    doc = IPDF.Documento(_t("Informe de contratación pública: {m}").format(m=nombre),
+                         pie=_t("Dinero Público · {url} · datos a {f}").format(url=SITE_URL.replace("https://", ""), f=datos_a))
+    s = _planes_sin_dni
+    contratos = d.get("contratos", [])
+    menores = _db_contratos_menors_por_municipio(nombre, prov or None)
+    doc.titulo(s(nombre))
+    doc.parrafo(_t("Informe de contratación pública del Ayuntamiento · {p}").format(p=prov_txt), color=IPDF.Documento.GRIS)
+    imp_f = sum((c.get("importe_num") or 0.0) for c in contratos)
+    imp_m = sum((r.get("import_num") or 0.0) for r in menores)
+    doc.datos([(_t("Contratos formales"), fmt_num(len(contratos))),
+               (_t("Importe de los formales"), fmt_eur(str(imp_f))),
+               (_t("Contratos menores"), fmt_num(len(menores))),
+               (_t("Importe de los menores"), fmt_eur(str(imp_m))),
+               (_t("Datos a"), datos_a), (_t("Informe generado el"), hoy)])
+    doc.nota(_t("Datos oficiales de los portales de contratación (PLACE, PSCP, BORM, KontratazioA y los de cada ayuntamiento), tal como los publica cada fuente. Los importes van con la base que publica la fuente (con o sin IVA) y las sumas no incluyen los contratos sin importe publicado. Un indicador no es una acusación: es un dato para mirar con más calma."))
+    alertas = analizar_riesgo(contratos, traducir=_i18n_idioma() != "es")
+    if alertas:
+        doc.seccion(_t("Indicadores"))
+        for a in alertas:
+            doc.parrafo("• " + s(re.sub(r"<[^>]+>", "", html.unescape(a.get("texto", "")))), tam=9.5)
+    # adjudicatarios con más importe (formales y menores juntos, por nombre)
+    suma = collections.defaultdict(lambda: [0.0, 0, ""])
+    for c in contratos:
+        n = nombre_sin_dni(c.get("empresa") or "")
+        if n and n not in ("No localizada", "Desierto", "—"):
+            k = _empresa_nkey(n) or n
+            suma[k][0] += c.get("importe_num") or 0.0
+            suma[k][1] += 1
+            suma[k][2] = suma[k][2] or _persona_fisica_txt(n)
+    for r in menores:
+        n = nombre_sin_dni(r.get("adjudicatari") or "")
+        if n:
+            k = _empresa_nkey(n) or n
+            suma[k][0] += r.get("import_num") or 0.0
+            suma[k][1] += 1
+            suma[k][2] = suma[k][2] or _persona_fisica_txt(n)
+    top = sorted(suma.values(), key=lambda v: -v[0])[:15]
+    if top:
+        doc.seccion(_t("Adjudicatarios con más importe"))
+        doc.tabla([_t("Adjudicatario"), _t("Contratos"), _t("Importe")],
+                  [[s(n), fmt_num(k), fmt_eur(str(i))] for i, k, n in top], [330, 70, 95], derecha=(1, 2))
+    if contratos:
+        ult = sorted(contratos, key=lambda c: c.get("fecha") or "", reverse=True)[:60]
+        doc.seccion(_t("Contratos formales (los {n} más recientes)").format(n=len(ult)) if len(contratos) > 60 else _t("Contratos formales"))
+        doc.tabla([_t("Fecha"), _t("Objeto"), _t("Adjudicatario"), _t("Importe")],
+                  [[_empresa_fecha(c.get("fecha") or ""), s((c.get("titulo") or "")[:220]),
+                    s(_persona_fisica_txt(nombre_sin_dni(c.get("empresa") or "—"))), _informe_importe(c.get("importe_num"))] for c in ult],
+                  [58, 245, 125, 72], derecha=(3,), enlaces=[(c.get("url") or "") if (c.get("url") or "").startswith("http") else "" for c in ult])
+        doc.nota(_t("Cada fila lleva a la ficha oficial del contrato (pulsa sobre ella)."))
+    if menores:
+        ult = menores[:60]
+        doc.seccion(_t("Contratos menores (los {n} más recientes)").format(n=len(ult)) if len(menores) > 60 else _t("Contratos menores"))
+        doc.tabla([_t("Fecha"), _t("Objeto"), _t("Adjudicatario"), _t("Importe")],
+                  [[r.get("data_adjudicacio") or "—", s((r.get("descripcio") or "")[:220]),
+                    s(_persona_fisica_txt(nombre_sin_dni(r.get("adjudicatari") or "—"))), _informe_importe(r.get("import_num"))] for r in ult],
+                  [58, 245, 125, 72], derecha=(3,))
+    doc.seccion(_t("Fuentes"))
+    doc.enlace(_t("Ficha en Dinero Público"), f"{SITE_URL}/?muni={quote_plus(nombre)}&provincia={quote_plus(prov)}")
+    if d.get("place_profile"):
+        doc.enlace(_t("Perfil del contratante"), d["place_profile"])
+    doc.enlace(_t("Plataforma de Contratación del Sector Público"), "https://contrataciondelsectorpublico.gob.es/")
+    doc.enlace(_t("Metodología"), f"{SITE_URL}/metodologia")
+    return doc.bytes()
+
+
+def _informe_empresa_pdf(clave):
+    """El informe de una empresa: contratos, importes y órganos, y el órgano de administración SOLO como sale en la
+    web (BORME, vigente, con fecha y enlace al anuncio). None si no está o si las fichas no están listas."""
+    con = _empresas_con()
+    if con is None:
+        return None, ""
+    try:
+        emp = con.execute("SELECT nombre, n, nf, nm, imp_sin, imp_con, imp_nd FROM empresas WHERE clave=?", (clave,)).fetchone()
+        if not emp:
+            return None, ""
+        nombre, n_total, n_f, n_m, imp_sin, imp_con, imp_nd = emp
+        variantes = con.execute("SELECT nombre, n FROM variantes WHERE clave=? ORDER BY n DESC", (clave,)).fetchall()
+        sumas_sql = ", ".join(f"SUM(CASE WHEN {_EMPRESAS_SQL_BASE[b]} THEN c.suma ELSE 0 END)" for b in _EMPRESAS_BASES)
+        organos = con.execute(
+            f"SELECT o.organo, o.municipio, o.provincia, COUNT(*), {sumas_sql} FROM c JOIN organos o ON o.id=c.org "
+            f"WHERE c.clave=? GROUP BY c.org ORDER BY 5 DESC, 4 DESC LIMIT 25", (clave,)).fetchall()
+        anios = con.execute(f"SELECT substr(c.fecha, 1, 4), SUM(c.tipo='F'), SUM(c.tipo='M'), {sumas_sql} "
+                            f"FROM c WHERE c.clave=? GROUP BY 1 ORDER BY 1 DESC", (clave,)).fetchall()
+        sql = ("SELECT c.fecha, o.organo, o.municipio, c.titulo, c.importe, c.iva, c.url FROM c JOIN organos o "
+               "ON o.id=c.org WHERE c.clave=? AND c.tipo=? ORDER BY c.fecha DESC, c.rowid LIMIT 40")
+        formales = con.execute(sql, (clave, "F")).fetchall()
+        menores = con.execute(sql, (clave, "M")).fetchall()
+        nif = "" if clave.startswith("n:") else clave
+        b, nombre_borme = _empresa_administrador(
+            nombre, nif, variantes, sum((k or 0) for _v, k in variantes) or (n_f + n_m),
+            contratos_de=lambda x: (con.execute("SELECT n FROM empresas WHERE clave=?", (x,)).fetchone() or (0,))[0] or 0)
+    finally:
+        con.close()
+    s = _planes_sin_dni
+    hoy = time.strftime("%d/%m/%Y")
+    doc = IPDF.Documento(_t("Informe de empresa: {e}").format(e=nombre),
+                         pie=_t("Dinero Público · {url} · informe generado el {f}").format(url=SITE_URL.replace("https://", ""), f=hoy))
+    doc.titulo(s(nombre))
+    pares = [(_t("NIF"), nif)] if nif else []
+    pares += [(_t("Contratos formales"), fmt_num(n_f)), (_t("Contratos menores"), fmt_num(n_m))]
+    for base, v in (("sin", imp_sin), ("con", imp_con), ("nd", imp_nd)):
+        if v or base == "sin":
+            pares.append((_empresa_base_txt(base), fmt_eur(str(v or 0))))
+    pares.append((_t("Informe generado el"), hoy))
+    doc.datos(pares)
+    doc.nota(_t("Datos oficiales de los portales de contratación. Los importes con bases distintas (con o sin IVA) no se suman entre sí. Las sumas no incluyen los contratos sin importe publicado."))
+    if len(variantes) > 1:
+        doc.nota(_t("Variantes del nombre en las fuentes: {lista}").format(lista=s(", ".join(f"«{v}»" for v, _n in variantes[:10]))))
+    doc.seccion(_t("Órgano de administración"))
+    if b:
+        desde = b.get("desde") or ""
+        fecha = f"{desde[6:8]}/{desde[4:6]}/{desde[:4]}" if len(desde) == 8 else ""
+        doc.parrafo(s(f'{b.get("nombre") or ""} · {_cargo_txt(b.get("cargo") or "")}'), negrita=True)
+        doc.nota(_t("Según el BORME") + (f", {fecha}" if fecha else "") + ". "
+                 + _t("Es el órgano de administración vigente según el último anuncio publicado. Para pedir una rectificación: contacto@dinero-publico.com."))
+        if b.get("fuente"):
+            doc.enlace(_t("Anuncio del BORME"), f"https://www.boe.es/diario_borme/txt.php?id={quote_plus(b['fuente'])}")
+    else:
+        doc.parrafo(_t("No tenemos el órgano de administración de esta empresa en el BORME."), color=IPDF.Documento.GRIS)
+    if organos:
+        doc.seccion(_t("Órganos contratantes"))
+        doc.tabla([_t("Órgano contratante"), _t("Municipio"), _t("Contratos"), _t("Importe sin IVA"), _t("Importe con IVA")],
+                  [[s(o or "—"), s(m or "—"), fmt_num(n), _informe_importe(si), _informe_importe(co)] for o, m, _pv, n, si, co, _nd in organos],
+                  [180, 105, 55, 80, 80], derecha=(2, 3, 4))
+    if anios:
+        doc.seccion(_t("Por año"))
+        doc.tabla([_t("Año"), _t("Formales"), _t("Menores"), _t("Importe sin IVA"), _t("Importe con IVA")],
+                  [[a or "—", fmt_num(nf or 0), fmt_num(nm or 0), _informe_importe(si), _informe_importe(co)] for a, nf, nm, si, co, _nd in anios],
+                  [60, 70, 70, 120, 120], derecha=(1, 2, 3, 4))
+    for titulo, filas in ((_t("Contratos formales (los más recientes)"), formales), (_t("Contratos menores (los más recientes)"), menores)):
+        if filas:
+            doc.seccion(titulo)
+            doc.tabla([_t("Fecha"), _t("Órgano / Objeto"), _t("Importe")],
+                      [[_empresa_fecha(fe), s(f"{org or '—'} ({mu or '—'}) · {(tit or '')[:180]}"),
+                        f"{_informe_importe(imp)} {_empresa_iva_txt(iva)}"] for fe, org, mu, tit, imp, iva, _u in filas],
+                      [60, 330, 110], derecha=(2,), enlaces=[(u or "") if (u or "").startswith("http") else "" for *_x, u in filas])
+    doc.seccion(_t("Fuentes"))
+    doc.enlace(_t("Ficha en Dinero Público"), f"{SITE_URL}/empresa/{clave}" if nif else f"{SITE_URL}/empresa/n-{clave[2:].replace(' ', '-')}")
+    doc.enlace(_t("Metodología"), f"{SITE_URL}/metodologia")
+    return doc.bytes(), nombre
+
+
+def _informe_slug(texto):
+    return re.sub(r"[^a-z0-9]+", "-", normalizar(texto or ""))[:60].strip("-") or "informe"
+
+
+def _informe_objetivo(tipo, g):
+    """(clave, nombre, extra) del informe pedido, o None si no existe."""
+    if tipo == "municipio":
+        d = _db_get_municipio(g("muni"), g("provincia") or None) if g("muni") else None
+        if not d or es_pseudo_municipio(d.get("municipio", "")):
+            return None
+        return clave_municipio(d["municipio"], d.get("provincia")), d["municipio"], d
+    nif = _empresa_nif(g("nif"))
+    if not nif:
+        return None
+    con = _empresas_con()
+    if con is None:
+        return None
+    try:
+        f = con.execute("SELECT nombre FROM empresas WHERE clave=?", (nif,)).fetchone()
+    finally:
+        con.close()
+    return (nif, f[0], None) if f else None
+
+
+def _informe_de_pago(c, tipo):
+    """¿Esta descarga sale de algo pagado (suscripción o bono)? Entonces, la primera vez, se pide aceptar la pérdida
+    del desistimiento (contenido digital, art. 103.m del TRLGDCU)."""
+    if PL.es_suscripcion(c["plan"]):
+        return True
+    return not CTA.Almacen.usa_cupo_mes(c["plan"], tipo) or (c["quedan_mes"] == 0 and c["bono"] > 0)
+
+
+def _informe_get(tipo, qs):
+    g = lambda k: (qs.get(k, [""])[0] or "").strip()[:120]           # noqa: E731
+    u = _planes_usuario()
+    obj = _informe_objetivo(tipo, g)
+    if not obj:
+        return _cuenta_pagina(_t("Informe no encontrado"), f'<div class="caja">{_t("No encontramos ese municipio o esa empresa. Búscalo en la web y usa el botón de su ficha.")}</div>', code=404)
+    clave, nombre, _d = obj
+    if not u:
+        volver = f"/informe/{tipo}?" + urlencode({k: g(k) for k in ("muni", "provincia", "nif") if g(k)})
+        return _cuenta_pagina(_t("Descargar el informe"),
+                              f'<p>{_t("El informe en PDF de {n} se descarga con una cuenta gratuita (1 informe de municipio al mes). La consulta en la web sigue libre y sin registro.").format(n=esc(nombre))}</p>'
+                              + _cuenta_formulario_acceso(volver))
+    alm = _cuentas_almacen()
+    c = alm.cuenta_informes(u)
+    if tipo == "empresa" and c["plan"] == "registrado" and not c["bono"]:
+        return _cuenta_pagina(_t("Informe de empresa"),
+                              f'<div class="caja"><p>{_t("Los informes de empresa van con el bono o con los planes Profesional y Premium. Con tu cuenta gratuita tienes 1 informe de municipio al mes.")}</p>'
+                              + (f'<p><a href="/planes">{_t("Ver los planes")}</a></p>' if _planes_visibles(u) else "") + '</div>')
+    if c["quedan_tecnico"] <= 0:
+        return _cuenta_pagina(_t("No te quedan informes"),
+                              f'<div class="caja"><p>{_t("Ya has usado los informes de este mes. Se renuevan el {f}.").format(f=_fecha_corta(c["renueva"]))}</p>'
+                              + (f'<p><a href="/planes">{_t("Ver los planes")}</a></p>' if _planes_visibles(u) else "") + '</div>')
+    de_pago = _informe_de_pago(c, tipo)
+    desist = ""
+    if de_pago and not u["desistimiento_fecha"]:
+        desist = (f'<label class="chk"><input type="checkbox" name="desistimiento" value="1" required> '
+                  f'{_t("Pido que la descarga empiece ya y acepto que, al ser un contenido digital, pierdo el derecho de desistimiento una vez descargado.")}</label>')
+    quedan = (_t("Te quedan {n} informes.").format(n=c["total_quedan"]) if c["total_quedan"] is not None
+              else _t("Informes sin límite (uso razonable)."))
+    campos = "".join(f'<input type="hidden" name="{k}" value="{esc(g(k))}">' for k in ("muni", "provincia", "nif") if g(k))
+    return _cuenta_pagina(_t("Descargar el informe"),
+                          f'<div class="caja"><p><b>{esc(nombre)}</b></p><p class="sub">{quedan} {_t("Volver a bajar el mismo informe el mismo día no gasta otro.")}</p>'
+                          f'<form method="POST" action="/informe/{tipo}">{_planes_csrf_campo()}{campos}{desist}'
+                          f'<button type="submit">{_t("Descargar el PDF")}</button></form></div><p><a href="/cuenta">{_t("Mi cuenta")}</a></p>')
+
+
+def _informe_post(tipo, p):
+    u = _planes_usuario()
+    if not u or not _planes_csrf_ok(p):
+        return _planes_redirigir("/cuenta")
+    obj = _informe_objetivo(tipo, p)
+    if not obj:
+        return _cuenta_pagina(_t("Informe no encontrado"), f'<div class="caja">{_t("No encontramos ese municipio o esa empresa.")}</div>', code=404)
+    clave, nombre, d = obj
+    alm = _cuentas_almacen()
+    c = alm.cuenta_informes(u)
+    if tipo == "empresa" and c["plan"] == "registrado" and not c["bono"]:
+        return _planes_redirigir("/informe/empresa?" + urlencode({"nif": p("nif")}))
+    de_pago = _informe_de_pago(c, tipo)
+    if de_pago and not u["desistimiento_fecha"]:
+        if p("desistimiento") != "1":
+            return _planes_redirigir(f"/informe/{tipo}?" + urlencode({k: p(k) for k in ("muni", "provincia", "nif") if p(k)}))
+        alm.anotar_desistimiento(u["id"])
+    # primero el PDF (si falla, no se gasta nada); luego se apunta la descarga
+    if tipo == "municipio":
+        pdf = _informe_municipio_pdf(d)
+    else:
+        pdf, _n = _informe_empresa_pdf(clave)
+        if pdf is None:
+            return _cuenta_pagina(_t("Informe no disponible"), f'<div class="caja">{_t("Las fichas de empresa se están preparando. Vuelve a intentarlo en unos minutos.")}</div>', code=503)
+    origen = alm.gastar_informe(u["id"], tipo, clave, nombre)
+    if origen is None:
+        return _planes_redirigir(f"/informe/{tipo}?" + urlencode({k: p(k) for k in ("muni", "provincia", "nif") if p(k)}))
+    nombre_fichero = f"dinero-publico-{tipo}-{_informe_slug(nombre)}.pdf"
+    return 200, {"Content-Type": "application/pdf", "Content-Length": str(len(pdf)), "Cache-Control": "no-store",
+                 "Content-Disposition": f'attachment; filename="{nombre_fichero}"', "X-Robots-Tag": "noindex"}, pdf
+
+
+# ── rutas ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+def _planes_get(path, qs):
+    """Páginas GET de los planes. None si no es ninguna (o si no le toca verla: 404 normal)."""
+    g = lambda k: (qs.get(k, [""])[0] or "").strip()                 # noqa: E731
+    if path == "/planes":
+        u = _planes_usuario()
+        if not _planes_visibles(u):
+            return None
+        return _resp(render_planes_html(u), headers={"Cache-Control": "no-store"})
+    if path in ("/informe/municipio", "/informe/empresa"):
+        return _informe_get(path.rsplit("/", 1)[1], qs)
+    if path == "/cuenta":
+        u = _planes_usuario()
+        volver = g("volver") if g("volver").startswith("/") and not g("volver").startswith("//") else ""
+        if not u:
+            return _cuenta_pagina(_t("Mi cuenta"), _cuenta_formulario_acceso(volver))
+        _planes_al_dia()
+        u = _planes_usuario()
+        return _cuenta_pagina(_t("Mi cuenta"), _cuenta_html(u, {"pago": _t("Gracias. En cuanto Stripe nos confirme el pago (suele tardar unos segundos), lo verás aquí. Si no, recarga la página en un minuto."),
+                                                               "borrado-pedido": _t("Te hemos mandado un correo para confirmar el borrado de tu cuenta."),
+                                                               "favorito": _t("Guardado en tus favoritos.")}.get(g("hecho"), "")))
+    if path == "/cuenta/revisa":
+        return _cuenta_pagina(_t("Revisa tu correo"), f'<div class="caja"><p>{_t("Si la dirección es correcta, te acabamos de mandar un enlace para entrar. Caduca en 15 minutos.")}</p><p class="sub">{_t("Si no lo ves, mira en la carpeta de correo no deseado.")}</p></div>')
+    if path == "/cuenta/entrar":
+        # El enlace solo enseña un formulario que se envía solo (POST): un programa de correo que abre el enlace para
+        # revisarlo no lo gasta.
+        c = g("c")
+        if not _cuentas_almacen().ver_enlace(c, "entrar"):
+            return _cuenta_pagina(_t("Enlace no válido"), f'<div class="caja">{_t("Este enlace ya no vale: caduca a los 15 minutos y solo se puede usar una vez. Pide otro.")}</div>' + _cuenta_formulario_acceso())
+        return _cuenta_pagina(_t("Entrar"), f'<div class="caja"><form method="POST" action="/cuenta/entrar" id="auto"><input type="hidden" name="c" value="{esc(c)}"><button type="submit">{_t("Entrar en mi cuenta")}</button></form></div>', autoenviar=True)
+    if path == "/cuenta/borrar":
+        c = g("c")
+        if not _cuentas_almacen().ver_enlace(c, "borrar"):
+            return _cuenta_pagina(_t("Enlace no válido"), f'<div class="caja">{_t("Este enlace ya no vale: caduca a los 15 minutos. Pide otro desde tu cuenta.")}</div>')
+        # sin envío automático: borrar es para siempre y lo decide la persona con un clic
+        return _cuenta_pagina(_t("Borrar tu cuenta"), f'<div class="caja"><p>{_t("Se borrarán tu correo, tus favoritos, tus descargas y tus informes pendientes, y se cancelará tu suscripción si la tienes. No se puede deshacer.")}</p><form method="POST" action="/cuenta/borrar"><input type="hidden" name="c" value="{esc(c)}"><button type="submit">{_t("Borrar mi cuenta para siempre")}</button></form></div>')
+    if path == "/planes/datos-enviado":
+        return _cuenta_pagina(_t("Mensaje enviado"), f'<div class="caja"><p>{_t("Gracias. Te contestaremos con un presupuesto a la dirección que nos has dado.")}</p></div><p><a href="/planes">{_t("Volver a los planes")}</a></p>')
+    return None
+
+
+def _planes_post(path, params):
+    p = lambda k: (params.get(k, [""])[0] or "").strip()              # noqa: E731
+    alm = _cuentas_almacen()
+    if path == "/cuenta/acceso":
+        correo = ALR.correo_valido(p("correo"))
+        volver = p("volver") if p("volver").startswith("/") and not p("volver").startswith("//") else ""
+        if not correo:
+            return _cuenta_pagina(_t("Correo no válido"), f'<div class="caja">{_t("Esa dirección de correo no parece válida. Vuelve atrás y revísala.")}</div>')
+        if p("condiciones") != "1" or p("privacidad") != "1":
+            return _cuenta_pagina(_t("Falta aceptar"), _cuenta_formulario_acceso(volver, f'<div class="aviso">{_t("Para crear la cuenta o entrar hay que aceptar las condiciones y haber leído la privacidad.")}</div>'))
+        # campo trampa, correos fuera de la prueba y límite de intentos: la misma respuesta, sin mandar nada
+        if not p("web") and _planes_correo_permitido(correo) and alm.intento_permitido(correo, _PLANES_IP.get()):
+            idioma = p("idioma") if p("idioma") in I18N_IDIOMAS else "es"
+            codigo = alm.crear_enlace(correo, "entrar", json.dumps({"v": volver, "i": idioma}))
+            nueva = alm.usuario_por_correo(correo) is None
+            _planes_mandar(_alertas_en_idioma(idioma, _planes_correo_acceso, correo, codigo, idioma, nueva), "cuenta-acceso")
+        return _planes_redirigir("/cuenta/revisa")
+    if path == "/cuenta/entrar":
+        e = alm.gastar_enlace(p("c"), "entrar")
+        if not e or not _planes_correo_permitido(e["correo"]):
+            return _cuenta_pagina(_t("Enlace no válido"), f'<div class="caja">{_t("Este enlace ya no vale: caduca a los 15 minutos y solo se puede usar una vez. Pide otro.")}</div>' + _cuenta_formulario_acceso())
+        try:
+            datos = json.loads(e["datos"] or "{}")
+        except ValueError:
+            datos = {}
+        u, nueva = alm.alta_o_entrada(e["correo"], PLANES_VERSION_CONDICIONES, PLANES_VERSION_PRIVACIDAD, datos.get("i", "es"))
+        if not nueva and (u["condiciones_version"], u["privacidad_version"]) != (PLANES_VERSION_CONDICIONES, PLANES_VERSION_PRIVACIDAD):
+            alm.aceptar_textos(u["id"], PLANES_VERSION_CONDICIONES, PLANES_VERSION_PRIVACIDAD)   # las aceptó en el formulario
+        alm.limpiar()
+        destino = datos.get("v") or "/cuenta"
+        return _planes_redirigir(destino, _planes_cookie(alm.crear_sesion(u["id"]), CTA.SESION_DURA_S))
+    if path == "/cuenta/salir":
+        if _planes_csrf_ok(p):
+            alm.cerrar_sesion(_planes_cookie_codigo())
+        return _planes_redirigir("/cuenta", _planes_cookie("", 0))
+    if path == "/cuenta/borrar-pedir":
+        u = _planes_usuario()
+        if u and _planes_csrf_ok(p) and alm.intento_permitido(u["correo"], _PLANES_IP.get()):
+            codigo = alm.crear_enlace(u["correo"], "borrar")
+            _planes_mandar(_alertas_en_idioma(u["idioma"], _planes_correo_borrar, u["correo"], codigo, u["idioma"]), "cuenta-borrar")
+        return _planes_redirigir("/cuenta?hecho=borrado-pedido")
+    if path == "/cuenta/borrar":
+        e = alm.ver_enlace(p("c"), "borrar")
+        u = alm.usuario_por_correo(e["correo"]) if e else None
+        if not u:
+            return _cuenta_pagina(_t("Enlace no válido"), f'<div class="caja">{_t("Este enlace ya no vale: caduca a los 15 minutos. Pide otro desde tu cuenta.")}</div>')
+        if u["stripe_suscripcion"] and PL.es_suscripcion(alm.plan_vigente(u)):
+            try:
+                STP.cancelar_suscripcion(u["stripe_suscripcion"])
+            except Exception as ex:
+                print(f"[planes] no se pudo cancelar la suscripción al borrar una cuenta: {type(ex).__name__}", flush=True)
+                return _cuenta_pagina(_t("No se ha podido borrar"), f'<div class="caja">{_t("No hemos podido cancelar tu suscripción en Stripe, así que no hemos borrado nada todavía. Inténtalo dentro de un rato o escríbenos a contacto@dinero-publico.com.")}</div>')
+        alm.gastar_enlace(p("c"), "borrar")
+        correo = u["correo"]
+        alm.borrar_cuenta(u["id"])
+        if ALERTAS_ACTIVAS:
+            _planes_sincronizar_alertas_correo(correo)
+        return _cuenta_pagina(_t("Cuenta borrada"), f'<div class="caja"><p>{_t("Hemos borrado tu cuenta y todo lo que tenía. No te escribiremos más.")}</p></div><p><a href="/">{_t("Volver al inicio")}</a></p>', cookie=_planes_cookie("", 0))
+    if path == "/cuenta/favorito":
+        u = _planes_usuario()
+        if not u:
+            return _planes_redirigir("/cuenta")
+        tipo, clave = p("tipo"), p("clave")[:160]
+        if p("accion") == "quitar":
+            if _planes_csrf_ok(p):
+                alm.quitar_favorito(u["id"], tipo, clave)
+            return _planes_redirigir("/cuenta")
+        nombre = p("nombre")[:200] or clave
+        alm.poner_favorito(u["id"], tipo, clave, nombre)
+        return _planes_redirigir("/cuenta?hecho=favorito")
+    if path == "/cuenta/portal":
+        u = _planes_usuario()
+        if not u or not _planes_csrf_ok(p) or not u["stripe_cliente"] or not STP.configurado():
+            return _planes_redirigir("/cuenta")
+        try:
+            return _planes_redirigir(STP.crear_portal(u["stripe_cliente"], f"{SITE_URL}/cuenta"))
+        except Exception as ex:
+            print(f"[planes] portal de Stripe: {type(ex).__name__}", flush=True)
+            return _cuenta_pagina(_t("Stripe no responde"), f'<div class="caja">{_t("No hemos podido abrir la página de Stripe. Inténtalo dentro de un rato.")}</div>')
+    if path == "/planes/pagar":
+        u = _planes_usuario()
+        plan, periodo = p("plan"), p("periodo")
+        if not u or not _planes_csrf_ok(p) or not STP.configurado() or not PL.comprable(plan, periodo):
+            return _planes_redirigir("/planes" if u else "/cuenta?volver=/planes")
+        try:
+            url = STP.crear_checkout(u, plan, periodo, f"{SITE_URL}/cuenta?hecho=pago", f"{SITE_URL}/planes")
+        except Exception as ex:
+            print(f"[planes] checkout de Stripe: {type(ex).__name__}", flush=True)
+            return _cuenta_pagina(_t("Stripe no responde"), f'<div class="caja">{_t("No hemos podido abrir la página de pago. No se ha cobrado nada. Inténtalo dentro de un rato.")}</div>')
+        return _planes_redirigir(url)
+    if path == "/planes/datos":
+        correo = ALR.correo_valido(p("correo"))
+        if not correo or p("privacidad") != "1" or not p("mensaje"):
+            return _cuenta_pagina(_t("Faltan datos"), f'<div class="caja">{_t("Necesitamos tu correo, qué datos necesitas y que hayas leído la privacidad. Vuelve atrás y revísalo.")}</div>')
+        if not p("web") and alm.intento_permitido(correo, _PLANES_IP.get()):
+            texto = (f"Petición de presupuesto de datos (formulario de /planes)\n\nCorreo: {correo}\n"
+                     f"Organización: {p('organizacion')[:120] or '-'}\n\n{p('mensaje')[:2000]}\n")
+            payload = {"from": _avisos_remitente(), "to": [PL.CONTACTO_DATOS], "reply_to": correo,
+                       "subject": "Presupuesto de datos: " + (p("organizacion")[:60] or correo.split("@")[-1]),
+                       "text": texto}
+            _planes_mandar(payload, "planes-datos")
+        return _planes_redirigir("/planes/datos-enviado")
+    if path in ("/informe/municipio", "/informe/empresa"):
+        return _informe_post(path.rsplit("/", 1)[1], p)
+    return None
+
+
+def _planes_sincronizar_alertas_correo(correo):
+    """Al borrar una cuenta de pago: sus alertas (si tiene) vuelven al nivel gratuito."""
+    a = _alertas_almacen()
+    with a.lock:
+        s = a._suscriptor("correo", correo)
+    if s and s["nivel"] != "gratis":
+        a.cambiar_nivel(s["id"], "gratis")
+
+
+def _planes_webhook(environ):
+    """POST /planes/stripe-webhook: el aviso firmado de Stripe. (code, headers, body)."""
+    if not PLANES_ACTIVOS or not STP.configurado():
+        return _resp("no", content_type="text/plain; charset=utf-8", code=404)
+    try:
+        length = int(environ.get("CONTENT_LENGTH") or 0)
+    except ValueError:
+        length = 0
+    if length <= 0 or length > 1024 * 1024:
+        return _resp("tamaño", content_type="text/plain; charset=utf-8", code=413)
+    cuerpo = environ["wsgi.input"].read(length)
+    try:
+        ev = STP.verificar_firma(cuerpo, environ.get("HTTP_STRIPE_SIGNATURE", ""),
+                                 os.environ.get("STRIPE_WEBHOOK_SECRET", "").strip())
+    except STP.ErrorStripe as ex:
+        print(f"[planes] aviso de Stripe rechazado: {ex}", flush=True)
+        return _resp("firma", content_type="text/plain; charset=utf-8", code=400)
+    alm = _cuentas_almacen()
+    try:
+        hecho = STP.procesar_evento(ev, alm)
+        _planes_sincronizar_alertas(STP.usuario_del_evento(ev, alm))
+        _planes_al_dia()
+    except Exception as ex:
+        print(f"[planes] aviso de Stripe {ev.get('type', '')}: ERROR {type(ex).__name__}", flush=True)
+        return _resp("error", content_type="text/plain; charset=utf-8", code=500)      # Stripe lo reintenta
+    print(f"[planes] aviso de Stripe {ev.get('type', '')}: {hecho}", flush=True)
+    return _resp(json.dumps({"ok": True}), content_type="application/json; charset=utf-8",
+                 headers={"Cache-Control": "no-store"})
+
+
+
 def _route_get(path, qs, gzip_ok=False):
     if FILTRO_EMBUDO and path.rstrip("/") == FEMB.RUTA:
         return _filtro_embudo_resp("GET", {})          # lo que venga en la dirección se ignora: nada en los registros
@@ -31872,6 +32722,10 @@ def _route_get(path, qs, gzip_ok=False):
         return 301, {"Location": "/convocatorias" + (f"?{query}" if query else ""), "Content-Length": "0"}, b""
     if ALERTAS_ACTIVAS and (path == "/alertas" or path.startswith("/alertas/")):
         respuesta = _alertas_get(path, qs)
+        if respuesta:
+            return respuesta
+    if PLANES_ACTIVOS and (path in ("/planes", "/cuenta") or path.startswith(("/planes/", "/cuenta/", "/informe/"))):
+        respuesta = _planes_get(path, qs)
         if respuesta:
             return respuesta
     if path == "/":
@@ -32087,6 +32941,9 @@ def _route_get(path, qs, gzip_ok=False):
         # idioma): era lo que más pedían los rastreadores y a un buscador no le aportan nada, porque la ficha sin
         # paginar ya lleva el municipio. Cualquier dirección con pag= o pag_cm= (también pag_alc=, pag_idx=...).
         bloqueos += "Disallow: /*pag=\nDisallow: /*pag_\n"
+        if PLANES_ACTIVOS:      # 2026-11-26: la cuenta y las descargas no son para buscadores (apagado: robots igual)
+            bloqueos += "".join(f"Disallow: {pref}/{ruta}\n" for ruta in ("cuenta", "informe/")
+                                for pref in ("", *(f"/{l}" for l in I18N_IDIOMAS)))
         # bloqueos ANTES de "Allow: /": hay rastreadores que aplican la primera regla que casa, no la más larga
         # 2026-11-06 (ancho de banda de Render, propuesta pendiente de César): fuera los rastreadores que solo recogen
         # textos para ENTRENAR modelos de IA (no traen visitas). Siguen permitidos Google y Bing, y también los que
@@ -32415,6 +33272,10 @@ def _route_post(path, params):
     try:
         if ALERTAS_ACTIVAS and path.startswith("/alertas/"):
             respuesta = _alertas_post(path, params)
+            if respuesta:
+                return respuesta
+        if PLANES_ACTIVOS and path.startswith(("/planes/", "/cuenta/", "/informe/")):
+            respuesta = _planes_post(path, params)
             if respuesta:
                 return respuesta
 
@@ -33829,6 +34690,9 @@ def _app_wsgi(environ, start_response):
         if sid.isdigit() and _alertas_almacen().firma_valida("baja", sid, firma):
             _alertas_almacen().baja(int(sid))
         code, headers, body = _resp("ok", content_type="text/plain; charset=utf-8")
+    elif PLANES_ACTIVOS and method == "POST" and path == "/planes/stripe-webhook":
+        # Aviso firmado de Stripe (2026-11-26): el cuerpo tal cual, sin pasar por el formulario (la firma es de los bytes)
+        code, headers, body = _planes_webhook(environ)
     elif FILTRO_FORMULARIO and method == "POST" and path == FFORM.RUTA + "/baja-correo":
         # Lo mismo para los perfiles del filtro de licitaciones: borra el perfil.
         pid, firma = qs.get("p", [""])[0], qs.get("k", [""])[0]
@@ -33998,7 +34862,11 @@ def _app_wsgi(environ, start_response):
             length = 0
         raw = environ["wsgi.input"].read(length).decode("utf-8") if length else ""
         params = parse_qs(raw, keep_blank_values=True)
-        code, headers, body = _route_post_i18n(path, params)
+        t_ip = _PLANES_IP.set((environ.get("HTTP_X_FORWARDED_FOR", "") or environ.get("REMOTE_ADDR", "") or "").split(",")[0].strip())
+        try:
+            code, headers, body = _route_post_i18n(path, params)
+        finally:
+            _PLANES_IP.reset(t_ip)
     else:
         code, headers, body = 405, {"Content-Length": "0"}, b""
 
