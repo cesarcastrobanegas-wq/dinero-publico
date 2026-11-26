@@ -404,11 +404,16 @@ def _k_importe(lista_o_valor):
     return _importe(s.replace(".", "").replace(",", ".") if "," in s else s)
 
 
-def _kohesio_ids(sesion, filtro=""):
-    """{QID: entrada de la lista} de los proyectos de España 2021-2027 que cumplen el filtro ('&fund=…', etc.)."""
+def _kohesio_ids(sesion, filtro="", con_periodo=True):
+    """{QID: entrada de la lista} de los proyectos de España 2021-2027 que cumplen el filtro ('&fund=…', etc.).
+    con_periodo=False quita el filtro del periodo 2021-2027. 26-11-2026: Kohesio responde «HTTP 400 Bad request» a
+    país + periodo + fondo FSE+ (Q7333994) juntos; sin el periodo responde bien, y el FEDER con él, también. Por fondo
+    sobra: los fondos que se piden ya son los de 2021-2027, y lo que salga de más se ignora porque solo se usan los QID
+    de la lista general de España 2021-2027."""
     salida, desplazamiento = {}, 0
+    periodo = f"&programmingPeriod={KOHESIO_2127}" if con_periodo else ""
     while True:
-        r = _pedir(sesion, f"{KOHESIO_API}/projects?country={KOHESIO_ESPANA}&programmingPeriod={KOHESIO_2127}"
+        r = _pedir(sesion, f"{KOHESIO_API}/projects?country={KOHESIO_ESPANA}{periodo}"
                            f"&language=es&limit={_KOHESIO_LOTE}&offset={desplazamiento}{filtro}", timeout=180)
         d = r.json()
         lote = d.get("list") or []
@@ -498,7 +503,7 @@ def descargar_kohesio(sesion, con_nombres=True):
     for f in _kohesio_consulta(sesion, "funds"):
         if "(2021-2027)" in f.get("instanceLabel", ""):
             corto = f["instanceLabel"].split(" - ")[0].strip()
-            for q in _kohesio_ids(sesion, f"&fund={f['instance']}"):
+            for q in _kohesio_ids(sesion, f"&fund={f['instance']}", con_periodo=False):   # ver _kohesio_ids
                 fondo.setdefault(q, []).append(corto)
     for p in _kohesio_consulta(sesion, "programs", country=KOHESIO_ESPANA):
         if p.get("instanceLabel", "").startswith("2021"):

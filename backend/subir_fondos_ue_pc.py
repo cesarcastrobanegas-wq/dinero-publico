@@ -28,6 +28,25 @@ import fondos_ue_espana as F  # noqa: E402
 URL = "https://dinero-publico.com/admin/fondos-ue"
 _REINTENTABLES = {502, 503, 504, 520, 521, 522, 523, 524}
 
+# 26-11-2026: en la consola de Windows, getpass lee tecla a tecla; pegar con Ctrl+V no pega el texto, sino el carácter
+# de control \x16, que .strip() no quita. Cloudflare rechaza una cabecera así con un 400 VACÍO, sin que la petición
+# llegue a la web (comprobado: una cabecera con \x16 da 400 y 0 bytes; la misma con texto normal, 200).
+COMO_PEGAR = ("En la consola de Windows, pega con clic DERECHO (Ctrl+V no pega aquí: mete un carácter de control); "
+              "en Windows Terminal, con Ctrl+Shift+V.")
+
+
+def problema_token(token):
+    """Texto con el problema del token, o None si vale. Nunca incluye el token ni ningún trozo suyo."""
+    if not token or token == "TU_TOKEN_AQUI":
+        return "Falta el token de administración (cambia TU_TOKEN_AQUI por el tuyo, o no pongas --token)."
+    raros = [c for c in token if not (33 <= ord(c) <= 126)]
+    if raros:
+        control = sum(1 for c in raros if ord(c) < 32 or ord(c) == 127)
+        return (f"El token tiene {len(raros)} carácter(es) que no son letras, cifras ni signos"
+                + (f" ({control} de control: suele ser un Ctrl+V)" if control else "")
+                + ". La web lo rechazaría con un 400 vacío. " + COMO_PEGAR)
+    return None
+
 
 def subir(ruta, token, url=URL, espera_max=300, pausa=30, requests_mod=None):
     """Sube el fichero como el flujo. Devuelve (código HTTP, respuesta en JSON o texto, fuente conservada o '')."""
@@ -69,9 +88,12 @@ def main(argv=None):
     a = ap.parse_args(argv)
     token = ""
     if not a.solo_generar:
+        if not a.token:
+            print(COMO_PEGAR)
         token = (a.token or getpass.getpass("Token de administración (no se ve al escribir): ")).strip()
-        if not token or token == "TU_TOKEN_AQUI":
-            sys.exit("Falta el token de administración (cambia TU_TOKEN_AQUI por el tuyo, o no pongas --token).")
+        problema = problema_token(token)          # antes de generar: no esperar 6-30 min para nada
+        if problema:
+            sys.exit(problema)
     t0 = time.time()
     with tempfile.TemporaryDirectory(prefix="fondos_ue_") as d:
         ruta = os.path.join(d, "fondos_ue.ndjson.gz")
@@ -83,6 +105,9 @@ def main(argv=None):
         codigo, cuerpo, falta = subir(ruta, token)
     print(f"HTTP {codigo}: {json.dumps(cuerpo, ensure_ascii=False) if not isinstance(cuerpo, str) else cuerpo}")
     if codigo != 200:
+        if codigo == 400 and not cuerpo:
+            sys.exit("HTTP 400 sin respuesta de la web: lo ha rechazado Cloudflare antes de llegar (casi siempre, una "
+                     "cabecera con un carácter raro). No ha cambiado nada. " + COMO_PEGAR)
         sys.exit(f"La web no ha aceptado la subida (HTTP {codigo}). No ha cambiado nada.")
     if falta:
         k = (cuerpo or {}).get("conservado") or {} if isinstance(cuerpo, dict) else {}
