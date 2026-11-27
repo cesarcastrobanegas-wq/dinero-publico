@@ -18400,17 +18400,22 @@ def _copia_arranque_cargar():
                                     provincias={pv: tuple(v) for pv, v in (rk.get("provincias") or {}).items()},
                                     ts=time.time())
         ahora = time.time()
-        n = 0
+        hoy = _paginas_dia(ahora)
+        n = otro_dia = 0
         with _paginas_lock:
             for k, gz64, ts in datos.get("paginas") or []:
                 clave = tuple(k)
                 if clave in _paginas_cache or ahora - ts > COPIA_ARRANQUE_MAX_EDAD:
                     continue
+                if _paginas_dia(ts) != hoy:      # 27-11-2026: montada otro día (días de plazo, fecha): no se usa
+                    otro_dia += 1
+                    continue
                 # vieja (se sirve, pero no se vuelve a montar sola: lo hace _calentar_portada tras el precálculo)
                 _paginas_cache[clave] = {"gz": base64.b64decode(gz64), "ts": ahora - _PAGINAS_TTL, "refrescando": True,
-                                         "grupo": None, "de_copia": True, "ts_copia": ts}
+                                         "grupo": None, "de_copia": True, "ts_copia": ts, "dia": hoy}
                 n += 1
-        est.update(cargada=True, motivo=f"Índice de {len(datos['indice'])} municipios y {n} páginas",
+        est.update(cargada=True, motivo=f"Índice de {len(datos['indice'])} municipios y {n} páginas"
+                                        + (f" ({otro_dia} de otro día, sin usar)" if otro_dia else ""),
                    guardada_utc=time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(datos.get("guardada") or 0)))
         del datos
     except Exception as e:
@@ -26671,8 +26676,25 @@ def _diagnostico_arranque_publico():
         "disco_confiable": _DISCO_CONFIABLE,
         "cache_db": _info(DB_FILE),
         "disco_inicializado_marker": _info(_DISK_INIT_MARKER),
+        "portadas": _paginas_portadas_estado(),
         "completo": "solo con la cabecera X-Admin-Token o en /admin/revision/diagnostico",
     }
+
+
+def _paginas_portadas_estado():
+    """Revisión diaria del 27-11-2026: de cada idioma, cuándo se montó la portada guardada (hora UTC, la misma del
+    <meta name="dp-montada"> de la página), qué día peninsular y si viene de la copia de arranque. Nada interno."""
+    out = {}
+    try:
+        with _paginas_lock:
+            for k, e in _paginas_cache.items():
+                if len(k) == 2 and k[1] == "/":
+                    ts = e.get("ts_copia") if e.get("de_copia") else e["ts"]
+                    out[k[0]] = {"montada_utc": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(ts)),
+                                 "dia": e.get("dia") or "", "de_copia": bool(e.get("de_copia"))}
+    except Exception as ex:
+        out = {"error": type(ex).__name__}
+    return out
 
 
 def _memoria_desglose():
@@ -30910,13 +30932,48 @@ _paginas_cache = collections.OrderedDict()     # clave -> {"gz": bytes, "ts": fl
 _paginas_cerrojos = {}                         # clave -> Lock (montajes iguales a la vez)
 _paginas_lock = threading.Lock()
 _paginas_fondo = threading.Semaphore(1)        # los montajes en segundo plano, de uno en uno
-_paginas_stats = {"servidas": 0, "servidas_viejas": 0, "montadas": 0, "montadas_fondo": 0, "errores_fondo": 0}
+_paginas_stats = {"servidas": 0, "servidas_viejas": 0, "montadas": 0, "montadas_fondo": 0, "errores_fondo": 0,
+                  "de_otro_dia": 0}
+
+# Revisión diaria del 27-11-2026: «cierra en N días», «cierra hoy» y la fecha de la portada se calculan al MONTAR la
+# página, así que una página montada antes de la medianoche (hora peninsular) y servida después enseñaba los días mal
+# contados (y cada idioma, montado a su hora, de forma distinta). Ahora cada página guarda el día en que se montó
+# (_paginas_dia): una de otro día ya no se sirve a las personas (se vuelve a montar en esa misma petición) y el primer
+# aviso de que ha cambiado el día vuelve a montar las fijas de todos los idiomas en segundo plano. Los rastreadores de
+# _BOT_PREFIERE_CACHE la siguen recibiendo, pero su visita la manda volver a montar. Además cada página guardada
+# lleva <meta name="dp-montada"> con la hora UTC en que se montó, para que la revisión diaria distinga una copia vieja
+# de esta caché de una de cualquier otra (la de quien la descarga, un proxy...).
+_paginas_dia_avisado = {"dia": None}
+
+
+def _paginas_dia(ts=None):
+    """Día peninsular (AAAA-MM-DD) de ahora o de `ts`."""
+    return _ahora_madrid(ts).strftime("%Y-%m-%d")
+
+
+def _paginas_sello(html_txt, ts):
+    """El HTML con <meta name="dp-montada" content="<hora UTC>"> justo tras <head> (si lo tiene)."""
+    sello = f'<meta name="dp-montada" content="{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ts))}">'
+    i = html_txt.find("<head>")
+    return html_txt if i < 0 else html_txt[:i + 6] + sello + html_txt[i + 6:]
+
+
+def _paginas_cambio_de_dia(hoy):
+    """La primera vez que se ve el día `hoy` con páginas de otro día guardadas: vuelve a montar las fijas de todos los
+    idiomas en segundo plano. Una sola vez por día."""
+    with _paginas_lock:
+        if _paginas_dia_avisado["dia"] == hoy:
+            return False
+        _paginas_dia_avisado["dia"] = hoy
+    threading.Thread(target=_calentar_portada, daemon=True, name="paginas-dia-nuevo").start()
+    return True
 
 
 def _pagina_guardar(clave, html_txt, grupo=None):
-    gz = _gzip.compress(html_txt.encode("utf-8"), compresslevel=6, mtime=0)
+    ts = time.time()
+    gz = _gzip.compress(_paginas_sello(html_txt, ts).encode("utf-8"), compresslevel=6, mtime=0)
     with _paginas_lock:
-        _paginas_cache[clave] = {"gz": gz, "ts": time.time(), "refrescando": False, "grupo": grupo}
+        _paginas_cache[clave] = {"gz": gz, "ts": ts, "refrescando": False, "grupo": grupo, "dia": _paginas_dia(ts)}
         _paginas_cache.move_to_end(clave)
         if grupo in _PAGINAS_CUPO:
             del_grupo = [k for k, e in _paginas_cache.items() if e.get("grupo") == grupo]
@@ -31092,16 +31149,24 @@ def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False, grupo=No
             _I18N_RUTA.reset(tk)
 
     ahora = time.time()
+    hoy = _paginas_dia(ahora)
     lanzar = False
     cerrojo = None
+    otro_dia = False
     bot = _BOT_PREFIERE_CACHE.get()
     with _paginas_lock:
         e = _paginas_cache.get(clave)
         edad = ahora - e["ts"] if e else None
+        de_hoy = bool(e) and e.get("dia") == hoy
+        if e and not de_hoy:
+            _paginas_stats["de_otro_dia"] += 1
+            otro_dia = True
         if bot and e and edad < _BOTS_PAGINA_MAX_VIEJA:
             gz = e["gz"]                         # Googlebot, Bingbot, OAI-SearchBot, PerplexityBot: lo que haya
-            _paginas_stats["servidas_viejas" if edad >= _PAGINAS_TTL else "servidas"] += 1
-        elif e and edad < _PAGINAS_MAX_VIEJA:
+            _paginas_stats["servidas_viejas" if edad >= _PAGINAS_TTL or not de_hoy else "servidas"] += 1
+            if not de_hoy and not e["refrescando"]:
+                e["refrescando"] = lanzar = True      # de otro día: que se vuelva a montar (ver _paginas_dia)
+        elif e and de_hoy and edad < _PAGINAS_MAX_VIEJA:
             _paginas_cache.move_to_end(clave)
             gz = e["gz"]
             if edad >= _PAGINAS_TTL:
@@ -31117,11 +31182,14 @@ def _pagina_cacheada(ruta, params, montar, headers=None, gzip_ok=False, grupo=No
         ctx = contextvars.copy_context()       # el hilo necesita el idioma de esta petición
         threading.Thread(target=ctx.run, args=(_pagina_remontar, clave, _montar, grupo), daemon=True,
                          name="pagina-cache").start()
+    if otro_dia:
+        _paginas_cambio_de_dia(hoy)
     if gz is None:
         with cerrojo:
             with _paginas_lock:
                 e = _paginas_cache.get(clave)
-                gz = e["gz"] if e and time.time() - e["ts"] < _PAGINAS_TTL else None
+                gz = (e["gz"] if e and time.time() - e["ts"] < _PAGINAS_TTL and e.get("dia") == _paginas_dia()
+                      else None)
             if gz is None:
                 gz = _pagina_guardar(clave, _montar(), grupo)
                 with _paginas_lock:

@@ -204,7 +204,8 @@ def main():
     # _pagina_cacheada: copia de 5 horas -> el bot la recibe sin montar nada; una persona lanza el remontaje
     with app._paginas_lock:
         app._paginas_cache[("es", "/prueba-bot")] = {"gz": _gz.compress(b"<html>vieja</html>"),
-                                                    "ts": time.time() - 5 * 3600, "refrescando": False, "grupo": None}
+                                                    "ts": time.time() - 5 * 3600, "refrescando": False, "grupo": None,
+                                                    "dia": app._paginas_dia()}
     n_m = []
     tk = app._BOT_PREFIERE_CACHE.set(True)
     try:
