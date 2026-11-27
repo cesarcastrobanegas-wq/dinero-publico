@@ -166,8 +166,36 @@ def main():
 
     # 5) el flujo
     yml = open(os.path.join(os.path.dirname(AQUI), ".github", "workflows", "fondos-ue-espana.yml"), encoding="utf-8").read()
-    ok("--una-fuente-opcional" in yml and 'if [ -n "$falta" ]; then exit 1; fi' in yml,
-       "el flujo sigue saliendo EN ROJO si falta una fuente")
+    # 26-11 (#28): sin Kohesio reciente, amarillo; en rojo si falta otra fuente o Kohesio tiene más de KOHESIO_DIAS_MAX
+    ok("--una-fuente-opcional" in yml and 'if [ -n "$grave" ]; then exit 1; fi' in yml and "KOHESIO_DIAS_MAX" in yml
+       and "::warning::" in yml, "el flujo: sin Kohesio reciente, aviso amarillo; lo demás, EN ROJO")
+
+    # 6) 26-11: Kohesio da 400 a país + periodo + fondo FSE+; por fondo se pide sin el periodo
+    urls = []
+
+    class SesionUrls:
+        def get(self, url, **k):
+            urls.append(url)
+            return Resp(200, {"list": [{"item": "Q1"}], "numberResults": 1})
+    F._kohesio_ids(SesionUrls(), "&fund=X", con_periodo=False)
+    F._kohesio_ids(SesionUrls(), "&program=Y")
+    ok("programmingPeriod" not in urls[0] and "fund=X" in urls[0] and "country=" in urls[0],
+       "por fondo, la lista se pide sin el periodo (el 400 del FSE+)")
+    ok("programmingPeriod" in urls[1], "por programa (y la lista general), con el periodo como antes")
+    fuente_f = open(F.__file__, encoding="utf-8").read()
+    ok("&fund={f['instance']}\", con_periodo=False" in fuente_f, "descargar_kohesio usa con_periodo=False en los fondos")
+
+    # 7) 26-11: token pegado con Ctrl+V en la consola de Windows (\x16) => Cloudflare da 400 vacío
+    for raro, txt in (("abc\x16", "Ctrl+V (\\x16)"), ("ab c", "un espacio dentro"), ("abcñ", "una letra no ASCII")):
+        p = P.problema_token(raro)
+        ok(p is not None and "abc" not in p and "clic DERECHO" in p, f"token con {txt}: se para y no enseña el token")
+    ok(P.problema_token("Abc-123_xyz.Z") is None, "un token normal vale")
+    try:
+        P.main(["--token", "x\x16"])
+        ok(False, "token con \\x16: debía pararse")
+    except SystemExit as e:
+        ok("control" in str(e), "token con \\x16: se para ANTES de generar")
+    ok("400 sin respuesta de la web" in fuente, "un 400 vacío se explica (Cloudflare), no solo «no ha aceptado»")
     ok("subir_fondos_ue_pc.py" in yml and '"$falta" = "kohesio"' in yml, "el resumen dice cómo cargar Kohesio desde el PC")
     ok(not os.path.exists(os.path.join(os.path.dirname(AQUI), ".github", "workflows", "kohesio-diagnostico.yml")),
        "no queda el flujo de diagnóstico temporal")
